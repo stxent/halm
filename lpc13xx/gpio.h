@@ -50,7 +50,6 @@ struct Gpio
 void gpioEnable();
 void gpioDisable();
 /*----------------------------------------------------------------------------*/
-//struct Gpio gpioInitByName(const char *, enum gpioDir);
 struct Gpio gpioInitPin(int16_t, enum gpioDir);
 void gpioReleasePin(struct Gpio *);
 /*----------------------------------------------------------------------------*/

@@ -32,46 +32,6 @@ static const uint8_t gpioRegMap[4][12] = {
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/
-//static const char *strToInt(const char *, int *);
-//static union GpioPin nameToPin(const char *);
-/*----------------------------------------------------------------------------*/
-//static const char *strToInt(const char *str, int *result)
-//{
-//  int res = 0;
-//
-////  while ((*str >= '0') && (*str <= '9'))
-//  while ((uint8_t)(*str - '0') <= '9')
-//  {
-//    res *= 10;
-//    res += *str++ - '0';
-//  }
-//  *result = res;
-//
-//  return str;
-//}
-/*----------------------------------------------------------------------------*/
-///* Name format is "PX.Y" where X is port and Y is pin */
-///* Return combined port and pin numbers or -1 on error */
-//static union GpioPin nameToPin(const char *name)
-//{
-//  int num;
-//  union GpioPin result = {
-//      .id = -1
-//  };
-//
-//  if (*name++ != 'P')
-//    return result;
-//  name = strToInt(name, &num);
-//  result.port = (int8_t)num;
-//
-//  if (*name++ != '.')
-//    return result;
-//  name = strToInt(name, &num);
-//  result.offset = (int8_t)num;
-//
-//  return result;
-//}
-/*----------------------------------------------------------------------------*/
 void gpioEnable()
 {
   /* Enable AHB clock to the GPIO domain */
@@ -93,49 +53,6 @@ void gpioDisable()
 {
   LPC_SYSCON->SYSAHBCLKCTRL &= ~(1 << 6); //FIXME
 }
-/*----------------------------------------------------------------------------*/
-//struct Gpio gpioInitByName(const char *name, enum gpioDir dir)
-//{
-//  uint32_t *iocon;
-//  union GpioPin converted = {
-//      .id = -1
-//  };
-//  struct Gpio p = {
-//      .control = 0,
-//      .pin     = converted
-//  };
-//
-//  converted = nameToPin(name);
-//  switch (converted.port)
-//  {
-//    case 0:
-//      p.control = LPC_GPIO0;
-//      break;
-//    case 1:
-//      p.control = LPC_GPIO1;
-//      break;
-//    case 2:
-//      p.control = LPC_GPIO2;
-//      break;
-//    case 3:
-//      p.control = LPC_GPIO3;
-//      break;
-//    default:
-//      return p;
-//  }
-//  p.pin = converted;
-//
-//  iocon = (void *)LPC_IOCON + gpioRegMap[p.pin.port][p.pin.offset];
-//  /* PIO function, no pull, no hysteresis, standard output */
-//  *iocon = IOCON_FUNC(0) | IOCON_MODE_INACTIVE;
-//
-//  if (dir == GPIO_OUTPUT)
-//    p.control->DIR |= 1 << p.pin.offset;
-//  else
-//    p.control->DIR &= ~(1 << p.pin.offset);
-//
-//  return p;
-//}
 /*----------------------------------------------------------------------------*/
 /* Return 0 when no function associated with id found */
 uint8_t gpioFindMode(const struct GpioPinMode *pinList, int16_t id)
