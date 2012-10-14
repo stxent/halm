@@ -19,17 +19,13 @@
 #define IOCON_FUNC(func)                ((func) << 0)
 #define IOCON_FUNC_MASK                 IOCON_FUNC(0x07)
 
-#define IOCON_MODE_INACTIVE             (0 << 3)
-#define IOCON_MODE_PULLDOWN             (1 << 3)
-#define IOCON_MODE_PULLUP               (2 << 3)
-#define IOCON_MODE_MASK                 (0x03 << 3)
-
 #define IOCON_I2C_STANDARD              (0 << 8)
 #define IOCON_I2C_IO                    (1 << 8)
 #define IOCON_I2C_PLUS                  (2 << 8)
 #define IOCON_I2C_MASK                  (0x03 << 8)
 
 #define IOCON_MODE_DIGITAL              BIT(7)
+#define IOCON_MODE_INACTIVE             (0 << 3)
 #define IOCON_MODE_PULLDOWN             (1 << 3)
 #define IOCON_MODE_PULLUP               (2 << 3)
 #define IOCON_MODE_MASK                 (0x03 << 3)
