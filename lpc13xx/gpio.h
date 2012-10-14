@@ -29,10 +29,10 @@ union GpioPin
   };
 };
 /*----------------------------------------------------------------------------*/
-struct GpioPinMode
+struct GpioPinFunc
 {
   gpioKey key;
-  uint8_t mode;
+  uint8_t func;
 };
 /*----------------------------------------------------------------------------*/
 struct Gpio
@@ -50,10 +50,10 @@ void gpioReleasePin(struct Gpio *);
 uint8_t gpioRead(struct Gpio *);
 void gpioWrite(struct Gpio *, uint8_t);
 /*----------------------------------------------------------------------------*/
-uint8_t gpioFindMode(const struct GpioPinMode *, gpioKey);
+uint8_t gpioFindFunc(const struct GpioPinFunc *, gpioKey);
 void gpioSetMode(struct Gpio *, uint8_t);
 void gpioSetPull(struct Gpio *, enum gpioPull);
 void gpioSetType(struct Gpio *, enum gpioType);
-int16_t gpioGetId(struct Gpio *);
+gpioKey gpioGetKey(struct Gpio *);
 /*----------------------------------------------------------------------------*/
 #endif /* GPIO_H_ */

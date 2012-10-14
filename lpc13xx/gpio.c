@@ -59,12 +59,12 @@ void gpioDeinit()
 }
 /*----------------------------------------------------------------------------*/
 /* Return 0 when no function associated with id found */
-uint8_t gpioFindMode(const struct GpioPinMode *pinList, int16_t id)
+uint8_t gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
 {
   while (pinList->key != -1)
   {
-    if (pinList->key == id)
-      return pinList->mode;
+    if (pinList->key == key)
+      return pinList->func;
     pinList++;
   }
   return 0;
@@ -172,7 +172,7 @@ void gpioSetType(struct Gpio *p, enum gpioType type)
   }
 }
 /*----------------------------------------------------------------------------*/
-int16_t gpioGetId(struct Gpio *p)
+gpioKey gpioGetKey(struct Gpio *p)
 {
   return p->pin.key;
 }

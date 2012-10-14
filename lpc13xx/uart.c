@@ -9,18 +9,18 @@
 #include "lpc13xx_defines.h"
 /*----------------------------------------------------------------------------*/
 /* UART pin modes */
-static const struct GpioPinMode uartPins[] = {
+static const struct GpioPinFunc uartPins[] = {
     {
         .key = GPIO_TO_PIN(1, 6),
-        .mode = 0x01
+        .func = 0x01
     },
     {
         .key = GPIO_TO_PIN(1, 7),
-        .mode = 0x01
+        .func = 0x01
     },
     {
         .key = -1,
-        .mode = 0x00
+        .func = 0x00
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -168,13 +168,13 @@ int uartInit(struct Uart *desc, uint8_t channel,
   /* Select UART function and pull-up */
   /* TODO check output mode assignment */
   desc->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
-  func = gpioFindMode(uartPins, config->rx);
-  if ((gpioGetId(&desc->rxPin) == -1) || !func)
+  func = gpioFindFunc(uartPins, config->rx);
+  if ((gpioGetKey(&desc->rxPin) == -1) || !func)
     return -1;
   gpioSetMode(&desc->rxPin, func);
   desc->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
-  func = gpioFindMode(uartPins, config->tx);
-  if ((gpioGetId(&desc->txPin) == -1) || !func)
+  func = gpioFindFunc(uartPins, config->tx);
+  if ((gpioGetKey(&desc->txPin) == -1) || !func)
     return -1;
   gpioSetMode(&desc->txPin, func);
 
