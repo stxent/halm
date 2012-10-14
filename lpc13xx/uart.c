@@ -11,15 +11,15 @@
 /* UART pin modes */
 static const struct GpioPinMode uartPins[] = {
     {
-        .id = GPIO_TO_PIN(1, 6),
+        .key = GPIO_TO_PIN(1, 6),
         .mode = 0x01
     },
     {
-        .id = GPIO_TO_PIN(1, 7),
+        .key = GPIO_TO_PIN(1, 7),
         .mode = 0x01
     },
     {
-        .id = -1,
+        .key = -1,
         .mode = 0x00
     }
 };

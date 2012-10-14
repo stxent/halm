@@ -6,16 +6,30 @@
  */
 
 #include <stdlib.h>
-#include "gpio.h"
+#include "LPC13xx.h"
 #include "lpc13xx_defines.h"
+#include "gpio.h"
 /*----------------------------------------------------------------------------*/
 /* IOCON register map differs for LPC1315/16/17/45/46/47 */
 #if defined __LPC13XX
 /*----------------------------------------------------------------------------*/
+/* Reserved bits, digital mode and IO mode for I2C pins */
+#define IOCON_DEFAULT                   0x01D0
+
 #define IOCON_FUNC(func)                ((func) << 0)
 #define IOCON_FUNC_MASK                 IOCON_FUNC(0x07)
 
 #define IOCON_MODE_INACTIVE             (0 << 3)
+#define IOCON_MODE_PULLDOWN             (1 << 3)
+#define IOCON_MODE_PULLUP               (2 << 3)
+#define IOCON_MODE_MASK                 (0x03 << 3)
+
+#define IOCON_I2C_STANDARD              (0 << 8)
+#define IOCON_I2C_IO                    (1 << 8)
+#define IOCON_I2C_PLUS                  (2 << 8)
+#define IOCON_I2C_MASK                  (0x03 << 8)
+
+#define IOCON_MODE_DIGITAL              BIT(7)
 #define IOCON_MODE_PULLDOWN             (1 << 3)
 #define IOCON_MODE_PULLUP               (2 << 3)
 #define IOCON_MODE_MASK                 (0x03 << 3)
@@ -32,34 +46,28 @@ static const uint8_t gpioRegMap[4][12] = {
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/
-void gpioEnable()
+void gpioInit()
 {
   /* Enable AHB clock to the GPIO domain */
-  LPC_SYSCON->SYSAHBCLKCTRL |= (1 << 6); //FIXME
-
-#ifdef __JTAG_DISABLED
-  LPC_IOCON->JTAG_TDO_PIO1_1  &= ~0x07;
-  LPC_IOCON->JTAG_TDO_PIO1_1  |= 0x01;
-#endif
-
-//  /* Set up NVIC when I/O pins are configured as external interrupts. */
+  LPC_SYSCON->SYSAHBCLKCTRL |= SYSAHBCLKCTRL_GPIO;
+  /* Set up NVIC when I/O pins are configured as external interrupts */
 //  NVIC_EnableIRQ(EINT0_IRQn);
 //  NVIC_EnableIRQ(EINT1_IRQn);
 //  NVIC_EnableIRQ(EINT2_IRQn);
 //  NVIC_EnableIRQ(EINT3_IRQn);
 }
 /*----------------------------------------------------------------------------*/
-void gpioDisable()
+void gpioDeinit()
 {
-  LPC_SYSCON->SYSAHBCLKCTRL &= ~(1 << 6); //FIXME
+  LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_GPIO;
 }
 /*----------------------------------------------------------------------------*/
 /* Return 0 when no function associated with id found */
 uint8_t gpioFindMode(const struct GpioPinMode *pinList, int16_t id)
 {
-  while (pinList->id != -1)
+  while (pinList->key != -1)
   {
-    if (pinList->id == id)
+    if (pinList->key == id)
       return pinList->mode;
     pinList++;
   }
@@ -70,14 +78,14 @@ struct Gpio gpioInitPin(int16_t id, enum gpioDir dir)
 {
   uint32_t *iocon;
   union GpioPin converted = {
-      .id = -1
+      .key = -1
   };
   struct Gpio p = {
       .control = 0,
       .pin     = converted
   };
 
-  converted.id = id;
+  converted.key = id;
   switch (converted.port)
   {
     case 0:
@@ -99,7 +107,8 @@ struct Gpio gpioInitPin(int16_t id, enum gpioDir dir)
 
   iocon = (void *)LPC_IOCON + gpioRegMap[p.pin.port][p.pin.offset];
   /* PIO function, no pull, no hysteresis, standard output */
-  *iocon = IOCON_FUNC(0) | IOCON_MODE_INACTIVE;
+  *iocon = IOCON_DEFAULT & ~IOCON_MODE_MASK;
+  /* TODO add analog functions */
 
   if (dir == GPIO_OUTPUT)
     p.control->DIR |= 1 << p.pin.offset;
@@ -113,7 +122,7 @@ void gpioReleasePin(struct Gpio *p)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
   p->control->DIR &= ~(1 << p->pin.offset);
-  *iocon = 0;
+  *iocon = IOCON_DEFAULT;
 }
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *p)
@@ -169,5 +178,5 @@ void gpioSetType(struct Gpio *p, enum gpioType type)
 /*----------------------------------------------------------------------------*/
 int16_t gpioGetId(struct Gpio *p)
 {
-  return p->pin.id;
+  return p->pin.key;
 }

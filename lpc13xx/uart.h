@@ -42,6 +42,7 @@ struct Uart
 };
 /*----------------------------------------------------------------------------*/
 int uartInit(struct Uart *, uint8_t, const struct UartConfig *, uint32_t);
+void uartDeinit(struct Uart *);
 int uartRead(struct Uart *, uint8_t *, int);
 int uartWrite(struct Uart *, const uint8_t *, int);
 /*----------------------------------------------------------------------------*/
