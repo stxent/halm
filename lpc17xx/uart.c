@@ -269,7 +269,7 @@ int uartInit(struct Uart *desc, uint8_t channel,
   }
 
   divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (rate << 4);
-  if (divider > 0xFFFF)
+  if (divider > 0xFFFF || !divider)
     return -1;
   //TODO Add fractional divider calculation
 

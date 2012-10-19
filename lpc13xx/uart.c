@@ -156,8 +156,8 @@ void uartDeinit(struct Uart *desc)
 int uartInit(struct Uart *desc, uint8_t channel,
     const struct UartConfig *config, uint32_t rate)
 {
-  uint16_t divider;
-  uart8_t func;
+  uint32_t divider;
+  uint8_t func;
 
   queueInit(&desc->sendQueue);
   queueInit(&desc->receiveQueue);
@@ -186,6 +186,9 @@ int uartInit(struct Uart *desc, uint8_t channel,
   LPC_SYSCON->UARTCLKDIV = 1; /* Divide AHB clock by 1 */
 
   divider = (SystemCoreClock / LPC_SYSCON->SYSAHBCLKDIV) / (rate << 4);
+  if (divider > 0xFFFF || !divider)
+    return -1;
+  //TODO Add fractional divider calculation
 
   /* Set 8-bit length and enable DLAB access */
   desc->block->LCR = LCR_WORD_8BIT | LCR_DLAB;
