@@ -11,7 +11,7 @@
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #ifndef QUEUE_SIZE
-#define QUEUE_SIZE ((uint8_t)0x20)
+#define QUEUE_SIZE 32
 #endif /* QUEUE_SIZE */
 /*----------------------------------------------------------------------------*/
 struct Queue

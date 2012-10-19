@@ -7,15 +7,16 @@
 
 #include <stdlib.h>
 #include "LPC17xx.h"
-//#include "lpc17xx_defines.h"
+/* #include "lpc17xx_defines.h" */
 #include "gpio.h"
 /*------------------Values for function and mode select registers-------------*/
-#define PIN_MASK                        ((uint32_t)0x03)
+#define PIN_MASK                        0x03
+//FIXME
 #define PIN_OFFSET(value, offset)       ((value) << (((offset) & 0x0F) << 1))
 /*------------------Pin output mode control values----------------------------*/
-#define PIN_MODE_PULLUP                 ((uint32_t)0)
-#define PIN_MODE_INACTIVE               ((uint32_t)2)
-#define PIN_MODE_PULLDOWN               ((uint32_t)3)
+#define PIN_MODE_PULLUP                 0
+#define PIN_MODE_INACTIVE               2
+#define PIN_MODE_PULLDOWN               3
 /*----------------------------------------------------------------------------*/
 static LPC_GPIO_TypeDef *gpioPorts[] = {
     LPC_GPIO0, LPC_GPIO1, LPC_GPIO2, LPC_GPIO3, LPC_GPIO4
@@ -42,18 +43,14 @@ static inline uint32_t *calcPinModeOD(union GpioPin p)
 /*----------------------------------------------------------------------------*/
 void gpioInit()
 {
-  /* Enable AHB clock to the GPIO domain */
-//  LPC_SYSCON->SYSAHBCLKCTRL |= SYSAHBCLKCTRL_GPIO;
-  /* Set up NVIC when I/O pins are configured as external interrupts */
-//  NVIC_EnableIRQ(EINT0_IRQn);
-//  NVIC_EnableIRQ(EINT1_IRQn);
-//  NVIC_EnableIRQ(EINT2_IRQn);
-//  NVIC_EnableIRQ(EINT3_IRQn);
+  /* Enable power of the GPIO domain */
+  /* LPC_SC->PCONP |= PCONP_PCGPIO; */
 }
 /*----------------------------------------------------------------------------*/
 void gpioDeinit()
 {
-//  LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_GPIO;
+  /* Disable power of the GPIO domain */
+  /* LPC_SC->PCONP &= ~PCONP_PCGPIO; */
 }
 /*----------------------------------------------------------------------------*/
 /* Return 0 when no function associated with id found */
