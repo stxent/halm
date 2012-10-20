@@ -13,13 +13,16 @@
 /*----------------------------------------------------------------------------*/
 #include "LPC17xx.h"
 /*----------------------------------------------------------------------------*/
+#include "interface.h"
 #include "queue.h"
 #include "gpio.h"
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
-  int16_t rx;
-  int16_t tx;
+  gpioKey rx;
+  gpioKey tx;
+  uint8_t channel;
+  uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
 struct Uart
@@ -32,9 +35,11 @@ struct Uart
   bool active;
 };
 /*----------------------------------------------------------------------------*/
-int uartInit(struct Uart *, uint8_t, const struct UartConfig *, uint32_t);
-void uartDeinit(struct Uart *);
-int uartRead(struct Uart *, uint8_t *, int);
-int uartWrite(struct Uart *, const uint8_t *, int);
+enum ifResult uartInit(struct Interface *, const void *);
+void uartDeinit(struct Interface *);
+unsigned int uartRead(struct Interface *, uint8_t *, unsigned int);
+unsigned int uartWrite(struct Interface *, const uint8_t *, unsigned int);
+enum ifResult uartGetOpt(struct Interface *, enum ifOption, void *);
+enum ifResult uartSetOpt(struct Interface *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

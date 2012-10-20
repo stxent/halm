@@ -17,9 +17,19 @@ typedef int16_t gpioKey;
 /*----------------------------------------------------------------------------*/
 #define GPIO_TO_PIN(port, pin) ((gpioKey)((int8_t)port << 8 | (int8_t)pin))
 /*----------------------------------------------------------------------------*/
-enum gpioDir {GPIO_INPUT = 0, GPIO_OUTPUT};
-enum gpioPull {GPIO_NOPULL = 0, GPIO_PULLUP, GPIO_PULLDOWN};
-enum gpioType {GPIO_PUSHPULL = 0, GPIO_OPENDRAIN};
+enum gpioDir {
+  GPIO_INPUT = 0,
+  GPIO_OUTPUT
+} __attribute__((packed));
+enum gpioPull {
+  GPIO_NOPULL = 0,
+  GPIO_PULLUP,
+  GPIO_PULLDOWN
+} __attribute__((packed));
+enum gpioType {
+  GPIO_PUSHPULL = 0,
+  GPIO_OPENDRAIN
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 union GpioPin
 {

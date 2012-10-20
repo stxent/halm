@@ -5,10 +5,11 @@
  *      Author: xen
  */
 
+#include <stdlib.h>
+/*----------------------------------------------------------------------------*/
 #include "uart.h"
 #include "lpc17xx_defines.h"
 #include "lpc17xx_sys.h"
-//FIXME replace return values with something else
 /*----------------------------------------------------------------------------*/
 #define FIFO_SIZE                       8
 #define DEFAULT_DIV                     PCLK_DIV1
@@ -187,120 +188,206 @@ void UART3_IRQHandler(void)
   uartBaseHandler(descriptor[3]);
 }
 /*----------------------------------------------------------------------------*/
-int uartRead(struct Uart *desc, uint8_t *buffer, int length)
+enum ifResult uartGetOpt(struct Interface *iface, enum ifOption option,
+    void *data)
 {
-  int read = 0;
-  while (queueSize(&desc->receiveQueue) && (read++ < length))
+  struct Uart *device = (struct Uart *)iface->dev;
+
+  switch (option)
   {
-    NVIC_DisableIRQ(desc->irq);
-    *buffer++ = queuePop(&desc->receiveQueue);
-    NVIC_EnableIRQ(desc->irq);
+    case IF_SPEED:
+      /* TODO */
+      return IF_OK;
+    case IF_QUEUE_RX:
+      *(uint8_t *)data = queueSize(&device->receiveQueue);
+      return IF_OK;
+    case IF_QUEUE_TX:
+      *(uint8_t *)data = queueSize(&device->sendQueue);
+      return IF_OK;
+    default:
+      return IF_ERROR;
   }
+}
+/*----------------------------------------------------------------------------*/
+enum ifResult uartSetOpt(struct Interface *iface, enum ifOption option,
+    const void *data)
+{
+  struct Uart *device = (struct Uart *)iface->dev;
+  uint32_t divider, rate;
+
+  switch (option)
+  {
+    case IF_SPEED:
+      rate = *(uint32_t *)data;
+      //TODO move to separate inline function
+      divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (rate << 4);
+      if (divider > 0xFFFF || !divider)
+        return IF_ERROR;
+      //TODO Add fractional divider calculation
+      /* Set 8-bit length and enable DLAB access */
+      device->block->LCR = LCR_DLAB;
+      /* Set divisor of the baud rate generator */
+      device->block->DLL = (uint8_t)divider;
+      device->block->DLM = (uint8_t)(divider >> 8);
+      device->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
+      return IF_OK;
+    default:
+      return IF_ERROR;
+  }
+}
+/*----------------------------------------------------------------------------*/
+unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
+    unsigned int length)
+{
+  struct Uart *device = (struct Uart *)iface->dev;
+  int read = 0;
+
+  mutexLock(&iface->lock);
+  while (queueSize(&device->receiveQueue) && (read++ < length))
+  {
+    NVIC_DisableIRQ(device->irq);
+    *buffer++ = queuePop(&device->receiveQueue);
+    NVIC_EnableIRQ(device->irq);
+  }
+  mutexUnlock(&iface->lock);
   return read;
 }
 /*----------------------------------------------------------------------------*/
-int uartWrite(struct Uart *desc, const uint8_t *buffer, int length)
+unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
+    unsigned int length)
 {
+  struct Uart *device = (struct Uart *)iface->dev;
   int written = 0;
-  if (!desc->active)
+
+  mutexLock(&iface->lock);
+  if (!device->active)
   {
-    desc->active = true;
-    desc->block->THR = *buffer++;
+    device->active = true;
+    device->block->THR = *buffer++;
     written++;
   }
-  while ((queueSize(&desc->sendQueue) < QUEUE_SIZE) && (written++ < length))
+  while ((queueSize(&device->sendQueue) < QUEUE_SIZE) &&
+      (written++ < length))
   {
-    NVIC_DisableIRQ(desc->irq);
-    queuePush(&desc->sendQueue, *buffer++);
-    NVIC_EnableIRQ(desc->irq);
+    NVIC_DisableIRQ(device->irq);
+    queuePush(&device->sendQueue, *buffer++);
+    NVIC_EnableIRQ(device->irq);
   }
+  mutexUnlock(&iface->lock);
   return written;
 }
 /*----------------------------------------------------------------------------*/
-void uartDeinit(struct Uart *desc)
+void uartDeinit(struct Interface *iface)
 {
-  NVIC_DisableIRQ(desc->irq); /* Disable interrupt */
+  struct Uart *device = (struct Uart *)iface->dev;
+  NVIC_DisableIRQ(device->irq); /* Disable interrupt */
   /* Processor-specific register */
   LPC_SC->PCONP &= ~PCONP_PCUART0;
   /* Release pins */
-  gpioReleasePin(&desc->rxPin);
-  gpioReleasePin(&desc->txPin);
+  gpioReleasePin(&device->rxPin);
+  gpioReleasePin(&device->txPin);
+  free(device);
 }
 /*----------------------------------------------------------------------------*/
-int uartInit(struct Uart *desc, uint8_t channel,
-    const struct UartConfig *config, uint32_t rate)
+enum ifResult uartInit(struct Interface *iface, const void *cdata)
 {
+  /* Set pointer to device configuration data */
+  struct UartConfig *config = (struct UartConfig *)cdata;
+  struct Uart *device = (struct Uart *)malloc(sizeof(struct Uart));
   uint32_t divider;
   uint8_t func;
 
-  queueInit(&desc->sendQueue);
-  queueInit(&desc->receiveQueue);
-  desc->active = false;
+  if (!device)
+    return IF_ERROR;
 
   //FIXME rewrite definitions, fix TER size
-  switch (channel)
+  switch (config->channel)
   {
     case 0:
       LPC_SC->PCONP |= PCONP_PCUART0;
       sysSetPeriphDiv(PCLK_UART0, DEFAULT_DIV);
-      desc->block = (LPC_UART_TypeDef *)LPC_UART0; //FIXME
-      desc->irq = UART0_IRQn;
+      device->block = (LPC_UART_TypeDef *)LPC_UART0; //FIXME
+      device->irq = UART0_IRQn;
       break;
     case 1:
       LPC_SC->PCONP |= PCONP_PCUART1;
       sysSetPeriphDiv(PCLK_UART1, DEFAULT_DIV);
-      desc->block = (LPC_UART_TypeDef *)LPC_UART1; //FIXME
-      desc->irq = UART1_IRQn;
+      device->block = (LPC_UART_TypeDef *)LPC_UART1; //FIXME
+      device->irq = UART1_IRQn;
       break;
     case 2:
       LPC_SC->PCONP |= PCONP_PCUART2;
       sysSetPeriphDiv(PCLK_UART2, DEFAULT_DIV);
-      desc->block = LPC_UART2;
-      desc->irq = UART2_IRQn;
+      device->block = LPC_UART2;
+      device->irq = UART2_IRQn;
       break;
     case 3:
       LPC_SC->PCONP |= PCONP_PCUART3;
       sysSetPeriphDiv(PCLK_UART3, DEFAULT_DIV);
-      desc->block = LPC_UART3;
-      desc->irq = UART3_IRQn;
+      device->block = LPC_UART3;
+      device->irq = UART3_IRQn;
       break;
     default:
-      return -1;
+      free(device);
+      return IF_ERROR;
   }
 
-  divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (rate << 4);
+  divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (config->rate << 4);
   if (divider > 0xFFFF || !divider)
-    return -1;
+  {
+    free(device);
+    return IF_ERROR;
+  }
   //TODO Add fractional divider calculation
 
   /* Select UART function and pull-up */
-  desc->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
+  device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
   func = gpioFindFunc(uartPins, config->rx);
-  if ((gpioGetKey(&desc->rxPin) == -1) || !func)
-    return -1;
-  gpioSetFunc(&desc->rxPin, func);
-  desc->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
+  if ((gpioGetKey(&device->rxPin) == -1) || !func)
+  {
+    free(device);
+    return IF_ERROR;
+  }
+  gpioSetFunc(&device->rxPin, func);
+  device->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
   func = gpioFindFunc(uartPins, config->tx);
-  if ((gpioGetKey(&desc->txPin) == -1) || !func)
-    return -1;
-  gpioSetFunc(&desc->txPin, func);
+  if ((gpioGetKey(&device->txPin) == -1) || !func)
+  {
+    free(device);
+    return IF_ERROR;
+  }
+  gpioSetFunc(&device->txPin, func);
 
-  desc->channel = channel;
-  descriptor[channel] = desc;
+  queueInit(&device->sendQueue);
+  queueInit(&device->receiveQueue);
+  device->active = false;
 
+  iface->dev = device;
+  /* Initialize interface functions */
+  iface->start = 0;
+  iface->stop = 0;
+  iface->read = uartRead;
+  iface->write = uartWrite;
+  iface->getopt = uartGetOpt;
+  iface->setopt = uartSetOpt;
+
+  device->channel = config->channel;
+  descriptor[device->channel] = device;
+
+  //TODO move speed setup to separate inline function
   /* Set 8-bit length and enable DLAB access */
-  desc->block->LCR = LCR_WORD_8BIT | LCR_DLAB;
+  device->block->LCR = LCR_WORD_8BIT | LCR_DLAB;
   /* Set divisor of the baud rate generator */
-  desc->block->DLL = (uint8_t)divider;
-  desc->block->DLM = (uint8_t)(divider >> 8);
-  desc->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
+  device->block->DLL = (uint8_t)divider;
+  device->block->DLM = (uint8_t)(divider >> 8);
+  device->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
   /* Enable and clear FIFO */
-  desc->block->FCR = FCR_ENABLE;
+  device->block->FCR = FCR_ENABLE;
   /* TODO add RX line interrupt */
   /* Enable RBR and THRE interrupts */
-  desc->block->IER = IER_RBR | IER_THRE;
-  desc->block->TER = TER_TXEN;
+  device->block->IER = IER_RBR | IER_THRE;
+  device->block->TER = TER_TXEN;
 
-  NVIC_EnableIRQ(desc->irq); /* Enable interrupt */
-  return 0;
+  NVIC_EnableIRQ(device->irq); /* Enable interrupt */
+  return IF_OK;
 }
