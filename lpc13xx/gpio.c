@@ -134,11 +134,11 @@ void gpioWrite(struct Gpio *p, uint8_t value)
     p->control->DATA &= ~(1 << p->pin.offset);
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetMode(struct Gpio *p, uint8_t mode)
+void gpioSetFunc(struct Gpio *p, uint8_t func)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
   *iocon &= ~IOCON_FUNC_MASK;
-  *iocon |= IOCON_FUNC(mode);
+  *iocon |= IOCON_FUNC(func);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)

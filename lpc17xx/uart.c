@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #include "uart.h"
 #include "lpc17xx_defines.h"
@@ -139,9 +140,24 @@ static const struct GpioPinFunc uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct Uart *descriptor[] = {0, 0, 0, 0};
+struct Uart
+{
+  LPC_UART_TypeDef *block;
+  IRQn_Type irq;
+  struct Queue sendQueue, receiveQueue;
+  struct Gpio rxPin, txPin;
+  uint8_t channel;
+  bool active;
+};
 /*----------------------------------------------------------------------------*/
+unsigned int uartRead(struct Interface *, uint8_t *, unsigned int);
+unsigned int uartWrite(struct Interface *, const uint8_t *, unsigned int);
+enum ifResult uartGetOpt(struct Interface *, enum ifOption, void *);
+enum ifResult uartSetOpt(struct Interface *, enum ifOption, const void *);
 static void uartBaseHandler(struct Uart *);
+static enum ifResult uartSetRate(struct Uart *, uint32_t);
+/*----------------------------------------------------------------------------*/
+static struct Uart *descriptor[] = {0, 0, 0, 0};
 /*----------------------------------------------------------------------------*/
 static void uartBaseHandler(struct Uart *desc)
 {
@@ -188,6 +204,23 @@ void UART3_IRQHandler(void)
   uartBaseHandler(descriptor[3]);
 }
 /*----------------------------------------------------------------------------*/
+static enum ifResult uartSetRate(struct Uart *device, uint32_t rate)
+{
+  uint32_t divider;
+
+  divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (rate << 4);
+  if (divider >= (1 << 16) || !divider)
+    return IF_ERROR;
+  //TODO Add fractional divider calculation
+  /* Set 8-bit length and enable DLAB access */
+  device->block->LCR = LCR_DLAB;
+  /* Set divisor of the baud rate generator */
+  device->block->DLL = (uint8_t)divider;
+  device->block->DLM = (uint8_t)(divider >> 8);
+  device->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
+  return IF_OK;
+}
+/*----------------------------------------------------------------------------*/
 enum ifResult uartGetOpt(struct Interface *iface, enum ifOption option,
     void *data)
 {
@@ -213,24 +246,13 @@ enum ifResult uartSetOpt(struct Interface *iface, enum ifOption option,
     const void *data)
 {
   struct Uart *device = (struct Uart *)iface->dev;
-  uint32_t divider, rate;
+  uint32_t rate;
 
   switch (option)
   {
     case IF_SPEED:
       rate = *(uint32_t *)data;
-      //TODO move to separate inline function
-      divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (rate << 4);
-      if (divider > 0xFFFF || !divider)
-        return IF_ERROR;
-      //TODO Add fractional divider calculation
-      /* Set 8-bit length and enable DLAB access */
-      device->block->LCR = LCR_DLAB;
-      /* Set divisor of the baud rate generator */
-      device->block->DLL = (uint8_t)divider;
-      device->block->DLM = (uint8_t)(divider >> 8);
-      device->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
-      return IF_OK;
+      return uartSetRate(device, rate);
     default:
       return IF_ERROR;
   }
@@ -280,12 +302,14 @@ unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
 void uartDeinit(struct Interface *iface)
 {
   struct Uart *device = (struct Uart *)iface->dev;
+
   NVIC_DisableIRQ(device->irq); /* Disable interrupt */
   /* Processor-specific register */
   LPC_SC->PCONP &= ~PCONP_PCUART0;
   /* Release pins */
   gpioReleasePin(&device->rxPin);
   gpioReleasePin(&device->txPin);
+  /* Free private memory */
   free(device);
 }
 /*----------------------------------------------------------------------------*/
@@ -293,10 +317,13 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
 {
   /* Set pointer to device configuration data */
   struct UartConfig *config = (struct UartConfig *)cdata;
-  struct Uart *device = (struct Uart *)malloc(sizeof(struct Uart));
-  uint32_t divider;
+  struct Uart *device;
   uint8_t func;
 
+  /* Device already initialized */
+  if (descriptor[config->channel])
+    return IF_ERROR;
+  device = (struct Uart *)malloc(sizeof(struct Uart));
   if (!device)
     return IF_ERROR;
 
@@ -332,15 +359,13 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
       return IF_ERROR;
   }
 
-  divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (config->rate << 4);
-  if (divider > 0xFFFF || !divider)
+  if (uartSetRate(device, config->rate) != IF_OK)
   {
     free(device);
     return IF_ERROR;
   }
-  //TODO Add fractional divider calculation
 
-  /* Select UART function and pull-up */
+  /* Setup UART pins */
   device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
   func = gpioFindFunc(uartPins, config->rx);
   if ((gpioGetKey(&device->rxPin) == -1) || !func)
@@ -358,10 +383,14 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
   }
   gpioSetFunc(&device->txPin, func);
 
+  /* Initialize RX and TX queues */
   queueInit(&device->sendQueue);
   queueInit(&device->receiveQueue);
-  device->active = false;
 
+  device->active = false;
+  device->channel = config->channel;
+
+  descriptor[config->channel] = device;
   iface->dev = device;
   /* Initialize interface functions */
   iface->start = 0;
@@ -370,17 +399,10 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
   iface->write = uartWrite;
   iface->getopt = uartGetOpt;
   iface->setopt = uartSetOpt;
+  iface->deinit = uartDeinit;
 
-  device->channel = config->channel;
-  descriptor[device->channel] = device;
-
-  //TODO move speed setup to separate inline function
-  /* Set 8-bit length and enable DLAB access */
-  device->block->LCR = LCR_WORD_8BIT | LCR_DLAB;
-  /* Set divisor of the baud rate generator */
-  device->block->DLL = (uint8_t)divider;
-  device->block->DLM = (uint8_t)(divider >> 8);
-  device->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
+  /* Set 8-bit length */
+  device->block->LCR = LCR_WORD_8BIT;
   /* Enable and clear FIFO */
   device->block->FCR = FCR_ENABLE;
   /* TODO add RX line interrupt */

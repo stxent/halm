@@ -9,32 +9,21 @@
 #define UART_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #include "LPC13xx.h"
 /*----------------------------------------------------------------------------*/
+#include "interface.h"
 #include "queue.h"
 #include "gpio.h"
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
-  int16_t rx;
-  int16_t tx;
-};
-/*----------------------------------------------------------------------------*/
-struct Uart
-{
-  LPC_UART_TypeDef *block;
-  IRQn_Type irq;
-  struct Queue sendQueue, receiveQueue;
-  struct Gpio rxPin, txPin;
+  gpioKey rx;
+  gpioKey tx;
   uint8_t channel;
-  bool active;
+  uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
-int uartInit(struct Uart *, uint8_t, const struct UartConfig *, uint32_t);
-void uartDeinit(struct Uart *);
-int uartRead(struct Uart *, uint8_t *, int);
-int uartWrite(struct Uart *, const uint8_t *, int);
+enum ifResult uartInit(struct Interface *, const void *);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

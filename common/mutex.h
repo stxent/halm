@@ -17,6 +17,6 @@ struct Mutex
 /*------------------------------------------------------------------------------*/
 void mutexLock(struct Mutex *);
 uint8_t mutexTryLock(struct Mutex *);
-void mutexRelease(struct Mutex *);
+void mutexUnlock(struct Mutex *);
 /*------------------------------------------------------------------------------*/
 #endif /* MUTEX_H_ */

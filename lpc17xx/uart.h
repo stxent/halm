@@ -9,7 +9,6 @@
 #define UART_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #include "LPC17xx.h"
 /*----------------------------------------------------------------------------*/
@@ -25,21 +24,6 @@ struct UartConfig
   uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
-struct Uart
-{
-  LPC_UART_TypeDef *block;
-  IRQn_Type irq;
-  struct Queue sendQueue, receiveQueue;
-  struct Gpio rxPin, txPin;
-  uint8_t channel;
-  bool active;
-};
-/*----------------------------------------------------------------------------*/
 enum ifResult uartInit(struct Interface *, const void *);
-void uartDeinit(struct Interface *);
-unsigned int uartRead(struct Interface *, uint8_t *, unsigned int);
-unsigned int uartWrite(struct Interface *, const uint8_t *, unsigned int);
-enum ifResult uartGetOpt(struct Interface *, enum ifOption, void *);
-enum ifResult uartSetOpt(struct Interface *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

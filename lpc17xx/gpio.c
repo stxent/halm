@@ -138,11 +138,11 @@ void gpioWrite(struct Gpio *p, uint8_t value)
     p->control->FIOCLR |= 1 << p->pin.offset;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetFunc(struct Gpio *p, uint8_t mode)
+void gpioSetFunc(struct Gpio *p, uint8_t func)
 {
   uint32_t *pinptr = calcPinSelect(p->pin);
   *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
-  *pinptr |= PIN_OFFSET(mode & 0x03, p->pin.offset);
+  *pinptr |= PIN_OFFSET(func & 0x03, p->pin.offset);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)

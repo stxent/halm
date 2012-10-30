@@ -55,3 +55,9 @@ enum ifResult ifSetOpt(struct Interface *iface, enum ifOption option,
   else
     return IF_OK;
 }
+/*------------------------------------------------------------------------------*/
+void ifDeinit(struct Interface *iface)
+{
+  if (iface->deinit)
+    iface->deinit(iface);
+}
