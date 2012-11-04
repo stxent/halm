@@ -7,6 +7,36 @@
 
 #include "interface.h"
 /*------------------------------------------------------------------------------*/
+//int ifInit(void *, const void *);
+//void ifDeinit(void *);
+///*------------------------------------------------------------------------------*/
+//static const struct EntityType typeInterface = {
+//    .size = sizeof(struct Interface),
+//    .init = 0,
+//    .deinit = 0
+//};
+/*------------------------------------------------------------------------------*/
+/* Interface is an abstract class */
+const struct EntityType *Interface = 0;
+/*------------------------------------------------------------------------------*/
+//int ifInit(void *entity, const void *args)
+//{
+//  struct Interface *iface = (struct Interface *)e;
+//  iface->start = 0;
+//  iface->stop = 0;
+//  iface->read = 0;
+//  iface->write = 0;
+//  iface->getopt = 0;
+//  iface->setopt = 0;
+//}
+///*------------------------------------------------------------------------------*/
+//void ifDeinit(void *entity)
+//{
+//  struct Interface iface = (struct Interface *)e;
+//  if (iface->deinit)
+//    iface->deinit(iface);
+//}
+/*------------------------------------------------------------------------------*/
 enum ifResult ifStart(struct Interface *iface, uint8_t *address)
 {
   if (iface->start)
@@ -54,10 +84,4 @@ enum ifResult ifSetOpt(struct Interface *iface, enum ifOption option,
     return iface->setopt(iface, option, data);
   else
     return IF_OK;
-}
-/*------------------------------------------------------------------------------*/
-void ifDeinit(struct Interface *iface)
-{
-  if (iface->deinit)
-    iface->deinit(iface);
 }

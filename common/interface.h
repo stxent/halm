@@ -9,12 +9,12 @@
 #define INTERFACE_H_
 /*------------------------------------------------------------------------------*/
 #include <stdint.h>
+/*------------------------------------------------------------------------------*/
+#include "entity.h"
 #include "mutex.h"
 /*------------------------------------------------------------------------------*/
-enum ifResult {
-  IF_OK = 0,
-  IF_ERROR
-} __attribute__((packed));
+typedef uint32_t memSize; /* Type for buffers size */
+typedef uint64_t memAddress; /* Type for addresses */
 /*------------------------------------------------------------------------------*/
 enum ifOption {
   IF_SPEED = 0,
@@ -22,34 +22,35 @@ enum ifOption {
   IF_SYNC,
   IF_QUEUE_RX,
   IF_QUEUE_TX
-} __attribute__((packed));
+};
+/*------------------------------------------------------------------------------*/
+extern const struct EntityType *Interface;
 /*------------------------------------------------------------------------------*/
 struct Interface
 {
+  struct Entity parent;
   struct Mutex lock;
-  void *dev;
   /* Start transmission, arguments: device address */
-  enum ifResult (*start)(struct Interface *, uint8_t *);
+  int (*start)(struct Interface *, uint8_t *);
   /* Stop transmission */
   void (*stop)(struct Interface *);
   /* Receive data, arguments: data buffer, message size */
-  unsigned int (*read)(struct Interface *, uint8_t *, unsigned int);
+  memSize (*read)(struct Interface *, uint8_t *, memAddress, memSize);
   /* Send data, arguments: data buffer, message size */
-  unsigned int (*write)(struct Interface *, const uint8_t *, unsigned int);
+  memSize (*write)(struct Interface *, const uint8_t *, memAddress, memSize);
   /* Get interface option, arguments: option id, pointer to save value */
-  enum ifResult (*getopt)(struct Interface *, enum ifOption, void *);
+  int (*getopt)(struct Interface *, enum ifOption, void *);
   /* Set interface option, arguments: option id, pointer to new value */
-  enum ifResult (*setopt)(struct Interface *, enum ifOption, const void *);
-  /* Release hardware */
-  void (*deinit)(struct Interface *);
+  int (*setopt)(struct Interface *, enum ifOption, const void *);
 };
 /*------------------------------------------------------------------------------*/
-enum ifResult ifStart(struct Interface *, uint8_t *);
+int ifStart(struct Interface *, uint8_t *);
 void ifStop(struct Interface *);
-unsigned int ifRead(struct Interface *, uint8_t *, unsigned int);
-unsigned int ifWrite(struct Interface *, const uint8_t *, unsigned int);
-enum ifResult ifGetOpt(struct Interface *, enum ifOption, void *);
-enum ifResult ifSetOpt(struct Interface *, enum ifOption, const void *);
-void ifDeinit(struct Interface *);
+memSize ifRead(struct Interface *, uint8_t *, memAddress, memSize);
+memSize ifWrite(struct Interface *, const uint8_t *, memAddress, memSize);
+memSize ifBlockRead(struct Interface *, uint8_t *, memAddress, memSize);
+memSize ifBlockWrite(struct Interface *, const uint8_t *, memAddress, memSize);
+int ifGetOpt(struct Interface *, enum ifOption, void *);
+int ifSetOpt(struct Interface *, enum ifOption, const void *);
 /*------------------------------------------------------------------------------*/
 #endif /* INTERFACE_H_ */
