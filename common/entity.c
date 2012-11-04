@@ -8,7 +8,7 @@
 /*----------------------------------------------------------------------------*/
 #include "entity.h"
 /*----------------------------------------------------------------------------*/
-void *init(const struct EntityType *type, void *args)
+void *init(const struct EntityClass *type, const void *args)
 {
   /* Actually entity is an instance of another class */
   struct Entity *entity;

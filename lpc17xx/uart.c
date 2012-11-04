@@ -6,7 +6,6 @@
  */
 
 #include <stdlib.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #include "uart.h"
 #include "lpc17xx_defines.h"
@@ -140,22 +139,32 @@ static const struct GpioPinFunc uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-struct Uart
-{
-  LPC_UART_TypeDef *block;
-  IRQn_Type irq;
-  struct Queue sendQueue, receiveQueue;
-  struct Gpio rxPin, txPin;
-  uint8_t channel;
-  bool active;
+static enum result uartInit(void *, const void *);
+static void uartDeinit(void *);
+static unsigned int uartRead(struct Interface *, uint8_t *, unsigned int);
+static unsigned int uartWrite(struct Interface *, const uint8_t *,
+    unsigned int);
+static enum result uartGetOpt(struct Interface *, enum ifOption, void *);
+static enum result uartSetOpt(struct Interface *, enum ifOption, const void *);
+/*----------------------------------------------------------------------------*/
+static void uartBaseHandler(struct Uart *);
+static enum result uartSetRate(struct Uart *, uint32_t);
+/*----------------------------------------------------------------------------*/
+static const struct InterfaceClass tableUart = {
+    .entity = {
+        .size = sizeof(struct Uart),
+        .init = uartInit,
+        .deinit = uartDeinit
+    },
+    .start = 0,
+    .stop = 0,
+    .read = uartRead,
+    .write = uartWrite,
+    .getopt = uartGetOpt,
+    .setopt = uartSetOpt
 };
 /*----------------------------------------------------------------------------*/
-unsigned int uartRead(struct Interface *, uint8_t *, unsigned int);
-unsigned int uartWrite(struct Interface *, const uint8_t *, unsigned int);
-enum ifResult uartGetOpt(struct Interface *, enum ifOption, void *);
-enum ifResult uartSetOpt(struct Interface *, enum ifOption, const void *);
-static void uartBaseHandler(struct Uart *);
-static enum ifResult uartSetRate(struct Uart *, uint32_t);
+const struct EntityClass *Uart = (struct EntityClass *)&tableUart;
 /*----------------------------------------------------------------------------*/
 static struct Uart *descriptor[] = {0, 0, 0, 0};
 /*----------------------------------------------------------------------------*/
@@ -204,13 +213,13 @@ void UART3_IRQHandler(void)
   uartBaseHandler(descriptor[3]);
 }
 /*----------------------------------------------------------------------------*/
-static enum ifResult uartSetRate(struct Uart *device, uint32_t rate)
+static enum result uartSetRate(struct Uart *device, uint32_t rate)
 {
   uint32_t divider;
 
   divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (rate << 4);
   if (divider >= (1 << 16) || !divider)
-    return IF_ERROR;
+    return E_ERROR;
   //TODO Add fractional divider calculation
   /* Set 8-bit length and enable DLAB access */
   device->block->LCR = LCR_DLAB;
@@ -218,34 +227,34 @@ static enum ifResult uartSetRate(struct Uart *device, uint32_t rate)
   device->block->DLL = (uint8_t)divider;
   device->block->DLM = (uint8_t)(divider >> 8);
   device->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
-  return IF_OK;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-enum ifResult uartGetOpt(struct Interface *iface, enum ifOption option,
+enum result uartGetOpt(struct Interface *iface, enum ifOption option,
     void *data)
 {
-  struct Uart *device = (struct Uart *)iface->dev;
+  struct Uart *device = (struct Uart *)iface;
 
   switch (option)
   {
     case IF_SPEED:
       /* TODO */
-      return IF_OK;
+      return E_OK;
     case IF_QUEUE_RX:
       *(uint8_t *)data = queueSize(&device->receiveQueue);
-      return IF_OK;
+      return E_OK;
     case IF_QUEUE_TX:
       *(uint8_t *)data = queueSize(&device->sendQueue);
-      return IF_OK;
+      return E_OK;
     default:
-      return IF_ERROR;
+      return E_ERROR;
   }
 }
 /*----------------------------------------------------------------------------*/
-enum ifResult uartSetOpt(struct Interface *iface, enum ifOption option,
+enum result uartSetOpt(struct Interface *iface, enum ifOption option,
     const void *data)
 {
-  struct Uart *device = (struct Uart *)iface->dev;
+  struct Uart *device = (struct Uart *)iface;
   uint32_t rate;
 
   switch (option)
@@ -254,14 +263,14 @@ enum ifResult uartSetOpt(struct Interface *iface, enum ifOption option,
       rate = *(uint32_t *)data;
       return uartSetRate(device, rate);
     default:
-      return IF_ERROR;
+      return E_ERROR;
   }
 }
 /*----------------------------------------------------------------------------*/
 unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
     unsigned int length)
 {
-  struct Uart *device = (struct Uart *)iface->dev;
+  struct Uart *device = (struct Uart *)iface;
   int read = 0;
 
   mutexLock(&iface->lock);
@@ -278,7 +287,7 @@ unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
 unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
     unsigned int length)
 {
-  struct Uart *device = (struct Uart *)iface->dev;
+  struct Uart *device = (struct Uart *)iface;
   int written = 0;
 
   mutexLock(&iface->lock);
@@ -299,9 +308,9 @@ unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
   return written;
 }
 /*----------------------------------------------------------------------------*/
-void uartDeinit(struct Interface *iface)
+void uartDeinit(void *iface)
 {
-  struct Uart *device = (struct Uart *)iface->dev;
+  struct Uart *device = (struct Uart *)iface;
 
   NVIC_DisableIRQ(device->irq); /* Disable interrupt */
   /* Processor-specific register */
@@ -313,7 +322,7 @@ void uartDeinit(struct Interface *iface)
   free(device);
 }
 /*----------------------------------------------------------------------------*/
-enum ifResult uartInit(struct Interface *iface, const void *cdata)
+enum result uartInit(void *iface, const void *cdata)
 {
   /* Set pointer to device configuration data */
   struct UartConfig *config = (struct UartConfig *)cdata;
@@ -322,10 +331,10 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
 
   /* Device already initialized */
   if (descriptor[config->channel])
-    return IF_ERROR;
+    return E_ERROR;
   device = (struct Uart *)malloc(sizeof(struct Uart));
   if (!device)
-    return IF_ERROR;
+    return E_ERROR;
 
   //FIXME rewrite definitions, fix TER size
   switch (config->channel)
@@ -356,13 +365,13 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
       break;
     default:
       free(device);
-      return IF_ERROR;
+      return E_ERROR;
   }
 
-  if (uartSetRate(device, config->rate) != IF_OK)
+  if (uartSetRate(device, config->rate) != E_OK)
   {
     free(device);
-    return IF_ERROR;
+    return E_ERROR;
   }
 
   /* Setup UART pins */
@@ -371,7 +380,7 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
   if ((gpioGetKey(&device->rxPin) == -1) || !func)
   {
     free(device);
-    return IF_ERROR;
+    return E_ERROR;
   }
   gpioSetFunc(&device->rxPin, func);
   device->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
@@ -379,7 +388,7 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
   if ((gpioGetKey(&device->txPin) == -1) || !func)
   {
     free(device);
-    return IF_ERROR;
+    return E_ERROR;
   }
   gpioSetFunc(&device->txPin, func);
 
@@ -391,15 +400,6 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
   device->channel = config->channel;
 
   descriptor[config->channel] = device;
-  iface->dev = device;
-  /* Initialize interface functions */
-  iface->start = 0;
-  iface->stop = 0;
-  iface->read = uartRead;
-  iface->write = uartWrite;
-  iface->getopt = uartGetOpt;
-  iface->setopt = uartSetOpt;
-  iface->deinit = uartDeinit;
 
   /* Set 8-bit length */
   device->block->LCR = LCR_WORD_8BIT;
@@ -411,5 +411,5 @@ enum ifResult uartInit(struct Interface *iface, const void *cdata)
   device->block->TER = TER_TXEN;
 
   NVIC_EnableIRQ(device->irq); /* Enable interrupt */
-  return IF_OK;
+  return E_OK;
 }

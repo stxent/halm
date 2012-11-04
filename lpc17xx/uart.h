@@ -9,12 +9,15 @@
 #define UART_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #include "LPC17xx.h"
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
 #include "queue.h"
 #include "gpio.h"
+/*----------------------------------------------------------------------------*/
+extern const struct EntityClass *Uart;
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
@@ -24,6 +27,15 @@ struct UartConfig
   uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
-enum ifResult uartInit(struct Interface *, const void *);
+struct Uart
+{
+  struct Interface parent;
+  LPC_UART_TypeDef *block;
+  IRQn_Type irq;
+  struct Queue sendQueue, receiveQueue;
+  struct Gpio rxPin, txPin;
+  uint8_t channel;
+  bool active;
+};
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

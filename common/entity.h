@@ -17,12 +17,14 @@ enum result
 /*----------------------------------------------------------------------------*/
 typedef unsigned int entitySize;
 /*----------------------------------------------------------------------------*/
+struct Entity;
+/*----------------------------------------------------------------------------*/
 /* Class descriptor */
-struct EntityType
+struct EntityClass
 {
   entitySize size;
   /* Create object, arguments: pointer to object, constructor parameters */
-  int (*init)(void *, const void *);
+  enum result (*init)(void *, const void *);
   /* Delete object, arguments: pointer to object */
   void (*deinit)(void *);
 };
@@ -30,10 +32,10 @@ struct EntityType
 /* Base class */
 struct Entity
 {
-  const struct EntityType *type;
+  const struct EntityClass *type;
 };
 /*----------------------------------------------------------------------------*/
-void *init(const struct EntityType *, const void *);
+void *init(const struct EntityClass *, const void *);
 void deinit(struct Entity *);
 /*----------------------------------------------------------------------------*/
 #endif /* ENTITY_H_ */
