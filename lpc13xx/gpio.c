@@ -78,7 +78,7 @@ struct Gpio gpioInitPin(int16_t id, enum gpioDir dir)
   };
   struct Gpio p = {
       .control = 0,
-      .pin     = converted
+      .pin = converted
   };
 
   converted.key = id;
@@ -123,15 +123,13 @@ void gpioReleasePin(struct Gpio *p)
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *p)
 {
-  return ((p->control->DATA & (1 << p->pin.offset)) != 0) ? 1 : 0;
+  return (p->control->DATA & (1 << p->pin.offset)) == 0 ? 1 : 0;
 }
 /*----------------------------------------------------------------------------*/
 void gpioWrite(struct Gpio *p, uint8_t value)
 {
-  if (value)
-    p->control->DATA |= 1 << p->pin.offset;
-  else
-    p->control->DATA &= ~(1 << p->pin.offset);
+  *(uint32_t *)(&p->control->MASKED_ACCESS + (1 << p->pin.offset)) =
+      value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetFunc(struct Gpio *p, uint8_t func)
