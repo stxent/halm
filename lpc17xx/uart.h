@@ -1,8 +1,7 @@
 /*
  * uart.h
- *
- *  Created on: Aug 27, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #ifndef UART_H_

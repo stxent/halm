@@ -1,8 +1,7 @@
 /*
  * interface.h
- *
- *  Created on: Oct 20, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #ifndef INTERFACE_H_
@@ -26,7 +25,7 @@ struct Interface;
 /* Class descriptor */
 struct InterfaceClass
 {
-  struct EntityClass entity;
+  const struct EntityClass entity;
   /* Start transmission, arguments: device address */
   enum result (*start)(struct Interface *, uint8_t *);
   /* Stop transmission */

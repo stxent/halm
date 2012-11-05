@@ -1,8 +1,7 @@
 /*
  * uart.c
- *
- *  Created on: Aug 27, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <stdlib.h>
@@ -150,7 +149,7 @@ static enum result uartSetOpt(struct Interface *, enum ifOption, const void *);
 static void uartBaseHandler(struct Uart *);
 static enum result uartSetRate(struct Uart *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass tableUart = {
+static const struct InterfaceClass uartTable = {
     .entity = {
         .size = sizeof(struct Uart),
         .init = uartInit,
@@ -164,7 +163,7 @@ static const struct InterfaceClass tableUart = {
     .setopt = uartSetOpt
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *Uart = (struct EntityClass *)&tableUart;
+const struct EntityClass *Uart = (const struct EntityClass *)&uartTable;
 /*----------------------------------------------------------------------------*/
 static struct Uart *descriptor[] = {0, 0, 0, 0};
 /*----------------------------------------------------------------------------*/
@@ -322,18 +321,17 @@ void uartDeinit(void *iface)
   free(device);
 }
 /*----------------------------------------------------------------------------*/
-enum result uartInit(void *iface, const void *cdata)
+enum result uartInit(void *entity, const void *cdata)
 {
   /* Set pointer to device configuration data */
   struct UartConfig *config = (struct UartConfig *)cdata;
-  struct Uart *device;
+  struct Uart *device = (struct Uart *)entity;
   uint8_t func;
+
+  Interface->init(entity, 0);
 
   /* Device already initialized */
   if (descriptor[config->channel])
-    return E_ERROR;
-  device = (struct Uart *)malloc(sizeof(struct Uart));
-  if (!device)
     return E_ERROR;
 
   //FIXME rewrite definitions, fix TER size

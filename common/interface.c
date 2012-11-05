@@ -1,14 +1,35 @@
 /*
  * interface.c
- *
- *  Created on: Oct 20, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include "interface.h"
 /*----------------------------------------------------------------------------*/
-/* Interface is an abstract class */
-const struct EntityClass *Interface = 0;
+enum result ifInit(void *, const void *);
+/*----------------------------------------------------------------------------*/
+static const struct InterfaceClass tableInterface = {
+    .entity = {
+        .size = sizeof(struct Interface),
+        .init = ifInit,
+        .deinit = 0
+    },
+    .start = 0,
+    .stop = 0,
+    .read = 0,
+    .write = 0,
+    .getopt = 0,
+    .setopt = 0
+};
+/*----------------------------------------------------------------------------*/
+const struct EntityClass *Interface =
+    (const struct EntityClass *)&tableInterface;
+/*----------------------------------------------------------------------------*/
+enum result ifInit(void *entity, const void *cdata)
+{
+  struct Interface *iface = (struct Interface *)entity;
+  mutexInit(&iface->lock);
+}
 /*----------------------------------------------------------------------------*/
 enum result ifStart(struct Interface *iface, uint8_t *address)
 {

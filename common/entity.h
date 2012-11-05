@@ -22,6 +22,7 @@ struct Entity;
 /* Class descriptor */
 struct EntityClass
 {
+  /* Object size */
   entitySize size;
   /* Create object, arguments: pointer to object, constructor parameters */
   enum result (*init)(void *, const void *);

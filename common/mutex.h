@@ -15,6 +15,7 @@ struct Mutex
   uint8_t state;
 };
 /*------------------------------------------------------------------------------*/
+void mutexInit(struct Mutex *);
 void mutexLock(struct Mutex *);
 uint8_t mutexTryLock(struct Mutex *);
 void mutexUnlock(struct Mutex *);
