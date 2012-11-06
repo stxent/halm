@@ -138,8 +138,8 @@ static const struct GpioPinFunc uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static enum result uartInit(void *, const void *);
-static void uartDeinit(void *);
+static enum result uartInit(struct Interface *, const void *);
+static void uartDeinit(struct Interface *);
 static unsigned int uartRead(struct Interface *, uint8_t *, unsigned int);
 static unsigned int uartWrite(struct Interface *, const uint8_t *,
     unsigned int);
@@ -150,11 +150,9 @@ static void uartBaseHandler(struct Uart *);
 static enum result uartSetRate(struct Uart *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass uartTable = {
-    .entity = {
-        .size = sizeof(struct Uart),
-        .init = uartInit,
-        .deinit = uartDeinit
-    },
+    .size = sizeof(struct Uart),
+    .init = uartInit,
+    .deinit = uartDeinit,
     .start = 0,
     .stop = 0,
     .read = uartRead,
@@ -163,7 +161,7 @@ static const struct InterfaceClass uartTable = {
     .setopt = uartSetOpt
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *Uart = (const struct EntityClass *)&uartTable;
+const struct InterfaceClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
 static struct Uart *descriptor[] = {0, 0, 0, 0};
 /*----------------------------------------------------------------------------*/
@@ -229,7 +227,7 @@ static enum result uartSetRate(struct Uart *device, uint32_t rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-enum result uartGetOpt(struct Interface *iface, enum ifOption option,
+static enum result uartGetOpt(struct Interface *iface, enum ifOption option,
     void *data)
 {
   struct Uart *device = (struct Uart *)iface;
@@ -250,7 +248,7 @@ enum result uartGetOpt(struct Interface *iface, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-enum result uartSetOpt(struct Interface *iface, enum ifOption option,
+static enum result uartSetOpt(struct Interface *iface, enum ifOption option,
     const void *data)
 {
   struct Uart *device = (struct Uart *)iface;
@@ -266,30 +264,30 @@ enum result uartSetOpt(struct Interface *iface, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
+static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
     unsigned int length)
 {
   struct Uart *device = (struct Uart *)iface;
   int read = 0;
 
-  mutexLock(&iface->lock);
+  mutexLock(&device->lock);
   while (queueSize(&device->receiveQueue) && (read++ < length))
   {
     NVIC_DisableIRQ(device->irq);
     *buffer++ = queuePop(&device->receiveQueue);
     NVIC_EnableIRQ(device->irq);
   }
-  mutexUnlock(&iface->lock);
+  mutexUnlock(&device->lock);
   return read;
 }
 /*----------------------------------------------------------------------------*/
-unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
+static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
     unsigned int length)
 {
   struct Uart *device = (struct Uart *)iface;
   int written = 0;
 
-  mutexLock(&iface->lock);
+  mutexLock(&device->lock);
   if (!device->active)
   {
     device->active = true;
@@ -303,11 +301,11 @@ unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
     queuePush(&device->sendQueue, *buffer++);
     NVIC_EnableIRQ(device->irq);
   }
-  mutexUnlock(&iface->lock);
+  mutexUnlock(&device->lock);
   return written;
 }
 /*----------------------------------------------------------------------------*/
-void uartDeinit(void *iface)
+static void uartDeinit(struct Interface *iface)
 {
   struct Uart *device = (struct Uart *)iface;
 
@@ -317,18 +315,14 @@ void uartDeinit(void *iface)
   /* Release pins */
   gpioReleasePin(&device->rxPin);
   gpioReleasePin(&device->txPin);
-  /* Free private memory */
-  free(device);
 }
 /*----------------------------------------------------------------------------*/
-enum result uartInit(void *entity, const void *cdata)
+static enum result uartInit(struct Interface *iface, const void *cdata)
 {
   /* Set pointer to device configuration data */
   struct UartConfig *config = (struct UartConfig *)cdata;
-  struct Uart *device = (struct Uart *)entity;
+  struct Uart *device = (struct Uart *)iface;
   uint8_t func;
-
-  Interface->init(entity, 0);
 
   /* Device already initialized */
   if (descriptor[config->channel])
@@ -362,37 +356,29 @@ enum result uartInit(void *entity, const void *cdata)
       device->irq = UART3_IRQn;
       break;
     default:
-      free(device);
       return E_ERROR;
   }
 
   if (uartSetRate(device, config->rate) != E_OK)
-  {
-    free(device);
     return E_ERROR;
-  }
 
   /* Setup UART pins */
   device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
   func = gpioFindFunc(uartPins, config->rx);
   if ((gpioGetKey(&device->rxPin) == -1) || !func)
-  {
-    free(device);
     return E_ERROR;
-  }
   gpioSetFunc(&device->rxPin, func);
   device->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
   func = gpioFindFunc(uartPins, config->tx);
   if ((gpioGetKey(&device->txPin) == -1) || !func)
-  {
-    free(device);
     return E_ERROR;
-  }
   gpioSetFunc(&device->txPin, func);
 
   /* Initialize RX and TX queues */
   queueInit(&device->sendQueue);
   queueInit(&device->receiveQueue);
+  /* Initialize mutex */
+  mutexInit(&device->lock);
 
   device->active = false;
   device->channel = config->channel;

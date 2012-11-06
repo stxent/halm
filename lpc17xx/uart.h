@@ -13,10 +13,11 @@
 #include "LPC17xx.h"
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
-#include "queue.h"
 #include "gpio.h"
+#include "mutex.h"
+#include "queue.h"
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *Uart;
+extern const struct InterfaceClass *Uart;
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
@@ -29,12 +30,15 @@ struct UartConfig
 struct Uart
 {
   struct Interface parent;
-  LPC_UART_TypeDef *block;
-  IRQn_Type irq;
-  struct Queue sendQueue, receiveQueue;
+  struct Mutex lock;
   struct Gpio rxPin, txPin;
+  struct Queue sendQueue, receiveQueue;
   uint8_t channel;
   bool active;
+
+  /* Device-specific data */
+  LPC_UART_TypeDef *block;
+  IRQn_Type irq;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

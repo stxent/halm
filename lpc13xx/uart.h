@@ -1,20 +1,23 @@
 /*
  * uart.h
- *
- *  Created on: Aug 27, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #ifndef UART_H_
 #define UART_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #include "LPC13xx.h"
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
-#include "queue.h"
 #include "gpio.h"
+#include "mutex.h"
+#include "queue.h"
+/*----------------------------------------------------------------------------*/
+extern const struct InterfaceClass *Uart;
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
@@ -24,6 +27,18 @@ struct UartConfig
   uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
-enum ifResult uartInit(struct Interface *, const void *);
+struct Uart
+{
+  struct Interface parent;
+  struct Mutex lock;
+  struct Gpio rxPin, txPin;
+  struct Queue sendQueue, receiveQueue;
+  uint8_t channel;
+  bool active;
+
+  /* Device-specific data */
+  LPC_UART_TypeDef *block;
+  IRQn_Type irq;
+};
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

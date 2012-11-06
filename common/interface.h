@@ -9,8 +9,12 @@
 /*------------------------------------------------------------------------------*/
 #include <stdint.h>
 /*------------------------------------------------------------------------------*/
-#include "entity.h"
-#include "mutex.h"
+enum result {
+  E_OK = 0,
+  E_ERROR,
+  E_MEM,
+  E_IO
+};
 /*------------------------------------------------------------------------------*/
 enum ifOption {
   IF_SPEED = 0,
@@ -25,7 +29,13 @@ struct Interface;
 /* Class descriptor */
 struct InterfaceClass
 {
-  const struct EntityClass entity;
+  /* Object size */
+  unsigned int size;
+  /* Create object, arguments: constructor parameters */
+  enum result (*init)(struct Interface *, const void *);
+  /* Delete object */
+  void (*deinit)(struct Interface *);
+
   /* Start transmission, arguments: device address */
   enum result (*start)(struct Interface *, uint8_t *);
   /* Stop transmission */
@@ -40,13 +50,13 @@ struct InterfaceClass
   enum result (*setopt)(struct Interface *, enum ifOption, const void *);
 };
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *Interface;
-/*----------------------------------------------------------------------------*/
 struct Interface
 {
-  struct Entity parent;
-  struct Mutex lock;
+  const struct InterfaceClass *type;
 };
+/*----------------------------------------------------------------------------*/
+struct Interface *ifInit(const struct InterfaceClass *, const void *);
+void ifDeinit(struct Interface *);
 /*----------------------------------------------------------------------------*/
 enum result ifStart(struct Interface *, uint8_t *);
 void ifStop(struct Interface *);
