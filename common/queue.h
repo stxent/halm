@@ -1,8 +1,7 @@
 /*
  * queue.h
- *
- *  Created on: Apr 17, 2010
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #ifndef QUEUE_H_

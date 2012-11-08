@@ -10,6 +10,11 @@
 #define MUTEX_FREE      0
 #define MUTEX_LOCKED    1
 /*------------------------------------------------------------------------------*/
+void mutexInit(struct Mutex *m)
+{
+  m->state = MUTEX_FREE;
+}
+/*------------------------------------------------------------------------------*/
 void mutexLock(struct Mutex *m)
 {
   while (m->state != MUTEX_FREE);
