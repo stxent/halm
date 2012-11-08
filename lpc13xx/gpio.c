@@ -128,7 +128,7 @@ uint8_t gpioRead(struct Gpio *p)
 /*----------------------------------------------------------------------------*/
 void gpioWrite(struct Gpio *p, uint8_t value)
 {
-  *(uint32_t *)(&p->control->MASKED_ACCESS + (1 << p->pin.offset)) =
+  *(uint32_t *)(p->control->MASKED_ACCESS + (1 << p->pin.offset)) =
       value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
