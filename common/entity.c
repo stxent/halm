@@ -11,7 +11,7 @@
 struct EntityClass
 {
   unsigned int size;
-  enum result (*init)(const void *, const void *);
+  enum result (*init)(void *, const void *);
   void (*deinit)(void *);
 };
 /*----------------------------------------------------------------------------*/
@@ -20,9 +20,9 @@ struct Entity
   const struct EntityClass *type;
 };
 /*----------------------------------------------------------------------------*/
-void *init(const void *typePtr, const void *args)
+void *init(const void *typeDesc, const void *args)
 {
-  const struct EntityClass *type = (const struct EntityClass *)typePtr;
+  const struct EntityClass *type = (const struct EntityClass *)typeDesc;
   struct Entity *entity;
 
   if (!type || !(entity = malloc(type->size)))
@@ -36,10 +36,11 @@ void *init(const void *typePtr, const void *args)
   return entity;
 }
 /*----------------------------------------------------------------------------*/
-void deinit(void *entityPtr)
+void deinit(void *entity)
 {
-  struct Entity *entity = (struct Entity *)entityPtr;
-  if (entity->type->deinit)
-    entity->type->deinit(entity);
+  const struct EntityClass *type = ((struct Entity *)entity)->type;
+
+  if (type->deinit)
+    type->deinit(entity);
   free(entity);
 }

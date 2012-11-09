@@ -16,8 +16,9 @@ enum result
 {
   E_OK = 0,
   E_ERROR,
-  E_IO,
-  E_MEM
+  E_MEMORY,
+  E_DEVICE,
+  E_INTERFACE
 };
 /*----------------------------------------------------------------------------*/
 void *init(const void *, const void *);
