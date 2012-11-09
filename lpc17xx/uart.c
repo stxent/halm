@@ -153,6 +153,7 @@ static const struct InterfaceClass uartTable = {
     .size = sizeof(struct Uart),
     .init = uartInit,
     .deinit = uartDeinit,
+
     .start = 0,
     .stop = 0,
     .read = uartRead,

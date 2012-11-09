@@ -48,13 +48,13 @@ uint8_t queueSize(struct Queue *q)
 {
   return q->size;
 }
-/*//---------------------------------------------------------------------------
-uint8_t queueFull(struct Queue *q)
+/*----------------------------------------------------------------------------*/
+/*uint8_t queueFull(struct Queue *q)
 {
   return (q->size == QUEUE_LENGTH);
-}
-//---------------------------------------------------------------------------
-uint8_t queueEmpty(struct Queue *q)
+}*/
+/*----------------------------------------------------------------------------*/
+/*uint8_t queueEmpty(struct Queue *q)
 {
   return (q->size == 0);
 }

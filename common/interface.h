@@ -9,17 +9,13 @@
 /*------------------------------------------------------------------------------*/
 #include <stdint.h>
 /*------------------------------------------------------------------------------*/
-enum result {
-  E_OK = 0,
-  E_ERROR,
-  E_MEM,
-  E_IO
-};
+#include "entity.h"
 /*------------------------------------------------------------------------------*/
 enum ifOption {
-  IF_SPEED = 0,
+  IF_ADDRESS,       /* Sub-address */
+  IF_SPEED,         /* Data rate */
   IF_BUFFER_SIZE,
-  IF_SYNC,
+  IF_SYNC,          /* Synchronous or asynchronous mode */
   IF_QUEUE_RX,
   IF_QUEUE_TX
 };
@@ -29,12 +25,7 @@ struct Interface;
 /* Class descriptor */
 struct InterfaceClass
 {
-  /* Object size */
-  unsigned int size;
-  /* Create object, arguments: constructor parameters */
-  enum result (*init)(struct Interface *, const void *);
-  /* Delete object */
-  void (*deinit)(struct Interface *);
+  CLASS_GENERATOR(Interface)
 
   /* Start transmission, arguments: device address */
   enum result (*start)(struct Interface *, uint8_t *);
@@ -54,9 +45,6 @@ struct Interface
 {
   const struct InterfaceClass *type;
 };
-/*----------------------------------------------------------------------------*/
-struct Interface *ifInit(const struct InterfaceClass *, const void *);
-void ifDeinit(struct Interface *);
 /*----------------------------------------------------------------------------*/
 enum result ifStart(struct Interface *, uint8_t *);
 void ifStop(struct Interface *);

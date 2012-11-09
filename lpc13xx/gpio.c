@@ -58,7 +58,7 @@ void gpioDeinit()
   LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_GPIO;
 }
 /*----------------------------------------------------------------------------*/
-/* Return 0 when no function associated with id found */
+/* Return 0 when function associated with key not found */
 uint8_t gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
 {
   while (pinList->key != -1)
