@@ -98,8 +98,6 @@ static const struct InterfaceClass uartTable = {
     .init = uartInit,
     .deinit = uartDeinit,
 
-    .start = 0,
-    .stop = 0,
     .read = uartRead,
     .write = uartWrite,
     .getopt = uartGetOpt,
@@ -259,7 +257,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   if (!config)
     return E_ERROR;
 
-  /* Device already initialized */
+  /* Check device availability */
   if (descriptor[config->channel])
     return E_ERROR;
 

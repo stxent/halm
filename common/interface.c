@@ -8,17 +8,6 @@
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
 /*----------------------------------------------------------------------------*/
-enum result ifStart(struct Interface *iface, uint8_t *address)
-{
-  return iface->type->start ? iface->type->start(iface, address) : E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-void ifStop(struct Interface *iface)
-{
-  if (iface->type->stop)
-    iface->type->stop(iface);
-}
-/*----------------------------------------------------------------------------*/
 unsigned int ifRead(struct Interface *iface, uint8_t *buffer,
     unsigned int length)
 {
