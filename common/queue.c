@@ -8,7 +8,7 @@
 /*----------------------------------------------------------------------------*/
 #include "queue.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_CAPACITY    16
+#define DEFAULT_CAPACITY        16
 /*----------------------------------------------------------------------------*/
 enum result queueInit(struct Queue *q, uint16_t capacity)
 {
@@ -53,18 +53,3 @@ uint8_t queuePeek(struct Queue *q)
 {
   return ((q->size) ? q->data[q->floor] : 0);
 }
-/*----------------------------------------------------------------------------*/
-/* uint16_t queueSize(struct Queue *q)
-{
-  return q->size;
-} */
-/*----------------------------------------------------------------------------*/
-/* bool queueFull(struct Queue *q)
-{
-  return q->size == q->capacity;
-} */
-/*----------------------------------------------------------------------------*/
-/* bool queueEmpty(struct Queue *q)
-{
-  return !q->size;
-} */

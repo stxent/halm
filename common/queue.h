@@ -8,7 +8,6 @@
 #define QUEUE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-// #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #include "entity.h"
 /*----------------------------------------------------------------------------*/
@@ -29,8 +28,5 @@ void queueDeinit(struct Queue *);
 void queuePush(struct Queue *, uint8_t);
 uint8_t queuePop(struct Queue *);
 uint8_t queuePeek(struct Queue *);
-/* uint16_t queueSize(struct Queue *); */
-/* bool queueFull(struct Queue *); */
-/* bool queueEmpty(struct Queue *); */
 /*----------------------------------------------------------------------------*/
 #endif /* QUEUE_H_ */

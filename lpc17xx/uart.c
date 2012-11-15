@@ -270,7 +270,7 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
   int read = 0;
 
   mutexLock(&device->lock);
-  while (queueSize(&device->receiveQueue) && (read++ < length))
+  while (queueSize(&device->receiveQueue) && read++ < length)
   {
     NVIC_DisableIRQ(device->irq);
     *buffer++ = queuePop(&device->receiveQueue);
