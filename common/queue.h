@@ -8,23 +8,29 @@
 #define QUEUE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+// #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
-#ifndef QUEUE_SIZE
-#define QUEUE_SIZE 32
-#endif /* QUEUE_SIZE */
+#include "entity.h"
 /*----------------------------------------------------------------------------*/
 struct Queue
 {
-  uint8_t data[QUEUE_SIZE];
-  uint8_t floor, ceil, size;
+  uint16_t size; /* Current queue size */
+  uint16_t capacity; /* Queue capacity */
+  uint16_t floor, ceil; /* Indexes of first and last elements in queue */
+  uint8_t *data;
 };
 /*----------------------------------------------------------------------------*/
-void queueInit(struct Queue *);
+#define queueSize(q)            ((q)->size)
+#define queueFull(q)            ((q)->size == (q)->capacity)
+#define queueEmpty(q)           (!(q)->size)
+/*----------------------------------------------------------------------------*/
+enum result queueInit(struct Queue *, uint16_t);
+void queueDeinit(struct Queue *);
 void queuePush(struct Queue *, uint8_t);
 uint8_t queuePop(struct Queue *);
 uint8_t queuePeek(struct Queue *);
-uint8_t queueSize(struct Queue *);
-/*uint8_t queueFull(struct Queue *);
-uint8_t queueEmpty(struct Queue *);*/
+/* uint16_t queueSize(struct Queue *); */
+/* bool queueFull(struct Queue *); */
+/* bool queueEmpty(struct Queue *); */
 /*----------------------------------------------------------------------------*/
 #endif /* QUEUE_H_ */

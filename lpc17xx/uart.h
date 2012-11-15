@@ -21,8 +21,8 @@ extern const struct InterfaceClass *Uart;
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
-  gpioKey rx;
-  gpioKey tx;
+  gpioKey rx, tx;
+  uint16_t rxLength, txLength;
   uint8_t channel;
   uint32_t rate;
 };

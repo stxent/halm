@@ -293,8 +293,7 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
     device->block->THR = *buffer++;
     written++;
   }
-  while ((queueSize(&device->sendQueue) < QUEUE_SIZE) &&
-      (written++ < length))
+  while (!queueFull(&device->sendQueue) && written++ < length)
   {
     NVIC_DisableIRQ(device->irq);
     queuePush(&device->sendQueue, *buffer++);
@@ -378,8 +377,8 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   gpioSetFunc(&device->txPin, func);
 
   /* Initialize RX and TX queues */
-  queueInit(&device->sendQueue);
-  queueInit(&device->receiveQueue);
+  queueInit(&device->receiveQueue, config->rxLength);
+  queueInit(&device->sendQueue, config->txLength);
   /* Initialize mutex */
   mutexInit(&device->lock);
 

@@ -4,39 +4,49 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <stdlib.h>
+/*----------------------------------------------------------------------------*/
 #include "queue.h"
 /*----------------------------------------------------------------------------*/
-void queueInit(struct Queue *q)
+#define DEFAULT_CAPACITY    16
+/*----------------------------------------------------------------------------*/
+enum result queueInit(struct Queue *q, uint16_t capacity)
 {
+  if (!capacity)
+    capacity = DEFAULT_CAPACITY;
+  q->data = malloc(capacity);
+  if (!q->data)
+    return E_ERROR;
+
+  q->capacity = capacity;
   q->floor = 0;
   q->ceil = 0;
   q->size = 0;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void queuePush(struct Queue *q, uint8_t x)
 {
-  if (q->size < QUEUE_SIZE)
+  if (q->size < q->capacity)
   {
     q->data[q->ceil++] = x;
-    q->size++;
-    if (q->ceil == QUEUE_SIZE)
+    if (q->ceil == q->capacity)
       q->ceil = 0;
+    q->size++;
   }
 }
 /*----------------------------------------------------------------------------*/
 uint8_t queuePop(struct Queue *q)
 {
-  uint8_t tmp;
+  uint8_t tmp = 0;
   if (q->size)
   {
     tmp = q->data[q->floor++];
-    if (q->floor == QUEUE_SIZE)
+    if (q->floor == q->capacity)
       q->floor = 0;
     q->size--;
-    return tmp;
   }
-  else
-    return 0;
+  return tmp;
 }
 /*----------------------------------------------------------------------------*/
 uint8_t queuePeek(struct Queue *q)
@@ -44,18 +54,17 @@ uint8_t queuePeek(struct Queue *q)
   return ((q->size) ? q->data[q->floor] : 0);
 }
 /*----------------------------------------------------------------------------*/
-uint8_t queueSize(struct Queue *q)
+/* uint16_t queueSize(struct Queue *q)
 {
   return q->size;
-}
+} */
 /*----------------------------------------------------------------------------*/
-/*uint8_t queueFull(struct Queue *q)
+/* bool queueFull(struct Queue *q)
 {
-  return (q->size == QUEUE_LENGTH);
-}*/
+  return q->size == q->capacity;
+} */
 /*----------------------------------------------------------------------------*/
-/*uint8_t queueEmpty(struct Queue *q)
+/* bool queueEmpty(struct Queue *q)
 {
-  return (q->size == 0);
-}
-*/
+  return !q->size;
+} */
