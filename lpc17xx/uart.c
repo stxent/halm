@@ -325,6 +325,9 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   struct Uart *device = (struct Uart *)iface;
   uint8_t func;
 
+  /* Check device configuration data */
+  if (!config)
+    return E_ERROR;
   /* Device already initialized */
   if (descriptor[config->channel])
     return E_ERROR;
