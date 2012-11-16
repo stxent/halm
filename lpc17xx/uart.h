@@ -32,7 +32,7 @@ struct Uart
   struct Interface parent;
   struct Mutex lock;
   struct Gpio rxPin, txPin;
-  struct Queue sendQueue, receiveQueue;
+  struct Queue rxQueue, txQueue;
   uint8_t channel;
   bool active;
 

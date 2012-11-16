@@ -32,8 +32,6 @@
 #define IER_RBR                         BIT(0)
 #define IER_THRE                        BIT(1)
 #define IER_RX_LINE                     BIT(2)
-//#define IER_ABEO                        BIT(8) /* End of auto-baud */
-//#define IER_ABTO                        BIT(9) /* Auto-baud timeout */
 /*------------------Interrupt Identification Register-------------------------*/
 #define IIR_INT_STATUS                  BIT(0) /* Status, active low */
 #define IIR_INT_MASK                    (0x07 << 1)
@@ -41,7 +39,6 @@
 #define IIR_INT_RDA                     (2 << 1) /* Receive data available */
 #define IIR_INT_CTI                     (6 << 1) /* Character timeout */
 #define IIR_INT_THRE                    (1 << 1) /* THRE interrupt */
-//#define IIR_INT_MODEM                   (0 << 1) /* Modem interrupt */
 /*------------------FIFO Control Register-------------------------------------*/
 #define FCR_ENABLE                      BIT(0)
 #define FCR_RX_RESET                    BIT(1)
@@ -111,22 +108,25 @@ static struct Uart *descriptor[] = {0};
 static void uartBaseHandler(struct Uart *desc)
 {
   uint8_t content, counter;
-  if (!desc)
+  if (!desc || desc->block->IIR & IIR_INT_STATUS)
     return;
 
   switch (desc->block->IIR & IIR_INT_MASK)
   {
+    case IIR_INT_RDA:
+      content = desc->block->RBR;
+      queuePush(&desc->rxQueue, content);
+      break;
     case IIR_INT_THRE:
       /* Fill FIFO with 8 bytes or less */
       counter = 0;
-      while (queueSize(&desc->sendQueue) && counter++ < FIFO_SIZE)
-        desc->block->THR = queuePop(&desc->sendQueue);
-      if (!queueSize(&desc->sendQueue))
+      while (queueSize(&desc->txQueue) && counter++ < FIFO_SIZE)
+        desc->block->THR = queuePop(&desc->txQueue);
+      if (!queueSize(&desc->txQueue))
         desc->active = false;
       break;
-    case IIR_INT_RDA:
-      content = desc->block->RBR;
-      queuePush(&desc->receiveQueue, content);
+    case IIR_INT_RLS:
+      /* TODO Add line error handling */
       break;
     default:
       break;
@@ -166,10 +166,10 @@ static enum result uartGetOpt(struct Interface *iface, enum ifOption option,
       /* TODO */
       return E_OK;
     case IF_QUEUE_RX:
-      *(uint8_t *)data = queueSize(&device->receiveQueue);
+      *(uint8_t *)data = queueSize(&device->rxQueue);
       return E_OK;
     case IF_QUEUE_TX:
-      *(uint8_t *)data = queueSize(&device->sendQueue);
+      *(uint8_t *)data = queueSize(&device->txQueue);
       return E_OK;
     default:
       return E_ERROR;
@@ -199,10 +199,10 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
   int read = 0;
 
   mutexLock(&device->lock);
-  while (queueSize(&device->receiveQueue) && read++ < length)
+  while (queueSize(&device->rxQueue) && read++ < length)
   {
     NVIC_DisableIRQ(device->irq);
-    *buffer++ = queuePop(&device->receiveQueue);
+    *buffer++ = queuePop(&device->rxQueue);
     NVIC_EnableIRQ(device->irq);
   }
   mutexUnlock(&device->lock);
@@ -222,10 +222,10 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
     device->block->THR = *buffer++;
     written++;
   }
-  while (!queueFull(&device->sendQueue) && written++ < length)
+  while (!queueFull(&device->txQueue) && written++ < length)
   {
     NVIC_DisableIRQ(device->irq);
-    queuePush(&device->sendQueue, *buffer++);
+    queuePush(&device->txQueue, *buffer++);
     NVIC_EnableIRQ(device->irq);
   }
   mutexUnlock(&device->lock);
@@ -240,9 +240,14 @@ static void uartDeinit(struct Interface *iface)
   LPC_SYSCON->UARTCLKDIV = 0;
   /* Processor-specific register */
   LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_UART;
+  /* Release mutex */
+  mutexDeinit(&device->lock);
+  /* Delete queues in reverse order than they were created */
+  queueDeinit(&device->txQueue);
+  queueDeinit(&device->rxQueue);
   /* Release pins */
-  gpioReleasePin(&device->rxPin);
   gpioReleasePin(&device->txPin);
+  gpioReleasePin(&device->rxPin);
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(struct Interface *iface, const void *cdata)
@@ -277,21 +282,29 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
 
   /* Setup UART pins */
   device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
-  func = gpioFindFunc(uartPins, config->rx);
-  if ((gpioGetKey(&device->rxPin) == -1) || !func)
+  if (gpioGetKey(&device->rxPin) == -1)
     return E_ERROR;
+  if (!(func = gpioFindFunc(uartPins, config->rx)))
+    goto free_rxPin;
   gpioSetFunc(&device->rxPin, func);
+
   device->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
-  func = gpioFindFunc(uartPins, config->tx);
-  if ((gpioGetKey(&device->txPin) == -1) || !func)
-    return E_ERROR;
+  if (gpioGetKey(&device->txPin) == -1)
+    goto free_rxPin;
+  if (!(func = gpioFindFunc(uartPins, config->tx)))
+    goto free_txPin;
   gpioSetFunc(&device->txPin, func);
 
   /* Initialize RX and TX queues */
-  queueInit(&device->receiveQueue, config->rxLength);
-  queueInit(&device->sendQueue, config->txLength);
+  if (queueInit(&device->rxQueue, config->rxLength) != E_OK)
+    goto free_txPin;
+
+  if (queueInit(&device->txQueue, config->txLength) != E_OK)
+    goto free_rxQueue;
+
   /* Initialize mutex */
-  mutexInit(&device->lock);
+  if (mutexInit(&device->lock) != E_OK)
+    goto free_txQueue;
 
   device->active = false;
   device->channel = config->channel;
@@ -302,11 +315,21 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->block->LCR = LCR_WORD_8BIT;
   /* Enable and clear FIFO */
   device->block->FCR = FCR_ENABLE;
-  /* TODO add RX line interrupt */
   /* Enable RBR and THRE interrupts */
-  device->block->IER = IER_RBR | IER_THRE;
+  device->block->IER = IER_RBR | IER_THRE | IER_RX_LINE;
   device->block->TER = TER_TXEN;
 
   NVIC_EnableIRQ(device->irq); /* Enable interrupt */
   return E_OK;
+
+  /* Error handling */
+free_txQueue:
+  queueDeinit(&device->txQueue);
+free_rxQueue:
+  queueDeinit(&device->rxQueue);
+free_txPin:
+  gpioReleasePin(&device->txPin);
+free_rxPin:
+  gpioReleasePin(&device->rxPin);
+  return E_ERROR;
 }

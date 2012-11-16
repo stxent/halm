@@ -10,9 +10,15 @@
 #define MUTEX_FREE      0
 #define MUTEX_LOCKED    1
 /*----------------------------------------------------------------------------*/
-void mutexInit(struct Mutex *m)
+enum result mutexInit(struct Mutex *m)
 {
   m->state = MUTEX_FREE;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+void mutexDeinit(struct Mutex *m)
+{
+
 }
 /*----------------------------------------------------------------------------*/
 void mutexLock(struct Mutex *m)

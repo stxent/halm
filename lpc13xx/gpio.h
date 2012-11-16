@@ -69,4 +69,6 @@ void gpioSetPull(struct Gpio *, enum gpioPull);
 void gpioSetType(struct Gpio *, enum gpioType);
 gpioKey gpioGetKey(struct Gpio *);
 /*----------------------------------------------------------------------------*/
+//#define gpioGetKey(p)           ((p)->pin.key)
+/*----------------------------------------------------------------------------*/
 #endif /* GPIO_H_ */

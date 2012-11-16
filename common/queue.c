@@ -25,6 +25,11 @@ enum result queueInit(struct Queue *q, uint16_t capacity)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+void queueDeinit(struct Queue *q)
+{
+  free(q->data);
+}
+/*----------------------------------------------------------------------------*/
 void queuePush(struct Queue *q, uint8_t x)
 {
   if (q->size < q->capacity)
