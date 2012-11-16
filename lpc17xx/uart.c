@@ -325,7 +325,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   /* Set pointer to device configuration data */
   struct UartConfig *config = (struct UartConfig *)cdata;
   struct Uart *device = (struct Uart *)iface;
-  uint8_t func;
+  uint8_t rxFunc, txFunc;
 
   /* Check device configuration data */
   if (!config)
@@ -333,6 +333,12 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
 
   /* Check device availability */
   if (descriptor[config->channel])
+    return E_ERROR;
+
+  /* Check pin mapping */
+  rxFunc = gpioFindFunc(uartPins, config->rx);
+  txFunc = gpioFindFunc(uartPins, config->tx);
+  if (!rxFunc || !txFunc)
     return E_ERROR;
 
   //FIXME rewrite definitions, fix TER size
@@ -373,16 +379,12 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
   if (gpioGetKey(&device->rxPin) == -1)
     return E_ERROR;
-  if (!(func = gpioFindFunc(uartPins, config->rx)))
-    goto free_rxPin;
-  gpioSetFunc(&device->rxPin, func);
+  gpioSetFunc(&device->rxPin, rxFunc);
 
   device->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
   if (gpioGetKey(&device->txPin) == -1)
     goto free_rxPin;
-  if (!(func = gpioFindFunc(uartPins, config->tx)))
-    goto free_txPin;
-  gpioSetFunc(&device->txPin, func);
+  gpioSetFunc(&device->txPin, txFunc);
 
   /* Initialize RX and TX queues */
   if (queueInit(&device->rxQueue, config->rxLength) != E_OK)
