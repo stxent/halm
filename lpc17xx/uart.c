@@ -175,9 +175,10 @@ static struct Uart *descriptor[] = {0, 0, 0, 0};
 static void uartBaseHandler(struct Uart *desc)
 {
   uint8_t content, counter;
-  if (!desc || desc->block->IIR & IIR_INT_STATUS)
+  if (!desc)
     return;
 
+  /* Interrupt status cleared when performed read operation on IIR register */
   switch (desc->block->IIR & IIR_INT_MASK)
   {
     case IIR_INT_RDA:
@@ -191,9 +192,6 @@ static void uartBaseHandler(struct Uart *desc)
         desc->block->THR = queuePop(&desc->txQueue);
       if (!queueSize(&desc->txQueue))
         desc->active = false;
-      break;
-    case IIR_INT_RLS:
-      /* TODO Add line error handling */
       break;
     default:
       break;
@@ -362,9 +360,6 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   if (!rxFunc || !txFunc)
     return E_ERROR;
 
-  if (uartSetRate(device, config->rate) != E_OK)
-    return E_ERROR;
-
   /* Setup UART pins */
   device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
   if (gpioGetKey(&device->rxPin) == -1)
@@ -431,6 +426,12 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
       break;
   }
 
+  if (uartSetRate(device, config->rate) != E_OK)
+  {
+    uartCleanup(device, FREE_ALL);
+    return E_ERROR;
+  }
+
   /* Select the UART function of pins */
   gpioSetFunc(&device->rxPin, rxFunc);
   gpioSetFunc(&device->txPin, txFunc);
@@ -440,7 +441,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   /* Enable and clear FIFO */
   device->block->FCR = FCR_ENABLE;
   /* Enable RBR and THRE interrupts */
-  device->block->IER = IER_RBR | IER_THRE | IER_RX_LINE;
+  device->block->IER = IER_RBR | IER_THRE;
   device->block->TER = TER_TXEN;
 
   descriptor[config->channel] = device;
