@@ -135,6 +135,16 @@ static const struct GpioPinFunc uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
+enum cleanup
+{
+  FREE_NONE = 0,
+  FREE_RX_PIN,
+  FREE_TX_PIN,
+  FREE_RX_QUEUE,
+  FREE_TX_QUEUE,
+  FREE_ALL
+};
+/*----------------------------------------------------------------------------*/
 static enum result uartInit(struct Interface *, const void *);
 static void uartDeinit(struct Interface *);
 static unsigned int uartRead(struct Interface *, uint8_t *, unsigned int);
@@ -145,6 +155,7 @@ static enum result uartSetOpt(struct Interface *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
 static void uartBaseHandler(struct Uart *);
 static enum result uartSetRate(struct Uart *, uint32_t);
+static void uartCleanup(struct Uart *, enum cleanup);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass uartTable = {
     .size = sizeof(struct Uart),
@@ -224,6 +235,26 @@ static enum result uartSetRate(struct Uart *device, uint32_t rate)
   device->block->DLM = (uint8_t)(divider >> 8);
   device->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void uartCleanup(struct Uart *device, enum cleanup step)
+{
+  switch (step)
+  {
+    case FREE_ALL:
+      mutexDeinit(&device->lock);
+    case FREE_TX_QUEUE:
+      queueDeinit(&device->txQueue);
+    case FREE_RX_QUEUE:
+      queueDeinit(&device->rxQueue);
+    case FREE_TX_PIN:
+      gpioReleasePin(&device->txPin);
+    case FREE_RX_PIN:
+      gpioReleasePin(&device->rxPin);
+      break;
+    default:
+      break;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartGetOpt(struct Interface *iface, enum ifOption option,
@@ -310,14 +341,8 @@ static void uartDeinit(struct Interface *iface)
   NVIC_DisableIRQ(device->irq); /* Disable interrupt */
   /* Processor-specific register */
   LPC_SC->PCONP &= ~PCONP_PCUART0;
-  /* Release mutex */
-  mutexDeinit(&device->lock);
-  /* Delete queues in reverse order than they were created */
-  queueDeinit(&device->txQueue);
-  queueDeinit(&device->rxQueue);
-  /* Release pins */
-  gpioReleasePin(&device->txPin);
-  gpioReleasePin(&device->rxPin);
+  /* Release resources */
+  uartCleanup(device, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(struct Interface *iface, const void *cdata)
@@ -327,12 +352,8 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   struct Uart *device = (struct Uart *)iface;
   uint8_t rxFunc, txFunc;
 
-  /* Check device configuration data */
-  if (!config)
-    return E_ERROR;
-
-  /* Check device availability */
-  if (descriptor[config->channel])
+  /* Check device configuration data and availability */
+  if (!config || config->channel > 3 || descriptor[config->channel])
     return E_ERROR;
 
   /* Check pin mapping */
@@ -340,6 +361,44 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   txFunc = gpioFindFunc(uartPins, config->tx);
   if (!rxFunc || !txFunc)
     return E_ERROR;
+
+  if (uartSetRate(device, config->rate) != E_OK)
+    return E_ERROR;
+
+  /* Setup UART pins */
+  device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
+  if (gpioGetKey(&device->rxPin) == -1)
+    return E_ERROR;
+
+  device->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
+  if (gpioGetKey(&device->txPin) == -1)
+  {
+    uartCleanup(device, FREE_RX_PIN);
+    return E_ERROR;
+  }
+
+  /* Initialize RX and TX queues */
+  if (queueInit(&device->rxQueue, config->rxLength) != E_OK)
+  {
+    uartCleanup(device, FREE_TX_PIN);
+    return E_ERROR;
+  }
+
+  if (queueInit(&device->txQueue, config->txLength) != E_OK)
+  {
+    uartCleanup(device, FREE_RX_QUEUE);
+    return E_ERROR;
+  }
+
+  /* Initialize mutex */
+  if (mutexInit(&device->lock) != E_OK)
+  {
+    uartCleanup(device, FREE_TX_QUEUE);
+    return E_ERROR;
+  }
+
+  device->active = false;
+  device->channel = config->channel;
 
   //FIXME rewrite definitions, fix TER size
   switch (config->channel)
@@ -369,38 +428,12 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
       device->irq = UART3_IRQn;
       break;
     default:
-      return E_ERROR;
+      break;
   }
 
-  if (uartSetRate(device, config->rate) != E_OK)
-    return E_ERROR;
-
-  /* Setup UART pins */
-  device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
-  if (gpioGetKey(&device->rxPin) == -1)
-    return E_ERROR;
+  /* Select the UART function of pins */
   gpioSetFunc(&device->rxPin, rxFunc);
-
-  device->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
-  if (gpioGetKey(&device->txPin) == -1)
-    goto free_rxPin;
   gpioSetFunc(&device->txPin, txFunc);
-
-  /* Initialize RX and TX queues */
-  if (queueInit(&device->rxQueue, config->rxLength) != E_OK)
-    goto free_txPin;
-
-  if (queueInit(&device->txQueue, config->txLength) != E_OK)
-    goto free_rxQueue;
-
-  /* Initialize mutex */
-  if (mutexInit(&device->lock) != E_OK)
-    goto free_txQueue;
-
-  device->active = false;
-  device->channel = config->channel;
-
-  descriptor[config->channel] = device;
 
   /* Set 8-bit length */
   device->block->LCR = LCR_WORD_8BIT;
@@ -410,17 +443,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->block->IER = IER_RBR | IER_THRE | IER_RX_LINE;
   device->block->TER = TER_TXEN;
 
+  descriptor[config->channel] = device;
   NVIC_EnableIRQ(device->irq); /* Enable interrupt */
   return E_OK;
-
-  /* Error handling */
-free_txQueue:
-  queueDeinit(&device->txQueue);
-free_rxQueue:
-  queueDeinit(&device->rxQueue);
-free_txPin:
-  gpioReleasePin(&device->txPin);
-free_rxPin:
-  gpioReleasePin(&device->rxPin);
-  return E_ERROR;
 }
