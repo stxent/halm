@@ -265,9 +265,12 @@ static void uartDeinit(struct Interface *iface)
 {
   struct Uart *device = (struct Uart *)iface;
 
-  NVIC_DisableIRQ(device->irq); /* Disable interrupt */
+  /* Disable interrupt */
+  NVIC_DisableIRQ(device->irq);
+  /* Reset UART descriptor */
+  descriptor[device->channel] = 0;
+  /* Processor-specific registers */
   LPC_SYSCON->UARTCLKDIV = 0;
-  /* Processor-specific register */
   LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_UART;
   /* Release resources */
   uartCleanup(device, FREE_ALL);
