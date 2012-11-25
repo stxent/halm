@@ -116,7 +116,7 @@ static struct Uart *descriptor[] = {0};
 /*----------------------------------------------------------------------------*/
 static void uartBaseHandler(struct Uart *desc)
 {
-  uint8_t content, counter;
+  uint8_t counter;
   if (!desc)
     return;
 
@@ -124,8 +124,10 @@ static void uartBaseHandler(struct Uart *desc)
   switch (desc->block->IIR & IIR_INT_MASK)
   {
     case IIR_INT_RDA:
-      content = desc->block->RBR;
-      queuePush(&desc->rxQueue, content);
+    case IIR_INT_CTI:
+      /* Byte removed from FIFO after RBR register read operation */
+      while (desc->block->LSR & LSR_RDR)
+        queuePush(&desc->rxQueue, desc->block->RBR);
       break;
     case IIR_INT_THRE:
       /* Fill FIFO with 8 bytes or less */
@@ -225,7 +227,6 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
   struct Uart *device = (struct Uart *)iface;
   int read = 0;
 
-  /* TODO Rewrite to use FIFO */
   mutexLock(&device->lock);
   while (queueSize(&device->rxQueue) && read++ < length)
   {
@@ -351,8 +352,8 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
 
   /* Set 8-bit length */
   device->block->LCR = LCR_WORD_8BIT;
-  /* Enable and clear FIFO */
-  device->block->FCR = FCR_ENABLE;
+  /* Enable and clear FIFO, set RX trigger level to 8 bytes */
+  device->block->FCR = FCR_ENABLE | FCR_RX_TRIGGER(2);
   /* Enable RBR and THRE interrupts */
   device->block->IER = IER_RBR | IER_THRE;
   device->block->TER = TER_TXEN;
