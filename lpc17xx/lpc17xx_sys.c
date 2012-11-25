@@ -1,8 +1,7 @@
 /*
  * lpc17xx_sys.c
- *
- *  Created on: Oct 19, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include "lpc17xx_sys.h"

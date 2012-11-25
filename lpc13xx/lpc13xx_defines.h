@@ -1,7 +1,14 @@
+/*
+ * lpc13xx_defines.h
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
+ */
+
 #ifndef LPC13XX_DEFINES_H_
 #define LPC13XX_DEFINES_H_
 /*----------------------------------------------------------------------------*/
-#define BIT(i)                          (1 << (i))
+#define GET_PRIORITY(i)                 (15 - (i))
+#define BIT(i)                          ((uint32_t)1 << (i))
 /*----------------------------------------------------------------------------*/
 /*------------------SYSAHBCLKCTRL register, reset value 0x0000485F------------*/
 #define SYSAHBCLKCTRL_SYS               BIT(0)

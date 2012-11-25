@@ -40,7 +40,7 @@ struct Uart
   struct Queue rxQueue, txQueue;
 
   /* Device-specific data */
-  LPC_UART_TypeDef *block;
+  LPC_UART_TypeDef *reg;
   IRQn_Type irq;
 };
 /*----------------------------------------------------------------------------*/

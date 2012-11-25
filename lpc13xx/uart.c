@@ -121,19 +121,19 @@ static void uartBaseHandler(struct Uart *desc)
     return;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  switch (desc->block->IIR & IIR_INT_MASK)
+  switch (desc->reg->IIR & IIR_INT_MASK)
   {
     case IIR_INT_RDA:
     case IIR_INT_CTI:
       /* Byte removed from FIFO after RBR register read operation */
-      while (desc->block->LSR & LSR_RDR)
-        queuePush(&desc->rxQueue, desc->block->RBR);
+      while (desc->reg->LSR & LSR_RDR)
+        queuePush(&desc->rxQueue, desc->reg->RBR);
       break;
     case IIR_INT_THRE:
       /* Fill FIFO with 8 bytes or less */
       counter = 0;
       while (queueSize(&desc->txQueue) && counter++ < FIFO_SIZE)
-        desc->block->THR = queuePop(&desc->txQueue);
+        desc->reg->THR = queuePop(&desc->txQueue);
       if (!queueSize(&desc->txQueue))
         desc->active = false;
       break;
@@ -156,11 +156,11 @@ static enum result uartSetRate(struct Uart *device, uint32_t rate)
     return E_ERROR;
   //TODO Add fractional divider calculation
   /* Set 8-bit length and enable DLAB access */
-  device->block->LCR = LCR_DLAB;
+  device->reg->LCR = LCR_DLAB;
   /* Set divisor of the baud rate generator */
-  device->block->DLL = (uint8_t)divider;
-  device->block->DLM = (uint8_t)(divider >> 8);
-  device->block->LCR &= ~LCR_DLAB; /* Clear DLAB */
+  device->reg->DLL = (uint8_t)divider;
+  device->reg->DLM = (uint8_t)(divider >> 8);
+  device->reg->LCR &= ~LCR_DLAB; /* Clear DLAB */
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -248,7 +248,7 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
   if (!device->active)
   {
     device->active = true;
-    device->block->THR = *buffer++;
+    device->reg->THR = *buffer++;
     written++;
   }
   while (!queueFull(&device->txQueue) && written++ < length)
@@ -333,7 +333,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
     case 0:
       LPC_SYSCON->SYSAHBCLKCTRL |= SYSAHBCLKCTRL_UART;
       LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV; /* Divide AHB clock */
-      device->block = LPC_UART;
+      device->reg = LPC_UART;
       device->irq = UART_IRQn;
       break;
     default:
@@ -351,12 +351,12 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   gpioSetFunc(&device->txPin, txFunc);
 
   /* Set 8-bit length */
-  device->block->LCR = LCR_WORD_8BIT;
+  device->reg->LCR = LCR_WORD_8BIT;
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  device->block->FCR = FCR_ENABLE | FCR_RX_TRIGGER(2);
+  device->reg->FCR = FCR_ENABLE | FCR_RX_TRIGGER(2);
   /* Enable RBR and THRE interrupts */
-  device->block->IER = IER_RBR | IER_THRE;
-  device->block->TER = TER_TXEN;
+  device->reg->IER = IER_RBR | IER_THRE;
+  device->reg->TER = TER_TXEN;
 
   descriptor[config->channel] = device;
   /* Enable UART interrupt and set priority, lowest by default */
