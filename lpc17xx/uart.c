@@ -4,8 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdlib.h>
-/*----------------------------------------------------------------------------*/
 #include "uart.h"
 #include "lpc17xx_defines.h"
 #include "lpc17xx_sys.h"
@@ -135,20 +133,6 @@ static const struct GpioPinFunc uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const enum dmaLine dmaTxLines[] = {
-    DMA_LINE_UART0_TX,
-    DMA_LINE_UART1_TX,
-    DMA_LINE_UART2_TX,
-    DMA_LINE_UART3_TX
-};
-/*----------------------------------------------------------------------------*/
-const enum dmaLine dmaRxLines[] = {
-    DMA_LINE_UART0_RX,
-    DMA_LINE_UART1_RX,
-    DMA_LINE_UART2_RX,
-    DMA_LINE_UART3_RX
-};
-/*----------------------------------------------------------------------------*/
 enum cleanup
 {
   FREE_NONE = 0,
@@ -156,7 +140,6 @@ enum cleanup
   FREE_TX_PIN,
   FREE_RX_QUEUE,
   FREE_TX_QUEUE,
-  FREE_MUTEX,
   FREE_ALL
 };
 /*----------------------------------------------------------------------------*/
@@ -171,7 +154,6 @@ static enum result uartSetOpt(struct Interface *, enum ifOption, const void *);
 static void uartBaseHandler(struct Uart *);
 static enum result uartSetRate(struct Uart *, uint32_t);
 static void uartCleanup(struct Uart *, enum cleanup);
-static enum result uartDmaSetup(struct Uart *, int8_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass uartTable = {
     .size = sizeof(struct Uart),
@@ -256,18 +238,10 @@ static void uartCleanup(struct Uart *device, enum cleanup step)
   switch (step)
   {
     case FREE_ALL:
-      if (device->dma)
-      {
-        dmaDeinit(&device->txDma);
-        /* dmaDeinit(&device->rxDma); */
-      }
-    case FREE_MUTEX:
       mutexDeinit(&device->lock);
     case FREE_TX_QUEUE:
-      if (!device->dma)
-        queueDeinit(&device->txQueue);
+      queueDeinit(&device->txQueue);
     case FREE_RX_QUEUE:
-//      if (!device->dma)
       queueDeinit(&device->rxQueue);
     case FREE_TX_PIN:
       gpioReleasePin(&device->txPin);
@@ -322,6 +296,7 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
   struct Uart *device = (struct Uart *)iface;
   int read = 0;
 
+  /* TODO Rewrite to use FIFO */
   mutexLock(&device->lock);
   while (queueSize(&device->rxQueue) && read++ < length)
   {
@@ -339,35 +314,21 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
   struct Uart *device = (struct Uart *)iface;
   int written = 0;
 
-  if (device->dma)
+  mutexLock(&device->lock);
+  if (!device->active)
   {
-    if (dmaStart(&device->txDma, (void *)buffer,
-        (void *)&device->block->THR, length) == E_OK)
-    {
-      /* Wait until all bytes transferred */
-      while (dmaIsActive(&device->txDma));
-    }
-    /* TODO Add DMA error handling */
-    return length;
+    device->active = true;
+    device->block->THR = *buffer++;
+    written++;
   }
-  else
+  while (!queueFull(&device->txQueue) && written++ < length)
   {
-    mutexLock(&device->lock);
-    if (!device->active)
-    {
-      device->active = true;
-      device->block->THR = *buffer++;
-      written++;
-    }
-    while (!queueFull(&device->txQueue) && written++ < length)
-    {
-      NVIC_DisableIRQ(device->irq);
-      queuePush(&device->txQueue, *buffer++);
-      NVIC_EnableIRQ(device->irq);
-    }
-    mutexUnlock(&device->lock);
-    return written;
+    NVIC_DisableIRQ(device->irq);
+    queuePush(&device->txQueue, *buffer++);
+    NVIC_EnableIRQ(device->irq);
   }
+  mutexUnlock(&device->lock);
+  return written;
 }
 /*----------------------------------------------------------------------------*/
 static void uartDeinit(struct Interface *iface)
@@ -384,40 +345,16 @@ static void uartDeinit(struct Interface *iface)
   uartCleanup(device, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
-static enum result uartDmaSetup(struct Uart *device, int8_t channel)
-{
-  struct DmaConfig dmaTxConfig = {
-      .source = {
-          .line = DMA_LINE_MEMORY,
-          .increment = true
-      },
-      .destination = {
-          .line = dmaTxLines[device->channel],
-          .increment = false
-      },
-      .burst = DMA_BURST_1,
-      .width = DMA_WIDTH_BYTE,
-      .direction = DMA_DIR_M2P,
-      .channel = channel
-  };
-
-  if (dmaInit(&device->txDma, &dmaTxConfig) != E_OK)
-    return E_ERROR;
-  /* TODO Add RX line */
-}
-/*----------------------------------------------------------------------------*/
 static enum result uartInit(struct Interface *iface, const void *cdata)
 {
   /* Set pointer to device configuration data */
-  struct UartConfig *config = (struct UartConfig *)cdata;
+  const struct UartConfig *config = (struct UartConfig *)cdata;
   struct Uart *device = (struct Uart *)iface;
   uint8_t rxFunc, txFunc;
 
   /* Check device configuration data and availability */
   if (!config || config->channel > 3 || descriptor[config->channel])
     return E_ERROR;
-
-  device->dma = config->dma.enabled;
 
   /* Check pin mapping */
   rxFunc = gpioFindFunc(uartPins, config->rx);
@@ -438,14 +375,13 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   }
 
   /* Initialize RX and TX queues */
-  /* TODO Add DMA handling: do not use RX queue */
   if (queueInit(&device->rxQueue, config->rxLength) != E_OK)
   {
     uartCleanup(device, FREE_TX_PIN);
     return E_ERROR;
   }
 
-  if (!device->dma && queueInit(&device->txQueue, config->txLength) != E_OK)
+  if (queueInit(&device->txQueue, config->txLength) != E_OK)
   {
     uartCleanup(device, FREE_RX_QUEUE);
     return E_ERROR;
@@ -455,13 +391,6 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   if (mutexInit(&device->lock) != E_OK)
   {
     uartCleanup(device, FREE_TX_QUEUE);
-    return E_ERROR;
-  }
-
-  /* Initialize DMA */
-  if (device->dma && uartDmaSetup(device, config->dma.channel) != E_OK)
-  {
-    uartCleanup(device, FREE_MUTEX);
     return E_ERROR;
   }
 
@@ -514,18 +443,12 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   /* Enable and clear FIFO */
   device->block->FCR = FCR_ENABLE;
   /* Enable RBR and THRE interrupts */
-#ifdef UART_DMA
-  /* TODO disable interrupts when using DMA */
-  device->block->IER = IER_RBR;
-  if (!device->dma)
-    device->block->IER |= IER_THRE;
-#else
-  device->block->IER |= IER_RBR | IER_THRE;
-#endif
+  device->block->IER = IER_RBR | IER_THRE;
   device->block->TER = TER_TXEN;
 
   descriptor[config->channel] = device;
-  NVIC_EnableIRQ(device->irq); /* Enable interrupt */
+  /* Enable UART interrupt and set priority, lowest by default */
+  NVIC_EnableIRQ(device->irq);
   NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));
   return E_OK;
 }

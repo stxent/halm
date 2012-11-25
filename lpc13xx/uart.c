@@ -4,8 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdlib.h>
-/*----------------------------------------------------------------------------*/
 #include "uart.h"
 #include "lpc13xx_defines.h"
 /*----------------------------------------------------------------------------*/
@@ -227,6 +225,7 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
   struct Uart *device = (struct Uart *)iface;
   int read = 0;
 
+  /* TODO Rewrite to use FIFO */
   mutexLock(&device->lock);
   while (queueSize(&device->rxQueue) && read++ < length)
   {
@@ -359,7 +358,8 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->block->TER = TER_TXEN;
 
   descriptor[config->channel] = device;
-  /* TODO Add priority setup */
-  NVIC_EnableIRQ(device->irq); /* Enable interrupt */
+  /* Enable UART interrupt and set priority, lowest by default */
+  NVIC_EnableIRQ(device->irq);
+  NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));
   return E_OK;
 }

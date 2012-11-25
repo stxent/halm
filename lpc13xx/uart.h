@@ -14,17 +14,18 @@
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
 #include "gpio.h"
-#include "mutex.h"
 #include "queue.h"
+#include "mutex.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Uart;
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
   gpioKey rx, tx;
-  uint16_t rxLength, txLength;
   uint8_t channel;
   uint32_t rate;
+  uint16_t rxLength, txLength; /* Queue lengths */
+  uint8_t priority; /* Interrupt priority */
 };
 /*----------------------------------------------------------------------------*/
 struct Uart
@@ -32,9 +33,11 @@ struct Uart
   struct Interface parent;
   struct Mutex lock;
   struct Gpio rxPin, txPin;
-  struct Queue rxQueue, txQueue;
   uint8_t channel;
   bool active;
+
+  /* Receive and transmit buffers */
+  struct Queue rxQueue, txQueue;
 
   /* Device-specific data */
   LPC_UART_TypeDef *block;
