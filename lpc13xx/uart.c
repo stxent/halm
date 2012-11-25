@@ -279,7 +279,7 @@ static void uartDeinit(struct Interface *iface)
 static enum result uartInit(struct Interface *iface, const void *cdata)
 {
   /* Set pointer to device configuration data */
-  struct UartConfig *config = (struct UartConfig *)cdata;
+  const struct UartConfig *config = (struct UartConfig *)cdata;
   struct Uart *device = (struct Uart *)iface;
   uint8_t rxFunc, txFunc;
 
@@ -359,6 +359,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->block->TER = TER_TXEN;
 
   descriptor[config->channel] = device;
+  /* TODO Add priority setup */
   NVIC_EnableIRQ(device->irq); /* Enable interrupt */
   return E_OK;
 }
