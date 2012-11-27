@@ -18,6 +18,7 @@
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Uart;
+extern void *uartDescriptors[];
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {

@@ -112,7 +112,7 @@ static const struct InterfaceClass uartTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
-static struct Uart *descriptor[] = {0};
+void *uartDescriptors[] = {0};
 /*----------------------------------------------------------------------------*/
 static void uartBaseHandler(struct Uart *desc)
 {
@@ -144,7 +144,7 @@ static void uartBaseHandler(struct Uart *desc)
 /*----------------------------------------------------------------------------*/
 void UART_IRQHandler(void)
 {
-  uartBaseHandler(descriptor[0]);
+  uartBaseHandler(uartDescriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartSetRate(struct Uart *device, uint32_t rate)
@@ -268,7 +268,7 @@ static void uartDeinit(struct Interface *iface)
   /* Disable interrupt */
   NVIC_DisableIRQ(device->irq);
   /* Reset UART descriptor */
-  descriptor[device->channel] = 0;
+  uartDescriptors[device->channel] = 0;
   /* Processor-specific registers */
   LPC_SYSCON->UARTCLKDIV = 0;
   LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_UART;
@@ -279,12 +279,12 @@ static void uartDeinit(struct Interface *iface)
 static enum result uartInit(struct Interface *iface, const void *cdata)
 {
   /* Set pointer to device configuration data */
-  const struct UartConfig *config = (struct UartConfig *)cdata;
+  const struct UartConfig *config = (const struct UartConfig *)cdata;
   struct Uart *device = (struct Uart *)iface;
   uint8_t rxFunc, txFunc;
 
   /* Check device configuration data and availability */
-  if (!config || config->channel > 3 || descriptor[config->channel])
+  if (!config || config->channel > 3 || uartDescriptors[config->channel])
     return E_ERROR;
 
   /* Check pin mapping */
@@ -358,7 +358,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->reg->IER = IER_RBR | IER_THRE;
   device->reg->TER = TER_TXEN;
 
-  descriptor[config->channel] = device;
+  uartDescriptors[config->channel] = device;
   /* Enable UART interrupt and set priority, lowest by default */
   NVIC_EnableIRQ(device->irq);
   NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));

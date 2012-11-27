@@ -13,6 +13,13 @@
 #include "LPC17xx.h"
 /*----------------------------------------------------------------------------*/
 #include "error.h"
+#include "entity.h"
+/*----------------------------------------------------------------------------*/
+struct Dma;
+struct DmaClass;
+/*----------------------------------------------------------------------------*/
+extern const struct DmaClass *Dma;
+extern void *dmaDescriptors[];
 /*----------------------------------------------------------------------------*/
 /* Controller-specific lines */
 enum dmaLine
@@ -98,6 +105,25 @@ struct DmaConfig
   int8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+struct DmaListItem
+{
+  void *source;
+  void *destination;
+  void *next;
+  uint32_t control;
+};
+/*----------------------------------------------------------------------------*/
+/* Class descriptor */
+struct DmaClass
+{
+  CLASS_GENERATOR(Dma)
+
+  /* Start DMA transmission */
+  enum result (*start)(struct Dma *, void *, void *, uint16_t);
+  /* Stop DMA transmission */
+  void (*stop)(struct Dma *);
+};
+/*----------------------------------------------------------------------------*/
 struct Dma
 {
   enum dmaDirection direction;
@@ -113,14 +139,11 @@ struct Dma
   LPC_GPDMACH_TypeDef *reg;
 };
 /*----------------------------------------------------------------------------*/
-///* Enable or disable DMA peripheral */
-//void dmaEnable();
-//void dmaDisable();
+bool dmaIsActive(struct Dma *);
+void dmaLinkList(struct Dma *, const struct DmaListItem *);
 /*----------------------------------------------------------------------------*/
-enum result dmaInit(struct Dma *, const struct DmaConfig *);
-void dmaDeinit(struct Dma *);
+/* Virtual functions */
 enum result dmaStart(struct Dma *, void *, void *, uint16_t);
 void dmaStop(struct Dma *);
-bool dmaIsActive(struct Dma *);
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_H_ */
