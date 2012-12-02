@@ -7,11 +7,6 @@
 #include "uart.h"
 #include "lpc13xx_defines.h"
 /*----------------------------------------------------------------------------*/
-#define FIFO_SIZE                       8
-/* In LPC13xx UART clock divider is value from 1 to 255, 0 to disable */
-#define DEFAULT_DIV                     1
-#define DEFAULT_DIV_VALUE               1
-/*----------------------------------------------------------------------------*/
 /* UART register bits */
 /* Modem signals, auto-baud and RS-485 not used */
 /*------------------Line Control Register-------------------------------------*/
@@ -61,6 +56,13 @@
 /*------------------Transmit Enable Register----------------------------------*/
 #define TER_TXEN                        BIT(7) /* Transmit enable */
 /*----------------------------------------------------------------------------*/
+/* UART settings */
+#define TX_FIFO_SIZE                    8
+#define RX_FIFO_LEVEL                   2 /* 8 characters */
+/* In LPC13xx UART clock divider is value from 1 to 255, 0 to disable */
+#define DEFAULT_DIV                     1
+#define DEFAULT_DIV_VALUE               1
+/*----------------------------------------------------------------------------*/
 /* UART pin function values */
 static const struct GpioPinFunc uartPins[] = {
     {
@@ -87,6 +89,12 @@ enum cleanup
   FREE_ALL
 };
 /*----------------------------------------------------------------------------*/
+static inline void runHandler(struct Uart *);
+/*----------------------------------------------------------------------------*/
+static void uartHandler(struct Uart *);
+static enum result uartSetRate(struct Uart *, uint32_t);
+static void uartCleanup(struct Uart *, enum cleanup);
+/*----------------------------------------------------------------------------*/
 static enum result uartInit(struct Interface *, const void *);
 static void uartDeinit(struct Interface *);
 static unsigned int uartRead(struct Interface *, uint8_t *, unsigned int);
@@ -95,47 +103,48 @@ static unsigned int uartWrite(struct Interface *, const uint8_t *,
 static enum result uartGetOpt(struct Interface *, enum ifOption, void *);
 static enum result uartSetOpt(struct Interface *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
-static void uartBaseHandler(struct Uart *);
-static enum result uartSetRate(struct Uart *, uint32_t);
-static void uartCleanup(struct Uart *, enum cleanup);
-/*----------------------------------------------------------------------------*/
-static const struct InterfaceClass uartTable = {
-    .size = sizeof(struct Uart),
-    .init = uartInit,
-    .deinit = uartDeinit,
+static const struct UartClass uartTable = {
+    .parent = {
+        .size = sizeof(struct Uart),
+        .init = uartInit,
+        .deinit = uartDeinit,
 
-    .read = uartRead,
-    .write = uartWrite,
-    .getopt = uartGetOpt,
-    .setopt = uartSetOpt
+        .read = uartRead,
+        .write = uartWrite,
+        .getopt = uartGetOpt,
+        .setopt = uartSetOpt
+    },
+    .handler = uartHandler
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *Uart = &uartTable;
+const struct UartClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
-void *uartDescriptors[] = {0};
+struct Uart *uartDescriptors[] = {0};
 /*----------------------------------------------------------------------------*/
-static void uartBaseHandler(struct Uart *desc)
+static inline void runHandler(struct Uart *device)
+{
+  if (device)
+    ((struct UartClass *)CLASS(device))->handler(device);
+}
+/*----------------------------------------------------------------------------*/
+static void uartHandler(struct Uart *device)
 {
   uint8_t counter;
-  if (!desc)
-    return;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  switch (desc->reg->IIR & IIR_INT_MASK)
+  switch (device->reg->IIR & IIR_INT_MASK)
   {
     case IIR_INT_RDA:
     case IIR_INT_CTI:
       /* Byte removed from FIFO after RBR register read operation */
-      while (desc->reg->LSR & LSR_RDR)
-        queuePush(&desc->rxQueue, desc->reg->RBR);
+      while (device->reg->LSR & LSR_RDR)
+        queuePush(&device->rxQueue, device->reg->RBR);
       break;
     case IIR_INT_THRE:
       /* Fill FIFO with 8 bytes or less */
       counter = 0;
-      while (queueSize(&desc->txQueue) && counter++ < FIFO_SIZE)
-        desc->reg->THR = queuePop(&desc->txQueue);
-      if (!queueSize(&desc->txQueue))
-        desc->active = false;
+      while (queueSize(&device->txQueue) && counter++ < TX_FIFO_SIZE)
+        device->reg->THR = queuePop(&device->txQueue);
       break;
     default:
       break;
@@ -144,7 +153,7 @@ static void uartBaseHandler(struct Uart *desc)
 /*----------------------------------------------------------------------------*/
 void UART_IRQHandler(void)
 {
-  uartBaseHandler(uartDescriptors[0]);
+  runHandler(uartDescriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartSetRate(struct Uart *device, uint32_t rate)
@@ -228,12 +237,13 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
   int read = 0;
 
   mutexLock(&device->lock);
-  while (queueSize(&device->rxQueue) && read++ < length)
+  NVIC_DisableIRQ(device->irq);
+  while (queueSize(&device->rxQueue) && read < length)
   {
-    NVIC_DisableIRQ(device->irq);
     *buffer++ = queuePop(&device->rxQueue);
-    NVIC_EnableIRQ(device->irq);
+    read++;
   }
+  NVIC_EnableIRQ(device->irq);
   mutexUnlock(&device->lock);
   return read;
 }
@@ -245,18 +255,24 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
   int written = 0;
 
   mutexLock(&device->lock);
-  if (!device->active)
+  NVIC_DisableIRQ(device->irq);
+  /* Check transmitter state */
+  if (device->reg->LSR & LSR_TEMT && queueEmpty(&device->txQueue))
   {
-    device->active = true;
-    device->reg->THR = *buffer++;
+    /* Transmitter is idle, fill TX FIFO */
+    while (written < TX_FIFO_SIZE && written < length)
+    {
+      device->reg->THR = *buffer++;
+      written++;
+    }
+  }
+  /* Fill TX queue with the rest of data */
+  while (!queueFull(&device->txQueue) && written < length)
+  {
+    queuePush(&device->txQueue, *buffer++);
     written++;
   }
-  while (!queueFull(&device->txQueue) && written++ < length)
-  {
-    NVIC_DisableIRQ(device->irq);
-    queuePush(&device->txQueue, *buffer++);
-    NVIC_EnableIRQ(device->irq);
-  }
+  NVIC_EnableIRQ(device->irq);
   mutexUnlock(&device->lock);
   return written;
 }
@@ -325,7 +341,6 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
     return E_ERROR;
   }
 
-  device->active = false;
   device->channel = config->channel;
 
   switch (config->channel)
@@ -353,7 +368,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   /* Set 8-bit length */
   device->reg->LCR = LCR_WORD_8BIT;
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  device->reg->FCR = FCR_ENABLE | FCR_RX_TRIGGER(2);
+  device->reg->FCR = FCR_ENABLE | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
   /* Enable RBR and THRE interrupts */
   device->reg->IER = IER_RBR | IER_THRE;
   device->reg->TER = TER_TXEN;

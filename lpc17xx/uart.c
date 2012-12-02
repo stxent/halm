@@ -201,8 +201,6 @@ static void uartHandler(struct Uart *device)
       counter = 0;
       while (queueSize(&device->txQueue) && counter++ < TX_FIFO_SIZE)
         device->reg->THR = queuePop(&device->txQueue);
-//      if (!queueSize(&device->txQueue))
-//        device->active = false;
       break;
     default:
       break;
@@ -413,7 +411,6 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
     return E_ERROR;
   }
 
-//  device->active = false; //FIXME
   device->channel = config->channel;
 
   //FIXME rewrite definitions, fix TER size
