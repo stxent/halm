@@ -13,6 +13,19 @@
   unsigned int size;\
   enum result (*init)(struct name *, const void *);\
   void (*deinit)(struct name *);
+#define CLASS(instance) (((struct Entity *)(instance))->type)
+/*----------------------------------------------------------------------------*/
+struct Entity;
+/*----------------------------------------------------------------------------*/
+struct EntityClass
+{
+  CLASS_GENERATOR(Entity);
+};
+/*----------------------------------------------------------------------------*/
+struct Entity
+{
+  const struct EntityClass *type;
+};
 /*----------------------------------------------------------------------------*/
 void *init(const void *, const void *);
 void deinit(void *);

@@ -8,18 +8,6 @@
 /*----------------------------------------------------------------------------*/
 #include "entity.h"
 /*----------------------------------------------------------------------------*/
-struct EntityClass
-{
-  unsigned int size;
-  enum result (*init)(void *, const void *);
-  void (*deinit)(void *);
-};
-/*----------------------------------------------------------------------------*/
-struct Entity
-{
-  const struct EntityClass *type;
-};
-/*----------------------------------------------------------------------------*/
 void *init(const void *typeDesc, const void *args)
 {
   const struct EntityClass *type = (const struct EntityClass *)typeDesc;

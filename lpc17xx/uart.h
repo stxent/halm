@@ -17,8 +17,11 @@
 #include "queue.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *Uart;
-extern void *uartDescriptors[];
+struct Uart;
+struct UartClass;
+/*----------------------------------------------------------------------------*/
+extern const struct UartClass *Uart;
+extern struct Uart *uartDescriptors[];
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
@@ -29,18 +32,24 @@ struct UartConfig
   uint8_t priority; /* Interrupt priority */
 };
 /*----------------------------------------------------------------------------*/
+struct UartClass
+{
+  struct InterfaceClass parent;
+
+  /* Interrupt handler, arguments: UART descriptor assigned to peripheral */
+  void (*handler)(struct Uart *);
+};
+/*----------------------------------------------------------------------------*/
 struct Uart
 {
   struct Interface parent;
-  struct Mutex lock;
-  struct Gpio rxPin, txPin;
-  uint8_t channel;
-  bool active;
 
-  /* Receive and transmit buffers */
-  struct Queue rxQueue, txQueue;
+  struct Gpio rxPin, txPin; /* Peripheral pins */
+  uint8_t channel; /* Peripheral number */
+  struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
+  struct Mutex lock; /* Access to queues mutex */
 
-  /* Device-specific data */
+  /* Controller-specific data */
   LPC_UART_TypeDef *reg;
   IRQn_Type irq;
 };

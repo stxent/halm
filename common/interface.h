@@ -40,7 +40,7 @@ struct InterfaceClass
 /*----------------------------------------------------------------------------*/
 struct Interface
 {
-  const struct InterfaceClass *type;
+  struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
 unsigned int ifRead(struct Interface *, uint8_t *, unsigned int);
