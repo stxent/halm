@@ -47,11 +47,15 @@ struct Uart
   struct Gpio rxPin, txPin; /* Peripheral pins */
   uint8_t channel; /* Peripheral number */
   struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
-  struct Mutex lock; /* Access to queues mutex */
+
+  Mutex queueLock; /* Access to queues mutex */
 
   /* Controller-specific data */
   LPC_UART_TypeDef *reg;
   IRQn_Type irq;
 };
+/*----------------------------------------------------------------------------*/
+/* TODO */
+/* bool uartSetDescriptor(struct Uart **, const struct Uart *); */
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

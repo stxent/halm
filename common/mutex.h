@@ -1,26 +1,26 @@
 /*
  * mutex.h
- *
- *  Created on: Oct 20, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #ifndef MUTEX_H_
 #define MUTEX_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #include "error.h"
 /*----------------------------------------------------------------------------*/
-struct Mutex
-{
-  uint8_t state;
+enum mutexState {
+  MUTEX_UNLOCKED = 0,
+  MUTEX_LOCKED
 };
 /*----------------------------------------------------------------------------*/
-enum result mutexInit(struct Mutex *);
-void mutexDeinit(struct Mutex *);
-void mutexLock(struct Mutex *);
-uint8_t mutexTryLock(struct Mutex *);
-void mutexUnlock(struct Mutex *);
+typedef volatile uint8_t Mutex;
+/*----------------------------------------------------------------------------*/
+void mutexLock(Mutex *);
+bool mutexTryLock(Mutex *);
+void mutexUnlock(Mutex *);
 /*----------------------------------------------------------------------------*/
 #endif /* MUTEX_H_ */

@@ -1,44 +1,36 @@
 /*
  * mutex.c
- *
- *  Created on: Oct 20, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include "LPC17xx.h"
+/*----------------------------------------------------------------------------*/
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
-#define MUTEX_FREE      0
-#define MUTEX_LOCKED    1
-/*----------------------------------------------------------------------------*/
-enum result mutexInit(struct Mutex *m)
+void mutexLock(Mutex *m)
 {
-  m->state = MUTEX_FREE;
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-void mutexDeinit(struct Mutex *m)
-{
-
-}
-/*----------------------------------------------------------------------------*/
-void mutexLock(struct Mutex *m)
-{
-  while (m->state != MUTEX_FREE);
-  m->state = MUTEX_LOCKED;
-}
-/*----------------------------------------------------------------------------*/
-uint8_t mutexTryLock(struct Mutex *m)
-{
-  if (m->state)
+  do
   {
-    m->state = MUTEX_LOCKED;
-    return 0; /* Operation successful */
+    while (__LDREXB(m) != MUTEX_UNLOCKED); /* Wait until mutex becomes free */
   }
-  else
-    return 1; /* Error: mutex already locked */
+  while (__STREXB(MUTEX_LOCKED, m) != 0); /* Try to set mutex locked */
+  __DMB(); /* Data memory barrier instruction */
 }
 /*----------------------------------------------------------------------------*/
-void mutexUnlock(struct Mutex *m)
+bool mutexTryLock(Mutex *m)
 {
-  m->state = MUTEX_FREE;
+  if (__LDREXB(m) == MUTEX_UNLOCKED) /* Get current mutex state */
+  {
+    while (__STREXB(MUTEX_LOCKED, m) != 0); /* Try to set mutex locked */
+    __DMB(); /* Data memory barrier instruction */
+    return true;
+  }
+  return false; /* Mutex is already locked */
+}
+/*----------------------------------------------------------------------------*/
+void mutexUnlock(Mutex *m)
+{
+  __DMB(); /* Ensure memory operations completed before releasing lock */
+  *m = MUTEX_UNLOCKED;
 }

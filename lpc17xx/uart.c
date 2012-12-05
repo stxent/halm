@@ -249,7 +249,6 @@ static void uartCleanup(struct Uart *device, enum cleanup step)
   switch (step)
   {
     case FREE_ALL:
-      mutexDeinit(&device->lock);
     case FREE_TX_QUEUE:
       queueDeinit(&device->txQueue);
     case FREE_RX_QUEUE:
@@ -263,6 +262,11 @@ static void uartCleanup(struct Uart *device, enum cleanup step)
       break;
   }
 }
+/*----------------------------------------------------------------------------*/
+/* bool uartSetDescriptor(struct Uart **descriptor, const struct Uart *value)
+{
+
+} */
 /*----------------------------------------------------------------------------*/
 static enum result uartGetOpt(struct Interface *iface, enum ifOption option,
     void *data)
@@ -307,7 +311,7 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
   struct Uart *device = (struct Uart *)iface;
   int read = 0;
 
-  mutexLock(&device->lock);
+  mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->irq);
   while (queueSize(&device->rxQueue) && read < length)
   {
@@ -315,7 +319,7 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
     read++;
   }
   NVIC_EnableIRQ(device->irq);
-  mutexUnlock(&device->lock);
+  mutexUnlock(&device->queueLock);
   return read;
 }
 /*----------------------------------------------------------------------------*/
@@ -325,7 +329,7 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
   struct Uart *device = (struct Uart *)iface;
   int written = 0;
 
-  mutexLock(&device->lock);
+  mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->irq);
   /* Check transmitter state */
   if (device->reg->LSR & LSR_TEMT && queueEmpty(&device->txQueue))
@@ -344,7 +348,7 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
     written++;
   }
   NVIC_EnableIRQ(device->irq);
-  mutexUnlock(&device->lock);
+  mutexUnlock(&device->queueLock);
   return written;
 }
 /*----------------------------------------------------------------------------*/
@@ -404,13 +408,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
     return E_ERROR;
   }
 
-  /* Initialize mutex */
-  if (mutexInit(&device->lock) != E_OK)
-  {
-    uartCleanup(device, FREE_TX_QUEUE);
-    return E_ERROR;
-  }
-
+  device->queueLock = MUTEX_UNLOCKED;
   device->channel = config->channel;
 
   //FIXME rewrite definitions, fix TER size
