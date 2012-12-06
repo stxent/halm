@@ -176,6 +176,21 @@ static const struct UartClass uartTable = {
 const struct UartClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
 struct Uart *uartDescriptors[] = {0, 0, 0, 0};
+Mutex descriptorLock = MUTEX_UNLOCKED;
+/*----------------------------------------------------------------------------*/
+enum result uartSetDescriptor(uint8_t channel, void *descriptor)
+{
+  enum result res = E_ERROR;
+
+  mutexLock(&descriptorLock);
+  if (!uartDescriptors[channel])
+  {
+    uartDescriptors[channel] = descriptor;
+    res = E_OK;
+  }
+  mutexUnlock(&descriptorLock);
+  return res;
+}
 /*----------------------------------------------------------------------------*/
 static inline void runHandler(struct Uart *device)
 {
@@ -231,6 +246,11 @@ static enum result uartSetRate(struct Uart *device, uint32_t rate)
 {
   uint32_t divider;
 
+  /* TODO
+  divider = (SystemCoreClock / DEFAULT_DIV_VALUE) >> 4;
+  reminder = divider * 100;
+  divider /= rate;
+  reminder -= divider * 100; */
   divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (rate << 4);
   if (divider >= (1 << 16) || !divider)
     return E_ERROR;
@@ -261,12 +281,9 @@ static void uartCleanup(struct Uart *device, enum cleanup step)
     default:
       break;
   }
+  /* Reset UART descriptor */
+  uartSetDescriptor(device->channel, 0);
 }
-/*----------------------------------------------------------------------------*/
-/* bool uartSetDescriptor(struct Uart **descriptor, const struct Uart *value)
-{
-
-} */
 /*----------------------------------------------------------------------------*/
 static enum result uartGetOpt(struct Interface *iface, enum ifOption option,
     void *data)
@@ -358,8 +375,6 @@ static void uartDeinit(struct Interface *iface)
 
   /* Disable interrupt */
   NVIC_DisableIRQ(device->irq);
-  /* Reset UART descriptor */
-  uartDescriptors[device->channel] = 0;
   /* Processor-specific register */
   LPC_SC->PCONP &= ~PCONP_PCUART0;
   /* Release resources */
@@ -374,8 +389,11 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   uint8_t rxFunc, txFunc;
 
   /* Check device configuration data and availability */
-  if (!config || config->channel > 3 || uartDescriptors[config->channel])
+  if (!config || config->channel > 3 ||
+      uartSetDescriptor(config->channel, iface) != E_OK)
+  {
     return E_ERROR;
+  }
 
   /* Check pin mapping */
   rxFunc = gpioFindFunc(uartPins, config->rx);
@@ -411,19 +429,20 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->queueLock = MUTEX_UNLOCKED;
   device->channel = config->channel;
 
-  //FIXME rewrite definitions, fix TER size
   switch (config->channel)
   {
     case 0:
       LPC_SC->PCONP |= PCONP_PCUART0;
       sysSetPeriphDiv(PCLK_UART0, DEFAULT_DIV);
-      device->reg = (LPC_UART_TypeDef *)LPC_UART0; //FIXME
+      //FIXME Replace with LPC_UART_TypeDef in CMSIS
+      device->reg = (LPC_UART_TypeDef *)LPC_UART0;
       device->irq = UART0_IRQn;
       break;
     case 1:
       LPC_SC->PCONP |= PCONP_PCUART1;
       sysSetPeriphDiv(PCLK_UART1, DEFAULT_DIV);
-      device->reg = (LPC_UART_TypeDef *)LPC_UART1; //FIXME
+      //FIXME Rewrite TER type
+      device->reg = (LPC_UART_TypeDef *)LPC_UART1;
       device->irq = UART1_IRQn;
       break;
     case 2:
@@ -460,7 +479,6 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->reg->IER = IER_RBR | IER_THRE;
   device->reg->TER = TER_TXEN;
 
-  uartDescriptors[config->channel] = device;
   /* Enable UART interrupt and set priority, lowest by default */
   NVIC_EnableIRQ(device->irq);
   NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));

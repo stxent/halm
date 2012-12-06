@@ -120,6 +120,21 @@ static const struct UartClass uartTable = {
 const struct UartClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
 struct Uart *uartDescriptors[] = {0};
+Mutex descriptorLock = MUTEX_UNLOCKED;
+/*----------------------------------------------------------------------------*/
+enum result uartSetDescriptor(uint8_t channel, void *descriptor)
+{
+  enum result res = E_ERROR;
+
+  mutexLock(&descriptorLock);
+  if (!uartDescriptors[channel])
+  {
+    uartDescriptors[channel] = descriptor;
+    res = E_OK;
+  }
+  mutexUnlock(&descriptorLock);
+  return res;
+}
 /*----------------------------------------------------------------------------*/
 static inline void runHandler(struct Uart *device)
 {
@@ -178,7 +193,6 @@ static void uartCleanup(struct Uart *device, enum cleanup step)
   switch (step)
   {
     case FREE_ALL:
-      mutexDeinit(&device->lock);
     case FREE_TX_QUEUE:
       queueDeinit(&device->txQueue);
     case FREE_RX_QUEUE:
@@ -191,6 +205,8 @@ static void uartCleanup(struct Uart *device, enum cleanup step)
     default:
       break;
   }
+  /* Reset UART descriptor */
+  uartSetDescriptor(device->channel, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartGetOpt(struct Interface *iface, enum ifOption option,
@@ -236,7 +252,7 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
   struct Uart *device = (struct Uart *)iface;
   int read = 0;
 
-  mutexLock(&device->lock);
+  mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->irq);
   while (queueSize(&device->rxQueue) && read < length)
   {
@@ -244,7 +260,7 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
     read++;
   }
   NVIC_EnableIRQ(device->irq);
-  mutexUnlock(&device->lock);
+  mutexUnlock(&device->queueLock);
   return read;
 }
 /*----------------------------------------------------------------------------*/
@@ -254,7 +270,7 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
   struct Uart *device = (struct Uart *)iface;
   int written = 0;
 
-  mutexLock(&device->lock);
+  mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->irq);
   /* Check transmitter state */
   if (device->reg->LSR & LSR_TEMT && queueEmpty(&device->txQueue))
@@ -273,7 +289,7 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
     written++;
   }
   NVIC_EnableIRQ(device->irq);
-  mutexUnlock(&device->lock);
+  mutexUnlock(&device->queueLock);
   return written;
 }
 /*----------------------------------------------------------------------------*/
@@ -283,8 +299,6 @@ static void uartDeinit(struct Interface *iface)
 
   /* Disable interrupt */
   NVIC_DisableIRQ(device->irq);
-  /* Reset UART descriptor */
-  uartDescriptors[device->channel] = 0;
   /* Processor-specific registers */
   LPC_SYSCON->UARTCLKDIV = 0;
   LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_UART;
@@ -300,8 +314,11 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   uint8_t rxFunc, txFunc;
 
   /* Check device configuration data and availability */
-  if (!config || config->channel > 3 || uartDescriptors[config->channel])
+  if (!config || config->channel > 0 ||
+      uartSetDescriptor(config->channel, iface) != E_OK)
+  {
     return E_ERROR;
+  }
 
   /* Check pin mapping */
   rxFunc = gpioFindFunc(uartPins, config->rx);
@@ -334,13 +351,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
     return E_ERROR;
   }
 
-  /* Initialize mutex */
-  if (mutexInit(&device->lock) != E_OK)
-  {
-    uartCleanup(device, FREE_TX_QUEUE);
-    return E_ERROR;
-  }
-
+  device->queueLock = MUTEX_UNLOCKED;
   device->channel = config->channel;
 
   switch (config->channel)
@@ -373,7 +384,6 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->reg->IER = IER_RBR | IER_THRE;
   device->reg->TER = TER_TXEN;
 
-  uartDescriptors[config->channel] = device;
   /* Enable UART interrupt and set priority, lowest by default */
   NVIC_EnableIRQ(device->irq);
   NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));

@@ -21,12 +21,11 @@ struct Uart;
 struct UartClass;
 /*----------------------------------------------------------------------------*/
 extern const struct UartClass *Uart;
-extern struct Uart *uartDescriptors[];
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
-  gpioKey rx, tx;
   uint8_t channel;
+  gpioKey rx, tx;
   uint32_t rate;
   uint16_t rxLength, txLength; /* Queue lengths */
   uint8_t priority; /* Interrupt priority */
@@ -44,18 +43,17 @@ struct Uart
 {
   struct Interface parent;
 
-  struct Gpio rxPin, txPin; /* Peripheral pins */
   uint8_t channel; /* Peripheral number */
-  struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
+  struct Gpio rxPin, txPin; /* Peripheral pins */
 
-  Mutex queueLock; /* Access to queues mutex */
+  struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
+  Mutex queueLock; /* Access to queues */
 
   /* Controller-specific data */
   LPC_UART_TypeDef *reg;
   IRQn_Type irq;
 };
 /*----------------------------------------------------------------------------*/
-/* TODO */
-/* bool uartSetDescriptor(struct Uart **, const struct Uart *); */
+enum result uartSetDescriptor(uint8_t, void *);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */
