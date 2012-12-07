@@ -8,8 +8,6 @@
 #include "lpc17xx_defines.h"
 #include "lpc17xx_sys.h"
 /*----------------------------------------------------------------------------*/
-/* TODO Add linked lists support */
-/*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT                   8
 /*----------------------------------------------------------------------------*/
 /*------------------DMA configuration register--------------------------------*/
@@ -18,15 +16,13 @@
 #define DMA_ENDIANNESS                  BIT(1)
 /*------------------DMA Channel Control register------------------------------*/
 #define C_CONTROL_SIZE(size)            (size)
+#define C_CONTROL_SIZE_MASK             0x0FFF
 #define C_CONTROL_SRC_BURST(burst)      ((burst) << 12)
 #define C_CONTROL_DEST_BURST(burst)     ((burst) << 15)
 #define C_CONTROL_SRC_WIDTH(width)      ((width) << 18)
 #define C_CONTROL_DEST_WIDTH(width)     ((width) << 21)
 #define C_CONTROL_SRC_INC               BIT(26) /* Source increment */
 #define C_CONTROL_DEST_INC              BIT(27) /* Destination increment */
-//#define DMA_CONTROL_PRIVILEGED          BIT(28)
-//#define DMA_CONTROL_BUFFERABLE          BIT(29)
-//#define DMA_CONTROL_CACHEABLE           BIT(30)
 #define C_CONTROL_INT                   BIT(31) /* Terminal count interrupt */
 /*------------------DMA Channel Configuration register------------------------*/
 #define C_CONFIG_ENABLE                 BIT(0)
@@ -38,8 +34,6 @@
 #define C_CONFIG_IE                     BIT(14)
 /* Terminal count interrupt mask */
 #define C_CONFIG_ITC                    BIT(15)
-/* Locked transfer, not used on LPC17xx */
-#define C_CONFIG_LOCK                   BIT(16)
 /* Indicates whether FIFO not empty */
 #define C_CONFIG_ACTIVE                 BIT(17)
 #define C_CONFIG_HALT                   BIT(18)
@@ -47,7 +41,8 @@
 enum result gpdmaInit(struct Dma *, const void *);
 void gpdmaDeinit(struct Dma *);
 enum result gpdmaStart(struct Dma *, void *, void *, uint16_t);
-void gpdmaStop(struct Dma *);
+uint16_t gpdmaStop(struct Dma *);
+uint16_t gpdmaHalt(struct Dma *);
 /*----------------------------------------------------------------------------*/
 bool dmaIsActive(struct Dma *);
 void dmaLinkList(struct Dma *, const struct DmaListItem *);
@@ -61,7 +56,8 @@ static const struct DmaClass gpdmaTable = {
     .deinit = gpdmaDeinit,
 
     .start = gpdmaStart,
-    .stop = gpdmaStop
+    .stop = gpdmaStop,
+    .halt = gpdmaHalt
 };
 /*----------------------------------------------------------------------------*/
 const struct DmaClass *Dma = &gpdmaTable;
@@ -111,40 +107,39 @@ void DMA_IRQHandler(void)
   LPC_GPDMA->DMACIntErrClr = (1 << CHANNEL_COUNT) - 1;
 }
 /*----------------------------------------------------------------------------*/
-enum result gpdmaInit(struct Dma *gpdma, const void *cdata)
+enum result gpdmaInit(struct Dma *dma, const void *cdata)
 {
   const struct DmaConfig *config = (const struct DmaConfig *)cdata;
-//  struct Dma *gpdma = (struct Dma *)dma;
 
   if (!config || config->channel >= CHANNEL_COUNT)
     return E_ERROR;
 
   /* TODO Add channel allocation, when channel is -1 */
-  gpdma->channel = (uint8_t)config->channel;
-  gpdma->active = false;
-  gpdma->direction = config->direction;
-  gpdma->reg = calcChannel(gpdma->channel);
+  dma->channel = (uint8_t)config->channel;
+  dma->active = false;
+  dma->direction = config->direction;
+  dma->reg = calcChannel(dma->channel);
 
-  gpdma->control = C_CONTROL_INT |
+  dma->control = C_CONTROL_INT |
       C_CONTROL_SRC_BURST(config->burst) | C_CONTROL_DEST_BURST(config->burst) |
       C_CONTROL_SRC_WIDTH(config->width) | C_CONTROL_DEST_WIDTH(config->width);
   if (config->source.increment)
-    gpdma->control |= C_CONTROL_SRC_INC;
+    dma->control |= C_CONTROL_SRC_INC;
   if (config->destination.increment)
-    gpdma->control |= C_CONTROL_DEST_INC;
+    dma->control |= C_CONTROL_DEST_INC;
 
-  gpdma->config = C_CONFIG_TYPE(config->direction) | C_CONFIG_IE | C_CONFIG_ITC;
+  dma->config = C_CONFIG_TYPE(config->direction) | C_CONFIG_IE | C_CONFIG_ITC;
   if (config->source.line != DMA_LINE_MEMORY)
-    gpdma->config |= C_CONFIG_SRC_PERIPH(config->source.line);
+    dma->config |= C_CONFIG_SRC_PERIPH(config->source.line);
   if (config->destination.line != DMA_LINE_MEMORY)
-    gpdma->config |= C_CONFIG_DEST_PERIPH(config->destination.line);
+    dma->config |= C_CONFIG_DEST_PERIPH(config->destination.line);
 
   /* Reset multiplexer register values */
-  gpdma->muxMask = 0xFF;
-  gpdma->muxValue = 0x00;
+  dma->muxMask = 0xFF;
+  dma->muxValue = 0x00;
   /* Calculate new mask and value */
-  setMux(gpdma, config->source.line);
-  setMux(gpdma, config->destination.line);
+  setMux(dma, config->source.line);
+  setMux(dma, config->destination.line);
 
   if (!instances)
   {
@@ -195,9 +190,23 @@ enum result gpdmaStart(struct Dma *dma, void *src, void *dest, uint16_t size)
   dma->reg->DMACCConfig |= C_CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-void gpdmaStop(struct Dma *dma)
+uint16_t gpdmaStop(struct Dma *dma)
 {
-
+  /* Disable channel */
+  dma->reg->DMACCConfig &= ~C_CONFIG_ENABLE;
+  /* Return transferred bytes count */
+  return dma->reg->DMACCControl & C_CONTROL_SIZE_MASK;
+}
+/*----------------------------------------------------------------------------*/
+/* TODO Check behavior */
+uint16_t gpdmaHalt(struct Dma *dma)
+{
+  /* Ignore future requests */
+  dma->reg->DMACCConfig |= C_CONFIG_HALT;
+  /* Wait until active bit reaches zero */
+  while (LPC_GPDMA->DMACEnbldChns & (1 << dma->channel));
+  /* Return transferred bytes count */
+  return dma->reg->DMACCControl & C_CONTROL_SIZE_MASK;
 }
 /*----------------------------------------------------------------------------*/
 bool dmaIsActive(struct Dma *dma)
@@ -205,6 +214,7 @@ bool dmaIsActive(struct Dma *dma)
   return LPC_GPDMA->DMACEnbldChns & (1 << dma->channel) != 0;
 }
 /*----------------------------------------------------------------------------*/
+/* TODO Rewrite */
 void dmaLinkList(struct Dma *dma, const struct DmaListItem *list)
 {
   /* Linked list items must be aligned at 4-byte boundary */

@@ -120,8 +120,10 @@ struct DmaClass
 
   /* Start DMA transmission */
   enum result (*start)(struct Dma *, void *, void *, uint16_t);
-  /* Stop DMA transmission */
-  void (*stop)(struct Dma *);
+  /* Disable a channel and lose data in the FIFO */
+  uint16_t (*stop)(struct Dma *);
+  /* Disable a channel without losing data in the FIFO */
+  uint16_t (*halt)(struct Dma *);
 };
 /*----------------------------------------------------------------------------*/
 struct Dma
@@ -139,11 +141,12 @@ struct Dma
   LPC_GPDMACH_TypeDef *reg;
 };
 /*----------------------------------------------------------------------------*/
-bool dmaIsActive(struct Dma *);
+bool dmaIsActive(struct Dma *); /* TODO Add const */
 void dmaLinkList(struct Dma *, const struct DmaListItem *);
 /*----------------------------------------------------------------------------*/
-/* Virtual functions */
+/*------------------Virtual functions-----------------------------------------*/
 enum result dmaStart(struct Dma *, void *, void *, uint16_t);
-void dmaStop(struct Dma *);
+uint16_t dmaStop(struct Dma *);
+uint16_t dmaHalt(struct Dma *);
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_H_ */
