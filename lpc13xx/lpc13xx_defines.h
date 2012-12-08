@@ -7,8 +7,9 @@
 #ifndef LPC13XX_DEFINES_H_
 #define LPC13XX_DEFINES_H_
 /*----------------------------------------------------------------------------*/
-#define GET_PRIORITY(i)                 (15 - (i))
-#define BIT(i)                          ((uint32_t)1 << (i))
+#define GET_PRIORITY(priority)          ((uint32_t)(15 - (priority)))
+#define BIT(offset)                     ((uint32_t)(1 << (offset)))
+#define BIT_FIELD(value, offset)        ((uint32_t)(value << (offset)))
 /*----------------------------------------------------------------------------*/
 /*------------------SYSAHBCLKCTRL register, reset value 0x0000485F------------*/
 #define SYSAHBCLKCTRL_SYS               BIT(0)

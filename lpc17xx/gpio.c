@@ -4,26 +4,26 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdlib.h>
-#include "LPC17xx.h"
-/* #include "lpc17xx_defines.h" */
 #include "gpio.h"
 /*------------------Values for function and mode select registers-------------*/
 #define PIN_MASK                        0x03
-//FIXME
-#define PIN_OFFSET(value, offset)       ((value) << (((offset) & 0x0F) << 1))
+#define PIN_OFFSET(value, offset) \
+    ((uint32_t)((value) << (((offset) & 0x0F) << 1)))
 /*------------------Pin output mode control values----------------------------*/
 #define PIN_MODE_PULLUP                 0
 #define PIN_MODE_INACTIVE               2
 #define PIN_MODE_PULLDOWN               3
 /*----------------------------------------------------------------------------*/
-static LPC_GPIO_TypeDef *gpioPorts[] = {
-    LPC_GPIO0, LPC_GPIO1, LPC_GPIO2, LPC_GPIO3, LPC_GPIO4
-};
-/*----------------------------------------------------------------------------*/
+static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
 static inline uint32_t *calcPinSelect(union GpioPin);
 static inline uint32_t *calcPinMode(union GpioPin);
 static inline uint32_t *calcPinModeOD(union GpioPin);
+/*----------------------------------------------------------------------------*/
+static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
+{
+  return (LPC_GPIO_TypeDef *)((void *)LPC_GPIO0 +
+      (LPC_GPIO1 - LPC_GPIO0) * p.port);
+}
 /*----------------------------------------------------------------------------*/
 static inline uint32_t *calcPinSelect(union GpioPin p)
 {
@@ -40,18 +40,6 @@ static inline uint32_t *calcPinModeOD(union GpioPin p)
   return (uint32_t *)(&LPC_PINCON->PINMODE_OD0 + p.port);
 }
 /*----------------------------------------------------------------------------*/
-void gpioInit()
-{
-  /* Enable power of the GPIO domain */
-  /* LPC_SC->PCONP |= PCONP_PCGPIO; */
-}
-/*----------------------------------------------------------------------------*/
-void gpioDeinit()
-{
-  /* Disable power of the GPIO domain */
-  /* LPC_SC->PCONP &= ~PCONP_PCGPIO; */
-}
-/*----------------------------------------------------------------------------*/
 /* Return 0 when no function associated with id found */
 uint8_t gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
 {
@@ -64,22 +52,22 @@ uint8_t gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInitPin(int16_t id, enum gpioDir dir)
+struct Gpio gpioInit(int16_t id, enum gpioDir dir)
 {
   uint32_t *pinptr;
-  union GpioPin converted;
+  union GpioPin converted = {
+      .key = id
+  };
   struct Gpio p = {
       .control = 0,
-      .pin =  {
-          .key = -1
-      }
+      .pin = converted
   };
 
-  converted.key = id;
+  /* TODO Add more precise pin checking */
   if ((uint8_t)converted.port > 4 || (uint8_t)converted.offset > 31)
     return p;
   p.pin = converted;
-  p.control = gpioPorts[p.pin.port];
+  p.control = calcPort(p.pin);
 
   /* Calculate PINSEL register */
   pinptr = calcPinSelect(p.pin);
@@ -102,10 +90,12 @@ struct Gpio gpioInitPin(int16_t id, enum gpioDir dir)
   else
     p.control->FIODIR &= ~(1 << p.pin.offset);
 
+  /* There is no need to enable GPIO power because it is enabled on reset */
+
   return p;
 }
 /*----------------------------------------------------------------------------*/
-void gpioReleasePin(struct Gpio *p)
+void gpioDeinit(struct Gpio *p)
 {
   uint32_t *pinptr;
 
@@ -122,11 +112,14 @@ void gpioReleasePin(struct Gpio *p)
   /* Calculate PINMODE_OD register */
   pinptr = calcPinModeOD(p->pin);
   *pinptr &= ~(1 << p->pin.offset);
+
+  /* TODO Check possibility of disabling power when no pins are used */
+  /* LPC_SC->PCONP &= ~PCONP_PCGPIO; */
 }
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *p)
 {
-  return ((p->control->FIOPIN & (1 << p->pin.offset)) != 0) ? 1 : 0;
+  return (p->control->FIOPIN & (1 << p->pin.offset)) != 0 ? 1 : 0;
 }
 /*----------------------------------------------------------------------------*/
 void gpioWrite(struct Gpio *p, uint8_t value)

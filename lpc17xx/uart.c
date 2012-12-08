@@ -4,22 +4,22 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "uart.h"
 #include "lpc17xx_defines.h"
 #include "lpc17xx_sys.h"
+#include "uart.h"
 /*----------------------------------------------------------------------------*/
 /* UART register bits */
 /* IrDA, Modem signals, auto-baud and RS-485 not used */
 /*------------------Line Control Register-------------------------------------*/
-#define LCR_WORD_5BIT                   (0 << 0)
-#define LCR_WORD_6BIT                   (1 << 0)
-#define LCR_WORD_7BIT                   (2 << 0)
-#define LCR_WORD_8BIT                   (3 << 0)
-#define LCR_STOP_1BIT                   (0 << 2)
-#define LCR_STOP_2BIT                   (1 << 2)
+#define LCR_WORD_5BIT                   BIT_FIELD(0, 0)
+#define LCR_WORD_6BIT                   BIT_FIELD(1, 0)
+#define LCR_WORD_7BIT                   BIT_FIELD(2, 0)
+#define LCR_WORD_8BIT                   BIT_FIELD(3, 0)
+#define LCR_STOP_1BIT                   BIT_FIELD(0, 2)
+#define LCR_STOP_2BIT                   BIT_FIELD(1, 2)
 #define LCR_PARITY                      BIT(3)
-#define LCR_PARITY_ODD                  (0 << 4)
-#define LCR_PARITY_EVEN                 (1 << 4)
+#define LCR_PARITY_ODD                  BIT_FIELD(0, 4)
+#define LCR_PARITY_EVEN                 BIT_FIELD(1, 4)
 #define LCR_BREAK                       BIT(6)
 #define LCR_DLAB                        BIT(7)
 /*------------------Interrupt Enable Register---------------------------------*/
@@ -28,11 +28,16 @@
 #define IER_RX_LINE                     BIT(2)
 /*------------------Interrupt Identification Register-------------------------*/
 #define IIR_INT_STATUS                  BIT(0) /* Status, active low */
-#define IIR_INT_MASK                    (0x07 << 1)
-#define IIR_INT_RLS                     (3 << 1) /* Receive line status */
-#define IIR_INT_RDA                     (2 << 1) /* Receive data available */
-#define IIR_INT_CTI                     (6 << 1) /* Character timeout */
-#define IIR_INT_THRE                    (1 << 1) /* THRE interrupt */
+/* Mask for interrupt identification value */
+#define IIR_INT_MASK                    BIT_FIELD(0x07, 1)
+/* Receive Line Status */
+#define IIR_INT_RLS                     BIT_FIELD(3, 1)
+/* Receive Data Available */
+#define IIR_INT_RDA                     BIT_FIELD(2, 1)
+/* Character Timeout Interrupt */
+#define IIR_INT_CTI                     BIT_FIELD(6, 1)
+/* Transmitter Holding Register Empty interrupt */
+#define IIR_INT_THRE                    BIT_FIELD(1, 1)
 /*------------------FIFO Control Register-------------------------------------*/
 #define FCR_ENABLE                      BIT(0)
 #define FCR_RX_RESET                    BIT(1)
@@ -43,7 +48,7 @@
  * Level 2:  8 characters
  * Level 3: 14 characters
  */
-#define FCR_RX_TRIGGER(level)           ((level) << 6)
+#define FCR_RX_TRIGGER(level)           BIT_FIELD((level), 6)
 /*------------------Line Status Register--------------------------------------*/
 #define LSR_RDR                         BIT(0) /* Receiver data ready */
 #define LSR_OE                          BIT(1) /* Overrun error */
@@ -60,6 +65,7 @@
 /* UART settings */
 #define TX_FIFO_SIZE                    8
 #define RX_FIFO_LEVEL                   2 /* 8 characters */
+#define FRACTION_VALUE                  15 /* Divisor from 1 to 15 */
 #define DEFAULT_DIV                     PCLK_DIV1
 #define DEFAULT_DIV_VALUE               1
 /*----------------------------------------------------------------------------*/
@@ -145,8 +151,6 @@ enum cleanup
   FREE_ALL
 };
 /*----------------------------------------------------------------------------*/
-static inline void runHandler(struct Uart *);
-/*----------------------------------------------------------------------------*/
 static void uartHandler(struct Uart *);
 static enum result uartSetRate(struct Uart *, uint32_t);
 static void uartCleanup(struct Uart *, enum cleanup);
@@ -159,6 +163,8 @@ static unsigned int uartWrite(struct Interface *, const uint8_t *,
 static enum result uartGetOpt(struct Interface *, enum ifOption, void *);
 static enum result uartSetOpt(struct Interface *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
+/* We like structures so we put a structure in a structure */
+/* So we can initialize a structure while we initialize a structure */
 static const struct UartClass uartTable = {
     .parent = {
         .size = sizeof(struct Uart),
@@ -175,32 +181,26 @@ static const struct UartClass uartTable = {
 /*----------------------------------------------------------------------------*/
 const struct UartClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
-struct Uart *uartDescriptors[] = {0, 0, 0, 0};
-Mutex descriptorLock = MUTEX_UNLOCKED;
+static void * volatile descriptors[] = {0, 0, 0, 0};
+static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 enum result uartSetDescriptor(uint8_t channel, void *descriptor)
 {
   enum result res = E_ERROR;
 
-  mutexLock(&descriptorLock);
-  if (!uartDescriptors[channel])
+  mutexLock(&lock);
+  if (!descriptors[channel])
   {
-    uartDescriptors[channel] = descriptor;
+    descriptors[channel] = descriptor;
     res = E_OK;
   }
-  mutexUnlock(&descriptorLock);
+  mutexUnlock(&lock);
   return res;
-}
-/*----------------------------------------------------------------------------*/
-static inline void runHandler(struct Uart *device)
-{
-  if (device)
-    ((struct UartClass *)CLASS(device))->handler(device);
 }
 /*----------------------------------------------------------------------------*/
 static void uartHandler(struct Uart *device)
 {
-  uint8_t counter;
+  uint8_t counter = 0;
 
   /* Interrupt status cleared when performed read operation on IIR register */
   switch (device->reg->IIR & IIR_INT_MASK)
@@ -213,7 +213,6 @@ static void uartHandler(struct Uart *device)
       break;
     case IIR_INT_THRE:
       /* Fill FIFO with 8 bytes or less */
-      counter = 0;
       while (queueSize(&device->txQueue) && counter++ < TX_FIFO_SIZE)
         device->reg->THR = queuePop(&device->txQueue);
       break;
@@ -224,42 +223,47 @@ static void uartHandler(struct Uart *device)
 /*----------------------------------------------------------------------------*/
 void UART0_IRQHandler(void)
 {
-  runHandler(uartDescriptors[0]);
+  if (descriptors[0])
+    ((struct UartClass *)CLASS(descriptors[0]))->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 void UART1_IRQHandler(void)
 {
-  runHandler(uartDescriptors[1]);
+  if (descriptors[1])
+    ((struct UartClass *)CLASS(descriptors[1]))->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
 void UART2_IRQHandler(void)
 {
-  runHandler(uartDescriptors[2]);
+  if (descriptors[2])
+    ((struct UartClass *)CLASS(descriptors[2]))->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
 void UART3_IRQHandler(void)
 {
-  runHandler(uartDescriptors[3]);
+  if (descriptors[3])
+    ((struct UartClass *)CLASS(descriptors[3]))->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartSetRate(struct Uart *device, uint32_t rate)
 {
-  uint32_t divider;
+  uint32_t divider, reminder;
 
-  /* TODO
   divider = (SystemCoreClock / DEFAULT_DIV_VALUE) >> 4;
-  reminder = divider * 100;
+  reminder = divider * FRACTION_VALUE / rate;
   divider /= rate;
-  reminder -= divider * 100; */
-  divider = (SystemCoreClock / DEFAULT_DIV_VALUE) / (rate << 4);
+  reminder -= divider * FRACTION_VALUE;
   if (divider >= (1 << 16) || !divider)
     return E_ERROR;
-  //TODO Add fractional divider calculation
+
   /* Set 8-bit length and enable DLAB access */
   device->reg->LCR = LCR_DLAB;
   /* Set divisor of the baud rate generator */
   device->reg->DLL = (uint8_t)divider;
   device->reg->DLM = (uint8_t)(divider >> 8);
+  /* Set fractional divider */
+  if (device->reg->DLM > 0 || device->reg->DLL > 1)
+    device->reg->FDR = (uint8_t)(reminder | (FRACTION_VALUE << 4));
   device->reg->LCR &= ~LCR_DLAB; /* Clear DLAB */
   return E_OK;
 }
@@ -274,9 +278,9 @@ static void uartCleanup(struct Uart *device, enum cleanup step)
     case FREE_RX_QUEUE:
       queueDeinit(&device->rxQueue);
     case FREE_TX_PIN:
-      gpioReleasePin(&device->txPin);
+      gpioDeinit(&device->txPin);
     case FREE_RX_PIN:
-      gpioReleasePin(&device->rxPin);
+      gpioDeinit(&device->rxPin);
       break;
     default:
       break;
@@ -326,7 +330,7 @@ static unsigned int uartRead(struct Interface *iface, uint8_t *buffer,
     unsigned int length)
 {
   struct Uart *device = (struct Uart *)iface;
-  int read = 0;
+  unsigned int read = 0;
 
   mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->irq);
@@ -344,7 +348,7 @@ static unsigned int uartWrite(struct Interface *iface, const uint8_t *buffer,
     unsigned int length)
 {
   struct Uart *device = (struct Uart *)iface;
-  int written = 0;
+  unsigned int written = 0;
 
   mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->irq);
@@ -402,11 +406,11 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
     return E_ERROR;
 
   /* Setup UART pins */
-  device->rxPin = gpioInitPin(config->rx, GPIO_INPUT);
+  device->rxPin = gpioInit(config->rx, GPIO_INPUT);
   if (gpioGetKey(&device->rxPin) == -1)
     return E_ERROR;
 
-  device->txPin = gpioInitPin(config->tx, GPIO_OUTPUT);
+  device->txPin = gpioInit(config->tx, GPIO_OUTPUT);
   if (gpioGetKey(&device->txPin) == -1)
   {
     uartCleanup(device, FREE_RX_PIN);
@@ -429,6 +433,7 @@ static enum result uartInit(struct Interface *iface, const void *cdata)
   device->queueLock = MUTEX_UNLOCKED;
   device->channel = config->channel;
 
+  //FIXME Remove FIFO level from CMSIS
   switch (config->channel)
   {
     case 0:

@@ -1,8 +1,7 @@
 /*
  * gpio.h
- *
- *  Created on: Sep 8, 2012
- *      Author: xen
+ * Copyright (C) 2012 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #ifndef GPIO_H_
@@ -19,18 +18,18 @@ typedef int16_t gpioKey;
 enum gpioDir {
   GPIO_INPUT = 0,
   GPIO_OUTPUT
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 enum gpioPull {
   GPIO_NOPULL = 0,
   GPIO_PULLUP,
   GPIO_PULLDOWN
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 enum gpioType {
   GPIO_PUSHPULL = 0,
   GPIO_OPENDRAIN
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 union GpioPin
 {
@@ -54,11 +53,8 @@ struct Gpio
   LPC_GPIO_TypeDef *control;
 };
 /*----------------------------------------------------------------------------*/
-void gpioInit();
-void gpioDeinit();
-/*----------------------------------------------------------------------------*/
-struct Gpio gpioInitPin(gpioKey, enum gpioDir);
-void gpioReleasePin(struct Gpio *);
+struct Gpio gpioInit(gpioKey, enum gpioDir);
+void gpioDeinit(struct Gpio *);
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *);
 void gpioWrite(struct Gpio *, uint8_t);

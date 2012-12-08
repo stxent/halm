@@ -19,7 +19,6 @@ struct Dma;
 struct DmaClass;
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass *Dma;
-extern void *dmaDescriptors[];
 /*----------------------------------------------------------------------------*/
 /* Controller-specific lines */
 enum dmaLine
@@ -90,22 +89,16 @@ struct DmaSide
   bool increment;
 };
 /*----------------------------------------------------------------------------*/
-struct DmaParameters
-{
-  bool enabled;
-  int8_t channel;
-};
-/*----------------------------------------------------------------------------*/
 struct DmaConfig
 {
+  int8_t channel;
   struct DmaSide source, destination;
+  enum dmaDirection direction;
   enum dmaBurst burst;
   enum dmaWidth width;
-  enum dmaDirection direction;
-  int8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct DmaListItem
+struct DmaListItem /* Rewrite */
 {
   void *source;
   void *destination;
@@ -121,9 +114,9 @@ struct DmaClass
   /* Start DMA transmission */
   enum result (*start)(struct Dma *, void *, void *, uint16_t);
   /* Disable a channel and lose data in the FIFO */
-  uint16_t (*stop)(struct Dma *);
+  void (*stop)(struct Dma *);
   /* Disable a channel without losing data in the FIFO */
-  uint16_t (*halt)(struct Dma *);
+  void (*halt)(struct Dma *);
 };
 /*----------------------------------------------------------------------------*/
 struct Dma
@@ -141,12 +134,18 @@ struct Dma
   LPC_GPDMACH_TypeDef *reg;
 };
 /*----------------------------------------------------------------------------*/
-bool dmaIsActive(struct Dma *); /* TODO Add const */
-void dmaLinkList(struct Dma *, const struct DmaListItem *);
-/*----------------------------------------------------------------------------*/
 /*------------------Virtual functions-----------------------------------------*/
 enum result dmaStart(struct Dma *, void *, void *, uint16_t);
-uint16_t dmaStop(struct Dma *);
-uint16_t dmaHalt(struct Dma *);
+void dmaStop(struct Dma *);
+void dmaHalt(struct Dma *);
+/*----------------------------------------------------------------------------*/
+/* Check whether the channel is enabled or not */
+bool dmaIsActive(const struct Dma *);
+/* Get the number of completed transfers */
+uint16_t dmaGetCount(const struct Dma *);
+/* Setup scatter-gather */
+void dmaLinkList(struct Dma *, const struct DmaListItem *); //TODO Rewrite
+/*----------------------------------------------------------------------------*/
+enum result dmaSetDescriptor(uint8_t, void *);
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_H_ */

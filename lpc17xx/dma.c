@@ -4,9 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "dma.h"
 #include "lpc17xx_defines.h"
 #include "lpc17xx_sys.h"
+#include "dma.h"
+#include "mutex.h"
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT                   8
 /*----------------------------------------------------------------------------*/
@@ -38,17 +39,14 @@
 #define C_CONFIG_ACTIVE                 BIT(17)
 #define C_CONFIG_HALT                   BIT(18)
 /*----------------------------------------------------------------------------*/
+static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t);
+static void setMux(struct Dma *, enum dmaLine);
+/*----------------------------------------------------------------------------*/
 enum result gpdmaInit(struct Dma *, const void *);
 void gpdmaDeinit(struct Dma *);
 enum result gpdmaStart(struct Dma *, void *, void *, uint16_t);
-uint16_t gpdmaStop(struct Dma *);
-uint16_t gpdmaHalt(struct Dma *);
-/*----------------------------------------------------------------------------*/
-bool dmaIsActive(struct Dma *);
-void dmaLinkList(struct Dma *, const struct DmaListItem *);
-/*----------------------------------------------------------------------------*/
-static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t);
-static void setMux(struct Dma *, enum dmaLine);
+void gpdmaStop(struct Dma *);
+void gpdmaHalt(struct Dma *);
 /*----------------------------------------------------------------------------*/
 static const struct DmaClass gpdmaTable = {
     .size = sizeof(struct Dma),
@@ -62,15 +60,29 @@ static const struct DmaClass gpdmaTable = {
 /*----------------------------------------------------------------------------*/
 const struct DmaClass *Dma = &gpdmaTable;
 /*----------------------------------------------------------------------------*/
-void *dmaDescriptors[] = {0, 0, 0, 0, 0, 0, 0, 0};
+static void * volatile descriptors[] = {0, 0, 0, 0, 0, 0, 0, 0};
+static Mutex lock = MUTEX_UNLOCKED;
 /* Initialized descriptors count */
-/* TODO Replace with semaphore */
 static uint16_t instances = 0;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t channel)
 {
-  /* FIXME Rewrite */
-  return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0 + channel * 0x20);
+  return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0 +
+      (LPC_GPDMACH1 - LPC_GPDMACH0) * channel);
+}
+/*----------------------------------------------------------------------------*/
+enum result dmaSetDescriptor(uint8_t channel, void *descriptor)
+{
+  enum result res = E_ERROR;
+
+  mutexLock(&lock);
+  if (!descriptors[channel])
+  {
+    descriptors[channel] = descriptor;
+    res = E_OK;
+  }
+  mutexUnlock(&lock);
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static void setMux(struct Dma *dma, enum dmaLine line)
@@ -94,11 +106,11 @@ void DMA_IRQHandler(void)
   {
     if (stat & (1 << counter))
     {
-      if (dmaDescriptors[counter])
+      if (descriptors[counter])
       {
         /* Clear channel descriptor */
-        ((struct Dma **)dmaDescriptors)[counter]->active = false;
-        ((struct Dma **)dmaDescriptors)[counter] = 0;
+        ((struct Dma **)descriptors)[counter]->active = false;
+        ((struct Dma **)descriptors)[counter] = 0;
       }
       /* Clear terminal count interrupt flag */
       LPC_GPDMA->DMACIntTCClear = 1 << counter;
@@ -141,19 +153,24 @@ enum result gpdmaInit(struct Dma *dma, const void *cdata)
   setMux(dma, config->source.line);
   setMux(dma, config->destination.line);
 
+  mutexLock(&lock);
   if (!instances)
   {
     LPC_SC->PCONP |= PCONP_PCGPDMA;
     LPC_GPDMA->DMACConfig |= DMA_ENABLE;
     NVIC_EnableIRQ(DMA_IRQn);
+    //TODO add priority config
+    //NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));
   }
   instances++;
+  mutexUnlock(&lock);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void gpdmaDeinit(struct Dma *dma)
 {
+  mutexLock(&lock);
   instances--;
   /* Disable DMA peripheral when no active descriptors exist */
   if (!instances)
@@ -162,11 +179,12 @@ void gpdmaDeinit(struct Dma *dma)
     LPC_GPDMA->DMACConfig &= ~DMA_ENABLE;
     LPC_SC->PCONP &= ~PCONP_PCGPDMA;
   }
+  mutexUnlock(&lock);
 }
 /*----------------------------------------------------------------------------*/
 enum result gpdmaStart(struct Dma *dma, void *src, void *dest, uint16_t size)
 {
-  if (dmaDescriptors[dma->channel])
+  if (dmaSetDescriptor(dma->channel, dma) != E_OK)
     return E_ERROR;
 
   LPC_SC->DMAREQSEL &= dma->muxMask;
@@ -186,30 +204,36 @@ enum result gpdmaStart(struct Dma *dma, void *src, void *dest, uint16_t size)
   LPC_GPDMA->DMACIntErrClr |= 1 << dma->channel;
 
   dma->active = true;
-  dmaDescriptors[dma->channel] = dma;
   dma->reg->DMACCConfig |= C_CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-uint16_t gpdmaStop(struct Dma *dma)
+void gpdmaStop(struct Dma *dma)
 {
   /* Disable channel */
   dma->reg->DMACCConfig &= ~C_CONFIG_ENABLE;
-  /* Return transferred bytes count */
-  return dma->reg->DMACCControl & C_CONTROL_SIZE_MASK;
 }
 /*----------------------------------------------------------------------------*/
-/* TODO Check behavior */
-uint16_t gpdmaHalt(struct Dma *dma)
+void gpdmaHalt(struct Dma *dma)
 {
   /* Ignore future requests */
   dma->reg->DMACCConfig |= C_CONFIG_HALT;
-  /* Wait until active bit reaches zero */
-  while (LPC_GPDMA->DMACEnbldChns & (1 << dma->channel));
-  /* Return transferred bytes count */
-  return dma->reg->DMACCControl & C_CONTROL_SIZE_MASK;
 }
 /*----------------------------------------------------------------------------*/
-bool dmaIsActive(struct Dma *dma)
+uint16_t dmaGetCount(const struct Dma *dma)
+{
+  /*
+   * Reading transfer size when the channel is active does not give
+   * useful information
+   */
+  if (!dmaIsActive(dma))
+  {
+    /* Return transferred bytes count */
+    return dma->reg->DMACCControl & C_CONTROL_SIZE_MASK;
+  }
+  return 0;
+}
+/*----------------------------------------------------------------------------*/
+bool dmaIsActive(const struct Dma *dma)
 {
   return LPC_GPDMA->DMACEnbldChns & (1 << dma->channel) != 0;
 }

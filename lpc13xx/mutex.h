@@ -7,17 +7,14 @@
 #ifndef MUTEX_H_
 #define MUTEX_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <stdbool.h>
-/*----------------------------------------------------------------------------*/
-#include "error.h"
 /*----------------------------------------------------------------------------*/
 enum mutexState {
   MUTEX_UNLOCKED = 0,
   MUTEX_LOCKED
 };
 /*----------------------------------------------------------------------------*/
-typedef volatile uint8_t Mutex;
+typedef volatile unsigned char Mutex;
 /*----------------------------------------------------------------------------*/
 void mutexLock(Mutex *);
 bool mutexTryLock(Mutex *);
