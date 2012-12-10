@@ -14,21 +14,26 @@
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
 #include "gpio.h"
-#include "queue.h"
-#include "mutex.h"
 /*----------------------------------------------------------------------------*/
-struct Uart;
+struct UartConfig;
+struct UartConfigRate;
 struct UartClass;
+struct Uart;
 /*----------------------------------------------------------------------------*/
 extern const struct UartClass *Uart;
 /*----------------------------------------------------------------------------*/
 struct UartConfig
 {
-  uint8_t channel;
-  gpioKey rx, tx;
-  uint32_t rate;
-  uint16_t rxLength, txLength; /* Queue lengths */
+  uint8_t channel; /* Peripheral number */
+  gpioKey rx, tx; /* RX and TX pins */
   uint8_t priority; /* Interrupt priority */
+};
+/*----------------------------------------------------------------------------*/
+struct UartConfigRate
+{
+  uint8_t high;
+  uint8_t low;
+  uint8_t fraction;
 };
 /*----------------------------------------------------------------------------*/
 struct UartClass
@@ -46,14 +51,12 @@ struct Uart
   uint8_t channel; /* Peripheral number */
   struct Gpio rxPin, txPin; /* Peripheral pins */
 
-  struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
-  Mutex queueLock; /* Access to queues */
-
-  /* Controller-specific data */
-  LPC_UART_TypeDef *reg;
-  IRQn_Type irq;
+  LPC_UART_TypeDef *reg; /* Pointer to UART registers */
+  IRQn_Type irq; /* IRQ identifier */
 };
 /*----------------------------------------------------------------------------*/
 enum result uartSetDescriptor(uint8_t, void *);
+struct UartConfigRate uartCalcRate(uint32_t);
+enum result uartSetRate(struct Uart *, struct UartConfigRate);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

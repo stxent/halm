@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
-#include "lpc17xx_defines.h"
+#include "lpc17xx_defs.h"
 /*----------------------------------------------------------------------------*/
 extern inline uint8_t sysGetPeriphDiv(enum sysPeriphClock);
 extern inline void sysSetPeriphDiv(enum sysPeriphClock, uint8_t);

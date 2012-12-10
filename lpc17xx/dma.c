@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "lpc17xx_defines.h"
+#include "lpc17xx_defs.h"
 #include "lpc17xx_sys.h"
 #include "dma.h"
 #include "mutex.h"
@@ -119,9 +119,9 @@ void DMA_IRQHandler(void)
   LPC_GPDMA->DMACIntErrClr = (1 << CHANNEL_COUNT) - 1;
 }
 /*----------------------------------------------------------------------------*/
-enum result gpdmaInit(struct Dma *dma, const void *cdata)
+enum result gpdmaInit(struct Dma *dma, const void *configPtr)
 {
-  const struct DmaConfig *config = (const struct DmaConfig *)cdata;
+  const struct DmaConfig *config = (const struct DmaConfig *)configPtr;
 
   if (!config || config->channel >= CHANNEL_COUNT)
     return E_ERROR;
