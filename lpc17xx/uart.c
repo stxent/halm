@@ -152,23 +152,21 @@ void UART3_IRQHandler(void)
 /*----------------------------------------------------------------------------*/
 struct UartConfigRate uartCalcRate(uint32_t rate)
 {
-  uint32_t divisor, reminder;
+  uint32_t divisor;
   struct UartConfigRate result = {
       .high = 0,
       .low = 0,
       .fraction = 0
   };
 
-  divisor = (SystemCoreClock / DEFAULT_DIV_VALUE) >> 4;
-  reminder = divisor * FRACTION_VALUE / rate;
-  divisor /= rate;
-  reminder -= divisor * FRACTION_VALUE;
+  divisor = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
   if (!(divisor >= (1 << 16) || !divisor))
   {
     result.high = (uint8_t)(divisor >> 8);
     result.low = (uint8_t)divisor;
-//    if (result.high > 0 || result.low > 1)
-//      result.fraction = (uint8_t)(reminder | (FRACTION_VALUE << 4));
+    /* TODO Add fractional part calculation */
+    /* if (result.high > 0 || result.low > 1)
+      result.fraction = 0; */
   }
   return result;
 }
