@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "lpc13xx_defines.h"
+#include "lpc13xx_defs.h"
 #include "gpio.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/

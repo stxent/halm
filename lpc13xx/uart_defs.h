@@ -7,10 +7,10 @@
 #ifndef UART_DEFS_H_
 #define UART_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include "lpc17xx_defs.h"
+#include "lpc13xx_defs.h"
 /*----------------------------------------------------------------------------*/
 /* UART register bits */
-/* IrDA, Modem signals, auto-baud and RS-485 not used */
+/* Modem signals, auto-baud and RS-485 not used */
 /*------------------Line Control Register-------------------------------------*/
 #define LCR_WORD_5BIT                   BIT_FIELD(0, 0)
 #define LCR_WORD_6BIT                   BIT_FIELD(1, 0)

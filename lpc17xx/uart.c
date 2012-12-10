@@ -10,6 +10,11 @@
 #include "uart_defs.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
+/* UART settings */
+#define FRACTION_VALUE                  15 /* Divisor from 1 to 15 */
+#define DEFAULT_DIV                     PCLK_DIV1
+#define DEFAULT_DIV_VALUE               1
+/*----------------------------------------------------------------------------*/
 /* UART pin function values */
 static const struct GpioPinFunc uartPins[] = {
     {
