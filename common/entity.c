@@ -26,7 +26,7 @@ void *init(const void *typeDesc, const void *args)
 /*----------------------------------------------------------------------------*/
 void deinit(void *entity)
 {
-  const struct EntityClass *type = ((struct Entity *)entity)->type;
+  const struct EntityClass *type = CLASS(entity);
 
   if (type->deinit)
     type->deinit(entity);

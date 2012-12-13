@@ -62,7 +62,7 @@ static void serialCleanup(struct Serial *device, enum cleanup step)
       queueDeinit(&device->rxQueue);
     case FREE_PERIPHERAL:
       /* Call UART class destructor */
-      Uart->parent.deinit((struct Interface *)device); //FIXME
+      Uart->parent.deinit((struct Interface *)device);
       break;
     default:
       break;
@@ -71,20 +71,25 @@ static void serialCleanup(struct Serial *device, enum cleanup step)
 /*----------------------------------------------------------------------------*/
 static void serialHandler(struct Uart *base)
 {
-  struct Serial *device = (struct Serial *)base; //FIXME
-  uint8_t counter = 0;
+  struct Serial *device = (struct Serial *)base;
+  uint8_t counter = 0, data;
 
   /* Interrupt status cleared when performed read operation on IIR register */
   switch (device->parent.reg->IIR & IIR_INT_MASK)
   {
     case IIR_INT_RDA:
     case IIR_INT_CTI:
-      /* Byte removed from FIFO after RBR register read operation */
+      /* Byte will be removed from FIFO after reading from RBR register */
       while (device->parent.reg->LSR & LSR_RDR)
-        queuePush(&device->rxQueue, device->parent.reg->RBR);
+      {
+        data = device->parent.reg->RBR;
+        /* Received bytes will be dropped when queue becomes full */
+        if (!queueFull(&device->rxQueue))
+          queuePush(&device->rxQueue, data);
+      }
       break;
     case IIR_INT_THRE:
-      /* Fill FIFO with 8 bytes or less */
+      /* Fill FIFO with selected burst size or less */
       while (queueSize(&device->txQueue) && counter++ < TX_FIFO_SIZE)
         device->parent.reg->THR = queuePop(&device->txQueue);
       break;
