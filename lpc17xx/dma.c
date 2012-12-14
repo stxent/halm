@@ -235,7 +235,8 @@ uint16_t dmaGetCount(const struct Dma *dma)
 /*----------------------------------------------------------------------------*/
 bool dmaIsActive(const struct Dma *dma)
 {
-  return LPC_GPDMA->DMACEnbldChns & (1 << dma->channel) != 0;
+  /* FIXME */
+  return dma->active && (LPC_GPDMA->DMACEnbldChns & (1 << dma->channel) != 0);
 }
 /*----------------------------------------------------------------------------*/
 /* TODO Rewrite */

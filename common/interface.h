@@ -29,9 +29,9 @@ struct InterfaceClass
   CLASS_GENERATOR(Interface)
 
   /* Receive data, arguments: data buffer, message size */
-  unsigned int (*read)(struct Interface *, uint8_t *, unsigned int);
+  uint32_t (*read)(struct Interface *, uint8_t *, uint32_t);
   /* Send data, arguments: data buffer, message size */
-  unsigned int (*write)(struct Interface *, const uint8_t *, unsigned int);
+  uint32_t (*write)(struct Interface *, const uint8_t *, uint32_t);
   /* Get interface option, arguments: option id, pointer to save value */
   enum result (*getopt)(struct Interface *, enum ifOption, void *);
   /* Set interface option, arguments: option id, pointer to new value */
@@ -43,8 +43,8 @@ struct Interface
   struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
-unsigned int ifRead(struct Interface *, uint8_t *, unsigned int);
-unsigned int ifWrite(struct Interface *, const uint8_t *, unsigned int);
+uint32_t ifRead(struct Interface *, uint8_t *, uint32_t);
+uint32_t ifWrite(struct Interface *, const uint8_t *, uint32_t);
 enum result ifGetOpt(struct Interface *, enum ifOption, void *);
 enum result ifSetOpt(struct Interface *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/

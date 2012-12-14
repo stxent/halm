@@ -25,9 +25,8 @@ static void serialCleanup(struct Serial *, enum cleanup);
 static void serialHandler(struct Uart *);
 static enum result serialInit(struct Interface *, const void *);
 static void serialDeinit(struct Interface *);
-static unsigned int serialRead(struct Interface *, uint8_t *, unsigned int);
-static unsigned int serialWrite(struct Interface *, const uint8_t *,
-    unsigned int);
+static uint32_t serialRead(struct Interface *, uint8_t *, uint32_t);
+static uint32_t serialWrite(struct Interface *, const uint8_t *, uint32_t);
 static enum result serialGetOpt(struct Interface *, enum ifOption, void *);
 static enum result serialSetOpt(struct Interface *, enum ifOption,
     const void *);
@@ -98,10 +97,10 @@ static void serialHandler(struct Uart *base)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGetOpt(struct Interface *iface, enum ifOption option,
-    void *data)
+static enum result serialGetOpt(struct Interface *interface,
+    enum ifOption option, void *data)
 {
-  struct Serial *device = (struct Serial *)iface;
+  struct Serial *device = (struct Serial *)interface;
 
   switch (option)
   {
@@ -109,20 +108,20 @@ static enum result serialGetOpt(struct Interface *iface, enum ifOption option,
       /* TODO */
       return E_OK;
     case IF_QUEUE_RX:
-      *(uint8_t *)data = queueSize(&device->rxQueue);
+      *(uint32_t *)data = queueSize(&device->rxQueue);
       return E_OK;
     case IF_QUEUE_TX:
-      *(uint8_t *)data = queueSize(&device->txQueue);
+      *(uint32_t *)data = queueSize(&device->txQueue);
       return E_OK;
     default:
       return E_ERROR;
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetOpt(struct Interface *iface, enum ifOption option,
-    const void *data)
+static enum result serialSetOpt(struct Interface *interface,
+    enum ifOption option, const void *data)
 {
-  struct Serial *device = (struct Serial *)iface;
+  struct Serial *device = (struct Serial *)interface;
 
   switch (option)
   {
@@ -134,11 +133,11 @@ static enum result serialSetOpt(struct Interface *iface, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static unsigned int serialRead(struct Interface *iface, uint8_t *buffer,
-    unsigned int length)
+static uint32_t serialRead(struct Interface *interface, uint8_t *buffer,
+    uint32_t length)
 {
-  struct Serial *device = (struct Serial *)iface;
-  unsigned int read = 0;
+  struct Serial *device = (struct Serial *)interface;
+  uint32_t read = 0;
 
   mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->parent.irq);
@@ -152,11 +151,11 @@ static unsigned int serialRead(struct Interface *iface, uint8_t *buffer,
   return read;
 }
 /*----------------------------------------------------------------------------*/
-static unsigned int serialWrite(struct Interface *iface, const uint8_t *buffer,
-    unsigned int length)
+static uint32_t serialWrite(struct Interface *interface, const uint8_t *buffer,
+    uint32_t length)
 {
-  struct Serial *device = (struct Serial *)iface;
-  unsigned int written = 0;
+  struct Serial *device = (struct Serial *)interface;
+  uint32_t written = 0;
 
   mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->parent.irq);
@@ -181,22 +180,23 @@ static unsigned int serialWrite(struct Interface *iface, const uint8_t *buffer,
   return written;
 }
 /*----------------------------------------------------------------------------*/
-static void serialDeinit(struct Interface *iface)
+static void serialDeinit(struct Interface *interface)
 {
-  struct Serial *device = (struct Serial *)iface;
+  struct Serial *device = (struct Serial *)interface;
 
   /* Release resources */
   serialCleanup(device, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(struct Interface *iface, const void *configPtr)
+static enum result serialInit(struct Interface *interface,
+    const void *configPtr)
 {
   /* Set pointer to device configuration data */
   const struct SerialConfig *config = (const struct SerialConfig *)configPtr;
-  struct Serial *device = (struct Serial *)iface;
+  struct Serial *device = (struct Serial *)interface;
 
   /* Call UART class constructor */
-  if (Uart->parent.init(iface, configPtr) != E_OK)
+  if (Uart->parent.init(interface, configPtr) != E_OK)
     return E_ERROR;
 
   /* Initialize RX and TX queues */
@@ -228,7 +228,7 @@ static enum result serialInit(struct Interface *iface, const void *configPtr)
   device->parent.reg->IER = IER_RBR | IER_THRE;
   device->parent.reg->TER = TER_TXEN;
 
-  /* Enable UART interrupt and set priority, lowest by default */
+  /* Enable UART interrupt */
   NVIC_EnableIRQ(device->parent.irq);
   return E_OK;
 }

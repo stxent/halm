@@ -11,7 +11,6 @@
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 /* UART settings */
-#define FRACTION_VALUE                  15 /* Divisor from 1 to 15 */
 #define DEFAULT_DIV                     PCLK_DIV1
 #define DEFAULT_DIV_VALUE               1
 /*----------------------------------------------------------------------------*/

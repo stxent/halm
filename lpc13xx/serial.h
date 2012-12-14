@@ -17,7 +17,7 @@ struct SerialConfig
 {
   struct UartConfig uart;
   uint32_t rate;
-  uint16_t rxLength, txLength; /* Queue lengths */
+  uint32_t rxLength, txLength; /* Queue lengths */
 };
 /*----------------------------------------------------------------------------*/
 struct Serial

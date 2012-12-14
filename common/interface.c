@@ -6,25 +6,29 @@
 
 #include "interface.h"
 /*----------------------------------------------------------------------------*/
-unsigned int ifRead(struct Interface *iface, uint8_t *buffer,
-    unsigned int length)
+uint32_t ifRead(struct Interface *interface, uint8_t *buffer, uint32_t length)
 {
-  return ((struct InterfaceClass *)CLASS(iface))->read(iface, buffer, length);
+  return ((struct InterfaceClass *)CLASS(interface))->read(interface, buffer,
+      length);
 }
 /*----------------------------------------------------------------------------*/
-unsigned int ifWrite(struct Interface *iface, const uint8_t *buffer,
-    unsigned int length)
+uint32_t ifWrite(struct Interface *interface, const uint8_t *buffer,
+    uint32_t length)
 {
-  return ((struct InterfaceClass *)CLASS(iface))->write(iface, buffer, length);
+  return ((struct InterfaceClass *)CLASS(interface))->write(interface, buffer,
+      length);
 }
 /*----------------------------------------------------------------------------*/
-enum result ifGetOpt(struct Interface *iface, enum ifOption option, void *data)
+enum result ifGetOpt(struct Interface *interface, enum ifOption option,
+    void *data)
 {
-  return ((struct InterfaceClass *)CLASS(iface))->getopt(iface, option, data);
+  return ((struct InterfaceClass *)CLASS(interface))->getopt(interface, option,
+      data);
 }
 /*----------------------------------------------------------------------------*/
-enum result ifSetOpt(struct Interface *iface, enum ifOption option,
+enum result ifSetOpt(struct Interface *interface, enum ifOption option,
     const void *data)
 {
-  return ((struct InterfaceClass *)CLASS(iface))->setopt(iface, option, data);
+  return ((struct InterfaceClass *)CLASS(interface))->setopt(interface, option,
+      data);
 }

@@ -13,6 +13,7 @@
 /*----------------------------------------------------------------------------*/
 struct Queue
 {
+  /* TODO Replace with uint? */
   uint16_t size; /* Current queue size */
   uint16_t capacity; /* Queue capacity */
   uint16_t floor, ceil; /* Indexes of first and last elements in queue */
