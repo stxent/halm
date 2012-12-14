@@ -18,7 +18,6 @@ struct SerialDmaConfig
   struct UartConfig uart;
   int8_t rxChannel, txChannel; /* DMA channels */
   uint32_t rate;
-//  uint16_t rxLength, txLength; /* Receive buffer length */
 };
 /*----------------------------------------------------------------------------*/
 struct SerialDma
