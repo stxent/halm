@@ -43,6 +43,7 @@
 #define FCR_ENABLE                      BIT(0)
 #define FCR_RX_RESET                    BIT(1)
 #define FCR_TX_RESET                    BIT(2)
+#define FCR_DMA_ENABLE                  BIT(3)
 /*
  * Level 0:  1 character
  * Level 1:  4 characters

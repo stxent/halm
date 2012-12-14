@@ -112,7 +112,7 @@ struct DmaClass
   CLASS_GENERATOR(Dma)
 
   /* Start DMA transmission */
-  enum result (*start)(struct Dma *, void *, void *, uint16_t);
+  enum result (*start)(struct Dma *, void *, const void *, uint16_t);
   /* Disable a channel and lose data in the FIFO */
   void (*stop)(struct Dma *);
   /* Disable a channel without losing data in the FIFO */
@@ -121,21 +121,23 @@ struct DmaClass
 /*----------------------------------------------------------------------------*/
 struct Dma
 {
-  enum dmaDirection direction;
-  bool active;
+  struct Entity parent;
+
   uint8_t channel;
+  bool active;
+  enum dmaDirection direction;
 
   /* Precalculated values of DMA connection multiplexer register */
   uint8_t muxMask, muxValue;
   /* Precalculated values of channel control and configuration registers */
   uint32_t control, config;
 
-  /* Device-specific data */
+  /* Controller-specific data */
   LPC_GPDMACH_TypeDef *reg;
 };
 /*----------------------------------------------------------------------------*/
 /*------------------Virtual functions-----------------------------------------*/
-enum result dmaStart(struct Dma *, void *, void *, uint16_t);
+enum result dmaStart(struct Dma *, void *, const void *, uint16_t);
 void dmaStop(struct Dma *);
 void dmaHalt(struct Dma *);
 /*----------------------------------------------------------------------------*/

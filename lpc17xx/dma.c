@@ -42,11 +42,11 @@
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t);
 static void setMux(struct Dma *, enum dmaLine);
 /*----------------------------------------------------------------------------*/
-enum result gpdmaInit(struct Dma *, const void *);
-void gpdmaDeinit(struct Dma *);
-enum result gpdmaStart(struct Dma *, void *, void *, uint16_t);
-void gpdmaStop(struct Dma *);
-void gpdmaHalt(struct Dma *);
+static enum result gpdmaInit(struct Dma *, const void *);
+static void gpdmaDeinit(struct Dma *);
+static enum result gpdmaStart(struct Dma *, void *, const void *, uint16_t);
+static void gpdmaStop(struct Dma *);
+static void gpdmaHalt(struct Dma *);
 /*----------------------------------------------------------------------------*/
 static const struct DmaClass gpdmaTable = {
     .size = sizeof(struct Dma),
@@ -68,7 +68,7 @@ static uint16_t instances = 0;
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t channel)
 {
   return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0 +
-      (LPC_GPDMACH1 - LPC_GPDMACH0) * channel);
+      ((void *)LPC_GPDMACH1 - (void *)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
 enum result dmaSetDescriptor(uint8_t channel, void *descriptor)
@@ -119,7 +119,7 @@ void DMA_IRQHandler(void)
   LPC_GPDMA->DMACIntErrClr = (1 << CHANNEL_COUNT) - 1;
 }
 /*----------------------------------------------------------------------------*/
-enum result gpdmaInit(struct Dma *dma, const void *configPtr)
+static enum result gpdmaInit(struct Dma *dma, const void *configPtr)
 {
   const struct DmaConfig *config = (const struct DmaConfig *)configPtr;
 
@@ -168,7 +168,7 @@ enum result gpdmaInit(struct Dma *dma, const void *configPtr)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void gpdmaDeinit(struct Dma *dma)
+static void gpdmaDeinit(struct Dma *dma)
 {
   mutexLock(&lock);
   instances--;
@@ -182,7 +182,8 @@ void gpdmaDeinit(struct Dma *dma)
   mutexUnlock(&lock);
 }
 /*----------------------------------------------------------------------------*/
-enum result gpdmaStart(struct Dma *dma, void *src, void *dest, uint16_t size)
+static enum result gpdmaStart(struct Dma *dma, void *dest, const void *src,
+    uint16_t size)
 {
   if (dmaSetDescriptor(dma->channel, dma) != E_OK)
     return E_ERROR;
@@ -205,19 +206,40 @@ enum result gpdmaStart(struct Dma *dma, void *src, void *dest, uint16_t size)
 
   dma->active = true;
   dma->reg->DMACCConfig |= C_CONFIG_ENABLE;
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void gpdmaStop(struct Dma *dma)
+static void gpdmaStop(struct Dma *dma)
 {
   /* Disable channel */
   dma->reg->DMACCConfig &= ~C_CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-void gpdmaHalt(struct Dma *dma)
+static void gpdmaHalt(struct Dma *dma)
 {
   /* Ignore future requests */
   dma->reg->DMACCConfig |= C_CONFIG_HALT;
 }
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+//FIXME
+enum result dmaStart(struct Dma *dma, void *dest, const void *src,
+    uint16_t size)
+{
+  return ((struct DmaClass *)CLASS(dma))->start(dma, dest, src, size);
+}
+/*----------------------------------------------------------------------------*/
+void dmaStop(struct Dma *dma)
+{
+  ((struct DmaClass *)CLASS(dma))->stop(dma);
+}
+/*----------------------------------------------------------------------------*/
+void dmaHalt(struct Dma *dma)
+{
+  ((struct DmaClass *)CLASS(dma))->halt(dma);
+}
+/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
 uint16_t dmaGetCount(const struct Dma *dma)
 {

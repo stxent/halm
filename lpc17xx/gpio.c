@@ -22,7 +22,7 @@ static inline uint32_t *calcPinModeOD(union GpioPin);
 static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
 {
   return (LPC_GPIO_TypeDef *)((void *)LPC_GPIO0 +
-      (LPC_GPIO1 - LPC_GPIO0) * p.port);
+      ((void *)LPC_GPIO1 - (void *)LPC_GPIO0) * p.port);
 }
 /*----------------------------------------------------------------------------*/
 static inline uint32_t *calcPinSelect(union GpioPin p)
