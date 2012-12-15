@@ -7,69 +7,29 @@
 #include "lpc17xx_defs.h"
 #include "lpc17xx_sys.h"
 #include "dma.h"
+#include "dma_defs.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT                   8
 /*----------------------------------------------------------------------------*/
-/*------------------DMA configuration register--------------------------------*/
-#define DMA_ENABLE                      BIT(0)
-/* 0 for little-endian, 1 for big-endian */
-#define DMA_ENDIANNESS                  BIT(1)
-/*------------------DMA Channel Control register------------------------------*/
-#define C_CONTROL_SIZE(size)            (size)
-#define C_CONTROL_SIZE_MASK             0x0FFF
-#define C_CONTROL_SRC_BURST(burst)      ((burst) << 12)
-#define C_CONTROL_DEST_BURST(burst)     ((burst) << 15)
-#define C_CONTROL_SRC_WIDTH(width)      ((width) << 18)
-#define C_CONTROL_DEST_WIDTH(width)     ((width) << 21)
-#define C_CONTROL_SRC_INC               BIT(26) /* Source increment */
-#define C_CONTROL_DEST_INC              BIT(27) /* Destination increment */
-#define C_CONTROL_INT                   BIT(31) /* Terminal count interrupt */
-/*------------------DMA Channel Configuration register------------------------*/
-#define C_CONFIG_ENABLE                 BIT(0)
-#define C_CONFIG_SRC_PERIPH(periph)     ((periph >> 2) << 1)
-#define C_CONFIG_DEST_PERIPH(periph)    ((periph >> 2) << 6)
-/* Transfer type */
-#define C_CONFIG_TYPE(type)             ((type) << 11)
-/* Interrupt error mask */
-#define C_CONFIG_IE                     BIT(14)
-/* Terminal count interrupt mask */
-#define C_CONFIG_ITC                    BIT(15)
-/* Indicates whether FIFO not empty */
-#define C_CONFIG_ACTIVE                 BIT(17)
-#define C_CONFIG_HALT                   BIT(18)
-/*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t);
 static void setMux(struct Dma *, enum dmaLine);
 /*----------------------------------------------------------------------------*/
-static enum result gpdmaInit(struct Dma *, const void *);
-static void gpdmaDeinit(struct Dma *);
-static enum result gpdmaStart(struct Dma *, void *, const void *, uint16_t);
-static void gpdmaStop(struct Dma *);
-static void gpdmaHalt(struct Dma *);
+static enum result dmaInit(struct Dma *, const void *);
+static void dmaDeinit(struct Dma *);
 /*----------------------------------------------------------------------------*/
-static const struct DmaClass gpdmaTable = {
+static const struct DmaClass dmaTable = {
     .size = sizeof(struct Dma),
-    .init = gpdmaInit,
-    .deinit = gpdmaDeinit,
-
-    .start = gpdmaStart,
-    .stop = gpdmaStop,
-    .halt = gpdmaHalt
+    .init = dmaInit,
+    .deinit = dmaDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct DmaClass *Dma = &gpdmaTable;
+const struct DmaClass *Dma = &dmaTable;
 /*----------------------------------------------------------------------------*/
 static void * volatile descriptors[] = {0, 0, 0, 0, 0, 0, 0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /* Initialized descriptors count */
 static uint16_t instances = 0;
-/*----------------------------------------------------------------------------*/
-static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t channel)
-{
-  return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0 +
-      ((void *)LPC_GPDMACH1 - (void *)LPC_GPDMACH0) * channel);
-}
 /*----------------------------------------------------------------------------*/
 enum result dmaSetDescriptor(uint8_t channel, void *descriptor)
 {
@@ -83,18 +43,6 @@ enum result dmaSetDescriptor(uint8_t channel, void *descriptor)
   }
   mutexUnlock(&lock);
   return res;
-}
-/*----------------------------------------------------------------------------*/
-static void setMux(struct Dma *dma, enum dmaLine line)
-{
-  uint8_t pos;
-
-  if (line >= DMA_LINE_UART0_TX && line != DMA_LINE_MEMORY)
-  {
-    pos = (line >> 2) - 8;
-    dma->muxMask &= ~(1 << pos);
-    dma->muxValue |= (line & 1) << pos;
-  }
 }
 /*----------------------------------------------------------------------------*/
 void DMA_IRQHandler(void)
@@ -119,7 +67,25 @@ void DMA_IRQHandler(void)
   LPC_GPDMA->DMACIntErrClr = (1 << CHANNEL_COUNT) - 1;
 }
 /*----------------------------------------------------------------------------*/
-static enum result gpdmaInit(struct Dma *dma, const void *configPtr)
+static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t channel)
+{
+  return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0 +
+      ((void *)LPC_GPDMACH1 - (void *)LPC_GPDMACH0) * channel);
+}
+/*----------------------------------------------------------------------------*/
+static void setMux(struct Dma *dma, enum dmaLine line)
+{
+  uint8_t pos;
+
+  if (line >= DMA_LINE_UART0_TX && line != DMA_LINE_MEMORY)
+  {
+    pos = (line >> 2) - 8;
+    dma->muxMask &= ~(1 << pos);
+    dma->muxValue |= (line & 1) << pos;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result dmaInit(struct Dma *dma, const void *configPtr)
 {
   const struct DmaConfig *config = (const struct DmaConfig *)configPtr;
 
@@ -168,7 +134,7 @@ static enum result gpdmaInit(struct Dma *dma, const void *configPtr)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void gpdmaDeinit(struct Dma *dma)
+static void dmaDeinit(struct Dma *dma)
 {
   mutexLock(&lock);
   instances--;
@@ -182,7 +148,7 @@ static void gpdmaDeinit(struct Dma *dma)
   mutexUnlock(&lock);
 }
 /*----------------------------------------------------------------------------*/
-static enum result gpdmaStart(struct Dma *dma, void *dest, const void *src,
+enum result dmaStart(struct Dma *dma, void *dest, const void *src,
     uint16_t size)
 {
   if (dmaSetDescriptor(dma->channel, dma) != E_OK)
@@ -210,36 +176,43 @@ static enum result gpdmaStart(struct Dma *dma, void *dest, const void *src,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void gpdmaStop(struct Dma *dma)
+enum result dmaStartList(struct Dma *dma, struct DmaListItem *first)
+{
+  if (dmaSetDescriptor(dma->channel, dma) != E_OK)
+    return E_ERROR;
+
+  LPC_SC->DMAREQSEL &= dma->muxMask;
+  LPC_SC->DMAREQSEL |= dma->muxValue;
+
+  dma->reg->DMACCSrcAddr = first->source;
+  dma->reg->DMACCDestAddr = first->destination;
+  dma->reg->DMACCControl = first->control;
+  dma->reg->DMACCLLI = first->next;
+
+  dma->reg->DMACCConfig = dma->config;
+
+  /* Clear interrupt requests */
+  LPC_GPDMA->DMACIntTCClear |= 1 << dma->channel;
+  LPC_GPDMA->DMACIntErrClr |= 1 << dma->channel;
+
+  dma->active = true;
+  dma->reg->DMACCConfig |= C_CONFIG_ENABLE;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+void dmaStop(struct Dma *dma)
 {
   /* Disable channel */
   dma->reg->DMACCConfig &= ~C_CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static void gpdmaHalt(struct Dma *dma)
+void dmaHalt(struct Dma *dma)
 {
   /* Ignore future requests */
   dma->reg->DMACCConfig |= C_CONFIG_HALT;
+  //FIXME Clear enable bit?
 }
-/*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
-//FIXME
-enum result dmaStart(struct Dma *dma, void *dest, const void *src,
-    uint16_t size)
-{
-  return ((struct DmaClass *)CLASS(dma))->start(dma, dest, src, size);
-}
-/*----------------------------------------------------------------------------*/
-void dmaStop(struct Dma *dma)
-{
-  ((struct DmaClass *)CLASS(dma))->stop(dma);
-}
-/*----------------------------------------------------------------------------*/
-void dmaHalt(struct Dma *dma)
-{
-  ((struct DmaClass *)CLASS(dma))->halt(dma);
-}
-/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
 uint16_t dmaGetCount(const struct Dma *dma)
 {
@@ -247,6 +220,7 @@ uint16_t dmaGetCount(const struct Dma *dma)
    * Reading transfer size when the channel is active does not give
    * useful information
    */
+  //FIXME Check work with linked lists
   if (!dmaIsActive(dma))
   {
     /* Return transferred bytes count */
@@ -257,13 +231,15 @@ uint16_t dmaGetCount(const struct Dma *dma)
 /*----------------------------------------------------------------------------*/
 bool dmaIsActive(const struct Dma *dma)
 {
-  /* FIXME */
-  return dma->active && (LPC_GPDMA->DMACEnbldChns & (1 << dma->channel) != 0);
+  return dma->active;
 }
 /*----------------------------------------------------------------------------*/
-/* TODO Rewrite */
-void dmaLinkList(struct Dma *dma, const struct DmaListItem *list)
+/* Scatter-gather support */
+enum result dmaLinkItem(struct Dma *dma, struct DmaListItem *current,
+    struct DmaListItem *next, void *dest, const void *src, uint16_t size)
 {
-  /* Linked list items must be aligned at 4-byte boundary */
-  dma->reg->DMACCLLI = (uint32_t)list;
+  current->source = (uint32_t)src;
+  current->destination = (uint32_t)dest;
+  current->next = (uint32_t)next;
+  current->control = dma->control | C_CONTROL_SIZE(size);
 }
