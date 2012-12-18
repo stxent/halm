@@ -30,8 +30,8 @@ static const struct GpioPinFunc uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static enum result uartInit(struct Interface *, const void *);
-static void uartDeinit(struct Interface *);
+static enum result uartInit(void *, const void *);
+static void uartDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct UartClass uartTable = {
     .parent = {
@@ -112,9 +112,9 @@ enum result uartSetRate(struct Uart *device, struct UartConfigRate rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void uartDeinit(struct Interface *iface)
+static void uartDeinit(void *object)
 {
-  struct Uart *device = (struct Uart *)iface;
+  struct Uart *device = object;
 
   /* Disable UART peripheral power */
   LPC_SYSCON->UARTCLKDIV = 0;
@@ -126,11 +126,11 @@ static void uartDeinit(struct Interface *iface)
   uartSetDescriptor(device->channel, 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result uartInit(struct Interface *iface, const void *configPtr)
+static enum result uartInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
-  const struct UartConfig *config = (const struct UartConfig *)configPtr;
-  struct Uart *device = (struct Uart *)iface;
+  const struct UartConfig *config = configPtr;
+  struct Uart *device = object;
   uint8_t rxFunc, txFunc;
 
   /* Check device configuration data and availability */

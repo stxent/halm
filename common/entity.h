@@ -11,8 +11,8 @@
 /*----------------------------------------------------------------------------*/
 #define CLASS_GENERATOR(name) \
   unsigned int size;\
-  enum result (*init)(struct name *, const void *);\
-  void (*deinit)(struct name *);
+  enum result (*init)(void *, const void *);\
+  void (*deinit)(void *);
 #define CLASS(instance) (((struct Entity *)(instance))->type)
 /*----------------------------------------------------------------------------*/
 struct Entity;

@@ -145,13 +145,9 @@ bool dmaIsActive(const struct Dma *);
 /* Get the number of completed transfers */
 uint16_t dmaGetCount(const struct Dma *); //FIXME
 /*----------------------------------------------------------------------------*/
-///* Clear first element of linked list */
-//void dmaClearFirst(struct Dma *, struct DmaListItem *);
 /* Link next element to list */
 enum result dmaLinkItem(struct Dma *, struct DmaListItem *,
     struct DmaListItem *, void *, const void *, uint16_t);
-///* Set pointer to start of the linked list for scatter-gather */
-//void dmaSetList(struct Dma *, const struct DmaListItem *);
 /*----------------------------------------------------------------------------*/
 enum result dmaSetDescriptor(uint8_t, void *);
 /*----------------------------------------------------------------------------*/

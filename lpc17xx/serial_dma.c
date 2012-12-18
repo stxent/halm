@@ -24,13 +24,13 @@ enum cleanup
 static void serialCleanup(struct SerialDma *, enum cleanup);
 static enum result serialDmaSetup(struct SerialDma *, int8_t, int8_t);
 /*----------------------------------------------------------------------------*/
-static void serialHandler(struct Uart *);
-static enum result serialInit(struct Interface *, const void *);
-static void serialDeinit(struct Interface *);
-static uint32_t serialRead(struct Interface *, uint8_t *, uint32_t);
-static uint32_t serialWrite(struct Interface *, const uint8_t *, uint32_t);
-static enum result serialGetOpt(struct Interface *, enum ifOption, void *);
-static enum result serialSetOpt(struct Interface *, enum ifOption,
+static void serialHandler(void *);
+static enum result serialInit(void *, const void *);
+static void serialDeinit(void *);
+static uint32_t serialRead(void *, uint8_t *, uint32_t);
+static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
+static enum result serialGetOpt(void *, enum ifOption, void *);
+static enum result serialSetOpt(void *, enum ifOption,
     const void *);
 /*----------------------------------------------------------------------------*/
 static const enum dmaLine dmaTxLines[] = {
@@ -76,22 +76,21 @@ static void serialCleanup(struct SerialDma *device, enum cleanup step)
       deinit(device->rxDma);
     case FREE_PERIPHERAL:
       /* Call UART class destructor */
-      Uart->parent.deinit((struct Interface *)device); //FIXME
+      Uart->parent.deinit(device); //FIXME
       break;
     default:
       break;
   }
 }
 /*----------------------------------------------------------------------------*/
-static void serialHandler(struct Uart *base /*__attribute__((unused))*/)
+static void serialHandler(void *object /*__attribute__((unused))*/)
 {
 
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGetOpt(struct Interface *interface,
-    enum ifOption option, void *data)
+static enum result serialGetOpt(void *object, enum ifOption option, void *data)
 {
-  struct SerialDma *device = (struct SerialDma *)interface;
+  struct SerialDma *device = object;
 
   switch (option)
   {
@@ -103,10 +102,10 @@ static enum result serialGetOpt(struct Interface *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetOpt(struct Interface *interface,
-    enum ifOption option, const void *data)
+static enum result serialSetOpt(void *object, enum ifOption option,
+    const void *data)
 {
-  struct SerialDma *device = (struct SerialDma *)interface;
+  struct SerialDma *device = object;
 
   switch (option)
   {
@@ -118,10 +117,9 @@ static enum result serialSetOpt(struct Interface *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialRead(struct Interface *interface, uint8_t *buffer,
-    uint32_t length)
+static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct SerialDma *device = (struct SerialDma *)interface;
+  struct SerialDma *device = object;
 
   /* TODO Add DMA error handling */
   if (length && dmaStart(device->rxDma,
@@ -133,10 +131,10 @@ static uint32_t serialRead(struct Interface *interface, uint8_t *buffer,
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialWrite(struct Interface *interface, const uint8_t *buffer,
+static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
-  struct SerialDma *device = (struct SerialDma *)interface;
+  struct SerialDma *device = object;
 
   /* TODO Add DMA error handling */
   if (length && dmaStart(device->txDma,
@@ -196,24 +194,22 @@ static enum result serialDmaSetup(struct SerialDma *device, int8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void serialDeinit(struct Interface *interface)
+static void serialDeinit(void *object)
 {
-  struct SerialDma *device = (struct SerialDma *)interface;
+  struct SerialDma *device = object;
 
   /* Release resources */
   serialCleanup(device, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(struct Interface *interface,
-    const void *configPtr)
+static enum result serialInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
-  const struct SerialDmaConfig *config =
-      (const struct SerialDmaConfig *)configPtr;
-  struct SerialDma *device = (struct SerialDma *)interface;
+  const struct SerialDmaConfig *config = configPtr;
+  struct SerialDma *device = object;
 
   /* Call UART class constructor */
-  if (Uart->parent.init(interface, configPtr) != E_OK)
+  if (Uart->parent.init(object, configPtr) != E_OK)
     return E_ERROR;
 
   if (serialDmaSetup(device, config->rxChannel, config->txChannel) != E_OK)

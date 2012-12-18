@@ -41,7 +41,7 @@ struct UartClass
   struct InterfaceClass parent;
 
   /* Interrupt handler, arguments: UART descriptor assigned to peripheral */
-  void (*handler)(struct Uart *);
+  void (*handler)(void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Uart
