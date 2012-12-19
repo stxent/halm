@@ -15,10 +15,7 @@
 #include "interface.h"
 #include "gpio.h"
 /*----------------------------------------------------------------------------*/
-struct UartConfig;
-struct UartConfigRate;
 struct UartClass;
-struct Uart;
 /*----------------------------------------------------------------------------*/
 extern const struct UartClass *Uart;
 /*----------------------------------------------------------------------------*/

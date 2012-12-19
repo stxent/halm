@@ -9,17 +9,15 @@
 /*----------------------------------------------------------------------------*/
 #include "error.h"
 /*----------------------------------------------------------------------------*/
-#define CLASS_GENERATOR(name) \
+#define CLASS_GENERATOR \
   unsigned int size;\
   enum result (*init)(void *, const void *);\
   void (*deinit)(void *);
 #define CLASS(instance) (((struct Entity *)(instance))->type)
 /*----------------------------------------------------------------------------*/
-struct Entity;
-/*----------------------------------------------------------------------------*/
 struct EntityClass
 {
-  CLASS_GENERATOR(Entity);
+  CLASS_GENERATOR
 };
 /*----------------------------------------------------------------------------*/
 struct Entity

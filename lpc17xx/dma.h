@@ -15,7 +15,6 @@
 #include "error.h"
 #include "entity.h"
 /*----------------------------------------------------------------------------*/
-struct Dma;
 struct DmaClass;
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass *Dma;
@@ -109,7 +108,7 @@ struct DmaListItem /* Rewrite */
 /* Class descriptor */
 struct DmaClass
 {
-  CLASS_GENERATOR(Dma)
+  CLASS_GENERATOR
 };
 /*----------------------------------------------------------------------------*/
 struct Dma
