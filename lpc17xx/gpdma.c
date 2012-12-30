@@ -139,8 +139,8 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   /* LPC17xx does not support 2 bytes burst */
   if (config->burst >= DMA_BURST_4)
   {
-    controller->control |= C_CONTROL_SRC_BURST(config->burst) |
-        C_CONTROL_DEST_BURST(config->burst);
+    controller->control |= C_CONTROL_SRC_BURST(config->burst - 1) |
+        C_CONTROL_DEST_BURST(config->burst - 1);
   }
   if (config->source.increment)
     controller->control |= C_CONTROL_SRC_INC;
