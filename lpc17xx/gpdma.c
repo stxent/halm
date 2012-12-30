@@ -14,6 +14,8 @@
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t);
 static void setMux(struct Gpdma *, enum gpdmaLine);
+void terminalHandler(struct Gpdma *);
+void errorHandler(struct Gpdma *);
 /*----------------------------------------------------------------------------*/
 static enum result gpdmaInit(void *, const void *);
 static void gpdmaDeinit(void *);
@@ -44,7 +46,7 @@ static Mutex lock = MUTEX_UNLOCKED;
 static uint16_t instances = 0;
 /*----------------------------------------------------------------------------*/
 /* TODO Replace return type */
-enum result dmaSetDescriptor(uint8_t channel, void *descriptor)
+enum result gpdmaSetDescriptor(uint8_t channel, void *descriptor)
 {
   enum result res = E_ERROR;
 
@@ -58,26 +60,46 @@ enum result dmaSetDescriptor(uint8_t channel, void *descriptor)
   return res;
 }
 /*----------------------------------------------------------------------------*/
+void terminalHandler(struct Gpdma *controller)
+{
+  controller->parent.active = false;
+}
+/*----------------------------------------------------------------------------*/
+void errorHandler(struct Gpdma *controller)
+{
+  controller->parent.active = false;
+}
+/*----------------------------------------------------------------------------*/
 void DMA_IRQHandler(void)
 {
-  uint8_t counter = 0;
-  uint32_t stat = LPC_GPDMA->DMACIntTCStat;
+  int8_t counter = CHANNEL_COUNT - 1;
+  uint8_t mask = 0x80;
+  uint8_t terminalStat = LPC_GPDMA->DMACIntTCStat;
+  uint8_t errorStat = LPC_GPDMA->DMACIntErrStat;
 
-  for (; counter < CHANNEL_COUNT; counter++)
+  for (; counter >= 0; counter--, mask >>= 1)
   {
-    if (stat & (1 << counter))
+    if (terminalStat & mask)
     {
       if (descriptors[counter])
       {
-        /* Clear channel descriptor */
-        ((struct Dma **)descriptors)[counter]->active = false;
-        ((struct Dma **)descriptors)[counter] = 0;
+        terminalHandler(descriptors[counter]);
+        descriptors[counter] = 0; /* Clear channel descriptor */
       }
       /* Clear terminal count interrupt flag */
-      LPC_GPDMA->DMACIntTCClear = 1 << counter;
+      LPC_GPDMA->DMACIntTCClear = mask;
+    }
+    if (errorStat & mask)
+    {
+      if (descriptors[counter])
+      {
+        errorHandler(descriptors[counter]);
+        descriptors[counter] = 0; /* Clear channel descriptor */
+      }
+      /* Clear error interrupt flag */
+      LPC_GPDMA->DMACIntErrClr = mask;
     }
   }
-  LPC_GPDMA->DMACIntErrClr = (1 << CHANNEL_COUNT) - 1;
 }
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t channel)
@@ -174,7 +196,7 @@ enum result gpdmaStart(void *object, void *dest, const void *src, uint32_t size)
 {
   struct Gpdma *controller = object;
 
-  if (dmaSetDescriptor(controller->parent.channel, object) != E_OK)
+  if (gpdmaSetDescriptor(controller->parent.channel, object) != E_OK)
     return E_ERROR;
 
   LPC_SC->DMAREQSEL &= controller->muxMask;
@@ -204,7 +226,7 @@ enum result gpdmaStartList(void *object, const void *first)
   struct Gpdma *controller = object;
   const struct GpdmaListItem *item = first;
 
-  if (dmaSetDescriptor(controller->parent.channel, object) != E_OK)
+  if (gpdmaSetDescriptor(controller->parent.channel, object) != E_OK)
     return E_ERROR;
 
   LPC_SC->DMAREQSEL &= controller->muxMask;

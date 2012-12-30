@@ -22,7 +22,7 @@ enum result dmaStart(void *controller, void *dest, const void *src,
 /*----------------------------------------------------------------------------*/
 /** Start scatter-gather DMA transmission.
  *  @param controller Pointer to Dma object.
- *  @param first Pointer to first list descriptor.
+ *  @param first Pointer to the first descriptor in linked list.
  *  @return Returns E_OK on success.
  */
 enum result dmaStartList(void *controller, const void *first)
