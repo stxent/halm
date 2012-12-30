@@ -8,6 +8,7 @@
 /*----------------------------------------------------------------------------*/
 #include "uart_defs.h"
 #include "serial_dma.h"
+#include "gpdma.h"
 /*----------------------------------------------------------------------------*/
 ///* Serial port settings */
 //#define TX_FIFO_SIZE                    8
@@ -33,18 +34,18 @@ static enum result serialGetOpt(void *, enum ifOption, void *);
 static enum result serialSetOpt(void *, enum ifOption,
     const void *);
 /*----------------------------------------------------------------------------*/
-static const enum dmaLine dmaTxLines[] = {
-    DMA_LINE_UART0_TX,
-    DMA_LINE_UART1_TX,
-    DMA_LINE_UART2_TX,
-    DMA_LINE_UART3_TX
+static const enum gpdmaLine dmaTxLines[] = {
+    GPDMA_LINE_UART0_TX,
+    GPDMA_LINE_UART1_TX,
+    GPDMA_LINE_UART2_TX,
+    GPDMA_LINE_UART3_TX
 };
 /*----------------------------------------------------------------------------*/
-static const enum dmaLine dmaRxLines[] = {
-    DMA_LINE_UART0_RX,
-    DMA_LINE_UART1_RX,
-    DMA_LINE_UART2_RX,
-    DMA_LINE_UART3_RX
+static const enum gpdmaLine dmaRxLines[] = {
+    GPDMA_LINE_UART0_RX,
+    GPDMA_LINE_UART1_RX,
+    GPDMA_LINE_UART2_RX,
+    GPDMA_LINE_UART3_RX
 };
 /*----------------------------------------------------------------------------*/
 /* We like structures so we put a structure in a structure */
@@ -150,7 +151,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 static enum result serialDmaSetup(struct SerialDma *device, int8_t rxChannel,
     int8_t txChannel)
 {
-  struct DmaConfig channels[2] =
+  struct GpdmaConfig channels[2] =
   {
       {
           .channel = rxChannel,
@@ -159,33 +160,33 @@ static enum result serialDmaSetup(struct SerialDma *device, int8_t rxChannel,
               .increment = false
           },
           .destination = {
-              .line = DMA_LINE_MEMORY,
+              .line = GPDMA_LINE_MEMORY,
               .increment = true
           },
-          .direction = DMA_DIR_P2M,
+          .direction = GPDMA_DIR_P2M,
           .burst = DMA_BURST_1,
           .width = DMA_WIDTH_BYTE
       },
       {
           .channel = txChannel,
           .source = {
-              .line = DMA_LINE_MEMORY,
+              .line = GPDMA_LINE_MEMORY,
               .increment = true
           },
           .destination = {
               .line = dmaTxLines[device->parent.channel],
               .increment = false
           },
-          .direction = DMA_DIR_M2P,
+          .direction = GPDMA_DIR_M2P,
           .burst = DMA_BURST_1,
           .width = DMA_WIDTH_BYTE
       }
   };
 
-  device->rxDma = init(Dma, channels + 0);
+  device->rxDma = init(Gpdma, channels + 0);
   if (!device->rxDma)
     return E_ERROR;
-  device->txDma = init(Dma, channels + 1);
+  device->txDma = init(Gpdma, channels + 1);
   if (!device->txDma)
   {
     deinit(device->rxDma);
@@ -207,21 +208,23 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct SerialDmaConfig *config = configPtr;
   struct SerialDma *device = object;
+  enum result res;
 
   /* Call UART class constructor */
-  if (Uart->parent.init(object, configPtr) != E_OK)
-    return E_ERROR;
+  if ((res = Uart->parent.init(object, configPtr)) != E_OK)
+    return res;
 
-  if (serialDmaSetup(device, config->rxChannel, config->txChannel) != E_OK)
+  if ((res = serialDmaSetup(device,
+      config->rxChannel, config->txChannel)) != E_OK)
   {
     serialCleanup(device, FREE_PERIPHERAL);
-    return E_ERROR;
+    return res;
   }
 
-  if (uartSetRate((struct Uart *)device, uartCalcRate(config->rate)) != E_OK)
+  if ((res = uartSetRate(object, uartCalcRate(config->rate))) != E_OK)
   {
     serialCleanup(device, FREE_ALL);
-    return E_ERROR;
+    return res;
   }
 
   /* Set 8-bit length */

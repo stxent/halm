@@ -190,30 +190,31 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct SerialConfig *config = configPtr;
   struct Serial *device = object;
+  enum result res;
 
   /* Call UART class constructor */
-  if (Uart->parent.init(object, configPtr) != E_OK)
-    return E_ERROR;
+  if ((res = Uart->parent.init(object, configPtr)) != E_OK)
+    return res;
 
   /* Initialize RX and TX queues */
-  if (queueInit(&device->rxQueue, config->rxLength) != E_OK)
+  if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
   {
     serialCleanup(device, FREE_PERIPHERAL);
-    return E_ERROR;
+    return res;
   }
 
-  if (queueInit(&device->txQueue, config->txLength) != E_OK)
+  if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
   {
     serialCleanup(device, FREE_RX_QUEUE);
-    return E_ERROR;
+    return res;
   }
 
   device->queueLock = MUTEX_UNLOCKED;
 
-  if (uartSetRate(object, uartCalcRate(config->rate)) != E_OK)
+  if ((res = uartSetRate(object, uartCalcRate(config->rate))) != E_OK)
   {
     serialCleanup(device, FREE_TX_QUEUE);
-    return E_ERROR;
+    return res;
   }
 
   /* Set 8-bit length */

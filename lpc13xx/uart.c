@@ -78,7 +78,7 @@ void UART_IRQHandler(void)
 struct UartConfigRate uartCalcRate(uint32_t rate)
 {
   uint32_t divisor;
-  struct UartConfigRate result = {
+  struct UartConfigRate config = {
       .high = 0,
       .low = 0,
       .fraction = 0
@@ -87,13 +87,13 @@ struct UartConfigRate uartCalcRate(uint32_t rate)
   divisor = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
   if (!(divisor >= (1 << 16) || !divisor))
   {
-    result.high = (uint8_t)(divisor >> 8);
-    result.low = (uint8_t)divisor;
+    config.high = (uint8_t)(divisor >> 8);
+    config.low = (uint8_t)divisor;
     /* TODO Add fractional part calculation */
-    /* if (result.high > 0 || result.low > 1)
-    result.fraction = 0; */
+    /* if (config.high > 0 || config.low > 1)
+      config.fraction = 0; */
   }
-  return result;
+  return config;
 }
 /*----------------------------------------------------------------------------*/
 enum result uartSetRate(struct Uart *device, struct UartConfigRate rate)
