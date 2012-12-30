@@ -4,9 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ *  @file
+ *  Abstract DMA interface for embedded systems: function wrappers.
+ */
+
 #include "dma.h"
 /*----------------------------------------------------------------------------*/
-/** Start DMA transmission.
+/** Start DMA transfer.
  *  @param controller Pointer to Dma object.
  *  @param dest Destination memory address.
  *  @param src Source memory address.
@@ -20,7 +25,7 @@ enum result dmaStart(void *controller, void *dest, const void *src,
       dest, src, size);
 }
 /*----------------------------------------------------------------------------*/
-/** Start scatter-gather DMA transmission.
+/** Start scatter-gather DMA transfer.
  *  @param controller Pointer to Dma object.
  *  @param first Pointer to the first descriptor in linked list.
  *  @return Returns E_OK on success.
@@ -46,7 +51,7 @@ void dmaHalt(void *controller)
   ((struct DmaClass *)CLASS(controller))->halt(controller);
 }
 /*----------------------------------------------------------------------------*/
-/** Link next element to list in scatter-gather transmissions.
+/** Link next element to the linked list for scatter-gather transfers.
  *  @param controller Pointer to Dma object.
  *  @param current Pointer to current linked list item.
  *  @param next Pointer to next linked list item or zero on list end.

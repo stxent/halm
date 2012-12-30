@@ -4,6 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ *  @file
+ *  Abstract DMA interface for embedded systems: definitions.
+ */
+
 #ifndef DMA_H_
 #define DMA_H_
 /*----------------------------------------------------------------------------*/
@@ -15,6 +20,7 @@
 #include "error.h"
 #include "entity.h"
 /*----------------------------------------------------------------------------*/
+/** DMA burst transfer size. */
 enum dmaBurst
 {
   DMA_BURST_1 = 0,
@@ -30,6 +36,7 @@ enum dmaBurst
   DMA_BURST_1024
 };
 /*----------------------------------------------------------------------------*/
+/** DMA transfer width. */
 enum dmaWidth
 {
   DMA_WIDTH_BYTE = 0,
@@ -55,7 +62,7 @@ struct Dma
 {
   struct Entity parent;
 
-  bool active; /* Transmission active flag */
+  bool active; /* Transfer active flag */
   uint8_t channel; /* Channel may have different meaning */
 };
 /*----------------------------------------------------------------------------*/
