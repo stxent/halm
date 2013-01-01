@@ -10,9 +10,10 @@
 #include "serial_dma.h"
 #include "gpdma.h"
 /*----------------------------------------------------------------------------*/
-///* Serial port settings */
+/* Serial port settings */
 //#define TX_FIFO_SIZE                    8
 //#define RX_FIFO_LEVEL                   2 /* 8 characters */
+//#define DEFAULT_PRIORITY                15 /* Lowest priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 enum cleanup
 {
@@ -235,6 +236,8 @@ static enum result serialInit(void *object, const void *configPtr)
 //  /* Enable RBR and THRE interrupts */
 //  device->parent.reg->IER = IER_RBR | IER_THRE;
 
+  /* Set interrupt priority, lowest by default */
+//  NVIC_SetPriority(device->irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
 //  NVIC_EnableIRQ(device->parent.irq);
   return E_OK;

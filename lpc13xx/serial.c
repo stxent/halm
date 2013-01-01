@@ -10,6 +10,7 @@
 /* Serial port settings */
 #define TX_FIFO_SIZE                    8
 #define RX_FIFO_LEVEL                   2 /* 8 characters */
+#define DEFAULT_PRIORITY                15 /* Lowest priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 enum cleanup
 {
@@ -112,6 +113,9 @@ static enum result serialGetOpt(void *object, enum ifOption option, void *data)
     case IF_QUEUE_TX:
       *(uint32_t *)data = queueSize(&device->txQueue);
       return E_OK;
+    case IF_PRIORITY:
+      *(uint32_t *)data = NVIC_GetPriority(device->parent.irq);
+      return E_OK;
     default:
       return E_ERROR;
   }
@@ -126,6 +130,9 @@ static enum result serialSetOpt(void *object, enum ifOption option,
   {
     case IF_SPEED:
       return uartSetRate(object, uartCalcRate(*(uint32_t *)data));
+    case IF_PRIORITY:
+      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
+      return E_OK;
     default:
       return E_ERROR;
   }
@@ -224,6 +231,8 @@ static enum result serialInit(void *object, const void *configPtr)
   device->parent.reg->IER |= IER_RBR | IER_THRE;
   device->parent.reg->TER = TER_TXEN;
 
+  /* Set interrupt priority, lowest by default */
+  NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
   NVIC_EnableIRQ(device->parent.irq);
   return E_OK;

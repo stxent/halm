@@ -187,7 +187,5 @@ static enum result uartInit(void *object, const void *configPtr)
       device->reg->LCR |= LCR_PARITY_ODD;
   }
 
-  /* Set interrupt priority, lowest by default */
-  NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));
   return E_OK;
 }

@@ -30,7 +30,6 @@ struct UartConfig
   uint8_t channel; /* Peripheral number */
   gpioKey rx, tx; /* RX and TX pins */
   enum uartParity parity; /* Disabled, even or odd parity */
-  uint8_t priority; /* Interrupt priority */
 };
 /*----------------------------------------------------------------------------*/
 struct UartConfigRate
