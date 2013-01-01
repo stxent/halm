@@ -16,8 +16,8 @@ extern const struct UartClass *SerialDma;
 struct SerialDmaConfig
 {
   struct UartConfig uart;
-  int8_t rxChannel, txChannel; /* DMA channels */
   uint32_t rate;
+  int8_t rxChannel, txChannel; /* DMA channels */
 };
 /*----------------------------------------------------------------------------*/
 struct SerialDma

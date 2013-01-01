@@ -227,13 +227,13 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
   }
 
-  /* Set 8-bit length */
-  device->parent.reg->LCR = LCR_WORD_8BIT;
-  /* Enable and clear FIFO, enable DMA, set RX trigger level to 1 byte */
-  device->parent.reg->FCR = FCR_ENABLE | FCR_DMA_ENABLE | FCR_RX_TRIGGER(0);
-  /* Enable RBR and THRE interrupts */
-//  device->parent.reg->IER = IER_RBR | IER_THRE;
+  /* Enable and clear FIFO, set RX trigger level to 8 bytes */
+  device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
+  device->parent.reg->FCR |= FCR_ENABLE | FCR_DMA_ENABLE | FCR_RX_TRIGGER(0);
   device->parent.reg->TER = TER_TXEN;
+
+//  /* Enable RBR and THRE interrupts */
+//  device->parent.reg->IER = IER_RBR | IER_THRE;
 
   /* Enable UART interrupt */
 //  NVIC_EnableIRQ(device->parent.irq);

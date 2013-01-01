@@ -12,12 +12,13 @@
 /* UART register bits */
 /* IrDA, Modem signals, auto-baud and RS-485 not used */
 /*------------------Line Control Register-------------------------------------*/
+#define LCR_WORD_MASK                   BIT_FIELD(0x03, 0)
 #define LCR_WORD_5BIT                   BIT_FIELD(0, 0)
 #define LCR_WORD_6BIT                   BIT_FIELD(1, 0)
 #define LCR_WORD_7BIT                   BIT_FIELD(2, 0)
 #define LCR_WORD_8BIT                   BIT_FIELD(3, 0)
-#define LCR_STOP_1BIT                   BIT_FIELD(0, 2)
-#define LCR_STOP_2BIT                   BIT_FIELD(1, 2)
+#define LCR_STOP_2BIT                   BIT(2)
+#define LCR_PARITY_MASK                 BIT_FIELD(0x03, 4)
 #define LCR_PARITY                      BIT(3)
 #define LCR_PARITY_ODD                  BIT_FIELD(0, 4)
 #define LCR_PARITY_EVEN                 BIT_FIELD(1, 4)
@@ -45,11 +46,13 @@
 #define FCR_TX_RESET                    BIT(2)
 #define FCR_DMA_ENABLE                  BIT(3)
 /*
+ * RX trigger level: how many characters must be received before interrupt
  * Level 0:  1 character
  * Level 1:  4 characters
  * Level 2:  8 characters
  * Level 3: 14 characters
  */
+#define FCR_RX_TRIGGER_MASK             BIT_FIELD(0x03, 6)
 #define FCR_RX_TRIGGER(level)           BIT_FIELD((level), 6)
 /*------------------Line Status Register--------------------------------------*/
 #define LSR_RDR                         BIT(0) /* Receiver data ready */

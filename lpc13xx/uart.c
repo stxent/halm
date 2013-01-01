@@ -173,6 +173,20 @@ static enum result uartInit(void *object, const void *configPtr)
   gpioSetFunc(&device->rxPin, rxFunc);
   gpioSetFunc(&device->txPin, txFunc);
 
+  device->reg->FCR = 0;
+  device->reg->IER = 0;
+  /* Set 8-bit length */
+  device->reg->LCR = LCR_WORD_8BIT;
+  /* Set parity */
+  if (config->parity != UART_PARITY_NONE)
+  {
+    device->reg->LCR |= LCR_PARITY;
+    if (config->parity == UART_PARITY_EVEN)
+      device->reg->LCR |= LCR_PARITY_EVEN;
+    else
+      device->reg->LCR |= LCR_PARITY_ODD;
+  }
+
   /* Set interrupt priority, lowest by default */
   NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));
   return E_OK;

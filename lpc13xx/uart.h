@@ -18,10 +18,18 @@ struct UartClass;
 /*----------------------------------------------------------------------------*/
 extern const struct UartClass *Uart;
 /*----------------------------------------------------------------------------*/
+enum uartParity
+{
+  UART_PARITY_NONE = 0,
+  UART_PARITY_ODD,
+  UART_PARITY_EVEN
+};
+/*----------------------------------------------------------------------------*/
 struct UartConfig
 {
   uint8_t channel; /* Peripheral number */
   gpioKey rx, tx; /* RX and TX pins */
+  enum uartParity parity; /* Disabled, even or odd parity */
   uint8_t priority; /* Interrupt priority */
 };
 /*----------------------------------------------------------------------------*/
