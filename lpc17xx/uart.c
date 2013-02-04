@@ -202,7 +202,7 @@ static enum result uartInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct UartConfig *config = configPtr;
   struct Uart *device = object;
-  int8_t rxFunc, txFunc;
+  gpioFunc rxFunc, txFunc;
 
   /* Check device configuration data and availability */
   if (!config || uartSetDescriptor(config->channel, device) != E_OK)

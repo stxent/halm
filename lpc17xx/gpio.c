@@ -40,8 +40,8 @@ static inline uint32_t *calcPinModeOD(union GpioPin p)
   return (uint32_t *)(&LPC_PINCON->PINMODE_OD0 + p.port);
 }
 /*----------------------------------------------------------------------------*/
-/* Return 0 when no function associated with id found */
-int8_t gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
+/* Returns -1 when no function associated with pin found */
+gpioFunc gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
 {
   while (pinList->key)
   {
@@ -60,7 +60,9 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   };
   struct Gpio p = {
       .control = 0,
-      .pin = converted
+      .pin = {
+          .key = ~0
+      }
   };
 
   /* TODO Add more precise pin checking */
@@ -91,7 +93,6 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
     p.control->FIODIR &= ~(1 << p.pin.offset);
 
   /* There is no need to enable GPIO power because it is enabled on reset */
-
   return p;
 }
 /*----------------------------------------------------------------------------*/
@@ -130,7 +131,7 @@ void gpioWrite(struct Gpio *p, uint8_t value)
     p->control->FIOCLR |= 1 << p->pin.offset;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetFunc(struct Gpio *p, int8_t func)
+void gpioSetFunc(struct Gpio *p, gpioFunc func)
 {
   uint32_t *pinptr = calcPinSelect(p->pin);
   *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
@@ -169,6 +170,7 @@ void gpioSetType(struct Gpio *p, enum gpioType type)
   }
 }
 /*----------------------------------------------------------------------------*/
+/* Returns zero when pin not initialized */
 gpioKey gpioGetKey(struct Gpio *p)
 {
   return ~p->pin.key; /* External pin identifiers are in 1's complement form */

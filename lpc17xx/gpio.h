@@ -11,6 +11,7 @@
 /*----------------------------------------------------------------------------*/
 #include "LPC17xx.h"
 /*----------------------------------------------------------------------------*/
+typedef int8_t gpioFunc;
 typedef uint16_t gpioKey;
 /*----------------------------------------------------------------------------*/
 /* External pin id consist of port and pin numbers in 1's complement form */
@@ -47,7 +48,7 @@ union GpioPin
 struct GpioPinFunc
 {
   gpioKey key;
-  int8_t func;
+  gpioFunc func;
 };
 /*----------------------------------------------------------------------------*/
 struct Gpio
@@ -62,8 +63,8 @@ void gpioDeinit(struct Gpio *);
 uint8_t gpioRead(struct Gpio *);
 void gpioWrite(struct Gpio *, uint8_t);
 /*----------------------------------------------------------------------------*/
-int8_t gpioFindFunc(const struct GpioPinFunc *, gpioKey);
-void gpioSetFunc(struct Gpio *, int8_t);
+gpioFunc gpioFindFunc(const struct GpioPinFunc *, gpioKey);
+void gpioSetFunc(struct Gpio *, gpioFunc);
 void gpioSetPull(struct Gpio *, enum gpioPull);
 void gpioSetType(struct Gpio *, enum gpioType);
 gpioKey gpioGetKey(struct Gpio *);

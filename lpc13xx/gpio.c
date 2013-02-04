@@ -47,31 +47,33 @@ static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
       ((void *)LPC_GPIO1 - (void *)LPC_GPIO0) * p.port);
 }
 /*----------------------------------------------------------------------------*/
-/* Return 0 when function associated with key not found */
-uint8_t gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
+/* Returns -1 when no function associated with pin found */
+gpioFunc gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
 {
-  while (pinList->key != -1)
+  while (pinList->key)
   {
     if (pinList->key == key)
       return pinList->func;
     pinList++;
   }
-  return 0;
+  return -1;
 }
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(int16_t id, enum gpioDir dir)
+struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 {
   uint32_t *iocon;
   union GpioPin converted = {
-      .key = id
+      .key = ~id /* Invert unique pin id */
   };
   struct Gpio p = {
       .control = 0,
-      .pin = converted
+      .pin = {
+          .key = ~0
+      }
   };
 
   /* TODO Add more precise pin checking */
-  if ((uint8_t)converted.port > 3 || (uint8_t)converted.offset > 11)
+  if (!id || (uint8_t)converted.port > 3 || (uint8_t)converted.offset > 11)
     return p;
   p.pin = converted;
   p.control = calcPort(p.pin);
@@ -125,7 +127,7 @@ void gpioWrite(struct Gpio *p, uint8_t value)
       value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetFunc(struct Gpio *p, uint8_t func)
+void gpioSetFunc(struct Gpio *p, gpioFunc func)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
   *iocon &= ~IOCON_FUNC_MASK;
@@ -163,7 +165,8 @@ void gpioSetType(struct Gpio *p, enum gpioType type)
   }
 }
 /*----------------------------------------------------------------------------*/
+/* Returns zero when pin not initialized */
 gpioKey gpioGetKey(struct Gpio *p)
 {
-  return p->pin.key;
+  return ~p->pin.key; /* External pin identifiers are in 1's complement form */
 }
