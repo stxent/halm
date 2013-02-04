@@ -18,72 +18,69 @@
 static const struct GpioPinFunc uartPins[] = {
     {
         .key = GPIO_TO_PIN(0, 0),
-        .func = 0x02
+        .func = 2
     },
     {
         .key = GPIO_TO_PIN(0, 1),
-        .func = 0x02
+        .func = 2
     },
     {
         .key = GPIO_TO_PIN(0, 2),
-        .func = 0x01
+        .func = 1
     },
     {
         .key = GPIO_TO_PIN(0, 3),
-        .func = 0x01
+        .func = 1
     },
     {
         .key = GPIO_TO_PIN(0, 10),
-        .func = 0x01
+        .func = 1
     },
     {
         .key = GPIO_TO_PIN(0, 11),
-        .func = 0x01
+        .func = 1
     },
     {
         .key = GPIO_TO_PIN(0, 15),
-        .func = 0x01
+        .func = 1
     },
     {
         .key = GPIO_TO_PIN(0, 16),
-        .func = 0x01
+        .func = 1
     },
     {
         .key = GPIO_TO_PIN(0, 25),
-        .func = 0x03
+        .func = 3
     },
     {
         .key = GPIO_TO_PIN(0, 26),
-        .func = 0x03
+        .func = 3
     },
     {
         .key = GPIO_TO_PIN(2, 0),
-        .func = 0x02
+        .func = 2
     },
     {
         .key = GPIO_TO_PIN(2, 1),
-        .func = 0x02
+        .func = 2
     },
     {
         .key = GPIO_TO_PIN(2, 8),
-        .func = 0x02
+        .func = 2
     },
     {
         .key = GPIO_TO_PIN(2, 9),
-        .func = 0x02
+        .func = 2
     },
     {
         .key = GPIO_TO_PIN(4, 28),
-        .func = 0x03
+        .func = 3
     },
     {
         .key = GPIO_TO_PIN(4, 29),
-        .func = 0x03
+        .func = 3
     },
-    {
-        .key = -1,
-        .func = 0x00
-    }
+    {} /* End of pin function association list */
 };
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
@@ -205,7 +202,7 @@ static enum result uartInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct UartConfig *config = configPtr;
   struct Uart *device = object;
-  uint8_t rxFunc, txFunc;
+  int8_t rxFunc, txFunc;
 
   /* Check device configuration data and availability */
   if (!config || uartSetDescriptor(config->channel, device) != E_OK)
@@ -214,16 +211,16 @@ static enum result uartInit(void *object, const void *configPtr)
   /* Check pin mapping */
   rxFunc = gpioFindFunc(uartPins, config->rx);
   txFunc = gpioFindFunc(uartPins, config->tx);
-  if (!rxFunc || !txFunc)
+  if (rxFunc == -1 || txFunc == -1)
     return E_ERROR;
 
   /* Setup UART pins */
   device->rxPin = gpioInit(config->rx, GPIO_INPUT);
-  if (gpioGetKey(&device->rxPin) == -1)
+  if (!gpioGetKey(&device->rxPin))
     return E_ERROR;
 
   device->txPin = gpioInit(config->tx, GPIO_OUTPUT);
-  if (gpioGetKey(&device->txPin) == -1)
+  if (!gpioGetKey(&device->txPin))
   {
     gpioDeinit(&device->rxPin);
     return E_ERROR;

@@ -41,22 +41,22 @@ static inline uint32_t *calcPinModeOD(union GpioPin p)
 }
 /*----------------------------------------------------------------------------*/
 /* Return 0 when no function associated with id found */
-uint8_t gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
+int8_t gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
 {
-  while (pinList->key != -1)
+  while (pinList->key)
   {
     if (pinList->key == key)
       return pinList->func;
     pinList++;
   }
-  return 0;
+  return -1;
 }
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(int16_t id, enum gpioDir dir)
+struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 {
   uint32_t *pinptr;
   union GpioPin converted = {
-      .key = id
+      .key = ~id /* Invert unique pin id */
   };
   struct Gpio p = {
       .control = 0,
@@ -64,7 +64,7 @@ struct Gpio gpioInit(int16_t id, enum gpioDir dir)
   };
 
   /* TODO Add more precise pin checking */
-  if ((uint8_t)converted.port > 4 || (uint8_t)converted.offset > 31)
+  if (!id || (uint8_t)converted.port > 4 || (uint8_t)converted.offset > 31)
     return p;
   p.pin = converted;
   p.control = calcPort(p.pin);
@@ -130,7 +130,7 @@ void gpioWrite(struct Gpio *p, uint8_t value)
     p->control->FIOCLR |= 1 << p->pin.offset;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetFunc(struct Gpio *p, uint8_t func)
+void gpioSetFunc(struct Gpio *p, int8_t func)
 {
   uint32_t *pinptr = calcPinSelect(p->pin);
   *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
@@ -171,5 +171,5 @@ void gpioSetType(struct Gpio *p, enum gpioType type)
 /*----------------------------------------------------------------------------*/
 gpioKey gpioGetKey(struct Gpio *p)
 {
-  return p->pin.key;
+  return ~p->pin.key; /* External pin identifiers are in 1's complement form */
 }

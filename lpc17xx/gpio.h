@@ -11,9 +11,12 @@
 /*----------------------------------------------------------------------------*/
 #include "LPC17xx.h"
 /*----------------------------------------------------------------------------*/
-typedef int16_t gpioKey;
+typedef uint16_t gpioKey;
 /*----------------------------------------------------------------------------*/
-#define GPIO_TO_PIN(port, pin) ((gpioKey)((int8_t)port << 8 | (int8_t)pin))
+/* External pin id consist of port and pin numbers in 1's complement form */
+/* Unused pins should be initialized with zero */
+/* This method supports up to 2^7 ports and 2^8 pins on each port */
+#define GPIO_TO_PIN(port, pin) ((gpioKey)(~((uint8_t)port << 8 | (uint8_t)pin)))
 /*----------------------------------------------------------------------------*/
 enum gpioDir {
   GPIO_INPUT = 0,
@@ -36,15 +39,15 @@ union GpioPin
   gpioKey key;
   struct
   {
-    int8_t offset;
-    int8_t port;
+    uint8_t offset;
+    uint8_t port;
   };
 };
 /*----------------------------------------------------------------------------*/
 struct GpioPinFunc
 {
   gpioKey key;
-  uint8_t func;
+  int8_t func;
 };
 /*----------------------------------------------------------------------------*/
 struct Gpio
@@ -59,8 +62,8 @@ void gpioDeinit(struct Gpio *);
 uint8_t gpioRead(struct Gpio *);
 void gpioWrite(struct Gpio *, uint8_t);
 /*----------------------------------------------------------------------------*/
-uint8_t gpioFindFunc(const struct GpioPinFunc *, gpioKey);
-void gpioSetFunc(struct Gpio *, uint8_t);
+int8_t gpioFindFunc(const struct GpioPinFunc *, gpioKey);
+void gpioSetFunc(struct Gpio *, int8_t);
 void gpioSetPull(struct Gpio *, enum gpioPull);
 void gpioSetType(struct Gpio *, enum gpioType);
 gpioKey gpioGetKey(struct Gpio *);
