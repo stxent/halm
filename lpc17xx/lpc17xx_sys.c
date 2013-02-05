@@ -6,33 +6,24 @@
 
 #include "LPC17xx.h"
 /*----------------------------------------------------------------------------*/
-#include "lpc17xx_sys.h"
 #include "macro.h"
+#include "lpc17xx_sys.h"
 /*----------------------------------------------------------------------------*/
-/* Change PCONP register, reset value 0x042887DE */
-inline void sysPowerEnable(enum sysPowerControl peripheral)
+/* Changes PCONP register, reset value 0x042887DE */
+inline void sysPowerEnable(enum sysPowerDevice offset)
 {
-  LPC_SC->PCONP |= BIT(peripheral);
+  LPC_SC->PCONP |= BIT(offset);
 }
 /*----------------------------------------------------------------------------*/
-inline void sysPowerDisable(enum sysPowerControl peripheral)
+inline void sysPowerDisable(enum sysPowerDevice offset)
 {
-  LPC_SC->PCONP &= ~BIT(peripheral);
+  LPC_SC->PCONP &= ~BIT(offset);
 }
-/*----------------------------------------------------------------------------*/
-///* Get peripheral clock divider for specified peripheral */
-//inline enum sysClockDiv sysGetPeriphDiv(enum sysClockControl peripheral)
-//{
-//  uint32_t *ptr = (uint32_t *)(&LPC_SC->PCLKSEL0 + (peripheral >> 5));
-//  return (*ptr >> (peripheral & 0x01F)) & 0x03;
-//}
 /*----------------------------------------------------------------------------*/
 /* Exception for CAN1, CAN2 and CAN filtering: PCLK_DIV8 divides clock by 6 */
-inline void sysSetPeriphDiv(enum sysClockControl peripheral,
-    enum sysClockDiv divider)
+inline void sysClockControl(enum sysClockDevice offset, enum sysClockDiv value)
 {
-  uint32_t *ptr = (uint32_t *)(&LPC_SC->PCLKSEL0 + (peripheral >> 5));
-  *ptr = (*ptr & ~(3 << (peripheral & 0x01F))) |
-      (divider << (peripheral & 0x01F));
+  uint32_t *ptr = (uint32_t *)(&LPC_SC->PCLKSEL0 + (offset >> 5));
+  *ptr = (*ptr & ~(3 << (offset & 0x01F))) | (value << (offset & 0x01F));
 }
 /*----------------------------------------------------------------------------*/

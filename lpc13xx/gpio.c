@@ -4,7 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "lpc13xx_defs.h"
+#include "macro.h"
+#include "lpc13xx_sys.h"
 #include "gpio.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
@@ -92,7 +93,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   if (!instances) //TODO Use increment in condition
   {
     /* Enable AHB clock to the GPIO domain */
-    LPC_SYSCON->SYSAHBCLKCTRL |= SYSAHBCLKCTRL_GPIO;
+    sysClockEnable(CLK_GPIO);
   }
   instances++;
   mutexUnlock(&lock);
@@ -111,7 +112,7 @@ void gpioDeinit(struct Gpio *p)
   if (!instances)
   {
     /* Disable AHB clock to the GPIO domain */
-    LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_GPIO;
+    sysClockDisable(CLK_GPIO);
   }
   mutexUnlock(&lock);
 }

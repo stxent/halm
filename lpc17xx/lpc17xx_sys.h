@@ -9,81 +9,81 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
-/* Power Control for Peripheral registers */
-enum sysPowerControl {
-  PCON_TIM0     = 1,
-  PCON_TIM1     = 2,
-  PCON_UART0    = 3,
-  PCON_UART1    = 4,
-  PCON_PWM1     = 6,
-  PCON_I2C0     = 7,
-  PCON_SPI      = 8,
-  PCON_RTC      = 9,
-  PCON_SSP1     = 10,
-  PCON_ADC      = 12,
-  PCON_CAN1     = 13,
-  PCON_CAN2     = 14,
-  PCON_GPIO     = 15,
-  PCON_RIT      = 16,
-  PCON_MCPWM    = 17,
-  PCON_QEI      = 18,
-  PCON_I2C1     = 19,
-  PCON_SSP0     = 21,
-  PCON_TIM2     = 22,
-  PCON_TIM3     = 23,
-  PCON_UART2    = 24,
-  PCON_UART3    = 25,
-  PCON_I2C2     = 26,
-  PCON_I2S      = 27,
-  PCON_GPDMA    = 29,
-  PCON_ENET     = 30,
-  PCON_USB      = 31
+/* Power control for peripherals register */
+enum sysPowerDevice {
+  PWR_TIM0  = 1,
+  PWR_TIM1  = 2,
+  PWR_UART0 = 3,
+  PWR_UART1 = 4,
+  PWR_PWM1  = 6,
+  PWR_I2C0  = 7,
+  PWR_SPI   = 8,
+  PWR_RTC   = 9,
+  PWR_SSP1  = 10,
+  PWR_ADC   = 12,
+  PWR_CAN1  = 13,
+  PWR_CAN2  = 14,
+  PWR_GPIO  = 15,
+  PWR_RIT   = 16,
+  PWR_MCPWM = 17,
+  PWR_QEI   = 18,
+  PWR_I2C1  = 19,
+  PWR_SSP0  = 21,
+  PWR_TIM2  = 22,
+  PWR_TIM3  = 23,
+  PWR_UART2 = 24,
+  PWR_UART3 = 25,
+  PWR_I2C2  = 26,
+  PWR_I2S   = 27,
+  PWR_GPDMA = 29,
+  PWR_ENET  = 30,
+  PWR_USB   = 31
 };
 /*----------------------------------------------------------------------------*/
-/* Divider values for peripheral clock select registers */
+/* Divider values for peripheral clock control registers */
 enum sysClockDiv {
-  PCLK_DIV1 = 1,
-  PCLK_DIV2 = 2,
-  PCLK_DIV4 = 0,
-  PCLK_DIV8 = 3
-};
-/*------------------Offsets for PCLKSEL registers, reset values 0x00000000----*/
-enum sysClockControl {
-/* PCLKSEL0 register */
-  PCLK_WDT      = 0,
-  PCLK_TIMER0   = 2,
-  PCLK_TIMER1   = 4,
-  PCLK_UART0    = 6,
-  PCLK_UART1    = 8,
-  PCLK_PWM1     = 12,
-  PCLK_I2C0     = 14,
-  PCLK_SPI      = 16,
-  PCLK_SSP1     = 20,
-  PCLK_DAC      = 22,
-  PCLK_ADC      = 24,
-  PCLK_CAN1     = 26,
-  PCLK_CAN2     = 28,
-  PCLK_ACF      = 30,
-  /* PCLKSEL1 */
-  PCLK_QEI      = 0x20 + 0,
-  PCLK_GPIOINT  = 0x20 + 2,
-  PCLK_PCB      = 0x20 + 4,
-  PCLK_I2C1     = 0x20 + 6,
-  PCLK_SSP0     = 0x20 + 10,
-  PCLK_TIMER2   = 0x20 + 12,
-  PCLK_TIMER3   = 0x20 + 14,
-  PCLK_UART2    = 0x20 + 16,
-  PCLK_UART3    = 0x20 + 18,
-  PCLK_I2C2     = 0x20 + 20,
-  PCLK_I2S      = 0x20 + 22,
-  PCLK_RIT      = 0x20 + 26,
-  PCLK_SYSCON   = 0x20 + 28,
-  PCLK_MC       = 0x20 + 30
+  CLK_DIV1 = 1,
+  CLK_DIV2 = 2,
+  CLK_DIV4 = 0,
+  CLK_DIV8 = 3
 };
 /*----------------------------------------------------------------------------*/
-//extern inline enum sysClockDiv sysGetPeriphDiv(enum sysClockControl);
-extern inline void sysSetPeriphDiv(enum sysClockControl, enum sysClockDiv);
-extern inline void sysPowerEnable(enum sysPowerControl);
-extern inline void sysPowerDisable(enum sysPowerControl);
+/* Peripheral clock selection registers */
+enum sysClockDevice {
+  /* PCLKSEL0 */
+  CLK_WDT      = 0,
+  CLK_TIMER0   = 2,
+  CLK_TIMER1   = 4,
+  CLK_UART0    = 6,
+  CLK_UART1    = 8,
+  CLK_PWM1     = 12,
+  CLK_I2C0     = 14,
+  CLK_SPI      = 16,
+  CLK_SSP1     = 20,
+  CLK_DAC      = 22,
+  CLK_ADC      = 24,
+  CLK_CAN1     = 26,
+  CLK_CAN2     = 28,
+  CLK_ACF      = 30,
+  /* PCLKSEL1 */
+  CLK_QEI      = 0x20 + 0,
+  CLK_GPIOINT  = 0x20 + 2,
+  CLK_PCB      = 0x20 + 4,
+  CLK_I2C1     = 0x20 + 6,
+  CLK_SSP0     = 0x20 + 10,
+  CLK_TIMER2   = 0x20 + 12,
+  CLK_TIMER3   = 0x20 + 14,
+  CLK_UART2    = 0x20 + 16,
+  CLK_UART3    = 0x20 + 18,
+  CLK_I2C2     = 0x20 + 20,
+  CLK_I2S      = 0x20 + 22,
+  CLK_RIT      = 0x20 + 26,
+  CLK_SYSCON   = 0x20 + 28,
+  CLK_MC       = 0x20 + 30
+};
+/*----------------------------------------------------------------------------*/
+extern inline void sysClockControl(enum sysClockDevice, enum sysClockDiv);
+extern inline void sysPowerEnable(enum sysPowerDevice);
+extern inline void sysPowerDisable(enum sysPowerDevice);
 /*----------------------------------------------------------------------------*/
 #endif /* LPC17XX_SYS_H_ */

@@ -10,7 +10,7 @@
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 /* UART settings */
-#define DEFAULT_DIV                     PCLK_DIV1
+#define DEFAULT_DIV                     CLK_DIV1
 #define DEFAULT_DIV_VALUE               1
 /*----------------------------------------------------------------------------*/
 /* UART pin function values */
@@ -191,16 +191,16 @@ static void uartDeinit(void *object)
   switch (device->channel)
   {
     case 0:
-      sysPowerDisable(PCON_UART0);
+      sysPowerDisable(PWR_UART0);
       break;
     case 1:
-      sysPowerDisable(PCON_UART1);
+      sysPowerDisable(PWR_UART1);
       break;
     case 2:
-      sysPowerDisable(PCON_UART2);
+      sysPowerDisable(PWR_UART2);
       break;
     case 3:
-      sysPowerDisable(PCON_UART3);
+      sysPowerDisable(PWR_UART3);
       break;
   }
   /* Release pins */
@@ -245,28 +245,28 @@ static enum result uartInit(void *object, const void *configPtr)
   switch (device->channel)
   {
     case 0:
-      sysPowerEnable(PCON_UART0);
-      sysSetPeriphDiv(PCLK_UART0, DEFAULT_DIV);
+      sysPowerEnable(PWR_UART0);
+      sysClockControl(CLK_UART0, DEFAULT_DIV);
       //FIXME Replace with LPC_UART_TypeDef in CMSIS
       device->reg = (LPC_UART_TypeDef *)LPC_UART0;
       device->irq = UART0_IRQn;
       break;
     case 1:
-      sysPowerEnable(PCON_UART1);
-      sysSetPeriphDiv(PCLK_UART1, DEFAULT_DIV);
+      sysPowerEnable(PWR_UART1);
+      sysClockControl(CLK_UART1, DEFAULT_DIV);
       //FIXME Rewrite TER type
       device->reg = (LPC_UART_TypeDef *)LPC_UART1;
       device->irq = UART1_IRQn;
       break;
     case 2:
-      sysPowerEnable(PCON_UART2);
-      sysSetPeriphDiv(PCLK_UART2, DEFAULT_DIV);
+      sysPowerEnable(PWR_UART2);
+      sysClockControl(CLK_UART2, DEFAULT_DIV);
       device->reg = LPC_UART2;
       device->irq = UART2_IRQn;
       break;
     case 3:
-      sysPowerEnable(PCON_UART3);
-      sysSetPeriphDiv(PCLK_UART3, DEFAULT_DIV);
+      sysPowerEnable(PWR_UART3);
+      sysClockControl(CLK_UART3, DEFAULT_DIV);
       device->reg = LPC_UART3;
       device->irq = UART3_IRQn;
       break;

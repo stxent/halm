@@ -163,7 +163,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   mutexLock(&lock);
   if (!instances)
   {
-    sysPowerEnable(PCON_GPDMA);
+    sysPowerEnable(PWR_GPDMA);
     LPC_GPDMA->DMACConfig |= DMA_ENABLE;
     NVIC_EnableIRQ(DMA_IRQn);
     //TODO add priority config
@@ -186,7 +186,7 @@ static void gpdmaDeinit(void *object)
   {
     NVIC_DisableIRQ(DMA_IRQn);
     LPC_GPDMA->DMACConfig &= ~DMA_ENABLE;
-    sysPowerDisable(PCON_GPDMA);
+    sysPowerDisable(PWR_GPDMA);
   }
   mutexUnlock(&lock);
 }

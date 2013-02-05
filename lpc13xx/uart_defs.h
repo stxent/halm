@@ -7,7 +7,7 @@
 #ifndef UART_DEFS_H_
 #define UART_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include "lpc13xx_defs.h"
+#include "macro.h"
 /*----------------------------------------------------------------------------*/
 /* UART register bits */
 /* Modem signals, auto-baud and RS-485 not used */

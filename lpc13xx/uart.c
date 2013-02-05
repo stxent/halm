@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "lpc13xx_defs.h"
+#include "lpc13xx_sys.h"
 #include "uart.h"
 #include "uart_defs.h"
 #include "mutex.h"
@@ -115,7 +115,7 @@ static void uartDeinit(void *object)
 
   /* Disable UART peripheral power */
   LPC_SYSCON->UARTCLKDIV = 0;
-  LPC_SYSCON->SYSAHBCLKCTRL &= ~SYSAHBCLKCTRL_UART;
+  sysClockEnable(CLK_UART);
   /* Release pins */
   gpioDeinit(&device->txPin);
   gpioDeinit(&device->rxPin);
@@ -157,7 +157,7 @@ static enum result uartInit(void *object, const void *configPtr)
   switch (config->channel)
   {
     case 0:
-      LPC_SYSCON->SYSAHBCLKCTRL |= SYSAHBCLKCTRL_UART;
+      sysClockEnable(CLK_UART);
       LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV; /* Divide AHB clock */
       device->reg = LPC_UART;
       device->irq = UART_IRQn;
