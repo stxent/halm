@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "lpc17xx_defs.h"
 #include "lpc17xx_sys.h"
 #include "uart.h"
 #include "uart_defs.h"
@@ -189,7 +188,21 @@ static void uartDeinit(void *object)
   struct Uart *device = object;
 
   /* Disable UART peripheral power */
-  LPC_SC->PCONP &= ~PCONP_PCUART0;
+  switch (device->channel)
+  {
+    case 0:
+      sysPowerDisable(PCON_UART0);
+      break;
+    case 1:
+      sysPowerDisable(PCON_UART1);
+      break;
+    case 2:
+      sysPowerDisable(PCON_UART2);
+      break;
+    case 3:
+      sysPowerDisable(PCON_UART3);
+      break;
+  }
   /* Release pins */
   gpioDeinit(&device->txPin);
   gpioDeinit(&device->rxPin);
@@ -229,35 +242,33 @@ static enum result uartInit(void *object, const void *configPtr)
   device->channel = config->channel;
 
   //FIXME Remove FIFO level from CMSIS
-  switch (config->channel)
+  switch (device->channel)
   {
     case 0:
-      LPC_SC->PCONP |= PCONP_PCUART0;
+      sysPowerEnable(PCON_UART0);
       sysSetPeriphDiv(PCLK_UART0, DEFAULT_DIV);
       //FIXME Replace with LPC_UART_TypeDef in CMSIS
       device->reg = (LPC_UART_TypeDef *)LPC_UART0;
       device->irq = UART0_IRQn;
       break;
     case 1:
-      LPC_SC->PCONP |= PCONP_PCUART1;
+      sysPowerEnable(PCON_UART1);
       sysSetPeriphDiv(PCLK_UART1, DEFAULT_DIV);
       //FIXME Rewrite TER type
       device->reg = (LPC_UART_TypeDef *)LPC_UART1;
       device->irq = UART1_IRQn;
       break;
     case 2:
-      LPC_SC->PCONP |= PCONP_PCUART2;
+      sysPowerEnable(PCON_UART2);
       sysSetPeriphDiv(PCLK_UART2, DEFAULT_DIV);
       device->reg = LPC_UART2;
       device->irq = UART2_IRQn;
       break;
     case 3:
-      LPC_SC->PCONP |= PCONP_PCUART3;
+      sysPowerEnable(PCON_UART3);
       sysSetPeriphDiv(PCLK_UART3, DEFAULT_DIV);
       device->reg = LPC_UART3;
       device->irq = UART3_IRQn;
-      break;
-    default:
       break;
   }
 

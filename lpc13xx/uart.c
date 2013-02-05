@@ -162,8 +162,6 @@ static enum result uartInit(void *object, const void *configPtr)
       device->reg = LPC_UART;
       device->irq = UART_IRQn;
       break;
-    default:
-      break;
   }
 
   /* Select the UART function of pins */

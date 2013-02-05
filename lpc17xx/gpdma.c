@@ -4,13 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "lpc17xx_defs.h"
 #include "lpc17xx_sys.h"
 #include "gpdma.h"
 #include "gpdma_defs.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
-#define CHANNEL_COUNT                   8
+#define CHANNEL_COUNT 8
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t);
 static void setMux(struct Gpdma *, enum gpdmaLine);
@@ -164,7 +163,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   mutexLock(&lock);
   if (!instances)
   {
-    LPC_SC->PCONP |= PCONP_PCGPDMA;
+    sysPowerEnable(PCON_GPDMA);
     LPC_GPDMA->DMACConfig |= DMA_ENABLE;
     NVIC_EnableIRQ(DMA_IRQn);
     //TODO add priority config
@@ -187,7 +186,7 @@ static void gpdmaDeinit(void *object)
   {
     NVIC_DisableIRQ(DMA_IRQn);
     LPC_GPDMA->DMACConfig &= ~DMA_ENABLE;
-    LPC_SC->PCONP &= ~PCONP_PCGPDMA;
+    sysPowerDisable(PCON_GPDMA);
   }
   mutexUnlock(&lock);
 }
