@@ -5,9 +5,9 @@
  */
 
 #include "lpc17xx_sys.h"
+#include "mutex.h"
 #include "uart.h"
 #include "uart_defs.h"
-#include "mutex.h"
 /*----------------------------------------------------------------------------*/
 /* UART settings */
 #define DEFAULT_DIV                     CLK_DIV1

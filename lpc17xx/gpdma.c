@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "lpc17xx_sys.h"
 #include "gpdma.h"
 #include "gpdma_defs.h"
+#include "lpc17xx_sys.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT 8
@@ -103,8 +103,8 @@ void DMA_IRQHandler(void)
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t channel)
 {
-  return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0 +
-      ((void *)LPC_GPDMACH1 - (void *)LPC_GPDMACH0) * channel);
+  return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0
+      + ((void *)LPC_GPDMACH1 - (void *)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
 static void setMux(struct Gpdma *controller, enum gpdmaLine line)
@@ -133,21 +133,21 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   controller->direction = config->direction;
   controller->reg = calcChannel(controller->parent.channel);
 
-  controller->control = C_CONTROL_INT | C_CONTROL_SRC_WIDTH(config->width) |
-      C_CONTROL_DEST_WIDTH(config->width);
+  controller->control = C_CONTROL_INT | C_CONTROL_SRC_WIDTH(config->width)
+      | C_CONTROL_DEST_WIDTH(config->width);
   /* LPC17xx does not support 2 bytes burst */
   if (config->burst >= DMA_BURST_4)
   {
-    controller->control |= C_CONTROL_SRC_BURST(config->burst - 1) |
-        C_CONTROL_DEST_BURST(config->burst - 1);
+    controller->control |= C_CONTROL_SRC_BURST(config->burst - 1)
+        | C_CONTROL_DEST_BURST(config->burst - 1);
   }
   if (config->source.increment)
     controller->control |= C_CONTROL_SRC_INC;
   if (config->destination.increment)
     controller->control |= C_CONTROL_DEST_INC;
 
-  controller->config = C_CONFIG_TYPE(config->direction) |
-      C_CONFIG_IE | C_CONFIG_ITC;
+  controller->config = C_CONFIG_TYPE(config->direction)
+      | C_CONFIG_IE | C_CONFIG_ITC;
   if (config->source.line != GPDMA_LINE_MEMORY)
     controller->config |= C_CONFIG_SRC_PERIPH(config->source.line);
   if (config->destination.line != GPDMA_LINE_MEMORY)

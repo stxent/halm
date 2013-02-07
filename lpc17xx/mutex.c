@@ -4,8 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "LPC17xx.h"
-/*----------------------------------------------------------------------------*/
+#include <LPC17xx.h>
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 void mutexLock(Mutex *m)

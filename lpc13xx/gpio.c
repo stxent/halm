@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "macro.h"
-#include "lpc13xx_sys.h"
 #include "gpio.h"
+#include "lpc13xx_sys.h"
+#include "macro.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 /* Reserved bits, digital mode and IO mode for I2C pins */
@@ -124,8 +124,8 @@ uint8_t gpioRead(struct Gpio *p)
 /*----------------------------------------------------------------------------*/
 void gpioWrite(struct Gpio *p, uint8_t value)
 {
-  *(uint32_t *)(p->control->MASKED_ACCESS + (1 << p->pin.offset)) =
-      value ? 0xFFF : 0x000;
+  *(uint32_t *)(p->control->MASKED_ACCESS + (1 << p->pin.offset)) = value
+      ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetFunc(struct Gpio *p, gpioFunc func)

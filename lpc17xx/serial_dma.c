@@ -6,9 +6,9 @@
 
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-#include "uart_defs.h"
-#include "serial_dma.h"
 #include "gpdma.h"
+#include "serial_dma.h"
+#include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
 /* Serial port settings */
 //#define TX_FIFO_SIZE                    8

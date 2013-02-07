@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.h>
-/*----------------------------------------------------------------------------*/
 #include "queue.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_CAPACITY        16
@@ -56,5 +55,5 @@ uint8_t queuePop(struct Queue *q)
 /*----------------------------------------------------------------------------*/
 uint8_t queuePeek(struct Queue *q)
 {
-  return ((q->size) ? q->data[q->floor] : 0);
+  return (q->size) ? q->data[q->floor] : 0;
 }

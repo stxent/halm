@@ -5,9 +5,9 @@
  */
 
 #include "lpc13xx_sys.h"
+#include "mutex.h"
 #include "uart.h"
 #include "uart_defs.h"
-#include "mutex.h"
 /*----------------------------------------------------------------------------*/
 /* UART settings */
 /* In LPC13xx UART clock divisor is number from 1 to 255, 0 to disable */

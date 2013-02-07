@@ -4,10 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "LPC13xx.h"
-/*----------------------------------------------------------------------------*/
-#include "macro.h"
+#include <LPC13xx.h>
 #include "lpc13xx_sys.h"
+#include "macro.h"
 /*----------------------------------------------------------------------------*/
 /* Changes SYSAHBCLKCTRL register, reset value 0x0000485F */
 inline void sysClockEnable(enum sysClockDevice peripheral)

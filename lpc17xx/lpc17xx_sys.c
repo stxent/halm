@@ -4,10 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "LPC17xx.h"
-/*----------------------------------------------------------------------------*/
-#include "macro.h"
+#include <LPC17xx.h>
 #include "lpc17xx_sys.h"
+#include "macro.h"
 /*----------------------------------------------------------------------------*/
 /* Changes PCONP register, reset value 0x042887DE */
 inline void sysPowerEnable(enum sysPowerDevice offset)

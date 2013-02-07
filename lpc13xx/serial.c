@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "uart_defs.h"
 #include "serial.h"
+#include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
 /* Serial port settings */
 #define TX_FIFO_SIZE                    8
