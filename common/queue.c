@@ -43,6 +43,7 @@ void queuePush(struct Queue *q, uint8_t x)
 uint8_t queuePop(struct Queue *q)
 {
   uint8_t tmp = 0;
+
   if (q->size)
   {
     tmp = q->data[q->floor++];

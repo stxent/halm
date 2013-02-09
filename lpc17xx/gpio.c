@@ -54,16 +54,16 @@ gpioFunc gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
 /*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 {
-  uint32_t *pinptr;
-  union GpioPin converted = {
-      .key = ~id /* Invert unique pin id */
-  };
   struct Gpio p = {
       .control = 0,
       .pin = {
           .key = ~0
       }
   };
+  union GpioPin converted = {
+      .key = ~id /* Invert unique pin id */
+  };
+  uint32_t *pinptr;
 
   /* TODO Add more precise pin checking */
   if (!id || (uint8_t)converted.port > 4 || (uint8_t)converted.offset > 31)
@@ -134,6 +134,7 @@ void gpioWrite(struct Gpio *p, uint8_t value)
 void gpioSetFunc(struct Gpio *p, gpioFunc func)
 {
   uint32_t *pinptr = calcPinSelect(p->pin);
+
   *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
   *pinptr |= PIN_OFFSET(func & 0x03, p->pin.offset);
 }
@@ -141,6 +142,7 @@ void gpioSetFunc(struct Gpio *p, gpioFunc func)
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)
 {
   uint32_t *pinptr = calcPinMode(p->pin);
+
   *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
   switch (pull)
   {
@@ -159,6 +161,7 @@ void gpioSetPull(struct Gpio *p, enum gpioPull pull)
 void gpioSetType(struct Gpio *p, enum gpioType type)
 {
   uint32_t *pinptr = calcPinModeOD(p->pin);
+
   switch (type)
   {
     case GPIO_PUSHPULL:

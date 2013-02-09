@@ -71,12 +71,12 @@ void errorHandler(struct Gpdma *controller)
 /*----------------------------------------------------------------------------*/
 void DMA_IRQHandler(void)
 {
-  int8_t counter = CHANNEL_COUNT - 1;
+  int8_t counter;
+  uint8_t errorStat = LPC_GPDMA->DMACIntErrStat;
   uint8_t mask = 0x80;
   uint8_t terminalStat = LPC_GPDMA->DMACIntTCStat;
-  uint8_t errorStat = LPC_GPDMA->DMACIntErrStat;
 
-  for (; counter >= 0; counter--, mask >>= 1)
+  for (counter = CHANNEL_COUNT - 1; counter >= 0; counter--, mask >>= 1)
   {
     if (terminalStat & mask)
     {
@@ -222,8 +222,8 @@ enum result gpdmaStart(void *object, void *dest, const void *src, uint32_t size)
 /*----------------------------------------------------------------------------*/
 enum result gpdmaStartList(void *object, const void *first)
 {
-  struct Gpdma *controller = object;
   const struct GpdmaListItem *item = first;
+  struct Gpdma *controller = object;
 
   if (gpdmaSetDescriptor(controller->parent.channel, object) != E_OK)
     return E_ERROR;

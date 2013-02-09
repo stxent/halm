@@ -63,14 +63,14 @@ gpioFunc gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
 struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 {
   uint32_t *iocon;
-  union GpioPin converted = {
-      .key = ~id /* Invert unique pin id */
-  };
   struct Gpio p = {
       .control = 0,
       .pin = {
           .key = ~0
       }
+  };
+  union GpioPin converted = {
+      .key = ~id /* Invert unique pin id */
   };
 
   /* TODO Add more precise pin checking */
@@ -104,6 +104,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 void gpioDeinit(struct Gpio *p)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
+
   p->control->DIR &= ~(1 << p->pin.offset);
   *iocon = IOCON_DEFAULT;
 
@@ -131,6 +132,7 @@ void gpioWrite(struct Gpio *p, uint8_t value)
 void gpioSetFunc(struct Gpio *p, gpioFunc func)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
+
   *iocon &= ~IOCON_FUNC_MASK;
   *iocon |= IOCON_FUNC(func);
 }
@@ -138,6 +140,7 @@ void gpioSetFunc(struct Gpio *p, gpioFunc func)
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
+
   switch (pull)
   {
     case GPIO_NOPULL:
@@ -155,6 +158,7 @@ void gpioSetPull(struct Gpio *p, enum gpioPull pull)
 void gpioSetType(struct Gpio *p, enum gpioType type)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
+
   switch (type)
   {
     case GPIO_PUSHPULL:

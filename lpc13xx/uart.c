@@ -74,12 +74,12 @@ void UART_IRQHandler(void)
 /*----------------------------------------------------------------------------*/
 struct UartConfigRate uartCalcRate(uint32_t rate)
 {
-  uint32_t divisor;
   struct UartConfigRate config = {
       .high = 0,
       .low = 0,
       .fraction = 0
   };
+  uint32_t divisor;
 
   divisor = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
   if (!(divisor >= (1 << 16) || !divisor))
