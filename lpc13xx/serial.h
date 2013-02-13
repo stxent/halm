@@ -15,7 +15,7 @@ extern const struct UartClass *Serial;
 /*----------------------------------------------------------------------------*/
 struct SerialConfig
 {
-  struct UartConfig uart;
+  struct UartConfig uart; //FIXME Rewrite
   uint32_t rate;
   uint32_t rxLength, txLength; /* Queue lengths */
 };

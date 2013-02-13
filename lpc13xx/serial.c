@@ -29,8 +29,7 @@ static void serialDeinit(void *);
 static uint32_t serialRead(void *, uint8_t *, uint32_t);
 static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
 static enum result serialGetOpt(void *, enum ifOption, void *);
-static enum result serialSetOpt(void *, enum ifOption,
-    const void *);
+static enum result serialSetOpt(void *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
 /* We like structures so we put a structure in a structure */
 /* So we can initialize a structure while we initialize a structure */

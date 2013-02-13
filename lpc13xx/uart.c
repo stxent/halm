@@ -115,7 +115,7 @@ static void uartDeinit(void *object)
 
   /* Disable UART peripheral power */
   LPC_SYSCON->UARTCLKDIV = 0;
-  sysClockEnable(CLK_UART);
+  sysClockDisable(CLK_UART);
   /* Release pins */
   gpioDeinit(&device->txPin);
   gpioDeinit(&device->rxPin);
