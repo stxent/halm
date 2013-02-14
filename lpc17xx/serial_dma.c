@@ -11,9 +11,7 @@
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
 /* Serial port settings */
-//#define TX_FIFO_SIZE                    8
-//#define RX_FIFO_LEVEL                   2 /* 8 characters */
-//#define DEFAULT_PRIORITY                15 /* Lowest priority in Cortex-M3 */
+#define RX_FIFO_LEVEL                   0 /* 1 character */
 /*----------------------------------------------------------------------------*/
 enum cleanup
 {
@@ -63,7 +61,6 @@ static const struct UartClass serialDmaTable = {
         .setopt = serialSetOpt
     },
     .handler = 0
-//    .handler = serialHandler
 };
 /*----------------------------------------------------------------------------*/
 const struct UartClass *SerialDma = &serialDmaTable;
@@ -79,7 +76,7 @@ static void serialCleanup(struct SerialDma *device, enum cleanup step)
       deinit(device->rxDma);
     case FREE_PERIPHERAL:
       /* Call UART class destructor */
-      Uart->parent.deinit(device); //FIXME
+      Uart->parent.deinit(device);
       break;
     default:
       break;
@@ -133,11 +130,6 @@ static enum result serialDmaSetup(struct SerialDma *device, int8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-//static void serialHandler(void *object)
-//{
-//
-//}
-/*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
@@ -165,16 +157,10 @@ static enum result serialInit(void *object, const void *configPtr)
 
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
   device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  device->parent.reg->FCR |= FCR_ENABLE | FCR_DMA_ENABLE | FCR_RX_TRIGGER(0);
+  device->parent.reg->FCR |= FCR_ENABLE | FCR_DMA_ENABLE
+      | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
   device->parent.reg->TER = TER_TXEN;
-
-//  /* Enable RBR and THRE interrupts */
-//  device->parent.reg->IER = IER_RBR | IER_THRE;
-
-  /* Set interrupt priority, lowest by default */
-//  NVIC_SetPriority(device->irq, DEFAULT_PRIORITY);
-  /* Enable UART interrupt */
-//  NVIC_EnableIRQ(device->parent.irq);
+  /* All interrupts are disabled by default */
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
