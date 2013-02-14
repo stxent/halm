@@ -1,10 +1,10 @@
 /*
- * spi_irq.c
+ * spi.c
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "spi_irq.h"
+#include "spi.h"
 #include "ssp_defs.h"
 /*----------------------------------------------------------------------------*/
 /* SPI settings */
