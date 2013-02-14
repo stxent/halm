@@ -60,8 +60,7 @@ static void serialCleanup(struct Serial *device, enum cleanup step)
     case FREE_RX_QUEUE:
       queueDeinit(&device->rxQueue);
     case FREE_PERIPHERAL:
-      /* Call UART class destructor */
-      Uart->parent.deinit(device);
+      Uart->parent.deinit(device); /* Call UART class destructor */
       break;
     default:
       break;
@@ -145,7 +144,6 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  /* Release resources */
   serialCleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
@@ -197,25 +195,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 /*----------------------------------------------------------------------------*/
 static enum result serialGetOpt(void *object, enum ifOption option, void *data)
 {
-  struct Serial *device = object;
-
-  switch (option)
-  {
-    case IF_SPEED:
-      /* TODO */
-      return E_OK;
-    case IF_QUEUE_RX:
-      *(uint32_t *)data = queueSize(&device->rxQueue);
-      return E_OK;
-    case IF_QUEUE_TX:
-      *(uint32_t *)data = queueSize(&device->txQueue);
-      return E_OK;
-    case IF_PRIORITY:
-      *(uint32_t *)data = NVIC_GetPriority(device->parent.irq);
-      return E_OK;
-    default:
-      return E_ERROR;
-  }
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialSetOpt(void *object, enum ifOption option,

@@ -166,7 +166,6 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  /* Release resources */
   serialCleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
@@ -202,16 +201,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 /*----------------------------------------------------------------------------*/
 static enum result serialGetOpt(void *object, enum ifOption option, void *data)
 {
-  struct SerialDma *device = object;
-
-  switch (option)
-  {
-    case IF_SPEED:
-      /* TODO */
-      return E_OK;
-    default:
-      return E_ERROR;
-  }
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialSetOpt(void *object, enum ifOption option,

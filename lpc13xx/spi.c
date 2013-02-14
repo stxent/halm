@@ -8,19 +8,18 @@
 #include "ssp_defs.h"
 /*----------------------------------------------------------------------------*/
 /* SPI settings */
-#define TX_FIFO_SIZE                    8
 #define DEFAULT_PRIORITY                15 /* Lowest priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
-//enum cleanup
-//{
-//  FREE_NONE = 0,
-//  FREE_PERIPHERAL,
-//  FREE_RX_QUEUE,
-//  FREE_TX_QUEUE,
-//  FREE_ALL
-//};
+enum cleanup
+{
+  FREE_NONE = 0,
+  FREE_PERIPHERAL,
+  FREE_RX_QUEUE,
+  FREE_TX_QUEUE,
+  FREE_ALL
+};
 /*----------------------------------------------------------------------------*/
-//static void spiCleanup(struct SpiIrq *, enum cleanup);
+static void spiCleanup(struct Spi *, enum cleanup);
 /*----------------------------------------------------------------------------*/
 static void spiHandler(void *);
 static enum result spiInit(void *, const void *);
@@ -48,24 +47,23 @@ static const struct SspClass spiTable = {
 /*----------------------------------------------------------------------------*/
 const struct SspClass *Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
-//static void spiCleanup(struct Serial *device, enum cleanup step)
-//{
-//  switch (step)
-//  {
-//    case FREE_ALL:
-//      NVIC_DisableIRQ(device->parent.irq); /* Disable interrupt */
-//    case FREE_TX_QUEUE:
-//      queueDeinit(&device->txQueue);
-//    case FREE_RX_QUEUE:
-//      queueDeinit(&device->rxQueue);
-//    case FREE_PERIPHERAL:
-//      /* Call UART class destructor */
-//      Uart->parent.deinit(device);
-//      break;
-//    default:
-//      break;
-//  }
-//}
+static void spiCleanup(struct Spi *device, enum cleanup step)
+{
+  switch (step)
+  {
+    case FREE_ALL:
+      NVIC_DisableIRQ(device->parent.irq); /* Disable interrupt */
+    case FREE_TX_QUEUE:
+      queueDeinit(&device->txQueue);
+    case FREE_RX_QUEUE:
+      queueDeinit(&device->rxQueue);
+    case FREE_PERIPHERAL:
+      Spi->parent.deinit(device); /* Call SSP class destructor */
+      break;
+    default:
+      break;
+  }
+}
 /*----------------------------------------------------------------------------*/
 static void spiHandler(void *object)
 {
@@ -94,25 +92,7 @@ static void spiHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result spiGetOpt(void *object, enum ifOption option, void *data)
 {
-  struct Spi *device = object;
-
-  switch (option)
-  {
-//    case IF_SPEED:
-//      /* TODO */
-//      return E_OK;
-//    case IF_QUEUE_RX:
-//      *(uint32_t *)data = queueSize(&device->rxQueue);
-//      return E_OK;
-//    case IF_QUEUE_TX:
-//      *(uint32_t *)data = queueSize(&device->txQueue);
-//      return E_OK;
-//    case IF_PRIORITY:
-//      *(uint32_t *)data = NVIC_GetPriority(device->parent.irq);
-//      return E_OK;
-    default:
-      return E_ERROR;
-  }
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result spiSetOpt(void *object, enum ifOption option,
@@ -122,11 +102,11 @@ static enum result spiSetOpt(void *object, enum ifOption option,
 
   switch (option)
   {
-//    case IF_SPEED:
-//      return uartSetRate(object, uartCalcRate(*(uint32_t *)data));
-//    case IF_PRIORITY:
-//      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
-//      return E_OK;
+    case IF_SPEED:
+      return sspSetRate(object, *(uint32_t *)data);
+    case IF_PRIORITY:
+      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
+      return E_OK;
     default:
       return E_ERROR;
   }
@@ -179,10 +159,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static void spiDeinit(void *object)
 {
-  struct Spi *device = object;
-
-  /* Release resources */
-//  serialCleanup(device, FREE_ALL);
+  spiCleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *object, const void *configPtr)
@@ -208,13 +185,12 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Initialize RX and TX queues */
   if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
   {
-//    serialCleanup(device, FREE_PERIPHERAL);
+    spiCleanup(device, FREE_PERIPHERAL);
     return res;
   }
-
   if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
   {
-//    serialCleanup(device, FREE_RX_QUEUE);
+    spiCleanup(device, FREE_RX_QUEUE);
     return res;
   }
 
