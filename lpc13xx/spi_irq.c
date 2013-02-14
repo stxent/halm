@@ -34,7 +34,7 @@ static enum result spiSetOpt(void *, enum ifOption, const void *);
 /* So we can initialize a structure while we initialize a structure */
 static const struct SspClass spiTable = {
     .parent = {
-        .size = sizeof(struct SpiIrq),
+        .size = sizeof(struct Spi),
         .init = spiInit,
         .deinit = spiDeinit,
 
@@ -46,7 +46,7 @@ static const struct SspClass spiTable = {
     .handler = spiHandler
 };
 /*----------------------------------------------------------------------------*/
-const struct SspClass *SpiIrq = &spiTable;
+const struct SspClass *Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
 //static void spiCleanup(struct Serial *device, enum cleanup step)
 //{
@@ -69,7 +69,7 @@ const struct SspClass *SpiIrq = &spiTable;
 /*----------------------------------------------------------------------------*/
 static void spiHandler(void *object)
 {
-  struct SpiIrq *device = object;
+  struct Spi *device = object;
   uint8_t status = device->parent.reg->MIS;
   uint16_t data;
 
@@ -94,7 +94,7 @@ static void spiHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result spiGetOpt(void *object, enum ifOption option, void *data)
 {
-  struct SpiIrq *device = object;
+  struct Spi *device = object;
 
   switch (option)
   {
@@ -118,7 +118,7 @@ static enum result spiGetOpt(void *object, enum ifOption option, void *data)
 static enum result spiSetOpt(void *object, enum ifOption option,
     const void *data)
 {
-  struct SpiIrq *device = object;
+  struct Spi *device = object;
 
   switch (option)
   {
@@ -134,7 +134,7 @@ static enum result spiSetOpt(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct SpiIrq *device = object;
+  struct Spi *device = object;
   uint32_t read = 0;
 
   mutexLock(&device->queueLock);
@@ -151,7 +151,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
-  struct SpiIrq *device = object;
+  struct Spi *device = object;
   uint32_t written = 0;
 
   mutexLock(&device->queueLock);
@@ -179,7 +179,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static void spiDeinit(void *object)
 {
-  struct SpiIrq *device = object;
+  struct Spi *device = object;
 
   /* Release resources */
 //  serialCleanup(device, FREE_ALL);
@@ -188,12 +188,21 @@ static void spiDeinit(void *object)
 static enum result spiInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
-  const struct SpiIrqConfig *config = configPtr;
+  const struct SpiConfig *config = configPtr;
+  const struct SspConfig parentConfig = {
+      .channel = config->channel,
+      .sck = config->sck,
+      .miso = config->miso,
+      .mosi = config->mosi,
+      .rate = config->rate,
+      .frame = config->frame,
+      .cs = config->cs
+  };
   enum result res;
-  struct SpiIrq *device = object;
+  struct Spi *device = object;
 
   /* Call SSP class constructor */
-  if ((res = Ssp->parent.init(object, configPtr)) != E_OK)
+  if ((res = Ssp->parent.init(object, &parentConfig)) != E_OK)
     return res;
 
   /* Initialize RX and TX queues */

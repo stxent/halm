@@ -70,7 +70,7 @@ static const struct SspClass sspTable = {
 /*----------------------------------------------------------------------------*/
 const struct SspClass *Ssp = &sspTable;
 /*----------------------------------------------------------------------------*/
-static void * volatile descriptors[] = {0};
+static void * volatile descriptors[] = {0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 enum result sspSetDescriptor(uint8_t channel, void *descriptor)
@@ -105,6 +105,7 @@ enum result sspSetRate(struct Ssp *device, uint32_t rate)
   device->reg->CPSR = 2;
   device->reg->CR0 &= ~CR0_SCR_MASK;
   device->reg->CR0 |= CR0_SCR(divider);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void sspDeinit(void *object)
@@ -175,6 +176,13 @@ static enum result sspInit(void *object, const void *configPtr)
       device->reg = LPC_SSP0;
       device->irq = SSP0_IRQn;
       break;
+    case 1:
+      sysClockEnable(CLK_SSP); /* FIXME */
+      LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
+      LPC_SYSCON->PRESETCTRL = 4; /* FIXME */
+      device->reg = LPC_SSP1;
+      device->irq = SSP1_IRQn;
+      break;
   }
 
   /* TODO Set SCK0 pin location register */
@@ -185,10 +193,10 @@ static enum result sspInit(void *object, const void *configPtr)
   gpioSetFunc(&device->mosiPin, mosiFunc);
 
   device->reg->CR0 = 0;
-  if (!config->size)
+  if (!config->frame)
     device->reg->CR0 |= CR0_DSS(8);
   else
-    device->reg->CR0 |= CR0_DSS(config->size); //FIXME Check
+    device->reg->CR0 |= CR0_DSS(config->frame); //FIXME Check
 
   sspSetRate(device, config->rate);
 

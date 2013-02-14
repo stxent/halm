@@ -16,12 +16,16 @@ struct SspClass;
 /*----------------------------------------------------------------------------*/
 extern const struct SspClass *Ssp;
 /*----------------------------------------------------------------------------*/
+/* TODO Add master/slave select */
 struct SspConfig
 {
+  /* Mandatory arguments */
   uint8_t channel; /* Peripheral number */
-  gpioKey sck, cs, miso, mosi; /* Clock, slave select and data pins */
+  gpioKey sck, miso, mosi; /* Serial clock, master output */
   uint32_t rate;
-  uint8_t size; /* Frame size, by default uses 8 bits */
+  /* Optional arguments */
+  uint8_t frame; /* Frame size, 8 bits by default */
+  gpioKey cs; /* Chip select for slave operations */
 };
 /*----------------------------------------------------------------------------*/
 struct SspClass

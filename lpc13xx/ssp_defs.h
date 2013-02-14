@@ -14,7 +14,7 @@
 /* Data Size Select */
 #define CR0_DSS_MASK                    BIT_FIELD(0x0F, 0)
 /* Possible values are from 4 to 16 bit */
-#define CR0_DSS(size)                   BIT_FIELD((size) - 1, 0)
+#define CR0_DSS(size)                   BIT_FIELD(((size) - 1), 0)
 /* Frame Format */
 #define CR0_FRF_MASK                    BIT_FIELD(0x03, 4)
 #define CR0_FRF_SPI                     BIT_FIELD(0, 4)

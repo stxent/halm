@@ -11,15 +11,21 @@
 #include "queue.h"
 #include "ssp.h"
 /*----------------------------------------------------------------------------*/
-extern const struct SspClass *SpiIrq;
+extern const struct SspClass *Spi;
 /*----------------------------------------------------------------------------*/
-struct SpiIrqConfig
+struct SpiConfig
 {
-  struct SspConfig ssp;
+  /* Mandatory arguments */
+  uint8_t channel; /* Peripheral number */
+  gpioKey sck, miso, mosi; /* Serial clock, master output */
+  uint32_t rate;
+  /* Optional arguments */
   uint32_t rxLength, txLength; /* Queue lengths */
+  uint8_t frame; /* Frame size, 8 bits by default */
+  gpioKey cs; /* Chip select for slave operations */
 };
 /*----------------------------------------------------------------------------*/
-struct SpiIrq
+struct Spi
 {
   struct Ssp parent;
 
