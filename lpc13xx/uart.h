@@ -23,18 +23,20 @@ enum uartParity
   UART_PARITY_EVEN
 };
 /*----------------------------------------------------------------------------*/
+/* TODO Stop bits, frame width, additional signals and modes */
 struct UartConfig
 {
+  /* Mandatory arguments */
   uint8_t channel; /* Peripheral number */
   gpioKey rx, tx; /* RX and TX pins */
-  enum uartParity parity; /* Disabled, even or odd parity */
+  uint32_t rate; /* Baud rate */
+  /* Optional arguments */
+  enum uartParity parity; /* By default no parity mode selected */
 };
 /*----------------------------------------------------------------------------*/
 struct UartConfigRate
 {
-  uint8_t high;
-  uint8_t low;
-  uint8_t fraction;
+  uint8_t high, low, fraction;
 };
 /*----------------------------------------------------------------------------*/
 struct UartClass

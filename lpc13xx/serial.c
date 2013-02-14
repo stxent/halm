@@ -22,8 +22,8 @@ enum cleanup
 };
 /*----------------------------------------------------------------------------*/
 static void serialCleanup(struct Serial *, enum cleanup);
-/*----------------------------------------------------------------------------*/
 static void serialHandler(void *);
+/*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
 static uint32_t serialRead(void *, uint8_t *, uint32_t);
@@ -195,11 +195,18 @@ static enum result serialInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
   const struct SerialConfig *config = configPtr;
+  const struct UartConfig parentConfig = {
+      .channel = config->channel,
+      .rx = config->rx,
+      .tx = config->tx,
+      .rate = config->rate,
+      .parity = config->parity
+  };
   enum result res;
   struct Serial *device = object;
 
   /* Call UART class constructor */
-  if ((res = Uart->parent.init(object, configPtr)) != E_OK)
+  if ((res = Uart->parent.init(object, &parentConfig)) != E_OK)
     return res;
 
   /* Initialize RX and TX queues */
@@ -208,7 +215,6 @@ static enum result serialInit(void *object, const void *configPtr)
     serialCleanup(device, FREE_PERIPHERAL);
     return res;
   }
-
   if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
   {
     serialCleanup(device, FREE_RX_QUEUE);
@@ -216,12 +222,6 @@ static enum result serialInit(void *object, const void *configPtr)
   }
 
   device->queueLock = MUTEX_UNLOCKED;
-
-  if ((res = uartSetRate(object, uartCalcRate(config->rate))) != E_OK)
-  {
-    serialCleanup(device, FREE_TX_QUEUE);
-    return res;
-  }
 
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
   device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;

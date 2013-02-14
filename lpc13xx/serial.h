@@ -15,9 +15,13 @@ extern const struct UartClass *Serial;
 /*----------------------------------------------------------------------------*/
 struct SerialConfig
 {
-  struct UartConfig uart; //FIXME Rewrite
-  uint32_t rate;
+  /* Mandatory arguments */
+  uint8_t channel; /* Peripheral number */
+  gpioKey rx, tx; /* RX and TX pins */
+  uint32_t rate; /* Baud rate */
+  /* Optional arguments */
   uint32_t rxLength, txLength; /* Queue lengths */
+  enum uartParity parity; /* Disabled, even or odd parity */
 };
 /*----------------------------------------------------------------------------*/
 struct Serial
