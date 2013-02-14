@@ -13,6 +13,16 @@
 #define DEFAULT_DIV                     CLK_DIV1
 #define DEFAULT_DIV_VALUE               1
 /*----------------------------------------------------------------------------*/
+enum cleanup
+{
+  FREE_NONE = 0,
+  FREE_DESCRIPTOR,
+  FREE_RX_PIN,
+  FREE_TX_PIN,
+  FREE_PERIPHERAL,
+  FREE_ALL
+};
+/*----------------------------------------------------------------------------*/
 /* UART pin function values */
 static const struct GpioPinFunc uartPins[] = {
     {
@@ -82,6 +92,8 @@ static const struct GpioPinFunc uartPins[] = {
     {} /* End of pin function association list */
 };
 /*----------------------------------------------------------------------------*/
+static void uartCleanup(struct Uart *, enum cleanup);
+/*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
 /*----------------------------------------------------------------------------*/
@@ -103,6 +115,31 @@ const struct UartClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
 static void * volatile descriptors[] = {0, 0, 0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
+/*----------------------------------------------------------------------------*/
+static void uartCleanup(struct Uart *device, enum cleanup step)
+{
+  const enum sysPowerDevice uartPower[] = {
+      PWR_UART0, PWR_UART1, PWR_UART2, PWR_UART3
+  };
+
+  switch (step)
+  {
+    case FREE_ALL:
+    case FREE_PERIPHERAL:
+      /* Disable UART peripheral power */
+      sysPowerDisable(uartPower[device->channel]);
+      break;
+    case FREE_TX_PIN:
+      gpioDeinit(&device->txPin);
+    case FREE_RX_PIN:
+      gpioDeinit(&device->rxPin);
+    case FREE_DESCRIPTOR:
+      /* Reset UART descriptor */
+      uartSetDescriptor(device->channel, 0);
+    default:
+      break;
+  }
+}
 /*----------------------------------------------------------------------------*/
 /* TODO Replace return type */
 enum result uartSetDescriptor(uint8_t channel, void *descriptor)
@@ -183,59 +220,40 @@ enum result uartSetRate(struct Uart *device, struct UartConfigRate rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void uartDeinit(void *object)
-{
-  struct Uart *device = object;
-
-  /* Disable UART peripheral power */
-  switch (device->channel)
-  {
-    case 0:
-      sysPowerDisable(PWR_UART0);
-      break;
-    case 1:
-      sysPowerDisable(PWR_UART1);
-      break;
-    case 2:
-      sysPowerDisable(PWR_UART2);
-      break;
-    case 3:
-      sysPowerDisable(PWR_UART3);
-      break;
-  }
-  /* Release pins */
-  gpioDeinit(&device->txPin);
-  gpioDeinit(&device->rxPin);
-  /* Reset UART descriptor */
-  uartSetDescriptor(device->channel, 0);
-}
-/*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
   const struct UartConfig *config = configPtr;
   struct Uart *device = object;
   gpioFunc rxFunc, txFunc;
+  enum result res;
 
   /* Check device configuration data and availability */
-  if (!config || uartSetDescriptor(config->channel, device) != E_OK)
+  if (!config)
     return E_ERROR;
+  if ((res = uartSetDescriptor(config->channel, device)) != E_OK)
+    return res;
 
   /* Check pin mapping */
   rxFunc = gpioFindFunc(uartPins, config->rx);
   txFunc = gpioFindFunc(uartPins, config->tx);
   if (rxFunc == -1 || txFunc == -1)
+  {
+    uartCleanup(device, FREE_DESCRIPTOR);
     return E_ERROR;
+  }
 
   /* Setup UART pins */
   device->rxPin = gpioInit(config->rx, GPIO_INPUT);
   if (!gpioGetKey(&device->rxPin))
+  {
+    uartCleanup(device, FREE_DESCRIPTOR);
     return E_ERROR;
-
+  }
   device->txPin = gpioInit(config->tx, GPIO_OUTPUT);
   if (!gpioGetKey(&device->txPin))
   {
-    gpioDeinit(&device->rxPin);
+    uartCleanup(device, FREE_RX_PIN);
     return E_ERROR;
   }
 
@@ -290,5 +308,18 @@ static enum result uartInit(void *object, const void *configPtr)
       device->reg->LCR |= LCR_PARITY_ODD;
   }
 
+  if ((res = uartSetRate(object, uartCalcRate(config->rate))) != E_OK)
+  {
+    uartCleanup(device, FREE_TX_PIN);
+    return res;
+  }
+
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void uartDeinit(void *object)
+{
+  struct Uart *device = object;
+
+  uartCleanup(device, FREE_ALL);
 }

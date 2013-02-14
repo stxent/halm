@@ -24,8 +24,6 @@ enum cleanup
   FREE_ALL
 };
 /*----------------------------------------------------------------------------*/
-static void uartCleanup(struct Uart *, enum cleanup);
-/*----------------------------------------------------------------------------*/
 /* UART pin function values */
 static const struct GpioPinFunc uartPins[] = {
     {
@@ -38,6 +36,8 @@ static const struct GpioPinFunc uartPins[] = {
     },
     {} /* End of pin function association list */
 };
+/*----------------------------------------------------------------------------*/
+static void uartCleanup(struct Uart *, enum cleanup);
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
@@ -143,13 +143,6 @@ enum result uartSetRate(struct Uart *device, struct UartConfigRate rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void uartDeinit(void *object)
-{
-  struct Uart *device = object;
-
-  uartCleanup(device, FREE_ALL);
-}
-/*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
@@ -224,4 +217,11 @@ static enum result uartInit(void *object, const void *configPtr)
   }
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void uartDeinit(void *object)
+{
+  struct Uart *device = object;
+
+  uartCleanup(device, FREE_ALL);
 }

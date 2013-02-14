@@ -15,9 +15,13 @@ extern const struct UartClass *SerialDma;
 /*----------------------------------------------------------------------------*/
 struct SerialDmaConfig
 {
-  struct UartConfig uart;
-  uint32_t rate;
-  int8_t rxChannel, txChannel; /* DMA channels */
+  /* Mandatory arguments */
+  uint8_t channel; /* Peripheral number */
+  gpioKey rx, tx; /* RX and TX pins */
+  uint32_t rate; /* Baud rate */
+  /* Optional arguments */
+  enum uartParity parity; /* Even, odd or no parity */
+  int8_t rxChannel, txChannel; /* DMA channels */ /* TODO Make optional */
 };
 /*----------------------------------------------------------------------------*/
 struct SerialDma

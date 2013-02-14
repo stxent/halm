@@ -20,8 +20,8 @@ struct SerialConfig
   gpioKey rx, tx; /* RX and TX pins */
   uint32_t rate; /* Baud rate */
   /* Optional arguments */
+  enum uartParity parity; /* Even, odd or no parity */
   uint32_t rxLength, txLength; /* Queue lengths */
-  enum uartParity parity; /* Disabled, even or odd parity */
 };
 /*----------------------------------------------------------------------------*/
 struct Serial

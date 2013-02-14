@@ -97,6 +97,60 @@ static void serialHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
+static enum result serialInit(void *object, const void *configPtr)
+{
+  /* Set pointer to device configuration data */
+  const struct SerialConfig *config = configPtr;
+  const struct UartConfig parentConfig = {
+      .channel = config->channel,
+      .rx = config->rx,
+      .tx = config->tx,
+      .rate = config->rate,
+      .parity = config->parity
+  };
+  enum result res;
+  struct Serial *device = object;
+
+  /* Call UART class constructor */
+  if ((res = Uart->parent.init(object, &parentConfig)) != E_OK)
+    return res;
+
+  /* Initialize RX and TX queues */
+  if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
+  {
+    serialCleanup(device, FREE_PERIPHERAL);
+    return res;
+  }
+  if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
+  {
+    serialCleanup(device, FREE_RX_QUEUE);
+    return res;
+  }
+
+  device->queueLock = MUTEX_UNLOCKED;
+
+  /* Enable and clear FIFO, set RX trigger level to 8 bytes */
+  device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
+  device->parent.reg->FCR |= FCR_ENABLE | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
+  /* Enable RBR and THRE interrupts */
+  device->parent.reg->IER |= IER_RBR | IER_THRE;
+  device->parent.reg->TER = TER_TXEN;
+
+  /* Set interrupt priority, lowest by default */
+  NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
+  /* Enable UART interrupt */
+  NVIC_EnableIRQ(device->parent.irq);
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void serialDeinit(void *object)
+{
+  struct Serial *device = object;
+
+  /* Release resources */
+  serialCleanup(device, FREE_ALL);
+}
+/*----------------------------------------------------------------------------*/
 static enum result serialGetOpt(void *object, enum ifOption option, void *data)
 {
   struct Serial *device = object;
@@ -181,58 +235,4 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   NVIC_EnableIRQ(device->parent.irq);
   mutexUnlock(&device->queueLock);
   return written;
-}
-/*----------------------------------------------------------------------------*/
-static void serialDeinit(void *object)
-{
-  struct Serial *device = object;
-
-  /* Release resources */
-  serialCleanup(device, FREE_ALL);
-}
-/*----------------------------------------------------------------------------*/
-static enum result serialInit(void *object, const void *configPtr)
-{
-  /* Set pointer to device configuration data */
-  const struct SerialConfig *config = configPtr;
-  const struct UartConfig parentConfig = {
-      .channel = config->channel,
-      .rx = config->rx,
-      .tx = config->tx,
-      .rate = config->rate,
-      .parity = config->parity
-  };
-  enum result res;
-  struct Serial *device = object;
-
-  /* Call UART class constructor */
-  if ((res = Uart->parent.init(object, &parentConfig)) != E_OK)
-    return res;
-
-  /* Initialize RX and TX queues */
-  if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
-  {
-    serialCleanup(device, FREE_PERIPHERAL);
-    return res;
-  }
-  if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
-  {
-    serialCleanup(device, FREE_RX_QUEUE);
-    return res;
-  }
-
-  device->queueLock = MUTEX_UNLOCKED;
-
-  /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  device->parent.reg->FCR |= FCR_ENABLE | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
-  /* Enable RBR and THRE interrupts */
-  device->parent.reg->IER |= IER_RBR | IER_THRE;
-  device->parent.reg->TER = TER_TXEN;
-
-  /* Set interrupt priority, lowest by default */
-  NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
-  /* Enable UART interrupt */
-  NVIC_EnableIRQ(device->parent.irq);
-  return E_OK;
 }

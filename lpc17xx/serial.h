@@ -15,8 +15,12 @@ extern const struct UartClass *Serial;
 /*----------------------------------------------------------------------------*/
 struct SerialConfig
 {
-  struct UartConfig uart;
-  uint32_t rate;
+  /* Mandatory arguments */
+  uint8_t channel; /* Peripheral number */
+  gpioKey rx, tx; /* RX and TX pins */
+  uint32_t rate; /* Baud rate */
+  /* Optional arguments */
+  enum uartParity parity; /* Even, odd or no parity */
   uint32_t rxLength, txLength; /* Queue lengths */
 };
 /*----------------------------------------------------------------------------*/
