@@ -22,8 +22,8 @@ enum cleanup
 };
 /*----------------------------------------------------------------------------*/
 static void serialCleanup(struct Serial *, enum cleanup);
-static void serialHandler(void *);
 /*----------------------------------------------------------------------------*/
+static void serialHandler(void *);
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
 static uint32_t serialRead(void *, uint8_t *, uint32_t);
@@ -151,46 +151,6 @@ static void serialDeinit(void *object)
   serialCleanup(device, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGetOpt(void *object, enum ifOption option, void *data)
-{
-  struct Serial *device = object;
-
-  switch (option)
-  {
-    case IF_SPEED:
-      /* TODO */
-      return E_OK;
-    case IF_QUEUE_RX:
-      *(uint32_t *)data = queueSize(&device->rxQueue);
-      return E_OK;
-    case IF_QUEUE_TX:
-      *(uint32_t *)data = queueSize(&device->txQueue);
-      return E_OK;
-    case IF_PRIORITY:
-      *(uint32_t *)data = NVIC_GetPriority(device->parent.irq);
-      return E_OK;
-    default:
-      return E_ERROR;
-  }
-}
-/*----------------------------------------------------------------------------*/
-static enum result serialSetOpt(void *object, enum ifOption option,
-    const void *data)
-{
-  struct Serial *device = object;
-
-  switch (option)
-  {
-    case IF_SPEED:
-      return uartSetRate(object, uartCalcRate(*(uint32_t *)data));
-    case IF_PRIORITY:
-      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
-      return E_OK;
-    default:
-      return E_ERROR;
-  }
-}
-/*----------------------------------------------------------------------------*/
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Serial *device = object;
@@ -235,4 +195,44 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   NVIC_EnableIRQ(device->parent.irq);
   mutexUnlock(&device->queueLock);
   return written;
+}
+/*----------------------------------------------------------------------------*/
+static enum result serialGetOpt(void *object, enum ifOption option, void *data)
+{
+  struct Serial *device = object;
+
+  switch (option)
+  {
+    case IF_SPEED:
+      /* TODO */
+      return E_OK;
+    case IF_QUEUE_RX:
+      *(uint32_t *)data = queueSize(&device->rxQueue);
+      return E_OK;
+    case IF_QUEUE_TX:
+      *(uint32_t *)data = queueSize(&device->txQueue);
+      return E_OK;
+    case IF_PRIORITY:
+      *(uint32_t *)data = NVIC_GetPriority(device->parent.irq);
+      return E_OK;
+    default:
+      return E_ERROR;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result serialSetOpt(void *object, enum ifOption option,
+    const void *data)
+{
+  struct Serial *device = object;
+
+  switch (option)
+  {
+    case IF_SPEED:
+      return uartSetRate(object, uartCalcRate(*(uint32_t *)data));
+    case IF_PRIORITY:
+      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
+      return E_OK;
+    default:
+      return E_ERROR;
+  }
 }

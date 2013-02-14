@@ -141,7 +141,6 @@ static void uartCleanup(struct Uart *device, enum cleanup step)
   }
 }
 /*----------------------------------------------------------------------------*/
-/* TODO Replace return type */
 enum result uartSetDescriptor(uint8_t channel, void *descriptor)
 {
   enum result res = E_ERROR;
@@ -228,7 +227,7 @@ static enum result uartInit(void *object, const void *configPtr)
   gpioFunc func;
   enum result res;
 
-  /* Check device configuration data and availability */
+  /* Check device configuration data */
   if (!config)
     return E_ERROR;
 

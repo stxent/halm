@@ -62,7 +62,8 @@ static const struct UartClass serialDmaTable = {
         .getopt = serialGetOpt,
         .setopt = serialSetOpt
     },
-    .handler = serialHandler
+    .handler = 0
+//    .handler = serialHandler
 };
 /*----------------------------------------------------------------------------*/
 const struct UartClass *SerialDma = &serialDmaTable;
@@ -83,70 +84,6 @@ static void serialCleanup(struct SerialDma *device, enum cleanup step)
     default:
       break;
   }
-}
-/*----------------------------------------------------------------------------*/
-static void serialHandler(void *object /*__attribute__((unused))*/)
-{
-
-}
-/*----------------------------------------------------------------------------*/
-static enum result serialGetOpt(void *object, enum ifOption option, void *data)
-{
-  struct SerialDma *device = object;
-
-  switch (option)
-  {
-    case IF_SPEED:
-      /* TODO */
-      return E_OK;
-    default:
-      return E_ERROR;
-  }
-}
-/*----------------------------------------------------------------------------*/
-static enum result serialSetOpt(void *object, enum ifOption option,
-    const void *data)
-{
-  struct SerialDma *device = object;
-
-  switch (option)
-  {
-    case IF_SPEED:
-      return uartSetRate((struct Uart *)device,
-          uartCalcRate(*(uint32_t *)data));
-    default:
-      return E_ERROR;
-  }
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
-{
-  struct SerialDma *device = object;
-
-  /* TODO Add DMA error handling */
-  if (length && dmaStart(device->rxDma,
-      buffer, (void *)&device->parent.reg->RBR, length) == E_OK)
-  {
-    while (dmaIsActive(device->rxDma));
-    return length;
-  }
-  return 0;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t serialWrite(void *object, const uint8_t *buffer,
-    uint32_t length)
-{
-  struct SerialDma *device = object;
-
-  /* TODO Add DMA error handling */
-  if (length && dmaStart(device->txDma,
-      (void *)&device->parent.reg->THR, buffer, length) == E_OK)
-  {
-    /* Wait until all bytes transferred */
-    while (dmaIsActive(device->txDma));
-    return length;
-  }
-  return 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialDmaSetup(struct SerialDma *device, int8_t rxChannel,
@@ -196,13 +133,10 @@ static enum result serialDmaSetup(struct SerialDma *device, int8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void serialDeinit(void *object)
-{
-  struct SerialDma *device = object;
-
-  /* Release resources */
-  serialCleanup(device, FREE_ALL);
-}
+//static void serialHandler(void *object)
+//{
+//
+//}
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
@@ -229,12 +163,6 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
   }
 
-  if ((res = uartSetRate(object, uartCalcRate(config->rate))) != E_OK)
-  {
-    serialCleanup(device, FREE_ALL);
-    return res;
-  }
-
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
   device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
   device->parent.reg->FCR |= FCR_ENABLE | FCR_DMA_ENABLE | FCR_RX_TRIGGER(0);
@@ -248,4 +176,71 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Enable UART interrupt */
 //  NVIC_EnableIRQ(device->parent.irq);
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void serialDeinit(void *object)
+{
+  struct SerialDma *device = object;
+
+  /* Release resources */
+  serialCleanup(device, FREE_ALL);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
+{
+  struct SerialDma *device = object;
+
+  /* TODO Add DMA error handling */
+  if (length && dmaStart(device->rxDma,
+      buffer, (void *)&device->parent.reg->RBR, length) == E_OK)
+  {
+    while (dmaIsActive(device->rxDma));
+    return length;
+  }
+  return 0;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t serialWrite(void *object, const uint8_t *buffer,
+    uint32_t length)
+{
+  struct SerialDma *device = object;
+
+  /* TODO Add DMA error handling */
+  if (length && dmaStart(device->txDma,
+      (void *)&device->parent.reg->THR, buffer, length) == E_OK)
+  {
+    /* Wait until all bytes transferred */
+    while (dmaIsActive(device->txDma));
+    return length;
+  }
+  return 0;
+}
+/*----------------------------------------------------------------------------*/
+static enum result serialGetOpt(void *object, enum ifOption option, void *data)
+{
+  struct SerialDma *device = object;
+
+  switch (option)
+  {
+    case IF_SPEED:
+      /* TODO */
+      return E_OK;
+    default:
+      return E_ERROR;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result serialSetOpt(void *object, enum ifOption option,
+    const void *data)
+{
+  struct SerialDma *device = object;
+
+  switch (option)
+  {
+    case IF_SPEED:
+      return uartSetRate((struct Uart *)device,
+          uartCalcRate(*(uint32_t *)data));
+    default:
+      return E_ERROR;
+  }
 }
