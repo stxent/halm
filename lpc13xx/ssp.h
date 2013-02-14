@@ -7,7 +7,6 @@
 #ifndef SSP_H_
 #define SSP_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <LPC13xx.h>
 #include "gpio.h"
 #include "interface.h"

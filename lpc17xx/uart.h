@@ -7,7 +7,6 @@
 #ifndef UART_H_
 #define UART_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <LPC17xx.h>
 #include "gpio.h"
 #include "interface.h"

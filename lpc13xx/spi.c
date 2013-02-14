@@ -90,26 +90,53 @@ static void spiHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiGetOpt(void *object, enum ifOption option, void *data)
+static enum result spiInit(void *object, const void *configPtr)
 {
-  return E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static enum result spiSetOpt(void *object, enum ifOption option,
-    const void *data)
-{
+  /* Set pointer to device configuration data */
+  const struct SpiConfig *config = configPtr;
+  const struct SspConfig parentConfig = {
+      .channel = config->channel,
+      .sck = config->sck,
+      .miso = config->miso,
+      .mosi = config->mosi,
+      .rate = config->rate,
+      .frame = config->frame,
+      .cs = config->cs
+  };
+  enum result res;
   struct Spi *device = object;
 
-  switch (option)
+  /* Call SSP class constructor */
+  if ((res = Ssp->parent.init(object, &parentConfig)) != E_OK)
+    return res;
+
+  /* Initialize RX and TX queues */
+  if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
   {
-    case IF_SPEED:
-      return sspSetRate(object, *(uint32_t *)data);
-    case IF_PRIORITY:
-      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
-      return E_OK;
-    default:
-      return E_ERROR;
+    spiCleanup(device, FREE_PERIPHERAL);
+    return res;
   }
+  if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
+  {
+    spiCleanup(device, FREE_RX_QUEUE);
+    return res;
+  }
+
+  device->queueLock = MUTEX_UNLOCKED;
+
+  /* Enable receive half-full and transmit half-empty interrupts */
+//  device->parent.reg->IMSC = IMSC_RXIM | IMSC_TXIM;
+
+  /* Set interrupt priority, lowest by default */
+  NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
+  /* Enable UART interrupt */
+  NVIC_EnableIRQ(device->parent.irq);
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void spiDeinit(void *object)
+{
+  spiCleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
@@ -157,51 +184,24 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   return written;
 }
 /*----------------------------------------------------------------------------*/
-static void spiDeinit(void *object)
+static enum result spiGetOpt(void *object, enum ifOption option, void *data)
 {
-  spiCleanup(object, FREE_ALL);
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiInit(void *object, const void *configPtr)
+static enum result spiSetOpt(void *object, enum ifOption option,
+    const void *data)
 {
-  /* Set pointer to device configuration data */
-  const struct SpiConfig *config = configPtr;
-  const struct SspConfig parentConfig = {
-      .channel = config->channel,
-      .sck = config->sck,
-      .miso = config->miso,
-      .mosi = config->mosi,
-      .rate = config->rate,
-      .frame = config->frame,
-      .cs = config->cs
-  };
-  enum result res;
   struct Spi *device = object;
 
-  /* Call SSP class constructor */
-  if ((res = Ssp->parent.init(object, &parentConfig)) != E_OK)
-    return res;
-
-  /* Initialize RX and TX queues */
-  if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
+  switch (option)
   {
-    spiCleanup(device, FREE_PERIPHERAL);
-    return res;
+    case IF_SPEED:
+      return sspSetRate(object, *(uint32_t *)data);
+    case IF_PRIORITY:
+      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
+      return E_OK;
+    default:
+      return E_ERROR;
   }
-  if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
-  {
-    spiCleanup(device, FREE_RX_QUEUE);
-    return res;
-  }
-
-  device->queueLock = MUTEX_UNLOCKED;
-
-  /* Enable receive half-full and transmit half-empty interrupts */
-//  device->parent.reg->IMSC = IMSC_RXIM | IMSC_TXIM;
-
-  /* Set interrupt priority, lowest by default */
-  NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
-  /* Enable UART interrupt */
-  NVIC_EnableIRQ(device->parent.irq);
-  return E_OK;
 }
