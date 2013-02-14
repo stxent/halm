@@ -215,7 +215,5 @@ static enum result uartInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void uartDeinit(void *object)
 {
-  struct Uart *device = object;
-
-  uartCleanup(device, FREE_ALL);
+  uartCleanup(object, FREE_ALL);
 }

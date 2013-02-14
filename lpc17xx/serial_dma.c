@@ -166,10 +166,8 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  struct SerialDma *device = object;
-
   /* Release resources */
-  serialCleanup(device, FREE_ALL);
+  serialCleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)

@@ -145,10 +145,8 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  struct Serial *device = object;
-
   /* Release resources */
-  serialCleanup(device, FREE_ALL);
+  serialCleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialGetOpt(void *object, enum ifOption option, void *data)
