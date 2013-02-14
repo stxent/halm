@@ -225,39 +225,37 @@ static enum result uartInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct UartConfig *config = configPtr;
   struct Uart *device = object;
-  gpioFunc rxFunc, txFunc;
+  gpioFunc func;
   enum result res;
 
   /* Check device configuration data and availability */
   if (!config)
     return E_ERROR;
-  if ((res = uartSetDescriptor(config->channel, device)) != E_OK)
+
+  /* Try to set peripheral descriptor */
+  device->channel = config->channel;
+  if ((res = uartSetDescriptor(device->channel, device)) != E_OK)
     return res;
 
-  /* Check pin mapping */
-  rxFunc = gpioFindFunc(uartPins, config->rx);
-  txFunc = gpioFindFunc(uartPins, config->tx);
-  if (rxFunc == -1 || txFunc == -1)
-  {
-    uartCleanup(device, FREE_DESCRIPTOR);
-    return E_ERROR;
-  }
-
-  /* Setup UART pins */
+  /* Setup UART RX pin */
+  func = gpioFindFunc(uartPins, config->rx);
   device->rxPin = gpioInit(config->rx, GPIO_INPUT);
-  if (!gpioGetKey(&device->rxPin))
+  if (func == -1 || !gpioGetKey(&device->rxPin))
   {
     uartCleanup(device, FREE_DESCRIPTOR);
     return E_ERROR;
   }
+  gpioSetFunc(&device->rxPin, func);
+
+  /* Setup UART TX pin */
+  func = gpioFindFunc(uartPins, config->tx);
   device->txPin = gpioInit(config->tx, GPIO_OUTPUT);
-  if (!gpioGetKey(&device->txPin))
+  if (func == -1 || !gpioGetKey(&device->rxPin))
   {
     uartCleanup(device, FREE_RX_PIN);
     return E_ERROR;
   }
-
-  device->channel = config->channel;
+  gpioSetFunc(&device->txPin, func);
 
   //FIXME Remove FIFO level from CMSIS
   switch (device->channel)
@@ -289,10 +287,6 @@ static enum result uartInit(void *object, const void *configPtr)
       device->irq = UART3_IRQn;
       break;
   }
-
-  /* Select the UART function of pins */
-  gpioSetFunc(&device->rxPin, rxFunc);
-  gpioSetFunc(&device->txPin, txFunc);
 
   device->reg->FCR = 0;
   device->reg->IER = 0;
