@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <string.h>
-/*----------------------------------------------------------------------------*/
 #include "gpdma.h"
 #include "serial_dma.h"
 #include "uart_defs.h"
@@ -13,16 +13,7 @@
 /* Serial port settings */
 #define RX_FIFO_LEVEL                   0 /* 1 character */
 /*----------------------------------------------------------------------------*/
-enum cleanup
-{
-  FREE_NONE = 0,
-  FREE_PERIPHERAL,
-  FREE_DMA,
-  FREE_ALL
-};
-/*----------------------------------------------------------------------------*/
-static void serialCleanup(struct SerialDma *, enum cleanup);
-static enum result serialDmaSetup(struct SerialDma *, int8_t, int8_t);
+static enum result dmaSetup(struct SerialDma *, int8_t, int8_t);
 /*----------------------------------------------------------------------------*/
 static void serialHandler(void *);
 static enum result serialInit(void *, const void *);
@@ -65,25 +56,7 @@ static const struct UartClass serialDmaTable = {
 /*----------------------------------------------------------------------------*/
 const struct UartClass *SerialDma = &serialDmaTable;
 /*----------------------------------------------------------------------------*/
-static void serialCleanup(struct SerialDma *device, enum cleanup step)
-{
-  switch (step)
-  {
-    case FREE_ALL:
-    case FREE_DMA:
-      /* Free DMA channel descriptors */
-      deinit(device->txDma);
-      deinit(device->rxDma);
-    case FREE_PERIPHERAL:
-      /* Call UART class destructor */
-      Uart->parent.deinit(device);
-      break;
-    default:
-      break;
-  }
-}
-/*----------------------------------------------------------------------------*/
-static enum result serialDmaSetup(struct SerialDma *device, int8_t rxChannel,
+static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
     int8_t txChannel)
 {
   struct GpdmaConfig channels[2] =
@@ -148,10 +121,9 @@ static enum result serialInit(void *object, const void *configPtr)
   if ((res = Uart->parent.init(object, &parentConfig)) != E_OK)
     return res;
 
-  if ((res = serialDmaSetup(device,
-      config->rxChannel, config->txChannel)) != E_OK)
+  if ((res = dmaSetup(device, config->rxChannel, config->txChannel)) != E_OK)
   {
-    serialCleanup(device, FREE_PERIPHERAL);
+    Uart->parent.deinit(device);
     return res;
   }
 
@@ -166,7 +138,13 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  serialCleanup(object, FREE_ALL);
+  struct SerialDma *device = object;
+
+  /* Free DMA channel descriptors */
+  deinit(device->txDma);
+  deinit(device->rxDma);
+  /* Call UART class destructor */
+  Uart->parent.deinit(device);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
@@ -212,8 +190,8 @@ static enum result serialSetOpt(void *object, enum ifOption option,
   switch (option)
   {
     case IF_SPEED:
-      return uartSetRate((struct Uart *)device,
-          uartCalcRate(*(uint32_t *)data));
+      uartSetRate((struct Uart *)device, uartCalcRate(*(uint32_t *)data));
+      return E_OK; /* TODO */
     default:
       return E_ERROR;
   }

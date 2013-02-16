@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include "gpio.h"
 /*------------------Values for function and mode select registers-------------*/
 #define PIN_MASK                        0x03
@@ -63,34 +64,26 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   union GpioPin converted = {
       .key = ~id /* Invert unique pin id */
   };
-  uint32_t *pinptr;
 
   /* TODO Add more precise pin checking */
-  if (!id || (uint8_t)converted.port > 4 || (uint8_t)converted.offset > 31)
-    return p;
+  assert(id && (uint8_t)converted.port <= 4 && (uint8_t)converted.offset <= 31);
+
   p.pin = converted;
   p.control = calcPort(p.pin);
 
-  /* Calculate PINSEL register */
-  pinptr = calcPinSelect(p.pin);
-  /* Set function 0: GPIO mode */
-  *pinptr &= ~PIN_OFFSET(PIN_MASK, p.pin.offset);
-
-  /* Calculate PINMODE register */
-  pinptr = calcPinMode(p.pin);
+  /* Set function 0: GPIO mode for all LPC17xx parts */
+  gpioSetFunc(&p, 0);
   /* Set mode 2: neither pull-up nor pull-down */
-  *pinptr &= ~PIN_OFFSET(PIN_MASK, p.pin.offset);
-  *pinptr |= PIN_OFFSET(PIN_MODE_INACTIVE, p.pin.offset);
-
-  /* Calculate PINMODE_OD register */
-  pinptr = calcPinModeOD(p.pin);
+  gpioSetPull(&p, GPIO_NOPULL);
   /* Set mode 0: normal mode (not open drain) */
-  *pinptr &= ~(1 << p.pin.offset);
+  gpioSetType(&p, GPIO_PUSHPULL);
 
   if (dir == GPIO_OUTPUT)
     p.control->FIODIR |= 1 << p.pin.offset;
   else
     p.control->FIODIR &= ~(1 << p.pin.offset);
+
+  /* TODO Add default output value */
 
   /* There is no need to enable GPIO power because it is enabled on reset */
   return p;
@@ -98,21 +91,11 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 /*----------------------------------------------------------------------------*/
 void gpioDeinit(struct Gpio *p)
 {
-  uint32_t *pinptr;
-
   p->control->FIODIR &= ~(1 << p->pin.offset);
   /* Reset values to default (0) */
-  /* Calculate PINSEL register */
-  pinptr = calcPinSelect(p->pin);
-  *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
-
-  /* Calculate PINMODE register */
-  pinptr = calcPinMode(p->pin);
-  *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
-
-  /* Calculate PINMODE_OD register */
-  pinptr = calcPinModeOD(p->pin);
-  *pinptr &= ~(1 << p->pin.offset);
+  gpioSetType(p, 0);
+  gpioSetPull(p, 0);
+  gpioSetFunc(p, 0);
 
   /* TODO Check possibility of disabling power when no pins are used */
   /* LPC_SC->PCONP &= ~PCONP_PCGPIO; */
@@ -136,7 +119,7 @@ void gpioSetFunc(struct Gpio *p, gpioFunc func)
   uint32_t *pinptr = calcPinSelect(p->pin);
 
   *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
-  *pinptr |= PIN_OFFSET(func & 0x03, p->pin.offset);
+  *pinptr |= PIN_OFFSET(func, p->pin.offset);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)

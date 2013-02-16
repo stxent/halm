@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include "gpio.h"
 #include "lpc13xx_sys.h"
 #include "macro.h"
@@ -74,8 +75,8 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   };
 
   /* TODO Add more precise pin checking */
-  if (!id || (uint8_t)converted.port > 3 || (uint8_t)converted.offset > 11)
-    return p;
+  assert(id && (uint8_t)converted.port <= 3 && (uint8_t)converted.offset <= 11);
+
   p.pin = converted;
   p.control = calcPort(p.pin);
 

@@ -15,13 +15,13 @@
 enum cleanup
 {
   FREE_NONE = 0,
-  FREE_PERIPHERAL,
+  FREE_PARENT,
   FREE_RX_QUEUE,
   FREE_TX_QUEUE,
   FREE_ALL
 };
 /*----------------------------------------------------------------------------*/
-static void serialCleanup(struct Serial *, enum cleanup);
+static void cleanup(struct Serial *, enum cleanup);
 /*----------------------------------------------------------------------------*/
 static void serialHandler(void *);
 static enum result serialInit(void *, const void *);
@@ -49,7 +49,7 @@ static const struct UartClass serialTable = {
 /*----------------------------------------------------------------------------*/
 const struct UartClass *Serial = &serialTable;
 /*----------------------------------------------------------------------------*/
-static void serialCleanup(struct Serial *device, enum cleanup step)
+static void cleanup(struct Serial *device, enum cleanup step)
 {
   switch (step)
   {
@@ -59,7 +59,7 @@ static void serialCleanup(struct Serial *device, enum cleanup step)
       queueDeinit(&device->txQueue);
     case FREE_RX_QUEUE:
       queueDeinit(&device->rxQueue);
-    case FREE_PERIPHERAL:
+    case FREE_PARENT:
       Uart->parent.deinit(device); /* Call UART class destructor */
       break;
     default:
@@ -117,12 +117,12 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Initialize RX and TX queues */
   if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
   {
-    serialCleanup(device, FREE_PERIPHERAL);
+    cleanup(device, FREE_PARENT);
     return res;
   }
   if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
   {
-    serialCleanup(device, FREE_RX_QUEUE);
+    cleanup(device, FREE_RX_QUEUE);
     return res;
   }
 
@@ -144,7 +144,30 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  serialCleanup(object, FREE_ALL);
+  cleanup(object, FREE_ALL);
+}
+/*----------------------------------------------------------------------------*/
+static enum result serialGetOpt(void *object, enum ifOption option, void *data)
+{
+  return E_ERROR;
+}
+/*----------------------------------------------------------------------------*/
+static enum result serialSetOpt(void *object, enum ifOption option,
+    const void *data)
+{
+  struct Serial *device = object;
+
+  switch (option)
+  {
+    case IF_SPEED:
+      uartSetRate(object, uartCalcRate(*(uint32_t *)data)); /* TODO */
+      return E_OK;
+    case IF_PRIORITY:
+      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
+      return E_OK;
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
@@ -191,26 +214,4 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   NVIC_EnableIRQ(device->parent.irq);
   mutexUnlock(&device->queueLock);
   return written;
-}
-/*----------------------------------------------------------------------------*/
-static enum result serialGetOpt(void *object, enum ifOption option, void *data)
-{
-  return E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static enum result serialSetOpt(void *object, enum ifOption option,
-    const void *data)
-{
-  struct Serial *device = object;
-
-  switch (option)
-  {
-    case IF_SPEED:
-      return uartSetRate(object, uartCalcRate(*(uint32_t *)data));
-    case IF_PRIORITY:
-      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
-      return E_OK;
-    default:
-      return E_ERROR;
-  }
 }

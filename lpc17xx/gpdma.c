@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include "gpdma.h"
 #include "gpdma_defs.h"
 #include "lpc17xx_sys.h"
@@ -124,8 +125,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   const struct GpdmaConfig *config = configPtr;
   struct Gpdma *controller = object;
 
-  if (!config || config->channel >= CHANNEL_COUNT)
-    return E_ERROR;
+  assert(config && config->channel < CHANNEL_COUNT);
 
   /* TODO Add channel allocation, when channel is -1 */
   controller->parent.channel = (uint8_t)config->channel;

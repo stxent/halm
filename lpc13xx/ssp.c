@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include "lpc13xx_sys.h"
 #include "mutex.h"
 #include "ssp.h"
@@ -13,18 +14,6 @@
 /* In LPC13xx SSP clock divisor is number from 1 to 255, 0 to disable */
 #define DEFAULT_DIV                     1
 #define DEFAULT_DIV_VALUE               1
-/*----------------------------------------------------------------------------*/
-enum cleanup
-{
-  FREE_NONE = 0,
-  FREE_DESCRIPTOR,
-  FREE_SCK_PIN,
-  FREE_MISO_PIN,
-  FREE_MOSI_PIN,
-  FREE_CS_PIN, /* TODO */
-  FREE_PERIPHERAL,
-  FREE_ALL
-};
 /*----------------------------------------------------------------------------*/
 /* UART pin function values */
 static const struct GpioPinFunc sspPins[] = {
@@ -63,8 +52,6 @@ static const struct GpioPinFunc sspPins[] = {
     {} /* End of pin function association list */
 };
 /*----------------------------------------------------------------------------*/
-static void sspCleanup(struct Ssp *, enum cleanup);
-/*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
 /*----------------------------------------------------------------------------*/
@@ -86,32 +73,6 @@ const struct SspClass *Ssp = &sspTable;
 /*----------------------------------------------------------------------------*/
 static void * volatile descriptors[] = {0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
-/*----------------------------------------------------------------------------*/
-static void sspCleanup(struct Ssp *device, enum cleanup step)
-{
-  switch (step)
-  {
-    case FREE_ALL:
-    case FREE_PERIPHERAL:
-      /* Disable UART peripheral power */
-      LPC_SYSCON->SSP0CLKDIV = 0;
-      sysClockDisable(CLK_SSP); //FIXME
-      break;
-    case FREE_CS_PIN:
-//      gpioDeinit(&device->csPin);
-    case FREE_MOSI_PIN:
-      gpioDeinit(&device->mosiPin);
-    case FREE_MISO_PIN:
-      gpioDeinit(&device->misoPin);
-    case FREE_SCK_PIN:
-      gpioDeinit(&device->sckPin);
-    case FREE_DESCRIPTOR:
-      /* Reset SSP descriptor */
-      sspSetDescriptor(device->channel, 0);
-    default:
-      break;
-  }
-}
 /*----------------------------------------------------------------------------*/
 enum result sspSetDescriptor(uint8_t channel, void *descriptor)
 {
@@ -136,7 +97,7 @@ void SSP_IRQHandler(void) /* FIXME SSP0? */
     ((struct SspClass *)CLASS(descriptors[0]))->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-enum result sspSetRate(struct Ssp *device, uint32_t rate)
+void sspSetRate(struct Ssp *device, uint32_t rate)
 {
   uint16_t divider;
 
@@ -145,7 +106,6 @@ enum result sspSetRate(struct Ssp *device, uint32_t rate)
   device->reg->CPSR = 2;
   device->reg->CR0 &= ~CR0_SCR_MASK;
   device->reg->CR0 |= CR0_SCR(divider);
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *object, const void *configPtr)
@@ -158,8 +118,7 @@ static enum result sspInit(void *object, const void *configPtr)
 
   /* TODO Add mater/slave select */
   /* Check device configuration data */
-  if (!config)
-    return E_ERROR;
+  assert(config);
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
@@ -168,42 +127,26 @@ static enum result sspInit(void *object, const void *configPtr)
 
   /* Setup Serial Clock pin */
   func = gpioFindFunc(sspPins, config->sck);
+  assert(func != -1);
   device->sckPin = gpioInit(config->sck, GPIO_OUTPUT);
-  if (func == -1 || !gpioGetKey(&device->sckPin))
-  {
-    sspCleanup(device, FREE_DESCRIPTOR);
-    return E_ERROR;
-  }
   gpioSetFunc(&device->sckPin, func);
 
   /* Setup MISO pin */
   func = gpioFindFunc(sspPins, config->miso);
+  assert(func != -1);
   device->misoPin = gpioInit(config->miso, GPIO_INPUT);
-  if (func == -1 || !gpioGetKey(&device->misoPin))
-  {
-    sspCleanup(device, FREE_SCK_PIN);
-    return E_ERROR;
-  }
   gpioSetFunc(&device->misoPin, func);
 
   /* Setup MOSI pin */
   func = gpioFindFunc(sspPins, config->mosi);
+  assert(func != -1);
   device->mosiPin = gpioInit(config->mosi, GPIO_OUTPUT);
-  if (func == -1 || !gpioGetKey(&device->mosiPin))
-  {
-    sspCleanup(device, FREE_MISO_PIN);
-    return E_ERROR;
-  }
   gpioSetFunc(&device->mosiPin, func);
 
   /* Setup CS pin, only in slave mode */
 //  func = gpioFindFunc(sspPins, config->cs);
+//  assert(func != -1);
 //  device->csPin = gpioInit(config->cs, GPIO_INPUT);
-//  if (func == -1 || !gpioGetKey(&device->csPin))
-//  {
-//    sspCleanup(device, FREE_MOSI_PIN);
-//    return E_ERROR;
-//  }
 //  gpioSetFunc(&device->csPin, func);
 
   switch (config->channel)
@@ -240,31 +183,29 @@ static enum result sspInit(void *object, const void *configPtr)
 
   device->reg->CR0 = 0;
   if (!config->frame)
-  {
     device->reg->CR0 |= CR0_DSS(8);
-  }
   else
   {
-    if (config->frame < 4 || config->frame > 16)
-    {
-      sspCleanup(device, FREE_PERIPHERAL);
-      return E_ERROR;
-    }
+    assert(config->frame >= 4 && config->frame <= 16);
     device->reg->CR0 |= CR0_DSS(config->frame);
   }
 
-  if ((res = sspSetRate(device, config->rate)) != E_OK)
-  {
-    sspCleanup(device, FREE_PERIPHERAL);
-    return res;
-  }
-
+  sspSetRate(device, config->rate); /* TODO Remove assert and add return val */
   device->reg->CR1 = CR1_SSE; /* Enable peripheral */
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void sspDeinit(void *object)
 {
-  sspCleanup(object, FREE_ALL);
+  struct Ssp *device = object;
+
+  /* Disable UART peripheral power */
+  LPC_SYSCON->SSP0CLKDIV = 0;
+  sysClockDisable(CLK_SSP); //FIXME
+//  gpioDeinit(&device->csPin);
+  gpioDeinit(&device->mosiPin);
+  gpioDeinit(&device->misoPin);
+  gpioDeinit(&device->sckPin);
+  /* Reset SSP descriptor */
+  sspSetDescriptor(device->channel, 0);
 }

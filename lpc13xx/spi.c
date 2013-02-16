@@ -13,7 +13,7 @@
 enum cleanup
 {
   FREE_NONE = 0,
-  FREE_PERIPHERAL,
+  FREE_PARENT,
   FREE_RX_QUEUE,
   FREE_TX_QUEUE,
   FREE_ALL
@@ -57,7 +57,7 @@ static void spiCleanup(struct Spi *device, enum cleanup step)
       queueDeinit(&device->txQueue);
     case FREE_RX_QUEUE:
       queueDeinit(&device->rxQueue);
-    case FREE_PERIPHERAL:
+    case FREE_PARENT:
       Spi->parent.deinit(device); /* Call SSP class destructor */
       break;
     default:
@@ -113,7 +113,7 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Initialize RX and TX queues */
   if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
   {
-    spiCleanup(device, FREE_PERIPHERAL);
+    spiCleanup(device, FREE_PARENT);
     return res;
   }
   if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
@@ -197,7 +197,8 @@ static enum result spiSetOpt(void *object, enum ifOption option,
   switch (option)
   {
     case IF_SPEED:
-      return sspSetRate(object, *(uint32_t *)data);
+      sspSetRate(object, *(uint32_t *)data);
+      return E_OK;
     case IF_PRIORITY:
       NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
       return E_OK;

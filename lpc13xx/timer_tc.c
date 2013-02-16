@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include "lpc13xx_sys.h"
 #include "timer_tc.h"
 #include "timer_defs.h"
@@ -71,16 +72,15 @@ enum result tcSetDescriptor(uint8_t channel, void *descriptor)
 {
   enum result res = E_ERROR;
 
-  if (channel < sizeof(descriptors))
+  assert(channel < sizeof(descriptors));
+
+  mutexLock(&lock);
+  if (!descriptors[channel])
   {
-    mutexLock(&lock);
-    if (!descriptors[channel])
-    {
-      descriptors[channel] = descriptor;
-      res = E_OK;
-    }
-    mutexUnlock(&lock);
+    descriptors[channel] = descriptor;
+    res = E_OK;
   }
+  mutexUnlock(&lock);
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -173,13 +173,14 @@ static enum result tcInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct TimerConfig *config = configPtr;
   struct TimerTC *device = object;
-//  uint32_t divisor;
 
-  /* Check device configuration data and availability */
-  if (!config || tcSetDescriptor((uint8_t)config->channel, device) != E_OK)
-    return E_ERROR;
+  /* Check device configuration data */
+  assert(config);
 
+  /* Try to set peripheral descriptor */
   device->channel = (uint8_t)config->channel;
+  if (tcSetDescriptor(device->channel, device) != E_OK)
+    return E_ERROR;
 
   switch (device->channel)
   {
