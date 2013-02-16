@@ -186,11 +186,16 @@ static enum result serialSetOpt(void *object, enum ifOption option,
     const void *data)
 {
   struct SerialDma *device = object;
+  struct UartConfigRate rate;
 
   switch (option)
   {
     case IF_SPEED:
-      uartSetRate((struct Uart *)device, uartCalcRate(*(uint32_t *)data));
+      rate = uartCalcRate(*(uint32_t *)data);
+      if (!uartRateValid(rate))
+        return E_ERROR;
+      uartSetRate(object, rate);
+      return E_OK;
       return E_OK; /* TODO */
     default:
       return E_ERROR;

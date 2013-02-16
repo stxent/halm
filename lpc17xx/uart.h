@@ -7,6 +7,7 @@
 #ifndef UART_H_
 #define UART_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <LPC17xx.h>
 #include "gpio.h"
 #include "interface.h"
@@ -59,6 +60,7 @@ struct Uart
 /*----------------------------------------------------------------------------*/
 enum result uartSetDescriptor(uint8_t, void *);
 struct UartConfigRate uartCalcRate(uint32_t);
+bool uartRateValid(struct UartConfigRate);
 void uartSetRate(struct Uart *, struct UartConfigRate);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

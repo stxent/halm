@@ -155,9 +155,3 @@ void gpioSetType(struct Gpio *p, enum gpioType type)
       break;
   }
 }
-/*----------------------------------------------------------------------------*/
-/* Returns zero when pin not initialized */
-gpioKey gpioGetKey(struct Gpio *p)
-{
-  return ~p->pin.key; /* External pin identifiers are in 1's complement form */
-}

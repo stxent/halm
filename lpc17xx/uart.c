@@ -166,10 +166,13 @@ struct UartConfigRate uartCalcRate(uint32_t rate)
   return config;
 }
 /*----------------------------------------------------------------------------*/
+bool uartRateValid(struct UartConfigRate rate)
+{
+  return rate.high || rate.low;
+}
+/*----------------------------------------------------------------------------*/
 void uartSetRate(struct Uart *device, struct UartConfigRate rate)
 {
-  assert(rate.high || rate.low);
-
   /* Enable DLAB access */
   device->reg->LCR |= LCR_DLAB;
   /* Set divisor of the baud rate generator */
@@ -186,11 +189,17 @@ static enum result uartInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct UartConfig *config = configPtr;
   struct Uart *device = object;
+  struct UartConfigRate rate;
   gpioFunc func;
   enum result res;
 
   /* Check device configuration data */
   assert(config);
+
+  /* Calculate and check baud rate value */
+  rate = uartCalcRate(config->rate);
+  if (!uartRateValid(rate))
+    return E_ERROR;
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
@@ -254,8 +263,7 @@ static enum result uartInit(void *object, const void *configPtr)
       device->reg->LCR |= LCR_PARITY_ODD;
   }
 
-  /* TODO Rewrite */
-  uartSetRate(object, uartCalcRate(config->rate));
+  uartSetRate(object, rate);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

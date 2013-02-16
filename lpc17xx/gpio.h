@@ -56,16 +56,15 @@ struct Gpio
   LPC_GPIO_TypeDef *control;
 };
 /*----------------------------------------------------------------------------*/
+gpioFunc gpioFindFunc(const struct GpioPinFunc *, gpioKey);
+/*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpioKey, enum gpioDir);
 void gpioDeinit(struct Gpio *);
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *);
 void gpioWrite(struct Gpio *, uint8_t);
-/*----------------------------------------------------------------------------*/
-gpioFunc gpioFindFunc(const struct GpioPinFunc *, gpioKey);
 void gpioSetFunc(struct Gpio *, gpioFunc);
 void gpioSetPull(struct Gpio *, enum gpioPull);
 void gpioSetType(struct Gpio *, enum gpioType);
-gpioKey gpioGetKey(struct Gpio *);
 /*----------------------------------------------------------------------------*/
 #endif /* GPIO_H_ */
