@@ -118,6 +118,10 @@ static void tcSetOverflow(void *object, uint32_t overflow)
   struct TimerTC *device = object;
 
   device->reg->MR0 = overflow;
+  /* Synchronously reset prescaler and counter registers */
+  device->reg->TCR |= TCR_CRES;
+  while (device->reg->TC || device->reg->PC);
+  device->reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
 static void tcSetHandler(void *object, void (*handler)(void *),

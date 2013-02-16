@@ -19,7 +19,7 @@
 //#define IR_CR0INT                       BIT(4)
 /*------------------Timer Control Register------------------------------------*/
 #define TCR_CEN                         BIT(0) /* Enable for counting */
-#define TCR_CRESET                      BIT(1) /* Synchronous reset */
+#define TCR_CRES                        BIT(1) /* Synchronous reset */
 /*------------------Match Control Register------------------------------------*/
 #define MCR_INTERRUPT(channel)          BIT((channel) * 3)
 #define MCR_RESET(channel)              BIT((channel) * 3 + 1)

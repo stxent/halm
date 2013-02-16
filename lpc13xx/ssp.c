@@ -34,6 +34,11 @@ static const struct GpioPinFunc sspPins[] = {
         .func = 2
     },
     {
+        .key = GPIO_TO_PIN(2, 11), /* SSP0 SCK */
+        .func = 1
+    },
+    /* SSP1 peripheral available only on LPC1313 */
+    {
         .key = GPIO_TO_PIN(2, 1), /* SSP1 SCK */
         .func = 2
     },
@@ -44,10 +49,6 @@ static const struct GpioPinFunc sspPins[] = {
     {
         .key = GPIO_TO_PIN(2, 3), /* SSP1 MOSI */
         .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 11), /* SSP0 SCK */
-        .func = 1
     },
     {} /* End of pin function association list */
 };
