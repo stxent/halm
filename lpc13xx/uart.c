@@ -50,6 +50,30 @@ const struct UartClass *Uart = &uartTable;
 static void * volatile descriptors[] = {0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
+void UART_IRQHandler(void)
+{
+  if (descriptors[0])
+    ((struct UartClass *)CLASS(descriptors[0]))->handler(descriptors[0]);
+}
+/*----------------------------------------------------------------------------*/
+enum result uartCalcRate(struct UartConfigRate *config, uint32_t rate)
+{
+  uint32_t divisor;
+
+  if (!rate)
+    return E_ERROR;
+  divisor = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
+  if (!divisor || divisor >= (1 << 16))
+    return E_ERROR;
+
+  config->high = (uint8_t)(divisor >> 8);
+  config->low = (uint8_t)divisor;
+  config->fraction = 0;
+  /* TODO Add fractional part calculation */
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
 enum result uartSetDescriptor(uint8_t channel, void *descriptor)
 {
   enum result res = E_ERROR; /* TODO Create special error code */
@@ -66,37 +90,8 @@ enum result uartSetDescriptor(uint8_t channel, void *descriptor)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void UART_IRQHandler(void)
-{
-  if (descriptors[0])
-    ((struct UartClass *)CLASS(descriptors[0]))->handler(descriptors[0]);
-}
-/*----------------------------------------------------------------------------*/
-struct UartConfigRate uartCalcRate(uint32_t rate)
-{
-  struct UartConfigRate config = {
-      .high = 0,
-      .low = 0,
-      .fraction = 0
-  };
-  uint32_t divisor;
-
-  divisor = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
-  if (!(divisor >= (1 << 16) || !divisor))
-  {
-    config.high = (uint8_t)(divisor >> 8);
-    config.low = (uint8_t)divisor;
-    /* TODO Add fractional part calculation */
-    /* if (config.high > 0 || config.low > 1)
-      config.fraction = 0; */
-  }
-  return config;
-}
-/*----------------------------------------------------------------------------*/
 void uartSetRate(struct Uart *device, struct UartConfigRate rate)
 {
-  assert(rate.high || rate.low);
-
   /* Enable DLAB access */
   device->reg->LCR |= LCR_DLAB;
   /* Set divisor of the baud rate generator */
@@ -113,11 +108,16 @@ static enum result uartInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct UartConfig *config = configPtr;
   struct Uart *device = object;
+  struct UartConfigRate rate;
   gpioFunc func;
   enum result res;
 
   /* Check device configuration data */
   assert(config);
+
+  /* Calculate and check baud rate value */
+  if ((res = uartCalcRate(&rate, config->rate)) != E_OK)
+    return res;
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
@@ -160,8 +160,7 @@ static enum result uartInit(void *object, const void *configPtr)
       device->reg->LCR |= LCR_PARITY_ODD;
   }
 
-  /* TODO Remove assert and add return val */
-  uartSetRate(object, uartCalcRate(config->rate));
+  uartSetRate(object, rate);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

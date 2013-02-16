@@ -105,22 +105,6 @@ const struct UartClass *Uart = &uartTable;
 static void * volatile descriptors[] = {0, 0, 0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-enum result uartSetDescriptor(uint8_t channel, void *descriptor)
-{
-  enum result res = E_ERROR;
-
-  assert(channel < sizeof(descriptors));
-
-  mutexLock(&lock);
-  if (!descriptors[channel])
-  {
-    descriptors[channel] = descriptor;
-    res = E_OK;
-  }
-  mutexUnlock(&lock);
-  return res;
-}
-/*----------------------------------------------------------------------------*/
 void UART0_IRQHandler(void)
 {
   if (descriptors[0])
@@ -145,30 +129,38 @@ void UART3_IRQHandler(void)
     ((struct UartClass *)CLASS(descriptors[3]))->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
-struct UartConfigRate uartCalcRate(uint32_t rate)
+enum result uartCalcRate(struct UartConfigRate *config, uint32_t rate)
 {
-  struct UartConfigRate config = {
-      .high = 0,
-      .low = 0,
-      .fraction = 0
-  };
   uint32_t divisor;
 
+  if (!rate)
+    return E_ERROR;
   divisor = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
-  if (!(divisor >= (1 << 16) || !divisor))
-  {
-    config.high = (uint8_t)(divisor >> 8);
-    config.low = (uint8_t)divisor;
-    /* TODO Add fractional part calculation */
-    /* if (config.high > 0 || config.low > 1)
-      config.fraction = 0; */
-  }
-  return config;
+  if (!divisor || divisor >= (1 << 16))
+    return E_ERROR;
+
+  config->high = (uint8_t)(divisor >> 8);
+  config->low = (uint8_t)divisor;
+  config->fraction = 0;
+  /* TODO Add fractional part calculation */
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-bool uartRateValid(struct UartConfigRate rate)
+enum result uartSetDescriptor(uint8_t channel, void *descriptor)
 {
-  return rate.high || rate.low;
+  enum result res = E_ERROR;
+
+  assert(channel < sizeof(descriptors));
+
+  mutexLock(&lock);
+  if (!descriptors[channel])
+  {
+    descriptors[channel] = descriptor;
+    res = E_OK;
+  }
+  mutexUnlock(&lock);
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct Uart *device, struct UartConfigRate rate)
@@ -197,9 +189,8 @@ static enum result uartInit(void *object, const void *configPtr)
   assert(config);
 
   /* Calculate and check baud rate value */
-  rate = uartCalcRate(config->rate);
-  if (!uartRateValid(rate))
-    return E_ERROR;
+  if ((res = uartCalcRate(&rate, config->rate)) != E_OK)
+    return res;
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
