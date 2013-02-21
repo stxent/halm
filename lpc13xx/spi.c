@@ -68,8 +68,8 @@ static void spiCleanup(struct Spi *device, enum cleanup step)
 static void spiHandler(void *object)
 {
   struct Spi *device = object;
-  uint8_t status = device->parent.reg->MIS;
   uint16_t data;
+  uint8_t status = device->parent.reg->MIS;
 
   if (status & MIS_RXMIS)
   {
@@ -94,6 +94,7 @@ static enum result spiInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
   const struct SpiConfig *config = configPtr;
+  struct Spi *device = object;
   const struct SspConfig parentConfig = {
       .channel = config->channel,
       .sck = config->sck,
@@ -104,7 +105,6 @@ static enum result spiInit(void *object, const void *configPtr)
       .cs = config->cs
   };
   enum result res;
-  struct Spi *device = object;
 
   /* Call SSP class constructor */
   if ((res = Ssp->parent.init(object, &parentConfig)) != E_OK)

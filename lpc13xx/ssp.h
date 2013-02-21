@@ -18,13 +18,11 @@ extern const struct SspClass *Ssp;
 /* TODO Add master/slave select */
 struct SspConfig
 {
-  /* Mandatory arguments */
-  uint8_t channel; /* Peripheral number */
-  gpioKey sck, miso, mosi; /* Serial clock, master output */
-  uint32_t rate;
-  /* Optional arguments */
-  uint8_t frame; /* Frame size, 8 bits by default */
-  gpioKey cs; /* Chip select for slave operations */
+  uint32_t rate; /* Mandatory: serial data rate */
+  gpioKey cs; /* Optional: chip select for slave mode */
+  gpioKey sck, miso, mosi; /* Mandatory: peripheral pins */
+  uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t frame; /* Optional: frame size, 8 bits by default */
 };
 /*----------------------------------------------------------------------------*/
 struct SspClass
@@ -39,11 +37,11 @@ struct Ssp
 {
   struct Interface parent;
 
-  uint8_t channel; /* Peripheral number */
-  struct Gpio sckPin, csPin, misoPin, mosiPin; /* Peripheral pins */
-
   LPC_SSP_TypeDef *reg; /* Pointer to SSP registers */
   IRQn_Type irq; /* IRQ identifier */
+
+  struct Gpio sckPin, csPin, misoPin, mosiPin; /* Peripheral pins */
+  uint8_t channel; /* Peripheral number */
 };
 /*----------------------------------------------------------------------------*/
 enum result sspSetDescriptor(uint8_t, void *);

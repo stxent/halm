@@ -25,20 +25,20 @@ enum tcType {
 /*----------------------------------------------------------------------------*/
 struct TimerConfig
 {
-  enum tcType channel; /* Peripheral number encoded to enumeration */
   uint32_t frequency;
+  enum tcType channel; /* Peripheral number encoded to enumeration */
 };
 /*----------------------------------------------------------------------------*/
 struct TimerTC
 {
   struct Timer parent;
 
-  uint8_t channel; /* Peripheral number for internal use */
-  void (*handler)(void *); /* User interrupt handler */
-  void *handlerParameters; /* User interrupt handler parameters */
-
   LPC_TMR_TypeDef *reg; /* Pointer to UART registers */
   IRQn_Type irq; /* IRQ identifier */
+
+  void (*handler)(void *); /* User interrupt handler */
+  void *handlerParameters; /* User interrupt handler parameters */
+  uint8_t channel; /* Peripheral number for internal use */
 };
 /*----------------------------------------------------------------------------*/
 enum result tcSetDescriptor(enum tcType, void *);

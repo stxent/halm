@@ -52,8 +52,8 @@ struct GpioPinFunc
 /*----------------------------------------------------------------------------*/
 struct Gpio
 {
-  union GpioPin pin;
   LPC_GPIO_TypeDef *control;
+  union GpioPin pin;
 };
 /*----------------------------------------------------------------------------*/
 gpioFunc gpioFindFunc(const struct GpioPinFunc *, gpioKey);

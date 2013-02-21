@@ -53,42 +53,43 @@ enum gpdmaDirection
 /* Source or sink descriptor */
 struct GpdmaSide
 {
-  enum gpdmaLine line;
   bool increment;
+  enum gpdmaLine line;
 };
 /*----------------------------------------------------------------------------*/
 struct GpdmaConfig
 {
-  /* Channel may be assigned to multiple descriptors, but not at same time */
-  int8_t channel;
+  /* Channel may be assigned to multiple descriptors but not at same time */
   struct GpdmaSide source, destination;
+  /* TODO Change type */
+  int8_t channel; /* General purpose DMA channel number */
   enum gpdmaDirection direction;
   enum dmaBurst burst;
   enum dmaWidth width;
 };
 /*----------------------------------------------------------------------------*/
+/* Items have to be aligned along 4-byte boundaries */
 struct GpdmaListItem
 {
   uint32_t source;
   uint32_t destination;
   uint32_t next;
   uint32_t control;
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct Gpdma
 {
   struct Dma parent;
 
-  /* Transfer direction */
-  enum gpdmaDirection direction;
-
-  /* Precalculated values of DMA connection multiplexer register */
-  uint8_t muxMask, muxValue;
-  /* Precalculated values of channel control and configuration registers */
-  uint32_t control, config;
-
   /* Pointer to DMA registers structure */
   LPC_GPDMACH_TypeDef *reg;
+
+  /* Precalculated values of channel control and configuration registers */
+  uint32_t control, config;
+  /* Precalculated values of DMA connection multiplexer register */
+  uint8_t muxMask, muxValue;
+  /* Transfer direction */
+  enum gpdmaDirection direction;
 };
 /*----------------------------------------------------------------------------*/
 enum result gpdmaSetDescriptor(uint8_t, void *);

@@ -12,11 +12,9 @@
 /*----------------------------------------------------------------------------*/
 struct Queue
 {
-  /* TODO Replace with uint? */
-  uint16_t size; /* Current queue size */
-  uint16_t capacity; /* Queue capacity */
-  uint16_t floor, ceil; /* Indexes of first and last elements in queue */
   uint8_t *data;
+  uint16_t size, capacity; /* Current queue size and maximal capacity */
+  uint16_t floor, ceil; /* Indexes of first and last elements in queue */
 };
 /*----------------------------------------------------------------------------*/
 #define queueSize(q)            ((q)->size)

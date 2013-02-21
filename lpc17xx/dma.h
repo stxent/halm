@@ -60,8 +60,8 @@ struct Dma
 {
   struct Entity parent;
 
-  bool active; /* Transfer active flag */
   uint8_t channel; /* Channel may have different meaning */
+  bool active; /* Transfer active flag */
 };
 /*----------------------------------------------------------------------------*/
 /* Virtual functions */

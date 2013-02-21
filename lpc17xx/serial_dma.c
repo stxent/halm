@@ -107,6 +107,7 @@ static enum result serialInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
   const struct SerialDmaConfig *config = configPtr;
+  struct SerialDma *device = object;
   const struct UartConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,
@@ -115,7 +116,6 @@ static enum result serialInit(void *object, const void *configPtr)
       .parity = config->parity
   };
   enum result res;
-  struct SerialDma *device = object;
 
   /* Call UART class constructor */
   if ((res = Uart->parent.init(object, &parentConfig)) != E_OK)

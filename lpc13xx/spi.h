@@ -15,14 +15,12 @@ extern const struct SspClass *Spi;
 /*----------------------------------------------------------------------------*/
 struct SpiConfig
 {
-  /* Mandatory arguments */
-  uint8_t channel; /* Peripheral number */
-  gpioKey sck, miso, mosi; /* Serial clock, master output */
-  uint32_t rate;
-  /* Optional arguments */
-  uint32_t rxLength, txLength; /* Queue lengths */
-  uint8_t frame; /* Frame size, 8 bits by default */
-  gpioKey cs; /* Chip select for slave operations */
+  uint32_t rate; /* Mandatory: serial data rate */
+  uint32_t rxLength, txLength; /* Optional: queue lengths */
+  gpioKey cs; /* Optional: chip select for slave mode */
+  gpioKey sck, miso, mosi; /* Mandatory: peripheral pins */
+  uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t frame; /* Optional: frame size, 8 bits by default */
 };
 /*----------------------------------------------------------------------------*/
 struct Spi
