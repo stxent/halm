@@ -87,6 +87,9 @@ static void spiHandler(void *object)
     /* Fill transmit FIFO */
     while (queueSize(&device->txQueue) && device->parent.reg->SR & SR_TNF)
       device->parent.reg->DR = queuePop(&device->txQueue);
+    /* Disable transmit interrupt when queue is empty */
+    if (queueEmpty(&device->txQueue))
+      device->parent.reg->IMSC &= ~IMSC_TXIM;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -101,7 +104,7 @@ static enum result spiInit(void *object, const void *configPtr)
       .miso = config->miso,
       .mosi = config->mosi,
       .rate = config->rate,
-      .frame = config->frame,
+      .frame = 8, /* Fixed frame size */
       .cs = config->cs
   };
   enum result res;
@@ -122,10 +125,7 @@ static enum result spiInit(void *object, const void *configPtr)
     return res;
   }
 
-  device->queueLock = MUTEX_UNLOCKED;
-
-  /* Enable receive half-full and transmit half-empty interrupts */
-//  device->parent.reg->IMSC = IMSC_RXIM | IMSC_TXIM;
+  device->channelLock = MUTEX_UNLOCKED;
 
   /* Set interrupt priority, lowest by default */
   NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
@@ -144,7 +144,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   struct Spi *device = object;
   uint32_t read = 0;
 
-  mutexLock(&device->queueLock);
+  mutexLock(&device->channelLock);
   NVIC_DisableIRQ(device->parent.irq);
   while (queueSize(&device->rxQueue) && read < length)
   {
@@ -152,7 +152,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
     read++;
   }
   NVIC_EnableIRQ(device->parent.irq);
-  mutexUnlock(&device->queueLock);
+  mutexUnlock(&device->channelLock);
   return read;
 }
 /*----------------------------------------------------------------------------*/
@@ -161,26 +161,34 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   struct Spi *device = object;
   uint32_t written = 0;
 
-  mutexLock(&device->queueLock);
-  NVIC_DisableIRQ(device->parent.irq);
-  /* Check transmitter state */
-  if (!(device->parent.reg->SR & SR_BSY) && queueEmpty(&device->txQueue))
+  if (!mutexTryLock(&device->channelLock))
+    return 0;
+  /* Check channel availability */
+  if (device->parent.reg->SR & SR_BSY || !queueEmpty(&device->txQueue))
   {
-    /* Transmitter is idle, fill TX FIFO */
-    while (device->parent.reg->SR & SR_TNF && written < length)
-    {
-      device->parent.reg->DR = *buffer++;
-      written++;
-    }
+    mutexUnlock(&device->channelLock);
+    return 0;
   }
-  /* Fill TX queue with the rest of data */
-  while (!queueFull(&device->txQueue) && written < length)
+
+  /* Fill transmit FIFO */
+  while (device->parent.reg->SR & SR_TNF && written < length)
   {
-    queuePush(&device->txQueue, *buffer++);
+    device->parent.reg->DR = *buffer++;
     written++;
   }
-  NVIC_EnableIRQ(device->parent.irq);
-  mutexUnlock(&device->queueLock);
+
+  if (written < length)
+  {
+    /* Fill transmit queue with the rest of data */
+    while (!queueFull(&device->txQueue) && written < length)
+    {
+      queuePush(&device->txQueue, *buffer++);
+      written++;
+    }
+    /* Enable transmit FIFO half empty interrupt */
+    device->parent.reg->IMSC |= IMSC_TXIM;
+  }
+  mutexUnlock(&device->channelLock);
   return written;
 }
 /*----------------------------------------------------------------------------*/

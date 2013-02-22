@@ -20,7 +20,6 @@ struct SpiConfig
   gpioKey cs; /* Optional: chip select for slave mode */
   gpioKey sck, miso, mosi; /* Mandatory: peripheral pins */
   uint8_t channel; /* Mandatory: peripheral number */
-  uint8_t frame; /* Optional: frame size, 8 bits by default */
 };
 /*----------------------------------------------------------------------------*/
 struct Spi
@@ -28,7 +27,7 @@ struct Spi
   struct Ssp parent;
 
   struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
-  Mutex queueLock; /* Access to queues */
+  Mutex channelLock; /* Access to queues */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SPI_IRQ_H_ */
