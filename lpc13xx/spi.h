@@ -8,7 +8,6 @@
 #define SPI_IRQ_H_
 /*----------------------------------------------------------------------------*/
 #include "mutex.h"
-#include "queue.h"
 #include "ssp.h"
 /*----------------------------------------------------------------------------*/
 extern const struct SspClass *Spi;
@@ -16,7 +15,6 @@ extern const struct SspClass *Spi;
 struct SpiConfig
 {
   uint32_t rate; /* Mandatory: serial data rate */
-  uint32_t rxLength, txLength; /* Optional: queue lengths */
   gpioKey cs; /* Optional: chip select for slave mode */
   gpioKey sck, miso, mosi; /* Mandatory: peripheral pins */
   uint8_t channel; /* Mandatory: peripheral number */
@@ -26,8 +24,10 @@ struct Spi
 {
   struct Ssp parent;
 
-  struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
-  Mutex channelLock; /* Access to queues */
+  uint8_t *rxBuffer;
+  const uint8_t *txBuffer;
+  uint32_t left, fill;
+  Mutex channelLock; /* Access to channel */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SPI_IRQ_H_ */

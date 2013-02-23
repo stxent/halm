@@ -10,17 +10,6 @@
 /* SPI settings */
 #define DEFAULT_PRIORITY                15 /* Lowest priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
-enum cleanup
-{
-  FREE_NONE = 0,
-  FREE_PARENT,
-  FREE_RX_QUEUE,
-  FREE_TX_QUEUE,
-  FREE_ALL
-};
-/*----------------------------------------------------------------------------*/
-static void spiCleanup(struct Spi *, enum cleanup);
-/*----------------------------------------------------------------------------*/
 static void spiHandler(void *);
 static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
@@ -47,48 +36,40 @@ static const struct SspClass spiTable = {
 /*----------------------------------------------------------------------------*/
 const struct SspClass *Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
-static void spiCleanup(struct Spi *device, enum cleanup step)
-{
-  switch (step)
-  {
-    case FREE_ALL:
-      NVIC_DisableIRQ(device->parent.irq); /* Disable interrupt */
-    case FREE_TX_QUEUE:
-      queueDeinit(&device->txQueue);
-    case FREE_RX_QUEUE:
-      queueDeinit(&device->rxQueue);
-    case FREE_PARENT:
-      Spi->parent.deinit(device); /* Call SSP class destructor */
-      break;
-    default:
-      break;
-  }
-}
-/*----------------------------------------------------------------------------*/
 static void spiHandler(void *object)
 {
   struct Spi *device = object;
-  uint16_t data;
   uint8_t status = device->parent.reg->MIS;
 
-  if (status & MIS_RXMIS)
+  if (status & (MIS_RXMIS | MIS_RTMIS))
   {
     /* Frame will be removed from FIFO after reading from DR register */
-    while (device->parent.reg->SR & SR_RNE) //FIXME Queue overflow
+    while (device->parent.reg->SR & SR_RNE && device->left)
     {
-      data = device->parent.reg->DR;
-      /* Received frames will be dropped when queue becomes full */
-      if (!queueFull(&device->rxQueue))
-        queuePush(&device->rxQueue, (uint8_t)data); //FIXME Change type
+      *device->rxBuffer++ = device->parent.reg->DR;
+      device->left--;
     }
+    /* Fill transmit FIFO with dummy frames */
+    /* TODO Move to TX interrupt? */
+    while (device->parent.reg->SR & SR_TNF && device->fill)
+    {
+      device->parent.reg->DR = 0xFF; /* TODO Select dummy frame value */
+      device->fill--;
+    }
+    /* Disable receive interrupts when all frames have been received */
+    if (!device->left)
+      device->parent.reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
   }
   if (status & MIS_TXMIS)
   {
     /* Fill transmit FIFO */
-    while (queueSize(&device->txQueue) && device->parent.reg->SR & SR_TNF)
-      device->parent.reg->DR = queuePop(&device->txQueue);
-    /* Disable transmit interrupt when queue is empty */
-    if (queueEmpty(&device->txQueue))
+    while (device->parent.reg->SR & SR_TNF && device->left)
+    {
+      device->parent.reg->DR = *device->txBuffer++;
+      device->left--;
+    }
+    /* Disable transmit interrupt when all frames have been pushed to FIFO */
+    if (!device->left)
       device->parent.reg->IMSC &= ~IMSC_TXIM;
   }
 }
@@ -112,19 +93,6 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Call SSP class constructor */
   if ((res = Ssp->parent.init(object, &parentConfig)) != E_OK)
     return res;
-
-  /* Initialize RX and TX queues */
-  if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
-  {
-    spiCleanup(device, FREE_PARENT);
-    return res;
-  }
-  if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
-  {
-    spiCleanup(device, FREE_RX_QUEUE);
-    return res;
-  }
-
   device->channelLock = MUTEX_UNLOCKED;
 
   /* Set interrupt priority, lowest by default */
@@ -136,60 +104,71 @@ static enum result spiInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void spiDeinit(void *object)
 {
-  spiCleanup(object, FREE_ALL);
+  struct Spi *device = object;
+
+  NVIC_DisableIRQ(device->parent.irq);
+  Spi->parent.deinit(device); /* Call SSP class destructor */
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Spi *device = object;
-  uint32_t read = 0;
 
-  mutexLock(&device->channelLock);
-  NVIC_DisableIRQ(device->parent.irq);
-  while (queueSize(&device->rxQueue) && read < length)
+  /* Check channel availability */
+  if (device->parent.reg->SR & SR_BSY || !mutexTryLock(&device->channelLock))
+    return 0;
+
+  device->fill = length;
+  /* Pop all previously received frames */
+  while (device->parent.reg->SR & SR_RNE)
+    (void)device->parent.reg->DR; /* TODO Check behavior */
+
+  /* Fill transmit FIFO with dummy frames */
+  while (device->parent.reg->SR & SR_TNF && device->fill)
   {
-    *buffer++ = queuePop(&device->rxQueue);
-    read++;
+    device->parent.reg->DR = 0xFF; /* TODO Select dummy frame value */
+    device->fill--;
   }
-  NVIC_EnableIRQ(device->parent.irq);
+
+  device->rxBuffer = buffer;
+  device->left = length;
+  /* Enable receive FIFO half full and receive FIFO timeout interrupts */
+  device->parent.reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+
+  /* Wait until all frames will be received */
+  while (device->left || (device->parent.reg->SR & SR_BSY));
+
   mutexUnlock(&device->channelLock);
-  return read;
+  return length;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Spi *device = object;
-  uint32_t written = 0;
 
-  if (!mutexTryLock(&device->channelLock))
-    return 0;
   /* Check channel availability */
-  if (device->parent.reg->SR & SR_BSY || !queueEmpty(&device->txQueue))
-  {
-    mutexUnlock(&device->channelLock);
+  if (device->parent.reg->SR & SR_BSY || !mutexTryLock(&device->channelLock))
     return 0;
-  }
 
+  device->left = length;
   /* Fill transmit FIFO */
-  while (device->parent.reg->SR & SR_TNF && written < length)
+  while (device->parent.reg->SR & SR_TNF && device->left)
   {
     device->parent.reg->DR = *buffer++;
-    written++;
+    device->left--;
   }
 
-  if (written < length)
+  /* Enable transmit interrupt when packet size is greater than FIFO length */
+  if (device->left)
   {
-    /* Fill transmit queue with the rest of data */
-    while (!queueFull(&device->txQueue) && written < length)
-    {
-      queuePush(&device->txQueue, *buffer++);
-      written++;
-    }
-    /* Enable transmit FIFO half empty interrupt */
+    device->txBuffer = buffer;
     device->parent.reg->IMSC |= IMSC_TXIM;
   }
+  /* Wait until all frames will be transmitted */
+  while (device->left || !(device->parent.reg->SR & SR_TFE));
+
   mutexUnlock(&device->channelLock);
-  return written;
+  return length;
 }
 /*----------------------------------------------------------------------------*/
 static enum result spiGetOpt(void *object, enum ifOption option, void *data)
