@@ -1,14 +1,13 @@
 /*
- * dma_defs.h
+ * gpdma_defs.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef DMA_DEFS_H_
-#define DMA_DEFS_H_
+#ifndef GPDMA_DEFS_H_
+#define GPDMA_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include "macro.h"
-/*----------------------------------------------------------------------------*/
 /*------------------DMA configuration register--------------------------------*/
 #define DMA_ENABLE                      BIT(0)
 /* 0 for little-endian, 1 for big-endian */

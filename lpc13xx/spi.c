@@ -7,8 +7,7 @@
 #include "spi.h"
 #include "ssp_defs.h"
 /*----------------------------------------------------------------------------*/
-/* SPI settings */
-#define DEFAULT_PRIORITY                15 /* Lowest priority in Cortex-M3 */
+#define DEFAULT_PRIORITY 15 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 static void spiHandler(void *);
 static enum result spiInit(void *, const void *);
@@ -183,7 +182,7 @@ static enum result spiSetOpt(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_SPEED:
+    case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);
       return E_OK;
     case IF_PRIORITY:

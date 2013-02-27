@@ -6,13 +6,12 @@
 
 #include <assert.h>
 #include "lpc13xx_sys.h"
+#include "mutex.h"
 #include "timer_tc.h"
 #include "timer_defs.h"
-#include "mutex.h"
 /*----------------------------------------------------------------------------*/
-/* Timer/Counter settings */
-#define DEFAULT_DIV_VALUE               1
-#define DEFAULT_PRIORITY                15 /* Lowest priority in Cortex-M3 */
+#define DEFAULT_DIV_VALUE   1
+#define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 ///* Timer pin function values */
 //static const struct GpioPinFunc timerPins[] = {

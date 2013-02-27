@@ -10,9 +10,8 @@
 #include "uart.h"
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
-/* UART settings */
-#define DEFAULT_DIV                     CLK_DIV1
-#define DEFAULT_DIV_VALUE               1
+#define DEFAULT_DIV         CLK_DIV1
+#define DEFAULT_DIV_VALUE   1
 /*----------------------------------------------------------------------------*/
 /* UART pin function values */
 static const struct GpioPinFunc uartPins[] = {

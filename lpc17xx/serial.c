@@ -7,10 +7,9 @@
 #include "serial.h"
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
-/* Serial port settings */
-#define TX_FIFO_SIZE                    8
-#define RX_FIFO_LEVEL                   2 /* 8 characters */
-#define DEFAULT_PRIORITY                15 /* Lowest priority in Cortex-M3 */
+#define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
+#define RX_FIFO_LEVEL       2 /* 8 characters */
+#define TX_FIFO_SIZE        8
 /*----------------------------------------------------------------------------*/
 enum cleanup
 {
@@ -161,7 +160,7 @@ static enum result serialSetOpt(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_SPEED:
+    case IF_RATE:
       if ((res = uartCalcRate(&rate, *(uint32_t *)data)) != E_OK)
         return res;
       uartSetRate(object, rate);

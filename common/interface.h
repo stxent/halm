@@ -11,14 +11,14 @@
 #include "entity.h"
 #include "error.h"
 /*----------------------------------------------------------------------------*/
-enum ifOption {
-  IF_ADDRESS,       /* Sub-address */
-  IF_SPEED,         /* Data rate */
-  IF_BLOCKING,      /* Blocking operations mode */
-  IF_NONBLOCKING,   /* Non-blocking operations mode */
-  IF_PRIORITY,      /* Interface interrupts or DMA requests priority */
-  IF_QUEUE_RX,
-  IF_QUEUE_TX
+enum ifOption
+{
+  IF_ADDRESS, /* Sub-address */
+  IF_RATE, /* Data rate */
+  IF_BLOCKING, /* Blocking operations mode */
+  IF_NONBLOCKING, /* Non-blocking operations mode */
+  IF_PRIORITY, /* Interface interrupts or DMA requests priority */
+  IF_BUSY, /* Check whether interface is busy */
 };
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */

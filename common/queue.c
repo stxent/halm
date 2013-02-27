@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "queue.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_CAPACITY        16
+#define DEFAULT_CAPACITY 16
 /*----------------------------------------------------------------------------*/
 enum result queueInit(struct Queue *q, uint16_t capacity)
 {

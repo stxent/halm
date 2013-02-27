@@ -10,10 +10,9 @@
 #include "ssp.h"
 #include "ssp_defs.h"
 /*----------------------------------------------------------------------------*/
-/* SSP settings */
 /* In LPC13xx SSP clock divisor is number from 1 to 255, 0 to disable */
-#define DEFAULT_DIV                     1
-#define DEFAULT_DIV_VALUE               1
+#define DEFAULT_DIV         1
+#define DEFAULT_DIV_VALUE   1
 /*----------------------------------------------------------------------------*/
 /* UART pin function values */
 static const struct GpioPinFunc sspPins[] = {

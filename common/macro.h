@@ -7,8 +7,9 @@
 #ifndef MACRO_H_
 #define MACRO_H_
 /*----------------------------------------------------------------------------*/
-/* TODO Check results more seriously */
-#define BIT(offset)                     ((uint32_t)(1 << (uint8_t)(offset)))
-#define BIT_FIELD(value, offset)        ((uint32_t)(value << (uint8_t)(offset)))
+#define BIT(offset) \
+    ((uint32_t)((uint32_t)1 << (uint8_t)(offset)))
+#define BIT_FIELD(value, offset) \
+    ((uint32_t)((uint32_t)value << (uint8_t)(offset)))
 /*----------------------------------------------------------------------------*/
 #endif /* MACRO_H_ */

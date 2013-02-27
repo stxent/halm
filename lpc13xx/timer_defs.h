@@ -8,15 +8,9 @@
 #define TIMER_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include "macro.h"
-/*----------------------------------------------------------------------------*/
 /*------------------Interrupt Register----------------------------------------*/
 #define IR_MATCH_INTERRUPT(channel)     BIT((channel))
 #define IR_CAPTURE_INTERRUPT(channel)   BIT((channel) + 4)
-//#define IR_MR0INT                       BIT(1)
-//#define IR_MR1INT                       BIT(1)
-//#define IR_MR2INT                       BIT(2)
-//#define IR_MR3INT                       BIT(3)
-//#define IR_CR0INT                       BIT(4)
 /*------------------Timer Control Register------------------------------------*/
 #define TCR_CEN                         BIT(0) /* Enable for counting */
 #define TCR_CRES                        BIT(1) /* Synchronous reset */

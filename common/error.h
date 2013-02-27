@@ -10,10 +10,14 @@
 enum result
 {
   E_OK = 0,
-  E_ERROR,
-  E_MEMORY,
-  E_DEVICE,
-  E_INTERFACE
+  E_ERROR, /* Generic error */
+  E_MEMORY, /* Out of memory */
+  E_ENTRY, /* No such file or directory */
+  E_ACCESS, /* Permission denied */
+  E_FAULT, /* Bad address */
+  E_BUSY, /* Device or resource busy */
+  E_DEVICE, /* Hardware device error */
+  E_INTERFACE, /* Interface error */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* ERROR_H_ */

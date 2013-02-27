@@ -10,8 +10,7 @@
 #include "serial_dma.h"
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
-/* Serial port settings */
-#define RX_FIFO_LEVEL                   0 /* 1 character */
+#define RX_FIFO_LEVEL 0 /* 1 character */
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SerialDma *, int8_t, int8_t);
 /*----------------------------------------------------------------------------*/
@@ -191,7 +190,7 @@ static enum result serialSetOpt(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_SPEED:
+    case IF_RATE:
       if ((res = uartCalcRate(&rate, *(uint32_t *)data)) != E_OK)
         return res;
       uartSetRate(object, rate);
