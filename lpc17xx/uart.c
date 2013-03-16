@@ -93,8 +93,8 @@ static const struct UartClass uartTable = {
 
         .read = 0,
         .write = 0,
-        .getopt = 0,
-        .setopt = 0
+        .get = 0,
+        .set = 0
     },
     .handler = 0
 };

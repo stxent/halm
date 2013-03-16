@@ -27,8 +27,8 @@ static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
 static uint32_t serialRead(void *, uint8_t *, uint32_t);
 static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
-static enum result serialGetOpt(void *, enum ifOption, void *);
-static enum result serialSetOpt(void *, enum ifOption, const void *);
+static enum result serialGet(void *, enum ifOption, void *);
+static enum result serialSet(void *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
 /* We like structures so we put a structure in a structure */
 /* So we can initialize a structure while we initialize a structure */
@@ -40,8 +40,8 @@ static const struct UartClass serialTable = {
 
         .read = serialRead,
         .write = serialWrite,
-        .getopt = serialGetOpt,
-        .setopt = serialSetOpt
+        .get = serialGet,
+        .set = serialSet
     },
     .handler = serialHandler
 };
@@ -146,12 +146,12 @@ static void serialDeinit(void *object)
   cleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGetOpt(void *object, enum ifOption option, void *data)
+static enum result serialGet(void *object, enum ifOption option, void *data)
 {
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetOpt(void *object, enum ifOption option,
+static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Serial *device = object;

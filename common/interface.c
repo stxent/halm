@@ -18,15 +18,14 @@ uint32_t ifWrite(void *interface, const uint8_t *buffer, uint32_t length)
       length);
 }
 /*----------------------------------------------------------------------------*/
-enum result ifGetOpt(void *interface, enum ifOption option, void *data)
+enum result ifGet(void *interface, enum ifOption option, void *data)
 {
-  return ((struct InterfaceClass *)CLASS(interface))->getopt(interface, option,
+  return ((struct InterfaceClass *)CLASS(interface))->get(interface, option,
       data);
 }
 /*----------------------------------------------------------------------------*/
-enum result ifSetOpt(void *interface, enum ifOption option,
-    const void *data)
+enum result ifSet(void *interface, enum ifOption option, const void *data)
 {
-  return ((struct InterfaceClass *)CLASS(interface))->setopt(interface, option,
+  return ((struct InterfaceClass *)CLASS(interface))->set(interface, option,
       data);
 }

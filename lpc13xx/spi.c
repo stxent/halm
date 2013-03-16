@@ -14,8 +14,8 @@ static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
 static uint32_t spiRead(void *, uint8_t *, uint32_t);
 static uint32_t spiWrite(void *, const uint8_t *, uint32_t);
-static enum result spiGetOpt(void *, enum ifOption, void *);
-static enum result spiSetOpt(void *, enum ifOption, const void *);
+static enum result spiGet(void *, enum ifOption, void *);
+static enum result spiSet(void *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
 /* We like structures so we put a structure in a structure */
 /* So we can initialize a structure while we initialize a structure */
@@ -27,8 +27,8 @@ static const struct SspClass spiTable = {
 
         .read = spiRead,
         .write = spiWrite,
-        .getopt = spiGetOpt,
-        .setopt = spiSetOpt
+        .get = spiGet,
+        .set = spiSet
     },
     .handler = spiHandler
 };
@@ -170,12 +170,12 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   return length;
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiGetOpt(void *object, enum ifOption option, void *data)
+static enum result spiGet(void *object, enum ifOption option, void *data)
 {
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiSetOpt(void *object, enum ifOption option,
+static enum result spiSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Spi *device = object;
