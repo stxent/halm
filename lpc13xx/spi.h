@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SPI_IRQ_H_
-#define SPI_IRQ_H_
+#ifndef SPI_H_
+#define SPI_H_
 /*----------------------------------------------------------------------------*/
 #include "mutex.h"
 #include "ssp.h"
@@ -30,4 +30,4 @@ struct Spi
   Mutex channelLock; /* Access to channel */
 };
 /*----------------------------------------------------------------------------*/
-#endif /* SPI_IRQ_H_ */
+#endif /* SPI_H_ */
