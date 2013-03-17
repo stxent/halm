@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include "spi.h"
 #include "ssp_defs.h"
 /*----------------------------------------------------------------------------*/
@@ -78,16 +79,21 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct SpiConfig *config = configPtr;
   struct Spi *device = object;
-  const struct SspConfig parentConfig = {
-      .channel = config->channel,
-      .sck = config->sck,
-      .miso = config->miso,
-      .mosi = config->mosi,
-      .rate = config->rate,
-      .frame = 8, /* Fixed frame size */
-      .cs = config->cs
+  struct SspConfig parentConfig = {
+      .frame = 8 /* Fixed frame size */
   };
   enum result res;
+
+  /* Check device configuration data */
+  assert(config);
+
+  /* Initialize parent configuration structure */
+  parentConfig.channel = config->channel;
+  parentConfig.sck = config->sck;
+  parentConfig.miso = config->miso;
+  parentConfig.mosi = config->mosi;
+  parentConfig.rate = config->rate;
+  parentConfig.cs = config->cs;
 
   /* Call SSP class constructor */
   if ((res = Ssp->parent.init(object, &parentConfig)) != E_OK)

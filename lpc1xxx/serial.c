@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include "serial.h"
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
@@ -100,14 +101,18 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Set pointer to device configuration data */
   const struct SerialConfig *config = configPtr;
   struct Serial *device = object;
-  const struct UartConfig parentConfig = {
-      .channel = config->channel,
-      .rx = config->rx,
-      .tx = config->tx,
-      .rate = config->rate,
-      .parity = config->parity
-  };
+  struct UartConfig parentConfig;
   enum result res;
+
+  /* Check device configuration data */
+  assert(config);
+
+  /* Initialize parent configuration structure */
+  parentConfig.channel = config->channel;
+  parentConfig.rx = config->rx;
+  parentConfig.tx = config->tx;
+  parentConfig.rate = config->rate;
+  parentConfig.parity = config->parity;
 
   /* Call UART class constructor */
   if ((res = Uart->parent.init(object, &parentConfig)) != E_OK)
