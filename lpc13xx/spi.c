@@ -164,7 +164,8 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
     device->parent.reg->IMSC |= IMSC_TXIM;
   }
   /* Wait until all frames will be transmitted */
-  while (device->left || !(device->parent.reg->SR & SR_TFE));
+  //while (device->left || !(device->parent.reg->SR & SR_TFE));
+  while (device->left || device->parent.reg->SR & SR_BSY);
 
   mutexUnlock(&device->channelLock);
   return length;
@@ -172,7 +173,14 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static enum result spiGet(void *object, enum ifOption option, void *data)
 {
-  return E_ERROR;
+  switch (option)
+  {
+    case IF_RATE:
+      *(uint32_t *)data = sspGetRate(object);
+      return E_OK;
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result spiSet(void *object, enum ifOption option,

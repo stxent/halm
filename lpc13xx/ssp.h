@@ -45,6 +45,7 @@ struct Ssp
 };
 /*----------------------------------------------------------------------------*/
 enum result sspSetDescriptor(uint8_t, void *);
+uint32_t sspGetRate(struct Ssp *);
 void sspSetRate(struct Ssp *, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* SSP_H_ */

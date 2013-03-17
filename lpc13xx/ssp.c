@@ -108,6 +108,16 @@ void sspSetRate(struct Ssp *device, uint32_t rate)
   device->reg->CR0 |= CR0_SCR(divider);
 }
 /*----------------------------------------------------------------------------*/
+uint32_t sspGetRate(struct Ssp *device)
+{
+  uint32_t rate;
+  uint16_t divider;
+
+  divider = CR0_SCR_VALUE(device->reg->CR0);
+  rate = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
+  return rate;
+}
+/*----------------------------------------------------------------------------*/
 static enum result sspInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */

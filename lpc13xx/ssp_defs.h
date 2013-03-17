@@ -28,6 +28,7 @@
 #define CR0_SCR_MASK                    BIT_FIELD(0xFF, 8)
 /* Resulting bit frequency is PCLK / (CPSDVSR * (SCR + 1)) */
 #define CR0_SCR(rate)                   BIT_FIELD((rate), 8)
+#define CR0_SCR_VALUE(reg)              (((reg) >> 8) & 0xFF)
 /*------------------Control Register 1----------------------------------------*/
 /* Loop-back mode */
 #define CR1_LBM                         BIT(0)
