@@ -126,7 +126,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   device->fill = length;
   /* Pop all previously received frames */
   while (device->parent.reg->SR & SR_RNE)
-    (void)device->parent.reg->DR; /* TODO Check behavior */
+    (void)device->parent.reg->DR;
 
   /* Fill transmit FIFO with dummy frames */
   while (device->parent.reg->SR & SR_TNF && device->fill)
@@ -170,7 +170,6 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
     device->parent.reg->IMSC |= IMSC_TXIM;
   }
   /* Wait until all frames will be transmitted */
-  //while (device->left || !(device->parent.reg->SR & SR_TFE));
   while (device->left || device->parent.reg->SR & SR_BSY);
 
   mutexUnlock(&device->channelLock);
