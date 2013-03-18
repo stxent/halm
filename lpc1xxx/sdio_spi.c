@@ -262,8 +262,9 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi *device = object;
 
-  uint32_t address;
-  uint16_t counter, checksum = 0xFFFF;
+  uint32_t address, count;
+  uint16_t counter;
+  uint8_t crcBuffer[2];
   struct ShortResponse shortResp;
   enum result res;
 
@@ -288,14 +289,17 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   if (!counter)
     return 0;
 
-  if (ifRead(device->interface, buffer, length) != length)
-    return 0;
-  /* TODO Check byte order */
-  if (ifWrite(device->interface, (const uint8_t *)&checksum,
-      sizeof(checksum)) != sizeof(checksum))
+  gpioWrite(&device->csPin, 0);
+  count = ifRead(device->interface, buffer, length);
+  if (count != length)
   {
+    gpioWrite(&device->csPin, 1);
     return 0;
   }
+  count = ifRead(device->interface, crcBuffer, sizeof(crcBuffer));
+  gpioWrite(&device->csPin, 1);
+  if (count != sizeof(crcBuffer))
+    return 0;
 
   return length;
 }
