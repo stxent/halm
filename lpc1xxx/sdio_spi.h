@@ -24,6 +24,7 @@ struct SdioSpi
   struct Interface parent;
 
   struct Interface *interface;
+  uint64_t position;
   struct Gpio csPin;
 //  bool ready; //TODO Add hotswap support?
   bool highCapacity;
