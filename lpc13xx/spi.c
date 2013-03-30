@@ -119,9 +119,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Spi *device = object;
 
-  /* Check channel availability */
-  if (device->parent.reg->SR & SR_BSY || !mutexTryLock(&device->channelLock))
-    return 0;
+  mutexLock(&device->channelLock);
 
   device->fill = length;
   /* Pop all previously received frames */
@@ -139,11 +137,11 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   device->left = length;
   /* Enable receive FIFO half full and receive FIFO timeout interrupts */
   device->parent.reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
-
   /* Wait until all frames will be received */
   while (device->left || (device->parent.reg->SR & SR_BSY));
 
   mutexUnlock(&device->channelLock);
+
   return length;
 }
 /*----------------------------------------------------------------------------*/
@@ -151,9 +149,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Spi *device = object;
 
-  /* Check channel availability */
-  if (device->parent.reg->SR & SR_BSY || !mutexTryLock(&device->channelLock))
-    return 0;
+  mutexLock(&device->channelLock);
 
   device->left = length;
   /* Fill transmit FIFO */
@@ -173,6 +169,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   while (device->left || device->parent.reg->SR & SR_BSY);
 
   mutexUnlock(&device->channelLock);
+
   return length;
 }
 /*----------------------------------------------------------------------------*/
