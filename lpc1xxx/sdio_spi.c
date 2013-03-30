@@ -8,6 +8,11 @@
 #include "sdio_spi.h"
 #include "ssp.h" //XXX
 /*----------------------------------------------------------------------------*/
+#define BLOCK_POW               9
+#define TOKEN_START             0xFE
+#define TOKEN_START_MULTIPLE    0xFC
+#define TOKEN_STOP              0xFD
+/*----------------------------------------------------------------------------*/
 enum sdioCommand
 {
   CMD0 = 0, /* GO_IDLE_STATE */
@@ -16,10 +21,11 @@ enum sdioCommand
   CMD55 = 55, /* Application command APP_CMD */
   CMD58 = 58, /* Read OCR READ_OCR */
   ACMD41 = 41, /* Send host capacity support information SD_SEND_OP_COND */
-  CMD_READ            = 17,
-  CMD_READ_MULTIPLE   = 18,
-  CMD_WRITE           = 24,
-  CMD_WRITE_MULTIPLE  = 25,
+  CMD_STOP_TRANSMISSION = 12,
+  CMD_READ              = 17,
+  CMD_READ_MULTIPLE     = 18,
+  CMD_WRITE             = 24,
+  CMD_WRITE_MULTIPLE    = 25,
 };
 /*----------------------------------------------------------------------------*/
 enum sdioResponse
@@ -52,6 +58,10 @@ struct LongResponse
     uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
+static enum result readBlock(struct SdioSpi *, uint8_t *);
+static enum result waitBusyState(struct SdioSpi *);
+static enum result writeBlock(struct SdioSpi *, const uint8_t *, uint8_t);
+/*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
 static uint32_t sdioRead(void *, uint8_t *, uint32_t);
@@ -73,11 +83,10 @@ static const struct InterfaceClass sdioTable = {
 const struct InterfaceClass *SdioSpi = &sdioTable;
 static const uint8_t dummyByte = 0xFF; /* Emulate high level during setup */
 /*----------------------------------------------------------------------------*/
-static enum result sendCommand(struct SdioSpi *device, enum sdioCommand command,
+static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
     uint32_t parameter)
 {
   uint8_t buffer[8];
-  enum result res = E_OK;
 
   /* Fill buffer */
   buffer[0] = 0xFF;
@@ -103,10 +112,9 @@ static enum result sendCommand(struct SdioSpi *device, enum sdioCommand command,
   buffer[7] = 0xFF;
 
   gpioWrite(&device->csPin, 0);
-  if (ifWrite(device->interface, buffer, sizeof(buffer)) != sizeof(buffer))
-    res = E_INTERFACE; /* Interface error */
+  /* TODO Check for interface error? */
+  ifWrite(device->interface, buffer, sizeof(buffer));
   gpioWrite(&device->csPin, 1);
-  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum result waitForData(struct SdioSpi *device, uint8_t *value)
@@ -258,48 +266,133 @@ static void sdioDeinit(void *object)
   gpioDeinit(&device->csPin);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
+static enum result readBlock(struct SdioSpi *device, uint8_t *buffer)
 {
-  struct SdioSpi *device = object;
-
-  uint32_t address, count;
+  uint32_t read = 0;
   uint16_t counter;
   uint8_t crcBuffer[2];
   struct ShortResponse shortResp;
   enum result res;
 
-  /* TODO Check upper limit */
-  if (length & ((1 << 9) - 1)) /* Unsupported block length */
-    return 0;
-  address = device->highCapacity ? (uint32_t)(device->position >> 9)
-      : (uint32_t)device->position;
-  sendCommand(device, CMD_READ, address);
-  if ((res = getShortResponse(device, &shortResp)) != E_OK)
-    return 0;
-
   /* Wait for data token */
   for (counter = 0xFFFF; counter; counter--)
   {
     res = getShortResponse(device, &shortResp);
-    if (res != E_OK && res != E_DEVICE)
-      return 0;
-    if (res == E_OK && shortResp.value == 0xFE) /* TODO Add define */
-      break;
+    if (res == E_DEVICE)
+      continue;
+    /* TODO Add delay */
+    if (res == E_OK)
+    {
+      if (shortResp.value == TOKEN_START)
+        break;
+      else
+        return E_DEVICE; /* TODO Add error token */
+    }
+    else
+      return res;
   }
   if (!counter)
-    return 0;
+    return E_DEVICE;
 
   gpioWrite(&device->csPin, 0);
-  count = ifRead(device->interface, buffer, length);
-  if (count != length)
-  {
-    gpioWrite(&device->csPin, 1);
-    return 0;
-  }
-  count = ifRead(device->interface, crcBuffer, sizeof(crcBuffer));
+  /* Receive block data */
+  read += ifRead(device->interface, buffer, 1 << BLOCK_POW);
+  /* Receive block checksum */
+  read += ifRead(device->interface, crcBuffer, sizeof(crcBuffer));
   gpioWrite(&device->csPin, 1);
-  if (count != sizeof(crcBuffer))
+
+  if (read != (1 << BLOCK_POW) + sizeof(crcBuffer))
+    return E_INTERFACE;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result waitBusyState(struct SdioSpi *device)
+{
+  uint16_t counter;
+  uint8_t state;
+
+  /* Wait until busy condition will be removed from RX line */
+  gpioWrite(&device->csPin, 0);
+  for (counter = 0xFFFF; counter; counter--)
+  {
+    if (ifRead(device->interface, &state, 1) == 1)
+    {
+      if (state == 0xFF)
+        break;
+    }
+  }
+  gpioWrite(&device->csPin, 1);
+
+  return counter ? E_OK : E_BUSY;
+}
+/*----------------------------------------------------------------------------*/
+static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
+    uint8_t token)
+{
+  const uint8_t crcBuffer[2] = {0xFF, 0xFF};
+  uint32_t written = 0;
+  struct ShortResponse shortResp;
+  enum result res;
+
+  gpioWrite(&device->csPin, 0);
+  /* Send start block token */
+  written += ifWrite(device->interface, &token, 1);
+  /* Send block data */
+  written += ifWrite(device->interface, buffer, 1 << BLOCK_POW);
+  /* Send block checksum */
+  written += ifWrite(device->interface, crcBuffer, sizeof(crcBuffer));
+  gpioWrite(&device->csPin, 1);
+
+  if (written != 1 + (1 << BLOCK_POW) + sizeof(crcBuffer))
+    return E_INTERFACE;
+
+  /* Receive data response */
+  if ((res = getShortResponse(device, &shortResp)) != E_OK)
+    return res;
+
+  /* TODO Move at the beginning */
+  if ((res = waitBusyState(device)) != E_OK)
+    return res;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
+{
+  struct SdioSpi *device = object;
+  uint32_t address;
+  uint16_t counter, blockCount;
+  struct ShortResponse shortResp;
+  enum sdioCommand command;
+
+  blockCount = length >> BLOCK_POW;
+  /* TODO Check upper limit */
+  if ((length & ((1 << BLOCK_POW) - 1)) || !blockCount)
+    return 0; /* Unsupported block length */
+
+  address = device->highCapacity ? (uint32_t)(device->position >> BLOCK_POW)
+      : (uint32_t)device->position;
+
+  if (blockCount > 1)
+    command = CMD_READ_MULTIPLE;
+  else
+    command = CMD_READ;
+  sendCommand(device, command, address);
+  if (getShortResponse(device, &shortResp) != E_OK || shortResp.value)
     return 0;
+
+  for (counter = 0; counter < blockCount; counter++)
+  {
+    if (readBlock(device, buffer + (counter << BLOCK_POW)) != E_OK)
+      return 0; //FIXME counter << BLOCK_POW;
+  }
+  sendCommand(device, CMD_STOP_TRANSMISSION, 0); //FIXME Check retval?
+  if (getShortResponse(device, &shortResp) != E_OK || shortResp.value)
+    return 0;
+
+  /* TODO Move at the beginning */
+  waitBusyState(device); //TODO Check result?
 
   return length;
 }
@@ -307,27 +400,49 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi *device = object;
+  uint32_t address;
+  uint16_t counter, blockCount;
+  uint8_t token;
+  struct ShortResponse shortResp;
+  enum sdioCommand command;
 
-//  uint32_t place;
-//  uint16_t t = 0;
-//
-//  place = 512 * dwAddress;
-//  Command(CMD_WRITE, place);
-//
-//  Resp8b();       /* Card response */
-//
-//  SPISend(0xfe);      /* Start block */
-//  SPISendN(pbBuf, 512);
-//  SPISend(0xff);      /* Checksum part 1 */
-//  SPISend(0xff);      /* Checksum part 2 */
-//
-//  SPISend(0xff);
-//
-//  while (SPISend(0xff) != 0xff) {
-//    t++;
-//  }
-//
-//  return 0;
+  blockCount = length >> BLOCK_POW;
+  /* TODO Check upper limit */
+  if ((length & ((1 << BLOCK_POW) - 1)) || !blockCount)
+    return 0; /* Unsupported block length */
+
+  address = device->highCapacity ? (uint32_t)(device->position >> BLOCK_POW)
+      : (uint32_t)device->position;
+
+  if (blockCount > 1)
+  {
+    command = CMD_WRITE_MULTIPLE;
+    token = TOKEN_START_MULTIPLE;
+  }
+  else
+  {
+    command = CMD_WRITE;
+    token = TOKEN_START;
+  }
+  sendCommand(device, command, address);
+  if (getShortResponse(device, &shortResp) != E_OK || shortResp.value)
+    return 0;
+
+  for (counter = 0; counter < blockCount; counter++)
+  {
+    if (writeBlock(device, buffer + (counter << BLOCK_POW), token) != E_OK)
+      return counter << BLOCK_POW;
+  }
+
+  if (blockCount > 1)
+  {
+    /* Send stop token in multiple block write operation */
+    token = TOKEN_STOP;
+    gpioWrite(&device->csPin, 0);
+    ifWrite(device->interface, &token, 1); //TODO Check result?
+    gpioWrite(&device->csPin, 1);
+  }
+  //FIXME Send ACMD22?
 
   return length;
 }
