@@ -152,6 +152,7 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SerialDma *device = object;
 
+  mutexLock(&device->dmaLock);
   /* TODO Add DMA error handling */
   if (length && dmaStart(device->rxDma,
       buffer, (void *)&device->parent.reg->RBR, length) == E_OK)
@@ -159,6 +160,8 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
     while (dmaIsActive(device->rxDma));
     return length;
   }
+  mutexUnlock(&device->dmaLock);
+
   return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -167,6 +170,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 {
   struct SerialDma *device = object;
 
+  mutexLock(&device->dmaLock);
   /* TODO Add DMA error handling */
   if (length && dmaStart(device->txDma,
       (void *)&device->parent.reg->THR, buffer, length) == E_OK)
@@ -175,6 +179,8 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     while (dmaIsActive(device->txDma));
     return length;
   }
+  mutexUnlock(&device->dmaLock);
+
   return 0;
 }
 /*----------------------------------------------------------------------------*/
