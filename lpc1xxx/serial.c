@@ -9,8 +9,8 @@
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
-#define RX_FIFO_LEVEL       2 /* 8 characters */
-#define TX_FIFO_SIZE        8
+#define RX_FIFO_LEVEL       3 /* 14 characters */
+#define TX_FIFO_SIZE        16
 /*----------------------------------------------------------------------------*/
 enum cleanup
 {
@@ -70,29 +70,29 @@ static void cleanup(struct Serial *device, enum cleanup step)
 static void serialHandler(void *object)
 {
   struct Serial *device = object;
-  uint8_t counter = 0, data;
+  uint8_t counter, data;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  switch (device->parent.reg->IIR & IIR_INT_MASK)
+  if (device->parent.reg->IIR & IIR_INT_STATUS)
+    return;
+
+  if (device->parent.reg->LSR & LSR_RDR)
   {
-    case IIR_INT_RDA:
-    case IIR_INT_CTI:
-      /* Byte will be removed from FIFO after reading from RBR register */
-      while (device->parent.reg->LSR & LSR_RDR)
-      {
-        data = device->parent.reg->RBR;
-        /* Received bytes will be dropped when queue becomes full */
-        if (!queueFull(&device->rxQueue))
-          queuePush(&device->rxQueue, data);
-      }
-      break;
-    case IIR_INT_THRE:
-      /* Fill FIFO with selected burst size or less */
-      while (queueSize(&device->txQueue) && counter++ < TX_FIFO_SIZE)
-        device->parent.reg->THR = queuePop(&device->txQueue);
-      break;
-    default:
-      break;
+    /* Byte will be removed from FIFO after reading from RBR register */
+    while (device->parent.reg->LSR & LSR_RDR)
+    {
+      data = device->parent.reg->RBR;
+      /* Received bytes will be dropped when queue becomes full */
+      if (!queueFull(&device->rxQueue))
+        queuePush(&device->rxQueue, data);
+    }
+  }
+  if (device->parent.reg->LSR & LSR_THRE)
+  {
+    counter = 0;
+    /* Fill FIFO with selected burst size or less */
+    while (queueSize(&device->txQueue) && counter++ < TX_FIFO_SIZE)
+      device->parent.reg->THR = queuePop(&device->txQueue);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -202,18 +202,20 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   uint32_t written = 0;
 
   mutexLock(&device->queueLock);
-  NVIC_DisableIRQ(device->parent.irq);
   /* Check transmitter state */
   if (device->parent.reg->LSR & LSR_TEMT && queueEmpty(&device->txQueue))
   {
     /* Transmitter is idle, fill TX FIFO */
+    NVIC_DisableIRQ(device->parent.irq);
     while (written < TX_FIFO_SIZE && written < length)
     {
       device->parent.reg->THR = *buffer++;
       written++;
     }
+    NVIC_EnableIRQ(device->parent.irq);
   }
   /* Fill TX queue with the rest of data */
+  NVIC_DisableIRQ(device->parent.irq);
   while (!queueFull(&device->txQueue) && written < length)
   {
     queuePush(&device->txQueue, *buffer++);
