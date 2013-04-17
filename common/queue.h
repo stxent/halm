@@ -26,5 +26,7 @@ void queueDeinit(struct Queue *);
 void queuePush(struct Queue *, uint8_t);
 uint8_t queuePop(struct Queue *);
 uint8_t queuePeek(struct Queue *);
+void queuePushArray(struct Queue *, const uint8_t *, uint16_t);
+void queuePopArray(struct Queue *, uint8_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 #endif /* QUEUE_H_ */
