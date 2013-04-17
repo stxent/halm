@@ -9,8 +9,8 @@
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
-#define RX_FIFO_LEVEL       3 /* 14 characters */
-#define TX_FIFO_SIZE        16
+#define RX_FIFO_LEVEL       2 /* 8 characters */
+#define TX_FIFO_SIZE        8
 /*----------------------------------------------------------------------------*/
 enum cleanup
 {
