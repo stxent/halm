@@ -60,70 +60,76 @@ uint8_t queuePeek(struct Queue *q)
   return (q->size) ? q->data[q->floor] : 0;
 }
 /*----------------------------------------------------------------------------*/
-void queuePushArray(struct Queue *q, const uint8_t *buffer, uint16_t length)
+uint16_t queuePushArray(struct Queue *q, const uint8_t *buffer, uint16_t length)
 {
-  uint16_t len;
+  uint16_t count, moved = 0;
 
   if (q->ceil >= q->floor)
   {
-    len = q->capacity - q->ceil;
-    if (length < len)
-      len = length;
-    if (len)
+    count = q->capacity - q->ceil;
+    if (length < count)
+      count = length;
+    if (count)
     {
-      memcpy(q->data + q->ceil, buffer, len);
-      buffer += len;
-      q->ceil = q->ceil + len;
+      memcpy(q->data + q->ceil, buffer, count);
+      buffer += count;
+      q->ceil = q->ceil + count;
       if (q->ceil == q->capacity)
         q->ceil = 0;
-      q->size += len;
-      length -= len;
+      q->size += count;
+      length -= count;
+      moved += count;
     }
   }
   if (q->ceil < q->floor)
   {
-    len = q->floor - q->ceil;
-    if (length < len)
-      len = length;
-    if (len)
+    count = q->floor - q->ceil;
+    if (length < count)
+      count = length;
+    if (count)
     {
-      memcpy(q->data + q->ceil, buffer, len);
-      q->ceil += len;
-      q->size += len;
+      memcpy(q->data + q->ceil, buffer, count);
+      q->ceil += count;
+      q->size += count;
+      moved += count;
     }
   }
+  return moved;
 }
 /*----------------------------------------------------------------------------*/
-void queuePopArray(struct Queue *q, uint8_t *buffer, uint16_t length)
+uint16_t queuePopArray(struct Queue *q, uint8_t *buffer, uint16_t length)
 {
-  uint16_t len;
+  uint16_t count, moved = 0;
 
-  if (q->ceil <= q->floor)
+  if (q->ceil < q->floor)
   {
-    len = q->capacity - q->floor;
-    if (length < len)
-      len = length;
-    if (len)
+    count = q->capacity - q->floor;
+    if (length < count)
+      count = length;
+    if (count)
     {
-      memcpy(buffer, q->data, len);
-      buffer += len;
-      q->floor = q->floor + len;
+      memcpy(buffer, q->data + q->floor, count);
+      buffer += count;
+      q->floor = q->floor + count;
       if (q->floor == q->capacity)
         q->floor = 0;
-      q->size -= len;
-      length -= len;
+      q->size -= count;
+      length -= count;
+      moved += count;
     }
   }
-  if (q->ceil > q->floor)
+  if (q->ceil >= q->floor)
   {
-    len = q->ceil - q->floor;
-    if (length < len)
-      len = length;
-    if (len)
+    count = q->ceil - q->floor;
+    if (length < count)
+      count = length;
+    if (count)
     {
-      memcpy(buffer, q->data + q->floor, len);
-      q->floor += len;
-      q->size -= len;
+      memcpy(buffer, q->data + q->floor, count);
+      q->floor += count;
+      q->size -= count;
+      moved += count;
     }
   }
+  return moved;
 }
