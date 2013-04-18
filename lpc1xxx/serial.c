@@ -91,7 +91,7 @@ static void serialHandler(void *object)
   {
     counter = 0;
     /* Fill FIFO with selected burst size or less */
-    while (queueSize(&device->txQueue) && counter++ < TX_FIFO_SIZE)
+    while (!queueEmpty(&device->txQueue) && counter++ < TX_FIFO_SIZE)
       device->parent.reg->THR = queuePop(&device->txQueue);
   }
 }
@@ -181,15 +181,11 @@ static enum result serialSet(void *object, enum ifOption option,
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Serial *device = object;
-  uint32_t read = 0;
+  uint32_t read;
 
   mutexLock(&device->queueLock);
   NVIC_DisableIRQ(device->parent.irq);
-  while (queueSize(&device->rxQueue) && read < length)
-  {
-    *buffer++ = queuePop(&device->rxQueue);
-    read++;
-  }
+  read = queuePopArray(&device->rxQueue, buffer, length);
   NVIC_EnableIRQ(device->parent.irq);
   mutexUnlock(&device->queueLock);
   return read;
@@ -213,15 +209,15 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
       written++;
     }
     NVIC_EnableIRQ(device->parent.irq);
+    length -= written;
   }
-  /* Fill TX queue with the rest of data */
-  NVIC_DisableIRQ(device->parent.irq);
-  while (!queueFull(&device->txQueue) && written < length)
+  if (length)
   {
-    queuePush(&device->txQueue, *buffer++);
-    written++;
+    /* Fill TX queue with the rest of data */
+    NVIC_DisableIRQ(device->parent.irq);
+    written += queuePushArray(&device->txQueue, buffer, length);
+    NVIC_EnableIRQ(device->parent.irq);
   }
-  NVIC_EnableIRQ(device->parent.irq);
   mutexUnlock(&device->queueLock);
   return written;
 }
