@@ -70,26 +70,22 @@ static void cleanup(struct Serial *device, enum cleanup step)
 static void serialHandler(void *object)
 {
   struct Serial *device = object;
-  uint8_t counter, data;
+  uint8_t counter = 0, data;
 
   /* Interrupt status cleared when performed read operation on IIR register */
   if (device->parent.reg->IIR & IIR_INT_STATUS)
     return;
 
-  if (device->parent.reg->LSR & LSR_RDR)
+  /* Byte will be removed from FIFO after reading from RBR register */
+  while (device->parent.reg->LSR & LSR_RDR)
   {
-    /* Byte will be removed from FIFO after reading from RBR register */
-    while (device->parent.reg->LSR & LSR_RDR)
-    {
-      data = device->parent.reg->RBR;
-      /* Received bytes will be dropped when queue becomes full */
-      if (!queueFull(&device->rxQueue))
-        queuePush(&device->rxQueue, data);
-    }
+    data = device->parent.reg->RBR;
+    /* Received bytes will be dropped when queue becomes full */
+    if (!queueFull(&device->rxQueue))
+      queuePush(&device->rxQueue, data);
   }
   if (device->parent.reg->LSR & LSR_THRE)
   {
-    counter = 0;
     /* Fill FIFO with selected burst size or less */
     while (!queueEmpty(&device->txQueue) && counter++ < TX_FIFO_SIZE)
       device->parent.reg->THR = queuePop(&device->txQueue);
