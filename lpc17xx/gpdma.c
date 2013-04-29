@@ -77,7 +77,7 @@ void DMA_IRQHandler(void)
   uint8_t mask = 0x80;
   uint8_t terminalStat = LPC_GPDMA->DMACIntTCStat;
 
-  for (counter = CHANNEL_COUNT - 1; counter >= 0; counter--, mask >>= 1)
+  for (counter = CHANNEL_COUNT - 1; counter >= 0; --counter, mask >>= 1)
   {
     if (terminalStat & mask)
     {
@@ -160,7 +160,6 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   setMux(controller, config->source.line);
   setMux(controller, config->destination.line);
 
-  mutexLock(&lock);
   if (!instances)
   {
     sysPowerEnable(PWR_GPDMA);
@@ -169,7 +168,8 @@ static enum result gpdmaInit(void *object, const void *configPtr)
     //TODO add priority config
     //NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));
   }
-  instances++;
+  mutexLock(&lock);
+  ++instances;
   mutexUnlock(&lock);
 
   return E_OK;
@@ -180,7 +180,8 @@ static void gpdmaDeinit(void *object)
   struct Gpdma *controller = object;
 
   mutexLock(&lock);
-  instances--;
+  --instances;
+  mutexUnlock(&lock);
   /* Disable DMA peripheral when no active descriptors exist */
   if (!instances)
   {
@@ -188,7 +189,6 @@ static void gpdmaDeinit(void *object)
     LPC_GPDMA->DMACConfig &= ~DMA_ENABLE;
     sysPowerDisable(PWR_GPDMA);
   }
-  mutexUnlock(&lock);
 }
 /*----------------------------------------------------------------------------*/
 enum result gpdmaStart(void *object, void *dest, const void *src, uint32_t size)

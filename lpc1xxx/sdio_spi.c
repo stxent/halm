@@ -374,15 +374,12 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   address = device->highCapacity ? (uint32_t)(device->position >> BLOCK_POW)
       : (uint32_t)device->position;
 
-  if (blockCount > 1)
-    command = CMD_READ_MULTIPLE;
-  else
-    command = CMD_READ;
+  command = blockCount > 1 ? CMD_READ_MULTIPLE : CMD_READ;
   sendCommand(device, command, address);
   if (getShortResponse(device, &shortResp) != E_OK || shortResp.value)
     return 0;
 
-  for (counter = 0; counter < blockCount; counter++)
+  for (counter = 0; counter < blockCount; ++counter)
   {
     if (readBlock(device, buffer + (counter << BLOCK_POW)) != E_OK)
       return 0; //FIXME counter << BLOCK_POW;
@@ -428,7 +425,7 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
   if (getShortResponse(device, &shortResp) != E_OK || shortResp.value)
     return 0;
 
-  for (counter = 0; counter < blockCount; counter++)
+  for (counter = 0; counter < blockCount; ++counter)
   {
     if (writeBlock(device, buffer + (counter << BLOCK_POW), token) != E_OK)
       return counter << BLOCK_POW;
@@ -470,7 +467,7 @@ static enum result sdioSet(void *object, enum ifOption option,
   {
     case IF_ADDRESS:
       /* TODO Add boundary check */
-      device->position = *(uint64_t *)data;// + 8192 * 512; //XXX
+      device->position = *(uint64_t *)data;
       return E_OK;
     default:
       return E_ERROR;

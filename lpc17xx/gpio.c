@@ -48,7 +48,7 @@ gpioFunc gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
   {
     if (pinList->key == key)
       return pinList->func;
-    pinList++;
+    ++pinList;
   }
   return -1;
 }

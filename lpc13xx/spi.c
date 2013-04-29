@@ -47,14 +47,14 @@ static void spiHandler(void *object)
     while (device->parent.reg->SR & SR_RNE && device->left)
     {
       *device->rxBuffer++ = device->parent.reg->DR;
-      device->left--;
+      --device->left;
     }
     /* Fill transmit FIFO with dummy frames */
     /* TODO Move to TX interrupt? */
     while (device->parent.reg->SR & SR_TNF && device->fill)
     {
       device->parent.reg->DR = 0xFF; /* TODO Select dummy frame value */
-      device->fill--;
+      --device->fill;
     }
     /* Disable receive interrupts when all frames have been received */
     if (!device->left)
@@ -66,7 +66,7 @@ static void spiHandler(void *object)
     while (device->parent.reg->SR & SR_TNF && device->left)
     {
       device->parent.reg->DR = *device->txBuffer++;
-      device->left--;
+      --device->left;
     }
     /* Disable transmit interrupt when all frames have been pushed to FIFO */
     if (!device->left)
@@ -129,8 +129,8 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   /* Fill transmit FIFO with dummy frames */
   while (device->parent.reg->SR & SR_TNF && device->fill)
   {
-    device->parent.reg->DR = 0xFF; /* TODO Select dummy frame value */
-    device->fill--;
+    device->parent.reg->DR = 0xFF;
+    --device->fill;
   }
 
   device->rxBuffer = buffer;

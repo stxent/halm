@@ -202,7 +202,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     while (written < TX_FIFO_SIZE && written < length)
     {
       device->parent.reg->THR = *buffer++;
-      written++;
+      ++written;
     }
     NVIC_EnableIRQ(device->parent.irq);
     length -= written;
