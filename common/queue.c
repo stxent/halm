@@ -4,8 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <string.h>
+#include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include "queue.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_CAPACITY 16
@@ -32,32 +33,32 @@ void queueDeinit(struct Queue *q)
 /*----------------------------------------------------------------------------*/
 void queuePush(struct Queue *q, uint8_t value)
 {
-  if (q->size < q->capacity)
-  {
-    q->data[q->ceil++] = value;
-    if (q->ceil == q->capacity)
-      q->ceil = 0;
-    q->size++;
-  }
+  assert(q->size >= q->capacity);
+
+  q->data[q->ceil++] = value;
+  if (q->ceil == q->capacity)
+    q->ceil = 0;
+  ++q->size;
 }
 /*----------------------------------------------------------------------------*/
 uint8_t queuePop(struct Queue *q)
 {
   uint8_t tmp = 0;
 
-  if (q->size)
-  {
-    tmp = q->data[q->floor++];
-    if (q->floor == q->capacity)
-      q->floor = 0;
-    q->size--;
-  }
+  assert(q->size);
+
+  tmp = q->data[q->floor++];
+  if (q->floor == q->capacity)
+    q->floor = 0;
+  --q->size;
   return tmp;
 }
 /*----------------------------------------------------------------------------*/
 uint8_t queuePeek(struct Queue *q)
 {
-  return (q->size) ? q->data[q->floor] : 0;
+  assert(q->size);
+
+  return q->data[q->floor];
 }
 /*----------------------------------------------------------------------------*/
 uint16_t queuePushArray(struct Queue *q, const uint8_t *buffer, uint16_t length)
