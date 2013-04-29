@@ -90,13 +90,13 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   else
     p.control->DIR &= ~(1 << p.pin.offset);
 
-  mutexLock(&lock);
-  if (!instances) //TODO Use increment in condition
+  if (!instances)
   {
     /* Enable AHB clock to the GPIO domain */
     sysClockEnable(CLK_GPIO);
   }
-  instances++;
+  mutexLock(&lock);
+  ++instances;
   mutexUnlock(&lock);
 
   return p;
@@ -110,18 +110,18 @@ void gpioDeinit(struct Gpio *p)
   *iocon = IOCON_DEFAULT;
 
   mutexLock(&lock);
-  instances--;
+  --instances;
+  mutexUnlock(&lock);
   if (!instances)
   {
     /* Disable AHB clock to the GPIO domain */
     sysClockDisable(CLK_GPIO);
   }
-  mutexUnlock(&lock);
 }
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *p)
 {
-  return (p->control->DATA & (1 << p->pin.offset)) == 0 ? 1 : 0;
+  return (p->control->DATA & (1 << p->pin.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void gpioWrite(struct Gpio *p, uint8_t value)

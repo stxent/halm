@@ -103,15 +103,15 @@ void gpioDeinit(struct Gpio *p)
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *p)
 {
-  return (p->control->FIOPIN & (1 << p->pin.offset)) != 0 ? 1 : 0;
+  return (p->control->FIOPIN & (1 << p->pin.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void gpioWrite(struct Gpio *p, uint8_t value)
 {
   if (value)
-    p->control->FIOSET |= 1 << p->pin.offset;
+    p->control->FIOSET = 1 << p->pin.offset;
   else
-    p->control->FIOCLR |= 1 << p->pin.offset;
+    p->control->FIOCLR = 1 << p->pin.offset;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetFunc(struct Gpio *p, gpioFunc func)
