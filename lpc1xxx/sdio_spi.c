@@ -351,7 +351,7 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
   if ((res = getShortResponse(device, &shortResp)) != E_OK)
     return res;
 
-  /* TODO Move at the beginning */
+  /* Wait for the flash programming to be finished */
   if ((res = waitBusyState(device)) != E_OK)
     return res;
 
@@ -388,8 +388,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   if (getShortResponse(device, &shortResp) != E_OK || shortResp.value)
     return 0;
 
-  /* TODO Move at the beginning */
-  waitBusyState(device); //TODO Check result?
+  waitBusyState(device);
 
   return length;
 }
@@ -438,8 +437,8 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
     gpioWrite(&device->csPin, 0);
     ifWrite(device->interface, &token, 1); //TODO Check result?
     gpioWrite(&device->csPin, 1);
+    waitBusyState(device);
   }
-  //FIXME Send ACMD22?
 
   return length;
 }
