@@ -33,7 +33,7 @@ void queueDeinit(struct Queue *q)
 /*----------------------------------------------------------------------------*/
 void queuePush(struct Queue *q, uint8_t value)
 {
-  assert(q->size >= q->capacity);
+  assert(q->size < q->capacity);
 
   q->data[q->ceil++] = value;
   if (q->ceil == q->capacity)
