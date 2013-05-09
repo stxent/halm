@@ -8,24 +8,33 @@
 #include "sdio_spi.h"
 #include "ssp.h" //XXX
 /*----------------------------------------------------------------------------*/
-#define BLOCK_POW               9
-#define TOKEN_START             0xFE
-#define TOKEN_START_MULTIPLE    0xFC
-#define TOKEN_STOP              0xFD
+#define BLOCK_POW       9
+#define TOKEN_DATA_MASK 0x1F
+/*----------------------------------------------------------------------------*/
+/* Direct operations with token variables are correct only on LE machines */
+enum sdioToken
+{
+  TOKEN_DATA_ACCEPTED     = 0x05,
+  TOKEN_DATA_CRC_ERROR    = 0x0B,
+  TOKEN_DATA_WRITE_ERROR  = 0x0D,
+  TOKEN_START             = 0xFE,
+  TOKEN_START_MULTIPLE    = 0xFC,
+  TOKEN_STOP              = 0xFD
+};
 /*----------------------------------------------------------------------------*/
 enum sdioCommand
 {
-  CMD0 = 0, /* GO_IDLE_STATE */
-  CMD8 = 8, /* Send interface condition SEND_IF_COND */
-  CMD13 = 13, /* SEND_STATUS */
-  CMD55 = 55, /* Application command APP_CMD */
-  CMD58 = 58, /* Read OCR READ_OCR */
-  ACMD41 = 41, /* Send host capacity support information SD_SEND_OP_COND */
+  CMD_GO_IDLE_STATE     = 0,
+  CMD_SEND_IF_COND      = 8,
   CMD_STOP_TRANSMISSION = 12,
+//  CMD_SEND_STATUS       = 13,
   CMD_READ              = 17,
   CMD_READ_MULTIPLE     = 18,
   CMD_WRITE             = 24,
   CMD_WRITE_MULTIPLE    = 25,
+  CMD_APP_CMD           = 55,
+  CMD_READ_OCR          = 58,
+  ACMD_SD_SEND_OP_COND  = 41
 };
 /*----------------------------------------------------------------------------*/
 enum sdioResponse
@@ -36,15 +45,7 @@ enum sdioResponse
   SDIO_CRC_ERROR        = 0x0008,
   SDIO_ERASE_ERROR      = 0x0010,
   SDIO_BAD_ADDRESS      = 0x0020,
-  SDIO_BAD_ARGUMENT     = 0x0040,
-//  SDIO_CARD_LOCKED        = 0x0100,
-//  SDIO_WP_ERASE_SKIP      = 0x0200,
-//  SDIO_ERROR              = 0x0400,
-//  SDIO_INTERNAL_ERROR     = 0x0800,
-//  SDIO_ECC_ERROR          = 0x1000,
-//  SDIO_WRITE_PROTECT      = 0x2000,
-//  SDIO_INVALID_SELECTION  = 0x4000,
-//  SDIO_OUT_OF_RANGE       = 0x8000
+  SDIO_BAD_ARGUMENT     = 0x0040
 };
 /*----------------------------------------------------------------------------*/
 struct ShortResponse
@@ -95,13 +96,13 @@ static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
   buffer[3] = (uint8_t)(parameter >> 16);
   buffer[4] = (uint8_t)(parameter >> 8);
   buffer[5] = (uint8_t)(parameter);
-  /* Checksum should be valid only for first CMD0 and CMD8 commands */
+  /* Checksum should be valid only for first CMD_GO_IDLE_STATE and CMD_SEND_IF_COND commands */
   switch (command)
   {
-    case CMD0:
+    case CMD_GO_IDLE_STATE:
       buffer[6] = 0x94;
       break;
-    case CMD8:
+    case CMD_SEND_IF_COND:
       buffer[6] = 0x86;
       break;
     default:
@@ -207,7 +208,7 @@ static enum result sdioInit(void *object, const void *configPtr)
   /* Try to send reset command up to 64 times */
   for (counter = 0; counter < 64; counter++) //XXX
   {
-    sendCommand(device, CMD0, 0);
+    sendCommand(device, CMD_GO_IDLE_STATE, 0);
     if ((res = getShortResponse(device, &shortResp)) != E_OK)
       return res; //FIXME
     if (shortResp.value & SDIO_INIT)
@@ -216,7 +217,7 @@ static enum result sdioInit(void *object, const void *configPtr)
   if (!(shortResp.value & SDIO_INIT))
     return E_ERROR; //FIXME
 
-  sendCommand(device, CMD8, 0x000001AA); /* TODO Add define */
+  sendCommand(device, CMD_SEND_IF_COND, 0x000001AA); /* TODO Add define */
   if ((res = getLongResponse(device, &longResp)) != E_OK)
     return res; //FIXME
   if (!(longResp.value & SDIO_ILLEGAL_COMMAND))
@@ -229,10 +230,10 @@ static enum result sdioInit(void *object, const void *configPtr)
   /* Wait till card is ready */
   for (counter = 0; counter < 32768; counter++) //XXX
   {
-    sendCommand(device, CMD55, 0);
+    sendCommand(device, CMD_APP_CMD, 0);
     if ((res = getShortResponse(device, &shortResp)) != E_OK)
       return res; //FIXME
-    sendCommand(device, ACMD41, (1 << 30)); //FIXME Add define HCS
+    sendCommand(device, ACMD_SD_SEND_OP_COND, (1 << 30)); //FIXME Add define HCS
     if ((res = getShortResponse(device, &shortResp)) != E_OK)
       return res;
     if (!shortResp.value)
@@ -243,7 +244,7 @@ static enum result sdioInit(void *object, const void *configPtr)
 
   if (!oldCard) /* SD Card version 2.0 or later */
   {
-    sendCommand(device, CMD58, 0);
+    sendCommand(device, CMD_READ_OCR, 0);
     if ((res = getLongResponse(device, &longResp)) != E_OK)
       return res; //FIXME
     if (longResp.payload & (1 << 30)) //FIXME Add define CCS
@@ -328,7 +329,7 @@ static enum result waitBusyState(struct SdioSpi *device)
 }
 /*----------------------------------------------------------------------------*/
 static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
-    uint8_t token)
+    enum sdioToken token)
 {
   const uint8_t crcBuffer[2] = {0xFF, 0xFF};
   uint32_t written = 0;
@@ -337,7 +338,7 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
 
   gpioWrite(&device->csPin, 0);
   /* Send start block token */
-  written += ifWrite(device->interface, &token, 1);
+  written += ifWrite(device->interface, (uint8_t *)&token, 1);
   /* Send block data */
   written += ifWrite(device->interface, buffer, 1 << BLOCK_POW);
   /* Send block checksum */
@@ -350,6 +351,9 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
   /* Receive data response */
   if ((res = getShortResponse(device, &shortResp)) != E_OK)
     return res;
+  /* Check data token value */
+  if ((shortResp.value & TOKEN_DATA_MASK) != TOKEN_DATA_ACCEPTED)
+    return E_ERROR; /* CRC error or write data error */
 
   /* Wait for the flash programming to be finished */
   if ((res = waitBusyState(device)) != E_OK)
@@ -398,9 +402,9 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
   struct SdioSpi *device = object;
   uint32_t address;
   uint16_t counter, blockCount;
-  uint8_t token;
   struct ShortResponse shortResp;
   enum sdioCommand command;
+  enum sdioToken token;
 
   blockCount = length >> BLOCK_POW;
   /* TODO Check upper limit */
@@ -435,7 +439,7 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
     /* Send stop token in multiple block write operation */
     token = TOKEN_STOP;
     gpioWrite(&device->csPin, 0);
-    ifWrite(device->interface, &token, 1); //TODO Check result?
+    ifWrite(device->interface, (uint8_t *)&token, 1); //TODO Check result?
     gpioWrite(&device->csPin, 1);
     waitBusyState(device);
   }
