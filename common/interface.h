@@ -4,6 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ * @file
+ * Abstract peripheral interface for embedded system applications.
+ */
+
 #ifndef INTERFACE_H_
 #define INTERFACE_H_
 /*----------------------------------------------------------------------------*/
@@ -11,31 +16,32 @@
 #include "entity.h"
 #include "error.h"
 /*----------------------------------------------------------------------------*/
+/** Interface options. */
 enum ifOption
 {
-  /* All interface options are optional */
-  IF_ADDRESS, /* Sub-address */
-  IF_DEVICE, /* Device address */
-  IF_RATE, /* Data rate */
-  IF_BLOCKING, /* Blocking operations mode */
-  IF_NONBLOCKING, /* Non-blocking operations mode */
-  IF_PRIORITY, /* Interface interrupts or DMA requests priority */
-  IF_BUSY, /* Check whether interface is busy */
-  IF_SIZE, /* The size of address space of device */
+  /** Device address. */
+  IF_DEVICE,
+  /** Sub-address. */
+  IF_ADDRESS,
+  /** Data rate. */
+  IF_RATE,
+  /** Non-blocking operations mode. */
+  IF_NONBLOCKING,
+  /** Interface interrupts or DMA requests priority. */
+  IF_PRIORITY,
+  /** Check whether interface is busy. */
+  IF_BUSY,
+  /** Size of the total space available on device. */
+  IF_SIZE
 };
 /*----------------------------------------------------------------------------*/
-/* Class descriptor */
 struct InterfaceClass
 {
   CLASS_GENERATOR
 
-  /* Receive data, arguments: data buffer, message size */
   uint32_t (*read)(void *, uint8_t *, uint32_t);
-  /* Send data, arguments: data buffer, message size */
   uint32_t (*write)(void *, const uint8_t *, uint32_t);
-  /* Get interface option, arguments: option id, pointer to save value */
   enum result (*get)(void *, enum ifOption, void *);
-  /* Set interface option, arguments: option id, pointer to new value */
   enum result (*set)(void *, enum ifOption, const void *);
 };
 /*----------------------------------------------------------------------------*/

@@ -5,8 +5,8 @@
  */
 
 /**
- *  @file
- *  Abstract DMA interface for embedded systems: definitions.
+ * @file
+ * Abstract DMA interface for embedded systems: definitions.
  */
 
 #ifndef DMA_H_
