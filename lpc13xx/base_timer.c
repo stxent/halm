@@ -1,14 +1,14 @@
 /*
- * timer_tc.c
+ * base_timer.c
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
+#include "base_timer.h"
+#include "base_timer_defs.h"
 #include "lpc13xx_sys.h"
 #include "mutex.h"
-#include "timer_tc.h"
-#include "timer_defs.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV_VALUE   1
 #define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
@@ -26,22 +26,22 @@
 //    {} /* End of pin function association list */
 //};
 /*----------------------------------------------------------------------------*/
-static enum result tcInit(void *, const void *);
-static void tcDeinit(void *);
-static void tcHandler(void *);
-static void tcSetFrequency(void *, uint32_t);
-static void tcSetHandler(void *, void (*)(void *), void *);
-static void tcSetOverflow(void *, uint32_t);
+static enum result btInit(void *, const void *);
+static void btDeinit(void *);
+static void btHandler(void *);
+static void btSetFrequency(void *, uint32_t);
+static void btSetHandler(void *, void (*)(void *), void *);
+static void btSetOverflow(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
-    .size = sizeof(struct TimerTC),
-    .init = tcInit,
-    .deinit = tcDeinit,
+    .size = sizeof(struct BaseTimer),
+    .init = btInit,
+    .deinit = btDeinit,
 
-    .setFrequency = tcSetFrequency,
-    .setOverflow = tcSetOverflow,
-    .setHandler = tcSetHandler,
-    .handler = tcHandler,
+    .setFrequency = btSetFrequency,
+    .setOverflow = btSetOverflow,
+    .setHandler = btSetHandler,
+    .handler = btHandler,
 
     .Capture = 0,
     .Pwm = 0,
@@ -50,14 +50,14 @@ static const struct TimerClass timerTable = {
     .createPwm = 0
 };
 /*----------------------------------------------------------------------------*/
-const struct TimerClass *TimerTC = &timerTable;
+const struct TimerClass *BaseTimer = &timerTable;
 /*----------------------------------------------------------------------------*/
 static void * volatile descriptors[] = {0, 0, 0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-static void tcHandler(void *object)
+static void btHandler(void *object)
 {
-  struct TimerTC *device = object;
+  struct BaseTimer *device = object;
 
   if (device->reg->IR & IR_MATCH_INTERRUPT(0)) /* Match 0 */
   {
@@ -67,7 +67,7 @@ static void tcHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-enum result tcSetDescriptor(uint8_t channel, void *descriptor)
+enum result btSetDescriptor(uint8_t channel, void *descriptor)
 {
   enum result res = E_ERROR;
 
@@ -107,14 +107,14 @@ void TIMER32_1_IRQHandler(void)
     ((struct TimerClass *)CLASS(descriptors[3]))->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
-static void tcSetFrequency(void *object, uint32_t frequency)
+static void btSetFrequency(void *object, uint32_t frequency)
 {
 
 }
 /*----------------------------------------------------------------------------*/
-static void tcSetOverflow(void *object, uint32_t overflow)
+static void btSetOverflow(void *object, uint32_t overflow)
 {
-  struct TimerTC *device = object;
+  struct BaseTimer *device = object;
 
   device->reg->MR0 = overflow;
   /* Synchronously reset prescaler and counter registers */
@@ -123,10 +123,10 @@ static void tcSetOverflow(void *object, uint32_t overflow)
   device->reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
-static void tcSetHandler(void *object, void (*handler)(void *),
+static void btSetHandler(void *object, void (*handler)(void *),
     void *parameters)
 {
-  struct TimerTC *device = object;
+  struct BaseTimer *device = object;
 
   device->handler = handler;
   device->handlerParameters = parameters;
@@ -142,9 +142,9 @@ static void tcSetHandler(void *object, void (*handler)(void *),
   }
 }
 /*----------------------------------------------------------------------------*/
-static void tcDeinit(void *object)
+static void btDeinit(void *object)
 {
-  struct TimerTC *device = object;
+  struct BaseTimer *device = object;
 
   /* Disable interrupt */
   NVIC_DisableIRQ(device->irq);
@@ -168,21 +168,21 @@ static void tcDeinit(void *object)
 //  gpioDeinit(&device->txPin);
 //  gpioDeinit(&device->rxPin);
   /* Reset Timer descriptor */
-  tcSetDescriptor(device->channel, 0);
+  btSetDescriptor(device->channel, 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tcInit(void *object, const void *configPtr)
+static enum result btInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
-  const struct TimerConfig *config = configPtr;
-  struct TimerTC *device = object;
+  const struct BaseTimerConfig *config = configPtr;
+  struct BaseTimer *device = object;
 
   /* Check device configuration data */
   assert(config);
 
   /* Try to set peripheral descriptor */
-  device->channel = (uint8_t)config->channel;
-  if (tcSetDescriptor(device->channel, device) != E_OK)
+  device->channel = config->channel;
+  if (btSetDescriptor(device->channel, device) != E_OK)
     return E_ERROR;
 
   switch (device->channel)

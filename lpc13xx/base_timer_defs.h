@@ -1,11 +1,11 @@
 /*
- * timer_defs.h
+ * base_timer_defs.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef TIMER_DEFS_H_
-#define TIMER_DEFS_H_
+#ifndef BASE_TIMER_DEFS_H_
+#define BASE_TIMER_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include "macro.h"
 /*------------------Interrupt Register----------------------------------------*/
@@ -32,4 +32,4 @@
 /*------------------PWM Control Register--------------------------------------*/
 #define PWMC_ENABLE(channel)            BIT((channel))
 /*----------------------------------------------------------------------------*/
-#endif /* TIMER_DEFS_H_ */
+#endif /* BASE_TIMER_DEFS_H_ */
