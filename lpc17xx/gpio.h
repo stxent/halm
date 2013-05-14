@@ -18,18 +18,21 @@ typedef uint16_t gpioKey;
 /* This method supports up to 2^7 ports and 2^8 pins on each port */
 #define GPIO_TO_PIN(port, pin) ((gpioKey)(~((uint8_t)port << 8 | (uint8_t)pin)))
 /*----------------------------------------------------------------------------*/
-enum gpioDir {
+enum gpioDir
+{
   GPIO_INPUT = 0,
   GPIO_OUTPUT
 };
 /*----------------------------------------------------------------------------*/
-enum gpioPull {
+enum gpioPull
+{
   GPIO_NOPULL = 0,
   GPIO_PULLUP,
   GPIO_PULLDOWN
 };
 /*----------------------------------------------------------------------------*/
-enum gpioType {
+enum gpioType
+{
   GPIO_PUSHPULL = 0,
   GPIO_OPENDRAIN
 };

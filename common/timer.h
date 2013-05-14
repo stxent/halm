@@ -8,19 +8,20 @@
 #define TIMER_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-/*----------------------------------------------------------------------------*/
-#include "error.h"
 #include "entity.h"
+#include "error.h"
 #include "gpio.h"
 /*----------------------------------------------------------------------------*/
-enum timerMode {
+enum timerMode
+{
   TIMER_NORMAL = 0,
   TIMER_CAPTURE,
   TIMER_MATCH, //FIXME Remove?
   TIMER_PWM
 };
 /*----------------------------------------------------------------------------*/
-enum captureMode {
+enum captureMode
+{
   CAPTURE_RISING,
   CAPTURE_FALLIND,
   CAPTURE_TOGGLE

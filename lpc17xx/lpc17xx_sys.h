@@ -10,7 +10,8 @@
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
-enum sysPowerDevice {
+enum sysPowerDevice
+{
   PWR_TIM0  = 1,
   PWR_TIM1  = 2,
   PWR_UART0 = 3,
@@ -41,7 +42,8 @@ enum sysPowerDevice {
 };
 /*----------------------------------------------------------------------------*/
 /* Divider values for peripheral clock control registers */
-enum sysClockDiv {
+enum sysClockDiv
+{
   CLK_DIV1 = 1,
   CLK_DIV2 = 2,
   CLK_DIV4 = 0,
@@ -49,7 +51,8 @@ enum sysClockDiv {
 };
 /*----------------------------------------------------------------------------*/
 /* Peripheral clock selection registers */
-enum sysClockDevice {
+enum sysClockDevice
+{
   /* PCLKSEL0 */
   CLK_WDT      = 0,
   CLK_TIMER0   = 2,

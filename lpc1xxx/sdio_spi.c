@@ -12,23 +12,11 @@
 #define BLOCK_POW       9
 #define TOKEN_DATA_MASK 0x1F
 /*----------------------------------------------------------------------------*/
-/* Direct operations with token variables are correct only on LE machines */
-enum sdioToken
-{
-  TOKEN_DATA_ACCEPTED     = 0x05,
-  TOKEN_DATA_CRC_ERROR    = 0x0B,
-  TOKEN_DATA_WRITE_ERROR  = 0x0D,
-  TOKEN_START             = 0xFE,
-  TOKEN_START_MULTIPLE    = 0xFC,
-  TOKEN_STOP              = 0xFD
-};
-/*----------------------------------------------------------------------------*/
 enum sdioCommand
 {
   CMD_GO_IDLE_STATE     = 0,
   CMD_SEND_IF_COND      = 8,
   CMD_STOP_TRANSMISSION = 12,
-//  CMD_SEND_STATUS       = 13,
   CMD_READ              = 17,
   CMD_READ_MULTIPLE     = 18,
   CMD_WRITE             = 24,
@@ -40,19 +28,30 @@ enum sdioCommand
 /*----------------------------------------------------------------------------*/
 enum sdioResponse
 {
-  SDIO_INIT             = 0x0001,
-  SDIO_ERASE_RESET      = 0x0002,
-  SDIO_ILLEGAL_COMMAND  = 0x0004,
-  SDIO_CRC_ERROR        = 0x0008,
-  SDIO_ERASE_ERROR      = 0x0010,
-  SDIO_BAD_ADDRESS      = 0x0020,
-  SDIO_BAD_ARGUMENT     = 0x0040
+  SDIO_INIT             = 0x01,
+  SDIO_ERASE_RESET      = 0x02,
+  SDIO_ILLEGAL_COMMAND  = 0x04,
+  SDIO_CRC_ERROR        = 0x08,
+  SDIO_ERASE_ERROR      = 0x10,
+  SDIO_BAD_ADDRESS      = 0x20,
+  SDIO_BAD_ARGUMENT     = 0x40
+};
+/*----------------------------------------------------------------------------*/
+/* Direct operations with token variables are correct only on LE machines */
+enum sdioToken
+{
+  TOKEN_DATA_ACCEPTED     = 0x05,
+  TOKEN_DATA_CRC_ERROR    = 0x0B,
+  TOKEN_DATA_WRITE_ERROR  = 0x0D,
+  TOKEN_START             = 0xFE,
+  TOKEN_START_MULTIPLE    = 0xFC,
+  TOKEN_STOP              = 0xFD
 };
 /*----------------------------------------------------------------------------*/
 struct LongResponse
 {
-    uint32_t payload;
-    uint8_t value;
+  uint32_t payload;
+  uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
 static void sendCommand(struct SdioSpi *, enum sdioCommand, uint32_t);
@@ -96,7 +95,7 @@ static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
   buffer[3] = (uint8_t)(parameter >> 16);
   buffer[4] = (uint8_t)(parameter >> 8);
   buffer[5] = (uint8_t)(parameter);
-  /* Checksum should be valid only for first CMD_GO_IDLE_STATE and CMD_SEND_IF_COND commands */
+  /* Checksum should be valid only for first CMD0 and CMD8 commands */
   switch (command)
   {
     case CMD_GO_IDLE_STATE:
@@ -144,7 +143,7 @@ static uint8_t getShortResponse(struct SdioSpi *device)
   return res == E_OK ? value : 0xFF;
 }
 /*----------------------------------------------------------------------------*/
-/* Responses to READ_OCR and SEND_IF_COND commands */
+/* Response to READ_OCR and SEND_IF_COND commands */
 static enum result getLongResponse(struct SdioSpi *device,
     struct LongResponse *response)
 {
@@ -169,8 +168,7 @@ static enum result getLongResponse(struct SdioSpi *device,
 static enum result resetCard(struct SdioSpi *device)
 {
   const uint32_t lowSpeed = 200000;
-  /* Emulate high level during setup */
-  const uint8_t dummyByte = 0xFF;
+  const uint8_t dummyByte = 0xFF; /* Emulate high level during setup */
 
   uint32_t srcSpeed;
   uint16_t counter;
@@ -197,7 +195,7 @@ static enum result resetCard(struct SdioSpi *device)
 
   sendCommand(device, CMD_SEND_IF_COND, 0x000001AA); /* TODO Add define */
   if ((res = getLongResponse(device, &longResp)) != E_OK)
-    return res; //FIXME
+    return res;
   if (!(longResp.value & SDIO_ILLEGAL_COMMAND))
   {
     if (longResp.payload != 0x000001AA)

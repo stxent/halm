@@ -8,7 +8,8 @@
 #define LPC13XX_SYS_H_
 /*----------------------------------------------------------------------------*/
 /* System AHB clock control register */
-enum sysClockDevice {
+enum sysClockDevice
+{
   CLK_ROM         = 1,
   CLK_RAM         = 2,
   CLK_FLASHREG    = 3,
@@ -24,7 +25,7 @@ enum sysClockDevice {
   CLK_ADC         = 13,
   CLK_USBREG      = 14,
   CLK_WDT         = 15,
-  CLK_IOCON       = 16,
+  CLK_IOCON       = 16
 };
 /*----------------------------------------------------------------------------*/
 extern inline void sysClockEnable(enum sysClockDevice);

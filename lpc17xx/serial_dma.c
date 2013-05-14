@@ -56,8 +56,7 @@ const struct UartClass *SerialDma = &serialDmaTable;
 static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
     int8_t txChannel)
 {
-  struct GpdmaConfig channels[2] =
-  {
+  struct GpdmaConfig channels[2] = {
       {
           .channel = rxChannel,
           .source = {
