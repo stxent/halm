@@ -10,7 +10,7 @@
 #include "mutex.h"
 #include "ssp.h"
 /*----------------------------------------------------------------------------*/
-extern const struct SspClass *Spi;
+extern const struct InterfaceClass *Spi;
 /*----------------------------------------------------------------------------*/
 struct SpiConfig
 {

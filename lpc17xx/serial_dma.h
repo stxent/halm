@@ -11,7 +11,7 @@
 #include "mutex.h"
 #include "uart.h"
 /*----------------------------------------------------------------------------*/
-extern const struct UartClass *SerialDma;
+extern const struct InterfaceClass *SerialDma;
 /*----------------------------------------------------------------------------*/
 struct SerialDmaConfig
 {

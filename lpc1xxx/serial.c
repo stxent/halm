@@ -22,8 +22,8 @@ enum cleanup
 };
 /*----------------------------------------------------------------------------*/
 static void cleanup(struct Serial *, enum cleanup);
-/*----------------------------------------------------------------------------*/
 static void serialHandler(void *);
+/*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
 static uint32_t serialRead(void *, uint8_t *, uint32_t);
@@ -31,23 +31,18 @@ static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
 static enum result serialGet(void *, enum ifOption, void *);
 static enum result serialSet(void *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
-/* We like structures so we put a structure in a structure */
-/* So we can initialize a structure while we initialize a structure */
-static const struct UartClass serialTable = {
-    .parent = {
-        .size = sizeof(struct Serial),
-        .init = serialInit,
-        .deinit = serialDeinit,
+static const struct InterfaceClass serialTable = {
+    .size = sizeof(struct Serial),
+    .init = serialInit,
+    .deinit = serialDeinit,
 
-        .read = serialRead,
-        .write = serialWrite,
-        .get = serialGet,
-        .set = serialSet
-    },
-    .handler = serialHandler
+    .read = serialRead,
+    .write = serialWrite,
+    .get = serialGet,
+    .set = serialSet
 };
 /*----------------------------------------------------------------------------*/
-const struct UartClass *Serial = &serialTable;
+const struct InterfaceClass *Serial = &serialTable;
 /*----------------------------------------------------------------------------*/
 static void cleanup(struct Serial *device, enum cleanup step)
 {
@@ -60,7 +55,7 @@ static void cleanup(struct Serial *device, enum cleanup step)
     case FREE_RX_QUEUE:
       queueDeinit(&device->rxQueue);
     case FREE_PARENT:
-      Uart->parent.deinit(device); /* Call UART class destructor */
+      Uart->deinit(device); /* Call UART class destructor */
       break;
     default:
       break;
@@ -70,7 +65,7 @@ static void cleanup(struct Serial *device, enum cleanup step)
 static void serialHandler(void *object)
 {
   struct Serial *device = object;
-  uint8_t counter = 0, data;
+  uint8_t data;
 
   /* Interrupt status cleared when performed read operation on IIR register */
   if (device->parent.reg->IIR & IIR_INT_STATUS)
@@ -86,6 +81,8 @@ static void serialHandler(void *object)
   }
   if (device->parent.reg->LSR & LSR_THRE)
   {
+    uint8_t counter = 0;
+
     /* Fill FIFO with selected burst size or less */
     while (!queueEmpty(&device->txQueue) && counter++ < TX_FIFO_SIZE)
       device->parent.reg->THR = queuePop(&device->txQueue);
@@ -111,8 +108,11 @@ static enum result serialInit(void *object, const void *configPtr)
   parentConfig.parity = config->parity;
 
   /* Call UART class constructor */
-  if ((res = Uart->parent.init(object, &parentConfig)) != E_OK)
+  if ((res = Uart->init(object, &parentConfig)) != E_OK)
     return res;
+
+  /* Set pointer to hardware interrupt handler */
+  device->parent.handler = serialHandler;
 
   /* Initialize RX and TX queues */
   if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
@@ -156,16 +156,19 @@ static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Serial *device = object;
-  struct UartConfigRate rate;
   enum result res;
 
   switch (option)
   {
     case IF_RATE:
+    {
+      struct UartConfigRate rate;
+
       if ((res = uartCalcRate(&rate, *(uint32_t *)data)) != E_OK)
         return res;
       uartSetRate(object, rate);
       return E_OK;
+    }
     case IF_PRIORITY:
       NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
       return E_OK;

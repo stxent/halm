@@ -55,23 +55,20 @@ static const struct GpioPinFunc sspPins[] = {
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct SspClass sspTable = {
-    .parent = {
-        .size = 0, /* Abstract class */
-        .init = sspInit,
-        .deinit = sspDeinit,
+static const struct InterfaceClass sspTable = {
+    .size = 0, /* Abstract class */
+    .init = sspInit,
+    .deinit = sspDeinit,
 
-        .read = 0,
-        .write = 0,
-        .get = 0,
-        .set = 0
-    },
-    .handler = 0
+    .read = 0,
+    .write = 0,
+    .get = 0,
+    .set = 0
 };
 /*----------------------------------------------------------------------------*/
-const struct SspClass *Ssp = &sspTable;
+const struct InterfaceClass *Ssp = &sspTable;
 /*----------------------------------------------------------------------------*/
-static void * volatile descriptors[] = {0, 0};
+static struct Ssp *descriptors[] = {0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 enum result sspSetDescriptor(uint8_t channel, void *descriptor)
@@ -94,7 +91,7 @@ enum result sspSetDescriptor(uint8_t channel, void *descriptor)
 void SSP_IRQHandler(void) /* FIXME SSP0? */
 {
   if (descriptors[0])
-    ((struct SspClass *)CLASS(descriptors[0]))->handler(descriptors[0]);
+    descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 void sspSetRate(struct Ssp *device, uint32_t rate)
@@ -134,6 +131,9 @@ static enum result sspInit(void *object, const void *configPtr)
   device->channel = config->channel;
   if ((res = sspSetDescriptor(device->channel, device)) != E_OK)
     return res;
+
+  /* Reset pointer to interrupt handler */
+  device->handler = 0;
 
   /* Setup Serial Clock pin */
   func = gpioFindFunc(sspPins, config->sck);
@@ -202,6 +202,7 @@ static enum result sspInit(void *object, const void *configPtr)
 
   sspSetRate(device, config->rate); /* TODO Remove assert and add return val */
   device->reg->CR1 = CR1_SSE; /* Enable peripheral */
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

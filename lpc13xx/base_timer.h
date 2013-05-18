@@ -33,11 +33,13 @@ struct BaseTimer
 {
   struct Timer parent;
 
+  void (*handler)(void *); /* Hardware interrupt handler */
+  void (*callback)(void *); /* User interrupt handler */
+  void *callbackParameters; /* User interrupt handler parameters */
+
   LPC_TMR_TypeDef *reg; /* Pointer to UART registers */
   IRQn_Type irq; /* IRQ identifier */
 
-  void (*handler)(void *); /* User interrupt handler */
-  void *handlerParameters; /* User interrupt handler parameters */
   uint8_t channel; /* Identifier of peripheral block for internal use */
 };
 /*----------------------------------------------------------------------------*/

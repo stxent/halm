@@ -11,6 +11,7 @@
 #define DEFAULT_PRIORITY 15 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 static void spiHandler(void *);
+/*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
 static uint32_t spiRead(void *, uint8_t *, uint32_t);
@@ -18,23 +19,18 @@ static uint32_t spiWrite(void *, const uint8_t *, uint32_t);
 static enum result spiGet(void *, enum ifOption, void *);
 static enum result spiSet(void *, enum ifOption, const void *);
 /*----------------------------------------------------------------------------*/
-/* We like structures so we put a structure in a structure */
-/* So we can initialize a structure while we initialize a structure */
-static const struct SspClass spiTable = {
-    .parent = {
-        .size = sizeof(struct Spi),
-        .init = spiInit,
-        .deinit = spiDeinit,
+static const struct InterfaceClass spiTable = {
+    .size = sizeof(struct Spi),
+    .init = spiInit,
+    .deinit = spiDeinit,
 
-        .read = spiRead,
-        .write = spiWrite,
-        .get = spiGet,
-        .set = spiSet
-    },
-    .handler = spiHandler
+    .read = spiRead,
+    .write = spiWrite,
+    .get = spiGet,
+    .set = spiSet
 };
 /*----------------------------------------------------------------------------*/
-const struct SspClass *Spi = &spiTable;
+const struct InterfaceClass *Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
 static void spiHandler(void *object)
 {
@@ -96,9 +92,12 @@ static enum result spiInit(void *object, const void *configPtr)
   parentConfig.cs = config->cs;
 
   /* Call SSP class constructor */
-  if ((res = Ssp->parent.init(object, &parentConfig)) != E_OK)
+  if ((res = Ssp->init(object, &parentConfig)) != E_OK)
     return res;
   device->channelLock = MUTEX_UNLOCKED;
+
+  /* Set pointer to hardware interrupt handler */
+  device->parent.handler = spiHandler;
 
   /* Set interrupt priority, lowest by default */
   NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
@@ -112,7 +111,7 @@ static void spiDeinit(void *object)
   struct Spi *device = object;
 
   NVIC_DisableIRQ(device->parent.irq);
-  Spi->parent.deinit(device); /* Call SSP class destructor */
+  Ssp->deinit(device); /* Call SSP class destructor */
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)

@@ -12,9 +12,7 @@
 #include "gpio.h"
 #include "interface.h"
 /*----------------------------------------------------------------------------*/
-struct UartClass;
-/*----------------------------------------------------------------------------*/
-extern const struct UartClass *Uart;
+extern const struct InterfaceClass *Uart;
 /*----------------------------------------------------------------------------*/
 enum uartParity
 {
@@ -37,17 +35,11 @@ struct UartConfigRate
   uint8_t high, low, fraction;
 };
 /*----------------------------------------------------------------------------*/
-struct UartClass
-{
-  struct InterfaceClass parent;
-
-  /* Interrupt handler, arguments: UART descriptor assigned to peripheral */
-  void (*handler)(void *);
-};
-/*----------------------------------------------------------------------------*/
 struct Uart
 {
   struct Interface parent;
+
+  void (*handler)(void *); /* Interrupt handler */
 
   LPC_UART_TypeDef *reg; /* Pointer to UART registers */
   IRQn_Type irq; /* IRQ identifier */

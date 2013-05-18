@@ -11,7 +11,7 @@
 #include "queue.h"
 #include "uart.h"
 /*----------------------------------------------------------------------------*/
-extern const struct UartClass *Serial;
+extern const struct InterfaceClass *Serial;
 /*----------------------------------------------------------------------------*/
 struct SerialConfig
 {

@@ -12,8 +12,8 @@
 #define RX_FIFO_LEVEL 0 /* 1 character */
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SerialDma *, int8_t, int8_t);
-/*----------------------------------------------------------------------------*/
 static void serialHandler(void *);
+/*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
 static uint32_t serialRead(void *, uint8_t *, uint32_t);
@@ -37,21 +37,18 @@ static const enum gpdmaLine dmaRxLines[] = {
 /*----------------------------------------------------------------------------*/
 /* We like structures so we put a structure in a structure */
 /* So we can initialize a structure while we initialize a structure */
-static const struct UartClass serialDmaTable = {
-    .parent = {
-        .size = sizeof(struct SerialDma),
-        .init = serialInit,
-        .deinit = serialDeinit,
+static const struct InterfaceClass serialDmaTable = {
+    .size = sizeof(struct SerialDma),
+    .init = serialInit,
+    .deinit = serialDeinit,
 
-        .read = serialRead,
-        .write = serialWrite,
-        .get = serialGet,
-        .set = serialSet
-    },
-    .handler = 0
+    .read = serialRead,
+    .write = serialWrite,
+    .get = serialGet,
+    .set = serialSet
 };
 /*----------------------------------------------------------------------------*/
-const struct UartClass *SerialDma = &serialDmaTable;
+const struct InterfaceClass *SerialDma = &serialDmaTable;
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
     int8_t txChannel)
@@ -99,6 +96,11 @@ static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static void serialHandler(void *object __attribute__((unused)))
+{
+
+}
+/*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
@@ -118,12 +120,15 @@ static enum result serialInit(void *object, const void *configPtr)
   parentConfig.parity = config->parity;
 
   /* Call UART class constructor */
-  if ((res = Uart->parent.init(object, &parentConfig)) != E_OK)
+  if ((res = Uart->init(object, &parentConfig)) != E_OK)
     return res;
+
+  /* Set pointer to hardware interrupt handler */
+  device->parent.handler = serialHandler;
 
   if ((res = dmaSetup(device, config->rxChannel, config->txChannel)) != E_OK)
   {
-    Uart->parent.deinit(device);
+    Uart->deinit(device);
     return res;
   }
 
@@ -144,7 +149,7 @@ static void serialDeinit(void *object)
   deinit(device->txDma);
   deinit(device->rxDma);
   /* Call UART class destructor */
-  Uart->parent.deinit(device);
+  Uart->deinit(device);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
@@ -192,16 +197,19 @@ static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
   struct SerialDma *device = object;
-  struct UartConfigRate rate;
   enum result res;
 
   switch (option)
   {
     case IF_RATE:
+    {
+      struct UartConfigRate rate;
+
       if ((res = uartCalcRate(&rate, *(uint32_t *)data)) != E_OK)
         return res;
       uartSetRate(object, rate);
       return E_OK;
+    }
     default:
       return E_ERROR;
   }

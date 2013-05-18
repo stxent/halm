@@ -26,11 +26,12 @@
 //    {} /* End of pin function association list */
 //};
 /*----------------------------------------------------------------------------*/
+static void btHandler(void *);
+/*----------------------------------------------------------------------------*/
 static enum result btInit(void *, const void *);
 static void btDeinit(void *);
-static void btHandler(void *);
 static void btSetFrequency(void *, uint32_t);
-static void btSetHandler(void *, void (*)(void *), void *);
+static void btSetCallback(void *, void (*)(void *), void *);
 static void btSetOverflow(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
@@ -40,11 +41,7 @@ static const struct TimerClass timerTable = {
 
     .setFrequency = btSetFrequency,
     .setOverflow = btSetOverflow,
-    .setHandler = btSetHandler,
-    .handler = btHandler,
-
-    .Capture = 0,
-    .Pwm = 0,
+    .setCallback = btSetCallback,
 
     .createCapture = 0,
     .createPwm = 0
@@ -52,7 +49,7 @@ static const struct TimerClass timerTable = {
 /*----------------------------------------------------------------------------*/
 const struct TimerClass *BaseTimer = &timerTable;
 /*----------------------------------------------------------------------------*/
-static void * volatile descriptors[] = {0, 0, 0, 0};
+static struct BaseTimer *descriptors[] = {0, 0, 0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static void btHandler(void *object)
@@ -61,8 +58,8 @@ static void btHandler(void *object)
 
   if (device->reg->IR & IR_MATCH_INTERRUPT(0)) /* Match 0 */
   {
-    if (device->handler)
-      device->handler(device->handlerParameters);
+    if (device->callback)
+      device->callback(device->callbackParameters);
     device->reg->IR = IR_MATCH_INTERRUPT(0); /* Clear flag */
   }
 }
@@ -86,25 +83,25 @@ enum result btSetDescriptor(uint8_t channel, void *descriptor)
 void TIMER16_0_IRQHandler(void)
 {
   if (descriptors[0])
-    ((struct TimerClass *)CLASS(descriptors[0]))->handler(descriptors[0]);
+    descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER16_1_IRQHandler(void)
 {
   if (descriptors[1])
-    ((struct TimerClass *)CLASS(descriptors[1]))->handler(descriptors[1]);
+    descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER32_0_IRQHandler(void)
 {
   if (descriptors[2])
-    ((struct TimerClass *)CLASS(descriptors[2]))->handler(descriptors[2]);
+    descriptors[2]->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER32_1_IRQHandler(void)
 {
   if (descriptors[3])
-    ((struct TimerClass *)CLASS(descriptors[3]))->handler(descriptors[3]);
+    descriptors[3]->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
 static void btSetFrequency(void *object, uint32_t frequency)
@@ -123,14 +120,14 @@ static void btSetOverflow(void *object, uint32_t overflow)
   device->reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
-static void btSetHandler(void *object, void (*handler)(void *),
+static void btSetCallback(void *object, void (*callback)(void *),
     void *parameters)
 {
   struct BaseTimer *device = object;
 
-  device->handler = handler;
-  device->handlerParameters = parameters;
-  if (handler)
+  device->callback = callback;
+  device->callbackParameters = parameters;
+  if (callback)
   {
     /* Enable Match 0 interrupt, reset counter after each interrupt */
     device->reg->MCR |= MCR_INTERRUPT(0) | MCR_RESET(0);
@@ -185,6 +182,9 @@ static enum result btInit(void *object, const void *configPtr)
   if (btSetDescriptor(device->channel, device) != E_OK)
     return E_ERROR;
 
+  /* Set hardware interrupt handler to default handler */
+  device->handler = btHandler;
+
   switch (device->channel)
   {
     case 0:
@@ -226,5 +226,6 @@ static enum result btInit(void *object, const void *configPtr)
   NVIC_EnableIRQ(device->irq);
   /* Set interrupt priority, lowest by default */
   NVIC_SetPriority(device->irq, DEFAULT_PRIORITY);
+
   return E_OK;
 }

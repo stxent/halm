@@ -30,29 +30,26 @@ static const struct GpioPinFunc uartPins[] = {
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct UartClass uartTable = {
-    .parent = {
-        .size = 0, /* Abstract class */
-        .init = uartInit,
-        .deinit = uartDeinit,
+static const struct InterfaceClass uartTable = {
+    .size = 0, /* Abstract class */
+    .init = uartInit,
+    .deinit = uartDeinit,
 
-        .read = 0,
-        .write = 0,
-        .get = 0,
-        .set = 0
-    },
-    .handler = 0
+    .read = 0,
+    .write = 0,
+    .get = 0,
+    .set = 0
 };
 /*----------------------------------------------------------------------------*/
-const struct UartClass *Uart = &uartTable;
+const struct InterfaceClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
-static void * volatile descriptors[] = {0};
+static struct Uart *descriptors[] = {0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 void UART_IRQHandler(void)
 {
   if (descriptors[0])
-    ((struct UartClass *)CLASS(descriptors[0]))->handler(descriptors[0]);
+    descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 enum result uartCalcRate(struct UartConfigRate *config, uint32_t rate)
@@ -123,6 +120,9 @@ static enum result uartInit(void *object, const void *configPtr)
   if ((res = uartSetDescriptor(device->channel, device)) != E_OK)
     return res;
 
+  /* Reset pointer to interrupt handler function */
+  device->handler = 0;
+
   /* Setup UART RX pin */
   func = gpioFindFunc(uartPins, config->rx);
   assert(func != -1);
@@ -160,6 +160,7 @@ static enum result uartInit(void *object, const void *configPtr)
   }
 
   uartSetRate(object, rate);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

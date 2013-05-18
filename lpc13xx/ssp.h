@@ -11,9 +11,7 @@
 #include "gpio.h"
 #include "interface.h"
 /*----------------------------------------------------------------------------*/
-struct SspClass;
-/*----------------------------------------------------------------------------*/
-extern const struct SspClass *Ssp;
+extern const struct InterfaceClass *Ssp;
 /*----------------------------------------------------------------------------*/
 /* TODO Add master/slave select */
 struct SspConfig
@@ -25,17 +23,11 @@ struct SspConfig
   uint8_t frame; /* Optional: frame size, 8 bits by default */
 };
 /*----------------------------------------------------------------------------*/
-struct SspClass
-{
-  struct InterfaceClass parent;
-
-  /* Interrupt handler, arguments: SSP descriptor assigned to peripheral */
-  void (*handler)(void *);
-};
-/*----------------------------------------------------------------------------*/
 struct Ssp
 {
   struct Interface parent;
+
+  void (*handler)(void *); /* Interrupt handler */
 
   LPC_SSP_TypeDef *reg; /* Pointer to SSP registers */
   IRQn_Type irq; /* IRQ identifier */
