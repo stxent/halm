@@ -32,30 +32,12 @@ struct TimerClass
 {
   CLASS_GENERATOR
 
-  /* Pointers to subclasses */
-  const void *Capture;
-  const void *Pwm;
-
   /* Virtual functions */
-  /* Set fundamental timer frequency, arguments: new frequency in Hz */
   void (*setFrequency)(void *, uint32_t);
-  /* Set overflow handler, arguments: pointer to handler function */
-  void (*setHandler)(void *, void (*)(void *), void *);
-  /* Set timer overflow rate, arguments: number of timer clocks */
+  void (*setCallback)(void *, void (*)(void *), void *);
   void (*setOverflow)(void *, uint32_t);
-  /*
-   * Use the pin for event capturing, arguments: pointer to Capture object,
-   * input pin, sensitive edge.
-   */
-  enum result (*createCapture)(void *, void *, struct Gpio, enum captureMode);
-  /*
-   * Output pulse width modulated signal to specified pin, arguments:
-   * pointer to Pwm object, output pin, resolution, initial fill
-   */
-  enum result (*createPwm)(void *, void *, struct Gpio, uint32_t, uint32_t);
-
-  /* Interrupt handler, arguments: Timer descriptor assigned to peripheral */
-  void (*handler)(void *);
+  void *(*createCapture)(void *, struct Gpio, enum captureMode);
+  void *(*createPwm)(void *, struct Gpio, uint32_t, uint32_t);
 };
 /*----------------------------------------------------------------------------*/
 struct Timer
@@ -64,7 +46,7 @@ struct Timer
 };
 /*----------------------------------------------------------------------------*/
 void timerSetFrequency(void *, uint32_t);
-void timerSetHandler(void *, void (*)(void *), void *);
+void timerSetCallback(void *, void (*)(void *), void *);
 void timerSetOverflow(void *, uint32_t);
 void *timerCreateCapture(void *, struct Gpio, enum captureMode);
 void *timerCreatePwm(void *, struct Gpio, uint32_t, uint32_t);
