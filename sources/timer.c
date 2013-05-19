@@ -7,45 +7,68 @@
 #include "timer.h"
 /*----------------------------------------------------------------------------*/
 /**
+ * Set timer overflow callback.
+ * @param timer Pointer to Timer object.
+ * @param callback Callback function.
+ * @param parameters Callback function parameters.
+ */
+void timerSetCallback(void *timer, void (*callback)(void *), void *parameters)
+{
+  ((struct TimerClass *)CLASS(timer))->setCallback(timer, callback, parameters);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Start or stop timer.
+ * @param timer Pointer to Timer object.
+ * @param state Timer state: @b true to start timer or @b false to stop timer.
+ */
+void timerSetEnabled(void *timer, bool state)
+{
+  ((struct TimerClass *)CLASS(timer))->setEnabled(timer, state);
+}
+/*----------------------------------------------------------------------------*/
+/**
  * Set fundamental timer frequency.
  * @param timer Pointer to Timer object.
- * @param frequency New frequency in Hz.
+ * @param frequency Frequency in Hz.
  */
 void timerSetFrequency(void *timer, uint32_t frequency)
 {
-  return ((struct TimerClass *)CLASS(timer))->setFrequency(timer, frequency);
+  ((struct TimerClass *)CLASS(timer))->setFrequency(timer, frequency);
 }
 /*----------------------------------------------------------------------------*/
-/* Set overflow handler, arguments: pointer to handler function */
-void timerSetCallback(void *timer, void (*callback)(void *), void *parameters)
-{
-  return ((struct TimerClass *)CLASS(timer))->setCallback(timer, callback,
-      parameters);
-}
-/*----------------------------------------------------------------------------*/
-/* Set timer overflow rate, arguments: number of timer clocks */
+/**
+ * Set timer overflow rate.
+ * @param timer Pointer to Timer object.
+ * @param overflow Number of timer ticks after which overflow event occurs.
+ */
 void timerSetOverflow(void *timer, uint32_t overflow)
 {
-  return ((struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
+  ((struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
 }
 /*----------------------------------------------------------------------------*/
-/*
- * Use the pin for event capturing, arguments: pointer to Capture object,
- * input pin, sensitive edge.
+/**
+ * Create event capture object, associated with timer.
+ * By default event capture is stopped.
+ * @param timer Pointer to Timer object.
+ * @param pin GPIO pin used as source input.
+ * @param mode Capture mode.
+ * @return Pointer to new Capture object on success or zero on error.
  */
 void *timerCreateCapture(void *timer, struct Gpio pin, enum captureMode mode)
 {
-//  if (!timer->Capture)
-    return 0; /* Capture mode unsupported */
+  return ((struct TimerClass *)CLASS(timer))->createCapture(timer, pin, mode);
 }
 /*----------------------------------------------------------------------------*/
-/*
- * Output pulse width modulated signal to specified pin, arguments:
- * pointer to Pwm object, output pin, resolution, initial fill
+/**
+ * Create Pwm object, associated with timer.
+ * By default PWM output is stopped.
+ * @param timer Pointer to Timer object.
+ * @param pin GPIO pin used as output for pulse width modulated signal.
+ * @param resolution PWM resolution.
+ * @return Pointer to new Pwm object on success or zero on error.
  */
-void *timerCreatePwm(void *timer, struct Gpio pin, uint32_t resolution,
-    uint32_t fill)
+void *timerCreatePwm(void *timer, struct Gpio pin, uint32_t resolution)
 {
-//  if (!timer->Pwm)
-    return 0; /* PWM mode unsupported */
+  return ((struct TimerClass *)CLASS(timer))->createPwm(timer, pin, resolution);
 }

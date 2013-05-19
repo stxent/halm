@@ -1,50 +1,39 @@
 /*
- * timer.h
+ * capture.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef TIMER_H_
-#define TIMER_H_
+#ifndef CAPTURE_H_
+#define CAPTURE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <stdbool.h>
-#include "capture.h"
 #include "entity.h"
-#include "error.h"
-#include "gpio.h"
 /*----------------------------------------------------------------------------*/
-enum timerMode
+enum captureMode
 {
-  TIMER_NORMAL = 0,
-  TIMER_CAPTURE,
-  TIMER_PWM
+  CAPTURE_RISING,
+  CAPTURE_FALLIND,
+  CAPTURE_TOGGLE
 };
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
-struct TimerClass
+struct CaptureClass
 {
   CLASS_HEADER
 
   /* Virtual functions */
   void (*setCallback)(void *, void (*)(void *), void *);
   void (*setEnabled)(void *, bool);
-  void (*setFrequency)(void *, uint32_t);
-  void (*setOverflow)(void *, uint32_t);
-  void *(*createCapture)(void *, struct Gpio, enum captureMode);
-  void *(*createPwm)(void *, struct Gpio, uint32_t);
 };
 /*----------------------------------------------------------------------------*/
-struct Timer
+struct Capture
 {
   struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
-void timerSetCallback(void *, void (*)(void *), void *);
-void timerSetEnabled(void *, bool);
-void timerSetFrequency(void *, uint32_t);
-void timerSetOverflow(void *, uint32_t);
-void *timerCreateCapture(void *, struct Gpio, enum captureMode);
-void *timerCreatePwm(void *, struct Gpio, uint32_t);
+void captureSetCallback(void *, void (*)(void *), void *);
+void captureSetEnabled(void *, bool);
 /*----------------------------------------------------------------------------*/
-#endif /* TIMER_H_ */
+#endif /* CAPTURE_H_ */
