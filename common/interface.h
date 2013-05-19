@@ -37,7 +37,7 @@ enum ifOption
 /*----------------------------------------------------------------------------*/
 struct InterfaceClass
 {
-  CLASS_GENERATOR
+  CLASS_HEADER
 
   uint32_t (*read)(void *, uint8_t *, uint32_t);
   uint32_t (*write)(void *, const uint8_t *, uint32_t);

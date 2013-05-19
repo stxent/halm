@@ -30,7 +30,7 @@ enum captureMode
 /* Class descriptor */
 struct TimerClass
 {
-  CLASS_GENERATOR
+  CLASS_HEADER
 
   /* Virtual functions */
   void (*setFrequency)(void *, uint32_t);

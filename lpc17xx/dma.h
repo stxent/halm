@@ -45,7 +45,7 @@ enum dmaWidth
 /* Class descriptor */
 struct DmaClass
 {
-  CLASS_GENERATOR
+  CLASS_HEADER
 
   enum result (*start)(void *, void *, const void *, uint32_t);
   enum result (*startList)(void *, const void *);
