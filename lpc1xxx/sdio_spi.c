@@ -7,7 +7,6 @@
 #include <assert.h>
 #include "macro.h"
 #include "sdio_spi.h"
-#include "ssp.h" //XXX
 /*----------------------------------------------------------------------------*/
 #define BLOCK_POW       9
 #define TOKEN_DATA_MASK 0x1F
@@ -247,9 +246,6 @@ static enum result sdioInit(void *object, const void *configPtr)
   assert(config->interface);
 
   device->interface = config->interface;
-
-  gpioSetPull(&fix->mosiPin, GPIO_PULLUP); //XXX
-  gpioSetPull(&fix->misoPin, GPIO_PULLUP); //XXX
 
   device->csPin = gpioInit(config->cs, GPIO_OUTPUT);
   gpioWrite(&device->csPin, 1);
