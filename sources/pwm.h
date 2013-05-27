@@ -10,6 +10,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "entity.h"
+#include "gpio.h"
+/*----------------------------------------------------------------------------*/
+/* Class descriptor */
+struct PwmControllerClass
+{
+  CLASS_HEADER
+
+  /* Virtual functions */
+  void *(*create)(void *, struct Gpio, uint8_t);
+};
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct PwmClass
@@ -27,6 +37,7 @@ struct Pwm
   struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
+void *pwmCreate(void *, struct Gpio, uint8_t);
 void pwmSetDutyCycle(void *, uint8_t);
 void pwmSetEnabled(void *, bool);
 void pwmSetPeriod(void *, uint32_t);

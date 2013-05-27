@@ -13,24 +13,13 @@
 #define DEFAULT_DIV_VALUE   1
 #define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
-///* Timer pin function values */
-//static const struct GpioPinFunc timerPins[] = {
-//    {
-//        .key = GPIO_TO_PIN(1, 6),
-//        .func = 1
-//    },
-//    {
-//        .key = GPIO_TO_PIN(1, 7),
-//        .func = 1
-//    },
-//    {} /* End of pin function association list */
-//};
-/*----------------------------------------------------------------------------*/
 static void btHandler(void *);
+static enum result setDescriptor(uint8_t channel, struct BaseTimer *);
 /*----------------------------------------------------------------------------*/
 static enum result btInit(void *, const void *);
 static void btDeinit(void *);
 static void btSetFrequency(void *, uint32_t);
+static void btSetEnabled(void *, bool);
 static void btSetCallback(void *, void (*)(void *), void *);
 static void btSetOverflow(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -40,11 +29,9 @@ static const struct TimerClass timerTable = {
     .deinit = btDeinit,
 
     .setFrequency = btSetFrequency,
+    .setEnabled = btSetEnabled,
     .setOverflow = btSetOverflow,
     .setCallback = btSetCallback,
-
-    .createCapture = 0,
-    .createPwm = 0
 };
 /*----------------------------------------------------------------------------*/
 const struct TimerClass *BaseTimer = &timerTable;
@@ -64,7 +51,7 @@ static void btHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-enum result btSetDescriptor(uint8_t channel, void *descriptor)
+enum result setDescriptor(uint8_t channel, struct BaseTimer *device)
 {
   enum result res = E_ERROR;
 
@@ -73,7 +60,7 @@ enum result btSetDescriptor(uint8_t channel, void *descriptor)
   mutexLock(&lock);
   if (!descriptors[channel])
   {
-    descriptors[channel] = descriptor;
+    descriptors[channel] = device;
     res = E_OK;
   }
   mutexUnlock(&lock);
@@ -106,7 +93,24 @@ void TIMER32_1_IRQHandler(void)
 /*----------------------------------------------------------------------------*/
 static void btSetFrequency(void *object, uint32_t frequency)
 {
+  struct BaseTimer *device = object;
 
+  device->reg->PR = (SystemCoreClock / DEFAULT_DIV_VALUE) / frequency - 1;
+}
+/*----------------------------------------------------------------------------*/
+static void btSetEnabled(void *object, bool state)
+{
+  struct BaseTimer *device = object;
+
+  if (state)
+  {
+    device->reg->TCR &= ~TCR_CRES;
+  }
+  else
+  {
+    device->reg->TCR |= TCR_CRES;
+    while (device->reg->TC || device->reg->PC);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void btSetOverflow(void *object, uint32_t overflow)
@@ -127,16 +131,11 @@ static void btSetCallback(void *object, void (*callback)(void *),
 
   device->callback = callback;
   device->callbackParameters = parameters;
+  /* Enable or disable Match interrupt and counter reset after each interrupt */
   if (callback)
-  {
-    /* Enable Match 0 interrupt, reset counter after each interrupt */
     device->reg->MCR |= MCR_INTERRUPT(0) | MCR_RESET(0);
-  }
   else
-  {
-    /* Disable Match 0 interrupt */
     device->reg->MCR &= ~(MCR_INTERRUPT(0) | MCR_RESET(0));
-  }
 }
 /*----------------------------------------------------------------------------*/
 static void btDeinit(void *object)
@@ -161,11 +160,11 @@ static void btDeinit(void *object)
       sysClockDisable(CLK_CT32B1);
       break;
   }
-//  /* Release pins */
-//  gpioDeinit(&device->txPin);
-//  gpioDeinit(&device->rxPin);
+  /* Release external clock pin when used*/
+  if (gpioGetKey(&device->input))
+    gpioDeinit(&device->input);
   /* Reset Timer descriptor */
-  btSetDescriptor(device->channel, 0);
+  setDescriptor(device->channel, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result btInit(void *object, const void *configPtr)
@@ -179,7 +178,7 @@ static enum result btInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
-  if (btSetDescriptor(device->channel, device) != E_OK)
+  if (setDescriptor(device->channel, device) != E_OK)
     return E_ERROR;
 
   /* Set hardware interrupt handler to default handler */
@@ -213,7 +212,6 @@ static enum result btInit(void *object, const void *configPtr)
       / config->frequency - 1;
   /* Reset control registers */
   device->reg->MCR = 0;
-//  device->reg->CCR = 0;
   /* Reset internal counters */
   device->reg->PC = 0;
   device->reg->TC = 0;
@@ -221,7 +219,7 @@ static enum result btInit(void *object, const void *configPtr)
   device->reg->TCR = TCR_CEN;
 
   /* Clear pending interrupts */
-  device->reg->IR = 0x1F;
+  device->reg->IR = IR_MASK;
   /* Enable interrupt */
   NVIC_EnableIRQ(device->irq);
   /* Set interrupt priority, lowest by default */

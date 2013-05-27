@@ -46,29 +46,3 @@ void timerSetOverflow(void *timer, uint32_t overflow)
 {
   ((struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
 }
-/*----------------------------------------------------------------------------*/
-/**
- * Create event capture object, associated with timer.
- * By default event capture is stopped.
- * @param timer Pointer to Timer object.
- * @param pin GPIO pin used as source input.
- * @param mode Capture mode.
- * @return Pointer to new Capture object on success or zero on error.
- */
-void *timerCreateCapture(void *timer, struct Gpio pin, enum captureMode mode)
-{
-  return ((struct TimerClass *)CLASS(timer))->createCapture(timer, pin, mode);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Create Pwm object, associated with timer.
- * By default PWM output is stopped.
- * @param timer Pointer to Timer object.
- * @param pin GPIO pin used as output for pulse width modulated signal.
- * @param resolution PWM resolution.
- * @return Pointer to new Pwm object on success or zero on error.
- */
-void *timerCreatePwm(void *timer, struct Gpio pin, uint32_t resolution)
-{
-  return ((struct TimerClass *)CLASS(timer))->createPwm(timer, pin, resolution);
-}
