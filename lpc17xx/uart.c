@@ -82,6 +82,8 @@ static const struct GpioPinFunc uartPins[] = {
     {} /* End of pin function association list */
 };
 /*----------------------------------------------------------------------------*/
+static enum result setDescriptor(uint8_t, struct Uart *);
+/*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
 /*----------------------------------------------------------------------------*/
@@ -143,20 +145,19 @@ enum result uartCalcRate(struct UartConfigRate *config, uint32_t rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-enum result uartSetDescriptor(uint8_t channel, void *descriptor)
+enum result setDescriptor(uint8_t channel, struct Uart *device)
 {
-  enum result res = E_ERROR;
+  enum result res = E_BUSY;
 
   assert(channel < sizeof(descriptors));
 
   mutexLock(&lock);
   if (!descriptors[channel])
   {
-    descriptors[channel] = descriptor;
+    descriptors[channel] = device;
     res = E_OK;
   }
   mutexUnlock(&lock);
-
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -191,7 +192,7 @@ static enum result uartInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
-  if ((res = uartSetDescriptor(device->channel, device)) != E_OK)
+  if ((res = setDescriptor(device->channel, device)) != E_OK)
     return res;
 
   /* Reset pointer to interrupt handler function */
@@ -271,5 +272,5 @@ static void uartDeinit(void *object)
   gpioDeinit(&device->txPin);
   gpioDeinit(&device->rxPin);
   /* Reset UART descriptor */
-  uartSetDescriptor(device->channel, 0);
+  setDescriptor(device->channel, 0);
 }

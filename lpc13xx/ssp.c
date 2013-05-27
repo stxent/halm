@@ -15,7 +15,12 @@
 #define DEFAULT_DIV_VALUE   1
 /*----------------------------------------------------------------------------*/
 /* UART pin function values */
+/* SSP1 peripheral available only on LPC1313 */
 static const struct GpioPinFunc sspPins[] = {
+    {
+        .key = GPIO_TO_PIN(0, 2), /* SSP0 SSEL */
+        .func = 1
+    },
     {
         .key = GPIO_TO_PIN(0, 6), /* SSP0 SCK */
         .func = 2
@@ -33,10 +38,9 @@ static const struct GpioPinFunc sspPins[] = {
         .func = 2
     },
     {
-        .key = GPIO_TO_PIN(2, 11), /* SSP0 SCK */
-        .func = 1
+        .key = GPIO_TO_PIN(2, 0), /* SSP1 SSEL */
+        .func = 2
     },
-    /* SSP1 peripheral available only on LPC1313 */
     {
         .key = GPIO_TO_PIN(2, 1), /* SSP1 SCK */
         .func = 2
@@ -49,8 +53,14 @@ static const struct GpioPinFunc sspPins[] = {
         .key = GPIO_TO_PIN(2, 3), /* SSP1 MOSI */
         .func = 2
     },
+    {
+        .key = GPIO_TO_PIN(2, 11), /* SSP0 SCK */
+        .func = 1
+    },
     {} /* End of pin function association list */
 };
+/*----------------------------------------------------------------------------*/
+enum result setDescriptor(uint8_t, struct Ssp *);
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
@@ -71,16 +81,16 @@ const struct InterfaceClass *Ssp = &sspTable;
 static struct Ssp *descriptors[] = {0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-enum result sspSetDescriptor(uint8_t channel, void *descriptor)
+enum result setDescriptor(uint8_t channel, struct Ssp *device)
 {
-  enum result res = E_ERROR;
+  enum result res = E_BUSY;
 
   if (channel < sizeof(descriptors))
   {
     mutexLock(&lock);
     if (!descriptors[channel])
     {
-      descriptors[channel] = descriptor;
+      descriptors[channel] = device;
       res = E_OK;
     }
     mutexUnlock(&lock);
@@ -129,7 +139,7 @@ static enum result sspInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
-  if ((res = sspSetDescriptor(device->channel, device)) != E_OK)
+  if ((res = setDescriptor(device->channel, device)) != E_OK)
     return res;
 
   /* Reset pointer to interrupt handler */
@@ -218,5 +228,5 @@ static void sspDeinit(void *object)
   gpioDeinit(&device->misoPin);
   gpioDeinit(&device->sckPin);
   /* Reset SSP descriptor */
-  sspSetDescriptor(device->channel, 0);
+  setDescriptor(device->channel, 0);
 }

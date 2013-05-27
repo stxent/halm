@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include "macro.h"
 /*------------------Interrupt Register----------------------------------------*/
+#define IR_MASK                         0x1F
 #define IR_MATCH_INTERRUPT(channel)     BIT((channel))
 #define IR_CAPTURE_INTERRUPT(channel)   BIT((channel) + 4)
 /*------------------Timer Control Register------------------------------------*/

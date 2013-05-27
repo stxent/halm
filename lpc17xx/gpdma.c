@@ -13,6 +13,7 @@
 #define CHANNEL_COUNT 8
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t);
+static enum result setDescriptor(uint8_t, struct Gpdma *);
 static void setMux(struct Gpdma *, enum gpdmaLine);
 void terminalHandler(struct Gpdma *);
 void errorHandler(struct Gpdma *);
@@ -45,15 +46,14 @@ static Mutex lock = MUTEX_UNLOCKED;
 /* Initialized descriptors count */
 static uint16_t instances = 0;
 /*----------------------------------------------------------------------------*/
-/* TODO Replace return type */
-enum result gpdmaSetDescriptor(uint8_t channel, void *descriptor)
+enum result setDescriptor(uint8_t channel, struct Gpdma *controller)
 {
-  enum result res = E_ERROR;
+  enum result res = E_BUSY;
 
   mutexLock(&lock);
   if (!descriptors[channel])
   {
-    descriptors[channel] = descriptor;
+    descriptors[channel] = controller;
     res = E_OK;
   }
   mutexUnlock(&lock);
@@ -195,7 +195,7 @@ enum result gpdmaStart(void *object, void *dest, const void *src, uint32_t size)
 {
   struct Gpdma *controller = object;
 
-  if (gpdmaSetDescriptor(controller->parent.channel, object) != E_OK)
+  if (setDescriptor(controller->parent.channel, object) != E_OK)
     return E_ERROR;
 
   LPC_SC->DMAREQSEL &= controller->muxMask;
@@ -225,7 +225,7 @@ enum result gpdmaStartList(void *object, const void *first)
   const struct GpdmaListItem *item = first;
   struct Gpdma *controller = object;
 
-  if (gpdmaSetDescriptor(controller->parent.channel, object) != E_OK)
+  if (setDescriptor(controller->parent.channel, object) != E_OK)
     return E_ERROR;
 
   LPC_SC->DMAREQSEL &= controller->muxMask;

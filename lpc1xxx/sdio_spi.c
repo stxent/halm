@@ -239,7 +239,6 @@ static enum result sdioInit(void *object, const void *configPtr)
 {
   const struct SdioSpiConfig *config = configPtr;
   struct SdioSpi *device = object;
-  struct Ssp *fix = (struct Ssp *)config->interface; //XXX
 
   /* Check device configuration data */
   assert(config);

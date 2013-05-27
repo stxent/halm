@@ -92,6 +92,4 @@ struct Gpdma
   enum gpdmaDirection direction;
 };
 /*----------------------------------------------------------------------------*/
-enum result gpdmaSetDescriptor(uint8_t, void *);
-/*----------------------------------------------------------------------------*/
 #endif /* GPDMA_H_ */

@@ -25,8 +25,9 @@ enum baseTimerNumber
 /*----------------------------------------------------------------------------*/
 struct BaseTimerConfig
 {
-  uint32_t frequency;
-  uint8_t channel;
+  uint32_t frequency; /* Mandatory: timer fundamental frequency */
+  gpioKey input; /* Optional: clock input pin */
+  uint8_t channel; /* Mandatory: timer block */
 };
 /*----------------------------------------------------------------------------*/
 struct BaseTimer
@@ -40,9 +41,8 @@ struct BaseTimer
   LPC_TMR_TypeDef *reg; /* Pointer to UART registers */
   IRQn_Type irq; /* IRQ identifier */
 
+  struct Gpio input; /* External clock input pin */
   uint8_t channel; /* Identifier of peripheral block for internal use */
 };
-/*----------------------------------------------------------------------------*/
-enum result btSetDescriptor(uint8_t, void *);
 /*----------------------------------------------------------------------------*/
 #endif /* BASE_TIMER_H_ */

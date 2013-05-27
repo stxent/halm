@@ -49,7 +49,6 @@ struct Uart
 };
 /*----------------------------------------------------------------------------*/
 enum result uartCalcRate(struct UartConfigRate *, uint32_t);
-enum result uartSetDescriptor(uint8_t, void *);
 void uartSetRate(struct Uart *, struct UartConfigRate);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */
