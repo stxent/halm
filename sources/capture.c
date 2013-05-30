@@ -7,6 +7,20 @@
 #include "capture.h"
 /*----------------------------------------------------------------------------*/
 /**
+ * Create event capture object, associated with capture block.
+ * By default event capture is stopped.
+ * @param timer Pointer to Timer object.
+ * @param pin GPIO pin used as source input.
+ * @param mode Capture mode.
+ * @return Pointer to new Capture object on success or zero on error.
+ */
+void *captureCreate(void *block, struct Gpio pin, enum captureMode mode)
+{
+  return ((struct CaptureControllerClass *)CLASS(block))->create(controller,
+      pin, mode);
+}
+/*----------------------------------------------------------------------------*/
+/**
  * Set capture event callback.
  * @param channel Pointer to Capture object.
  * @param callback Callback function.

@@ -184,8 +184,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiSet(void *object, enum ifOption option,
-    const void *data)
+static enum result spiSet(void *object, enum ifOption option, const void *data)
 {
   struct Spi *device = object;
 

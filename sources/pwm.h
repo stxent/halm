@@ -32,6 +32,11 @@ struct PwmClass
   void (*setPeriod)(void *, uint32_t);
 };
 /*----------------------------------------------------------------------------*/
+struct PwmController
+{
+  struct Entity parent;
+};
+/*----------------------------------------------------------------------------*/
 struct Pwm
 {
   struct Entity parent;
