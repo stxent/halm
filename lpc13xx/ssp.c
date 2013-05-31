@@ -127,8 +127,7 @@ uint32_t sspGetRate(struct Ssp *device)
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *object, const void *configPtr)
 {
-  /* Set pointer to device configuration data */
-  const struct SspConfig *config = configPtr;
+  const struct SspConfig * const config = configPtr;
   struct Ssp *device = object;
   gpioFunc func;
   enum result res;

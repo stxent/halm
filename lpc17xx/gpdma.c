@@ -122,7 +122,7 @@ static void setMux(struct Gpdma *controller, enum gpdmaLine line)
 /*----------------------------------------------------------------------------*/
 static enum result gpdmaInit(void *object, const void *configPtr)
 {
-  const struct GpdmaConfig *config = configPtr;
+  const struct GpdmaConfig * const config = configPtr;
   struct Gpdma *controller = object;
 
   assert(config && config->channel < CHANNEL_COUNT);

@@ -237,7 +237,7 @@ static enum result resetCard(struct SdioSpi *device)
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configPtr)
 {
-  const struct SdioSpiConfig *config = configPtr;
+  const struct SdioSpiConfig * const config = configPtr;
   struct SdioSpi *device = object;
 
   /* Check device configuration data */

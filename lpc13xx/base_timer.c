@@ -170,7 +170,7 @@ static void btDeinit(void *object)
 static enum result btInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
-  const struct BaseTimerConfig *config = configPtr;
+  const struct BaseTimerConfig * const config = configPtr;
   struct BaseTimer *device = object;
 
   /* Check device configuration data */

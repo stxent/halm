@@ -92,7 +92,7 @@ static void serialHandler(void *object)
 static enum result serialInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
-  const struct SerialConfig *config = configPtr;
+  const struct SerialConfig * const config = configPtr;
   struct Serial *device = object;
   struct UartConfig parentConfig;
   enum result res;

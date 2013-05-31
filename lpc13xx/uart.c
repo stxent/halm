@@ -103,8 +103,7 @@ void uartSetRate(struct Uart *device, struct UartConfigRate rate)
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
 {
-  /* Set pointer to device configuration data */
-  const struct UartConfig *config = configPtr;
+  const struct UartConfig * const config = configPtr;
   struct Uart *device = object;
   struct UartConfigRate rate;
   gpioFunc func;

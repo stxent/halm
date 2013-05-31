@@ -104,7 +104,7 @@ static void serialHandler(void *object __attribute__((unused)))
 static enum result serialInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
-  const struct SerialDmaConfig *config = configPtr;
+  const struct SerialDmaConfig * const config = configPtr;
   struct SerialDma *device = object;
   struct UartConfig parentConfig;
   enum result res;

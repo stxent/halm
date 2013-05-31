@@ -72,8 +72,7 @@ static void spiHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *object, const void *configPtr)
 {
-  /* Set pointer to device configuration data */
-  const struct SpiConfig *config = configPtr;
+  const struct SpiConfig * const config = configPtr;
   struct Spi *device = object;
   struct SspConfig parentConfig = {
       .frame = 8 /* Fixed frame size */
