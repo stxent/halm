@@ -5,63 +5,67 @@
  */
 
 #include <assert.h>
-#include "lpc13xx_sys.h"
+#include "lpc17xx_sys.h"
 #include "mutex.h"
 #include "ssp.h"
 #include "ssp_defs.h"
 /*----------------------------------------------------------------------------*/
-/* In LPC13xx SSP clock divisor is number from 1 to 255, 0 to disable */
-#define DEFAULT_DIV         1
+#define DEFAULT_DIV         CLK_DIV1
 #define DEFAULT_DIV_VALUE   1
 /*----------------------------------------------------------------------------*/
-/* SSP1 peripheral available only on LPC1313 */
 static const struct GpioDescriptor sspPins[] = {
     {
-        .key = GPIO_TO_PIN(0, 2), /* SSP0_SSEL */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = GPIO_TO_PIN(0, 6), /* SSP0_SCK */
-        .channel = 0,
-        .value = 2
-    }, {
-        .key = GPIO_TO_PIN(0, 8), /* SSP0_MISO */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = GPIO_TO_PIN(0, 9), /* SSP0_MOSI */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = GPIO_TO_PIN(0, 10), /* SSP0_SCK */
-        .channel = 0,
-        .value = 2
-    }, {
-        .key = GPIO_TO_PIN(2, 0), /* SSP1_SSEL */
+        .key = GPIO_TO_PIN(0, 6), /* SSP1_SSEL */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 1), /* SSP1_SCK */
+        .key = GPIO_TO_PIN(0, 7), /* SSP1_SCK */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 2), /* SSP1_MISO */
+        .key = GPIO_TO_PIN(0, 8), /* SSP1_MISO */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 3), /* SSP1_MOSI */
+        .key = GPIO_TO_PIN(0, 9), /* SSP1_MOSI */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 11), /* SSP0_SCK */
+        .key = GPIO_TO_PIN(0, 15), /* SSP0_SCK */
         .channel = 0,
-        .value = 1
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(0, 16), /* SSP0_SSEL */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(0, 17), /* SSP0_MISO */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(0, 18), /* SSP0_MOSI */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(1, 20), /* SSP0_SCK */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = GPIO_TO_PIN(1, 21), /* SSP0_SSEL */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = GPIO_TO_PIN(1, 23), /* SSP0_MISO */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = GPIO_TO_PIN(1, 24), /* SSP0_MOSI */
+        .channel = 0,
+        .value = 3
     }, {
         /* End of pin function association list */
     }
 };
-/*----------------------------------------------------------------------------*/
-enum result setDescriptor(uint8_t, struct Ssp *);
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
@@ -82,16 +86,16 @@ const struct InterfaceClass *Ssp = &sspTable;
 static struct Ssp *descriptors[] = {0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-enum result setDescriptor(uint8_t channel, struct Ssp *device)
+enum result sspSetDescriptor(uint8_t channel, void *descriptor)
 {
-  enum result res = E_BUSY;
+  enum result res = E_ERROR;
 
   if (channel < sizeof(descriptors))
   {
     mutexLock(&lock);
     if (!descriptors[channel])
     {
-      descriptors[channel] = device;
+      descriptors[channel] = descriptor;
       res = E_OK;
     }
     mutexUnlock(&lock);
@@ -99,10 +103,16 @@ enum result setDescriptor(uint8_t channel, struct Ssp *device)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void SSP_IRQHandler(void) /* FIXME SSP0? */
+void SSP0_IRQHandler(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
+}
+/*----------------------------------------------------------------------------*/
+void SSP1_IRQHandler(void)
+{
+  if (descriptors[1])
+    descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
 void sspSetRate(struct Ssp *device, uint32_t rate)
@@ -139,7 +149,7 @@ static enum result sspInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
-  if ((res = setDescriptor(device->channel, device)) != E_OK)
+  if ((res = sspSetDescriptor(device->channel, device)) != E_OK)
     return res;
 
   /* Reset pointer to interrupt handler */
@@ -164,7 +174,7 @@ static enum result sspInit(void *object, const void *configPtr)
   gpioSetFunction(&device->mosiPin, pin->value);
 
   /* Setup CS pin, only in slave mode */
-//  pin = gpioFind(sspPins, config->cs, device->channel);
+//  pin = gpioFindFunc(sspPins, config->cs);
 //  assert(pin);
 //  device->csPin = gpioInit(config->cs, GPIO_INPUT);
 //  gpioSetFunction(&device->csPin, pin->value);
@@ -172,30 +182,14 @@ static enum result sspInit(void *object, const void *configPtr)
   switch (device->channel)
   {
     case 0:
-      sysClockEnable(CLK_SSP);
-      LPC_SYSCON->SSP0CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
-      LPC_SYSCON->PRESETCTRL = 1; /* FIXME */
+      sysPowerEnable(PWR_SSP0);
+      sysClockControl(CLK_SSP0, DEFAULT_DIV);
       device->reg = LPC_SSP0;
       device->irq = SSP0_IRQn;
-
-      /* Set SCK0 pin location register */
-      switch (config->sck)
-      {
-        case GPIO_TO_PIN(0, 10):
-          LPC_IOCON->SCK_LOC = 0;
-          break;
-        case GPIO_TO_PIN(2, 11):
-          LPC_IOCON->SCK_LOC = 1;
-          break;
-        case GPIO_TO_PIN(0, 6):
-          LPC_IOCON->SCK_LOC = 2;
-          break;
-      }
       break;
     case 1:
-      sysClockEnable(CLK_SSP); /* FIXME */
-      LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
-      LPC_SYSCON->PRESETCTRL = 4; /* FIXME */
+      sysPowerEnable(PWR_SSP1);
+      sysClockControl(CLK_SSP1, DEFAULT_DIV);
       device->reg = LPC_SSP1;
       device->irq = SSP1_IRQn;
       break;
@@ -224,14 +218,10 @@ static void sspDeinit(void *object)
   switch (device->channel)
   {
     case 0:
-      LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
-      LPC_SYSCON->SSP0CLKDIV = 0;
-      sysClockDisable(CLK_SSP); //FIXME
+      sysPowerDisable(PWR_SSP0);
       break;
     case 1:
-      LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
-      LPC_SYSCON->SSP1CLKDIV = 0;
-      sysClockDisable(CLK_SSP); //FIXME
+      sysPowerDisable(PWR_SSP1);
       break;
   }
 //  gpioDeinit(&device->csPin);
@@ -239,5 +229,5 @@ static void sspDeinit(void *object)
   gpioDeinit(&device->misoPin);
   gpioDeinit(&device->sckPin);
   /* Reset SSP descriptor */
-  setDescriptor(device->channel, 0);
+  sspSetDescriptor(device->channel, 0);
 }
