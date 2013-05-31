@@ -13,73 +13,74 @@
 #define DEFAULT_DIV         CLK_DIV1
 #define DEFAULT_DIV_VALUE   1
 /*----------------------------------------------------------------------------*/
-/* UART pin function values */
-static const struct GpioPinFunc uartPins[] = {
+static const struct GpioDescriptor uartPins[] = {
     {
-        .key = GPIO_TO_PIN(0, 0),
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(0, 1),
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(0, 2),
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 3),
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 10),
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 11),
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 15),
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 16),
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 25),
-        .func = 3
-    },
-    {
-        .key = GPIO_TO_PIN(0, 26),
-        .func = 3
-    },
-    {
-        .key = GPIO_TO_PIN(2, 0),
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 1),
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 8),
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 9),
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(4, 28),
-        .func = 3
-    },
-    {
-        .key = GPIO_TO_PIN(4, 29),
-        .func = 3
-    },
-    {} /* End of pin function association list */
+        .key = GPIO_TO_PIN(0, 0), /* UART_TXD3 */
+        .channel = 3,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(0, 1), /* UART_RXD3 */
+        .channel = 3,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(0, 2), /* UART_TXD0 */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 3), /* UART_RXD0 */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 10), /* UART_TXD2 */
+        .channel = 2,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 11), /* UART_RXD2 */
+        .channel = 2,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 15), /* UART_TXD1 */
+        .channel = 1,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 16), /* UART_RXD1 */
+        .channel = 1,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 25), /* UART_TXD3 */
+        .channel = 3,
+        .value = 3
+    }, {
+        .key = GPIO_TO_PIN(0, 26), /* UART_RXD3 */
+        .channel = 3,
+        .value = 3
+    }, {
+        .key = GPIO_TO_PIN(2, 0), /* UART_TXD1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(2, 1), /* UART_RXD1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(2, 8), /* UART_TXD2 */
+        .channel = 2,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(2, 9), /* UART_RXD2 */
+        .channel = 2,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(4, 28), /* UART_TXD3 */
+        .channel = 3,
+        .value = 3
+    }, {
+        .key = GPIO_TO_PIN(4, 29), /* UART_RXD3 */
+        .channel = 3,
+        .value = 3
+    }, {
+        /* End of pin function association list */
+    }
 };
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct Uart *);
@@ -176,10 +177,10 @@ void uartSetRate(struct Uart *device, struct UartConfigRate rate)
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
 {
+  const struct GpioDescriptor *pin;
   const struct UartConfig * const config = configPtr;
   struct Uart *device = object;
   struct UartConfigRate rate;
-  gpioFunc func;
   enum result res;
 
   /* Check device configuration data */
@@ -198,16 +199,16 @@ static enum result uartInit(void *object, const void *configPtr)
   device->handler = 0;
 
   /* Setup UART RX pin */
-  func = gpioFindFunc(uartPins, config->rx);
-  assert(func != -1);
+  pin = gpioFind(uartPins, config->rx, device->channel);
+  assert(pin);
   device->rxPin = gpioInit(config->rx, GPIO_INPUT);
-  gpioSetFunc(&device->rxPin, func);
+  gpioSetFunction(&device->rxPin, pin->value);
 
   /* Setup UART TX pin */
-  func = gpioFindFunc(uartPins, config->tx);
-  assert(func != -1);
+  pin = gpioFind(uartPins, config->tx, device->channel);
+  assert(pin);
   device->txPin = gpioInit(config->tx, GPIO_OUTPUT);
-  gpioSetFunc(&device->txPin, func);
+  gpioSetFunction(&device->txPin, pin->value);
 
   //FIXME Remove FIFO level from CMSIS
   switch (device->channel)

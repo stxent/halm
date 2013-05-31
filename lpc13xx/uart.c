@@ -14,17 +14,16 @@
 #define DEFAULT_DIV         1
 #define DEFAULT_DIV_VALUE   1
 /*----------------------------------------------------------------------------*/
-/* UART pin function values */
-static const struct GpioPinFunc uartPins[] = {
+static const struct GpioDescriptor uartPins[] = {
     {
-        .key = GPIO_TO_PIN(1, 6),
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(1, 7),
-        .func = 1
-    },
-    {} /* End of pin function association list */
+        .key = GPIO_TO_PIN(1, 6), /* UART_RX */
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(1, 7), /* UART_TX */
+        .value = 1
+    }, {
+        /* End of pin function association list */
+    }
 };
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct Uart *);
@@ -103,10 +102,10 @@ void uartSetRate(struct Uart *device, struct UartConfigRate rate)
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
 {
+  const struct GpioDescriptor *pin;
   const struct UartConfig * const config = configPtr;
   struct Uart *device = object;
   struct UartConfigRate rate;
-  gpioFunc func;
   enum result res;
 
   /* Check device configuration data */
@@ -125,16 +124,16 @@ static enum result uartInit(void *object, const void *configPtr)
   device->handler = 0;
 
   /* Setup UART RX pin */
-  func = gpioFindFunc(uartPins, config->rx);
-  assert(func != -1);
+  pin = gpioFind(uartPins, config->rx, device->channel);
+  assert(pin);
   device->rxPin = gpioInit(config->rx, GPIO_INPUT);
-  gpioSetFunc(&device->rxPin, func);
+  gpioSetFunction(&device->rxPin, pin->value);
 
   /* Setup UART TX pin */
-  func = gpioFindFunc(uartPins, config->tx);
-  assert(func != -1);
+  pin = gpioFind(uartPins, config->tx, device->channel);
+  assert(pin);
   device->txPin = gpioInit(config->tx, GPIO_OUTPUT);
-  gpioSetFunc(&device->txPin, func);
+  gpioSetFunction(&device->txPin, pin->value);
 
   switch (config->channel)
   {

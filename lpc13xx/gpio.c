@@ -49,16 +49,14 @@ static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
       ((void *)LPC_GPIO1 - (void *)LPC_GPIO0) * p.port);
 }
 /*----------------------------------------------------------------------------*/
-/* Returns -1 when no function associated with pin found */
-gpioFunc gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
+/* Returns 0 when no descriptor associated with pin found */
+const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
+    gpioKey key, uint8_t channel)
 {
-  while (pinList->key)
-  {
-    if (pinList->key == key)
-      return pinList->func;
-    ++pinList;
-  }
-  return -1;
+  while (list->key && (list->key != key || list->channel != channel))
+    ++list;
+
+  return list->key ? list : 0;
 }
 /*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
@@ -130,12 +128,12 @@ void gpioWrite(struct Gpio *p, uint8_t value)
       ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetFunc(struct Gpio *p, gpioFunc func)
+void gpioSetFunction(struct Gpio *p, uint8_t function)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
 
   *iocon &= ~IOCON_FUNC_MASK;
-  *iocon |= IOCON_FUNC(func);
+  *iocon |= IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)

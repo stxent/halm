@@ -41,16 +41,14 @@ static inline uint32_t *calcPinModeOD(union GpioPin p)
   return (uint32_t *)(&LPC_PINCON->PINMODE_OD0 + p.port);
 }
 /*----------------------------------------------------------------------------*/
-/* Returns -1 when no function associated with pin found */
-gpioFunc gpioFindFunc(const struct GpioPinFunc *pinList, gpioKey key)
+/* Returns 0 when no descriptor associated with pin found */
+const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
+    gpioKey key, uint8_t channel)
 {
-  while (pinList->key)
-  {
-    if (pinList->key == key)
-      return pinList->func;
-    ++pinList;
-  }
-  return -1;
+  while (list->key && (list->key != key || list->channel != channel))
+    ++list;
+
+  return list->key ? list : 0;
 }
 /*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
@@ -72,7 +70,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   p.control = calcPort(p.pin);
 
   /* Set function 0: GPIO mode for all LPC17xx parts */
-  gpioSetFunc(&p, 0);
+  gpioSetFunction(&p, 0);
   /* Set mode 2: neither pull-up nor pull-down */
   gpioSetPull(&p, GPIO_NOPULL);
   /* Set mode 0: normal mode (not open drain) */
@@ -95,7 +93,7 @@ void gpioDeinit(struct Gpio *p)
   /* Reset values to default (0) */
   gpioSetType(p, 0);
   gpioSetPull(p, 0);
-  gpioSetFunc(p, 0);
+  gpioSetFunction(p, 0);
 
   /* TODO Check possibility of disabling power when no pins are used */
   /* LPC_SC->PCONP &= ~PCONP_PCGPIO; */
@@ -114,12 +112,12 @@ void gpioWrite(struct Gpio *p, uint8_t value)
     p->control->FIOCLR = 1 << p->pin.offset;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetFunc(struct Gpio *p, gpioFunc func)
+void gpioSetFunction(struct Gpio *p, uint8_t function)
 {
   uint32_t *pinptr = calcPinSelect(p->pin);
 
   *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
-  *pinptr |= PIN_OFFSET(func, p->pin.offset);
+  *pinptr |= PIN_OFFSET(function, p->pin.offset);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)

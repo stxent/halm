@@ -14,50 +14,51 @@
 #define DEFAULT_DIV         1
 #define DEFAULT_DIV_VALUE   1
 /*----------------------------------------------------------------------------*/
-/* UART pin function values */
 /* SSP1 peripheral available only on LPC1313 */
-static const struct GpioPinFunc sspPins[] = {
+static const struct GpioDescriptor sspPins[] = {
     {
-        .key = GPIO_TO_PIN(0, 2), /* SSP0 SSEL */
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 6), /* SSP0 SCK */
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(0, 8), /* SSP0 MISO */
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 9), /* SSP0 MOSI */
-        .func = 1
-    },
-    {
-        .key = GPIO_TO_PIN(0, 10), /* SSP0 SCK */
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 0), /* SSP1 SSEL */
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 1), /* SSP1 SCK */
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 2), /* SSP1 MISO */
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 3), /* SSP1 MOSI */
-        .func = 2
-    },
-    {
-        .key = GPIO_TO_PIN(2, 11), /* SSP0 SCK */
-        .func = 1
-    },
-    {} /* End of pin function association list */
+        .key = GPIO_TO_PIN(0, 2), /* SSP0_SSEL */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 6), /* SSP0_SCK */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(0, 8), /* SSP0_MISO */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 9), /* SSP0_MOSI */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = GPIO_TO_PIN(0, 10), /* SSP0_SCK */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(2, 0), /* SSP1_SSEL */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(2, 1), /* SSP1_SCK */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(2, 2), /* SSP1_MISO */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(2, 3), /* SSP1_MOSI */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = GPIO_TO_PIN(2, 11), /* SSP0_SCK */
+        .channel = 0,
+        .value = 1
+    }, {
+        /* End of pin function association list */
+    }
 };
 /*----------------------------------------------------------------------------*/
 enum result setDescriptor(uint8_t, struct Ssp *);
@@ -127,9 +128,9 @@ uint32_t sspGetRate(struct Ssp *device)
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *object, const void *configPtr)
 {
+  const struct GpioDescriptor *pin;
   const struct SspConfig * const config = configPtr;
   struct Ssp *device = object;
-  gpioFunc func;
   enum result res;
 
   /* TODO Add mater/slave select */
@@ -145,28 +146,28 @@ static enum result sspInit(void *object, const void *configPtr)
   device->handler = 0;
 
   /* Setup Serial Clock pin */
-  func = gpioFindFunc(sspPins, config->sck);
-  assert(func != -1);
+  pin = gpioFind(sspPins, config->sck, device->channel);
+  assert(pin);
   device->sckPin = gpioInit(config->sck, GPIO_OUTPUT);
-  gpioSetFunc(&device->sckPin, func);
+  gpioSetFunction(&device->sckPin, pin->value);
 
   /* Setup MISO pin */
-  func = gpioFindFunc(sspPins, config->miso);
-  assert(func != -1);
+  pin = gpioFind(sspPins, config->miso, device->channel);
+  assert(pin);
   device->misoPin = gpioInit(config->miso, GPIO_INPUT);
-  gpioSetFunc(&device->misoPin, func);
+  gpioSetFunction(&device->misoPin, pin->value);
 
   /* Setup MOSI pin */
-  func = gpioFindFunc(sspPins, config->mosi);
-  assert(func != -1);
+  pin = gpioFind(sspPins, config->mosi, device->channel);
+  assert(pin);
   device->mosiPin = gpioInit(config->mosi, GPIO_OUTPUT);
-  gpioSetFunc(&device->mosiPin, func);
+  gpioSetFunction(&device->mosiPin, pin->value);
 
   /* Setup CS pin, only in slave mode */
-//  func = gpioFindFunc(sspPins, config->cs);
-//  assert(func != -1);
+//  pin = gpioFind(sspPins, config->cs, device->channel);
+//  assert(pin);
 //  device->csPin = gpioInit(config->cs, GPIO_INPUT);
-//  gpioSetFunc(&device->csPin, func);
+//  gpioSetFunction(&device->csPin, pin->value);
 
   switch (config->channel)
   {
