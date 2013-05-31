@@ -13,8 +13,8 @@
 #define DEFAULT_DIV_VALUE   1
 #define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
-static void btHandler(void *);
-static enum result setDescriptor(uint8_t channel, struct BaseTimer *);
+static void interruptHandler(void *);
+static enum result setDescriptor(uint8_t, struct BaseTimer *);
 /*----------------------------------------------------------------------------*/
 static enum result btInit(void *, const void *);
 static void btDeinit(void *);
@@ -39,7 +39,7 @@ const struct TimerClass *BaseTimer = &timerTable;
 static struct BaseTimer *descriptors[] = {0, 0, 0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-static void btHandler(void *object)
+static void interruptHandler(void *object)
 {
   struct BaseTimer *device = object;
 
@@ -182,7 +182,7 @@ static enum result btInit(void *object, const void *configPtr)
     return E_ERROR;
 
   /* Set hardware interrupt handler to default handler */
-  device->handler = btHandler;
+  device->handler = interruptHandler;
 
   switch (device->channel)
   {

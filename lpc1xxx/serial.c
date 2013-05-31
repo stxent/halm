@@ -22,7 +22,7 @@ enum cleanup
 };
 /*----------------------------------------------------------------------------*/
 static void cleanup(struct Serial *, enum cleanup);
-static void serialHandler(void *);
+static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
@@ -62,7 +62,7 @@ static void cleanup(struct Serial *device, enum cleanup step)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void serialHandler(void *object)
+static void interruptHandler(void *object)
 {
   struct Serial *device = object;
   uint8_t data;
@@ -112,7 +112,7 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
 
   /* Set pointer to hardware interrupt handler */
-  device->parent.handler = serialHandler;
+  device->parent.handler = interruptHandler;
 
   /* Initialize RX and TX queues */
   if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)

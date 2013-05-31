@@ -30,6 +30,8 @@
 #define IOCON_HYS                       BIT(5)
 #define IOCON_OD                        BIT(10)
 /*----------------------------------------------------------------------------*/
+static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
+/*----------------------------------------------------------------------------*/
 /* IOCON register map differs for LPC1315/16/17/45/46/47 */
 static const uint8_t gpioRegMap[4][12] = {
     {0x0C, 0x10, 0x1C, 0x2C, 0x30, 0x34, 0x4C, 0x50, 0x60, 0x64, 0x68, 0x74},
@@ -40,8 +42,6 @@ static const uint8_t gpioRegMap[4][12] = {
 /*----------------------------------------------------------------------------*/
 static Mutex lock = MUTEX_UNLOCKED;
 static uint8_t instances = 0;
-/*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
 {

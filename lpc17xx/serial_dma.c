@@ -12,7 +12,7 @@
 #define RX_FIFO_LEVEL 0 /* 1 character */
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SerialDma *, int8_t, int8_t);
-static void serialHandler(void *);
+static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
@@ -67,8 +67,7 @@ static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
           .direction = GPDMA_DIR_P2M,
           .burst = DMA_BURST_1,
           .width = DMA_WIDTH_BYTE
-      },
-      {
+      }, {
           .channel = txChannel,
           .source = {
               .line = GPDMA_LINE_MEMORY,
@@ -96,7 +95,7 @@ static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void serialHandler(void *object __attribute__((unused)))
+static void interruptHandler(void *object __attribute__((unused)))
 {
 
 }
@@ -124,7 +123,7 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
 
   /* Set pointer to hardware interrupt handler */
-  device->parent.handler = serialHandler;
+  device->parent.handler = interruptHandler;
 
   if ((res = dmaSetup(device, config->rxChannel, config->txChannel)) != E_OK)
   {

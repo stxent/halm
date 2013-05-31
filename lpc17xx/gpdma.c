@@ -12,11 +12,12 @@
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT 8
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t);
+static inline LPC_GPDMACH_TypeDef *calcPeripheral(uint8_t);
+/*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct Gpdma *);
 static void setMux(struct Gpdma *, enum gpdmaLine);
-void terminalHandler(struct Gpdma *);
-void errorHandler(struct Gpdma *);
+static void errorHandler(struct Gpdma *);
+static void terminalHandler(struct Gpdma *);
 /*----------------------------------------------------------------------------*/
 static enum result gpdmaInit(void *, const void *);
 static void gpdmaDeinit(void *);
@@ -60,12 +61,12 @@ enum result setDescriptor(uint8_t channel, struct Gpdma *controller)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void terminalHandler(struct Gpdma *controller)
+static void terminalHandler(struct Gpdma *controller)
 {
   controller->parent.active = false;
 }
 /*----------------------------------------------------------------------------*/
-void errorHandler(struct Gpdma *controller)
+static void errorHandler(struct Gpdma *controller)
 {
   controller->parent.active = false;
 }
@@ -102,7 +103,7 @@ void DMA_IRQHandler(void)
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPDMACH_TypeDef *calcChannel(uint8_t channel)
+static inline LPC_GPDMACH_TypeDef *calcPeripheral(uint8_t channel)
 {
   return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0
       + ((void *)LPC_GPDMACH1 - (void *)LPC_GPDMACH0) * channel);
@@ -131,7 +132,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   controller->parent.channel = (uint8_t)config->channel;
   controller->parent.active = false;
   controller->direction = config->direction;
-  controller->reg = calcChannel(controller->parent.channel);
+  controller->reg = calcPeripheral(controller->parent.channel);
 
   controller->control = C_CONTROL_INT | C_CONTROL_SRC_WIDTH(config->width)
       | C_CONTROL_DEST_WIDTH(config->width);

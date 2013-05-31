@@ -10,7 +10,7 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_PRIORITY 15 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
-static void spiHandler(void *);
+static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
@@ -32,7 +32,7 @@ static const struct InterfaceClass spiTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
-static void spiHandler(void *object)
+static void interruptHandler(void *object)
 {
   struct Spi *device = object;
   uint8_t status = device->parent.reg->MIS;
@@ -96,7 +96,7 @@ static enum result spiInit(void *object, const void *configPtr)
   device->channelLock = MUTEX_UNLOCKED;
 
   /* Set pointer to hardware interrupt handler */
-  device->parent.handler = spiHandler;
+  device->parent.handler = interruptHandler;
 
   /* Set interrupt priority, lowest by default */
   NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
