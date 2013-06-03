@@ -18,7 +18,7 @@ struct PwmControllerClass
   CLASS_HEADER
 
   /* Virtual functions */
-  void *(*create)(void *, struct Gpio, uint8_t);
+  void *(*create)(void *, gpioKey, uint8_t);
 };
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
@@ -29,7 +29,7 @@ struct PwmClass
   /* Virtual functions */
   void (*setDutyCycle)(void *, uint8_t);
   void (*setEnabled)(void *, bool);
-  void (*setPeriod)(void *, uint32_t);
+  void (*setPeriod)(void *, uint16_t);
 };
 /*----------------------------------------------------------------------------*/
 struct PwmController
@@ -42,9 +42,9 @@ struct Pwm
   struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
-void *pwmCreate(void *, struct Gpio, uint8_t);
+void *pwmCreate(void *, gpioKey, uint8_t);
 void pwmSetDutyCycle(void *, uint8_t);
 void pwmSetEnabled(void *, bool);
-void pwmSetPeriod(void *, uint32_t);
+void pwmSetPeriod(void *, uint16_t);
 /*----------------------------------------------------------------------------*/
 #endif /* PWM_H_ */

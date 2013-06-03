@@ -14,7 +14,7 @@
  * @param value Initial duty cycle value in percents.
  * @return Pointer to new Pwm object on success or zero on error.
  */
-void *pwmCreate(void *controller, struct Gpio pin, uint8_t value)
+void *pwmCreate(void *controller, gpioKey pin, uint8_t value)
 {
   return ((struct PwmControllerClass *)CLASS(controller))->create(controller,
       pin, value);
@@ -46,7 +46,7 @@ void pwmSetEnabled(void *channel, bool state)
  * @param channel Pointer to Pwm object.
  * @param period Period in timer ticks.
  */
-void pwmSetPeriod(void *channel, uint32_t period)
+void pwmSetPeriod(void *channel, uint16_t period)
 {
   ((struct PwmClass *)CLASS(channel))->setPeriod(channel, period);
 }
