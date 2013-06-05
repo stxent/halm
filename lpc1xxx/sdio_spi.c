@@ -11,6 +11,9 @@
 #define BLOCK_POW       9
 #define TOKEN_DATA_MASK 0x1F
 /*----------------------------------------------------------------------------*/
+#define OCR_CCS         BIT(30) /* Card Capacity Status */
+#define OCR_HCS         BIT(30) /* Host Capacity Support */
+/*----------------------------------------------------------------------------*/
 enum sdioCommand
 {
   CMD_GO_IDLE_STATE     = 0,
@@ -53,6 +56,10 @@ struct LongResponse
   uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
+static inline enum result acquireBus(struct SdioSpi *);
+static inline uint32_t calcPosition(struct SdioSpi *);
+static inline void releaseBus(struct SdioSpi *);
+/*----------------------------------------------------------------------------*/
 static void sendCommand(struct SdioSpi *, enum sdioCommand, uint32_t);
 static enum result waitForData(struct SdioSpi *, uint8_t *);
 static uint8_t getShortResponse(struct SdioSpi *);
@@ -82,6 +89,30 @@ static const struct InterfaceClass sdioTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *SdioSpi = &sdioTable;
 /*----------------------------------------------------------------------------*/
+static inline enum result acquireBus(struct SdioSpi *device)
+{
+  enum result res;
+
+  if ((res = ifSet(device->interface, IF_DEVICE, &device->id)) != E_OK)
+    return res;
+  gpioWrite(&device->csPin, 0);
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static inline uint32_t calcPosition(struct SdioSpi *device)
+{
+  return device->capacity == CARD_SD ? (uint32_t)device->position
+      : (uint32_t)(device->position >> BLOCK_POW);
+}
+/*----------------------------------------------------------------------------*/
+static inline void releaseBus(struct SdioSpi *device)
+{
+  const uint32_t emptyId = 0;
+
+  gpioWrite(&device->csPin, 1);
+  ifSet(device->interface, IF_DEVICE, &emptyId);
+}
+/*----------------------------------------------------------------------------*/
 static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
     uint32_t parameter)
 {
@@ -110,10 +141,8 @@ static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
   buffer[6] |= 0x01; /* Add end bit */
   buffer[7] = 0xFF;
 
-  gpioWrite(&device->csPin, 0);
   /* TODO Check for interface error? */
   ifWrite(device->interface, buffer, sizeof(buffer));
-  gpioWrite(&device->csPin, 1);
 }
 /*----------------------------------------------------------------------------*/
 static enum result waitForData(struct SdioSpi *device, uint8_t *value)
@@ -134,12 +163,8 @@ static enum result waitForData(struct SdioSpi *device, uint8_t *value)
 static uint8_t getShortResponse(struct SdioSpi *device)
 {
   uint8_t value;
-  enum result res;
 
-  gpioWrite(&device->csPin, 0);
-  res = waitForData(device, &value);
-  gpioWrite(&device->csPin, 1);
-  return res == E_OK ? value : 0xFF;
+  return waitForData(device, &value) == E_OK ? value : 0xFF;
 }
 /*----------------------------------------------------------------------------*/
 /* Response to READ_OCR and SEND_IF_COND commands */
@@ -149,7 +174,6 @@ static enum result getLongResponse(struct SdioSpi *device,
   uint8_t buffer[4];
   enum result res;
 
-  gpioWrite(&device->csPin, 0);
   res = waitForData(device, buffer);
   if (res == E_OK)
   {
@@ -160,7 +184,7 @@ static enum result getLongResponse(struct SdioSpi *device,
     response->payload = (uint32_t)buffer[3] | ((uint32_t)buffer[2] << 8)
         | ((uint32_t)buffer[1] << 16) | ((uint32_t)buffer[0] << 24);
   }
-  gpioWrite(&device->csPin, 1);
+
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -168,17 +192,19 @@ static enum result resetCard(struct SdioSpi *device)
 {
   const uint32_t lowSpeed = 200000;
   const uint8_t dummyByte = 0xFF; /* Emulate high level during setup */
-
   uint32_t srcSpeed;
   uint16_t counter;
   uint8_t response;
-  bool oldCard = true;
+  uint8_t version = 1; /* SD Card version */
   struct LongResponse longResp;
   enum result res;
 
-//  device->ready = false;
-  device->highCapacity = false;
+  device->capacity = CARD_SD;
   device->position = 0;
+
+  /* Acquire bus but leave chip select high */
+  if ((res = ifSet(device->interface, IF_DEVICE, &device->id)) != E_OK)
+    return res;
 
   ifGet(device->interface, IF_RATE, &srcSpeed);
   ifSet(device->interface, IF_RATE, &lowSpeed);
@@ -187,51 +213,72 @@ static enum result resetCard(struct SdioSpi *device)
   for (counter = 10; counter; --counter)
     ifWrite(device->interface, &dummyByte, 1);
 
+  /* Enable chip select */
+  gpioWrite(&device->csPin, 0);
+
   /* Send reset command */
   sendCommand(device, CMD_GO_IDLE_STATE, 0);
   if (!(getShortResponse(device) & SDIO_INIT))
+  {
+    ifSet(device->interface, IF_RATE, &srcSpeed);
+    releaseBus(device);
     return E_DEVICE;
+  }
 
+  /* Detect card version */
   sendCommand(device, CMD_SEND_IF_COND, 0x000001AA); /* TODO Add define */
   if ((res = getLongResponse(device, &longResp)) != E_OK)
+  {
+    ifSet(device->interface, IF_RATE, &srcSpeed);
+    releaseBus(device);
     return res;
+  }
   if (!(longResp.value & SDIO_ILLEGAL_COMMAND))
   {
     if (longResp.payload != 0x000001AA)
+    {
+      ifSet(device->interface, IF_RATE, &srcSpeed);
+      releaseBus(device);
       return E_ERROR; /* Pattern mismatched */
-    oldCard = false;
+    }
+    version = 2; /* SD Card version 2.0 or later */
   }
 
   /* Wait till card becomes ready */
   for (counter = 100; counter; --counter)
   {
     sendCommand(device, CMD_APP_CMD, 0);
-    if (getShortResponse(device) == 0xFF)
-      return E_DEVICE;
-    sendCommand(device, ACMD_SD_SEND_OP_COND, (1 << 30)); //FIXME Add define HCS
     if ((response = getShortResponse(device)) == 0xFF)
-      return E_DEVICE;
-    if (!response)
       break;
-    /* Retry after 10 ms */
-    msleep(10);
+    sendCommand(device, ACMD_SD_SEND_OP_COND, OCR_HCS);
+    if ((response = getShortResponse(device)) == 0xFF || !response)
+      break;
+    msleep(10); /* Retry after 10 ms */
   }
   if (response)
-    return E_ERROR;
+  {
+    ifSet(device->interface, IF_RATE, &srcSpeed);
+    releaseBus(device);
+    return response == 0xFF ? E_DEVICE : E_ERROR;
+  }
 
-  if (!oldCard) /* SD Card version 2.0 or later */
+  /* Detect card capacity */
+  if (version >= 2)
   {
     sendCommand(device, CMD_READ_OCR, 0);
     if ((res = getLongResponse(device, &longResp)) != E_OK)
+    {
+      ifSet(device->interface, IF_RATE, &srcSpeed);
+      releaseBus(device);
       return res;
-    if (longResp.payload & (1 << 30)) //FIXME Add define CCS
-      device->highCapacity = true;
+    }
+    if (longResp.payload & OCR_CCS)
+      device->capacity = CARD_SDHC;
   }
 
   /* Increase speed after initialization */
   ifSet(device->interface, IF_RATE, &srcSpeed);
-//  device->ready = true;
-
+  releaseBus(device);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -239,6 +286,7 @@ static enum result sdioInit(void *object, const void *configPtr)
 {
   const struct SdioSpiConfig * const config = configPtr;
   struct SdioSpi *device = object;
+  enum result res;
 
   /* Check device configuration data */
   assert(config);
@@ -248,9 +296,10 @@ static enum result sdioInit(void *object, const void *configPtr)
 
   device->csPin = gpioInit(config->cs, GPIO_OUTPUT);
   gpioWrite(&device->csPin, 1);
+  device->id = (uint32_t)config->cs;
 
-  resetCard(device);
-  device->lock = MUTEX_UNLOCKED;
+  if ((res = resetCard(device)) != E_OK)
+    return res;
 
   return E_OK;
 }
@@ -284,12 +333,10 @@ static enum result readBlock(struct SdioSpi *device, uint8_t *buffer)
   if (!counter)
     return E_DEVICE;
 
-  gpioWrite(&device->csPin, 0);
   /* Receive block data */
   read += ifRead(device->interface, buffer, 1 << BLOCK_POW);
   /* Receive block checksum */
   read += ifRead(device->interface, (uint8_t *)&crc, sizeof(crc));
-  gpioWrite(&device->csPin, 1);
 
   if (read != (1 << BLOCK_POW) + sizeof(crc))
     return E_INTERFACE;
@@ -306,9 +353,7 @@ static enum result waitBusyState(struct SdioSpi *device)
   /* Wait until busy condition will be removed from RX line */
   while (--counter)
   {
-    gpioWrite(&device->csPin, 0);
     read = ifRead(device->interface, &state, 1);
-    gpioWrite(&device->csPin, 1);
     if (read != 1)
       return E_INTERFACE;
     if (state == 0xFF)
@@ -328,14 +373,12 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
   uint32_t written = 0;
   uint8_t response;
 
-  gpioWrite(&device->csPin, 0);
   /* Send start block token */
   written += ifWrite(device->interface, (uint8_t *)&token, 1);
   /* Send block data */
   written += ifWrite(device->interface, buffer, 1 << BLOCK_POW);
   /* Send block checksum */
   written += ifWrite(device->interface, (uint8_t *)&crc, sizeof(crc));
-  gpioWrite(&device->csPin, 1);
 
   if (written != 1 + (1 << BLOCK_POW) + sizeof(crc))
     return E_INTERFACE;
@@ -356,7 +399,6 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
 static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi *device = object;
-  uint32_t address;
   uint16_t counter, blockCount;
   enum sdioCommand command;
 
@@ -364,13 +406,17 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   if ((length & ((1 << BLOCK_POW) - 1)) || !blockCount)
     return 0; /* Unsupported block length */
 
-  address = device->highCapacity ? (uint32_t)(device->position >> BLOCK_POW)
-      : (uint32_t)device->position;
-
   command = blockCount > 1 ? CMD_READ_MULTIPLE : CMD_READ;
-  sendCommand(device, command, address);
-  if (getShortResponse(device))
+
+  if (acquireBus(device) != E_OK)
     return 0;
+
+  sendCommand(device, command, calcPosition(device));
+  if (getShortResponse(device))
+  {
+    releaseBus(device);
+    return 0;
+  }
 
   for (counter = 0; counter < blockCount; ++counter)
   {
@@ -379,17 +425,16 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   }
 
   sendCommand(device, CMD_STOP_TRANSMISSION, 0);
-  if (getShortResponse(device))
-    return counter << BLOCK_POW;
+  getShortResponse(device);
   waitBusyState(device);
 
+  releaseBus(device);
   return counter << BLOCK_POW;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi *device = object;
-  uint32_t address;
   uint16_t counter, blockCount;
   enum sdioCommand command;
   enum sdioToken token;
@@ -397,9 +442,6 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
   blockCount = length >> BLOCK_POW;
   if ((length & ((1 << BLOCK_POW) - 1)) || !blockCount)
     return 0; /* Unsupported block length */
-
-  address = device->highCapacity ? (uint32_t)(device->position >> BLOCK_POW)
-      : (uint32_t)device->position;
 
   if (blockCount > 1)
   {
@@ -411,27 +453,33 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
     command = CMD_WRITE;
     token = TOKEN_START;
   }
-  sendCommand(device, command, address);
-  if (getShortResponse(device))
+
+  if (acquireBus(device) != E_OK)
     return 0;
+
+  sendCommand(device, command, calcPosition(device));
+  if (getShortResponse(device))
+  {
+    releaseBus(device);
+    return 0;
+  }
 
   for (counter = 0; counter < blockCount; ++counter)
   {
     if (writeBlock(device, buffer + (counter << BLOCK_POW), token) != E_OK)
-      return counter << BLOCK_POW;
+      break;
   }
 
   if (blockCount > 1)
   {
     /* Send stop token in multiple block write operation */
     token = TOKEN_STOP;
-    gpioWrite(&device->csPin, 0);
     ifWrite(device->interface, (uint8_t *)&token, 1); //TODO Check result?
-    gpioWrite(&device->csPin, 1);
     waitBusyState(device);
   }
 
-  return length;
+  releaseBus(device);
+  return counter << BLOCK_POW;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioGet(void *object, enum ifOption option, void *data)
