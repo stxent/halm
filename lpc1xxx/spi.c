@@ -94,6 +94,7 @@ static enum result spiInit(void *object, const void *configPtr)
   if ((res = Ssp->init(object, &parentConfig)) != E_OK)
     return res;
   device->channelLock = MUTEX_UNLOCKED;
+  device->deviceLock = MUTEX_UNLOCKED;
 
   /* Set pointer to hardware interrupt handler */
   device->parent.handler = interruptHandler;
@@ -189,6 +190,14 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 
   switch (option)
   {
+    case IF_DEVICE:
+      if (!*(uint32_t *)data)
+      {
+        mutexUnlock(&device->deviceLock);
+        return E_OK;
+      }
+      else
+        return mutexTryLock(&device->deviceLock) ? E_OK : E_BUSY;
     case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);
       return E_OK;

@@ -28,6 +28,7 @@ struct Spi
   const uint8_t *txBuffer;
   uint32_t left, fill;
   Mutex channelLock; /* Access to channel */
+  Mutex deviceLock; /* Used to avoid simultaneous access to multiple devices */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SPI_H_ */
