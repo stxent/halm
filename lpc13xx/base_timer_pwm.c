@@ -127,18 +127,16 @@ static int8_t findEmptyChannel(uint8_t channels)
 {
   int8_t pos = 4; /* Each timer has 4 match blocks */
 
-  //FIXME Remove additional brackets?
-  while (--pos >= 0 && (channels & (1 << pos)));
-
+  while (--pos >= 0 && channels & (1 << pos));
   return pos;
 }
 /*----------------------------------------------------------------------------*/
 static void updateResolution(struct BaseTimerPwm *device, uint8_t channel)
 {
-//  LPC_TMR_TypeDef *reg = device->timer->reg;
+  /* Put timer in reset state */
+  device->timer->reg->TCR |= TCR_CRES;
+  while (device->timer->reg->TC || device->timer->reg->PC);
 
-  /* Disable timer counting */
-  device->timer->reg->TCR &= ~TCR_CEN;
   /* Disable previous match channel */
   device->timer->reg->MCR &= ~MCR_RESET(device->current);
 
@@ -147,7 +145,7 @@ static void updateResolution(struct BaseTimerPwm *device, uint8_t channel)
   /* Enable new match channel */
   device->timer->reg->MCR |= MCR_RESET(device->current);
   /* Enable timer */
-  device->timer->reg->TCR |= TCR_CEN;
+  device->timer->reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetDutyCycle(void *object, uint8_t percentage)
@@ -181,7 +179,8 @@ static void *controllerCreate(void *object, gpioKey output, uint8_t percentage)
   pin = gpioFind(pwmPins, output, device->timer->channel);
   assert(pin);
 
-  freeChannel = findEmptyChannel(device->matches | UNPACK_CHANNEL(pin->value));
+  freeChannel = findEmptyChannel(device->matches
+      | (1 << UNPACK_CHANNEL(pin->value)));
   if (freeChannel == -1)
     return 0; /* There are no free match channels left */
 
@@ -192,7 +191,7 @@ static void *controllerCreate(void *object, gpioKey output, uint8_t percentage)
   pwm->channel = UNPACK_CHANNEL(pin->value);
   pwm->reg = calcMatchChannel(device->timer->reg, pwm->channel);
 
-  device->matches |= UNPACK_CHANNEL(pin->value);
+  device->matches |= 1 << UNPACK_CHANNEL(pin->value);
   updateResolution(device, (uint8_t)freeChannel);
 
   /* Initialize match output pin */
