@@ -196,8 +196,8 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
         mutexUnlock(&device->deviceLock);
         return E_OK;
       }
-      else
-        return mutexTryLock(&device->deviceLock) ? E_OK : E_BUSY;
+      mutexLock(&device->deviceLock);
+      return E_OK;
     case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);
       return E_OK;
