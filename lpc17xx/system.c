@@ -5,7 +5,7 @@
  */
 
 #include <LPC17xx.h>
-#include "lpc17xx_sys.h"
+#include "system.h"
 #include "macro.h"
 /*----------------------------------------------------------------------------*/
 /* Changes PCONP register, reset value 0x042887DE */

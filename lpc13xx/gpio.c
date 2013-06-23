@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include "gpio.h"
-#include "lpc13xx_sys.h"
+#include "system.h"
 #include "macro.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/

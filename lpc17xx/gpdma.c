@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "gpdma.h"
 #include "gpdma_defs.h"
-#include "lpc17xx_sys.h"
+#include "system.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT 8

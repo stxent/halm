@@ -5,7 +5,7 @@
  */
 
 #include <assert.h>
-#include "lpc17xx_sys.h"
+#include "system.h"
 #include "mutex.h"
 #include "uart.h"
 #include "uart_defs.h"

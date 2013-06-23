@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "base_timer.h"
 #include "base_timer_defs.h"
-#include "lpc13xx_sys.h"
+#include "system.h"
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV_VALUE   1

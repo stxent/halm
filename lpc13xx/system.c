@@ -5,7 +5,7 @@
  */
 
 #include <LPC13xx.h>
-#include "lpc13xx_sys.h"
+#include "system.h"
 #include "macro.h"
 /*----------------------------------------------------------------------------*/
 /* Changes SYSAHBCLKCTRL register, reset value 0x0000485F */

@@ -5,7 +5,7 @@
  */
 
 #include <assert.h>
-#include "lpc13xx_sys.h"
+#include "system.h"
 #include "mutex.h"
 #include "ssp.h"
 #include "ssp_defs.h"
