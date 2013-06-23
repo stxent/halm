@@ -83,8 +83,8 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   *iocon = IOCON_DEFAULT & ~IOCON_MODE_MASK;
 
   /* Exceptions */
-  if (p.pin.port == 1 && (p.pin.offset >= 0 && p.pin.offset <= 2)
-      || p.pin.port == 0 && p.pin.offset == 11)
+  if ((p.pin.port == 1 && (p.pin.offset >= 0 && p.pin.offset <= 2))
+      || (p.pin.port == 0 && p.pin.offset == 11))
   {
     *iocon |= 0x01; /* Select GPIO function */
   }

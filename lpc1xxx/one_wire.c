@@ -224,7 +224,6 @@ static enum result oneWireSet(void *object, enum ifOption option,
     const void *data)
 {
   struct OneWire *device = object;
-  enum result res;
 
   switch (option)
   {
@@ -248,7 +247,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
   uint32_t read;
 
   if (!length)
-    return;
+    return 0;
 
   mutexLock(&device->channelLock);
 
