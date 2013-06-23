@@ -53,7 +53,7 @@ void UART_IRQHandler(void)
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-enum result uartCalcRate(struct UartConfigRate *config, uint32_t rate)
+enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
 {
   uint32_t divisor;
 
@@ -87,7 +87,7 @@ enum result setDescriptor(uint8_t channel, struct Uart *device)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void uartSetRate(struct Uart *device, struct UartConfigRate rate)
+void uartSetRate(struct Uart *device, struct UartRateConfig rate)
 {
   /* Enable DLAB access */
   device->reg->LCR |= LCR_DLAB;
@@ -105,7 +105,7 @@ static enum result uartInit(void *object, const void *configPtr)
   const struct GpioDescriptor *pin;
   const struct UartConfig * const config = configPtr;
   struct Uart *device = object;
-  struct UartConfigRate rate;
+  struct UartRateConfig rate;
   enum result res;
 
   /* Check device configuration data */

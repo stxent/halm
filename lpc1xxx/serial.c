@@ -162,7 +162,7 @@ static enum result serialSet(void *object, enum ifOption option,
   {
     case IF_RATE:
     {
-      struct UartConfigRate rate;
+      struct UartRateConfig rate;
 
       if ((res = uartCalcRate(&rate, *(uint32_t *)data)) != E_OK)
         return res;

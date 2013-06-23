@@ -30,7 +30,7 @@ struct UartConfig
   enum uartParity parity; /* Optional: even, odd or no parity */
 };
 /*----------------------------------------------------------------------------*/
-struct UartConfigRate
+struct UartRateConfig
 {
   uint8_t high, low, fraction;
 };
@@ -48,7 +48,7 @@ struct Uart
   uint8_t channel; /* Peripheral number */
 };
 /*----------------------------------------------------------------------------*/
-enum result uartCalcRate(struct UartConfigRate *, uint32_t);
-void uartSetRate(struct Uart *, struct UartConfigRate);
+enum result uartCalcRate(struct UartRateConfig *, uint32_t);
+void uartSetRate(struct Uart *, struct UartRateConfig);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */
