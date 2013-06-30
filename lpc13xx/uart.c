@@ -47,7 +47,7 @@ const struct InterfaceClass *Uart = &uartTable;
 static struct Uart *descriptors[] = {0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-void UART_IRQHandler(void)
+void UART_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
@@ -59,7 +59,7 @@ enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
 
   if (!rate)
     return E_ERROR;
-  divisor = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
+  divisor = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
   if (!divisor || divisor >= (1 << 16))
     return E_ERROR;
 
@@ -141,7 +141,7 @@ static enum result uartInit(void *object, const void *configPtr)
       sysClockEnable(CLK_UART);
       LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV; /* Divide AHB clock */
       device->reg = LPC_UART;
-      device->irq = UART_IRQn;
+      device->irq = UART_IRQ;
       break;
   }
 

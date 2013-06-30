@@ -11,7 +11,7 @@
 #include "mutex.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV_VALUE   1
-#define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
+#define DEFAULT_PRIORITY    255 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum result setDescriptor(uint8_t, struct BaseTimer *);
@@ -67,25 +67,25 @@ enum result setDescriptor(uint8_t channel, struct BaseTimer *device)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void TIMER16_0_IRQHandler(void)
+void TIMER16B0_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER16_1_IRQHandler(void)
+void TIMER16B1_ISR(void)
 {
   if (descriptors[1])
     descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER32_0_IRQHandler(void)
+void TIMER32B0_ISR(void)
 {
   if (descriptors[2])
     descriptors[2]->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER32_1_IRQHandler(void)
+void TIMER32B1_ISR(void)
 {
   if (descriptors[3])
     descriptors[3]->handler(descriptors[3]);
@@ -95,7 +95,7 @@ static void btSetFrequency(void *object, uint32_t frequency)
 {
   struct BaseTimer *device = object;
 
-  device->reg->PR = (SystemCoreClock / DEFAULT_DIV_VALUE) / frequency - 1;
+  device->reg->PR = (sysCoreClock / DEFAULT_DIV_VALUE) / frequency - 1;
 }
 /*----------------------------------------------------------------------------*/
 static void btSetEnabled(void *object, bool state)
@@ -143,7 +143,7 @@ static void btDeinit(void *object)
   struct BaseTimer *device = object;
 
   /* Disable interrupt */
-  NVIC_DisableIRQ(device->irq);
+  nvicDisable(device->irq);
   /* Disable Timer clock */
   switch (device->channel)
   {
@@ -189,26 +189,26 @@ static enum result btInit(void *object, const void *configPtr)
     case 0:
       sysClockEnable(CLK_CT16B0);
       device->reg = LPC_TMR16B0;
-      device->irq = TIMER_16_0_IRQn;
+      device->irq = TIMER16B0_IRQ;
       break;
     case 1:
       sysClockEnable(CLK_CT16B1);
       device->reg = LPC_TMR16B1;
-      device->irq = TIMER_16_1_IRQn;
+      device->irq = TIMER16B1_IRQ;
       break;
     case 2:
       sysClockEnable(CLK_CT32B0);
       device->reg = LPC_TMR32B0;
-      device->irq = TIMER_32_0_IRQn;
+      device->irq = TIMER32B0_IRQ;
       break;
     case 3:
       sysClockEnable(CLK_CT32B1);
       device->reg = LPC_TMR32B1;
-      device->irq = TIMER_32_1_IRQn;
+      device->irq = TIMER32B1_IRQ;
       break;
   }
 
-  device->reg->PR = (SystemCoreClock / DEFAULT_DIV_VALUE)
+  device->reg->PR = (sysCoreClock / DEFAULT_DIV_VALUE)
       / config->frequency - 1;
   /* Reset control registers */
   device->reg->MCR = 0;
@@ -221,9 +221,9 @@ static enum result btInit(void *object, const void *configPtr)
   /* Clear pending interrupts */
   device->reg->IR = IR_MASK;
   /* Enable interrupt */
-  NVIC_EnableIRQ(device->irq);
+  nvicEnable(device->irq);
   /* Set interrupt priority, lowest by default */
-  NVIC_SetPriority(device->irq, DEFAULT_PRIORITY);
+  nvicSetPriority(device->irq, DEFAULT_PRIORITY);
 
   return E_OK;
 }

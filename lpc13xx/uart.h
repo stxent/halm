@@ -10,6 +10,7 @@
 #include <LPC13xx.h>
 #include "gpio.h"
 #include "interface.h"
+#include "nvic.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Uart;
 /*----------------------------------------------------------------------------*/
@@ -41,7 +42,7 @@ struct Uart
   void (*handler)(void *); /* Interrupt handler */
 
   LPC_UART_TypeDef *reg; /* Pointer to UART registers */
-  IRQn_Type irq; /* IRQ identifier */
+  enum interrupt irq; /* IRQ identifier */
 
   struct Gpio rxPin, txPin; /* Peripheral pins */
   uint8_t channel; /* Peripheral number */

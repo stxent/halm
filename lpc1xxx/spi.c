@@ -8,7 +8,7 @@
 #include "spi.h"
 #include "ssp_defs.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY 15 /* Lowest interrupt priority in Cortex-M3 */
+#define DEFAULT_PRIORITY 255 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -100,9 +100,9 @@ static enum result spiInit(void *object, const void *configPtr)
   device->parent.handler = interruptHandler;
 
   /* Set interrupt priority, lowest by default */
-  NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
+  nvicSetPriority(device->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
-  NVIC_EnableIRQ(device->parent.irq);
+  nvicEnable(device->parent.irq);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -110,7 +110,7 @@ static void spiDeinit(void *object)
 {
   struct Spi *device = object;
 
-  NVIC_DisableIRQ(device->parent.irq);
+  nvicDisable(device->parent.irq);
   Ssp->deinit(device); /* Call SSP class destructor */
 }
 /*----------------------------------------------------------------------------*/
@@ -200,7 +200,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       sspSetRate(object, *(uint32_t *)data);
       return E_OK;
     case IF_PRIORITY:
-      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
+      nvicSetPriority(device->parent.irq, *(uint32_t *)data);
       return E_OK;
     default:
       return E_ERROR;

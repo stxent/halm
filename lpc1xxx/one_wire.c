@@ -8,7 +8,7 @@
 #include "one_wire.h"
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
+#define DEFAULT_PRIORITY    255 /* Lowest interrupt priority in Cortex-M3 */
 #define RATE_RESET          9600
 #define RATE_DATA           115200
 /*----------------------------------------------------------------------------*/
@@ -59,7 +59,7 @@ static void cleanup(struct OneWire *device, enum cleanup step)
   switch (step)
   {
     case FREE_ALL:
-      NVIC_DisableIRQ(device->parent.irq); /* Disable interrupt */
+      nvicDisable(device->parent.irq); /* Disable interrupt */
     case FREE_TX_QUEUE:
       queueDeinit(&device->txQueue);
     case FREE_RX_QUEUE:
@@ -204,9 +204,9 @@ static enum result oneWireInit(void *object, const void *configPtr)
   device->parent.reg->IER |= IER_RBR | IER_THRE;
 
   /* Set interrupt priority, lowest by default */
-  NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
+  nvicSetPriority(device->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
-  NVIC_EnableIRQ(device->parent.irq);
+  nvicEnable(device->parent.irq);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -234,7 +234,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
         mutexUnlock(&device->deviceLock);
       return E_OK;
     case IF_PRIORITY:
-      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
+      nvicSetPriority(device->parent.irq, *(uint32_t *)data);
       return E_OK;
     default:
       return E_ERROR;

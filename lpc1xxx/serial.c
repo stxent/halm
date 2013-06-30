@@ -8,7 +8,7 @@
 #include "serial.h"
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY    15 /* Lowest interrupt priority in Cortex-M3 */
+#define DEFAULT_PRIORITY    255 /* Lowest interrupt priority in Cortex-M3 */
 #define RX_FIFO_LEVEL       2 /* 8 characters */
 #define TX_FIFO_SIZE        8
 /*----------------------------------------------------------------------------*/
@@ -49,7 +49,7 @@ static void cleanup(struct Serial *device, enum cleanup step)
   switch (step)
   {
     case FREE_ALL:
-      NVIC_DisableIRQ(device->parent.irq); /* Disable interrupt */
+      nvicDisable(device->parent.irq); /* Disable interrupt */
     case FREE_TX_QUEUE:
       queueDeinit(&device->txQueue);
     case FREE_RX_QUEUE:
@@ -136,9 +136,9 @@ static enum result serialInit(void *object, const void *configPtr)
   device->parent.reg->TER = TER_TXEN;
 
   /* Set interrupt priority, lowest by default */
-  NVIC_SetPriority(device->parent.irq, DEFAULT_PRIORITY);
+  nvicSetPriority(device->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
-  NVIC_EnableIRQ(device->parent.irq);
+  nvicEnable(device->parent.irq);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -170,7 +170,7 @@ static enum result serialSet(void *object, enum ifOption option,
       return E_OK;
     }
     case IF_PRIORITY:
-      NVIC_SetPriority(device->parent.irq, *(uint32_t *)data);
+      nvicSetPriority(device->parent.irq, *(uint32_t *)data);
       return E_OK;
     default:
       return E_ERROR;
@@ -183,9 +183,9 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   uint32_t read;
 
   mutexLock(&device->queueLock);
-  NVIC_DisableIRQ(device->parent.irq);
+  nvicDisable(device->parent.irq);
   read = queuePopArray(&device->rxQueue, buffer, length);
-  NVIC_EnableIRQ(device->parent.irq);
+  nvicEnable(device->parent.irq);
   mutexUnlock(&device->queueLock);
   return read;
 }
@@ -201,21 +201,21 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   if (device->parent.reg->LSR & LSR_TEMT && queueEmpty(&device->txQueue))
   {
     /* Transmitter is idle, fill TX FIFO */
-    NVIC_DisableIRQ(device->parent.irq);
+    nvicDisable(device->parent.irq);
     while (written < TX_FIFO_SIZE && written < length)
     {
       device->parent.reg->THR = *buffer++;
       ++written;
     }
-    NVIC_EnableIRQ(device->parent.irq);
+    nvicEnable(device->parent.irq);
     length -= written;
   }
   if (length)
   {
     /* Fill TX queue with the rest of data */
-    NVIC_DisableIRQ(device->parent.irq);
+    nvicDisable(device->parent.irq);
     written += queuePushArray(&device->txQueue, buffer, length);
-    NVIC_EnableIRQ(device->parent.irq);
+    nvicEnable(device->parent.irq);
   }
   mutexUnlock(&device->queueLock);
   return written;

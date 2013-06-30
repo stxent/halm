@@ -7,6 +7,10 @@
 #ifndef LPC13XX_SYS_H_
 #define LPC13XX_SYS_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
+extern uint32_t sysCoreClock;
+/*----------------------------------------------------------------------------*/
 /* System AHB clock control register */
 enum sysClockDevice
 {
@@ -20,12 +24,13 @@ enum sysClockDevice
   CLK_CT16B1      = 8,
   CLK_CT32B0      = 9,
   CLK_CT32B1      = 10,
-  CLK_SSP         = 11,
+  CLK_SSP0        = 11,
   CLK_UART        = 12,
   CLK_ADC         = 13,
   CLK_USBREG      = 14,
   CLK_WDT         = 15,
-  CLK_IOCON       = 16
+  CLK_IOCON       = 16,
+  CLK_SSP1        = 18
 };
 /*----------------------------------------------------------------------------*/
 extern inline void sysClockEnable(enum sysClockDevice);

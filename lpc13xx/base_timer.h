@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <LPC13xx.h>
 #include "gpio.h"
+#include "nvic.h"
 #include "timer.h"
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass *BaseTimer;
@@ -39,7 +40,7 @@ struct BaseTimer
   void *callbackParameters; /* User interrupt handler parameters */
 
   LPC_TMR_TypeDef *reg; /* Pointer to UART registers */
-  IRQn_Type irq; /* IRQ identifier */
+  enum interrupt irq; /* IRQ identifier */
 
   struct Gpio input; /* External clock input pin */
   uint8_t channel; /* Identifier of peripheral block for internal use */

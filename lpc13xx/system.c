@@ -5,8 +5,10 @@
  */
 
 #include <LPC13xx.h>
-#include "system.h"
 #include "macro.h"
+#include "system.h"
+/*----------------------------------------------------------------------------*/
+uint32_t sysCoreClock = 12000000; //FIXME
 /*----------------------------------------------------------------------------*/
 /* Changes SYSAHBCLKCTRL register, reset value 0x0000485F */
 inline void sysClockEnable(enum sysClockDevice peripheral)
@@ -21,11 +23,12 @@ inline void sysClockDisable(enum sysClockDevice peripheral)
 /*----------------------------------------------------------------------------*/
 inline void usleep(uint32_t period)
 {
-  volatile uint32_t count = SystemCoreClock / 3000000 * period;
+  volatile uint32_t count = sysCoreClock / 3000000 * period;
 
-  __asm__ __volatile__ (
-      "1: SUBS.W %[count], %[count], #1 \n"
-      "BNE 1b \n"
+  __asm__ __volatile__(
+      "1:\n"
+      "   SUBS.W %[count], %[count], #1\n"
+      "   BNE 1b\n"
       : [count] "=r"(count)
       : "0" (count)
       : "r3"

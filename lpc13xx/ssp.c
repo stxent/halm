@@ -99,17 +99,23 @@ enum result setDescriptor(uint8_t channel, struct Ssp *device)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void SSP_IRQHandler(void) /* FIXME SSP0? */
+void SSP0_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
+}
+/*----------------------------------------------------------------------------*/
+void SSP1_ISR(void)
+{
+  if (descriptors[1])
+    descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
 void sspSetRate(struct Ssp *device, uint32_t rate)
 {
   uint16_t divider;
 
-  divider = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 1) / rate - 1;
+  divider = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / rate - 1;
   /* FIXME Rewrite */
   device->reg->CPSR = 2;
   device->reg->CR0 &= ~CR0_SCR_MASK;
@@ -122,7 +128,7 @@ uint32_t sspGetRate(struct Ssp *device)
   uint16_t divider;
 
   divider = CR0_SCR_VALUE(device->reg->CR0);
-  rate = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
+  rate = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
   return rate;
 }
 /*----------------------------------------------------------------------------*/
@@ -172,11 +178,11 @@ static enum result sspInit(void *object, const void *configPtr)
   switch (device->channel)
   {
     case 0:
-      sysClockEnable(CLK_SSP);
+      sysClockEnable(CLK_SSP0);
       LPC_SYSCON->SSP0CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
       LPC_SYSCON->PRESETCTRL = 1; /* FIXME */
       device->reg = LPC_SSP0;
-      device->irq = SSP0_IRQn;
+      device->irq = SSP0_IRQ;
 
       /* Set SCK0 pin location register */
       switch (config->sck)
@@ -193,11 +199,11 @@ static enum result sspInit(void *object, const void *configPtr)
       }
       break;
     case 1:
-      sysClockEnable(CLK_SSP); /* FIXME */
+      sysClockEnable(CLK_SSP1);
       LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
       LPC_SYSCON->PRESETCTRL = 4; /* FIXME */
       device->reg = LPC_SSP1;
-      device->irq = SSP1_IRQn;
+      device->irq = SSP1_IRQ;
       break;
   }
 
@@ -226,12 +232,12 @@ static void sspDeinit(void *object)
     case 0:
       LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
       LPC_SYSCON->SSP0CLKDIV = 0;
-      sysClockDisable(CLK_SSP); //FIXME
+      sysClockDisable(CLK_SSP0);
       break;
     case 1:
       LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
       LPC_SYSCON->SSP1CLKDIV = 0;
-      sysClockDisable(CLK_SSP); //FIXME
+      sysClockDisable(CLK_SSP1);
       break;
   }
 //  gpioDeinit(&device->csPin);
