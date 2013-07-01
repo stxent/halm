@@ -6,9 +6,9 @@
 
 #include <assert.h>
 #include "gpio.h"
-#include "system.h"
 #include "macro.h"
 #include "mutex.h"
+#include "system.h"
 /*----------------------------------------------------------------------------*/
 /* Reserved bits, digital mode and IO mode for I2C pins */
 #define IOCON_DEFAULT                   0x01D0
@@ -97,6 +97,8 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 
   if (!instances)
   {
+    /* Enable clock to IO configuration block */
+    sysClockEnable(CLK_IOCON);
     /* Enable AHB clock to the GPIO domain */
     sysClockEnable(CLK_GPIO);
   }
@@ -121,6 +123,8 @@ void gpioDeinit(struct Gpio *p)
   {
     /* Disable AHB clock to the GPIO domain */
     sysClockDisable(CLK_GPIO);
+    /* Enable clock to IO configuration block */
+    sysClockDisable(CLK_IOCON);
   }
 }
 /*----------------------------------------------------------------------------*/

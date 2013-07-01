@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <LPC13xx.h>
+#include "device_defs.h"
 #include "interrupts.h"
 /*----------------------------------------------------------------------------*/
 /* The following are constructs created by the linker, indicating where the
@@ -22,14 +22,13 @@ extern int __main(void); /* Redlib */
 extern int main(void); /* Newlib */
 #endif
 /*----------------------------------------------------------------------------*/
-extern void RESET_ISR(void);
-/*----------------------------------------------------------------------------*/
 void RESET_ISR(void)
+//void ResetISR(void)
 {
   unsigned long *pulDest, *pulSrc = &_etext;
 
   /* Copy the data segment initializers from flash to RAM */
-  for(pulDest = &_data; pulDest < &_edata; )
+  for (pulDest = &_data; pulDest < &_edata;)
     *pulDest++ = *pulSrc++;
 
   /* Zero fill the BSS segment */
@@ -49,8 +48,6 @@ void RESET_ISR(void)
   /* Call C++ library initialization */
   __libc_init_array();
 #endif
-
-  LPC_SYSCON->SYSAHBCLKCTRL = 0x0001005F; //FIXME
 
 #ifdef __REDLIB__
   __main();

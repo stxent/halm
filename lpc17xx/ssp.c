@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include "system.h"
 #include "mutex.h"
 #include "ssp.h"
 #include "ssp_defs.h"
+#include "system.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV         CLK_DIV1
 #define DEFAULT_DIV_VALUE   1
@@ -103,13 +103,13 @@ enum result sspSetDescriptor(uint8_t channel, void *descriptor)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void SSP0_IRQHandler(void)
+void SSP0_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-void SSP1_IRQHandler(void)
+void SSP1_ISR(void)
 {
   if (descriptors[1])
     descriptors[1]->handler(descriptors[1]);
@@ -185,13 +185,13 @@ static enum result sspInit(void *object, const void *configPtr)
       sysPowerEnable(PWR_SSP0);
       sysClockControl(CLK_SSP0, DEFAULT_DIV);
       device->reg = LPC_SSP0;
-      device->irq = SSP0_IRQn;
+      device->irq = SSP0_IRQ;
       break;
     case 1:
       sysPowerEnable(PWR_SSP1);
       sysClockControl(CLK_SSP1, DEFAULT_DIV);
       device->reg = LPC_SSP1;
-      device->irq = SSP1_IRQn;
+      device->irq = SSP1_IRQ;
       break;
   }
 

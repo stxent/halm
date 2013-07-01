@@ -7,8 +7,8 @@
 #include <assert.h>
 #include "base_timer.h"
 #include "base_timer_defs.h"
-#include "system.h"
 #include "mutex.h"
+#include "system.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV_VALUE   1
 #define DEFAULT_PRIORITY    255 /* Lowest interrupt priority in Cortex-M3 */

@@ -4,10 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef LPC17XX_SYS_H_
-#define LPC17XX_SYS_H_
+#ifndef SYSTEM_H_
+#define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+/*----------------------------------------------------------------------------*/
+extern uint32_t sysCoreClock;
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
 enum sysPowerDevice
@@ -89,4 +91,4 @@ extern inline void sysClockControl(enum sysClockDevice, enum sysClockDiv);
 extern inline void sysPowerEnable(enum sysPowerDevice);
 extern inline void sysPowerDisable(enum sysPowerDevice);
 /*----------------------------------------------------------------------------*/
-#endif /* LPC17XX_SYS_H_ */
+#endif /* SYSTEM_H_ */

@@ -1,12 +1,14 @@
 /*
- * lpc17xx_sys.c
+ * system.c
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <LPC17xx.h>
-#include "system.h"
+#include "device_defs.h"
 #include "macro.h"
+#include "system.h"
+/*----------------------------------------------------------------------------*/
+uint32_t sysCoreClock = 4000000; //FIXME
 /*----------------------------------------------------------------------------*/
 /* Changes PCONP register, reset value 0x042887DE */
 inline void sysPowerEnable(enum sysPowerDevice offset)

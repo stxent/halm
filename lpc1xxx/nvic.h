@@ -8,7 +8,7 @@
 #define NVIC_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include <LPC13xx.h>
+#include "device_defs.h"
 #include "interrupts.h"
 /*----------------------------------------------------------------------------*/
 uint8_t nvicGetPriority(enum interrupt);

@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include "system.h"
 #include "mutex.h"
+#include "system.h"
 #include "uart.h"
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/
@@ -104,25 +104,25 @@ const struct InterfaceClass *Uart = &uartTable;
 static struct Uart *descriptors[] = {0, 0, 0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-void UART0_IRQHandler(void)
+void UART0_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-void UART1_IRQHandler(void)
+void UART1_ISR(void)
 {
   if (descriptors[1])
     descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-void UART2_IRQHandler(void)
+void UART2_ISR(void)
 {
   if (descriptors[2])
     descriptors[2]->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
-void UART3_IRQHandler(void)
+void UART3_ISR(void)
 {
   if (descriptors[3])
     descriptors[3]->handler(descriptors[3]);
@@ -134,7 +134,7 @@ enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
 
   if (!rate)
     return E_ERROR;
-  divisor = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
+  divisor = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
   if (!divisor || divisor >= (1 << 16))
     return E_ERROR;
 
@@ -218,26 +218,26 @@ static enum result uartInit(void *object, const void *configPtr)
       sysClockControl(CLK_UART0, DEFAULT_DIV);
       //FIXME Replace with LPC_UART_TypeDef in CMSIS
       device->reg = (LPC_UART_TypeDef *)LPC_UART0;
-      device->irq = UART0_IRQn;
+      device->irq = UART0_IRQ;
       break;
     case 1:
       sysPowerEnable(PWR_UART1);
       sysClockControl(CLK_UART1, DEFAULT_DIV);
       //FIXME Rewrite TER type
       device->reg = (LPC_UART_TypeDef *)LPC_UART1;
-      device->irq = UART1_IRQn;
+      device->irq = UART1_IRQ;
       break;
     case 2:
       sysPowerEnable(PWR_UART2);
       sysClockControl(CLK_UART2, DEFAULT_DIV);
       device->reg = LPC_UART2;
-      device->irq = UART2_IRQn;
+      device->irq = UART2_IRQ;
       break;
     case 3:
       sysPowerEnable(PWR_UART3);
       sysClockControl(CLK_UART3, DEFAULT_DIV);
       device->reg = LPC_UART3;
-      device->irq = UART3_IRQn;
+      device->irq = UART3_IRQ;
       break;
   }
 

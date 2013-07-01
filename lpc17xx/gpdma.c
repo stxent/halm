@@ -7,8 +7,8 @@
 #include <assert.h>
 #include "gpdma.h"
 #include "gpdma_defs.h"
-#include "system.h"
 #include "mutex.h"
+#include "system.h"
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT 8
 /*----------------------------------------------------------------------------*/
@@ -71,7 +71,7 @@ static void errorHandler(struct Gpdma *controller)
   controller->parent.active = false;
 }
 /*----------------------------------------------------------------------------*/
-void DMA_IRQHandler(void)
+void DMA_ISR(void)
 {
   int8_t counter;
   uint8_t errorStat = LPC_GPDMA->DMACIntErrStat;
@@ -165,9 +165,9 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   {
     sysPowerEnable(PWR_GPDMA);
     LPC_GPDMA->DMACConfig |= DMA_ENABLE;
-    NVIC_EnableIRQ(DMA_IRQn);
+    nvicEnable(DMA_IRQ);
     //TODO add priority config
-    //NVIC_SetPriority(device->irq, GET_PRIORITY(config->priority));
+    //nvicSetPriority(device->irq, GET_PRIORITY(config->priority));
   }
   mutexLock(&lock);
   ++instances;
@@ -186,7 +186,7 @@ static void gpdmaDeinit(void *object)
   /* Disable DMA peripheral when no active descriptors exist */
   if (!instances)
   {
-    NVIC_DisableIRQ(DMA_IRQn);
+    nvicDisable(DMA_IRQ);
     LPC_GPDMA->DMACConfig &= ~DMA_ENABLE;
     sysPowerDisable(PWR_GPDMA);
   }

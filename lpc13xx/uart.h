@@ -7,7 +7,7 @@
 #ifndef UART_H_
 #define UART_H_
 /*----------------------------------------------------------------------------*/
-#include <LPC13xx.h>
+#include "device_defs.h"
 #include "gpio.h"
 #include "interface.h"
 #include "nvic.h"

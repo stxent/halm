@@ -18,6 +18,7 @@ enum interrupt
   DEBUGMON_IRQ    = -4,
   PENDSV_IRQ      = -2,
   SYSTICK_IRQ     = -1,
+
   /* Chip-specific IRQ handlers */
   WAKEUP_IRQ    = 0,
   /* TODO */

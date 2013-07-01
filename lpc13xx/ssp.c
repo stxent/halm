@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include "system.h"
 #include "mutex.h"
 #include "ssp.h"
 #include "ssp_defs.h"
+#include "system.h"
 /*----------------------------------------------------------------------------*/
 /* In LPC13xx SSP clock divisor is number from 1 to 255, 0 to disable */
 #define DEFAULT_DIV         1

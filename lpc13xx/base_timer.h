@@ -7,7 +7,7 @@
 #ifndef BASE_TIMER_H_
 #define BASE_TIMER_H_
 /*----------------------------------------------------------------------------*/
-#include <LPC13xx.h>
+#include "device_defs.h"
 #include "gpio.h"
 #include "nvic.h"
 #include "timer.h"

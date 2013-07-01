@@ -7,7 +7,7 @@
 #ifndef SSP_H_
 #define SSP_H_
 /*----------------------------------------------------------------------------*/
-#include <LPC13xx.h>
+#include "device_defs.h"
 #include "gpio.h"
 #include "interface.h"
 #include "nvic.h"

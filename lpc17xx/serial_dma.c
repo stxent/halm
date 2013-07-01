@@ -124,6 +124,7 @@ static enum result serialInit(void *object, const void *configPtr)
 
   /* Set pointer to hardware interrupt handler */
   device->parent.handler = interruptHandler;
+  device->dmaLock = MUTEX_UNLOCKED;
 
   if ((res = dmaSetup(device, config->rxChannel, config->txChannel)) != E_OK)
   {
@@ -154,6 +155,7 @@ static void serialDeinit(void *object)
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SerialDma *device = object;
+  uint32_t read = 0;
 
   mutexLock(&device->dmaLock);
   /* TODO Add DMA error handling */
@@ -161,17 +163,18 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
       buffer, (void *)&device->parent.reg->RBR, length) == E_OK)
   {
     while (dmaIsActive(device->rxDma));
-    return length;
+    read = length;
   }
   mutexUnlock(&device->dmaLock);
 
-  return 0;
+  return read;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
   struct SerialDma *device = object;
+  uint32_t written = 0;
 
   mutexLock(&device->dmaLock);
   /* TODO Add DMA error handling */
@@ -180,11 +183,11 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   {
     /* Wait until all bytes transferred */
     while (dmaIsActive(device->txDma));
-    return length;
+    written = length;
   }
   mutexUnlock(&device->dmaLock);
 
-  return 0;
+  return written;
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialGet(void *object, enum ifOption option, void *data)

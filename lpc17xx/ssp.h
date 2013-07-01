@@ -7,9 +7,10 @@
 #ifndef SSP_H_
 #define SSP_H_
 /*----------------------------------------------------------------------------*/
-#include <LPC17xx.h>
+#include "device_defs.h"
 #include "gpio.h"
 #include "interface.h"
+#include "nvic.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Ssp;
 /*----------------------------------------------------------------------------*/
@@ -30,7 +31,7 @@ struct Ssp
   void (*handler)(void *); /* Interrupt handler */
 
   LPC_SSP_TypeDef *reg; /* Pointer to SSP registers */
-  IRQn_Type irq; /* IRQ identifier */
+  enum interrupt irq; /* IRQ identifier */
 
   struct Gpio sckPin, csPin, misoPin, mosiPin; /* Peripheral pins */
   uint8_t channel; /* Peripheral number */

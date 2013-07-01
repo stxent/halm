@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include "system.h"
 #include "mutex.h"
+#include "system.h"
 #include "uart.h"
 #include "uart_defs.h"
 /*----------------------------------------------------------------------------*/

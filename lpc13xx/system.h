@@ -1,11 +1,11 @@
 /*
- * lpc13xx_sys.h
+ * system.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef LPC13XX_SYS_H_
-#define LPC13XX_SYS_H_
+#ifndef SYSTEM_H_
+#define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
@@ -36,4 +36,4 @@ enum sysClockDevice
 extern inline void sysClockEnable(enum sysClockDevice);
 extern inline void sysClockDisable(enum sysClockDevice);
 /*----------------------------------------------------------------------------*/
-#endif /* LPC13XX_SYS_H_ */
+#endif /* SYSTEM_H_ */
