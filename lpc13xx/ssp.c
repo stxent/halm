@@ -71,10 +71,11 @@ static const struct InterfaceClass sspTable = {
     .init = sspInit,
     .deinit = sspDeinit,
 
-    .read = 0,
-    .write = 0,
+    .callback = 0,
     .get = 0,
-    .set = 0
+    .set = 0,
+    .read = 0,
+    .write = 0
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *Ssp = &sspTable;
@@ -111,23 +112,23 @@ void SSP1_ISR(void)
     descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-void sspSetRate(struct Ssp *device, uint32_t rate)
+void sspSetRate(struct Ssp *interface, uint32_t rate)
 {
   uint16_t divider;
 
   divider = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / rate - 1;
   /* FIXME Rewrite */
-  device->reg->CPSR = 2;
-  device->reg->CR0 &= ~CR0_SCR_MASK;
-  device->reg->CR0 |= CR0_SCR(divider);
+  interface->reg->CPSR = 2;
+  interface->reg->CR0 &= ~CR0_SCR_MASK;
+  interface->reg->CR0 |= CR0_SCR(divider);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetRate(struct Ssp *device)
+uint32_t sspGetRate(struct Ssp *interface)
 {
   uint32_t rate;
   uint16_t divider;
 
-  divider = CR0_SCR_VALUE(device->reg->CR0);
+  divider = CR0_SCR_VALUE(interface->reg->CR0);
   rate = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
   return rate;
 }
@@ -136,53 +137,53 @@ static enum result sspInit(void *object, const void *configPtr)
 {
   const struct GpioDescriptor *pin;
   const struct SspConfig * const config = configPtr;
-  struct Ssp *device = object;
+  struct Ssp *interface = object;
   enum result res;
 
   /* TODO Add mater/slave select */
-  /* Check device configuration data */
+  /* Check interface configuration data */
   assert(config);
 
   /* Try to set peripheral descriptor */
-  device->channel = config->channel;
-  if ((res = setDescriptor(device->channel, device)) != E_OK)
+  interface->channel = config->channel;
+  if ((res = setDescriptor(interface->channel, interface)) != E_OK)
     return res;
 
   /* Reset pointer to interrupt handler */
-  device->handler = 0;
+  interface->handler = 0;
 
   /* Setup Serial Clock pin */
-  pin = gpioFind(sspPins, config->sck, device->channel);
+  pin = gpioFind(sspPins, config->sck, interface->channel);
   assert(pin);
-  device->sckPin = gpioInit(config->sck, GPIO_OUTPUT);
-  gpioSetFunction(&device->sckPin, pin->value);
+  interface->sckPin = gpioInit(config->sck, GPIO_OUTPUT);
+  gpioSetFunction(&interface->sckPin, pin->value);
 
   /* Setup MISO pin */
-  pin = gpioFind(sspPins, config->miso, device->channel);
+  pin = gpioFind(sspPins, config->miso, interface->channel);
   assert(pin);
-  device->misoPin = gpioInit(config->miso, GPIO_INPUT);
-  gpioSetFunction(&device->misoPin, pin->value);
+  interface->misoPin = gpioInit(config->miso, GPIO_INPUT);
+  gpioSetFunction(&interface->misoPin, pin->value);
 
   /* Setup MOSI pin */
-  pin = gpioFind(sspPins, config->mosi, device->channel);
+  pin = gpioFind(sspPins, config->mosi, interface->channel);
   assert(pin);
-  device->mosiPin = gpioInit(config->mosi, GPIO_OUTPUT);
-  gpioSetFunction(&device->mosiPin, pin->value);
+  interface->mosiPin = gpioInit(config->mosi, GPIO_OUTPUT);
+  gpioSetFunction(&interface->mosiPin, pin->value);
 
   /* Setup CS pin, only in slave mode */
-//  pin = gpioFind(sspPins, config->cs, device->channel);
+//  pin = gpioFind(sspPins, config->cs, interface->channel);
 //  assert(pin);
-//  device->csPin = gpioInit(config->cs, GPIO_INPUT);
-//  gpioSetFunction(&device->csPin, pin->value);
+//  interface->csPin = gpioInit(config->cs, GPIO_INPUT);
+//  gpioSetFunction(&interface->csPin, pin->value);
 
-  switch (device->channel)
+  switch (interface->channel)
   {
     case 0:
       sysClockEnable(CLK_SSP0);
       LPC_SYSCON->SSP0CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
       LPC_SYSCON->PRESETCTRL = 1; /* FIXME */
-      device->reg = LPC_SSP0;
-      device->irq = SSP0_IRQ;
+      interface->reg = LPC_SSP0;
+      interface->irq = SSP0_IRQ;
 
       /* Set SCK0 pin location register */
       switch (config->sck)
@@ -202,32 +203,32 @@ static enum result sspInit(void *object, const void *configPtr)
       sysClockEnable(CLK_SSP1);
       LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
       LPC_SYSCON->PRESETCTRL = 4; /* FIXME */
-      device->reg = LPC_SSP1;
-      device->irq = SSP1_IRQ;
+      interface->reg = LPC_SSP1;
+      interface->irq = SSP1_IRQ;
       break;
   }
 
-  device->reg->CR0 = 0;
+  interface->reg->CR0 = 0;
   if (!config->frame)
-    device->reg->CR0 |= CR0_DSS(8);
+    interface->reg->CR0 |= CR0_DSS(8);
   else
   {
     assert(config->frame >= 4 && config->frame <= 16);
-    device->reg->CR0 |= CR0_DSS(config->frame);
+    interface->reg->CR0 |= CR0_DSS(config->frame);
   }
 
-  sspSetRate(device, config->rate); /* TODO Remove assert and add return val */
-  device->reg->CR1 = CR1_SSE; /* Enable peripheral */
+  sspSetRate(interface, config->rate);
+  interface->reg->CR1 = CR1_SSE; /* Enable peripheral */
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void sspDeinit(void *object)
 {
-  struct Ssp *device = object;
+  struct Ssp *interface = object;
 
   /* Disable UART peripheral power */
-  switch (device->channel)
+  switch (interface->channel)
   {
     case 0:
       LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
@@ -240,10 +241,10 @@ static void sspDeinit(void *object)
       sysClockDisable(CLK_SSP1);
       break;
   }
-//  gpioDeinit(&device->csPin);
-  gpioDeinit(&device->mosiPin);
-  gpioDeinit(&device->misoPin);
-  gpioDeinit(&device->sckPin);
+//  gpioDeinit(&interface->csPin);
+  gpioDeinit(&interface->mosiPin);
+  gpioDeinit(&interface->misoPin);
+  gpioDeinit(&interface->sckPin);
   /* Reset SSP descriptor */
-  setDescriptor(device->channel, 0);
+  setDescriptor(interface->channel, 0);
 }

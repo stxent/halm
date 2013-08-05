@@ -23,7 +23,7 @@ enum cardType
 struct SdioSpiConfig
 {
   struct Interface *interface; /* Mandatory: low-level character device */
-  gpioKey cs;
+  gpioKey cs; /* Mandatory: chip select pin */
 };
 /*----------------------------------------------------------------------------*/
 struct SdioSpi
@@ -32,8 +32,12 @@ struct SdioSpi
 
   struct Interface *interface;
   uint64_t position;
-  uint32_t id; /* Unique device identifier */
+
+  void (*callback)(void *); /* Function called on completion event */
+  void *callbackArgument;
+
   struct Gpio csPin;
+  bool blocking; /* By default interface is in blocking mode */
   Mutex lock;
   enum cardType capacity;
 };

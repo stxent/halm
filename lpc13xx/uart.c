@@ -36,10 +36,11 @@ static const struct InterfaceClass uartTable = {
     .init = uartInit,
     .deinit = uartDeinit,
 
-    .read = 0,
-    .write = 0,
+    .callback = 0,
     .get = 0,
-    .set = 0
+    .set = 0,
+    .read = 0,
+    .write = 0
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *Uart = &uartTable;
@@ -71,7 +72,7 @@ enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-enum result setDescriptor(uint8_t channel, struct Uart *device)
+enum result setDescriptor(uint8_t channel, struct Uart *interface)
 {
   enum result res = E_BUSY;
 
@@ -80,35 +81,35 @@ enum result setDescriptor(uint8_t channel, struct Uart *device)
   mutexLock(&lock);
   if (!descriptors[channel])
   {
-    descriptors[channel] = device;
+    descriptors[channel] = interface;
     res = E_OK;
   }
   mutexUnlock(&lock);
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void uartSetRate(struct Uart *device, struct UartRateConfig rate)
+void uartSetRate(struct Uart *interface, struct UartRateConfig rate)
 {
   /* Enable DLAB access */
-  device->reg->LCR |= LCR_DLAB;
+  interface->reg->LCR |= LCR_DLAB;
   /* Set divisor of the baud rate generator */
-  device->reg->DLL = rate.low;
-  device->reg->DLM = rate.high;
+  interface->reg->DLL = rate.low;
+  interface->reg->DLM = rate.high;
   /* Set fractional divisor */
-  device->reg->FDR = rate.fraction;
+  interface->reg->FDR = rate.fraction;
   /* Disable DLAB access */
-  device->reg->LCR &= ~LCR_DLAB;
+  interface->reg->LCR &= ~LCR_DLAB;
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
 {
   const struct GpioDescriptor *pin;
   const struct UartConfig * const config = configPtr;
-  struct Uart *device = object;
+  struct Uart *interface = object;
   struct UartRateConfig rate;
   enum result res;
 
-  /* Check device configuration data */
+  /* Check interface configuration data */
   assert(config);
 
   /* Calculate and check baud rate value */
@@ -116,47 +117,47 @@ static enum result uartInit(void *object, const void *configPtr)
     return res;
 
   /* Try to set peripheral descriptor */
-  device->channel = config->channel;
-  if ((res = setDescriptor(device->channel, device)) != E_OK)
+  interface->channel = config->channel;
+  if ((res = setDescriptor(interface->channel, interface)) != E_OK)
     return res;
 
   /* Reset pointer to interrupt handler function */
-  device->handler = 0;
+  interface->handler = 0;
 
   /* Setup UART RX pin */
-  pin = gpioFind(uartPins, config->rx, device->channel);
+  pin = gpioFind(uartPins, config->rx, interface->channel);
   assert(pin);
-  device->rxPin = gpioInit(config->rx, GPIO_INPUT);
-  gpioSetFunction(&device->rxPin, pin->value);
+  interface->rxPin = gpioInit(config->rx, GPIO_INPUT);
+  gpioSetFunction(&interface->rxPin, pin->value);
 
   /* Setup UART TX pin */
-  pin = gpioFind(uartPins, config->tx, device->channel);
+  pin = gpioFind(uartPins, config->tx, interface->channel);
   assert(pin);
-  device->txPin = gpioInit(config->tx, GPIO_OUTPUT);
-  gpioSetFunction(&device->txPin, pin->value);
+  interface->txPin = gpioInit(config->tx, GPIO_OUTPUT);
+  gpioSetFunction(&interface->txPin, pin->value);
 
   switch (config->channel)
   {
     case 0:
       sysClockEnable(CLK_UART);
       LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV; /* Divide AHB clock */
-      device->reg = LPC_UART;
-      device->irq = UART_IRQ;
+      interface->reg = LPC_UART;
+      interface->irq = UART_IRQ;
       break;
   }
 
-  device->reg->FCR = 0;
-  device->reg->IER = 0;
+  interface->reg->FCR = 0;
+  interface->reg->IER = 0;
   /* Set 8-bit length */
-  device->reg->LCR = LCR_WORD_8BIT;
+  interface->reg->LCR = LCR_WORD_8BIT;
   /* Set parity */
   if (config->parity != UART_PARITY_NONE)
   {
-    device->reg->LCR |= LCR_PARITY;
+    interface->reg->LCR |= LCR_PARITY;
     if (config->parity == UART_PARITY_EVEN)
-      device->reg->LCR |= LCR_PARITY_EVEN;
+      interface->reg->LCR |= LCR_PARITY_EVEN;
     else
-      device->reg->LCR |= LCR_PARITY_ODD;
+      interface->reg->LCR |= LCR_PARITY_ODD;
   }
 
   uartSetRate(object, rate);
@@ -166,13 +167,13 @@ static enum result uartInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void uartDeinit(void *object)
 {
-  struct Uart *device = object;
+  struct Uart *interface = object;
 
   /* Disable UART peripheral power */
   LPC_SYSCON->UARTCLKDIV = 0;
   sysClockDisable(CLK_UART);
-  gpioDeinit(&device->txPin);
-  gpioDeinit(&device->rxPin);
+  gpioDeinit(&interface->txPin);
+  gpioDeinit(&interface->rxPin);
   /* Reset UART descriptor */
-  setDescriptor(device->channel, 0);
+  setDescriptor(interface->channel, 0);
 }

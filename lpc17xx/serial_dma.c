@@ -16,10 +16,11 @@ static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
-static uint32_t serialRead(void *, uint8_t *, uint32_t);
-static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
+static enum result serialCallback(void *, void (*)(void *), void *);
 static enum result serialGet(void *, enum ifOption, void *);
 static enum result serialSet(void *, enum ifOption, const void *);
+static uint32_t serialRead(void *, uint8_t *, uint32_t);
+static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const enum gpdmaLine dmaTxLines[] = {
     GPDMA_LINE_UART0_TX,
@@ -42,22 +43,23 @@ static const struct InterfaceClass serialDmaTable = {
     .init = serialInit,
     .deinit = serialDeinit,
 
-    .read = serialRead,
-    .write = serialWrite,
+    .callback = serialCallback,
     .get = serialGet,
-    .set = serialSet
+    .set = serialSet,
+    .read = serialRead,
+    .write = serialWrite
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *SerialDma = &serialDmaTable;
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
+static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
     int8_t txChannel)
 {
   struct GpdmaConfig channels[2] = {
       {
           .channel = rxChannel,
           .source = {
-              .line = dmaRxLines[device->parent.channel],
+              .line = dmaRxLines[interface->parent.channel],
               .increment = false
           },
           .destination = {
@@ -74,7 +76,7 @@ static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
               .increment = true
           },
           .destination = {
-              .line = dmaTxLines[device->parent.channel],
+              .line = dmaTxLines[interface->parent.channel],
               .increment = false
           },
           .direction = GPDMA_DIR_M2P,
@@ -83,13 +85,13 @@ static enum result dmaSetup(struct SerialDma *device, int8_t rxChannel,
       }
   };
 
-  device->rxDma = init(Gpdma, channels + 0);
-  if (!device->rxDma)
+  interface->rxDma = init(Gpdma, channels + 0);
+  if (!interface->rxDma)
     return E_ERROR;
-  device->txDma = init(Gpdma, channels + 1);
-  if (!device->txDma)
+  interface->txDma = init(Gpdma, channels + 1);
+  if (!interface->txDma)
   {
-    deinit(device->rxDma);
+    deinit(interface->rxDma);
     return E_ERROR;
   }
   return E_OK;
@@ -102,13 +104,13 @@ static void interruptHandler(void *object __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
-  /* Set pointer to device configuration data */
+  /* Set pointer to interface configuration data */
   const struct SerialDmaConfig * const config = configPtr;
-  struct SerialDma *device = object;
+  struct SerialDma *interface = object;
   struct UartConfig parentConfig;
   enum result res;
 
-  /* Check device configuration data */
+  /* Check interface configuration data */
   assert(config);
 
   /* Initialize parent configuration structure */
@@ -123,82 +125,61 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
 
   /* Set pointer to hardware interrupt handler */
-  device->parent.handler = interruptHandler;
-  device->dmaLock = MUTEX_UNLOCKED;
+  interface->parent.handler = interruptHandler;
+  interface->dmaLock = MUTEX_UNLOCKED;
 
-  if ((res = dmaSetup(device, config->rxChannel, config->txChannel)) != E_OK)
+  if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
   {
-    Uart->deinit(device);
+    Uart->deinit(interface);
     return res;
   }
 
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  device->parent.reg->FCR |= FCR_ENABLE | FCR_DMA_ENABLE
+  interface->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
+  interface->parent.reg->FCR |= FCR_ENABLE | FCR_DMA_ENABLE
       | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
-  device->parent.reg->TER = TER_TXEN;
+  interface->parent.reg->TER = TER_TXEN;
   /* All interrupts are disabled by default */
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  struct SerialDma *device = object;
+  struct SerialDma *interface = object;
 
   /* Free DMA channel descriptors */
-  deinit(device->txDma);
-  deinit(device->rxDma);
+  deinit(interface->txDma);
+  deinit(interface->rxDma);
   /* Call UART class destructor */
-  Uart->deinit(device);
+  Uart->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
+static enum result serialCallback(void *object, void (*callback)(void *),
+    void *argument)
 {
-  struct SerialDma *device = object;
-  uint32_t read = 0;
-
-  mutexLock(&device->dmaLock);
-  /* TODO Add DMA error handling */
-  if (length && dmaStart(device->rxDma,
-      buffer, (void *)&device->parent.reg->RBR, length) == E_OK)
-  {
-    while (dmaIsActive(device->rxDma));
-    read = length;
-  }
-  mutexUnlock(&device->dmaLock);
-
-  return read;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t serialWrite(void *object, const uint8_t *buffer,
-    uint32_t length)
-{
-  struct SerialDma *device = object;
-  uint32_t written = 0;
-
-  mutexLock(&device->dmaLock);
-  /* TODO Add DMA error handling */
-  if (length && dmaStart(device->txDma,
-      (void *)&device->parent.reg->THR, buffer, length) == E_OK)
-  {
-    /* Wait until all bytes transferred */
-    while (dmaIsActive(device->txDma));
-    written = length;
-  }
-  mutexUnlock(&device->dmaLock);
-
-  return written;
+  /* Callback functionality not implemented */
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialGet(void *object, enum ifOption option, void *data)
 {
-  return E_ERROR;
+  struct SerialDma *interface = object;
+  enum result res;
+
+  switch (option)
+  {
+    case IF_RATE:
+      /* TODO */
+      return E_ERROR;
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct SerialDma *device = object;
+  struct SerialDma *interface = object;
   enum result res;
 
   switch (option)
@@ -215,4 +196,42 @@ static enum result serialSet(void *object, enum ifOption option,
     default:
       return E_ERROR;
   }
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
+{
+  struct SerialDma *interface = object;
+  uint32_t read = 0;
+
+  mutexLock(&interface->dmaLock);
+  /* TODO Add DMA error handling */
+  if (length && dmaStart(interface->rxDma,
+      buffer, (void *)&interface->parent.reg->RBR, length) == E_OK)
+  {
+    while (dmaIsActive(interface->rxDma));
+    read = length;
+  }
+  mutexUnlock(&interface->dmaLock);
+
+  return read;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t serialWrite(void *object, const uint8_t *buffer,
+    uint32_t length)
+{
+  struct SerialDma *interface = object;
+  uint32_t written = 0;
+
+  mutexLock(&interface->dmaLock);
+  /* TODO Add DMA error handling */
+  if (length && dmaStart(interface->txDma,
+      (void *)&interface->parent.reg->THR, buffer, length) == E_OK)
+  {
+    /* Wait until all bytes transferred */
+    while (dmaIsActive(interface->txDma));
+    written = length;
+  }
+  mutexUnlock(&interface->dmaLock);
+
+  return written;
 }

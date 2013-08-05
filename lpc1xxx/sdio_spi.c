@@ -71,29 +71,32 @@ static enum result writeBlock(struct SdioSpi *, const uint8_t *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
-static uint32_t sdioRead(void *, uint8_t *, uint32_t);
-static uint32_t sdioWrite(void *, const uint8_t *, uint32_t);
+static enum result sdioCallback(void *, void (*)(void *), void *);
 static enum result sdioGet(void *, enum ifOption, void *);
 static enum result sdioSet(void *, enum ifOption, const void *);
+static uint32_t sdioRead(void *, uint8_t *, uint32_t);
+static uint32_t sdioWrite(void *, const uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass sdioTable = {
     .size = sizeof(struct SdioSpi),
     .init = sdioInit,
     .deinit = sdioDeinit,
 
-    .read = sdioRead,
-    .write = sdioWrite,
+    .callback = sdioCallback,
     .get = sdioGet,
-    .set = sdioSet
+    .set = sdioSet,
+    .read = sdioRead,
+    .write = sdioWrite
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *SdioSpi = &sdioTable;
 /*----------------------------------------------------------------------------*/
 static inline enum result acquireBus(struct SdioSpi *device)
 {
+  const uint32_t lockValue = 1;
   enum result res;
 
-  if ((res = ifSet(device->interface, IF_DEVICE, &device->id)) != E_OK)
+  if ((res = ifSet(device->interface, IF_LOCK, &lockValue)) != E_OK)
     return res;
   gpioWrite(&device->csPin, 0);
   return E_OK;
@@ -107,10 +110,10 @@ static inline uint32_t calcPosition(struct SdioSpi *device)
 /*----------------------------------------------------------------------------*/
 static inline void releaseBus(struct SdioSpi *device)
 {
-  const uint32_t emptyId = 0;
+  const uint32_t lockValue = 0;
 
   gpioWrite(&device->csPin, 1);
-  ifSet(device->interface, IF_DEVICE, &emptyId);
+  ifSet(device->interface, IF_LOCK, &lockValue);
 }
 /*----------------------------------------------------------------------------*/
 static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
@@ -191,6 +194,7 @@ static enum result getLongResponse(struct SdioSpi *device,
 static enum result resetCard(struct SdioSpi *device)
 {
   const uint32_t lowSpeed = 200000;
+  const uint32_t lockValue = 1;
   const uint8_t dummyByte = 0xFF; /* Emulate high level during setup */
   uint32_t srcSpeed;
   uint16_t counter;
@@ -203,7 +207,7 @@ static enum result resetCard(struct SdioSpi *device)
   device->position = 0;
 
   /* Acquire bus but leave chip select high */
-  if ((res = ifSet(device->interface, IF_DEVICE, &device->id)) != E_OK)
+  if ((res = ifSet(device->interface, IF_LOCK, &lockValue)) != E_OK)
     return res;
 
   ifGet(device->interface, IF_RATE, &srcSpeed);
@@ -280,35 +284,6 @@ static enum result resetCard(struct SdioSpi *device)
   ifSet(device->interface, IF_RATE, &srcSpeed);
   releaseBus(device);
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static enum result sdioInit(void *object, const void *configPtr)
-{
-  const struct SdioSpiConfig * const config = configPtr;
-  struct SdioSpi *device = object;
-  enum result res;
-
-  /* Check device configuration data */
-  assert(config);
-  assert(config->interface);
-
-  device->interface = config->interface;
-
-  device->csPin = gpioInit(config->cs, GPIO_OUTPUT);
-  gpioWrite(&device->csPin, 1);
-  device->id = (uint32_t)config->cs;
-
-  if ((res = resetCard(device)) != E_OK)
-    return res;
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void sdioDeinit(void *object)
-{
-  struct SdioSpi *device = object;
-
-  gpioDeinit(&device->csPin);
 }
 /*----------------------------------------------------------------------------*/
 static enum result readBlock(struct SdioSpi *device, uint8_t *buffer)
@@ -396,6 +371,84 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static enum result sdioInit(void *object, const void *configPtr)
+{
+  const struct SdioSpiConfig * const config = configPtr;
+  struct SdioSpi *device = object;
+  enum result res;
+
+  /* Check device configuration data */
+  assert(config);
+  assert(config->interface);
+
+  device->csPin = gpioInit(config->cs, GPIO_OUTPUT);
+  if (!gpioGetKey(&device->csPin))
+    return E_ERROR;
+  gpioWrite(&device->csPin, 1);
+
+  device->interface = config->interface;
+  device->callback = 0;
+  device->blocking = true;
+
+  if ((res = resetCard(device)) != E_OK)
+    return res;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void sdioDeinit(void *object)
+{
+  struct SdioSpi *device = object;
+
+  gpioDeinit(&device->csPin);
+}
+/*----------------------------------------------------------------------------*/
+static enum result sdioCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct SdioSpi *device = object;
+
+  device->callback = callback;
+  device->callbackArgument = argument;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result sdioGet(void *object, enum ifOption option, void *data)
+{
+  struct SdioSpi *device = object;
+
+  switch (option)
+  {
+    case IF_ADDRESS:
+      *(uint64_t *)data = device->position;
+      return E_OK;
+    case IF_NONBLOCKING:
+      *(uint32_t *)data = !device->blocking;
+      return E_OK;
+    default:
+      return E_ERROR;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result sdioSet(void *object, enum ifOption option,
+    const void *data)
+{
+  struct SdioSpi *device = object;
+
+  switch (option)
+  {
+    case IF_ADDRESS:
+      /* TODO Add boundary check */
+      device->position = *(uint64_t *)data;
+      return E_OK;
+    case IF_NONBLOCKING:
+      device->blocking = *(uint32_t *)data ? false : true;
+      return E_OK;
+    default:
+      return E_ERROR;
+  }
+}
+/*----------------------------------------------------------------------------*/
 static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi *device = object;
@@ -480,34 +533,4 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   releaseBus(device);
   return counter << BLOCK_POW;
-}
-/*----------------------------------------------------------------------------*/
-static enum result sdioGet(void *object, enum ifOption option, void *data)
-{
-  struct SdioSpi *device = object;
-
-  switch (option)
-  {
-    case IF_ADDRESS:
-      *(uint64_t *)data = device->position;
-      return E_OK;
-    default:
-      return E_ERROR;
-  }
-}
-/*----------------------------------------------------------------------------*/
-static enum result sdioSet(void *object, enum ifOption option,
-    const void *data)
-{
-  struct SdioSpi *device = object;
-
-  switch (option)
-  {
-    case IF_ADDRESS:
-      /* TODO Add boundary check */
-      device->position = *(uint64_t *)data;
-      return E_OK;
-    default:
-      return E_ERROR;
-  }
 }

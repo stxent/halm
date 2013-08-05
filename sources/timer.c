@@ -10,11 +10,11 @@
  * Set timer overflow callback.
  * @param timer Pointer to Timer object.
  * @param callback Callback function.
- * @param parameters Callback function parameters.
+ * @param parameters Callback function argument.
  */
-void timerSetCallback(void *timer, void (*callback)(void *), void *parameters)
+void timerSetCallback(void *timer, void (*callback)(void *), void *argument)
 {
-  ((struct TimerClass *)CLASS(timer))->setCallback(timer, callback, parameters);
+  ((struct TimerClass *)CLASS(timer))->setCallback(timer, callback, argument);
 }
 /*----------------------------------------------------------------------------*/
 /**

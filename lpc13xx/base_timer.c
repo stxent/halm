@@ -46,7 +46,7 @@ static void interruptHandler(void *object)
   if (device->reg->IR & IR_MATCH_INTERRUPT(0)) /* Match 0 */
   {
     if (device->callback)
-      device->callback(device->callbackParameters);
+      device->callback(device->callbackArgument);
     device->reg->IR = IR_MATCH_INTERRUPT(0); /* Clear flag */
   }
 }
@@ -125,12 +125,12 @@ static void btSetOverflow(void *object, uint32_t overflow)
 }
 /*----------------------------------------------------------------------------*/
 static void btSetCallback(void *object, void (*callback)(void *),
-    void *parameters)
+    void *argument)
 {
   struct BaseTimer *device = object;
 
   device->callback = callback;
-  device->callbackParameters = parameters;
+  device->callbackArgument = argument;
   /* Enable or disable Match interrupt and counter reset after each interrupt */
   if (callback)
     device->reg->MCR |= MCR_INTERRUPT(0) | MCR_RESET(0);

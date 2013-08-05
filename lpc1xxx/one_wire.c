@@ -24,144 +24,143 @@ enum cleanup
 {
   FREE_NONE = 0,
   FREE_PARENT,
-  FREE_RX_QUEUE,
   FREE_TX_QUEUE,
   FREE_ALL
 };
 /*----------------------------------------------------------------------------*/
+static void beginTransmission(struct OneWire *);
 static void cleanup(struct OneWire *, enum cleanup);
 static void interruptHandler(void *);
-static enum result resetChannel(struct OneWire *);
 static void sendWord(struct OneWire *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result oneWireInit(void *, const void *);
 static void oneWireDeinit(void *);
-static uint32_t oneWireRead(void *, uint8_t *, uint32_t);
-static uint32_t oneWireWrite(void *, const uint8_t *, uint32_t);
+static enum result oneWireCallback(void *, void (*)(void *), void *);
 static enum result oneWireGet(void *, enum ifOption, void *);
 static enum result oneWireSet(void *, enum ifOption, const void *);
+static uint32_t oneWireRead(void *, uint8_t *, uint32_t);
+static uint32_t oneWireWrite(void *, const uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass serialTable = {
     .size = sizeof(struct OneWire),
     .init = oneWireInit,
     .deinit = oneWireDeinit,
 
-    .read = oneWireRead,
-    .write = oneWireWrite,
+    .callback = oneWireCallback,
     .get = oneWireGet,
-    .set = oneWireSet
+    .set = oneWireSet,
+    .read = oneWireRead,
+    .write = oneWireWrite
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *OneWire = &serialTable;
 /*----------------------------------------------------------------------------*/
-static void cleanup(struct OneWire *device, enum cleanup step)
+static void beginTransmission(struct OneWire *interface)
+{
+  uartSetRate((struct Uart *)interface, interface->resetRate);
+  interface->state = OW_RESET;
+  /* Clear RX FIFO and set trigger level to 1 character */
+  interface->parent.reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(0);
+  interface->parent.reg->THR = 0xF0; /* Execute reset */
+}
+/*----------------------------------------------------------------------------*/
+static void cleanup(struct OneWire *interface, enum cleanup step)
 {
   switch (step)
   {
     case FREE_ALL:
-      nvicDisable(device->parent.irq); /* Disable interrupt */
+      nvicDisable(interface->parent.irq); /* Disable interrupt */
     case FREE_TX_QUEUE:
-      queueDeinit(&device->txQueue);
-    case FREE_RX_QUEUE:
-      queueDeinit(&device->rxQueue);
+      queueDeinit(&interface->txQueue);
     case FREE_PARENT:
-      Uart->deinit(device); /* Call UART class destructor */
+      Uart->deinit(interface); /* Call UART class destructor */
       break;
     default:
       break;
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result resetChannel(struct OneWire *device)
-{
-  uartSetRate((struct Uart *)device, device->resetRate);
-  device->state = OW_RESET;
-  /* Clear RX FIFO and set trigger level to 1 character */
-  device->parent.reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(0);
-  device->parent.reg->THR = 0xF0; /* Execute reset */
-  while (device->state == OW_RESET); /* Wait reset to be completed */
-
-  if (device->state == OW_READY)
-  {
-    uartSetRate((struct Uart *)device, device->dataRate);
-    return E_OK;
-  }
-  else
-    return E_DEVICE;
-}
-/*----------------------------------------------------------------------------*/
-static void sendWord(struct OneWire *device, uint8_t word)
+static void sendWord(struct OneWire *interface, uint8_t word)
 {
   uint8_t counter = 0;
 
   while (counter < 8)
-    device->parent.reg->THR = (word >> counter++) & 0x01 ? 0xFF : 0;
-//    device->parent.reg->THR = ((word >> counter++) & 0x01) * 0xFF;
+    interface->parent.reg->THR = (word >> counter++) & 0x01 ? 0xFF : 0;
+/*    interface->parent.reg->THR = ((word >> counter++) & 0x01) * 0xFF; */
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct OneWire *device = object;
+  struct OneWire *interface = object;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  if (device->parent.reg->IIR & IIR_INT_STATUS)
+  if (interface->parent.reg->IIR & IIR_INT_STATUS)
     return;
 
   /* Byte will be removed from FIFO after reading from RBR register */
-  while (device->parent.reg->LSR & LSR_RDR)
+  while (interface->parent.reg->LSR & LSR_RDR)
   {
-    uint8_t data = device->parent.reg->RBR;
-    switch (device->state)
+    uint8_t data = interface->parent.reg->RBR;
+    switch (interface->state)
     {
       case OW_RESET:
-        device->state = data ^ 0xF0 ? OW_READY : OW_IDLE;
+        if (data ^ 0xF0)
+        {
+          uartSetRate((struct Uart *)interface, interface->dataRate);
+          interface->state = OW_TRANSMIT;
+        }
+        else
+        {
+          interface->state = OW_IDLE;
+        }
         break;
       case OW_RECEIVE:
         if (data & 0x01)
-          device->word |= 1 << device->rxPosition;
-        if (++device->rxPosition == 8)
+          interface->word |= 1 << interface->rxPosition;
+      case OW_TRANSMIT:
+        if (++interface->rxPosition == 8)
         {
-          queuePush(&device->rxQueue, device->word);
-          device->word = 0x00;
-          device->rxPosition = 0;
-          if (!--device->left)
-            device->state = OW_IDLE;
+          if (interface->state == OW_RECEIVE)
+          {
+            *interface->rxBuffer++ = interface->word;
+            interface->word = 0x00;
+          }
+          interface->rxPosition = 0;
+          if (!--interface->left)
+          {
+            interface->state = OW_IDLE;
+            if (interface->callback)
+              interface->callback(interface->callbackArgument);
+          }
         }
         break;
-      case OW_TRANSMIT:
-        if (++device->rxPosition == 8)
-        {
-          device->rxPosition = 0;
-          if (!--device->left)
-            device->state = OW_IDLE;
-        }
       default:
         break;
     }
   }
-  if (device->parent.reg->LSR & LSR_THRE)
+  if ((interface->parent.reg->LSR & LSR_THRE) && interface->state != OW_RESET)
   {
     /* Fill FIFO with next word or end the transaction */
-    if (!queueEmpty(&device->txQueue))
-      sendWord(device, queuePop(&device->txQueue));
+    if (!queueEmpty(&interface->txQueue))
+      sendWord(interface, queuePop(&interface->txQueue));
   }
 }
 /*----------------------------------------------------------------------------*/
 static enum result oneWireInit(void *object, const void *configPtr)
 {
-  /* Set pointer to device configuration data */
+  /* Set pointer to interface configuration data */
   const struct OneWireConfig * const config = configPtr;
-  struct OneWire *device = object;
+  struct OneWire *interface = object;
   struct UartConfig parentConfig;
   enum result res;
 
-  /* Check device configuration data */
+  /* Check interface configuration data */
   assert(config);
 
   /* Compute rates */
-   if ((res = uartCalcRate(&device->dataRate, RATE_DATA)) != E_OK)
+   if ((res = uartCalcRate(&interface->dataRate, RATE_DATA)) != E_OK)
      return res;
-   if ((res = uartCalcRate(&device->resetRate, RATE_RESET)) != E_OK)
+   if ((res = uartCalcRate(&interface->resetRate, RATE_RESET)) != E_OK)
      return res;
 
   /* Initialize parent configuration structure */
@@ -174,39 +173,37 @@ static enum result oneWireInit(void *object, const void *configPtr)
   if ((res = Uart->init(object, &parentConfig)) != E_OK)
     return res;
 
-  gpioSetType(&device->parent.txPin, GPIO_OPENDRAIN);
-//  gpioSetPull(&device->parent.txPin, GPIO_PULLUP); //XXX
+  gpioSetType(&interface->parent.txPin, GPIO_OPENDRAIN);
+//  gpioSetPull(&interface->parent.txPin, GPIO_PULLUP); //XXX
 
   /* Set pointer to hardware interrupt handler */
-  device->parent.handler = interruptHandler;
+  interface->parent.handler = interruptHandler;
 
-  /* Initialize RX and TX queues */
-  if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
+  /* Initialize TX queue */
+  if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
   {
-    cleanup(device, FREE_PARENT);
-    return res;
-  }
-  if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
-  {
-    cleanup(device, FREE_RX_QUEUE);
+    cleanup(interface, FREE_PARENT);
     return res;
   }
 
-  device->channelLock = MUTEX_UNLOCKED;
-  device->state = OW_IDLE;
-  device->address.rom = 0;
+  interface->callback = 0;
+
+  interface->blocking = true;
+  interface->channelLock = MUTEX_UNLOCKED;
+  interface->state = OW_IDLE;
+  interface->address.rom = 0;
 
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  device->parent.reg->FCR |= FCR_ENABLE;
+  interface->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
+  interface->parent.reg->FCR |= FCR_ENABLE;
   /* Enable RBR and THRE interrupts */
-  device->parent.reg->IER |= IER_THRE;
-  device->parent.reg->IER |= IER_RBR | IER_THRE;
+  interface->parent.reg->IER |= IER_THRE;
+  interface->parent.reg->IER |= IER_RBR | IER_THRE;
 
   /* Set interrupt priority, lowest by default */
-  nvicSetPriority(device->parent.irq, DEFAULT_PRIORITY);
+  nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
-  nvicEnable(device->parent.irq);
+  nvicEnable(interface->parent.irq);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -215,26 +212,67 @@ static void oneWireDeinit(void *object)
   cleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
+static enum result oneWireCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct OneWire *interface = object;
+
+  interface->callback = callback;
+  interface->callbackArgument = argument;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
 static enum result oneWireGet(void *object, enum ifOption option, void *data)
 {
-  return E_ERROR;
+  struct OneWire *interface = object;
+
+  switch (option)
+  {
+    case IF_BUSY:
+      *(uint32_t *)data = interface->state != OW_IDLE;
+      return E_OK;
+    case IF_NONBLOCKING:
+      *(uint32_t *)data = !interface->blocking;
+      return E_OK;
+    case IF_DEVICE:
+      *(uint64_t *)data = interface->address.rom;
+      return E_OK;
+    case IF_PRIORITY:
+      *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
+      return E_OK;
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result oneWireSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct OneWire *device = object;
+  struct OneWire *interface = object;
 
   switch (option)
   {
     case IF_DEVICE:
-      if ((device->address.rom = *(uint64_t *)data))
-        mutexLock(&device->deviceLock);
+      interface->address.rom = *(uint64_t *)data;
+      return E_OK;
+    case IF_LOCK:
+      if (*(uint32_t *)data)
+      {
+        if (interface->blocking)
+          return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
+        else
+          mutexLock(&interface->channelLock);
+      }
       else
-        mutexUnlock(&device->deviceLock);
+      {
+        mutexUnlock(&interface->channelLock);
+      }
+      return E_OK;
+    case IF_NONBLOCKING:
+      interface->blocking = *(uint32_t *)data ? false : true;
       return E_OK;
     case IF_PRIORITY:
-      nvicSetPriority(device->parent.irq, *(uint32_t *)data);
+      nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     default:
       return E_ERROR;
@@ -243,31 +281,27 @@ static enum result oneWireSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct OneWire *device = object;
-  uint32_t read;
+  struct OneWire *interface = object;
+  uint32_t read = 0;
 
   if (!length)
     return 0;
 
-  mutexLock(&device->channelLock);
+  queueClear(&interface->txQueue);
+  interface->rxPosition = 0;
+  interface->rxBuffer = buffer;
+  interface->word = 0x00;
+  while (!queueFull(&interface->txQueue) && ++read != length)
+    queuePush(&interface->txQueue, 0xFF);
+  interface->left = read;
 
-  device->rxPosition = 0;
-  device->left = 1;
-  device->word = 0x00;
-  while (device->left != length) //TODO Rewrite
-  {
-    queuePush(&device->txQueue, 0xFF);
-    device->left++;
-  }
-
-  device->state = OW_RECEIVE;
+  interface->state = OW_RECEIVE;
   /* Clear RX FIFO and set trigger level to 8 characters */
-  device->parent.reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(2);
-  sendWord(device, 0xFF); /* Start reception */
-  while (device->state == OW_RECEIVE);
-  read = queuePopArray(&device->rxQueue, buffer, length);
+  interface->parent.reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(2);
+  sendWord(interface, 0xFF); /* Start reception */
 
-  mutexUnlock(&device->channelLock);
+  if (interface->blocking)
+    while (interface->state != OW_IDLE);
 
   return read;
 }
@@ -275,42 +309,31 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
-  struct OneWire *device = object;
+  struct OneWire *interface = object;
   uint32_t written;
 
   if (!length)
     return 0;
 
-  mutexLock(&device->channelLock);
-
-  if (resetChannel(device) != E_OK)
-  {
-    /* No devices detected */
-    mutexUnlock(&device->channelLock);
-    return 0;
-  }
-
-  device->rxPosition = 0;
-  device->left = 1;
-  device->state = OW_TRANSMIT;
+  queueClear(&interface->txQueue);
+  interface->rxPosition = 0;
+  interface->left = 1;
   /* Initiate new transaction by selecting addressing mode */
-  if (device->address.rom)
+  if (interface->address.rom)
   {
-    device->left += queuePushArray(&device->txQueue,
-        (const uint8_t *)&device->address.rom, length);
-    written = queuePushArray(&device->txQueue, buffer, length);
-    device->left += written;
-    sendWord(device, (uint8_t)MATCH_ROM);
+    queuePush(&interface->txQueue, (uint8_t)MATCH_ROM);
+    interface->left += queuePushArray(&interface->txQueue,
+        (const uint8_t *)&interface->address.rom, length);
   }
   else
-  {
-    written = queuePushArray(&device->txQueue, buffer, length);
-    device->left += written;
-    sendWord(device, (uint8_t)SKIP_ROM);
-  }
-  while (device->state == OW_TRANSMIT);
+    queuePush(&interface->txQueue, (uint8_t)SKIP_ROM);
+  written = queuePushArray(&interface->txQueue, buffer, length);
+  interface->left += written;
 
-  mutexUnlock(&device->channelLock);
+  beginTransmission(interface);
+
+  if (interface->blocking)
+    while (interface->state != OW_IDLE);
 
   return written;
 }

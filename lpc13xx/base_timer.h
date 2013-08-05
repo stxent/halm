@@ -37,7 +37,7 @@ struct BaseTimer
 
   void (*handler)(void *); /* Hardware interrupt handler */
   void (*callback)(void *); /* User interrupt handler */
-  void *callbackParameters; /* User interrupt handler parameters */
+  void *callbackArgument; /* User interrupt handler argument */
 
   LPC_TMR_TypeDef *reg; /* Pointer to UART registers */
   enum interrupt irq; /* IRQ identifier */

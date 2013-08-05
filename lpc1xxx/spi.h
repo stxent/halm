@@ -27,8 +27,12 @@ struct Spi
   uint8_t *rxBuffer;
   const uint8_t *txBuffer;
   uint32_t left, fill;
+
+  void (*callback)(void *); /* Function called on completion event */
+  void *callbackArgument;
+
+  bool blocking; /* By default interface is in blocking mode */
   Mutex channelLock; /* Access to channel */
-  Mutex deviceLock; /* Used to avoid simultaneous access to multiple devices */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SPI_H_ */

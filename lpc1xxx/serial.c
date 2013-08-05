@@ -26,36 +26,38 @@ static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
-static uint32_t serialRead(void *, uint8_t *, uint32_t);
-static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
+static enum result serialCallback(void *, void (*)(void *), void *);
 static enum result serialGet(void *, enum ifOption, void *);
 static enum result serialSet(void *, enum ifOption, const void *);
+static uint32_t serialRead(void *, uint8_t *, uint32_t);
+static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass serialTable = {
     .size = sizeof(struct Serial),
     .init = serialInit,
     .deinit = serialDeinit,
 
-    .read = serialRead,
-    .write = serialWrite,
+    .callback = serialCallback,
     .get = serialGet,
-    .set = serialSet
+    .set = serialSet,
+    .read = serialRead,
+    .write = serialWrite
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *Serial = &serialTable;
 /*----------------------------------------------------------------------------*/
-static void cleanup(struct Serial *device, enum cleanup step)
+static void cleanup(struct Serial *interface, enum cleanup step)
 {
   switch (step)
   {
     case FREE_ALL:
-      nvicDisable(device->parent.irq); /* Disable interrupt */
+      nvicDisable(interface->parent.irq); /* Disable interrupt */
     case FREE_TX_QUEUE:
-      queueDeinit(&device->txQueue);
+      queueDeinit(&interface->txQueue);
     case FREE_RX_QUEUE:
-      queueDeinit(&device->rxQueue);
+      queueDeinit(&interface->rxQueue);
     case FREE_PARENT:
-      Uart->deinit(device); /* Call UART class destructor */
+      Uart->deinit(interface); /* Call UART class destructor */
       break;
     default:
       break;
@@ -64,40 +66,40 @@ static void cleanup(struct Serial *device, enum cleanup step)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct Serial *device = object;
+  struct Serial *interface = object;
   uint8_t data;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  if (device->parent.reg->IIR & IIR_INT_STATUS)
+  if (interface->parent.reg->IIR & IIR_INT_STATUS)
     return;
 
   /* Byte will be removed from FIFO after reading from RBR register */
-  while (device->parent.reg->LSR & LSR_RDR)
+  while (interface->parent.reg->LSR & LSR_RDR)
   {
-    data = device->parent.reg->RBR;
+    data = interface->parent.reg->RBR;
     /* Received bytes will be dropped when queue becomes full */
-    if (!queueFull(&device->rxQueue))
-      queuePush(&device->rxQueue, data);
+    if (!queueFull(&interface->rxQueue))
+      queuePush(&interface->rxQueue, data);
   }
-  if (device->parent.reg->LSR & LSR_THRE)
+  if (interface->parent.reg->LSR & LSR_THRE)
   {
     uint8_t counter = 0;
 
     /* Fill FIFO with selected burst size or less */
-    while (!queueEmpty(&device->txQueue) && counter++ < TX_FIFO_SIZE)
-      device->parent.reg->THR = queuePop(&device->txQueue);
+    while (!queueEmpty(&interface->txQueue) && counter++ < TX_FIFO_SIZE)
+      interface->parent.reg->THR = queuePop(&interface->txQueue);
   }
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
-  /* Set pointer to device configuration data */
+  /* Set pointer to interface configuration data */
   const struct SerialConfig * const config = configPtr;
-  struct Serial *device = object;
+  struct Serial *interface = object;
   struct UartConfig parentConfig;
   enum result res;
 
-  /* Check device configuration data */
+  /* Check interface configuration data */
   assert(config);
 
   /* Initialize parent configuration structure */
@@ -112,33 +114,33 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
 
   /* Set pointer to hardware interrupt handler */
-  device->parent.handler = interruptHandler;
+  interface->parent.handler = interruptHandler;
 
   /* Initialize RX and TX queues */
-  if ((res = queueInit(&device->rxQueue, config->rxLength)) != E_OK)
+  if ((res = queueInit(&interface->rxQueue, config->rxLength)) != E_OK)
   {
-    cleanup(device, FREE_PARENT);
+    cleanup(interface, FREE_PARENT);
     return res;
   }
-  if ((res = queueInit(&device->txQueue, config->txLength)) != E_OK)
+  if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
   {
-    cleanup(device, FREE_RX_QUEUE);
+    cleanup(interface, FREE_RX_QUEUE);
     return res;
   }
 
-  device->queueLock = MUTEX_UNLOCKED;
+  interface->queueLock = MUTEX_UNLOCKED;
 
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  device->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  device->parent.reg->FCR |= FCR_ENABLE | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
+  interface->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
+  interface->parent.reg->FCR |= FCR_ENABLE | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
   /* Enable RBR and THRE interrupts */
-  device->parent.reg->IER |= IER_RBR | IER_THRE;
-  device->parent.reg->TER = TER_TXEN;
+  interface->parent.reg->IER |= IER_RBR | IER_THRE;
+  interface->parent.reg->TER = TER_TXEN;
 
   /* Set interrupt priority, lowest by default */
-  nvicSetPriority(device->parent.irq, DEFAULT_PRIORITY);
+  nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
-  nvicEnable(device->parent.irq);
+  nvicEnable(interface->parent.irq);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -147,19 +149,47 @@ static void serialDeinit(void *object)
   cleanup(object, FREE_ALL);
 }
 /*----------------------------------------------------------------------------*/
+static enum result serialCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  /* Callback functionality not implemented */
+  return E_ERROR;
+}
+/*----------------------------------------------------------------------------*/
 static enum result serialGet(void *object, enum ifOption option, void *data)
 {
-  return E_ERROR;
+  struct Serial *interface = object;
+
+  switch (option)
+  {
+    case IF_AVAILABLE:
+      *(uint32_t *)data = queueSize(&interface->rxQueue);
+      return E_OK;
+    case IF_PENDING:
+      *(uint32_t *)data = queueSize(&interface->txQueue);
+      return E_OK;
+    case IF_PRIORITY:
+      *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
+      return E_OK;
+    case IF_RATE:
+      /* TODO */
+      return E_ERROR;
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct Serial *device = object;
+  struct Serial *interface = object;
   enum result res;
 
   switch (option)
   {
+    case IF_PRIORITY:
+      nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
+      return E_OK;
     case IF_RATE:
     {
       struct UartRateConfig rate;
@@ -169,9 +199,6 @@ static enum result serialSet(void *object, enum ifOption option,
       uartSetRate(object, rate);
       return E_OK;
     }
-    case IF_PRIORITY:
-      nvicSetPriority(device->parent.irq, *(uint32_t *)data);
-      return E_OK;
     default:
       return E_ERROR;
   }
@@ -179,44 +206,44 @@ static enum result serialSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct Serial *device = object;
+  struct Serial *interface = object;
   uint32_t read;
 
-  mutexLock(&device->queueLock);
-  nvicDisable(device->parent.irq);
-  read = queuePopArray(&device->rxQueue, buffer, length);
-  nvicEnable(device->parent.irq);
-  mutexUnlock(&device->queueLock);
+  mutexLock(&interface->queueLock);
+  nvicDisable(interface->parent.irq);
+  read = queuePopArray(&interface->rxQueue, buffer, length);
+  nvicEnable(interface->parent.irq);
+  mutexUnlock(&interface->queueLock);
   return read;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
-  struct Serial *device = object;
+  struct Serial *interface = object;
   uint32_t written = 0;
 
-  mutexLock(&device->queueLock);
+  mutexLock(&interface->queueLock);
   /* Check transmitter state */
-  if (device->parent.reg->LSR & LSR_TEMT && queueEmpty(&device->txQueue))
+  if (interface->parent.reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle, fill TX FIFO */
-    nvicDisable(device->parent.irq);
+    nvicDisable(interface->parent.irq);
     while (written < TX_FIFO_SIZE && written < length)
     {
-      device->parent.reg->THR = *buffer++;
+      interface->parent.reg->THR = *buffer++;
       ++written;
     }
-    nvicEnable(device->parent.irq);
+    nvicEnable(interface->parent.irq);
     length -= written;
   }
   if (length)
   {
     /* Fill TX queue with the rest of data */
-    nvicDisable(device->parent.irq);
-    written += queuePushArray(&device->txQueue, buffer, length);
-    nvicEnable(device->parent.irq);
+    nvicDisable(interface->parent.irq);
+    written += queuePushArray(&interface->txQueue, buffer, length);
+    nvicEnable(interface->parent.irq);
   }
-  mutexUnlock(&device->queueLock);
+  mutexUnlock(&interface->queueLock);
   return written;
 }

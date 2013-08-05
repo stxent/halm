@@ -48,14 +48,19 @@ struct OneWire
 {
   struct Uart parent;
 
+  void (*callback)(void *); /* Function called on completion event */
+  void *callbackArgument;
+
+  uint8_t *rxBuffer; /* Receive buffer */
+
   struct OneWireAddress address; /* Currently selected device */
   uint8_t rxPosition, left;
   uint8_t word;
 
-  struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
+  struct Queue txQueue; /* Transmit queue */
   struct UartRateConfig dataRate, resetRate;
+  bool blocking; /* By default interface is in blocking mode */
   Mutex channelLock; /* Access to medium */
-  Mutex deviceLock; /* Access to specific device */
   enum oneWireState state; /* Current 1-Wire interface state */
 };
 /*----------------------------------------------------------------------------*/
