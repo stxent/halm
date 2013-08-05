@@ -24,9 +24,10 @@ struct Queue
 /*----------------------------------------------------------------------------*/
 enum result queueInit(struct Queue *, uint16_t);
 void queueDeinit(struct Queue *);
-void queuePush(struct Queue *, uint8_t);
-uint8_t queuePop(struct Queue *);
+void queueClear(struct Queue *);
 uint8_t queuePeek(struct Queue *);
+uint8_t queuePop(struct Queue *);
+void queuePush(struct Queue *, uint8_t);
 uint16_t queuePushArray(struct Queue *, const uint8_t *, uint16_t);
 uint16_t queuePopArray(struct Queue *, uint8_t *, uint16_t);
 /*----------------------------------------------------------------------------*/

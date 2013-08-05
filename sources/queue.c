@@ -20,9 +20,7 @@ enum result queueInit(struct Queue *q, uint16_t capacity)
     return E_ERROR;
 
   q->capacity = capacity;
-  q->floor = 0;
-  q->ceil = 0;
-  q->size = 0;
+  q->floor = q->ceil = q->size = 0;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -31,14 +29,16 @@ void queueDeinit(struct Queue *q)
   free(q->data);
 }
 /*----------------------------------------------------------------------------*/
-void queuePush(struct Queue *q, uint8_t value)
+void queueClear(struct Queue *q)
 {
-  assert(q->size < q->capacity);
+  q->floor = q->ceil = q->size = 0;
+}
+/*----------------------------------------------------------------------------*/
+uint8_t queuePeek(struct Queue *q)
+{
+  assert(q->size);
 
-  q->data[q->ceil++] = value;
-  if (q->ceil == q->capacity)
-    q->ceil = 0;
-  ++q->size;
+  return q->data[q->floor];
 }
 /*----------------------------------------------------------------------------*/
 uint8_t queuePop(struct Queue *q)
@@ -54,11 +54,14 @@ uint8_t queuePop(struct Queue *q)
   return tmp;
 }
 /*----------------------------------------------------------------------------*/
-uint8_t queuePeek(struct Queue *q)
+void queuePush(struct Queue *q, uint8_t value)
 {
-  assert(q->size);
+  assert(q->size < q->capacity);
 
-  return q->data[q->floor];
+  q->data[q->ceil++] = value;
+  if (q->ceil == q->capacity)
+    q->ceil = 0;
+  ++q->size;
 }
 /*----------------------------------------------------------------------------*/
 uint16_t queuePushArray(struct Queue *q, const uint8_t *buffer, uint16_t length)
