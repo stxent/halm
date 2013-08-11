@@ -54,7 +54,7 @@ const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
 struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 {
   struct Gpio p = {
-      .control = 0,
+      .reg = 0,
       .pin = {
           .key = ~0
       }
@@ -67,7 +67,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   assert(id && (uint8_t)converted.port <= 4 && (uint8_t)converted.offset <= 31);
 
   p.pin = converted;
-  p.control = calcPort(p.pin);
+  p.reg = calcPort(p.pin);
 
   /* Set function 0: GPIO mode for all LPC17xx parts */
   gpioSetFunction(&p, 0);
@@ -77,9 +77,9 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   gpioSetType(&p, GPIO_PUSHPULL);
 
   if (dir == GPIO_OUTPUT)
-    p.control->FIODIR |= 1 << p.pin.offset;
+    p.reg->FIODIR |= 1 << p.pin.offset;
   else
-    p.control->FIODIR &= ~(1 << p.pin.offset);
+    p.reg->FIODIR &= ~(1 << p.pin.offset);
 
   /* TODO Add default output value */
 
@@ -89,7 +89,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 /*----------------------------------------------------------------------------*/
 void gpioDeinit(struct Gpio *p)
 {
-  p->control->FIODIR &= ~(1 << p->pin.offset);
+  p->reg->FIODIR &= ~(1 << p->pin.offset);
   /* Reset values to default (0) */
   gpioSetType(p, 0);
   gpioSetPull(p, 0);
@@ -101,15 +101,15 @@ void gpioDeinit(struct Gpio *p)
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *p)
 {
-  return (p->control->FIOPIN & (1 << p->pin.offset)) != 0;
+  return (p->reg->FIOPIN & (1 << p->pin.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void gpioWrite(struct Gpio *p, uint8_t value)
 {
   if (value)
-    p->control->FIOSET = 1 << p->pin.offset;
+    p->reg->FIOSET = 1 << p->pin.offset;
   else
-    p->control->FIOCLR = 1 << p->pin.offset;
+    p->reg->FIOCLR = 1 << p->pin.offset;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio *p, uint8_t function)

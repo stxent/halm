@@ -55,7 +55,7 @@ struct GpioDescriptor
 /*----------------------------------------------------------------------------*/
 struct Gpio
 {
-  LPC_GPIO_TypeDef *control;
+  LPC_GPIO_TypeDef *reg;
   union GpioPin pin;
 };
 /*----------------------------------------------------------------------------*/
@@ -65,11 +65,11 @@ void gpioDeinit(struct Gpio *);
 uint8_t gpioRead(struct Gpio *);
 void gpioWrite(struct Gpio *, uint8_t);
 /*----------------------------------------------------------------------------*/
+gpioKey gpioGetKey(struct Gpio *);
 const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *, gpioKey,
     uint8_t);
 void gpioSetFunction(struct Gpio *, uint8_t);
 void gpioSetPull(struct Gpio *, enum gpioPull);
 void gpioSetType(struct Gpio *, enum gpioType);
-gpioKey gpioGetKey(struct Gpio *);
 /*----------------------------------------------------------------------------*/
 #endif /* GPIO_H_ */

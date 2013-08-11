@@ -63,7 +63,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 {
   uint32_t *iocon;
   struct Gpio p = {
-      .control = 0,
+      .reg = 0,
       .pin = {
           .key = ~0
       }
@@ -76,7 +76,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   assert(id && (uint8_t)converted.port <= 3 && (uint8_t)converted.offset <= 11);
 
   p.pin = converted;
-  p.control = calcPort(p.pin);
+  p.reg = calcPort(p.pin);
 
   iocon = (void *)LPC_IOCON + gpioRegMap[p.pin.port][p.pin.offset];
   /* PIO function, no pull, no hysteresis, standard output */
@@ -91,9 +91,9 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   /* TODO Add analog functions */
 
   if (dir == GPIO_OUTPUT)
-    p.control->DIR |= 1 << p.pin.offset;
+    p.reg->DIR |= 1 << p.pin.offset;
   else
-    p.control->DIR &= ~(1 << p.pin.offset);
+    p.reg->DIR &= ~(1 << p.pin.offset);
 
   if (!instances)
   {
@@ -113,7 +113,7 @@ void gpioDeinit(struct Gpio *p)
 {
   uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
 
-  p->control->DIR &= ~(1 << p->pin.offset);
+  p->reg->DIR &= ~(1 << p->pin.offset);
   *iocon = IOCON_DEFAULT;
 
   mutexLock(&lock);
@@ -130,12 +130,12 @@ void gpioDeinit(struct Gpio *p)
 /*----------------------------------------------------------------------------*/
 uint8_t gpioRead(struct Gpio *p)
 {
-  return (p->control->DATA & (1 << p->pin.offset)) != 0;
+  return (p->reg->DATA & (1 << p->pin.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void gpioWrite(struct Gpio *p, uint8_t value)
 {
-  *(uint32_t *)(p->control->MASKED_ACCESS + (1 << p->pin.offset)) = value
+  *(uint32_t *)(p->reg->MASKED_ACCESS + (1 << p->pin.offset)) = value
       ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/

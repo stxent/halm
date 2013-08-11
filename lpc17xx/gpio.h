@@ -55,7 +55,7 @@ struct GpioDescriptor
 /*----------------------------------------------------------------------------*/
 struct Gpio
 {
-  LPC_GPIO_TypeDef *control;
+  LPC_GPIO_TypeDef *reg;
   union GpioPin pin;
 };
 /*----------------------------------------------------------------------------*/
