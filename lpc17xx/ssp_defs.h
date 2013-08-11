@@ -63,5 +63,9 @@
 /*------------------Interrupt Clear Register----------------------------------*/
 #define ICR_RORIC                       BIT(0)
 #define ICR_RTIC                        BIT(1)
+/*------------------DMA Control Register--------------------------------------*/
+/* Available only on devices with direct memory access support */
+#define DMACR_RXDMAE                    BIT(0) /* Receive DMA enable */
+#define DMACR_TXDMAE                    BIT(1) /* Transmit DMA enable */
 /*----------------------------------------------------------------------------*/
 #endif /* SSP_DEFS_H_ */

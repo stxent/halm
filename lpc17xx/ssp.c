@@ -67,6 +67,8 @@ static const struct GpioDescriptor sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
+static enum result setDescriptor(uint8_t, struct Ssp *);
+/*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
 /*----------------------------------------------------------------------------*/
@@ -87,7 +89,7 @@ const struct InterfaceClass *Ssp = &sspTable;
 static struct Ssp *descriptors[] = {0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-enum result sspSetDescriptor(uint8_t channel, void *descriptor)
+static enum result setDescriptor(uint8_t channel, struct Ssp *interface)
 {
   enum result res = E_ERROR;
 
@@ -96,7 +98,7 @@ enum result sspSetDescriptor(uint8_t channel, void *descriptor)
     mutexLock(&lock);
     if (!descriptors[channel])
     {
-      descriptors[channel] = descriptor;
+      descriptors[channel] = interface;
       res = E_OK;
     }
     mutexUnlock(&lock);
@@ -150,7 +152,7 @@ static enum result sspInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   interface->channel = config->channel;
-  if ((res = sspSetDescriptor(interface->channel, interface)) != E_OK)
+  if ((res = setDescriptor(interface->channel, interface)) != E_OK)
     return res;
 
   /* Reset pointer to interrupt handler */

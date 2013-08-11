@@ -83,7 +83,7 @@ const struct InterfaceClass *Ssp = &sspTable;
 static struct Ssp *descriptors[] = {0, 0};
 static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-enum result setDescriptor(uint8_t channel, struct Ssp *device)
+enum result setDescriptor(uint8_t channel, struct Ssp *interface)
 {
   enum result res = E_BUSY;
 
@@ -92,7 +92,7 @@ enum result setDescriptor(uint8_t channel, struct Ssp *device)
     mutexLock(&lock);
     if (!descriptors[channel])
     {
-      descriptors[channel] = device;
+      descriptors[channel] = interface;
       res = E_OK;
     }
     mutexUnlock(&lock);
