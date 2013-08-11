@@ -18,9 +18,9 @@ static enum result setDescriptor(uint8_t, struct BaseTimer *);
 /*----------------------------------------------------------------------------*/
 static enum result btInit(void *, const void *);
 static void btDeinit(void *);
-static void btSetFrequency(void *, uint32_t);
-static void btSetEnabled(void *, bool);
 static void btSetCallback(void *, void (*)(void *), void *);
+static void btSetEnabled(void *, bool);
+static void btSetFrequency(void *, uint32_t);
 static void btSetOverflow(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
@@ -28,10 +28,10 @@ static const struct TimerClass timerTable = {
     .init = btInit,
     .deinit = btDeinit,
 
-    .setFrequency = btSetFrequency,
-    .setEnabled = btSetEnabled,
-    .setOverflow = btSetOverflow,
     .setCallback = btSetCallback,
+    .setEnabled = btSetEnabled,
+    .setFrequency = btSetFrequency,
+    .setOverflow = btSetOverflow
 };
 /*----------------------------------------------------------------------------*/
 const struct TimerClass *BaseTimer = &timerTable;
@@ -89,82 +89,6 @@ void TIMER32B1_ISR(void)
 {
   if (descriptors[3])
     descriptors[3]->handler(descriptors[3]);
-}
-/*----------------------------------------------------------------------------*/
-static void btSetFrequency(void *object, uint32_t frequency)
-{
-  struct BaseTimer *device = object;
-
-  device->reg->PR = (sysCoreClock / DEFAULT_DIV_VALUE) / frequency - 1;
-}
-/*----------------------------------------------------------------------------*/
-static void btSetEnabled(void *object, bool state)
-{
-  struct BaseTimer *device = object;
-
-  if (state)
-  {
-    device->reg->TCR &= ~TCR_CRES;
-  }
-  else
-  {
-    device->reg->TCR |= TCR_CRES;
-    while (device->reg->TC || device->reg->PC);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void btSetOverflow(void *object, uint32_t overflow)
-{
-  struct BaseTimer *device = object;
-
-  device->reg->MR0 = overflow;
-  /* Synchronously reset prescaler and counter registers */
-  device->reg->TCR |= TCR_CRES;
-  while (device->reg->TC || device->reg->PC);
-  device->reg->TCR &= ~TCR_CRES;
-}
-/*----------------------------------------------------------------------------*/
-static void btSetCallback(void *object, void (*callback)(void *),
-    void *argument)
-{
-  struct BaseTimer *device = object;
-
-  device->callback = callback;
-  device->callbackArgument = argument;
-  /* Enable or disable Match interrupt and counter reset after each interrupt */
-  if (callback)
-    device->reg->MCR |= MCR_INTERRUPT(0) | MCR_RESET(0);
-  else
-    device->reg->MCR &= ~(MCR_INTERRUPT(0) | MCR_RESET(0));
-}
-/*----------------------------------------------------------------------------*/
-static void btDeinit(void *object)
-{
-  struct BaseTimer *device = object;
-
-  /* Disable interrupt */
-  nvicDisable(device->irq);
-  /* Disable Timer clock */
-  switch (device->channel)
-  {
-    case 0:
-      sysClockDisable(CLK_CT16B0);
-      break;
-    case 1:
-      sysClockDisable(CLK_CT16B1);
-      break;
-    case 2:
-      sysClockDisable(CLK_CT32B0);
-      break;
-    case 3:
-      sysClockDisable(CLK_CT32B1);
-      break;
-  }
-  /* Release external clock pin when used*/
-  if (gpioGetKey(&device->input))
-    gpioDeinit(&device->input);
-  /* Reset Timer descriptor */
-  setDescriptor(device->channel, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result btInit(void *object, const void *configPtr)
@@ -226,4 +150,83 @@ static enum result btInit(void *object, const void *configPtr)
   nvicSetPriority(device->irq, DEFAULT_PRIORITY);
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void btDeinit(void *object)
+{
+  struct BaseTimer *device = object;
+
+  /* Disable interrupt */
+  nvicDisable(device->irq);
+  /* Disable Timer clock */
+  switch (device->channel)
+  {
+    case 0:
+      sysClockDisable(CLK_CT16B0);
+      break;
+    case 1:
+      sysClockDisable(CLK_CT16B1);
+      break;
+    case 2:
+      sysClockDisable(CLK_CT32B0);
+      break;
+    case 3:
+      sysClockDisable(CLK_CT32B1);
+      break;
+  }
+  /* Release external clock pin when used*/
+  if (gpioGetKey(&device->input))
+    gpioDeinit(&device->input);
+  /* Reset Timer descriptor */
+  setDescriptor(device->channel, 0);
+}
+/*----------------------------------------------------------------------------*/
+static void btSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct BaseTimer *device = object;
+
+  device->callback = callback;
+  device->callbackArgument = argument;
+  /* Enable or disable Match interrupt and counter reset after each interrupt */
+  if (callback)
+  {
+    device->reg->IR = IR_MATCH_INTERRUPT(0); /* Clear pending interrupt flag */
+    device->reg->MCR |= MCR_INTERRUPT(0) | MCR_RESET(0);
+  }
+  else
+    device->reg->MCR &= ~(MCR_INTERRUPT(0) | MCR_RESET(0));
+}
+/*----------------------------------------------------------------------------*/
+static void btSetEnabled(void *object, bool state)
+{
+  struct BaseTimer *device = object;
+
+  if (state)
+  {
+    device->reg->TCR &= ~TCR_CRES;
+  }
+  else
+  {
+    device->reg->TCR |= TCR_CRES;
+    while (device->reg->TC || device->reg->PC);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void btSetFrequency(void *object, uint32_t frequency)
+{
+  struct BaseTimer *device = object;
+
+  device->reg->PR = (sysCoreClock / DEFAULT_DIV_VALUE) / frequency - 1;
+}
+/*----------------------------------------------------------------------------*/
+static void btSetOverflow(void *object, uint32_t overflow)
+{
+  struct BaseTimer *device = object;
+
+  device->reg->MR0 = overflow;
+  /* Synchronously reset prescaler and counter registers */
+  device->reg->TCR |= TCR_CRES;
+  while (device->reg->TC || device->reg->PC);
+  device->reg->TCR &= ~TCR_CRES;
 }
