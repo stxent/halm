@@ -5,14 +5,13 @@
  */
 
 #include <assert.h>
-#include "threading/mutex.h"
 #include "platform/nxp/system.h"
 #include "platform/nxp/lpc13xx/base_timer.h"
 #include "platform/nxp/lpc13xx/base_timer_defs.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_DIV_VALUE   1
-#define DEFAULT_PRIORITY    255 /* Lowest interrupt priority in Cortex-M3 */
+#define DEFAULT_DIV_VALUE 1
+#define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum result setDescriptor(uint8_t, struct BaseTimer *);
@@ -38,7 +37,6 @@ static const struct TimerClass timerTable = {
 const struct TimerClass *BaseTimer = &timerTable;
 /*----------------------------------------------------------------------------*/
 static struct BaseTimer *descriptors[] = {0, 0, 0, 0};
-static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -52,20 +50,15 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-enum result setDescriptor(uint8_t channel, struct BaseTimer *device)
+static enum result setDescriptor(uint8_t channel, struct BaseTimer *device)
 {
-  enum result res = E_ERROR;
-
   assert(channel < sizeof(descriptors));
 
-  mutexLock(&lock);
-  if (!descriptors[channel])
-  {
-    descriptors[channel] = device;
-    res = E_OK;
-  }
-  mutexUnlock(&lock);
-  return res;
+  if (descriptors[channel])
+    return E_BUSY;
+
+  descriptors[channel] = device;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void TIMER16B0_ISR(void)

@@ -48,7 +48,7 @@ static Mutex lock = MUTEX_UNLOCKED;
 /* Initialized descriptors count */
 static uint16_t instances = 0;
 /*----------------------------------------------------------------------------*/
-enum result setDescriptor(uint8_t channel, struct Gpdma *controller)
+static enum result setDescriptor(uint8_t channel, struct Gpdma *controller)
 {
   enum result res = E_BUSY;
 
