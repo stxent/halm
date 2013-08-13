@@ -37,45 +37,34 @@ const struct InterfaceClass *Spi = &spiTable;
 static void interruptHandler(void *object)
 {
   struct Spi *interface = object;
-  uint8_t status = interface->parent.reg->MIS;
 
-  if (status & (MIS_RXMIS | MIS_RTMIS))
+  while (interface->parent.reg->SR & SR_RNE)
   {
-    /* Frame will be removed from FIFO after reading from DR register */
-    while (interface->parent.reg->SR & SR_RNE && interface->left)
+    if (interface->left)
     {
-      *interface->rxBuffer++ = interface->parent.reg->DR;
       --interface->left;
+      if (interface->rxBuffer)
+      {
+        *interface->rxBuffer++ = interface->parent.reg->DR;
+        continue;
+      }
     }
-    /* Fill transmit FIFO with dummy frames */
-    while (interface->parent.reg->SR & SR_TNF && interface->fill)
-    {
-      interface->parent.reg->DR = 0xFF; /* TODO Select dummy frame value */
-      --interface->fill;
-    }
-    /* Disable receive interrupts when all frames have been received */
-    if (!interface->left)
-    {
-      interface->parent.reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
-      if (interface->callback)
-        interface->callback(interface->callbackArgument);
-    }
+    (void)interface->parent.reg->DR;
   }
-  if (status & MIS_TXMIS)
+
+  while (interface->fill && interface->parent.reg->SR & SR_TNF)
   {
-    /* Fill transmit FIFO */
-    while (interface->parent.reg->SR & SR_TNF && interface->left)
-    {
-      interface->parent.reg->DR = *interface->txBuffer++;
-      --interface->left;
-    }
-    /* Disable transmit interrupt when all frames have been pushed to FIFO */
-    if (!interface->left)
-    {
-      interface->parent.reg->IMSC &= ~IMSC_TXIM;
-      if (interface->callback)
-        interface->callback(interface->callbackArgument);
-    }
+    /* TODO Select dummy frame value */
+    interface->parent.reg->DR = interface->rxBuffer ? 0xFF
+        : *interface->txBuffer++;
+    --interface->fill;
+  }
+
+  if (!interface->left)
+  {
+    interface->parent.reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
+    if (interface->callback)
+      interface->callback(interface->callbackArgument);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -111,8 +100,9 @@ static enum result spiInit(void *object, const void *configPtr)
 
   /* Set interrupt priority, lowest by default */
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
-  /* Enable UART interrupt */
+  /* Enable SPI interrupt */
   nvicEnable(interface->parent.irq);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -141,8 +131,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_BUSY:
-      *(uint32_t *)data = interface->left
-          || (interface->parent.reg->SR & SR_BSY);
+      *(uint32_t *)data = interface->left || interface->parent.reg->SR & SR_BSY;
       return E_OK;
     case IF_NONBLOCKING:
       *(uint32_t *)data = !interface->blocking;
@@ -173,9 +162,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
           mutexLock(&interface->channelLock);
       }
       else
-      {
         mutexUnlock(&interface->channelLock);
-      }
       return E_OK;
     case IF_NONBLOCKING:
       interface->blocking = *(uint32_t *)data ? false : true;
@@ -196,27 +183,25 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   struct Spi *interface = object;
 
   /* Break all previous transactions */
-  interface->parent.reg->IMSC &= ~(IMSC_TXIM | IMSC_RXIM | IMSC_RTIM);
+  interface->parent.reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
 
   interface->fill = length;
-  /* Pop all previously received frames */
-  while (interface->parent.reg->SR & SR_RNE)
-    (void)interface->parent.reg->DR;
-
   /* Fill transmit FIFO with dummy frames */
-  while (interface->parent.reg->SR & SR_TNF && interface->fill)
+  while (interface->fill && interface->parent.reg->SR & SR_TNF)
   {
     interface->parent.reg->DR = 0xFF;
     --interface->fill;
   }
 
   interface->rxBuffer = buffer;
+  interface->txBuffer = 0;
   interface->left = length;
+
   /* Enable receive FIFO half full and receive FIFO timeout interrupts */
   interface->parent.reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   if (interface->blocking)
-    while (interface->left || (interface->parent.reg->SR & SR_BSY));
+    while (interface->left || interface->parent.reg->SR & SR_BSY);
 
   return length;
 }
@@ -226,25 +211,25 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   struct Spi *interface = object;
 
   /* Break all previous transactions */
-  interface->parent.reg->IMSC &= ~(IMSC_TXIM | IMSC_RXIM | IMSC_RTIM);
+  interface->parent.reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
 
-  interface->left = length;
+  interface->fill = length;
   /* Fill transmit FIFO */
-  while (interface->parent.reg->SR & SR_TNF && interface->left)
+  while (interface->fill && interface->parent.reg->SR & SR_TNF)
   {
     interface->parent.reg->DR = *buffer++;
-    interface->left--;
+    --interface->fill;
   }
 
-  /* Enable transmit interrupt when packet size is greater than FIFO length */
-  if (interface->left)
-  {
-    interface->txBuffer = buffer;
-    interface->parent.reg->IMSC |= IMSC_TXIM;
-  }
+  interface->rxBuffer = 0;
+  interface->txBuffer = interface->left ? buffer : 0;
+  interface->left = length;
+
+  /* Enable receive FIFO half full and receive FIFO timeout interrupts */
+  interface->parent.reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   if (interface->blocking)
-    while (interface->left || (interface->parent.reg->SR & SR_BSY));
+    while (interface->left || interface->parent.reg->SR & SR_BSY);
 
   return length;
 }
