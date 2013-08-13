@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include "threading/mutex.h"
 #include "platform/nxp/system.h"
 #include "platform/nxp/uart.h"
 #include "platform/nxp/uart_defs.h"
@@ -13,8 +12,8 @@
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
 /* In LPC13xx UART clock divisor is number from 1 to 255, 0 to disable */
-#define DEFAULT_DIV         1
-#define DEFAULT_DIV_VALUE   1
+#define DEFAULT_DIV       1
+#define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
 static const struct GpioDescriptor uartPins[] = {
     {
@@ -48,12 +47,22 @@ static const struct InterfaceClass uartTable = {
 const struct InterfaceClass *Uart = &uartTable;
 /*----------------------------------------------------------------------------*/
 static struct Uart *descriptors[] = {0};
-static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 void UART_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
+}
+/*----------------------------------------------------------------------------*/
+static enum result setDescriptor(uint8_t channel, struct Uart *interface)
+{
+  assert(channel < sizeof(descriptors));
+
+  if (descriptors[channel])
+    return E_BUSY;
+
+  descriptors[channel] = interface;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
@@ -72,22 +81,6 @@ enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
   /* TODO Add fractional part calculation */
 
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-enum result setDescriptor(uint8_t channel, struct Uart *interface)
-{
-  enum result res = E_BUSY;
-
-  assert(channel < sizeof(descriptors));
-
-  mutexLock(&lock);
-  if (!descriptors[channel])
-  {
-    descriptors[channel] = interface;
-    res = E_OK;
-  }
-  mutexUnlock(&lock);
-  return res;
 }
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct Uart *interface, struct UartRateConfig rate)

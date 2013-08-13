@@ -8,9 +8,9 @@
 #include "platform/nxp/serial.h"
 #include "platform/nxp/uart_defs.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY    255 /* Lowest interrupt priority in Cortex-M3 */
-#define RX_FIFO_LEVEL       2 /* 8 characters */
-#define TX_FIFO_SIZE        8
+#define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
+#define RX_FIFO_LEVEL     2 /* 8 characters */
+#define TX_FIFO_SIZE      8
 /*----------------------------------------------------------------------------*/
 enum cleanup
 {
@@ -67,26 +67,24 @@ static void cleanup(struct Serial *interface, enum cleanup step)
 static void interruptHandler(void *object)
 {
   struct Serial *interface = object;
-  uint8_t data;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  if (interface->parent.reg->IIR & IIR_INT_STATUS)
-    return;
+  (void)interface->parent.reg->IIR;
 
   /* Byte will be removed from FIFO after reading from RBR register */
   while (interface->parent.reg->LSR & LSR_RDR)
   {
-    data = interface->parent.reg->RBR;
+    uint8_t data = interface->parent.reg->RBR;
     /* Received bytes will be dropped when queue becomes full */
     if (!queueFull(&interface->rxQueue))
       queuePush(&interface->rxQueue, data);
   }
   if (interface->parent.reg->LSR & LSR_THRE)
   {
-    uint8_t counter = 0;
-
     /* Fill FIFO with selected burst size or less */
-    while (!queueEmpty(&interface->txQueue) && counter++ < TX_FIFO_SIZE)
+    uint32_t limit = queueSize(&interface->txQueue) < TX_FIFO_SIZE
+        ? queueSize(&interface->txQueue) : TX_FIFO_SIZE;
+    while (limit--)
       interface->parent.reg->THR = queuePop(&interface->txQueue);
   }
 }
@@ -141,6 +139,7 @@ static enum result serialInit(void *object, const void *configPtr)
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
   nvicEnable(interface->parent.irq);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -214,6 +213,7 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   read = queuePopArray(&interface->rxQueue, buffer, length);
   nvicEnable(interface->parent.irq);
   mutexUnlock(&interface->queueLock);
+
   return read;
 }
 /*----------------------------------------------------------------------------*/
@@ -224,26 +224,21 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   uint32_t written = 0;
 
   mutexLock(&interface->queueLock);
+  nvicDisable(interface->parent.irq);
   /* Check transmitter state */
   if (interface->parent.reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle, fill TX FIFO */
-    nvicDisable(interface->parent.irq);
-    while (written < TX_FIFO_SIZE && written < length)
-    {
+    uint32_t limit = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
+    for (; written < limit; ++written)
       interface->parent.reg->THR = *buffer++;
-      ++written;
-    }
-    nvicEnable(interface->parent.irq);
     length -= written;
   }
+  /* Fill TX queue with the rest of data */
   if (length)
-  {
-    /* Fill TX queue with the rest of data */
-    nvicDisable(interface->parent.irq);
     written += queuePushArray(&interface->txQueue, buffer, length);
-    nvicEnable(interface->parent.irq);
-  }
+  nvicEnable(interface->parent.irq);
   mutexUnlock(&interface->queueLock);
+
   return written;
 }
