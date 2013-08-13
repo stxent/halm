@@ -92,9 +92,9 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   /* TODO Add analog functions */
 
   if (dir == GPIO_OUTPUT)
-    ((LPC_GPIO_TypeDef *)&p.reg)->DIR |= 1 << p.pin.offset;
+    ((LPC_GPIO_TypeDef *)p.reg)->DIR |= 1 << p.pin.offset;
   else
-    ((LPC_GPIO_TypeDef *)&p.reg)->DIR &= ~(1 << p.pin.offset);
+    ((LPC_GPIO_TypeDef *)p.reg)->DIR &= ~(1 << p.pin.offset);
 
   if (!instances)
   {

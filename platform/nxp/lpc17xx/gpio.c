@@ -80,9 +80,9 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   gpioSetType(&p, GPIO_PUSHPULL);
 
   if (dir == GPIO_OUTPUT)
-    ((LPC_GPIO_TypeDef *)&p.reg)->FIODIR |= 1 << p.pin.offset;
+    ((LPC_GPIO_TypeDef *)p.reg)->FIODIR |= 1 << p.pin.offset;
   else
-    ((LPC_GPIO_TypeDef *)&p.reg)->FIODIR &= ~(1 << p.pin.offset);
+    ((LPC_GPIO_TypeDef *)p.reg)->FIODIR &= ~(1 << p.pin.offset);
 
   /* TODO Add default output value */
 
