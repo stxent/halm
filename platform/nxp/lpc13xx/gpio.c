@@ -41,7 +41,6 @@ static const uint8_t gpioRegMap[4][12] = {
     {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
 };
 /*----------------------------------------------------------------------------*/
-static Mutex lock = MUTEX_UNLOCKED;
 static uint8_t instances = 0;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
@@ -103,9 +102,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
     /* Enable AHB clock to the GPIO domain */
     sysClockEnable(CLK_GPIO);
   }
-  mutexLock(&lock);
   ++instances;
-  mutexUnlock(&lock);
 
   return p;
 }
@@ -117,9 +114,7 @@ void gpioDeinit(struct Gpio *p)
   ((LPC_GPIO_TypeDef *)p->reg)->DIR &= ~(1 << p->pin.offset);
   *iocon = IOCON_DEFAULT;
 
-  mutexLock(&lock);
   --instances;
-  mutexUnlock(&lock);
   if (!instances)
   {
     /* Disable AHB clock to the GPIO domain */

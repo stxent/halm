@@ -44,7 +44,6 @@ static const struct TimerClass timerTable = {
 const struct TimerClass *SysTickTimer = &timerTable;
 /*----------------------------------------------------------------------------*/
 static struct SysTickTimer *descriptor = 0;
-static Mutex lock = MUTEX_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -56,16 +55,11 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 enum result setDescriptor(struct SysTickTimer *device)
 {
-  enum result res = E_ERROR;
+  if (descriptor)
+    return E_BUSY;
 
-  mutexLock(&lock);
-  if (!descriptor)
-  {
-    descriptor = device;
-    res = E_OK;
-  }
-  mutexUnlock(&lock);
-  return res;
+  descriptor = device;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void SYSTICK_ISR(void)
