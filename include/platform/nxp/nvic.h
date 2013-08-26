@@ -18,12 +18,12 @@ void nvicSetPriorityGrouping(uint8_t);
 /*----------------------------------------------------------------------------*/
 static inline void nvicEnable(irq_t irq)
 {
-  NVIC->ISER[irq >> 5] = 1 << (irq & 0x1F);
+  *(NVIC->ISER + (irq >> 5)) = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
 static inline void nvicDisable(irq_t irq)
 {
-  NVIC->ICER[irq >> 5] = 1 << (irq & 0x1F);
+  *(NVIC->ISER + (irq >> 5)) = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* NVIC_H_ */

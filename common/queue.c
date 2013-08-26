@@ -17,7 +17,7 @@ enum result queueInit(struct Queue *q, uint16_t capacity)
     capacity = DEFAULT_CAPACITY;
   q->data = malloc(capacity);
   if (!q->data)
-    return E_ERROR;
+    return E_MEMORY;
 
   q->capacity = capacity;
   q->floor = q->ceil = q->size = 0;
