@@ -36,14 +36,16 @@ enum ifOption
   IF_DEVICE,
   /** Interface lock. */
   IF_LOCK,
-  /** Non-blocking operations mode. */
+  /** Non-blocking mode with copying into internal buffers. */
   IF_NONBLOCKING,
   /** Interface interrupts or DMA requests priority. */
   IF_PRIORITY,
   /** Data rate. */
   IF_RATE,
   /** Timeout value for blocking functions. */
-  IF_TIMEOUT
+  IF_TIMEOUT,
+  /** Zero-copy mode. */
+  IF_ZEROCOPY
 };
 /*----------------------------------------------------------------------------*/
 struct InterfaceClass

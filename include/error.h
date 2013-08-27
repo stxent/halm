@@ -29,6 +29,8 @@ enum result
   E_BUSY,
   /** Hardware device error */
   E_DEVICE,
+  /** Invalid argument */
+  E_VALUE,
   /** Interface error */
   E_INTERFACE,
 };

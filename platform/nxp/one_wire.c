@@ -212,14 +212,14 @@ static enum result oneWireGet(void *object, enum ifOption option, void *data)
     case IF_BUSY:
       *(uint32_t *)data = interface->state != OW_IDLE;
       return E_OK;
-    case IF_NONBLOCKING:
-      *(uint32_t *)data = !interface->blocking;
-      return E_OK;
     case IF_DEVICE:
       *(uint64_t *)data = interface->address.rom;
       return E_OK;
     case IF_PRIORITY:
       *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
+      return E_OK;
+    case IF_ZEROCOPY:
+      *(uint32_t *)data = !interface->blocking;
       return E_OK;
     default:
       return E_ERROR;
@@ -249,11 +249,11 @@ static enum result oneWireSet(void *object, enum ifOption option,
         mutexUnlock(&interface->channelLock);
       }
       return E_OK;
-    case IF_NONBLOCKING:
-      interface->blocking = *(uint32_t *)data ? false : true;
-      return E_OK;
     case IF_PRIORITY:
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
+      return E_OK;
+    case IF_ZEROCOPY:
+      interface->blocking = *(uint32_t *)data ? false : true;
       return E_OK;
     default:
       return E_ERROR;
