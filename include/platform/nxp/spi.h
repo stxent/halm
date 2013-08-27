@@ -16,8 +16,9 @@ struct SpiConfig
 {
   uint32_t rate; /* Mandatory: serial data rate */
   gpioKey cs; /* Optional: chip select for slave mode */
-  gpioKey sck, miso, mosi; /* Mandatory: peripheral pins */
+  gpioKey miso, mosi, sck; /* Mandatory: peripheral pins */
   uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t mode; /* Optional: mode number used in SPI */
 };
 /*----------------------------------------------------------------------------*/
 struct Spi
@@ -31,8 +32,8 @@ struct Spi
   void (*callback)(void *); /* Function called on completion event */
   void *callbackArgument;
 
+  struct Mutex channelLock; /* Access to channel */
   bool blocking; /* By default interface is in blocking mode */
-  Mutex channelLock; /* Access to channel */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SPI_H_ */

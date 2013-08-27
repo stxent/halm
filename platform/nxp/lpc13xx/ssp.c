@@ -218,6 +218,10 @@ static enum result sspInit(void *object, const void *configPtr)
     assert(config->frame >= 4 && config->frame <= 16);
     interface->reg->CR0 |= CR0_DSS(config->frame);
   }
+  if (config->mode & 0x01) //TODO Remove magic numbers
+    interface->reg->CR0 |= CR0_CPHA;
+  if (config->mode & 0x02)
+    interface->reg->CR0 |= CR0_CPOL;
 
   sspSetRate(interface, config->rate);
   interface->reg->CR1 = CR1_SSE; /* Enable peripheral */

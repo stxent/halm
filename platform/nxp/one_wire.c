@@ -184,11 +184,12 @@ static enum result oneWireInit(void *object, const void *configPtr)
     cleanup(interface, FREE_PARENT);
     return res;
   }
+  if ((res = mutexInit(&interface->channelLock)) != E_OK)
+    return res;
 
   interface->callback = 0;
 
   interface->blocking = true;
-  interface->channelLock = MUTEX_UNLOCKED;
   interface->state = OW_IDLE;
   interface->address.rom = 0;
 

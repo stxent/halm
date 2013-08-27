@@ -37,8 +37,9 @@ struct SdioSpi
   void *callbackArgument;
 
   struct Gpio csPin;
+  struct Mutex lock;
+
   bool blocking; /* By default interface is in blocking mode */
-  Mutex lock;
   enum cardType capacity;
 };
 /*----------------------------------------------------------------------------*/

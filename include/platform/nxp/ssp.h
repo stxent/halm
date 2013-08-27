@@ -20,8 +20,9 @@ struct SspConfig
 {
   uint32_t rate; /* Mandatory: serial data rate */
   gpioKey cs; /* Optional: chip select for slave mode */
-  gpioKey sck, miso, mosi; /* Mandatory: peripheral pins */
+  gpioKey miso, mosi, sck; /* Mandatory: interface pins */
   uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t mode; /* Optional: mode number used in SPI */
   uint8_t frame; /* Optional: frame size, 8 bits by default */
 };
 /*----------------------------------------------------------------------------*/
@@ -29,12 +30,11 @@ struct Ssp
 {
   struct Interface parent;
 
-  void (*handler)(void *); /* Interrupt handler */
-
   LPC_SSP_TypeDef *reg; /* Pointer to SSP registers */
   irq_t irq; /* IRQ identifier */
 
-  struct Gpio sckPin, csPin, misoPin, mosiPin; /* Peripheral pins */
+  void (*handler)(void *); /* Interrupt handler */
+  struct Gpio csPin, misoPin, mosiPin, sckPin;
   uint8_t channel; /* Peripheral number */
 };
 /*----------------------------------------------------------------------------*/

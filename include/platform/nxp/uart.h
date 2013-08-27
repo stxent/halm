@@ -39,11 +39,10 @@ struct Uart
 {
   struct Interface parent;
 
-  void (*handler)(void *); /* Interrupt handler */
-
   LPC_UART_TypeDef *reg; /* Pointer to UART registers */
   irq_t irq; /* IRQ identifier */
 
+  void (*handler)(void *); /* Interrupt handler */
   struct Gpio rxPin, txPin; /* Peripheral pins */
   uint8_t channel; /* Peripheral number */
 };

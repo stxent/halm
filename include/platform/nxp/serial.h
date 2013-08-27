@@ -27,7 +27,7 @@ struct Serial
   struct Uart parent;
 
   struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
-  Mutex queueLock; /* Access to queues */
+  struct Mutex queueLock; /* Access to queues */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SERIAL_H_ */

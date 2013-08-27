@@ -391,8 +391,10 @@ static enum result sdioInit(void *object, const void *configPtr)
   device->callback = 0;
   device->blocking = true;
 
-  if ((res = resetCard(device)) != E_OK)
+  if ((res = resetCard(device)) != E_OK) {
+    gpioDeinit(&device->csPin);
     return res;
+  }
 
   return E_OK;
 }

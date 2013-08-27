@@ -124,6 +124,9 @@ static enum result serialInit(void *object, const void *configPtr)
   {
     cleanup(interface, FREE_RX_QUEUE);
     return res;
+  /* Create mutex */
+  if ((res = mutexInit(&interface->queueLock)) != E_OK)
+    return res;
   }
 
   interface->queueLock = MUTEX_UNLOCKED;

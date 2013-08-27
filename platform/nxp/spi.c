@@ -91,7 +91,9 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Call SSP class constructor */
   if ((res = Ssp->init(object, &parentConfig)) != E_OK)
     return res;
-  interface->channelLock = MUTEX_UNLOCKED;
+  if ((res = mutexInit(&interface->channelLock)) != E_OK)
+    return res;
+
   interface->callback = 0;
   interface->blocking = true;
 
