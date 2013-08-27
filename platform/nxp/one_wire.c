@@ -20,16 +20,7 @@ enum romCommand
   SKIP_ROM    = 0xCC
 };
 /*----------------------------------------------------------------------------*/
-enum cleanup
-{
-  FREE_NONE = 0,
-  FREE_PARENT,
-  FREE_TX_QUEUE,
-  FREE_ALL
-};
-/*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWire *);
-static void cleanup(struct OneWire *, enum cleanup);
 static void interruptHandler(void *);
 static void sendWord(struct OneWire *, uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -63,21 +54,6 @@ static void beginTransmission(struct OneWire *interface)
   interface->parent.reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(0);
   interface->parent.reg->THR = 0xF0; /* Execute reset */
 }
-/*----------------------------------------------------------------------------*/
-static void cleanup(struct OneWire *interface, enum cleanup step)
-{
-  switch (step)
-  {
-    case FREE_ALL:
-      nvicDisable(interface->parent.irq); /* Disable interrupt */
-    case FREE_TX_QUEUE:
-      queueDeinit(&interface->txQueue);
-    case FREE_PARENT:
-      Uart->deinit(interface); /* Call UART class destructor */
-      break;
-    default:
-      break;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static void sendWord(struct OneWire *interface, uint8_t word)
@@ -110,9 +86,7 @@ static void interruptHandler(void *object)
           interface->state = OW_TRANSMIT;
         }
         else
-        {
           interface->state = OW_IDLE;
-        }
         break;
       case OW_RECEIVE:
         if (data & 0x01)
@@ -180,10 +154,8 @@ static enum result oneWireInit(void *object, const void *configPtr)
 
   /* Initialize TX queue */
   if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
-  {
-    cleanup(interface, FREE_PARENT);
     return res;
-  }
+  /* Create mutex */
   if ((res = mutexInit(&interface->channelLock)) != E_OK)
     return res;
 
@@ -204,12 +176,17 @@ static enum result oneWireInit(void *object, const void *configPtr)
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
   nvicEnable(interface->parent.irq);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void oneWireDeinit(void *object)
 {
-  cleanup(object, FREE_ALL);
+  struct OneWire *interface = object;
+
+  nvicDisable(interface->parent.irq); /* Disable interrupt */
+  queueDeinit(&interface->txQueue);
+  Uart->deinit(interface); /* Call UART class destructor */
 }
 /*----------------------------------------------------------------------------*/
 static enum result oneWireCallback(void *object, void (*callback)(void *),

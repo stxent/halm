@@ -12,16 +12,6 @@
 #define RX_FIFO_LEVEL     2 /* 8 characters */
 #define TX_FIFO_SIZE      8
 /*----------------------------------------------------------------------------*/
-enum cleanup
-{
-  FREE_NONE = 0,
-  FREE_PARENT,
-  FREE_RX_QUEUE,
-  FREE_TX_QUEUE,
-  FREE_ALL
-};
-/*----------------------------------------------------------------------------*/
-static void cleanup(struct Serial *, enum cleanup);
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
@@ -45,24 +35,6 @@ static const struct InterfaceClass serialTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *Serial = &serialTable;
-/*----------------------------------------------------------------------------*/
-static void cleanup(struct Serial *interface, enum cleanup step)
-{
-  switch (step)
-  {
-    case FREE_ALL:
-      nvicDisable(interface->parent.irq); /* Disable interrupt */
-    case FREE_TX_QUEUE:
-      queueDeinit(&interface->txQueue);
-    case FREE_RX_QUEUE:
-      queueDeinit(&interface->rxQueue);
-    case FREE_PARENT:
-      Uart->deinit(interface); /* Call UART class destructor */
-      break;
-    default:
-      break;
-  }
-}
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -116,20 +88,13 @@ static enum result serialInit(void *object, const void *configPtr)
 
   /* Initialize RX and TX queues */
   if ((res = queueInit(&interface->rxQueue, config->rxLength)) != E_OK)
-  {
-    cleanup(interface, FREE_PARENT);
     return res;
-  }
   if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
-  {
-    cleanup(interface, FREE_RX_QUEUE);
     return res;
   /* Create mutex */
   if ((res = mutexInit(&interface->queueLock)) != E_OK)
     return res;
-  }
 
-  interface->queueLock = MUTEX_UNLOCKED;
 
   /* Enable and clear FIFO, set RX trigger level to 8 bytes */
   interface->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
@@ -148,7 +113,12 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  cleanup(object, FREE_ALL);
+  struct Serial *interface = object;
+
+  nvicDisable(interface->parent.irq); /* Disable interrupt */
+  queueDeinit(&interface->txQueue);
+  queueDeinit(&interface->rxQueue);
+  Uart->deinit(interface); /* Call UART class destructor */
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialCallback(void *object, void (*callback)(void *),
