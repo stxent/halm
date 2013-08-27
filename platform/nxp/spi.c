@@ -37,32 +37,33 @@ const struct InterfaceClass *Spi = &spiTable;
 static void interruptHandler(void *object)
 {
   struct Spi *interface = object;
+  LPC_SSP_TypeDef *reg = interface->parent.reg;
 
-  while (interface->parent.reg->SR & SR_RNE)
+  while (reg->SR & SR_RNE)
   {
     if (interface->left)
     {
       --interface->left;
       if (interface->rxBuffer)
       {
-        *interface->rxBuffer++ = interface->parent.reg->DR;
+        *interface->rxBuffer++ = reg->DR;
         continue;
       }
     }
-    (void)interface->parent.reg->DR;
+    (void)reg->DR;
   }
 
-  while (interface->fill && interface->parent.reg->SR & SR_TNF)
+  while (interface->fill && reg->SR & SR_TNF)
   {
     /* TODO Select dummy frame value */
-    interface->parent.reg->DR = interface->rxBuffer ? 0xFF
+    reg->DR = interface->rxBuffer ? 0xFF
         : *interface->txBuffer++;
     --interface->fill;
   }
 
   if (!interface->left)
   {
-    interface->parent.reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
+    reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
     if (interface->callback)
       interface->callback(interface->callbackArgument);
   }
@@ -91,6 +92,7 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Call SSP class constructor */
   if ((res = Ssp->init(object, &parentConfig)) != E_OK)
     return res;
+  /* Create mutex */
   if ((res = mutexInit(&interface->channelLock)) != E_OK)
     return res;
 
@@ -133,7 +135,8 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_BUSY:
-      *(uint32_t *)data = interface->left || interface->parent.reg->SR & SR_BSY;
+      *(uint32_t *)data = interface->left
+          || ((LPC_SSP_TypeDef *)interface->parent.reg)->SR & SR_BSY;
       return E_OK;
     case IF_NONBLOCKING:
       *(uint32_t *)data = !interface->blocking;
@@ -183,15 +186,16 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Spi *interface = object;
+  LPC_SSP_TypeDef *reg = interface->parent.reg;
 
   /* Break all previous transactions */
-  interface->parent.reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
+  reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
 
   interface->fill = length;
   /* Fill transmit FIFO with dummy frames */
-  while (interface->fill && interface->parent.reg->SR & SR_TNF)
+  while (interface->fill && reg->SR & SR_TNF)
   {
-    interface->parent.reg->DR = 0xFF;
+    reg->DR = 0xFF;
     --interface->fill;
   }
 
@@ -200,10 +204,10 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   interface->left = length;
 
   /* Enable receive FIFO half full and receive FIFO timeout interrupts */
-  interface->parent.reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+  reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   if (interface->blocking)
-    while (interface->left || interface->parent.reg->SR & SR_BSY);
+    while (interface->left || reg->SR & SR_BSY);
 
   return length;
 }
@@ -211,15 +215,16 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Spi *interface = object;
+  LPC_SSP_TypeDef *reg = interface->parent.reg;
 
   /* Break all previous transactions */
-  interface->parent.reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
+  reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
 
   interface->fill = length;
   /* Fill transmit FIFO */
-  while (interface->fill && interface->parent.reg->SR & SR_TNF)
+  while (interface->fill && reg->SR & SR_TNF)
   {
-    interface->parent.reg->DR = *buffer++;
+    reg->DR = *buffer++;
     --interface->fill;
   }
 
@@ -228,10 +233,10 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   interface->left = length;
 
   /* Enable receive FIFO half full and receive FIFO timeout interrupts */
-  interface->parent.reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+  reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   if (interface->blocking)
-    while (interface->left || interface->parent.reg->SR & SR_BSY);
+    while (interface->left || reg->SR & SR_BSY);
 
   return length;
 }

@@ -48,35 +48,38 @@ const struct InterfaceClass *OneWire = &serialTable;
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWire *interface)
 {
+  LPC_UART_TypeDef *reg = interface->parent.reg;
+
   uartSetRate((struct Uart *)interface, interface->resetRate);
   interface->state = OW_RESET;
   /* Clear RX FIFO and set trigger level to 1 character */
-  interface->parent.reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(0);
-  interface->parent.reg->THR = 0xF0; /* Execute reset */
-}
+  reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(0);
+  reg->THR = 0xF0; /* Execute reset */
 }
 /*----------------------------------------------------------------------------*/
 static void sendWord(struct OneWire *interface, uint8_t word)
 {
+  LPC_UART_TypeDef *reg = interface->parent.reg;
   uint8_t counter = 0;
 
   while (counter < 8)
-    interface->parent.reg->THR = (word >> counter++) & 0x01 ? 0xFF : 0;
-/*    interface->parent.reg->THR = ((word >> counter++) & 0x01) * 0xFF; */
+    reg->THR = (word >> counter++) & 0x01 ? 0xFF : 0;
+/*    reg->THR = ((word >> counter++) & 0x01) * 0xFF; FIXME */
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct OneWire *interface = object;
+  LPC_UART_TypeDef *reg = interface->parent.reg;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  if (interface->parent.reg->IIR & IIR_INT_STATUS)
+  if (reg->IIR & IIR_INT_STATUS)
     return;
 
   /* Byte will be removed from FIFO after reading from RBR register */
-  while (interface->parent.reg->LSR & LSR_RDR)
+  while (reg->LSR & LSR_RDR)
   {
-    uint8_t data = interface->parent.reg->RBR;
+    uint8_t data = reg->RBR;
     switch (interface->state)
     {
       case OW_RESET:
@@ -112,7 +115,7 @@ static void interruptHandler(void *object)
         break;
     }
   }
-  if ((interface->parent.reg->LSR & LSR_THRE) && interface->state != OW_RESET)
+  if ((reg->LSR & LSR_THRE) && interface->state != OW_RESET)
   {
     /* Fill FIFO with next word or end the transaction */
     if (!queueEmpty(&interface->txQueue))
@@ -165,12 +168,13 @@ static enum result oneWireInit(void *object, const void *configPtr)
   interface->state = OW_IDLE;
   interface->address.rom = 0;
 
-  /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  interface->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  interface->parent.reg->FCR |= FCR_ENABLE;
+  /* Initialize UART block */
+  LPC_UART_TypeDef *reg = interface->parent.reg;
+
+  /* Set RX trigger level to single byte */
+  reg->FCR &= ~FCR_RX_TRIGGER_MASK;
   /* Enable RBR and THRE interrupts */
-  interface->parent.reg->IER |= IER_THRE;
-  interface->parent.reg->IER |= IER_RBR | IER_THRE;
+  reg->IER |= IER_RBR | IER_THRE;
 
   /* Set interrupt priority, lowest by default */
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
@@ -274,7 +278,8 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 
   interface->state = OW_RECEIVE;
   /* Clear RX FIFO and set trigger level to 8 characters */
-  interface->parent.reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(2);
+  ((LPC_UART_TypeDef *)interface->parent.reg)->FCR |= FCR_RX_RESET
+      | FCR_RX_TRIGGER(2);
   sendWord(interface, 0xFF); /* Start reception */
 
   if (interface->blocking)

@@ -145,13 +145,14 @@ void SSP1_ISR(void)
 /*----------------------------------------------------------------------------*/
 void sspSetRate(struct Ssp *interface, uint32_t rate)
 {
+  LPC_SSP_TypeDef *reg = interface->reg;
   uint16_t divider;
 
   divider = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 1) / rate - 1;
   /* FIXME Rewrite */
-  interface->reg->CPSR = 2;
-  interface->reg->CR0 &= ~CR0_SCR_MASK;
-  interface->reg->CR0 |= CR0_SCR(divider);
+  reg->CPSR = 2;
+  reg->CR0 &= ~CR0_SCR_MASK;
+  reg->CR0 |= CR0_SCR(divider);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetRate(struct Ssp *interface)
@@ -159,7 +160,7 @@ uint32_t sspGetRate(struct Ssp *interface)
   uint32_t rate;
   uint16_t divider;
 
-  divider = CR0_SCR_VALUE(interface->reg->CR0);
+  divider = CR0_SCR_VALUE(((LPC_SSP_TypeDef *)interface->reg)->CR0);
   rate = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
   return rate;
 }
@@ -170,6 +171,9 @@ static enum result sspInit(void *object, const void *configPtr)
   struct Ssp *interface = object;
   enum result res;
 
+  /* When frame is set its value should be from 4 to 16 */
+  if (config->frame && config->frame - 4 > 12)
+    return E_VALUE;
   /* TODO Add mater/slave select */
   /* Check interface configuration data */
   assert(config);
@@ -201,17 +205,18 @@ static enum result sspInit(void *object, const void *configPtr)
       break;
   }
 
-  interface->reg->CR0 = 0;
-  if (!config->frame)
-    interface->reg->CR0 |= CR0_DSS(8);
-  else
-  {
-    assert(config->frame >= 4 && config->frame <= 16);
-    interface->reg->CR0 |= CR0_DSS(config->frame);
-  }
+  /* Initialize SSP block */
+  LPC_SSP_TypeDef *reg = interface->reg;
+
+  reg->CR0 = !config->frame ? CR0_DSS(8) : CR0_DSS(config->frame);
+
+  if (config->mode & 0x01) //TODO Remove magic numbers
+    reg->CR0 |= CR0_CPHA;
+  if (config->mode & 0x02)
+    reg->CR0 |= CR0_CPOL;
 
   sspSetRate(interface, config->rate);
-  interface->reg->CR1 = CR1_SSE; /* Enable peripheral */
+  reg->CR1 = CR1_SSE; /* Enable peripheral */
 
   return E_OK;
 }

@@ -39,25 +39,26 @@ const struct InterfaceClass *Serial = &serialTable;
 static void interruptHandler(void *object)
 {
   struct Serial *interface = object;
+  LPC_UART_TypeDef *reg = interface->parent.reg;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  (void)interface->parent.reg->IIR;
+  (void)reg->IIR;
 
   /* Byte will be removed from FIFO after reading from RBR register */
-  while (interface->parent.reg->LSR & LSR_RDR)
+  while (reg->LSR & LSR_RDR)
   {
-    uint8_t data = interface->parent.reg->RBR;
+    uint8_t data = reg->RBR;
     /* Received bytes will be dropped when queue becomes full */
     if (!queueFull(&interface->rxQueue))
       queuePush(&interface->rxQueue, data);
   }
-  if (interface->parent.reg->LSR & LSR_THRE)
+  if (reg->LSR & LSR_THRE)
   {
     /* Fill FIFO with selected burst size or less */
     uint32_t limit = queueSize(&interface->txQueue) < TX_FIFO_SIZE
         ? queueSize(&interface->txQueue) : TX_FIFO_SIZE;
     while (limit--)
-      interface->parent.reg->THR = queuePop(&interface->txQueue);
+      reg->THR = queuePop(&interface->txQueue);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -95,13 +96,14 @@ static enum result serialInit(void *object, const void *configPtr)
   if ((res = mutexInit(&interface->queueLock)) != E_OK)
     return res;
 
+  /* Initialize UART block */
+  LPC_UART_TypeDef *reg = interface->parent.reg;
 
-  /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  interface->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  interface->parent.reg->FCR |= FCR_ENABLE | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
+  /* Set RX trigger level */
+  reg->FCR &= ~FCR_RX_TRIGGER_MASK;
+  reg->FCR |= FCR_RX_TRIGGER(RX_FIFO_LEVEL);
   /* Enable RBR and THRE interrupts */
-  interface->parent.reg->IER |= IER_RBR | IER_THRE;
-  interface->parent.reg->TER = TER_TXEN;
+  reg->IER |= IER_RBR | IER_THRE;
 
   /* Set interrupt priority, lowest by default */
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
@@ -194,17 +196,18 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
   struct Serial *interface = object;
+  LPC_UART_TypeDef *reg = interface->parent.reg;
   uint32_t written = 0;
 
   mutexLock(&interface->queueLock);
   nvicDisable(interface->parent.irq);
   /* Check transmitter state */
-  if (interface->parent.reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
+  if (reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle, fill TX FIFO */
     uint32_t limit = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
     for (; written < limit; ++written)
-      interface->parent.reg->THR = *buffer++;
+      reg->THR = *buffer++;
     length -= written;
   }
   /* Fill TX queue with the rest of data */

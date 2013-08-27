@@ -160,15 +160,17 @@ enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct Uart *interface, struct UartRateConfig rate)
 {
+  LPC_UART_TypeDef *reg = interface->reg;
+
   /* Enable DLAB access */
-  interface->reg->LCR |= LCR_DLAB;
+  reg->LCR |= LCR_DLAB;
   /* Set divisor of the baud rate generator */
-  interface->reg->DLL = rate.low;
-  interface->reg->DLM = rate.high;
+  reg->DLL = rate.low;
+  reg->DLM = rate.high;
   /* Set fractional divisor */
-  interface->reg->FDR = rate.fraction;
+  reg->FDR = rate.fraction;
   /* Disable DLAB access */
-  interface->reg->LCR &= ~LCR_DLAB;
+  reg->LCR &= ~LCR_DLAB;
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
@@ -237,18 +239,21 @@ static enum result uartInit(void *object, const void *configPtr)
       break;
   }
 
-  interface->reg->FCR = 0;
-  interface->reg->IER = 0;
+  LPC_UART_TypeDef *reg = interface->reg;
+
+  reg->FCR = FCR_ENABLE;
+  reg->IER = 0;
+  reg->TER = TER_TXEN;
   /* Set 8-bit length */
-  interface->reg->LCR = LCR_WORD_8BIT;
+  reg->LCR = LCR_WORD_8BIT;
   /* Set parity */
   if (config->parity != UART_PARITY_NONE)
   {
-    interface->reg->LCR |= LCR_PARITY;
+    reg->LCR |= LCR_PARITY;
     if (config->parity == UART_PARITY_EVEN)
-      interface->reg->LCR |= LCR_PARITY_EVEN;
+      reg->LCR |= LCR_PARITY_EVEN;
     else
-      interface->reg->LCR |= LCR_PARITY_ODD;
+      reg->LCR |= LCR_PARITY_ODD;
   }
 
   uartSetRate(object, rate);

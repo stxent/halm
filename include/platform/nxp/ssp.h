@@ -15,23 +15,22 @@
 extern const struct InterfaceClass *Ssp;
 /*----------------------------------------------------------------------------*/
 /* TODO Add master/slave select */
-/* TODO Add phase and polarity */
 struct SspConfig
 {
   uint32_t rate; /* Mandatory: serial data rate */
   gpioKey cs; /* Optional: chip select for slave mode */
   gpioKey miso, mosi, sck; /* Mandatory: interface pins */
   uint8_t channel; /* Mandatory: peripheral number */
-  uint8_t mode; /* Optional: mode number used in SPI */
   uint8_t frame; /* Optional: frame size, 8 bits by default */
+  uint8_t mode; /* Optional: mode number used in SPI */
 };
 /*----------------------------------------------------------------------------*/
 struct Ssp
 {
   struct Interface parent;
 
-  LPC_SSP_TypeDef *reg; /* Pointer to SSP registers */
-  irq_t irq; /* IRQ identifier */
+  void *reg; /* Pointer to SSP registers */
+  irq_t irq; /* Interrupt identifier */
 
   void (*handler)(void *); /* Interrupt handler */
   struct Gpio csPin, misoPin, mosiPin, sckPin;
