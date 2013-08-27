@@ -11,7 +11,6 @@
 #include "platform/timer.h"
 #include "../device_defs.h"
 #include "../nvic.h"
-#include "./interrupts.h"
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass *BaseTimer;
 /*----------------------------------------------------------------------------*/
@@ -41,7 +40,7 @@ struct BaseTimer
   void *callbackArgument; /* User interrupt handler argument */
 
   LPC_TMR_TypeDef *reg; /* Pointer to UART registers */
-  enum interrupt irq; /* IRQ identifier */
+  irq_t irq; /* IRQ identifier */
 
   struct Gpio input; /* External clock input pin */
   uint8_t channel; /* Identifier of peripheral block for internal use */

@@ -70,9 +70,6 @@ static enum result serialInit(void *object, const void *configPtr)
   struct UartConfig parentConfig;
   enum result res;
 
-  /* Check interface configuration data */
-  assert(config);
-
   /* Initialize parent configuration structure */
   parentConfig.channel = config->channel;
   parentConfig.rx = config->rx;

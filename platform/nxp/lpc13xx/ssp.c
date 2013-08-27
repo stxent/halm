@@ -165,8 +165,6 @@ static enum result sspInit(void *object, const void *configPtr)
   struct Ssp *interface = object;
   enum result res;
 
-  /* Check interface configuration data */
-  assert(config);
   /* When frame is set its value should be from 4 to 16 */
   if (config->frame && config->frame - 4 > 12)
     return E_VALUE;

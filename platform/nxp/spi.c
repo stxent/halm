@@ -78,9 +78,6 @@ static enum result spiInit(void *object, const void *configPtr)
   };
   enum result res;
 
-  /* Check interface configuration data */
-  assert(config);
-
   /* Initialize parent configuration structure */
   parentConfig.channel = config->channel;
   parentConfig.sck = config->sck;

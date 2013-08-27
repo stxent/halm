@@ -106,9 +106,6 @@ static enum result uartInit(void *object, const void *configPtr)
   struct UartRateConfig rate;
   enum result res;
 
-  /* Check interface configuration data */
-  assert(config);
-
   /* Calculate and check baud rate value */
   if ((res = uartCalcRate(&rate, config->rate)) != E_OK)
     return res;

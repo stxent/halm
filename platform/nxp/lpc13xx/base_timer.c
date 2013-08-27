@@ -8,6 +8,7 @@
 #include "platform/nxp/system.h"
 #include "platform/nxp/lpc13xx/base_timer.h"
 #include "platform/nxp/lpc13xx/base_timer_defs.h"
+#include "platform/nxp/lpc13xx/interrupts.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV_VALUE 1

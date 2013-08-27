@@ -148,7 +148,7 @@ void sspSetRate(struct Ssp *interface, uint32_t rate)
   LPC_SSP_TypeDef *reg = interface->reg;
   uint16_t divider;
 
-  divider = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 1) / rate - 1;
+  divider = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / rate - 1;
   /* FIXME Rewrite */
   reg->CPSR = 2;
   reg->CR0 &= ~CR0_SCR_MASK;
@@ -161,7 +161,7 @@ uint32_t sspGetRate(struct Ssp *interface)
   uint16_t divider;
 
   divider = CR0_SCR_VALUE(((LPC_SSP_TypeDef *)interface->reg)->CR0);
-  rate = ((SystemCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
+  rate = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
   return rate;
 }
 /*----------------------------------------------------------------------------*/
@@ -174,9 +174,6 @@ static enum result sspInit(void *object, const void *configPtr)
   /* When frame is set its value should be from 4 to 16 */
   if (config->frame && config->frame - 4 > 12)
     return E_VALUE;
-  /* TODO Add mater/slave select */
-  /* Check interface configuration data */
-  assert(config);
 
   /* Try to set peripheral descriptor */
   interface->channel = config->channel;
@@ -240,5 +237,5 @@ static void sspDeinit(void *object)
   gpioDeinit(&interface->misoPin);
   gpioDeinit(&interface->sckPin);
   /* Reset SSP descriptor */
-  sspSetDescriptor(interface->channel, 0);
+  setDescriptor(interface->channel, 0);
 }

@@ -7,7 +7,7 @@
 #ifndef INTERRUPTS_H_
 #define INTERRUPTS_H_
 /*----------------------------------------------------------------------------*/
-enum interrupt
+enum
 {
   /* Core-specific interrupt sources */
   NMI_IRQ         = -14,
