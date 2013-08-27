@@ -8,29 +8,48 @@
 #include "platform/nxp/device_defs.h"
 #include "threading/cortex-m3/mutex.h"
 /*----------------------------------------------------------------------------*/
-void mutexLock(Mutex *m)
+enum mutexState
+{
+  MUTEX_UNLOCKED = 0,
+  MUTEX_LOCKED
+};
+/*----------------------------------------------------------------------------*/
+enum result mutexInit(struct Mutex *m)
+{
+  m->state = MUTEX_UNLOCKED;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+void mutexDeinit(struct Mutex *m)
+{
+
+}
+/*----------------------------------------------------------------------------*/
+void mutexLock(struct Mutex *m)
 {
   do
   {
-    while (__LDREXB(m) != MUTEX_UNLOCKED); /* Wait until mutex becomes free */
+    /* Wait until mutex becomes free */
+    while (__LDREXB(&m->state) != MUTEX_UNLOCKED);
   }
-  while (__STREXB(MUTEX_LOCKED, m) != 0); /* Try to set mutex locked */
-  __DMB(); /* Data memory barrier instruction */
+  while (__STREXB(MUTEX_LOCKED, &m->state) != 0); /* Try to set mutex locked */
+  __DMB();
 }
 /*----------------------------------------------------------------------------*/
-bool mutexTryLock(Mutex *m)
+bool mutexTryLock(struct Mutex *m)
 {
-  if (__LDREXB(m) == MUTEX_UNLOCKED) /* Get current mutex state */
+  if (__LDREXB(&m->state) == MUTEX_UNLOCKED) /* Get current mutex state */
   {
-    while (__STREXB(MUTEX_LOCKED, m) != 0); /* Try to set mutex locked */
-    __DMB(); /* Data memory barrier instruction */
+    /* Try to set mutex locked */
+    while (__STREXB(MUTEX_LOCKED, &m->state) != 0);
+    __DMB();
     return true;
   }
   return false; /* Mutex is already locked */
 }
 /*----------------------------------------------------------------------------*/
-void mutexUnlock(Mutex *m)
+void mutexUnlock(struct Mutex *m)
 {
   __DMB(); /* Ensure memory operations completed before releasing lock */
-  *m = MUTEX_UNLOCKED;
+  m->state = MUTEX_UNLOCKED;
 }

@@ -8,17 +8,18 @@
 #define MUTEX_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
+#include "error.h"
 /*----------------------------------------------------------------------------*/
-enum mutexState
+struct Mutex
 {
-  MUTEX_UNLOCKED = 0,
-  MUTEX_LOCKED
+  unsigned char state;
 };
 /*----------------------------------------------------------------------------*/
-typedef volatile unsigned char Mutex;
+enum result mutexInit(struct Mutex *);
+void mutexDeinit(struct Mutex *);
 /*----------------------------------------------------------------------------*/
-void mutexLock(Mutex *);
-bool mutexTryLock(Mutex *);
-void mutexUnlock(Mutex *);
+void mutexLock(struct Mutex *);
+bool mutexTryLock(struct Mutex *);
+void mutexUnlock(struct Mutex *);
 /*----------------------------------------------------------------------------*/
 #endif /* MUTEX_H_ */
