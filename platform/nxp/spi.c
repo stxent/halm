@@ -56,8 +56,7 @@ static void interruptHandler(void *object)
   while (interface->fill && reg->SR & SR_TNF)
   {
     /* TODO Select dummy frame value */
-    reg->DR = interface->rxBuffer ? 0xFF
-        : *interface->txBuffer++;
+    reg->DR = interface->rxBuffer ? 0xFF : *interface->txBuffer++;
     --interface->fill;
   }
 
@@ -112,6 +111,7 @@ static void spiDeinit(void *object)
   struct Spi *interface = object;
 
   nvicDisable(interface->parent.irq);
+  mutexDeinit(&interface->channelLock);
   Ssp->deinit(interface); /* Call SSP class destructor */
 }
 /*----------------------------------------------------------------------------*/

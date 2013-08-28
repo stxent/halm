@@ -48,7 +48,7 @@ struct OneWire
 {
   struct Uart parent;
 
-  void (*callback)(void *); /* Function called on completion event */
+  void (*callback)(void *);
   void *callbackArgument;
 
   uint8_t *rxBuffer; /* Receive buffer */

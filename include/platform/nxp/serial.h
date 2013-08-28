@@ -26,6 +26,9 @@ struct Serial
 {
   struct Uart parent;
 
+  void (*callback)(void *);
+  void *callbackArgument;
+
   struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
   struct Mutex queueLock; /* Access to queues */
 };

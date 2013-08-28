@@ -30,11 +30,11 @@ struct SdioSpi
 {
   struct Interface parent;
 
+  void (*callback)(void *);
+  void *callbackArgument;
+
   struct Interface *interface;
   uint64_t position;
-
-  void (*callback)(void *); /* Function called on completion event */
-  void *callbackArgument;
 
   struct Gpio csPin;
   struct Mutex lock;

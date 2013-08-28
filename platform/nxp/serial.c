@@ -115,6 +115,7 @@ static void serialDeinit(void *object)
   struct Serial *interface = object;
 
   nvicDisable(interface->parent.irq); /* Disable interrupt */
+  mutexDeinit(&interface->queueLock);
   queueDeinit(&interface->txQueue);
   queueDeinit(&interface->rxQueue);
   Uart->deinit(interface); /* Call UART class destructor */
@@ -202,8 +203,8 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   if (reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle, fill TX FIFO */
-    uint32_t limit = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
-    for (; written < limit; ++written)
+    uint16_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
+    for (; written < count; ++written)
       reg->THR = *buffer++;
     length -= written;
   }

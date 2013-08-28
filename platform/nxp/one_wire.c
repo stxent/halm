@@ -189,6 +189,7 @@ static void oneWireDeinit(void *object)
   struct OneWire *interface = object;
 
   nvicDisable(interface->parent.irq); /* Disable interrupt */
+  mutexDeinit(&interface->channelLock);
   queueDeinit(&interface->txQueue);
   Uart->deinit(interface); /* Call UART class destructor */
 }

@@ -25,12 +25,12 @@ struct Spi
 {
   struct Ssp parent;
 
+  void (*callback)(void *);
+  void *callbackArgument;
+
   uint8_t *rxBuffer;
   const uint8_t *txBuffer;
   uint32_t left, fill;
-
-  void (*callback)(void *); /* Function called on completion event */
-  void *callbackArgument;
 
   struct Mutex channelLock; /* Access to channel */
   bool blocking; /* By default interface is in blocking mode */

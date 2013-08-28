@@ -20,7 +20,7 @@ struct Queue
 #define queueEmpty(q)           (!(q)->size)
 #define queueFull(q)            ((q)->size == (q)->capacity)
 #define queueSize(q)            ((q)->size)
-#define queueSpace(q)           ((q)->capacity - (q)->size)
+#define queueCapacity(q)        ((q)->capacity)
 /*----------------------------------------------------------------------------*/
 enum result queueInit(struct Queue *, uint16_t);
 void queueDeinit(struct Queue *);

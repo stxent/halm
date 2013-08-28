@@ -84,18 +84,16 @@ enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
 }
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct Uart *interface, struct UartRateConfig rate)
+void uartSetRate(struct Uart *interface, struct UartRateConfig config)
 {
   LPC_UART_TypeDef *reg = interface->reg;
 
-  /* Enable DLAB access */
-  reg->LCR |= LCR_DLAB;
-  /* Set divisor of the baud rate generator */
-  reg->DLL = rate.low;
-  reg->DLM = rate.high;
-  /* Set fractional divisor */
-  reg->FDR = rate.fraction;
-  /* Disable DLAB access */
-  reg->LCR &= ~LCR_DLAB;
+  /* UART should not be used during this command sequence */
+  reg->LCR |= LCR_DLAB; /* Enable DLAB access */
+  reg->DLL = config.low;
+  reg->DLM = config.high;
+  reg->FDR = config.fraction;
+  reg->LCR &= ~LCR_DLAB; /* Disable DLAB access */
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
