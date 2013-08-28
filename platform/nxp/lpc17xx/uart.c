@@ -85,6 +85,7 @@ static const struct GpioDescriptor uartPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct Uart *);
+static inline enum result setupPins(struct Uart *, const struct UartConfig *);
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
@@ -140,6 +141,26 @@ static enum result setDescriptor(uint8_t channel, struct Uart *interface)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static inline enum result setupPins(struct Uart *interface,
+    const struct UartConfig *config)
+{
+  const struct GpioDescriptor *pin;
+
+  /* Setup UART RX pin */
+  if (!(pin = gpioFind(uartPins, config->rx, interface->channel)))
+    return E_VALUE;
+  interface->rxPin = gpioInit(config->rx, GPIO_INPUT);
+  gpioSetFunction(&interface->rxPin, pin->value);
+
+  /* Setup UART TX pin */
+  if (!(pin = gpioFind(uartPins, config->tx, interface->channel)))
+    return E_VALUE;
+  interface->txPin = gpioInit(config->tx, GPIO_OUTPUT);
+  gpioSetFunction(&interface->txPin, pin->value);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
 enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
 {
   uint32_t divisor;
@@ -158,24 +179,20 @@ enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void uartSetRate(struct Uart *interface, struct UartRateConfig rate)
+void uartSetRate(struct Uart *interface, struct UartRateConfig config)
 {
   LPC_UART_TypeDef *reg = interface->reg;
 
-  /* Enable DLAB access */
-  reg->LCR |= LCR_DLAB;
-  /* Set divisor of the baud rate generator */
-  reg->DLL = rate.low;
-  reg->DLM = rate.high;
-  /* Set fractional divisor */
-  reg->FDR = rate.fraction;
-  /* Disable DLAB access */
-  reg->LCR &= ~LCR_DLAB;
+  /* UART should not be used during this command sequence */
+  reg->LCR |= LCR_DLAB; /* Enable DLAB access */
+  reg->DLL = config.low;
+  reg->DLM = config.high;
+  reg->FDR = config.fraction;
+  reg->LCR &= ~LCR_DLAB; /* Disable DLAB access */
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
 {
-  const struct GpioDescriptor *pin;
   const struct UartConfig * const config = configPtr;
   struct Uart *interface = object;
   struct UartRateConfig rate;
@@ -190,20 +207,12 @@ static enum result uartInit(void *object, const void *configPtr)
   if ((res = setDescriptor(interface->channel, interface)) != E_OK)
     return res;
 
+  /* Configure interface pins */
+  if ((res = setupPins(interface, config)) != E_OK)
+    return res;
+
   /* Reset pointer to interrupt handler function */
   interface->handler = 0;
-
-  /* Setup UART RX pin */
-  pin = gpioFind(uartPins, config->rx, interface->channel);
-  assert(pin);
-  interface->rxPin = gpioInit(config->rx, GPIO_INPUT);
-  gpioSetFunction(&interface->rxPin, pin->value);
-
-  /* Setup UART TX pin */
-  pin = gpioFind(uartPins, config->tx, interface->channel);
-  assert(pin);
-  interface->txPin = gpioInit(config->tx, GPIO_OUTPUT);
-  gpioSetFunction(&interface->txPin, pin->value);
 
   //FIXME Remove FIFO level from CMSIS
   switch (interface->channel)

@@ -226,7 +226,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   }
 
   interface->rxBuffer = 0;
-  interface->txBuffer = interface->left ? buffer : 0;
+  interface->txBuffer = interface->fill ? buffer : 0;
   interface->left = length;
 
   /* Enable receive FIFO half full and receive FIFO timeout interrupts */

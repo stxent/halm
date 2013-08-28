@@ -161,9 +161,6 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
     case IF_PRIORITY:
       *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
       return E_OK;
-    case IF_RATE:
-      /* TODO */
-      return E_ERROR;
     default:
       return E_ERROR;
   }

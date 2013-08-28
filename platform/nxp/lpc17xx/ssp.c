@@ -69,7 +69,7 @@ static const struct GpioDescriptor sspPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct Ssp *);
-static inline void setupPins(struct Ssp *, const struct SspConfig *);
+static inline enum result setupPins(struct Ssp *, const struct SspConfig *);
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
@@ -101,34 +101,36 @@ static enum result setDescriptor(uint8_t channel, struct Ssp *interface)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static inline void setupPins(struct Ssp *interface,
+static inline enum result setupPins(struct Ssp *interface,
     const struct SspConfig *config)
 {
   const struct GpioDescriptor *pin;
 
-  /* Setup Serial Clock pin */
-  pin = gpioFind(sspPins, config->sck, interface->channel);
-  assert(pin);
-  interface->sckPin = gpioInit(config->sck, GPIO_OUTPUT);
-  gpioSetFunction(&interface->sckPin, pin->value);
-
   /* Setup MISO pin */
-  pin = gpioFind(sspPins, config->miso, interface->channel);
-  assert(pin);
+  if (!(pin = gpioFind(sspPins, config->miso, interface->channel)))
+    return E_VALUE;
   interface->misoPin = gpioInit(config->miso, GPIO_INPUT);
   gpioSetFunction(&interface->misoPin, pin->value);
 
   /* Setup MOSI pin */
-  pin = gpioFind(sspPins, config->mosi, interface->channel);
-  assert(pin);
+  if (!(pin = gpioFind(sspPins, config->mosi, interface->channel)))
+    return E_VALUE;
   interface->mosiPin = gpioInit(config->mosi, GPIO_OUTPUT);
   gpioSetFunction(&interface->mosiPin, pin->value);
 
+  /* Setup Serial Clock pin */
+  if (!(pin = gpioFind(sspPins, config->sck, interface->channel)))
+    return E_VALUE;
+  interface->sckPin = gpioInit(config->sck, GPIO_OUTPUT);
+  gpioSetFunction(&interface->sckPin, pin->value);
+
   /* Setup CS pin, only in slave mode */
-//  pin = gpioFind(sspPins, config->cs, interface->channel);
-//  assert(pin);
+//  if (!(pin = gpioFind(sspPins, config->cs, interface->channel)))
+//    return E_VALUE;
 //  interface->csPin = gpioInit(config->cs, GPIO_INPUT);
 //  gpioSetFunction(&interface->csPin, pin->value);
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void SSP0_ISR(void)
@@ -181,7 +183,8 @@ static enum result sspInit(void *object, const void *configPtr)
     return res;
 
   /* Configure interface pins */
-  setupPins(interface, config);
+  if ((res = setupPins(interface, config)) != E_OK)
+    return res;
 
   /* Reset pointer to interrupt handler */
   interface->handler = 0;
