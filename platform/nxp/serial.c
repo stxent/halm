@@ -40,9 +40,12 @@ static void interruptHandler(void *object)
 {
   struct Serial *interface = object;
   LPC_UART_TypeDef *reg = interface->parent.reg;
+  bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  (void)reg->IIR;
+  uint8_t state = reg->IIR;
+  /* Call user handler when receive timeout occurs */
+  event |= (state & IIR_INT_MASK) == IIR_INT_CTI;
 
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
@@ -55,11 +58,23 @@ static void interruptHandler(void *object)
   if (reg->LSR & LSR_THRE)
   {
     /* Fill FIFO with selected burst size or less */
-    uint32_t limit = queueSize(&interface->txQueue) < TX_FIFO_SIZE
+    uint16_t count = queueSize(&interface->txQueue) < TX_FIFO_SIZE
         ? queueSize(&interface->txQueue) : TX_FIFO_SIZE;
-    while (limit--)
+
+    /* Call user handler when transmit queue become half empty */
+    event |= count && queueSize(&interface->txQueue) - count
+        < (queueCapacity(&interface->txQueue) >> 1);
+
+    while (count--)
       reg->THR = queuePop(&interface->txQueue);
   }
+
+  /* User handler will be called when receive queue is half full */
+  event |= queueSize(&interface->rxQueue)
+      >= (queueCapacity(&interface->rxQueue) >> 1);
+
+  if (interface->callback && event)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
@@ -124,8 +139,11 @@ static void serialDeinit(void *object)
 static enum result serialCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  /* Callback functionality not implemented */
-  return E_ERROR;
+  struct Serial *interface = object;
+
+  interface->callback = callback;
+  interface->callbackArgument = argument;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialGet(void *object, enum ifOption option, void *data)
