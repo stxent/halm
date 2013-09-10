@@ -125,26 +125,21 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result oneWireInit(void *object, const void *configPtr)
 {
-  /* Set pointer to interface configuration data */
   const struct OneWireConfig * const config = configPtr;
+  const struct UartConfig parentConfig = {
+      .channel = config->channel,
+      .rx = config->rx,
+      .tx = config->tx,
+      .rate = RATE_RESET
+  };
   struct OneWire *interface = object;
-  struct UartConfig parentConfig;
   enum result res;
-
-  /* Check interface configuration data */
-  assert(config);
 
   /* Compute rates */
    if ((res = uartCalcRate(&interface->dataRate, RATE_DATA)) != E_OK)
      return res;
    if ((res = uartCalcRate(&interface->resetRate, RATE_RESET)) != E_OK)
      return res;
-
-  /* Initialize parent configuration structure */
-  parentConfig.channel = config->channel;
-  parentConfig.rx = config->rx;
-  parentConfig.tx = config->tx;
-  parentConfig.rate = RATE_RESET;
 
   /* Call UART class constructor */
   if ((res = Uart->init(object, &parentConfig)) != E_OK)

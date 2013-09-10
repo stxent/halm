@@ -71,19 +71,17 @@ static void interruptHandler(void *object)
 static enum result spiInit(void *object, const void *configPtr)
 {
   const struct SpiConfig * const config = configPtr;
-  struct Spi *interface = object;
-  struct SspConfig parentConfig = {
+  const struct SspConfig parentConfig = {
+      .channel = config->channel,
+      .miso = config->miso,
+      .mosi = config->mosi,
+      .sck = config->sck,
+      .cs = config->cs,
+      .rate = config->rate,
       .frame = 8 /* Fixed frame size */
   };
+  struct Spi *interface = object;
   enum result res;
-
-  /* Initialize parent configuration structure */
-  parentConfig.channel = config->channel;
-  parentConfig.sck = config->sck;
-  parentConfig.miso = config->miso;
-  parentConfig.mosi = config->mosi;
-  parentConfig.rate = config->rate;
-  parentConfig.cs = config->cs;
 
   /* Call SSP class constructor */
   if ((res = Ssp->init(object, &parentConfig)) != E_OK)

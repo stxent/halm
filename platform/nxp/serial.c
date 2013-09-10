@@ -79,18 +79,16 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
-  /* Set pointer to interface configuration data */
   const struct SerialConfig * const config = configPtr;
+  const struct UartConfig parentConfig = {
+      .channel = config->channel,
+      .rx = config->rx,
+      .tx = config->tx,
+      .rate = config->rate,
+      .parity = config->parity
+  };
   struct Serial *interface = object;
-  struct UartConfig parentConfig;
   enum result res;
-
-  /* Initialize parent configuration structure */
-  parentConfig.channel = config->channel;
-  parentConfig.rx = config->rx;
-  parentConfig.tx = config->tx;
-  parentConfig.rate = config->rate;
-  parentConfig.parity = config->parity;
 
   /* Call UART class constructor */
   if ((res = Uart->init(object, &parentConfig)) != E_OK)
