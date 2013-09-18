@@ -47,6 +47,7 @@ enum sysClockDiv
   CLK_DIV1 = 1,
   CLK_DIV2 = 2,
   CLK_DIV4 = 0,
+  CLK_DIV6 = 3, /* For CAN1, CAN2 and CAN Filtering */
   CLK_DIV8 = 3
 };
 /*----------------------------------------------------------------------------*/

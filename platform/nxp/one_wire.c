@@ -208,7 +208,7 @@ static enum result oneWireGet(void *object, enum ifOption option, void *data)
     case IF_BUSY:
       *(uint32_t *)data = interface->state != OW_IDLE;
       return E_OK;
-    case IF_DEVICE:
+    case IF_DEVICE: /* TODO Remove address getter */
       *(uint64_t *)data = interface->address.rom;
       return E_OK;
     case IF_PRIORITY:
@@ -241,9 +241,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
           mutexLock(&interface->channelLock);
       }
       else
-      {
         mutexUnlock(&interface->channelLock);
-      }
       return E_OK;
     case IF_PRIORITY:
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);

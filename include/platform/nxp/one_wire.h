@@ -59,8 +59,8 @@ struct OneWire
 
   struct Queue txQueue; /* Transmit queue */
   struct UartRateConfig dataRate, resetRate;
-  bool blocking; /* By default interface is in blocking mode */
   struct Mutex channelLock; /* Access to base interface */
+  bool blocking; /* By default interface is in blocking mode */
   enum oneWireState state; /* Current 1-Wire interface state */
 };
 /*----------------------------------------------------------------------------*/
