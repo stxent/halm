@@ -7,14 +7,14 @@
 #include <stdlib.h>
 #include "entity.h"
 /*----------------------------------------------------------------------------*/
-void *init(const void *typeDesc, const void *args)
+void *init(const void *typeDescriptor, const void *arguments)
 {
-  const struct EntityClass *type = (const struct EntityClass *)typeDesc;
+  const struct EntityClass *type = (const struct EntityClass *)typeDescriptor;
   struct Entity *entity;
 
   if (!type || !type->size || !(entity = malloc(type->size)))
     return 0;
-  if (type->init && type->init(entity, args) != E_OK)
+  if (type->init && type->init(entity, arguments) != E_OK)
   {
     free(entity);
     return 0;
