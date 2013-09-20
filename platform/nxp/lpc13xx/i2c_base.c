@@ -55,6 +55,21 @@ void I2C_ISR(void)
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
+uint32_t i2cGetRate(const struct I2cBase *interface)
+{
+  LPC_I2C_TypeDef *reg = interface->reg;
+  uint32_t rate = reg->SCLL + reg->SCLH;
+
+  return rate ? sysCoreClock / rate : 0;
+}
+/*----------------------------------------------------------------------------*/
+void i2cSetRate(struct I2cBase *interface, uint32_t rate)
+{
+  LPC_I2C_TypeDef *reg = interface->reg;
+
+  reg->SCLL = reg->SCLH = (sysCoreClock >> 1) / rate;
+}
+/*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct I2cBase *interface)
 {
   assert(channel < sizeof(descriptors));
@@ -71,13 +86,13 @@ static inline enum result setupPins(struct I2cBase *interface,
 {
   const struct GpioDescriptor *pin;
 
-  /* Setup UART RX pin */
+  /* Setup I2C serial clock pin */
   if (!(pin = gpioFind(i2cPins, config->scl, interface->channel)))
     return E_VALUE;
   interface->sclPin = gpioInit(config->scl, GPIO_INPUT);
   gpioSetFunction(&interface->sclPin, pin->value);
 
-  /* Setup UART TX pin */
+  /* Setup I2C serial data pin */
   if (!(pin = gpioFind(i2cPins, config->sda, interface->channel)))
     return E_VALUE;
   interface->sdaPin = gpioInit(config->sda, GPIO_INPUT);
@@ -97,29 +112,22 @@ static enum result i2cInit(void *object, const void *configPtr)
   if ((res = setDescriptor(interface->channel, interface)) != E_OK)
     return res;
 
-  /* Configure interface pins */
   if ((res = setupPins(interface, configPtr)) != E_OK)
     return res;
 
-  /* Reset pointer to interrupt handler function */
   interface->handler = 0;
 
-  switch (config->channel)
-  {
-    case 0:
-      sysClockEnable(CLK_I2C);
-      LPC_SYSCON->PRESETCTRL |= 1 << 1; //FIXME Add define
-      interface->reg = LPC_I2C;
-      interface->irq = I2C_IRQ;
-      break;
-  }
+  /* Set controller specific parameters */
+  sysClockEnable(CLK_I2C);
+  LPC_SYSCON->PRESETCTRL |= 1 << 1; //FIXME Add define
+  interface->reg = LPC_I2C;
+  interface->irq = I2C_IRQ;
+
+  /* Rate should be initialized after block selection */
+  i2cSetRate(interface, config->rate);
 
   LPC_I2C_TypeDef *reg = interface->reg;
-  /* TODO Fast mode */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
-  /* Duty cycle registers are 16-bit */
-  /* TODO Add check and separate function */
-  reg->SCLL = reg->SCLH = (sysCoreClock >> 1) / config->rate;
   reg->CONSET = CONSET_I2EN;
 
   return E_OK;
@@ -129,5 +137,12 @@ static void i2cDeinit(void *object)
 {
   struct I2cBase *interface = object;
 
+  ((LPC_I2C_TypeDef *)interface->reg)->CONCLR = CONCLR_I2ENC;
 
+  LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
+  sysClockDisable(CLK_I2C);
+  gpioDeinit(&interface->sdaPin);
+  gpioDeinit(&interface->sclPin);
+  /* Reset I2C descriptor */
+  setDescriptor(interface->channel, 0);
 }

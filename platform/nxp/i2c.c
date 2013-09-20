@@ -1,5 +1,5 @@
 /*
- * spi.c
+ * i2c.c
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -54,6 +54,7 @@ static void interruptHandler(void *object)
 {
   struct I2c *interface = object;
   LPC_I2C_TypeDef *reg = interface->parent.reg;
+  bool event = false;
 
   switch (reg->STAT)
   {
@@ -93,6 +94,7 @@ static void interruptHandler(void *object)
       {
         reg->CONSET = CONSET_STO;
         interface->state = I2C_IDLE;
+        event = true;
       }
       break;
     /* Data has been received and ACK has been returned */
@@ -110,6 +112,7 @@ static void interruptHandler(void *object)
       *interface->rxBuffer++ = reg->DAT;
       reg->CONSET = CONSET_STO;
       interface->state = I2C_IDLE;
+      event = true;
       break;
     /* Address and direction bit have not been acknowledged */
     case STAT_SLAVE_WRITE_NACK:
@@ -126,6 +129,9 @@ static void interruptHandler(void *object)
       break;
   }
   reg->CONCLR = CONCLR_SIC;
+
+  if (interface->callback && event)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *object, const void *configPtr)
@@ -141,10 +147,12 @@ static enum result i2cInit(void *object, const void *configPtr)
     return res;
 
   interface->callback = 0;
+
+  interface->blocking = true;
   interface->state = I2C_IDLE;
   interface->address = 0;
 
-  /* Set pointer to hardware interrupt handler */
+  /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
 
   /* Set interrupt priority, lowest by default */
@@ -184,11 +192,14 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
       *(uint32_t *)data = interface->state != I2C_IDLE
           && interface->state != I2C_ERROR;
       return E_OK;
-    case IF_DEVICE: /* TODO Remove address getter */
-      *(uint32_t *)data = interface->address;
-      return E_OK;
     case IF_PRIORITY:
       *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
+      return E_OK;
+    case IF_RATE:
+      *(uint32_t *)data = i2cGetRate(interface);
+      return E_OK;
+    case IF_ZEROCOPY:
+      *(uint32_t *)data = !interface->blocking;
       return E_OK;
     default:
       return E_ERROR;
@@ -204,19 +215,25 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
     case IF_DEVICE:
       interface->address = *(uint32_t *)data;
       return E_OK;
-    case IF_LOCK: //TODO
-//      if (*(uint32_t *)data)
-//      {
-//        if (interface->blocking)
-//          return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
-//        else
-//          mutexLock(&interface->channelLock);
-//      }
-//      else
-//        mutexUnlock(&interface->channelLock);
+    case IF_LOCK:
+      if (*(uint32_t *)data)
+      {
+        if (interface->blocking)
+          return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
+        else
+          mutexLock(&interface->channelLock);
+      }
+      else
+        mutexUnlock(&interface->channelLock);
       return E_OK;
     case IF_PRIORITY:
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
+      return E_OK;
+    case IF_RATE:
+      i2cSetRate(interface, *(uint32_t *)data);
+      return E_OK;
+    case IF_ZEROCOPY:
+      interface->blocking = *(uint32_t *)data ? false : true;
       return E_OK;
     default:
       return E_ERROR;
@@ -228,6 +245,8 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
   struct I2c *interface = object;
   LPC_I2C_TypeDef *reg = interface->parent.reg;
 
+  while (reg->CONSET & CONSET_STO); //FIXME Is it safe?
+
   interface->rxCount = (uint16_t)length;
   interface->txCount = 0;
   interface->rxBuffer = buffer;
@@ -235,8 +254,13 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
   interface->state = I2C_ADDRESS;
   reg->CONSET = CONSET_STA;
 
-  //TODO Zero-copy mode and return value based on result
-  while (interface->state != I2C_IDLE && interface->state != I2C_ERROR);
+  if (interface->blocking)
+  {
+    while (interface->state != I2C_IDLE && interface->state != I2C_ERROR);
+
+    if (interface->state == I2C_ERROR)
+      return 0;
+  }
 
   return length;
 }
@@ -246,6 +270,8 @@ static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
   struct I2c *interface = object;
   LPC_I2C_TypeDef *reg = interface->parent.reg;
 
+  while (reg->CONSET & CONSET_STO); //FIXME Is it safe?
+
   interface->rxCount = 0;
   interface->txCount = (uint16_t)length;
   interface->txBuffer = buffer;
@@ -253,8 +279,13 @@ static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
   interface->state = I2C_ADDRESS;
   reg->CONSET = CONSET_STA;
 
-  //TODO Zero-copy mode and return value based on result
-  while (interface->state != I2C_IDLE && interface->state != I2C_ERROR);
+  if (interface->blocking)
+  {
+    while (interface->state != I2C_IDLE && interface->state != I2C_ERROR);
+
+    if (interface->state == I2C_ERROR)
+      return 0;
+  }
 
   return length;
 }

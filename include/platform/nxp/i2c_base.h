@@ -34,4 +34,7 @@ struct I2cBase
   uint8_t channel; /* Peripheral number */
 };
 /*----------------------------------------------------------------------------*/
+uint32_t i2cGetRate(const struct I2cBase *);
+void i2cSetRate(struct I2cBase *, uint32_t);
+/*----------------------------------------------------------------------------*/
 #endif /* I2C_BASE_H_ */
