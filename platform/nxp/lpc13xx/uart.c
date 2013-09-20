@@ -86,22 +86,22 @@ static inline enum result setupPins(struct Uart *interface,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-enum result uartCalcRate(struct UartRateConfig *config, uint32_t rate)
+struct UartRateConfig uartCalcRate(uint32_t rate)
 {
   uint32_t divisor;
+  struct UartRateConfig config = {0, 0, 0};
 
   if (!rate)
-    return E_ERROR;
+    return config;
+
   divisor = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 4) / rate;
-  if (!divisor || divisor >= (1 << 16))
-    return E_ERROR;
-
-  config->high = (uint8_t)(divisor >> 8);
-  config->low = (uint8_t)divisor;
-  config->fraction = 0;
-  /* TODO Add fractional part calculation */
-
-  return E_OK;
+  if (divisor && divisor < (1 << 16))
+  {
+    config.high = (uint8_t)(divisor >> 8);
+    config.low = (uint8_t)divisor;
+    /* TODO Add fractional part calculation */
+  }
+  return config;
 }
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct Uart *interface, struct UartRateConfig config)
@@ -120,42 +120,33 @@ static enum result uartInit(void *object, const void *configPtr)
 {
   const struct UartConfig * const config = configPtr;
   struct Uart *interface = object;
-  struct UartRateConfig rate;
   enum result res;
-
-  /* Calculate and check baud rate value */
-  if ((res = uartCalcRate(&rate, config->rate)) != E_OK)
-    return res;
 
   /* Try to set peripheral descriptor */
   interface->channel = config->channel;
   if ((res = setDescriptor(interface->channel, interface)) != E_OK)
     return res;
 
-  /* Configure interface pins */
   if ((res = setupPins(interface, config)) != E_OK)
     return res;
 
-  /* Reset pointer to interrupt handler function */
   interface->handler = 0;
 
-  switch (config->channel)
-  {
-    case 0:
-      sysClockEnable(CLK_UART);
-      LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV; /* Divide AHB clock */
-      interface->reg = LPC_UART;
-      interface->irq = UART_IRQ;
-      break;
-  }
+  /* Set controller specific parameters */
+  sysClockEnable(CLK_UART);
+  LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV; /* Divide AHB clock */
+  interface->reg = LPC_UART;
+  interface->irq = UART_IRQ;
 
+  /* Initialize UART block */
   LPC_UART_TypeDef *reg = interface->reg;
 
+  /* Set initial values for UART registers */
   reg->FCR = FCR_ENABLE;
   reg->IER = 0;
   reg->TER = TER_TXEN;
-  /* Set 8-bit length */
-  reg->LCR = LCR_WORD_8BIT;
+  reg->LCR = LCR_WORD_8BIT; /* Set 8-bit length */
+
   /* Set parity */
   if (config->parity != UART_PARITY_NONE)
   {
@@ -166,7 +157,7 @@ static enum result uartInit(void *object, const void *configPtr)
       reg->LCR |= LCR_PARITY_ODD;
   }
 
-  uartSetRate(object, rate);
+  uartSetRate(object, uartCalcRate(config->rate));
 
   return E_OK;
 }

@@ -94,7 +94,7 @@ static enum result serialInit(void *object, const void *configPtr)
   if ((res = Uart->init(object, &parentConfig)) != E_OK)
     return res;
 
-  /* Set pointer to hardware interrupt handler */
+  /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
 
   /* Initialize RX and TX queues */
@@ -168,7 +168,6 @@ static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Serial *interface = object;
-  enum result res;
 
   switch (option)
   {
@@ -176,14 +175,8 @@ static enum result serialSet(void *object, enum ifOption option,
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
-    {
-      struct UartRateConfig rate;
-
-      if ((res = uartCalcRate(&rate, *(uint32_t *)data)) != E_OK)
-        return res;
-      uartSetRate(object, rate);
+      uartSetRate(object, uartCalcRate(*(uint32_t *)data));
       return E_OK;
-    }
     default:
       return E_ERROR;
   }

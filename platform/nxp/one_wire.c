@@ -136,10 +136,8 @@ static enum result oneWireInit(void *object, const void *configPtr)
   enum result res;
 
   /* Compute rates */
-   if ((res = uartCalcRate(&interface->dataRate, RATE_DATA)) != E_OK)
-     return res;
-   if ((res = uartCalcRate(&interface->resetRate, RATE_RESET)) != E_OK)
-     return res;
+  interface->dataRate = uartCalcRate(RATE_DATA);
+  interface->resetRate = uartCalcRate(RATE_RESET);
 
   /* Call UART class constructor */
   if ((res = Uart->init(object, &parentConfig)) != E_OK)
@@ -147,7 +145,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
 
   gpioSetType(&interface->parent.txPin, GPIO_OPENDRAIN);
 
-  /* Set pointer to hardware interrupt handler */
+  /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
 
   /* Initialize TX queue */

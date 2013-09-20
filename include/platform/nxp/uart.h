@@ -47,7 +47,7 @@ struct Uart
   uint8_t channel; /* Peripheral number */
 };
 /*----------------------------------------------------------------------------*/
-enum result uartCalcRate(struct UartRateConfig *, uint32_t);
+struct UartRateConfig uartCalcRate(uint32_t);
 void uartSetRate(struct Uart *, struct UartRateConfig);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */
