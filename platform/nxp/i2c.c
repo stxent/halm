@@ -188,18 +188,14 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-    case IF_BUSY:
-      *(uint32_t *)data = interface->state != I2C_IDLE
-          && interface->state != I2C_ERROR;
-      return E_OK;
+    case IF_READY:
+      return interface->state != I2C_IDLE && interface->state != I2C_ERROR ?
+          E_BUSY : E_OK;
     case IF_PRIORITY:
       *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
       return E_OK;
     case IF_RATE:
-      *(uint32_t *)data = i2cGetRate(interface);
-      return E_OK;
-    case IF_ZEROCOPY:
-      *(uint32_t *)data = !interface->blocking;
+      *(uint32_t *)data = i2cGetRate(object);
       return E_OK;
     default:
       return E_ERROR;
@@ -212,28 +208,31 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 
   switch (option)
   {
+    case IF_BLOCKING:
+      interface->blocking = true;
+      return E_OK;
     case IF_DEVICE:
       interface->address = *(uint32_t *)data;
       return E_OK;
     case IF_LOCK:
-      if (*(uint32_t *)data)
-      {
-        if (interface->blocking)
-          return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
-        else
-          mutexLock(&interface->channelLock);
-      }
+      if (interface->blocking)
+        return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
       else
-        mutexUnlock(&interface->channelLock);
-      return E_OK;
+      {
+        mutexLock(&interface->channelLock);
+        return E_OK;
+      }
     case IF_PRIORITY:
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
-      i2cSetRate(interface, *(uint32_t *)data);
+      i2cSetRate(object, *(uint32_t *)data);
+      return E_OK;
+    case IF_UNLOCK:
+      mutexUnlock(&interface->channelLock);
       return E_OK;
     case IF_ZEROCOPY:
-      interface->blocking = *(uint32_t *)data ? false : true;
+      interface->blocking = false;
       return E_OK;
     default:
       return E_ERROR;

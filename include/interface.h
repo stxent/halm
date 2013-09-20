@@ -19,33 +19,47 @@
 /** Interface options. */
 enum ifOption
 {
-  /** Bytes available in receive buffers. */
+  /** Bytes available in the receive buffer. */
   IF_AVAILABLE,
-  /** Check whether interface is busy. */
-  IF_BUSY,
-  /** Bytes pending in transmit buffers. */
+  /** Bytes pending in the transmit buffer. */
   IF_PENDING,
-  /** Size of the total space available on device. */
-  IF_SIZE,
 
-  /** Sub-address. */
-  IF_ADDRESS,
-  /** Burst size for scatter-gather operations. */
+  /** Burst size for the scatter-gather operations. */
   IF_BURST,
-  /** Device address. */
+  /** Address of the device. */
   IF_DEVICE,
-  /** Interface lock. */
-  IF_LOCK,
-  /** Non-blocking mode with copying into internal buffers. */
-  IF_NONBLOCKING,
-  /** Interface interrupts or DMA requests priority. */
+  /** Priority of the interrupts or the memory requests. */
   IF_PRIORITY,
   /** Data rate. */
   IF_RATE,
   /** Timeout value for blocking functions. */
   IF_TIMEOUT,
-  /** Zero-copy mode. */
-  IF_ZEROCOPY
+
+  /** Internal address of the device.
+   * Some devices can use 64-bit unsigned integer as an argument.
+   */
+  IF_ADDRESS,
+  /** Total memory available for use with the internal addressing method. */
+  IF_SIZE,
+
+  /** Check whether the interface is ready to the next portion of data.
+   * Returns @b E_OK when interface is ready or @b E_BUSY otherwise.
+   */
+  IF_READY,
+
+  /** Select blocking mode for the interface. */
+  IF_BLOCKING,
+  /** Select non-blocking mode for the interface. */
+  IF_NONBLOCKING,
+  /** Select zero-copy mode for the interface. */
+  IF_ZEROCOPY,
+
+  /** Lock the interface.
+   * Returns @b E_OK when interface successfully locked or @b E_BUSY otherwise.
+   */
+  IF_LOCK,
+  /** Unlock the interface. */
+  IF_UNLOCK
 };
 /*----------------------------------------------------------------------------*/
 struct InterfaceClass

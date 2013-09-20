@@ -425,9 +425,6 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
     case IF_ADDRESS:
       *(uint64_t *)data = device->position;
       return E_OK;
-    case IF_NONBLOCKING:
-      *(uint32_t *)data = !device->blocking;
-      return E_OK;
     default:
       return E_ERROR;
   }
@@ -444,8 +441,11 @@ static enum result sdioSet(void *object, enum ifOption option,
       /* TODO Add boundary check */
       device->position = *(uint64_t *)data;
       return E_OK;
+    case IF_BLOCKING:
+      device->blocking = true;
+      return E_OK;
     case IF_NONBLOCKING:
-      device->blocking = *(uint32_t *)data ? false : true;
+      device->blocking = false;
       return E_OK;
     default:
       return E_ERROR;

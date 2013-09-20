@@ -126,22 +126,18 @@ static enum result spiCallback(void *object, void (*callback)(void *),
 static enum result spiGet(void *object, enum ifOption option, void *data)
 {
   struct Spi *interface = object;
+  LPC_SSP_TypeDef *reg = interface->parent.reg;
 
   switch (option)
   {
-    case IF_BUSY:
-      *(uint32_t *)data = interface->left
-          || ((LPC_SSP_TypeDef *)interface->parent.reg)->SR & SR_BSY;
-      return E_OK;
     case IF_PRIORITY:
       *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
       return E_OK;
     case IF_RATE:
       *(uint32_t *)data = sspGetRate(object);
       return E_OK;
-    case IF_ZEROCOPY:
-      *(uint32_t *)data = !interface->blocking;
-      return E_OK;
+    case IF_READY:
+      return interface->left || reg->SR & SR_BSY ? E_BUSY : E_OK;
     default:
       return E_ERROR;
   }
@@ -153,25 +149,28 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 
   switch (option)
   {
-    case IF_LOCK:
-      if (*(uint32_t *)data)
-      {
-        if (interface->blocking)
-          return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
-        else
-          mutexLock(&interface->channelLock);
-      }
-      else
-        mutexUnlock(&interface->channelLock);
+    case IF_BLOCKING:
+      interface->blocking = true;
       return E_OK;
+    case IF_LOCK:
+      if (interface->blocking)
+        return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
+      else
+      {
+        mutexLock(&interface->channelLock);
+        return E_OK;
+      }
     case IF_PRIORITY:
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);
       return E_OK;
+    case IF_UNLOCK:
+      mutexUnlock(&interface->channelLock);
+      return E_OK;
     case IF_ZEROCOPY:
-      interface->blocking = *(uint32_t *)data ? false : true;
+      interface->blocking = false;
       return E_OK;
     default:
       return E_ERROR;
