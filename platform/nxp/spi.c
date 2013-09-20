@@ -93,7 +93,7 @@ static enum result spiInit(void *object, const void *configPtr)
   interface->callback = 0;
   interface->blocking = true;
 
-  /* Set pointer to hardware interrupt handler */
+  /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
 
   /* Set interrupt priority, lowest by default */

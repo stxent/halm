@@ -37,7 +37,7 @@ struct Ssp
   uint8_t channel; /* Peripheral number */
 };
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetRate(struct Ssp *);
+uint32_t sspGetRate(const struct Ssp *);
 void sspSetRate(struct Ssp *, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* SSP_H_ */

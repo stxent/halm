@@ -145,17 +145,18 @@ void sspSetRate(struct Ssp *interface, uint32_t rate)
   uint16_t divider;
 
   divider = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / rate - 1;
-  /* FIXME Rewrite */
+  /* FIXME Add more precise calculation of SSP dividers */
   reg->CPSR = 2;
   reg->CR0 &= ~CR0_SCR_MASK;
   reg->CR0 |= CR0_SCR(divider);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetRate(struct Ssp *interface)
+uint32_t sspGetRate(const struct Ssp *interface)
 {
   uint32_t rate;
   uint16_t divider;
 
+  /* FIXME Add more precise calculation of SSP rate */
   divider = CR0_SCR_VALUE(((LPC_SSP_TypeDef *)interface->reg)->CR0);
   rate = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
   return rate;
@@ -176,11 +177,9 @@ static enum result sspInit(void *object, const void *configPtr)
   if ((res = setDescriptor(interface->channel, interface)) != E_OK)
     return res;
 
-  /* Configure interface pins */
   if ((res = setupPins(interface, config)) != E_OK)
     return res;
 
-  /* Reset pointer to interrupt handler */
   interface->handler = 0;
 
   switch (interface->channel)
@@ -218,8 +217,10 @@ static enum result sspInit(void *object, const void *configPtr)
   /* Initialize SSP block */
   LPC_SSP_TypeDef *reg = interface->reg;
 
+  /* Set frame size */
   reg->CR0 = !config->frame ? CR0_DSS(8) : CR0_DSS(config->frame);
 
+  /* Set mode for SPI interface */
   if (config->mode & 0x01) //TODO Remove magic numbers
     reg->CR0 |= CR0_CPHA;
   if (config->mode & 0x02)
