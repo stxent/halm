@@ -6,8 +6,8 @@
 
 #include <assert.h>
 #include "platform/nxp/system.h"
-#include "platform/nxp/lpc13xx/base_timer.h"
-#include "platform/nxp/lpc13xx/base_timer_defs.h"
+#include "platform/nxp/gptimer_defs.h"
+#include "platform/nxp/lpc13xx/gptimer.h"
 #include "platform/nxp/lpc13xx/interrupts.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
@@ -15,43 +15,44 @@
 #define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static enum result setDescriptor(uint8_t, struct BaseTimer *);
+static enum result setDescriptor(uint8_t, struct GpTimer *);
 /*----------------------------------------------------------------------------*/
-static enum result btInit(void *, const void *);
-static void btDeinit(void *);
-static void btSetCallback(void *, void (*)(void *), void *);
-static void btSetEnabled(void *, bool);
-static void btSetFrequency(void *, uint32_t);
-static void btSetOverflow(void *, uint32_t);
+static enum result tmrInit(void *, const void *);
+static void tmrDeinit(void *);
+static void tmrCallback(void *, void (*)(void *), void *);
+static void tmrControl(void *, bool);
+static void tmrSetFrequency(void *, uint32_t);
+static void tmrSetOverflow(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
-    .size = sizeof(struct BaseTimer),
-    .init = btInit,
-    .deinit = btDeinit,
+    .size = sizeof(struct GpTimer),
+    .init = tmrInit,
+    .deinit = tmrDeinit,
 
-    .setCallback = btSetCallback,
-    .setEnabled = btSetEnabled,
-    .setFrequency = btSetFrequency,
-    .setOverflow = btSetOverflow
+    .callback = tmrCallback,
+    .control = tmrControl,
+    .setFrequency = tmrSetFrequency,
+    .setOverflow = tmrSetOverflow
 };
 /*----------------------------------------------------------------------------*/
-const struct TimerClass *BaseTimer = &timerTable;
+const struct TimerClass *GpTimer = &timerTable;
 /*----------------------------------------------------------------------------*/
-static struct BaseTimer *descriptors[] = {0, 0, 0, 0};
+static struct GpTimer *descriptors[] = {0, 0, 0, 0};
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct BaseTimer *device = object;
+  struct GpTimer *device = object;
+  LPC_TMR_TypeDef *reg = device->reg;
 
-  if (device->reg->IR & IR_MATCH_INTERRUPT(0)) /* Match 0 */
+  if (reg->IR & IR_MATCH_INTERRUPT(0)) /* Match 0 */
   {
     if (device->callback)
       device->callback(device->callbackArgument);
-    device->reg->IR = IR_MATCH_INTERRUPT(0); /* Clear flag */
+    reg->IR = IR_MATCH_INTERRUPT(0); /* Clear flag */
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct BaseTimer *device)
+static enum result setDescriptor(uint8_t channel, struct GpTimer *device)
 {
   assert(channel < sizeof(descriptors));
 
@@ -86,14 +87,14 @@ void TIMER32B1_ISR(void)
     descriptors[3]->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
-static enum result btInit(void *object, const void *configPtr)
+static enum result tmrInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
-  const struct BaseTimerConfig * const config = configPtr;
-  struct BaseTimer *device = object;
+  const struct GpTimerConfig * const config = configPtr;
+  struct GpTimer *device = object;
 
-  /* Check device configuration data */
-  assert(config);
+  if (!config->frequency)
+    return E_VALUE;
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
@@ -127,18 +128,17 @@ static enum result btInit(void *object, const void *configPtr)
       break;
   }
 
-  device->reg->PR = (sysCoreClock / DEFAULT_DIV_VALUE)
-      / config->frequency - 1;
-  /* Reset control registers */
-  device->reg->MCR = 0;
-  /* Reset internal counters */
-  device->reg->PC = 0;
-  device->reg->TC = 0;
-  /* Enable timer/counter */
-  device->reg->TCR = TCR_CEN;
+  LPC_TMR_TypeDef *reg = device->reg;
 
-  /* Clear pending interrupts */
-  device->reg->IR = IR_MASK;
+  reg->MCR = reg->TCR = 0; /* Reset control registers */
+  reg->PC = reg->TC = 0; /* Reset internal counters */
+  reg->IR = IR_MASK; /* Clear pending interrupts */
+
+  /* Configure prescaler */
+  reg->PR = (sysCoreClock / DEFAULT_DIV_VALUE) / config->frequency - 1;
+  /* Enable timer/counter */
+  reg->TCR = TCR_CEN;
+
   /* Enable interrupt */
   nvicEnable(device->irq);
   /* Set interrupt priority, lowest by default */
@@ -147,9 +147,9 @@ static enum result btInit(void *object, const void *configPtr)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void btDeinit(void *object)
+static void tmrDeinit(void *object)
 {
-  struct BaseTimer *device = object;
+  struct GpTimer *device = object;
 
   /* Disable interrupt */
   nvicDisable(device->irq);
@@ -176,52 +176,50 @@ static void btDeinit(void *object)
   setDescriptor(device->channel, 0);
 }
 /*----------------------------------------------------------------------------*/
-static void btSetCallback(void *object, void (*callback)(void *),
+static void tmrCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct BaseTimer *device = object;
+  struct GpTimer *device = object;
+  LPC_TMR_TypeDef *reg = device->reg;
 
   device->callback = callback;
   device->callbackArgument = argument;
   /* Enable or disable Match interrupt and counter reset after each interrupt */
   if (callback)
   {
-    device->reg->IR = IR_MATCH_INTERRUPT(0); /* Clear pending interrupt flag */
-    device->reg->MCR |= MCR_INTERRUPT(0) | MCR_RESET(0);
+    reg->IR = IR_MATCH_INTERRUPT(0); /* Clear pending interrupt flag */
+    reg->MCR |= MCR_INTERRUPT(0) | MCR_RESET(0);
   }
   else
-    device->reg->MCR &= ~(MCR_INTERRUPT(0) | MCR_RESET(0));
+    reg->MCR &= ~(MCR_INTERRUPT(0) | MCR_RESET(0));
 }
 /*----------------------------------------------------------------------------*/
-static void btSetEnabled(void *object, bool state)
+static void tmrControl(void *object, bool state)
 {
-  struct BaseTimer *device = object;
+  LPC_TMR_TypeDef *reg = ((struct GpTimer *)object)->reg;
 
-  if (state)
+  if (!state)
   {
-    device->reg->TCR &= ~TCR_CRES;
+    reg->TCR |= TCR_CRES;
+    while (reg->TC || reg->PC);
   }
   else
-  {
-    device->reg->TCR |= TCR_CRES;
-    while (device->reg->TC || device->reg->PC);
-  }
+    reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
-static void btSetFrequency(void *object, uint32_t frequency)
+static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  struct BaseTimer *device = object;
-
-  device->reg->PR = (sysCoreClock / DEFAULT_DIV_VALUE) / frequency - 1;
+  ((LPC_TMR_TypeDef *)((struct GpTimer *)object)->reg)->PR =
+      (sysCoreClock / DEFAULT_DIV_VALUE) / frequency - 1;
 }
 /*----------------------------------------------------------------------------*/
-static void btSetOverflow(void *object, uint32_t overflow)
+static void tmrSetOverflow(void *object, uint32_t overflow)
 {
-  struct BaseTimer *device = object;
+  LPC_TMR_TypeDef *reg = ((struct GpTimer *)object)->reg;
 
-  device->reg->MR0 = overflow;
+  reg->MR0 = overflow;
   /* Synchronously reset prescaler and counter registers */
-  device->reg->TCR |= TCR_CRES;
-  while (device->reg->TC || device->reg->PC);
-  device->reg->TCR &= ~TCR_CRES;
+  reg->TCR |= TCR_CRES;
+  while (reg->TC || reg->PC);
+  reg->TCR &= ~TCR_CRES;
 }

@@ -1,19 +1,19 @@
 /*
- * base_timer.c
+ * gptimer_pwm.c
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
 #include "platform/gpio.h"
-#include "platform/nxp/lpc13xx/base_timer_defs.h"
-#include "platform/nxp/lpc13xx/base_timer_pwm.h"
+#include "platform/nxp/gptimer_defs.h"
+#include "platform/nxp/lpc13xx/gptimer_pwm.h"
 /*----------------------------------------------------------------------------*/
-struct BaseTimerPwmChannel
+struct GpTimerPwmChannel
 {
   struct Pwm parent;
 
-  struct BaseTimerPwm *controller;
+  struct GpTimerPwm *controller;
   uint32_t *reg;
   struct Gpio pin;
   uint8_t channel; /* Match channel */
@@ -86,7 +86,7 @@ static const struct GpioDescriptor pwmPins[] = {
 /*----------------------------------------------------------------------------*/
 static inline uint32_t *calcMatchChannel(LPC_TMR_TypeDef *, uint8_t);
 static int8_t findEmptyChannel(uint8_t);
-static void updateResolution(struct BaseTimerPwm *, uint8_t);
+static void updateResolution(struct GpTimerPwm *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result controllerInit(void *, const void *);
 static void controllerDeinit(void *);
@@ -97,7 +97,7 @@ static void channelSetEnabled(void *, bool);
 static void channelSetPeriod(void *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static const struct PwmControllerClass controllerTable = {
-    .size = sizeof(struct BaseTimerPwm),
+    .size = sizeof(struct GpTimerPwm),
     .init = controllerInit,
     .deinit = controllerDeinit,
 
@@ -105,7 +105,7 @@ static const struct PwmControllerClass controllerTable = {
 };
 /*----------------------------------------------------------------------------*/
 static const struct PwmClass channelTable = {
-    .size = sizeof(struct BaseTimerPwmChannel),
+    .size = sizeof(struct GpTimerPwmChannel),
     .init = 0,
     .deinit = 0,
 
@@ -114,8 +114,8 @@ static const struct PwmClass channelTable = {
     .setPeriod = channelSetPeriod
 };
 /*----------------------------------------------------------------------------*/
-const struct PwmControllerClass *BaseTimerPwm = &controllerTable;
-const struct PwmClass *BaseTimerPwmChannel = &channelTable;
+const struct PwmControllerClass *GpTimerPwm = &controllerTable;
+const struct PwmClass *GpTimerPwmChannel = &channelTable;
 /*----------------------------------------------------------------------------*/
 static inline uint32_t *calcMatchChannel(LPC_TMR_TypeDef *timer,
     uint8_t channel)
@@ -131,26 +131,28 @@ static int8_t findEmptyChannel(uint8_t channels)
   return pos;
 }
 /*----------------------------------------------------------------------------*/
-static void updateResolution(struct BaseTimerPwm *device, uint8_t channel)
+static void updateResolution(struct GpTimerPwm *device, uint8_t channel)
 {
+  LPC_TMR_TypeDef *reg = device->timer->reg;
+
   /* Put timer in reset state */
-  device->timer->reg->TCR |= TCR_CRES;
-  while (device->timer->reg->TC || device->timer->reg->PC);
+  reg->TCR |= TCR_CRES;
+  while (reg->TC || reg->PC);
 
   /* Disable previous match channel */
-  device->timer->reg->MCR &= ~MCR_RESET(device->current);
+  reg->MCR &= ~MCR_RESET(device->current);
 
   device->current = channel;
-  *calcMatchChannel(device->timer->reg, device->current) = device->resolution;
+  *calcMatchChannel(reg, device->current) = device->resolution;
   /* Enable new match channel */
-  device->timer->reg->MCR |= MCR_RESET(device->current);
+  reg->MCR |= MCR_RESET(device->current);
   /* Enable timer */
-  device->timer->reg->TCR &= ~TCR_CRES;
+  reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetDutyCycle(void *object, uint8_t percentage)
 {
-  struct BaseTimerPwmChannel *pwm = object;
+  struct GpTimerPwmChannel *pwm = object;
 
   *pwm->reg = !percentage ? (uint32_t)pwm->controller->resolution + 1
       : (uint32_t)pwm->controller->resolution
@@ -164,7 +166,7 @@ static void channelSetEnabled(void *object, bool state)
 /*----------------------------------------------------------------------------*/
 static void channelSetPeriod(void *object, uint16_t period)
 {
-  struct BaseTimerPwmChannel *pwm = object;
+  struct GpTimerPwmChannel *pwm = object;
 
   *pwm->reg = period;
 }
@@ -172,8 +174,8 @@ static void channelSetPeriod(void *object, uint16_t period)
 static void *controllerCreate(void *object, gpioKey output, uint8_t percentage)
 {
   const struct GpioDescriptor *pin;
-  struct BaseTimerPwm *device = object;
-  struct BaseTimerPwmChannel *pwm;
+  struct GpTimerPwm *device = object;
+  struct GpTimerPwmChannel *pwm;
   int8_t freeChannel;
 
   pin = gpioFind(pwmPins, output, device->timer->channel);
@@ -184,7 +186,7 @@ static void *controllerCreate(void *object, gpioKey output, uint8_t percentage)
   if (freeChannel == -1)
     return 0; /* There are no free match channels left */
 
-  if (!(pwm = init(BaseTimerPwmChannel, 0)))
+  if (!(pwm = init(GpTimerPwmChannel, 0)))
     return 0;
 
   pwm->controller = device;
@@ -199,40 +201,36 @@ static void *controllerCreate(void *object, gpioKey output, uint8_t percentage)
   gpioSetFunction(&pwm->pin, UNPACK_FUNCTION(pin->value));
 
   pwmSetDutyCycle(pwm, percentage);
-  device->timer->reg->PWMC |= PWMC_ENABLE(pwm->channel);
+  ((LPC_TMR_TypeDef *)device->timer->reg)->PWMC |= PWMC_ENABLE(pwm->channel);
 
   return pwm;
 }
 /*----------------------------------------------------------------------------*/
 static void controllerDeinit(void *object)
 {
-  struct BaseTimerPwm *device = object;
+  struct GpTimerPwm *device = object;
 
-  deinit(device->timer); /* Delete BaseTimer object */
+  deinit(device->timer); /* Delete GpTimer object */
 }
 /*----------------------------------------------------------------------------*/
 static enum result controllerInit(void *object, const void *configPtr)
 {
-  const struct BaseTimerPwmConfig * const config = configPtr;
-  struct BaseTimerPwm *device = object;
-  struct BaseTimerConfig timerConfig;
-//  enum result res;
+  const struct GpTimerPwmConfig * const config = configPtr;
+  struct GpTimerPwm *device = object;
+  struct GpTimerConfig timerConfig = {
+      .channel = config->channel,
+      .frequency = config->frequency * (uint32_t)config->resolution
+  };
 
-  /* Check device configuration data */
-  assert(config);
-
-  timerConfig.channel = config->channel;
-  timerConfig.frequency = config->frequency * (uint32_t)config->resolution;
-
-  /* Create parent BaseTimer object */
-  if (!(device->timer = init(BaseTimer, &timerConfig)))
+  /* Create parent GpTimer object */
+  if (!(device->timer = init(GpTimer, &timerConfig)))
     return E_MEMORY;
 
   device->resolution = config->resolution;
   device->matches = 0;
   device->current = findEmptyChannel(device->matches);
 
-  device->timer->reg->PWMC = 0;
+  ((LPC_TMR_TypeDef *)device->timer->reg)->PWMC = 0;
 
   return E_OK;
 }

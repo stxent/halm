@@ -7,14 +7,14 @@
 #include "platform/timer.h"
 /*----------------------------------------------------------------------------*/
 /**
- * Set timer overflow callback.
+ * Set timer overflow callback function.
  * @param timer Pointer to Timer object.
  * @param callback Callback function.
- * @param parameters Callback function argument.
+ * @param argument Callback function argument.
  */
-void timerSetCallback(void *timer, void (*callback)(void *), void *argument)
+void timerCallback(void *timer, void (*callback)(void *), void *argument)
 {
-  ((struct TimerClass *)CLASS(timer))->setCallback(timer, callback, argument);
+  ((struct TimerClass *)CLASS(timer))->callback(timer, callback, argument);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -22,9 +22,9 @@ void timerSetCallback(void *timer, void (*callback)(void *), void *argument)
  * @param timer Pointer to Timer object.
  * @param state Timer state: @b true to start timer or @b false to stop timer.
  */
-void timerSetEnabled(void *timer, bool state)
+void timerControl(void *timer, bool state)
 {
-  ((struct TimerClass *)CLASS(timer))->setEnabled(timer, state);
+  ((struct TimerClass *)CLASS(timer))->control(timer, state);
 }
 /*----------------------------------------------------------------------------*/
 /**

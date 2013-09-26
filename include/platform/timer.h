@@ -17,9 +17,10 @@ struct TimerClass
 {
   CLASS_HEADER
 
-  /* Virtual functions */
-  void (*setCallback)(void *, void (*)(void *), void *);
-  void (*setEnabled)(void *, bool);
+  /* Virtual functions with arguments similar to other classes */
+  void (*callback)(void *, void (*)(void *), void *);
+  void (*control)(void *, bool);
+  /* Other virtual functions */
   void (*setFrequency)(void *, uint32_t);
   void (*setOverflow)(void *, uint32_t);
 };
@@ -29,8 +30,9 @@ struct Timer
   struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
-void timerSetCallback(void *, void (*)(void *), void *);
-void timerSetEnabled(void *, bool);
+void timerCallback(void *, void (*)(void *), void *);
+void timerControl(void *, bool);
+/*----------------------------------------------------------------------------*/
 void timerSetFrequency(void *, uint32_t);
 void timerSetOverflow(void *, uint32_t);
 /*----------------------------------------------------------------------------*/

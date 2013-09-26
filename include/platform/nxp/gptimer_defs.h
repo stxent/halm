@@ -1,11 +1,11 @@
 /*
- * base_timer_defs.h
+ * gptimer_defs.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef BASE_TIMER_DEFS_H_
-#define BASE_TIMER_DEFS_H_
+#ifndef GPTIMER_DEFS_H_
+#define GPTIMER_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include "macro.h"
 /*------------------Interrupt Register----------------------------------------*/
@@ -33,4 +33,4 @@
 /*------------------PWM Control Register--------------------------------------*/
 #define PWMC_ENABLE(channel)            BIT((channel))
 /*----------------------------------------------------------------------------*/
-#endif /* BASE_TIMER_DEFS_H_ */
+#endif /* GPTIMER_DEFS_H_ */

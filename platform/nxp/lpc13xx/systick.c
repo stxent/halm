@@ -23,22 +23,22 @@
 static void interruptHandler(void *);
 static enum result setDescriptor(struct SysTickTimer *);
 /*----------------------------------------------------------------------------*/
-static enum result systickInit(void *, const void *);
-static void systickDeinit(void *);
-static void systickSetCallback(void *, void (*)(void *), void *);
-static void systickSetEnabled(void *, bool);
-static void systickSetFrequency(void *, uint32_t);
-static void systickSetOverflow(void *, uint32_t);
+static enum result tmrInit(void *, const void *);
+static void tmrDeinit(void *);
+static void tmrCallback(void *, void (*)(void *), void *);
+static void tmrControl(void *, bool);
+static void tmrSetFrequency(void *, uint32_t);
+static void tmrSetOverflow(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
     .size = sizeof(struct SysTickTimer),
-    .init = systickInit,
-    .deinit = systickDeinit,
+    .init = tmrInit,
+    .deinit = tmrDeinit,
 
-    .setCallback = systickSetCallback,
-    .setEnabled = systickSetEnabled,
-    .setFrequency = systickSetFrequency,
-    .setOverflow = systickSetOverflow
+    .callback = tmrCallback,
+    .control = tmrControl,
+    .setFrequency = tmrSetFrequency,
+    .setOverflow = tmrSetOverflow
 };
 /*----------------------------------------------------------------------------*/
 const struct TimerClass *SysTickTimer = &timerTable;
@@ -68,7 +68,7 @@ void SYSTICK_ISR(void)
     descriptor->handler(descriptor);
 }
 /*----------------------------------------------------------------------------*/
-static void systickSetCallback(void *object, void (*callback)(void *),
+static void tmrCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SysTickTimer *device = object;
@@ -85,7 +85,7 @@ static void systickSetCallback(void *object, void (*callback)(void *),
     SysTick->CTRL &= ~CTRL_TICKINT;
 }
 /*----------------------------------------------------------------------------*/
-static void systickSetEnabled(void *object, bool state)
+static void tmrControl(void *object, bool state)
 {
   if (state)
     SysTick->CTRL |= CTRL_ENABLE;
@@ -93,7 +93,7 @@ static void systickSetEnabled(void *object, bool state)
     SysTick->CTRL &= ~CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static void systickSetFrequency(void *object, uint32_t frequency)
+static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   struct SysTickTimer *device = object;
 
@@ -106,7 +106,7 @@ static void systickSetFrequency(void *object, uint32_t frequency)
   SysTick->CTRL |= CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static void systickSetOverflow(void *object, uint32_t overflow)
+static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SysTickTimer *device = object;
 
@@ -119,28 +119,29 @@ static void systickSetOverflow(void *object, uint32_t overflow)
   SysTick->CTRL |= CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result systickInit(void *object, const void *configPtr)
+static enum result tmrInit(void *object, const void *configPtr)
 {
   /* Set pointer to device configuration data */
   const struct SysTickTimerConfig * const config = configPtr;
   struct SysTickTimer *device = object;
 
-  /* Check device configuration data */
-  assert(config);
+  if (!config->frequency)
+    return E_VALUE;
 
   /* Try to set peripheral descriptor */
   if (setDescriptor(device) != E_OK)
     return E_ERROR;
 
-  /* Set hardware interrupt handler to default handler */
+  /* Set timer interrupt handler to default handler */
   device->handler = interruptHandler;
 
   device->frequency = config->frequency;
   device->overflow = 1; //FIXME
-  SysTick->LOAD = sysCoreClock / device->frequency - 1;
-  SysTick->VAL = 0;
 
-  SysTick->CTRL |= CTRL_ENABLE | CTRL_CLKSOURCE;
+  SysTick->CTRL = 0; /* Stop timer */
+  SysTick->VAL = 0; /* Reset current timer value */
+  SysTick->LOAD = sysCoreClock / device->frequency - 1;
+  SysTick->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
 
   /* Enable interrupt */
   nvicEnable(SYSTICK_IRQ);
@@ -150,7 +151,7 @@ static enum result systickInit(void *object, const void *configPtr)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void systickDeinit(void *object)
+static void tmrDeinit(void *object)
 {
   /* Disable interrupt */
   nvicDisable(SYSTICK_IRQ);
