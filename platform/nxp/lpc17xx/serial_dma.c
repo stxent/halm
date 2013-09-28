@@ -22,14 +22,14 @@ static enum result serialSet(void *, enum ifOption, const void *);
 static uint32_t serialRead(void *, uint8_t *, uint32_t);
 static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static const enum gpdmaLine dmaTxLines[] = {
+static const enum gpDmaLine dmaTxLines[] = {
     GPDMA_LINE_UART0_TX,
     GPDMA_LINE_UART1_TX,
     GPDMA_LINE_UART2_TX,
     GPDMA_LINE_UART3_TX
 };
 /*----------------------------------------------------------------------------*/
-static const enum gpdmaLine dmaRxLines[] = {
+static const enum gpDmaLine dmaRxLines[] = {
     GPDMA_LINE_UART0_RX,
     GPDMA_LINE_UART1_RX,
     GPDMA_LINE_UART2_RX,
@@ -55,7 +55,7 @@ const struct InterfaceClass *SerialDma = &serialDmaTable;
 static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
     int8_t txChannel)
 {
-  struct GpdmaConfig channels[2] = {
+  struct GpDmaConfig channels[2] = {
       {
           .channel = rxChannel,
           .source = {
@@ -85,15 +85,12 @@ static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
       }
   };
 
-  interface->rxDma = init(Gpdma, channels + 0);
+  interface->rxDma = init(GpDma, channels + 0);
   if (!interface->rxDma)
     return E_ERROR;
-  interface->txDma = init(Gpdma, channels + 1);
+  interface->txDma = init(GpDma, channels + 1);
   if (!interface->txDma)
-  {
-    deinit(interface->rxDma);
     return E_ERROR;
-  }
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

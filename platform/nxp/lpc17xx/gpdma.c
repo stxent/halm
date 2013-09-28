@@ -15,10 +15,10 @@
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcPeripheral(uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct Gpdma *);
-static void setMux(struct Gpdma *, enum gpdmaLine);
-static void errorHandler(struct Gpdma *);
-static void terminalHandler(struct Gpdma *);
+static enum result setDescriptor(uint8_t, struct GpDma *);
+static void setMux(struct GpDma *, enum gpDmaLine);
+static void errorHandler(struct GpDma *);
+static void terminalHandler(struct GpDma *);
 /*----------------------------------------------------------------------------*/
 static enum result gpdmaInit(void *, const void *);
 static void gpdmaDeinit(void *);
@@ -30,7 +30,7 @@ static void gpdmaLinkItem(void *, void *, void *, void *, const void *,
     uint16_t);
 /*----------------------------------------------------------------------------*/
 static const struct DmaClass gpdmaTable = {
-    .size = sizeof(struct Gpdma),
+    .size = sizeof(struct GpDma),
     .init = gpdmaInit,
     .deinit = gpdmaDeinit,
 
@@ -41,15 +41,15 @@ static const struct DmaClass gpdmaTable = {
     .linkItem = gpdmaLinkItem
 };
 /*----------------------------------------------------------------------------*/
-const struct DmaClass *Gpdma = &gpdmaTable;
+const struct DmaClass *GpDma = &gpdmaTable;
 /*----------------------------------------------------------------------------*/
-static void * volatile descriptors[] = {0, 0, 0, 0, 0, 0, 0, 0};
+static struct GpDma * volatile descriptors[] = {0, 0, 0, 0, 0, 0, 0, 0};
 /* Access to descriptor array */
 static spinlock_t lock = SPIN_UNLOCKED;
 /* Initialized descriptors count */
 static uint16_t instances = 0;
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct Gpdma *controller)
+static enum result setDescriptor(uint8_t channel, struct GpDma *controller)
 {
   enum result res = E_BUSY;
 
@@ -68,12 +68,12 @@ static enum result setDescriptor(uint8_t channel, struct Gpdma *controller)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void terminalHandler(struct Gpdma *controller)
+static void terminalHandler(struct GpDma *controller)
 {
   controller->parent.active = false;
 }
 /*----------------------------------------------------------------------------*/
-static void errorHandler(struct Gpdma *controller)
+static void errorHandler(struct GpDma *controller)
 {
   controller->parent.active = false;
 }
@@ -111,7 +111,7 @@ static inline LPC_GPDMACH_TypeDef *calcPeripheral(uint8_t channel)
       + ((void *)LPC_GPDMACH1 - (void *)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
-static void setMux(struct Gpdma *controller, enum gpdmaLine line)
+static void setMux(struct GpDma *controller, enum gpDmaLine line)
 {
   uint8_t pos;
 
@@ -125,13 +125,14 @@ static void setMux(struct Gpdma *controller, enum gpdmaLine line)
 /*----------------------------------------------------------------------------*/
 static enum result gpdmaInit(void *object, const void *configPtr)
 {
-  const struct GpdmaConfig * const config = configPtr;
-  struct Gpdma *controller = object;
+  const struct GpDmaConfig * const config = configPtr;
+  struct GpDma *controller = object;
 
   assert(config && config->channel < CHANNEL_COUNT);
 
   /* TODO Add channel allocation, when channel is -1 */
   controller->parent.channel = (uint8_t)config->channel;
+  /* TODO Replace active flag in GPDMA with something else */
   controller->parent.active = false;
   controller->direction = config->direction;
   controller->reg = calcPeripheral(controller->parent.channel);
@@ -160,6 +161,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   controller->muxMask = 0xFF;
   controller->muxValue = 0x00;
   /* Calculate new mask and value */
+  /* TODO Rewrite function to return calculated value */
   setMux(controller, config->source.line);
   setMux(controller, config->destination.line);
 
@@ -177,7 +179,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void gpdmaDeinit(void *object)
 {
-  struct Gpdma *controller = object;
+  struct GpDma *controller = object;
 
   /* Disable DMA peripheral when no active descriptors exist */
   if (!--instances)
@@ -190,7 +192,7 @@ static void gpdmaDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 enum result gpdmaStart(void *object, void *dest, const void *src, uint32_t size)
 {
-  struct Gpdma *controller = object;
+  struct GpDma *controller = object;
 
   if (setDescriptor(controller->parent.channel, object) != E_OK)
     return E_ERROR;
@@ -207,7 +209,7 @@ enum result gpdmaStart(void *object, void *dest, const void *src, uint32_t size)
   controller->reg->DMACCLLI = 0;
   controller->reg->DMACCConfig = controller->config;
 
-  /* Clear interrupt requests */
+  /* Clear interrupt requests of the selected channel */
   LPC_GPDMA->DMACIntTCClear |= 1 << controller->parent.channel;
   LPC_GPDMA->DMACIntErrClr |= 1 << controller->parent.channel;
 
@@ -219,8 +221,8 @@ enum result gpdmaStart(void *object, void *dest, const void *src, uint32_t size)
 /*----------------------------------------------------------------------------*/
 enum result gpdmaStartList(void *object, const void *first)
 {
-  const struct GpdmaListItem *item = first;
-  struct Gpdma *controller = object;
+  const struct GpDmaListItem *item = first;
+  struct GpDma *controller = object;
 
   if (setDescriptor(controller->parent.channel, object) != E_OK)
     return E_ERROR;
@@ -235,7 +237,7 @@ enum result gpdmaStartList(void *object, const void *first)
 
   controller->reg->DMACCConfig = controller->config;
 
-  /* Clear interrupt requests */
+  /* Clear interrupt requests of the selected channel */
   LPC_GPDMA->DMACIntTCClear |= 1 << controller->parent.channel;
   LPC_GPDMA->DMACIntErrClr |= 1 << controller->parent.channel;
 
@@ -248,13 +250,13 @@ enum result gpdmaStartList(void *object, const void *first)
 void gpdmaStop(void *object)
 {
   /* Disable channel */
-  ((struct Gpdma *)object)->reg->DMACCConfig &= ~C_CONFIG_ENABLE;
+  ((struct GpDma *)object)->reg->DMACCConfig &= ~C_CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
 void gpdmaHalt(void *object)
 {
   /* Ignore future requests */
-  ((struct Gpdma *)object)->reg->DMACCConfig |= C_CONFIG_HALT;
+  ((struct GpDma *)object)->reg->DMACCConfig |= C_CONFIG_HALT;
   //FIXME Clear enable bit?
 }
 /*----------------------------------------------------------------------------*/
@@ -276,10 +278,10 @@ void gpdmaHalt(void *object)
 static void gpdmaLinkItem(void *object, void *current, void *next,
     void *dest, const void *src, uint16_t size)
 {
-  struct GpdmaListItem *item = current;
+  struct GpDmaListItem *item = current;
 
   item->source = (uint32_t)src;
   item->destination = (uint32_t)dest;
   item->next = (uint32_t)next;
-  item->control = ((struct Gpdma *)object)->control | C_CONTROL_SIZE(size);
+  item->control = ((struct GpDma *)object)->control | C_CONTROL_SIZE(size);
 }

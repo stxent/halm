@@ -11,10 +11,10 @@
 #include "../device_defs.h"
 #include "../nvic.h"
 /*----------------------------------------------------------------------------*/
-extern const struct DmaClass *Gpdma;
+extern const struct DmaClass *GpDma;
 /*----------------------------------------------------------------------------*/
 /* GPDMA connections */
-enum gpdmaLine
+enum gpDmaLine
 {
   GPDMA_LINE_SSP0_TX  = 0x00,
   GPDMA_LINE_SSP0_RX  = 0x04,
@@ -43,7 +43,7 @@ enum gpdmaLine
   GPDMA_LINE_MEMORY   = 0x40 /* Special case: reserved value */
 };
 /*----------------------------------------------------------------------------*/
-enum gpdmaDirection
+enum gpDmaDirection
 {
   GPDMA_DIR_M2M = 0, /* Memory to memory */
   GPDMA_DIR_M2P,     /* Memory to peripheral */
@@ -52,25 +52,25 @@ enum gpdmaDirection
 };
 /*----------------------------------------------------------------------------*/
 /* Source or sink descriptor */
-struct GpdmaSide
+struct GpDmaSide
 {
   bool increment;
-  enum gpdmaLine line;
+  enum gpDmaLine line;
 };
 /*----------------------------------------------------------------------------*/
-struct GpdmaConfig
+struct GpDmaConfig
 {
   /* Channel may be assigned to multiple descriptors but not at same time */
-  struct GpdmaSide source, destination;
+  struct GpDmaSide source, destination;
   /* TODO Change type */
   int8_t channel; /* General purpose DMA channel number */
-  enum gpdmaDirection direction;
+  enum gpDmaDirection direction;
   enum dmaBurst burst;
   enum dmaWidth width;
 };
 /*----------------------------------------------------------------------------*/
 /* Items have to be aligned along 4-byte boundaries */
-struct GpdmaListItem
+struct GpDmaListItem
 {
   uint32_t source;
   uint32_t destination;
@@ -78,7 +78,7 @@ struct GpdmaListItem
   uint32_t control;
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
-struct Gpdma
+struct GpDma
 {
   struct Dma parent;
 
@@ -90,7 +90,7 @@ struct Gpdma
   /* Precalculated values of DMA connection multiplexer register */
   uint8_t muxMask, muxValue;
   /* Transfer direction */
-  enum gpdmaDirection direction;
+  enum gpDmaDirection direction;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPDMA_H_ */
