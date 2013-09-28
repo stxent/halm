@@ -7,7 +7,7 @@
 #ifndef SPI_H_
 #define SPI_H_
 /*----------------------------------------------------------------------------*/
-#include "threading/mutex.h"
+#include "platform/nxp/spinlock.h"
 #include "./ssp.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Spi;
@@ -32,8 +32,8 @@ struct Spi
   const uint8_t *txBuffer;
   uint32_t left, fill;
 
-  struct Mutex channelLock; /* Access to channel */
   bool blocking; /* By default interface is in blocking mode */
+  spinlock_t lock;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SPI_H_ */

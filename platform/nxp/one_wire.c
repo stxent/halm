@@ -151,13 +151,11 @@ static enum result oneWireInit(void *object, const void *configPtr)
   /* Initialize TX queue */
   if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
     return res;
-  /* Create mutex */
-  if ((res = mutexInit(&interface->channelLock)) != E_OK)
-    return res;
 
   interface->callback = 0;
 
   interface->blocking = true;
+  interface->lock = SPIN_UNLOCKED;
   interface->state = OW_IDLE;
   interface->address.rom = 0;
 
@@ -182,7 +180,6 @@ static void oneWireDeinit(void *object)
   struct OneWire *interface = object;
 
   nvicDisable(interface->parent.irq); /* Disable interrupt */
-  mutexDeinit(&interface->channelLock);
   queueDeinit(&interface->txQueue);
   Uart->deinit(interface); /* Call UART class destructor */
 }
@@ -220,25 +217,19 @@ static enum result oneWireSet(void *object, enum ifOption option,
 
   switch (option)
   {
+    case IF_ACQUIRE:
+      return spinTryLock(&interface->lock) ? E_OK : E_BUSY;
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
     case IF_DEVICE:
       interface->address.rom = *(uint64_t *)data;
       return E_OK;
-    case IF_LOCK:
-      if (interface->blocking)
-        return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
-      else
-      {
-        mutexLock(&interface->channelLock);
-        return E_OK;
-      }
     case IF_PRIORITY:
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
-    case IF_UNLOCK:
-      mutexUnlock(&interface->channelLock);
+    case IF_RELEASE:
+      spinUnlock(&interface->lock);
       return E_OK;
     case IF_ZEROCOPY:
       interface->blocking = false;

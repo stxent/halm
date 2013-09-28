@@ -1,25 +1,25 @@
 /*
- * mutex.h
- * Copyright (C) 2012 xent
+ * spinlock.h
+ * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef MUTEX_H_
-#define MUTEX_H_
+#ifndef SPINLOCK_H_
+#define SPINLOCK_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include "error.h"
 /*----------------------------------------------------------------------------*/
-struct Mutex
+enum
 {
-  unsigned char state;
+  SPIN_UNLOCKED = 0,
+  SPIN_LOCKED
 };
 /*----------------------------------------------------------------------------*/
-enum result mutexInit(struct Mutex *);
-void mutexDeinit(struct Mutex *);
+typedef volatile unsigned char spinlock_t;
 /*----------------------------------------------------------------------------*/
-void mutexLock(struct Mutex *);
-bool mutexTryLock(struct Mutex *);
-void mutexUnlock(struct Mutex *);
+void spinLock(spinlock_t *);
+bool spinTryLock(spinlock_t *);
+void spinUnlock(spinlock_t *);
 /*----------------------------------------------------------------------------*/
-#endif /* MUTEX_H_ */
+#endif /* SPINLOCK_H_ */

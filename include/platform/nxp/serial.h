@@ -8,7 +8,6 @@
 #define SERIAL_H_
 /*----------------------------------------------------------------------------*/
 #include "queue.h"
-#include "threading/mutex.h"
 #include "./uart.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Serial;
@@ -30,7 +29,6 @@ struct Serial
   void *callbackArgument;
 
   struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
-  struct Mutex queueLock; /* Access to queues */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SERIAL_H_ */

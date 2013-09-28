@@ -126,7 +126,6 @@ static enum result serialInit(void *object, const void *configPtr)
 
   /* Set pointer to hardware interrupt handler */
   interface->parent.handler = interruptHandler;
-  interface->dmaLock = MUTEX_UNLOCKED;
 
   if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
   {
@@ -201,6 +200,8 @@ static enum result serialSet(void *object, enum ifOption option,
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SerialDma *interface = object;
+  const void *source =
+      (const void *)&((LPC_UART_TypeDef *)interface->parent.reg)->RBR;
   uint32_t read = 0;
 
   mutexLock(&interface->dmaLock);
@@ -211,7 +212,6 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
     while (dmaIsActive(interface->rxDma));
     read = length;
   }
-  mutexUnlock(&interface->dmaLock);
 
   return read;
 }
@@ -222,7 +222,6 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   struct SerialDma *interface = object;
   uint32_t written = 0;
 
-  mutexLock(&interface->dmaLock);
   /* TODO Add DMA error handling */
   if (length && dmaStart(interface->txDma,
       (void *)&interface->parent.reg->THR, buffer, length) == E_OK)
@@ -231,7 +230,6 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     while (dmaIsActive(interface->txDma));
     written = length;
   }
-  mutexUnlock(&interface->dmaLock);
 
   return written;
 }

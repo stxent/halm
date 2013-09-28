@@ -142,13 +142,11 @@ static enum result i2cInit(void *object, const void *configPtr)
   /* Call SSP class constructor */
   if ((res = I2cBase->init(object, configPtr)) != E_OK)
     return res;
-  /* Create mutex */
-  if ((res = mutexInit(&interface->channelLock)) != E_OK)
-    return res;
 
   interface->callback = 0;
 
   interface->blocking = true;
+  interface->lock = SPIN_UNLOCKED;
   interface->state = I2C_IDLE;
   interface->address = 0;
 
@@ -168,7 +166,6 @@ static void i2cDeinit(void *object)
   struct I2c *interface = object;
 
   nvicDisable(interface->parent.irq);
-  mutexDeinit(&interface->channelLock);
   I2cBase->deinit(interface); /* Call I2C base class destructor */
 }
 /*----------------------------------------------------------------------------*/
@@ -208,28 +205,22 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 
   switch (option)
   {
+    case IF_ACQUIRE:
+      return spinTryLock(&interface->lock) ? E_OK : E_BUSY;
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
     case IF_DEVICE:
       interface->address = *(uint32_t *)data;
       return E_OK;
-    case IF_LOCK:
-      if (interface->blocking)
-        return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
-      else
-      {
-        mutexLock(&interface->channelLock);
-        return E_OK;
-      }
     case IF_PRIORITY:
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
       i2cSetRate(object, *(uint32_t *)data);
       return E_OK;
-    case IF_UNLOCK:
-      mutexUnlock(&interface->channelLock);
+    case IF_RELEASE:
+      spinUnlock(&interface->lock);
       return E_OK;
     case IF_ZEROCOPY:
       interface->blocking = false;

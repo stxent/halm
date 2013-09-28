@@ -102,9 +102,6 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
   if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
     return res;
-  /* Create mutex */
-  if ((res = mutexInit(&interface->queueLock)) != E_OK)
-    return res;
 
   /* Initialize UART block */
   LPC_UART_TypeDef *reg = interface->parent.reg;
@@ -128,7 +125,6 @@ static void serialDeinit(void *object)
   struct Serial *interface = object;
 
   nvicDisable(interface->parent.irq); /* Disable interrupt */
-  mutexDeinit(&interface->queueLock);
   queueDeinit(&interface->txQueue);
   queueDeinit(&interface->rxQueue);
   Uart->deinit(interface); /* Call UART class destructor */
@@ -187,11 +183,9 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   struct Serial *interface = object;
   uint32_t read;
 
-  mutexLock(&interface->queueLock);
   nvicDisable(interface->parent.irq);
   read = queuePopArray(&interface->rxQueue, buffer, length);
   nvicEnable(interface->parent.irq);
-  mutexUnlock(&interface->queueLock);
 
   return read;
 }
@@ -203,7 +197,6 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   LPC_UART_TypeDef *reg = interface->parent.reg;
   uint32_t written = 0;
 
-  mutexLock(&interface->queueLock);
   nvicDisable(interface->parent.irq);
   /* Check transmitter state */
   if (reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
@@ -218,7 +211,6 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   if (length)
     written += queuePushArray(&interface->txQueue, buffer, length);
   nvicEnable(interface->parent.irq);
-  mutexUnlock(&interface->queueLock);
 
   return written;
 }

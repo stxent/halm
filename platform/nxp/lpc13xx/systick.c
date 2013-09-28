@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include "macro.h"
-#include "threading/mutex.h"
 #include "platform/nxp/nvic.h"
 #include "platform/nxp/system.h"
 #include "platform/nxp/systick.h"

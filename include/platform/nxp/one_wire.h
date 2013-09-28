@@ -8,7 +8,7 @@
 #define ONE_WIRE_H_
 /*----------------------------------------------------------------------------*/
 #include "queue.h"
-#include "threading/mutex.h"
+#include "platform/nxp/spinlock.h"
 #include "./nvic.h"
 #include "./uart.h"
 /*----------------------------------------------------------------------------*/
@@ -59,9 +59,9 @@ struct OneWire
 
   struct Queue txQueue; /* Transmit queue */
   struct UartRateConfig dataRate, resetRate;
-  struct Mutex channelLock; /* Access to base interface */
   bool blocking; /* By default interface is in blocking mode */
   enum oneWireState state; /* Current 1-Wire interface state */
+  spinlock_t lock;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* ONE_WIRE_H_ */

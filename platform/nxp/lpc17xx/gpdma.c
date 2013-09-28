@@ -5,7 +5,7 @@
  */
 
 #include <assert.h>
-#include "threading/mutex.h"
+#include "platform/nxp/spinlock.h"
 #include "platform/nxp/lpc17xx/gpdma.h"
 #include "platform/nxp/lpc17xx/gpdma_defs.h"
 #include "platform/nxp/lpc17xx/interrupts.h"
@@ -44,7 +44,8 @@ static const struct DmaClass gpdmaTable = {
 const struct DmaClass *Gpdma = &gpdmaTable;
 /*----------------------------------------------------------------------------*/
 static void * volatile descriptors[] = {0, 0, 0, 0, 0, 0, 0, 0};
-static Mutex lock = MUTEX_UNLOCKED;
+/* Access to descriptor array */
+static spinlock_t lock = SPIN_UNLOCKED;
 /* Initialized descriptors count */
 static uint16_t instances = 0;
 /*----------------------------------------------------------------------------*/
@@ -52,13 +53,18 @@ static enum result setDescriptor(uint8_t channel, struct Gpdma *controller)
 {
   enum result res = E_BUSY;
 
-  mutexLock(&lock);
-  if (!descriptors[channel])
+  nvicDisable(DMA_IRQ);
+  if (spinTryLock(&lock))
   {
-    descriptors[channel] = controller;
-    res = E_OK;
+    if (!descriptors[channel])
+    {
+      descriptors[channel] = controller;
+      res = E_OK;
+    }
+    spinUnlock(&lock);
   }
-  mutexUnlock(&lock);
+  nvicEnable(DMA_IRQ);
+
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -74,34 +80,29 @@ static void errorHandler(struct Gpdma *controller)
 /*----------------------------------------------------------------------------*/
 void DMA_ISR(void)
 {
-  int8_t counter;
-  uint8_t errorStat = LPC_GPDMA->DMACIntErrStat;
-  uint8_t mask = 0x80;
-  uint8_t terminalStat = LPC_GPDMA->DMACIntTCStat;
+  const uint8_t errorStat = LPC_GPDMA->DMACIntErrStat;
+  const uint8_t terminalStat = LPC_GPDMA->DMACIntTCStat;
+  uint8_t counter = 0, mask = 0x80;
 
-  for (counter = CHANNEL_COUNT - 1; counter >= 0; --counter, mask >>= 1)
+  for (; counter < CHANNEL_COUNT; ++counter, mask <<= 1)
   {
-    if (terminalStat & mask)
+    if (descriptors[counter] && (terminalStat | errorStat) & mask)
     {
-      if (descriptors[counter])
+      spinLock(&lock);
+      descriptors[counter] = 0; /* Clear channel descriptor */
+      spinUnlock(&lock);
+
+      if (terminalStat & mask)
       {
         terminalHandler(descriptors[counter]);
-        descriptors[counter] = 0; /* Clear channel descriptor */
+        /* TODO Add callback */
       }
-      /* Clear terminal count interrupt flag */
-      LPC_GPDMA->DMACIntTCClear = mask;
-    }
-    if (errorStat & mask)
-    {
-      if (descriptors[counter])
-      {
+      else
         errorHandler(descriptors[counter]);
-        descriptors[counter] = 0; /* Clear channel descriptor */
-      }
-      /* Clear error interrupt flag */
-      LPC_GPDMA->DMACIntErrClr = mask;
     }
   }
+  LPC_GPDMA->DMACIntErrClr = errorStat;
+  LPC_GPDMA->DMACIntTCClear = terminalStat;
 }
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcPeripheral(uint8_t channel)
@@ -162,17 +163,14 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   setMux(controller, config->source.line);
   setMux(controller, config->destination.line);
 
-  if (!instances)
+  if (!instances++)
   {
     sysPowerEnable(PWR_GPDMA);
     LPC_GPDMA->DMACConfig |= DMA_ENABLE;
     nvicEnable(DMA_IRQ);
-    //TODO add priority config
+    //TODO Add priority configuration
     //nvicSetPriority(device->irq, GET_PRIORITY(config->priority));
   }
-  mutexLock(&lock);
-  ++instances;
-  mutexUnlock(&lock);
 
   return E_OK;
 }
@@ -181,11 +179,8 @@ static void gpdmaDeinit(void *object)
 {
   struct Gpdma *controller = object;
 
-  mutexLock(&lock);
-  --instances;
-  mutexUnlock(&lock);
   /* Disable DMA peripheral when no active descriptors exist */
-  if (!instances)
+  if (!--instances)
   {
     nvicDisable(DMA_IRQ);
     LPC_GPDMA->DMACConfig &= ~DMA_ENABLE;

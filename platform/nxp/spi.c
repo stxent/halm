@@ -86,12 +86,10 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Call SSP class constructor */
   if ((res = Ssp->init(object, &parentConfig)) != E_OK)
     return res;
-  /* Create mutex */
-  if ((res = mutexInit(&interface->channelLock)) != E_OK)
-    return res;
 
   interface->callback = 0;
   interface->blocking = true;
+  interface->lock = SPIN_UNLOCKED;
 
   /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
@@ -109,7 +107,6 @@ static void spiDeinit(void *object)
   struct Spi *interface = object;
 
   nvicDisable(interface->parent.irq);
-  mutexDeinit(&interface->channelLock);
   Ssp->deinit(interface); /* Call SSP class destructor */
 }
 /*----------------------------------------------------------------------------*/
@@ -149,25 +146,19 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 
   switch (option)
   {
+    case IF_ACQUIRE:
+      return spinTryLock(&interface->lock) ? E_OK : E_BUSY;
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
-    case IF_LOCK:
-      if (interface->blocking)
-        return mutexTryLock(&interface->channelLock) ? E_OK : E_BUSY;
-      else
-      {
-        mutexLock(&interface->channelLock);
-        return E_OK;
-      }
     case IF_PRIORITY:
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);
       return E_OK;
-    case IF_UNLOCK:
-      mutexUnlock(&interface->channelLock);
+    case IF_RELEASE:
+      spinUnlock(&interface->lock);
       return E_OK;
     case IF_ZEROCOPY:
       interface->blocking = false;

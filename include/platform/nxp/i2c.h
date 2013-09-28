@@ -7,7 +7,7 @@
 #ifndef I2C_H_
 #define I2C_H_
 /*----------------------------------------------------------------------------*/
-#include "threading/mutex.h"
+#include "platform/nxp/spinlock.h"
 #include "./i2c_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *I2c;
@@ -33,9 +33,9 @@ struct I2c
   uint16_t rxCount, txCount;
 
   uint16_t address; /* For 7-bit and 11-bit addresses */
-  struct Mutex channelLock; /* Access to channel */
   bool blocking; /* By default interface is in blocking mode */
   enum i2cState state;
+  spinlock_t lock;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_H_ */

@@ -1,55 +1,37 @@
 /*
- * mutex.c
+ * spinlock.c
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-//FIXME Rewrite
 #include "platform/nxp/device_defs.h"
-#include "threading/cortex-m3/mutex.h"
+#include "platform/nxp/spinlock.h"
 /*----------------------------------------------------------------------------*/
-enum mutexState
-{
-  MUTEX_UNLOCKED = 0,
-  MUTEX_LOCKED
-};
-/*----------------------------------------------------------------------------*/
-enum result mutexInit(struct Mutex *m)
-{
-  m->state = MUTEX_UNLOCKED;
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-void mutexDeinit(struct Mutex *m)
-{
-
-}
-/*----------------------------------------------------------------------------*/
-void mutexLock(struct Mutex *m)
+void spinLock(spinlock_t *lock)
 {
   do
   {
-    /* Wait until mutex becomes free */
-    while (__LDREXB(&m->state) != MUTEX_UNLOCKED);
+    /* Wait until lock becomes free */
+    while (__LDREXB(lock) != SPIN_UNLOCKED);
   }
-  while (__STREXB(MUTEX_LOCKED, &m->state) != 0); /* Try to set mutex locked */
+  while (__STREXB(SPIN_LOCKED, lock) != 0); /* Try to lock */
   __DMB();
 }
 /*----------------------------------------------------------------------------*/
-bool mutexTryLock(struct Mutex *m)
+bool spinTryLock(spinlock_t *lock)
 {
-  if (__LDREXB(&m->state) == MUTEX_UNLOCKED) /* Get current mutex state */
+  if (__LDREXB(lock) == SPIN_UNLOCKED) /* Get current state */
   {
-    /* Try to set mutex locked */
-    while (__STREXB(MUTEX_LOCKED, &m->state) != 0);
+    /* Try to lock */
+    while (__STREXB(SPIN_LOCKED, lock) != 0);
     __DMB();
     return true;
   }
-  return false; /* Mutex is already locked */
+  return false; /* Already locked */
 }
 /*----------------------------------------------------------------------------*/
-void mutexUnlock(struct Mutex *m)
+void spinUnlock(spinlock_t *lock)
 {
   __DMB(); /* Ensure memory operations completed before releasing lock */
-  m->state = MUTEX_UNLOCKED;
+  *lock = SPIN_UNLOCKED;
 }

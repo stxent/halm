@@ -7,7 +7,6 @@
 #include <assert.h>
 #include "macro.h"
 #include "platform/gpio.h"
-#include "threading/mutex.h"
 #include "platform/nxp/device_defs.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/

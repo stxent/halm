@@ -9,7 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
 #include "platform/gpio.h"
-#include "threading/mutex.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *SdioSpi;
 /*----------------------------------------------------------------------------*/
@@ -37,7 +36,6 @@ struct SdioSpi
   uint64_t position;
 
   struct Gpio csPin;
-  struct Mutex lock;
 
   bool blocking; /* By default interface is in blocking mode */
   enum cardType capacity;

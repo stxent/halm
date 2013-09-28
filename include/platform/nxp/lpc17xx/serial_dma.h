@@ -8,7 +8,6 @@
 #define SERIAL_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include "platform/dma.h"
-#include "threading/mutex.h"
 #include "platform/nxp/uart.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *SerialDma;
@@ -28,7 +27,6 @@ struct SerialDma
   struct Uart parent;
 
   struct Dma *rxDma, *txDma;
-  Mutex dmaLock; /* Access to DMA channels */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SERIAL_DMA_H_ */
