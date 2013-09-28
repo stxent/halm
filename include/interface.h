@@ -35,16 +35,12 @@ enum ifOption
   /** Timeout value for blocking functions. */
   IF_TIMEOUT,
 
-  /** Internal address of the device.
-   * Some devices can use 64-bit unsigned integer as an argument.
-   */
+  /** Internal address of the device.  Some devices can use 64-bit address. */
   IF_ADDRESS,
   /** Total memory available for use with the internal addressing method. */
   IF_SIZE,
 
-  /** Check whether the interface is ready to the next portion of data.
-   * Returns @b E_OK when interface is ready or @b E_BUSY otherwise.
-   */
+  /** Check interface readiness. Returns @b E_OK on success or @b E_BUSY. */
   IF_READY,
 
   /** Select blocking mode for the interface. */

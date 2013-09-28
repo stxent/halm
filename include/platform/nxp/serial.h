@@ -25,10 +25,12 @@ struct Serial
 {
   struct Uart parent;
 
+  /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);
   void *callbackArgument;
 
-  struct Queue rxQueue, txQueue; /* Receive and transmit buffers */
+  /* Receive and transmit buffers */
+  struct Queue rxQueue, txQueue;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SERIAL_H_ */

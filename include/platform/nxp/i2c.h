@@ -25,17 +25,24 @@ struct I2c
 {
   struct I2cBase parent;
 
+  /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* Pointers to input and output buffers */
   uint8_t *rxBuffer;
   const uint8_t *txBuffer;
+  /* Bytes left for transmission or reception */
   uint16_t rxCount, txCount;
 
-  uint16_t address; /* For 7-bit and 11-bit addresses */
-  bool blocking; /* By default interface is in blocking mode */
+  /* Current interface state */
   enum i2cState state;
+  /* Exclusive access to the channel */
   spinlock_t lock;
+  /* Address of the device, only 7-bit addressing supported */
+  uint8_t address;
+  /* Selection between blocking mode and zero copy mode */
+  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_H_ */

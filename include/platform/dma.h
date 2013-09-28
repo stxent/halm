@@ -70,7 +70,6 @@ void dmaStop(void *);
 void dmaHalt(void *);
 void dmaLinkItem(void *, void *, void *, void *, const void *, uint16_t);
 /*----------------------------------------------------------------------------*/
-/* Non-virtual functions */
 bool dmaIsActive(const struct Dma *);
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_H_ */

@@ -39,12 +39,17 @@ struct Uart
 {
   struct Interface parent;
 
-  void *reg; /* Pointer to UART registers */
-  irq_t irq; /* Interrupt identifier */
+  /* Pointer to the UART register block */
+  void *reg;
+  /* Pointer to the interrupt handler */
+  void (*handler)(void *);
+  /* Interrupt identifier */
+  irq_t irq;
 
-  void (*handler)(void *); /* Interrupt handler */
-  struct Gpio rxPin, txPin; /* Peripheral pins */
-  uint8_t channel; /* Peripheral number */
+  /* Interface pins */
+  struct Gpio rxPin, txPin;
+  /* Peripheral block identifier */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct UartRateConfig uartCalcRate(uint32_t);

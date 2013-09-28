@@ -374,10 +374,6 @@ static enum result sdioInit(void *object, const void *configPtr)
   struct SdioSpi *device = object;
   enum result res;
 
-  /* Check device configuration data */
-  assert(config);
-  assert(config->interface);
-
   device->csPin = gpioInit(config->cs, GPIO_OUTPUT);
   if (!gpioGetKey(&device->csPin))
     return E_ERROR;
@@ -385,7 +381,9 @@ static enum result sdioInit(void *object, const void *configPtr)
 
   device->interface = config->interface;
 
-  if ((res = resetCard(device)) != E_OK) {
+  if ((res = resetCard(device)) != E_OK)
+  {
+    /* TODO Remove or add hot plug */
     gpioDeinit(&device->csPin);
     return res;
   }

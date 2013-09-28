@@ -48,20 +48,30 @@ struct OneWire
 {
   struct Uart parent;
 
+  /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);
   void *callbackArgument;
 
-  uint8_t *rxBuffer; /* Receive buffer */
+  /* Receive buffer */
+  uint8_t *rxBuffer;
+  /* Address of the device */
+  struct OneWireAddress address;
+  /* Number of bytes to be transmitted */
+  uint8_t left;
+  /* Position in the receiving word and temporary buffer for the word */
+  uint8_t bit, word;
+  /* Transmit queue */
+  struct Queue txQueue;
 
-  struct OneWireAddress address; /* Currently selected device */
-  uint8_t rxPosition, left;
-  uint8_t word;
-
-  struct Queue txQueue; /* Transmit queue */
+  /* Computed data rates for reset sequence and for data transmission */
   struct UartRateConfig dataRate, resetRate;
-  bool blocking; /* By default interface is in blocking mode */
-  enum oneWireState state; /* Current 1-Wire interface state */
+
+  /* Current 1-Wire interface state */
+  enum oneWireState state;
+  /* Exclusive access to channel */
   spinlock_t lock;
+  /* Selection between blocking mode and zero copy mode */
+  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* ONE_WIRE_H_ */

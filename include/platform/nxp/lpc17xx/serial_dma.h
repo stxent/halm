@@ -26,6 +26,11 @@ struct SerialDma
 {
   struct Uart parent;
 
+  /* Pointer to the callback function and to the callback argument */
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  /* DMA channel descriptors */
   struct Dma *rxDma, *txDma;
 };
 /*----------------------------------------------------------------------------*/

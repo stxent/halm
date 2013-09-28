@@ -29,15 +29,13 @@ struct SdioSpi
 {
   struct Interface parent;
 
-  void (*callback)(void *);
-  void *callbackArgument;
-
+  /* Parent SPI interface */
   struct Interface *interface;
+  /* Current position in internal memory space */
   uint64_t position;
-
+  /* Pin connected to the chip select signal of card */
   struct Gpio csPin;
-
-  bool blocking; /* By default interface is in blocking mode */
+  /* Type of the memory card */
   enum cardType capacity;
 };
 /*----------------------------------------------------------------------------*/

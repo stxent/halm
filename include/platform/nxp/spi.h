@@ -25,15 +25,22 @@ struct Spi
 {
   struct Ssp parent;
 
+  /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* Pointers to input and output buffers */
   uint8_t *rxBuffer;
   const uint8_t *txBuffer;
-  uint32_t left, fill;
+  /* Number of bytes to be received */
+  uint32_t left;
+  /* Number of bytes to be transmitted */
+  uint32_t length;
 
-  bool blocking; /* By default interface is in blocking mode */
+  /* Exclusive access to the channel */
   spinlock_t lock;
+  /* Selection between blocking mode and zero copy mode */
+  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SPI_H_ */

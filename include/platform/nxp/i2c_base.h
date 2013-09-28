@@ -26,12 +26,17 @@ struct I2cBase
 {
   struct Interface parent;
 
-  void *reg; /* Pointer to I2C registers */
-  irq_t irq; /* Interrupt identifier */
+  /* Pointer to the I2C register block */
+  void *reg;
+  /* Pointer to the interrupt handler */
+  void (*handler)(void *);
+  /* Interrupt identifier */
+  irq_t irq;
 
-  void (*handler)(void *); /* Interrupt handler */
+  /* Interface pins */
   struct Gpio sclPin, sdaPin;
-  uint8_t channel; /* Peripheral number */
+  /* Peripheral block identifier */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetRate(const struct I2cBase *);

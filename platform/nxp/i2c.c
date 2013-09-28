@@ -143,12 +143,11 @@ static enum result i2cInit(void *object, const void *configPtr)
   if ((res = I2cBase->init(object, configPtr)) != E_OK)
     return res;
 
+  interface->address = 0;
   interface->callback = 0;
-
   interface->blocking = true;
   interface->lock = SPIN_UNLOCKED;
   interface->state = I2C_IDLE;
-  interface->address = 0;
 
   /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
@@ -235,7 +234,9 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
   struct I2c *interface = object;
   LPC_I2C_TypeDef *reg = interface->parent.reg;
 
-  while (reg->CONSET & CONSET_STO); //FIXME Is it safe?
+  /* TODO Add interface recovery */
+  /* TODO Check whether it is safe to wait for stop condition in I2C */
+  while (reg->CONSET & CONSET_STO);
 
   interface->rxCount = (uint16_t)length;
   interface->txCount = 0;
@@ -260,7 +261,7 @@ static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
   struct I2c *interface = object;
   LPC_I2C_TypeDef *reg = interface->parent.reg;
 
-  while (reg->CONSET & CONSET_STO); //FIXME Is it safe?
+  while (reg->CONSET & CONSET_STO);
 
   interface->rxCount = 0;
   interface->txCount = (uint16_t)length;

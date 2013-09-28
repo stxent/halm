@@ -104,38 +104,34 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Set pointer to interface configuration data */
   const struct SerialDmaConfig * const config = configPtr;
   struct SerialDma *interface = object;
-  struct UartConfig parentConfig;
+  struct UartConfig parentConfig = {
+      .channel = config->channel,
+      .rx = config->rx,
+      .tx = config->tx,
+      .rate = config->rate,
+      .parity = config->parity
+  };
   enum result res;
-
-  /* Check interface configuration data */
-  assert(config);
-
-  /* Initialize parent configuration structure */
-  parentConfig.channel = config->channel;
-  parentConfig.rx = config->rx;
-  parentConfig.tx = config->tx;
-  parentConfig.rate = config->rate;
-  parentConfig.parity = config->parity;
 
   /* Call UART class constructor */
   if ((res = Uart->init(object, &parentConfig)) != E_OK)
     return res;
 
-  /* Set pointer to hardware interrupt handler */
+  /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
 
   if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
-  {
-    Uart->deinit(interface);
     return res;
-  }
 
-  /* Enable and clear FIFO, set RX trigger level to 8 bytes */
-  interface->parent.reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  interface->parent.reg->FCR |= FCR_ENABLE | FCR_DMA_ENABLE
-      | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
-  interface->parent.reg->TER = TER_TXEN;
+  /* Initialize UART block */
+  LPC_UART_TypeDef *reg = interface->parent.reg;
+
+  /* Enable DMA and set RX trigger level */
+  reg->FCR |= (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(RX_FIFO_LEVEL)
+      | FCR_DMA_ENABLE;
+  reg->TER = TER_TXEN;
   /* All interrupts are disabled by default */
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -153,7 +149,12 @@ static void serialDeinit(void *object)
 static enum result serialCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  /* Callback functionality not implemented */
+  //TODO Add callback to SerialDma
+  /*struct Serial *interface = object;
+
+  interface->callback = callback;
+  interface->callbackArgument = argument;
+  return E_OK;*/
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
@@ -191,11 +192,10 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
       (const void *)&((LPC_UART_TypeDef *)interface->parent.reg)->RBR;
   uint32_t read = 0;
 
-  mutexLock(&interface->dmaLock);
-  /* TODO Add DMA error handling */
-  if (length && dmaStart(interface->rxDma,
-      buffer, (void *)&interface->parent.reg->RBR, length) == E_OK)
+  /* TODO Add DMA error handling in SerialDma */
+  if (length && dmaStart(interface->rxDma, buffer, source, length) == E_OK)
   {
+    /* Wait until all bytes are received */
     while (dmaIsActive(interface->rxDma));
     read = length;
   }
@@ -207,13 +207,12 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
   struct SerialDma *interface = object;
+  void *destination = (void *)&((LPC_UART_TypeDef *)interface->parent.reg)->THR;
   uint32_t written = 0;
 
-  /* TODO Add DMA error handling */
-  if (length && dmaStart(interface->txDma,
-      (void *)&interface->parent.reg->THR, buffer, length) == E_OK)
+  if (length && dmaStart(interface->txDma, destination, buffer, length) == E_OK)
   {
-    /* Wait until all bytes transferred */
+    /* Wait until all bytes are transmitted */
     while (dmaIsActive(interface->txDma));
     written = length;
   }

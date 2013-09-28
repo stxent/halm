@@ -64,7 +64,6 @@ static void sendWord(struct OneWire *interface, uint8_t word)
 
   while (counter < 8)
     reg->THR = (word >> counter++) & 0x01 ? 0xFF : 0;
-/*    reg->THR = ((word >> counter++) & 0x01) * 0xFF; FIXME */
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -93,16 +92,16 @@ static void interruptHandler(void *object)
         break;
       case OW_RECEIVE:
         if (data & 0x01)
-          interface->word |= 1 << interface->rxPosition;
+          interface->word |= 1 << interface->bit;
       case OW_TRANSMIT:
-        if (++interface->rxPosition == 8)
+        if (++interface->bit == 8)
         {
           if (interface->state == OW_RECEIVE)
           {
             *interface->rxBuffer++ = interface->word;
             interface->word = 0x00;
           }
-          interface->rxPosition = 0;
+          interface->bit = 0;
           if (!--interface->left)
           {
             interface->state = OW_IDLE;
@@ -152,12 +151,11 @@ static enum result oneWireInit(void *object, const void *configPtr)
   if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
     return res;
 
+  interface->address.rom = 0;
   interface->callback = 0;
-
   interface->blocking = true;
   interface->lock = SPIN_UNLOCKED;
   interface->state = OW_IDLE;
-  interface->address.rom = 0;
 
   /* Initialize UART block */
   LPC_UART_TypeDef *reg = interface->parent.reg;
@@ -248,7 +246,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
     return 0;
 
   queueClear(&interface->txQueue);
-  interface->rxPosition = 0;
+  interface->bit = 0;
   interface->rxBuffer = buffer;
   interface->word = 0x00;
   while (!queueFull(&interface->txQueue) && ++read != length)
@@ -277,7 +275,7 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
     return 0;
 
   queueClear(&interface->txQueue);
-  interface->rxPosition = 0;
+  interface->bit = 0;
   interface->left = 1;
   /* Initiate new transaction by selecting addressing mode */
   if (interface->address.rom)

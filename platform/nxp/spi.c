@@ -53,11 +53,11 @@ static void interruptHandler(void *object)
     (void)reg->DR;
   }
 
-  while (interface->fill && reg->SR & SR_TNF)
+  while (interface->length && reg->SR & SR_TNF)
   {
     /* TODO Select dummy frame value */
     reg->DR = interface->rxBuffer ? 0xFF : *interface->txBuffer++;
-    --interface->fill;
+    --interface->length;
   }
 
   if (!interface->left)
@@ -87,8 +87,8 @@ static enum result spiInit(void *object, const void *configPtr)
   if ((res = Ssp->init(object, &parentConfig)) != E_OK)
     return res;
 
-  interface->callback = 0;
   interface->blocking = true;
+  interface->callback = 0;
   interface->lock = SPIN_UNLOCKED;
 
   /* Set pointer to interrupt handler */
@@ -176,12 +176,12 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   /* Break all previous transactions */
   reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
 
-  interface->fill = length;
+  interface->length = length;
   /* Fill transmit FIFO with dummy frames */
-  while (interface->fill && reg->SR & SR_TNF)
+  while (interface->length && reg->SR & SR_TNF)
   {
     reg->DR = 0xFF;
-    --interface->fill;
+    --interface->length;
   }
 
   interface->rxBuffer = buffer;
@@ -205,16 +205,16 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   /* Break all previous transactions */
   reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
 
-  interface->fill = length;
+  interface->length = length;
   /* Fill transmit FIFO */
-  while (interface->fill && reg->SR & SR_TNF)
+  while (interface->length && reg->SR & SR_TNF)
   {
     reg->DR = *buffer++;
-    --interface->fill;
+    --interface->length;
   }
 
   interface->rxBuffer = 0;
-  interface->txBuffer = interface->fill ? buffer : 0;
+  interface->txBuffer = interface->length ? buffer : 0;
   interface->left = length;
 
   /* Enable receive FIFO half full and receive FIFO timeout interrupts */

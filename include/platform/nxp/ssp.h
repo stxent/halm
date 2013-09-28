@@ -29,12 +29,17 @@ struct Ssp
 {
   struct Interface parent;
 
-  void *reg; /* Pointer to SSP registers */
-  irq_t irq; /* Interrupt identifier */
+  /* Pointer to the SSP register block */
+  void *reg;
+  /* Pointer to the interrupt handler */
+  void (*handler)(void *);
+  /* Interrupt identifier */
+  irq_t irq;
 
-  void (*handler)(void *); /* Interrupt handler */
+  /* Interface pins */
   struct Gpio csPin, misoPin, mosiPin, sckPin;
-  uint8_t channel; /* Peripheral number */
+  /* Peripheral block identifier */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetRate(const struct Ssp *);

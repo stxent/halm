@@ -164,7 +164,7 @@ static inline enum result setupPins(struct Uart *interface,
 struct UartRateConfig uartCalcRate(uint32_t rate)
 {
   uint32_t divisor;
-  struct UartRateConfig config = {0, 0, 0};
+  struct UartRateConfig config = {0, 0, 0x10};
 
   if (!rate)
     return config;

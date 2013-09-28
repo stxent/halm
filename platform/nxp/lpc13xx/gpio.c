@@ -116,7 +116,7 @@ void gpioDeinit(struct Gpio *p)
   {
     /* Disable AHB clock to the GPIO domain */
     sysClockDisable(CLK_GPIO);
-    /* Enable clock to IO configuration block */
+    /* Disable clock to IO configuration block */
     sysClockDisable(CLK_IOCON);
   }
 }

@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
+#include <stdbool.h>
 #include "platform/nxp/serial.h"
 #include "platform/nxp/uart_defs.h"
 /*----------------------------------------------------------------------------*/
@@ -107,8 +107,7 @@ static enum result serialInit(void *object, const void *configPtr)
   LPC_UART_TypeDef *reg = interface->parent.reg;
 
   /* Set RX trigger level */
-  reg->FCR &= ~FCR_RX_TRIGGER_MASK;
-  reg->FCR |= FCR_RX_TRIGGER(RX_FIFO_LEVEL);
+  reg->FCR |= (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
   /* Enable RBR and THRE interrupts */
   reg->IER |= IER_RBR | IER_THRE;
 

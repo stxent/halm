@@ -72,7 +72,7 @@ void dmaLinkItem(void *controller, void *current, void *next,
  * @param controller Pointer to Dma object.
  * @return @b true when the transmission is active or @b false otherwise.
  */
-bool dmaIsActive(const struct Dma *dma)
+bool dmaIsActive(const struct Dma *controller)
 {
-  return dma->active;
+  return controller->active;
 }
