@@ -159,14 +159,11 @@ static enum result serialCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum result serialGet(void *object, enum ifOption option, void *data)
 {
-  struct SerialDma *interface = object;
-  enum result res;
+  /* TODO Add more options to SerialDma */
+  struct SerialDma *interface __attribute__((unused)) = object;
 
   switch (option)
   {
-    case IF_RATE:
-      /* TODO */
-      return E_ERROR;
     default:
       return E_ERROR;
   }
@@ -175,20 +172,13 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
 static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct SerialDma *interface = object;
-  enum result res;
+  struct SerialDma *interface __attribute__((unused)) = object;
 
   switch (option)
   {
     case IF_RATE:
-    {
-      struct UartRateConfig rate;
-
-      if ((res = uartCalcRate(&rate, *(uint32_t *)data)) != E_OK)
-        return res;
-      uartSetRate(object, rate);
+      uartSetRate(object, uartCalcRate(*(uint32_t *)data));
       return E_OK;
-    }
     default:
       return E_ERROR;
   }

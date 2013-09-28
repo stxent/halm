@@ -130,7 +130,7 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   LPC_TMR_TypeDef *reg = device->reg;
 
-  reg->MCR = reg->TCR = 0; /* Reset control registers */
+  reg->MCR = 0; /* Reset control register */
   reg->PC = reg->TC = 0; /* Reset internal counters */
   reg->IR = IR_MASK; /* Clear pending interrupts */
 

@@ -54,12 +54,10 @@ enum ifOption
   /** Select zero-copy mode for the interface. */
   IF_ZEROCOPY,
 
-  /** Lock the interface.
-   * Returns @b E_OK when interface successfully locked or @b E_BUSY otherwise.
-   */
-  IF_LOCK,
-  /** Unlock the interface. */
-  IF_UNLOCK
+  /** Acquire the interface. Returns @b E_OK on success or @b E_BUSY. */
+  IF_ACQUIRE,
+  /** Release the interface. */
+  IF_RELEASE
 };
 /*----------------------------------------------------------------------------*/
 struct InterfaceClass
