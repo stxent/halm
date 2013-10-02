@@ -84,7 +84,7 @@ static void tmrCallback(void *object, void (*callback)(void *),
     SysTick->CTRL &= ~CTRL_TICKINT;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrControl(void *object, bool state)
+static void tmrControl(void *object __attribute__((unused)), bool state)
 {
   if (state)
     SysTick->CTRL |= CTRL_ENABLE;
@@ -150,7 +150,7 @@ static enum result tmrInit(void *object, const void *configPtr)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrDeinit(void *object)
+static void tmrDeinit(void *object __attribute__((unused)))
 {
   /* Disable interrupt */
   nvicDisable(SYSTICK_IRQ);

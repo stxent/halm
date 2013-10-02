@@ -64,7 +64,7 @@ static const struct GpioDescriptor sspPins[] = {
         .channel = 0,
         .value = 3
     }, {
-        /* End of pin function association list */
+        .key = 0 /* End of pin function association list */
     }
 };
 /*----------------------------------------------------------------------------*/

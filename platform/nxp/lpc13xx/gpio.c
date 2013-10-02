@@ -31,6 +31,7 @@
 #define IOCON_OD                        BIT(10)
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
+static inline void *calcReg(union GpioPin p);
 /*----------------------------------------------------------------------------*/
 /* IOCON register map differs for LPC1315/16/17/45/46/47 */
 static const uint8_t gpioRegMap[4][12] = {
@@ -44,8 +45,13 @@ static uint8_t instances = 0;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
 {
-  return (LPC_GPIO_TypeDef *)((void *)LPC_GPIO0 +
-      ((void *)LPC_GPIO1 - (void *)LPC_GPIO0) * p.port);
+  return (LPC_GPIO_TypeDef *)((uint32_t)LPC_GPIO0 +
+      ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * p.port);
+}
+/*----------------------------------------------------------------------------*/
+static inline void *calcReg(union GpioPin p)
+{
+  return (void *)((uint32_t)LPC_IOCON + (uint32_t)gpioRegMap[p.port][p.offset]);
 }
 /*----------------------------------------------------------------------------*/
 /* Returns 0 when no descriptor associated with pin found */
@@ -77,12 +83,12 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
   p.pin = converted;
   p.reg = calcPort(p.pin);
 
-  iocon = (void *)LPC_IOCON + gpioRegMap[p.pin.port][p.pin.offset];
+  iocon = calcReg(p.pin);
   /* PIO function, no pull, no hysteresis, standard output */
   *iocon = IOCON_DEFAULT & ~IOCON_MODE_MASK;
 
   /* Exceptions */
-  if ((p.pin.port == 1 && (p.pin.offset >= 0 && p.pin.offset <= 2))
+  if ((p.pin.port == 1 && p.pin.offset <= 2)
       || (p.pin.port == 0 && p.pin.offset == 11))
   {
     *iocon |= 0x01; /* Select GPIO function */
@@ -107,7 +113,7 @@ struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
 /*----------------------------------------------------------------------------*/
 void gpioDeinit(struct Gpio *p)
 {
-  uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
+  uint32_t *iocon = calcReg(p->pin);
 
   ((LPC_GPIO_TypeDef *)p->reg)->DIR &= ~(1 << p->pin.offset);
   *iocon = IOCON_DEFAULT;
@@ -134,7 +140,7 @@ void gpioWrite(struct Gpio *p, uint8_t value)
 /*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio *p, uint8_t function)
 {
-  uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
+  uint32_t *iocon = calcReg(p->pin);
 
   *iocon &= ~IOCON_FUNC_MASK;
   *iocon |= IOCON_FUNC(function);
@@ -142,7 +148,7 @@ void gpioSetFunction(struct Gpio *p, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)
 {
-  uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
+  uint32_t *iocon = calcReg(p->pin);
 
   switch (pull)
   {
@@ -160,7 +166,7 @@ void gpioSetPull(struct Gpio *p, enum gpioPull pull)
 /*----------------------------------------------------------------------------*/
 void gpioSetType(struct Gpio *p, enum gpioType type)
 {
-  uint32_t *iocon = (void *)LPC_IOCON + gpioRegMap[p->pin.port][p->pin.offset];
+  uint32_t *iocon = calcReg(p->pin);
 
   switch (type)
   {

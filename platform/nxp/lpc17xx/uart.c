@@ -80,7 +80,7 @@ static const struct GpioDescriptor uartPins[] = {
         .channel = 3,
         .value = 3
     }, {
-        /* End of pin function association list */
+        .key = 0 /* End of pin function association list */
     }
 };
 /*----------------------------------------------------------------------------*/

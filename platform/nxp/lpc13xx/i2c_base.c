@@ -23,7 +23,7 @@ static const struct GpioDescriptor i2cPins[] = {
         .key = GPIO_TO_PIN(0, 5), /* SDA */
         .value = 1
     }, {
-        /* End of pin function association list */
+        .key = 0 /* End of pin function association list */
     }
 };
 /*----------------------------------------------------------------------------*/

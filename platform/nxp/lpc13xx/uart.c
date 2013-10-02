@@ -23,7 +23,7 @@ static const struct GpioDescriptor uartPins[] = {
         .key = GPIO_TO_PIN(1, 7), /* UART_TX */
         .value = 1
     }, {
-        /* End of pin function association list */
+        .key = 0 /* End of pin function association list */
     }
 };
 /*----------------------------------------------------------------------------*/

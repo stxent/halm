@@ -107,8 +107,8 @@ void DMA_ISR(void)
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_TypeDef *calcPeripheral(uint8_t channel)
 {
-  return (LPC_GPDMACH_TypeDef *)((void *)LPC_GPDMACH0
-      + ((void *)LPC_GPDMACH1 - (void *)LPC_GPDMACH0) * channel);
+  return (LPC_GPDMACH_TypeDef *)((uint32_t)LPC_GPDMACH0
+      + ((uint32_t)LPC_GPDMACH1 - (uint32_t)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
 static void setMux(struct GpDma *controller, enum gpDmaLine line)
@@ -179,7 +179,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void gpdmaDeinit(void *object)
 {
-  struct GpDma *controller = object;
+  struct GpDma *controller = object; /* TODO Remove variable? */
 
   /* Disable DMA peripheral when no active descriptors exist */
   if (!--instances)

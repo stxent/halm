@@ -80,7 +80,7 @@ static const struct GpioDescriptor pwmPins[] = {
         .channel = TIMER_CT16B1,
         .value = PACK_VALUE(2, 1)
     }, {
-        /* End of pin function association list */
+        .key = 0 /* End of pin function association list */
     }
 };
 /*----------------------------------------------------------------------------*/

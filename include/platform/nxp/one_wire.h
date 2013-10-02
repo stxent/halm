@@ -21,17 +21,14 @@ struct OneWireConfig
   uint8_t channel; /* Mandatory: Peripheral number */
 };
 /*----------------------------------------------------------------------------*/
-struct OneWireAddress
+union OneWireAddress
 {
-  union
+  uint64_t rom;
+  struct
   {
-    uint64_t rom;
-    struct
-    {
-      uint8_t family;
-      uint8_t serial[6];
-      uint8_t crc;
-    };
+    uint8_t family;
+    uint8_t serial[6];
+    uint8_t crc;
   };
 };
 /*----------------------------------------------------------------------------*/
@@ -55,7 +52,7 @@ struct OneWire
   /* Receive buffer */
   uint8_t *rxBuffer;
   /* Address of the device */
-  struct OneWireAddress address;
+  union OneWireAddress address;
   /* Number of bytes to be transmitted */
   uint8_t left;
   /* Position in the receiving word and temporary buffer for the word */
