@@ -8,7 +8,8 @@
 #include "platform/nxp/spi.h"
 #include "platform/nxp/ssp_defs.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY 255 /* Lowest interrupt priority in Cortex-M3 */
+#define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
+#define FIFO_DEPTH        8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -38,24 +39,21 @@ static void interruptHandler(void *object)
 {
   struct Spi *interface = object;
   LPC_SSP_TypeDef *reg = interface->parent.reg;
+  uint32_t count = interface->length > FIFO_DEPTH ? FIFO_DEPTH
+      : interface->length;
 
-  while (reg->SR & SR_RNE)
+  while (interface->left && reg->SR & SR_RNE)
   {
-    if (interface->left)
-    {
-      --interface->left;
-      if (interface->rxBuffer)
-      {
-        *interface->rxBuffer++ = reg->DR;
-        continue;
-      }
-    }
-    (void)reg->DR;
+    --interface->left;
+    if (interface->rxBuffer)
+      *interface->rxBuffer++ = reg->DR;
+    else
+      (void)reg->DR;
   }
 
-  while (interface->length && reg->SR & SR_TNF)
+  while (count-- && reg->SR & SR_TNF)
   {
-    /* TODO Select dummy frame value */
+    /* TODO Select dummy frame value for SPI */
     reg->DR = interface->rxBuffer ? 0xFF : *interface->txBuffer++;
     --interface->length;
   }
@@ -173,23 +171,21 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   struct Spi *interface = object;
   LPC_SSP_TypeDef *reg = interface->parent.reg;
 
-  /* Break all previous transactions */
-  reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
+  if (!length)
+    return 0;
 
-  interface->length = length;
-  /* Fill transmit FIFO with dummy frames */
-  while (interface->length && reg->SR & SR_TNF)
-  {
-    reg->DR = 0xFF;
-    --interface->length;
-  }
+  //TODO In SPI: is it necessary to reset previous transmission and clear FIFO?
 
   interface->rxBuffer = buffer;
   interface->txBuffer = 0;
   interface->left = length;
+  interface->length = length - 1;
 
   /* Enable receive FIFO half full and receive FIFO timeout interrupts */
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+
+  /* Initiate reception by pushing first dummy frame */
+  reg->DR = 0xFF;
 
   if (interface->blocking)
     while (interface->left || reg->SR & SR_BSY);
@@ -202,23 +198,19 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   struct Spi *interface = object;
   LPC_SSP_TypeDef *reg = interface->parent.reg;
 
-  /* Break all previous transactions */
-  reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
-
-  interface->length = length;
-  /* Fill transmit FIFO */
-  while (interface->length && reg->SR & SR_TNF)
-  {
-    reg->DR = *buffer++;
-    --interface->length;
-  }
+  if (!length)
+    return 0;
 
   interface->rxBuffer = 0;
-  interface->txBuffer = interface->length ? buffer : 0;
+  interface->txBuffer = buffer;
   interface->left = length;
+  interface->length = length - 1;
 
   /* Enable receive FIFO half full and receive FIFO timeout interrupts */
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+
+  /* Initiate transmission by pushing first frame into FIFO */
+  reg->DR = 0xFF;
 
   if (interface->blocking)
     while (interface->left || reg->SR & SR_BSY);
