@@ -93,8 +93,7 @@ static enum result tmrInit(void *object, const void *configPtr)
   const struct GpTimerConfig * const config = configPtr;
   struct GpTimer *device = object;
 
-  if (!config->frequency)
-    return E_VALUE;
+  assert(config->frequency);
 
   /* Try to set peripheral descriptor */
   device->channel = config->channel;
@@ -149,26 +148,15 @@ static enum result tmrInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void tmrDeinit(void *object)
 {
+  const enum sysClockDevice tmrClock[] = {
+      CLK_CT16B0, CLK_CT16B1, CLK_CT32B0, CLK_CT32B1
+  };
   struct GpTimer *device = object;
 
   /* Disable interrupt */
   nvicDisable(device->irq);
   /* Disable Timer clock */
-  switch (device->channel)
-  {
-    case 0:
-      sysClockDisable(CLK_CT16B0);
-      break;
-    case 1:
-      sysClockDisable(CLK_CT16B1);
-      break;
-    case 2:
-      sysClockDisable(CLK_CT32B0);
-      break;
-    case 3:
-      sysClockDisable(CLK_CT32B1);
-      break;
-  }
+  sysClockDisable(tmrClock[device->channel]);
   /* Release external clock pin when used*/
   if (gpioGetKey(&device->input))
     gpioDeinit(&device->input);
@@ -188,10 +176,10 @@ static void tmrCallback(void *object, void (*callback)(void *),
   if (callback)
   {
     reg->IR = IR_MATCH_INTERRUPT(0); /* Clear pending interrupt flag */
-    reg->MCR |= MCR_INTERRUPT(0) | MCR_RESET(0);
+    reg->MCR |= MCR_INTERRUPT(0);
   }
   else
-    reg->MCR &= ~(MCR_INTERRUPT(0) | MCR_RESET(0));
+    reg->MCR &= ~MCR_INTERRUPT(0);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrControl(void *object, bool state)
@@ -217,7 +205,13 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   LPC_TMR_TypeDef *reg = ((struct GpTimer *)object)->reg;
 
+  /* Set match value and enable timer reset when value is greater than zero */
   reg->MR0 = overflow;
+  if (overflow)
+    reg->MCR |= MCR_RESET(0);
+  else
+    reg->MCR &= ~MCR_RESET(0);
+
   /* Synchronously reset prescaler and counter registers */
   reg->TCR |= TCR_CRES;
   while (reg->TC || reg->PC);

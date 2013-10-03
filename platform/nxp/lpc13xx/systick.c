@@ -124,8 +124,7 @@ static enum result tmrInit(void *object, const void *configPtr)
   const struct SysTickTimerConfig * const config = configPtr;
   struct SysTickTimer *device = object;
 
-  if (!config->frequency)
-    return E_VALUE;
+  assert(config->frequency);
 
   /* Try to set peripheral descriptor */
   if (setDescriptor(device) != E_OK)
