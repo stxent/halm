@@ -64,7 +64,7 @@ struct OneWire
   struct UartRateConfig dataRate, resetRate;
 
   /* Current 1-Wire interface state */
-  enum oneWireState state;
+  volatile enum oneWireState state;
   /* Exclusive access to channel */
   spinlock_t lock;
   /* Selection between blocking mode and zero copy mode */

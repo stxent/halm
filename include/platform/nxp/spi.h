@@ -33,7 +33,7 @@ struct Spi
   uint8_t *rxBuffer;
   const uint8_t *txBuffer;
   /* Number of bytes to be received */
-  uint32_t left;
+  volatile uint32_t left;
   /* Number of bytes to be transmitted */
   uint32_t length;
 

@@ -36,7 +36,7 @@ struct I2c
   uint16_t rxCount, txCount;
 
   /* Current interface state */
-  enum i2cState state;
+  volatile enum i2cState state;
   /* Exclusive access to the channel */
   spinlock_t lock;
   /* Address of the device, only 7-bit addressing supported */
