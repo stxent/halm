@@ -24,7 +24,7 @@ enum result ifCallback(void *interface, void (*callback)(void *),
  * @param interface Pointer to an Interface object.
  * @param option Option to be read.
  * @param data Pointer to a variable where a value of the option will be stored.
- * @return E_OK on success.
+ * @return @b E_OK on success.
  */
 enum result ifGet(void *interface, enum ifOption option, void *data)
 {
@@ -37,7 +37,7 @@ enum result ifGet(void *interface, enum ifOption option, void *data)
  * @param interface Pointer to an Interface object.
  * @param option Option to be set.
  * @param data Pointer to a new value of the option.
- * @return E_OK on success.
+ * @return @b E_OK on success.
  */
 enum result ifSet(void *interface, enum ifOption option, const void *data)
 {

@@ -29,8 +29,9 @@ struct Spi
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointers to input and output buffers */
+  /* Pointer used in read mode */
   uint8_t *rxBuffer;
+  /* Pointer used in write mode */
   const uint8_t *txBuffer;
   /* Number of bytes to be received */
   volatile uint32_t left;

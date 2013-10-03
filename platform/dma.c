@@ -12,7 +12,7 @@
  * @param dest Destination memory address.
  * @param src Source memory address.
  * @param size Size of the transfer.
- * @return E_OK on success.
+ * @return @b E_OK on success.
  */
 enum result dmaStart(void *controller, void *dest, const void *src,
     uint32_t size)
@@ -25,7 +25,7 @@ enum result dmaStart(void *controller, void *dest, const void *src,
  * Start scatter-gather DMA transfer.
  * @param controller Pointer to Dma object.
  * @param first Pointer to the first descriptor in linked list.
- * @return E_OK on success.
+ * @return @b E_OK on success.
  */
 enum result dmaStartList(void *controller, const void *first)
 {
@@ -58,7 +58,7 @@ void dmaHalt(void *controller)
  * @param dest Destination memory address.
  * @param src Source memory address.
  * @param size Size of the transfer.
- * @return E_OK on success.
+ * @return @b E_OK on success.
  */
 void dmaLinkItem(void *controller, void *current, void *next,
     void *dest, const void *src, uint16_t size)
