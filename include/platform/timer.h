@@ -17,12 +17,11 @@ struct TimerClass
 {
   CLASS_HEADER
 
-  /* Virtual functions with arguments similar to other classes */
   void (*callback)(void *, void (*)(void *), void *);
   void (*control)(void *, bool);
-  /* Other virtual functions */
   void (*setFrequency)(void *, uint32_t);
   void (*setOverflow)(void *, uint32_t);
+  uint32_t (*value)(void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Timer
@@ -33,6 +32,7 @@ struct Timer
 void timerCallback(void *, void (*)(void *), void *);
 void timerControl(void *, bool);
 /*----------------------------------------------------------------------------*/
+uint32_t timerValue(void *);
 void timerSetFrequency(void *, uint32_t);
 void timerSetOverflow(void *, uint32_t);
 /*----------------------------------------------------------------------------*/

@@ -7,7 +7,7 @@
 #include "platform/timer.h"
 /*----------------------------------------------------------------------------*/
 /**
- * Set timer overflow callback function.
+ * Set callback function for timer overflow event.
  * @param timer Pointer to Timer object.
  * @param callback Callback function.
  * @param argument Callback function argument.
@@ -18,7 +18,7 @@ void timerCallback(void *timer, void (*callback)(void *), void *argument)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Start or stop timer.
+ * Start or stop the timer.
  * @param timer Pointer to Timer object.
  * @param state Timer state: @b true to start timer or @b false to stop timer.
  */
@@ -45,4 +45,14 @@ void timerSetFrequency(void *timer, uint32_t frequency)
 void timerSetOverflow(void *timer, uint32_t overflow)
 {
   ((struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get value of the internal counter.
+ * @param timer Pointer to Timer object.
+ * @return Value of the counter measured in timer ticks.
+ */
+uint32_t timerValue(void *timer)
+{
+  return ((struct TimerClass *)CLASS(timer))->value(timer);
 }
