@@ -7,8 +7,6 @@
 #ifndef POWER_H_
 #define POWER_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
-/*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
 enum sysPowerDevice
 {

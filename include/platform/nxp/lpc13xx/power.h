@@ -7,7 +7,20 @@
 #ifndef POWER_H_
 #define POWER_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
+/* Power-down configuration register */
+enum sysPowerDevice
+{
+  PWR_IRCOUT  = 0,
+  PWR_IRC     = 1,
+  PWR_FLASH   = 2,
+  PWR_BOD     = 3,
+  PWR_ADC     = 4,
+  PWR_SYSOSC  = 5,
+  PWR_WDTOSC  = 6,
+  PWR_SYSPLL  = 7,
+  PWR_USBPLL  = 8,
+  PWR_USBPAD  = 10
+};
 /*----------------------------------------------------------------------------*/
 /* System AHB clock control register */
 enum sysClockDevice
@@ -33,5 +46,7 @@ enum sysClockDevice
 /*----------------------------------------------------------------------------*/
 void sysClockEnable(enum sysClockDevice);
 void sysClockDisable(enum sysClockDevice);
+void sysPowerEnable(enum sysPowerDevice);
+void sysPowerDisable(enum sysPowerDevice);
 /*----------------------------------------------------------------------------*/
 #endif /* POWER_H_ */
