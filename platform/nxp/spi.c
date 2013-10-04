@@ -39,23 +39,39 @@ static void interruptHandler(void *object)
 {
   struct Spi *interface = object;
   LPC_SSP_TypeDef *reg = interface->parent.reg;
-  uint32_t count = interface->length > FIFO_DEPTH ? FIFO_DEPTH
-      : interface->length;
+  uint32_t count;
 
-  while (interface->left && reg->SR & SR_RNE)
+  count = interface->length > FIFO_DEPTH ? FIFO_DEPTH : interface->length;
+
+  if (interface->rxBuffer)
   {
-    --interface->left;
-    if (interface->rxBuffer)
+    /* Read mode */
+    while (reg->SR & SR_RNE)
+    {
+      --interface->left;
       *interface->rxBuffer++ = reg->DR;
-    else
-      (void)reg->DR;
-  }
+    }
 
-  while (count-- && reg->SR & SR_TNF)
+    while (count-- && reg->SR & SR_TNF)
+    {
+      reg->DR = 0xFF; /* TODO Select dummy frame value for SPI */
+      --interface->length;
+    }
+  }
+  else
   {
-    /* TODO Select dummy frame value for SPI */
-    reg->DR = interface->rxBuffer ? 0xFF : *interface->txBuffer++;
-    --interface->length;
+    /* Write mode */
+    while (reg->SR & SR_RNE)
+    {
+      --interface->left;
+      (void)reg->DR;
+    }
+
+    while (count-- && reg->SR & SR_TNF)
+    {
+      reg->DR = *interface->txBuffer++;
+      --interface->length;
+    }
   }
 
   if (!interface->left)
@@ -178,14 +194,14 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 
   interface->rxBuffer = buffer;
   interface->txBuffer = 0;
-  interface->left = length;
-  interface->length = length - 1;
+  interface->left = interface->length = length;
 
-  /* Enable receive FIFO half full and receive FIFO timeout interrupts */
+  /* Clear interrupt flags and enable interrupts */
+  reg->ICR = ICR_RTIC;
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
-  /* Initiate reception by pushing first dummy frame */
-  reg->DR = 0xFF;
+  /* Initiate reception by setting pending interrupt flag */
+  nvicSetPending(interface->parent.irq);
 
   if (interface->blocking)
     while (interface->left || reg->SR & SR_BSY);
@@ -203,14 +219,14 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   interface->rxBuffer = 0;
   interface->txBuffer = buffer;
-  interface->left = length;
-  interface->length = length - 1;
+  interface->left = interface->length = length;
 
-  /* Enable receive FIFO half full and receive FIFO timeout interrupts */
+  /* Clear interrupt flags and enable interrupts */
+  reg->ICR = ICR_RTIC;
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
-  /* Initiate transmission by pushing first frame into FIFO */
-  reg->DR = 0xFF;
+  /* Initiate transmission by setting pending interrupt flag */
+  nvicSetPending(interface->parent.irq);
 
   if (interface->blocking)
     while (interface->left || reg->SR & SR_BSY);
