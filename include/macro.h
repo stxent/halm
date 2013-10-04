@@ -7,9 +7,7 @@
 #ifndef MACRO_H_
 #define MACRO_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
-/*----------------------------------------------------------------------------*/
-#define BIT(offset)                     ((uint32_t)1 << (offset))
-#define BIT_FIELD(value, offset)        ((uint32_t)value << (offset))
+#define BIT(offset)                     (1UL << (offset))
+#define BIT_FIELD(value, offset)        ((unsigned long)value << (offset))
 /*----------------------------------------------------------------------------*/
 #endif /* MACRO_H_ */

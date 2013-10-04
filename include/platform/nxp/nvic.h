@@ -26,4 +26,9 @@ static inline void nvicDisable(irq_t irq)
   *(NVIC->ISER + (irq >> 5)) = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
+static inline void nvicSetPending(irq_t irq)
+{
+  *(NVIC->ISPR + (irq >> 5)) = 1 << (irq & 0x1F);
+}
+/*----------------------------------------------------------------------------*/
 #endif /* NVIC_H_ */
