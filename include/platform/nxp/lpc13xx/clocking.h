@@ -43,13 +43,7 @@ struct MainClockConfig
 //{
 //  uint8_t msel;
 //  uint8_t psel;
-//};
-///*----------------------------------------------------------------------------*/
-//struct SystemPll
-//{
-//  struct Clock parent;
-//
-//  uint8_t feedbackDivider, postDivider;
+//  enum clockSource source;
 //};
 /*----------------------------------------------------------------------------*/
 #endif /* CLOCKING_H_ */

@@ -9,16 +9,7 @@
 #include "platform/nxp/system.h"
 #include "platform/nxp/lpc13xx/power.h"
 #include "platform/nxp/lpc13xx/clocking.h"
-/*----------------------------------------------------------------------------*/
-//TODO Move to specific header
-/*------------------Main Clock Source Select Register-------------------------*/
-#define MAINCLKSEL_IRC                  BIT_FIELD(0, 0)
-#define MAINCLKSEL_PLL_INPUT            BIT_FIELD(1, 0)
-#define MAINCLKSEL_WDT                  BIT_FIELD(2, 0)
-#define MAINCLKSEL_PLL_OUTPUT           BIT_FIELD(3, 0)
-/*------------------System Oscillator Control Register------------------------*/
-#define SYSOSCCTRL_BYPASS               BIT(0)
-#define SYSOSCCTRL_FREQRANGE            BIT(1) /* Set for 15 - 25 MHz range */
+#include "platform/nxp/lpc13xx/clocking_defs.h"
 /*----------------------------------------------------------------------------*/
 void stubDisable(void);
 enum result stubEnable(const void *);
@@ -35,30 +26,18 @@ bool extOscReady(void);
 enum result mainClockEnable(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
-    .size = 0, /* Abstract class */
-    .init = 0,
-    .deinit = 0,
-
     .disable = extOscDisable,
     .enable = extOscEnable,
     .ready = extOscReady
 };
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass intOscTable = {
-    .size = 0, /* Abstract class */
-    .init = 0,
-    .deinit = 0,
-
     .disable = stubDisable,
     .enable = stubEnable,
     .ready = stubReady
 };
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
-    .size = 0, /* Abstract class */
-    .init = 0,
-    .deinit = 0,
-
     .disable = stubDisable,
     .enable = mainClockEnable,
     .ready = stubReady
@@ -70,7 +49,7 @@ const struct ClockClass *MainClock = &mainClockTable;
 //const struct ClockClass *SystemPll = &systemPllTable;
 /*----------------------------------------------------------------------------*/
 static const uint32_t intOscFrequency = 12000000;
-static uint32_t extOscFrequency = 0;
+static uint32_t extOscFrequency = 0, pllFrequency = 0;
 /*----------------------------------------------------------------------------*/
 //TODO Move declaration from system.h to other file
 uint32_t sysCoreClock = 12000000; //FIXME
@@ -100,8 +79,6 @@ enum result extOscEnable(const void *configPtr)
   const struct ExternalOscConfig * const config = configPtr;
   uint32_t buffer = 0;
 
-  sysPowerEnable(PWR_SYSOSC);
-
   if (config->bypass)
     buffer |= SYSOSCCTRL_BYPASS;
   if (config->frequency > 15e6)
@@ -110,8 +87,18 @@ enum result extOscEnable(const void *configPtr)
   extOscFrequency = config->frequency;
   LPC_SYSCON->SYSOSCCTRL = buffer;
 
-  /* There are no status register so wait 10 microseconds for startup */
+  sysPowerEnable(PWR_SYSOSC);
+
+  /* There is no status register so wait 10 microseconds for startup */
   usleep(10);
+
+  LPC_SYSCON->SYSPLLCLKSEL = SYSPLLCLKSEL_SYSOSC;
+  /* Update PLL clock source */
+  LPC_SYSCON->SYSPLLCLKUEN = 0x01;
+  LPC_SYSCON->SYSPLLCLKUEN = 0x00;
+  LPC_SYSCON->SYSPLLCLKUEN = 0x01;
+  /* Wait until updated */
+  while (!(LPC_SYSCON->SYSPLLCLKUEN & 0x01));
 
   return E_OK;
 }
@@ -125,6 +112,7 @@ enum result mainClockEnable(const void *configPtr)
 {
   const struct MainClockConfig * const config = configPtr;
 
+  //TODO In LPC13xx clocking: add more configuration checks
   switch (config->source)
   {
     case CLOCK_INTERNAL:
@@ -137,14 +125,23 @@ enum result mainClockEnable(const void *configPtr)
       LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_PLL_INPUT;
       sysCoreClock = extOscFrequency;
       break;
+    case CLOCK_PLL:
+      /* Check whether PLL is configured */
+      if (!pllFrequency)
+        return E_ERROR;
+      LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_PLL_OUTPUT;
+      sysCoreClock = pllFrequency;
+      break;
     default:
       return E_VALUE;
   }
 
-  /* Update Main Clock source */
+  /* Update Main clock source */
   LPC_SYSCON->MAINCLKUEN = 0x01;
   LPC_SYSCON->MAINCLKUEN = 0x00;
   LPC_SYSCON->MAINCLKUEN = 0x01;
+  /* Wait until updated */
+  while (!(LPC_SYSCON->MAINCLKUEN & 0x01));
 
   return E_OK;
 }

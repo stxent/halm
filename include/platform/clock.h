@@ -11,11 +11,9 @@
 #include <stdbool.h>
 #include "entity.h"
 /*----------------------------------------------------------------------------*/
-/* Class descriptor */
+/* Simplified descriptor for abstract class */
 struct ClockClass
 {
-  CLASS_HEADER
-
   void (*disable)(void);
   enum result (*enable)(const void *);
   bool (*ready)(void);
