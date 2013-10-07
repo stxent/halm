@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <stdbool.h>
-#include "entity.h"
+#include "error.h"
 /*----------------------------------------------------------------------------*/
 /* Simplified descriptor for abstract class */
 struct ClockClass

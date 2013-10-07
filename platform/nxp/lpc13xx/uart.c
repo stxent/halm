@@ -11,7 +11,7 @@
 #include "platform/nxp/lpc13xx/interrupts.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
-/* In LPC13xx UART clock divisor is number from 1 to 255, 0 to disable */
+/* UART clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
@@ -134,7 +134,7 @@ static enum result uartInit(void *object, const void *configPtr)
 
   /* Set controller specific parameters */
   sysClockEnable(CLK_UART);
-  LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV; /* Divide AHB clock */
+  LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV;
   interface->reg = LPC_UART;
   interface->irq = UART_IRQ;
 

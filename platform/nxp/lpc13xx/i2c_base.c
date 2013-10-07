@@ -11,9 +11,12 @@
 #include "platform/nxp/lpc13xx/interrupts.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
-/* In LPC13xx UART clock divisor is number from 1 to 255, 0 to disable */
+/* I2C clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
+/*----------------------------------------------------------------------------*/
+//FIXME Move to header
+#define PRESETCTRL_I2C BIT(1)
 /*----------------------------------------------------------------------------*/
 static const struct GpioDescriptor i2cPins[] = {
     {
@@ -119,7 +122,7 @@ static enum result i2cInit(void *object, const void *configPtr)
 
   /* Set controller specific parameters */
   sysClockEnable(CLK_I2C);
-  LPC_SYSCON->PRESETCTRL |= 1 << 1; //FIXME Add define
+  LPC_SYSCON->PRESETCTRL |= PRESETCTRL_I2C;
   interface->reg = LPC_I2C;
   interface->irq = I2C_IRQ;
 
@@ -139,7 +142,7 @@ static void i2cDeinit(void *object)
 
   ((LPC_I2C_TypeDef *)interface->reg)->CONCLR = CONCLR_I2ENC;
 
-  LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
+  LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C;
   sysClockDisable(CLK_I2C);
   gpioDeinit(&interface->sdaPin);
   gpioDeinit(&interface->sclPin);

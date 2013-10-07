@@ -11,9 +11,13 @@
 #include "platform/nxp/lpc13xx/interrupts.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
-/* In LPC13xx SSP clock divisor is number from 1 to 255, 0 to disable */
+/* SSP clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
+/*----------------------------------------------------------------------------*/
+//FIXME Move to header
+#define PRESETCTRL_SSP0 BIT(0)
+#define PRESETCTRL_SSP1 BIT(2)
 /*----------------------------------------------------------------------------*/
 /* SSP1 peripheral available only on LPC1313 */
 static const struct GpioDescriptor sspPins[] = {
@@ -186,8 +190,8 @@ static enum result sspInit(void *object, const void *configPtr)
   {
     case 0:
       sysClockEnable(CLK_SSP0);
-      LPC_SYSCON->SSP0CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
-      LPC_SYSCON->PRESETCTRL = 1; /* FIXME */
+      LPC_SYSCON->SSP0CLKDIV = DEFAULT_DIV;
+      LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP0;
       interface->reg = LPC_SSP0;
       interface->irq = SSP0_IRQ;
 
@@ -207,8 +211,8 @@ static enum result sspInit(void *object, const void *configPtr)
       break;
     case 1:
       sysClockEnable(CLK_SSP1);
-      LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV; /* Divide AHB clock */
-      LPC_SYSCON->PRESETCTRL = 4; /* FIXME */
+      LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV;
+      LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP1;
       interface->reg = LPC_SSP1;
       interface->irq = SSP1_IRQ;
       break;
@@ -221,7 +225,7 @@ static enum result sspInit(void *object, const void *configPtr)
   reg->CR0 = !config->frame ? CR0_DSS(8) : CR0_DSS(config->frame);
 
   /* Set mode for SPI interface */
-  if (config->mode & 0x01) //TODO Remove magic numbers
+  if (config->mode & 0x01)
     reg->CR0 |= CR0_CPHA;
   if (config->mode & 0x02)
     reg->CR0 |= CR0_CPOL;
@@ -240,12 +244,12 @@ static void sspDeinit(void *object)
   switch (interface->channel)
   {
     case 0:
-      LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
+      LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_SSP0;
       LPC_SYSCON->SSP0CLKDIV = 0;
       sysClockDisable(CLK_SSP0);
       break;
     case 1:
-      LPC_SYSCON->PRESETCTRL = 0; /* FIXME */
+      LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_SSP1;
       LPC_SYSCON->SSP1CLKDIV = 0;
       sysClockDisable(CLK_SSP1);
       break;

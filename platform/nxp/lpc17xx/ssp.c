@@ -211,7 +211,7 @@ static enum result sspInit(void *object, const void *configPtr)
   reg->CR0 = !config->frame ? CR0_DSS(8) : CR0_DSS(config->frame);
 
   /* Set mode for SPI interface */
-  if (config->mode & 0x01) //TODO Remove magic numbers
+  if (config->mode & 0x01)
     reg->CR0 |= CR0_CPHA;
   if (config->mode & 0x02)
     reg->CR0 |= CR0_CPOL;

@@ -11,8 +11,7 @@
 #include "platform/nxp/lpc13xx/interrupts.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_DIV_VALUE 1
-#define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
+#define DEFAULT_PRIORITY 255 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum result setDescriptor(uint8_t, struct GpTimer *);
@@ -136,7 +135,7 @@ static enum result tmrInit(void *object, const void *configPtr)
   reg->IR = IR_MASK; /* Clear pending interrupts */
 
   /* Configure prescaler */
-  reg->PR = (sysCoreClock / DEFAULT_DIV_VALUE) / config->frequency - 1;
+  reg->PR = sysCoreClock / config->frequency - 1;
   /* Enable timer/counter */
   reg->TCR = TCR_CEN;
 
@@ -200,7 +199,7 @@ static void tmrControl(void *object, bool state)
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   ((LPC_TMR_TypeDef *)((struct GpTimer *)object)->reg)->PR =
-      (sysCoreClock / DEFAULT_DIV_VALUE) / frequency - 1;
+      sysCoreClock/ frequency - 1;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
