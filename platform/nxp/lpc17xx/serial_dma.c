@@ -107,9 +107,7 @@ static enum result serialInit(void *object, const void *configPtr)
   struct UartConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,
-      .tx = config->tx,
-      .rate = config->rate,
-      .parity = config->parity
+      .tx = config->tx
   };
   enum result res;
 
@@ -126,11 +124,18 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Initialize UART block */
   LPC_UART_TypeDef *reg = interface->parent.reg;
 
-  /* Enable DMA and set RX trigger level */
-  reg->FCR |= (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(RX_FIFO_LEVEL)
-      | FCR_DMA_ENABLE;
+  /* Set 8-bit length */
+  reg->LCR = LCR_WORD_8BIT;
+  /* Enable FIFO and DMA, set RX trigger level */
+  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(RX_FIFO_LEVEL)
+      | FCR_ENABLE | FCR_DMA_ENABLE;
+  /* Disable all interrupts */
+  reg->IER = 0;
+  /* Enable transmitter */
   reg->TER = TER_TXEN;
-  /* All interrupts are disabled by default */
+
+  uartSetParity(object, config->parity);
+  uartSetRate(object, uartCalcRate(object, config->rate));
 
   return E_OK;
 }
@@ -178,7 +183,7 @@ static enum result serialSet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_RATE:
-      uartSetRate(object, uartCalcRate(*(uint32_t *)data));
+      uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
       return E_OK;
     default:
       return E_ERROR;

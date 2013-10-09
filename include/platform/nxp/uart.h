@@ -24,10 +24,8 @@ enum uartParity
 /* TODO Stop bits, frame width, additional signals and modes */
 struct UartConfig
 {
-  uint32_t rate; /* Mandatory: baud rate */
   gpioKey rx, tx; /* Mandatory: RX and TX pins */
   uint8_t channel; /* Mandatory: Peripheral number */
-  enum uartParity parity; /* Optional: even, odd or no parity */
 };
 /*----------------------------------------------------------------------------*/
 struct UartRateConfig
@@ -52,7 +50,12 @@ struct Uart
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct UartRateConfig uartCalcRate(uint32_t);
+struct UartRateConfig uartCalcRate(struct Uart *, uint32_t);
+uint32_t uartGetRate(struct Uart *);
+void uartSetParity(struct Uart *, enum uartParity);
 void uartSetRate(struct Uart *, struct UartRateConfig);
+/*----------------------------------------------------------------------------*/
+extern uint32_t uartGetClock(struct Uart *);
+extern enum result uartSetupPins(struct Uart *, const struct UartConfig *);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_H_ */

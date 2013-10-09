@@ -8,9 +8,9 @@
 #include "platform/nxp/one_wire.h"
 #include "platform/nxp/uart_defs.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY    255 /* Lowest interrupt priority in Cortex-M3 */
-#define RATE_RESET          9600
-#define RATE_DATA           115200
+#define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
+#define RATE_RESET        9600
+#define RATE_DATA         115200
 /*----------------------------------------------------------------------------*/
 enum romCommand
 {
@@ -128,21 +128,20 @@ static enum result oneWireInit(void *object, const void *configPtr)
   const struct UartConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,
-      .tx = config->tx,
-      .rate = RATE_RESET
+      .tx = config->tx
   };
   struct OneWire *interface = object;
   enum result res;
-
-  /* Compute rates */
-  interface->dataRate = uartCalcRate(RATE_DATA);
-  interface->resetRate = uartCalcRate(RATE_RESET);
 
   /* Call UART class constructor */
   if ((res = Uart->init(object, &parentConfig)) != E_OK)
     return res;
 
   gpioSetType(&interface->parent.txPin, GPIO_OPENDRAIN);
+
+  /* Compute rates */
+  interface->dataRate = uartCalcRate(object, RATE_DATA);
+  interface->resetRate = uartCalcRate(object, RATE_RESET);
 
   /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
@@ -160,10 +159,16 @@ static enum result oneWireInit(void *object, const void *configPtr)
   /* Initialize UART block */
   LPC_UART_TypeDef *reg = interface->parent.reg;
 
-  /* Set RX trigger level to single byte */
-  reg->FCR &= ~FCR_RX_TRIGGER_MASK;
+  /* Set 8-bit length */
+  reg->LCR = LCR_WORD_8BIT;
+  /* Enable FIFO and set RX trigger level to single byte */
+  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_ENABLE;
   /* Enable RBR and THRE interrupts */
-  reg->IER |= IER_RBR | IER_THRE;
+  reg->IER = IER_RBR | IER_THRE;
+  /* Enable transmitter */
+  reg->TER = TER_TXEN;
+
+  uartSetRate(object, interface->resetRate);
 
   /* Set interrupt priority, lowest by default */
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);

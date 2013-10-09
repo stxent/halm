@@ -83,9 +83,7 @@ static enum result serialInit(void *object, const void *configPtr)
   const struct UartConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,
-      .tx = config->tx,
-      .rate = config->rate,
-      .parity = config->parity
+      .tx = config->tx
   };
   struct Serial *interface = object;
   enum result res;
@@ -106,10 +104,18 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Initialize UART block */
   LPC_UART_TypeDef *reg = interface->parent.reg;
 
-  /* Set RX trigger level */
-  reg->FCR |= (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(RX_FIFO_LEVEL);
+  /* Set 8-bit length */
+  reg->LCR = LCR_WORD_8BIT;
+  /* Enable FIFO and set RX trigger level */
+  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(RX_FIFO_LEVEL)
+      | FCR_ENABLE;
   /* Enable RBR and THRE interrupts */
-  reg->IER |= IER_RBR | IER_THRE;
+  reg->IER = IER_RBR | IER_THRE;
+  /* Enable transmitter */
+  reg->TER = TER_TXEN;
+
+  uartSetParity(object, config->parity);
+  uartSetRate(object, uartCalcRate(object, config->rate));
 
   /* Set interrupt priority, lowest by default */
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
@@ -170,7 +176,7 @@ static enum result serialSet(void *object, enum ifOption option,
       nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
-      uartSetRate(object, uartCalcRate(*(uint32_t *)data));
+      uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
       return E_OK;
     default:
       return E_ERROR;
