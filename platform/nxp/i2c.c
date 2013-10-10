@@ -136,11 +136,17 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *object, const void *configPtr)
 {
+  const struct I2cConfig * const config = configPtr;
+  const struct I2cBaseConfig parentConfig = {
+      .channel = config->channel,
+      .scl = config->scl,
+      .sda = config->sda
+  };
   struct I2c *interface = object;
   enum result res;
 
   /* Call SSP class constructor */
-  if ((res = I2cBase->init(object, configPtr)) != E_OK)
+  if ((res = I2cBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   interface->address = 0;
@@ -152,9 +158,20 @@ static enum result i2cInit(void *object, const void *configPtr)
   /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
 
+  /* Rate should be initialized after block selection */
+  i2cSetRate(object, config->rate);
+
+  /* Initialize I2C block */
+  LPC_I2C_TypeDef *reg = interface->parent.reg;
+
+  /* Clear all flags */
+  reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
+  /* Enable I2C interface */
+  reg->CONSET = CONSET_I2EN;
+
   /* Set interrupt priority, lowest by default */
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
-  /* Enable SPI interrupt */
+  /* Enable interrupt */
   nvicEnable(interface->parent.irq);
 
   return E_OK;
@@ -163,8 +180,10 @@ static enum result i2cInit(void *object, const void *configPtr)
 static void i2cDeinit(void *object)
 {
   struct I2c *interface = object;
+  LPC_I2C_TypeDef *reg = interface->parent.reg;
 
   nvicDisable(interface->parent.irq);
+  reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
   I2cBase->deinit(interface); /* Call I2C base class destructor */
 }
 /*----------------------------------------------------------------------------*/

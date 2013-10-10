@@ -21,6 +21,13 @@ enum i2cState
   I2C_ERROR
 };
 /*----------------------------------------------------------------------------*/
+struct I2cConfig
+{
+  uint32_t rate; /* Mandatory: interface data rate */
+  gpioKey scl, sda; /* Mandatory: interface pins */
+  uint8_t channel; /* Mandatory: peripheral number */
+};
+/*----------------------------------------------------------------------------*/
 struct I2c
 {
   struct I2cBase parent;

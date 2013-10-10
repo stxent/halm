@@ -14,10 +14,8 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *I2cBase;
 /*----------------------------------------------------------------------------*/
-/* TODO Add master/slave select */
-struct I2cConfig
+struct I2cBaseConfig
 {
-  uint32_t rate; /* Mandatory: data rate */
   gpioKey scl, sda; /* Mandatory: interface pins */
   uint8_t channel; /* Mandatory: peripheral number */
 };
@@ -39,7 +37,10 @@ struct I2cBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetRate(const struct I2cBase *);
+uint32_t i2cGetRate(struct I2cBase *);
 void i2cSetRate(struct I2cBase *, uint32_t);
+/*----------------------------------------------------------------------------*/
+uint32_t i2cGetClock(struct I2cBase *);
+enum result i2cSetupPins(struct I2cBase *, const struct I2cBaseConfig *);
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_BASE_H_ */
