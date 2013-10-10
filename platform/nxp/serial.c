@@ -80,7 +80,7 @@ static void interruptHandler(void *object)
 static enum result serialInit(void *object, const void *configPtr)
 {
   const struct SerialConfig * const config = configPtr;
-  const struct UartConfig parentConfig = {
+  const struct UartBaseConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,
       .tx = config->tx
@@ -89,7 +89,7 @@ static enum result serialInit(void *object, const void *configPtr)
   enum result res;
 
   /* Call UART class constructor */
-  if ((res = Uart->init(object, &parentConfig)) != E_OK)
+  if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   /* Set pointer to interrupt handler */
@@ -132,7 +132,7 @@ static void serialDeinit(void *object)
   nvicDisable(interface->parent.irq); /* Disable interrupt */
   queueDeinit(&interface->txQueue);
   queueDeinit(&interface->rxQueue);
-  Uart->deinit(interface); /* Call UART class destructor */
+  UartBase->deinit(interface); /* Call UART class destructor */
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialCallback(void *object, void (*callback)(void *),

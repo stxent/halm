@@ -1,18 +1,18 @@
 /*
- * uart.h
+ * uart_base.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef UART_H_
-#define UART_H_
+#ifndef UART_BASE_H_
+#define UART_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
 #include "platform/gpio.h"
 #include "./device_defs.h"
 #include "./nvic.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *Uart;
+extern const struct InterfaceClass *UartBase;
 /*----------------------------------------------------------------------------*/
 enum uartParity
 {
@@ -21,8 +21,7 @@ enum uartParity
   UART_PARITY_EVEN
 };
 /*----------------------------------------------------------------------------*/
-/* TODO Stop bits, frame width, additional signals and modes */
-struct UartConfig
+struct UartBaseConfig
 {
   gpioKey rx, tx; /* Mandatory: RX and TX pins */
   uint8_t channel; /* Mandatory: Peripheral number */
@@ -33,7 +32,7 @@ struct UartRateConfig
   uint8_t high, low, fraction;
 };
 /*----------------------------------------------------------------------------*/
-struct Uart
+struct UartBase
 {
   struct Interface parent;
 
@@ -50,12 +49,12 @@ struct Uart
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct UartRateConfig uartCalcRate(struct Uart *, uint32_t);
-uint32_t uartGetRate(struct Uart *);
-void uartSetParity(struct Uart *, enum uartParity);
-void uartSetRate(struct Uart *, struct UartRateConfig);
+struct UartRateConfig uartCalcRate(struct UartBase *, uint32_t);
+uint32_t uartGetRate(struct UartBase *);
+void uartSetParity(struct UartBase *, enum uartParity);
+void uartSetRate(struct UartBase *, struct UartRateConfig);
 /*----------------------------------------------------------------------------*/
-extern uint32_t uartGetClock(struct Uart *);
-extern enum result uartSetupPins(struct Uart *, const struct UartConfig *);
+uint32_t uartGetClock(struct UartBase *);
+enum result uartSetupPins(struct UartBase *, const struct UartBaseConfig *);
 /*----------------------------------------------------------------------------*/
-#endif /* UART_H_ */
+#endif /* UART_BASE_H_ */

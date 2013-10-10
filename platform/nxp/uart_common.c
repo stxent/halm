@@ -1,16 +1,16 @@
 /*
- * uart.c
+ * uart_common.c
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "platform/nxp/uart.h"
+#include "platform/nxp/uart_base.h"
 #include "platform/nxp/uart_defs.h"
 /*----------------------------------------------------------------------------*/
 extern const struct GpioDescriptor uartPins[];
 /*----------------------------------------------------------------------------*/
-enum result uartSetupPins(struct Uart *interface,
-    const struct UartConfig *config)
+enum result uartSetupPins(struct UartBase *interface,
+    const struct UartBaseConfig *config)
 {
   const struct GpioDescriptor *pin;
 
@@ -29,7 +29,7 @@ enum result uartSetupPins(struct Uart *interface,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-struct UartRateConfig uartCalcRate(struct Uart *interface, uint32_t rate)
+struct UartRateConfig uartCalcRate(struct UartBase *interface, uint32_t rate)
 {
   uint32_t divisor;
   struct UartRateConfig config = {0, 0, 0x10};
@@ -47,7 +47,7 @@ struct UartRateConfig uartCalcRate(struct Uart *interface, uint32_t rate)
   return config;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetRate(struct Uart *interface)
+uint32_t uartGetRate(struct UartBase *interface)
 {
   LPC_UART_TypeDef *reg = interface->reg;
   uint32_t rate = uartGetClock(interface) >> 4;
@@ -67,7 +67,7 @@ uint32_t uartGetRate(struct Uart *interface)
   return rate;
 }
 /*----------------------------------------------------------------------------*/
-void uartSetParity(struct Uart *interface, enum uartParity parity)
+void uartSetParity(struct UartBase *interface, enum uartParity parity)
 {
   LPC_UART_TypeDef *reg = interface->reg;
 
@@ -81,7 +81,7 @@ void uartSetParity(struct Uart *interface, enum uartParity parity)
   }
 }
 /*----------------------------------------------------------------------------*/
-void uartSetRate(struct Uart *interface, struct UartRateConfig config)
+void uartSetRate(struct UartBase *interface, struct UartRateConfig config)
 {
   LPC_UART_TypeDef *reg = interface->reg;
 

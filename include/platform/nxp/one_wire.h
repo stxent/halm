@@ -10,7 +10,7 @@
 #include "queue.h"
 #include "platform/nxp/spinlock.h"
 #include "./nvic.h"
-#include "./uart.h"
+#include "./uart_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *OneWire;
 /*----------------------------------------------------------------------------*/
@@ -43,7 +43,7 @@ enum oneWireState
 /*----------------------------------------------------------------------------*/
 struct OneWire
 {
-  struct Uart parent;
+  struct UartBase parent;
 
   /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);

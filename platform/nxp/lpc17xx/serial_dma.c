@@ -104,7 +104,7 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Set pointer to interface configuration data */
   const struct SerialDmaConfig * const config = configPtr;
   struct SerialDma *interface = object;
-  struct UartConfig parentConfig = {
+  struct UartBaseConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,
       .tx = config->tx
@@ -112,7 +112,7 @@ static enum result serialInit(void *object, const void *configPtr)
   enum result res;
 
   /* Call UART class constructor */
-  if ((res = Uart->init(object, &parentConfig)) != E_OK)
+  if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   /* Set pointer to interrupt handler */
@@ -148,7 +148,7 @@ static void serialDeinit(void *object)
   deinit(interface->txDma);
   deinit(interface->rxDma);
   /* Call UART class destructor */
-  Uart->deinit(interface);
+  UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialCallback(void *object, void (*callback)(void *),

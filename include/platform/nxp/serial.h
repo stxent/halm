@@ -8,7 +8,7 @@
 #define SERIAL_H_
 /*----------------------------------------------------------------------------*/
 #include "queue.h"
-#include "./uart.h"
+#include "./uart_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Serial;
 /*----------------------------------------------------------------------------*/
@@ -23,7 +23,7 @@ struct SerialConfig
 /*----------------------------------------------------------------------------*/
 struct Serial
 {
-  struct Uart parent;
+  struct UartBase parent;
 
   /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);

@@ -6,19 +6,19 @@
 
 #include <assert.h>
 #include "platform/nxp/system.h"
-#include "platform/nxp/uart.h"
+#include "platform/nxp/uart_base.h"
 #include "platform/nxp/lpc17xx/interrupts.h"
 #include "platform/nxp/lpc17xx/power.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV       CLK_DIV1
 #define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct Uart *);
+static enum result setDescriptor(uint8_t, struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static struct Uart *descriptors[] = {0, 0, 0, 0};
+static struct UartBase *descriptors[] = {0, 0, 0, 0};
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass uartTable = {
     .size = 0, /* Abstract class */
@@ -102,9 +102,9 @@ const struct GpioDescriptor uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *Uart = &uartTable;
+const struct InterfaceClass *UartBase = &uartTable;
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct Uart *interface)
+static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
 {
   assert(channel < sizeof(descriptors));
 
@@ -139,15 +139,15 @@ void UART3_ISR(void)
     descriptors[3]->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetClock(struct Uart *interface __attribute__((unused)))
+uint32_t uartGetClock(struct UartBase *interface __attribute__((unused)))
 {
   return sysCoreClock / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)
 {
-  const struct UartConfig * const config = configPtr;
-  struct Uart *interface = object;
+  const struct UartBaseConfig * const config = configPtr;
+  struct UartBase *interface = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -196,7 +196,7 @@ static void uartDeinit(void *object)
   const enum sysPowerDevice uartPower[] = {
       PWR_UART0, PWR_UART1, PWR_UART2, PWR_UART3
   };
-  struct Uart *interface = object;
+  struct UartBase *interface = object;
 
   /* Disable UART peripheral power */
   sysPowerDisable(uartPower[interface->channel]);

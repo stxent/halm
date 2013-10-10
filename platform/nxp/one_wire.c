@@ -50,7 +50,7 @@ static void beginTransmission(struct OneWire *interface)
 {
   LPC_UART_TypeDef *reg = interface->parent.reg;
 
-  uartSetRate((struct Uart *)interface, interface->resetRate);
+  uartSetRate((struct UartBase *)interface, interface->resetRate);
   interface->state = OW_RESET;
   /* Clear RX FIFO and set trigger level to 1 character */
   reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(0);
@@ -84,7 +84,7 @@ static void interruptHandler(void *object)
       case OW_RESET:
         if (data ^ 0xF0)
         {
-          uartSetRate((struct Uart *)interface, interface->dataRate);
+          uartSetRate((struct UartBase *)interface, interface->dataRate);
           interface->state = OW_TRANSMIT;
         }
         else
@@ -125,7 +125,7 @@ static void interruptHandler(void *object)
 static enum result oneWireInit(void *object, const void *configPtr)
 {
   const struct OneWireConfig * const config = configPtr;
-  const struct UartConfig parentConfig = {
+  const struct UartBaseConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,
       .tx = config->tx
@@ -134,7 +134,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
   enum result res;
 
   /* Call UART class constructor */
-  if ((res = Uart->init(object, &parentConfig)) != E_OK)
+  if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   gpioSetType(&interface->parent.txPin, GPIO_OPENDRAIN);
@@ -184,7 +184,7 @@ static void oneWireDeinit(void *object)
 
   nvicDisable(interface->parent.irq); /* Disable interrupt */
   queueDeinit(&interface->txQueue);
-  Uart->deinit(interface); /* Call UART class destructor */
+  UartBase->deinit(interface); /* Call UART class destructor */
 }
 /*----------------------------------------------------------------------------*/
 static enum result oneWireCallback(void *object, void (*callback)(void *),

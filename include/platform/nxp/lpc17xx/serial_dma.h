@@ -8,7 +8,7 @@
 #define SERIAL_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include "platform/dma.h"
-#include "platform/nxp/uart.h"
+#include "platform/nxp/uart_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *SerialDma;
 /*----------------------------------------------------------------------------*/
@@ -24,7 +24,7 @@ struct SerialDmaConfig
 /*----------------------------------------------------------------------------*/
 struct SerialDma
 {
-  struct Uart parent;
+  struct UartBase parent;
 
   /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);
