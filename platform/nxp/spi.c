@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include "platform/nxp/spi.h"
 #include "platform/nxp/ssp_defs.h"
 /*----------------------------------------------------------------------------*/
@@ -85,20 +84,18 @@ static void interruptHandler(void *object)
 static enum result spiInit(void *object, const void *configPtr)
 {
   const struct SpiConfig * const config = configPtr;
-  const struct SspConfig parentConfig = {
+  const struct SspBaseConfig parentConfig = {
       .channel = config->channel,
       .miso = config->miso,
       .mosi = config->mosi,
       .sck = config->sck,
-      .cs = config->cs,
-      .rate = config->rate,
-      .frame = 8 /* Fixed frame size */
+      .cs = config->cs
   };
   struct Spi *interface = object;
   enum result res;
 
   /* Call SSP class constructor */
-  if ((res = Ssp->init(object, &parentConfig)) != E_OK)
+  if ((res = SspBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   interface->blocking = true;
@@ -107,6 +104,21 @@ static enum result spiInit(void *object, const void *configPtr)
 
   /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
+
+  /* Initialize SSP block */
+  LPC_SSP_TypeDef *reg = interface->parent.reg;
+
+  /* Set frame size */
+  reg->CR0 = CR0_DSS(8);
+
+  /* Set mode for SPI interface */
+  if (config->mode & 0x01)
+    reg->CR0 |= CR0_CPHA;
+  if (config->mode & 0x02)
+    reg->CR0 |= CR0_CPOL;
+
+  sspSetRate(object, config->rate);
+  reg->CR1 = CR1_SSE; /* Enable peripheral */
 
   /* Set interrupt priority, lowest by default */
   nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
@@ -121,7 +133,7 @@ static void spiDeinit(void *object)
   struct Spi *interface = object;
 
   nvicDisable(interface->parent.irq);
-  Ssp->deinit(interface); /* Call SSP class destructor */
+  SspBase->deinit(interface); /* Call SSP class destructor */
 }
 /*----------------------------------------------------------------------------*/
 static enum result spiCallback(void *object, void (*callback)(void *),

@@ -1,31 +1,28 @@
 /*
- * ssp.h
+ * ssp_base.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SSP_H_
-#define SSP_H_
+#ifndef SSP_BASE_H_
+#define SSP_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include "interface.h"
 #include "platform/gpio.h"
 #include "./device_defs.h"
 #include "./nvic.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *Ssp;
+extern const struct InterfaceClass *SspBase;
 /*----------------------------------------------------------------------------*/
 /* TODO Add master/slave select */
-struct SspConfig
+struct SspBaseConfig
 {
-  uint32_t rate; /* Mandatory: serial data rate */
   gpioKey cs; /* Optional: chip select for slave mode */
   gpioKey miso, mosi, sck; /* Mandatory: interface pins */
   uint8_t channel; /* Mandatory: peripheral number */
-  uint8_t frame; /* Optional: frame size, 8 bits by default */
-  uint8_t mode; /* Optional: mode number used in SPI */
 };
 /*----------------------------------------------------------------------------*/
-struct Ssp
+struct SspBase
 {
   struct Interface parent;
 
@@ -42,7 +39,10 @@ struct Ssp
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetRate(const struct Ssp *);
-void sspSetRate(struct Ssp *, uint32_t);
+uint32_t sspGetRate(struct SspBase *);
+void sspSetRate(struct SspBase *, uint32_t);
 /*----------------------------------------------------------------------------*/
-#endif /* SSP_H_ */
+uint32_t sspGetClock(struct SspBase *);
+enum result sspSetupPins(struct SspBase *, const struct SspBaseConfig *);
+/*----------------------------------------------------------------------------*/
+#endif /* SSP_BASE_H_ */

@@ -8,7 +8,7 @@
 #define SPI_H_
 /*----------------------------------------------------------------------------*/
 #include "platform/nxp/spinlock.h"
-#include "./ssp.h"
+#include "./ssp_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Spi;
 /*----------------------------------------------------------------------------*/
@@ -23,7 +23,7 @@ struct SpiConfig
 /*----------------------------------------------------------------------------*/
 struct Spi
 {
-  struct Ssp parent;
+  struct SspBase parent;
 
   /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);

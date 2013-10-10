@@ -1,12 +1,12 @@
 /*
- * ssp.c
+ * ssp_base.c
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
-#include "platform/nxp/ssp.h"
-#include "platform/nxp/ssp_defs.h"
+#include "macro.h"
+#include "platform/nxp/ssp_base.h"
 #include "platform/nxp/system.h"
 #include "platform/nxp/lpc13xx/interrupts.h"
 #include "platform/nxp/lpc13xx/power.h"
@@ -19,8 +19,27 @@
 #define PRESETCTRL_SSP0 BIT(0)
 #define PRESETCTRL_SSP1 BIT(2)
 /*----------------------------------------------------------------------------*/
+static enum result setDescriptor(uint8_t, struct SspBase *);
+/*----------------------------------------------------------------------------*/
+static enum result sspInit(void *, const void *);
+static void sspDeinit(void *);
+/*----------------------------------------------------------------------------*/
+static struct SspBase *descriptors[] = {0, 0};
+/*----------------------------------------------------------------------------*/
+static const struct InterfaceClass sspTable = {
+    .size = 0, /* Abstract class */
+    .init = sspInit,
+    .deinit = sspDeinit,
+
+    .callback = 0,
+    .get = 0,
+    .set = 0,
+    .read = 0,
+    .write = 0
+};
+/*----------------------------------------------------------------------------*/
 /* SSP1 peripheral available only on LPC1313 */
-static const struct GpioDescriptor sspPins[] = {
+const struct GpioDescriptor sspPins[] = {
     {
         .key = GPIO_TO_PIN(0, 2), /* SSP0_SSEL */
         .channel = 0,
@@ -66,29 +85,9 @@ static const struct GpioDescriptor sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct Ssp *);
-static inline enum result setupPins(struct Ssp *, const struct SspConfig *);
+const struct InterfaceClass *SspBase = &sspTable;
 /*----------------------------------------------------------------------------*/
-static enum result sspInit(void *, const void *);
-static void sspDeinit(void *);
-/*----------------------------------------------------------------------------*/
-static const struct InterfaceClass sspTable = {
-    .size = 0, /* Abstract class */
-    .init = sspInit,
-    .deinit = sspDeinit,
-
-    .callback = 0,
-    .get = 0,
-    .set = 0,
-    .read = 0,
-    .write = 0
-};
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass *Ssp = &sspTable;
-/*----------------------------------------------------------------------------*/
-static struct Ssp *descriptors[] = {0, 0};
-/*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct Ssp *interface)
+static enum result setDescriptor(uint8_t channel, struct SspBase *interface)
 {
   assert(channel < sizeof(descriptors));
 
@@ -96,38 +95,6 @@ static enum result setDescriptor(uint8_t channel, struct Ssp *interface)
     return E_BUSY;
 
   descriptors[channel] = interface;
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static inline enum result setupPins(struct Ssp *interface,
-    const struct SspConfig *config)
-{
-  const struct GpioDescriptor *pin;
-
-  /* Setup MISO pin */
-  if (!(pin = gpioFind(sspPins, config->miso, interface->channel)))
-    return E_VALUE;
-  interface->misoPin = gpioInit(config->miso, GPIO_INPUT);
-  gpioSetFunction(&interface->misoPin, pin->value);
-
-  /* Setup MOSI pin */
-  if (!(pin = gpioFind(sspPins, config->mosi, interface->channel)))
-    return E_VALUE;
-  interface->mosiPin = gpioInit(config->mosi, GPIO_OUTPUT);
-  gpioSetFunction(&interface->mosiPin, pin->value);
-
-  /* Setup Serial Clock pin */
-  if (!(pin = gpioFind(sspPins, config->sck, interface->channel)))
-    return E_VALUE;
-  interface->sckPin = gpioInit(config->sck, GPIO_OUTPUT);
-  gpioSetFunction(&interface->sckPin, pin->value);
-
-  /* Setup CS pin, only in slave mode */
-//  if (!(pin = gpioFind(sspPins, config->cs, interface->channel)))
-//    return E_VALUE;
-//  interface->csPin = gpioInit(config->cs, GPIO_INPUT);
-//  gpioSetFunction(&interface->csPin, pin->value);
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -143,45 +110,23 @@ void SSP1_ISR(void)
     descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-void sspSetRate(struct Ssp *interface, uint32_t rate)
+uint32_t sspGetClock(struct SspBase *interface __attribute__((unused)))
 {
-  LPC_SSP_TypeDef *reg = interface->reg;
-  uint16_t divider;
-
-  divider = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / rate - 1;
-  /* FIXME Add more precise calculation of SSP dividers */
-  reg->CPSR = 2;
-  reg->CR0 &= ~CR0_SCR_MASK;
-  reg->CR0 |= CR0_SCR(divider);
-}
-/*----------------------------------------------------------------------------*/
-uint32_t sspGetRate(const struct Ssp *interface)
-{
-  uint32_t rate;
-  uint16_t divider;
-
-  /* FIXME Add more precise calculation of SSP rate */
-  divider = CR0_SCR_VALUE(((LPC_SSP_TypeDef *)interface->reg)->CR0);
-  rate = ((sysCoreClock / DEFAULT_DIV_VALUE) >> 1) / (divider + 1);
-  return rate;
+  return sysCoreClock / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *object, const void *configPtr)
 {
-  const struct SspConfig * const config = configPtr;
-  struct Ssp *interface = object;
+  const struct SspBaseConfig * const config = configPtr;
+  struct SspBase *interface = object;
   enum result res;
-
-  /* When frame is set its value should be from 4 to 16 */
-  if (config->frame && config->frame - 4 > 12)
-    return E_VALUE;
 
   /* Try to set peripheral descriptor */
   interface->channel = config->channel;
   if ((res = setDescriptor(interface->channel, interface)) != E_OK)
     return res;
 
-  if ((res = setupPins(interface, config)) != E_OK)
+  if ((res = sspSetupPins(interface, config)) != E_OK)
     return res;
 
   interface->handler = 0;
@@ -218,27 +163,12 @@ static enum result sspInit(void *object, const void *configPtr)
       break;
   }
 
-  /* Initialize SSP block */
-  LPC_SSP_TypeDef *reg = interface->reg;
-
-  /* Set frame size */
-  reg->CR0 = !config->frame ? CR0_DSS(8) : CR0_DSS(config->frame);
-
-  /* Set mode for SPI interface */
-  if (config->mode & 0x01)
-    reg->CR0 |= CR0_CPHA;
-  if (config->mode & 0x02)
-    reg->CR0 |= CR0_CPOL;
-
-  sspSetRate(interface, config->rate);
-  reg->CR1 = CR1_SSE; /* Enable peripheral */
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void sspDeinit(void *object)
 {
-  struct Ssp *interface = object;
+  struct SspBase *interface = object;
 
   /* Disable UART peripheral power */
   switch (interface->channel)
@@ -254,10 +184,13 @@ static void sspDeinit(void *object)
       sysClockDisable(CLK_SSP1);
       break;
   }
+
+  /* Release SSP pins */
 //  gpioDeinit(&interface->csPin);
   gpioDeinit(&interface->mosiPin);
   gpioDeinit(&interface->misoPin);
   gpioDeinit(&interface->sckPin);
+
   /* Reset SSP descriptor */
   setDescriptor(interface->channel, 0);
 }
