@@ -153,25 +153,20 @@ static enum result sspInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void sspDeinit(void *object)
 {
+  const enum sysPowerDevice sspPower[] = {
+      PWR_SSP0, PWR_SSP1
+  };
   struct SspBase *interface = object;
 
-  /* Disable UART peripheral power */
-  switch (interface->channel)
-  {
-    case 0:
-      sysPowerDisable(PWR_SSP0);
-      break;
-    case 1:
-      sysPowerDisable(PWR_SSP1);
-      break;
-  }
+  /* Disable peripheral power */
+  sysPowerDisable(sspPower[interface->channel]);
 
-  /* Release SSP pins */
+  /* Release interface pins */
 //  gpioDeinit(&interface->csPin);
   gpioDeinit(&interface->mosiPin);
   gpioDeinit(&interface->misoPin);
   gpioDeinit(&interface->sckPin);
 
-  /* Reset SSP descriptor */
+  /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

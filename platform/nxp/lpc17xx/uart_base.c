@@ -198,13 +198,13 @@ static void uartDeinit(void *object)
   };
   struct UartBase *interface = object;
 
-  /* Disable UART peripheral power */
+  /* Disable peripheral power */
   sysPowerDisable(uartPower[interface->channel]);
 
   /* Release interface pins */
   gpioDeinit(&interface->txPin);
   gpioDeinit(&interface->rxPin);
 
-  /* Reset UART descriptor */
+  /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

@@ -36,9 +36,11 @@ static const struct InterfaceClass uartTable = {
 const struct GpioDescriptor uartPins[] = {
     {
         .key = GPIO_TO_PIN(1, 6), /* UART_RX */
+        .channel = 0,
         .value = 1
     }, {
         .key = GPIO_TO_PIN(1, 7), /* UART_TX */
+        .channel = 0,
         .value = 1
     }, {
         .key = 0 /* End of pin function association list */
@@ -98,7 +100,7 @@ static void uartDeinit(void *object)
 {
   struct UartBase *interface = object;
 
-  /* Disable UART peripheral power */
+  /* Disable peripheral clock */
   LPC_SYSCON->UARTCLKDIV = 0;
   sysClockDisable(CLK_UART);
 
@@ -106,6 +108,6 @@ static void uartDeinit(void *object)
   gpioDeinit(&interface->txPin);
   gpioDeinit(&interface->rxPin);
 
-  /* Reset UART descriptor */
+  /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

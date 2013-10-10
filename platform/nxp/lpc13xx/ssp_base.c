@@ -170,7 +170,7 @@ static void sspDeinit(void *object)
 {
   struct SspBase *interface = object;
 
-  /* Disable UART peripheral power */
+  /* Put peripheral in reset and disable clock */
   switch (interface->channel)
   {
     case 0:
@@ -185,7 +185,7 @@ static void sspDeinit(void *object)
       break;
   }
 
-  /* Release SSP pins */
+  /* Release interface pins */
 //  gpioDeinit(&interface->csPin);
   gpioDeinit(&interface->mosiPin);
   gpioDeinit(&interface->misoPin);
