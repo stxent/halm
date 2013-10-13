@@ -11,7 +11,7 @@
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
 /* Reserved bits, digital mode and IO mode for I2C pins */
-#define IOCON_DEFAULT                   0x01D0
+#define IOCON_DEFAULT                   0x00D0
 
 #define IOCON_FUNC(func)                BIT_FIELD((func), 0)
 #define IOCON_FUNC_MASK                 BIT_FIELD(0x07, 0)

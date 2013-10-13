@@ -23,7 +23,7 @@ static inline void nvicEnable(irq_t irq)
 /*----------------------------------------------------------------------------*/
 static inline void nvicDisable(irq_t irq)
 {
-  *(NVIC->ISER + (irq >> 5)) = 1 << (irq & 0x1F);
+  *(NVIC->ICER + (irq >> 5)) = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
 static inline void nvicSetPending(irq_t irq)
