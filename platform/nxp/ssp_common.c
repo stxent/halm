@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "platform/nxp/ssp_base.h"
-#include "platform/nxp/ssp_defs.h"
+#include <platform/nxp/ssp_base.h>
+#include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct GpioDescriptor sspPins[];
 /*----------------------------------------------------------------------------*/

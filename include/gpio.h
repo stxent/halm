@@ -4,17 +4,19 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPIO_H_
-#define GPIO_H_
+//TODO Move gpioFind to common gpio.c
+#ifndef GPIO_TOP_H_
+#define GPIO_TOP_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+#include "mcu.h"
 /*----------------------------------------------------------------------------*/
-typedef uint16_t gpioKey;
+typedef uint16_t gpio_t;
 /*----------------------------------------------------------------------------*/
 /* External pin id consist of port and pin numbers in 1's complement form */
 /* Unused pins should be initialized with zero */
 /* This method supports up to 2^7 ports and 2^8 pins on each port */
-#define GPIO_TO_PIN(port, pin) ((gpioKey)(~((uint8_t)port << 8 | (uint8_t)pin)))
+#define GPIO_TO_PIN(port, pin) ((gpio_t)(~((uint8_t)port << 8 | (uint8_t)pin)))
 /*----------------------------------------------------------------------------*/
 enum gpioDir
 {
@@ -37,7 +39,7 @@ enum gpioType
 /*----------------------------------------------------------------------------*/
 union GpioPin
 {
-  gpioKey key;
+  gpio_t key;
   struct
   {
     uint8_t offset;
@@ -47,7 +49,7 @@ union GpioPin
 /*----------------------------------------------------------------------------*/
 struct GpioDescriptor
 {
-  gpioKey key;
+  gpio_t key;
   uint8_t channel;
   uint8_t value;
 };
@@ -58,17 +60,14 @@ struct Gpio
   union GpioPin pin;
 };
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(gpioKey, enum gpioDir);
-void gpioDeinit(struct Gpio *);
+static inline gpio_t gpioGetKey(struct Gpio *p)
+{
+  /* Returns zero when pin not initialized */
+  return ~p->pin.key;
+}
 /*----------------------------------------------------------------------------*/
-uint8_t gpioRead(struct Gpio *);
-void gpioWrite(struct Gpio *, uint8_t);
+#define HEADER_PATH <platform/PLATFORM_TYPE/gpio.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *, gpioKey,
-    uint8_t);
-void gpioSetFunction(struct Gpio *, uint8_t);
-void gpioSetPull(struct Gpio *, enum gpioPull);
-void gpioSetType(struct Gpio *, enum gpioType);
-gpioKey gpioGetKey(struct Gpio *);
-/*----------------------------------------------------------------------------*/
-#endif /* GPIO_H_ */
+#endif /* GPIO_TOP_H_ */

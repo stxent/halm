@@ -1,25 +1,15 @@
 /*
- * interrupts.h
+ * platform/nxp/lpc13xx/vectors.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef INTERRUPTS_H_
-#define INTERRUPTS_H_
+#ifndef VECTORS_H_
+#define VECTORS_H_
 /*----------------------------------------------------------------------------*/
 enum
 {
-  /* Core-specific interrupt sources */
-  NMI_IRQ         = -14,
-  MEMMANAGE_IRQ   = -12,
-  BUSFAULT_IRQ    = -11,
-  USAGEFAULT_IRQ  = -10,
-  SVCALL_IRQ      = -5,
-  DEBUGMON_IRQ    = -4,
-  PENDSV_IRQ      = -2,
-  SYSTICK_IRQ     = -1,
-
-  /* Chip-specific IRQ handlers */
+  /* Chip-specific interrupt sources */
   WAKEUP_IRQ    = 0,
   /* TODO */
   I2C_IRQ       = 40,
@@ -42,4 +32,4 @@ enum
   SSP1_IRQ      = 57
 };
 /*----------------------------------------------------------------------------*/
-#endif /* INTERRUPTS_H_ */
+#endif /* VECTORS_H_ */

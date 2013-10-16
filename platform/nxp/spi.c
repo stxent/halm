@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "platform/nxp/spi.h"
-#include "platform/nxp/ssp_defs.h"
+#include <platform/nxp/spi.h>
+#include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
 #define FIFO_DEPTH        8
@@ -121,9 +121,9 @@ static enum result spiInit(void *object, const void *configPtr)
   reg->CR1 = CR1_SSE; /* Enable peripheral */
 
   /* Set interrupt priority, lowest by default */
-  nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
+  irqSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
   /* Enable SPI interrupt */
-  nvicEnable(interface->parent.irq);
+  irqEnable(interface->parent.irq);
 
   return E_OK;
 }
@@ -132,7 +132,7 @@ static void spiDeinit(void *object)
 {
   struct Spi *interface = object;
 
-  nvicDisable(interface->parent.irq);
+  irqDisable(interface->parent.irq);
   SspBase->deinit(interface); /* Call SSP class destructor */
 }
 /*----------------------------------------------------------------------------*/
@@ -154,7 +154,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_PRIORITY:
-      *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
+      *(uint32_t *)data = irqGetPriority(interface->parent.irq);
       return E_OK;
     case IF_RATE:
       *(uint32_t *)data = sspGetRate(object);
@@ -178,7 +178,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       interface->blocking = true;
       return E_OK;
     case IF_PRIORITY:
-      nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
+      irqSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);
@@ -213,7 +213,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   /* Initiate reception by setting pending interrupt flag */
-  nvicSetPending(interface->parent.irq);
+  irqSetPending(interface->parent.irq);
 
   if (interface->blocking)
     while (interface->left || reg->SR & SR_BSY);
@@ -238,7 +238,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   /* Initiate transmission by setting pending interrupt flag */
-  nvicSetPending(interface->parent.irq);
+  irqSetPending(interface->parent.irq);
 
   if (interface->blocking)
     while (interface->left || reg->SR & SR_BSY);

@@ -1,5 +1,5 @@
 /*
- * gptimer_pwm.h
+ * platform/nxp/lpc13xx/gptimer_pwm.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,7 +7,7 @@
 #ifndef GPTIMER_PWM_H_
 #define GPTIMER_PWM_H_
 /*----------------------------------------------------------------------------*/
-#include "platform/pwm.h"
+#include <pwm.h>
 #include "./gptimer.h"
 /*----------------------------------------------------------------------------*/
 extern const struct PwmControllerClass *GpTimerPwm;

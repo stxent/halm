@@ -1,5 +1,5 @@
 /*
- * one_wire.h
+ * platform/nxp/one_wire.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,9 +7,9 @@
 #ifndef ONE_WIRE_H_
 #define ONE_WIRE_H_
 /*----------------------------------------------------------------------------*/
-#include "queue.h"
-#include "platform/nxp/spinlock.h"
-#include "./nvic.h"
+#include <irq.h>
+#include <queue.h>
+#include <spinlock.h>
 #include "./uart_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *OneWire;
@@ -17,7 +17,7 @@ extern const struct InterfaceClass *OneWire;
 struct OneWireConfig
 {
   uint32_t rxLength, txLength; /* Optional: queue lengths */
-  gpioKey rx, tx; /* Mandatory: RX and TX pins */
+  gpio_t rx, tx; /* Mandatory: RX and TX pins */
   uint8_t channel; /* Mandatory: Peripheral number */
 };
 /*----------------------------------------------------------------------------*/

@@ -1,5 +1,5 @@
 /*
- * uart_defs.h
+ * platform/nxp/uart_defs.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,7 +7,7 @@
 #ifndef UART_DEFS_H_
 #define UART_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include "macro.h"
+#include <macro.h>
 /*----------------------------------------------------------------------------*/
 /* IrDA, Modem signals, auto-baud and RS-485 not used */
 /*------------------Line Control Register-------------------------------------*/

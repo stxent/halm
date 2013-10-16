@@ -46,7 +46,7 @@ static inline uint32_t *calcPinModeOD(union GpioPin p)
 /*----------------------------------------------------------------------------*/
 /* Returns 0 when no descriptor associated with pin found */
 const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
-    gpioKey key, uint8_t channel)
+    gpio_t key, uint8_t channel)
 {
   while (list->key && (list->key != key || list->channel != channel))
     ++list;
@@ -54,7 +54,7 @@ const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
   return list->key ? list : 0;
 }
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
+struct Gpio gpioInit(gpio_t id, enum gpioDir dir)
 {
   struct Gpio p = {
       .reg = 0,

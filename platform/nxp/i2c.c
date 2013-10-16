@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include "platform/nxp/i2c.h"
-#include "platform/nxp/i2c_defs.h"
+#include <platform/nxp/i2c.h>
+#include <platform/nxp/i2c_defs.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_PRIORITY 255 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
@@ -170,9 +170,9 @@ static enum result i2cInit(void *object, const void *configPtr)
   reg->CONSET = CONSET_I2EN;
 
   /* Set interrupt priority, lowest by default */
-  nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
+  irqSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
   /* Enable interrupt */
-  nvicEnable(interface->parent.irq);
+  irqEnable(interface->parent.irq);
 
   return E_OK;
 }
@@ -182,7 +182,7 @@ static void i2cDeinit(void *object)
   struct I2c *interface = object;
   LPC_I2C_TypeDef *reg = interface->parent.reg;
 
-  nvicDisable(interface->parent.irq);
+  irqDisable(interface->parent.irq);
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
   I2cBase->deinit(interface); /* Call I2C base class destructor */
 }
@@ -207,7 +207,7 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
       return interface->state != I2C_IDLE && interface->state != I2C_ERROR ?
           E_BUSY : E_OK;
     case IF_PRIORITY:
-      *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
+      *(uint32_t *)data = irqGetPriority(interface->parent.irq);
       return E_OK;
     case IF_RATE:
       *(uint32_t *)data = i2cGetRate(object);
@@ -232,7 +232,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
       interface->address = *(uint32_t *)data;
       return E_OK;
     case IF_PRIORITY:
-      nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
+      irqSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
       i2cSetRate(object, *(uint32_t *)data);

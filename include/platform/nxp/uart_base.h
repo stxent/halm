@@ -1,5 +1,5 @@
 /*
- * uart_base.h
+ * platform/nxp/lpc13xx/uart_base.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,10 +7,10 @@
 #ifndef UART_BASE_H_
 #define UART_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include "interface.h"
-#include "platform/gpio.h"
+#include <gpio.h>
+#include <interface.h>
+#include <irq.h>
 #include "./device_defs.h"
-#include "./nvic.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *UartBase;
 /*----------------------------------------------------------------------------*/
@@ -23,7 +23,7 @@ enum uartParity
 /*----------------------------------------------------------------------------*/
 struct UartBaseConfig
 {
-  gpioKey rx, tx; /* Mandatory: RX and TX pins */
+  gpio_t rx, tx; /* Mandatory: RX and TX pins */
   uint8_t channel; /* Mandatory: Peripheral number */
 };
 /*----------------------------------------------------------------------------*/

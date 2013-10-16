@@ -1,5 +1,5 @@
 /*
- * ssp_base.h
+ * platform/nxp/ssp_base.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,18 +7,18 @@
 #ifndef SSP_BASE_H_
 #define SSP_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include "interface.h"
-#include "platform/gpio.h"
+#include <gpio.h>
+#include <interface.h>
+#include <irq.h>
 #include "./device_defs.h"
-#include "./nvic.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *SspBase;
 /*----------------------------------------------------------------------------*/
 /* TODO Add master/slave select */
 struct SspBaseConfig
 {
-  gpioKey cs; /* Optional: chip select for slave mode */
-  gpioKey miso, mosi, sck; /* Mandatory: interface pins */
+  gpio_t cs; /* Optional: chip select for slave mode */
+  gpio_t miso, mosi, sck; /* Mandatory: interface pins */
   uint8_t channel; /* Mandatory: peripheral number */
 };
 /*----------------------------------------------------------------------------*/

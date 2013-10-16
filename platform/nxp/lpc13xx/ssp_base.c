@@ -5,10 +5,9 @@
  */
 
 #include <assert.h>
-#include "macro.h"
-#include "platform/nxp/ssp_base.h"
-#include "platform/nxp/system.h"
-#include "platform/nxp/lpc13xx/interrupts.h"
+#include <macro.h>
+#include <platform/nxp/ssp_base.h>
+#include "platform/nxp/lpc13xx/clocking.h"
 #include "platform/nxp/lpc13xx/power.h"
 /*----------------------------------------------------------------------------*/
 /* SSP clock divisor is the number from 1 to 255 or 0 to disable */

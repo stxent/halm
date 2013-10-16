@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include "platform/gpio.h"
-#include "platform/nxp/gptimer_defs.h"
-#include "platform/nxp/lpc13xx/gptimer_pwm.h"
+#include <gpio.h>
+#include <platform/nxp/gptimer_defs.h>
+#include <platform/nxp/lpc13xx/gptimer_pwm.h>
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwmChannel
 {
@@ -90,7 +90,7 @@ static void updateResolution(struct GpTimerPwm *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result controllerInit(void *, const void *);
 static void controllerDeinit(void *);
-static void *controllerCreate(void *, gpioKey, uint8_t);
+static void *controllerCreate(void *, gpio_t, uint8_t);
 /*----------------------------------------------------------------------------*/
 static void channelSetDutyCycle(void *, uint8_t);
 static void channelSetEnabled(void *, bool);
@@ -171,7 +171,7 @@ static void channelSetPeriod(void *object, uint16_t period)
   *pwm->reg = period;
 }
 /*----------------------------------------------------------------------------*/
-static void *controllerCreate(void *object, gpioKey output, uint8_t percentage)
+static void *controllerCreate(void *object, gpio_t output, uint8_t percentage)
 {
   const struct GpioDescriptor *pin;
   struct GpTimerPwm *device = object;

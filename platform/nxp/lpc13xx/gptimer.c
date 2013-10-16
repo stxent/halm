@@ -5,11 +5,10 @@
  */
 
 #include <assert.h>
-#include "platform/nxp/system.h"
-#include "platform/nxp/gptimer_defs.h"
-#include "platform/nxp/lpc13xx/gptimer.h"
-#include "platform/nxp/lpc13xx/interrupts.h"
-#include "platform/nxp/lpc13xx/power.h"
+#include <platform/nxp/gptimer_defs.h>
+#include <platform/nxp/lpc13xx/clocking.h>
+#include <platform/nxp/lpc13xx/gptimer.h>
+#include <platform/nxp/lpc13xx/power.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_PRIORITY 255 /* Lowest interrupt priority in Cortex-M3 */
 /*----------------------------------------------------------------------------*/
@@ -140,9 +139,9 @@ static enum result tmrInit(void *object, const void *configPtr)
   reg->TCR = TCR_CEN;
 
   /* Enable interrupt */
-  nvicEnable(device->irq);
+  irqEnable(device->irq);
   /* Set interrupt priority, lowest by default */
-  nvicSetPriority(device->irq, DEFAULT_PRIORITY);
+  irqSetPriority(device->irq, DEFAULT_PRIORITY);
 
   return E_OK;
 }
@@ -155,7 +154,7 @@ static void tmrDeinit(void *object)
   struct GpTimer *device = object;
 
   /* Disable interrupt */
-  nvicDisable(device->irq);
+  irqDisable(device->irq);
   /* Disable Timer clock */
   sysClockDisable(tmrClock[device->channel]);
   /* Release external clock pin when used*/

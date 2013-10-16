@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "platform/capture.h"
+#include <capture.h>
 /*----------------------------------------------------------------------------*/
 /**
  * Create event capture object, associated with capture block.

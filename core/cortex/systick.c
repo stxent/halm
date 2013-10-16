@@ -5,11 +5,9 @@
  */
 
 #include <assert.h>
-#include "macro.h"
-#include "platform/nxp/nvic.h"
-#include "platform/nxp/system.h"
-#include "platform/nxp/systick.h"
-#include "platform/nxp/lpc13xx/interrupts.h"
+#include <irq.h>
+#include <macro.h>
+#include <core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
 #define CTRL_ENABLE                     BIT(0) /* System tick timer enable */
 #define CTRL_TICKINT                    BIT(1) /* Interrupt enable */
@@ -45,6 +43,8 @@ static const struct TimerClass timerTable = {
 const struct TimerClass *SysTickTimer = &timerTable;
 /*----------------------------------------------------------------------------*/
 static struct SysTickTimer *descriptor = 0;
+/*----------------------------------------------------------------------------*/
+extern uint32_t sysCoreClock;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -93,9 +93,9 @@ static enum result tmrInit(void *object, const void *configPtr)
   SysTick->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
 
   /* Enable interrupt */
-  nvicEnable(SYSTICK_IRQ);
+  irqEnable(SYSTICK_IRQ);
   /* Set interrupt priority, lowest by default */
-  nvicSetPriority(SYSTICK_IRQ, DEFAULT_PRIORITY);
+  irqSetPriority(SYSTICK_IRQ, DEFAULT_PRIORITY);
 
   return E_OK;
 }
@@ -103,7 +103,7 @@ static enum result tmrInit(void *object, const void *configPtr)
 static void tmrDeinit(void *object __attribute__((unused)))
 {
   /* Disable interrupt */
-  nvicDisable(SYSTICK_IRQ);
+  irqDisable(SYSTICK_IRQ);
   /* Disable timer */
   SysTick->CTRL &= ~CTRL_ENABLE;
   /* Reset descriptor */

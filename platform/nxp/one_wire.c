@@ -4,9 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include "platform/nxp/one_wire.h"
-#include "platform/nxp/uart_defs.h"
+#include <platform/nxp/one_wire.h>
+#include <platform/nxp/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
 #define RATE_RESET        9600
@@ -171,9 +170,9 @@ static enum result oneWireInit(void *object, const void *configPtr)
   uartSetRate(object, interface->resetRate);
 
   /* Set interrupt priority, lowest by default */
-  nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
+  irqSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
-  nvicEnable(interface->parent.irq);
+  irqEnable(interface->parent.irq);
 
   return E_OK;
 }
@@ -182,7 +181,7 @@ static void oneWireDeinit(void *object)
 {
   struct OneWire *interface = object;
 
-  nvicDisable(interface->parent.irq); /* Disable interrupt */
+  irqDisable(interface->parent.irq); /* Disable interrupt */
   queueDeinit(&interface->txQueue);
   UartBase->deinit(interface); /* Call UART class destructor */
 }
@@ -204,7 +203,7 @@ static enum result oneWireGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_PRIORITY:
-      *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
+      *(uint32_t *)data = irqGetPriority(interface->parent.irq);
       return E_OK;
     case IF_READY:
       return interface->state == OW_IDLE ? E_OK : E_BUSY;
@@ -229,7 +228,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
       interface->address.rom = *(uint64_t *)data;
       return E_OK;
     case IF_PRIORITY:
-      nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
+      irqSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RELEASE:
       spinUnlock(&interface->lock);

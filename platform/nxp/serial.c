@@ -5,8 +5,8 @@
  */
 
 #include <stdbool.h>
-#include "platform/nxp/serial.h"
-#include "platform/nxp/uart_defs.h"
+#include <platform/nxp/serial.h>
+#include <platform/nxp/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
 #define RX_FIFO_LEVEL     2 /* 8 characters */
@@ -118,9 +118,9 @@ static enum result serialInit(void *object, const void *configPtr)
   uartSetRate(object, uartCalcRate(object, config->rate));
 
   /* Set interrupt priority, lowest by default */
-  nvicSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
+  irqSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
   /* Enable UART interrupt */
-  nvicEnable(interface->parent.irq);
+  irqEnable(interface->parent.irq);
 
   return E_OK;
 }
@@ -129,7 +129,7 @@ static void serialDeinit(void *object)
 {
   struct Serial *interface = object;
 
-  nvicDisable(interface->parent.irq); /* Disable interrupt */
+  irqDisable(interface->parent.irq); /* Disable interrupt */
   queueDeinit(&interface->txQueue);
   queueDeinit(&interface->rxQueue);
   UartBase->deinit(interface); /* Call UART class destructor */
@@ -158,7 +158,7 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
       *(uint32_t *)data = queueSize(&interface->txQueue);
       return E_OK;
     case IF_PRIORITY:
-      *(uint32_t *)data = nvicGetPriority(interface->parent.irq);
+      *(uint32_t *)data = irqGetPriority(interface->parent.irq);
       return E_OK;
     default:
       return E_ERROR;
@@ -173,7 +173,7 @@ static enum result serialSet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_PRIORITY:
-      nvicSetPriority(interface->parent.irq, *(uint32_t *)data);
+      irqSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
       uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
@@ -188,9 +188,9 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   struct Serial *interface = object;
   uint32_t read;
 
-  nvicDisable(interface->parent.irq);
+  irqDisable(interface->parent.irq);
   read = queuePopArray(&interface->rxQueue, buffer, length);
-  nvicEnable(interface->parent.irq);
+  irqEnable(interface->parent.irq);
 
   return read;
 }
@@ -202,7 +202,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   LPC_UART_TypeDef *reg = interface->parent.reg;
   uint32_t written = 0;
 
-  nvicDisable(interface->parent.irq);
+  irqDisable(interface->parent.irq);
   /* Check transmitter state */
   if (reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
   {
@@ -215,7 +215,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   /* Fill TX queue with the rest of data */
   if (length)
     written += queuePushArray(&interface->txQueue, buffer, length);
-  nvicEnable(interface->parent.irq);
+  irqEnable(interface->parent.irq);
 
   return written;
 }

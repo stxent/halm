@@ -5,11 +5,10 @@
  */
 
 #include <assert.h>
-#include "macro.h"
-#include "platform/nxp/i2c_base.h"
-#include "platform/nxp/system.h"
-#include "platform/nxp/lpc13xx/interrupts.h"
-#include "platform/nxp/lpc13xx/power.h"
+#include <macro.h>
+#include <platform/nxp/i2c_base.h>
+#include <platform/nxp/lpc13xx/clocking.h>
+#include <platform/nxp/lpc13xx/power.h>
 /*----------------------------------------------------------------------------*/
 //FIXME Move to header
 #define PRESETCTRL_I2C BIT(1)

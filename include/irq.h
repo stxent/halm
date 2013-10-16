@@ -1,30 +1,23 @@
 /*
- * systick.h
+ * irq.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SYSTICK_H_
-#define SYSTICK_H_
+#ifndef IRQ_TOP_H_
+#define IRQ_TOP_H_
 /*----------------------------------------------------------------------------*/
-#include "platform/timer.h"
+#include <stdint.h>
+#include <mcu.h>
 /*----------------------------------------------------------------------------*/
-extern const struct TimerClass *SysTickTimer;
+typedef int16_t irq_t;
 /*----------------------------------------------------------------------------*/
-struct SysTickTimerConfig
-{
-  uint32_t frequency; /* Mandatory: timer fundamental frequency */
-};
+#define HEADER_PATH <core/CORE_TYPE/irq.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-struct SysTickTimer
-{
-  struct Timer parent;
-
-  void (*handler)(void *); /* Hardware interrupt handler */
-  void (*callback)(void *); /* User interrupt handler */
-  void *callbackArgument; /* User interrupt handler argument */
-
-  uint32_t frequency, overflow;
-};
+#define HEADER_PATH <platform/PLATFORM_TYPE/vectors.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* SYSTICK_H_ */
+#endif /* IRQ_TOP_H_ */

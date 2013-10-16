@@ -1,5 +1,5 @@
 /*
- * ssp_defs.h
+ * platform/nxp/ssp_defs.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,7 +7,7 @@
 #ifndef SSP_DEFS_H_
 #define SSP_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include "macro.h"
+#include <macro.h>
 /*------------------Control Register 0----------------------------------------*/
 /* Data Size Select */
 #define CR0_DSS_MASK                    BIT_FIELD(0x0F, 0)

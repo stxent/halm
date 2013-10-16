@@ -1,5 +1,5 @@
 /*
- * i2c.h
+ * platform/nxp/i2c.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,7 +7,7 @@
 #ifndef I2C_H_
 #define I2C_H_
 /*----------------------------------------------------------------------------*/
-#include "platform/nxp/spinlock.h"
+#include <spinlock.h>
 #include "./i2c_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *I2c;
@@ -24,7 +24,7 @@ enum i2cState
 struct I2cConfig
 {
   uint32_t rate; /* Mandatory: interface data rate */
-  gpioKey scl, sda; /* Mandatory: interface pins */
+  gpio_t scl, sda; /* Mandatory: interface pins */
   uint8_t channel; /* Mandatory: peripheral number */
 };
 /*----------------------------------------------------------------------------*/

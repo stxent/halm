@@ -1,5 +1,5 @@
 /*
- * gptimer.h
+ * platform/nxp/lpc13xx/gptimer.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,10 +7,10 @@
 #ifndef GPTIMER_H_
 #define GPTIMER_H_
 /*----------------------------------------------------------------------------*/
-#include "platform/gpio.h"
-#include "platform/timer.h"
+#include <gpio.h>
+#include <irq.h>
+#include <timer.h>
 #include "../device_defs.h"
-#include "../nvic.h"
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass *GpTimer;
 /*----------------------------------------------------------------------------*/
@@ -27,7 +27,7 @@ enum gpTimerNumber
 struct GpTimerConfig
 {
   uint32_t frequency; /* Mandatory: timer fundamental frequency */
-  gpioKey input; /* Optional: clock input pin */
+  gpio_t input; /* Optional: clock input pin */
   uint8_t channel; /* Mandatory: timer block */
 };
 /*----------------------------------------------------------------------------*/

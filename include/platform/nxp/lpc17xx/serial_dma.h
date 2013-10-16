@@ -15,7 +15,7 @@ extern const struct InterfaceClass *SerialDma;
 struct SerialDmaConfig
 {
   uint32_t rate; /* Mandatory: baud rate */
-  gpioKey rx, tx; /* Mandatory: RX and TX pins */
+  gpio_t rx, tx; /* Mandatory: RX and TX pins */
   uint8_t channel; /* Mandatory: Peripheral number */
   /* TODO Make optional */
   int8_t rxChannel, txChannel; /* Mandatory: DMA channels */

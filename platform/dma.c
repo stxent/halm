@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "platform/dma.h"
+#include <dma.h>
 /*----------------------------------------------------------------------------*/
 /**
  * Start DMA transfer.

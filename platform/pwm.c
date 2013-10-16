@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "platform/pwm.h"
+#include <pwm.h>
 /*----------------------------------------------------------------------------*/
 /**
  * Create Pwm object, associated with controller.
@@ -14,7 +14,7 @@
  * @param value Initial duty cycle value in percents.
  * @return Pointer to new Pwm object on success or zero on error.
  */
-void *pwmCreate(void *controller, gpioKey pin, uint8_t value)
+void *pwmCreate(void *controller, gpio_t pin, uint8_t value)
 {
   return ((struct PwmControllerClass *)CLASS(controller))->create(controller,
       pin, value);

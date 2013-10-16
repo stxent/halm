@@ -56,7 +56,7 @@ static inline void *calcReg(union GpioPin p)
 /*----------------------------------------------------------------------------*/
 /* Returns 0 when no descriptor associated with pin found */
 const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
-    gpioKey key, uint8_t channel)
+    gpio_t key, uint8_t channel)
 {
   while (list->key && (list->key != key || list->channel != channel))
     ++list;
@@ -64,7 +64,7 @@ const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
   return list->key ? list : 0;
 }
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(gpioKey id, enum gpioDir dir)
+struct Gpio gpioInit(gpio_t id, enum gpioDir dir)
 {
   uint32_t *iocon;
   struct Gpio p = {
@@ -180,7 +180,7 @@ void gpioSetType(struct Gpio *p, enum gpioType type)
 }
 /*----------------------------------------------------------------------------*/
 /* Returns zero when pin not initialized */
-gpioKey gpioGetKey(struct Gpio *p)
+gpio_t gpioGetKey(struct Gpio *p)
 {
   return ~p->pin.key; /* External pin identifiers are in 1's complement form */
 }

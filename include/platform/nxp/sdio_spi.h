@@ -1,5 +1,5 @@
 /*
- * sdio_spi.h
+ * platform/nxp/sdio_spi.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,8 +7,8 @@
 #ifndef SDIO_SPI_H_
 #define SDIO_SPI_H_
 /*----------------------------------------------------------------------------*/
-#include "interface.h"
-#include "platform/gpio.h"
+#include <gpio.h>
+#include <interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *SdioSpi;
 /*----------------------------------------------------------------------------*/
@@ -22,7 +22,7 @@ enum cardType
 struct SdioSpiConfig
 {
   struct Interface *interface; /* Mandatory: low-level character device */
-  gpioKey cs; /* Mandatory: chip select pin */
+  gpio_t cs; /* Mandatory: chip select pin */
 };
 /*----------------------------------------------------------------------------*/
 struct SdioSpi

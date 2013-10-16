@@ -5,9 +5,8 @@
  */
 
 #include <assert.h>
-#include "macro.h"
+#include <delay.h>
 #include "platform/nxp/device_defs.h"
-#include "platform/nxp/system.h"
 #include "platform/nxp/lpc13xx/power.h"
 #include "platform/nxp/lpc13xx/clocking.h"
 #include "platform/nxp/lpc13xx/clocking_defs.h"
@@ -76,9 +75,7 @@ const struct ClockClass *UsbClock = &usbClockTable;
 /*----------------------------------------------------------------------------*/
 static const uint32_t intOscFrequency = 12000000;
 static uint32_t extOscFrequency = 0, pllFrequency = 0;
-/*----------------------------------------------------------------------------*/
-//TODO Move declaration from system.h to other file
-uint32_t sysCoreClock = 12000000; //FIXME
+uint32_t sysCoreClock = 12000000;
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void)
 {
@@ -111,7 +108,7 @@ static enum result extOscEnable(const void *configPtr)
   sysPowerEnable(PWR_SYSOSC);
 
   /* There is no status register so wait 10 microseconds for startup */
-  usleep(10);
+  udelay(10);
 
   LPC_SYSCON->SYSPLLCLKSEL = PLLCLKSEL_SYSOSC;
   /* Update PLL clock source */

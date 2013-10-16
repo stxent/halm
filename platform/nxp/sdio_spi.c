@@ -4,10 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include "macro.h"
-#include "platform/nxp/sdio_spi.h"
-#include "platform/nxp/system.h"
+#include <delay.h>
+#include <macro.h>
+#include <platform/nxp/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_POW       9
 #define TOKEN_DATA_MASK 0x1F
@@ -254,7 +253,7 @@ static enum result resetCard(struct SdioSpi *device)
     sendCommand(device, ACMD_SD_SEND_OP_COND, OCR_HCS);
     if ((response = getShortResponse(device)) == 0xFF || !response)
       break;
-    msleep(10); /* Retry after 10 ms */
+    mdelay(10); /* Retry after 10 ms */
   }
   if (response)
   {
@@ -295,7 +294,7 @@ static enum result readBlock(struct SdioSpi *device, uint8_t *buffer)
   {
     if ((response = getShortResponse(device)) == 0xFF)
     {
-      usleep(10);
+      udelay(10);
       continue;
     }
     if (response != TOKEN_START)
@@ -330,7 +329,7 @@ static enum result waitBusyState(struct SdioSpi *device)
       return E_INTERFACE;
     if (state == 0xFF)
       break;
-    usleep(10);
+    udelay(10);
   }
 
   /* TODO Add interface recovery */
