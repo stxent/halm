@@ -1,32 +1,40 @@
 /*
  * spinlock.c
- * Copyright (C) 2012 xent
+ * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <core/cortex/m3/asm.h>
+#include <core/cortex/m0/asm.h>
 #include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 void spinLock(spinlock_t *lock)
 {
-  do
+  /* Wait until lock becomes free */
+  while (1)
   {
-    /* Wait until lock becomes free */
-    while (__ldrexb(lock) != SPIN_UNLOCKED);
+    __irqDisable();
+    if (*lock == SPIN_UNLOCKED) /* Check current state */
+    {
+      *lock = SPIN_LOCKED; /* Lock */
+      __dmb();
+      __irqEnable();
+      return;
+    }
+    __irqEnable();
   }
-  while (__strexb(SPIN_LOCKED, lock) != 0); /* Try to lock */
-  __dmb();
 }
 /*----------------------------------------------------------------------------*/
 bool spinTryLock(spinlock_t *lock)
 {
-  if (__ldrexb(lock) == SPIN_UNLOCKED) /* Get current state */
+  __irqDisable();
+  if (*lock == SPIN_UNLOCKED) /* Check current state */
   {
-    /* Try to lock */
-    while (__strexb(SPIN_LOCKED, lock) != 0);
+    *lock = SPIN_LOCKED; /* Lock */
     __dmb();
+    __irqEnable();
     return true;
   }
+  __irqEnable();
   return false; /* Already locked */
 }
 /*----------------------------------------------------------------------------*/

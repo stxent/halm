@@ -1,5 +1,5 @@
 /*
- * core/cortex/m3/delay.h
+ * core/cortex/m0/delay.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -23,9 +23,11 @@ static inline void udelay(uint32_t period)
   volatile uint32_t count = sysCoreClock / 3000000 * period;
 
   __asm__ volatile (
+      ".syntax unified\n\t"
       "1:\n\t"
-      "   SUBS.W %[count], %[count], #1\n\t"
-      "   BNE 1b"
+      "   SUBS %[count], %[count], #1\n\t"
+      "   BNE 1b\n\t"
+      ".syntax divided"
       : [count] "=r" (count)
       : "0" (count)
       : "r3"
