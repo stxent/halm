@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include "platform/nxp/system.h"
-#include "platform/nxp/uart_base.h"
-#include "platform/nxp/lpc11xx/interrupts.h"
-#include "platform/nxp/lpc11xx/power.h"
+#include <irq.h>
+#include <platform/nxp/uart_base.h>
+#include <platform/nxp/lpc13xx/clocking.h>
+#include <platform/nxp/lpc13xx/power.h>
 /*----------------------------------------------------------------------------*/
 /* UART clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1

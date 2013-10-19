@@ -5,30 +5,10 @@
  */
 
 #include <assert.h>
-#include "macro.h"
-#include "platform/gpio.h"
-#include "platform/nxp/device_defs.h"
-#include "platform/nxp/lpc11xx/power.h"
-/*----------------------------------------------------------------------------*/
-/* Reserved bits, digital mode and IO mode for I2C pins */
-#define IOCON_DEFAULT                   0x00D0
-
-#define IOCON_FUNC(func)                BIT_FIELD((func), 0)
-#define IOCON_FUNC_MASK                 BIT_FIELD(0x07, 0)
-
-#define IOCON_I2C_STANDARD              BIT_FIELD(0, 8)
-#define IOCON_I2C_IO                    BIT_FIELD(1, 8)
-#define IOCON_I2C_PLUS                  BIT_FIELD(2, 8)
-#define IOCON_I2C_MASK                  BIT_FIELD(0x03, 8)
-
-#define IOCON_MODE_DIGITAL              BIT(7)
-#define IOCON_MODE_INACTIVE             BIT_FIELD(0, 3)
-#define IOCON_MODE_PULLDOWN             BIT_FIELD(1, 3)
-#define IOCON_MODE_PULLUP               BIT_FIELD(2, 3)
-#define IOCON_MODE_MASK                 BIT_FIELD(0x03, 3)
-
-#define IOCON_HYS                       BIT(5)
-#define IOCON_OD                        BIT(10)
+#include <gpio.h>
+#include <macro.h>
+#include <platform/nxp/lpc11xx/gpio_defs.h>
+#include <platform/nxp/lpc11xx/power.h>
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
@@ -127,17 +107,6 @@ void gpioDeinit(struct Gpio *p)
   }
 }
 /*----------------------------------------------------------------------------*/
-uint8_t gpioRead(struct Gpio *p)
-{
-  return (((LPC_GPIO_TypeDef *)p->reg)->DATA & (1 << p->pin.offset)) != 0;
-}
-/*----------------------------------------------------------------------------*/
-void gpioWrite(struct Gpio *p, uint8_t value)
-{
-  *(uint32_t *)(((LPC_GPIO_TypeDef *)p->reg)->MASKED_ACCESS
-      + (1 << p->pin.offset)) = value ? 0xFFF : 0x000;
-}
-/*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio *p, uint8_t function)
 {
   uint32_t *iocon = calcReg(p->pin);
@@ -177,10 +146,4 @@ void gpioSetType(struct Gpio *p, enum gpioType type)
       *iocon |= IOCON_OD;
       break;
   }
-}
-/*----------------------------------------------------------------------------*/
-/* Returns zero when pin not initialized */
-gpio_t gpioGetKey(struct Gpio *p)
-{
-  return ~p->pin.key; /* External pin identifiers are in 1's complement form */
 }

@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <delay.h>
 #include <platform/nxp/device_defs.h>
-#include <platform/nxp/lpc13xx/power.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/clocking_defs.h>
+#include <platform/nxp/lpc11xx/power.h>
+#include <platform/nxp/lpc11xx/clocking.h>
+#include <platform/nxp/lpc11xx/clocking_defs.h>
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void);
 static bool stubReady(void);
@@ -23,12 +23,8 @@ static bool intOscReady();
 static void sysPllDisable(void);
 static enum result sysPllEnable(const void *);
 static bool sysPllReady(void);
-static void usbPllDisable(void);
-static enum result usbPllEnable(const void *);
-static bool usbPllReady(void);
 /*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *);
-static enum result usbClockEnable(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -47,35 +43,23 @@ static const struct ClockClass sysPllTable = {
     .enable = sysPllEnable,
     .ready = sysPllReady
 };
-
-static const struct ClockClass usbPllTable = {
-    .disable = usbPllDisable,
-    .enable = usbPllEnable,
-    .ready = usbPllReady
-};
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
     .disable = stubDisable,
     .enable = mainClockEnable,
     .ready = stubReady
 };
-/*----------------------------------------------------------------------------*/
-static const struct ClockClass usbClockTable = {
-    .disable = stubDisable,
-    .enable = usbClockEnable,
-    .ready = stubReady
-};
 ///*----------------------------------------------------------------------------*/
 const struct ClockClass *ExternalOsc = &extOscTable;
 const struct ClockClass *InternalOsc = &intOscTable;
 const struct ClockClass *SystemPll = &sysPllTable;
-const struct ClockClass *UsbPll = &usbPllTable;
 const struct ClockClass *MainClock = &mainClockTable;
-const struct ClockClass *UsbClock = &usbClockTable;
 /*----------------------------------------------------------------------------*/
 static const uint32_t intOscFrequency = 12000000;
 static uint32_t extOscFrequency = 0, pllFrequency = 0;
-uint32_t sysCoreClock = 12000000;
+/*----------------------------------------------------------------------------*/
+//TODO Move declaration from system.h to other file
+uint32_t sysCoreClock = 12000000; //FIXME
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void)
 {
@@ -212,62 +196,6 @@ static bool sysPllReady(void)
   return LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK ? true : false;
 }
 /*----------------------------------------------------------------------------*/
-static void usbPllDisable(void)
-{
-  sysPowerDisable(PWR_USBPLL);
-}
-/*----------------------------------------------------------------------------*/
-static enum result usbPllEnable(const void *configPtr)
-{
-  const struct PllConfig * const config = configPtr;
-  uint32_t frequency; /* Resulting CCO frequency */
-  uint8_t msel, psel, counter = 0;
-
-  assert(config->multiplier && config->divider);
-
-  if (config->source != CLOCK_EXTERNAL || !extOscFrequency)
-    return E_ERROR;
-
-  //TODO LPC13xx clock: thoroughly check the selection of input variables style
-  msel = config->multiplier / config->divider - 1;
-  if (msel >= 32)
-    return E_VALUE;
-
-  psel = config->divider >> 1;
-  while (counter < 4 && psel != 1 << counter)
-    counter++;
-  /* Check whether actual divider value found */
-  if ((psel = counter) == 4)
-    return E_VALUE;
-
-  /* Check CCO range */
-  frequency = extOscFrequency * config->multiplier;
-  if (frequency < 156e6 || frequency > 320e6)
-    return E_ERROR;
-  frequency /= config->divider;
-  if (frequency != 48e6)
-    return E_ERROR;
-
-  LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_SYSOSC;
-
-  /* Update USB PLL clock source */
-  LPC_SYSCON->USBPLLCLKUEN = 0x01;
-  LPC_SYSCON->USBPLLCLKUEN = 0x00;
-  LPC_SYSCON->USBPLLCLKUEN = 0x01;
-  /* Wait until updated */
-  while (!(LPC_SYSCON->USBPLLCLKUEN & 0x01));
-
-  LPC_SYSCON->USBPLLCTRL = PLLCTRL_MSEL(msel) | PLLCTRL_PSEL(psel);
-  sysPowerEnable(PWR_USBPLL);
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static bool usbPllReady(void)
-{
-  return LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK ? true : false;
-}
-/*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *configPtr)
 {
   const struct MainClockConfig * const config = configPtr;
@@ -305,36 +233,6 @@ static enum result mainClockEnable(const void *configPtr)
   LPC_SYSCON->MAINCLKUEN = 0x01;
   /* Wait until updated */
   while (!(LPC_SYSCON->MAINCLKUEN & 0x01));
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static enum result usbClockEnable(const void *configPtr)
-{
-  const struct MainClockConfig * const config = configPtr; //FIXME
-
-//  if (!extOscFrequency)
-//    return E_ERROR;
-
-  //TODO Add more checks
-  switch (config->source)
-  {
-    case CLOCK_USB_PLL:
-      LPC_SYSCON->USBCLKSEL = USBCLKSEL_USBPLL_OUTPUT;
-      break;
-    case CLOCK_MAIN:
-      LPC_SYSCON->USBCLKSEL = USBCLKSEL_MAIN_CLOCK;
-      break;
-    default:
-      return E_ERROR;
-  }
-
-  /* Update Main clock source */
-  LPC_SYSCON->USBCLKUEN = 0x01;
-  LPC_SYSCON->USBCLKUEN = 0x00;
-  LPC_SYSCON->USBCLKUEN = 0x01;
-  /* Wait until updated */
-  while (!(LPC_SYSCON->USBCLKUEN & 0x01));
 
   return E_OK;
 }

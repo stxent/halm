@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "macro.h"
-#include "platform/nxp/device_defs.h"
-#include "platform/nxp/lpc11xx/power.h"
+#include <macro.h>
+#include <platform/nxp/device_defs.h>
+#include <platform/nxp/lpc11xx/power.h>
 /*----------------------------------------------------------------------------*/
 /* Changes SYSAHBCLKCTRL register, reset value 0x0000085F */
 void sysClockEnable(enum sysClockDevice block)

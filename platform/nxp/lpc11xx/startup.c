@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "platform/nxp/device_defs.h"
+#include <platform/nxp/device_defs.h>
 /*----------------------------------------------------------------------------*/
 extern unsigned long _etext;
 extern unsigned long _data;
@@ -20,7 +20,7 @@ extern int main(void); /* Newlib */
 /*----------------------------------------------------------------------------*/
 void RESET_ISR(void)
 {
-  register unsigned char *src, *dst;
+  register unsigned long *src, *dst;
 
   /* Copy the data segment initializers from flash to RAM */
   src = &_etext;

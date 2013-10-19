@@ -5,11 +5,10 @@
  */
 
 #include <assert.h>
-#include "macro.h"
-#include "gpio.h"
-#include "platform/nxp/device_defs.h"
-#include "platform/nxp/lpc13xx/gpio_defs.h"
-#include "platform/nxp/lpc13xx/power.h"
+#include <gpio.h>
+#include <macro.h>
+#include <platform/nxp/lpc13xx/gpio_defs.h>
+#include <platform/nxp/lpc13xx/power.h>
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
