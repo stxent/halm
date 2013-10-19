@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include "macro.h"
-#include "platform/nxp/device_defs.h"
-#include "platform/nxp/lpc17xx/power.h"
+#include <macro.h>
+#include <platform/nxp/device_defs.h>
+#include <platform/nxp/lpc17xx/power.h>
 /*----------------------------------------------------------------------------*/
 /* Changes PCONP register, reset value 0x042887DE */
 inline void sysPowerEnable(enum sysPowerDevice block)

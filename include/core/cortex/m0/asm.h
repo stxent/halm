@@ -9,17 +9,17 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
-static void __dmb(void)
+static inline void __dmb(void)
 {
   __asm__ volatile ("DMB");
 }
 /*----------------------------------------------------------------------------*/
-static void __irqDisable(void)
+static inline void __irqDisable(void)
 {
   __asm__ volatile ("CPSID i");
 }
 /*----------------------------------------------------------------------------*/
-static void __irqEnable(void)
+static inline void __irqEnable(void)
 {
   __asm__ volatile ("CPSIE i");
 }

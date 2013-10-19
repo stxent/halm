@@ -5,18 +5,10 @@
  */
 
 #include <assert.h>
-#include "macro.h"
-#include "platform/gpio.h"
-#include "platform/nxp/device_defs.h"
-//#include "platform/nxp/lpc13xx/power.h"
-/*------------------Values for function and mode select registers-------------*/
-#define PIN_MASK                        0x03
-#define PIN_OFFSET(value, offset) \
-    ((uint32_t)((value) << (((offset) & 0x0F) << 1)))
-/*------------------Pin output mode control values----------------------------*/
-#define PIN_MODE_PULLUP                 0
-#define PIN_MODE_INACTIVE               2
-#define PIN_MODE_PULLDOWN               3
+#include <gpio.h>
+#include <macro.h>
+#include <platform/nxp/lpc17xx/gpio_defs.h>
+#include <platform/nxp/lpc17xx/power.h>
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
 static inline uint32_t *calcPinSelect(union GpioPin);
@@ -99,19 +91,6 @@ void gpioDeinit(struct Gpio *p)
   gpioSetFunction(p, 0);
 
   /* TODO Check possibility of disabling power when no pins are used */
-}
-/*----------------------------------------------------------------------------*/
-uint8_t gpioRead(struct Gpio *p)
-{
-  return (((LPC_GPIO_TypeDef *)p->reg)->FIOPIN & (1 << p->pin.offset)) != 0;
-}
-/*----------------------------------------------------------------------------*/
-void gpioWrite(struct Gpio *p, uint8_t value)
-{
-  if (value)
-    ((LPC_GPIO_TypeDef *)p->reg)->FIOSET = 1 << p->pin.offset;
-  else
-    ((LPC_GPIO_TypeDef *)p->reg)->FIOCLR = 1 << p->pin.offset;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio *p, uint8_t function)

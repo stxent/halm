@@ -7,17 +7,19 @@
 #ifndef ASM_H_
 #define ASM_H_
 /*----------------------------------------------------------------------------*/
-static void __dmb(void)
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
+static inline void __dmb(void)
 {
   __asm__ volatile ("DMB");
 }
 /*----------------------------------------------------------------------------*/
-static void __irqDisable(void)
+static inline void __irqDisable(void)
 {
   __asm__ volatile ("CPSID i");
 }
 /*----------------------------------------------------------------------------*/
-static void __irqEnable(void)
+static inline void __irqEnable(void)
 {
   __asm__ volatile ("CPSIE i");
 }

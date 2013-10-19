@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include "platform/nxp/system.h"
-#include "platform/nxp/uart_base.h"
-#include "platform/nxp/lpc17xx/interrupts.h"
-#include "platform/nxp/lpc17xx/power.h"
+#include <irq.h>
+#include <platform/nxp/uart_base.h>
+#include <platform/nxp/lpc17xx/clocking.h>
+#include <platform/nxp/lpc17xx/power.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV       CLK_DIV1
 #define DEFAULT_DIV_VALUE 1

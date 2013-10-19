@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include "platform/nxp/spinlock.h"
-#include "platform/nxp/lpc17xx/gpdma.h"
-#include "platform/nxp/lpc17xx/gpdma_defs.h"
-#include "platform/nxp/lpc17xx/interrupts.h"
-#include "platform/nxp/lpc17xx/power.h"
+#include <irq.h>
+#include <spinlock.h>
+#include <platform/nxp/lpc17xx/gpdma.h>
+#include <platform/nxp/lpc17xx/gpdma_defs.h>
+#include <platform/nxp/lpc17xx/power.h>
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT 8
 /*----------------------------------------------------------------------------*/
@@ -53,7 +53,7 @@ static enum result setDescriptor(uint8_t channel, struct GpDma *controller)
 {
   enum result res = E_BUSY;
 
-  nvicDisable(DMA_IRQ);
+  irqDisable(DMA_IRQ);
   if (spinTryLock(&lock))
   {
     if (!descriptors[channel])
@@ -63,7 +63,7 @@ static enum result setDescriptor(uint8_t channel, struct GpDma *controller)
     }
     spinUnlock(&lock);
   }
-  nvicEnable(DMA_IRQ);
+  irqEnable(DMA_IRQ);
 
   return res;
 }
@@ -169,7 +169,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   {
     sysPowerEnable(PWR_GPDMA);
     LPC_GPDMA->DMACConfig |= DMA_ENABLE;
-    nvicEnable(DMA_IRQ);
+    irqEnable(DMA_IRQ);
     //TODO Add priority configuration
     //nvicSetPriority(device->irq, GET_PRIORITY(config->priority));
   }
@@ -184,7 +184,7 @@ static void gpdmaDeinit(void *object)
   /* Disable DMA peripheral when no active descriptors exist */
   if (!--instances)
   {
-    nvicDisable(DMA_IRQ);
+    irqDisable(DMA_IRQ);
     LPC_GPDMA->DMACConfig &= ~DMA_ENABLE;
     sysPowerDisable(PWR_GPDMA);
   }
