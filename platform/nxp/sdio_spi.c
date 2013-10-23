@@ -56,17 +56,17 @@ struct LongResponse
   uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
-static inline enum result acquireBus(struct SdioSpi *);
 static inline uint32_t calcPosition(struct SdioSpi *);
-static inline void releaseBus(struct SdioSpi *);
 /*----------------------------------------------------------------------------*/
-static void sendCommand(struct SdioSpi *, enum sdioCommand, uint32_t);
-static enum result waitForData(struct SdioSpi *, uint8_t *);
-static uint8_t getShortResponse(struct SdioSpi *);
+static enum result acquireBus(struct SdioSpi *);
 static enum result getLongResponse(struct SdioSpi *, struct LongResponse *);
-static enum result resetCard(struct SdioSpi *);
-static enum result readBlock(struct SdioSpi *, uint8_t *);
+static uint8_t getShortResponse(struct SdioSpi *);
 static enum result waitBusyState(struct SdioSpi *);
+static enum result waitForData(struct SdioSpi *, uint8_t *);
+static void releaseBus(struct SdioSpi *);
+static enum result resetCard(struct SdioSpi *);
+static void sendCommand(struct SdioSpi *, enum sdioCommand, uint32_t);
+static enum result readBlock(struct SdioSpi *, uint8_t *);
 static enum result writeBlock(struct SdioSpi *, const uint8_t *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
@@ -91,6 +91,12 @@ static const struct InterfaceClass sdioTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *SdioSpi = &sdioTable;
 /*----------------------------------------------------------------------------*/
+static inline uint32_t calcPosition(struct SdioSpi *device)
+{
+  return device->capacity == CARD_SD ? (uint32_t)device->position
+      : (uint32_t)(device->position >> BLOCK_POW);
+}
+/*----------------------------------------------------------------------------*/
 static enum result acquireBus(struct SdioSpi *device)
 {
   enum result res;
@@ -99,72 +105,6 @@ static enum result acquireBus(struct SdioSpi *device)
     return res;
   gpioReset(&device->csPin);
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static inline uint32_t calcPosition(struct SdioSpi *device)
-{
-  return device->capacity == CARD_SD ? (uint32_t)device->position
-      : (uint32_t)(device->position >> BLOCK_POW);
-}
-/*----------------------------------------------------------------------------*/
-static void releaseBus(struct SdioSpi *device)
-{
-  gpioSet(&device->csPin);
-  ifSet(device->interface, IF_RELEASE, 0);
-}
-/*----------------------------------------------------------------------------*/
-static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
-    uint32_t parameter)
-{
-  uint8_t buffer[8];
-
-  /* Fill buffer */
-  buffer[0] = 0xFF;
-  buffer[1] = 0x40 | (uint8_t)command;
-  buffer[2] = (uint8_t)(parameter >> 24);
-  buffer[3] = (uint8_t)(parameter >> 16);
-  buffer[4] = (uint8_t)(parameter >> 8);
-  buffer[5] = (uint8_t)(parameter);
-  /* Checksum should be valid only for first CMD0 and CMD8 commands */
-  switch (command)
-  {
-    case CMD_GO_IDLE_STATE:
-      buffer[6] = 0x94;
-      break;
-    case CMD_SEND_IF_COND:
-      buffer[6] = 0x86;
-      break;
-    default:
-      buffer[6] = 0x00;
-      break;
-  }
-  buffer[6] |= 0x01; /* Add end bit */
-  buffer[7] = 0xFF;
-
-  /* TODO Check for interface error? */
-  ifWrite(device->interface, buffer, sizeof(buffer));
-}
-/*----------------------------------------------------------------------------*/
-static enum result waitForData(struct SdioSpi *device, uint8_t *value)
-{
-  uint8_t counter;
-
-  /* Response will come after 1..8 queries */
-  for (counter = 8; counter; --counter)
-  {
-    if (!ifRead(device->interface, value, 1))
-      return E_INTERFACE; /* Interface error */
-    if (*value != 0xFF)
-      break;
-  }
-  return !counter ? E_BUSY : E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static uint8_t getShortResponse(struct SdioSpi *device)
-{
-  uint8_t value;
-
-  return waitForData(device, &value) == E_OK ? value : 0xFF;
 }
 /*----------------------------------------------------------------------------*/
 /* Response to READ_OCR and SEND_IF_COND commands */
@@ -186,6 +126,56 @@ static enum result getLongResponse(struct SdioSpi *device,
   }
 
   return res;
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t getShortResponse(struct SdioSpi *device)
+{
+  uint8_t value;
+
+  return waitForData(device, &value) == E_OK ? value : 0xFF;
+}
+/*----------------------------------------------------------------------------*/
+static enum result waitBusyState(struct SdioSpi *device)
+{
+  uint32_t read;
+  uint16_t counter = 50000; /* Up to 500 ms */
+  uint8_t state;
+
+  /* Wait until busy condition will be removed from RX line */
+  while (--counter)
+  {
+    read = ifRead(device->interface, &state, 1);
+    if (read != 1)
+      return E_INTERFACE;
+    if (state == 0xFF)
+      break;
+    udelay(10);
+  }
+
+  /* TODO Add interface recovery */
+
+  return counter ? E_OK : E_BUSY;
+}
+/*----------------------------------------------------------------------------*/
+static enum result waitForData(struct SdioSpi *device, uint8_t *value)
+{
+  uint8_t counter;
+
+  /* Response will come after 1..8 queries */
+  for (counter = 8; counter; --counter)
+  {
+    if (!ifRead(device->interface, value, 1))
+      return E_INTERFACE; /* Interface error */
+    if (*value != 0xFF)
+      break;
+  }
+  return !counter ? E_BUSY : E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void releaseBus(struct SdioSpi *device)
+{
+  gpioSet(&device->csPin);
+  ifSet(device->interface, IF_RELEASE, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result resetCard(struct SdioSpi *device)
@@ -282,6 +272,38 @@ static enum result resetCard(struct SdioSpi *device)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
+    uint32_t parameter)
+{
+  uint8_t buffer[8];
+
+  /* Fill buffer */
+  buffer[0] = 0xFF;
+  buffer[1] = 0x40 | (uint8_t)command;
+  buffer[2] = (uint8_t)(parameter >> 24);
+  buffer[3] = (uint8_t)(parameter >> 16);
+  buffer[4] = (uint8_t)(parameter >> 8);
+  buffer[5] = (uint8_t)(parameter);
+  /* Checksum should be valid only for first CMD0 and CMD8 commands */
+  switch (command)
+  {
+    case CMD_GO_IDLE_STATE:
+      buffer[6] = 0x94;
+      break;
+    case CMD_SEND_IF_COND:
+      buffer[6] = 0x86;
+      break;
+    default:
+      buffer[6] = 0x00;
+      break;
+  }
+  buffer[6] |= 0x01; /* Add end bit */
+  buffer[7] = 0xFF;
+
+  /* TODO Check for interface error? */
+  ifWrite(device->interface, buffer, sizeof(buffer));
+}
+/*----------------------------------------------------------------------------*/
 static enum result readBlock(struct SdioSpi *device, uint8_t *buffer)
 {
   uint32_t read = 0;
@@ -313,28 +335,6 @@ static enum result readBlock(struct SdioSpi *device, uint8_t *buffer)
     return E_INTERFACE;
 
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static enum result waitBusyState(struct SdioSpi *device)
-{
-  uint32_t read;
-  uint16_t counter = 50000; /* Up to 500 ms */
-  uint8_t state;
-
-  /* Wait until busy condition will be removed from RX line */
-  while (--counter)
-  {
-    read = ifRead(device->interface, &state, 1);
-    if (read != 1)
-      return E_INTERFACE;
-    if (state == 0xFF)
-      break;
-    udelay(10);
-  }
-
-  /* TODO Add interface recovery */
-
-  return counter ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
