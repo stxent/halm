@@ -23,6 +23,16 @@ static inline uint8_t gpioRead(struct Gpio *p)
   return (((LPC_GPIO_TypeDef *)p->reg)->FIOPIN & (1 << p->pin.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
+static inline void gpioReset(struct Gpio *p)
+{
+  ((LPC_GPIO_TypeDef *)p->reg)->FIOCLR = 1 << p->pin.offset;
+}
+/*----------------------------------------------------------------------------*/
+static inline void gpioSet(struct Gpio *p)
+{
+  ((LPC_GPIO_TypeDef *)p->reg)->FIOSET = 1 << p->pin.offset;
+}
+/*----------------------------------------------------------------------------*/
 static inline void gpioWrite(struct Gpio *p, uint8_t value)
 {
   if (value)
