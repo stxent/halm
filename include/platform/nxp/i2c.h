@@ -21,6 +21,11 @@ enum i2cState
   I2C_ERROR
 };
 /*----------------------------------------------------------------------------*/
+enum i2cOption
+{
+  IF_I2C_SENDSTOP = IF_END_OPTION /* Repeated start condition generation */
+};
+/*----------------------------------------------------------------------------*/
 struct I2cConfig
 {
   uint32_t rate; /* Mandatory: interface data rate */
@@ -51,6 +56,8 @@ struct I2c
   uint8_t address;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
+  /* Generate stop condition after writing */
+  bool stop;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_H_ */

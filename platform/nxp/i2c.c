@@ -92,7 +92,8 @@ static void interruptHandler(void *object)
       }
       else
       {
-        reg->CONSET = CONSET_STO;
+        if (interface->stop)
+          reg->CONSET = CONSET_STO;
         interface->state = I2C_IDLE;
         event = true;
       }
@@ -153,6 +154,7 @@ static enum result i2cInit(void *object, const void *configPtr)
   interface->callback = 0;
   interface->blocking = true;
   interface->lock = SPIN_UNLOCKED;
+  interface->stop = true;
   interface->state = I2C_IDLE;
 
   /* Set pointer to interrupt handler */
@@ -242,6 +244,10 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
       return E_OK;
     case IF_ZEROCOPY:
       interface->blocking = false;
+      return E_OK;
+    /* Additional I2C options */
+    case IF_I2C_SENDSTOP:
+      interface->stop = *(uint32_t *)data ? true : false;
       return E_OK;
     default:
       return E_ERROR;
