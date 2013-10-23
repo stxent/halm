@@ -29,11 +29,56 @@ struct Timer
   struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
-void timerCallback(void *, void (*)(void *), void *);
-void timerControl(void *, bool);
+/**
+ * Set callback function for timer overflow event.
+ * @param timer Pointer to Timer object.
+ * @param callback Callback function.
+ * @param argument Callback function argument.
+ */
+static inline void timerCallback(void *timer, void (*callback)(void *),
+    void *argument)
+{
+  ((struct TimerClass *)CLASS(timer))->callback(timer, callback, argument);
+}
 /*----------------------------------------------------------------------------*/
-uint32_t timerValue(void *);
-void timerSetFrequency(void *, uint32_t);
-void timerSetOverflow(void *, uint32_t);
+/**
+ * Start or stop the timer.
+ * @param timer Pointer to Timer object.
+ * @param state Timer state: @b true to start timer or @b false to stop timer.
+ */
+static inline void timerControl(void *timer, bool state)
+{
+  ((struct TimerClass *)CLASS(timer))->control(timer, state);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set fundamental timer frequency.
+ * @param timer Pointer to Timer object.
+ * @param frequency Frequency in Hz.
+ */
+static inline void timerSetFrequency(void *timer, uint32_t frequency)
+{
+  ((struct TimerClass *)CLASS(timer))->setFrequency(timer, frequency);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set timer overflow rate.
+ * @param timer Pointer to Timer object.
+ * @param overflow Number of timer ticks after which overflow event occurs.
+ */
+static inline void timerSetOverflow(void *timer, uint32_t overflow)
+{
+  ((struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get value of the internal counter.
+ * @param timer Pointer to Timer object.
+ * @return Value of the counter measured in timer ticks.
+ */
+static inline uint32_t timerValue(void *timer)
+{
+  return ((struct TimerClass *)CLASS(timer))->value(timer);
+}
 /*----------------------------------------------------------------------------*/
 #endif /* TIMER_H_ */

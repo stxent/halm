@@ -19,8 +19,34 @@ struct ClockClass
   bool (*ready)(void);
 };
 /*----------------------------------------------------------------------------*/
-void clockDisable(const void *);
-enum result clockEnable(const void *, const void *);
-bool clockReady(const void *);
+/**
+ * Try to stop specified clock.
+ * @param clock Class descriptor.
+ */
+static inline void clockDisable(const void *clock)
+{
+  ((struct ClockClass *)clock)->disable();
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Start or restart clock with specified parameters.
+ * @param clock Class descriptor.
+ * @param config Clock configuration data, in some cases may be zero.
+ * @return @b E_OK on success.
+ */
+static inline enum result clockEnable(const void *clock, const void *config)
+{
+  return ((struct ClockClass *)clock)->enable(config);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Check whether clock is ready or not.
+ * @param clock Class descriptor.
+ * @return @b true when clock is ready to be used or @b false otherwise.
+ */
+static inline bool clockReady(const void *clock)
+{
+  return ((struct ClockClass *)clock)->ready();
+}
 /*----------------------------------------------------------------------------*/
 #endif /* CLOCK_H_ */

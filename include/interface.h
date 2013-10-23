@@ -53,7 +53,10 @@ enum ifOption
   /** Acquire the interface. Returns @b E_OK on success or @b E_BUSY. */
   IF_ACQUIRE,
   /** Release the interface. */
-  IF_RELEASE
+  IF_RELEASE,
+
+  /** End of list. Used for option list extensions. */
+  IF_END_OPTION
 };
 /*----------------------------------------------------------------------------*/
 struct InterfaceClass
@@ -72,10 +75,72 @@ struct Interface
   struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
-enum result ifCallback(void *, void (*)(void *), void *);
-enum result ifGet(void *, enum ifOption, void *);
-enum result ifSet(void *, enum ifOption, const void *);
-uint32_t ifRead(void *, uint8_t *, uint32_t);
-uint32_t ifWrite(void *, const uint8_t *, uint32_t);
+/**
+ * Set callback function and its argument called on completion event.
+ * @param interface Pointer to an Interface object.
+ * @param callback Callback function.
+ * @param argument Callback function argument.
+ */
+static inline enum result ifCallback(void *interface, void (*callback)(void *),
+    void *argument)
+{
+  return ((struct InterfaceClass *)CLASS(interface))->callback(interface,
+      callback, argument);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Retrieve value of an option.
+ * @param interface Pointer to an Interface object.
+ * @param option Option to be read.
+ * @param data Pointer to a variable where a value of the option will be stored.
+ * @return @b E_OK on success.
+ */
+static inline enum result ifGet(void *interface, enum ifOption option,
+    void *data)
+{
+  return ((struct InterfaceClass *)CLASS(interface))->get(interface, option,
+      data);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set value of an option.
+ * @param interface Pointer to an Interface object.
+ * @param option Option to be set.
+ * @param data Pointer to a new value of the option.
+ * @return @b E_OK on success.
+ */
+static inline enum result ifSet(void *interface, enum ifOption option,
+    const void *data)
+{
+  return ((struct InterfaceClass *)CLASS(interface))->set(interface, option,
+      data);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Receive data.
+ * @param interface Pointer to an Interface object.
+ * @param buffer Pointer to a buffer with a size of at least @b length bytes.
+ * @param length Number of bytes to be read.
+ * @return The total number of elements successfully read is returned.
+ */
+static inline uint32_t ifRead(void *interface, uint8_t *buffer, uint32_t length)
+{
+  return ((struct InterfaceClass *)CLASS(interface))->read(interface, buffer,
+      length);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Send data.
+ * @param interface Pointer to an Interface object.
+ * @param buffer Pointer to a buffer with a size of at least @b length bytes.
+ * @param length Number of bytes to be written.
+ * @return The total number of elements successfully written is returned.
+ */
+static inline uint32_t ifWrite(void *interface, const uint8_t *buffer,
+    uint32_t length)
+{
+  return ((struct InterfaceClass *)CLASS(interface))->write(interface, buffer,
+      length);
+}
 /*----------------------------------------------------------------------------*/
 #endif /* INTERFACE_H_ */
