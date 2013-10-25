@@ -1,5 +1,5 @@
 /*
- * platform/nxp/lpc13xx/gptimer.h
+ * platform/nxp/gptimer.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,15 +7,11 @@
 #ifndef GPTIMER_H_
 #define GPTIMER_H_
 /*----------------------------------------------------------------------------*/
-#include <gpio.h>
-#include <irq.h>
-#include <timer.h>
-#include "../device_defs.h"
+#include "gptimer_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass *GpTimer;
 /*----------------------------------------------------------------------------*/
-/* Registers are common for two timer types with different resolutions */
-/* To distinguish them all timers/counter have their own symbolic identifiers */
+/* Symbolic names for two different types of timers on low-performance parts */
 enum gpTimerNumber
 {
   TIMER_CT16B0 = 0,
@@ -28,22 +24,16 @@ struct GpTimerConfig
 {
   uint32_t frequency; /* Mandatory: timer fundamental frequency */
   gpio_t input; /* Optional: clock input pin */
+  priority_t priority; /* Optional: timer interrupts priority */
   uint8_t channel; /* Mandatory: timer block */
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimer
 {
-  struct Timer parent;
+  struct GpTimerBase parent;
 
-  void (*handler)(void *); /* Hardware interrupt handler */
   void (*callback)(void *); /* User interrupt handler */
   void *callbackArgument; /* User interrupt handler argument */
-
-  void *reg; /* Pointer to UART registers */
-  irq_t irq; /* IRQ identifier */
-
-  struct Gpio input; /* External clock input pin */
-  uint8_t channel; /* Identifier of peripheral block for internal use */
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPTIMER_H_ */
