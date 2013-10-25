@@ -7,7 +7,7 @@
 #ifndef IRQ_H_
 #define IRQ_H_
 /*----------------------------------------------------------------------------*/
-#include <platform/nxp/device_defs.h> //FIXME
+#include <platform/nxp/platform_defs.h> //FIXME
 /*----------------------------------------------------------------------------*/
 enum
 {

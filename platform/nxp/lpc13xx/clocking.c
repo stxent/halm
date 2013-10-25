@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <delay.h>
-#include <platform/nxp/device_defs.h>
+#include <platform/nxp/platform_defs.h>
 #include <platform/nxp/lpc13xx/power.h>
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/clocking_defs.h>

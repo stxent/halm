@@ -5,7 +5,7 @@
  */
 
 #include <macro.h>
-#include <platform/nxp/device_defs.h>
+#include <platform/nxp/platform_defs.h>
 #include <platform/nxp/lpc11xx/power.h>
 /*----------------------------------------------------------------------------*/
 /* Changes SYSAHBCLKCTRL register, reset value 0x0000085F */

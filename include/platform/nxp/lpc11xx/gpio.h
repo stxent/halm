@@ -7,7 +7,7 @@
 #ifndef GPIO_H_
 #define GPIO_H_
 /*----------------------------------------------------------------------------*/
-#include "../device_defs.h"
+#include "../platform_defs.h"
 /*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpio_t, enum gpioDir);
 void gpioDeinit(struct Gpio *);
