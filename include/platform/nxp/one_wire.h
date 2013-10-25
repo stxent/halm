@@ -10,7 +10,7 @@
 #include <irq.h>
 #include <queue.h>
 #include <spinlock.h>
-#include "./uart_base.h"
+#include "uart_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *OneWire;
 /*----------------------------------------------------------------------------*/

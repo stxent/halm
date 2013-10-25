@@ -11,6 +11,7 @@
 #include <mcu.h>
 /*----------------------------------------------------------------------------*/
 typedef int16_t irq_t;
+typedef uint8_t priority_t;
 /*----------------------------------------------------------------------------*/
 #define HEADER_PATH <core/CORE_TYPE/irq.h>
 #include HEADER_PATH

@@ -32,7 +32,7 @@ enum result
   /** Invalid argument. */
   E_VALUE,
   /** Interface error. */
-  E_INTERFACE,
+  E_INTERFACE
 };
 /*----------------------------------------------------------------------------*/
 #endif /* ERROR_H_ */

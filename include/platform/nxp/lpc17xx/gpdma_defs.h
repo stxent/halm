@@ -7,7 +7,7 @@
 #ifndef GPDMA_DEFS_H_
 #define GPDMA_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include "macro.h"
+#include <macro.h>
 /*------------------DMA configuration register--------------------------------*/
 #define DMA_ENABLE                      BIT(0)
 /* 0 for little-endian, 1 for big-endian */
