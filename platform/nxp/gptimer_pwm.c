@@ -5,9 +5,13 @@
  */
 
 #include <assert.h>
-#include <gpio.h>
 #include <platform/nxp/gptimer_defs.h>
-#include <platform/nxp/lpc13xx/gptimer_pwm.h>
+#include <platform/nxp/gptimer_pwm.h>
+/*----------------------------------------------------------------------------*/
+/* Unpack function */
+#define UNPACK_FUNCTION(value)          ((value) & 0x0F)
+/* Unpack match channel */
+#define UNPACK_CHANNEL(value)           (((value) >> 4) & 0x0F)
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwmChannel
 {
@@ -19,70 +23,7 @@ struct GpTimerPwmChannel
   uint8_t channel; /* Match channel */
 };
 /*----------------------------------------------------------------------------*/
-/* Pack match channel and pin function in one value */
-#define PACK_VALUE(function, channel)   (((channel) << 4) | (function))
-/* Unpack function */
-#define UNPACK_FUNCTION(value)          ((value) & 0x0F)
-/* Unpack match channel */
-#define UNPACK_CHANNEL(value)           (((value) >> 4) & 0x0F)
-/*----------------------------------------------------------------------------*/
-static const struct GpioDescriptor pwmPins[] = {
-    {
-        .key = GPIO_TO_PIN(0, 1), /* CT32B0_MAT2 */
-        .channel = TIMER_CT32B0,
-        .value = PACK_VALUE(2, 2)
-    }, {
-        .key = GPIO_TO_PIN(0, 8), /* CT16B0_MAT0 */
-        .channel = TIMER_CT16B0,
-        .value = PACK_VALUE(2, 0)
-    }, {
-        .key = GPIO_TO_PIN(0, 9), /* CT16B0_MAT1 */
-        .channel = TIMER_CT16B0,
-        .value = PACK_VALUE(2, 1)
-    }, {
-        .key = GPIO_TO_PIN(0, 10), /* CT16B0_MAT2 */
-        .channel = TIMER_CT16B0,
-        .value = PACK_VALUE(3, 2)
-    }, {
-        .key = GPIO_TO_PIN(0, 11), /* CT32B0_MAT3 */
-        .channel = TIMER_CT32B0,
-        .value = PACK_VALUE(3, 3)
-    }, {
-        .key = GPIO_TO_PIN(1, 1), /* CT32B1_MAT0 */
-        .channel = TIMER_CT32B1,
-        .value = PACK_VALUE(3, 0)
-    }, {
-        .key = GPIO_TO_PIN(1, 2), /* CT32B1_MAT1 */
-        .channel = TIMER_CT32B1,
-        .value = PACK_VALUE(3, 1)
-    }, {
-        .key = GPIO_TO_PIN(1, 3), /* CT32B1_MAT2 */
-        .channel = TIMER_CT32B1,
-        .value = PACK_VALUE(3, 2)
-    }, {
-        .key = GPIO_TO_PIN(1, 4), /* CT32B1_MAT3 */
-        .channel = TIMER_CT32B1,
-        .value = PACK_VALUE(2, 3)
-    }, {
-        .key = GPIO_TO_PIN(1, 6), /* CT32B0_MAT0 */
-        .channel = TIMER_CT32B0,
-        .value = PACK_VALUE(2, 0)
-    }, {
-        .key = GPIO_TO_PIN(1, 7), /* CT32B0_MAT1 */
-        .channel = TIMER_CT32B0,
-        .value = PACK_VALUE(2, 1)
-    }, {
-        .key = GPIO_TO_PIN(1, 9), /* CT16B1_MAT0 */
-        .channel = TIMER_CT16B1,
-        .value = PACK_VALUE(1, 0)
-    }, {
-        .key = GPIO_TO_PIN(1, 10), /* CT16B1_MAT1 */
-        .channel = TIMER_CT16B1,
-        .value = PACK_VALUE(2, 1)
-    }, {
-        .key = 0 /* End of pin function association list */
-    }
-};
+extern const struct GpioDescriptor gpTimerPwmPins[];
 /*----------------------------------------------------------------------------*/
 static inline uint32_t *calcMatchChannel(LPC_TMR_TypeDef *, uint8_t);
 static int8_t findEmptyChannel(uint8_t);
@@ -103,7 +44,7 @@ static const struct PwmControllerClass controllerTable = {
 
     .create = controllerCreate
 };
-/*----------------------------------------------------------------------------*/
+
 static const struct PwmClass channelTable = {
     .size = sizeof(struct GpTimerPwmChannel),
     .init = 0,
@@ -133,7 +74,7 @@ static int8_t findEmptyChannel(uint8_t channels)
 /*----------------------------------------------------------------------------*/
 static void updateResolution(struct GpTimerPwm *device, uint8_t channel)
 {
-  LPC_TMR_TypeDef *reg = device->timer->reg;
+  LPC_TMR_TypeDef *reg = device->timer->parent.reg;
 
   /* Put timer in reset state */
   reg->TCR |= TCR_CRES;
@@ -154,21 +95,37 @@ static void channelSetDutyCycle(void *object, uint8_t percentage)
 {
   struct GpTimerPwmChannel *pwm = object;
 
-  *pwm->reg = !percentage ? (uint32_t)pwm->controller->resolution + 1
-      : (uint32_t)pwm->controller->resolution
-      * (uint32_t)(100 - percentage) / 100;
+  if (percentage)
+  {
+    *pwm->reg = percentage == 100 ? 0 : (uint32_t)pwm->controller->resolution
+        * (uint32_t)(100 - percentage) / 100;
+  }
+  else
+    *pwm->reg = (uint32_t)pwm->controller->resolution + 1;
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetEnabled(void *object, bool state)
 {
+  struct GpTimerPwmChannel *pwm = object;
+  LPC_TMR_TypeDef *reg = pwm->controller->timer->parent.reg;
 
+  if (!state)
+  {
+    reg->PWMC &= ~PWMC_ENABLE(pwm->channel);
+    reg->EMR &= ~EMR_EXTERNAL_MATCH(pwm->channel);
+  }
+  else
+    reg->PWMC |= PWMC_ENABLE(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetPeriod(void *object, uint16_t period)
 {
   struct GpTimerPwmChannel *pwm = object;
 
-  *pwm->reg = period;
+  if (period == pwm->controller->resolution)
+    *pwm->reg = 0;
+  else
+    *pwm->reg = !period ? (uint32_t)pwm->controller->resolution + 1 : period;
 }
 /*----------------------------------------------------------------------------*/
 static void *controllerCreate(void *object, gpio_t output, uint8_t percentage)
@@ -176,12 +133,11 @@ static void *controllerCreate(void *object, gpio_t output, uint8_t percentage)
   const struct GpioDescriptor *pin;
   struct GpTimerPwm *device = object;
   struct GpTimerPwmChannel *pwm;
-  int8_t freeChannel;
 
-  pin = gpioFind(pwmPins, output, device->timer->channel);
-  assert(pin);
+  if (!(pin = gpioFind(gpTimerPwmPins, output, device->timer->parent.channel)))
+    return 0;
 
-  freeChannel = findEmptyChannel(device->matches
+  int8_t freeChannel = findEmptyChannel(device->matches
       | (1 << UNPACK_CHANNEL(pin->value)));
   if (freeChannel == -1)
     return 0; /* There are no free match channels left */
@@ -189,9 +145,12 @@ static void *controllerCreate(void *object, gpio_t output, uint8_t percentage)
   if (!(pwm = init(GpTimerPwmChannel, 0)))
     return 0;
 
+  /* Initialize PWM specific registers in Timer/Counter block */
+  LPC_TMR_TypeDef *reg = device->timer->parent.reg;
+
   pwm->controller = device;
   pwm->channel = UNPACK_CHANNEL(pin->value);
-  pwm->reg = calcMatchChannel(device->timer->reg, pwm->channel);
+  pwm->reg = calcMatchChannel(reg, pwm->channel);
 
   device->matches |= 1 << UNPACK_CHANNEL(pin->value);
   updateResolution(device, (uint8_t)freeChannel);
@@ -201,7 +160,9 @@ static void *controllerCreate(void *object, gpio_t output, uint8_t percentage)
   gpioSetFunction(&pwm->pin, UNPACK_FUNCTION(pin->value));
 
   pwmSetDutyCycle(pwm, percentage);
-  ((LPC_TMR_TypeDef *)device->timer->reg)->PWMC |= PWMC_ENABLE(pwm->channel);
+
+  /* Enable selected PWM channel */
+  reg->PWMC |= PWMC_ENABLE(pwm->channel);
 
   return pwm;
 }
@@ -230,7 +191,7 @@ static enum result controllerInit(void *object, const void *configPtr)
   device->matches = 0;
   device->current = findEmptyChannel(device->matches);
 
-  ((LPC_TMR_TypeDef *)device->timer->reg)->PWMC = 0;
+  ((LPC_TMR_TypeDef *)device->timer->parent.reg)->PWMC = 0;
 
   return E_OK;
 }
