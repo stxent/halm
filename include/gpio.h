@@ -9,7 +9,7 @@
 #define GPIO_TOP_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include "mcu.h"
+#include <mcu.h>
 /*----------------------------------------------------------------------------*/
 typedef uint16_t gpio_t;
 /*----------------------------------------------------------------------------*/
@@ -66,6 +66,7 @@ static inline gpio_t gpioGetKey(struct Gpio *p)
   return ~p->pin.key;
 }
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/gpio.h>
 #include HEADER_PATH
 #undef HEADER_PATH

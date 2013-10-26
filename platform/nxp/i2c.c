@@ -53,7 +53,7 @@ const struct InterfaceClass *I2c = &i2cTable;
 static void interruptHandler(void *object)
 {
   struct I2c *interface = object;
-  LPC_I2C_TypeDef *reg = interface->parent.reg;
+  LPC_I2C_Type *reg = interface->parent.reg;
   bool event = false;
 
   switch (reg->STAT)
@@ -164,7 +164,7 @@ static enum result i2cInit(void *object, const void *configPtr)
   i2cSetRate(object, config->rate);
 
   /* Initialize I2C block */
-  LPC_I2C_TypeDef *reg = interface->parent.reg;
+  LPC_I2C_Type *reg = interface->parent.reg;
 
   /* Clear all flags */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
@@ -182,7 +182,7 @@ static enum result i2cInit(void *object, const void *configPtr)
 static void i2cDeinit(void *object)
 {
   struct I2c *interface = object;
-  LPC_I2C_TypeDef *reg = interface->parent.reg;
+  LPC_I2C_Type *reg = interface->parent.reg;
 
   irqDisable(interface->parent.irq);
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
@@ -257,7 +257,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct I2c *interface = object;
-  LPC_I2C_TypeDef *reg = interface->parent.reg;
+  LPC_I2C_Type *reg = interface->parent.reg;
 
   /* TODO Add interface recovery */
   /* TODO Check whether it is safe to wait for stop condition in I2C */
@@ -284,7 +284,7 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct I2c *interface = object;
-  LPC_I2C_TypeDef *reg = interface->parent.reg;
+  LPC_I2C_Type *reg = interface->parent.reg;
 
   while (reg->CONSET & CONSET_STO);
 

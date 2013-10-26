@@ -20,24 +20,24 @@ void gpioSetType(struct Gpio *, enum gpioType);
 /*----------------------------------------------------------------------------*/
 static inline uint8_t gpioRead(struct Gpio *p)
 {
-  return (((LPC_GPIO_TypeDef *)p->reg)->DATA & (1 << p->pin.offset)) != 0;
+  return (((LPC_GPIO_Type *)p->reg)->DATA & (1 << p->pin.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void gpioReset(struct Gpio *p)
 {
-  *(uint32_t *)(((LPC_GPIO_TypeDef *)p->reg)->MASKED_ACCESS
+  *(uint32_t *)(((LPC_GPIO_Type *)p->reg)->MASKED_ACCESS
         + (1 << p->pin.offset)) = 0x000;
 }
 /*----------------------------------------------------------------------------*/
 static inline void gpioSet(struct Gpio *p)
 {
-  *(uint32_t *)(((LPC_GPIO_TypeDef *)p->reg)->MASKED_ACCESS
+  *(uint32_t *)(((LPC_GPIO_Type *)p->reg)->MASKED_ACCESS
         + (1 << p->pin.offset)) = 0xFFF;
 }
 /*----------------------------------------------------------------------------*/
 static inline void gpioWrite(struct Gpio *p, uint8_t value)
 {
-  *(uint32_t *)(((LPC_GPIO_TypeDef *)p->reg)->MASKED_ACCESS
+  *(uint32_t *)(((LPC_GPIO_Type *)p->reg)->MASKED_ACCESS
       + (1 << p->pin.offset)) = value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/

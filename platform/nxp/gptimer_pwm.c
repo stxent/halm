@@ -25,7 +25,7 @@ struct GpTimerPwmChannel
 /*----------------------------------------------------------------------------*/
 extern const struct GpioDescriptor gpTimerPwmPins[];
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcMatchChannel(LPC_TMR_TypeDef *, uint8_t);
+static inline uint32_t *calcMatchChannel(LPC_TMR_Type *, uint8_t);
 static int8_t findEmptyChannel(uint8_t);
 static void updateResolution(struct GpTimerPwm *, uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -58,7 +58,7 @@ static const struct PwmClass channelTable = {
 const struct PwmControllerClass *GpTimerPwm = &controllerTable;
 const struct PwmClass *GpTimerPwmChannel = &channelTable;
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcMatchChannel(LPC_TMR_TypeDef *timer,
+static inline uint32_t *calcMatchChannel(LPC_TMR_Type *timer,
     uint8_t channel)
 {
   return (uint32_t *)&timer->MR0 + channel;
@@ -74,7 +74,7 @@ static int8_t findEmptyChannel(uint8_t channels)
 /*----------------------------------------------------------------------------*/
 static void updateResolution(struct GpTimerPwm *device, uint8_t channel)
 {
-  LPC_TMR_TypeDef *reg = device->timer->parent.reg;
+  LPC_TMR_Type *reg = device->timer->parent.reg;
 
   /* Put timer in reset state */
   reg->TCR |= TCR_CRES;
@@ -107,7 +107,7 @@ static void channelSetDutyCycle(void *object, uint8_t percentage)
 static void channelSetEnabled(void *object, bool state)
 {
   struct GpTimerPwmChannel *pwm = object;
-  LPC_TMR_TypeDef *reg = pwm->controller->timer->parent.reg;
+  LPC_TMR_Type *reg = pwm->controller->timer->parent.reg;
 
   if (!state)
   {
@@ -146,7 +146,7 @@ static void *controllerCreate(void *object, gpio_t output, uint8_t percentage)
     return 0;
 
   /* Initialize PWM specific registers in Timer/Counter block */
-  LPC_TMR_TypeDef *reg = device->timer->parent.reg;
+  LPC_TMR_Type *reg = device->timer->parent.reg;
 
   pwm->controller = device;
   pwm->channel = UNPACK_CHANNEL(pin->value);
@@ -191,7 +191,7 @@ static enum result controllerInit(void *object, const void *configPtr)
   device->matches = 0;
   device->current = findEmptyChannel(device->matches);
 
-  ((LPC_TMR_TypeDef *)device->timer->parent.reg)->PWMC = 0;
+  ((LPC_TMR_Type *)device->timer->parent.reg)->PWMC = 0;
 
   return E_OK;
 }

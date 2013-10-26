@@ -49,7 +49,7 @@ struct UartRateConfig uartCalcRate(struct UartBase *interface, uint32_t rate)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetRate(struct UartBase *interface)
 {
-  LPC_UART_TypeDef *reg = interface->reg;
+  LPC_UART_Type *reg = interface->reg;
   uint32_t rate = uartGetClock(interface) >> 4;
   struct UartRateConfig config;
 
@@ -69,7 +69,7 @@ uint32_t uartGetRate(struct UartBase *interface)
 /*----------------------------------------------------------------------------*/
 void uartSetParity(struct UartBase *interface, enum uartParity parity)
 {
-  LPC_UART_TypeDef *reg = interface->reg;
+  LPC_UART_Type *reg = interface->reg;
 
   if (parity != UART_PARITY_NONE)
   {
@@ -83,7 +83,7 @@ void uartSetParity(struct UartBase *interface, enum uartParity parity)
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct UartBase *interface, struct UartRateConfig config)
 {
-  LPC_UART_TypeDef *reg = interface->reg;
+  LPC_UART_Type *reg = interface->reg;
 
   /* UART should not be used during this command sequence */
   reg->LCR |= LCR_DLAB; /* Enable DLAB access */

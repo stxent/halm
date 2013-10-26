@@ -11,7 +11,7 @@ extern const struct GpioDescriptor i2cPins[];
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetRate(struct I2cBase *interface)
 {
-  LPC_I2C_TypeDef *reg = interface->reg;
+  LPC_I2C_Type *reg = interface->reg;
   uint32_t rate = reg->SCLL + reg->SCLH;
 
   return rate ? i2cGetClock(interface) / rate : 0;
@@ -19,7 +19,7 @@ uint32_t i2cGetRate(struct I2cBase *interface)
 /*----------------------------------------------------------------------------*/
 void i2cSetRate(struct I2cBase *interface, uint32_t rate)
 {
-  LPC_I2C_TypeDef *reg = interface->reg;
+  LPC_I2C_Type *reg = interface->reg;
 
   reg->SCLL = reg->SCLH = (i2cGetClock(interface) >> 1) / rate;
 }

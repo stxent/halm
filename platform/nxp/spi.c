@@ -37,7 +37,7 @@ const struct InterfaceClass *Spi = &spiTable;
 static void interruptHandler(void *object)
 {
   struct Spi *interface = object;
-  LPC_SSP_TypeDef *reg = interface->parent.reg;
+  LPC_SSP_Type *reg = interface->parent.reg;
   uint32_t count;
 
   count = interface->length > FIFO_DEPTH ? FIFO_DEPTH : interface->length;
@@ -106,7 +106,7 @@ static enum result spiInit(void *object, const void *configPtr)
   interface->parent.handler = interruptHandler;
 
   /* Initialize SSP block */
-  LPC_SSP_TypeDef *reg = interface->parent.reg;
+  LPC_SSP_Type *reg = interface->parent.reg;
 
   /* Set frame size */
   reg->CR0 = CR0_DSS(8);
@@ -149,7 +149,7 @@ static enum result spiCallback(void *object, void (*callback)(void *),
 static enum result spiGet(void *object, enum ifOption option, void *data)
 {
   struct Spi *interface = object;
-  LPC_SSP_TypeDef *reg = interface->parent.reg;
+  LPC_SSP_Type *reg = interface->parent.reg;
 
   switch (option)
   {
@@ -197,7 +197,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Spi *interface = object;
-  LPC_SSP_TypeDef *reg = interface->parent.reg;
+  LPC_SSP_Type *reg = interface->parent.reg;
 
   if (!length)
     return 0;
@@ -224,7 +224,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Spi *interface = object;
-  LPC_SSP_TypeDef *reg = interface->parent.reg;
+  LPC_SSP_Type *reg = interface->parent.reg;
 
   if (!length)
     return 0;

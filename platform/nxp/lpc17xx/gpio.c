@@ -10,14 +10,14 @@
 #include <platform/nxp/lpc17xx/gpio_defs.h>
 #include <platform/nxp/lpc17xx/power.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
+static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline uint32_t *calcPinSelect(union GpioPin);
 static inline uint32_t *calcPinMode(union GpioPin);
 static inline uint32_t *calcPinModeOD(union GpioPin);
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
+static inline LPC_GPIO_Type *calcPort(union GpioPin p)
 {
-  return (LPC_GPIO_TypeDef *)((uint32_t)LPC_GPIO0
+  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
       + ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * p.port);
 }
 /*----------------------------------------------------------------------------*/
@@ -72,9 +72,9 @@ struct Gpio gpioInit(gpio_t id, enum gpioDir dir)
   gpioSetType(&p, GPIO_PUSHPULL);
 
   if (dir == GPIO_OUTPUT)
-    ((LPC_GPIO_TypeDef *)p.reg)->FIODIR |= 1 << p.pin.offset;
+    ((LPC_GPIO_Type *)p.reg)->DIR |= 1 << p.pin.offset;
   else
-    ((LPC_GPIO_TypeDef *)p.reg)->FIODIR &= ~(1 << p.pin.offset);
+    ((LPC_GPIO_Type *)p.reg)->DIR &= ~(1 << p.pin.offset);
 
   /* TODO Add default output value */
 
@@ -84,7 +84,7 @@ struct Gpio gpioInit(gpio_t id, enum gpioDir dir)
 /*----------------------------------------------------------------------------*/
 void gpioDeinit(struct Gpio *p)
 {
-  ((LPC_GPIO_TypeDef *)p->reg)->FIODIR &= ~(1 << p->pin.offset);
+  ((LPC_GPIO_Type *)p->reg)->DIR &= ~(1 << p->pin.offset);
   /* Reset values to default (0) */
   gpioSetType(p, 0);
   gpioSetPull(p, 0);

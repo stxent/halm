@@ -50,7 +50,7 @@ static void interruptHandler(void *object)
 {
   struct SysTickTimer *device = object;
 
-  if ((SysTick->CTRL & CTRL_COUNTFLAG) && device->callback)
+  if ((SYSTICK->CTRL & CTRL_COUNTFLAG) && device->callback)
     device->callback(device->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -87,10 +87,10 @@ static enum result tmrInit(void *object, const void *configPtr)
   device->frequency = config->frequency;
   device->overflow = 1; //FIXME
 
-  SysTick->CTRL = 0; /* Stop timer */
-  SysTick->VAL = 0; /* Reset current timer value */
-  SysTick->LOAD = sysCoreClock / device->frequency - 1;
-  SysTick->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
+  SYSTICK->CTRL = 0; /* Stop timer */
+  SYSTICK->VAL = 0; /* Reset current timer value */
+  SYSTICK->LOAD = sysCoreClock / device->frequency - 1;
+  SYSTICK->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
 
   /* Enable interrupt */
   irqEnable(SYSTICK_IRQ);
@@ -105,7 +105,7 @@ static void tmrDeinit(void *object __attribute__((unused)))
   /* Disable interrupt */
   irqDisable(SYSTICK_IRQ);
   /* Disable timer */
-  SysTick->CTRL &= ~CTRL_ENABLE;
+  SYSTICK->CTRL &= ~CTRL_ENABLE;
   /* Reset descriptor */
   setDescriptor(0);
 }
@@ -120,19 +120,19 @@ static void tmrCallback(void *object, void (*callback)(void *),
 
   if (callback)
   {
-    (void)SysTick->CTRL; /* Clear pending interrupt */
-    SysTick->CTRL |= CTRL_TICKINT;
+    (void)SYSTICK->CTRL; /* Clear pending interrupt */
+    SYSTICK->CTRL |= CTRL_TICKINT;
   }
   else
-    SysTick->CTRL &= ~CTRL_TICKINT;
+    SYSTICK->CTRL &= ~CTRL_TICKINT;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrControl(void *object __attribute__((unused)), bool state)
 {
   if (state)
-    SysTick->CTRL |= CTRL_ENABLE;
+    SYSTICK->CTRL |= CTRL_ENABLE;
   else
-    SysTick->CTRL &= ~CTRL_ENABLE;
+    SYSTICK->CTRL &= ~CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
@@ -141,11 +141,11 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 
   device->frequency = frequency;
 
-  SysTick->CTRL &= ~CTRL_ENABLE;
+  SYSTICK->CTRL &= ~CTRL_ENABLE;
   /* FIXME overflow + 1? */
-  SysTick->LOAD = (sysCoreClock / device->frequency) * device->overflow - 1;
-  SysTick->VAL = 0;
-  SysTick->CTRL |= CTRL_ENABLE;
+  SYSTICK->LOAD = (sysCoreClock / device->frequency) * device->overflow - 1;
+  SYSTICK->VAL = 0;
+  SYSTICK->CTRL |= CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
@@ -154,15 +154,15 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 
   device->overflow = overflow;
 
-  SysTick->CTRL &= ~CTRL_ENABLE;
+  SYSTICK->CTRL &= ~CTRL_ENABLE;
   /* FIXME overflow + 1? */
-  SysTick->LOAD = (sysCoreClock / device->frequency) * device->overflow - 1;
-  SysTick->VAL = 0;
-  SysTick->CTRL |= CTRL_ENABLE;
+  SYSTICK->LOAD = (sysCoreClock / device->frequency) * device->overflow - 1;
+  SYSTICK->VAL = 0;
+  SYSTICK->CTRL |= CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrValue(void *object __attribute__((unused)))
 {
-  return SysTick->VAL;
+  return SYSTICK->VAL;
 }
 

@@ -7,7 +7,7 @@
 #ifndef IRQ_H_
 #define IRQ_H_
 /*----------------------------------------------------------------------------*/
-#include <platform/nxp/platform_defs.h> //FIXME
+#include "core_defs.h"
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -22,8 +22,8 @@ enum
   SYSTICK_IRQ     = -1
 };
 /*----------------------------------------------------------------------------*/
-uint8_t irqGetPriority(irq_t);
-void irqSetPriority(irq_t, uint8_t);
+priority_t irqGetPriority(irq_t);
+void irqSetPriority(irq_t, priority_t);
 /*----------------------------------------------------------------------------*/
 static inline void irqEnable(irq_t irq)
 {

@@ -18,6 +18,7 @@ enum
 /*----------------------------------------------------------------------------*/
 typedef volatile uint8_t spinlock_t;
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
 #define HEADER_PATH <core/CORE_TYPE/spinlock.h>
 #include HEADER_PATH
 #undef HEADER_PATH

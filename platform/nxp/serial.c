@@ -39,7 +39,7 @@ const struct InterfaceClass *Serial = &serialTable;
 static void interruptHandler(void *object)
 {
   struct Serial *interface = object;
-  LPC_UART_TypeDef *reg = interface->parent.reg;
+  LPC_UART_Type *reg = interface->parent.reg;
   bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
@@ -102,7 +102,7 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
 
   /* Initialize UART block */
-  LPC_UART_TypeDef *reg = interface->parent.reg;
+  LPC_UART_Type *reg = interface->parent.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
@@ -199,7 +199,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
   struct Serial *interface = object;
-  LPC_UART_TypeDef *reg = interface->parent.reg;
+  LPC_UART_Type *reg = interface->parent.reg;
   uint32_t written = 0;
 
   irqDisable(interface->parent.irq);

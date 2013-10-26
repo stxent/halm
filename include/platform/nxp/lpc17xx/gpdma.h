@@ -83,7 +83,7 @@ struct GpDma
   struct Dma parent;
 
   /* Pointer to DMA registers structure */
-  LPC_GPDMACH_TypeDef *reg;
+  void *reg;
 
   /* Precalculated values of channel control and configuration registers */
   uint32_t control, config;

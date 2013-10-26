@@ -43,7 +43,7 @@ enum result sspSetupPins(struct SspBase *interface,
 /*----------------------------------------------------------------------------*/
 void sspSetRate(struct SspBase *interface, uint32_t rate)
 {
-  LPC_SSP_TypeDef *reg = interface->reg;
+  LPC_SSP_Type *reg = interface->reg;
   uint16_t divider;
 
   divider = (sspGetClock(interface) >> 1) / rate - 1;
@@ -59,7 +59,7 @@ uint32_t sspGetRate(struct SspBase *interface)
   uint16_t divider;
 
   /* FIXME Add more precise calculation of SSP rate */
-  divider = CR0_SCR_VALUE(((LPC_SSP_TypeDef *)interface->reg)->CR0);
+  divider = CR0_SCR_VALUE(((LPC_SSP_Type *)interface->reg)->CR0);
   rate = (sspGetClock(interface) >> 1) / (divider + 1);
   return rate;
 }

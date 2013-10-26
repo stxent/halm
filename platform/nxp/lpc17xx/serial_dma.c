@@ -122,7 +122,7 @@ static enum result serialInit(void *object, const void *configPtr)
     return res;
 
   /* Initialize UART block */
-  LPC_UART_TypeDef *reg = interface->parent.reg;
+  LPC_UART_Type *reg = interface->parent.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
@@ -194,7 +194,7 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SerialDma *interface = object;
   const void *source =
-      (const void *)&((LPC_UART_TypeDef *)interface->parent.reg)->RBR;
+      (const void *)&((LPC_UART_Type *)interface->parent.reg)->RBR;
   uint32_t read = 0;
 
   /* TODO Add DMA error handling in SerialDma */
@@ -212,7 +212,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
   struct SerialDma *interface = object;
-  void *destination = (void *)&((LPC_UART_TypeDef *)interface->parent.reg)->THR;
+  void *destination = (void *)&((LPC_UART_Type *)interface->parent.reg)->THR;
   uint32_t written = 0;
 
   if (length && dmaStart(interface->txDma, destination, buffer, length) == E_OK)

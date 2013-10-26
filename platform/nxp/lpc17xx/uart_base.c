@@ -171,7 +171,7 @@ static enum result uartInit(void *object, const void *configPtr)
     case 1:
       sysPowerEnable(PWR_UART1);
       sysClockControl(CLK_UART1, DEFAULT_DIV);
-      interface->reg = (LPC_UART_TypeDef *)LPC_UART1;
+      interface->reg = (LPC_UART_Type *)LPC_UART1;
       interface->irq = UART1_IRQ;
       break;
     case 2:

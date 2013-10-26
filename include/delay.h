@@ -6,6 +6,7 @@
 
 #include <mcu.h>
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
 #define HEADER_PATH <core/CORE_TYPE/delay.h>
 #include HEADER_PATH
 #undef HEADER_PATH

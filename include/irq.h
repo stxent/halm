@@ -13,10 +13,10 @@
 typedef int16_t irq_t;
 typedef uint8_t priority_t;
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
 #define HEADER_PATH <core/CORE_TYPE/irq.h>
 #include HEADER_PATH
 #undef HEADER_PATH
-/*----------------------------------------------------------------------------*/
 #define HEADER_PATH <platform/PLATFORM_TYPE/vectors.h>
 #include HEADER_PATH
 #undef HEADER_PATH

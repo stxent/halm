@@ -47,7 +47,7 @@ const struct InterfaceClass *OneWire = &serialTable;
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWire *interface)
 {
-  LPC_UART_TypeDef *reg = interface->parent.reg;
+  LPC_UART_Type *reg = interface->parent.reg;
 
   uartSetRate((struct UartBase *)interface, interface->resetRate);
   interface->state = OW_RESET;
@@ -58,7 +58,7 @@ static void beginTransmission(struct OneWire *interface)
 /*----------------------------------------------------------------------------*/
 static void sendWord(struct OneWire *interface, uint8_t word)
 {
-  LPC_UART_TypeDef *reg = interface->parent.reg;
+  LPC_UART_Type *reg = interface->parent.reg;
   uint8_t counter = 0;
 
   while (counter < 8)
@@ -68,7 +68,7 @@ static void sendWord(struct OneWire *interface, uint8_t word)
 static void interruptHandler(void *object)
 {
   struct OneWire *interface = object;
-  LPC_UART_TypeDef *reg = interface->parent.reg;
+  LPC_UART_Type *reg = interface->parent.reg;
 
   /* Interrupt status cleared when performed read operation on IIR register */
   if (reg->IIR & IIR_INT_STATUS)
@@ -156,7 +156,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
   interface->state = OW_IDLE;
 
   /* Initialize UART block */
-  LPC_UART_TypeDef *reg = interface->parent.reg;
+  LPC_UART_Type *reg = interface->parent.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
@@ -259,7 +259,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 
   interface->state = OW_RECEIVE;
   /* Clear RX FIFO and set trigger level to 8 characters */
-  ((LPC_UART_TypeDef *)interface->parent.reg)->FCR |= FCR_RX_RESET
+  ((LPC_UART_Type *)interface->parent.reg)->FCR |= FCR_RX_RESET
       | FCR_RX_TRIGGER(2);
   sendWord(interface, 0xFF); /* Start reception */
 

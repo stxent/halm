@@ -10,7 +10,7 @@
 #include <platform/nxp/lpc13xx/gpio_defs.h>
 #include <platform/nxp/lpc13xx/power.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
+static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
 /*----------------------------------------------------------------------------*/
 /* IOCON register map differs for LPC1315/16/17/45/46/47 */
@@ -23,9 +23,9 @@ static const uint8_t gpioRegMap[4][12] = {
 /*----------------------------------------------------------------------------*/
 static uint8_t instances = 0;
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
+static inline LPC_GPIO_Type *calcPort(union GpioPin p)
 {
-  return (LPC_GPIO_TypeDef *)((uint32_t)LPC_GPIO0 +
+  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0 +
       ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * p.port);
 }
 /*----------------------------------------------------------------------------*/
@@ -76,9 +76,9 @@ struct Gpio gpioInit(gpio_t id, enum gpioDir dir)
   /* TODO Add analog functions */
 
   if (dir == GPIO_OUTPUT)
-    ((LPC_GPIO_TypeDef *)p.reg)->DIR |= 1 << p.pin.offset;
+    ((LPC_GPIO_Type *)p.reg)->DIR |= 1 << p.pin.offset;
   else
-    ((LPC_GPIO_TypeDef *)p.reg)->DIR &= ~(1 << p.pin.offset);
+    ((LPC_GPIO_Type *)p.reg)->DIR &= ~(1 << p.pin.offset);
 
   if (!instances++)
   {
@@ -95,7 +95,7 @@ void gpioDeinit(struct Gpio *p)
 {
   uint32_t *iocon = calcReg(p->pin);
 
-  ((LPC_GPIO_TypeDef *)p->reg)->DIR &= ~(1 << p->pin.offset);
+  ((LPC_GPIO_Type *)p->reg)->DIR &= ~(1 << p->pin.offset);
   *iocon = IOCON_DEFAULT;
 
   if (!--instances)

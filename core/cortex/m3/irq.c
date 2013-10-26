@@ -6,25 +6,33 @@
 
 #include <irq.h>
 /*----------------------------------------------------------------------------*/
+#define HEADER_PATH <platform/PLATFORM_TYPE/platform_defs.h>
+#include HEADER_PATH
+/*----------------------------------------------------------------------------*/
 #define AIRCR_VECTKEY_MASK              0xFFFF0000UL
 #define AIRCR_VECTKEY(value)            ((unsigned long)(value) << 16)
 #define AIRCR_PRIGROUP_MASK             0x00000700UL
 #define AIRCR_PRIGROUP(value)           ((unsigned long)(value) << 8)
 /*----------------------------------------------------------------------------*/
-void irqSetPriority(irq_t irq, uint8_t priority)
+#define PRIORITY_TO_VALUE(priority) \
+    ((((1 << NVIC_PRIORITY_SIZE) - 1) - (priority)) << (8 - NVIC_PRIORITY_SIZE))
+#define VALUE_TO_PRIORITY(value) \
+    ((((1 << NVIC_PRIORITY_SIZE) - 1) - (value)) << (8 - NVIC_PRIORITY_SIZE))
+/*----------------------------------------------------------------------------*/
+void irqSetPriority(irq_t irq, priority_t priority)
 {
   if (irq < 0)
-    SCB->SHP[(irq & 0x0F) - 4] = priority;
+    SCB->SHP[(irq & 0x0F) - 4] = PRIORITY_TO_VALUE(priority);
   else
-    NVIC->IP[irq] = priority;
+    NVIC->IP[irq] = PRIORITY_TO_VALUE(priority);
 }
 /*----------------------------------------------------------------------------*/
-uint8_t irqGetPriority(irq_t irq)
+priority_t irqGetPriority(irq_t irq)
 {
   if (irq < 0)
-    return SCB->SHP[(irq & 0x0F) - 4];
+    return VALUE_TO_PRIORITY(SCB->SHP[(irq & 0x0F) - 4]);
   else
-    return NVIC->IP[irq];
+    return VALUE_TO_PRIORITY(NVIC->IP[irq]);
 }
 /*----------------------------------------------------------------------------*/
 //void nvicSetPriorityGrouping(uint8_t subpriority)
