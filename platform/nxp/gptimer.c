@@ -7,8 +7,6 @@
 #include <platform/nxp/gptimer.h>
 #include <platform/nxp/gptimer_defs.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY 255 /* Lowest interrupt priority in Cortex-M3 */
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
@@ -74,10 +72,10 @@ static enum result tmrInit(void *object, const void *configPtr)
   /* Enable timer/counter */
   reg->TCR = TCR_CEN;
 
+  /* Set interrupt priority, lowest by default */
+  irqSetPriority(timer->parent.irq, config->priority);
   /* Enable interrupt */
   irqEnable(timer->parent.irq);
-  /* Set interrupt priority, lowest by default */
-  irqSetPriority(timer->parent.irq, DEFAULT_PRIORITY);
 
   return E_OK;
 }

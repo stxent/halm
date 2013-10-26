@@ -8,9 +8,8 @@
 #include <platform/nxp/serial.h>
 #include <platform/nxp/uart_defs.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
-#define RX_FIFO_LEVEL     2 /* 8 characters */
-#define TX_FIFO_SIZE      8
+#define RX_FIFO_LEVEL 2 /* 8 characters */
+#define TX_FIFO_SIZE  8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -118,7 +117,7 @@ static enum result serialInit(void *object, const void *configPtr)
   uartSetRate(object, uartCalcRate(object, config->rate));
 
   /* Set interrupt priority, lowest by default */
-  irqSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
+  irqSetPriority(interface->parent.irq, config->priority);
   /* Enable UART interrupt */
   irqEnable(interface->parent.irq);
 
@@ -157,9 +156,6 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
     case IF_PENDING:
       *(uint32_t *)data = queueSize(&interface->txQueue);
       return E_OK;
-    case IF_PRIORITY:
-      *(uint32_t *)data = irqGetPriority(interface->parent.irq);
-      return E_OK;
     default:
       return E_ERROR;
   }
@@ -168,13 +164,8 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
 static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct Serial *interface = object;
-
   switch (option)
   {
-    case IF_PRIORITY:
-      irqSetPriority(interface->parent.irq, *(uint32_t *)data);
-      return E_OK;
     case IF_RATE:
       uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
       return E_OK;

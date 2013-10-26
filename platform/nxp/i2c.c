@@ -8,8 +8,6 @@
 #include <platform/nxp/i2c.h>
 #include <platform/nxp/i2c_defs.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY 255 /* Lowest interrupt priority in Cortex-M3 */
-/*----------------------------------------------------------------------------*/
 enum status
 {
   /* Implemented only master transmitter and receiver modes */
@@ -172,7 +170,7 @@ static enum result i2cInit(void *object, const void *configPtr)
   reg->CONSET = CONSET_I2EN;
 
   /* Set interrupt priority, lowest by default */
-  irqSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
+  irqSetPriority(interface->parent.irq, config->priority);
   /* Enable interrupt */
   irqEnable(interface->parent.irq);
 
@@ -208,9 +206,6 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
     case IF_READY:
       return interface->state != I2C_IDLE && interface->state != I2C_ERROR ?
           E_BUSY : E_OK;
-    case IF_PRIORITY:
-      *(uint32_t *)data = irqGetPriority(interface->parent.irq);
-      return E_OK;
     case IF_RATE:
       *(uint32_t *)data = i2cGetRate(object);
       return E_OK;
@@ -232,9 +227,6 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
       return E_OK;
     case IF_DEVICE:
       interface->address = *(uint32_t *)data;
-      return E_OK;
-    case IF_PRIORITY:
-      irqSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
       i2cSetRate(object, *(uint32_t *)data);

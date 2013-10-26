@@ -17,6 +17,7 @@ struct SpiConfig
   uint32_t rate; /* Mandatory: serial data rate */
   gpio_t cs; /* Optional: chip select for slave mode */
   gpio_t miso, mosi, sck; /* Mandatory: peripheral pins */
+  priority_t priority; /* Optional: interrupt priority */
   uint8_t channel; /* Mandatory: peripheral number */
   uint8_t mode; /* Optional: mode number used in SPI */
 };

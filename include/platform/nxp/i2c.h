@@ -30,6 +30,7 @@ struct I2cConfig
 {
   uint32_t rate; /* Mandatory: interface data rate */
   gpio_t scl, sda; /* Mandatory: interface pins */
+  priority_t priority; /* Optional: interrupt priority */
   uint8_t channel; /* Mandatory: peripheral number */
 };
 /*----------------------------------------------------------------------------*/

@@ -7,9 +7,9 @@
 #include <platform/nxp/one_wire.h>
 #include <platform/nxp/uart_defs.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
-#define RATE_RESET        9600
-#define RATE_DATA         115200
+#define RATE_RESET      9600
+#define RATE_DATA       115200
+#define TX_QUEUE_LENGTH 32
 /*----------------------------------------------------------------------------*/
 enum romCommand
 {
@@ -146,7 +146,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
   interface->parent.handler = interruptHandler;
 
   /* Initialize TX queue */
-  if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
+  if ((res = queueInit(&interface->txQueue, TX_QUEUE_LENGTH)) != E_OK)
     return res;
 
   interface->address.rom = 0;
@@ -170,7 +170,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
   uartSetRate(object, interface->resetRate);
 
   /* Set interrupt priority, lowest by default */
-  irqSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
+  irqSetPriority(interface->parent.irq, config->priority);
   /* Enable UART interrupt */
   irqEnable(interface->parent.irq);
 
@@ -196,15 +196,13 @@ static enum result oneWireCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireGet(void *object, enum ifOption option, void *data)
+static enum result oneWireGet(void *object, enum ifOption option,
+    void *data __attribute__((unused)))
 {
   struct OneWire *interface = object;
 
   switch (option)
   {
-    case IF_PRIORITY:
-      *(uint32_t *)data = irqGetPriority(interface->parent.irq);
-      return E_OK;
     case IF_READY:
       return interface->state == OW_IDLE ? E_OK : E_BUSY;
     default:
@@ -226,9 +224,6 @@ static enum result oneWireSet(void *object, enum ifOption option,
       return E_OK;
     case IF_DEVICE:
       interface->address.rom = *(uint64_t *)data;
-      return E_OK;
-    case IF_PRIORITY:
-      irqSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RELEASE:
       spinUnlock(&interface->lock);

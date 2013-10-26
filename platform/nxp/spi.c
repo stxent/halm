@@ -7,8 +7,7 @@
 #include <platform/nxp/spi.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY  255 /* Lowest interrupt priority in Cortex-M3 */
-#define FIFO_DEPTH        8
+#define FIFO_DEPTH 8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -121,7 +120,7 @@ static enum result spiInit(void *object, const void *configPtr)
   reg->CR1 = CR1_SSE; /* Enable peripheral */
 
   /* Set interrupt priority, lowest by default */
-  irqSetPriority(interface->parent.irq, DEFAULT_PRIORITY);
+  irqSetPriority(interface->parent.irq, config->priority);
   /* Enable SPI interrupt */
   irqEnable(interface->parent.irq);
 
@@ -153,9 +152,6 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-    case IF_PRIORITY:
-      *(uint32_t *)data = irqGetPriority(interface->parent.irq);
-      return E_OK;
     case IF_RATE:
       *(uint32_t *)data = sspGetRate(object);
       return E_OK;
@@ -176,9 +172,6 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       return spinTryLock(&interface->lock) ? E_OK : E_BUSY;
     case IF_BLOCKING:
       interface->blocking = true;
-      return E_OK;
-    case IF_PRIORITY:
-      irqSetPriority(interface->parent.irq, *(uint32_t *)data);
       return E_OK;
     case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);

@@ -22,9 +22,9 @@
 void irqSetPriority(irq_t irq, priority_t priority)
 {
   if (irq < 0)
-    SCB->SHP[(irq & 0x0F) - 4] = PRIORITY_TO_VALUE(priority);
+    SCB->SHP[(irq & 0x0F) - 4] = PRIORITY_TO_VALUE(priority) & 0xFF;
   else
-    NVIC->IP[irq] = PRIORITY_TO_VALUE(priority);
+    NVIC->IP[irq] = PRIORITY_TO_VALUE(priority) & 0xFF;
 }
 /*----------------------------------------------------------------------------*/
 priority_t irqGetPriority(irq_t irq)

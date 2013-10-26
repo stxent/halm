@@ -16,8 +16,8 @@ extern const struct InterfaceClass *OneWire;
 /*----------------------------------------------------------------------------*/
 struct OneWireConfig
 {
-  uint32_t rxLength, txLength; /* Optional: queue lengths */
   gpio_t rx, tx; /* Mandatory: RX and TX pins */
+  priority_t priority; /* Optional: interrupt priority */
   uint8_t channel; /* Mandatory: Peripheral number */
 };
 /*----------------------------------------------------------------------------*/
