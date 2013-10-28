@@ -11,8 +11,8 @@
 /*----------------------------------------------------------------------------*/
 #define RX_FIFO_LEVEL 0 /* 1 character */
 /*----------------------------------------------------------------------------*/
+static void dmaHandler(void *);
 static enum result dmaSetup(struct SerialDma *, int8_t, int8_t);
-static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
@@ -52,6 +52,14 @@ static const struct InterfaceClass serialDmaTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *SerialDma = &serialDmaTable;
 /*----------------------------------------------------------------------------*/
+static void dmaHandler(void *object)
+{
+  struct SerialDma *interface = object;
+
+  if (interface->callback)
+    interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
     int8_t txChannel)
 {
@@ -88,15 +96,12 @@ static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
   interface->rxDma = init(GpDma, channels + 0);
   if (!interface->rxDma)
     return E_ERROR;
+  dmaCallback(interface->rxDma, dmaHandler, interface);
   interface->txDma = init(GpDma, channels + 1);
   if (!interface->txDma)
     return E_ERROR;
+  dmaCallback(interface->txDma, dmaHandler, interface);
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object __attribute__((unused)))
-{
-
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
@@ -114,9 +119,6 @@ static enum result serialInit(void *object, const void *configPtr)
   /* Call UART class constructor */
   if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
-
-  /* Set pointer to interrupt handler */
-  interface->parent.handler = interruptHandler;
 
   if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
     return res;
@@ -154,22 +156,24 @@ static void serialDeinit(void *object)
 static enum result serialCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  //TODO Add callback to SerialDma
-  /*struct Serial *interface = object;
+  struct SerialDma *interface = object;
 
   interface->callback = callback;
   interface->callbackArgument = argument;
-  return E_OK;*/
-  return E_ERROR;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGet(void *object, enum ifOption option, void *data)
+static enum result serialGet(void *object, enum ifOption option,
+    void *data __attribute__((unused)))
 {
   /* TODO Add more options to SerialDma */
-  struct SerialDma *interface __attribute__((unused)) = object;
+  struct SerialDma *interface = object;
 
   switch (option)
   {
+    case IF_READY:
+      return dmaActive(interface->rxDma) || dmaActive(interface->txDma) ?
+          E_BUSY : E_OK;
     default:
       return E_ERROR;
   }
@@ -178,12 +182,18 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
 static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct SerialDma *interface __attribute__((unused)) = object;
+  struct SerialDma *interface = object;
 
   switch (option)
   {
+    case IF_BLOCKING:
+      interface->blocking = true;
+      return E_OK;
     case IF_RATE:
       uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
+      return E_OK;
+    case IF_ZEROCOPY:
+      interface->blocking = false;
       return E_OK;
     default:
       return E_ERROR;
@@ -200,8 +210,8 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   /* TODO Add DMA error handling in SerialDma */
   if (length && dmaStart(interface->rxDma, buffer, source, length) == E_OK)
   {
-    /* Wait until all bytes are received */
-    while (dmaIsActive(interface->rxDma));
+    if (interface->blocking)
+      while (dmaActive(interface->rxDma));
     read = length;
   }
 
@@ -217,8 +227,8 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 
   if (length && dmaStart(interface->txDma, destination, buffer, length) == E_OK)
   {
-    /* Wait until all bytes are transmitted */
-    while (dmaIsActive(interface->txDma));
+    if (interface->blocking)
+      while (dmaActive(interface->txDma));
     written = length;
   }
 

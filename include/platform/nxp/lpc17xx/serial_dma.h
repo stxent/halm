@@ -32,6 +32,8 @@ struct SerialDma
 
   /* DMA channel descriptors */
   struct Dma *rxDma, *txDma;
+  /* Selection between blocking mode and zero copy mode */
+  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SERIAL_DMA_H_ */
