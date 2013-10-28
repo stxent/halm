@@ -32,8 +32,8 @@ struct GpTimer
 {
   struct GpTimerBase parent;
 
-  void (*callback)(void *); /* User interrupt handler */
-  void *callbackArgument; /* User interrupt handler argument */
+  void (*callback)(void *);
+  void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPTIMER_H_ */

@@ -33,8 +33,8 @@ static enum result controllerInit(void *, const void *);
 static void controllerDeinit(void *);
 static void *controllerCreate(void *, gpio_t, uint8_t);
 /*----------------------------------------------------------------------------*/
+static void channelControl(void *, bool);
 static void channelSetDutyCycle(void *, uint8_t);
-static void channelSetEnabled(void *, bool);
 static void channelSetPeriod(void *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static const struct PwmControllerClass controllerTable = {
@@ -50,8 +50,8 @@ static const struct PwmClass channelTable = {
     .init = 0,
     .deinit = 0,
 
+    .control = channelControl,
     .setDutyCycle = channelSetDutyCycle,
-    .setEnabled = channelSetEnabled,
     .setPeriod = channelSetPeriod
 };
 /*----------------------------------------------------------------------------*/
@@ -91,20 +91,7 @@ static void updateResolution(struct GpTimerPwm *device, uint8_t channel)
   reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
-static void channelSetDutyCycle(void *object, uint8_t percentage)
-{
-  struct GpTimerPwmChannel *pwm = object;
-
-  if (percentage)
-  {
-    *pwm->reg = percentage == 100 ? 0 : (uint32_t)pwm->controller->resolution
-        * (uint32_t)(100 - percentage) / 100;
-  }
-  else
-    *pwm->reg = (uint32_t)pwm->controller->resolution + 1;
-}
-/*----------------------------------------------------------------------------*/
-static void channelSetEnabled(void *object, bool state)
+static void channelControl(void *object, bool state)
 {
   struct GpTimerPwmChannel *pwm = object;
   LPC_TMR_Type *reg = pwm->controller->timer->parent.reg;
@@ -116,6 +103,19 @@ static void channelSetEnabled(void *object, bool state)
   }
   else
     reg->PWMC |= PWMC_ENABLE(pwm->channel);
+}
+/*----------------------------------------------------------------------------*/
+static void channelSetDutyCycle(void *object, uint8_t percentage)
+{
+  struct GpTimerPwmChannel *pwm = object;
+
+  if (percentage)
+  {
+    *pwm->reg = percentage == 100 ? 0 : (uint32_t)pwm->controller->resolution
+        * (uint32_t)(100 - percentage) / 100;
+  }
+  else
+    *pwm->reg = (uint32_t)pwm->controller->resolution + 1;
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetPeriod(void *object, uint16_t period)

@@ -26,7 +26,6 @@ struct Spi
 {
   struct SspBase parent;
 
-  /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);
   void *callbackArgument;
 
