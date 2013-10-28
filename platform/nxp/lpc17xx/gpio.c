@@ -13,7 +13,7 @@
 static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline uint32_t *calcPinSelect(union GpioPin);
 static inline uint32_t *calcPinMode(union GpioPin);
-static inline uint32_t *calcPinModeOD(union GpioPin);
+static inline uint32_t *calcPinType(union GpioPin);
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin p)
 {
@@ -31,7 +31,7 @@ static inline uint32_t *calcPinMode(union GpioPin p)
   return (uint32_t *)(&LPC_PINCON->PINMODE0 + (p.offset >> 4) + (p.port << 1));
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcPinModeOD(union GpioPin p)
+static inline uint32_t *calcPinType(union GpioPin p)
 {
   return (uint32_t *)(&LPC_PINCON->PINMODE_OD0 + p.port);
 }
@@ -89,40 +89,39 @@ void gpioDeinit(struct Gpio *p)
   gpioSetType(p, 0);
   gpioSetPull(p, 0);
   gpioSetFunction(p, 0);
-
-  /* TODO Check possibility of disabling power when no pins are used */
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio *p, uint8_t function)
 {
   uint32_t *pinptr = calcPinSelect(p->pin);
 
-  *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
-  *pinptr |= PIN_OFFSET(function, p->pin.offset);
+  *pinptr = (*pinptr & ~PIN_OFFSET(PIN_MASK, p->pin.offset))
+      | PIN_OFFSET(function, p->pin.offset);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)
 {
   uint32_t *pinptr = calcPinMode(p->pin);
+  uint32_t value = *pinptr & ~PIN_OFFSET(PIN_MASK, p->pin.offset);
 
-  *pinptr &= ~PIN_OFFSET(PIN_MASK, p->pin.offset);
   switch (pull)
   {
     case GPIO_NOPULL:
-      *pinptr |= PIN_OFFSET(PIN_MODE_INACTIVE, p->pin.offset);
+      value |= PIN_OFFSET(PIN_MODE_INACTIVE, p->pin.offset);
       break;
     case GPIO_PULLUP:
-      *pinptr |= PIN_OFFSET(PIN_MODE_PULLUP, p->pin.offset);
+      value |= PIN_OFFSET(PIN_MODE_PULLUP, p->pin.offset);
       break;
     case GPIO_PULLDOWN:
-      *pinptr |= PIN_OFFSET(PIN_MODE_PULLDOWN, p->pin.offset);
+      value |= PIN_OFFSET(PIN_MODE_PULLDOWN, p->pin.offset);
       break;
   }
+  *pinptr = value;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetType(struct Gpio *p, enum gpioType type)
 {
-  uint32_t *pinptr = calcPinModeOD(p->pin);
+  uint32_t *pinptr = calcPinType(p->pin);
 
   switch (type)
   {

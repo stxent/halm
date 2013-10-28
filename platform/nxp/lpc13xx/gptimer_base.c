@@ -118,7 +118,7 @@ static void tmrDeinit(void *object)
   struct GpTimerBase *device = object;
 
   /* Disable Timer/Counter clock */
-  sysClockDisable(tmrClock[device->channel]);
+  sysClockDisable(timerClock[device->channel]);
 
   /* Release external clock pin when used*/
   if (gpioGetKey(&device->input))

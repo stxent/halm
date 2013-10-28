@@ -111,26 +111,27 @@ void gpioSetFunction(struct Gpio *p, uint8_t function)
 {
   uint32_t *iocon = calcReg(p->pin);
 
-  *iocon &= ~IOCON_FUNC_MASK;
-  *iocon |= IOCON_FUNC(function);
+  *iocon = (*iocon & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio *p, enum gpioPull pull)
 {
   uint32_t *iocon = calcReg(p->pin);
+  uint32_t value = *iocon & ~IOCON_MODE_MASK;
 
   switch (pull)
   {
     case GPIO_NOPULL:
-      *iocon = (*iocon & ~IOCON_MODE_MASK) | IOCON_MODE_INACTIVE;
+      value |= IOCON_MODE_INACTIVE;
       break;
     case GPIO_PULLUP:
-      *iocon = (*iocon & ~IOCON_MODE_MASK) | IOCON_MODE_PULLUP;
+      value |= IOCON_MODE_PULLUP;
       break;
     case GPIO_PULLDOWN:
-      *iocon = (*iocon & ~IOCON_MODE_MASK) | IOCON_MODE_PULLDOWN;
+      value |= IOCON_MODE_PULLDOWN;
       break;
   }
+  *iocon = value;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetType(struct Gpio *p, enum gpioType type)
