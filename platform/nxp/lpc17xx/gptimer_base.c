@@ -6,8 +6,11 @@
 
 #include <assert.h>
 #include <platform/nxp/gptimer_base.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/power.h>
+#include <platform/nxp/lpc17xx/clocking.h>
+#include <platform/nxp/lpc17xx/power.h>
+/*----------------------------------------------------------------------------*/
+#define DEFAULT_DIV       CLK_DIV1
+#define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
@@ -41,25 +44,25 @@ static enum result setDescriptor(uint8_t channel, struct GpTimerBase *timer)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void TIMER16B0_ISR(void)
+void TIMER0_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER16B1_ISR(void)
+void TIMER1_ISR(void)
 {
   if (descriptors[1])
     descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER32B0_ISR(void)
+void TIMER2_ISR(void)
 {
   if (descriptors[2])
     descriptors[2]->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER32B1_ISR(void)
+void TIMER3_ISR(void)
 {
   if (descriptors[3])
     descriptors[3]->handler(descriptors[3]);
@@ -67,7 +70,7 @@ void TIMER32B1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t gpTimerGetClock(struct GpTimerBase *timer __attribute__((unused)))
 {
-  return sysCoreClock;
+  return sysCoreClock / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configPtr)
@@ -86,24 +89,28 @@ static enum result tmrInit(void *object, const void *configPtr)
   switch (device->channel)
   {
     case 0:
-      sysClockEnable(CLK_CT16B0);
-      device->reg = LPC_TMR16B0;
-      device->irq = TIMER16B0_IRQ;
+      sysPowerEnable(PWR_TIM0);
+      sysClockControl(CLK_TIMER0, DEFAULT_DIV);
+      device->reg = LPC_TIM0;
+      device->irq = TIMER0_IRQ;
       break;
     case 1:
-      sysClockEnable(CLK_CT16B1);
-      device->reg = LPC_TMR16B1;
-      device->irq = TIMER16B1_IRQ;
+      sysPowerEnable(PWR_TIM1);
+      sysClockControl(CLK_TIMER1, DEFAULT_DIV);
+      device->reg = LPC_TIM1;
+      device->irq = TIMER1_IRQ;
       break;
     case 2:
-      sysClockEnable(CLK_CT32B0);
-      device->reg = LPC_TMR32B0;
-      device->irq = TIMER32B0_IRQ;
+      sysPowerEnable(PWR_TIM2);
+      sysClockControl(CLK_TIMER2, DEFAULT_DIV);
+      device->reg = LPC_TIM2;
+      device->irq = TIMER2_IRQ;
       break;
     case 3:
-      sysClockEnable(CLK_CT32B1);
-      device->reg = LPC_TMR32B1;
-      device->irq = TIMER32B1_IRQ;
+      sysPowerEnable(PWR_TIM3);
+      sysClockControl(CLK_TIMER3, DEFAULT_DIV);
+      device->reg = LPC_TIM3;
+      device->irq = TIMER3_IRQ;
       break;
   }
 
@@ -112,13 +119,13 @@ static enum result tmrInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void tmrDeinit(void *object)
 {
-  const enum sysClockDevice timerClock[] = {
-      CLK_CT16B0, CLK_CT16B1, CLK_CT32B0, CLK_CT32B1
+  const enum sysPowerDevice timerPower[] = {
+      PWR_TIM0, PWR_TIM1, PWR_TIM2, PWR_TIM3
   };
   struct GpTimerBase *device = object;
 
-  /* Disable Timer/Counter clock */
-  sysClockDisable(tmrClock[device->channel]);
+  /* Disable peripheral power */
+  sysPowerDisable(timerPower[device->channel]);
 
   /* Release external clock pin when used*/
   if (gpioGetKey(&device->input))
