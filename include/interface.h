@@ -13,8 +13,8 @@
 #define INTERFACE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include "entity.h"
-#include "error.h"
+#include <entity.h>
+#include <error.h>
 /*----------------------------------------------------------------------------*/
 /** Interface options. */
 enum ifOption

@@ -14,8 +14,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
-#include "entity.h"
-#include "error.h"
+#include <entity.h>
 /*----------------------------------------------------------------------------*/
 /** DMA burst transfer size. */
 enum dmaBurst

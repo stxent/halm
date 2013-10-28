@@ -7,10 +7,9 @@
 #ifndef PWM_H_
 #define PWM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <stdbool.h>
-#include "entity.h"
-#include "gpio.h"
+#include <entity.h>
+#include <gpio.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct PwmControllerClass

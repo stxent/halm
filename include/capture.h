@@ -7,9 +7,9 @@
 #ifndef CAPTURE_H_
 #define CAPTURE_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <stdbool.h>
-#include "entity.h"
+#include <stdint.h>
+#include <entity.h>
 /*----------------------------------------------------------------------------*/
 enum captureMode
 {

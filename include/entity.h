@@ -7,7 +7,7 @@
 #ifndef ENTITY_H_
 #define ENTITY_H_
 /*----------------------------------------------------------------------------*/
-#include "error.h"
+#include <error.h>
 /*----------------------------------------------------------------------------*/
 #define CLASS_HEADER \
   unsigned int size;\
