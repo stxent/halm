@@ -37,7 +37,8 @@ enum dmaWidth
 {
   DMA_WIDTH_BYTE = 0,
   DMA_WIDTH_HALFWORD,
-  DMA_WIDTH_WORD
+  DMA_WIDTH_WORD,
+  DMA_WIDTH_DOUBLEWORD
 };
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
@@ -45,92 +46,79 @@ struct DmaClass
 {
   CLASS_HEADER
 
+  bool (*active)(void *);
+  void (*callback)(void *, void (*)(void *), void *);
+  void (*link)(void *, void *, void *, void *, const void *, uint32_t);
   enum result (*start)(void *, void *, const void *, uint32_t);
-  enum result (*startList)(void *, const void *);
   void (*stop)(void *);
-  void (*halt)(void *);
-  void (*linkItem)(void *, void *, void *, void *, const void *, uint16_t);
-  /* TODO Get the number of completed transfers */
-  /* uint16_t getCount(const void *); */
 };
 /*----------------------------------------------------------------------------*/
 struct Dma
 {
   struct Entity parent;
-
-  uint8_t channel; /* Channel may have different meaning */
-  bool active; /* Transfer active flag */
 };
 /*----------------------------------------------------------------------------*/
 /**
- * Start DMA transfer.
- * @param controller Pointer to Dma object.
- * @param dest Destination memory address.
- * @param src Source memory address.
- * @param size Size of the transfer.
- * @return @b E_OK on success.
+ * Check whether the channel is enabled or not.
+ * @param channel Pointer to Dma object.
+ * @return @b true when the transmission is active or @b false otherwise.
  */
-static inline enum result dmaStart(void *controller, void *dest,
-    const void *src, uint32_t size)
+static inline bool dmaActive(void *channel)
 {
-  return ((struct DmaClass *)CLASS(controller))->start(controller,
-      dest, src, size);
+  return ((struct DmaClass *)CLASS(channel))->active(channel);
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Start scatter-gather DMA transfer.
- * @param controller Pointer to Dma object.
- * @param first Pointer to the first descriptor in linked list.
- * @return @b E_OK on success.
+ * Set callback function for the transmission completion event.
+ * @param channel Pointer to Dma object.
+ * @param callback Callback function.
+ * @param argument Callback function argument.
  */
-static inline enum result dmaStartList(void *controller, const void *first)
+static inline void dmaCallback(void *channel, void (*callback)(void *),
+    void *argument)
 {
-  return ((struct DmaClass *)CLASS(controller))->startList(controller, first);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Disable a channel and lose data in the FIFO.
- * @param controller Pointer to Dma object.
- */
-static inline void dmaStop(void *controller)
-{
-  ((struct DmaClass *)CLASS(controller))->stop(controller);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Disable a channel without losing data in the FIFO.
- * @param controller Pointer to Dma object.
- */
-static inline void dmaHalt(void *controller)
-{
-  ((struct DmaClass *)CLASS(controller))->halt(controller);
+  ((struct DmaClass *)CLASS(channel))->callback(channel, callback, argument);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Link next element to the linked list for scatter-gather transfers.
- * @param controller Pointer to Dma object.
+ * @param channel Pointer to Dma object.
  * @param current Pointer to current linked list item.
  * @param next Pointer to next linked list item or zero on list end.
- * @param dest Destination memory address.
- * @param src Source memory address.
+ * @param destination Destination memory address.
+ * @param source Source memory address.
  * @param size Size of the transfer.
  * @return @b E_OK on success.
  */
-static inline void dmaLinkItem(void *controller, void *current, void *next,
-    void *dest, const void *src, uint16_t size)
+static inline void dmaLink(void *channel, void *current, void *next,
+    void *destination, const void *source, uint32_t size)
 {
-  ((struct DmaClass *)CLASS(controller))->linkItem(controller, current, next,
-      dest, src, size);
+  ((struct DmaClass *)CLASS(channel))->link(channel, current, next,
+      destination, source, size);
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Check whether the channel is enabled or not.
- * @param controller Pointer to Dma object.
- * @return @b true when the transmission is active or @b false otherwise.
+ * Start DMA transfer.
+ * @param channel Pointer to Dma object.
+ * @param destination Destination memory address.
+ * @param source Source memory address.
+ * @param size Size of the transfer.
+ * @return @b E_OK on success.
  */
-static inline bool dmaIsActive(const struct Dma *controller)
+static inline enum result dmaStart(void *channel, void *destination,
+    const void *source, uint32_t size)
 {
-  return controller->active;
+  return ((struct DmaClass *)CLASS(channel))->start(channel, destination,
+      source, size);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Disable a channel and lose data in the FIFO.
+ * @param channel Pointer to Dma object.
+ */
+static inline void dmaStop(void *channel)
+{
+  ((struct DmaClass *)CLASS(channel))->stop(channel);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_H_ */

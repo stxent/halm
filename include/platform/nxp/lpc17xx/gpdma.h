@@ -82,15 +82,18 @@ struct GpDma
 {
   struct Dma parent;
 
-  /* Pointer to DMA registers structure */
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  /* Pointer to the register block */
   void *reg;
 
   /* Precalculated values of channel control and configuration registers */
   uint32_t control, config;
   /* Precalculated values of DMA connection multiplexer register */
   uint8_t muxMask, muxValue;
-  /* Transfer direction */
-  enum gpDmaDirection direction;
+  /* Direct memory access peripheral channel */
+  uint8_t number;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPDMA_H_ */
