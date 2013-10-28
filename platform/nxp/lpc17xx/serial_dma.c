@@ -1,13 +1,12 @@
 /*
- * serial.c
+ * serial_dma.c
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include "platform/nxp/uart_defs.h"
-#include "platform/nxp/lpc17xx/gpdma.h"
-#include "platform/nxp/lpc17xx/serial_dma.h"
+#include <platform/nxp/uart_defs.h>
+#include <platform/nxp/lpc17xx/gpdma.h>
+#include <platform/nxp/lpc17xx/serial_dma.h>
 /*----------------------------------------------------------------------------*/
 #define RX_FIFO_LEVEL 0 /* 1 character */
 /*----------------------------------------------------------------------------*/
@@ -28,7 +27,7 @@ static const enum gpDmaLine dmaTxLines[] = {
     GPDMA_LINE_UART2_TX,
     GPDMA_LINE_UART3_TX
 };
-/*----------------------------------------------------------------------------*/
+
 static const enum gpDmaLine dmaRxLines[] = {
     GPDMA_LINE_UART0_RX,
     GPDMA_LINE_UART1_RX,
@@ -36,9 +35,7 @@ static const enum gpDmaLine dmaRxLines[] = {
     GPDMA_LINE_UART3_RX
 };
 /*----------------------------------------------------------------------------*/
-/* We like structures so we put a structure in a structure */
-/* So we can initialize a structure while we initialize a structure */
-static const struct InterfaceClass serialDmaTable = {
+static const struct InterfaceClass serialTable = {
     .size = sizeof(struct SerialDma),
     .init = serialInit,
     .deinit = serialDeinit,
@@ -50,7 +47,7 @@ static const struct InterfaceClass serialDmaTable = {
     .write = serialWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *SerialDma = &serialDmaTable;
+const struct InterfaceClass *SerialDma = &serialTable;
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {
@@ -205,17 +202,15 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   struct SerialDma *interface = object;
   const void *source =
       (const void *)&((LPC_UART_Type *)interface->parent.reg)->RBR;
-  uint32_t read = 0;
 
-  /* TODO Add DMA error handling in SerialDma */
   if (length && dmaStart(interface->rxDma, buffer, source, length) == E_OK)
   {
     if (interface->blocking)
       while (dmaActive(interface->rxDma));
-    read = length;
+    return length;
   }
-
-  return read;
+  else
+    return 0;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialWrite(void *object, const uint8_t *buffer,
@@ -223,14 +218,13 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 {
   struct SerialDma *interface = object;
   void *destination = (void *)&((LPC_UART_Type *)interface->parent.reg)->THR;
-  uint32_t written = 0;
 
   if (length && dmaStart(interface->txDma, destination, buffer, length) == E_OK)
   {
     if (interface->blocking)
       while (dmaActive(interface->txDma));
-    written = length;
+    return length;
   }
-
-  return written;
+  else
+    return 0;
 }

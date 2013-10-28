@@ -39,9 +39,7 @@ typedef struct
   __rw__ uint32_t EMR;
          uint32_t RESERVED2[12];
   __rw__ uint32_t CTCR;
-#ifdef GPTIMER_PWM
-  __rw__ uint32_t PWMC;
-#endif
+  __rw__ uint32_t PWMC; /* May not be available on all parts */
 } LPC_TMR_Type;
 /*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
@@ -114,6 +112,7 @@ typedef struct
   __rw__ uint32_t RIS;
   __rw__ uint32_t MIS;
   __w__  uint32_t ICR;
+  __rw__ uint32_t DMACR; /* May not be available on some parts */
 } LPC_SSP_Type;
 /*------------------Inter-Integrated Circuit----------------------------------*/
 typedef struct
