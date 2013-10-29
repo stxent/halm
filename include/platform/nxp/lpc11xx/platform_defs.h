@@ -1,5 +1,5 @@
 /*
- * platform/nxp/lpc13xx/platform_defs.h
+ * platform/nxp/lpc11xx/platform_defs.h
  * Based on original by NXP
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,7 +7,7 @@
 #ifndef PLATFORM_DEFS_H_
 #define PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#define NVIC_PRIORITY_SIZE 3
+#define NVIC_PRIORITY_SIZE 2
 /*------------------System Configuration Registers----------------------------*/
 typedef struct
 {
@@ -15,9 +15,7 @@ typedef struct
   __rw__ uint32_t PRESETCTRL; /* Peripheral reset control */
   __rw__ uint32_t SYSPLLCTRL; /* System PLL control */
   __rw__ uint32_t SYSPLLSTAT;
-  __rw__ uint32_t USBPLLCTRL; /* USB PLL control */
-  __rw__ uint32_t USBPLLSTAT;
-         uint32_t RESERVED0[2];
+         uint32_t RESERVED0[4];
 
   /* Offset 0x20 */
   __rw__ uint32_t SYSOSCCTRL;
@@ -30,9 +28,7 @@ typedef struct
   /* Offset 0x40 */
   __rw__ uint32_t SYSPLLCLKSEL;
   __rw__ uint32_t SYSPLLCLKUEN;
-  __rw__ uint32_t USBPLLCLKSEL;
-  __rw__ uint32_t USBPLLCLKUEN;
-         uint32_t RESERVED3[8];
+         uint32_t RESERVED3[10];
   __rw__ uint32_t MAINCLKSEL;
   __rw__ uint32_t MAINCLKUEN;
   __rw__ uint32_t SYSAHBCLKDIV;
@@ -44,54 +40,48 @@ typedef struct
   __rw__ uint32_t SSP0CLKDIV;
   __rw__ uint32_t UARTCLKDIV;
   __rw__ uint32_t SSP1CLKDIV;
-         uint32_t RESERVED6[3];
-  __rw__ uint32_t TRACECLKDIV;
+         uint32_t RESERVED6[4];
   __rw__ uint32_t SYSTICKCLKDIV;
-         uint32_t RESERVED7[3];
-
-  /* Offset 0xC0 */
-  __rw__ uint32_t USBCLKSEL;
-  __rw__ uint32_t USBCLKUEN;
-  __rw__ uint32_t USBCLKDIV;
-         uint32_t RESERVED8[1];
+         uint32_t RESERVED7[7];
   __rw__ uint32_t WDTCLKSEL;
   __rw__ uint32_t WDTCLKUEN;
   __rw__ uint32_t WDTCLKDIV;
-         uint32_t RESERVED9[1];
+         uint32_t RESERVED8[1];
 
   /* Offset 0xE0 */
   __rw__ uint32_t CLKOUTCLKSEL;
   __rw__ uint32_t CLKOUTUEN;
   __rw__ uint32_t CLKOUTDIV;
-         uint32_t RESERVED10[5];
+         uint32_t RESERVED9[5];
 
   /* Offset 0x100 */
   __rw__ uint32_t PIOPORCAP0;
   __rw__ uint32_t PIOPORCAP1;
-         uint32_t RESERVED11[18];
+         uint32_t RESERVED10[18];
 
   /* Offset 0x150 */
   __rw__ uint32_t BODCTRL;
-         uint32_t RESERVED12[1];
+         uint32_t RESERVED11[1];
   __rw__ uint32_t SYSTCKCAL;
-         uint32_t RESERVED13[41];
+         uint32_t RESERVED12[1];
+  __rw__ uint32_t MAINREGVOUT0CFG;
+  __rw__ uint32_t MAINREGVOUT1CFG;
+         uint32_t RESERVED13[38];
 
   /* Offset 0x200 */
   __rw__ uint32_t STARTAPRP0;
   __rw__ uint32_t STARTERP0;
   __rw__ uint32_t STARTRSRP0CLR;
   __rw__ uint32_t STARTSRP0;
-  __rw__ uint32_t STARTAPRP1;
-  __rw__ uint32_t STARTERP1;
-  __rw__ uint32_t STARTRSRP1CLR;
-  __rw__ uint32_t STARTSRP1;
-         uint32_t RESERVED14[4];
+         uint32_t RESERVED14[8];
 
   /* Offset 0x230 */
   __rw__ uint32_t PDSLEEPCFG;
   __rw__ uint32_t PDAWAKECFG;
   __rw__ uint32_t PDRUNCFG;
-         uint32_t RESERVED15[110];
+         uint32_t RESERVED15[101];
+  __w__  uint32_t VOUTCFGPROT;
+         uint32_t RESERVED16[8];
   __r__  uint32_t DEVICE_ID;
 } LPC_SYSCON_Type;
 /*------------------Input/Output Configuration--------------------------------*/
@@ -197,24 +187,69 @@ typedef struct
   __rw__ uint32_t WARNINT;
   __rw__ uint32_t WINDOW;
 } LPC_WDT_Type;
-/*------------------Universal Serial Bus--------------------------------------*/
+/*------------------CAN Controller--------------------------------------------*/
 typedef struct
 {
-  __r__  uint32_t DevIntSt; /* USB Device Interrupt Registers */
-  __rw__ uint32_t DevIntEn;
-  __w__  uint32_t DevIntClr;
-  __w__  uint32_t DevIntSet;
+  __rw__ uint32_t CNTL;
+  __rw__ uint32_t STAT;
+  __rw__ uint32_t EC;
+  __rw__ uint32_t BT;
+  __rw__ uint32_t INT;
+  __rw__ uint32_t TEST;
+  __rw__ uint32_t BRPE;
+         uint32_t RESERVED0;
 
-  __w__  uint32_t CmdCode; /* USB Device SIE Command Registers */
-  __r__  uint32_t CmdData;
+  /* Offset 0x20 */
+  __rw__ uint32_t IF1_CMDREQ;
+  __rw__ uint32_t IF1_CMDMSK;
+  __rw__ uint32_t IF1_MSK1;
+  __rw__ uint32_t IF1_MSK2;
+  __rw__ uint32_t IF1_ARB1;
+  __rw__ uint32_t IF1_ARB2;
+  __rw__ uint32_t IF1_MCTRL;
+  __rw__ uint32_t IF1_DA1;
+  __rw__ uint32_t IF1_DA2;
+  __rw__ uint32_t IF1_DB1;
+  __rw__ uint32_t IF1_DB2;
+         uint32_t RESERVED1[13];
 
-  __r__  uint32_t RxData; /* USB Device Transfer Registers */
-  __w__  uint32_t TxData;
-  __r__  uint32_t RxPLen;
-  __w__  uint32_t TxPLen;
-  __rw__ uint32_t Ctrl;
-  __w__  uint32_t DevFIQSel;
-} LPC_USB_Type;
+  /* Offset 0x80 */
+  __rw__ uint32_t IF2_CMDREQ;
+  __rw__ uint32_t IF2_CMDMSK;
+  __rw__ uint32_t IF2_MSK1;
+  __rw__ uint32_t IF2_MSK2;
+  __rw__ uint32_t IF2_ARB1;
+  __rw__ uint32_t IF2_ARB2;
+  __rw__ uint32_t IF2_MCTRL;
+  __rw__ uint32_t IF2_DA1;
+  __rw__ uint32_t IF2_DA2;
+  __rw__ uint32_t IF2_DB1;
+  __rw__ uint32_t IF2_DB2;
+         uint32_t RESERVED2[21];
+
+  /* Offset 0x100 */
+  __r__  uint32_t TXREQ1;
+  __r__  uint32_t TXREQ2;
+         uint32_t RESERVED3[6];
+
+  /* Offset 0x120 */
+  __r__  uint32_t ND1;
+  __r__  uint32_t ND2;
+         uint32_t RESERVED4[6];
+
+  /* Offset 0x140 */
+  __r__  uint32_t IR1;
+  __r__  uint32_t IR2;
+         uint32_t RESERVED5[6];
+
+  /* Offset 0x160 */
+  __r__  uint32_t MSGV1;
+  __r__  uint32_t MSGV2;
+         uint32_t RESERVED6[6];
+
+  /* Offset 0x180 */
+  __rw__ uint32_t CLKDIV;
+} LPC_CAN_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
 #define LPC_FLASH_BASE          (0x00000000UL)
@@ -231,11 +266,11 @@ typedef struct
 #define LPC_CT32B0_BASE         (LPC_APB0_BASE + 0x14000)
 #define LPC_CT32B1_BASE         (LPC_APB0_BASE + 0x18000)
 #define LPC_ADC_BASE            (LPC_APB0_BASE + 0x1C000)
-#define LPC_USB_BASE            (LPC_APB0_BASE + 0x20000)
 #define LPC_PMU_BASE            (LPC_APB0_BASE + 0x38000)
 #define LPC_SSP0_BASE           (LPC_APB0_BASE + 0x40000)
 #define LPC_IOCON_BASE          (LPC_APB0_BASE + 0x44000)
 #define LPC_SYSCON_BASE         (LPC_APB0_BASE + 0x48000)
+#define LPC_CAN_BASE            (LPC_APB0_BASE + 0x50000)
 #define LPC_SSP1_BASE           (LPC_APB0_BASE + 0x58000)
 
 /* AHB peripherals */

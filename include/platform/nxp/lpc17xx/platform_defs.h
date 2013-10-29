@@ -595,17 +595,17 @@ typedef struct
 #define LPC_SC_BASE             (LPC_APB1_BASE + 0x7C000)
 
 /* AHB peripherals */
-#define LPC_EMAC_BASE           (LPC_AHB_BASE  + 0x00000)
-#define LPC_GPDMA_BASE          (LPC_AHB_BASE  + 0x04000)
-#define LPC_GPDMACH0_BASE       (LPC_AHB_BASE  + 0x04100)
-#define LPC_GPDMACH1_BASE       (LPC_AHB_BASE  + 0x04120)
-#define LPC_GPDMACH2_BASE       (LPC_AHB_BASE  + 0x04140)
-#define LPC_GPDMACH3_BASE       (LPC_AHB_BASE  + 0x04160)
-#define LPC_GPDMACH4_BASE       (LPC_AHB_BASE  + 0x04180)
-#define LPC_GPDMACH5_BASE       (LPC_AHB_BASE  + 0x041A0)
-#define LPC_GPDMACH6_BASE       (LPC_AHB_BASE  + 0x041C0)
-#define LPC_GPDMACH7_BASE       (LPC_AHB_BASE  + 0x041E0)
-#define LPC_USB_BASE            (LPC_AHB_BASE  + 0x0C000)
+#define LPC_EMAC_BASE           (LPC_AHB_BASE + 0x00000)
+#define LPC_GPDMA_BASE          (LPC_AHB_BASE + 0x04000)
+#define LPC_GPDMACH0_BASE       (LPC_AHB_BASE + 0x04100)
+#define LPC_GPDMACH1_BASE       (LPC_AHB_BASE + 0x04120)
+#define LPC_GPDMACH2_BASE       (LPC_AHB_BASE + 0x04140)
+#define LPC_GPDMACH3_BASE       (LPC_AHB_BASE + 0x04160)
+#define LPC_GPDMACH4_BASE       (LPC_AHB_BASE + 0x04180)
+#define LPC_GPDMACH5_BASE       (LPC_AHB_BASE + 0x041A0)
+#define LPC_GPDMACH6_BASE       (LPC_AHB_BASE + 0x041C0)
+#define LPC_GPDMACH7_BASE       (LPC_AHB_BASE + 0x041E0)
+#define LPC_USB_BASE            (LPC_AHB_BASE + 0x0C000)
 
 /* General Purpose Input/Output */
 #define LPC_GPIO0_BASE          (LPC_GPIO_BASE + 0x00000)
