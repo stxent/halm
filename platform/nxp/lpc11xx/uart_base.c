@@ -104,10 +104,6 @@ static void uartDeinit(void *object)
   LPC_SYSCON->UARTCLKDIV = 0;
   sysClockDisable(CLK_UART);
 
-  /* Release interface pins */
-  gpioDeinit(&interface->txPin);
-  gpioDeinit(&interface->rxPin);
-
   /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

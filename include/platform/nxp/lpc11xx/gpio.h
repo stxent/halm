@@ -9,36 +9,34 @@
 /*----------------------------------------------------------------------------*/
 #include "../platform_defs.h"
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(gpio_t, enum gpioDir);
-void gpioDeinit(struct Gpio *);
+struct Gpio gpioInit(gpio_t);
+void gpioInput(struct Gpio);
+void gpioOutput(struct Gpio, uint8_t);
+void gpioSetFunction(struct Gpio, uint8_t);
+void gpioSetPull(struct Gpio, enum gpioPull);
+void gpioSetType(struct Gpio, enum gpioType);
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *, gpio_t,
-    uint8_t);
-void gpioSetFunction(struct Gpio *, uint8_t);
-void gpioSetPull(struct Gpio *, enum gpioPull);
-void gpioSetType(struct Gpio *, enum gpioType);
-/*----------------------------------------------------------------------------*/
-static inline uint8_t gpioRead(struct Gpio *p)
+static inline uint8_t gpioRead(struct Gpio gpio)
 {
-  return (((LPC_GPIO_TypeDef *)p->reg)->DATA & (1 << p->pin.offset)) != 0;
+  return (((LPC_GPIO_Type *)gpio.reg)->DATA & (1 << gpio.pin.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioReset(struct Gpio *p)
+static inline void gpioReset(struct Gpio gpio)
 {
-  *(uint32_t *)(((LPC_GPIO_TypeDef *)p->reg)->MASKED_ACCESS
-        + (1 << p->pin.offset)) = 0x000;
+  *(uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
+        + (1 << gpio.pin.offset)) = 0x000;
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioSet(struct Gpio *p)
+static inline void gpioSet(struct Gpio gpio)
 {
-  *(uint32_t *)(((LPC_GPIO_TypeDef *)p->reg)->MASKED_ACCESS
-        + (1 << p->pin.offset)) = 0xFFF;
+  *(uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
+        + (1 << gpio.pin.offset)) = 0xFFF;
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioWrite(struct Gpio *p, uint8_t value)
+static inline void gpioWrite(struct Gpio gpio, uint8_t value)
 {
-  *(uint32_t *)(((LPC_GPIO_TypeDef *)p->reg)->MASKED_ACCESS
-      + (1 << p->pin.offset)) = value ? 0xFFF : 0x000;
+  *(uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
+      + (1 << gpio.pin.offset)) = value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* GPIO_H_ */

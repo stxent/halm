@@ -103,10 +103,6 @@ static void i2cDeinit(void *object)
   LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C;
   sysClockDisable(CLK_I2C);
 
-  /* Release interface pins */
-  gpioDeinit(&interface->sdaPin);
-  gpioDeinit(&interface->sclPin);
-
   /* Reset I2C descriptor */
   setDescriptor(interface->channel, 0);
 }

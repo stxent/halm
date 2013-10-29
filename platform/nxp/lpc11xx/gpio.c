@@ -4,16 +4,16 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
+#include <stdbool.h>
 #include <gpio.h>
-#include <macro.h>
 #include <platform/nxp/lpc11xx/gpio_defs.h>
 #include <platform/nxp/lpc11xx/power.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_TypeDef *calcPort(union GpioPin);
+static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
 /*----------------------------------------------------------------------------*/
-/* IOCON register map for LPC111x */
+static void commonGpioSetup(struct Gpio);
+/*----------------------------------------------------------------------------*/
 static const uint8_t gpioRegMap[4][12] = {
     {0x0C, 0x10, 0x1C, 0x2C, 0x30, 0x34, 0x4C, 0x50, 0x60, 0x64, 0x68, 0x74},
     {0x78, 0x7C, 0x80, 0x90, 0x94, 0xA0, 0xA4, 0xA8, 0x14, 0x38, 0x6C, 0x98},
@@ -21,11 +21,11 @@ static const uint8_t gpioRegMap[4][12] = {
     {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
 };
 /*----------------------------------------------------------------------------*/
-static uint8_t instances = 0;
+static bool powered = false;
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_TypeDef *calcPort(union GpioPin p)
+static inline LPC_GPIO_Type *calcPort(union GpioPin p)
 {
-  return (LPC_GPIO_TypeDef *)((uint32_t)LPC_GPIO0 +
+  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0 +
       ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * p.port);
 }
 /*----------------------------------------------------------------------------*/
@@ -34,108 +34,92 @@ static inline void *calcReg(union GpioPin p)
   return (void *)((uint32_t)LPC_IOCON + (uint32_t)gpioRegMap[p.port][p.offset]);
 }
 /*----------------------------------------------------------------------------*/
-/* Returns 0 when no descriptor associated with pin found */
-const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
-    gpio_t key, uint8_t channel)
+static void commonGpioSetup(struct Gpio gpio)
 {
-  while (list->key && (list->key != key || list->channel != channel))
-    ++list;
+  /* Set GPIO mode */
+  gpioSetFunction(gpio, GPIO_DEFAULT);
+  /* Neither pull-up nor pull-down */
+  gpioSetPull(gpio, GPIO_NOPULL);
+  /* Push-pull output type */
+  gpioSetType(gpio, GPIO_PUSHPULL);
 
-  return list->key ? list : 0;
-}
-/*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(gpio_t id, enum gpioDir dir)
-{
-  uint32_t *iocon;
-  struct Gpio p = {
-      .reg = 0,
-      .pin = {
-          .key = ~0
-      }
-  };
-  union GpioPin converted = {
-      .key = ~id /* Invert unique pin id */
-  };
-
-  /* TODO Add more precise pin checking */
-  assert(id && (uint8_t)converted.port <= 3 && (uint8_t)converted.offset <= 11);
-
-  p.pin = converted;
-  p.reg = calcPort(p.pin);
-
-  iocon = calcReg(p.pin);
-  /* PIO function, no pull, no hysteresis, standard output */
-  *iocon = IOCON_DEFAULT & ~IOCON_MODE_MASK;
-
-  /* Exceptions */
-  if ((p.pin.port == 1 && p.pin.offset <= 2)
-      || (p.pin.port == 0 && p.pin.offset == 11))
-  {
-    *iocon |= 0x01; /* Select GPIO function */
-  }
-  /* TODO Add analog functions */
-
-  if (dir == GPIO_OUTPUT)
-    ((LPC_GPIO_TypeDef *)p.reg)->DIR |= 1 << p.pin.offset;
-  else
-    ((LPC_GPIO_TypeDef *)p.reg)->DIR &= ~(1 << p.pin.offset);
-
-  if (!instances++)
+  if (!powered)
   {
     /* Enable clock to IO configuration block */
     sysClockEnable(CLK_IOCON);
     /* Enable AHB clock to the GPIO domain */
     sysClockEnable(CLK_GPIO);
-  }
 
-  return p;
+    powered = true;
+  }
 }
 /*----------------------------------------------------------------------------*/
-void gpioDeinit(struct Gpio *p)
+struct Gpio gpioInit(gpio_t id)
 {
-  uint32_t *iocon = calcReg(p->pin);
+  struct Gpio gpio;
 
-  ((LPC_GPIO_TypeDef *)p->reg)->DIR &= ~(1 << p->pin.offset);
-  *iocon = IOCON_DEFAULT;
+  gpio.pin.key = ~id;
+  gpio.reg = calcPort(gpio.pin);
 
-  if (!--instances)
+  return gpio;
+}
+/*----------------------------------------------------------------------------*/
+void gpioInput(struct Gpio gpio)
+{
+  commonGpioSetup(gpio);
+  ((LPC_GPIO_Type *)gpio.reg)->DIR &= ~(1 << gpio.pin.offset);
+}
+/*----------------------------------------------------------------------------*/
+void gpioOutput(struct Gpio gpio, uint8_t value)
+{
+  commonGpioSetup(gpio);
+  gpioWrite(gpio, value);
+  ((LPC_GPIO_Type *)gpio.reg)->DIR |= 1 << gpio.pin.offset;
+}
+/*----------------------------------------------------------------------------*/
+void gpioSetFunction(struct Gpio gpio, uint8_t function)
+{
+  uint32_t *iocon = calcReg(gpio.pin);
+  uint32_t value = *iocon;
+
+  switch (function)
   {
-    /* Disable AHB clock to the GPIO domain */
-    sysClockDisable(CLK_GPIO);
-    /* Disable clock to IO configuration block */
-    sysClockDisable(CLK_IOCON);
+    case GPIO_DEFAULT:
+      function = (gpio.pin.port == 1 && gpio.pin.offset <= 2)
+          || (gpio.pin.port == 0 && gpio.pin.offset == 11) ? 1 : 0;
+      break;
+    case GPIO_ANALOG:
+      *iocon = value & ~IOCON_MODE_DIGITAL;
+      return;
   }
-}
-/*----------------------------------------------------------------------------*/
-void gpioSetFunction(struct Gpio *p, uint8_t function)
-{
-  uint32_t *iocon = calcReg(p->pin);
 
-  *iocon &= ~IOCON_FUNC_MASK;
-  *iocon |= IOCON_FUNC(function);
+  *iocon = (value & ~IOCON_FUNC_MASK) | IOCON_MODE_DIGITAL
+      | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetPull(struct Gpio *p, enum gpioPull pull)
+void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
 {
-  uint32_t *iocon = calcReg(p->pin);
+  uint32_t *iocon = calcReg(gpio.pin);
+  uint32_t value = *iocon & ~IOCON_MODE_MASK;
 
   switch (pull)
   {
     case GPIO_NOPULL:
-      *iocon = (*iocon & ~IOCON_MODE_MASK) | IOCON_MODE_INACTIVE;
+      value |= IOCON_MODE_INACTIVE;
       break;
     case GPIO_PULLUP:
-      *iocon = (*iocon & ~IOCON_MODE_MASK) | IOCON_MODE_PULLUP;
+      value |= IOCON_MODE_PULLUP;
       break;
     case GPIO_PULLDOWN:
-      *iocon = (*iocon & ~IOCON_MODE_MASK) | IOCON_MODE_PULLDOWN;
+      value |= IOCON_MODE_PULLDOWN;
       break;
   }
+  *iocon = value;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetType(struct Gpio *p, enum gpioType type)
+void gpioSetType(struct Gpio gpio, enum gpioType type)
 {
-  uint32_t *iocon = calcReg(p->pin);
+  uint32_t *iocon = calcReg(gpio.pin);
 
   switch (type)
   {
