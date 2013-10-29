@@ -4,9 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
+#include <stdbool.h>
 #include <gpio.h>
-#include <macro.h>
 #include <platform/nxp/lpc13xx/gpio_defs.h>
 #include <platform/nxp/lpc13xx/power.h>
 /*----------------------------------------------------------------------------*/
@@ -15,7 +14,6 @@ static inline void *calcReg(union GpioPin p);
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
-/* IOCON register map differs for LPC1315/16/17/45/46/47 */
 static const uint8_t gpioRegMap[4][12] = {
     {0x0C, 0x10, 0x1C, 0x2C, 0x30, 0x34, 0x4C, 0x50, 0x60, 0x64, 0x68, 0x74},
     {0x78, 0x7C, 0x80, 0x90, 0x94, 0xA0, 0xA4, 0xA8, 0x14, 0x38, 0x6C, 0x98},
@@ -58,20 +56,9 @@ static void commonGpioSetup(struct Gpio gpio)
 /*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpio_t id)
 {
-  struct Gpio gpio = {
-      .reg = 0,
-      .pin = {
-          .key = ~0
-      }
-  };
-  union GpioPin converted = {
-      .key = ~id /* Invert unique pin id */
-  };
+  struct Gpio gpio;
 
-  /* TODO Add more precise pin checking */
-  assert(id && (uint8_t)converted.port <= 3 && (uint8_t)converted.offset <= 11);
-
-  gpio.pin = converted;
+  gpio.pin.key = ~id;
   gpio.reg = calcPort(gpio.pin);
 
   return gpio;
@@ -102,15 +89,12 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
           || (gpio.pin.port == 0 && gpio.pin.offset == 11) ? 1 : 0;
       break;
     case GPIO_ANALOG:
-      value &= ~IOCON_MODE_DIGITAL;
+      *iocon = value & ~IOCON_MODE_DIGITAL;
       return;
   }
 
-  value |= IOCON_MODE_DIGITAL;
-  value &= ~IOCON_FUNC_MASK;
-  value |= IOCON_FUNC(function);
-
-  *iocon = value;
+  *iocon = (value & ~IOCON_FUNC_MASK) | IOCON_MODE_DIGITAL
+      | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio gpio, enum gpioPull pull)

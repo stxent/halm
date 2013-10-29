@@ -4,11 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <gpio.h>
-#include <macro.h>
 #include <platform/nxp/lpc17xx/gpio_defs.h>
-#include <platform/nxp/lpc17xx/power.h>
+/*----------------------------------------------------------------------------*/
+#define REG_PIN_TYPE(port) (volatile uint32_t *)(&LPC_PINCON->PINMODE_OD0 + (port))
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline uint32_t *calcPinSelect(union GpioPin);
@@ -50,20 +49,9 @@ static void commonGpioSetup(struct Gpio gpio)
 /*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpio_t id)
 {
-  struct Gpio gpio = {
-      .reg = 0,
-      .pin = {
-          .key = ~0
-      }
-  };
-  union GpioPin converted = {
-      .key = ~id /* Invert unique pin id */
-  };
+  struct Gpio gpio;
 
-  /* TODO Add more precise pin checking */
-  assert(id && (uint8_t)converted.port <= 4 && (uint8_t)converted.offset <= 31);
-
-  gpio.pin = converted;
+  gpio.pin.key = ~id;
   gpio.reg = calcPort(gpio.pin);
 
   return gpio;
@@ -85,8 +73,6 @@ void gpioOutput(struct Gpio gpio, uint8_t value)
 void gpioSetFunction(struct Gpio gpio, uint8_t function)
 {
   /* Function should not be used outside platform drivers */
-  uint32_t *pinptr = calcPinSelect(gpio.pin);
-
   switch (function)
   {
     case GPIO_DEFAULT:
@@ -96,14 +82,15 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
       return;
   }
 
-  *pinptr = (*pinptr & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset))
+  uint32_t *pointer = calcPinSelect(gpio.pin);
+  *pointer = (*pointer & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset))
       | PIN_OFFSET(function, gpio.pin.offset);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
 {
-  uint32_t *pinptr = calcPinMode(gpio.pin);
-  uint32_t value = *pinptr & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset);
+  uint32_t *pointer = calcPinMode(gpio.pin);
+  uint32_t value = *pointer & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset);
 
   switch (pull)
   {
@@ -117,20 +104,22 @@ void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
       value |= PIN_OFFSET(PIN_MODE_PULLDOWN, gpio.pin.offset);
       break;
   }
-  *pinptr = value;
+  *pointer = value;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetType(struct Gpio gpio, enum gpioType type)
 {
-  uint32_t *pinptr = calcPinType(gpio.pin);
+  uint32_t *pointer = calcPinType(gpio.pin);
+  uint32_t value = *pointer;
 
   switch (type)
   {
     case GPIO_PUSHPULL:
-      *pinptr &= ~(1 << gpio.pin.offset);
+      value &= ~(1 << gpio.pin.offset);
       break;
     case GPIO_OPENDRAIN:
-      *pinptr |= 1 << gpio.pin.offset;
+      value |= 1 << gpio.pin.offset;
       break;
   }
+  *pointer = value;
 }
