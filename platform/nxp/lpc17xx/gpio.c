@@ -15,6 +15,8 @@ static inline uint32_t *calcPinSelect(union GpioPin);
 static inline uint32_t *calcPinMode(union GpioPin);
 static inline uint32_t *calcPinType(union GpioPin);
 /*----------------------------------------------------------------------------*/
+static void commonGpioSetup(struct Gpio);
+/*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin p)
 {
   return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
@@ -36,19 +38,19 @@ static inline uint32_t *calcPinType(union GpioPin p)
   return (uint32_t *)(&LPC_PINCON->PINMODE_OD0 + p.port);
 }
 /*----------------------------------------------------------------------------*/
-/* Returns 0 when no descriptor associated with pin found */
-const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *list,
-    gpio_t key, uint8_t channel)
+static void commonGpioSetup(struct Gpio gpio)
 {
-  while (list->key && (list->key != key || list->channel != channel))
-    ++list;
-
-  return list->key ? list : 0;
+  /* Set GPIO mode */
+  gpioSetFunction(gpio, GPIO_DEFAULT);
+  /* Neither pull-up nor pull-down */
+  gpioSetPull(gpio, GPIO_NOPULL);
+  /* Push-pull output type */
+  gpioSetType(gpio, GPIO_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(gpio_t id, enum gpioDir dir)
+struct Gpio gpioInit(gpio_t id)
 {
-  struct Gpio p = {
+  struct Gpio gpio = {
       .reg = 0,
       .pin = {
           .key = ~0
@@ -61,75 +63,74 @@ struct Gpio gpioInit(gpio_t id, enum gpioDir dir)
   /* TODO Add more precise pin checking */
   assert(id && (uint8_t)converted.port <= 4 && (uint8_t)converted.offset <= 31);
 
-  p.pin = converted;
-  p.reg = calcPort(p.pin);
+  gpio.pin = converted;
+  gpio.reg = calcPort(gpio.pin);
 
-  /* Set function 0: GPIO mode for all LPC17xx parts */
-  gpioSetFunction(&p, 0);
-  /* Set mode 2: neither pull-up nor pull-down */
-  gpioSetPull(&p, GPIO_NOPULL);
-  /* Set mode 0: normal mode (not open drain) */
-  gpioSetType(&p, GPIO_PUSHPULL);
-
-  if (dir == GPIO_OUTPUT)
-    ((LPC_GPIO_Type *)p.reg)->DIR |= 1 << p.pin.offset;
-  else
-    ((LPC_GPIO_Type *)p.reg)->DIR &= ~(1 << p.pin.offset);
-
-  /* TODO Add default output value */
-
-  /* There is no need to enable GPIO power because it is enabled on reset */
-  return p;
+  return gpio;
 }
 /*----------------------------------------------------------------------------*/
-void gpioDeinit(struct Gpio *p)
+void gpioInput(struct Gpio gpio)
 {
-  ((LPC_GPIO_Type *)p->reg)->DIR &= ~(1 << p->pin.offset);
-  /* Reset values to default (0) */
-  gpioSetType(p, 0);
-  gpioSetPull(p, 0);
-  gpioSetFunction(p, 0);
+  commonGpioSetup(gpio);
+  ((LPC_GPIO_Type *)gpio.reg)->DIR &= ~(1 << gpio.pin.offset);
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetFunction(struct Gpio *p, uint8_t function)
+void gpioOutput(struct Gpio gpio, uint8_t value)
 {
-  uint32_t *pinptr = calcPinSelect(p->pin);
+  commonGpioSetup(gpio);
+  gpioWrite(gpio, value);
+  ((LPC_GPIO_Type *)gpio.reg)->DIR |= 1 << gpio.pin.offset;
+}
+/*----------------------------------------------------------------------------*/
+void gpioSetFunction(struct Gpio gpio, uint8_t function)
+{
+  /* Function should not be used outside platform drivers */
+  uint32_t *pinptr = calcPinSelect(gpio.pin);
 
-  *pinptr = (*pinptr & ~PIN_OFFSET(PIN_MASK, p->pin.offset))
-      | PIN_OFFSET(function, p->pin.offset);
+  switch (function)
+  {
+    case GPIO_DEFAULT:
+      function = 0; /* Zero function is the default mode */
+      break;
+    case GPIO_ANALOG:
+      return;
+  }
+
+  *pinptr = (*pinptr & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset))
+      | PIN_OFFSET(function, gpio.pin.offset);
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetPull(struct Gpio *p, enum gpioPull pull)
+void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
 {
-  uint32_t *pinptr = calcPinMode(p->pin);
-  uint32_t value = *pinptr & ~PIN_OFFSET(PIN_MASK, p->pin.offset);
+  uint32_t *pinptr = calcPinMode(gpio.pin);
+  uint32_t value = *pinptr & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset);
 
   switch (pull)
   {
     case GPIO_NOPULL:
-      value |= PIN_OFFSET(PIN_MODE_INACTIVE, p->pin.offset);
+      value |= PIN_OFFSET(PIN_MODE_INACTIVE, gpio.pin.offset);
       break;
     case GPIO_PULLUP:
-      value |= PIN_OFFSET(PIN_MODE_PULLUP, p->pin.offset);
+      value |= PIN_OFFSET(PIN_MODE_PULLUP, gpio.pin.offset);
       break;
     case GPIO_PULLDOWN:
-      value |= PIN_OFFSET(PIN_MODE_PULLDOWN, p->pin.offset);
+      value |= PIN_OFFSET(PIN_MODE_PULLDOWN, gpio.pin.offset);
       break;
   }
   *pinptr = value;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetType(struct Gpio *p, enum gpioType type)
+void gpioSetType(struct Gpio gpio, enum gpioType type)
 {
-  uint32_t *pinptr = calcPinType(p->pin);
+  uint32_t *pinptr = calcPinType(gpio.pin);
 
   switch (type)
   {
     case GPIO_PUSHPULL:
-      *pinptr &= ~(1 << p->pin.offset);
+      *pinptr &= ~(1 << gpio.pin.offset);
       break;
     case GPIO_OPENDRAIN:
-      *pinptr |= 1 << p->pin.offset;
+      *pinptr |= 1 << gpio.pin.offset;
       break;
   }
 }

@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-//TODO Move gpioFind to common gpio.c
 #ifndef GPIO_TOP_H_
 #define GPIO_TOP_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <stdint.h>
 #include <mcu.h>
 /*----------------------------------------------------------------------------*/
@@ -18,10 +18,11 @@ typedef uint16_t gpio_t;
 /* This method supports up to 2^7 ports and 2^8 pins on each port */
 #define GPIO_TO_PIN(port, pin) ((gpio_t)(~((uint8_t)port << 8 | (uint8_t)pin)))
 /*----------------------------------------------------------------------------*/
-enum gpioDir
+/* Reserved function values */
+enum
 {
-  GPIO_INPUT = 0,
-  GPIO_OUTPUT
+  GPIO_DEFAULT = 0x7F,
+  GPIO_ANALOG = 0x7E
 };
 /*----------------------------------------------------------------------------*/
 enum gpioPull
@@ -60,10 +61,13 @@ struct Gpio
   union GpioPin pin;
 };
 /*----------------------------------------------------------------------------*/
-static inline gpio_t gpioGetKey(struct Gpio *p)
+const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *, gpio_t,
+    uint8_t);
+/*----------------------------------------------------------------------------*/
+static inline gpio_t gpioGetKey(struct Gpio gpio)
 {
   /* Returns zero when pin not initialized */
-  return ~p->pin.key;
+  return ~gpio.pin.key;
 }
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH

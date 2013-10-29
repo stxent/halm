@@ -184,12 +184,6 @@ static void sspDeinit(void *object)
       break;
   }
 
-  /* Release interface pins */
-//  gpioDeinit(&interface->csPin);
-  gpioDeinit(&interface->mosiPin);
-  gpioDeinit(&interface->misoPin);
-  gpioDeinit(&interface->sckPin);
-
   /* Reset SSP descriptor */
   setDescriptor(interface->channel, 0);
 }

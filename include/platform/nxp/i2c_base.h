@@ -31,8 +31,6 @@ struct I2cBase
   /* Interrupt identifier */
   irq_t irq;
 
-  /* Interface pins */
-  struct Gpio sclPin, sdaPin;
   /* Peripheral block identifier */
   uint8_t channel;
 };

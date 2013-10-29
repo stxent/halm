@@ -201,10 +201,6 @@ static void uartDeinit(void *object)
   /* Disable peripheral power */
   sysPowerDisable(uartPower[interface->channel]);
 
-  /* Release interface pins */
-  gpioDeinit(&interface->txPin);
-  gpioDeinit(&interface->rxPin);
-
   /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

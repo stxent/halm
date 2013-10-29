@@ -157,10 +157,6 @@ static void i2cDeinit(void *object)
   /* Disable peripheral power */
   sysPowerDisable(i2cPower[interface->channel]);
 
-  /* Release interface pins */
-  gpioDeinit(&interface->sdaPin);
-  gpioDeinit(&interface->sclPin);
-
   /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

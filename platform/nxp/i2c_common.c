@@ -27,19 +27,20 @@ void i2cSetRate(struct I2cBase *interface, uint32_t rate)
 enum result i2cSetupPins(struct I2cBase *interface,
     const struct I2cBaseConfig *config)
 {
-  const struct GpioDescriptor *pin;
+  const struct GpioDescriptor *pinDescriptor;
+  struct Gpio pin;
 
   /* Setup I2C serial clock pin */
-  if (!(pin = gpioFind(i2cPins, config->scl, interface->channel)))
+  if (!(pinDescriptor = gpioFind(i2cPins, config->scl, interface->channel)))
     return E_VALUE;
-  interface->sclPin = gpioInit(config->scl, GPIO_INPUT);
-  gpioSetFunction(&interface->sclPin, pin->value);
+  gpioInput((pin = gpioInit(config->scl)));
+  gpioSetFunction(pin, pinDescriptor->value);
 
   /* Setup I2C serial data pin */
-  if (!(pin = gpioFind(i2cPins, config->sda, interface->channel)))
+  if (!(pinDescriptor = gpioFind(i2cPins, config->sda, interface->channel)))
     return E_VALUE;
-  interface->sdaPin = gpioInit(config->sda, GPIO_INPUT);
-  gpioSetFunction(&interface->sdaPin, pin->value);
+  gpioInput((pin = gpioInit(config->sda)));
+  gpioSetFunction(pin, pinDescriptor->value);
 
   return E_OK;
 }

@@ -12,19 +12,20 @@ extern const struct GpioDescriptor uartPins[];
 enum result uartSetupPins(struct UartBase *interface,
     const struct UartBaseConfig *config)
 {
-  const struct GpioDescriptor *pin;
+  const struct GpioDescriptor *pinDescriptor;
+  struct Gpio pin;
 
   /* Setup UART RX pin */
-  if (!(pin = gpioFind(uartPins, config->rx, interface->channel)))
+  if (!(pinDescriptor = gpioFind(uartPins, config->rx, interface->channel)))
     return E_VALUE;
-  interface->rxPin = gpioInit(config->rx, GPIO_INPUT);
-  gpioSetFunction(&interface->rxPin, pin->value);
+  gpioInput((pin = gpioInit(config->rx)));
+  gpioSetFunction(pin, pinDescriptor->value);
 
   /* Setup UART TX pin */
-  if (!(pin = gpioFind(uartPins, config->tx, interface->channel)))
+  if (!(pinDescriptor = gpioFind(uartPins, config->tx, interface->channel)))
     return E_VALUE;
-  interface->txPin = gpioInit(config->tx, GPIO_OUTPUT);
-  gpioSetFunction(&interface->txPin, pin->value);
+  gpioOutput((pin = gpioInit(config->tx)), 1);
+  gpioSetFunction(pin, pinDescriptor->value);
 
   return E_OK;
 }

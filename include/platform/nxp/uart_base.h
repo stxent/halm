@@ -43,8 +43,6 @@ struct UartBase
   /* Interrupt identifier */
   irq_t irq;
 
-  /* Interface pins */
-  struct Gpio rxPin, txPin;
   /* Peripheral block identifier */
   uint8_t channel;
 };

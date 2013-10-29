@@ -120,10 +120,6 @@ static void tmrDeinit(void *object)
   /* Disable Timer/Counter clock */
   sysClockDisable(timerClock[device->channel]);
 
-  /* Release external clock pin when used*/
-  if (gpioGetKey(&device->input))
-    gpioDeinit(&device->input);
-
   /* Reset Timer descriptor */
   setDescriptor(device->channel, 0);
 }

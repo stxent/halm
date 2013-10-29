@@ -12,31 +12,33 @@ extern const struct GpioDescriptor sspPins[];
 enum result sspSetupPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
-  const struct GpioDescriptor *pin;
+  /* TODO Pin configuration for SSP slave */
+  const struct GpioDescriptor *pinDescriptor;
+  struct Gpio pin;
 
   /* Setup MISO pin */
-  if (!(pin = gpioFind(sspPins, config->miso, interface->channel)))
+  if (!(pinDescriptor = gpioFind(sspPins, config->miso, interface->channel)))
     return E_VALUE;
-  interface->misoPin = gpioInit(config->miso, GPIO_INPUT);
-  gpioSetFunction(&interface->misoPin, pin->value);
+  gpioInput((pin = gpioInit(config->miso)));
+  gpioSetFunction(pin, pinDescriptor->value);
 
   /* Setup MOSI pin */
-  if (!(pin = gpioFind(sspPins, config->mosi, interface->channel)))
+  if (!(pinDescriptor = gpioFind(sspPins, config->mosi, interface->channel)))
     return E_VALUE;
-  interface->mosiPin = gpioInit(config->mosi, GPIO_OUTPUT);
-  gpioSetFunction(&interface->mosiPin, pin->value);
+  gpioOutput((pin = gpioInit(config->mosi)), 0);
+  gpioSetFunction(pin, pinDescriptor->value);
 
   /* Setup Serial Clock pin */
-  if (!(pin = gpioFind(sspPins, config->sck, interface->channel)))
+  if (!(pinDescriptor = gpioFind(sspPins, config->sck, interface->channel)))
     return E_VALUE;
-  interface->sckPin = gpioInit(config->sck, GPIO_OUTPUT);
-  gpioSetFunction(&interface->sckPin, pin->value);
+  gpioOutput((pin = gpioInit(config->sck)), 0);
+  gpioSetFunction(pin, pinDescriptor->value);
 
   /* Setup CS pin, only in slave mode */
-//  if (!(pin = gpioFind(sspPins, config->cs, interface->channel)))
+//  if (!(pinDescriptor = gpioFind(sspPins, config->cs, interface->channel)))
 //    return E_VALUE;
-//  interface->csPin = gpioInit(config->cs, GPIO_INPUT);
-//  gpioSetFunction(&interface->csPin, pin->value);
+//  gpioInput((pin = gpioInit(config->cs)));
+//  gpioSetFunction(pin, pinDescriptor->value);
 
   return E_OK;
 }

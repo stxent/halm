@@ -19,6 +19,7 @@ enum romCommand
   SKIP_ROM    = 0xCC
 };
 /*----------------------------------------------------------------------------*/
+static void adjustPins(struct OneWire *, const struct OneWireConfig *);
 static void beginTransmission(struct OneWire *);
 static void interruptHandler(void *);
 static void sendWord(struct OneWire *, uint8_t);
@@ -44,6 +45,12 @@ static const struct InterfaceClass serialTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *OneWire = &serialTable;
+/*----------------------------------------------------------------------------*/
+static void adjustPins(struct OneWire *interface __attribute__((unused)),
+    const struct OneWireConfig *config)
+{
+  gpioSetType(gpioInit(config->tx), GPIO_OPENDRAIN);
+}
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWire *interface)
 {
@@ -136,7 +143,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
   if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  gpioSetType(&interface->parent.txPin, GPIO_OPENDRAIN);
+  adjustPins(interface, config);
 
   /* Compute rates */
   interface->dataRate = uartCalcRate(object, RATE_DATA);

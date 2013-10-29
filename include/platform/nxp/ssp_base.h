@@ -33,8 +33,6 @@ struct SspBase
   /* Interrupt identifier */
   irq_t irq;
 
-  /* Interface pins */
-  struct Gpio csPin, misoPin, mosiPin, sckPin;
   /* Peripheral block identifier */
   uint8_t channel;
 };

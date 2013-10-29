@@ -156,8 +156,8 @@ static void *controllerCreate(void *object, gpio_t output, uint8_t percentage)
   updateResolution(device, (uint8_t)freeChannel);
 
   /* Initialize match output pin */
-  pwm->pin = gpioInit(output, GPIO_OUTPUT);
-  gpioSetFunction(&pwm->pin, UNPACK_FUNCTION(pin->value));
+  pwm->pin = gpioInit(output);
+  gpioSetFunction(pwm->pin, UNPACK_FUNCTION(pin->value));
 
   pwmSetDutyCycle(pwm, percentage);
 

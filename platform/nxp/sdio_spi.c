@@ -103,7 +103,7 @@ static enum result acquireBus(struct SdioSpi *device)
 
   if ((res = ifSet(device->interface, IF_ACQUIRE, 0)) != E_OK)
     return res;
-  gpioReset(&device->csPin);
+  gpioReset(device->csPin);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -174,7 +174,7 @@ static enum result waitForData(struct SdioSpi *device, uint8_t *value)
 /*----------------------------------------------------------------------------*/
 static void releaseBus(struct SdioSpi *device)
 {
-  gpioSet(&device->csPin);
+  gpioSet(device->csPin);
   ifSet(device->interface, IF_RELEASE, 0);
 }
 /*----------------------------------------------------------------------------*/
@@ -204,7 +204,7 @@ static enum result resetCard(struct SdioSpi *device)
     ifWrite(device->interface, &dummyByte, 1);
 
   /* Enable chip select */
-  gpioReset(&device->csPin);
+  gpioReset(device->csPin);
 
   /* Send reset command */
   sendCommand(device, CMD_GO_IDLE_STATE, 0);
@@ -373,28 +373,22 @@ static enum result sdioInit(void *object, const void *configPtr)
   struct SdioSpi *device = object;
   enum result res;
 
-  device->csPin = gpioInit(config->cs, GPIO_OUTPUT);
-  if (!gpioGetKey(&device->csPin))
+  device->csPin = gpioInit(config->cs);
+  if (!gpioGetKey(device->csPin))
     return E_ERROR;
-  gpioSet(&device->csPin);
+  gpioOutput(device->csPin, 1);
 
   device->interface = config->interface;
 
   if ((res = resetCard(device)) != E_OK)
-  {
-    /* TODO Remove or add hot plug */
-    gpioDeinit(&device->csPin);
     return res;
-  }
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void sdioDeinit(void *object)
+static void sdioDeinit(void *object __attribute__((unused)))
 {
-  struct SdioSpi *device = object;
 
-  gpioDeinit(&device->csPin);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioCallback(void *object __attribute__((unused)),

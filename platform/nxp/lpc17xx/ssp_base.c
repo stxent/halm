@@ -161,12 +161,6 @@ static void sspDeinit(void *object)
   /* Disable peripheral power */
   sysPowerDisable(sspPower[interface->channel]);
 
-  /* Release interface pins */
-//  gpioDeinit(&interface->csPin);
-  gpioDeinit(&interface->mosiPin);
-  gpioDeinit(&interface->misoPin);
-  gpioDeinit(&interface->sckPin);
-
   /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }
