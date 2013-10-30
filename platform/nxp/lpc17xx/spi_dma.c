@@ -10,6 +10,7 @@
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static enum result dmaSetup(struct SpiDma *, int8_t, int8_t);
+static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
@@ -100,15 +101,23 @@ static enum result dmaSetup(struct SpiDma *interface, int8_t rxChannel,
   interface->rxDma = init(GpDma, channels + 0);
   if (!interface->rxDma)
     return E_ERROR;
-  dmaCallback(interface->rxDma, dmaHandler, interface);
   interface->txDma = init(GpDma, channels + 1);
   if (!interface->txDma)
     return E_ERROR;
-  dmaCallback(interface->txDma, dmaHandler, interface);
   interface->txMockDma = init(GpDma, channels + 2);
   if (!interface->txMockDma)
     return E_ERROR;
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct SpiDma *interface = object;
+  LPC_SSP_Type *reg = interface->parent.reg;
+
+  reg->IMSC &= ~IMSC_RTIM;
+  if (interface->callback)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *object, const void *configPtr)
@@ -134,6 +143,9 @@ static enum result spiInit(void *object, const void *configPtr)
   interface->callback = 0;
   interface->lock = SPIN_UNLOCKED;
 
+  /* Set pointer to interrupt handler */
+  interface->parent.handler = interruptHandler;
+
   /* Initialize SSP block */
   LPC_SSP_Type *reg = interface->parent.reg;
 
@@ -147,8 +159,13 @@ static enum result spiInit(void *object, const void *configPtr)
     reg->CR0 |= CR0_CPOL;
 
   sspSetRate(object, config->rate);
-  reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
-  reg->CR1 = CR1_SSE; /* Enable peripheral */
+  /* Enable peripheral */
+  reg->CR1 = CR1_SSE;
+
+  /* Set lowest interrupt priority */
+  irqSetPriority(interface->parent.irq, 0);
+  /* Enable SPI interrupt */
+  irqEnable(interface->parent.irq);
 
   return E_OK;
 }
@@ -179,6 +196,7 @@ static enum result spiCallback(void *object, void (*callback)(void *),
 static enum result spiGet(void *object, enum ifOption option, void *data)
 {
   struct SpiDma *interface = object;
+  LPC_SSP_Type *reg = interface->parent.reg;
 
   switch (option)
   {
@@ -186,8 +204,8 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
       *(uint32_t *)data = sspGetRate(object);
       return E_OK;
     case IF_READY:
-      return dmaActive(interface->rxDma) || dmaActive(interface->txDma) ?
-          E_BUSY : E_OK;
+      return dmaActive(interface->rxDma) || dmaActive(interface->txDma)
+          || reg->SR & SR_BSY ? E_BUSY : E_OK;
     default:
       return E_ERROR;
   }
@@ -202,6 +220,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
     case IF_ACQUIRE:
       return spinTryLock(&interface->lock) ? E_OK : E_BUSY;
     case IF_BLOCKING:
+      dmaCallback(interface->rxDma, 0, 0);
       interface->blocking = true;
       return E_OK;
     case IF_RATE:
@@ -211,6 +230,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       spinUnlock(&interface->lock);
       return E_OK;
     case IF_ZEROCOPY:
+      dmaCallback(interface->rxDma, dmaHandler, interface);
       interface->blocking = false;
       return E_OK;
     default:
@@ -227,6 +247,17 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 
   if (!length)
     return 0;
+
+  /* Clear input FIFO */
+  while (reg->SR & SR_RNE)
+    (void)reg->DR;
+
+  /* Clear timeout interrupt flags */
+  reg->ICR = ICR_RORIC | ICR_RTIC;
+
+  /* Clear DMA requests */
+  reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
+  reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
 
   if (dmaStart(interface->rxDma, buffer, source, length) != E_OK)
     return 0;
@@ -247,12 +278,25 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   LPC_SSP_Type *reg = interface->parent.reg;
   void *destination = (void *)&((LPC_SSP_Type *)interface->parent.reg)->DR;
 
-  if (length && dmaStart(interface->txDma, destination, buffer, length) == E_OK)
-  {
-    if (interface->blocking)
-      while (dmaActive(interface->txDma) || reg->SR & SR_BSY);
-    return length;
-  }
+  if (!length)
+    return 0;
 
-  return 0;
+  /* Clear timeout interrupt flags */
+  reg->ICR = ICR_RORIC | ICR_RTIC;
+
+  /* Enable timeout interrupt when in zero copy mode */
+  if (!interface->blocking)
+    reg->IMSC |= IMSC_RTIM;
+
+  /* Clear DMA requests */
+  reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
+  reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
+
+  if (dmaStart(interface->txDma, destination, buffer, length) != E_OK)
+    return 0;
+
+  if (interface->blocking)
+    while (dmaActive(interface->txDma) || reg->SR & SR_BSY);
+
+  return length;
 }
