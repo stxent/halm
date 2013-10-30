@@ -195,14 +195,12 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   if (!length)
     return 0;
 
-  //TODO In SPI: is it necessary to reset previous transmission and clear FIFO?
-
   interface->rxBuffer = buffer;
   interface->txBuffer = 0;
   interface->left = interface->length = length;
 
   /* Clear interrupt flags and enable interrupts */
-  reg->ICR = ICR_RTIC;
+  reg->ICR = ICR_RORIC | ICR_RTIC;
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   /* Initiate reception by setting pending interrupt flag */
@@ -227,7 +225,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   interface->left = interface->length = length;
 
   /* Clear interrupt flags and enable interrupts */
-  reg->ICR = ICR_RTIC;
+  reg->ICR = ICR_RORIC | ICR_RTIC;
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   /* Initiate transmission by setting pending interrupt flag */

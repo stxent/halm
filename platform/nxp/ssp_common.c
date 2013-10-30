@@ -51,8 +51,7 @@ void sspSetRate(struct SspBase *interface, uint32_t rate)
   divider = (sspGetClock(interface) >> 1) / rate - 1;
   /* FIXME Add more precise calculation of SSP dividers */
   reg->CPSR = 2;
-  reg->CR0 &= ~CR0_SCR_MASK;
-  reg->CR0 |= CR0_SCR(divider);
+  reg->CR0 = (reg->CR0 & ~CR0_SCR_MASK) | CR0_SCR(divider);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetRate(struct SspBase *interface)
