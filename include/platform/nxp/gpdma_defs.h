@@ -1,5 +1,5 @@
 /*
- * platform/nxp/lpc17xx/gpdma_defs.h
+ * platform/nxp/gpdma_defs.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -16,16 +16,16 @@
 #define C_CONTROL_SIZE(size)            (size)
 #define C_CONTROL_SIZE_MASK             0x0FFF
 #define C_CONTROL_SRC_BURST(burst)      ((burst) << 12)
-#define C_CONTROL_DEST_BURST(burst)     ((burst) << 15)
+#define C_CONTROL_DST_BURST(burst)      ((burst) << 15)
 #define C_CONTROL_SRC_WIDTH(width)      ((width) << 18)
-#define C_CONTROL_DEST_WIDTH(width)     ((width) << 21)
+#define C_CONTROL_DST_WIDTH(width)      ((width) << 21)
 #define C_CONTROL_SRC_INC               BIT(26) /* Source increment */
-#define C_CONTROL_DEST_INC              BIT(27) /* Destination increment */
+#define C_CONTROL_DST_INC               BIT(27) /* Destination increment */
 #define C_CONTROL_INT                   BIT(31) /* Terminal count interrupt */
 /*------------------DMA Channel Configuration register------------------------*/
 #define C_CONFIG_ENABLE                 BIT(0)
 #define C_CONFIG_SRC_PERIPH(periph)     ((periph >> 2) << 1)
-#define C_CONFIG_DEST_PERIPH(periph)    ((periph >> 2) << 6)
+#define C_CONFIG_DST_PERIPH(periph)     ((periph >> 2) << 6)
 /* Transfer type */
 #define C_CONFIG_TYPE(type)             ((type) << 11)
 /* Interrupt error mask */

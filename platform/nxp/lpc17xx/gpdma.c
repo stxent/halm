@@ -7,8 +7,8 @@
 #include <assert.h>
 #include <irq.h>
 #include <spinlock.h>
+#include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/lpc17xx/gpdma.h>
-#include <platform/nxp/lpc17xx/gpdma_defs.h>
 #include <platform/nxp/lpc17xx/power.h>
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT 8
@@ -120,24 +120,24 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   channel->reg = calcPeripheral(channel->number);
 
   channel->control = C_CONTROL_INT | C_CONTROL_SRC_WIDTH(config->width)
-      | C_CONTROL_DEST_WIDTH(config->width);
+      | C_CONTROL_DST_WIDTH(config->width);
   /* LPC17xx does not support 2 bytes burst */
   if (config->burst >= DMA_BURST_4)
   {
     channel->control |= C_CONTROL_SRC_BURST(config->burst - 1)
-        | C_CONTROL_DEST_BURST(config->burst - 1);
+        | C_CONTROL_DST_BURST(config->burst - 1);
   }
   if (config->source.increment)
     channel->control |= C_CONTROL_SRC_INC;
   if (config->destination.increment)
-    channel->control |= C_CONTROL_DEST_INC;
+    channel->control |= C_CONTROL_DST_INC;
 
   channel->config = C_CONFIG_TYPE(config->direction)
       | C_CONFIG_IE | C_CONFIG_ITC;
   if (config->source.line != GPDMA_LINE_MEMORY)
     channel->config |= C_CONFIG_SRC_PERIPH(config->source.line);
   if (config->destination.line != GPDMA_LINE_MEMORY)
-    channel->config |= C_CONFIG_DEST_PERIPH(config->destination.line);
+    channel->config |= C_CONFIG_DST_PERIPH(config->destination.line);
 
   /* Reset multiplexer register values */
   channel->muxMask = 0xFF;
