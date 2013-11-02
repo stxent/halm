@@ -10,6 +10,8 @@
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/clocking_defs.h>
 /*----------------------------------------------------------------------------*/
+#define INT_OSC_FREQUENCY 4e6
+/*----------------------------------------------------------------------------*/
 static void stubDisable(void);
 static bool stubReady(void);
 /*----------------------------------------------------------------------------*/
@@ -44,10 +46,10 @@ const struct ClockClass *ExternalOsc = &extOscTable;
 const struct ClockClass *SystemPll = &sysPllTable;
 const struct ClockClass *MainClock = &mainClockTable;
 /*----------------------------------------------------------------------------*/
-static const uint32_t intOscFrequency = 4000000;
-static uint8_t pllDivider = 0;
+static const uint32_t intOscFrequency = INT_OSC_FREQUENCY;
 static uint32_t extOscFrequency = 0, pllFrequency = 0;
-uint32_t sysCoreClock = 4000000; //FIXME
+static uint8_t pllDivider = 0;
+uint32_t sysCoreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void)
 {

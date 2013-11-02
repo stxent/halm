@@ -11,6 +11,8 @@
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/clocking_defs.h>
 /*----------------------------------------------------------------------------*/
+#define INT_OSC_FREQUENCY 12e6
+/*----------------------------------------------------------------------------*/
 static void stubDisable(void);
 static bool stubReady(void);
 /*----------------------------------------------------------------------------*/
@@ -73,9 +75,9 @@ const struct ClockClass *UsbPll = &usbPllTable;
 const struct ClockClass *MainClock = &mainClockTable;
 const struct ClockClass *UsbClock = &usbClockTable;
 /*----------------------------------------------------------------------------*/
-static const uint32_t intOscFrequency = 12000000;
+static const uint32_t intOscFrequency = INT_OSC_FREQUENCY;
 static uint32_t extOscFrequency = 0, pllFrequency = 0;
-uint32_t sysCoreClock = 12000000;
+uint32_t sysCoreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void)
 {
