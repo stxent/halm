@@ -34,7 +34,7 @@ const struct TimerClass *GpTimer = &timerTable;
 static void interruptHandler(void *object)
 {
   struct GpTimer *timer = object;
-  LPC_TMR_Type *reg = timer->parent.reg;
+  LPC_TIMER_Type *reg = timer->parent.reg;
 
   if (reg->IR & IR_MATCH_INTERRUPT(0)) /* Match 0 */
   {
@@ -61,7 +61,7 @@ static enum result tmrInit(void *object, const void *configPtr)
   /* Set pointer to interrupt handler */
   timer->parent.handler = interruptHandler;
 
-  LPC_TMR_Type *reg = timer->parent.reg;
+  LPC_TIMER_Type *reg = timer->parent.reg;
 
   reg->MCR = 0; /* Reset control register */
   reg->PC = reg->TC = 0; /* Reset internal counters */
@@ -91,7 +91,7 @@ static void tmrDeinit(void *object)
 static void tmrCallback(void *object, void (*callback)(void *), void *argument)
 {
   struct GpTimer *timer = object;
-  LPC_TMR_Type *reg = timer->parent.reg;
+  LPC_TIMER_Type *reg = timer->parent.reg;
 
   timer->callback = callback;
   timer->callbackArgument = argument;
@@ -107,7 +107,7 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
 /*----------------------------------------------------------------------------*/
 static void tmrControl(void *object, bool state)
 {
-  LPC_TMR_Type *reg = ((struct GpTimer *)object)->parent.reg;
+  LPC_TIMER_Type *reg = ((struct GpTimer *)object)->parent.reg;
 
   if (!state)
   {
@@ -120,13 +120,13 @@ static void tmrControl(void *object, bool state)
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  ((LPC_TMR_Type *)((struct GpTimer *)object)->parent.reg)->PR =
+  ((LPC_TIMER_Type *)((struct GpTimer *)object)->parent.reg)->PR =
       gpTimerGetClock(object) / frequency - 1;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
-  LPC_TMR_Type *reg = ((struct GpTimer *)object)->parent.reg;
+  LPC_TIMER_Type *reg = ((struct GpTimer *)object)->parent.reg;
 
   /* Set match value and enable timer reset when value is greater than zero */
   reg->MR0 = overflow;
@@ -143,5 +143,5 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrValue(void *object)
 {
-  return ((LPC_TMR_Type *)((struct GpTimer *)object)->parent.reg)->TC;
+  return ((LPC_TIMER_Type *)((struct GpTimer *)object)->parent.reg)->TC;
 }

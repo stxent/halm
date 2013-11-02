@@ -91,25 +91,25 @@ static enum result tmrInit(void *object, const void *configPtr)
     case 0:
       sysPowerEnable(PWR_TIM0);
       sysClockControl(CLK_TIMER0, DEFAULT_DIV);
-      device->reg = LPC_TIM0;
+      device->reg = LPC_TIMER0;
       device->irq = TIMER0_IRQ;
       break;
     case 1:
       sysPowerEnable(PWR_TIM1);
       sysClockControl(CLK_TIMER1, DEFAULT_DIV);
-      device->reg = LPC_TIM1;
+      device->reg = LPC_TIMER1;
       device->irq = TIMER1_IRQ;
       break;
     case 2:
       sysPowerEnable(PWR_TIM2);
       sysClockControl(CLK_TIMER2, DEFAULT_DIV);
-      device->reg = LPC_TIM2;
+      device->reg = LPC_TIMER2;
       device->irq = TIMER2_IRQ;
       break;
     case 3:
       sysPowerEnable(PWR_TIM3);
       sysClockControl(CLK_TIMER3, DEFAULT_DIV);
-      device->reg = LPC_TIM3;
+      device->reg = LPC_TIMER3;
       device->irq = TIMER3_IRQ;
       break;
   }

@@ -87,22 +87,22 @@ static enum result tmrInit(void *object, const void *configPtr)
   {
     case 0:
       sysClockEnable(CLK_CT16B0);
-      device->reg = LPC_TMR16B0;
+      device->reg = LPC_TIMER16B0;
       device->irq = TIMER16B0_IRQ;
       break;
     case 1:
       sysClockEnable(CLK_CT16B1);
-      device->reg = LPC_TMR16B1;
+      device->reg = LPC_TIMER16B1;
       device->irq = TIMER16B1_IRQ;
       break;
     case 2:
       sysClockEnable(CLK_CT32B0);
-      device->reg = LPC_TMR32B0;
+      device->reg = LPC_TIMER32B0;
       device->irq = TIMER32B0_IRQ;
       break;
     case 3:
       sysClockEnable(CLK_CT32B1);
-      device->reg = LPC_TMR32B1;
+      device->reg = LPC_TIMER32B1;
       device->irq = TIMER32B1_IRQ;
       break;
   }

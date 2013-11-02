@@ -40,7 +40,7 @@ typedef struct
          uint32_t RESERVED2[12];
   __rw__ uint32_t CTCR;
   __rw__ uint32_t PWMC; /* May not be available on all parts */
-} LPC_TMR_Type;
+} LPC_TIMER_Type;
 /*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
 {
