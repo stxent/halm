@@ -16,6 +16,8 @@
 #include <stdint.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
+typedef uint8_t dma_event_t;
+/*----------------------------------------------------------------------------*/
 /** DMA burst transfer size. */
 enum dmaBurst
 {
@@ -48,9 +50,13 @@ struct DmaClass
 
   bool (*active)(void *);
   void (*callback)(void *, void (*)(void *), void *);
-  void (*link)(void *, void *, void *, void *, const void *, uint32_t);
   enum result (*start)(void *, void *, const void *, uint32_t);
   void (*stop)(void *);
+
+  /* Support for scatter-gather operations */
+  void *(*listAllocate)(void *, uint32_t);
+  void (*listAppend)(void *, void *, uint32_t, void *, const void *, uint32_t);
+  enum result (*listStart)(void *, const void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Dma
@@ -81,24 +87,46 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Link next element to the linked list for scatter-gather transfers.
+ * Allocate memory for linked list used by scatter-gather transfers.
  * @param channel Pointer to Dma object.
- * @param current Pointer to current linked list item.
- * @param next Pointer to next linked list item or zero on list end.
+ * @param size Size of the list in elements.
+ * @return Pointer to the beginning of the allocated memory space.
+ */
+static inline void *dmaListAllocate(void *channel, uint32_t size)
+{
+  return ((struct DmaClass *)CLASS(channel))->listAllocate(channel, size);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Link next element to the linked list.
+ * @param channel Pointer to Dma object.
+ * @param list Pointer to a first element of the linked list.
+ * @param index Index of the currently processing element in linked list.
  * @param destination Destination memory address.
  * @param source Source memory address.
  * @param size Size of the transfer.
  * @return @b E_OK on success.
  */
-static inline void dmaLink(void *channel, void *current, void *next,
+static inline void dmaListAppend(void *channel, void *first, uint32_t index,
     void *destination, const void *source, uint32_t size)
 {
-  ((struct DmaClass *)CLASS(channel))->link(channel, current, next,
+  ((struct DmaClass *)CLASS(channel))->listAppend(channel, first, index,
       destination, source, size);
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Start DMA transfer.
+ * Begin the execution of previously created scatter-gather transfer.
+ * @param channel Pointer to Dma object.
+ * @param list Pointer to a first element of the linked list.
+ * @return @b E_OK on success.
+ */
+static inline enum result dmaListStart(void *channel, const void *first)
+{
+  return ((struct DmaClass *)CLASS(channel))->listStart(channel, first);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Start transfer.
  * @param channel Pointer to Dma object.
  * @param destination Destination memory address.
  * @param source Source memory address.

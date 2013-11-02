@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <platform/nxp/gpdma.h>
+#include <platform/nxp/serial_dma.h>
 #include <platform/nxp/uart_defs.h>
-#include <platform/nxp/lpc17xx/gpdma.h>
-#include <platform/nxp/lpc17xx/serial_dma.h>
 /*----------------------------------------------------------------------------*/
 #define RX_FIFO_LEVEL 0 /* 1 character */
 /*----------------------------------------------------------------------------*/
@@ -20,20 +20,6 @@ static enum result serialGet(void *, enum ifOption, void *);
 static enum result serialSet(void *, enum ifOption, const void *);
 static uint32_t serialRead(void *, uint8_t *, uint32_t);
 static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
-/*----------------------------------------------------------------------------*/
-static const enum gpDmaLine dmaTxLines[] = {
-    GPDMA_LINE_UART0_TX,
-    GPDMA_LINE_UART1_TX,
-    GPDMA_LINE_UART2_TX,
-    GPDMA_LINE_UART3_TX
-};
-
-static const enum gpDmaLine dmaRxLines[] = {
-    GPDMA_LINE_UART0_RX,
-    GPDMA_LINE_UART1_RX,
-    GPDMA_LINE_UART2_RX,
-    GPDMA_LINE_UART3_RX
-};
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass serialTable = {
     .size = sizeof(struct SerialDma),
@@ -62,29 +48,19 @@ static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
 {
   struct GpDmaConfig channels[2] = {
       {
+          .event = GPDMA_UART0_RX + interface->parent.channel,
           .channel = rxChannel,
-          .source = {
-              .line = dmaRxLines[interface->parent.channel],
-              .increment = false
-          },
-          .destination = {
-              .line = GPDMA_LINE_MEMORY,
-              .increment = true
-          },
-          .direction = GPDMA_DIR_P2M,
+          .source.increment = false,
+          .destination.increment = true,
+          .type = GPDMA_TYPE_P2M,
           .burst = DMA_BURST_1,
           .width = DMA_WIDTH_BYTE
       }, {
+          .event = GPDMA_UART0_TX + interface->parent.channel,
           .channel = txChannel,
-          .source = {
-              .line = GPDMA_LINE_MEMORY,
-              .increment = true
-          },
-          .destination = {
-              .line = dmaTxLines[interface->parent.channel],
-              .increment = false
-          },
-          .direction = GPDMA_DIR_M2P,
+          .source.increment = true,
+          .destination.increment = false,
+          .type = GPDMA_TYPE_M2P,
           .burst = DMA_BURST_1,
           .width = DMA_WIDTH_BYTE
       }

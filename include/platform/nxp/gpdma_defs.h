@@ -24,8 +24,8 @@
 #define C_CONTROL_INT                   BIT(31) /* Terminal count interrupt */
 /*------------------DMA Channel Configuration register------------------------*/
 #define C_CONFIG_ENABLE                 BIT(0)
-#define C_CONFIG_SRC_PERIPH(periph)     ((periph >> 2) << 1)
-#define C_CONFIG_DST_PERIPH(periph)     ((periph >> 2) << 6)
+#define C_CONFIG_SRC_PERIPH(periph)     ((periph) << 1)
+#define C_CONFIG_DST_PERIPH(periph)     ((periph) << 6)
 /* Transfer type */
 #define C_CONFIG_TYPE(type)             ((type) << 11)
 /* Interrupt error mask */

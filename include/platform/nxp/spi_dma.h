@@ -1,5 +1,5 @@
 /*
- * platform/nxp/lpc17xx/spi_dma.h
+ * platform/nxp/spi_dma.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */

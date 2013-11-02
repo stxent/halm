@@ -1,5 +1,5 @@
 /*
- * platform/nxp/lpc17xx/serial_dma.h
+ * platform/nxp/serial_dma.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
