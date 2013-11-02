@@ -65,7 +65,7 @@ static const struct ClockClass usbClockTable = {
     .enable = usbClockEnable,
     .ready = stubReady
 };
-///*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 const struct ClockClass *ExternalOsc = &extOscTable;
 const struct ClockClass *InternalOsc = &intOscTable;
 const struct ClockClass *SystemPll = &sysPllTable;

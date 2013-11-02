@@ -8,7 +8,7 @@
 #define PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 3
-/*------------------System Configuration Registers----------------------------*/
+/*------------------System Configuration registers----------------------------*/
 typedef struct
 {
   __rw__ uint32_t SYSMEMREMAP; /* System memory remap */
