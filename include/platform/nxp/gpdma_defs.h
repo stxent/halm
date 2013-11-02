@@ -13,27 +13,27 @@
 /* 0 for little-endian, 1 for big-endian */
 #define DMA_ENDIANNESS                  BIT(1)
 /*------------------DMA Channel Control register------------------------------*/
-#define C_CONTROL_SIZE(size)            (size)
-#define C_CONTROL_SIZE_MASK             0x0FFF
-#define C_CONTROL_SRC_BURST(burst)      ((burst) << 12)
-#define C_CONTROL_DST_BURST(burst)      ((burst) << 15)
-#define C_CONTROL_SRC_WIDTH(width)      ((width) << 18)
-#define C_CONTROL_DST_WIDTH(width)      ((width) << 21)
-#define C_CONTROL_SRC_INC               BIT(26) /* Source increment */
-#define C_CONTROL_DST_INC               BIT(27) /* Destination increment */
-#define C_CONTROL_INT                   BIT(31) /* Terminal count interrupt */
+#define CONTROL_SIZE(size)              (size)
+#define CONTROL_SIZE_MASK               0xFFFUL
+#define CONTROL_SRC_BURST(burst)        BIT_FIELD(burst, 12)
+#define CONTROL_DST_BURST(burst)        BIT_FIELD(burst, 15)
+#define CONTROL_SRC_WIDTH(width)        BIT_FIELD(width, 18)
+#define CONTROL_DST_WIDTH(width)        BIT_FIELD(width, 21)
+#define CONTROL_SRC_INC                 BIT(26) /* Source increment */
+#define CONTROL_DST_INC                 BIT(27) /* Destination increment */
+#define CONTROL_INT                     BIT(31) /* Terminal count interrupt */
 /*------------------DMA Channel Configuration register------------------------*/
-#define C_CONFIG_ENABLE                 BIT(0)
-#define C_CONFIG_SRC_PERIPH(periph)     ((periph) << 1)
-#define C_CONFIG_DST_PERIPH(periph)     ((periph) << 6)
+#define CONFIG_ENABLE                   BIT(0)
+#define CONFIG_SRC_PERIPH(periph)       BIT_FIELD(periph, 1)
+#define CONFIG_DST_PERIPH(periph)       BIT_FIELD(periph, 6)
 /* Transfer type */
-#define C_CONFIG_TYPE(type)             ((type) << 11)
+#define CONFIG_TYPE(type)               BIT_FIELD(type, 11)
 /* Interrupt error mask */
-#define C_CONFIG_IE                     BIT(14)
+#define CONFIG_IE                       BIT(14)
 /* Terminal count interrupt mask */
-#define C_CONFIG_ITC                    BIT(15)
+#define CONFIG_ITC                      BIT(15)
 /* Indicates whether FIFO not empty */
-#define C_CONFIG_ACTIVE                 BIT(17)
-#define C_CONFIG_HALT                   BIT(18)
+#define CONFIG_ACTIVE                   BIT(17)
+#define CONFIG_HALT                     BIT(18)
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_DEFS_H_ */

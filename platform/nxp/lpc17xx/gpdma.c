@@ -179,29 +179,28 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   channel->reg = calcPeripheral(channel->number);
 
   uint8_t peripheral = eventToPeripheral(config->event);
-  channel->control = C_CONTROL_INT | C_CONTROL_SRC_WIDTH(config->width)
-      | C_CONTROL_DST_WIDTH(config->width);
-  channel->config = C_CONFIG_TYPE(config->type)
-      | C_CONFIG_IE | C_CONFIG_ITC;
+  channel->control = CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
+      | CONTROL_DST_WIDTH(config->width);
+  channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
 
   /* Two bytes burst mode is unsupported */
   switch (config->type)
   {
     case GPDMA_TYPE_M2M:
       /* Set 4-byte burst size for memory transfers */
-      channel->control |= C_CONTROL_SRC_BURST(1) | C_CONTROL_DST_BURST(1);
+      channel->control |= CONTROL_SRC_BURST(1) | CONTROL_DST_BURST(1);
       break;
     case GPDMA_TYPE_M2P:
-      channel->control |= C_CONTROL_SRC_BURST(0);
+      channel->control |= CONTROL_SRC_BURST(1);
       if (config->burst >= DMA_BURST_4)
-        channel->control |= C_CONTROL_DST_BURST(config->burst - 1);
-      channel->config |= C_CONFIG_DST_PERIPH(peripheral);
+        channel->control |= CONTROL_DST_BURST(config->burst - 1);
+      channel->config |= CONFIG_DST_PERIPH(peripheral);
       break;
     case GPDMA_TYPE_P2M:
-      channel->control |= C_CONTROL_DST_BURST(0);
+      channel->control |= CONTROL_DST_BURST(1);
       if (config->burst >= DMA_BURST_4)
-        channel->control |= C_CONTROL_SRC_BURST(config->burst - 1);
-      channel->config |= C_CONFIG_SRC_PERIPH(peripheral);
+        channel->control |= CONTROL_SRC_BURST(config->burst - 1);
+      channel->config |= CONFIG_SRC_PERIPH(peripheral);
       break;
   }
 
@@ -213,9 +212,9 @@ static enum result gpdmaInit(void *object, const void *configPtr)
     setEventMux(channel, peripheral);
 
   if (config->source.increment)
-    channel->control |= C_CONTROL_SRC_INC;
+    channel->control |= CONTROL_SRC_INC;
   if (config->destination.increment)
-    channel->control |= C_CONTROL_DST_INC;
+    channel->control |= CONTROL_DST_INC;
 
   if (!instances++)
   {
@@ -246,7 +245,7 @@ static bool gpdmaActive(void *object)
   LPC_GPDMACH_Type *reg = channel->reg;
 
   return descriptors[channel->number] == channel
-      && (reg->CONFIG & C_CONFIG_ENABLE);
+      && (reg->CONFIG & CONFIG_ENABLE);
 }
 /*----------------------------------------------------------------------------*/
 static void gpdmaCallback(void *object, void (*callback)(void *),
@@ -273,7 +272,7 @@ enum result gpdmaStart(void *object, void *destination, const void *source,
 
   reg->SRCADDR = (uint32_t)source;
   reg->DESTADDR = (uint32_t)destination;
-  reg->CONTROL = channel->control | C_CONTROL_SIZE(size);
+  reg->CONTROL = channel->control | CONTROL_SIZE(size);
   reg->CONFIG = channel->config;
   reg->LLI = 0;
 
@@ -281,7 +280,7 @@ enum result gpdmaStart(void *object, void *destination, const void *source,
   LPC_GPDMA->INTTCCLEAR |= 1 << channel->number;
   LPC_GPDMA->INTERRCLEAR |= 1 << channel->number;
 
-  reg->CONFIG |= C_CONFIG_ENABLE;
+  reg->CONFIG |= CONFIG_ENABLE;
 
   return E_OK;
 }
@@ -289,8 +288,7 @@ enum result gpdmaStart(void *object, void *destination, const void *source,
 void gpdmaStop(void *object)
 {
   /* Disable channel */
-  ((LPC_GPDMACH_Type *)((struct GpDma *)object)->reg)->CONFIG &=
-      ~C_CONFIG_ENABLE;
+  ((LPC_GPDMACH_Type *)((struct GpDma *)object)->reg)->CONFIG &= ~CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
 static void *gpdmaListAllocate(void *object __attribute__((unused)),
@@ -311,7 +309,7 @@ static void gpdmaListAppend(void *object, void *first, uint32_t index,
   item->source = (uint32_t)source;
   item->destination = (uint32_t)destination;
   item->next = 0;
-  item->control = ((struct GpDma *)object)->control | C_CONTROL_SIZE(size);
+  item->control = ((struct GpDma *)object)->control | CONTROL_SIZE(size);
 }
 /*----------------------------------------------------------------------------*/
 static enum result gpdmaListStart(void *object, const void *firstPtr)
@@ -337,7 +335,7 @@ static enum result gpdmaListStart(void *object, const void *firstPtr)
   LPC_GPDMA->INTTCCLEAR |= 1 << channel->number;
   LPC_GPDMA->INTERRCLEAR |= 1 << channel->number;
 
-  reg->CONFIG |= C_CONFIG_ENABLE;
+  reg->CONFIG |= CONFIG_ENABLE;
 
   return E_OK;
 }

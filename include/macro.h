@@ -8,6 +8,6 @@
 #define MACRO_H_
 /*----------------------------------------------------------------------------*/
 #define BIT(offset)                     (1UL << (offset))
-#define BIT_FIELD(value, offset)        ((unsigned long)value << (offset))
+#define BIT_FIELD(value, offset)        ((unsigned long)(value) << (offset))
 /*----------------------------------------------------------------------------*/
 #endif /* MACRO_H_ */
