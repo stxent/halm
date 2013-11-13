@@ -18,28 +18,29 @@ extern int main(void); /* Newlib */
 /*----------------------------------------------------------------------------*/
 void RESET_ISR(void)
 {
-  register unsigned long *src, *dst;
+  register unsigned long *dst __asm__ ("r0");
+  register unsigned long *src __asm__ ("r1");
 
   /* Copy the data segment initializers from flash to RAM */
-  src = &_etext;
-  dst = &_data;
-  while (dst < &_edata)
+  for (dst = &_data, src = &_etext; dst < &_edata;)
     *dst++ = *src++;
 
   /* Zero fill the BSS segment */
-  dst = &_bss;
-  while (dst < &_ebss)
+  for (dst = &_bss; dst < &_ebss;)
     *dst++ = 0;
 
 #if defined(__cplusplus)
-  /* Call C++ library initialization */
-  __libc_init_array();
+  __libc_init_array(); /* Call C++ library initialization */
 #endif
 
 #ifdef __REDLIB__
   __main();
 #else
   main();
+#endif
+
+#if defined(__cplusplus)
+  __libc_fini_array();
 #endif
 
   while (1);
