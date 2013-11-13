@@ -36,22 +36,22 @@ static inline void *calcReg(union GpioPin p)
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio gpio)
 {
+  if (!powered)
+  {
+    powered = true;
+
+    /* Enable clock to IO configuration block */
+    sysClockEnable(CLK_IOCON);
+    /* Enable AHB clock to the GPIO domain */
+    sysClockEnable(CLK_GPIO);
+  }
+
   /* Set GPIO mode */
   gpioSetFunction(gpio, GPIO_DEFAULT);
   /* Neither pull-up nor pull-down */
   gpioSetPull(gpio, GPIO_NOPULL);
   /* Push-pull output type */
   gpioSetType(gpio, GPIO_PUSHPULL);
-
-  if (!powered)
-  {
-    /* Enable clock to IO configuration block */
-    sysClockEnable(CLK_IOCON);
-    /* Enable AHB clock to the GPIO domain */
-    sysClockEnable(CLK_GPIO);
-
-    powered = true;
-  }
 }
 /*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpio_t id)
@@ -73,8 +73,8 @@ void gpioInput(struct Gpio gpio)
 void gpioOutput(struct Gpio gpio, uint8_t value)
 {
   commonGpioSetup(gpio);
-  gpioWrite(gpio, value);
   ((LPC_GPIO_Type *)gpio.reg)->DIR |= 1 << gpio.pin.offset;
+  gpioWrite(gpio, value);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio gpio, uint8_t function)

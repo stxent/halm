@@ -66,8 +66,8 @@ void gpioInput(struct Gpio gpio)
 void gpioOutput(struct Gpio gpio, uint8_t value)
 {
   commonGpioSetup(gpio);
-  gpioWrite(gpio, value);
   ((LPC_GPIO_Type *)gpio.reg)->DIR |= 1 << gpio.pin.offset;
+  gpioWrite(gpio, value);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio gpio, uint8_t function)
