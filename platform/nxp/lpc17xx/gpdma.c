@@ -74,15 +74,6 @@ static uint8_t eventToPeripheral(dma_event_t event)
 {
   assert(event < GPDMA_EVENT_END);
 
-  if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
-    return 8 + (event - GPDMA_MAT0_0);
-
-//  if (event >= GPDMA_UART0_RX && event <= GPDMA_UART3_RX)
-//    return 9 + ((event - GPDMA_UART0_RX) << 1);
-//
-//  if (event >= GPDMA_UART0_TX && event <= GPDMA_UART3_TX)
-//    return 8 + ((event - GPDMA_UART0_TX) << 1);
-
   switch (event)
   {
     case GPDMA_SSP0_RX:
@@ -108,9 +99,10 @@ static uint8_t eventToPeripheral(dma_event_t event)
       return 4;
     case GPDMA_DAC:
       return 7;
+    default:
+      /* Event is GPDMA_MAT0_0 or GPDMA_MAT3_1 */
+      return 8 + (event - GPDMA_MAT0_0);
   }
-
-  return 0xFF;
 }
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct GpDma *controller)
@@ -154,11 +146,13 @@ void DMA_ISR(void)
     {
       struct GpDma * volatile channel = descriptors[counter];
 
-      spinLock(&lock);
-      descriptors[counter] = 0; /* Clear channel descriptor */
-      spinUnlock(&lock);
-
-      /* TODO Invoke callback on errors */
+      if (!(((LPC_GPDMACH_Type *)channel->reg)->CONFIG & CONFIG_ENABLE))
+      {
+        /* Clear descriptor when channel is disabled or transfer is completed */
+        spinLock(&lock);
+        descriptors[counter] = 0;
+        spinUnlock(&lock);
+      }
       if ((terminalStat & mask) && channel->callback)
         channel->callback(channel->callbackArgument);
     }
@@ -172,13 +166,14 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   const struct GpDmaConfig * const config = configPtr;
   struct GpDma *channel = object;
 
-  assert(config && config->channel < CHANNEL_COUNT);
+  assert(config->channel < CHANNEL_COUNT);
 
   channel->callback = 0;
   channel->number = (uint8_t)config->channel;
   channel->reg = calcPeripheral(channel->number);
 
-  uint8_t peripheral = eventToPeripheral(config->event);
+  const uint8_t peripheral = eventToPeripheral(config->event);
+
   channel->control = CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
       | CONTROL_DST_WIDTH(config->width);
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
