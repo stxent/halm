@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <entity.h>
-#include <error.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct TimerClass

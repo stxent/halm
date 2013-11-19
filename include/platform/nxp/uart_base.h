@@ -1,5 +1,5 @@
 /*
- * platform/nxp/lpc13xx/uart_base.h
+ * platform/nxp/uart_base.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
