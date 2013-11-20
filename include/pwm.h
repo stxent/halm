@@ -16,7 +16,6 @@ struct PwmControllerClass
 {
   CLASS_HEADER
 
-  /* Virtual functions */
   void *(*create)(void *, gpio_t, uint8_t);
 };
 /*----------------------------------------------------------------------------*/
@@ -25,9 +24,8 @@ struct PwmClass
 {
   CLASS_HEADER
 
-  /* Virtual functions */
-  void (*control)(void *, bool);
   void (*setDutyCycle)(void *, uint8_t);
+  void (*setEnabled)(void *, bool);
   void (*setPeriod)(void *, uint16_t);
 };
 /*----------------------------------------------------------------------------*/
@@ -56,16 +54,6 @@ static inline void *pwmCreate(void *controller, gpio_t pin, uint8_t value)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Start or stop pulse width modulation output.
- * @param channel Pointer to Pwm object.
- * @param state PWM channel state, @b true to start or @b false to stop output.
- */
-static inline void pwmControl(void *channel, bool state)
-{
-  ((struct PwmClass *)CLASS(channel))->control(channel, state);
-}
-/*----------------------------------------------------------------------------*/
-/**
  * Set duty cycle of pulse width modulated signal.
  * @param channel Pointer to Pwm object.
  * @param percentage Duty cycle in percents.
@@ -73,6 +61,16 @@ static inline void pwmControl(void *channel, bool state)
 static inline void pwmSetDutyCycle(void *channel, uint8_t percentage)
 {
   ((struct PwmClass *)CLASS(channel))->setDutyCycle(channel, percentage);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Start or stop pulse width modulation output.
+ * @param channel Pointer to Pwm object.
+ * @param state PWM channel state, @b true to start or @b false to stop output.
+ */
+static inline void pwmSetEnabled(void *channel, bool state)
+{
+  ((struct PwmClass *)CLASS(channel))->setEnabled(channel, state);
 }
 /*----------------------------------------------------------------------------*/
 /**

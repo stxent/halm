@@ -22,7 +22,7 @@ static const struct TimerClass timerTable = {
     .deinit = tmrDeinit,
 
     .callback = 0,
-    .control = 0,
+    .setEnabled = 0,
     .setFrequency = 0,
     .setOverflow = 0,
     .value = 0

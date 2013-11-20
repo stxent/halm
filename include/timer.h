@@ -17,7 +17,7 @@ struct TimerClass
   CLASS_HEADER
 
   void (*callback)(void *, void (*)(void *), void *);
-  void (*control)(void *, bool);
+  void (*setEnabled)(void *, bool);
   void (*setFrequency)(void *, uint32_t);
   void (*setOverflow)(void *, uint32_t);
   uint32_t (*value)(void *);
@@ -45,9 +45,9 @@ static inline void timerCallback(void *timer, void (*callback)(void *),
  * @param timer Pointer to Timer object.
  * @param state Timer state: @b true to start timer or @b false to stop timer.
  */
-static inline void timerControl(void *timer, bool state)
+static inline void timerSetEnabled(void *timer, bool state)
 {
-  ((struct TimerClass *)CLASS(timer))->control(timer, state);
+  ((struct TimerClass *)CLASS(timer))->setEnabled(timer, state);
 }
 /*----------------------------------------------------------------------------*/
 /**

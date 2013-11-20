@@ -33,7 +33,7 @@ static enum result controllerInit(void *, const void *);
 static void controllerDeinit(void *);
 static void *controllerCreate(void *, gpio_t, uint8_t);
 /*----------------------------------------------------------------------------*/
-static void channelControl(void *, bool);
+static void channelSetEnabled(void *, bool);
 static void channelSetDutyCycle(void *, uint8_t);
 static void channelSetPeriod(void *, uint16_t);
 /*----------------------------------------------------------------------------*/
@@ -50,8 +50,8 @@ static const struct PwmClass channelTable = {
     .init = 0,
     .deinit = 0,
 
-    .control = channelControl,
     .setDutyCycle = channelSetDutyCycle,
+    .setEnabled = channelSetEnabled,
     .setPeriod = channelSetPeriod
 };
 /*----------------------------------------------------------------------------*/
@@ -91,7 +91,7 @@ static void updateResolution(struct GpTimerPwm *device, uint8_t channel)
   reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
-static void channelControl(void *object, bool state)
+static void channelSetEnabled(void *object, bool state)
 {
   struct GpTimerPwmChannel *pwm = object;
   LPC_TIMER_Type *reg = pwm->controller->timer->parent.reg;

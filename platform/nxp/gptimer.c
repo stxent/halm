@@ -12,7 +12,7 @@ static void interruptHandler(void *);
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrCallback(void *, void (*)(void *), void *);
-static void tmrControl(void *, bool);
+static void tmrSetEnabled(void *, bool);
 static void tmrSetFrequency(void *, uint32_t);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrValue(void *);
@@ -23,7 +23,7 @@ static const struct TimerClass timerTable = {
     .deinit = tmrDeinit,
 
     .callback = tmrCallback,
-    .control = tmrControl,
+    .setEnabled = tmrSetEnabled,
     .setFrequency = tmrSetFrequency,
     .setOverflow = tmrSetOverflow,
     .value = tmrValue
@@ -105,7 +105,7 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
     reg->MCR &= ~MCR_INTERRUPT(0);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrControl(void *object, bool state)
+static void tmrSetEnabled(void *object, bool state)
 {
   LPC_TIMER_Type *reg = ((struct GpTimer *)object)->parent.reg;
 

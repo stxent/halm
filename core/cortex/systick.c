@@ -23,7 +23,7 @@ static enum result setDescriptor(struct SysTickTimer *);
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrCallback(void *, void (*)(void *), void *);
-static void tmrControl(void *, bool);
+static void tmrSetEnabled(void *, bool);
 static void tmrSetFrequency(void *, uint32_t);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrValue(void *);
@@ -34,7 +34,7 @@ static const struct TimerClass timerTable = {
     .deinit = tmrDeinit,
 
     .callback = tmrCallback,
-    .control = tmrControl,
+    .setEnabled = tmrSetEnabled,
     .setFrequency = tmrSetFrequency,
     .setOverflow = tmrSetOverflow,
     .value = tmrValue
@@ -127,7 +127,7 @@ static void tmrCallback(void *object, void (*callback)(void *),
     SYSTICK->CTRL &= ~CTRL_TICKINT;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrControl(void *object __attribute__((unused)), bool state)
+static void tmrSetEnabled(void *object __attribute__((unused)), bool state)
 {
   if (state)
     SYSTICK->CTRL |= CTRL_ENABLE;
