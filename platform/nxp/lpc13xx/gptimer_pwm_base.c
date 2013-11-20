@@ -7,7 +7,7 @@
 #include <platform/nxp/gptimer_pwm.h>
 /*----------------------------------------------------------------------------*/
 /* Pack match channel and pin function in one value */
-#define PACK_VALUE(function, channel)   (((channel) << 4) | (function))
+#define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor gpTimerPwmPins[] = {
     {

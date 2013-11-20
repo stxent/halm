@@ -6,9 +6,9 @@
 
 #include <assert.h>
 #include <platform/nxp/platform_defs.h>
-#include <platform/nxp/lpc17xx/power.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/clocking_defs.h>
+#include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY 4e6
 /*----------------------------------------------------------------------------*/

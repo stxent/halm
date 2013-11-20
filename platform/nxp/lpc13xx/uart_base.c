@@ -8,7 +8,7 @@
 #include <irq.h>
 #include <platform/nxp/uart_base.h>
 #include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/power.h>
+#include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
 /* UART clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1
@@ -19,7 +19,7 @@ static enum result setDescriptor(uint8_t, struct UartBase *);
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static struct UartBase *descriptors[] = {0};
+static struct UartBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass uartTable = {
     .size = 0, /* Abstract class */

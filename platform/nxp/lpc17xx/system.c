@@ -6,7 +6,7 @@
 
 #include <macro.h>
 #include <platform/nxp/platform_defs.h>
-#include <platform/nxp/lpc17xx/power.h>
+#include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 /* Changes PCONP register, reset value 0x042887DE */
 inline void sysPowerEnable(enum sysPowerDevice block)

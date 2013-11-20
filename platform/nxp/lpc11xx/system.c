@@ -6,9 +6,9 @@
 
 #include <macro.h>
 #include <platform/nxp/platform_defs.h>
-#include <platform/nxp/lpc13xx/power.h>
+#include <platform/nxp/lpc11xx/system.h>
 /*----------------------------------------------------------------------------*/
-/* Changes SYSAHBCLKCTRL register, reset value 0x0000485F */
+/* Changes SYSAHBCLKCTRL register, reset value 0x0000085F */
 void sysClockEnable(enum sysClockDevice block)
 {
   LPC_SYSCON->SYSAHBCLKCTRL |= BIT(block);

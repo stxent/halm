@@ -7,23 +7,20 @@
 #include <assert.h>
 #include <macro.h>
 #include <platform/nxp/ssp_base.h>
-#include "platform/nxp/lpc13xx/clocking.h"
-#include "platform/nxp/lpc13xx/power.h"
+#include <platform/nxp/lpc13xx/clocking.h>
+#include <platform/nxp/lpc13xx/system.h>
+#include <platform/nxp/lpc13xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 /* SSP clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
-/*----------------------------------------------------------------------------*/
-//FIXME Move to header
-#define PRESETCTRL_SSP0 BIT(0)
-#define PRESETCTRL_SSP1 BIT(2)
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static struct SspBase *descriptors[] = {0, 0};
+static struct SspBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass sspTable = {
     .size = 0, /* Abstract class */

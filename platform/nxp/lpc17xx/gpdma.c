@@ -11,7 +11,7 @@
 #include <platform/nxp/gpdma.h>
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/platform_defs.h>
-#include <platform/nxp/lpc17xx/power.h>
+#include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT 8
 /*----------------------------------------------------------------------------*/
@@ -25,6 +25,7 @@ struct GpDmaListItem
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t);
 /*----------------------------------------------------------------------------*/
+static void blockEnabled(bool);
 static uint8_t eventToPeripheral(dma_event_t);
 static enum result setDescriptor(uint8_t, struct GpDma *);
 static void setEventMux(struct GpDma *, uint8_t);
@@ -62,12 +63,30 @@ static struct GpDma * volatile descriptors[8] = {0};
 /* Access to descriptor array */
 static spinlock_t lock = SPIN_UNLOCKED;
 /* Initialized descriptors count */
-static uint16_t instances = 0;
+static uint8_t instances = 0;
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t channel)
 {
   return (void *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
       - (uint32_t)LPC_GPDMACH0) * channel);
+}
+/*----------------------------------------------------------------------------*/
+static void blockEnabled(bool state)
+{
+  if (state)
+  {
+    sysPowerEnable(PWR_GPDMA);
+    LPC_GPDMA->CONFIG |= DMA_ENABLE;
+    irqEnable(DMA_IRQ);
+    /* TODO Add priority configuration for GPDMA block */
+    /* setPriority(DMA_IRQ, config->priority); */
+  }
+  else
+  {
+    irqDisable(DMA_IRQ);
+    LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
+    sysPowerDisable(PWR_GPDMA);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t eventToPeripheral(dma_event_t event)
@@ -100,7 +119,7 @@ static uint8_t eventToPeripheral(dma_event_t event)
     case GPDMA_DAC:
       return 7;
     default:
-      /* Event is GPDMA_MAT0_0 or GPDMA_MAT3_1 */
+      /* Timer match event */
       return 8 + (event - GPDMA_MAT0_0);
   }
 }
@@ -212,13 +231,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
     channel->control |= CONTROL_DST_INC;
 
   if (!instances++)
-  {
-    sysPowerEnable(PWR_GPDMA);
-    LPC_GPDMA->CONFIG |= DMA_ENABLE;
-    irqEnable(DMA_IRQ);
-    /* TODO Add priority configuration for GPDMA block */
-    /* setPriority(DMA_IRQ, config->priority); */
-  }
+    blockEnabled(true);
 
   return E_OK;
 }
@@ -227,11 +240,7 @@ static void gpdmaDeinit(void *object __attribute__((unused)))
 {
   /* Disable DMA peripheral when no active descriptors exist */
   if (!--instances)
-  {
-    irqDisable(DMA_IRQ);
-    LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
-    sysPowerDisable(PWR_GPDMA);
-  }
+    blockEnabled(false);
 }
 /*----------------------------------------------------------------------------*/
 static bool gpdmaActive(void *object)

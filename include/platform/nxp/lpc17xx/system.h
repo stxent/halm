@@ -1,11 +1,11 @@
 /*
- * platform/nxp/lpc17xx/power.h
+ * platform/nxp/lpc17xx/system.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef POWER_H_
-#define POWER_H_
+#ifndef SYSTEM_H_
+#define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
 enum sysPowerDevice
@@ -88,4 +88,4 @@ void sysClockControl(enum sysClockDevice, enum sysClockDiv);
 void sysPowerEnable(enum sysPowerDevice);
 void sysPowerDisable(enum sysPowerDevice);
 /*----------------------------------------------------------------------------*/
-#endif /* POWER_H_ */
+#endif /* SYSTEM_H_ */

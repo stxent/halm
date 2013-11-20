@@ -7,11 +7,12 @@
 #include <stdbool.h>
 #include <gpio.h>
 #include <platform/nxp/lpc13xx/gpio_defs.h>
-#include <platform/nxp/lpc13xx/power.h>
+#include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
 /*----------------------------------------------------------------------------*/
+static void blockEnabled(bool);
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
 static const uint8_t gpioRegMap[4][12] = {
@@ -21,7 +22,8 @@ static const uint8_t gpioRegMap[4][12] = {
     {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
 };
 /*----------------------------------------------------------------------------*/
-static bool powered = false;
+/* Initialized pins count */
+static uint8_t instances = 0;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin p)
 {
@@ -34,17 +36,27 @@ static inline void *calcReg(union GpioPin p)
   return (void *)((uint32_t)LPC_IOCON + (uint32_t)gpioRegMap[p.port][p.offset]);
 }
 /*----------------------------------------------------------------------------*/
-static void commonGpioSetup(struct Gpio gpio)
+static void blockEnabled(bool state)
 {
-  if (!powered)
+  if (state)
   {
-    powered = true;
-
     /* Enable clock to IO configuration block */
     sysClockEnable(CLK_IOCON);
     /* Enable AHB clock to the GPIO domain */
     sysClockEnable(CLK_GPIO);
   }
+  else
+  {
+    /* Disable all IO clocks */
+    sysClockDisable(CLK_GPIO);
+    sysClockDisable(CLK_IOCON);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void commonGpioSetup(struct Gpio gpio)
+{
+  if (!instances++)
+    blockEnabled(true);
 
   /* Set GPIO mode */
   gpioSetFunction(gpio, GPIO_DEFAULT);

@@ -1,11 +1,11 @@
 /*
- * platform/nxp/lpc13xx/power.h
+ * platform/nxp/lpc13xx/system.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef POWER_H_
-#define POWER_H_
+#ifndef SYSTEM_H_
+#define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
 enum sysPowerDevice
@@ -49,4 +49,4 @@ void sysClockDisable(enum sysClockDevice);
 void sysPowerEnable(enum sysPowerDevice);
 void sysPowerDisable(enum sysPowerDevice);
 /*----------------------------------------------------------------------------*/
-#endif /* POWER_H_ */
+#endif /* SYSTEM_H_ */

@@ -7,9 +7,11 @@
 #include <assert.h>
 #include <delay.h>
 #include <platform/nxp/platform_defs.h>
-#include <platform/nxp/lpc11xx/power.h>
 #include <platform/nxp/lpc11xx/clocking.h>
 #include <platform/nxp/lpc11xx/clocking_defs.h>
+#include <platform/nxp/lpc11xx/system.h>
+/*----------------------------------------------------------------------------*/
+#define INT_OSC_FREQUENCY 12e6
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void);
 static bool stubReady(void);
@@ -55,11 +57,9 @@ const struct ClockClass *InternalOsc = &intOscTable;
 const struct ClockClass *SystemPll = &sysPllTable;
 const struct ClockClass *MainClock = &mainClockTable;
 /*----------------------------------------------------------------------------*/
-static const uint32_t intOscFrequency = 12000000;
+static const uint32_t intOscFrequency = INT_OSC_FREQUENCY;
 static uint32_t extOscFrequency = 0, pllFrequency = 0;
-/*----------------------------------------------------------------------------*/
-//TODO Move declaration from system.h to other file
-uint32_t sysCoreClock = 12000000; //FIXME
+uint32_t sysCoreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void)
 {

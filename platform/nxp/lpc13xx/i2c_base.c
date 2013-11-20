@@ -8,17 +8,15 @@
 #include <macro.h>
 #include <platform/nxp/i2c_base.h>
 #include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/power.h>
-/*----------------------------------------------------------------------------*/
-//FIXME Move to header
-#define PRESETCTRL_I2C BIT(1)
+#include <platform/nxp/lpc13xx/system.h>
+#include <platform/nxp/lpc13xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *, const void *);
 static void i2cDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static struct I2cBase *descriptors[] = {0};
+static struct I2cBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass i2cTable = {
     .size = 0, /* Abstract class */

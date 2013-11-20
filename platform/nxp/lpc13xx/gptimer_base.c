@@ -7,14 +7,14 @@
 #include <assert.h>
 #include <platform/nxp/gptimer_base.h>
 #include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/power.h>
+#include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *descriptors[] = {0, 0, 0, 0};
+static struct GpTimerBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
     .size = 0, /* Abstract class */
