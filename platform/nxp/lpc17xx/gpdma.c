@@ -25,7 +25,7 @@ struct GpDmaListItem
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t);
 /*----------------------------------------------------------------------------*/
-static void blockEnabled(bool);
+static void blockSetEnabled(bool);
 static uint8_t eventToPeripheral(dma_event_t);
 static enum result setDescriptor(uint8_t, struct GpDma *);
 static void setEventMux(struct GpDma *, uint8_t);
@@ -71,7 +71,7 @@ static inline void *calcPeripheral(uint8_t channel)
       - (uint32_t)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
-static void blockEnabled(bool state)
+static void blockSetEnabled(bool state)
 {
   if (state)
   {
@@ -231,7 +231,7 @@ static enum result gpdmaInit(void *object, const void *configPtr)
     channel->control |= CONTROL_DST_INC;
 
   if (!instances++)
-    blockEnabled(true);
+    blockSetEnabled(true);
 
   return E_OK;
 }
@@ -240,7 +240,7 @@ static void gpdmaDeinit(void *object __attribute__((unused)))
 {
   /* Disable DMA peripheral when no active descriptors exist */
   if (!--instances)
-    blockEnabled(false);
+    blockSetEnabled(false);
 }
 /*----------------------------------------------------------------------------*/
 static bool gpdmaActive(void *object)

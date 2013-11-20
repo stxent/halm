@@ -7,6 +7,9 @@
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
+#include <macro.h>
+#include "../platform_defs.h"
+/*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
 enum sysPowerDevice
 {
@@ -85,7 +88,15 @@ enum sysClockDevice
 };
 /*----------------------------------------------------------------------------*/
 void sysClockControl(enum sysClockDevice, enum sysClockDiv);
-void sysPowerEnable(enum sysPowerDevice);
-void sysPowerDisable(enum sysPowerDevice);
+/*----------------------------------------------------------------------------*/
+static inline void sysPowerEnable(enum sysPowerDevice block)
+{
+  LPC_SC->PCONP |= BIT(block);
+}
+/*----------------------------------------------------------------------------*/
+static inline void sysPowerDisable(enum sysPowerDevice block)
+{
+  LPC_SC->PCONP &= ~BIT(block);
+}
 /*----------------------------------------------------------------------------*/
 #endif /* SYSTEM_H_ */

@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <irq.h>
 #include <platform/nxp/uart_base.h>
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/system.h>

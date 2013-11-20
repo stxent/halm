@@ -7,6 +7,9 @@
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
+#include <macro.h>
+#include "../platform_defs.h"
+/*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
 enum sysPowerDevice
 {
@@ -44,9 +47,24 @@ enum sysClockDevice
   CLK_SSP1        = 18
 };
 /*----------------------------------------------------------------------------*/
-void sysClockEnable(enum sysClockDevice);
-void sysClockDisable(enum sysClockDevice);
-void sysPowerEnable(enum sysPowerDevice);
-void sysPowerDisable(enum sysPowerDevice);
+static inline void sysClockEnable(enum sysClockDevice block)
+{
+  LPC_SYSCON->SYSAHBCLKCTRL |= BIT(block);
+}
+/*----------------------------------------------------------------------------*/
+static inline void sysClockDisable(enum sysClockDevice block)
+{
+  LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT(block);
+}
+/*----------------------------------------------------------------------------*/
+static inline void sysPowerEnable(enum sysPowerDevice block)
+{
+  LPC_SYSCON->PDRUNCFG &= ~BIT(block);
+}
+/*----------------------------------------------------------------------------*/
+static inline void sysPowerDisable(enum sysPowerDevice block)
+{
+  LPC_SYSCON->PDRUNCFG |= BIT(block);
+}
 /*----------------------------------------------------------------------------*/
 #endif /* SYSTEM_H_ */

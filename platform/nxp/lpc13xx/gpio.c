@@ -12,7 +12,7 @@
 static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
 /*----------------------------------------------------------------------------*/
-static void blockEnabled(bool);
+static void blockSetEnabled(bool);
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
 static const uint8_t gpioRegMap[4][12] = {
@@ -36,7 +36,7 @@ static inline void *calcReg(union GpioPin p)
   return (void *)((uint32_t)LPC_IOCON + (uint32_t)gpioRegMap[p.port][p.offset]);
 }
 /*----------------------------------------------------------------------------*/
-static void blockEnabled(bool state)
+static void blockSetEnabled(bool state)
 {
   if (state)
   {
@@ -56,7 +56,7 @@ static void blockEnabled(bool state)
 static void commonGpioSetup(struct Gpio gpio)
 {
   if (!instances++)
-    blockEnabled(true);
+    blockSetEnabled(true);
 
   /* Set GPIO mode */
   gpioSetFunction(gpio, GPIO_DEFAULT);

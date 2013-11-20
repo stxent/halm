@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <macro.h>
 #include <platform/nxp/i2c_base.h>
 #include <platform/nxp/lpc11xx/clocking.h>
 #include <platform/nxp/lpc11xx/system.h>
