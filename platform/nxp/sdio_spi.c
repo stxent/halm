@@ -57,7 +57,6 @@ struct LongResponse
 };
 /*----------------------------------------------------------------------------*/
 static inline uint32_t calcPosition(struct SdioSpi *);
-/*----------------------------------------------------------------------------*/
 static enum result acquireBus(struct SdioSpi *);
 static enum result getLongResponse(struct SdioSpi *, struct LongResponse *);
 static uint8_t getShortResponse(struct SdioSpi *);

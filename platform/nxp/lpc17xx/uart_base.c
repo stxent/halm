@@ -17,8 +17,6 @@ static enum result setDescriptor(uint8_t, struct UartBase *);
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static struct UartBase *descriptors[] = {0, 0, 0, 0};
-/*----------------------------------------------------------------------------*/
 static const struct InterfaceClass uartTable = {
     .size = 0, /* Abstract class */
     .init = uartInit,
@@ -102,6 +100,7 @@ const struct GpioDescriptor uartPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *UartBase = &uartTable;
+static struct UartBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
 {

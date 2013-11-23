@@ -15,8 +15,6 @@ static enum result setDescriptor(uint8_t, struct I2cBase *);
 static enum result i2cInit(void *, const void *);
 static void i2cDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static struct I2cBase *descriptors[1] = {0};
-/*----------------------------------------------------------------------------*/
 static const struct InterfaceClass i2cTable = {
     .size = 0, /* Abstract class */
     .init = i2cInit,
@@ -44,6 +42,7 @@ const struct GpioDescriptor i2cPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass *I2cBase = &i2cTable;
+static struct I2cBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct I2cBase *interface)
 {

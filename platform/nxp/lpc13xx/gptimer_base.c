@@ -14,8 +14,6 @@ static enum result setDescriptor(uint8_t, struct GpTimerBase *);
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *descriptors[4] = {0};
-/*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
     .size = 0, /* Abstract class */
     .init = tmrInit,
@@ -29,6 +27,7 @@ static const struct TimerClass timerTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct TimerClass *GpTimerBase = &timerTable;
+static struct GpTimerBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct GpTimerBase *timer)
 {
