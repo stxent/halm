@@ -5,15 +5,32 @@
  */
 
 #include <stdbool.h>
+#include <entity.h>
 #include <gpio.h>
 #include <platform/nxp/lpc13xx/gpio_defs.h>
 #include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
+struct GpioHandler
+{
+  struct Entity parent;
+
+  /* Initialized pins count */
+  uint8_t instances;
+};
+/*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
-/*----------------------------------------------------------------------------*/
-static void blockSetEnabled(bool);
 static void commonGpioSetup(struct Gpio);
+/*----------------------------------------------------------------------------*/
+static inline void gpioHandlerRegister(struct GpioHandler **);
+static inline void gpioHandlerErase(struct GpioHandler **);
+static enum result gpioHandlerInit(void *, const void *);
+/*----------------------------------------------------------------------------*/
+static const struct EntityClass handlerTable = {
+    .size = sizeof(struct GpioHandler),
+    .init = gpioHandlerInit,
+    .deinit = 0
+};
 /*----------------------------------------------------------------------------*/
 static const uint8_t gpioRegMap[4][12] = {
     {0x0C, 0x10, 0x1C, 0x2C, 0x30, 0x34, 0x4C, 0x50, 0x60, 0x64, 0x68, 0x74},
@@ -22,8 +39,8 @@ static const uint8_t gpioRegMap[4][12] = {
     {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
 };
 /*----------------------------------------------------------------------------*/
-/* Initialized pins count */
-static uint8_t instances = 0;
+static const struct EntityClass *GpioHandler = &handlerTable;
+static struct GpioHandler *gpioHandler = 0;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin p)
 {
@@ -36,27 +53,10 @@ static inline void *calcReg(union GpioPin p)
   return (void *)((uint32_t)LPC_IOCON + (uint32_t)gpioRegMap[p.port][p.offset]);
 }
 /*----------------------------------------------------------------------------*/
-static void blockSetEnabled(bool state)
-{
-  if (state)
-  {
-    /* Enable clock to IO configuration block */
-    sysClockEnable(CLK_IOCON);
-    /* Enable AHB clock to the GPIO domain */
-    sysClockEnable(CLK_GPIO);
-  }
-  else
-  {
-    /* Disable all IO clocks */
-    sysClockDisable(CLK_GPIO);
-    sysClockDisable(CLK_IOCON);
-  }
-}
-/*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio gpio)
 {
-  if (!instances++)
-    blockSetEnabled(true);
+  /* Register new pin in the handler */
+  gpioHandlerRegister(&gpioHandler);
 
   /* Set GPIO mode */
   gpioSetFunction(gpio, GPIO_DEFAULT);
@@ -64,6 +64,39 @@ static void commonGpioSetup(struct Gpio gpio)
   gpioSetPull(gpio, GPIO_NOPULL);
   /* Push-pull output type */
   gpioSetType(gpio, GPIO_PUSHPULL);
+}
+/*----------------------------------------------------------------------------*/
+static inline void gpioHandlerRegister(struct GpioHandler **pool)
+{
+  if (!(*pool))
+    *pool = init(GpioHandler, 0);
+
+  if (!(*pool)->instances++)
+  {
+    /* Enable clock to IO configuration block */
+    sysClockEnable(CLK_IOCON);
+    /* Enable AHB clock to the GPIO domain */
+    sysClockEnable(CLK_GPIO);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline void gpioHandlerErase(struct GpioHandler **pool)
+{
+  /* Disable clocks when no active pins exist */
+  if (!--(*pool)->instances)
+  {
+    sysClockDisable(CLK_GPIO);
+    sysClockDisable(CLK_IOCON);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result gpioHandlerInit(void *object,
+    const void *configPtr __attribute__((unused)))
+{
+  struct GpioHandler *pool = object;
+
+  pool->instances = 0;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 struct Gpio gpioInit(gpio_t id)

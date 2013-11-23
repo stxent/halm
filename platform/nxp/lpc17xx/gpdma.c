@@ -15,7 +15,15 @@
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT 8
 /*----------------------------------------------------------------------------*/
-struct GpDmaListItem
+struct DmaHandler
+{
+  struct Entity parent;
+
+  /* Initialized channels count */
+  uint8_t instances;
+};
+/*----------------------------------------------------------------------------*/
+struct DescriptorListItem
 {
   uint32_t source;
   uint32_t destination;
@@ -24,46 +32,51 @@ struct GpDmaListItem
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t);
-/*----------------------------------------------------------------------------*/
-static void blockSetEnabled(bool);
-static uint8_t eventToPeripheral(dma_event_t);
 static enum result setDescriptor(uint8_t, struct GpDma *);
 static void setEventMux(struct GpDma *, uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum result gpdmaInit(void *, const void *);
-static void gpdmaDeinit(void *);
-static bool gpdmaActive(void *);
-static void gpdmaCallback(void *, void (*)(void *), void *);
-static enum result gpdmaStart(void *, void *, const void *, uint32_t);
-static void gpdmaStop(void *);
-
-static void *gpdmaListAllocate(void *, uint32_t);
-static void gpdmaListAppend(void *, void *, uint32_t, void *,
-    const void *, uint32_t);
-static enum result gpdmaListStart(void *, const void *);
+static inline void dmaHandlerRegister(struct DmaHandler **);
+static inline void dmaHandlerErase(struct DmaHandler **);
+static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static const struct DmaClass gpdmaTable = {
-    .size = sizeof(struct GpDma),
-    .init = gpdmaInit,
-    .deinit = gpdmaDeinit,
+static enum result channelInit(void *, const void *);
+static void channelDeinit(void *);
+static bool channelActive(void *);
+static void channelCallback(void *, void (*)(void *), void *);
+static enum result channelStart(void *, void *, const void *, uint32_t);
+static void channelStop(void *);
 
-    .active = gpdmaActive,
-    .callback = gpdmaCallback,
-    .start = gpdmaStart,
-    .stop = gpdmaStop,
-
-    .listAllocate = gpdmaListAllocate,
-    .listAppend = gpdmaListAppend,
-    .listStart = gpdmaListStart
+static void *channelListAllocate(void *, uint32_t);
+static void channelListAppend(void *, void *, uint32_t, void *,
+    const void *, uint32_t);
+static enum result channelListStart(void *, const void *);
+/*----------------------------------------------------------------------------*/
+static const struct EntityClass handlerTable = {
+    .size = sizeof(struct DmaHandler),
+    .init = dmaHandlerInit,
+    .deinit = 0
 };
 /*----------------------------------------------------------------------------*/
-const struct DmaClass *GpDma = &gpdmaTable;
+static const struct DmaClass channelTable = {
+    .size = sizeof(struct GpDma),
+    .init = channelInit,
+    .deinit = channelDeinit,
+
+    .active = channelActive,
+    .callback = channelCallback,
+    .start = channelStart,
+    .stop = channelStop,
+
+    .listAllocate = channelListAllocate,
+    .listAppend = channelListAppend,
+    .listStart = channelListStart
+};
 /*----------------------------------------------------------------------------*/
-static struct GpDma * volatile descriptors[8] = {0};
-/* Access to descriptor array */
-static spinlock_t lock = SPIN_UNLOCKED;
-/* Initialized descriptors count */
-static uint8_t instances = 0;
+static const struct EntityClass *DmaHandler = &handlerTable;
+const struct DmaClass *GpDma = &channelTable;
+static struct GpDma * volatile descriptors[8] = {0}; /* Channel descriptors */
+static struct DmaHandler *dmaHandler = 0;
+static spinlock_t lock = SPIN_UNLOCKED; /* Access to descriptor array */
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t channel)
 {
@@ -71,22 +84,38 @@ static inline void *calcPeripheral(uint8_t channel)
       - (uint32_t)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
-static void blockSetEnabled(bool state)
+static inline void dmaHandlerRegister(struct DmaHandler **handler)
 {
-  if (state)
+  if (!(*handler))
+    *handler = init(DmaHandler, 0);
+
+  if (!(*handler)->instances++)
   {
     sysPowerEnable(PWR_GPDMA);
     LPC_GPDMA->CONFIG |= DMA_ENABLE;
     irqEnable(DMA_IRQ);
-    /* TODO Add priority configuration for GPDMA block */
-    /* setPriority(DMA_IRQ, config->priority); */
   }
-  else
+}
+/*----------------------------------------------------------------------------*/
+static inline void dmaHandlerErase(struct DmaHandler **handler)
+{
+  /* Disable peripheral when no active descriptors exist */
+  if (!--(*handler)->instances)
   {
     irqDisable(DMA_IRQ);
     LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
     sysPowerDisable(PWR_GPDMA);
   }
+}
+/*----------------------------------------------------------------------------*/
+static enum result dmaHandlerInit(void *object,
+    const void *configPtr __attribute__((unused)))
+{
+  struct DmaHandler *handler = object;
+
+  /* TODO Add priority configuration for GPDMA interrupt */
+  handler->instances = 0;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t eventToPeripheral(dma_event_t event)
@@ -180,7 +209,7 @@ void DMA_ISR(void)
   LPC_GPDMA->INTTCCLEAR = terminalStat;
 }
 /*----------------------------------------------------------------------------*/
-static enum result gpdmaInit(void *object, const void *configPtr)
+static enum result channelInit(void *object, const void *configPtr)
 {
   const struct GpDmaConfig * const config = configPtr;
   struct GpDma *channel = object;
@@ -230,20 +259,19 @@ static enum result gpdmaInit(void *object, const void *configPtr)
   if (config->destination.increment)
     channel->control |= CONTROL_DST_INC;
 
-  if (!instances++)
-    blockSetEnabled(true);
+  /* Register new descriptor in the handler */
+  dmaHandlerRegister(&dmaHandler);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void gpdmaDeinit(void *object __attribute__((unused)))
+static void channelDeinit(void *object __attribute__((unused)))
 {
-  /* Disable DMA peripheral when no active descriptors exist */
-  if (!--instances)
-    blockSetEnabled(false);
+  /* Erase descriptor from the handler */
+  dmaHandlerErase(&dmaHandler);
 }
 /*----------------------------------------------------------------------------*/
-static bool gpdmaActive(void *object)
+static bool channelActive(void *object)
 {
   struct GpDma *channel = object;
   LPC_GPDMACH_Type *reg = channel->reg;
@@ -252,7 +280,7 @@ static bool gpdmaActive(void *object)
       && (reg->CONFIG & CONFIG_ENABLE);
 }
 /*----------------------------------------------------------------------------*/
-static void gpdmaCallback(void *object, void (*callback)(void *),
+static void channelCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct GpDma *channel = object;
@@ -261,7 +289,7 @@ static void gpdmaCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-enum result gpdmaStart(void *object, void *destination, const void *source,
+enum result channelStart(void *object, void *destination, const void *source,
     uint32_t size)
 {
   struct GpDma *channel = object;
@@ -289,23 +317,23 @@ enum result gpdmaStart(void *object, void *destination, const void *source,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void gpdmaStop(void *object)
+void channelStop(void *object)
 {
   /* Disable channel */
   ((LPC_GPDMACH_Type *)((struct GpDma *)object)->reg)->CONFIG &= ~CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static void *gpdmaListAllocate(void *object __attribute__((unused)),
+static void *channelListAllocate(void *object __attribute__((unused)),
     uint32_t size)
 {
   /* Allocation should produce memory chunks aligned along 4-byte boundary */
-  return malloc(sizeof(struct GpDmaListItem) * size);
+  return malloc(sizeof(struct DescriptorListItem) * size);
 }
 /*----------------------------------------------------------------------------*/
-static void gpdmaListAppend(void *object, void *first, uint32_t index,
+static void channelListAppend(void *object, void *first, uint32_t index,
     void *destination, const void *source, uint32_t size)
 {
-  struct GpDmaListItem *item = (struct GpDmaListItem *)first + index;
+  struct DescriptorListItem *item = (struct DescriptorListItem *)first + index;
 
   if (index)
     (item - 1)->next = (uint32_t)item;
@@ -316,9 +344,9 @@ static void gpdmaListAppend(void *object, void *first, uint32_t index,
   item->control = ((struct GpDma *)object)->control | CONTROL_SIZE(size);
 }
 /*----------------------------------------------------------------------------*/
-static enum result gpdmaListStart(void *object, const void *firstPtr)
+static enum result channelListStart(void *object, const void *firstPtr)
 {
-  const struct GpDmaListItem *first = firstPtr;
+  const struct DescriptorListItem *first = firstPtr;
   struct GpDma *channel = object;
 
   if (setDescriptor(channel->number, object) != E_OK)
