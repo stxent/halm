@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <platform/nxp/gptimer.h>
 #include <platform/nxp/gptimer_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -54,6 +55,8 @@ static enum result tmrInit(void *object, const void *configPtr)
   struct GpTimer *timer = object;
   enum result res;
 
+  assert(config->frequency);
+
   /* Call base timer class constructor */
   if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
     return res;
@@ -69,7 +72,7 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   /* Configure prescaler */
   reg->PR = gpTimerGetClock(object) / config->frequency - 1;
-  /* Enable timer/counter */
+  /* Enable counter */
   reg->TCR = TCR_CEN;
 
   /* Set interrupt priority, lowest by default */
@@ -84,8 +87,11 @@ static void tmrDeinit(void *object)
 {
   struct GpTimer *timer = object;
 
-  irqDisable(timer->parent.irq); /* Disable interrupt */
-  GpTimerBase->deinit(timer); /* Call base timer class destructor */
+  irqDisable(timer->parent.irq);
+  /* Disable counter */
+  ((LPC_TIMER_Type *)timer->parent.reg)->TCR &= ~TCR_CEN;
+  /* Call base timer class destructor */
+  GpTimerBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrCallback(void *object, void (*callback)(void *), void *argument)

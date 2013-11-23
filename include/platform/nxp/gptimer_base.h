@@ -13,6 +13,15 @@
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass *GpTimerBase;
 /*----------------------------------------------------------------------------*/
+/* Symbolic names for two different types of timers on low-performance parts */
+enum gpTimerChannel
+{
+  TIMER_CT16B0 = 0,
+  TIMER_CT16B1,
+  TIMER_CT32B0,
+  TIMER_CT32B1
+};
+/*----------------------------------------------------------------------------*/
 struct GpTimerBaseConfig
 {
   gpio_t input; /* Optional: clock input pin */

@@ -12,14 +12,6 @@
 #include <gpio.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
-struct PwmControllerClass
-{
-  CLASS_HEADER
-
-  void *(*create)(void *, gpio_t, uint8_t);
-};
-/*----------------------------------------------------------------------------*/
-/* Class descriptor */
 struct PwmClass
 {
   CLASS_HEADER
@@ -29,29 +21,10 @@ struct PwmClass
   void (*setPeriod)(void *, uint16_t);
 };
 /*----------------------------------------------------------------------------*/
-struct PwmController
-{
-  struct Entity parent;
-};
-/*----------------------------------------------------------------------------*/
 struct Pwm
 {
   struct Entity parent;
 };
-/*----------------------------------------------------------------------------*/
-/**
- * Create Pwm object, associated with controller.
- * By default PWM output is stopped.
- * @param controller Pointer to PwmController object.
- * @param pin GPIO pin used as output for pulse width modulated signal.
- * @param value Initial duty cycle value in percents.
- * @return Pointer to new Pwm object on success or zero on error.
- */
-static inline void *pwmCreate(void *controller, gpio_t pin, uint8_t value)
-{
-  return ((struct PwmControllerClass *)CLASS(controller))->create(controller,
-      pin, value);
-}
 /*----------------------------------------------------------------------------*/
 /**
  * Set duty cycle of pulse width modulated signal.
