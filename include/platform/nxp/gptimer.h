@@ -17,6 +17,7 @@ struct GpTimerConfig
   gpio_t input; /* Optional: clock input pin */
   priority_t priority; /* Optional: timer interrupts priority */
   uint8_t channel; /* Mandatory: timer block */
+  uint8_t event; /* Optional: match channel used as reset event source */
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimer
@@ -25,6 +26,9 @@ struct GpTimer
 
   void (*callback)(void *);
   void *callbackArgument;
+
+  /* Match channel used for counter reset */
+  uint8_t event;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPTIMER_H_ */

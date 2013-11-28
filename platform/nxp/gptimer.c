@@ -8,6 +8,7 @@
 #include <platform/nxp/gptimer.h>
 #include <platform/nxp/gptimer_defs.h>
 /*----------------------------------------------------------------------------*/
+static inline uint32_t *calcMatchChannel(LPC_TIMER_Type *, uint8_t);
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
@@ -32,17 +33,20 @@ static const struct TimerClass timerTable = {
 /*----------------------------------------------------------------------------*/
 const struct TimerClass *GpTimer = &timerTable;
 /*----------------------------------------------------------------------------*/
+static inline uint32_t *calcMatchChannel(LPC_TIMER_Type *timer,
+    uint8_t channel)
+{
+  return (uint32_t *)&timer->MR0 + channel;
+}
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct GpTimer *timer = object;
   LPC_TIMER_Type *reg = timer->parent.reg;
 
-  if (reg->IR & IR_MATCH_INTERRUPT(0)) /* Match 0 */
-  {
-    if (timer->callback)
-      timer->callback(timer->callbackArgument);
-    reg->IR = IR_MATCH_INTERRUPT(0); /* Clear flag */
-  }
+  if (timer->callback)
+    timer->callback(timer->callbackArgument);
+  reg->IR = IR_MASK; /* Clear all pending interrupt flags */
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configPtr)
@@ -56,6 +60,7 @@ static enum result tmrInit(void *object, const void *configPtr)
   enum result res;
 
   assert(config->frequency);
+  assert(config->event < 4);
 
   /* Call base timer class constructor */
   if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
@@ -63,6 +68,8 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   /* Set pointer to interrupt handler */
   timer->parent.handler = interruptHandler;
+  /* Set match channel */
+  timer->event = config->event;
 
   LPC_TIMER_Type *reg = timer->parent.reg;
 
@@ -101,14 +108,12 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
 
   timer->callback = callback;
   timer->callbackArgument = argument;
-  /* Enable or disable Match interrupt and counter reset after each interrupt */
+
+  reg->IR = IR_MASK; /* Clear all pending interrupts */
   if (callback)
-  {
-    reg->IR = IR_MATCH_INTERRUPT(0); /* Clear pending interrupt flag */
-    reg->MCR |= MCR_INTERRUPT(0);
-  }
+    reg->MCR |= MCR_INTERRUPT(timer->event);
   else
-    reg->MCR &= ~MCR_INTERRUPT(0);
+    reg->MCR &= ~MCR_INTERRUPT(timer->event);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetEnabled(void *object, bool state)
@@ -132,14 +137,15 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
-  LPC_TIMER_Type *reg = ((struct GpTimer *)object)->parent.reg;
+  struct GpTimer *timer = object;
+  LPC_TIMER_Type *reg = timer->parent.reg;
 
   /* Set match value and enable timer reset when value is greater than zero */
-  reg->MR0 = overflow;
+  *calcMatchChannel(reg, timer->event) = overflow;
   if (overflow)
-    reg->MCR |= MCR_RESET(0);
+    reg->MCR |= MCR_RESET(timer->event);
   else
-    reg->MCR &= ~MCR_RESET(0);
+    reg->MCR &= ~MCR_RESET(timer->event);
 
   /* Synchronously reset prescaler and counter registers */
   reg->TCR |= TCR_CRES;
