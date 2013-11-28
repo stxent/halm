@@ -8,31 +8,56 @@
 #define ADC_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
+#include <interface.h>
+#include <spinlock.h>
 #include "adc_base.h"
 /*----------------------------------------------------------------------------*/
+extern const struct EntityClass *AdcUnit;
 extern const struct InterfaceClass *Adc;
 /*----------------------------------------------------------------------------*/
-/* TODO ADC: add sample rate configuration */
+struct AdcUnitConfig
+{
+  uint8_t channel; /* Mandatory: peripheral number */
+//  uint8_t resolution; /* Optional: result width in bits */
+  priority_t priority; /* Optional: interrupt priority */
+};
+/*----------------------------------------------------------------------------*/
+struct AdcUnit
+{
+  struct AdcUnitBase parent;
+
+  /* Access to converter block */
+  spinlock_t lock;
+};
+/*----------------------------------------------------------------------------*/
 struct AdcConfig
 {
+  struct AdcUnit *parent; /* Mandatory: peripheral unit */
   gpio_t pin; /* Mandatory: analog input */
-  uint8_t precision; /* Optional: result width in bits */
+  uint8_t event; /* Optional: hardware triggered conversion source */
 };
 /*----------------------------------------------------------------------------*/
 struct Adc
 {
-  struct AdcBase parent;
+  struct Interface parent;
+
+  /* Pointer to parental unit */
+  struct AdcUnit *unit;
 
   void (*callback)(void *);
   void *callbackArgument;
 
   /* Pointer to the input buffer */
   uint8_t *buffer;
-  /* Samples left for conversion */
+  /* Number of samples to be converted */
   volatile uint32_t left;
 
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
+  /* Peripheral channel */
+  uint8_t channel;
+  /* Hardware trigger */
+  uint8_t event;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* ADC_H_ */

@@ -4,28 +4,39 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef ADC_BASE_H_
-#define ADC_BASE_H_
+#ifndef ADC_BASE_TOP_H_
+#define ADC_BASE_TOP_H_
 /*----------------------------------------------------------------------------*/
+#include <entity.h>
 #include <gpio.h>
-#include <interface.h>
+#include <irq.h>
 #include "platform_defs.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *AdcBase;
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/adc_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-struct AdcBaseConfig
+extern const struct EntityClass *AdcUnitBase;
+/*----------------------------------------------------------------------------*/
+struct AdcUnitBaseConfig
 {
-  gpio_t pin; /* Mandatory: analog input */
+  uint8_t channel; /* Mandatory: peripheral number */
 };
 /*----------------------------------------------------------------------------*/
-struct AdcBase
+struct AdcUnitBase
 {
-  struct Interface parent;
+  struct Entity parent;
 
-  /* Peripheral channel */
+  /* Pointer to the ADC register block */
+  void *reg;
+  /* Pointer to the interrupt handler */
+  void (*handler)(void *);
+  /* Interrupt identifier */
+  irq_t irq;
+
+  /* Peripheral block identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-//void adcSetClock(uint32_t);
-/*----------------------------------------------------------------------------*/
-#endif /* ADC_BASE_H_ */
+#endif /* ADC_BASE_TOP_H_ */

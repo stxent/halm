@@ -5,34 +5,24 @@
  */
 
 #include <assert.h>
-#include <irq.h>
 #include <stdbool.h>
 #include <platform/nxp/adc_base.h>
 #include <platform/nxp/adc_defs.h>
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define CHANNEL_COUNT                   8
 /* Pack match channel and pin function in one value */
-#define PACK_VALUE(function, channel)   (((channel) << 4) | (function))
-/* Unpack function */
-#define UNPACK_FUNCTION(value)          ((value) & 0x0F)
-/* Unpack match channel */
-#define UNPACK_CHANNEL(value)           (((value) >> 4) & 0x0F)
+#define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *, const void *);
-static void adcDeinit(void *);
+static enum result setDescriptor(uint8_t, struct AdcUnitBase *);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass adcTable = {
-    .size = 0, /* Abstract class */
-    .init = adcInit,
-    .deinit = adcDeinit,
-
-    .callback = 0,
-    .get = 0,
-    .set = 0,
-    .read = 0,
-    .write = 0
+static enum result adcUnitInit(void *, const void *);
+static void adcUnitDeinit(void *);
+/*----------------------------------------------------------------------------*/
+static const struct EntityClass adcUnitTable = {
+    .size = sizeof(struct AdcUnitBase),
+    .init = adcUnitInit,
+    .deinit = adcUnitDeinit
 };
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor adcPins[] = {
@@ -73,67 +63,55 @@ const struct GpioDescriptor adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *AdcBase = &adcTable;
+const struct EntityClass *AdcUnitBase = &adcUnitTable;
+static struct AdcUnitBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-/* Initialized analog inputs count */
-static uint8_t instances = 0;
-/*----------------------------------------------------------------------------*/
-//uint32_t adcGetClock(struct AdcBase *interface __attribute__((unused)))
-//{
-//  return sysCoreClock / DEFAULT_DIV_VALUE;
-//}
-/*----------------------------------------------------------------------------*/
-static void blockSetEnabled(bool state)
+static enum result setDescriptor(uint8_t channel, struct AdcUnitBase *unit)
 {
-  if (state)
-  {
-    sysClockEnable(CLK_ADC);
-/*    irqSetPriority(ADC_IRQ, priority); TODO ADC: add priority configuration */
-    irqEnable(ADC_IRQ);
-  }
-  else
-  {
-    irqDisable(ADC_IRQ);
-    sysClockDisable(CLK_ADC);
-  }
+  assert(channel < sizeof(descriptors));
+
+  if (descriptors[channel])
+    return E_BUSY;
+
+  descriptors[channel] = unit;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *object, const void *configPtr)
+void ADC_ISR()
 {
-  const struct AdcBaseConfig * const config = configPtr;
-  const struct GpioDescriptor *pinDescriptor;
-  struct AdcBase *interface = object;
+  if (descriptors[0])
+    descriptors[0]->handler(descriptors[0]);
+}
+/*----------------------------------------------------------------------------*/
+static enum result adcUnitInit(void *object, const void *configPtr)
+{
+  const struct AdcUnitBaseConfig * const config = configPtr;
+  struct AdcUnitBase *unit = object;
+  enum result res;
 
-  if (!(pinDescriptor = gpioFind(adcPins, config->pin, 0)))
-    return E_VALUE;
+  /* Try to set peripheral descriptor */
+  unit->channel = config->channel;
+  if ((res = setDescriptor(unit->channel, unit)) != E_OK)
+    return res;
 
-  interface->channel = UNPACK_CHANNEL(pinDescriptor->value);
-  /* Initialize analog input pin */
-  struct Gpio pin = gpioInit(config->pin);
-  gpioInput(pin);
-  /* Enable analog pin mode bit */
-  gpioSetFunction(pin, GPIO_ANALOG);
-  /* Set analog pin function */
-  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  unit->handler = 0;
 
   /* Clear Power Down bit for the ADC block */
   sysPowerEnable(PWR_ADC);
   /* Enable clock to the ADC */
   sysClockEnable(CLK_ADC);
 
-  /* Set system clock divider */
-  LPC_ADC->CR = CR_CLKDIV(sysCoreClock / 45e5); //FIXME Magic numbers
+  unit->irq = ADC_IRQ;
+  unit->reg = LPC_ADC;
 
-//  if (!instances++)
-//    blockSetEnabled(true);
+  /* Set system clock divider */
+  ((LPC_ADC_Type *)unit->reg)->CR = CR_CLKDIV(sysCoreClock / 45e5); //FIXME
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void adcDeinit(void *object)
+static void adcUnitDeinit(void *object __attribute__((unused)))
 {
-  struct AdcBase *interface = object;
-
-//  if (!--instances)
-//    blockSetEnabled(false);
+  sysPowerDisable(PWR_ADC);
+  sysClockDisable(CLK_ADC);
 }

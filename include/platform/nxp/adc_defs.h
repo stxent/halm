@@ -16,11 +16,15 @@
 #define CR_CLKDIV(value)                BIT_FIELD((value), 8)
 #define CR_CLKDIV_VALUE(reg)            (((reg) >> 8) & 0xFF)
 #define CR_BURST                        BIT(16)
-#define CR_PDN                          BIT(21)
 #define CR_START_MASK                   BIT_FIELD(0x07, 24)
 #define CR_START(value)                 BIT_FIELD((value), 24)
 #define CR_START_VALUE(reg)             (((reg) >> 24) & 0x07)
 #define CR_EDGE                         BIT(27)
+/* Device-specific bits */
+#define CR_CLKS_MASK                    BIT_FIELD(0x03, 17)
+#define CR_CLKS(value)                  BIT_FIELD((value), 17)
+#define CR_CLKS_VALUE(reg)              (((reg) >> 17) & 0x03)
+#define CR_PDN                          BIT(21)
 /*------------------Global Data Register--------------------------------------*/
 #define GDR_RESULT_VALUE(reg, width) \
 		(((reg) >> (16 - (width))) & ((1 << (width)) - 1))
