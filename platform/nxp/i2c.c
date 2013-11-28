@@ -161,7 +161,6 @@ static enum result i2cInit(void *object, const void *configPtr)
   /* Rate should be initialized after block selection */
   i2cSetRate(object, config->rate);
 
-  /* Initialize I2C block */
   LPC_I2C_Type *reg = interface->parent.reg;
 
   /* Clear all flags */

@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <delay.h>
 #include <macro.h>
 #include <platform/nxp/sdio_spi.h>
@@ -434,9 +435,12 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   uint16_t counter, blockCount;
   enum sdioCommand command;
 
+  /* Check buffer alignment */
+  assert(!(length & ((1 << BLOCK_POW) - 1)));
+
   blockCount = length >> BLOCK_POW;
-  if ((length & ((1 << BLOCK_POW) - 1)) || !blockCount)
-    return 0; /* Unsupported block length */
+  if (!blockCount)
+    return 0;
 
   command = blockCount > 1 ? CMD_READ_MULTIPLE : CMD_READ;
 
@@ -471,9 +475,12 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
   enum sdioCommand command;
   enum sdioToken token;
 
+  /* Check buffer alignment */
+  assert(!(length & ((1 << BLOCK_POW) - 1)));
+
   blockCount = length >> BLOCK_POW;
-  if ((length & ((1 << BLOCK_POW) - 1)) || !blockCount)
-    return 0; /* Unsupported block length */
+  if (!blockCount)
+    return 0;
 
   if (blockCount > 1)
   {

@@ -162,7 +162,6 @@ static enum result oneWireInit(void *object, const void *configPtr)
   interface->lock = SPIN_UNLOCKED;
   interface->state = OW_IDLE;
 
-  /* Initialize UART block */
   LPC_UART_Type *reg = interface->parent.reg;
 
   /* Set 8-bit length */

@@ -39,8 +39,10 @@ struct GpTimerBase
   /* Interrupt identifier */
   irq_t irq;
 
-  struct Gpio input; /* External clock input pin */
-  uint8_t channel; /* Identifier of peripheral block for internal use */
+  /* External clock input pin */
+  struct Gpio input;
+  /* Peripheral block identifier */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 uint32_t gpTimerGetClock(struct GpTimerBase *);

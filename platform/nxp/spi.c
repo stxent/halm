@@ -104,7 +104,6 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
 
-  /* Initialize SSP block */
   LPC_SSP_Type *reg = interface->parent.reg;
 
   /* Set frame size */

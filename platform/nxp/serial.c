@@ -100,7 +100,6 @@ static enum result serialInit(void *object, const void *configPtr)
   if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
     return res;
 
-  /* Initialize UART block */
   LPC_UART_Type *reg = interface->parent.reg;
 
   /* Set 8-bit length */

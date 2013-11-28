@@ -10,6 +10,11 @@
 #include <dma.h>
 #include <irq.h>
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/gpdma.h>
+#include HEADER_PATH
+#undef HEADER_PATH
+/*----------------------------------------------------------------------------*/
 extern const struct DmaClass *GpDma;
 /*----------------------------------------------------------------------------*/
 enum gpDmaType
@@ -55,13 +60,8 @@ struct GpDma
   uint32_t control, config;
   /* Precalculated values of DMA connection multiplexer register */
   uint8_t muxMask, muxValue;
-  /* Direct memory access peripheral channel */
+  /* Identifier of the DMA channel */
   uint8_t number;
 };
-/*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/gpdma.h>
-#include HEADER_PATH
-#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* GPDMA_TOP_H_ */

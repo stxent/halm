@@ -31,7 +31,7 @@ struct GpTimerPwmUnit
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwmConfig
 {
-  struct GpTimerPwmUnit *parent; /* Mandatory: object unit */
+  struct GpTimerPwmUnit *parent; /* Mandatory: peripheral unit */
   gpio_t pin; /* Mandatory: pin used as output for modulated signal */
   uint8_t value; /* Optional: initial duty cycle in percents */
 };
@@ -40,7 +40,7 @@ struct GpTimerPwm
 {
   struct Pwm parent;
 
-  /* Parent object representing peripheral block */
+  /* Pointer to parental unit */
   struct GpTimerPwmUnit *unit;
   /* Pointer to channel register block */
   uint32_t *reg;
