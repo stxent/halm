@@ -19,6 +19,10 @@ struct DmaHandler
 {
   struct Entity parent;
 
+  /* Channel descriptors currently in use */
+  struct GpDma * volatile descriptors[8];
+  /* Access to descriptor array */
+  spinlock_t lock;
   /* Initialized channels count */
   uint8_t instances;
 };
@@ -35,8 +39,8 @@ static inline void *calcPeripheral(uint8_t);
 static enum result setDescriptor(uint8_t, struct GpDma *);
 static void setEventMux(struct GpDma *, uint8_t);
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerRegister(struct DmaHandler **);
-static inline void dmaHandlerErase(struct DmaHandler **);
+static inline void dmaHandlerErase();
+static inline void dmaHandlerRegister();
 static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
@@ -74,9 +78,7 @@ static const struct DmaClass channelTable = {
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass *DmaHandler = &handlerTable;
 const struct DmaClass *GpDma = &channelTable;
-static struct GpDma * volatile descriptors[8] = {0}; /* Channel descriptors */
 static struct DmaHandler *dmaHandler = 0;
-static spinlock_t lock = SPIN_UNLOCKED; /* Access to descriptor array */
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t channel)
 {
@@ -84,27 +86,27 @@ static inline void *calcPeripheral(uint8_t channel)
       - (uint32_t)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerRegister(struct DmaHandler **handler)
-{
-  if (!(*handler))
-    *handler = init(DmaHandler, 0);
-
-  if (!(*handler)->instances++)
-  {
-    sysPowerEnable(PWR_GPDMA);
-    LPC_GPDMA->CONFIG |= DMA_ENABLE;
-    irqEnable(DMA_IRQ);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static inline void dmaHandlerErase(struct DmaHandler **handler)
+static inline void dmaHandlerErase()
 {
   /* Disable peripheral when no active descriptors exist */
-  if (!--(*handler)->instances)
+  if (!--dmaHandler->instances)
   {
     irqDisable(DMA_IRQ);
     LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
     sysPowerDisable(PWR_GPDMA);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline void dmaHandlerRegister()
+{
+  if (!dmaHandler)
+    dmaHandler = init(DmaHandler, 0);
+
+  if (!dmaHandler->instances++)
+  {
+    sysPowerEnable(PWR_GPDMA);
+    LPC_GPDMA->CONFIG |= DMA_ENABLE;
+    irqEnable(DMA_IRQ);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -114,6 +116,9 @@ static enum result dmaHandlerInit(void *object,
   struct DmaHandler *handler = object;
 
   /* TODO Add priority configuration for GPDMA interrupt */
+  for (uint8_t counter = 0; counter < CHANNEL_COUNT; ++counter)
+    handler->descriptors[counter] = 0;
+  handler->lock = SPIN_UNLOCKED;
   handler->instances = 0;
   return E_OK;
 }
@@ -158,14 +163,14 @@ static enum result setDescriptor(uint8_t channel, struct GpDma *controller)
   enum result res = E_BUSY;
 
   irqDisable(DMA_IRQ);
-  if (spinTryLock(&lock))
+  if (spinTryLock(&dmaHandler->lock))
   {
-    if (!descriptors[channel])
+    if (!dmaHandler->descriptors[channel])
     {
-      descriptors[channel] = controller;
+      dmaHandler->descriptors[channel] = controller;
       res = E_OK;
     }
-    spinUnlock(&lock);
+    spinUnlock(&dmaHandler->lock);
   }
   irqEnable(DMA_IRQ);
 
@@ -186,20 +191,20 @@ void DMA_ISR(void)
 {
   const uint8_t errorStat = LPC_GPDMA->INTERRSTAT;
   const uint8_t terminalStat = LPC_GPDMA->INTTCSTAT;
-  uint8_t counter = 0, mask = 0x01;
+  uint8_t mask = 0x01;
 
-  for (; counter < CHANNEL_COUNT; ++counter, mask <<= 1)
+  for (uint8_t counter = 0; counter < CHANNEL_COUNT; ++counter, mask <<= 1)
   {
-    if (descriptors[counter] && (terminalStat | errorStat) & mask)
-    {
-      struct GpDma * volatile channel = descriptors[counter];
+    struct GpDma * volatile channel = dmaHandler->descriptors[counter];
 
+    if (channel && (terminalStat | errorStat) & mask)
+    {
       if (!(((LPC_GPDMACH_Type *)channel->reg)->CONFIG & CONFIG_ENABLE))
       {
         /* Clear descriptor when channel is disabled or transfer is completed */
-        spinLock(&lock);
-        descriptors[counter] = 0;
-        spinUnlock(&lock);
+        spinLock(&dmaHandler->lock);
+        dmaHandler->descriptors[counter] = 0;
+        spinUnlock(&dmaHandler->lock);
       }
       if ((terminalStat & mask) && channel->callback)
         channel->callback(channel->callbackArgument);
@@ -260,7 +265,7 @@ static enum result channelInit(void *object, const void *configPtr)
     channel->control |= CONTROL_DST_INC;
 
   /* Register new descriptor in the handler */
-  dmaHandlerRegister(&dmaHandler);
+  dmaHandlerRegister();
 
   return E_OK;
 }
@@ -268,7 +273,7 @@ static enum result channelInit(void *object, const void *configPtr)
 static void channelDeinit(void *object __attribute__((unused)))
 {
   /* Erase descriptor from the handler */
-  dmaHandlerErase(&dmaHandler);
+  dmaHandlerErase();
 }
 /*----------------------------------------------------------------------------*/
 static bool channelActive(void *object)
@@ -276,7 +281,7 @@ static bool channelActive(void *object)
   struct GpDma *channel = object;
   LPC_GPDMACH_Type *reg = channel->reg;
 
-  return descriptors[channel->number] == channel
+  return dmaHandler->descriptors[channel->number] == channel
       && (reg->CONFIG & CONFIG_ENABLE);
 }
 /*----------------------------------------------------------------------------*/
