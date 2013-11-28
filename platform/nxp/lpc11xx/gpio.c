@@ -22,8 +22,8 @@ static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerRegister(struct GpioHandler **);
-static inline void gpioHandlerErase(struct GpioHandler **);
+static inline void gpioHandlerErase();
+static inline void gpioHandlerRegister();
 static enum result gpioHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -56,7 +56,7 @@ static inline void *calcReg(union GpioPin p)
 static void commonGpioSetup(struct Gpio gpio)
 {
   /* Register new pin in the handler */
-  gpioHandlerRegister(&gpioHandler);
+  gpioHandlerRegister();
 
   /* Set GPIO mode */
   gpioSetFunction(gpio, GPIO_DEFAULT);
@@ -66,12 +66,22 @@ static void commonGpioSetup(struct Gpio gpio)
   gpioSetType(gpio, GPIO_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerRegister(struct GpioHandler **pool)
+static inline void gpioHandlerErase()
 {
-  if (!(*pool))
-    *pool = init(GpioHandler, 0);
+  /* Disable clocks when no active pins exist */
+  if (!--gpioHandler->instances)
+  {
+    sysClockDisable(CLK_GPIO);
+    sysClockDisable(CLK_IOCON);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline void gpioHandlerRegister()
+{
+  if (!gpioHandler)
+    gpioHandler = init(GpioHandler, 0);
 
-  if (!(*pool)->instances++)
+  if (!gpioHandler->instances++)
   {
     /* Enable clock to IO configuration block */
     sysClockEnable(CLK_IOCON);
@@ -80,22 +90,12 @@ static inline void gpioHandlerRegister(struct GpioHandler **pool)
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerErase(struct GpioHandler **pool)
-{
-  /* Disable clocks when no active pins exist */
-  if (!--(*pool)->instances)
-  {
-    sysClockDisable(CLK_GPIO);
-    sysClockDisable(CLK_IOCON);
-  }
-}
-/*----------------------------------------------------------------------------*/
 static enum result gpioHandlerInit(void *object,
     const void *configPtr __attribute__((unused)))
 {
-  struct GpioHandler *pool = object;
+  struct GpioHandler *handler = object;
 
-  pool->instances = 0;
+  handler->instances = 0;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
