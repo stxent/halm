@@ -36,9 +36,9 @@ enum oneWireState
 {
   OW_IDLE = 0,
   OW_RESET,
-  OW_READY,
+  OW_RECEIVE,
   OW_TRANSMIT,
-  OW_RECEIVE
+  OW_ERROR
 };
 /*----------------------------------------------------------------------------*/
 struct OneWire

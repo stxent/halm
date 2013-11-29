@@ -144,7 +144,7 @@ static enum result serialGet(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_READY:
+    case IF_STATUS:
       return dmaActive(interface->rxDma) || dmaActive(interface->txDma) ?
           E_BUSY : E_OK;
     default:

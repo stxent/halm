@@ -154,7 +154,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
     case IF_RATE:
       *(uint32_t *)data = sspGetRate(object);
       return E_OK;
-    case IF_READY:
+    case IF_STATUS:
       return interface->left || reg->SR & SR_BSY ? E_BUSY : E_OK;
     default:
       return E_ERROR;

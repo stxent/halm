@@ -202,9 +202,11 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-    case IF_READY:
-      return interface->state != I2C_IDLE && interface->state != I2C_ERROR ?
-          E_BUSY : E_OK;
+    case IF_STATUS:
+      if (!interface->blocking && interface->state == I2C_ERROR)
+        return E_ERROR;
+      else
+        return interface->state != I2C_IDLE ? E_BUSY : E_OK;
     case IF_RATE:
       *(uint32_t *)data = i2cGetRate(object);
       return E_OK;

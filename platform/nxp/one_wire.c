@@ -76,6 +76,7 @@ static void interruptHandler(void *object)
 {
   struct OneWire *interface = object;
   LPC_UART_Type *reg = interface->parent.reg;
+  bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
   if (reg->IIR & IIR_INT_STATUS)
@@ -94,7 +95,10 @@ static void interruptHandler(void *object)
           interface->state = OW_TRANSMIT;
         }
         else
-          interface->state = OW_IDLE;
+        {
+          interface->state = OW_ERROR;
+          event = true;
+        }
         break;
       case OW_RECEIVE:
         if (data & 0x01)
@@ -111,8 +115,7 @@ static void interruptHandler(void *object)
           if (!--interface->left)
           {
             interface->state = OW_IDLE;
-            if (interface->callback)
-              interface->callback(interface->callbackArgument);
+            event = true;
           }
         }
         break;
@@ -126,6 +129,8 @@ static void interruptHandler(void *object)
     if (!queueEmpty(&interface->txQueue))
       sendWord(interface, queuePop(&interface->txQueue));
   }
+  if (interface->callback && event)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result oneWireInit(void *object, const void *configPtr)
@@ -209,8 +214,11 @@ static enum result oneWireGet(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_READY:
-      return interface->state == OW_IDLE ? E_OK : E_BUSY;
+    case IF_STATUS:
+      if (!interface->blocking && interface->state == OW_ERROR)
+        return E_ERROR;
+      else
+        return interface->state != OW_IDLE ? E_BUSY : E_OK;
     default:
       return E_ERROR;
   }
@@ -265,7 +273,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
   sendWord(interface, 0xFF); /* Start reception */
 
   if (interface->blocking)
-    while (interface->state != OW_IDLE);
+    while (interface->state != OW_IDLE && interface->state != OW_ERROR);
 
   return read;
 }
@@ -297,7 +305,7 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
   beginTransmission(interface);
 
   if (interface->blocking)
-    while (interface->state != OW_IDLE);
+    while (interface->state != OW_IDLE && interface->state != OW_ERROR);
 
   return written;
 }

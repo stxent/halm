@@ -178,7 +178,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
     case IF_RATE:
       *(uint32_t *)data = sspGetRate(object);
       return E_OK;
-    case IF_READY:
+    case IF_STATUS:
       return dmaActive(interface->rxDma) || dmaActive(interface->txDma)
           || reg->SR & SR_BSY ? E_BUSY : E_OK;
     default:

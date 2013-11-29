@@ -136,7 +136,7 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-    case IF_READY:
+    case IF_STATUS:
       return E_OK; //TODO
     default:
       return E_ERROR;
