@@ -113,16 +113,14 @@ static void interruptHandler(void *object)
       interface->state = I2C_IDLE;
       event = true;
       break;
+    /* Arbitration has been lost during transmission or reception */
+    case STAT_ARBITRATION_LOST:
     /* Address and direction bit have not been acknowledged */
     case STAT_SLAVE_WRITE_NACK:
     case STAT_SLAVE_READ_NACK:
       reg->CONSET = CONSET_STO;
       interface->state = I2C_ERROR;
-      break;
-    /* Arbitration has been lost during transmission or reception */
-    case STAT_ARBITRATION_LOST:
-      reg->CONSET = CONSET_STO; //FIXME
-      interface->state = I2C_ERROR;
+      event = true;
       break;
     default:
       break;

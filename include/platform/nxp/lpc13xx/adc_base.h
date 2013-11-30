@@ -7,18 +7,19 @@
 #ifndef ADC_BASE_H_
 #define ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
-#define ADC_RESOLUTION 10
+#define ADC_RESOLUTION 10 /* Bits */
 /*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
 enum
 {
-  ADC_EVENT_UNUSED      = 0,
-  ADC_EVENT_PIO0_2      = 2,
-  ADC_EVENT_PIO1_5      = 3,
-  ADC_EVENT_CT32B0_MAT0 = 4,
-  ADC_EVENT_CT32B0_MAT1 = 5,
-  ADC_EVENT_CT16B0_MAT0 = 6,
-  ADC_EVENT_CT16B0_MAT1 = 7
+  ADC_SOFTWARE = 0,
+  ADC_PIO0_2,
+  ADC_PIO1_5,
+  ADC_CT32B0_MAT0,
+  ADC_CT32B0_MAT1,
+  ADC_CT16B0_MAT0,
+  ADC_CT16B0_MAT1,
+  ADC_EVENT_END
 };
 /*----------------------------------------------------------------------------*/
 #endif /* ADC_BASE_H_ */

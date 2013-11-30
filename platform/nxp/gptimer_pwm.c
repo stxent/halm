@@ -9,9 +9,9 @@
 #include <platform/nxp/gptimer_pwm.h>
 /*----------------------------------------------------------------------------*/
 /* Unpack function */
-#define UNPACK_FUNCTION(value)          ((value) & 0x0F)
+#define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /* Unpack match channel */
-#define UNPACK_CHANNEL(value)           (((value) >> 4) & 0x0F)
+#define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static inline uint32_t *calcMatchChannel(LPC_TIMER_Type *, uint8_t);
 static int8_t findEmptyChannel(uint8_t);

@@ -127,6 +127,7 @@ static uint8_t eventToPeripheral(dma_event_t event)
 {
   assert(event < GPDMA_EVENT_END);
 
+  /* TODO GPDMA: optimize event conversion */
   switch (event)
   {
     case GPDMA_SSP0_RX:
@@ -206,7 +207,8 @@ void DMA_ISR(void)
         dmaHandler->descriptors[counter] = 0;
         spinUnlock(&dmaHandler->lock);
       }
-      if ((terminalStat & mask) && channel->callback)
+      /* TODO GPDMA: add error handling */
+      if (channel->callback)
         channel->callback(channel->callbackArgument);
     }
   }
@@ -231,26 +233,28 @@ static enum result channelInit(void *object, const void *configPtr)
       | CONTROL_DST_WIDTH(config->width);
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
 
-  /* Two bytes burst mode is unsupported */
+  /* Set four-byte burst size by default */
+  uint8_t srcBurst = DMA_BURST_4, dstBurst = DMA_BURST_4;
+
   switch (config->type)
   {
-    case GPDMA_TYPE_M2M:
-      /* Set 4-byte burst size for memory transfers */
-      channel->control |= CONTROL_SRC_BURST(1) | CONTROL_DST_BURST(1);
-      break;
     case GPDMA_TYPE_M2P:
-      channel->control |= CONTROL_SRC_BURST(1);
-      if (config->burst >= DMA_BURST_4)
-        channel->control |= CONTROL_DST_BURST(config->burst - 1);
+      dstBurst = config->burst;
       channel->config |= CONFIG_DST_PERIPH(peripheral);
       break;
     case GPDMA_TYPE_P2M:
-      channel->control |= CONTROL_DST_BURST(1);
-      if (config->burst >= DMA_BURST_4)
-        channel->control |= CONTROL_SRC_BURST(config->burst - 1);
+      srcBurst = config->burst;
       channel->config |= CONFIG_SRC_PERIPH(peripheral);
       break;
+    default:
+      break;
   }
+  /* Two-byte burst unsupported */
+  if (srcBurst >= DMA_BURST_4)
+    --srcBurst;
+  if (dstBurst >= DMA_BURST_4)
+    --dstBurst;
+  channel->control |= CONTROL_SRC_BURST(srcBurst) | CONTROL_DST_BURST(dstBurst);
 
   /* Reset multiplexer mask and value */
   channel->muxMask = 0xFF;

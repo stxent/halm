@@ -9,10 +9,9 @@
 #include <platform/nxp/adc.h>
 #include <platform/nxp/adc_defs.h>
 /*----------------------------------------------------------------------------*/
-/* Unpack function */
-#define UNPACK_FUNCTION(value)          ((value) & 0x0F)
-/* Unpack match channel */
-#define UNPACK_CHANNEL(value)           (((value) >> 4) & 0x0F)
+#define RESULT_POW              1 /* Power of two */
+#define UNPACK_FUNCTION(value)  ((value) & 0x0F) /* Unpack function */
+#define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F) /* Unpack channel */
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -91,7 +90,7 @@ static enum result adcInit(void *object, const void *configPtr)
   const struct GpioDescriptor *pinDescriptor;
   struct Adc *interface = object;
 
-  //TODO ADC: add assertion for hardware event
+  assert(config->event < ADC_EVENT_END);
 
   if (!(pinDescriptor = gpioFind(adcPins, config->pin, 0)))
     return E_VALUE;
@@ -108,7 +107,7 @@ static enum result adcInit(void *object, const void *configPtr)
   interface->channel = UNPACK_CHANNEL(pinDescriptor->value);
   interface->blocking = true;
   interface->buffer = 0;
-  interface->event = config->event;
+  interface->event = config->event + 1;
   interface->left = 0;
   interface->unit = config->parent;
 
@@ -166,23 +165,24 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   LPC_ADC_Type *reg = interface->unit->parent.reg;
 
   /* Check buffer alignment */
-  assert(!(length & 0x01));
+  assert(!(length & ((1 << RESULT_POW) - 1)));
 
   if (!spinTryLock(&interface->unit->lock))
     return 0;
 
-  reg->CR &= ~CR_SEL_MASK;
-  //FIXME Magic
-  reg->CR |= CR_START(1) | CR_SEL(interface->channel);
+  /* Set conversion channel */
+  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->channel);
 
-  while (!(reg->GDR & GDR_DONE));
+  for (uint32_t position = 0; position < length; position += 1 << RESULT_POW)
+  {
+    /* Start the conversion, then wait for result and finally clear flag */
+    reg->CR |= CR_START(interface->event);
+    while (!(reg->GDR & GDR_DONE));
+    reg->CR &= ~CR_START_MASK;
 
-  reg->CR &= ~CR_START_MASK; /* Stop conversion */
-  if (reg->GDR & GDR_OVERRUN) /* Return error when overrun occurred */
-    return 0;
-
-  uint16_t value = GDR_RESULT_VALUE(reg->GDR, ADC_RESOLUTION);
-  memcpy(buffer, &value, sizeof(value));
+    uint16_t value = GDR_RESULT_VALUE(reg->GDR, ADC_RESOLUTION);
+    memcpy(buffer + position, &value, sizeof(value));
+  }
 
   spinUnlock(&interface->unit->lock);
   return length;
