@@ -18,7 +18,6 @@ extern const struct InterfaceClass *Adc;
 struct AdcUnitConfig
 {
   uint8_t channel; /* Mandatory: peripheral number */
-//  uint8_t resolution; /* Optional: result width in bits */
   priority_t priority; /* Optional: interrupt priority */
 };
 /*----------------------------------------------------------------------------*/
@@ -26,6 +25,8 @@ struct AdcUnit
 {
   struct AdcUnitBase parent;
 
+  /* Conversion channel currently in use */
+  struct Adc *current;
   /* Access to converter block */
   spinlock_t lock;
 };

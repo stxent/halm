@@ -26,7 +26,7 @@ static enum result adcSet(void *, enum ifOption, const void *);
 static uint32_t adcRead(void *, uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass adcUnitTable = {
-    .size = sizeof(struct AdcUnitBase),
+    .size = sizeof(struct AdcUnit),
     .init = adcUnitInit,
     .deinit = adcUnitDeinit
 };
@@ -50,6 +50,32 @@ const struct InterfaceClass *Adc = &adcTable;
 static void interruptHandler(void *object)
 {
   struct AdcUnit *unit = object;
+  struct Adc *interface = unit->current;
+  LPC_ADC_Type *reg = interface->unit->parent.reg;
+
+  if (interface)
+  {
+    reg->CR &= ~CR_START_MASK;
+
+    /* Copy conversion result */
+    uint16_t value = GDR_RESULT_VALUE(reg->GDR, ADC_RESOLUTION);
+    memcpy(interface->buffer, &value, sizeof(value));
+    interface->buffer += 1 << RESULT_POW;
+
+    if (!--interface->left)
+    {
+      /* Release converter lock when all conversions are done */
+      unit->current = 0;
+      spinUnlock(&unit->lock);
+      if (interface->callback)
+        interface->callback(interface->callbackArgument);
+    }
+    else
+    {
+      /* Start next conversion */
+      reg->CR |= CR_START(interface->event);
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *object, const void *configPtr)
@@ -65,11 +91,12 @@ static enum result adcUnitInit(void *object, const void *configPtr)
   if ((res = AdcUnitBase->init(object, &parentConfig)) != E_OK)
     return res;
 
+  unit->current = 0;
   unit->lock = SPIN_UNLOCKED;
   unit->parent.handler = interruptHandler;
 
-  /* Disable all interrupt sources */
-  ((LPC_ADC_Type *)unit->parent.reg)->INTEN = 0;
+  /* Enable global conversion interrupt */
+  ((LPC_ADC_Type *)unit->parent.reg)->INTEN = INTEN_ADG;
   /* Enable interrupt globally */
   irqEnable(unit->parent.irq);
 
@@ -129,20 +156,22 @@ static enum result adcCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGet(void *object, enum ifOption option, void *data)
+static enum result adcGet(void *object, enum ifOption option,
+    void *data __attribute__((unused)))
 {
   struct Adc *interface = object;
 
   switch (option)
   {
     case IF_STATUS:
-      return E_OK; //TODO
+      return interface->left ? E_BUSY : E_OK;
     default:
       return E_ERROR;
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSet(void *object, enum ifOption option, const void *data)
+static enum result adcSet(void *object, enum ifOption option,
+    const void *data __attribute__((unused)))
 {
   struct Adc *interface = object;
 
@@ -167,23 +196,21 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   /* Check buffer alignment */
   assert(!(length & ((1 << RESULT_POW) - 1)));
 
-  if (!spinTryLock(&interface->unit->lock))
+  if (!length || !spinTryLock(&interface->unit->lock))
     return 0;
 
   /* Set conversion channel */
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->channel);
 
-  for (uint32_t position = 0; position < length; position += 1 << RESULT_POW)
-  {
-    /* Start the conversion, then wait for result and finally clear flag */
-    reg->CR |= CR_START(interface->event);
-    while (!(reg->GDR & GDR_DONE));
-    reg->CR &= ~CR_START_MASK;
+  interface->buffer = buffer;
+  interface->left = length >> RESULT_POW;
+  interface->unit->current = object;
 
-    uint16_t value = GDR_RESULT_VALUE(reg->GDR, ADC_RESOLUTION);
-    memcpy(buffer + position, &value, sizeof(value));
-  }
+  /* Start the conversion */
+  reg->CR |= CR_START(interface->event);
 
-  spinUnlock(&interface->unit->lock);
+  if (interface->blocking)
+    while (interface->left);
+
   return length;
 }
