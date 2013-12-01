@@ -75,6 +75,9 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   reg->MCR = 0; /* Reset control register */
   reg->PC = reg->TC = 0; /* Reset internal counters */
+  reg->CCR = 0; /* Reset capture control register */
+  reg->CTCR = 0; /* Select timer mode */
+  reg->EMR = 0; /* Disable all external match outputs */
   reg->IR = IR_MASK; /* Clear pending interrupts */
 
   /* Configure prescaler */
@@ -143,9 +146,15 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   /* Set match value and enable timer reset when value is greater than zero */
   *calcMatchChannel(reg, timer->event) = overflow;
   if (overflow)
+  {
     reg->MCR |= MCR_RESET(timer->event);
+    reg->EMR |= EMR_CONTROL(timer->event, EMR_CONTROL_TOGGLE);
+  }
   else
+  {
     reg->MCR &= ~MCR_RESET(timer->event);
+    reg->EMR &= ~EMR_CONTROL_MASK(timer->event);
+  }
 
   /* Synchronously reset prescaler and counter registers */
   reg->TCR |= TCR_CRES;

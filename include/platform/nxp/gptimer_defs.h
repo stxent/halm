@@ -24,12 +24,12 @@
 #define CCR_FALLING_EDGE(channel)       BIT((channel) * 3 + 1)
 #define CCR_INTERRUPT(channel)          BIT((channel) * 3 + 2)
 /*------------------External Match Register-----------------------------------*/
-#define EMR_CONTROL_MASK(channel)       0x03
+#define EMR_CONTROL_MASK(channel)       BIT_FIELD(0x03, (channel) * 2 + 4)
 #define EMR_CONTROL_CLEAR               1
 #define EMR_CONTROL_SET                 2
 #define EMR_CONTROL_TOGGLE              3
-#define EMR_EXTERNAL_MATCH(channel)     BIT((channel))
 #define EMR_CONTROL(channel, value)     BIT_FIELD((value), (channel) * 2 + 4)
+#define EMR_EXTERNAL_MATCH(channel)     BIT((channel))
 /*------------------PWM Control Register--------------------------------------*/
 #define PWMC_ENABLE(channel)            BIT((channel))
 /*----------------------------------------------------------------------------*/
