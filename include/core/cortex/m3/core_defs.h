@@ -9,9 +9,9 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
-#define __rw__ volatile
-#define __r__ const volatile
-#define __w__ volatile
+#define __rw__  volatile
+#define __r__   const volatile
+#define __w__   volatile
 /*------------------System Control Block--------------------------------------*/
 typedef struct
 {

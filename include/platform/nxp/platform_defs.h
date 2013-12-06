@@ -10,16 +10,9 @@
 #include <stdint.h>
 #include <mcu.h>
 /*----------------------------------------------------------------------------*/
-#if defined(LPC11XX)
-#define GPTIMER_PWM
-#elif defined(LPC13XX)
-#define GPTIMER_PWM
-#elif defined(LPC17XX)
-#endif
-/*----------------------------------------------------------------------------*/
-#define __rw__ volatile
-#define __r__ const volatile
-#define __w__ volatile
+#define __rw__  volatile
+#define __r__   const volatile
+#define __w__   volatile
 /*------------------Timer/Counter---------------------------------------------*/
 typedef struct
 {
@@ -29,17 +22,33 @@ typedef struct
   __rw__ uint32_t PR;
   __rw__ uint32_t PC;
   __rw__ uint32_t MCR;
-  __rw__ uint32_t MR0;
-  __rw__ uint32_t MR1;
-  __rw__ uint32_t MR2;
-  __rw__ uint32_t MR3;
+  union
+  {
+    __rw__ uint32_t MR[4];
+    struct
+    {
+      __rw__ uint32_t MR0;
+      __rw__ uint32_t MR1;
+      __rw__ uint32_t MR2;
+      __rw__ uint32_t MR3;
+    };
+  };
   __rw__ uint32_t CCR;
-  __r__  uint32_t CR0;
-         uint32_t RESERVED1[3];
+  union
+  {
+    __r__  uint32_t CR[4];
+    struct
+    {
+      __r__  uint32_t CR0;
+      __r__  uint32_t CR1;
+      __r__  uint32_t CR2;
+      __r__  uint32_t CR3;
+    };
+  };
   __rw__ uint32_t EMR;
          uint32_t RESERVED2[12];
   __rw__ uint32_t CTCR;
-  __rw__ uint32_t PWMC; /* May not be available on all parts */
+  __rw__ uint32_t PWMC; /* Chip-specific register */
 } LPC_TIMER_Type;
 /*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
@@ -72,16 +81,19 @@ typedef struct
 /* UART block with modem control, RS485 support and IrDA mode */
 typedef struct
 {
-  union {
+  union
+  {
     __r__  uint32_t RBR;
     __w__  uint32_t THR;
     __rw__ uint32_t DLL;
   };
-  union {
+  union
+  {
     __rw__ uint32_t DLM;
     __rw__ uint32_t IER;
   };
-  union {
+  union
+  {
     __r__  uint32_t IIR;
     __w__  uint32_t FCR;
   };
@@ -141,9 +153,11 @@ typedef struct
   __rw__ uint32_t GDR;
          uint32_t RESERVED0;
   __rw__ uint32_t INTEN;
-  union {
+  union
+  {
     __rw__ uint32_t DR[8];
-    struct {
+    struct
+    {
       __rw__ uint32_t DR0;
       __rw__ uint32_t DR1;
       __rw__ uint32_t DR2;

@@ -51,33 +51,54 @@ typedef struct
 /*------------------Pin Connect Block-----------------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t PINSEL0;
-  __rw__ uint32_t PINSEL1;
-  __rw__ uint32_t PINSEL2;
-  __rw__ uint32_t PINSEL3;
-  __rw__ uint32_t PINSEL4;
-  __rw__ uint32_t PINSEL5;
-  __rw__ uint32_t PINSEL6;
-  __rw__ uint32_t PINSEL7;
-  __rw__ uint32_t PINSEL8;
-  __rw__ uint32_t PINSEL9;
-  __rw__ uint32_t PINSEL10;
+  union
+  {
+    __rw__ uint32_t PINSEL[11];
+    struct
+    {
+      __rw__ uint32_t PINSEL0;
+      __rw__ uint32_t PINSEL1;
+      __rw__ uint32_t PINSEL2;
+      __rw__ uint32_t PINSEL3;
+      __rw__ uint32_t PINSEL4;
+      __rw__ uint32_t PINSEL5;
+      __rw__ uint32_t PINSEL6;
+      __rw__ uint32_t PINSEL7;
+      __rw__ uint32_t PINSEL8;
+      __rw__ uint32_t PINSEL9;
+      __rw__ uint32_t PINSEL10;
+    };
+  };
          uint32_t RESERVED0[5];
-  __rw__ uint32_t PINMODE0;
-  __rw__ uint32_t PINMODE1;
-  __rw__ uint32_t PINMODE2;
-  __rw__ uint32_t PINMODE3;
-  __rw__ uint32_t PINMODE4;
-  __rw__ uint32_t PINMODE5;
-  __rw__ uint32_t PINMODE6;
-  __rw__ uint32_t PINMODE7;
-  __rw__ uint32_t PINMODE8;
-  __rw__ uint32_t PINMODE9;
-  __rw__ uint32_t PINMODE_OD0;
-  __rw__ uint32_t PINMODE_OD1;
-  __rw__ uint32_t PINMODE_OD2;
-  __rw__ uint32_t PINMODE_OD3;
-  __rw__ uint32_t PINMODE_OD4;
+  union
+  {
+    __rw__ uint32_t PINMODE[10];
+    struct
+    {
+      __rw__ uint32_t PINMODE0;
+      __rw__ uint32_t PINMODE1;
+      __rw__ uint32_t PINMODE2;
+      __rw__ uint32_t PINMODE3;
+      __rw__ uint32_t PINMODE4;
+      __rw__ uint32_t PINMODE5;
+      __rw__ uint32_t PINMODE6;
+      __rw__ uint32_t PINMODE7;
+      __rw__ uint32_t PINMODE8;
+      __rw__ uint32_t PINMODE9;
+    };
+  };
+  union
+  {
+    __rw__ uint32_t PINMODE_OD[5];
+    struct
+    {
+      __rw__ uint32_t PINMODE_OD0;
+      __rw__ uint32_t PINMODE_OD1;
+      __rw__ uint32_t PINMODE_OD2;
+      __rw__ uint32_t PINMODE_OD3;
+      __rw__ uint32_t PINMODE_OD4;
+    };
+  };
   __rw__ uint32_t I2CPADCFG;
 } LPC_PINCON_Type;
 /*------------------General Purpose Input/Output------------------------------*/
@@ -464,7 +485,8 @@ typedef struct
          uint32_t RESERVED4[15];
 
   /* USB OTG I2C registers */
-  union {
+  union
+  {
     __r__  uint32_t I2C_RX;
     __w__  uint32_t I2C_TX;
   };
@@ -475,11 +497,13 @@ typedef struct
          uint32_t RESERVED5[824];
 
   /* USB Clock Control registers */
-  union {
+  union
+  {
     __rw__ uint32_t USBClkCtrl;
     __rw__ uint32_t OTGClkCtrl;
   };
-  union {
+  union
+  {
     __r__  uint32_t USBClkSt;
     __r__  uint32_t OTGClkSt;
   };

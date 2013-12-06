@@ -133,11 +133,11 @@ typedef struct
   __rw__ uint32_t PIO1_10;
   __rw__ uint32_t PIO2_11;
   __rw__ uint32_t R_PIO0_11;
-	__rw__ uint32_t R_PIO1_0;
-	__rw__ uint32_t R_PIO1_1;
+  __rw__ uint32_t R_PIO1_0;
+  __rw__ uint32_t R_PIO1_1;
 
-	/* Offset 0x80 */
-	__rw__ uint32_t R_PIO1_2;
+  /* Offset 0x80 */
+  __rw__ uint32_t R_PIO1_2;
   __rw__ uint32_t PIO3_0;
   __rw__ uint32_t PIO3_1;
   __rw__ uint32_t PIO2_3;
@@ -240,10 +240,10 @@ typedef struct
 
 /* AHB peripherals */
 #define LPC_GPIO_BASE           (LPC_AHB_BASE + 0x00000)
-#define LPC_GPIO0_BASE          (LPC_AHB_BASE + 0x00000)
-#define LPC_GPIO1_BASE          (LPC_AHB_BASE + 0x10000)
-#define LPC_GPIO2_BASE          (LPC_AHB_BASE + 0x20000)
-#define LPC_GPIO3_BASE          (LPC_AHB_BASE + 0x30000)
+#define LPC_GPIO0_BASE          (LPC_GPIO_BASE + 0x00000)
+#define LPC_GPIO1_BASE          (LPC_GPIO_BASE + 0x10000)
+#define LPC_GPIO2_BASE          (LPC_GPIO_BASE + 0x20000)
+#define LPC_GPIO3_BASE          (LPC_GPIO_BASE + 0x30000)
 /*----------------------------------------------------------------------------*/
 /* Peripheral declaration */
 #define LPC_I2C         ((LPC_I2C_Type *)LPC_I2C_BASE)
