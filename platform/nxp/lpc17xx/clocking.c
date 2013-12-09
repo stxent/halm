@@ -12,12 +12,14 @@
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY 4e6
 /*----------------------------------------------------------------------------*/
+static inline void flashLatencyReset(void);
+static void flashLatencyUpdate(uint32_t);
 static void stubDisable(void);
 static bool stubReady(void);
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(void);
 static enum result extOscEnable(const void *);
-static bool extOscReady();
+static bool extOscReady(void);
 static void sysPllDisable(void);
 static enum result sysPllEnable(const void *);
 static bool sysPllReady(void);
@@ -51,6 +53,29 @@ static uint32_t extOscFrequency = 0, pllFrequency = 0;
 static uint8_t pllDivider = 0;
 uint32_t sysCoreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
+static inline void flashLatencyReset(void)
+{
+  /* Select safe settings */
+  sysFlashLatency(6);
+}
+/*----------------------------------------------------------------------------*/
+static void flashLatencyUpdate(uint32_t frequency)
+{
+  /*
+   * 1 clock: frequency <= 20 MHz.
+   * 2 clocks: 20 < frequency <= 40 MHz.
+   * 3 clocks: 40 < frequency <= 60 MHz.
+   * 4 clocks: 60 < frequency <= 80 MHz.
+   * 5 clocks: 80 < frequency <= 100 MHz or 120 MHz for some parts.
+   * 6 clocks: safe setting will work under any conditions.
+   */
+  uint8_t cycles = frequency / 20e6;
+
+  if (cycles > 5)
+    cycles = 5;
+  sysFlashLatency(cycles);
+}
+/*----------------------------------------------------------------------------*/
 static void stubDisable(void)
 {
 
@@ -63,21 +88,24 @@ static bool stubReady(void)
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(void)
 {
-  //TODO
+  LPC_SC->SCS &= ~SCS_OSCEN;
 }
 /*----------------------------------------------------------------------------*/
 static enum result extOscEnable(const void *configPtr)
 {
   const struct ExternalOscConfig * const config = configPtr;
-  uint32_t buffer = 0;
+  uint32_t buffer = LPC_SC->SCS | SCS_OSCEN;
 
-//  if (config->bypass)
-//    buffer |= SYSOSCCTRL_BYPASS;
+  /*
+   * Oscillator can operate in two modes: slave mode and oscillation mode.
+   * Slave mode does not require any additional configuration.
+   */
+
   if (config->frequency > 15e6)
     buffer |= SCS_FREQRANGE;
 
   extOscFrequency = config->frequency;
-  LPC_SC->SCS = SCS_OSCEN | buffer;
+  LPC_SC->SCS = buffer;
 
   return E_OK;
 }
@@ -115,6 +143,7 @@ static enum result sysPllEnable(const void *configPtr)
     case CLOCK_EXTERNAL:
       if (!extOscFrequency)
         return E_ERROR; /* System oscillator is not initialized */
+
       LPC_SC->CLKSRCSEL = CLKSRCSEL_MAIN;
       frequency = extOscFrequency;
       break;
@@ -158,12 +187,15 @@ static enum result mainClockEnable(const void *configPtr)
   switch (config->source)
   {
     case CLOCK_INTERNAL:
+      flashLatencyReset();
       LPC_SC->CLKSRCSEL = CLKSRCSEL_IRC;
       sysCoreClock = intOscFrequency;
     case CLOCK_EXTERNAL:
       /* Check whether external oscillator is configured */
       if (!extOscFrequency)
         return E_ERROR;
+
+      flashLatencyReset();
       LPC_SC->CLKSRCSEL = CLKSRCSEL_MAIN;
       sysCoreClock = extOscFrequency;
       break;
@@ -172,7 +204,8 @@ static enum result mainClockEnable(const void *configPtr)
       if (!pllFrequency)
         return E_ERROR;
 
-      /* Configure system clock divider */
+      /* Maximize flash latency and configure system clock divider */
+      flashLatencyReset();
       LPC_SC->CCLKCFG = pllDivider;
 
       /* Connect PLL */
@@ -187,10 +220,12 @@ static enum result mainClockEnable(const void *configPtr)
       break;
     case CLOCK_RTC:
       LPC_SC->CLKSRCSEL = CLKSRCSEL_RTC;
+      /* TODO Add LPC17xx clocking from RTC */
       break;
     default:
       return E_ERROR;
   }
+  flashLatencyUpdate(sysCoreClock);
 
   return E_OK;
 }

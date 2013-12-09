@@ -114,7 +114,8 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
 /*----------------------------------------------------------------------------*/
 static void tmrSetEnabled(void *object, bool state)
 {
-  LPC_TIMER_Type *reg = ((struct GpTimer *)object)->parent.reg;
+  struct GpTimer *timer = object;
+  LPC_TIMER_Type *reg = timer->parent.reg;
 
   if (!state)
   {
@@ -122,7 +123,11 @@ static void tmrSetEnabled(void *object, bool state)
     while (reg->TC || reg->PC);
   }
   else
+  {
+    /* Clear flag in External Match Register and start the timer */
+    reg->EMR &= ~EMR_EXTERNAL_MATCH(timer->event);
     reg->TCR &= ~TCR_CRES;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)

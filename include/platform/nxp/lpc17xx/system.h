@@ -88,6 +88,7 @@ enum sysClockDevice
 };
 /*----------------------------------------------------------------------------*/
 void sysClockControl(enum sysClockDevice, enum sysClockDiv);
+void sysFlashLatency(uint8_t);
 /*----------------------------------------------------------------------------*/
 static inline void sysPowerEnable(enum sysPowerDevice block)
 {

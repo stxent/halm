@@ -45,16 +45,15 @@ typedef struct
          uint32_t RESERVED4[10];
 
   /* External interrupts, offset 0x140 */
-  __rw__ uint32_t EXTINT; /* External Interrupt Flag register */
+  __rw__ uint32_t EXTINT;
          uint32_t RESERVED5;
-  __rw__ uint32_t EXTMODE; /* External Interrupt Mode register */
-  __rw__ uint32_t EXTPOLAR; /* External Interrupt Polarity register */
+  __rw__ uint32_t EXTMODE;
+  __rw__ uint32_t EXTPOLAR;
          uint32_t RESERVED6[12];
 
   __rw__ uint32_t RSID; /* Reset Source Identification register */
          uint32_t RESERVED7[7];
   __rw__ uint32_t SCS; /* System Control and Status */
-  __rw__ uint32_t IRCTRIM;
          uint32_t RESERVED8;
 
   /* Peripheral Clock Selection registers, offset 0x1A8 */
