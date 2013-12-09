@@ -7,8 +7,6 @@
 #include <gpio.h>
 #include <platform/nxp/lpc17xx/gpio_defs.h>
 /*----------------------------------------------------------------------------*/
-#define REG_PIN_TYPE(port) (volatile uint32_t *)(&LPC_PINCON->PINMODE_OD0 + (port))
-/*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline uint32_t *calcPinSelect(union GpioPin);
 static inline uint32_t *calcPinMode(union GpioPin);

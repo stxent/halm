@@ -19,26 +19,26 @@ void PENDSV_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SYSTICK_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
 /* Chip-specific IRQ handlers */
-void CAN_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void SSP1_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void I2C_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void TIMER16B0_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void TIMER16B1_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void TIMER32B0_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void TIMER32B1_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void SSP0_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void UART_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void USB_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void USB_FIQ_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void ADC_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void WDT_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void BOD_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void FMC_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void PIOINT3_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void PIOINT2_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void PIOINT1_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void PIOINT0_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void WAKEUP_ISR (void) __attribute__((weak, alias("defaultHandler")));
+void CAN_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void SSP1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void I2C_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void TIMER16B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void TIMER16B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void TIMER32B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void TIMER32B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void SSP0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void UART_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void USB_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void USB_FIQ_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void ADC_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void WDT_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void BOD_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void FMC_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void PIOINT3_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void PIOINT2_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void PIOINT1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void PIOINT0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void WAKEUP_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
 extern void _stack(void); /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/

@@ -8,7 +8,6 @@
 #include <platform/nxp/gptimer.h>
 #include <platform/nxp/gptimer_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcMatchChannel(LPC_TIMER_Type *, uint8_t);
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
@@ -32,12 +31,6 @@ static const struct TimerClass timerTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct TimerClass *GpTimer = &timerTable;
-/*----------------------------------------------------------------------------*/
-static inline uint32_t *calcMatchChannel(LPC_TIMER_Type *timer,
-    uint8_t channel)
-{
-  return (uint32_t *)&timer->MR0 + channel;
-}
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -144,7 +137,7 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   LPC_TIMER_Type *reg = timer->parent.reg;
 
   /* Set match value and enable timer reset when value is greater than zero */
-  *calcMatchChannel(reg, timer->event) = overflow;
+  reg->MR[timer->event] = overflow;
   if (overflow)
   {
     reg->MCR |= MCR_RESET(timer->event);

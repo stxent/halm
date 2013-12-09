@@ -11,94 +11,91 @@
 /*------------------System Control--------------------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t FLASHCFG; /* Flash Accelerator Module */
+  /* Flash Accelerator Module */
+  __rw__ uint32_t FLASHCFG;
          uint32_t RESERVED0[31];
-  __rw__ uint32_t PLL0CON; /* Clocking and Power Control */
+
+  /* Phase Locked Loop 0, offset 0x80 */
+  __rw__ uint32_t PLL0CON;
   __rw__ uint32_t PLL0CFG;
   __r__  uint32_t PLL0STAT;
   __w__  uint32_t PLL0FEED;
          uint32_t RESERVED1[4];
+
+  /* Phase Locked Loop 1, offset 0xA0 */
   __rw__ uint32_t PLL1CON;
   __rw__ uint32_t PLL1CFG;
   __r__  uint32_t PLL1STAT;
   __w__  uint32_t PLL1FEED;
          uint32_t RESERVED2[4];
+
+  /* Power control, offset 0xC0 */
   __rw__ uint32_t PCON;
   __rw__ uint32_t PCONP;
          uint32_t RESERVED3[15];
+
+  /* Clock dividers, offset 0x104 */
   __rw__ uint32_t CCLKCFG;
   __rw__ uint32_t USBCLKCFG;
   __rw__ uint32_t CLKSRCSEL;
+
+  /* CAN Wake and Sleep registers, offset 0x110 */
   __rw__ uint32_t CANSLEEPCLR;
   __rw__ uint32_t CANWAKEFLAGS;
          uint32_t RESERVED4[10];
-  __rw__ uint32_t EXTINT; /* External Interrupts */
+
+  /* External interrupts, offset 0x140 */
+  __rw__ uint32_t EXTINT; /* External Interrupt Flag register */
          uint32_t RESERVED5;
-  __rw__ uint32_t EXTMODE;
-  __rw__ uint32_t EXTPOLAR;
+  __rw__ uint32_t EXTMODE; /* External Interrupt Mode register */
+  __rw__ uint32_t EXTPOLAR; /* External Interrupt Polarity register */
          uint32_t RESERVED6[12];
-  __rw__ uint32_t RSID;
+
+  __rw__ uint32_t RSID; /* Reset Source Identification register */
          uint32_t RESERVED7[7];
-  __rw__ uint32_t SCS;
+  __rw__ uint32_t SCS; /* System Control and Status */
   __rw__ uint32_t IRCTRIM;
+         uint32_t RESERVED8;
+
+  /* Peripheral Clock Selection registers, offset 0x1A8 */
   __rw__ uint32_t PCLKSEL0;
   __rw__ uint32_t PCLKSEL1;
-         uint32_t RESERVED8[4];
-  __rw__ uint32_t USBIntSt; /* USB Device/OTG Interrupt Register */
-  __rw__ uint32_t DMAREQSEL;
-  __rw__ uint32_t CLKOUTCFG;
+         uint32_t RESERVED9[4];
+
+  __rw__ uint32_t USBIntSt; /* USB Device/OTG Interrupt Status register */
+  __rw__ uint32_t DMAREQSEL; /* DMA Request Select register */
+  __rw__ uint32_t CLKOUTCFG; /* Clock Output Configuration register */
 } LPC_SC_Type;
 /*------------------Pin Connect Block-----------------------------------------*/
 typedef struct
 {
-  union
-  {
-    __rw__ uint32_t PINSEL[11];
-    struct
-    {
-      __rw__ uint32_t PINSEL0;
-      __rw__ uint32_t PINSEL1;
-      __rw__ uint32_t PINSEL2;
-      __rw__ uint32_t PINSEL3;
-      __rw__ uint32_t PINSEL4;
-      __rw__ uint32_t PINSEL5;
-      __rw__ uint32_t PINSEL6;
-      __rw__ uint32_t PINSEL7;
-      __rw__ uint32_t PINSEL8;
-      __rw__ uint32_t PINSEL9;
-      __rw__ uint32_t PINSEL10;
-    };
-  };
+  __rw__ uint32_t PINSEL0;
+  __rw__ uint32_t PINSEL1;
+  __rw__ uint32_t PINSEL2;
+  __rw__ uint32_t PINSEL3;
+  __rw__ uint32_t PINSEL4;
+  __rw__ uint32_t PINSEL5;
+  __rw__ uint32_t PINSEL6;
+  __rw__ uint32_t PINSEL7;
+  __rw__ uint32_t PINSEL8;
+  __rw__ uint32_t PINSEL9;
+  __rw__ uint32_t PINSEL10;
          uint32_t RESERVED0[5];
-  union
-  {
-    __rw__ uint32_t PINMODE[10];
-    struct
-    {
-      __rw__ uint32_t PINMODE0;
-      __rw__ uint32_t PINMODE1;
-      __rw__ uint32_t PINMODE2;
-      __rw__ uint32_t PINMODE3;
-      __rw__ uint32_t PINMODE4;
-      __rw__ uint32_t PINMODE5;
-      __rw__ uint32_t PINMODE6;
-      __rw__ uint32_t PINMODE7;
-      __rw__ uint32_t PINMODE8;
-      __rw__ uint32_t PINMODE9;
-    };
-  };
-  union
-  {
-    __rw__ uint32_t PINMODE_OD[5];
-    struct
-    {
-      __rw__ uint32_t PINMODE_OD0;
-      __rw__ uint32_t PINMODE_OD1;
-      __rw__ uint32_t PINMODE_OD2;
-      __rw__ uint32_t PINMODE_OD3;
-      __rw__ uint32_t PINMODE_OD4;
-    };
-  };
+  __rw__ uint32_t PINMODE0;
+  __rw__ uint32_t PINMODE1;
+  __rw__ uint32_t PINMODE2;
+  __rw__ uint32_t PINMODE3;
+  __rw__ uint32_t PINMODE4;
+  __rw__ uint32_t PINMODE5;
+  __rw__ uint32_t PINMODE6;
+  __rw__ uint32_t PINMODE7;
+  __rw__ uint32_t PINMODE8;
+  __rw__ uint32_t PINMODE9;
+  __rw__ uint32_t PINMODE_OD0;
+  __rw__ uint32_t PINMODE_OD1;
+  __rw__ uint32_t PINMODE_OD2;
+  __rw__ uint32_t PINMODE_OD3;
+  __rw__ uint32_t PINMODE_OD4;
   __rw__ uint32_t I2CPADCFG;
 } LPC_PINCON_Type;
 /*------------------General Purpose Input/Output------------------------------*/
@@ -532,7 +529,7 @@ typedef struct
   __rw__ uint32_t SA2;
          uint32_t RESERVED1[45];
 
-  /* Control Registers */
+  /* Control registers */
   __rw__ uint32_t Command;
   __r__  uint32_t Status;
   __rw__ uint32_t RxDescriptor;

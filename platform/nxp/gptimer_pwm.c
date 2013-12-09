@@ -13,7 +13,6 @@
 /* Unpack match channel */
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcMatchChannel(LPC_TIMER_Type *, uint8_t);
 static int8_t findEmptyChannel(uint8_t);
 static void updateResolution(struct GpTimerPwmUnit *, uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -46,12 +45,6 @@ extern const struct GpioDescriptor gpTimerPwmPins[];
 const struct EntityClass *GpTimerPwmUnit = &unitTable;
 const struct PwmClass *GpTimerPwm = &channelTable;
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcMatchChannel(LPC_TIMER_Type *timer,
-    uint8_t channel)
-{
-  return (uint32_t *)&timer->MR0 + channel;
-}
-/*----------------------------------------------------------------------------*/
 static int8_t findEmptyChannel(uint8_t channels)
 {
   int8_t pos = 4; /* Each timer has 4 match blocks */
@@ -72,9 +65,11 @@ static void updateResolution(struct GpTimerPwmUnit *device, uint8_t channel)
   reg->MCR &= ~MCR_RESET(device->current);
 
   device->current = channel;
-  *calcMatchChannel(reg, device->current) = device->resolution;
-  /* Enable new match channel */
+
+  /* Set new match value and enable channel */
+  reg->MR[device->current] = device->resolution;
   reg->MCR |= MCR_RESET(device->current);
+
   /* Enable timer */
   reg->TCR &= ~TCR_CRES;
 }
@@ -149,7 +144,7 @@ static enum result channelInit(void *object, const void *configPtr)
   /* Initialize PWM specific registers in Timer/Counter block */
   LPC_TIMER_Type *reg = pwm->unit->parent.reg;
 
-  pwm->reg = calcMatchChannel(reg, pwm->channel);
+  pwm->reg = (uint32_t *)(reg->MR + pwm->channel);
   pwm->unit->matches |= 1 << UNPACK_CHANNEL(pinDescriptor->value);
   updateResolution(pwm->unit, (uint8_t)freeChannel);
 
