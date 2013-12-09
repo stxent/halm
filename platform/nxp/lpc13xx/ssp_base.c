@@ -34,43 +34,43 @@ static const struct InterfaceClass sspTable = {
 /* SSP1 peripheral available only on LPC1313 */
 const struct GpioDescriptor sspPins[] = {
     {
-        .key = GPIO_TO_PIN(0, 2), /* SSP0_SSEL */
+        .key = PIN(0, 2), /* SSP0_SSEL */
         .channel = 0,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 6), /* SSP0_SCK */
+        .key = PIN(0, 6), /* SSP0_SCK */
         .channel = 0,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 8), /* SSP0_MISO */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = GPIO_TO_PIN(0, 9), /* SSP0_MOSI */
+        .key = PIN(0, 8), /* SSP0_MISO */
         .channel = 0,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 10), /* SSP0_SCK */
+        .key = PIN(0, 9), /* SSP0_MOSI */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = PIN(0, 10), /* SSP0_SCK */
         .channel = 0,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 0), /* SSP1_SSEL */
+        .key = PIN(2, 0), /* SSP1_SSEL */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 1), /* SSP1_SCK */
+        .key = PIN(2, 1), /* SSP1_SCK */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 2), /* SSP1_MISO */
+        .key = PIN(2, 2), /* SSP1_MISO */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 3), /* SSP1_MOSI */
+        .key = PIN(2, 3), /* SSP1_MOSI */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 11), /* SSP0_SCK */
+        .key = PIN(2, 11), /* SSP0_SCK */
         .channel = 0,
         .value = 1
     }, {
@@ -137,13 +137,13 @@ static enum result sspInit(void *object, const void *configPtr)
       /* Set SCK0 pin location register */
       switch (config->sck)
       {
-        case GPIO_TO_PIN(0, 10):
+        case PIN(0, 10):
           LPC_IOCON->SCK_LOC = 0;
           break;
-        case GPIO_TO_PIN(2, 11):
+        case PIN(2, 11):
           LPC_IOCON->SCK_LOC = 1;
           break;
-        case GPIO_TO_PIN(0, 6):
+        case PIN(0, 6):
           LPC_IOCON->SCK_LOC = 2;
           break;
       }

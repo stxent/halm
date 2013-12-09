@@ -31,51 +31,51 @@ static const struct InterfaceClass sspTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor sspPins[] = {
     {
-        .key = GPIO_TO_PIN(0, 6), /* SSP1_SSEL */
+        .key = PIN(0, 6), /* SSP1_SSEL */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 7), /* SSP1_SCK */
+        .key = PIN(0, 7), /* SSP1_SCK */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 8), /* SSP1_MISO */
+        .key = PIN(0, 8), /* SSP1_MISO */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 9), /* SSP1_MOSI */
+        .key = PIN(0, 9), /* SSP1_MOSI */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 15), /* SSP0_SCK */
+        .key = PIN(0, 15), /* SSP0_SCK */
         .channel = 0,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 16), /* SSP0_SSEL */
+        .key = PIN(0, 16), /* SSP0_SSEL */
         .channel = 0,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 17), /* SSP0_MISO */
+        .key = PIN(0, 17), /* SSP0_MISO */
         .channel = 0,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 18), /* SSP0_MOSI */
+        .key = PIN(0, 18), /* SSP0_MOSI */
         .channel = 0,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(1, 20), /* SSP0_SCK */
+        .key = PIN(1, 20), /* SSP0_SCK */
         .channel = 0,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(1, 21), /* SSP0_SSEL */
+        .key = PIN(1, 21), /* SSP0_SSEL */
         .channel = 0,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(1, 23), /* SSP0_MISO */
+        .key = PIN(1, 23), /* SSP0_MISO */
         .channel = 0,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(1, 24), /* SSP0_MOSI */
+        .key = PIN(1, 24), /* SSP0_MOSI */
         .channel = 0,
         .value = 3
     }, {

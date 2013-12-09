@@ -32,11 +32,11 @@ static const struct InterfaceClass uartTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor uartPins[] = {
     {
-        .key = GPIO_TO_PIN(1, 6), /* UART_RX */
+        .key = PIN(1, 6), /* UART_RX */
         .channel = 0,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(1, 7), /* UART_TX */
+        .key = PIN(1, 7), /* UART_TX */
         .channel = 0,
         .value = 1
     }, {

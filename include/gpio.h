@@ -12,16 +12,19 @@
 /*----------------------------------------------------------------------------*/
 typedef uint16_t gpio_t;
 /*----------------------------------------------------------------------------*/
-/* External pin id consist of port and pin numbers in 1's complement form */
-/* Unused pins should be initialized with zero */
-/* This method supports up to 2^7 ports and 2^8 pins on each port */
-#define GPIO_TO_PIN(port, pin) ((gpio_t)(~((uint8_t)port << 8 | (uint8_t)pin)))
+/*
+ * External pin id consist of port number and offset in 1's complement form.
+ * Unused pins should be initialized with zero.
+ * This representation supports up to 2^7 ports and 2^8 pins on each port.
+ */
+#define PIN(port, offset) ((gpio_t)(~(((unsigned long)(port) << 8 & 0xFF00)\
+    | ((unsigned long)(offset) & 0x00FF))))
 /*----------------------------------------------------------------------------*/
 /* Reserved function values */
 enum
 {
-  GPIO_DEFAULT = 0x7F,
-  GPIO_ANALOG = 0x7E
+  GPIO_DEFAULT  = 0x7F,
+  GPIO_ANALOG   = 0x7E
 };
 /*----------------------------------------------------------------------------*/
 enum gpioPull
@@ -65,7 +68,7 @@ const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *, gpio_t,
 /*----------------------------------------------------------------------------*/
 static inline gpio_t gpioGetKey(struct Gpio gpio)
 {
-  /* Returns zero when pin not initialized */
+  /* Returns zero when pin is not initialized */
   return ~gpio.pin.key;
 }
 /*----------------------------------------------------------------------------*/

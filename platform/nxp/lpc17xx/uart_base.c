@@ -31,67 +31,67 @@ static const struct InterfaceClass uartTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor uartPins[] = {
     {
-        .key = GPIO_TO_PIN(0, 0), /* UART_TXD3 */
+        .key = PIN(0, 0), /* UART_TXD3 */
         .channel = 3,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 1), /* UART_RXD3 */
+        .key = PIN(0, 1), /* UART_RXD3 */
         .channel = 3,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 2), /* UART_TXD0 */
+        .key = PIN(0, 2), /* UART_TXD0 */
         .channel = 0,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 3), /* UART_RXD0 */
+        .key = PIN(0, 3), /* UART_RXD0 */
         .channel = 0,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 10), /* UART_TXD2 */
+        .key = PIN(0, 10), /* UART_TXD2 */
         .channel = 2,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 11), /* UART_RXD2 */
+        .key = PIN(0, 11), /* UART_RXD2 */
         .channel = 2,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 15), /* UART_TXD1 */
+        .key = PIN(0, 15), /* UART_TXD1 */
         .channel = 1,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 16), /* UART_RXD1 */
+        .key = PIN(0, 16), /* UART_RXD1 */
         .channel = 1,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 25), /* UART_TXD3 */
+        .key = PIN(0, 25), /* UART_TXD3 */
         .channel = 3,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(0, 26), /* UART_RXD3 */
+        .key = PIN(0, 26), /* UART_RXD3 */
         .channel = 3,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(2, 0), /* UART_TXD1 */
+        .key = PIN(2, 0), /* UART_TXD1 */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 1), /* UART_RXD1 */
+        .key = PIN(2, 1), /* UART_RXD1 */
         .channel = 1,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 8), /* UART_TXD2 */
+        .key = PIN(2, 8), /* UART_TXD2 */
         .channel = 2,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(2, 9), /* UART_RXD2 */
+        .key = PIN(2, 9), /* UART_RXD2 */
         .channel = 2,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(4, 28), /* UART_TXD3 */
+        .key = PIN(4, 28), /* UART_TXD3 */
         .channel = 3,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(4, 29), /* UART_RXD3 */
+        .key = PIN(4, 29), /* UART_RXD3 */
         .channel = 3,
         .value = 3
     }, {

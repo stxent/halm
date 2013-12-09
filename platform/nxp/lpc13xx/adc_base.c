@@ -27,35 +27,35 @@ static const struct EntityClass adcUnitTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor adcPins[] = {
     {
-        .key = GPIO_TO_PIN(0, 11), /* AD0 */
+        .key = PIN(0, 11), /* AD0 */
         .channel = 0,
         .value = PACK_VALUE(2, 0)
     }, {
-        .key = GPIO_TO_PIN(1, 0), /* AD1 */
+        .key = PIN(1, 0), /* AD1 */
         .channel = 0,
         .value = PACK_VALUE(2, 1)
     }, {
-        .key = GPIO_TO_PIN(1, 1), /* AD2 */
+        .key = PIN(1, 1), /* AD2 */
         .channel = 0,
         .value = PACK_VALUE(2, 2)
     }, {
-        .key = GPIO_TO_PIN(1, 2), /* AD3 */
+        .key = PIN(1, 2), /* AD3 */
         .channel = 0,
         .value = PACK_VALUE(2, 3)
     }, {
-        .key = GPIO_TO_PIN(1, 3), /* AD4 */
+        .key = PIN(1, 3), /* AD4 */
         .channel = 0,
         .value = PACK_VALUE(2, 4)
     }, {
-        .key = GPIO_TO_PIN(1, 4), /* AD5 */
+        .key = PIN(1, 4), /* AD5 */
         .channel = 0,
         .value = PACK_VALUE(1, 5)
     }, {
-        .key = GPIO_TO_PIN(1, 10), /* AD6 */
+        .key = PIN(1, 10), /* AD6 */
         .channel = 0,
         .value = PACK_VALUE(1, 6)
     }, {
-        .key = GPIO_TO_PIN(1, 11), /* AD7 */
+        .key = PIN(1, 11), /* AD7 */
         .channel = 0,
         .value = PACK_VALUE(1, 7)
     }, {

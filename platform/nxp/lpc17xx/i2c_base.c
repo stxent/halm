@@ -31,35 +31,35 @@ static const struct InterfaceClass i2cTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor i2cPins[] = {
     {
-        .key = GPIO_TO_PIN(0, 0), /* SDA1 */
+        .key = PIN(0, 0), /* SDA1 */
         .channel = 1,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(0, 1), /* SCL1 */
+        .key = PIN(0, 1), /* SCL1 */
         .channel = 1,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(0, 10), /* SDA2 */
+        .key = PIN(0, 10), /* SDA2 */
         .channel = 2,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 11), /* SCL2 */
+        .key = PIN(0, 11), /* SCL2 */
         .channel = 2,
         .value = 2
     }, {
-        .key = GPIO_TO_PIN(0, 19), /* SDA1 */
+        .key = PIN(0, 19), /* SDA1 */
         .channel = 1,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(0, 20), /* SCL1 */
+        .key = PIN(0, 20), /* SCL1 */
         .channel = 1,
         .value = 3
     }, {
-        .key = GPIO_TO_PIN(0, 27), /* SDA0 */
+        .key = PIN(0, 27), /* SDA0 */
         .channel = 0,
         .value = 1
     }, {
-        .key = GPIO_TO_PIN(0, 28), /* SCL0 */
+        .key = PIN(0, 28), /* SCL0 */
         .channel = 0,
         .value = 1
     }, {
