@@ -4,6 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ * @file
+ * Abstract timer class.
+ */
+
 #ifndef TIMER_H_
 #define TIMER_H_
 /*----------------------------------------------------------------------------*/

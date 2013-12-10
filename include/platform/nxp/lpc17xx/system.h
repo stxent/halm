@@ -4,6 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ * @file
+ * System configuration functions for LPC17xx chips.
+ */
+
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 /*----------------------------------------------------------------------------*/

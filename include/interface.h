@@ -6,7 +6,7 @@
 
 /**
  * @file
- * Abstract peripheral interface for embedded system applications.
+ * Abstract interface for peripherals with input and output functionality.
  */
 
 #ifndef INTERFACE_H_
