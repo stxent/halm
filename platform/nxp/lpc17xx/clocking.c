@@ -118,7 +118,7 @@ static enum result sysPllEnable(const void *configPtr)
   uint32_t frequency; /* Resulting CCO frequency */
   uint32_t source; /* Clock Source Select register value */
   uint16_t multiplier;
-  uint8_t prescaler = 1;
+  uint8_t prescaler;
 
   assert(config->multiplier && config->divider);
 
@@ -152,25 +152,22 @@ static enum result sysPllEnable(const void *configPtr)
   }
 
   multiplier = config->multiplier;
+  frequency = frequency * config->multiplier;
   if (config->source != CLOCK_RTC)
   {
-    if (multiplier & 1)
-      prescaler <<= 1;
-    else
-      multiplier >>= 1;
     if (multiplier < 6 || multiplier > 512)
       return E_VALUE;
 
-    frequency = frequency * config->multiplier;
     if (frequency < 275e6 || frequency > 550e6)
       return E_ERROR;
+
+    prescaler = 2;
   }
   else
   {
     /* Low-frequency source supports only a limited set of multiplier values */
-    frequency = frequency * (config->multiplier << 1);
-    prescaler = frequency / 550e6;
-    /* No check performed for resulting values due to complexity */
+    /* No check is performed due to complexity */
+    prescaler = 1 + frequency / 550e6;
   }
 
   /* Update system frequency and postscaler value */
