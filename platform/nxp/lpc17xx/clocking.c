@@ -49,31 +49,23 @@ const struct ClockClass *SystemPll = &sysPllTable;
 const struct ClockClass *MainClock = &mainClockTable;
 /*----------------------------------------------------------------------------*/
 static const uint32_t intOscFrequency = INT_OSC_FREQUENCY;
-static uint32_t extOscFrequency = 0, pllFrequency = 0;
+static uint32_t extOscFrequency = 0, rtcOscFrequency = 0, pllFrequency = 0;
 static uint8_t pllDivider = 0;
 uint32_t sysCoreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
 {
-  /* Select safe settings */
+  /* Select safe setting */
   sysFlashLatency(6);
 }
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
-  /*
-   * 1 clock: frequency <= 20 MHz.
-   * 2 clocks: 20 < frequency <= 40 MHz.
-   * 3 clocks: 40 < frequency <= 60 MHz.
-   * 4 clocks: 60 < frequency <= 80 MHz.
-   * 5 clocks: 80 < frequency <= 100 MHz or 120 MHz for some parts.
-   * 6 clocks: safe setting will work under any conditions.
-   */
-  uint8_t cycles = frequency / 20e6;
+  uint8_t clocks = 1 + frequency / 20e6;
 
-  if (cycles > 5)
-    cycles = 5;
-  sysFlashLatency(cycles);
+  if (clocks > 5)
+    clocks = 5;
+  sysFlashLatency(clocks);
 }
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void)
@@ -124,46 +116,72 @@ static enum result sysPllEnable(const void *configPtr)
 {
   const struct PllConfig * const config = configPtr;
   uint32_t frequency; /* Resulting CCO frequency */
-  uint16_t msel;
-  uint8_t /*nsel, */psel;
+  uint32_t source; /* Clock Source Select register value */
+  uint16_t multiplier;
+  uint8_t prescaler = 1;
 
-  //TODO NSEL calculation
   assert(config->multiplier && config->divider);
 
-  msel = (config->multiplier >> 1) - 1;
-  if (msel < 5 || msel >= 512)
-    return E_VALUE;
-
-  psel = config->divider - 1;
-  if (psel < 2)
-    return E_VALUE;
+  /*
+   * Calculations:
+   * multiplier = (F_CCO * prescaler) / (2 * F_IN)
+   * output = F_CCO / postscaler
+   */
 
   switch (config->source)
   {
     case CLOCK_EXTERNAL:
+      /* Check whether external oscillator is configured */
       if (!extOscFrequency)
-        return E_ERROR; /* System oscillator is not initialized */
-
-      LPC_SC->CLKSRCSEL = CLKSRCSEL_MAIN;
+        return E_ERROR;
+      source = CLKSRCSEL_MAIN;
       frequency = extOscFrequency;
       break;
     case CLOCK_INTERNAL:
-      LPC_SC->CLKSRCSEL = CLKSRCSEL_IRC;
+      source = CLKSRCSEL_IRC;
       frequency = intOscFrequency;
+      break;
+    case CLOCK_RTC:
+      if (!rtcOscFrequency)
+        return E_ERROR;
+      source = CLKSRCSEL_RTC;
+      frequency = rtcOscFrequency;
       break;
     default:
       return E_ERROR;
   }
 
-  /* Check CCO range */
-  frequency = frequency * config->multiplier;
-  if (frequency < 275e6 || frequency > 550e6)
-    return E_ERROR;
+  multiplier = config->multiplier;
+  if (config->source != CLOCK_RTC)
+  {
+    if (multiplier & 1)
+      prescaler <<= 1;
+    else
+      multiplier >>= 1;
+    if (multiplier < 6 || multiplier > 512)
+      return E_VALUE;
+
+    frequency = frequency * config->multiplier;
+    if (frequency < 275e6 || frequency > 550e6)
+      return E_ERROR;
+  }
+  else
+  {
+    /* Low-frequency source supports only a limited set of multiplier values */
+    frequency = frequency * (config->multiplier << 1);
+    prescaler = frequency / 550e6;
+    /* No check performed for resulting values due to complexity */
+  }
+
+  /* Update system frequency and postscaler value */
   pllFrequency = frequency / config->divider;
-  pllDivider = psel;
+  pllDivider = config->divider - 1;
+
+  /* Set clock source */
+  LPC_SC->CLKSRCSEL = source;
 
   /* Update PLL clock source */
-  LPC_SC->PLL0CFG = PLL0CFG_MSEL(msel) | PLL0CFG_NSEL(0);
+  LPC_SC->PLL0CFG = PLL0CFG_MSEL(multiplier - 1) | PLL0CFG_NSEL(prescaler - 1);
   LPC_SC->PLL0FEED = 0xAA;
   LPC_SC->PLL0FEED = 0x55;
 
@@ -194,7 +212,6 @@ static enum result mainClockEnable(const void *configPtr)
       /* Check whether external oscillator is configured */
       if (!extOscFrequency)
         return E_ERROR;
-
       flashLatencyReset();
       LPC_SC->CLKSRCSEL = CLKSRCSEL_MAIN;
       sysCoreClock = extOscFrequency;
@@ -219,8 +236,11 @@ static enum result mainClockEnable(const void *configPtr)
       sysCoreClock = pllFrequency;
       break;
     case CLOCK_RTC:
+      if (!rtcOscFrequency)
+        return E_ERROR;
+      flashLatencyReset();
       LPC_SC->CLKSRCSEL = CLKSRCSEL_RTC;
-      /* TODO Add LPC17xx clocking from RTC */
+      sysCoreClock = rtcOscFrequency;
       break;
     default:
       return E_ERROR;
