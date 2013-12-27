@@ -178,7 +178,5 @@ static void sspDeinit(void *object)
       sysClockDisable(CLK_SSP1);
       break;
   }
-
-  /* Reset SSP descriptor */
   setDescriptor(interface->channel, 0);
 }

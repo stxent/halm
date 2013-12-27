@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 enum
 {
-  /* Chip-specific IRQ handlers */
+  /* Chip-specific interrupt sources */
   WDT_IRQ     = 0,
   TIMER0_IRQ  = 1,
   TIMER1_IRQ  = 2,

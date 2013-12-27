@@ -32,11 +32,8 @@ struct GpTimerBase
 {
   struct Timer parent;
 
-  /* Pointer to Timer/Capture register block */
   void *reg;
-  /* Pointer to the interrupt handler */
   void (*handler)(void *);
-  /* Interrupt identifier */
   irq_t irq;
 
   /* External clock input pin */

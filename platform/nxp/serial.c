@@ -87,14 +87,12 @@ static enum result serialInit(void *object, const void *configPtr)
   struct Serial *interface = object;
   enum result res;
 
-  /* Call UART class constructor */
+  /* Call base class constructor */
   if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  /* Set pointer to interrupt handler */
   interface->parent.handler = interruptHandler;
 
-  /* Initialize RX and TX queues */
   if ((res = queueInit(&interface->rxQueue, config->rxLength)) != E_OK)
     return res;
   if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
@@ -115,9 +113,7 @@ static enum result serialInit(void *object, const void *configPtr)
   uartSetParity(object, config->parity);
   uartSetRate(object, uartCalcRate(object, config->rate));
 
-  /* Set interrupt priority, lowest by default */
   irqSetPriority(interface->parent.irq, config->priority);
-  /* Enable UART interrupt */
   irqEnable(interface->parent.irq);
 
   return E_OK;
@@ -127,10 +123,10 @@ static void serialDeinit(void *object)
 {
   struct Serial *interface = object;
 
-  irqDisable(interface->parent.irq); /* Disable interrupt */
+  irqDisable(interface->parent.irq);
   queueDeinit(&interface->txQueue);
   queueDeinit(&interface->rxQueue);
-  UartBase->deinit(interface); /* Call UART class destructor */
+  UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialCallback(void *object, void (*callback)(void *),
@@ -196,7 +192,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   /* Check transmitter state */
   if (reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
   {
-    /* Transmitter is idle, fill TX FIFO */
+    /* Transmitter is idle so fill TX FIFO */
     uint32_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
     for (; written < count; ++written)
       reg->THR = *buffer++;

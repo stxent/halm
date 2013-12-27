@@ -156,9 +156,6 @@ static void sspDeinit(void *object)
   };
   struct SspBase *interface = object;
 
-  /* Disable peripheral power */
   sysPowerDisable(sspPower[interface->channel]);
-
-  /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

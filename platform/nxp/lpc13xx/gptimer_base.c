@@ -116,9 +116,6 @@ static void tmrDeinit(void *object)
   };
   struct GpTimerBase *device = object;
 
-  /* Disable Timer/Counter clock */
   sysClockDisable(timerClock[device->channel]);
-
-  /* Reset Timer descriptor */
   setDescriptor(device->channel, 0);
 }

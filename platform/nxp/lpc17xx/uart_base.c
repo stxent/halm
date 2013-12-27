@@ -196,9 +196,6 @@ static void uartDeinit(void *object)
   };
   struct UartBase *interface = object;
 
-  /* Disable peripheral power */
   sysPowerDisable(uartPower[interface->channel]);
-
-  /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

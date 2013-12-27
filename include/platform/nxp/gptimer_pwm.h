@@ -25,7 +25,7 @@ struct GpTimerPwmUnit
   struct GpTimerBase parent;
 
   uint16_t resolution;
-  uint8_t matches; /* Match blocks currently used */
+  uint8_t matches; /* Match blocks currently in use */
   uint8_t current; /* Match block used for period setup */
 };
 /*----------------------------------------------------------------------------*/
@@ -40,11 +40,11 @@ struct GpTimerPwm
 {
   struct Pwm parent;
 
-  /* Pointer to parental unit */
+  /* Pointer to a parent unit */
   struct GpTimerPwmUnit *unit;
-  /* Pointer to channel register block */
-  uint32_t *reg;
-  /* Match channel */
+  /* Pointer to a match register */
+  uint32_t *value;
+  /* Match channel number */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/

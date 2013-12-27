@@ -85,7 +85,6 @@ static enum result uartInit(void *object, const void *configPtr)
 
   interface->handler = 0;
 
-  /* Set controller specific parameters */
   sysClockEnable(CLK_UART);
   LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV;
   interface->reg = LPC_UART;
@@ -98,10 +97,7 @@ static void uartDeinit(void *object)
 {
   struct UartBase *interface = object;
 
-  /* Disable peripheral clock */
-  LPC_SYSCON->UARTCLKDIV = 0;
+  LPC_SYSCON->UARTCLKDIV = 0; /* Disable peripheral clock */
   sysClockDisable(CLK_UART);
-
-  /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

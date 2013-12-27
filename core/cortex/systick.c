@@ -15,8 +15,6 @@
 #define CTRL_CLKSOURCE                  BIT(2)
 #define CTRL_COUNTFLAG                  BIT(16) /* Set when counter reaches 0 */
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_PRIORITY 255 /* Lowest interrupt priority in Cortex-M3 */
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum result setDescriptor(struct SysTickTimer *);
 /*----------------------------------------------------------------------------*/
@@ -40,11 +38,9 @@ static const struct TimerClass timerTable = {
     .value = tmrValue
 };
 /*----------------------------------------------------------------------------*/
-const struct TimerClass *SysTickTimer = &timerTable;
-/*----------------------------------------------------------------------------*/
-static struct SysTickTimer *descriptor = 0;
-/*----------------------------------------------------------------------------*/
 extern uint32_t sysCoreClock;
+const struct TimerClass *SysTickTimer = &timerTable;
+static struct SysTickTimer *descriptor = 0;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -71,7 +67,6 @@ void SYSTICK_ISR(void)
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configPtr)
 {
-  /* Set pointer to device configuration data */
   const struct SysTickTimerConfig * const config = configPtr;
   struct SysTickTimer *device = object;
 
@@ -81,7 +76,6 @@ static enum result tmrInit(void *object, const void *configPtr)
   if (setDescriptor(device) != E_OK)
     return E_ERROR;
 
-  /* Set timer interrupt handler to default handler */
   device->handler = interruptHandler;
 
   device->frequency = config->frequency;
@@ -92,21 +86,16 @@ static enum result tmrInit(void *object, const void *configPtr)
   SYSTICK->LOAD = sysCoreClock / device->frequency - 1;
   SYSTICK->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
 
-  /* Enable interrupt */
   irqEnable(SYSTICK_IRQ);
-  /* Set interrupt priority, lowest by default */
-  irqSetPriority(SYSTICK_IRQ, DEFAULT_PRIORITY);
+  irqSetPriority(SYSTICK_IRQ, config->priority);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrDeinit(void *object __attribute__((unused)))
 {
-  /* Disable interrupt */
   irqDisable(SYSTICK_IRQ);
-  /* Disable timer */
   SYSTICK->CTRL &= ~CTRL_ENABLE;
-  /* Reset descriptor */
   setDescriptor(0);
 }
 /*----------------------------------------------------------------------------*/
@@ -142,7 +131,7 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   device->frequency = frequency;
 
   SYSTICK->CTRL &= ~CTRL_ENABLE;
-  /* FIXME overflow + 1? */
+  /* FIXME Recalculate overflow and add state saving */
   SYSTICK->LOAD = (sysCoreClock / device->frequency) * device->overflow - 1;
   SYSTICK->VAL = 0;
   SYSTICK->CTRL |= CTRL_ENABLE;
@@ -155,7 +144,6 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   device->overflow = overflow;
 
   SYSTICK->CTRL &= ~CTRL_ENABLE;
-  /* FIXME overflow + 1? */
   SYSTICK->LOAD = (sysCoreClock / device->frequency) * device->overflow - 1;
   SYSTICK->VAL = 0;
   SYSTICK->CTRL |= CTRL_ENABLE;

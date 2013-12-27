@@ -13,9 +13,9 @@ void spinLock(spinlock_t *lock)
   while (1)
   {
     __irqDisable();
-    if (*lock == SPIN_UNLOCKED) /* Check current state */
+    if (*lock == SPIN_UNLOCKED)
     {
-      *lock = SPIN_LOCKED; /* Lock */
+      *lock = SPIN_LOCKED;
       __dmb();
       __irqEnable();
       return;
@@ -27,9 +27,9 @@ void spinLock(spinlock_t *lock)
 bool spinTryLock(spinlock_t *lock)
 {
   __irqDisable();
-  if (*lock == SPIN_UNLOCKED) /* Check current state */
+  if (*lock == SPIN_UNLOCKED)
   {
-    *lock = SPIN_LOCKED; /* Lock */
+    *lock = SPIN_LOCKED;
     __dmb();
     __irqEnable();
     return true;

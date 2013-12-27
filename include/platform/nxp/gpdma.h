@@ -50,17 +50,15 @@ struct GpDma
 {
   struct Dma parent;
 
+  void *reg;
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointer to the register block */
-  void *reg;
-
   /* Precalculated values of channel control and configuration registers */
   uint32_t control, config;
-  /* Precalculated values of DMA connection multiplexer register */
+  /* Precalculated values of the connection multiplexer register */
   uint8_t muxMask, muxValue;
-  /* Identifier of the DMA channel */
+  /* Identifier of the channel */
   uint8_t number;
 };
 /*----------------------------------------------------------------------------*/

@@ -96,22 +96,23 @@ static enum result adcUnitInit(void *object, const void *configPtr)
 
   unit->handler = 0;
 
-  /* Clear Power Down bit for the ADC block */
   sysPowerEnable(PWR_ADC);
-  /* Enable clock to the ADC */
   sysClockEnable(CLK_ADC);
 
   unit->irq = ADC_IRQ;
   unit->reg = LPC_ADC;
 
   /* Set system clock divider */
-  ((LPC_ADC_Type *)unit->reg)->CR = CR_CLKDIV(sysCoreClock / 45e5); //FIXME
+  ((LPC_ADC_Type *)unit->reg)->CR = CR_CLKDIV(sysCoreClock / 4500000);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void adcUnitDeinit(void *object __attribute__((unused)))
+static void adcUnitDeinit(void *object)
 {
-  sysPowerDisable(PWR_ADC);
+  struct AdcUnitBase *unit = object;
+
   sysClockDisable(CLK_ADC);
+  sysPowerDisable(PWR_ADC);
+  setDescriptor(unit->channel, 0);
 }

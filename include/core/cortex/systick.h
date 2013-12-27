@@ -14,6 +14,7 @@ extern const struct TimerClass *SysTickTimer;
 struct SysTickTimerConfig
 {
   uint32_t frequency; /* Mandatory: timer fundamental frequency */
+  priority_t priority; /* Optional: interrupt priority */
 };
 /*----------------------------------------------------------------------------*/
 struct SysTickTimer

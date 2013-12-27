@@ -18,7 +18,7 @@ struct SpiConfig
   gpio_t cs; /* Optional: chip select for slave mode */
   gpio_t miso, mosi, sck; /* Mandatory: peripheral pins */
   priority_t priority; /* Optional: interrupt priority */
-  uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t channel; /* Mandatory: peripheral identifier */
   uint8_t mode; /* Optional: mode number used in SPI */
 };
 /*----------------------------------------------------------------------------*/
@@ -29,14 +29,14 @@ struct Spi
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointer used in read mode */
+  /* Pointer to an input buffer */
   uint8_t *rxBuffer;
-  /* Pointer used in write mode */
+  /* Pointer to an output buffer */
   const uint8_t *txBuffer;
   /* Number of bytes to be received */
-  volatile uint32_t left;
+  volatile uint32_t rxLeft;
   /* Number of bytes to be transmitted */
-  uint32_t length;
+  uint32_t txLeft;
 
   /* Exclusive access to the channel */
   spinlock_t lock;

@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <macro.h>
 /*----------------------------------------------------------------------------*/
-/* IrDA, Modem signals, auto-baud and RS-485 not used */
+/* IrDA, Modem signals, auto-baud and RS-485 are unused */
 /*------------------Line Control Register-------------------------------------*/
 #define LCR_WORD_MASK                   BIT_FIELD(0x03, 0)
 #define LCR_WORD_5BIT                   BIT_FIELD(0, 0)

@@ -19,21 +19,18 @@ struct SspBaseConfig
 {
   gpio_t cs; /* Optional: chip select for slave mode */
   gpio_t miso, mosi, sck; /* Mandatory: interface pins */
-  uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t channel; /* Mandatory: peripheral identifier */
 };
 /*----------------------------------------------------------------------------*/
 struct SspBase
 {
   struct Interface parent;
 
-  /* Pointer to the SSP register block */
   void *reg;
-  /* Pointer to the interrupt handler */
   void (*handler)(void *);
-  /* Interrupt identifier */
   irq_t irq;
 
-  /* Peripheral block identifier */
+  /* Unique peripheral identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/

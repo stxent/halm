@@ -41,23 +41,23 @@ struct I2c
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointer used in read mode */
+  /* Pointer to an input buffer */
   uint8_t *rxBuffer;
-  /* Pointer used in write mode */
+  /* Pointer to an output buffer */
   const uint8_t *txBuffer;
   /* Bytes left for transmission or reception */
-  uint16_t rxCount, txCount;
+  uint16_t rxLeft, txLeft;
 
   /* Current interface state */
   volatile enum i2cState state;
   /* Exclusive access to the channel */
   spinlock_t lock;
-  /* Address of the device, only 7-bit addressing supported */
+  /* Address of the device, only 7-bit addressing is supported */
   uint8_t address;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
   /* Generate stop condition after writing */
-  bool stop;
+  bool stopGeneration;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_H_ */

@@ -123,9 +123,6 @@ static void tmrDeinit(void *object)
   };
   struct GpTimerBase *device = object;
 
-  /* Disable peripheral power */
   sysPowerDisable(timerPower[device->channel]);
-
-  /* Reset Timer descriptor */
   setDescriptor(device->channel, 0);
 }

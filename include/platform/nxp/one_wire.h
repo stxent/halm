@@ -18,7 +18,7 @@ struct OneWireConfig
 {
   gpio_t rx, tx; /* Mandatory: RX and TX pins */
   priority_t priority; /* Optional: interrupt priority */
-  uint8_t channel; /* Mandatory: Peripheral number */
+  uint8_t channel; /* Mandatory: peripheral identifier */
 };
 /*----------------------------------------------------------------------------*/
 union OneWireAddress
@@ -59,7 +59,7 @@ struct OneWire
   /* Transmit queue */
   struct Queue txQueue;
 
-  /* Computed data rates for reset sequence and for data transmission */
+  /* Computed data rates for reset sequence and data transmission */
   struct UartRateConfig dataRate, resetRate;
 
   /* Current 1-Wire interface state */

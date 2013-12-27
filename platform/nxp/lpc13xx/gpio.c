@@ -22,8 +22,8 @@ static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerErase();
-static inline void gpioHandlerRegister();
+static inline void gpioHandlerAttach();
+static inline void gpioHandlerDetach();
 static enum result gpioHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -56,37 +56,33 @@ static inline void *calcReg(union GpioPin p)
 static void commonGpioSetup(struct Gpio gpio)
 {
   /* Register new pin in the handler */
-  gpioHandlerRegister();
+  gpioHandlerAttach();
 
-  /* Set GPIO mode */
   gpioSetFunction(gpio, GPIO_DEFAULT);
-  /* Neither pull-up nor pull-down */
   gpioSetPull(gpio, GPIO_NOPULL);
-  /* Push-pull output type */
   gpioSetType(gpio, GPIO_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerErase()
+static inline void gpioHandlerAttach()
+{
+  /* Create handler object on first function call */
+  if (!gpioHandler)
+    gpioHandler = init(GpioHandler, 0);
+
+  if (!gpioHandler->instances++)
+  {
+    sysClockEnable(CLK_IOCON);
+    sysClockEnable(CLK_GPIO);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline void gpioHandlerDetach()
 {
   /* Disable clocks when no active pins exist */
   if (!--gpioHandler->instances)
   {
     sysClockDisable(CLK_GPIO);
     sysClockDisable(CLK_IOCON);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static inline void gpioHandlerRegister()
-{
-  if (!gpioHandler)
-    gpioHandler = init(GpioHandler, 0);
-
-  if (!gpioHandler->instances++)
-  {
-    /* Enable clock to IO configuration block */
-    sysClockEnable(CLK_IOCON);
-    /* Enable AHB clock to the GPIO domain */
-    sysClockEnable(CLK_GPIO);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -130,6 +126,7 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
   switch (function)
   {
     case GPIO_DEFAULT:
+      /* Some pins have default function value other than zero */
       function = (gpio.pin.port == 1 && gpio.pin.offset <= 2)
           || (gpio.pin.port == 0 && gpio.pin.offset == 11) ? 1 : 0;
       break;

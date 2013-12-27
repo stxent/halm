@@ -107,21 +107,19 @@ static enum result spiInit(void *object, const void *configPtr)
   struct SpiDma *interface = object;
   enum result res;
 
-  /* Call SSP class constructor */
+  /* Call base class constructor */
   if ((res = SspBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
     return res;
 
+  interface->parent.handler = interruptHandler;
+
   interface->blocking = true;
   interface->callback = 0;
   interface->lock = SPIN_UNLOCKED;
 
-  /* Set pointer to interrupt handler */
-  interface->parent.handler = interruptHandler;
-
-  /* Initialize SSP block */
   LPC_SSP_Type *reg = interface->parent.reg;
 
   /* Set frame size */
@@ -137,9 +135,7 @@ static enum result spiInit(void *object, const void *configPtr)
   /* Enable peripheral */
   reg->CR1 = CR1_SSE;
 
-  /* Set lowest interrupt priority */
   irqSetPriority(interface->parent.irq, 0);
-  /* Enable SPI interrupt */
   irqEnable(interface->parent.irq);
 
   return E_OK;
@@ -149,12 +145,10 @@ static void spiDeinit(void *object)
 {
   struct SpiDma *interface = object;
 
-  /* Free DMA channel descriptors */
   deinit(interface->txMockDma);
   deinit(interface->txDma);
   deinit(interface->rxDma);
 
-  /* Call SSP class destructor */
   SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -259,7 +253,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   /* Clear timeout interrupt flags */
   reg->ICR = ICR_RORIC | ICR_RTIC;
 
-  /* Enable timeout interrupt when in zero copy mode */
+  /* Enable timeout interrupt when interface is in zero copy mode */
   if (!interface->blocking)
     reg->IMSC |= IMSC_RTIM;
 

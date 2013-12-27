@@ -108,7 +108,7 @@ static void adcUnitDeinit(void *object)
   struct AdcUnit *unit = object;
 
   irqDisable(unit->parent.irq);
-  AdcUnitBase->deinit(unit); /* Call base class destructor */
+  AdcUnitBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *object, const void *configPtr)
@@ -122,7 +122,7 @@ static enum result adcInit(void *object, const void *configPtr)
   if (!(pinDescriptor = gpioFind(adcPins, config->pin, 0)))
     return E_VALUE;
 
-  /* Initialize analog input pin */
+  /* Fill pin structure and initialize pin as input */
   struct Gpio pin = gpioInit(config->pin);
   gpioInput(pin);
   /* Enable analog pin mode bit */
@@ -134,9 +134,10 @@ static enum result adcInit(void *object, const void *configPtr)
   interface->channel = UNPACK_CHANNEL(pinDescriptor->value);
   interface->blocking = true;
   interface->buffer = 0;
-  interface->event = config->event + 1;
   interface->left = 0;
   interface->unit = config->parent;
+  /* Convert enumerator constant to register value */
+  interface->event = config->event + 1;
 
   return E_OK;
 }

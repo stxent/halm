@@ -16,7 +16,7 @@ struct SerialDmaConfig
 {
   uint32_t rate; /* Mandatory: baud rate */
   gpio_t rx, tx; /* Mandatory: RX and TX pins */
-  uint8_t channel; /* Mandatory: Peripheral number */
+  uint8_t channel; /* Mandatory: peripheral identifier */
   /* TODO Make optional */
   int8_t rxChannel, txChannel; /* Mandatory: DMA channels */
   enum uartParity parity; /* Optional: even, odd or no parity */
@@ -26,7 +26,6 @@ struct SerialDma
 {
   struct UartBase parent;
 
-  /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);
   void *callbackArgument;
 

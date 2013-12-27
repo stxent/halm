@@ -39,8 +39,8 @@ static inline void *calcPeripheral(uint8_t);
 static enum result setDescriptor(uint8_t, struct GpDma *);
 static void setEventMux(struct GpDma *, uint8_t);
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerErase();
-static inline void dmaHandlerRegister();
+static inline void dmaHandlerAttach();
+static inline void dmaHandlerDetach();
 static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
@@ -86,18 +86,7 @@ static inline void *calcPeripheral(uint8_t channel)
       - (uint32_t)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerErase()
-{
-  /* Disable peripheral when no active descriptors exist */
-  if (!--dmaHandler->instances)
-  {
-    irqDisable(DMA_IRQ);
-    LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
-    sysPowerDisable(PWR_GPDMA);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static inline void dmaHandlerRegister()
+static inline void dmaHandlerAttach()
 {
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
@@ -107,6 +96,17 @@ static inline void dmaHandlerRegister()
     sysPowerEnable(PWR_GPDMA);
     LPC_GPDMA->CONFIG |= DMA_ENABLE;
     irqEnable(DMA_IRQ);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline void dmaHandlerDetach()
+{
+  /* Disable peripheral when no active descriptors exist */
+  if (!--dmaHandler->instances)
+  {
+    irqDisable(DMA_IRQ);
+    LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
+    sysPowerDisable(PWR_GPDMA);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -127,7 +127,6 @@ static uint8_t eventToPeripheral(dma_event_t event)
 {
   assert(event < GPDMA_EVENT_END);
 
-  /* TODO GPDMA: optimize event conversion */
   switch (event)
   {
     case GPDMA_SSP0_RX:
@@ -154,8 +153,7 @@ static uint8_t eventToPeripheral(dma_event_t event)
     case GPDMA_DAC:
       return 7;
     default:
-      /* Timer match event */
-      return 8 + (event - GPDMA_MAT0_0);
+      return 8 + (event - GPDMA_MAT0_0); /* One of the timer match events */
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -269,15 +267,14 @@ static enum result channelInit(void *object, const void *configPtr)
     channel->control |= CONTROL_DST_INC;
 
   /* Register new descriptor in the handler */
-  dmaHandlerRegister();
+  dmaHandlerAttach();
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object __attribute__((unused)))
 {
-  /* Erase descriptor from the handler */
-  dmaHandlerErase();
+  dmaHandlerDetach();
 }
 /*----------------------------------------------------------------------------*/
 static bool channelActive(void *object)
@@ -317,7 +314,7 @@ enum result channelStart(void *object, void *destination, const void *source,
   reg->CONFIG = channel->config;
   reg->LLI = 0;
 
-  /* Clear interrupt requests of the selected channel */
+  /* Clear interrupt requests for current channel */
   LPC_GPDMA->INTTCCLEAR |= 1 << channel->number;
   LPC_GPDMA->INTERRCLEAR |= 1 << channel->number;
 
@@ -328,7 +325,6 @@ enum result channelStart(void *object, void *destination, const void *source,
 /*----------------------------------------------------------------------------*/
 void channelStop(void *object)
 {
-  /* Disable channel */
   ((LPC_GPDMACH_Type *)((struct GpDma *)object)->reg)->CONFIG &= ~CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
@@ -344,6 +340,7 @@ static void channelListAppend(void *object, void *first, uint32_t index,
 {
   struct DescriptorListItem *item = (struct DescriptorListItem *)first + index;
 
+  /* Append new element to the last element in list pointed by index */
   if (index)
     (item - 1)->next = (uint32_t)item;
 
@@ -372,7 +369,6 @@ static enum result channelListStart(void *object, const void *firstPtr)
   reg->CONFIG = channel->config;
   reg->LLI = first->next;
 
-  /* Clear interrupt requests of the selected channel */
   LPC_GPDMA->INTTCCLEAR |= 1 << channel->number;
   LPC_GPDMA->INTERRCLEAR |= 1 << channel->number;
 

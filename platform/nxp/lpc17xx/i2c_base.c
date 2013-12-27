@@ -152,9 +152,6 @@ static void i2cDeinit(void *object)
   };
   struct I2cBase *interface = object;
 
-  /* Disable peripheral power */
   sysPowerDisable(i2cPower[interface->channel]);
-
-  /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

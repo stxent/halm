@@ -18,7 +18,7 @@ struct SerialConfig
   uint32_t rate; /* Mandatory: baud rate */
   gpio_t rx, tx; /* Mandatory: RX and TX pins */
   priority_t priority; /* Optional: interrupt priority */
-  uint8_t channel; /* Mandatory: Peripheral number */
+  uint8_t channel; /* Mandatory: Peripheral identifier */
   enum uartParity parity; /* Optional: even, odd or no parity */
 };
 /*----------------------------------------------------------------------------*/
@@ -29,7 +29,7 @@ struct Serial
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Receive and transmit buffers */
+  /* Input and output queues */
   struct Queue rxQueue, txQueue;
 };
 /*----------------------------------------------------------------------------*/

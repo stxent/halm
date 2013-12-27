@@ -24,7 +24,7 @@ enum uartParity
 struct UartBaseConfig
 {
   gpio_t rx, tx; /* Mandatory: RX and TX pins */
-  uint8_t channel; /* Mandatory: Peripheral number */
+  uint8_t channel; /* Mandatory: peripheral identifier */
 };
 /*----------------------------------------------------------------------------*/
 struct UartRateConfig
@@ -36,14 +36,11 @@ struct UartBase
 {
   struct Interface parent;
 
-  /* Pointer to the UART register block */
   void *reg;
-  /* Pointer to the interrupt handler */
   void (*handler)(void *);
-  /* Interrupt identifier */
   irq_t irq;
 
-  /* Peripheral block identifier */
+  /* Unique peripheral identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/

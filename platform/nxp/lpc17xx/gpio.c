@@ -37,11 +37,8 @@ static inline uint32_t *calcPinType(union GpioPin p)
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio gpio)
 {
-  /* Set GPIO mode */
   gpioSetFunction(gpio, GPIO_DEFAULT);
-  /* Neither pull-up nor pull-down */
   gpioSetPull(gpio, GPIO_NOPULL);
-  /* Push-pull output type */
   gpioSetType(gpio, GPIO_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
@@ -74,7 +71,7 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
   switch (function)
   {
     case GPIO_DEFAULT:
-      function = 0; /* Zero function is the default mode */
+      function = 0; /* Zero function is the default for all pins */
       break;
     case GPIO_ANALOG:
       return;

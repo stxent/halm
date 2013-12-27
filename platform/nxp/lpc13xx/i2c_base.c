@@ -82,7 +82,6 @@ static enum result i2cInit(void *object, const void *configPtr)
 
   interface->handler = 0;
 
-  /* Set controller specific parameters */
   sysClockEnable(CLK_I2C);
   LPC_SYSCON->PRESETCTRL |= PRESETCTRL_I2C;
   interface->reg = LPC_I2C;
@@ -95,10 +94,7 @@ static void i2cDeinit(void *object)
 {
   struct I2cBase *interface = object;
 
-  /* Put peripheral in reset and disable clock */
-  LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C;
+  LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C; /* Put peripheral in reset */
   sysClockDisable(CLK_I2C);
-
-  /* Reset I2C descriptor */
   setDescriptor(interface->channel, 0);
 }

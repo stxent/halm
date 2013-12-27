@@ -144,22 +144,19 @@ static enum result oneWireInit(void *object, const void *configPtr)
   struct OneWire *interface = object;
   enum result res;
 
-  /* Call UART class constructor */
+  /* Call base class constructor */
   if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   adjustPins(interface, config);
 
-  /* Compute rates */
-  interface->dataRate = uartCalcRate(object, RATE_DATA);
-  interface->resetRate = uartCalcRate(object, RATE_RESET);
-
-  /* Set pointer to interrupt handler */
-  interface->parent.handler = interruptHandler;
-
-  /* Initialize TX queue */
   if ((res = queueInit(&interface->txQueue, TX_QUEUE_LENGTH)) != E_OK)
     return res;
+
+  interface->parent.handler = interruptHandler;
+
+  interface->dataRate = uartCalcRate(object, RATE_DATA);
+  interface->resetRate = uartCalcRate(object, RATE_RESET);
 
   interface->address.rom = 0;
   interface->callback = 0;
@@ -180,9 +177,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
 
   uartSetRate(object, interface->resetRate);
 
-  /* Set interrupt priority, lowest by default */
   irqSetPriority(interface->parent.irq, config->priority);
-  /* Enable UART interrupt */
   irqEnable(interface->parent.irq);
 
   return E_OK;
@@ -192,9 +187,9 @@ static void oneWireDeinit(void *object)
 {
   struct OneWire *interface = object;
 
-  irqDisable(interface->parent.irq); /* Disable interrupt */
+  irqDisable(interface->parent.irq);
   queueDeinit(&interface->txQueue);
-  UartBase->deinit(interface); /* Call UART class destructor */
+  UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
 static enum result oneWireCallback(void *object, void (*callback)(void *),

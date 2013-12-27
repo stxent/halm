@@ -17,7 +17,7 @@ extern const struct InterfaceClass *Adc;
 /*----------------------------------------------------------------------------*/
 struct AdcUnitConfig
 {
-  uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t channel; /* Mandatory: peripheral block identifier */
   priority_t priority; /* Optional: interrupt priority */
 };
 /*----------------------------------------------------------------------------*/
@@ -35,20 +35,20 @@ struct AdcConfig
 {
   struct AdcUnit *parent; /* Mandatory: peripheral unit */
   gpio_t pin; /* Mandatory: analog input */
-  uint8_t event; /* Optional: hardware triggered conversion source */
+  uint8_t event; /* Optional: hardware triggered conversion event */
 };
 /*----------------------------------------------------------------------------*/
 struct Adc
 {
   struct Interface parent;
 
-  /* Pointer to parental unit */
+  /* Pointer to a parent unit */
   struct AdcUnit *unit;
 
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointer to the input buffer */
+  /* Pointer to an input buffer */
   uint8_t *buffer;
   /* Number of samples to be converted */
   volatile uint32_t left;
@@ -57,7 +57,7 @@ struct Adc
   bool blocking;
   /* Peripheral channel */
   uint8_t channel;
-  /* Hardware trigger */
+  /* Hardware trigger event */
   uint8_t event;
 };
 /*----------------------------------------------------------------------------*/

@@ -21,21 +21,18 @@ extern const struct EntityClass *AdcUnitBase;
 /*----------------------------------------------------------------------------*/
 struct AdcUnitBaseConfig
 {
-  uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t channel; /* Mandatory: peripheral identifier */
 };
 /*----------------------------------------------------------------------------*/
 struct AdcUnitBase
 {
   struct Entity parent;
 
-  /* Pointer to the ADC register block */
   void *reg;
-  /* Pointer to the interrupt handler */
   void (*handler)(void *);
-  /* Interrupt identifier */
   irq_t irq;
 
-  /* Peripheral block identifier */
+  /* Unique peripheral identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/

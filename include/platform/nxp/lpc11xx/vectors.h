@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 enum
 {
-  /* Chip-specific IRQ handlers */
+  /* Chip-specific interrupt sources */
   WAKEUP_IRQ    = 0,
   /* TODO */
   CAN_IRQ       = 13,
@@ -21,8 +21,6 @@ enum
   TIMER32B1_IRQ = 19,
   SSP0_IRQ      = 20,
   UART_IRQ      = 21,
-//  USB_IRQ       = 47,
-//  USB_FIQ_IRQ   = 48,
   ADC_IRQ       = 24,
   WDT_IRQ       = 25,
   BOD_IRQ       = 26,

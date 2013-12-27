@@ -17,7 +17,7 @@ struct SpiDmaConfig
 {
   uint32_t rate; /* Mandatory: serial data rate */
   gpio_t miso, mosi, sck; /* Mandatory: peripheral pins */
-  uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t channel; /* Mandatory: peripheral identifier */
   uint8_t mode; /* Optional: mode number used in SPI */
   int8_t rxChannel, txChannel; /* Mandatory: DMA channels */
 };
@@ -26,7 +26,6 @@ struct SpiDma
 {
   struct SspBase parent;
 
-  /* Pointer to the callback function and to the callback argument */
   void (*callback)(void *);
   void *callbackArgument;
 

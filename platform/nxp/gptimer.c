@@ -52,16 +52,14 @@ static enum result tmrInit(void *object, const void *configPtr)
   struct GpTimer *timer = object;
   enum result res;
 
-  assert(config->frequency);
-  assert(config->event < 4);
+  assert(config->frequency && config->event < 4);
 
-  /* Call base timer class constructor */
+  /* Call base class constructor */
   if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  /* Set pointer to interrupt handler */
   timer->parent.handler = interruptHandler;
-  /* Set match channel */
+  /* Set match channel used as event source for timer reset */
   timer->event = config->event;
 
   LPC_TIMER_Type *reg = timer->parent.reg;
@@ -78,9 +76,7 @@ static enum result tmrInit(void *object, const void *configPtr)
   /* Enable counter */
   reg->TCR = TCR_CEN;
 
-  /* Set interrupt priority, lowest by default */
   irqSetPriority(timer->parent.irq, config->priority);
-  /* Enable interrupt */
   irqEnable(timer->parent.irq);
 
   return E_OK;
@@ -91,9 +87,7 @@ static void tmrDeinit(void *object)
   struct GpTimer *timer = object;
 
   irqDisable(timer->parent.irq);
-  /* Disable counter */
   ((LPC_TIMER_Type *)timer->parent.reg)->TCR &= ~TCR_CEN;
-  /* Call base timer class destructor */
   GpTimerBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
@@ -124,7 +118,7 @@ static void tmrSetEnabled(void *object, bool state)
   }
   else
   {
-    /* Clear flag in External Match Register and start the timer */
+    /* Clear match value to avoid undefined output level */
     reg->EMR &= ~EMR_EXTERNAL_MATCH(timer->event);
     reg->TCR &= ~TCR_CRES;
   }
@@ -141,15 +135,17 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   struct GpTimer *timer = object;
   LPC_TIMER_Type *reg = timer->parent.reg;
 
-  /* Set match value and enable timer reset when value is greater than zero */
   reg->MR[timer->event] = overflow;
   if (overflow)
   {
+    /* Enable timer reset after reaching match register value */
     reg->MCR |= MCR_RESET(timer->event);
+    /* Enable external match to generate signals to other peripherals */
     reg->EMR |= EMR_CONTROL(timer->event, EMR_CONTROL_TOGGLE);
   }
   else
   {
+    /* Disable timer reset and external match */
     reg->MCR &= ~MCR_RESET(timer->event);
     reg->EMR &= ~EMR_CONTROL_MASK(timer->event);
   }

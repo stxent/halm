@@ -39,21 +39,21 @@ static void interruptHandler(void *object)
   LPC_SSP_Type *reg = interface->parent.reg;
   uint32_t count;
 
-  count = interface->length > FIFO_DEPTH ? FIFO_DEPTH : interface->length;
+  count = interface->txLeft > FIFO_DEPTH ? FIFO_DEPTH : interface->txLeft;
 
   if (interface->rxBuffer)
   {
     /* Read mode */
     while (reg->SR & SR_RNE)
     {
-      --interface->left;
+      --interface->rxLeft;
       *interface->rxBuffer++ = reg->DR;
     }
 
     while (count-- && reg->SR & SR_TNF)
     {
       reg->DR = 0xFF; /* TODO Select dummy frame value for SPI */
-      --interface->length;
+      --interface->txLeft;
     }
   }
   else
@@ -61,18 +61,18 @@ static void interruptHandler(void *object)
     /* Write mode */
     while (reg->SR & SR_RNE)
     {
-      --interface->left;
+      --interface->rxLeft;
       (void)reg->DR;
     }
 
     while (count-- && reg->SR & SR_TNF)
     {
       reg->DR = *interface->txBuffer++;
-      --interface->length;
+      --interface->txLeft;
     }
   }
 
-  if (!interface->left)
+  if (!interface->rxLeft)
   {
     reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
     if (interface->callback)
@@ -93,16 +93,15 @@ static enum result spiInit(void *object, const void *configPtr)
   struct Spi *interface = object;
   enum result res;
 
-  /* Call SSP class constructor */
+  /* Call base class constructor */
   if ((res = SspBase->init(object, &parentConfig)) != E_OK)
     return res;
+
+  interface->parent.handler = interruptHandler;
 
   interface->blocking = true;
   interface->callback = 0;
   interface->lock = SPIN_UNLOCKED;
-
-  /* Set pointer to interrupt handler */
-  interface->parent.handler = interruptHandler;
 
   LPC_SSP_Type *reg = interface->parent.reg;
 
@@ -116,11 +115,10 @@ static enum result spiInit(void *object, const void *configPtr)
     reg->CR0 |= CR0_CPOL;
 
   sspSetRate(object, config->rate);
-  reg->CR1 = CR1_SSE; /* Enable peripheral */
+  /* Enable peripheral */
+  reg->CR1 = CR1_SSE;
 
-  /* Set interrupt priority, lowest by default */
   irqSetPriority(interface->parent.irq, config->priority);
-  /* Enable SPI interrupt */
   irqEnable(interface->parent.irq);
 
   return E_OK;
@@ -155,7 +153,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
       *(uint32_t *)data = sspGetRate(object);
       return E_OK;
     case IF_STATUS:
-      return interface->left || reg->SR & SR_BSY ? E_BUSY : E_OK;
+      return interface->rxLeft || reg->SR & SR_BSY ? E_BUSY : E_OK;
     default:
       return E_ERROR;
   }
@@ -196,7 +194,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 
   interface->rxBuffer = buffer;
   interface->txBuffer = 0;
-  interface->left = interface->length = length;
+  interface->rxLeft = interface->txLeft = length;
 
   /* Clear interrupt flags and enable interrupts */
   reg->ICR = ICR_RORIC | ICR_RTIC;
@@ -206,7 +204,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   irqSetPending(interface->parent.irq);
 
   if (interface->blocking)
-    while (interface->left || reg->SR & SR_BSY);
+    while (interface->rxLeft || reg->SR & SR_BSY);
 
   return length;
 }
@@ -221,7 +219,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   interface->rxBuffer = 0;
   interface->txBuffer = buffer;
-  interface->left = interface->length = length;
+  interface->rxLeft = interface->txLeft = length;
 
   /* Clear interrupt flags and enable interrupts */
   reg->ICR = ICR_RORIC | ICR_RTIC;
@@ -231,7 +229,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   irqSetPending(interface->parent.irq);
 
   if (interface->blocking)
-    while (interface->left || reg->SR & SR_BSY);
+    while (interface->rxLeft || reg->SR & SR_BSY);
 
   return length;
 }

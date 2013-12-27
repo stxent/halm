@@ -17,21 +17,18 @@ extern const struct InterfaceClass *I2cBase;
 struct I2cBaseConfig
 {
   gpio_t scl, sda; /* Mandatory: interface pins */
-  uint8_t channel; /* Mandatory: peripheral number */
+  uint8_t channel; /* Mandatory: peripheral identifier */
 };
 /*----------------------------------------------------------------------------*/
 struct I2cBase
 {
   struct Interface parent;
 
-  /* Pointer to the I2C register block */
   void *reg;
-  /* Pointer to the interrupt handler */
   void (*handler)(void *);
-  /* Interrupt identifier */
   irq_t irq;
 
-  /* Peripheral block identifier */
+  /* Unique peripheral identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/

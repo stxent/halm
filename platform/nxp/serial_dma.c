@@ -79,7 +79,6 @@ static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
-  /* Set pointer to interface configuration data */
   const struct SerialDmaConfig * const config = configPtr;
   struct SerialDma *interface = object;
   struct UartBaseConfig parentConfig = {
@@ -89,14 +88,13 @@ static enum result serialInit(void *object, const void *configPtr)
   };
   enum result res;
 
-  /* Call UART class constructor */
+  /* Call base class constructor */
   if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
     return res;
 
-  /* Initialize UART block */
   LPC_UART_Type *reg = interface->parent.reg;
 
   /* Set 8-bit length */
