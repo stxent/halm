@@ -134,7 +134,6 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
       *iocon = value & ~IOCON_MODE_DIGITAL;
       return;
   }
-
   *iocon = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
