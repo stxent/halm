@@ -126,6 +126,8 @@ static void tmrSetEnabled(void *object, bool state)
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
+  assert(frequency);
+
   ((LPC_TIMER_Type *)((struct GpTimer *)object)->parent.reg)->PR =
       gpTimerGetClock(object) / frequency - 1;
 }
@@ -150,10 +152,13 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
     reg->EMR &= ~EMR_CONTROL_MASK(timer->event);
   }
 
-  /* Synchronously reset prescaler and counter registers */
-  reg->TCR |= TCR_CRES;
-  while (reg->TC || reg->PC);
-  reg->TCR &= ~TCR_CRES;
+  if (reg->TCR & TCR_CRES)
+  {
+    /* Synchronously reset prescaler and counter registers */
+    reg->TCR |= TCR_CRES;
+    while (reg->TC || reg->PC);
+    reg->TCR &= ~TCR_CRES;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrValue(void *object)

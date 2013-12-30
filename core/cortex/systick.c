@@ -9,14 +9,18 @@
 #include <macro.h>
 #include <core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
-#define CTRL_ENABLE                     BIT(0) /* System tick timer enable */
-#define CTRL_TICKINT                    BIT(1) /* Interrupt enable */
-/* Clock source selection: 0 for clock divider, 1 for system clock source */
+/* System Tick counter enable */
+#define CTRL_ENABLE                     BIT(0)
+/* Interrupt enable */
+#define CTRL_TICKINT                    BIT(1)
+/* Clock source selection: 0 for external clock, 1 for processor clock */
 #define CTRL_CLKSOURCE                  BIT(2)
-#define CTRL_COUNTFLAG                  BIT(16) /* Set when counter reaches 0 */
+/* Counter flag is set when counter counts down to zero */
+#define CTRL_COUNTFLAG                  BIT(16)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum result setDescriptor(struct SysTickTimer *);
+static void updateFrequency(struct SysTickTimer *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
@@ -50,13 +54,23 @@ static void interruptHandler(void *object)
     device->callback(device->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-enum result setDescriptor(struct SysTickTimer *device)
+static enum result setDescriptor(struct SysTickTimer *timer)
 {
   if (descriptor)
     return E_BUSY;
 
-  descriptor = device;
+  descriptor = timer;
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void updateFrequency(struct SysTickTimer *timer)
+{
+  uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
+
+  SYSTICK->CTRL &= ~CTRL_ENABLE;
+  SYSTICK->LOAD = (sysCoreClock / timer->frequency) * timer->overflow - 1;
+  SYSTICK->VAL = 0;
+  SYSTICK->CTRL |= state;
 }
 /*----------------------------------------------------------------------------*/
 void SYSTICK_ISR(void)
@@ -68,22 +82,22 @@ void SYSTICK_ISR(void)
 static enum result tmrInit(void *object, const void *configPtr)
 {
   const struct SysTickTimerConfig * const config = configPtr;
-  struct SysTickTimer *device = object;
+  struct SysTickTimer *timer = object;
 
   assert(config->frequency);
 
   /* Try to set peripheral descriptor */
-  if (setDescriptor(device) != E_OK)
+  if (setDescriptor(timer) != E_OK)
     return E_ERROR;
 
-  device->handler = interruptHandler;
+  timer->handler = interruptHandler;
 
-  device->frequency = config->frequency;
-  device->overflow = 1; //FIXME
+  timer->frequency = config->frequency;
+  timer->overflow = 1;
 
   SYSTICK->CTRL = 0; /* Stop timer */
   SYSTICK->VAL = 0; /* Reset current timer value */
-  SYSTICK->LOAD = sysCoreClock / device->frequency - 1;
+  SYSTICK->LOAD = sysCoreClock / timer->frequency - 1;
   SYSTICK->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
 
   irqEnable(SYSTICK_IRQ);
@@ -102,10 +116,10 @@ static void tmrDeinit(void *object __attribute__((unused)))
 static void tmrCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct SysTickTimer *device = object;
+  struct SysTickTimer *timer = object;
 
-  device->callback = callback;
-  device->callbackArgument = argument;
+  timer->callback = callback;
+  timer->callbackArgument = argument;
 
   if (callback)
   {
@@ -126,27 +140,20 @@ static void tmrSetEnabled(void *object __attribute__((unused)), bool state)
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  struct SysTickTimer *device = object;
+  struct SysTickTimer *timer = object;
 
-  device->frequency = frequency;
+  assert(frequency);
 
-  SYSTICK->CTRL &= ~CTRL_ENABLE;
-  /* FIXME Recalculate overflow and add state saving */
-  SYSTICK->LOAD = (sysCoreClock / device->frequency) * device->overflow - 1;
-  SYSTICK->VAL = 0;
-  SYSTICK->CTRL |= CTRL_ENABLE;
+  timer->frequency = frequency;
+  updateFrequency(timer);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
-  struct SysTickTimer *device = object;
+  struct SysTickTimer *timer = object;
 
-  device->overflow = overflow;
-
-  SYSTICK->CTRL &= ~CTRL_ENABLE;
-  SYSTICK->LOAD = (sysCoreClock / device->frequency) * device->overflow - 1;
-  SYSTICK->VAL = 0;
-  SYSTICK->CTRL |= CTRL_ENABLE;
+  timer->overflow = overflow;
+  updateFrequency(timer);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrValue(void *object __attribute__((unused)))
