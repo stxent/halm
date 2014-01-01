@@ -7,6 +7,7 @@
 #ifndef SYSTICK_H_
 #define SYSTICK_H_
 /*----------------------------------------------------------------------------*/
+#include <irq.h>
 #include <timer.h>
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass *SysTickTimer;

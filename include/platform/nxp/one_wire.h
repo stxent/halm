@@ -59,10 +59,10 @@ struct OneWire
   /* Transmit queue */
   struct Queue txQueue;
 
-  /* Computed data rates for reset sequence and data transmission */
+  /* Computed data rates for reset and data transmission modes */
   struct UartRateConfig dataRate, resetRate;
 
-  /* Current 1-Wire interface state */
+  /* Current interface state */
   volatile enum oneWireState state;
   /* Exclusive access to channel */
   spinlock_t lock;

@@ -134,8 +134,8 @@ static enum result serialCallback(void *object, void (*callback)(void *),
 {
   struct Serial *interface = object;
 
-  interface->callback = callback;
   interface->callbackArgument = argument;
+  interface->callback = callback;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

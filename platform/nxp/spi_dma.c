@@ -157,8 +157,8 @@ static enum result spiCallback(void *object, void (*callback)(void *),
 {
   struct SpiDma *interface = object;
 
-  interface->callback = callback;
   interface->callbackArgument = argument;
+  interface->callback = callback;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

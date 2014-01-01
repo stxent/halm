@@ -197,8 +197,8 @@ static enum result oneWireCallback(void *object, void (*callback)(void *),
 {
   struct OneWire *interface = object;
 
-  interface->callback = callback;
   interface->callbackArgument = argument;
+  interface->callback = callback;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

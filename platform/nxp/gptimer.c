@@ -96,8 +96,8 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
   struct GpTimer *timer = object;
   LPC_TIMER_Type *reg = timer->parent.reg;
 
-  timer->callback = callback;
   timer->callbackArgument = argument;
+  timer->callback = callback;
 
   reg->IR = IR_MASK; /* Clear all pending interrupts */
   if (callback)

@@ -199,8 +199,8 @@ static enum result i2cCallback(void *object, void (*callback)(void *),
 {
   struct I2c *interface = object;
 
-  interface->callback = callback;
   interface->callbackArgument = argument;
+  interface->callback = callback;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

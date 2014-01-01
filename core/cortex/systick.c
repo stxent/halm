@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <irq.h>
 #include <macro.h>
 #include <core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/

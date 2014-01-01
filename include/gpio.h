@@ -20,7 +20,7 @@ typedef uint16_t gpio_t;
 #define PIN(port, offset) ((gpio_t)(~(((unsigned long)(port) << 8 & 0xFF00)\
     | ((unsigned long)(offset) & 0x00FF))))
 /*----------------------------------------------------------------------------*/
-/* Reserved function values */
+/* Special function values */
 enum
 {
   GPIO_DEFAULT  = 0x7F,

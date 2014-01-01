@@ -152,8 +152,8 @@ static enum result adcCallback(void *object, void (*callback)(void *),
 {
   struct Adc *interface = object;
 
-  interface->callback = callback;
   interface->callbackArgument = argument;
+  interface->callback = callback;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

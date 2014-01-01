@@ -129,8 +129,8 @@ static enum result serialCallback(void *object, void (*callback)(void *),
 {
   struct SerialDma *interface = object;
 
-  interface->callback = callback;
   interface->callbackArgument = argument;
+  interface->callback = callback;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
