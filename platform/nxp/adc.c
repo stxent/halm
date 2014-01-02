@@ -10,8 +10,8 @@
 #include <platform/nxp/adc_defs.h>
 /*----------------------------------------------------------------------------*/
 #define RESULT_POW              1 /* Power of two */
-#define UNPACK_FUNCTION(value)  ((value) & 0x0F) /* Unpack function */
-#define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F) /* Unpack channel */
+#define UNPACK_FUNCTION(value)  ((value) & 0x0F)
+#define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -58,7 +58,8 @@ static void interruptHandler(void *object)
     reg->CR &= ~CR_START_MASK;
 
     /* Copy conversion result */
-    uint16_t value = GDR_RESULT_VALUE(reg->GDR, ADC_RESOLUTION);
+    uint16_t value = DR_RESULT_VALUE(reg->DR[interface->channel],
+        ADC_RESOLUTION);
     memcpy(interface->buffer, &value, sizeof(value));
     interface->buffer += 1 << RESULT_POW;
 

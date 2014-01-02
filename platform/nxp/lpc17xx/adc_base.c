@@ -1,6 +1,6 @@
 /*
  * adc_base.c
- * Copyright (C) 2013 xent
+ * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
@@ -8,9 +8,11 @@
 #include <stdbool.h>
 #include <platform/nxp/adc_base.h>
 #include <platform/nxp/adc_defs.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/system.h>
+#include <platform/nxp/lpc17xx/clocking.h>
+#include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
+#define DEFAULT_DIV                   CLK_DIV1
+#define DEFAULT_DIV_VALUE             1
 /* Pack conversion channel and pin function in one number */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
@@ -27,37 +29,37 @@ static const struct EntityClass adcUnitTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor adcPins[] = {
     {
-        .key = PIN(0, 11), /* AD0 */
+        .key = PIN(0, 23), /* AD0 */
         .channel = 0,
-        .value = PACK_VALUE(2, 0)
+        .value = PACK_VALUE(1, 0)
     }, {
-        .key = PIN(1, 0), /* AD1 */
+        .key = PIN(0, 24), /* AD1 */
         .channel = 0,
-        .value = PACK_VALUE(2, 1)
+        .value = PACK_VALUE(1, 1)
     }, {
-        .key = PIN(1, 1), /* AD2 */
+        .key = PIN(0, 25), /* AD2 */
         .channel = 0,
-        .value = PACK_VALUE(2, 2)
+        .value = PACK_VALUE(1, 2)
     }, {
-        .key = PIN(1, 2), /* AD3 */
+        .key = PIN(0, 26), /* AD3 */
         .channel = 0,
-        .value = PACK_VALUE(2, 3)
+        .value = PACK_VALUE(1, 3)
     }, {
-        .key = PIN(1, 3), /* AD4 */
+        .key = PIN(1, 30), /* AD4 */
         .channel = 0,
-        .value = PACK_VALUE(2, 4)
+        .value = PACK_VALUE(3, 4)
     }, {
-        .key = PIN(1, 4), /* AD5 */
+        .key = PIN(1, 31), /* AD5 */
         .channel = 0,
-        .value = PACK_VALUE(1, 5)
+        .value = PACK_VALUE(3, 5)
     }, {
-        .key = PIN(1, 10), /* AD6 */
+        .key = PIN(0, 3), /* AD6 */
         .channel = 0,
-        .value = PACK_VALUE(1, 6)
+        .value = PACK_VALUE(2, 6)
     }, {
-        .key = PIN(1, 11), /* AD7 */
+        .key = PIN(0, 2), /* AD7 */
         .channel = 0,
-        .value = PACK_VALUE(1, 7)
+        .value = PACK_VALUE(2, 7)
     }, {
         .key = 0 /* End of pin function association list */
     }
@@ -97,13 +99,13 @@ static enum result adcUnitInit(void *object, const void *configPtr)
   unit->handler = 0;
 
   sysPowerEnable(PWR_ADC);
-  sysClockEnable(CLK_ADC);
+  sysClockControl(CLK_ADC, DEFAULT_DIV);
 
   unit->irq = ADC_IRQ;
   unit->reg = LPC_ADC;
 
-  /* Set system clock divider */
-  ((LPC_ADC_Type *)unit->reg)->CR = CR_CLKDIV(sysCoreClock / 4500000);
+  /* Enable converter and set system clock divider */
+  ((LPC_ADC_Type *)unit->reg)->CR = CR_PDN | CR_CLKDIV(sysCoreClock / 13000000);
 
   return E_OK;
 }
@@ -112,7 +114,6 @@ static void adcUnitDeinit(void *object)
 {
   struct AdcUnitBase *unit = object;
 
-  sysClockDisable(CLK_ADC);
   sysPowerDisable(PWR_ADC);
   setDescriptor(unit->channel, 0);
 }
