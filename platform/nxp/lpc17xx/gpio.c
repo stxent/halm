@@ -14,25 +14,27 @@ static inline uint32_t *calcPinType(union GpioPin);
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union GpioPin p)
+static inline LPC_GPIO_Type *calcPort(union GpioPin pin)
 {
   return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
-      + ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * p.port);
+      + ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * pin.port);
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcPinSelect(union GpioPin p)
+static inline uint32_t *calcPinSelect(union GpioPin pin)
 {
-  return (uint32_t *)(&LPC_PINCON->PINSEL0 + (p.offset >> 4) + (p.port << 1));
+  return (uint32_t *)(&LPC_PINCON->PINSEL0 + (pin.offset >> 4)
+      + (pin.port << 1));
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcPinMode(union GpioPin p)
+static inline uint32_t *calcPinMode(union GpioPin pin)
 {
-  return (uint32_t *)(&LPC_PINCON->PINMODE0 + (p.offset >> 4) + (p.port << 1));
+  return (uint32_t *)(&LPC_PINCON->PINMODE0 + (pin.offset >> 4)
+      + (pin.port << 1));
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcPinType(union GpioPin p)
+static inline uint32_t *calcPinType(union GpioPin pin)
 {
-  return (uint32_t *)(&LPC_PINCON->PINMODE_OD0 + p.port);
+  return (uint32_t *)(&LPC_PINCON->PINMODE_OD0 + pin.port);
 }
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio gpio)

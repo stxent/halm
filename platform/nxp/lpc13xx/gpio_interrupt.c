@@ -9,9 +9,9 @@
 #include <platform/nxp/gpio_interrupt.h>
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t);
-static enum result clearDescriptor(struct Gpio);
 static void processInterrupt(uint8_t);
-static enum result setDescriptor(struct Gpio, struct GpioInterrupt *);
+static enum result resetDescriptor(union GpioPin);
+static enum result setDescriptor(union GpioPin, struct GpioInterrupt *);
 /*----------------------------------------------------------------------------*/
 static enum result gpioIntInit(void *, const void *);
 static void gpioIntDeinit(void *);
@@ -40,25 +40,41 @@ static inline LPC_GPIO_Type *calcPort(uint8_t port)
       ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * port);
 }
 /*----------------------------------------------------------------------------*/
-static enum result clearDescriptor(struct Gpio input)
+static void processInterrupt(uint8_t channel)
 {
-  struct GpioInterrupt *current = descriptors[input.pin.port];
+  struct GpioInterrupt *current = descriptors[channel];
+  LPC_GPIO_Type *reg = calcPort(channel);
+  uint32_t state = reg->MIS;
+
+  while (current)
+  {
+    if ((state & (1 << current->pin.offset)) && current->callback)
+      current->callback(current->callbackArgument);
+    current = current->next;
+  }
+  reg->IC = state;
+  /* Synchronizer logic causes a delay of 2 clocks */
+}
+/*----------------------------------------------------------------------------*/
+static enum result resetDescriptor(union GpioPin pin)
+{
+  struct GpioInterrupt *current = descriptors[pin.port];
 
   /* Remove the interrupt from chain */
   if (!current)
     return E_ERROR;
-  if (current->input.pin.key == input.pin.key)
+  if (current->pin.key == pin.key)
   {
-    descriptors[input.pin.port] = descriptors[input.pin.port]->next;
-    if (!descriptors[input.pin.port])
-      irqDisable(gpioIntIrq[input.pin.port]);
+    descriptors[pin.port] = descriptors[pin.port]->next;
+    if (!descriptors[pin.port])
+      irqDisable(gpioIntIrq[pin.port]);
     return E_OK;
   }
   else
   {
     while (current->next)
     {
-      if (current->next->input.pin.key == input.pin.key)
+      if (current->next->pin.key == pin.key)
       {
         current->next = current->next->next;
         return E_OK;
@@ -69,44 +85,28 @@ static enum result clearDescriptor(struct Gpio input)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void processInterrupt(uint8_t port)
-{
-  struct GpioInterrupt *current = descriptors[port];
-  LPC_GPIO_Type *reg = calcPort(port);
-  uint32_t state = reg->MIS;
-
-  while (current)
-  {
-    if ((state & (1 << current->input.pin.offset)) && current->callback)
-      current->callback(current->callbackArgument);
-    current = current->next;
-  }
-  reg->IC = state;
-  /* Synchronizer logic causes a delay of 2 clocks */
-}
-/*----------------------------------------------------------------------------*/
-static enum result setDescriptor(struct Gpio input,
+static enum result setDescriptor(union GpioPin pin,
     struct GpioInterrupt *interrupt)
 {
-  struct GpioInterrupt *current = descriptors[input.pin.port];
+  struct GpioInterrupt *current = descriptors[pin.port];
 
-  assert(gpioGetKey(input));
+  assert(~pin.key);
 
   /* Attach new interrupt to descriptor chain */
   if (!current)
   {
-    irqEnable(gpioIntIrq[input.pin.port]);
-    descriptors[input.pin.port] = interrupt;
+    irqEnable(gpioIntIrq[pin.port]);
+    descriptors[pin.port] = interrupt;
   }
   else
   {
     while (current->next)
     {
-      if (current->input.pin.key == input.pin.key)
+      if (current->pin.key == pin.key)
         return E_BUSY;
       current = current->next;
     }
-    if (current->input.pin.key != input.pin.key)
+    if (current->pin.key != pin.key)
       current->next = interrupt;
     else
       return E_BUSY;
@@ -140,19 +140,19 @@ static enum result gpioIntInit(void *object, const void *configPtr)
   struct GpioInterrupt *interrupt = object;
   enum result res;
 
-  /* Pin structure should be initialized before setting up descriptor */
-  interrupt->input = gpioInit(config->pin);
-  gpioInput(interrupt->input);
+  struct Gpio input = gpioInit(config->pin);
+  gpioInput(input);
+  interrupt->pin = input.pin;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(interrupt->input, interrupt)) != E_OK)
+  if ((res = setDescriptor(interrupt->pin, interrupt)) != E_OK)
     return res;
 
   interrupt->callback = 0;
   interrupt->next = 0;
 
-  LPC_GPIO_Type *reg = calcPort(interrupt->input.pin.port);
-  uint32_t mask = 1 << interrupt->input.pin.offset;
+  LPC_GPIO_Type *reg = calcPort(interrupt->pin.port);
+  uint32_t mask = 1 << interrupt->pin.offset;
 
   /* Configure interrupt as edge sensitive*/
   reg->IS &= ~mask;
@@ -179,14 +179,14 @@ static enum result gpioIntInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void gpioIntDeinit(void *object)
 {
-  struct Gpio input = ((struct GpioInterrupt *)object)->input;
-  LPC_GPIO_Type *reg = calcPort(input.pin.port);
-  uint32_t mask = 1 << input.pin.offset;
+  union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
+  LPC_GPIO_Type *reg = calcPort(pin.port);
+  uint32_t mask = 1 << pin.offset;
 
   reg->IE &= ~mask;
   reg->IBE &= ~mask;
   reg->IEV &= ~mask;
-  clearDescriptor(input);
+  resetDescriptor(pin);
 }
 /*----------------------------------------------------------------------------*/
 static void gpioIntCallback(void *object, void (*callback)(void *),
@@ -200,9 +200,9 @@ static void gpioIntCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static void gpioIntSetEnabled(void *object, bool state)
 {
-  struct Gpio input = ((struct GpioInterrupt *)object)->input;
-  LPC_GPIO_Type *reg = calcPort(input.pin.port);
-  uint32_t mask = 1 << input.pin.offset;
+  union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
+  LPC_GPIO_Type *reg = calcPort(pin.port);
+  uint32_t mask = 1 << pin.offset;
 
   if (state)
     reg->IE |= mask;

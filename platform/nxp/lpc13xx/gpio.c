@@ -42,15 +42,16 @@ static const uint8_t gpioRegMap[4][12] = {
 static const struct EntityClass *GpioHandler = &handlerTable;
 static struct GpioHandler *gpioHandler = 0;
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union GpioPin p)
+static inline LPC_GPIO_Type *calcPort(union GpioPin pin)
 {
-  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0 +
-      ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * p.port);
+  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
+      + ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * pin.port);
 }
 /*----------------------------------------------------------------------------*/
-static inline void *calcReg(union GpioPin p)
+static inline void *calcReg(union GpioPin pin)
 {
-  return (void *)((uint32_t)LPC_IOCON + (uint32_t)gpioRegMap[p.port][p.offset]);
+  return (void *)((uint32_t)LPC_IOCON
+      + (uint32_t)gpioRegMap[pin.port][pin.offset]);
 }
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio gpio)

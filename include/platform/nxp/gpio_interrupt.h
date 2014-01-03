@@ -35,7 +35,7 @@ struct GpioInterrupt
   /* Pointer to a next entry in chain */
   struct GpioInterrupt *next;
   /* Descriptor of input pin used as interrupt source */
-  struct Gpio input;
+  union GpioPin pin;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPIO_INTERRUPT_H_ */
