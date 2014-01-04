@@ -7,7 +7,8 @@
 #include <platform/nxp/spi.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
-#define FIFO_DEPTH 8
+#define DUMMY_FRAME 0xFF
+#define FIFO_DEPTH  8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -37,9 +38,8 @@ static void interruptHandler(void *object)
 {
   struct Spi *interface = object;
   LPC_SSP_Type *reg = interface->parent.reg;
-  uint32_t count;
-
-  count = interface->txLeft > FIFO_DEPTH ? FIFO_DEPTH : interface->txLeft;
+  uint32_t count = interface->txLeft > FIFO_DEPTH ? FIFO_DEPTH
+      : interface->txLeft;
 
   if (interface->rxBuffer)
   {
@@ -52,7 +52,7 @@ static void interruptHandler(void *object)
 
     while (count-- && reg->SR & SR_TNF)
     {
-      reg->DR = 0xFF; /* TODO Select dummy frame value for SPI */
+      reg->DR = DUMMY_FRAME;
       --interface->txLeft;
     }
   }
@@ -129,7 +129,7 @@ static void spiDeinit(void *object)
   struct Spi *interface = object;
 
   irqDisable(interface->parent.irq);
-  SspBase->deinit(interface); /* Call SSP class destructor */
+  SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
 static enum result spiCallback(void *object, void (*callback)(void *),

@@ -42,7 +42,7 @@ static void interruptHandler(void *object)
   bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  uint8_t state = reg->IIR;
+  const uint8_t state = reg->IIR;
   /* Call user handler when receive timeout occurs */
   event |= (state & IIR_INT_MASK) == IIR_INT_CTI;
 

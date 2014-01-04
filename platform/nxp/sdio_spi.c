@@ -376,7 +376,7 @@ static enum result sdioInit(void *object, const void *configPtr)
 
   device->csPin = gpioInit(config->cs);
   if (!gpioGetKey(device->csPin))
-    return E_ERROR;
+    return E_VALUE;
   gpioOutput(device->csPin, 1);
 
   device->interface = config->interface;
