@@ -16,5 +16,8 @@
 #define PIN_MODE_PULLUP                 0
 #define PIN_MODE_INACTIVE               2
 #define PIN_MODE_PULLDOWN               3
+/*------------------Overall interrupt status register-------------------------*/
+#define STATUS_P0INT                    BIT(0)
+#define STATUS_P2INT                    BIT(2)
 /*----------------------------------------------------------------------------*/
 #endif /* GPIO_DEFS_ */

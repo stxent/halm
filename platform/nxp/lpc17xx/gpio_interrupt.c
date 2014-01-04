@@ -5,9 +5,12 @@
  */
 
 #include <irq.h>
+#include <macro.h>
 #include <platform/nxp/gpio_interrupt.h>
+#include <platform/nxp/lpc17xx/gpio_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(uint8_t);
+static void disableInterrupt(union GpioPin);
+static void enableInterrupt(union GpioPin, enum gpioIntMode);
 static void processInterrupt(uint8_t);
 static enum result resetDescriptor(union GpioPin);
 static enum result setDescriptor(union GpioPin, struct GpioInterrupt *);
@@ -26,24 +29,69 @@ static const struct InterruptClass gpioIntTable = {
     .setEnabled = gpioIntSetEnabled
 };
 /*----------------------------------------------------------------------------*/
-static const irq_t gpioIntIrq[] = {
-    PIOINT0_IRQ, PIOINT1_IRQ, PIOINT2_IRQ, PIOINT3_IRQ
-};
-/*----------------------------------------------------------------------------*/
 const struct InterruptClass *GpioInterrupt = &gpioIntTable;
-static struct GpioInterrupt *descriptors[4] = {0};
+static struct GpioInterrupt *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(uint8_t port)
+static void disableInterrupt(union GpioPin pin)
 {
-  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0 +
-      ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * port);
+  const uint32_t mask = 1 << pin.offset;
+
+  switch (pin.port)
+  {
+    case 0:
+      LPC_GPIOINT->ENF0 &= ~mask;
+      LPC_GPIOINT->ENR0 &= ~mask;
+      break;
+    case 2:
+      LPC_GPIOINT->ENF2 &= ~mask;
+      LPC_GPIOINT->ENR2 &= ~mask;
+      break;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void enableInterrupt(union GpioPin pin, enum gpioIntMode mode)
+{
+  const uint32_t mask = 1 << pin.offset;
+
+  switch (pin.port)
+  {
+    case 0:
+      /* Clear pending interrupt flag */
+      LPC_GPIOINT->CLR0 = mask;
+      /* Configure edge sensitivity options */
+      if (mode != GPIO_RISING)
+        LPC_GPIOINT->ENF0 |= mask;
+      if (mode != GPIO_FALLING)
+        LPC_GPIOINT->ENR0 |= mask;
+      break;
+    case 2:
+      LPC_GPIOINT->CLR2 = mask;
+      if (mode != GPIO_RISING)
+        LPC_GPIOINT->ENF2 |= mask;
+      if (mode != GPIO_FALLING)
+        LPC_GPIOINT->ENR2 |= mask;
+      break;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  struct GpioInterrupt *current = descriptors[channel];
-  LPC_GPIO_Type *reg = calcPort(channel);
-  const uint32_t state = reg->MIS;
+  struct GpioInterrupt *current;
+  uint32_t state;
+
+  switch (channel)
+  {
+    case 0:
+      state = LPC_GPIOINT->STATR0 | LPC_GPIOINT->STATF0;
+      current = descriptors[0];
+      break;
+    case 2:
+      state = LPC_GPIOINT->STATR2 | LPC_GPIOINT->STATF2;
+      current = descriptors[1];
+      break;
+    default:
+      return;
+  }
 
   while (current)
   {
@@ -51,22 +99,31 @@ static void processInterrupt(uint8_t channel)
       current->callback(current->callbackArgument);
     current = current->next;
   }
-  reg->IC = state;
-  /* Synchronizer logic causes a delay of 2 clocks */
+
+  switch (channel)
+  {
+    case 0:
+      LPC_GPIOINT->CLR0 = state;
+      break;
+    case 2:
+      LPC_GPIOINT->CLR2 = state;
+      break;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result resetDescriptor(union GpioPin pin)
 {
-  struct GpioInterrupt *current = descriptors[pin.port];
+  const uint8_t index = !pin.port ? 0 : 1;
+  struct GpioInterrupt *current = descriptors[index];
 
   /* Remove the interrupt from chain */
   if (!current)
     return E_ERROR;
   if (current->pin.key == pin.key)
   {
-    descriptors[pin.port] = descriptors[pin.port]->next;
-    if (!descriptors[pin.port])
-      irqDisable(gpioIntIrq[pin.port]);
+    descriptors[index] = descriptors[index]->next;
+    if (!descriptors[0] && !descriptors[1])
+      irqDisable(EINT3_IRQ);
     return E_OK;
   }
   else
@@ -87,13 +144,15 @@ static enum result resetDescriptor(union GpioPin pin)
 static enum result setDescriptor(union GpioPin pin,
     struct GpioInterrupt *interrupt)
 {
-  struct GpioInterrupt *current = descriptors[pin.port];
+  const uint8_t index = !pin.port ? 0 : 1;
+  struct GpioInterrupt *current = descriptors[index];
 
   /* Attach new interrupt to descriptor chain */
   if (!current)
   {
-    irqEnable(gpioIntIrq[pin.port]);
-    descriptors[pin.port] = interrupt;
+    if (!descriptors[0] && !descriptors[1])
+      irqEnable(EINT3_IRQ);
+    descriptors[index] = interrupt;
   }
   else
   {
@@ -111,24 +170,12 @@ static enum result setDescriptor(union GpioPin pin,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void PIOINT0_ISR(void)
+void EINT3_ISR(void)
 {
-  processInterrupt(0);
-}
-/*----------------------------------------------------------------------------*/
-void PIOINT1_ISR(void)
-{
-  processInterrupt(1);
-}
-/*----------------------------------------------------------------------------*/
-void PIOINT2_ISR(void)
-{
-  processInterrupt(2);
-}
-/*----------------------------------------------------------------------------*/
-void PIOINT3_ISR(void)
-{
-  processInterrupt(3);
+  if (LPC_GPIOINT->STATUS & STATUS_P0INT)
+    processInterrupt(0);
+  if (LPC_GPIOINT->STATUS & STATUS_P2INT)
+    processInterrupt(2);
 }
 /*----------------------------------------------------------------------------*/
 static enum result gpioIntInit(void *object, const void *configPtr)
@@ -138,7 +185,8 @@ static enum result gpioIntInit(void *object, const void *configPtr)
   enum result res;
 
   struct Gpio input = gpioInit(config->pin);
-  if (!gpioGetKey(input))
+  /* External interrupt functionality is available only on two ports */
+  if (!gpioGetKey(input) || (input.pin.port != 0 && input.pin.port != 2))
     return E_VALUE;
 
   gpioInput(input);
@@ -152,41 +200,15 @@ static enum result gpioIntInit(void *object, const void *configPtr)
   interrupt->mode = config->mode;
   interrupt->next = 0;
 
-  LPC_GPIO_Type *reg = calcPort(interrupt->pin.port);
-  uint32_t mask = 1 << interrupt->pin.offset;
-
-  /* Configure interrupt as edge sensitive*/
-  reg->IS &= ~mask;
-  /* Configure edge sensitivity options */
-  switch (config->mode)
-  {
-    case GPIO_RISING:
-      reg->IEV |= mask;
-      break;
-    case GPIO_FALLING:
-      reg->IEV &= ~mask;
-      break;
-    case GPIO_TOGGLE:
-      reg->IBE |= mask;
-      break;
-  }
-  /* Clear pending interrupt flag */
-  reg->IC = mask;
-  /* Disable interrupt masking */
-  reg->IE |= mask;
-
+  enableInterrupt(interrupt->pin, interrupt->mode);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void gpioIntDeinit(void *object)
 {
   const union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
-  const uint32_t mask = 1 << pin.offset;
-  LPC_GPIO_Type *reg = calcPort(pin.port);
 
-  reg->IE &= ~mask;
-  reg->IBE &= ~mask;
-  reg->IEV &= ~mask;
+  disableInterrupt(pin);
   resetDescriptor(pin);
 }
 /*----------------------------------------------------------------------------*/
@@ -201,15 +223,10 @@ static void gpioIntCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static void gpioIntSetEnabled(void *object, bool state)
 {
-  const union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
-  const uint32_t mask = 1 << pin.offset;
-  LPC_GPIO_Type *reg = calcPort(pin.port);
+  struct GpioInterrupt *interrupt = object;
 
   if (state)
-  {
-    reg->IC = mask;
-    reg->IE |= mask;
-  }
+    enableInterrupt(interrupt->pin, interrupt->mode);
   else
-    reg->IE &= ~mask;
+    disableInterrupt(interrupt->pin);
 }

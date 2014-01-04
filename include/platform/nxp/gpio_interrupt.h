@@ -36,6 +36,8 @@ struct GpioInterrupt
   struct GpioInterrupt *next;
   /* Descriptor of input pin used as interrupt source */
   union GpioPin pin;
+  /* Edge sensitivity mode */
+  enum gpioIntMode mode;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPIO_INTERRUPT_H_ */
