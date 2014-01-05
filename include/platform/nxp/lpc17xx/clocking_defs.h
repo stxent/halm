@@ -26,8 +26,6 @@
 #define PLL0CFG_NSEL_MASK               BIT_FIELD(0xFF, 16)
 #define PLL0CFG_NSEL(value)             BIT_FIELD((value), 16)
 /*------------------PLL0 Status register--------------------------------------*/
-//#define PLL0STAT_MSEL_VALUE(reg)        ((reg) & 0x7FFF)
-//#define PLL0STAT_NSEL_VALUE(reg)        (((reg) >> 16) & 0xFF)
 /* Read-back for the Enable bit */
 #define PLL0STAT_ENABLED                BIT(24)
 /* Read-back for the Connect bit */
@@ -43,6 +41,9 @@
 #define PLL1CFG_PSEL(value)             BIT_FIELD((value), 5)
 /*------------------PLL1 Status register--------------------------------------*/
 #define PLL1STAT_LOCK                   BIT(10)
+/*------------------PLL Feed registers----------------------------------------*/
+#define PLLFEED_FIRST                   0xAA
+#define PLLFEED_SECOND                  0x55
 /*------------------Flash Accelerator Configuration register------------------*/
 #define FLASHCFG_TIME_MASK              BIT_FIELD(0x0F, 12)
 #define FLASHCFG_TIME(value)            BIT_FIELD((value), 12)

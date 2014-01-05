@@ -9,8 +9,7 @@
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_DIV       CLK_DIV1
-#define DEFAULT_DIV_VALUE 1
+#define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct UartBase *);
 /*----------------------------------------------------------------------------*/
@@ -139,7 +138,7 @@ void UART3_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(struct UartBase *interface __attribute__((unused)))
 {
-  return sysCoreClock / DEFAULT_DIV_VALUE;
+  return sysCoreClock / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)

@@ -50,9 +50,9 @@ enum sysPowerDevice
 /* Divider values for peripheral clock control registers */
 enum sysClockDiv
 {
-  CLK_DIV1 = 1,
-  CLK_DIV2 = 2,
-  CLK_DIV4 = 0,
+  CLK_DIV1 = 0,
+  CLK_DIV2 = 1,
+  CLK_DIV4 = 2,
   CLK_DIV6 = 3, /* For CAN1, CAN2 and CAN Filtering */
   CLK_DIV8 = 3
 };
@@ -94,6 +94,11 @@ enum sysClockDevice
 /*----------------------------------------------------------------------------*/
 void sysClockControl(enum sysClockDevice, enum sysClockDiv);
 void sysFlashLatency(uint8_t);
+/*----------------------------------------------------------------------------*/
+static inline uint32_t sysClockDivToValue(enum sysClockDiv divisor)
+{
+  return 1 << divisor;
+}
 /*----------------------------------------------------------------------------*/
 static inline void sysPowerEnable(enum sysPowerDevice block)
 {

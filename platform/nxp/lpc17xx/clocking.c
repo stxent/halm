@@ -179,13 +179,13 @@ static enum result sysPllEnable(const void *configPtr)
 
   /* Update PLL clock source */
   LPC_SC->PLL0CFG = PLL0CFG_MSEL(multiplier - 1) | PLL0CFG_NSEL(prescaler - 1);
-  LPC_SC->PLL0FEED = 0xAA;
-  LPC_SC->PLL0FEED = 0x55;
+  LPC_SC->PLL0FEED = PLLFEED_FIRST;
+  LPC_SC->PLL0FEED = PLLFEED_SECOND;
 
   /* Enable PLL */
   LPC_SC->PLL0CON = PLL0CON_ENABLE;
-  LPC_SC->PLL0FEED  = 0xAA;
-  LPC_SC->PLL0FEED  = 0x55;
+  LPC_SC->PLL0FEED  = PLLFEED_FIRST;
+  LPC_SC->PLL0FEED  = PLLFEED_SECOND;
 
   return E_OK;
 }
@@ -224,8 +224,8 @@ static enum result mainClockEnable(const void *configPtr)
 
       /* Connect PLL */
       LPC_SC->PLL0CON |= PLL0CON_CONNECT;
-      LPC_SC->PLL0FEED = 0xAA;
-      LPC_SC->PLL0FEED = 0x55;
+      LPC_SC->PLL0FEED = PLLFEED_FIRST;
+      LPC_SC->PLL0FEED = PLLFEED_SECOND;
 
       /* Wait for enable and connect */
       while (!(LPC_SC->PLL0STAT & (PLL0STAT_ENABLED | PLL0STAT_CONNECTED)));

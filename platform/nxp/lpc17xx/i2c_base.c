@@ -9,8 +9,7 @@
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_DIV       CLK_DIV1
-#define DEFAULT_DIV_VALUE 1
+#define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
@@ -101,7 +100,7 @@ void I2C2_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetClock(struct I2cBase *interface __attribute__((unused)))
 {
-  return sysCoreClock / DEFAULT_DIV_VALUE;
+  return sysCoreClock / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *object, const void *configPtr)

@@ -8,6 +8,9 @@
 #include <macro.h>
 #include <platform/nxp/gpio_interrupt.h>
 #include <platform/nxp/lpc17xx/gpio_defs.h>
+#include <platform/nxp/lpc17xx/system.h>
+/*----------------------------------------------------------------------------*/
+#define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static void disableInterrupt(union GpioPin);
 static void enableInterrupt(union GpioPin, enum gpioIntMode);
@@ -151,7 +154,11 @@ static enum result setDescriptor(union GpioPin pin,
   if (!current)
   {
     if (!descriptors[0] && !descriptors[1])
+    {
+      /* Initial interrupt configuration */
+      sysClockControl(CLK_GPIOINT, DEFAULT_DIV);
       irqEnable(EINT3_IRQ);
+    }
     descriptors[index] = interrupt;
   }
   else

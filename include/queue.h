@@ -14,7 +14,7 @@
 struct Queue
 {
   uint8_t *data;
-  uint16_t size, capacity; /* Current queue size and maximal capacity */
+  uint16_t size, capacity; /* Current queue size and maximum capacity */
   uint16_t floor, ceil; /* Indexes of first and last elements in queue */
 };
 /*----------------------------------------------------------------------------*/

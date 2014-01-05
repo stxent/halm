@@ -11,8 +11,7 @@
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_DIV                   CLK_DIV1
-#define DEFAULT_DIV_VALUE             1
+#define DEFAULT_DIV CLK_DIV1
 /* Pack conversion channel and pin function in one number */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/

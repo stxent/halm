@@ -9,8 +9,7 @@
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_DIV       CLK_DIV1
-#define DEFAULT_DIV_VALUE 1
+#define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct SspBase *);
 /*----------------------------------------------------------------------------*/
@@ -111,7 +110,7 @@ void SSP1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetClock(struct SspBase *interface __attribute__((unused)))
 {
-  return sysCoreClock / DEFAULT_DIV_VALUE;
+  return sysCoreClock / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *object, const void *configPtr)
