@@ -47,7 +47,6 @@ void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
   *reg = (*reg & ~(3 << (peripheral & 0x01F)))
       | (actualValue << (peripheral & 0x01F));
 
-  /* PCLKSEL and PLL0 workaround */
   if (pllEnabled)
   {
     LPC_SC->PLL0CON |= PLL0CON_CONNECT;
