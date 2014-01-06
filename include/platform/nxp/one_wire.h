@@ -48,15 +48,15 @@ struct OneWire
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Receive buffer */
+  /* Pointer to an input buffer */
   uint8_t *rxBuffer;
   /* Address of the device */
   union OneWireAddress address;
   /* Number of bytes to be transmitted */
   uint8_t left;
-  /* Position in the receiving word and temporary buffer for the word */
+  /* Position in a receiving word and temporary buffer for this word */
   uint8_t bit, word;
-  /* Transmit queue */
+  /* Output queue containing command, address and data */
   struct ByteQueue txQueue;
 
   /* Computed data rates for reset and data transmission modes */
