@@ -5,7 +5,7 @@
  */
 
 #include <stdlib.h>
-#include "entity.h"
+#include <entity.h>
 /*----------------------------------------------------------------------------*/
 void *init(const void *typeDescriptor, const void *arguments)
 {

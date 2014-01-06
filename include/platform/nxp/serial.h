@@ -7,7 +7,7 @@
 #ifndef SERIAL_H_
 #define SERIAL_H_
 /*----------------------------------------------------------------------------*/
-#include <queue.h>
+#include <byte_queue.h>
 #include "uart_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Serial;
@@ -30,7 +30,7 @@ struct Serial
   void *callbackArgument;
 
   /* Input and output queues */
-  struct Queue rxQueue, txQueue;
+  struct ByteQueue rxQueue, txQueue;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SERIAL_H_ */

@@ -7,8 +7,8 @@
 #ifndef ONE_WIRE_H_
 #define ONE_WIRE_H_
 /*----------------------------------------------------------------------------*/
+#include <byte_queue.h>
 #include <irq.h>
-#include <queue.h>
 #include <spinlock.h>
 #include "uart_base.h"
 /*----------------------------------------------------------------------------*/
@@ -57,7 +57,7 @@ struct OneWire
   /* Position in the receiving word and temporary buffer for the word */
   uint8_t bit, word;
   /* Transmit queue */
-  struct Queue txQueue;
+  struct ByteQueue txQueue;
 
   /* Computed data rates for reset and data transmission modes */
   struct UartRateConfig dataRate, resetRate;

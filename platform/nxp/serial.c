@@ -51,26 +51,26 @@ static void interruptHandler(void *object)
   {
     uint8_t data = reg->RBR;
     /* Received bytes will be dropped when queue becomes full */
-    if (!queueFull(&interface->rxQueue))
-      queuePush(&interface->rxQueue, data);
+    if (!byteQueueFull(&interface->rxQueue))
+      byteQueuePush(&interface->rxQueue, data);
   }
   if (reg->LSR & LSR_THRE)
   {
     /* Fill FIFO with selected burst size or less */
-    uint32_t count = queueSize(&interface->txQueue) < TX_FIFO_SIZE
-        ? queueSize(&interface->txQueue) : TX_FIFO_SIZE;
+    uint32_t count = byteQueueSize(&interface->txQueue) < TX_FIFO_SIZE
+        ? byteQueueSize(&interface->txQueue) : TX_FIFO_SIZE;
 
     /* Call user handler when transmit queue become half empty */
-    event |= count && queueSize(&interface->txQueue) - count
-        < (queueCapacity(&interface->txQueue) >> 1);
+    event |= count && byteQueueSize(&interface->txQueue) - count
+        < (byteQueueCapacity(&interface->txQueue) >> 1);
 
     while (count--)
-      reg->THR = queuePop(&interface->txQueue);
+      reg->THR = byteQueuePop(&interface->txQueue);
   }
 
   /* User handler will be called when receive queue is half full */
-  event |= queueSize(&interface->rxQueue)
-      >= (queueCapacity(&interface->rxQueue) >> 1);
+  event |= byteQueueSize(&interface->rxQueue)
+      >= (byteQueueCapacity(&interface->rxQueue) >> 1);
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
@@ -93,9 +93,9 @@ static enum result serialInit(void *object, const void *configPtr)
 
   interface->parent.handler = interruptHandler;
 
-  if ((res = queueInit(&interface->rxQueue, config->rxLength)) != E_OK)
+  if ((res = byteQueueInit(&interface->rxQueue, config->rxLength)) != E_OK)
     return res;
-  if ((res = queueInit(&interface->txQueue, config->txLength)) != E_OK)
+  if ((res = byteQueueInit(&interface->txQueue, config->txLength)) != E_OK)
     return res;
 
   LPC_UART_Type *reg = interface->parent.reg;
@@ -124,8 +124,8 @@ static void serialDeinit(void *object)
   struct Serial *interface = object;
 
   irqDisable(interface->parent.irq);
-  queueDeinit(&interface->txQueue);
-  queueDeinit(&interface->rxQueue);
+  byteQueueDeinit(&interface->txQueue);
+  byteQueueDeinit(&interface->rxQueue);
   UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -146,10 +146,10 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_AVAILABLE:
-      *(uint32_t *)data = queueSize(&interface->rxQueue);
+      *(uint32_t *)data = byteQueueSize(&interface->rxQueue);
       return E_OK;
     case IF_PENDING:
-      *(uint32_t *)data = queueSize(&interface->txQueue);
+      *(uint32_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
     default:
       return E_ERROR;
@@ -175,7 +175,7 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   uint32_t read;
 
   irqDisable(interface->parent.irq);
-  read = queuePopArray(&interface->rxQueue, buffer, length);
+  read = byteQueuePopArray(&interface->rxQueue, buffer, length);
   irqEnable(interface->parent.irq);
 
   return read;
@@ -190,7 +190,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 
   irqDisable(interface->parent.irq);
   /* Check transmitter state */
-  if (reg->LSR & LSR_TEMT && queueEmpty(&interface->txQueue))
+  if (reg->LSR & LSR_TEMT && byteQueueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle so fill TX FIFO */
     uint32_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
@@ -200,7 +200,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   }
   /* Fill TX queue with the rest of data */
   if (length)
-    written += queuePushArray(&interface->txQueue, buffer, length);
+    written += byteQueuePushArray(&interface->txQueue, buffer, length);
   irqEnable(interface->parent.irq);
 
   return written;

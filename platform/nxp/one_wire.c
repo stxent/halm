@@ -126,8 +126,8 @@ static void interruptHandler(void *object)
   if ((reg->LSR & LSR_THRE) && interface->state != OW_RESET)
   {
     /* Fill FIFO with next word or end the transaction */
-    if (!queueEmpty(&interface->txQueue))
-      sendWord(interface, queuePop(&interface->txQueue));
+    if (!byteQueueEmpty(&interface->txQueue))
+      sendWord(interface, byteQueuePop(&interface->txQueue));
   }
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
@@ -150,7 +150,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
 
   adjustPins(interface, config);
 
-  if ((res = queueInit(&interface->txQueue, TX_QUEUE_LENGTH)) != E_OK)
+  if ((res = byteQueueInit(&interface->txQueue, TX_QUEUE_LENGTH)) != E_OK)
     return res;
 
   interface->parent.handler = interruptHandler;
@@ -188,7 +188,7 @@ static void oneWireDeinit(void *object)
   struct OneWire *interface = object;
 
   irqDisable(interface->parent.irq);
-  queueDeinit(&interface->txQueue);
+  byteQueueDeinit(&interface->txQueue);
   UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -253,12 +253,12 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
   if (!length)
     return 0;
 
-  queueClear(&interface->txQueue);
+  byteQueueClear(&interface->txQueue);
   interface->bit = 0;
   interface->rxBuffer = buffer;
   interface->word = 0x00;
-  while (!queueFull(&interface->txQueue) && ++read != length)
-    queuePush(&interface->txQueue, 0xFF);
+  while (!byteQueueFull(&interface->txQueue) && ++read != length)
+    byteQueuePush(&interface->txQueue, 0xFF);
   interface->left = read;
 
   interface->state = OW_RECEIVE;
@@ -282,19 +282,19 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
   if (!length)
     return 0;
 
-  queueClear(&interface->txQueue);
+  byteQueueClear(&interface->txQueue);
   interface->bit = 0;
   interface->left = 1;
   /* Initiate new transaction by selecting addressing mode */
   if (interface->address.rom)
   {
-    queuePush(&interface->txQueue, (uint8_t)MATCH_ROM);
-    interface->left += queuePushArray(&interface->txQueue,
+    byteQueuePush(&interface->txQueue, (uint8_t)MATCH_ROM);
+    interface->left += byteQueuePushArray(&interface->txQueue,
         (const uint8_t *)&interface->address.rom, length);
   }
   else
-    queuePush(&interface->txQueue, (uint8_t)SKIP_ROM);
-  written = queuePushArray(&interface->txQueue, buffer, length);
+    byteQueuePush(&interface->txQueue, (uint8_t)SKIP_ROM);
+  written = byteQueuePushArray(&interface->txQueue, buffer, length);
   interface->left += written;
 
   beginTransmission(interface);
