@@ -16,16 +16,10 @@ static enum result setDescriptor(uint8_t, struct SspBase *);
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass sspTable = {
+static const struct EntityClass sspTable = {
     .size = 0, /* Abstract class */
     .init = sspInit,
-    .deinit = sspDeinit,
-
-    .callback = 0,
-    .get = 0,
-    .set = 0,
-    .read = 0,
-    .write = 0
+    .deinit = sspDeinit
 };
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor sspPins[] = {
@@ -82,7 +76,7 @@ const struct GpioDescriptor sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *SspBase = &sspTable;
+const struct EntityClass *SspBase = &sspTable;
 static struct SspBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct SspBase *interface)

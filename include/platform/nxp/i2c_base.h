@@ -10,9 +10,8 @@
 #include <gpio.h>
 #include <interface.h>
 #include <irq.h>
-#include "platform_defs.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *I2cBase;
+extern const struct EntityClass *I2cBase;
 /*----------------------------------------------------------------------------*/
 struct I2cBaseConfig
 {

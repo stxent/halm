@@ -10,7 +10,6 @@
 #include <entity.h>
 #include <gpio.h>
 #include <irq.h>
-#include "platform_defs.h"
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/adc_base.h>

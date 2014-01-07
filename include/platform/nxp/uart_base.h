@@ -10,9 +10,8 @@
 #include <gpio.h>
 #include <interface.h>
 #include <irq.h>
-#include "platform_defs.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *UartBase;
+extern const struct EntityClass *UartBase;
 /*----------------------------------------------------------------------------*/
 enum uartParity
 {

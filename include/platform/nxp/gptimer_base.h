@@ -11,7 +11,7 @@
 #include <irq.h>
 #include <timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct TimerClass *GpTimerBase;
+extern const struct EntityClass *GpTimerBase;
 /*----------------------------------------------------------------------------*/
 /* Symbolic names for two different types of timers on low-performance parts */
 enum gpTimerChannel
