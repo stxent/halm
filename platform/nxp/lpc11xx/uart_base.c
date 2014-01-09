@@ -6,8 +6,8 @@
 
 #include <assert.h>
 #include <platform/nxp/uart_base.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/system.h>
+#include <platform/nxp/lpc11xx/clocking.h>
+#include <platform/nxp/lpc11xx/system.h>
 /*----------------------------------------------------------------------------*/
 /* UART clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1
@@ -17,8 +17,6 @@ static enum result setDescriptor(uint8_t, struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
-/*----------------------------------------------------------------------------*/
-static struct UartBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass uartTable = {
     .size = 0, /* Abstract class */
@@ -41,6 +39,7 @@ const struct GpioDescriptor uartPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass *UartBase = &uartTable;
+static struct UartBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
 {
@@ -80,7 +79,6 @@ static enum result uartInit(void *object, const void *configPtr)
 
   interface->handler = 0;
 
-  /* Set controller specific parameters */
   sysClockEnable(CLK_UART);
   LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV;
   interface->reg = LPC_UART;
@@ -93,10 +91,7 @@ static void uartDeinit(void *object)
 {
   struct UartBase *interface = object;
 
-  /* Disable peripheral clock */
-  LPC_SYSCON->UARTCLKDIV = 0;
+  LPC_SYSCON->UARTCLKDIV = 0; /* Disable peripheral clock */
   sysClockDisable(CLK_UART);
-
-  /* Reset descriptor */
   setDescriptor(interface->channel, 0);
 }

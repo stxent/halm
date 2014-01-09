@@ -22,8 +22,8 @@ static inline LPC_GPIO_Type *calcPort(union GpioPin);
 static inline void *calcReg(union GpioPin p);
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerErase();
-static inline void gpioHandlerRegister();
+static inline void gpioHandlerAttach();
+static inline void gpioHandlerDetach();
 static enum result gpioHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -42,51 +42,48 @@ static const uint8_t gpioRegMap[4][12] = {
 static const struct EntityClass *GpioHandler = &handlerTable;
 static struct GpioHandler *gpioHandler = 0;
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union GpioPin p)
+static inline LPC_GPIO_Type *calcPort(union GpioPin pin)
 {
-  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0 +
-      ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * p.port);
+  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
+      + ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * pin.port);
 }
 /*----------------------------------------------------------------------------*/
-static inline void *calcReg(union GpioPin p)
+static inline void *calcReg(union GpioPin pin)
 {
-  return (void *)((uint32_t)LPC_IOCON + (uint32_t)gpioRegMap[p.port][p.offset]);
+  return (void *)((uint32_t)LPC_IOCON
+      + (uint32_t)gpioRegMap[pin.port][pin.offset]);
 }
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio gpio)
 {
   /* Register new pin in the handler */
-  gpioHandlerRegister();
+  gpioHandlerAttach();
 
-  /* Set GPIO mode */
   gpioSetFunction(gpio, GPIO_DEFAULT);
-  /* Neither pull-up nor pull-down */
   gpioSetPull(gpio, GPIO_NOPULL);
-  /* Push-pull output type */
   gpioSetType(gpio, GPIO_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerErase()
+static inline void gpioHandlerAttach()
+{
+  /* Create handler object on first function call */
+  if (!gpioHandler)
+    gpioHandler = init(GpioHandler, 0);
+
+  if (!gpioHandler->instances++)
+  {
+    sysClockEnable(CLK_IOCON);
+    sysClockEnable(CLK_GPIO);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline void gpioHandlerDetach()
 {
   /* Disable clocks when no active pins exist */
   if (!--gpioHandler->instances)
   {
     sysClockDisable(CLK_GPIO);
     sysClockDisable(CLK_IOCON);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static inline void gpioHandlerRegister()
-{
-  if (!gpioHandler)
-    gpioHandler = init(GpioHandler, 0);
-
-  if (!gpioHandler->instances++)
-  {
-    /* Enable clock to IO configuration block */
-    sysClockEnable(CLK_IOCON);
-    /* Enable AHB clock to the GPIO domain */
-    sysClockEnable(CLK_GPIO);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -130,6 +127,7 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
   switch (function)
   {
     case GPIO_DEFAULT:
+      /* Some pins have default function value other than zero */
       function = (gpio.pin.port == 1 && gpio.pin.offset <= 2)
           || (gpio.pin.port == 0 && gpio.pin.offset == 11) ? 1 : 0;
       break;
@@ -137,7 +135,6 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
       *iocon = value & ~IOCON_MODE_DIGITAL;
       return;
   }
-
   *iocon = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/

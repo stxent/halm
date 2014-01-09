@@ -51,7 +51,7 @@ static const struct ClockClass mainClockTable = {
     .enable = mainClockEnable,
     .ready = stubReady
 };
-///*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 const struct ClockClass *ExternalOsc = &extOscTable;
 const struct ClockClass *InternalOsc = &intOscTable;
 const struct ClockClass *SystemPll = &sysPllTable;
@@ -142,9 +142,8 @@ static enum result sysPllEnable(const void *configPtr)
   uint32_t frequency; /* Resulting CCO frequency */
   uint8_t msel, psel, counter = 0;
 
-  assert(config->multiplier && config->divider);
+  assert(config->multiplier && config->divider && !(config->divider & 1));
 
-  //TODO LPC13xx clock: thoroughly check the selection of input variables style
   msel = config->multiplier / config->divider - 1;
   if (msel >= 32)
     return E_VALUE;

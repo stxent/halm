@@ -160,7 +160,7 @@ static enum result sysPllEnable(const void *configPtr)
   uint32_t frequency; /* Resulting CCO frequency */
   uint8_t msel, psel, counter = 0;
 
-  assert(config->multiplier && config->divider && config->divider ^ 1);
+  assert(config->multiplier && config->divider && !(config->divider & 1));
 
   msel = config->multiplier / config->divider - 1;
   if (msel >= 32)
