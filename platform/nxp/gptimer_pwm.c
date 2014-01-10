@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/gptimer_defs.h>
 #include <platform/nxp/gptimer_pwm.h>
+#include <platform/nxp/gptimer_pwm_defs.h>
 /*----------------------------------------------------------------------------*/
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /* Unpack timer match channel */
@@ -75,14 +75,16 @@ static void updateResolution(struct GpTimerPwmUnit *device, uint8_t channel)
 static enum result unitInit(void *object, const void *configPtr)
 {
   const struct GpTimerPwmUnitConfig * const config = configPtr;
-  struct GpTimerPwmUnit *device = object;
   const struct GpTimerBaseConfig parentConfig = {
       .channel = config->channel,
       .input = 0
   };
+  struct GpTimerPwmUnit *device = object;
   enum result res;
 
-  assert(config->frequency && config->resolution);
+  const uint32_t clockFrequency = gpTimerGetClock(object);
+  const uint32_t timerFrequency = config->frequency * config->resolution;
+  assert(timerFrequency && timerFrequency < clockFrequency);
 
   /* Call base class constructor */
   if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
@@ -101,13 +103,11 @@ static enum result unitInit(void *object, const void *configPtr)
   reg->CTCR = 0;
   reg->EMR = 0;
   reg->IR = IR_MASK;
-
   /* PWM Control register is available only on certain parts */
   reg->PWMC = 0;
 
   /* Configure prescaler */
-  reg->PR = gpTimerGetClock(object)
-      / (config->frequency * (uint32_t)config->resolution) - 1;
+  reg->PR = timerFrequency / clockFrequency - 1;
   /* Enable timer */
   reg->TCR = TCR_CEN;
 

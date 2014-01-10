@@ -30,7 +30,5 @@
 #define EMR_CONTROL_TOGGLE              3
 #define EMR_CONTROL(channel, value)     BIT_FIELD((value), (channel) * 2 + 4)
 #define EMR_EXTERNAL_MATCH(channel)     BIT((channel))
-/*------------------PWM Control Register--------------------------------------*/
-#define PWMC_ENABLE(channel)            BIT((channel))
 /*----------------------------------------------------------------------------*/
 #endif /* GPTIMER_DEFS_H_ */
