@@ -21,9 +21,10 @@ struct PwmClass
 {
   CLASS_HEADER
 
-  void (*setDutyCycle)(void *, uint8_t);
+  uint32_t (*getResolution)(void *);
+  void (*setDuration)(void *, uint32_t);
+  void (*setEdges)(void *, uint32_t, uint32_t);
   void (*setEnabled)(void *, bool);
-  void (*setPeriod)(void *, uint16_t);
 };
 /*----------------------------------------------------------------------------*/
 struct Pwm
@@ -32,34 +33,45 @@ struct Pwm
 };
 /*----------------------------------------------------------------------------*/
 /**
- * Set duty cycle of pulse width modulated signal.
+ * Get channel resolution.
  * @param channel Pointer to Pwm object.
- * @param percentage Duty cycle in percents.
+ * @return Channel resolution in timer ticks.
  */
-static inline void pwmSetDutyCycle(void *channel, uint8_t percentage)
+static inline uint32_t pwmGetResolution(void *channel)
 {
-  ((struct PwmClass *)CLASS(channel))->setDutyCycle(channel, percentage);
+  return ((struct PwmClass *)CLASS(channel))->getResolution(channel);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set duration of the pulse when output is in active state.
+ * @param channel Pointer to Pwm object.
+ * @param duration Duration in timer ticks.
+ */
+static inline void pwmSetDuration(void *channel, uint32_t duration)
+{
+  ((struct PwmClass *)CLASS(channel))->setDuration(channel, duration);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set times of leading and trailing edges of the pulse.
+ * @param channel Pointer to Pwm object.
+ * @param leading Time of a leading edge in timer ticks.
+ * @param trailing Time of a trailing edge in timer ticks.
+ */
+static inline void pwmSetEdges(void *channel, uint32_t leading,
+    uint32_t trailing)
+{
+  ((struct PwmClass *)CLASS(channel))->setEdges(channel, leading, trailing);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Start or stop pulse width modulation output.
  * @param channel Pointer to Pwm object.
- * @param state PWM channel state, @b true to start or @b false to stop output.
+ * @param state Output state: @b true to start or @b false to stop output.
  */
 static inline void pwmSetEnabled(void *channel, bool state)
 {
   ((struct PwmClass *)CLASS(channel))->setEnabled(channel, state);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Set length of period when PWM output is enabled.
- * More precise version of pwmSetPeriod function.
- * @param channel Pointer to Pwm object.
- * @param period Period in timer ticks.
- */
-static inline void pwmSetPeriod(void *channel, uint16_t period)
-{
-  ((struct PwmClass *)CLASS(channel))->setPeriod(channel, period);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* PWM_H_ */
