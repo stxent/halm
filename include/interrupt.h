@@ -4,6 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ * @file
+ * Abstract interrupt class.
+ */
+
 #ifndef INTERRUPT_H_
 #define INTERRUPT_H_
 /*----------------------------------------------------------------------------*/
