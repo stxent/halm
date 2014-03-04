@@ -39,4 +39,10 @@ static inline void gpioWrite(struct Gpio gpio, uint8_t value)
       + (1 << gpio.pin.offset)) = value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
+static inline void gpioSetSlewRate(struct Gpio gpio __attribute__((unused)),
+    enum gpioSlewRate rate __attribute__((unused)))
+{
+  /* Slew rate control is not supported on these devices */
+}
+/*----------------------------------------------------------------------------*/
 #endif /* GPIO_H_ */
