@@ -15,18 +15,25 @@
 struct ByteQueue
 {
   uint8_t *data;
-  uint16_t size, capacity; /* Current queue size and maximum capacity */
-  uint16_t floor, ceil; /* Indexes of first and last elements in queue */
+  /** Maximum capacity of the queue. */
+  unsigned short capacity;
+  /** Current number of elements in the queue. */
+  unsigned short size;
+  /** Index of the last element. */
+  unsigned short ceil;
+  /** Index of the first element. */
+  unsigned short floor;
 };
 /*----------------------------------------------------------------------------*/
-enum result byteQueueInit(struct ByteQueue *, uint16_t);
+enum result byteQueueInit(struct ByteQueue *, unsigned int);
 void byteQueueDeinit(struct ByteQueue *);
-uint16_t byteQueuePushArray(struct ByteQueue *, const uint8_t *, uint16_t);
-uint16_t byteQueuePopArray(struct ByteQueue *, uint8_t *, uint16_t);
+unsigned int byteQueuePopArray(struct ByteQueue *, uint8_t *, unsigned int);
+unsigned int byteQueuePushArray(struct ByteQueue *, const uint8_t *,
+    unsigned int);
 /*----------------------------------------------------------------------------*/
-static inline uint16_t byteQueueCapacity(const struct ByteQueue *queue)
+static inline unsigned int byteQueueCapacity(const struct ByteQueue *queue)
 {
-  return queue->capacity;
+  return (unsigned int)queue->capacity;
 }
 /*----------------------------------------------------------------------------*/
 static inline void byteQueueClear(struct ByteQueue *queue)
@@ -44,7 +51,7 @@ static inline bool byteQueueFull(const struct ByteQueue *queue)
   return queue->size == queue->capacity;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint8_t byteQueuePeek(struct ByteQueue *queue)
+static inline uint8_t byteQueuePeek(const struct ByteQueue *queue)
 {
   assert(queue->size);
 
@@ -59,6 +66,7 @@ static inline uint8_t byteQueuePop(struct ByteQueue *queue)
   if (queue->floor == queue->capacity)
     queue->floor = 0;
   --queue->size;
+
   return tmp;
 }
 /*----------------------------------------------------------------------------*/
@@ -72,9 +80,9 @@ static inline void byteQueuePush(struct ByteQueue *queue, uint8_t value)
   ++queue->size;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint16_t byteQueueSize(const struct ByteQueue *queue)
+static inline unsigned int byteQueueSize(const struct ByteQueue *queue)
 {
-  return queue->size;
+  return (unsigned int)queue->size;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* BYTE_QUEUE_H_ */

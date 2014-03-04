@@ -4,22 +4,23 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <byte_queue.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_CAPACITY 16
-/*----------------------------------------------------------------------------*/
-enum result byteQueueInit(struct ByteQueue *queue, uint16_t capacity)
+enum result byteQueueInit(struct ByteQueue *queue, uint32_t capacity)
 {
-  if (!capacity)
-    capacity = DEFAULT_CAPACITY;
+  if (!capacity || capacity > USHRT_MAX)
+    return E_VALUE;
+
   queue->data = malloc(capacity);
   if (!queue->data)
     return E_MEMORY;
 
-  queue->capacity = capacity;
-  queue->floor = queue->ceil = queue->size = 0;
+  queue->capacity = (unsigned short)capacity;
+  byteQueueClear(queue);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -28,10 +29,10 @@ void byteQueueDeinit(struct ByteQueue *queue)
   free(queue->data);
 }
 /*----------------------------------------------------------------------------*/
-uint16_t byteQueuePopArray(struct ByteQueue *queue, uint8_t *buffer,
-    uint16_t length)
+unsigned int byteQueuePopArray(struct ByteQueue *queue, uint8_t *buffer,
+    unsigned int length)
 {
-  uint16_t count, moved = 0;
+  unsigned short count, moved = 0;
 
   if (queue->ceil < queue->floor)
   {
@@ -50,6 +51,7 @@ uint16_t byteQueuePopArray(struct ByteQueue *queue, uint8_t *buffer,
       moved += count;
     }
   }
+
   if (queue->ceil >= queue->floor)
   {
     count = queue->ceil - queue->floor;
@@ -63,13 +65,14 @@ uint16_t byteQueuePopArray(struct ByteQueue *queue, uint8_t *buffer,
       moved += count;
     }
   }
-  return moved;
+
+  return (unsigned int)moved;
 }
 /*----------------------------------------------------------------------------*/
-uint16_t byteQueuePushArray(struct ByteQueue *queue, const uint8_t *buffer,
-    uint16_t length)
+unsigned int byteQueuePushArray(struct ByteQueue *queue, const uint8_t *buffer,
+    unsigned int length)
 {
-  uint16_t count, moved = 0;
+  unsigned short count, moved = 0;
 
   if (queue->ceil >= queue->floor)
   {
@@ -88,6 +91,7 @@ uint16_t byteQueuePushArray(struct ByteQueue *queue, const uint8_t *buffer,
       moved += count;
     }
   }
+
   if (queue->ceil < queue->floor)
   {
     count = queue->floor - queue->ceil;
@@ -101,5 +105,6 @@ uint16_t byteQueuePushArray(struct ByteQueue *queue, const uint8_t *buffer,
       moved += count;
     }
   }
-  return moved;
+
+  return (unsigned int)moved;
 }

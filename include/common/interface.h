@@ -6,7 +6,7 @@
 
 /**
  * @file
- * Abstract interface for peripherals with input and output functionality.
+ * Abstract interface for peripherals with input and output capability.
  */
 
 #ifndef INTERFACE_H_
@@ -35,7 +35,7 @@ enum ifOption
   /** Timeout value for blocking functions. */
   IF_TIMEOUT,
 
-  /** Internal address of the device. Some devices can use 64-bit addresses. */
+  /** Internal address of the device. */
   IF_ADDRESS,
   /** Total memory available for use with the internal addressing method. */
   IF_SIZE,
@@ -55,7 +55,7 @@ enum ifOption
   /** Release the interface. */
   IF_RELEASE,
 
-  /** End of list. Used for options list extensions. */
+  /** End of the list. Used for options list extensions. */
   IF_END_OPTION
 };
 /*----------------------------------------------------------------------------*/
