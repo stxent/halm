@@ -164,7 +164,6 @@ static enum result i2cInit(void *object, const void *configPtr)
   interface->address = 0;
   interface->callback = 0;
   interface->blocking = true;
-  interface->lock = SPIN_UNLOCKED;
   interface->stopGeneration = true;
   interface->state = I2C_IDLE;
 
@@ -229,8 +228,6 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 
   switch (option)
   {
-    case IF_ACQUIRE:
-      return spinTryLock(&interface->lock) ? E_OK : E_BUSY;
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
@@ -239,9 +236,6 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
       return E_OK;
     case IF_RATE:
       i2cSetRate(object, *(uint32_t *)data);
-      return E_OK;
-    case IF_RELEASE:
-      spinUnlock(&interface->lock);
       return E_OK;
     case IF_ZEROCOPY:
       interface->blocking = false;

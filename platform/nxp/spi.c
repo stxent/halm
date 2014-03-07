@@ -101,7 +101,6 @@ static enum result spiInit(void *object, const void *configPtr)
 
   interface->blocking = true;
   interface->callback = 0;
-  interface->lock = SPIN_UNLOCKED;
 
   LPC_SSP_Type *reg = interface->parent.reg;
 
@@ -165,16 +164,11 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 
   switch (option)
   {
-    case IF_ACQUIRE:
-      return spinTryLock(&interface->lock) ? E_OK : E_BUSY;
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
     case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);
-      return E_OK;
-    case IF_RELEASE:
-      spinUnlock(&interface->lock);
       return E_OK;
     case IF_ZEROCOPY:
       interface->blocking = false;

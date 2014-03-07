@@ -7,7 +7,7 @@
 #ifndef SPI_H_
 #define SPI_H_
 /*----------------------------------------------------------------------------*/
-#include <spinlock.h>
+#include <stdbool.h>
 #include "ssp_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *Spi;
@@ -38,8 +38,6 @@ struct Spi
   /* Number of bytes to be transmitted */
   uint32_t txLeft;
 
-  /* Exclusive access to the channel */
-  spinlock_t lock;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };

@@ -161,7 +161,6 @@ static enum result oneWireInit(void *object, const void *configPtr)
   interface->address.rom = 0;
   interface->callback = 0;
   interface->blocking = true;
-  interface->lock = SPIN_UNLOCKED;
   interface->state = OW_IDLE;
 
   LPC_UART_Type *reg = interface->parent.reg;
@@ -226,16 +225,11 @@ static enum result oneWireSet(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_ACQUIRE:
-      return spinTryLock(&interface->lock) ? E_OK : E_BUSY;
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
     case IF_DEVICE:
       interface->address.rom = *(uint64_t *)data;
-      return E_OK;
-    case IF_RELEASE:
-      spinUnlock(&interface->lock);
       return E_OK;
     case IF_ZEROCOPY:
       interface->blocking = false;

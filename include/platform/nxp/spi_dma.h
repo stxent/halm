@@ -8,7 +8,6 @@
 #define SPI_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <dma.h>
-#include <spinlock.h>
 #include <platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *SpiDma;
@@ -31,8 +30,6 @@ struct SpiDma
 
   /* DMA channel descriptors */
   struct Dma *rxDma, *txDma, *txMockDma;
-  /* Exclusive access to the channel */
-  spinlock_t lock;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };

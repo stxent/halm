@@ -9,7 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <byte_queue.h>
 #include <irq.h>
-#include <spinlock.h>
 #include "uart_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *OneWire;
@@ -64,8 +63,6 @@ struct OneWire
 
   /* Current interface state */
   volatile enum oneWireState state;
-  /* Exclusive access to channel */
-  spinlock_t lock;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };

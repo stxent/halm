@@ -7,7 +7,7 @@
 #ifndef I2C_H_
 #define I2C_H_
 /*----------------------------------------------------------------------------*/
-#include <spinlock.h>
+#include <stdbool.h>
 #include "i2c_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass *I2c;
@@ -50,8 +50,6 @@ struct I2c
 
   /* Current interface state */
   volatile enum i2cState state;
-  /* Exclusive access to the channel */
-  spinlock_t lock;
   /* Address of the device, only 7-bit addressing is supported */
   uint8_t address;
   /* Selection between blocking mode and zero copy mode */
