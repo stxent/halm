@@ -14,12 +14,12 @@ static inline void __dmb(void)
   __asm__ volatile ("DMB");
 }
 /*----------------------------------------------------------------------------*/
-static inline void __irqDisable(void)
+static inline void __interruptsDisable(void)
 {
   __asm__ volatile ("CPSID i");
 }
 /*----------------------------------------------------------------------------*/
-static inline void __irqEnable(void)
+static inline void __interruptsEnable(void)
 {
   __asm__ volatile ("CPSIE i");
 }
