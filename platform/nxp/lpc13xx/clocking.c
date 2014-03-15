@@ -11,7 +11,7 @@
 #include <platform/nxp/lpc13xx/clocking_defs.h>
 #include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY 12e6
+#define INT_OSC_FREQUENCY 12000000
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void);
 static bool stubReady(void);
@@ -101,7 +101,7 @@ static enum result extOscEnable(const void *configPtr)
 
   if (config->bypass)
     buffer |= SYSOSCCTRL_BYPASS;
-  if (config->frequency > 15e6)
+  if (config->frequency > 15000000)
     buffer |= SYSOSCCTRL_FREQRANGE;
 
   extOscFrequency = config->frequency;
@@ -191,7 +191,7 @@ static enum result sysPllEnable(const void *configPtr)
 
   /* Check CCO range */
   frequency = frequency * config->multiplier;
-  if (frequency < 156e6 || frequency > 320e6)
+  if (frequency < 156000000 || frequency > 320000000)
     return E_ERROR;
   pllFrequency = frequency / config->divider;
 
@@ -243,10 +243,10 @@ static enum result usbPllEnable(const void *configPtr)
 
   /* Check CCO range */
   frequency = extOscFrequency * config->multiplier;
-  if (frequency < 156e6 || frequency > 320e6)
+  if (frequency < 156000000 || frequency > 320000000)
     return E_ERROR;
   frequency /= config->divider;
-  if (frequency != 48e6)
+  if (frequency != 48000000)
     return E_ERROR;
 
   LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_SYSOSC;

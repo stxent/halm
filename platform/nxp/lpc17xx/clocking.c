@@ -10,7 +10,7 @@
 #include <platform/nxp/lpc17xx/clocking_defs.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY 4e6
+#define INT_OSC_FREQUENCY 4000000
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
@@ -61,7 +61,7 @@ static inline void flashLatencyReset(void)
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
-  uint8_t clocks = 1 + frequency / 20e6;
+  uint8_t clocks = 1 + frequency / 20000000;
 
   if (clocks > 5)
     clocks = 5;
@@ -93,7 +93,7 @@ static enum result extOscEnable(const void *configPtr)
    * Slave mode does not require any additional configuration.
    */
 
-  if (config->frequency > 15e6)
+  if (config->frequency > 15000000)
     buffer |= SCS_FREQRANGE;
 
   extOscFrequency = config->frequency;
@@ -158,7 +158,7 @@ static enum result sysPllEnable(const void *configPtr)
     if (multiplier < 6 || multiplier > 512)
       return E_VALUE;
 
-    if (frequency < 275e6 || frequency > 550e6)
+    if (frequency < 275000000 || frequency > 550000000)
       return E_ERROR;
 
     prescaler = 2;
@@ -167,7 +167,7 @@ static enum result sysPllEnable(const void *configPtr)
   {
     /* Low-frequency source supports only a limited set of multiplier values */
     /* No check is performed due to complexity */
-    prescaler = 1 + frequency / 550e6;
+    prescaler = 1 + frequency / 550000000;
   }
 
   /* Update system frequency and postscaler value */
