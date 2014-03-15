@@ -9,9 +9,16 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
+#define barrier() __asm__ volatile ("" : : : "memory")
+/*----------------------------------------------------------------------------*/
 static inline void __dmb(void)
 {
   __asm__ volatile ("DMB");
+}
+/*----------------------------------------------------------------------------*/
+static inline void __clrex(void)
+{
+  __asm__ volatile ("CLREX");
 }
 /*----------------------------------------------------------------------------*/
 static inline void __interruptsDisable(void)
@@ -24,12 +31,36 @@ static inline void __interruptsEnable(void)
   __asm__ volatile ("CPSIE i");
 }
 /*----------------------------------------------------------------------------*/
+static inline uint32_t __ldrex(volatile uint32_t *address)
+{
+  uint32_t result;
+
+  __asm__ volatile (
+      "LDREX %[result], [%[address]]"
+      : [result] "=r" (result)
+      : [address] "r" (address)
+  );
+  return result;
+}
+/*----------------------------------------------------------------------------*/
 static inline uint8_t __ldrexb(volatile uint8_t *address)
 {
   uint8_t result;
 
   __asm__ volatile (
       "LDREXB %[result], [%[address]]"
+      : [result] "=r" (result)
+      : [address] "r" (address)
+  );
+  return result;
+}
+/*----------------------------------------------------------------------------*/
+static inline uint16_t __ldrexh(volatile uint16_t *address)
+{
+  uint16_t result;
+
+  __asm__ volatile (
+      "LDREXH %[result], [%[address]]"
       : [result] "=r" (result)
       : [address] "r" (address)
   );
@@ -60,12 +91,36 @@ static inline uint16_t __rev16(uint16_t value)
   return result;
 }
 /*----------------------------------------------------------------------------*/
+static inline uint32_t __strex(uint32_t value, volatile uint32_t *address)
+{
+  uint32_t result;
+
+  __asm__ volatile (
+      "STREX %[result], %[value], [%[address]]"
+      : [result] "=r" (result)
+      : [address] "r" (address), [value] "r" (value)
+  );
+  return result;
+}
+/*----------------------------------------------------------------------------*/
 static inline uint32_t __strexb(uint8_t value, volatile uint8_t *address)
 {
   uint32_t result;
 
   __asm__ volatile (
       "STREXB %[result], %[value], [%[address]]"
+      : [result] "=r" (result)
+      : [address] "r" (address), [value] "r" (value)
+  );
+  return result;
+}
+/*----------------------------------------------------------------------------*/
+static inline uint32_t __strexh(uint16_t value, volatile uint16_t *address)
+{
+  uint32_t result;
+
+  __asm__ volatile (
+      "STREXH %[result], %[value], [%[address]]"
       : [result] "=r" (result)
       : [address] "r" (address), [value] "r" (value)
   );

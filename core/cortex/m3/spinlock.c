@@ -14,24 +14,30 @@ void spinLock(spinlock_t *lock)
     /* Wait until lock becomes free */
     while (__ldrexb(lock) != SPIN_UNLOCKED);
   }
-  while (__strexb(SPIN_LOCKED, lock) != 0); /* Try to lock */
+  while (__strexb(SPIN_LOCKED, lock));
+
   __dmb();
 }
 /*----------------------------------------------------------------------------*/
 bool spinTryLock(spinlock_t *lock)
 {
-  if (__ldrexb(lock) == SPIN_UNLOCKED) /* Get current state */
+  if (__ldrexb(lock) == SPIN_UNLOCKED) /* Check current state */
   {
-    /* Try to lock */
-    while (__strexb(SPIN_LOCKED, lock) != 0);
-    __dmb();
-    return true;
+    if (!__strexb(SPIN_LOCKED, lock))
+    {
+      __dmb();
+      return true;
+    }
+    else
+      return false;
   }
-  return false; /* Already locked */
+
+  __clrex();
+  return false; /* Lock is not free */
 }
 /*----------------------------------------------------------------------------*/
 void spinUnlock(spinlock_t *lock)
 {
-  __dmb(); /* Ensure memory operations completed before releasing lock */
+  __dmb(); /* Ensure memory operations completed before releasing the lock */
   *lock = SPIN_UNLOCKED;
 }
