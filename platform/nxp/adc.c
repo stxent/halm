@@ -212,7 +212,10 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   reg->CR |= CR_START(interface->event);
 
   if (interface->blocking)
-    while (interface->left);
+  {
+    while (interface->left)
+      barrier();
+  }
 
   return length;
 }

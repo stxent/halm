@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <irq.h>
+#include <memory.h>
 #include <platform/nxp/gpdma.h>
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/platform_defs.h>
@@ -19,7 +20,7 @@ struct DmaHandler
   struct Entity parent;
 
   /* Channel descriptors currently in use */
-  struct GpDma * volatile descriptors[8];
+  struct GpDma *descriptors[8];
   /* Initialized channels count */
   uint8_t instances;
 };
@@ -155,17 +156,8 @@ static uint8_t eventToPeripheral(dma_event_t event)
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct GpDma *controller)
 {
-  struct GpDma * volatile *descriptor = dmaHandler->descriptors + channel;
-  enum result res = E_OK;
-
-  interruptsDisable();
-  if (!(*descriptor))
-    *descriptor = controller;
-  else
-    res = E_BUSY;
-  interruptsEnable();
-
-  return res;
+  return compareExchangePointer((void **)(dmaHandler->descriptors + channel),
+      0, controller) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static void setEventMux(struct GpDma *channel, uint8_t peripheral)
@@ -189,7 +181,7 @@ void DMA_ISR(void)
 
   for (uint8_t counter = 0; counter < CHANNEL_COUNT; ++counter, mask <<= 1)
   {
-    struct GpDma * volatile descriptor = dmaHandler->descriptors[counter];
+    struct GpDma *descriptor = dmaHandler->descriptors[counter];
 
     if (descriptor && (terminalStat | errorStat) & mask)
     {

@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <memory.h>
 #include <platform/nxp/i2c.h>
 #include <platform/nxp/i2c_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -274,7 +275,8 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 
   if (interface->blocking)
   {
-    while (interface->state != I2C_IDLE && interface->state != I2C_ERROR);
+    while (interface->state != I2C_IDLE && interface->state != I2C_ERROR)
+      barrier();
 
     if (interface->state == I2C_ERROR)
       return 0;
@@ -307,7 +309,8 @@ static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   if (interface->blocking)
   {
-    while (interface->state != I2C_IDLE && interface->state != I2C_ERROR);
+    while (interface->state != I2C_IDLE && interface->state != I2C_ERROR)
+      barrier();
 
     if (interface->state == I2C_ERROR)
       return 0;

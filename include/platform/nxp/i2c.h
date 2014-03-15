@@ -49,7 +49,7 @@ struct I2c
   uint16_t rxLeft, txLeft;
 
   /* Current interface state */
-  volatile enum i2cState state;
+  enum i2cState state;
   /* Address of the device, only 7-bit addressing is supported */
   uint8_t address;
   /* Selection between blocking mode and zero copy mode */

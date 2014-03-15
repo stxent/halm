@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <memory.h>
 #include <platform/nxp/one_wire.h>
 #include <platform/nxp/uart_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -262,7 +263,13 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
   sendWord(interface, 0xFF); /* Start reception */
 
   if (interface->blocking)
-    while (interface->state != OW_IDLE && interface->state != OW_ERROR);
+  {
+    while (interface->state != OW_IDLE && interface->state != OW_ERROR)
+      barrier();
+
+    if (interface->state == OW_ERROR)
+      return 0;
+  }
 
   return read;
 }
@@ -294,7 +301,13 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
   beginTransmission(interface);
 
   if (interface->blocking)
-    while (interface->state != OW_IDLE && interface->state != OW_ERROR);
+  {
+    while (interface->state != OW_IDLE && interface->state != OW_ERROR)
+      barrier();
+
+    if (interface->state == OW_ERROR)
+      return 0;
+  }
 
   return written;
 }

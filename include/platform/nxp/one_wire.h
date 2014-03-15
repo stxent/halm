@@ -62,7 +62,7 @@ struct OneWire
   struct UartRateConfig dataRate, resetRate;
 
   /* Current interface state */
-  volatile enum oneWireState state;
+  enum oneWireState state;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };

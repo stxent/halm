@@ -51,7 +51,7 @@ struct Adc
   /* Pointer to an input buffer */
   uint8_t *buffer;
   /* Number of samples to be converted */
-  volatile uint32_t left;
+  uint32_t left;
 
   /* Selection between blocking mode and zero copy mode */
   bool blocking;

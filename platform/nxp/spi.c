@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <memory.h>
 #include <platform/nxp/spi.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -198,7 +199,10 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   irqSetPending(interface->parent.irq);
 
   if (interface->blocking)
-    while (interface->rxLeft || reg->SR & SR_BSY);
+  {
+    while (interface->rxLeft || reg->SR & SR_BSY)
+      barrier();
+  }
 
   return length;
 }
@@ -223,7 +227,10 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   irqSetPending(interface->parent.irq);
 
   if (interface->blocking)
-    while (interface->rxLeft || reg->SR & SR_BSY);
+  {
+    while (interface->rxLeft || reg->SR & SR_BSY)
+      barrier();
+  }
 
   return length;
 }

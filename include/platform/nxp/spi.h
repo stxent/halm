@@ -34,7 +34,7 @@ struct Spi
   /* Pointer to an output buffer */
   const uint8_t *txBuffer;
   /* Number of bytes to be received */
-  volatile uint32_t rxLeft;
+  uint32_t rxLeft;
   /* Number of bytes to be transmitted */
   uint32_t txLeft;
 
