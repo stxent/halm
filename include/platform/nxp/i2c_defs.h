@@ -7,7 +7,7 @@
 #ifndef I2C_DEFS_H_
 #define I2C_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 /*------------------Control Set Register--------------------------------------*/
 #define CONSET_AA                       BIT(2) /* Assert acknowledge flag */
 #define CONSET_SI                       BIT(3) /* I2C interrupt flag */

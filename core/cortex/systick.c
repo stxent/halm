@@ -5,7 +5,7 @@
  */
 
 #include <assert.h>
-#include <macro.h>
+#include <bits.h>
 #include <core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
 /* System Tick counter enable */

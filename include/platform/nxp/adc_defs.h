@@ -7,7 +7,7 @@
 #ifndef ADC_DEFS_H_
 #define ADC_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 /*------------------Control Register------------------------------------------*/
 #define CR_SEL_MASK                     BIT_FIELD(0xFF, 0)
 #define CR_SEL(channel)                 BIT_FIELD((1 << (channel)), 0)

@@ -7,7 +7,7 @@
 #ifndef CLOCKING_DEFS_
 #define CLOCKING_DEFS_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 /*------------------Main Clock Source Select register-------------------------*/
 #define MAINCLKSEL_MASK                 BIT_FIELD(0x03, 0)
 #define MAINCLKSEL_IRC                  BIT_FIELD(0, 0)

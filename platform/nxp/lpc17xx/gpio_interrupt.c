@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <bits.h>
 #include <irq.h>
-#include <macro.h>
 #include <platform/nxp/gpio_interrupt.h>
 #include <platform/nxp/lpc17xx/gpio_defs.h>
 #include <platform/nxp/lpc17xx/system.h>

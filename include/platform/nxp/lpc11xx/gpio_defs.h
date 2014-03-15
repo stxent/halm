@@ -7,7 +7,7 @@
 #ifndef GPIO_DEFS_
 #define GPIO_DEFS_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 /*------------------IO Configuration registers--------------------------------*/
 #define IOCON_FUNC_MASK                 BIT_FIELD(0x07, 0)
 #define IOCON_FUNC(func)                BIT_FIELD((func), 0)

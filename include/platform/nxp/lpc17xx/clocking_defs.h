@@ -7,7 +7,7 @@
 #ifndef CLOCKING_DEFS_
 #define CLOCKING_DEFS_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 /*------------------System Controls and Status register-----------------------*/
 #define SCS_FREQRANGE                   BIT(4) /* Set for 15 - 25 MHz range */
 #define SCS_OSCEN                       BIT(5)

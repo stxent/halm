@@ -7,7 +7,7 @@
 #ifndef UART_DEFS_H_
 #define UART_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 /*----------------------------------------------------------------------------*/
 /* IrDA, Modem signals, auto-baud and RS-485 are unused */
 /*------------------Line Control Register-------------------------------------*/

@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
+#include <bits.h>
 #include <delay.h>
-#include <macro.h>
 #include <platform/nxp/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_POW       9

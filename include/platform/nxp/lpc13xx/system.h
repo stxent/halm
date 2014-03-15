@@ -7,7 +7,7 @@
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 #include "../platform_defs.h"
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */

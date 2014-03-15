@@ -7,7 +7,7 @@
 #ifndef GPTIMER_DEFS_H_
 #define GPTIMER_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 /*------------------Interrupt Register----------------------------------------*/
 #define IR_MASK                         0x1F
 #define IR_MATCH_INTERRUPT(channel)     BIT((channel))

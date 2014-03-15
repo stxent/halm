@@ -7,7 +7,7 @@
 #ifndef GPIO_DEFS_
 #define GPIO_DEFS_
 /*----------------------------------------------------------------------------*/
-#include <macro.h>
+#include <bits.h>
 /*------------------Values for function and mode select registers-------------*/
 #define PIN_MASK                        0x03
 #define PIN_OFFSET(value, offset) \
