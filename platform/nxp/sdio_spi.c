@@ -65,7 +65,7 @@ static enum result waitBusyState(struct SdioSpi *);
 static enum result waitForData(struct SdioSpi *, uint8_t *);
 static void releaseBus(struct SdioSpi *);
 static enum result resetCard(struct SdioSpi *);
-static void sendCommand(struct SdioSpi *, enum sdioCommand, uint32_t);
+static enum result sendCommand(struct SdioSpi *, enum sdioCommand, uint32_t);
 static enum result readBlock(struct SdioSpi *, uint8_t *);
 static enum result writeBlock(struct SdioSpi *, const uint8_t *, uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -99,10 +99,7 @@ static inline uint32_t calcPosition(struct SdioSpi *device)
 /*----------------------------------------------------------------------------*/
 static enum result acquireBus(struct SdioSpi *device)
 {
-  enum result res;
-
-  if ((res = ifSet(device->interface, IF_ACQUIRE, 0)) != E_OK)
-    return res;
+  ifSet(device->interface, IF_ACQUIRE, 0);
   gpioReset(device->csPin);
   return E_OK;
 }
@@ -150,6 +147,8 @@ static enum result waitBusyState(struct SdioSpi *device)
       return E_INTERFACE;
     if (state == 0xFF)
       break;
+
+    /* TODO Remove delay */
     udelay(10);
   }
 
@@ -194,8 +193,7 @@ static enum result resetCard(struct SdioSpi *device)
   device->position = 0;
 
   /* Acquire bus but leave chip select high */
-  if ((res = ifSet(device->interface, IF_ACQUIRE, 0)) != E_OK)
-    return res;
+  ifSet(device->interface, IF_ACQUIRE, 0);
 
   ifGet(device->interface, IF_RATE, &srcSpeed);
   ifSet(device->interface, IF_RATE, &lowSpeed);
@@ -241,10 +239,13 @@ static enum result resetCard(struct SdioSpi *device)
     sendCommand(device, CMD_APP_CMD, 0);
     if ((response = getShortResponse(device)) == 0xFF)
       break;
+
     sendCommand(device, ACMD_SD_SEND_OP_COND, OCR_HCS);
     if ((response = getShortResponse(device)) == 0xFF || !response)
       break;
-    mdelay(10); /* Retry after 10 ms */
+
+    /* TODO Remove delay */
+    mdelay(10); /* Retry after 10 milliseconds */
   }
   if (response)
   {
@@ -273,7 +274,7 @@ static enum result resetCard(struct SdioSpi *device)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
+static enum result sendCommand(struct SdioSpi *device, enum sdioCommand command,
     uint32_t parameter)
 {
   uint8_t buffer[8];
@@ -301,8 +302,10 @@ static void sendCommand(struct SdioSpi *device, enum sdioCommand command,
   buffer[6] |= 0x01; /* Add end bit */
   buffer[7] = 0xFF;
 
-  /* TODO Check for interface error? */
-  ifWrite(device->interface, buffer, sizeof(buffer));
+  if (ifWrite(device->interface, buffer, sizeof(buffer)) != sizeof(buffer))
+    return E_INTERFACE;
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result readBlock(struct SdioSpi *device, uint8_t *buffer)
@@ -317,12 +320,14 @@ static enum result readBlock(struct SdioSpi *device, uint8_t *buffer)
   {
     if ((response = getShortResponse(device)) == 0xFF)
     {
+      /* TODO Remove delay */
       udelay(10);
       continue;
     }
     if (response != TOKEN_START)
       return E_DEVICE;
-    break;
+    else
+      break;
   }
   if (!counter)
     return E_DEVICE;
@@ -448,7 +453,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
     return 0;
 
   sendCommand(device, command, calcPosition(device));
-  if (getShortResponse(device))
+  if (getShortResponse(device) != 0)
   {
     releaseBus(device);
     return 0;
@@ -497,7 +502,7 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
     return 0;
 
   sendCommand(device, command, calcPosition(device));
-  if (getShortResponse(device))
+  if (getShortResponse(device) != 0)
   {
     releaseBus(device);
     return 0;
