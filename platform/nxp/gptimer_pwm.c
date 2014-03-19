@@ -58,16 +58,15 @@ static void updateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
   LPC_TIMER_Type *reg = unit->parent.reg;
 
-  /* Put the timer into a reset state and wait for internal counters to clear */
+  /* Put the timer into a reset state to clear prescaler and current value */
   reg->TCR |= TCR_CRES;
-  while (reg->TC || reg->PC);
 
   /* Disable previous match channel */
   reg->MCR &= ~MCR_RESET(unit->current);
 
   /* Initialize new match channel and enable it */
   unit->current = channel;
-  reg->MR[unit->current] = unit->resolution;
+  reg->MR[unit->current] = unit->resolution - 1;
   reg->MCR |= MCR_RESET(unit->current);
 
   /* Clear reset bit and enable counting */
@@ -98,18 +97,20 @@ static enum result unitInit(void *object, const void *configPtr)
 
   LPC_TIMER_Type *reg = unit->parent.reg;
 
-  /* Base initialization is similar to common timer class */
-  reg->MCR = 0;
-  reg->PC = reg->TC = 0;
-  reg->CCR = 0;
-  reg->CTCR = 0;
-  reg->EMR = 0;
-  reg->IR = IR_MASK;
-  /* PWM Control register is available only on certain parts */
-  reg->PWMC = 0;
+  reg->TCR = 0;
 
-  /* Configure prescaler */
+  reg->IR = reg->IR; /* Clear pending interrupts */
+  reg->PC = reg->TC = 0;
+  reg->CTCR = 0;
+  reg->CCR = 0;
+  reg->EMR = 0;
+  reg->PWMC = 0; /* Register is available only on specific parts */
+
+  /* Configure timings */
   reg->PR = clockFrequency / timerFrequency - 1;
+  reg->MR[unit->current] = unit->resolution - 1;
+  reg->MCR = MCR_RESET(unit->current);
+
   /* Enable timer */
   reg->TCR = TCR_CEN;
 
@@ -187,10 +188,10 @@ static void channelSetDuration(void *object, uint32_t duration)
   if (duration >= pwm->unit->resolution)
   {
     /*
-     * If match register is set to a value greater than resolution, than
-     * output stays low during all cycle.
+     * If match register is set to a value greater or equal to resolution,
+     * then output stays low during all cycle.
      */
-    value = pwm->unit->resolution + 1;
+    value = pwm->unit->resolution;
   }
   else
   {
@@ -212,7 +213,7 @@ static void channelSetEdges(void *object,
   assert(!leading); /* Leading edge time is constant in single edge mode */
 
   if (trailing >= pwm->unit->resolution)
-    value = pwm->unit->resolution + 1;
+    value = pwm->unit->resolution;
   else
     value = !trailing ? 0 : trailing;
   *pwm->value = value;

@@ -8,6 +8,8 @@
 #define GPTIMER_PWM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include "gptimer_defs.h"
+/*------------------Interrupt Register----------------------------------------*/
+#define IR_PWM_INTERRUPT(channel)       BIT((channel) + 8)
 /*------------------PWM Control Register--------------------------------------*/
 #define PWMC_ENABLE(channel)            BIT((channel))
 /*----------------------------------------------------------------------------*/

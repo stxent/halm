@@ -8,6 +8,8 @@
 #include <platform/nxp/gptimer.h>
 #include <platform/nxp/gptimer_defs.h>
 /*----------------------------------------------------------------------------*/
+#define DEFAULT_OVERFLOW 0xFFFFFFFFUL
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
@@ -37,9 +39,10 @@ static void interruptHandler(void *object)
   struct GpTimer *timer = object;
   LPC_TIMER_Type *reg = timer->parent.reg;
 
+  reg->IR = reg->IR; /* Clear all pending interrupts */
+
   if (timer->callback)
     timer->callback(timer->callbackArgument);
-  reg->IR = IR_MASK; /* Clear all pending interrupt flags */
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configPtr)
@@ -59,20 +62,24 @@ static enum result tmrInit(void *object, const void *configPtr)
     return res;
 
   timer->parent.handler = interruptHandler;
-  /* Set match channel used as event source for timer reset */
+  /* Match channel used as event source for timer reset */
   timer->event = config->event;
 
   LPC_TIMER_Type *reg = timer->parent.reg;
 
-  reg->MCR = 0; /* Reset control register */
-  reg->PC = reg->TC = 0; /* Reset internal counters */
-  reg->CCR = 0; /* Reset capture control register */
-  reg->CTCR = 0; /* Select timer mode */
-  reg->EMR = 0; /* Disable all external match outputs */
-  reg->IR = IR_MASK; /* Clear pending interrupts */
+  reg->TCR = 0;
 
-  /* Configure prescaler */
+  reg->IR = reg->IR; /* Clear pending interrupts */
+  reg->PC = reg->TC = 0;
+  reg->CTCR = 0;
+  reg->CCR = 0;
+  reg->EMR = 0;
+
+  /* Configure prescaler and default match value */
   reg->PR = gpTimerGetClock(object) / config->frequency - 1;
+  reg->MR[timer->event] = DEFAULT_OVERFLOW;
+  reg->MCR = 0; /* All match channels are currently disabled */
+
   /* Enable counter */
   reg->TCR = TCR_CEN;
 
@@ -99,7 +106,7 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  reg->IR = IR_MASK; /* Clear all pending interrupts */
+  reg->IR = reg->IR; /* Clear all pending interrupts */
   if (callback)
     reg->MCR |= MCR_INTERRUPT(timer->event);
   else
@@ -137,9 +144,9 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   struct GpTimer *timer = object;
   LPC_TIMER_Type *reg = timer->parent.reg;
 
-  reg->MR[timer->event] = overflow;
   if (overflow)
   {
+    reg->MR[timer->event] = overflow - 1;
     /* Enable timer reset after reaching match register value */
     reg->MCR |= MCR_RESET(timer->event);
     /* Enable external match to generate signals to other peripherals */
@@ -147,7 +154,8 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   }
   else
   {
-    /* Disable timer reset and external match */
+    reg->MR[timer->event] = DEFAULT_OVERFLOW;
+    /* Disable timer reset and clear external match output value */
     reg->MCR &= ~MCR_RESET(timer->event);
     reg->EMR &= ~EMR_CONTROL_MASK(timer->event);
   }

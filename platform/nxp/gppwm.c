@@ -85,6 +85,7 @@ static enum result unitInit(void *object, const void *configPtr)
 
   const uint32_t clockFrequency = gpPwmGetClock(object);
   const uint32_t timerFrequency = config->frequency * config->resolution;
+
   assert(timerFrequency && timerFrequency < clockFrequency);
 
   /* Call base class constructor */
@@ -96,19 +97,20 @@ static enum result unitInit(void *object, const void *configPtr)
 
   LPC_PWM_Type *reg = unit->parent.reg;
 
-  reg->MCR = 0;
-  reg->PC = reg->TC = 0;
-  reg->CCR = 0;
-  reg->CTCR = 0;
-  reg->PCR = 0;
-  reg->IR = IR_MASK;
+  reg->TCR = 0;
 
-  /* Configure prescaler */
+  reg->IR = reg->IR; /* Clear pending interrupts */
+  reg->PC = reg->TC = 0;
+  reg->CTCR = 0;
+  reg->CCR = 0;
+  reg->PCR = 0;
+
+  /* Configure timings */
   reg->PR = clockFrequency / timerFrequency - 1;
-  reg->MR0 = config->resolution;
+  reg->MR0 = unit->resolution - 1;
   reg->MCR = MCR_RESET(0);
 
-  /* Enable timer */
+  /* Enable timer and PWM mode */
   reg->TCR = TCR_CEN | TCR_PWM_ENABLE;
 
   return E_OK;
@@ -192,10 +194,10 @@ static void singleEdgeSetDuration(void *object, uint32_t duration)
   if (duration >= pwm->unit->resolution)
   {
     /*
-     * If match register is set to a value greater than resolution, than
-     * output stays high during all cycle.
+     * If match register is set to a value greater or equal to resolution
+     * than output stays high during all cycle.
      */
-    value = pwm->unit->resolution + 1;
+    value = pwm->unit->resolution;
   }
   else
     value = duration;
@@ -214,7 +216,7 @@ static void singleEdgeSetEdges(void *object,
   assert(!leading); /* Leading edge time is constant in single edge mode */
 
   if (trailing >= pwm->unit->resolution)
-    value = pwm->unit->resolution + 1;
+    value = pwm->unit->resolution;
   else
     value = trailing;
 
