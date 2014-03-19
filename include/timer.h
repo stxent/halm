@@ -35,7 +35,7 @@ struct Timer
 /*----------------------------------------------------------------------------*/
 /**
  * Set callback function for timer overflow event.
- * @param timer Pointer to Timer object.
+ * @param timer Pointer to a Timer object.
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
@@ -47,7 +47,7 @@ static inline void timerCallback(void *timer, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 /**
  * Start or stop the timer.
- * @param timer Pointer to Timer object.
+ * @param timer Pointer to a Timer object.
  * @param state Timer state: @b true to start timer or @b false to stop timer.
  */
 static inline void timerSetEnabled(void *timer, bool state)
@@ -57,7 +57,7 @@ static inline void timerSetEnabled(void *timer, bool state)
 /*----------------------------------------------------------------------------*/
 /**
  * Set fundamental timer frequency.
- * @param timer Pointer to Timer object.
+ * @param timer Pointer to a Timer object.
  * @param frequency Frequency in Hz.
  */
 static inline void timerSetFrequency(void *timer, uint32_t frequency)
@@ -67,7 +67,7 @@ static inline void timerSetFrequency(void *timer, uint32_t frequency)
 /*----------------------------------------------------------------------------*/
 /**
  * Set timer overflow rate.
- * @param timer Pointer to Timer object.
+ * @param timer Pointer to a Timer object.
  * @param overflow Number of timer ticks after which overflow event occurs.
  */
 static inline void timerSetOverflow(void *timer, uint32_t overflow)
@@ -77,7 +77,7 @@ static inline void timerSetOverflow(void *timer, uint32_t overflow)
 /*----------------------------------------------------------------------------*/
 /**
  * Get value of the internal counter.
- * @param timer Pointer to Timer object.
+ * @param timer Pointer to a Timer object.
  * @return Value of the counter measured in timer ticks.
  */
 static inline uint32_t timerValue(void *timer)

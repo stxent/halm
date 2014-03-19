@@ -67,7 +67,7 @@ struct Dma
 /*----------------------------------------------------------------------------*/
 /**
  * Check whether the channel is enabled or not.
- * @param channel Pointer to Dma object.
+ * @param channel Pointer to a Dma object.
  * @return @b true when the transmission is active or @b false otherwise.
  */
 static inline bool dmaActive(void *channel)
@@ -77,7 +77,7 @@ static inline bool dmaActive(void *channel)
 /*----------------------------------------------------------------------------*/
 /**
  * Set callback function for the transmission completion event.
- * @param channel Pointer to Dma object.
+ * @param channel Pointer to a Dma object.
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
@@ -89,7 +89,7 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 /**
  * Allocate memory for linked list used by scatter-gather transfers.
- * @param channel Pointer to Dma object.
+ * @param channel Pointer to a Dma object.
  * @param size Size of the list in elements.
  * @return Pointer to the beginning of the allocated memory space.
  */
@@ -100,7 +100,7 @@ static inline void *dmaListAllocate(void *channel, uint32_t size)
 /*----------------------------------------------------------------------------*/
 /**
  * Link next element to the linked list.
- * @param channel Pointer to Dma object.
+ * @param channel Pointer to a Dma object.
  * @param list Pointer to a first element of the linked list.
  * @param index Index of the currently processing element in linked list.
  * @param destination Destination memory address.
@@ -117,7 +117,7 @@ static inline void dmaListAppend(void *channel, void *first, uint32_t index,
 /*----------------------------------------------------------------------------*/
 /**
  * Begin the execution of previously created scatter-gather transfer.
- * @param channel Pointer to Dma object.
+ * @param channel Pointer to a Dma object.
  * @param list Pointer to a first element of the linked list.
  * @return @b E_OK on success.
  */
@@ -128,7 +128,7 @@ static inline enum result dmaListStart(void *channel, const void *first)
 /*----------------------------------------------------------------------------*/
 /**
  * Start transfer.
- * @param channel Pointer to Dma object.
+ * @param channel Pointer to a Dma object.
  * @param destination Destination memory address.
  * @param source Source memory address.
  * @param size Size of the transfer.
@@ -143,7 +143,7 @@ static inline enum result dmaStart(void *channel, void *destination,
 /*----------------------------------------------------------------------------*/
 /**
  * Disable a channel and lose data in the FIFO.
- * @param channel Pointer to Dma object.
+ * @param channel Pointer to a Dma object.
  */
 static inline void dmaStop(void *channel)
 {

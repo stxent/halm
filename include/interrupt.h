@@ -32,8 +32,8 @@ struct Interrupt
 /*----------------------------------------------------------------------------*/
 /**
  * Set interrupt callback.
- * @param interrupt Pointer to Interrupt class object.
- * @param callback Pointer to callback function.
+ * @param interrupt Pointer to an Interrupt object.
+ * @param callback Callback function.
  * @param argument Callback function argument.
  */
 static inline void intCallback(void *interrupt, void (*callback)(void *),
@@ -45,7 +45,7 @@ static inline void intCallback(void *interrupt, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 /**
  * Enable or disable interrupt processing.
- * @param interrupt Pointer to Interrupt class object.
+ * @param interrupt Pointer to an Interrupt object.
  * @param state Interrupt state: @b true to enable or @b false to disable.
  */
 static inline void intSetEnabled(void *interrupt, bool state)

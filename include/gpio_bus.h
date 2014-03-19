@@ -32,7 +32,7 @@ struct GpioBus
 /*----------------------------------------------------------------------------*/
 /**
  * Read logical levels from bus lines.
- * @param bus Pointer to GpioBus class object.
+ * @param bus Pointer to a GpioBus object.
  * @return Current logical levels on bus lines.
  */
 static inline uint32_t gpioBusRead(void *bus)
@@ -42,7 +42,7 @@ static inline uint32_t gpioBusRead(void *bus)
 /*----------------------------------------------------------------------------*/
 /**
  * Set logical values on bus lines.
- * @param bus Pointer to GpioBus class object.
+ * @param bus Pointer to a GpioBus object.
  * @param value Signal values to be set.
  */
 static inline void gpioBusWrite(void *bus, uint32_t value)

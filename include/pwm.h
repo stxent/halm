@@ -34,7 +34,7 @@ struct Pwm
 /*----------------------------------------------------------------------------*/
 /**
  * Get channel resolution.
- * @param channel Pointer to Pwm object.
+ * @param channel Pointer to a Pwm object.
  * @return Channel resolution in timer ticks.
  */
 static inline uint32_t pwmGetResolution(void *channel)
@@ -43,8 +43,8 @@ static inline uint32_t pwmGetResolution(void *channel)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set duration of the pulse when output is in active state.
- * @param channel Pointer to Pwm object.
+ * Set duration of the pulse.
+ * @param channel Pointer to a Pwm object.
  * @param duration Duration in timer ticks.
  */
 static inline void pwmSetDuration(void *channel, uint32_t duration)
@@ -54,7 +54,7 @@ static inline void pwmSetDuration(void *channel, uint32_t duration)
 /*----------------------------------------------------------------------------*/
 /**
  * Set times of leading and trailing edges of the pulse.
- * @param channel Pointer to Pwm object.
+ * @param channel Pointer to a Pwm object.
  * @param leading Time of a leading edge in timer ticks.
  * @param trailing Time of a trailing edge in timer ticks.
  */
@@ -66,7 +66,7 @@ static inline void pwmSetEdges(void *channel, uint32_t leading,
 /*----------------------------------------------------------------------------*/
 /**
  * Start or stop pulse width modulation output.
- * @param channel Pointer to Pwm object.
+ * @param channel Pointer to a Pwm object.
  * @param state Output state: @b true to start or @b false to stop output.
  */
 static inline void pwmSetEnabled(void *channel, bool state)

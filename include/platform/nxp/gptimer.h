@@ -15,7 +15,7 @@ struct GpTimerConfig
 {
   uint32_t frequency; /* Mandatory: timer fundamental frequency */
   gpio_t input; /* Optional: clock input pin */
-  priority_t priority; /* Optional: timer interrupts priority */
+  priority_t priority; /* Optional: timer interrupt priority */
   uint8_t channel; /* Mandatory: timer block */
   uint8_t event; /* Optional: match channel used as reset event source */
 };
