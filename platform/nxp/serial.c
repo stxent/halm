@@ -91,6 +91,7 @@ static enum result serialInit(void *object, const void *configPtr)
   if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
+  interface->callback = 0;
   interface->parent.handler = interruptHandler;
 
   if ((res = byteQueueInit(&interface->rxQueue, config->rxLength)) != E_OK)
@@ -190,7 +191,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 
   irqDisable(interface->parent.irq);
   /* Check transmitter state */
-  if (reg->LSR & LSR_TEMT && byteQueueEmpty(&interface->txQueue))
+  if (reg->LSR & LSR_THRE && byteQueueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle so fill TX FIFO */
     uint32_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;

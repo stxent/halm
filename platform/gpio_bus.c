@@ -63,13 +63,16 @@ static enum result busInit(void *object, const void *configPtr)
     }
 
     if (config->direction == GPIO_OUTPUT)
+    {
       gpioOutput(bus->pins[position], (config->initial >> position) & 1);
+
+      gpioSetType(bus->pins[position], config->type);
+      gpioSetSlewRate(bus->pins[position], config->rate);
+    }
     else
       gpioInput(bus->pins[position]);
 
     gpioSetPull(bus->pins[position], config->pull);
-    gpioSetSlewRate(bus->pins[position], config->rate);
-    gpioSetType(bus->pins[position], config->type);
   }
 
   return E_OK;
