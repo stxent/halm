@@ -95,6 +95,8 @@ static enum result serialInit(void *object, const void *configPtr)
   if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
     return res;
 
+  interface->callback = 0;
+
   LPC_UART_Type *reg = interface->parent.reg;
 
   /* Set 8-bit length */

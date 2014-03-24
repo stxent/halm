@@ -42,7 +42,7 @@ static const struct PwmClass channelTable = {
     .setEnabled = channelSetEnabled
 };
 /*----------------------------------------------------------------------------*/
-extern const struct GpioDescriptor gpTimerPwmPins[];
+extern const struct GpioDescriptor gpTimerMatchPins[];
 const struct EntityClass *GpTimerPwmUnit = &unitTable;
 const struct PwmClass *GpTimerPwm = &channelTable;
 /*----------------------------------------------------------------------------*/
@@ -131,7 +131,7 @@ static enum result channelInit(void *object, const void *configPtr)
   const struct GpioDescriptor *pinDescriptor;
   struct GpTimerPwm *pwm = object;
 
-  pinDescriptor = gpioFind(gpTimerPwmPins, config->pin,
+  pinDescriptor = gpioFind(gpTimerMatchPins, config->pin,
       config->parent->parent.channel);
   if (!pinDescriptor)
     return E_VALUE;
