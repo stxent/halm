@@ -34,8 +34,9 @@ struct DescriptorListItem
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t);
+static uint8_t eventToPeripheral(enum gpDmaEvent);
 static enum result setDescriptor(uint8_t, struct GpDma *);
-static void setEventMux(struct GpDma *, uint8_t);
+static void setEventMux(struct GpDma *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
 static inline void dmaHandlerAttach();
 static inline void dmaHandlerDetach();
@@ -120,12 +121,15 @@ static enum result dmaHandlerInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t eventToPeripheral(dma_event_t event)
+static uint8_t eventToPeripheral(enum gpDmaEvent event)
 {
   assert(event < GPDMA_EVENT_END);
 
   switch (event)
   {
+    case GPDMA_MEMORY:
+      /* Reserved case */
+      return 0xFF;
     case GPDMA_SSP0_RX:
     case GPDMA_SSP1_RX:
       return 1 + ((event - GPDMA_SSP0_RX) << 1);
@@ -160,13 +164,13 @@ static enum result setDescriptor(uint8_t channel, struct GpDma *controller)
       0, controller) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-static void setEventMux(struct GpDma *channel, uint8_t peripheral)
+static void setEventMux(struct GpDma *channel, enum gpDmaEvent event)
 {
-  if (peripheral >= 8)
+  if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
   {
-    uint8_t position = (peripheral >> 2) - 8;
+    uint8_t position = event - GPDMA_MAT0_0;
     channel->muxMask &= ~(1 << position);
-    channel->muxValue |= (peripheral & 1) << position;
+    channel->muxValue |= 1 << position;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -208,13 +212,12 @@ static enum result channelInit(void *object, const void *configPtr)
   channel->number = (uint8_t)config->channel;
   channel->reg = calcPeripheral(channel->number);
 
-  const uint8_t peripheral = eventToPeripheral(config->event);
-
   channel->control = CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
       | CONTROL_DST_WIDTH(config->width);
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
 
   /* Set four-byte burst size by default */
+  const uint8_t peripheral = eventToPeripheral(config->event); //TODO Remove in case of mem to mem
   uint8_t srcBurst = DMA_BURST_4, dstBurst = DMA_BURST_4;
 
   switch (config->type)
@@ -242,7 +245,7 @@ static enum result channelInit(void *object, const void *configPtr)
   channel->muxValue = 0x00;
   /* Calculate new mask and value for event multiplexer */
   if (config->type == GPDMA_TYPE_M2P || config->type == GPDMA_TYPE_P2M)
-    setEventMux(channel, peripheral);
+    setEventMux(channel, config->event);
 
   if (config->source.increment)
     channel->control |= CONTROL_SRC_INC;

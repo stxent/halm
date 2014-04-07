@@ -10,7 +10,7 @@
 #define ADC_RESOLUTION 10 /* Bits */
 /*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
-enum
+enum adcEvent
 {
   ADC_SOFTWARE = 0,
   ADC_PIN_0_2,

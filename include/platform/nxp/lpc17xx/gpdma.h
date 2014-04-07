@@ -8,9 +8,10 @@
 #define GPDMA_H_
 /*----------------------------------------------------------------------------*/
 /* GPDMA connections */
-enum
+enum gpDmaEvent
 {
-  GPDMA_SSP0_RX = 0,
+  GPDMA_MEMORY = 0,
+  GPDMA_SSP0_RX,
   GPDMA_SSP1_RX,
   GPDMA_SSP0_TX,
   GPDMA_SSP1_TX,
