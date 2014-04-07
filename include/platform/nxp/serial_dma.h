@@ -14,12 +14,20 @@ extern const struct InterfaceClass *SerialDma;
 /*----------------------------------------------------------------------------*/
 struct SerialDmaConfig
 {
-  uint32_t rate; /* Mandatory: baud rate */
-  gpio_t rx, tx; /* Mandatory: RX and TX pins */
-  uint8_t channel; /* Mandatory: peripheral identifier */
-  /* TODO Make optional */
-  int8_t rxChannel, txChannel; /* Mandatory: DMA channels */
-  enum uartParity parity; /* Optional: even, odd or no parity */
+  /** Mandatory: baud rate. */
+  uint32_t rate;
+  /** Mandatory: Receive Data pin. */
+  gpio_t rx;
+  /** Mandatory: Transmit Data pin. */
+  gpio_t tx;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+  /** Mandatory: incoming data channel. */
+  uint8_t rxChannel;
+  /** Mandatory: outgoing data channel. */
+  uint8_t txChannel;
+  /** Optional: parity configuration option. */
+  enum uartParity parity;
 };
 /*----------------------------------------------------------------------------*/
 struct SerialDma

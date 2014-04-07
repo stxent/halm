@@ -33,7 +33,7 @@ struct I2cBase
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetRate(struct I2cBase *);
 void i2cSetRate(struct I2cBase *, uint32_t);
-/*----------------------------------------------------------------------------*/
+
 uint32_t i2cGetClock(struct I2cBase *);
 enum result i2cSetupPins(struct I2cBase *, const struct I2cBaseConfig *);
 /*----------------------------------------------------------------------------*/

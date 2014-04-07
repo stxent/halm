@@ -83,15 +83,13 @@ static enum result tmrInit(void *object, const void *configPtr)
   const struct SysTickTimerConfig * const config = configPtr;
   struct SysTickTimer *timer = object;
 
-  assert(config->frequency);
-
   /* Try to set peripheral descriptor */
   if (setDescriptor(timer) != E_OK)
     return E_ERROR;
 
   timer->handler = interruptHandler;
 
-  timer->frequency = config->frequency;
+  timer->frequency = config->frequency ? config->frequency : sysCoreClock;
   timer->overflow = 1;
 
   SYSTICK->CTRL = 0; /* Stop timer */
@@ -141,9 +139,7 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   struct SysTickTimer *timer = object;
 
-  assert(frequency);
-
-  timer->frequency = frequency;
+  timer->frequency = frequency ? frequency : sysCoreClock;
   updateFrequency(timer);
 }
 /*----------------------------------------------------------------------------*/

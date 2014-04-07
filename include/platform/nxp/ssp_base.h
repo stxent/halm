@@ -35,7 +35,7 @@ struct SspBase
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetRate(struct SspBase *);
 void sspSetRate(struct SspBase *, uint32_t);
-/*----------------------------------------------------------------------------*/
+
 uint32_t sspGetClock(struct SspBase *);
 enum result sspSetupPins(struct SspBase *, const struct SspBaseConfig *);
 /*----------------------------------------------------------------------------*/

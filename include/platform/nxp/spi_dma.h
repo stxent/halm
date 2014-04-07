@@ -14,11 +14,22 @@ extern const struct InterfaceClass *SpiDma;
 /*----------------------------------------------------------------------------*/
 struct SpiDmaConfig
 {
-  uint32_t rate; /* Mandatory: serial data rate */
-  gpio_t miso, mosi, sck; /* Mandatory: peripheral pins */
-  uint8_t channel; /* Mandatory: peripheral identifier */
-  uint8_t mode; /* Optional: mode number used in SPI */
-  int8_t rxChannel, txChannel; /* Mandatory: DMA channels */
+  /** Mandatory: serial data rate. */
+  uint32_t rate;
+  /** Mandatory: data input. */
+  gpio_t miso;
+  /** Mandatory: data output. */
+  gpio_t mosi; /* Mandatory: peripheral pins */
+  /** Mandatory: serial clock output. */
+  gpio_t sck;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+  /** Optional: mode number of the Serial Peripheral Interface. */
+  uint8_t mode;
+  /** Mandatory: incoming data channel. */
+  uint8_t rxChannel;
+  /** Mandatory: outgoing data channel. */
+  uint8_t txChannel;
 };
 /*----------------------------------------------------------------------------*/
 struct SpiDma
