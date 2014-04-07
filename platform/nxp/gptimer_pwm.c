@@ -8,11 +8,6 @@
 #include <platform/nxp/gptimer_pwm.h>
 #include <platform/nxp/gptimer_pwm_defs.h>
 /*----------------------------------------------------------------------------*/
-#define UNPACK_FUNCTION(value)  ((value) & 0x0F)
-/* Unpack timer match channel */
-#define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
-/*----------------------------------------------------------------------------*/
-static int8_t findEmptyChannel(uint8_t);
 static void updateResolution(struct GpTimerPwmUnit *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *, const void *);
@@ -42,23 +37,14 @@ static const struct PwmClass channelTable = {
     .setEnabled = channelSetEnabled
 };
 /*----------------------------------------------------------------------------*/
-extern const struct GpioDescriptor gpTimerMatchPins[];
 const struct EntityClass *GpTimerPwmUnit = &unitTable;
 const struct PwmClass *GpTimerPwm = &channelTable;
-/*----------------------------------------------------------------------------*/
-static int8_t findEmptyChannel(uint8_t channels)
-{
-  int8_t pos = 4; /* Each timer has 4 match blocks */
-
-  while (--pos >= 0 && channels & (1 << pos));
-  return pos;
-}
 /*----------------------------------------------------------------------------*/
 static void updateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
   LPC_TIMER_Type *reg = unit->parent.reg;
 
-  /* Put the timer into a reset state to clear prescaler and current value */
+  /* Put the timer into a reset state to clear prescaler and counter */
   reg->TCR |= TCR_CRES;
 
   /* Disable previous match channel */
@@ -93,7 +79,7 @@ static enum result unitInit(void *object, const void *configPtr)
 
   unit->resolution = config->resolution;
   unit->matches = 0;
-  unit->current = findEmptyChannel(unit->matches);
+  unit->current = gpTimerAllocateChannel(unit->matches);
 
   LPC_TIMER_Type *reg = unit->parent.reg;
 
@@ -128,31 +114,27 @@ static void unitDeinit(void *object)
 static enum result channelInit(void *object, const void *configPtr)
 {
   const struct GpTimerPwmConfig * const config = configPtr;
-  const struct GpioDescriptor *pinDescriptor;
   struct GpTimerPwm *pwm = object;
+  int8_t freeChannel, pwmChannel;
 
-  pinDescriptor = gpioFind(gpTimerMatchPins, config->pin,
-      config->parent->parent.channel);
-  if (!pinDescriptor)
+  /* Initialize output pin */
+  pwmChannel = gpTimerSetupMatchPin(config->parent->parent.channel,
+      config->pin);
+  if (pwmChannel == -1)
     return E_VALUE;
 
   /* Check if there is a free match channel */
-  int8_t freeChannel = findEmptyChannel(config->parent->matches
-      | (1 << UNPACK_CHANNEL(pinDescriptor->value)));
+  freeChannel = gpTimerAllocateChannel(config->parent->matches
+      | 1 << pwmChannel);
   if (freeChannel == -1)
     return E_BUSY;
 
-  pwm->channel = UNPACK_CHANNEL(pinDescriptor->value);
+  pwm->channel = (uint8_t)pwmChannel;
   pwm->unit = config->parent;
   pwm->unit->matches |= 1 << pwm->channel;
 
   /* Update match channel used for timer reset */
   updateResolution(pwm->unit, (uint8_t)freeChannel);
-
-  /* Initialize match output pin */
-  struct Gpio pin = gpioInit(config->pin);
-  gpioOutput(pin, 0);
-  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
 
   LPC_TIMER_Type *reg = pwm->unit->parent.reg;
 
