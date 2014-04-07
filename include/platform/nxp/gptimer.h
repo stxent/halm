@@ -11,13 +11,39 @@
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass *GpTimer;
 /*----------------------------------------------------------------------------*/
+/** Symbolic names for two different types of timers on some series. */
+enum
+{
+  GPTIMER_CT16B0 = 0,
+  GPTIMER_CT16B1,
+  GPTIMER_CT32B0,
+  GPTIMER_CT32B1
+};
+/*----------------------------------------------------------------------------*/
+enum gpTimerEvent
+{
+  GPTIMER_MATCH_AUTO = 0,
+  GPTIMER_MATCH0,
+  GPTIMER_MATCH1,
+  GPTIMER_MATCH2,
+  GPTIMER_MATCH3,
+  GPTIMER_EVENT_END
+};
+/*----------------------------------------------------------------------------*/
 struct GpTimerConfig
 {
-  uint32_t frequency; /* Mandatory: timer fundamental frequency */
-  gpio_t input; /* Optional: clock input pin */
-  priority_t priority; /* Optional: timer interrupt priority */
-  uint8_t channel; /* Mandatory: timer block */
-  uint8_t event; /* Optional: match channel used as reset event source */
+  /** Optional: timer fundamental frequency. */
+  uint32_t frequency;
+  /** Optional: external clock input. */
+  gpio_t input;
+  /** Optional: timer interrupt priority. */
+  priority_t priority;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+  /** Optional: increment timer on falling edge of an external clock. */
+  bool invert;
+  /** Optional: match event used as a reset source for the timer. */
+  enum gpTimerEvent event;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimer

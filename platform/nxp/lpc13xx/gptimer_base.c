@@ -26,19 +26,19 @@ static const struct EntityClass timerTable = {
 const struct GpioDescriptor gpTimerCapturePins[] = {
     {
         .key = PIN(0, 2), /* CT16B0_CAP0 */
-        .channel = TIMER_CT16B0,
+        .channel = 0,
         .value = PACK_VALUE(2, 0)
     }, {
         .key = PIN(1, 0), /* CT32B1_CAP0 */
-        .channel = TIMER_CT32B1,
+        .channel = 3,
         .value = PACK_VALUE(3, 0)
     }, {
         .key = PIN(1, 5), /* CT32B0_CAP0 */
-        .channel = TIMER_CT32B0,
+        .channel = 2,
         .value = PACK_VALUE(2, 0)
     }, {
         .key = PIN(1, 8), /* CT16B1_CAP0 */
-        .channel = TIMER_CT16B1,
+        .channel = 1,
         .value = PACK_VALUE(1, 0)
     }, {
         .key = 0 /* End of pin function association list */
@@ -48,55 +48,55 @@ const struct GpioDescriptor gpTimerCapturePins[] = {
 const struct GpioDescriptor gpTimerMatchPins[] = {
     {
         .key = PIN(0, 1), /* CT32B0_MAT2 */
-        .channel = TIMER_CT32B0,
+        .channel = 2,
         .value = PACK_VALUE(2, 2)
     }, {
         .key = PIN(0, 8), /* CT16B0_MAT0 */
-        .channel = TIMER_CT16B0,
+        .channel = 0,
         .value = PACK_VALUE(2, 0)
     }, {
         .key = PIN(0, 9), /* CT16B0_MAT1 */
-        .channel = TIMER_CT16B0,
+        .channel = 0,
         .value = PACK_VALUE(2, 1)
     }, {
         .key = PIN(0, 10), /* CT16B0_MAT2 */
-        .channel = TIMER_CT16B0,
+        .channel = 0,
         .value = PACK_VALUE(3, 2)
     }, {
         .key = PIN(0, 11), /* CT32B0_MAT3 */
-        .channel = TIMER_CT32B0,
+        .channel = 2,
         .value = PACK_VALUE(3, 3)
     }, {
         .key = PIN(1, 1), /* CT32B1_MAT0 */
-        .channel = TIMER_CT32B1,
+        .channel = 3,
         .value = PACK_VALUE(3, 0)
     }, {
         .key = PIN(1, 2), /* CT32B1_MAT1 */
-        .channel = TIMER_CT32B1,
+        .channel = 3,
         .value = PACK_VALUE(3, 1)
     }, {
         .key = PIN(1, 3), /* CT32B1_MAT2 */
-        .channel = TIMER_CT32B1,
+        .channel = 3,
         .value = PACK_VALUE(3, 2)
     }, {
         .key = PIN(1, 4), /* CT32B1_MAT3 */
-        .channel = TIMER_CT32B1,
+        .channel = 3,
         .value = PACK_VALUE(2, 3)
     }, {
         .key = PIN(1, 6), /* CT32B0_MAT0 */
-        .channel = TIMER_CT32B0,
+        .channel = 2,
         .value = PACK_VALUE(2, 0)
     }, {
         .key = PIN(1, 7), /* CT32B0_MAT1 */
-        .channel = TIMER_CT32B0,
+        .channel = 2,
         .value = PACK_VALUE(2, 1)
     }, {
         .key = PIN(1, 9), /* CT16B1_MAT0 */
-        .channel = TIMER_CT16B1,
+        .channel = 1,
         .value = PACK_VALUE(1, 0)
     }, {
         .key = PIN(1, 10), /* CT16B1_MAT1 */
-        .channel = TIMER_CT16B1,
+        .channel = 1,
         .value = PACK_VALUE(2, 1)
     }, {
         .key = 0 /* End of pin function association list */
@@ -161,22 +161,22 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   switch (device->channel)
   {
-    case 0:
+    case 0: /* CT16B0 */
       sysClockEnable(CLK_CT16B0);
       device->reg = LPC_TIMER16B0;
       device->irq = TIMER16B0_IRQ;
       break;
-    case 1:
+    case 1: /* CT16B1 */
       sysClockEnable(CLK_CT16B1);
       device->reg = LPC_TIMER16B1;
       device->irq = TIMER16B1_IRQ;
       break;
-    case 2:
+    case 2: /* CT32B0 */
       sysClockEnable(CLK_CT32B0);
       device->reg = LPC_TIMER32B0;
       device->irq = TIMER32B0_IRQ;
       break;
-    case 3:
+    case 3: /* CT32B1 */
       sysClockEnable(CLK_CT32B1);
       device->reg = LPC_TIMER32B1;
       device->irq = TIMER32B1_IRQ;

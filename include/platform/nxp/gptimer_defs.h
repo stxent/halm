@@ -22,6 +22,14 @@
 #define CCR_RISING_EDGE(channel)        BIT((channel) * 3)
 #define CCR_FALLING_EDGE(channel)       BIT((channel) * 3 + 1)
 #define CCR_INTERRUPT(channel)          BIT((channel) * 3 + 2)
+/*------------------Count Control Register------------------------------------*/
+#define CTCR_MODE_MASK                  BIT_FIELD(0x03, 0)
+#define CTCR_MODE_TIMER                 BIT_FIELD(0, 0)
+#define CTCR_MODE_RISING                BIT_FIELD(1, 0)
+#define CTCR_MODE_FALLING               BIT_FIELD(2, 0)
+#define CTCR_MODE_TOGGLE                BIT_FIELD(3, 0)
+#define CTCR_INPUT_MASK                 BIT_FIELD(0x03, 2)
+#define CTCR_INPUT(channel)             BIT_FIELD((channel), 2)
 /*------------------External Match Register-----------------------------------*/
 #define EMR_CONTROL_MASK(channel)       BIT_FIELD(0x03, (channel) * 2 + 4)
 #define EMR_CONTROL_CLEAR               1

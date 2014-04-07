@@ -49,21 +49,31 @@ static enum result tmrInit(void *object, const void *configPtr)
 {
   const struct GpTimerConfig * const config = configPtr;
   const struct GpTimerBaseConfig parentConfig = {
-      .channel = config->channel,
-      .input = config->input
+      .channel = config->channel
   };
   struct GpTimer *timer = object;
+  int8_t captureChannel;
   enum result res;
 
-  assert(config->frequency && config->event < 4);
+  assert(config->event < GPTIMER_EVENT_END);
+
+  if (config->input)
+  {
+    captureChannel = gpTimerSetupCapturePin(config->channel, config->input);
+
+    if (captureChannel == -1)
+      return E_VALUE;
+  }
+
+  timer->event = config->event ? config->event - 1
+      : (uint8_t)gpTimerAllocateChannel(0);
 
   /* Call base class constructor */
   if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   timer->parent.handler = interruptHandler;
-  /* Match channel used as event source for timer reset */
-  timer->event = config->event;
+  timer->callback = 0;
 
   LPC_TIMER_Type *reg = timer->parent.reg;
 
@@ -71,12 +81,22 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   reg->IR = reg->IR; /* Clear pending interrupts */
   reg->PC = reg->TC = 0;
-  reg->CTCR = 0;
   reg->CCR = 0;
   reg->EMR = 0;
 
+  if (config->input)
+  {
+    reg->CTCR = CTCR_INPUT(captureChannel)
+        | (config->invert ? CTCR_MODE_FALLING : CTCR_MODE_RISING);
+    reg->PR = 0; /* In external clock mode frequency setting will be ignored */
+  }
+  else
+  {
+    reg->CTCR = 0;
+    reg->PR = gpTimerGetClock(object) / config->frequency - 1;
+  }
+
   /* Configure prescaler and default match value */
-  reg->PR = gpTimerGetClock(object) / config->frequency - 1;
   reg->MR[timer->event] = DEFAULT_OVERFLOW;
   reg->MCR = 0; /* All match channels are currently disabled */
 
@@ -106,9 +126,11 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  reg->IR = reg->IR; /* Clear all pending interrupts */
   if (callback)
+  {
+    reg->IR = reg->IR;
     reg->MCR |= MCR_INTERRUPT(timer->event);
+  }
   else
     reg->MCR &= ~MCR_INTERRUPT(timer->event);
 }
@@ -120,10 +142,19 @@ static void tmrSetEnabled(void *object, bool state)
 
   if (!state)
   {
+    /*
+     * Checking of the prescaler and counter registers removed assuming
+     * that there is more than one peripheral bus clock between
+     * reset enabling and disabling due to other operations with registers
+     * of the timer block.
+     */
     reg->TCR |= TCR_CRES;
-    while (reg->TC || reg->PC);
   }
-  else
+
+  /* Clear pending interrupt flags and direct memory access requests */
+  reg->IR = IR_MATCH_INTERRUPT(timer->event);
+
+  if (state)
   {
     /* Clear match value to avoid undefined output level */
     reg->EMR &= ~EMR_EXTERNAL_MATCH(timer->event);
@@ -133,16 +164,22 @@ static void tmrSetEnabled(void *object, bool state)
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  assert(frequency);
+  struct GpTimer *timer = object;
+  LPC_TIMER_Type *reg = timer->parent.reg;
 
-  ((LPC_TIMER_Type *)((struct GpTimer *)object)->parent.reg)->PR =
-      gpTimerGetClock(object) / frequency - 1;
+  /* Frequency setup in external clock mode is currently ignored */
+  if (!reg->CTCR)
+    reg->PR = gpTimerGetClock(object) / frequency - 1;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer *timer = object;
   LPC_TIMER_Type *reg = timer->parent.reg;
+  bool enabled;
+
+  if ((enabled = !(reg->TCR & TCR_CRES)))
+    reg->TCR |= TCR_CRES;
 
   if (overflow)
   {
@@ -160,13 +197,8 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
     reg->EMR &= ~EMR_CONTROL_MASK(timer->event);
   }
 
-  if (reg->TCR & TCR_CRES)
-  {
-    /* Synchronously reset prescaler and counter registers */
-    reg->TCR |= TCR_CRES;
-    while (reg->TC || reg->PC);
+  if (enabled)
     reg->TCR &= ~TCR_CRES;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrValue(void *object)
