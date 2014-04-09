@@ -8,11 +8,11 @@
 #include <platform/nxp/gppwm.h>
 #include <platform/nxp/gppwm_defs.h>
 /*----------------------------------------------------------------------------*/
-#define UNPACK_FUNCTION(value)  ((value) & 0x0F)
-/* Unpack match output */
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
+#define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static inline uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
+static int8_t setupMatchPin(uint8_t channel, gpio_t key);
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *, const void *);
 static void unitDeinit(void *);
@@ -65,13 +65,26 @@ const struct PwmClass *GpPwmDoubleEdge = &doubleEdgeTable;
 /*----------------------------------------------------------------------------*/
 static inline uint32_t *calcMatchChannel(LPC_PWM_Type *device, uint8_t channel)
 {
-  if (!channel || channel > 6)
-    return 0;
+  assert(channel && channel <= 6);
 
   if (channel > 3)
     return (uint32_t *)&device->MR4 + (channel - 4);
   else
     return (uint32_t *)&device->MR1 + (channel - 1);
+}
+/*----------------------------------------------------------------------------*/
+static int8_t setupMatchPin(uint8_t channel, gpio_t key)
+{
+  const struct GpioDescriptor *pinDescriptor;
+
+  if (!(pinDescriptor = gpioFind(gpPwmPins, key, channel)))
+    return -1;
+
+  struct Gpio pin = gpioInit(key);
+  gpioOutput(pin, 0);
+  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+
+  return UNPACK_CHANNEL(pinDescriptor->value);
 }
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *object, const void *configPtr)
@@ -107,7 +120,7 @@ static enum result unitInit(void *object, const void *configPtr)
 
   /* Configure timings */
   reg->PR = clockFrequency / timerFrequency - 1;
-  reg->MR0 = unit->resolution - 1;
+  reg->MR0 = unit->resolution;
   reg->MCR = MCR_RESET(0);
 
   /* Enable timer and PWM mode */
@@ -143,27 +156,21 @@ static void channelSetEnabled(void *object, bool state)
 static enum result singleEdgeInit(void *object, const void *configPtr)
 {
   const struct GpPwmConfig * const config = configPtr;
-  const struct GpioDescriptor *pinDescriptor;
   struct GpPwm *pwm = object;
+  int8_t channel;
 
-  pinDescriptor = gpioFind(gpPwmPins, config->pin,
-      config->parent->parent.channel);
-  if (!pinDescriptor)
+  /* Initialize output pin */
+  channel = setupMatchPin(config->parent->parent.channel, config->pin);
+  if (channel == -1)
     return E_VALUE;
 
-  pwm->channel = UNPACK_CHANNEL(pinDescriptor->value);
-  /* Check if channel is free */
-  if (config->parent->matches & pwm->channel)
+  /* Check whether channel is free */
+  if (config->parent->matches & (1 << channel))
     return E_BUSY;
 
-  pwm->channel = UNPACK_CHANNEL(pinDescriptor->value);
+  pwm->channel = channel;
   pwm->unit = config->parent;
   pwm->unit->matches |= 1 << pwm->channel;
-
-  /* Initialize match output pin */
-  struct Gpio pin = gpioInit(config->pin);
-  gpioOutput(pin, 0);
-  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
 
   LPC_PWM_Type *reg = pwm->unit->parent.reg;
 
@@ -194,10 +201,10 @@ static void singleEdgeSetDuration(void *object, uint32_t duration)
   if (duration >= pwm->unit->resolution)
   {
     /*
-     * If match register is set to a value greater or equal to resolution
+     * If match register is set to a value greater than resolution,
      * than output stays high during all cycle.
      */
-    value = pwm->unit->resolution;
+    value = pwm->unit->resolution + 1;
   }
   else
     value = duration;
@@ -216,7 +223,7 @@ static void singleEdgeSetEdges(void *object,
   assert(!leading); /* Leading edge time is constant in single edge mode */
 
   if (trailing >= pwm->unit->resolution)
-    value = pwm->unit->resolution;
+    value = pwm->unit->resolution + 1;
   else
     value = trailing;
 
