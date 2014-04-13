@@ -31,9 +31,12 @@ struct GpPwmUnit
 /*----------------------------------------------------------------------------*/
 struct GpPwmConfig
 {
-  struct GpPwmUnit *parent; /* Mandatory: peripheral unit */
-  uint32_t duration; /* Optional: initial duration in timer ticks */
-  gpio_t pin; /* Mandatory: pin used as output for modulated signal */
+  /** Mandatory: peripheral unit. */
+  struct GpPwmUnit *parent;
+  /** Optional: initial duration in timer ticks. */
+  uint32_t duration;
+  /** Mandatory: pin used as an output for modulated signal. */
+  gpio_t pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwm
@@ -50,10 +53,14 @@ struct GpPwm
 /*----------------------------------------------------------------------------*/
 struct GpPwmDoubleEdgeConfig
 {
-  struct GpPwmUnit *parent; /* Mandatory: peripheral unit */
-  uint32_t leading; /* Optional: initial leading edge time in timer ticks */
-  uint32_t trailing; /* Optional: initial trailing edge time in timer ticks */
-  gpio_t pin; /* Mandatory: pin used as output for modulated signal */
+  /** Mandatory: peripheral unit. */
+  struct GpPwmUnit *parent;
+  /** Optional: initial leading edge time in timer ticks. */
+  uint32_t leading;
+  /** Optional: initial trailing edge time in timer ticks. */
+  uint32_t trailing;
+  /** Mandatory: pin used as an output for modulated signal. */
+  gpio_t pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwmDoubleEdge
@@ -62,9 +69,11 @@ struct GpPwmDoubleEdge
 
   /* Pointer to a parent unit */
   struct GpPwmUnit *unit;
-  /* Pointer to a match register */
-  uint32_t *value;
-  /* Match channel number */
+  /* Pointer to a match register containing leading edge time */
+  uint32_t *leading;
+  /* Pointer to a match register containing trailing edge time */
+  uint32_t *trailing;
+  /* Number of the main match channel */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/

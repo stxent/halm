@@ -168,18 +168,18 @@ static enum result singleEdgeInit(void *object, const void *configPtr)
   if (config->parent->matches & (1 << channel))
     return E_BUSY;
 
-  pwm->channel = channel;
+  pwm->channel = (uint8_t)channel;
   pwm->unit = config->parent;
-  pwm->unit->matches |= 1 << pwm->channel;
+  pwm->unit->matches |= 1 << channel;
 
   LPC_PWM_Type *reg = pwm->unit->parent.reg;
 
   /* Calculate pointer to match register for fast access */
-  pwm->value = calcMatchChannel(reg, pwm->channel);
+  pwm->value = calcMatchChannel(reg, channel);
   /* Call function directly because of unfinished object construction */
   singleEdgeSetDuration(pwm, config->duration);
-  /* Enable PWM channel */
-  reg->PCR |= PCR_OUTPUT_ENABLED(pwm->channel);
+  /* Enable channel */
+  reg->PCR |= PCR_OUTPUT_ENABLED(channel);
 
   return E_OK;
 }
@@ -190,13 +190,13 @@ static void singleEdgeDeinit(void *object)
   LPC_PWM_Type *reg = pwm->unit->parent.reg;
 
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
+  pwm->unit->matches &= ~(1 << pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static void singleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct GpPwm *pwm = object;
   LPC_PWM_Type *reg = pwm->unit->parent.reg;
-  uint32_t value;
 
   if (duration >= pwm->unit->resolution)
   {
@@ -204,12 +204,10 @@ static void singleEdgeSetDuration(void *object, uint32_t duration)
      * If match register is set to a value greater than resolution,
      * than output stays high during all cycle.
      */
-    value = pwm->unit->resolution + 1;
+    duration = pwm->unit->resolution + 1;
   }
-  else
-    value = duration;
 
-  *pwm->value = value;
+  *pwm->value = duration;
   reg->LER |= LER_ENABLE_LATCH(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
@@ -218,86 +216,129 @@ static void singleEdgeSetEdges(void *object,
 {
   struct GpPwm *pwm = object;
   LPC_PWM_Type *reg = pwm->unit->parent.reg;
-  uint32_t value;
 
   assert(!leading); /* Leading edge time is constant in single edge mode */
 
   if (trailing >= pwm->unit->resolution)
-    value = pwm->unit->resolution + 1;
-  else
-    value = trailing;
+    trailing = pwm->unit->resolution + 1;
 
-  *pwm->value = value;
+  *pwm->value = trailing;
   reg->LER |= LER_ENABLE_LATCH(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static enum result doubleEdgeInit(void *object, const void *configPtr)
 {
   const struct GpPwmDoubleEdgeConfig * const config = configPtr;
-  const struct GpioDescriptor *pinDescriptor;
   struct GpPwmDoubleEdge *pwm = object;
+  int8_t channel;
 
-  pinDescriptor = gpioFind(gpPwmPins, config->pin,
-      config->parent->parent.channel);
-  if (!pinDescriptor)
+  /* Initialize output pin */
+  channel = setupMatchPin(config->parent->parent.channel, config->pin);
+  /* First channel cannot be a double edged output */
+  if (channel <= 1)
     return E_VALUE;
 
-//  pwm->channel = UNPACK_CHANNEL(pinDescriptor->value);
-//  /* Check if channel is free */
-//  if (config->parent->matches & pwm->channel)
-//    return E_BUSY;
-//
-//  pwm->channel = UNPACK_CHANNEL(pinDescriptor->value);
-//  pwm->unit = config->parent;
-//  pwm->unit->matches |= 1 << pwm->channel;
-//
-//  /* Initialize match output pin */
-//  struct Gpio pin = gpioInit(config->pin);
-//  gpioOutput(pin, 0);
-//  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
-//
-//  LPC_PWM_Type *reg = pwm->unit->parent.reg;
-//
-//  /* Calculate pointer to match register for fast access */
-//  pwm->value = calcMatchChannel(reg, pwm->channel);
-//  /* Call function directly because of unfinished object construction */
-//  singleEdgeSetDuration(pwm, config->duration);
-//  /* Enable PWM channel */
-//  reg->PCR |= PCR_OUTPUT_ENABLED(pwm->channel);
+  /* Check whether channels are free */
+  if (config->parent->matches & (1 << channel | 1 << (channel - 1)))
+    return E_BUSY;
+
+  pwm->channel = channel;
+  pwm->unit = config->parent;
+  pwm->unit->matches |= 1 << channel | 1 << (channel - 1);
+
+  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+
+  /* Setup channels and initial edge times */
+  pwm->leading = calcMatchChannel(reg, channel - 1);
+  pwm->trailing = calcMatchChannel(reg, channel);
+  doubleEdgeSetEdges(pwm, config->leading, config->trailing);
+  /* Select double edge mode and enable the channel */
+  reg->PCR |= PCR_DOUBLE_EDGE(channel) | PCR_OUTPUT_ENABLED(channel);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeDeinit(void *object)
 {
-  struct GpPwm *pwm = object;
+  struct GpPwmDoubleEdge *pwm = object;
   LPC_PWM_Type *reg = pwm->unit->parent.reg;
 
-  //FIXME
-//  reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
+  reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
+  pwm->unit->matches &= ~(1 << pwm->channel | 1 << (pwm->channel - 1));
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
 {
-  struct GpPwm *pwm = object;
+  struct GpPwmDoubleEdge *pwm = object;
+  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  uint32_t center, leading, resolution, trailing;
 
-  //TODO
+  leading = *pwm->leading;
+  trailing = *pwm->trailing;
+  resolution = pwm->unit->resolution;
+
+  if (trailing <= resolution)
+  {
+    if (leading <= trailing)
+    {
+      center = leading + (trailing - leading) / 2;
+    }
+    else
+    {
+      uint32_t halfResolution = resolution / 2;
+
+      center = trailing + (leading - trailing) / 2;
+      if (center <= halfResolution)
+        center += halfResolution;
+      else
+        center -= halfResolution;
+    }
+  }
+  else
+    center = leading;
+
+  if (duration >= resolution)
+  {
+    leading = center;
+    trailing = resolution + 1;
+  }
+  else
+  {
+    duration = duration / 2;
+
+    leading = center >= duration ? center - duration
+        : resolution - (duration - center);
+    trailing = resolution - center >= duration ? center + duration
+        : duration - (resolution - center);
+  }
+
+  *pwm->leading = leading;
+  *pwm->trailing = trailing;
+  reg->LER |= LER_ENABLE_LATCH(pwm->channel)
+      | LER_ENABLE_LATCH(pwm->channel - 1);
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeSetEdges(void *object, uint32_t leading,
     uint32_t trailing)
 {
-  struct GpPwm *pwm = object;
+  struct GpPwmDoubleEdge *pwm = object;
+  LPC_PWM_Type *reg = pwm->unit->parent.reg;
 
-  //TODO
+  if (trailing >= pwm->unit->resolution)
+    trailing = pwm->unit->resolution + 1;
+
+  *pwm->leading = leading;
+  *pwm->trailing = trailing;
+  reg->LER |= LER_ENABLE_LATCH(pwm->channel)
+      | LER_ENABLE_LATCH(pwm->channel - 1);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Create single edge PWM channel.
- * @param unit Pointer to GpPwmUnit object.
- * @param pin pin used as output for pulse width modulated signal.
+ * @param unit Pointer to a GpPwmUnit object.
+ * @param pin Pin used as output for pulse width modulated signal.
  * @param duration Initial duration in timer ticks.
- * @return Pointer to new Pwm object on success or zero on error.
+ * @return Pointer to a new Pwm object on success or zero on error.
  */
 void *gpPwmCreate(void *unit, gpio_t pin, uint32_t duration)
 {
@@ -312,10 +353,10 @@ void *gpPwmCreate(void *unit, gpio_t pin, uint32_t duration)
 /*----------------------------------------------------------------------------*/
 /**
  * Create double edge PWM channel.
- * @param unit Pointer to GpPwmUnit object.
- * @param pin pin used as output for pulse width modulated signal.
+ * @param unit Pointer to a GpPwmUnit object.
+ * @param pin Pin used as output for pulse width modulated signal.
  * @param duration Initial duration in timer ticks.
- * @return Pointer to new Pwm object on success or zero on error.
+ * @return Pointer to a new Pwm object on success or zero on error.
  */
 void *gpPwmCreateDoubleEdge(void *unit, gpio_t pin, uint32_t leading,
     uint32_t trailing)
