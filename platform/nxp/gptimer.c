@@ -52,7 +52,7 @@ static enum result tmrInit(void *object, const void *configPtr)
       .channel = config->channel
   };
   struct GpTimer *timer = object;
-  int8_t captureChannel;
+  int8_t captureChannel = -1;
   enum result res;
 
   assert(config->event < GPTIMER_EVENT_END);
@@ -84,7 +84,7 @@ static enum result tmrInit(void *object, const void *configPtr)
   reg->CCR = 0;
   reg->EMR = 0;
 
-  if (config->input)
+  if (captureChannel != -1)
   {
     reg->CTCR = CTCR_INPUT(captureChannel)
         | (config->invert ? CTCR_MODE_FALLING : CTCR_MODE_RISING);

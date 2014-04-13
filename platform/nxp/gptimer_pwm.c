@@ -63,8 +63,7 @@ static enum result unitInit(void *object, const void *configPtr)
 {
   const struct GpTimerPwmUnitConfig * const config = configPtr;
   const struct GpTimerBaseConfig parentConfig = {
-      .channel = config->channel,
-      .input = 0
+      .channel = config->channel
   };
   struct GpTimerPwmUnit *unit = object;
   enum result res;
@@ -131,7 +130,7 @@ static enum result channelInit(void *object, const void *configPtr)
 
   pwm->channel = (uint8_t)pwmChannel;
   pwm->unit = config->parent;
-  pwm->unit->matches |= 1 << pwm->channel;
+  pwm->unit->matches |= 1 << pwmChannel;
 
   /* Update match channel used for timer reset */
   updateResolution(pwm->unit, (uint8_t)freeChannel);
@@ -139,11 +138,11 @@ static enum result channelInit(void *object, const void *configPtr)
   LPC_TIMER_Type *reg = pwm->unit->parent.reg;
 
   /* Calculate pointer to match register for fast access */
-  pwm->value = (uint32_t *)(reg->MR + pwm->channel);
+  pwm->value = (uint32_t *)(reg->MR + pwmChannel);
   /* Call function directly because of unfinished object construction */
   channelSetDuration(pwm, config->duration);
   /* Enable PWM channel */
-  reg->PWMC |= PWMC_ENABLE(pwm->channel);
+  reg->PWMC |= PWMC_ENABLE(pwmChannel);
 
   return E_OK;
 }
@@ -154,6 +153,7 @@ static void channelDeinit(void *object)
   LPC_TIMER_Type *reg = pwm->unit->parent.reg;
 
   reg->PWMC &= ~PWMC_ENABLE(pwm->channel);
+  pwm->unit->matches &= ~(1 << pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelGetResolution(void *object)
@@ -164,41 +164,35 @@ static uint32_t channelGetResolution(void *object)
 static void channelSetDuration(void *object, uint32_t duration)
 {
   struct GpTimerPwm *pwm = object;
-  uint32_t value;
 
-  /* Polarity is inverse */
+  /* Polarity is inverted */
   if (duration >= pwm->unit->resolution)
   {
     /*
      * If match register is set to a value greater or equal to resolution,
      * then output stays low during all cycle.
      */
-    value = pwm->unit->resolution;
+    duration = pwm->unit->resolution;
   }
-  else
-  {
-    /*
-     * If a match register is set to zero, than output pin goes high
-     * and will stay in this state continuously.
-     */
-    value = !duration ? 0 : duration;
-  }
-  *pwm->value = value;
+
+  /*
+   * If a match register is set to zero, than output pin goes high
+   * and will stay in this state continuously.
+   */
+  *pwm->value = duration;
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetEdges(void *object,
     uint32_t leading __attribute__((unused)), uint32_t trailing)
 {
   struct GpTimerPwm *pwm = object;
-  uint32_t value;
 
   assert(!leading); /* Leading edge time is constant in single edge mode */
 
   if (trailing >= pwm->unit->resolution)
-    value = pwm->unit->resolution;
-  else
-    value = !trailing ? 0 : trailing;
-  *pwm->value = value;
+    trailing = pwm->unit->resolution;
+
+  *pwm->value = trailing;
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetEnabled(void *object, bool state)
