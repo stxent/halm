@@ -63,7 +63,7 @@ static void interruptHandler(void *object)
       if (interface->state == I2C_ADDRESS)
       {
         reg->DAT = (interface->txLeft ? DATA_WRITE : DATA_READ)
-            | interface->address;
+            | (interface->address << 1);
       }
       reg->CONCLR = CONCLR_STAC;
       break;
@@ -97,7 +97,7 @@ static void interruptHandler(void *object)
       }
       else
       {
-        if (interface->stopGeneration)
+        if (interface->sendStopBit)
           reg->CONSET = CONSET_STO;
         interface->state = I2C_IDLE;
         event = true;
@@ -165,7 +165,7 @@ static enum result i2cInit(void *object, const void *configPtr)
   interface->address = 0;
   interface->callback = 0;
   interface->blocking = true;
-  interface->stopGeneration = true;
+  interface->sendStopBit = true;
   interface->state = I2C_IDLE;
 
   interface->parent.handler = interruptHandler;
@@ -227,6 +227,16 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 {
   struct I2c *interface = object;
 
+  /* Additional I2C options */
+  switch ((enum i2cOption)option)
+  {
+    case IF_I2C_SENDSTOP:
+      interface->sendStopBit = *(uint32_t *)data ? true : false;
+      return E_OK;
+    default:
+      break;
+  }
+
   switch (option)
   {
     case IF_BLOCKING:
@@ -240,10 +250,6 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
       return E_OK;
     case IF_ZEROCOPY:
       interface->blocking = false;
-      return E_OK;
-    /* Additional I2C options */
-    case IF_I2C_SENDSTOP:
-      interface->stopGeneration = *(uint32_t *)data ? true : false;
       return E_OK;
     default:
       return E_ERROR;
@@ -269,7 +275,7 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
    * Flag should be cleared when Repeated Start generation is enabled.
    * Interrupt with previous interface state will be generated otherwise.
    */
-  if (!interface->stopGeneration)
+  if (!interface->sendStopBit)
     reg->CONCLR = CONCLR_SIC;
   irqEnable(interface->parent.irq);
 

@@ -55,7 +55,7 @@ struct I2c
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
   /* Generate stop condition after writing */
-  bool stopGeneration;
+  bool sendStopBit;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_H_ */
