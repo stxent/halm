@@ -242,7 +242,7 @@ static enum result doubleEdgeInit(void *object, const void *configPtr)
   if (config->parent->matches & (1 << channel | 1 << (channel - 1)))
     return E_BUSY;
 
-  pwm->channel = channel;
+  pwm->channel = (uint8_t)channel;
   pwm->unit = config->parent;
   pwm->unit->matches |= 1 << channel | 1 << (channel - 1);
 
@@ -277,25 +277,22 @@ static void doubleEdgeSetDuration(void *object, uint32_t duration)
   trailing = *pwm->trailing;
   resolution = pwm->unit->resolution;
 
-  if (trailing <= resolution)
+  if (leading > trailing)
   {
-    if (leading <= trailing)
-    {
-      center = leading + (trailing - leading) / 2;
-    }
-    else
-    {
-      uint32_t halfResolution = resolution / 2;
+    uint32_t half = resolution / 2;
 
-      center = trailing + (leading - trailing) / 2;
-      if (center <= halfResolution)
-        center += halfResolution;
-      else
-        center -= halfResolution;
-    }
+    center = trailing + (leading - trailing) / 2;
+    if (center < half)
+      center += half;
+    else
+      center -= half;
   }
   else
+  {
     center = leading;
+    if (trailing < resolution)
+      center += (trailing - leading) / 2;
+  }
 
   if (duration >= resolution)
   {
@@ -307,9 +304,9 @@ static void doubleEdgeSetDuration(void *object, uint32_t duration)
     duration = duration / 2;
 
     leading = center >= duration ? center - duration
-        : resolution - (duration - center);
-    trailing = resolution - center >= duration ? center + duration
-        : duration - (resolution - center);
+        : center - duration + resolution;
+    trailing = center <= duration ? center + duration
+        : center + duration - resolution;
   }
 
   *pwm->leading = leading;
@@ -323,6 +320,8 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
 {
   struct GpPwmDoubleEdge *pwm = object;
   LPC_PWM_Type *reg = pwm->unit->parent.reg;
+
+  assert(leading < pwm->unit->resolution);
 
   if (trailing >= pwm->unit->resolution)
     trailing = pwm->unit->resolution + 1;
