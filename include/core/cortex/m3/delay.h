@@ -19,8 +19,8 @@ static inline void mdelay(uint32_t period)
 /*----------------------------------------------------------------------------*/
 static inline void udelay(uint32_t period)
 {
-  extern uint32_t sysCoreClock;
-  volatile uint32_t count = sysCoreClock / 3000000 * period;
+  extern uint32_t coreClock;
+  volatile uint32_t count = coreClock / 3000000 * period;
 
   __asm__ volatile (
       "1:\n\t"

@@ -94,7 +94,7 @@ void I2C2_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetClock(struct I2cBase *interface __attribute__((unused)))
 {
-  return sysCoreClock / sysClockDivToValue(DEFAULT_DIV);
+  return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *object, const void *configPtr)

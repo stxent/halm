@@ -100,7 +100,7 @@ void SSP1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetClock(struct SspBase *interface __attribute__((unused)))
 {
-  return sysCoreClock / DEFAULT_DIV_VALUE;
+  return clockFrequency(MainClock) / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *object, const void *configPtr)

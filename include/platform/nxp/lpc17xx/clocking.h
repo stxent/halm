@@ -9,8 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
-extern uint32_t sysCoreClock;
-/*----------------------------------------------------------------------------*/
 extern const struct ClockClass *ExternalOsc;
 extern const struct ClockClass *SystemPll;
 extern const struct ClockClass *MainClock;
@@ -32,15 +30,15 @@ enum clockSource
   CLOCK_MAIN
 };
 /*----------------------------------------------------------------------------*/
-struct MainClockConfig
-{
-  enum clockSource source;
-};
-/*----------------------------------------------------------------------------*/
 struct PllConfig
 {
   uint16_t multiplier;
   uint8_t divider;
+  enum clockSource source;
+};
+/*----------------------------------------------------------------------------*/
+struct MainClockConfig
+{
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/

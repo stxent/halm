@@ -21,6 +21,7 @@ struct ClockClass
 {
   void (*disable)(void);
   enum result (*enable)(const void *);
+  uint32_t (*frequency)(void);
   bool (*ready)(void);
 };
 /*----------------------------------------------------------------------------*/
@@ -42,6 +43,16 @@ static inline void clockDisable(const void *clock)
 static inline enum result clockEnable(const void *clock, const void *config)
 {
   return ((struct ClockClass *)clock)->enable(config);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get clock frequency.
+ * @param clock Class descriptor.
+ * @return Clock frequency on success or zero otherwise.
+ */
+static inline uint32_t clockFrequency(const void *clock)
+{
+  return ((struct ClockClass *)clock)->frequency();
 }
 /*----------------------------------------------------------------------------*/
 /**

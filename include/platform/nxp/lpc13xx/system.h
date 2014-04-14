@@ -7,6 +7,7 @@
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <bits.h>
 #include "../platform_defs.h"
 /*----------------------------------------------------------------------------*/
@@ -65,6 +66,11 @@ static inline void sysPowerEnable(enum sysPowerDevice block)
 static inline void sysPowerDisable(enum sysPowerDevice block)
 {
   LPC_SYSCON->PDRUNCFG |= BIT(block);
+}
+/*----------------------------------------------------------------------------*/
+static inline bool sysPowerStatus(enum sysPowerDevice block)
+{
+  return LPC_SYSCON->PDRUNCFG & BIT(block) ? false : true;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* SYSTEM_H_ */

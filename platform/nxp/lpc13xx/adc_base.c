@@ -103,7 +103,8 @@ static enum result adcUnitInit(void *object, const void *configPtr)
   unit->reg = LPC_ADC;
 
   /* Set system clock divider */
-  ((LPC_ADC_Type *)unit->reg)->CR = CR_CLKDIV(sysCoreClock / 4500000);
+  ((LPC_ADC_Type *)unit->reg)->CR = CR_CLKDIV(clockFrequency(MainClock)
+      / 4500000);
 
   return E_OK;
 }

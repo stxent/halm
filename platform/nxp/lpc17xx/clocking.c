@@ -14,33 +14,40 @@
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
+static void pllDisconnect(void);
 static void stubDisable(void);
 static bool stubReady(void);
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(void);
 static enum result extOscEnable(const void *);
+static uint32_t extOscFrequency(void);
 static bool extOscReady(void);
 static void sysPllDisable(void);
 static enum result sysPllEnable(const void *);
+static uint32_t sysPllFrequency(void);
 static bool sysPllReady(void);
 /*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *);
+static uint32_t mainClockFrequency(void);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
     .enable = extOscEnable,
+    .frequency = extOscFrequency,
     .ready = extOscReady
 };
 
 static const struct ClockClass sysPllTable = {
     .disable = sysPllDisable,
     .enable = sysPllEnable,
+    .frequency = sysPllFrequency,
     .ready = sysPllReady
 };
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
     .disable = stubDisable,
     .enable = mainClockEnable,
+    .frequency = mainClockFrequency,
     .ready = stubReady
 };
 /*----------------------------------------------------------------------------*/
@@ -48,10 +55,11 @@ const struct ClockClass *ExternalOsc = &extOscTable;
 const struct ClockClass *SystemPll = &sysPllTable;
 const struct ClockClass *MainClock = &mainClockTable;
 /*----------------------------------------------------------------------------*/
-static const uint32_t intOscFrequency = INT_OSC_FREQUENCY;
-static uint32_t extOscFrequency = 0, rtcOscFrequency = 0, pllFrequency = 0;
+static uint32_t extFrequency = 0;
+static uint32_t pllFrequency = 0;
+static uint32_t rtcFrequency = 0;
 static uint8_t pllDivider = 0;
-uint32_t sysCoreClock = INT_OSC_FREQUENCY;
+uint32_t coreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
 {
@@ -66,6 +74,13 @@ static void flashLatencyUpdate(uint32_t frequency)
   if (clocks > 5)
     clocks = 5;
   sysFlashLatency(clocks);
+}
+/*----------------------------------------------------------------------------*/
+static void pllDisconnect(void)
+{
+  LPC_SC->PLL0CON &= ~PLL0CON_CONNECT;
+  LPC_SC->PLL0FEED = PLLFEED_FIRST;
+  LPC_SC->PLL0FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
 static void stubDisable(void)
@@ -96,20 +111,29 @@ static enum result extOscEnable(const void *configPtr)
   if (config->frequency > 15000000)
     buffer |= SCS_FREQRANGE;
 
-  extOscFrequency = config->frequency;
+  extFrequency = config->frequency;
   LPC_SC->SCS = buffer;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static uint32_t extOscFrequency(void)
+{
+  return extFrequency;
+}
+/*----------------------------------------------------------------------------*/
 static bool extOscReady(void)
 {
-  return LPC_SC->SCS & SCS_OSCSTAT ? true : false;
+  return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT ? true : false);
 }
 /*----------------------------------------------------------------------------*/
 static void sysPllDisable(void)
 {
-  //TODO
+  assert(!(LPC_SC->PLL0STAT & PLL0STAT_CONNECTED));
+
+  LPC_SC->PLL0CON &= ~PLL0CON_ENABLE;
+  LPC_SC->PLL0FEED = PLLFEED_FIRST;
+  LPC_SC->PLL0FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sysPllEnable(const void *configPtr)
@@ -132,21 +156,24 @@ static enum result sysPllEnable(const void *configPtr)
   {
     case CLOCK_EXTERNAL:
       /* Check whether external oscillator is configured */
-      if (!extOscFrequency)
+      if (!extOscReady())
         return E_ERROR;
       source = CLKSRCSEL_MAIN;
-      frequency = extOscFrequency;
+      frequency = extFrequency;
       break;
+
     case CLOCK_INTERNAL:
       source = CLKSRCSEL_IRC;
-      frequency = intOscFrequency;
+      frequency = INT_OSC_FREQUENCY;
       break;
+
     case CLOCK_RTC:
-      if (!rtcOscFrequency)
+      if (!rtcFrequency) //TODO Replace with rtcOscReady
         return E_ERROR;
       source = CLKSRCSEL_RTC;
-      frequency = rtcOscFrequency;
+      frequency = rtcFrequency;
       break;
+
     default:
       return E_ERROR;
   }
@@ -190,9 +217,14 @@ static enum result sysPllEnable(const void *configPtr)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static uint32_t sysPllFrequency(void)
+{
+  return pllFrequency;
+}
+/*----------------------------------------------------------------------------*/
 static bool sysPllReady(void)
 {
-  return LPC_SC->PLL0STAT & PLL0STAT_LOCK ? true : false;
+  return pllFrequency && (LPC_SC->PLL0STAT & PLL0STAT_LOCK ? true : false);
 }
 /*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *configPtr)
@@ -203,19 +235,26 @@ static enum result mainClockEnable(const void *configPtr)
   {
     case CLOCK_INTERNAL:
       flashLatencyReset();
+      if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
+        pllDisconnect();
       LPC_SC->CLKSRCSEL = CLKSRCSEL_IRC;
-      sysCoreClock = intOscFrequency;
+      coreClock = INT_OSC_FREQUENCY;
+
     case CLOCK_EXTERNAL:
-      /* Check whether external oscillator is configured */
-      if (!extOscFrequency)
+      /* Check whether external oscillator is configured and ready */
+      if (!extOscReady())
         return E_ERROR;
+
       flashLatencyReset();
+      if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
+        pllDisconnect();
       LPC_SC->CLKSRCSEL = CLKSRCSEL_MAIN;
-      sysCoreClock = extOscFrequency;
+      coreClock = extFrequency;
       break;
+
     case CLOCK_PLL:
-      /* Check whether PLL is configured */
-      if (!pllFrequency)
+      /* Check whether PLL is configured and ready */
+      if (!sysPllReady())
         return E_ERROR;
 
       /* Maximize flash latency and configure system clock divider */
@@ -230,19 +269,26 @@ static enum result mainClockEnable(const void *configPtr)
       /* Wait for enable and connect */
       while (!(LPC_SC->PLL0STAT & (PLL0STAT_ENABLED | PLL0STAT_CONNECTED)));
 
-      sysCoreClock = pllFrequency;
+      coreClock = pllFrequency;
       break;
+
     case CLOCK_RTC:
-      if (!rtcOscFrequency)
+      if (!rtcFrequency) //TODO Replace with rtcOscReady
         return E_ERROR;
       flashLatencyReset();
       LPC_SC->CLKSRCSEL = CLKSRCSEL_RTC;
-      sysCoreClock = rtcOscFrequency;
+      coreClock = rtcFrequency;
       break;
+
     default:
       return E_ERROR;
   }
-  flashLatencyUpdate(sysCoreClock);
+  flashLatencyUpdate(coreClock);
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t mainClockFrequency(void)
+{
+  return coreClock;
 }

@@ -167,7 +167,7 @@ void TIMER3_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t gpTimerGetClock(struct GpTimerBase *timer __attribute__((unused)))
 {
-  return sysCoreClock / sysClockDivToValue(DEFAULT_DIV);
+  return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configPtr)
