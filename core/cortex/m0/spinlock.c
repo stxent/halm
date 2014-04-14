@@ -12,29 +12,29 @@ void spinLock(spinlock_t *lock)
   /* Wait until lock becomes free */
   while (1)
   {
-    __irqDisable();
+    __interruptsDisable();
     if (*lock == SPIN_UNLOCKED)
     {
       *lock = SPIN_LOCKED;
       __dmb();
-      __irqEnable();
+      __interruptsEnable();
       return;
     }
-    __irqEnable();
+    __interruptsEnable();
   }
 }
 /*----------------------------------------------------------------------------*/
 bool spinTryLock(spinlock_t *lock)
 {
-  __irqDisable();
+  __interruptsDisable();
   if (*lock == SPIN_UNLOCKED)
   {
     *lock = SPIN_LOCKED;
     __dmb();
-    __irqEnable();
+    __interruptsEnable();
     return true;
   }
-  __irqEnable();
+  __interruptsEnable();
   return false; /* Already locked */
 }
 /*----------------------------------------------------------------------------*/

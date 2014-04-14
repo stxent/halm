@@ -41,7 +41,7 @@ static const struct TimerClass timerTable = {
     .value = tmrValue
 };
 /*----------------------------------------------------------------------------*/
-extern uint32_t sysCoreClock;
+extern uint32_t coreClock;
 const struct TimerClass *SysTickTimer = &timerTable;
 static struct SysTickTimer *descriptor = 0;
 /*----------------------------------------------------------------------------*/
@@ -67,7 +67,7 @@ static void updateFrequency(struct SysTickTimer *timer)
   uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
 
   SYSTICK->CTRL &= ~CTRL_ENABLE;
-  SYSTICK->LOAD = (sysCoreClock / timer->frequency) * timer->overflow - 1;
+  SYSTICK->LOAD = (coreClock / timer->frequency) * timer->overflow - 1;
   SYSTICK->VAL = 0;
   SYSTICK->CTRL |= state;
 }
@@ -89,12 +89,12 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   timer->handler = interruptHandler;
 
-  timer->frequency = config->frequency ? config->frequency : sysCoreClock;
+  timer->frequency = config->frequency ? config->frequency : coreClock;
   timer->overflow = 1;
 
   SYSTICK->CTRL = 0; /* Stop timer */
   SYSTICK->VAL = 0; /* Reset current timer value */
-  SYSTICK->LOAD = sysCoreClock / timer->frequency - 1;
+  SYSTICK->LOAD = coreClock / timer->frequency - 1;
   SYSTICK->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
 
   irqEnable(SYSTICK_IRQ);
@@ -139,7 +139,7 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   struct SysTickTimer *timer = object;
 
-  timer->frequency = frequency ? frequency : sysCoreClock;
+  timer->frequency = frequency ? frequency : coreClock;
   updateFrequency(timer);
 }
 /*----------------------------------------------------------------------------*/
