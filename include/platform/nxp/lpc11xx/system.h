@@ -65,4 +65,9 @@ static inline void sysPowerDisable(enum sysPowerDevice block)
   LPC_SYSCON->PDRUNCFG |= BIT(block);
 }
 /*----------------------------------------------------------------------------*/
+static inline bool sysPowerStatus(enum sysPowerDevice block)
+{
+  return LPC_SYSCON->PDRUNCFG & BIT(block) ? false : true;
+}
+/*----------------------------------------------------------------------------*/
 #endif /* SYSTEM_H_ */

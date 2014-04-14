@@ -104,7 +104,7 @@ static bool stubReady(void)
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(void)
 {
-  assert(LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK != MAINCLKSEL_PLL_INPUT);
+  assert((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_INPUT);
 
   sysPowerDisable(PWR_SYSOSC);
 }
@@ -150,7 +150,7 @@ static bool extOscReady(void)
 /*----------------------------------------------------------------------------*/
 static void intOscDisable(void)
 {
-  assert(LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK != MAINCLKSEL_IRC);
+  assert((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_IRC);
 
   sysPowerDisable(PWR_IRCOUT);
   sysPowerDisable(PWR_IRC);
@@ -176,7 +176,7 @@ static bool intOscReady(void)
 /*----------------------------------------------------------------------------*/
 static void sysPllDisable(void)
 {
-  assert(LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK != MAINCLKSEL_PLL_OUTPUT);
+  assert((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_OUTPUT);
 
   sysPowerDisable(PWR_SYSPLL);
 }

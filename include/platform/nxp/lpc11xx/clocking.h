@@ -9,8 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
-extern uint32_t sysCoreClock;
-/*----------------------------------------------------------------------------*/
 extern const struct ClockClass *ExternalOsc;
 extern const struct ClockClass *InternalOsc;
 extern const struct ClockClass *SystemPll;
