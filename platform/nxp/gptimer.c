@@ -98,10 +98,10 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   /* Configure prescaler and default match value */
   reg->MR[timer->event] = DEFAULT_OVERFLOW;
-  reg->MCR = 0; /* All match channels are currently disabled */
+  /* Enable timer stopping in one shot mode */
+  reg->MCR = config->oneshot ? MCR_STOP(timer->event) : 0;
 
-  /* Enable counter */
-  reg->TCR = TCR_CEN;
+  reg->TCR = config->disabled || config->oneshot ? TCR_CRES : TCR_CEN;
 
   irqSetPriority(timer->parent.irq, config->priority);
   irqEnable(timer->parent.irq);
@@ -114,7 +114,7 @@ static void tmrDeinit(void *object)
   struct GpTimer *timer = object;
 
   irqDisable(timer->parent.irq);
-  ((LPC_TIMER_Type *)timer->parent.reg)->TCR &= ~TCR_CEN;
+  ((LPC_TIMER_Type *)timer->parent.reg)->TCR = 0;
   GpTimerBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
@@ -140,17 +140,8 @@ static void tmrSetEnabled(void *object, bool state)
   struct GpTimer *timer = object;
   LPC_TIMER_Type *reg = timer->parent.reg;
 
-  if (!state)
-  {
-    /*
-     * Checking of the prescaler and counter registers removed assuming
-     * that there is more than one peripheral bus clock between
-     * reset enabling and disabling due to other operations with registers
-     * of the timer block.
-     */
-    reg->TCR |= TCR_CRES;
-  }
-
+  /* Put timer in the reset state */
+  reg->TCR = TCR_CRES;
   /* Clear pending interrupt flags and direct memory access requests */
   reg->IR = IR_MATCH_INTERRUPT(timer->event);
 
@@ -158,7 +149,7 @@ static void tmrSetEnabled(void *object, bool state)
   {
     /* Clear match value to avoid undefined output level */
     reg->EMR &= ~EMR_EXTERNAL_MATCH(timer->event);
-    reg->TCR &= ~TCR_CRES;
+    reg->TCR = TCR_CEN;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -178,8 +169,8 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   LPC_TIMER_Type *reg = timer->parent.reg;
   bool enabled;
 
-  if ((enabled = !(reg->TCR & TCR_CRES)))
-    reg->TCR |= TCR_CRES;
+  if ((enabled = reg->TCR & TCR_CEN))
+    reg->TCR = TCR_CRES;
 
   if (overflow)
   {
@@ -198,7 +189,7 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   }
 
   if (enabled)
-    reg->TCR &= ~TCR_CRES;
+    reg->TCR = TCR_CEN;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrValue(void *object)

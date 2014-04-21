@@ -6,7 +6,7 @@
 
 /**
  * @file
- * Abstract class for clock subsystem parts.
+ * Abstract class for clock subsystem components.
  */
 
 #ifndef CLOCK_H_
