@@ -45,8 +45,8 @@ struct GpTimerConfig
   uint8_t channel;
   /**
    * Optional: timer is not enabled by default. Argument makes no sense in
-   * one shot timer mode because in this mode timer is disabled after
-   * initialization by default.
+   * one shot timer mode because in this mode timer is not started
+   * during the initialization process.
    */
   bool disabled;
   /**

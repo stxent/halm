@@ -77,10 +77,9 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   LPC_TIMER_Type *reg = timer->parent.reg;
 
-  reg->TCR = 0;
+  reg->TCR = TCR_CRES;
 
   reg->IR = reg->IR; /* Clear pending interrupts */
-  reg->PC = reg->TC = 0;
   reg->CCR = 0;
   reg->EMR = 0;
 
@@ -101,7 +100,8 @@ static enum result tmrInit(void *object, const void *configPtr)
   /* Enable timer stopping in one shot mode */
   reg->MCR = config->oneshot ? MCR_STOP(timer->event) : 0;
 
-  reg->TCR = config->disabled || config->oneshot ? TCR_CRES : TCR_CEN;
+  if (!config->disabled && !config->oneshot)
+    reg->TCR = TCR_CEN;
 
   irqSetPriority(timer->parent.irq, config->priority);
   irqEnable(timer->parent.irq);
