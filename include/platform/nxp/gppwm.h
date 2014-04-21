@@ -46,7 +46,7 @@ struct GpPwm
   /* Pointer to a parent unit */
   struct GpPwmUnit *unit;
   /* Pointer to a match register */
-  uint32_t *value;
+  volatile uint32_t *value;
   /* Match channel number */
   uint8_t channel;
 };
@@ -70,9 +70,9 @@ struct GpPwmDoubleEdge
   /* Pointer to a parent unit */
   struct GpPwmUnit *unit;
   /* Pointer to a match register containing leading edge time */
-  uint32_t *leading;
+  volatile uint32_t *leading;
   /* Pointer to a match register containing trailing edge time */
-  uint32_t *trailing;
+  volatile uint32_t *trailing;
   /* Number of the main match channel */
   uint8_t channel;
 };

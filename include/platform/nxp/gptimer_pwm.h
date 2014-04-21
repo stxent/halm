@@ -43,7 +43,7 @@ struct GpTimerPwm
   /* Pointer to a parent unit */
   struct GpTimerPwmUnit *unit;
   /* Pointer to a match register */
-  uint32_t *value;
+  volatile uint32_t *value;
   /* Match channel number */
   uint8_t channel;
 };

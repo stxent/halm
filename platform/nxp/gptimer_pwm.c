@@ -138,7 +138,7 @@ static enum result channelInit(void *object, const void *configPtr)
   LPC_TIMER_Type *reg = pwm->unit->parent.reg;
 
   /* Calculate pointer to match register for fast access */
-  pwm->value = (uint32_t *)(reg->MR + pwmChannel);
+  pwm->value = reg->MR + pwmChannel;
   /* Call function directly because of unfinished object construction */
   channelSetDuration(pwm, config->duration);
   /* Enable PWM channel */

@@ -11,7 +11,7 @@
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
+static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
 static int8_t setupMatchPin(uint8_t channel, gpio_t key);
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *, const void *);
@@ -63,14 +63,15 @@ const struct EntityClass *GpPwmUnit = &unitTable;
 const struct PwmClass *GpPwm = &singleEdgeTable;
 const struct PwmClass *GpPwmDoubleEdge = &doubleEdgeTable;
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcMatchChannel(LPC_PWM_Type *device, uint8_t channel)
+static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
+    uint8_t channel)
 {
   assert(channel && channel <= 6);
 
   if (channel > 3)
-    return (uint32_t *)&device->MR4 + (channel - 4);
+    return &device->MR4 + (channel - 4);
   else
-    return (uint32_t *)&device->MR1 + (channel - 1);
+    return &device->MR1 + (channel - 1);
 }
 /*----------------------------------------------------------------------------*/
 static int8_t setupMatchPin(uint8_t channel, gpio_t key)
