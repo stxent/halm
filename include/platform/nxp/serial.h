@@ -14,12 +14,22 @@ extern const struct InterfaceClass *Serial;
 /*----------------------------------------------------------------------------*/
 struct SerialConfig
 {
-  uint32_t rxLength, txLength; /* Optional: queue lengths */
-  uint32_t rate; /* Mandatory: baud rate */
-  gpio_t rx, tx; /* Mandatory: RX and TX pins */
-  priority_t priority; /* Optional: interrupt priority */
-  uint8_t channel; /* Mandatory: Peripheral identifier */
-  enum uartParity parity; /* Optional: even, odd or no parity */
+  /** Optional: input queue size. */
+  uint32_t rxLength;
+  /** Optional: output queue size. */
+  uint32_t txLength;
+  /** Mandatory: baud rate. */
+  uint32_t rate;
+  /** Mandatory: serial input. */
+  gpio_t rx;
+  /** Mandatory: serial output. */
+  gpio_t tx;
+  /** Optional: interrupt priority. */
+  priority_t priority;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+  /** Optional: parity generation and checking. */
+  enum uartParity parity;
 };
 /*----------------------------------------------------------------------------*/
 struct Serial

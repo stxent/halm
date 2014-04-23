@@ -87,6 +87,7 @@ static void interruptHandler(void *object)
   while (reg->LSR & LSR_RDR)
   {
     uint8_t data = reg->RBR;
+
     switch (interface->state)
     {
       case OW_UART_RESET:
@@ -101,9 +102,11 @@ static void interruptHandler(void *object)
           event = true;
         }
         break;
+
       case OW_UART_RECEIVE:
         if (data & 0x01)
           interface->word |= 1 << interface->bit;
+
       case OW_UART_TRANSMIT:
         if (++interface->bit == 8)
         {
@@ -120,16 +123,19 @@ static void interruptHandler(void *object)
           }
         }
         break;
+
       default:
         break;
     }
   }
+
   if ((reg->LSR & LSR_THRE) && interface->state != OW_UART_RESET)
   {
     /* Fill FIFO with next word or end the transaction */
     if (!byteQueueEmpty(&interface->txQueue))
       sendWord(interface, byteQueuePop(&interface->txQueue));
   }
+
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
 }

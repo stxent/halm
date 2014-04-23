@@ -16,9 +16,9 @@ struct SerialDmaConfig
 {
   /** Mandatory: baud rate. */
   uint32_t rate;
-  /** Mandatory: Receive Data pin. */
+  /** Mandatory: serial input. */
   gpio_t rx;
-  /** Mandatory: Transmit Data pin. */
+  /** Mandatory: serial output. */
   gpio_t tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
@@ -26,7 +26,7 @@ struct SerialDmaConfig
   uint8_t rxChannel;
   /** Mandatory: outgoing data channel. */
   uint8_t txChannel;
-  /** Optional: parity configuration option. */
+  /** Optional: parity generation and checking. */
   enum uartParity parity;
 };
 /*----------------------------------------------------------------------------*/

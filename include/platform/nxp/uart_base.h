@@ -22,8 +22,12 @@ enum uartParity
 /*----------------------------------------------------------------------------*/
 struct UartBaseConfig
 {
-  gpio_t rx, tx; /* Mandatory: RX and TX pins */
-  uint8_t channel; /* Mandatory: peripheral identifier */
+  /** Mandatory: serial input. */
+  gpio_t rx;
+  /** Mandatory: serial output. */
+  gpio_t tx;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct UartRateConfig
