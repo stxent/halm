@@ -16,10 +16,10 @@ struct SpiDmaConfig
 {
   /** Mandatory: serial data rate. */
   uint32_t rate;
-  /** Mandatory: data input. */
+  /** Optional: serial data input. */
   gpio_t miso;
-  /** Mandatory: data output. */
-  gpio_t mosi; /* Mandatory: peripheral pins */
+  /** Optional: serial data output. */
+  gpio_t mosi;
   /** Mandatory: serial clock output. */
   gpio_t sck;
   /** Mandatory: peripheral identifier. */

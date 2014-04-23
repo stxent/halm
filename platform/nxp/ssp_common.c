@@ -16,29 +16,38 @@ enum result sspSetupPins(struct SspBase *interface,
   const struct GpioDescriptor *pinDescriptor;
   struct Gpio pin;
 
-  /* Setup MISO pin */
-  if (!(pinDescriptor = gpioFind(sspPins, config->miso, interface->channel)))
-    return E_VALUE;
-  gpioInput((pin = gpioInit(config->miso)));
-  gpioSetFunction(pin, pinDescriptor->value);
+  /* Configure MOSI pin */
+  if (config->mosi)
+  {
+    if (!(pinDescriptor = gpioFind(sspPins, config->mosi, interface->channel)))
+      return E_VALUE;
+    gpioOutput((pin = gpioInit(config->mosi)), 0);
+    gpioSetFunction(pin, pinDescriptor->value);
+  }
 
-  /* Setup MOSI pin */
-  if (!(pinDescriptor = gpioFind(sspPins, config->mosi, interface->channel)))
-    return E_VALUE;
-  gpioOutput((pin = gpioInit(config->mosi)), 0);
-  gpioSetFunction(pin, pinDescriptor->value);
+  /* Configure MISO pin */
+  if (config->miso)
+  {
+    if (!(pinDescriptor = gpioFind(sspPins, config->miso, interface->channel)))
+      return E_VALUE;
+    gpioInput((pin = gpioInit(config->miso)));
+    gpioSetFunction(pin, pinDescriptor->value);
+  }
 
-  /* Setup Serial Clock pin */
-  if (!(pinDescriptor = gpioFind(sspPins, config->sck, interface->channel)))
-    return E_VALUE;
-  gpioOutput((pin = gpioInit(config->sck)), 0);
-  gpioSetFunction(pin, pinDescriptor->value);
+  /* Configure SCK pin */
+  if (config->sck)
+  {
+    if (!(pinDescriptor = gpioFind(sspPins, config->sck, interface->channel)))
+      return E_VALUE;
+    gpioOutput((pin = gpioInit(config->sck)), 0);
+    gpioSetFunction(pin, pinDescriptor->value);
+  }
 
-  /* Setup CS pin, only in slave mode */
-//  if (!(pinDescriptor = gpioFind(sspPins, config->cs, interface->channel)))
-//    return E_VALUE;
-//  gpioInput((pin = gpioInit(config->cs)));
-//  gpioSetFunction(pin, pinDescriptor->value);
+  /* Configure Slave Select pin available only in slave mode */
+/*  if (!(pinDescriptor = gpioFind(sspPins, config->cs, interface->channel)))
+    return E_VALUE;
+  gpioInput((pin = gpioInit(config->cs)));
+  gpioSetFunction(pin, pinDescriptor->value); */
 
   return E_OK;
 }

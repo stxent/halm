@@ -102,7 +102,8 @@ static enum result spiInit(void *object, const void *configPtr)
       .channel = config->channel,
       .miso = config->miso,
       .mosi = config->mosi,
-      .sck = config->sck
+      .sck = config->sck,
+      .cs = 0
   };
   struct SpiDma *interface = object;
   enum result res;

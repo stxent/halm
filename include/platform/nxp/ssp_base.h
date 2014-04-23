@@ -16,9 +16,25 @@ extern const struct EntityClass *SspBase;
 /* TODO Add master/slave select */
 struct SspBaseConfig
 {
-  gpio_t cs; /* Optional: chip select for slave mode */
-  gpio_t miso, mosi, sck; /* Mandatory: interface pins */
-  uint8_t channel; /* Mandatory: peripheral identifier */
+  /** Optional: slave select pin. Available in slave mode only. */
+  gpio_t cs;
+  /**
+   * Optional: pin acts as data input in master mode and as data output
+   * in slave mode.
+   */
+  gpio_t miso;
+  /**
+   * Optional: pin acts as serial data output in master mode and
+   * as data input in slave mode.
+   */
+  gpio_t mosi;
+  /**
+   * Optional: serial clock output for masters and input for slaves.
+   * May be left unused in specific emulation modes.
+   */
+  gpio_t sck;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct SspBase

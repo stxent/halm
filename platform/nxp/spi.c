@@ -89,7 +89,7 @@ static enum result spiInit(void *object, const void *configPtr)
       .miso = config->miso,
       .mosi = config->mosi,
       .sck = config->sck,
-      .cs = config->cs
+      .cs = 0
   };
   struct Spi *interface = object;
   enum result res;

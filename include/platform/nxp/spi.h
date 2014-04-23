@@ -14,12 +14,20 @@ extern const struct InterfaceClass *Spi;
 /*----------------------------------------------------------------------------*/
 struct SpiConfig
 {
-  uint32_t rate; /* Mandatory: serial data rate */
-  gpio_t cs; /* Optional: chip select for slave mode */
-  gpio_t miso, mosi, sck; /* Mandatory: peripheral pins */
-  priority_t priority; /* Optional: interrupt priority */
-  uint8_t channel; /* Mandatory: peripheral identifier */
-  uint8_t mode; /* Optional: mode number used in SPI */
+  /** Mandatory: serial data rate. */
+  uint32_t rate;
+  /** Optional: serial data input. */
+  gpio_t miso;
+  /** Optional: serial data output. */
+  gpio_t mosi;
+  /** Mandatory: serial clock output. */
+  gpio_t sck;
+  /** Optional: interrupt priority. */
+  priority_t priority;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+  /** Optional: mode number used in Serial Peripheral Interface mode. */
+  uint8_t mode;
 };
 /*----------------------------------------------------------------------------*/
 struct Spi
