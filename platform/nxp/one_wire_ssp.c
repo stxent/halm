@@ -8,17 +8,17 @@
 #include <platform/nxp/one_wire_ssp.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
-#define RATE_RESET      16000
-#define RATE_DATA       260000
+#define DATA_MASK         0x3FC0
 
-#define MASK_DATA       0x3F00
-#define MASK_PRESENCE   0x00FF
+#define PATTERN_HIGH      0x7FFF
+#define PATTERN_LOW       0x000F
+#define PATTERN_PRESENCE  0xFFFF
+#define PATTERN_RESET     0x0000
 
-#define PATTERN_HIGH    0x7FFF
-#define PATTERN_LOW     0x000F
-#define PATTERN_RESET   0x00FF
+#define RATE_RESET        31250
+#define RATE_DATA         250000
 
-#define TX_QUEUE_LENGTH 24
+#define TX_QUEUE_LENGTH   24
 /*----------------------------------------------------------------------------*/
 enum oneWireRomCommand
 {
@@ -58,10 +58,8 @@ const struct InterfaceClass *OneWireSsp = &oneWireTable;
 static void adjustPins(struct OneWireSsp *interface __attribute__((unused)),
     const struct OneWireSspConfig *config)
 {
-  //FIXME
   gpioSetType(gpioInit(config->mosi), GPIO_OPENDRAIN);
-  gpioSetPull(gpioInit(config->mosi), GPIO_PULLUP);
-  gpioSetPull(gpioInit(config->miso), GPIO_PULLUP);
+  gpioSetPull(gpioInit(config->mosi), GPIO_PULLUP); //FIXME
 }
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWireSsp *interface)
@@ -70,7 +68,8 @@ static void beginTransmission(struct OneWireSsp *interface)
 
   sspSetRate((struct SspBase *)interface, RATE_RESET);
   interface->state = OW_SSP_RESET;
-  reg->DR = PATTERN_RESET; /* Execute reset */
+  reg->DR = PATTERN_RESET;
+  reg->DR = PATTERN_PRESENCE;
 }
 /*----------------------------------------------------------------------------*/
 static void sendWord(struct OneWireSsp *interface, uint8_t word)
@@ -90,25 +89,12 @@ static void interruptHandler(void *object)
 
   while (reg->SR & SR_RNE)
   {
-    uint16_t data = reg->DR;
+    uint16_t data = ~reg->DR;
 
     switch (interface->state)
     {
-      case OW_SSP_RESET:
-        if (data ^ MASK_PRESENCE)
-        {
-          sspSetRate((struct SspBase *)object, RATE_DATA);
-          interface->state = OW_SSP_TRANSMIT;
-        }
-        else
-        {
-          interface->state = OW_SSP_ERROR;
-          event = true;
-        }
-        break;
-
       case OW_SSP_RECEIVE:
-        if (data & MASK_DATA)
+        if (!(data & DATA_MASK))
           interface->word |= 1 << interface->bit;
 
       case OW_SSP_TRANSMIT:
@@ -125,6 +111,23 @@ static void interruptHandler(void *object)
             interface->state = OW_SSP_IDLE;
             event = true;
           }
+        }
+        break;
+
+      case OW_SSP_RESET:
+        interface->state = OW_SSP_PRESENCE;
+        break;
+
+      case OW_SSP_PRESENCE:
+        if (data & DATA_MASK)
+        {
+          sspSetRate((struct SspBase *)object, RATE_DATA);
+          interface->state = OW_SSP_TRANSMIT;
+        }
+        else
+        {
+          interface->state = OW_SSP_ERROR;
+          event = true;
         }
         break;
 

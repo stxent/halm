@@ -17,6 +17,7 @@ enum oneWireSspState
 {
   OW_SSP_IDLE = 0,
   OW_SSP_RESET,
+  OW_SSP_PRESENCE,
   OW_SSP_RECEIVE,
   OW_SSP_TRANSMIT,
   OW_SSP_ERROR
