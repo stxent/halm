@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <platform/nxp/ssp_base.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -54,22 +55,23 @@ enum result sspSetupPins(struct SspBase *interface,
 /*----------------------------------------------------------------------------*/
 void sspSetRate(struct SspBase *interface, uint32_t rate)
 {
-  LPC_SSP_Type *reg = interface->reg;
-  uint16_t divider;
+  rate = (sspGetClock(interface) >> 1) / rate - 1;
 
-  divider = (sspGetClock(interface) >> 1) / rate - 1;
-  /* FIXME Add more precise calculation of SSP dividers */
-  reg->CPSR = 2;
-  reg->CR0 = (reg->CR0 & ~CR0_SCR_MASK) | CR0_SCR(divider);
+  assert(rate && rate < 127 * 256);
+
+  LPC_SSP_Type *reg = interface->reg;
+  uint8_t prescaler = 1 + rate / 256;
+
+  reg->CPSR = prescaler << 1;
+  reg->CR0 = (reg->CR0 & ~CR0_SCR_MASK) | CR0_SCR(rate / prescaler);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetRate(struct SspBase *interface)
 {
-  uint32_t rate;
-  uint16_t divider;
+  LPC_SSP_Type *reg = interface->reg;
 
-  /* FIXME Add more precise calculation of SSP rate */
-  divider = CR0_SCR_VALUE(((LPC_SSP_Type *)interface->reg)->CR0);
-  rate = (sspGetClock(interface) >> 1) / (divider + 1);
-  return rate;
+  if (!reg->CPSR)
+    return 0;
+
+  return sspGetClock(interface) / reg->CPSR / (CR0_SCR_VALUE(reg->CR0) + 1);
 }
