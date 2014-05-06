@@ -32,10 +32,7 @@ enum gpTimerEvent
 /*----------------------------------------------------------------------------*/
 struct GpTimerConfig
 {
-  /**
-   * Optional: timer fundamental frequency. Argument is not used in
-   * external clock mode.
-   */
+  /** Optional: timer frequency. Argument is not used in external clock mode. */
   uint32_t frequency;
   /** Optional: external clock input. */
   gpio_t input;
@@ -49,11 +46,6 @@ struct GpTimerConfig
    * during the initialization process.
    */
   bool disabled;
-  /**
-   * Optional: increment timer on falling edge of an external clock.
-   * Argument is not used without external clock mode.
-   */
-  bool invert;
   /** Optional: disable timer after reaching maximum value. */
   bool oneshot;
   /** Optional: match event used as a reset source for the timer. */

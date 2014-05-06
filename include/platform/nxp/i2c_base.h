@@ -15,8 +15,12 @@ extern const struct EntityClass *I2cBase;
 /*----------------------------------------------------------------------------*/
 struct I2cBaseConfig
 {
-  gpio_t scl, sda; /* Mandatory: interface pins */
-  uint8_t channel; /* Mandatory: peripheral identifier */
+  /** Mandatory: serial clock pin. */
+  gpio_t scl;
+  /** Mandatory: serial data pin. */
+  gpio_t sda;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct I2cBase

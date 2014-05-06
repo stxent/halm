@@ -23,15 +23,25 @@ enum i2cState
 /*----------------------------------------------------------------------------*/
 enum i2cOption
 {
-  IF_I2C_SENDSTOP = IF_END_OPTION /* Repeated start condition generation */
+  /**
+   * Send stop after write operation. Option controls the repeated start
+   * condition generation. This option is enabled by default.
+   */
+  IF_I2C_SENDSTOP = IF_END_OPTION
 };
 /*----------------------------------------------------------------------------*/
 struct I2cConfig
 {
-  uint32_t rate; /* Mandatory: interface data rate */
-  gpio_t scl, sda; /* Mandatory: interface pins */
-  priority_t priority; /* Optional: interrupt priority */
-  uint8_t channel; /* Mandatory: peripheral number */
+  /** Mandatory: data rate. */
+  uint32_t rate;
+  /** Mandatory: serial clock pin. */
+  gpio_t scl;
+  /** Mandatory: serial data pin. */
+  gpio_t sda;
+  /** Optional: interrupt priority. */
+  priority_t priority;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct I2c

@@ -9,9 +9,9 @@
 #include <platform/nxp/i2c.h>
 #include <platform/nxp/i2c_defs.h>
 /*----------------------------------------------------------------------------*/
+/* Master transmitter and receiver modes */
 enum status
 {
-  /* Only master transmitter and receiver modes are implemented */
   STAT_START_TRANSMITTED      = 0x08, /* Start condition transmitted */
   STAT_RESTART_TRANSMITTED    = 0x10, /* Repeated start condition transmitted */
   STAT_SLAVE_WRITE_ACK        = 0x18,

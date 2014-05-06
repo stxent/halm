@@ -85,8 +85,7 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   if (captureChannel != -1)
   {
-    reg->CTCR = CTCR_INPUT(captureChannel)
-        | (config->invert ? CTCR_MODE_FALLING : CTCR_MODE_RISING);
+    reg->CTCR = CTCR_INPUT(captureChannel) | CTCR_MODE_RISING;
     reg->PR = 0; /* In external clock mode frequency setting will be ignored */
   }
   else
