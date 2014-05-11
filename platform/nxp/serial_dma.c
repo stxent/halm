@@ -139,14 +139,17 @@ static enum result serialCallback(void *object, void (*callback)(void *),
 static enum result serialGet(void *object, enum ifOption option,
     void *data __attribute__((unused)))
 {
-  /* TODO Add more options to SerialDma */
+  /* TODO Add more options for SerialDma */
   struct SerialDma *interface = object;
 
   switch (option)
   {
     case IF_STATUS:
-      return dmaActive(interface->rxDma) || dmaActive(interface->txDma) ?
-          E_BUSY : E_OK;
+      if (dmaActive(interface->rxDma) || dmaActive(interface->txDma))
+        return E_BUSY;
+      else
+        return E_OK;
+
     default:
       return E_ERROR;
   }
@@ -162,12 +165,15 @@ static enum result serialSet(void *object, enum ifOption option,
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
+
     case IF_RATE:
       uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
       return E_OK;
+
     case IF_ZEROCOPY:
       interface->blocking = false;
       return E_OK;
+
     default:
       return E_ERROR;
   }
@@ -183,6 +189,7 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   {
     if (interface->blocking)
       while (dmaActive(interface->rxDma));
+
     return length;
   }
   else
@@ -199,6 +206,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   {
     if (interface->blocking)
       while (dmaActive(interface->txDma));
+
     return length;
   }
   else

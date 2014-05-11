@@ -217,8 +217,8 @@ static enum result channelInit(void *object, const void *configPtr)
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
 
   /* Set four-byte burst size by default */
-  const uint8_t peripheral = eventToPeripheral(config->event); //TODO Remove in case of mem to mem
-  uint8_t srcBurst = DMA_BURST_4, dstBurst = DMA_BURST_4;
+  const uint8_t peripheral = eventToPeripheral(config->event);
+  uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
 
   switch (config->type)
   {
@@ -233,7 +233,7 @@ static enum result channelInit(void *object, const void *configPtr)
     default:
       break;
   }
-  /* Two-byte burst unsupported */
+  /* Two-byte burst requests are unsupported */
   if (srcBurst >= DMA_BURST_4)
     --srcBurst;
   if (dstBurst >= DMA_BURST_4)
@@ -326,7 +326,7 @@ static void channelListAppend(void *object, void *first, uint32_t index,
 {
   struct DescriptorListItem *item = (struct DescriptorListItem *)first + index;
 
-  /* Append new element to the last element in list pointed by index */
+  /* Append new element to the last element pointed by index */
   if (index)
     (item - 1)->next = (uint32_t)item;
 

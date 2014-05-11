@@ -149,9 +149,11 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
     case IF_AVAILABLE:
       *(uint32_t *)data = byteQueueSize(&interface->rxQueue);
       return E_OK;
+
     case IF_PENDING:
       *(uint32_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
+
     default:
       return E_ERROR;
   }
@@ -165,6 +167,7 @@ static enum result serialSet(void *object, enum ifOption option,
     case IF_RATE:
       uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
       return E_OK;
+
     default:
       return E_ERROR;
   }

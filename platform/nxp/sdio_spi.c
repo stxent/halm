@@ -412,6 +412,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
     case IF_ADDRESS:
       *(uint64_t *)data = device->position;
       return E_OK;
+
     default:
       return E_ERROR;
   }
@@ -428,6 +429,7 @@ static enum result sdioSet(void *object, enum ifOption option,
       /* TODO Add boundary check */
       device->position = *(uint64_t *)data;
       return E_OK;
+
     default:
       return E_ERROR;
   }

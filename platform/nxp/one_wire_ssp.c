@@ -96,7 +96,6 @@ static void interruptHandler(void *object)
       case OW_SSP_RECEIVE:
         if (!(data & DATA_MASK))
           interface->word |= 1 << interface->bit;
-
       case OW_SSP_TRANSMIT:
         if (++interface->bit == 8)
         {
@@ -228,6 +227,7 @@ static enum result oneWireGet(void *object, enum ifOption option,
         return E_ERROR;
       else
         return interface->state != OW_SSP_IDLE ? E_BUSY : E_OK;
+
     default:
       return E_ERROR;
   }
@@ -243,12 +243,15 @@ static enum result oneWireSet(void *object, enum ifOption option,
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
+
     case IF_DEVICE:
       interface->address = toLittleEndian64(*(uint64_t *)data);
       return E_OK;
+
     case IF_ZEROCOPY:
       interface->blocking = false;
       return E_OK;
+
     default:
       return E_ERROR;
   }

@@ -215,9 +215,11 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
         return E_ERROR;
       else
         return interface->state != I2C_IDLE ? E_BUSY : E_OK;
+
     case IF_RATE:
       *(uint32_t *)data = i2cGetRate(object);
       return E_OK;
+
     default:
       return E_ERROR;
   }
@@ -233,6 +235,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
     case IF_I2C_SENDSTOP:
       interface->sendStopBit = *(uint32_t *)data ? true : false;
       return E_OK;
+
     default:
       break;
   }
@@ -242,15 +245,19 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
+
     case IF_DEVICE:
       interface->address = *(uint32_t *)data;
       return E_OK;
+
     case IF_RATE:
       i2cSetRate(object, *(uint32_t *)data);
       return E_OK;
+
     case IF_ZEROCOPY:
       interface->blocking = false;
       return E_OK;
+
     default:
       return E_ERROR;
   }

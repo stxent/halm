@@ -167,6 +167,7 @@ static enum result adcGet(void *object, enum ifOption option,
   {
     case IF_STATUS:
       return interface->left ? E_BUSY : E_OK;
+
     default:
       return E_ERROR;
   }

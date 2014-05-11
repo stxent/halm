@@ -172,9 +172,11 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
     case IF_RATE:
       *(uint32_t *)data = sspGetRate(object);
       return E_OK;
+
     case IF_STATUS:
       return dmaActive(interface->rxDma) || dmaActive(interface->txDma)
           || reg->SR & SR_BSY ? E_BUSY : E_OK;
+
     default:
       return E_ERROR;
   }
@@ -190,13 +192,16 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       dmaCallback(interface->rxDma, 0, 0);
       interface->blocking = true;
       return E_OK;
+
     case IF_RATE:
       sspSetRate(object, *(uint32_t *)data);
       return E_OK;
+
     case IF_ZEROCOPY:
       dmaCallback(interface->rxDma, dmaHandler, interface);
       interface->blocking = false;
       return E_OK;
+
     default:
       return E_ERROR;
   }
