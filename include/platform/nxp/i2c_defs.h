@@ -23,13 +23,13 @@
 /*------------------Data register---------------------------------------------*/
 #define DATA_READ                       BIT(0)
 #define DATA_WRITE                      (0)
-/*------------------Status Register-------------------------------------------*/
-/* TODO Remove unused mask? */
-#define STAT_MASK                       BIT_FIELD(0x1F, 3)
-#define STAT_VALUE(reg)                 (((reg) >> 3) & 0x1F)
 /*------------------Monitor Mode Control register-----------------------------*/
 #define MMCTRL_MM_ENA                   BIT(0) /* Monitor mode enable */
 #define MMCTRL_ENA_SCL                  BIT(1) /* SCL output enable */
 #define MMCTRL_MATCH_ALL                BIT(2) /* Select interrupt match mode */
+/*------------------Slave Address registers-----------------------------------*/
+#define ADR_GENERAL_CALL                BIT(0) /* General Call enable bit */
+#define ADR_ADDRESS(address)            BIT_FIELD((address), 1)
+#define ADR_VALUE(reg)                  (((reg) >> 1) & 0x7F)
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_DEFS_H_ */

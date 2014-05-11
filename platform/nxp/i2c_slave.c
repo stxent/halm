@@ -60,16 +60,6 @@ static void interruptHandler(void *object)
       interface->state = I2C_SLAVE_ADDRESS;
       break;
 
-    case STAT_ADDRESS_READ_RECEIVED:
-      reg->DAT = interface->cache[interface->external++];
-
-      /* Wrap current external position after reaching the end of cache */
-      if (interface->external >= interface->size)
-        interface->external = 0;
-
-      interface->state = I2C_SLAVE_DATA;
-      break;
-
     case STAT_DATA_RECEIVED_ACK:
       if (interface->state == I2C_SLAVE_ADDRESS)
       {
@@ -78,17 +68,20 @@ static void interruptHandler(void *object)
       }
       else
       {
-        interface->cache[interface->external++] = reg->DAT;
+        interface->cache[interface->external] = reg->DAT;
 
-        if (interface->external >= interface->size)
+        if (++interface->external >= interface->size)
           interface->external = 0;
       }
       break;
 
+    case STAT_ADDRESS_READ_RECEIVED:
+      interface->state = I2C_SLAVE_DATA;
     case STAT_DATA_TRANSMITTED_ACK:
-      reg->DAT = interface->cache[interface->external++];
+      reg->DAT = interface->cache[interface->external];
 
-      if (interface->external >= interface->size)
+      /* Wrap current external position after reaching the end of cache */
+      if (++interface->external >= interface->size)
         interface->external = 0;
       break;
 
@@ -104,8 +97,8 @@ static void interruptHandler(void *object)
       break;
   }
 
-  reg->CONCLR = CONCLR_SIC;
   reg->CONSET = CONSET_AA;
+  reg->CONCLR = CONCLR_SIC;
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
@@ -181,11 +174,14 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
     case IF_ADDRESS:
       *(uint32_t *)data = interface->internal;
       return E_OK;
+
     case IF_DEVICE:
-       *(uint32_t *)data = reg->ADR0 >> 1; //FIXME
+       *(uint32_t *)data = ADR_VALUE(reg->ADR0);
       return E_OK;
+
     case IF_STATUS:
       return interface->state != I2C_SLAVE_IDLE ? E_BUSY : E_OK;
+
     default:
       return E_ERROR;
   }
@@ -199,11 +195,18 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch (option)
   {
     case IF_ADDRESS:
-      interface->internal = *(uint32_t *)data;
-      return E_OK;
+      if (*(uint32_t *)data < interface->size)
+      {
+        interface->internal = *(uint32_t *)data;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
+
     case IF_DEVICE:
-      reg->ADR0 = *(uint32_t *)data << 1; //FIXME
+      reg->ADR0 = ADR_ADDRESS(*(uint32_t *)data);
       return E_OK;
+
     default:
       return E_ERROR;
   }
@@ -212,41 +215,43 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct I2cSlave *interface = object;
-  uint32_t read;
+  uint8_t *position = interface->cache + interface->internal;
+  uint32_t left = interface->size - (uint32_t)interface->internal;
 
   if (!length)
     return 0;
 
-  read = interface->internal + length <= interface->size ? length
-      : interface->size - interface->internal;
-
-  memcpy(buffer, interface->cache + interface->internal, read);
-  interface->internal += read;
-
-  /* Wrap address */
-  if (interface->internal >= interface->size)
+  if (length < left)
+  {
+    left = length;
+    interface->internal += length;
+  }
+  else
     interface->internal = 0;
 
-  return read;
+  memcpy(buffer, position, left);
+
+  return left;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct I2cSlave *interface = object;
-  uint32_t written;
+  uint8_t *position = interface->cache + interface->internal;
+  uint32_t left = interface->size - (uint32_t)interface->internal;
 
   if (!length)
     return 0;
 
-  written = interface->internal + length <= interface->size ? length
-      : interface->size - interface->internal;
-
-  memcpy(interface->cache + interface->internal, buffer, written);
-  interface->internal += written;
-
-  /* Wrap address */
-  if (interface->internal >= interface->size)
+  if (length < left)
+  {
+    left = length;
+    interface->internal += length;
+  }
+  else
     interface->internal = 0;
 
-  return written;
+  memcpy(position, buffer, left);
+
+  return left;
 }
