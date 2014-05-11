@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <bits.h>
 #include <delay.h>
+#include <memory.h>
 #include <platform/nxp/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_POW       9
@@ -118,9 +119,7 @@ static enum result getLongResponse(struct SdioSpi *device,
     if (ifRead(device->interface, buffer, sizeof(buffer)) != sizeof(buffer))
       res = E_INTERFACE;
     /* Response comes in big-endian format */
-    /* TODO Replace with byte-order macro */
-    response->payload = (uint32_t)buffer[3] | ((uint32_t)buffer[2] << 8)
-        | ((uint32_t)buffer[1] << 16) | ((uint32_t)buffer[0] << 24);
+    response->payload = toBigEndian32(*(uint32_t *)buffer);
   }
 
   return res;
