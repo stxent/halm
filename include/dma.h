@@ -52,10 +52,9 @@ struct DmaClass
   enum result (*start)(void *, void *, const void *, uint32_t);
   void (*stop)(void *);
 
-  /* Support for scatter-gather operations */
-  void *(*listAllocate)(void *, uint32_t);
-  void (*listAppend)(void *, void *, uint32_t, void *, const void *, uint32_t);
-  enum result (*listStart)(void *, const void *);
+  /* Operations with buffer lists */
+  void *(*allocate)(void *, uint32_t, bool);
+  enum result (*execute)(void *, const void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Dma
@@ -86,50 +85,11 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Allocate memory for linked list used by scatter-gather transfers.
- * @param channel Pointer to a Dma object.
- * @param size Size of the list in elements.
- * @return Pointer to the beginning of the allocated memory space.
- */
-static inline void *dmaListAllocate(void *channel, uint32_t size)
-{
-  return ((struct DmaClass *)CLASS(channel))->listAllocate(channel, size);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Link next element to the linked list.
- * @param channel Pointer to a Dma object.
- * @param list Pointer to a first element of the linked list.
- * @param index Index of the currently processing element in linked list.
- * @param destination Destination memory address.
- * @param source Source memory address.
- * @param size Size of the transfer.
- * @return @b E_OK on success.
- */
-static inline void dmaListAppend(void *channel, void *first, uint32_t index,
-    void *destination, const void *source, uint32_t size)
-{
-  ((struct DmaClass *)CLASS(channel))->listAppend(channel, first, index,
-      destination, source, size);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Begin the execution of previously created scatter-gather transfer.
- * @param channel Pointer to a Dma object.
- * @param list Pointer to a first element of the linked list.
- * @return @b E_OK on success.
- */
-static inline enum result dmaListStart(void *channel, const void *first)
-{
-  return ((struct DmaClass *)CLASS(channel))->listStart(channel, first);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Start transfer.
+ * Start the transfer.
  * @param channel Pointer to a Dma object.
  * @param destination Destination memory address.
  * @param source Source memory address.
- * @param size Size of the transfer.
+ * @param size Transfer size in number of transfers.
  * @return @b E_OK on success.
  */
 static inline enum result dmaStart(void *channel, void *destination,
@@ -140,12 +100,35 @@ static inline enum result dmaStart(void *channel, void *destination,
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Disable a channel and lose data in the FIFO.
+ * Disable the channel.
  * @param channel Pointer to a Dma object.
  */
 static inline void dmaStop(void *channel)
 {
   ((struct DmaClass *)CLASS(channel))->stop(channel);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Allocate memory for a buffer list.
+ * @param channel Pointer to a Dma object.
+ * @param size Size of the list in elements.
+ * @param circular Set @b true to create a circular buffer list.
+ * @return Pointer to an allocated list on success or zero otherwise.
+ */
+static inline void *dmaAllocate(void *channel, uint32_t size, bool circular)
+{
+  return ((struct DmaClass *)CLASS(channel))->allocate(channel, size, circular);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Start the scatter-gather transfer.
+ * @param channel Pointer to a Dma object.
+ * @param list Pointer to a buffer list.
+ * @return @b E_OK on success.
+ */
+static inline enum result dmaExecute(void *channel, const void *list)
+{
+  return ((struct DmaClass *)CLASS(channel))->execute(channel, list);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_H_ */
