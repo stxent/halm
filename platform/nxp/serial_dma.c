@@ -11,7 +11,7 @@
 #define RX_FIFO_LEVEL 0 /* 1 character */
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
-static enum result dmaSetup(struct SerialDma *, int8_t, int8_t);
+static enum result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
@@ -43,10 +43,10 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
-    int8_t txChannel)
+static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
+    uint8_t txChannel)
 {
-  struct GpDmaConfig channels[2] = {
+  const struct GpDmaConfig channels[2] = {
       {
           .event = GPDMA_UART0_RX + interface->parent.channel,
           .channel = rxChannel,
@@ -70,10 +70,12 @@ static enum result dmaSetup(struct SerialDma *interface, int8_t rxChannel,
   if (!interface->rxDma)
     return E_ERROR;
   dmaCallback(interface->rxDma, dmaHandler, interface);
+
   interface->txDma = init(GpDma, channels + 1);
   if (!interface->txDma)
     return E_ERROR;
   dmaCallback(interface->txDma, dmaHandler, interface);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

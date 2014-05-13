@@ -15,13 +15,20 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
+#define GPDMA_CHANNEL_COUNT 8
+#define GPDMA_MAX_TRANSFER  ((1 << 12) - 1)
+/*----------------------------------------------------------------------------*/
 extern const struct DmaClass *GpDma;
 /*----------------------------------------------------------------------------*/
+/** Direct Memory Access transfer type. */
 enum gpDmaType
 {
-  GPDMA_TYPE_M2M = 0, /* Memory to memory */
-  GPDMA_TYPE_M2P, /* Memory to peripheral */
-  GPDMA_TYPE_P2M /* Peripheral to memory */
+  /** Memory to memory. */
+  GPDMA_TYPE_M2M = 0,
+  /** Memory to peripheral. */
+  GPDMA_TYPE_M2P,
+  /** Peripheral to memory. */
+  GPDMA_TYPE_P2M
 };
 /*----------------------------------------------------------------------------*/
 struct GpDmaConfig
@@ -57,7 +64,7 @@ struct GpDma
   /* Precalculated values of channel control and configuration registers */
   uint32_t control, config;
   /* Precalculated values of the connection multiplexer register */
-  uint8_t muxMask, muxValue;
+  uint32_t muxMask, muxValue;
   /* Identifier of the channel */
   uint8_t number;
 };

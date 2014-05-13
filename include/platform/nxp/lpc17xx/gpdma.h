@@ -7,10 +7,9 @@
 #ifndef GPDMA_H_
 #define GPDMA_H_
 /*----------------------------------------------------------------------------*/
-/* GPDMA connections */
+/** Direct Memory Access controller connections. */
 enum gpDmaEvent
 {
-  GPDMA_MEMORY = 0,
   GPDMA_SSP0_RX,
   GPDMA_SSP1_RX,
   GPDMA_SSP0_TX,
@@ -35,6 +34,7 @@ enum gpDmaEvent
   GPDMA_MAT3_1,
   GPDMA_ADC,
   GPDMA_DAC,
+  GPDMA_MEMORY,
   GPDMA_EVENT_END
 };
 /*----------------------------------------------------------------------------*/

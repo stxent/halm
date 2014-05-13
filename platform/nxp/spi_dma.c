@@ -9,7 +9,7 @@
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
-static enum result dmaSetup(struct SpiDma *, int8_t, int8_t);
+static enum result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
@@ -42,10 +42,10 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct SpiDma *interface, int8_t rxChannel,
-    int8_t txChannel)
+static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
+    uint8_t txChannel)
 {
-  struct GpDmaConfig channels[3] = {
+  const struct GpDmaConfig channels[3] = {
       {
           .event = GPDMA_SSP0_RX + interface->parent.channel,
           .channel = rxChannel,
@@ -76,12 +76,15 @@ static enum result dmaSetup(struct SpiDma *interface, int8_t rxChannel,
   interface->rxDma = init(GpDma, channels + 0);
   if (!interface->rxDma)
     return E_ERROR;
+
   interface->txDma = init(GpDma, channels + 1);
   if (!interface->txDma)
     return E_ERROR;
+
   interface->txMockDma = init(GpDma, channels + 2);
   if (!interface->txMockDma)
     return E_ERROR;
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

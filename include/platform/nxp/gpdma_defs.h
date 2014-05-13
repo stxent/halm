@@ -32,6 +32,8 @@
 #define CONFIG_IE                       BIT(14)
 /* Terminal count interrupt mask */
 #define CONFIG_ITC                      BIT(15)
+/* Enable locked transfer */
+#define CONFIG_LOCK                     BIT(16)
 /* Indicates whether FIFO not empty */
 #define CONFIG_ACTIVE                   BIT(17)
 #define CONFIG_HALT                     BIT(18)
