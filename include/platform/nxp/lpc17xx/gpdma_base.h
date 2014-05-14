@@ -1,11 +1,11 @@
 /*
- * platform/nxp/lpc17xx/gpdma.h
+ * platform/nxp/lpc17xx/gpdma_base.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPDMA_H_
-#define GPDMA_H_
+#ifndef GPDMA_BASE_H_
+#define GPDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
 /** Direct Memory Access controller connections. */
 enum gpDmaEvent
@@ -38,4 +38,4 @@ enum gpDmaEvent
   GPDMA_EVENT_END
 };
 /*----------------------------------------------------------------------------*/
-#endif /* GPDMA_H_ */
+#endif /* GPDMA_BASE_H_ */

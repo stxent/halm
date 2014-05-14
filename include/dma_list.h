@@ -7,13 +7,16 @@
 #ifndef DMA_LIST_H_
 #define DMA_LIST_H_
 /*----------------------------------------------------------------------------*/
+#include <dma.h>
+/*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct DmaListClass
 {
-  CLASS_HEADER
+  struct DmaClass parent;
 
   enum result (*append)(void *, void *, const void *, uint32_t);
   void (*clear)(void *);
+  enum result (*execute)(void *);
 };
 /*----------------------------------------------------------------------------*/
 struct DmaList
@@ -43,6 +46,16 @@ static inline enum result dmaListAppend(void *list, void *destination,
 static inline void dmaListClear(void *list)
 {
   ((struct DmaListClass *)CLASS(list))->clear(list);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Start the scatter-gather transfer.
+ * @param channel Pointer to a DmaList object.
+ * @return @b E_OK on success.
+ */
+static inline enum result dmaListExecute(void *channel)
+{
+  return ((struct DmaListClass *)CLASS(channel))->execute(channel);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_LIST_H_ */

@@ -49,12 +49,9 @@ struct DmaClass
 
   bool (*active)(void *);
   void (*callback)(void *, void (*)(void *), void *);
+  uint32_t (*index)(void *);
   enum result (*start)(void *, void *, const void *, uint32_t);
   void (*stop)(void *);
-
-  /* Operations with buffer lists */
-  void *(*allocate)(void *, uint32_t, bool);
-  enum result (*execute)(void *, const void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Dma
@@ -85,6 +82,17 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 /**
+ * Get status of the transfer.
+ * @param channel Pointer to a Dma object.
+ * @return Transmitted or received elements count for standard transfers or
+ * buffer index for scatter-gather transfers.
+ */
+static inline uint32_t dmaIndex(void *channel)
+{
+  return ((struct DmaClass *)CLASS(channel))->index(channel);
+}
+/*----------------------------------------------------------------------------*/
+/**
  * Start the transfer.
  * @param channel Pointer to a Dma object.
  * @param destination Destination memory address.
@@ -106,29 +114,6 @@ static inline enum result dmaStart(void *channel, void *destination,
 static inline void dmaStop(void *channel)
 {
   ((struct DmaClass *)CLASS(channel))->stop(channel);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Allocate memory for a buffer list.
- * @param channel Pointer to a Dma object.
- * @param size Size of the list in elements.
- * @param circular Set @b true to create a circular buffer list.
- * @return Pointer to an allocated list on success or zero otherwise.
- */
-static inline void *dmaAllocate(void *channel, uint32_t size, bool circular)
-{
-  return ((struct DmaClass *)CLASS(channel))->allocate(channel, size, circular);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Start the scatter-gather transfer.
- * @param channel Pointer to a Dma object.
- * @param list Pointer to a buffer list.
- * @return @b E_OK on success.
- */
-static inline enum result dmaExecute(void *channel, const void *list)
-{
-  return ((struct DmaClass *)CLASS(channel))->execute(channel, list);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_H_ */

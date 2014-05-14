@@ -8,20 +8,42 @@
 #define GPDMA_LIST_H_
 /*----------------------------------------------------------------------------*/
 #include <dma_list.h>
+#include "gpdma_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct DmaListClass *GpDmaList;
 /*----------------------------------------------------------------------------*/
 struct GpDmaListConfig
 {
-  /** Mandatory: parent channel. */
-  struct Dma *parent;
   /** Mandatory: list size. */
   uint16_t size;
+  /** Mandatory: channel number. */
+  uint8_t channel;
+  /** Mandatory: destination configuration. */
+  struct {
+    bool increment;
+  } destination;
+  /** Mandatory: source configuration. */
+  struct {
+    bool increment;
+  } source;
+  /** Mandatory: number of transfers that make up a burst transfer request. */
+  enum dmaBurst burst;
+  /** Mandatory: source and destination transfer widths. */
+  enum dmaWidth width;
+  /** Mandatory: request connection to the peripheral or memory. */
+  enum gpDmaEvent event;
+  /** Mandatory: transfer type. */
+  enum gpDmaType type;
   /**
    * Optional: buffer organization selection for scatter-gather transfers.
    * Set @b true for circular buffer type or @b false for linear type.
    */
   bool circular;
+  /**
+   * Optional: set @b true to pace channel interrupts by disabling requests
+   * for intermediate states of the transfer.
+   */
+  bool pace;
 };
 /*----------------------------------------------------------------------------*/
 struct GpDmaListItem
@@ -34,11 +56,13 @@ struct GpDmaListItem
 /*----------------------------------------------------------------------------*/
 struct GpDmaList
 {
-  struct DmaList parent;
+  struct GpDmaBase parent;
 
   /* Descriptor list container */
-  struct GpDmaListItem *first;
+  struct GpDmaListItem *buffer;
 
+  /* Automatic transfer alignment boundary */
+  uint16_t alignment;
   /* List capacity */
   uint16_t capacity;
   /* Current list size */
@@ -46,6 +70,8 @@ struct GpDmaList
 
   /* Circular buffer flag */
   bool circular;
+  /* Pace interrupts flag */
+  bool pace;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPDMA_LIST_H_ */
