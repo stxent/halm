@@ -24,7 +24,7 @@ struct DmaHandler
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t);
 static uint8_t eventToPeripheral(enum gpDmaEvent);
-static void setEventMux(struct GpDmaBase *, enum gpDmaEvent);
+static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
 static inline void dmaHandlerAttach();
 static inline void dmaHandlerDetach();
@@ -126,14 +126,14 @@ static uint8_t eventToPeripheral(enum gpDmaEvent event)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void setEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
+static void updateEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
 {
   if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
   {
     uint32_t position = event - GPDMA_MAT0_0;
 
-    channel->muxMask &= ~(1 << position);
-    channel->muxValue |= 1 << position;
+    channel->mux.mask &= ~(1 << position);
+    channel->mux.value |= 1 << position;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -150,33 +150,39 @@ enum result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
       0, descriptor) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
+void gpDmaSetupMux(struct GpDmaBase *descriptor)
+{
+  LPC_SC->DMAREQSEL = (LPC_SC->DMAREQSEL & descriptor->mux.mask)
+      | descriptor->mux.value;
+}
+/*----------------------------------------------------------------------------*/
 void DMA_ISR(void)
 {
-  const uint8_t errorStat = LPC_GPDMA->INTERRSTAT;
-  const uint8_t terminalStat = LPC_GPDMA->INTTCSTAT;
-  uint8_t mask = 0x01;
+  const uint8_t errorStatus = LPC_GPDMA->INTERRSTAT;
+  const uint8_t terminalStatus = LPC_GPDMA->INTTCSTAT;
 
-  LPC_GPDMA->INTERRCLEAR = errorStat;
-  LPC_GPDMA->INTTCCLEAR = terminalStat;
+  LPC_GPDMA->INTERRCLEAR = errorStatus;
+  LPC_GPDMA->INTTCCLEAR = terminalStatus;
+
+  uint8_t intStatus = errorStatus | terminalStatus;
 
   for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
   {
-    struct GpDmaBase *descriptor = dmaHandler->descriptors[index];
-
-    if (descriptor && mask & (terminalStat | errorStat))
+    if (intStatus & 0x01)
     {
+      struct GpDmaBase *descriptor = dmaHandler->descriptors[index];
+
       if (!(((LPC_GPDMACH_Type *)descriptor->reg)->CONFIG & CONFIG_ENABLE))
       {
-        /* Clear descriptor when channel is disabled or transfer is completed */
+        /* Clear descriptor when channel is stopped or transfer is completed */
         dmaHandler->descriptors[index] = 0;
       }
 
-      /* TODO Add DMA error handling in GPDMA interrupt */
-      if (descriptor->callback)
-        descriptor->callback(descriptor->callbackArgument);
+      if (descriptor->handler)
+        descriptor->handler(descriptor);
     }
 
-    mask <<= 1;
+    intStatus >>= 1;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -187,15 +193,15 @@ static enum result channelInit(void *object, const void *configPtr)
 
   assert(config->channel < GPDMA_CHANNEL_COUNT);
 
-  channel->callback = 0;
   channel->config = 0;
   channel->control = 0;
+  channel->handler = 0;
   channel->number = (uint8_t)config->channel;
   channel->reg = calcPeripheral(channel->number);
 
   /* Reset multiplexer mask and value */
-  channel->muxMask = 0xFFFFFFFFUL;
-  channel->muxValue = 0;
+  channel->mux.mask = 0xFF;
+  channel->mux.value = 0;
 
   if (config->type != GPDMA_TYPE_M2M)
   {
@@ -216,7 +222,7 @@ static enum result channelInit(void *object, const void *configPtr)
     }
 
     /* Calculate new mask and value for event multiplexer */
-    setEventMux(channel, config->event);
+    updateEventMux(channel, config->event);
   }
 
   /* Register new descriptor in the handler */

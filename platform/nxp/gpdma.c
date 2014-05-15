@@ -9,6 +9,8 @@
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *);
+/*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static bool channelActive(void *);
@@ -31,6 +33,16 @@ static const struct DmaClass channelTable = {
 /*----------------------------------------------------------------------------*/
 const struct DmaClass *GpDma = &channelTable;
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct GpDma *channel = object;
+
+  /* TODO Add DMA errors detection and processing */
+
+  if (channel->callback)
+    channel->callback(channel->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configPtr)
 {
   const struct GpDmaConfig * const config = configPtr;
@@ -45,6 +57,9 @@ static enum result channelInit(void *object, const void *configPtr)
   /* Call base class constructor */
   if ((res = GpDmaBase->init(object, &parentConfig)) != E_OK)
     return res;
+
+  channel->parent.handler = interruptHandler;
+  channel->callback = 0;
 
   channel->parent.control |= CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
       | CONTROL_DST_WIDTH(config->width);
@@ -103,8 +118,8 @@ static void channelCallback(void *object, void (*callback)(void *),
 {
   struct GpDma *channel = object;
 
-  channel->parent.callback = callback;
-  channel->parent.callbackArgument = argument;
+  channel->callback = callback;
+  channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelIndex(void *object)
@@ -126,8 +141,7 @@ static enum result channelStart(void *object, void *destination,
   if (gpDmaSetDescriptor(channel->parent.number, object) != E_OK)
     return E_BUSY;
 
-  LPC_SC->DMAREQSEL = (LPC_SC->DMAREQSEL & channel->parent.muxMask)
-      | channel->parent.muxValue;
+  gpDmaSetupMux(object);
 
   const uint32_t request = 1 << channel->parent.number;
   LPC_GPDMACH_Type *reg = channel->parent.reg;

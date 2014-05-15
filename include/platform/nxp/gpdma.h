@@ -36,6 +36,9 @@ struct GpDmaConfig
 struct GpDma
 {
   struct GpDmaBase parent;
+
+  void (*callback)(void *);
+  void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPDMA_H_ */

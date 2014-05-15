@@ -58,10 +58,13 @@ struct GpDmaList
 {
   struct GpDmaBase parent;
 
+  void (*callback)(void *);
+  void *callbackArgument;
+
   /* Descriptor list container */
   struct GpDmaListItem *buffer;
 
-  /* Automatic transfer alignment boundary */
+  /* Size alignment mask */
   uint16_t alignment;
   /* List capacity */
   uint16_t capacity;

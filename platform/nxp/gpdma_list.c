@@ -42,6 +42,16 @@ static const struct DmaListClass channelTable = {
 /*----------------------------------------------------------------------------*/
 const struct DmaListClass *GpDmaList = &channelTable;
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct GpDmaList *channel = object;
+
+  /* TODO Add DMA errors detection and processing */
+
+  if (channel->callback)
+    channel->callback(channel->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configPtr)
 {
   const struct GpDmaListConfig * const config = configPtr;
@@ -64,7 +74,10 @@ static enum result channelInit(void *object, const void *configPtr)
   if ((res = GpDmaBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  channel->alignment = 1 << config->burst;
+  channel->parent.handler = interruptHandler;
+  channel->callback = 0;
+
+  channel->alignment = (1 << config->burst) - 1;
   channel->capacity = config->size;
   channel->circular = config->circular;
   channel->pace = config->pace;
@@ -128,51 +141,72 @@ static void channelCallback(void *object, void (*callback)(void *),
 {
   struct GpDmaList *channel = object;
 
-  channel->parent.callback = callback;
-  channel->parent.callbackArgument = argument;
+  channel->callback = callback;
+  channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelIndex(void *object)
 {
-  LPC_GPDMACH_Type *reg = ((struct GpDmaList *)object)->parent.reg;
+  struct GpDmaList *channel = object;
+  LPC_GPDMACH_Type *reg = channel->parent.reg;
+  struct GpDmaListItem *next = (struct GpDmaListItem *)reg->LLI;
 
-  //FIXME Rewrite to calculate current buffer
-  return reg->CONTROL & CONTROL_SIZE_MASK;
+  if (!next)
+    return 0;
+
+  return next == channel->buffer ? channel->size
+      : (uint32_t)(next - channel->buffer) - 1;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
     const void *source, uint32_t size)
 {
   struct GpDmaList *channel = object;
+  const uint32_t chunkSize = GPDMA_MAX_TRANSFER & channel->alignment;
 
-  //FIXME Subdivide transfer into smaller chunks
+  /* TODO Write test for DMA transfer subdivision */
 
-//  if (size > GPDMA_MAX_TRANSFER)
-//    return E_VALUE;
-//
-//  if (gpDmaSetDescriptor(channel->parent.number, object) != E_OK)
-//    return E_BUSY;
-//
-//  LPC_SC->DMAREQSEL = (LPC_SC->DMAREQSEL & channel->parent.muxMask)
-//      | channel->parent.muxValue;
-//
-//  const uint32_t request = 1 << channel->parent.number;
-//  LPC_GPDMACH_Type *reg = channel->parent.reg;
-//
-//  reg->SRCADDR = (uint32_t)source;
-//  reg->DESTADDR = (uint32_t)destination;
-//  reg->CONTROL = channel->parent.control | CONTROL_SIZE(size);
-//  reg->CONFIG = channel->parent.config;
-//  reg->LLI = 0;
-//
-//  /* Clear interrupt requests for current channel */
-//  LPC_GPDMA->INTTCCLEAR |= request;
-//  LPC_GPDMA->INTERRCLEAR |= request;
-//
-//  /* Start the transfer */
-//  reg->CONFIG |= CONFIG_ENABLE;
+  if (size > chunkSize * channel->capacity)
+    return E_VALUE;
 
-  return E_ERROR;
+  if (gpDmaSetDescriptor(channel->parent.number, object) != E_OK)
+    return E_BUSY;
+
+  gpDmaSetupMux(object);
+  channelClear(channel);
+
+  uint32_t chunk, offset = 0;
+
+  while (offset < size)
+  {
+    chunk = size - offset >= chunkSize ? chunkSize : size - offset;
+    offset += chunk;
+
+    channelAppend(channel, destination, source, chunk);
+
+    if (channel->parent.control & CONTROL_DST_INC)
+      destination += chunk;
+    if (channel->parent.control & CONTROL_SRC_INC)
+      source += chunk;
+  }
+
+  const struct GpDmaListItem *first = channel->buffer;
+  const uint32_t request = 1 << channel->parent.number;
+  LPC_GPDMACH_Type *reg = channel->parent.reg;
+
+  reg->SRCADDR = first->source;
+  reg->DESTADDR = first->destination;
+  reg->CONTROL = first->control;
+  reg->LLI = first->next;
+  reg->CONFIG = channel->parent.config;
+
+  LPC_GPDMA->INTTCCLEAR |= request;
+  LPC_GPDMA->INTERRCLEAR |= request;
+
+  /* Start the transfer */
+  reg->CONFIG |= CONFIG_ENABLE;
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)
@@ -194,18 +228,22 @@ static enum result channelAppend(void *object, void *destination,
   if (channel->size >= channel->capacity)
     return E_FAULT;
 
-  /* Append current element to the previous one */
   if (channel->size++)
-    (item - 1)->next = (uint32_t)item;
+  {
+    struct GpDmaListItem *previous = item - 1;
+
+    /* Append current element to the previous one */
+    previous->next = (uint32_t)item;
+
+    if (channel->pace)
+      previous->control &= ~CONTROL_INT;
+  }
 
   item->source = (uint32_t)source;
   item->destination = (uint32_t)destination;
   item->control = channel->parent.control | CONTROL_SIZE(size);
 
   item->next = channel->circular ? (uint32_t)channel->buffer : 0;
-
-  if (channel->pace)
-    item->control &= ~CONTROL_INT;
 
   return E_OK;
 }
@@ -225,8 +263,7 @@ static enum result channelExecute(void *object)
   if (gpDmaSetDescriptor(channel->parent.number, object) != E_OK)
     return E_BUSY;
 
-  LPC_SC->DMAREQSEL = (LPC_SC->DMAREQSEL & channel->parent.muxMask)
-      | channel->parent.muxValue;
+  gpDmaSetupMux(object);
 
   const struct GpDmaListItem *first = channel->buffer;
   const uint32_t request = 1 << channel->parent.number;

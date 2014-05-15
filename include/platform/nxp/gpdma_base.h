@@ -46,19 +46,18 @@ struct GpDmaBase
   struct Entity parent;
 
   void *reg;
-
-  void (*callback)(void *);
-  void *callbackArgument;
+  void (*handler)(void *);
 
   /* Precalculated values of channel control and configuration registers */
   uint32_t control, config;
-  /* Precalculated values of the connection multiplexer register */
-  uint32_t muxMask, muxValue;
+  /* Precalculated values of the system connections multiplexer */
+  struct GpDmaMuxConfig mux;
   /* Identifier of the channel */
   uint8_t number;
 };
 /*----------------------------------------------------------------------------*/
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
 enum result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
+void gpDmaSetupMux(struct GpDmaBase *);
 /*----------------------------------------------------------------------------*/
 #endif /* GPDMA_BASE_TOP_H_ */
