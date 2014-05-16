@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/gpdma_list.h>
@@ -63,7 +62,8 @@ static enum result channelInit(void *object, const void *configPtr)
   struct GpDmaList *channel = object;
   enum result res;
 
-  assert(config->size);
+  if (!config->size)
+    return E_VALUE;
 
   /* Allocation should produce memory chunks aligned along 4-byte boundary */
   channel->buffer = malloc(sizeof(struct GpDmaListItem) * config->size);

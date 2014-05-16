@@ -59,7 +59,6 @@ static void adjustPins(struct OneWireSsp *interface __attribute__((unused)),
     const struct OneWireSspConfig *config)
 {
   gpioSetType(gpioInit(config->mosi), GPIO_OPENDRAIN);
-  gpioSetPull(gpioInit(config->mosi), GPIO_PULLUP); //FIXME
 }
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWireSsp *interface)
@@ -170,7 +169,6 @@ static enum result oneWireInit(void *object, const void *configPtr)
 
   adjustPins(interface, config);
 
-  //TODO Rollback?
   if ((res = byteQueueInit(&interface->txQueue, TX_QUEUE_LENGTH)) != E_OK)
     return res;
 

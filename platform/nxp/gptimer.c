@@ -157,9 +157,9 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   struct GpTimer *timer = object;
   LPC_TIMER_Type *reg = timer->parent.reg;
 
-  /* Frequency setup in external clock mode is currently ignored */
+  /* Frequency setup in external clock mode is ignored */
   if (!reg->CTCR)
-    reg->PR = gpTimerGetClock(object) / frequency - 1;
+    reg->PR = frequency ? gpTimerGetClock(object) / frequency - 1 : 0;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)

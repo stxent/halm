@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <platform/nxp/platform_defs.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/clocking_defs.h>
@@ -129,11 +128,12 @@ static bool extOscReady(void)
 /*----------------------------------------------------------------------------*/
 static void sysPllDisable(void)
 {
-  assert(!(LPC_SC->PLL0STAT & PLL0STAT_CONNECTED));
-
-  LPC_SC->PLL0CON &= ~PLL0CON_ENABLE;
-  LPC_SC->PLL0FEED = PLLFEED_FIRST;
-  LPC_SC->PLL0FEED = PLLFEED_SECOND;
+  if (!(LPC_SC->PLL0STAT & PLL0STAT_CONNECTED))
+  {
+    LPC_SC->PLL0CON &= ~PLL0CON_ENABLE;
+    LPC_SC->PLL0FEED = PLLFEED_FIRST;
+    LPC_SC->PLL0FEED = PLLFEED_SECOND;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result sysPllEnable(const void *configPtr)
@@ -144,7 +144,8 @@ static enum result sysPllEnable(const void *configPtr)
   uint16_t multiplier;
   uint8_t prescaler;
 
-  assert(config->multiplier && config->divider);
+  if (!config->multiplier || !config->divider)
+    return E_VALUE;
 
   /*
    * Calculations:

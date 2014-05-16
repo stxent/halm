@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <delay.h>
 #include <platform/nxp/platform_defs.h>
 #include <platform/nxp/lpc11xx/clocking.h>
@@ -81,9 +80,8 @@ static bool stubReady(void)
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(void)
 {
-  assert((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_INPUT);
-
-  sysPowerDisable(PWR_SYSOSC);
+  if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_INPUT)
+    sysPowerDisable(PWR_SYSOSC);
 }
 /*----------------------------------------------------------------------------*/
 static enum result extOscEnable(const void *configPtr)
@@ -127,10 +125,11 @@ static bool extOscReady(void)
 /*----------------------------------------------------------------------------*/
 static void intOscDisable(void)
 {
-  assert((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_IRC);
-
-  sysPowerDisable(PWR_IRCOUT);
-  sysPowerDisable(PWR_IRC);
+  if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_IRC)
+  {
+    sysPowerDisable(PWR_IRCOUT);
+    sysPowerDisable(PWR_IRC);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result intOscEnable(const void *configPtr __attribute__((unused)))
@@ -153,9 +152,8 @@ static bool intOscReady(void)
 /*----------------------------------------------------------------------------*/
 static void sysPllDisable(void)
 {
-  assert((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_OUTPUT);
-
-  sysPowerDisable(PWR_SYSPLL);
+  if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_OUTPUT)
+    sysPowerDisable(PWR_SYSPLL);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sysPllEnable(const void *configPtr)
@@ -164,7 +162,8 @@ static enum result sysPllEnable(const void *configPtr)
   uint32_t frequency; /* Resulting CCO frequency */
   uint8_t msel, psel, counter = 0;
 
-  assert(config->multiplier && config->divider && !(config->divider & 1));
+  if (!config->multiplier || !config->divider || config->divider & 1)
+    return E_VALUE;
 
   msel = config->multiplier / config->divider - 1;
   if (msel >= 32)

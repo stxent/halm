@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
@@ -14,11 +15,20 @@ void *init(const void *typeDescriptor, const void *arguments)
 
   if (!type || !type->size || !(entity = malloc(type->size)))
     return 0;
-  if (type->init && type->init(entity, arguments) != E_OK)
+
+  if (type->init)
   {
-    free(entity);
-    return 0;
+    enum result res = type->init(entity, arguments);
+
+    assert(res == E_OK);
+
+    if (res != E_OK)
+    {
+      free(entity);
+      return 0;
+    }
   }
+
   entity->type = type;
   return entity;
 }
@@ -29,5 +39,6 @@ void deinit(void *entity)
 
   if (type->deinit)
     type->deinit(entity);
+
   free(entity);
 }

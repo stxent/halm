@@ -100,7 +100,8 @@ static enum result unitInit(void *object, const void *configPtr)
   const uint32_t clockFrequency = gpPwmGetClock(object);
   const uint32_t timerFrequency = config->frequency * config->resolution;
 
-  assert(timerFrequency && timerFrequency < clockFrequency);
+  if (!timerFrequency || timerFrequency > clockFrequency)
+    return E_VALUE;
 
   /* Call base class constructor */
   if ((res = GpPwmUnitBase->init(object, &parentConfig)) != E_OK)
