@@ -22,14 +22,15 @@
 #define CONCLR_I2ENC                    BIT(6)
 /*------------------Data register---------------------------------------------*/
 #define DATA_READ                       BIT(0)
-#define DATA_WRITE                      (0)
+#define DATA_WRITE                      0
 /*------------------Monitor Mode Control register-----------------------------*/
 #define MMCTRL_MM_ENA                   BIT(0) /* Monitor mode enable */
 #define MMCTRL_ENA_SCL                  BIT(1) /* SCL output enable */
 #define MMCTRL_MATCH_ALL                BIT(2) /* Select interrupt match mode */
 /*------------------Slave Address registers-----------------------------------*/
 #define ADR_GENERAL_CALL                BIT(0) /* General Call enable bit */
-#define ADR_ADDRESS(address)            BIT_FIELD((address), 1)
-#define ADR_VALUE(reg)                  (((reg) >> 1) & 0x7F)
+#define ADR_ADDRESS(value)              BIT_FIELD((value), 1)
+#define ADR_ADDRESS_MASK                BIT_FIELD(MASK(7), 1)
+#define ADR_ADDRESS_VALUE(reg)          FIELD_VALUE((reg), ADR_ADDRESS_MASK, 1)
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_DEFS_H_ */

@@ -10,11 +10,11 @@
 #include <bits.h>
 /*------------------Control Register 0----------------------------------------*/
 /* Data Size Select */
-#define CR0_DSS_MASK                    BIT_FIELD(0x0F, 0)
+#define CR0_DSS_MASK                    BIT_FIELD(MASK(4), 0)
 /* Possible values are from 4 to 16 bit */
 #define CR0_DSS(size)                   BIT_FIELD(((size) - 1), 0)
 /* Frame Format */
-#define CR0_FRF_MASK                    BIT_FIELD(0x03, 4)
+#define CR0_FRF_MASK                    BIT_FIELD(MASK(2), 4)
 #define CR0_FRF_SPI                     BIT_FIELD(0, 4)
 #define CR0_FRF_TI                      BIT_FIELD(1, 4)
 #define CR0_FRF_MICROWIRE               BIT_FIELD(2, 4)
@@ -25,10 +25,10 @@
 /* When set, controller captures data on the second clock of the frame */
 #define CR0_CPHA                        BIT(7)
 /* Serial Clock Rate */
-#define CR0_SCR_MASK                    BIT_FIELD(0xFF, 8)
+#define CR0_SCR_MASK                    BIT_FIELD(MASK(8), 8)
 /* Resulting bit frequency is PCLK / (CPSDVSR * (SCR + 1)) */
 #define CR0_SCR(rate)                   BIT_FIELD((rate), 8)
-#define CR0_SCR_VALUE(reg)              (((reg) >> 8) & 0xFF)
+#define CR0_SCR_VALUE(reg)              FIELD_VALUE((reg), CR0_SCR_MASK, 8)
 /*------------------Control Register 1----------------------------------------*/
 /* Loop-back mode */
 #define CR1_LBM                         BIT(0)

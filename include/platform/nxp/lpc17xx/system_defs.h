@@ -7,7 +7,7 @@
 #ifndef SYSTEM_DEFS_H_
 #define SYSTEM_DEFS_H_
 /*------------------Flash Accelerator Configuration register------------------*/
-#define FLASHCFG_FLASHTIM_MASK          BIT_FIELD(0x0F, 12)
+#define FLASHCFG_FLASHTIM_MASK          BIT_FIELD(MASK(4), 12)
 #define FLASHCFG_FLASHTIM(value)        BIT_FIELD((value), 12)
 /*----------------------------------------------------------------------------*/
 #endif /* SYSTEM_DEFS_H_ */

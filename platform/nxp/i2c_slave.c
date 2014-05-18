@@ -176,7 +176,7 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_DEVICE:
-       *(uint32_t *)data = ADR_VALUE(reg->ADR0);
+       *(uint32_t *)data = ADR_ADDRESS_VALUE(reg->ADR0);
       return E_OK;
 
     case IF_STATUS:

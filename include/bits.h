@@ -7,7 +7,9 @@
 #ifndef BITS_H_
 #define BITS_H_
 /*----------------------------------------------------------------------------*/
-#define BIT(offset)                     (1UL << (offset))
-#define BIT_FIELD(value, offset)        ((unsigned long)(value) << (offset))
+#define BIT(shift)                      (1UL << (shift))
+#define BIT_FIELD(value, shift)         ((unsigned long)(value) << (shift))
+#define FIELD_VALUE(reg, mask, shift)   (((reg) & (mask)) >> (shift))
+#define MASK(width)                     ((1UL << (width)) - 1)
 /*----------------------------------------------------------------------------*/
 #endif /* BITS_H_ */

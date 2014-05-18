@@ -11,13 +11,13 @@
 /*----------------------------------------------------------------------------*/
 /* IrDA, Modem signals, auto-baud and RS-485 are unused */
 /*------------------Line Control Register-------------------------------------*/
-#define LCR_WORD_MASK                   BIT_FIELD(0x03, 0)
+#define LCR_WORD_MASK                   BIT_FIELD(MASK(2), 0)
 #define LCR_WORD_5BIT                   BIT_FIELD(0, 0)
 #define LCR_WORD_6BIT                   BIT_FIELD(1, 0)
 #define LCR_WORD_7BIT                   BIT_FIELD(2, 0)
 #define LCR_WORD_8BIT                   BIT_FIELD(3, 0)
 #define LCR_STOP_2BIT                   BIT(2)
-#define LCR_PARITY_MASK                 BIT_FIELD(0x03, 4)
+#define LCR_PARITY_MASK                 BIT_FIELD(MASK(2), 4)
 #define LCR_PARITY                      BIT(3)
 #define LCR_PARITY_ODD                  BIT_FIELD(0, 4)
 #define LCR_PARITY_EVEN                 BIT_FIELD(1, 4)
@@ -30,7 +30,7 @@
 /*------------------Interrupt Identification Register-------------------------*/
 #define IIR_INT_STATUS                  BIT(0) /* Status, active low */
 /* Mask for interrupt identification value */
-#define IIR_INT_MASK                    BIT_FIELD(0x07, 1)
+#define IIR_INT_MASK                    BIT_FIELD(MASK(3), 1)
 /* Receive Line Status */
 #define IIR_INT_RLS                     BIT_FIELD(3, 1)
 /* Receive Data Available */
@@ -51,7 +51,7 @@
  * Level 2:  8 characters
  * Level 3: 14 characters
  */
-#define FCR_RX_TRIGGER_MASK             BIT_FIELD(0x03, 6)
+#define FCR_RX_TRIGGER_MASK             BIT_FIELD(MASK(2), 6)
 #define FCR_RX_TRIGGER(level)           BIT_FIELD((level), 6)
 /*------------------Line Status Register--------------------------------------*/
 #define LSR_RDR                         BIT(0) /* Receiver data ready */

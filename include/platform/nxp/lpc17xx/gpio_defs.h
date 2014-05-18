@@ -9,9 +9,9 @@
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Values for function and mode select registers-------------*/
-#define PIN_MASK                        0x03
-#define PIN_OFFSET(value, offset) \
-    ((unsigned long)((value) << (((offset) & 0x0F) << 1UL)))
+#define PIN_MASK                        MASK(2)
+#define PIN_OFFSET(value, shift) \
+    BIT_FIELD((value), (((shift) & MASK(4)) << 1))
 /*------------------Pin output mode control values----------------------------*/
 #define PIN_MODE_PULLUP                 0
 #define PIN_MODE_INACTIVE               2

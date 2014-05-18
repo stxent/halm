@@ -13,7 +13,7 @@
 #define SCS_OSCEN                       BIT(5)
 #define SCS_OSCSTAT                     BIT(6)
 /*------------------Clock Source Select register------------------------------*/
-#define CLKSRCSEL_MASK                  BIT_FIELD(0x03, 0)
+#define CLKSRCSEL_MASK                  BIT_FIELD(MASK(2), 0)
 #define CLKSRCSEL_IRC                   BIT_FIELD(0, 0)
 #define CLKSRCSEL_MAIN                  BIT_FIELD(1, 0)
 #define CLKSRCSEL_RTC                   BIT_FIELD(2, 0)
@@ -21,9 +21,9 @@
 #define PLL0CON_ENABLE                  BIT(0)
 #define PLL0CON_CONNECT                 BIT(1)
 /*------------------PLL0 Configuration register-------------------------------*/
-#define PLL0CFG_MSEL_MASK               BIT_FIELD(0x7FFF, 0)
+#define PLL0CFG_MSEL_MASK               BIT_FIELD(MASK(15), 0)
 #define PLL0CFG_MSEL(value)             BIT_FIELD((value), 0)
-#define PLL0CFG_NSEL_MASK               BIT_FIELD(0xFF, 16)
+#define PLL0CFG_NSEL_MASK               BIT_FIELD(MASK(8), 16)
 #define PLL0CFG_NSEL(value)             BIT_FIELD((value), 16)
 /*------------------PLL0 Status register--------------------------------------*/
 /* Read-back for the Enable bit */
@@ -35,9 +35,9 @@
 #define PLL1CON_ENABLE                  BIT(0)
 #define PLL1CON_CONNECT                 BIT(1)
 /*------------------PLL1 Configuration register-------------------------------*/
-#define PLL1CFG_MSEL_MASK               BIT_FIELD(0x1F, 0)
+#define PLL1CFG_MSEL_MASK               BIT_FIELD(MASK(5), 0)
 #define PLL1CFG_MSEL(value)             BIT_FIELD((value), 0)
-#define PLL1CFG_PSEL_MASK               BIT_FIELD(0x03, 5)
+#define PLL1CFG_PSEL_MASK               BIT_FIELD(MASK(2), 5)
 #define PLL1CFG_PSEL(value)             BIT_FIELD((value), 5)
 /*------------------PLL1 Status register--------------------------------------*/
 #define PLL1STAT_LOCK                   BIT(10)
@@ -45,7 +45,7 @@
 #define PLLFEED_FIRST                   0xAA
 #define PLLFEED_SECOND                  0x55
 /*------------------Flash Accelerator Configuration register------------------*/
-#define FLASHCFG_TIME_MASK              BIT_FIELD(0x0F, 12)
+#define FLASHCFG_TIME_MASK              BIT_FIELD(MASK(4), 12)
 #define FLASHCFG_TIME(value)            BIT_FIELD((value), 12)
 /*----------------------------------------------------------------------------*/
 #endif /* CLOCKING_DEFS_ */

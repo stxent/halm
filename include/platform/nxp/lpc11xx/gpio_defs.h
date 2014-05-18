@@ -9,15 +9,15 @@
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------IO Configuration registers--------------------------------*/
-#define IOCON_FUNC_MASK                 BIT_FIELD(0x07, 0)
+#define IOCON_FUNC_MASK                 BIT_FIELD(MASK(3), 0)
 #define IOCON_FUNC(func)                BIT_FIELD((func), 0)
 /*----------------------------------------------------------------------------*/
-#define IOCON_I2C_MASK                  BIT_FIELD(0x03, 8)
+#define IOCON_I2C_MASK                  BIT_FIELD(MASK(2), 8)
 #define IOCON_I2C_STANDARD              BIT_FIELD(0, 8)
 #define IOCON_I2C_IO                    BIT_FIELD(1, 8)
 #define IOCON_I2C_PLUS                  BIT_FIELD(2, 8)
 /*----------------------------------------------------------------------------*/
-#define IOCON_MODE_MASK                 BIT_FIELD(0x03, 3)
+#define IOCON_MODE_MASK                 BIT_FIELD(MASK(2), 3)
 #define IOCON_MODE_DIGITAL              BIT(7)
 #define IOCON_MODE_INACTIVE             BIT_FIELD(0, 3)
 #define IOCON_MODE_PULLDOWN             BIT_FIELD(1, 3)
