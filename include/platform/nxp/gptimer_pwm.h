@@ -15,25 +15,34 @@ extern const struct PwmClass *GpTimerPwm;
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwmUnitConfig
 {
-  uint32_t frequency; /* Mandatory: cycle frequency */
-  uint32_t resolution; /* Mandatory: cycle resolution */
-  uint8_t channel; /* Mandatory: timer block */
+  /** Mandatory: switching frequency. */
+  uint32_t frequency;
+  /** Mandatory: cycle resolution. */
+  uint32_t resolution;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwmUnit
 {
   struct GpTimerBase parent;
 
+  /* Cycle width measured in timer ticks */
   uint32_t resolution;
-  uint8_t current; /* Match block used for period setup */
-  uint8_t matches; /* Match blocks currently in use */
+  /* Match block used for period setup */
+  uint8_t current;
+  /* Match blocks currently in use */
+  uint8_t matches;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwmConfig
 {
-  struct GpTimerPwmUnit *parent; /* Mandatory: peripheral unit */
-  uint32_t duration; /* Optional: initial duration in timer ticks */
-  gpio_t pin; /* Mandatory: pin used as output for modulated signal */
+  /** Mandatory: peripheral unit. */
+  struct GpTimerPwmUnit *parent;
+  /** Optional: initial duration in timer ticks. */
+  uint32_t duration;
+  /** Mandatory: pin used as an output for modulated signal. */
+  gpio_t pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwm

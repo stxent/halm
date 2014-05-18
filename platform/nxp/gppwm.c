@@ -19,6 +19,7 @@ static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static uint32_t channelGetResolution(void *);
 static void channelSetEnabled(void *, bool);
+static void channelSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result singleEdgeInit(void *, const void *);
 static void singleEdgeDeinit(void *);
@@ -44,7 +45,8 @@ static const struct PwmClass singleEdgeTable = {
     .getResolution = channelGetResolution,
     .setDuration = singleEdgeSetDuration,
     .setEdges = singleEdgeSetEdges,
-    .setEnabled = channelSetEnabled
+    .setEnabled = channelSetEnabled,
+    .setFrequency = channelSetFrequency
 };
 /*----------------------------------------------------------------------------*/
 static const struct PwmClass doubleEdgeTable = {
@@ -55,7 +57,8 @@ static const struct PwmClass doubleEdgeTable = {
     .getResolution = channelGetResolution,
     .setDuration = doubleEdgeSetDuration,
     .setEdges = doubleEdgeSetEdges,
-    .setEnabled = channelSetEnabled
+    .setEnabled = channelSetEnabled,
+    .setFrequency = channelSetFrequency
 };
 /*----------------------------------------------------------------------------*/
 extern const struct GpioDescriptor gpPwmPins[];
@@ -153,6 +156,21 @@ static void channelSetEnabled(void *object, bool state)
     reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
   else
     reg->PCR |= PCR_OUTPUT_ENABLED(pwm->channel);
+}
+/*----------------------------------------------------------------------------*/
+static void channelSetFrequency(void *object, uint32_t frequency)
+{
+  struct GpPwm *pwm = object;
+  struct GpPwmUnit *unit = pwm->unit;
+  LPC_PWM_Type *reg = unit->parent.reg;
+
+  const uint32_t clockFrequency = gpPwmGetClock((struct GpPwmUnitBase *)unit);
+  const uint32_t timerFrequency = frequency * unit->resolution;
+
+  assert(timerFrequency && timerFrequency <= clockFrequency);
+
+  /* TODO Add scaling of PWM match values */
+  reg->PR = clockFrequency / timerFrequency - 1;
 }
 /*----------------------------------------------------------------------------*/
 static enum result singleEdgeInit(void *object, const void *configPtr)

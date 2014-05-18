@@ -16,17 +16,22 @@ extern const struct PwmClass *GpPwm;
 /*----------------------------------------------------------------------------*/
 struct GpPwmUnitConfig
 {
-  uint32_t frequency; /* Mandatory: cycle frequency */
-  uint32_t resolution; /* Mandatory: cycle resolution */
-  uint8_t channel; /* Mandatory: timer block */
+  /** Mandatory: switching frequency. */
+  uint32_t frequency;
+  /** Mandatory: cycle resolution. */
+  uint32_t resolution;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwmUnit
 {
   struct GpPwmUnitBase parent;
 
+  /* Cycle width measured in timer ticks */
   uint32_t resolution;
-  uint8_t matches; /* Match blocks currently in use */
+  /* Match blocks currently in use */
+  uint8_t matches;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwmConfig

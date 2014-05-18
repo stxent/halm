@@ -19,6 +19,7 @@ static uint32_t channelGetResolution(void *);
 static void channelSetDuration(void *, uint32_t);
 static void channelSetEdges(void *, uint32_t, uint32_t);
 static void channelSetEnabled(void *, bool);
+static void channelSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct GpTimerPwmUnit),
@@ -34,7 +35,8 @@ static const struct PwmClass channelTable = {
     .getResolution = channelGetResolution,
     .setDuration = channelSetDuration,
     .setEdges = channelSetEdges,
-    .setEnabled = channelSetEnabled
+    .setEnabled = channelSetEnabled,
+    .setFrequency = channelSetFrequency
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass *GpTimerPwmUnit = &unitTable;
@@ -210,6 +212,21 @@ static void channelSetEnabled(void *object, bool state)
   }
   else
     reg->PWMC |= PWMC_ENABLE(pwm->channel);
+}
+/*----------------------------------------------------------------------------*/
+static void channelSetFrequency(void *object, uint32_t frequency)
+{
+  struct GpTimerPwm *pwm = object;
+  struct GpTimerPwmUnit *unit = pwm->unit;
+  LPC_TIMER_Type *reg = unit->parent.reg;
+
+  const uint32_t clockFrequency = gpTimerGetClock((struct GpTimerBase *)unit);
+  const uint32_t timerFrequency = frequency * unit->resolution;
+
+  assert(timerFrequency && timerFrequency <= clockFrequency);
+
+  /* TODO Add scaling of timer match values */
+  reg->PR = clockFrequency / timerFrequency - 1;
 }
 /*----------------------------------------------------------------------------*/
 /**

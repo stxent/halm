@@ -25,6 +25,7 @@ struct PwmClass
   void (*setDuration)(void *, uint32_t);
   void (*setEdges)(void *, uint32_t, uint32_t);
   void (*setEnabled)(void *, bool);
+  void (*setFrequency)(void *, uint32_t);
 };
 /*----------------------------------------------------------------------------*/
 struct Pwm
@@ -72,6 +73,16 @@ static inline void pwmSetEdges(void *channel, uint32_t leading,
 static inline void pwmSetEnabled(void *channel, bool state)
 {
   ((struct PwmClass *)CLASS(channel))->setEnabled(channel, state);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Change switching frequency of the channel.
+ * @param channel Pointer to a Pwm object.
+ * @param frequency New switching frequency in Hz or zero to use default value.
+ */
+static inline void pwmSetFrequency(void *channel, uint32_t frequency)
+{
+  ((struct PwmClass *)CLASS(channel))->setFrequency(channel, frequency);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* PWM_H_ */
