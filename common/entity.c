@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
@@ -19,8 +18,6 @@ void *init(const void *typeDescriptor, const void *arguments)
   if (type->init)
   {
     enum result res = type->init(entity, arguments);
-
-    assert(res == E_OK);
 
     if (res != E_OK)
     {

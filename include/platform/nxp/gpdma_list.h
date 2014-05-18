@@ -40,10 +40,10 @@ struct GpDmaListConfig
    */
   bool circular;
   /**
-   * Optional: set @b true to pace channel interrupts by disabling requests
-   * for intermediate states of the transfer.
+   * Optional: set @b true to reduce channel interrupts count by disabling
+   * requests for intermediate states of the transfer.
    */
-  bool pace;
+  bool silence;
 };
 /*----------------------------------------------------------------------------*/
 struct GpDmaListItem
@@ -73,8 +73,8 @@ struct GpDmaList
 
   /* Circular buffer flag */
   bool circular;
-  /* Pace interrupts flag */
-  bool pace;
+  /* Reduce interrupts flag */
+  bool silence;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPDMA_LIST_H_ */

@@ -80,7 +80,7 @@ static enum result channelInit(void *object, const void *configPtr)
   channel->alignment = (1 << config->burst) - 1;
   channel->capacity = config->size;
   channel->circular = config->circular;
-  channel->pace = config->pace;
+  channel->silence = config->silence;
   channel->size = 0;
 
   channel->parent.control |= CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
@@ -235,7 +235,7 @@ static enum result channelAppend(void *object, void *destination,
     /* Append current element to the previous one */
     previous->next = (uint32_t)item;
 
-    if (channel->pace)
+    if (channel->silence)
       previous->control &= ~CONTROL_INT;
   }
 
