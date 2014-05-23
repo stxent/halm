@@ -226,9 +226,9 @@ typedef struct
 /*------------------Digital-to-Analog Converter-------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t DACR;
-  __rw__ uint32_t DACCTRL;
-  __rw__ uint16_t DACCNTVAL;
+  __rw__ uint32_t CR; /* Converter Register */
+  __rw__ uint32_t CTRL; /* Control register */
+  __rw__ uint16_t CNTVAL; /* Counter Value register */
 } LPC_DAC_Type;
 /*------------------Watchdog Timer--------------------------------------------*/
 typedef struct
