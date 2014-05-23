@@ -99,9 +99,7 @@ static enum result channelInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  struct GpDma *channel = object;
-
-  GpDmaBase->deinit(channel);
+  GpDmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
 static bool channelActive(void *object)

@@ -442,7 +442,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   enum sdioCommand command;
 
   /* Check buffer alignment */
-  assert(!(length & ((1 << BLOCK_POW) - 1)));
+  assert(!(length & MASK(BLOCK_POW)));
 
   blockCount = length >> BLOCK_POW;
   if (!blockCount)
@@ -482,7 +482,7 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
   enum sdioToken token;
 
   /* Check buffer alignment */
-  assert(!(length & ((1 << BLOCK_POW) - 1)));
+  assert(!(length & MASK(BLOCK_POW)));
 
   blockCount = length >> BLOCK_POW;
   if (!blockCount)

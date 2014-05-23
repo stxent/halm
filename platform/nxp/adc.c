@@ -197,7 +197,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   LPC_ADC_Type *reg = interface->unit->parent.reg;
 
   /* Check buffer alignment */
-  assert(!(length & ((1 << RESULT_POW) - 1)));
+  assert(!(length & MASK(RESULT_POW)));
 
   if (!length || !spinTryLock(&interface->unit->lock))
     return 0;

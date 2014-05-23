@@ -213,7 +213,8 @@ static void channelStop(void *object)
 {
   LPC_GPDMACH_Type *reg = ((struct GpDmaList *)object)->parent.reg;
 
-  reg->CONFIG &= ~CONFIG_ENABLE;
+  /* Complete current transfer and stop */
+  reg->LLI = 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelAppend(void *object, void *destination,
