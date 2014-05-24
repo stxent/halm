@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <memory.h>
 #include <platform/nxp/adc_base.h>
 #include <platform/nxp/adc_defs.h>
 #include <platform/nxp/lpc17xx/clocking.h>
@@ -71,11 +72,8 @@ static enum result setDescriptor(uint8_t channel, struct AdcUnitBase *unit)
 {
   assert(channel < sizeof(descriptors));
 
-  if (descriptors[channel])
-    return E_BUSY;
-
-  descriptors[channel] = unit;
-  return E_OK;
+  return compareExchangePointer((void **)(descriptors + channel), 0,
+      unit) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void ADC_ISR()

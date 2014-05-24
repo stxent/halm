@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <gpio.h>
+#include <memory.h>
 #include <platform/nxp/gppwm_base.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
@@ -98,11 +99,8 @@ static enum result setDescriptor(uint8_t channel, struct GpPwmUnitBase *unit)
 {
   assert(channel < sizeof(descriptors));
 
-  if (descriptors[channel])
-    return E_BUSY;
-
-  descriptors[channel] = unit;
-  return E_OK;
+  return compareExchangePointer((void **)(descriptors + channel), 0,
+      unit) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpPwmGetClock(struct GpPwmUnitBase *unit __attribute__((unused)))

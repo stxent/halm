@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <memory.h>
 #include <platform/nxp/dac_base.h>
 #include <platform/nxp/dac_defs.h>
 #include <platform/nxp/lpc17xx/clocking.h>
@@ -37,12 +38,8 @@ static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(struct DacBase *interface)
 {
-  if (descriptor)
-    return E_BUSY;
-
-  //TODO Compare and swap
-  descriptor = interface;
-  return E_OK;
+  return compareExchangePointer((void **)&descriptor, 0, interface) ? E_OK
+      : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 enum result setupOutputPin(gpio_t key)

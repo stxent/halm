@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <memory.h>
 #include <platform/nxp/i2c_base.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
@@ -67,11 +68,8 @@ static enum result setDescriptor(uint8_t channel, struct I2cBase *interface)
 {
   assert(channel < sizeof(descriptors));
 
-  if (descriptors[channel])
-    return E_BUSY;
-
-  descriptors[channel] = interface;
-  return E_OK;
+  return compareExchangePointer((void **)(descriptors + channel), 0,
+      interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void I2C0_ISR(void)

@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <memory.h>
 #include <platform/nxp/gptimer_base.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
@@ -134,11 +135,8 @@ static enum result setDescriptor(uint8_t channel, struct GpTimerBase *timer)
 {
   assert(channel < sizeof(descriptors));
 
-  if (descriptors[channel])
-    return E_BUSY;
-
-  descriptors[channel] = timer;
-  return E_OK;
+  return compareExchangePointer((void **)(descriptors + channel), 0,
+      timer) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void TIMER0_ISR(void)

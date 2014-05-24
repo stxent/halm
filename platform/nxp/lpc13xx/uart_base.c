@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <memory.h>
 #include <platform/nxp/uart_base.h>
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/system.h>
@@ -45,11 +46,8 @@ static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
 {
   assert(channel < sizeof(descriptors));
 
-  if (descriptors[channel])
-    return E_BUSY;
-
-  descriptors[channel] = interface;
-  return E_OK;
+  return compareExchangePointer((void **)(descriptors + channel), 0,
+      interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void UART_ISR(void)
