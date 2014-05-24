@@ -109,17 +109,21 @@ static enum result acquireBus(struct SdioSpi *device)
 static enum result getLongResponse(struct SdioSpi *device,
     struct LongResponse *response)
 {
-  uint8_t buffer[4];
+  uint32_t value;
+  uint8_t acknowledge;
   enum result res;
 
-  res = waitForData(device, buffer);
+  res = waitForData(device, &acknowledge);
   if (res == E_OK)
   {
-    response->value = *buffer;
-    if (ifRead(device->interface, buffer, sizeof(buffer)) != sizeof(buffer))
+    response->value = acknowledge;
+    if (ifRead(device->interface, (uint8_t *)&value,
+        sizeof(value)) != sizeof(value))
+    {
       res = E_INTERFACE;
+    }
     /* Response comes in big-endian format */
-    response->payload = toBigEndian32(*(uint32_t *)buffer);
+    response->payload = fromBigEndian32(value);
   }
 
   return res;
