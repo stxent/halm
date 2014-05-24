@@ -55,24 +55,6 @@ static inline uint32_t fromLittleEndian32(uint32_t)
 static inline uint16_t fromLittleEndian16(uint16_t)
     __attribute__((alias("toLittleEndian16")));
 /*----------------------------------------------------------------------------*/
-static inline bool compareExchangePointer(void **pointer, void *expected,
-    void *desired)
-{
-  /* Compare current state with expected state */
-  if (__ldrex((uint32_t *)pointer) == (uint32_t)expected)
-  {
-    if (!__strex((uint32_t)desired, (uint32_t *)pointer))
-    {
-      __dmb();
-      return true;
-    }
-    else
-      return false;
-  }
-
-  /* Value has changed outside current context */
-  __clrex();
-  return false;
-}
+bool compareExchangePointer(void **, void *, void *);
 /*----------------------------------------------------------------------------*/
 #endif /* MEMORY_H_ */
