@@ -55,6 +55,11 @@ enum result setupOutputPin(gpio_t key)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+uint32_t dacGetClock(struct DacBase *interface __attribute__((unused)))
+{
+  return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
+}
+/*----------------------------------------------------------------------------*/
 static enum result dacInit(void *object, const void *configPtr)
 {
   const struct DacBaseConfig * const config = configPtr;

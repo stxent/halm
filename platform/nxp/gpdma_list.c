@@ -154,8 +154,10 @@ static uint32_t channelIndex(void *object)
   if (!next)
     return 0;
 
-  return next == channel->buffer ? channel->size
-      : (uint32_t)(next - channel->buffer) - 1;
+  if (next == channel->buffer)
+    return channel->size - 1;
+  else
+    return (uint32_t)(next - channel->buffer) - 1;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
