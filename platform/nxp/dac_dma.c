@@ -156,8 +156,7 @@ static enum result dacCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacGet(void *object, enum ifOption option,
-    void *data __attribute__((unused)))
+static enum result dacGet(void *object, enum ifOption option, void *data)
 {
   struct DacDma *interface = object;
 
@@ -165,6 +164,10 @@ static enum result dacGet(void *object, enum ifOption option,
   {
     case IF_STATUS:
       return dmaActive(interface->dma) ? E_BUSY : E_OK;
+
+    case IF_WIDTH:
+      *((uint32_t *)data) = CR_OUTPUT_WIDTH;
+      return E_OK;
 
     default:
       return E_ERROR;

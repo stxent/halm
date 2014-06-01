@@ -39,6 +39,8 @@ enum ifOption
   IF_ADDRESS,
   /** Total memory available for use with the internal addressing method. */
   IF_SIZE,
+  /** Data width in bits. */
+  IF_WIDTH,
 
   /** Get status of the last command. Returns @b E_OK when interface is idle. */
   IF_STATUS,

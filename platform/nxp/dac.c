@@ -62,10 +62,17 @@ static enum result dacCallback(void *object __attribute__((unused)),
 }
 /*----------------------------------------------------------------------------*/
 static enum result dacGet(void *object __attribute__((unused)),
-    enum ifOption option __attribute__((unused)),
-    void *data __attribute__((unused)))
+    enum ifOption option, void *data)
 {
-  return E_ERROR;
+  switch (option)
+  {
+    case IF_WIDTH:
+      *((uint32_t *)data) = CR_OUTPUT_WIDTH;
+      return E_OK;
+
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result dacSet(void *object __attribute__((unused)),

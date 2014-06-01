@@ -26,8 +26,7 @@
 #define CR_PDN                          BIT(21)
 /*------------------Global Data Register--------------------------------------*/
 #define GDR_RESULT_MASK                 BIT_FIELD(MASK(16), 0)
-#define GDR_RESULT_VALUE(reg, width) \
-    FIELD_VALUE((reg), GDR_RESULT_MASK, 16 - (width))
+#define GDR_RESULT_VALUE(reg)           FIELD_VALUE((reg), GDR_RESULT_MASK, 0)
 #define GDR_CHN_MASK                    BIT_FIELD(MASK(3), 24)
 #define GDR_CHN_VALUE(reg)              FIELD_VALUE((reg), GDR_CHN_MASK, 24)
 #define GDR_OVERRUN                     BIT(30)
@@ -37,8 +36,7 @@
 #define INTEN_ADG                       BIT(8)
 /*------------------Data Registers--------------------------------------------*/
 #define DR_RESULT_MASK                  BIT_FIELD(MASK(16), 0)
-#define DR_RESULT_VALUE(reg, width) \
-    FIELD_VALUE((reg), DR_RESULT_MASK, 16 - (width))
+#define DR_RESULT_VALUE(reg)            FIELD_VALUE((reg), DR_RESULT_MASK, 0)
 #define DR_OVERRUN                      BIT(30)
 #define DR_DONE                         BIT(31)
 /*------------------Status register-------------------------------------------*/

@@ -9,11 +9,11 @@
 #include <platform/nxp/adc.h>
 #include <platform/nxp/adc_defs.h>
 /*----------------------------------------------------------------------------*/
-#define RESULT_POW              1 /* Power of two */
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
+static inline uint32_t resultWidthExponent(void);
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *, const void *);
 static void adcUnitDeinit(void *);
@@ -58,10 +58,9 @@ static void interruptHandler(void *object)
     reg->CR &= ~CR_START_MASK;
 
     /* Copy conversion result */
-    uint16_t value = DR_RESULT_VALUE(reg->DR[interface->channel],
-        ADC_RESOLUTION);
+    uint16_t value = DR_RESULT_VALUE(reg->DR[interface->channel]);
     memcpy(interface->buffer, &value, sizeof(value));
-    interface->buffer += 1 << RESULT_POW;
+    interface->buffer += 1 << resultWidthExponent();
 
     if (!--interface->left)
     {
@@ -77,6 +76,14 @@ static void interruptHandler(void *object)
       reg->CR |= CR_START(interface->event);
     }
   }
+}
+/*----------------------------------------------------------------------------*/
+static inline uint32_t resultWidthExponent(void)
+{
+  /* 8-bit and 16-bit result widths are supported */
+  assert(ADC_RESOLUTION < 16);
+
+  return ADC_RESOLUTION >> 3;
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *object, const void *configPtr)
@@ -158,8 +165,7 @@ static enum result adcCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGet(void *object, enum ifOption option,
-    void *data __attribute__((unused)))
+static enum result adcGet(void *object, enum ifOption option, void *data)
 {
   struct Adc *interface = object;
 
@@ -167,6 +173,10 @@ static enum result adcGet(void *object, enum ifOption option,
   {
     case IF_STATUS:
       return interface->left ? E_BUSY : E_OK;
+
+    case IF_WIDTH:
+      *((uint32_t *)data) = ADC_RESOLUTION;
+      return E_OK;
 
     default:
       return E_ERROR;
@@ -183,9 +193,11 @@ static enum result adcSet(void *object, enum ifOption option,
     case IF_BLOCKING:
       interface->blocking = true;
       return E_OK;
+
     case IF_ZEROCOPY:
       interface->blocking = false;
       return E_OK;
+
     default:
       return E_ERROR;
   }
@@ -197,7 +209,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   LPC_ADC_Type *reg = interface->unit->parent.reg;
 
   /* Check buffer alignment */
-  assert(!(length & MASK(RESULT_POW)));
+  assert(!(length & MASK(resultWidthExponent())));
 
   if (!length || !spinTryLock(&interface->unit->lock))
     return 0;
@@ -206,7 +218,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->channel);
 
   interface->buffer = buffer;
-  interface->left = length >> RESULT_POW;
+  interface->left = length >> resultWidthExponent();
   interface->unit->current = object;
 
   /* Start the conversion */
