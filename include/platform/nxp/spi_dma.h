@@ -39,8 +39,15 @@ struct SpiDma
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* DMA channel descriptors */
+  /* Direct memory access channel descriptors */
   struct Dma *rxDma, *txDma, *txMockDma;
+  /*
+   * Dummy frame intended to be sent over transmit line in the receive mode.
+   * The peripheral descriptor structure should be placed in auxiliary memory
+   * when direct memory access mode is used in sleep mode because main memory
+   * may be unavailable for use.
+   */
+  uint8_t dummy;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };

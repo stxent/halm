@@ -8,6 +8,8 @@
 #include <platform/nxp/spi_dma.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
+#define DUMMY_FRAME 0xFF
+/*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static enum result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static void interruptHandler(void *);
@@ -122,6 +124,7 @@ static enum result spiInit(void *object, const void *configPtr)
 
   interface->blocking = true;
   interface->callback = 0;
+  interface->dummy = DUMMY_FRAME;
 
   LPC_SSP_Type *reg = interface->parent.reg;
 
@@ -212,10 +215,9 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 /*----------------------------------------------------------------------------*/
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  const uint8_t mock = 0xFF;
   struct SpiDma *interface = object;
   LPC_SSP_Type *reg = interface->parent.reg;
-  void *source = (void *)&((LPC_SSP_Type *)interface->parent.reg)->DR;
+  void *source = (void *)&reg->DR;
 
   if (!length)
     return 0;
@@ -233,7 +235,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 
   if (dmaStart(interface->rxDma, buffer, source, length) != E_OK)
     return 0;
-  if (dmaStart(interface->txMockDma, source, &mock, length) != E_OK)
+  if (dmaStart(interface->txMockDma, source, &interface->dummy, length) != E_OK)
   {
     dmaStop(interface->rxDma);
     return 0;
@@ -248,7 +250,6 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct SpiDma *interface = object;
   LPC_SSP_Type *reg = interface->parent.reg;
-  void *destination = (void *)&((LPC_SSP_Type *)interface->parent.reg)->DR;
 
   if (!length)
     return 0;
@@ -264,7 +265,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
   reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
 
-  if (dmaStart(interface->txDma, destination, buffer, length) != E_OK)
+  if (dmaStart(interface->txDma, (void *)&reg->DR, buffer, length) != E_OK)
     return 0;
 
   if (interface->blocking)

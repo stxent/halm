@@ -13,7 +13,7 @@
 #define CR_OUTPUT_WIDTH                 10 /* Input data width */
 #define CR_OUTPUT_MASK                  BIT_FIELD(MASK(CR_OUTPUT_WIDTH), 6)
 #define CR_OUTPUT_VALUE(reg)            FIELD_VALUE((reg), CR_OUTPUT_MASK, 6)
-#define CR_BIAS                         BIT(16) /* Enable higher current */
+#define CR_BIAS                         BIT(16) /* Reduces output current */
 /*------------------Control register------------------------------------------*/
 #define CTRL_INT_DMA_REQ                BIT(0)
 #define CTRL_DBLBUF_ENA                 BIT(1)
