@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPIO_DEFS_
-#define GPIO_DEFS_
+#ifndef GPIO_DEFS_H_
+#define GPIO_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Values for function and mode select registers-------------*/
@@ -20,4 +20,4 @@
 #define STATUS_P0INT                    BIT(0)
 #define STATUS_P2INT                    BIT(2)
 /*----------------------------------------------------------------------------*/
-#endif /* GPIO_DEFS_ */
+#endif /* GPIO_DEFS_H_ */

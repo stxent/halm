@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CLOCKING_DEFS_
-#define CLOCKING_DEFS_
+#ifndef CLOCKING_DEFS_H_
+#define CLOCKING_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------System Controls and Status register-----------------------*/
@@ -48,4 +48,4 @@
 #define FLASHCFG_TIME_MASK              BIT_FIELD(MASK(4), 12)
 #define FLASHCFG_TIME(value)            BIT_FIELD((value), 12)
 /*----------------------------------------------------------------------------*/
-#endif /* CLOCKING_DEFS_ */
+#endif /* CLOCKING_DEFS_H_ */

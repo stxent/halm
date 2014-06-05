@@ -162,13 +162,13 @@ static enum result i2cInit(void *object, const void *configPtr)
   if ((res = I2cBase->init(object, &parentConfig)) != E_OK)
     return res;
 
+  interface->parent.handler = interruptHandler;
+
   interface->address = 0;
   interface->callback = 0;
   interface->blocking = true;
   interface->sendStopBit = true;
   interface->state = I2C_IDLE;
-
-  interface->parent.handler = interruptHandler;
 
   /* Rate should be initialized after block selection */
   i2cSetRate(object, config->rate);

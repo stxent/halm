@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPIO_DEFS_
-#define GPIO_DEFS_
+#ifndef GPIO_DEFS_H_
+#define GPIO_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------IO Configuration registers--------------------------------*/
@@ -26,4 +26,4 @@
 #define IOCON_HYS                       BIT(5)
 #define IOCON_OD                        BIT(10)
 /*----------------------------------------------------------------------------*/
-#endif /* GPIO_DEFS_ */
+#endif /* GPIO_DEFS_H_ */
