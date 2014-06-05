@@ -26,7 +26,7 @@ static inline void *calcPeripheral(uint8_t);
 static uint8_t eventToPeripheral(enum gpDmaEvent);
 static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerAttach();
+static inline enum result dmaHandlerAttach();
 static inline void dmaHandlerDetach();
 static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -55,10 +55,13 @@ static inline void *calcPeripheral(uint8_t channel)
       - (uint32_t)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerAttach()
+static inline enum result dmaHandlerAttach()
 {
   if (!dmaHandler)
-    dmaHandler = init(DmaHandler, 0);
+  {
+    if (!(dmaHandler = init(DmaHandler, 0)))
+      return E_ERROR;
+  }
 
   if (!dmaHandler->instances++)
   {
@@ -66,6 +69,8 @@ static inline void dmaHandlerAttach()
     LPC_GPDMA->CONFIG |= DMA_ENABLE;
     irqEnable(DMA_IRQ);
   }
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static inline void dmaHandlerDetach()
@@ -192,6 +197,7 @@ static enum result channelInit(void *object, const void *configPtr)
 {
   const struct GpDmaBaseConfig * const config = configPtr;
   struct GpDmaBase *channel = object;
+  enum result res;
 
   assert(config->channel < GPDMA_CHANNEL_COUNT);
 
@@ -228,7 +234,8 @@ static enum result channelInit(void *object, const void *configPtr)
   }
 
   /* Register new descriptor in the handler */
-  dmaHandlerAttach();
+  if ((res = dmaHandlerAttach()) != E_OK)
+    return res;
 
   return E_OK;
 }

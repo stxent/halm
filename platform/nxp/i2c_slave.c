@@ -120,14 +120,16 @@ static enum result i2cInit(void *object, const void *configPtr)
     return res;
 
   interface->cache = malloc(config->size);
-  interface->size = config->size;
+  if (!interface->cache)
+    return E_MEMORY;
+
+  interface->parent.handler = interruptHandler;
 
   interface->callback = 0;
   interface->external = 0;
   interface->internal = 0;
+  interface->size = config->size;
   interface->state = I2C_SLAVE_IDLE;
-
-  interface->parent.handler = interruptHandler;
 
   LPC_I2C_Type *reg = interface->parent.reg;
 
