@@ -41,6 +41,8 @@ struct Serial
 
   /* Input and output queues */
   struct ByteQueue rxQueue, txQueue;
+  /* Desired baud rate */
+  uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* SERIAL_H_ */

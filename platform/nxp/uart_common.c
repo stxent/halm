@@ -30,22 +30,24 @@ enum result uartSetupPins(struct UartBase *interface,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-struct UartRateConfig uartCalcRate(struct UartBase *interface, uint32_t rate)
+enum result uartCalcRate(struct UartBase *interface, uint32_t rate,
+    struct UartRateConfig *output)
 {
-  uint32_t divisor;
-  struct UartRateConfig config = {0, 0, 0x10};
-
   if (!rate)
-    return config;
+    return E_VALUE;
 
-  divisor = (uartGetClock(interface) >> 4) / rate;
+  uint32_t divisor = (uartGetClock(interface) >> 4) / rate;
+
   if (divisor && divisor < (1 << 16))
   {
-    config.high = (uint8_t)(divisor >> 8);
-    config.low = (uint8_t)divisor;
+    output->divisor = (uint16_t)divisor;
+    output->fraction = 0x10;
     /* TODO Add fractional part calculation */
+
+    return E_OK;
   }
-  return config;
+  else
+    return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetRate(struct UartBase *interface)
@@ -54,18 +56,12 @@ uint32_t uartGetRate(struct UartBase *interface)
   uint32_t rate = uartGetClock(interface) >> 4;
   struct UartRateConfig config;
 
-  /* UART should not be used during this command sequence */
   reg->LCR |= LCR_DLAB; /* Enable DLAB access */
-  config.low = reg->DLL;
-  config.high = reg->DLM;
+  config.divisor = ((reg->DLM & 0xFF) << 8) | (reg->DLL & 0xFF);
   config.fraction = reg->FDR;
   reg->LCR &= ~LCR_DLAB; /* Disable DLAB access */
 
-  if (!(config.low || config.high))
-    return 0;
-  rate /= ((uint16_t)config.high << 8) | (uint16_t)config.low;
-
-  return rate;
+  return !config.divisor ? 0 : rate / config.divisor;
 }
 /*----------------------------------------------------------------------------*/
 void uartSetParity(struct UartBase *interface, enum uartParity parity)
@@ -75,10 +71,7 @@ void uartSetParity(struct UartBase *interface, enum uartParity parity)
   if (parity != UART_PARITY_NONE)
   {
     reg->LCR |= LCR_PARITY;
-    if (parity == UART_PARITY_EVEN)
-      reg->LCR |= LCR_PARITY_EVEN;
-    else
-      reg->LCR |= LCR_PARITY_ODD;
+    reg->LCR |= parity == UART_PARITY_EVEN ? LCR_PARITY_EVEN : LCR_PARITY_ODD;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -86,10 +79,9 @@ void uartSetRate(struct UartBase *interface, struct UartRateConfig config)
 {
   LPC_UART_Type *reg = interface->reg;
 
-  /* UART should not be used during this command sequence */
   reg->LCR |= LCR_DLAB; /* Enable DLAB access */
-  reg->DLL = config.low;
-  reg->DLM = config.high;
+  reg->DLL = config.divisor & 0xFF;
+  reg->DLM = config.divisor >> 8;
   reg->FDR = config.fraction;
   reg->LCR &= ~LCR_DLAB; /* Disable DLAB access */
 }

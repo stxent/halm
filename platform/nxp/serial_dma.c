@@ -82,16 +82,20 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
 static enum result serialInit(void *object, const void *configPtr)
 {
   const struct SerialDmaConfig * const config = configPtr;
-  struct SerialDma *interface = object;
-  struct UartBaseConfig parentConfig = {
+  const struct UartBaseConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,
       .tx = config->tx
   };
+  struct SerialDma *interface = object;
+  struct UartRateConfig rateConfig;
   enum result res;
 
   /* Call base class constructor */
   if ((res = UartBase->init(object, &parentConfig)) != E_OK)
+    return res;
+
+  if ((res = uartCalcRate(object, config->rate, &rateConfig)) != E_OK)
     return res;
 
   if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
@@ -112,7 +116,7 @@ static enum result serialInit(void *object, const void *configPtr)
   reg->TER = TER_TXEN;
 
   uartSetParity(object, config->parity);
-  uartSetRate(object, uartCalcRate(object, config->rate));
+  uartSetRate(object, rateConfig);
 
   return E_OK;
 }
@@ -161,6 +165,8 @@ static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
   struct SerialDma *interface = object;
+  struct UartRateConfig rateConfig;
+  enum result res;
 
   switch (option)
   {
@@ -169,8 +175,9 @@ static enum result serialSet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_RATE:
-      uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
-      return E_OK;
+      if ((res = uartCalcRate(object, *(uint32_t *)data, &rateConfig)) == E_OK)
+        uartSetRate(object, rateConfig);
+      return res;
 
     case IF_ZEROCOPY:
       interface->blocking = false;

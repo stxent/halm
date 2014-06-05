@@ -32,7 +32,8 @@ struct UartBaseConfig
 /*----------------------------------------------------------------------------*/
 struct UartRateConfig
 {
-  uint8_t high, low, fraction;
+  uint16_t divisor;
+  uint8_t fraction;
 };
 /*----------------------------------------------------------------------------*/
 struct UartBase
@@ -47,7 +48,7 @@ struct UartBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct UartRateConfig uartCalcRate(struct UartBase *, uint32_t);
+enum result uartCalcRate(struct UartBase *, uint32_t, struct UartRateConfig *);
 uint32_t uartGetRate(struct UartBase *);
 void uartSetParity(struct UartBase *, enum uartParity);
 void uartSetRate(struct UartBase *, struct UartRateConfig);

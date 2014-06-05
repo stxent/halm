@@ -85,14 +85,20 @@ static enum result serialInit(void *object, const void *configPtr)
       .tx = config->tx
   };
   struct Serial *interface = object;
+  struct UartRateConfig rateConfig;
   enum result res;
 
   /* Call base class constructor */
   if ((res = UartBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  interface->callback = 0;
+  if ((res = uartCalcRate(object, config->rate, &rateConfig)) != E_OK)
+    return res;
+
   interface->parent.handler = interruptHandler;
+
+  interface->callback = 0;
+  interface->rate = config->rate;
 
   if ((res = byteQueueInit(&interface->rxQueue, config->rxLength)) != E_OK)
     return res;
@@ -112,7 +118,7 @@ static enum result serialInit(void *object, const void *configPtr)
   reg->TER = TER_TXEN;
 
   uartSetParity(object, config->parity);
-  uartSetRate(object, uartCalcRate(object, config->rate));
+  uartSetRate(object, rateConfig);
 
   irqSetPriority(interface->parent.irq, config->priority);
   irqEnable(interface->parent.irq);
@@ -162,11 +168,19 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
 static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
+  struct Serial *interface = object;
+  struct UartRateConfig rateConfig;
+  enum result res;
+
   switch (option)
   {
     case IF_RATE:
-      uartSetRate(object, uartCalcRate(object, *(uint32_t *)data));
-      return E_OK;
+      if ((res = uartCalcRate(object, *(uint32_t *)data, &rateConfig)) == E_OK)
+      {
+        interface->rate = *(uint32_t *)data;
+        uartSetRate(object, rateConfig);
+      }
+      return res;
 
     default:
       return E_ERROR;

@@ -159,10 +159,12 @@ static enum result oneWireInit(void *object, const void *configPtr)
   if ((res = byteQueueInit(&interface->txQueue, TX_QUEUE_LENGTH)) != E_OK)
     return res;
 
-  interface->parent.handler = interruptHandler;
+  if ((res = uartCalcRate(object, RATE_DATA, &interface->dataRate)) != E_OK)
+    return res;
+  if ((res = uartCalcRate(object, RATE_RESET, &interface->resetRate)) != E_OK)
+    return res;
 
-  interface->dataRate = uartCalcRate(object, RATE_DATA);
-  interface->resetRate = uartCalcRate(object, RATE_RESET);
+  interface->parent.handler = interruptHandler;
 
   interface->address = 0;
   interface->blocking = true;
