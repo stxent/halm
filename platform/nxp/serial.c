@@ -5,6 +5,7 @@
  */
 
 #include <stdbool.h>
+#include <pm.h>
 #include <platform/nxp/serial.h>
 #include <platform/nxp/uart_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -12,6 +13,7 @@
 #define TX_FIFO_SIZE  8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
+static enum result powerStateHandler(void *, enum pmState);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
@@ -76,6 +78,24 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
+static enum result powerStateHandler(void *object, enum pmState state)
+{
+  struct Serial *interface = object;
+  struct UartRateConfig rateConfig;
+  enum result res;
+
+  if (state == PM_ACTIVE)
+  {
+    /* Recalculate and apply baud rate */
+    if ((res = uartCalcRate(object, interface->rate, &rateConfig)) != E_OK)
+      return res;
+
+    uartSetRate(object, rateConfig);
+  }
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
   const struct SerialConfig * const config = configPtr;
@@ -119,6 +139,9 @@ static enum result serialInit(void *object, const void *configPtr)
 
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);
+
+  if ((res = pmRegister(object, powerStateHandler)) != E_OK)
+    return res;
 
   irqSetPriority(interface->parent.irq, config->priority);
   irqEnable(interface->parent.irq);
