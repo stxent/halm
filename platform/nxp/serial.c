@@ -12,8 +12,11 @@
 #define RX_FIFO_LEVEL 2 /* 8 characters */
 #define TX_FIFO_SIZE  8
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *);
+#ifdef CONFIG_SERIAL_PM
 static enum result powerStateHandler(void *, enum pmState);
+#endif
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
@@ -78,6 +81,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_SERIAL_PM
 static enum result powerStateHandler(void *object, enum pmState state)
 {
   struct Serial *interface = object;
@@ -95,6 +99,7 @@ static enum result powerStateHandler(void *object, enum pmState state)
 
   return E_OK;
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configPtr)
 {
@@ -140,8 +145,10 @@ static enum result serialInit(void *object, const void *configPtr)
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);
 
+#ifdef CONFIG_SERIAL_PM
   if ((res = pmRegister(object, powerStateHandler)) != E_OK)
     return res;
+#endif
 
   irqSetPriority(interface->parent.irq, config->priority);
   irqEnable(interface->parent.irq);
