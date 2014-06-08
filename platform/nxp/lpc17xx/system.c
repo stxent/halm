@@ -10,7 +10,7 @@
 #include <platform/nxp/lpc17xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 /**
- * Set peripheral clock prescaler.
+ * Set the peripheral clock prescaler.
  * @param peripheral Peripheral to be configured.
  * @param divisor Clock divisor.
  * @b CLK_DIV6 is only used for CAN1, CAN2 and CAN Filtering peripherals.
@@ -56,7 +56,7 @@ void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set flash access time.
+ * Set the flash access time.
  * @param value Flash access time in CPU clocks.
  * @n Possible values and recommended operating frequencies:
  *   - 1 clock: up to 20 MHz.

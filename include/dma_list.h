@@ -4,6 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ * @file
+ * Scatter-gather lists extension to the Direct Memory Access interface.
+ */
+
 #ifndef DMA_LIST_H_
 #define DMA_LIST_H_
 /*----------------------------------------------------------------------------*/

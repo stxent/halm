@@ -50,7 +50,7 @@ static inline void gpioBusWrite(void *bus, uint32_t value)
   ((struct GpioBusClass *)CLASS(bus))->write(bus, value);
 }
 /*----------------------------------------------------------------------------*/
-/** Reference GpioBus implementation based on pin array. */
+/** Reference GpioBus implementation based on the pin array. */
 extern const struct GpioBusClass *GpioBus;
 /*----------------------------------------------------------------------------*/
 struct GpioBusConfig

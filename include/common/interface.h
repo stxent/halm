@@ -91,7 +91,7 @@ static inline enum result ifCallback(void *interface, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Retrieve value of an option.
+ * Retrieve the interface option.
  * @param interface Pointer to an Interface object.
  * @param option Option to be read.
  * @param data Pointer to a variable where a value of the option will be stored.
@@ -105,7 +105,7 @@ static inline enum result ifGet(void *interface, enum ifOption option,
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set value of an option.
+ * Set the interface option.
  * @param interface Pointer to an Interface object.
  * @param option Option to be set.
  * @param data Pointer to a new value of the option.
@@ -119,7 +119,7 @@ static inline enum result ifSet(void *interface, enum ifOption option,
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Receive data.
+ * Receive data from the interface.
  * @param interface Pointer to an Interface object.
  * @param buffer Pointer to a buffer with a size of at least @b length bytes.
  * @param length Number of bytes to be read.
@@ -132,7 +132,7 @@ static inline uint32_t ifRead(void *interface, uint8_t *buffer, uint32_t length)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Send data.
+ * Send data over the interface.
  * @param interface Pointer to an Interface object.
  * @param buffer Pointer to a buffer with a size of at least @b length bytes.
  * @param length Number of bytes to be written.

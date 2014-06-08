@@ -25,8 +25,28 @@ enum pmState
 /*----------------------------------------------------------------------------*/
 typedef enum result (*PmCallback)(void *, enum pmState);
 /*----------------------------------------------------------------------------*/
-enum result pmChangeState(enum pmState);
-enum result pmRegister(void *, PmCallback);
-void pmUnregister(const void *);
+/**
+ * Change the system state.
+ * Two processor-specific functions should be defined externally:
+ * @b pmCoreChangeState for core-dependent code and
+ * @b pmPlatformChangeState for platform-dependent code.
+ * When the low power mode is selected, function returns after resuming from
+ * that mode to the active state.
+ * @param state Next system state.
+ * @return Returns E_OK on success or error otherwise.
+ */
+enum result pmChangeState(enum pmState state);
+/**
+ * Register a callback function.
+ * @param object Pointer to an object used as function argument.
+ * @param callback Callback function.
+ * @return Returns E_OK on success.
+ */
+enum result pmRegister(void *object, PmCallback callback);
+/**
+ * Unregister the callback function.
+ * @param object Pointer to an object to be deleted from the list.
+ */
+void pmUnregister(const void *object);
 /*----------------------------------------------------------------------------*/
 #endif /* PM_H_ */

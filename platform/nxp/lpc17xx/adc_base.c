@@ -29,10 +29,12 @@ static const struct EntityClass adcUnitTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioDescriptor adcPins[] = {
     {
+        /* Unavailable on LPC175x series */
         .key = PIN(0, 23), /* AD0 */
         .channel = 0,
         .value = PACK_VALUE(1, 0)
     }, {
+        /* Unavailable on LPC175x series */
         .key = PIN(0, 24), /* AD1 */
         .channel = 0,
         .value = PACK_VALUE(1, 1)
