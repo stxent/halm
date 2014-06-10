@@ -19,7 +19,7 @@
 /* Simplified descriptor for abstract class */
 struct ClockClass
 {
-  void (*disable)(void);
+  enum result (*disable)(void);
   enum result (*enable)(const void *);
   uint32_t (*frequency)(void);
   bool (*ready)(void);
@@ -28,10 +28,11 @@ struct ClockClass
 /**
  * Try to stop specified clock.
  * @param clock Class descriptor.
+ * @return @b E_OK on success.
  */
-static inline void clockDisable(const void *clock)
+static inline enum result clockDisable(const void *clock)
 {
-  ((struct ClockClass *)clock)->disable();
+  return ((struct ClockClass *)clock)->disable();
 }
 /*----------------------------------------------------------------------------*/
 /**

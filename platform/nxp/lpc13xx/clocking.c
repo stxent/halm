@@ -13,28 +13,33 @@
 #define INT_OSC_FREQUENCY 12000000
 #define USB_FREQUENCY     48000000
 /*----------------------------------------------------------------------------*/
-static void stubDisable(void);
+static enum result stubDisable(void);
 static bool stubReady(void);
 /*----------------------------------------------------------------------------*/
-static void extOscDisable(void);
+static enum result extOscDisable(void);
 static enum result extOscEnable(const void *);
 static uint32_t extOscFrequency(void);
 static bool extOscReady();
-static void intOscDisable(void);
+
+static enum result intOscDisable(void);
 static enum result intOscEnable(const void *);
 static uint32_t intOscFrequency(void);
 static bool intOscReady();
-static void sysPllDisable(void);
+
+static enum result sysPllDisable(void);
 static enum result sysPllEnable(const void *);
 static uint32_t sysPllFrequency(void);
 static bool sysPllReady(void);
-static void usbPllDisable(void);
+
+static enum result usbPllDisable(void);
 static enum result usbPllEnable(const void *);
 static uint32_t usbPllFrequency(void);
 static bool usbPllReady(void);
 /*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *);
 static uint32_t mainClockFrequency(void);
+
+static enum result usbClockDisable();
 static enum result usbClockEnable(const void *);
 static uint32_t usbClockFrequency(void);
 /*----------------------------------------------------------------------------*/
@@ -74,7 +79,7 @@ static const struct ClockClass mainClockTable = {
 };
 
 static const struct ClockClass usbClockTable = {
-    .disable = stubDisable,
+    .disable = usbClockDisable,
     .enable = usbClockEnable,
     .frequency = usbClockFrequency,
     .ready = stubReady
@@ -91,9 +96,9 @@ static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
 uint32_t coreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
-static void stubDisable(void)
+static enum result stubDisable(void)
 {
-
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static bool stubReady(void)
@@ -101,10 +106,15 @@ static bool stubReady(void)
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static void extOscDisable(void)
+static enum result extOscDisable(void)
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_INPUT)
+  {
     sysPowerDisable(PWR_SYSOSC);
+    return E_OK;
+  }
+  else
+    return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result extOscEnable(const void *configPtr)
@@ -146,13 +156,16 @@ static bool extOscReady(void)
   return extFrequency && sysPowerStatus(PWR_SYSOSC);
 }
 /*----------------------------------------------------------------------------*/
-static void intOscDisable(void)
+static enum result intOscDisable(void)
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_IRC)
   {
     sysPowerDisable(PWR_IRCOUT);
     sysPowerDisable(PWR_IRC);
+    return E_OK;
   }
+  else
+    return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result intOscEnable(const void *configPtr __attribute__((unused)))
@@ -173,10 +186,15 @@ static bool intOscReady(void)
   return sysPowerStatus(PWR_IRC) && sysPowerStatus(PWR_IRCOUT);
 }
 /*----------------------------------------------------------------------------*/
-static void sysPllDisable(void)
+static enum result sysPllDisable(void)
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_OUTPUT)
+  {
     sysPowerDisable(PWR_SYSPLL);
+    return E_OK;
+  }
+  else
+    return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sysPllEnable(const void *configPtr)
@@ -246,9 +264,10 @@ static bool sysPllReady(void)
   return pllFrequency && (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK ? true : false);
 }
 /*----------------------------------------------------------------------------*/
-static void usbPllDisable(void)
+static enum result usbPllDisable(void)
 {
   sysPowerDisable(PWR_USBPLL);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result usbPllEnable(const void *configPtr)
@@ -362,6 +381,11 @@ static enum result mainClockEnable(const void *configPtr)
 static uint32_t mainClockFrequency(void)
 {
   return coreClock;
+}
+/*----------------------------------------------------------------------------*/
+static enum result usbClockDisable(void)
+{
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result usbClockEnable(const void *configPtr)

@@ -33,16 +33,18 @@ typedef enum result (*PmCallback)(void *, enum pmState);
  * When the low power mode is selected, function returns after resuming from
  * that mode to the active state.
  * @param state Next system state.
- * @return Returns E_OK on success or error otherwise.
+ * @return @b E_OK on success or error otherwise.
  */
 enum result pmChangeState(enum pmState state);
+/*----------------------------------------------------------------------------*/
 /**
  * Register a callback function.
  * @param object Pointer to an object used as function argument.
  * @param callback Callback function.
- * @return Returns E_OK on success.
+ * @return @b E_OK on success.
  */
 enum result pmRegister(void *object, PmCallback callback);
+/*----------------------------------------------------------------------------*/
 /**
  * Unregister the callback function.
  * @param object Pointer to an object to be deleted from the list.

@@ -14,14 +14,15 @@
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 static void pllDisconnect(void);
-static void stubDisable(void);
+static enum result stubDisable(void);
 static bool stubReady(void);
 /*----------------------------------------------------------------------------*/
-static void extOscDisable(void);
+static enum result extOscDisable(void);
 static enum result extOscEnable(const void *);
 static uint32_t extOscFrequency(void);
 static bool extOscReady(void);
-static void sysPllDisable(void);
+
+static enum result sysPllDisable(void);
 static enum result sysPllEnable(const void *);
 static uint32_t sysPllFrequency(void);
 static bool sysPllReady(void);
@@ -82,9 +83,9 @@ static void pllDisconnect(void)
   LPC_SC->PLL0FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
-static void stubDisable(void)
+static enum result stubDisable(void)
 {
-
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static bool stubReady(void)
@@ -92,9 +93,10 @@ static bool stubReady(void)
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static void extOscDisable(void)
+static enum result extOscDisable(void)
 {
   LPC_SC->SCS &= ~SCS_OSCEN;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result extOscEnable(const void *configPtr)
@@ -126,14 +128,17 @@ static bool extOscReady(void)
   return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT ? true : false);
 }
 /*----------------------------------------------------------------------------*/
-static void sysPllDisable(void)
+static enum result sysPllDisable(void)
 {
   if (!(LPC_SC->PLL0STAT & PLL0STAT_CONNECTED))
   {
     LPC_SC->PLL0CON &= ~PLL0CON_ENABLE;
     LPC_SC->PLL0FEED = PLLFEED_FIRST;
     LPC_SC->PLL0FEED = PLLFEED_SECOND;
+    return E_OK;
   }
+  else
+    return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sysPllEnable(const void *configPtr)
@@ -276,6 +281,7 @@ static enum result mainClockEnable(const void *configPtr)
     case CLOCK_RTC:
       if (!rtcFrequency) //TODO Replace with rtcOscReady
         return E_ERROR;
+
       flashLatencyReset();
       LPC_SC->CLKSRCSEL = CLKSRCSEL_RTC;
       coreClock = rtcFrequency;
