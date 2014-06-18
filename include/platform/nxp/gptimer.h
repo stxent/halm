@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include "gptimer_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct TimerClass *GpTimer;
+extern const struct TimerClass * const GpTimer;
 /*----------------------------------------------------------------------------*/
 /** Symbolic names for two different types of timers on some series. */
 enum

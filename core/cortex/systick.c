@@ -41,13 +41,13 @@ static const struct TimerClass timerTable = {
     .value = tmrValue
 };
 /*----------------------------------------------------------------------------*/
-extern uint32_t coreClock;
-const struct TimerClass *SysTickTimer = &timerTable;
+extern uint32_t coreClock; //TODO SysTick: add workaround
+const struct TimerClass * const SysTickTimer = &timerTable;
 static struct SysTickTimer *descriptor = 0;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct SysTickTimer *device = object;
+  struct SysTickTimer * const device = object;
 
   if ((SYSTICK->CTRL & CTRL_COUNTFLAG) && device->callback)
     device->callback(device->callbackArgument);
@@ -55,6 +55,7 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(struct SysTickTimer *timer)
 {
+  //TODO SysTick: replace with compare and swap
   if (descriptor)
     return E_BUSY;
 
@@ -64,7 +65,7 @@ static enum result setDescriptor(struct SysTickTimer *timer)
 /*----------------------------------------------------------------------------*/
 static void updateFrequency(struct SysTickTimer *timer)
 {
-  uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
+  const uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
 
   SYSTICK->CTRL &= ~CTRL_ENABLE;
   SYSTICK->LOAD = (coreClock / timer->frequency) * timer->overflow - 1;
@@ -81,7 +82,7 @@ void SYSTICK_ISR(void)
 static enum result tmrInit(void *object, const void *configPtr)
 {
   const struct SysTickTimerConfig * const config = configPtr;
-  struct SysTickTimer *timer = object;
+  struct SysTickTimer * const timer = object;
 
   /* Try to set peripheral descriptor */
   if (setDescriptor(timer) != E_OK)
@@ -110,10 +111,9 @@ static void tmrDeinit(void *object __attribute__((unused)))
   setDescriptor(0);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrCallback(void *object, void (*callback)(void *),
-    void *argument)
+static void tmrCallback(void *object, void (*callback)(void *), void *argument)
 {
-  struct SysTickTimer *timer = object;
+  struct SysTickTimer * const timer = object;
 
   timer->callback = callback;
   timer->callbackArgument = argument;
@@ -137,7 +137,7 @@ static void tmrSetEnabled(void *object __attribute__((unused)), bool state)
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  struct SysTickTimer *timer = object;
+  struct SysTickTimer * const timer = object;
 
   timer->frequency = frequency ? frequency : coreClock;
   updateFrequency(timer);
@@ -145,7 +145,7 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
-  struct SysTickTimer *timer = object;
+  struct SysTickTimer * const timer = object;
 
   timer->overflow = overflow;
   updateFrequency(timer);

@@ -16,7 +16,7 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *AdcUnitBase;
+extern const struct EntityClass * const AdcUnitBase;
 /*----------------------------------------------------------------------------*/
 struct AdcUnitBaseConfig
 {

@@ -30,7 +30,7 @@ static const irq_t gpioIntIrq[] = {
     PIOINT0_IRQ, PIOINT1_IRQ, PIOINT2_IRQ, PIOINT3_IRQ
 };
 /*----------------------------------------------------------------------------*/
-const struct InterruptClass *GpioInterrupt = &gpioIntTable;
+const struct InterruptClass * const GpioInterrupt = &gpioIntTable;
 static struct GpioInterrupt *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t port)
@@ -41,8 +41,8 @@ static inline LPC_GPIO_Type *calcPort(uint8_t port)
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  struct GpioInterrupt *current = descriptors[channel];
-  LPC_GPIO_Type *reg = calcPort(channel);
+  const struct GpioInterrupt *current = descriptors[channel];
+  LPC_GPIO_Type * const reg = calcPort(channel);
   const uint32_t state = reg->MIS;
 
   while (current)
@@ -51,7 +51,7 @@ static void processInterrupt(uint8_t channel)
       current->callback(current->callbackArgument);
     current = current->next;
   }
-  reg->IC = state;
+  reg->IC = state; //FIXME Add check
   /* Synchronizer logic causes a delay of 2 clocks */
 }
 /*----------------------------------------------------------------------------*/
@@ -68,6 +68,7 @@ static enum result resetDescriptor(union GpioPin pin)
     descriptors[pin.port] = descriptors[pin.port]->next;
     if (!descriptors[pin.port])
       irqDisable(gpioIntIrq[pin.port]);
+
     return E_OK;
   }
   else
@@ -81,6 +82,7 @@ static enum result resetDescriptor(union GpioPin pin)
       }
       current = current->next;
     }
+
     return E_ERROR;
   }
 }
@@ -104,11 +106,13 @@ static enum result setDescriptor(union GpioPin pin,
         return E_BUSY;
       current = current->next;
     }
+
     if (current->pin.key != pin.key)
       current->next = interrupt;
     else
       return E_BUSY;
   }
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -135,7 +139,7 @@ void PIOINT3_ISR(void)
 static enum result gpioIntInit(void *object, const void *configPtr)
 {
   const struct GpioInterruptConfig * const config = configPtr;
-  struct GpioInterrupt *interrupt = object;
+  struct GpioInterrupt * const interrupt = object;
   enum result res;
 
   struct Gpio input = gpioInit(config->pin);
@@ -153,8 +157,8 @@ static enum result gpioIntInit(void *object, const void *configPtr)
   interrupt->mode = config->mode;
   interrupt->next = 0;
 
-  LPC_GPIO_Type *reg = calcPort(interrupt->pin.port);
-  uint32_t mask = 1 << interrupt->pin.offset;
+  LPC_GPIO_Type * const reg = calcPort(interrupt->pin.port);
+  const uint32_t mask = 1 << interrupt->pin.offset;
 
   /* Configure interrupt as edge sensitive*/
   reg->IS &= ~mask;
@@ -183,7 +187,7 @@ static void gpioIntDeinit(void *object)
 {
   const union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
   const uint32_t mask = 1 << pin.offset;
-  LPC_GPIO_Type *reg = calcPort(pin.port);
+  LPC_GPIO_Type * const reg = calcPort(pin.port);
 
   reg->IE &= ~mask;
   reg->IBE &= ~mask;
@@ -194,7 +198,7 @@ static void gpioIntDeinit(void *object)
 static void gpioIntCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct GpioInterrupt *interrupt = object;
+  struct GpioInterrupt * const interrupt = object;
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
@@ -204,7 +208,7 @@ static void gpioIntSetEnabled(void *object, bool state)
 {
   const union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
   const uint32_t mask = 1 << pin.offset;
-  LPC_GPIO_Type *reg = calcPort(pin.port);
+  LPC_GPIO_Type * const reg = calcPort(pin.port);
 
   if (state)
   {

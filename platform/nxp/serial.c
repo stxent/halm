@@ -38,7 +38,7 @@ static const struct InterfaceClass serialTable = {
     .write = serialWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *Serial = &serialTable;
+const struct InterfaceClass * const Serial = &serialTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -54,7 +54,7 @@ static void interruptHandler(void *object)
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
   {
-    uint8_t data = reg->RBR;
+    const uint8_t data = reg->RBR;
     /* Received bytes will be dropped when queue becomes full */
     if (!byteQueueFull(&interface->rxQueue))
       byteQueuePush(&interface->rxQueue, data);
@@ -109,7 +109,7 @@ static enum result serialInit(void *object, const void *configPtr)
       .rx = config->rx,
       .tx = config->tx
   };
-  struct Serial *interface = object;
+  struct Serial * const interface = object;
   struct UartRateConfig rateConfig;
   enum result res;
 
@@ -130,7 +130,7 @@ static enum result serialInit(void *object, const void *configPtr)
   if ((res = byteQueueInit(&interface->txQueue, config->txLength)) != E_OK)
     return res;
 
-  LPC_UART_Type *reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->parent.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;

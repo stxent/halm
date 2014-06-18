@@ -10,8 +10,8 @@
 #include <pwm.h>
 #include "gptimer_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *GpTimerPwmUnit;
-extern const struct PwmClass *GpTimerPwm;
+extern const struct EntityClass * const GpTimerPwmUnit;
+extern const struct PwmClass * const GpTimerPwm;
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwmUnitConfig
 {

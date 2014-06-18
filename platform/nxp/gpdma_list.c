@@ -39,11 +39,11 @@ static const struct DmaListClass channelTable = {
     .execute = channelExecute
 };
 /*----------------------------------------------------------------------------*/
-const struct DmaListClass *GpDmaList = &channelTable;
+const struct DmaListClass * const GpDmaList = &channelTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct GpDmaList *channel = object;
+  struct GpDmaList * const channel = object;
 
   /* TODO Add DMA errors detection and processing */
 
@@ -59,7 +59,7 @@ static enum result channelInit(void *object, const void *configPtr)
       .event = config->event,
       .type = config->type
   };
-  struct GpDmaList *channel = object;
+  struct GpDmaList * const channel = object;
   enum result res;
 
   if (!config->size)
@@ -121,7 +121,7 @@ static enum result channelInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  struct GpDmaList *channel = object;
+  struct GpDmaList * const channel = object;
 
   free(channel->buffer);
   GpDmaBase->deinit(channel);
@@ -129,8 +129,8 @@ static void channelDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static bool channelActive(void *object)
 {
-  struct GpDmaList *channel = object;
-  LPC_GPDMACH_Type *reg = channel->parent.reg;
+  struct GpDmaList * const channel = object;
+  LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
   return gpDmaGetDescriptor(channel->parent.number) == object
       && (reg->CONFIG & CONFIG_ENABLE);
@@ -139,7 +139,7 @@ static bool channelActive(void *object)
 static void channelCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct GpDmaList *channel = object;
+  struct GpDmaList * const channel = object;
 
   channel->callback = callback;
   channel->callbackArgument = argument;
@@ -147,9 +147,9 @@ static void channelCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static uint32_t channelIndex(void *object)
 {
-  struct GpDmaList *channel = object;
-  LPC_GPDMACH_Type *reg = channel->parent.reg;
-  struct GpDmaListItem *next = (struct GpDmaListItem *)reg->LLI;
+  struct GpDmaList * const channel = object;
+  LPC_GPDMACH_Type * const reg = channel->parent.reg;
+  struct GpDmaListItem * const next = (struct GpDmaListItem *)reg->LLI;
 
   if (!next)
     return 0;
@@ -163,7 +163,7 @@ static uint32_t channelIndex(void *object)
 static enum result channelStart(void *object, void *destination,
     const void *source, uint32_t size)
 {
-  struct GpDmaList *channel = object;
+  struct GpDmaList * const channel = object;
   const uint32_t chunkSize = GPDMA_MAX_TRANSFER & channel->alignment;
 
   /* TODO Write test for DMA transfer subdivision */
@@ -192,9 +192,9 @@ static enum result channelStart(void *object, void *destination,
       source += chunk;
   }
 
-  const struct GpDmaListItem *first = channel->buffer;
+  const struct GpDmaListItem * const first = channel->buffer;
   const uint32_t request = 1 << channel->parent.number;
-  LPC_GPDMACH_Type *reg = channel->parent.reg;
+  LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
   reg->SRCADDR = first->source;
   reg->DESTADDR = first->destination;
@@ -213,7 +213,7 @@ static enum result channelStart(void *object, void *destination,
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)
 {
-  LPC_GPDMACH_Type *reg = ((struct GpDmaList *)object)->parent.reg;
+  LPC_GPDMACH_Type * const reg = ((struct GpDmaList *)object)->parent.reg;
 
   /* Complete current transfer and stop */
   reg->LLI = 0;
@@ -222,8 +222,8 @@ static void channelStop(void *object)
 static enum result channelAppend(void *object, void *destination,
     const void *source, uint32_t size)
 {
-  struct GpDmaList *channel = object;
-  struct GpDmaListItem *item = channel->buffer + channel->size;
+  struct GpDmaList * const channel = object;
+  struct GpDmaListItem * const item = channel->buffer + channel->size;
 
   if (size > GPDMA_MAX_TRANSFER)
     return E_VALUE;
@@ -258,7 +258,7 @@ static void channelClear(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result channelExecute(void *object)
 {
-  struct GpDmaList *channel = object;
+  struct GpDmaList * const channel = object;
 
   if (!channel->size)
     return E_VALUE;
@@ -268,9 +268,9 @@ static enum result channelExecute(void *object)
 
   gpDmaSetupMux(object);
 
-  const struct GpDmaListItem *first = channel->buffer;
+  const struct GpDmaListItem * const first = channel->buffer;
   const uint32_t request = 1 << channel->parent.number;
-  LPC_GPDMACH_Type *reg = channel->parent.reg;
+  LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
   reg->SRCADDR = first->source;
   reg->DESTADDR = first->destination;

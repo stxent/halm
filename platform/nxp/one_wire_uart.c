@@ -45,7 +45,7 @@ static const struct InterfaceClass oneWireTable = {
     .write = oneWireWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *OneWireUart = &oneWireTable;
+const struct InterfaceClass * const OneWireUart = &oneWireTable;
 /*----------------------------------------------------------------------------*/
 static void adjustPins(struct OneWireUart *interface __attribute__((unused)),
     const struct OneWireUartConfig *config)
@@ -55,7 +55,7 @@ static void adjustPins(struct OneWireUart *interface __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWireUart *interface)
 {
-  LPC_UART_Type *reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->parent.reg;
 
   uartSetRate((struct UartBase *)interface, interface->resetRate);
   interface->state = OW_UART_RESET;
@@ -66,7 +66,7 @@ static void beginTransmission(struct OneWireUart *interface)
 /*----------------------------------------------------------------------------*/
 static void sendWord(struct OneWireUart *interface, uint8_t word)
 {
-  LPC_UART_Type *reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->parent.reg;
   uint8_t counter = 0;
 
   while (counter < 8)
@@ -75,8 +75,8 @@ static void sendWord(struct OneWireUart *interface, uint8_t word)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct OneWireUart *interface = object;
-  LPC_UART_Type *reg = interface->parent.reg;
+  struct OneWireUart * const interface = object;
+  LPC_UART_Type * const reg = interface->parent.reg;
   bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
@@ -86,7 +86,7 @@ static void interruptHandler(void *object)
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
   {
-    uint8_t data = reg->RBR;
+    const uint8_t data = reg->RBR;
 
     switch (interface->state)
     {
@@ -147,7 +147,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
       .rx = config->rx,
       .tx = config->tx
   };
-  struct OneWireUart *interface = object;
+  struct OneWireUart * const interface = object;
   enum result res;
 
   /* Call base class constructor */
@@ -171,7 +171,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
   interface->callback = 0;
   interface->state = OW_UART_IDLE;
 
-  LPC_UART_Type *reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->parent.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
@@ -192,7 +192,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void oneWireDeinit(void *object)
 {
-  struct OneWireUart *interface = object;
+  struct OneWireUart * const interface = object;
 
   irqDisable(interface->parent.irq);
   byteQueueDeinit(&interface->txQueue);
@@ -202,7 +202,7 @@ static void oneWireDeinit(void *object)
 static enum result oneWireCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct OneWireUart *interface = object;
+  struct OneWireUart * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -212,7 +212,7 @@ static enum result oneWireCallback(void *object, void (*callback)(void *),
 static enum result oneWireGet(void *object, enum ifOption option,
     void *data __attribute__((unused)))
 {
-  struct OneWireUart *interface = object;
+  struct OneWireUart * const interface = object;
 
   switch (option)
   {
@@ -230,7 +230,7 @@ static enum result oneWireGet(void *object, enum ifOption option,
 static enum result oneWireSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct OneWireUart *interface = object;
+  struct OneWireUart * const interface = object;
 
   switch (option)
   {
@@ -253,7 +253,8 @@ static enum result oneWireSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct OneWireUart *interface = object;
+  struct OneWireUart * const interface = object;
+  LPC_UART_Type * const reg = interface->parent.reg;
   uint32_t read = 0;
 
   if (!length)
@@ -263,14 +264,15 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
   interface->bit = 0;
   interface->rxBuffer = buffer;
   interface->word = 0x00;
+
+  /* Fill queue with dummy words */
   while (!byteQueueFull(&interface->txQueue) && ++read != length)
     byteQueuePush(&interface->txQueue, 0xFF);
   interface->left = read;
 
   interface->state = OW_UART_RECEIVE;
   /* Clear RX FIFO and set trigger level to 8 characters */
-  ((LPC_UART_Type *)interface->parent.reg)->FCR |= FCR_RX_RESET
-      | FCR_RX_TRIGGER(2);
+  reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(2);
   sendWord(interface, 0xFF); /* Start reception */
 
   if (interface->blocking)
@@ -291,7 +293,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
-  struct OneWireUart *interface = object;
+  struct OneWireUart * const interface = object;
   uint32_t written;
 
   if (!length)

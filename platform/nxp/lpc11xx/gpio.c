@@ -39,7 +39,7 @@ static const uint8_t gpioRegMap[4][12] = {
     {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass *GpioHandler = &handlerTable;
+static const struct EntityClass * const GpioHandler = &handlerTable;
 static struct GpioHandler *gpioHandler = 0;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union GpioPin pin)
@@ -90,7 +90,7 @@ static inline void gpioHandlerDetach()
 static enum result gpioHandlerInit(void *object,
     const void *configPtr __attribute__((unused)))
 {
-  struct GpioHandler *handler = object;
+  struct GpioHandler * const handler = object;
 
   handler->instances = 0;
   return E_OK;
@@ -121,8 +121,8 @@ void gpioOutput(struct Gpio gpio, uint8_t value)
 /*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio gpio, uint8_t function)
 {
-  uint32_t *iocon = calcReg(gpio.pin);
-  uint32_t value = *iocon;
+  uint32_t * const iocon = calcReg(gpio.pin);
+  const uint32_t value = *iocon;
 
   switch (function)
   {
@@ -131,16 +131,18 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
       function = (gpio.pin.port == 1 && gpio.pin.offset <= 2)
           || (gpio.pin.port == 0 && gpio.pin.offset == 11) ? 1 : 0;
       break;
+
     case GPIO_ANALOG:
       *iocon = value & ~IOCON_MODE_DIGITAL;
       return;
   }
+
   *iocon = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
 {
-  uint32_t *iocon = calcReg(gpio.pin);
+  uint32_t * const iocon = calcReg(gpio.pin);
   uint32_t value = *iocon & ~IOCON_MODE_MASK;
 
   switch (pull)
@@ -148,25 +150,29 @@ void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
     case GPIO_NOPULL:
       value |= IOCON_MODE_INACTIVE;
       break;
+
     case GPIO_PULLUP:
       value |= IOCON_MODE_PULLUP;
       break;
+
     case GPIO_PULLDOWN:
       value |= IOCON_MODE_PULLDOWN;
       break;
   }
+
   *iocon = value;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetType(struct Gpio gpio, enum gpioType type)
 {
-  uint32_t *iocon = calcReg(gpio.pin);
+  uint32_t * const iocon = calcReg(gpio.pin);
 
   switch (type)
   {
     case GPIO_PUSHPULL:
       *iocon &= ~IOCON_OD;
       break;
+
     case GPIO_OPENDRAIN:
       *iocon |= IOCON_OD;
       break;

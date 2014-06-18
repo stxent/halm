@@ -10,7 +10,7 @@
 #include <gpio.h>
 #include <interrupt.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterruptClass *GpioInterrupt;
+extern const struct InterruptClass * const GpioInterrupt;
 /*----------------------------------------------------------------------------*/
 enum gpioIntMode
 {

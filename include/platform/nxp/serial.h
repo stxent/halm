@@ -10,7 +10,7 @@
 #include <byte_queue.h>
 #include "uart_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *Serial;
+extern const struct InterfaceClass * const Serial;
 /*----------------------------------------------------------------------------*/
 struct SerialConfig
 {

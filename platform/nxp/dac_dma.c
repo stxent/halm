@@ -35,13 +35,13 @@ static const struct InterfaceClass dacTable = {
     .write = dacWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *DacDma = &dacTable;
+const struct InterfaceClass * const DacDma = &dacTable;
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {
-  struct DacDma *interface = object;
-  LPC_DAC_Type *reg = interface->parent.reg;
-  uint32_t index = dmaIndex(interface->dma);
+  struct DacDma * const interface = object;
+  LPC_DAC_Type * const reg = interface->parent.reg;
+  const uint32_t index = dmaIndex(interface->dma);
 
   if (index & 1)
   {
@@ -82,7 +82,7 @@ static enum result dmaSetup(struct DacDma *interface,
       .circular = true,
       .silence = false
   };
-  LPC_DAC_Type *reg = interface->parent.reg;
+  LPC_DAC_Type * const reg = interface->parent.reg;
 
   interface->dma = init(GpDmaList, &channelConfig);
   if (!interface->dma)
@@ -110,7 +110,7 @@ static enum result dacInit(void *object, const void *configPtr)
   const struct DacBaseConfig parentConfig = {
       .pin = config->pin
   };
-  struct DacDma *interface = object;
+  struct DacDma * const interface = object;
   enum result res;
 
   if (!config->frequency || !config->length)
@@ -127,7 +127,7 @@ static enum result dacInit(void *object, const void *configPtr)
   interface->length = config->length;
   interface->updated = false;
 
-  LPC_DAC_Type *reg = interface->parent.reg;
+  LPC_DAC_Type * const reg = interface->parent.reg;
 
   reg->CR = (config->value & CR_OUTPUT_MASK) | CR_BIAS;
   reg->CTRL = CTRL_DBLBUF_ENA | CTRL_DMA_ENA;
@@ -138,7 +138,7 @@ static enum result dacInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void dacDeinit(void *object)
 {
-  struct DacDma *interface = object;
+  struct DacDma * const interface = object;
 
   free(interface->buffer);
   deinit(interface->dma);
@@ -149,7 +149,7 @@ static void dacDeinit(void *object)
 static enum result dacCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct DacDma *interface = object;
+  struct DacDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -158,7 +158,7 @@ static enum result dacCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum result dacGet(void *object, enum ifOption option, void *data)
 {
-  struct DacDma *interface = object;
+  struct DacDma * const interface = object;
 
   switch (option)
   {
@@ -183,8 +183,8 @@ static enum result dacSet(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
-  struct DacDma *interface = object;
-  LPC_DAC_Type *reg = interface->parent.reg;
+  struct DacDma * const interface = object;
+  LPC_DAC_Type * const reg = interface->parent.reg;
 
   /* Outgoing buffer length should be equal to internal buffer length */
   assert(length == interface->length * sizeof(uint16_t));

@@ -46,12 +46,12 @@ static const struct InterfaceClass i2cTable = {
     .write = i2cWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *I2cSlave = &i2cTable;
+const struct InterfaceClass * const I2cSlave = &i2cTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct I2cSlave *interface = object;
-  LPC_I2C_Type *reg = interface->parent.reg;
+  struct I2cSlave * const interface = object;
+  LPC_I2C_Type * const reg = interface->parent.reg;
   bool event = false;
 
   switch (reg->STAT)
@@ -112,7 +112,7 @@ static enum result i2cInit(void *object, const void *configPtr)
       .scl = config->scl,
       .sda = config->sda
   };
-  struct I2cSlave *interface = object;
+  struct I2cSlave * const interface = object;
   enum result res;
 
   /* Call base class constructor */
@@ -131,7 +131,7 @@ static enum result i2cInit(void *object, const void *configPtr)
   interface->size = config->size;
   interface->state = I2C_SLAVE_IDLE;
 
-  LPC_I2C_Type *reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->parent.reg;
 
   /* Clear all flags */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
@@ -147,8 +147,8 @@ static enum result i2cInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void i2cDeinit(void *object)
 {
-  struct I2cSlave *interface = object;
-  LPC_I2C_Type *reg = interface->parent.reg;
+  struct I2cSlave * const interface = object;
+  LPC_I2C_Type * const reg = interface->parent.reg;
 
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
 
@@ -159,7 +159,7 @@ static void i2cDeinit(void *object)
 static enum result i2cCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct I2cSlave *interface = object;
+  struct I2cSlave * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -168,8 +168,8 @@ static enum result i2cCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum result i2cGet(void *object, enum ifOption option, void *data)
 {
-  struct I2cSlave *interface = object;
-  LPC_I2C_Type *reg = interface->parent.reg;
+  struct I2cSlave * const interface = object;
+  LPC_I2C_Type * const reg = interface->parent.reg;
 
   switch (option)
   {
@@ -191,8 +191,8 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
 /*----------------------------------------------------------------------------*/
 static enum result i2cSet(void *object, enum ifOption option, const void *data)
 {
-  struct I2cSlave *interface = object;
-  LPC_I2C_Type *reg = interface->parent.reg;
+  struct I2cSlave * const interface = object;
+  LPC_I2C_Type * const reg = interface->parent.reg;
 
   switch (option)
   {
@@ -216,8 +216,8 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 /*----------------------------------------------------------------------------*/
 static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct I2cSlave *interface = object;
-  uint8_t *position = interface->cache + interface->internal;
+  struct I2cSlave * const interface = object;
+  const uint8_t * const position = interface->cache + interface->internal;
   uint32_t left = interface->size - (uint32_t)interface->internal;
 
   if (!length)
@@ -238,8 +238,8 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
-  struct I2cSlave *interface = object;
-  uint8_t *position = interface->cache + interface->internal;
+  struct I2cSlave * const interface = object;
+  uint8_t * const position = interface->cache + interface->internal;
   uint32_t left = interface->size - (uint32_t)interface->internal;
 
   if (!length)

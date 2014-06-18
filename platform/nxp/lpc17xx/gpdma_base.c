@@ -45,8 +45,8 @@ static const struct EntityClass channelTable = {
     .deinit = channelDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass *DmaHandler = &handlerTable;
-const struct EntityClass *GpDmaBase = &channelTable;
+static const struct EntityClass * const DmaHandler = &handlerTable;
+const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t channel)
@@ -87,7 +87,7 @@ static inline void dmaHandlerDetach()
 static enum result dmaHandlerInit(void *object,
     const void *configPtr __attribute__((unused)))
 {
-  struct DmaHandler *handler = object;
+  struct DmaHandler * const handler = object;
 
   /* TODO Add priority configuration for GPDMA interrupt */
   for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
@@ -106,26 +106,33 @@ static uint8_t eventToPeripheral(enum gpDmaEvent event)
     case GPDMA_SSP0_RX:
     case GPDMA_SSP1_RX:
       return 1 + ((event - GPDMA_SSP0_RX) << 1);
+
     case GPDMA_SSP0_TX:
     case GPDMA_SSP1_TX:
       return 0 + ((event - GPDMA_SSP0_TX) << 1);
+
     case GPDMA_I2S0:
     case GPDMA_I2S1:
       return 5 + (event - GPDMA_I2S0);
+
     case GPDMA_UART0_RX:
     case GPDMA_UART1_RX:
     case GPDMA_UART2_RX:
     case GPDMA_UART3_RX:
       return 9 + ((event - GPDMA_UART0_RX) << 1);
+
     case GPDMA_UART0_TX:
     case GPDMA_UART1_TX:
     case GPDMA_UART2_TX:
     case GPDMA_UART3_TX:
       return 8 + ((event - GPDMA_UART0_TX) << 1);
+
     case GPDMA_ADC:
       return 4;
+
     case GPDMA_DAC:
       return 7;
+
     default:
       return 8 + (event - GPDMA_MAT0_0); /* One of the timer match events */
   }
@@ -135,7 +142,7 @@ static void updateEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
 {
   if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
   {
-    uint32_t position = event - GPDMA_MAT0_0;
+    const uint32_t position = event - GPDMA_MAT0_0;
 
     channel->mux.mask &= ~(1 << position);
     channel->mux.value |= 1 << position;
@@ -196,7 +203,7 @@ void DMA_ISR(void)
 static enum result channelInit(void *object, const void *configPtr)
 {
   const struct GpDmaBaseConfig * const config = configPtr;
-  struct GpDmaBase *channel = object;
+  struct GpDmaBase * const channel = object;
   enum result res;
 
   assert(config->channel < GPDMA_CHANNEL_COUNT);

@@ -27,7 +27,7 @@ static const struct InterfaceClass dacTable = {
     .write = dacWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *Dac = &dacTable;
+const struct InterfaceClass * const Dac = &dacTable;
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *object, const void *configPtr)
 {
@@ -35,7 +35,7 @@ static enum result dacInit(void *object, const void *configPtr)
   const struct DacBaseConfig parentConfig = {
       .pin = config->pin
   };
-  struct Dac *interface = object;
+  struct Dac * const interface = object;
   enum result res;
 
   /* Call base class constructor */

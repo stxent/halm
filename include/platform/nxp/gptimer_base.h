@@ -11,7 +11,7 @@
 #include <irq.h>
 #include <timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *GpTimerBase;
+extern const struct EntityClass * const GpTimerBase;
 /*----------------------------------------------------------------------------*/
 struct GpTimerBaseConfig
 {

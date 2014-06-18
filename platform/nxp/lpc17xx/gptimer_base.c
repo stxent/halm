@@ -128,7 +128,7 @@ const struct GpioDescriptor gpTimerMatchPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *GpTimerBase = &timerTable;
+const struct EntityClass * const GpTimerBase = &timerTable;
 static struct GpTimerBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct GpTimerBase *timer)
@@ -171,7 +171,7 @@ uint32_t gpTimerGetClock(struct GpTimerBase *timer __attribute__((unused)))
 static enum result tmrInit(void *object, const void *configPtr)
 {
   const struct GpTimerBaseConfig * const config = configPtr;
-  struct GpTimerBase *device = object;
+  struct GpTimerBase * const device = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -189,18 +189,21 @@ static enum result tmrInit(void *object, const void *configPtr)
       device->reg = LPC_TIMER0;
       device->irq = TIMER0_IRQ;
       break;
+
     case 1:
       sysPowerEnable(PWR_TIM1);
       sysClockControl(CLK_TIMER1, DEFAULT_DIV);
       device->reg = LPC_TIMER1;
       device->irq = TIMER1_IRQ;
       break;
+
     case 2:
       sysPowerEnable(PWR_TIM2);
       sysClockControl(CLK_TIMER2, DEFAULT_DIV);
       device->reg = LPC_TIMER2;
       device->irq = TIMER2_IRQ;
       break;
+
     case 3:
       sysPowerEnable(PWR_TIM3);
       sysClockControl(CLK_TIMER3, DEFAULT_DIV);
@@ -217,7 +220,7 @@ static void tmrDeinit(void *object)
   const enum sysPowerDevice timerPower[] = {
       PWR_TIM0, PWR_TIM1, PWR_TIM2, PWR_TIM3
   };
-  struct GpTimerBase *device = object;
+  struct GpTimerBase * const device = object;
 
   sysPowerDisable(timerPower[device->channel]);
   setDescriptor(device->channel, 0);

@@ -33,11 +33,11 @@ static const struct InterfaceClass serialTable = {
     .write = serialWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *SerialDma = &serialTable;
+const struct InterfaceClass * const SerialDma = &serialTable;
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {
-  struct SerialDma *interface = object;
+  struct SerialDma * const interface = object;
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
@@ -87,7 +87,7 @@ static enum result serialInit(void *object, const void *configPtr)
       .rx = config->rx,
       .tx = config->tx
   };
-  struct SerialDma *interface = object;
+  struct SerialDma * const interface = object;
   struct UartRateConfig rateConfig;
   enum result res;
 
@@ -103,7 +103,7 @@ static enum result serialInit(void *object, const void *configPtr)
 
   interface->callback = 0;
 
-  LPC_UART_Type *reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->parent.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
@@ -123,7 +123,7 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  struct SerialDma *interface = object;
+  struct SerialDma * const interface = object;
 
   /* Free DMA channel descriptors */
   deinit(interface->txDma);
@@ -135,7 +135,7 @@ static void serialDeinit(void *object)
 static enum result serialCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct SerialDma *interface = object;
+  struct SerialDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -146,15 +146,13 @@ static enum result serialGet(void *object, enum ifOption option,
     void *data __attribute__((unused)))
 {
   /* TODO Add more options for SerialDma */
-  struct SerialDma *interface = object;
+  struct SerialDma * const interface = object;
 
   switch (option)
   {
     case IF_STATUS:
-      if (dmaActive(interface->rxDma) || dmaActive(interface->txDma))
-        return E_BUSY;
-      else
-        return E_OK;
+      return !dmaActive(interface->rxDma) && !dmaActive(interface->txDma) ? E_OK
+          : E_BUSY;
 
     default:
       return E_ERROR;
@@ -164,7 +162,7 @@ static enum result serialGet(void *object, enum ifOption option,
 static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct SerialDma *interface = object;
+  struct SerialDma * const interface = object;
   struct UartRateConfig rateConfig;
   enum result res;
 
@@ -190,11 +188,11 @@ static enum result serialSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct SerialDma *interface = object;
-  const void *source =
-      (const void *)&((LPC_UART_Type *)interface->parent.reg)->RBR;
+  struct SerialDma * const interface = object;
+  LPC_UART_Type * const reg = interface->parent.reg;
 
-  if (length && dmaStart(interface->rxDma, buffer, source, length) == E_OK)
+  if (length && dmaStart(interface->rxDma, buffer, (const void *)&reg->RBR,
+      length) == E_OK)
   {
     if (interface->blocking)
       while (dmaActive(interface->rxDma));
@@ -208,10 +206,11 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
-  struct SerialDma *interface = object;
-  void *destination = (void *)&((LPC_UART_Type *)interface->parent.reg)->THR;
+  struct SerialDma * const interface = object;
+  LPC_UART_Type * const reg = interface->parent.reg;
 
-  if (length && dmaStart(interface->txDma, destination, buffer, length) == E_OK)
+  if (length && dmaStart(interface->txDma, (void *)&reg->THR, buffer,
+      length) == E_OK)
   {
     if (interface->blocking)
       while (dmaActive(interface->txDma));

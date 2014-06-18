@@ -92,7 +92,7 @@ const struct GpioDescriptor gpPwmPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *GpPwmUnitBase = &unitTable;
+const struct EntityClass * const GpPwmUnitBase = &unitTable;
 static struct GpPwmUnitBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct GpPwmUnitBase *unit)
@@ -111,7 +111,7 @@ uint32_t gpPwmGetClock(struct GpPwmUnitBase *unit __attribute__((unused)))
 static enum result unitInit(void *object, const void *configPtr)
 {
   const struct GpPwmUnitBaseConfig * const config = configPtr;
-  struct GpPwmUnitBase *unit = object;
+  struct GpPwmUnitBase * const unit = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -128,7 +128,7 @@ static enum result unitInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void unitDeinit(void *object)
 {
-  struct GpPwmUnitBase *unit = object;
+  struct GpPwmUnitBase * const unit = object;
 
   sysPowerDisable(PWR_PWM1);
   setDescriptor(unit->channel, 0);

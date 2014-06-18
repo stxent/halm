@@ -31,11 +31,11 @@ static const struct DmaClass channelTable = {
     .stop = channelStop
 };
 /*----------------------------------------------------------------------------*/
-const struct DmaClass *GpDma = &channelTable;
+const struct DmaClass * const GpDma = &channelTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct GpDma *channel = object;
+  struct GpDma * const channel = object;
 
   /* TODO Add DMA errors detection and processing */
 
@@ -51,7 +51,7 @@ static enum result channelInit(void *object, const void *configPtr)
       .event = config->event,
       .type = config->type
   };
-  struct GpDma *channel = object;
+  struct GpDma * const channel = object;
   enum result res;
 
   /* Call base class constructor */
@@ -104,8 +104,8 @@ static void channelDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static bool channelActive(void *object)
 {
-  struct GpDma *channel = object;
-  LPC_GPDMACH_Type *reg = channel->parent.reg;
+  struct GpDma * const channel = object;
+  LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
   return gpDmaGetDescriptor(channel->parent.number) == object
       && (reg->CONFIG & CONFIG_ENABLE);
@@ -114,7 +114,7 @@ static bool channelActive(void *object)
 static void channelCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct GpDma *channel = object;
+  struct GpDma * const channel = object;
 
   channel->callback = callback;
   channel->callbackArgument = argument;
@@ -122,7 +122,7 @@ static void channelCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static uint32_t channelIndex(void *object)
 {
-  LPC_GPDMACH_Type *reg = ((struct GpDma *)object)->parent.reg;
+  LPC_GPDMACH_Type * const reg = ((struct GpDma *)object)->parent.reg;
 
   //FIXME Rewrite
   return reg->CONTROL & CONTROL_SIZE_MASK;
@@ -131,7 +131,7 @@ static uint32_t channelIndex(void *object)
 static enum result channelStart(void *object, void *destination,
     const void *source, uint32_t size)
 {
-  struct GpDma *channel = object;
+  struct GpDma * const channel = object;
 
   if (size > GPDMA_MAX_TRANSFER)
     return E_VALUE;
@@ -142,7 +142,7 @@ static enum result channelStart(void *object, void *destination,
   gpDmaSetupMux(object);
 
   const uint32_t request = 1 << channel->parent.number;
-  LPC_GPDMACH_Type *reg = channel->parent.reg;
+  LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
   reg->SRCADDR = (uint32_t)source;
   reg->DESTADDR = (uint32_t)destination;
@@ -162,7 +162,7 @@ static enum result channelStart(void *object, void *destination,
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)
 {
-  LPC_GPDMACH_Type *reg = ((struct GpDma *)object)->parent.reg;
+  LPC_GPDMACH_Type * const reg = ((struct GpDma *)object)->parent.reg;
 
   reg->CONFIG &= ~CONFIG_ENABLE;
 }

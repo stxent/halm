@@ -11,7 +11,7 @@
 #include <gpio.h>
 #include <irq.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *DacBase;
+extern const struct EntityClass * const DacBase;
 /*----------------------------------------------------------------------------*/
 struct DacBaseConfig
 {
@@ -26,6 +26,6 @@ struct DacBase
   void *reg;
 };
 /*----------------------------------------------------------------------------*/
-uint32_t dacGetClock(struct DacBase *);
+uint32_t dacGetClock(const struct DacBase *);
 /*----------------------------------------------------------------------------*/
 #endif /* DAC_BASE_H_ */

@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include "ssp_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *Spi;
+extern const struct InterfaceClass * const Spi;
 /*----------------------------------------------------------------------------*/
 struct SpiConfig
 {

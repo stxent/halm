@@ -10,7 +10,7 @@
 #include <gpio.h>
 #include <interface.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *SdioSpi;
+extern const struct InterfaceClass * const SdioSpi;
 /*----------------------------------------------------------------------------*/
 enum cardType
 {

@@ -11,7 +11,7 @@
 #include <interface.h>
 #include <irq.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *I2cBase;
+extern const struct EntityClass * const I2cBase;
 /*----------------------------------------------------------------------------*/
 struct I2cBaseConfig
 {
@@ -35,10 +35,10 @@ struct I2cBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetRate(struct I2cBase *);
+uint32_t i2cGetRate(const struct I2cBase *);
 void i2cSetRate(struct I2cBase *, uint32_t);
 
-uint32_t i2cGetClock(struct I2cBase *);
+uint32_t i2cGetClock(const struct I2cBase *);
 enum result i2cSetupPins(struct I2cBase *, const struct I2cBaseConfig *);
 /*----------------------------------------------------------------------------*/
 #endif /* I2C_BASE_H_ */

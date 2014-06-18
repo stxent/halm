@@ -10,7 +10,7 @@
 #include <dma.h>
 #include <platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *SpiDma;
+extern const struct InterfaceClass * const SpiDma;
 /*----------------------------------------------------------------------------*/
 struct SpiDmaConfig
 {

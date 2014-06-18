@@ -10,7 +10,7 @@
 #include <dma_list.h>
 #include "gpdma_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct DmaListClass *GpDmaList;
+extern const struct DmaListClass * const GpDmaList;
 /*----------------------------------------------------------------------------*/
 struct GpDmaListConfig
 {

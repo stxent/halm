@@ -53,7 +53,7 @@ static const struct InterfaceClass oneWireTable = {
     .write = oneWireWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *OneWireSsp = &oneWireTable;
+const struct InterfaceClass * const OneWireSsp = &oneWireTable;
 /*----------------------------------------------------------------------------*/
 static void adjustPins(struct OneWireSsp *interface __attribute__((unused)),
     const struct OneWireSspConfig *config)
@@ -63,7 +63,7 @@ static void adjustPins(struct OneWireSsp *interface __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWireSsp *interface)
 {
-  LPC_SSP_Type *reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   sspSetRate((struct SspBase *)interface, RATE_RESET);
   interface->state = OW_SSP_RESET;
@@ -73,7 +73,7 @@ static void beginTransmission(struct OneWireSsp *interface)
 /*----------------------------------------------------------------------------*/
 static void sendWord(struct OneWireSsp *interface, uint8_t word)
 {
-  LPC_SSP_Type *reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->parent.reg;
   uint8_t counter = 0;
 
   while (counter < 8)
@@ -82,13 +82,13 @@ static void sendWord(struct OneWireSsp *interface, uint8_t word)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct OneWireSsp *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct OneWireSsp * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
   bool event = false;
 
   while (reg->SR & SR_RNE)
   {
-    uint16_t data = ~reg->DR;
+    const uint16_t data = ~reg->DR;
 
     switch (interface->state)
     {
@@ -160,7 +160,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
       .sck = 0,
       .cs = 0
   };
-  struct OneWireSsp *interface = object;
+  struct OneWireSsp * const interface = object;
   enum result res;
 
   /* Call base class constructor */
@@ -179,7 +179,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
   interface->callback = 0;
   interface->state = OW_SSP_IDLE;
 
-  LPC_SSP_Type *reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   /* Set frame size to 16 bit and SPI mode 0 */
   reg->CR0 = CR0_FRF_TI | CR0_DSS(16);
@@ -196,7 +196,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void oneWireDeinit(void *object)
 {
-  struct OneWireSsp *interface = object;
+  struct OneWireSsp * const interface = object;
 
   irqDisable(interface->parent.irq);
   byteQueueDeinit(&interface->txQueue);
@@ -206,7 +206,7 @@ static void oneWireDeinit(void *object)
 static enum result oneWireCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct OneWireSsp *interface = object;
+  struct OneWireSsp * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -216,7 +216,7 @@ static enum result oneWireCallback(void *object, void (*callback)(void *),
 static enum result oneWireGet(void *object, enum ifOption option,
     void *data __attribute__((unused)))
 {
-  struct OneWireSsp *interface = object;
+  struct OneWireSsp * const interface = object;
 
   switch (option)
   {
@@ -234,7 +234,7 @@ static enum result oneWireGet(void *object, enum ifOption option,
 static enum result oneWireSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct OneWireSsp *interface = object;
+  struct OneWireSsp * const interface = object;
 
   switch (option)
   {
@@ -257,8 +257,8 @@ static enum result oneWireSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct OneWireSsp *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct OneWireSsp * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
   uint32_t read = 0;
 
   if (!length)
@@ -268,6 +268,8 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
   interface->bit = 0;
   interface->rxBuffer = buffer;
   interface->word = 0x00;
+
+  /* Fill the queue with dummy words */
   while (!byteQueueFull(&interface->txQueue) && ++read != length)
     byteQueuePush(&interface->txQueue, 0xFF);
   interface->left = read;
@@ -294,8 +296,8 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
-  struct OneWireSsp *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct OneWireSsp * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
   uint32_t written;
 
   if (!length)

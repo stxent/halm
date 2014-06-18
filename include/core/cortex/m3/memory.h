@@ -72,6 +72,6 @@ static inline uint16_t fromLittleEndian16(uint16_t value)
   return value;
 }
 /*----------------------------------------------------------------------------*/
-bool compareExchangePointer(void **, void *, void *);
+bool compareExchangePointer(void **, const void *, void *);
 /*----------------------------------------------------------------------------*/
 #endif /* MEMORY_H_ */

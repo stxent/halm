@@ -33,12 +33,12 @@ static const struct InterfaceClass spiTable = {
     .write = spiWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *Spi = &spiTable;
+const struct InterfaceClass * const Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct Spi *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct Spi * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
   uint32_t count = interface->txLeft > FIFO_DEPTH ? FIFO_DEPTH
       : interface->txLeft;
 
@@ -91,7 +91,7 @@ static enum result spiInit(void *object, const void *configPtr)
       .sck = config->sck,
       .cs = 0
   };
-  struct Spi *interface = object;
+  struct Spi * const interface = object;
   enum result res;
 
   /* Call base class constructor */
@@ -103,7 +103,7 @@ static enum result spiInit(void *object, const void *configPtr)
   interface->blocking = true;
   interface->callback = 0;
 
-  LPC_SSP_Type *reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   /* Set frame size */
   reg->CR0 = CR0_DSS(8);
@@ -114,7 +114,9 @@ static enum result spiInit(void *object, const void *configPtr)
   if (config->mode & 0x02)
     reg->CR0 |= CR0_CPOL;
 
-  sspSetRate(object, config->rate);
+  if ((res = sspSetRate(object, config->rate)) != E_OK)
+    return res;
+
   /* Enable peripheral */
   reg->CR1 = CR1_SSE;
 
@@ -126,7 +128,7 @@ static enum result spiInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void spiDeinit(void *object)
 {
-  struct Spi *interface = object;
+  struct Spi * const interface = object;
 
   irqDisable(interface->parent.irq);
   SspBase->deinit(interface);
@@ -135,7 +137,7 @@ static void spiDeinit(void *object)
 static enum result spiCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct Spi *interface = object;
+  struct Spi * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -144,8 +146,8 @@ static enum result spiCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum result spiGet(void *object, enum ifOption option, void *data)
 {
-  struct Spi *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct Spi * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   switch (option)
   {
@@ -163,7 +165,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
 /*----------------------------------------------------------------------------*/
 static enum result spiSet(void *object, enum ifOption option, const void *data)
 {
-  struct Spi *interface = object;
+  struct Spi * const interface = object;
 
   switch (option)
   {
@@ -172,8 +174,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     case IF_RATE:
-      sspSetRate(object, *(uint32_t *)data);
-      return E_OK;
+      return sspSetRate(object, *(uint32_t *)data);
 
     case IF_ZEROCOPY:
       interface->blocking = false;
@@ -186,8 +187,8 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 /*----------------------------------------------------------------------------*/
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct Spi *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct Spi * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   if (!length)
     return 0;
@@ -214,8 +215,8 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
-  struct Spi *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct Spi * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   if (!length)
     return 0;

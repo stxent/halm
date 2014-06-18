@@ -93,7 +93,7 @@ const struct GpioDescriptor uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *UartBase = &uartTable;
+const struct EntityClass * const UartBase = &uartTable;
 static struct UartBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
@@ -128,7 +128,7 @@ void UART3_ISR(void)
     descriptors[3]->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetClock(struct UartBase *interface __attribute__((unused)))
+uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
@@ -136,7 +136,7 @@ uint32_t uartGetClock(struct UartBase *interface __attribute__((unused)))
 static enum result uartInit(void *object, const void *configPtr)
 {
   const struct UartBaseConfig * const config = configPtr;
-  struct UartBase *interface = object;
+  struct UartBase * const interface = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -157,18 +157,21 @@ static enum result uartInit(void *object, const void *configPtr)
       interface->reg = LPC_UART0;
       interface->irq = UART0_IRQ;
       break;
+
     case 1:
       sysPowerEnable(PWR_UART1);
       sysClockControl(CLK_UART1, DEFAULT_DIV);
       interface->reg = (LPC_UART_Type *)LPC_UART1;
       interface->irq = UART1_IRQ;
       break;
+
     case 2:
       sysPowerEnable(PWR_UART2);
       sysClockControl(CLK_UART2, DEFAULT_DIV);
       interface->reg = LPC_UART2;
       interface->irq = UART2_IRQ;
       break;
+
     case 3:
       sysPowerEnable(PWR_UART3);
       sysClockControl(CLK_UART3, DEFAULT_DIV);
@@ -185,7 +188,7 @@ static void uartDeinit(void *object)
   const enum sysPowerDevice uartPower[] = {
       PWR_UART0, PWR_UART1, PWR_UART2, PWR_UART3
   };
-  struct UartBase *interface = object;
+  struct UartBase * const interface = object;
 
   sysPowerDisable(uartPower[interface->channel]);
   setDescriptor(interface->channel, 0);

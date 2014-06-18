@@ -62,19 +62,17 @@ static const struct PwmClass doubleEdgeTable = {
 };
 /*----------------------------------------------------------------------------*/
 extern const struct GpioDescriptor gpPwmPins[];
-const struct EntityClass *GpPwmUnit = &unitTable;
-const struct PwmClass *GpPwm = &singleEdgeTable;
-const struct PwmClass *GpPwmDoubleEdge = &doubleEdgeTable;
+const struct EntityClass * const GpPwmUnit = &unitTable;
+const struct PwmClass * const GpPwm = &singleEdgeTable;
+const struct PwmClass * const GpPwmDoubleEdge = &doubleEdgeTable;
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
     uint8_t channel)
 {
   assert(channel && channel <= 6);
 
-  if (channel > 3)
-    return &device->MR4 + (channel - 4);
-  else
-    return &device->MR1 + (channel - 1);
+  return channel > 3 ? &device->MR4 + (channel - 4)
+      : &device->MR1 + (channel - 1);
 }
 /*----------------------------------------------------------------------------*/
 static int8_t setupMatchPin(uint8_t channel, gpio_t key)
@@ -97,7 +95,7 @@ static enum result unitInit(void *object, const void *configPtr)
   const struct GpPwmUnitBaseConfig parentConfig = {
       .channel = config->channel
   };
-  struct GpPwmUnit *unit = object;
+  struct GpPwmUnit * const unit = object;
   enum result res;
 
   const uint32_t clockFrequency = gpPwmGetClock(object);
@@ -113,7 +111,7 @@ static enum result unitInit(void *object, const void *configPtr)
   unit->resolution = config->resolution;
   unit->matches = 0;
 
-  LPC_PWM_Type *reg = unit->parent.reg;
+  LPC_PWM_Type * const reg = unit->parent.reg;
 
   reg->TCR = 0;
 
@@ -136,9 +134,10 @@ static enum result unitInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void unitDeinit(void *object)
 {
-  struct GpPwmUnit *unit = object;
+  struct GpPwmUnit * const unit = object;
+  LPC_PWM_Type * const reg = unit->parent.reg;
 
-  ((LPC_PWM_Type *)unit->parent.reg)->TCR &= ~(TCR_CEN | TCR_PWM_ENABLE);
+  reg->TCR &= ~(TCR_CEN | TCR_PWM_ENABLE);
   GpPwmUnitBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
@@ -149,8 +148,8 @@ static uint32_t channelGetResolution(void *object)
 /*----------------------------------------------------------------------------*/
 static void channelSetEnabled(void *object, bool state)
 {
-  struct GpPwm *pwm = object;
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  struct GpPwm * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   if (!state)
     reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
@@ -160,9 +159,9 @@ static void channelSetEnabled(void *object, bool state)
 /*----------------------------------------------------------------------------*/
 static void channelSetFrequency(void *object, uint32_t frequency)
 {
-  struct GpPwm *pwm = object;
-  struct GpPwmUnit *unit = pwm->unit;
-  LPC_PWM_Type *reg = unit->parent.reg;
+  struct GpPwm * const pwm = object;
+  struct GpPwmUnit * const unit = pwm->unit;
+  LPC_PWM_Type * const reg = unit->parent.reg;
 
   const uint32_t clockFrequency = gpPwmGetClock((struct GpPwmUnitBase *)unit);
   const uint32_t timerFrequency = frequency * unit->resolution;
@@ -176,7 +175,7 @@ static void channelSetFrequency(void *object, uint32_t frequency)
 static enum result singleEdgeInit(void *object, const void *configPtr)
 {
   const struct GpPwmConfig * const config = configPtr;
-  struct GpPwm *pwm = object;
+  struct GpPwm * const pwm = object;
   int8_t channel;
 
   /* Initialize output pin */
@@ -192,7 +191,7 @@ static enum result singleEdgeInit(void *object, const void *configPtr)
   pwm->unit = config->parent;
   pwm->unit->matches |= 1 << channel;
 
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   /* Calculate pointer to match register for fast access */
   pwm->value = calcMatchChannel(reg, channel);
@@ -206,8 +205,8 @@ static enum result singleEdgeInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void singleEdgeDeinit(void *object)
 {
-  struct GpPwm *pwm = object;
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  struct GpPwm * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
   pwm->unit->matches &= ~(1 << pwm->channel);
@@ -215,8 +214,8 @@ static void singleEdgeDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static void singleEdgeSetDuration(void *object, uint32_t duration)
 {
-  struct GpPwm *pwm = object;
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  struct GpPwm * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   if (duration >= pwm->unit->resolution)
   {
@@ -234,8 +233,8 @@ static void singleEdgeSetDuration(void *object, uint32_t duration)
 static void singleEdgeSetEdges(void *object,
     uint32_t leading __attribute__((unused)), uint32_t trailing)
 {
-  struct GpPwm *pwm = object;
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  struct GpPwm * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   assert(!leading); /* Leading edge time is constant in single edge mode */
 
@@ -249,7 +248,7 @@ static void singleEdgeSetEdges(void *object,
 static enum result doubleEdgeInit(void *object, const void *configPtr)
 {
   const struct GpPwmDoubleEdgeConfig * const config = configPtr;
-  struct GpPwmDoubleEdge *pwm = object;
+  struct GpPwmDoubleEdge * const pwm = object;
   int8_t channel;
 
   /* Initialize output pin */
@@ -280,8 +279,8 @@ static enum result doubleEdgeInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeDeinit(void *object)
 {
-  struct GpPwmDoubleEdge *pwm = object;
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  struct GpPwmDoubleEdge * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
   pwm->unit->matches &= ~(1 << pwm->channel | 1 << (pwm->channel - 1));
@@ -289,8 +288,8 @@ static void doubleEdgeDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
 {
-  struct GpPwmDoubleEdge *pwm = object;
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  struct GpPwmDoubleEdge * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
   uint32_t center, leading, resolution, trailing;
 
   leading = *pwm->leading;
@@ -338,8 +337,8 @@ static void doubleEdgeSetDuration(void *object, uint32_t duration)
 static void doubleEdgeSetEdges(void *object, uint32_t leading,
     uint32_t trailing)
 {
-  struct GpPwmDoubleEdge *pwm = object;
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  struct GpPwmDoubleEdge * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   assert(leading < pwm->unit->resolution);
 

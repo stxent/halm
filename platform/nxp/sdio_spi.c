@@ -58,7 +58,7 @@ struct LongResponse
   uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
-static inline uint32_t calcPosition(struct SdioSpi *);
+static inline uint32_t calcPosition(const struct SdioSpi *);
 static enum result acquireBus(struct SdioSpi *);
 static enum result getLongResponse(struct SdioSpi *, struct LongResponse *);
 static uint8_t getShortResponse(struct SdioSpi *);
@@ -90,9 +90,9 @@ static const struct InterfaceClass sdioTable = {
     .write = sdioWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *SdioSpi = &sdioTable;
+const struct InterfaceClass * const SdioSpi = &sdioTable;
 /*----------------------------------------------------------------------------*/
-static inline uint32_t calcPosition(struct SdioSpi *device)
+static inline uint32_t calcPosition(const struct SdioSpi *device)
 {
   return device->capacity == CARD_SD ? (uint32_t)device->position
       : (uint32_t)(device->position >> BLOCK_POW);
@@ -113,8 +113,7 @@ static enum result getLongResponse(struct SdioSpi *device,
   uint8_t acknowledge;
   enum result res;
 
-  res = waitForData(device, &acknowledge);
-  if (res == E_OK)
+  if ((res = waitForData(device, &acknowledge)) == E_OK)
   {
     response->value = acknowledge;
     if (ifRead(device->interface, (uint8_t *)&value,
@@ -162,16 +161,18 @@ static enum result waitBusyState(struct SdioSpi *device)
 /*----------------------------------------------------------------------------*/
 static enum result waitForData(struct SdioSpi *device, uint8_t *value)
 {
-  uint8_t counter;
+  uint8_t counter = 8;
 
   /* Response will come after 1..8 queries */
-  for (counter = 8; counter; --counter)
+  while (--counter)
   {
     if (!ifRead(device->interface, value, 1))
       return E_INTERFACE; /* Interface error */
+
     if (*value != 0xFF)
       break;
   }
+
   return !counter ? E_BUSY : E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -379,7 +380,7 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
 static enum result sdioInit(void *object, const void *configPtr)
 {
   const struct SdioSpiConfig * const config = configPtr;
-  struct SdioSpi *device = object;
+  struct SdioSpi * const device = object;
   enum result res;
 
   device->csPin = gpioInit(config->cs);
@@ -409,7 +410,7 @@ static enum result sdioCallback(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static enum result sdioGet(void *object, enum ifOption option, void *data)
 {
-  struct SdioSpi *device = object;
+  struct SdioSpi * const device = object;
 
   switch (option)
   {
@@ -425,7 +426,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
 static enum result sdioSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct SdioSpi *device = object;
+  struct SdioSpi * const device = object;
 
   switch (option)
   {
@@ -441,7 +442,7 @@ static enum result sdioSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct SdioSpi *device = object;
+  struct SdioSpi * const device = object;
   uint16_t counter, blockCount;
   enum sdioCommand command;
 
@@ -480,7 +481,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
-  struct SdioSpi *device = object;
+  struct SdioSpi * const device = object;
   uint16_t counter, blockCount;
   enum sdioCommand command;
   enum sdioToken token;

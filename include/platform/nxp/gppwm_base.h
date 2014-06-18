@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *GpPwmUnitBase;
+extern const struct EntityClass * const GpPwmUnitBase;
 /*----------------------------------------------------------------------------*/
 struct GpPwmUnitBaseConfig
 {

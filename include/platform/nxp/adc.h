@@ -12,8 +12,8 @@
 #include <spinlock.h>
 #include "adc_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *AdcUnit;
-extern const struct InterfaceClass *Adc;
+extern const struct EntityClass * const AdcUnit;
+extern const struct InterfaceClass * const Adc;
 /*----------------------------------------------------------------------------*/
 struct AdcUnitConfig
 {

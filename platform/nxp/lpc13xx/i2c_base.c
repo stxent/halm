@@ -36,7 +36,7 @@ const struct GpioDescriptor i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *I2cBase = &i2cTable;
+const struct EntityClass * const I2cBase = &i2cTable;
 static struct I2cBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct I2cBase *interface)
@@ -53,7 +53,7 @@ void I2C_ISR(void)
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock(struct I2cBase *interface __attribute__((unused)))
+uint32_t i2cGetClock(const struct I2cBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock);
 }
@@ -61,7 +61,7 @@ uint32_t i2cGetClock(struct I2cBase *interface __attribute__((unused)))
 static enum result i2cInit(void *object, const void *configPtr)
 {
   const struct I2cBaseConfig * const config = configPtr;
-  struct I2cBase *interface = object;
+  struct I2cBase * const interface = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -84,7 +84,7 @@ static enum result i2cInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void i2cDeinit(void *object)
 {
-  struct I2cBase *interface = object;
+  struct I2cBase * const interface = object;
 
   LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C; /* Put peripheral in reset */
   sysClockDisable(CLK_I2C);

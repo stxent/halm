@@ -61,7 +61,7 @@ const struct GpioDescriptor i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *I2cBase = &i2cTable;
+const struct EntityClass * const I2cBase = &i2cTable;
 static struct I2cBase *descriptors[3] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct I2cBase *interface)
@@ -90,7 +90,7 @@ void I2C2_ISR(void)
     descriptors[2]->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock(struct I2cBase *interface __attribute__((unused)))
+uint32_t i2cGetClock(const struct I2cBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
@@ -98,7 +98,7 @@ uint32_t i2cGetClock(struct I2cBase *interface __attribute__((unused)))
 static enum result i2cInit(void *object, const void *configPtr)
 {
   const struct I2cBaseConfig * const config = configPtr;
-  struct I2cBase *interface = object;
+  struct I2cBase * const interface = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -119,12 +119,14 @@ static enum result i2cInit(void *object, const void *configPtr)
       interface->reg = LPC_I2C0;
       interface->irq = I2C0_IRQ;
       break;
+
     case 1:
       sysPowerEnable(PWR_I2C1);
       sysClockControl(CLK_I2C1, DEFAULT_DIV);
       interface->reg = LPC_I2C1;
       interface->irq = I2C1_IRQ;
       break;
+
     case 2:
       sysPowerEnable(PWR_I2C2);
       sysClockControl(CLK_I2C2, DEFAULT_DIV);
@@ -141,7 +143,7 @@ static void i2cDeinit(void *object)
   const enum sysPowerDevice i2cPower[] = {
       PWR_I2C0, PWR_I2C1, PWR_I2C2
   };
-  struct I2cBase *interface = object;
+  struct I2cBase * const interface = object;
 
   sysPowerDisable(i2cPower[interface->channel]);
   setDescriptor(interface->channel, 0);

@@ -32,20 +32,17 @@ static const struct GpioBusClass gpioBusTable = {
     .write = busWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioBusClass *GpioBus = &gpioBusTable;
+const struct GpioBusClass * const GpioBus = &gpioBusTable;
 /*----------------------------------------------------------------------------*/
 static enum result busInit(void *object, const void *configPtr)
 {
   const struct GpioBusConfig * const config = configPtr;
-  struct CommonGpioBus *bus = object;
-  uint8_t position;
+  struct CommonGpioBus * const bus = object;
+  uint8_t position = 0;
 
-  position = 0;
-  while (config->pins[position])
-  {
-    if (++position == 32)
-      return E_VALUE;
-  }
+  while (config->pins[position] && ++position < 32);
+  if (!position || position >= 32)
+    return E_VALUE;
 
   bus->count = position;
   bus->pins = malloc(sizeof(struct Gpio) * bus->count);
@@ -80,14 +77,14 @@ static enum result busInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void busDeinit(void *object)
 {
-  struct CommonGpioBus *bus = object;
+  struct CommonGpioBus * const bus = object;
 
   free(bus->pins);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t busRead(void *object)
 {
-  struct CommonGpioBus *bus = object;
+  struct CommonGpioBus * const bus = object;
   uint32_t result = 0;
 
   for (uint8_t position = 0; position < bus->count; ++position)
@@ -98,7 +95,7 @@ static uint32_t busRead(void *object)
 /*----------------------------------------------------------------------------*/
 static void busWrite(void *object, uint32_t value)
 {
-  struct CommonGpioBus *bus = object;
+  struct CommonGpioBus * const bus = object;
 
   for (uint8_t position = 0; position < bus->count; ++position)
     gpioWrite(bus->pins[position], (value >> position) & 1);

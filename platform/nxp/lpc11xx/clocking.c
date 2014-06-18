@@ -61,10 +61,10 @@ static const struct ClockClass mainClockTable = {
     .ready = stubReady
 };
 /*----------------------------------------------------------------------------*/
-const struct ClockClass *ExternalOsc = &extOscTable;
-const struct ClockClass *InternalOsc = &intOscTable;
-const struct ClockClass *SystemPll = &sysPllTable;
-const struct ClockClass *MainClock = &mainClockTable;
+const struct ClockClass * const ExternalOsc = &extOscTable;
+const struct ClockClass * const InternalOsc = &intOscTable;
+const struct ClockClass * const SystemPll = &sysPllTable;
+const struct ClockClass * const MainClock = &mainClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;

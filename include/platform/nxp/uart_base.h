@@ -11,7 +11,7 @@
 #include <interface.h>
 #include <irq.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *UartBase;
+extern const struct EntityClass * const UartBase;
 /*----------------------------------------------------------------------------*/
 enum uartParity
 {
@@ -48,12 +48,13 @@ struct UartBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-enum result uartCalcRate(struct UartBase *, uint32_t, struct UartRateConfig *);
-uint32_t uartGetRate(struct UartBase *);
+enum result uartCalcRate(const struct UartBase *, uint32_t,
+    struct UartRateConfig *);
+uint32_t uartGetRate(const struct UartBase *);
 void uartSetParity(struct UartBase *, enum uartParity);
 void uartSetRate(struct UartBase *, struct UartRateConfig);
 
-uint32_t uartGetClock(struct UartBase *);
+uint32_t uartGetClock(const struct UartBase *);
 enum result uartSetupPins(struct UartBase *, const struct UartBaseConfig *);
 /*----------------------------------------------------------------------------*/
 #endif /* UART_BASE_H_ */

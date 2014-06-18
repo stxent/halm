@@ -34,11 +34,11 @@ static const struct InterfaceClass spiTable = {
     .write = spiWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass *SpiDma = &spiTable;
+const struct InterfaceClass * const SpiDma = &spiTable;
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {
-  struct SpiDma *interface = object;
+  struct SpiDma * const interface = object;
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
@@ -92,10 +92,11 @@ static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct SpiDma *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct SpiDma * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   reg->IMSC &= ~IMSC_RTIM;
+
   if (interface->callback)
     interface->callback(interface->callbackArgument);
 }
@@ -110,7 +111,7 @@ static enum result spiInit(void *object, const void *configPtr)
       .sck = config->sck,
       .cs = 0
   };
-  struct SpiDma *interface = object;
+  struct SpiDma * const interface = object;
   enum result res;
 
   /* Call base class constructor */
@@ -126,7 +127,7 @@ static enum result spiInit(void *object, const void *configPtr)
   interface->callback = 0;
   interface->dummy = DUMMY_FRAME;
 
-  LPC_SSP_Type *reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   /* Set frame size */
   reg->CR0 = CR0_DSS(8);
@@ -149,7 +150,7 @@ static enum result spiInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void spiDeinit(void *object)
 {
-  struct SpiDma *interface = object;
+  struct SpiDma * const interface = object;
 
   deinit(interface->txMockDma);
   deinit(interface->txDma);
@@ -161,7 +162,7 @@ static void spiDeinit(void *object)
 static enum result spiCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct SpiDma *interface = object;
+  struct SpiDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -170,8 +171,8 @@ static enum result spiCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum result spiGet(void *object, enum ifOption option, void *data)
 {
-  struct SpiDma *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct SpiDma * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   switch (option)
   {
@@ -190,7 +191,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
 /*----------------------------------------------------------------------------*/
 static enum result spiSet(void *object, enum ifOption option, const void *data)
 {
-  struct SpiDma *interface = object;
+  struct SpiDma * const interface = object;
 
   switch (option)
   {
@@ -215,9 +216,8 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 /*----------------------------------------------------------------------------*/
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct SpiDma *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
-  void *source = (void *)&reg->DR;
+  struct SpiDma * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   if (!length)
     return 0;
@@ -232,6 +232,8 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   /* Clear DMA requests */
   reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
   reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
+
+  void * const source = (void *)&reg->DR;
 
   if (dmaStart(interface->rxDma, buffer, source, length) != E_OK)
     return 0;
@@ -248,8 +250,8 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
-  struct SpiDma *interface = object;
-  LPC_SSP_Type *reg = interface->parent.reg;
+  struct SpiDma * const interface = object;
+  LPC_SSP_Type * const reg = interface->parent.reg;
 
   if (!length)
     return 0;

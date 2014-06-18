@@ -32,7 +32,7 @@ static const struct InterruptClass gpioIntTable = {
     .setEnabled = gpioIntSetEnabled
 };
 /*----------------------------------------------------------------------------*/
-const struct InterruptClass *GpioInterrupt = &gpioIntTable;
+const struct InterruptClass * const GpioInterrupt = &gpioIntTable;
 static struct GpioInterrupt *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
 static void disableInterrupt(union GpioPin pin)
@@ -79,7 +79,7 @@ static void enableInterrupt(union GpioPin pin, enum gpioIntMode mode)
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  struct GpioInterrupt *current;
+  const struct GpioInterrupt *current;
   uint32_t state;
 
   switch (channel)
@@ -88,10 +88,12 @@ static void processInterrupt(uint8_t channel)
       state = LPC_GPIOINT->STATR0 | LPC_GPIOINT->STATF0;
       current = descriptors[0];
       break;
+
     case 2:
       state = LPC_GPIOINT->STATR2 | LPC_GPIOINT->STATF2;
       current = descriptors[1];
       break;
+
     default:
       return;
   }
@@ -108,6 +110,7 @@ static void processInterrupt(uint8_t channel)
     case 0:
       LPC_GPIOINT->CLR0 = state;
       break;
+
     case 2:
       LPC_GPIOINT->CLR2 = state;
       break;
@@ -119,14 +122,16 @@ static enum result resetDescriptor(union GpioPin pin)
   const uint8_t index = !pin.port ? 0 : 1;
   struct GpioInterrupt *current = descriptors[index];
 
-  /* Remove the interrupt from chain */
   if (!current)
     return E_ERROR;
+
+  /* Remove the interrupt from chain */
   if (current->pin.key == pin.key)
   {
     descriptors[index] = descriptors[index]->next;
     if (!descriptors[0] && !descriptors[1])
       irqDisable(EINT3_IRQ);
+
     return E_OK;
   }
   else
@@ -140,6 +145,7 @@ static enum result resetDescriptor(union GpioPin pin)
       }
       current = current->next;
     }
+
     return E_ERROR;
   }
 }
@@ -169,11 +175,13 @@ static enum result setDescriptor(union GpioPin pin,
         return E_BUSY;
       current = current->next;
     }
+
     if (current->pin.key != pin.key)
       current->next = interrupt;
     else
       return E_BUSY;
   }
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -181,6 +189,7 @@ void EINT3_ISR(void)
 {
   if (LPC_GPIOINT->STATUS & STATUS_P0INT)
     processInterrupt(0);
+
   if (LPC_GPIOINT->STATUS & STATUS_P2INT)
     processInterrupt(2);
 }
@@ -188,10 +197,10 @@ void EINT3_ISR(void)
 static enum result gpioIntInit(void *object, const void *configPtr)
 {
   const struct GpioInterruptConfig * const config = configPtr;
-  struct GpioInterrupt *interrupt = object;
+  struct GpioInterrupt * const interrupt = object;
   enum result res;
 
-  struct Gpio input = gpioInit(config->pin);
+  const struct Gpio input = gpioInit(config->pin);
   /* External interrupt functionality is available only on two ports */
   if (!gpioGetKey(input) || (input.pin.port != 0 && input.pin.port != 2))
     return E_VALUE;
@@ -208,6 +217,7 @@ static enum result gpioIntInit(void *object, const void *configPtr)
   interrupt->next = 0;
 
   enableInterrupt(interrupt->pin, interrupt->mode);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -222,7 +232,7 @@ static void gpioIntDeinit(void *object)
 static void gpioIntCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct GpioInterrupt *interrupt = object;
+  struct GpioInterrupt * const interrupt = object;
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
@@ -230,7 +240,7 @@ static void gpioIntCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static void gpioIntSetEnabled(void *object, bool state)
 {
-  struct GpioInterrupt *interrupt = object;
+  struct GpioInterrupt * const interrupt = object;
 
   if (state)
     enableInterrupt(interrupt->pin, interrupt->mode);

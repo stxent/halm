@@ -44,21 +44,21 @@ static const struct InterfaceClass adcTable = {
 };
 /*----------------------------------------------------------------------------*/
 extern const struct GpioDescriptor adcPins[];
-const struct EntityClass *AdcUnit = &adcUnitTable;
-const struct InterfaceClass *Adc = &adcTable;
+const struct EntityClass * const AdcUnit = &adcUnitTable;
+const struct InterfaceClass * const Adc = &adcTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct AdcUnit *unit = object;
-  struct Adc *interface = unit->current;
-  LPC_ADC_Type *reg = interface->unit->parent.reg;
+  struct AdcUnit * const unit = object;
+  struct Adc * const interface = unit->current;
+  LPC_ADC_Type * const reg = interface->unit->parent.reg;
 
   if (interface)
   {
     reg->CR &= ~CR_START_MASK;
 
     /* Copy conversion result */
-    uint16_t value = DR_RESULT_VALUE(reg->DR[interface->channel]);
+    const uint16_t value = DR_RESULT_VALUE(reg->DR[interface->channel]);
     memcpy(interface->buffer, &value, sizeof(value));
     interface->buffer += 1 << resultWidthExponent();
 
@@ -92,7 +92,7 @@ static enum result adcUnitInit(void *object, const void *configPtr)
   const struct AdcUnitBaseConfig parentConfig = {
       .channel = config->channel
   };
-  struct AdcUnit *unit = object;
+  struct AdcUnit * const unit = object;
   enum result res;
 
   /* Call base class constructor */
@@ -103,8 +103,10 @@ static enum result adcUnitInit(void *object, const void *configPtr)
   unit->lock = SPIN_UNLOCKED;
   unit->parent.handler = interruptHandler;
 
+  LPC_ADC_Type * const reg = unit->parent.reg;
+
   /* Enable global conversion interrupt */
-  ((LPC_ADC_Type *)unit->parent.reg)->INTEN = INTEN_ADG;
+  reg->INTEN = INTEN_ADG;
   /* Enable interrupt globally */
   irqEnable(unit->parent.irq);
 
@@ -113,7 +115,7 @@ static enum result adcUnitInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void adcUnitDeinit(void *object)
 {
-  struct AdcUnit *unit = object;
+  struct AdcUnit * const unit = object;
 
   irqDisable(unit->parent.irq);
   AdcUnitBase->deinit(unit);
@@ -123,7 +125,7 @@ static enum result adcInit(void *object, const void *configPtr)
 {
   const struct AdcConfig * const config = configPtr;
   const struct GpioDescriptor *pinDescriptor;
-  struct Adc *interface = object;
+  struct Adc * const interface = object;
 
   assert(config->event < ADC_EVENT_END);
 
@@ -131,7 +133,7 @@ static enum result adcInit(void *object, const void *configPtr)
     return E_VALUE;
 
   /* Fill pin structure and initialize pin as input */
-  struct Gpio pin = gpioInit(config->pin);
+  const struct Gpio pin = gpioInit(config->pin);
   gpioInput(pin);
   /* Enable analog pin mode bit */
   gpioSetFunction(pin, GPIO_ANALOG);
@@ -158,7 +160,7 @@ static void adcDeinit(void *object __attribute__((unused)))
 static enum result adcCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct Adc *interface = object;
+  struct Adc * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -167,7 +169,7 @@ static enum result adcCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum result adcGet(void *object, enum ifOption option, void *data)
 {
-  struct Adc *interface = object;
+  struct Adc * const interface = object;
 
   switch (option)
   {
@@ -186,7 +188,7 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
 static enum result adcSet(void *object, enum ifOption option,
     const void *data __attribute__((unused)))
 {
-  struct Adc *interface = object;
+  struct Adc * const interface = object;
 
   switch (option)
   {
@@ -205,8 +207,8 @@ static enum result adcSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct Adc *interface = object;
-  LPC_ADC_Type *reg = interface->unit->parent.reg;
+  struct Adc * const interface = object;
+  LPC_ADC_Type * const reg = interface->unit->parent.reg;
 
   /* Check buffer alignment */
   assert(!(length & MASK(resultWidthExponent())));

@@ -33,7 +33,7 @@ const struct GpioDescriptor dacPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *DacBase = &dacTable;
+const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(struct DacBase *interface)
@@ -44,18 +44,19 @@ static enum result setDescriptor(struct DacBase *interface)
 /*----------------------------------------------------------------------------*/
 enum result setupOutputPin(gpio_t key)
 {
-  const struct GpioDescriptor *pinDescriptor;
-  struct Gpio pin;
+  const struct GpioDescriptor * const pinDescriptor = gpioFind(dacPins, key, 0);
 
-  if (!(pinDescriptor = gpioFind(dacPins, key, 0)))
+  if (!pinDescriptor)
     return E_VALUE;
-  gpioInput((pin = gpioInit(key)));
+
+  const struct Gpio pin = gpioInit(key);
+  gpioInput(pin);
   gpioSetFunction(pin, pinDescriptor->value);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t dacGetClock(struct DacBase *interface __attribute__((unused)))
+uint32_t dacGetClock(const struct DacBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
@@ -63,7 +64,7 @@ uint32_t dacGetClock(struct DacBase *interface __attribute__((unused)))
 static enum result dacInit(void *object, const void *configPtr)
 {
   const struct DacBaseConfig * const config = configPtr;
-  struct DacBase *interface = object;
+  struct DacBase * const interface = object;
   enum result res;
 
   /* Try to set peripheral descriptor */

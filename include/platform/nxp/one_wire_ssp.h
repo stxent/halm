@@ -11,7 +11,7 @@
 #include <irq.h>
 #include "ssp_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *OneWireSsp;
+extern const struct InterfaceClass * const OneWireSsp;
 /*----------------------------------------------------------------------------*/
 enum oneWireSspState
 {

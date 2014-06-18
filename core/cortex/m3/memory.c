@@ -6,12 +6,12 @@
 
 #include <memory.h>
 /*----------------------------------------------------------------------------*/
-bool compareExchangePointer(void **pointer, void *expected, void *desired)
+bool compareExchangePointer(void **pointer, const void *expected, void *desired)
 {
   /* Compare current state with expected state */
-  if (__ldrex((uint32_t *)pointer) == (uint32_t)expected)
+  if (__ldrex((volatile uint32_t *)pointer) == (uint32_t)expected)
   {
-    if (!__strex((uint32_t)desired, (uint32_t *)pointer))
+    if (!__strex((uint32_t)desired, (volatile uint32_t *)pointer))
     {
       __dmb();
       return true;

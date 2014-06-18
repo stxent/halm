@@ -11,7 +11,7 @@
 #include <interface.h>
 #include <irq.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *SspBase;
+extern const struct EntityClass * const SspBase;
 /*----------------------------------------------------------------------------*/
 /* TODO Add master/slave select */
 struct SspBaseConfig
@@ -49,10 +49,10 @@ struct SspBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetRate(struct SspBase *);
-void sspSetRate(struct SspBase *, uint32_t);
+uint32_t sspGetRate(const struct SspBase *);
+enum result sspSetRate(struct SspBase *, uint32_t);
 
-uint32_t sspGetClock(struct SspBase *);
+uint32_t sspGetClock(const struct SspBase *);
 enum result sspSetupPins(struct SspBase *, const struct SspBaseConfig *);
 /*----------------------------------------------------------------------------*/
 #endif /* SSP_BASE_H_ */

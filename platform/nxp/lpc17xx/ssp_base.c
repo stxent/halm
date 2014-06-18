@@ -77,7 +77,7 @@ const struct GpioDescriptor sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *SspBase = &sspTable;
+const struct EntityClass * const SspBase = &sspTable;
 static struct SspBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct SspBase *interface)
@@ -100,7 +100,7 @@ void SSP1_ISR(void)
     descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetClock(struct SspBase *interface __attribute__((unused)))
+uint32_t sspGetClock(const struct SspBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
@@ -108,7 +108,7 @@ uint32_t sspGetClock(struct SspBase *interface __attribute__((unused)))
 static enum result sspInit(void *object, const void *configPtr)
 {
   const struct SspBaseConfig * const config = configPtr;
-  struct SspBase *interface = object;
+  struct SspBase * const interface = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -129,6 +129,7 @@ static enum result sspInit(void *object, const void *configPtr)
       interface->reg = LPC_SSP0;
       interface->irq = SSP0_IRQ;
       break;
+
     case 1:
       sysPowerEnable(PWR_SSP1);
       sysClockControl(CLK_SSP1, DEFAULT_DIV);
@@ -145,7 +146,7 @@ static void sspDeinit(void *object)
   const enum sysPowerDevice sspPower[] = {
       PWR_SSP0, PWR_SSP1
   };
-  struct SspBase *interface = object;
+  struct SspBase * const interface = object;
 
   sysPowerDisable(sspPower[interface->channel]);
   setDescriptor(interface->channel, 0);

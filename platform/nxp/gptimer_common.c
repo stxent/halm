@@ -18,6 +18,7 @@ int8_t gpTimerAllocateChannel(uint8_t used)
   int8_t pos = 4; /* Each timer has 4 match blocks */
 
   while (--pos >= 0 && used & (1 << pos));
+
   return pos;
 }
 /*----------------------------------------------------------------------------*/
@@ -28,7 +29,7 @@ int8_t gpTimerSetupCapturePin(uint8_t channel, gpio_t key)
   if (!(pinDescriptor = gpioFind(gpTimerCapturePins, key, channel)))
     return -1;
 
-  struct Gpio pin = gpioInit(key);
+  const struct Gpio pin = gpioInit(key);
   gpioInput(pin);
   gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
 
@@ -42,7 +43,7 @@ int8_t gpTimerSetupMatchPin(uint8_t channel, gpio_t key)
   if (!(pinDescriptor = gpioFind(gpTimerMatchPins, key, channel)))
     return -1;
 
-  struct Gpio pin = gpioInit(key);
+  const struct Gpio pin = gpioInit(key);
   gpioOutput(pin, 0);
   gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
 

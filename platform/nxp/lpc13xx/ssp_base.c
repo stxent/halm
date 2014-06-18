@@ -73,7 +73,7 @@ const struct GpioDescriptor sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *SspBase = &sspTable;
+const struct EntityClass * const SspBase = &sspTable;
 static struct SspBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct SspBase *interface)
@@ -96,7 +96,7 @@ void SSP1_ISR(void)
     descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetClock(struct SspBase *interface __attribute__((unused)))
+uint32_t sspGetClock(const struct SspBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock) / DEFAULT_DIV_VALUE;
 }
@@ -104,7 +104,7 @@ uint32_t sspGetClock(struct SspBase *interface __attribute__((unused)))
 static enum result sspInit(void *object, const void *configPtr)
 {
   const struct SspBaseConfig * const config = configPtr;
-  struct SspBase *interface = object;
+  struct SspBase * const interface = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -132,14 +132,17 @@ static enum result sspInit(void *object, const void *configPtr)
         case PIN(0, 10):
           LPC_IOCON->SCK_LOC = 0;
           break;
+
         case PIN(2, 11):
           LPC_IOCON->SCK_LOC = 1;
           break;
+
         case PIN(0, 6):
           LPC_IOCON->SCK_LOC = 2;
           break;
       }
       break;
+
     case 1:
       sysClockEnable(CLK_SSP1);
       LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV;
@@ -154,7 +157,7 @@ static enum result sspInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void sspDeinit(void *object)
 {
-  struct SspBase *interface = object;
+  struct SspBase * const interface = object;
 
   /* Put peripheral in reset and disable clock */
   switch (interface->channel)
@@ -164,6 +167,7 @@ static void sspDeinit(void *object)
       LPC_SYSCON->SSP0CLKDIV = 0;
       sysClockDisable(CLK_SSP0);
       break;
+
     case 1:
       LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_SSP1;
       LPC_SYSCON->SSP1CLKDIV = 0;

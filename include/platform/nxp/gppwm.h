@@ -11,8 +11,8 @@
 #include <pwm.h>
 #include "gppwm_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass *GpPwmUnit;
-extern const struct PwmClass *GpPwm;
+extern const struct EntityClass * const GpPwmUnit;
+extern const struct PwmClass * const GpPwm;
 /*----------------------------------------------------------------------------*/
 struct GpPwmUnitConfig
 {

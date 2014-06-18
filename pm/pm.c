@@ -33,13 +33,13 @@ static const struct EntityClass handlerTable = {
     .deinit = 0
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass *PmHandler = &handlerTable;
+static const struct EntityClass * const PmHandler = &handlerTable;
 static struct PmHandler *pmHandler = 0;
 /*----------------------------------------------------------------------------*/
 static enum result pmHandlerInit(void *object,
     const void *configPtr __attribute__((unused)))
 {
-  struct PmHandler *handler = object;
+  struct PmHandler * const handler = object;
 
   return listInit(&handler->objectList, sizeof(struct PmHandlerEntry));
 }
@@ -50,7 +50,7 @@ enum result pmChangeState(enum pmState state)
     return E_ERROR;
 
   struct PmHandlerEntry entry;
-  void *current = listFirst(&pmHandler->objectList);
+  const void *current = listFirst(&pmHandler->objectList);
   enum result res;
 
   while (current)

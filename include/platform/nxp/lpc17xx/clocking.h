@@ -9,9 +9,9 @@
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
-extern const struct ClockClass *ExternalOsc;
-extern const struct ClockClass *SystemPll;
-extern const struct ClockClass *MainClock;
+extern const struct ClockClass * const ExternalOsc;
+extern const struct ClockClass * const SystemPll;
+extern const struct ClockClass * const MainClock;
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {

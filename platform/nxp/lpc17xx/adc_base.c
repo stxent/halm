@@ -67,7 +67,7 @@ const struct GpioDescriptor adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *AdcUnitBase = &adcUnitTable;
+const struct EntityClass * const AdcUnitBase = &adcUnitTable;
 static struct AdcUnitBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct AdcUnitBase *unit)
@@ -87,7 +87,7 @@ void ADC_ISR()
 static enum result adcUnitInit(void *object, const void *configPtr)
 {
   const struct AdcUnitBaseConfig * const config = configPtr;
-  struct AdcUnitBase *unit = object;
+  struct AdcUnitBase * const unit = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -103,16 +103,17 @@ static enum result adcUnitInit(void *object, const void *configPtr)
   unit->irq = ADC_IRQ;
   unit->reg = LPC_ADC;
 
+  LPC_ADC_Type * const reg = unit->reg;
+
   /* Enable converter and set system clock divider */
-  ((LPC_ADC_Type *)unit->reg)->CR = CR_PDN
-      | CR_CLKDIV(clockFrequency(MainClock) / 13000000);
+  reg->CR = CR_PDN | CR_CLKDIV(clockFrequency(MainClock) / 13000000);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void adcUnitDeinit(void *object)
 {
-  struct AdcUnitBase *unit = object;
+  struct AdcUnitBase * const unit = object;
 
   sysPowerDisable(PWR_ADC);
   setDescriptor(unit->channel, 0);

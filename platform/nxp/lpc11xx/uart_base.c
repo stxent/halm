@@ -38,7 +38,7 @@ const struct GpioDescriptor uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass *UartBase = &uartTable;
+const struct EntityClass * const UartBase = &uartTable;
 static struct UartBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
@@ -58,7 +58,7 @@ void UART_ISR(void)
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetClock(struct UartBase *interface __attribute__((unused)))
+uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock) / DEFAULT_DIV_VALUE;
 }
@@ -66,7 +66,7 @@ uint32_t uartGetClock(struct UartBase *interface __attribute__((unused)))
 static enum result uartInit(void *object, const void *configPtr)
 {
   const struct UartBaseConfig * const config = configPtr;
-  struct UartBase *interface = object;
+  struct UartBase * const interface = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
@@ -89,7 +89,7 @@ static enum result uartInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void uartDeinit(void *object)
 {
-  struct UartBase *interface = object;
+  struct UartBase * const interface = object;
 
   LPC_SYSCON->UARTCLKDIV = 0; /* Disable peripheral clock */
   sysClockDisable(CLK_UART);

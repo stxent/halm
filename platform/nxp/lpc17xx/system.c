@@ -18,9 +18,9 @@
  */
 void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
 {
-  uint32_t *reg = (uint32_t *)(&LPC_SC->PCLKSEL0 + (peripheral >> 5));
+  uint32_t * const reg = (uint32_t *)(&LPC_SC->PCLKSEL0 + (peripheral >> 5));
   uint32_t actualValue;
-  bool pllEnabled = (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED) != 0;
+  const bool pllEnabled = (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED) != 0;
 
   switch (divisor)
   {

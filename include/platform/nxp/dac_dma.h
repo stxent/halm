@@ -11,7 +11,7 @@
 #include <dma_list.h>
 #include "dac_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *DacDma;
+extern const struct InterfaceClass * const DacDma;
 /*----------------------------------------------------------------------------*/
 struct DacDmaConfig
 {

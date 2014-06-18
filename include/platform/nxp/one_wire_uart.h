@@ -11,7 +11,7 @@
 #include <irq.h>
 #include "uart_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *OneWireUart;
+extern const struct InterfaceClass * const OneWireUart;
 /*----------------------------------------------------------------------------*/
 enum oneWireUartState
 {

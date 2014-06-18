@@ -10,7 +10,7 @@
 #include <irq.h>
 #include <timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct TimerClass *SysTickTimer;
+extern const struct TimerClass * const SysTickTimer;
 /*----------------------------------------------------------------------------*/
 struct SysTickTimerConfig
 {

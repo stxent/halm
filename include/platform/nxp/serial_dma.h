@@ -10,7 +10,7 @@
 #include <dma.h>
 #include <platform/nxp/uart_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *SerialDma;
+extern const struct InterfaceClass * const SerialDma;
 /*----------------------------------------------------------------------------*/
 struct SerialDmaConfig
 {

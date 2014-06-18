@@ -10,7 +10,7 @@
 #include <interface.h>
 #include "dac_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *Dac;
+extern const struct InterfaceClass * const Dac;
 /*----------------------------------------------------------------------------*/
 struct DacConfig
 {

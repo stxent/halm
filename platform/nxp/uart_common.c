@@ -30,13 +30,14 @@ enum result uartSetupPins(struct UartBase *interface,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-enum result uartCalcRate(struct UartBase *interface, uint32_t rate,
+enum result uartCalcRate(const struct UartBase *interface, uint32_t rate,
     struct UartRateConfig *output)
 {
   if (!rate)
     return E_VALUE;
 
-  uint32_t divisor = ((uartGetClock(interface) + (rate >> 1)) >> 4) / rate;
+  const uint32_t divisor = ((uartGetClock(interface) + (rate >> 1)) >> 4)
+      / rate;
 
   if (divisor && divisor < (1 << 16))
   {
@@ -50,10 +51,10 @@ enum result uartCalcRate(struct UartBase *interface, uint32_t rate,
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetRate(struct UartBase *interface)
+uint32_t uartGetRate(const struct UartBase *interface)
 {
-  LPC_UART_Type *reg = interface->reg;
-  uint32_t rate = uartGetClock(interface) >> 4;
+  LPC_UART_Type * const reg = interface->reg;
+  const uint32_t rate = uartGetClock(interface) >> 4;
   struct UartRateConfig config;
 
   reg->LCR |= LCR_DLAB; /* Enable DLAB access */
@@ -66,7 +67,7 @@ uint32_t uartGetRate(struct UartBase *interface)
 /*----------------------------------------------------------------------------*/
 void uartSetParity(struct UartBase *interface, enum uartParity parity)
 {
-  LPC_UART_Type *reg = interface->reg;
+  LPC_UART_Type * const reg = interface->reg;
 
   if (parity != UART_PARITY_NONE)
   {
@@ -77,7 +78,7 @@ void uartSetParity(struct UartBase *interface, enum uartParity parity)
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct UartBase *interface, struct UartRateConfig config)
 {
-  LPC_UART_Type *reg = interface->reg;
+  LPC_UART_Type * const reg = interface->reg;
 
   reg->LCR |= LCR_DLAB; /* Enable DLAB access */
   reg->DLL = config.divisor & 0xFF;

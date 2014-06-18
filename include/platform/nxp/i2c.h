@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include "i2c_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass *I2c;
+extern const struct InterfaceClass * const I2c;
 /*----------------------------------------------------------------------------*/
 enum i2cState
 {

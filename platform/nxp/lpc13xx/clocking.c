@@ -85,12 +85,12 @@ static const struct ClockClass usbClockTable = {
     .ready = stubReady
 };
 /*----------------------------------------------------------------------------*/
-const struct ClockClass *ExternalOsc = &extOscTable;
-const struct ClockClass *InternalOsc = &intOscTable;
-const struct ClockClass *SystemPll = &sysPllTable;
-const struct ClockClass *UsbPll = &usbPllTable;
-const struct ClockClass *MainClock = &mainClockTable;
-const struct ClockClass *UsbClock = &usbClockTable;
+const struct ClockClass * const ExternalOsc = &extOscTable;
+const struct ClockClass * const InternalOsc = &intOscTable;
+const struct ClockClass * const SystemPll = &sysPllTable;
+const struct ClockClass * const UsbPll = &usbPllTable;
+const struct ClockClass * const MainClock = &mainClockTable;
+const struct ClockClass * const UsbClock = &usbClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
