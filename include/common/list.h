@@ -16,7 +16,7 @@ struct ListNode
   /** Pointer to the next element or to an end of the list. */
   struct ListNode *next;
   /** Beginning of the user data. */
-  char data[];
+  unsigned char data[];
 };
 /*----------------------------------------------------------------------------*/
 struct List
@@ -51,12 +51,12 @@ static inline void *listFirst(const struct List *list)
 /*----------------------------------------------------------------------------*/
 static inline void *listNext(const void *node)
 {
-  return ((struct ListNode *)node)->next;
+  return ((const struct ListNode *)node)->next;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool listEmpty(const struct List *list)
 {
-  return list->first != 0;
+  return list->first == 0;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* LIST_H_ */

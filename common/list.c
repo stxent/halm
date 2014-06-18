@@ -48,21 +48,22 @@ void listDeinit(struct List *list)
 /*----------------------------------------------------------------------------*/
 void listClear(struct List *list)
 {
-  struct ListNode *current = list->first;
-
-  while (current && current->next)
-    current = current->next;
-
-  if (current)
+  if (list->first)
   {
+    struct ListNode *current = list->first;
+
+    while (current->next)
+      current = current->next;
+
     current->next = list->pool;
-    list->pool = current;
+    list->pool = list->first;
+    list->first = 0;
   }
 }
 /*----------------------------------------------------------------------------*/
 void *listErase(struct List *list, void *node)
 {
-  struct ListNode *next;
+  struct ListNode *next, *target = node;
 
   if (list->first != node)
   {
@@ -70,14 +71,15 @@ void *listErase(struct List *list, void *node)
 
     while (current->next != node)
       current = current->next;
-    current->next = current->next->next;
+
+    current->next = target->next;
   }
   else
     list->first = list->first->next;
 
-  next = ((struct ListNode *)node)->next;
-  ((struct ListNode *)node)->next = list->pool;
-  list->pool = node;
+  next = target->next;
+  target->next = list->pool;
+  list->pool = target;
 
   return next;
 }
@@ -100,15 +102,26 @@ enum result listPush(struct List *list, const void *element)
   }
 
   memcpy(node->data, element, list->width);
-  node->next = list->first;
-  list->first = node;
+  node->next = 0;
+
+  if (list->first)
+  {
+    struct ListNode *current = list->first;
+
+    while (current->next)
+      current = current->next;
+
+    current->next = node;
+  }
+  else
+    list->first = node;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 unsigned int listCapacity(const struct List *list)
 {
-  return countListNodes(list->pool);
+  return countListNodes(list->first) + countListNodes(list->pool);
 }
 /*----------------------------------------------------------------------------*/
 unsigned int listSize(const struct List *list)
