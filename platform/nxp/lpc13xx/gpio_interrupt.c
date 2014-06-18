@@ -59,9 +59,10 @@ static enum result resetDescriptor(union GpioPin pin)
 {
   struct GpioInterrupt *current = descriptors[pin.port];
 
-  /* Remove the interrupt from chain */
   if (!current)
     return E_ERROR;
+
+  /* Remove the interrupt from chain */
   if (current->pin.key == pin.key)
   {
     descriptors[pin.port] = descriptors[pin.port]->next;

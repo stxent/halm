@@ -43,6 +43,8 @@ static void interruptHandler(void *object)
 
   if (timer->callback)
     timer->callback(timer->callbackArgument);
+
+  while (reg->IR); /* Wait for interrupt flags to be cleared */
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configPtr)

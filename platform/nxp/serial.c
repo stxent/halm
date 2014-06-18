@@ -65,7 +65,7 @@ static void interruptHandler(void *object)
     uint32_t count = byteQueueSize(&interface->txQueue) < TX_FIFO_SIZE
         ? byteQueueSize(&interface->txQueue) : TX_FIFO_SIZE;
 
-    /* Call user handler when transmit queue become half empty */
+    /* Call user handler when transmit queue becomes half empty */
     event |= count && byteQueueSize(&interface->txQueue) - count
         < (byteQueueCapacity(&interface->txQueue) >> 1);
 
@@ -73,7 +73,7 @@ static void interruptHandler(void *object)
       reg->THR = byteQueuePop(&interface->txQueue);
   }
 
-  /* User handler will be called when receive queue is half full */
+  /* User handler will be called when receive queue becomes half full */
   event |= byteQueueSize(&interface->rxQueue)
       >= (byteQueueCapacity(&interface->rxQueue) >> 1);
 
