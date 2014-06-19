@@ -39,17 +39,34 @@ static inline uint16_t toLittleEndian16(uint16_t value)
   return value;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint64_t fromBigEndian64(uint64_t)
-    __attribute__((alias("toBigEndian64")));
-static inline uint32_t fromBigEndian32(uint32_t)
-    __attribute__((alias("toBigEndian32")));
-static inline uint16_t fromBigEndian16(uint16_t)
-    __attribute__((alias("toBigEndian16")));
-static inline uint64_t fromLittleEndian64(uint64_t)
-    __attribute__((alias("toLittleEndian64")));
-static inline uint32_t fromLittleEndian32(uint32_t)
-    __attribute__((alias("toLittleEndian32")));
-static inline uint16_t fromLittleEndian16(uint16_t)
-    __attribute__((alias("toLittleEndian16")));
+static inline uint64_t fromBigEndian64(uint64_t value)
+{
+  return toBigEndian64(value);
+}
+/*----------------------------------------------------------------------------*/
+static inline uint32_t fromBigEndian32(uint32_t value)
+{
+  return toBigEndian32(value);
+}
+/*----------------------------------------------------------------------------*/
+static inline uint16_t fromBigEndian16(uint16_t value)
+{
+  return toBigEndian16(value);
+}
+/*----------------------------------------------------------------------------*/
+static inline uint64_t fromLittleEndian64(uint64_t value)
+{
+  return value;
+}
+/*----------------------------------------------------------------------------*/
+static inline uint32_t fromLittleEndian32(uint32_t value)
+{
+  return value;
+}
+/*----------------------------------------------------------------------------*/
+static inline uint16_t fromLittleEndian16(uint16_t value)
+{
+  return value;
+}
 /*----------------------------------------------------------------------------*/
 #endif /* MEMORY_H_ */
