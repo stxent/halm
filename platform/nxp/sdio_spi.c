@@ -359,7 +359,7 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
   /* Send block data */
   written += ifWrite(device->interface, buffer, 1 << BLOCK_POW);
   /* Send block checksum */
-  written += ifWrite(device->interface, (uint8_t *)&crc, sizeof(crc));
+  written += ifWrite(device->interface, (const uint8_t *)&crc, sizeof(crc));
 
   if (written != 1 + (1 << BLOCK_POW) + sizeof(crc))
     return E_INTERFACE;
@@ -432,7 +432,7 @@ static enum result sdioSet(void *object, enum ifOption option,
   {
     case IF_ADDRESS:
       /* TODO Add boundary check */
-      device->position = *(uint64_t *)data;
+      device->position = *(const uint64_t *)data;
       return E_OK;
 
     default:

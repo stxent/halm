@@ -233,7 +233,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch ((enum i2cOption)option)
   {
     case IF_I2C_SENDSTOP:
-      interface->sendStopBit = *(uint32_t *)data ? true : false;
+      interface->sendStopBit = *(const uint32_t *)data ? true : false;
       return E_OK;
 
     default:
@@ -247,11 +247,11 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     case IF_DEVICE:
-      interface->address = *(uint32_t *)data;
+      interface->address = *(const uint32_t *)data;
       return E_OK;
 
     case IF_RATE:
-      i2cSetRate(object, *(uint32_t *)data);
+      i2cSetRate(object, *(const uint32_t *)data);
       return E_OK;
 
     case IF_ZEROCOPY:

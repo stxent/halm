@@ -47,14 +47,14 @@ static void interruptHandler(void *object)
   bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  const uint8_t state = reg->IIR;
+  const uint32_t state = reg->IIR;
   /* Call user handler when receive timeout occurs */
   event |= (state & IIR_INT_MASK) == IIR_INT_CTI;
 
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
   {
-    const uint8_t data = reg->RBR;
+    const uint8_t data = (uint8_t)reg->RBR;
     /* Received bytes will be dropped when queue becomes full */
     if (!byteQueueFull(&interface->rxQueue))
       byteQueuePush(&interface->rxQueue, data);
@@ -205,9 +205,11 @@ static enum result serialSet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_RATE:
-      if ((res = uartCalcRate(object, *(uint32_t *)data, &rateConfig)) == E_OK)
+      res = uartCalcRate(object, *(const uint32_t *)data, &rateConfig);
+
+      if (res == E_OK)
       {
-        interface->rate = *(uint32_t *)data;
+        interface->rate = *(const uint32_t *)data;
         uartSetRate(object, rateConfig);
       }
       return res;

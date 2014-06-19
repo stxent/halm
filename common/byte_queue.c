@@ -37,31 +37,37 @@ unsigned int byteQueuePopArray(struct ByteQueue *queue, uint8_t *buffer,
   if (queue->ceil < queue->floor)
   {
     count = queue->capacity - queue->floor;
+
     if (length < count)
       count = length;
+
     if (count)
     {
       memcpy(buffer, queue->data + queue->floor, count);
-      buffer += count;
       queue->floor = queue->floor + count;
       if (queue->floor == queue->capacity)
         queue->floor = 0;
       queue->size -= count;
-      length -= count;
+
+      buffer += count;
       moved += count;
+      length -= count;
     }
   }
 
   if (queue->ceil >= queue->floor)
   {
     count = queue->ceil - queue->floor;
+
     if (length < count)
       count = length;
+
     if (count)
     {
       memcpy(buffer, queue->data + queue->floor, count);
       queue->floor += count;
       queue->size -= count;
+
       moved += count;
     }
   }
@@ -77,31 +83,37 @@ unsigned int byteQueuePushArray(struct ByteQueue *queue, const uint8_t *buffer,
   if (queue->ceil >= queue->floor)
   {
     count = queue->capacity - queue->ceil;
+
     if (length < count)
       count = length;
+
     if (count)
     {
       memcpy(queue->data + queue->ceil, buffer, count);
-      buffer += count;
       queue->ceil = queue->ceil + count;
       if (queue->ceil == queue->capacity)
         queue->ceil = 0;
       queue->size += count;
-      length -= count;
+
+      buffer += count;
       moved += count;
+      length -= count;
     }
   }
 
   if (queue->ceil < queue->floor)
   {
     count = queue->floor - queue->ceil;
+
     if (length < count)
       count = length;
+
     if (count)
     {
       memcpy(queue->data + queue->ceil, buffer, count);
       queue->ceil += count;
       queue->size += count;
+
       moved += count;
     }
   }

@@ -62,9 +62,11 @@ static inline uint8_t byteQueuePop(struct ByteQueue *queue)
 {
   assert(queue->size);
 
-  uint8_t tmp = queue->data[queue->floor++];
+  const uint8_t tmp = queue->data[queue->floor++];
+
   if (queue->floor == queue->capacity)
     queue->floor = 0;
+
   --queue->size;
 
   return tmp;
@@ -75,8 +77,10 @@ static inline void byteQueuePush(struct ByteQueue *queue, uint8_t value)
   assert(queue->size < queue->capacity);
 
   queue->data[queue->ceil++] = value;
+
   if (queue->ceil == queue->capacity)
     queue->ceil = 0;
+
   ++queue->size;
 }
 /*----------------------------------------------------------------------------*/

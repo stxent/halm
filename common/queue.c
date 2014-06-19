@@ -13,11 +13,12 @@
 enum result queueInit(struct Queue *queue, unsigned int width,
     unsigned int capacity)
 {
-  /* Resulting capacity is lower than the maximum input value */
+  /* Resulting capacity is lower than the maximum possible input value */
   if (!capacity || capacity > USHRT_MAX)
     return E_VALUE;
 
-  if (!(queue->data = malloc(width * capacity)))
+  queue->data = malloc(width * capacity);
+  if (!queue->data)
     return E_MEMORY;
 
   queue->width = width;
@@ -49,6 +50,7 @@ void queuePop(struct Queue *queue, void *element)
 
   if (++queue->floor == queue->capacity)
     queue->floor = 0;
+
   --queue->size;
 }
 /*----------------------------------------------------------------------------*/
@@ -61,5 +63,6 @@ void queuePush(struct Queue *queue, const void *element)
 
   if (++queue->ceil == queue->capacity)
     queue->ceil = 0;
+
   ++queue->size;
 }

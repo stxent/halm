@@ -243,7 +243,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_DEVICE:
-      interface->address = toLittleEndian64(*(uint64_t *)data);
+      interface->address = toLittleEndian64(*(const uint64_t *)data);
       return E_OK;
 
     case IF_ZEROCOPY:

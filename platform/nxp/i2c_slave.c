@@ -197,16 +197,16 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch (option)
   {
     case IF_ADDRESS:
-      if (*(uint32_t *)data < interface->size)
+      if (*(const uint32_t *)data < interface->size)
       {
-        interface->internal = *(uint32_t *)data;
+        interface->internal = *(const uint32_t *)data;
         return E_OK;
       }
       else
         return E_VALUE;
 
     case IF_DEVICE:
-      reg->ADR0 = ADR_ADDRESS(*(uint32_t *)data);
+      reg->ADR0 = ADR_ADDRESS(*(const uint32_t *)data);
       return E_OK;
 
     default:
