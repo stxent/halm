@@ -17,7 +17,7 @@ static int8_t setupMatchPin(uint8_t channel, gpio_t key);
 static enum result unitInit(void *, const void *);
 static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static uint32_t channelGetResolution(void *);
+static uint32_t channelGetResolution(const void *);
 static void channelSetEnabled(void *, bool);
 static void channelSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -141,9 +141,9 @@ static void unitDeinit(void *object)
   GpPwmUnitBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelGetResolution(void *object)
+static uint32_t channelGetResolution(const void *object)
 {
-  return ((struct GpPwm *)object)->unit->resolution;
+  return ((const struct GpPwm *)object)->unit->resolution;
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetEnabled(void *object, bool state)

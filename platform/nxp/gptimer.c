@@ -18,7 +18,7 @@ static void tmrCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
 static void tmrSetFrequency(void *, uint32_t);
 static void tmrSetOverflow(void *, uint32_t);
-static uint32_t tmrValue(void *);
+static uint32_t tmrValue(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
     .size = sizeof(struct GpTimer),
@@ -194,9 +194,10 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
     reg->TCR = TCR_CEN;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrValue(void *object)
+static uint32_t tmrValue(const void *object)
 {
-  LPC_TIMER_Type * const reg = ((struct GpTimer *)object)->parent.reg;
+  const struct GpTimer * const timer = object;
+  const LPC_TIMER_Type * const reg = timer->parent.reg;
 
   return reg->TC;
 }

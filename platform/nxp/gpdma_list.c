@@ -11,9 +11,9 @@
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
-static bool channelActive(void *);
+static bool channelActive(const void *);
 static void channelCallback(void *, void (*)(void *), void *);
-static uint32_t channelIndex(void *);
+static uint32_t channelIndex(const void *);
 static enum result channelStart(void *, void *, const void *, uint32_t);
 static void channelStop(void *);
 
@@ -127,10 +127,10 @@ static void channelDeinit(void *object)
   GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
-static bool channelActive(void *object)
+static bool channelActive(const void *object)
 {
-  struct GpDmaList * const channel = object;
-  LPC_GPDMACH_Type * const reg = channel->parent.reg;
+  const struct GpDmaList * const channel = object;
+  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
   return gpDmaGetDescriptor(channel->parent.number) == object
       && (reg->CONFIG & CONFIG_ENABLE);
@@ -145,11 +145,12 @@ static void channelCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelIndex(void *object)
+static uint32_t channelIndex(const void *object)
 {
-  struct GpDmaList * const channel = object;
-  LPC_GPDMACH_Type * const reg = channel->parent.reg;
-  struct GpDmaListItem * const next = (struct GpDmaListItem *)reg->LLI;
+  const struct GpDmaList * const channel = object;
+  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
+  const struct GpDmaListItem * const next =
+      (const struct GpDmaListItem *)reg->LLI;
 
   if (!next)
     return 0;

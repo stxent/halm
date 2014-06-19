@@ -25,7 +25,7 @@ struct TimerClass
   void (*setEnabled)(void *, bool);
   void (*setFrequency)(void *, uint32_t);
   void (*setOverflow)(void *, uint32_t);
-  uint32_t (*value)(void *);
+  uint32_t (*value)(const void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Timer
@@ -80,7 +80,7 @@ static inline void timerSetOverflow(void *timer, uint32_t overflow)
  * @param timer Pointer to a Timer object.
  * @return Value of the counter measured in timer ticks.
  */
-static inline uint32_t timerValue(void *timer)
+static inline uint32_t timerValue(const void *timer)
 {
   return ((struct TimerClass *)CLASS(timer))->value(timer);
 }

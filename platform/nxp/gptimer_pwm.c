@@ -15,7 +15,7 @@ static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
-static uint32_t channelGetResolution(void *);
+static uint32_t channelGetResolution(const void *);
 static void channelSetDuration(void *, uint32_t);
 static void channelSetEdges(void *, uint32_t, uint32_t);
 static void channelSetEnabled(void *, bool);
@@ -161,9 +161,9 @@ static void channelDeinit(void *object)
   pwm->unit->matches &= ~(1 << pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelGetResolution(void *object)
+static uint32_t channelGetResolution(const void *object)
 {
-  return ((struct GpTimerPwm *)object)->unit->resolution;
+  return ((const struct GpTimerPwm *)object)->unit->resolution;
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetDuration(void *object, uint32_t duration)

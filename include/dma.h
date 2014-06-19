@@ -47,9 +47,9 @@ struct DmaClass
 {
   CLASS_HEADER
 
-  bool (*active)(void *);
+  bool (*active)(const void *);
   void (*callback)(void *, void (*)(void *), void *);
-  uint32_t (*index)(void *);
+  uint32_t (*index)(const void *);
   enum result (*start)(void *, void *, const void *, uint32_t);
   void (*stop)(void *);
 };
@@ -64,7 +64,7 @@ struct Dma
  * @param channel Pointer to a Dma object.
  * @return @b true when the transmission is active or @b false otherwise.
  */
-static inline bool dmaActive(void *channel)
+static inline bool dmaActive(const void *channel)
 {
   return ((struct DmaClass *)CLASS(channel))->active(channel);
 }
@@ -87,7 +87,7 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
  * @return Transmitted or received elements count for standard transfers or
  * buffer index for scatter-gather transfers.
  */
-static inline uint32_t dmaIndex(void *channel)
+static inline uint32_t dmaIndex(const void *channel)
 {
   return ((struct DmaClass *)CLASS(channel))->index(channel);
 }

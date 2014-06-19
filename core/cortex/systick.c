@@ -27,7 +27,7 @@ static void tmrCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
 static void tmrSetFrequency(void *, uint32_t);
 static void tmrSetOverflow(void *, uint32_t);
-static uint32_t tmrValue(void *);
+static uint32_t tmrValue(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
     .size = sizeof(struct SysTickTimer),
@@ -151,8 +151,7 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   updateFrequency(timer);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrValue(void *object __attribute__((unused)))
+static uint32_t tmrValue(const void *object __attribute__((unused)))
 {
   return SYSTICK->VAL;
 }
-

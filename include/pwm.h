@@ -21,7 +21,7 @@ struct PwmClass
 {
   CLASS_HEADER
 
-  uint32_t (*getResolution)(void *);
+  uint32_t (*getResolution)(const void *);
   void (*setDuration)(void *, uint32_t);
   void (*setEdges)(void *, uint32_t, uint32_t);
   void (*setEnabled)(void *, bool);
@@ -38,7 +38,7 @@ struct Pwm
  * @param channel Pointer to a Pwm object.
  * @return Channel resolution in timer ticks.
  */
-static inline uint32_t pwmGetResolution(void *channel)
+static inline uint32_t pwmGetResolution(const void *channel)
 {
   return ((struct PwmClass *)CLASS(channel))->getResolution(channel);
 }
