@@ -86,7 +86,7 @@ struct Interface
 static inline enum result ifCallback(void *interface, void (*callback)(void *),
     void *argument)
 {
-  return ((struct InterfaceClass *)CLASS(interface))->callback(interface,
+  return ((const struct InterfaceClass *)CLASS(interface))->callback(interface,
       callback, argument);
 }
 /*----------------------------------------------------------------------------*/
@@ -100,8 +100,8 @@ static inline enum result ifCallback(void *interface, void (*callback)(void *),
 static inline enum result ifGet(void *interface, enum ifOption option,
     void *data)
 {
-  return ((struct InterfaceClass *)CLASS(interface))->get(interface, option,
-      data);
+  return ((const struct InterfaceClass *)CLASS(interface))->get(interface,
+      option, data);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -114,8 +114,8 @@ static inline enum result ifGet(void *interface, enum ifOption option,
 static inline enum result ifSet(void *interface, enum ifOption option,
     const void *data)
 {
-  return ((struct InterfaceClass *)CLASS(interface))->set(interface, option,
-      data);
+  return ((const struct InterfaceClass *)CLASS(interface))->set(interface,
+      option, data);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -127,8 +127,8 @@ static inline enum result ifSet(void *interface, enum ifOption option,
  */
 static inline uint32_t ifRead(void *interface, uint8_t *buffer, uint32_t length)
 {
-  return ((struct InterfaceClass *)CLASS(interface))->read(interface, buffer,
-      length);
+  return ((const struct InterfaceClass *)CLASS(interface))->read(interface,
+      buffer, length);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -141,8 +141,8 @@ static inline uint32_t ifRead(void *interface, uint8_t *buffer, uint32_t length)
 static inline uint32_t ifWrite(void *interface, const uint8_t *buffer,
     uint32_t length)
 {
-  return ((struct InterfaceClass *)CLASS(interface))->write(interface, buffer,
-      length);
+  return ((const struct InterfaceClass *)CLASS(interface))->write(interface,
+      buffer, length);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* INTERFACE_H_ */

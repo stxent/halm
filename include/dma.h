@@ -66,7 +66,7 @@ struct Dma
  */
 static inline bool dmaActive(const void *channel)
 {
-  return ((struct DmaClass *)CLASS(channel))->active(channel);
+  return ((const struct DmaClass *)CLASS(channel))->active(channel);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -78,7 +78,8 @@ static inline bool dmaActive(const void *channel)
 static inline void dmaCallback(void *channel, void (*callback)(void *),
     void *argument)
 {
-  ((struct DmaClass *)CLASS(channel))->callback(channel, callback, argument);
+  ((const struct DmaClass *)CLASS(channel))->callback(channel, callback,
+      argument);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -89,7 +90,7 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
  */
 static inline uint32_t dmaIndex(const void *channel)
 {
-  return ((struct DmaClass *)CLASS(channel))->index(channel);
+  return ((const struct DmaClass *)CLASS(channel))->index(channel);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -103,7 +104,7 @@ static inline uint32_t dmaIndex(const void *channel)
 static inline enum result dmaStart(void *channel, void *destination,
     const void *source, uint32_t size)
 {
-  return ((struct DmaClass *)CLASS(channel))->start(channel, destination,
+  return ((const struct DmaClass *)CLASS(channel))->start(channel, destination,
       source, size);
 }
 /*----------------------------------------------------------------------------*/
@@ -113,7 +114,7 @@ static inline enum result dmaStart(void *channel, void *destination,
  */
 static inline void dmaStop(void *channel)
 {
-  ((struct DmaClass *)CLASS(channel))->stop(channel);
+  ((const struct DmaClass *)CLASS(channel))->stop(channel);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_H_ */

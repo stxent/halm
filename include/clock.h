@@ -32,7 +32,7 @@ struct ClockClass
  */
 static inline enum result clockDisable(const void *clock)
 {
-  return ((struct ClockClass *)clock)->disable();
+  return ((const struct ClockClass *)clock)->disable();
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -43,7 +43,7 @@ static inline enum result clockDisable(const void *clock)
  */
 static inline enum result clockEnable(const void *clock, const void *config)
 {
-  return ((struct ClockClass *)clock)->enable(config);
+  return ((const struct ClockClass *)clock)->enable(config);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -53,7 +53,7 @@ static inline enum result clockEnable(const void *clock, const void *config)
  */
 static inline uint32_t clockFrequency(const void *clock)
 {
-  return ((struct ClockClass *)clock)->frequency();
+  return ((const struct ClockClass *)clock)->frequency();
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -63,7 +63,7 @@ static inline uint32_t clockFrequency(const void *clock)
  */
 static inline bool clockReady(const void *clock)
 {
-  return ((struct ClockClass *)clock)->ready();
+  return ((const struct ClockClass *)clock)->ready();
 }
 /*----------------------------------------------------------------------------*/
 #endif /* CLOCK_H_ */

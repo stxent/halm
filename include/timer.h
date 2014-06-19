@@ -42,7 +42,8 @@ struct Timer
 static inline void timerCallback(void *timer, void (*callback)(void *),
     void *argument)
 {
-  ((struct TimerClass *)CLASS(timer))->callback(timer, callback, argument);
+  ((const struct TimerClass *)CLASS(timer))->callback(timer, callback,
+      argument);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -52,7 +53,7 @@ static inline void timerCallback(void *timer, void (*callback)(void *),
  */
 static inline void timerSetEnabled(void *timer, bool state)
 {
-  ((struct TimerClass *)CLASS(timer))->setEnabled(timer, state);
+  ((const struct TimerClass *)CLASS(timer))->setEnabled(timer, state);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -62,7 +63,7 @@ static inline void timerSetEnabled(void *timer, bool state)
  */
 static inline void timerSetFrequency(void *timer, uint32_t frequency)
 {
-  ((struct TimerClass *)CLASS(timer))->setFrequency(timer, frequency);
+  ((const struct TimerClass *)CLASS(timer))->setFrequency(timer, frequency);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -72,7 +73,7 @@ static inline void timerSetFrequency(void *timer, uint32_t frequency)
  */
 static inline void timerSetOverflow(void *timer, uint32_t overflow)
 {
-  ((struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
+  ((const struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -82,7 +83,7 @@ static inline void timerSetOverflow(void *timer, uint32_t overflow)
  */
 static inline uint32_t timerValue(const void *timer)
 {
-  return ((struct TimerClass *)CLASS(timer))->value(timer);
+  return ((const struct TimerClass *)CLASS(timer))->value(timer);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* TIMER_H_ */

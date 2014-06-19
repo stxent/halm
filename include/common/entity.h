@@ -10,10 +10,11 @@
 #include <error.h>
 /*----------------------------------------------------------------------------*/
 #define CLASS_HEADER \
-  unsigned int size;\
-  enum result (*init)(void *, const void *);\
-  void (*deinit)(void *);
-#define CLASS(instance) (((struct Entity *)(instance))->type)
+    unsigned int size;\
+    enum result (*init)(void *, const void *);\
+    void (*deinit)(void *);
+
+#define CLASS(instance) (((const struct Entity *)(instance))->descriptor)
 /*----------------------------------------------------------------------------*/
 struct EntityClass
 {
@@ -22,7 +23,7 @@ struct EntityClass
 /*----------------------------------------------------------------------------*/
 struct Entity
 {
-  const struct EntityClass *type;
+  const void *descriptor;
 };
 /*----------------------------------------------------------------------------*/
 void *init(const void *, const void *);

@@ -37,7 +37,7 @@ struct GpioBus
  */
 static inline uint32_t gpioBusRead(void *bus)
 {
-  return ((struct GpioBusClass *)CLASS(bus))->read(bus);
+  return ((const struct GpioBusClass *)CLASS(bus))->read(bus);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -47,7 +47,7 @@ static inline uint32_t gpioBusRead(void *bus)
  */
 static inline void gpioBusWrite(void *bus, uint32_t value)
 {
-  ((struct GpioBusClass *)CLASS(bus))->write(bus, value);
+  ((const struct GpioBusClass *)CLASS(bus))->write(bus, value);
 }
 /*----------------------------------------------------------------------------*/
 /** Reference GpioBus implementation based on the pin array. */

@@ -40,7 +40,7 @@ struct Pwm
  */
 static inline uint32_t pwmGetResolution(const void *channel)
 {
-  return ((struct PwmClass *)CLASS(channel))->getResolution(channel);
+  return ((const struct PwmClass *)CLASS(channel))->getResolution(channel);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -50,7 +50,7 @@ static inline uint32_t pwmGetResolution(const void *channel)
  */
 static inline void pwmSetDuration(void *channel, uint32_t duration)
 {
-  ((struct PwmClass *)CLASS(channel))->setDuration(channel, duration);
+  ((const struct PwmClass *)CLASS(channel))->setDuration(channel, duration);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -62,7 +62,8 @@ static inline void pwmSetDuration(void *channel, uint32_t duration)
 static inline void pwmSetEdges(void *channel, uint32_t leading,
     uint32_t trailing)
 {
-  ((struct PwmClass *)CLASS(channel))->setEdges(channel, leading, trailing);
+  ((const struct PwmClass *)CLASS(channel))->setEdges(channel, leading,
+      trailing);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -72,7 +73,7 @@ static inline void pwmSetEdges(void *channel, uint32_t leading,
  */
 static inline void pwmSetEnabled(void *channel, bool state)
 {
-  ((struct PwmClass *)CLASS(channel))->setEnabled(channel, state);
+  ((const struct PwmClass *)CLASS(channel))->setEnabled(channel, state);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -82,7 +83,7 @@ static inline void pwmSetEnabled(void *channel, bool state)
  */
 static inline void pwmSetFrequency(void *channel, uint32_t frequency)
 {
-  ((struct PwmClass *)CLASS(channel))->setFrequency(channel, frequency);
+  ((const struct PwmClass *)CLASS(channel))->setFrequency(channel, frequency);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* PWM_H_ */

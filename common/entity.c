@@ -7,35 +7,35 @@
 #include <stdlib.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
-void *init(const void *typeDescriptor, const void *arguments)
+void *init(const void *descriptor, const void *arguments)
 {
-  const struct EntityClass *type = (const struct EntityClass *)typeDescriptor;
+  const struct EntityClass * const base = descriptor;
   struct Entity *entity;
 
-  if (!type || !type->size || !(entity = malloc(type->size)))
+  if (!base || !base->size || !(entity = malloc(base->size)))
     return 0;
 
-  if (type->init)
+  if (base->init)
   {
-    enum result res = type->init(entity, arguments);
+    enum result res;
 
-    if (res != E_OK)
+    if ((res = base->init(entity, arguments)) != E_OK)
     {
       free(entity);
       return 0;
     }
   }
 
-  entity->type = type;
+  entity->descriptor = base;
   return entity;
 }
 /*----------------------------------------------------------------------------*/
 void deinit(void *entity)
 {
-  const struct EntityClass *type = CLASS(entity);
+  const struct EntityClass * const base = CLASS(entity);
 
-  if (type->deinit)
-    type->deinit(entity);
+  if (base->deinit)
+    base->deinit(entity);
 
   free(entity);
 }

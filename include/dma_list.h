@@ -40,7 +40,7 @@ struct DmaList
 static inline enum result dmaListAppend(void *list, void *destination,
     const void *source, uint32_t size)
 {
-  return ((struct DmaListClass *)CLASS(list))->append(list, destination,
+  return ((const struct DmaListClass *)CLASS(list))->append(list, destination,
       source, size);
 }
 /*----------------------------------------------------------------------------*/
@@ -50,7 +50,7 @@ static inline enum result dmaListAppend(void *list, void *destination,
   */
 static inline void dmaListClear(void *list)
 {
-  ((struct DmaListClass *)CLASS(list))->clear(list);
+  ((const struct DmaListClass *)CLASS(list))->clear(list);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -60,7 +60,7 @@ static inline void dmaListClear(void *list)
  */
 static inline enum result dmaListExecute(void *channel)
 {
-  return ((struct DmaListClass *)CLASS(channel))->execute(channel);
+  return ((const struct DmaListClass *)CLASS(channel))->execute(channel);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_LIST_H_ */

@@ -39,8 +39,8 @@ struct Interrupt
 static inline void intCallback(void *interrupt, void (*callback)(void *),
     void *argument)
 {
-  ((struct InterruptClass *)CLASS(interrupt))->callback(interrupt, callback,
-      argument);
+  ((const struct InterruptClass *)CLASS(interrupt))->callback(interrupt,
+      callback, argument);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -50,7 +50,8 @@ static inline void intCallback(void *interrupt, void (*callback)(void *),
  */
 static inline void intSetEnabled(void *interrupt, bool state)
 {
-  ((struct InterruptClass *)CLASS(interrupt))->setEnabled(interrupt, state);
+  ((const struct InterruptClass *)CLASS(interrupt))->setEnabled(interrupt,
+      state);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* INTERRUPT_H_ */
