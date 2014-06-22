@@ -12,6 +12,7 @@
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static enum result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
+static enum result getStatus(const struct SpiDma *);
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
@@ -88,6 +89,20 @@ static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
     return E_ERROR;
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result getStatus(const struct SpiDma *interface)
+{
+  LPC_SSP_Type * const reg = interface->parent.reg;
+  enum result res;
+
+  if (reg->SR & SR_BSY)
+    return E_BUSY;
+  if ((res = dmaStatus(interface->txDma)) != E_OK)
+    return res;
+  if ((res = dmaStatus(interface->txMockDma)) != E_OK)
+    return res;
+  return dmaStatus(interface->rxDma);
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -172,7 +187,6 @@ static enum result spiCallback(void *object, void (*callback)(void *),
 static enum result spiGet(void *object, enum ifOption option, void *data)
 {
   struct SpiDma * const interface = object;
-  LPC_SSP_Type * const reg = interface->parent.reg;
 
   switch (option)
   {
@@ -181,8 +195,12 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_STATUS:
-      return dmaActive(interface->rxDma) || dmaActive(interface->txDma)
-          || reg->SR & SR_BSY ? E_BUSY : E_OK;
+      /*
+       * Previous type of operation should be performed when a direct memory
+       * access error occurs or a status of the interface would repeatedly
+       * return last error code.
+       */
+      return getStatus(interface);
 
     default:
       return E_ERROR;
@@ -242,8 +260,17 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
     dmaStop(interface->rxDma);
     return 0;
   }
+
   if (interface->blocking)
-    while (dmaActive(interface->rxDma) || reg->SR & SR_BSY);
+  {
+    enum result res = E_BUSY;
+
+    while (res == E_BUSY)
+      res = getStatus(interface);
+
+    if (res != E_OK)
+      return 0;
+  }
 
   return length;
 }
@@ -271,7 +298,15 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
     return 0;
 
   if (interface->blocking)
-    while (dmaActive(interface->txDma) || reg->SR & SR_BSY);
+  {
+    enum result res = E_BUSY;
+
+    while (res == E_BUSY)
+      res = getStatus(interface);
+
+    if (res != E_OK)
+      return 0;
+  }
 
   return length;
 }

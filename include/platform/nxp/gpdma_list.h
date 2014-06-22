@@ -73,7 +73,9 @@ struct GpDmaList
 
   /* Circular buffer flag */
   bool circular;
-  /* Reduce interrupts flag */
+  /* Channel error flag */
+  bool error;
+  /* Reduce interrupt count flag */
   bool silence;
 };
 /*----------------------------------------------------------------------------*/

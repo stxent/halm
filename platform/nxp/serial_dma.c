@@ -145,14 +145,24 @@ static enum result serialCallback(void *object, void (*callback)(void *),
 static enum result serialGet(void *object, enum ifOption option,
     void *data __attribute__((unused)))
 {
-  /* TODO Add more options for SerialDma */
   struct SerialDma * const interface = object;
 
   switch (option)
   {
     case IF_STATUS:
-      return !dmaActive(interface->rxDma) && !dmaActive(interface->txDma) ? E_OK
-          : E_BUSY;
+    {
+      const enum result rxStatus = dmaStatus(interface->rxDma);
+
+      if (rxStatus != E_OK && rxStatus != E_BUSY)
+        return rxStatus;
+
+      const enum result txStatus = dmaStatus(interface->txDma);
+
+      if (txStatus != E_OK && txStatus != E_BUSY)
+        return txStatus;
+
+      return rxStatus == E_OK && txStatus == E_OK ? E_OK : E_BUSY;
+    }
 
     default:
       return E_ERROR;
@@ -190,17 +200,25 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SerialDma * const interface = object;
   LPC_UART_Type * const reg = interface->parent.reg;
+  enum result res;
 
-  if (length && dmaStart(interface->rxDma, buffer, (const void *)&reg->RBR,
-      length) == E_OK)
+  if (!length)
+    return 0;
+
+  res = dmaStart(interface->rxDma, buffer, (const void *)&reg->RBR, length);
+
+  if (res == E_OK)
   {
     if (interface->blocking)
-      while (dmaActive(interface->rxDma));
+    {
+      res = E_BUSY;
 
-    return length;
+      while (res == E_BUSY)
+        res = dmaStatus(interface->rxDma);
+    }
   }
-  else
-    return 0;
+
+  return res == E_OK ? length : 0;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialWrite(void *object, const uint8_t *buffer,
@@ -208,15 +226,23 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 {
   struct SerialDma * const interface = object;
   LPC_UART_Type * const reg = interface->parent.reg;
+  enum result res;
 
-  if (length && dmaStart(interface->txDma, (void *)&reg->THR, buffer,
-      length) == E_OK)
+  if (!length)
+    return 0;
+
+  res = dmaStart(interface->txDma, (void *)&reg->THR, buffer, length);
+
+  if (res == E_OK)
   {
     if (interface->blocking)
-      while (dmaActive(interface->txDma));
+    {
+      res = E_BUSY;
 
-    return length;
+      while (res == E_BUSY)
+        res = dmaStatus(interface->txDma);
+    }
   }
-  else
-    return 0;
+
+  return res == E_OK ? length : 0;
 }

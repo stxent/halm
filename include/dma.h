@@ -47,10 +47,9 @@ struct DmaClass
 {
   CLASS_HEADER
 
-  bool (*active)(const void *);
   void (*callback)(void *, void (*)(void *), void *);
-  uint32_t (*index)(const void *);
   enum result (*start)(void *, void *, const void *, uint32_t);
+  enum result (*status)(const void *);
   void (*stop)(void *);
 };
 /*----------------------------------------------------------------------------*/
@@ -58,16 +57,6 @@ struct Dma
 {
   struct Entity parent;
 };
-/*----------------------------------------------------------------------------*/
-/**
- * Check whether the channel is enabled or not.
- * @param channel Pointer to a Dma object.
- * @return @b true when the transmission is active or @b false otherwise.
- */
-static inline bool dmaActive(const void *channel)
-{
-  return ((const struct DmaClass *)CLASS(channel))->active(channel);
-}
 /*----------------------------------------------------------------------------*/
 /**
  * Set callback function for the transmission completion event.
@@ -83,17 +72,6 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Get status of the transfer.
- * @param channel Pointer to a Dma object.
- * @return Transmitted or received elements count for standard transfers or
- * buffer index for scatter-gather transfers.
- */
-static inline uint32_t dmaIndex(const void *channel)
-{
-  return ((const struct DmaClass *)CLASS(channel))->index(channel);
-}
-/*----------------------------------------------------------------------------*/
-/**
  * Start the transfer.
  * @param channel Pointer to a Dma object.
  * @param destination Destination memory address.
@@ -106,6 +84,17 @@ static inline enum result dmaStart(void *channel, void *destination,
 {
   return ((const struct DmaClass *)CLASS(channel))->start(channel, destination,
       source, size);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get status of the transfer.
+ * @param channel Pointer to a Dma object.
+ * @return @b E_OK when the transfer is completed successfully, @b E_BUSY when
+ * the transfer is not finished yet, other error types in case of errors.
+ */
+static inline enum result dmaStatus(const void *channel)
+{
+  return ((const struct DmaClass *)CLASS(channel))->status(channel);
 }
 /*----------------------------------------------------------------------------*/
 /**

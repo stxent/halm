@@ -182,21 +182,28 @@ void DMA_ISR(void)
 
   for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
   {
-    if (intStatus & 0x01)
-    {
-      struct GpDmaBase *descriptor = dmaHandler->descriptors[index];
+    const uint8_t mask = 1 << index;
 
-      if (!(((LPC_GPDMACH_Type *)descriptor->reg)->CONFIG & CONFIG_ENABLE))
+    if (intStatus & mask)
+    {
+      struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
+      LPC_GPDMACH_Type * const reg = descriptor->reg;
+      enum result res = E_OK;
+
+      if (!(reg->CONFIG & CONFIG_ENABLE))
       {
         /* Clear descriptor when channel is stopped or transfer is completed */
         dmaHandler->descriptors[index] = 0;
       }
+      else
+        res = E_BUSY;
+
+      if (errorStatus & mask)
+        res = E_ERROR;
 
       if (descriptor->handler)
-        descriptor->handler(descriptor);
+        descriptor->handler(descriptor, res);
     }
-
-    intStatus >>= 1;
   }
 }
 /*----------------------------------------------------------------------------*/

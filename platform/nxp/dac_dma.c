@@ -41,7 +41,7 @@ static void dmaHandler(void *object)
 {
   struct DacDma * const interface = object;
   LPC_DAC_Type * const reg = interface->parent.reg;
-  const uint32_t index = dmaIndex(interface->dma);
+  const uint32_t index = dmaListIndex(interface->dma);
 
   if (index & 1)
   {
@@ -54,7 +54,7 @@ static void dmaHandler(void *object)
   else
   {
     /* Page changed event */
-    if (!dmaActive(interface->dma))
+    if (dmaStatus(interface->dma) == E_OK)
     {
       if (interface->updated)
         dmaListExecute(interface->dma);
@@ -163,7 +163,7 @@ static enum result dacGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_STATUS:
-      return dmaActive(interface->dma) ? E_BUSY : E_OK;
+      return dmaStatus(interface->dma);
 
     case IF_WIDTH:
       *((uint32_t *)data) = CR_OUTPUT_WIDTH;
@@ -192,12 +192,12 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
   if (!length)
     return 0;
 
-  if (dmaActive(interface->dma)) {
+  if (dmaStatus(interface->dma) == E_OK) {
     /*
      * Previous transfer will be continued. When index is odd number the
      * transfer will be restarted due to buffer underflow.
      */
-    uint32_t index = dmaIndex(interface->dma);
+    uint32_t index = dmaListIndex(interface->dma);
 
     index = 1 - (index >> 1);
     memcpy(interface->buffer + index * interface->length, buffer, length);

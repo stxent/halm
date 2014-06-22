@@ -22,6 +22,7 @@ struct DmaListClass
   enum result (*append)(void *, void *, const void *, uint32_t);
   void (*clear)(void *);
   enum result (*execute)(void *);
+  uint32_t (*index)(const void *);
 };
 /*----------------------------------------------------------------------------*/
 struct DmaList
@@ -47,7 +48,7 @@ static inline enum result dmaListAppend(void *list, void *destination,
 /**
  * Clear the buffer list.
  * @param list Pointer to a DmaList object to be cleared.
-  */
+ */
 static inline void dmaListClear(void *list)
 {
   ((const struct DmaListClass *)CLASS(list))->clear(list);
@@ -61,6 +62,16 @@ static inline void dmaListClear(void *list)
 static inline enum result dmaListExecute(void *channel)
 {
   return ((const struct DmaListClass *)CLASS(channel))->execute(channel);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get an index of the current descriptor in scatter-gather transfer mode.
+ * @param channel Pointer to a DmaList object.
+ * @return The index of the descriptor.
+ */
+static inline uint32_t dmaListIndex(const void *channel)
+{
+  return ((const struct DmaListClass *)CLASS(channel))->index(channel);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* DMA_LIST_H_ */

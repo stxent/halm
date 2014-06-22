@@ -9,14 +9,13 @@
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *);
+static void interruptHandler(void *, enum result);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
-static bool channelActive(const void *);
 static void channelCallback(void *, void (*)(void *), void *);
-static uint32_t channelIndex(const void *);
 static enum result channelStart(void *, void *, const void *, uint32_t);
+static enum result channelStatus(const void *);
 static void channelStop(void *);
 /*----------------------------------------------------------------------------*/
 static const struct DmaClass channelTable = {
@@ -24,20 +23,19 @@ static const struct DmaClass channelTable = {
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .active = channelActive,
     .callback = channelCallback,
-    .index = channelIndex,
     .start = channelStart,
+    .status = channelStatus,
     .stop = channelStop
 };
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDma = &channelTable;
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
+static void interruptHandler(void *object, enum result res)
 {
   struct GpDma * const channel = object;
 
-  /* TODO Add DMA errors detection and processing */
+  channel->error = res != E_OK;
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
@@ -60,6 +58,7 @@ static enum result channelInit(void *object, const void *configPtr)
 
   channel->parent.handler = interruptHandler;
   channel->callback = 0;
+  channel->error = false;
 
   channel->parent.control |= CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
       | CONTROL_DST_WIDTH(config->width);
@@ -102,15 +101,6 @@ static void channelDeinit(void *object)
   GpDmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static bool channelActive(const void *object)
-{
-  const struct GpDma * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
-
-  return gpDmaGetDescriptor(channel->parent.number) == object
-      && (reg->CONFIG & CONFIG_ENABLE);
-}
-/*----------------------------------------------------------------------------*/
 static void channelCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -118,15 +108,6 @@ static void channelCallback(void *object, void (*callback)(void *),
 
   channel->callback = callback;
   channel->callbackArgument = argument;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t channelIndex(const void *object)
-{
-  const struct GpDma * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
-
-  //FIXME Rewrite
-  return reg->CONTROL & CONTROL_SIZE_MASK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
@@ -141,6 +122,7 @@ static enum result channelStart(void *object, void *destination,
     return E_BUSY;
 
   gpDmaSetupMux(object);
+  channel->error = false;
 
   const uint32_t request = 1 << channel->parent.number;
   LPC_GPDMACH_Type * const reg = channel->parent.reg;
@@ -159,6 +141,18 @@ static enum result channelStart(void *object, void *destination,
   reg->CONFIG |= CONFIG_ENABLE;
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result channelStatus(const void *object)
+{
+  const struct GpDma * const channel = object;
+  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
+
+  if (channel->error)
+    return E_ERROR;
+
+  return gpDmaGetDescriptor(channel->parent.number) == object
+      && (reg->CONFIG & CONFIG_ENABLE);
 }
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)

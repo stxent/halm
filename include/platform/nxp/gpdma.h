@@ -39,6 +39,9 @@ struct GpDma
 
   void (*callback)(void *);
   void *callbackArgument;
+
+  /* Channel error flag */
+  bool error;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPDMA_H_ */

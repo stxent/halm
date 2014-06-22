@@ -9,17 +9,19 @@
 #include <platform/nxp/gpdma_list.h>
 #include <platform/nxp/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *, enum result);
+/*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
-static bool channelActive(const void *);
 static void channelCallback(void *, void (*)(void *), void *);
-static uint32_t channelIndex(const void *);
 static enum result channelStart(void *, void *, const void *, uint32_t);
+static enum result channelStatus(const void *);
 static void channelStop(void *);
 
 static enum result channelAppend(void *, void *, const void *, uint32_t);
 static void channelClear(void *);
 static enum result channelExecute(void *);
+static uint32_t channelIndex(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct DmaListClass channelTable = {
     .parent = {
@@ -27,25 +29,25 @@ static const struct DmaListClass channelTable = {
         .init = channelInit,
         .deinit = channelDeinit,
 
-        .active = channelActive,
         .callback = channelCallback,
-        .index = channelIndex,
         .start = channelStart,
+        .status = channelStatus,
         .stop = channelStop
     },
 
     .append = channelAppend,
     .clear = channelClear,
-    .execute = channelExecute
+    .execute = channelExecute,
+    .index = channelIndex
 };
 /*----------------------------------------------------------------------------*/
 const struct DmaListClass * const GpDmaList = &channelTable;
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
+static void interruptHandler(void *object, enum result res)
 {
   struct GpDmaList * const channel = object;
 
-  /* TODO Add DMA errors detection and processing */
+  channel->error = res != E_OK && res != E_BUSY;
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
@@ -80,6 +82,7 @@ static enum result channelInit(void *object, const void *configPtr)
   channel->alignment = (1 << config->burst) - 1;
   channel->capacity = config->size;
   channel->circular = config->circular;
+  channel->error = false;
   channel->silence = config->silence;
   channel->size = 0;
 
@@ -127,15 +130,6 @@ static void channelDeinit(void *object)
   GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
-static bool channelActive(const void *object)
-{
-  const struct GpDmaList * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
-
-  return gpDmaGetDescriptor(channel->parent.number) == object
-      && (reg->CONFIG & CONFIG_ENABLE);
-}
-/*----------------------------------------------------------------------------*/
 static void channelCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -143,22 +137,6 @@ static void channelCallback(void *object, void (*callback)(void *),
 
   channel->callback = callback;
   channel->callbackArgument = argument;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t channelIndex(const void *object)
-{
-  const struct GpDmaList * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
-  const struct GpDmaListItem * const next =
-      (const struct GpDmaListItem *)reg->LLI;
-
-  if (!next)
-    return 0;
-
-  if (next == channel->buffer)
-    return channel->size - 1;
-  else
-    return (uint32_t)(next - channel->buffer) - 1;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
@@ -177,6 +155,7 @@ static enum result channelStart(void *object, void *destination,
 
   gpDmaSetupMux(object);
   channelClear(channel);
+  channel->error = false;
 
   uint32_t chunk, offset = 0;
 
@@ -210,6 +189,18 @@ static enum result channelStart(void *object, void *destination,
   reg->CONFIG |= CONFIG_ENABLE;
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result channelStatus(const void *object)
+{
+  const struct GpDmaList * const channel = object;
+  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
+
+  if (channel->error)
+    return E_ERROR;
+
+  return gpDmaGetDescriptor(channel->parent.number) == object
+      && (reg->CONFIG & CONFIG_ENABLE);
 }
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)
@@ -246,7 +237,6 @@ static enum result channelAppend(void *object, void *destination,
   item->source = (uint32_t)source;
   item->destination = (uint32_t)destination;
   item->control = channel->parent.control | CONTROL_SIZE(size);
-
   item->next = channel->circular ? (uint32_t)channel->buffer : 0;
 
   return E_OK;
@@ -268,6 +258,7 @@ static enum result channelExecute(void *object)
     return E_BUSY;
 
   gpDmaSetupMux(object);
+  channel->error = false;
 
   const struct GpDmaListItem * const first = channel->buffer;
   const uint32_t request = 1 << channel->parent.number;
@@ -286,4 +277,20 @@ static enum result channelExecute(void *object)
   reg->CONFIG |= CONFIG_ENABLE;
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t channelIndex(const void *object)
+{
+  const struct GpDmaList * const channel = object;
+  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
+  const struct GpDmaListItem * const next =
+      (const struct GpDmaListItem *)reg->LLI;
+
+  if (!next)
+    return 0;
+
+  if (next == channel->buffer)
+    return channel->size - 1;
+  else
+    return (uint32_t)(next - channel->buffer) - 1;
 }
