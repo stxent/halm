@@ -39,12 +39,15 @@ static void interruptHandler(void *object)
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->parent.reg;
 
-  reg->IR = reg->IR; /* Clear all pending interrupts */
-
   if (timer->callback)
     timer->callback(timer->callbackArgument);
 
-  while (reg->IR); /* Wait for interrupt flags to be cleared */
+  /* Clear all pending interrupts */
+  do
+  {
+    reg->IR = reg->IR;
+  }
+  while (reg->IR);
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configPtr)

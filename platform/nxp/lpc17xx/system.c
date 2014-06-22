@@ -18,23 +18,27 @@
  */
 void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
 {
-  uint32_t * const reg = (uint32_t *)(&LPC_SC->PCLKSEL0 + (peripheral >> 5));
-  uint32_t actualValue;
-  const bool pllEnabled = (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED) != 0;
+  uint32_t value;
 
   switch (divisor)
   {
-    case CLK_DIV4:
-      actualValue = 0;
-      break;
     case CLK_DIV1:
     case CLK_DIV2:
-      actualValue = divisor + 1;
+      value = divisor + 1;
       break;
+
+    case CLK_DIV4:
+      value = 0;
+      break;
+
     default:
-      actualValue = 3;
+      value = 3;
       break;
   }
+
+  volatile uint32_t * const reg = &LPC_SC->PCLKSEL0 + (peripheral >> 5);
+  const uint32_t offset = peripheral & 0x1F;
+  const bool pllEnabled = (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED) != 0;
 
   /* PCLKSEL and PLL0 workaround */
   if (pllEnabled)
@@ -44,8 +48,7 @@ void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
     LPC_SC->PLL0FEED = PLLFEED_SECOND;
   }
 
-  *reg = (*reg & ~(3 << (peripheral & 0x01F)))
-      | (actualValue << (peripheral & 0x01F));
+  *reg = (*reg & ~(3 << offset)) | (value << offset);
 
   if (pllEnabled)
   {
