@@ -12,6 +12,11 @@
 #define CORE m0
 #define PLATFORM_TYPE nxp
 #define PLATFORM lpc11xx
+#elif defined(LPC11EXX)
+#define CORE_TYPE cortex
+#define CORE m0
+#define PLATFORM_TYPE nxp
+#define PLATFORM lpc11exx
 #elif defined(LPC13XX)
 #define CORE_TYPE cortex
 #define CORE m3
