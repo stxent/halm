@@ -174,11 +174,10 @@ void DMA_ISR(void)
 {
   const uint8_t errorStatus = LPC_GPDMA->INTERRSTAT;
   const uint8_t terminalStatus = LPC_GPDMA->INTTCSTAT;
+  const uint8_t intStatus = errorStatus | terminalStatus;
 
   LPC_GPDMA->INTERRCLEAR = errorStatus;
   LPC_GPDMA->INTTCCLEAR = terminalStatus;
-
-  uint8_t intStatus = errorStatus | terminalStatus;
 
   for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
   {

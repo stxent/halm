@@ -14,6 +14,7 @@
     BIT_FIELD((value), (((shift) & MASK(4)) << 1))
 /*------------------Pin output mode control values----------------------------*/
 #define PIN_MODE_PULLUP                 0
+#define PIN_MODE_REPEATER               1
 #define PIN_MODE_INACTIVE               2
 #define PIN_MODE_PULLDOWN               3
 /*------------------Overall interrupt status register-------------------------*/

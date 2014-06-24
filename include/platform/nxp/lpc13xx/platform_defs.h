@@ -23,7 +23,7 @@ typedef struct
   __rw__ uint32_t SYSOSCCTRL;
   __rw__ uint32_t WDTOSCCTRL;
   __rw__ uint32_t IRCCTRL;
-         uint32_t RESERVED1[1];
+         uint32_t RESERVED1;
   __rw__ uint32_t SYSRESSTAT; /* System reset status */
          uint32_t RESERVED2[3];
 
@@ -36,7 +36,7 @@ typedef struct
   __rw__ uint32_t MAINCLKSEL;
   __rw__ uint32_t MAINCLKUEN;
   __rw__ uint32_t SYSAHBCLKDIV;
-         uint32_t RESERVED4[1];
+         uint32_t RESERVED4;
 
   /* Offset 0x80 */
   __rw__ uint32_t SYSAHBCLKCTRL;
@@ -53,11 +53,11 @@ typedef struct
   __rw__ uint32_t USBCLKSEL;
   __rw__ uint32_t USBCLKUEN;
   __rw__ uint32_t USBCLKDIV;
-         uint32_t RESERVED8[1];
+         uint32_t RESERVED8;
   __rw__ uint32_t WDTCLKSEL;
   __rw__ uint32_t WDTCLKUEN;
   __rw__ uint32_t WDTCLKDIV;
-         uint32_t RESERVED9[1];
+         uint32_t RESERVED9;
 
   /* Offset 0xE0 */
   __rw__ uint32_t CLKOUTCLKSEL;
@@ -72,9 +72,8 @@ typedef struct
 
   /* Offset 0x150 */
   __rw__ uint32_t BODCTRL;
-         uint32_t RESERVED12[1];
   __rw__ uint32_t SYSTCKCAL;
-         uint32_t RESERVED13[41];
+         uint32_t RESERVED12[42];
 
   /* Offset 0x200 */
   __rw__ uint32_t STARTAPRP0;
@@ -85,25 +84,25 @@ typedef struct
   __rw__ uint32_t STARTERP1;
   __rw__ uint32_t STARTRSRP1CLR;
   __rw__ uint32_t STARTSRP1;
-         uint32_t RESERVED14[4];
+         uint32_t RESERVED13[4];
 
   /* Offset 0x230 */
   __rw__ uint32_t PDSLEEPCFG;
   __rw__ uint32_t PDAWAKECFG;
   __rw__ uint32_t PDRUNCFG;
-         uint32_t RESERVED15[110];
+         uint32_t RESERVED14[110];
   __r__  uint32_t DEVICE_ID;
 } LPC_SYSCON_Type;
 /*------------------Input/Output Configuration--------------------------------*/
 typedef struct
 {
   __rw__ uint32_t PIO2_6;
-         uint32_t RESERVED0[1];
+         uint32_t RESERVED0;
   __rw__ uint32_t PIO2_0;
   __rw__ uint32_t RESET_PIO0_0;
   __rw__ uint32_t PIO0_1;
   __rw__ uint32_t PIO1_8;
-         uint32_t RESERVED1[1];
+         uint32_t RESERVED1;
   __rw__ uint32_t PIO0_2;
 
   /* Offset 0x20 */
@@ -219,24 +218,24 @@ typedef struct
 /* Base addresses */
 #define LPC_FLASH_BASE          (0x00000000UL)
 #define LPC_RAM_BASE            (0x10000000UL)
-#define LPC_APB0_BASE           (0x40000000UL)
+#define LPC_APB_BASE            (0x40000000UL)
 #define LPC_AHB_BASE            (0x50000000UL)
 
-/* APB0 peripherals */
-#define LPC_I2C_BASE            (LPC_APB0_BASE + 0x00000)
-#define LPC_WDT_BASE            (LPC_APB0_BASE + 0x04000)
-#define LPC_UART_BASE           (LPC_APB0_BASE + 0x08000)
-#define LPC_TIMER16B0_BASE      (LPC_APB0_BASE + 0x0C000)
-#define LPC_TIMER16B1_BASE      (LPC_APB0_BASE + 0x10000)
-#define LPC_TIMER32B0_BASE      (LPC_APB0_BASE + 0x14000)
-#define LPC_TIMER32B1_BASE      (LPC_APB0_BASE + 0x18000)
-#define LPC_ADC_BASE            (LPC_APB0_BASE + 0x1C000)
-#define LPC_USB_BASE            (LPC_APB0_BASE + 0x20000)
-#define LPC_PMU_BASE            (LPC_APB0_BASE + 0x38000)
-#define LPC_SSP0_BASE           (LPC_APB0_BASE + 0x40000)
-#define LPC_IOCON_BASE          (LPC_APB0_BASE + 0x44000)
-#define LPC_SYSCON_BASE         (LPC_APB0_BASE + 0x48000)
-#define LPC_SSP1_BASE           (LPC_APB0_BASE + 0x58000)
+/* APB peripherals */
+#define LPC_I2C_BASE            (LPC_APB_BASE + 0x00000)
+#define LPC_WDT_BASE            (LPC_APB_BASE + 0x04000)
+#define LPC_UART_BASE           (LPC_APB_BASE + 0x08000)
+#define LPC_TIMER16B0_BASE      (LPC_APB_BASE + 0x0C000)
+#define LPC_TIMER16B1_BASE      (LPC_APB_BASE + 0x10000)
+#define LPC_TIMER32B0_BASE      (LPC_APB_BASE + 0x14000)
+#define LPC_TIMER32B1_BASE      (LPC_APB_BASE + 0x18000)
+#define LPC_ADC_BASE            (LPC_APB_BASE + 0x1C000)
+#define LPC_USB_BASE            (LPC_APB_BASE + 0x20000)
+#define LPC_PMU_BASE            (LPC_APB_BASE + 0x38000)
+#define LPC_SSP0_BASE           (LPC_APB_BASE + 0x40000)
+#define LPC_IOCON_BASE          (LPC_APB_BASE + 0x44000)
+#define LPC_SYSCON_BASE         (LPC_APB_BASE + 0x48000)
+#define LPC_SSP1_BASE           (LPC_APB_BASE + 0x58000)
 
 /* AHB peripherals */
 #define LPC_GPIO_BASE           (LPC_AHB_BASE + 0x00000)

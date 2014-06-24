@@ -26,6 +26,7 @@ enum sysPowerDevice
 /* System AHB clock control register */
 enum sysClockDevice
 {
+  CLK_SYS         = 0,
   CLK_ROM         = 1,
   CLK_RAM         = 2,
   CLK_FLASHREG    = 3,
