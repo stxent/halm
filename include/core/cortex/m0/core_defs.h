@@ -9,20 +9,25 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
+/* No effect or reserved registers */
+#define __ne__ __attribute__((deprecated))
+/* Registers with read and write access types */
 #define __rw__ volatile
-#define __r__ const volatile
-#define __w__ volatile
+/* Read-only registers */
+#define __ro__ const volatile
+/* Write-only registers */
+#define __wo__ volatile
 /*------------------System Control Block--------------------------------------*/
 typedef struct
 {
-  __r__  uint32_t CPUID; /* CPU ID Base Register */
+  __ro__ uint32_t CPUID; /* CPU ID Base Register */
   __rw__ uint32_t ICSR; /* Interrupt Control State Register */
-         uint32_t RESERVED0;
+  __ne__ uint32_t RESERVED0;
   __rw__ uint32_t AIRCR; /* Application Interrupt and Reset Control Register */
   __rw__ uint32_t SCR; /* System Control Register */
   __rw__ uint32_t CCR; /* Configuration Control Register */
-         uint32_t RESERVED1;
-  __rw__ uint8_t  SHP[2]; /* System Handlers Priority Registers */
+  __ne__ uint32_t RESERVED1;
+  __rw__ uint8_t SHP[2]; /* System Handlers Priority Registers */
 } SCB_Type;
 /*------------------System Tick Timer-----------------------------------------*/
 typedef struct
@@ -30,19 +35,19 @@ typedef struct
   __rw__ uint32_t CTRL; /* SysTick Control and Status Register */
   __rw__ uint32_t LOAD; /* SysTick Reload Value Register */
   __rw__ uint32_t VAL; /* SysTick Current Value Register */
-  __r__  uint32_t CALIB; /* SysTick Calibration Register */
+  __ro__ uint32_t CALIB; /* SysTick Calibration Register */
 } SYSTICK_Type;
 /*------------------Power Management Unit-------------------------------------*/
 typedef struct
 {
   __rw__ uint32_t ISER[1]; /* Interrupt Set Enable Register */
-         uint32_t RESERVED0[31];
+  __ne__ uint32_t RESERVED0[31];
   __rw__ uint32_t ICER[1]; /* Interrupt Clear Enable Register */
-         uint32_t RESERVED1[31];
+  __ne__ uint32_t RESERVED1[31];
   __rw__ uint32_t ISPR[1]; /* Interrupt Set Pending Register */
-         uint32_t RESERVED2[31];
+  __ne__ uint32_t RESERVED2[31];
   __rw__ uint32_t ICPR[1]; /* Interrupt Clear Pending Register */
-         uint32_t RESERVED3[95];
+  __ne__ uint32_t RESERVED3[95];
   __rw__ uint32_t IPR[8]; /* Interrupt Priority Registers */
 }  NVIC_Type;
 /*----------------------------------------------------------------------------*/
@@ -57,8 +62,9 @@ typedef struct
 #define SYSTICK         ((SYSTICK_Type *)SYSTICK_BASE)
 #define NVIC            ((NVIC_Type *)NVIC_BASE)
 /*----------------------------------------------------------------------------*/
-#undef __w__
-#undef __r__
+#undef __wo__
+#undef __ro__
 #undef __rw__
+#undef __ne__
 /*----------------------------------------------------------------------------*/
 #endif /* CORE_DEFS_H_ */

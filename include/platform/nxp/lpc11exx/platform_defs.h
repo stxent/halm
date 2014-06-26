@@ -15,48 +15,48 @@ typedef struct
   __rw__ uint32_t PRESETCTRL; /* Peripheral reset control */
   __rw__ uint32_t SYSPLLCTRL; /* System PLL control */
   __rw__ uint32_t SYSPLLSTAT;
-         uint32_t RESERVED0[4];
+  __ne__ uint32_t RESERVED0[4];
 
   /* Offset 0x20 */
   __rw__ uint32_t SYSOSCCTRL;
   __rw__ uint32_t WDTOSCCTRL;
   __rw__ uint32_t IRCCTRL;
-         uint32_t RESERVED1;
+  __ne__ uint32_t RESERVED1;
   __rw__ uint32_t SYSRESSTAT; /* System reset status */
-         uint32_t RESERVED2[3];
+  __ne__ uint32_t RESERVED2[3];
 
   /* Offset 0x40 */
   __rw__ uint32_t SYSPLLCLKSEL;
   __rw__ uint32_t SYSPLLCLKUEN;
-         uint32_t RESERVED3[10];
+  __ne__ uint32_t RESERVED3[10];
   __rw__ uint32_t MAINCLKSEL;
   __rw__ uint32_t MAINCLKUEN;
   __rw__ uint32_t SYSAHBCLKDIV;
-         uint32_t RESERVED4;
+  __ne__ uint32_t RESERVED4;
 
   /* Offset 0x80 */
   __rw__ uint32_t SYSAHBCLKCTRL;
-         uint32_t RESERVED5[4];
+  __ne__ uint32_t RESERVED5[4];
   __rw__ uint32_t SSP0CLKDIV;
   __rw__ uint32_t UARTCLKDIV;
   __rw__ uint32_t SSP1CLKDIV;
-         uint32_t RESERVED6[16];
+  __ne__ uint32_t RESERVED6[16];
 
   /* Offset 0xE0 */
   __rw__ uint32_t CLKOUTCLKSEL;
   __rw__ uint32_t CLKOUTUEN;
   __rw__ uint32_t CLKOUTDIV;
-         uint32_t RESERVED7[5];
+  __ne__ uint32_t RESERVED7[5];
 
   /* Offset 0x100 */
   __rw__ uint32_t PIOPORCAP0;
   __rw__ uint32_t PIOPORCAP1;
-         uint32_t RESERVED10[18];
+  __ne__ uint32_t RESERVED10[18];
 
   /* Offset 0x150 */
   __rw__ uint32_t BODCTRL;
   __rw__ uint32_t SYSTCKCAL;
-         uint32_t RESERVED11[6];
+  __ne__ uint32_t RESERVED11[6];
 
   /* Offset 0x170 */
   __rw__ uint32_t IRQLATENCY;
@@ -76,21 +76,21 @@ typedef struct
       __rw__ uint32_t PINTSEL7;
     };
   };
-         uint32_t RESERVED12[27];
+  __ne__ uint32_t RESERVED12[27];
 
   /* Offset 0x200 */
-         uint32_t RESERVED13;
+  __ne__ uint32_t RESERVED13;
   __rw__ uint32_t STARTERP0;
-         uint32_t RESERVED14[3];
+  __ne__ uint32_t RESERVED14[3];
   __rw__ uint32_t STARTERP1;
-         uint32_t RESERVED15[6];
+  __ne__ uint32_t RESERVED15[6];
 
   /* Offset 0x230 */
   __rw__ uint32_t PDSLEEPCFG;
   __rw__ uint32_t PDAWAKECFG;
   __rw__ uint32_t PDRUNCFG;
-         uint32_t RESERVED16[110];
-  __r__  uint32_t DEVICE_ID;
+  __ne__ uint32_t RESERVED16[110];
+  __ro__ uint32_t DEVICE_ID;
 } LPC_SYSCON_Type;
 /*------------------Input/Output Configuration--------------------------------*/
 typedef struct
@@ -173,7 +173,7 @@ typedef struct
       __rw__ uint32_t PIO1_27;
       __rw__ uint32_t PIO1_28;
       __rw__ uint32_t PIO1_29;
-             uint32_t RESERVED0;
+      __ne__ uint32_t RESERVED0;
       __rw__ uint32_t PIO1_31;
     };
   };
@@ -193,11 +193,11 @@ typedef struct
 {
   __rw__ uint32_t ISEL;
   __rw__ uint32_t IENR;
-  __w__  uint32_t SIENR;
-  __w__  uint32_t CIENR;
+  __wo__ uint32_t SIENR;
+  __wo__ uint32_t CIENR;
   __rw__ uint32_t IENF;
-  __w__  uint32_t SIENF;
-  __w__  uint32_t CIENF;
+  __wo__ uint32_t SIENF;
+  __wo__ uint32_t CIENF;
 
   __rw__ uint32_t RISE;
   __rw__ uint32_t FALL;
@@ -207,7 +207,7 @@ typedef struct
 typedef struct
 {
   __rw__ uint32_t CTRL;
-         uint32_t RESERVED0[7];
+  __ne__ uint32_t RESERVED0[7];
 
   /* Offset 0x20 */
   union
@@ -219,7 +219,7 @@ typedef struct
       __rw__ uint32_t PORT_POL1;
     };
   };
-         uint32_t RESERVED1[6];
+  __ne__ uint32_t RESERVED1[6];
 
   /* Offset 0x40 */
   union
@@ -244,7 +244,7 @@ typedef struct
       __rw__ uint8_t B1[32];
     };
   };
-         uint32_t RESERVED0[1008];
+  __ne__ uint32_t RESERVED0[1008];
 
   /* Offset 0x1000 */
   union
@@ -256,7 +256,7 @@ typedef struct
       __rw__ uint32_t W1[32];
     };
   };
-         uint32_t RESERVED1[960];
+  __ne__ uint32_t RESERVED1[960];
 
   /* Offset 0x2000 */
   union
@@ -268,7 +268,7 @@ typedef struct
       __rw__ uint32_t DIR1;
     };
   };
-         uint32_t RESERVED2[30];
+  __ne__ uint32_t RESERVED2[30];
 
   /* Offset 0x2080 */
   union
@@ -280,7 +280,7 @@ typedef struct
       __rw__ uint32_t MASK1;
     };
   };
-         uint32_t RESERVED3[30];
+  __ne__ uint32_t RESERVED3[30];
 
   /* Offset 0x2100 */
   union
@@ -292,7 +292,7 @@ typedef struct
       __rw__ uint32_t PIN1;
     };
   };
-         uint32_t RESERVED4[30];
+  __ne__ uint32_t RESERVED4[30];
 
   /* Offset 0x2180 */
   union
@@ -304,7 +304,7 @@ typedef struct
       __rw__ uint32_t MPIN1;
     };
   };
-         uint32_t RESERVED5[30];
+  __ne__ uint32_t RESERVED5[30];
 
   /* Offset 0x2200 */
   union
@@ -316,38 +316,110 @@ typedef struct
       __rw__ uint32_t SET1;
     };
   };
-         uint32_t RESERVED6[30];
+  __ne__ uint32_t RESERVED6[30];
 
   /* Offset 0x2280 */
   union
   {
-    __w__  uint32_t CLR[2];
+    __wo__ uint32_t CLR[2];
     struct
     {
-      __w__  uint32_t CLR0;
-      __w__  uint32_t CLR1;
+      __wo__ uint32_t CLR0;
+      __wo__ uint32_t CLR1;
     };
   };
-         uint32_t RESERVED7[30];
+  __ne__ uint32_t RESERVED7[30];
 
   /* Offset 0x2300 */
   union
   {
-    __w__  uint32_t NOT[2];
+    __wo__ uint32_t NOT[2];
     struct
     {
-      __w__  uint32_t NOT0;
-      __w__  uint32_t NOT1;
+      __wo__ uint32_t NOT0;
+      __wo__ uint32_t NOT1;
     };
   };
 } LPC_GPIO_Type;
+/*------------------Timer/Counter---------------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t IR;
+  __rw__ uint32_t TCR;
+  __rw__ uint32_t TC;
+  __rw__ uint32_t PR;
+  __rw__ uint32_t PC;
+  __rw__ uint32_t MCR;
+  union
+  {
+    __rw__ uint32_t MR[4];
+    struct
+    {
+      __rw__ uint32_t MR0;
+      __rw__ uint32_t MR1;
+      __rw__ uint32_t MR2;
+      __rw__ uint32_t MR3;
+    };
+  };
+  __rw__ uint32_t CCR;
+  __ro__ uint32_t CR0;
+  __ne__ uint32_t RESERVED0;
+  __ro__ uint32_t CR1;
+  __ne__ uint32_t RESERVED1;
+  __rw__ uint32_t EMR;
+  __ne__ uint32_t RESERVED2[12];
+  __rw__ uint32_t CTCR;
+  __rw__ uint32_t PWMC;
+} LPC_TIMER_Type;
+/*------------------Extended Universal Asynchronous Receiver Transmitter------*/
+/*
+ * UART controller with modem control, RS485, half duplex mode,
+ * smart card interface, synchronous mode and IrDa support.
+ */
+typedef struct
+{
+  union
+  {
+    __ro__ uint32_t RBR;
+    __wo__ uint32_t THR;
+    __rw__ uint32_t DLL;
+  };
+  union
+  {
+    __rw__ uint32_t DLM;
+    __rw__ uint32_t IER;
+  };
+  union
+  {
+    __ro__ uint32_t IIR;
+    __wo__ uint32_t FCR;
+  };
+  __rw__ uint32_t LCR;
+  __rw__ uint32_t MCR;
+  __ro__ uint32_t LSR;
+  __ro__ uint32_t MSR;
+  __rw__ uint32_t SCR;
+  __rw__ uint32_t ACR;
+  __rw__ uint32_t ICR;
+  __rw__ uint32_t FDR;
+  __rw__ uint32_t OSR;
+  __rw__ uint32_t TER;
+  __ne__ uint32_t RESERVED0[3];
+  __rw__ uint32_t HDEN; /* Half Duplex Enable register */
+  __ne__ uint32_t RESERVED1;
+  __rw__ uint32_t SCICTRL; /* Smart Card Interface Control register */
+  __rw__ uint32_t RS485CTRL;
+  __rw__ uint32_t RS485ADRMATCH;
+  __rw__ uint32_t RS485DLY;
+  __rw__ uint32_t SYNCCTRL; /* Synchronous Mode Control register */
+} LPC_UART_Type;
 /*------------------Watchdog Timer--------------------------------------------*/
 typedef struct
 {
   __rw__ uint32_t MOD;
   __rw__ uint32_t TC;
-  __w__  uint32_t FEED;
-  __r__  uint32_t TV;
+  __wo__ uint32_t FEED;
+  __ro__ uint32_t TV;
   __rw__ uint32_t CLKSEL;
   __rw__ uint32_t WARNINT;
   __rw__ uint32_t WINDOW;
@@ -383,7 +455,7 @@ typedef struct
 /* Peripheral declaration */
 #define LPC_I2C             ((LPC_I2C_Type *)LPC_I2C_BASE)
 #define LPC_WDT             ((LPC_WDT_Type *)LPC_WDT_BASE)
-#define LPC_UART            ((LPC_UART_MODEM_Type *)LPC_UART_BASE)
+#define LPC_UART            ((LPC_UART_Type *)LPC_UART_BASE)
 #define LPC_TIMER16B0       ((LPC_TIMER_Type *)LPC_TIMER16B0_BASE)
 #define LPC_TIMER16B1       ((LPC_TIMER_Type *)LPC_TIMER16B1_BASE)
 #define LPC_TIMER32B0       ((LPC_TIMER_Type *)LPC_TIMER32B0_BASE)
