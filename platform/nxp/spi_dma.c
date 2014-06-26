@@ -235,6 +235,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SpiDma * const interface = object;
   LPC_SSP_Type * const reg = interface->parent.reg;
+  enum result res;
 
   if (!length)
     return 0;
@@ -250,34 +251,29 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
   reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
 
-  void * const source = (void *)&reg->DR;
-
-  if (dmaStart(interface->rxDma, buffer, source, length) != E_OK)
+  res = dmaStart(interface->rxDma, buffer, (const void *)&reg->DR, length);
+  if (res != E_OK)
     return 0;
-  if (dmaStart(interface->txMockDma, source, &interface->dummy, length) != E_OK)
+
+  res = dmaStart(interface->txMockDma, (void *)&reg->DR, &interface->dummy,
+      length);
+  if (res != E_OK)
   {
     dmaStop(interface->rxDma);
     return 0;
   }
 
   if (interface->blocking)
-  {
-    enum result res = E_BUSY;
+    while ((res = getStatus(interface)) == E_BUSY);
 
-    while (res == E_BUSY)
-      res = getStatus(interface);
-
-    if (res != E_OK)
-      return 0;
-  }
-
-  return length;
+  return res == E_OK ? length : 0;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct SpiDma * const interface = object;
   LPC_SSP_Type * const reg = interface->parent.reg;
+  enum result res;
 
   if (!length)
     return 0;
@@ -293,19 +289,10 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
   reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
 
-  if (dmaStart(interface->txDma, (void *)&reg->DR, buffer, length) != E_OK)
-    return 0;
+  res = dmaStart(interface->txDma, (void *)&reg->DR, buffer, length);
 
-  if (interface->blocking)
-  {
-    enum result res = E_BUSY;
+  if (res == E_OK && interface->blocking)
+    while ((res = getStatus(interface)) == E_BUSY);
 
-    while (res == E_BUSY)
-      res = getStatus(interface);
-
-    if (res != E_OK)
-      return 0;
-  }
-
-  return length;
+  return res == E_OK ? length : 0;
 }

@@ -208,16 +208,8 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 
   res = dmaStart(interface->rxDma, buffer, (const void *)&reg->RBR, length);
 
-  if (res == E_OK)
-  {
-    if (interface->blocking)
-    {
-      res = E_BUSY;
-
-      while (res == E_BUSY)
-        res = dmaStatus(interface->rxDma);
-    }
-  }
+  if (res == E_OK && interface->blocking)
+    while ((res = dmaStatus(interface->rxDma)) == E_BUSY);
 
   return res == E_OK ? length : 0;
 }
@@ -234,16 +226,8 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 
   res = dmaStart(interface->txDma, (void *)&reg->THR, buffer, length);
 
-  if (res == E_OK)
-  {
-    if (interface->blocking)
-    {
-      res = E_BUSY;
-
-      while (res == E_BUSY)
-        res = dmaStatus(interface->txDma);
-    }
-  }
+  if (res == E_OK && interface->blocking)
+    while ((res = dmaStatus(interface->txDma)) == E_BUSY);
 
   return res == E_OK ? length : 0;
 }
