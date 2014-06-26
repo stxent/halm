@@ -42,12 +42,12 @@ static void disableInterrupt(union GpioPin pin)
   switch (pin.port)
   {
     case 0:
-      LPC_GPIOINT->ENF0 &= ~mask;
-      LPC_GPIOINT->ENR0 &= ~mask;
+      LPC_GPIO_INT->ENF0 &= ~mask;
+      LPC_GPIO_INT->ENR0 &= ~mask;
       break;
     case 2:
-      LPC_GPIOINT->ENF2 &= ~mask;
-      LPC_GPIOINT->ENR2 &= ~mask;
+      LPC_GPIO_INT->ENF2 &= ~mask;
+      LPC_GPIO_INT->ENR2 &= ~mask;
       break;
   }
 }
@@ -60,19 +60,19 @@ static void enableInterrupt(union GpioPin pin, enum gpioIntMode mode)
   {
     case 0:
       /* Clear pending interrupt flag */
-      LPC_GPIOINT->CLR0 = mask;
+      LPC_GPIO_INT->CLR0 = mask;
       /* Configure edge sensitivity options */
       if (mode != GPIO_RISING)
-        LPC_GPIOINT->ENF0 |= mask;
+        LPC_GPIO_INT->ENF0 |= mask;
       if (mode != GPIO_FALLING)
-        LPC_GPIOINT->ENR0 |= mask;
+        LPC_GPIO_INT->ENR0 |= mask;
       break;
     case 2:
-      LPC_GPIOINT->CLR2 = mask;
+      LPC_GPIO_INT->CLR2 = mask;
       if (mode != GPIO_RISING)
-        LPC_GPIOINT->ENF2 |= mask;
+        LPC_GPIO_INT->ENF2 |= mask;
       if (mode != GPIO_FALLING)
-        LPC_GPIOINT->ENR2 |= mask;
+        LPC_GPIO_INT->ENR2 |= mask;
       break;
   }
 }
@@ -85,12 +85,12 @@ static void processInterrupt(uint8_t channel)
   switch (channel)
   {
     case 0:
-      state = LPC_GPIOINT->STATR0 | LPC_GPIOINT->STATF0;
+      state = LPC_GPIO_INT->STATR0 | LPC_GPIO_INT->STATF0;
       current = descriptors[0];
       break;
 
     case 2:
-      state = LPC_GPIOINT->STATR2 | LPC_GPIOINT->STATF2;
+      state = LPC_GPIO_INT->STATR2 | LPC_GPIO_INT->STATF2;
       current = descriptors[1];
       break;
 
@@ -108,11 +108,11 @@ static void processInterrupt(uint8_t channel)
   switch (channel)
   {
     case 0:
-      LPC_GPIOINT->CLR0 = state;
+      LPC_GPIO_INT->CLR0 = state;
       break;
 
     case 2:
-      LPC_GPIOINT->CLR2 = state;
+      LPC_GPIO_INT->CLR2 = state;
       break;
   }
 }
@@ -187,10 +187,10 @@ static enum result setDescriptor(union GpioPin pin,
 /*----------------------------------------------------------------------------*/
 void EINT3_ISR(void)
 {
-  if (LPC_GPIOINT->STATUS & STATUS_P0INT)
+  if (LPC_GPIO_INT->STATUS & STATUS_P0INT)
     processInterrupt(0);
 
-  if (LPC_GPIOINT->STATUS & STATUS_P2INT)
+  if (LPC_GPIO_INT->STATUS & STATUS_P2INT)
     processInterrupt(2);
 }
 /*----------------------------------------------------------------------------*/
