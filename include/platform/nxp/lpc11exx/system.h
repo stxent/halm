@@ -38,7 +38,7 @@ enum sysClockDevice
   CLK_CT32B0      = 9,
   CLK_CT32B1      = 10,
   CLK_SSP0        = 11,
-  CLK_UART        = 12,
+  CLK_USART       = 12,
   CLK_ADC         = 13,
   CLK_WWDT        = 15,
   CLK_IOCON       = 16,

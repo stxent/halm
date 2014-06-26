@@ -434,7 +434,7 @@ typedef struct
 /* APB peripherals */
 #define LPC_I2C_BASE                (LPC_APB_BASE + 0x00000)
 #define LPC_WDT_BASE                (LPC_APB_BASE + 0x04000)
-#define LPC_UART_BASE               (LPC_APB_BASE + 0x08000)
+#define LPC_USART_BASE              (LPC_APB_BASE + 0x08000)
 #define LPC_TIMER16B0_BASE          (LPC_APB_BASE + 0x0C000)
 #define LPC_TIMER16B1_BASE          (LPC_APB_BASE + 0x10000)
 #define LPC_TIMER32B0_BASE          (LPC_APB_BASE + 0x14000)
@@ -455,7 +455,7 @@ typedef struct
 /* Peripheral declaration */
 #define LPC_I2C             ((LPC_I2C_Type *)LPC_I2C_BASE)
 #define LPC_WDT             ((LPC_WDT_Type *)LPC_WDT_BASE)
-#define LPC_UART            ((LPC_UART_Type *)LPC_UART_BASE)
+#define LPC_USART           ((LPC_UART_Type *)LPC_USART_BASE)
 #define LPC_TIMER16B0       ((LPC_TIMER_Type *)LPC_TIMER16B0_BASE)
 #define LPC_TIMER16B1       ((LPC_TIMER_Type *)LPC_TIMER16B1_BASE)
 #define LPC_TIMER32B0       ((LPC_TIMER_Type *)LPC_TIMER32B0_BASE)

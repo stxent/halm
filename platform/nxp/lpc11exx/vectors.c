@@ -36,7 +36,7 @@ void TIMER16B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void TIMER32B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void TIMER32B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SSP0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void UART_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void USART_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void ADC_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void WDT_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void BOD_ISR(void) __attribute__((weak, alias("defaultHandler")));
@@ -85,7 +85,7 @@ __attribute__((section(".isr_vectors"))) void (* const isrVectors[])(void) = {
     TIMER32B0_ISR,
     TIMER32B1_ISR,
     SSP0_ISR,
-    UART_ISR,
+    USART_ISR,
     0,
     0,
     ADC_ISR,
