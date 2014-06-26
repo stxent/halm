@@ -109,7 +109,7 @@ static inline uint32_t __strexb(uint8_t value, volatile uint8_t *address)
 
   __asm__ volatile (
       "STREXB %[result], %[value], [%[address]]"
-      : [result] "=r" (result)
+      : [result] "=&r" (result)
       : [address] "r" (address), [value] "r" (value)
   );
   return result;

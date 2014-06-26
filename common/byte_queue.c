@@ -9,7 +9,7 @@
 #include <string.h>
 #include <byte_queue.h>
 /*----------------------------------------------------------------------------*/
-enum result byteQueueInit(struct ByteQueue *queue, uint32_t capacity)
+enum result byteQueueInit(struct ByteQueue *queue, unsigned int capacity)
 {
   if (!capacity || capacity > USHRT_MAX)
     return E_VALUE;
