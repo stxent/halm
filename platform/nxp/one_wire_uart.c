@@ -128,7 +128,8 @@ static void interruptHandler(void *object)
     }
   }
 
-  if ((reg->LSR & LSR_THRE) && interface->state != OW_UART_RESET)
+  if ((reg->LSR & LSR_THRE) && (interface->state == OW_UART_RECEIVE
+      || interface->state != OW_UART_TRANSMIT))
   {
     /* Fill FIFO with next word or end the transaction */
     if (!byteQueueEmpty(&interface->txQueue))

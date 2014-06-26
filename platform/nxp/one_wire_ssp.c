@@ -134,7 +134,8 @@ static void interruptHandler(void *object)
     }
   }
 
-  if ((reg->SR & SR_TFE) && interface->state != OW_SSP_RESET)
+  if ((reg->SR & SR_TFE) && (interface->state == OW_SSP_RECEIVE
+      || interface->state != OW_SSP_TRANSMIT))
   {
     /* Fill FIFO with next word or end the transaction */
     if (!byteQueueEmpty(&interface->txQueue))
