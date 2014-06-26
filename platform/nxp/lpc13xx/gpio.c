@@ -18,8 +18,8 @@ struct GpioHandler
   uint8_t instances;
 };
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union GpioPin);
-static inline void *calcReg(union GpioPin p);
+static inline void *calcPort(union GpioPin);
+static inline volatile uint32_t *calcControlReg(union GpioPin);
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
 static inline void gpioHandlerAttach();
@@ -42,16 +42,16 @@ static const uint8_t gpioRegMap[4][12] = {
 static const struct EntityClass * const GpioHandler = &handlerTable;
 static struct GpioHandler *gpioHandler = 0;
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union GpioPin pin)
+static inline void *calcPort(union GpioPin pin)
 {
-  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
-      + ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * pin.port);
+  return (void *)(((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * pin.port
+      + (uint32_t)LPC_GPIO0);
 }
 /*----------------------------------------------------------------------------*/
-static inline void *calcReg(union GpioPin pin)
+static inline volatile uint32_t *calcControlReg(union GpioPin pin)
 {
-  return (void *)((uint32_t)LPC_IOCON
-      + (uint32_t)gpioRegMap[pin.port][pin.offset]);
+  return (volatile uint32_t *)((uint32_t)LPC_IOCON
+      + gpioRegMap[pin.port][pin.offset]);
 }
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio gpio)
@@ -121,7 +121,7 @@ void gpioOutput(struct Gpio gpio, uint8_t value)
 /*----------------------------------------------------------------------------*/
 void gpioSetFunction(struct Gpio gpio, uint8_t function)
 {
-  uint32_t * const iocon = calcReg(gpio.pin);
+  volatile uint32_t * const iocon = calcControlReg(gpio.pin);
   const uint32_t value = *iocon;
 
   switch (function)
@@ -142,7 +142,7 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
 {
-  uint32_t * const iocon = calcReg(gpio.pin);
+  volatile uint32_t * const iocon = calcControlReg(gpio.pin);
   uint32_t value = *iocon & ~IOCON_MODE_MASK;
 
   switch (pull)
@@ -165,7 +165,7 @@ void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
 /*----------------------------------------------------------------------------*/
 void gpioSetType(struct Gpio gpio, enum gpioType type)
 {
-  uint32_t * const iocon = calcReg(gpio.pin);
+  volatile uint32_t * const iocon = calcControlReg(gpio.pin);
 
   switch (type)
   {

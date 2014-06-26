@@ -23,19 +23,19 @@ static inline uint8_t gpioRead(struct Gpio gpio)
 /*----------------------------------------------------------------------------*/
 static inline void gpioReset(struct Gpio gpio)
 {
-  *(uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
+  *(volatile uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
         + (1 << gpio.pin.offset)) = 0x000;
 }
 /*----------------------------------------------------------------------------*/
 static inline void gpioSet(struct Gpio gpio)
 {
-  *(uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
+  *(volatile uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
         + (1 << gpio.pin.offset)) = 0xFFF;
 }
 /*----------------------------------------------------------------------------*/
 static inline void gpioWrite(struct Gpio gpio, uint8_t value)
 {
-  *(uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
+  *(volatile uint32_t *)(((LPC_GPIO_Type *)gpio.reg)->MASKED_ACCESS
       + (1 << gpio.pin.offset)) = value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/

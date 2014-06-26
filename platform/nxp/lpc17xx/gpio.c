@@ -7,34 +7,32 @@
 #include <gpio.h>
 #include <platform/nxp/lpc17xx/gpio_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union GpioPin);
-static inline uint32_t *calcPinSelect(union GpioPin);
-static inline uint32_t *calcPinMode(union GpioPin);
-static inline uint32_t *calcPinType(union GpioPin);
+static inline void *calcPort(union GpioPin);
+static inline volatile uint32_t *calcPinSelect(union GpioPin);
+static inline volatile uint32_t *calcPinMode(union GpioPin);
+static inline volatile uint32_t *calcPinType(union GpioPin);
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio);
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union GpioPin pin)
+static inline void *calcPort(union GpioPin pin)
 {
-  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
-      + ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * pin.port);
+  return (void *)(((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * pin.port
+      + (uint32_t)LPC_GPIO0);
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcPinSelect(union GpioPin pin)
+static inline volatile uint32_t *calcPinSelect(union GpioPin pin)
 {
-  return (uint32_t *)(&LPC_PINCON->PINSEL0 + (pin.offset >> 4)
-      + (pin.port << 1));
+  return &LPC_PINCON->PINSEL0 + (pin.offset >> 4) + (pin.port << 1);
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcPinMode(union GpioPin pin)
+static inline volatile uint32_t *calcPinMode(union GpioPin pin)
 {
-  return (uint32_t *)(&LPC_PINCON->PINMODE0 + (pin.offset >> 4)
-      + (pin.port << 1));
+  return &LPC_PINCON->PINMODE0 + (pin.offset >> 4) + (pin.port << 1);
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcPinType(union GpioPin pin)
+static inline volatile uint32_t *calcPinType(union GpioPin pin)
 {
-  return (uint32_t *)(&LPC_PINCON->PINMODE_OD0 + pin.port);
+  return &LPC_PINCON->PINMODE_OD0 + pin.port;
 }
 /*----------------------------------------------------------------------------*/
 static void commonGpioSetup(struct Gpio gpio)
@@ -80,16 +78,16 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
       return;
   }
 
-  uint32_t * const pointer = calcPinSelect(gpio.pin);
+  volatile uint32_t * const reg = calcPinSelect(gpio.pin);
 
-  *pointer = (*pointer & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset))
+  *reg = (*reg & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset))
       | PIN_OFFSET(function, gpio.pin.offset);
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
 {
-  uint32_t * const pointer = calcPinMode(gpio.pin);
-  uint32_t value = *pointer & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset);
+  volatile uint32_t * const reg = calcPinMode(gpio.pin);
+  uint32_t value = *reg & ~PIN_OFFSET(PIN_MASK, gpio.pin.offset);
 
   switch (pull)
   {
@@ -106,13 +104,13 @@ void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
       break;
   }
 
-  *pointer = value;
+  *reg = value;
 }
 /*----------------------------------------------------------------------------*/
 void gpioSetType(struct Gpio gpio, enum gpioType type)
 {
-  uint32_t * const pointer = calcPinType(gpio.pin);
-  uint32_t value = *pointer;
+  volatile uint32_t * const reg = calcPinType(gpio.pin);
+  uint32_t value = *reg;
 
   switch (type)
   {
@@ -125,5 +123,5 @@ void gpioSetType(struct Gpio gpio, enum gpioType type)
       break;
   }
 
-  *pointer = value;
+  *reg = value;
 }

@@ -183,7 +183,8 @@ static enum result serialSet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_RATE:
-      if ((res = uartCalcRate(object, *(uint32_t *)data, &rateConfig)) == E_OK)
+      res = uartCalcRate(object, *(const uint32_t *)data, &rateConfig);
+      if (res == E_OK)
         uartSetRate(object, rateConfig);
       return res;
 

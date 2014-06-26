@@ -93,7 +93,7 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
   if (!length)
     return 0;
 
-  uint16_t value = *(uint16_t *)buffer;
+  uint16_t value = *(const uint16_t *)buffer;
   reg->CR = (value & CR_OUTPUT_MASK) | CR_BIAS;
 
   return 2;

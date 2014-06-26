@@ -219,8 +219,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     case IF_RATE:
-      sspSetRate(object, *(uint32_t *)data);
-      return E_OK;
+      return sspSetRate(object, *(const uint32_t *)data);
 
     case IF_ZEROCOPY:
       dmaCallback(interface->rxDma, dmaHandler, interface);
