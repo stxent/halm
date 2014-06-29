@@ -124,12 +124,12 @@ static void adcUnitDeinit(void *object)
 static enum result adcInit(void *object, const void *configPtr)
 {
   const struct AdcConfig * const config = configPtr;
-  const struct PinEntry *pinDescriptor;
+  const struct PinEntry *pinEntry;
   struct Adc * const interface = object;
 
   assert(config->event < ADC_EVENT_END);
 
-  if (!(pinDescriptor = pinFind(adcPins, config->pin, 0)))
+  if (!(pinEntry = pinFind(adcPins, config->pin, 0)))
     return E_VALUE;
 
   /* Fill pin structure and initialize pin as input */
@@ -138,10 +138,10 @@ static enum result adcInit(void *object, const void *configPtr)
   /* Enable analog pin mode bit */
   pinSetFunction(pin, PIN_ANALOG);
   /* Set analog pin function */
-  pinSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
   interface->callback = 0;
-  interface->channel = UNPACK_CHANNEL(pinDescriptor->value);
+  interface->channel = UNPACK_CHANNEL(pinEntry->value);
   interface->blocking = true;
   interface->buffer = 0;
   interface->left = 0;

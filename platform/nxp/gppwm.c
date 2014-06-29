@@ -77,16 +77,16 @@ static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
 /*----------------------------------------------------------------------------*/
 static int8_t setupMatchPin(uint8_t channel, pin_t key)
 {
-  const struct PinEntry *pinDescriptor;
+  const struct PinEntry *pinEntry;
 
-  if (!(pinDescriptor = pinFind(gpPwmPins, key, channel)))
+  if (!(pinEntry = pinFind(gpPwmPins, key, channel)))
     return -1;
 
   struct Pin pin = pinInit(key);
   pinOutput(pin, 0);
-  pinSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
-  return UNPACK_CHANNEL(pinDescriptor->value);
+  return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *object, const void *configPtr)

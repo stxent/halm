@@ -44,14 +44,14 @@ static enum result setDescriptor(struct DacBase *interface)
 /*----------------------------------------------------------------------------*/
 enum result setupOutputPin(pin_t key)
 {
-  const struct PinEntry * const pinDescriptor = pinFind(dacPins, key, 0);
+  const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
 
-  if (!pinDescriptor)
+  if (!pinEntry)
     return E_VALUE;
 
   const struct Pin pin = pinInit(key);
   pinInput(pin);
-  pinSetFunction(pin, pinDescriptor->value);
+  pinSetFunction(pin, pinEntry->value);
 
   return E_OK;
 }

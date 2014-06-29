@@ -12,20 +12,20 @@ extern const struct PinEntry uartPins[];
 enum result uartSetupPins(struct UartBase *interface,
     const struct UartBaseConfig *config)
 {
-  const struct PinEntry *pinDescriptor;
+  const struct PinEntry *pinEntry;
   struct Pin pin;
 
   /* Setup UART RX pin */
-  if (!(pinDescriptor = pinFind(uartPins, config->rx, interface->channel)))
+  if (!(pinEntry = pinFind(uartPins, config->rx, interface->channel)))
     return E_VALUE;
   pinInput((pin = pinInit(config->rx)));
-  pinSetFunction(pin, pinDescriptor->value);
+  pinSetFunction(pin, pinEntry->value);
 
   /* Setup UART TX pin */
-  if (!(pinDescriptor = pinFind(uartPins, config->tx, interface->channel)))
+  if (!(pinEntry = pinFind(uartPins, config->tx, interface->channel)))
     return E_VALUE;
   pinOutput((pin = pinInit(config->tx)), 1);
-  pinSetFunction(pin, pinDescriptor->value);
+  pinSetFunction(pin, pinEntry->value);
 
   return E_OK;
 }

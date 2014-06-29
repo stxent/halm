@@ -24,28 +24,28 @@ int8_t gpTimerAllocateChannel(uint8_t used)
 /*----------------------------------------------------------------------------*/
 int8_t gpTimerSetupCapturePin(uint8_t channel, pin_t key)
 {
-  const struct PinEntry *pinDescriptor;
+  const struct PinEntry *pinEntry;
 
-  if (!(pinDescriptor = pinFind(gpTimerCapturePins, key, channel)))
+  if (!(pinEntry = pinFind(gpTimerCapturePins, key, channel)))
     return -1;
 
   const struct Pin pin = pinInit(key);
   pinInput(pin);
-  pinSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
-  return UNPACK_CHANNEL(pinDescriptor->value);
+  return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
 int8_t gpTimerSetupMatchPin(uint8_t channel, pin_t key)
 {
-  const struct PinEntry *pinDescriptor;
+  const struct PinEntry *pinEntry;
 
-  if (!(pinDescriptor = pinFind(gpTimerMatchPins, key, channel)))
+  if (!(pinEntry = pinFind(gpTimerMatchPins, key, channel)))
     return -1;
 
   const struct Pin pin = pinInit(key);
   pinOutput(pin, 0);
-  pinSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
-  return UNPACK_CHANNEL(pinDescriptor->value);
+  return UNPACK_CHANNEL(pinEntry->value);
 }
