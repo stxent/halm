@@ -7,25 +7,25 @@
 #include <platform/nxp/uart_base.h>
 #include <platform/nxp/uart_defs.h>
 /*----------------------------------------------------------------------------*/
-extern const struct GpioDescriptor uartPins[];
+extern const struct PinEntry uartPins[];
 /*----------------------------------------------------------------------------*/
 enum result uartSetupPins(struct UartBase *interface,
     const struct UartBaseConfig *config)
 {
-  const struct GpioDescriptor *pinDescriptor;
-  struct Gpio pin;
+  const struct PinEntry *pinDescriptor;
+  struct Pin pin;
 
   /* Setup UART RX pin */
-  if (!(pinDescriptor = gpioFind(uartPins, config->rx, interface->channel)))
+  if (!(pinDescriptor = pinFind(uartPins, config->rx, interface->channel)))
     return E_VALUE;
-  gpioInput((pin = gpioInit(config->rx)));
-  gpioSetFunction(pin, pinDescriptor->value);
+  pinInput((pin = pinInit(config->rx)));
+  pinSetFunction(pin, pinDescriptor->value);
 
   /* Setup UART TX pin */
-  if (!(pinDescriptor = gpioFind(uartPins, config->tx, interface->channel)))
+  if (!(pinDescriptor = pinFind(uartPins, config->tx, interface->channel)))
     return E_VALUE;
-  gpioOutput((pin = gpioInit(config->tx)), 1);
-  gpioSetFunction(pin, pinDescriptor->value);
+  pinOutput((pin = pinInit(config->tx)), 1);
+  pinSetFunction(pin, pinDescriptor->value);
 
   return E_OK;
 }

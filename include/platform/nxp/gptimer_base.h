@@ -7,8 +7,8 @@
 #ifndef GPTIMER_BASE_H_
 #define GPTIMER_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <gpio.h>
 #include <irq.h>
+#include <pin.h>
 #include <timer.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerBase;
@@ -27,14 +27,14 @@ struct GpTimerBase
   irq_t irq;
 
   /* External clock input pin */
-  struct Gpio input;
+  struct Pin input;
   /* Peripheral block identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 int8_t gpTimerAllocateChannel(uint8_t);
-int8_t gpTimerSetupCapturePin(uint8_t, gpio_t);
-int8_t gpTimerSetupMatchPin(uint8_t, gpio_t);
+int8_t gpTimerSetupCapturePin(uint8_t, pin_t);
+int8_t gpTimerSetupMatchPin(uint8_t, pin_t);
 
 uint32_t gpTimerGetClock(struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/

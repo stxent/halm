@@ -35,9 +35,9 @@ struct I2cConfig
   /** Mandatory: data rate. */
   uint32_t rate;
   /** Mandatory: serial clock pin. */
-  gpio_t scl;
+  pin_t scl;
   /** Mandatory: serial data pin. */
-  gpio_t sda;
+  pin_t sda;
   /** Optional: interrupt priority. */
   priority_t priority;
   /** Mandatory: peripheral identifier. */

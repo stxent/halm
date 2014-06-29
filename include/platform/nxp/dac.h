@@ -17,7 +17,7 @@ struct DacConfig
   /** Optional: initial output value. */
   uint16_t value;
   /** Mandatory: analog output. */
-  gpio_t pin;
+  pin_t pin;
 };
 /*----------------------------------------------------------------------------*/
 struct Dac

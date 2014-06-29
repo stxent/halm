@@ -43,7 +43,7 @@ static const struct InterfaceClass adcTable = {
     .write = 0
 };
 /*----------------------------------------------------------------------------*/
-extern const struct GpioDescriptor adcPins[];
+extern const struct PinEntry adcPins[];
 const struct EntityClass * const AdcUnit = &adcUnitTable;
 const struct InterfaceClass * const Adc = &adcTable;
 /*----------------------------------------------------------------------------*/
@@ -124,21 +124,21 @@ static void adcUnitDeinit(void *object)
 static enum result adcInit(void *object, const void *configPtr)
 {
   const struct AdcConfig * const config = configPtr;
-  const struct GpioDescriptor *pinDescriptor;
+  const struct PinEntry *pinDescriptor;
   struct Adc * const interface = object;
 
   assert(config->event < ADC_EVENT_END);
 
-  if (!(pinDescriptor = gpioFind(adcPins, config->pin, 0)))
+  if (!(pinDescriptor = pinFind(adcPins, config->pin, 0)))
     return E_VALUE;
 
   /* Fill pin structure and initialize pin as input */
-  const struct Gpio pin = gpioInit(config->pin);
-  gpioInput(pin);
+  const struct Pin pin = pinInit(config->pin);
+  pinInput(pin);
   /* Enable analog pin mode bit */
-  gpioSetFunction(pin, GPIO_ANALOG);
+  pinSetFunction(pin, PIN_ANALOG);
   /* Set analog pin function */
-  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  pinSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
 
   interface->callback = 0;
   interface->channel = UNPACK_CHANNEL(pinDescriptor->value);

@@ -24,7 +24,7 @@ enum oneWireUartState
 /*----------------------------------------------------------------------------*/
 struct OneWireUartConfig
 {
-  gpio_t rx, tx; /* Mandatory: RX and TX pins */
+  pin_t rx, tx; /* Mandatory: RX and TX pins */
   priority_t priority; /* Optional: interrupt priority */
   uint8_t channel; /* Mandatory: peripheral identifier */
 };

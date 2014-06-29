@@ -24,7 +24,7 @@ static const struct EntityClass timerTable = {
     .deinit = tmrDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor gpTimerCapturePins[] = {
+const struct PinEntry gpTimerCapturePins[] = {
     {
         .key = PIN(0, 2), /* CT16B0_CAP0 */
         .channel = 0,
@@ -46,7 +46,7 @@ const struct GpioDescriptor gpTimerCapturePins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor gpTimerMatchPins[] = {
+const struct PinEntry gpTimerMatchPins[] = {
     {
         .key = PIN(0, 1), /* CT32B0_MAT2 */
         .channel = 2,

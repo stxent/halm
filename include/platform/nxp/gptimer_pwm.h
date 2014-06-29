@@ -42,7 +42,7 @@ struct GpTimerPwmConfig
   /** Optional: initial duration in timer ticks. */
   uint32_t duration;
   /** Mandatory: pin used as an output for modulated signal. */
-  gpio_t pin;
+  pin_t pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwm
@@ -57,6 +57,6 @@ struct GpTimerPwm
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-void *gpTimerPwmCreate(void *, gpio_t, uint32_t);
+void *gpTimerPwmCreate(void *, pin_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* GPTIMER_PWM_H_ */

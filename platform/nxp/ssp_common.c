@@ -8,47 +8,47 @@
 #include <platform/nxp/ssp_base.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
-extern const struct GpioDescriptor sspPins[];
+extern const struct PinEntry sspPins[];
 /*----------------------------------------------------------------------------*/
 enum result sspSetupPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
   /* TODO Pin configuration for SSP slave */
-  const struct GpioDescriptor *pinDescriptor;
-  struct Gpio pin;
+  const struct PinEntry *pinDescriptor;
+  struct Pin pin;
 
   /* Configure MOSI pin */
   if (config->mosi)
   {
-    if (!(pinDescriptor = gpioFind(sspPins, config->mosi, interface->channel)))
+    if (!(pinDescriptor = pinFind(sspPins, config->mosi, interface->channel)))
       return E_VALUE;
-    gpioOutput((pin = gpioInit(config->mosi)), 0);
-    gpioSetFunction(pin, pinDescriptor->value);
+    pinOutput((pin = pinInit(config->mosi)), 0);
+    pinSetFunction(pin, pinDescriptor->value);
   }
 
   /* Configure MISO pin */
   if (config->miso)
   {
-    if (!(pinDescriptor = gpioFind(sspPins, config->miso, interface->channel)))
+    if (!(pinDescriptor = pinFind(sspPins, config->miso, interface->channel)))
       return E_VALUE;
-    gpioInput((pin = gpioInit(config->miso)));
-    gpioSetFunction(pin, pinDescriptor->value);
+    pinInput((pin = pinInit(config->miso)));
+    pinSetFunction(pin, pinDescriptor->value);
   }
 
   /* Configure SCK pin */
   if (config->sck)
   {
-    if (!(pinDescriptor = gpioFind(sspPins, config->sck, interface->channel)))
+    if (!(pinDescriptor = pinFind(sspPins, config->sck, interface->channel)))
       return E_VALUE;
-    gpioOutput((pin = gpioInit(config->sck)), 0);
-    gpioSetFunction(pin, pinDescriptor->value);
+    pinOutput((pin = pinInit(config->sck)), 0);
+    pinSetFunction(pin, pinDescriptor->value);
   }
 
   /* Configure Slave Select pin available only in slave mode */
-/*  if (!(pinDescriptor = gpioFind(sspPins, config->cs, interface->channel)))
+/*  if (!(pinDescriptor = pinFind(sspPins, config->cs, interface->channel)))
     return E_VALUE;
-  gpioInput((pin = gpioInit(config->cs)));
-  gpioSetFunction(pin, pinDescriptor->value); */
+  pinInput((pin = pinInit(config->cs)));
+  pinSetFunction(pin, pinDescriptor->value); */
 
   return E_OK;
 }

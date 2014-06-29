@@ -7,18 +7,18 @@
 #ifndef I2C_BASE_H_
 #define I2C_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <gpio.h>
 #include <interface.h>
 #include <irq.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const I2cBase;
 /*----------------------------------------------------------------------------*/
 struct I2cBaseConfig
 {
   /** Mandatory: serial clock pin. */
-  gpio_t scl;
+  pin_t scl;
   /** Mandatory: serial data pin. */
-  gpio_t sda;
+  pin_t sda;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

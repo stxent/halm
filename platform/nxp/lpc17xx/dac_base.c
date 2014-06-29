@@ -23,7 +23,7 @@ static const struct EntityClass dacTable = {
     .deinit = dacDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor dacPins[] = {
+const struct PinEntry dacPins[] = {
     {
         .key = PIN(0, 26),
         .channel = 0,
@@ -42,16 +42,16 @@ static enum result setDescriptor(struct DacBase *interface)
       : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-enum result setupOutputPin(gpio_t key)
+enum result setupOutputPin(pin_t key)
 {
-  const struct GpioDescriptor * const pinDescriptor = gpioFind(dacPins, key, 0);
+  const struct PinEntry * const pinDescriptor = pinFind(dacPins, key, 0);
 
   if (!pinDescriptor)
     return E_VALUE;
 
-  const struct Gpio pin = gpioInit(key);
-  gpioInput(pin);
-  gpioSetFunction(pin, pinDescriptor->value);
+  const struct Pin pin = pinInit(key);
+  pinInput(pin);
+  pinSetFunction(pin, pinDescriptor->value);
 
   return E_OK;
 }

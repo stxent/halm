@@ -7,9 +7,9 @@
 #ifndef SSP_BASE_H_
 #define SSP_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <gpio.h>
 #include <interface.h>
 #include <irq.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SspBase;
 /*----------------------------------------------------------------------------*/
@@ -17,22 +17,22 @@ extern const struct EntityClass * const SspBase;
 struct SspBaseConfig
 {
   /** Optional: slave select pin. Available in slave mode only. */
-  gpio_t cs;
+  pin_t cs;
   /**
    * Optional: pin acts as data input in master mode and as data output
    * in slave mode.
    */
-  gpio_t miso;
+  pin_t miso;
   /**
    * Optional: pin acts as serial data output in master mode and
    * as data input in slave mode.
    */
-  gpio_t mosi;
+  pin_t mosi;
   /**
    * Optional: serial clock output for masters and input for slaves.
    * May be left unused in specific emulation modes.
    */
-  gpio_t sck;
+  pin_t sck;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

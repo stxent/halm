@@ -9,8 +9,8 @@
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t);
 static void processInterrupt(uint8_t);
-static enum result resetDescriptor(union GpioPin);
-static enum result setDescriptor(union GpioPin, struct GpioInterrupt *);
+static enum result resetDescriptor(union PinData);
+static enum result setDescriptor(union PinData, struct GpioInterrupt *);
 /*----------------------------------------------------------------------------*/
 static enum result gpioIntInit(void *, const void *);
 static void gpioIntDeinit(void *);
@@ -55,7 +55,7 @@ static void processInterrupt(uint8_t channel)
   /* Synchronizer logic causes a delay of 2 clocks */
 }
 /*----------------------------------------------------------------------------*/
-static enum result resetDescriptor(union GpioPin pin)
+static enum result resetDescriptor(union PinData pin)
 {
   struct GpioInterrupt *current = descriptors[pin.port];
 
@@ -87,7 +87,7 @@ static enum result resetDescriptor(union GpioPin pin)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(union GpioPin pin,
+static enum result setDescriptor(union PinData pin,
     struct GpioInterrupt *interrupt)
 {
   struct GpioInterrupt *current = descriptors[pin.port];
@@ -142,12 +142,12 @@ static enum result gpioIntInit(void *object, const void *configPtr)
   struct GpioInterrupt * const interrupt = object;
   enum result res;
 
-  struct Gpio input = gpioInit(config->pin);
-  if (!gpioGetKey(input))
+  struct Pin input = pinInit(config->pin);
+  if (!pinGetKey(input))
     return E_VALUE;
 
-  gpioInput(input);
-  interrupt->pin = input.pin;
+  pinInput(input);
+  interrupt->pin = input.data;
 
   /* Try to set peripheral descriptor */
   if ((res = setDescriptor(interrupt->pin, interrupt)) != E_OK)
@@ -185,14 +185,14 @@ static enum result gpioIntInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void gpioIntDeinit(void *object)
 {
-  const union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
-  const uint32_t mask = 1 << pin.offset;
-  LPC_GPIO_Type * const reg = calcPort(pin.port);
+  const union PinData data = ((struct GpioInterrupt *)object)->pin;
+  const uint32_t mask = 1 << data.offset;
+  LPC_GPIO_Type * const reg = calcPort(data.port);
 
   reg->IE &= ~mask;
   reg->IBE &= ~mask;
   reg->IEV &= ~mask;
-  resetDescriptor(pin);
+  resetDescriptor(data);
 }
 /*----------------------------------------------------------------------------*/
 static void gpioIntCallback(void *object, void (*callback)(void *),
@@ -206,9 +206,9 @@ static void gpioIntCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static void gpioIntSetEnabled(void *object, bool state)
 {
-  const union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
-  const uint32_t mask = 1 << pin.offset;
-  LPC_GPIO_Type * const reg = calcPort(pin.port);
+  const union PinData data = ((struct GpioInterrupt *)object)->pin;
+  const uint32_t mask = 1 << data.offset;
+  LPC_GPIO_Type * const reg = calcPort(data.port);
 
   if (state)
   {

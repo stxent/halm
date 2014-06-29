@@ -101,7 +101,7 @@ static inline uint32_t calcPosition(const struct SdioSpi *device)
 static enum result acquireBus(struct SdioSpi *device)
 {
   ifSet(device->interface, IF_ACQUIRE, 0);
-  gpioReset(device->csPin);
+  pinReset(device->csPin);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -178,7 +178,7 @@ static enum result waitForData(struct SdioSpi *device, uint8_t *value)
 /*----------------------------------------------------------------------------*/
 static void releaseBus(struct SdioSpi *device)
 {
-  gpioSet(device->csPin);
+  pinSet(device->csPin);
   ifSet(device->interface, IF_RELEASE, 0);
 }
 /*----------------------------------------------------------------------------*/
@@ -207,7 +207,7 @@ static enum result resetCard(struct SdioSpi *device)
     ifWrite(device->interface, &dummyByte, 1);
 
   /* Enable chip select */
-  gpioReset(device->csPin);
+  pinReset(device->csPin);
 
   /* Send reset command */
   sendCommand(device, CMD_GO_IDLE_STATE, 0);
@@ -383,10 +383,10 @@ static enum result sdioInit(void *object, const void *configPtr)
   struct SdioSpi * const device = object;
   enum result res;
 
-  device->csPin = gpioInit(config->cs);
-  if (!gpioGetKey(device->csPin))
+  device->csPin = pinInit(config->cs);
+  if (!pinGetKey(device->csPin))
     return E_VALUE;
-  gpioOutput(device->csPin, 1);
+  pinOutput(device->csPin, 1);
 
   device->interface = config->interface;
 

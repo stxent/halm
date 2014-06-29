@@ -12,7 +12,7 @@
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
-static int8_t setupMatchPin(uint8_t channel, gpio_t key);
+static int8_t setupMatchPin(uint8_t channel, pin_t key);
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *, const void *);
 static void unitDeinit(void *);
@@ -61,7 +61,7 @@ static const struct PwmClass doubleEdgeTable = {
     .setFrequency = channelSetFrequency
 };
 /*----------------------------------------------------------------------------*/
-extern const struct GpioDescriptor gpPwmPins[];
+extern const struct PinEntry gpPwmPins[];
 const struct EntityClass * const GpPwmUnit = &unitTable;
 const struct PwmClass * const GpPwm = &singleEdgeTable;
 const struct PwmClass * const GpPwmDoubleEdge = &doubleEdgeTable;
@@ -75,16 +75,16 @@ static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
       : &device->MR1 + (channel - 1);
 }
 /*----------------------------------------------------------------------------*/
-static int8_t setupMatchPin(uint8_t channel, gpio_t key)
+static int8_t setupMatchPin(uint8_t channel, pin_t key)
 {
-  const struct GpioDescriptor *pinDescriptor;
+  const struct PinEntry *pinDescriptor;
 
-  if (!(pinDescriptor = gpioFind(gpPwmPins, key, channel)))
+  if (!(pinDescriptor = pinFind(gpPwmPins, key, channel)))
     return -1;
 
-  struct Gpio pin = gpioInit(key);
-  gpioOutput(pin, 0);
-  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  struct Pin pin = pinInit(key);
+  pinOutput(pin, 0);
+  pinSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
 
   return UNPACK_CHANNEL(pinDescriptor->value);
 }
@@ -358,7 +358,7 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
  * @param duration Initial duration in timer ticks.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpPwmCreate(void *unit, gpio_t pin, uint32_t duration)
+void *gpPwmCreate(void *unit, pin_t pin, uint32_t duration)
 {
   const struct GpPwmConfig channelConfig = {
       .parent = unit,
@@ -376,7 +376,7 @@ void *gpPwmCreate(void *unit, gpio_t pin, uint32_t duration)
  * @param duration Initial duration in timer ticks.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpPwmCreateDoubleEdge(void *unit, gpio_t pin, uint32_t leading,
+void *gpPwmCreateDoubleEdge(void *unit, pin_t pin, uint32_t leading,
     uint32_t trailing)
 {
   const struct GpPwmDoubleEdgeConfig channelConfig = {

@@ -13,7 +13,7 @@ struct CommonGpioBus
   struct GpioBus parent;
 
   /* Pin array */
-  struct Gpio *pins;
+  struct Pin *pins;
   /* Number of pins in array */
   uint8_t count;
 };
@@ -45,31 +45,31 @@ static enum result busInit(void *object, const void *configPtr)
     return E_VALUE;
 
   bus->count = position;
-  bus->pins = malloc(sizeof(struct Gpio) * bus->count);
+  bus->pins = malloc(sizeof(struct Pin) * bus->count);
   if (!bus->pins)
     return E_MEMORY;
 
   for (position = 0; position < bus->count; ++position)
   {
-    bus->pins[position] = gpioInit(config->pins[position]);
-    if (!gpioGetKey(bus->pins[position]))
+    bus->pins[position] = pinInit(config->pins[position]);
+    if (!pinGetKey(bus->pins[position]))
     {
       /* Pin does not exist or cannot be used */
       free(bus->pins);
       return E_VALUE;
     }
 
-    if (config->direction == GPIO_OUTPUT)
+    if (config->direction == PIN_OUTPUT)
     {
-      gpioOutput(bus->pins[position], (config->initial >> position) & 1);
+      pinOutput(bus->pins[position], (config->initial >> position) & 1);
 
-      gpioSetType(bus->pins[position], config->type);
-      gpioSetSlewRate(bus->pins[position], config->rate);
+      pinSetType(bus->pins[position], config->type);
+      pinSetSlewRate(bus->pins[position], config->rate);
     }
     else
-      gpioInput(bus->pins[position]);
+      pinInput(bus->pins[position]);
 
-    gpioSetPull(bus->pins[position], config->pull);
+    pinSetPull(bus->pins[position], config->pull);
   }
 
   return E_OK;
@@ -88,7 +88,7 @@ static uint32_t busRead(void *object)
   uint32_t result = 0;
 
   for (uint8_t position = 0; position < bus->count; ++position)
-    result |= gpioRead(bus->pins[position]) << position;
+    result |= pinRead(bus->pins[position]) << position;
 
   return result;
 }
@@ -98,5 +98,5 @@ static void busWrite(void *object, uint32_t value)
   struct CommonGpioBus * const bus = object;
 
   for (uint8_t position = 0; position < bus->count; ++position)
-    gpioWrite(bus->pins[position], (value >> position) & 1);
+    pinWrite(bus->pins[position], (value >> position) & 1);
 }

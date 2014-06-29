@@ -7,16 +7,16 @@
 #include <bits.h>
 #include <irq.h>
 #include <platform/nxp/gpio_interrupt.h>
-#include <platform/nxp/lpc17xx/gpio_defs.h>
+#include <platform/nxp/lpc17xx/pin_defs.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
-static void disableInterrupt(union GpioPin);
-static void enableInterrupt(union GpioPin, enum gpioIntMode);
+static void disableInterrupt(union PinData);
+static void enableInterrupt(union PinData, enum gpioIntMode);
 static void processInterrupt(uint8_t);
-static enum result resetDescriptor(union GpioPin);
-static enum result setDescriptor(union GpioPin, struct GpioInterrupt *);
+static enum result resetDescriptor(union PinData);
+static enum result setDescriptor(union PinData, struct GpioInterrupt *);
 /*----------------------------------------------------------------------------*/
 static enum result gpioIntInit(void *, const void *);
 static void gpioIntDeinit(void *);
@@ -35,7 +35,7 @@ static const struct InterruptClass gpioIntTable = {
 const struct InterruptClass * const GpioInterrupt = &gpioIntTable;
 static struct GpioInterrupt *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void disableInterrupt(union GpioPin pin)
+static void disableInterrupt(union PinData pin)
 {
   const uint32_t mask = 1 << pin.offset;
 
@@ -52,7 +52,7 @@ static void disableInterrupt(union GpioPin pin)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void enableInterrupt(union GpioPin pin, enum gpioIntMode mode)
+static void enableInterrupt(union PinData pin, enum gpioIntMode mode)
 {
   const uint32_t mask = 1 << pin.offset;
 
@@ -117,7 +117,7 @@ static void processInterrupt(uint8_t channel)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result resetDescriptor(union GpioPin pin)
+static enum result resetDescriptor(union PinData pin)
 {
   const uint8_t index = !pin.port ? 0 : 1;
   struct GpioInterrupt *current = descriptors[index];
@@ -150,7 +150,7 @@ static enum result resetDescriptor(union GpioPin pin)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(union GpioPin pin,
+static enum result setDescriptor(union PinData pin,
     struct GpioInterrupt *interrupt)
 {
   const uint8_t index = !pin.port ? 0 : 1;
@@ -200,13 +200,13 @@ static enum result gpioIntInit(void *object, const void *configPtr)
   struct GpioInterrupt * const interrupt = object;
   enum result res;
 
-  const struct Gpio input = gpioInit(config->pin);
+  const struct Pin input = pinInit(config->pin);
   /* External interrupt functionality is available only on two ports */
-  if (!gpioGetKey(input) || (input.pin.port != 0 && input.pin.port != 2))
+  if (!pinGetKey(input) || (input.data.port != 0 && input.data.port != 2))
     return E_VALUE;
 
-  gpioInput(input);
-  interrupt->pin = input.pin;
+  pinInput(input);
+  interrupt->pin = input.data;
 
   /* Try to set peripheral descriptor */
   if ((res = setDescriptor(interrupt->pin, interrupt)) != E_OK)
@@ -223,7 +223,7 @@ static enum result gpioIntInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void gpioIntDeinit(void *object)
 {
-  const union GpioPin pin = ((struct GpioInterrupt *)object)->pin;
+  const union PinData pin = ((struct GpioInterrupt *)object)->pin;
 
   disableInterrupt(pin);
   resetDescriptor(pin);

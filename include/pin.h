@@ -1,61 +1,61 @@
 /*
- * gpio.h
+ * pin.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPIO_TOP_H_
-#define GPIO_TOP_H_
+#ifndef PIN_TOP_H_
+#define PIN_TOP_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <mcu.h>
 /*----------------------------------------------------------------------------*/
-typedef uint16_t gpio_t;
+typedef uint16_t pin_t;
 /*----------------------------------------------------------------------------*/
 /*
  * External pin id consist of port number and offset in 1's complement form.
  * Unused pins should be initialized with zero.
  * This representation supports up to 2^7 ports and 2^8 pins on each port.
  */
-#define PIN(port, offset) ((gpio_t)(~(((unsigned long)(port) << 8 & 0xFF00)\
+#define PIN(port, offset) ((pin_t)(~(((unsigned long)(port) << 8 & 0xFF00)\
     | ((unsigned long)(offset) & 0x00FF))))
 /*----------------------------------------------------------------------------*/
 /* Special function values */
 enum
 {
-  GPIO_DEFAULT  = 0x7F,
-  GPIO_ANALOG   = 0x7E
+  PIN_DEFAULT = 0x7F,
+  PIN_ANALOG  = 0x7E
 };
 /*----------------------------------------------------------------------------*/
-enum gpioDirection
+enum pinDirection
 {
-  GPIO_INPUT = 0,
-  GPIO_OUTPUT
+  PIN_INPUT = 0,
+  PIN_OUTPUT
 };
 /*----------------------------------------------------------------------------*/
-enum gpioPull
+enum pinPull
 {
-  GPIO_NOPULL = 0,
-  GPIO_PULLUP,
-  GPIO_PULLDOWN
+  PIN_NOPULL = 0,
+  PIN_PULLUP,
+  PIN_PULLDOWN
 };
 /*----------------------------------------------------------------------------*/
-enum gpioSlewRate
+enum pinSlewRate
 {
-  GPIO_SLEW_FAST = 0,
-  GPIO_SLEW_NORMAL,
-  GPIO_SLEW_SLOW,
+  PIN_SLEW_FAST = 0,
+  PIN_SLEW_NORMAL,
+  PIN_SLEW_SLOW,
 };
 /*----------------------------------------------------------------------------*/
-enum gpioType
+enum pinType
 {
-  GPIO_PUSHPULL = 0,
-  GPIO_OPENDRAIN
+  PIN_PUSHPULL = 0,
+  PIN_OPENDRAIN
 };
 /*----------------------------------------------------------------------------*/
-union GpioPin
+union PinData
 {
-  gpio_t key;
+  pin_t key;
   struct
   {
     uint8_t offset;
@@ -63,31 +63,30 @@ union GpioPin
   };
 };
 /*----------------------------------------------------------------------------*/
-struct GpioDescriptor
+struct PinEntry
 {
-  gpio_t key;
+  pin_t key;
   uint8_t channel;
   uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
-struct Gpio
+struct Pin
 {
   void *reg;
-  union GpioPin pin;
+  union PinData data;
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor *gpioFind(const struct GpioDescriptor *, gpio_t,
-    uint8_t);
+const struct PinEntry *pinFind(const struct PinEntry *, pin_t, uint8_t);
 /*----------------------------------------------------------------------------*/
-static inline gpio_t gpioGetKey(struct Gpio gpio)
+static inline pin_t pinGetKey(struct Pin pin)
 {
   /* Returns zero when pin is not initialized */
-  return ~gpio.pin.key;
+  return ~pin.data.key;
 }
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/gpio.h>
+#define HEADER_PATH <platform/PLATFORM_TYPE/pin.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* GPIO_TOP_H_ */
+#endif /* PIN_TOP_H_ */

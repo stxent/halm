@@ -21,9 +21,9 @@ struct SerialConfig
   /** Mandatory: baud rate. */
   uint32_t rate;
   /** Mandatory: serial input. */
-  gpio_t rx;
+  pin_t rx;
   /** Mandatory: serial output. */
-  gpio_t tx;
+  pin_t tx;
   /** Optional: interrupt priority. */
   priority_t priority;
   /** Mandatory: peripheral identifier. */

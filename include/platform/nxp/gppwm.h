@@ -7,7 +7,6 @@
 #ifndef GPPWM_H_
 #define GPPWM_H_
 /*----------------------------------------------------------------------------*/
-#include <gpio.h>
 #include <pwm.h>
 #include "gppwm_base.h"
 /*----------------------------------------------------------------------------*/
@@ -41,7 +40,7 @@ struct GpPwmConfig
   /** Optional: initial duration in timer ticks. */
   uint32_t duration;
   /** Mandatory: pin used as an output for modulated signal. */
-  gpio_t pin;
+  pin_t pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwm
@@ -65,7 +64,7 @@ struct GpPwmDoubleEdgeConfig
   /** Optional: initial trailing edge time in timer ticks. */
   uint32_t trailing;
   /** Mandatory: pin used as an output for modulated signal. */
-  gpio_t pin;
+  pin_t pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwmDoubleEdge
@@ -82,7 +81,7 @@ struct GpPwmDoubleEdge
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-void *gpPwmCreate(void *, gpio_t, uint32_t);
-void *gpPwmCreateDoubleEdge(void *, gpio_t, uint32_t, uint32_t);
+void *gpPwmCreate(void *, pin_t, uint32_t);
+void *gpPwmCreateDoubleEdge(void *, pin_t, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* GPPWM_H_ */

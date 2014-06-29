@@ -26,9 +26,9 @@ enum oneWireSspState
 struct OneWireSspConfig
 {
   /** Mandatory: pin used for serial data reception from the bus. */
-  gpio_t miso;
+  pin_t miso;
   /** Mandatory: pin used for data transmission on the serial bus. */
-  gpio_t mosi;
+  pin_t mosi;
   /** Optional: interrupt priority. */
   priority_t priority;
   /** Mandatory: peripheral identifier. */

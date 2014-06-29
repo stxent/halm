@@ -8,15 +8,15 @@
 #define DAC_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <entity.h>
-#include <gpio.h>
 #include <irq.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const DacBase;
 /*----------------------------------------------------------------------------*/
 struct DacBaseConfig
 {
   /** Mandatory: analog output. */
-  gpio_t pin;
+  pin_t pin;
 };
 /*----------------------------------------------------------------------------*/
 struct DacBase

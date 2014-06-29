@@ -23,7 +23,7 @@ static const struct EntityClass uartTable = {
     .deinit = uartDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor uartPins[] = {
+const struct PinEntry uartPins[] = {
     {
         .key = PIN(0, 0), /* UART_TXD3 */
         .channel = 3,

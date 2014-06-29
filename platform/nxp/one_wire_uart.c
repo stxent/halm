@@ -50,7 +50,7 @@ const struct InterfaceClass * const OneWireUart = &oneWireTable;
 static void adjustPins(struct OneWireUart *interface __attribute__((unused)),
     const struct OneWireUartConfig *config)
 {
-  gpioSetType(gpioInit(config->tx), GPIO_OPENDRAIN);
+  pinSetType(pinInit(config->tx), PIN_OPENDRAIN);
 }
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWireUart *interface)

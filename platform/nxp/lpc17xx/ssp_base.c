@@ -23,7 +23,7 @@ static const struct EntityClass sspTable = {
     .deinit = sspDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor sspPins[] = {
+const struct PinEntry sspPins[] = {
     {
         .key = PIN(0, 6), /* SSP1_SSEL */
         .channel = 1,

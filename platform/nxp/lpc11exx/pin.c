@@ -1,16 +1,16 @@
 /*
- * gpio.c
- * Copyright (C) 2012 xent
+ * pin.c
+ * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <stdbool.h>
 #include <entity.h>
-#include <gpio.h>
-#include <platform/nxp/lpc11exx/gpio_defs.h>
+#include <pin.h>
+#include <platform/nxp/lpc11exx/pin_defs.h>
 #include <platform/nxp/lpc11exx/system.h>
 /*----------------------------------------------------------------------------*/
-struct GpioHandler
+struct PinHandler
 {
   struct Entity parent;
 
@@ -18,119 +18,119 @@ struct GpioHandler
   uint8_t instances;
 };
 /*----------------------------------------------------------------------------*/
-static void *calcControlReg(union GpioPin);
-static void commonGpioSetup(struct Gpio);
+static void *calcControlReg(union PinData);
+static void commonPinSetup(struct Pin);
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerAttach();
-static inline void gpioHandlerDetach();
-static enum result gpioHandlerInit(void *, const void *);
+static inline void pinHandlerAttach();
+static inline void pinHandlerDetach();
+static enum result pinHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
-    .size = sizeof(struct GpioHandler),
-    .init = gpioHandlerInit,
+    .size = sizeof(struct PinHandler),
+    .init = pinHandlerInit,
     .deinit = 0
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const GpioHandler = &handlerTable;
-static struct GpioHandler *gpioHandler = 0;
+static const struct EntityClass * const PinHandler = &handlerTable;
+static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
-static void *calcControlReg(union GpioPin pin)
+static void *calcControlReg(union PinData data)
 {
   volatile uint32_t *iocon = 0;
 
-  switch (pin.port)
+  switch (data.port)
   {
     case 0:
-      iocon = &LPC_IOCON->PIO0[pin.offset];
+      iocon = &LPC_IOCON->PIO0[data.offset];
       break;
 
     case 1:
-      iocon = &LPC_IOCON->PIO1[pin.offset];
+      iocon = &LPC_IOCON->PIO1[data.offset];
       break;
   }
 
   return (void *)iocon;
 }
 /*----------------------------------------------------------------------------*/
-static void commonGpioSetup(struct Gpio gpio)
+static void commonPinSetup(struct Pin pin)
 {
   /* Register new pin in the handler */
-  gpioHandlerAttach();
+  pinHandlerAttach();
 
-  gpioSetFunction(gpio, GPIO_DEFAULT);
-  gpioSetPull(gpio, GPIO_NOPULL);
-  gpioSetType(gpio, GPIO_PUSHPULL);
+  pinSetFunction(pin, PIN_DEFAULT);
+  pinSetPull(pin, PIN_NOPULL);
+  pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerAttach()
+static inline void pinHandlerAttach()
 {
   /* Create handler object on first function call */
-  if (!gpioHandler)
-    gpioHandler = init(GpioHandler, 0);
+  if (!pinHandler)
+    pinHandler = init(PinHandler, 0);
 
-  if (!gpioHandler->instances++)
+  if (!pinHandler->instances++)
   {
     sysClockEnable(CLK_IOCON);
     sysClockEnable(CLK_GPIO);
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline void gpioHandlerDetach()
+static inline void pinHandlerDetach()
 {
   /* Disable clocks when no active pins exist */
-  if (!--gpioHandler->instances)
+  if (!--pinHandler->instances)
   {
     sysClockDisable(CLK_GPIO);
     sysClockDisable(CLK_IOCON);
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result gpioHandlerInit(void *object,
+static enum result pinHandlerInit(void *object,
     const void *configPtr __attribute__((unused)))
 {
-  struct GpioHandler * const handler = object;
+  struct PinHandler * const handler = object;
 
   handler->instances = 0;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-struct Gpio gpioInit(gpio_t id)
+struct Pin pinInit(pin_t id)
 {
-  struct Gpio gpio;
+  struct Pin pin;
 
-  gpio.pin.key = ~id;
-  gpio.reg = calcControlReg(gpio.pin);
+  pin.data.key = ~id;
+  pin.reg = calcControlReg(pin.data);
 
-  return gpio;
+  return pin;
 }
 /*----------------------------------------------------------------------------*/
-void gpioInput(struct Gpio gpio)
+void pinInput(struct Pin pin)
 {
-  commonGpioSetup(gpio);
-  LPC_GPIO->DIR[gpio.pin.port] &= ~(1 << gpio.pin.offset);
+  commonPinSetup(pin);
+  LPC_GPIO->DIR[pin.data.port] &= ~(1 << pin.data.offset);
 }
 /*----------------------------------------------------------------------------*/
-void gpioOutput(struct Gpio gpio, uint8_t value)
+void pinOutput(struct Pin pin, uint8_t value)
 {
-  commonGpioSetup(gpio);
-  LPC_GPIO->DIR[gpio.pin.port] |= 1 << gpio.pin.offset;
-  gpioWrite(gpio, value);
+  commonPinSetup(pin);
+  LPC_GPIO->DIR[pin.data.port] |= 1 << pin.data.offset;
+  pinWrite(pin, value);
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetFunction(struct Gpio gpio, uint8_t function)
+void pinSetFunction(struct Pin pin, uint8_t function)
 {
-  volatile uint32_t * const iocon = gpio.reg;
+  volatile uint32_t * const iocon = pin.reg;
   const uint32_t value = *iocon;
 
   switch (function)
   {
-    case GPIO_DEFAULT:
+    case PIN_DEFAULT:
       /* Some pins have default function value other than zero */
-      function = (gpio.pin.port == 1 && gpio.pin.offset <= 2)
-          || (gpio.pin.port == 0 && gpio.pin.offset == 11) ? 1 : 0;
+      function = (pin.data.port == 1 && pin.data.offset <= 2)
+          || (pin.data.port == 0 && pin.data.offset == 11) ? 1 : 0;
       break;
 
-    case GPIO_ANALOG:
+    case PIN_ANALOG:
       *iocon = value & ~IOCON_MODE_DIGITAL;
       return;
   }
@@ -138,22 +138,22 @@ void gpioSetFunction(struct Gpio gpio, uint8_t function)
   *iocon = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
+void pinSetPull(struct Pin pin, enum pinPull pull)
 {
-  volatile uint32_t * const iocon = gpio.reg;
+  volatile uint32_t * const iocon = pin.reg;
   uint32_t value = *iocon & ~IOCON_MODE_MASK;
 
   switch (pull)
   {
-    case GPIO_NOPULL:
+    case PIN_NOPULL:
       value |= IOCON_MODE_INACTIVE;
       break;
 
-    case GPIO_PULLUP:
+    case PIN_PULLUP:
       value |= IOCON_MODE_PULLUP;
       break;
 
-    case GPIO_PULLDOWN:
+    case PIN_PULLDOWN:
       value |= IOCON_MODE_PULLDOWN;
       break;
   }
@@ -161,17 +161,17 @@ void gpioSetPull(struct Gpio gpio, enum gpioPull pull)
   *iocon = value;
 }
 /*----------------------------------------------------------------------------*/
-void gpioSetType(struct Gpio gpio, enum gpioType type)
+void pinSetType(struct Pin pin, enum pinType type)
 {
-  volatile uint32_t * const iocon = gpio.reg;
+  volatile uint32_t * const iocon = pin.reg;
 
   switch (type)
   {
-    case GPIO_PUSHPULL:
+    case PIN_PUSHPULL:
       *iocon &= ~IOCON_OD;
       break;
 
-    case GPIO_OPENDRAIN:
+    case PIN_OPENDRAIN:
       *iocon |= IOCON_OD;
       break;
   }

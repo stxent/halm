@@ -7,7 +7,7 @@
 #include <platform/nxp/i2c_base.h>
 #include <platform/nxp/i2c_defs.h>
 /*----------------------------------------------------------------------------*/
-extern const struct GpioDescriptor i2cPins[];
+extern const struct PinEntry i2cPins[];
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetRate(const struct I2cBase *interface)
 {
@@ -27,20 +27,20 @@ void i2cSetRate(struct I2cBase *interface, uint32_t rate)
 enum result i2cSetupPins(struct I2cBase *interface,
     const struct I2cBaseConfig *config)
 {
-  const struct GpioDescriptor *pinDescriptor;
-  struct Gpio pin;
+  const struct PinEntry *pinDescriptor;
+  struct Pin pin;
 
   /* Setup I2C serial clock pin */
-  if (!(pinDescriptor = gpioFind(i2cPins, config->scl, interface->channel)))
+  if (!(pinDescriptor = pinFind(i2cPins, config->scl, interface->channel)))
     return E_VALUE;
-  gpioInput((pin = gpioInit(config->scl)));
-  gpioSetFunction(pin, pinDescriptor->value);
+  pinInput((pin = pinInit(config->scl)));
+  pinSetFunction(pin, pinDescriptor->value);
 
   /* Setup I2C serial data pin */
-  if (!(pinDescriptor = gpioFind(i2cPins, config->sda, interface->channel)))
+  if (!(pinDescriptor = pinFind(i2cPins, config->sda, interface->channel)))
     return E_VALUE;
-  gpioInput((pin = gpioInit(config->sda)));
-  gpioSetFunction(pin, pinDescriptor->value);
+  pinInput((pin = pinInit(config->sda)));
+  pinSetFunction(pin, pinDescriptor->value);
 
   return E_OK;
 }

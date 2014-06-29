@@ -26,7 +26,7 @@ static const struct EntityClass adcUnitTable = {
     .deinit = adcUnitDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor adcPins[] = {
+const struct PinEntry adcPins[] = {
     {
         .key = PIN(0, 11), /* AD0 */
         .channel = 0,

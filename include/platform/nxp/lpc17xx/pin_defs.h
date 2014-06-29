@@ -1,11 +1,11 @@
 /*
- * platform/nxp/lpc17xx/gpio_defs.h
+ * platform/nxp/lpc17xx/pin_defs.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPIO_DEFS_H_
-#define GPIO_DEFS_H_
+#ifndef PIN_DEFS_H_
+#define PIN_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Values for function and mode select registers-------------*/
@@ -21,4 +21,4 @@
 #define STATUS_P0INT                    BIT(0)
 #define STATUS_P2INT                    BIT(2)
 /*----------------------------------------------------------------------------*/
-#endif /* GPIO_DEFS_H_ */
+#endif /* PIN_DEFS_H_ */

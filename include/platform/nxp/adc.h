@@ -38,7 +38,7 @@ struct AdcConfig
   /** Mandatory: peripheral unit. */
   struct AdcUnit *parent;
   /** Mandatory: analog input. */
-  gpio_t pin;
+  pin_t pin;
   /** Optional: trigger to start the conversion. */
   enum adcEvent event;
 };

@@ -10,8 +10,8 @@
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-extern const struct GpioDescriptor gpTimerCapturePins[];
-extern const struct GpioDescriptor gpTimerMatchPins[];
+extern const struct PinEntry gpTimerCapturePins[];
+extern const struct PinEntry gpTimerMatchPins[];
 /*----------------------------------------------------------------------------*/
 int8_t gpTimerAllocateChannel(uint8_t used)
 {
@@ -22,30 +22,30 @@ int8_t gpTimerAllocateChannel(uint8_t used)
   return pos;
 }
 /*----------------------------------------------------------------------------*/
-int8_t gpTimerSetupCapturePin(uint8_t channel, gpio_t key)
+int8_t gpTimerSetupCapturePin(uint8_t channel, pin_t key)
 {
-  const struct GpioDescriptor *pinDescriptor;
+  const struct PinEntry *pinDescriptor;
 
-  if (!(pinDescriptor = gpioFind(gpTimerCapturePins, key, channel)))
+  if (!(pinDescriptor = pinFind(gpTimerCapturePins, key, channel)))
     return -1;
 
-  const struct Gpio pin = gpioInit(key);
-  gpioInput(pin);
-  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  const struct Pin pin = pinInit(key);
+  pinInput(pin);
+  pinSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
 
   return UNPACK_CHANNEL(pinDescriptor->value);
 }
 /*----------------------------------------------------------------------------*/
-int8_t gpTimerSetupMatchPin(uint8_t channel, gpio_t key)
+int8_t gpTimerSetupMatchPin(uint8_t channel, pin_t key)
 {
-  const struct GpioDescriptor *pinDescriptor;
+  const struct PinEntry *pinDescriptor;
 
-  if (!(pinDescriptor = gpioFind(gpTimerMatchPins, key, channel)))
+  if (!(pinDescriptor = pinFind(gpTimerMatchPins, key, channel)))
     return -1;
 
-  const struct Gpio pin = gpioInit(key);
-  gpioOutput(pin, 0);
-  gpioSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
+  const struct Pin pin = pinInit(key);
+  pinOutput(pin, 0);
+  pinSetFunction(pin, UNPACK_FUNCTION(pinDescriptor->value));
 
   return UNPACK_CHANNEL(pinDescriptor->value);
 }

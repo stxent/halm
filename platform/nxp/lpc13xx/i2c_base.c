@@ -22,7 +22,7 @@ static const struct EntityClass i2cTable = {
     .deinit = i2cDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioDescriptor i2cPins[] = {
+const struct PinEntry i2cPins[] = {
     {
         .key = PIN(0, 4), /* SCL */
         .channel = 0,

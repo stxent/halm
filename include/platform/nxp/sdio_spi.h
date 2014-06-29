@@ -7,8 +7,8 @@
 #ifndef SDIO_SPI_H_
 #define SDIO_SPI_H_
 /*----------------------------------------------------------------------------*/
-#include <gpio.h>
 #include <interface.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdioSpi;
 /*----------------------------------------------------------------------------*/
@@ -22,7 +22,7 @@ enum cardType
 struct SdioSpiConfig
 {
   struct Interface *interface; /* Mandatory: low-level character device */
-  gpio_t cs; /* Mandatory: chip select pin */
+  pin_t cs; /* Mandatory: chip select pin */
 };
 /*----------------------------------------------------------------------------*/
 struct SdioSpi
@@ -34,7 +34,7 @@ struct SdioSpi
   /* Current position in internal memory space */
   uint64_t position;
   /* Pin connected to the chip select signal of card */
-  struct Gpio csPin;
+  struct Pin csPin;
   /* Type of the memory card */
   enum cardType capacity;
 };

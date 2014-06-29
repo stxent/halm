@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <gpio.h>
 #include <memory.h>
+#include <pin.h>
 #include <platform/nxp/gppwm_base.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
@@ -27,7 +27,7 @@ static const struct EntityClass unitTable = {
 };
 /*----------------------------------------------------------------------------*/
 /* PWM1 block mapped to 0 channel */
-const struct GpioDescriptor gpPwmPins[] = {
+const struct PinEntry gpPwmPins[] = {
     {
         .key = PIN(1, 18), /* PWM1 output 1 */
         .channel = 0,

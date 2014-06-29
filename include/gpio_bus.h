@@ -14,7 +14,7 @@
 #define GPIO_BUS_H_
 /*----------------------------------------------------------------------------*/
 #include <entity.h>
-#include <gpio.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct GpioBusClass
@@ -56,17 +56,17 @@ extern const struct GpioBusClass * const GpioBus;
 struct GpioBusConfig
 {
   /** Mandatory: pointer to an array of pins terminated with zero element. */
-  const gpio_t *pins;
+  const pin_t *pins;
   /** Optional: initial output value for pins configured as outputs. */
   uint32_t initial;
   /** Mandatory: direction of pins in the bus. */
-  enum gpioDirection direction;
+  enum pinDirection direction;
   /** Optional: pull-up and pull-down configuration. */
-  enum gpioPull pull;
+  enum pinPull pull;
   /** Optional: slew rate control of output pins. */
-  enum gpioSlewRate rate;
+  enum pinSlewRate rate;
   /** Optional: push-pull or open-drain configuration for output pins. */
-  enum gpioType type;
+  enum pinType type;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPIO_BUS_H_ */

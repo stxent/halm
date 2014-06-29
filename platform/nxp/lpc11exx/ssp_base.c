@@ -27,7 +27,7 @@ static const struct EntityClass sspTable = {
 };
 /*----------------------------------------------------------------------------*/
 /* SSP1 peripheral available only on LPC1313 */
-const struct GpioDescriptor sspPins[] = {
+const struct PinEntry sspPins[] = {
     {
         .key = PIN(0, 2), /* SSP0_SSEL */
         .channel = 0,

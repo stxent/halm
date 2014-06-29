@@ -8,8 +8,8 @@
 #define ADC_BASE_TOP_H_
 /*----------------------------------------------------------------------------*/
 #include <entity.h>
-#include <gpio.h>
 #include <irq.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/adc_base.h>

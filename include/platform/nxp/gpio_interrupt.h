@@ -7,8 +7,8 @@
 #ifndef GPIO_INTERRUPT_H_
 #define GPIO_INTERRUPT_H_
 /*----------------------------------------------------------------------------*/
-#include <gpio.h>
 #include <interrupt.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterruptClass * const GpioInterrupt;
 /*----------------------------------------------------------------------------*/
@@ -21,7 +21,7 @@ enum gpioIntMode
 /*----------------------------------------------------------------------------*/
 struct GpioInterruptConfig
 {
-  gpio_t pin; /* Mandatory: pin used as interrupt source */
+  pin_t pin; /* Mandatory: pin used as interrupt source */
   enum gpioIntMode mode; /* External interrupt mode */
 };
 /*----------------------------------------------------------------------------*/
@@ -35,7 +35,7 @@ struct GpioInterrupt
   /* Pointer to a next entry in chain */
   struct GpioInterrupt *next;
   /* Descriptor of input pin used as interrupt source */
-  union GpioPin pin;
+  union PinData pin;
   /* Edge sensitivity mode */
   enum gpioIntMode mode;
 };

@@ -58,7 +58,7 @@ const struct InterfaceClass * const OneWireSsp = &oneWireTable;
 static void adjustPins(struct OneWireSsp *interface __attribute__((unused)),
     const struct OneWireSspConfig *config)
 {
-  gpioSetType(gpioInit(config->mosi), GPIO_OPENDRAIN);
+  pinSetType(pinInit(config->mosi), PIN_OPENDRAIN);
 }
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWireSsp *interface)

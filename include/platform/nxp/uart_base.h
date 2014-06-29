@@ -7,9 +7,9 @@
 #ifndef UART_BASE_H_
 #define UART_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <gpio.h>
 #include <interface.h>
 #include <irq.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UartBase;
 /*----------------------------------------------------------------------------*/
@@ -23,9 +23,9 @@ enum uartParity
 struct UartBaseConfig
 {
   /** Mandatory: serial input. */
-  gpio_t rx;
+  pin_t rx;
   /** Mandatory: serial output. */
-  gpio_t tx;
+  pin_t tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

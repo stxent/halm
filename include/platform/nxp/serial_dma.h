@@ -17,9 +17,9 @@ struct SerialDmaConfig
   /** Mandatory: baud rate. */
   uint32_t rate;
   /** Mandatory: serial input. */
-  gpio_t rx;
+  pin_t rx;
   /** Mandatory: serial output. */
-  gpio_t tx;
+  pin_t tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: incoming data channel. */

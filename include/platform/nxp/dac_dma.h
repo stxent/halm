@@ -22,7 +22,7 @@ struct DacDmaConfig
   /** Optional: initial output value. */
   uint16_t value;
   /** Mandatory: analog output. */
-  gpio_t pin;
+  pin_t pin;
   /** Mandatory: memory access channel. */
   uint8_t channel;
 };
