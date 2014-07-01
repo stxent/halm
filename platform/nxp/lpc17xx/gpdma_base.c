@@ -67,7 +67,7 @@ static inline enum result dmaHandlerAttach()
   {
     sysPowerEnable(PWR_GPDMA);
     LPC_GPDMA->CONFIG |= DMA_ENABLE;
-    irqEnable(DMA_IRQ);
+    irqEnable(GPDMA_IRQ);
   }
 
   return E_OK;
@@ -78,7 +78,7 @@ static inline void dmaHandlerDetach()
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)
   {
-    irqDisable(DMA_IRQ);
+    irqDisable(GPDMA_IRQ);
     LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
     sysPowerDisable(PWR_GPDMA);
   }

@@ -8,7 +8,6 @@ __attribute__((weak)) void defaultHandler(void);
 /*----------------------------------------------------------------------------*/
 /* Core Cortex-M3 IRQ handlers */
 void RESET_ISR(void) __attribute__((weak, alias("defaultHandler")));
-//void ResetISR(void) __attribute__((weak, alias("defaultHandler")));
 void NMI_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void HARDFAULT_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void MEMMANAGE_ISR(void) __attribute__((weak, alias("defaultHandler")));

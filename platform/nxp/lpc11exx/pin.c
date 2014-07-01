@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdbool.h>
 #include <entity.h>
 #include <pin.h>
 #include <platform/nxp/lpc11exx/pin_defs.h>
@@ -15,7 +14,7 @@ struct PinHandler
   struct Entity parent;
 
   /* Initialized pins count */
-  uint8_t instances;
+  uint16_t instances;
 };
 /*----------------------------------------------------------------------------*/
 static void *calcControlReg(union PinData);
@@ -131,7 +130,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       break;
 
     case PIN_ANALOG:
-      *iocon = value & ~IOCON_MODE_DIGITAL;
+      *iocon = value & ~IOCON_DIGITAL;
       return;
   }
 

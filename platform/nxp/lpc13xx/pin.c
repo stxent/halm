@@ -15,7 +15,7 @@ struct PinHandler
   struct Entity parent;
 
   /* Initialized pins count */
-  uint8_t instances;
+  uint16_t instances;
 };
 /*----------------------------------------------------------------------------*/
 static inline void *calcPort(union PinData);
@@ -133,7 +133,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       break;
 
     case PIN_ANALOG:
-      *iocon = value & ~IOCON_MODE_DIGITAL;
+      *iocon = value & ~IOCON_DIGITAL;
       return;
   }
 

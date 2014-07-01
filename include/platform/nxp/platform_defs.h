@@ -18,40 +18,6 @@
 #define __ro__ const volatile
 /* Write-only registers */
 #define __wo__ volatile
-/*------------------Synchronous Serial Port-----------------------------------*/
-typedef struct
-{
-  __rw__ uint32_t CR0;
-  __rw__ uint32_t CR1;
-  __rw__ uint32_t DR;
-  __ro__ uint32_t SR;
-  __rw__ uint32_t CPSR;
-  __rw__ uint32_t IMSC;
-  __rw__ uint32_t RIS;
-  __rw__ uint32_t MIS;
-  __wo__ uint32_t ICR;
-  __rw__ uint32_t DMACR; /* May be unavailable on some parts */
-} LPC_SSP_Type;
-/*------------------Inter-Integrated Circuit----------------------------------*/
-typedef struct
-{
-  __rw__ uint32_t CONSET;
-  __ro__ uint32_t STAT;
-  __rw__ uint32_t DAT;
-  __rw__ uint32_t ADR0;
-  __rw__ uint32_t SCLH;
-  __rw__ uint32_t SCLL;
-  __rw__ uint32_t CONCLR;
-  __rw__ uint32_t MMCTRL;
-  __rw__ uint32_t ADR1;
-  __rw__ uint32_t ADR2;
-  __rw__ uint32_t ADR3;
-  __ro__ uint32_t DATA_BUFFER;
-  __rw__ uint32_t MASK0;
-  __rw__ uint32_t MASK1;
-  __rw__ uint32_t MASK2;
-  __rw__ uint32_t MASK3;
-} LPC_I2C_Type;
 /*------------------Analog-to-Digital Converter-------------------------------*/
 typedef struct
 {
@@ -84,6 +50,40 @@ typedef struct
   __rw__ uint32_t CTRL; /* Control register */
   __rw__ uint16_t CNTVAL; /* Counter Value register */
 } LPC_DAC_Type;
+/*------------------Inter-Integrated Circuit----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CONSET;
+  __ro__ uint32_t STAT;
+  __rw__ uint32_t DAT;
+  __rw__ uint32_t ADR0;
+  __rw__ uint32_t SCLH;
+  __rw__ uint32_t SCLL;
+  __rw__ uint32_t CONCLR;
+  __rw__ uint32_t MMCTRL;
+  __rw__ uint32_t ADR1;
+  __rw__ uint32_t ADR2;
+  __rw__ uint32_t ADR3;
+  __ro__ uint32_t DATA_BUFFER;
+  __rw__ uint32_t MASK0;
+  __rw__ uint32_t MASK1;
+  __rw__ uint32_t MASK2;
+  __rw__ uint32_t MASK3;
+} LPC_I2C_Type;
+/*------------------Synchronous Serial Port-----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR0;
+  __rw__ uint32_t CR1;
+  __rw__ uint32_t DR;
+  __ro__ uint32_t SR;
+  __rw__ uint32_t CPSR;
+  __rw__ uint32_t IMSC;
+  __rw__ uint32_t RIS;
+  __rw__ uint32_t MIS;
+  __wo__ uint32_t ICR;
+  __rw__ uint32_t DMACR; /* May be unavailable on some parts */
+} LPC_SSP_Type;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/platform_defs.h>
