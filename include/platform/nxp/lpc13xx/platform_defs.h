@@ -248,7 +248,7 @@ typedef struct
   __rw__ uint32_t RS485ADRMATCH;
   __rw__ uint32_t RS485DLY;
 } LPC_UART_Type;
-/*------------------Watchdog Timer--------------------------------------------*/
+/*------------------Windowed Watchdog Timer-----------------------------------*/
 typedef struct
 {
   __rw__ uint32_t MOD;
@@ -279,8 +279,6 @@ typedef struct
 } LPC_USB_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
-#define LPC_FLASH_BASE          (0x00000000UL)
-#define LPC_RAM_BASE            (0x10000000UL)
 #define LPC_APB_BASE            (0x40000000UL)
 #define LPC_AHB_BASE            (0x50000000UL)
 

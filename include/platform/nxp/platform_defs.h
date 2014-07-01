@@ -30,7 +30,7 @@ typedef struct
   __rw__ uint32_t RIS;
   __rw__ uint32_t MIS;
   __wo__ uint32_t ICR;
-  __rw__ uint32_t DMACR; /* May not be available on some parts */
+  __rw__ uint32_t DMACR; /* May be unavailable on some parts */
 } LPC_SSP_Type;
 /*------------------Inter-Integrated Circuit----------------------------------*/
 typedef struct
@@ -61,22 +61,29 @@ typedef struct
   __rw__ uint32_t INTEN;
   union
   {
-    __rw__ uint32_t DR[8];
+    __ro__ uint32_t DR[8];
     struct
     {
-      __rw__ uint32_t DR0;
-      __rw__ uint32_t DR1;
-      __rw__ uint32_t DR2;
-      __rw__ uint32_t DR3;
-      __rw__ uint32_t DR4;
-      __rw__ uint32_t DR5;
-      __rw__ uint32_t DR6;
-      __rw__ uint32_t DR7;
+      __ro__ uint32_t DR0;
+      __ro__ uint32_t DR1;
+      __ro__ uint32_t DR2;
+      __ro__ uint32_t DR3;
+      __ro__ uint32_t DR4;
+      __ro__ uint32_t DR5;
+      __ro__ uint32_t DR6;
+      __ro__ uint32_t DR7;
     };
   };
   __ro__ uint32_t STAT;
-  __rw__ uint32_t TRIM;
+  __rw__ uint32_t TRIM; /* May be unavailable on some parts */
 } LPC_ADC_Type;
+/*------------------Digital-to-Analog Converter-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR; /* Converter Register */
+  __rw__ uint32_t CTRL; /* Control register */
+  __rw__ uint16_t CNTVAL; /* Counter Value register */
+} LPC_DAC_Type;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/platform_defs.h>

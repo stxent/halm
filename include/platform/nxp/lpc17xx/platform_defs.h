@@ -321,13 +321,6 @@ typedef struct
   __rw__ uint32_t ALMON;
   __rw__ uint32_t ALYEAR;
 } LPC_RTC_Type;
-/*------------------Digital-to-Analog Converter-------------------------------*/
-typedef struct
-{
-  __rw__ uint32_t CR; /* Converter Register */
-  __rw__ uint32_t CTRL; /* Control register */
-  __rw__ uint16_t CNTVAL; /* Counter Value register */
-} LPC_DAC_Type;
 /*------------------Watchdog Timer--------------------------------------------*/
 typedef struct
 {
@@ -666,16 +659,13 @@ typedef struct
   __rw__ uint32_t PowerDown;
   __ne__ uint32_t RESERVED8;
   __rw__ uint32_t Module_ID;
-} LPC_EMAC_Type;
+} LPC_ETHERNET_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
-#define LPC_FLASH_BASE          (0x00000000UL)
-#define LPC_RAM_BASE            (0x10000000UL)
 #define LPC_GPIO_BASE           (0x2009C000UL)
 #define LPC_APB0_BASE           (0x40000000UL)
 #define LPC_APB1_BASE           (0x40080000UL)
 #define LPC_AHB_BASE            (0x50000000UL)
-#define LPC_CM3_BASE            (0xE0000000UL)
 
 /* APB0 peripherals */
 #define LPC_WDT_BASE            (LPC_APB0_BASE + 0x00000)
@@ -687,7 +677,7 @@ typedef struct
 #define LPC_I2C0_BASE           (LPC_APB0_BASE + 0x1C000)
 #define LPC_SPI_BASE            (LPC_APB0_BASE + 0x20000)
 #define LPC_RTC_BASE            (LPC_APB0_BASE + 0x24000)
-#define LPC_GPIOINT_BASE        (LPC_APB0_BASE + 0x28080)
+#define LPC_GPIO_INT_BASE       (LPC_APB0_BASE + 0x28080)
 #define LPC_PINCON_BASE         (LPC_APB0_BASE + 0x2C000)
 #define LPC_SSP1_BASE           (LPC_APB0_BASE + 0x30000)
 #define LPC_ADC_BASE            (LPC_APB0_BASE + 0x34000)
@@ -713,7 +703,7 @@ typedef struct
 #define LPC_SC_BASE             (LPC_APB1_BASE + 0x7C000)
 
 /* AHB peripherals */
-#define LPC_EMAC_BASE           (LPC_AHB_BASE + 0x00000)
+#define LPC_ETHERNET_BASE       (LPC_AHB_BASE + 0x00000)
 #define LPC_GPDMA_BASE          (LPC_AHB_BASE + 0x04000)
 #define LPC_GPDMACH0_BASE       (LPC_AHB_BASE + 0x04100)
 #define LPC_GPDMACH1_BASE       (LPC_AHB_BASE + 0x04120)
@@ -734,42 +724,14 @@ typedef struct
 /*----------------------------------------------------------------------------*/
 /* Peripheral declaration */
 #define LPC_SC          ((LPC_SC_Type *)LPC_SC_BASE)
-#define LPC_GPIO0       ((LPC_GPIO_Type *)LPC_GPIO0_BASE)
-#define LPC_GPIO1       ((LPC_GPIO_Type *)LPC_GPIO1_BASE)
-#define LPC_GPIO2       ((LPC_GPIO_Type *)LPC_GPIO2_BASE)
-#define LPC_GPIO3       ((LPC_GPIO_Type *)LPC_GPIO3_BASE)
-#define LPC_GPIO4       ((LPC_GPIO_Type *)LPC_GPIO4_BASE)
-#define LPC_WDT         ((LPC_WDT_Type *)LPC_WDT_BASE)
-#define LPC_TIMER0      ((LPC_TIMER_Type *)LPC_TIMER0_BASE)
-#define LPC_TIMER1      ((LPC_TIMER_Type *)LPC_TIMER1_BASE)
-#define LPC_TIMER2      ((LPC_TIMER_Type *)LPC_TIMER2_BASE)
-#define LPC_TIMER3      ((LPC_TIMER_Type *)LPC_TIMER3_BASE)
-#define LPC_RIT         ((LPC_RIT_Type *)LPC_RIT_BASE)
-#define LPC_UART0       ((LPC_UART_Type *)LPC_UART0_BASE)
-#define LPC_UART1       ((LPC_UART_MODEM_Type *)LPC_UART1_BASE)
-#define LPC_UART2       ((LPC_UART_Type *)LPC_UART2_BASE)
-#define LPC_UART3       ((LPC_UART_Type *)LPC_UART3_BASE)
-#define LPC_PWM1        ((LPC_PWM_Type *)LPC_PWM1_BASE)
-#define LPC_I2C0        ((LPC_I2C_Type *)LPC_I2C0_BASE)
-#define LPC_I2C1        ((LPC_I2C_Type *)LPC_I2C1_BASE)
-#define LPC_I2C2        ((LPC_I2C_Type *)LPC_I2C2_BASE)
-#define LPC_I2S         ((LPC_I2S_Type *)LPC_I2S_BASE)
-#define LPC_SPI         ((LPC_SPI_Type *)LPC_SPI_BASE)
-#define LPC_RTC         ((LPC_RTC_Type *)LPC_RTC_BASE)
-#define LPC_GPIO_INT    ((LPC_GPIO_INT_Type *)LPC_GPIOINT_BASE)
-#define LPC_PINCON      ((LPC_PINCON_Type *)LPC_PINCON_BASE)
-#define LPC_SSP0        ((LPC_SSP_Type *)LPC_SSP0_BASE)
-#define LPC_SSP1        ((LPC_SSP_Type *)LPC_SSP1_BASE)
 #define LPC_ADC         ((LPC_ADC_Type *)LPC_ADC_BASE)
-#define LPC_DAC         ((LPC_DAC_Type *)LPC_DAC_BASE)
-#define LPC_CANAF_RAM   ((LPC_CANAF_RAM_Type *)LPC_CANAF_RAM_BASE)
-#define LPC_CANAF       ((LPC_CANAF_Type *)LPC_CANAF_BASE)
-#define LPC_CANCR       ((LPC_CANCR_Type *)LPC_CANCR_BASE)
 #define LPC_CAN1        ((LPC_CAN_Type *)LPC_CAN1_BASE)
 #define LPC_CAN2        ((LPC_CAN_Type *)LPC_CAN2_BASE)
-#define LPC_MCPWM       ((LPC_MCPWM_Type *)LPC_MCPWM_BASE)
-#define LPC_QEI         ((LPC_QEI_Type *)LPC_QEI_BASE)
-#define LPC_EMAC        ((LPC_EMAC_Type *)LPC_EMAC_BASE)
+#define LPC_CANAF       ((LPC_CANAF_Type *)LPC_CANAF_BASE)
+#define LPC_CANAF_RAM   ((LPC_CANAF_RAM_Type *)LPC_CANAF_RAM_BASE)
+#define LPC_CANCR       ((LPC_CANCR_Type *)LPC_CANCR_BASE)
+#define LPC_DAC         ((LPC_DAC_Type *)LPC_DAC_BASE)
+#define LPC_ETHERNET    ((LPC_ETHERNET_Type *)LPC_ETHERNET_BASE)
 #define LPC_GPDMA       ((LPC_GPDMA_Type *)LPC_GPDMA_BASE)
 #define LPC_GPDMACH0    ((LPC_GPDMACH_Type *)LPC_GPDMACH0_BASE)
 #define LPC_GPDMACH1    ((LPC_GPDMACH_Type *)LPC_GPDMACH1_BASE)
@@ -779,6 +741,34 @@ typedef struct
 #define LPC_GPDMACH5    ((LPC_GPDMACH_Type *)LPC_GPDMACH5_BASE)
 #define LPC_GPDMACH6    ((LPC_GPDMACH_Type *)LPC_GPDMACH6_BASE)
 #define LPC_GPDMACH7    ((LPC_GPDMACH_Type *)LPC_GPDMACH7_BASE)
+#define LPC_GPIO0       ((LPC_GPIO_Type *)LPC_GPIO0_BASE)
+#define LPC_GPIO1       ((LPC_GPIO_Type *)LPC_GPIO1_BASE)
+#define LPC_GPIO2       ((LPC_GPIO_Type *)LPC_GPIO2_BASE)
+#define LPC_GPIO3       ((LPC_GPIO_Type *)LPC_GPIO3_BASE)
+#define LPC_GPIO4       ((LPC_GPIO_Type *)LPC_GPIO4_BASE)
+#define LPC_GPIO_INT    ((LPC_GPIO_INT_Type *)LPC_GPIO_INT_BASE)
+#define LPC_I2C0        ((LPC_I2C_Type *)LPC_I2C0_BASE)
+#define LPC_I2C1        ((LPC_I2C_Type *)LPC_I2C1_BASE)
+#define LPC_I2C2        ((LPC_I2C_Type *)LPC_I2C2_BASE)
+#define LPC_I2S         ((LPC_I2S_Type *)LPC_I2S_BASE)
+#define LPC_MCPWM       ((LPC_MCPWM_Type *)LPC_MCPWM_BASE)
+#define LPC_PINCON      ((LPC_PINCON_Type *)LPC_PINCON_BASE)
+#define LPC_PWM1        ((LPC_PWM_Type *)LPC_PWM1_BASE)
+#define LPC_QEI         ((LPC_QEI_Type *)LPC_QEI_BASE)
+#define LPC_RIT         ((LPC_RIT_Type *)LPC_RIT_BASE)
+#define LPC_RTC         ((LPC_RTC_Type *)LPC_RTC_BASE)
+#define LPC_SPI         ((LPC_SPI_Type *)LPC_SPI_BASE)
+#define LPC_SSP0        ((LPC_SSP_Type *)LPC_SSP0_BASE)
+#define LPC_SSP1        ((LPC_SSP_Type *)LPC_SSP1_BASE)
+#define LPC_TIMER0      ((LPC_TIMER_Type *)LPC_TIMER0_BASE)
+#define LPC_TIMER1      ((LPC_TIMER_Type *)LPC_TIMER1_BASE)
+#define LPC_TIMER2      ((LPC_TIMER_Type *)LPC_TIMER2_BASE)
+#define LPC_TIMER3      ((LPC_TIMER_Type *)LPC_TIMER3_BASE)
+#define LPC_UART0       ((LPC_UART_Type *)LPC_UART0_BASE)
+#define LPC_UART1       ((LPC_UART_MODEM_Type *)LPC_UART1_BASE)
+#define LPC_UART2       ((LPC_UART_Type *)LPC_UART2_BASE)
+#define LPC_UART3       ((LPC_UART_Type *)LPC_UART3_BASE)
 #define LPC_USB         ((LPC_USB_Type *)LPC_USB_BASE)
+#define LPC_WDT         ((LPC_WDT_Type *)LPC_WDT_BASE)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_DEFS_H_ */

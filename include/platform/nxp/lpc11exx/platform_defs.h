@@ -198,7 +198,6 @@ typedef struct
   __rw__ uint32_t IENF;
   __wo__ uint32_t SIENF;
   __wo__ uint32_t CIENF;
-
   __rw__ uint32_t RISE;
   __rw__ uint32_t FALL;
   __rw__ uint32_t IST;
@@ -413,7 +412,7 @@ typedef struct
   __rw__ uint32_t RS485DLY;
   __rw__ uint32_t SYNCCTRL; /* Synchronous Mode Control register */
 } LPC_UART_Type;
-/*------------------Watchdog Timer--------------------------------------------*/
+/*------------------Windowed Watchdog Timer-----------------------------------*/
 typedef struct
 {
   __rw__ uint32_t MOD;
@@ -426,8 +425,6 @@ typedef struct
 } LPC_WDT_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
-#define LPC_FLASH_BASE              (0x00000000UL)
-#define LPC_RAM_BASE                (0x10000000UL)
 #define LPC_APB_BASE                (0x40000000UL)
 #define LPC_AHB_BASE                (0x50000000UL)
 
