@@ -127,10 +127,16 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   switch (function)
   {
     case PIN_DEFAULT:
+    {
       /* Some pins have default function value other than zero */
-      function = (pin.data.port == 1 && pin.data.offset <= 2)
-          || (pin.data.port == 0 && pin.data.offset == 11) ? 1 : 0;
+      bool alternate = false;
+
+      alternate |= pin.data.port == 0 && (pin.data.offset == 0
+          || (pin.data.offset >= 10 && pin.data.offset <= 11));
+      alternate |= pin.data.port == 1 && pin.data.offset <= 3;
+      function = alternate ? 1 : 0;
       break;
+    }
 
     case PIN_ANALOG:
       *iocon = value & ~IOCON_DIGITAL;

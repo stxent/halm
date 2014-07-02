@@ -125,8 +125,13 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   {
     case PIN_DEFAULT:
       /* Some pins have default function value other than zero */
-      function = (pin.data.port == 1 && pin.data.offset <= 2)
-          || (pin.data.port == 0 && pin.data.offset == 11) ? 1 : 0;
+      if (pin.data.port == 0 && (pin.data.offset == 0
+          || (pin.data.offset >= 10 && pin.data.offset <= 15)))
+      {
+        function = 1;
+      }
+      else
+        function = 0;
       break;
 
     case PIN_ANALOG:
