@@ -121,35 +121,35 @@ void pinOutput(struct Pin pin, uint8_t value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
-  volatile uint32_t * const iocon = calcControlReg(pin.data);
-  const uint32_t value = *iocon;
+  volatile uint32_t * const reg = calcControlReg(pin.data);
+  const uint32_t value = *reg;
 
   switch (function)
   {
     case PIN_DEFAULT:
     {
       /* Some pins have default function value other than zero */
-      bool alternate = false;
+      bool alternate;
 
-      alternate |= pin.data.port == 0 && (pin.data.offset == 0
+      alternate = pin.data.port == 0 && (pin.data.offset == 0
           || (pin.data.offset >= 10 && pin.data.offset <= 11));
-      alternate |= pin.data.port == 1 && pin.data.offset <= 3;
+      alternate = alternate || (pin.data.port == 1 && pin.data.offset <= 3);
       function = alternate ? 1 : 0;
       break;
     }
 
     case PIN_ANALOG:
-      *iocon = value & ~IOCON_DIGITAL;
+      *reg = value & ~IOCON_DIGITAL;
       return;
   }
 
-  *iocon = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
+  *reg = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum pinPull pull)
 {
-  volatile uint32_t * const iocon = calcControlReg(pin.data);
-  uint32_t value = *iocon & ~IOCON_MODE_MASK;
+  volatile uint32_t * const reg = calcControlReg(pin.data);
+  uint32_t value = *reg & ~IOCON_MODE_MASK;
 
   switch (pull)
   {
@@ -166,21 +166,21 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
       break;
   }
 
-  *iocon = value;
+  *reg = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum pinType type)
 {
-  volatile uint32_t * const iocon = calcControlReg(pin.data);
+  volatile uint32_t * const reg = calcControlReg(pin.data);
 
   switch (type)
   {
     case PIN_PUSHPULL:
-      *iocon &= ~IOCON_OD;
+      *reg &= ~IOCON_OD;
       break;
 
     case PIN_OPENDRAIN:
-      *iocon |= IOCON_OD;
+      *reg |= IOCON_OD;
       break;
   }
 }

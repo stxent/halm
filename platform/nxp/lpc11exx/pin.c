@@ -35,20 +35,24 @@ static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
 static void *calcControlReg(union PinData data)
 {
-  volatile uint32_t *iocon = 0;
+  volatile uint32_t *reg;
 
   switch (data.port)
   {
     case 0:
-      iocon = &LPC_IOCON->PIO0[data.offset];
+      reg = &LPC_IOCON->PIO0[data.offset];
       break;
 
     case 1:
-      iocon = &LPC_IOCON->PIO1[data.offset];
+      reg = &LPC_IOCON->PIO1[data.offset];
+      break;
+
+    default:
+      reg = 0;
       break;
   }
 
-  return (void *)iocon;
+  return (void *)reg;
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinSetup(struct Pin pin)
@@ -118,8 +122,8 @@ void pinOutput(struct Pin pin, uint8_t value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
-  volatile uint32_t * const iocon = pin.reg;
-  const uint32_t value = *iocon;
+  volatile uint32_t * const reg = pin.reg;
+  const uint32_t value = *reg;
 
   switch (function)
   {
@@ -135,17 +139,17 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       break;
 
     case PIN_ANALOG:
-      *iocon = value & ~IOCON_DIGITAL;
+      *reg = value & ~IOCON_DIGITAL;
       return;
   }
 
-  *iocon = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
+  *reg = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum pinPull pull)
 {
-  volatile uint32_t * const iocon = pin.reg;
-  uint32_t value = *iocon & ~IOCON_MODE_MASK;
+  volatile uint32_t * const reg = pin.reg;
+  uint32_t value = *reg & ~IOCON_MODE_MASK;
 
   switch (pull)
   {
@@ -162,21 +166,21 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
       break;
   }
 
-  *iocon = value;
+  *reg = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum pinType type)
 {
-  volatile uint32_t * const iocon = pin.reg;
+  volatile uint32_t * const reg = pin.reg;
 
   switch (type)
   {
     case PIN_PUSHPULL:
-      *iocon &= ~IOCON_OD;
+      *reg &= ~IOCON_OD;
       break;
 
     case PIN_OPENDRAIN:
-      *iocon |= IOCON_OD;
+      *reg |= IOCON_OD;
       break;
   }
 }
