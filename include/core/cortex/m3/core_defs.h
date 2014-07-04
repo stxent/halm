@@ -1,6 +1,6 @@
 /*
  * core/cortex/m3/core_defs.h
-  * Based on original by ARM Limited
+ * Based on original by ARM Limited
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 

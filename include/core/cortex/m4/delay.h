@@ -1,5 +1,5 @@
 /*
- * core/cortex/m3/delay.h
+ * core/cortex/m4/delay.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */

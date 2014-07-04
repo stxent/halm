@@ -15,3 +15,28 @@ const struct PinEntry *pinFind(const struct PinEntry *list, pin_t key,
 
   return list->key ? list : 0;
 }
+/*----------------------------------------------------------------------------*/
+const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *list,
+    pin_t key, uint8_t channel)
+{
+  union PinData begin, end, pin;
+
+  pin.key = ~key;
+
+  while (list->begin && list->end)
+  {
+    begin.key = ~list->begin;
+    end.key = ~list->end;
+
+    if (list->channel == channel
+        && pin.port >= begin.port && pin.port <= end.port
+        && pin.offset >= begin.offset && pin.offset <= end.offset)
+    {
+      return list;
+    }
+
+    ++list;
+  }
+
+  return 0;
+}

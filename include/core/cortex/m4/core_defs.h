@@ -1,5 +1,5 @@
 /*
- * core/cortex/m0/core_defs.h
+ * core/cortex/m4/core_defs.h
  * Based on original by ARM Limited
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -22,12 +22,23 @@ typedef struct
 {
   __ro__ uint32_t CPUID; /* CPU ID Base Register */
   __rw__ uint32_t ICSR; /* Interrupt Control State Register */
-  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t VTOR; /* Vector Table Offset Register */
   __rw__ uint32_t AIRCR; /* Application Interrupt and Reset Control Register */
   __rw__ uint32_t SCR; /* System Control Register */
   __rw__ uint32_t CCR; /* Configuration Control Register */
-  __ne__ uint32_t RESERVED1;
-  __rw__ uint8_t SHP[2]; /* System Handlers Priority Registers */
+  __rw__ uint8_t SHP[12]; /* System Handlers Priority Registers */
+  __rw__ uint32_t SHCSR; /* System Handler Control and State Register */
+  __rw__ uint32_t CFSR; /* Configurable Fault Status Register */
+  __rw__ uint32_t HFSR; /* Hard Fault Status Register */
+  __rw__ uint32_t DFSR; /* Debug Fault Status Register */
+  __rw__ uint32_t MMFAR; /* Memory Manage Address Register */
+  __rw__ uint32_t BFAR; /* Bus Fault Address Register */
+  __rw__ uint32_t AFSR; /* Auxiliary Fault Status Register */
+  __ro__ uint32_t PFR[2]; /* Processor Feature Register */
+  __ro__ uint32_t DFR; /* Debug Feature Register */
+  __ro__ uint32_t ADR; /* Auxiliary Feature Register */
+  __ro__ uint32_t MMFR[4]; /* Memory Model Feature Register */
+  __ro__ uint32_t ISAR[5]; /* ISA Feature Register */
 } SCB_Type;
 /*------------------System Tick Timer-----------------------------------------*/
 typedef struct
@@ -40,15 +51,19 @@ typedef struct
 /*------------------Power Management Unit-------------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t ISER[1]; /* Interrupt Set Enable Register */
-  __ne__ uint32_t RESERVED0[31];
-  __rw__ uint32_t ICER[1]; /* Interrupt Clear Enable Register */
-  __ne__ uint32_t RESERVED1[31];
-  __rw__ uint32_t ISPR[1]; /* Interrupt Set Pending Register */
-  __ne__ uint32_t RESERVED2[31];
-  __rw__ uint32_t ICPR[1]; /* Interrupt Clear Pending Register */
-  __ne__ uint32_t RESERVED3[95];
-  __rw__ uint32_t IPR[8]; /* Interrupt Priority Registers */
+  __rw__ uint32_t ISER[8]; /* Interrupt Set Enable Register */
+  __ne__ uint32_t RESERVED0[24];
+  __rw__ uint32_t ICER[8]; /* Interrupt Clear Enable Register */
+  __ne__ uint32_t RESERVED1[24];
+  __rw__ uint32_t ISPR[8]; /* Interrupt Set Pending Register */
+  __ne__ uint32_t RESERVED2[24];
+  __rw__ uint32_t ICPR[8]; /* Interrupt Clear Pending Register */
+  __ne__ uint32_t RESERVED3[24];
+  __rw__ uint32_t IABR[8]; /* Interrupt Active bit Register */
+  __ne__ uint32_t RESERVED4[56];
+  __rw__ uint8_t IP[240]; /* Interrupt Priority Registers */
+  __ne__ uint32_t RESERVED5[644];
+  __wo__ uint32_t STIR; /* Software Trigger Interrupt Register */
 }  NVIC_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses of Cortex-M3 Hardware */

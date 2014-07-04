@@ -27,6 +27,11 @@
 #define CORE m3
 #define PLATFORM_TYPE nxp
 #define PLATFORM lpc17xx
+#elif defined(LPC43XX)
+#define CORE_TYPE cortex
+#define CORE m4
+#define PLATFORM_TYPE nxp
+#define PLATFORM lpc43xx
 #endif
 /*----------------------------------------------------------------------------*/
 #endif /* MCU_H_ */

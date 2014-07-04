@@ -70,6 +70,14 @@ struct PinEntry
   uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
+struct PinGroupEntry
+{
+  pin_t begin;
+  pin_t end;
+  uint8_t channel;
+  uint8_t value;
+};
+/*----------------------------------------------------------------------------*/
 struct Pin
 {
   void *reg;
@@ -77,6 +85,8 @@ struct Pin
 };
 /*----------------------------------------------------------------------------*/
 const struct PinEntry *pinFind(const struct PinEntry *, pin_t, uint8_t);
+const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *, pin_t,
+    uint8_t);
 /*----------------------------------------------------------------------------*/
 static inline pin_t pinGetKey(struct Pin pin)
 {
