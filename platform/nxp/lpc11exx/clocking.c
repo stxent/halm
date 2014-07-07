@@ -247,6 +247,7 @@ static enum result mainClockEnable(const void *configPtr)
     case CLOCK_INTERNAL:
       LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_IRC;
       coreClock = INT_OSC_FREQUENCY;
+      break;
 
     case CLOCK_EXTERNAL:
       /* Check whether external oscillator is configured and ready */
