@@ -369,6 +369,12 @@ static enum result mainClockEnable(const void *configPtr)
       return E_ERROR;
   }
 
+  if (config->divider)
+  {
+    coreClock /= config->divider;
+    LPC_SYSCON->SYSAHBCLKDIV = config->divider;
+  }
+
   /* Update Main clock source */
   LPC_SYSCON->MAINCLKUEN = MAINCLKUEN_ENA;
   LPC_SYSCON->MAINCLKUEN = 0;

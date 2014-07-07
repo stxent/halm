@@ -60,7 +60,8 @@ void UART_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
 {
-  return clockFrequency(MainClock) / DEFAULT_DIV_VALUE;
+  return (clockFrequency(MainClock) * LPC_SYSCON->SYSAHBCLKDIV)
+      / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configPtr)

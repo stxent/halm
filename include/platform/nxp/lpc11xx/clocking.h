@@ -29,14 +29,15 @@ enum clockSource
   CLOCK_MAIN
 };
 /*----------------------------------------------------------------------------*/
-struct MainClockConfig
-{
-  enum clockSource source;
-};
-/*----------------------------------------------------------------------------*/
 struct PllConfig
 {
   uint16_t multiplier;
+  uint8_t divider;
+  enum clockSource source;
+};
+/*----------------------------------------------------------------------------*/
+struct MainClockConfig
+{
   uint8_t divider;
   enum clockSource source;
 };
