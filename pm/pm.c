@@ -46,19 +46,20 @@ static enum result pmHandlerInit(void *object,
 /*----------------------------------------------------------------------------*/
 enum result pmChangeState(enum pmState state)
 {
-  if (!pmHandler)
-    return E_ERROR;
-
-  struct PmHandlerEntry entry;
-  const void *current = listFirst(&pmHandler->objectList);
   enum result res;
 
-  while (current)
+  if (pmHandler)
   {
-    listData(&pmHandler->objectList, current, &entry);
-    if ((res = entry.callback(entry.object, state)) != E_OK)
-      return res;
-    current = listNext(current);
+    struct PmHandlerEntry entry;
+    const void *current = listFirst(&pmHandler->objectList);
+
+    while (current)
+    {
+      listData(&pmHandler->objectList, current, &entry);
+      if ((res = entry.callback(entry.object, state)) != E_OK)
+        return res;
+      current = listNext(current);
+    }
   }
 
   /* Prepare specific platform features before entering other state */
