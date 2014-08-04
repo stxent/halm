@@ -42,8 +42,8 @@ const struct InterfaceClass * const Serial = &serialTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct Serial *interface = object;
-  LPC_UART_Type *reg = interface->parent.reg;
+  struct Serial * const interface = object;
+  LPC_UART_Type * const reg = interface->parent.reg;
   bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
@@ -84,13 +84,13 @@ static void interruptHandler(void *object)
 #ifdef CONFIG_SERIAL_PM
 static enum result powerStateHandler(void *object, enum pmState state)
 {
-  struct Serial *interface = object;
+  struct Serial * const interface = object;
   struct UartRateConfig rateConfig;
   enum result res;
 
   if (state == PM_ACTIVE)
   {
-    /* Recalculate and apply baud rate */
+    /* Recalculate and set baud rate */
     if ((res = uartCalcRate(object, interface->rate, &rateConfig)) != E_OK)
       return res;
 
@@ -158,7 +158,7 @@ static enum result serialInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  struct Serial *interface = object;
+  struct Serial * const interface = object;
 
   irqDisable(interface->parent.irq);
   byteQueueDeinit(&interface->txQueue);
@@ -169,7 +169,7 @@ static void serialDeinit(void *object)
 static enum result serialCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct Serial *interface = object;
+  struct Serial * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -178,7 +178,7 @@ static enum result serialCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum result serialGet(void *object, enum ifOption option, void *data)
 {
-  struct Serial *interface = object;
+  struct Serial * const interface = object;
 
   switch (option)
   {
@@ -198,7 +198,7 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
 static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
-  struct Serial *interface = object;
+  struct Serial * const interface = object;
   struct UartRateConfig rateConfig;
   enum result res;
 
@@ -221,7 +221,7 @@ static enum result serialSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct Serial *interface = object;
+  struct Serial * const interface = object;
   uint32_t read;
 
   irqDisable(interface->parent.irq);
@@ -234,8 +234,8 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
-  struct Serial *interface = object;
-  LPC_UART_Type *reg = interface->parent.reg;
+  struct Serial * const interface = object;
+  LPC_UART_Type * const reg = interface->parent.reg;
   uint32_t written = 0;
 
   irqDisable(interface->parent.irq);
