@@ -14,6 +14,14 @@
 /* Pack capture or match channel and pin function in one value */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
+struct TimerBlockDescriptor
+{
+  void *reg;
+  irq_t irq;
+  enum sysPowerDevice power;
+  enum sysClockDevice clock;
+};
+/*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
@@ -23,6 +31,33 @@ static const struct EntityClass timerTable = {
     .size = 0, /* Abstract class */
     .init = tmrInit,
     .deinit = tmrDeinit
+};
+/*----------------------------------------------------------------------------*/
+static const struct TimerBlockDescriptor timerBlockData[4] = {
+    {
+        .reg = LPC_TIMER0,
+        .irq = TIMER0_IRQ,
+        .power = PWR_TIM0,
+        .clock = CLK_TIMER0
+    },
+    {
+        .reg = LPC_TIMER1,
+        .irq = TIMER1_IRQ,
+        .power = PWR_TIM1,
+        .clock = CLK_TIMER1
+    },
+    {
+        .reg = LPC_TIMER2,
+        .irq = TIMER2_IRQ,
+        .power = PWR_TIM2,
+        .clock = CLK_TIMER2
+    },
+    {
+        .reg = LPC_TIMER3,
+        .irq = TIMER3_IRQ,
+        .power = PWR_TIM3,
+        .clock = CLK_TIMER3
+    }
 };
 /*----------------------------------------------------------------------------*/
 const struct PinEntry gpTimerCapturePins[] = {
@@ -171,57 +206,31 @@ uint32_t gpTimerGetClock(struct GpTimerBase *timer __attribute__((unused)))
 static enum result tmrInit(void *object, const void *configPtr)
 {
   const struct GpTimerBaseConfig * const config = configPtr;
-  struct GpTimerBase * const device = object;
+  struct GpTimerBase * const timer = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
-  device->channel = config->channel;
-  if ((res = setDescriptor(device->channel, device)) != E_OK)
+  timer->channel = config->channel;
+  if ((res = setDescriptor(timer->channel, timer)) != E_OK)
     return res;
 
-  device->handler = 0;
+  const struct TimerBlockDescriptor block = timerBlockData[timer->channel];
 
-  switch (device->channel)
-  {
-    case 0:
-      sysPowerEnable(PWR_TIM0);
-      sysClockControl(CLK_TIMER0, DEFAULT_DIV);
-      device->reg = LPC_TIMER0;
-      device->irq = TIMER0_IRQ;
-      break;
+  sysPowerEnable(block.power);
+  sysClockControl(block.clock, DEFAULT_DIV);
 
-    case 1:
-      sysPowerEnable(PWR_TIM1);
-      sysClockControl(CLK_TIMER1, DEFAULT_DIV);
-      device->reg = LPC_TIMER1;
-      device->irq = TIMER1_IRQ;
-      break;
-
-    case 2:
-      sysPowerEnable(PWR_TIM2);
-      sysClockControl(CLK_TIMER2, DEFAULT_DIV);
-      device->reg = LPC_TIMER2;
-      device->irq = TIMER2_IRQ;
-      break;
-
-    case 3:
-      sysPowerEnable(PWR_TIM3);
-      sysClockControl(CLK_TIMER3, DEFAULT_DIV);
-      device->reg = LPC_TIMER3;
-      device->irq = TIMER3_IRQ;
-      break;
-  }
+  timer->handler = 0;
+  timer->resolution = 32;
+  timer->irq = block.irq;
+  timer->reg = block.reg;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrDeinit(void *object)
 {
-  const enum sysPowerDevice timerPower[] = {
-      PWR_TIM0, PWR_TIM1, PWR_TIM2, PWR_TIM3
-  };
   struct GpTimerBase * const device = object;
 
-  sysPowerDisable(timerPower[device->channel]);
+  sysPowerDisable(timerBlockData[device->channel].power);
   setDescriptor(device->channel, 0);
 }
