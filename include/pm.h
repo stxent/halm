@@ -17,10 +17,23 @@
 /*----------------------------------------------------------------------------*/
 enum pmState
 {
+  /** Normal operational mode. */
   PM_ACTIVE = 0,
+  /**
+   * Auxiliary mode designed to temporarily disable peripherals during
+   * frequency or power state changes.
+   */
+  PM_IDLE,
+  /**
+   * Lower power consumption mode. The system is able to resume normal
+   * mode almost immediately.
+   */
   PM_SLEEP,
-  PM_SUSPEND,
-  PM_POWERDOWN
+  /**
+   * The lowest power consumption mode. Resuming from this mode takes longer
+   * time and may require additional hardware features.
+   */
+  PM_SUSPEND
 };
 /*----------------------------------------------------------------------------*/
 typedef enum result (*PmCallback)(void *, enum pmState);

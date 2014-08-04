@@ -5,7 +5,7 @@
  */
 
 #include <spinlock.h>
-#include <core/cortex/m3/asm.h>
+#include <core/cortex/m4/asm.h>
 /*----------------------------------------------------------------------------*/
 void spinLock(spinlock_t *lock)
 {

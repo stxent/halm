@@ -16,6 +16,11 @@ static inline void __dmb(void)
   __asm__ volatile ("DMB");
 }
 /*----------------------------------------------------------------------------*/
+static inline void __dsb(void)
+{
+  __asm__ volatile ("DSB");
+}
+/*----------------------------------------------------------------------------*/
 static inline void __interruptsDisable(void)
 {
   __asm__ volatile ("CPSID i");

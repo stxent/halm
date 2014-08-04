@@ -8,6 +8,8 @@
 #include <bits.h>
 #include <core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
+#define TIMER_RESOLUTION                ((1UL << 24) - 1)
+/*----------------------------------------------------------------------------*/
 /* System Tick counter enable */
 #define CTRL_ENABLE                     BIT(0)
 /* Interrupt enable */
@@ -25,8 +27,9 @@ static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
-static void tmrSetFrequency(void *, uint32_t);
-static void tmrSetOverflow(void *, uint32_t);
+static enum result tmrSetFrequency(void *, uint32_t);
+static enum result tmrSetOverflow(void *, uint32_t);
+static enum result tmrSetValue(void *, uint32_t);
 static uint32_t tmrValue(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass timerTable = {
@@ -38,6 +41,7 @@ static const struct TimerClass timerTable = {
     .setEnabled = tmrSetEnabled,
     .setFrequency = tmrSetFrequency,
     .setOverflow = tmrSetOverflow,
+    .setValue = tmrSetValue,
     .value = tmrValue
 };
 /*----------------------------------------------------------------------------*/
@@ -135,20 +139,31 @@ static void tmrSetEnabled(void *object __attribute__((unused)), bool state)
     SYSTICK->CTRL &= ~CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetFrequency(void *object, uint32_t frequency)
+static enum result tmrSetFrequency(void *object, uint32_t frequency)
 {
   struct SysTickTimer * const timer = object;
 
   timer->frequency = frequency ? frequency : coreClock;
   updateFrequency(timer);
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetOverflow(void *object, uint32_t overflow)
+static enum result tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SysTickTimer * const timer = object;
 
   timer->overflow = overflow;
   updateFrequency(timer);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result tmrSetValue(void *object __attribute__((unused)),
+    uint32_t value)
+{
+  SYSTICK->VAL = value;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrValue(const void *object __attribute__((unused)))
