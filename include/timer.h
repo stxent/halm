@@ -23,8 +23,9 @@ struct TimerClass
 
   void (*callback)(void *, void (*)(void *), void *);
   void (*setEnabled)(void *, bool);
-  void (*setFrequency)(void *, uint32_t);
-  void (*setOverflow)(void *, uint32_t);
+  enum result (*setFrequency)(void *, uint32_t);
+  enum result (*setOverflow)(void *, uint32_t);
+  enum result (*setValue)(void *, uint32_t);
   uint32_t (*value)(const void *);
 };
 /*----------------------------------------------------------------------------*/
@@ -60,20 +61,35 @@ static inline void timerSetEnabled(void *timer, bool state)
  * Set fundamental timer frequency.
  * @param timer Pointer to a Timer object.
  * @param frequency Frequency in Hz.
+ * @return @b E_OK on success.
  */
-static inline void timerSetFrequency(void *timer, uint32_t frequency)
+static inline enum result timerSetFrequency(void *timer, uint32_t frequency)
 {
-  ((const struct TimerClass *)CLASS(timer))->setFrequency(timer, frequency);
+  return ((const struct TimerClass *)CLASS(timer))->setFrequency(timer,
+      frequency);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Set timer overflow rate.
  * @param timer Pointer to a Timer object.
  * @param overflow Number of timer ticks after which overflow event occurs.
+ * @return @b E_OK on success.
  */
-static inline void timerSetOverflow(void *timer, uint32_t overflow)
+static inline enum result timerSetOverflow(void *timer, uint32_t overflow)
 {
-  ((const struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
+  return ((const struct TimerClass *)CLASS(timer))->setOverflow(timer,
+      overflow);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set timer value.
+ * @param timer Pointer to a Timer object.
+ * @param value New timer value.
+ * @return @b E_OK on success.
+ */
+static inline enum result timerSetValue(void *timer, uint32_t value)
+{
+  return ((const struct TimerClass *)CLASS(timer))->setValue(timer, value);
 }
 /*----------------------------------------------------------------------------*/
 /**

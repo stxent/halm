@@ -32,7 +32,11 @@ enum gpTimerEvent
 /*----------------------------------------------------------------------------*/
 struct GpTimerConfig
 {
-  /** Optional: timer frequency. Argument is not used in external clock mode. */
+  /**
+   * Optional: timer frequency. When the option is left unused or is set
+   * to zero an actual peripheral frequency value is used. Option is not used
+   * in external clock mode.
+   */
   uint32_t frequency;
   /** Optional: external clock input. */
   pin_t input;
@@ -46,7 +50,7 @@ struct GpTimerConfig
    * during the initialization process.
    */
   bool disabled;
-  /** Optional: disable timer after reaching maximum value. */
+  /** Optional: disable timer after it reaches the maximum value. */
   bool oneshot;
   /** Optional: match event used as a reset source for the timer. */
   enum gpTimerEvent event;
@@ -59,8 +63,12 @@ struct GpTimer
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* Actual timer frequency */
+  uint32_t frequency;
   /* Match channel used for counter reset */
   uint8_t event;
+  /* Timer activity flag */
+  bool active;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPTIMER_H_ */

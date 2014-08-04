@@ -30,6 +30,8 @@ struct GpTimerBase
   struct Pin input;
   /* Peripheral block identifier */
   uint8_t channel;
+  /* Exponent of the timer resolution */
+  uint8_t resolution;
 };
 /*----------------------------------------------------------------------------*/
 int8_t gpTimerAllocateChannel(uint8_t);

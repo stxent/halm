@@ -104,6 +104,10 @@ const struct PinEntry gpTimerMatchPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
+const enum sysClockDevice timerClockMap[] = {
+    CLK_CT16B0, CLK_CT16B1, CLK_CT32B0, CLK_CT32B1
+};
+/*----------------------------------------------------------------------------*/
 const struct EntityClass * const GpTimerBase = &timerTable;
 static struct GpTimerBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
@@ -147,40 +151,42 @@ uint32_t gpTimerGetClock(struct GpTimerBase *timer __attribute__((unused)))
 static enum result tmrInit(void *object, const void *configPtr)
 {
   const struct GpTimerBaseConfig * const config = configPtr;
-  struct GpTimerBase * const device = object;
+  struct GpTimerBase * const timer = object;
   enum result res;
 
   /* Try to set peripheral descriptor */
-  device->channel = config->channel;
-  if ((res = setDescriptor(device->channel, device)) != E_OK)
+  timer->channel = config->channel;
+  if ((res = setDescriptor(timer->channel, timer)) != E_OK)
     return res;
 
-  device->handler = 0;
+  timer->handler = 0;
 
-  switch (device->channel)
+  sysClockEnable(timerClockMap[timer->channel]);
+
+  switch (timer->channel)
   {
     case 0: /* CT16B0 */
-      sysClockEnable(CLK_CT16B0);
-      device->reg = LPC_TIMER16B0;
-      device->irq = TIMER16B0_IRQ;
+      timer->reg = LPC_TIMER16B0;
+      timer->irq = TIMER16B0_IRQ;
+      timer->resolution = 16;
       break;
 
     case 1: /* CT16B1 */
-      sysClockEnable(CLK_CT16B1);
-      device->reg = LPC_TIMER16B1;
-      device->irq = TIMER16B1_IRQ;
+      timer->reg = LPC_TIMER16B1;
+      timer->irq = TIMER16B1_IRQ;
+      timer->resolution = 16;
       break;
 
     case 2: /* CT32B0 */
-      sysClockEnable(CLK_CT32B0);
-      device->reg = LPC_TIMER32B0;
-      device->irq = TIMER32B0_IRQ;
+      timer->reg = LPC_TIMER32B0;
+      timer->irq = TIMER32B0_IRQ;
+      timer->resolution = 32;
       break;
 
     case 3: /* CT32B1 */
-      sysClockEnable(CLK_CT32B1);
-      device->reg = LPC_TIMER32B1;
-      device->irq = TIMER32B1_IRQ;
+      timer->reg = LPC_TIMER32B1;
+      timer->irq = TIMER32B1_IRQ;
+      timer->resolution = 32;
       break;
   }
 
@@ -189,11 +195,8 @@ static enum result tmrInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void tmrDeinit(void *object)
 {
-  const enum sysClockDevice timerClock[] = {
-      CLK_CT16B0, CLK_CT16B1, CLK_CT32B0, CLK_CT32B1
-  };
-  struct GpTimerBase * const device = object;
+  struct GpTimerBase * const timer = object;
 
-  sysClockDisable(timerClock[device->channel]);
-  setDescriptor(device->channel, 0);
+  sysClockDisable(timerClockMap[timer->channel]);
+  setDescriptor(timer->channel, 0);
 }
