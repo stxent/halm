@@ -9,7 +9,7 @@
 #include <platform/nxp/gptimer.h>
 #include <platform/nxp/gptimer_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t calcResolution(uint8_t);
+static inline uint32_t getResolution(struct GpTimer *);
 static void interruptHandler(void *);
 static enum result powerStateHandler(void *, enum pmState);
 static enum result updateFrequency(struct GpTimer *, uint32_t);
@@ -38,9 +38,9 @@ static const struct TimerClass timerTable = {
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const GpTimer = &timerTable;
 /*----------------------------------------------------------------------------*/
-static inline uint32_t calcResolution(uint8_t exponent)
+static inline uint32_t getResolution(struct GpTimer *timer)
 {
-  return (1UL << exponent) - 1;
+  return (1UL << timer->parent.resolution) - 1;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -64,10 +64,7 @@ static enum result powerStateHandler(void *object, enum pmState state)
 {
   struct GpTimer * const timer = object;
 
-  if (state == PM_ACTIVE)
-    return updateFrequency(timer, timer->frequency);
-  else
-    return E_OK;
+  return state == PM_ACTIVE ? updateFrequency(timer, timer->frequency) : E_OK;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -75,9 +72,9 @@ static enum result updateFrequency(struct GpTimer *timer, uint32_t frequency)
 {
   LPC_TIMER_Type * const reg = timer->parent.reg;
 
-  if (timer->frequency)
+  if (frequency)
   {
-    if (frequency > calcResolution(timer->parent.resolution))
+    if (frequency > getResolution(timer))
       return E_VALUE;
 
     reg->PR = gpTimerGetClock((struct GpTimerBase *)timer) / frequency - 1;
@@ -96,21 +93,14 @@ static enum result tmrInit(void *object, const void *configPtr)
       .channel = config->channel
   };
   struct GpTimer * const timer = object;
-  int8_t captureChannel = -1;
   enum result res;
 
   assert(config->event < GPTIMER_EVENT_END);
 
-  if (config->input)
-  {
-    captureChannel = gpTimerSetupCapturePin(config->channel, config->input);
-
-    if (captureChannel == -1)
-      return E_VALUE;
-  }
-
-  timer->event = config->event ? config->event - 1
-      : (uint8_t)gpTimerAllocateChannel(0);
+  if (config->event)
+    timer->event = config->event - 1;
+  else
+    timer->event = (uint8_t)gpTimerAllocateChannel(0);
 
   /* Call base class constructor */
   if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
@@ -126,24 +116,15 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   reg->IR = reg->IR; /* Clear pending interrupts */
   reg->CCR = 0;
+  reg->CTCR = 0;
   reg->EMR = 0;
   reg->MCR = 0;
 
-  if (captureChannel != -1)
-  {
-    reg->CTCR = CTCR_INPUT(captureChannel) | CTCR_MODE_RISING;
-    reg->PR = 0; /* In external clock mode frequency setting will be ignored */
-  }
-  else
-  {
-    reg->CTCR = 0;
-
-    if ((res = updateFrequency(timer, config->frequency)) != E_OK)
-      return res;
-  }
+  if ((res = updateFrequency(timer, config->frequency)) != E_OK)
+    return res;
 
   /* Configure prescaler and default match value */
-  reg->MR[timer->event] = calcResolution(timer->parent.resolution);
+  reg->MR[timer->event] = getResolution(timer);
 
 #ifdef CONFIG_GPTIMER_PM
   if ((res = pmRegister(object, powerStateHandler)) != E_OK)
@@ -206,17 +187,15 @@ static void tmrSetEnabled(void *object, bool state)
 static enum result tmrSetFrequency(void *object, uint32_t frequency)
 {
   struct GpTimer * const timer = object;
-  LPC_TIMER_Type * const reg = timer->parent.reg;
 
-  /* Frequency setup is ignored in external clock mode */
-  return reg->CTCR ? E_ERROR : updateFrequency(timer, frequency);
+  return updateFrequency(timer, frequency);
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->parent.reg;
-  const uint32_t resolution = calcResolution(timer->parent.resolution);
+  const uint32_t resolution = getResolution(timer);
   const bool enabled = reg->TCR & TCR_CEN;
 
   if (overflow)
