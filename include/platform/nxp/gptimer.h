@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const GpTimer;
 /*----------------------------------------------------------------------------*/
-/** Symbolic names for two different types of timers on some series. */
+/** Symbolic names for two different types of timers. */
 enum
 {
   GPTIMER_CT16B0 = 0,
@@ -33,9 +33,8 @@ enum gpTimerEvent
 struct GpTimerConfig
 {
   /**
-   * Optional: timer frequency. When the option is left unused or is set
-   * to zero an actual peripheral frequency value is used. Option is not used
-   * in external clock mode.
+   * Optional: timer frequency. When it is set to zero  an actual peripheral
+   * frequency value is used. Option is not used in external clock mode.
    */
   uint32_t frequency;
   /** Optional: external clock input. */
@@ -44,14 +43,8 @@ struct GpTimerConfig
   priority_t priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /**
-   * Optional: timer is not enabled by default. Argument makes no sense in
-   * one shot timer mode because in this mode timer is not started
-   * during the initialization process.
-   */
+  /** Optional: do not enable the timer after the initialization. */
   bool disabled;
-  /** Optional: disable timer after it reaches the maximum value. */
-  bool oneshot;
   /** Optional: match event used as a reset source for the timer. */
   enum gpTimerEvent event;
 };
@@ -67,8 +60,6 @@ struct GpTimer
   uint32_t frequency;
   /* Match channel used for counter reset */
   uint8_t event;
-  /* Timer activity flag */
-  bool active;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* GPTIMER_H_ */
