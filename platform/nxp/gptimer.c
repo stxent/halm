@@ -11,8 +11,11 @@
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getResolution(struct GpTimer *);
 static void interruptHandler(void *);
-static enum result powerStateHandler(void *, enum pmState);
 static enum result updateFrequency(struct GpTimer *, uint32_t);
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_GPTIMER_PM
+static enum result powerStateHandler(void *, enum pmState);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);

@@ -20,11 +20,6 @@ enum pmState
   /** Normal operational mode. */
   PM_ACTIVE = 0,
   /**
-   * Auxiliary mode designed to temporarily disable peripherals during
-   * frequency or power state changes.
-   */
-  PM_IDLE,
-  /**
    * Lower power consumption mode. The system is able to resume normal
    * mode almost immediately.
    */
