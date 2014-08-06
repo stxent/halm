@@ -76,7 +76,7 @@ static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void UART_ISR(void)
+void USART_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
