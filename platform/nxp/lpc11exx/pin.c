@@ -17,7 +17,7 @@ struct PinHandler
   uint16_t instances;
 };
 /*----------------------------------------------------------------------------*/
-static void *calcControlReg(union PinData);
+static volatile uint32_t *calcControlReg(union PinData);
 static void commonPinSetup(struct Pin);
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach();
@@ -33,26 +33,19 @@ static const struct EntityClass handlerTable = {
 static const struct EntityClass * const PinHandler = &handlerTable;
 static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
-static void *calcControlReg(union PinData data)
+static volatile uint32_t *calcControlReg(union PinData data)
 {
-  volatile uint32_t *reg;
-
   switch (data.port)
   {
     case 0:
-      reg = &LPC_IOCON->PIO0[data.offset];
-      break;
+      return &LPC_IOCON->PIO0[data.offset];
 
     case 1:
-      reg = &LPC_IOCON->PIO1[data.offset];
-      break;
+      return &LPC_IOCON->PIO1[data.offset];
 
     default:
-      reg = 0;
-      break;
+      return 0;
   }
-
-  return (void *)reg;
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinSetup(struct Pin pin)
@@ -102,7 +95,7 @@ struct Pin pinInit(pin_t id)
   struct Pin pin;
 
   pin.data.key = ~id;
-  pin.reg = calcControlReg(pin.data);
+  pin.reg = (void *)calcControlReg(pin.data);
 
   return pin;
 }

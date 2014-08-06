@@ -16,7 +16,7 @@
 /*----------------------------------------------------------------------------*/
 struct TimerBlockDescriptor
 {
-  void *reg;
+  LPC_TIMER_Type *reg;
   irq_t irq;
   enum sysPowerDevice power;
   enum sysClockDevice clock;

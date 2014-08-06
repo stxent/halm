@@ -7,17 +7,17 @@
 #include <pin.h>
 #include <platform/nxp/lpc17xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline void *calcPort(union PinData);
+static inline LPC_GPIO_Type *calcPort(union PinData);
 static inline volatile uint32_t *calcPinSelect(union PinData);
 static inline volatile uint32_t *calcPinMode(union PinData);
 static inline volatile uint32_t *calcPinType(union PinData);
 /*----------------------------------------------------------------------------*/
 static void commonPinSetup(struct Pin);
 /*----------------------------------------------------------------------------*/
-static inline void *calcPort(union PinData pin)
+static inline LPC_GPIO_Type *calcPort(union PinData pin)
 {
-  return (void *)(((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * pin.port
-      + (uint32_t)LPC_GPIO0);
+  return (LPC_GPIO_Type *)(((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0)
+      * pin.port + (uint32_t)LPC_GPIO0);
 }
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinSelect(union PinData pin)

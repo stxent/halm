@@ -27,7 +27,7 @@ struct PinHandler
   uint16_t instances;
 };
 /*----------------------------------------------------------------------------*/
-static void *calcControlReg(union PinData);
+static volatile uint32_t *calcControlReg(union PinData);
 static void commonPinSetup(struct Pin);
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach();
@@ -291,9 +291,9 @@ const struct PinGroupEntry gpioPins[] = {
 static const struct EntityClass * const PinHandler = &handlerTable;
 static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
-static void *calcControlReg(union PinData data)
+static volatile uint32_t *calcControlReg(union PinData data)
 {
-  return (void *)(sizeof(LPC_SCU->SFSP0[0]) * data.offset
+  return (volatile uint32_t *)(sizeof(LPC_SCU->SFSP0[0]) * data.offset
       + ((uint32_t)&LPC_SCU->SFSP1 - (uint32_t)&LPC_SCU->SFSP0) * data.port
       + (uint32_t)&LPC_SCU->SFSP0);
 }
@@ -355,7 +355,7 @@ struct Pin pinInit(pin_t id)
     pin.data.port = UNPACK_CHANNEL(group->value);
     pin.data.offset = current.offset - begin.offset
         + UNPACK_OFFSET(group->value);
-    pin.reg = calcControlReg(current);
+    pin.reg = (void *)calcControlReg(current);
   }
   else
   {
