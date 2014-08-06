@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
+#include <pm.h>
 #include <platform/nxp/i2c_slave.h>
 #include <platform/nxp/i2c_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -25,6 +26,10 @@ enum status
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_I2C_PM
+static enum result powerStateHandler(void *, enum pmState);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *, const void *);
 static void i2cDeinit(void *);
@@ -104,6 +109,21 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_I2C_PM
+static enum result powerStateHandler(void *object, enum pmState state)
+{
+  struct I2cSlave * const interface = object;
+
+  if ((state == PM_SLEEP || state == PM_SUSPEND)
+      && interface->state != I2C_SLAVE_IDLE)
+  {
+    return E_BUSY;
+  }
+
+  return E_OK;
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *object, const void *configPtr)
 {
   const struct I2cSlaveConfig * const config = configPtr;
@@ -135,6 +155,11 @@ static enum result i2cInit(void *object, const void *configPtr)
 
   /* Clear all flags */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
+
+#ifdef CONFIG_I2C_PM
+  if ((res = pmRegister(object, powerStateHandler)) != E_OK)
+    return res;
+#endif
 
   irqSetPriority(interface->parent.irq, config->priority);
   irqEnable(interface->parent.irq);

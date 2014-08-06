@@ -12,11 +12,11 @@
 #define RX_FIFO_LEVEL 2 /* 8 characters */
 #define TX_FIFO_SIZE  8
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *);
+/*----------------------------------------------------------------------------*/
 #ifdef CONFIG_SERIAL_PM
 static enum result powerStateHandler(void *, enum pmState);
 #endif
-/*----------------------------------------------------------------------------*/
-static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
