@@ -17,7 +17,6 @@
 struct TimerBlockDescriptor
 {
   LPC_TIMER_Type *reg;
-  irq_t irq;
   enum sysPowerDevice power;
   enum sysClockDevice clock;
 };
@@ -33,28 +32,24 @@ static const struct EntityClass timerTable = {
     .deinit = tmrDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct TimerBlockDescriptor timerBlockData[4] = {
+static const struct TimerBlockDescriptor timerBlockEntries[4] = {
     {
         .reg = LPC_TIMER0,
-        .irq = TIMER0_IRQ,
         .power = PWR_TIM0,
         .clock = CLK_TIMER0
     },
     {
         .reg = LPC_TIMER1,
-        .irq = TIMER1_IRQ,
         .power = PWR_TIM1,
         .clock = CLK_TIMER1
     },
     {
         .reg = LPC_TIMER2,
-        .irq = TIMER2_IRQ,
         .power = PWR_TIM2,
         .clock = CLK_TIMER2
     },
     {
         .reg = LPC_TIMER3,
-        .irq = TIMER3_IRQ,
         .power = PWR_TIM3,
         .clock = CLK_TIMER3
     }
@@ -214,15 +209,15 @@ static enum result tmrInit(void *object, const void *configPtr)
   if ((res = setDescriptor(timer->channel, timer)) != E_OK)
     return res;
 
-  const struct TimerBlockDescriptor block = timerBlockData[timer->channel];
+  const struct TimerBlockDescriptor entry = timerBlockEntries[timer->channel];
 
-  sysPowerEnable(block.power);
-  sysClockControl(block.clock, DEFAULT_DIV);
+  sysPowerEnable(entry.power);
+  sysClockControl(entry.clock, DEFAULT_DIV);
 
   timer->handler = 0;
+  timer->irq = TIMER0_IRQ + timer->channel;
   timer->resolution = 32;
-  timer->irq = block.irq;
-  timer->reg = block.reg;
+  timer->reg = entry.reg;
 
   return E_OK;
 }
@@ -231,6 +226,6 @@ static void tmrDeinit(void *object)
 {
   struct GpTimerBase * const device = object;
 
-  sysPowerDisable(timerBlockData[device->channel].power);
+  sysPowerDisable(timerBlockEntries[device->channel].power);
   setDescriptor(device->channel, 0);
 }

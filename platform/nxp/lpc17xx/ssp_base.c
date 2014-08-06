@@ -143,11 +143,17 @@ static enum result sspInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void sspDeinit(void *object)
 {
-  const enum sysPowerDevice sspPower[] = {
-      PWR_SSP0, PWR_SSP1
-  };
   struct SspBase * const interface = object;
 
-  sysPowerDisable(sspPower[interface->channel]);
+  switch (interface->channel)
+  {
+    case 0:
+      sysPowerDisable(PWR_SSP0);
+      break;
+
+    case 1:
+      sysPowerDisable(PWR_SSP1);
+      break;
+  }
   setDescriptor(interface->channel, 0);
 }

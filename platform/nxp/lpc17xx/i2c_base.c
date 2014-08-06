@@ -12,6 +12,13 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
+struct I2cBlockDescriptor
+{
+  LPC_I2C_Type *reg;
+  enum sysPowerDevice power;
+  enum sysClockDevice clock;
+};
+/*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *, const void *);
@@ -21,6 +28,24 @@ static const struct EntityClass i2cTable = {
     .size = 0, /* Abstract class */
     .init = i2cInit,
     .deinit = i2cDeinit
+};
+/*----------------------------------------------------------------------------*/
+static const struct I2cBlockDescriptor i2cBlockEntries[3] = {
+    {
+        .reg = LPC_I2C0,
+        .power = PWR_I2C0,
+        .clock = CLK_I2C0
+    },
+    {
+        .reg = LPC_I2C1,
+        .power = PWR_I2C1,
+        .clock = CLK_I2C1
+    },
+    {
+        .reg = LPC_I2C2,
+        .power = PWR_I2C2,
+        .clock = CLK_I2C2
+    }
 };
 /*----------------------------------------------------------------------------*/
 const struct PinEntry i2cPins[] = {
@@ -109,42 +134,22 @@ static enum result i2cInit(void *object, const void *configPtr)
   if ((res = i2cSetupPins(interface, configPtr)) != E_OK)
     return res;
 
+  const struct I2cBlockDescriptor entry = i2cBlockEntries[interface->channel];
+
+  sysPowerEnable(entry.power);
+  sysClockControl(entry.clock, DEFAULT_DIV);
+
   interface->handler = 0;
-
-  switch (interface->channel)
-  {
-    case 0:
-      sysPowerEnable(PWR_I2C0);
-      sysClockControl(CLK_I2C0, DEFAULT_DIV);
-      interface->reg = LPC_I2C0;
-      interface->irq = I2C0_IRQ;
-      break;
-
-    case 1:
-      sysPowerEnable(PWR_I2C1);
-      sysClockControl(CLK_I2C1, DEFAULT_DIV);
-      interface->reg = LPC_I2C1;
-      interface->irq = I2C1_IRQ;
-      break;
-
-    case 2:
-      sysPowerEnable(PWR_I2C2);
-      sysClockControl(CLK_I2C2, DEFAULT_DIV);
-      interface->reg = LPC_I2C2;
-      interface->irq = I2C2_IRQ;
-      break;
-  }
+  interface->irq = I2C0_IRQ + interface->channel;
+  interface->reg = entry.reg;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void i2cDeinit(void *object)
 {
-  const enum sysPowerDevice i2cPower[] = {
-      PWR_I2C0, PWR_I2C1, PWR_I2C2
-  };
   struct I2cBase * const interface = object;
 
-  sysPowerDisable(i2cPower[interface->channel]);
+  sysPowerDisable(i2cBlockEntries[interface->channel].power);
   setDescriptor(interface->channel, 0);
 }

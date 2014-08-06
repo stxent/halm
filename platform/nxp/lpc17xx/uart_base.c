@@ -12,6 +12,14 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
+struct UartBlockDescriptor
+{
+  LPC_UART_Type *reg;
+  irq_t irq;
+  enum sysPowerDevice power;
+  enum sysClockDevice clock;
+};
+/*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
@@ -21,6 +29,33 @@ static const struct EntityClass uartTable = {
     .size = 0, /* Abstract class */
     .init = uartInit,
     .deinit = uartDeinit
+};
+/*----------------------------------------------------------------------------*/
+static const struct UartBlockDescriptor uartBlockEntries[4] = {
+    {
+        .reg = LPC_UART0,
+        .irq = UART0_IRQ,
+        .power = PWR_UART0,
+        .clock = CLK_UART0
+    },
+    {
+        .reg = (LPC_UART_Type *)LPC_UART1,
+        .irq = UART1_IRQ,
+        .power = PWR_UART1,
+        .clock = CLK_UART1
+    },
+    {
+        .reg = LPC_UART2,
+        .irq = UART2_IRQ,
+        .power = PWR_UART2,
+        .clock = CLK_UART2
+    },
+    {
+        .reg = LPC_UART3,
+        .irq = UART3_IRQ,
+        .power = PWR_UART3,
+        .clock = CLK_UART3
+    }
 };
 /*----------------------------------------------------------------------------*/
 const struct PinEntry uartPins[] = {
@@ -147,49 +182,22 @@ static enum result uartInit(void *object, const void *configPtr)
   if ((res = uartSetupPins(interface, config)) != E_OK)
     return res;
 
+  const struct UartBlockDescriptor entry = uartBlockEntries[interface->channel];
+
+  sysPowerEnable(entry.power);
+  sysClockControl(entry.clock, DEFAULT_DIV);
+
   interface->handler = 0;
-
-  switch (interface->channel)
-  {
-    case 0:
-      sysPowerEnable(PWR_UART0);
-      sysClockControl(CLK_UART0, DEFAULT_DIV);
-      interface->reg = LPC_UART0;
-      interface->irq = UART0_IRQ;
-      break;
-
-    case 1:
-      sysPowerEnable(PWR_UART1);
-      sysClockControl(CLK_UART1, DEFAULT_DIV);
-      interface->reg = (LPC_UART_Type *)LPC_UART1;
-      interface->irq = UART1_IRQ;
-      break;
-
-    case 2:
-      sysPowerEnable(PWR_UART2);
-      sysClockControl(CLK_UART2, DEFAULT_DIV);
-      interface->reg = LPC_UART2;
-      interface->irq = UART2_IRQ;
-      break;
-
-    case 3:
-      sysPowerEnable(PWR_UART3);
-      sysClockControl(CLK_UART3, DEFAULT_DIV);
-      interface->reg = LPC_UART3;
-      interface->irq = UART3_IRQ;
-      break;
-  }
+  interface->irq = entry.irq;
+  interface->reg = entry.reg;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void uartDeinit(void *object)
 {
-  const enum sysPowerDevice uartPower[] = {
-      PWR_UART0, PWR_UART1, PWR_UART2, PWR_UART3
-  };
   struct UartBase * const interface = object;
 
-  sysPowerDisable(uartPower[interface->channel]);
+  sysPowerDisable(uartBlockEntries[interface->channel].power);
   setDescriptor(interface->channel, 0);
 }
