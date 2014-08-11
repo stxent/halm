@@ -22,7 +22,7 @@ struct ExternalOscConfig
 /*----------------------------------------------------------------------------*/
 enum clockSource
 {
-  CLOCK_INTERNAL = 0,
+  CLOCK_INTERNAL,
   CLOCK_EXTERNAL,
   CLOCK_PLL,
   CLOCK_WDT,

@@ -15,7 +15,7 @@ extern const struct InterfaceClass * const OneWireUart;
 /*----------------------------------------------------------------------------*/
 enum oneWireUartState
 {
-  OW_UART_IDLE = 0,
+  OW_UART_IDLE,
   OW_UART_RESET,
   OW_UART_RECEIVE,
   OW_UART_TRANSMIT,

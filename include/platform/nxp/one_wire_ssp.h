@@ -15,7 +15,7 @@ extern const struct InterfaceClass * const OneWireSsp;
 /*----------------------------------------------------------------------------*/
 enum oneWireSspState
 {
-  OW_SSP_IDLE = 0,
+  OW_SSP_IDLE,
   OW_SSP_RESET,
   OW_SSP_PRESENCE,
   OW_SSP_RECEIVE,

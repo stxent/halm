@@ -20,7 +20,7 @@
 /** DMA burst transfer size. */
 enum dmaBurst
 {
-  DMA_BURST_1 = 0,
+  DMA_BURST_1,
   DMA_BURST_2,
   DMA_BURST_4,
   DMA_BURST_8,
@@ -36,7 +36,7 @@ enum dmaBurst
 /** DMA transfer width. */
 enum dmaWidth
 {
-  DMA_WIDTH_BYTE = 0,
+  DMA_WIDTH_BYTE,
   DMA_WIDTH_HALFWORD,
   DMA_WIDTH_WORD,
   DMA_WIDTH_DOUBLEWORD

@@ -14,7 +14,7 @@ extern const struct InterfaceClass * const SdioSpi;
 /*----------------------------------------------------------------------------*/
 enum cardType
 {
-  CARD_SD = 0,
+  CARD_SD,
   CARD_SDHC,
   CARD_SDXC
 };

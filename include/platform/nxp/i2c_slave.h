@@ -14,7 +14,7 @@ extern const struct InterfaceClass * const I2cSlave;
 /*----------------------------------------------------------------------------*/
 enum i2cSlaveState
 {
-  I2C_SLAVE_IDLE = 0,
+  I2C_SLAVE_IDLE,
   I2C_SLAVE_ADDRESS,
   I2C_SLAVE_DATA
 };

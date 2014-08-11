@@ -24,7 +24,7 @@ extern const struct EntityClass * const GpDmaBase;
 enum gpDmaType
 {
   /** Memory to memory. */
-  GPDMA_TYPE_M2M = 0,
+  GPDMA_TYPE_M2M,
   /** Memory to peripheral. */
   GPDMA_TYPE_M2P,
   /** Peripheral to memory. */

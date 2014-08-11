@@ -15,7 +15,7 @@ extern const struct EntityClass * const UartBase;
 /*----------------------------------------------------------------------------*/
 enum uartParity
 {
-  UART_PARITY_NONE = 0,
+  UART_PARITY_NONE,
   UART_PARITY_ODD,
   UART_PARITY_EVEN
 };

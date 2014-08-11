@@ -14,7 +14,7 @@ extern const struct InterfaceClass * const I2c;
 /*----------------------------------------------------------------------------*/
 enum i2cState
 {
-  I2C_IDLE = 0,
+  I2C_IDLE,
   I2C_ADDRESS,
   I2C_TRANSMIT,
   I2C_RECEIVE,

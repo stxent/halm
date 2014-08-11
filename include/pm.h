@@ -18,7 +18,7 @@
 enum pmState
 {
   /** Normal operational mode. */
-  PM_ACTIVE = 0,
+  PM_ACTIVE,
   /**
    * Lower power consumption mode. The system is able to resume normal
    * mode almost immediately.

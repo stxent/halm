@@ -12,7 +12,7 @@
 /* ADC trigger sources */
 enum adcEvent
 {
-  ADC_SOFTWARE = 0,
+  ADC_SOFTWARE,
   ADC_PIN_0_2,
   ADC_PIN_1_5,
   ADC_CT32B0_MAT0,
