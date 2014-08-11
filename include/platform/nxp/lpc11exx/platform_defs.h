@@ -76,7 +76,7 @@ typedef struct
       __rw__ uint32_t PINTSEL7;
     };
   };
-  __ne__ uint32_t RESERVED12[27];
+  __ne__ uint32_t RESERVED12[26];
 
   /* Offset 0x200 */
   __ne__ uint32_t RESERVED13;
