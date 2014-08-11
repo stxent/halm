@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <stdbool.h>
 #include <entity.h>
 #include <pin.h>
@@ -18,7 +19,7 @@ struct PinHandler
   uint16_t instances;
 };
 /*----------------------------------------------------------------------------*/
-static inline void *calcPort(union PinData);
+static inline LPC_GPIO_Type *calcPort(union PinData);
 static inline volatile uint32_t *calcControlReg(union PinData);
 static void commonPinSetup(struct Pin);
 /*----------------------------------------------------------------------------*/
@@ -42,10 +43,10 @@ static const uint8_t pinRegMap[4][12] = {
 static const struct EntityClass * const PinHandler = &handlerTable;
 static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
-static inline void *calcPort(union PinData data)
+static inline LPC_GPIO_Type *calcPort(union PinData data)
 {
-  return (void *)(((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * data.port
-      + (uint32_t)LPC_GPIO0);
+  return (LPC_GPIO_Type *)(((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0)
+      * data.port + (uint32_t)LPC_GPIO0);
 }
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcControlReg(union PinData data)
@@ -69,6 +70,8 @@ static inline void pinHandlerAttach()
   /* Create handler object on first function call */
   if (!pinHandler)
     pinHandler = init(PinHandler, 0);
+
+  assert(pinHandler);
 
   if (!pinHandler->instances++)
   {

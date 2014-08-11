@@ -26,7 +26,7 @@ static inline void *calcPeripheral(uint8_t);
 static uint8_t eventToPeripheral(enum gpDmaEvent);
 static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
-static inline enum result dmaHandlerAttach();
+static inline void dmaHandlerAttach();
 static inline void dmaHandlerDetach();
 static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -53,48 +53,6 @@ static inline void *calcPeripheral(uint8_t channel)
 {
   return (void *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
       - (uint32_t)LPC_GPDMACH0) * channel);
-}
-/*----------------------------------------------------------------------------*/
-static inline enum result dmaHandlerAttach()
-{
-  if (!dmaHandler)
-  {
-    if (!(dmaHandler = init(DmaHandler, 0)))
-      return E_ERROR;
-  }
-
-  if (!dmaHandler->instances++)
-  {
-    sysPowerEnable(PWR_GPDMA);
-    LPC_GPDMA->CONFIG |= DMA_ENABLE;
-    irqEnable(GPDMA_IRQ);
-  }
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static inline void dmaHandlerDetach()
-{
-  /* Disable peripheral when no active descriptors exist */
-  if (!--dmaHandler->instances)
-  {
-    irqDisable(GPDMA_IRQ);
-    LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
-    sysPowerDisable(PWR_GPDMA);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static enum result dmaHandlerInit(void *object,
-    const void *configPtr __attribute__((unused)))
-{
-  struct DmaHandler * const handler = object;
-
-  /* TODO Add priority configuration for GPDMA interrupt */
-  for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
-    handler->descriptors[index] = 0;
-
-  handler->instances = 0;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t eventToPeripheral(enum gpDmaEvent event)
@@ -206,6 +164,45 @@ void DMA_ISR(void)
   }
 }
 /*----------------------------------------------------------------------------*/
+static inline void dmaHandlerAttach()
+{
+  if (!dmaHandler)
+    dmaHandler = init(DmaHandler, 0);
+
+  assert(dmaHandler);
+
+  if (!dmaHandler->instances++)
+  {
+    sysPowerEnable(PWR_GPDMA);
+    LPC_GPDMA->CONFIG |= DMA_ENABLE;
+    irqEnable(GPDMA_IRQ);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline void dmaHandlerDetach()
+{
+  /* Disable peripheral when no active descriptors exist */
+  if (!--dmaHandler->instances)
+  {
+    irqDisable(GPDMA_IRQ);
+    LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
+    sysPowerDisable(PWR_GPDMA);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result dmaHandlerInit(void *object,
+    const void *configPtr __attribute__((unused)))
+{
+  struct DmaHandler * const handler = object;
+
+  /* TODO Add priority configuration for GPDMA interrupt */
+  for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
+    handler->descriptors[index] = 0;
+
+  handler->instances = 0;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configPtr)
 {
   const struct GpDmaBaseConfig * const config = configPtr;
@@ -246,9 +243,8 @@ static enum result channelInit(void *object, const void *configPtr)
     updateEventMux(channel, config->event);
   }
 
-  /* Register new descriptor in the handler */
-  if ((res = dmaHandlerAttach()) != E_OK)
-    return res;
+  /* Register new descriptor */
+  dmaHandlerAttach();
 
   return E_OK;
 }

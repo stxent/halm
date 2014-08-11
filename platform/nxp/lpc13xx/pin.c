@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <stdbool.h>
 #include <entity.h>
 #include <pin.h>
@@ -69,6 +70,8 @@ static inline void pinHandlerAttach()
   /* Create handler object on first function call */
   if (!pinHandler)
     pinHandler = init(PinHandler, 0);
+
+  assert(pinHandler);
 
   if (!pinHandler->instances++)
   {
