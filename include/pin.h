@@ -33,6 +33,13 @@ enum pinDirection
   PIN_OUTPUT
 };
 /*----------------------------------------------------------------------------*/
+enum pinEvent
+{
+  PIN_RISING,
+  PIN_FALLING,
+  PIN_TOGGLE
+};
+/*----------------------------------------------------------------------------*/
 enum pinPull
 {
   PIN_NOPULL,

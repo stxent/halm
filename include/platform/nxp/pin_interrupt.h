@@ -1,43 +1,38 @@
 /*
- * platform/nxp/gpio_interrupt.h
+ * platform/nxp/pin_interrupt.h
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPIO_INTERRUPT_H_
-#define GPIO_INTERRUPT_H_
+#ifndef PIN_INTERRUPT_H_
+#define PIN_INTERRUPT_H_
 /*----------------------------------------------------------------------------*/
 #include <interrupt.h>
 #include <pin.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterruptClass * const GpioInterrupt;
+extern const struct InterruptClass * const PinInterrupt;
 /*----------------------------------------------------------------------------*/
-enum gpioIntMode
+struct PinInterruptConfig
 {
-  GPIO_RISING,
-  GPIO_FALLING,
-  GPIO_TOGGLE
+  /** Mandatory: pin used as interrupt source. */
+  pin_t pin;
+  /** Mandatory: external interrupt mode. */
+  enum pinEvent event;
+  /** Optional: enables pull-up or pull-down resistors for pin. */
+  enum pinPull pull;
 };
 /*----------------------------------------------------------------------------*/
-struct GpioInterruptConfig
-{
-  pin_t pin; /* Mandatory: pin used as interrupt source */
-  enum gpioIntMode mode; /* External interrupt mode */
-};
-/*----------------------------------------------------------------------------*/
-struct GpioInterrupt
+struct PinInterrupt
 {
   struct Entity parent;
 
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointer to a next entry in chain */
-  struct GpioInterrupt *next;
   /* Descriptor of input pin used as interrupt source */
   union PinData pin;
   /* Edge sensitivity mode */
-  enum gpioIntMode mode;
+  enum pinEvent event;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* GPIO_INTERRUPT_H_ */
+#endif /* PIN_INTERRUPT_H_ */
