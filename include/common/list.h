@@ -32,26 +32,26 @@ struct List
 enum result listInit(struct List *, unsigned int);
 void listDeinit(struct List *);
 void listClear(struct List *);
-void *listErase(struct List *, void *);
+struct ListNode *listErase(struct List *, struct ListNode *);
 enum result listPush(struct List *, const void *);
 
 unsigned int listCapacity(const struct List *);
 unsigned int listSize(const struct List *);
 /*----------------------------------------------------------------------------*/
-static inline void listData(const struct List *list, const void *node,
-    void *element)
+static inline void listData(const struct List *list,
+    const struct ListNode *node, void *element)
 {
-  memcpy(element, ((const struct ListNode *)node)->data, list->width);
+  memcpy(element, node->data, list->width);
 }
 /*----------------------------------------------------------------------------*/
-static inline void *listFirst(const struct List *list)
+static inline struct ListNode *listFirst(const struct List *list)
 {
   return list->first;
 }
 /*----------------------------------------------------------------------------*/
-static inline void *listNext(const void *node)
+static inline struct ListNode *listNext(const struct ListNode *node)
 {
-  return ((const struct ListNode *)node)->next;
+  return node->next;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool listEmpty(const struct List *list)
