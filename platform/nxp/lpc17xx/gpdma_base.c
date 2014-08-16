@@ -207,7 +207,6 @@ static enum result channelInit(void *object, const void *configPtr)
 {
   const struct GpDmaBaseConfig * const config = configPtr;
   struct GpDmaBase * const channel = object;
-  enum result res;
 
   assert(config->channel < GPDMA_CHANNEL_COUNT);
 

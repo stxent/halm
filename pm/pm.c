@@ -50,8 +50,8 @@ enum result pmChangeState(enum pmState state)
 
   if (pmHandler)
   {
+    const struct ListNode *current = listFirst(&pmHandler->objectList);
     struct PmHandlerEntry entry;
-    const void *current = listFirst(&pmHandler->objectList);
 
     while (current)
     {
@@ -94,8 +94,8 @@ void pmUnregister(const void *object)
   if (!pmHandler)
     return;
 
+  struct ListNode *current = listFirst(&pmHandler->objectList);
   struct PmHandlerEntry entry;
-  void *current = listFirst(&pmHandler->objectList);
 
   while (current)
   {
