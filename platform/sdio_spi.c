@@ -8,7 +8,7 @@
 #include <bits.h>
 #include <delay.h>
 #include <memory.h>
-#include <platform/nxp/sdio_spi.h>
+#include <platform/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_POW       9
 #define TOKEN_DATA_MASK 0x1F
