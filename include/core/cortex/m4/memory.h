@@ -4,10 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-/* TODO Add compile-time byte order detection */
-
-#ifndef MEMORY_H_
-#define MEMORY_H_
+#ifndef CORE_CORTEX_M4_MEMORY_H_
+#define CORE_CORTEX_M4_MEMORY_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include "asm.h"
@@ -74,4 +72,4 @@ static inline uint16_t fromLittleEndian16(uint16_t value)
 /*----------------------------------------------------------------------------*/
 bool compareExchangePointer(void **, const void *, void *);
 /*----------------------------------------------------------------------------*/
-#endif /* MEMORY_H_ */
+#endif /* CORE_CORTEX_M4_MEMORY_H_ */

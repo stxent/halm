@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPDMA_LIST_H_
-#define GPDMA_LIST_H_
+#ifndef PLATFORM_NXP_GPDMA_LIST_H_
+#define PLATFORM_NXP_GPDMA_LIST_H_
 /*----------------------------------------------------------------------------*/
 #include <dma_list.h>
 #include "gpdma_base.h"
@@ -79,4 +79,4 @@ struct GpDmaList
   bool silence;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* GPDMA_LIST_H_ */
+#endif /* PLATFORM_NXP_GPDMA_LIST_H_ */

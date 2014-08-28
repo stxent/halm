@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef DAC_DMA_H_
-#define DAC_DMA_H_
+#ifndef PLATFORM_NXP_DAC_DMA_H_
+#define PLATFORM_NXP_DAC_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <dma_list.h>
@@ -44,4 +44,4 @@ struct DacDma
   bool updated;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* DAC_DMA_H_ */
+#endif /* PLATFORM_NXP_DAC_DMA_H_ */

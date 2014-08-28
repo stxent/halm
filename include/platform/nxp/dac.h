@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef DAC_H_
-#define DAC_H_
+#ifndef PLATFORM_NXP_DAC_H_
+#define PLATFORM_NXP_DAC_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include "dac_base.h"
@@ -25,4 +25,4 @@ struct Dac
   struct DacBase parent;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* DAC_H_ */
+#endif /* PLATFORM_NXP_DAC_H_ */

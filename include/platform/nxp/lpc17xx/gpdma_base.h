@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPDMA_BASE_H_
-#define GPDMA_BASE_H_
+#ifndef PLATFORM_NXP_LPC17XX_GPDMA_BASE_H_
+#define PLATFORM_NXP_LPC17XX_GPDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
 /** Direct Memory Access controller connections. */
 enum gpDmaEvent
@@ -44,4 +44,4 @@ struct GpDmaMuxConfig
   uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* GPDMA_BASE_H_ */
+#endif /* PLATFORM_NXP_LPC17XX_GPDMA_BASE_H_ */

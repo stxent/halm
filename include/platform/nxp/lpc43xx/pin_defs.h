@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PIN_DEFS_H_
-#define PIN_DEFS_H_
+#ifndef PLATFORM_NXP_LPC43XX_PIN_DEFS_H_
+#define PLATFORM_NXP_LPC43XX_PIN_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
@@ -30,4 +30,4 @@
 /*----------------------------------------------------------------------------*/
 //TODO USB and I2C pins
 /*----------------------------------------------------------------------------*/
-#endif /* PIN_DEFS_H_ */
+#endif /* PLATFORM_NXP_LPC43XX_PIN_DEFS_H_ */

@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef MEMORY_H_
-#define MEMORY_H_
+#ifndef CORE_CORTEX_M0_MEMORY_H_
+#define CORE_CORTEX_M0_MEMORY_H_
 /*----------------------------------------------------------------------------*/
 #include "asm.h"
 /*----------------------------------------------------------------------------*/
@@ -69,4 +69,4 @@ static inline uint16_t fromLittleEndian16(uint16_t value)
   return value;
 }
 /*----------------------------------------------------------------------------*/
-#endif /* MEMORY_H_ */
+#endif /* CORE_CORTEX_M0_MEMORY_H_ */

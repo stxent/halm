@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef ONE_WIRE_UART_H_
-#define ONE_WIRE_UART_H_
+#ifndef PLATFORM_NXP_ONE_WIRE_UART_H_
+#define PLATFORM_NXP_ONE_WIRE_UART_H_
 /*----------------------------------------------------------------------------*/
 #include <byte_queue.h>
 #include <irq.h>
@@ -56,4 +56,4 @@ struct OneWireUart
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* ONE_WIRE_UART_H_ */
+#endif /* PLATFORM_NXP_ONE_WIRE_UART_H_ */

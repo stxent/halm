@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef ADC_BASE_TOP_H_
-#define ADC_BASE_TOP_H_
+#ifndef PLATFORM_NXP_ADC_BASE_H_
+#define PLATFORM_NXP_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <entity.h>
 #include <irq.h>
@@ -35,4 +35,4 @@ struct AdcUnitBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* ADC_BASE_TOP_H_ */
+#endif /* PLATFORM_NXP_ADC_BASE_H_ */

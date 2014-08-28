@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SPI_DMA_H_
-#define SPI_DMA_H_
+#ifndef PLATFORM_NXP_SPI_DMA_H_
+#define PLATFORM_NXP_SPI_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <dma.h>
-#include <platform/nxp/ssp_base.h>
+#include "ssp_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SpiDma;
 /*----------------------------------------------------------------------------*/
@@ -52,4 +52,4 @@ struct SpiDma
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* SPI_DMA_H_ */
+#endif /* PLATFORM_NXP_SPI_DMA_H_ */

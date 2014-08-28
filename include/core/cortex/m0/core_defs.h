@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CORE_DEFS_H_
-#define CORE_DEFS_H_
+#ifndef CORE_CORTEX_M0_CORE_DEFS_H_
+#define CORE_CORTEX_M0_CORE_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
@@ -67,4 +67,4 @@ typedef struct
 #undef __rw__
 #undef __ne__
 /*----------------------------------------------------------------------------*/
-#endif /* CORE_DEFS_H_ */
+#endif /* CORE_CORTEX_M0_CORE_DEFS_H_ */

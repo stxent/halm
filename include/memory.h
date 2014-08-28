@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef MEMORY_TOP_H_
-#define MEMORY_TOP_H_
+#ifndef MEMORY_H_
+#define MEMORY_H_
 /*----------------------------------------------------------------------------*/
 #include <mcu.h>
 /*----------------------------------------------------------------------------*/
@@ -14,4 +14,4 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* MEMORY_TOP_H_ */
+#endif /* MEMORY_H_ */

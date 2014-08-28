@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef I2C_H_
-#define I2C_H_
+#ifndef PLATFORM_NXP_I2C_H_
+#define PLATFORM_NXP_I2C_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include "i2c_base.h"
@@ -68,4 +68,4 @@ struct I2c
   bool sendStopBit;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* I2C_H_ */
+#endif /* PLATFORM_NXP_I2C_H_ */

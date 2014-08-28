@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef I2C_DEFS_H_
-#define I2C_DEFS_H_
+#ifndef PLATFORM_NXP_I2C_DEFS_H_
+#define PLATFORM_NXP_I2C_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Control Set register--------------------------------------*/
@@ -33,4 +33,4 @@
 #define ADR_ADDRESS_MASK                BIT_FIELD(MASK(7), 1)
 #define ADR_ADDRESS_VALUE(reg)          FIELD_VALUE((reg), ADR_ADDRESS_MASK, 1)
 /*----------------------------------------------------------------------------*/
-#endif /* I2C_DEFS_H_ */
+#endif /* PLATFORM_NXP_I2C_DEFS_H_ */

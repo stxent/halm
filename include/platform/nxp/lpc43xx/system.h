@@ -9,8 +9,8 @@
  * System configuration functions for LPC43xx chips.
  */
 
-#ifndef SYSTEM_H_
-#define SYSTEM_H_
+#ifndef PLATFORM_NXP_LPC43XX_SYSTEM_H_
+#define PLATFORM_NXP_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 #include <platform/platform_defs.h>
@@ -110,4 +110,4 @@
 //  LPC_SC->PCONP &= ~BIT(block);
 //}
 /*----------------------------------------------------------------------------*/
-#endif /* SYSTEM_H_ */
+#endif /* PLATFORM_NXP_LPC43XX_SYSTEM_H_ */

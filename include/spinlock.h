@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SPINLOCK_TOP_H_
-#define SPINLOCK_TOP_H_
+#ifndef SPINLOCK_H_
+#define SPINLOCK_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <mcu.h>
@@ -23,4 +23,4 @@ typedef volatile uint8_t spinlock_t;
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* SPINLOCK_TOP_H_ */
+#endif /* SPINLOCK_H_ */

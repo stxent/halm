@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPTIMER_DEFS_H_
-#define GPTIMER_DEFS_H_
+#ifndef PLATFORM_NXP_GPTIMER_DEFS_H_
+#define PLATFORM_NXP_GPTIMER_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Interrupt Register----------------------------------------*/
@@ -38,4 +38,4 @@
 #define EMR_CONTROL(channel, value)     BIT_FIELD((value), (channel) * 2 + 4)
 #define EMR_EXTERNAL_MATCH(channel)     BIT((channel))
 /*----------------------------------------------------------------------------*/
-#endif /* GPTIMER_DEFS_H_ */
+#endif /* PLATFORM_NXP_GPTIMER_DEFS_H_ */

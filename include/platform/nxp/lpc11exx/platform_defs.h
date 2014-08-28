@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_DEFS_H_
-#define PLATFORM_DEFS_H_
+#ifndef PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_
+#define PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 2
 /*------------------System Configuration Registers----------------------------*/
@@ -470,4 +470,4 @@ typedef struct
 #define LPC_GPIO_GROUP_INT1 \
     ((LPC_GPIO_GROUP_INT_Type *)LPC_GPIO_GROUP_INT1_BASE)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_DEFS_H_ */
+#endif /* PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_ */

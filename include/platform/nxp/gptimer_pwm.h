@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPTIMER_PWM_H_
-#define GPTIMER_PWM_H_
+#ifndef PLATFORM_NXP_GPTIMER_PWM_H_
+#define PLATFORM_NXP_GPTIMER_PWM_H_
 /*----------------------------------------------------------------------------*/
 #include <pwm.h>
 #include "gptimer_base.h"
@@ -59,4 +59,4 @@ struct GpTimerPwm
 /*----------------------------------------------------------------------------*/
 void *gpTimerPwmCreate(void *, pin_t, uint32_t);
 /*----------------------------------------------------------------------------*/
-#endif /* GPTIMER_PWM_H_ */
+#endif /* PLATFORM_NXP_GPTIMER_PWM_H_ */

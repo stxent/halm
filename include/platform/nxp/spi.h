@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SPI_H_
-#define SPI_H_
+#ifndef PLATFORM_NXP_SPI_H_
+#define PLATFORM_NXP_SPI_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include "ssp_base.h"
@@ -50,4 +50,4 @@ struct Spi
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* SPI_H_ */
+#endif /* PLATFORM_NXP_SPI_H_ */

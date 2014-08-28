@@ -6,8 +6,8 @@
 
 #include <error.h>
 #include <pm.h>
+#include <core/core_defs.h>
 #include <core/cortex/asm.h>
-#include <core/cortex/core_defs.h>
 #include <core/cortex/pm_defs.h>
 /*----------------------------------------------------------------------------*/
 enum result pmCoreChangeState(enum pmState);

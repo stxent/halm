@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef I2C_BASE_H_
-#define I2C_BASE_H_
+#ifndef PLATFORM_NXP_I2C_BASE_H_
+#define PLATFORM_NXP_I2C_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <irq.h>
@@ -41,4 +41,4 @@ void i2cSetRate(struct I2cBase *, uint32_t);
 uint32_t i2cGetClock(const struct I2cBase *);
 enum result i2cSetupPins(struct I2cBase *, const struct I2cBaseConfig *);
 /*----------------------------------------------------------------------------*/
-#endif /* I2C_BASE_H_ */
+#endif /* PLATFORM_NXP_I2C_BASE_H_ */

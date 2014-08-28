@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef DAC_BASE_H_
-#define DAC_BASE_H_
+#ifndef PLATFORM_NXP_DAC_BASE_H_
+#define PLATFORM_NXP_DAC_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <entity.h>
 #include <irq.h>
@@ -28,4 +28,4 @@ struct DacBase
 /*----------------------------------------------------------------------------*/
 uint32_t dacGetClock(const struct DacBase *);
 /*----------------------------------------------------------------------------*/
-#endif /* DAC_BASE_H_ */
+#endif /* PLATFORM_NXP_DAC_BASE_H_ */

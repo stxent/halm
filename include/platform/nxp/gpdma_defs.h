@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPDMA_DEFS_H_
-#define GPDMA_DEFS_H_
+#ifndef PLATFORM_NXP_GPDMA_DEFS_H_
+#define PLATFORM_NXP_GPDMA_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------DMA configuration register--------------------------------*/
@@ -39,4 +39,4 @@
 #define CONFIG_ACTIVE                   BIT(17)
 #define CONFIG_HALT                     BIT(18)
 /*----------------------------------------------------------------------------*/
-#endif /* DMA_DEFS_H_ */
+#endif /* PLATFORM_NXP_DMA_DEFS_H_ */

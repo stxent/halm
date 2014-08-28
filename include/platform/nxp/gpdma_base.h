@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPDMA_BASE_TOP_H_
-#define GPDMA_BASE_TOP_H_
+#ifndef PLATFORM_NXP_GPDMA_BASE_H_
+#define PLATFORM_NXP_GPDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <dma.h>
 #include <mcu.h>
@@ -60,4 +60,4 @@ const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
 enum result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
 void gpDmaSetupMux(struct GpDmaBase *);
 /*----------------------------------------------------------------------------*/
-#endif /* GPDMA_BASE_TOP_H_ */
+#endif /* PLATFORM_NXP_GPDMA_BASE_H_ */

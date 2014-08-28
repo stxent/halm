@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SYSTEM_H_
-#define SYSTEM_H_
+#ifndef PLATFORM_NXP_LPC11XX_SYSTEM_H_
+#define PLATFORM_NXP_LPC11XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 #include <platform/platform_defs.h>
@@ -71,4 +71,4 @@ static inline bool sysPowerStatus(enum sysPowerDevice block)
   return LPC_SYSCON->PDRUNCFG & BIT(block) ? false : true;
 }
 /*----------------------------------------------------------------------------*/
-#endif /* SYSTEM_H_ */
+#endif /* PLATFORM_NXP_LPC11XX_SYSTEM_H_ */

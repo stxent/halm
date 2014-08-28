@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPPWM_H_
-#define GPPWM_H_
+#ifndef PLATFORM_NXP_GPPWM_H_
+#define PLATFORM_NXP_GPPWM_H_
 /*----------------------------------------------------------------------------*/
 #include <pwm.h>
 #include "gppwm_base.h"
@@ -84,4 +84,4 @@ struct GpPwmDoubleEdge
 void *gpPwmCreate(void *, pin_t, uint32_t);
 void *gpPwmCreateDoubleEdge(void *, pin_t, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
-#endif /* GPPWM_H_ */
+#endif /* PLATFORM_NXP_GPPWM_H_ */

@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_DEFS_TOP_H_
-#define PLATFORM_DEFS_TOP_H_
+#ifndef PLATFORM_NXP_PLATFORM_DEFS_H_
+#define PLATFORM_NXP_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <mcu.h>
@@ -95,4 +95,4 @@ typedef struct
 #undef __rw__
 #undef __ne__
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_DEFS_TOP_H_ */
+#endif /* PLATFORM_NXP_PLATFORM_DEFS_H_ */

@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPDMA_H_
-#define GPDMA_H_
+#ifndef PLATFORM_NXP_GPDMA_H_
+#define PLATFORM_NXP_GPDMA_H_
 /*----------------------------------------------------------------------------*/
 #include "gpdma_base.h"
 /*----------------------------------------------------------------------------*/
@@ -44,4 +44,4 @@ struct GpDma
   bool error;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* GPDMA_H_ */
+#endif /* PLATFORM_NXP_GPDMA_H_ */

@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef ADC_H_
-#define ADC_H_
+#ifndef PLATFORM_NXP_ADC_H_
+#define PLATFORM_NXP_ADC_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <interface.h>
@@ -66,4 +66,4 @@ struct Adc
   uint8_t event;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* ADC_H_ */
+#endif /* PLATFORM_NXP_ADC_H_ */

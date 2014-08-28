@@ -4,14 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef VECTORS_H_
-#define VECTORS_H_
+#ifndef PLATFORM_NXP_LPC13XX_VECTORS_H_
+#define PLATFORM_NXP_LPC13XX_VECTORS_H_
 /*----------------------------------------------------------------------------*/
 enum
 {
   /* Chip-specific interrupt sources */
   WAKEUP_IRQ    = 0,
-  /* TODO */
+  /* TODO Add other wakeup events */
   I2C_IRQ       = 40,
   TIMER16B0_IRQ = 41,
   TIMER16B1_IRQ = 42,
@@ -32,4 +32,4 @@ enum
   SSP1_IRQ      = 57
 };
 /*----------------------------------------------------------------------------*/
-#endif /* VECTORS_H_ */
+#endif /* PLATFORM_NXP_LPC13XX_VECTORS_H_ */

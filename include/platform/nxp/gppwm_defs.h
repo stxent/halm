@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPPWM_DEFS_H_
-#define GPPWM_DEFS_H_
+#ifndef PLATFORM_NXP_GPPWM_DEFS_H_
+#define PLATFORM_NXP_GPPWM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include "gptimer_defs.h"
 /*------------------Timer Control Register------------------------------------*/
@@ -18,4 +18,4 @@
 /*------------------PWM Latch Enable Register---------------------------------*/
 #define LER_ENABLE_LATCH(channel)       BIT((channel))
 /*----------------------------------------------------------------------------*/
-#endif /* GPPWM_DEFS_H_ */
+#endif /* PLATFORM_NXP_GPPWM_DEFS_H_ */

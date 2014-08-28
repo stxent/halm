@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef VECTORS_H_
-#define VECTORS_H_
+#ifndef PLATFORM_NXP_LPC11EXX_VECTORS_H_
+#define PLATFORM_NXP_LPC11EXX_VECTORS_H_
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -35,4 +35,4 @@ enum
   IOH_IRQ       = 31
 };
 /*----------------------------------------------------------------------------*/
-#endif /* VECTORS_H_ */
+#endif /* PLATFORM_NXP_LPC11EXX_VECTORS_H_ */

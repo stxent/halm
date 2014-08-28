@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef UART_DEFS_H_
-#define UART_DEFS_H_
+#ifndef PLATFORM_NXP_UART_DEFS_H_
+#define PLATFORM_NXP_UART_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
@@ -66,4 +66,4 @@
 /*------------------Transmit Enable Register----------------------------------*/
 #define TER_TXEN                        BIT(7) /* Transmit enable */
 /*----------------------------------------------------------------------------*/
-#endif /* UART_DEFS_H_ */
+#endif /* PLATFORM_NXP_UART_DEFS_H_ */

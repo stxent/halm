@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PIN_H_
-#define PIN_H_
+#ifndef PLATFORM_NXP_LPC13XX_PIN_H_
+#define PLATFORM_NXP_LPC13XX_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -43,4 +43,4 @@ static inline void pinSetSlewRate(struct Pin pin __attribute__((unused)),
   /* Slew rate control is not supported on these devices */
 }
 /*----------------------------------------------------------------------------*/
-#endif /* PIN_H_ */
+#endif /* PLATFORM_NXP_LPC13XX_PIN_H_ */

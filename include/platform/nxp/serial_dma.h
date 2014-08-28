@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SERIAL_DMA_H_
-#define SERIAL_DMA_H_
+#ifndef PLATFORM_NXP_SERIAL_DMA_H_
+#define PLATFORM_NXP_SERIAL_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <dma.h>
-#include <platform/nxp/uart_base.h>
+#include "uart_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SerialDma;
 /*----------------------------------------------------------------------------*/
@@ -43,4 +43,4 @@ struct SerialDma
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* SERIAL_DMA_H_ */
+#endif /* PLATFORM_NXP_SERIAL_DMA_H_ */

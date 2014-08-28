@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef ONE_WIRE_SSP_H_
-#define ONE_WIRE_SSP_H_
+#ifndef PLATFORM_NXP_ONE_WIRE_SSP_H_
+#define PLATFORM_NXP_ONE_WIRE_SSP_H_
 /*----------------------------------------------------------------------------*/
 #include <byte_queue.h>
 #include <irq.h>
@@ -59,4 +59,4 @@ struct OneWireSsp
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* ONE_WIRE_SSP_H_ */
+#endif /* PLATFORM_NXP_ONE_WIRE_SSP_H_ */

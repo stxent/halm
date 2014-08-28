@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef IRQ_TOP_H_
-#define IRQ_TOP_H_
+#ifndef IRQ_H_
+#define IRQ_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <mcu.h>
@@ -21,4 +21,4 @@ typedef uint8_t priority_t;
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* IRQ_TOP_H_ */
+#endif /* IRQ_H_ */

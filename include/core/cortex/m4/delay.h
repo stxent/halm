@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef DELAY_H_
-#define DELAY_H_
+#ifndef CORE_CORTEX_M4_DELAY_H_
+#define CORE_CORTEX_M4_DELAY_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
@@ -33,4 +33,4 @@ static inline void udelay(uint32_t period)
   );
 }
 /*----------------------------------------------------------------------------*/
-#endif /* DELAY_H_ */
+#endif /* CORE_CORTEX_M4_DELAY_H_ */

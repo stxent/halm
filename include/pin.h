@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PIN_TOP_H_
-#define PIN_TOP_H_
+#ifndef PIN_H_
+#define PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <mcu.h>
@@ -106,4 +106,4 @@ static inline pin_t pinGetKey(struct Pin pin)
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* PIN_TOP_H_ */
+#endif /* PIN_H_ */

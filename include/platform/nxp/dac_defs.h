@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef DAC_DEFS_H_
-#define DAC_DEFS_H_
+#ifndef PLATFORM_NXP_DAC_DEFS_H_
+#define PLATFORM_NXP_DAC_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Converter Register----------------------------------------*/
@@ -20,4 +20,4 @@
 #define CTRL_CNT_ENA                    BIT(2)
 #define CTRL_DMA_ENA                    BIT(3)
 /*----------------------------------------------------------------------------*/
-#endif /* DAC_DEFS_H_ */
+#endif /* PLATFORM_NXP_DAC_DEFS_H_ */

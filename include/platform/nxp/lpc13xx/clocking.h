@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CLOCKING_H_
-#define CLOCKING_H_
+#ifndef PLATFORM_NXP_LPC13XX_CLOCKING_H_
+#define PLATFORM_NXP_LPC13XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
@@ -50,4 +50,4 @@ struct UsbClockConfig
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* CLOCKING_H_ */
+#endif /* PLATFORM_NXP_LPC13XX_CLOCKING_H_ */

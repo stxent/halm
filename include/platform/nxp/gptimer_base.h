@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef GPTIMER_BASE_H_
-#define GPTIMER_BASE_H_
+#ifndef PLATFORM_NXP_GPTIMER_BASE_H_
+#define PLATFORM_NXP_GPTIMER_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <irq.h>
 #include <pin.h>
@@ -40,4 +40,4 @@ int8_t gpTimerSetupMatchPin(uint8_t, pin_t);
 
 uint32_t gpTimerGetClock(struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
-#endif /* GPTIMER_BASE_H_ */
+#endif /* PLATFORM_NXP_GPTIMER_BASE_H_ */

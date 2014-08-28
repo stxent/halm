@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SERIAL_H_
-#define SERIAL_H_
+#ifndef PLATFORM_NXP_SERIAL_H_
+#define PLATFORM_NXP_SERIAL_H_
 /*----------------------------------------------------------------------------*/
 #include <byte_queue.h>
 #include "uart_base.h"
@@ -45,4 +45,4 @@ struct Serial
   uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* SERIAL_H_ */
+#endif /* PLATFORM_NXP_SERIAL_H_ */

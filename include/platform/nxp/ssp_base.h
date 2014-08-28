@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SSP_BASE_H_
-#define SSP_BASE_H_
+#ifndef PLATFORM_NXP_SSP_BASE_H_
+#define PLATFORM_NXP_SSP_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <irq.h>
@@ -55,4 +55,4 @@ enum result sspSetRate(struct SspBase *, uint32_t);
 uint32_t sspGetClock(const struct SspBase *);
 enum result sspSetupPins(struct SspBase *, const struct SspBaseConfig *);
 /*----------------------------------------------------------------------------*/
-#endif /* SSP_BASE_H_ */
+#endif /* PLATFORM_NXP_SSP_BASE_H_ */

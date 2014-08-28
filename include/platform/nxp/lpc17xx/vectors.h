@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef VECTORS_H_
-#define VECTORS_H_
+#ifndef PLATFORM_NXP_LPC17XX_VECTORS_H_
+#define PLATFORM_NXP_LPC17XX_VECTORS_H_
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -47,4 +47,4 @@ enum
   CAN_ACT_IRQ   = 34
 };
 /*----------------------------------------------------------------------------*/
-#endif /* VECTORS_H_ */
+#endif /* PLATFORM_NXP_LPC17XX_VECTORS_H_ */

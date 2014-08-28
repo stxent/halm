@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PIN_INTERRUPT_H_
-#define PIN_INTERRUPT_H_
+#ifndef PLATFORM_NXP_PIN_INTERRUPT_H_
+#define PLATFORM_NXP_PIN_INTERRUPT_H_
 /*----------------------------------------------------------------------------*/
 #include <interrupt.h>
 #include <pin.h>
@@ -35,4 +35,4 @@ struct PinInterrupt
   enum pinEvent event;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PIN_INTERRUPT_H_ */
+#endif /* PLATFORM_NXP_PIN_INTERRUPT_H_ */

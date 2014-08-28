@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SYSTEM_DEFS_H_
-#define SYSTEM_DEFS_H_
+#ifndef PLATFORM_NXP_LPC11EXX_SYSTEM_DEFS_H_
+#define PLATFORM_NXP_LPC11EXX_SYSTEM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Peripheral Reset Control register-------------------------*/
@@ -25,4 +25,4 @@
 #define PCON_PM_SLEEPFLAG               BIT(8)
 #define PCON_PM_DPDFLAG                 BIT(11)
 /*----------------------------------------------------------------------------*/
-#endif /* SYSTEM_DEFS_H_ */
+#endif /* PLATFORM_NXP_LPC11EXX_SYSTEM_DEFS_H_ */

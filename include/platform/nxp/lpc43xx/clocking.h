@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CLOCKING_H_
-#define CLOCKING_H_
+#ifndef PLATFORM_NXP_LPC43XX_CLOCKING_H_
+#define PLATFORM_NXP_LPC43XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const MainClock;
 /*----------------------------------------------------------------------------*/
-#endif /* CLOCKING_H_ */
+#endif /* PLATFORM_NXP_LPC43XX_CLOCKING_H_ */

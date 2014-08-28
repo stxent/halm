@@ -9,4 +9,3 @@
 #undef HEADER_PATH
 #define HEADER_PATH <core/CORE_TYPE/CORE/core_defs.h>
 #include HEADER_PATH
-#undef HEADER_PATH

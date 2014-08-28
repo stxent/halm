@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef IRQ_H_
-#define IRQ_H_
+#ifndef CORE_CORTEX_M3_IRQ_H_
+#define CORE_CORTEX_M3_IRQ_H_
 /*----------------------------------------------------------------------------*/
-#include "asm.h"
-#include "core_defs.h"
+#include <core/core_defs.h>
+#include <core/cortex/asm.h>
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -56,4 +56,4 @@ static inline void irqSetPending(irq_t irq)
   *(NVIC->ISPR + (irq >> 5)) = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* IRQ_H_ */
+#endif /* CORE_CORTEX_M3_IRQ_H_ */
