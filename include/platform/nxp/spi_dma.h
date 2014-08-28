@@ -24,7 +24,7 @@ struct SpiDmaConfig
   pin_t sck;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Optional: mode number of the Serial Peripheral Interface. */
+  /** Optional: mode number. */
   uint8_t mode;
   /** Mandatory: incoming data channel. */
   uint8_t rxChannel;

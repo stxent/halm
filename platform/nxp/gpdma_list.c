@@ -5,9 +5,9 @@
  */
 
 #include <stdlib.h>
+#include <platform/platform_defs.h>
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/gpdma_list.h>
-#include <platform/nxp/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *, enum result);
 /*----------------------------------------------------------------------------*/

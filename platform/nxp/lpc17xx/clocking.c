@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/platform_defs.h>
+#include <platform/platform_defs.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/clocking_defs.h>
 #include <platform/nxp/lpc17xx/system.h>

@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <bits.h>
-#include "../platform_defs.h"
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
 enum sysPowerDevice

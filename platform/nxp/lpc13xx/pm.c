@@ -6,7 +6,7 @@
 
 #include <error.h>
 #include <pm.h>
-#include <platform/nxp/platform_defs.h>
+#include <platform/platform_defs.h>
 #include <platform/nxp/lpc13xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 enum result pmPlatformChangeState(enum pmState);

@@ -5,9 +5,7 @@
  */
 
 #include <irq.h>
-/*----------------------------------------------------------------------------*/
-#define HEADER_PATH <platform/PLATFORM_TYPE/platform_defs.h>
-#include HEADER_PATH
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define AIRCR_VECTKEY_MASK              0xFFFF0000UL
 #define AIRCR_VECTKEY(value)            ((unsigned long)(value) << 16)
@@ -35,6 +33,7 @@ priority_t irqGetPriority(irq_t irq)
     return VALUE_TO_PRIORITY(NVIC->IP[irq]);
 }
 /*----------------------------------------------------------------------------*/
+//TODO Implement
 //void nvicSetPriorityGrouping(uint8_t subpriority)
 //{
 //  uint32_t value;

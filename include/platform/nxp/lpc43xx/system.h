@@ -13,7 +13,7 @@
 #define SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
-#include "../platform_defs.h"
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 ///* Power control for peripherals register */
 //enum sysPowerDevice

@@ -5,7 +5,7 @@
  */
 
 #include <delay.h>
-#include <platform/nxp/platform_defs.h>
+#include <platform/platform_defs.h>
 #include <platform/nxp/lpc11exx/clocking.h>
 #include <platform/nxp/lpc11exx/clocking_defs.h>
 #include <platform/nxp/lpc11exx/system.h>

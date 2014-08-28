@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/platform_defs.h>
+#include <platform/platform_defs.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY 96000000

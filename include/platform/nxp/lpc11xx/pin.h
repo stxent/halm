@@ -7,7 +7,7 @@
 #ifndef PIN_H_
 #define PIN_H_
 /*----------------------------------------------------------------------------*/
-#include "../platform_defs.h"
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(pin_t);
 void pinInput(struct Pin);

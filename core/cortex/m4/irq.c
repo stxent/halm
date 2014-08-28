@@ -5,9 +5,7 @@
  */
 
 #include <irq.h>
-/*----------------------------------------------------------------------------*/
-#define HEADER_PATH <platform/PLATFORM_TYPE/platform_defs.h>
-#include HEADER_PATH
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define PRIORITY_TO_VALUE(priority) \
     ((((1 << NVIC_PRIORITY_SIZE) - 1) - (priority)) << (8 - NVIC_PRIORITY_SIZE))

@@ -26,7 +26,7 @@ struct SpiConfig
   priority_t priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Optional: mode number used in Serial Peripheral Interface mode. */
+  /** Optional: mode number. */
   uint8_t mode;
 };
 /*----------------------------------------------------------------------------*/

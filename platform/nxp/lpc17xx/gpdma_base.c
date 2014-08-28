@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <irq.h>
 #include <memory.h>
+#include <platform/platform_defs.h>
 #include <platform/nxp/gpdma_base.h>
 #include <platform/nxp/gpdma_defs.h>
-#include <platform/nxp/platform_defs.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 struct DmaHandler
