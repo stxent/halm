@@ -37,8 +37,6 @@ struct GpTimerConfig
    * frequency value is used. Option is not used in external clock mode.
    */
   uint32_t frequency;
-  /** Optional: external clock input. */
-  pin_t input;
   /** Optional: timer interrupt priority. */
   priority_t priority;
   /** Mandatory: peripheral identifier. */

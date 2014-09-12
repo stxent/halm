@@ -77,10 +77,13 @@ static enum result updateFrequency(struct GpTimer *timer, uint32_t frequency)
 
   if (frequency)
   {
-    if (frequency > getResolution(timer))
+    const uint32_t baseClock = gpTimerGetClock((struct GpTimerBase *)timer);
+    const uint32_t divisor = baseClock / frequency - 1;
+
+    if (frequency > baseClock || divisor > getResolution(timer))
       return E_VALUE;
 
-    reg->PR = gpTimerGetClock((struct GpTimerBase *)timer) / frequency - 1;
+    reg->PR = divisor;
   }
   else
     reg->PR = 0;

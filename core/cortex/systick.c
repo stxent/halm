@@ -21,7 +21,8 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum result setDescriptor(struct SysTickTimer *);
-static void updateFrequency(struct SysTickTimer *);
+static void updateInterrupt(struct SysTickTimer *);
+static enum result updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
@@ -67,14 +68,44 @@ static enum result setDescriptor(struct SysTickTimer *timer)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void updateFrequency(struct SysTickTimer *timer)
+static void updateInterrupt(struct SysTickTimer *timer)
 {
-  const uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
+  if (timer->overflow && timer->callback)
+  {
+    (void)SYSTICK->CTRL; /* Clear pending interrupt */
+    SYSTICK->CTRL |= CTRL_TICKINT;
+  }
+  else
+    SYSTICK->CTRL &= ~CTRL_TICKINT;
+}
+/*----------------------------------------------------------------------------*/
+static enum result updateFrequency(struct SysTickTimer *timer,
+    uint32_t frequency, uint32_t overflow)
+{
+  if (overflow > TIMER_RESOLUTION)
+    return E_VALUE;
 
-  SYSTICK->CTRL &= ~CTRL_ENABLE;
-  SYSTICK->LOAD = (coreClock / timer->frequency) * timer->overflow - 1;
+  const uint32_t limit = !overflow ? 1 : overflow;
+
+  if (frequency)
+  {
+    const uint32_t divisor = (coreClock / frequency) * limit - 1;
+
+    if (divisor > TIMER_RESOLUTION)
+      return E_VALUE;
+
+    SYSTICK->LOAD = divisor;
+  }
+  else
+    SYSTICK->LOAD = limit - 1;
+
+  /* Reset current timer value */
   SYSTICK->VAL = 0;
-  SYSTICK->CTRL |= state;
+
+  timer->frequency = frequency;
+  timer->overflow = overflow;
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void SYSTICK_ISR(void)
@@ -87,6 +118,7 @@ static enum result tmrInit(void *object, const void *configPtr)
 {
   const struct SysTickTimerConfig * const config = configPtr;
   struct SysTickTimer * const timer = object;
+  enum result res;
 
   /* Try to set peripheral descriptor */
   if (setDescriptor(timer) != E_OK)
@@ -94,22 +126,25 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   timer->handler = interruptHandler;
 
-  timer->frequency = config->frequency ? config->frequency : coreClock;
-  timer->overflow = 1;
+  SYSTICK->CTRL = 0; /* Stop the timer */
 
-  SYSTICK->CTRL = 0; /* Stop timer */
-  SYSTICK->VAL = 0; /* Reset current timer value */
-  SYSTICK->LOAD = coreClock / timer->frequency - 1;
+  if ((res = updateFrequency(timer, config->frequency, 1)) != E_OK)
+    return res;
+
   SYSTICK->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
+  if (!config->disabled)
+    SYSTICK->CTRL |= CTRL_ENABLE;
 
-  irqEnable(SYSTICK_IRQ);
   irqSetPriority(SYSTICK_IRQ, config->priority);
+  irqEnable(SYSTICK_IRQ);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrDeinit(void *object __attribute__((unused)))
 {
+  const struct SysTickTimer * const timer = object;
+
   irqDisable(SYSTICK_IRQ);
   SYSTICK->CTRL &= ~CTRL_ENABLE;
   setDescriptor(0);
@@ -122,13 +157,7 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
   timer->callback = callback;
   timer->callbackArgument = argument;
 
-  if (callback)
-  {
-    (void)SYSTICK->CTRL; /* Clear pending interrupt */
-    SYSTICK->CTRL |= CTRL_TICKINT;
-  }
-  else
-    SYSTICK->CTRL &= ~CTRL_TICKINT;
+  updateInterrupt(timer);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetEnabled(void *object __attribute__((unused)), bool state)
@@ -142,21 +171,28 @@ static void tmrSetEnabled(void *object __attribute__((unused)), bool state)
 static enum result tmrSetFrequency(void *object, uint32_t frequency)
 {
   struct SysTickTimer * const timer = object;
+  const uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
+  enum result res;
 
-  timer->frequency = frequency ? frequency : coreClock;
-  updateFrequency(timer);
+  SYSTICK->CTRL &= ~CTRL_ENABLE;
+  res = updateFrequency(timer, frequency, timer->overflow);
+  SYSTICK->CTRL |= state;
 
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SysTickTimer * const timer = object;
+  const uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
+  enum result res;
 
-  timer->overflow = overflow;
-  updateFrequency(timer);
+  SYSTICK->CTRL &= ~CTRL_ENABLE;
+  if ((res = updateFrequency(timer, timer->frequency, overflow)) == E_OK)
+    updateInterrupt(timer);
+  SYSTICK->CTRL |= state;
 
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrSetValue(void *object __attribute__((unused)),

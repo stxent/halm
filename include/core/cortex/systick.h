@@ -14,19 +14,28 @@ extern const struct TimerClass * const SysTickTimer;
 /*----------------------------------------------------------------------------*/
 struct SysTickTimerConfig
 {
-  uint32_t frequency; /* Mandatory: timer fundamental frequency */
-  priority_t priority; /* Optional: interrupt priority */
+  /** Mandatory: timer fundamental frequency. */
+  uint32_t frequency;
+  /** Optional: interrupt priority. */
+  priority_t priority;
+  /** Optional: do not enable the timer after the initialization. */
+  bool disabled;
 };
 /*----------------------------------------------------------------------------*/
 struct SysTickTimer
 {
   struct Timer parent;
 
-  void (*handler)(void *); /* Hardware interrupt handler */
-  void (*callback)(void *); /* User interrupt handler */
-  void *callbackArgument; /* User interrupt handler argument */
+  /* Hardware interrupt handler */
+  void (*handler)(void *);
+  /* User interrupt handler */
+  void (*callback)(void *);
+  /* User interrupt handler argument */
+  void *callbackArgument;
 
+  /* Desired timer frequency */
   uint32_t frequency;
+  /* Overflow value in ticks of desired frequency */
   uint32_t overflow;
 };
 /*----------------------------------------------------------------------------*/
