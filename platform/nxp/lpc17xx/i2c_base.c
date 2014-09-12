@@ -150,7 +150,7 @@ static enum result i2cInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void i2cDeinit(void *object)
 {
-  struct I2cBase * const interface = object;
+  const struct I2cBase * const interface = object;
 
   sysPowerDisable(i2cBlockEntries[interface->channel].power);
   setDescriptor(interface->channel, interface, 0);

@@ -86,7 +86,7 @@ static enum result i2cInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void i2cDeinit(void *object)
 {
-  struct I2cBase * const interface = object;
+  const struct I2cBase * const interface = object;
 
   LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C; /* Put peripheral in reset */
   sysClockDisable(CLK_I2C);

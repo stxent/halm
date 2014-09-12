@@ -90,7 +90,7 @@ static enum result uartInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void uartDeinit(void *object)
 {
-  struct UartBase * const interface = object;
+  const struct UartBase * const interface = object;
 
   LPC_SYSCON->UARTCLKDIV = 0; /* Disable peripheral clock */
   sysClockDisable(CLK_UART);

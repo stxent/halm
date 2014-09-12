@@ -265,7 +265,7 @@ static enum result doubleEdgeInit(void *object, const void *configPtr)
   pwm->unit = config->parent;
   pwm->unit->matches |= 1 << channel | 1 << (channel - 1);
 
-  LPC_PWM_Type *reg = pwm->unit->parent.reg;
+  LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   /* Setup channels and initial edge times */
   pwm->leading = calcMatchChannel(reg, channel - 1);

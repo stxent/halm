@@ -277,7 +277,7 @@ static enum result tmrInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void tmrDeinit(void *object)
 {
-  struct GpTimerBase * const timer = object;
+  const struct GpTimerBase * const timer = object;
 
   sysClockDisable(timerBlockEntries[timer->channel].clock);
   setDescriptor(timer->channel, timer, 0);

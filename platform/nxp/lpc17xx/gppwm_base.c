@@ -130,7 +130,7 @@ static enum result unitInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void unitDeinit(void *object)
 {
-  struct GpPwmUnitBase * const unit = object;
+  const struct GpPwmUnitBase * const unit = object;
 
   sysPowerDisable(PWR_PWM1);
   setDescriptor(unit->channel, unit, 0);

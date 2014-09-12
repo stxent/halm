@@ -159,7 +159,7 @@ static enum result sspInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void sspDeinit(void *object)
 {
-  struct SspBase * const interface = object;
+  const struct SspBase * const interface = object;
 
   /* Put peripheral in reset and disable clock */
   switch (interface->channel)

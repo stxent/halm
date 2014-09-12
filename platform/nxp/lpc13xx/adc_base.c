@@ -112,7 +112,7 @@ static enum result adcUnitInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void adcUnitDeinit(void *object)
 {
-  struct AdcUnitBase * const unit = object;
+  const struct AdcUnitBase * const unit = object;
 
   sysClockDisable(CLK_ADC);
   sysPowerDisable(PWR_ADC);

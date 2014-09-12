@@ -108,7 +108,7 @@ static enum result unitInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void unitDeinit(void *object)
 {
-  struct GpTimerPwmUnit *unit = object;
+  struct GpTimerPwmUnit * const unit = object;
   LPC_TIMER_Type * const reg = unit->parent.reg;
 
   reg->TCR &= ~TCR_CEN;
@@ -140,7 +140,7 @@ static enum result channelInit(void *object, const void *configPtr)
   /* Update match channel used for timer reset */
   updateResolution(pwm->unit, (uint8_t)freeChannel);
 
-  LPC_TIMER_Type *reg = pwm->unit->parent.reg;
+  LPC_TIMER_Type * const reg = pwm->unit->parent.reg;
 
   /* Calculate pointer to match register for fast access */
   pwm->value = reg->MR + pwmChannel;

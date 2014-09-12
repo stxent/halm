@@ -42,7 +42,7 @@ static enum result dacInit(void *object, const void *configPtr)
   if ((res = DacBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  LPC_DAC_Type *reg = interface->parent.reg;
+  LPC_DAC_Type * const reg = interface->parent.reg;
 
   reg->CR = (config->value & CR_OUTPUT_MASK) | CR_BIAS;
 
@@ -84,8 +84,8 @@ static enum result dacSet(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
-  struct Dac *interface = object;
-  LPC_DAC_Type *reg = interface->parent.reg;
+  struct Dac * const interface = object;
+  LPC_DAC_Type * const reg = interface->parent.reg;
 
   /* Check buffer alignment */
   assert(!(length & MASK(1))); //FIXME Hardcoded
@@ -93,7 +93,7 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
   if (!length)
     return 0;
 
-  uint16_t value = *(const uint16_t *)buffer;
+  const uint16_t value = *(const uint16_t *)buffer;
   reg->CR = (value & CR_OUTPUT_MASK) | CR_BIAS;
 
   return 2;

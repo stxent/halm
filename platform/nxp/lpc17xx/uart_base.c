@@ -198,7 +198,7 @@ static enum result uartInit(void *object, const void *configPtr)
 /*----------------------------------------------------------------------------*/
 static void uartDeinit(void *object)
 {
-  struct UartBase * const interface = object;
+  const struct UartBase * const interface = object;
 
   sysPowerDisable(uartBlockEntries[interface->channel].power);
   setDescriptor(interface->channel, interface, 0);
