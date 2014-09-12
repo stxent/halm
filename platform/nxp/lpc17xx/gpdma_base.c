@@ -116,8 +116,10 @@ const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
 /*----------------------------------------------------------------------------*/
 enum result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
 {
+  assert(descriptor);
   assert(channel < GPDMA_CHANNEL_COUNT);
 
+  /* Descriptor reset is performed in interrupt handler */
   return compareExchangePointer((void **)(dmaHandler->descriptors + channel),
       0, descriptor) ? E_OK : E_BUSY;
 }

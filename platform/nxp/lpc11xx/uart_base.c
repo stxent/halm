@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <memory.h>
 #include <platform/nxp/uart_base.h>
 #include <platform/nxp/lpc11xx/clocking.h>
 #include <platform/nxp/lpc11xx/system.h>
@@ -13,7 +14,8 @@
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct UartBase *);
+static enum result setDescriptor(uint8_t, const struct UartBase *,
+    struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
@@ -41,15 +43,13 @@ const struct PinEntry uartPins[] = {
 const struct EntityClass * const UartBase = &uartTable;
 static struct UartBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
+static enum result setDescriptor(uint8_t channel, const struct UartBase *state,
+    struct UartBase *interface)
 {
   assert(channel < sizeof(descriptors));
 
-  if (descriptors[channel])
-    return E_BUSY;
-
-  descriptors[channel] = interface;
-  return E_OK;
+  return compareExchangePointer((void **)(descriptors + channel), state,
+      interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void UART_ISR(void)
@@ -72,7 +72,7 @@ static enum result uartInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   interface->channel = config->channel;
-  if ((res = setDescriptor(interface->channel, interface)) != E_OK)
+  if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
   if ((res = uartSetupPins(interface, config)) != E_OK)
@@ -94,5 +94,5 @@ static void uartDeinit(void *object)
 
   LPC_SYSCON->UARTCLKDIV = 0; /* Disable peripheral clock */
   sysClockDisable(CLK_UART);
-  setDescriptor(interface->channel, 0);
+  setDescriptor(interface->channel, interface, 0);
 }

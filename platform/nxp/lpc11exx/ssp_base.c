@@ -15,7 +15,8 @@
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct SspBase *);
+static enum result setDescriptor(uint8_t, const struct SspBase *,
+    struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
@@ -92,15 +93,13 @@ const struct PinEntry sspPins[] = {
 const struct EntityClass * const SspBase = &sspTable;
 static struct SspBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct SspBase *interface)
+static enum result setDescriptor(uint8_t channel,
+    const struct SspBase *state, struct SspBase *interface)
 {
   assert(channel < sizeof(descriptors));
 
-  if (descriptors[channel])
-    return E_BUSY;
-
-  descriptors[channel] = interface;
-  return E_OK;
+  return compareExchangePointer((void **)(descriptors + channel), state,
+      interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void SSP0_ISR(void)
@@ -129,7 +128,7 @@ static enum result sspInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   interface->channel = config->channel;
-  if ((res = setDescriptor(interface->channel, interface)) != E_OK)
+  if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
   if ((res = sspSetupPins(interface, config)) != E_OK)
@@ -178,5 +177,5 @@ static void sspDeinit(void *object)
       sysClockDisable(CLK_SSP1);
       break;
   }
-  setDescriptor(interface->channel, 0);
+  setDescriptor(interface->channel, interface, 0);
 }

@@ -20,7 +20,8 @@ struct UartBlockDescriptor
   enum sysClockDevice clock;
 };
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct UartBase *);
+static enum result setDescriptor(uint8_t, const struct UartBase *,
+    struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
@@ -131,11 +132,12 @@ const struct PinEntry uartPins[] = {
 const struct EntityClass * const UartBase = &uartTable;
 static struct UartBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct UartBase *interface)
+static enum result setDescriptor(uint8_t channel, const struct UartBase *state,
+    struct UartBase *interface)
 {
   assert(channel < sizeof(descriptors));
 
-  return compareExchangePointer((void **)(descriptors + channel), 0,
+  return compareExchangePointer((void **)(descriptors + channel), state,
       interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
@@ -176,7 +178,7 @@ static enum result uartInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   interface->channel = config->channel;
-  if ((res = setDescriptor(interface->channel, interface)) != E_OK)
+  if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
   if ((res = uartSetupPins(interface, config)) != E_OK)
@@ -199,5 +201,5 @@ static void uartDeinit(void *object)
   struct UartBase * const interface = object;
 
   sysPowerDisable(uartBlockEntries[interface->channel].power);
-  setDescriptor(interface->channel, 0);
+  setDescriptor(interface->channel, interface, 0);
 }

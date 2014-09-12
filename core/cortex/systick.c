@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <bits.h>
+#include <memory.h>
 #include <core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
 #define TIMER_RESOLUTION                ((1UL << 24) - 1)
@@ -20,7 +21,8 @@
 #define CTRL_COUNTFLAG                  BIT(16)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static enum result setDescriptor(struct SysTickTimer *);
+static enum result setDescriptor(const struct SysTickTimer *,
+    struct SysTickTimer *);
 static void updateInterrupt(struct SysTickTimer *);
 static enum result updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -58,14 +60,11 @@ static void interruptHandler(void *object)
     device->callback(device->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(struct SysTickTimer *timer)
+static enum result setDescriptor(const struct SysTickTimer *state,
+    struct SysTickTimer *timer)
 {
-  //TODO SysTick: replace with compare and swap
-  if (descriptor)
-    return E_BUSY;
-
-  descriptor = timer;
-  return E_OK;
+  return compareExchangePointer((void **)&descriptor, state,
+      timer) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static void updateInterrupt(struct SysTickTimer *timer)
@@ -121,8 +120,8 @@ static enum result tmrInit(void *object, const void *configPtr)
   enum result res;
 
   /* Try to set peripheral descriptor */
-  if (setDescriptor(timer) != E_OK)
-    return E_ERROR;
+  if ((res = setDescriptor(0, timer)) != E_OK)
+    return res;
 
   timer->handler = interruptHandler;
 
@@ -147,7 +146,7 @@ static void tmrDeinit(void *object __attribute__((unused)))
 
   irqDisable(SYSTICK_IRQ);
   SYSTICK->CTRL &= ~CTRL_ENABLE;
-  setDescriptor(0);
+  setDescriptor(timer, 0);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrCallback(void *object, void (*callback)(void *), void *argument)

@@ -12,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(struct DacBase *);
+static enum result setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
 static void dacDeinit(void *);
@@ -36,10 +36,11 @@ const struct PinEntry dacPins[] = {
 const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(struct DacBase *interface)
+static enum result setDescriptor(const struct DacBase *state,
+    struct DacBase *interface)
 {
-  return compareExchangePointer((void **)&descriptor, 0, interface) ? E_OK
-      : E_BUSY;
+  return compareExchangePointer((void **)&descriptor, state,
+      interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 enum result setupOutputPin(pin_t key)
@@ -68,7 +69,7 @@ static enum result dacInit(void *object, const void *configPtr)
   enum result res;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(interface)) != E_OK)
+  if ((res = setDescriptor(0, interface)) != E_OK)
     return res;
 
   if ((res = setupOutputPin(config->pin)) != E_OK)
@@ -81,7 +82,9 @@ static enum result dacInit(void *object, const void *configPtr)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void dacDeinit(void *object __attribute__((unused)))
+static void dacDeinit(void *object)
 {
-  setDescriptor(0);
+  const struct DacBase * const interface = object;
+
+  setDescriptor(interface, 0);
 }

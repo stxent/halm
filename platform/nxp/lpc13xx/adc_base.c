@@ -15,7 +15,8 @@
 /* Pack conversion channel and pin function in one number */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct AdcUnitBase *);
+static enum result setDescriptor(uint8_t, const struct AdcUnitBase *state,
+    struct AdcUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *, const void *);
 static void adcUnitDeinit(void *);
@@ -67,11 +68,12 @@ const struct PinEntry adcPins[] = {
 const struct EntityClass * const AdcUnitBase = &adcUnitTable;
 static struct AdcUnitBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct AdcUnitBase *unit)
+static enum result setDescriptor(uint8_t channel,
+    const struct AdcUnitBase *state, struct AdcUnitBase *unit)
 {
   assert(channel < sizeof(descriptors));
 
-  return compareExchangePointer((void **)(descriptors + channel), 0,
+  return compareExchangePointer((void **)(descriptors + channel), state,
       unit) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
@@ -89,7 +91,7 @@ static enum result adcUnitInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   unit->channel = config->channel;
-  if ((res = setDescriptor(unit->channel, unit)) != E_OK)
+  if ((res = setDescriptor(unit->channel, 0, unit)) != E_OK)
     return res;
 
   unit->handler = 0;
@@ -114,5 +116,5 @@ static void adcUnitDeinit(void *object)
 
   sysClockDisable(CLK_ADC);
   sysPowerDisable(PWR_ADC);
-  setDescriptor(unit->channel, 0);
+  setDescriptor(unit->channel, unit, 0);
 }

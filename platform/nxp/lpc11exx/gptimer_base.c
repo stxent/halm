@@ -20,7 +20,8 @@ struct TimerBlockDescriptor
   enum sysClockDevice clock;
 };
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct GpTimerBase *);
+static enum result setDescriptor(uint8_t, const struct GpTimerBase *,
+    struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
@@ -213,15 +214,13 @@ const struct PinEntry gpTimerMatchPins[] = {
 const struct EntityClass * const GpTimerBase = &timerTable;
 static struct GpTimerBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct GpTimerBase *timer)
+static enum result setDescriptor(uint8_t channel,
+    const struct GpTimerBase *state, struct GpTimerBase *timer)
 {
   assert(channel < sizeof(descriptors));
 
-  if (descriptors[channel])
-    return E_BUSY;
-
-  descriptors[channel] = timer;
-  return E_OK;
+  return compareExchangePointer((void **)(descriptors + channel), state,
+      timer) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void TIMER16B0_ISR(void)
@@ -261,7 +260,7 @@ static enum result tmrInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   timer->channel = config->channel;
-  if ((res = setDescriptor(timer->channel, timer)) != E_OK)
+  if ((res = setDescriptor(timer->channel, 0, timer)) != E_OK)
     return res;
 
   const struct TimerBlockDescriptor entry = timerBlockEntries[timer->channel];
@@ -281,5 +280,5 @@ static void tmrDeinit(void *object)
   struct GpTimerBase * const timer = object;
 
   sysClockDisable(timerBlockEntries[timer->channel].clock);
-  setDescriptor(timer->channel, 0);
+  setDescriptor(timer->channel, timer, 0);
 }

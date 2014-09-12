@@ -15,7 +15,8 @@
 /* Pack match channel and pin function in one value */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, struct GpPwmUnitBase *);
+static enum result setDescriptor(uint8_t, const struct GpPwmUnitBase *,
+    struct GpPwmUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *, const void *);
 static void unitDeinit(void *);
@@ -95,11 +96,12 @@ const struct PinEntry gpPwmPins[] = {
 const struct EntityClass * const GpPwmUnitBase = &unitTable;
 static struct GpPwmUnitBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, struct GpPwmUnitBase *unit)
+static enum result setDescriptor(uint8_t channel,
+    const struct GpPwmUnitBase *state, struct GpPwmUnitBase *unit)
 {
   assert(channel < sizeof(descriptors));
 
-  return compareExchangePointer((void **)(descriptors + channel), 0,
+  return compareExchangePointer((void **)(descriptors + channel), state,
       unit) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
@@ -116,7 +118,7 @@ static enum result unitInit(void *object, const void *configPtr)
 
   /* Try to set peripheral descriptor */
   unit->channel = config->channel;
-  if ((res = setDescriptor(unit->channel, unit)) != E_OK)
+  if ((res = setDescriptor(unit->channel, 0, unit)) != E_OK)
     return res;
 
   sysPowerEnable(PWR_PWM1);
@@ -131,5 +133,5 @@ static void unitDeinit(void *object)
   struct GpPwmUnitBase * const unit = object;
 
   sysPowerDisable(PWR_PWM1);
-  setDescriptor(unit->channel, 0);
+  setDescriptor(unit->channel, unit, 0);
 }
