@@ -384,7 +384,7 @@ static enum result sdioInit(void *object, const void *configPtr)
   enum result res;
 
   device->csPin = pinInit(config->cs);
-  if (!pinGetKey(device->csPin))
+  if (!pinValid(device->csPin))
     return E_VALUE;
   pinOutput(device->csPin, 1);
 

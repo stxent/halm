@@ -176,7 +176,7 @@ static enum result pinInterruptInit(void *object, const void *configPtr)
   struct PinInterrupt * const interrupt = object;
   enum result res;
 
-  if (!pinGetKey(input))
+  if (!pinValid(input))
     return E_VALUE;
 
   /* Try to register pin interrupt in the interrupt handler */

@@ -7,6 +7,7 @@
 #ifndef PIN_H_
 #define PIN_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <stdint.h>
 #include <mcu.h>
 /*----------------------------------------------------------------------------*/
@@ -95,10 +96,9 @@ const struct PinEntry *pinFind(const struct PinEntry *, pin_t, uint8_t);
 const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *, pin_t,
     uint8_t);
 /*----------------------------------------------------------------------------*/
-static inline pin_t pinGetKey(struct Pin pin)
+static inline bool pinValid(struct Pin pin)
 {
-  /* Returns zero when pin is not initialized */
-  return ~pin.data.key;
+  return (pin_t)(pin.data.key) != 0 || pin.reg != 0;
 }
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH

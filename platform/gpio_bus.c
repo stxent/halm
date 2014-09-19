@@ -52,7 +52,7 @@ static enum result busInit(void *object, const void *configPtr)
   for (position = 0; position < bus->count; ++position)
   {
     bus->pins[position] = pinInit(config->pins[position]);
-    if (!pinGetKey(bus->pins[position]))
+    if (!pinValid(bus->pins[position]))
     {
       /* Pin does not exist or cannot be used */
       free(bus->pins);
