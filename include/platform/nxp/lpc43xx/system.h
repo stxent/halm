@@ -15,99 +15,59 @@
 #include <bits.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-///* Power control for peripherals register */
-//enum sysPowerDevice
-//{
-//  PWR_TIM0  = 1,
-//  PWR_TIM1  = 2,
-//  PWR_UART0 = 3,
-//  PWR_UART1 = 4,
-//  PWR_PWM1  = 6,
-//  PWR_I2C0  = 7,
-//  PWR_SPI   = 8,
-//  PWR_RTC   = 9,
-//  PWR_SSP1  = 10,
-//  PWR_ADC   = 12,
-//  PWR_CAN1  = 13,
-//  PWR_CAN2  = 14,
-//  PWR_GPIO  = 15,
-//  PWR_RIT   = 16,
-//  PWR_MCPWM = 17,
-//  PWR_QEI   = 18,
-//  PWR_I2C1  = 19,
-//  PWR_SSP0  = 21,
-//  PWR_TIM2  = 22,
-//  PWR_TIM3  = 23,
-//  PWR_UART2 = 24,
-//  PWR_UART3 = 25,
-//  PWR_I2C2  = 26,
-//  PWR_I2S   = 27,
-//  PWR_GPDMA = 29,
-//  PWR_ENET  = 30,
-//  PWR_USB   = 31
-//};
-///*----------------------------------------------------------------------------*/
-///* Divider values for peripheral clock control registers */
-//enum sysClockDiv
-//{
-//  CLK_DIV1 = 0,
-//  CLK_DIV2 = 1,
-//  CLK_DIV4 = 2,
-//  CLK_DIV6 = 3, /* For CAN1, CAN2 and CAN Filtering */
-//  CLK_DIV8 = 3
-//};
-///*----------------------------------------------------------------------------*/
-///* Peripheral clock selection registers */
-//enum sysClockDevice
-//{
-//  /* PCLKSEL0 */
-//  CLK_WDT      = 0,
-//  CLK_TIMER0   = 2,
-//  CLK_TIMER1   = 4,
-//  CLK_UART0    = 6,
-//  CLK_UART1    = 8,
-//  CLK_PWM1     = 12,
-//  CLK_I2C0     = 14,
-//  CLK_SPI      = 16,
-//  CLK_SSP1     = 20,
-//  CLK_DAC      = 22,
-//  CLK_ADC      = 24,
-//  CLK_CAN1     = 26,
-//  CLK_CAN2     = 28,
-//  CLK_ACF      = 30,
-//  /* PCLKSEL1 */
-//  CLK_QEI      = 0x20 + 0,
-//  CLK_GPIOINT  = 0x20 + 2,
-//  CLK_PCB      = 0x20 + 4,
-//  CLK_I2C1     = 0x20 + 6,
-//  CLK_SSP0     = 0x20 + 10,
-//  CLK_TIMER2   = 0x20 + 12,
-//  CLK_TIMER3   = 0x20 + 14,
-//  CLK_UART2    = 0x20 + 16,
-//  CLK_UART3    = 0x20 + 18,
-//  CLK_I2C2     = 0x20 + 20,
-//  CLK_I2S      = 0x20 + 22,
-//  CLK_RIT      = 0x20 + 26,
-//  CLK_SYSCON   = 0x20 + 28,
-//  CLK_MC       = 0x20 + 30
-//};
-///*----------------------------------------------------------------------------*/
-//void sysClockControl(enum sysClockDevice, enum sysClockDiv);
-//void sysFlashLatency(uint8_t);
-///*----------------------------------------------------------------------------*/
-//static inline uint32_t sysClockDivToValue(enum sysClockDiv divisor)
-//{
-//  return 1 << divisor;
-//}
-///*----------------------------------------------------------------------------*/
-//static inline void sysPowerEnable(enum sysPowerDevice block)
-//{
-//  LPC_SC->PCONP |= BIT(block);
-//}
-///*----------------------------------------------------------------------------*/
-//static inline void sysPowerDisable(enum sysPowerDevice block)
-//{
-//  LPC_SC->PCONP &= ~BIT(block);
-//}
+/* Reset control for core and peripherals register */
+enum sysDeviceReset
+{
+  RST_CORE    = 0,
+  RST_PERIPH  = 1,
+  RST_MASTER  = 2,
+  RST_WWDT    = 4,
+  RST_CREG    = 5,
+  RST_BUS     = 8,
+  RST_SCU     = 9,
+  RST_M0SUB   = 12,
+  RST_M4      = 13,
+  RST_LCD     = 16,
+  RST_USB0    = 17,
+  RST_USB1    = 18,
+  RST_GPDMA   = 19,
+  RST_SDIO    = 20,
+  RST_EMC     = 21,
+  RST_ENET    = 22,
+  RST_FLASHA  = 25,
+  RST_EEPROM  = 27,
+  RST_GPIO    = 28,
+  RST_FLASHB  = 29,
+  RST_TIMER0  = 0x20 + 0,
+  RST_TIMER1  = 0x20 + 1,
+  RST_TIMER2  = 0x20 + 2,
+  RST_TIMER3  = 0x20 + 3,
+  RST_RIT     = 0x20 + 4,
+  RST_SCT     = 0x20 + 5,
+  RST_MCPWM   = 0x20 + 6,
+  RST_QEI     = 0x20 + 7,
+  RST_ADC0    = 0x20 + 8,
+  RST_ADC1    = 0x20 + 9,
+  RST_DAC     = 0x20 + 10,
+  RST_USART0  = 0x20 + 12,
+  RST_UART1   = 0x20 + 13,
+  RST_USART2  = 0x20 + 14,
+  RST_USART3  = 0x20 + 15,
+  RST_I2C0    = 0x20 + 16,
+  RST_I2C1    = 0x20 + 17,
+  RST_SSP0    = 0x20 + 18,
+  RST_SSP1    = 0x20 + 19,
+  RST_I2S     = 0x20 + 20,
+  RST_SPIFI   = 0x20 + 21,
+  RST_CAN1    = 0x20 + 22,
+  RST_CAN0    = 0x20 + 23,
+  RST_M0APP   = 0x20 + 24,
+  RST_SGPIO   = 0x20 + 25,
+  RST_SPI     = 0x20 + 26,
+  RST_ADCHS   = 0x20 + 28,
+};
+/*----------------------------------------------------------------------------*/
+void sysResetEnable(enum sysDeviceReset);
+void sysResetDisable(enum sysDeviceReset);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC43XX_SYSTEM_H_ */
