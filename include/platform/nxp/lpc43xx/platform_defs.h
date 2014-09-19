@@ -1006,12 +1006,85 @@ typedef struct
       __ne__ uint32_t RESERVED14[3];
     };
   };
-} LPC_RGU_TypeDef;
+} LPC_RGU_Type;
+/*------------------Universal Asynchronous Receiver Transmitter---------------*/
+typedef struct
+{
+    union
+    {
+      __ro__ uint32_t RBR;
+      __wo__ uint32_t THR;
+      __rw__ uint32_t DLL;
+    };
+    union
+    {
+      __rw__ uint32_t DLM;
+      __rw__ uint32_t IER;
+    };
+    union
+    {
+      __ro__ uint32_t IIR;
+      __wo__ uint32_t FCR;
+    };
+    __rw__ uint32_t LCR;
+    __rw__ uint32_t MCR;
+    __ro__ uint32_t LSR;
+    __ro__ uint32_t MSR;
+    __rw__ uint32_t SCR;
+    __rw__ uint32_t ACR;
+    __ne__ uint32_t RESERVED0;
+    __rw__ uint32_t FDR;
+    __ne__ uint32_t RESERVED1[8];
+    __rw__ uint32_t RS485CTRL;
+    __rw__ uint32_t RS485ADRMATCH;
+    __rw__ uint32_t RS485DLY;
+    __rw__ uint32_t SYNCCTRL;
+    __rw__ uint32_t TER;
+} LPC_USART_Type;
+/*------------------Extended Universal Asynchronous Receiver Transmitter------*/
+/* UART block with modem control, RS485 support and IrDA mode */
+typedef struct
+{
+  union
+  {
+    __ro__ uint32_t RBR;
+    __wo__ uint32_t THR;
+    __rw__ uint32_t DLL;
+  };
+  union
+  {
+    __rw__ uint32_t DLM;
+    __rw__ uint32_t IER;
+  };
+  union
+  {
+    __ro__ uint32_t IIR;
+    __wo__ uint32_t FCR;
+  };
+  __rw__ uint32_t LCR;
+  __ne__ uint32_t RESERVED0;
+  __ro__ uint32_t LSR;
+  __ne__ uint32_t RESERVED1;
+  __rw__ uint32_t SCR;
+  __rw__ uint32_t ACR;
+  __rw__ uint32_t ICR;
+  __rw__ uint32_t FDR;
+  __rw__ uint32_t OSR;
+  __ne__ uint32_t RESERVED2[4];
+  __rw__ uint32_t HDEN;
+  __ne__ uint32_t RESERVED3;
+  __rw__ uint32_t SCICTRL;
+  __rw__ uint32_t RS485CTRL;
+  __rw__ uint32_t RS485ADRMATCH;
+  __rw__ uint32_t RS485DLY;
+  __rw__ uint32_t SYNCCTRL;
+  __rw__ uint32_t TER;
+} LPC_UART_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
 #define LPC_AHB_BASE              (0x40000000UL)
 #define LPC_RTC_DOMAIN_BASE       (0x40040000UL)
-#define LPC_CLK_DOMAIN_BASE       (0x40040000UL)
+#define LPC_CLK_DOMAIN_BASE       (0x40050000UL)
 #define LPC_APB0_BASE             (0x40080000UL)
 #define LPC_APB1_BASE             (0x400A0000UL)
 #define LPC_APB2_BASE             (0x400C0000UL)
@@ -1098,8 +1171,8 @@ typedef struct
 //#define LPC_ETHERNET      ((LPC_ETHERNET_Type *)LPC_ETHERNET_BASE)
 
 //#define LPC_WDT           ((LPC_WDT_Type *)LPC_WDT_BASE)
-//#define LPC_USART0        ((LPC_USART_Type *)LPC_USART0_BASE)
-//#define LPC_UART1         ((LPC_UART_Type *)LPC_UART1_BASE)
+#define LPC_USART0        ((LPC_USART_Type *)LPC_USART0_BASE)
+#define LPC_UART1         ((LPC_UART_Type *)LPC_UART1_BASE)
 #define LPC_SSP0          ((LPC_SSP_Type *)LPC_SSP0_BASE)
 //#define LPC_TIMER0        ((LPC_TIMER_Type *)LPC_TIMER0_BASE)
 //#define LPC_TIMER1        ((LPC_TIMER_Type *)LPC_TIMER1_BASE)
@@ -1117,8 +1190,8 @@ typedef struct
 //#define LPC_CAN1          ((LPC_CAN_Type *)LPC_CAN1_BASE)
 
 //#define LPC_RIT           ((LPC_RIT_Type *)LPC_RIT_BASE)
-//#define LPC_USART2        ((LPC_USART_Type *)LPC_USART2_BASE)
-//#define LPC_USART3        ((LPC_USART_Type *)LPC_USART3_BASE)
+#define LPC_USART2        ((LPC_USART_Type *)LPC_USART2_BASE)
+#define LPC_USART3        ((LPC_USART_Type *)LPC_USART3_BASE)
 //#define LPC_TIMER2        ((LPC_TIMER_Type *)LPC_TIMER2_BASE)
 //#define LPC_TIMER3        ((LPC_TIMER_Type *)LPC_TIMER3_BASE)
 #define LPC_SSP1          ((LPC_SSP_Type *)LPC_SSP1_BASE)
