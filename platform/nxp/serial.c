@@ -139,8 +139,7 @@ static enum result serialInit(void *object, const void *configPtr)
       | FCR_ENABLE;
   /* Enable RBR and THRE interrupts */
   reg->IER = IER_RBR | IER_THRE;
-  /* Enable transmitter */
-  reg->TER = TER_TXEN;
+  /* Transmitter is enabled by default thus TER register is left untouched */
 
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);

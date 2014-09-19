@@ -180,8 +180,7 @@ static enum result oneWireInit(void *object, const void *configPtr)
   reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_ENABLE;
   /* Enable RBR and THRE interrupts */
   reg->IER = IER_RBR | IER_THRE;
-  /* Enable transmitter */
-  reg->TER = TER_TXEN;
+  /* Transmitter is enabled by default */
 
   uartSetRate(object, interface->resetRate);
 

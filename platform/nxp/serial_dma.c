@@ -112,8 +112,7 @@ static enum result serialInit(void *object, const void *configPtr)
       | FCR_ENABLE | FCR_DMA_ENABLE;
   /* Disable all interrupts */
   reg->IER = 0;
-  /* Enable transmitter */
-  reg->TER = TER_TXEN;
+  /* Transmitter is enabled by default */
 
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);
