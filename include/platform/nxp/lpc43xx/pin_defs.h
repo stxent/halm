@@ -12,11 +12,11 @@
 #define SFS_FUNC_MASK                   BIT_FIELD(MASK(3), 0)
 #define SFS_FUNC(func)                  BIT_FIELD((func), 0)
 /*----------------------------------------------------------------------------*/
-#define SFS_PULL_MASK                   BIT_FIELD(MASK(2), 3)
-#define SFS_PULL_INACTIVE               BIT_FIELD(0, 3)
-#define SFS_PULL_PULLDOWN               BIT_FIELD(1, 3)
-#define SFS_PULL_PULLUP                 BIT_FIELD(2, 3)
-#define SFS_PULL_REPEATER               BIT_FIELD(3, 3)
+#define SFS_MODE_MASK                   BIT_FIELD(MASK(2), 3)
+#define SFS_MODE_PULLUP                 BIT_FIELD(0, 3)
+#define SFS_MODE_REPEATER               BIT_FIELD(1, 3)
+#define SFS_MODE_INACTIVE               BIT_FIELD(2, 3)
+#define SFS_MODE_PULLDOWN               BIT_FIELD(3, 3)
 /*----------------------------------------------------------------------------*/
 #define SFS_EHS                         BIT(5) /* Select fast slew rate */
 #define SFS_EZI                         BIT(6) /* Enable input buffer */
