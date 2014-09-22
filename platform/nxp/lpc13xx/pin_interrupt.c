@@ -68,6 +68,9 @@ static void processInterrupt(uint8_t channel)
   const uint32_t state = reg->MIS;
   struct PinInterrupt *interrupt;
 
+  /* Synchronizer logic causes a delay of 2 clocks */
+  reg->IC = state;
+
   while (current)
   {
     listData(list, current, &interrupt);
@@ -81,27 +84,24 @@ static void processInterrupt(uint8_t channel)
 
     current = listNext(current);
   }
-
-  /* Note that synchronizer logic causes a delay of 2 clocks */
-  reg->IC = state; //FIXME Add check
 }
 /*----------------------------------------------------------------------------*/
-void PIOINT0_ISR(void)
+void PIO0_ISR(void)
 {
   processInterrupt(0);
 }
 /*----------------------------------------------------------------------------*/
-void PIOINT1_ISR(void)
+void PIO1_ISR(void)
 {
   processInterrupt(1);
 }
 /*----------------------------------------------------------------------------*/
-void PIOINT2_ISR(void)
+void PIO2_ISR(void)
 {
   processInterrupt(2);
 }
 /*----------------------------------------------------------------------------*/
-void PIOINT3_ISR(void)
+void PIO3_ISR(void)
 {
   processInterrupt(3);
 }

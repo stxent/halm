@@ -33,10 +33,10 @@ void ADC_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void WDT_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void BOD_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void FMC_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void PIOINT3_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void PIOINT2_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void PIOINT1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void PIOINT0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void PIO3_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void PIO2_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void PIO1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void PIO0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void WAKEUP_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
 extern void _stack(void); /* Initial stack pointer */
@@ -122,10 +122,10 @@ __attribute__((section(".isr_vectors"))) void (* const isrVectors[])(void) = {
     WDT_ISR,
     BOD_ISR,
     FMC_ISR,
-    PIOINT3_ISR,
-    PIOINT2_ISR,
-    PIOINT1_ISR,
-    PIOINT0_ISR,
+    PIO3_ISR,
+    PIO2_ISR,
+    PIO1_ISR,
+    PIO0_ISR,
     SSP1_ISR
 };
 /*----------------------------------------------------------------------------*/
