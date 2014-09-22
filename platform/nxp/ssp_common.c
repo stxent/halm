@@ -13,16 +13,17 @@ extern const struct PinEntry sspPins[];
 enum result sspSetupPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
-  /* TODO Pin configuration for SSP slave */
   const struct PinEntry *pinEntry;
   struct Pin pin;
+
+  /* Direction configuration is not needed for alternate function pins */
 
   /* Configure MOSI pin */
   if (config->mosi)
   {
     if (!(pinEntry = pinFind(sspPins, config->mosi, interface->channel)))
       return E_VALUE;
-    pinOutput((pin = pinInit(config->mosi)), 0);
+    pinInput((pin = pinInit(config->mosi)));
     pinSetFunction(pin, pinEntry->value);
   }
 
@@ -40,15 +41,18 @@ enum result sspSetupPins(struct SspBase *interface,
   {
     if (!(pinEntry = pinFind(sspPins, config->sck, interface->channel)))
       return E_VALUE;
-    pinOutput((pin = pinInit(config->sck)), 0);
+    pinInput((pin = pinInit(config->sck)));
     pinSetFunction(pin, pinEntry->value);
   }
 
-  /* Configure Slave Select pin available only in slave mode */
-/*  if (!(pinEntry = pinFind(sspPins, config->cs, interface->channel)))
-    return E_VALUE;
-  pinInput((pin = pinInit(config->cs)));
-  pinSetFunction(pin, pinEntry->value); */
+  /* Slave Select pin configuration needed only in slave mode */
+  if (config->cs)
+  {
+    if (!(pinEntry = pinFind(sspPins, config->cs, interface->channel)))
+      return E_VALUE;
+    pinInput((pin = pinInit(config->cs)));
+    pinSetFunction(pin, pinEntry->value);
+  }
 
   return E_OK;
 }

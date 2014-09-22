@@ -7,7 +7,7 @@
 #include <platform/platform_defs.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY 96000000
+#define INT_OSC_FREQUENCY 12000000
 /*----------------------------------------------------------------------------*/
 static uint32_t mainClockFrequency(void);
 /*----------------------------------------------------------------------------*/

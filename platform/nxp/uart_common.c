@@ -15,6 +15,8 @@ enum result uartSetupPins(struct UartBase *interface,
   const struct PinEntry *pinEntry;
   struct Pin pin;
 
+  /* Direction configuration is not needed for alternate function pins */
+
   /* Setup UART RX pin */
   if (!(pinEntry = pinFind(uartPins, config->rx, interface->channel)))
     return E_VALUE;
@@ -24,7 +26,7 @@ enum result uartSetupPins(struct UartBase *interface,
   /* Setup UART TX pin */
   if (!(pinEntry = pinFind(uartPins, config->tx, interface->channel)))
     return E_VALUE;
-  pinOutput((pin = pinInit(config->tx)), 1);
+  pinInput((pin = pinInit(config->tx)));
   pinSetFunction(pin, pinEntry->value);
 
   return E_OK;

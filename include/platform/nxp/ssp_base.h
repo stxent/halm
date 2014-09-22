@@ -13,7 +13,6 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SspBase;
 /*----------------------------------------------------------------------------*/
-/* TODO Add master/slave select */
 struct SspBaseConfig
 {
   /** Optional: slave select pin. Available in slave mode only. */
