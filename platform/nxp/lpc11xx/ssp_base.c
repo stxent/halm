@@ -99,7 +99,7 @@ static struct SspBase *descriptors[2] = {0};
 static enum result setDescriptor(uint8_t channel,
     const struct SspBase *state, struct SspBase *interface)
 {
-  assert(channel < sizeof(descriptors));
+  assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
       interface) ? E_OK : E_BUSY;

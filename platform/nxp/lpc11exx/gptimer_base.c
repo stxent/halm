@@ -217,7 +217,7 @@ static struct GpTimerBase *descriptors[4] = {0};
 static enum result setDescriptor(uint8_t channel,
     const struct GpTimerBase *state, struct GpTimerBase *timer)
 {
-  assert(channel < sizeof(descriptors));
+  assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
       timer) ? E_OK : E_BUSY;

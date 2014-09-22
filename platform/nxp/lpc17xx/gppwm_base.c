@@ -99,7 +99,7 @@ static struct GpPwmUnitBase *descriptors[1] = {0};
 static enum result setDescriptor(uint8_t channel,
     const struct GpPwmUnitBase *state, struct GpPwmUnitBase *unit)
 {
-  assert(channel < sizeof(descriptors));
+  assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
       unit) ? E_OK : E_BUSY;

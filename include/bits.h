@@ -12,4 +12,6 @@
 #define FIELD_VALUE(reg, mask, shift)   (((reg) & (mask)) >> (shift))
 #define MASK(width)                     ((1UL << (width)) - 1)
 /*----------------------------------------------------------------------------*/
+#define ARRAY_SIZE(array)               (sizeof(array) / sizeof(*(array)))
+/*----------------------------------------------------------------------------*/
 #endif /* BITS_H_ */

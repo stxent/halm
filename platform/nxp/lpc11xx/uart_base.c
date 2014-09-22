@@ -61,7 +61,7 @@ static struct UartBase *descriptors[1] = {0};
 static enum result setDescriptor(uint8_t channel, const struct UartBase *state,
     struct UartBase *interface)
 {
-  assert(channel < sizeof(descriptors));
+  assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
       interface) ? E_OK : E_BUSY;
