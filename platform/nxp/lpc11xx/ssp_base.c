@@ -29,45 +29,65 @@ static const struct EntityClass sspTable = {
 /*----------------------------------------------------------------------------*/
 const struct PinEntry sspPins[] = {
     {
-        .key = PIN(0, 2), /* SSP0_SSEL */
+        .key = PIN(0, 2), /* SSEL0 */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(0, 6), /* SSP0_SCK */
+        .key = PIN(0, 6), /* SCK0 */
         .channel = 0,
         .value = 2
     }, {
-        .key = PIN(0, 8), /* SSP0_MISO */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = PIN(0, 9), /* SSP0_MOSI */
+        .key = PIN(0, 8), /* MISO0 */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(0, 10), /* SSP0_SCK */
-        .channel = 0,
-        .value = 2
-    }, {
-        .key = PIN(2, 0), /* SSP1_SSEL */
-        .channel = 1,
-        .value = 2
-    }, {
-        .key = PIN(2, 1), /* SSP1_SCK */
-        .channel = 1,
-        .value = 2
-    }, {
-        .key = PIN(2, 2), /* SSP1_MISO */
-        .channel = 1,
-        .value = 2
-    }, {
-        .key = PIN(2, 3), /* SSP1_MOSI */
-        .channel = 1,
-        .value = 2
-    }, {
-        .key = PIN(2, 11), /* SSP0_SCK */
+        .key = PIN(0, 9), /* MOSI0 */
         .channel = 0,
         .value = 1
+    }, {
+        .key = PIN(0, 10), /* SCK0 */
+        .channel = 0,
+        .value = 2
+    }, {
+        /* Available on LPC1100XL only */
+        .key = PIN(1, 9), /* MOSI1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        /* Available on LPC1100XL only */
+        .key = PIN(1, 10), /* MISO1 */
+        .channel = 1,
+        .value = 3
+    }, {
+        .key = PIN(2, 0), /* SSEL1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(2, 1), /* SCK1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(2, 2), /* MISO1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(2, 3), /* MOSI1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        /* Available on LPC1100XL only */
+        .key = PIN(2, 4), /* SSEL1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(2, 11), /* SCK0 */
+        .channel = 0,
+        .value = 1
+    }, {
+        /* Available on LPC1100XL only */
+        .key = PIN(3, 2), /* SCK1 */
+        .channel = 1,
+        .value = 3
     }, {
         .key = 0 /* End of pin function association list */
     }
@@ -119,6 +139,11 @@ static enum result sspInit(void *object, const void *configPtr)
 
   interface->handler = 0;
 
+  /*
+   * SSP1 configuration differs for latest silicon revisions and is not
+   * completely reentrant. Device should be reset to configure peripheral
+   * with different pins.
+   */
   switch (interface->channel)
   {
     case 0:
@@ -151,6 +176,20 @@ static enum result sspInit(void *object, const void *configPtr)
       LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP1;
       interface->reg = LPC_SSP1;
       interface->irq = SSP1_IRQ;
+
+      /* Configure pin locations for LPC1100XL */
+      if (config->sck == PIN(3, 2))
+        LPC_IOCON->SCK1_LOC = 1;
+
+      if (config->cs == PIN(2, 4))
+        LPC_IOCON->SSEL1_LOC = 1;
+
+      if (config->miso == PIN(1, 10))
+        LPC_IOCON->MISO1_LOC = 1;
+
+      if (config->mosi == PIN(1, 9))
+        LPC_IOCON->MOSI1_LOC = 1;
+
       break;
   }
 

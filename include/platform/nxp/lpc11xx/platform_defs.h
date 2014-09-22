@@ -90,7 +90,7 @@ typedef struct
   __rw__ uint32_t RESET_PIO0_0;
   __rw__ uint32_t PIO0_1;
   __rw__ uint32_t PIO1_8;
-  __ne__ uint32_t RESERVED1;
+  __rw__ uint32_t SSEL1_LOC; /* Available on LPC1100XL only */
   __rw__ uint32_t PIO0_2;
 
   /* Offset 0x20 */
@@ -142,6 +142,14 @@ typedef struct
   __rw__ uint32_t DSR_LOC;
   __rw__ uint32_t DCD_LOC;
   __rw__ uint32_t RI_LOC;
+
+  /* Offset 0xC0: registers are available on LPC1100XL only */
+  __rw__ uint32_t CT16B0_CAP0_LOC;
+  __rw__ uint32_t SCK1_LOC;
+  __rw__ uint32_t MISO1_LOC;
+  __rw__ uint32_t MOSI1_LOC;
+  __rw__ uint32_t CT32B0_CAP0_LOC;
+  __rw__ uint32_t RXD_LOC;
 } LPC_IOCON_Type;
 /*------------------Power Management Unit-------------------------------------*/
 typedef struct

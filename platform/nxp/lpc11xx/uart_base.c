@@ -28,13 +28,28 @@ static const struct EntityClass uartTable = {
 /*----------------------------------------------------------------------------*/
 const struct PinEntry uartPins[] = {
     {
-        .key = PIN(1, 6), /* UART_RX */
+        .key = PIN(1, 6), /* RXD */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(1, 7), /* UART_TX */
+        .key = PIN(1, 7), /* TXD */
         .channel = 0,
         .value = 1
+    }, {
+        /* Available on LPC1100XL only */
+        .key = PIN(2, 7), /* RXD */
+        .channel = 0,
+        .value = 2
+    }, {
+        /* Available on LPC1100XL only */
+        .key = PIN(3, 1), /* RXD */
+        .channel = 0,
+        .value = 3
+    }, {
+        /* Available on LPC1100XL only */
+        .key = PIN(3, 4), /* RXD */
+        .channel = 0,
+        .value = 2
     }, {
         .key = 0 /* End of pin function association list */
     }
@@ -84,6 +99,30 @@ static enum result uartInit(void *object, const void *configPtr)
   LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV;
   interface->reg = LPC_UART;
   interface->irq = UART_IRQ;
+
+  /*
+   * Configuration differs for latest silicon revisions and is not
+   * completely reentrant. Device should be reset to configure peripheral
+   * with different pins.
+   */
+  switch (config->rx)
+  {
+    case PIN(2, 7):
+      LPC_IOCON->RXD_LOC = 1;
+      break;
+
+    case PIN(3, 1):
+      LPC_IOCON->RXD_LOC = 2;
+      break;
+
+    case PIN(3, 4):
+      LPC_IOCON->RXD_LOC = 3;
+      break;
+
+    default:
+      /* Do nothing to ensure compatibility with older revisions  */
+      break;
+  }
 
   return E_OK;
 }
