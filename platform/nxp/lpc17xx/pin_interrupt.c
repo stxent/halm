@@ -17,15 +17,14 @@ struct PinInterruptHandler
 {
   struct Entity parent;
 
-  struct List list0;
-  struct List list2;
+  struct List list[2];
 };
 /*----------------------------------------------------------------------------*/
-static void disableInterrupt(union PinData);
-static void enableInterrupt(union PinData, enum pinEvent);
+static void disableInterrupt(uint8_t, union PinData);
+static void enableInterrupt(uint8_t, union PinData, enum pinEvent);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerAttach(union PinData,
+static enum result pinInterruptHandlerAttach(uint8_t, union PinData,
     const struct PinInterrupt *);
 static void pinInterruptHandlerDetach(const struct PinInterrupt *);
 static enum result pinInterruptHandlerInit(void *, const void *);
@@ -54,71 +53,33 @@ static const struct EntityClass * const PinInterruptHandler = &handlerTable;
 const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
 static struct PinInterruptHandler *handler = 0;
 /*----------------------------------------------------------------------------*/
-static void disableInterrupt(union PinData pin)
+static void disableInterrupt(uint8_t channel, union PinData pin)
 {
   const uint32_t mask = 1 << pin.offset;
 
-  switch (pin.port)
-  {
-    case 0:
-      LPC_GPIO_INT->ENF0 &= ~mask;
-      LPC_GPIO_INT->ENR0 &= ~mask;
-      break;
-
-    case 2:
-      LPC_GPIO_INT->ENF2 &= ~mask;
-      LPC_GPIO_INT->ENR2 &= ~mask;
-      break;
-  }
+  LPC_GPIO_INT->PORT[channel].ENF &= ~mask;
+  LPC_GPIO_INT->PORT[channel].ENR &= ~mask;
 }
 /*----------------------------------------------------------------------------*/
-static void enableInterrupt(union PinData pin, enum pinEvent event)
+static void enableInterrupt(uint8_t channel, union PinData pin,
+    enum pinEvent event)
 {
   const uint32_t mask = 1 << pin.offset;
 
-  switch (pin.port)
-  {
-    case 0:
-      /* Clear pending interrupt flag */
-      LPC_GPIO_INT->CLR0 = mask;
-      /* Configure edge sensitivity options */
-      if (event != PIN_RISING)
-        LPC_GPIO_INT->ENF0 |= mask;
-      if (event != PIN_FALLING)
-        LPC_GPIO_INT->ENR0 |= mask;
-      break;
-
-    case 2:
-      LPC_GPIO_INT->CLR2 = mask;
-      if (event != PIN_RISING)
-        LPC_GPIO_INT->ENF2 |= mask;
-      if (event != PIN_FALLING)
-        LPC_GPIO_INT->ENR2 |= mask;
-      break;
-  }
+  /* Clear pending interrupt flag */
+  LPC_GPIO_INT->PORT[channel].CLR = mask;
+  /* Configure edge sensitivity options */
+  if (event != PIN_RISING)
+    LPC_GPIO_INT->PORT[channel].ENF |= mask;
+  if (event != PIN_FALLING)
+    LPC_GPIO_INT->PORT[channel].ENR |= mask;
 }
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  const struct List *list;
-  volatile uint32_t *cleaner;
-  uint32_t state;
-
-  switch (channel)
-  {
-    case 0:
-      cleaner = &LPC_GPIO_INT->CLR0;
-      state = LPC_GPIO_INT->STATR0 | LPC_GPIO_INT->STATF0;
-      list = &handler->list0;
-      break;
-
-    case 2:
-      cleaner = &LPC_GPIO_INT->CLR2;
-      state = LPC_GPIO_INT->STATR2 | LPC_GPIO_INT->STATF2;
-      list = &handler->list2;
-      break;
-  }
-
+  const struct List * const list = &handler->list[channel];
+  const uint32_t state = LPC_GPIO_INT->PORT[channel].STATR
+      | LPC_GPIO_INT->PORT[channel].STATF;
   const struct ListNode *current = listFirst(list);
   struct PinInterrupt *interrupt;
 
@@ -136,7 +97,7 @@ static void processInterrupt(uint8_t channel)
     current = listNext(current);
   }
 
-  *cleaner = state;
+  LPC_GPIO_INT->PORT[channel].CLR = state;
 }
 /*----------------------------------------------------------------------------*/
 void EINT3_ISR(void)
@@ -145,10 +106,10 @@ void EINT3_ISR(void)
     processInterrupt(0);
 
   if (LPC_GPIO_INT->STATUS & STATUS_P2INT)
-    processInterrupt(2);
+    processInterrupt(1);
 }
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerAttach(union PinData pin,
+static enum result pinInterruptHandlerAttach(uint8_t channel, union PinData pin,
     const struct PinInterrupt *interrupt)
 {
   if (!handler)
@@ -156,23 +117,7 @@ static enum result pinInterruptHandlerAttach(union PinData pin,
 
   assert(handler);
 
-  struct List *list;
-
-  switch (pin.port)
-  {
-    case 0:
-      list = &handler->list0;
-      break;
-
-    case 2:
-      list = &handler->list2;
-      break;
-
-    default:
-      /* External interrupt functionality is available only on two ports */
-      return E_VALUE;
-  }
-
+  struct List * const list = &handler->list[channel];
   const struct ListNode *current = listFirst(list);
   struct PinInterrupt *entry;
 
@@ -188,7 +133,8 @@ static enum result pinInterruptHandlerAttach(union PinData pin,
   }
 
   /* Add to list */
-  const bool empty = listEmpty(&handler->list0) && listEmpty(&handler->list2);
+  const bool empty = listEmpty(&handler->list[0])
+      && listEmpty(&handler->list[1]);
   const enum result res = listPush(list, &interrupt);
 
   if (res == E_OK && empty)
@@ -203,8 +149,7 @@ static enum result pinInterruptHandlerAttach(union PinData pin,
 /*----------------------------------------------------------------------------*/
 static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
 {
-  struct List * const list = !interrupt->pin.port ? &handler->list0
-      : &handler->list2;
+  struct List * const list = &handler->list[interrupt->channel];
   struct ListNode *current = listFirst(list);
   struct PinInterrupt *entry;
 
@@ -215,7 +160,7 @@ static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
     if (entry == interrupt)
     {
       listErase(list, current);
-      if (listEmpty(&handler->list0) && listEmpty(&handler->list2))
+      if (listEmpty(&handler->list[0]) && listEmpty(&handler->list[1]))
         irqDisable(EINT3_IRQ);
       break;
     }
@@ -230,10 +175,12 @@ static enum result pinInterruptHandlerInit(void *object,
   struct PinInterruptHandler * const handler = object;
   enum result res;
 
-  if ((res = listInit(&handler->list0, sizeof(struct PinInterrupt *))) != E_OK)
+  res = listInit(&handler->list[0], sizeof(struct PinInterrupt *));
+  if (res != E_OK)
     return res;
 
-  if ((res = listInit(&handler->list2, sizeof(struct PinInterrupt *))) != E_OK)
+  res = listInit(&handler->list[1], sizeof(struct PinInterrupt *));
+  if (res != E_OK)
     return res;
 
   return E_OK;
@@ -249,8 +196,15 @@ static enum result pinInterruptInit(void *object, const void *configPtr)
   if (!pinValid(input))
     return E_VALUE;
 
+  /* External interrupt functionality is available only on two ports */
+  if (input.data.port != 0 && input.data.port != 2)
+    return E_VALUE;
+  /* Map ports 0 and 2 on channels 0 and 1 */
+  interrupt->channel = input.data.port >> 1;
+
   /* Try to register pin interrupt in the interrupt handler */
-  if ((res = pinInterruptHandlerAttach(input.data, interrupt)) != E_OK)
+  res = pinInterruptHandlerAttach(interrupt->channel, input.data, interrupt);
+  if (res != E_OK)
     return res;
 
   /* Configure the pin */
@@ -261,17 +215,17 @@ static enum result pinInterruptInit(void *object, const void *configPtr)
   interrupt->event = config->event;
   interrupt->pin = input.data;
 
-  enableInterrupt(interrupt->pin, interrupt->event);
+  enableInterrupt(interrupt->channel, interrupt->pin, interrupt->event);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptDeinit(void *object)
 {
-  const union PinData pin = ((struct PinInterrupt *)object)->pin;
+  const struct PinInterrupt * const interrupt = object;
 
-  disableInterrupt(pin);
-  pinInterruptHandlerDetach(object);
+  disableInterrupt(interrupt->channel, interrupt->pin);
+  pinInterruptHandlerDetach(interrupt);
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptCallback(void *object, void (*callback)(void *),
@@ -285,10 +239,10 @@ static void pinInterruptCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static void pinInterruptSetEnabled(void *object, bool state)
 {
-  struct PinInterrupt * const interrupt = object;
+  const struct PinInterrupt * const interrupt = object;
 
   if (state)
-    enableInterrupt(interrupt->pin, interrupt->event);
+    enableInterrupt(interrupt->channel, interrupt->pin, interrupt->event);
   else
-    disableInterrupt(interrupt->pin);
+    disableInterrupt(interrupt->channel, interrupt->pin);
 }

@@ -188,6 +188,7 @@ static enum result pinInterruptInit(void *object, const void *configPtr)
   pinSetPull(input, config->pull);
 
   interrupt->callback = 0;
+  interrupt->channel = 0; /* Channel field is left unused */
   interrupt->event = config->event;
   interrupt->pin = input.data;
 

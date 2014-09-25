@@ -111,17 +111,35 @@ typedef struct
 typedef struct
 {
   __ro__ uint32_t STATUS;
-  __ro__ uint32_t STATR0;
-  __ro__ uint32_t STATF0;
-  __wo__ uint32_t CLR0;
-  __rw__ uint32_t ENR0;
-  __rw__ uint32_t ENF0;
-  __ne__ uint32_t RESERVED0[3];
-  __ro__ uint32_t STATR2;
-  __ro__ uint32_t STATF2;
-  __wo__ uint32_t CLR2;
-  __rw__ uint32_t ENR2;
-  __rw__ uint32_t ENF2;
+  union
+  {
+    struct
+    {
+      __ro__ uint32_t STATR;
+      __ro__ uint32_t STATF;
+      __wo__ uint32_t CLR;
+      __rw__ uint32_t ENR;
+      __rw__ uint32_t ENF;
+      __ne__ uint32_t RESERVED[3];
+    } PORT[2];
+
+    struct
+    {
+      __ro__ uint32_t STATR0;
+      __ro__ uint32_t STATF0;
+      __wo__ uint32_t CLR0;
+      __rw__ uint32_t ENR0;
+      __rw__ uint32_t ENF0;
+      __ne__ uint32_t RESERVED0[3];
+      __ro__ uint32_t STATR2;
+      __ro__ uint32_t STATF2;
+      __wo__ uint32_t CLR2;
+      __rw__ uint32_t ENR2;
+      __rw__ uint32_t ENF2;
+      __ne__ uint32_t RESERVED1[3];
+    };
+  };
+
 } LPC_GPIO_INT_Type;
 /*------------------Timer/Counter---------------------------------------------*/
 typedef struct
