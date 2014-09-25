@@ -34,7 +34,10 @@ unsigned int byteQueuePopArray(struct ByteQueue *queue, uint8_t *buffer,
 {
   unsigned short count, moved = 0;
 
-  if (queue->ceil < queue->floor)
+  if (!queue->size)
+    return 0;
+
+  if (queue->ceil <= queue->floor)
   {
     count = queue->capacity - queue->floor;
 
@@ -44,7 +47,7 @@ unsigned int byteQueuePopArray(struct ByteQueue *queue, uint8_t *buffer,
     if (count)
     {
       memcpy(buffer, queue->data + queue->floor, count);
-      queue->floor = queue->floor + count;
+      queue->floor += count;
       if (queue->floor == queue->capacity)
         queue->floor = 0;
       queue->size -= count;
@@ -55,7 +58,7 @@ unsigned int byteQueuePopArray(struct ByteQueue *queue, uint8_t *buffer,
     }
   }
 
-  if (queue->ceil >= queue->floor)
+  if (queue->ceil > queue->floor)
   {
     count = queue->ceil - queue->floor;
 
