@@ -680,8 +680,15 @@ typedef struct
   __ne__ uint32_t RESERVED20[31];
 
   /* Offset 0xE00 */
-  __rw__ uint32_t PINTSEL0;
-  __rw__ uint32_t PINTSEL1;
+  union
+  {
+    __rw__ uint32_t PINTSEL[2];
+    struct
+    {
+      __rw__ uint32_t PINTSEL0;
+      __rw__ uint32_t PINTSEL1;
+    };
+  };
 } LPC_SCU_Type;
 /*------------------General Purpose Input/Output------------------------------*/
 typedef struct

@@ -28,6 +28,10 @@
 #define SFS_STRENGTH_HIGH               BIT_FIELD(2, 8)
 #define SFS_STRENGTH_ULTRAHIGH          BIT_FIELD(3, 8)
 /*----------------------------------------------------------------------------*/
+#define PINTSEL_CHANNEL_MASK(channel)   BIT_FIELD(MASK(8), channel << 3)
+#define PINTSEL_CHANNEL(channel, port, offset) \
+    BIT_FIELD(((port) << 5) | (offset), (channel) << 3)
+/*----------------------------------------------------------------------------*/
 //TODO USB and I2C pins
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC43XX_PIN_DEFS_H_ */
