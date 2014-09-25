@@ -98,7 +98,7 @@ const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *, pin_t,
 /*----------------------------------------------------------------------------*/
 static inline bool pinValid(struct Pin pin)
 {
-  return (pin_t)(pin.data.key) != 0 || pin.reg != 0;
+  return (pin_t)(pin.data.key) != 0 && pin.reg != 0;
 }
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
