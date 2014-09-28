@@ -147,9 +147,9 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2cInit(void *object, const void *configPtr)
+static enum result i2cInit(void *object, const void *configBase)
 {
-  const struct I2cConfig * const config = configPtr;
+  const struct I2cConfig * const config = configBase;
   const struct I2cBaseConfig parentConfig = {
       .channel = config->channel,
       .scl = config->scl,

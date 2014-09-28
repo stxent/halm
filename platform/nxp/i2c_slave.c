@@ -124,9 +124,9 @@ static enum result powerStateHandler(void *object, enum pmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result i2cInit(void *object, const void *configPtr)
+static enum result i2cInit(void *object, const void *configBase)
 {
-  const struct I2cSlaveConfig * const config = configPtr;
+  const struct I2cSlaveConfig * const config = configBase;
   const struct I2cBaseConfig parentConfig = {
       .channel = config->channel,
       .scl = config->scl,

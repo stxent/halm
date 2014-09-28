@@ -89,9 +89,9 @@ static int8_t setupMatchPin(uint8_t channel, pin_t key)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *object, const void *configPtr)
+static enum result unitInit(void *object, const void *configBase)
 {
-  const struct GpPwmUnitConfig * const config = configPtr;
+  const struct GpPwmUnitConfig * const config = configBase;
   const struct GpPwmUnitBaseConfig parentConfig = {
       .channel = config->channel
   };
@@ -172,9 +172,9 @@ static void channelSetFrequency(void *object, uint32_t frequency)
   reg->PR = clockFrequency / timerFrequency - 1;
 }
 /*----------------------------------------------------------------------------*/
-static enum result singleEdgeInit(void *object, const void *configPtr)
+static enum result singleEdgeInit(void *object, const void *configBase)
 {
-  const struct GpPwmConfig * const config = configPtr;
+  const struct GpPwmConfig * const config = configBase;
   struct GpPwm * const pwm = object;
   int8_t channel;
 
@@ -245,9 +245,9 @@ static void singleEdgeSetEdges(void *object,
   reg->LER |= LER_ENABLE_LATCH(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
-static enum result doubleEdgeInit(void *object, const void *configPtr)
+static enum result doubleEdgeInit(void *object, const void *configBase)
 {
-  const struct GpPwmDoubleEdgeConfig * const config = configPtr;
+  const struct GpPwmDoubleEdgeConfig * const config = configBase;
   struct GpPwmDoubleEdge * const pwm = object;
   int8_t channel;
 

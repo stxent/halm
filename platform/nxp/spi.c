@@ -81,9 +81,9 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiInit(void *object, const void *configPtr)
+static enum result spiInit(void *object, const void *configBase)
 {
-  const struct SpiConfig * const config = configPtr;
+  const struct SpiConfig * const config = configBase;
   const struct SspBaseConfig parentConfig = {
       .channel = config->channel,
       .miso = config->miso,

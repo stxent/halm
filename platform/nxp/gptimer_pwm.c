@@ -61,9 +61,9 @@ static void updateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
   reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *object, const void *configPtr)
+static enum result unitInit(void *object, const void *configBase)
 {
-  const struct GpTimerPwmUnitConfig * const config = configPtr;
+  const struct GpTimerPwmUnitConfig * const config = configBase;
   const struct GpTimerBaseConfig parentConfig = {
       .channel = config->channel
   };
@@ -115,9 +115,9 @@ static void unitDeinit(void *object)
   GpTimerBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configPtr)
+static enum result channelInit(void *object, const void *configBase)
 {
-  const struct GpTimerPwmConfig * const config = configPtr;
+  const struct GpTimerPwmConfig * const config = configBase;
   struct GpTimerPwm * const pwm = object;
   int8_t freeChannel, pwmChannel;
 

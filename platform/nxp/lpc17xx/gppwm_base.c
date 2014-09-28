@@ -110,9 +110,9 @@ uint32_t gpPwmGetClock(struct GpPwmUnitBase *unit __attribute__((unused)))
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *object, const void *configPtr)
+static enum result unitInit(void *object, const void *configBase)
 {
-  const struct GpPwmUnitBaseConfig * const config = configPtr;
+  const struct GpPwmUnitBaseConfig * const config = configBase;
   struct GpPwmUnitBase * const unit = object;
   enum result res;
 

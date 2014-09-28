@@ -86,9 +86,9 @@ static inline uint32_t resultWidthExponent(void)
   return ADC_RESOLUTION >> 3;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcUnitInit(void *object, const void *configPtr)
+static enum result adcUnitInit(void *object, const void *configBase)
 {
-  const struct AdcUnitConfig * const config = configPtr;
+  const struct AdcUnitConfig * const config = configBase;
   const struct AdcUnitBaseConfig parentConfig = {
       .channel = config->channel
   };
@@ -121,9 +121,9 @@ static void adcUnitDeinit(void *object)
   AdcUnitBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *object, const void *configPtr)
+static enum result adcInit(void *object, const void *configBase)
 {
-  const struct AdcConfig * const config = configPtr;
+  const struct AdcConfig * const config = configBase;
   const struct PinEntry *pinEntry;
   struct Adc * const interface = object;
 

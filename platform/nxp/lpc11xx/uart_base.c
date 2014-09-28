@@ -79,9 +79,9 @@ uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
       / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result uartInit(void *object, const void *configPtr)
+static enum result uartInit(void *object, const void *configBase)
 {
-  const struct UartBaseConfig * const config = configPtr;
+  const struct UartBaseConfig * const config = configBase;
   struct UartBase * const interface = object;
   enum result res;
 

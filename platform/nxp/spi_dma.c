@@ -116,9 +116,9 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiInit(void *object, const void *configPtr)
+static enum result spiInit(void *object, const void *configBase)
 {
-  const struct SpiDmaConfig * const config = configPtr;
+  const struct SpiDmaConfig * const config = configBase;
   const struct SspBaseConfig parentConfig = {
       .channel = config->channel,
       .miso = config->miso,

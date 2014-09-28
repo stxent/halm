@@ -101,9 +101,9 @@ static enum result powerStateHandler(void *object, enum pmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(void *object, const void *configPtr)
+static enum result serialInit(void *object, const void *configBase)
 {
-  const struct SerialConfig * const config = configPtr;
+  const struct SerialConfig * const config = configBase;
   const struct UartBaseConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,

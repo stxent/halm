@@ -377,9 +377,9 @@ static enum result writeBlock(struct SdioSpi *device, const uint8_t *buffer,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioInit(void *object, const void *configPtr)
+static enum result sdioInit(void *object, const void *configBase)
 {
-  const struct SdioSpiConfig * const config = configPtr;
+  const struct SdioSpiConfig * const config = configBase;
   struct SdioSpi * const device = object;
   enum result res;
 

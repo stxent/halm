@@ -92,9 +92,9 @@ static enum result updateFrequency(struct GpTimer *timer, uint32_t frequency)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configPtr)
+static enum result tmrInit(void *object, const void *configBase)
 {
-  const struct GpTimerConfig * const config = configPtr;
+  const struct GpTimerConfig * const config = configBase;
   const struct GpTimerBaseConfig parentConfig = {
       .channel = config->channel
   };

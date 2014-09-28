@@ -113,9 +113,9 @@ void SYSTICK_ISR(void)
     descriptor->handler(descriptor);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configPtr)
+static enum result tmrInit(void *object, const void *configBase)
 {
-  const struct SysTickTimerConfig * const config = configPtr;
+  const struct SysTickTimerConfig * const config = configBase;
   struct SysTickTimer * const timer = object;
   enum result res;
 

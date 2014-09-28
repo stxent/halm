@@ -120,9 +120,9 @@ uint32_t sspGetClock(const struct SspBase *interface __attribute__((unused)))
       / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sspInit(void *object, const void *configPtr)
+static enum result sspInit(void *object, const void *configBase)
 {
-  const struct SspBaseConfig * const config = configPtr;
+  const struct SspBaseConfig * const config = configBase;
   struct SspBase * const interface = object;
   enum result res;
 

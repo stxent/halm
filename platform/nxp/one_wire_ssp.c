@@ -151,9 +151,9 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireInit(void *object, const void *configPtr)
+static enum result oneWireInit(void *object, const void *configBase)
 {
-  const struct OneWireSspConfig * const config = configPtr;
+  const struct OneWireSspConfig * const config = configBase;
   const struct SspBaseConfig parentConfig = {
       .channel = config->channel,
       .miso = config->miso,

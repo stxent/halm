@@ -99,9 +99,9 @@ static enum result extOscDisable(void)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscEnable(const void *configPtr)
+static enum result extOscEnable(const void *configBase)
 {
-  const struct ExternalOscConfig * const config = configPtr;
+  const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = LPC_SC->SCS | SCS_OSCEN;
 
   /*
@@ -141,9 +141,9 @@ static enum result sysPllDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllEnable(const void *configPtr)
+static enum result sysPllEnable(const void *configBase)
 {
-  const struct PllConfig * const config = configPtr;
+  const struct PllConfig * const config = configBase;
   uint32_t frequency; /* Resulting CCO frequency */
   uint32_t source; /* Clock Source Select register value */
   uint16_t multiplier;
@@ -233,9 +233,9 @@ static bool sysPllReady(void)
   return pllFrequency && (LPC_SC->PLL0STAT & PLL0STAT_LOCK ? true : false);
 }
 /*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *configPtr)
+static enum result mainClockEnable(const void *configBase)
 {
-  const struct MainClockConfig * const config = configPtr;
+  const struct MainClockConfig * const config = configBase;
 
   switch (config->source)
   {

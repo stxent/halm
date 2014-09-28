@@ -200,9 +200,9 @@ uint32_t gpTimerGetClock(struct GpTimerBase *timer __attribute__((unused)))
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configPtr)
+static enum result tmrInit(void *object, const void *configBase)
 {
-  const struct GpTimerBaseConfig * const config = configPtr;
+  const struct GpTimerBaseConfig * const config = configBase;
   struct GpTimerBase * const timer = object;
   enum result res;
 

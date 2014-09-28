@@ -37,7 +37,7 @@ static const struct EntityClass * const PmHandler = &handlerTable;
 static struct PmHandler *pmHandler = 0;
 /*----------------------------------------------------------------------------*/
 static enum result pmHandlerInit(void *object,
-    const void *configPtr __attribute__((unused)))
+    const void *configBase __attribute__((unused)))
 {
   struct PmHandler * const handler = object;
 

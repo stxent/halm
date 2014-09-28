@@ -85,7 +85,7 @@ static inline void pinHandlerDetach()
 }
 /*----------------------------------------------------------------------------*/
 static enum result pinHandlerInit(void *object,
-    const void *configPtr __attribute__((unused)))
+    const void *configBase __attribute__((unused)))
 {
   struct PinHandler * const handler = object;
 

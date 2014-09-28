@@ -34,9 +34,9 @@ static const struct GpioBusClass gpioBusTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioBusClass * const GpioBus = &gpioBusTable;
 /*----------------------------------------------------------------------------*/
-static enum result busInit(void *object, const void *configPtr)
+static enum result busInit(void *object, const void *configBase)
 {
-  const struct GpioBusConfig * const config = configPtr;
+  const struct GpioBusConfig * const config = configBase;
   struct CommonGpioBus * const bus = object;
   uint8_t position = 0;
 

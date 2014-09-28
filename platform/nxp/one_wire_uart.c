@@ -140,9 +140,9 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireInit(void *object, const void *configPtr)
+static enum result oneWireInit(void *object, const void *configBase)
 {
-  const struct OneWireUartConfig * const config = configPtr;
+  const struct OneWireUartConfig * const config = configBase;
   const struct UartBaseConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,

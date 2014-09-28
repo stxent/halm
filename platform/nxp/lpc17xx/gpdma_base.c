@@ -193,7 +193,7 @@ static inline void dmaHandlerDetach()
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaHandlerInit(void *object,
-    const void *configPtr __attribute__((unused)))
+    const void *configBase __attribute__((unused)))
 {
   struct DmaHandler * const handler = object;
 
@@ -205,9 +205,9 @@ static enum result dmaHandlerInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configPtr)
+static enum result channelInit(void *object, const void *configBase)
 {
-  const struct GpDmaBaseConfig * const config = configPtr;
+  const struct GpDmaBaseConfig * const config = configBase;
   struct GpDmaBase * const channel = object;
 
   assert(config->channel < GPDMA_CHANNEL_COUNT);

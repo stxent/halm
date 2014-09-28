@@ -29,9 +29,9 @@ static const struct InterfaceClass dacTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Dac = &dacTable;
 /*----------------------------------------------------------------------------*/
-static enum result dacInit(void *object, const void *configPtr)
+static enum result dacInit(void *object, const void *configBase)
 {
-  const struct DacConfig * const config = configPtr;
+  const struct DacConfig * const config = configBase;
   const struct DacBaseConfig parentConfig = {
       .pin = config->pin
   };

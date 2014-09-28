@@ -79,9 +79,9 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(void *object, const void *configPtr)
+static enum result serialInit(void *object, const void *configBase)
 {
-  const struct SerialDmaConfig * const config = configPtr;
+  const struct SerialDmaConfig * const config = configBase;
   const struct UartBaseConfig parentConfig = {
       .channel = config->channel,
       .rx = config->rx,

@@ -117,9 +117,9 @@ static enum result extOscDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscEnable(const void *configPtr)
+static enum result extOscEnable(const void *configBase)
 {
-  const struct ExternalOscConfig * const config = configPtr;
+  const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = 0;
 
   if (config->bypass)
@@ -168,7 +168,7 @@ static enum result intOscDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result intOscEnable(const void *configPtr __attribute__((unused)))
+static enum result intOscEnable(const void *configBase __attribute__((unused)))
 {
   sysPowerEnable(PWR_IRC);
   sysPowerEnable(PWR_IRCOUT);
@@ -197,9 +197,9 @@ static enum result sysPllDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllEnable(const void *configPtr)
+static enum result sysPllEnable(const void *configBase)
 {
-  const struct PllConfig * const config = configPtr;
+  const struct PllConfig * const config = configBase;
   uint32_t frequency; /* Resulting CCO frequency */
   uint8_t msel, psel, counter = 0;
 
@@ -270,9 +270,9 @@ static enum result usbPllDisable(void)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result usbPllEnable(const void *configPtr)
+static enum result usbPllEnable(const void *configBase)
 {
-  const struct PllConfig * const config = configPtr;
+  const struct PllConfig * const config = configBase;
   uint32_t frequency; /* Resulting CCO frequency */
   uint8_t msel, psel, counter = 0;
 
@@ -334,9 +334,9 @@ static bool usbPllReady(void)
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *configPtr)
+static enum result mainClockEnable(const void *configBase)
 {
-  const struct MainClockConfig * const config = configPtr;
+  const struct MainClockConfig * const config = configBase;
 
   switch (config->source)
   {
@@ -397,9 +397,9 @@ static enum result usbClockDisable(void)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result usbClockEnable(const void *configPtr)
+static enum result usbClockEnable(const void *configBase)
 {
-  const struct UsbClockConfig * const config = configPtr;
+  const struct UsbClockConfig * const config = configBase;
 
   switch (config->source)
   {

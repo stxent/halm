@@ -83,9 +83,9 @@ void ADC_ISR()
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcUnitInit(void *object, const void *configPtr)
+static enum result adcUnitInit(void *object, const void *configBase)
 {
-  const struct AdcUnitBaseConfig * const config = configPtr;
+  const struct AdcUnitBaseConfig * const config = configBase;
   struct AdcUnitBase * const unit = object;
   enum result res;
 

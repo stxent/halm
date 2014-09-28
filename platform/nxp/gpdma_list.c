@@ -53,9 +53,9 @@ static void interruptHandler(void *object, enum result res)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configPtr)
+static enum result channelInit(void *object, const void *configBase)
 {
-  const struct GpDmaListConfig * const config = configPtr;
+  const struct GpDmaListConfig * const config = configBase;
   const struct GpDmaBaseConfig parentConfig = {
       .channel = config->channel,
       .event = config->event,
