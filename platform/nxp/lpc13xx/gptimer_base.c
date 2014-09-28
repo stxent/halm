@@ -187,14 +187,14 @@ static enum result tmrInit(void *object, const void *configBase)
   if ((res = setDescriptor(timer->channel, 0, timer)) != E_OK)
     return res;
 
-  const struct TimerBlockDescriptor entry = timerBlockEntries[timer->channel];
+  const struct TimerBlockDescriptor *entry = &timerBlockEntries[timer->channel];
 
   sysClockEnable(entry.clock);
 
   timer->handler = 0;
   timer->irq = TIMER16B0_IRQ + timer->channel;
-  timer->reg = entry.reg;
-  timer->resolution = entry.resolution;
+  timer->reg = entry->reg;
+  timer->resolution = entry->resolution;
 
   return E_OK;
 }

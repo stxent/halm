@@ -184,14 +184,15 @@ static enum result uartInit(void *object, const void *configBase)
   if ((res = uartSetupPins(interface, config)) != E_OK)
     return res;
 
-  const struct UartBlockDescriptor entry = uartBlockEntries[interface->channel];
+  const struct UartBlockDescriptor *entry =
+      &uartBlockEntries[interface->channel];
 
-  sysPowerEnable(entry.power);
-  sysClockControl(entry.clock, DEFAULT_DIV);
+  sysPowerEnable(entry->power);
+  sysClockControl(entry->clock, DEFAULT_DIV);
 
   interface->handler = 0;
-  interface->irq = entry.irq;
-  interface->reg = entry.reg;
+  interface->irq = entry->irq;
+  interface->reg = entry->reg;
 
   return E_OK;
 }

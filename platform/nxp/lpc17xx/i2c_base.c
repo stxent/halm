@@ -136,14 +136,14 @@ static enum result i2cInit(void *object, const void *configBase)
   if ((res = i2cSetupPins(interface, configBase)) != E_OK)
     return res;
 
-  const struct I2cBlockDescriptor entry = i2cBlockEntries[interface->channel];
+  const struct I2cBlockDescriptor *entry = &i2cBlockEntries[interface->channel];
 
-  sysPowerEnable(entry.power);
-  sysClockControl(entry.clock, DEFAULT_DIV);
+  sysPowerEnable(entry->power);
+  sysClockControl(entry->clock, DEFAULT_DIV);
 
   interface->handler = 0;
   interface->irq = I2C0_IRQ + interface->channel;
-  interface->reg = entry.reg;
+  interface->reg = entry->reg;
 
   return E_OK;
 }
