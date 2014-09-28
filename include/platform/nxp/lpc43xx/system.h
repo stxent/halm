@@ -67,6 +67,76 @@ enum sysDeviceReset
   RST_ADCHS   = 0x20 + 28,
 };
 /*----------------------------------------------------------------------------*/
+/* Enable or disable clock branches */
+enum sysClockBranch
+{
+  /* Offsets from the beginning of the CCU1 peripheral */
+  CLK_APB3_BUS      = 0x020,
+  CLK_APB3_I2C1     = 0x020 + 1,
+  CLK_APB3_DAC      = 0x020 + 2,
+  CLK_APB3_ADC0     = 0x020 + 3,
+  CLK_APB3_ADC1     = 0x020 + 4,
+  CLK_APB3_CAN0     = 0x020 + 5,
+  CLK_APB1_BUS      = 0x040,
+  CLK_APB1_MCPWM    = 0x040 + 1,
+  CLK_APB1_I2C0     = 0x040 + 2,
+  CLK_APB1_I2S      = 0x040 + 3,
+  CLK_APB1_CAN1     = 0x040 + 4,
+  CLK_SPIFI         = 0x060,
+  CLK_M4_BUS        = 0x080,
+  CLK_M4_SPIFI      = 0x080 + 1,
+  CLK_M4_GPIO       = 0x080 + 2,
+  CLK_M4_LCD        = 0x080 + 3,
+  CLK_M4_ENET       = 0x080 + 4,
+  CLK_M4_USB0       = 0x080 + 5,
+  CLK_M4_EMC        = 0x080 + 6,
+  CLK_M4_SDIO       = 0x080 + 7,
+  CLK_M4_DMA        = 0x080 + 8,
+  CLK_M4_M4CORE     = 0x080 + 9,
+  CLK_M4_SCT        = 0x080 + 13,
+  CLK_M4_USB1       = 0x080 + 14,
+  CLK_M4_EMCDIV     = 0x080 + 15,
+  CLK_M4_FLASHA     = 0x080 + 16,
+  CLK_M4_FLASHB     = 0x080 + 17,
+  CLK_M4_M0APP      = 0x080 + 18,
+  CLK_M4_ADCHS      = 0x080 + 19,
+  CLK_M4_EEPROM     = 0x080 + 20,
+  CLK_M4_WWDT       = 0x0A0,
+  CLK_M4_USART0     = 0x0A0 + 1,
+  CLK_M4_UART1      = 0x0A0 + 2,
+  CLK_M4_SSP0       = 0x0A0 + 3,
+  CLK_M4_TIMER0     = 0x0A0 + 4,
+  CLK_M4_TIMER1     = 0x0A0 + 5,
+  CLK_M4_SCU        = 0x0A0 + 6,
+  CLK_M4_CREG       = 0x0A0 + 7,
+  CLK_M4_RIT        = 0x0C0,
+  CLK_M4_USART2     = 0x0C0 + 1,
+  CLK_M4_USART3     = 0x0C0 + 2,
+  CLK_M4_TIMER2     = 0x0C0 + 3,
+  CLK_M4_TIMER3     = 0x0C0 + 4,
+  CLK_M4_SSP1       = 0x0C0 + 5,
+  CLK_M4_QEI        = 0x0C0 + 6,
+  CLK_PERIPH_BUS    = 0x0E0,
+  CLK_PERIPH_CORE   = 0x0E0 + 1,
+  CLK_PERIPH_SGPIO  = 0x0E0 + 2,
+  CLK_USB0          = 0x100,
+  CLK_USB1          = 0x120,
+  CLK_SPI           = 0x140,
+  CLK_ADCHS         = 0x160,
+
+  /* Offsets from the beginning of the CCU2 peripheral */
+  CLK_AUDIO         = 0x200 + 0x020,
+  CLK_APB2_USART3   = 0x200 + 0x040,
+  CLK_APB2_USART2   = 0x200 + 0x060,
+  CLK_APB0_UART1    = 0x200 + 0x080,
+  CLK_APB0_USART0   = 0x200 + 0x0A0,
+  CLK_APB2_SSP1     = 0x200 + 0x0C0,
+  CLK_APB0_SSP0     = 0x200 + 0x0E0,
+  CLK_SDIO          = 0x200 + 0x100
+};
+/*----------------------------------------------------------------------------*/
+void sysClockEnable(enum sysClockBranch);
+void sysClockDisable(enum sysClockBranch);
 void sysResetEnable(enum sysDeviceReset);
 void sysResetDisable(enum sysDeviceReset);
 /*----------------------------------------------------------------------------*/

@@ -13,10 +13,14 @@
 struct UartBlockDescriptor
 {
   LPC_UART_Type *reg;
-  volatile uint32_t *registerClock;
-  volatile uint32_t *peripheralClock;
+  /* Peripheral interrupt request identifier */
   irq_t irq;
+  /* Reset control identifier */
   enum sysDeviceReset reset;
+  /* Peripheral clock branch */
+  enum sysClockBranch periperalBranch;
+  /* Clock to register interface */
+  enum sysClockBranch registerBranch;
 };
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, const struct UartBase *,
@@ -34,30 +38,30 @@ static const struct EntityClass uartTable = {
 static const struct UartBlockDescriptor uartBlockEntries[4] = {
     {
         .reg = (LPC_UART_Type *)LPC_USART0,
-        .registerClock = &LPC_CCU1->CLK_M4_USART0_CFG,
-        .peripheralClock = &LPC_CCU2->CLK_APB0_USART0_CFG,
         .irq = USART0_IRQ,
+        .registerBranch = CLK_M4_USART0,
+        .periperalBranch = CLK_APB0_USART0,
         .reset = RST_USART0
     },
     {
         .reg = LPC_UART1,
-        .registerClock = &LPC_CCU1->CLK_M4_UART1_CFG,
-        .peripheralClock = &LPC_CCU2->CLK_APB0_UART1_CFG,
         .irq = UART1_IRQ,
+        .registerBranch = CLK_M4_UART1,
+        .periperalBranch = CLK_APB0_UART1,
         .reset = RST_UART1
     },
     {
         .reg = (LPC_UART_Type *)LPC_USART2,
-        .registerClock = &LPC_CCU1->CLK_M4_USART2_CFG,
-        .peripheralClock = &LPC_CCU2->CLK_APB2_USART3_CFG,
         .irq = USART2_IRQ,
+        .registerBranch = CLK_M4_USART2,
+        .periperalBranch = CLK_APB2_USART2,
         .reset = RST_USART2
     },
     {
         .reg = (LPC_UART_Type *)LPC_USART3,
-        .registerClock = &LPC_CCU1->CLK_M4_USART3_CFG,
-        .peripheralClock = &LPC_CCU2->CLK_APB2_USART3_CFG,
         .irq = USART3_IRQ,
+        .registerBranch = CLK_M4_USART3,
+        .periperalBranch = CLK_APB2_USART3,
         .reset = RST_USART3
     }
 };
@@ -246,9 +250,9 @@ uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-static enum result uartInit(void *object, const void *configPtr)
+static enum result uartInit(void *object, const void *configBase)
 {
-  const struct UartBaseConfig * const config = configPtr;
+  const struct UartBaseConfig * const config = configBase;
   struct UartBase * const interface = object;
   enum result res;
 
@@ -260,16 +264,18 @@ static enum result uartInit(void *object, const void *configPtr)
   if ((res = uartSetupPins(interface, config)) != E_OK)
     return res;
 
-  const struct UartBlockDescriptor entry = uartBlockEntries[interface->channel];
+  const struct UartBlockDescriptor *entry =
+      &uartBlockEntries[interface->channel];
 
-  /* Enable clocks to registers and peripheral */
-  //TODO
+  /* Enable clocks to register interface and peripheral */
+  sysClockEnable(entry->periperalBranch);
+  sysClockEnable(entry->registerBranch);
   /* Clear registers to default values */
-  sysResetEnable(entry.reset);
+  sysResetEnable(entry->reset);
 
   interface->handler = 0;
-  interface->irq = entry.irq;
-  interface->reg = entry.reg;
+  interface->irq = entry->irq;
+  interface->reg = entry->reg;
 
   return E_OK;
 }
@@ -277,7 +283,10 @@ static enum result uartInit(void *object, const void *configPtr)
 static void uartDeinit(void *object)
 {
   const struct UartBase * const interface = object;
+  const struct UartBlockDescriptor *entry =
+      &uartBlockEntries[interface->channel];
 
-  //TODO Disable clocks
+  sysClockDisable(entry->registerBranch);
+  sysClockDisable(entry->periperalBranch);
   setDescriptor(interface->channel, interface, 0);
 }

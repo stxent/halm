@@ -7,6 +7,31 @@
 #include <platform/nxp/lpc43xx/system.h>
 #include <platform/nxp/lpc43xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
+static volatile uint32_t *calcBranchReg(enum sysClockBranch branch)
+{
+  const uint32_t address = branch < 0x200 ? (uint32_t)LPC_CCU1 + (branch << 3)
+      : (uint32_t)LPC_CCU2 + ((branch - 0x200) << 3);
+
+  return (volatile uint32_t *)address;
+}
+/*----------------------------------------------------------------------------*/
+void sysClockEnable(enum sysClockBranch branch)
+{
+  volatile uint32_t *reg = calcBranchReg(branch);
+
+  *reg = (*reg & ~CFG_AUTO) | CFG_RUN;
+}
+/*----------------------------------------------------------------------------*/
+void sysClockDisable(enum sysClockBranch branch)
+{
+  volatile uint32_t *reg = calcBranchReg(branch);
+
+  *reg |= CFG_AUTO; /* Initiate clock disable process */
+  *reg &= ~CFG_RUN; /* Disable clock */
+  /* TODO Check whether bit clearing necessary */
+  *reg &= ~CFG_AUTO;
+}
+/*----------------------------------------------------------------------------*/
 void sysResetEnable(enum sysDeviceReset block)
 {
   const uint32_t mask = BIT(block & 0x1F);
