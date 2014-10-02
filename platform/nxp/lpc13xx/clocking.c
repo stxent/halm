@@ -13,35 +13,35 @@
 #define INT_OSC_FREQUENCY 12000000
 #define USB_FREQUENCY     48000000
 /*----------------------------------------------------------------------------*/
-static enum result stubDisable(void);
-static bool stubReady(void);
+static bool stubReady(const void *);
 /*----------------------------------------------------------------------------*/
-static enum result extOscDisable(void);
-static enum result extOscEnable(const void *);
-static uint32_t extOscFrequency(void);
+static enum result extOscDisable(const void *);
+static enum result extOscEnable(const void *, const void *);
+static uint32_t extOscFrequency(const void *);
 static bool extOscReady();
 
-static enum result intOscDisable(void);
-static enum result intOscEnable(const void *);
-static uint32_t intOscFrequency(void);
+static enum result intOscDisable(const void *);
+static enum result intOscEnable(const void *, const void *);
+static uint32_t intOscFrequency(const void *);
 static bool intOscReady();
 
-static enum result sysPllDisable(void);
-static enum result sysPllEnable(const void *);
-static uint32_t sysPllFrequency(void);
-static bool sysPllReady(void);
+static enum result sysPllDisable(const void *);
+static enum result sysPllEnable(const void *, const void *);
+static uint32_t sysPllFrequency(const void *);
+static bool sysPllReady(const void *);
 
-static enum result usbPllDisable(void);
-static enum result usbPllEnable(const void *);
-static uint32_t usbPllFrequency(void);
-static bool usbPllReady(void);
+static enum result usbPllDisable(const void *);
+static enum result usbPllEnable(const void *, const void *);
+static uint32_t usbPllFrequency(const void *);
+static bool usbPllReady(const void *);
 /*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *);
-static uint32_t mainClockFrequency(void);
+static enum result mainClockDisable(const void *);
+static enum result mainClockEnable(const void *, const void *);
+static uint32_t mainClockFrequency(const void *);
 
-static enum result usbClockDisable();
-static enum result usbClockEnable(const void *);
-static uint32_t usbClockFrequency(void);
+static enum result usbClockDisable(const void *);
+static enum result usbClockEnable(const void *, const void *);
+static uint32_t usbClockFrequency(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -72,7 +72,7 @@ static const struct ClockClass usbPllTable = {
 };
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
-    .disable = stubDisable,
+    .disable = mainClockDisable,
     .enable = mainClockEnable,
     .frequency = mainClockFrequency,
     .ready = stubReady
@@ -96,17 +96,12 @@ static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
 uint32_t coreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
-static enum result stubDisable(void)
-{
-  return E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static bool stubReady(void)
+static bool stubReady(const void *clock __attribute__((unused)))
 {
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscDisable(void)
+static enum result extOscDisable(const void *clock __attribute__((unused)))
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_INPUT)
   {
@@ -117,7 +112,8 @@ static enum result extOscDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscEnable(const void *configBase)
+static enum result extOscEnable(const void *clock __attribute__((unused)),
+    const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = 0;
@@ -146,17 +142,17 @@ static enum result extOscEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extOscFrequency(void)
+static uint32_t extOscFrequency(const void *clock __attribute__((unused)))
 {
   return extFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool extOscReady(void)
+static bool extOscReady(const void *clock __attribute__((unused)))
 {
   return extFrequency && sysPowerStatus(PWR_SYSOSC);
 }
 /*----------------------------------------------------------------------------*/
-static enum result intOscDisable(void)
+static enum result intOscDisable(const void *clock __attribute__((unused)))
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_IRC)
   {
@@ -168,7 +164,8 @@ static enum result intOscDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result intOscEnable(const void *configBase __attribute__((unused)))
+static enum result intOscEnable(const void *clock __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
 {
   sysPowerEnable(PWR_IRC);
   sysPowerEnable(PWR_IRCOUT);
@@ -176,17 +173,17 @@ static enum result intOscEnable(const void *configBase __attribute__((unused)))
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOscFrequency(void)
+static uint32_t intOscFrequency(const void *clock __attribute__((unused)))
 {
   return INT_OSC_FREQUENCY;
 }
 /*----------------------------------------------------------------------------*/
-static bool intOscReady(void)
+static bool intOscReady(const void *clock __attribute__((unused)))
 {
   return sysPowerStatus(PWR_IRC) && sysPowerStatus(PWR_IRCOUT);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllDisable(void)
+static enum result sysPllDisable(const void *clock __attribute__((unused)))
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_OUTPUT)
   {
@@ -197,7 +194,8 @@ static enum result sysPllDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllEnable(const void *configBase)
+static enum result sysPllEnable(const void *clock __attribute__((unused)),
+    const void *configBase)
 {
   const struct PllConfig * const config = configBase;
   uint32_t frequency; /* Resulting CCO frequency */
@@ -220,7 +218,7 @@ static enum result sysPllEnable(const void *configBase)
   switch (config->source)
   {
     case CLOCK_EXTERNAL:
-      if (!extOscReady())
+      if (!extOscReady(ExternalOsc))
         return E_ERROR;
       LPC_SYSCON->SYSPLLCLKSEL = PLLCLKSEL_SYSOSC;
       frequency = extFrequency;
@@ -254,23 +252,24 @@ static enum result sysPllEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sysPllFrequency(void)
+static uint32_t sysPllFrequency(const void *clock __attribute__((unused)))
 {
   return pllFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool sysPllReady(void)
+static bool sysPllReady(const void *clock __attribute__((unused)))
 {
-  return pllFrequency && (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK ? true : false);
+  return pllFrequency && (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static enum result usbPllDisable(void)
+static enum result usbPllDisable(const void *clock __attribute__((unused)))
 {
   sysPowerDisable(PWR_USBPLL);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result usbPllEnable(const void *configBase)
+static enum result usbPllEnable(const void *clock __attribute__((unused)),
+    const void *configBase)
 {
   const struct PllConfig * const config = configBase;
   uint32_t frequency; /* Resulting CCO frequency */
@@ -278,9 +277,6 @@ static enum result usbPllEnable(const void *configBase)
 
   if (!config->multiplier || !config->divider || config->divider & 1)
     return E_VALUE;
-
-  if (config->source != CLOCK_EXTERNAL || !extFrequency)
-    return E_ERROR;
 
   msel = config->multiplier / config->divider - 1;
   if (msel >= 32)
@@ -293,6 +289,24 @@ static enum result usbPllEnable(const void *configBase)
   if ((psel = counter) == 4)
     return E_VALUE;
 
+  switch (config->source)
+  {
+    case CLOCK_EXTERNAL:
+      if (!extOscReady(ExternalOsc))
+        return E_ERROR;
+      LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_SYSOSC;
+      frequency = extFrequency;
+      break;
+
+    case CLOCK_INTERNAL:
+      LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_IRC;
+      frequency = INT_OSC_FREQUENCY;
+      break;
+
+    default:
+      return E_ERROR;
+  }
+
   /* Check CCO range */
   frequency = extFrequency * config->multiplier;
   if (frequency < 156000000 || frequency > 320000000)
@@ -300,8 +314,6 @@ static enum result usbPllEnable(const void *configBase)
   frequency /= config->divider;
   if (frequency != USB_FREQUENCY)
     return E_ERROR;
-
-  LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_SYSOSC;
 
   /* Update USB PLL clock source */
   LPC_SYSCON->USBPLLCLKUEN = 0x01;
@@ -316,17 +328,13 @@ static enum result usbPllEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t usbPllFrequency(void)
+static uint32_t usbPllFrequency(const void *clock)
 {
-  return usbPllReady() ? USB_FREQUENCY : 0;
+  return usbPllReady(clock) ? USB_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool usbPllReady(void)
+static bool usbPllReady(const void *clock __attribute__((unused)))
 {
-  /* System oscillator should be selected as the USB PLL source */
-  if ((LPC_SYSCON->USBPLLCLKSEL & USBCLKSEL_MASK) != PLLCLKSEL_SYSOSC)
-    return false;
-
   /* USB PLL should be locked */
   if (!(LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK))
     return false;
@@ -334,7 +342,13 @@ static bool usbPllReady(void)
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *configBase)
+static enum result mainClockDisable(const void *clock __attribute__((unused)))
+{
+  return E_ERROR;
+}
+/*----------------------------------------------------------------------------*/
+static enum result mainClockEnable(const void *clock __attribute__((unused)),
+    const void *configBase)
 {
   const struct MainClockConfig * const config = configBase;
 
@@ -347,7 +361,7 @@ static enum result mainClockEnable(const void *configBase)
 
     case CLOCK_EXTERNAL:
       /* Check whether external oscillator is configured and ready */
-      if (!extOscReady())
+      if (!extOscReady(ExternalOsc))
         return E_ERROR;
       LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_PLL_INPUT;
       coreClock = extFrequency;
@@ -355,7 +369,7 @@ static enum result mainClockEnable(const void *configBase)
 
     case CLOCK_PLL:
       /* Check whether PLL is configured and ready */
-      if (!sysPllReady())
+      if (!sysPllReady(UsbPll))
         return E_ERROR;
       LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_PLL_OUTPUT;
       coreClock = pllFrequency;
@@ -387,30 +401,31 @@ static enum result mainClockEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t mainClockFrequency(void)
+static uint32_t mainClockFrequency(const void *clock __attribute__((unused)))
 {
   return coreClock;
 }
 /*----------------------------------------------------------------------------*/
-static enum result usbClockDisable(void)
+static enum result usbClockDisable(const void *clock __attribute__((unused)))
 {
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result usbClockEnable(const void *configBase)
+static enum result usbClockEnable(const void *clock __attribute__((unused)),
+    const void *configBase)
 {
   const struct UsbClockConfig * const config = configBase;
 
   switch (config->source)
   {
     case CLOCK_USB_PLL:
-      if (!usbPllReady())
+      if (!usbPllReady(UsbPll))
         return E_ERROR;
       LPC_SYSCON->USBCLKSEL = USBCLKSEL_USBPLL_OUTPUT;
       break;
 
     case CLOCK_MAIN:
-      if (!extOscReady() || coreClock != USB_FREQUENCY)
+      if (!extOscReady(ExternalOsc) || coreClock != USB_FREQUENCY)
         return E_VALUE;
       LPC_SYSCON->USBCLKSEL = USBCLKSEL_MAIN_CLOCK;
       break;
@@ -429,7 +444,7 @@ static enum result usbClockEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t usbClockFrequency(void)
+static uint32_t usbClockFrequency(const void *clock __attribute__((unused)))
 {
   switch (LPC_SYSCON->USBCLKSEL & USBCLKSEL_MASK)
   {
@@ -437,7 +452,7 @@ static uint32_t usbClockFrequency(void)
       return coreClock;
 
     case USBCLKSEL_USBPLL_OUTPUT:
-      return usbPllFrequency();
+      return usbPllFrequency(UsbPll);
 
     default:
       return 0;

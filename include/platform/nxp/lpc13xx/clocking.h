@@ -9,6 +9,16 @@
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
+enum clockSource
+{
+  CLOCK_INTERNAL,
+  CLOCK_EXTERNAL,
+  CLOCK_PLL,
+  CLOCK_USB_PLL,
+  CLOCK_WDT,
+  CLOCK_MAIN
+};
+/*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const SystemPll;
@@ -20,16 +30,6 @@ struct ExternalOscConfig
 {
   uint32_t frequency;
   bool bypass;
-};
-/*----------------------------------------------------------------------------*/
-enum clockSource
-{
-  CLOCK_INTERNAL,
-  CLOCK_EXTERNAL,
-  CLOCK_PLL,
-  CLOCK_USB_PLL,
-  CLOCK_WDT,
-  CLOCK_MAIN
 };
 /*----------------------------------------------------------------------------*/
 struct PllConfig
