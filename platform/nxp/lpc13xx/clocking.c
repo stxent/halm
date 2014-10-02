@@ -13,6 +13,9 @@
 #define INT_OSC_FREQUENCY 12000000
 #define USB_FREQUENCY     48000000
 /*----------------------------------------------------------------------------*/
+static uint32_t calcPllFrequency(uint16_t, uint8_t, enum clockSource);
+static enum result calcPllValues(uint16_t, uint8_t, uint32_t *);
+/*----------------------------------------------------------------------------*/
 static bool stubReady(const void *);
 /*----------------------------------------------------------------------------*/
 static enum result extOscDisable(const void *);
@@ -95,6 +98,59 @@ const struct ClockClass * const UsbClock = &usbClockTable;
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
 uint32_t coreClock = INT_OSC_FREQUENCY;
+/*----------------------------------------------------------------------------*/
+static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divider,
+    enum clockSource source)
+{
+  uint32_t frequency;
+
+  switch (source)
+  {
+    case CLOCK_EXTERNAL:
+      if (!extOscReady(ExternalOsc))
+        return 0;
+
+      frequency = extFrequency;
+      break;
+
+    case CLOCK_INTERNAL:
+      frequency = INT_OSC_FREQUENCY;
+      break;
+
+    default:
+      return 0;
+  }
+
+  /* Check CCO range */
+  frequency = frequency * multiplier;
+  if (frequency < 156000000 || frequency > 320000000)
+    return 0;
+
+  return frequency / divider;
+}
+/*----------------------------------------------------------------------------*/
+static enum result calcPllValues(uint16_t multiplier, uint8_t divider,
+    uint32_t *result)
+{
+  uint8_t msel, psel, counter = 0;
+
+  if (!multiplier || !divider || divider & 1)
+    return E_VALUE;
+
+  msel = multiplier / divider - 1;
+  if (msel >= 32)
+    return E_VALUE;
+
+  psel = divider >> 1;
+  while (counter < 4 && psel != 1 << counter)
+    counter++;
+  /* Check whether actual divider value found */
+  if ((psel = counter) == 4)
+    return E_VALUE;
+
+  *result = PLLCTRL_MSEL(msel) | PLLCTRL_PSEL(psel);
+  return E_OK;
+}
 /*----------------------------------------------------------------------------*/
 static bool stubReady(const void *clock __attribute__((unused)))
 {
@@ -198,55 +254,33 @@ static enum result sysPllEnable(const void *clock __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
+  uint32_t control; /* Control register value */
   uint32_t frequency; /* Resulting CCO frequency */
-  uint8_t msel, psel, counter = 0;
+  enum result res;
 
-  if (!config->multiplier || !config->divider || config->divider & 1)
+  res = calcPllValues(config->multiplier, config->divider, &control);
+  if (res != E_OK)
+    return res;
+
+  frequency = calcPllFrequency(config->multiplier, config->divider,
+      config->source);
+  if (!frequency)
     return E_VALUE;
 
-  msel = config->multiplier / config->divider - 1;
-  if (msel >= 32)
-    return E_VALUE;
+  pllFrequency = frequency;
 
-  psel = config->divider >> 1;
-  while (counter < 4 && psel != 1 << counter)
-    counter++;
-  /* Check whether actual divider value found */
-  if ((psel = counter) == 4)
-    return E_VALUE;
+  /* Select clock source */
+  LPC_SYSCON->SYSPLLCLKSEL = config->source == CLOCK_EXTERNAL ?
+      PLLCLKSEL_SYSOSC : PLLCLKSEL_IRC;
 
-  switch (config->source)
-  {
-    case CLOCK_EXTERNAL:
-      if (!extOscReady(ExternalOsc))
-        return E_ERROR;
-      LPC_SYSCON->SYSPLLCLKSEL = PLLCLKSEL_SYSOSC;
-      frequency = extFrequency;
-      break;
-
-    case CLOCK_INTERNAL:
-      LPC_SYSCON->SYSPLLCLKSEL = PLLCLKSEL_IRC;
-      frequency = INT_OSC_FREQUENCY;
-      break;
-
-    default:
-      return E_ERROR;
-  }
-
-  /* Check CCO range */
-  frequency = frequency * config->multiplier;
-  if (frequency < 156000000 || frequency > 320000000)
-    return E_ERROR;
-  pllFrequency = frequency / config->divider;
-
-  /* Update PLL clock source */
+  /* Update clock source for changes to take effect */
   LPC_SYSCON->SYSPLLCLKUEN = 0x01;
   LPC_SYSCON->SYSPLLCLKUEN = 0x00;
   LPC_SYSCON->SYSPLLCLKUEN = 0x01;
   /* Wait until updated */
   while (!(LPC_SYSCON->SYSPLLCLKUEN & 0x01));
 
-  LPC_SYSCON->SYSPLLCTRL = PLLCTRL_MSEL(msel) | PLLCTRL_PSEL(psel);
+  LPC_SYSCON->SYSPLLCTRL = control;
   sysPowerEnable(PWR_SYSPLL);
 
   return E_OK;
@@ -272,57 +306,31 @@ static enum result usbPllEnable(const void *clock __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
+  uint32_t control; /* Control register value */
   uint32_t frequency; /* Resulting CCO frequency */
-  uint8_t msel, psel, counter = 0;
+  enum result res;
 
-  if (!config->multiplier || !config->divider || config->divider & 1)
-    return E_VALUE;
+  res = calcPllValues(config->multiplier, config->divider, &control);
+  if (res != E_OK)
+    return res;
 
-  msel = config->multiplier / config->divider - 1;
-  if (msel >= 32)
-    return E_VALUE;
-
-  psel = config->divider >> 1;
-  while (counter < 4 && psel != 1 << counter)
-    counter++;
-  /* Check whether actual divider value found */
-  if ((psel = counter) == 4)
-    return E_VALUE;
-
-  switch (config->source)
-  {
-    case CLOCK_EXTERNAL:
-      if (!extOscReady(ExternalOsc))
-        return E_ERROR;
-      LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_SYSOSC;
-      frequency = extFrequency;
-      break;
-
-    case CLOCK_INTERNAL:
-      LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_IRC;
-      frequency = INT_OSC_FREQUENCY;
-      break;
-
-    default:
-      return E_ERROR;
-  }
-
-  /* Check CCO range */
-  frequency = extFrequency * config->multiplier;
-  if (frequency < 156000000 || frequency > 320000000)
-    return E_ERROR;
-  frequency /= config->divider;
+  frequency = calcPllFrequency(config->multiplier, config->divider,
+      config->source);
   if (frequency != USB_FREQUENCY)
-    return E_ERROR;
+    return E_VALUE;
 
-  /* Update USB PLL clock source */
+  /* Select clock source */
+  LPC_SYSCON->USBPLLCLKSEL = config->source == CLOCK_EXTERNAL ?
+      PLLCLKSEL_SYSOSC : PLLCLKSEL_IRC;
+
+  /* Update clock source for changes to take effect */
   LPC_SYSCON->USBPLLCLKUEN = 0x01;
   LPC_SYSCON->USBPLLCLKUEN = 0x00;
   LPC_SYSCON->USBPLLCLKUEN = 0x01;
   /* Wait until updated */
   while (!(LPC_SYSCON->USBPLLCLKUEN & 0x01));
 
-  LPC_SYSCON->USBPLLCTRL = PLLCTRL_MSEL(msel) | PLLCTRL_PSEL(psel);
+  LPC_SYSCON->USBPLLCTRL = control;
   sysPowerEnable(PWR_USBPLL);
 
   return E_OK;
