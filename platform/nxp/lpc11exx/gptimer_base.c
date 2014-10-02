@@ -265,7 +265,7 @@ static enum result tmrInit(void *object, const void *configBase)
 
   const struct TimerBlockDescriptor *entry = &timerBlockEntries[timer->channel];
 
-  sysClockEnable(entry.clock);
+  sysClockEnable(entry->clock);
 
   timer->handler = 0;
   timer->irq = TIMER16B0_IRQ + timer->channel;
