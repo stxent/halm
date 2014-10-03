@@ -12,26 +12,25 @@
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY 12000000
 /*----------------------------------------------------------------------------*/
-static enum result stubDisable(void);
-static bool stubReady(void);
-/*----------------------------------------------------------------------------*/
-static enum result extOscDisable(void);
-static enum result extOscEnable(const void *);
-static uint32_t extOscFrequency(void);
-static bool extOscReady();
+static enum result extOscDisable(const void *);
+static enum result extOscEnable(const void *, const void *);
+static uint32_t extOscFrequency(const void *);
+static bool extOscReady(const void *);
 
-static enum result intOscDisable(void);
-static enum result intOscEnable(const void *);
-static uint32_t intOscFrequency(void);
-static bool intOscReady();
+static enum result intOscDisable(const void *);
+static enum result intOscEnable(const void *, const void *);
+static uint32_t intOscFrequency(const void *);
+static bool intOscReady(const void *);
 
-static enum result sysPllDisable(void);
-static enum result sysPllEnable(const void *);
-static uint32_t sysPllFrequency(void);
-static bool sysPllReady(void);
+static enum result sysPllDisable(const void *);
+static enum result sysPllEnable(const void *, const void *);
+static uint32_t sysPllFrequency(const void *);
+static bool sysPllReady(const void *);
 /*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *);
-static uint32_t mainClockFrequency(void);
+static enum result mainClockDisable(const void *);
+static enum result mainClockEnable(const void *, const void *);
+static uint32_t mainClockFrequency(const void *);
+static bool mainClockReady(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -55,10 +54,10 @@ static const struct ClockClass sysPllTable = {
 };
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
-    .disable = stubDisable,
+    .disable = mainClockDisable,
     .enable = mainClockEnable,
     .frequency = mainClockFrequency,
-    .ready = stubReady
+    .ready = mainClockReady
 };
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
@@ -70,17 +69,7 @@ static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
 uint32_t coreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
-static enum result stubDisable(void)
-{
-  return E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static bool stubReady(void)
-{
-  return true;
-}
-/*----------------------------------------------------------------------------*/
-static enum result extOscDisable(void)
+static enum result extOscDisable(const void *clockBase __attribute__((unused)))
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_INPUT)
   {
@@ -91,7 +80,8 @@ static enum result extOscDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscEnable(const void *configBase)
+static enum result extOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = 0;
@@ -120,17 +110,17 @@ static enum result extOscEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extOscFrequency(void)
+static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 {
   return extFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool extOscReady(void)
+static bool extOscReady(const void *clockBase __attribute__((unused)))
 {
   return extFrequency && sysPowerStatus(PWR_SYSOSC);
 }
 /*----------------------------------------------------------------------------*/
-static enum result intOscDisable(void)
+static enum result intOscDisable(const void *clockBase __attribute__((unused)))
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_IRC)
   {
@@ -142,7 +132,8 @@ static enum result intOscDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result intOscEnable(const void *configBase __attribute__((unused)))
+static enum result intOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
 {
   sysPowerEnable(PWR_IRC);
   sysPowerEnable(PWR_IRCOUT);
@@ -150,17 +141,17 @@ static enum result intOscEnable(const void *configBase __attribute__((unused)))
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOscFrequency(void)
+static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
 {
   return INT_OSC_FREQUENCY;
 }
 /*----------------------------------------------------------------------------*/
-static bool intOscReady(void)
+static bool intOscReady(const void *clockBase __attribute__((unused)))
 {
   return sysPowerStatus(PWR_IRC) && sysPowerStatus(PWR_IRCOUT);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllDisable(void)
+static enum result sysPllDisable(const void *clockBase __attribute__((unused)))
 {
   if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_OUTPUT)
   {
@@ -171,7 +162,8 @@ static enum result sysPllDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllEnable(const void *configBase)
+static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
 {
   const struct PllConfig * const config = configBase;
   uint32_t frequency; /* Resulting CCO frequency */
@@ -194,7 +186,7 @@ static enum result sysPllEnable(const void *configBase)
   switch (config->source)
   {
     case CLOCK_EXTERNAL:
-      if (!extOscReady())
+      if (!extOscReady(ExternalOsc))
         return E_ERROR;
       LPC_SYSCON->SYSPLLCLKSEL = PLLCLKSEL_SYSOSC;
       frequency = extFrequency;
@@ -228,17 +220,24 @@ static enum result sysPllEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sysPllFrequency(void)
+static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
 {
   return pllFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool sysPllReady(void)
+static bool sysPllReady(const void *clockBase __attribute__((unused)))
 {
-  return pllFrequency && (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK ? true : false);
+  return pllFrequency && (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *configBase)
+static enum result mainClockDisable(const void *clockBase
+    __attribute__((unused)))
+{
+  return E_ERROR;
+}
+/*----------------------------------------------------------------------------*/
+static enum result mainClockEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
 {
   const struct MainClockConfig * const config = configBase;
 
@@ -251,7 +250,7 @@ static enum result mainClockEnable(const void *configBase)
 
     case CLOCK_EXTERNAL:
       /* Check whether external oscillator is configured and ready */
-      if (!extOscReady())
+      if (!extOscReady(ExternalOsc))
         return E_ERROR;
       LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_PLL_INPUT;
       coreClock = extFrequency;
@@ -259,7 +258,7 @@ static enum result mainClockEnable(const void *configBase)
 
     case CLOCK_PLL:
       /* Check whether PLL is configured and ready */
-      if (!sysPllReady())
+      if (!sysPllReady(SystemPll))
         return E_ERROR;
       LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_PLL_OUTPUT;
       coreClock = pllFrequency;
@@ -291,7 +290,13 @@ static enum result mainClockEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t mainClockFrequency(void)
+static uint32_t mainClockFrequency(const void *clockBase
+    __attribute__((unused)))
 {
   return coreClock;
+}
+/*----------------------------------------------------------------------------*/
+static bool mainClockReady(const void *clockBase __attribute__((unused)))
+{
+  return true;
 }
