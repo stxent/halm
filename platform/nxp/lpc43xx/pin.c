@@ -488,6 +488,7 @@ struct Pin pinInit(pin_t id)
   else
   {
     /* Some pins do not have GPIO function */
+    pin.data.key = ~id;
     pin.reg = (void *)calcControlReg(pin.data);
     pin.data.key = ~0;
   }
