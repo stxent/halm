@@ -244,10 +244,33 @@ void USART3_ISR(void)
     descriptors[3]->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
+uint32_t uartGetClock(const struct UartBase *interface)
 {
-  //TODO
-  return clockFrequency(MainClock);
+  const void *clock = 0;
+
+  switch (interface->channel)
+  {
+    case 0:
+      clock = Usart0Clock;
+      break;
+
+    case 1:
+      clock = Uart1Clock;
+      break;
+
+    case 2:
+      clock = Usart2Clock;
+      break;
+
+    case 3:
+      clock = Usart3Clock;
+      break;
+
+    default:
+      return 0;
+  }
+
+  return clockFrequency(clock);
 }
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *object, const void *configBase)
