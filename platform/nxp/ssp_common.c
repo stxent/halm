@@ -13,45 +13,22 @@ extern const struct PinEntry sspPins[];
 enum result sspSetupPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
+  const pin_t pinArray[4] = {
+      config->miso, config->mosi, config->sck, config->cs
+  };
   const struct PinEntry *pinEntry;
   struct Pin pin;
 
   /* Direction configuration is not needed for alternate function pins */
-
-  /* Configure MOSI pin */
-  if (config->mosi)
+  for (uint8_t index = 0; index < 4; ++index)
   {
-    if (!(pinEntry = pinFind(sspPins, config->mosi, interface->channel)))
-      return E_VALUE;
-    pinInput((pin = pinInit(config->mosi)));
-    pinSetFunction(pin, pinEntry->value);
-  }
-
-  /* Configure MISO pin */
-  if (config->miso)
-  {
-    if (!(pinEntry = pinFind(sspPins, config->miso, interface->channel)))
-      return E_VALUE;
-    pinInput((pin = pinInit(config->miso)));
-    pinSetFunction(pin, pinEntry->value);
-  }
-
-  /* Configure SCK pin */
-  if (config->sck)
-  {
-    if (!(pinEntry = pinFind(sspPins, config->sck, interface->channel)))
-      return E_VALUE;
-    pinInput((pin = pinInit(config->sck)));
-    pinSetFunction(pin, pinEntry->value);
-  }
-
-  /* Slave Select pin configuration needed only in slave mode */
-  if (config->cs)
-  {
-    if (!(pinEntry = pinFind(sspPins, config->cs, interface->channel)))
-      return E_VALUE;
-    pinInput((pin = pinInit(config->cs)));
-    pinSetFunction(pin, pinEntry->value);
+    if (pinArray[index])
+    {
+      if (!(pinEntry = pinFind(sspPins, pinArray[index], interface->channel)))
+        return E_VALUE;
+      pinInput((pin = pinInit(pinArray[index])));
+      pinSetFunction(pin, pinEntry->value);
+    }
   }
 
   return E_OK;
