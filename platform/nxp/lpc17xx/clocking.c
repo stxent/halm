@@ -14,21 +14,21 @@
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 static void pllDisconnect(void);
-static enum result stubDisable(void);
-static bool stubReady(void);
+static enum result stubDisable(const void *);
+static bool stubReady(const void *);
 /*----------------------------------------------------------------------------*/
-static enum result extOscDisable(void);
-static enum result extOscEnable(const void *);
-static uint32_t extOscFrequency(void);
-static bool extOscReady(void);
+static enum result extOscDisable(const void *);
+static enum result extOscEnable(const void *, const void *);
+static uint32_t extOscFrequency(const void *);
+static bool extOscReady(const void *);
 
-static enum result sysPllDisable(void);
-static enum result sysPllEnable(const void *);
-static uint32_t sysPllFrequency(void);
-static bool sysPllReady(void);
+static enum result sysPllDisable(const void *);
+static enum result sysPllEnable(const void *, const void *);
+static uint32_t sysPllFrequency(const void *);
+static bool sysPllReady(const void *);
 /*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *);
-static uint32_t mainClockFrequency(void);
+static enum result mainClockEnable(const void *, const void *);
+static uint32_t mainClockFrequency(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -83,23 +83,24 @@ static void pllDisconnect(void)
   LPC_SC->PLL0FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
-static enum result stubDisable(void)
+static enum result stubDisable(const void *clockBase __attribute__((unused)))
 {
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static bool stubReady(void)
+static bool stubReady(const void *clockBase __attribute__((unused)))
 {
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscDisable(void)
+static enum result extOscDisable(const void *clockBase __attribute__((unused)))
 {
   LPC_SC->SCS &= ~SCS_OSCEN;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscEnable(const void *configBase)
+static enum result extOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = LPC_SC->SCS | SCS_OSCEN;
@@ -118,17 +119,17 @@ static enum result extOscEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extOscFrequency(void)
+static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 {
   return extFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool extOscReady(void)
+static bool extOscReady(const void *clockBase __attribute__((unused)))
 {
   return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT ? true : false);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllDisable(void)
+static enum result sysPllDisable(const void *clockBase __attribute__((unused)))
 {
   if (!(LPC_SC->PLL0STAT & PLL0STAT_CONNECTED))
   {
@@ -141,7 +142,8 @@ static enum result sysPllDisable(void)
     return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllEnable(const void *configBase)
+static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
 {
   const struct PllConfig * const config = configBase;
   uint32_t frequency; /* Resulting CCO frequency */
@@ -162,7 +164,7 @@ static enum result sysPllEnable(const void *configBase)
   {
     case CLOCK_EXTERNAL:
       /* Check whether external oscillator is configured */
-      if (!extOscReady())
+      if (!extOscReady(ExternalOsc))
         return E_ERROR;
       source = CLKSRCSEL_MAIN;
       frequency = extFrequency;
@@ -223,17 +225,18 @@ static enum result sysPllEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sysPllFrequency(void)
+static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
 {
   return pllFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool sysPllReady(void)
+static bool sysPllReady(const void *clockBase __attribute__((unused)))
 {
-  return pllFrequency && (LPC_SC->PLL0STAT & PLL0STAT_LOCK ? true : false);
+  return pllFrequency && (LPC_SC->PLL0STAT & PLL0STAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *configBase)
+static enum result mainClockEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
 {
   const struct MainClockConfig * const config = configBase;
 
@@ -248,7 +251,7 @@ static enum result mainClockEnable(const void *configBase)
 
     case CLOCK_EXTERNAL:
       /* Check whether external oscillator is configured and ready */
-      if (!extOscReady())
+      if (!extOscReady(ExternalOsc))
         return E_ERROR;
 
       flashLatencyReset();
@@ -260,7 +263,7 @@ static enum result mainClockEnable(const void *configBase)
 
     case CLOCK_PLL:
       /* Check whether PLL is configured and ready */
-      if (!sysPllReady())
+      if (!sysPllReady(SystemPll))
         return E_ERROR;
 
       /* Maximize flash latency and configure system clock divider */
@@ -295,7 +298,8 @@ static enum result mainClockEnable(const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t mainClockFrequency(void)
+static uint32_t mainClockFrequency(const void *clockBase
+    __attribute__((unused)))
 {
   return coreClock;
 }
