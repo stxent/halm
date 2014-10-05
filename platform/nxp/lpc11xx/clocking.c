@@ -166,8 +166,9 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  uint32_t frequency; /* Resulting CCO frequency */
-  uint8_t msel, psel, counter = 0;
+  uint32_t frequency;
+  uint8_t counter = 0;
+  uint8_t msel, psel;
 
   if (!config->multiplier || !config->divider || config->divider & 1)
     return E_VALUE;

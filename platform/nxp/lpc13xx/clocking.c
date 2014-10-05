@@ -132,7 +132,8 @@ static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divider,
 static enum result calcPllValues(uint16_t multiplier, uint8_t divider,
     uint32_t *result)
 {
-  uint8_t msel, psel, counter = 0;
+  uint8_t counter = 0;
+  uint8_t msel, psel;
 
   if (!multiplier || !divider || divider & 1)
     return E_VALUE;
@@ -255,7 +256,7 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
 {
   const struct PllConfig * const config = configBase;
   uint32_t control; /* Control register value */
-  uint32_t frequency; /* Resulting CCO frequency */
+  uint32_t frequency;
   enum result res;
 
   res = calcPllValues(config->multiplier, config->divider, &control);
@@ -307,7 +308,7 @@ static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
 {
   const struct PllConfig * const config = configBase;
   uint32_t control; /* Control register value */
-  uint32_t frequency; /* Resulting CCO frequency */
+  uint32_t frequency;
   enum result res;
 
   res = calcPllValues(config->multiplier, config->divider, &control);
