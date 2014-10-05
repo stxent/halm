@@ -9,6 +9,96 @@
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
-extern const struct ClockClass * const MainClock;
+enum clockBranch
+{
+  CLOCK_BASE_USB0     = 0,
+  CLOCK_BASE_PERIPH   = 1,
+  CLOCK_BASE_USB1     = 2,
+  CLOCK_BASE_M4       = 3,
+  CLOCK_BASE_SPIFI    = 4,
+  CLOCK_BASE_SPI      = 5,
+  CLOCK_BASE_PHY_RX   = 6,
+  CLOCK_BASE_PHY_TX   = 7,
+  CLOCK_BASE_APB1     = 8,
+  CLOCK_BASE_APB3     = 9,
+  CLOCK_BASE_LCD      = 10,
+  CLOCK_BASE_ADCHS    = 11,
+  CLOCK_BASE_SDIO     = 12,
+  CLOCK_BASE_SSP0     = 13,
+  CLOCK_BASE_SSP1     = 14,
+  CLOCK_BASE_USART0   = 15,
+  CLOCK_BASE_UART1    = 16,
+  CLOCK_BASE_USART2   = 17,
+  CLOCK_BASE_USART3   = 18,
+  CLOCK_BASE_OUT      = 19,
+  CLOCK_BASE_AUDIO    = 24,
+  CLOCK_BASE_CGU_OUT0 = 25,
+  CLOCK_BASE_CGU_OUT1 = 26
+};
+
+enum clockSource
+{
+  CLOCK_RTC         = 0x00,
+  CLOCK_INTERNAL    = 0x01,
+  CLOCK_ENET_RX     = 0x02,
+  CLOCK_ENET_TX     = 0x03,
+  CLOCK_GP_CLKIN    = 0x04,
+  CLOCK_EXTERNAL    = 0x06,
+  CLOCK_PLL0_USB    = 0x07,
+  CLOCK_PLL0_AUDIO  = 0x08,
+  CLOCK_PLL1        = 0x09,
+  CLOCK_IDIVA       = 0x0C,
+  CLOCK_IDIVB       = 0x0D,
+  CLOCK_IDIVC       = 0x0E,
+  CLOCK_IDIVD       = 0x0F,
+  CLOCK_IDIVE       = 0x10
+};
+/*----------------------------------------------------------------------------*/
+struct CommonClockClass
+{
+  struct ClockClass parent;
+
+  enum clockBranch channel;
+};
+/*----------------------------------------------------------------------------*/
+extern const struct ClockClass * const Pll1;
+/*----------------------------------------------------------------------------*/
+/* Base M4 clock */
+extern const struct CommonClockClass * const MainClock;
+extern const struct CommonClockClass * const Usb0Clock;
+extern const struct CommonClockClass * const Usb1Clock;
+/* APB0 and APB2 clocks */
+extern const struct CommonClockClass * const PeripheralClock;
+extern const struct CommonClockClass * const Apb1Clock;
+extern const struct CommonClockClass * const Apb3Clock;
+extern const struct CommonClockClass * const SpifiClock;
+extern const struct CommonClockClass * const SpiClock;
+extern const struct CommonClockClass * const PhyRxClock;
+extern const struct CommonClockClass * const PhyTxClock;
+extern const struct CommonClockClass * const LcdClock;
+extern const struct CommonClockClass * const AdcHsClock;
+extern const struct CommonClockClass * const SdioClock;
+extern const struct CommonClockClass * const Ssp0Clock;
+extern const struct CommonClockClass * const Ssp1Clock;
+extern const struct CommonClockClass * const Usart0Clock;
+extern const struct CommonClockClass * const Uart1Clock;
+extern const struct CommonClockClass * const Usart2Clock;
+extern const struct CommonClockClass * const Usart3Clock;
+extern const struct CommonClockClass * const AudioClock;
+extern const struct CommonClockClass * const OutClock;
+extern const struct CommonClockClass * const CguOut0Clock;
+extern const struct CommonClockClass * const CguOut1Clock;
+/*----------------------------------------------------------------------------*/
+struct CommonClockConfig
+{
+  enum clockSource source;
+};
+/*----------------------------------------------------------------------------*/
+struct PllConfig
+{
+  uint16_t multiplier;
+  uint8_t divider;
+  enum clockSource source;
+};
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC43XX_CLOCKING_H_ */
