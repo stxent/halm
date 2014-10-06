@@ -1014,6 +1014,42 @@ typedef struct
     };
   };
 } LPC_RGU_Type;
+/*------------------Timer/Counter---------------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t IR;
+  __rw__ uint32_t TCR;
+  __rw__ uint32_t TC;
+  __rw__ uint32_t PR;
+  __rw__ uint32_t PC;
+  __rw__ uint32_t MCR;
+  union
+  {
+    __rw__ uint32_t MR[4];
+    struct
+    {
+      __rw__ uint32_t MR0;
+      __rw__ uint32_t MR1;
+      __rw__ uint32_t MR2;
+      __rw__ uint32_t MR3;
+    };
+  };
+  __rw__ uint32_t CCR;
+  union
+  {
+    __ro__ uint32_t CR[4];
+    struct
+    {
+      __ro__ uint32_t CR0;
+      __ro__ uint32_t CR1;
+      __ro__ uint32_t CR2;
+      __ro__ uint32_t CR3;
+    };
+  };
+  __rw__ uint32_t EMR;
+  __ne__ uint32_t RESERVED1[12];
+  __rw__ uint32_t CTCR;
+} LPC_TIMER_Type;
 /*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
 {
@@ -1181,8 +1217,8 @@ typedef struct
 #define LPC_USART0        ((LPC_USART_Type *)LPC_USART0_BASE)
 #define LPC_UART1         ((LPC_UART_Type *)LPC_UART1_BASE)
 #define LPC_SSP0          ((LPC_SSP_Type *)LPC_SSP0_BASE)
-//#define LPC_TIMER0        ((LPC_TIMER_Type *)LPC_TIMER0_BASE)
-//#define LPC_TIMER1        ((LPC_TIMER_Type *)LPC_TIMER1_BASE)
+#define LPC_TIMER0        ((LPC_TIMER_Type *)LPC_TIMER0_BASE)
+#define LPC_TIMER1        ((LPC_TIMER_Type *)LPC_TIMER1_BASE)
 #define LPC_SCU           ((LPC_SCU_Type *)LPC_SCU_BASE)
 #define LPC_GPIO_INT      ((LPC_GPIO_INT_Type *)LPC_GPIO_INT_BASE)
 #define LPC_GPIO_GROUP_INT0 \
@@ -1199,8 +1235,8 @@ typedef struct
 //#define LPC_RIT           ((LPC_RIT_Type *)LPC_RIT_BASE)
 #define LPC_USART2        ((LPC_USART_Type *)LPC_USART2_BASE)
 #define LPC_USART3        ((LPC_USART_Type *)LPC_USART3_BASE)
-//#define LPC_TIMER2        ((LPC_TIMER_Type *)LPC_TIMER2_BASE)
-//#define LPC_TIMER3        ((LPC_TIMER_Type *)LPC_TIMER3_BASE)
+#define LPC_TIMER2        ((LPC_TIMER_Type *)LPC_TIMER2_BASE)
+#define LPC_TIMER3        ((LPC_TIMER_Type *)LPC_TIMER3_BASE)
 #define LPC_SSP1          ((LPC_SSP_Type *)LPC_SSP1_BASE)
 //#define LPC_QEI           ((LPC_QEI_Type *)LPC_QEI_BASE)
 //#define LPC_GIMA          ((LPC_GIMA_Type *)LPC_GIMA_BASE)

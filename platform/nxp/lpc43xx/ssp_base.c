@@ -280,7 +280,7 @@ static enum result sspInit(void *object, const void *configBase)
   /* Enable clocks to register interface and peripheral */
   sysClockEnable(entry->periperalBranch);
   sysClockEnable(entry->registerBranch);
-  /* Clear registers to default values */
+  /* Reset registers to default values */
   sysResetEnable(entry->reset);
 
   interface->handler = 0;

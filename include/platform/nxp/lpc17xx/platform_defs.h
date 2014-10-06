@@ -175,7 +175,6 @@ typedef struct
   __rw__ uint32_t EMR;
   __ne__ uint32_t RESERVED1[12];
   __rw__ uint32_t CTCR;
-  __rw__ uint32_t PWMC; /* Chip-specific register */
 } LPC_TIMER_Type;
 /*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
