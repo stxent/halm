@@ -45,7 +45,7 @@ void ADC_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void BOD_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void USB_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void CAN_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void DMA_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void GPDMA_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void I2S_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void ENET_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void RIT_ISR(void) __attribute__((weak, alias("defaultHandler")));
@@ -102,7 +102,7 @@ __attribute__((section(".isr_vectors"))) void (* const isrVectors[])(void) = {
     BOD_ISR,
     USB_ISR,
     CAN_ISR,
-    DMA_ISR,
+    GPDMA_ISR,
     I2S_ISR,
     ENET_ISR,
     RIT_ISR,

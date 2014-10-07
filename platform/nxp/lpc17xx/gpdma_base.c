@@ -130,7 +130,7 @@ void gpDmaSetupMux(struct GpDmaBase *descriptor)
       | descriptor->mux.value;
 }
 /*----------------------------------------------------------------------------*/
-void DMA_ISR(void)
+void GPDMA_ISR(void)
 {
   const uint8_t errorStatus = LPC_GPDMA->INTERRSTAT;
   const uint8_t terminalStatus = LPC_GPDMA->INTTCSTAT;
@@ -215,7 +215,7 @@ static enum result channelInit(void *object, const void *configBase)
   channel->config = 0;
   channel->control = 0;
   channel->handler = 0;
-  channel->number = (uint8_t)config->channel;
+  channel->number = config->channel;
   channel->reg = calcPeripheral(channel->number);
 
   /* Reset multiplexer mask and value */
