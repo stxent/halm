@@ -1123,6 +1123,35 @@ typedef struct
   __rw__ uint32_t SYNCCTRL;
   __rw__ uint32_t TER;
 } LPC_UART_Type;
+/*------------------General Purpose Direct Memory Access----------------------*/
+/* Common registers */
+typedef struct
+{
+  __ro__ uint32_t INTSTAT;
+  __ro__ uint32_t INTTCSTAT;
+  __wo__ uint32_t INTTCCLEAR;
+  __ro__ uint32_t INTERRSTAT;
+  __wo__ uint32_t INTERRCLEAR;
+  __ro__ uint32_t RAWINTTCSTAT;
+  __ro__ uint32_t RAWINTERRSTAT;
+  __ro__ uint32_t ENBLDCHNS;
+  __rw__ uint32_t SOFTBREQ;
+  __rw__ uint32_t SOFTSREQ;
+  __rw__ uint32_t SOFTLBREQ;
+  __rw__ uint32_t SOFTLSREQ;
+  __rw__ uint32_t CONFIG;
+  __rw__ uint32_t SYNC;
+} LPC_GPDMA_Type;
+
+/* Channel registers */
+typedef struct
+{
+  __rw__ uint32_t SRCADDR;
+  __rw__ uint32_t DESTADDR;
+  __rw__ uint32_t LLI;
+  __rw__ uint32_t CONTROL;
+  __rw__ uint32_t CONFIG;
+} LPC_GPDMACH_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
 #define LPC_AHB_BASE              (0x40000000UL)
@@ -1197,6 +1226,16 @@ typedef struct
 #define LPC_CCU1_BASE             (LPC_CLK_DOMAIN_BASE + 0x1000)
 #define LPC_CCU2_BASE             (LPC_CLK_DOMAIN_BASE + 0x2000)
 #define LPC_RGU_BASE              (LPC_CLK_DOMAIN_BASE + 0x3000)
+
+/* GPDMA channels */
+#define LPC_GPDMACH0_BASE         (LPC_GPDMA_BASE + 0x0100)
+#define LPC_GPDMACH1_BASE         (LPC_GPDMA_BASE + 0x0120)
+#define LPC_GPDMACH2_BASE         (LPC_GPDMA_BASE + 0x0140)
+#define LPC_GPDMACH3_BASE         (LPC_GPDMA_BASE + 0x0160)
+#define LPC_GPDMACH4_BASE         (LPC_GPDMA_BASE + 0x0180)
+#define LPC_GPDMACH5_BASE         (LPC_GPDMA_BASE + 0x01A0)
+#define LPC_GPDMACH6_BASE         (LPC_GPDMA_BASE + 0x01C0)
+#define LPC_GPDMACH7_BASE         (LPC_GPDMA_BASE + 0x01E0)
 /*----------------------------------------------------------------------------*/
 /* Peripheral declaration */
 #define LPC_GPIO          ((LPC_GPIO_Type *)LPC_GPIO_BASE)
@@ -1204,7 +1243,15 @@ typedef struct
 //#define LPC_SGPIO         ((LPC_SGPIO_Type *)LPC_SGPIO_BASE)
 
 //#define LPC_SCT           ((LPC_SCT_Type *)LPC_SCT_BASE)
-//#define LPC_GPDMA         ((LPC_GPDMA_Type *)LPC_GPDMA_BASE)
+#define LPC_GPDMA         ((LPC_GPDMA_Type *)LPC_GPDMA_BASE)
+#define LPC_GPDMACH0      ((LPC_GPDMACH_Type *)LPC_GPDMACH0_BASE)
+#define LPC_GPDMACH1      ((LPC_GPDMACH_Type *)LPC_GPDMACH1_BASE)
+#define LPC_GPDMACH2      ((LPC_GPDMACH_Type *)LPC_GPDMACH2_BASE)
+#define LPC_GPDMACH3      ((LPC_GPDMACH_Type *)LPC_GPDMACH3_BASE)
+#define LPC_GPDMACH4      ((LPC_GPDMACH_Type *)LPC_GPDMACH4_BASE)
+#define LPC_GPDMACH5      ((LPC_GPDMACH_Type *)LPC_GPDMACH5_BASE)
+#define LPC_GPDMACH6      ((LPC_GPDMACH_Type *)LPC_GPDMACH6_BASE)
+#define LPC_GPDMACH7      ((LPC_GPDMACH_Type *)LPC_GPDMACH7_BASE)
 //#define LPC_SPIFI         ((LPC_SPIFI_Type *)LPC_SPIFI_BASE)
 //#define LPC_SDIO          ((LPC_SDIO_Type *)LPC_SDIO_BASE)
 //#define LPC_EMC           ((LPC_EMC_Type *)LPC_EMC_BASE)

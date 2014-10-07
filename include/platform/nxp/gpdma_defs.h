@@ -20,6 +20,8 @@
 #define CONTROL_DST_BURST(burst)        BIT_FIELD((burst), 15)
 #define CONTROL_SRC_WIDTH(width)        BIT_FIELD((width), 18)
 #define CONTROL_DST_WIDTH(width)        BIT_FIELD((width), 21)
+#define CONTROL_SRC_MASTER1             BIT(24) //FIXME Rename both masters
+#define CONTROL_DST_MASTER1             BIT(25)
 #define CONTROL_SRC_INC                 BIT(26) /* Source increment */
 #define CONTROL_DST_INC                 BIT(27) /* Destination increment */
 #define CONTROL_INT                     BIT(31) /* Terminal count interrupt */

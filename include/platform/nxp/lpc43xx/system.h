@@ -91,7 +91,7 @@ enum sysClockBranch
   CLK_M4_USB0       = 0x080 + 5,
   CLK_M4_EMC        = 0x080 + 6,
   CLK_M4_SDIO       = 0x080 + 7,
-  CLK_M4_DMA        = 0x080 + 8,
+  CLK_M4_GPDMA      = 0x080 + 8,
   CLK_M4_M4CORE     = 0x080 + 9,
   CLK_M4_SCT        = 0x080 + 13,
   CLK_M4_USB1       = 0x080 + 14,
