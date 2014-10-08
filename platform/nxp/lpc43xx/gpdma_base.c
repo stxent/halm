@@ -229,7 +229,7 @@ static enum result channelInit(void *object, const void *configBase)
   assert(config->channel < GPDMA_CHANNEL_COUNT);
 
   channel->config = 0;
-  channel->control = CONTROL_SRC_MASTER1 | CONTROL_DST_MASTER1; //FIXME Remove
+  channel->control = 0;
   channel->handler = 0;
   channel->number = config->channel;
   channel->reg = calcPeripheral(channel->number);
@@ -242,14 +242,17 @@ static enum result channelInit(void *object, const void *configBase)
   {
     const uint8_t peripheral = allocateConnection(channel, config->event);
 
+    /* Only AHB master 1 can access a peripheral */
     switch (config->type)
     {
       case GPDMA_TYPE_M2P:
         channel->config |= CONFIG_DST_PERIPH(peripheral);
+        channel->control |= CONTROL_DST_MASTER(1);
         break;
 
       case GPDMA_TYPE_P2M:
         channel->config |= CONFIG_SRC_PERIPH(peripheral);
+        channel->control |= CONTROL_SRC_MASTER(1);
         break;
 
       default:
