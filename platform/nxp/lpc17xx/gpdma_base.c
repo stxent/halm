@@ -18,7 +18,7 @@ struct DmaHandler
 
   /* Channel descriptors currently in use */
   struct GpDmaBase *descriptors[8];
-  /* Initialized channels count */
+  /* Initialized descriptors count */
   uint16_t instances;
 };
 /*----------------------------------------------------------------------------*/
@@ -26,8 +26,8 @@ static inline void *calcPeripheral(uint8_t);
 static uint8_t eventToPeripheral(enum gpDmaEvent);
 static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerAttach();
-static inline void dmaHandlerDetach();
+static void dmaHandlerAttach();
+static void dmaHandlerDetach();
 static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
@@ -166,7 +166,7 @@ void GPDMA_ISR(void)
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerAttach()
+static void dmaHandlerAttach()
 {
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
@@ -181,7 +181,7 @@ static inline void dmaHandlerAttach()
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerDetach()
+static void dmaHandlerDetach()
 {
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)

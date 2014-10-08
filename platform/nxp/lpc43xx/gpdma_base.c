@@ -19,18 +19,19 @@ struct DmaHandler
 
   /* Channel descriptors currently in use */
   struct GpDmaBase *descriptors[8];
-  /* Initialized channels count */
+  /* Initialized descriptors count */
   uint16_t instances;
   /* Peripheral connection statuses */
   uint8_t connections[16];
 };
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t);
-static uint8_t allocateConnection(struct GpDmaBase *, enum gpDmaEvent);
-static void freeConnection(uint8_t);
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerAttach();
-static inline void dmaHandlerDetach();
+static uint8_t dmaHandlerAllocate(struct GpDmaBase *, enum gpDmaEvent);
+static void dmaHandlerAttach();
+static void dmaHandlerDetach();
+static void dmaHandlerFree(struct GpDmaBase *);
+static void dmaHandlerInstantiate();
 static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
@@ -75,49 +76,6 @@ static inline void *calcPeripheral(uint8_t channel)
 {
   return (void *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
       - (uint32_t)LPC_GPDMACH0) * channel);
-}
-/*----------------------------------------------------------------------------*/
-static uint8_t allocateConnection(struct GpDmaBase *channel,
-    enum gpDmaEvent event)
-{
-  uint8_t minIndex, minValue;
-  bool found = false;
-
-  assert(event < GPDMA_MEMORY);
-
-  if (!dmaHandler)
-    dmaHandler = init(DmaHandler, 0);
-  assert(dmaHandler);
-
-  for (uint8_t index = 0; index < 16; ++index)
-  {
-    bool allowed = false;
-
-    for (uint8_t entry = 0; entry < 4; ++entry)
-    {
-      if (eventMap[index][entry] == event)
-        allowed = true;
-    }
-
-    if (allowed && (!found || minValue < dmaHandler->connections[index]))
-    {
-      found = true;
-      minIndex = index;
-      minValue = dmaHandler->connections[index];
-    }
-  }
-
-  assert(found);
-
-  ++dmaHandler->connections[minIndex];
-  channel->mux.mask &= ~(0x03 << (minIndex << 1));
-  channel->mux.value |= minValue << (minIndex << 1);
-  return minIndex;
-}
-/*----------------------------------------------------------------------------*/
-static void freeConnection(uint8_t index)
-{
-  //TODO
 }
 /*----------------------------------------------------------------------------*/
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
@@ -179,12 +137,45 @@ void GPDMA_ISR(void)
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerAttach()
+static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
+    enum gpDmaEvent event)
 {
-  if (!dmaHandler)
-    dmaHandler = init(DmaHandler, 0);
+  uint8_t minIndex, minValue;
+  bool found = false;
 
-  assert(dmaHandler);
+  assert(event < GPDMA_MEMORY);
+
+  dmaHandlerInstantiate();
+
+  for (uint8_t index = 0; index < 16; ++index)
+  {
+    bool allowed = false;
+
+    for (uint8_t entry = 0; entry < 4; ++entry)
+    {
+      if (eventMap[index][entry] == event)
+        allowed = true;
+    }
+
+    if (allowed && (!found || minValue < dmaHandler->connections[index]))
+    {
+      found = true;
+      minIndex = index;
+      minValue = dmaHandler->connections[index];
+    }
+  }
+
+  assert(found);
+
+  ++dmaHandler->connections[minIndex];
+  channel->mux.mask &= ~(0x03 << (minIndex << 1));
+  channel->mux.value = minValue << (minIndex << 1);
+  return minIndex;
+}
+/*----------------------------------------------------------------------------*/
+static void dmaHandlerAttach()
+{
+  dmaHandlerInstantiate();
 
   if (!dmaHandler->instances++)
   {
@@ -195,7 +186,7 @@ static inline void dmaHandlerAttach()
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline void dmaHandlerDetach()
+static void dmaHandlerDetach()
 {
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)
@@ -204,6 +195,30 @@ static inline void dmaHandlerDetach()
     LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
     sysClockDisable(CLK_M4_GPDMA);
   }
+}
+/*----------------------------------------------------------------------------*/
+static void dmaHandlerFree(struct GpDmaBase *channel)
+{
+  uint32_t mask = ~channel->mux.mask;
+  uint8_t index = 0;
+
+  /* DMA Handler is already initialized */
+  while (mask)
+  {
+    if (mask & 0x03)
+      --dmaHandler->connections[index];
+
+    ++index;
+    mask >>= 2;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void dmaHandlerInstantiate()
+{
+  if (!dmaHandler)
+    dmaHandler = init(DmaHandler, 0);
+
+  assert(dmaHandler);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaHandlerInit(void *object,
@@ -240,7 +255,7 @@ static enum result channelInit(void *object, const void *configBase)
 
   if (config->type != GPDMA_TYPE_M2M)
   {
-    const uint8_t peripheral = allocateConnection(channel, config->event);
+    const uint8_t peripheral = dmaHandlerAllocate(channel, config->event);
 
     /* Only AHB master 1 can access a peripheral */
     switch (config->type)
@@ -266,7 +281,8 @@ static enum result channelInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void channelDeinit(void *object __attribute__((unused)))
+static void channelDeinit(void *object)
 {
+  dmaHandlerFree(object);
   dmaHandlerDetach();
 }
