@@ -21,5 +21,13 @@
 #define STAT_AUTO                       BIT(1)
 #define STAT_WAKEUP                     BIT(2)
 #define STAT_RUN_N                      BIT(5)
+/*------------------Hardware sleep event enable register----------------------*/
+#define ENA_EVENT0                      BIT(0)
+#define ENA_EVENT1                      BIT(1)
+/*------------------Power-down modes register---------------------------------*/
+#define MODE_DEEP_SLEEP                 0x003000AA
+#define MODE_POWERDOWN                  0x0030FCBA
+#define MODE_POWERDOWN_M0SUB            0x00303CBA
+#define MODE_DEEP_POWERDOWN             0x0030FF7F
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC43XX_SYSTEM_DEFS_H_ */

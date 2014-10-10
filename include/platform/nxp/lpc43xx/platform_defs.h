@@ -312,6 +312,13 @@ typedef struct
   /* Offset 0x600 */
   __rw__ uint32_t USB1FLADJ;
 } LPC_CREG_Type;
+/*------------------Power Management Controller-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t PD0_SLEEP0_HW_ENA;
+  __ne__ uint32_t RESERVED0[6];
+  __rw__ uint32_t PD0_SLEEP0_MODE;
+} LPC_PMC_Type;
 /*------------------System Configuration Unit---------------------------------*/
 typedef struct
 {
@@ -1296,7 +1303,7 @@ typedef struct
 
 //#define LPC_ATIMER        ((LPC_ATIMER_Type *)LPC_ATIMER_BASE)
 //#define LPC_BACKUP        ((LPC_BACKUP_Type *)LPC_BACKUP_BASE)
-//#define LPC_PMC           ((LPC_PMC_Type *)LPC_PMC_BASE)
+#define LPC_PMC           ((LPC_PMC_Type *)LPC_PMC_BASE)
 #define LPC_CREG          ((LPC_CREG_Type *)LPC_CREG_BASE)
 //#define LPC_EVENTROUTER   ((LPC_EVENTROUTER_Type *)LPC_EVENTROUTER_BASE)
 //#define LPC_OTP           ((LPC_OTP_Type *)LPC_OTP_BASE)
