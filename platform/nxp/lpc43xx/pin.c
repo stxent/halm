@@ -500,7 +500,7 @@ void pinInput(struct Pin pin)
 {
   commonPinSetup(pin);
 
-  if ((pin_t)(pin.data.key))
+  if (pinKeyValid(pin))
   {
     /* Configure pin as input */
     LPC_GPIO->DIR[pin.data.port] &= ~(1 << pin.data.offset);
@@ -516,7 +516,7 @@ void pinOutput(struct Pin pin, uint8_t value)
 {
   commonPinSetup(pin);
 
-  if ((pin_t)(pin.data.key))
+  if (pinKeyValid(pin))
   {
     /* Configure pin as output */
     LPC_GPIO->DIR[pin.data.port] |= 1 << pin.data.offset;
@@ -540,7 +540,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   switch (function)
   {
     case PIN_DEFAULT:
-      if (!(pin_t)(pin.data.key))
+      if (!pinKeyValid(pin))
         break;
 
       function = pin.data.port >= 5 ? 4 : 0;

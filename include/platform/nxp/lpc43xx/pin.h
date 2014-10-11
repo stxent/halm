@@ -41,28 +41,28 @@ void pinSetSlewRate(struct Pin, enum pinSlewRate);
 /*----------------------------------------------------------------------------*/
 static inline uint8_t pinRead(struct Pin pin)
 {
-  assert((pin_t)(pin.data.key));
+  assert(pinKeyValid(pin));
 
   return LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset];
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
 {
-  assert((pin_t)(pin.data.key));
+  assert(pinKeyValid(pin));
 
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSet(struct Pin pin)
 {
-  assert((pin_t)(pin.data.key));
+  assert(pinKeyValid(pin));
 
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 1;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinWrite(struct Pin pin, uint8_t value)
 {
-  assert((pin_t)(pin.data.key));
+  assert(pinKeyValid(pin));
 
   /* Only 0 and 1 are allowed */
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = value;
