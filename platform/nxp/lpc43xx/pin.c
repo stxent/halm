@@ -373,9 +373,13 @@ static volatile uint32_t *calcControlReg(union PinData data)
 
     return LPC_SCU->SFSP0 + portMapSize * data.port + data.offset;
   }
-  else
+  else if (data.port != PORT_ADC)
   {
     return &LPC_SCU->SFSPCLK0 + data.offset;
+  }
+  else
+  {
+    return 0;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -506,10 +510,13 @@ void pinInput(struct Pin pin)
     LPC_GPIO->DIR[pin.data.port] &= ~(1 << pin.data.offset);
   }
 
-  volatile uint32_t * const reg = pin.reg;
+  if (pin.reg)
+  {
+    volatile uint32_t * const reg = pin.reg;
 
-  /* Disable glitch filter and enable input buffer */
-  *reg |= SFS_ZIF | SFS_EZI;
+    /* Disable glitch filter and enable input buffer */
+    *reg |= SFS_ZIF | SFS_EZI;
+  }
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, uint8_t value)
@@ -524,14 +531,20 @@ void pinOutput(struct Pin pin, uint8_t value)
     pinWrite(pin, value);
   }
 
-  volatile uint32_t * const reg = pin.reg;
+  if (pin.reg)
+  {
+    volatile uint32_t * const reg = pin.reg;
 
-  /* Enable glitch filter and disable input buffer */
-  *reg &= ~(SFS_ZIF | SFS_EZI);
+    /* Enable glitch filter and disable input buffer */
+    *reg &= ~(SFS_ZIF | SFS_EZI);
+  }
 }
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
+  if (!pin.reg)
+    return;
+
   volatile uint32_t * const reg = pin.reg;
   const union PinData data = calcPinData(reg);
   const uint32_t value = *reg & ~SFS_FUNC_MASK;
@@ -575,6 +588,9 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum pinPull pull)
 {
+  if (!pin.reg)
+    return;
+
   volatile uint32_t * const reg = pin.reg;
   uint32_t value = *reg & ~SFS_MODE_MASK;
 
@@ -598,6 +614,9 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
 /*----------------------------------------------------------------------------*/
 void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
 {
+  if (!pin.reg)
+    return;
+
   volatile uint32_t * const reg = pin.reg;
   const enum pinDriveType type = detectPinDriveType(reg);
   uint32_t value = *reg & ~SFS_STRENGTH_MASK;
