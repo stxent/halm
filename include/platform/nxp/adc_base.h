@@ -7,6 +7,7 @@
 #ifndef PLATFORM_NXP_ADC_BASE_H_
 #define PLATFORM_NXP_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
 #include <entity.h>
 #include <irq.h>
 #include <pin.h>
@@ -34,5 +35,7 @@ struct AdcUnitBase
   /* Unique peripheral identifier */
   uint8_t channel;
 };
+/*----------------------------------------------------------------------------*/
+int8_t adcSetupPin(uint8_t, pin_t);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_ADC_BASE_H_ */

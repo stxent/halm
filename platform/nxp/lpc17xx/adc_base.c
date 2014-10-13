@@ -28,43 +28,35 @@ static const struct EntityClass adcUnitTable = {
     .deinit = adcUnitDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct PinEntry adcPins[] = {
+const struct PinGroupEntry adcPins[] = {
     {
-        /* Unavailable on LPC175x series */
-        .key = PIN(0, 23), /* AD0 */
+        /* From AD0 to AD3 */
+        .begin = PIN(0, 23),
+        .end = PIN(0, 26),
         .channel = 0,
         .value = PACK_VALUE(1, 0)
     }, {
-        /* Unavailable on LPC175x series */
-        .key = PIN(0, 24), /* AD1 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 1)
-    }, {
-        .key = PIN(0, 25), /* AD2 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 2)
-    }, {
-        .key = PIN(0, 26), /* AD3 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 3)
-    }, {
-        .key = PIN(1, 30), /* AD4 */
+        /* From AD4 to AD5 */
+        .begin = PIN(1, 30),
+        .end = PIN(1, 31),
         .channel = 0,
         .value = PACK_VALUE(3, 4)
     }, {
-        .key = PIN(1, 31), /* AD5 */
-        .channel = 0,
-        .value = PACK_VALUE(3, 5)
-    }, {
-        .key = PIN(0, 3), /* AD6 */
-        .channel = 0,
-        .value = PACK_VALUE(2, 6)
-    }, {
-        .key = PIN(0, 2), /* AD7 */
+        /* AD7 */
+        .begin = PIN(0, 2),
+        .end = PIN(0, 2),
         .channel = 0,
         .value = PACK_VALUE(2, 7)
     }, {
-        .key = 0 /* End of pin function association list */
+        /* AD6 */
+        .begin = PIN(0, 3),
+        .end = PIN(0, 3),
+        .channel = 0,
+        .value = PACK_VALUE(2, 6)
+    }, {
+        /* End of pin function association list */
+        .begin = 0,
+        .end = 0
     }
 };
 /*----------------------------------------------------------------------------*/

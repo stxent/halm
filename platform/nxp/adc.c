@@ -9,9 +9,6 @@
 #include <platform/nxp/adc.h>
 #include <platform/nxp/adc_defs.h>
 /*----------------------------------------------------------------------------*/
-#define UNPACK_FUNCTION(value)  ((value) & 0x0F)
-#define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static inline uint32_t resultWidthExponent(void);
 /*----------------------------------------------------------------------------*/
@@ -43,7 +40,6 @@ static const struct InterfaceClass adcTable = {
     .write = 0
 };
 /*----------------------------------------------------------------------------*/
-extern const struct PinEntry adcPins[];
 const struct EntityClass * const AdcUnit = &adcUnitTable;
 const struct InterfaceClass * const Adc = &adcTable;
 /*----------------------------------------------------------------------------*/
@@ -124,24 +120,19 @@ static void adcUnitDeinit(void *object)
 static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
-  const struct PinEntry *pinEntry;
   struct Adc * const interface = object;
 
   assert(config->event < ADC_EVENT_END);
 
-  if (!(pinEntry = pinFind(adcPins, config->pin, 0)))
+  /* Initialize input pin */
+  const int8_t channel = adcSetupPin(config->parent->parent.channel,
+      config->pin);
+
+  if (channel == -1)
     return E_VALUE;
 
-  /* Fill pin structure and initialize pin as input */
-  const struct Pin pin = pinInit(config->pin);
-  pinInput(pin);
-  /* Enable analog pin mode bit */
-  pinSetFunction(pin, PIN_ANALOG);
-  /* Set analog pin function */
-  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
-
   interface->callback = 0;
-  interface->channel = UNPACK_CHANNEL(pinEntry->value);
+  interface->channel = (uint8_t)channel;
   interface->blocking = true;
   interface->buffer = 0;
   interface->left = 0;
