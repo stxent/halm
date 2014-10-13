@@ -140,7 +140,7 @@ void GPDMA_ISR(void)
 static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
     enum gpDmaEvent event)
 {
-  uint8_t minIndex, minValue;
+  uint8_t minIndex = 0, minValue = 0;
   bool found = false;
 
   assert(event < GPDMA_MEMORY);

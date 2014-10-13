@@ -119,17 +119,18 @@ static enum result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmConfig * const config = configBase;
   struct GpTimerPwm * const pwm = object;
-  int8_t freeChannel, pwmChannel;
 
   /* Initialize output pin */
-  pwmChannel = gpTimerSetupMatchPin(config->parent->parent.channel,
+  const int8_t pwmChannel = gpTimerSetupMatchPin(config->parent->parent.channel,
       config->pin);
+
   if (pwmChannel == -1)
     return E_VALUE;
 
   /* Check if there is a free match channel */
-  freeChannel = gpTimerAllocateChannel(config->parent->matches
+  const int8_t freeChannel = gpTimerAllocateChannel(config->parent->matches
       | 1 << pwmChannel);
+
   if (freeChannel == -1)
     return E_BUSY;
 

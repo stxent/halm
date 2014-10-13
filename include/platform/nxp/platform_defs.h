@@ -82,7 +82,7 @@ typedef struct
   __rw__ uint32_t RIS;
   __rw__ uint32_t MIS;
   __wo__ uint32_t ICR;
-  __rw__ uint32_t DMACR; /* May be unavailable on some parts */
+  __rw__ uint32_t DMACR; /* Unavailable on parts without DMA controller */
 } LPC_SSP_Type;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
