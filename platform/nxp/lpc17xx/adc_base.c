@@ -12,9 +12,11 @@
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_DIV CLK_DIV1
-/* Pack conversion channel and pin function in one number */
-#define PACK_VALUE(function, channel) (((channel) << 4) | (function))
+#define DEFAULT_DIV                     CLK_DIV1
+/* Pack or unpack conversion channel and pin function */
+#define PACK_VALUE(function, channel)   (((channel) << 4) | (function))
+#define UNPACK_CHANNEL(value)           (((value) >> 4) & 0x0F)
+#define UNPACK_FUNCTION(value)          ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);
@@ -28,35 +30,43 @@ static const struct EntityClass adcUnitTable = {
     .deinit = adcUnitDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct PinGroupEntry adcPins[] = {
+const struct PinEntry adcPins[] = {
     {
-        /* From AD0 to AD3 */
-        .begin = PIN(0, 23),
-        .end = PIN(0, 26),
+        /* Unavailable on LPC175x series */
+        .key = PIN(0, 23), /* AD0 */
         .channel = 0,
         .value = PACK_VALUE(1, 0)
     }, {
-        /* From AD4 to AD5 */
-        .begin = PIN(1, 30),
-        .end = PIN(1, 31),
+        /* Unavailable on LPC175x series */
+        .key = PIN(0, 24), /* AD1 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 1)
+    }, {
+        .key = PIN(0, 25), /* AD2 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 2)
+    }, {
+        .key = PIN(0, 26), /* AD3 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 3)
+    }, {
+        .key = PIN(1, 30), /* AD4 */
         .channel = 0,
         .value = PACK_VALUE(3, 4)
     }, {
-        /* AD7 */
-        .begin = PIN(0, 2),
-        .end = PIN(0, 2),
+        .key = PIN(1, 31), /* AD5 */
         .channel = 0,
-        .value = PACK_VALUE(2, 7)
+        .value = PACK_VALUE(3, 5)
     }, {
-        /* AD6 */
-        .begin = PIN(0, 3),
-        .end = PIN(0, 3),
+        .key = PIN(0, 3), /* AD6 */
         .channel = 0,
         .value = PACK_VALUE(2, 6)
     }, {
-        /* End of pin function association list */
-        .begin = 0,
-        .end = 0
+        .key = PIN(0, 2), /* AD7 */
+        .channel = 0,
+        .value = PACK_VALUE(2, 7)
+    }, {
+        .key = 0 /* End of pin function association list */
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -76,6 +86,25 @@ void ADC_ISR()
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
+}
+/*----------------------------------------------------------------------------*/
+int8_t adcSetupPin(uint8_t channel, pin_t key)
+{
+  const struct PinEntry *entry;
+
+  if (!(entry = pinFind(adcPins, key, channel)))
+    return -1;
+
+  const uint8_t function = UNPACK_FUNCTION(entry->value);
+  const uint8_t index = UNPACK_CHANNEL(entry->value);
+
+  /* Fill pin structure and initialize pin as input */
+  const struct Pin pin = pinInit(key);
+  pinInput(pin);
+  /* Set analog pin function */
+  pinSetFunction(pin, function);
+
+  return (int8_t)index;
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *object, const void *configBase)
