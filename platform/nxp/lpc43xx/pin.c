@@ -32,6 +32,7 @@ static volatile uint32_t *calcControlReg(union PinData);
 static union PinData calcPinData(volatile uint32_t *);
 static void commonPinSetup(struct Pin);
 static enum pinDriveType detectPinDriveType(volatile uint32_t *);
+static void resetAnalogFunction(pin_t);
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach();
 static inline void pinHandlerDetach();
@@ -43,73 +44,33 @@ static const struct EntityClass handlerTable = {
     .deinit = 0
 };
 /*----------------------------------------------------------------------------*/
-const struct PinEntry analogPins[] = {
-    {
-        .key = PIN(PORT_4, 3), /* ADC0_0 */
-        .channel = 0,
-        .value = PACK_VALUE(0, 0)
-    }, {
-        .key = PIN(PORT_4, 1), /* ADC0_1 */
-        .channel = 0,
-        .value = PACK_VALUE(0, 1)
-    }, {
-        .key = PIN(PORT_F, 8), /* ADC0_2 */
-        .channel = 0,
-        .value = PACK_VALUE(0, 2)
-    }, {
-        .key = PIN(PORT_7, 5), /* ADC0_3 */
-        .channel = 0,
-        .value = PACK_VALUE(0, 3)
-    }, {
-        .key = PIN(PORT_7, 4), /* ADC0_4 */
-        .channel = 0,
-        .value = PACK_VALUE(0, 4)
-    }, {
-        .key = PIN(PORT_F, 10), /* ADC0_5 */
-        .channel = 0,
-        .value = PACK_VALUE(0, 5)
-    }, {
-        .key = PIN(PORT_B, 6), /* ADC0_6 */
-        .channel = 0,
-        .value = PACK_VALUE(0, 6)
-    }, {
-        .key = PIN(PORT_C, 3), /* ADC1_0 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 0)
-    }, {
-        .key = PIN(PORT_C, 0), /* ADC1_1 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 1)
-    }, {
-        .key = PIN(PORT_F, 9), /* ADC1_2 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 2)
-    }, {
-        .key = PIN(PORT_F, 6), /* ADC1_3 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 3)
-    }, {
-        .key = PIN(PORT_F, 5), /* ADC1_4 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 4)
-    }, {
-        .key = PIN(PORT_F, 11), /* ADC1_5 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 5)
-    }, {
-        .key = PIN(PORT_7, 7), /* ADC1_6 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 6)
-    }, {
-        .key = PIN(PORT_F, 7), /* ADC1_7 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 7)
-    }, {
-        .key = PIN(PORT_4, 4), /* DAC */
-        .channel = 0,
-        .value = PACK_VALUE(2, 0)
-    }, {
-        .key = 0 /* End of pin function association list */
+/* List of analog pins configurable through ENAIO registers */
+static const pin_t *analogMaps[] = {
+    [0] = (const pin_t []){
+        PIN(PORT_4, 3),
+        PIN(PORT_4, 1),
+        PIN(PORT_F, 8),
+        PIN(PORT_7, 5),
+        PIN(PORT_7, 4),
+        PIN(PORT_F, 10),
+        PIN(PORT_B, 6),
+        0
+    },
+    [1] = (const pin_t []){
+        PIN(PORT_C, 3),
+        PIN(PORT_C, 0),
+        PIN(PORT_F, 9),
+        PIN(PORT_F, 6),
+        PIN(PORT_F, 5),
+        PIN(PORT_F, 11),
+        PIN(PORT_7, 7),
+        PIN(PORT_F, 7),
+        0
+    },
+    [2] = (const pin_t []){
+        PIN(PORT_4, 4),
+        PIN(PORT_F, 7),
+        0
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -410,6 +371,14 @@ static void commonPinSetup(struct Pin pin)
   /* Register new pin in the handler */
   pinHandlerAttach();
 
+  if (pin.reg)
+  {
+    volatile uint32_t * const reg = pin.reg;
+
+    /* Disable glitch filter and enable input buffer */
+    *reg |= SFS_ZIF | SFS_EZI;
+  }
+
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
   pinSetSlewRate(pin, PIN_SLEW_FAST);
@@ -435,6 +404,24 @@ static enum pinDriveType detectPinDriveType(volatile uint32_t *reg)
     return HIGH_SPEED_PIN;
   else
     return NORMAL_DRIVE_PIN;
+}
+/*----------------------------------------------------------------------------*/
+static void resetAnalogFunction(pin_t key)
+{
+  for (uint8_t map = 0; map < 3; ++map)
+  {
+    const pin_t *entry = analogMaps[map];
+
+    while (*entry)
+    {
+      if (*entry == key)
+      {
+        *(&LPC_SCU->ENAIO0 + map) &= ~(1 << (entry - analogMaps[map]));
+        break;
+      }
+      ++entry;
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach()
@@ -474,26 +461,24 @@ struct Pin pinInit(pin_t id)
 {
   const struct PinGroupEntry *group;
   struct Pin pin;
+  union PinData current;
 
-  group = pinGroupFind(gpioPins, id, 0);
+  current.key = ~id;
+  pin.reg = (void *)calcControlReg(current);
 
-  if (group)
+  if ((group = pinGroupFind(gpioPins, id, 0)))
   {
-    union PinData begin, current;
+    union PinData begin;
 
     begin.key = ~group->begin;
-    current.key = ~id;
 
     pin.data.port = UNPACK_CHANNEL(group->value);
     pin.data.offset = current.offset - begin.offset
         + UNPACK_OFFSET(group->value);
-    pin.reg = (void *)calcControlReg(current);
   }
   else
   {
     /* Some pins do not have GPIO function */
-    pin.data.key = ~id;
-    pin.reg = (void *)calcControlReg(pin.data);
     pin.data.key = ~0;
   }
 
@@ -509,14 +494,6 @@ void pinInput(struct Pin pin)
     /* Configure pin as input */
     LPC_GPIO->DIR[pin.data.port] &= ~(1 << pin.data.offset);
   }
-
-  if (pin.reg)
-  {
-    volatile uint32_t * const reg = pin.reg;
-
-    /* Disable glitch filter and enable input buffer */
-    *reg |= SFS_ZIF | SFS_EZI;
-  }
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, uint8_t value)
@@ -530,14 +507,6 @@ void pinOutput(struct Pin pin, uint8_t value)
     /* Set default output value */
     pinWrite(pin, value);
   }
-
-  if (pin.reg)
-  {
-    volatile uint32_t * const reg = pin.reg;
-
-    /* Enable glitch filter and disable input buffer */
-    *reg &= ~(SFS_ZIF | SFS_EZI);
-  }
 }
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
@@ -546,44 +515,39 @@ void pinSetFunction(struct Pin pin, uint8_t function)
     return;
 
   volatile uint32_t * const reg = pin.reg;
-  const union PinData data = calcPinData(reg);
-  const uint32_t value = *reg & ~SFS_FUNC_MASK;
-  const struct PinEntry *pinEntry = pinFind(analogPins, data.key, 0);
+  uint32_t value = *reg & ~SFS_FUNC_MASK;
+  union PinData data;
 
   switch (function)
   {
     case PIN_DEFAULT:
-      if (!pinKeyValid(pin))
-        break;
+      /* Disable analog function on pin */
+      data = calcPinData(reg);
+      resetAnalogFunction(data.key);
 
-      function = pin.data.port >= 5 ? 4 : 0;
-
-      if (pinEntry)
+      if (pinKeyValid(pin))
       {
-        *(&LPC_SCU->ENAIO0 + UNPACK_CHANNEL(pinEntry->value)) &=
-            ~(1 << UNPACK_OFFSET(pinEntry->value));
+        const uint8_t actualFunction = pin.data.port >= 5 ? 4 : 0;
+
+        /* Set GPIO function */
+        value |= SFS_FUNC(actualFunction);
       }
-      *reg = value | SFS_FUNC(function);
+
+      /* Enable input buffer */
+      value |= SFS_EZI;
       break;
 
     case PIN_ANALOG:
-      if (pinEntry)
-      {
-        /*
-         * Pin should be completely reconfigured to switch back
-         * to digital function from analog function.
-         */
-        *reg = value & ~SFS_EZI;
-
-        *(&LPC_SCU->ENAIO0 + UNPACK_CHANNEL(pinEntry->value)) |=
-            1 << UNPACK_OFFSET(pinEntry->value);
-      }
+      /* Disable input buffer */
+      value &= ~SFS_EZI;
       break;
 
     default:
-      *reg = value | SFS_FUNC(function);
+      value |= SFS_FUNC(function);
       break;
   }
+
+  *reg = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum pinPull pull)
