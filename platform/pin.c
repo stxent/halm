@@ -25,14 +25,16 @@ const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *list,
 
   while (list->begin && list->end)
   {
-    begin.key = ~list->begin;
-    end.key = ~list->end;
-
-    if (list->channel == channel
-        && pin.port >= begin.port && pin.port <= end.port
-        && pin.offset >= begin.offset && pin.offset <= end.offset)
+    if (list->channel == channel)
     {
-      return list;
+      begin.key = ~list->begin;
+      end.key = ~list->end;
+
+      const bool found = pin.port >= begin.port && pin.port <= end.port
+          && pin.offset >= begin.offset && pin.offset <= end.offset;
+
+      if (found)
+        return list;
     }
 
     ++list;

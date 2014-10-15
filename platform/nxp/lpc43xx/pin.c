@@ -357,12 +357,13 @@ static union PinData calcPinData(volatile uint32_t *reg)
   {
     const uint32_t portMapSize = ((uint32_t)&LPC_SCU->SFSP1
         - (uint32_t)&LPC_SCU->SFSP0) / sizeof(LPC_SCU->SFSP0[0]);
-    const uint32_t totalOffset = reg - &LPC_SCU->SFSPCLK0;
+    const uint32_t totalOffset = reg - &LPC_SCU->SFSP0[0];
 
     pin.port = totalOffset / portMapSize;
     pin.offset = totalOffset % portMapSize;
   }
 
+  pin.key = ~pin.key;
   return pin;
 }
 /*----------------------------------------------------------------------------*/
