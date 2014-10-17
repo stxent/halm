@@ -8,7 +8,7 @@
 #define PLATFORM_NXP_DAC_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
-#include <dma_list.h>
+#include <dma.h>
 #include "dac_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const DacDma;
@@ -17,8 +17,8 @@ struct DacDmaConfig
 {
   /** Mandatory: conversion frequency. */
   uint32_t frequency;
-  /** Mandatory: length of the single buffer in elements. */
-  uint32_t length;
+  /** Mandatory: size of the single buffer in elements. */
+  uint32_t size;
   /** Optional: initial output value. */
   uint16_t value;
   /** Mandatory: analog output. */
@@ -34,12 +34,12 @@ struct DacDma
   void (*callback)(void *);
   void *callbackArgument;
 
-  struct DmaList *dma;
+  struct Dma *dma;
 
   /* Internal data buffer containing two pages and four chunks */
   uint16_t *buffer;
-  /* Length of the page */
-  uint32_t length;
+  /* Size of the page */
+  uint32_t size;
   /* Update flag indicating that the second buffer is ready */
   bool updated;
 };
