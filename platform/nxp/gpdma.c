@@ -9,11 +9,11 @@
 #include <platform/nxp/gpdma.h>
 #include <platform/nxp/gpdma_defs.h>
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *, enum result);
-/*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelCallback(void *, void (*)(void *), void *);
+static void channelHandler(void *, enum result);
+static uint32_t channelIndex(const void *);
 static enum result channelStart(void *, void *, const void *, uint32_t);
 static enum result channelStatus(const void *);
 static void channelStop(void *);
@@ -24,22 +24,15 @@ static const struct DmaClass channelTable = {
     .deinit = channelDeinit,
 
     .callback = channelCallback,
+    .index = channelIndex,
     .start = channelStart,
     .status = channelStatus,
-    .stop = channelStop
+    .stop = channelStop,
+
+    .handler = channelHandler
 };
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDma = &channelTable;
-/*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object, enum result res)
-{
-  struct GpDma * const channel = object;
-
-  channel->error = res != E_OK;
-
-  if (channel->callback)
-    channel->callback(channel->callbackArgument);
-}
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configBase)
 {
@@ -56,7 +49,6 @@ static enum result channelInit(void *object, const void *configBase)
   if ((res = GpDmaBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  channel->parent.handler = interruptHandler;
   channel->callback = 0;
   channel->error = false;
 
@@ -108,6 +100,27 @@ static void channelCallback(void *object, void (*callback)(void *),
 
   channel->callback = callback;
   channel->callbackArgument = argument;
+}
+/*----------------------------------------------------------------------------*/
+static void channelHandler(void *object, enum result res)
+{
+  struct GpDma * const channel = object;
+
+  channel->error = res != E_OK;
+
+  if (channel->callback)
+    channel->callback(channel->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t channelIndex(const void *object)
+{
+  const struct GpDma * const channel = object;
+  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
+
+  if (gpDmaGetDescriptor(channel->parent.number) != object)
+    return 0;
+
+  return CONTROL_SIZE_VALUE(reg->CONTROL);
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,

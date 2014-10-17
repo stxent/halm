@@ -7,14 +7,16 @@
 #ifndef PLATFORM_NXP_GPDMA_LIST_H_
 #define PLATFORM_NXP_GPDMA_LIST_H_
 /*----------------------------------------------------------------------------*/
-#include <dma_list.h>
+#include <dma.h>
 #include "gpdma_base.h"
 /*----------------------------------------------------------------------------*/
-extern const struct DmaListClass * const GpDmaList;
+extern const struct DmaClass * const GpDmaList;
 /*----------------------------------------------------------------------------*/
 struct GpDmaListConfig
 {
-  /** Mandatory: list size. */
+  /** Mandatory: number of elements in the list. */
+  uint16_t number;
+  /** Mandatory: size of each element. */
   uint16_t size;
   /** Mandatory: channel number. */
   uint8_t channel;
@@ -64,11 +66,11 @@ struct GpDmaList
   /* Descriptor list container */
   struct GpDmaListItem *buffer;
 
-  /* Size alignment mask */
-  uint16_t alignment;
   /* List capacity */
   uint16_t capacity;
-  /* Current list size */
+  /* Current list length */
+  uint16_t number;
+  /* Size of an element */
   uint16_t size;
 
   /* Circular buffer flag */

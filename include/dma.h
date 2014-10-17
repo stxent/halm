@@ -48,9 +48,13 @@ struct DmaClass
   CLASS_HEADER
 
   void (*callback)(void *, void (*)(void *), void *);
+  uint32_t (*index)(const void *);
   enum result (*start)(void *, void *, const void *, uint32_t);
   enum result (*status)(const void *);
   void (*stop)(void *);
+
+  /* Interrupt handler associated with the channel */
+  void (*handler)(void *, enum result);
 };
 /*----------------------------------------------------------------------------*/
 struct Dma
@@ -69,6 +73,16 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
 {
   ((const struct DmaClass *)CLASS(channel))->callback(channel, callback,
       argument);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get an index of the last transferred element.
+ * @param channel Pointer to a Dma object.
+ * @return Index of an element.
+ */
+static inline uint32_t dmaIndex(const void *channel)
+{
+  return ((const struct DmaClass *)CLASS(channel))->index(channel);
 }
 /*----------------------------------------------------------------------------*/
 /**
