@@ -9,10 +9,11 @@
 #include <platform/nxp/gpdma.h>
 #include <platform/nxp/gpdma_defs.h>
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *, enum result);
+/*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelCallback(void *, void (*)(void *), void *);
-static void channelHandler(void *, enum result);
 static uint32_t channelIndex(const void *);
 static enum result channelStart(void *, void *, const void *, uint32_t);
 static enum result channelStatus(const void *);
@@ -27,12 +28,20 @@ static const struct DmaClass channelTable = {
     .index = channelIndex,
     .start = channelStart,
     .status = channelStatus,
-    .stop = channelStop,
-
-    .handler = channelHandler
+    .stop = channelStop
 };
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDma = &channelTable;
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object, enum result res)
+{
+  struct GpDma * const channel = object;
+
+  channel->error = res != E_OK;
+
+  if (channel->callback)
+    channel->callback(channel->callbackArgument);
+}
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configBase)
 {
@@ -49,12 +58,13 @@ static enum result channelInit(void *object, const void *configBase)
   if ((res = GpDmaBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  channel->callback = 0;
-  channel->error = false;
-
   channel->parent.control |= CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
       | CONTROL_DST_WIDTH(config->width);
   channel->parent.config |= CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
+  channel->parent.handler = interruptHandler;
+
+  channel->callback = 0;
+  channel->error = false;
 
   /* Set four-byte burst size by default */
   uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
@@ -100,16 +110,6 @@ static void channelCallback(void *object, void (*callback)(void *),
 
   channel->callback = callback;
   channel->callbackArgument = argument;
-}
-/*----------------------------------------------------------------------------*/
-static void channelHandler(void *object, enum result res)
-{
-  struct GpDma * const channel = object;
-
-  channel->error = res != E_OK;
-
-  if (channel->callback)
-    channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelIndex(const void *object)

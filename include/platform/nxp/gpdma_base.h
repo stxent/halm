@@ -46,6 +46,7 @@ struct GpDmaBase
   struct Entity parent;
 
   void *reg;
+  void (*handler)(void *, enum result);
 
   /* Precalculated values of channel control and configuration registers */
   uint32_t control, config;

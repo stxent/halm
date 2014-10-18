@@ -11,12 +11,12 @@
 /*----------------------------------------------------------------------------*/
 static enum result appendItem(void *, void *, const void *, uint32_t);
 static void clearItemList(void *);
+static void interruptHandler(void *, enum result);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelCallback(void *, void (*)(void *), void *);
 static uint32_t channelIndex(const void *);
-static void channelHandler(void *, enum result);
 static enum result channelStart(void *, void *, const void *, uint32_t);
 static enum result channelStatus(const void *);
 static void channelStop(void *);
@@ -30,9 +30,7 @@ static const struct DmaClass channelTable = {
     .index = channelIndex,
     .start = channelStart,
     .status = channelStatus,
-    .stop = channelStop,
-
-    .handler = channelHandler
+    .stop = channelStop
 };
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDmaList = &channelTable;
@@ -41,7 +39,7 @@ static enum result appendItem(void *object, void *destination,
     const void *source, uint32_t size)
 {
   struct GpDmaList * const channel = object;
-  struct GpDmaListItem * const item = channel->buffer + channel->number;
+  struct GpDmaListItem * const item = channel->list + channel->number;
 
   if (size > GPDMA_MAX_TRANSFER)
     return E_VALUE;
@@ -53,14 +51,14 @@ static enum result appendItem(void *object, void *destination,
     /* Append current element to the previous one */
     previous->next = (uint32_t)item;
 
-    if (channel->silence)
+    if (channel->silent)
       previous->control &= ~CONTROL_INT;
   }
 
   item->source = (uint32_t)source;
   item->destination = (uint32_t)destination;
   item->control = channel->parent.control | CONTROL_SIZE(size);
-  item->next = channel->circular ? (uint32_t)channel->buffer : 0;
+  item->next = channel->circular ? (uint32_t)channel->list : 0;
 
   return E_OK;
 }
@@ -68,6 +66,16 @@ static enum result appendItem(void *object, void *destination,
 static void clearItemList(void *object)
 {
   ((struct GpDmaList *)object)->number = 0;
+}
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object, enum result res)
+{
+  struct GpDmaList * const channel = object;
+
+  channel->error = res != E_OK && res != E_BUSY;
+
+  if (channel->callback)
+    channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configBase)
@@ -88,25 +96,26 @@ static enum result channelInit(void *object, const void *configBase)
     return E_VALUE;
 
   /* Allocation should produce memory chunks aligned along 4-byte boundary */
-  channel->buffer = malloc(sizeof(struct GpDmaListItem) * config->size);
-  if (!channel->buffer)
+  channel->list = malloc(sizeof(struct GpDmaListItem) * config->size);
+  if (!channel->list)
     return E_MEMORY;
 
   /* Call base class constructor */
   if ((res = GpDmaBase->init(object, &parentConfig)) != E_OK)
     return res;
 
+  channel->parent.control |= CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
+      | CONTROL_DST_WIDTH(config->width);
+  channel->parent.config |= CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
+  channel->parent.handler = interruptHandler;
+
   channel->callback = 0;
   channel->capacity = config->number;
   channel->circular = config->circular;
   channel->error = false;
   channel->number = 0;
-  channel->silence = config->silence;
+  channel->silent = config->silent;
   channel->size = config->size;
-
-  channel->parent.control |= CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
-      | CONTROL_DST_WIDTH(config->width);
-  channel->parent.config |= CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
 
   /* Set four-byte burst size by default */
   uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
@@ -144,7 +153,7 @@ static void channelDeinit(void *object)
 {
   struct GpDmaList * const channel = object;
 
-  free(channel->buffer);
+  free(channel->list);
   GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
@@ -167,20 +176,10 @@ static uint32_t channelIndex(const void *object)
   if (!next)
     return 0;
 
-  if (next == channel->buffer)
+  if (next == channel->list)
     return channel->number - 1;
   else
-    return (uint32_t)(next - channel->buffer) - 1;
-}
-/*----------------------------------------------------------------------------*/
-static void channelHandler(void *object, enum result res)
-{
-  struct GpDmaList * const channel = object;
-
-  channel->error = res != E_OK && res != E_BUSY;
-
-  if (channel->callback)
-    channel->callback(channel->callbackArgument);
+    return (uint32_t)(next - channel->list) - 1;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
@@ -213,7 +212,7 @@ static enum result channelStart(void *object, void *destination,
       source += chunk;
   }
 
-  const struct GpDmaListItem * const first = channel->buffer;
+  const struct GpDmaListItem * const first = channel->list;
   const uint32_t request = 1 << channel->parent.number;
   LPC_GPDMACH_Type * const reg = channel->parent.reg;
 

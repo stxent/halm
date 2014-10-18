@@ -52,9 +52,6 @@ struct DmaClass
   enum result (*start)(void *, void *, const void *, uint32_t);
   enum result (*status)(const void *);
   void (*stop)(void *);
-
-  /* Interrupt handler associated with the channel */
-  void (*handler)(void *, enum result);
 };
 /*----------------------------------------------------------------------------*/
 struct Dma

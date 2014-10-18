@@ -131,7 +131,7 @@ void GPDMA_ISR(void)
       if (errorStatus & mask)
         res = E_ERROR;
 
-      ((const struct DmaClass *)CLASS(descriptor))->handler(descriptor, res);
+      descriptor->handler(descriptor, res);
     }
   }
 }
@@ -244,6 +244,7 @@ static enum result channelInit(void *object, const void *configBase)
 
   channel->config = 0;
   channel->control = 0;
+  channel->handler = 0;
   channel->number = config->channel;
   channel->reg = calcPeripheral(channel->number);
 

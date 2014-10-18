@@ -45,7 +45,7 @@ struct GpDmaListConfig
    * Optional: set @b true to reduce channel interrupts count by disabling
    * requests for intermediate states of the transfer.
    */
-  bool silence;
+  bool silent;
 };
 /*----------------------------------------------------------------------------*/
 struct GpDmaListItem
@@ -64,7 +64,7 @@ struct GpDmaList
   void *callbackArgument;
 
   /* Descriptor list container */
-  struct GpDmaListItem *buffer;
+  struct GpDmaListItem *list;
 
   /* List capacity */
   uint16_t capacity;
@@ -78,7 +78,7 @@ struct GpDmaList
   /* Channel error flag */
   bool error;
   /* Reduce interrupt count flag */
-  bool silence;
+  bool silent;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPDMA_LIST_H_ */
