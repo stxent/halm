@@ -32,7 +32,6 @@ static volatile uint32_t *calcControlReg(union PinData);
 static union PinData calcPinData(volatile uint32_t *);
 static void commonPinSetup(struct Pin);
 static enum pinDriveType detectPinDriveType(volatile uint32_t *);
-static void resetAnalogFunction(pin_t);
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach();
 static inline void pinHandlerDetach();
@@ -42,36 +41,6 @@ static const struct EntityClass handlerTable = {
     .size = sizeof(struct PinHandler),
     .init = pinHandlerInit,
     .deinit = 0
-};
-/*----------------------------------------------------------------------------*/
-/* List of analog pins configurable through ENAIO registers */
-static const pin_t *analogMaps[] = {
-    [0] = (const pin_t []){
-        PIN(PORT_4, 3),
-        PIN(PORT_4, 1),
-        PIN(PORT_F, 8),
-        PIN(PORT_7, 5),
-        PIN(PORT_7, 4),
-        PIN(PORT_F, 10),
-        PIN(PORT_B, 6),
-        0
-    },
-    [1] = (const pin_t []){
-        PIN(PORT_C, 3),
-        PIN(PORT_C, 0),
-        PIN(PORT_F, 9),
-        PIN(PORT_F, 6),
-        PIN(PORT_F, 5),
-        PIN(PORT_F, 11),
-        PIN(PORT_7, 7),
-        PIN(PORT_F, 7),
-        0
-    },
-    [2] = (const pin_t []){
-        PIN(PORT_4, 4),
-        PIN(PORT_F, 7),
-        0
-    }
 };
 /*----------------------------------------------------------------------------*/
 const struct PinGroupEntry gpioPins[] = {
@@ -407,24 +376,6 @@ static enum pinDriveType detectPinDriveType(volatile uint32_t *reg)
     return NORMAL_DRIVE_PIN;
 }
 /*----------------------------------------------------------------------------*/
-static void resetAnalogFunction(pin_t key)
-{
-  for (uint8_t map = 0; map < 3; ++map)
-  {
-    const pin_t *entry = analogMaps[map];
-
-    while (*entry)
-    {
-      if (*entry == key)
-      {
-        *(&LPC_SCU->ENAIO0 + map) &= ~(1 << (entry - analogMaps[map]));
-        break;
-      }
-      ++entry;
-    }
-  }
-}
-/*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach()
 {
   /* Create handler object on first function call */
@@ -517,15 +468,10 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 
   volatile uint32_t * const reg = pin.reg;
   uint32_t value = *reg & ~SFS_FUNC_MASK;
-  union PinData data;
 
   switch (function)
   {
     case PIN_DEFAULT:
-      /* Disable analog function on pin */
-      data = calcPinData(reg);
-      resetAnalogFunction(data.key);
-
       if (pinKeyValid(pin))
       {
         const uint8_t actualFunction = pin.data.port >= 5 ? 4 : 0;

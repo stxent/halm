@@ -54,7 +54,7 @@ static void interruptHandler(void *object)
     reg->CR &= ~CR_START_MASK;
 
     /* Copy conversion result */
-    const uint16_t value = DR_RESULT_VALUE(reg->DR[interface->channel]);
+    const uint16_t value = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
     memcpy(interface->buffer, &value, sizeof(value));
     interface->buffer += 1 << resultWidthExponent();
 
@@ -121,18 +121,17 @@ static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
   struct Adc * const interface = object;
+  enum result res;
 
   assert(config->event < ADC_EVENT_END);
 
   /* Initialize input pin */
-  const int8_t channel = adcSetupPin(config->parent->parent.channel,
-      config->pin);
-
-  if (channel == -1)
-    return E_VALUE;
+  res = adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
+      &interface->pin);
+  if (res != E_OK)
+    return res;
 
   interface->callback = 0;
-  interface->channel = (uint8_t)channel;
   interface->blocking = true;
   interface->buffer = 0;
   interface->left = 0;
@@ -143,9 +142,11 @@ static enum result adcInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void adcDeinit(void *object __attribute__((unused)))
+static void adcDeinit(void *object)
 {
+  const struct Adc * const interface = object;
 
+  adcReleasePin(interface->pin);
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcCallback(void *object, void (*callback)(void *),
@@ -208,7 +209,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
     return 0;
 
   /* Set conversion channel */
-  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->channel);
+  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->pin.channel);
 
   interface->buffer = buffer;
   interface->left = length >> resultWidthExponent();

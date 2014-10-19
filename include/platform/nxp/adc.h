@@ -27,8 +27,10 @@ struct AdcUnit
 {
   struct AdcUnitBase parent;
 
-  /* Conversion channel currently in use */
+  /* Current channel descriptor */
   struct Adc *current;
+  /* Pointer to an interrupt handler */
+  void (*handler)(void *);
   /* Access to converter block */
   spinlock_t lock;
 };
@@ -45,7 +47,7 @@ struct AdcConfig
 /*----------------------------------------------------------------------------*/
 struct Adc
 {
-  struct Interface parent;
+  struct Entity parent;
 
   /* Pointer to a parent unit */
   struct AdcUnit *unit;
@@ -57,13 +59,13 @@ struct Adc
   uint8_t *buffer;
   /* Number of samples to be converted */
   uint32_t left;
+  /* Pin descriptor */
+  struct AdcPin pin;
+  /* Hardware trigger event */
+  uint8_t event;
 
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
-  /* Peripheral channel */
-  uint8_t channel;
-  /* Hardware trigger event */
-  uint8_t event;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_ADC_H_ */

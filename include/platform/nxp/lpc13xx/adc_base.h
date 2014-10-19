@@ -22,4 +22,10 @@ enum adcEvent
   ADC_EVENT_END
 };
 /*----------------------------------------------------------------------------*/
+struct AdcPin
+{
+  /* Peripheral channel */
+  uint8_t channel;
+};
+/*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC13XX_ADC_BASE_H_ */

@@ -35,7 +35,7 @@ static enum result adcUnitInit(void *, const void *);
 static void adcUnitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass adcUnitTable = {
-    .size = sizeof(struct AdcUnitBase),
+    .size = 0, /* Abstract class */
     .init = adcUnitInit,
     .deinit = adcUnitDeinit
 };
@@ -166,12 +166,13 @@ void ADC1_ISR()
     descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-int8_t adcSetupPin(uint8_t channel, pin_t key)
+enum result adcConfigPin(const struct AdcUnitBase *unit, pin_t key,
+    struct AdcPin *adcPin)
 {
   const struct PinEntry *entry;
   const struct PinGroupEntry *group;
 
-  group = pinGroupFind(adcPinGroups, key, channel);
+  group = pinGroupFind(adcPinGroups, key, unit->channel);
   if (group)
   {
     union PinData begin, current;
@@ -179,7 +180,9 @@ int8_t adcSetupPin(uint8_t channel, pin_t key)
     begin.key = ~group->begin;
     current.key = ~key;
 
-    return (int8_t)(current.offset - begin.offset);
+    adcPin->channel = current.offset - begin.offset;
+    adcPin->control = -1;
+    return E_OK;
   }
 
   /* Inputs are connected to both peripherals on parts without ADCHS */
@@ -202,10 +205,18 @@ int8_t adcSetupPin(uint8_t channel, pin_t key)
     /* Route analog input */
     *(&LPC_SCU->ENAIO0 + part) |= 1 << index;
 
-    return (int8_t)index;
+    adcPin->channel = index;
+    adcPin->control = part;
+    return E_OK;
   }
 
-  return -1;
+  return E_VALUE;
+}
+/*----------------------------------------------------------------------------*/
+void adcReleasePin(const struct AdcPin adcPin)
+{
+  if (adcPin.control != -1)
+    *(&LPC_SCU->ENAIO0 + adcPin.control) &= ~(1 << adcPin.channel);
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *object, const void *configBase)
