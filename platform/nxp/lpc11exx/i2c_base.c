@@ -71,7 +71,7 @@ static enum result i2cInit(void *object, const void *configBase)
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-  if ((res = i2cSetupPins(interface, configBase)) != E_OK)
+  if ((res = i2cConfigPins(interface, configBase)) != E_OK)
     return res;
 
   interface->handler = 0;

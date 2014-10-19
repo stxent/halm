@@ -121,8 +121,8 @@ static enum result channelInit(void *object, const void *configBase)
   struct GpTimerPwm * const pwm = object;
 
   /* Initialize output pin */
-  const int8_t pwmChannel = gpTimerSetupMatchPin(config->parent->parent.channel,
-      config->pin);
+  const int8_t pwmChannel =
+      gpTimerConfigMatchPin(config->parent->parent.channel, config->pin);
 
   if (pwmChannel == -1)
     return E_VALUE;

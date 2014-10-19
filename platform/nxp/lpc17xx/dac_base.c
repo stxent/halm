@@ -12,6 +12,7 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
+static enum result configOutputPin(pin_t);
 static enum result setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
@@ -36,14 +37,7 @@ const struct PinEntry dacPins[] = {
 const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(const struct DacBase *state,
-    struct DacBase *interface)
-{
-  return compareExchangePointer((void **)&descriptor, state,
-      interface) ? E_OK : E_BUSY;
-}
-/*----------------------------------------------------------------------------*/
-enum result setupOutputPin(pin_t key)
+static enum result configOutputPin(pin_t key)
 {
   const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
 
@@ -55,6 +49,13 @@ enum result setupOutputPin(pin_t key)
   pinSetFunction(pin, pinEntry->value);
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result setDescriptor(const struct DacBase *state,
+    struct DacBase *interface)
+{
+  return compareExchangePointer((void **)&descriptor, state,
+      interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t dacGetClock(const struct DacBase *interface __attribute__((unused)))
@@ -72,7 +73,7 @@ static enum result dacInit(void *object, const void *configBase)
   if ((res = setDescriptor(0, interface)) != E_OK)
     return res;
 
-  if ((res = setupOutputPin(config->pin)) != E_OK)
+  if ((res = configOutputPin(config->pin)) != E_OK)
     return res;
 
   sysClockControl(CLK_DAC, DEFAULT_DIV);

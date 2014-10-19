@@ -99,7 +99,7 @@ static enum result uartInit(void *object, const void *configBase)
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-  if ((res = uartSetupPins(interface, config)) != E_OK)
+  if ((res = uartConfigPins(interface, config)) != E_OK)
     return res;
 
   interface->handler = 0;

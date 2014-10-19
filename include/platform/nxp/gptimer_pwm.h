@@ -29,7 +29,7 @@ struct GpTimerPwmUnit
 
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
-  /* Match block used for period setup */
+  /* Match block used for period configuration */
   uint8_t current;
   /* Match blocks currently in use */
   uint8_t matches;

@@ -185,7 +185,7 @@ static void releaseBus(struct SdioSpi *device)
 static enum result resetCard(struct SdioSpi *device)
 {
   const uint32_t lowSpeed = 200000;
-  const uint8_t dummyByte = 0xFF; /* Emulate high level during setup */
+  const uint8_t dummyByte = 0xFF; /* Emulate high level during initialization */
   uint32_t srcSpeed;
   uint16_t counter;
   uint8_t response;

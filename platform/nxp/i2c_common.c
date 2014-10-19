@@ -24,19 +24,19 @@ void i2cSetRate(struct I2cBase *interface, uint32_t rate)
   reg->SCLL = reg->SCLH = (i2cGetClock(interface) >> 1) / rate;
 }
 /*----------------------------------------------------------------------------*/
-enum result i2cSetupPins(struct I2cBase *interface,
+enum result i2cConfigPins(struct I2cBase *interface,
     const struct I2cBaseConfig *config)
 {
   const struct PinEntry *pinEntry;
   struct Pin pin;
 
-  /* Setup I2C serial clock pin */
+  /* Configure I2C serial clock pin */
   if (!(pinEntry = pinFind(i2cPins, config->scl, interface->channel)))
     return E_VALUE;
   pinInput((pin = pinInit(config->scl)));
   pinSetFunction(pin, pinEntry->value);
 
-  /* Setup I2C serial data pin */
+  /* Configure I2C serial data pin */
   if (!(pinEntry = pinFind(i2cPins, config->sda, interface->channel)))
     return E_VALUE;
   pinInput((pin = pinInit(config->sda)));

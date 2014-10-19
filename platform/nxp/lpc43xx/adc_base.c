@@ -24,9 +24,9 @@ struct AdcBlockDescriptor
 };
 /*----------------------------------------------------------------------------*/
 /* Pack or unpack conversion channel and pin function */
-#define PACK_VALUE(function, channel)   (((channel) << 4) | (function))
-#define UNPACK_CHANNEL(value)           (((value) >> 4) & 0x0F)
-#define UNPACK_FUNCTION(value)          ((value) & 0x0F)
+#define PACK_VALUE(function, channel) (((channel) << 4) | (function))
+#define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
+#define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);

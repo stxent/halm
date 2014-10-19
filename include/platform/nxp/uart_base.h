@@ -50,11 +50,11 @@ struct UartBase
 /*----------------------------------------------------------------------------*/
 enum result uartCalcRate(const struct UartBase *, uint32_t,
     struct UartRateConfig *);
+enum result uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
 uint32_t uartGetRate(const struct UartBase *);
 void uartSetParity(struct UartBase *, enum uartParity);
 void uartSetRate(struct UartBase *, struct UartRateConfig);
 
 uint32_t uartGetClock(const struct UartBase *);
-enum result uartSetupPins(struct UartBase *, const struct UartBaseConfig *);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_UART_BASE_H_ */

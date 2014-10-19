@@ -21,7 +21,7 @@ struct PinHandler
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union PinData);
 static inline volatile uint32_t *calcControlReg(union PinData);
-static void commonPinSetup(struct Pin);
+static void commonPinInit(struct Pin);
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach();
 static inline void pinHandlerDetach();
@@ -55,7 +55,7 @@ static inline volatile uint32_t *calcControlReg(union PinData data)
       + pinRegMap[data.port][data.offset]);
 }
 /*----------------------------------------------------------------------------*/
-static void commonPinSetup(struct Pin pin)
+static void commonPinInit(struct Pin pin)
 {
   /* Register new pin in the handler */
   pinHandlerAttach();
@@ -111,13 +111,13 @@ struct Pin pinInit(pin_t id)
 /*----------------------------------------------------------------------------*/
 void pinInput(struct Pin pin)
 {
-  commonPinSetup(pin);
+  commonPinInit(pin);
   ((LPC_GPIO_Type *)pin.reg)->DIR &= ~(1 << pin.data.offset);
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, uint8_t value)
 {
-  commonPinSetup(pin);
+  commonPinInit(pin);
   ((LPC_GPIO_Type *)pin.reg)->DIR |= 1 << pin.data.offset;
   pinWrite(pin, value);
 }

@@ -9,9 +9,9 @@
 #include <platform/nxp/lpc43xx/pin_defs.h>
 #include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define PACK_VALUE(channel, offset)  (((offset) << 3) | (channel))
-#define UNPACK_CHANNEL(value)        ((value) & 0x07)
-#define UNPACK_OFFSET(value)         (((value) >> 3) & 0x1F)
+#define PACK_VALUE(channel, offset) (((offset) << 3) | (channel))
+#define UNPACK_CHANNEL(value)       ((value) & 0x07)
+#define UNPACK_OFFSET(value)        (((value) >> 3) & 0x1F)
 /*----------------------------------------------------------------------------*/
 enum pinDriveType
 {
@@ -30,7 +30,7 @@ struct PinHandler
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData);
 static union PinData calcPinData(volatile uint32_t *);
-static void commonPinSetup(struct Pin);
+static void commonPinInit(struct Pin);
 static enum pinDriveType detectPinDriveType(volatile uint32_t *);
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach();
@@ -336,7 +336,7 @@ static union PinData calcPinData(volatile uint32_t *reg)
   return pin;
 }
 /*----------------------------------------------------------------------------*/
-static void commonPinSetup(struct Pin pin)
+static void commonPinInit(struct Pin pin)
 {
   /* Register new pin in the handler */
   pinHandlerAttach();
@@ -439,7 +439,7 @@ struct Pin pinInit(pin_t id)
 /*----------------------------------------------------------------------------*/
 void pinInput(struct Pin pin)
 {
-  commonPinSetup(pin);
+  commonPinInit(pin);
 
   if (pinKeyValid(pin))
   {
@@ -450,7 +450,7 @@ void pinInput(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, uint8_t value)
 {
-  commonPinSetup(pin);
+  commonPinInit(pin);
 
   if (pinKeyValid(pin))
   {

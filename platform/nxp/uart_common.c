@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];
 /*----------------------------------------------------------------------------*/
-enum result uartSetupPins(struct UartBase *interface,
+enum result uartConfigPins(struct UartBase *interface,
     const struct UartBaseConfig *config)
 {
   const struct PinEntry *pinEntry;
@@ -17,13 +17,13 @@ enum result uartSetupPins(struct UartBase *interface,
 
   /* Direction configuration is not needed for alternate function pins */
 
-  /* Setup UART RX pin */
+  /* Configure UART RX pin */
   if (!(pinEntry = pinFind(uartPins, config->rx, interface->channel)))
     return E_VALUE;
   pinInput((pin = pinInit(config->rx)));
   pinSetFunction(pin, pinEntry->value);
 
-  /* Setup UART TX pin */
+  /* Configure UART TX pin */
   if (!(pinEntry = pinFind(uartPins, config->tx, interface->channel)))
     return E_VALUE;
   pinInput((pin = pinInit(config->tx)));

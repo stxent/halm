@@ -30,9 +30,9 @@ struct SspBlockDescriptor
   enum sysClockBranch registerBranch;
 };
 /*----------------------------------------------------------------------------*/
+static enum result configPins(struct SspBase *, const struct SspBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct SspBase *,
     struct SspBase *);
-static enum result setupPins(struct SspBase *, const struct SspBaseConfig *);
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
@@ -189,16 +189,7 @@ const struct PinEntry sspPins[] = {
 const struct EntityClass * const SspBase = &sspTable;
 static struct SspBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct SspBase *state, struct SspBase *interface)
-{
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface) ? E_OK : E_BUSY;
-}
-/*----------------------------------------------------------------------------*/
-static enum result setupPins(struct SspBase *interface,
+static enum result configPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
   const pin_t pinArray[4] = {
@@ -221,6 +212,15 @@ static enum result setupPins(struct SspBase *interface,
   }
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result setDescriptor(uint8_t channel,
+    const struct SspBase *state, struct SspBase *interface)
+{
+  assert(channel < ARRAY_SIZE(descriptors));
+
+  return compareExchangePointer((void **)(descriptors + channel), state,
+      interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void SSP0_ISR(void)
@@ -268,11 +268,11 @@ static enum result sspInit(void *object, const void *configBase)
     return res;
 
   /*
-   * Pin setup is not similar to other device families due to differences in
-   * the pin tables. One pin may have more than two alternate functions of the
-   * same peripheral channel.
+   * Pin configuration is not similar to other device families due
+   * to the differences in the pin tables. One pin may have more than two
+   * alternate functions of the same peripheral channel.
    */
-  if ((res = setupPins(interface, config)) != E_OK)
+  if ((res = configPins(interface, config)) != E_OK)
     return res;
 
   const struct SspBlockDescriptor *entry = &sspBlockEntries[interface->channel];

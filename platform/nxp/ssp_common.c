@@ -10,7 +10,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry sspPins[];
 /*----------------------------------------------------------------------------*/
-enum result sspSetupPins(struct SspBase *interface,
+enum result sspConfigPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
   const pin_t pinArray[4] = {
