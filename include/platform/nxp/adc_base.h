@@ -21,7 +21,8 @@ extern const struct EntityClass * const AdcUnitBase;
 /*----------------------------------------------------------------------------*/
 struct AdcUnitBaseConfig
 {
-  uint8_t channel; /* Mandatory: peripheral identifier */
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct AdcUnitBase

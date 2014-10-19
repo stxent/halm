@@ -193,7 +193,7 @@ static enum result channelStart(void *object, void *destination,
   if (gpDmaSetDescriptor(channel->parent.number, object) != E_OK)
     return E_BUSY;
 
-  gpDmaSetupMux(object);
+  gpDmaSetMux(object);
   clearItemList(channel);
   channel->error = false;
 

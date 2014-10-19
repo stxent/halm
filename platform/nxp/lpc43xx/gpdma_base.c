@@ -95,7 +95,7 @@ enum result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
       0, descriptor) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-void gpDmaSetupMux(struct GpDmaBase *descriptor)
+void gpDmaSetMux(struct GpDmaBase *descriptor)
 {
   LPC_CREG->DMAMUX = (LPC_CREG->DMAMUX & descriptor->mux.mask)
       | descriptor->mux.value;

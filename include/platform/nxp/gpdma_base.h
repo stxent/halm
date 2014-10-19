@@ -58,6 +58,6 @@ struct GpDmaBase
 /*----------------------------------------------------------------------------*/
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
 enum result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
-void gpDmaSetupMux(struct GpDmaBase *);
+void gpDmaSetMux(struct GpDmaBase *);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPDMA_BASE_H_ */

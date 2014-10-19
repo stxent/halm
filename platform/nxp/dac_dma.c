@@ -85,7 +85,7 @@ static enum result dmaSetup(struct DacDma *interface,
       .number = 4,
       .size = elements,
       .circular = true,
-      .silence = false
+      .silent = false
   };
 
   interface->dma = init(GpDmaList, &channelConfig);

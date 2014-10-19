@@ -20,6 +20,12 @@ enum uartParity
   UART_PARITY_EVEN
 };
 /*----------------------------------------------------------------------------*/
+struct UartRateConfig
+{
+  uint16_t divisor;
+  uint8_t fraction;
+};
+/*----------------------------------------------------------------------------*/
 struct UartBaseConfig
 {
   /** Mandatory: serial input. */
@@ -28,12 +34,6 @@ struct UartBaseConfig
   pin_t tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-};
-/*----------------------------------------------------------------------------*/
-struct UartRateConfig
-{
-  uint16_t divisor;
-  uint8_t fraction;
 };
 /*----------------------------------------------------------------------------*/
 struct UartBase
