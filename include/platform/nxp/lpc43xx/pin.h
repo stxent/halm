@@ -46,30 +46,36 @@ void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum pinPull);
 void pinSetSlewRate(struct Pin, enum pinSlewRate);
 /*----------------------------------------------------------------------------*/
+static inline bool pinGpioValid(struct Pin pin)
+{
+  /* Device family has eight GPIO ports */
+  return pin.data.port < 8;
+}
+/*----------------------------------------------------------------------------*/
 static inline uint8_t pinRead(struct Pin pin)
 {
-  assert(pinKeyValid(pin));
+  assert(pinGpioValid(pin));
 
   return LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset];
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
 {
-  assert(pinKeyValid(pin));
+  assert(pinGpioValid(pin));
 
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSet(struct Pin pin)
 {
-  assert(pinKeyValid(pin));
+  assert(pinGpioValid(pin));
 
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 1;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinWrite(struct Pin pin, uint8_t value)
 {
-  assert(pinKeyValid(pin));
+  assert(pinGpioValid(pin));
 
   /* Only 0 and 1 are allowed */
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = value;

@@ -296,14 +296,14 @@ static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData data)
 {
-  if (data.port != PORT_CLK)
+  if (data.port < PORT_CLK)
   {
     const uint32_t portMapSize = ((uint32_t)&LPC_SCU->SFSP1
         - (uint32_t)&LPC_SCU->SFSP0) / sizeof(LPC_SCU->SFSP0[0]);
 
     return LPC_SCU->SFSP0 + portMapSize * data.port + data.offset;
   }
-  else if (data.port != PORT_ADC)
+  else if (data.port == PORT_CLK)
   {
     return &LPC_SCU->SFSPCLK0 + data.offset;
   }
@@ -340,14 +340,6 @@ static void commonPinInit(struct Pin pin)
 {
   /* Register new pin in the handler */
   pinHandlerAttach();
-
-  if (pin.reg)
-  {
-    volatile uint32_t * const reg = pin.reg;
-
-    /* Disable glitch filter and enable input buffer */
-    *reg |= SFS_ZIF | SFS_EZI;
-  }
 
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
@@ -432,6 +424,26 @@ struct Pin pinInit(pin_t id)
   {
     /* Some pins do not have GPIO function */
     pin.data.key = ~0;
+
+    switch (current.port)
+    {
+      case PORT_ADC:
+        if (current.offset < 8)
+          pin.data = current;
+        break;
+
+      case PORT_I2C:
+        if (current.offset < 2)
+        {
+          pin.data = current;
+          /* Enable input receiver, input filter is enabled by default */
+          LPC_SCU->SFSI2C0 |= SFS_I2C_EZI << (current.offset << 3);
+        }
+        break;
+
+      default:
+        break;
+    }
   }
 
   return pin;
@@ -441,7 +453,7 @@ void pinInput(struct Pin pin)
 {
   commonPinInit(pin);
 
-  if (pinKeyValid(pin))
+  if (pinGpioValid(pin))
   {
     /* Configure pin as input */
     LPC_GPIO->DIR[pin.data.port] &= ~(1 << pin.data.offset);
@@ -452,7 +464,7 @@ void pinOutput(struct Pin pin, uint8_t value)
 {
   commonPinInit(pin);
 
-  if (pinKeyValid(pin))
+  if (pinGpioValid(pin))
   {
     /* Configure pin as output */
     LPC_GPIO->DIR[pin.data.port] |= 1 << pin.data.offset;
@@ -472,7 +484,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   switch (function)
   {
     case PIN_DEFAULT:
-      if (pinKeyValid(pin))
+      if (pinGpioValid(pin))
       {
         const uint8_t actualFunction = pin.data.port >= 5 ? 4 : 0;
 
@@ -525,12 +537,24 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
 /*----------------------------------------------------------------------------*/
 void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
 {
+  if (pin.data.port == PORT_I2C)
+  {
+    const uint32_t mask = (SFS_I2C_EFP | SFS_I2C_EHD) << (pin.data.offset << 3);
+
+    if (rate == PIN_SLEW_FAST)
+      LPC_SCU->SFSI2C0 |= mask;
+    else
+      LPC_SCU->SFSI2C0 &= ~mask;
+
+    return;
+  }
+
   if (!pin.reg)
     return;
 
   volatile uint32_t * const reg = pin.reg;
   const enum pinDriveType type = detectPinDriveType(reg);
-  uint32_t value = *reg & ~SFS_STRENGTH_MASK;
+  uint32_t value = *reg & ~(SFS_STRENGTH_MASK | SFS_ZIF);
 
   if (type == HIGH_SPEED_PIN)
   {
@@ -546,14 +570,15 @@ void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
         break;
 
       case PIN_SLEW_FAST:
-        value |= SFS_STRENGTH_ULTRAHIGH;
+        /* Select drive strength and disable input glitch filter */
+        value |= SFS_STRENGTH_ULTRAHIGH | SFS_ZIF;
         break;
     }
   }
   else
   {
     if (rate == PIN_SLEW_FAST)
-      value |= SFS_EHS;
+      value |= SFS_EHS | SFS_ZIF;
     else
       value &= ~SFS_EHS;
   }

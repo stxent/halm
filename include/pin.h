@@ -96,11 +96,6 @@ const struct PinEntry *pinFind(const struct PinEntry *, pin_t, uint8_t);
 const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *, pin_t,
     uint8_t);
 /*----------------------------------------------------------------------------*/
-static inline bool pinKeyValid(struct Pin pin)
-{
-  return pin.data.key != (pin_t)~0;
-}
-/*----------------------------------------------------------------------------*/
 static inline bool pinValid(struct Pin pin)
 {
   return pin.data.key != (pin_t)~0 && pin.reg != 0;
