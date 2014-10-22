@@ -39,8 +39,8 @@ enum result sspSetRate(struct SspBase *interface, uint32_t rate)
   if (!rate)
     return E_VALUE;
 
-  const uint32_t divisor = ((sspGetClock(interface) + (rate >> 1)) >> 1)
-      / rate - 1;
+  const uint32_t divisor =
+      ((sspGetClock(interface) + (rate >> 1)) >> 1) / rate - 1;
 
   assert(divisor && divisor < 127 * 256);
 

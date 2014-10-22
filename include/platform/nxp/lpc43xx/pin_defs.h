@@ -30,7 +30,7 @@
 /*----------------------------------------------------------------------------*/
 /* 50 ns glitch filter when reset or 3 ns filter when set */
 #define SFS_I2C_EFP                     BIT(0)
-/* Standard or fast mode when set or fast mode plus when set */
+/* Standard or Fast-mode when reset or Fast-mode Plus when set */
 #define SFS_I2C_EHD                     BIT(2)
 #define SFS_I2C_EZI                     BIT(3) /* Enable input receiver */
 #define SFS_I2C_ZIF                     BIT(7) /* Disable input filter */

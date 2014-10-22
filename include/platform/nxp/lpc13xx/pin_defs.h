@@ -13,8 +13,11 @@
 #define IOCON_FUNC(func)                BIT_FIELD((func), 0)
 /*----------------------------------------------------------------------------*/
 #define IOCON_I2C_MASK                  BIT_FIELD(MASK(2), 8)
+/* Standard or Fast-mode with input glitch filter */
 #define IOCON_I2C_STANDARD              BIT_FIELD(0, 8)
+/* Open-drain input-output without glitch filter */
 #define IOCON_I2C_IO                    BIT_FIELD(1, 8)
+/* Fast-mode Plus with input glitch filter */
 #define IOCON_I2C_PLUS                  BIT_FIELD(2, 8)
 /*----------------------------------------------------------------------------*/
 #define IOCON_MODE_MASK                 BIT_FIELD(MASK(2), 3)
