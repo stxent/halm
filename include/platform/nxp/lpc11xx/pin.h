@@ -14,6 +14,7 @@ void pinInput(struct Pin);
 void pinOutput(struct Pin, uint8_t);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum pinPull);
+void pinSetSlewRate(struct Pin, enum pinSlewRate);
 void pinSetType(struct Pin, enum pinType);
 /*----------------------------------------------------------------------------*/
 static inline uint8_t pinRead(struct Pin pin)
@@ -35,12 +36,6 @@ static inline void pinWrite(struct Pin pin, uint8_t value)
 {
   ((LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[1 << pin.data.offset] =
       value ? 0xFFF : 0x000;
-}
-/*----------------------------------------------------------------------------*/
-static inline void pinSetSlewRate(struct Pin pin __attribute__((unused)),
-    enum pinSlewRate rate __attribute__((unused)))
-{
-  /* Slew rate control is not supported on these devices */
 }
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC11XX_PIN_H_ */

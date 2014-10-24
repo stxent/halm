@@ -22,6 +22,7 @@ struct PinHandler
 static inline LPC_GPIO_Type *calcPort(union PinData);
 static inline volatile uint32_t *calcControlReg(union PinData);
 static void commonPinInit(struct Pin);
+static bool isCommonPin(struct Pin);
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach();
 static inline void pinHandlerDetach();
@@ -62,7 +63,14 @@ static void commonPinInit(struct Pin pin)
 
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
+  pinSetSlewRate(pin, PIN_SLEW_NORMAL);
   pinSetType(pin, PIN_PUSHPULL);
+}
+/*----------------------------------------------------------------------------*/
+static bool isCommonPin(struct Pin pin)
+{
+  /* PIO0_4 and PIO0_5 are I2C pins with different function set */
+  return pin.data.port != 0 || (pin.data.offset < 4 || pin.data.offset > 5);
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach()
@@ -151,6 +159,9 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum pinPull pull)
 {
+  if (!isCommonPin(pin))
+    return;
+
   volatile uint32_t * const reg = calcControlReg(pin.data);
   uint32_t value = *reg & ~IOCON_MODE_MASK;
 
@@ -174,6 +185,9 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum pinType type)
 {
+  if (!isCommonPin(pin))
+    return;
+
   volatile uint32_t * const reg = calcControlReg(pin.data);
 
   switch (type)
@@ -186,4 +200,16 @@ void pinSetType(struct Pin pin, enum pinType type)
       *reg |= IOCON_OD;
       break;
   }
+}
+/*----------------------------------------------------------------------------*/
+void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
+{
+  /* Slew rate control is available only on I2C pins */
+  if (isCommonPin(pin))
+    return;
+
+  volatile uint32_t * const reg = calcControlReg(pin.data);
+
+  *reg = (*reg & ~IOCON_I2C_MASK)
+      | (rate == PIN_SLEW_FAST ? IOCON_I2C_PLUS : 0);
 }
