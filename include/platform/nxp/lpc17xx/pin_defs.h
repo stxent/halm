@@ -17,6 +17,11 @@
 #define PIN_MODE_REPEATER               1
 #define PIN_MODE_INACTIVE               2
 #define PIN_MODE_PULLDOWN               3
+/*------------------I2C pin configuration register----------------------------*/
+/* Set to enable Fast-mode Plus */
+#define I2CPADCFG_DRIVE(offset)         BIT_FIELD(1, (offset) << 1)
+/* Reset to enable glitch filtering and slew rate control */
+#define I2CPADCFG_FILTERING(offset)     BIT_FIELD(1, ((offset) << 1) + 1)
 /*------------------Overall interrupt status register-------------------------*/
 #define STATUS_P0INT                    BIT(0)
 #define STATUS_P2INT                    BIT(2)

@@ -107,6 +107,24 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
   *reg = value;
 }
 /*----------------------------------------------------------------------------*/
+void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
+{
+  /* Slew rate control is available only for I2C pins */
+  if (pin.data.port == 0 && (pin.data.offset >= 27 && pin.data.offset <= 28))
+  {
+    const uint8_t offset = pin.data.offset - 27;
+    const uint32_t mask = I2CPADCFG_DRIVE(offset);
+    uint32_t value = LPC_PINCON->I2CPADCFG & ~I2CPADCFG_FILTERING(offset);
+
+    if (rate == PIN_SLEW_FAST)
+      value |= mask;
+    else
+      value &= ~mask;
+
+    LPC_PINCON->I2CPADCFG = value;
+  }
+}
+/*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum pinType type)
 {
   volatile uint32_t * const reg = calcPinType(pin.data);

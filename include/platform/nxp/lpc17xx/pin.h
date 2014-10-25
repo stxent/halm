@@ -15,6 +15,7 @@ void pinOutput(struct Pin, uint8_t);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum pinPull);
 void pinSetType(struct Pin, enum pinType);
+void pinSetSlewRate(struct Pin, enum pinSlewRate);
 /*----------------------------------------------------------------------------*/
 static inline uint8_t pinRead(struct Pin pin)
 {
@@ -37,12 +38,6 @@ static inline void pinWrite(struct Pin pin, uint8_t value)
     ((LPC_GPIO_Type *)pin.reg)->SET = 1 << pin.data.offset;
   else
     ((LPC_GPIO_Type *)pin.reg)->CLR = 1 << pin.data.offset;
-}
-/*----------------------------------------------------------------------------*/
-static inline void pinSetSlewRate(struct Pin pin __attribute__((unused)),
-    enum pinSlewRate rate __attribute__((unused)))
-{
-  /* Slew rate control is not supported on these devices */
 }
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC17XX_PIN_H_ */
