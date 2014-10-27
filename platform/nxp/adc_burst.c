@@ -36,11 +36,10 @@ static void interruptHandler(void *object)
 {
   struct AdcBurst * const interface = object;
   LPC_ADC_Type * const reg = interface->unit->parent.reg;
-  const uint16_t value = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
 
   /* Copy conversion result and increase position in buffer */
-  memcpy(interface->buffer, &value, ADC_RESULT_WIDTH);
-  interface->buffer += ADC_RESULT_WIDTH;
+  *interface->buffer = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
+  ++interface->buffer;
 
   if (!--interface->left)
   {
@@ -145,8 +144,8 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   if (!length)
     return 0;
 
-  /* Check buffer alignment */
-  assert(!(length & MASK(ADC_RESULT_WIDTH)));
+  /* Buffer length should be a multiple of single sample sizes */
+  assert(!(length & (sizeof(interface->buffer[0]) - 1)));
 
   if (adcUnitRegister(interface->unit, interruptHandler, interface) != E_OK)
     return 0;
@@ -156,8 +155,8 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   /* Set conversion channel */
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->pin.channel);
 
-  interface->buffer = buffer;
-  interface->left = length / ADC_RESULT_WIDTH;
+  interface->buffer = (uint16_t *)buffer;
+  interface->left = length / sizeof(interface->buffer[0]);
 
   /* Start the conversion */
   reg->CR |= CR_START(interface->event);

@@ -35,7 +35,7 @@ struct AdcBurst
   void *callbackArgument;
 
   /* Pointer to an input buffer */
-  uint8_t *buffer;
+  uint16_t *buffer;
   /* Number of samples to be converted */
   uint32_t left;
   /* Pin descriptor */
