@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <pm.h>
 #include <platform/nxp/gpdma.h>
 #include <platform/nxp/serial_dma.h>
 #include <platform/nxp/uart_defs.h>
@@ -12,6 +13,10 @@
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static enum result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_SERIAL_PM
+static enum result powerStateHandler(void *, enum pmState);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
@@ -79,6 +84,26 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_SERIAL_PM
+static enum result powerStateHandler(void *object, enum pmState state)
+{
+  struct SerialDma * const interface = object;
+  struct UartRateConfig rateConfig;
+  enum result res;
+
+  if (state == PM_ACTIVE)
+  {
+    /* Recalculate and set baud rate */
+    if ((res = uartCalcRate(object, interface->rate, &rateConfig)) != E_OK)
+      return res;
+
+    uartSetRate(object, rateConfig);
+  }
+
+  return E_OK;
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
@@ -102,6 +127,7 @@ static enum result serialInit(void *object, const void *configBase)
     return res;
 
   interface->callback = 0;
+  interface->rate = config->rate;
 
   LPC_UART_Type * const reg = interface->parent.reg;
 
@@ -116,6 +142,11 @@ static enum result serialInit(void *object, const void *configBase)
 
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);
+
+#ifdef CONFIG_SERIAL_PM
+  if ((res = pmRegister(object, powerStateHandler)) != E_OK)
+    return res;
+#endif
 
   return E_OK;
 }

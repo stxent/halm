@@ -39,6 +39,8 @@ struct SerialDma
 
   /* DMA channel descriptors */
   struct Dma *rxDma, *txDma;
+  /* Desired baud rate */
+  uint32_t rate;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };
