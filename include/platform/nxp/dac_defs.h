@@ -8,10 +8,11 @@
 #define PLATFORM_NXP_DAC_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
+/*----------------------------------------------------------------------------*/
+#define DAC_RESOLUTION                  10 /* Input data width in bits */
 /*------------------Converter Register----------------------------------------*/
 #define CR_OUTPUT(value)                BIT_FIELD((value), 6)
-#define CR_OUTPUT_WIDTH                 10 /* Input data width */
-#define CR_OUTPUT_MASK                  BIT_FIELD(MASK(CR_OUTPUT_WIDTH), 6)
+#define CR_OUTPUT_MASK                  BIT_FIELD(MASK(DAC_RESOLUTION), 6)
 #define CR_OUTPUT_VALUE(reg)            FIELD_VALUE((reg), CR_OUTPUT_MASK, 6)
 #define CR_BIAS                         BIT(16) /* Reduces output current */
 /*------------------Control register------------------------------------------*/

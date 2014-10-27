@@ -93,7 +93,7 @@ static enum result dmaSetup(struct DacDma *interface,
     return E_ERROR;
   dmaCallback(interface->dma, dmaHandler, interface);
 
-  interface->buffer = malloc(elements * 4 * sizeof(uint16_t));
+  interface->buffer = malloc(elements * 4 * sizeof(interface->buffer[0]));
   if (!interface->buffer)
     return E_MEMORY;
 
@@ -162,7 +162,7 @@ static enum result dacGet(void *object, enum ifOption option, void *data)
       return dmaStatus(interface->dma);
 
     case IF_WIDTH:
-      *((uint32_t *)data) = CR_OUTPUT_WIDTH;
+      *((uint32_t *)data) = DAC_RESOLUTION;
       return E_OK;
 
     default:
@@ -183,7 +183,7 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
   LPC_DAC_Type * const reg = interface->parent.reg;
 
   /* Outgoing buffer length should be equal to internal buffer length */
-  assert(length == interface->size * sizeof(uint16_t));
+  assert(length == interface->size * sizeof(interface->buffer[0]));
 
   if (!length)
     return 0;

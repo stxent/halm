@@ -67,7 +67,7 @@ static enum result dacGet(void *object __attribute__((unused)),
   switch (option)
   {
     case IF_WIDTH:
-      *((uint32_t *)data) = CR_OUTPUT_WIDTH;
+      *((uint32_t *)data) = DAC_RESOLUTION;
       return E_OK;
 
     default:
@@ -86,15 +86,15 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Dac * const interface = object;
   LPC_DAC_Type * const reg = interface->parent.reg;
-
-  /* Check buffer alignment */
-  assert(!(length & MASK(1))); //FIXME Hardcoded
+  const uint16_t *samples = (const uint16_t *)buffer;
 
   if (!length)
     return 0;
 
-  const uint16_t value = *(const uint16_t *)buffer;
-  reg->CR = (value & CR_OUTPUT_MASK) | CR_BIAS;
+  /* Buffer length should be a multiple of single sample sizes */
+  assert(!(length & (sizeof(samples[0]) - 1)));
 
-  return 2;
+  reg->CR = (samples[0] & CR_OUTPUT_MASK) | CR_BIAS;
+
+  return sizeof(samples[0]);
 }
