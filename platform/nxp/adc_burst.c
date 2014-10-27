@@ -53,6 +53,8 @@ static void interruptHandler(void *object)
     if (interface->callback)
       interface->callback(interface->callbackArgument);
   }
+  else
+    reg->CR = reg->CR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *object, const void *configBase)
