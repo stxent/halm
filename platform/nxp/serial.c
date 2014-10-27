@@ -55,6 +55,8 @@ static void interruptHandler(void *object)
   while (reg->LSR & LSR_RDR)
   {
     const uint8_t data = (uint8_t)reg->RBR;
+
+
     /* Received bytes will be dropped when queue becomes full */
     if (!byteQueueFull(&interface->rxQueue))
       byteQueuePush(&interface->rxQueue, data);
@@ -242,7 +244,8 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   if (reg->LSR & LSR_THRE && byteQueueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle so fill TX FIFO */
-    uint32_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
+    const uint32_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
+
     for (; written < count; ++written)
       reg->THR = *buffer++;
     length -= written;
