@@ -45,6 +45,8 @@ static enum result dacInit(void *object, const void *configBase)
   LPC_DAC_Type * const reg = interface->parent.reg;
 
   reg->CR = (config->value & CR_OUTPUT_MASK) | CR_BIAS;
+  /* DMA enable and DAC enable signals are combined on some parts */
+  reg->CTRL = CTRL_DMA_ENA;
 
   return E_OK;
 }

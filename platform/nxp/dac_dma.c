@@ -10,8 +10,6 @@
 #include <platform/nxp/dac_dma.h>
 #include <platform/nxp/dac_defs.h>
 #include <platform/nxp/gpdma_list.h>
-#include <platform/nxp/lpc17xx/clocking.h>
-#include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
 static enum result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
