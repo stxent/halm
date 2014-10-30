@@ -33,8 +33,8 @@ enum gpTimerEvent
 struct GpTimerConfig
 {
   /**
-   * Optional: timer frequency. When it is set to zero  an actual peripheral
-   * frequency value is used. Option is not used in external clock mode.
+   * Optional: desired timer tick rate. An actual peripheral frequency is used
+   * when option is set to zero.
    */
   uint32_t frequency;
   /** Optional: timer interrupt priority. */
@@ -54,7 +54,7 @@ struct GpTimer
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Actual timer frequency */
+  /* Desired timer frequency */
   uint32_t frequency;
   /* Match channel used for counter reset */
   uint8_t event;

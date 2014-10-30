@@ -15,7 +15,8 @@ extern const struct EntityClass * const GpTimerBase;
 /*----------------------------------------------------------------------------*/
 struct GpTimerBaseConfig
 {
-  uint8_t channel; /* Mandatory: timer block */
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerBase
