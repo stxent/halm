@@ -1057,6 +1057,170 @@ typedef struct
   __ne__ uint32_t RESERVED1[12];
   __rw__ uint32_t CTCR;
 } LPC_TIMER_Type;
+/*------------------State Configurable Timer----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CONFIG;
+  union
+  {
+    __rw__ uint32_t CTRL;
+    __rw__ uint16_t CTRL_PART[2];
+    struct
+    {
+      __rw__ uint16_t CTRL_L;
+      __rw__ uint16_t CTRL_H;
+    };
+  };
+  union
+  {
+    __rw__ uint32_t LIMIT;
+    __rw__ uint16_t LIMIT_PART[2];
+    struct
+    {
+      __rw__ uint16_t LIMIT_L;
+      __rw__ uint16_t LIMIT_H;
+    };
+  };
+  union
+  {
+    __rw__ uint32_t HALT;
+    __rw__ uint16_t HALT_PART[2];
+    struct
+    {
+      __rw__ uint16_t HALT_L;
+      __rw__ uint16_t HALT_H;
+    };
+  };
+  union
+  {
+    __rw__ uint32_t STOP;
+    __rw__ uint16_t STOP_PART[2];
+    struct
+    {
+      __rw__ uint16_t STOP_L;
+      __rw__ uint16_t STOP_H;
+    };
+  };
+  union
+  {
+    __rw__ uint32_t START;
+    __rw__ uint16_t START_PART[2];
+    struct
+    {
+      __rw__ uint16_t START_L;
+      __rw__ uint16_t START_H;
+    };
+  };
+  union
+  {
+    __rw__ uint32_t DITHER;
+    __rw__ uint16_t DITHER_PART[2];
+    struct
+    {
+      __rw__ uint16_t DITHER_L;
+      __rw__ uint16_t DITHER_H;
+    };
+  };
+  __ne__ uint32_t RESERVED0[9];
+  /* Offset 0x040 */
+  union
+  {
+    __rw__ uint32_t COUNT;
+    __rw__ uint16_t COUNT_PART[2];
+    struct
+    {
+      __rw__ uint16_t COUNT_L;
+      __rw__ uint16_t COUNT_H;
+    };
+  };
+  union
+  {
+    __rw__ uint32_t STATE;
+    __rw__ uint16_t STATE_PART[2];
+    struct
+    {
+      __rw__ uint16_t STATE_L;
+      __rw__ uint16_t STATE_H;
+    };
+  };
+  __ro__ uint32_t INPUT;
+  union
+  {
+    __rw__ uint32_t REGMODE;
+    __rw__ uint16_t REGMODE_PART[2];
+    struct
+    {
+      __rw__ uint16_t REGMODE_L;
+      __rw__ uint16_t REGMODE_H;
+    };
+  };
+  __rw__ uint32_t OUTPUT;
+  __rw__ uint32_t OUTPUTDIRCTRL;
+  __rw__ uint32_t RES;
+  union
+  {
+    __rw__ uint32_t DMAREQ[2];
+    struct
+    {
+      __rw__ uint32_t DMAREQ0;
+      __rw__ uint32_t DMAREQ1;
+    };
+  };
+  __ne__ uint32_t RESERVED1[35];
+  __rw__ uint32_t EVEN;
+  __rw__ uint32_t EVFLAG;
+  __rw__ uint32_t CONEN;
+  __rw__ uint32_t CONFLAG;
+  /* Offset 0x100 */
+  union
+  {
+    union
+    {
+      __rw__ uint32_t MATCH[16];
+      __rw__ uint16_t MATCH_PART[16][2];
+    };
+    union
+    {
+      __ro__ uint32_t CAP[16];
+      __ro__ uint16_t CAP_PART[16][2];
+    };
+  };
+  union
+  {
+    __rw__ uint32_t FRACMAT[6];
+    __rw__ uint16_t FRACMAT_PART[6][2];
+  };
+  __ne__ uint32_t RESERVED2[42]; /* Alias registers unused */
+  union
+  {
+    union
+    {
+      __rw__ uint32_t MATCHREL[16];
+      __rw__ uint16_t MATCHREL_PART[16][2];
+    };
+    union
+    {
+      __rw__ uint32_t CAPCTRL[16];
+      __rw__ uint16_t CAPCTRL_PART[16][2];
+    };
+  };
+  union
+  {
+    __rw__ uint32_t FRACMATREL[6];
+    __rw__ uint16_t FRACMATREL_PART[6][2];
+  };
+  __ne__ uint32_t RESERVED3[42]; /* Alias registers unused */
+  struct
+  {
+    __rw__ uint32_t STATE;
+    __rw__ uint32_t CTRL;
+  } EV[16];
+  struct
+  {
+    __rw__ uint32_t SET;
+    __rw__ uint32_t CLR;
+  } OUT[16];
+} LPC_SCT_Type;
 /*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
 {
