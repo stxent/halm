@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <entity.h>
 #include <pin.h>
+#include <spinlock.h>
 #include <platform/nxp/lpc13xx/pin_defs.h>
 #include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
@@ -43,6 +44,7 @@ static const uint8_t pinRegMap[4][12] = {
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PinHandler = &handlerTable;
 static struct PinHandler *pinHandler = 0;
+static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union PinData data)
 {
@@ -75,10 +77,11 @@ static bool isCommonPin(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach()
 {
+  spinLock(&spinlock);
+
   /* Create handler object on first function call */
   if (!pinHandler)
     pinHandler = init(PinHandler, 0);
-
   assert(pinHandler);
 
   if (!pinHandler->instances++)
@@ -86,16 +89,22 @@ static inline void pinHandlerAttach()
     sysClockEnable(CLK_IOCON);
     sysClockEnable(CLK_GPIO);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerDetach()
 {
+  spinLock(&spinlock);
+
   /* Disable clocks when no active pins exist */
   if (!--pinHandler->instances)
   {
     sysClockDisable(CLK_GPIO);
     sysClockDisable(CLK_IOCON);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static enum result pinHandlerInit(void *object,

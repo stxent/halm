@@ -6,6 +6,7 @@
 
 #include <entity.h>
 #include <pin.h>
+#include <spinlock.h>
 #include <platform/nxp/lpc43xx/pin_defs.h>
 #include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
@@ -293,6 +294,7 @@ const struct PinGroupEntry gpioPins[] = {
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PinHandler = &handlerTable;
 static struct PinHandler *pinHandler = 0;
+static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData data)
 {
@@ -370,9 +372,12 @@ static enum pinDriveType detectPinDriveType(volatile uint32_t *reg)
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach()
 {
+  spinLock(&spinlock);
+
   /* Create handler object on first function call */
   if (!pinHandler)
     pinHandler = init(PinHandler, 0);
+  assert(pinHandler);
 
   if (!pinHandler->instances++)
   {
@@ -381,15 +386,21 @@ static inline void pinHandlerAttach()
     sysResetEnable(RST_SCU);
     sysResetEnable(RST_GPIO);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerDetach()
 {
+  spinLock(&spinlock);
+
   /* Disable clocks when no active pins exist */
   if (!--pinHandler->instances)
   {
     sysClockDisable(CLK_M4_GPIO);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static enum result pinHandlerInit(void *object,

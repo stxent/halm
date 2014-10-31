@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <entity.h>
 #include <pin.h>
+#include <spinlock.h>
 #include <platform/nxp/lpc11exx/pin_defs.h>
 #include <platform/nxp/lpc11exx/system.h>
 /*----------------------------------------------------------------------------*/
@@ -33,6 +34,7 @@ static const struct EntityClass handlerTable = {
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PinHandler = &handlerTable;
 static struct PinHandler *pinHandler = 0;
+static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData data)
 {
@@ -61,10 +63,11 @@ static void commonPinInit(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach()
 {
+  spinLock(&spinlock);
+
   /* Create handler object on first function call */
   if (!pinHandler)
     pinHandler = init(PinHandler, 0);
-
   assert(pinHandler);
 
   if (!pinHandler->instances++)
@@ -72,16 +75,22 @@ static inline void pinHandlerAttach()
     sysClockEnable(CLK_IOCON);
     sysClockEnable(CLK_GPIO);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerDetach()
 {
+  spinLock(&spinlock);
+
   /* Disable clocks when no active pins exist */
   if (!--pinHandler->instances)
   {
     sysClockDisable(CLK_GPIO);
     sysClockDisable(CLK_IOCON);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static enum result pinHandlerInit(void *object,

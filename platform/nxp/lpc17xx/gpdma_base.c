@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <irq.h>
 #include <memory.h>
+#include <spinlock.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/gpdma_base.h>
 #include <platform/nxp/gpdma_defs.h>
@@ -48,6 +49,7 @@ static const struct EntityClass channelTable = {
 static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
+static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t channel)
 {
@@ -167,9 +169,10 @@ void GPDMA_ISR(void)
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach()
 {
+  spinLock(&spinlock);
+
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
-
   assert(dmaHandler);
 
   if (!dmaHandler->instances++)
@@ -178,10 +181,14 @@ static void dmaHandlerAttach()
     LPC_GPDMA->CONFIG |= DMA_ENABLE;
     irqEnable(GPDMA_IRQ);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerDetach()
 {
+  spinLock(&spinlock);
+
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)
   {
@@ -189,6 +196,8 @@ static void dmaHandlerDetach()
     LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
     sysPowerDisable(PWR_GPDMA);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaHandlerInit(void *object,

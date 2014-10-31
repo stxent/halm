@@ -8,6 +8,7 @@
 #include <string.h>
 #include <irq.h>
 #include <memory.h>
+#include <spinlock.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/gpdma_base.h>
 #include <platform/nxp/gpdma_defs.h>
@@ -71,6 +72,7 @@ static const enum gpDmaEvent eventMap[16][4] = {
 static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
+static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t channel)
 {
@@ -144,6 +146,7 @@ static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
 
   assert(event < GPDMA_MEMORY);
 
+  spinLock(&spinlock);
   dmaHandlerInstantiate();
 
   for (uint8_t index = 0; index < 16; ++index)
@@ -169,11 +172,14 @@ static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
   ++dmaHandler->connections[minIndex];
   channel->mux.mask &= ~(0x03 << (minIndex << 1));
   channel->mux.value = minValue << (minIndex << 1);
+
+  spinUnlock(&spinlock);
   return minIndex;
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach()
 {
+  spinLock(&spinlock);
   dmaHandlerInstantiate();
 
   if (!dmaHandler->instances++)
@@ -183,10 +189,14 @@ static void dmaHandlerAttach()
     LPC_GPDMA->CONFIG |= DMA_ENABLE;
     irqEnable(GPDMA_IRQ);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerDetach()
 {
+  spinLock(&spinlock);
+
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)
   {
@@ -194,6 +204,8 @@ static void dmaHandlerDetach()
     LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
     sysClockDisable(CLK_M4_GPDMA);
   }
+
+  spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerFree(struct GpDmaBase *channel)
@@ -216,7 +228,6 @@ static void dmaHandlerInstantiate()
 {
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
-
   assert(dmaHandler);
 }
 /*----------------------------------------------------------------------------*/
