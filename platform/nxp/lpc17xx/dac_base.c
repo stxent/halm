@@ -78,6 +78,7 @@ static enum result dacInit(void *object, const void *configBase)
 
   sysClockControl(CLK_DAC, DEFAULT_DIV);
 
+  interface->pin = config->pin;
   interface->reg = LPC_DAC;
 
   return E_OK;

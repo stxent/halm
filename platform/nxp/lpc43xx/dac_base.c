@@ -89,6 +89,7 @@ static enum result dacInit(void *object, const void *configBase)
   /* Reset registers to default values */
   sysResetEnable(RST_DAC);
 
+  interface->pin = config->pin;
   interface->reg = LPC_DAC;
 
   return E_OK;
@@ -99,5 +100,6 @@ static void dacDeinit(void *object)
   const struct DacBase * const interface = object;
 
   sysClockDisable(CLK_APB3_DAC);
+  releaseOutputPin(interface->pin);
   setDescriptor(interface, 0);
 }

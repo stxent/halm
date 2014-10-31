@@ -24,6 +24,9 @@ struct DacBase
   struct Entity parent;
 
   void *reg;
+
+  /* Output pin */
+  pin_t pin;
 };
 /*----------------------------------------------------------------------------*/
 uint32_t dacGetClock(const struct DacBase *);
