@@ -23,17 +23,16 @@
 #define CONFIG_INSYNC(channel)          BIT_FIELD(BIT((channel)), 9)
 #define CONFIG_AUTOLIMIT(part)          BIT(17 + (part))
 /*------------------Control register------------------------------------------*/
-#define CTRL_DOWN(part)                 BIT(0 + ((part) << 4))
-#define CTRL_STOP(part)                 BIT(1 + ((part) << 4))
-#define CTRL_HALT(part)                 BIT(2 + ((part) << 4))
-#define CTRL_CLRCTR(part)               BIT(3 + ((part) << 4))
-#define CTRL_BIDIR(part)                BIT(4 + ((part) << 4))
-#define CTRL_PRE_MASK(part)             BIT_FIELD(MASK(8), 5 + ((part) << 4))
-#define CTRL_PRE(part, value)           BIT_FIELD((value), 5 + ((part) << 4))
+#define CTRL_DOWN                       BIT(0)
+#define CTRL_STOP                       BIT(1)
+#define CTRL_HALT                       BIT(2)
+#define CTRL_CLRCTR                     BIT(3)
+#define CTRL_BIDIR                      BIT(4)
+#define CTRL_PRE_MASK                   BIT_FIELD(MASK(8), 5)
+#define CTRL_PRE(value)                 BIT_FIELD((value), 5)
 /*------------------State register--------------------------------------------*/
-#define STATE_MASK(part)                BIT_FIELD(MASK(5), ((part) << 4))
-#define STATE_VALUE(part, reg) \
-    FIELD_VALUE((reg), STATE_MASK, ((part) << 4))
+#define STATE_MASK                      BIT_FIELD(MASK(5), 0)
+#define STATE_VALUE(reg)                FIELD_VALUE((reg), STATE_MASK, 0)
 /*------------------Input register--------------------------------------------*/
 #define INPUT_AIN(channel)              BIT((channel))
 #define INPUT_SIN(channel)              BIT(16 + (channel))

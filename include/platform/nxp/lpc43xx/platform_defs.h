@@ -1413,7 +1413,7 @@ typedef struct
 //#define LPC_SPI           ((LPC_SPI_Type *)LPC_SPI_BASE)
 //#define LPC_SGPIO         ((LPC_SGPIO_Type *)LPC_SGPIO_BASE)
 
-//#define LPC_SCT           ((LPC_SCT_Type *)LPC_SCT_BASE)
+#define LPC_SCT           ((LPC_SCT_Type *)LPC_SCT_BASE)
 #define LPC_GPDMA         ((LPC_GPDMA_Type *)LPC_GPDMA_BASE)
 #define LPC_GPDMACH0      ((LPC_GPDMACH_Type *)LPC_GPDMACH0_BASE)
 #define LPC_GPDMACH1      ((LPC_GPDMACH_Type *)LPC_GPDMACH1_BASE)
