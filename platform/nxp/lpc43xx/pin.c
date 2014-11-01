@@ -34,8 +34,8 @@ static union PinData calcPinData(volatile uint32_t *);
 static void commonPinInit(struct Pin);
 static enum pinDriveType detectPinDriveType(volatile uint32_t *);
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach();
-static inline void pinHandlerDetach();
+static inline void pinHandlerAttach(void);
+static inline void pinHandlerDetach(void);
 static enum result pinHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -370,7 +370,7 @@ static enum pinDriveType detectPinDriveType(volatile uint32_t *reg)
     return NORMAL_DRIVE_PIN;
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach()
+static inline void pinHandlerAttach(void)
 {
   spinLock(&spinlock);
 
@@ -390,7 +390,7 @@ static inline void pinHandlerAttach()
   spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerDetach()
+static inline void pinHandlerDetach(void)
 {
   spinLock(&spinlock);
 

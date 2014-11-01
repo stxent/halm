@@ -21,12 +21,12 @@ static bool stubReady(const void *);
 static enum result extOscDisable(const void *);
 static enum result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
-static bool extOscReady();
+static bool extOscReady(const void *);
 
 static enum result intOscDisable(const void *);
 static enum result intOscEnable(const void *, const void *);
 static uint32_t intOscFrequency(const void *);
-static bool intOscReady();
+static bool intOscReady(const void *);
 
 static enum result sysPllDisable(const void *);
 static enum result sysPllEnable(const void *, const void *);

@@ -22,8 +22,8 @@ struct PinHandler
 static volatile uint32_t *calcControlReg(union PinData);
 static void commonPinInit(struct Pin);
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach();
-static inline void pinHandlerDetach();
+static inline void pinHandlerAttach(void);
+static inline void pinHandlerDetach(void);
 static enum result pinHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -61,7 +61,7 @@ static void commonPinInit(struct Pin pin)
   pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach()
+static inline void pinHandlerAttach(void)
 {
   spinLock(&spinlock);
 
@@ -79,7 +79,7 @@ static inline void pinHandlerAttach()
   spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerDetach()
+static inline void pinHandlerDetach(void)
 {
   spinLock(&spinlock);
 

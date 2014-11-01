@@ -27,6 +27,6 @@ struct GpPwmUnitBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-uint32_t gpPwmGetClock(struct GpPwmUnitBase *);
+uint32_t gpPwmGetClock(const struct GpPwmUnitBase *);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPPWM_BASE_H_ */

@@ -27,8 +27,8 @@ static inline void *calcPeripheral(uint8_t);
 static uint8_t eventToPeripheral(enum gpDmaEvent);
 static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerAttach();
-static void dmaHandlerDetach();
+static void dmaHandlerAttach(void);
+static void dmaHandlerDetach(void);
 static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
@@ -167,7 +167,7 @@ void GPDMA_ISR(void)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerAttach()
+static void dmaHandlerAttach(void)
 {
   spinLock(&spinlock);
 
@@ -185,7 +185,7 @@ static void dmaHandlerAttach()
   spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerDetach()
+static void dmaHandlerDetach(void)
 {
   spinLock(&spinlock);
 

@@ -26,12 +26,12 @@ enum
 priority_t irqGetPriority(irq_t);
 void irqSetPriority(irq_t, priority_t);
 /*----------------------------------------------------------------------------*/
-static inline void interruptsDisable()
+static inline void interruptsDisable(void)
 {
   __interruptsDisable();
 }
 /*----------------------------------------------------------------------------*/
-static inline void interruptsEnable()
+static inline void interruptsEnable(void)
 {
   __interruptsEnable();
 }

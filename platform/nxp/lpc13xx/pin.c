@@ -25,8 +25,8 @@ static inline volatile uint32_t *calcControlReg(union PinData);
 static void commonPinInit(struct Pin);
 static bool isCommonPin(struct Pin);
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach();
-static inline void pinHandlerDetach();
+static inline void pinHandlerAttach(void);
+static inline void pinHandlerDetach(void);
 static enum result pinHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -75,7 +75,7 @@ static bool isCommonPin(struct Pin pin)
   return pin.data.port != 0 || (pin.data.offset < 4 || pin.data.offset > 5);
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach()
+static inline void pinHandlerAttach(void)
 {
   spinLock(&spinlock);
 
@@ -93,7 +93,7 @@ static inline void pinHandlerAttach()
   spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinHandlerDetach()
+static inline void pinHandlerDetach(void)
 {
   spinLock(&spinlock);
 

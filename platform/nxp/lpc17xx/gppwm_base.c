@@ -105,7 +105,7 @@ static enum result setDescriptor(uint8_t channel,
       unit) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t gpPwmGetClock(struct GpPwmUnitBase *unit __attribute__((unused)))
+uint32_t gpPwmGetClock(const struct GpPwmUnitBase *unit __attribute__((unused)))
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }

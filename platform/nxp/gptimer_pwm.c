@@ -129,7 +129,7 @@ static enum result channelInit(void *object, const void *configBase)
 
   /* Check if there is a free match channel */
   const int8_t freeChannel = gpTimerAllocateChannel(config->parent->matches
-      | 1 << pwmChannel);
+      | (1 << pwmChannel));
 
   if (freeChannel == -1)
     return E_BUSY;

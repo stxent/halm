@@ -171,7 +171,8 @@ void TIMER32B1_ISR(void)
     descriptors[3]->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t gpTimerGetClock(struct GpTimerBase *timer __attribute__((unused)))
+uint32_t gpTimerGetClock(const struct GpTimerBase *timer
+    __attribute__((unused)))
 {
   return clockFrequency(MainClock);
 }

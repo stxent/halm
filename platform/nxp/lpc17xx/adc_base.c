@@ -82,7 +82,7 @@ static enum result setDescriptor(uint8_t channel,
       unit) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-void ADC_ISR()
+void ADC_ISR(void)
 {
   if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);

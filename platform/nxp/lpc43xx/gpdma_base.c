@@ -29,10 +29,10 @@ struct DmaHandler
 static inline void *calcPeripheral(uint8_t);
 /*----------------------------------------------------------------------------*/
 static uint8_t dmaHandlerAllocate(struct GpDmaBase *, enum gpDmaEvent);
-static void dmaHandlerAttach();
-static void dmaHandlerDetach();
+static void dmaHandlerAttach(void);
+static void dmaHandlerDetach(void);
 static void dmaHandlerFree(struct GpDmaBase *);
-static void dmaHandlerInstantiate();
+static void dmaHandlerInstantiate(void);
 static enum result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
@@ -177,7 +177,7 @@ static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
   return minIndex;
 }
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerAttach()
+static void dmaHandlerAttach(void)
 {
   spinLock(&spinlock);
   dmaHandlerInstantiate();
@@ -193,7 +193,7 @@ static void dmaHandlerAttach()
   spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerDetach()
+static void dmaHandlerDetach(void)
 {
   spinLock(&spinlock);
 
@@ -224,7 +224,7 @@ static void dmaHandlerFree(struct GpDmaBase *channel)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerInstantiate()
+static void dmaHandlerInstantiate(void)
 {
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
