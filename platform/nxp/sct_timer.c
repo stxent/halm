@@ -98,13 +98,14 @@ static enum result tmrInit(void *object, const void *configBase)
 
   timer->parent.mask = eventMask;
   reg->CTRL_PART[offset] = CTRL_HALT;
-  reg->CONFIG |= CONFIG_NORELOAD(offset);
 
   /* Set desired timer frequency */
   if ((res = updateFrequency(timer, config->frequency)) != E_OK)
     return res;
 
-  /* Set match register value depending on timer type */
+  /* Disable match value reload and set current match register value */
+  reg->CONFIG = (reg->CONFIG & ~CONFIG_AUTOLIMIT(offset))
+      | CONFIG_NORELOAD(offset);
   if (timer->parent.part == SCT_UNIFIED)
     reg->MATCH[0] = 0xFFFFFFFF;
   else
@@ -117,14 +118,20 @@ static enum result tmrInit(void *object, const void *configBase)
   if (timer->parent.part == SCT_HIGH)
     reg->EV[timer->event].CTRL |= EVCTRL_HEVENT;
 
-  /* Enable allocated event in state 0 */
+  /* Reset current state and enable allocated event in state 0 */
+  reg->STATE_PART[offset] = 0;
   reg->EV[timer->event].STATE = 0x00000001;
   /* Enable timer clearing on allocated event */
   reg->LIMIT_PART[offset] = eventMask;
   /* Disable interrupt requests when no callback is specified */
   reg->EVEN &= ~eventMask;
 
-  /* TODO Clear unused registers */
+  reg->DITHER_PART[offset] = 0;
+  reg->HALT_PART[offset] = 0;
+  reg->START_PART[offset] = 0;
+  reg->STOP_PART[offset] = 0;
+  /* All registers operate as match registers */
+  reg->REGMODE_PART[offset] = 0;
 
   if (!config->disabled)
     reg->CTRL_PART[offset] &= ~CTRL_HALT;
@@ -135,6 +142,16 @@ static enum result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *object)
 {
   struct SctTimer * const timer = object;
+  LPC_SCT_Type * const reg = timer->parent.reg;
+  const uint8_t offset = timer->parent.part == SCT_HIGH;
+
+  /* Halt the timer */
+  reg->CTRL_PART[offset] = CTRL_HALT;
+
+  /* Disable allocated event */
+  reg->EV[timer->event].CTRL = 0;
+  reg->EV[timer->event].STATE = 0;
+  sctReleaseEvent((struct SctBase *)timer, timer->event);
 
   SctBase->deinit(timer);
 }
