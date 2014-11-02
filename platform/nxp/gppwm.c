@@ -14,6 +14,8 @@
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
 static int8_t setupMatchPin(uint8_t channel, pin_t key);
 /*----------------------------------------------------------------------------*/
+static enum result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
+static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
 static enum result unitInit(void *, const void *);
 static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
@@ -89,6 +91,29 @@ static int8_t setupMatchPin(uint8_t channel, pin_t key)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
+static enum result unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
+{
+  const uint8_t mask = 1 << channel;
+  enum result res = E_BUSY;
+
+  spinLock(&unit->spinlock);
+  if (!(unit->matches & mask))
+  {
+    unit->matches |= mask;
+    res = E_OK;
+  }
+  spinUnlock(&unit->spinlock);
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
+{
+  spinLock(&unit->spinlock);
+  unit->matches &= ~(1 << channel);
+  spinUnlock(&unit->spinlock);
+}
+/*----------------------------------------------------------------------------*/
 static enum result unitInit(void *object, const void *configBase)
 {
   const struct GpPwmUnitConfig * const config = configBase;
@@ -108,8 +133,9 @@ static enum result unitInit(void *object, const void *configBase)
   if ((res = GpPwmUnitBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  unit->resolution = config->resolution;
   unit->matches = 0;
+  unit->resolution = config->resolution;
+  unit->spinlock = SPIN_UNLOCKED;
 
   LPC_PWM_Type * const reg = unit->parent.reg;
 
@@ -176,29 +202,30 @@ static enum result singleEdgeInit(void *object, const void *configBase)
 {
   const struct GpPwmConfig * const config = configBase;
   struct GpPwm * const pwm = object;
-  int8_t channel;
+  enum result res;
 
   /* Initialize output pin */
-  channel = setupMatchPin(config->parent->parent.channel, config->pin);
+  const int8_t channel = setupMatchPin(config->parent->parent.channel,
+      config->pin);
   if (channel == -1)
     return E_VALUE;
 
-  /* Check whether channel is free */
-  if (config->parent->matches & (1 << channel))
-    return E_BUSY;
+  /* Allocate channels */
+  if ((res = unitAllocateChannel(config->parent, (uint8_t)channel)) != E_OK)
+    return res;
 
   pwm->channel = (uint8_t)channel;
   pwm->unit = config->parent;
-  pwm->unit->matches |= 1 << channel;
 
   LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   /* Calculate pointer to match register for fast access */
-  pwm->value = calcMatchChannel(reg, channel);
+  pwm->value = calcMatchChannel(reg, pwm->channel);
   /* Call function directly because of unfinished object construction */
   singleEdgeSetDuration(pwm, config->duration);
   /* Enable channel */
-  reg->PCR |= PCR_OUTPUT_ENABLED(channel);
+  reg->PCR = (reg->PCR & ~PCR_DOUBLE_EDGE(pwm->channel))
+      | PCR_OUTPUT_ENABLED(pwm->channel);
 
   return E_OK;
 }
@@ -209,7 +236,7 @@ static void singleEdgeDeinit(void *object)
   LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
-  pwm->unit->matches &= ~(1 << pwm->channel);
+  unitReleaseChannel(pwm->unit, pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static void singleEdgeSetDuration(void *object, uint32_t duration)
@@ -249,30 +276,32 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
 {
   const struct GpPwmDoubleEdgeConfig * const config = configBase;
   struct GpPwmDoubleEdge * const pwm = object;
-  int8_t channel;
+  enum result res;
 
   /* Initialize output pin */
-  channel = setupMatchPin(config->parent->parent.channel, config->pin);
+  const int8_t channel = setupMatchPin(config->parent->parent.channel,
+      config->pin);
   /* First channel cannot be a double edged output */
   if (channel <= 1)
     return E_VALUE;
 
-  /* Check whether channels are free */
-  if (config->parent->matches & (1 << channel | 1 << (channel - 1)))
-    return E_BUSY;
+  /* Allocate channels */
+  if ((res = unitAllocateChannel(config->parent, (uint8_t)channel - 1)) != E_OK)
+    return res;
+  if ((res = unitAllocateChannel(config->parent, (uint8_t)channel)) != E_OK)
+    return res;
 
   pwm->channel = (uint8_t)channel;
   pwm->unit = config->parent;
-  pwm->unit->matches |= 1 << channel | 1 << (channel - 1);
 
   LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   /* Setup channels and initial edge times */
-  pwm->leading = calcMatchChannel(reg, channel - 1);
-  pwm->trailing = calcMatchChannel(reg, channel);
+  pwm->leading = calcMatchChannel(reg, pwm->channel - 1);
+  pwm->trailing = calcMatchChannel(reg, pwm->channel);
   doubleEdgeSetEdges(pwm, config->leading, config->trailing);
   /* Select double edge mode and enable the channel */
-  reg->PCR |= PCR_DOUBLE_EDGE(channel) | PCR_OUTPUT_ENABLED(channel);
+  reg->PCR |= PCR_DOUBLE_EDGE(pwm->channel) | PCR_OUTPUT_ENABLED(pwm->channel);
 
   return E_OK;
 }
@@ -283,7 +312,8 @@ static void doubleEdgeDeinit(void *object)
   LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
-  pwm->unit->matches &= ~(1 << pwm->channel | 1 << (pwm->channel - 1));
+  unitReleaseChannel(pwm->unit, pwm->channel);
+  unitReleaseChannel(pwm->unit, pwm->channel - 1);
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
