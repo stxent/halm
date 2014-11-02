@@ -89,19 +89,10 @@ static enum result timerHandlerAttach(uint8_t channel, enum sctPart part,
   }
   else
   {
-    const uint8_t current = part == SCT_HIGH;
-    const uint8_t opposite = current ^ 0x01;
+    const uint8_t offset = part == SCT_HIGH;
 
-    if (!handler->descriptors[current])
-    {
-      if (timer && handler->descriptors[opposite])
-      {
-        /* TODO Check mode of an opposite timer */
-        handler->descriptors[current] = timer;
-      }
-      else
-        handler->descriptors[current] = timer;
-    }
+    if (!handler->descriptors[offset])
+      handler->descriptors[offset] = timer;
     else
       res = E_BUSY;
   }
@@ -201,16 +192,45 @@ void sctReleaseEvent(struct SctBase *timer, uint8_t channel)
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configBase)
 {
+  const uint32_t configMask = CONFIG_UNIFY | CONFIG_CLKMODE_MASK
+      | CONFIG_CKSEL_MASK;
   const struct SctBaseConfig * const config = configBase;
   struct SctBase * const timer = object;
+  uint32_t desiredConfig = 0;
   enum result res;
 
+  assert(config->edge < PIN_TOGGLE);
   assert(config->input < SCT_INPUT_END);
 
   timer->channel = config->channel;
   timer->part = config->part;
 
+  /* Check whether the timer is divided into two separate parts */
+  if (timer->part == SCT_UNIFIED)
+    desiredConfig |= CONFIG_UNIFY;
+
+  /* Configure timer clock source */
+  if (config->input != SCT_INPUT_NONE)
+  {
+    desiredConfig |= CONFIG_CLKMODE(CONFIG_CLKMODE_INPUT);
+    if (config->edge == PIN_RISING)
+      desiredConfig |= CONFIG_CKSEL_RISING(config->input);
+    else
+      desiredConfig |= CONFIG_CKSEL_FALLING(config->input);
+  }
+
+  LPC_SCT_Type * const reg = LPC_SCT;
   const bool enabled = timerHandlerActive(timer->channel);
+
+  if (enabled)
+  {
+    /*
+     * Compare current timer configuration with proposed one
+     * when timer is already enabled.
+     */
+    if (desiredConfig != (reg->CONFIG & configMask))
+      return E_BUSY;
+  }
 
   if ((res = timerHandlerAttach(timer->channel, timer->part, timer)) != E_OK)
     return res;
@@ -218,7 +238,7 @@ static enum result tmrInit(void *object, const void *configBase)
   timer->handler = 0;
   timer->irq = SCT_IRQ;
   timer->mask = 0;
-  timer->reg = LPC_SCT;
+  timer->reg = reg;
 
   if (!enabled)
   {
@@ -230,20 +250,7 @@ static enum result tmrInit(void *object, const void *configBase)
     irqEnable(timer->irq);
   }
 
-  LPC_SCT_Type * const reg = timer->reg;
-
-  /* TODO Check config when other part is already enabled */
-
-  /* Check whether the timer is divided into two separate parts */
-  if (timer->part == SCT_UNIFIED)
-    reg->CONFIG |= CONFIG_UNIFY;
-
-  /* Configure timer clock source */
-  if (config->input != SCT_INPUT_NONE)
-  {
-    reg->CONFIG = (reg->CONFIG & ~CONFIG_CLKMODE_MASK)
-        | CONFIG_CLKMODE(CONFIG_CLKMODE_INPUT);
-  }
+  reg->CONFIG = (reg->CONFIG & ~configMask) | desiredConfig;
 
   return E_OK;
 }

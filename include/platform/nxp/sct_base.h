@@ -38,6 +38,8 @@ struct SctBaseConfig
 {
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: edge sensitivity of the selected clock input. */
+  enum pinEvent edge;
   /** Optional: clock input. */
   enum sctInput input;
   /** Optional: timer part. */
