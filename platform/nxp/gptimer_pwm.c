@@ -8,8 +8,9 @@
 #include <platform/nxp/gptimer_pwm.h>
 #include <platform/nxp/gptimer_pwm_defs.h>
 /*----------------------------------------------------------------------------*/
-static void updateResolution(struct GpTimerPwmUnit *, uint8_t);
-/*----------------------------------------------------------------------------*/
+static enum result unitAllocateChannel(struct GpTimerPwmUnit *, uint8_t);
+static void unitReleaseChannel(struct GpTimerPwmUnit *, uint8_t);
+static void unitUpdateResolution(struct GpTimerPwmUnit *, uint8_t);
 static enum result unitInit(void *, const void *);
 static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
@@ -42,7 +43,35 @@ static const struct PwmClass channelTable = {
 const struct EntityClass * const GpTimerPwmUnit = &unitTable;
 const struct PwmClass * const GpTimerPwm = &channelTable;
 /*----------------------------------------------------------------------------*/
-static void updateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
+static enum result unitAllocateChannel(struct GpTimerPwmUnit *unit,
+    uint8_t channel)
+{
+  const uint8_t mask = 1 << channel;
+  enum result res = E_BUSY;
+
+  spinLock(&unit->spinlock);
+
+  const int8_t freeChannel = gpTimerAllocateChannel(unit->matches | mask);
+
+  if (freeChannel != -1 && !(unit->matches & mask))
+  {
+    unit->matches |= mask;
+    unitUpdateResolution(unit, (uint8_t)freeChannel);
+    res = E_OK;
+  }
+
+  spinUnlock(&unit->spinlock);
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static void unitReleaseChannel(struct GpTimerPwmUnit *unit, uint8_t channel)
+{
+  spinLock(&unit->spinlock);
+  unit->matches &= ~(1 << channel);
+  spinUnlock(&unit->spinlock);
+}
+/*----------------------------------------------------------------------------*/
+static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
   LPC_TIMER_Type * const reg = unit->parent.reg;
 
@@ -80,8 +109,11 @@ static enum result unitInit(void *object, const void *configBase)
   if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  unit->resolution = config->resolution;
   unit->matches = 0;
+  unit->spinlock = SPIN_UNLOCKED;
+  unit->resolution = config->resolution;
+
+  /* Should be invoked after object initialization completion */
   unit->current = gpTimerAllocateChannel(unit->matches);
 
   LPC_TIMER_Type * const reg = unit->parent.reg;
@@ -119,6 +151,7 @@ static enum result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmConfig * const config = configBase;
   struct GpTimerPwm * const pwm = object;
+  enum result res;
 
   /* Initialize output pin */
   const int8_t pwmChannel =
@@ -127,19 +160,12 @@ static enum result channelInit(void *object, const void *configBase)
   if (pwmChannel == -1)
     return E_VALUE;
 
-  /* Check if there is a free match channel */
-  const int8_t freeChannel = gpTimerAllocateChannel(config->parent->matches
-      | (1 << pwmChannel));
-
-  if (freeChannel == -1)
-    return E_BUSY;
+  /* Allocate channel */
+  if ((res = unitAllocateChannel(config->parent, (uint8_t)pwmChannel)) != E_OK)
+    return res;
 
   pwm->channel = (uint8_t)pwmChannel;
   pwm->unit = config->parent;
-  pwm->unit->matches |= 1 << pwmChannel;
-
-  /* Update match channel used for timer reset */
-  updateResolution(pwm->unit, (uint8_t)freeChannel);
 
   LPC_TIMER_Type * const reg = pwm->unit->parent.reg;
 
@@ -159,7 +185,7 @@ static void channelDeinit(void *object)
   LPC_TIMER_Type * const reg = pwm->unit->parent.reg;
 
   reg->PWMC &= ~PWMC_ENABLE(pwm->channel);
-  pwm->unit->matches &= ~(1 << pwm->channel);
+  unitReleaseChannel(pwm->unit, pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelGetResolution(const void *object)

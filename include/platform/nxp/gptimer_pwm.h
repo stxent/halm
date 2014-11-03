@@ -8,6 +8,7 @@
 #define PLATFORM_NXP_GPTIMER_PWM_H_
 /*----------------------------------------------------------------------------*/
 #include <pwm.h>
+#include <spinlock.h>
 #include "gptimer_base.h"
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerPwmUnit;
@@ -29,6 +30,8 @@ struct GpTimerPwmUnit
 
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
+  /* Access protection for match registers state */
+  spinlock_t spinlock;
   /* Match block used for period configuration */
   uint8_t current;
   /* Match blocks currently in use */
