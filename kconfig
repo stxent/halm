@@ -1,0 +1,73 @@
+# samples/Kconfig
+
+choice
+	prompt "Optimizations"
+	default OPTIMIZE_NONE
+
+	config OPTIMIZE_NONE
+		bool "None"
+
+	config OPTIMIZE_SIZE
+		bool "Size"
+
+	config OPTIMIZE_ALL
+		bool "All"
+
+endchoice
+
+choice
+	prompt "Processor family"
+	default LPC11XX
+
+	config LPC11XX
+		bool "LPC11xx and LPC11Cxx"
+
+	config LPC11EXX
+		bool "LPC11Exx"
+
+	config LPC13XX
+		bool "LPC13xx"
+
+	config LPC17XX
+		bool "LPC175x and LPC176x"
+
+	config LPC43XX
+		bool "LPC43xx"
+
+endchoice
+
+menu "Core peripherals"
+
+config CORE_CORTEX_SYSTICK
+	bool "System Timer"
+	help
+	  Enable building of System Timer (SysTick) driver.
+
+config CORE_CORTEX_PM
+	bool "Power management"
+	help
+	  Enable power management features.
+
+endmenu
+
+menu "Processor peripherals"
+
+config PLATFORM_NXP_ADC
+	bool "ADC"
+
+config PLATFORM_NXP_UART
+	bool "UART"
+
+config PLATFORM_NXP_SERIAL
+	bool "Default serial port driver"
+	depends on PLATFORM_NXP_UART
+
+config PLATFORM_NXP_SERIAL_POLL
+	bool "Serial port driver with polling"
+	depends on PLATFORM_NXP_UART
+
+config PLATFORM_NXP_SERIAL_DMA
+	bool "Serial port driver with DMA"
+	depends on PLATFORM_NXP_UART && PLATFORM_NXP_DMA
+
+endmenu

@@ -41,7 +41,7 @@ void WAKEUP_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
 extern void _stack(void); /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
-__attribute__((section(".isr_vectors"))) void (* const isrVectors[])(void) = {
+__attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     /* Core interrupt sources */
     &_stack,
     RESET_ISR,
