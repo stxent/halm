@@ -131,7 +131,7 @@ $(PROJECTFILE): $(COBJECTS)
 	$(AR) -r $@ $(COBJECTS)
 
 $(OUTPUTDIR)/%.o: %.c
-	@mkdir -p $(@D)
+	@mkdir -p $(@D) ; \
 	$(CC) -c $(CFLAGS) $(INCLUDEPATH) -MMD -MF "$(@:%.o=%.d)" -MT $@ $< -o $@
 
 clean:
