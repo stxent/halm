@@ -20,7 +20,7 @@ choice
 	default LPC11XX
 
 	config LPC11XX
-		bool "LPC11xx and LPC11Cxx"
+		bool "LPC11xx"
 
 	config LPC11EXX
 		bool "LPC11Exx"
@@ -43,7 +43,7 @@ config CORE_CORTEX_SYSTICK
 	help
 	  Enable building of System Timer (SysTick) driver.
 
-config CORE_CORTEX_PM
+config PM
 	bool "Power management"
 	help
 	  Enable power management features.
@@ -55,19 +55,142 @@ menu "Processor peripherals"
 config PLATFORM_NXP_ADC
 	bool "ADC"
 
+config PLATFORM_NXP_DAC
+	bool "DAC"
+	depends on LPC17XX || LPC43XX
+
+config PLATFORM_NXP_GPDMA
+	bool "GPDMA"
+	depends on LPC17XX || LPC43XX
+
+config PLATFORM_NXP_GPTIMER
+	bool "General-purpose timer"
+
+config PLATFORM_NXP_GPTIMER_PM
+	bool "Power management for general-purpose timers"
+	depends on PLATFORM_NXP_GPTIMER && PM
+
+config PLATFORM_NXP_GPTIMER_TIMER
+	bool "Common timer on general-purpose timer"
+	depends on PLATFORM_NXP_GPTIMER
+
+config PLATFORM_NXP_GPTIMER_PWM
+	bool "PWM on general-purpose timer"
+	depends on PLATFORM_NXP_GPTIMER && (LPC11XX || LPC11EXX || LPC13XX)
+
+config PLATFORM_NXP_GPPWM
+	bool "PWM"
+	depends on LPC17XX
+
+config PLATFORM_NXP_I2C
+	bool "I2C"
+
+config PLATFORM_NXP_SCT
+	bool "State Configurable Timer"
+	depends on LPC43XX
+
+config PLATFORM_NXP_SCT_TIMER
+	bool "Common timer on State Configurable Timer"
+	depends on PLATFORM_NXP_SCT
+
+config PLATFORM_NXP_SSP
+	bool "SSP"
+
 config PLATFORM_NXP_UART
 	bool "UART"
 
-config PLATFORM_NXP_SERIAL
-	bool "Default serial port driver"
+endmenu
+
+menu "Interfaces"
+
+config ONE_WIRE
+	bool "1-Wire"
+	depends on PLATFORM_NXP_SSP || PLATFORM_NXP_UART
+
+config PLATFORM_NXP_ONE_WIRE_SSP
+	bool "1-Wire driver on SSP peripheral"
+	depends on ONE_WIRE && PLATFORM_NXP_SSP
+
+config PLATFORM_NXP_ONE_WIRE_UART
+	bool "1-Wire driver on UART peripheral"
+	depends on ONE_WIRE && PLATFORM_NXP_UART
+
+config ADC
+	bool "ADC drivers"
+	depends on PLATFORM_NXP_ADC
+
+config PLATFORM_NXP_ADC_BURST
+	bool "Interrupt-driven ADC"
+	depends on ADC && PLATFORM_NXP_ADC
+
+config PLATFORM_NXP_ADC_POLL
+	bool "Simplified ADC driver with polling"
+	depends on ADC && PLATFORM_NXP_ADC
+
+config DAC
+	bool "DAC drivers"
+	depends on PLATFORM_NXP_DAC
+
+config PLATFORM_NXP_DAC_DIRECT
+	bool "Simplified DAC driver"
+	depends on DAC && PLATFORM_NXP_DAC
+
+config PLATFORM_NXP_DAC_DMA
+	bool "Multi-buffer DAC driver with DMA"
+	depends on DAC && PLATFORM_NXP_DAC && PLATFORM_NXP_GPDMA
+
+config I2C
+	bool "I2C drivers"
+	depends on PLATFORM_NXP_I2C
+
+config PLATFORM_NXP_I2C_PM
+	bool "Power management for I2C drivers"
+	depends on I2C && PM
+
+config PLATFORM_NXP_I2C_MASTER
+	bool "I2C Master"
+	depends on I2C && PLATFORM_NXP_I2C
+
+config PLATFORM_NXP_I2C_SLAVE
+	bool "I2C Slave"
+	depends on I2C && PLATFORM_NXP_I2C
+
+config SERIAL
+	bool "Serial port"
 	depends on PLATFORM_NXP_UART
+
+config PLATFORM_NXP_SERIAL_PM
+	bool "Power management for serial port drivers"
+	depends on SERIAL && PM
+
+config PLATFORM_NXP_SERIAL
+	bool "Interrupt-driven serial port driver"
+	depends on SERIAL && PLATFORM_NXP_UART
 
 config PLATFORM_NXP_SERIAL_POLL
 	bool "Serial port driver with polling"
-	depends on PLATFORM_NXP_UART
+	depends on SERIAL && PLATFORM_NXP_UART
 
 config PLATFORM_NXP_SERIAL_DMA
 	bool "Serial port driver with DMA"
-	depends on PLATFORM_NXP_UART && PLATFORM_NXP_DMA
+	depends on SERIAL && PLATFORM_NXP_UART && PLATFORM_NXP_GPDMA
+
+config SPI
+	bool "SPI"
+	depends on PLATFORM_NXP_SSP
+
+config PLATFORM_NXP_SPI_MASTER
+	bool "Interrupt-driven SPI Master"
+	depends on SPI && PLATFORM_NXP_SSP
+
+config PLATFORM_NXP_SPI_DMA_MASTER
+	bool "SPI Master with DMA"
+	depends on SPI && PLATFORM_NXP_SSP && PLATFORM_NXP_GPDMA
+
+config PLATFORM_GPIO_BUS
+	bool "GPIO Bus"
+
+config PLATFORM_SDIO_SPI
+	bool "SDIO over SPI"
 
 endmenu
