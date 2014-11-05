@@ -35,12 +35,14 @@ enum result i2cConfigPins(struct I2cBase *interface,
     return E_VALUE;
   pinInput((pin = pinInit(config->scl)));
   pinSetFunction(pin, pinEntry->value);
+  pinSetSlewRate(pin, PIN_SLEW_FAST);
 
   /* Configure I2C serial data pin */
   if (!(pinEntry = pinFind(i2cPins, config->sda, interface->channel)))
     return E_VALUE;
   pinInput((pin = pinInit(config->sda)));
   pinSetFunction(pin, pinEntry->value);
+  pinSetSlewRate(pin, PIN_SLEW_FAST);
 
   return E_OK;
 }
