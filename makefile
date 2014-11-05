@@ -110,12 +110,11 @@ ifeq ($(CONFIG_PLATFORM_NXP_SERIAL_DMA),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/serial_dma.c
 endif
 
-DEPENDENCIES := $(shell find -name ".depend")
 OUTPUTDIR = build_$(PLATFORM)
 COBJECTS = $(addprefix $(OUTPUTDIR)/, $(CSOURCES:%.c=%.o))
 PROJECTFILE = $(OUTPUTDIR)/lib$(PROJECT).a
 
-.PHONY: all clean depend menuconfig
+.PHONY: all clean menuconfig
 .SUFFIXES:
 
 all: $(PROJECTFILE)
@@ -125,22 +124,14 @@ $(PROJECTFILE): $(COBJECTS)
 
 $(OUTPUTDIR)/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) $(INCLUDEPATH) $< -o $@
-
-.depend:
-	for src in $(CSOURCES) ; do \
-		$(CC) -MM $(CFLAGS) $(INCLUDEPATH) -MT $(OUTPUTDIR)/"$$(echo $$src | sed s/c$$/o/)" "$$src" ; \
-	done > $@
-
-depend: .depend
-	@touch .depend
+	$(CC) -c $(CFLAGS) $(INCLUDEPATH) -MMD -MF "$(@:%.o=%.d)" -MT $@ $< -o $@
 
 clean:
-	rm -f $(DEPENDENCIES)
+	rm -f $(COBJECTS:%.o=%.d)
 	rm -f $(COBJECTS)
 	rm -f $(PROJECTFILE)
 
 menuconfig:
 	kconfig-mconf kconfig
 
--include $(DEPENDENCIES)
+-include $(COBJECTS:%.o=%.d)
