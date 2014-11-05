@@ -1,13 +1,18 @@
-include .config
-
 PROJECT = hal
 PROJECTDIR = .
 
-INCLUDEPATH += -I./
-INCLUDEPATH += $(addprefix -I$(PROJECTDIR)/, include include/common)
+ifneq ($(CONFIGFILE),)
+	include $(CONFIGFILE)
+else
+	include .config
+endif
 
-AR = $(CROSS_COMPILE)arm-none-eabi-ar
-CC = $(CROSS_COMPILE)arm-none-eabi-gcc
+ifeq ($(CROSS_COMPILE),)
+	CROSS_COMPILE = arm-none-eabi-
+endif
+
+AR = $(CROSS_COMPILE)ar
+CC = $(CROSS_COMPILE)gcc
 
 ifeq ($(CONFIG_LPC11XX),y)
 	CHIP = LPC11XX
@@ -61,6 +66,9 @@ endif
 ifeq ($(CONFIG_OPTIMIZE_ALL),y)
 	OPTIMIZE_FLAGS = -O3
 endif
+
+INCLUDEPATH += -I./
+INCLUDEPATH += $(addprefix -I$(PROJECTDIR)/, include include/common)
 
 CFLAGS += -std=c11 -Wall -Wextra -Winline -Wcast-qual -pedantic -Wshadow
 CFLAGS += -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections
