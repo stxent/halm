@@ -73,7 +73,6 @@ ifeq ($(CONFIG_OPTIMIZE_ALL),y)
 	OPTIMIZE_FLAGS = -O3
 endif
 
-INCLUDEPATH += -I./
 INCLUDEPATH += $(addprefix -I$(PROJECTDIR)/, include include/common)
 
 CFLAGS += -std=c11 -Wall -Wextra -Winline -Wcast-qual -pedantic -Wshadow
@@ -111,12 +110,16 @@ ifeq ($(PLATFORM_SYSTEM_MODULE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/system.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_ADC),y)
+ifeq ($(CONFIG_PLATFORM_GPIO_BUS),y)
+	CSOURCES += platform/gpio_bus.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_NXP_ADC_BASE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/adc_unit.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/adc_base.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_DAC),y)
+ifeq ($(CONFIG_PLATFORM_NXP_DAC_BASE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/dac_base.c
 endif
 
@@ -131,7 +134,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_GPPWM),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/gppwm_base.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER),y)
+ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER_BASE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/gptimer_common.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/gptimer_base.c
 endif
@@ -140,34 +143,38 @@ ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER_PWM),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/gptimer_pwm.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_I2C),y)
+ifeq ($(CONFIG_PLATFORM_NXP_I2C_BASE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/i2c_common.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/i2c_base.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_SCT),y)
+ifeq ($(CONFIG_PLATFORM_NXP_PIN_INTERRUPT),y)
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pin_interrupt.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_NXP_SCT_BASE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/sct_base.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_SSP),y)
+ifeq ($(CONFIG_PLATFORM_NXP_SSP_BASE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/ssp_common.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/ssp_base.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_UART),y)
+ifeq ($(CONFIG_PLATFORM_NXP_UART_BASE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/uart_common.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/uart_base.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_NXP_ADC),y)
+	CSOURCES += platform/$(PLATFORM_TYPE)/adc.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC_BURST),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/adc_burst.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_ADC_POLL),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/adc.c
-endif
-
-ifeq ($(CONFIG_PLATFORM_NXP_DAC_DIRECT),y)
+ifeq ($(CONFIG_PLATFORM_NXP_DAC),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/dac.c
 endif
 
@@ -175,7 +182,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_DAC_DMA),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/dac_dma.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER_TIMER),y)
+ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/gptimer.c
 endif
 
@@ -187,7 +194,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_ONE_WIRE_UART),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/one_wire_uart.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_I2C_MASTER),y)
+ifeq ($(CONFIG_PLATFORM_NXP_I2C),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/i2c.c
 endif
 
@@ -211,16 +218,12 @@ ifeq ($(CONFIG_PLATFORM_NXP_SERIAL_DMA),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/serial_dma.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_SPI_MASTER),y)
+ifeq ($(CONFIG_PLATFORM_NXP_SPI),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/spi.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_SPI_DMA_MASTER),y)
+ifeq ($(CONFIG_PLATFORM_NXP_SPI_DMA),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/spi_dma.c
-endif
-
-ifeq ($(CONFIG_PLATFORM_GPIO_BUS),y)
-	CSOURCES += platform/gpio_bus.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_SDIO_SPI),y)
