@@ -44,6 +44,9 @@ ifeq ($(CONFIG_LPC17XX),y)
 	CORE = m3
 	PLATFORM_TYPE = nxp
 	PLATFORM = lpc17xx
+
+	#Platform-specific options
+	PLATFORM_SYSTEM_MODULE = y
 endif
 
 ifeq ($(CONFIG_LPC43XX),y)
@@ -52,7 +55,10 @@ ifeq ($(CONFIG_LPC43XX),y)
 	CORE = m4
 	PLATFORM_TYPE = nxp
 	PLATFORM = lpc43xx
+
+	#Platform-specific options
 	PLATFORM_FLAGS += -D__MULTICORE_NONE
+	PLATFORM_SYSTEM_MODULE = y
 endif
 
 ifeq ($(CONFIG_OPTIMIZE_NONE),y)
@@ -100,6 +106,10 @@ CSOURCES += platform/$(PLATFORM_TYPE)/startup.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/clocking.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pin.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/vectors.c
+
+ifeq ($(PLATFORM_SYSTEM_MODULE),y)
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/system.c
+endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/adc_unit.c
