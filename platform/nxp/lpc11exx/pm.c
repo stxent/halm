@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <error.h>
 #include <pm.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/lpc11exx/system_defs.h>

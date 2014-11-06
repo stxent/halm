@@ -6,7 +6,7 @@
 
 #include <pm.h>
 #include <platform/platform_defs.h>
-#include <platform/nxp/lpc13xx/system_defs.h>
+#include <platform/nxp/lpc17xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 enum result pmPlatformChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/
@@ -15,11 +15,11 @@ enum result pmPlatformChangeState(enum pmState state)
   switch (state)
   {
     case PM_SLEEP:
-      LPC_PMU->PCON &= ~PCON_DPDEN;
+      LPC_SC->PCON = (LPC_SC->PCON & PCON_PM_MASK) | PCON_PM(PCON_PM_SLEEP);
       break;
 
     case PM_SUSPEND:
-      LPC_PMU->PCON |= PCON_DPDEN;
+      LPC_SC->PCON = (LPC_SC->PCON & PCON_PM_MASK) | PCON_PM(PCON_PM_POWERDOWN);
       break;
 
     default:
