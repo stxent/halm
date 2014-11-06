@@ -172,14 +172,14 @@ static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
 static enum result pinInterruptHandlerInit(void *object,
     const void *configBase __attribute__((unused)))
 {
-  struct PinInterruptHandler * const handler = object;
+  struct PinInterruptHandler * const interruptHandler = object;
   enum result res;
 
-  res = listInit(&handler->list[0], sizeof(struct PinInterrupt *));
+  res = listInit(&interruptHandler->list[0], sizeof(struct PinInterrupt *));
   if (res != E_OK)
     return res;
 
-  res = listInit(&handler->list[1], sizeof(struct PinInterrupt *));
+  res = listInit(&interruptHandler->list[1], sizeof(struct PinInterrupt *));
   if (res != E_OK)
     return res;
 

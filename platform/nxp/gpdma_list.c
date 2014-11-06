@@ -207,9 +207,9 @@ static enum result channelStart(void *object, void *destination,
     appendItem(channel, destination, source, chunk);
 
     if (channel->parent.control & CONTROL_DST_INC)
-      destination += chunk;
+      destination = (void *)((uint32_t)destination + chunk);
     if (channel->parent.control & CONTROL_SRC_INC)
-      source += chunk;
+      source = (const void *)((uint32_t)source + chunk);
   }
 
   const struct GpDmaListItem * const first = channel->list;
