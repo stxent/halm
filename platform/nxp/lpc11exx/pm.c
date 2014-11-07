@@ -15,12 +15,12 @@ enum result pmPlatformChangeState(enum pmState state)
   switch (state)
   {
     case PM_SLEEP:
-      LPC_PMU->PCON &= (LPC_PMU->PCON & ~PCON_PM_MASK)
+      LPC_PMU->PCON &= (LPC_PMU->PCON & ~(PCON_PM_MASK | PCON_PM_SLEEPFLAG))
           | PCON_PM_VALUE(PCON_PM_DEFAULT);
       break;
 
     case PM_SUSPEND:
-      LPC_PMU->PCON &= (LPC_PMU->PCON & ~PCON_PM_MASK)
+      LPC_PMU->PCON &= (LPC_PMU->PCON & ~(PCON_PM_MASK | PCON_PM_DPDFLAG))
           | PCON_PM_VALUE(PCON_PM_POWERDOWN);
       break;
 
