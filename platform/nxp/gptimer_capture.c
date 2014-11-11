@@ -144,31 +144,18 @@ static enum result channelInit(void *object, const void *configBase)
 
   capture->callback = 0;
   capture->channel = (uint8_t)channel;
-  capture->eventMask = 0;
+  capture->event = config->event;
   capture->unit = unit;
 
-  LPC_TIMER_Type * const reg = capture->unit->parent.reg;
+  const LPC_TIMER_Type * const reg = capture->unit->parent.reg;
 
-  /* Calculate pointer to match register for fast access */
+  /* Calculate pointer to capture register for fast access */
   capture->value = reg->CR + capture->channel;
-  /* Configure channel */
-  /* TODO Rewrite */
-  switch (config->event)
-  {
-    case PIN_RISING:
-      capture->eventMask = CCR_RISING_EDGE(0);
-      break;
-
-    case PIN_FALLING:
-      capture->eventMask = CCR_FALLING_EDGE(0);
-      break;
-
-    case PIN_TOGGLE:
-      capture->eventMask = CCR_RISING_EDGE(0) | CCR_FALLING_EDGE(0);
-      break;
-  }
-  reg->CCR = (reg->CCR & ~CCR_MASK(capture->channel))
-      | ((uint32_t)capture->eventMask << (capture->channel * 3));
+  /*
+   * Configure capture events. Function should be called when
+   * the initialization of the current object is completed.
+   */
+  channelSetEnabled(capture, true);
 
   return E_OK;
 }
@@ -176,9 +163,8 @@ static enum result channelInit(void *object, const void *configBase)
 static void channelDeinit(void *object)
 {
   struct GpTimerCapture * const capture = object;
-  LPC_TIMER_Type * const reg = capture->unit->parent.reg;
 
-  reg->CCR &= ~CCR_MASK(capture->channel);
+  channelSetEnabled(object, false);
   unitSetDescriptor(capture->unit, capture->channel, capture, 0);
 }
 /*----------------------------------------------------------------------------*/
@@ -205,15 +191,19 @@ static void channelSetEnabled(void *object, bool state)
   struct GpTimerCapture * const capture = object;
   LPC_TIMER_Type * const reg = capture->unit->parent.reg;
 
-  /* TODO Rewrite with enabling or disabling of events */
-  /* Controls the state of the interrupts only */
   if (state)
   {
-    reg->IR = reg->IR;
-    reg->CCR |= CCR_INTERRUPT(capture->channel);
+    uint32_t value = 0;
+
+    if (capture->event != PIN_RISING)
+      value |= CCR_FALLING_EDGE(capture->channel);
+    if (capture->event != PIN_FALLING)
+      value |= CCR_RISING_EDGE(capture->channel);
+
+    reg->CCR = (reg->CCR & ~CCR_MASK(capture->channel)) | value;
   }
   else
-    reg->CCR &= ~CCR_INTERRUPT(capture->channel);
+    reg->CCR &= ~CCR_MASK(capture->channel);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelValue(const void *object)

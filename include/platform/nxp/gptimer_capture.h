@@ -54,10 +54,10 @@ struct GpTimerCapture
   struct GpTimerCaptureUnit *unit;
   /* Pointer to a capture register */
   const volatile uint32_t *value;
-  /* Capture channel number */
+  /* Channel identifier */
   uint8_t channel;
-  /* Event mask */
-  uint8_t eventMask;
+  /* Capture event */
+  enum pinEvent event;
 };
 /*----------------------------------------------------------------------------*/
 void *gpTimerCaptureCreate(void *, pin_t);
