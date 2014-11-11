@@ -133,7 +133,7 @@ static enum result channelInit(void *object, const void *configBase)
 
   /* Initialize output pin */
   const int8_t channel = gpTimerConfigCapturePin(unit->parent.channel,
-      config->pin);
+      config->pin, config->pull);
 
   if (channel == -1)
     return E_VALUE;

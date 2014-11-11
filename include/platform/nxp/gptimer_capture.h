@@ -41,6 +41,8 @@ struct GpTimerCaptureConfig
   pin_t pin;
   /** Mandatory: capture mode. */
   enum pinEvent event;
+  /** Optional: enables pull-up or pull-down resistors for input pin. */
+  enum pinPull pull;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerCapture
