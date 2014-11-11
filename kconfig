@@ -77,6 +77,10 @@ config PLATFORM_NXP_GPTIMER
 	bool "Common timer on general-purpose timer"
 	depends on PLATFORM_NXP_GPTIMER_BASE
 
+config PLATFORM_NXP_GPTIMER_CAPTURE
+	bool "Input capture on general-purpose timer"
+	depends on PLATFORM_NXP_GPTIMER_BASE
+
 config PLATFORM_NXP_GPTIMER_PWM
 	bool "PWM on general-purpose timer"
 	depends on PLATFORM_NXP_GPTIMER_BASE && (LPC11XX || LPC11EXX || LPC13XX)

@@ -19,6 +19,7 @@
 #define MCR_RESET(channel)              BIT((channel) * 3 + 1)
 #define MCR_STOP(channel)               BIT((channel) * 3 + 2)
 /*------------------Capture Control Register----------------------------------*/
+#define CCR_MASK(channel)               BIT_FIELD(MASK(3), (channel) * 3)
 #define CCR_RISING_EDGE(channel)        BIT((channel) * 3)
 #define CCR_FALLING_EDGE(channel)       BIT((channel) * 3 + 1)
 #define CCR_INTERRUPT(channel)          BIT((channel) * 3 + 2)
