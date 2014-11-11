@@ -206,8 +206,15 @@ typedef struct
     };
   };
   __rw__ uint32_t CCR;
-  __ro__ uint32_t CR0;
-  __ne__ uint32_t RESERVED0[3];
+  union
+  {
+    __ro__ uint32_t CR[4];
+    struct
+    {
+      __ro__ uint32_t CR0;
+      __ne__ uint32_t RESERVED0[3];
+    };
+  };
   __rw__ uint32_t EMR;
   __ne__ uint32_t RESERVED1[12];
   __rw__ uint32_t CTCR;

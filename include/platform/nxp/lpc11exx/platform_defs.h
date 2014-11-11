@@ -361,12 +361,25 @@ typedef struct
     };
   };
   __rw__ uint32_t CCR;
-  __ro__ uint32_t CR0;
-  __ne__ uint32_t RESERVED0;
-  __ro__ uint32_t CR1;
-  __ne__ uint32_t RESERVED1;
+  union
+  {
+    __ro__ uint32_t CR[4];
+    struct
+    {
+      __ro__ uint32_t B0_CR0;
+      __ne__ uint32_t RESERVED0;
+      __ro__ uint32_t B0_CR1;
+      __ne__ uint32_t RESERVED1;
+    };
+    struct
+    {
+      __ro__ uint32_t B1_CR0;
+      __ro__ uint32_t B1_CR1;
+      __ne__ uint32_t RESERVED2[2];
+    };
+  };
   __rw__ uint32_t EMR;
-  __ne__ uint32_t RESERVED2[12];
+  __ne__ uint32_t RESERVED3[12];
   __rw__ uint32_t CTCR;
   __rw__ uint32_t PWMC;
 } LPC_TIMER_Type;
