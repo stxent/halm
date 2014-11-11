@@ -87,7 +87,7 @@ const struct PinEntry gpTimerCapturePins[] = {
     }, {
         .key = PIN(1, 17), /* CT16B0_CAP1 */
         .channel = 0,
-        .value = PACK_VALUE(1, 1)
+        .value = PACK_VALUE(1, 2) /* Capture channel defined as channel 1 */
     }, {
         .key = PIN(1, 18), /* CT16B1_CAP1 */
         .channel = 1,
@@ -99,7 +99,7 @@ const struct PinEntry gpTimerCapturePins[] = {
     }, {
         .key = PIN(1, 29), /* CT32B0_CAP1 */
         .channel = 2,
-        .value = PACK_VALUE(2, 1)
+        .value = PACK_VALUE(2, 2) /* Capture channel defined as channel 1 */
     }, {
         .key = 0 /* End of pin function association list */
     }
