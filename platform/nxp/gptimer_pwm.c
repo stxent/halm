@@ -151,30 +151,31 @@ static enum result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmConfig * const config = configBase;
   struct GpTimerPwm * const pwm = object;
+  struct GpTimerPwmUnit * const unit = config->parent;
   enum result res;
 
   /* Initialize output pin */
-  const int8_t pwmChannel =
-      gpTimerConfigMatchPin(config->parent->parent.channel, config->pin);
+  const int8_t channel = gpTimerConfigMatchPin(unit->parent.channel,
+      config->pin);
 
-  if (pwmChannel == -1)
+  if (channel == -1)
     return E_VALUE;
 
   /* Allocate channel */
-  if ((res = unitAllocateChannel(config->parent, (uint8_t)pwmChannel)) != E_OK)
+  if ((res = unitAllocateChannel(unit, (uint8_t)channel)) != E_OK)
     return res;
 
-  pwm->channel = (uint8_t)pwmChannel;
-  pwm->unit = config->parent;
+  pwm->channel = (uint8_t)channel;
+  pwm->unit = unit;
 
   LPC_TIMER_Type * const reg = pwm->unit->parent.reg;
 
   /* Calculate pointer to match register for fast access */
-  pwm->value = reg->MR + pwmChannel;
+  pwm->value = reg->MR + pwm->channel;
   /* Call function directly because of unfinished object construction */
   channelSetDuration(pwm, config->duration);
   /* Enable PWM channel */
-  reg->PWMC |= PWMC_ENABLE(pwmChannel);
+  reg->PWMC |= PWMC_ENABLE(pwm->channel);
 
   return E_OK;
 }
