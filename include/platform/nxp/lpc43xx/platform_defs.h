@@ -1294,6 +1294,59 @@ typedef struct
   __rw__ uint32_t SYNCCTRL;
   __rw__ uint32_t TER;
 } LPC_UART_Type;
+/*------------------SD/MMC card interface-------------------------------------*/
+typedef struct
+{
+  /* Offset 0x000 */
+  __rw__ uint32_t CTRL;
+  __rw__ uint32_t PWREN;
+  __rw__ uint32_t CLKDIV;
+  __rw__ uint32_t CLKSRC;
+  __rw__ uint32_t CLKENA;
+  __rw__ uint32_t TMOUT;
+  __rw__ uint32_t CTYPE;
+  __rw__ uint32_t BLKSIZ;
+
+  /* Offset 0x020 */
+  __rw__ uint32_t BYTCNT;
+  __rw__ uint32_t INTMASK;
+  __rw__ uint32_t CMDARG;
+  __rw__ uint32_t CMD;
+  __ro__ uint32_t RESP0;
+  __ro__ uint32_t RESP1;
+  __ro__ uint32_t RESP2;
+  __ro__ uint32_t RESP3;
+
+  /* Offset 0x040 */
+  __ro__ uint32_t MINTSTS;
+  __rw__ uint32_t RINTSTS;
+  __ro__ uint32_t STATUS;
+  __rw__ uint32_t FIFOTH;
+  __ro__ uint32_t CDETECT;
+  __ro__ uint32_t WRTPRT;
+  __ne__ uint32_t RESERVED0;
+  __ro__ uint32_t TCBCNT;
+
+  /* Offset 0x060 */
+  __ro__ uint32_t TBBCNT;
+  __rw__ uint32_t DEBNCE;
+  __ne__ uint32_t RESERVED1[4];
+  __rw__ uint32_t RST_N;
+  __ne__ uint32_t RESERVED2;
+
+  /* Offset 0x080 */
+  __rw__ uint32_t BMOD;
+  __wo__ uint32_t PLDMND;
+  __rw__ uint32_t DBADDR;
+  __rw__ uint32_t IDSTS;
+  __rw__ uint32_t IDINTEN;
+  __ro__ uint32_t DSCADDR;
+  __ro__ uint32_t BUFADDR;
+  __ne__ uint32_t RESERVED3;
+
+  /* Offset 0x100 */
+  __rw__ uint32_t DATA[];
+} LPC_SDMMC_Type;
 /*------------------General Purpose Direct Memory Access----------------------*/
 /* Common registers */
 typedef struct
@@ -1340,7 +1393,7 @@ typedef struct
 #define LPC_SCT_BASE              (LPC_AHB_BASE + 0x00000)
 #define LPC_GPDMA_BASE            (LPC_AHB_BASE + 0x02000)
 #define LPC_SPIFI_BASE            (LPC_AHB_BASE + 0x03000)
-#define LPC_SDIO_BASE             (LPC_AHB_BASE + 0x04000)
+#define LPC_SDMMC_BASE            (LPC_AHB_BASE + 0x04000)
 #define LPC_EMC_BASE              (LPC_AHB_BASE + 0x05000)
 #define LPC_USB0_BASE             (LPC_AHB_BASE + 0x06000)
 #define LPC_USB1_BASE             (LPC_AHB_BASE + 0x07000)
@@ -1424,7 +1477,7 @@ typedef struct
 #define LPC_GPDMACH6      ((LPC_GPDMACH_Type *)LPC_GPDMACH6_BASE)
 #define LPC_GPDMACH7      ((LPC_GPDMACH_Type *)LPC_GPDMACH7_BASE)
 //#define LPC_SPIFI         ((LPC_SPIFI_Type *)LPC_SPIFI_BASE)
-//#define LPC_SDIO          ((LPC_SDIO_Type *)LPC_SDIO_BASE)
+#define LPC_SDMMC         ((LPC_SDMMC_Type *)LPC_SDMMC_BASE)
 //#define LPC_EMC           ((LPC_EMC_Type *)LPC_EMC_BASE)
 //#define LPC_USB0          ((LPC_USB_Type *)LPC_USB0_BASE)
 //#define LPC_USB1          ((LPC_USB_Type *)LPC_USB1_BASE)
