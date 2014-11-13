@@ -9,3 +9,4 @@
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/spi.h>
 #include HEADER_PATH
+#undef HEADER_PATH

@@ -7,7 +7,7 @@
 #ifndef PLATFORM_NXP_GPPWM_DEFS_H_
 #define PLATFORM_NXP_GPPWM_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include "gptimer_defs.h"
+#include <platform/nxp/gptimer_defs.h>
 /*------------------Timer Control Register------------------------------------*/
 #define TCR_PWM_ENABLE                  BIT(3)
 /*------------------PWM Control Register--------------------------------------*/

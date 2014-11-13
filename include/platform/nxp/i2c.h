@@ -13,6 +13,7 @@
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/i2c_base.h>
 #include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2c;
 /*----------------------------------------------------------------------------*/

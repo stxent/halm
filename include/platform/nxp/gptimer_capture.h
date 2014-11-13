@@ -8,7 +8,7 @@
 #define PLATFORM_NXP_GPTIMER_CAPTURE_H_
 /*----------------------------------------------------------------------------*/
 #include <capture.h>
-#include "gptimer_base.h"
+#include <platform/nxp/gptimer_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerCaptureUnit;
 extern const struct CaptureClass * const GpTimerCapture;

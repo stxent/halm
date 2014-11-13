@@ -14,6 +14,7 @@
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/dac_base.h>
 #include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const DacDma;
 /*----------------------------------------------------------------------------*/

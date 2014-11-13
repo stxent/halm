@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <pwm.h>
 #include <spinlock.h>
-#include "gptimer_base.h"
+#include <platform/nxp/gptimer_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerPwmUnit;
 extern const struct PwmClass * const GpTimerPwm;

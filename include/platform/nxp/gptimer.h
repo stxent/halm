@@ -7,7 +7,7 @@
 #ifndef PLATFORM_NXP_GPTIMER_H_
 #define PLATFORM_NXP_GPTIMER_H_
 /*----------------------------------------------------------------------------*/
-#include "gptimer_base.h"
+#include <platform/nxp/gptimer_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const GpTimer;
 /*----------------------------------------------------------------------------*/

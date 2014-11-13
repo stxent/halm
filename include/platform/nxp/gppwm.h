@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <pwm.h>
 #include <spinlock.h>
-#include "gppwm_base.h"
+#include <platform/nxp/gppwm_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpPwmUnit;
 extern const struct PwmClass * const GpPwm;

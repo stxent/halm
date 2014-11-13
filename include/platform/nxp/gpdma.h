@@ -7,7 +7,7 @@
 #ifndef PLATFORM_NXP_GPDMA_H_
 #define PLATFORM_NXP_GPDMA_H_
 /*----------------------------------------------------------------------------*/
-#include "gpdma_base.h"
+#include <platform/nxp/gpdma_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const GpDma;
 /*----------------------------------------------------------------------------*/

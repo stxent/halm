@@ -7,7 +7,7 @@
 #ifndef PLATFORM_NXP_SCT_TIMER_H_
 #define PLATFORM_NXP_SCT_TIMER_H_
 /*----------------------------------------------------------------------------*/
-#include "sct_base.h"
+#include <platform/nxp/sct_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const SctTimer;
 /*----------------------------------------------------------------------------*/
