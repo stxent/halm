@@ -7,8 +7,8 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <memory.h>
-#include <platform/nxp/adc_base.h>
-#include <platform/nxp/adc_defs.h>
+#include <platform/nxp/gen_1/adc_base.h>
+#include <platform/nxp/gen_1/adc_defs.h>
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/

@@ -8,8 +8,11 @@
 #define PLATFORM_NXP_ONE_WIRE_UART_H_
 /*----------------------------------------------------------------------------*/
 #include <byte_queue.h>
-#include <irq.h>
-#include "uart_base.h"
+#include <mcu.h>
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/uart_base.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const OneWireUart;
 /*----------------------------------------------------------------------------*/
@@ -24,9 +27,14 @@ enum oneWireUartState
 /*----------------------------------------------------------------------------*/
 struct OneWireUartConfig
 {
-  pin_t rx, tx; /* Mandatory: RX and TX pins */
-  priority_t priority; /* Optional: interrupt priority */
-  uint8_t channel; /* Mandatory: peripheral identifier */
+  /** Mandatory: serial input. */
+  pin_t rx;
+  /** Mandatory: serial output. */
+  pin_t tx;
+  /** Optional: interrupt priority. */
+  priority_t priority;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct OneWireUart

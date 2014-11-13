@@ -8,7 +8,11 @@
 #define PLATFORM_NXP_DAC_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
-#include "dac_base.h"
+#include <mcu.h>
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/dac_base.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Dac;
 /*----------------------------------------------------------------------------*/

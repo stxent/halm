@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include <platform/nxp/adc.h>
-#include <platform/nxp/adc_defs.h>
+#include <platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *, const void *);
 static void adcDeinit(void *);

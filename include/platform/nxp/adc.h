@@ -8,7 +8,11 @@
 #define PLATFORM_NXP_ADC_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
-#include "adc_unit.h"
+#include <mcu.h>
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/adc_unit.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Adc;
 /*----------------------------------------------------------------------------*/

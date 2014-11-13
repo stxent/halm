@@ -6,7 +6,7 @@
 
 #include <memory.h>
 #include <platform/nxp/one_wire_uart.h>
-#include <platform/nxp/uart_defs.h>
+#include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 #define RATE_RESET      9600
 #define RATE_DATA       115200

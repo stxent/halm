@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <pm.h>
 #include <platform/nxp/serial.h>
-#include <platform/nxp/uart_defs.h>
+#include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 #define RX_FIFO_LEVEL 2 /* 8 characters */
 #define TX_FIFO_SIZE  8

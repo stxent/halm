@@ -7,7 +7,11 @@
 #ifndef PLATFORM_NXP_SERIAL_POLL_H_
 #define PLATFORM_NXP_SERIAL_POLL_H_
 /*----------------------------------------------------------------------------*/
-#include "uart_base.h"
+#include <mcu.h>
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/uart_base.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SerialPoll;
 /*----------------------------------------------------------------------------*/

@@ -8,7 +8,7 @@
 #define PLATFORM_NXP_ADC_UNIT_H_
 /*----------------------------------------------------------------------------*/
 #include <spinlock.h>
-#include "adc_base.h"
+#include <platform/nxp/gen_1/adc_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const AdcUnit;
 /*----------------------------------------------------------------------------*/

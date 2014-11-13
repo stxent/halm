@@ -10,7 +10,10 @@
 #include <stdbool.h>
 #include <interface.h>
 #include <spinlock.h>
-#include "adc_unit.h"
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/adc_unit.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const AdcBurst;
 /*----------------------------------------------------------------------------*/

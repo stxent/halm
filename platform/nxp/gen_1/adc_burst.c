@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include <platform/nxp/adc_burst.h>
-#include <platform/nxp/adc_defs.h>
+#include <platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/

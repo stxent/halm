@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/i2c_base.h>
-#include <platform/nxp/i2c_defs.h>
+#include <platform/nxp/gen_1/i2c_base.h>
+#include <platform/nxp/gen_1/i2c_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry i2cPins[];
 /*----------------------------------------------------------------------------*/

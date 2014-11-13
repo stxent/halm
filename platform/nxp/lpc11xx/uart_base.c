@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <memory.h>
-#include <platform/nxp/uart_base.h>
+#include <platform/nxp/gen_1/uart_base.h>
 #include <platform/nxp/lpc11xx/clocking.h>
 #include <platform/nxp/lpc11xx/system.h>
 /*----------------------------------------------------------------------------*/

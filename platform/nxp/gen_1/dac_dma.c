@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <platform/nxp/dac_dma.h>
-#include <platform/nxp/dac_defs.h>
 #include <platform/nxp/gpdma_list.h>
+#include <platform/nxp/gen_1/dac_defs.h>
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
 static enum result dmaSetup(struct DacDma *, const struct DacDmaConfig *);

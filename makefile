@@ -18,6 +18,7 @@ ifeq ($(CONFIG_LPC11XX),y)
 	CHIP = LPC11XX
 	CORE = m0
 	CORE_TYPE = cortex
+	GENERATION = gen_1
 	PLATFORM = lpc11xx
 	PLATFORM_TYPE = nxp
 endif
@@ -26,6 +27,7 @@ ifeq ($(CONFIG_LPC11EXX),y)
 	CHIP = LPC11EXX
 	CORE = m0
 	CORE_TYPE = cortex
+	GENERATION = gen_1
 	PLATFORM = lpc11exx
 	PLATFORM_TYPE = nxp
 endif
@@ -34,6 +36,7 @@ ifeq ($(CONFIG_LPC13XX),y)
 	CHIP = LPC13XX
 	CORE = m3
 	CORE_TYPE = cortex
+	GENERATION = gen_1
 	PLATFORM = lpc13xx
 	PLATFORM_TYPE = nxp
 endif
@@ -42,6 +45,7 @@ ifeq ($(CONFIG_LPC17XX),y)
 	CHIP = LPC17XX
 	CORE = m3
 	CORE_TYPE = cortex
+	GENERATION = gen_1
 	PLATFORM = lpc17xx
 	PLATFORM_TYPE = nxp
 
@@ -53,6 +57,7 @@ ifeq ($(CONFIG_LPC43XX),y)
 	CHIP = LPC43XX
 	CORE = m4
 	CORE_TYPE = cortex
+	GENERATION = gen_1
 	PLATFORM = lpc43xx
 	PLATFORM_TYPE = nxp
 
@@ -115,7 +120,7 @@ ifeq ($(CONFIG_PLATFORM_GPIO_BUS),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC_BASE),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/adc_unit.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc_unit.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/adc_base.c
 endif
 
@@ -148,7 +153,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER_PWM),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2C_BASE),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/i2c_common.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/i2c_common.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/i2c_base.c
 endif
 
@@ -166,24 +171,24 @@ ifeq ($(CONFIG_PLATFORM_NXP_SSP_BASE),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_UART_BASE),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/uart_common.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/uart_common.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/uart_base.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/adc.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC_BURST),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/adc_burst.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc_burst.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_DAC),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/dac.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/dac.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_DAC_DMA),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/dac_dma.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/dac_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER),y)
@@ -195,15 +200,15 @@ ifeq ($(CONFIG_PLATFORM_NXP_ONE_WIRE_SSP),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ONE_WIRE_UART),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/one_wire_uart.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/one_wire_uart.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2C),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/i2c.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/i2c.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2C_SLAVE),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/i2c_slave.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/i2c_slave.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SCT_TIMER),y)
@@ -211,23 +216,23 @@ ifeq ($(CONFIG_PLATFORM_NXP_SCT_TIMER),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SERIAL),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/serial.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/serial.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SERIAL_POLL),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/serial_poll.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/serial_poll.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SERIAL_DMA),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/serial_dma.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/serial_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SPI),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/spi.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/spi.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SPI_DMA),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/spi_dma.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/spi_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_SDIO_SPI),y)

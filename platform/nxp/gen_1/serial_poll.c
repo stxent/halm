@@ -6,7 +6,7 @@
 
 #include <pm.h>
 #include <platform/nxp/serial_poll.h>
-#include <platform/nxp/uart_defs.h>
+#include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 #define TX_FIFO_SIZE 8
 /*----------------------------------------------------------------------------*/

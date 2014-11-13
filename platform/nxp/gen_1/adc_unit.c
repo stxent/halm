@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/adc_unit.h>
-#include <platform/nxp/adc_defs.h>
+#include <platform/nxp/gen_1/adc_defs.h>
+#include <platform/nxp/gen_1/adc_unit.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/

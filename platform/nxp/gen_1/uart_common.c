@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/uart_base.h>
-#include <platform/nxp/uart_defs.h>
+#include <platform/nxp/gen_1/uart_base.h>
+#include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];
 /*----------------------------------------------------------------------------*/

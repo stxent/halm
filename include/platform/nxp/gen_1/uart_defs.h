@@ -1,11 +1,11 @@
 /*
- * platform/nxp/uart_defs.h
+ * platform/nxp/gen_1/uart_defs.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_UART_DEFS_H_
-#define PLATFORM_NXP_UART_DEFS_H_
+#ifndef PLATFORM_NXP_GEN_1_UART_DEFS_H_
+#define PLATFORM_NXP_GEN_1_UART_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
@@ -66,4 +66,4 @@
 /*------------------Transmit Enable Register----------------------------------*/
 #define TER_TXEN                        BIT(7) /* Transmit enable */
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_UART_DEFS_H_ */
+#endif /* PLATFORM_NXP_GEN_1_UART_DEFS_H_ */

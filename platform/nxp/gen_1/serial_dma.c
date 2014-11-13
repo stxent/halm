@@ -7,7 +7,7 @@
 #include <pm.h>
 #include <platform/nxp/gpdma.h>
 #include <platform/nxp/serial_dma.h>
-#include <platform/nxp/uart_defs.h>
+#include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 #define RX_FIFO_LEVEL 0 /* 1 character */
 /*----------------------------------------------------------------------------*/

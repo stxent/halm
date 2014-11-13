@@ -5,8 +5,8 @@
  */
 
 #include <memory.h>
-#include <platform/nxp/dac_base.h>
-#include <platform/nxp/dac_defs.h>
+#include <platform/nxp/gen_1/dac_base.h>
+#include <platform/nxp/gen_1/dac_defs.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/

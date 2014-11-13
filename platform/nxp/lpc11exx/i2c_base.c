@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <memory.h>
-#include <platform/nxp/i2c_base.h>
+#include <platform/nxp/gen_1/i2c_base.h>
 #include <platform/nxp/lpc11exx/clocking.h>
 #include <platform/nxp/lpc11exx/system.h>
 #include <platform/nxp/lpc11exx/system_defs.h>

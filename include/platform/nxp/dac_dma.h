@@ -7,9 +7,13 @@
 #ifndef PLATFORM_NXP_DAC_DMA_H_
 #define PLATFORM_NXP_DAC_DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <interface.h>
 #include <dma.h>
-#include "dac_base.h"
+#include <interface.h>
+#include <mcu.h>
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/dac_base.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const DacDma;
 /*----------------------------------------------------------------------------*/

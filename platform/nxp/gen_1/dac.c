@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <platform/nxp/dac.h>
-#include <platform/nxp/dac_defs.h>
+#include <platform/nxp/gen_1/dac_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
 static void dacDeinit(void *);
