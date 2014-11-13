@@ -8,30 +8,30 @@
 #define MCU_H_
 /*----------------------------------------------------------------------------*/
 #if defined(LPC11XX)
-#define CORE_TYPE cortex
-#define CORE m0
-#define PLATFORM_TYPE nxp
-#define PLATFORM lpc11xx
+#define CORE            m0
+#define CORE_TYPE       cortex
+#define PLATFORM        lpc11xx
+#define PLATFORM_TYPE   nxp
 #elif defined(LPC11EXX)
-#define CORE_TYPE cortex
-#define CORE m0
-#define PLATFORM_TYPE nxp
-#define PLATFORM lpc11exx
+#define CORE            m0
+#define CORE_TYPE       cortex
+#define PLATFORM        lpc11exx
+#define PLATFORM_TYPE   nxp
 #elif defined(LPC13XX)
-#define CORE_TYPE cortex
-#define CORE m3
-#define PLATFORM_TYPE nxp
-#define PLATFORM lpc13xx
+#define CORE            m3
+#define CORE_TYPE       cortex
+#define PLATFORM        lpc13xx
+#define PLATFORM_TYPE   nxp
 #elif defined(LPC17XX)
-#define CORE_TYPE cortex
-#define CORE m3
-#define PLATFORM_TYPE nxp
-#define PLATFORM lpc17xx
+#define CORE            m3
+#define CORE_TYPE       cortex
+#define PLATFORM        lpc17xx
+#define PLATFORM_TYPE   nxp
 #elif defined(LPC43XX)
-#define CORE_TYPE cortex
-#define CORE m4
-#define PLATFORM_TYPE nxp
-#define PLATFORM lpc43xx
+#define CORE            m4
+#define CORE_TYPE       cortex
+#define PLATFORM        lpc43xx
+#define PLATFORM_TYPE   nxp
 #endif
 /*----------------------------------------------------------------------------*/
 #endif /* MCU_H_ */

@@ -16,34 +16,34 @@ CC = $(CROSS_COMPILE)gcc
 
 ifeq ($(CONFIG_LPC11XX),y)
 	CHIP = LPC11XX
-	CORE_TYPE = cortex
 	CORE = m0
-	PLATFORM_TYPE = nxp
+	CORE_TYPE = cortex
 	PLATFORM = lpc11xx
+	PLATFORM_TYPE = nxp
 endif
 
 ifeq ($(CONFIG_LPC11EXX),y)
 	CHIP = LPC11EXX
-	CORE_TYPE = cortex
 	CORE = m0
-	PLATFORM_TYPE = nxp
+	CORE_TYPE = cortex
 	PLATFORM = lpc11exx
+	PLATFORM_TYPE = nxp
 endif
 
 ifeq ($(CONFIG_LPC13XX),y)
 	CHIP = LPC13XX
-	CORE_TYPE = cortex
 	CORE = m3
-	PLATFORM_TYPE = nxp
+	CORE_TYPE = cortex
 	PLATFORM = lpc13xx
+	PLATFORM_TYPE = nxp
 endif
 
 ifeq ($(CONFIG_LPC17XX),y)
 	CHIP = LPC17XX
-	CORE_TYPE = cortex
 	CORE = m3
-	PLATFORM_TYPE = nxp
+	CORE_TYPE = cortex
 	PLATFORM = lpc17xx
+	PLATFORM_TYPE = nxp
 
 	#Platform-specific options
 	PLATFORM_SYSTEM_MODULE = y
@@ -51,10 +51,10 @@ endif
 
 ifeq ($(CONFIG_LPC43XX),y)
 	CHIP = LPC43XX
-	CORE_TYPE = cortex
 	CORE = m4
-	PLATFORM_TYPE = nxp
+	CORE_TYPE = cortex
 	PLATFORM = lpc43xx
+	PLATFORM_TYPE = nxp
 
 	#Platform-specific options
 	PLATFORM_FLAGS += -D__MULTICORE_NONE
