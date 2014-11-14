@@ -1,11 +1,11 @@
 /*
- * platform/nxp/adc_base.h
+ * platform/nxp/gen_1/adc_base.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_ADC_BASE_H_
-#define PLATFORM_NXP_ADC_BASE_H_
+#ifndef PLATFORM_NXP_GEN_1_ADC_BASE_H_
+#define PLATFORM_NXP_GEN_1_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <entity.h>
@@ -40,4 +40,4 @@ struct AdcUnitBase
 enum result adcConfigPin(const struct AdcUnitBase *, pin_t, struct AdcPin *);
 void adcReleasePin(struct AdcPin);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_ADC_BASE_H_ */
+#endif /* PLATFORM_NXP_GEN_1_ADC_BASE_H_ */
