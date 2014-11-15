@@ -95,6 +95,10 @@ config PLATFORM_NXP_I2C_BASE
 config PLATFORM_NXP_PIN_INTERRUPT
 	bool "Pin interrupts"
 
+config PLATFORM_NXP_SDMMC_BASE
+	bool "SD/MMC card interface"
+	depends on LPC43XX
+
 config PLATFORM_NXP_SCT_BASE
 	bool "State Configurable Timer"
 	depends on LPC43XX
