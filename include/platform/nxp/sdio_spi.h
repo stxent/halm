@@ -24,6 +24,8 @@ struct SdioSpiConfig
 {
   /** Mandatory: underlying serial interface. */
   struct Interface *interface;
+  /** Mandatory: chip select pin. */
+  pin_t cs;
 };
 /*----------------------------------------------------------------------------*/
 struct SdioSpi
@@ -32,12 +34,18 @@ struct SdioSpi
 
   /* Parent SPI interface */
   struct Interface *interface;
+  /* Pin connected to the chip select signal of the device */
+  struct Pin cs;
   /* Argument for the most recent command */
   uint32_t argument;
   /* Interface command */
   uint32_t command;
   /* Command response */
   uint32_t response[4];
+  /* Buffer for temporary data */
+  uint8_t buffer[8];
+  /* Status of the last command */
+  enum result status;
 };
 /*----------------------------------------------------------------------------*/
 enum sdioResponseType

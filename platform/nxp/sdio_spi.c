@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <string.h>
 #include <bits.h>
 #include <delay.h>
 #include <memory.h>
@@ -13,21 +14,34 @@
 #define COMMAND_CODE_MASK               BIT_FIELD(MASK(6), 0)
 #define COMMAND_CODE(value)             BIT_FIELD((value), 0)
 #define COMMAND_CODE_VALUE(command) \
-    FIELD_VALUE((value), COMMAND_CODE_MASK, 0)
+    FIELD_VALUE((command), COMMAND_CODE_MASK, 0)
 #define COMMAND_DATA_MASK               BIT_FIELD(MASK(2), 6)
 #define COMMAND_DATA(value)             BIT_FIELD((value), 6)
 #define COMMAND_DATA_VALUE(command) \
-    FIELD_VALUE((value), COMMAND_DATA_MASK, 6)
+    FIELD_VALUE((command), COMMAND_DATA_MASK, 6)
 #define COMMAND_RESPONSE_MASK           BIT_FIELD(MASK(2), 8)
 #define COMMAND_RESPONSE(value)         BIT_FIELD((value), 8)
 #define COMMAND_RESPONSE_VALUE(command) \
-    FIELD_VALUE((value), COMMAND_RESPONSE_MASK, 8)
+    FIELD_VALUE((command), COMMAND_RESPONSE_MASK, 8)
 #define COMMAND_FLAGS_MASK              BIT_FIELD(MASK(8), 10)
 #define COMMAND_FLAGS(value)            BIT_FIELD((value), 10)
 #define COMMAND_FLAGS_VALUE(command) \
-    FIELD_VALUE((value), COMMAND_FLAGS_MASK, 10)
+    FIELD_VALUE((command), COMMAND_FLAGS_MASK, 10)
 /*----------------------------------------------------------------------------*/
-static enum result execute(struct SdioSpi *);
+enum sdioResponse
+{
+  SDIO_INIT             = 0x01,
+  SDIO_ERASE_RESET      = 0x02,
+  SDIO_ILLEGAL_COMMAND  = 0x04,
+  SDIO_CRC_ERROR        = 0x08,
+  SDIO_ERASE_ERROR      = 0x10,
+  SDIO_BAD_ADDRESS      = 0x20,
+  SDIO_BAD_ARGUMENT     = 0x40
+};
+/*----------------------------------------------------------------------------*/
+static void execute(struct SdioSpi *);
+static enum result getShortResponse(struct SdioSpi *, uint32_t *);
+static enum result waitForData(struct SdioSpi *, uint8_t *);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -51,12 +65,167 @@ static const struct InterfaceClass sdioTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SdioSpi = &sdioTable;
 /*----------------------------------------------------------------------------*/
-static enum result execute(struct SdioSpi *interface)
+static enum result acquireBus(struct SdioSpi *interface)
 {
+  ifSet(interface->interface, IF_ACQUIRE, 0);
+  pinReset(interface->cs);
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void releaseBus(struct SdioSpi *interface)
+{
+  pinSet(interface->cs);
+  ifSet(interface->interface, IF_RELEASE, 0);
+}
+/*----------------------------------------------------------------------------*/
+static void execute(struct SdioSpi *interface)
+{
+  const uint32_t argument = toBigEndian32(interface->argument);
+  const uint8_t code = COMMAND_CODE_VALUE(interface->command);
   const uint8_t flags = COMMAND_FLAGS_VALUE(interface->command);
-  const enum sdioDataMode mode = COMMAND_DATA_VALUE(device->command);
+  const enum sdioDataMode mode = COMMAND_DATA_VALUE(interface->command);
   const enum sdioResponseType response =
-      COMMAND_RESPONSE_VALUE(device->command);
+      COMMAND_RESPONSE_VALUE(interface->command);
+  enum result res;
+
+  interface->status = E_BUSY;
+
+  if (flags & SDIO_INITIALIZE)
+  {
+    uint32_t bytesWritten = 0;
+
+    /* Send initialization sequence */
+    interface->buffer[0] = 0xFF;
+
+    ifSet(interface->interface, IF_ACQUIRE, 0);
+    for (uint8_t counter = 0; counter < 10; ++counter)
+      bytesWritten += ifWrite(interface->interface, interface->buffer, 1);
+    ifSet(interface->interface, IF_RELEASE, 0);
+
+    if (bytesWritten != 10)
+    {
+      interface->status = E_INTERFACE;
+      return;
+    }
+  }
+
+  /* Fill the buffer */
+  interface->buffer[0] = 0xFF;
+  interface->buffer[1] = 0x40 | code;
+  memcpy(interface->buffer + 2, &argument, sizeof(argument));
+
+  // TODO Remove hardcoded values
+  /* Checksum should be valid only for first CMD0 and CMD8 commands */
+  switch (code)
+  {
+    case 0:
+      interface->buffer[6] = 0x94;
+      break;
+
+    case 8:
+      interface->buffer[6] = 0x86;
+      break;
+
+    default:
+      interface->buffer[6] = 0x00;
+      break;
+  }
+  interface->buffer[6] |= 0x01; /* Add end bit */
+  interface->buffer[7] = 0xFF;
+
+  acquireBus(interface);
+
+  const uint32_t bytesWritten = ifWrite(interface->interface,
+      interface->buffer, sizeof(interface->buffer));
+
+  if (bytesWritten != sizeof(interface->buffer))
+  {
+    interface->status = E_INTERFACE;
+    releaseBus(interface);
+    return;
+  }
+
+  if (response == SDIO_RESPONSE_SHORT)
+  {
+    /* 32-bit response */
+    if ((res = getShortResponse(interface, interface->response)) != E_OK)
+    {
+      interface->status = res;
+      releaseBus(interface);
+      return;
+    }
+  }
+  else
+  {
+    // TODO Add support for long responses
+    uint8_t status;
+
+    if ((res = waitForData(interface, &status)) != E_OK)
+    {
+      interface->status = res;
+      releaseBus(interface);
+      return;
+    }
+
+    if (flags & SDIO_INITIALIZE)
+    {
+      interface->status = status & SDIO_INIT ? E_OK : E_DEVICE;
+      releaseBus(interface);
+      return;
+    }
+    else if (status)
+    {
+      interface->status = E_ERROR;
+      releaseBus(interface);
+      return;
+    }
+  }
+
+  interface->status = E_OK;
+  releaseBus(interface);
+}
+/*----------------------------------------------------------------------------*/
+static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
+{
+  uint8_t response;
+  enum result res;
+
+  if ((res = waitForData(interface, &response)) == E_OK)
+  {
+    const uint32_t bytesRead = ifRead(interface->interface,
+        interface->buffer, 4);
+
+    if (response)
+      res = E_ERROR;
+    else if (bytesRead != sizeof(interface->buffer))
+      res = E_INTERFACE;
+
+    /* Response comes in big-endian format */
+    memcpy(value, interface->buffer, 4);
+    *value = fromBigEndian32(*value);
+  }
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static enum result waitForData(struct SdioSpi *interface, uint8_t *value)
+{
+  uint8_t counter = 8;
+
+  /* Response will come after 1..8 queries */
+  while (--counter)
+  {
+    if (!ifRead(interface->interface, interface->buffer, 1))
+      return E_INTERFACE;
+
+    if (interface->buffer[0] != 0xFF)
+    {
+      *value = interface->buffer[0];
+      break;
+    }
+  }
+
+  return !counter ? E_BUSY : E_OK;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sdioPrepareCommand(uint8_t command, enum sdioDataMode dataMode,
@@ -72,9 +241,15 @@ static enum result sdioInit(void *object, const void *configBase)
   struct SdioSpi * const interface = object;
   enum result res;
 
+  interface->cs = pinInit(config->cs);
+  if (!pinValid(interface->cs))
+    return E_VALUE;
+  pinOutput(interface->cs, 1);
+
   interface->argument = 0;
   interface->command = 0;
   interface->interface = config->interface;
+  interface->status = E_OK;
   memset(interface->response, 0, sizeof(interface->response));
 
   return E_OK;
@@ -102,7 +277,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
     case IF_SDIO_RESPONSE:
     {
       const enum sdioResponseType response =
-          COMMAND_RESPONSE_VALUE(device->command);
+          COMMAND_RESPONSE_VALUE(interface->command);
 
       if (response == SDIO_RESPONSE_NONE)
         return E_ERROR;
@@ -134,16 +309,16 @@ static enum result sdioSet(void *object, enum ifOption option,
   switch ((enum sdioOption)option)
   {
     case IF_SDIO_EXECUTE:
-
-      break;
+      execute(interface);
+      return E_OK;
 
     case IF_SDIO_ARGUMENT:
       interface->argument = *(const uint32_t *)data;
-      break;
+      return E_OK;
 
     case IF_SDIO_COMMAND:
       interface->command = *(const uint32_t *)data;
-      break;
+      return E_OK;
 
     default:
       break;
@@ -151,6 +326,9 @@ static enum result sdioSet(void *object, enum ifOption option,
 
   switch (option)
   {
+    case IF_STATUS:
+      return interface->status;
+
     default:
       return E_ERROR;
   }

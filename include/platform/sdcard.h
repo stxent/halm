@@ -1,16 +1,16 @@
 /*
- * platform/sdio_spi.h
- * Copyright (C) 2013 xent
+ * platform/sdcard.h
+ * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_SDIO_SPI_H_
-#define PLATFORM_SDIO_SPI_H_
+#ifndef PLATFORM_SDCARD_H_
+#define PLATFORM_SDCARD_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <pin.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const SdioSpi;
+extern const struct InterfaceClass * const SdCard;
 /*----------------------------------------------------------------------------*/
 enum cardType
 {
@@ -19,13 +19,13 @@ enum cardType
   CARD_SDXC
 };
 /*----------------------------------------------------------------------------*/
-struct SdioSpiConfig
+struct SdCardConfig
 {
-  struct Interface *interface; /* Mandatory: low-level character device */
-  pin_t cs; /* Mandatory: chip select pin */
+  /** Mandatory: low-level interface. */
+  struct Interface *interface;
 };
 /*----------------------------------------------------------------------------*/
-struct SdioSpi
+struct SdCard
 {
   struct Interface parent;
 
@@ -33,10 +33,8 @@ struct SdioSpi
   struct Interface *interface;
   /* Current position in internal memory space */
   uint64_t position;
-  /* Pin connected to the chip select signal of card */
-  struct Pin csPin;
   /* Type of the memory card */
-  enum cardType capacity;
+  enum cardType type;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_SDIO_SPI_H_ */
+#endif /* PLATFORM_SDCARD_H_ */
