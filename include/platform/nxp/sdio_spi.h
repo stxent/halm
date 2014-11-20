@@ -43,12 +43,12 @@ struct SdioSpi
   /* Command response */
   uint32_t response[4];
   /* Buffer for temporary data */
-  uint8_t buffer[8];
+  uint8_t buffer[16];
   /* Status of the last command */
   enum result status;
 };
 /*----------------------------------------------------------------------------*/
-enum sdioResponseType
+enum sdioResponse
 {
   SDIO_RESPONSE_NONE,
   SDIO_RESPONSE_SHORT,
@@ -69,7 +69,7 @@ enum sdioFlags
   SDIO_INITIALIZE = 0x04
 };
 /*----------------------------------------------------------------------------*/
-uint32_t sdioPrepareCommand(uint8_t, enum sdioDataMode, enum sdioResponseType,
+uint32_t sdioPrepareCommand(uint8_t, enum sdioDataMode, enum sdioResponse,
     uint8_t);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDIO_SPI_H_ */

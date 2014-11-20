@@ -28,15 +28,15 @@
 #define COMMAND_FLAGS_VALUE(command) \
     FIELD_VALUE((command), COMMAND_FLAGS_MASK, 10)
 /*----------------------------------------------------------------------------*/
-enum sdioResponse
+enum sdioResponseFlags
 {
-  SDIO_INIT             = 0x01,
-  SDIO_ERASE_RESET      = 0x02,
-  SDIO_ILLEGAL_COMMAND  = 0x04,
-  SDIO_CRC_ERROR        = 0x08,
-  SDIO_ERASE_ERROR      = 0x10,
-  SDIO_BAD_ADDRESS      = 0x20,
-  SDIO_BAD_ARGUMENT     = 0x40
+  FLAG_IDLE_STATE       = 0x01,
+  FLAG_ERASE_RESET      = 0x02,
+  FLAG_ILLEGAL_COMMAND  = 0x04,
+  FLAG_CRC_ERROR        = 0x08,
+  FLAG_ERASE_ERROR      = 0x10,
+  FLAG_BAD_ADDRESS      = 0x20,
+  FLAG_BAD_PARAMETER    = 0x40
 };
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *);
@@ -84,22 +84,19 @@ static void execute(struct SdioSpi *interface)
   const uint8_t code = COMMAND_CODE_VALUE(interface->command);
   const uint8_t flags = COMMAND_FLAGS_VALUE(interface->command);
   const enum sdioDataMode mode = COMMAND_DATA_VALUE(interface->command);
-  const enum sdioResponseType response =
-      COMMAND_RESPONSE_VALUE(interface->command);
+  const enum sdioResponse response = COMMAND_RESPONSE_VALUE(interface->command);
+  uint32_t bytesWritten;
   enum result res;
 
   interface->status = E_BUSY;
 
   if (flags & SDIO_INITIALIZE)
   {
-    uint32_t bytesWritten = 0;
-
     /* Send initialization sequence */
-    interface->buffer[0] = 0xFF;
+    memset(interface->buffer, 0xFF, 10);
 
     ifSet(interface->interface, IF_ACQUIRE, 0);
-    for (uint8_t counter = 0; counter < 10; ++counter)
-      bytesWritten += ifWrite(interface->interface, interface->buffer, 1);
+    bytesWritten = ifWrite(interface->interface, interface->buffer, 10);
     ifSet(interface->interface, IF_RELEASE, 0);
 
     if (bytesWritten != 10)
@@ -135,10 +132,8 @@ static void execute(struct SdioSpi *interface)
 
   acquireBus(interface);
 
-  const uint32_t bytesWritten = ifWrite(interface->interface,
-      interface->buffer, sizeof(interface->buffer));
-
-  if (bytesWritten != sizeof(interface->buffer))
+  bytesWritten = ifWrite(interface->interface, interface->buffer, 8);
+  if (bytesWritten != 8)
   {
     interface->status = E_INTERFACE;
     releaseBus(interface);
@@ -147,41 +142,30 @@ static void execute(struct SdioSpi *interface)
 
   if (response == SDIO_RESPONSE_SHORT)
   {
-    /* 32-bit response */
-    if ((res = getShortResponse(interface, interface->response)) != E_OK)
-    {
-      interface->status = res;
-      releaseBus(interface);
-      return;
-    }
+    /* Wait for 32-bit response */
+    interface->status = getShortResponse(interface, interface->response);
   }
   else
   {
     // TODO Add support for long responses
-    uint8_t status;
+    uint8_t errors;
 
-    if ((res = waitForData(interface, &status)) != E_OK)
+    if ((res = waitForData(interface, &errors)) == E_OK)
     {
+      if (flags & SDIO_INITIALIZE)
+      {
+        interface->status = errors & FLAG_IDLE_STATE == FLAG_IDLE_STATE ?
+            E_OK : E_DEVICE;
+      }
+      else
+      {
+        interface->status = !errors ? E_OK : E_DEVICE;
+      }
+    }
+    else
       interface->status = res;
-      releaseBus(interface);
-      return;
-    }
-
-    if (flags & SDIO_INITIALIZE)
-    {
-      interface->status = status & SDIO_INIT ? E_OK : E_DEVICE;
-      releaseBus(interface);
-      return;
-    }
-    else if (status)
-    {
-      interface->status = E_ERROR;
-      releaseBus(interface);
-      return;
-    }
   }
 
-  interface->status = E_OK;
   releaseBus(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -210,29 +194,29 @@ static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
 /*----------------------------------------------------------------------------*/
 static enum result waitForData(struct SdioSpi *interface, uint8_t *value)
 {
-  uint8_t counter = 8;
-
   /* Response will come after 1..8 queries */
-  while (--counter)
-  {
-    if (!ifRead(interface->interface, interface->buffer, 1))
-      return E_INTERFACE;
+  const uint32_t bytesRead = ifRead(interface->interface, interface->buffer, 8);
 
-    if (interface->buffer[0] != 0xFF)
+  if (bytesRead != 8)
+    return E_INTERFACE;
+
+  for (uint8_t index = 0; index < 8; ++index)
+  {
+    if (interface->buffer[index] != 0xFF)
     {
-      *value = interface->buffer[0];
-      break;
+      *value = interface->buffer[index];
+      return E_OK;
     }
   }
 
-  return !counter ? E_BUSY : E_OK;
+  return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sdioPrepareCommand(uint8_t command, enum sdioDataMode dataMode,
-    enum sdioResponseType responseType, uint8_t flags)
+    enum sdioResponse response, uint8_t flags)
 {
   return COMMAND_CODE(command) | COMMAND_DATA((uint8_t)dataMode)
-      | COMMAND_RESPONSE((uint8_t)responseType) | COMMAND_FLAGS(flags);
+      | COMMAND_RESPONSE((uint8_t)response) | COMMAND_FLAGS(flags);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)
@@ -276,7 +260,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
   {
     case IF_SDIO_RESPONSE:
     {
-      const enum sdioResponseType response =
+      const enum sdioResponse response =
           COMMAND_RESPONSE_VALUE(interface->command);
 
       if (response == SDIO_RESPONSE_NONE)
@@ -295,6 +279,9 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
+    case IF_STATUS:
+      return interface->status;
+
     default:
       return E_ERROR;
   }
@@ -326,9 +313,6 @@ static enum result sdioSet(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_STATUS:
-      return interface->status;
-
     default:
       return E_ERROR;
   }
