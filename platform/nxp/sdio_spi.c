@@ -39,7 +39,18 @@ enum sdioResponseFlags
   FLAG_BAD_PARAMETER    = 0x40
 };
 /*----------------------------------------------------------------------------*/
+enum sdioToken
+{
+  TOKEN_DATA_ACCEPTED     = 0x05,
+  TOKEN_DATA_CRC_ERROR    = 0x0B,
+  TOKEN_DATA_WRITE_ERROR  = 0x0D,
+  TOKEN_START             = 0xFE,
+  TOKEN_START_MULTIPLE    = 0xFC,
+  TOKEN_STOP              = 0xFD
+};
+/*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *);
+static enum result getLongResponse(struct SdioSpi *, uint32_t *);
 static enum result getShortResponse(struct SdioSpi *, uint32_t *);
 static enum result waitForData(struct SdioSpi *, uint8_t *);
 /*----------------------------------------------------------------------------*/
@@ -142,47 +153,76 @@ static void execute(struct SdioSpi *interface)
 
   if (response == SDIO_RESPONSE_SHORT)
   {
-    /* Wait for 32-bit response */
+    /* Read 32-bit response */
     interface->status = getShortResponse(interface, interface->response);
+  }
+  else if (response == SDIO_RESPONSE_LONG)
+  {
+    /* Read 128-bit response */
+    interface->status = getLongResponse(interface, interface->response);
   }
   else
   {
-    // TODO Add support for long responses
     uint8_t errors;
 
     if ((res = waitForData(interface, &errors)) == E_OK)
     {
-      if (flags & SDIO_INITIALIZE)
-      {
-        interface->status = errors & FLAG_IDLE_STATE == FLAG_IDLE_STATE ?
-            E_OK : E_DEVICE;
-      }
+      if (flags & SDIO_CHECK_IDLE)
+        res = (errors & FLAG_IDLE_STATE) == FLAG_IDLE_STATE ? E_OK : E_DEVICE;
       else
-      {
-        interface->status = !errors ? E_OK : E_DEVICE;
-      }
+        res = !errors ? E_OK : E_ERROR;
     }
-    else
-      interface->status = res;
+    interface->status = res;
   }
 
   releaseBus(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
+static enum result getLongResponse(struct SdioSpi *interface, uint32_t *value)
 {
   uint8_t response;
   enum result res;
 
   if ((res = waitForData(interface, &response)) == E_OK)
   {
-    const uint32_t bytesRead = ifRead(interface->interface,
-        interface->buffer, 4);
-
-    if (response)
+    if (response != TOKEN_START)
       res = E_ERROR;
-    else if (bytesRead != sizeof(interface->buffer))
-      res = E_INTERFACE;
+
+    /* Read 16 bytes of the long response */
+    if (ifRead(interface->interface, interface->buffer, 16) != 16)
+      return E_INTERFACE;
+    memcpy(value, interface->buffer, 16);
+
+    /* Read 2 bytes of checksum */
+    if (ifRead(interface->interface, interface->buffer, 2) != 2)
+      return E_INTERFACE;
+    //TODO Check CRC
+  }
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
+{
+  const uint8_t flags = COMMAND_FLAGS_VALUE(interface->command);
+  uint8_t response;
+  enum result res;
+
+  if ((res = waitForData(interface, &response)) == E_OK)
+  {
+    if (ifRead(interface->interface, interface->buffer, 4) != 4)
+      return E_INTERFACE;
+
+    if (flags & SDIO_CHECK_IDLE)
+    {
+      if ((response & FLAG_IDLE_STATE) != FLAG_IDLE_STATE)
+        res = E_DEVICE;
+    }
+    else
+    {
+      if (response)
+        res = E_ERROR;
+    }
 
     /* Response comes in big-endian format */
     memcpy(value, interface->buffer, 4);
@@ -195,16 +235,14 @@ static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
 static enum result waitForData(struct SdioSpi *interface, uint8_t *value)
 {
   /* Response will come after 1..8 queries */
-  const uint32_t bytesRead = ifRead(interface->interface, interface->buffer, 8);
-
-  if (bytesRead != 8)
-    return E_INTERFACE;
-
-  for (uint8_t index = 0; index < 8; ++index)
+  for (uint8_t count = 0; count < 8; ++count)
   {
-    if (interface->buffer[index] != 0xFF)
+    if (ifRead(interface->interface, interface->buffer, 1) != 1)
+      return E_INTERFACE;
+
+    if (interface->buffer[0] != 0xFF)
     {
-      *value = interface->buffer[index];
+      *value = interface->buffer[0];
       return E_OK;
     }
   }
@@ -266,11 +304,11 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
       if (response == SDIO_RESPONSE_NONE)
         return E_ERROR;
 
-      if (response == SDIO_RESPONSE_LONG)
-        memcpy(data, interface->response, sizeof(interface->response));
+      if (response == SDIO_RESPONSE_SHORT)
+        memcpy(data, interface->response, 4);
       else
-        *(uint32_t *)data = interface->response[0];
-      break;
+        memcpy(data, interface->response, 16);
+      return E_OK;
     }
 
     default:

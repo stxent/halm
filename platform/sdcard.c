@@ -31,17 +31,6 @@ enum sdioCommand
   ACMD_SD_SEND_OP_COND  = 41
 };
 /*----------------------------------------------------------------------------*/
-/* Direct operations with token variables are correct only on LE machines */
-enum sdioToken
-{
-  TOKEN_DATA_ACCEPTED     = 0x05,
-  TOKEN_DATA_CRC_ERROR    = 0x0B,
-  TOKEN_DATA_WRITE_ERROR  = 0x0D,
-  TOKEN_START             = 0xFE,
-  TOKEN_START_MULTIPLE    = 0xFC,
-  TOKEN_STOP              = 0xFD
-};
-/*----------------------------------------------------------------------------*/
 static enum result cardInit(void *, const void *);
 static void cardDeinit(void *);
 static enum result cardCallback(void *, void (*)(void *), void *);
@@ -64,38 +53,77 @@ static const struct InterfaceClass cardTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SdCard = &cardTable;
 /*----------------------------------------------------------------------------*/
+static enum result executeCommand(struct SdCard *device, uint32_t command,
+    uint32_t argument, uint32_t *response)
+{
+  enum result res;
+
+  if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
+    return res;
+  if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
+    return res;
+  if ((res = ifSet(device->interface, IF_SDIO_EXECUTE, 0)) != E_OK)
+    return res;
+
+  while (ifGet(device->interface, IF_STATUS, 0) == E_BUSY);
+
+  if (res != E_OK)
+    return res;
+
+  if (response)
+  {
+    if ((res = ifGet(device->interface, IF_SDIO_RESPONSE, response)) != E_OK)
+      return res;
+  }
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
 static enum result resetCard(struct SdCard *device)
 {
-  uint32_t argument, command, response;
+  uint32_t response[4];
+  uint8_t version = 1; /* SD Card version */
   enum result res;
 
   /* Send reset command */
-  command = sdioPrepareCommand(CMD_GO_IDLE_STATE, SDIO_DATA_NONE,
-      SDIO_RESPONSE_NONE, SDIO_INITIALIZE);
-  argument = 0;
-
-  ifSet(device->interface, IF_SDIO_COMMAND, &command);
-  ifSet(device->interface, IF_SDIO_ARGUMENT, &argument);
-  ifSet(device->interface, IF_SDIO_EXECUTE, 0);
-
-  while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY);
+  res = executeCommand(device, sdioPrepareCommand(CMD_GO_IDLE_STATE,
+      SDIO_DATA_NONE, SDIO_RESPONSE_NONE,
+      SDIO_INITIALIZE | SDIO_CHECK_IDLE), 0, 0);
   if (res != E_OK)
     return res;
 
+  //TODO Remove magic numbers
   /* Detect card version */
-  command = sdioPrepareCommand(CMD_SEND_IF_COND, SDIO_DATA_NONE,
-      SDIO_RESPONSE_SHORT, 0);
-  argument = 0x000001AA;
-
-  ifSet(device->interface, IF_SDIO_COMMAND, &command);
-  ifSet(device->interface, IF_SDIO_ARGUMENT, &argument);
-  ifSet(device->interface, IF_SDIO_EXECUTE, 0);
-
-  while (ifGet(device->interface, IF_STATUS, 0) == E_BUSY);
-  if (res != E_OK)
+  res = executeCommand(device, sdioPrepareCommand(CMD_SEND_IF_COND,
+      SDIO_DATA_NONE, SDIO_RESPONSE_SHORT, SDIO_CHECK_IDLE), 0x000001AA,
+      response);
+  if (res == E_OK) /* Wrong command */
+  {
+    if (response[0] != 0x000001AA)
+      return E_DEVICE; /* Pattern mismatched */
+    version = 2;
+  }
+  else if (res != E_ERROR)
+  {
     return res;
+  }
 
-  ifGet(device->interface, IF_SDIO_RESPONSE, &response);
+  /* Wait till card becomes ready */
+  for (uint8_t counter = 100; counter; --counter)
+  {
+    res = executeCommand(device, sdioPrepareCommand(CMD_APP_CMD,
+        SDIO_DATA_NONE, SDIO_RESPONSE_NONE, 0), 0, 0);
+    if (res != E_OK)
+      break;
+
+    res = executeCommand(device, sdioPrepareCommand(ACMD_SD_SEND_OP_COND,
+        SDIO_DATA_NONE, SDIO_RESPONSE_NONE, 0), OCR_HCS, 0);
+    if (res != E_OK)
+      break;
+
+    /* TODO Remove delay */
+    mdelay(10); /* Retry after 10 milliseconds */
+  }
 
   return E_OK;
 }
