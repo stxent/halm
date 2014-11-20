@@ -215,6 +215,10 @@ ifeq ($(CONFIG_PLATFORM_NXP_SCT_TIMER),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/sct_timer.c
 endif
 
+ifeq ($(CONFIG_PLATFORM_NXP_SDIO_SPI),y)
+	CSOURCES += platform/$(PLATFORM_TYPE)/sdio_spi.c
+endif
+
 ifeq ($(CONFIG_PLATFORM_NXP_SERIAL),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/serial.c
 endif
@@ -235,8 +239,8 @@ ifeq ($(CONFIG_PLATFORM_NXP_SPI_DMA),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/spi_dma.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_SDIO_SPI),y)
-	CSOURCES += platform/sdio_spi.c
+ifeq ($(CONFIG_PLATFORM_SDCARD),y)
+	CSOURCES += platform/sdcard.c
 endif
 
 OUTPUTDIR = build_$(PLATFORM)

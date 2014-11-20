@@ -197,7 +197,11 @@ config PLATFORM_NXP_SPI_DMA
 	bool "SPI Master with DMA"
 	depends on SPI && PLATFORM_NXP_SSP_BASE && PLATFORM_NXP_GPDMA
 
-config PLATFORM_SDIO_SPI
+config PLATFORM_NXP_SDIO_SPI
 	bool "SDIO over SPI"
+	depends on SPI
+
+config PLATFORM_SDCARD
+	bool "SD Card driver"
 
 endmenu
