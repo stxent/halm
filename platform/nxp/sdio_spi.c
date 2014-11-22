@@ -36,7 +36,9 @@ enum sdioResponseFlags
   FLAG_CRC_ERROR        = 0x08,
   FLAG_ERASE_ERROR      = 0x10,
   FLAG_BAD_ADDRESS      = 0x20,
-  FLAG_BAD_PARAMETER    = 0x40
+  FLAG_BAD_PARAMETER    = 0x40,
+  /* MSB in response tokens is always set to zero */
+  FLAG_NO_RESPONSE      = 0x80
 };
 /*----------------------------------------------------------------------------*/
 enum sdioToken
@@ -52,6 +54,7 @@ enum sdioToken
 static void execute(struct SdioSpi *);
 static enum result getLongResponse(struct SdioSpi *, uint32_t *);
 static enum result getShortResponse(struct SdioSpi *, uint32_t *);
+static enum result processResponseToken(uint8_t);
 static enum result waitForData(struct SdioSpi *, uint8_t *);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
@@ -163,15 +166,11 @@ static void execute(struct SdioSpi *interface)
   }
   else
   {
-    uint8_t errors;
+    uint8_t token;
 
-    if ((res = waitForData(interface, &errors)) == E_OK)
-    {
-      if (flags & SDIO_CHECK_IDLE)
-        res = (errors & FLAG_IDLE_STATE) == FLAG_IDLE_STATE ? E_OK : E_DEVICE;
-      else
-        res = !errors ? E_OK : E_ERROR;
-    }
+    if ((res = waitForData(interface, &token)) == E_OK)
+      res = processResponseToken(token);
+
     interface->status = res;
   }
 
@@ -204,30 +203,38 @@ static enum result getLongResponse(struct SdioSpi *interface, uint32_t *value)
 /*----------------------------------------------------------------------------*/
 static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
 {
-  const uint8_t flags = COMMAND_FLAGS_VALUE(interface->command);
-  uint8_t response;
+  uint8_t token;
   enum result res;
 
-  if ((res = waitForData(interface, &response)) == E_OK)
+  if ((res = waitForData(interface, &token)) == E_OK)
   {
     if (ifRead(interface->interface, interface->buffer, 4) != 4)
       return E_INTERFACE;
 
-    if (flags & SDIO_CHECK_IDLE)
-    {
-      if ((response & FLAG_IDLE_STATE) != FLAG_IDLE_STATE)
-        res = E_DEVICE;
-    }
-    else
-    {
-      if (response)
-        res = E_ERROR;
-    }
+    res = processResponseToken(token);
 
     /* Response comes in big-endian format */
     memcpy(value, interface->buffer, 4);
     *value = fromBigEndian32(*value);
   }
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static enum result processResponseToken(uint8_t token)
+{
+  enum result res;
+
+  if (token & FLAG_NO_RESPONSE)
+    res = E_DEVICE;
+  else if (token & FLAG_ILLEGAL_COMMAND)
+    res = E_INVALID;
+  else if ((token & FLAG_IDLE_STATE) == FLAG_IDLE_STATE)
+    res = E_IDLE;
+  else if (token)
+    res = E_ERROR;
+  else
+    res = E_OK;
 
   return res;
 }
@@ -247,7 +254,7 @@ static enum result waitForData(struct SdioSpi *interface, uint8_t *value)
     }
   }
 
-  return E_BUSY;
+  return E_TIMEOUT;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sdioPrepareCommand(uint8_t command, enum sdioDataMode dataMode,

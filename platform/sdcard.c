@@ -56,7 +56,7 @@ const struct InterfaceClass * const SdCard = &cardTable;
 static enum result executeCommand(struct SdCard *device, uint32_t command,
     uint32_t argument, uint32_t *response)
 {
-  enum result res;
+  enum result res, status;
 
   if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
     return res;
@@ -65,10 +65,10 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
   if ((res = ifSet(device->interface, IF_SDIO_EXECUTE, 0)) != E_OK)
     return res;
 
-  while (ifGet(device->interface, IF_STATUS, 0) == E_BUSY);
+  while ((status = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY);
 
-  if (res != E_OK)
-    return res;
+  if (status != E_OK && status != E_IDLE)
+    return status;
 
   if (response)
   {
@@ -76,7 +76,7 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
       return res;
   }
 
-  return E_OK;
+  return status;
 }
 /*----------------------------------------------------------------------------*/
 static enum result resetCard(struct SdCard *device)
@@ -87,23 +87,22 @@ static enum result resetCard(struct SdCard *device)
 
   /* Send reset command */
   res = executeCommand(device, sdioPrepareCommand(CMD_GO_IDLE_STATE,
-      SDIO_DATA_NONE, SDIO_RESPONSE_NONE,
-      SDIO_INITIALIZE | SDIO_CHECK_IDLE), 0, 0);
-  if (res != E_OK)
+      SDIO_DATA_NONE, SDIO_RESPONSE_NONE, SDIO_INITIALIZE), 0, 0);
+  if (res != E_OK && res != E_IDLE)
     return res;
 
   //TODO Remove magic numbers
   /* Detect card version */
   res = executeCommand(device, sdioPrepareCommand(CMD_SEND_IF_COND,
-      SDIO_DATA_NONE, SDIO_RESPONSE_SHORT, SDIO_CHECK_IDLE), 0x000001AA,
-      response);
-  if (res == E_OK) /* Wrong command */
+      SDIO_DATA_NONE, SDIO_RESPONSE_SHORT, 0), 0x000001AA, response);
+  if (res == E_OK || res == E_IDLE)
   {
-    if (response[0] != 0x000001AA)
+    if (response[0] == 0x000001AA)
+      version = 2;
+    else
       return E_DEVICE; /* Pattern mismatched */
-    version = 2;
   }
-  else if (res != E_ERROR)
+  else if (res != E_INVALID) /* Not an unsupported command */
   {
     return res;
   }
@@ -113,17 +112,19 @@ static enum result resetCard(struct SdCard *device)
   {
     res = executeCommand(device, sdioPrepareCommand(CMD_APP_CMD,
         SDIO_DATA_NONE, SDIO_RESPONSE_NONE, 0), 0, 0);
-    if (res != E_OK)
+    if (res != E_OK && res != E_IDLE)
       break;
 
     res = executeCommand(device, sdioPrepareCommand(ACMD_SD_SEND_OP_COND,
         SDIO_DATA_NONE, SDIO_RESPONSE_NONE, 0), OCR_HCS, 0);
-    if (res != E_OK)
+    if (res != E_IDLE)
       break;
 
     /* TODO Remove delay */
-    mdelay(10); /* Retry after 10 milliseconds */
+    mdelay(10);
   }
+  if (res != E_OK)
+    return res;
 
   return E_OK;
 }

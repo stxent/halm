@@ -65,9 +65,8 @@ enum sdioDataMode
 enum sdioFlags
 {
   SDIO_INITIALIZE = 0x01,
-  SDIO_CHECK_IDLE = 0x02,
-  SDIO_CHECK_CRC  = 0x04,
-  SDIO_BLOCK_MODE = 0x08
+  SDIO_CHECK_CRC  = 0x02,
+  SDIO_BLOCK_MODE = 0x04
 };
 /*----------------------------------------------------------------------------*/
 uint32_t sdioPrepareCommand(uint8_t, enum sdioDataMode, enum sdioResponse,
