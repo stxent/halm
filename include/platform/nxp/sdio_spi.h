@@ -14,10 +14,18 @@ extern const struct InterfaceClass * const SdioSpi;
 /*----------------------------------------------------------------------------*/
 enum sdioOption
 {
-  IF_SDIO_EXECUTE = IF_END_OPTION,
+  IF_SDIO_MODE = IF_END_OPTION,
+  IF_SDIO_EXECUTE,
   IF_SDIO_ARGUMENT,
   IF_SDIO_COMMAND,
-  IF_SDIO_RESPONSE
+  IF_SDIO_RESPONSE,
+};
+/*----------------------------------------------------------------------------*/
+enum sdioMode
+{
+  SDIO_SPI,
+  SDIO_1BIT,
+  SDIO_4BIT
 };
 /*----------------------------------------------------------------------------*/
 struct SdioSpiConfig
@@ -55,21 +63,22 @@ enum sdioResponse
   SDIO_RESPONSE_LONG
 };
 /*----------------------------------------------------------------------------*/
-enum sdioDataMode
-{
-  SDIO_DATA_NONE,
-  SDIO_DATA_READ,
-  SDIO_DATA_WRITE
-};
-/*----------------------------------------------------------------------------*/
 enum sdioFlags
 {
-  SDIO_INITIALIZE = 0x01,
-  SDIO_CHECK_CRC  = 0x02,
-  SDIO_BLOCK_MODE = 0x04
+  /** Send initialization sequence to device. */
+  SDIO_INITIALIZE   = 0x01,
+  /** Generate and check checksum. */
+  SDIO_CHECK_CRC    = 0x02,
+  /** Enable data transfer mode. */
+  SDIO_DATA_MODE    = 0x04,
+  /** Clear to read data from device, set to write data to device. */
+  SDIO_READ_WRITE   = 0x08,
+  /** Enable stream transfer mode instead of block mode. */
+  SDIO_STREAM_MODE  = 0x10,
+  /** Send stop command at the end of data transfer. */
+  SDIO_AUTO_STOP    = 0x20
 };
 /*----------------------------------------------------------------------------*/
-uint32_t sdioPrepareCommand(uint8_t, enum sdioDataMode, enum sdioResponse,
-    uint8_t);
+uint32_t sdioPrepareCommand(uint8_t, enum sdioResponse, uint16_t);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDIO_SPI_H_ */

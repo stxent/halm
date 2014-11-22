@@ -79,28 +79,32 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
   return status;
 }
 /*----------------------------------------------------------------------------*/
-static enum result resetCard(struct SdCard *device)
+static enum result initCommonCard(struct SdCard *device)
 {
   uint32_t response[4];
-  uint8_t version = 1; /* SD Card version */
+  enum sdioMode mode;
   enum result res;
+
+  if ((res = ifGet(device->interface, IF_SDIO_MODE, response)) != E_OK)
+    return res;
+  mode = response[0];
 
   /* Send reset command */
   res = executeCommand(device, sdioPrepareCommand(CMD_GO_IDLE_STATE,
-      SDIO_DATA_NONE, SDIO_RESPONSE_NONE, SDIO_INITIALIZE), 0, 0);
+      SDIO_RESPONSE_NONE, SDIO_INITIALIZE), 0, 0);
   if (res != E_OK && res != E_IDLE)
     return res;
 
-  //TODO Remove magic numbers
-  /* Detect card version */
+  /* Start initialization and detect card type */
   res = executeCommand(device, sdioPrepareCommand(CMD_SEND_IF_COND,
-      SDIO_DATA_NONE, SDIO_RESPONSE_SHORT, 0), 0x000001AA, response);
+      SDIO_RESPONSE_SHORT, 0), 0x000001AA, response);
   if (res == E_OK || res == E_IDLE)
   {
-    if (response[0] == 0x000001AA)
-      version = 2;
-    else
+    //TODO Remove magic numbers
+    if (response[0] != 0x000001AA)
       return E_DEVICE; /* Pattern mismatched */
+
+    device->type = SDCARD_2_0;
   }
   else if (res != E_INVALID) /* Not an unsupported command */
   {
@@ -108,15 +112,17 @@ static enum result resetCard(struct SdCard *device)
   }
 
   /* Wait till card becomes ready */
+  const enum sdioResponse initResponseType =
+      mode == SDIO_SPI ? SDIO_RESPONSE_NONE : SDIO_RESPONSE_SHORT;
   for (uint8_t counter = 100; counter; --counter)
   {
     res = executeCommand(device, sdioPrepareCommand(CMD_APP_CMD,
-        SDIO_DATA_NONE, SDIO_RESPONSE_NONE, 0), 0, 0);
+        initResponseType, 0), 0, 0);
     if (res != E_OK && res != E_IDLE)
       break;
 
     res = executeCommand(device, sdioPrepareCommand(ACMD_SD_SEND_OP_COND,
-        SDIO_DATA_NONE, SDIO_RESPONSE_NONE, 0), OCR_HCS, 0);
+        initResponseType, 0), OCR_HCS, mode != SDIO_SPI ? response : 0);
     if (res != E_IDLE)
       break;
 
@@ -124,7 +130,25 @@ static enum result resetCard(struct SdCard *device)
     mdelay(10);
   }
   if (res != E_OK)
+  {
+    /* Check card capacity information */
+    if (mode != SDIO_SPI && (response[0] & OCR_CCS))
+      device->capacity = SDCARD_SDHC;
+
     return res;
+  }
+
+  /* Read card capacity information when SPI mode is used */
+  if (mode == SDIO_SPI && device->type == SDCARD_2_0)
+  {
+    res = executeCommand(device, sdioPrepareCommand(CMD_READ_OCR,
+        SDIO_RESPONSE_SHORT, 0), 0, response);
+    if (res != E_OK)
+      return res;
+
+    if (response[0] & OCR_CCS)
+      device->capacity = SDCARD_SDHC;
+  }
 
   return E_OK;
 }
@@ -136,8 +160,11 @@ static enum result cardInit(void *object, const void *configBase)
   enum result res;
 
   device->interface = config->interface;
+  device->position = 0;
+  device->capacity = SDCARD_SD;
+  device->type = SDCARD_1_0;
 
-  if ((res = resetCard(device)) != E_OK)
+  if ((res = initCommonCard(device)) != E_OK)
     return res;
 
   return E_OK;

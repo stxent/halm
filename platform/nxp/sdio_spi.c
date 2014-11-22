@@ -15,18 +15,14 @@
 #define COMMAND_CODE(value)             BIT_FIELD((value), 0)
 #define COMMAND_CODE_VALUE(command) \
     FIELD_VALUE((command), COMMAND_CODE_MASK, 0)
-#define COMMAND_DATA_MASK               BIT_FIELD(MASK(2), 6)
-#define COMMAND_DATA(value)             BIT_FIELD((value), 6)
-#define COMMAND_DATA_VALUE(command) \
-    FIELD_VALUE((command), COMMAND_DATA_MASK, 6)
-#define COMMAND_RESPONSE_MASK           BIT_FIELD(MASK(2), 8)
-#define COMMAND_RESPONSE(value)         BIT_FIELD((value), 8)
-#define COMMAND_RESPONSE_VALUE(command) \
-    FIELD_VALUE((command), COMMAND_RESPONSE_MASK, 8)
-#define COMMAND_FLAGS_MASK              BIT_FIELD(MASK(8), 10)
-#define COMMAND_FLAGS(value)            BIT_FIELD((value), 10)
-#define COMMAND_FLAGS_VALUE(command) \
-    FIELD_VALUE((command), COMMAND_FLAGS_MASK, 10)
+#define COMMAND_RESP_MASK               BIT_FIELD(MASK(2), 6)
+#define COMMAND_RESP(value)             BIT_FIELD((value), 6)
+#define COMMAND_RESP_VALUE(command) \
+    FIELD_VALUE((command), COMMAND_RESP_MASK, 6)
+#define COMMAND_FLAG_MASK               BIT_FIELD(MASK(16), 8)
+#define COMMAND_FLAG(value)             BIT_FIELD((value), 8)
+#define COMMAND_FLAG_VALUE(command) \
+    FIELD_VALUE((command), COMMAND_FLAG_MASK, 8)
 /*----------------------------------------------------------------------------*/
 enum sdioResponseFlags
 {
@@ -96,9 +92,8 @@ static void execute(struct SdioSpi *interface)
 {
   const uint32_t argument = toBigEndian32(interface->argument);
   const uint8_t code = COMMAND_CODE_VALUE(interface->command);
-  const uint8_t flags = COMMAND_FLAGS_VALUE(interface->command);
-  const enum sdioDataMode mode = COMMAND_DATA_VALUE(interface->command);
-  const enum sdioResponse response = COMMAND_RESPONSE_VALUE(interface->command);
+  const uint8_t flags = COMMAND_FLAG_VALUE(interface->command);
+  const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
   uint32_t bytesWritten;
   enum result res;
 
@@ -257,11 +252,11 @@ static enum result waitForData(struct SdioSpi *interface, uint8_t *value)
   return E_TIMEOUT;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sdioPrepareCommand(uint8_t command, enum sdioDataMode dataMode,
-    enum sdioResponse response, uint8_t flags)
+uint32_t sdioPrepareCommand(uint8_t command, enum sdioResponse response,
+    uint16_t flags)
 {
-  return COMMAND_CODE(command) | COMMAND_DATA((uint8_t)dataMode)
-      | COMMAND_RESPONSE((uint8_t)response) | COMMAND_FLAGS(flags);
+  return COMMAND_CODE(command) | COMMAND_RESP((uint8_t)response)
+      | COMMAND_FLAG(flags);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)
@@ -303,10 +298,15 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
   /* Additional options */
   switch ((enum sdioOption)option)
   {
+    case IF_SDIO_MODE:
+    {
+      *(uint32_t *)data = SDIO_SPI;
+      return E_OK;
+    }
+
     case IF_SDIO_RESPONSE:
     {
-      const enum sdioResponse response =
-          COMMAND_RESPONSE_VALUE(interface->command);
+      const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
 
       if (response == SDIO_RESPONSE_NONE)
         return E_ERROR;

@@ -12,11 +12,21 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdCard;
 /*----------------------------------------------------------------------------*/
-enum cardType
+enum sdCardCapacity
 {
-  CARD_SD,
-  CARD_SDHC,
-  CARD_SDXC
+  SDCARD_SD,
+  SDCARD_SDHC,
+  SDCARD_SDXC
+};
+/*----------------------------------------------------------------------------*/
+enum sdCardType
+{
+  SDCARD_1_0,
+  SDCARD_1_1,
+  SDCARD_2_0,
+  SDCARD_3_0,
+  SDCARD_4_0,
+  SDCARD_4_1
 };
 /*----------------------------------------------------------------------------*/
 struct SdCardConfig
@@ -33,8 +43,10 @@ struct SdCard
   struct Interface *interface;
   /* Current position in internal memory space */
   uint64_t position;
+  /* Memory card capacity */
+  enum sdCardCapacity capacity;
   /* Type of the memory card */
-  enum cardType type;
+  enum sdCardType type;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_SDCARD_H_ */
