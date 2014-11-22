@@ -19,20 +19,32 @@ enum result
   E_ERROR,
   /** Out of memory. */
   E_MEMORY,
-  /** No such file or directory. */
-  E_ENTRY,
   /** Permission denied. */
   E_ACCESS,
   /** Bad address. */
-  E_FAULT,
+  E_ADDRESS,
   /** Device or resource busy. */
   E_BUSY,
-  /** Hardware device error. */
+  /** Device error. */
   E_DEVICE,
-  /** Invalid argument. */
-  E_VALUE,
+  /** Device or resource is in idle state. */
+  E_IDLE,
   /** Interface error. */
-  E_INTERFACE
+  E_INTERFACE,
+  /** Unsupported operation. */
+  E_INVALID,
+  /** Operation timed out. */
+  E_TIMEOUT,
+  /** Argument contains wrong value. */
+  E_VALUE,
+  /** No such file. */
+  E_ENTRY,
+  /** File exists. */
+  E_EXIST,
+  /** No data available. */
+  E_EMPTY,
+  /** No space left. */
+  E_OVERFLOW
 };
 /*----------------------------------------------------------------------------*/
 #endif /* ERROR_H_ */
