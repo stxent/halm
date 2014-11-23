@@ -12,6 +12,17 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdioSpi;
 /*----------------------------------------------------------------------------*/
+enum sdioSpiState
+{
+  SDIO_SPI_STATE_IDLE,
+  SDIO_SPI_STATE_SEND_CMD,
+  SDIO_SPI_STATE_WAIT_RESPONSE,
+  SDIO_SPI_STATE_READ_SHORT,
+  SDIO_SPI_STATE_WAIT_LONG,
+  SDIO_SPI_STATE_READ_LONG,
+  SDIO_SPI_STATE_READ_LONG_CRC
+};
+/*----------------------------------------------------------------------------*/
 struct SdioSpiConfig
 {
   /** Mandatory: underlying serial interface. */
@@ -23,6 +34,9 @@ struct SdioSpiConfig
 struct SdioSpi
 {
   struct Interface parent;
+
+  void (*callback)(void *);
+  void *callbackArgument;
 
   /* Parent SPI interface */
   struct Interface *interface;
@@ -36,8 +50,16 @@ struct SdioSpi
   uint32_t response[4];
   /* Buffer for temporary data */
   uint8_t buffer[16];
+  /* Iteration */
+  uint8_t iteration;
+  /* Current interface state */
+  enum sdioSpiState state;
+  /* Status of the last processed token */
+  enum result token;
   /* Status of the last command */
   enum result status;
+
+  struct Pin debug;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDIO_SPI_H_ */

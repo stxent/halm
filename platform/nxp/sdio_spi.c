@@ -36,11 +36,11 @@ enum sdioToken
   TOKEN_STOP              = 0xFD
 };
 /*----------------------------------------------------------------------------*/
+static void acquireBus(struct SdioSpi *);
 static void execute(struct SdioSpi *);
 static enum result getLongResponse(struct SdioSpi *, uint32_t *);
 static enum result getShortResponse(struct SdioSpi *, uint32_t *);
-static enum result processResponseToken(uint8_t);
-static enum result waitForData(struct SdioSpi *, uint8_t *);
+static void releaseBus(struct SdioSpi *);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -64,17 +64,10 @@ static const struct InterfaceClass sdioTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SdioSpi = &sdioTable;
 /*----------------------------------------------------------------------------*/
-static enum result acquireBus(struct SdioSpi *interface)
+static void acquireBus(struct SdioSpi *interface)
 {
   ifSet(interface->interface, IF_ACQUIRE, 0);
   pinReset(interface->cs);
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void releaseBus(struct SdioSpi *interface)
-{
-  pinSet(interface->cs);
-  ifSet(interface->interface, IF_RELEASE, 0);
 }
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *interface)
@@ -95,6 +88,9 @@ static void execute(struct SdioSpi *interface)
 
     ifSet(interface->interface, IF_ACQUIRE, 0);
     bytesWritten = ifWrite(interface->interface, interface->buffer, 10);
+
+    // TODO Rewrite
+    while (ifGet(interface->interface, IF_STATUS, 0) == E_BUSY);
     ifSet(interface->interface, IF_RELEASE, 0);
 
     if (bytesWritten != 10)
@@ -130,35 +126,21 @@ static void execute(struct SdioSpi *interface)
 
   acquireBus(interface);
 
+  interface->state = SDIO_SPI_STATE_SEND_CMD;
   bytesWritten = ifWrite(interface->interface, interface->buffer, 8);
   if (bytesWritten != 8)
   {
     interface->status = E_INTERFACE;
+    interface->state = SDIO_SPI_STATE_IDLE;
     releaseBus(interface);
     return;
   }
-
-  if (response == SDIO_RESPONSE_SHORT)
-  {
-    /* Read 32-bit response */
-    interface->status = getShortResponse(interface, interface->response);
-  }
-  else if (response == SDIO_RESPONSE_LONG)
-  {
-    /* Read 128-bit response */
-    interface->status = getLongResponse(interface, interface->response);
-  }
   else
   {
-    uint8_t token;
 
-    if ((res = waitForData(interface, &token)) == E_OK)
-      res = processResponseToken(token);
-
-    interface->status = res;
   }
 
-  releaseBus(interface);
+  while (interface->status == E_BUSY); //FIXME
 }
 /*----------------------------------------------------------------------------*/
 static enum result getLongResponse(struct SdioSpi *interface, uint32_t *value)
@@ -220,11 +202,66 @@ static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum result processResponseToken(uint8_t token)
+static enum result checksumProcess(struct SdioSpi *interface, uint16_t checksum)
 {
+  //TODO
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result checksumRequest(struct SdioSpi *interface)
+{
+  if (ifRead(interface->interface, interface->buffer, 2) != 2)
+    return E_INTERFACE;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result responseProcess(struct SdioSpi *interface)
+{
+  const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
+
+  /* Responses come in big-endian format */
+  if (response == SDIO_RESPONSE_SHORT)
+  {
+    interface->response[0] = fromBigEndian32(*(uint32_t *)interface->buffer);
+  }
+  else
+  {
+    const uint32_t *buffer = (const uint32_t *)interface->buffer;
+
+    for (uint8_t index = 0; index < 4; ++index)
+      interface->response[3 - index] = fromBigEndian32(buffer[index]);
+  }
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result responseRequest(struct SdioSpi *interface,
+    const enum sdioResponse type)
+{
+  if (type == SDIO_RESPONSE_SHORT)
+  {
+    /* Read 32-bit response */
+    if (ifRead(interface->interface, interface->buffer, 4) != 4)
+      return E_INTERFACE;
+  }
+  else
+  {
+    /* Read 128-bit response */
+    if (ifRead(interface->interface, interface->buffer, 16) != 16)
+      return E_INTERFACE;
+  }
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result responseTokenProcess(struct SdioSpi *interface)
+{
+  const uint8_t token = interface->buffer[0];
   enum result res;
 
-  if (token & FLAG_NO_RESPONSE)
+  if (token == 0xFF)
+    res = interface->iteration >= 8 ? E_TIMEOUT : E_BUSY;
+  else if (token & FLAG_NO_RESPONSE)
     res = E_DEVICE;
   else if (token & FLAG_ILLEGAL_COMMAND)
     res = E_INVALID;
@@ -238,37 +275,245 @@ static enum result processResponseToken(uint8_t token)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum result waitForData(struct SdioSpi *interface, uint8_t *value)
+static enum result tokenProcess(struct SdioSpi *interface,
+    enum sdioToken expected)
 {
-  /* Response will come after 1..8 queries */
-  for (uint8_t count = 0; count < 8; ++count)
+  const uint8_t token = interface->buffer[0];
+  enum result res;
+
+  if (token == 0xFF)
+    res = interface->iteration >= 8 ? E_TIMEOUT : E_BUSY;
+  else if (token != expected)
+    res = E_DEVICE;
+  else
+    res = E_OK;
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static enum result tokenRequest(struct SdioSpi *interface)
+{
+  return ifRead(interface->interface, interface->buffer, 1) == 1 ? E_OK
+      : E_INTERFACE;
+}
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct SdioSpi * const interface = object;
+  enum result res;
+  bool event = false;
+
+  pinSet(interface->debug);
+  switch (interface->state)
   {
-    if (ifRead(interface->interface, interface->buffer, 1) != 1)
-      return E_INTERFACE;
+    case SDIO_SPI_STATE_SEND_CMD:
+      if ((res = tokenRequest(interface)) == E_OK)
+      {
+        interface->state = SDIO_SPI_STATE_WAIT_RESPONSE;
+        interface->iteration = 0;
+      }
+      else
+      {
+        /* Error occurred */
+        interface->status = res;
+        interface->state = SDIO_SPI_STATE_IDLE;
+        event = true;
+      }
+      break;
 
-    if (interface->buffer[0] != 0xFF)
-    {
-      *value = interface->buffer[0];
-      return E_OK;
-    }
+    case SDIO_SPI_STATE_WAIT_RESPONSE:
+      res = responseTokenProcess(interface);
+      if (res == E_BUSY)
+      {
+        /* Device is busy, try again */
+        if ((res = tokenRequest(interface)) == E_OK)
+        {
+          ++interface->iteration;
+        }
+        else
+        {
+          /* Error occurred */
+          interface->status = res;
+          interface->state = SDIO_SPI_STATE_IDLE;
+          event = true;
+        }
+      }
+      else if (res == E_OK || res == E_IDLE)
+      {
+        const enum sdioResponse response =
+            COMMAND_RESP_VALUE(interface->command);
+
+        if (response == SDIO_RESPONSE_NONE)
+        {
+          /* No response required */
+          interface->status = res;
+          interface->state = SDIO_SPI_STATE_IDLE;
+          event = true;
+        }
+        else if (response == SDIO_RESPONSE_SHORT)
+        {
+          interface->token = res;
+
+          if ((res = responseRequest(interface, SDIO_RESPONSE_SHORT)) == E_OK)
+          {
+            interface->state = SDIO_SPI_STATE_READ_SHORT;
+          }
+          else
+          {
+            /* Error occurred */
+            interface->status = res;
+            interface->state = SDIO_SPI_STATE_IDLE;
+            event = true;
+          }
+        }
+        else
+        {
+          interface->token = res;
+
+          //TODO Remove redundant code
+          if ((res = tokenRequest(interface)) == E_OK)
+          {
+            interface->state = SDIO_SPI_STATE_WAIT_LONG;
+            interface->iteration = 0;
+          }
+          else
+          {
+            /* Error occurred */
+            interface->status = res;
+            interface->state = SDIO_SPI_STATE_IDLE;
+            event = true;
+          }
+        }
+      }
+      break;
+
+    case SDIO_SPI_STATE_READ_SHORT:
+      if ((res = responseProcess(interface)) != E_OK)
+        interface->status = res;
+      else
+        interface->status = interface->token;
+      interface->state = SDIO_SPI_STATE_IDLE;
+      event = true;
+      break;
+
+    case SDIO_SPI_STATE_WAIT_LONG:
+      res = tokenProcess(interface, TOKEN_START);
+      if (res == E_BUSY)
+      {
+        /* Device is busy, try again */
+        if ((res = tokenRequest(interface)) == E_OK)
+        {
+          ++interface->iteration;
+        }
+        else
+        {
+          /* Error occurred */
+          interface->status = res;
+          interface->state = SDIO_SPI_STATE_IDLE;
+          event = true;
+        }
+      }
+      else if (res == E_OK)
+      {
+        if ((res = responseRequest(interface, SDIO_RESPONSE_LONG)) == E_OK)
+        {
+          interface->state = SDIO_SPI_STATE_READ_LONG;
+        }
+        else
+        {
+          /* Error occurred */
+          interface->status = res;
+          interface->state = SDIO_SPI_STATE_IDLE;
+          event = true;
+        }
+      }
+      else
+      {
+        /* Error occurred */
+        interface->status = res;
+        interface->state = SDIO_SPI_STATE_IDLE;
+        event = true;
+      }
+      break;
+
+    case SDIO_SPI_STATE_READ_LONG:
+      if ((res = responseProcess(interface)) == E_OK)
+      {
+        if ((res = checksumRequest(interface)) == E_OK)
+        {
+          interface->state = SDIO_SPI_STATE_READ_LONG_CRC;
+        }
+        else
+        {
+          /* Error occurred */
+          interface->status = res;
+          interface->state = SDIO_SPI_STATE_IDLE;
+          event = true;
+        }
+      }
+      else
+      {
+        /* Error occurred */
+        interface->status = res;
+        interface->state = SDIO_SPI_STATE_IDLE;
+        event = true;
+      }
+      break;
+
+    case SDIO_SPI_STATE_READ_LONG_CRC:
+      interface->status = checksumProcess(interface, 0x0000); //TODO
+      interface->state = SDIO_SPI_STATE_IDLE;
+      event = true;
+
+    default:
+      break;
   }
+  pinReset(interface->debug);
 
-  return E_TIMEOUT;
+  if (event)
+  {
+    releaseBus(interface);
+
+    if (interface->callback)
+      interface->callback(interface->callbackArgument);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void releaseBus(struct SdioSpi *interface)
+{
+  pinSet(interface->cs);
+  ifSet(interface->interface, IF_RELEASE, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)
 {
   const struct SdioSpiConfig * const config = configBase;
   struct SdioSpi * const interface = object;
+  enum result res;
 
   interface->cs = pinInit(config->cs);
   if (!pinValid(interface->cs))
     return E_VALUE;
   pinOutput(interface->cs, 1);
 
-  interface->argument = 0;
-  interface->command = 0;
   interface->interface = config->interface;
+
+  res = ifSet(interface->interface, IF_ZEROCOPY, 0);
+  if (res != E_OK)
+    return res;
+
+  res = ifCallback(interface->interface, interruptHandler, interface);
+  if (res != E_OK)
+    return res;
+
+  //TODO Remove debug pin
+  interface->debug = pinInit(PIN(1, 0));
+  pinOutput(interface->debug, 0);
+
+  interface->argument = 0;
+  interface->callback = 0;
+  interface->command = 0;
+  interface->state = SDIO_SPI_STATE_IDLE;
   interface->status = E_OK;
   memset(interface->response, 0, sizeof(interface->response));
 
@@ -280,11 +525,14 @@ static void sdioDeinit(void *object __attribute__((unused)))
 
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioCallback(void *object __attribute__((unused)),
-    void (*callback)(void *) __attribute__((unused)),
-    void *argument __attribute__((unused)))
+static enum result sdioCallback(void *object, void (*callback)(void *),
+    void *argument)
 {
-  return E_ERROR;
+  struct SdioSpi * const interface = object;
+
+  interface->callbackArgument = argument;
+  interface->callback = callback;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioGet(void *object, enum ifOption option, void *data)
