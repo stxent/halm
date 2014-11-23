@@ -7,36 +7,37 @@
 #ifndef PLATFORM_NXP_SDMMC_BASE_H_
 #define PLATFORM_NXP_SDMMC_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <interface.h>
+#include <entity.h>
 #include <irq.h>
 #include <pin.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const SdmmcBase;
+extern const struct EntityClass * const SdmmcBase;
 /*----------------------------------------------------------------------------*/
 struct SdmmcBaseConfig
 {
-
+  /** Mandatory: clock line. */
+  pin_t clock;
+  /** Mandatory: command line. */
+  pin_t cmd;
+  /** Mandatory: data line 0. */
+  pin_t dat0;
+  /** Optional: data line 1. */
+  pin_t dat1;
+  /** Optional: data line 2. */
+  pin_t dat2;
+  /** Optional: data line 3. */
+  pin_t dat3;
 };
-/*----------------------------------------------------------------------------*/
-#define MMC_SECTOR_SIZE 512
 /*----------------------------------------------------------------------------*/
 struct SdmmcBase
 {
-  struct Interface parent;
+  struct Entity parent;
 
-  /* Current position in internal memory space */
-  uint64_t position;
-
-  uint32_t response[4];
-  uint32_t cid[4];
-  uint32_t csd[4];
-  uint32_t ext_csd[MMC_SECTOR_SIZE / 4];
-  uint32_t card_type;
-  uint32_t rca;
-  uint32_t speed;
-  uint32_t block_len;
-  uint32_t device_size;
-  uint32_t blocknr;
+  void *reg;
+  void (*handler)(void *);
+  irq_t irq;
 };
+/*----------------------------------------------------------------------------*/
+uint32_t sdmmcGetClock(const struct SdmmcBase *);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDMMC_BASE_H_ */
