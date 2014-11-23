@@ -14,7 +14,7 @@ extern const struct InterfaceClass * const SdCard;
 /*----------------------------------------------------------------------------*/
 enum sdCardCapacity
 {
-  SDCARD_SD,
+  SDCARD_SDSC,
   SDCARD_SDHC,
   SDCARD_SDXC
 };
@@ -39,10 +39,14 @@ struct SdCard
 {
   struct Interface parent;
 
-  /* Parent SPI interface */
+  /* Parent interface */
   struct Interface *interface;
   /* Current position in internal memory space */
   uint64_t position;
+  /* Relative card address */
+  uint32_t blockCount;
+  /* Relative card address */
+  uint16_t address;
   /* Memory card capacity */
   enum sdCardCapacity capacity;
   /* Type of the memory card */

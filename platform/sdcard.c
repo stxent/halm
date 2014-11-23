@@ -19,17 +19,28 @@
 /*----------------------------------------------------------------------------*/
 enum sdioCommand
 {
-  CMD_GO_IDLE_STATE     = 0,
-  CMD_SEND_IF_COND      = 8,
-  CMD_STOP_TRANSMISSION = 12,
-  CMD_READ              = 17,
-  CMD_READ_MULTIPLE     = 18,
-  CMD_WRITE             = 24,
-  CMD_WRITE_MULTIPLE    = 25,
-  CMD_APP_CMD           = 55,
-  CMD_READ_OCR          = 58,
-  ACMD_SD_SEND_OP_COND  = 41
+  CMD_GO_IDLE_STATE         = 0,
+  CMD_ALL_SEND_CID          = 2,
+  CMD_SEND_RELATIVE_ADDR    = 3,
+  CMD_SEND_IF_COND          = 8,
+  CMD_SEND_CSD              = 9,
+  CMD_SEND_CID              = 10,
+  CMD_STOP_TRANSMISSION     = 12,
+  CMD_SET_BLOCKLEN          = 16,
+  CMD_READ_SINGLE_BLOCK     = 17,
+  CMD_READ_MULTIPLE_BLOCK   = 18,
+  CMD_WRITE_BLOCK           = 24,
+  CMD_WRITE_MULTIPLE_BLOCK  = 25,
+  CMD_APP_CMD               = 55,
+  CMD_READ_OCR              = 58,
+  ACMD_SD_SEND_OP_COND      = 41
 };
+/*----------------------------------------------------------------------------*/
+static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
+    uint32_t *);
+static uint32_t extractBits(uint32_t *, uint16_t, uint16_t);
+static enum result initializeCard(struct SdCard *);
+static void processCardSpecificData(struct SdCard *, uint32_t *);
 /*----------------------------------------------------------------------------*/
 static enum result cardInit(void *, const void *);
 static void cardDeinit(void *);
@@ -79,7 +90,21 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
   return status;
 }
 /*----------------------------------------------------------------------------*/
-static enum result initCommonCard(struct SdCard *device)
+static uint32_t extractBits(uint32_t *data, uint16_t start, uint16_t end)
+{
+  const uint32_t index = end >> 5;
+  const uint32_t offset = start & 0x1F;
+  uint32_t value;
+
+  if (index == start >> 5)
+    value = data[index] >> offset;
+  else
+    value = (data[index] << (32 - offset)) | (data[start >> 5] >> offset);
+
+  return value & MASK(end - start + 1);
+}
+/*----------------------------------------------------------------------------*/
+static enum result initializeCard(struct SdCard *device)
 {
   uint32_t response[4];
   enum sdioMode mode;
@@ -150,7 +175,32 @@ static enum result initCommonCard(struct SdCard *device)
       device->capacity = SDCARD_SDHC;
   }
 
+  res = executeCommand(device, sdioPrepareCommand(CMD_SEND_CSD,
+      SDIO_RESPONSE_LONG, (uint32_t)device->address << 16), 0, response);
+  if (res != E_OK)
+    return res;
+  processCardSpecificData(device, response);
+
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void processCardSpecificData(struct SdCard *device, uint32_t *response)
+{
+  if (device->capacity == SDCARD_SDSC)
+  {
+    const uint32_t blockLength = extractBits(response, 80, 83);
+    const uint32_t deviceSize = extractBits(response, 62, 73) + 1;
+    const uint32_t sizeMultiplier = extractBits(response, 47, 49);
+
+    device->blockCount = (deviceSize << (sizeMultiplier + 2))
+        >> (blockLength - 9);
+  }
+  else
+  {
+    const uint32_t deviceSize = extractBits(response, 48, 69) + 1;
+
+    device->blockCount = deviceSize << 10;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result cardInit(void *object, const void *configBase)
@@ -159,12 +209,14 @@ static enum result cardInit(void *object, const void *configBase)
   struct SdCard * const device = object;
   enum result res;
 
+  device->address = 0;
+  device->blockCount = 0;
+  device->capacity = SDCARD_SDSC;
   device->interface = config->interface;
   device->position = 0;
-  device->capacity = SDCARD_SD;
   device->type = SDCARD_1_0;
 
-  if ((res = initCommonCard(device)) != E_OK)
+  if ((res = initializeCard(device)) != E_OK)
     return res;
 
   return E_OK;
