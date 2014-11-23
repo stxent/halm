@@ -9,20 +9,9 @@
 #include <bits.h>
 #include <delay.h>
 #include <memory.h>
+#include <modules/sdio.h>
+#include <modules/sdio_defs.h>
 #include <platform/nxp/sdio_spi.h>
-/*----------------------------------------------------------------------------*/
-#define COMMAND_CODE_MASK               BIT_FIELD(MASK(6), 0)
-#define COMMAND_CODE(value)             BIT_FIELD((value), 0)
-#define COMMAND_CODE_VALUE(command) \
-    FIELD_VALUE((command), COMMAND_CODE_MASK, 0)
-#define COMMAND_RESP_MASK               BIT_FIELD(MASK(2), 6)
-#define COMMAND_RESP(value)             BIT_FIELD((value), 6)
-#define COMMAND_RESP_VALUE(command) \
-    FIELD_VALUE((command), COMMAND_RESP_MASK, 6)
-#define COMMAND_FLAG_MASK               BIT_FIELD(MASK(16), 8)
-#define COMMAND_FLAG(value)             BIT_FIELD((value), 8)
-#define COMMAND_FLAG_VALUE(command) \
-    FIELD_VALUE((command), COMMAND_FLAG_MASK, 8)
 /*----------------------------------------------------------------------------*/
 enum sdioResponseFlags
 {
@@ -265,13 +254,6 @@ static enum result waitForData(struct SdioSpi *interface, uint8_t *value)
   }
 
   return E_TIMEOUT;
-}
-/*----------------------------------------------------------------------------*/
-uint32_t sdioPrepareCommand(uint8_t command, enum sdioResponse response,
-    uint16_t flags)
-{
-  return COMMAND_CODE(command) | COMMAND_RESP((uint8_t)response)
-      | COMMAND_FLAG(flags);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)

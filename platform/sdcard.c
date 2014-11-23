@@ -8,33 +8,15 @@
 #include <bits.h>
 #include <delay.h>
 #include <memory.h>
+#include <modules/sdio.h>
+#include <modules/sdio_defs.h>
 #include <platform/sdcard.h>
-#include <platform/nxp/sdio_spi.h> // FIXME Rewrite
 /*----------------------------------------------------------------------------*/
 #define BLOCK_POW       9
 #define TOKEN_DATA_MASK 0x1F
 /*----------------------------------------------------------------------------*/
 #define OCR_CCS         BIT(30) /* Card Capacity Status */
 #define OCR_HCS         BIT(30) /* Host Capacity Support */
-/*----------------------------------------------------------------------------*/
-enum sdioCommand
-{
-  CMD_GO_IDLE_STATE         = 0,
-  CMD_ALL_SEND_CID          = 2,
-  CMD_SEND_RELATIVE_ADDR    = 3,
-  CMD_SEND_IF_COND          = 8,
-  CMD_SEND_CSD              = 9,
-  CMD_SEND_CID              = 10,
-  CMD_STOP_TRANSMISSION     = 12,
-  CMD_SET_BLOCKLEN          = 16,
-  CMD_READ_SINGLE_BLOCK     = 17,
-  CMD_READ_MULTIPLE_BLOCK   = 18,
-  CMD_WRITE_BLOCK           = 24,
-  CMD_WRITE_MULTIPLE_BLOCK  = 25,
-  CMD_APP_CMD               = 55,
-  CMD_READ_OCR              = 58,
-  ACMD_SD_SEND_OP_COND      = 41
-};
 /*----------------------------------------------------------------------------*/
 static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
     uint32_t *);
@@ -115,13 +97,13 @@ static enum result initializeCard(struct SdCard *device)
   mode = response[0];
 
   /* Send reset command */
-  res = executeCommand(device, sdioPrepareCommand(CMD_GO_IDLE_STATE,
+  res = executeCommand(device, SDIO_COMMAND(CMD_GO_IDLE_STATE,
       SDIO_RESPONSE_NONE, SDIO_INITIALIZE), 0, 0);
   if (res != E_OK && res != E_IDLE)
     return res;
 
   /* Start initialization and detect card type */
-  res = executeCommand(device, sdioPrepareCommand(CMD_SEND_IF_COND,
+  res = executeCommand(device, SDIO_COMMAND(CMD_SEND_IF_COND,
       SDIO_RESPONSE_SHORT, 0), 0x000001AA, response);
   if (res == E_OK || res == E_IDLE)
   {
@@ -141,12 +123,12 @@ static enum result initializeCard(struct SdCard *device)
       mode == SDIO_SPI ? SDIO_RESPONSE_NONE : SDIO_RESPONSE_SHORT;
   for (uint8_t counter = 100; counter; --counter)
   {
-    res = executeCommand(device, sdioPrepareCommand(CMD_APP_CMD,
+    res = executeCommand(device, SDIO_COMMAND(CMD_APP_CMD,
         initResponseType, 0), 0, 0);
     if (res != E_OK && res != E_IDLE)
       break;
 
-    res = executeCommand(device, sdioPrepareCommand(ACMD_SD_SEND_OP_COND,
+    res = executeCommand(device, SDIO_COMMAND(ACMD_SD_SEND_OP_COND,
         initResponseType, 0), OCR_HCS, mode != SDIO_SPI ? response : 0);
     if (res != E_IDLE)
       break;
@@ -166,7 +148,7 @@ static enum result initializeCard(struct SdCard *device)
   /* Read card capacity information when SPI mode is used */
   if (mode == SDIO_SPI && device->type == SDCARD_2_0)
   {
-    res = executeCommand(device, sdioPrepareCommand(CMD_READ_OCR,
+    res = executeCommand(device, SDIO_COMMAND(CMD_READ_OCR,
         SDIO_RESPONSE_SHORT, 0), 0, response);
     if (res != E_OK)
       return res;
@@ -175,8 +157,8 @@ static enum result initializeCard(struct SdCard *device)
       device->capacity = SDCARD_SDHC;
   }
 
-  res = executeCommand(device, sdioPrepareCommand(CMD_SEND_CSD,
-      SDIO_RESPONSE_LONG, (uint32_t)device->address << 16), 0, response);
+  res = executeCommand(device, SDIO_COMMAND(CMD_SEND_CSD, SDIO_RESPONSE_LONG,
+      (uint32_t)device->address << 16), 0, response);
   if (res != E_OK)
     return res;
   processCardSpecificData(device, response);
