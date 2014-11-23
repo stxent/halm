@@ -219,12 +219,41 @@ static enum result cardCallback(void *object __attribute__((unused)),
 static enum result cardGet(void *object, enum ifOption option, void *data)
 {
   struct SdCard * const device = object;
+
+  switch (option)
+  {
+    case IF_ADDRESS:
+      *(uint64_t *)data = device->position;
+      return E_OK;
+
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result cardSet(void *object, enum ifOption option,
     const void *data)
 {
   struct SdCard * const device = object;
+
+  switch (option)
+  {
+    case IF_ADDRESS:
+    {
+      const uint64_t position = *(const uint64_t *)data;
+
+      //TODO Hardcoded sector size
+      if ((position >> 9) >= (uint64_t)device->blockCount)
+        return E_VALUE;
+
+      //TODO Add alignment check
+      device->position = position;
+      return E_OK;
+    }
+
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
