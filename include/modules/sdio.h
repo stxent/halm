@@ -7,6 +7,8 @@
 #ifndef MODULES_SDIO_H_
 #define MODULES_SDIO_H_
 /*----------------------------------------------------------------------------*/
+#include <interface.h>
+/*----------------------------------------------------------------------------*/
 enum sdioCommandCode
 {
   CMD_GO_IDLE_STATE         = 0,

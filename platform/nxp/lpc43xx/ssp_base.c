@@ -198,7 +198,7 @@ static enum result configPins(struct SspBase *interface,
   const struct PinEntry *pinEntry;
   struct Pin pin;
 
-  for (uint8_t index = 0; index < 4; ++index)
+  for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {

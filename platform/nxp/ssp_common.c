@@ -20,7 +20,7 @@ enum result sspConfigPins(struct SspBase *interface,
   struct Pin pin;
 
   /* Direction configuration is not needed for alternate function pins */
-  for (uint8_t index = 0; index < 4; ++index)
+  for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {
