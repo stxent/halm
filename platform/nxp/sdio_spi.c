@@ -202,7 +202,7 @@ static enum result getLongResponse(struct SdioSpi *interface, uint32_t *value)
     return E_INTERFACE;
 
   for (uint8_t index = 0; index < 4; ++index)
-    value[index] = fromBigEndian32(*((uint32_t *)interface->buffer + index));
+    value[3 - index] = fromBigEndian32(((uint32_t *)interface->buffer)[index]);
 
   /* Read 2 bytes of checksum */
   if (ifRead(interface->interface, interface->buffer, 2) != 2)

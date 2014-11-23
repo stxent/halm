@@ -192,8 +192,8 @@ static void processCardSpecificData(struct SdCard *device, uint32_t *response)
     const uint32_t deviceSize = extractBits(response, 62, 73) + 1;
     const uint32_t sizeMultiplier = extractBits(response, 47, 49);
 
-    device->blockCount = (deviceSize << (sizeMultiplier + 2))
-        >> (blockLength - 9);
+    device->blockCount = (deviceSize << (sizeMultiplier + 2));
+    device->blockCount <<= blockLength - 9;
   }
   else
   {
