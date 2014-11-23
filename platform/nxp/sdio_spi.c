@@ -174,26 +174,42 @@ static void execute(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static enum result getLongResponse(struct SdioSpi *interface, uint32_t *value)
 {
-  uint8_t response;
+  uint8_t token;
   enum result res;
 
-  if ((res = waitForData(interface, &response)) == E_OK)
+  if ((res = waitForData(interface, &token)) == E_OK)
   {
-    if (response != TOKEN_START)
-      res = E_ERROR;
-
-    /* Read 16 bytes of the long response */
-    if (ifRead(interface->interface, interface->buffer, 16) != 16)
-      return E_INTERFACE;
-    memcpy(value, interface->buffer, 16);
-
-    /* Read 2 bytes of checksum */
-    if (ifRead(interface->interface, interface->buffer, 2) != 2)
-      return E_INTERFACE;
-    //TODO Check CRC
+    if ((res = processResponseToken(token)) != E_OK)
+      return res;
+  }
+  else
+  {
+    return res;
   }
 
-  return res;
+  if ((res = waitForData(interface, &token)) == E_OK)
+  {
+    if (token != TOKEN_START)
+      return E_ERROR;
+  }
+  else
+  {
+    return res;
+  }
+
+  /* Read 16 bytes of the long response */
+  if (ifRead(interface->interface, interface->buffer, 16) != 16)
+    return E_INTERFACE;
+
+  for (uint8_t index = 0; index < 4; ++index)
+    value[index] = fromBigEndian32(*((uint32_t *)interface->buffer + index));
+
+  /* Read 2 bytes of checksum */
+  if (ifRead(interface->interface, interface->buffer, 2) != 2)
+    return E_INTERFACE;
+  //TODO Check CRC
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
@@ -209,8 +225,7 @@ static enum result getShortResponse(struct SdioSpi *interface, uint32_t *value)
     res = processResponseToken(token);
 
     /* Response comes in big-endian format */
-    memcpy(value, interface->buffer, 4);
-    *value = fromBigEndian32(*value);
+    *value = fromBigEndian32(*(uint32_t *)interface->buffer);
   }
 
   return res;
@@ -263,7 +278,6 @@ static enum result sdioInit(void *object, const void *configBase)
 {
   const struct SdioSpiConfig * const config = configBase;
   struct SdioSpi * const interface = object;
-  enum result res;
 
   interface->cs = pinInit(config->cs);
   if (!pinValid(interface->cs))
