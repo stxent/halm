@@ -21,7 +21,11 @@ enum sdioSpiState
   SDIO_SPI_STATE_READ_SHORT,
   SDIO_SPI_STATE_WAIT_LONG,
   SDIO_SPI_STATE_READ_LONG,
-  SDIO_SPI_STATE_READ_LONG_CRC
+  SDIO_SPI_STATE_READ_LONG_CRC,
+  SDIO_SPI_STATE_WAIT_READ_TOKEN,
+  SDIO_SPI_STATE_READ_DATA,
+  SDIO_SPI_STATE_READ_CRC,
+  SDIO_SPI_STATE_WAIT_BUSY
 };
 /*----------------------------------------------------------------------------*/
 struct SdioSpiConfig
@@ -41,24 +45,30 @@ struct SdioSpi
 
   /* Parent SPI interface */
   struct Interface *interface;
-  /* Pin connected to the chip select signal of the device */
-  struct Pin cs;
+
+  /* Pointer to an input buffer */
+  uint8_t *rxBuffer;
+  /* Pointer to an output buffer */
+  const uint8_t *txBuffer;
+
   /* Argument for the most recent command */
   uint32_t argument;
   /* Interface command */
   uint32_t command;
   /* Command response */
   uint32_t response[4];
+  /* Pin connected to the chip select signal of the device */
+  struct Pin cs;
   /* Buffer for temporary data */
   uint8_t buffer[16];
   /* Iteration */
   uint8_t iteration;
   /* Current interface state */
   enum sdioSpiState state;
-  /* Status of the last processed token */
-  enum result token;
   /* Status of the last command */
   enum result status;
+  /* Status of the last processed token */
+  enum result tokenStatus;
 
   struct Pin debug1, debug2;
 };
