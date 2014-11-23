@@ -36,16 +36,16 @@ enum sdioToken
   TOKEN_STOP              = 0xFD
 };
 /*----------------------------------------------------------------------------*/
-static void acquireBus(struct SdioSpi *);
 static void execute(struct SdioSpi *);
 static void interruptHandler(void *);
-static void releaseBus(struct SdioSpi *);
 
 static enum result checksumProcess(struct SdioSpi *, uint16_t);
 static void checksumRequest(struct SdioSpi *);
 static void responseProcess(struct SdioSpi *);
 static void responseRequest(struct SdioSpi *, enum sdioResponse);
 static enum result responseTokenProcess(struct SdioSpi *);
+static void sendCommand(struct SdioSpi *);
+static void sendInitSequence(struct SdioSpi *);
 static enum result tokenProcess(struct SdioSpi *, enum sdioToken);
 static void tokenRequest(struct SdioSpi *);
 /*----------------------------------------------------------------------------*/
@@ -71,81 +71,23 @@ static const struct InterfaceClass sdioTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SdioSpi = &sdioTable;
 /*----------------------------------------------------------------------------*/
-static void acquireBus(struct SdioSpi *interface)
-{
-  ifSet(interface->interface, IF_ACQUIRE, 0);
-  pinReset(interface->cs);
-  pinSet(interface->debug2);
-}
-/*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *interface)
 {
-  const uint32_t argument = toBigEndian32(interface->argument);
-  const uint8_t code = COMMAND_CODE_VALUE(interface->command);
   const uint8_t flags = COMMAND_FLAG_VALUE(interface->command);
-  const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
-  uint32_t bytesWritten;
-  enum result res;
 
   interface->status = E_BUSY;
+  ifSet(interface->interface, IF_ACQUIRE, 0);
+  pinSet(interface->debug2); //TODO Remove
 
   if (flags & SDIO_INITIALIZE)
   {
-    /* Send initialization sequence */
-    memset(interface->buffer, 0xFF, 10);
-
-    ifSet(interface->interface, IF_ACQUIRE, 0);
-    bytesWritten = ifWrite(interface->interface, interface->buffer, 10);
-
-    // TODO Rewrite
-    while (ifGet(interface->interface, IF_STATUS, 0) == E_BUSY);
-    ifSet(interface->interface, IF_RELEASE, 0);
-
-    if (bytesWritten != 10)
-    {
-      interface->status = E_INTERFACE;
-      return;
-    }
-  }
-
-  /* Fill the buffer */
-  interface->buffer[0] = 0xFF;
-  interface->buffer[1] = 0x40 | code;
-  memcpy(interface->buffer + 2, &argument, sizeof(argument));
-
-  // TODO Remove hardcoded values
-  /* Checksum should be valid only for first CMD0 and CMD8 commands */
-  switch (code)
-  {
-    case 0:
-      interface->buffer[6] = 0x94;
-      break;
-
-    case 8:
-      interface->buffer[6] = 0x86;
-      break;
-
-    default:
-      interface->buffer[6] = 0x00;
-      break;
-  }
-  interface->buffer[6] |= 0x01; /* Add end bit */
-  interface->buffer[7] = 0xFF;
-
-  acquireBus(interface);
-
-  interface->state = SDIO_SPI_STATE_SEND_CMD;
-  bytesWritten = ifWrite(interface->interface, interface->buffer, 8);
-  if (bytesWritten != 8)
-  {
-    interface->status = E_INTERFACE;
-    interface->state = SDIO_SPI_STATE_IDLE;
-    releaseBus(interface);
-    return;
+    sendInitSequence(interface);
+    interface->state = SDIO_SPI_STATE_INIT;
   }
   else
   {
-
+    sendCommand(interface);
+    interface->state = SDIO_SPI_STATE_SEND_CMD;
   }
 
   while (interface->status == E_BUSY); //FIXME
@@ -215,6 +157,45 @@ static enum result responseTokenProcess(struct SdioSpi *interface)
   return res;
 }
 /*----------------------------------------------------------------------------*/
+static void sendCommand(struct SdioSpi *interface)
+{
+  const uint32_t argument = toBigEndian32(interface->argument);
+  const uint8_t code = COMMAND_CODE_VALUE(interface->command);
+
+  /* Fill the buffer */
+  interface->buffer[0] = 0xFF;
+  interface->buffer[1] = 0x40 | code;
+  memcpy(interface->buffer + 2, &argument, sizeof(argument));
+
+  // TODO Remove hardcoded values
+  /* Checksum should be valid only for first CMD0 and CMD8 commands */
+  switch (code)
+  {
+    case 0:
+      interface->buffer[6] = 0x94;
+      break;
+
+    case 8:
+      interface->buffer[6] = 0x86;
+      break;
+
+    default:
+      interface->buffer[6] = 0x00;
+      break;
+  }
+  interface->buffer[6] |= 0x01; /* Add end bit */
+  interface->buffer[7] = 0xFF;
+
+  pinReset(interface->cs);
+  ifWrite(interface->interface, interface->buffer, 8);
+}
+/*----------------------------------------------------------------------------*/
+static void sendInitSequence(struct SdioSpi *interface)
+{
+  memset(interface->buffer, 0xFF, 10);
+  ifWrite(interface->interface, interface->buffer, 10);
+}
+/*----------------------------------------------------------------------------*/
 static enum result tokenProcess(struct SdioSpi *interface,
     enum sdioToken expected)
 {
@@ -244,6 +225,11 @@ static void interruptHandler(void *object)
   pinSet(interface->debug1);
   switch (interface->state)
   {
+    case SDIO_SPI_STATE_INIT:
+      sendCommand(interface);
+      interface->state = SDIO_SPI_STATE_SEND_CMD;
+      break;
+
     case SDIO_SPI_STATE_SEND_CMD:
       tokenRequest(interface);
       interface->iteration = 0;
@@ -333,17 +319,12 @@ event:
   interface->status = res;
   interface->state = SDIO_SPI_STATE_IDLE;
 
-  releaseBus(interface);
+  pinReset(interface->debug2); //TODO Remove
+  pinSet(interface->cs);
+  ifSet(interface->interface, IF_RELEASE, 0);
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
-static void releaseBus(struct SdioSpi *interface)
-{
-  pinReset(interface->debug2);
-  pinSet(interface->cs);
-  ifSet(interface->interface, IF_RELEASE, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)

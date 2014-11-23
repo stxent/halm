@@ -15,6 +15,7 @@ extern const struct InterfaceClass * const SdioSpi;
 enum sdioSpiState
 {
   SDIO_SPI_STATE_IDLE,
+  SDIO_SPI_STATE_INIT,
   SDIO_SPI_STATE_SEND_CMD,
   SDIO_SPI_STATE_WAIT_RESPONSE,
   SDIO_SPI_STATE_READ_SHORT,
