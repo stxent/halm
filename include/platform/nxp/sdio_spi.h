@@ -59,7 +59,7 @@ struct SdioSpi
   /* Status of the last command */
   enum result status;
 
-  struct Pin debug;
+  struct Pin debug1, debug2;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDIO_SPI_H_ */
