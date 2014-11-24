@@ -89,8 +89,6 @@ static void execute(struct SdioSpi *interface)
     interface->state = SDIO_SPI_STATE_SEND_CMD;
     sendCommand(interface);
   }
-
-  while (interface->status == E_BUSY); //FIXME
 }
 /*----------------------------------------------------------------------------*/
 static enum result checksumProcess(struct SdioSpi *interface, uint16_t checksum)
@@ -326,7 +324,7 @@ static void interruptHandler(void *object)
 
     case SDIO_SPI_STATE_READ_LONG_CRC:
       //TODO Merge with previous state
-      interface->status = checksumProcess(interface, 0x0000); //TODO
+      res = checksumProcess(interface, 0x0000); //TODO
       goto event;
 
     case SDIO_SPI_STATE_WAIT_READ_TOKEN:

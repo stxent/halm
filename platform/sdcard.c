@@ -258,28 +258,39 @@ static enum result cardSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
 {
+  const uint32_t blocks = length >> BLOCK_POW;
   struct SdCard * const device = object;
+  uint32_t mode;
   enum result res;
 
-  //FIXME Hardcoded sector size
-  const uint32_t command = SDIO_COMMAND(CMD_READ_SINGLE_BLOCK,
-      SDIO_RESPONSE_NONE, SDIO_DATA_MODE);
+  if (!blocks)
+    return 0;
+
+  if ((res = ifGet(device->interface, IF_SDIO_MODE, &mode)) != E_OK)
+    return res;
+
+  const enum sdioResponse responseType =
+      mode == SDIO_SPI ? SDIO_RESPONSE_NONE : SDIO_RESPONSE_SHORT;
+  const uint32_t command = SDIO_COMMAND(blocks == 1 ? CMD_READ_SINGLE_BLOCK
+      : CMD_READ_MULTIPLE_BLOCK, responseType, SDIO_DATA_MODE);
   const uint32_t argument = device->capacity == SDCARD_SDSC ?
       (uint32_t)device->position : (uint32_t)(device->position >> BLOCK_POW);
 
-  //FIXME Different response length in SPI and native modes
   if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
     return res;
   if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
     return res;
 
-  //FIXME Hardcoded sector size
   if (!ifRead(device->interface, buffer, length))
     return E_ERROR;
 
   while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY);
 
-  return res == E_OK ? length : 0;
+  const enum result finished = executeCommand(device,
+      SDIO_COMMAND(CMD_STOP_TRANSMISSION, responseType, 0), 0, 0);
+  /* TODO Recover interface when stop failed */
+
+  return res == E_OK && finished == E_OK ? length : 0;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
