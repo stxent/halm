@@ -21,7 +21,6 @@ enum sdioSpiState
   SDIO_SPI_STATE_READ_SHORT,
   SDIO_SPI_STATE_WAIT_LONG,
   SDIO_SPI_STATE_READ_LONG,
-  SDIO_SPI_STATE_READ_LONG_CRC,
   SDIO_SPI_STATE_WAIT_READ_TOKEN,
   SDIO_SPI_STATE_READ_DATA,
   SDIO_SPI_STATE_READ_CRC,
@@ -62,7 +61,7 @@ struct SdioSpi
   /* Command response */
   uint32_t response[4];
   /* Buffer for temporary data */
-  uint8_t buffer[20];
+  uint8_t buffer[18];
   /* Iteration */
   uint8_t iteration;
   /* Current interface state */
@@ -77,7 +76,7 @@ struct SdioSpi
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 
-  struct Pin debug1, debug2;
+  struct Pin debug2;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDIO_SPI_H_ */

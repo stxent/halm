@@ -41,7 +41,7 @@ static void interruptHandler(void *);
 
 static enum result checksumProcess(struct SdioSpi *, uint16_t);
 static void checksumRequest(struct SdioSpi *);
-static void responseProcess(struct SdioSpi *, enum sdioResponse);
+static enum result responseProcess(struct SdioSpi *, enum sdioResponse);
 static void responseRequest(struct SdioSpi *, enum sdioResponse);
 static enum result responseTokenProcess(struct SdioSpi *);
 static void sendCommand(struct SdioSpi *);
@@ -107,7 +107,8 @@ static void readDataBlock(struct SdioSpi *interface)
   ifRead(interface->interface, interface->rxBuffer, interface->blockLength);
 }
 /*----------------------------------------------------------------------------*/
-static void responseProcess(struct SdioSpi *interface, enum sdioResponse type)
+static enum result responseProcess(struct SdioSpi *interface,
+    enum sdioResponse type)
 {
   /* Responses come in big-endian format */
   if (type == SDIO_RESPONSE_SHORT)
@@ -120,7 +121,11 @@ static void responseProcess(struct SdioSpi *interface, enum sdioResponse type)
 
     for (uint8_t index = 0; index < 4; ++index)
       interface->response[3 - index] = fromBigEndian32(buffer[index]);
+
+    //TODO Add CRC checking
   }
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void responseRequest(struct SdioSpi *interface, enum sdioResponse type)
@@ -132,8 +137,8 @@ static void responseRequest(struct SdioSpi *interface, enum sdioResponse type)
   }
   else
   {
-    /* Read 128-bit response */
-    ifRead(interface->interface, interface->buffer, 16);
+    /* Read 128-bit response and 16-bit checksum */
+    ifRead(interface->interface, interface->buffer, 18);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -223,19 +228,18 @@ static void interruptHandler(void *object)
   struct SdioSpi * const interface = object;
   enum result res;
 
-  pinSet(interface->debug1);
   switch (interface->state)
   {
     case SDIO_SPI_STATE_INIT:
       sendCommand(interface);
       interface->state = SDIO_SPI_STATE_SEND_CMD;
-      break;
+      return;
 
     case SDIO_SPI_STATE_SEND_CMD:
       tokenRequest(interface);
       interface->iteration = 0;
       interface->state = SDIO_SPI_STATE_WAIT_RESPONSE;
-      break;
+      return;
 
     case SDIO_SPI_STATE_WAIT_RESPONSE:
       res = responseTokenProcess(interface);
@@ -244,6 +248,7 @@ static void interruptHandler(void *object)
         /* Device is busy, try again */
         tokenRequest(interface);
         ++interface->iteration;
+        return;
       }
       else if (res == E_OK || res == E_IDLE)
       {
@@ -255,47 +260,49 @@ static void interruptHandler(void *object)
             responseRequest(interface, SDIO_RESPONSE_SHORT);
             interface->tokenStatus = res;
             interface->state = SDIO_SPI_STATE_READ_SHORT;
-            break;
+            return;
 
           case SDIO_RESPONSE_LONG:
             tokenRequest(interface);
             interface->iteration = 0;
             interface->tokenStatus = res;
             interface->state = SDIO_SPI_STATE_WAIT_LONG;
-            break;
+            return;
 
           default:
-          {
-            if (!(flags & SDIO_DATA_MODE))
-            {
-              /* No response expected */
-              goto event;
-            }
+            break;
+        }
 
-            if (flags & SDIO_READ_WRITE)
-            {
-              /* Write data mode */
-            }
-            else
-            {
-              /* Read data mode */
-              tokenRequest(interface);
-              interface->iteration = 0;
-              interface->state = SDIO_SPI_STATE_WAIT_READ_TOKEN;
-            }
-          }
+        if (!(flags & SDIO_DATA_MODE))
+        {
+          /* No response expected, stop the transfer */
+          break;
+        }
+
+        if (flags & SDIO_READ_WRITE)
+        {
+          /* Write data mode */
+          //TODO
+        }
+        else
+        {
+          /* Read data mode */
+          tokenRequest(interface);
+          interface->iteration = 0;
+          interface->state = SDIO_SPI_STATE_WAIT_READ_TOKEN;
+          return;
         }
       }
       else
       {
-        goto event;
+        /* Error occurred, stop the transfer */
+        break;
       }
-      break;
 
     case SDIO_SPI_STATE_READ_SHORT:
-      responseProcess(interface, SDIO_RESPONSE_SHORT);
-      res = interface->tokenStatus;
-      goto event;
+      if ((res = responseProcess(interface, SDIO_RESPONSE_SHORT)) == E_OK)
+        res = interface->tokenStatus;
+      break;
 
     case SDIO_SPI_STATE_WAIT_LONG:
       res = tokenProcess(interface, TOKEN_START);
@@ -304,28 +311,23 @@ static void interruptHandler(void *object)
         /* Device is busy, try again */
         tokenRequest(interface);
         ++interface->iteration;
+        return;
       }
       else if (res == E_OK)
       {
         responseRequest(interface, SDIO_RESPONSE_LONG);
         interface->state = SDIO_SPI_STATE_READ_LONG;
+        return;
       }
       else
       {
-        goto event;
+        /* Error occurred, stop the transfer */
+        break;
       }
-      break;
 
     case SDIO_SPI_STATE_READ_LONG:
-      responseProcess(interface, SDIO_RESPONSE_LONG);
-      checksumRequest(interface);
-      interface->state = SDIO_SPI_STATE_READ_LONG_CRC;
+      res = responseProcess(interface, SDIO_RESPONSE_LONG);
       break;
-
-    case SDIO_SPI_STATE_READ_LONG_CRC:
-      //TODO Merge with previous state
-      res = checksumProcess(interface, 0x0000); //TODO
-      goto event;
 
     case SDIO_SPI_STATE_WAIT_READ_TOKEN:
       res = tokenProcess(interface, TOKEN_START);
@@ -334,31 +336,37 @@ static void interruptHandler(void *object)
         /* Device is busy, try again */
         tokenRequest(interface);
         ++interface->iteration;
+        return;
       }
       else if (res == E_OK)
       {
         readDataBlock(interface);
         interface->left -= interface->blockLength;
         interface->state = SDIO_SPI_STATE_READ_DATA;
+        return;
       }
       else
       {
-        goto event;
+        /* Error occurred, stop the transfer */
+        break;
       }
-      break;
 
     case SDIO_SPI_STATE_READ_DATA:
       checksumRequest(interface);
       interface->state = SDIO_SPI_STATE_READ_CRC;
-      break;
+      return;
 
     case SDIO_SPI_STATE_READ_CRC:
       if (COMMAND_FLAG_VALUE(interface->command) & SDIO_CHECK_CRC)
       {
-        //TODO Rewrite
+        //TODO Rewrite checksum calculation
         if ((res = checksumProcess(interface, 0x0000)) != E_OK)
-          goto event;
+        {
+          /* Error occurred, stop the transfer */
+          break;
+        }
       }
+
       if (interface->left)
       {
         /* Continue to read data */
@@ -366,23 +374,20 @@ static void interruptHandler(void *object)
         interface->iteration = 0;
         interface->rxBuffer += interface->blockLength;
         interface->state = SDIO_SPI_STATE_WAIT_READ_TOKEN;
+        return;
       }
       else
       {
+        /* No more data required, stop the transfer */
         res = E_OK;
-        goto event;
+        break;
       }
 
     default:
-      break;
+      return;
   }
 
-  pinReset(interface->debug1); //TODO Remove
-  return;
-
-event:
-  pinReset(interface->debug1); //TODO Remove
-  /* End of transfer */
+  /* Finalize transfer */
   interface->status = res;
   interface->state = SDIO_SPI_STATE_IDLE;
 
@@ -416,8 +421,6 @@ static enum result sdioInit(void *object, const void *configBase)
     return res;
 
   //TODO Remove debug pin
-  interface->debug1 = pinInit(PIN(1, 0));
-  pinOutput(interface->debug1, 0);
   interface->debug2 = pinInit(PIN(2, 10));
   pinOutput(interface->debug2, 0);
 
