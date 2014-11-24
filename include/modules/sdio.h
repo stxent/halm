@@ -58,6 +58,7 @@ enum sdioOption
   IF_SDIO_ARGUMENT,
   IF_SDIO_COMMAND,
   IF_SDIO_RESPONSE,
+  IF_SDIO_BLOCK_LENGTH
 };
 /*----------------------------------------------------------------------------*/
 enum sdioResponse

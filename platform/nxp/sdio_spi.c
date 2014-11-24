@@ -106,7 +106,7 @@ static void checksumRequest(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void readDataBlock(struct SdioSpi *interface)
 {
-  ifRead(interface->interface, interface->rxBuffer, 512); //FIXME Hardcoded
+  ifRead(interface->interface, interface->rxBuffer, interface->blockLength);
 }
 /*----------------------------------------------------------------------------*/
 static void responseProcess(struct SdioSpi *interface, enum sdioResponse type)
@@ -340,6 +340,7 @@ static void interruptHandler(void *object)
       else if (res == E_OK)
       {
         readDataBlock(interface);
+        interface->left -= interface->blockLength;
         interface->state = SDIO_SPI_STATE_READ_DATA;
       }
       else
@@ -354,9 +355,25 @@ static void interruptHandler(void *object)
       break;
 
     case SDIO_SPI_STATE_READ_CRC:
-      /* TODO Add checksum checking */
-      checksumProcess(interface, 0x0000);
-      goto event;
+      if (COMMAND_FLAG_VALUE(interface->command) & SDIO_CHECK_CRC)
+      {
+        //TODO Rewrite
+        if ((res = checksumProcess(interface, 0x0000)) != E_OK)
+          goto event;
+      }
+      if (interface->left)
+      {
+        /* Continue to read data */
+        tokenRequest(interface);
+        interface->iteration = 0;
+        interface->rxBuffer += interface->blockLength;
+        interface->state = SDIO_SPI_STATE_WAIT_READ_TOKEN;
+      }
+      else
+      {
+        res = E_OK;
+        goto event;
+      }
 
     default:
       break;
@@ -406,15 +423,18 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->debug2 = pinInit(PIN(2, 10));
   pinOutput(interface->debug2, 0);
 
+  interface->blockLength = 512; /* 512 bytes by default */
+  interface->left = 0;
+  interface->rxBuffer = 0;
+  interface->txBuffer = 0;
+
   interface->argument = 0;
+  interface->blocking = true;
   interface->callback = 0;
   interface->command = 0;
   interface->state = SDIO_SPI_STATE_IDLE;
   interface->status = E_OK;
   memset(interface->response, 0, sizeof(interface->response));
-
-  interface->rxBuffer = 0;
-  interface->txBuffer = 0;
 
   return E_OK;
 }
@@ -510,10 +530,14 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi * const interface = object;
 
+  /* Check buffer alignment */
+  assert(!(length % interface->blockLength));
+
   interface->status = E_BUSY;
   ifSet(interface->interface, IF_ACQUIRE, 0);
   pinSet(interface->debug2); //TODO Remove
 
+  interface->left = length;
   interface->rxBuffer = buffer;
   interface->state = SDIO_SPI_STATE_SEND_CMD;
   sendCommand(interface);
@@ -525,4 +549,8 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi * const interface = object;
 
+  /* Check buffer alignment */
+  assert(!(length % interface->blockLength));
+
+  return length;
 }
