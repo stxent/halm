@@ -269,10 +269,13 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
   if ((res = ifGet(device->interface, IF_SDIO_MODE, &mode)) != E_OK)
     return res;
 
-  const enum sdioResponse responseType =
-      mode == SDIO_SPI ? SDIO_RESPONSE_NONE : SDIO_RESPONSE_SHORT;
-  const uint32_t command = SDIO_COMMAND(blocks == 1 ? CMD_READ_SINGLE_BLOCK
-      : CMD_READ_MULTIPLE_BLOCK, responseType, SDIO_DATA_MODE);
+  const enum sdioCommand commandType = blocks == 1 ? CMD_READ_SINGLE_BLOCK
+      : CMD_READ_MULTIPLE_BLOCK;
+  const enum sdioResponse responseType = mode == SDIO_SPI ? SDIO_RESPONSE_NONE
+      : SDIO_RESPONSE_SHORT;
+
+  const uint32_t command = SDIO_COMMAND(commandType, responseType,
+      SDIO_DATA_MODE | SDIO_AUTO_STOP);
   const uint32_t argument = device->capacity == SDCARD_SDSC ?
       (uint32_t)device->position : (uint32_t)(device->position >> BLOCK_POW);
 
@@ -286,11 +289,7 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
 
   while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY);
 
-  const enum result finished = executeCommand(device,
-      SDIO_COMMAND(CMD_STOP_TRANSMISSION, responseType, 0), 0, 0);
-  /* TODO Recover interface when stop failed */
-
-  return res == E_OK && finished == E_OK ? length : 0;
+  return res == E_OK ? length : 0;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)

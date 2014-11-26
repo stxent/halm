@@ -305,7 +305,18 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
   }
   else if (flags & SDIO_AUTO_STOP)
   {
-    //TODO Add auto stop mode
+    /*
+     * Inject Stop Transmission command when Auto Stop flag is set.
+     * Command injection changes current command code. This behavior does not
+     * interfere with interface response type because response parameters
+     * are similar to ones in the original command.
+     */
+    interface->command = SDIO_COMMAND(CMD_STOP_TRANSMISSION,
+        SDIO_RESPONSE_NONE, 0);
+    interface->argument = 0;
+
+    sendCommand(interface, interface->command, interface->argument);
+    interface->retries = TOKEN_RETRIES;
     return STATE_SEND_CMD;
   }
   else
