@@ -75,8 +75,6 @@ struct SdioSpi
   struct Pin cs;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
-
-  struct Pin debug2;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDIO_SPI_H_ */
