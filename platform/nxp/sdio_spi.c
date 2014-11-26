@@ -11,8 +11,12 @@
 #include <modules/sdio_defs.h>
 #include <platform/nxp/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
-#define BUSY_RETRIES  10000
-#define TOKEN_RETRIES 8
+#define BUSY_TIMER_FREQUENCY 100000
+#define BUSY_READ_DELAY      10
+#define BUSY_READ_RETRIES    1000
+#define BUSY_WRITE_DELAY     40
+#define BUSY_WRITE_RETRIES   1000
+#define TOKEN_RETRIES        8
 /*----------------------------------------------------------------------------*/
 enum state
 {
@@ -26,7 +30,7 @@ enum state
   STATE_WAIT_READ,
   STATE_READ_DATA,
   STATE_READ_CRC,
-  STATE_WAIT_BUSY
+  STATE_READ_BUSY
 };
 /*----------------------------------------------------------------------------*/
 enum sdioResponseFlags
@@ -74,6 +78,8 @@ static enum state stateWaitReadAdvance(struct SdioSpi *);
 static void stateReadDataEnter(struct SdioSpi *);
 static void stateReadCrcEnter(struct SdioSpi *);
 static enum state stateReadCrcAdvance(struct SdioSpi *);
+static void stateReadBusyEnter(struct SdioSpi *);
+static enum state stateReadBusyAdvance(struct SdioSpi *);
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *);
 static void interruptHandler(void *);
@@ -100,7 +106,7 @@ static const struct StateEntry stateTable[] = {
     [STATE_WAIT_READ]   = {stateWaitReadEnter, stateWaitReadAdvance, 0},
     [STATE_READ_DATA]   = {stateReadDataEnter, 0, STATE_READ_CRC},
     [STATE_READ_CRC]    = {stateReadCrcEnter, stateReadCrcAdvance, 0},
-    [STATE_WAIT_BUSY]   = {0, 0, STATE_IDLE}
+    [STATE_READ_BUSY]   = {stateReadBusyEnter, stateReadBusyAdvance, 0}
 };
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass sdioTable = {
@@ -154,7 +160,7 @@ static enum state stateWaitRespAdvance(struct SdioSpi *interface)
       else
       {
         /* Read data mode */
-        interface->retries = TOKEN_RETRIES;
+        interface->retries = BUSY_READ_RETRIES;
         return STATE_WAIT_READ;
       }
     }
@@ -264,7 +270,7 @@ static enum state stateWaitReadAdvance(struct SdioSpi *interface)
   else if (res == E_BUSY)
   {
     /* Interface is busy, try again */
-    return STATE_WAIT_READ;
+    return interface->timer ? STATE_READ_BUSY : STATE_WAIT_READ;
   }
   else
   {
@@ -300,7 +306,7 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
   if (interface->left)
   {
     /* Continue to read data */
-    interface->retries = TOKEN_RETRIES;
+    interface->retries = BUSY_READ_RETRIES;
     return STATE_WAIT_READ;
   }
   else if (flags & SDIO_AUTO_STOP)
@@ -325,6 +331,20 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
     interface->status = E_OK;
     return STATE_IDLE;
   }
+}
+/*----------------------------------------------------------------------------*/
+static void stateReadBusyEnter(struct SdioSpi *interface)
+{
+  timerSetOverflow(interface->timer, BUSY_READ_DELAY);
+  timerSetValue(interface->timer, 0);
+  timerSetEnabled(interface->timer, true);
+  --interface->retries;
+}
+/*----------------------------------------------------------------------------*/
+static enum state stateReadBusyAdvance(struct SdioSpi *interface)
+{
+  timerSetEnabled(interface->timer, false);
+  return STATE_WAIT_READ;
 }
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *interface)
@@ -457,10 +477,22 @@ static enum result sdioInit(void *object, const void *configBase)
   res = ifSet(interface->interface, IF_ZEROCOPY, 0);
   if (res != E_OK)
     return res;
-
   res = ifCallback(interface->interface, interruptHandler, interface);
   if (res != E_OK)
     return res;
+
+  interface->timer = config->timer;
+
+  if (interface->timer)
+  {
+    /* TODO Add priority configuration */
+    timerSetEnabled(interface->timer, false);
+    timerCallback(interface->timer, interruptHandler, interface);
+
+    res = timerSetFrequency(interface->timer, BUSY_TIMER_FREQUENCY);
+    if (res != E_OK)
+      return res;
+  }
 
   interface->blockLength = 512; /* 512 bytes by default */
   interface->left = 0;

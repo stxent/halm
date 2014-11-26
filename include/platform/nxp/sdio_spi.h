@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <pin.h>
+#include <timer.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdioSpi;
 /*----------------------------------------------------------------------------*/
@@ -16,6 +17,11 @@ struct SdioSpiConfig
 {
   /** Mandatory: underlying serial interface. */
   struct Interface *interface;
+  /**
+   * Optional: timer to reduce interrupt count. Timer interrupts should have
+   * lower priority than serial interface interrupts.
+   */
+  struct Timer *timer;
   /** Mandatory: chip select pin. */
   pin_t cs;
 };
@@ -29,6 +35,8 @@ struct SdioSpi
 
   /* Parent SPI interface */
   struct Interface *interface;
+  /* Timer to generate periodic interrupt requests */
+  struct Timer *timer;
 
   /* Pointer to an input buffer */
   uint8_t *rxBuffer;
@@ -45,10 +53,10 @@ struct SdioSpi
   uint32_t command;
   /* Command response */
   uint32_t response[4];
+  /* Retries left */
+  uint16_t retries;
   /* Buffer for temporary data */
   uint8_t buffer[18];
-  /* Retries left */
-  uint8_t retries;
   /* Current interface state */
   uint8_t state;
   /* Status of the last command */

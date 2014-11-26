@@ -177,7 +177,7 @@ static void tmrSetEnabled(void *object, bool state)
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->parent.reg;
 
-  /* Put timer in the reset state */
+  /* Temporarily disable timer */
   reg->TCR = 0;
   /* Clear pending interrupt flags and direct memory access requests */
   reg->IR = IR_MATCH_INTERRUPT(timer->event);
