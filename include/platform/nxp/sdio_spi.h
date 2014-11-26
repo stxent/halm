@@ -47,8 +47,8 @@ struct SdioSpi
   uint32_t response[4];
   /* Buffer for temporary data */
   uint8_t buffer[18];
-  /* Iteration */
-  uint8_t iteration;
+  /* Retries left */
+  uint8_t retries;
   /* Current interface state */
   uint8_t state;
   /* Status of the last command */
