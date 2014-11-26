@@ -12,21 +12,6 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdioSpi;
 /*----------------------------------------------------------------------------*/
-enum sdioSpiState
-{
-  SDIO_SPI_STATE_IDLE,
-  SDIO_SPI_STATE_INIT,
-  SDIO_SPI_STATE_SEND_CMD,
-  SDIO_SPI_STATE_WAIT_RESPONSE,
-  SDIO_SPI_STATE_READ_SHORT,
-  SDIO_SPI_STATE_WAIT_LONG,
-  SDIO_SPI_STATE_READ_LONG,
-  SDIO_SPI_STATE_WAIT_READ_TOKEN,
-  SDIO_SPI_STATE_READ_DATA,
-  SDIO_SPI_STATE_READ_CRC,
-  SDIO_SPI_STATE_WAIT_BUSY
-};
-/*----------------------------------------------------------------------------*/
 struct SdioSpiConfig
 {
   /** Mandatory: underlying serial interface. */
@@ -65,7 +50,7 @@ struct SdioSpi
   /* Iteration */
   uint8_t iteration;
   /* Current interface state */
-  enum sdioSpiState state;
+  uint8_t state;
   /* Status of the last command */
   enum result status;
   /* Status of the last processed token */
