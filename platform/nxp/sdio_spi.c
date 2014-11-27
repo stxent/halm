@@ -30,7 +30,14 @@ enum state
   STATE_WAIT_READ,
   STATE_READ_DATA,
   STATE_READ_CRC,
-  STATE_READ_BUSY
+  STATE_READ_DELAY,
+  STATE_WRITE_TOKEN,
+  STATE_WRITE_DATA,
+  STATE_WRITE_CRC,
+  STATE_WAIT_WRITE,
+  STATE_WRITE_DELAY,
+  STATE_WRITE_BUSY,
+  STATE_WRITE_STOP
 };
 /*----------------------------------------------------------------------------*/
 enum sdioResponseFlags
@@ -78,8 +85,17 @@ static enum state stateWaitReadAdvance(struct SdioSpi *);
 static void stateReadDataEnter(struct SdioSpi *);
 static void stateReadCrcEnter(struct SdioSpi *);
 static enum state stateReadCrcAdvance(struct SdioSpi *);
-static void stateReadBusyEnter(struct SdioSpi *);
-static enum state stateReadBusyAdvance(struct SdioSpi *);
+static void stateDelayEnter(struct SdioSpi *);
+static enum state stateReadDelayAdvance(struct SdioSpi *);
+static void stateWriteTokenEnter(struct SdioSpi *);
+static void stateWriteDataEnter(struct SdioSpi *);
+static void stateWriteCrcEnter(struct SdioSpi *);
+static void stateWaitWriteEnter(struct SdioSpi *);
+static enum state stateWaitWriteAdvance(struct SdioSpi *);
+static enum state stateWriteDelayAdvance(struct SdioSpi *);
+static void stateWriteBusyEnter(struct SdioSpi *);
+static enum state stateWriteBusyAdvance(struct SdioSpi *);
+static void stateWriteStopEnter(struct SdioSpi *);
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *);
 static void interruptHandler(void *);
@@ -106,7 +122,14 @@ static const struct StateEntry stateTable[] = {
     [STATE_WAIT_READ]   = {stateWaitReadEnter, stateWaitReadAdvance, 0},
     [STATE_READ_DATA]   = {stateReadDataEnter, 0, STATE_READ_CRC},
     [STATE_READ_CRC]    = {stateReadCrcEnter, stateReadCrcAdvance, 0},
-    [STATE_READ_BUSY]   = {stateReadBusyEnter, stateReadBusyAdvance, 0}
+    [STATE_READ_DELAY]  = {stateDelayEnter, stateReadDelayAdvance, 0},
+    [STATE_WRITE_TOKEN] = {stateWriteTokenEnter, 0, STATE_WRITE_DATA},
+    [STATE_WRITE_DATA]  = {stateWriteDataEnter, 0, STATE_WRITE_CRC},
+    [STATE_WRITE_CRC]   = {stateWriteCrcEnter, 0, STATE_WAIT_WRITE},
+    [STATE_WAIT_WRITE]  = {stateWaitWriteEnter, stateWaitWriteAdvance, 0},
+    [STATE_WRITE_DELAY] = {stateDelayEnter, stateWriteDelayAdvance, 0},
+    [STATE_WRITE_BUSY]  = {stateWriteBusyEnter, stateWriteBusyAdvance, 0},
+    [STATE_WRITE_STOP]  = {stateWriteStopEnter, 0, STATE_WRITE_BUSY}
 };
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass sdioTable = {
@@ -158,8 +181,7 @@ static enum state stateWaitRespAdvance(struct SdioSpi *interface)
         if (interface->timer)
           timerSetOverflow(interface->timer, BUSY_WRITE_DELAY);
 
-        interface->retries = BUSY_WRITE_RETRIES;
-        //TODO
+        return STATE_WRITE_TOKEN;
       }
       else
       {
@@ -280,7 +302,7 @@ static enum state stateWaitReadAdvance(struct SdioSpi *interface)
   else if (res == E_BUSY)
   {
     /* Interface is busy, try again */
-    return interface->timer ? STATE_READ_BUSY : STATE_WAIT_READ;
+    return interface->timer ? STATE_READ_DELAY : STATE_WAIT_READ;
   }
   else
   {
@@ -343,17 +365,123 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void stateReadBusyEnter(struct SdioSpi *interface)
+static void stateDelayEnter(struct SdioSpi *interface)
 {
   timerSetValue(interface->timer, 0);
   timerSetEnabled(interface->timer, true);
   --interface->retries;
 }
 /*----------------------------------------------------------------------------*/
-static enum state stateReadBusyAdvance(struct SdioSpi *interface)
+static enum state stateReadDelayAdvance(struct SdioSpi *interface)
 {
   timerSetEnabled(interface->timer, false);
   return STATE_WAIT_READ;
+}
+/*----------------------------------------------------------------------------*/
+static void stateWriteTokenEnter(struct SdioSpi *interface)
+{
+  /* Auto stop is enabled only during multiple block write */
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  interface->buffer[0] = flags & SDIO_AUTO_STOP ? TOKEN_START_MULTIPLE
+      : TOKEN_START;
+
+  interface->retries = TOKEN_RETRIES;
+  ifWrite(interface->bus, interface->buffer, 1);
+}
+/*----------------------------------------------------------------------------*/
+static void stateWriteDataEnter(struct SdioSpi *interface)
+{
+  ifWrite(interface->bus, interface->txBuffer, interface->blockLength);
+  interface->left -= interface->blockLength;
+  interface->txBuffer += interface->blockLength;
+}
+/*----------------------------------------------------------------------------*/
+static void stateWriteCrcEnter(struct SdioSpi *interface)
+{
+  /* TODO Add checksum calculation */
+  memset(interface->buffer, 0, 2);
+  ifWrite(interface->bus, interface->buffer, 2);
+}
+/*----------------------------------------------------------------------------*/
+static void stateWaitWriteEnter(struct SdioSpi *interface)
+{
+  ifRead(interface->bus, interface->buffer, 1);
+  --interface->retries;
+}
+/*----------------------------------------------------------------------------*/
+static enum state stateWaitWriteAdvance(struct SdioSpi *interface)
+{
+  const uint8_t token = interface->buffer[0] & 0x1F;
+  const enum result res = parseDataToken(interface, token, TOKEN_DATA_ACCEPTED);
+
+  if (res == E_OK)
+  {
+    interface->retries = BUSY_WRITE_RETRIES;
+    return STATE_WRITE_BUSY;
+  }
+  else if (res == E_BUSY)
+  {
+    /* Interface is busy, try again */
+    return STATE_WAIT_WRITE;
+  }
+  else
+  {
+    /* Error occurred, stop the transfer */
+    interface->status = res;
+    return STATE_IDLE;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum state stateWriteDelayAdvance(struct SdioSpi *interface)
+{
+  timerSetEnabled(interface->timer, false);
+  return STATE_WRITE_BUSY;
+}
+/*----------------------------------------------------------------------------*/
+static void stateWriteBusyEnter(struct SdioSpi *interface)
+{
+  ifRead(interface->bus, interface->buffer, 1);
+  --interface->retries;
+}
+/*----------------------------------------------------------------------------*/
+static enum state stateWriteBusyAdvance(struct SdioSpi *interface)
+{
+  if (interface->buffer[0] != 0xFF)
+  {
+    if (!interface->retries)
+    {
+      /* Error occurred, stop the transfer */
+      interface->status = E_TIMEOUT;
+      return STATE_IDLE;
+    }
+    else
+      return interface->timer ? STATE_WRITE_BUSY : STATE_WAIT_WRITE;
+  }
+  else
+  {
+    if (interface->left)
+      return STATE_WRITE_TOKEN;
+
+    const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+
+    if ((flags & SDIO_AUTO_STOP) && interface->txBuffer)
+    {
+      interface->txBuffer = 0;
+      interface->retries = BUSY_WRITE_RETRIES;
+      return STATE_WRITE_STOP;
+    }
+    else
+    {
+      interface->status = E_OK;
+      return STATE_IDLE;
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void stateWriteStopEnter(struct SdioSpi *interface)
+{
+  interface->buffer[0] = TOKEN_STOP;
+  ifWrite(interface->bus, interface->buffer, 1);
 }
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *interface)
@@ -642,6 +770,16 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   /* Check buffer alignment */
   assert(!(length % interface->blockLength));
+
+  interface->status = E_BUSY;
+  ifSet(interface->bus, IF_ACQUIRE, 0);
+
+  interface->left = length;
+  interface->txBuffer = buffer;
+
+  /* Begin execution */
+  interface->state = STATE_SEND_CMD;
+  stateTable[STATE_SEND_CMD].enter(interface);
 
   return length;
 }

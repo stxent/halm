@@ -313,5 +313,38 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
 /*----------------------------------------------------------------------------*/
 static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
+  const uint32_t blocks = length >> BLOCK_POW;
   struct SdCard * const device = object;
+  uint32_t mode;
+  enum result res;
+
+  if (!blocks)
+    return 0;
+
+  if ((res = ifGet(device->interface, IF_SDIO_MODE, &mode)) != E_OK)
+    return res;
+
+  const enum sdioCommand commandType = blocks == 1 ? CMD_WRITE_BLOCK
+      : CMD_WRITE_MULTIPLE_BLOCK;
+  const enum sdioResponse responseType = mode == SDIO_SPI ? SDIO_RESPONSE_NONE
+      : SDIO_RESPONSE_SHORT;
+  const uint32_t flags = SDIO_DATA_MODE | SDIO_WRITE_MODE
+      | (blocks > 1 ? SDIO_AUTO_STOP : 0);
+
+  const uint32_t command = SDIO_COMMAND(commandType, responseType, flags);
+  const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
+      device->position : device->position >> BLOCK_POW);
+
+  if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
+    return res;
+  if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
+    return res;
+
+  if (!ifWrite(device->interface, buffer, length))
+    return E_ERROR;
+
+  while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
+    barrier();
+
+  return res == E_OK ? length : 0;
 }
