@@ -32,7 +32,7 @@ enum i2cOption
    * Send stop after write operation. Option controls the repeated start
    * condition generation. This option is enabled by default.
    */
-  IF_I2C_SENDSTOP = IF_END_OPTION
+  IF_I2C_SENDSTOP = IF_OPTION_END
 };
 /*----------------------------------------------------------------------------*/
 struct I2cConfig

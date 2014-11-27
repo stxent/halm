@@ -53,7 +53,7 @@ enum sdioMode
 /*----------------------------------------------------------------------------*/
 enum sdioOption
 {
-  IF_SDIO_MODE = IF_END_OPTION,
+  IF_SDIO_MODE = IF_OPTION_END,
   IF_SDIO_EXECUTE,
   IF_SDIO_ARGUMENT,
   IF_SDIO_COMMAND,

@@ -24,25 +24,24 @@ enum ifOption
   /** Bytes pending in the transmit buffer. */
   IF_PENDING,
 
-  /** Burst size for the scatter-gather operations. */
-  IF_BURST,
-  /** Address of the device. */
+  /** Unique identifier of the device. */
   IF_DEVICE,
   /** Priority of the interrupts or the memory requests. */
   IF_PRIORITY,
   /** Data rate. */
   IF_RATE,
-  /** Timeout value for blocking functions. */
-  IF_TIMEOUT,
 
-  /** Internal address of the device. */
+  /** Address inside the internal address space. */
   IF_ADDRESS,
-  /** Total memory available for use with the internal addressing method. */
+  /** Size of the internal address space. */
   IF_SIZE,
-  /** Data width in bits. */
+  /** Size of the single element in bits. */
   IF_WIDTH,
 
-  /** Get status of the last command. Returns @b E_OK when interface is idle. */
+  /**
+   * Get execution status of the last command. Returns @b E_OK when interface
+   * is ready to accept a new command.
+   */
   IF_STATUS,
 
   /** Select blocking mode for the interface. */
@@ -57,8 +56,8 @@ enum ifOption
   /** Release the interface. */
   IF_RELEASE,
 
-  /** End of the list. Used for options list extensions. */
-  IF_END_OPTION
+  /** End of the list. */
+  IF_OPTION_END
 };
 /*----------------------------------------------------------------------------*/
 struct InterfaceClass
