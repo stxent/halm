@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include <memory.h>
+#include <crc/crc7.h>
 #include <modules/sdio.h>
 #include <modules/sdio_defs.h>
 #include <platform/nxp/sdio_spi.h>
@@ -550,28 +551,13 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
 {
   argument = toBigEndian32(argument);
 
-  /* Fill the buffer */
   interface->buffer[0] = 0xFF;
-  interface->buffer[1] = 0x40 | COMMAND_CODE_VALUE(command);
+  interface->buffer[1] = COMMAND_CODE_VALUE(command) | 0x40;
   memcpy(interface->buffer + 2, &argument, sizeof(argument));
-
-  // TODO Remove hardcoded values
-  /* Checksum should be valid only for first CMD0 and CMD8 commands */
-  switch (COMMAND_CODE_VALUE(command))
-  {
-    case 0:
-      interface->buffer[6] = 0x94;
-      break;
-
-    case 8:
-      interface->buffer[6] = 0x86;
-      break;
-
-    default:
-      interface->buffer[6] = 0x00;
-      break;
-  }
-  interface->buffer[6] |= 0x01; /* Add end bit */
+  interface->buffer[6] = crcUpdate(interface->crc7, 0x00,
+      interface->buffer + 1, 5);
+  /* Add end bit */
+  interface->buffer[6] = (interface->buffer[6] << 1) | 0x01;
   interface->buffer[7] = 0xFF;
 
   ifWrite(interface->bus, interface->buffer, 8);
@@ -609,6 +595,10 @@ static enum result sdioInit(void *object, const void *configBase)
     if (res != E_OK)
       return res;
   }
+
+  interface->crc7 = init(Crc7, 0);
+  if (!interface->crc7)
+    return E_MEMORY;
 
   interface->blockLength = 512; /* 512 bytes by default */
   interface->left = 0;

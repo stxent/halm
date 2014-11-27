@@ -7,6 +7,7 @@
 #ifndef PLATFORM_NXP_SDIO_SPI_H_
 #define PLATFORM_NXP_SDIO_SPI_H_
 /*----------------------------------------------------------------------------*/
+#include <crc.h>
 #include <interface.h>
 #include <pin.h>
 #include <timer.h>
@@ -19,7 +20,7 @@ struct SdioSpiConfig
   struct Interface *interface;
   /**
    * Optional: timer to reduce interrupt count. Timer interrupts should have
-   * lower priority than serial interface interrupts.
+   * lower or equal priority than serial interface interrupts.
    */
   struct Timer *timer;
   /** Mandatory: chip select pin. */
@@ -32,6 +33,8 @@ struct SdioSpi
 
   void (*callback)(void *);
   void *callbackArgument;
+
+  struct CrcEngine *crc7;
 
   /* Parent SPI interface */
   struct Interface *bus;
