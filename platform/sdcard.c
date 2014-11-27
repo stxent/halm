@@ -12,11 +12,12 @@
 #include <modules/sdio_defs.h>
 #include <platform/sdcard.h>
 /*----------------------------------------------------------------------------*/
-#define BLOCK_POW       9
-#define TOKEN_DATA_MASK 0x1F
+#define ENUM_RATE 400000
+#define WORK_RATE 25000000
+#define BLOCK_POW 9
 /*----------------------------------------------------------------------------*/
-#define OCR_CCS         BIT(30) /* Card Capacity Status */
-#define OCR_HCS         BIT(30) /* Host Capacity Support */
+#define OCR_CCS   BIT(30) /* Card Capacity Status */
+#define OCR_HCS   BIT(30) /* Host Capacity Support */
 /*----------------------------------------------------------------------------*/
 static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
     uint32_t *);
@@ -188,7 +189,9 @@ static void processCardSpecificData(struct SdCard *device, uint32_t *response)
 static enum result cardInit(void *object, const void *configBase)
 {
   const struct SdCardConfig * const config = configBase;
+  const uint32_t lowRate = ENUM_RATE;
   struct SdCard * const device = object;
+  uint32_t rate;
   enum result res;
 
   device->address = 0;
@@ -198,10 +201,20 @@ static enum result cardInit(void *object, const void *configBase)
   device->position = 0;
   device->type = SDCARD_1_0;
 
-  if ((res = initializeCard(device)) != E_OK)
+  if ((res = ifGet(device->interface, IF_RATE, &rate)) != E_OK)
     return res;
+  if (rate > WORK_RATE)
+    rate = WORK_RATE;
 
-  return E_OK;
+  /* Set low data rate for enumeration purposes */
+  if ((res = ifSet(device->interface, IF_RATE, &lowRate)) != E_OK)
+    return res;
+  /* Initialize memory card */
+  res = initializeCard(device);
+  /* Restore original interface rate */
+  ifSet(device->interface, IF_RATE, &rate);
+
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static void cardDeinit(void *object __attribute__((unused)))
@@ -224,6 +237,10 @@ static enum result cardGet(void *object, enum ifOption option, void *data)
   {
     case IF_ADDRESS:
       *(uint64_t *)data = device->position;
+      return E_OK;
+
+    case IF_SIZE:
+      *(uint64_t *)data = (uint64_t)device->blockCount << BLOCK_POW;
       return E_OK;
 
     default:
