@@ -34,7 +34,7 @@ struct SdioSpi
   void *callbackArgument;
 
   /* Parent SPI interface */
-  struct Interface *interface;
+  struct Interface *bus;
   /* Timer to generate periodic interrupt requests */
   struct Timer *timer;
 
@@ -66,8 +66,6 @@ struct SdioSpi
 
   /* Pin connected to the chip select signal of the device */
   struct Pin cs;
-  /* Selection between blocking mode and zero copy mode */
-  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDIO_SPI_H_ */

@@ -126,7 +126,7 @@ const struct InterfaceClass * const SdioSpi = &sdioTable;
 static void stateInitEnter(struct SdioSpi *interface)
 {
   memset(interface->buffer, 0xFF, 10);
-  ifWrite(interface->interface, interface->buffer, 10);
+  ifWrite(interface->bus, interface->buffer, 10);
 }
 /*----------------------------------------------------------------------------*/
 static void stateSendCommandEnter(struct SdioSpi *interface)
@@ -138,7 +138,7 @@ static void stateSendCommandEnter(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateWaitRespEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->interface, interface->buffer, 1);
+  ifRead(interface->bus, interface->buffer, 1);
   --interface->retries;
 }
 /*----------------------------------------------------------------------------*/
@@ -155,11 +155,18 @@ static enum state stateWaitRespAdvance(struct SdioSpi *interface)
       if (flags & SDIO_READ_WRITE)
       {
         /* Write data mode */
+        if (interface->timer)
+          timerSetOverflow(interface->timer, BUSY_WRITE_DELAY);
+
+        interface->retries = BUSY_WRITE_RETRIES;
         //TODO
       }
       else
       {
         /* Read data mode */
+        if (interface->timer)
+          timerSetOverflow(interface->timer, BUSY_READ_DELAY);
+
         interface->retries = BUSY_READ_RETRIES;
         return STATE_WAIT_READ;
       }
@@ -196,7 +203,7 @@ static enum state stateWaitRespAdvance(struct SdioSpi *interface)
 static void stateReadShortEnter(struct SdioSpi *interface)
 {
   /* Read 32-bit response */
-  ifRead(interface->interface, interface->buffer, 4);
+  ifRead(interface->bus, interface->buffer, 4);
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateReadShortAdvance(struct SdioSpi *interface)
@@ -208,7 +215,7 @@ static enum state stateReadShortAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateWaitLongEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->interface, interface->buffer, 1);
+  ifRead(interface->bus, interface->buffer, 1);
   --interface->retries;
 }
 /*----------------------------------------------------------------------------*/
@@ -237,7 +244,7 @@ static enum state stateWaitLongAdvance(struct SdioSpi *interface)
 static void stateReadLongEnter(struct SdioSpi *interface)
 {
   /* Read 128-bit response and 16-bit checksum */
-  ifRead(interface->interface, interface->buffer, 18);
+  ifRead(interface->bus, interface->buffer, 18);
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateReadLongAdvance(struct SdioSpi *interface)
@@ -254,7 +261,7 @@ static enum state stateReadLongAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateWaitReadEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->interface, interface->buffer, 1);
+  ifRead(interface->bus, interface->buffer, 1);
   --interface->retries;
 }
 /*----------------------------------------------------------------------------*/
@@ -282,13 +289,13 @@ static enum state stateWaitReadAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateReadDataEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->interface, interface->rxBuffer, interface->blockLength);
+  ifRead(interface->bus, interface->rxBuffer, interface->blockLength);
   interface->left -= interface->blockLength;
 }
 /*----------------------------------------------------------------------------*/
 static void stateReadCrcEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->interface, interface->buffer, 2);
+  ifRead(interface->bus, interface->buffer, 2);
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateReadCrcAdvance(struct SdioSpi *interface)
@@ -335,7 +342,6 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateReadBusyEnter(struct SdioSpi *interface)
 {
-  timerSetOverflow(interface->timer, BUSY_READ_DELAY);
   timerSetValue(interface->timer, 0);
   timerSetEnabled(interface->timer, true);
   --interface->retries;
@@ -352,7 +358,7 @@ static void execute(struct SdioSpi *interface)
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
 
   interface->status = E_BUSY;
-  ifSet(interface->interface, IF_ACQUIRE, 0);
+  ifSet(interface->bus, IF_ACQUIRE, 0);
 
   if (flags & SDIO_INITIALIZE)
   {
@@ -387,7 +393,7 @@ static void interruptHandler(void *object)
   {
     /* Finalize the transfer */
     pinSet(interface->cs);
-    ifSet(interface->interface, IF_RELEASE, 0);
+    ifSet(interface->bus, IF_RELEASE, 0);
 
     if (interface->callback)
       interface->callback(interface->callbackArgument);
@@ -458,7 +464,7 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
   interface->buffer[6] |= 0x01; /* Add end bit */
   interface->buffer[7] = 0xFF;
 
-  ifWrite(interface->interface, interface->buffer, 8);
+  ifWrite(interface->bus, interface->buffer, 8);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)
@@ -472,12 +478,12 @@ static enum result sdioInit(void *object, const void *configBase)
     return E_VALUE;
   pinOutput(interface->cs, 1);
 
-  interface->interface = config->interface;
+  interface->bus = config->interface;
 
-  res = ifSet(interface->interface, IF_ZEROCOPY, 0);
+  res = ifSet(interface->bus, IF_ZEROCOPY, 0);
   if (res != E_OK)
     return res;
-  res = ifCallback(interface->interface, interruptHandler, interface);
+  res = ifCallback(interface->bus, interruptHandler, interface);
   if (res != E_OK)
     return res;
 
@@ -500,7 +506,6 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->txBuffer = 0;
 
   interface->argument = 0;
-  interface->blocking = true;
   interface->callback = 0;
   interface->command = 0;
   interface->state = STATE_IDLE;
@@ -512,7 +517,12 @@ static enum result sdioInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void sdioDeinit(void *object __attribute__((unused)))
 {
+  struct SdioSpi * const interface = object;
 
+  if (interface->timer)
+    timerCallback(interface->timer, 0, 0);
+
+  ifCallback(interface->bus, 0, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioCallback(void *object, void (*callback)(void *),
@@ -558,6 +568,9 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
+    case IF_RATE:
+      return ifGet(interface->bus, IF_RATE, data);
+
     case IF_STATUS:
       return interface->status;
 
@@ -592,6 +605,9 @@ static enum result sdioSet(void *object, enum ifOption option,
 
   switch (option)
   {
+    case IF_RATE:
+      return ifSet(interface->bus, IF_RATE, data);
+
     default:
       return E_ERROR;
   }
@@ -605,7 +621,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   assert(!(length % interface->blockLength));
 
   interface->status = E_BUSY;
-  ifSet(interface->interface, IF_ACQUIRE, 0);
+  ifSet(interface->bus, IF_ACQUIRE, 0);
 
   interface->left = length;
   interface->rxBuffer = buffer;
