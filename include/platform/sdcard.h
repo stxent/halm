@@ -51,6 +51,8 @@ struct SdCard
   enum sdCardCapacity capacity;
   /* Type of the memory card */
   enum sdCardType type;
+  /* Type of the underlying interface */
+  bool native;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_SDCARD_H_ */

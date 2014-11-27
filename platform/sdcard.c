@@ -90,13 +90,10 @@ static uint32_t extractBits(uint32_t *data, uint16_t start, uint16_t end)
 /*----------------------------------------------------------------------------*/
 static enum result initializeCard(struct SdCard *device)
 {
+  const enum sdioResponse responseType = device->native ?
+      SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
   uint32_t response[4];
-  enum sdioMode mode;
   enum result res;
-
-  if ((res = ifGet(device->interface, IF_SDIO_MODE, response)) != E_OK)
-    return res;
-  mode = response[0];
 
   /* Send reset command */
   res = executeCommand(device, SDIO_COMMAND(CMD_GO_IDLE_STATE,
@@ -121,17 +118,15 @@ static enum result initializeCard(struct SdCard *device)
   }
 
   /* Wait till card becomes ready */
-  const enum sdioResponse initResponseType =
-      mode == SDIO_SPI ? SDIO_RESPONSE_NONE : SDIO_RESPONSE_SHORT;
   for (uint8_t counter = 100; counter; --counter)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_APP_CMD,
-        initResponseType, 0), 0, 0);
+        responseType, 0), 0, 0);
     if (res != E_OK && res != E_IDLE)
       break;
 
     res = executeCommand(device, SDIO_COMMAND(ACMD_SD_SEND_OP_COND,
-        initResponseType, 0), OCR_HCS, mode != SDIO_SPI ? response : 0);
+        responseType, 0), OCR_HCS, device->native ? response : 0);
     if (res != E_IDLE)
       break;
 
@@ -141,14 +136,14 @@ static enum result initializeCard(struct SdCard *device)
   if (res != E_OK)
   {
     /* Check card capacity information */
-    if (mode != SDIO_SPI && (response[0] & OCR_CCS))
+    if (device->native && (response[0] & OCR_CCS))
       device->capacity = SDCARD_SDHC;
 
     return res;
   }
 
   /* Read card capacity information when SPI mode is used */
-  if (mode == SDIO_SPI && device->type == SDCARD_2_0)
+  if (!device->native && device->type == SDCARD_2_0)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_READ_OCR,
         SDIO_RESPONSE_SHORT, 0), 0, response);
@@ -192,7 +187,7 @@ static enum result cardInit(void *object, const void *configBase)
   const struct SdCardConfig * const config = configBase;
   const uint32_t lowRate = ENUM_RATE;
   struct SdCard * const device = object;
-  uint32_t rate;
+  uint32_t mode, rate;
   enum result res;
 
   device->address = 0;
@@ -201,6 +196,10 @@ static enum result cardInit(void *object, const void *configBase)
   device->interface = config->interface;
   device->position = 0;
   device->type = SDCARD_1_0;
+
+  if ((res = ifGet(device->interface, IF_SDIO_MODE, &mode)) != E_OK)
+    return res;
+  device->native = mode != SDIO_SPI;
 
   if ((res = ifGet(device->interface, IF_RATE, &rate)) != E_OK)
     return res;
@@ -278,22 +277,21 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
 {
   const uint32_t blocks = length >> BLOCK_POW;
   struct SdCard * const device = object;
-  uint32_t mode;
   enum result res;
 
   if (!blocks)
     return 0;
 
-  if ((res = ifGet(device->interface, IF_SDIO_MODE, &mode)) != E_OK)
-    return res;
+  uint32_t flags = SDIO_DATA_MODE;
 
-  const enum sdioCommand commandType = blocks == 1 ? CMD_READ_SINGLE_BLOCK
-      : CMD_READ_MULTIPLE_BLOCK;
-  const enum sdioResponse responseType = mode == SDIO_SPI ? SDIO_RESPONSE_NONE
-      : SDIO_RESPONSE_SHORT;
+  if (blocks > 1)
+    flags |= SDIO_AUTO_STOP;
 
-  const uint32_t command = SDIO_COMMAND(commandType, responseType,
-      SDIO_DATA_MODE | SDIO_AUTO_STOP);
+  const enum sdioCommand code = blocks == 1 ?
+      CMD_READ_SINGLE_BLOCK : CMD_READ_MULTIPLE_BLOCK;
+  const enum sdioResponse response = device->native ?
+      SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
+  const uint32_t command = SDIO_COMMAND(code, response, flags);
   const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
       device->position : device->position >> BLOCK_POW);
 
@@ -315,23 +313,21 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   const uint32_t blocks = length >> BLOCK_POW;
   struct SdCard * const device = object;
-  uint32_t mode;
   enum result res;
 
   if (!blocks)
     return 0;
 
-  if ((res = ifGet(device->interface, IF_SDIO_MODE, &mode)) != E_OK)
-    return res;
+  uint32_t flags = SDIO_DATA_MODE | SDIO_WRITE_MODE;
 
-  const enum sdioCommand commandType = blocks == 1 ? CMD_WRITE_BLOCK
-      : CMD_WRITE_MULTIPLE_BLOCK;
-  const enum sdioResponse responseType = mode == SDIO_SPI ? SDIO_RESPONSE_NONE
-      : SDIO_RESPONSE_SHORT;
-  const uint32_t flags = SDIO_DATA_MODE | SDIO_WRITE_MODE
-      | (blocks > 1 ? SDIO_AUTO_STOP : 0);
+  if (blocks > 1)
+    flags |= SDIO_AUTO_STOP;
 
-  const uint32_t command = SDIO_COMMAND(commandType, responseType, flags);
+  const enum sdioCommand code = blocks == 1 ?
+      CMD_WRITE_BLOCK : CMD_WRITE_MULTIPLE_BLOCK;
+  const enum sdioResponse response = device->native ?
+      SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
+  const uint32_t command = SDIO_COMMAND(code, response, flags);
   const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
       device->position : device->position >> BLOCK_POW);
 
