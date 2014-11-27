@@ -61,8 +61,6 @@ struct SdioSpi
   uint8_t state;
   /* Status of the last command */
   enum result status;
-  /* Status of the last processed token */
-  enum result tokenStatus;
 
   /* Pin connected to the chip select signal of the device */
   struct Pin cs;

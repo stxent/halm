@@ -59,7 +59,8 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
   if ((res = ifSet(device->interface, IF_SDIO_EXECUTE, 0)) != E_OK)
     return res;
 
-  while ((status = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY);
+  while ((status = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
+    barrier();
 
   if (status != E_OK && status != E_IDLE)
     return status;
@@ -293,8 +294,8 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
 
   const uint32_t command = SDIO_COMMAND(commandType, responseType,
       SDIO_DATA_MODE | SDIO_AUTO_STOP);
-  const uint32_t argument = device->capacity == SDCARD_SDSC ?
-      (uint32_t)device->position : (uint32_t)(device->position >> BLOCK_POW);
+  const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
+      device->position : device->position >> BLOCK_POW);
 
   if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
     return res;
@@ -304,7 +305,8 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
   if (!ifRead(device->interface, buffer, length))
     return E_ERROR;
 
-  while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY);
+  while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
+    barrier();
 
   return res == E_OK ? length : 0;
 }

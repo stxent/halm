@@ -37,7 +37,7 @@ enum sdioFlags
   /** Enable data transfer mode. */
   SDIO_DATA_MODE    = 0x04,
   /** Clear to read data from device, set to write data to device. */
-  SDIO_READ_WRITE   = 0x08,
+  SDIO_WRITE_MODE   = 0x08,
   /** Enable stream transfer mode instead of block mode. */
   SDIO_STREAM_MODE  = 0x10,
   /** Send stop command at the end of data transfer. */

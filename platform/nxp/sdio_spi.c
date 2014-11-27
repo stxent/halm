@@ -152,7 +152,7 @@ static enum state stateWaitRespAdvance(struct SdioSpi *interface)
 
     if (flags & SDIO_DATA_MODE)
     {
-      if (flags & SDIO_READ_WRITE)
+      if (flags & SDIO_WRITE_MODE)
       {
         /* Write data mode */
         if (interface->timer)
@@ -175,7 +175,6 @@ static enum state stateWaitRespAdvance(struct SdioSpi *interface)
     switch (COMMAND_RESP_VALUE(interface->command))
     {
       case SDIO_RESPONSE_SHORT:
-        interface->tokenStatus = res;
         return STATE_READ_SHORT;
 
       case SDIO_RESPONSE_LONG:
@@ -202,14 +201,18 @@ static enum state stateWaitRespAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateReadShortEnter(struct SdioSpi *interface)
 {
-  /* Read 32-bit response */
-  ifRead(interface->bus, interface->buffer, 4);
+  /* Read 32-bit response into temporary buffer, command token is preserved */
+  ifRead(interface->bus, interface->buffer + 1, 4);
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateReadShortAdvance(struct SdioSpi *interface)
 {
-  interface->response[0] = fromBigEndian32(*(uint32_t *)interface->buffer);
-  interface->status = interface->tokenStatus;
+  uint32_t value;
+
+  /* Command token is preserved in the first byte of data buffer */
+  memcpy(&value, interface->buffer + 1, 4);
+  interface->response[0] = fromBigEndian32(value);
+  interface->status = parseResponseToken(interface, interface->buffer[0]);
   return STATE_IDLE;
 }
 /*----------------------------------------------------------------------------*/
