@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <memory.h>
 #include <platform/nxp/sdmmc_base.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
@@ -17,7 +18,7 @@ static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass sdioTable = {
-    .size = sizeof(struct SdmmcBase),
+    .size = 0, /* Abstract class */
     .init = sdioInit,
     .deinit = sdioDeinit
 };
@@ -162,7 +163,7 @@ static struct SdmmcBase *descriptors[1] = {0};
 static enum result configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
 {
-  const pin_t pinArray[4] = {
+  const pin_t pinArray[] = {
       config->clock,
       config->cmd,
       config->dat0,
@@ -219,7 +220,7 @@ static enum result sdioInit(void *object, const void *configBase)
   if ((res = setDescriptor(0, 0, interface)) != E_OK)
     return res;
 
-  if ((res = sdmmcConfigPins(interface, configBase)) != E_OK)
+  if ((res = configPins(interface, config)) != E_OK)
     return res;
 
   sysClockEnable(CLK_M4_SDIO);

@@ -651,14 +651,12 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
     case IF_SDIO_RESPONSE:
     {
       const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
+      const uint8_t length = response == SDIO_RESPONSE_LONG ? 16 : 4;
 
       if (response == SDIO_RESPONSE_NONE)
         return E_ERROR;
 
-      if (response == SDIO_RESPONSE_SHORT)
-        memcpy(data, interface->response, 4);
-      else
-        memcpy(data, interface->response, 16);
+      memcpy(data, interface->response, length);
       return E_OK;
     }
 

@@ -13,7 +13,7 @@ extern const struct PinEntry sspPins[];
 enum result sspConfigPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
-  const pin_t pinArray[4] = {
+  const pin_t pinArray[] = {
       config->miso, config->mosi, config->sck, config->cs
   };
   const struct PinEntry *pinEntry;
