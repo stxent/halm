@@ -12,12 +12,14 @@
 #include <modules/sdio_defs.h>
 #include <platform/sdcard.h>
 /*----------------------------------------------------------------------------*/
-#define ENUM_RATE 400000
-#define WORK_RATE 25000000
-#define BLOCK_POW 9
+#define ENUM_RATE         400000
+#define WORK_RATE         25000000
+#define BLOCK_POW         9
 /*----------------------------------------------------------------------------*/
-#define OCR_CCS   BIT(30) /* Card Capacity Status */
-#define OCR_HCS   BIT(30) /* Host Capacity Support */
+#define OCR_VOLTAGE_MASK  0x00FF8000
+#define OCR_CCS           BIT(30) /* Card Capacity Status */
+#define OCR_HCS           BIT(30) /* Host Capacity Support */
+#define OCR_BUSY          BIT(31) /* Card power up status bit */
 /*----------------------------------------------------------------------------*/
 static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
     uint32_t *);
@@ -90,8 +92,6 @@ static uint32_t extractBits(uint32_t *data, uint16_t start, uint16_t end)
 /*----------------------------------------------------------------------------*/
 static enum result initializeCard(struct SdCard *device)
 {
-  const enum sdioResponse responseType = device->native ?
-      SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
   uint32_t response[4];
   enum result res;
 
@@ -117,6 +117,15 @@ static enum result initializeCard(struct SdCard *device)
     return res;
   }
 
+  const enum sdioResponse responseType = device->native ?
+      SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
+  uint32_t ocr = 0;
+
+  if (device->type == SDCARD_2_0)
+    ocr |= OCR_HCS;
+  if (device->native)
+    ocr |= OCR_VOLTAGE_MASK;
+
   /* Wait till card becomes ready */
   for (uint8_t counter = 100; counter; --counter)
   {
@@ -126,21 +135,28 @@ static enum result initializeCard(struct SdCard *device)
       break;
 
     res = executeCommand(device, SDIO_COMMAND(ACMD_SD_SEND_OP_COND,
-        responseType, 0), OCR_HCS, device->native ? response : 0);
-    if (res != E_IDLE)
-      break;
+        responseType, 0), ocr, device->native ? response : 0);
+    if (device->native)
+    {
+      if (res == E_OK && (response[0] & OCR_BUSY))
+      {
+        /* Check card capacity information */
+        if (response[0] & OCR_CCS)
+          device->capacity = SDCARD_SDHC;
+        break;
+      }
+    }
+    else
+    {
+      if (res != E_IDLE)
+        break;
+    }
 
     /* TODO Remove delay */
     mdelay(10);
   }
   if (res != E_OK)
-  {
-    /* Check card capacity information */
-    if (device->native && (response[0] & OCR_CCS))
-      device->capacity = SDCARD_SDHC;
-
     return res;
-  }
 
   /* Read card capacity information when SPI mode is used */
   if (!device->native && device->type == SDCARD_2_0)
@@ -154,8 +170,24 @@ static enum result initializeCard(struct SdCard *device)
       device->capacity = SDCARD_SDHC;
   }
 
-  res = executeCommand(device, SDIO_COMMAND(CMD_SEND_CSD, SDIO_RESPONSE_LONG,
-      (uint32_t)device->address << 16), 0, response);
+  /* Read CID and RCA information */
+  if (device->native)
+  {
+    res = executeCommand(device, SDIO_COMMAND(CMD_ALL_SEND_CID,
+        SDIO_RESPONSE_LONG, 0), 0, response);
+    if (res != E_OK)
+      return res;
+
+    res = executeCommand(device, SDIO_COMMAND(CMD_SEND_RELATIVE_ADDR,
+        SDIO_RESPONSE_SHORT, 0), 0, response);
+    if (res != E_OK)
+      return res;
+
+    device->address = response[0] >> 16;
+  }
+
+  res = executeCommand(device, SDIO_COMMAND(CMD_SEND_CSD,
+      SDIO_RESPONSE_LONG, 0), (uint32_t)device->address << 16, response);
   if (res != E_OK)
     return res;
   processCardSpecificData(device, response);

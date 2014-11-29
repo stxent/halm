@@ -200,6 +200,7 @@ static enum result execute(struct Sdmmc *interface)
   /* Wait for command response */
   const uint32_t status = waitCallback(waitStatus); //TODO Rewrite
 
+  //TODO Check INTMASK_RTO for command availability
   //TODO Rewrite
   /* Return an error if there is a timeout */
   if (status & SD_INT_ERROR)
@@ -238,7 +239,7 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->parent.handler = interruptHandler;
   interface->argument = 0;
   interface->command = 0;
-  interface->rate = 100000; //FIXME
+  interface->rate = 400000; //FIXME
   interface->status = E_OK;
 
   /* Software reset */
@@ -267,7 +268,7 @@ static enum result sdioInit(void *object, const void *configBase)
   LPC_SDMMC->CLKENA = 0;
   LPC_SDMMC->CLKSRC = 0;
 
-  sdmmcSetClock(100000);
+  sdmmcSetClock(400000);
   //FIXME
   /* Enable power */
 //  LPC_SDMMC->PWREN = 1;
@@ -334,8 +335,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_RATE:
-      /* TODO */
-      *(uint32_t *)data = 100000;
+      *(uint32_t *)data = interface->rate;
       return E_OK;
 
     case IF_STATUS:
