@@ -161,7 +161,8 @@ ifeq ($(CONFIG_PLATFORM_NXP_PIN_INTERRUPT),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pin_interrupt.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_SDMMC_BASE),y)
+ifeq ($(CONFIG_PLATFORM_NXP_SDMMC),y)
+	CSOURCES += platform/$(PLATFORM_TYPE)/sdmmc.c
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/sdmmc_base.c
 endif
 
