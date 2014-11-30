@@ -61,6 +61,7 @@ struct CommonClockClass
   enum clockBranch channel;
 };
 /*----------------------------------------------------------------------------*/
+extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const Pll1;
 /*----------------------------------------------------------------------------*/
 /* Base M4 clock */
@@ -68,7 +69,7 @@ extern const struct CommonClockClass * const MainClock;
 extern const struct CommonClockClass * const Usb0Clock;
 extern const struct CommonClockClass * const Usb1Clock;
 /* APB0 and APB2 clocks */
-extern const struct CommonClockClass * const PeripheralClock;
+extern const struct CommonClockClass * const PeriphClock;
 extern const struct CommonClockClass * const Apb1Clock;
 extern const struct CommonClockClass * const Apb3Clock;
 extern const struct CommonClockClass * const SpifiClock;
@@ -92,6 +93,12 @@ extern const struct CommonClockClass * const CguOut1Clock;
 struct CommonClockConfig
 {
   enum clockSource source;
+};
+/*----------------------------------------------------------------------------*/
+struct ExternalOscConfig
+{
+  uint32_t frequency;
+  bool bypass;
 };
 /*----------------------------------------------------------------------------*/
 struct PllConfig

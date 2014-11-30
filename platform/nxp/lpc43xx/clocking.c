@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <delay.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/clocking_defs.h>
@@ -12,6 +13,11 @@
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcBranchReg(enum clockBranch);
 /*----------------------------------------------------------------------------*/
+static enum result extOscDisable(const void *);
+static enum result extOscEnable(const void *, const void *);
+static uint32_t extOscFrequency(const void *);
+static bool extOscReady(const void *);
+
 static enum result pll1ClockDisable(const void *);
 static enum result pll1ClockEnable(const void *, const void *);
 static uint32_t pll1ClockFrequency(const void *);
@@ -22,6 +28,13 @@ static enum result commonClockEnable(const void *, const void *);
 static uint32_t commonClockFrequency(const void *);
 static bool commonClockReady(const void *);
 /*----------------------------------------------------------------------------*/
+static const struct ClockClass extOscTable = {
+    .disable = extOscDisable,
+    .enable = extOscEnable,
+    .frequency = extOscFrequency,
+    .ready = extOscReady
+};
+
 static const struct ClockClass pll1Table = {
     .disable = pll1ClockDisable,
     .enable = pll1ClockEnable,
@@ -59,7 +72,7 @@ static const struct CommonClockClass usb1ClockTable = {
     .channel = CLOCK_BASE_USB1
 };
 
-static const struct CommonClockClass peripheralClockTable = {
+static const struct CommonClockClass periphClockTable = {
     .parent = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
@@ -259,12 +272,13 @@ static const struct CommonClockClass cguOut1ClockTable = {
     .channel = CLOCK_BASE_CGU_OUT1
 };
 /*----------------------------------------------------------------------------*/
+const struct ClockClass * const ExternalOsc = &extOscTable;
 const struct ClockClass * const Pll1 = &pll1Table;
 /*----------------------------------------------------------------------------*/
 const struct CommonClockClass * const MainClock = &mainClockTable;
 const struct CommonClockClass * const Usb0Clock = &usb0ClockTable;
 const struct CommonClockClass * const Usb1Clock = &usb1ClockTable;
-const struct CommonClockClass * const PeripheralClock = &peripheralClockTable;
+const struct CommonClockClass * const PeriphClock = &periphClockTable;
 const struct CommonClockClass * const Apb1Clock = &apb1ClockTable;
 const struct CommonClockClass * const Apb3Clock = &apb3ClockTable;
 const struct CommonClockClass * const SpifiClock = &spifiClockTable;
@@ -294,6 +308,52 @@ uint32_t coreClock = INT_OSC_FREQUENCY; /* FIXME Used for SysTick only */
 static volatile uint32_t *calcBranchReg(enum clockBranch source)
 {
   return &LPC_CGU->BASE_USB0_CLK + source;
+}
+/*----------------------------------------------------------------------------*/
+static enum result extOscDisable(const void *clockBase __attribute__((unused)))
+{
+  /* TODO Check current clock source */
+  LPC_CGU->XTAL_OSC_CTRL &= ~XTAL_ENABLE;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result extOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
+{
+  const struct ExternalOscConfig * const config = configBase;
+  uint32_t buffer = XTAL_ENABLE;
+
+  if (config->bypass)
+    buffer |= XTAL_BYPASS;
+
+  /* Bypass bit should not be changed in one write-action with the enable bit */
+  LPC_CGU->XTAL_OSC_CTRL = buffer;
+
+  if (config->frequency > 15000000)
+    buffer |= XTAL_HF;
+
+  buffer &= ~XTAL_ENABLE;
+  LPC_CGU->XTAL_OSC_CTRL = buffer;
+
+  extFrequency = config->frequency;
+
+  /*
+   * There is no status register so wait for 250 microseconds
+   * as recommended in the user manual.
+   */
+  udelay(250);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
+{
+  return extFrequency;
+}
+/*----------------------------------------------------------------------------*/
+static bool extOscReady(const void *clockBase __attribute__((unused)))
+{
+  return extFrequency && !(LPC_CGU->XTAL_OSC_CTRL & XTAL_ENABLE);
 }
 /*----------------------------------------------------------------------------*/
 static enum result pll1ClockDisable(const void *clockBase

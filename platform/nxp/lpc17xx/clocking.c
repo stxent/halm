@@ -126,7 +126,7 @@ static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 static bool extOscReady(const void *clockBase __attribute__((unused)))
 {
-  return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT ? true : false);
+  return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sysPllDisable(const void *clockBase __attribute__((unused)))

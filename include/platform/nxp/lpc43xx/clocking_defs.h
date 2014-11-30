@@ -15,6 +15,10 @@
 #define BASE_CLK_SEL(channel)           BIT_FIELD((channel), 24)
 #define BASE_CLK_SEL_VALUE(reg) \
     FIELD_VALUE((reg), BASE_CLK_SEL_MASK, 24)
+/*------------------Crystal Oscillator Control register-----------------------*/
+#define XTAL_ENABLE                     BIT(0) /* Inverted */
+#define XTAL_BYPASS                     BIT(1)
+#define XTAL_HF                         BIT(2)
 /*------------------PLL1 Control register-------------------------------------*/
 #define PLL1_CTRL_PD                    BIT(0)
 #define PLL1_CTRL_BYPASS                BIT(1)

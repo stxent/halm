@@ -345,7 +345,7 @@ static uint32_t usbPllFrequency(const void *clock)
 static bool usbPllReady(const void *clockBase __attribute__((unused)))
 {
   /* USB PLL should be locked */
-  return LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK;
+  return LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK != 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum result mainClockDisable(const void *clockBase
