@@ -4,12 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <delay.h> //TODO Remove
 #include <modules/sdio.h>
 #include <modules/sdio_defs.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/sdmmc.h>
 #include <platform/nxp/sdmmc_defs.h>
+/*----------------------------------------------------------------------------*/
+static enum result executeCommand(uint32_t, uint32_t);
+static enum result updateRate(struct Sdmmc *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -34,58 +36,49 @@ static const struct InterfaceClass sdioTable = {
 const struct InterfaceClass * const Sdmmc = &sdioTable;
 /*----------------------------------------------------------------------------*/
 #define FIFOSZ 32 //FIXME
-#define OCR_VOLTAGE_RANGE_MSK   0x00FF8000
 /*----------------------------------------------------------------------------*/
-bool sendLowLevelCommand(uint32_t cmd, uint32_t arg)
+static enum result executeCommand(uint32_t command, uint32_t argument)
 {
-  int32_t tmo = 50;
-
-  /* set command arg reg*/
-  LPC_SDMMC->CMDARG = arg;
-  LPC_SDMMC->CMD = CMD_START | cmd;
+  /* TODO Add timeout */
+  LPC_SDMMC->CMDARG = argument;
+  LPC_SDMMC->CMD = command | CMD_START;
 
   /* Poll until command is accepted by the CIU */
-  while (--tmo && (LPC_SDMMC->CMD & CMD_START))
-    udelay(100);
+  while (LPC_SDMMC->CMD & CMD_START);
 
-  return tmo < 1;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void sdmmcSetClock(uint32_t speed)
+static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
 {
-  /* compute SD/MMC clock dividers */
-  uint32_t div;
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  const uint32_t clock = sdmmcGetClock((struct SdmmcBase *)interface);
 
-  //FIXME Argument value
-  div = ((sdmmcGetClock(0) / speed) + 2) >> 1;
+  if (rate > clock)
+    return E_VALUE;
 
-  if ((div == LPC_SDMMC->CLKDIV) && LPC_SDMMC->CLKENA)
-    return; /* Closest speed is already set */
+  const uint32_t current = CLKDIV_VALUE(0, reg->CLKDIV);
+  const uint32_t divider = ((clock + (rate >> 1)) / rate) >> 1;
 
-  /* disable clock */
+  if (divider == current && (LPC_SDMMC->CLKENA & CLKENA_CCLK_ENABLE))
+    return E_OK; /* Closest rate is already set */
+
+  /* Disable clock and reset set user divider */
   LPC_SDMMC->CLKENA = 0;
-
-  /* User divider 0 */
-  LPC_SDMMC->CLKSRC = CLKSRC_CLK_SOURCE(0);
-
-  /* inform CIU */
-  sendLowLevelCommand(CMD_UPDATE_CLOCK_REGISTERS
-      | CMD_WAIT_PRVDATA_COMPLETE, 0);
+  LPC_SDMMC->CLKSRC = 0;
+  executeCommand(CMD_UPDATE_CLOCK_REGISTERS | CMD_WAIT_PRVDATA_COMPLETE, 0);
 
   /* Set divider 0 to desired value */
-  LPC_SDMMC->CLKDIV = (LPC_SDMMC->CLKDIV & CLKDIV_CLK_DIVIDER_MASK(0))
-      | CLKDIV_CLK_DIVIDER(0, div);
+  LPC_SDMMC->CLKDIV = (LPC_SDMMC->CLKDIV & ~CLKDIV_MASK(0))
+      | CLKDIV_DIVIDER(0, divider);
+  executeCommand(CMD_UPDATE_CLOCK_REGISTERS | CMD_WAIT_PRVDATA_COMPLETE, 0);
 
-  /* inform CIU */
-  sendLowLevelCommand(CMD_UPDATE_CLOCK_REGISTERS
-      | CMD_WAIT_PRVDATA_COMPLETE, 0);
-
-  /* enable clock */
+  /* Enable clock */
   LPC_SDMMC->CLKENA = CLKENA_CCLK_ENABLE;
+  executeCommand(CMD_UPDATE_CLOCK_REGISTERS | CMD_WAIT_PRVDATA_COMPLETE, 0);
 
-  /* inform CIU */
-  sendLowLevelCommand(CMD_UPDATE_CLOCK_REGISTERS
-      | CMD_WAIT_PRVDATA_COMPLETE, 0);
+  interface->rate = rate;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static bool waitExit = false;
@@ -164,7 +157,7 @@ static enum result execute(struct Sdmmc *interface)
   LPC_SDMMC->RINTSTS = 0xFFFFFFFF;
   evSetup(waitStatus);
 
-  uint32_t command = code | CMD_START;
+  uint32_t command = code;
 
   if (flags & SDIO_INITIALIZE)
     command |= CMD_SEND_INITIALIZATION;
@@ -191,7 +184,7 @@ static enum result execute(struct Sdmmc *interface)
   /* TODO Select/Deselect command */
 
   /* Wait for command to be accepted by CIU */
-  if (sendLowLevelCommand(command, interface->argument) != 0)
+  if (executeCommand(command, interface->argument) != 0)
   {
     interface->status = E_ERROR;
     return interface->status;
@@ -268,7 +261,9 @@ static enum result sdioInit(void *object, const void *configBase)
   LPC_SDMMC->CLKENA = 0;
   LPC_SDMMC->CLKSRC = 0;
 
-  sdmmcSetClock(400000);
+  /* Set default clock rate */
+  updateRate(interface, interface->rate); //TODO Rewrite
+
   //FIXME
   /* Enable power */
 //  LPC_SDMMC->PWREN = 1;
@@ -373,8 +368,7 @@ static enum result sdioSet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_RATE:
-      /* TODO */
-      return E_OK;
+      return updateRate(interface, *(const uint32_t *)data);
 
     default:
       return E_ERROR;

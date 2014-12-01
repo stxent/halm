@@ -71,14 +71,10 @@ enum fsmState
 /*------------------Power Enable register-------------------------------------*/
 #define PWREN_POWER_ENABLE              BIT(0)
 /*------------------Clock Divider register------------------------------------*/
-#define CLKDIV_CLK_DIVIDER_MASK(channel) \
-    BIT_FIELD(MASK(8), (channel) << 3)
-#define CLKDIV_CLK_DIVIDER(channel, value) \
-    BIT_FIELD((value), (channel) << 3)
-#define CLKDIV_CLK_DIVIDER_VALUE(channel, reg) \
-    FIELD_VALUE((reg), CLKDIV_CLK_DIVIDER_MASK(channel), (channel) << 3)
-/*------------------Clock Source register-------------------------------------*/
-#define CLKSRC_CLK_SOURCE(value)        BIT_FIELD((value), 0)
+#define CLKDIV_MASK(channel)            BIT_FIELD(MASK(8), (channel) << 3)
+#define CLKDIV_DIVIDER(channel, value)  BIT_FIELD((value), (channel) << 3)
+#define CLKDIV_VALUE(channel, reg) \
+    FIELD_VALUE((reg), CLKDIV_MASK(channel), (channel) << 3)
 /*------------------Clock Enable register-------------------------------------*/
 #define CLKENA_CCLK_ENABLE              BIT(0)
 #define CLKENA_CCLK_LOW_POWER           BIT(16)
