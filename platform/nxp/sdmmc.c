@@ -10,7 +10,8 @@
 #include <platform/nxp/sdmmc.h>
 #include <platform/nxp/sdmmc_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result executeCommand(uint32_t, uint32_t);
+static void execute(struct Sdmmc *);
+static enum result executeCommand(struct Sdmmc *, uint32_t, uint32_t);
 static enum result updateRate(struct Sdmmc *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
@@ -37,93 +38,9 @@ const struct InterfaceClass * const Sdmmc = &sdioTable;
 /*----------------------------------------------------------------------------*/
 #define FIFOSZ 32 //FIXME
 /*----------------------------------------------------------------------------*/
-static enum result executeCommand(uint32_t command, uint32_t argument)
-{
-  /* TODO Add timeout */
-  LPC_SDMMC->CMDARG = argument;
-  LPC_SDMMC->CMD = command | CMD_START;
-
-  /* Poll until command is accepted by the CIU */
-  while (LPC_SDMMC->CMD & CMD_START);
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
+static void execute(struct Sdmmc *interface)
 {
   LPC_SDMMC_Type * const reg = interface->parent.reg;
-  const uint32_t clock = sdmmcGetClock((struct SdmmcBase *)interface);
-
-  if (rate > clock)
-    return E_VALUE;
-
-  const uint32_t current = CLKDIV_VALUE(0, reg->CLKDIV);
-  const uint32_t divider = ((clock + (rate >> 1)) / rate) >> 1;
-
-  if (divider == current && (LPC_SDMMC->CLKENA & CLKENA_CCLK_ENABLE))
-    return E_OK; /* Closest rate is already set */
-
-  /* Disable clock and reset set user divider */
-  LPC_SDMMC->CLKENA = 0;
-  LPC_SDMMC->CLKSRC = 0;
-  executeCommand(CMD_UPDATE_CLOCK_REGISTERS | CMD_WAIT_PRVDATA_COMPLETE, 0);
-
-  /* Set divider 0 to desired value */
-  LPC_SDMMC->CLKDIV = (LPC_SDMMC->CLKDIV & ~CLKDIV_MASK(0))
-      | CLKDIV_DIVIDER(0, divider);
-  executeCommand(CMD_UPDATE_CLOCK_REGISTERS | CMD_WAIT_PRVDATA_COMPLETE, 0);
-
-  /* Enable clock */
-  LPC_SDMMC->CLKENA = CLKENA_CCLK_ENABLE;
-  executeCommand(CMD_UPDATE_CLOCK_REGISTERS | CMD_WAIT_PRVDATA_COMPLETE, 0);
-
-  interface->rate = rate;
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static bool waitExit = false;
-/*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
-{
-  struct Sdmmc * const interface = object;
-
-  pinSet(interface->debug);
-  irqDisable(interface->parent.irq);
-  waitExit = true; //FIXME
-  pinReset(interface->debug);
-
-  //FIXME Add callback
-}
-/*----------------------------------------------------------------------------*/
-void evSetup(uint32_t bits)
-{
-  irqClearPending(SDIO_IRQ);
-  waitExit = false;
-  LPC_SDMMC->INTMASK = bits;
-  irqEnable(SDIO_IRQ);
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t waitCallback(uint32_t bits)
-{
-  uint32_t status;
-
-  while (waitExit == 0)
-    barrier();
-
-  /* Get status and clear interrupts */
-  status = LPC_SDMMC->RINTSTS;
-  LPC_SDMMC->RINTSTS = status;
-  LPC_SDMMC->INTMASK = 0;
-
-  return status;
-}
-/*----------------------------------------------------------------------------*/
-#define SD_INT_ERROR (INTMASK_RE | INTMASK_RCRC | INTMASK_DCRC | \
-    INTMASK_RTO | INTMASK_DTO | INTMASK_HTO | INTMASK_FRUN | INTMASK_HLE | \
-    INTMASK_SBE | INTMASK_EBE)
-/*----------------------------------------------------------------------------*/
-static enum result execute(struct Sdmmc *interface)
-{
   const uint32_t code = COMMAND_CODE_VALUE(interface->command);
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
   const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
@@ -140,11 +57,8 @@ static enum result execute(struct Sdmmc *interface)
   if (flags & SDIO_DATA_MODE)
   {
     /* Reset FIFO */
-    LPC_SDMMC->CTRL |= CTRL_FIFO_RESET;
-    while (LPC_SDMMC->CTRL & CTRL_FIFO_RESET);
-
-    /* Clear interrupt status */
-    LPC_SDMMC->RINTSTS = 0xFFFFFFFF;
+    reg->CTRL |= CTRL_FIFO_RESET;
+    while (reg->CTRL & CTRL_FIFO_RESET);
   }
 
   waitStatus |= INTMASK_EBE | INTMASK_SBE | INTMASK_HLE |
@@ -152,11 +66,13 @@ static enum result execute(struct Sdmmc *interface)
   if (waitStatus & INTMASK_DTO)
     waitStatus |= INTMASK_FRUN | INTMASK_HTO | INTMASK_DTO | INTMASK_DCRC;
 
-  /* Clear the interrupts */
-  //FIXME Redundant
-  LPC_SDMMC->RINTSTS = 0xFFFFFFFF;
-  evSetup(waitStatus);
+  /* Initialize interrupts */
+  reg->RINTSTS = 0xFFFFFFFF; /* Clear pending interrupts */
+  irqClearPending(SDIO_IRQ);
+  reg->INTMASK = waitStatus;
+  irqEnable(SDIO_IRQ);
 
+  /* Prepare command */
   uint32_t command = code;
 
   if (flags & SDIO_INITIALIZE)
@@ -183,29 +99,92 @@ static enum result execute(struct Sdmmc *interface)
   /* TODO Stop/Abort command */
   /* TODO Select/Deselect command */
 
-  /* Wait for command to be accepted by CIU */
-  if (executeCommand(command, interface->argument) != 0)
-  {
+  /* Execute low-level command */
+  interface->status = E_BUSY;
+  if (executeCommand(interface, command, interface->argument) != E_OK)
+    interface->status = E_VALUE;
+}
+/*----------------------------------------------------------------------------*/
+static enum result executeCommand(struct Sdmmc *interface,
+    uint32_t command, uint32_t argument)
+{
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
+
+  /* TODO Add timeout */
+  reg->CMDARG = argument;
+  reg->CMD = command | CMD_START;
+
+  /* Poll until command is accepted by the CIU */
+  while (reg->CMD & CMD_START);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
+{
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  const uint32_t clock = sdmmcGetClock((struct SdmmcBase *)interface);
+
+  if (rate > clock)
+    return E_VALUE;
+
+  const uint32_t current = CLKDIV_VALUE(0, reg->CLKDIV);
+  const uint32_t divider = ((clock + (rate >> 1)) / rate) >> 1;
+
+  if (divider == current && (reg->CLKENA & CLKENA_CCLK_ENABLE))
+    return E_OK; /* Closest rate is already set */
+
+  /* Disable clock and reset set user divider */
+  reg->CLKENA = 0;
+  reg->CLKSRC = 0;
+  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
+      | CMD_WAIT_PRVDATA_COMPLETE, 0);
+
+  /* Set divider 0 to desired value */
+  reg->CLKDIV = (reg->CLKDIV & ~CLKDIV_MASK(0))
+      | CLKDIV_DIVIDER(0, divider);
+  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
+      | CMD_WAIT_PRVDATA_COMPLETE, 0);
+
+  /* Enable clock */
+  reg->CLKENA = CLKENA_CCLK_ENABLE;
+  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
+      | CMD_WAIT_PRVDATA_COMPLETE, 0);
+
+  interface->rate = rate;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  const uint32_t hostErrors = INTMASK_FRUN | INTMASK_HLE;
+  const uint32_t integrityErrors = INTMASK_RE | INTMASK_RCRC | INTMASK_DCRC
+      | INTMASK_SBE | INTMASK_EBE;
+  const uint32_t timeoutErrors = INTMASK_RTO | INTMASK_DRTO | INTMASK_HTO;
+
+  struct Sdmmc * const interface = object;
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  const uint32_t status = reg->MINTSTS;
+
+  pinSet(interface->debug); //FIXME Remove
+
+  irqDisable(interface->parent.irq);
+  reg->INTMASK = 0;
+  reg->RINTSTS = 0xFFFFFFFF;
+
+  if (status & hostErrors)
     interface->status = E_ERROR;
-    return interface->status;
-  }
-
-  /* Wait for command response */
-  const uint32_t status = waitCallback(waitStatus); //TODO Rewrite
-
-  //TODO Check INTMASK_RTO for command availability
-  //TODO Rewrite
-  /* Return an error if there is a timeout */
-  if (status & SD_INT_ERROR)
-  {
+  else if (status & integrityErrors)
+    interface->status = E_INTERFACE;
+  else if (status & timeoutErrors)
     interface->status = E_TIMEOUT;
-  }
   else
-  {
     interface->status = E_OK;
-  }
 
-  return interface->status;
+  if (interface->callback)
+    interface->callback(interface->callbackArgument);
+
+  pinReset(interface->debug); //FIXME Remove
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)
@@ -231,35 +210,39 @@ static enum result sdioInit(void *object, const void *configBase)
 
   interface->parent.handler = interruptHandler;
   interface->argument = 0;
+  interface->callback = 0;
   interface->command = 0;
   interface->rate = 400000; //FIXME
   interface->status = E_OK;
 
-  /* Software reset */
-  LPC_SDMMC->BMOD = BMOD_SWR;
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
 
-  /* Reset all blocks */
+  /* Reset DMA controller */
+  reg->BMOD = BMOD_SWR;
+
+  /* Reset specified blocks */
   const uint32_t resetMask = CTRL_CONTROLLER_RESET | CTRL_FIFO_RESET
       | CTRL_DMA_RESET;
 
-  LPC_SDMMC->CTRL = resetMask;
-  while (LPC_SDMMC->CTRL & resetMask);
+  reg->CTRL = resetMask;
+  while (reg->CTRL & resetMask);
 
   /* Internal DMA setup */
-  LPC_SDMMC->CTRL = CTRL_USE_INTERNAL_DMAC | CTRL_INT_ENABLE;
-  LPC_SDMMC->INTMASK = 0;
+  reg->CTRL = CTRL_USE_INTERNAL_DMAC | CTRL_INT_ENABLE;
 
-  LPC_SDMMC->RINTSTS = 0xFFFFFFFF;
-  LPC_SDMMC->TMOUT = 0xFFFFFFFF;
+  /* Clear pending interrupts */
+  reg->INTMASK = 0;
+  reg->RINTSTS = 0xFFFFFFFF;
 
-  LPC_SDMMC->FIFOTH = FIFOTH_TX_WMARK(FIFOSZ / 2)
-      | FIFOTH_RX_WMARK(FIFOSZ / 2 - 1) | FIFOTH_DMA_MTS(BURST_SIZE_4);
+  reg->FIFOTH = FIFOTH_TX_WMARK(FIFOSZ / 2) | FIFOTH_RX_WMARK(FIFOSZ / 2 - 1)
+      | FIFOTH_DMA_MTS(BURST_SIZE_4);
+  reg->TMOUT = 0xFFFFFFFF;
 
   /* Enable internal DMA */
-  LPC_SDMMC->BMOD = BMOD_DE | BMOD_DSL(4) | BMOD_PBL(BURST_SIZE_4);
+  reg->BMOD = BMOD_DE | BMOD_DSL(4) | BMOD_PBL(BURST_SIZE_4);
 
-  LPC_SDMMC->CLKENA = 0;
-  LPC_SDMMC->CLKSRC = 0;
+  reg->CLKENA = 0;
+  reg->CLKSRC = 0;
 
   /* Set default clock rate */
   updateRate(interface, interface->rate); //TODO Rewrite
