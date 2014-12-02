@@ -112,8 +112,9 @@ static enum result initializeCard(struct SdCard *device)
 
     device->type = SDCARD_2_0;
   }
-  else if (res != E_INVALID) /* Not an unsupported command */
+  else if (res != E_INVALID && res != E_TIMEOUT)
   {
+    /* Not an unsupported command */
     return res;
   }
 
@@ -291,11 +292,14 @@ static enum result cardSet(void *object, enum ifOption option,
     {
       const uint64_t position = *(const uint64_t *)data;
 
-      //TODO Hardcoded sector size
-      if ((position >> 9) >= (uint64_t)device->blockCount)
+      /* Check address alignment */
+      if (position & MASK(BLOCK_POW))
         return E_VALUE;
 
-      //TODO Add alignment check
+      /* Check address range */
+      if ((position >> BLOCK_POW) >= (uint64_t)device->blockCount)
+        return E_VALUE;
+
       device->position = position;
       return E_OK;
     }
