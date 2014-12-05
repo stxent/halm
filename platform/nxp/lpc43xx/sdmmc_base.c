@@ -163,6 +163,7 @@ static struct SdmmcBase *descriptors[1] = {0};
 static enum result configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
 {
+  //TODO Add bus mode detection
   const pin_t pinArray[] = {
       config->clock,
       config->cmd,

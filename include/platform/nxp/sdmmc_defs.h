@@ -171,7 +171,6 @@ enum fsmState
 #define BMOD_DSL_VALUE(reg)             FIELD_VALUE((reg), BMOD_DSL_MASK, 2)
 #define BMOD_DE                         BIT(7)
 #define BMOD_PBL_MASK                   BIT_FIELD(MASK(3), 8)
-#define BMOD_PBL(value)                 BIT_FIELD((value), 8)
 #define BMOD_PBL_VALUE(reg)             FIELD_VALUE((reg), BMOD_PBL_MASK, 8)
 /*------------------Internal DMAC Status register-----------------------------*/
 #define IDSTS_TI                        BIT(0)

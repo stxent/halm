@@ -7,6 +7,7 @@
 #ifndef PLATFORM_NXP_SDMMC_H_
 #define PLATFORM_NXP_SDMMC_H_
 /*----------------------------------------------------------------------------*/
+#include <dma.h>
 #include <interface.h>
 #include <irq.h>
 #include <pin.h>
@@ -30,14 +31,6 @@ struct SdmmcConfig
   pin_t dat3;
 };
 /*----------------------------------------------------------------------------*/
-struct SdmmcDmaDescriptor
-{
-  uint32_t control;
-  uint32_t size;
-  uint32_t buffer1;
-  uint32_t buffer2;
-};
-/*----------------------------------------------------------------------------*/
 struct Sdmmc
 {
   struct SdmmcBase parent;
@@ -45,6 +38,8 @@ struct Sdmmc
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* DMA channel descriptor */
+  struct Dma *dma;
   /* Argument for the most recent command */
   uint32_t argument;
   /* Interface command */
@@ -53,8 +48,6 @@ struct Sdmmc
   uint32_t rate;
   /* Status of the last command */
   enum result status;
-
-  struct SdmmcDmaDescriptor descriptor[16];
 
   struct Pin debug;
 };

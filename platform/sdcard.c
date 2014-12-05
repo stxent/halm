@@ -324,7 +324,7 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
     uint32_t response;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
-        SDIO_RESPONSE_SHORT, 0), address, &response);
+        SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, &response);
     if (res != E_OK)
       return 0;
 
@@ -385,7 +385,7 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
     uint32_t response;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
-        SDIO_RESPONSE_SHORT, 0), address, &response);
+        SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, &response);
     if (res != E_OK)
       return 0;
 
