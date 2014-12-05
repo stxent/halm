@@ -49,28 +49,29 @@ static void execute(struct Sdmmc *interface)
   if (flags & SDIO_INITIALIZE)
     waitStatus |= INTMASK_CDONE;
 
-  if (response != SDIO_RESPONSE_NONE)
-    waitStatus |= INTMASK_CDONE;
-  else
-    waitStatus |= INTMASK_DTO;
-
+  //FIXME Rewrite wait status generation
   if (flags & SDIO_DATA_MODE)
   {
     /* Reset FIFO */
     reg->CTRL |= CTRL_FIFO_RESET;
     while (reg->CTRL & CTRL_FIFO_RESET);
+
+    /* Enable data-relative interrupts */
+    waitStatus |= INTMASK_DTO;
+    waitStatus |= INTMASK_DCRC | INTMASK_DRTO | INTMASK_HTO | INTMASK_FRUN;
   }
+
+  if (!(flags & SDIO_DATA_MODE) && response != SDIO_RESPONSE_NONE)
+    waitStatus |= INTMASK_CDONE;
 
   waitStatus |= INTMASK_EBE | INTMASK_SBE | INTMASK_HLE |
       INTMASK_RTO | INTMASK_RCRC | INTMASK_RE;
-  if (waitStatus & INTMASK_DTO)
-    waitStatus |= INTMASK_FRUN | INTMASK_HTO | INTMASK_DTO | INTMASK_DCRC;
 
   /* Initialize interrupts */
   reg->RINTSTS = 0xFFFFFFFF; /* Clear pending interrupts */
-  irqClearPending(SDIO_IRQ);
+  irqClearPending(interface->parent.irq);
   reg->INTMASK = waitStatus;
-  irqEnable(SDIO_IRQ);
+  irqEnable(interface->parent.irq);
 
   /* Prepare command */
   uint32_t command = code;
@@ -96,8 +97,9 @@ static void execute(struct Sdmmc *interface)
     command |= CMD_TRANSFER_MODE;
   if (flags & SDIO_AUTO_STOP)
     command |= CMD_SEND_AUTO_STOP;
+  if (flags & SDIO_WAIT_DATA)
+    command |= CMD_WAIT_PRVDATA_COMPLETE;
   /* TODO Stop/Abort command */
-  /* TODO Select/Deselect command */
 
   /* Execute low-level command */
   interface->status = E_BUSY;
@@ -170,7 +172,7 @@ static void interruptHandler(void *object)
 
   irqDisable(interface->parent.irq);
   reg->INTMASK = 0;
-  reg->RINTSTS = 0xFFFFFFFF;
+  reg->RINTSTS = 0xFFFFFFFF; //TODO Add define
 
   if (status & hostErrors)
     interface->status = E_ERROR;
@@ -238,6 +240,8 @@ static enum result sdioInit(void *object, const void *configBase)
       | FIFOTH_DMA_MTS(BURST_SIZE_4);
   reg->TMOUT = 0xFFFFFFFF;
 
+  /* Set default block length */
+  reg->BLKSIZ = 512;
   /* Enable internal DMA */
   reg->BMOD = BMOD_DE | BMOD_DSL(4) | BMOD_PBL(BURST_SIZE_4);
 
@@ -328,6 +332,7 @@ static enum result sdioSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Sdmmc * const interface = object;
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
 
   /* Additional options */
   switch ((enum sdioOption)option)
@@ -339,6 +344,19 @@ static enum result sdioSet(void *object, enum ifOption option,
     case IF_SDIO_ARGUMENT:
       interface->argument = *(const uint32_t *)data;
       return E_OK;
+
+    case IF_SDIO_BLOCK_LENGTH:
+    {
+      const uint32_t blockLength = *(const uint32_t *)data;
+
+      if (blockLength < 0xFFFF)
+      {
+        reg->BLKSIZ = blockLength;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
+    }
 
     case IF_SDIO_COMMAND:
       interface->command = *(const uint32_t *)data;
@@ -358,11 +376,65 @@ static enum result sdioSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
+void dmaSetup(struct Sdmmc *interface, uint8_t *buffer, uint32_t length)
+{
+  //TODO Move to separate DmaList-based class
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
+
+  int i = 0;
+  uint32_t ctrl, maxs;
+
+  /* Reset DMA */
+  reg->CTRL |= CTRL_DMA_RESET | CTRL_FIFO_RESET;
+  while (reg->CTRL & CTRL_DMA_RESET);
+
+  /* Build a descriptor list using the chained DMA method */
+  while (length > 0)
+  {
+    /* Limit size of the transfer to maximum buffer size */
+    maxs = length <= DESC_SIZE_MAX ? length : DESC_SIZE_MAX;
+    length -= maxs;
+
+    /* Set buffer size */
+    interface->descriptor[i].size = DESC_SIZE_BS1(maxs);
+
+    /* Setup buffer address (chained) */
+    interface->descriptor[i].buffer1 = (uint32_t)(buffer + (i * DESC_SIZE_MAX));
+
+    /* Setup basic control */
+    ctrl = DESC_CONTROL_OWN | DESC_CONTROL_CH;
+    if (i == 0)
+      ctrl |= DESC_CONTROL_FS; /* First DMA buffer */
+
+    /* No more data? Then this is the last descriptor */
+    if (!length)
+      ctrl |= DESC_CONTROL_LD;
+    else
+      ctrl |= DESC_CONTROL_DIC;
+
+    /* Another descriptor is needed */
+    interface->descriptor[i].buffer2 =
+        (uint32_t)(&interface->descriptor[i + 1]);
+    interface->descriptor[i].control = ctrl;
+
+    ++i;
+  }
+
+  /* Set DMA descriptor base address */
+  reg->DBADDR = (uint32_t)&interface->descriptor[0];
+}
+/*----------------------------------------------------------------------------*/
 static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Sdmmc * const interface = object;
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
 
-  return 0;
+  reg->BYTCNT = length;
+  dmaSetup(interface, buffer, length);
+
+  execute(interface);
+
+  return length;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)

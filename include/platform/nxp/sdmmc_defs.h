@@ -193,5 +193,24 @@ enum fsmState
 #define IDINTEN_CES                     BIT(5)
 #define IDINTEN_NIS                     BIT(8)
 #define IDINTEN_AIS                     BIT(9)
+/*------------------DMA DESC0 descriptor--------------------------------------*/
+/* Disable interrupt on completion bit */
+#define DESC_CONTROL_DIC                BIT(1)
+/* Last Descriptor */
+#define DESC_CONTROL_LD                 BIT(2)
+/* First Descriptor */
+#define DESC_CONTROL_FS                 BIT(3)
+/* Second Address Chained */
+#define DESC_CONTROL_CH                 BIT(4)
+/* End of descriptor ring */
+#define DESC_CONTROL_ER                 BIT(5)
+/* Card Error Summary */
+#define DESC_CONTROL_CES                BIT(30)
+/* Set when descriptor is owned by DMA controller */
+#define DESC_CONTROL_OWN                BIT(31)
+/*------------------DMA DESC1 descriptor--------------------------------------*/
+#define DESC_SIZE_MAX                   4096 /* Max transfer size per buffer */
+#define DESC_SIZE_BS1(value)            BIT_FIELD((value), 0)
+#define DESC_SIZE_BS2(value)            BIT_FIELD((value), 13)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDMMC_DEFS_H_ */

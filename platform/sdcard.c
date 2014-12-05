@@ -318,6 +318,31 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
   if (!blocks)
     return 0;
 
+  if (device->native)
+  {
+    const uint32_t address = (uint32_t)device->address << 16;
+    uint32_t response;
+
+    res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
+        SDIO_RESPONSE_SHORT, 0), address, &response);
+    if (res != E_OK)
+      return 0;
+
+    const uint8_t state = CURRENT_STATE(response);
+
+    if (state == CARD_STANDBY)
+    {
+      res = executeCommand(device, SDIO_COMMAND(CMD_SELECT_CARD,
+          SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, 0);
+      if (res != E_OK)
+        return 0;
+    }
+    else if (state != CARD_TRANSFER)
+    {
+      return 0;
+    }
+  }
+
   uint32_t flags = SDIO_DATA_MODE;
 
   if (blocks > 1)
@@ -353,6 +378,31 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   if (!blocks)
     return 0;
+
+  if (device->native)
+  {
+    const uint32_t address = (uint32_t)device->address << 16;
+    uint32_t response;
+
+    res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
+        SDIO_RESPONSE_SHORT, 0), address, &response);
+    if (res != E_OK)
+      return 0;
+
+    const uint8_t state = CURRENT_STATE(response);
+
+    if (state == CARD_STANDBY)
+    {
+      res = executeCommand(device, SDIO_COMMAND(CMD_SELECT_CARD,
+          SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, 0);
+      if (res != E_OK)
+        return 0;
+    }
+    else if (state != CARD_TRANSFER)
+    {
+      return 0;
+    }
+  }
 
   uint32_t flags = SDIO_DATA_MODE | SDIO_WRITE_MODE;
 

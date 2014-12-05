@@ -14,10 +14,12 @@ enum sdioCommand
   CMD_GO_IDLE_STATE         = 0,
   CMD_ALL_SEND_CID          = 2,
   CMD_SEND_RELATIVE_ADDR    = 3,
+  CMD_SELECT_CARD           = 7,
   CMD_SEND_IF_COND          = 8,
   CMD_SEND_CSD              = 9,
   CMD_SEND_CID              = 10,
   CMD_STOP_TRANSMISSION     = 12,
+  CMD_SEND_STATUS           = 13,
   CMD_SET_BLOCKLEN          = 16,
   CMD_READ_SINGLE_BLOCK     = 17,
   CMD_READ_MULTIPLE_BLOCK   = 18,
@@ -41,7 +43,9 @@ enum sdioFlags
   /** Enable stream transfer mode instead of block mode. */
   SDIO_STREAM_MODE  = 0x10,
   /** Send stop command at the end of data transfer. */
-  SDIO_AUTO_STOP    = 0x20
+  SDIO_AUTO_STOP    = 0x20,
+  /** Wait for previous data transfer completion. */
+  SDIO_WAIT_DATA    = 0x40
 };
 /*----------------------------------------------------------------------------*/
 enum sdioMode

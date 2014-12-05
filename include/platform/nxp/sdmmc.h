@@ -30,6 +30,14 @@ struct SdmmcConfig
   pin_t dat3;
 };
 /*----------------------------------------------------------------------------*/
+struct SdmmcDmaDescriptor
+{
+  uint32_t control;
+  uint32_t size;
+  uint32_t buffer1;
+  uint32_t buffer2;
+};
+/*----------------------------------------------------------------------------*/
 struct Sdmmc
 {
   struct SdmmcBase parent;
@@ -45,6 +53,8 @@ struct Sdmmc
   uint32_t rate;
   /* Status of the last command */
   enum result status;
+
+  struct SdmmcDmaDescriptor descriptor[16];
 
   struct Pin debug;
 };

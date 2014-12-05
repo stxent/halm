@@ -25,4 +25,21 @@
 #define SDIO_COMMAND(code, response, flags) \
     (COMMAND_CODE(code) | COMMAND_RESP(response) | COMMAND_FLAG(flags))
 /*----------------------------------------------------------------------------*/
+enum cardState
+{
+  CARD_IDLE,
+  CARD_READY,
+  CARD_IDENT,
+  CARD_STANDBY,
+  CARD_TRANSFER,
+  CARD_DATA,
+  CARD_RECEIVE,
+  CARD_PROGRAMMING,
+  CARD_DISCONNECT
+};
+
+#define CURRENT_STATE_MASK              BIT_FIELD(MASK(4), 9)
+#define CURRENT_STATE(response) \
+    FIELD_VALUE((response), CURRENT_STATE_MASK, 9)
+/*----------------------------------------------------------------------------*/
 #endif /* MODULES_SDIO_DEFS_H_ */
