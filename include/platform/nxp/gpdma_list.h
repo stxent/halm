@@ -47,7 +47,7 @@ struct GpDmaListConfig
   bool silent;
 };
 /*----------------------------------------------------------------------------*/
-struct GpDmaListItem
+struct GpDmaListEntry
 {
   uint32_t source;
   uint32_t destination;
@@ -63,7 +63,7 @@ struct GpDmaList
   void *callbackArgument;
 
   /* Descriptor list container */
-  struct GpDmaListItem *list;
+  struct GpDmaListEntry *list;
 
   /* List capacity */
   uint16_t capacity;

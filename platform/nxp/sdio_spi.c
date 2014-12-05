@@ -693,6 +693,10 @@ static enum result sdioSet(void *object, enum ifOption option,
       interface->argument = *(const uint32_t *)data;
       return E_OK;
 
+    case IF_SDIO_BLOCK_LENGTH:
+      interface->blockLength = (uint16_t)(*(const uint32_t *)data);
+      return E_OK;
+
     case IF_SDIO_COMMAND:
       interface->command = *(const uint32_t *)data;
       return E_OK;

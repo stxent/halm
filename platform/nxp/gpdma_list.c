@@ -10,7 +10,7 @@
 #include <platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
 static enum result appendItem(void *, void *, const void *, uint32_t);
-static void clearItemList(void *);
+static void clearEntryList(void *);
 static void interruptHandler(void *, enum result);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
@@ -39,31 +39,31 @@ static enum result appendItem(void *object, void *destination,
     const void *source, uint32_t size)
 {
   struct GpDmaList * const channel = object;
-  struct GpDmaListItem * const item = channel->list + channel->number;
+  struct GpDmaListEntry * const entry = channel->list + channel->number;
 
   if (size > GPDMA_MAX_TRANSFER)
     return E_VALUE;
 
   if (channel->number++)
   {
-    struct GpDmaListItem *previous = item - 1;
+    struct GpDmaListEntry *previous = entry - 1;
 
-    /* Append current element to the previous one */
-    previous->next = (uint32_t)item;
+    /* Link current element to the previous one */
+    previous->next = (uint32_t)entry;
 
     if (channel->silent)
       previous->control &= ~CONTROL_INT;
   }
 
-  item->source = (uint32_t)source;
-  item->destination = (uint32_t)destination;
-  item->control = channel->parent.control | CONTROL_SIZE(size);
-  item->next = channel->circular ? (uint32_t)channel->list : 0;
+  entry->source = (uint32_t)source;
+  entry->destination = (uint32_t)destination;
+  entry->control = channel->parent.control | CONTROL_SIZE(size);
+  entry->next = channel->circular ? (uint32_t)channel->list : 0;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void clearItemList(void *object)
+static void clearEntryList(void *object)
 {
   ((struct GpDmaList *)object)->number = 0;
 }
@@ -96,7 +96,7 @@ static enum result channelInit(void *object, const void *configBase)
     return E_VALUE;
 
   /* Allocation should produce memory chunks aligned along 4-byte boundary */
-  channel->list = malloc(sizeof(struct GpDmaListItem) * config->size);
+  channel->list = malloc(sizeof(struct GpDmaListEntry) * config->number);
   if (!channel->list)
     return E_MEMORY;
 
@@ -170,8 +170,8 @@ static uint32_t channelIndex(const void *object)
 {
   const struct GpDmaList * const channel = object;
   const LPC_GPDMACH_Type * const reg = channel->parent.reg;
-  const struct GpDmaListItem * const next =
-      (const struct GpDmaListItem *)reg->LLI;
+  const struct GpDmaListEntry * const next =
+      (const struct GpDmaListEntry *)reg->LLI;
 
   if (!next)
     return 0;
@@ -194,16 +194,17 @@ static enum result channelStart(void *object, void *destination,
     return E_BUSY;
 
   gpDmaSetMux(object);
-  clearItemList(channel);
+  clearEntryList(channel);
   channel->error = false;
 
-  uint32_t chunk, offset = 0;
+  uint32_t offset = 0;
 
   while (offset < size)
   {
-    chunk = size - offset >= channel->size ? channel->size : size - offset;
-    offset += chunk;
+    const uint32_t chunk = size - offset >= channel->size ?
+        channel->size : size - offset;
 
+    offset += chunk;
     appendItem(channel, destination, source, chunk);
 
     if (channel->parent.control & CONTROL_DST_INC)
@@ -212,7 +213,7 @@ static enum result channelStart(void *object, void *destination,
       source = (const void *)((uint32_t)source + chunk);
   }
 
-  const struct GpDmaListItem * const first = channel->list;
+  const struct GpDmaListEntry * const first = channel->list;
   const uint32_t request = 1 << channel->parent.number;
   LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
