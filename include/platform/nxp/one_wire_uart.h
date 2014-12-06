@@ -17,15 +17,6 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const OneWireUart;
 /*----------------------------------------------------------------------------*/
-enum oneWireUartState
-{
-  OW_UART_IDLE,
-  OW_UART_RESET,
-  OW_UART_RECEIVE,
-  OW_UART_TRANSMIT,
-  OW_UART_ERROR
-};
-/*----------------------------------------------------------------------------*/
 struct OneWireUartConfig
 {
   /** Mandatory: serial input. */
@@ -60,7 +51,7 @@ struct OneWireUart
   struct UartRateConfig dataRate, resetRate;
 
   /* Current interface state */
-  enum oneWireUartState state;
+  uint8_t state;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };

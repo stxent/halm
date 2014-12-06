@@ -17,15 +17,6 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2c;
 /*----------------------------------------------------------------------------*/
-enum i2cState
-{
-  I2C_IDLE,
-  I2C_ADDRESS,
-  I2C_TRANSMIT,
-  I2C_RECEIVE,
-  I2C_ERROR
-};
-/*----------------------------------------------------------------------------*/
 enum i2cOption
 {
   /**
@@ -63,10 +54,10 @@ struct I2c
   /* Bytes left for transmission or reception */
   uint16_t rxLeft, txLeft;
 
-  /* Current interface state */
-  enum i2cState state;
   /* Address of the device, only 7-bit addressing is supported */
   uint8_t address;
+  /* Current interface state */
+  uint8_t state;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
   /* Generate stop condition after writing */

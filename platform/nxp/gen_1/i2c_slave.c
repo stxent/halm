@@ -12,17 +12,24 @@
 #include <platform/nxp/i2c_slave.h>
 #include <platform/nxp/gen_1/i2c_defs.h>
 /*----------------------------------------------------------------------------*/
+enum state
+{
+  STATE_IDLE,
+  STATE_ADDRESS,
+  STATE_DATA
+};
+/*----------------------------------------------------------------------------*/
 /* Slave receiver and transmitter modes except general call modes */
 enum status
 {
-  STAT_ADDRESS_WRITE_RECEIVED = 0x60,
-  STAT_DATA_RECEIVED_ACK      = 0x80,
-  STAT_DATA_RECEIVED_NACK     = 0x88,
-  STAT_STOP_RECEIVED          = 0xA0,
-  STAT_ADDRESS_READ_RECEIVED  = 0xA8,
-  STAT_DATA_TRANSMITTED_ACK   = 0xB8,
-  STAT_DATA_TRANSMITTED_NACK  = 0xC0,
-  STAT_LAST_TRANSMITTED_ACK   = 0xC8
+  STATUS_ADDRESS_WRITE_RECEIVED = 0x60,
+  STATUS_DATA_RECEIVED_ACK      = 0x80,
+  STATUS_DATA_RECEIVED_NACK     = 0x88,
+  STATUS_STOP_RECEIVED          = 0xA0,
+  STATUS_ADDRESS_READ_RECEIVED  = 0xA8,
+  STATUS_DATA_TRANSMITTED_ACK   = 0xB8,
+  STATUS_DATA_TRANSMITTED_NACK  = 0xC0,
+  STATUS_LAST_TRANSMITTED_ACK   = 0xC8
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
@@ -61,15 +68,15 @@ static void interruptHandler(void *object)
 
   switch (reg->STAT)
   {
-    case STAT_ADDRESS_WRITE_RECEIVED:
-      interface->state = I2C_SLAVE_ADDRESS;
+    case STATUS_ADDRESS_WRITE_RECEIVED:
+      interface->state = STATE_ADDRESS;
       break;
 
-    case STAT_DATA_RECEIVED_ACK:
-      if (interface->state == I2C_SLAVE_ADDRESS)
+    case STATUS_DATA_RECEIVED_ACK:
+      if (interface->state == STATE_ADDRESS)
       {
         interface->external = reg->DAT;
-        interface->state = I2C_SLAVE_DATA;
+        interface->state = STATE_DATA;
       }
       else
       {
@@ -80,9 +87,9 @@ static void interruptHandler(void *object)
       }
       break;
 
-    case STAT_ADDRESS_READ_RECEIVED:
-      interface->state = I2C_SLAVE_DATA;
-    case STAT_DATA_TRANSMITTED_ACK:
+    case STATUS_ADDRESS_READ_RECEIVED:
+      interface->state = STATE_DATA;
+    case STATUS_DATA_TRANSMITTED_ACK:
       reg->DAT = interface->cache[interface->external];
 
       /* Wrap current external position after reaching the end of cache */
@@ -90,11 +97,11 @@ static void interruptHandler(void *object)
         interface->external = 0;
       break;
 
-    case STAT_DATA_RECEIVED_NACK:
-    case STAT_STOP_RECEIVED:
-    case STAT_DATA_TRANSMITTED_NACK:
-    case STAT_LAST_TRANSMITTED_ACK:
-      interface->state = I2C_SLAVE_IDLE;
+    case STATUS_DATA_RECEIVED_NACK:
+    case STATUS_STOP_RECEIVED:
+    case STATUS_DATA_TRANSMITTED_NACK:
+    case STATUS_LAST_TRANSMITTED_ACK:
+      interface->state = STATE_IDLE;
       event = true;
       break;
 
@@ -115,7 +122,7 @@ static enum result powerStateHandler(void *object, enum pmState state)
   struct I2cSlave * const interface = object;
 
   if ((state == PM_SLEEP || state == PM_SUSPEND)
-      && interface->state != I2C_SLAVE_IDLE)
+      && interface->state != STATE_IDLE)
   {
     return E_BUSY;
   }
@@ -149,7 +156,7 @@ static enum result i2cInit(void *object, const void *configBase)
   interface->external = 0;
   interface->internal = 0;
   interface->size = config->size;
-  interface->state = I2C_SLAVE_IDLE;
+  interface->state = STATE_IDLE;
 
   LPC_I2C_Type * const reg = interface->parent.reg;
 
@@ -207,7 +214,7 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_STATUS:
-      return interface->state != I2C_SLAVE_IDLE ? E_BUSY : E_OK;
+      return interface->state != STATE_IDLE ? E_BUSY : E_OK;
 
     default:
       return E_ERROR;

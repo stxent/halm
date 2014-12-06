@@ -20,12 +20,22 @@
 
 #define TX_QUEUE_LENGTH   24
 /*----------------------------------------------------------------------------*/
-enum oneWireRomCommand
+enum command
 {
   SEARCH_ROM  = 0xF0,
   READ_ROM    = 0x33,
   MATCH_ROM   = 0x55,
   SKIP_ROM    = 0xCC
+};
+/*----------------------------------------------------------------------------*/
+enum state
+{
+  STATE_IDLE,
+  STATE_RESET,
+  STATE_PRESENCE,
+  STATE_RECEIVE,
+  STATE_TRANSMIT,
+  STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
 static void adjustPins(struct OneWireSsp *, const struct OneWireSspConfig *);
@@ -66,7 +76,7 @@ static void beginTransmission(struct OneWireSsp *interface)
   LPC_SSP_Type * const reg = interface->parent.reg;
 
   sspSetRate((struct SspBase *)interface, RATE_RESET);
-  interface->state = OW_SSP_RESET;
+  interface->state = STATE_RESET;
   reg->DR = PATTERN_RESET;
   reg->DR = PATTERN_PRESENCE;
 }
@@ -92,13 +102,13 @@ static void interruptHandler(void *object)
 
     switch (interface->state)
     {
-      case OW_SSP_RECEIVE:
+      case STATE_RECEIVE:
         if (!(data & DATA_MASK))
           interface->word |= 1 << interface->bit;
-      case OW_SSP_TRANSMIT:
+      case STATE_TRANSMIT:
         if (++interface->bit == 8)
         {
-          if (interface->state == OW_SSP_RECEIVE)
+          if (interface->state == STATE_RECEIVE)
           {
             *interface->rxBuffer++ = interface->word;
             interface->word = 0x00;
@@ -106,25 +116,25 @@ static void interruptHandler(void *object)
           interface->bit = 0;
           if (!--interface->left)
           {
-            interface->state = OW_SSP_IDLE;
+            interface->state = STATE_IDLE;
             event = true;
           }
         }
         break;
 
-      case OW_SSP_RESET:
-        interface->state = OW_SSP_PRESENCE;
+      case STATE_RESET:
+        interface->state = STATE_PRESENCE;
         break;
 
-      case OW_SSP_PRESENCE:
+      case STATE_PRESENCE:
         if (data & DATA_MASK)
         {
           sspSetRate((struct SspBase *)object, RATE_DATA);
-          interface->state = OW_SSP_TRANSMIT;
+          interface->state = STATE_TRANSMIT;
         }
         else
         {
-          interface->state = OW_SSP_ERROR;
+          interface->state = STATE_ERROR;
           event = true;
         }
         break;
@@ -134,8 +144,8 @@ static void interruptHandler(void *object)
     }
   }
 
-  if ((reg->SR & SR_TFE) && (interface->state == OW_SSP_RECEIVE
-      || interface->state == OW_SSP_TRANSMIT))
+  if ((reg->SR & SR_TFE) && (interface->state == STATE_RECEIVE
+      || interface->state == STATE_TRANSMIT))
   {
     /* Fill FIFO with next word or end the transaction */
     if (!byteQueueEmpty(&interface->txQueue))
@@ -178,7 +188,7 @@ static enum result oneWireInit(void *object, const void *configBase)
   interface->address = 0;
   interface->blocking = true;
   interface->callback = 0;
-  interface->state = OW_SSP_IDLE;
+  interface->state = STATE_IDLE;
 
   LPC_SSP_Type * const reg = interface->parent.reg;
 
@@ -222,10 +232,10 @@ static enum result oneWireGet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_STATUS:
-      if (!interface->blocking && interface->state == OW_SSP_ERROR)
+      if (!interface->blocking && interface->state == STATE_ERROR)
         return E_ERROR;
       else
-        return interface->state != OW_SSP_IDLE ? E_BUSY : E_OK;
+        return interface->state != STATE_IDLE ? E_BUSY : E_OK;
 
     default:
       return E_ERROR;
@@ -275,7 +285,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
     byteQueuePush(&interface->txQueue, 0xFF);
   interface->left = read;
 
-  interface->state = OW_SSP_RECEIVE;
+  interface->state = STATE_RECEIVE;
 
   /* Clear interrupt flags, enable interrupts and start reception */
   reg->ICR = ICR_RORIC | ICR_RTIC;
@@ -284,10 +294,10 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 
   if (interface->blocking)
   {
-    while (interface->state != OW_SSP_IDLE && interface->state != OW_SSP_ERROR)
+    while (interface->state != STATE_IDLE && interface->state != STATE_ERROR)
       barrier();
 
-    if (interface->state == OW_SSP_ERROR)
+    if (interface->state == STATE_ERROR)
       return 0;
   }
 
@@ -326,10 +336,10 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
 
   if (interface->blocking)
   {
-    while (interface->state != OW_SSP_IDLE && interface->state != OW_SSP_ERROR)
+    while (interface->state != STATE_IDLE && interface->state != STATE_ERROR)
       barrier();
 
-    if (interface->state == OW_SSP_ERROR)
+    if (interface->state == STATE_ERROR)
       return 0;
   }
 

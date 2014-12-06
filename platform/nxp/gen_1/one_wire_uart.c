@@ -12,12 +12,21 @@
 #define RATE_DATA       115200
 #define TX_QUEUE_LENGTH 24
 /*----------------------------------------------------------------------------*/
-enum oneWireRomCommand
+enum command
 {
   SEARCH_ROM  = 0xF0,
   READ_ROM    = 0x33,
   MATCH_ROM   = 0x55,
   SKIP_ROM    = 0xCC
+};
+/*----------------------------------------------------------------------------*/
+enum state
+{
+  STATE_IDLE,
+  STATE_RESET,
+  STATE_RECEIVE,
+  STATE_TRANSMIT,
+  STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
 static void adjustPins(struct OneWireUart *, const struct OneWireUartConfig *);
@@ -58,7 +67,7 @@ static void beginTransmission(struct OneWireUart *interface)
   LPC_UART_Type * const reg = interface->parent.reg;
 
   uartSetRate((struct UartBase *)interface, interface->resetRate);
-  interface->state = OW_UART_RESET;
+  interface->state = STATE_RESET;
   /* Clear RX FIFO and set trigger level to 1 character */
   reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(0);
   reg->THR = 0xF0; /* Execute reset */
@@ -90,26 +99,26 @@ static void interruptHandler(void *object)
 
     switch (interface->state)
     {
-      case OW_UART_RESET:
+      case STATE_RESET:
         if (data ^ 0xF0)
         {
           uartSetRate((struct UartBase *)interface, interface->dataRate);
-          interface->state = OW_UART_TRANSMIT;
+          interface->state = STATE_TRANSMIT;
         }
         else
         {
-          interface->state = OW_UART_ERROR;
+          interface->state = STATE_ERROR;
           event = true;
         }
         break;
 
-      case OW_UART_RECEIVE:
+      case STATE_RECEIVE:
         if (data & 0x01)
           interface->word |= 1 << interface->bit;
-      case OW_UART_TRANSMIT:
+      case STATE_TRANSMIT:
         if (++interface->bit == 8)
         {
-          if (interface->state == OW_UART_RECEIVE)
+          if (interface->state == STATE_RECEIVE)
           {
             *interface->rxBuffer++ = interface->word;
             interface->word = 0x00;
@@ -117,7 +126,7 @@ static void interruptHandler(void *object)
           interface->bit = 0;
           if (!--interface->left)
           {
-            interface->state = OW_UART_IDLE;
+            interface->state = STATE_IDLE;
             event = true;
           }
         }
@@ -128,8 +137,8 @@ static void interruptHandler(void *object)
     }
   }
 
-  if ((reg->LSR & LSR_THRE) && (interface->state == OW_UART_RECEIVE
-      || interface->state == OW_UART_TRANSMIT))
+  if ((reg->LSR & LSR_THRE) && (interface->state == STATE_RECEIVE
+      || interface->state == STATE_TRANSMIT))
   {
     /* Fill FIFO with next word or end the transaction */
     if (!byteQueueEmpty(&interface->txQueue))
@@ -170,7 +179,7 @@ static enum result oneWireInit(void *object, const void *configBase)
   interface->address = 0;
   interface->blocking = true;
   interface->callback = 0;
-  interface->state = OW_UART_IDLE;
+  interface->state = STATE_IDLE;
 
   LPC_UART_Type * const reg = interface->parent.reg;
 
@@ -217,10 +226,10 @@ static enum result oneWireGet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_STATUS:
-      if (!interface->blocking && interface->state == OW_UART_ERROR)
+      if (!interface->blocking && interface->state == STATE_ERROR)
         return E_ERROR;
       else
-        return interface->state != OW_UART_IDLE ? E_BUSY : E_OK;
+        return interface->state != STATE_IDLE ? E_BUSY : E_OK;
 
     default:
       return E_ERROR;
@@ -270,20 +279,20 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
     byteQueuePush(&interface->txQueue, 0xFF);
   interface->left = read;
 
-  interface->state = OW_UART_RECEIVE;
+  interface->state = STATE_RECEIVE;
   /* Clear RX FIFO and set trigger level to 8 characters */
   reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(2);
   sendWord(interface, 0xFF); /* Start reception */
 
   if (interface->blocking)
   {
-    while (interface->state != OW_UART_IDLE
-        && interface->state != OW_UART_ERROR)
+    while (interface->state != STATE_IDLE
+        && interface->state != STATE_ERROR)
     {
       barrier();
     }
 
-    if (interface->state == OW_UART_ERROR)
+    if (interface->state == STATE_ERROR)
       return 0;
   }
 
@@ -318,13 +327,13 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
 
   if (interface->blocking)
   {
-    while (interface->state != OW_UART_IDLE
-        && interface->state != OW_UART_ERROR)
+    while (interface->state != STATE_IDLE
+        && interface->state != STATE_ERROR)
     {
       barrier();
     }
 
-    if (interface->state == OW_UART_ERROR)
+    if (interface->state == STATE_ERROR)
       return 0;
   }
 

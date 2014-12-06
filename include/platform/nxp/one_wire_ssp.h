@@ -13,16 +13,6 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const OneWireSsp;
 /*----------------------------------------------------------------------------*/
-enum oneWireSspState
-{
-  OW_SSP_IDLE,
-  OW_SSP_RESET,
-  OW_SSP_PRESENCE,
-  OW_SSP_RECEIVE,
-  OW_SSP_TRANSMIT,
-  OW_SSP_ERROR
-};
-/*----------------------------------------------------------------------------*/
 struct OneWireSspConfig
 {
   /** Mandatory: pin used for serial data reception from the bus. */
@@ -54,7 +44,7 @@ struct OneWireSsp
   struct ByteQueue txQueue;
 
   /* Current interface state */
-  enum oneWireSspState state;
+  uint8_t state;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };

@@ -17,13 +17,6 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2cSlave;
 /*----------------------------------------------------------------------------*/
-enum i2cSlaveState
-{
-  I2C_SLAVE_IDLE,
-  I2C_SLAVE_ADDRESS,
-  I2C_SLAVE_DATA
-};
-/*----------------------------------------------------------------------------*/
 struct I2cSlaveConfig
 {
   /** Mandatory: register map size. */
@@ -55,7 +48,7 @@ struct I2cSlave
   uint16_t internal;
 
   /* Current interface state */
-  enum i2cSlaveState state;
+  uint8_t state;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_I2C_SLAVE_H_ */
