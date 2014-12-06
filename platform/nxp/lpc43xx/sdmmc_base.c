@@ -249,8 +249,8 @@ static void sdioDeinit(void *object)
 {
   struct SdmmcBase * const interface = object;
 
-  sysClockEnable(CLK_SDIO);
-  sysClockEnable(CLK_M4_SDIO);
+  sysClockDisable(CLK_SDIO);
+  sysClockDisable(CLK_M4_SDIO);
 
   setDescriptor(0, interface, 0);
 }

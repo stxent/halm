@@ -1521,10 +1521,17 @@ typedef struct
   __rw__ uint32_t INTMASK;
   __rw__ uint32_t CMDARG;
   __rw__ uint32_t CMD;
-  __ro__ uint32_t RESP0;
-  __ro__ uint32_t RESP1;
-  __ro__ uint32_t RESP2;
-  __ro__ uint32_t RESP3;
+  union
+  {
+    __ro__ uint32_t RESP[4];
+    struct
+    {
+      __ro__ uint32_t RESP0;
+      __ro__ uint32_t RESP1;
+      __ro__ uint32_t RESP2;
+      __ro__ uint32_t RESP3;
+    };
+  };
 
   /* Offset 0x040 */
   __ro__ uint32_t MINTSTS;

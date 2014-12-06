@@ -108,6 +108,10 @@ static enum result controllerInit(void *object, const void *configBase)
 static void controllerDeinit(void *object)
 {
   struct DmaSdmmc * const controller = object;
+  LPC_SDMMC_Type * const reg = controller->reg;
+
+  reg->CTRL &= ~CTRL_USE_INTERNAL_DMAC;
+  reg->BMOD = 0;
 
   free(controller->list);
 }

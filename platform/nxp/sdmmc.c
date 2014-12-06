@@ -253,8 +253,11 @@ static enum result sdioInit(void *object, const void *configBase)
 static void sdioDeinit(void *object)
 {
   struct Sdmmc * const interface = object;
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
 
   deinit(interface->dma);
+  reg->CTRL &= ~CTRL_INT_ENABLE;
+
   SdmmcBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -287,21 +290,18 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
       const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
       uint32_t *buffer = data;
 
-      if (response == SDIO_RESPONSE_NONE)
-        return E_ERROR;
-
-      if (response == SDIO_RESPONSE_SHORT)
+      if (response == SDIO_RESPONSE_LONG)
       {
-        buffer[0] = reg->RESP0;
+        for (uint8_t index = 0; index < 4; ++index)
+          buffer[index] = reg->RESP[index];
+      }
+      else if (response == SDIO_RESPONSE_SHORT)
+      {
+        buffer[0] = reg->RESP[0];
       }
       else
-      {
-        /* TODO Rewrite */
-        buffer[0] = reg->RESP0;
-        buffer[1] = reg->RESP1;
-        buffer[2] = reg->RESP2;
-        buffer[3] = reg->RESP3;
-      }
+        return E_ERROR;
+
       return E_OK;
     }
 
