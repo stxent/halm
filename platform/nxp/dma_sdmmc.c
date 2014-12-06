@@ -68,6 +68,8 @@ static enum result controllerInit(void *object, const void *configBase)
 
   if (!config->number)
     return E_VALUE;
+  if (config->burst == DMA_BURST_2 || config->burst > DMA_BURST_256)
+    return E_VALUE;
 
   /* Allocation should produce memory chunks aligned along 4-byte boundary */
   controller->list = malloc(sizeof(struct DmaSdmmcEntry) * config->number);
@@ -75,13 +77,14 @@ static enum result controllerInit(void *object, const void *configBase)
     return E_MEMORY;
 
   controller->capacity = config->number;
-  controller->circular = config->circular;
   controller->number = 0;
   controller->reg = config->parent->parent.reg;
 
   LPC_SDMMC_Type * const reg = controller->reg;
+  const uint8_t burst = config->burst >= DMA_BURST_4 ?
+      config->burst - 1 : config->burst;
 
-  /* Control register is initialized in parent class */
+  /* Control register is originally initialized in parent class */
 
   /* Reset DMA controller */
   reg->BMOD = BMOD_SWR;
@@ -92,12 +95,12 @@ static enum result controllerInit(void *object, const void *configBase)
   /* Use internal DMA */
   reg->CTRL |= CTRL_USE_INTERNAL_DMAC;
   /* Enable internal DMA */
-  reg->BMOD = BMOD_DE;
+  reg->BMOD = BMOD_DE | BMOD_DSL(4);
   /* Disable all DMA interrupts */
   reg->IDINTEN = 0;
 
-  //TODO Configure DSL
-  //TODO Configure burst
+  reg->FIFOTH = FIFOTH_DMA_MTS(burst) | FIFOTH_TX_WMARK(FIFO_SIZE / 2)
+      | FIFOTH_RX_WMARK(FIFO_SIZE / 2 - 1);
 
   return E_OK;
 }
@@ -118,8 +121,15 @@ static void controllerCallback(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t controllerIndex(const void *object __attribute__((unused)))
 {
-  //TODO
-  return 0;
+  const struct DmaSdmmc * const controller = object;
+  const LPC_SDMMC_Type * const reg = controller->reg;
+  const struct DmaSdmmcEntry * const current =
+      (const struct DmaSdmmcEntry *)reg->DSCADDR;
+
+  if (!current)
+    return 0;
+
+  return (uint32_t)(current - controller->list);
 }
 /*----------------------------------------------------------------------------*/
 static enum result controllerStart(void *object, void *destination,
@@ -176,5 +186,5 @@ static enum result controllerStatus(const void *object)
 /*----------------------------------------------------------------------------*/
 static void controllerStop(void *object __attribute__((unused)))
 {
-  //TODO
+
 }

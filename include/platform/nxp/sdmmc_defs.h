@@ -9,18 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
-enum burstSize
-{
-  BURST_SIZE_1,
-  BURST_SIZE_4,
-  BURST_SIZE_8,
-  BURST_SIZE_16,
-  BURST_SIZE_32,
-  BURST_SIZE_64,
-  BURST_SIZE_128,
-  BURST_SIZE_256
-};
-
 enum dmacState
 {
   DMA_IDLE,
@@ -53,6 +41,8 @@ enum fsmState
   FSM_STATE_CMD_PATH_WAIT_NCC,
   FSM_STATE_WAIT
 };
+/*----------------------------------------------------------------------------*/
+#define FIFO_SIZE                       32
 /*------------------Control register------------------------------------------*/
 #define CTRL_CONTROLLER_RESET           BIT(0)
 #define CTRL_FIFO_RESET                 BIT(1)
@@ -90,24 +80,25 @@ enum fsmState
 /*------------------Card Type register----------------------------------------*/
 #define CTYPE_CARD_WIDTH0_4BIT          BIT(0)
 #define CTYPE_CARD_WIDTH0_8BIT          BIT(16)
-/*------------------Interrupt Mask register-----------------------------------*/
-#define INTMASK_CDET                    BIT(0)
-#define INTMASK_RE                      BIT(1)
-#define INTMASK_CDONE                   BIT(2)
-#define INTMASK_DTO                     BIT(3)
-#define INTMASK_TXDR                    BIT(4)
-#define INTMASK_RXDR                    BIT(5)
-#define INTMASK_RCRC                    BIT(6)
-#define INTMASK_DCRC                    BIT(7)
-#define INTMASK_RTO                     BIT(8)
-#define INTMASK_DRTO                    BIT(9)
-#define INTMASK_HTO                     BIT(10)
-#define INTMASK_FRUN                    BIT(11)
-#define INTMASK_HLE                     BIT(12)
-#define INTMASK_SBE                     BIT(13)
-#define INTMASK_ACD                     BIT(14)
-#define INTMASK_EBE                     BIT(15)
-#define INTMASK_SDIO_INT_MASK           BIT(16)
+/*------------------Interrupt registers---------------------------------------*/
+#define INT_MASK                        MASK(17)
+#define INT_CDET                        BIT(0)
+#define INT_RE                          BIT(1)
+#define INT_CDONE                       BIT(2)
+#define INT_DTO                         BIT(3)
+#define INT_TXDR                        BIT(4)
+#define INT_RXDR                        BIT(5)
+#define INT_RCRC                        BIT(6)
+#define INT_DCRC                        BIT(7)
+#define INT_RTO                         BIT(8)
+#define INT_DRTO                        BIT(9)
+#define INT_HTO                         BIT(10)
+#define INT_FRUN                        BIT(11)
+#define INT_HLE                         BIT(12)
+#define INT_SBE                         BIT(13)
+#define INT_ACD                         BIT(14)
+#define INT_EBE                         BIT(15)
+#define INT_SDIO_INT_MASK               BIT(16)
 /*------------------Command register------------------------------------------*/
 #define CMD_INDEX_MASK                  BIT_FIELD(MASK(6), 0)
 #define CMD_INDEX(value)                BIT_FIELD((value), 0)

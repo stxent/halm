@@ -19,8 +19,6 @@ struct DmaSdmmcConfig
   uint16_t number;
   /** Mandatory: number of transfers that make up a burst transfer request. */
   enum dmaBurst burst;
-  /** Optional: set @b true for circular buffer type. */
-  bool circular;
 };
 /*----------------------------------------------------------------------------*/
 struct DmaSdmmcEntry
@@ -44,9 +42,6 @@ struct DmaSdmmc
   uint16_t capacity;
   /* Current list length */
   uint16_t number;
-
-  /* Circular buffer flag */
-  bool circular;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_DMA_SDMMC_H_ */

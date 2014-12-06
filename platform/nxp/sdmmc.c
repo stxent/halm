@@ -48,7 +48,7 @@ static void execute(struct Sdmmc *interface)
   uint32_t waitStatus = 0;
 
   if (flags & SDIO_INITIALIZE)
-    waitStatus |= INTMASK_CDONE;
+    waitStatus |= INT_CDONE;
 
   //FIXME Rewrite wait status generation
   if (flags & SDIO_DATA_MODE)
@@ -58,18 +58,17 @@ static void execute(struct Sdmmc *interface)
     while (reg->CTRL & CTRL_FIFO_RESET);
 
     /* Enable data-relative interrupts */
-    waitStatus |= INTMASK_DTO;
-    waitStatus |= INTMASK_DCRC | INTMASK_DRTO | INTMASK_HTO | INTMASK_FRUN;
+    waitStatus |= INT_DTO;
+    waitStatus |= INT_DCRC | INT_DRTO | INT_HTO | INT_FRUN;
   }
 
   if (!(flags & SDIO_DATA_MODE) && response != SDIO_RESPONSE_NONE)
-    waitStatus |= INTMASK_CDONE;
+    waitStatus |= INT_CDONE;
 
-  waitStatus |= INTMASK_EBE | INTMASK_SBE | INTMASK_HLE |
-      INTMASK_RTO | INTMASK_RCRC | INTMASK_RE;
+  waitStatus |= INT_EBE | INT_SBE | INT_HLE | INT_RTO | INT_RCRC | INT_RE;
 
   /* Initialize interrupts */
-  reg->RINTSTS = 0xFFFFFFFF; /* Clear pending interrupts */
+  reg->RINTSTS = INT_MASK;
   irqClearPending(interface->parent.irq);
   reg->INTMASK = waitStatus;
   irqEnable(interface->parent.irq);
@@ -137,7 +136,7 @@ static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
   if (divider == current && (reg->CLKENA & CLKENA_CCLK_ENABLE))
     return E_OK; /* Closest rate is already set */
 
-  /* Disable clock and reset set user divider */
+  /* Disable clock and reset divider */
   reg->CLKENA = 0;
   reg->CLKSRC = 0;
   executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
@@ -160,10 +159,10 @@ static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  const uint32_t hostErrors = INTMASK_FRUN | INTMASK_HLE;
-  const uint32_t integrityErrors = INTMASK_RE | INTMASK_RCRC | INTMASK_DCRC
-      | INTMASK_SBE | INTMASK_EBE;
-  const uint32_t timeoutErrors = INTMASK_RTO | INTMASK_DRTO | INTMASK_HTO;
+  const uint32_t hostErrors = INT_FRUN | INT_HLE;
+  const uint32_t integrityErrors = INT_RE | INT_RCRC | INT_DCRC
+      | INT_SBE | INT_EBE;
+  const uint32_t timeoutErrors = INT_RTO | INT_DRTO | INT_HTO;
 
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->parent.reg;
@@ -173,7 +172,7 @@ static void interruptHandler(void *object)
 
   irqDisable(interface->parent.irq);
   reg->INTMASK = 0;
-  reg->RINTSTS = 0xFFFFFFFF; //TODO Add define
+  reg->RINTSTS = INT_MASK;
 
   if (status & hostErrors)
     interface->status = E_ERROR;
@@ -195,7 +194,6 @@ static enum result sdioInit(void *object, const void *configBase)
   const struct SdmmcConfig * const config = configBase;
   const struct DmaSdmmcConfig dmaConfig = {
       .burst = DMA_BURST_4,
-      .circular = false,
       .number = 16,
       .parent = object
   };
@@ -234,17 +232,12 @@ static enum result sdioInit(void *object, const void *configBase)
   reg->INTMASK = 0;
   reg->CTRL = CTRL_INT_ENABLE;
   /* Clear pending interrupts */
-  reg->RINTSTS = 0xFFFFFFFF;
+  reg->RINTSTS = INT_MASK;
 
-  reg->FIFOTH = FIFOTH_TX_WMARK(FIFOSZ / 2) | FIFOTH_RX_WMARK(FIFOSZ / 2 - 1)
-      | FIFOTH_DMA_MTS(BURST_SIZE_4);
-  reg->TMOUT = 0xFFFFFFFF;
+  reg->TMOUT = 0xFFFFFFFF; //TODO Add timeout calculation
 
   /* Set default block length */
   reg->BLKSIZ = 512;
-
-  reg->CLKENA = 0;
-  reg->CLKSRC = 0;
 
   /* Set default clock rate */
   updateRate(interface, interface->rate); //TODO Rewrite
