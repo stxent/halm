@@ -24,7 +24,7 @@ static enum result adcUnitInit(void *, const void *);
 static void adcUnitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass adcUnitTable = {
-    .size = sizeof(struct AdcUnitBase),
+    .size = 0, /* Abstract class */
     .init = adcUnitInit,
     .deinit = adcUnitDeinit
 };

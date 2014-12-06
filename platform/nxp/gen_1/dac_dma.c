@@ -137,7 +137,7 @@ static void dacDeinit(void *object)
   free(interface->buffer);
   deinit(interface->dma);
 
-  DacBase->deinit(object);
+  DacBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dacCallback(void *object, void (*callback)(void *),

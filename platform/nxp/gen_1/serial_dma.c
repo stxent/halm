@@ -158,7 +158,7 @@ static void serialDeinit(void *object)
   /* Free DMA channel descriptors */
   deinit(interface->txDma);
   deinit(interface->rxDma);
-  /* Call UART class destructor */
+  /* Call base class destructor */
   UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/

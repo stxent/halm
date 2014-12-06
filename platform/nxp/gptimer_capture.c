@@ -121,7 +121,7 @@ static void unitDeinit(void *object)
 
   irqDisable(unit->parent.irq);
   reg->TCR = 0;
-  GpTimerBase->deinit(object);
+  GpTimerBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configBase)

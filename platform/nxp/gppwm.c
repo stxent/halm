@@ -164,7 +164,7 @@ static void unitDeinit(void *object)
   LPC_PWM_Type * const reg = unit->parent.reg;
 
   reg->TCR &= ~(TCR_CEN | TCR_PWM_ENABLE);
-  GpPwmUnitBase->deinit(object);
+  GpPwmUnitBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelGetResolution(const void *object)

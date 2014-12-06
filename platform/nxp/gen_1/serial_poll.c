@@ -100,9 +100,7 @@ static enum result serialInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-  struct SerialPoll * const interface = object;
-
-  UartBase->deinit(interface);
+  UartBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialCallback(void *object __attribute__((unused)),

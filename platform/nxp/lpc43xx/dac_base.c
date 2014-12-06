@@ -18,7 +18,7 @@ static enum result dacInit(void *, const void *);
 static void dacDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass dacTable = {
-    .size = sizeof(struct DacBase),
+    .size = 0, /* Abstract class */
     .init = dacInit,
     .deinit = dacDeinit
 };

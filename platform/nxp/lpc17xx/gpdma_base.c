@@ -41,7 +41,7 @@ static const struct EntityClass handlerTable = {
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass channelTable = {
-    .size = sizeof(struct GpDmaBase),
+    .size = 0, /* Abstract class */
     .init = channelInit,
     .deinit = channelDeinit
 };

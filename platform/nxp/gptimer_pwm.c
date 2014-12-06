@@ -144,7 +144,7 @@ static void unitDeinit(void *object)
   LPC_TIMER_Type * const reg = unit->parent.reg;
 
   reg->TCR &= ~TCR_CEN;
-  GpTimerBase->deinit(object);
+  GpTimerBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configBase)
