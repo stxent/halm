@@ -198,7 +198,7 @@ static enum result sdioInit(void *object, const void *configBase)
       .parent = object
   };
   const struct SdmmcBaseConfig parentConfig = {
-      .clock = config->clock,
+      .clk = config->clk,
       .cmd = config->cmd,
       .dat0 = config->dat0,
       .dat1 = config->dat1,
@@ -278,7 +278,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
   {
     case IF_SDIO_MODE:
     {
-      *(uint32_t *)data = SDIO_1BIT; //TODO
+      *(uint32_t *)data = interface->parent.wide ? SDIO_4BIT : SDIO_1BIT;
       return E_OK;
     }
 

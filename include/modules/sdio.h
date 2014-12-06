@@ -27,6 +27,7 @@ enum sdioCommand
   CMD_WRITE_MULTIPLE_BLOCK  = 25,
   CMD_APP_CMD               = 55,
   CMD_READ_OCR              = 58,
+  ACMD_SET_BUS_WIDTH        = 6,
   ACMD_SD_SEND_OP_COND      = 41
 };
 /*----------------------------------------------------------------------------*/

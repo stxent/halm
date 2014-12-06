@@ -16,7 +16,7 @@ extern const struct EntityClass * const SdmmcBase;
 struct SdmmcBaseConfig
 {
   /** Mandatory: clock line. */
-  pin_t clock;
+  pin_t clk;
   /** Mandatory: command line. */
   pin_t cmd;
   /** Mandatory: data line 0. */
@@ -36,6 +36,9 @@ struct SdmmcBase
   void *reg;
   void (*handler)(void *);
   irq_t irq;
+
+  /* 4-bit bus indicator */
+  bool wide;
 };
 /*----------------------------------------------------------------------------*/
 uint32_t sdmmcGetClock(const struct SdmmcBase *);

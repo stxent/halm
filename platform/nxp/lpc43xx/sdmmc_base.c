@@ -163,9 +163,8 @@ static struct SdmmcBase *descriptors[1] = {0};
 static enum result configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
 {
-  //TODO Add bus mode detection
   const pin_t pinArray[] = {
-      config->clock,
+      config->clk,
       config->cmd,
       config->dat0,
       config->dat1,
@@ -174,19 +173,30 @@ static enum result configPins(struct SdmmcBase *interface,
   };
   const struct PinEntry *pinEntry;
   struct Pin pin;
+  bool wide = true;
 
   for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
-    if (pinArray[index])
+    if (!pinArray[index])
     {
-      pinEntry = pinFind(sdmmcPins, pinArray[index], 0);
-      if (!pinEntry)
+      /* First three pins are mandatory */
+      if (index >= 3)
+      {
+        wide = false;
+        continue;
+      }
+      else
         return E_VALUE;
-      pinInput((pin = pinInit(pinArray[index])));
-      pinSetFunction(pin, pinEntry->value);
     }
+
+    pinEntry = pinFind(sdmmcPins, pinArray[index], 0);
+    if (!pinEntry)
+      return E_VALUE;
+    pinInput((pin = pinInit(pinArray[index])));
+    pinSetFunction(pin, pinEntry->value);
   }
 
+  interface->wide = wide;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

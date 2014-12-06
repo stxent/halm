@@ -15,7 +15,12 @@
 #define ENUM_RATE         400000
 #define WORK_RATE         25000000
 #define BLOCK_POW         9
-/*----------------------------------------------------------------------------*/
+/*------------------CMD8------------------------------------------------------*/
+#define CONDITION_PATTERN 0x000001AA
+/*------------------ACMD6-----------------------------------------------------*/
+#define BUS_WIDTH_1BIT    0x00
+#define BUS_WIDTH_4BIT    0x02
+/*------------------OCR register----------------------------------------------*/
 #define OCR_VOLTAGE_MASK  0x00FF8000
 #define OCR_CCS           BIT(30) /* Card Capacity Status */
 #define OCR_HCS           BIT(30) /* Host Capacity Support */
@@ -26,6 +31,7 @@ static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
 static uint32_t extractBits(uint32_t *, uint16_t, uint16_t);
 static enum result initializeCard(struct SdCard *);
 static void processCardSpecificData(struct SdCard *, uint32_t *);
+static enum result setTransferState(struct SdCard *);
 /*----------------------------------------------------------------------------*/
 static enum result cardInit(void *, const void *);
 static void cardDeinit(void *);
@@ -103,18 +109,18 @@ static enum result initializeCard(struct SdCard *device)
 
   /* Start initialization and detect card type */
   res = executeCommand(device, SDIO_COMMAND(CMD_SEND_IF_COND,
-      SDIO_RESPONSE_SHORT, 0), 0x000001AA, response);
+      SDIO_RESPONSE_SHORT, 0), CONDITION_PATTERN, response);
   if (res == E_OK || res == E_IDLE)
   {
-    //TODO Remove magic numbers
-    if (response[0] != 0x000001AA)
-      return E_DEVICE; /* Pattern mismatched */
+    /* Response should be equal to the command argument */
+    if (response[0] != CONDITION_PATTERN)
+      return E_DEVICE;
 
     device->type = SDCARD_2_0;
   }
   else if (res != E_INVALID && res != E_TIMEOUT)
   {
-    /* Not an unsupported command */
+    /* Other error, it is not an unsupported command */
     return res;
   }
 
@@ -187,11 +193,42 @@ static enum result initializeCard(struct SdCard *device)
     device->address = response[0] >> 16;
   }
 
+  const uint32_t address = (uint32_t)device->address << 16;
+
+  /* Read and process CSD register */
   res = executeCommand(device, SDIO_COMMAND(CMD_SEND_CSD,
-      SDIO_RESPONSE_LONG, 0), (uint32_t)device->address << 16, response);
+      SDIO_RESPONSE_LONG, 0), address, response);
   if (res != E_OK)
     return res;
   processCardSpecificData(device, response);
+
+  /* Configure block length and bus width */
+  if (device->native)
+  {
+    if ((res = setTransferState(device)) != E_OK)
+        return res;
+
+    res = executeCommand(device, SDIO_COMMAND(CMD_SET_BLOCKLEN,
+        SDIO_RESPONSE_SHORT, 0), 1 << BLOCK_POW, 0);
+    if (res != E_OK)
+      return res;
+
+    if ((res = ifGet(device->interface, IF_SDIO_MODE, response)) != E_OK)
+      return res;
+
+    const uint8_t width = response[0] == SDIO_1BIT ?
+        BUS_WIDTH_1BIT : BUS_WIDTH_4BIT;
+
+    res = executeCommand(device, SDIO_COMMAND(CMD_APP_CMD,
+        SDIO_RESPONSE_SHORT, 0), address, 0);
+    if (res != E_OK)
+      return res;
+
+    res = executeCommand(device, SDIO_COMMAND(ACMD_SET_BUS_WIDTH,
+        SDIO_RESPONSE_SHORT, 0), width, 0);
+    if (res != E_OK)
+      return res;
+  }
 
   return E_OK;
 }
@@ -213,6 +250,33 @@ static void processCardSpecificData(struct SdCard *device, uint32_t *response)
 
     device->blockCount = deviceSize << 10;
   }
+}
+/*----------------------------------------------------------------------------*/
+static enum result setTransferState(struct SdCard *device)
+{
+  /* Relative card address should be initialized */
+  const uint32_t address = (uint32_t)device->address << 16;
+  uint32_t response;
+  enum result res;
+
+  res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
+      SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, &response);
+  if (res != E_OK)
+    return res;
+
+  const uint8_t state = CURRENT_STATE(response);
+
+  if (state == CARD_STANDBY)
+  {
+    return executeCommand(device, SDIO_COMMAND(CMD_SELECT_CARD,
+        SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, 0);
+  }
+  else if (state != CARD_TRANSFER)
+  {
+    return res;
+  }
+  else
+    return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result cardInit(void *object, const void *configBase)
@@ -318,30 +382,8 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
   if (!blocks)
     return 0;
 
-  if (device->native)
-  {
-    const uint32_t address = (uint32_t)device->address << 16;
-    uint32_t response;
-
-    res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
-        SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, &response);
-    if (res != E_OK)
-      return 0;
-
-    const uint8_t state = CURRENT_STATE(response);
-
-    if (state == CARD_STANDBY)
-    {
-      res = executeCommand(device, SDIO_COMMAND(CMD_SELECT_CARD,
-          SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, 0);
-      if (res != E_OK)
-        return 0;
-    }
-    else if (state != CARD_TRANSFER)
-    {
-      return 0;
-    }
-  }
+  if (device->native && (res = setTransferState(device)) != E_OK)
+      return res;
 
   uint32_t flags = SDIO_DATA_MODE;
 
@@ -379,30 +421,8 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
   if (!blocks)
     return 0;
 
-  if (device->native)
-  {
-    const uint32_t address = (uint32_t)device->address << 16;
-    uint32_t response;
-
-    res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
-        SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, &response);
-    if (res != E_OK)
-      return 0;
-
-    const uint8_t state = CURRENT_STATE(response);
-
-    if (state == CARD_STANDBY)
-    {
-      res = executeCommand(device, SDIO_COMMAND(CMD_SELECT_CARD,
-          SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, 0);
-      if (res != E_OK)
-        return 0;
-    }
-    else if (state != CARD_TRANSFER)
-    {
-      return 0;
-    }
-  }
+  if (device->native && (res = setTransferState(device)) != E_OK)
+      return res;
 
   uint32_t flags = SDIO_DATA_MODE | SDIO_WRITE_MODE;
 

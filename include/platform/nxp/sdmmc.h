@@ -18,7 +18,7 @@ extern const struct InterfaceClass * const Sdmmc;
 struct SdmmcConfig
 {
   /** Mandatory: clock line. */
-  pin_t clock;
+  pin_t clk;
   /** Mandatory: command line. */
   pin_t cmd;
   /** Mandatory: data line 0. */
