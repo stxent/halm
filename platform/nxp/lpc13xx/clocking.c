@@ -16,6 +16,7 @@
 static uint32_t calcPllFrequency(uint16_t, uint8_t, enum clockSource);
 static enum result calcPllValues(uint16_t, uint8_t, uint32_t *);
 /*----------------------------------------------------------------------------*/
+static enum result stubDisable(const void *);
 static bool stubReady(const void *);
 /*----------------------------------------------------------------------------*/
 static enum result extOscDisable(const void *);
@@ -28,6 +29,11 @@ static enum result intOscEnable(const void *, const void *);
 static uint32_t intOscFrequency(const void *);
 static bool intOscReady(const void *);
 
+static enum result wdtOscDisable(const void *);
+static enum result wdtOscEnable(const void *, const void *);
+static uint32_t wdtOscFrequency(const void *);
+static bool wdtOscReady(const void *);
+
 static enum result sysPllDisable(const void *);
 static enum result sysPllEnable(const void *, const void *);
 static uint32_t sysPllFrequency(const void *);
@@ -38,13 +44,14 @@ static enum result usbPllEnable(const void *, const void *);
 static uint32_t usbPllFrequency(const void *);
 static bool usbPllReady(const void *);
 /*----------------------------------------------------------------------------*/
-static enum result mainClockDisable(const void *);
 static enum result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
 
-static enum result usbClockDisable(const void *);
 static enum result usbClockEnable(const void *, const void *);
 static uint32_t usbClockFrequency(const void *);
+
+static enum result wdtClockEnable(const void *, const void *);
+static uint32_t wdtClockFrequency(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -58,6 +65,13 @@ static const struct ClockClass intOscTable = {
     .enable = intOscEnable,
     .frequency = intOscFrequency,
     .ready = intOscReady
+};
+
+static const struct ClockClass wdtOscTable = {
+    .disable = wdtOscDisable,
+    .enable = wdtOscEnable,
+    .frequency = wdtOscFrequency,
+    .ready = wdtOscReady
 };
 
 static const struct ClockClass sysPllTable = {
@@ -75,28 +89,38 @@ static const struct ClockClass usbPllTable = {
 };
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
-    .disable = mainClockDisable,
+    .disable = stubDisable,
     .enable = mainClockEnable,
     .frequency = mainClockFrequency,
     .ready = stubReady
 };
 
 static const struct ClockClass usbClockTable = {
-    .disable = usbClockDisable,
+    .disable = stubDisable,
     .enable = usbClockEnable,
     .frequency = usbClockFrequency,
+    .ready = stubReady
+};
+
+static const struct ClockClass wdtClockTable = {
+    .disable = stubDisable,
+    .enable = wdtClockEnable,
+    .frequency = wdtClockFrequency,
     .ready = stubReady
 };
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
 const struct ClockClass * const InternalOsc = &intOscTable;
+const struct ClockClass * const WdtOsc = &wdtOscTable;
 const struct ClockClass * const SystemPll = &sysPllTable;
 const struct ClockClass * const UsbPll = &usbPllTable;
 const struct ClockClass * const MainClock = &mainClockTable;
 const struct ClockClass * const UsbClock = &usbClockTable;
+const struct ClockClass * const WdtClock = &wdtClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
+static uint32_t wdtFrequency = 0;
 uint32_t coreClock = INT_OSC_FREQUENCY;
 /*----------------------------------------------------------------------------*/
 static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divider,
@@ -153,6 +177,11 @@ static enum result calcPllValues(uint16_t multiplier, uint8_t divider,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static enum result stubDisable(const void *clockBase __attribute__((unused)))
+{
+  return E_ERROR;
+}
+/*----------------------------------------------------------------------------*/
 static bool stubReady(const void *clockBase __attribute__((unused)))
 {
   return true;
@@ -160,7 +189,7 @@ static bool stubReady(const void *clockBase __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 static enum result extOscDisable(const void *clockBase __attribute__((unused)))
 {
-  if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_INPUT)
+  if (LPC_SYSCON->MAINCLKSEL != MAINCLKSEL_PLL_INPUT)
   {
     sysPowerDisable(PWR_SYSOSC);
     return E_OK;
@@ -211,7 +240,7 @@ static bool extOscReady(const void *clockBase __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 static enum result intOscDisable(const void *clockBase __attribute__((unused)))
 {
-  if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_IRC)
+  if (LPC_SYSCON->MAINCLKSEL != MAINCLKSEL_IRC)
   {
     sysPowerDisable(PWR_IRCOUT);
     sysPowerDisable(PWR_IRC);
@@ -240,9 +269,53 @@ static bool intOscReady(const void *clockBase __attribute__((unused)))
   return sysPowerStatus(PWR_IRC) && sysPowerStatus(PWR_IRCOUT);
 }
 /*----------------------------------------------------------------------------*/
+static enum result wdtOscDisable(const void *clockBase __attribute__((unused)))
+{
+  //TODO Check usage
+  sysPowerDisable(PWR_WDTOSC);
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result wdtOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
+{
+  const uint32_t frequencies[15] = {
+      600000,  1050000, 1400000, 1750000,
+      2100000, 2400000, 2700000, 3000000,
+      3250000, 3500000, 3750000, 4000000,
+      4200000, 4400000, 4600000
+  };
+  const struct WdtOscConfig * const config = configBase;
+
+  if ((config->divider && (config->divider & 0x01)) || config->divider > 64)
+    return E_VALUE;
+
+  if (config->frequency < WDT_FREQ_600 || config->frequency > WDT_FREQ_4600)
+    return E_VALUE;
+
+  const uint8_t divider = (config->divider >> 1) - 1;
+
+  sysPowerEnable(PWR_WDTOSC);
+  LPC_SYSCON->WDTOSCCTRL = WDTOSCCTRL_DIVSEL(divider)
+      | WDTOSCCTRL_FREQSEL(config->frequency);
+  wdtFrequency = frequencies[config->frequency - 1] / config->divider;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t wdtOscFrequency(const void *clockBase __attribute__((unused)))
+{
+  return sysPowerStatus(PWR_WDTOSC) ? wdtFrequency : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool wdtOscReady(const void *clockBase __attribute__((unused)))
+{
+  return sysPowerStatus(PWR_WDTOSC) == true;
+}
+/*----------------------------------------------------------------------------*/
 static enum result sysPllDisable(const void *clockBase __attribute__((unused)))
 {
-  if ((LPC_SYSCON->MAINCLKSEL & MAINCLKSEL_MASK) != MAINCLKSEL_PLL_OUTPUT)
+  if (LPC_SYSCON->MAINCLKSEL != MAINCLKSEL_PLL_OUTPUT)
   {
     sysPowerDisable(PWR_SYSPLL);
     return E_OK;
@@ -345,13 +418,7 @@ static uint32_t usbPllFrequency(const void *clock)
 static bool usbPllReady(const void *clockBase __attribute__((unused)))
 {
   /* USB PLL should be locked */
-  return LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK != 0;
-}
-/*----------------------------------------------------------------------------*/
-static enum result mainClockDisable(const void *clockBase
-    __attribute__((unused)))
-{
-  return E_ERROR;
+  return (LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *clockBase
@@ -414,12 +481,6 @@ static uint32_t mainClockFrequency(const void *clockBase
   return coreClock;
 }
 /*----------------------------------------------------------------------------*/
-static enum result usbClockDisable(const void *clockBase
-    __attribute__((unused)))
-{
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
 static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
@@ -455,13 +516,61 @@ static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t usbClockFrequency(const void *clockBase __attribute__((unused)))
 {
-  switch (LPC_SYSCON->USBCLKSEL & USBCLKSEL_MASK)
+  switch (LPC_SYSCON->USBCLKSEL)
   {
     case USBCLKSEL_MAIN_CLOCK:
       return coreClock;
 
     case USBCLKSEL_USBPLL_OUTPUT:
       return usbPllFrequency(UsbPll);
+
+    default:
+      return 0;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result wdtClockEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
+{
+  const struct WdtClockConfig * const config = configBase;
+
+  switch (config->source)
+  {
+    case CLOCK_INTERNAL:
+      if (!intOscReady(InternalOsc))
+        return E_ERROR;
+      LPC_SYSCON->WDTCLKSEL = WDTCLKSEL_IRC;
+      break;
+
+    case CLOCK_WDT:
+      if (!wdtOscReady(WdtOsc))
+        return E_VALUE;
+      LPC_SYSCON->WDTCLKSEL = WDTCLKSEL_WDT;
+      break;
+
+    case CLOCK_MAIN:
+      LPC_SYSCON->WDTCLKSEL = WDTCLKSEL_MAIN_CLOCK;
+      break;
+
+    default:
+      return E_ERROR;
+  }
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t wdtClockFrequency(const void *clockBase __attribute__((unused)))
+{
+  switch (LPC_SYSCON->WDTCLKSEL)
+  {
+    case WDTCLKSEL_IRC:
+      return intOscReady(InternalOsc) ? INT_OSC_FREQUENCY : 0;
+
+    case WDTCLKSEL_MAIN_CLOCK:
+      return coreClock;
+
+    case WDTCLKSEL_WDT:
+      return wdtFrequency;
 
     default:
       return 0;

@@ -19,17 +19,45 @@ enum clockSource
   CLOCK_MAIN
 };
 /*----------------------------------------------------------------------------*/
+enum wdtFrequency
+{
+  /* Watchdog oscillator analog output frequency in kHz */
+  WDT_FREQ_600 = 0x01,
+  WDT_FREQ_1050,
+  WDT_FREQ_1400,
+  WDT_FREQ_1750,
+  WDT_FREQ_2100,
+  WDT_FREQ_2400,
+  WDT_FREQ_2700,
+  WDT_FREQ_3000,
+  WDT_FREQ_3250,
+  WDT_FREQ_3500,
+  WDT_FREQ_3750,
+  WDT_FREQ_4000,
+  WDT_FREQ_4200,
+  WDT_FREQ_4400,
+  WDT_FREQ_4600
+};
+/*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
+extern const struct ClockClass * const WdtOsc;
 extern const struct ClockClass * const SystemPll;
 extern const struct ClockClass * const UsbPll;
 extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const UsbClock;
+extern const struct ClockClass * const WdtClock;
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
   uint32_t frequency;
   bool bypass;
+};
+/*----------------------------------------------------------------------------*/
+struct WdtOscConfig
+{
+  uint8_t divider;
+  enum wdtFrequency frequency;
 };
 /*----------------------------------------------------------------------------*/
 struct PllConfig
@@ -47,6 +75,12 @@ struct MainClockConfig
 /*----------------------------------------------------------------------------*/
 struct UsbClockConfig
 {
+  enum clockSource source;
+};
+/*----------------------------------------------------------------------------*/
+struct WdtClockConfig
+{
+  uint8_t divider;
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
