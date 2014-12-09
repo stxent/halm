@@ -81,8 +81,7 @@ static enum result setDescriptor(uint8_t channel,
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
 {
-  if (descriptors[0])
-    descriptors[0]->handler(descriptors[0]);
+  descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 enum result adcConfigPin(const struct AdcUnitBase *unit, pin_t key,

@@ -51,8 +51,7 @@ static enum result setDescriptor(uint8_t channel,
 /*----------------------------------------------------------------------------*/
 void I2C_ISR(void)
 {
-  if (descriptors[0])
-    descriptors[0]->handler(descriptors[0]);
+  descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetClock(const struct I2cBase *interface __attribute__((unused)))

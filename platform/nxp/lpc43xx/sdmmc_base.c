@@ -11,8 +11,7 @@
 /*----------------------------------------------------------------------------*/
 static enum result configPins(struct SdmmcBase *,
     const struct SdmmcBaseConfig *);
-static enum result setDescriptor(uint8_t, const struct SdmmcBase *,
-    struct SdmmcBase *);
+static enum result setDescriptor(const struct SdmmcBase *, struct SdmmcBase *);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -158,7 +157,7 @@ const struct PinEntry sdmmcPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SdmmcBase = &sdioTable;
-static struct SdmmcBase *descriptors[1] = {0};
+static struct SdmmcBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
 static enum result configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
@@ -200,19 +199,16 @@ static enum result configPins(struct SdmmcBase *interface,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct SdmmcBase *state, struct SdmmcBase *interface)
+static enum result setDescriptor(const struct SdmmcBase *state,
+    struct SdmmcBase *interface)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state,
+  return compareExchangePointer((void **)&descriptor, state,
       interface) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void SDIO_ISR(void)
 {
-  if (descriptors[0])
-    descriptors[0]->handler(descriptors[0]);
+  descriptor->handler(descriptor);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sdmmcGetClock(const struct SdmmcBase *interface
@@ -228,7 +224,7 @@ static enum result sdioInit(void *object, const void *configBase)
   enum result res;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(0, 0, interface)) != E_OK)
+  if ((res = setDescriptor(0, interface)) != E_OK)
     return res;
 
   if ((res = configPins(interface, config)) != E_OK)
@@ -252,5 +248,5 @@ static void sdioDeinit(void *object)
   sysClockDisable(CLK_SDIO);
   sysClockDisable(CLK_M4_SDIO);
 
-  setDescriptor(0, interface, 0);
+  setDescriptor(interface, 0);
 }

@@ -97,7 +97,7 @@ static void interruptHandler(void *object)
   {
     const uint8_t data = reg->RBR;
 
-    switch (interface->state)
+    switch ((enum state)interface->state)
     {
       case STATE_RESET:
         if (data ^ 0xF0)

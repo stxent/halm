@@ -69,8 +69,7 @@ static enum result setDescriptor(uint8_t channel, const struct UartBase *state,
 /*----------------------------------------------------------------------------*/
 void UART_ISR(void)
 {
-  if (descriptors[0])
-    descriptors[0]->handler(descriptors[0]);
+  descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))

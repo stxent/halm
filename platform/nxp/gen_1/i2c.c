@@ -66,7 +66,7 @@ static void interruptHandler(void *object)
   LPC_I2C_Type * const reg = interface->parent.reg;
   bool event = false;
 
-  switch (reg->STAT)
+  switch ((enum status)reg->STAT)
   {
     /* Start or Repeated Start conditions have been transmitted */
     case STATUS_START_TRANSMITTED:

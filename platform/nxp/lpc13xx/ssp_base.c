@@ -88,14 +88,12 @@ static enum result setDescriptor(uint8_t channel,
 /*----------------------------------------------------------------------------*/
 void SSP0_ISR(void)
 {
-  if (descriptors[0])
-    descriptors[0]->handler(descriptors[0]);
+  descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 void SSP1_ISR(void)
 {
-  if (descriptors[1])
-    descriptors[1]->handler(descriptors[1]);
+  descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetClock(const struct SspBase *interface __attribute__((unused)))

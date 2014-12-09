@@ -100,7 +100,7 @@ static void interruptHandler(void *object)
   {
     const uint16_t data = ~reg->DR;
 
-    switch (interface->state)
+    switch ((enum state)interface->state)
     {
       case STATE_RECEIVE:
         if (!(data & DATA_MASK))

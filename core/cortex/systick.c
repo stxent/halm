@@ -109,8 +109,7 @@ static enum result updateFrequency(struct SysTickTimer *timer,
 /*----------------------------------------------------------------------------*/
 void SYSTICK_ISR(void)
 {
-  if (descriptor)
-    descriptor->handler(descriptor);
+  descriptor->handler(descriptor);
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configBase)

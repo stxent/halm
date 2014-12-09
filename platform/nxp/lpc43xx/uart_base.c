@@ -222,26 +222,22 @@ static enum result setDescriptor(uint8_t channel, const struct UartBase *state,
 /*----------------------------------------------------------------------------*/
 void USART0_ISR(void)
 {
-  if (descriptors[0])
-    descriptors[0]->handler(descriptors[0]);
+  descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 void UART1_ISR(void)
 {
-  if (descriptors[1])
-    descriptors[1]->handler(descriptors[1]);
+  descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
 void USART2_ISR(void)
 {
-  if (descriptors[2])
-    descriptors[2]->handler(descriptors[2]);
+  descriptors[2]->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
 void USART3_ISR(void)
 {
-  if (descriptors[3])
-    descriptors[3]->handler(descriptors[3]);
+  descriptors[3]->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)

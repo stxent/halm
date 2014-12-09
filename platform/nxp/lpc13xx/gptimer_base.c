@@ -149,26 +149,22 @@ static enum result setDescriptor(uint8_t channel,
 /*----------------------------------------------------------------------------*/
 void TIMER16B0_ISR(void)
 {
-  if (descriptors[0])
-    descriptors[0]->handler(descriptors[0]);
+  descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER16B1_ISR(void)
 {
-  if (descriptors[1])
-    descriptors[1]->handler(descriptors[1]);
+  descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER32B0_ISR(void)
 {
-  if (descriptors[2])
-    descriptors[2]->handler(descriptors[2]);
+  descriptors[2]->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER32B1_ISR(void)
 {
-  if (descriptors[3])
-    descriptors[3]->handler(descriptors[3]);
+  descriptors[3]->handler(descriptors[3]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpTimerGetClock(const struct GpTimerBase *timer
