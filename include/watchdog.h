@@ -12,8 +12,6 @@
 #ifndef WATCHDOG_H_
 #define WATCHDOG_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <stdint.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
@@ -21,6 +19,7 @@ struct WatchdogClass
 {
   CLASS_HEADER
 
+  void (*callback)(void *, void (*)(void *), void *);
   void (*restart)(void *);
 };
 /*----------------------------------------------------------------------------*/
@@ -28,6 +27,19 @@ struct Watchdog
 {
   struct Entity parent;
 };
+/*----------------------------------------------------------------------------*/
+/**
+ * Set watchdog interrupt callback.
+ * @param timer Pointer to a Watchdog object.
+ * @param callback Callback function.
+ * @param argument Callback function argument.
+ */
+static inline void watchdogCallback(void *timer, void (*callback)(void *),
+    void *argument)
+{
+  ((const struct WatchdogClass *)CLASS(timer))->callback(timer,
+      callback, argument);
+}
 /*----------------------------------------------------------------------------*/
 /**
  * Restart internal timer.
