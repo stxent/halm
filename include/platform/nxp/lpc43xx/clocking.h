@@ -58,7 +58,7 @@ struct CommonClockClass
 {
   struct ClockClass parent;
 
-  enum clockBranch channel;
+  enum clockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;

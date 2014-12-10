@@ -8,13 +8,18 @@
 #define PLATFORM_NXP_LPC13XX_CLOCKING_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
+/*------------------Clock Source Update registers-----------------------------*/
+#define CLKUEN_ENA                      BIT(0)
+/*------------------Clock Output Source Select register-----------------------*/
+#define CLKOUTCLKSEL_IRC                BIT_FIELD(0, 0)
+#define CLKOUTCLKSEL_SYSOSC             BIT_FIELD(1, 0)
+#define CLKOUTCLKSEL_WDT                BIT_FIELD(2, 0)
+#define CLKOUTCLKSEL_MAIN_CLOCK         BIT_FIELD(3, 0)
 /*------------------Main Clock Source Select register-------------------------*/
 #define MAINCLKSEL_IRC                  BIT_FIELD(0, 0)
 #define MAINCLKSEL_PLL_INPUT            BIT_FIELD(1, 0)
 #define MAINCLKSEL_WDT                  BIT_FIELD(2, 0)
 #define MAINCLKSEL_PLL_OUTPUT           BIT_FIELD(3, 0)
-/*------------------Main Clock Source Update register-------------------------*/
-#define MAINCLKUEN_ENA                  BIT(0)
 /*------------------PLL Clock Source Select registers-------------------------*/
 #define PLLCLKSEL_IRC                   BIT_FIELD(0, 0)
 #define PLLCLKSEL_SYSOSC                BIT_FIELD(1, 0)
@@ -31,8 +36,6 @@
 /*------------------USB Clock Source Select register--------------------------*/
 #define USBCLKSEL_USBPLL_OUTPUT         BIT_FIELD(0, 0)
 #define USBCLKSEL_MAIN_CLOCK            BIT_FIELD(1, 0)
-/*------------------USB Clock Source Update register--------------------------*/
-#define USBCLKUEN_ENA                   BIT(0)
 /*------------------Watchdog Clock Source Select register---------------------*/
 #define WDTCLKSEL_IRC                   BIT_FIELD(0, 0)
 #define WDTCLKSEL_MAIN_CLOCK            BIT_FIELD(1, 0)

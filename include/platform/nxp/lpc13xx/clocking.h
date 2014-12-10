@@ -44,6 +44,7 @@ extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const WdtOsc;
 extern const struct ClockClass * const SystemPll;
 extern const struct ClockClass * const UsbPll;
+extern const struct ClockClass * const ClockOutput;
 extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const UsbClock;
 extern const struct ClockClass * const WdtClock;
@@ -56,7 +57,6 @@ struct ExternalOscConfig
 /*----------------------------------------------------------------------------*/
 struct WdtOscConfig
 {
-  uint8_t divider;
   enum wdtFrequency frequency;
 };
 /*----------------------------------------------------------------------------*/
@@ -67,18 +67,7 @@ struct PllConfig
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
-struct MainClockConfig
-{
-  uint8_t divider;
-  enum clockSource source;
-};
-/*----------------------------------------------------------------------------*/
-struct UsbClockConfig
-{
-  enum clockSource source;
-};
-/*----------------------------------------------------------------------------*/
-struct WdtClockConfig
+struct CommonClockConfig
 {
   uint8_t divider;
   enum clockSource source;
