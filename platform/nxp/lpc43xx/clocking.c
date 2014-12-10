@@ -450,7 +450,7 @@ static enum result commonClockEnable(const void *clockBase,
 static uint32_t commonClockFrequency(const void *clockBase)
 {
   const struct CommonClockClass * const clock = clockBase;
-  volatile uint32_t * const reg = calcBranchReg(clock->branch);
+  const volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
   switch (BASE_CLK_SEL_VALUE(*reg))
   {
@@ -478,7 +478,7 @@ static uint32_t commonClockFrequency(const void *clockBase)
 static bool commonClockReady(const void *clockBase)
 {
   const struct CommonClockClass * const clock = clockBase;
-  volatile uint32_t * const reg = calcBranchReg(clock->branch);
+  const volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
   return !(*reg & BASE_CLK_PD);
 }

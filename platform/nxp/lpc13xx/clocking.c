@@ -13,6 +13,14 @@
 #define INT_OSC_FREQUENCY 12000000
 #define USB_FREQUENCY     48000000
 /*----------------------------------------------------------------------------*/
+struct ClockDescriptor
+{
+  volatile uint32_t sourceSelect;
+  volatile uint32_t sourceUpdate;
+  volatile uint32_t divider;
+};
+/*----------------------------------------------------------------------------*/
+static struct ClockDescriptor *calcBranchDescriptor(enum clockBranch);
 static uint32_t calcPllFrequency(uint16_t, uint8_t, enum clockSource);
 static enum result calcPllValues(uint16_t, uint8_t, uint32_t *);
 /*----------------------------------------------------------------------------*/
@@ -41,25 +49,10 @@ static enum result usbPllEnable(const void *, const void *);
 static uint32_t usbPllFrequency(const void *);
 static bool usbPllReady(const void *);
 /*----------------------------------------------------------------------------*/
-static void clockOutputDisable(const void *);
-static enum result clockOutputEnable(const void *, const void *);
-static uint32_t clockOutputFrequency(const void *);
-static bool clockOutputReady(const void *);
-
-static void mainClockDisable(const void *);
-static enum result mainClockEnable(const void *, const void *);
-static uint32_t mainClockFrequency(const void *);
-static bool mainClockReady(const void *);
-
-static void usbClockDisable(const void *);
-static enum result usbClockEnable(const void *, const void *);
-static uint32_t usbClockFrequency(const void *);
-static bool usbClockReady(const void *);
-
-static void wdtClockDisable(const void *);
-static enum result wdtClockEnable(const void *, const void *);
-static uint32_t wdtClockFrequency(const void *);
-static bool wdtClockReady(const void *);
+static void branchDisable(const void *);
+static enum result branchEnable(const void *, const void *);
+static uint32_t branchFrequency(const void *);
+static bool branchReady(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -96,50 +89,77 @@ static const struct ClockClass usbPllTable = {
     .ready = usbPllReady
 };
 /*----------------------------------------------------------------------------*/
-static const struct ClockClass clockOutputTable = {
-    .disable = clockOutputDisable,
-    .enable = clockOutputEnable,
-    .frequency = clockOutputFrequency,
-    .ready = clockOutputReady
+static const struct CommonClockClass clockOutputTable = {
+    .parent = {
+        .disable = branchDisable,
+        .enable = branchEnable,
+        .frequency = branchFrequency,
+        .ready = branchReady,
+    },
+    .branch = CLOCK_BRANCH_OUTPUT
 };
 
-static const struct ClockClass mainClockTable = {
-    .disable = mainClockDisable,
-    .enable = mainClockEnable,
-    .frequency = mainClockFrequency,
-    .ready = mainClockReady
+static const struct CommonClockClass mainClockTable = {
+    .parent = {
+        .disable = branchDisable,
+        .enable = branchEnable,
+        .frequency = branchFrequency,
+        .ready = branchReady,
+    },
+    .branch = CLOCK_BRANCH_MAIN
 };
 
-static const struct ClockClass usbClockTable = {
-    .disable = usbClockDisable,
-    .enable = usbClockEnable,
-    .frequency = usbClockFrequency,
-    .ready = usbClockReady
+static const struct CommonClockClass usbClockTable = {
+    .parent = {
+        .disable = branchDisable,
+        .enable = branchEnable,
+        .frequency = branchFrequency,
+        .ready = branchReady,
+    },
+    .branch = CLOCK_BRANCH_USB
 };
 
-static const struct ClockClass wdtClockTable = {
-    .disable = wdtClockDisable,
-    .enable = wdtClockEnable,
-    .frequency = wdtClockFrequency,
-    .ready = wdtClockReady
+static const struct CommonClockClass wdtClockTable = {
+    .parent = {
+        .disable = branchDisable,
+        .enable = branchEnable,
+        .frequency = branchFrequency,
+        .ready = branchReady,
+    },
+    .branch = CLOCK_BRANCH_WDT
 };
 /*----------------------------------------------------------------------------*/
-static const uint32_t wdtFrequencyValues[15] = {
-    600000,
-    1050000,
-    1400000,
-    1750000,
-    2100000,
-    2400000,
-    2700000,
-    3000000,
-    3250000,
-    3500000,
-    3750000,
-    4000000,
-    4200000,
-    4400000,
-    4600000
+static const int8_t commonClockSourceMap[4][4] = {
+    [CLOCK_BRANCH_MAIN] = {
+        CLOCK_INTERNAL, CLOCK_EXTERNAL, CLOCK_WDT, CLOCK_PLL
+    },
+    [CLOCK_BRANCH_OUTPUT] = {
+        CLOCK_INTERNAL, CLOCK_EXTERNAL, CLOCK_WDT, CLOCK_MAIN
+    },
+    [CLOCK_BRANCH_USB] = {
+        CLOCK_USB_PLL, CLOCK_MAIN, -1, -1
+    },
+    [CLOCK_BRANCH_WDT] = {
+        CLOCK_INTERNAL, CLOCK_MAIN, CLOCK_WDT, -1
+    }
+};
+/*----------------------------------------------------------------------------*/
+static const uint16_t wdtFrequencyValues[15] = {
+    600,
+    1050,
+    1400,
+    1750,
+    2100,
+    2400,
+    2700,
+    3000,
+    3250,
+    3500,
+    3750,
+    4000,
+    4200,
+    4400,
+    4600
 };
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
@@ -147,15 +167,41 @@ const struct ClockClass * const InternalOsc = &intOscTable;
 const struct ClockClass * const WdtOsc = &wdtOscTable;
 const struct ClockClass * const SystemPll = &sysPllTable;
 const struct ClockClass * const UsbPll = &usbPllTable;
-const struct ClockClass * const ClockOutput = &clockOutputTable;
-const struct ClockClass * const MainClock = &mainClockTable;
-const struct ClockClass * const UsbClock = &usbClockTable;
-const struct ClockClass * const WdtClock = &wdtClockTable;
+const struct CommonClockClass * const ClockOutput = &clockOutputTable;
+const struct CommonClockClass * const MainClock = &mainClockTable;
+const struct CommonClockClass * const UsbClock = &usbClockTable;
+const struct CommonClockClass * const WdtClock = &wdtClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
 static uint32_t wdtFrequency = 0;
 uint32_t coreClock = INT_OSC_FREQUENCY;
+/*----------------------------------------------------------------------------*/
+static struct ClockDescriptor *calcBranchDescriptor(enum clockBranch branch)
+{
+  volatile uint32_t *base = 0;
+
+  switch (branch)
+  {
+    case CLOCK_BRANCH_MAIN:
+      base = &LPC_SYSCON->MAINCLKSEL;
+      break;
+
+    case CLOCK_BRANCH_OUTPUT:
+      base = &LPC_SYSCON->CLKOUTCLKSEL;
+      break;
+
+    case CLOCK_BRANCH_USB:
+      base = &LPC_SYSCON->USBCLKSEL;
+      break;
+
+    case CLOCK_BRANCH_WDT:
+      base = &LPC_SYSCON->WDTCLKSEL;
+      break;
+  }
+
+  return (struct ClockDescriptor *)base;
+}
 /*----------------------------------------------------------------------------*/
 static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divider,
     enum clockSource source)
@@ -273,7 +319,8 @@ static enum result intOscEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
 {
-  return intOscReady(InternalOsc) ? INT_OSC_FREQUENCY : 0;
+  return sysPowerStatus(PWR_IRC) && sysPowerStatus(PWR_IRCOUT) ?
+      INT_OSC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool intOscReady(const void *clockBase __attribute__((unused)))
@@ -299,7 +346,7 @@ static enum result wdtOscEnable(const void *clockBase __attribute__((unused)),
 
   sysPowerEnable(PWR_WDTOSC);
   LPC_SYSCON->WDTOSCCTRL = WDTOSCCTRL_DIVSEL(0) | WDTOSCCTRL_FREQSEL(index);
-  wdtFrequency = wdtFrequencyValues[index - 1] >> 1;
+  wdtFrequency = ((uint32_t)wdtFrequencyValues[index - 1] * 1000) >> 1;
 
   return E_OK;
 }
@@ -405,9 +452,9 @@ static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t usbPllFrequency(const void *clock)
+static uint32_t usbPllFrequency(const void *clockBase __attribute__((unused)))
 {
-  return usbPllReady(clock) ? USB_FREQUENCY : 0;
+  return LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK ? USB_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool usbPllReady(const void *clockBase __attribute__((unused)))
@@ -416,307 +463,102 @@ static bool usbPllReady(const void *clockBase __attribute__((unused)))
   return (LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void clockOutputDisable(const void *clockBase __attribute__((unused)))
+static void branchDisable(const void *clockBase)
 {
-  LPC_SYSCON->CLKOUTDIV = 0;
+  const struct CommonClockClass * const clock = clockBase;
+  struct ClockDescriptor * const descriptor =
+      calcBranchDescriptor(clock->branch);
+
+  if (clock->branch != CLOCK_BRANCH_MAIN)
+    descriptor->divider = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result clockOutputEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase)
+static enum result branchEnable(const void *clockBase, const void *configBase)
 {
+  const struct CommonClockClass * const clock = clockBase;
   const struct CommonClockConfig * const config = configBase;
+  struct ClockDescriptor * const descriptor =
+      calcBranchDescriptor(clock->branch);
+  int8_t value = -1;
 
-  switch (config->source)
+  for (uint8_t index = 0; index < 4; ++index)
   {
-    case CLOCK_INTERNAL:
-      if (!intOscReady(InternalOsc))
-        return E_ERROR;
-      LPC_SYSCON->CLKOUTCLKSEL = CLKOUTCLKSEL_IRC;
+    if (commonClockSourceMap[clock->branch][index] == (int8_t)config->source)
+    {
+      value = index;
       break;
-
-    case CLOCK_EXTERNAL:
-      if (!extOscReady(InternalOsc))
-        return E_ERROR;
-      LPC_SYSCON->CLKOUTCLKSEL = CLKOUTCLKSEL_SYSOSC;
-      break;
-
-    case CLOCK_WDT:
-      if (!wdtOscReady(WdtOsc))
-        return E_VALUE;
-      LPC_SYSCON->CLKOUTCLKSEL = CLKOUTCLKSEL_WDT;
-      break;
-
-    case CLOCK_MAIN:
-      LPC_SYSCON->CLKOUTCLKSEL = CLKOUTCLKSEL_MAIN_CLOCK;
-      break;
-
-    default:
-      return E_ERROR;
+    }
   }
 
+  if (value == -1)
+    return E_VALUE;
+
+  descriptor->sourceSelect = (uint32_t)value;
+
   /* Update clock source */
-  LPC_SYSCON->CLKOUTUEN = CLKUEN_ENA;
-  LPC_SYSCON->CLKOUTUEN = 0;
-  LPC_SYSCON->CLKOUTUEN = CLKUEN_ENA;
+  descriptor->sourceUpdate = CLKUEN_ENA;
+  descriptor->sourceUpdate = 0;
+  descriptor->sourceUpdate = CLKUEN_ENA;
   /* Wait until updated */
-  while (!(LPC_SYSCON->CLKOUTUEN & CLKUEN_ENA));
+  while (!(descriptor->sourceUpdate & CLKUEN_ENA));
 
   /* Enable clock */
-  /* Enable clock */
-  if (config->divider)
-    LPC_SYSCON->CLKOUTDIV = config->divider;
-  else
-    LPC_SYSCON->CLKOUTDIV = 1;
+  descriptor->divider = config->divider ? config->divider : 1;
+
+  if (clock->branch == CLOCK_BRANCH_MAIN)
+    coreClock = branchFrequency(MainClock);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t clockOutputFrequency(const void *clockBase
-    __attribute__((unused)))
+static uint32_t branchFrequency(const void *clockBase)
 {
-  uint32_t baseFrequency = 0;
+  const struct CommonClockClass * const clock = clockBase;
+  const struct ClockDescriptor * const descriptor =
+      calcBranchDescriptor(clock->branch);
+  const int8_t sourceType =
+      commonClockSourceMap[clock->branch][descriptor->sourceSelect];
 
-  if (!LPC_SYSCON->CLKOUTDIV)
+  if (!descriptor->divider || sourceType == -1)
     return 0;
 
-  switch (LPC_SYSCON->CLKOUTCLKSEL)
-  {
-    case CLKOUTCLKSEL_IRC:
-      baseFrequency = intOscFrequency(InternalOsc);
-      break;
+  uint32_t baseFrequency = 0;
 
-    case CLKOUTCLKSEL_SYSOSC:
-      baseFrequency = extOscFrequency(ExternalOsc);
-      break;
-
-    case CLKOUTCLKSEL_WDT:
-      baseFrequency = wdtFrequency;
-      break;
-
-    case CLKOUTCLKSEL_MAIN_CLOCK:
-      baseFrequency = mainClockFrequency(MainClock);
-      break;
-  }
-
-  return baseFrequency / LPC_SYSCON->CLKOUTDIV;
-}
-/*----------------------------------------------------------------------------*/
-static bool clockOutputReady(const void *clockBase __attribute__((unused)))
-{
-  return LPC_SYSCON->CLKOUTDIV != 0;
-}
-/*----------------------------------------------------------------------------*/
-static void mainClockDisable(const void *clockBase __attribute__((unused)))
-{
-
-}
-/*----------------------------------------------------------------------------*/
-static enum result mainClockEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase)
-{
-  const struct CommonClockConfig * const config = configBase;
-
-  switch (config->source)
+  switch (sourceType)
   {
     case CLOCK_INTERNAL:
-      LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_IRC;
-      coreClock = INT_OSC_FREQUENCY;
+      baseFrequency = intOscFrequency(0);
       break;
 
     case CLOCK_EXTERNAL:
-      /* Check whether external oscillator is configured and ready */
-      if (!extOscReady(ExternalOsc))
-        return E_ERROR;
-      LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_PLL_INPUT;
-      coreClock = extFrequency;
+      baseFrequency = extOscFrequency(0);
       break;
 
     case CLOCK_PLL:
-      /* Check whether PLL is configured and ready */
-      if (!sysPllReady(UsbPll))
-        return E_ERROR;
-      LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_PLL_OUTPUT;
-      coreClock = pllFrequency;
+      baseFrequency = sysPllFrequency(0);
       break;
 
-    case CLOCK_WDT:
-      if (!wdtOscReady(WdtOsc))
-        return E_ERROR;
-      LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_WDT;
-      coreClock = wdtFrequency;
-      break;
-
-    default:
-      return E_ERROR;
-  }
-
-  if (config->divider)
-  {
-    coreClock /= config->divider;
-    LPC_SYSCON->SYSAHBCLKDIV = config->divider;
-  }
-  else
-    LPC_SYSCON->SYSAHBCLKDIV = 1;
-
-  /* Update Main clock source */
-  LPC_SYSCON->MAINCLKUEN = CLKUEN_ENA;
-  LPC_SYSCON->MAINCLKUEN = 0;
-  LPC_SYSCON->MAINCLKUEN = CLKUEN_ENA;
-  /* Wait until updated */
-  while (!(LPC_SYSCON->MAINCLKUEN & CLKUEN_ENA));
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t mainClockFrequency(const void *clockBase
-    __attribute__((unused)))
-{
-  return coreClock;
-}
-/*----------------------------------------------------------------------------*/
-static bool mainClockReady(const void *clockBase __attribute__((unused)))
-{
-  return true;
-}
-/*----------------------------------------------------------------------------*/
-static void usbClockDisable(const void *clockBase __attribute__((unused)))
-{
-  LPC_SYSCON->USBCLKDIV = 0;
-}
-/*----------------------------------------------------------------------------*/
-static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase)
-{
-  const struct CommonClockConfig * const config = configBase;
-
-  if (config->divider > 1)
-    return E_VALUE;
-
-  switch (config->source)
-  {
     case CLOCK_USB_PLL:
-      if (!usbPllReady(UsbPll))
-        return E_ERROR;
-      LPC_SYSCON->USBCLKSEL = USBCLKSEL_USBPLL_OUTPUT;
-      break;
-
-    case CLOCK_MAIN:
-      if (!extOscReady(ExternalOsc) || coreClock != USB_FREQUENCY)
-        return E_VALUE;
-      LPC_SYSCON->USBCLKSEL = USBCLKSEL_MAIN_CLOCK;
-      break;
-
-    default:
-      return E_ERROR;
-  }
-
-  /* Update Main clock source */
-  LPC_SYSCON->USBCLKUEN = CLKUEN_ENA;
-  LPC_SYSCON->USBCLKUEN = 0;
-  LPC_SYSCON->USBCLKUEN = CLKUEN_ENA;
-  /* Wait until updated */
-  while (!(LPC_SYSCON->USBCLKUEN & CLKUEN_ENA));
-
-  /* Enable clock */
-  LPC_SYSCON->USBCLKDIV = 1;
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t usbClockFrequency(const void *clockBase __attribute__((unused)))
-{
-  switch (LPC_SYSCON->USBCLKSEL)
-  {
-    case USBCLKSEL_MAIN_CLOCK:
-      return coreClock;
-
-    case USBCLKSEL_USBPLL_OUTPUT:
-      return usbPllFrequency(UsbPll);
-
-    default:
-      return 0;
-  }
-}
-/*----------------------------------------------------------------------------*/
-static bool usbClockReady(const void *clockBase __attribute__((unused)))
-{
-  return LPC_SYSCON->USBCLKDIV != 0;
-}
-/*----------------------------------------------------------------------------*/
-static void wdtClockDisable(const void *clockBase __attribute__((unused)))
-{
-  LPC_SYSCON->WDTCLKDIV = 0;
-}
-/*----------------------------------------------------------------------------*/
-static enum result wdtClockEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase)
-{
-  const struct CommonClockConfig * const config = configBase;
-
-  switch (config->source)
-  {
-    case CLOCK_INTERNAL:
-      if (!intOscReady(InternalOsc))
-        return E_ERROR;
-      LPC_SYSCON->WDTCLKSEL = WDTCLKSEL_IRC;
+      baseFrequency = usbPllFrequency(0);
       break;
 
     case CLOCK_WDT:
-      if (!wdtOscReady(WdtOsc))
-        return E_VALUE;
-      LPC_SYSCON->WDTCLKSEL = WDTCLKSEL_WDT;
+      baseFrequency = wdtOscFrequency(0);
       break;
 
     case CLOCK_MAIN:
-      LPC_SYSCON->WDTCLKSEL = WDTCLKSEL_MAIN_CLOCK;
-      break;
-
-    default:
-      return E_ERROR;
-  }
-
-  /* Update WDT clock source */
-  LPC_SYSCON->WDTCLKUEN = CLKUEN_ENA;
-  LPC_SYSCON->WDTCLKUEN = 0;
-  LPC_SYSCON->WDTCLKUEN = CLKUEN_ENA;
-  /* Wait until updated */
-  while (!(LPC_SYSCON->WDTCLKUEN & CLKUEN_ENA));
-
-  /* Enable clock */
-  if (config->divider)
-    LPC_SYSCON->WDTCLKDIV = config->divider;
-  else
-    LPC_SYSCON->WDTCLKDIV = 1;
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t wdtClockFrequency(const void *clockBase __attribute__((unused)))
-{
-  uint32_t baseFrequency = 0;
-
-  if (!LPC_SYSCON->WDTCLKDIV)
-    return 0;
-
-  switch (LPC_SYSCON->WDTCLKSEL)
-  {
-    case WDTCLKSEL_IRC:
-      baseFrequency = intOscFrequency(InternalOsc);
-      break;
-
-    case WDTCLKSEL_MAIN_CLOCK:
-      baseFrequency = mainClockFrequency(MainClock);
-      break;
-
-    case WDTCLKSEL_WDT:
-      baseFrequency = wdtFrequency;
+      baseFrequency = branchFrequency(MainClock);
       break;
   }
 
-  return baseFrequency / LPC_SYSCON->WDTCLKDIV;
+  return baseFrequency / descriptor->divider;
 }
 /*----------------------------------------------------------------------------*/
-static bool wdtClockReady(const void *clockBase __attribute__((unused)))
+static bool branchReady(const void *clockBase)
 {
-  return LPC_SYSCON->WDTCLKDIV != 0;
+  const struct CommonClockClass * const clock = clockBase;
+  const struct ClockDescriptor * const descriptor =
+      calcBranchDescriptor(clock->branch);
+
+  return descriptor->divider != 0;
 }

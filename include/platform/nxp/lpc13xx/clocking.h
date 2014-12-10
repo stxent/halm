@@ -9,6 +9,14 @@
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
+enum clockBranch
+{
+  CLOCK_BRANCH_MAIN,
+  CLOCK_BRANCH_OUTPUT,
+  CLOCK_BRANCH_USB,
+  CLOCK_BRANCH_WDT
+};
+/*----------------------------------------------------------------------------*/
 enum clockSource
 {
   CLOCK_INTERNAL,
@@ -39,15 +47,22 @@ enum wdtFrequency
   WDT_FREQ_4600
 };
 /*----------------------------------------------------------------------------*/
+struct CommonClockClass
+{
+  struct ClockClass parent;
+
+  enum clockBranch branch;
+};
+/*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const WdtOsc;
 extern const struct ClockClass * const SystemPll;
 extern const struct ClockClass * const UsbPll;
-extern const struct ClockClass * const ClockOutput;
-extern const struct ClockClass * const MainClock;
-extern const struct ClockClass * const UsbClock;
-extern const struct ClockClass * const WdtClock;
+extern const struct CommonClockClass * const ClockOutput;
+extern const struct CommonClockClass * const MainClock;
+extern const struct CommonClockClass * const UsbClock;
+extern const struct CommonClockClass * const WdtClock;
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
