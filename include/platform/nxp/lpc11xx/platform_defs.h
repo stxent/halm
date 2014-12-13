@@ -81,6 +81,28 @@ typedef struct
   __ne__ uint32_t RESERVED14[110];
   __ro__ uint32_t DEVICE_ID;
 } LPC_SYSCON_Type;
+/*------------------Flash Memory Configuration--------------------------------*/
+typedef struct
+{
+  __ne__ uint32_t RESERVED0[4];
+  __rw__ uint32_t FLASHCFG;
+  __ne__ uint32_t RESERVED1[3];
+
+  /* Offset 0x020 */
+  __rw__ uint32_t FMSSTART;
+  __rw__ uint32_t FMSSTOP;
+  __ne__ uint32_t RESERVED2;
+  __ro__ uint32_t FMSW0;
+  __ro__ uint32_t FMSW1;
+  __ro__ uint32_t FMSW2;
+  __ro__ uint32_t FMSW3;
+  __ne__ uint32_t RESERVED3[1001];
+
+  /* Offset 0xFE0 */
+  __ro__ uint32_t FMSTAT;
+  __ne__ uint32_t RESERVED4;
+  __wo__ uint32_t FMSTATCLR;
+} LPC_FMC_Type;
 /*------------------Input/Output Configuration--------------------------------*/
 typedef struct
 {
@@ -341,6 +363,7 @@ typedef struct
 #define LPC_TIMER32B1_BASE      (LPC_APB_BASE + 0x18000)
 #define LPC_ADC_BASE            (LPC_APB_BASE + 0x1C000)
 #define LPC_PMU_BASE            (LPC_APB_BASE + 0x38000)
+#define LPC_FMC_BASE            (LPC_APB_BASE + 0x3C000)
 #define LPC_SSP0_BASE           (LPC_APB_BASE + 0x40000)
 #define LPC_IOCON_BASE          (LPC_APB_BASE + 0x44000)
 #define LPC_SYSCON_BASE         (LPC_APB_BASE + 0x48000)
@@ -364,6 +387,7 @@ typedef struct
 #define LPC_TIMER32B1   ((LPC_TIMER_Type *)LPC_TIMER32B1_BASE)
 #define LPC_ADC         ((LPC_ADC_Type *)LPC_ADC_BASE)
 #define LPC_PMU         ((LPC_PMU_Type *)LPC_PMU_BASE)
+#define LPC_FMC         ((LPC_FMC_Type *)LPC_FMC_BASE)
 #define LPC_SSP0        ((LPC_SSP_Type *)LPC_SSP0_BASE)
 #define LPC_SSP1        ((LPC_SSP_Type *)LPC_SSP1_BASE)
 #define LPC_IOCON       ((LPC_IOCON_Type *)LPC_IOCON_BASE)

@@ -78,13 +78,13 @@ struct WdtOscConfig
 struct PllConfig
 {
   uint16_t multiplier;
-  uint8_t divider;
+  uint8_t divisor;
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig
 {
-  uint8_t divider;
+  uint8_t divisor;
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/

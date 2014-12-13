@@ -71,9 +71,7 @@ static void flashLatencyUpdate(uint32_t frequency)
 {
   uint8_t clocks = 1 + frequency / 20000000;
 
-  if (clocks > 5)
-    clocks = 5;
-  sysFlashLatency(clocks);
+  sysFlashLatency(clocks <= 5 ? clocks : 5);
 }
 /*----------------------------------------------------------------------------*/
 static void pllDisconnect(void)

@@ -51,6 +51,9 @@ enum sysClockDevice
   CLK_RAM2        = 27
 };
 /*----------------------------------------------------------------------------*/
+void sysFlashLatencyUpdate(uint8_t);
+uint8_t sysFlashLatency();
+/*----------------------------------------------------------------------------*/
 static inline void sysClockEnable(enum sysClockDevice block)
 {
   LPC_SYSCON->SYSAHBCLKCTRL |= BIT(block);

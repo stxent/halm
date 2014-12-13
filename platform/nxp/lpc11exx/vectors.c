@@ -38,7 +38,7 @@ void TIMER32B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SSP0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void USART_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void ADC_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void WDT_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void WWDT_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void BOD_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void FLASH_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void IOH_ISR(void) __attribute__((weak, alias("defaultHandler")));
@@ -89,7 +89,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     0,
     0,
     ADC_ISR,
-    WDT_ISR,
+    WWDT_ISR,
     BOD_ISR,
     FLASH_ISR,
     0,

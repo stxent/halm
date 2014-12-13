@@ -29,7 +29,7 @@ enum
   SSP0_IRQ      = 20,
   USART_IRQ     = 21,
   ADC_IRQ       = 24,
-  WDT_IRQ       = 25,
+  WWDT_IRQ      = 25,
   BOD_IRQ       = 26,
   FLASH_IRQ     = 27,
   IOH_IRQ       = 31

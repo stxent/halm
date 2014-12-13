@@ -48,9 +48,6 @@ ifeq ($(CONFIG_LPC17XX),y)
 	GENERATION = gen_1
 	PLATFORM = lpc17xx
 	PLATFORM_TYPE = nxp
-
-	#Platform-specific options
-	PLATFORM_SYSTEM_MODULE = y
 endif
 
 ifeq ($(CONFIG_LPC43XX),y)
@@ -63,7 +60,6 @@ ifeq ($(CONFIG_LPC43XX),y)
 
 	#Platform-specific options
 	PLATFORM_FLAGS += -D__MULTICORE_NONE
-	PLATFORM_SYSTEM_MODULE = y
 endif
 
 ifeq ($(CONFIG_OPTIMIZE_NONE),y)
@@ -109,11 +105,8 @@ CSOURCES += platform/pin.c
 CSOURCES += platform/$(PLATFORM_TYPE)/startup.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/clocking.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pin.c
+CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/system.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/vectors.c
-
-ifeq ($(PLATFORM_SYSTEM_MODULE),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/system.c
-endif
 
 ifeq ($(CONFIG_PLATFORM_GPIO_BUS),y)
 	CSOURCES += platform/gpio_bus.c

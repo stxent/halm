@@ -8,6 +8,11 @@
 #define PLATFORM_NXP_LPC13XX_SYSTEM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
+/*------------------Flash Configuration register------------------------------*/
+#define FLASHCFG_FLASHTIM_MASK          BIT_FIELD(MASK(2), 0)
+#define FLASHCFG_FLASHTIM(value)        BIT_FIELD((value), 0)
+#define FLASHCFG_FLASHTIM_VALUE(reg) \
+    FIELD_VALUE((reg), FLASHCFG_FLASHTIM_MASK, 0)
 /*------------------Peripheral Reset Control register-------------------------*/
 #define PRESETCTRL_SSP0                 BIT(0)
 #define PRESETCTRL_I2C                  BIT(1)

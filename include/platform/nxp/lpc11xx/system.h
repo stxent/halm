@@ -7,6 +7,7 @@
 #ifndef PLATFORM_NXP_LPC11XX_SYSTEM_H_
 #define PLATFORM_NXP_LPC11XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <bits.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -45,6 +46,9 @@ enum sysClockDevice
   CLK_CAN         = 17,
   CLK_SSP1        = 18
 };
+/*----------------------------------------------------------------------------*/
+void sysFlashLatencyUpdate(uint8_t);
+uint8_t sysFlashLatency();
 /*----------------------------------------------------------------------------*/
 static inline void sysClockEnable(enum sysClockDevice block)
 {

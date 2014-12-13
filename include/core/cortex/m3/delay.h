@@ -9,28 +9,45 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
-static inline void mdelay(uint32_t);
-static inline void udelay(uint32_t);
-/*----------------------------------------------------------------------------*/
-static inline void mdelay(uint32_t period)
+static inline void __delay(uint32_t count)
 {
-  udelay(1000 * period);
-}
-/*----------------------------------------------------------------------------*/
-static inline void udelay(uint32_t period)
-{
-  extern uint32_t coreClock;
-  //FIXME Recalculate delay
-  volatile uint32_t count = coreClock / 3000000 * period;
-
   __asm__ volatile (
-      "1:\n\t"
-      "   SUBS.W %[count], %[count], #1\n\t"
-      "   BNE 1b"
+      "1:\n"
+      "    NOP\n"
+      "    SUBS.W %[count], %[count], #1\n"
+      "    BNE 1b"
       : [count] "=r" (count)
       : "0" (count)
       : "r3"
   );
+}
+/*----------------------------------------------------------------------------*/
+static inline void mdelay(uint32_t period)
+{
+  extern uint32_t ticksPerSecond;
+
+  while (period)
+  {
+    uint32_t count = period > (1 << 12) ? 1 << 12 : period;
+
+    period -= count;
+    count = (ticksPerSecond * count) / 4;
+    __delay(count);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline void udelay(uint32_t period)
+{
+  extern uint32_t ticksPerSecond;
+
+  while (period)
+  {
+    uint32_t count = period > (1 << 12) ? 1 << 12 : period;
+
+    period -= count;
+    count = (ticksPerSecond * count) / 4000;
+    __delay(count);
+  }
 }
 /*----------------------------------------------------------------------------*/
 #endif /* CORE_CORTEX_M3_DELAY_H_ */

@@ -49,6 +49,9 @@ enum sysClockDevice
   CLK_SSP1        = 18
 };
 /*----------------------------------------------------------------------------*/
+void sysFlashLatencyUpdate(uint8_t);
+uint8_t sysFlashLatency();
+/*----------------------------------------------------------------------------*/
 static inline void sysClockEnable(enum sysClockDevice block)
 {
   LPC_SYSCON->SYSAHBCLKCTRL |= BIT(block);

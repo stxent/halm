@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <bits.h>
+#include <clock.h>
 #include <memory.h>
 #include <core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
@@ -48,7 +48,7 @@ static const struct TimerClass timerTable = {
     .value = tmrValue
 };
 /*----------------------------------------------------------------------------*/
-extern uint32_t coreClock; //TODO SysTick: add workaround
+extern const struct ClockClass * const MainClock;
 const struct TimerClass * const SysTickTimer = &timerTable;
 static struct SysTickTimer *descriptor = 0;
 /*----------------------------------------------------------------------------*/
@@ -84,11 +84,12 @@ static enum result updateFrequency(struct SysTickTimer *timer,
   if (overflow > TIMER_RESOLUTION)
     return E_VALUE;
 
-  const uint32_t limit = !overflow ? 1 : overflow;
+  const uint32_t limit = overflow ? overflow : 1;
 
   if (frequency)
   {
-    const uint32_t divisor = (coreClock / frequency) * limit - 1;
+    const uint32_t divisor =
+        (clockFrequency(MainClock) / frequency) * limit - 1;
 
     if (divisor > TIMER_RESOLUTION)
       return E_VALUE;
