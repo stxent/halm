@@ -8,6 +8,9 @@
 #define PLATFORM_NXP_WWDT_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
+/*------------------Feed register---------------------------------------------*/
+#define FEED_FIRST                      0xAA
+#define FEED_SECOND                     0x55
 /*------------------Mode register---------------------------------------------*/
 /* Enable bit */
 #define MOD_WDEN                        BIT(0)
@@ -21,8 +24,9 @@
 #define MOD_WDPROTECT                   BIT(4)
 /* Prevent disabling of the watchdog oscillator */
 #define MOD_LOCK                        BIT(5)
-/*------------------Feed register---------------------------------------------*/
-#define FEED_FIRST                      0xAA
-#define FEED_SECOND                     0x55
+/*------------------Watchdog Clock Select register----------------------------*/
+/* When set module is clocked from watchdog oscillator */
+#define CLKSEL_WDOSC                    BIT(0)
+#define CLKSEL_LOCK                     BIT(31)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_WWDT_DEFS_H_ */
