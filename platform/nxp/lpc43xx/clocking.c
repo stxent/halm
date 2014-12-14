@@ -9,7 +9,8 @@
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/clocking_defs.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY 12000000
+#define INT_OSC_FREQUENCY               12000000
+#define TICK_RATE(frequency)            ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcBranchReg(enum clockBranch);
 /*----------------------------------------------------------------------------*/
@@ -303,7 +304,7 @@ static uint32_t extFrequency = 0;
 static uint32_t pll0UsbFrequency = 0;
 static uint32_t pll0AudioFrequency = 0;
 static uint32_t pll1Frequency = 0;
-uint32_t coreClock = INT_OSC_FREQUENCY; /* FIXME Used for SysTick only */
+uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcBranchReg(enum clockBranch source)
 {
@@ -432,8 +433,6 @@ static enum result commonClockEnable(const void *clockBase,
   const struct CommonClockConfig * const config = configBase;
   volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
-  /* TODO Add configuration parameters checking */
-
   *reg |= BASE_CLK_AUTOBLOCK;
   *reg = (*reg & ~BASE_CLK_SEL_MASK) | BASE_CLK_SEL(config->source);
   *reg &= ~(BASE_CLK_PD | BASE_CLK_AUTOBLOCK); //FIXME Remove autoblock
@@ -441,7 +440,7 @@ static enum result commonClockEnable(const void *clockBase,
   if (clock->branch == CLOCK_BASE_M4)
   {
     /* Update core clock frequency */
-    coreClock = commonClockFrequency(clockBase);
+    ticksPerSecond = TICK_RATE(commonClockFrequency(clockBase));
   }
 
   return E_OK;

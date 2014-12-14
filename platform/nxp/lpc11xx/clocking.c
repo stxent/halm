@@ -408,24 +408,24 @@ static enum result branchEnable(const void *clockBase, const void *configBase)
   const struct CommonClockConfig * const config = configBase;
   struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
-  int8_t value = -1;
+  int8_t source = -1;
 
   for (uint8_t index = 0; index < 4; ++index)
   {
     if (commonClockSourceMap[clock->branch][index] == (int8_t)config->source)
     {
-      value = index;
+      source = (int8_t)index;
       break;
     }
   }
 
-  if (value == -1)
+  if (source == -1)
     return E_VALUE;
 
   if (clock->branch == CLOCK_BRANCH_MAIN)
     flashLatencyReset();
 
-  descriptor->sourceSelect = (uint32_t)value;
+  descriptor->sourceSelect = (uint32_t)source;
 
   /* Update clock source */
   descriptor->sourceUpdate = CLKUEN_ENA;

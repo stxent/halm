@@ -7,8 +7,6 @@
 #include <platform/platform_defs.h>
 #include <platform/nxp/wwdt.h>
 #include <platform/nxp/wwdt_defs.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
