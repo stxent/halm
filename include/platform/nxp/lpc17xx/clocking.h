@@ -26,14 +26,13 @@ enum clockSource
   CLOCK_PLL,
   CLOCK_RTC,
   CLOCK_USB_PLL,
-  CLOCK_WDT,
   CLOCK_MAIN
 };
 /*----------------------------------------------------------------------------*/
 struct PllConfig
 {
   uint16_t multiplier;
-  uint8_t divider;
+  uint8_t divisor;
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/

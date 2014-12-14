@@ -44,8 +44,5 @@
 /*------------------PLL Feed registers----------------------------------------*/
 #define PLLFEED_FIRST                   0xAA
 #define PLLFEED_SECOND                  0x55
-/*------------------Flash Accelerator Configuration register------------------*/
-#define FLASHCFG_TIME_MASK              BIT_FIELD(MASK(4), 12)
-#define FLASHCFG_TIME(value)            BIT_FIELD((value), 12)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC17XX_CLOCKING_DEFS_H_ */

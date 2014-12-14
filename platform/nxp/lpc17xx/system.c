@@ -5,6 +5,7 @@
  */
 
 #include <stdbool.h>
+#include <platform/nxp/lpc17xx/clocking_defs.h>
 #include <platform/nxp/lpc17xx/system.h>
 #include <platform/nxp/lpc17xx/system_defs.h>
 /*----------------------------------------------------------------------------*/

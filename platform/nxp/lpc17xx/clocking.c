@@ -9,26 +9,27 @@
 #include <platform/nxp/lpc17xx/clocking_defs.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY 4000000
+#define INT_OSC_FREQUENCY               4000000
+#define TICK_RATE(frequency)            ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 static void pllDisconnect(void);
-static enum result stubDisable(const void *);
-static bool stubReady(const void *);
 /*----------------------------------------------------------------------------*/
-static enum result extOscDisable(const void *);
+static void extOscDisable(const void *);
 static enum result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
 static bool extOscReady(const void *);
 
-static enum result sysPllDisable(const void *);
+static void sysPllDisable(const void *);
 static enum result sysPllEnable(const void *, const void *);
 static uint32_t sysPllFrequency(const void *);
 static bool sysPllReady(const void *);
 /*----------------------------------------------------------------------------*/
+static void mainClockDisable(const void *);
 static enum result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
+static bool mainClockReady(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -45,10 +46,10 @@ static const struct ClockClass sysPllTable = {
 };
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
-    .disable = stubDisable,
+    .disable = mainClockDisable,
     .enable = mainClockEnable,
     .frequency = mainClockFrequency,
-    .ready = stubReady
+    .ready = mainClockReady
 };
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
@@ -58,8 +59,8 @@ const struct ClockClass * const MainClock = &mainClockTable;
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
 static uint32_t rtcFrequency = 0;
-static uint8_t pllDivider = 0;
-uint32_t coreClock = INT_OSC_FREQUENCY;
+static uint8_t pllDivisor = 0;
+uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
 {
@@ -81,20 +82,9 @@ static void pllDisconnect(void)
   LPC_SC->PLL0FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
-static enum result stubDisable(const void *clockBase __attribute__((unused)))
-{
-  return E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static bool stubReady(const void *clockBase __attribute__((unused)))
-{
-  return true;
-}
-/*----------------------------------------------------------------------------*/
-static enum result extOscDisable(const void *clockBase __attribute__((unused)))
+static void extOscDisable(const void *clockBase __attribute__((unused)))
 {
   LPC_SC->SCS &= ~SCS_OSCEN;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result extOscEnable(const void *clockBase __attribute__((unused)),
@@ -127,17 +117,11 @@ static bool extOscReady(const void *clockBase __attribute__((unused)))
   return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllDisable(const void *clockBase __attribute__((unused)))
+static void sysPllDisable(const void *clockBase __attribute__((unused)))
 {
-  if (!(LPC_SC->PLL0STAT & PLL0STAT_CONNECTED))
-  {
-    LPC_SC->PLL0CON &= ~PLL0CON_ENABLE;
-    LPC_SC->PLL0FEED = PLLFEED_FIRST;
-    LPC_SC->PLL0FEED = PLLFEED_SECOND;
-    return E_OK;
-  }
-  else
-    return E_ERROR;
+  LPC_SC->PLL0CON &= ~PLL0CON_ENABLE;
+  LPC_SC->PLL0FEED = PLLFEED_FIRST;
+  LPC_SC->PLL0FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
@@ -149,7 +133,7 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   uint16_t multiplier;
   uint8_t prescaler;
 
-  if (!config->multiplier || !config->divider)
+  if (!config->multiplier || !config->divisor)
     return E_VALUE;
 
   /*
@@ -161,9 +145,6 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   switch (config->source)
   {
     case CLOCK_EXTERNAL:
-      /* Check whether external oscillator is configured */
-      if (!extOscReady(ExternalOsc))
-        return E_ERROR;
       source = CLKSRCSEL_MAIN;
       frequency = extFrequency;
       break;
@@ -174,8 +155,6 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
       break;
 
     case CLOCK_RTC:
-      if (!rtcFrequency) //TODO Replace with rtcOscReady
-        return E_ERROR;
       source = CLKSRCSEL_RTC;
       frequency = rtcFrequency;
       break;
@@ -204,8 +183,8 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   }
 
   /* Update system frequency and postscaler value */
-  pllFrequency = frequency / config->divider;
-  pllDivider = config->divider - 1;
+  pllFrequency = frequency / config->divisor;
+  pllDivisor = config->divisor - 1;
 
   /* Set clock source */
   LPC_SC->CLKSRCSEL = source;
@@ -233,65 +212,62 @@ static bool sysPllReady(const void *clockBase __attribute__((unused)))
   return pllFrequency && (LPC_SC->PLL0STAT & PLL0STAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
+static void mainClockDisable(const void *clockBase __attribute__((unused)))
+{
+
+}
+/*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct MainClockConfig * const config = configBase;
+  int8_t source = -1;
 
   switch (config->source)
   {
     case CLOCK_INTERNAL:
-      flashLatencyReset();
-      if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
-        pllDisconnect();
-      LPC_SC->CLKSRCSEL = CLKSRCSEL_IRC;
-      coreClock = INT_OSC_FREQUENCY;
+      source = CLKSRCSEL_IRC;
+      break;
 
     case CLOCK_EXTERNAL:
-      /* Check whether external oscillator is configured and ready */
-      if (!extOscReady(ExternalOsc))
-        return E_ERROR;
-
-      flashLatencyReset();
-      if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
-        pllDisconnect();
-      LPC_SC->CLKSRCSEL = CLKSRCSEL_MAIN;
-      coreClock = extFrequency;
+      source = CLKSRCSEL_MAIN;
       break;
 
     case CLOCK_PLL:
-      /* Check whether PLL is configured and ready */
-      if (!sysPllReady(SystemPll))
-        return E_ERROR;
-
-      /* Maximize flash latency and configure system clock divider */
-      flashLatencyReset();
-      LPC_SC->CCLKCFG = pllDivider;
-
-      /* Connect PLL */
-      LPC_SC->PLL0CON |= PLL0CON_CONNECT;
-      LPC_SC->PLL0FEED = PLLFEED_FIRST;
-      LPC_SC->PLL0FEED = PLLFEED_SECOND;
-
-      /* Wait for enable and connect */
-      while (!(LPC_SC->PLL0STAT & (PLL0STAT_ENABLED | PLL0STAT_CONNECTED)));
-
-      coreClock = pllFrequency;
       break;
 
     case CLOCK_RTC:
-      if (!rtcFrequency) //TODO Replace with rtcOscReady
-        return E_ERROR;
-
-      flashLatencyReset();
-      LPC_SC->CLKSRCSEL = CLKSRCSEL_RTC;
-      coreClock = rtcFrequency;
+      source = CLKSRCSEL_RTC;
       break;
 
     default:
       return E_ERROR;
   }
-  flashLatencyUpdate(coreClock);
+
+  if (source != -1)
+  {
+    if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
+      pllDisconnect();
+
+    LPC_SC->CLKSRCSEL = (uint32_t)source;
+  }
+  else
+  {
+    LPC_SC->CCLKCFG = pllDivisor;
+
+    /* Connect PLL */
+    LPC_SC->PLL0CON |= PLL0CON_CONNECT;
+    LPC_SC->PLL0FEED = PLLFEED_FIRST;
+    LPC_SC->PLL0FEED = PLLFEED_SECOND;
+
+    /* Wait for enable and connect */
+    while (!(LPC_SC->PLL0STAT & (PLL0STAT_ENABLED | PLL0STAT_CONNECTED)));
+  }
+
+  const uint32_t frequency = mainClockFrequency(MainClock);
+
+  flashLatencyUpdate(frequency);
+  ticksPerSecond = TICK_RATE(frequency);
 
   return E_OK;
 }
@@ -299,5 +275,26 @@ static enum result mainClockEnable(const void *clockBase
 static uint32_t mainClockFrequency(const void *clockBase
     __attribute__((unused)))
 {
-  return coreClock;
+  switch (LPC_SC->CLKSRCSEL)
+  {
+    case CLKSRCSEL_IRC:
+      return INT_OSC_FREQUENCY;
+
+    case CLKSRCSEL_MAIN:
+      if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
+        return pllFrequency;
+      else
+        return extFrequency;
+
+    case CLKSRCSEL_RTC:
+      return rtcFrequency;
+
+    default:
+      return 0;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static bool mainClockReady(const void *clockBase __attribute__((unused)))
+{
+  return true;
 }
