@@ -70,7 +70,7 @@ static inline void flashLatencyReset(void)
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
-  uint8_t clocks = 1 + frequency / 20000000;
+  const uint8_t clocks = 1 + frequency / 20000000;
 
   sysFlashLatency(clocks <= 5 ? clocks : 5);
 }

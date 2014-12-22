@@ -76,7 +76,7 @@ struct GpDmaList
   bool circular;
   /* Channel error flag */
   bool error;
-  /* Reduce interrupt count flag */
+  /* Reduce interrupts count */
   bool silent;
 };
 /*----------------------------------------------------------------------------*/

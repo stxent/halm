@@ -76,7 +76,8 @@ endif
 
 INCLUDEPATH += $(addprefix -I$(PROJECTDIR)/, include include/common)
 
-CFLAGS += -std=c11 -Wall -Wextra -Winline -Wcast-qual -pedantic -Wshadow
+#TODO Enable -Wcast-qual for GCC-4.9
+CFLAGS += -std=c11 -Wall -Wextra -Winline -pedantic -Wshadow
 CFLAGS += -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections
 CFLAGS += $(OPTIMIZE_FLAGS) -mcpu=$(CORE_TYPE)-$(CORE) -mthumb
 CFLAGS += -specs=redlib.specs -D__REDLIB__ $(PLATFORM_FLAGS) -D$(CHIP)
