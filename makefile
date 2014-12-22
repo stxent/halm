@@ -174,9 +174,9 @@ ifeq ($(CONFIG_PLATFORM_NXP_UART_BASE),y)
 	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/uart_base.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_WWDT),y)
-	CSOURCES += platform/$(PLATFORM_TYPE)/wwdt.c
-	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/wwdt_base.c
+ifeq ($(CONFIG_PLATFORM_NXP_WDT),y)
+	CSOURCES += platform/$(PLATFORM_TYPE)/wdt.c
+	CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/wdt_base.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC),y)

@@ -1,18 +1,18 @@
 /*
- * wwdt.h
+ * platform/nxp/wdt.h
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_WWDT_H_
-#define PLATFORM_NXP_WWDT_H_
+#ifndef PLATFORM_NXP_WDT_H_
+#define PLATFORM_NXP_WDT_H_
 /*----------------------------------------------------------------------------*/
 #include <watchdog.h>
-#include <platform/nxp/wwdt_base.h>
+#include <platform/nxp/wdt_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct WatchdogClass * const Wwdt;
+extern const struct WatchdogClass * const Wdt;
 /*----------------------------------------------------------------------------*/
-struct WwdtConfig
+struct WdtConfig
 {
   /** Watchdog timer period in milliseconds. */
   uint32_t period;
@@ -20,12 +20,12 @@ struct WwdtConfig
   priority_t priority;
 };
 /*----------------------------------------------------------------------------*/
-struct Wwdt
+struct Wdt
 {
-  struct WwdtBase parent;
+  struct WdtBase parent;
 
   void (*callback)(void *);
   void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_WWDT_H_ */
+#endif /* PLATFORM_NXP_WDT_H_ */

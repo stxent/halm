@@ -1,12 +1,12 @@
 /*
- * wwdt.c
+ * wdt.c
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <platform/platform_defs.h>
-#include <platform/nxp/wwdt.h>
-#include <platform/nxp/wwdt_defs.h>
+#include <platform/nxp/wdt.h>
+#include <platform/nxp/wdt_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -16,7 +16,7 @@ static void wdtCallback(void *, void (*)(void *), void *);
 static void wdtRestart(void *);
 /*----------------------------------------------------------------------------*/
 static const struct WatchdogClass wdtTable = {
-    .size = sizeof(struct Wwdt),
+    .size = sizeof(struct Wdt),
     .init = wdtInit,
     .deinit = wdtDeinit,
 
@@ -24,11 +24,11 @@ static const struct WatchdogClass wdtTable = {
     .restart = wdtRestart
 };
 /*----------------------------------------------------------------------------*/
-const struct WatchdogClass * const Wwdt = &wdtTable;
+const struct WatchdogClass * const Wdt = &wdtTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct Wwdt * const timer = object;
+  struct Wdt * const timer = object;
 
   if (timer->callback)
     timer->callback(timer->callbackArgument);
@@ -36,18 +36,18 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result wdtInit(void *object, const void *configBase)
 {
-  const struct WwdtConfig * const config = configBase;
-  struct Wwdt * const timer = object;
+  const struct WdtConfig * const config = configBase;
+  struct Wdt * const timer = object;
   enum result res;
 
   /* Call base class constructor */
-  if ((res = WwdtBase->init(object, 0)) != E_OK)
+  if ((res = WdtBase->init(object, 0)) != E_OK)
     return res;
 
   timer->parent.handler = interruptHandler;
   timer->callback = 0;
 
-  LPC_WDT->TC = (config->period * (wwdtGetClock(object) / 1000)) >> 2;
+  LPC_WDT->TC = (config->period * (wdtGetClock(object) / 1000)) >> 2;
   LPC_WDT->MOD = MOD_WDEN | MOD_WDRESET;
 
   irqSetPriority(timer->parent.irq, config->priority);
@@ -62,7 +62,7 @@ static void wdtDeinit(void *object __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 static void wdtCallback(void *object, void (*callback)(void *), void *argument)
 {
-  struct Wwdt * const timer = object;
+  struct Wdt * const timer = object;
 
   timer->callbackArgument = argument;
   timer->callback = callback;
