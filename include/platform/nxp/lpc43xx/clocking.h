@@ -44,9 +44,9 @@ enum clockSource
   CLOCK_ENET_TX     = 0x03,
   CLOCK_GP_CLKIN    = 0x04,
   CLOCK_EXTERNAL    = 0x06,
-  CLOCK_PLL0_USB    = 0x07,
-  CLOCK_PLL0_AUDIO  = 0x08,
-  CLOCK_PLL1        = 0x09,
+  CLOCK_USB_PLL     = 0x07,
+  CLOCK_AUDIO_PLL   = 0x08,
+  CLOCK_PLL         = 0x09,
   CLOCK_IDIVA       = 0x0C,
   CLOCK_IDIVB       = 0x0D,
   CLOCK_IDIVC       = 0x0E,
@@ -62,7 +62,7 @@ struct CommonClockClass
 };
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;
-extern const struct ClockClass * const Pll1;
+extern const struct ClockClass * const SystemPll;
 /*----------------------------------------------------------------------------*/
 /* Base M4 clock */
 extern const struct CommonClockClass * const MainClock;

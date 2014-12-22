@@ -8,11 +8,14 @@
 #include <platform/platform_defs.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/clocking_defs.h>
+#include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY               12000000
 #define TICK_RATE(frequency)            ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcBranchReg(enum clockBranch);
+static inline void flashLatencyReset(void);
+static void flashLatencyUpdate(uint32_t);
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *);
 static enum result extOscEnable(const void *, const void *);
@@ -274,7 +277,7 @@ static const struct CommonClockClass cguOut1ClockTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
-const struct ClockClass * const Pll1 = &pll1Table;
+const struct ClockClass * const SystemPll = &pll1Table;
 /*----------------------------------------------------------------------------*/
 const struct CommonClockClass * const MainClock = &mainClockTable;
 const struct CommonClockClass * const Usb0Clock = &usb0ClockTable;
@@ -309,6 +312,21 @@ uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY);
 static volatile uint32_t *calcBranchReg(enum clockBranch source)
 {
   return &LPC_CGU->BASE_USB0_CLK + source;
+}
+/*----------------------------------------------------------------------------*/
+static inline void flashLatencyReset(void)
+{
+  /* Select safe setting */
+  sysFlashLatencyUpdate(10);
+}
+/*----------------------------------------------------------------------------*/
+static void flashLatencyUpdate(uint32_t frequency)
+{
+  const uint32_t divisor = frequency / 43000000;
+  const uint32_t remainder = frequency - divisor * 43000000;
+  const uint8_t clocks = 1 + (divisor << 1) + (remainder >= 21000000 ? 1 : 0);
+
+  sysFlashLatencyUpdate(clocks <= 10 ? clocks : 10);
 }
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *clockBase __attribute__((unused)))
@@ -379,7 +397,6 @@ static enum result pll1ClockEnable(const void *clockBase
   switch (config->source)
   {
     case CLOCK_EXTERNAL:
-      //TODO Add checks
       frequency = extFrequency;
       break;
 
@@ -402,7 +419,6 @@ static enum result pll1ClockEnable(const void *clockBase
       | PLL1_CTRL_PSEL(0) | PLL1_CTRL_NSEL(nsel) | PLL1_CTRL_MSEL(msel)
       | PLL1_CTRL_CLKSEL(config->source);
   LPC_CGU->PLL1_CTRL &= ~PLL1_CTRL_PD;
-  LPC_CGU->PLL1_CTRL &= ~PLL1_CTRL_AUTOBLOCK; //TODO Remove
 
   return E_OK;
 }
@@ -433,14 +449,19 @@ static enum result commonClockEnable(const void *clockBase,
   const struct CommonClockConfig * const config = configBase;
   volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
+  if (clock->branch == CLOCK_BASE_M4)
+    flashLatencyReset();
+
   *reg |= BASE_CLK_AUTOBLOCK;
   *reg = (*reg & ~BASE_CLK_SEL_MASK) | BASE_CLK_SEL(config->source);
-  *reg &= ~(BASE_CLK_PD | BASE_CLK_AUTOBLOCK); //FIXME Remove autoblock
+  *reg &= ~BASE_CLK_PD;
 
   if (clock->branch == CLOCK_BASE_M4)
   {
-    /* Update core clock frequency */
-    ticksPerSecond = TICK_RATE(commonClockFrequency(clockBase));
+    const uint32_t frequency = commonClockFrequency(clockBase);
+
+    flashLatencyUpdate(frequency);
+    ticksPerSecond = TICK_RATE(frequency);
   }
 
   return E_OK;
@@ -459,13 +480,13 @@ static uint32_t commonClockFrequency(const void *clockBase)
     case CLOCK_EXTERNAL:
       return extFrequency;
 
-    case CLOCK_PLL0_USB:
+    case CLOCK_USB_PLL:
       return pll0UsbFrequency;
 
-    case CLOCK_PLL0_AUDIO:
+    case CLOCK_AUDIO_PLL:
       return pll0AudioFrequency;
 
-    case CLOCK_PLL1:
+    case CLOCK_PLL:
       return pll1Frequency;
 
     default:

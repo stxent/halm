@@ -137,6 +137,10 @@ enum sysClockBranch
 /*----------------------------------------------------------------------------*/
 void sysClockEnable(enum sysClockBranch);
 void sysClockDisable(enum sysClockBranch);
+void sysFlashEnable(uint8_t);
+void sysFlashDisable(uint8_t);
+uint8_t sysFlashLatency();
+void sysFlashLatencyUpdate(uint8_t);
 void sysResetEnable(enum sysDeviceReset);
 void sysResetDisable(enum sysDeviceReset);
 /*----------------------------------------------------------------------------*/

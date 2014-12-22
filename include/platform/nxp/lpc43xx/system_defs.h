@@ -16,6 +16,12 @@
 #define CFG_DIV(value)                  BIT_FIELD((value), 5)
 #define CFG_DIV_MASK                    BIT_FIELD(MASK(3), 27)
 #define CFG_DIV_VALUE(reg)              FIELD_VALUE((reg), CFG_DIV_MASK, 27)
+/*------------------Flash Configuration registers-----------------------------*/
+#define FLASHCFG_FLASHTIM_MASK          BIT_FIELD(MASK(4), 12)
+#define FLASHCFG_FLASHTIM(value)        BIT_FIELD((value), 12)
+#define FLASHCFG_FLASHTIM_VALUE(reg) \
+    FIELD_VALUE((reg), FLASHCFG_FLASHTIM_MASK, 12)
+#define FLASHCFG_POW                    BIT(31)
 /*------------------Branch clock status registers-----------------------------*/
 #define STAT_RUN                        BIT(0)
 #define STAT_AUTO                       BIT(1)

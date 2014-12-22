@@ -285,8 +285,15 @@ typedef struct
   __rw__ uint32_t DMAMUX;
 
   /* Offset 0x120 */
-  __rw__ uint32_t FLASHCFGA;
-  __rw__ uint32_t FLASHCFGB;
+  union
+  {
+    __rw__ uint32_t FLASHCFG[2];
+    struct
+    {
+      __rw__ uint32_t FLASHCFGA;
+      __rw__ uint32_t FLASHCFGB;
+    };
+  };
   __rw__ uint32_t ETBCFG;
   __rw__ uint32_t CREG6;
   __rw__ uint32_t M4TXEVENT;
