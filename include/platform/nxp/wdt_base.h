@@ -10,7 +10,17 @@
 #include <entity.h>
 #include <irq.h>
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/wdt_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
+/*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const WdtBase;
+/*----------------------------------------------------------------------------*/
+struct WdtBaseConfig
+{
+  enum wdtClockSource source;
+};
 /*----------------------------------------------------------------------------*/
 struct WdtBase
 {

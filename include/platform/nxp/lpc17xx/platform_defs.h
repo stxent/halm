@@ -345,7 +345,7 @@ typedef struct
   __rw__ uint32_t TC;
   __wo__ uint32_t FEED;
   __ro__ uint32_t TV;
-  __rw__ uint32_t WDCLKSEL;
+  __rw__ uint32_t CLKSEL;
 } LPC_WDT_Type;
 /*------------------Motor Control Pulse-Width Modulation----------------------*/
 typedef struct

@@ -37,11 +37,14 @@ static void interruptHandler(void *object)
 static enum result wdtInit(void *object, const void *configBase)
 {
   const struct WdtConfig * const config = configBase;
+  const struct WdtBaseConfig parentConfig = {
+      .source = config->source
+  };
   struct Wdt * const timer = object;
   enum result res;
 
   /* Call base class constructor */
-  if ((res = WdtBase->init(object, 0)) != E_OK)
+  if ((res = WdtBase->init(object, &parentConfig)) != E_OK)
     return res;
 
   timer->parent.handler = interruptHandler;

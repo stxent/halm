@@ -1382,14 +1382,16 @@ typedef struct
 //  __rw__ uint16_t CNTVAL; /* Counter Value register */
 //} LPC_DAC_Type;
 ///*------------------Watchdog Timer--------------------------------------------*/
-//typedef struct
-//{
-//  __rw__ uint32_t MOD;
-//  __rw__ uint32_t TC;
-//  __wo__ uint32_t FEED;
-//  __ro__ uint32_t TV;
-//  __rw__ uint32_t WDCLKSEL;
-//} LPC_WDT_Type;
+typedef struct
+{
+  __rw__ uint32_t MOD;
+  __rw__ uint32_t TC;
+  __wo__ uint32_t FEED;
+  __ro__ uint32_t TV;
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t WARNINT;
+  __rw__ uint32_t WINDOW;
+} LPC_WDT_Type;
 ///*------------------Motor Control Pulse-Width Modulation----------------------*/
 //typedef struct
 //{
@@ -1888,7 +1890,7 @@ typedef struct
 //#define LPC_LCD           ((LPC_LCD_Type *)LPC_LCD_BASE)
 //#define LPC_ETHERNET      ((LPC_ETHERNET_Type *)LPC_ETHERNET_BASE)
 
-//#define LPC_WDT           ((LPC_WDT_Type *)LPC_WDT_BASE)
+#define LPC_WDT           ((LPC_WDT_Type *)LPC_WDT_BASE)
 #define LPC_USART0        ((LPC_USART_Type *)LPC_USART0_BASE)
 #define LPC_UART1         ((LPC_UART_Type *)LPC_UART1_BASE)
 #define LPC_SSP0          ((LPC_SSP_Type *)LPC_SSP0_BASE)

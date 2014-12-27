@@ -7,8 +7,10 @@
 #include <memory.h>
 #include <platform/nxp/wdt_base.h>
 #include <platform/nxp/wdt_defs.h>
-#include <platform/nxp/lpc11exx/clocking.h>
-#include <platform/nxp/lpc11exx/system.h>
+#include <platform/nxp/lpc17xx/clocking.h>
+#include <platform/nxp/lpc17xx/system.h>
+/*----------------------------------------------------------------------------*/
+#define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(struct WdtBase *);
 /*----------------------------------------------------------------------------*/
@@ -29,7 +31,7 @@ static enum result setDescriptor(struct WdtBase *timer)
   return compareExchangePointer((void **)&descriptor, 0, timer) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-void WWDT_ISR(void)
+void WDT_ISR(void)
 {
   descriptor->handler(descriptor);
 }
@@ -41,8 +43,11 @@ uint32_t wdtGetClock(const struct WdtBase *timer __attribute__((unused)))
     case WDT_CLOCK_IRC:
       return clockFrequency(InternalOsc);
 
-    case WDT_CLOCK_WDOSC:
-      return clockFrequency(WdtOsc);
+    case WDT_CLOCK_PCLK:
+      return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
+
+    case WDT_CLOCK_RTC:
+      return clockFrequency(RtcOsc);
 
     default:
       return 0;
@@ -62,14 +67,13 @@ static enum result wdtInit(void *object, const void *configBase)
     return res;
 
   timer->handler = 0;
-  timer->irq = WWDT_IRQ;
+  timer->irq = WDT_IRQ;
 
-  sysClockEnable(CLK_WWDT);
+  sysClockControl(CLK_WDT, DEFAULT_DIV);
 
   const uint8_t clockSource = config->source != WDT_CLOCK_DEFAULT ?
       config->source : WDT_CLOCK_IRC;
 
-  /* Select clock source */
   LPC_WDT->CLKSEL = CLKSEL_WDSEL(clockSource - 1) | CLKSEL_LOCK;
 
   return E_OK;

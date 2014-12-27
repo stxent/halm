@@ -18,6 +18,8 @@ struct WdtConfig
   uint32_t period;
   /** Optional: interrupt priority. */
   priority_t priority;
+  /** Optional: timer clock source. */
+  enum wdtClockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct Wdt

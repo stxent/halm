@@ -26,7 +26,9 @@
 #define MOD_LOCK                        BIT(5)
 /*------------------Watchdog Clock Select register----------------------------*/
 /* When set module is clocked from watchdog oscillator */
-#define CLKSEL_WDOSC                    BIT(0)
+#define CLKSEL_WDSEL_MASK               BIT_FIELD(MASK(2), 0)
+#define CLKSEL_WDSEL(value)             BIT_FIELD((value), 0)
+#define CLKSEL_WDSEL_VALUE(reg)         FIELD_VALUE((reg), CLKSEL_WDSEL_MASK, 0)
 #define CLKSEL_LOCK                     BIT(31)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_WDT_DEFS_H_ */
