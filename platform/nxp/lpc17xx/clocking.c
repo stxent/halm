@@ -21,6 +21,16 @@ static enum result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
 static bool extOscReady(const void *);
 
+static void intOscDisable(const void *);
+static enum result intOscEnable(const void *, const void *);
+static uint32_t intOscFrequency(const void *);
+static bool intOscReady(const void *);
+
+static void rtcOscDisable(const void *);
+static enum result rtcOscEnable(const void *, const void *);
+static uint32_t rtcOscFrequency(const void *);
+static bool rtcOscReady(const void *);
+
 static void sysPllDisable(const void *);
 static enum result sysPllEnable(const void *, const void *);
 static uint32_t sysPllFrequency(const void *);
@@ -38,6 +48,20 @@ static const struct ClockClass extOscTable = {
     .ready = extOscReady
 };
 
+static const struct ClockClass intOscTable = {
+    .disable = intOscDisable,
+    .enable = intOscEnable,
+    .frequency = intOscFrequency,
+    .ready = intOscReady
+};
+
+static const struct ClockClass rtcOscTable = {
+    .disable = rtcOscDisable,
+    .enable = rtcOscEnable,
+    .frequency = rtcOscFrequency,
+    .ready = rtcOscReady
+};
+
 static const struct ClockClass sysPllTable = {
     .disable = sysPllDisable,
     .enable = sysPllEnable,
@@ -53,6 +77,8 @@ static const struct ClockClass mainClockTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
+const struct ClockClass * const InternalOsc = &intOscTable;
+const struct ClockClass * const RtcOsc = &rtcOscTable;
 const struct ClockClass * const SystemPll = &sysPllTable;
 const struct ClockClass * const MainClock = &mainClockTable;
 /*----------------------------------------------------------------------------*/
@@ -115,6 +141,48 @@ static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 static bool extOscReady(const void *clockBase __attribute__((unused)))
 {
   return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT);
+}
+/*----------------------------------------------------------------------------*/
+static void intOscDisable(const void *clockBase __attribute__((unused)))
+{
+  /* Unsupported */
+}
+/*----------------------------------------------------------------------------*/
+static enum result intOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
+{
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
+{
+  return INT_OSC_FREQUENCY;
+}
+/*----------------------------------------------------------------------------*/
+static bool intOscReady(const void *clockBase __attribute__((unused)))
+{
+  return true;
+}
+/*----------------------------------------------------------------------------*/
+static void rtcOscDisable(const void *clockBase __attribute__((unused)))
+{
+
+}
+/*----------------------------------------------------------------------------*/
+static enum result rtcOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
+{
+
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t rtcOscFrequency(const void *clockBase __attribute__((unused)))
+{
+
+}
+/*----------------------------------------------------------------------------*/
+static bool rtcOscReady(const void *clockBase __attribute__((unused)))
+{
+
 }
 /*----------------------------------------------------------------------------*/
 static void sysPllDisable(const void *clockBase __attribute__((unused)))
