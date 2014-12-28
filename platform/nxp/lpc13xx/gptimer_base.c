@@ -58,19 +58,19 @@ static const struct TimerBlockDescriptor timerBlockEntries[4] = {
 const struct PinEntry gpTimerCapturePins[] = {
     {
         .key = PIN(0, 2), /* CT16B0_CAP0 */
-        .channel = 0,
+        .channel = GPTIMER_CT16B0,
         .value = PACK_VALUE(2, 0)
     }, {
         .key = PIN(1, 0), /* CT32B1_CAP0 */
-        .channel = 3,
+        .channel = GPTIMER_CT32B1,
         .value = PACK_VALUE(3, 0)
     }, {
         .key = PIN(1, 5), /* CT32B0_CAP0 */
-        .channel = 2,
+        .channel = GPTIMER_CT32B0,
         .value = PACK_VALUE(2, 0)
     }, {
         .key = PIN(1, 8), /* CT16B1_CAP0 */
-        .channel = 1,
+        .channel = GPTIMER_CT16B1,
         .value = PACK_VALUE(1, 0)
     }, {
         .key = 0 /* End of pin function association list */
@@ -80,55 +80,55 @@ const struct PinEntry gpTimerCapturePins[] = {
 const struct PinEntry gpTimerMatchPins[] = {
     {
         .key = PIN(0, 1), /* CT32B0_MAT2 */
-        .channel = 2,
+        .channel = GPTIMER_CT32B0,
         .value = PACK_VALUE(2, 2)
     }, {
         .key = PIN(0, 8), /* CT16B0_MAT0 */
-        .channel = 0,
+        .channel = GPTIMER_CT16B0,
         .value = PACK_VALUE(2, 0)
     }, {
         .key = PIN(0, 9), /* CT16B0_MAT1 */
-        .channel = 0,
+        .channel = GPTIMER_CT16B0,
         .value = PACK_VALUE(2, 1)
     }, {
         .key = PIN(0, 10), /* CT16B0_MAT2 */
-        .channel = 0,
+        .channel = GPTIMER_CT16B0,
         .value = PACK_VALUE(3, 2)
     }, {
         .key = PIN(0, 11), /* CT32B0_MAT3 */
-        .channel = 2,
+        .channel = GPTIMER_CT32B0,
         .value = PACK_VALUE(3, 3)
     }, {
         .key = PIN(1, 1), /* CT32B1_MAT0 */
-        .channel = 3,
+        .channel = GPTIMER_CT32B1,
         .value = PACK_VALUE(3, 0)
     }, {
         .key = PIN(1, 2), /* CT32B1_MAT1 */
-        .channel = 3,
+        .channel = GPTIMER_CT32B1,
         .value = PACK_VALUE(3, 1)
     }, {
         .key = PIN(1, 3), /* CT32B1_MAT2 */
-        .channel = 3,
+        .channel = GPTIMER_CT32B1,
         .value = PACK_VALUE(3, 2)
     }, {
         .key = PIN(1, 4), /* CT32B1_MAT3 */
-        .channel = 3,
+        .channel = GPTIMER_CT32B1,
         .value = PACK_VALUE(2, 3)
     }, {
         .key = PIN(1, 6), /* CT32B0_MAT0 */
-        .channel = 2,
+        .channel = GPTIMER_CT32B0,
         .value = PACK_VALUE(2, 0)
     }, {
         .key = PIN(1, 7), /* CT32B0_MAT1 */
-        .channel = 2,
+        .channel = GPTIMER_CT32B0,
         .value = PACK_VALUE(2, 1)
     }, {
         .key = PIN(1, 9), /* CT16B1_MAT0 */
-        .channel = 1,
+        .channel = GPTIMER_CT16B1,
         .value = PACK_VALUE(1, 0)
     }, {
         .key = PIN(1, 10), /* CT16B1_MAT1 */
-        .channel = 1,
+        .channel = GPTIMER_CT16B1,
         .value = PACK_VALUE(2, 1)
     }, {
         .key = 0 /* End of pin function association list */

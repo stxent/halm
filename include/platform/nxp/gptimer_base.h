@@ -13,6 +13,25 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerBase;
 /*----------------------------------------------------------------------------*/
+/** Symbolic names for two different types of timers. */
+enum
+{
+  GPTIMER_CT16B0,
+  GPTIMER_CT16B1,
+  GPTIMER_CT32B0,
+  GPTIMER_CT32B1
+};
+/*----------------------------------------------------------------------------*/
+enum gpTimerEvent
+{
+  GPTIMER_MATCH_AUTO,
+  GPTIMER_MATCH0,
+  GPTIMER_MATCH1,
+  GPTIMER_MATCH2,
+  GPTIMER_MATCH3,
+  GPTIMER_EVENT_END
+};
+/*----------------------------------------------------------------------------*/
 struct GpTimerBaseConfig
 {
   /** Mandatory: peripheral identifier. */
