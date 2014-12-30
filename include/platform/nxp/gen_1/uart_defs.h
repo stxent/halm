@@ -40,19 +40,23 @@
 /* Transmitter Holding Register Empty interrupt */
 #define IIR_INT_THRE                    BIT_FIELD(1, 1)
 /*------------------FIFO Control Register-------------------------------------*/
+/* How many characters must be received before interrupt */
+enum
+{
+  RX_TRIGGER_LEVEL_1  = 0,
+  RX_TRIGGER_LEVEL_4  = 1,
+  RX_TRIGGER_LEVEL_8  = 2,
+  RX_TRIGGER_LEVEL_14 = 3
+};
+
 #define FCR_ENABLE                      BIT(0)
 #define FCR_RX_RESET                    BIT(1)
 #define FCR_TX_RESET                    BIT(2)
 #define FCR_DMA_ENABLE                  BIT(3)
-/*
- * RX trigger level: how many characters must be received before interrupt
- * Level 0:  1 character
- * Level 1:  4 characters
- * Level 2:  8 characters
- * Level 3: 14 characters
- */
 #define FCR_RX_TRIGGER_MASK             BIT_FIELD(MASK(2), 6)
 #define FCR_RX_TRIGGER(level)           BIT_FIELD((level), 6)
+#define FCR_RX_TRIGGER_VALUE(reg) \
+    FIELD_VALUE((reg), FCR_RX_TRIGGER_MASK, 6)
 /*------------------Line Status Register--------------------------------------*/
 #define LSR_RDR                         BIT(0) /* Receiver data ready */
 #define LSR_OE                          BIT(1) /* Overrun error */

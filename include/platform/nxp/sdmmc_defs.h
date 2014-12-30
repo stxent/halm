@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
-enum dmacState
+enum
 {
   DMA_IDLE,
   DMA_SUSPEND,
@@ -22,7 +22,7 @@ enum dmacState
   DMA_DESC_CLOSE
 };
 
-enum fsmState
+enum
 {
   FSM_STATE_IDLE,
   FSM_STATE_SEND_INIT_SEQUENCE,

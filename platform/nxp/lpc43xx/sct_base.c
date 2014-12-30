@@ -212,7 +212,7 @@ static enum result tmrInit(void *object, const void *configBase)
   /* Configure timer clock source */
   if (config->input != SCT_INPUT_NONE)
   {
-    desiredConfig |= CONFIG_CLKMODE(CONFIG_CLKMODE_INPUT);
+    desiredConfig |= CONFIG_CLKMODE(CLKMODE_INPUT);
     if (config->edge == PIN_RISING)
       desiredConfig |= CONFIG_CKSEL_RISING(config->input);
     else

@@ -113,8 +113,8 @@ static enum result tmrInit(void *object, const void *configBase)
 
   /* Configure event */
   reg->EV[timer->event].CTRL = EVCTRL_MATCHSEL(0)
-      | EVCTRL_COMBMODE(EVCTRL_COMBMODE_MATCH) | EVCTRL_MATCHMEM
-      | EVCTRL_DIRECTION(EVCTRL_DIRECTION_IND);
+      | EVCTRL_COMBMODE(COMBMODE_MATCH) | EVCTRL_MATCHMEM
+      | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
   if (timer->parent.part == SCT_HIGH)
     reg->EV[timer->event].CTRL |= EVCTRL_HEVENT;
 

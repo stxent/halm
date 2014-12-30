@@ -221,7 +221,7 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
     /* Enable timer reset after reaching match register value */
     reg->MCR |= MCR_RESET(timer->event);
     /* Enable external match to generate signals to other peripherals */
-    reg->EMR |= EMR_CONTROL(timer->event, EMR_CONTROL_TOGGLE);
+    reg->EMR |= EMR_CONTROL(timer->event, CONTROL_TOGGLE);
   }
   else
   {

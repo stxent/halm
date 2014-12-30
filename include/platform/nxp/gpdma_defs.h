@@ -9,9 +9,14 @@
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------DMA configuration register--------------------------------*/
+enum
+{
+  DMA_LITTLE_ENDIAN,
+  DMA_BIG_ENDIAN
+};
+
 #define DMA_ENABLE                      BIT(0)
-#define DMA_BIG_ENDIAN                  BIT(1)
-#define DMA_LITTLE_ENDIAN               0
+#define DMA_ENDIANNESS(master, mode)    BIT_FIELD((mode), 1 + (master))
 /*------------------DMA Channel Control register------------------------------*/
 #define CONTROL_SIZE(size)              BIT_FIELD((size), 0)
 #define CONTROL_SIZE_MASK               BIT_FIELD(MASK(12), 0)

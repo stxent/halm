@@ -69,7 +69,7 @@ static void beginTransmission(struct OneWireUart *interface)
   uartSetRate((struct UartBase *)interface, interface->resetRate);
   interface->state = STATE_RESET;
   /* Clear RX FIFO and set trigger level to 1 character */
-  reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(0);
+  reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_1);
   reg->THR = 0xF0; /* Execute reset */
 }
 /*----------------------------------------------------------------------------*/
@@ -281,7 +281,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 
   interface->state = STATE_RECEIVE;
   /* Clear RX FIFO and set trigger level to 8 characters */
-  reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(2);
+  reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_8);
   sendWord(interface, 0xFF); /* Start reception */
 
   if (interface->blocking)

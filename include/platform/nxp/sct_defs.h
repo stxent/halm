@@ -9,10 +9,14 @@
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Configuration register------------------------------------*/
+enum
+{
+  CLKMODE_BUS       = 0,
+  CLKMODE_PRESCALED = 1,
+  CLKMODE_INPUT     = 2
+};
+
 #define CONFIG_UNIFY                    BIT(0)
-#define CONFIG_CLKMODE_BUS              0
-#define CONFIG_CLKMODE_PRESCALED        1
-#define CONFIG_CLKMODE_INPUT            2
 #define CONFIG_CLKMODE_MASK             BIT_FIELD(MASK(2), 1)
 #define CONFIG_CLKMODE(value)           BIT_FIELD((value), 1)
 #define CONFIG_CKSEL_MASK               BIT_FIELD(MASK(4), 3)
@@ -37,18 +41,26 @@
 #define INPUT_AIN(channel)              BIT((channel))
 #define INPUT_SIN(channel)              BIT(16 + (channel))
 /*------------------Bidirectional output control register---------------------*/
-#define OUTPUTDIRCTRL_SETCLR_IND        0 /* Independent */
-#define OUTPUTDIRCTRL_SETCLR_L          1 /* L counter */
-#define OUTPUTDIRCTRL_SETCLR_H          2 /* H counter */
+enum
+{
+  SETCLR_INDEPENDENT  = 0,
+  SETCLR_L            = 1, /* L counter */
+  SETCLR_H            = 2  /* H counter */
+};
+
 #define OUTPUTDIRCTRL_SETCLR_MASK(channel) \
     BIT_FIELD(MASK(2), (channel) << 1)
 #define OUTPUTDIRCTRL_SETCLR(channel, value) \
     BIT_FIELD((value), (channel) << 1)
 /*------------------Conflict resolution register------------------------------*/
-#define RES_OUTPUT_NO_CHANGE            0
-#define RES_OUTPUT_SET                  1
-#define RES_OUTPUT_CLEAR                2
-#define RES_OUTPUT_TOGGLE               3
+enum
+{
+  OUTPUT_NO_CHANGE  = 0,
+  OUTPUT_SET        = 1,
+  OUTPUT_CLEAR      = 2,
+  OUTPUT_TOGGLE     = 3
+};
+
 #define RES_OUTPUT_MASK(channel)        BIT_FIELD(MASK(2), (channel) << 1)
 #define RES_OUTPUT(channel, value)      BIT_FIELD((value), (channel) << 1)
 /*------------------DMA request registers-------------------------------------*/
@@ -70,31 +82,43 @@
 #define CONFLAG_BUSERRL                 BIT(30)
 #define CONFLAG_BUSERRH                 BIT(31)
 /*------------------Event Control registers-----------------------------------*/
+enum
+{
+  IOCOND_LOW  = 0,
+  IOCOND_RISE = 1,
+  IOCOND_FALL = 2,
+  IOCOND_HIGH = 3
+};
+
+enum
+{
+  COMBMODE_OR     = 0,
+  COMBMODE_MATCH  = 1,
+  COMBMODE_IO     = 2,
+  COMBMODE_AND    = 3
+};
+
+enum
+{
+  DIRECTION_INDEPENDENT = 0,
+  DIRECTION_UP          = 1,
+  DIRECTION_DOWN        = 2
+};
+
 #define EVCTRL_MATCHSEL_MASK            BIT_FIELD(MASK(4), 0)
 #define EVCTRL_MATCHSEL(value)          BIT_FIELD((value), 0)
 #define EVCTRL_HEVENT                   BIT(4) /* Select L/H counter */
 #define EVCTRL_OUTSEL                   BIT(5) /* Input/output select */
 #define EVCTRL_IOSEL_MASK               BIT_FIELD(MASK(4), 6)
 #define EVCTRL_IOSEL(value)             BIT_FIELD((value), 6)
-#define EVCTRL_IOCOND_LOW               0
-#define EVCTRL_IOCOND_RISE              1
-#define EVCTRL_IOCOND_FALL              2
-#define EVCTRL_IOCOND_HIGH              3
 #define EVCTRL_IOCOND_MASK              BIT_FIELD(MASK(2), 10)
 #define EVCTRL_IOCOND(value)            BIT_FIELD((value), 10)
-#define EVCTRL_COMBMODE_OR              0
-#define EVCTRL_COMBMODE_MATCH           1
-#define EVCTRL_COMBMODE_IO              2
-#define EVCTRL_COMBMODE_AND             3
 #define EVCTRL_COMBMODE_MASK            BIT_FIELD(MASK(2), 12)
 #define EVCTRL_COMBMODE(value)          BIT_FIELD((value), 12)
 #define EVCTRL_STATELD                  BIT(14)
 #define EVCTRL_STATEV_MASK              BIT_FIELD(MASK(5), 15)
 #define EVCTRL_STATEV(value)            BIT_FIELD((value), 15)
 #define EVCTRL_MATCHMEM                 BIT(20)
-#define EVCTRL_DIRECTION_IND            0 /* Direction independent */
-#define EVCTRL_DIRECTION_UP             1
-#define EVCTRL_DIRECTION_DOWN           2
 #define EVCTRL_DIRECTION_MASK           BIT_FIELD(MASK(2), 21)
 #define EVCTRL_DIRECTION(value)         BIT_FIELD((value), 21)
 /*----------------------------------------------------------------------------*/

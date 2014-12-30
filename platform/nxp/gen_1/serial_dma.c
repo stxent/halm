@@ -9,8 +9,6 @@
 #include <platform/nxp/serial_dma.h>
 #include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
-#define RX_FIFO_LEVEL 0 /* 1 character */
-/*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static enum result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -134,8 +132,8 @@ static enum result serialInit(void *object, const void *configBase)
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
   /* Enable FIFO and DMA, set RX trigger level */
-  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(RX_FIFO_LEVEL)
-      | FCR_ENABLE | FCR_DMA_ENABLE;
+  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_ENABLE | FCR_DMA_ENABLE
+      | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_1);
   /* Disable all interrupts */
   reg->IER = 0;
   /* Transmitter is enabled by default */

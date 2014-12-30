@@ -82,7 +82,8 @@ static enum result serialInit(void *object, const void *configBase)
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
   /* Enable FIFO and reset RX trigger level */
-  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(0) | FCR_ENABLE;
+  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_ENABLE
+      | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_1);
   /* Disable all interrupts */
   reg->IER = 0;
   /* Transmitter is enabled by default thus TER register is left untouched */

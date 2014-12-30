@@ -9,8 +9,7 @@
 #include <platform/nxp/serial.h>
 #include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
-#define RX_FIFO_LEVEL 2 /* 8 characters */
-#define TX_FIFO_SIZE  8
+#define TX_FIFO_SIZE 8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -137,8 +136,8 @@ static enum result serialInit(void *object, const void *configBase)
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
   /* Enable FIFO and set RX trigger level */
-  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_RX_TRIGGER(RX_FIFO_LEVEL)
-      | FCR_ENABLE;
+  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_ENABLE
+      | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_8);
   /* Enable RBR and THRE interrupts */
   reg->IER = IER_RBR | IER_THRE;
   /* Transmitter is enabled by default thus TER register is left untouched */
