@@ -1,40 +1,52 @@
-# samples/Kconfig
-
 choice
-	prompt "Optimizations"
-	default OPTIMIZE_NONE
+	prompt "Optimization level"
+	default OPTIMIZATIONS_DISABLED
 
-	config OPTIMIZE_NONE
+	config OPTIMIZATIONS_DISABLED
 		bool "None"
 
-	config OPTIMIZE_SIZE
+	config OPTIMIZATIONS_SIZE
 		bool "Size"
 
-	config OPTIMIZE_ALL
-		bool "All"
+	config OPTIMIZATIONS_FULL
+		bool "Full"
 
 endchoice
+
+config OPT_LEVEL
+	string
+	default "none" if OPTIMIZATIONS_DISABLED
+	default "size" if OPTIMIZATIONS_SIZE
+	default "full" if OPTIMIZATIONS_FULL
 
 choice
 	prompt "Processor family"
-	default LPC11XX
+	default FAMILY_LPC11XX
 
-	config LPC11XX
-		bool "LPC11xx"
+	config FAMILY_LPC11XX
+		bool "NXP LPC11xx"
 
-	config LPC11EXX
-		bool "LPC11Exx"
+	config FAMILY_LPC11EXX
+		bool "NXP LPC11Exx"
 
-	config LPC13XX
-		bool "LPC13xx"
+	config FAMILY_LPC13XX
+		bool "NXP LPC13xx"
 
-	config LPC17XX
-		bool "LPC175x and LPC176x"
+	config FAMILY_LPC17XX
+		bool "NXP LPC175x and LPC176x"
 
-	config LPC43XX
-		bool "LPC43xx"
+	config FAMILY_LPC43XX
+		bool "NXP LPC43xx"
 
 endchoice
+
+config CPU_FAMILY
+	string
+	default "LPC11XX"   if FAMILY_LPC11XX
+	default "LPC11EXX"  if FAMILY_LPC11EXX
+	default "LPC13XX"   if FAMILY_LPC13xx
+	default "LPC17XX"   if FAMILY_LPC17XX
+	default "LPC43XX"   if FAMILY_LPC43XX
 
 menu "Core peripherals"
 
@@ -60,11 +72,11 @@ config PLATFORM_NXP_ADC_BASE
 
 config PLATFORM_NXP_DAC_BASE
 	bool "DAC"
-	depends on LPC17XX || LPC43XX
+	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_NXP_GPDMA
 	bool "GPDMA"
-	depends on LPC17XX || LPC43XX
+	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_NXP_GPTIMER_BASE
 	bool "General-purpose timer"
@@ -83,11 +95,11 @@ config PLATFORM_NXP_GPTIMER_CAPTURE
 
 config PLATFORM_NXP_GPTIMER_PWM
 	bool "PWM on general-purpose timer"
-	depends on PLATFORM_NXP_GPTIMER_BASE && (LPC11XX || LPC11EXX || LPC13XX)
+	depends on PLATFORM_NXP_GPTIMER_BASE && (FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX)
 
 config PLATFORM_NXP_GPPWM
 	bool "PWM"
-	depends on LPC17XX
+	depends on FAMILY_LPC17XX
 
 config PLATFORM_NXP_I2C_BASE
 	bool "I2C"
@@ -97,11 +109,11 @@ config PLATFORM_NXP_PIN_INTERRUPT
 
 config PLATFORM_NXP_SDMMC
 	bool "SD/MMC card interface"
-	depends on LPC43XX
+	depends on FAMILY_LPC43XX
 
 config PLATFORM_NXP_SCT_BASE
 	bool "State Configurable Timer"
-	depends on LPC43XX
+	depends on FAMILY_LPC43XX
 
 config PLATFORM_NXP_SCT_TIMER
 	bool "Common timer on State Configurable Timer"
