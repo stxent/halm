@@ -1,11 +1,11 @@
 /*
- * platform/nxp/sdio.h
+ * common/sdio.h
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef MODULES_SDIO_H_
-#define MODULES_SDIO_H_
+#ifndef COMMON_SDIO_H_
+#define COMMON_SDIO_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 /*----------------------------------------------------------------------------*/
@@ -73,4 +73,4 @@ enum sdioResponse
   SDIO_RESPONSE_LONG
 };
 /*----------------------------------------------------------------------------*/
-#endif /* MODULES_SDIO_H_ */
+#endif /* COMMON_SDIO_H_ */

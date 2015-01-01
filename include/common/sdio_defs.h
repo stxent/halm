@@ -1,11 +1,11 @@
 /*
- * platform/nxp/sdio_defs.h
+ * common/sdio_defs.h
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef MODULES_SDIO_DEFS_H_
-#define MODULES_SDIO_DEFS_H_
+#ifndef COMMON_SDIO_DEFS_H_
+#define COMMON_SDIO_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
@@ -42,4 +42,4 @@ enum cardState
 #define CURRENT_STATE(response) \
     FIELD_VALUE((response), CURRENT_STATE_MASK, 9)
 /*----------------------------------------------------------------------------*/
-#endif /* MODULES_SDIO_DEFS_H_ */
+#endif /* COMMON_SDIO_DEFS_H_ */

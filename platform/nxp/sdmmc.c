@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <modules/sdio.h>
-#include <modules/sdio_defs.h>
+#include <common/sdio.h>
+#include <common/sdio_defs.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/dma_sdmmc.h>
 #include <platform/nxp/sdmmc.h>

@@ -7,8 +7,8 @@
 #include <bits.h>
 #include <delay.h>
 #include <memory.h>
-#include <modules/sdio.h>
-#include <modules/sdio_defs.h>
+#include <common/sdio.h>
+#include <common/sdio_defs.h>
 #include <platform/sdcard.h>
 /*----------------------------------------------------------------------------*/
 #define ENUM_RATE         400000

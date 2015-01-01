@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <string.h>
 #include <memory.h>
+#include <common/sdio.h>
+#include <common/sdio_defs.h>
 #include <crc/crc7.h>
-#include <modules/sdio.h>
-#include <modules/sdio_defs.h>
 #include <platform/nxp/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define BUSY_TIMER_FREQUENCY 100000

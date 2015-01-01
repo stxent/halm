@@ -8,7 +8,6 @@
 #define PLATFORM_NXP_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 /* No effect or reserved registers */
 #define __ne__ __attribute__((deprecated))
@@ -88,7 +87,6 @@ typedef struct
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/platform_defs.h>
 #include HEADER_PATH
-#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #undef __wo__
 #undef __ro__
