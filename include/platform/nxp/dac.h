@@ -8,7 +8,7 @@
 #define PLATFORM_NXP_DAC_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
-#include <mcu.h>
+#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/dac_base.h>

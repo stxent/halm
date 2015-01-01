@@ -15,7 +15,7 @@ XCORE_PATH ?= $(PROJECTDIR)/../xcore
 AR = $(CROSS_COMPILE)ar
 CC = $(CROSS_COMPILE)gcc
 
-ifeq ($(CONFIG_CPU_FAMILY),LPC11XX)
+ifeq ($(CONFIG_CPU_FAMILY),"LPC11XX")
 	CORE := m0
 	CORE_TYPE := cortex
 	GENERATION := gen_1
@@ -27,7 +27,7 @@ ifeq ($(CONFIG_CPU_FAMILY),LPC11XX)
 	PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
 endif
 
-ifeq ($(CONFIG_CPU_FAMILY),LPC11EXX)
+ifeq ($(CONFIG_CPU_FAMILY),"LPC11EXX")
 	CORE := m0
 	CORE_TYPE := cortex
 	GENERATION := gen_1
@@ -39,7 +39,7 @@ ifeq ($(CONFIG_CPU_FAMILY),LPC11EXX)
 	PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
 endif
 
-ifeq ($(CONFIG_CPU_FAMILY),LPC13XX)
+ifeq ($(CONFIG_CPU_FAMILY),"LPC13XX")
 	CORE := m3
 	CORE_TYPE := cortex
 	GENERATION := gen_1

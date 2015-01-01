@@ -7,7 +7,7 @@
 #ifndef MEMORY_H_
 #define MEMORY_H_
 /*----------------------------------------------------------------------------*/
-#include <mcu.h>
+#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <core/CORE_TYPE/memory.h>

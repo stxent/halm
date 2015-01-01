@@ -6,8 +6,8 @@
 
 #include <stdlib.h>
 #include <entity.h>
-#include <list.h>
 #include <pm.h>
+#include <containers/list.h>
 /*----------------------------------------------------------------------------*/
 struct PmHandlerEntry
 {

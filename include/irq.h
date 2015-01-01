@@ -8,7 +8,7 @@
 #define IRQ_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include <mcu.h>
+#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 typedef int16_t irq_t;
 typedef uint8_t priority_t;

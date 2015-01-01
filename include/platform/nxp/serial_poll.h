@@ -7,7 +7,7 @@
 #ifndef PLATFORM_NXP_SERIAL_POLL_H_
 #define PLATFORM_NXP_SERIAL_POLL_H_
 /*----------------------------------------------------------------------------*/
-#include <mcu.h>
+#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/uart_base.h>

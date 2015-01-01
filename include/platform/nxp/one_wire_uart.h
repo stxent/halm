@@ -7,8 +7,8 @@
 #ifndef PLATFORM_NXP_ONE_WIRE_UART_H_
 #define PLATFORM_NXP_ONE_WIRE_UART_H_
 /*----------------------------------------------------------------------------*/
-#include <byte_queue.h>
-#include <mcu.h>
+#include <containers/byte_queue.h>
+#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/uart_base.h>

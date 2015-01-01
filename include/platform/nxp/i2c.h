@@ -8,7 +8,7 @@
 #define PLATFORM_NXP_I2C_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
-#include <mcu.h>
+#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/i2c_base.h>

@@ -8,7 +8,7 @@
 #define PLATFORM_NXP_GPDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <dma.h>
-#include <mcu.h>
+#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/gpdma_base.h>

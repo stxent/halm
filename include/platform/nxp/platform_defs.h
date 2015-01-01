@@ -8,7 +8,7 @@
 #define PLATFORM_NXP_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include <mcu.h>
+#include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 /* No effect or reserved registers */
 #define __ne__ __attribute__((deprecated))
