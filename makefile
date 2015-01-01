@@ -7,6 +7,9 @@ PROJECTDIR = $(shell pwd)
 CONFIG_FILE ?= .config
 CROSS_COMPILE ?= arm-none-eabi-
 
+#External libraries
+XCORE_PATH ?= $(PROJECTDIR)/../xcore
+
 -include $(CONFIG_FILE)
 
 AR = $(CROSS_COMPILE)ar
@@ -83,7 +86,7 @@ else
 endif
 
 #Configure common paths and libraries
-INCLUDEPATH += $(addprefix -I$(PROJECTDIR)/,include include/common)
+INCLUDEPATH += -I$(PROJECTDIR)/include -I$(XCORE_PATH)/include
 OUTPUTDIR = $(PROJECTDIR)/build_$(PLATFORM)
 
 #Configure compiler options
@@ -93,13 +96,11 @@ CFLAGS += $(OPT_FLAGS) $(CPU_FLAGS) $(PLATFORM_FLAGS)
 CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 
 #Common modules
-CSOURCES_COMMON := $(shell find common -name "*.c")
-CSOURCES += $(CSOURCES_COMMON)
-
 ifeq ($(CONFIG_PM),y)
 	CSOURCES += pm/pm.c
 endif
 
+#Modules specific for selected platform
 include core/makefile
 include platform/makefile
 
