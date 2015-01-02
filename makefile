@@ -16,78 +16,74 @@ AR = $(CROSS_COMPILE)ar
 CC = $(CROSS_COMPILE)gcc
 
 ifeq ($(CONFIG_CPU_FAMILY),"LPC11XX")
-	CORE := m0
-	CORE_TYPE := cortex
-	GENERATION := gen_1
-	PLATFORM := lpc11xx
-	PLATFORM_TYPE := nxp
+  CORE := m0
+  CORE_TYPE := cortex
+  GENERATION := gen_1
+  PLATFORM := lpc11xx
+  PLATFORM_TYPE := nxp
 
-	#Platform-specific options
-	CPU_FLAGS := -mcpu=cortex-m0 -mthumb
-	PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
-endif
+  #Platform-specific options
+  CPU_FLAGS := -mcpu=cortex-m0 -mthumb
+  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
+else ifeq ($(CONFIG_CPU_FAMILY),"LPC11EXX")
+  CORE := m0
+  CORE_TYPE := cortex
+  GENERATION := gen_1
+  PLATFORM := lpc11exx
+  PLATFORM_TYPE := nxp
 
-ifeq ($(CONFIG_CPU_FAMILY),"LPC11EXX")
-	CORE := m0
-	CORE_TYPE := cortex
-	GENERATION := gen_1
-	PLATFORM := lpc11exx
-	PLATFORM_TYPE := nxp
+  #Platform-specific options
+  CPU_FLAGS := -mcpu=cortex-m0 -mthumb
+  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
+else ifeq ($(CONFIG_CPU_FAMILY),"LPC13XX")
+  CORE := m3
+  CORE_TYPE := cortex
+  GENERATION := gen_1
+  PLATFORM := lpc13xx
+  PLATFORM_TYPE = nxp
 
-	#Platform-specific options
-	CPU_FLAGS := -mcpu=cortex-m0 -mthumb
-	PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
-endif
+  #Platform-specific options
+  CPU_FLAGS := -mcpu=cortex-m3 -mthumb
+  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
+else ifeq ($(CONFIG_CPU_FAMILY),"LPC17XX")
+  CORE := m3
+  CORE_TYPE := cortex
+  GENERATION := gen_1
+  PLATFORM := lpc17xx
+  PLATFORM_TYPE := nxp
 
-ifeq ($(CONFIG_CPU_FAMILY),"LPC13XX")
-	CORE := m3
-	CORE_TYPE := cortex
-	GENERATION := gen_1
-	PLATFORM := lpc13xx
-	PLATFORM_TYPE = nxp
+  #Platform-specific options
+  CPU_FLAGS := -mcpu=cortex-m3 -mthumb
+  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
+else ifeq ($(CONFIG_CPU_FAMILY),"LPC43XX")
+  CORE := m4
+  CORE_TYPE := cortex
+  GENERATION := gen_1
+  PLATFORM := lpc43xx
+  PLATFORM_TYPE := nxp
 
-	#Platform-specific options
-	CPU_FLAGS := -mcpu=cortex-m3 -mthumb
-	PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
-endif
-
-ifeq ($(CONFIG_CPU_FAMILY),"LPC17XX")
-	CORE := m3
-	CORE_TYPE := cortex
-	GENERATION := gen_1
-	PLATFORM := lpc17xx
-	PLATFORM_TYPE := nxp
-
-	#Platform-specific options
-	CPU_FLAGS := -mcpu=cortex-m3 -mthumb
-	PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
-endif
-
-ifeq ($(CONFIG_CPU_FAMILY),"LPC43XX")
-	CORE := m4
-	CORE_TYPE := cortex
-	GENERATION := gen_1
-	PLATFORM := lpc43xx
-	PLATFORM_TYPE := nxp
-
-	#Platform-specific options
-	CPU_FLAGS := -mcpu=cortex-m4 -mthumb
-	PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__ -D__MULTICORE_NONE
+  #Platform-specific options
+  CPU_FLAGS := -mcpu=cortex-m4 -mthumb
+  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__ -D__MULTICORE_NONE
+else
+  ifneq ($(MAKECMDGOALS),menuconfig)
+    $(error Target architecture is undefined)
+  endif
 endif
 
 ifeq ($(CONFIG_OPT_LEVEL),"full")
-	OPT_FLAGS := -O3
+  OPT_FLAGS := -O3
 else ifeq ($(CONFIG_OPT_LEVEL),"size")
-	OPT_FLAGS := -Os
+  OPT_FLAGS := -Os
 else ifeq ($(CONFIG_OPT_LEVEL),"none")
-	OPT_FLAGS := -O0 -g3
+  OPT_FLAGS := -O0 -g3
 else
-	OPT_FLAGS := $(CONFIG_OPT_LEVEL)
+  OPT_FLAGS := $(CONFIG_OPT_LEVEL)
 endif
 
 #Configure common paths and libraries
-INCLUDEPATH += -I$(PROJECTDIR)/include -I$(XCORE_PATH)/include
-OUTPUTDIR = $(PROJECTDIR)/build_$(PLATFORM)
+INCLUDEPATH += -Iinclude -I"$(XCORE_PATH)/include"
+OUTPUTDIR = build_$(PLATFORM)
 
 #Configure compiler options
 CFLAGS += -std=c11 -Wall -Wextra -Winline -pedantic -Wshadow
@@ -97,7 +93,7 @@ CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 
 #Common modules
 ifeq ($(CONFIG_PM),y)
-	CSOURCES += pm/pm.c
+  CSOURCES += pm/pm.c
 endif
 
 #Modules specific for selected platform
@@ -120,7 +116,7 @@ $(PROJECT_FILE): $(COBJECTS)
 
 $(OUTPUTDIR)/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) $(INCLUDEPATH) -MMD -MF "$(@:%.o=%.d)" -MT $@ $< -o $@
+	$(CC) -c $(CFLAGS) $(INCLUDEPATH) -MMD -MF $(@:%.o=%.d) -MT $@ $< -o $@
 
 clean:
 	rm -f $(COBJECTS:%.o=%.d) $(COBJECTS)
@@ -129,4 +125,6 @@ clean:
 menuconfig:
 	kconfig-mconf kconfig
 
--include $(COBJECTS:%.o=%.d)
+ifneq ($(MAKECMDGOALS),clean)
+  -include $(COBJECTS:%.o=%.d)
+endif
