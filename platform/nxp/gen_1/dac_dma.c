@@ -43,25 +43,9 @@ static void dmaHandler(void *object)
 
   if (index & 1)
   {
-    /* Page is half-empty event */
-    if (!interface->updated)
-      dmaStop(interface->dma);
-    else
-      interface->updated = false;
-  }
-  else
-  {
-    /* Page changed event */
-    if (dmaStatus(interface->dma) == E_OK)
-    {
-      if (interface->updated)
-      {
-        dmaStart(interface->dma, (void *)&reg->CR, interface->buffer,
-            interface->size * 4);
-      }
-      else
-        reg->CTRL &= ~(CTRL_INT_DMA_REQ | CTRL_CNT_ENA);
-    }
+    /* Scatter-gather transfer finished */
+    if (dmaStatus(interface->dma) != E_BUSY)
+      reg->CTRL &= ~(CTRL_INT_DMA_REQ | CTRL_CNT_ENA);
 
     if (interface->callback)
       interface->callback(interface->callbackArgument);
@@ -71,7 +55,6 @@ static void dmaHandler(void *object)
 static enum result dmaSetup(struct DacDma *interface,
     const struct DacDmaConfig *config)
 {
-  const uint32_t elements = config->size >> 1;
   const struct GpDmaListConfig channelConfig = {
       .event = GPDMA_DAC,
       .channel = config->channel,
@@ -81,8 +64,8 @@ static enum result dmaSetup(struct DacDma *interface,
       .burst = DMA_BURST_1,
       .width = DMA_WIDTH_HALFWORD,
       .number = 4,
-      .size = elements,
-      .circular = true,
+      .size = config->size >> 1,
+      .circular = false,
       .silent = false
   };
 
@@ -90,10 +73,6 @@ static enum result dmaSetup(struct DacDma *interface,
   if (!interface->dma)
     return E_ERROR;
   dmaCallback(interface->dma, dmaHandler, interface);
-
-  interface->buffer = malloc(elements * 4 * sizeof(interface->buffer[0]));
-  if (!interface->buffer)
-    return E_MEMORY;
 
   return E_OK;
 }
@@ -119,7 +98,6 @@ static enum result dacInit(void *object, const void *configBase)
 
   interface->callback = 0;
   interface->size = config->size;
-  interface->updated = false;
 
   LPC_DAC_Type * const reg = interface->parent.reg;
 
@@ -134,9 +112,7 @@ static void dacDeinit(void *object)
 {
   struct DacDma * const interface = object;
 
-  free(interface->buffer);
   deinit(interface->dma);
-
   DacBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -179,37 +155,28 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct DacDma * const interface = object;
   LPC_DAC_Type * const reg = interface->parent.reg;
+  const uint32_t samples = length / sizeof(uint16_t);
 
-  /* Outgoing buffer length should be equal to internal buffer length */
-  assert(length == interface->size * sizeof(interface->buffer[0]));
-
-  if (!length)
+  if (!samples)
     return 0;
 
-  if (dmaStatus(interface->dma) == E_OK) {
-    /*
-     * Previous transfer will be continued. When index is odd number the
-     * transfer will be restarted due to buffer underflow.
-     */
-    uint32_t index = dmaIndex(interface->dma);
+  /* Strict requirements on the buffer length */
+  assert(samples > (interface->size >> 1) && samples <= interface->size);
 
-    index = 1 - (index >> 1);
-    memcpy(interface->buffer + index * interface->size, buffer, length);
-    interface->updated = true;
-  } else {
-    /* Start new transfer */
-    memcpy(interface->buffer, buffer, length);
-    interface->updated = false;
+  const bool ongoing = dmaStatus(interface->dma) == E_BUSY;
 
-    const enum result res = dmaStart(interface->dma, (void *)&reg->CR,
-        interface->buffer, interface->size * 4);
+  /* When previous transfer is ongoing it will be continued */
+  const enum result res = dmaStart(interface->dma, (void *)&reg->CR,
+      buffer, samples);
 
-    if (res != E_OK)
-      return 0;
+  if (res != E_OK)
+    return 0;
 
+  if (!ongoing)
+  {
     /* Enable counter to generate memory access requests */
     reg->CTRL |= CTRL_CNT_ENA;
   }
 
-  return length;
+  return samples * sizeof(uint16_t);
 }

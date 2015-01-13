@@ -67,10 +67,12 @@ struct GpDmaList
 
   /* List capacity */
   uint16_t capacity;
-  /* Current list length */
-  uint16_t number;
-  /* Size of an element */
+  /* Current element in the list */
+  uint16_t current;
+  /* Size of each element */
   uint16_t size;
+  /* Unused elements in the current configuration */
+  uint16_t unused;
 
   /* Circular buffer flag */
   bool circular;

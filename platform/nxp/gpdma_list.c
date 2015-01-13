@@ -40,11 +40,13 @@ static enum result appendItem(void *object, void *destination,
     const void *source, uint32_t size)
 {
   struct GpDmaList * const channel = object;
-  struct GpDmaListEntry * const entry = channel->list + channel->number;
+  struct GpDmaListEntry * const entry = channel->list + channel->current;
 
-  if (channel->number++)
+  if (channel->unused < channel->capacity)
   {
-    struct GpDmaListEntry *previous = entry - 1;
+    /* There are initialized entries in the list */
+    struct GpDmaListEntry * const previous = (channel->current ?
+        entry : channel->list + channel->capacity) - 1;
 
     /* Link current element to the previous one */
     previous->next = (uint32_t)entry;
@@ -53,17 +55,35 @@ static enum result appendItem(void *object, void *destination,
       previous->control &= ~CONTROL_INT;
   }
 
+  if (++channel->current >= channel->capacity)
+    channel->current = 0;
+
   entry->source = (uint32_t)source;
   entry->destination = (uint32_t)destination;
   entry->control = channel->parent.control | CONTROL_SIZE(size);
-  entry->next = channel->circular ? (uint32_t)channel->list : 0;
+
+  if (channel->circular)
+  {
+    if (channel->unused)
+    {
+      /* Entry is not initialized yet */
+      entry->next = (uint32_t)channel->list;
+    }
+  }
+  else
+    entry->next = 0;
+
+  if (channel->unused)
+    --channel->unused;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void clearEntryList(void *object)
 {
-  ((struct GpDmaList *)object)->number = 0;
+  struct GpDmaList * const channel = object;
+
+  channel->unused = channel->capacity;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum result res)
@@ -110,10 +130,11 @@ static enum result channelInit(void *object, const void *configBase)
   channel->callback = 0;
   channel->capacity = config->number;
   channel->circular = config->circular;
-  channel->number = 0;
+  channel->current = 0;
   channel->last = E_OK;
   channel->silent = config->silent;
   channel->size = config->size;
+  channel->unused = config->number; /* Similar as capacity */
 
   /* Set four-byte burst size by default */
   uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
@@ -172,26 +193,37 @@ static uint32_t channelIndex(const void *object)
       (const struct GpDmaListEntry *)reg->LLI;
 
   if (!next)
-    return 0;
-
-  if (next == channel->list)
-    return channel->number - 1;
+  {
+    return (channel->current ? channel->current : channel->capacity) - 1;
+  }
+  else if (next == channel->list)
+  {
+    return channel->capacity - 1;
+  }
   else
+  {
     return (uint32_t)(next - channel->list) - 1;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
     const void *source, uint32_t size)
 {
   struct GpDmaList * const channel = object;
+  LPC_GPDMACH_Type * const reg = channel->parent.reg;
+  const bool active = gpDmaGetDescriptor(channel->parent.number) == object;
 
   assert(size && size <= (uint32_t)(channel->capacity * channel->size));
 
-  if (gpDmaSetDescriptor(channel->parent.number, object) != E_OK)
-    return E_BUSY;
+  if (!active)
+  {
+    if (gpDmaSetDescriptor(channel->parent.number, object) != E_OK)
+      return E_BUSY;
 
-  gpDmaSetMux(object);
-  clearEntryList(channel);
+    gpDmaSetMux(object);
+    clearEntryList(channel);
+    channel->last = E_OK;
+  }
 
   uint32_t offset = 0;
 
@@ -209,21 +241,32 @@ static enum result channelStart(void *object, void *destination,
       source = (const void *)((uint32_t)source + chunk);
   }
 
-  const struct GpDmaListEntry * const first = channel->list;
-  const uint32_t request = 1 << channel->parent.number;
-  LPC_GPDMACH_Type * const reg = channel->parent.reg;
+  if (!active)
+  {
+    const struct GpDmaListEntry * const first = channel->list;
+    const uint32_t request = 1 << channel->parent.number;
 
-  reg->SRCADDR = first->source;
-  reg->DESTADDR = first->destination;
-  reg->CONTROL = first->control;
-  reg->LLI = first->next;
-  reg->CONFIG = channel->parent.config;
+    reg->SRCADDR = first->source;
+    reg->DESTADDR = first->destination;
+    reg->CONTROL = first->control;
+    reg->LLI = first->next;
+    reg->CONFIG = channel->parent.config;
 
-  LPC_GPDMA->INTTCCLEAR |= request;
-  LPC_GPDMA->INTERRCLEAR |= request;
+    LPC_GPDMA->INTTCCLEAR |= request;
+    LPC_GPDMA->INTERRCLEAR |= request;
 
-  /* Start the transfer */
-  reg->CONFIG |= CONFIG_ENABLE;
+    /* Start the transfer */
+    reg->CONFIG |= CONFIG_ENABLE;
+  }
+  else
+  {
+    /* Check whether the channel is still active */
+    if (!reg->LLI || !(reg->CONFIG & CONFIG_ENABLE))
+    {
+      /* Buffer underflow occurred, transfer should be restarted */
+      return E_TIMEOUT;
+    }
+  }
 
   return E_OK;
 }

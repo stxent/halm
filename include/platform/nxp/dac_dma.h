@@ -41,12 +41,8 @@ struct DacDma
 
   struct Dma *dma;
 
-  /* Internal data buffer containing two pages and four chunks */
-  uint16_t *buffer;
   /* Size of the page */
   uint32_t size;
-  /* Update flag indicating that the second buffer is ready */
-  bool updated;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_DAC_DMA_H_ */
