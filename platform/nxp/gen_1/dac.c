@@ -88,15 +88,12 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Dac * const interface = object;
   LPC_DAC_Type * const reg = interface->parent.reg;
-  const uint16_t *samples = (const uint16_t *)buffer;
+  const uint32_t samples = length / sizeof(uint16_t);
 
-  if (!length)
+  if (!samples)
     return 0;
 
-  /* Buffer length should be a multiple of single sample sizes */
-  assert(!(length & (sizeof(samples[0]) - 1)));
+  reg->CR = (*((const uint16_t *)buffer) & CR_OUTPUT_MASK) | CR_BIAS;
 
-  reg->CR = (samples[0] & CR_OUTPUT_MASK) | CR_BIAS;
-
-  return sizeof(samples[0]);
+  return sizeof(uint16_t);
 }

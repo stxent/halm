@@ -720,7 +720,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   struct SdioSpi * const interface = object;
 
   /* Check buffer alignment */
-  assert(!(length % interface->blockLength));
+  assert(!(length & (interface->blockLength - 1)));
 
   interface->status = E_BUSY;
   ifSet(interface->bus, IF_ACQUIRE, 0);
@@ -740,7 +740,7 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
   struct SdioSpi * const interface = object;
 
   /* Check buffer alignment */
-  assert(!(length % interface->blockLength));
+  assert(!(length & (interface->blockLength - 1)));
 
   interface->status = E_BUSY;
   ifSet(interface->bus, IF_ACQUIRE, 0);

@@ -85,14 +85,11 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Adc * const interface = object;
   LPC_ADC_Type * const reg = interface->unit->parent.reg;
-  uint16_t *samples = (uint16_t *)buffer;
+  const uint32_t samples = length / sizeof(uint16_t);
   const uint8_t channel = interface->pin.channel;
 
-  if (!length)
+  if (!samples)
     return 0;
-
-  /* Buffer length should be a multiple of single sample sizes */
-  assert(!(length & (sizeof(samples[0]) - 1)));
 
   if (adcUnitRegister(interface->unit, 0, interface) != E_OK)
     return 0;
@@ -108,7 +105,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   reg->CR &= ~CR_START_MASK;
 
   /* Copy result into first element of the array */
-  samples[0] = DR_RESULT_VALUE(reg->DR[channel]);
+  *((uint16_t *)buffer) = DR_RESULT_VALUE(reg->DR[channel]);
 
-  return sizeof(samples[0]);
+  return sizeof(uint16_t);
 }

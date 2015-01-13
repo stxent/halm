@@ -140,12 +140,10 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct AdcBurst * const interface = object;
   LPC_ADC_Type * const reg = interface->unit->parent.reg;
+  const uint32_t samples = length / sizeof(uint16_t);
 
-  if (!length)
+  if (!samples)
     return 0;
-
-  /* Buffer length should be a multiple of single sample sizes */
-  assert(!(length & (sizeof(interface->buffer[0]) - 1)));
 
   if (adcUnitRegister(interface->unit, interruptHandler, interface) != E_OK)
     return 0;
@@ -156,7 +154,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->pin.channel);
 
   interface->buffer = (uint16_t *)buffer;
-  interface->left = length / sizeof(interface->buffer[0]);
+  interface->left = samples;
 
   /* Start the conversion */
   reg->CR |= CR_START(interface->event);
@@ -167,5 +165,5 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
       barrier();
   }
 
-  return length;
+  return samples * sizeof(uint16_t);
 }
