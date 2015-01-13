@@ -40,8 +40,8 @@ struct GpDma
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Channel error flag */
-  bool error;
+  /* Last transfer status */
+  enum result last;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPDMA_H_ */

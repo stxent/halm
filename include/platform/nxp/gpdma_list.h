@@ -74,10 +74,10 @@ struct GpDmaList
 
   /* Circular buffer flag */
   bool circular;
-  /* Channel error flag */
-  bool error;
   /* Reduce interrupts count */
   bool silent;
+  /* Last transfer status */
+  enum result last;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPDMA_LIST_H_ */

@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/dma_sdmmc.h>
@@ -142,10 +143,8 @@ static enum result controllerStart(void *object, void *destination,
   struct DmaSdmmc * const controller = object;
   LPC_SDMMC_Type * const reg = controller->reg;
 
-  if (size > (uint32_t)(controller->capacity * DESC_SIZE_MAX))
-    return E_VALUE;
-  if ((!destination ^ !source) == 0)
-    return E_VALUE;
+  assert(size && size <= (uint32_t)(controller->capacity * DESC_SIZE_MAX));
+  assert(!destination ^ !source);
 
   const uint32_t address = destination ?
       (uint32_t)destination : (uint32_t)source;

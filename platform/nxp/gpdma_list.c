@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/gpdma_defs.h>
@@ -41,9 +42,6 @@ static enum result appendItem(void *object, void *destination,
   struct GpDmaList * const channel = object;
   struct GpDmaListEntry * const entry = channel->list + channel->number;
 
-  if (size > GPDMA_MAX_TRANSFER)
-    return E_VALUE;
-
   if (channel->number++)
   {
     struct GpDmaListEntry *previous = entry - 1;
@@ -72,7 +70,7 @@ static void interruptHandler(void *object, enum result res)
 {
   struct GpDmaList * const channel = object;
 
-  channel->error = res != E_OK && res != E_BUSY;
+  channel->last = (res == E_OK || res == E_BUSY) ? E_OK : res;
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
@@ -112,8 +110,8 @@ static enum result channelInit(void *object, const void *configBase)
   channel->callback = 0;
   channel->capacity = config->number;
   channel->circular = config->circular;
-  channel->error = false;
   channel->number = 0;
+  channel->last = E_OK;
   channel->silent = config->silent;
   channel->size = config->size;
 
@@ -187,15 +185,13 @@ static enum result channelStart(void *object, void *destination,
 {
   struct GpDmaList * const channel = object;
 
-  if (size > (uint32_t)(channel->capacity * channel->size))
-    return E_VALUE;
+  assert(size && size <= (uint32_t)(channel->capacity * channel->size));
 
   if (gpDmaSetDescriptor(channel->parent.number, object) != E_OK)
     return E_BUSY;
 
   gpDmaSetMux(object);
   clearEntryList(channel);
-  channel->error = false;
 
   uint32_t offset = 0;
 
@@ -237,11 +233,11 @@ static enum result channelStatus(const void *object)
   const struct GpDmaList * const channel = object;
   const LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
-  if (channel->error)
-    return E_ERROR;
+  if (channel->last != E_OK)
+    return channel->last;
 
   return gpDmaGetDescriptor(channel->parent.number) == object
-      && (reg->CONFIG & CONFIG_ENABLE);
+      && (reg->CONFIG & CONFIG_ENABLE) ? E_BUSY : E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)
