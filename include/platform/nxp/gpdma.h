@@ -41,7 +41,7 @@ struct GpDma
   void *callbackArgument;
 
   /* Last transfer status */
-  enum result last;
+  enum result status;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPDMA_H_ */

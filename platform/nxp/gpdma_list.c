@@ -10,7 +10,7 @@
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
-static enum result appendItem(void *, void *, const void *, uint32_t);
+static void appendItem(void *, void *, const void *, uint32_t);
 static void clearEntryList(void *);
 static void interruptHandler(void *, enum result);
 /*----------------------------------------------------------------------------*/
@@ -36,8 +36,8 @@ static const struct DmaClass channelTable = {
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDmaList = &channelTable;
 /*----------------------------------------------------------------------------*/
-static enum result appendItem(void *object, void *destination,
-    const void *source, uint32_t size)
+static void appendItem(void *object, void *destination, const void *source,
+    uint32_t size)
 {
   struct GpDmaList * const channel = object;
   struct GpDmaListEntry * const entry = channel->list + channel->current;
@@ -61,22 +61,10 @@ static enum result appendItem(void *object, void *destination,
   entry->source = (uint32_t)source;
   entry->destination = (uint32_t)destination;
   entry->control = channel->parent.control | CONTROL_SIZE(size);
-
-  if (channel->circular)
-  {
-    if (channel->unused)
-    {
-      /* Entry is not initialized yet */
-      entry->next = (uint32_t)channel->list;
-    }
-  }
-  else
-    entry->next = 0;
+  entry->next = 0;
 
   if (channel->unused)
     --channel->unused;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void clearEntryList(void *object)
@@ -84,13 +72,15 @@ static void clearEntryList(void *object)
   struct GpDmaList * const channel = object;
 
   channel->unused = channel->capacity;
+  channel->status = E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum result res)
 {
   struct GpDmaList * const channel = object;
 
-  channel->last = (res == E_OK || res == E_BUSY) ? E_OK : res;
+  channel->unused = channel->silent ? channel->capacity : channel->unused + 1;
+  channel->status = (res == E_OK || res == E_BUSY) ? E_OK : res;
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
@@ -129,9 +119,8 @@ static enum result channelInit(void *object, const void *configBase)
 
   channel->callback = 0;
   channel->capacity = config->number;
-  channel->circular = config->circular;
   channel->current = 0;
-  channel->last = E_OK;
+  channel->status = E_OK;
   channel->silent = config->silent;
   channel->size = config->size;
   channel->unused = config->number; /* Similar as capacity */
@@ -188,22 +177,13 @@ static void channelCallback(void *object, void (*callback)(void *),
 static uint32_t channelIndex(const void *object)
 {
   const struct GpDmaList * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
-  const struct GpDmaListEntry * const next =
-      (const struct GpDmaListEntry *)reg->LLI;
+  uint16_t current;
 
-  if (!next)
-  {
-    return (channel->current ? channel->current : channel->capacity) - 1;
-  }
-  else if (next == channel->list)
-  {
-    return channel->capacity - 1;
-  }
-  else
-  {
-    return (uint32_t)(next - channel->list) - 1;
-  }
+  current = channel->current + channel->unused;
+  if (current >= channel->capacity)
+    current -= channel->capacity;
+
+  return (uint32_t)current;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
@@ -213,7 +193,10 @@ static enum result channelStart(void *object, void *destination,
   LPC_GPDMACH_Type * const reg = channel->parent.reg;
   const bool active = gpDmaGetDescriptor(channel->parent.number) == object;
 
-  assert(size && size <= (uint32_t)(channel->capacity * channel->size));
+  assert(size);
+
+  if (size > (uint32_t)(channel->unused * channel->size))
+    return E_VALUE;
 
   if (!active)
   {
@@ -222,7 +205,6 @@ static enum result channelStart(void *object, void *destination,
 
     gpDmaSetMux(object);
     clearEntryList(channel);
-    channel->last = E_OK;
   }
 
   uint32_t offset = 0;
@@ -232,9 +214,9 @@ static enum result channelStart(void *object, void *destination,
     const uint32_t chunk = size - offset >= channel->size ?
         channel->size : size - offset;
 
-    offset += chunk;
     appendItem(channel, destination, source, chunk);
 
+    offset += chunk;
     if (channel->parent.control & CONTROL_DST_INC)
       destination = (void *)((uint32_t)destination + chunk);
     if (channel->parent.control & CONTROL_SRC_INC)
@@ -261,7 +243,7 @@ static enum result channelStart(void *object, void *destination,
   else
   {
     /* Check whether the channel is still active */
-    if (!reg->LLI || !(reg->CONFIG & CONFIG_ENABLE))
+    if (!reg->LLI)
     {
       /* Buffer underflow occurred, transfer should be restarted */
       return E_TIMEOUT;
@@ -274,19 +256,24 @@ static enum result channelStart(void *object, void *destination,
 static enum result channelStatus(const void *object)
 {
   const struct GpDmaList * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
-  if (channel->last != E_OK)
-    return channel->last;
-
-  return gpDmaGetDescriptor(channel->parent.number) == object
-      && (reg->CONFIG & CONFIG_ENABLE) ? E_BUSY : E_OK;
+  if (channel->status != E_OK)
+    return channel->status;
+  else if (gpDmaGetDescriptor(channel->parent.number) != object)
+    return E_OK;
+  else if (!channel->unused)
+    return E_FULL;
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)
 {
-  LPC_GPDMACH_Type * const reg = ((struct GpDmaList *)object)->parent.reg;
+  struct GpDmaList * const channel = object;
+  const LPC_GPDMACH_Type * const reg = channel->parent.reg;
+  struct GpDmaListEntry * const next = (struct GpDmaListEntry *)reg->LLI;
 
-  /* Complete current transfer and stop */
-  reg->LLI = 0;
+  /* Transfer next chunk and stop */
+  if (next)
+    next->next = 0;
 }

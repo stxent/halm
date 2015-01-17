@@ -36,11 +36,6 @@ struct GpDmaListConfig
   /** Mandatory: transfer type. */
   enum gpDmaType type;
   /**
-   * Optional: buffer organization selection for scatter-gather transfers.
-   * Set @b true for circular buffer type or @b false for linear type.
-   */
-  bool circular;
-  /**
    * Optional: set @b true to reduce channel interrupts count by disabling
    * requests for intermediate states of the transfer.
    */
@@ -74,12 +69,10 @@ struct GpDmaList
   /* Unused elements in the current configuration */
   uint16_t unused;
 
-  /* Circular buffer flag */
-  bool circular;
   /* Reduce interrupts count */
   bool silent;
   /* Last transfer status */
-  enum result last;
+  enum result status;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPDMA_LIST_H_ */

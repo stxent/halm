@@ -37,7 +37,7 @@ static void interruptHandler(void *object, enum result res)
 {
   struct GpDma * const channel = object;
 
-  channel->last = res;
+  channel->status = res;
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
@@ -64,7 +64,7 @@ static enum result channelInit(void *object, const void *configBase)
   channel->parent.handler = interruptHandler;
 
   channel->callback = 0;
-  channel->last = E_OK;
+  channel->status = E_OK;
 
   /* Set four-byte burst size by default */
   uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
@@ -134,7 +134,7 @@ static enum result channelStart(void *object, void *destination,
     return E_BUSY;
 
   gpDmaSetMux(object);
-  channel->last = E_OK;
+  channel->status = E_OK;
 
   const uint32_t request = 1 << channel->parent.number;
   LPC_GPDMACH_Type * const reg = channel->parent.reg;
@@ -160,8 +160,8 @@ static enum result channelStatus(const void *object)
   const struct GpDma * const channel = object;
   const LPC_GPDMACH_Type * const reg = channel->parent.reg;
 
-  if (channel->last != E_OK)
-    return channel->last;
+  if (channel->status != E_OK)
+    return channel->status;
 
   return gpDmaGetDescriptor(channel->parent.number) == object
       && (reg->CONFIG & CONFIG_ENABLE) ? E_BUSY : E_OK;

@@ -100,8 +100,9 @@ static inline enum result dmaStart(void *channel, void *destination,
 /**
  * Get status of the transfer.
  * @param channel Pointer to a Dma object.
- * @return @b E_OK when the transfer is completed successfully, @b E_BUSY when
- * the transfer is not finished yet, other error types in case of errors.
+ * @return @b E_OK when the transfer is completed successfully; @b E_BUSY when
+ * the transfer is not finished yet; @b E_FULL when no free space left in a
+ * scatter-gather list; other error types in case of errors.
  */
 static inline enum result dmaStatus(const void *channel)
 {

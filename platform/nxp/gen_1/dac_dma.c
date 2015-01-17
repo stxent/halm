@@ -41,7 +41,7 @@ static void dmaHandler(void *object)
   LPC_DAC_Type * const reg = interface->parent.reg;
   const uint32_t index = dmaIndex(interface->dma);
 
-  if (index & 1)
+  if (!(index & 0x01))
   {
     /* Scatter-gather transfer finished */
     if (dmaStatus(interface->dma) != E_BUSY)
@@ -65,7 +65,6 @@ static enum result dmaSetup(struct DacDma *interface,
       .width = DMA_WIDTH_HALFWORD,
       .number = 4,
       .size = config->size >> 1,
-      .circular = false,
       .silent = false
   };
 
