@@ -54,6 +54,9 @@ static enum result channelInit(void *object, const void *configBase)
   struct GpDma * const channel = object;
   enum result res;
 
+  assert(config->burst != DMA_BURST_2 && config->burst <= DMA_BURST_256);
+  assert(config->width <= DMA_WIDTH_WORD);
+
   /* Call base class constructor */
   if ((res = GpDmaBase->init(object, &parentConfig)) != E_OK)
     return res;
@@ -69,24 +72,17 @@ static enum result channelInit(void *object, const void *configBase)
   /* Set four-byte burst size by default */
   uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
 
-  switch (config->type)
-  {
-    case GPDMA_TYPE_M2P:
-      dstBurst = config->burst;
-      break;
+  if (config->type == GPDMA_TYPE_M2P)
+    dstBurst = config->burst;
+  if (config->type == GPDMA_TYPE_P2M)
+    srcBurst = config->burst;
 
-    case GPDMA_TYPE_P2M:
-      srcBurst = config->burst;
-      break;
-
-    default:
-      break;
-  }
   /* Two-byte burst requests are unsupported */
   if (srcBurst >= DMA_BURST_4)
     --srcBurst;
   if (dstBurst >= DMA_BURST_4)
     --dstBurst;
+
   channel->parent.control |= CONTROL_SRC_BURST(srcBurst)
       | CONTROL_DST_BURST(dstBurst);
 

@@ -79,7 +79,8 @@ static void interruptHandler(void *object, enum result res)
 {
   struct GpDmaList * const channel = object;
 
-  channel->unused = channel->silent ? channel->capacity : channel->unused + 1;
+  channel->unused = (res != E_BUSY || channel->silent) ? channel->capacity
+      : channel->unused + 1;
   channel->status = (res == E_OK || res == E_BUSY) ? E_OK : res;
 
   if (channel->callback)
@@ -97,11 +98,10 @@ static enum result channelInit(void *object, const void *configBase)
   struct GpDmaList * const channel = object;
   enum result res;
 
-  if (!config->number)
-    return E_VALUE;
-
-  if (!config->size || config->size > GPDMA_MAX_TRANSFER)
-    return E_VALUE;
+  assert(config->burst != DMA_BURST_2 && config->burst <= DMA_BURST_256);
+  assert(config->width <= DMA_WIDTH_WORD);
+  assert(config->number);
+  assert(config->size && config->size <= GPDMA_MAX_TRANSFER);
 
   /* Allocation should produce memory chunks aligned along 4-byte boundary */
   channel->list = malloc(sizeof(struct GpDmaListEntry) * config->number);
@@ -123,29 +123,23 @@ static enum result channelInit(void *object, const void *configBase)
   channel->status = E_OK;
   channel->silent = config->silent;
   channel->size = config->size;
-  channel->unused = config->number; /* Similar as capacity */
+  channel->unused = config->number; /* Initial value is equal to capacity */
+  channel->width = 1 << config->width;
 
   /* Set four-byte burst size by default */
   uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
 
-  switch (config->type)
-  {
-    case GPDMA_TYPE_M2P:
-      dstBurst = config->burst;
-      break;
+  if (config->type == GPDMA_TYPE_M2P)
+    dstBurst = config->burst;
+  if (config->type == GPDMA_TYPE_P2M)
+    srcBurst = config->burst;
 
-    case GPDMA_TYPE_P2M:
-      srcBurst = config->burst;
-      break;
-
-    default:
-      break;
-  }
   /* Two-byte burst requests are unsupported */
   if (srcBurst >= DMA_BURST_4)
     --srcBurst;
   if (dstBurst >= DMA_BURST_4)
     --dstBurst;
+
   channel->parent.control |= CONTROL_SRC_BURST(srcBurst)
       | CONTROL_DST_BURST(dstBurst);
 
@@ -218,9 +212,9 @@ static enum result channelStart(void *object, void *destination,
 
     offset += chunk;
     if (channel->parent.control & CONTROL_DST_INC)
-      destination = (void *)((uint32_t)destination + chunk);
+      destination = (void *)((uint32_t)destination + chunk * channel->width);
     if (channel->parent.control & CONTROL_SRC_INC)
-      source = (const void *)((uint32_t)source + chunk);
+      source = (const void *)((uint32_t)source + chunk * channel->width);
   }
 
   if (!active)

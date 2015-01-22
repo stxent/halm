@@ -13,9 +13,9 @@ extern const struct DmaClass * const GpDmaList;
 /*----------------------------------------------------------------------------*/
 struct GpDmaListConfig
 {
-  /** Mandatory: number of elements in the list. */
+  /** Mandatory: number of blocks in the chain. */
   uint16_t number;
-  /** Mandatory: size of each element. */
+  /** Mandatory: size of each block. */
   uint16_t size;
   /** Mandatory: channel number. */
   uint8_t channel;
@@ -60,14 +60,16 @@ struct GpDmaList
   /* Descriptor list container */
   struct GpDmaListEntry *list;
 
-  /* List capacity */
+  /* Capacity of the chain in blocks */
   uint16_t capacity;
-  /* Current element in the list */
+  /* Current block in the chain */
   uint16_t current;
-  /* Size of each element */
+  /* Maximum size of each block */
   uint16_t size;
-  /* Unused elements in the current configuration */
+  /* Unused elements in the current chain */
   uint16_t unused;
+  /* Width of each element in block */
+  uint8_t width;
 
   /* Reduce interrupts count */
   bool silent;
