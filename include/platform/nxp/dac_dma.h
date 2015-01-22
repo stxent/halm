@@ -41,7 +41,7 @@ struct DacDma
 
   struct Dma *dma;
 
-  /* Size of the page */
+  /* Size of each buffer */
   uint32_t size;
 };
 /*----------------------------------------------------------------------------*/

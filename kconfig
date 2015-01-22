@@ -156,6 +156,10 @@ config PLATFORM_NXP_ADC_BURST
 	bool "Interrupt-driven ADC"
 	depends on ADC && PLATFORM_NXP_ADC_BASE
 
+config PLATFORM_NXP_ADC_DMA
+	bool "Single channel ADC driver with DMA"
+	depends on ADC && PLATFORM_NXP_ADC_BASE && PLATFORM_NXP_GPDMA
+
 config DAC
 	bool "DAC drivers"
 	depends on PLATFORM_NXP_DAC_BASE
@@ -165,7 +169,7 @@ config PLATFORM_NXP_DAC
 	depends on DAC && PLATFORM_NXP_DAC_BASE
 
 config PLATFORM_NXP_DAC_DMA
-	bool "Multi-buffer DAC driver with DMA"
+	bool "DAC driver with DMA"
 	depends on DAC && PLATFORM_NXP_DAC_BASE && PLATFORM_NXP_GPDMA
 
 config I2C

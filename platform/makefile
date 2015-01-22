@@ -91,6 +91,10 @@ ifeq ($(CONFIG_PLATFORM_NXP_ADC_BURST),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc_burst.c
 endif
 
+ifeq ($(CONFIG_PLATFORM_NXP_ADC_DMA),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc_dma.c
+endif
+
 ifeq ($(CONFIG_PLATFORM_NXP_DAC),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/dac.c
 endif
