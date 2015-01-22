@@ -36,23 +36,28 @@ const struct InterfaceClass * const AdcDma = &adcTable;
 static void dmaHandler(void *object)
 {
   struct AdcDma * const interface = object;
-  LPC_ADC_Type * const reg = interface->unit->parent.reg;
+  struct AdcUnit * const unit = interface->unit;
+  LPC_ADC_Type * const reg = unit->parent.reg;
   const uint32_t index = dmaIndex(interface->dma);
+  const enum result res = dmaStatus(interface->dma);
 
-  if (!(index & 0x01))
+  /* Scatter-gather transfer finished */
+  if (res != E_BUSY)
   {
-    /* Scatter-gather transfer finished */
-    if (dmaStatus(interface->dma) != E_BUSY)
-    {
-      /* Stop automatic conversion */
-      reg->CR &= ~CR_START_MASK;
-      /* Unregister interface when all conversions are done */
-      adcUnitUnregister(interface->unit);
-    }
+    /* Stop automatic conversion */
+    reg->CR &= ~CR_START_MASK;
+    /* Disable requests */
+    reg->INTEN = 0;
 
-    if (interface->callback)
-      interface->callback(interface->callbackArgument);
+    adcUnitUnregister(unit);
   }
+
+  /*
+   * Each block consists of two buffers. Call user function
+   * at the end of block or at the end of transfer.
+   */
+  if ((res != E_BUSY || !(index & 0x01)) && interface->callback)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct AdcDma *interface,
@@ -149,7 +154,8 @@ static enum result adcSet(void *object __attribute__((unused)),
 static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct AdcDma * const interface = object;
-  LPC_ADC_Type * const reg = interface->unit->parent.reg;
+  struct AdcUnit * const unit = interface->unit;
+  LPC_ADC_Type * const reg = unit->parent.reg;
   const uint32_t samples = length / sizeof(uint16_t);
 
   if (!samples)
@@ -158,17 +164,26 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   /* Strict requirements on the buffer length */
   assert(samples > (interface->size >> 1) && samples <= interface->size);
 
-  if (adcUnitRegister(interface->unit, 0, interface) != E_OK)
-    return 0;
-
   const bool ongoing = dmaStatus(interface->dma) == E_BUSY;
+
+  if (!ongoing)
+  {
+    if (adcUnitRegister(unit, 0, interface) != E_OK)
+      return 0;
+  }
 
   /* When previous transfer is ongoing it will be continued */
   const enum result res = dmaStart(interface->dma, buffer,
       (void *)&reg->DR[interface->pin.channel], samples);
 
   if (res != E_OK)
+  {
+    adcUnitUnregister(unit);
     return 0;
+  }
+
+  /* Enable DMA requests */
+  reg->INTEN = INTEN_AD(interface->pin.channel);
 
   if (!ongoing)
   {

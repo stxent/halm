@@ -40,16 +40,14 @@ static void dmaHandler(void *object)
   struct DacDma * const interface = object;
   LPC_DAC_Type * const reg = interface->parent.reg;
   const uint32_t index = dmaIndex(interface->dma);
+  const enum result res = dmaStatus(interface->dma);
 
-  if (!(index & 0x01))
-  {
-    /* Scatter-gather transfer finished */
-    if (dmaStatus(interface->dma) != E_BUSY)
-      reg->CTRL &= ~(CTRL_INT_DMA_REQ | CTRL_CNT_ENA);
+  /* Scatter-gather transfer finished */
+  if (res != E_BUSY)
+    reg->CTRL &= ~(CTRL_INT_DMA_REQ | CTRL_CNT_ENA);
 
-    if (interface->callback)
-      interface->callback(interface->callbackArgument);
-  }
+  if ((res != E_BUSY || !(index & 0x01)) && interface->callback)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct DacDma *interface,

@@ -75,16 +75,11 @@ static enum result adcUnitInit(void *object, const void *configBase)
 
   /* Disable interrupts for conversion completion */
   reg->INTEN = 0;
-  /* Enable interrupts */
-  irqEnable(unit->parent.irq);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void adcUnitDeinit(void *object)
 {
-  struct AdcUnit * const unit = object;
-
-  irqDisable(unit->parent.irq);
-  AdcUnitBase->deinit(unit);
+  AdcUnitBase->deinit(object);
 }

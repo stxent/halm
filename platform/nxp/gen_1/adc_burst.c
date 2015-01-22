@@ -35,7 +35,8 @@ const struct InterfaceClass * const AdcBurst = &adcTable;
 static void interruptHandler(void *object)
 {
   struct AdcBurst * const interface = object;
-  LPC_ADC_Type * const reg = interface->unit->parent.reg;
+  struct AdcUnit * const unit = interface->unit;
+  LPC_ADC_Type * const reg = unit->parent.reg;
 
   /* Copy conversion result and increase position in buffer */
   *interface->buffer = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
@@ -45,9 +46,11 @@ static void interruptHandler(void *object)
   {
     /* Stop automatic conversion */
     reg->CR &= ~CR_START_MASK;
+    /* Disable interrupts */
+    reg->INTEN = 0;
+    irqDisable(unit->parent.irq);
 
-    /* Unregister interface when all conversions are done */
-    adcUnitUnregister(interface->unit);
+    adcUnitUnregister(unit);
 
     if (interface->callback)
       interface->callback(interface->callbackArgument);
@@ -139,17 +142,20 @@ static enum result adcSet(void *object, enum ifOption option,
 static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct AdcBurst * const interface = object;
-  LPC_ADC_Type * const reg = interface->unit->parent.reg;
+  struct AdcUnit * const unit = interface->unit;
+  LPC_ADC_Type * const reg = unit->parent.reg;
   const uint32_t samples = length / sizeof(uint16_t);
 
   if (!samples)
     return 0;
 
-  if (adcUnitRegister(interface->unit, interruptHandler, interface) != E_OK)
+  if (adcUnitRegister(unit, interruptHandler, interface) != E_OK)
     return 0;
 
-  /* Enable interrupt after conversion completion */
+  /* Enable interrupt after completion of the conversion */
+  irqEnable(unit->parent.irq);
   reg->INTEN = INTEN_AD(interface->pin.channel);
+
   /* Set conversion channel */
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->pin.channel);
 
