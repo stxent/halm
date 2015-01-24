@@ -14,7 +14,7 @@ static void interruptHandler(void *, enum result);
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelCallback(void *, void (*)(void *), void *);
-static uint32_t channelIndex(const void *);
+static uint32_t channelCount(const void *);
 static enum result channelStart(void *, void *, const void *, uint32_t);
 static enum result channelStatus(const void *);
 static void channelStop(void *);
@@ -25,7 +25,7 @@ static const struct DmaClass channelTable = {
     .deinit = channelDeinit,
 
     .callback = channelCallback,
-    .index = channelIndex,
+    .count = channelCount,
     .start = channelStart,
     .status = channelStatus,
     .stop = channelStop
@@ -108,7 +108,7 @@ static void channelCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelIndex(const void *object)
+static uint32_t channelCount(const void *object)
 {
   const struct GpDma * const channel = object;
   const LPC_GPDMACH_Type * const reg = channel->parent.reg;
@@ -116,7 +116,8 @@ static uint32_t channelIndex(const void *object)
   if (gpDmaGetDescriptor(channel->parent.number) != object)
     return 0;
 
-  return CONTROL_SIZE_VALUE(reg->CONTROL);
+  return CONTROL_SIZE_VALUE(channel->parent.control)
+      - CONTROL_SIZE_VALUE(reg->CONTROL);
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
@@ -130,6 +131,8 @@ static enum result channelStart(void *object, void *destination,
     return E_BUSY;
 
   gpDmaSetMux(object);
+  channel->parent.control = (channel->parent.control & ~CONTROL_SIZE_MASK)
+      | CONTROL_SIZE(size);
   channel->status = E_OK;
 
   const uint32_t request = 1 << channel->parent.number;
@@ -137,7 +140,7 @@ static enum result channelStart(void *object, void *destination,
 
   reg->SRCADDR = (uint32_t)source;
   reg->DESTADDR = (uint32_t)destination;
-  reg->CONTROL = channel->parent.control | CONTROL_SIZE(size);
+  reg->CONTROL = channel->parent.control;
   reg->CONFIG = channel->parent.config;
   reg->LLI = 0;
 
@@ -159,8 +162,8 @@ static enum result channelStatus(const void *object)
   if (channel->status != E_OK)
     return channel->status;
 
-  return gpDmaGetDescriptor(channel->parent.number) == object
-      && (reg->CONFIG & CONFIG_ENABLE) ? E_BUSY : E_OK;
+  return (gpDmaGetDescriptor(channel->parent.number) == object
+      && (reg->CONFIG & CONFIG_ENABLE)) ? E_BUSY : E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)

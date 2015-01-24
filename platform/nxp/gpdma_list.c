@@ -17,7 +17,7 @@ static void interruptHandler(void *, enum result);
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelCallback(void *, void (*)(void *), void *);
-static uint32_t channelIndex(const void *);
+static uint32_t channelCount(const void *);
 static enum result channelStart(void *, void *, const void *, uint32_t);
 static enum result channelStatus(const void *);
 static void channelStop(void *);
@@ -28,7 +28,7 @@ static const struct DmaClass channelTable = {
     .deinit = channelDeinit,
 
     .callback = channelCallback,
-    .index = channelIndex,
+    .count = channelCount,
     .start = channelStart,
     .status = channelStatus,
     .stop = channelStop
@@ -168,16 +168,11 @@ static void channelCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelIndex(const void *object)
+static uint32_t channelCount(const void *object)
 {
   const struct GpDmaList * const channel = object;
-  uint16_t current;
 
-  current = channel->current + channel->unused;
-  if (current >= channel->capacity)
-    current -= channel->capacity;
-
-  return (uint32_t)current;
+  return (uint32_t)(channel->capacity - channel->unused);
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
@@ -255,8 +250,6 @@ static enum result channelStatus(const void *object)
     return channel->status;
   else if (gpDmaGetDescriptor(channel->parent.number) != object)
     return E_OK;
-  else if (!channel->unused)
-    return E_FULL;
   else
     return E_BUSY;
 }

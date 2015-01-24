@@ -15,7 +15,7 @@ static enum result appendItem(void *, uint32_t, uint32_t);
 static enum result controllerInit(void *, const void *);
 static void controllerDeinit(void *);
 static void controllerCallback(void *, void (*)(void *), void *);
-static uint32_t controllerIndex(const void *);
+static uint32_t controllerCount(const void *);
 static enum result controllerStart(void *, void *, const void *, uint32_t);
 static enum result controllerStatus(const void *);
 static void controllerStop(void *);
@@ -26,7 +26,7 @@ static const struct DmaClass controllerTable = {
     .deinit = controllerDeinit,
 
     .callback = controllerCallback,
-    .index = controllerIndex,
+    .count = controllerCount,
     .start = controllerStart,
     .status = controllerStatus,
     .stop = controllerStop
@@ -37,10 +37,10 @@ const struct DmaClass * const DmaSdmmc = &controllerTable;
 static enum result appendItem(void *object, uint32_t buffer, uint32_t size)
 {
   struct DmaSdmmc * const controller = object;
-  struct DmaSdmmcEntry * const entry = controller->list + controller->number;
+  struct DmaSdmmcEntry * const entry = controller->list + controller->length;
   uint32_t control = DESC_CONTROL_OWN | DESC_CONTROL_CH | DESC_CONTROL_LD;
 
-  if (controller->number++)
+  if (controller->length++)
   {
     struct DmaSdmmcEntry *previous = entry - 1;
 
@@ -78,7 +78,7 @@ static enum result controllerInit(void *object, const void *configBase)
     return E_MEMORY;
 
   controller->capacity = config->number;
-  controller->number = 0;
+  controller->length = 0;
   controller->reg = config->parent->parent.reg;
 
   LPC_SDMMC_Type * const reg = controller->reg;
@@ -124,7 +124,7 @@ static void controllerCallback(void *object __attribute__((unused)),
 
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t controllerIndex(const void *object __attribute__((unused)))
+static uint32_t controllerCount(const void *object __attribute__((unused)))
 {
   const struct DmaSdmmc * const controller = object;
   const LPC_SDMMC_Type * const reg = controller->reg;
@@ -134,7 +134,7 @@ static uint32_t controllerIndex(const void *object __attribute__((unused)))
   if (!current)
     return 0;
 
-  return (uint32_t)(current - controller->list);
+  return (uint32_t)(controller->length - (current - controller->list));
 }
 /*----------------------------------------------------------------------------*/
 static enum result controllerStart(void *object, void *destination,
@@ -155,7 +155,7 @@ static enum result controllerStart(void *object, void *destination,
 
   uint32_t offset = 0;
 
-  controller->number = 0;
+  controller->length = 0;
   while (offset < size)
   {
     const uint32_t chunk = size - offset >= DESC_SIZE_MAX ?

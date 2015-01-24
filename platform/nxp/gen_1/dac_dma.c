@@ -1,15 +1,15 @@
 /*
- * dac.c
+ * dac_dma.c
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
-#include <stdlib.h>
-#include <string.h>
 #include <platform/nxp/dac_dma.h>
 #include <platform/nxp/gpdma_list.h>
 #include <platform/nxp/gen_1/dac_defs.h>
+/*----------------------------------------------------------------------------*/
+#define BLOCK_COUNT 2
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
 static enum result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
@@ -39,14 +39,14 @@ static void dmaHandler(void *object)
 {
   struct DacDma * const interface = object;
   LPC_DAC_Type * const reg = interface->parent.reg;
-  const uint32_t index = dmaIndex(interface->dma);
+  const uint32_t count = dmaCount(interface->dma);
   const enum result res = dmaStatus(interface->dma);
 
   /* Scatter-gather transfer finished */
   if (res != E_BUSY)
     reg->CTRL &= ~(CTRL_INT_DMA_REQ | CTRL_CNT_ENA);
 
-  if ((res != E_BUSY || !(index & 0x01)) && interface->callback)
+  if ((res != E_BUSY || !(count & 1)) && interface->callback)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -131,6 +131,10 @@ static enum result dacGet(void *object, enum ifOption option, void *data)
   {
     case IF_STATUS:
       return dmaStatus(interface->dma);
+
+    case IF_TX_CAPACITY:
+      *(uint32_t *)data = BLOCK_COUNT - ((dmaCount(interface->dma) + 1) >> 1);
+      return E_OK;
 
     case IF_WIDTH:
       *((uint32_t *)data) = DAC_RESOLUTION;

@@ -48,7 +48,7 @@ struct DmaClass
   CLASS_HEADER
 
   void (*callback)(void *, void (*)(void *), void *);
-  uint32_t (*index)(const void *);
+  uint32_t (*count)(const void *);
   enum result (*start)(void *, void *, const void *, uint32_t);
   enum result (*status)(const void *);
   void (*stop)(void *);
@@ -73,13 +73,13 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Get an index of the last transferred element.
+ * Get the number of pending transfers.
  * @param channel Pointer to a Dma object.
- * @return Index of an element.
+ * @return The number of pending transfers is returned.
  */
-static inline uint32_t dmaIndex(const void *channel)
+static inline uint32_t dmaCount(const void *channel)
 {
-  return ((const struct DmaClass *)CLASS(channel))->index(channel);
+  return ((const struct DmaClass *)CLASS(channel))->count(channel);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -101,8 +101,7 @@ static inline enum result dmaStart(void *channel, void *destination,
  * Get status of the transfer.
  * @param channel Pointer to a Dma object.
  * @return @b E_OK when the transfer is completed successfully; @b E_BUSY when
- * the transfer is not finished yet; @b E_FULL when no free space left in a
- * scatter-gather list; other error types in case of errors.
+ * the transfer is not finished yet; other error types in case of errors.
  */
 static inline enum result dmaStatus(const void *channel)
 {

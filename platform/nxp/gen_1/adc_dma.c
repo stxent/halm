@@ -9,6 +9,8 @@
 #include <platform/nxp/gpdma_list.h>
 #include <platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
+#define BLOCK_COUNT 2
+/*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static enum result dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
 /*----------------------------------------------------------------------------*/
@@ -38,7 +40,7 @@ static void dmaHandler(void *object)
   struct AdcDma * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->parent.reg;
-  const uint32_t index = dmaIndex(interface->dma);
+  const uint32_t count = dmaCount(interface->dma);
   const enum result res = dmaStatus(interface->dma);
 
   /* Scatter-gather transfer finished */
@@ -56,7 +58,7 @@ static void dmaHandler(void *object)
    * Each block consists of two buffers. Call user function
    * at the end of block or at the end of transfer.
    */
-  if ((res != E_BUSY || !(index & 0x01)) && interface->callback)
+  if ((res != E_BUSY || !(count & 1)) && interface->callback)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -71,7 +73,7 @@ static enum result dmaSetup(struct AdcDma *interface,
       .type = GPDMA_TYPE_P2M,
       .burst = DMA_BURST_1,
       .width = DMA_WIDTH_HALFWORD,
-      .number = 4,
+      .number = BLOCK_COUNT << 1,
       .size = config->size >> 1,
       .silent = false
   };
@@ -132,6 +134,10 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
+    case IF_RX_CAPACITY:
+      *(uint32_t *)data = BLOCK_COUNT - ((dmaCount(interface->dma) + 1) >> 1);
+      return E_OK;
+
     case IF_STATUS:
       return dmaStatus(interface->dma);
 
