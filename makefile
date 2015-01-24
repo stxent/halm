@@ -24,7 +24,6 @@ ifeq ($(CONFIG_CPU_FAMILY),"LPC11XX")
 
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m0 -mthumb
-  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
 else ifeq ($(CONFIG_CPU_FAMILY),"LPC11EXX")
   CORE := m0
   CORE_TYPE := cortex
@@ -34,7 +33,6 @@ else ifeq ($(CONFIG_CPU_FAMILY),"LPC11EXX")
 
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m0 -mthumb
-  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
 else ifeq ($(CONFIG_CPU_FAMILY),"LPC13XX")
   CORE := m3
   CORE_TYPE := cortex
@@ -44,7 +42,6 @@ else ifeq ($(CONFIG_CPU_FAMILY),"LPC13XX")
 
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m3 -mthumb
-  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
 else ifeq ($(CONFIG_CPU_FAMILY),"LPC17XX")
   CORE := m3
   CORE_TYPE := cortex
@@ -54,7 +51,6 @@ else ifeq ($(CONFIG_CPU_FAMILY),"LPC17XX")
 
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m3 -mthumb
-  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__
 else ifeq ($(CONFIG_CPU_FAMILY),"LPC43XX")
   CORE := m4
   CORE_TYPE := cortex
@@ -64,7 +60,6 @@ else ifeq ($(CONFIG_CPU_FAMILY),"LPC43XX")
 
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m4 -mthumb
-  PLATFORM_FLAGS := -specs=redlib.specs -D__REDLIB__ -D__MULTICORE_NONE
 else
   ifneq ($(MAKECMDGOALS),menuconfig)
     $(error Target architecture is undefined)
@@ -72,9 +67,9 @@ else
 endif
 
 ifeq ($(CONFIG_OPT_LEVEL),"full")
-  OPT_FLAGS := -O3 -DNDEBUG
+  OPT_FLAGS := -O3 -flto -DNDEBUG
 else ifeq ($(CONFIG_OPT_LEVEL),"size")
-  OPT_FLAGS := -Os -DNDEBUG
+  OPT_FLAGS := -Os -flto -DNDEBUG
 else ifeq ($(CONFIG_OPT_LEVEL),"none")
   OPT_FLAGS := -O0 -g3
 else
@@ -88,7 +83,7 @@ OUTPUTDIR = build_$(PLATFORM)
 #Configure compiler options
 CFLAGS += -std=c11 -Wall -Wextra -Winline -pedantic -Wshadow
 CFLAGS += -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections
-CFLAGS += $(OPT_FLAGS) $(CPU_FLAGS) $(PLATFORM_FLAGS)
+CFLAGS += $(OPT_FLAGS) $(CPU_FLAGS)
 CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 
 #Common modules
