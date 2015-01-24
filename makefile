@@ -72,9 +72,9 @@ else
 endif
 
 ifeq ($(CONFIG_OPT_LEVEL),"full")
-  OPT_FLAGS := -O3
+  OPT_FLAGS := -O3 -DNDEBUG
 else ifeq ($(CONFIG_OPT_LEVEL),"size")
-  OPT_FLAGS := -Os
+  OPT_FLAGS := -Os -DNDEBUG
 else ifeq ($(CONFIG_OPT_LEVEL),"none")
   OPT_FLAGS := -O0 -g3
 else
