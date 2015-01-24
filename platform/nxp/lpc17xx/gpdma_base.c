@@ -71,9 +71,9 @@ static uint8_t eventToPeripheral(enum gpDmaEvent event)
     case GPDMA_SSP1_TX:
       return 0 + ((event - GPDMA_SSP0_TX) << 1);
 
-    case GPDMA_I2S0:
-    case GPDMA_I2S1:
-      return 5 + (event - GPDMA_I2S0);
+    case GPDMA_I2S0_REQ1:
+    case GPDMA_I2S0_REQ2:
+      return 5 + (event - GPDMA_I2S0_REQ1);
 
     case GPDMA_UART0_RX:
     case GPDMA_UART1_RX:
@@ -87,7 +87,7 @@ static uint8_t eventToPeripheral(enum gpDmaEvent event)
     case GPDMA_UART3_TX:
       return 8 + ((event - GPDMA_UART0_TX) << 1);
 
-    case GPDMA_ADC:
+    case GPDMA_ADC0:
       return 4;
 
     case GPDMA_DAC:

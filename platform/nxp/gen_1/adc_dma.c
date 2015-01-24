@@ -64,7 +64,7 @@ static enum result dmaSetup(struct AdcDma *interface,
     const struct AdcDmaConfig *config)
 {
   const struct GpDmaListConfig dmaConfig = {
-      .event = GPDMA_ADC,
+      .event = GPDMA_ADC0 + config->channel,
       .channel = config->channel,
       .source.increment = false,
       .destination.increment = true,
