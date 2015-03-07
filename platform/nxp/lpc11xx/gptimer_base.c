@@ -26,7 +26,7 @@ static enum result setDescriptor(uint8_t, const struct GpTimerBase *,
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass timerTable = {
+static const struct EntityClass tmrTable = {
     .size = 0, /* Abstract class */
     .init = tmrInit,
     .deinit = tmrDeinit
@@ -135,7 +135,7 @@ const struct PinEntry gpTimerMatchPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpTimerBase = &timerTable;
+const struct EntityClass * const GpTimerBase = &tmrTable;
 static struct GpTimerBase *descriptors[4] = {0};
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel,

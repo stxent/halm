@@ -79,7 +79,7 @@ static void sendWord(struct OneWireUart *interface, uint8_t word)
   uint8_t counter = 0;
 
   while (counter < 8)
-    reg->THR = (word >> counter++) & 0x01 ? 0xFF : 0;
+    reg->THR = ((word >> counter++) & 0x01) ? 0xFF : 0;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)

@@ -26,7 +26,7 @@ static enum result tmrSetOverflow(void *, uint32_t);
 static enum result tmrSetValue(void *, uint32_t);
 static uint32_t tmrValue(const void *);
 /*----------------------------------------------------------------------------*/
-static const struct TimerClass timerTable = {
+static const struct TimerClass tmrTable = {
     .size = sizeof(struct GpTimer),
     .init = tmrInit,
     .deinit = tmrDeinit,
@@ -39,7 +39,7 @@ static const struct TimerClass timerTable = {
     .value = tmrValue
 };
 /*----------------------------------------------------------------------------*/
-const struct TimerClass * const GpTimer = &timerTable;
+const struct TimerClass * const GpTimer = &tmrTable;
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getResolution(struct GpTimer *timer)
 {

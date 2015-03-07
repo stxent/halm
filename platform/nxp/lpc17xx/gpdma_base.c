@@ -23,7 +23,7 @@ struct DmaHandler
   uint16_t instances;
 };
 /*----------------------------------------------------------------------------*/
-static inline void *calcPeripheral(uint8_t);
+static inline LPC_GPDMACH_Type *calcPeripheral(uint8_t);
 static uint8_t eventToPeripheral(enum gpDmaEvent);
 static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
@@ -51,9 +51,9 @@ const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
 static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-static inline void *calcPeripheral(uint8_t channel)
+static inline LPC_GPDMACH_Type *calcPeripheral(uint8_t channel)
 {
-  return (void *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
+  return (LPC_GPDMACH_Type *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
       - (uint32_t)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/

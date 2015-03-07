@@ -9,6 +9,8 @@
 #include <platform/nxp/adc_burst.h>
 #include <platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
+#define SAMPLE_SIZE sizeof(*((struct AdcBurst *)0)->buffer)
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *, const void *);
@@ -144,7 +146,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   struct AdcBurst * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->parent.reg;
-  const uint32_t samples = length / sizeof(uint16_t);
+  const uint32_t samples = length / SAMPLE_SIZE;
 
   if (!samples)
     return 0;
@@ -159,7 +161,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   /* Set conversion channel */
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->pin.channel);
 
-  interface->buffer = (uint16_t *)buffer;
+  interface->buffer = (void *)buffer;
   interface->left = samples;
 
   /* Start the conversion */
@@ -171,5 +173,5 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
       barrier();
   }
 
-  return samples * sizeof(uint16_t);
+  return samples * SAMPLE_SIZE;
 }

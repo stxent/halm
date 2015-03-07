@@ -87,7 +87,7 @@ static void sendWord(struct OneWireSsp *interface, uint8_t word)
   uint8_t counter = 0;
 
   while (counter < 8)
-    reg->DR = (word >> counter++) & 0x01 ? PATTERN_HIGH : PATTERN_LOW;
+    reg->DR = ((word >> counter++) & 0x01) ? PATTERN_HIGH : PATTERN_LOW;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)

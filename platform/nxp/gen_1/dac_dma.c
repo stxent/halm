@@ -10,6 +10,7 @@
 #include <platform/nxp/gen_1/dac_defs.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
+#define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
 static enum result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
@@ -156,7 +157,7 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct DacDma * const interface = object;
   LPC_DAC_Type * const reg = interface->parent.reg;
-  const uint32_t samples = length / sizeof(uint16_t);
+  const uint32_t samples = length / SAMPLE_SIZE;
 
   if (!samples)
     return 0;
@@ -179,5 +180,5 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
     reg->CTRL |= CTRL_CNT_ENA;
   }
 
-  return samples * sizeof(uint16_t);
+  return samples * SAMPLE_SIZE;
 }

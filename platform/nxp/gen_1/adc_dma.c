@@ -10,6 +10,7 @@
 #include <platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
+#define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static enum result dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
@@ -162,7 +163,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   struct AdcDma * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->parent.reg;
-  const uint32_t samples = length / sizeof(uint16_t);
+  const uint32_t samples = length / SAMPLE_SIZE;
 
   if (!samples)
     return 0;
@@ -199,5 +200,5 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
     reg->CR |= CR_START(interface->event);
   }
 
-  return samples * sizeof(uint16_t);
+  return samples * SAMPLE_SIZE;
 }

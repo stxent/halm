@@ -167,7 +167,6 @@ void ADC1_ISR(void)
 enum result adcConfigPin(const struct AdcUnitBase *unit, pin_t key,
     struct AdcPin *adcPin)
 {
-  const struct PinEntry *entry;
   const struct PinGroupEntry *group;
 
   group = pinGroupFind(adcPinGroups, key, unit->channel);
@@ -186,7 +185,9 @@ enum result adcConfigPin(const struct AdcUnitBase *unit, pin_t key,
   /* Inputs are connected to both peripherals on parts without ADCHS */
   for (uint8_t part = 0; part < 2; ++part)
   {
-    if (!(entry = pinFind(adcPins, key, part)))
+    const struct PinEntry * const entry = pinFind(adcPins, key, part);
+
+    if (!entry)
       continue;
 
     const uint8_t function = UNPACK_FUNCTION(entry->value);

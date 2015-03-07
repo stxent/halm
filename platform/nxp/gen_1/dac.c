@@ -8,6 +8,8 @@
 #include <platform/nxp/dac.h>
 #include <platform/nxp/gen_1/dac_defs.h>
 /*----------------------------------------------------------------------------*/
+#define SAMPLE_SIZE sizeof(uint16_t)
+/*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
 static void dacDeinit(void *);
 static enum result dacCallback(void *, void (*)(void *), void *);
@@ -88,12 +90,12 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Dac * const interface = object;
   LPC_DAC_Type * const reg = interface->parent.reg;
-  const uint32_t samples = length / sizeof(uint16_t);
+  const uint32_t samples = length / SAMPLE_SIZE;
 
   if (!samples)
     return 0;
 
   reg->CR = (*((const uint16_t *)buffer) & CR_OUTPUT_MASK) | CR_BIAS;
 
-  return sizeof(uint16_t);
+  return SAMPLE_SIZE;
 }

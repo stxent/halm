@@ -35,7 +35,7 @@ static enum result tmrSetOverflow(void *, uint32_t);
 static enum result tmrSetValue(void *, uint32_t);
 static uint32_t tmrValue(const void *);
 /*----------------------------------------------------------------------------*/
-static const struct TimerClass timerTable = {
+static const struct TimerClass tmrTable = {
     .size = sizeof(struct SysTickTimer),
     .init = tmrInit,
     .deinit = tmrDeinit,
@@ -49,7 +49,7 @@ static const struct TimerClass timerTable = {
 };
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const MainClock;
-const struct TimerClass * const SysTickTimer = &timerTable;
+const struct TimerClass * const SysTickTimer = &tmrTable;
 static struct SysTickTimer *descriptor = 0;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)

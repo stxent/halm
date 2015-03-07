@@ -5,9 +5,10 @@
  */
 
 #include <assert.h>
-#include <string.h>
 #include <platform/nxp/adc.h>
 #include <platform/nxp/gen_1/adc_defs.h>
+/*----------------------------------------------------------------------------*/
+#define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *, const void *);
 static void adcDeinit(void *);
@@ -34,10 +35,11 @@ static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
   struct Adc * const interface = object;
+  enum result res;
 
   /* Initialize input pin */
-  const enum result res = adcConfigPin((struct AdcUnitBase *)config->parent,
-      config->pin, &interface->pin);
+  res = adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
+      &interface->pin);
   if (res != E_OK)
     return res;
 
@@ -85,7 +87,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Adc * const interface = object;
   LPC_ADC_Type * const reg = interface->unit->parent.reg;
-  const uint32_t samples = length / sizeof(uint16_t);
+  const uint32_t samples = length / SAMPLE_SIZE;
   const uint8_t channel = interface->pin.channel;
 
   if (!samples)
@@ -107,5 +109,5 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   /* Copy result into first element of the array */
   *((uint16_t *)buffer) = DR_RESULT_VALUE(reg->DR[channel]);
 
-  return sizeof(uint16_t);
+  return SAMPLE_SIZE;
 }

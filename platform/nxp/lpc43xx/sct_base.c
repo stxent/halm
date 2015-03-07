@@ -46,28 +46,27 @@ static const struct EntityClass handlerTable = {
     .deinit = 0
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass timerTable = {
+static const struct EntityClass tmrTable = {
     .size = 0, /* Abstract class */
     .init = tmrInit,
     .deinit = tmrDeinit
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const TimerHandler = &handlerTable;
-const struct EntityClass * const SctBase = &timerTable;
+const struct EntityClass * const SctBase = &tmrTable;
 static struct TimerHandler *handlers[CHANNEL_COUNT] = {0};
 static spinlock_t spinlocks[CHANNEL_COUNT] = {SPIN_UNLOCKED};
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(uint8_t channel)
 {
-  bool result = false;
-
   spinLock(&spinlocks[channel]);
   timerHandlerInstantiate(channel);
 
-  result = handlers[channel]->descriptors[0]
+  const bool result = handlers[channel]->descriptors[0]
       || handlers[channel]->descriptors[1];
 
   spinUnlock(&spinlocks[channel]);
+
   return result;
 }
 /*----------------------------------------------------------------------------*/
