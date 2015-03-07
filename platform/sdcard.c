@@ -16,9 +16,11 @@
 #define BLOCK_POW         9
 /*------------------CMD8------------------------------------------------------*/
 #define CONDITION_PATTERN 0x000001AA
+/*------------------CMD59-----------------------------------------------------*/
+#define CRC_ENABLED       0x00000001
 /*------------------ACMD6-----------------------------------------------------*/
-#define BUS_WIDTH_1BIT    0x00
-#define BUS_WIDTH_4BIT    0x02
+#define BUS_WIDTH_1BIT    0x00000000
+#define BUS_WIDTH_4BIT    0x00000002
 /*------------------OCR register----------------------------------------------*/
 #define OCR_VOLTAGE_MASK  0x00FF8000
 #define OCR_CCS           BIT(30) /* Card Capacity Status */
@@ -27,7 +29,7 @@
 /*----------------------------------------------------------------------------*/
 static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
     uint32_t *);
-static uint32_t extractBits(uint32_t *, uint16_t, uint16_t);
+static uint32_t extractBits(const uint32_t *, uint16_t, uint16_t);
 static enum result initializeCard(struct SdCard *);
 static void processCardSpecificData(struct SdCard *, uint32_t *);
 static enum result setTransferState(struct SdCard *);
@@ -81,10 +83,10 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
   return status;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extractBits(uint32_t *data, uint16_t start, uint16_t end)
+static uint32_t extractBits(const uint32_t *data, uint16_t start, uint16_t end)
 {
-  const uint32_t index = end >> 5;
-  const uint32_t offset = start & 0x1F;
+  const uint16_t index = end >> 5;
+  const uint16_t offset = start & 0x1F;
   uint32_t value;
 
   if (index == start >> 5)
@@ -125,6 +127,7 @@ static enum result initializeCard(struct SdCard *device)
 
   const enum sdioResponse responseType = device->native ?
       SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
+  const uint32_t crcStatus = device->crc ? SDIO_CHECK_CRC : 0;
   uint32_t ocr = 0;
 
   if (device->type == SDCARD_2_0)
@@ -164,11 +167,20 @@ static enum result initializeCard(struct SdCard *device)
   if (res != E_OK)
     return res;
 
+  /* Enable optional integrity checking */
+  if (!device->native && device->crc)
+  {
+    res = executeCommand(device, SDIO_COMMAND(CMD_CRC_ON_OFF,
+        SDIO_RESPONSE_SHORT, 0), CRC_ENABLED, 0);
+    if (res != E_OK)
+      return res;
+  }
+
   /* Read card capacity information when SPI mode is used */
   if (!device->native && device->type == SDCARD_2_0)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_READ_OCR,
-        SDIO_RESPONSE_SHORT, 0), 0, response);
+        SDIO_RESPONSE_SHORT, crcStatus), 0, response);
     if (res != E_OK)
       return res;
 
@@ -180,12 +192,12 @@ static enum result initializeCard(struct SdCard *device)
   if (device->native)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_ALL_SEND_CID,
-        SDIO_RESPONSE_LONG, 0), 0, response);
+        SDIO_RESPONSE_LONG, crcStatus), 0, response);
     if (res != E_OK)
       return res;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_SEND_RELATIVE_ADDR,
-        SDIO_RESPONSE_SHORT, 0), 0, response);
+        SDIO_RESPONSE_SHORT, crcStatus), 0, response);
     if (res != E_OK)
       return res;
 
@@ -196,7 +208,7 @@ static enum result initializeCard(struct SdCard *device)
 
   /* Read and process CSD register */
   res = executeCommand(device, SDIO_COMMAND(CMD_SEND_CSD,
-      SDIO_RESPONSE_LONG, 0), address, response);
+      SDIO_RESPONSE_LONG, crcStatus), address, response);
   if (res != E_OK)
     return res;
   processCardSpecificData(device, response);
@@ -208,7 +220,7 @@ static enum result initializeCard(struct SdCard *device)
         return res;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_SET_BLOCKLEN,
-        SDIO_RESPONSE_SHORT, 0), 1 << BLOCK_POW, 0);
+        SDIO_RESPONSE_SHORT, crcStatus), 1 << BLOCK_POW, 0);
     if (res != E_OK)
       return res;
 
@@ -219,12 +231,12 @@ static enum result initializeCard(struct SdCard *device)
         BUS_WIDTH_1BIT : BUS_WIDTH_4BIT;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_APP_CMD,
-        SDIO_RESPONSE_SHORT, 0), address, 0);
+        SDIO_RESPONSE_SHORT, crcStatus), address, 0);
     if (res != E_OK)
       return res;
 
     res = executeCommand(device, SDIO_COMMAND(ACMD_SET_BUS_WIDTH,
-        SDIO_RESPONSE_SHORT, 0), width, 0);
+        SDIO_RESPONSE_SHORT, crcStatus), width, 0);
     if (res != E_OK)
       return res;
   }
@@ -255,11 +267,12 @@ static enum result setTransferState(struct SdCard *device)
 {
   /* Relative card address should be initialized */
   const uint32_t address = (uint32_t)device->address << 16;
+  const uint32_t flags = SDIO_WAIT_DATA | (device->crc ? SDIO_CHECK_CRC : 0);
   uint32_t response;
   enum result res;
 
   res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
-      SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, &response);
+      SDIO_RESPONSE_SHORT, flags), address, &response);
   if (res != E_OK)
     return res;
 
@@ -268,7 +281,7 @@ static enum result setTransferState(struct SdCard *device)
   if (state == CARD_STANDBY)
   {
     return executeCommand(device, SDIO_COMMAND(CMD_SELECT_CARD,
-        SDIO_RESPONSE_SHORT, SDIO_WAIT_DATA), address, 0);
+        SDIO_RESPONSE_SHORT, flags), address, 0);
   }
   else if (state != CARD_TRANSFER)
   {
@@ -289,6 +302,7 @@ static enum result cardInit(void *object, const void *configBase)
   device->address = 0;
   device->blockCount = 0;
   device->capacity = SDCARD_SDSC;
+  device->crc = config->crc;
   device->interface = config->interface;
   device->position = 0;
   device->type = SDCARD_1_0;
@@ -388,6 +402,8 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
 
   if (blocks > 1)
     flags |= SDIO_AUTO_STOP;
+  if (device->crc)
+    flags |= SDIO_CHECK_CRC;
 
   const enum sdioCommand code = blocks == 1 ?
       CMD_READ_SINGLE_BLOCK : CMD_READ_MULTIPLE_BLOCK;
@@ -427,6 +443,8 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   if (blocks > 1)
     flags |= SDIO_AUTO_STOP;
+  if (device->crc)
+    flags |= SDIO_CHECK_CRC;
 
   const enum sdioCommand code = blocks == 1 ?
       CMD_WRITE_BLOCK : CMD_WRITE_MULTIPLE_BLOCK;

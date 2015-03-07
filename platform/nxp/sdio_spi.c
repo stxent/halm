@@ -5,19 +5,24 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 #include <memory.h>
 #include <common/sdio.h>
 #include <common/sdio_defs.h>
 #include <crc/crc7.h>
+#include <crc/crc16.h>
 #include <platform/nxp/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
-#define BUSY_TIMER_FREQUENCY 100000
-#define BUSY_READ_DELAY      10
-#define BUSY_READ_RETRIES    1000
-#define BUSY_WRITE_DELAY     40
-#define BUSY_WRITE_RETRIES   1000
-#define TOKEN_RETRIES        8
+#define DEFAULT_BLOCK_SIZE    512
+#define BUSY_TIMER_FREQUENCY  100000
+#define BUSY_READ_DELAY       10
+#define BUSY_READ_RETRIES     1000
+#define BUSY_WRITE_DELAY      40
+#define BUSY_WRITE_RETRIES    1000
+#define INITIAL_CRC7          0x00
+#define INITIAL_CRC16         0x0000
+#define TOKEN_RETRIES         8
 /*----------------------------------------------------------------------------*/
 enum state
 {
@@ -233,6 +238,7 @@ static enum state stateReadShortAdvance(struct SdioSpi *interface)
   memcpy(&value, interface->buffer + 1, 4);
   interface->response[0] = fromBigEndian32(value);
   interface->status = parseResponseToken(interface, interface->buffer[0]);
+
   return STATE_IDLE;
 }
 /*----------------------------------------------------------------------------*/
@@ -277,7 +283,6 @@ static enum state stateReadLongAdvance(struct SdioSpi *interface)
   for (uint8_t index = 0; index < 4; ++index)
     interface->response[3 - index] = fromBigEndian32(buffer[index]);
 
-  //TODO Add CRC checking
   interface->status = E_OK;
   return STATE_IDLE;
 }
@@ -306,8 +311,9 @@ static enum state stateWaitReadAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateReadDataEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->bus, interface->rxBuffer, interface->blockLength);
-  interface->left -= interface->blockLength;
+  ifRead(interface->bus, interface->rxBuffer
+      + (interface->length - interface->left), interface->blockSize);
+  interface->left -= interface->blockSize;
 }
 /*----------------------------------------------------------------------------*/
 static void stateReadCrcEnter(struct SdioSpi *interface)
@@ -321,11 +327,14 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
 
   if (flags & SDIO_CHECK_CRC)
   {
-    //TODO Add CRC checking
-  }
+    const uint16_t blockIndex = (interface->length - interface->left)
+        / interface->blockSize - 1;
+    uint16_t receivedCrc;
 
-  /* Increase pointer to an input buffer */
-  interface->rxBuffer += interface->blockLength;
+    memcpy(&receivedCrc, interface->buffer, 2);
+    receivedCrc = fromBigEndian16(receivedCrc);
+    interface->crcPool[blockIndex] = receivedCrc;
+  }
 
   if (interface->left)
   {
@@ -341,6 +350,8 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
      * interfere with interface response type because response parameters
      * are similar to ones in the original command.
      */
+    interface->status = E_OK;
+
     interface->command = SDIO_COMMAND(CMD_STOP_TRANSMISSION,
         SDIO_RESPONSE_NONE, 0);
     interface->argument = 0;
@@ -383,15 +394,30 @@ static void stateWriteTokenEnter(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateWriteDataEnter(struct SdioSpi *interface)
 {
-  ifWrite(interface->bus, interface->txBuffer, interface->blockLength);
-  interface->left -= interface->blockLength;
-  interface->txBuffer += interface->blockLength;
+  ifWrite(interface->bus, interface->txBuffer
+      + (interface->length - interface->left), interface->blockSize);
+  interface->left -= interface->blockSize;
 }
 /*----------------------------------------------------------------------------*/
 static void stateWriteCrcEnter(struct SdioSpi *interface)
 {
-  /* TODO Add checksum calculation */
-  memset(interface->buffer, 0, 2);
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  uint16_t computedCrc;
+
+  if (flags & SDIO_CHECK_CRC)
+  {
+    const uint16_t blockIndex = (interface->length - interface->left)
+          / interface->blockSize - 1;
+
+    computedCrc = interface->crcPool[blockIndex];
+  }
+  else
+  {
+    computedCrc = 0xFFFF;
+  }
+
+  computedCrc = toBigEndian16(computedCrc);
+  memcpy(interface->buffer, &computedCrc, 2);
   ifWrite(interface->bus, interface->buffer, 2);
 }
 /*----------------------------------------------------------------------------*/
@@ -412,9 +438,20 @@ static enum state stateWaitWriteAdvance(struct SdioSpi *interface)
   }
   else
   {
-    /* Error occurred, stop the transfer */
-    interface->status = res;
-    return STATE_IDLE;
+    /*
+     * Error occurred, stop the transfer by injecting the Stop
+     * Transmission command. Preserve error code in temporary variable.
+     */
+    interface->status = interface->transferStatus = res;
+
+    interface->command = SDIO_COMMAND(CMD_STOP_TRANSMISSION,
+        SDIO_RESPONSE_NONE, 0);
+    interface->argument = 0;
+
+    sendCommand(interface, interface->command, interface->argument);
+    interface->retries = TOKEN_RETRIES;
+
+    return STATE_SEND_CMD;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -446,8 +483,8 @@ static enum state stateWriteBusyAdvance(struct SdioSpi *interface)
 
     if ((flags & SDIO_AUTO_STOP) && interface->txBuffer)
     {
-      interface->txBuffer = 0;
       interface->retries = BUSY_WRITE_RETRIES;
+      interface->txBuffer = 0;
       return STATE_WRITE_STOP;
     }
     else
@@ -466,10 +503,11 @@ static void stateWriteStopEnter(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *interface)
 {
+  ifSet(interface->bus, IF_ACQUIRE, 0);
+
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
 
-  interface->status = E_BUSY;
-  ifSet(interface->bus, IF_ACQUIRE, 0);
+  interface->status = interface->transferStatus = E_BUSY;
 
   if (flags & SDIO_INITIALIZE)
   {
@@ -502,6 +540,19 @@ static void interruptHandler(void *object)
   }
   else
   {
+    if (interface->transferStatus == E_BUSY)
+    {
+      /*
+       * Copy the status of the last command when the global command
+       * status is not changed. Global command status may be changed when
+       * one of several low-level commands has failed.
+       */
+      interface->transferStatus = interface->status;
+    }
+
+    if (interface->checkReceivedCrc && interface->transferStatus != E_OK)
+      interface->checkReceivedCrc = false;
+
     /* Finalize the transfer */
     pinSet(interface->cs);
     ifSet(interface->bus, IF_RELEASE, 0);
@@ -554,7 +605,7 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
   interface->buffer[0] = 0xFF;
   interface->buffer[1] = COMMAND_CODE_VALUE(command) | 0x40;
   memcpy(interface->buffer + 2, &argument, sizeof(argument));
-  interface->buffer[6] = crcUpdate(interface->crc7, 0x00,
+  interface->buffer[6] = crcUpdate(interface->crc7, INITIAL_CRC7,
       interface->buffer + 1, 5);
   /* Add end bit */
   interface->buffer[6] = (interface->buffer[6] << 1) | 0x01;
@@ -596,20 +647,43 @@ static enum result sdioInit(void *object, const void *configBase)
       return res;
   }
 
+  /* Command verification part */
   interface->crc7 = init(Crc7, 0);
   if (!interface->crc7)
     return E_MEMORY;
 
-  interface->blockLength = 512; /* 512 bytes by default */
+  /* Data verification part */
+  interface->checkReceivedCrc = false;
+  interface->crcPoolSize = config->blocks;
+  if (interface->crcPoolSize)
+  {
+    interface->crc16 = init(Crc16, 0);
+    if (!interface->crc16)
+      return E_MEMORY;
+
+    interface->crcPool = malloc(2 * interface->crcPoolSize);
+    if (!interface->crcPool)
+      return E_MEMORY;
+  }
+  else
+  {
+    interface->crc16 = 0;
+    interface->crcPool = 0;
+  }
+
+  /* Data transfer part */
+  interface->blockSize = DEFAULT_BLOCK_SIZE;
   interface->left = 0;
+  interface->length = 0;
   interface->rxBuffer = 0;
   interface->txBuffer = 0;
 
+  /* Command execution part */
   interface->argument = 0;
   interface->callback = 0;
   interface->command = 0;
   interface->state = STATE_IDLE;
-  interface->status = E_OK;
+  interface->status = interface->transferStatus = E_OK;
   memset(interface->response, 0, sizeof(interface->response));
 
   return E_OK;
@@ -670,7 +744,34 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
       return ifGet(interface->bus, IF_RATE, data);
 
     case IF_STATUS:
-      return interface->status;
+    {
+      if (interface->state == STATE_IDLE)
+      {
+        if (interface->transferStatus == E_OK && interface->checkReceivedCrc)
+        {
+          interface->checkReceivedCrc = false;
+
+          const uint16_t blockCount = interface->length / interface->blockSize;
+
+          for (uint16_t index = 0; index < blockCount; ++index)
+          {
+            const uint16_t computed = crcUpdate(interface->crc16, INITIAL_CRC16,
+                interface->rxBuffer + index * interface->blockSize,
+                interface->blockSize);
+
+            if (computed != interface->crcPool[index])
+            {
+              interface->transferStatus = E_INTERFACE;
+              break;
+            }
+          }
+        }
+
+        return interface->transferStatus;
+      }
+      else
+        return E_BUSY;
+    }
 
     default:
       return E_ERROR;
@@ -693,8 +794,8 @@ static enum result sdioSet(void *object, enum ifOption option,
       interface->argument = *(const uint32_t *)data;
       return E_OK;
 
-    case IF_SDIO_BLOCK_LENGTH:
-      interface->blockLength = (uint16_t)(*(const uint32_t *)data);
+    case IF_SDIO_BLOCK_SIZE:
+      interface->blockSize = (uint16_t)(*(const uint32_t *)data);
       return E_OK;
 
     case IF_SDIO_COMMAND:
@@ -719,13 +820,25 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi * const interface = object;
 
-  /* Check buffer alignment */
-  assert(!(length & (interface->blockLength - 1)));
-
-  interface->status = E_BUSY;
   ifSet(interface->bus, IF_ACQUIRE, 0);
 
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+
+  /* Check buffer alignment */
+  assert(!(length & (interface->blockSize - 1)));
+
+  interface->status = interface->transferStatus = E_BUSY;
+
+  if (flags & SDIO_CHECK_CRC)
+  {
+    if (interface->crcPoolSize >= length / interface->blockSize)
+      interface->checkReceivedCrc = true;
+    else
+      return 0; /* Checksum pool is not big enough */
+  }
+
   interface->left = length;
+  interface->length = length;
   interface->rxBuffer = buffer;
 
   /* Begin execution */
@@ -739,13 +852,37 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct SdioSpi * const interface = object;
 
-  /* Check buffer alignment */
-  assert(!(length & (interface->blockLength - 1)));
-
-  interface->status = E_BUSY;
   ifSet(interface->bus, IF_ACQUIRE, 0);
 
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+
+  /* Check buffer alignment */
+  assert(!(length & (interface->blockSize - 1)));
+
+  interface->status = interface->transferStatus = E_BUSY;
+
+  if (flags & SDIO_CHECK_CRC)
+  {
+    const uint16_t blockCount = length / interface->blockSize;
+
+    if (interface->crcPoolSize >= blockCount)
+    {
+      for (uint16_t index = 0; index < blockCount; ++index)
+      {
+        interface->crcPool[index] = crcUpdate(interface->crc16, INITIAL_CRC16,
+            buffer + index * interface->blockSize, interface->blockSize);
+      }
+    }
+    else
+    {
+      /* Integrity checking is disabled or checksum pool is not big enough */
+      return 0;
+    }
+  }
+
   interface->left = length;
+  interface->length = length;
+  interface->rxBuffer = 0;
   interface->txBuffer = buffer;
 
   /* Begin execution */

@@ -11,10 +11,8 @@
 /*----------------------------------------------------------------------------*/
 enum sdioCommand
 {
+  /* Common commands */
   CMD_GO_IDLE_STATE         = 0,
-  CMD_ALL_SEND_CID          = 2,
-  CMD_SEND_RELATIVE_ADDR    = 3,
-  CMD_SELECT_CARD           = 7,
   CMD_SEND_IF_COND          = 8,
   CMD_SEND_CSD              = 9,
   CMD_SEND_CID              = 10,
@@ -26,9 +24,17 @@ enum sdioCommand
   CMD_WRITE_BLOCK           = 24,
   CMD_WRITE_MULTIPLE_BLOCK  = 25,
   CMD_APP_CMD               = 55,
-  CMD_READ_OCR              = 58,
+  ACMD_SD_SEND_OP_COND      = 41,
+
+  /* Commands available only in SDIO mode */
+  CMD_ALL_SEND_CID          = 2,
+  CMD_SEND_RELATIVE_ADDR    = 3,
+  CMD_SELECT_CARD           = 7,
   ACMD_SET_BUS_WIDTH        = 6,
-  ACMD_SD_SEND_OP_COND      = 41
+
+  /* Commands available only in SPI mode */
+  CMD_READ_OCR              = 58,
+  CMD_CRC_ON_OFF            = 59
 };
 /*----------------------------------------------------------------------------*/
 enum sdioFlags
@@ -63,7 +69,7 @@ enum sdioOption
   IF_SDIO_ARGUMENT,
   IF_SDIO_COMMAND,
   IF_SDIO_RESPONSE,
-  IF_SDIO_BLOCK_LENGTH
+  IF_SDIO_BLOCK_SIZE
 };
 /*----------------------------------------------------------------------------*/
 enum sdioResponse

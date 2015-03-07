@@ -33,6 +33,8 @@ struct SdCardConfig
 {
   /** Mandatory: low-level interface. */
   struct Interface *interface;
+  /** Optional: enable integrity checking for all transfers. */
+  bool crc;
 };
 /*----------------------------------------------------------------------------*/
 struct SdCard
@@ -51,6 +53,8 @@ struct SdCard
   enum sdCardCapacity capacity;
   /* Type of the memory card */
   enum sdCardType type;
+  /* Integrity check option */
+  bool crc;
   /* Type of the underlying interface */
   bool native;
 };
