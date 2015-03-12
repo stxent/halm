@@ -105,6 +105,7 @@ static void interruptHandler(void *);
 static enum result parseDataToken(struct SdioSpi *, uint8_t, enum sdioToken);
 static enum result parseResponseToken(struct SdioSpi *, uint8_t);
 static void sendCommand(struct SdioSpi *, uint32_t, uint32_t);
+static enum result verifyChecksum(struct SdioSpi *);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -543,9 +544,9 @@ static void interruptHandler(void *object)
     if (interface->transferStatus == E_BUSY)
     {
       /*
-       * Copy the status of the last command when the global command
-       * status is not changed. Global command status may be changed when
-       * one of several low-level commands has failed.
+       * Copy status of the last command when the global command status
+       * is not changed. Global command status may be changed when
+       * one of low-level commands has failed.
        */
       interface->transferStatus = interface->status;
     }
@@ -614,6 +615,27 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
   ifWrite(interface->bus, interface->buffer, 8);
 }
 /*----------------------------------------------------------------------------*/
+static enum result verifyChecksum(struct SdioSpi *interface)
+{
+  const uint16_t blockCount = interface->length / interface->blockSize;
+  enum result res = E_OK;
+
+  for (uint16_t index = 0; index < blockCount; ++index)
+  {
+    const uint16_t computed = crcUpdate(interface->crc16, INITIAL_CRC16,
+        interface->rxBuffer + index * interface->blockSize,
+        interface->blockSize);
+
+    if (computed != interface->crcPool[index])
+    {
+      res = E_INTERFACE;
+      break;
+    }
+  }
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)
 {
   const struct SdioSpiConfig * const config = configBase;
@@ -627,11 +649,9 @@ static enum result sdioInit(void *object, const void *configBase)
 
   interface->bus = config->interface;
 
-  res = ifSet(interface->bus, IF_ZEROCOPY, 0);
-  if (res != E_OK)
+  if ((res = ifSet(interface->bus, IF_ZEROCOPY, 0)) != E_OK)
     return res;
-  res = ifCallback(interface->bus, interruptHandler, interface);
-  if (res != E_OK)
+  if ((res = ifCallback(interface->bus, interruptHandler, interface)) != E_OK)
     return res;
 
   interface->timer = config->timer;
@@ -750,21 +770,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
         if (interface->transferStatus == E_OK && interface->checkReceivedCrc)
         {
           interface->checkReceivedCrc = false;
-
-          const uint16_t blockCount = interface->length / interface->blockSize;
-
-          for (uint16_t index = 0; index < blockCount; ++index)
-          {
-            const uint16_t computed = crcUpdate(interface->crc16, INITIAL_CRC16,
-                interface->rxBuffer + index * interface->blockSize,
-                interface->blockSize);
-
-            if (computed != interface->crcPool[index])
-            {
-              interface->transferStatus = E_INTERFACE;
-              break;
-            }
-          }
+          interface->transferStatus = verifyChecksum(interface);
         }
 
         return interface->transferStatus;

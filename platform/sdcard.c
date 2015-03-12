@@ -30,6 +30,7 @@
 static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
     uint32_t *);
 static uint32_t extractBits(const uint32_t *, uint16_t, uint16_t);
+static enum result identifyCard(struct SdCard *);
 static enum result initializeCard(struct SdCard *);
 static void processCardSpecificData(struct SdCard *, uint32_t *);
 static enum result setTransferState(struct SdCard *);
@@ -97,7 +98,7 @@ static uint32_t extractBits(const uint32_t *data, uint16_t start, uint16_t end)
   return value & MASK(end - start + 1);
 }
 /*----------------------------------------------------------------------------*/
-static enum result initializeCard(struct SdCard *device)
+static enum result identifyCard(struct SdCard *device)
 {
   uint32_t response[4];
   enum result res;
@@ -244,6 +245,36 @@ static enum result initializeCard(struct SdCard *device)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static enum result initializeCard(struct SdCard *device)
+{
+  const uint32_t lowRate = ENUM_RATE;
+  uint32_t rate;
+  enum result res;
+
+  /* Lock the interface */
+  ifSet(device->interface, IF_ACQUIRE, 0);
+
+  if ((res = ifGet(device->interface, IF_RATE, &rate)) != E_OK)
+    return res;
+  if (rate > WORK_RATE)
+    return E_VALUE;
+
+  /* Set low data rate for enumeration purposes */
+  if ((res = ifSet(device->interface, IF_RATE, &lowRate)) != E_OK)
+    return res;
+
+  /* Initialize memory card */
+  res = identifyCard(device);
+
+  /* Restore original interface rate */
+  ifSet(device->interface, IF_RATE, &rate);
+
+  /* Release the interface */
+  ifSet(device->interface, IF_RELEASE, 0);
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
 static void processCardSpecificData(struct SdCard *device, uint32_t *response)
 {
   if (device->capacity == SDCARD_SDSC)
@@ -294,9 +325,8 @@ static enum result setTransferState(struct SdCard *device)
 static enum result cardInit(void *object, const void *configBase)
 {
   const struct SdCardConfig * const config = configBase;
-  const uint32_t lowRate = ENUM_RATE;
   struct SdCard * const device = object;
-  uint32_t mode, rate;
+  uint32_t mode;
   enum result res;
 
   device->address = 0;
@@ -307,24 +337,12 @@ static enum result cardInit(void *object, const void *configBase)
   device->position = 0;
   device->type = SDCARD_1_0;
 
+  /* Get interface type */
   if ((res = ifGet(device->interface, IF_SDIO_MODE, &mode)) != E_OK)
     return res;
   device->native = mode != SDIO_SPI;
 
-  if ((res = ifGet(device->interface, IF_RATE, &rate)) != E_OK)
-    return res;
-  if (rate > WORK_RATE)
-    rate = WORK_RATE;
-
-  /* Set low data rate for enumeration purposes */
-  if ((res = ifSet(device->interface, IF_RATE, &lowRate)) != E_OK)
-    return res;
-  /* Initialize memory card */
-  res = initializeCard(device);
-  /* Restore original interface rate */
-  ifSet(device->interface, IF_RATE, &rate);
-
-  return res;
+  return initializeCard(device);
 }
 /*----------------------------------------------------------------------------*/
 static void cardDeinit(void *object __attribute__((unused)))
@@ -395,8 +413,10 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
   if (!blocks)
     return 0;
 
+  ifSet(device->interface, IF_ACQUIRE, 0);
+
   if (device->native && (res = setTransferState(device)) != E_OK)
-      return res;
+    goto exit;
 
   uint32_t flags = SDIO_DATA_MODE;
 
@@ -414,16 +434,21 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
       device->position : device->position >> BLOCK_POW);
 
   if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
-    return res;
+    goto exit;
   if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
-    return res;
+    goto exit;
 
   if (!ifRead(device->interface, buffer, length))
-    return E_ERROR;
+  {
+    res = E_INTERFACE;
+    goto exit;
+  }
 
   while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
     barrier();
 
+exit:
+  ifSet(device->interface, IF_RELEASE, 0);
   return res == E_OK ? length : 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -436,8 +461,10 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
   if (!blocks)
     return 0;
 
+  ifSet(device->interface, IF_ACQUIRE, 0);
+
   if (device->native && (res = setTransferState(device)) != E_OK)
-      return res;
+    goto exit;
 
   uint32_t flags = SDIO_DATA_MODE | SDIO_WRITE_MODE;
 
@@ -455,15 +482,20 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
       device->position : device->position >> BLOCK_POW);
 
   if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
-    return res;
+    goto exit;
   if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
-    return res;
+    goto exit;
 
   if (!ifWrite(device->interface, buffer, length))
-    return E_ERROR;
+  {
+    res = E_INTERFACE;
+    goto exit;
+  }
 
   while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
     barrier();
 
+exit:
+  ifSet(device->interface, IF_RELEASE, 0);
   return res == E_OK ? length : 0;
 }
