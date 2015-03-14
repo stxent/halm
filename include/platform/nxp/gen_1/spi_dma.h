@@ -26,10 +26,11 @@ struct SpiDmaConfig
   uint8_t channel;
   /** Optional: mode number. */
   uint8_t mode;
-  /** Mandatory: incoming data channel. */
-  uint8_t rxChannel;
-  /** Mandatory: outgoing data channel. */
-  uint8_t txChannel;
+  /**
+   * Mandatory: direct memory access channels for incoming and outgoing data,
+   * correct channel priority will be selected automatically.
+   */
+  uint8_t dma[2];
 };
 /*----------------------------------------------------------------------------*/
 struct SpiDma

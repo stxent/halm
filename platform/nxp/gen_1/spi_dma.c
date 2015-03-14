@@ -144,11 +144,18 @@ static enum result spiInit(void *object, const void *configBase)
   struct SpiDma * const interface = object;
   enum result res;
 
+  if (config->dma[0] == config->dma[1])
+    return E_VALUE;
+
   /* Call base class constructor */
   if ((res = SspBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
+  const bool channelPair = config->dma[0] > config->dma[1];
+  const uint8_t rxChannel = config->dma[!channelPair];
+  const uint8_t txChannel = config->dma[channelPair];
+
+  if ((res = dmaSetup(interface, rxChannel, txChannel)) != E_OK)
     return res;
 
   interface->blocking = true;
