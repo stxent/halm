@@ -40,7 +40,7 @@ struct SpiDma
   void *callbackArgument;
 
   /* Direct memory access channel descriptors */
-  struct Dma *rxDma, *rxMockDma, *txDma, *txMockDma;
+  struct Dma *rxDma, *txDma;
   /*
    * Dummy frame to be sent over transmit line in the receive mode or
    * to be received in the transmit mode. The peripheral descriptor structure
