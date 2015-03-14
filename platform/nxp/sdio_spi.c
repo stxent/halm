@@ -473,7 +473,7 @@ static enum state stateWriteBusyAdvance(struct SdioSpi *interface)
       return STATE_IDLE;
     }
     else
-      return interface->timer ? STATE_WRITE_BUSY : STATE_WAIT_WRITE;
+      return interface->timer ? STATE_WRITE_DELAY : STATE_WRITE_BUSY;
   }
   else
   {
