@@ -49,6 +49,7 @@ struct DmaClass
 
   void (*callback)(void *, void (*)(void *), void *);
   uint32_t (*count)(const void *);
+  enum result (*reconfigure)(void *, const void *);
   enum result (*start)(void *, void *, const void *, uint32_t);
   enum result (*status)(const void *);
   void (*stop)(void *);
@@ -80,6 +81,19 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
 static inline uint32_t dmaCount(const void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->count(channel);
+}
+/*----------------------------------------------------------------------------*/
+enum result (*reconfigure)(void *, const void *);
+/**
+ * Change channel settings when the channel is already initialized.
+ * @param channel Pointer to a Dma object.
+ * @param config Pointer to a runtime configuration data.
+ * @return @b E_OK on success.
+ */
+static inline enum result dmaReconfigure(void *channel, const void *config)
+{
+  return ((const struct DmaClass *)CLASS(channel))->reconfigure(channel,
+      config);
 }
 /*----------------------------------------------------------------------------*/
 /**

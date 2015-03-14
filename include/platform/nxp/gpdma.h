@@ -33,6 +33,18 @@ struct GpDmaConfig
   enum gpDmaType type;
 };
 /*----------------------------------------------------------------------------*/
+struct GpDmaRuntimeConfig
+{
+  /** Mandatory: destination configuration. */
+  struct {
+    bool increment;
+  } destination;
+  /** Mandatory: source configuration. */
+  struct {
+    bool increment;
+  } source;
+};
+/*----------------------------------------------------------------------------*/
 struct GpDma
 {
   struct GpDmaBase parent;

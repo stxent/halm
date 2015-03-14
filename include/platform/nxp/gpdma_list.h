@@ -42,6 +42,18 @@ struct GpDmaListConfig
   bool silent;
 };
 /*----------------------------------------------------------------------------*/
+struct GpDmaListRuntimeConfig
+{
+  /** Mandatory: destination configuration. */
+  struct {
+    bool increment;
+  } destination;
+  /** Mandatory: source configuration. */
+  struct {
+    bool increment;
+  } source;
+};
+/*----------------------------------------------------------------------------*/
 struct GpDmaListEntry
 {
   uint32_t source;

@@ -16,6 +16,7 @@ static enum result controllerInit(void *, const void *);
 static void controllerDeinit(void *);
 static void controllerCallback(void *, void (*)(void *), void *);
 static uint32_t controllerCount(const void *);
+static enum result controllerReconfigure(void *, const void *);
 static enum result controllerStart(void *, void *, const void *, uint32_t);
 static enum result controllerStatus(const void *);
 static void controllerStop(void *);
@@ -27,6 +28,7 @@ static const struct DmaClass controllerTable = {
 
     .callback = controllerCallback,
     .count = controllerCount,
+    .reconfigure = controllerReconfigure,
     .start = controllerStart,
     .status = controllerStatus,
     .stop = controllerStop
@@ -135,6 +137,12 @@ static uint32_t controllerCount(const void *object __attribute__((unused)))
     return 0;
 
   return (uint32_t)(controller->length - (current - controller->list));
+}
+/*----------------------------------------------------------------------------*/
+static enum result controllerReconfigure(void *object __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
+{
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result controllerStart(void *object, void *destination,

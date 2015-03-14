@@ -18,6 +18,7 @@ static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelCallback(void *, void (*)(void *), void *);
 static uint32_t channelCount(const void *);
+static enum result channelReconfigure(void *, const void *);
 static enum result channelStart(void *, void *, const void *, uint32_t);
 static enum result channelStatus(const void *);
 static void channelStop(void *);
@@ -29,6 +30,7 @@ static const struct DmaClass channelTable = {
 
     .callback = channelCallback,
     .count = channelCount,
+    .reconfigure = channelReconfigure,
     .start = channelStart,
     .status = channelStatus,
     .stop = channelStop
@@ -173,6 +175,22 @@ static uint32_t channelCount(const void *object)
   const struct GpDmaList * const channel = object;
 
   return (uint32_t)(channel->capacity - channel->unused);
+}
+/*----------------------------------------------------------------------------*/
+static enum result channelReconfigure(void *object, const void *configBase)
+{
+  const struct GpDmaListRuntimeConfig * const config = configBase;
+  struct GpDmaList * const channel = object;
+  uint32_t control = channel->parent.control
+      & ~(CONTROL_SRC_INC | CONTROL_DST_INC);
+
+  if (config->source.increment)
+    control |= CONTROL_SRC_INC;
+  if (config->destination.increment)
+    control |= CONTROL_DST_INC;
+
+  channel->parent.control = control;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
