@@ -13,7 +13,6 @@
 static void dmaHandler(void *);
 static enum result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static enum result getStatus(const struct SpiDma *);
-static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
@@ -48,12 +47,20 @@ static void dmaHandler(void *object)
 static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
-  const struct GpDmaConfig channels[3] = {
+  const struct GpDmaConfig channels[] = {
       {
           .event = GPDMA_SSP0_RX + interface->parent.channel,
           .channel = rxChannel,
           .source.increment = false,
           .destination.increment = true,
+          .type = GPDMA_TYPE_P2M,
+          .burst = DMA_BURST_1,
+          .width = DMA_WIDTH_BYTE
+      }, {
+          .event = GPDMA_SSP0_RX + interface->parent.channel,
+          .channel = rxChannel,
+          .source.increment = false,
+          .destination.increment = false,
           .type = GPDMA_TYPE_P2M,
           .burst = DMA_BURST_1,
           .width = DMA_WIDTH_BYTE
@@ -80,11 +87,15 @@ static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
   if (!interface->rxDma)
     return E_ERROR;
 
-  interface->txDma = init(GpDma, channels + 1);
+  interface->rxMockDma = init(GpDma, channels + 1);
+  if (!interface->rxMockDma)
+    return E_ERROR;
+
+  interface->txDma = init(GpDma, channels + 2);
   if (!interface->txDma)
     return E_ERROR;
 
-  interface->txMockDma = init(GpDma, channels + 2);
+  interface->txMockDma = init(GpDma, channels + 3);
   if (!interface->txMockDma)
     return E_ERROR;
 
@@ -102,18 +113,12 @@ static enum result getStatus(const struct SpiDma *interface)
     return res;
   if ((res = dmaStatus(interface->txMockDma)) != E_OK)
     return res;
-  return dmaStatus(interface->rxDma);
-}
-/*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
-{
-  struct SpiDma * const interface = object;
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  if ((res = dmaStatus(interface->rxDma)) != E_OK)
+    return res;
+  if ((res = dmaStatus(interface->rxMockDma)) != E_OK)
+    return res;
 
-  reg->IMSC &= ~IMSC_RTIM;
-
-  if (interface->callback)
-    interface->callback(interface->callbackArgument);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *object, const void *configBase)
@@ -135,8 +140,6 @@ static enum result spiInit(void *object, const void *configBase)
 
   if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
     return res;
-
-  interface->parent.handler = interruptHandler;
 
   interface->blocking = true;
   interface->callback = 0;
@@ -169,6 +172,7 @@ static void spiDeinit(void *object)
 
   deinit(interface->txMockDma);
   deinit(interface->txDma);
+  deinit(interface->rxMockDma);
   deinit(interface->rxDma);
 
   SspBase->deinit(interface);
@@ -215,6 +219,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
   {
     case IF_BLOCKING:
       dmaCallback(interface->rxDma, 0, 0);
+      dmaCallback(interface->rxMockDma, 0, 0);
       interface->blocking = true;
       return E_OK;
 
@@ -223,6 +228,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 
     case IF_ZEROCOPY:
       dmaCallback(interface->rxDma, dmaHandler, interface);
+      dmaCallback(interface->rxMockDma, dmaHandler, interface);
       interface->blocking = false;
       return E_OK;
 
@@ -239,10 +245,6 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 
   if (!length)
     return 0;
-
-  /* Clear input FIFO */
-  while (reg->SR & SR_RNE)
-    (void)reg->DR;
 
   /* Clear timeout interrupt flags */
   reg->ICR = ICR_RORIC | ICR_RTIC;
@@ -264,7 +266,10 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   }
 
   if (interface->blocking)
-    while ((res = getStatus(interface)) == E_BUSY);
+  {
+    while ((res = getStatus(interface)) == E_BUSY)
+      barrier();
+  }
 
   return res == E_OK ? length : 0;
 }
@@ -281,18 +286,27 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   /* Clear timeout interrupt flags */
   reg->ICR = ICR_RORIC | ICR_RTIC;
 
-  /* Enable timeout interrupt when interface is in zero copy mode */
-  if (!interface->blocking)
-    reg->IMSC |= IMSC_RTIM;
-
   /* Clear DMA requests */
   reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
   reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
 
-  res = dmaStart(interface->txDma, (void *)&reg->DR, buffer, length);
+  res = dmaStart(interface->rxMockDma, &interface->dummy,
+      (const void *)&reg->DR, length);
+  if (res != E_OK)
+    return 0;
 
-  if (res == E_OK && interface->blocking)
-    while ((res = getStatus(interface)) == E_BUSY);
+  res = dmaStart(interface->txDma, (void *)&reg->DR, buffer, length);
+  if (res != E_OK)
+  {
+    dmaStop(interface->rxMockDma);
+    return 0;
+  }
+
+  if (interface->blocking)
+  {
+    while ((res = getStatus(interface)) == E_BUSY)
+      barrier();
+  }
 
   return res == E_OK ? length : 0;
 }
