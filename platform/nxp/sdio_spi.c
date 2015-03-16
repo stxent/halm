@@ -833,15 +833,21 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   /* Check buffer alignment */
   assert(!(length & (interface->blockSize - 1)));
 
-  interface->status = interface->transferStatus = E_BUSY;
-
   if (flags & SDIO_CHECK_CRC)
   {
     if (interface->crcPoolSize >= length / interface->blockSize)
+    {
       interface->checkReceivedCrc = true;
+    }
     else
-      return 0; /* Checksum pool is not big enough */
+    {
+      /* Checksum pool is not big enough */
+      interface->status = E_MEMORY;
+      return 0;
+    }
   }
+
+  interface->status = interface->transferStatus = E_BUSY;
 
   interface->left = length;
   interface->length = length;
@@ -865,8 +871,6 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
   /* Check buffer alignment */
   assert(!(length & (interface->blockSize - 1)));
 
-  interface->status = interface->transferStatus = E_BUSY;
-
   if (flags & SDIO_CHECK_CRC)
   {
     const uint16_t blockCount = length / interface->blockSize;
@@ -881,14 +885,16 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
     }
     else
     {
-      /* Integrity checking is disabled or checksum pool is not big enough */
+      /* Checksum pool is not big enough */
+      interface->status = E_MEMORY;
       return 0;
     }
   }
 
+  interface->status = interface->transferStatus = E_BUSY;
+
   interface->left = length;
   interface->length = length;
-  interface->rxBuffer = 0;
   interface->txBuffer = buffer;
 
   /* Begin execution */

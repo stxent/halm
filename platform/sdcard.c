@@ -438,7 +438,7 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
   if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
     goto exit;
 
-  if (!ifRead(device->interface, buffer, length))
+  if (ifRead(device->interface, buffer, length) != length)
   {
     res = E_INTERFACE;
     goto exit;
@@ -486,7 +486,7 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
   if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
     goto exit;
 
-  if (!ifWrite(device->interface, buffer, length))
+  if (ifWrite(device->interface, buffer, length) != length)
   {
     res = E_INTERFACE;
     goto exit;
