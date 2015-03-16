@@ -42,7 +42,7 @@ static void processInterrupt(uint8_t channel)
 {
   struct PinInterrupt * const interrupt = descriptors[channel];
 
-  LPC_GPIO_INT->IST |= 1 << channel;
+  LPC_GPIO_INT->IST = 1 << channel;
 
   if (!interrupt)
     return;
@@ -150,12 +150,13 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   if (config->event == PIN_FALLING || config->event == PIN_TOGGLE)
     LPC_GPIO_INT->SIENF = mask;
 
-  /* Clear pending interrupt flags */
-  LPC_GPIO_INT->IST |= mask;
-
-  /* Enable interrupt */
   const irq_t irq = calcVector(interrupt->channel);
 
+  /* Clear pending interrupt flags */
+  LPC_GPIO_INT->IST = mask;
+  irqClearPending(irq);
+
+  /* Enable interrupt */
   irqSetPriority(irq, config->priority);
   irqEnable(irq);
 
@@ -193,7 +194,8 @@ static void pinInterruptSetEnabled(void *object, bool state)
 
   if (state)
   {
-    LPC_GPIO_INT->IST |= 1 << interrupt->pin.offset;
+    LPC_GPIO_INT->IST = 1 << interrupt->channel;
+    irqClearPending(irq);
     irqEnable(irq);
   }
   else
