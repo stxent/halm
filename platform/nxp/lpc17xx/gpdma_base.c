@@ -46,6 +46,33 @@ static const struct EntityClass channelTable = {
     .deinit = channelDeinit
 };
 /*----------------------------------------------------------------------------*/
+static const uint8_t eventTranslationMap[] = {
+    [GPDMA_SSP0_RX]   = 1,
+    [GPDMA_SSP1_RX]   = 3,
+    [GPDMA_SSP0_TX]   = 0,
+    [GPDMA_SSP1_TX]   = 2,
+    [GPDMA_I2S0_REQ1] = 5,
+    [GPDMA_I2S0_REQ2] = 6,
+    [GPDMA_UART0_RX]  = 9,
+    [GPDMA_UART1_RX]  = 11,
+    [GPDMA_UART2_RX]  = 13,
+    [GPDMA_UART3_RX]  = 15,
+    [GPDMA_UART0_TX]  = 8,
+    [GPDMA_UART1_TX]  = 10,
+    [GPDMA_UART2_TX]  = 12,
+    [GPDMA_UART3_TX]  = 14,
+    [GPDMA_MAT0_0]    = 8,
+    [GPDMA_MAT0_1]    = 9,
+    [GPDMA_MAT1_0]    = 10,
+    [GPDMA_MAT1_1]    = 11,
+    [GPDMA_MAT2_0]    = 12,
+    [GPDMA_MAT2_1]    = 13,
+    [GPDMA_MAT3_0]    = 14,
+    [GPDMA_MAT3_1]    = 15,
+    [GPDMA_ADC0]      = 4,
+    [GPDMA_DAC]       = 7
+};
+/*----------------------------------------------------------------------------*/
 static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
@@ -61,41 +88,7 @@ static uint8_t eventToPeripheral(enum gpDmaEvent event)
 {
   assert(event < GPDMA_MEMORY);
 
-  switch (event)
-  {
-    case GPDMA_SSP0_RX:
-    case GPDMA_SSP1_RX:
-      return 1 + ((event - GPDMA_SSP0_RX) << 1);
-
-    case GPDMA_SSP0_TX:
-    case GPDMA_SSP1_TX:
-      return 0 + ((event - GPDMA_SSP0_TX) << 1);
-
-    case GPDMA_I2S0_REQ1:
-    case GPDMA_I2S0_REQ2:
-      return 5 + (event - GPDMA_I2S0_REQ1);
-
-    case GPDMA_UART0_RX:
-    case GPDMA_UART1_RX:
-    case GPDMA_UART2_RX:
-    case GPDMA_UART3_RX:
-      return 9 + ((event - GPDMA_UART0_RX) << 1);
-
-    case GPDMA_UART0_TX:
-    case GPDMA_UART1_TX:
-    case GPDMA_UART2_TX:
-    case GPDMA_UART3_TX:
-      return 8 + ((event - GPDMA_UART0_TX) << 1);
-
-    case GPDMA_ADC0:
-      return 4;
-
-    case GPDMA_DAC:
-      return 7;
-
-    default:
-      return 8 + (event - GPDMA_MAT0_0); /* One of the timer match events */
-  }
+  return eventTranslationMap[event];
 }
 /*----------------------------------------------------------------------------*/
 static void updateEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
