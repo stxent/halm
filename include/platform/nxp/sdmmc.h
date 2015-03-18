@@ -18,6 +18,8 @@ extern const struct InterfaceClass * const Sdmmc;
 /*----------------------------------------------------------------------------*/
 struct SdmmcConfig
 {
+  /** Mandatory: data rate. */
+  uint32_t rate;
   /** Mandatory: clock line. */
   pin_t clk;
   /** Mandatory: command line. */

@@ -11,6 +11,8 @@
 #include <platform/nxp/sdmmc.h>
 #include <platform/nxp/sdmmc_defs.h>
 /*----------------------------------------------------------------------------*/
+#define DEFAULT_BLOCK_SIZE 512
+/*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *);
 static enum result executeCommand(struct Sdmmc *, uint32_t, uint32_t);
 static enum result updateRate(struct Sdmmc *, uint32_t);
@@ -36,8 +38,6 @@ static const struct InterfaceClass sdioTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Sdmmc = &sdioTable;
-/*----------------------------------------------------------------------------*/
-#define FIFOSZ 32 //FIXME
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *interface)
 {
@@ -78,6 +78,8 @@ static void execute(struct Sdmmc *interface)
 
   if (flags & SDIO_INITIALIZE)
     command |= CMD_SEND_INITIALIZATION;
+  if (flags & SDIO_CHECK_CRC)
+    command |= CMD_CHECK_RESPONSE_CRC;
   if (flags & SDIO_DATA_MODE)
     command |= CMD_DATA_EXPECTED | CMD_WAIT_PRVDATA_COMPLETE;
   switch (response)
@@ -99,7 +101,6 @@ static void execute(struct Sdmmc *interface)
     command |= CMD_SEND_AUTO_STOP;
   if (flags & SDIO_WAIT_DATA)
     command |= CMD_WAIT_PRVDATA_COMPLETE;
-  /* TODO Stop/Abort command */
 
   /* Execute low-level command */
   interface->status = E_BUSY;
@@ -107,8 +108,8 @@ static void execute(struct Sdmmc *interface)
     interface->status = E_VALUE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result executeCommand(struct Sdmmc *interface,
-    uint32_t command, uint32_t argument)
+static enum result executeCommand(struct Sdmmc *interface, uint32_t command,
+    uint32_t argument)
 {
   LPC_SDMMC_Type * const reg = interface->parent.reg;
 
@@ -230,6 +231,9 @@ static enum result sdioInit(void *object, const void *configBase)
   struct Sdmmc * const interface = object;
   enum result res;
 
+  if (!config->rate)
+    return E_VALUE;
+
   interface->finalizer = init(PinInterrupt, &finalizerConfig);
   if (!interface->finalizer)
     return E_ERROR;
@@ -240,14 +244,13 @@ static enum result sdioInit(void *object, const void *configBase)
   if ((res = SdmmcBase->init(object, &parentConfig)) != E_OK)
     return res;
 
-  interface->debug = pinInit(PIN(PORT_5, 2));
-  pinOutput(interface->debug, 0);
+  interface->debug = pinInit(PIN(PORT_1, 11)); //FIXME
+  pinOutput(interface->debug, 0); //FIXME
 
   interface->parent.handler = interruptHandler;
   interface->argument = 0;
   interface->callback = 0;
   interface->command = 0;
-  interface->rate = 400000; //FIXME
   interface->status = E_OK;
 
   LPC_SDMMC_Type * const reg = interface->parent.reg;
@@ -264,11 +267,11 @@ static enum result sdioInit(void *object, const void *configBase)
 
   reg->TMOUT = 0xFFFFFFFF; //TODO Add timeout calculation
 
-  /* Set default block length */
-  reg->BLKSIZ = 512;
+  /* Set default block size */
+  reg->BLKSIZ = DEFAULT_BLOCK_SIZE;
 
   /* Set default clock rate */
-  updateRate(interface, interface->rate); //TODO Rewrite
+  updateRate(interface, config->rate);
 
   /* Internal DMA controller should be initialized after interface setup */
   interface->dma = init(DmaSdmmc, &dmaConfig);
@@ -368,7 +371,7 @@ static enum result sdioSet(void *object, enum ifOption option,
       interface->argument = *(const uint32_t *)data;
       return E_OK;
 
-    case IF_SDIO_BLOCK_LENGTH:
+    case IF_SDIO_BLOCK_SIZE:
     {
       const uint32_t blockLength = *(const uint32_t *)data;
 
