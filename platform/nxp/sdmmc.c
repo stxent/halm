@@ -169,8 +169,6 @@ static void interruptHandler(void *object)
   LPC_SDMMC_Type * const reg = interface->parent.reg;
   const uint32_t status = reg->MINTSTS;
 
-  pinSet(interface->debug); //FIXME Remove
-
   intSetEnabled(interface->finalizer, false);
 
   irqDisable(interface->parent.irq);
@@ -203,8 +201,6 @@ static void interruptHandler(void *object)
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
-
-  pinReset(interface->debug); //FIXME Remove
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)
@@ -243,9 +239,6 @@ static enum result sdioInit(void *object, const void *configBase)
   /* Call base class constructor */
   if ((res = SdmmcBase->init(object, &parentConfig)) != E_OK)
     return res;
-
-  interface->debug = pinInit(PIN(PORT_1, 11)); //FIXME
-  pinOutput(interface->debug, 0); //FIXME
 
   interface->parent.handler = interruptHandler;
   interface->argument = 0;

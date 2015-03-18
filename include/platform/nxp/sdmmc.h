@@ -53,8 +53,6 @@ struct Sdmmc
   uint32_t rate;
   /* Status of the last command */
   enum result status;
-
-  struct Pin debug;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SDMMC_H_ */
