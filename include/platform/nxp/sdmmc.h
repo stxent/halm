@@ -11,6 +11,7 @@
 #include <interface.h>
 #include <irq.h>
 #include <pin.h>
+#include <platform/nxp/pin_interrupt.h>
 #include <platform/nxp/sdmmc_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Sdmmc;
@@ -40,6 +41,8 @@ struct Sdmmc
 
   /* DMA channel descriptor */
   struct Dma *dma;
+  /* External interrupt on data line 0 */
+  struct Interrupt *finalizer;
   /* Argument for the most recent command */
   uint32_t argument;
   /* Interface command */

@@ -170,18 +170,35 @@ static void interruptHandler(void *object)
 
   pinSet(interface->debug); //FIXME Remove
 
+  intSetEnabled(interface->finalizer, false);
+
   irqDisable(interface->parent.irq);
   reg->INTMASK = 0;
   reg->RINTSTS = INT_MASK;
 
   if (status & hostErrors)
+  {
     interface->status = E_ERROR;
+  }
   else if (status & integrityErrors)
+  {
     interface->status = E_INTERFACE;
+  }
   else if (status & timeoutErrors)
+  {
     interface->status = E_TIMEOUT;
+  }
   else
-    interface->status = E_OK;
+  {
+    if (reg->STATUS & STATUS_DATA_BUSY)
+    {
+      interface->status = E_BUSY;
+      intSetEnabled(interface->finalizer, true);
+      /* TODO Check whether operation is already completed */
+    }
+    else
+      interface->status = E_OK;
+  }
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
@@ -197,6 +214,11 @@ static enum result sdioInit(void *object, const void *configBase)
       .number = 16,
       .parent = object
   };
+  const struct PinInterruptConfig finalizerConfig = {
+      .pin = config->dat0,
+      .event = PIN_RISING,
+      .pull = PIN_NOPULL
+  };
   const struct SdmmcBaseConfig parentConfig = {
       .clk = config->clk,
       .cmd = config->cmd,
@@ -207,6 +229,12 @@ static enum result sdioInit(void *object, const void *configBase)
   };
   struct Sdmmc * const interface = object;
   enum result res;
+
+  interface->finalizer = init(PinInterrupt, &finalizerConfig);
+  if (!interface->finalizer)
+    return E_ERROR;
+  intSetEnabled(interface->finalizer, false);
+  intCallback(interface->finalizer, interruptHandler, interface);
 
   /* Call base class constructor */
   if ((res = SdmmcBase->init(object, &parentConfig)) != E_OK)
@@ -391,6 +419,16 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Sdmmc * const interface = object;
+  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  enum result res;
 
-  return 0;
+  reg->BYTCNT = length;
+  if ((res = dmaStart(interface->dma, 0, buffer, length)) != E_OK)
+  {
+    interface->status = res;
+    return 0;
+  }
+
+  execute(interface);
+  return length;
 }
