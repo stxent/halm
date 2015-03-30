@@ -81,7 +81,7 @@ static enum result adcInit(void *object, const void *configBase)
   interface->left = 0;
   interface->unit = config->parent;
   /* Convert enumerator constant to register value */
-  interface->event = config->event + 1;
+  interface->event = 1 + config->event;
 
   return E_OK;
 }

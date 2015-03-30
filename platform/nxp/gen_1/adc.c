@@ -102,12 +102,13 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(channel);
 
   /* Perform a new conversion */
-  reg->CR |= CR_START(ADC_SOFTWARE);
+  reg->CR |= CR_START(1 + ADC_SOFTWARE);
   while (!(reg->DR[channel] & DR_DONE));
   reg->CR &= ~CR_START_MASK;
 
   /* Copy result into first element of the array */
   *((uint16_t *)buffer) = DR_RESULT_VALUE(reg->DR[channel]);
 
+  adcUnitUnregister(interface->unit);
   return SAMPLE_SIZE;
 }
