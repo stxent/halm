@@ -7,7 +7,7 @@
 #ifndef PLATFORM_NXP_LPC43XX_ADC_BASE_H_
 #define PLATFORM_NXP_LPC43XX_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
-#define ADC_RESOLUTION    10 /* Bits */
+#define ADC_RESOLUTION 10 /* Bits */
 /*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
 enum adcEvent

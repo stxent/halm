@@ -1,3 +1,5 @@
+menu "Build options"
+
 choice
 	prompt "Optimization level"
 	default OPTIMIZATIONS_DISABLED
@@ -10,17 +12,18 @@ choice
 
 	config OPTIMIZATIONS_FULL
 		bool "Full"
-
 endchoice
 
-config OPT_LEVEL
+endmenu
+
+config OPTIMIZATIONS
 	string
 	default "none" if OPTIMIZATIONS_DISABLED
 	default "size" if OPTIMIZATIONS_SIZE
 	default "full" if OPTIMIZATIONS_FULL
 
 choice
-	prompt "Processor family"
+	prompt "Controller family"
 	default FAMILY_LPC11XX
 
 	config FAMILY_LPC11XX
@@ -37,7 +40,6 @@ choice
 
 	config FAMILY_LPC43XX
 		bool "NXP LPC43xx"
-
 endchoice
 
 config CPU_FAMILY
@@ -62,7 +64,7 @@ config PM
 
 endmenu
 
-menu "Processor peripherals"
+menu "Controller peripherals"
 
 config PLATFORM_GPIO_BUS
 	bool "GPIO Bus"

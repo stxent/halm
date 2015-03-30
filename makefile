@@ -66,14 +66,14 @@ else
   endif
 endif
 
-ifeq ($(CONFIG_OPT_LEVEL),"full")
-  OPT_FLAGS := -O3 -flto -DNDEBUG
-else ifeq ($(CONFIG_OPT_LEVEL),"size")
-  OPT_FLAGS := -Os -flto -DNDEBUG
-else ifeq ($(CONFIG_OPT_LEVEL),"none")
-  OPT_FLAGS := -O0 -g3
+ifeq ($(CONFIG_OPTIMIZATIONS),"full")
+  OPT_FLAGS += -O3 -flto -DNDEBUG
+else ifeq ($(CONFIG_OPTIMIZATIONS),"size")
+  OPT_FLAGS += -Os -flto -DNDEBUG
+else ifeq ($(CONFIG_OPTIMIZATIONS),"none")
+  OPT_FLAGS += -O0 -g3
 else
-  OPT_FLAGS := $(CONFIG_OPT_LEVEL)
+  OPT_FLAGS += $(CONFIG_OPTIMIZATIONS)
 endif
 
 #Configure common paths and libraries
