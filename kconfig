@@ -1,27 +1,3 @@
-menu "Build options"
-
-choice
-	prompt "Optimization level"
-	default OPTIMIZATIONS_DISABLED
-
-	config OPTIMIZATIONS_DISABLED
-		bool "None"
-
-	config OPTIMIZATIONS_SIZE
-		bool "Size"
-
-	config OPTIMIZATIONS_FULL
-		bool "Full"
-endchoice
-
-endmenu
-
-config OPTIMIZATIONS
-	string
-	default "none" if OPTIMIZATIONS_DISABLED
-	default "size" if OPTIMIZATIONS_SIZE
-	default "full" if OPTIMIZATIONS_FULL
-
 choice
 	prompt "Controller family"
 	default FAMILY_LPC11XX
@@ -52,15 +28,15 @@ config CPU_FAMILY
 
 menu "Core peripherals"
 
-config CORE_CORTEX_SYSTICK
-	bool "System Timer"
-	help
-	  Enable building of System Timer (SysTick) driver.
-
 config PM
 	bool "Power management"
 	help
-	  Enable power management features.
+	  This enables support for power management features.
+
+config CORE_CORTEX_SYSTICK
+	bool "SysTick"
+	help
+	  This is the driver for the System Timer peripheral.
 
 endmenu
 
@@ -114,15 +90,19 @@ config PLATFORM_NXP_SDMMC
 	depends on FAMILY_LPC43XX
 
 config PLATFORM_NXP_SCT_BASE
-	bool "State Configurable Timer"
+	bool "SCT"
 	depends on FAMILY_LPC43XX
+	help
+	  This is the driver for the State Configurable Timer peripheral.
 
 config PLATFORM_NXP_SCT_TIMER
-	bool "Common timer on State Configurable Timer"
+	bool "Common timer on SCT"
 	depends on PLATFORM_NXP_SCT_BASE
 
 config PLATFORM_NXP_SSP_BASE
 	bool "SSP"
+	help
+	  This is the driver for the Synchronous Serial Port peripheral.
 
 config PLATFORM_NXP_UART_BASE
 	bool "UART"
@@ -230,3 +210,27 @@ config PLATFORM_SDCARD
 	bool "SD Card driver"
 
 endmenu
+
+menu "Build options"
+
+choice
+	prompt "Optimization level"
+	default OPTIMIZATIONS_DISABLED
+
+	config OPTIMIZATIONS_DISABLED
+		bool "None"
+
+	config OPTIMIZATIONS_SIZE
+		bool "Size"
+
+	config OPTIMIZATIONS_FULL
+		bool "Full"
+endchoice
+
+endmenu
+
+config OPTIMIZATIONS
+	string
+	default "none" if OPTIMIZATIONS_DISABLED
+	default "size" if OPTIMIZATIONS_SIZE
+	default "full" if OPTIMIZATIONS_FULL

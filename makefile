@@ -67,9 +67,9 @@ else
 endif
 
 ifeq ($(CONFIG_OPTIMIZATIONS),"full")
-  OPT_FLAGS += -O3 -flto -DNDEBUG
+  OPT_FLAGS += -O3 -DNDEBUG
 else ifeq ($(CONFIG_OPTIMIZATIONS),"size")
-  OPT_FLAGS += -Os -flto -DNDEBUG
+  OPT_FLAGS += -Os -DNDEBUG
 else ifeq ($(CONFIG_OPTIMIZATIONS),"none")
   OPT_FLAGS += -O0 -g3
 else
