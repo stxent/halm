@@ -16,9 +16,12 @@ enum result pmCoreChangeState(enum pmState state)
 {
   switch (state)
   {
-    case PM_SUSPEND:
     case PM_SLEEP:
       SCB->SCR &= ~SCR_SLEEPDEEP;
+      break;
+
+    case PM_SUSPEND:
+      SCB->SCR |= SCR_SLEEPDEEP;
       break;
 
     default:

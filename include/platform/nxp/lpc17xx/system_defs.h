@@ -17,5 +17,9 @@
 #define PCON_PM_DEEP_POWERDOWN          3
 #define PCON_PM_MASK                    BIT_FIELD(MASK(4), 0)
 #define PCON_PM(value)                  BIT_FIELD((value), 0)
+#define PCON_SMFLAG                     BIT(8)
+#define PCON_DSFLAG                     BIT(9)
+#define PCON_PDFLAG                     BIT(10)
+#define PCON_DPDFLAG                    BIT(11)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC17XX_SYSTEM_DEFS_H_ */

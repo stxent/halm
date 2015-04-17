@@ -3,6 +3,7 @@
 
 ifeq ($(CONFIG_PM),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pm.c
+  FLAG_NAMES += CONFIG_PLATFORM_NXP_PM_PD CONFIG_PLATFORM_NXP_PM_DPD
 endif
 
 CSOURCES += platform/pin.c

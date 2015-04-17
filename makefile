@@ -83,7 +83,7 @@ OUTPUTDIR = build_$(PLATFORM)
 #Configure compiler options
 CFLAGS += -std=c11 -Wall -Wextra -Winline -pedantic -Wshadow
 CFLAGS += -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections
-CFLAGS += $(OPT_FLAGS) $(CPU_FLAGS)
+CFLAGS += $(CPU_FLAGS) $(CONFIG_FLAGS) $(OPT_FLAGS)
 CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 
 #Common modules
@@ -95,6 +95,18 @@ endif
 include core/makefile
 include platform/makefile
 
+#Setup build flags
+define append-flag
+  ifeq ($$($(1)),y)
+    CONFIG_FLAGS += -D$(1)
+  else ifneq ($$($(1)),)
+    CONFIG_FLAGS += -D$(1)=$$($(1))
+  endif
+endef
+
+$(foreach entry,$(FLAG_NAMES),$(eval $(call append-flag,$(entry))))
+
+#Configure targets
 PROJECT_FILE += $(OUTPUTDIR)/lib$(PROJECT).a
 
 TARGETS += $(PROJECT_FILE)

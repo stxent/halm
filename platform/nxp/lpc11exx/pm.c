@@ -12,21 +12,29 @@ enum result pmPlatformChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/
 enum result pmPlatformChangeState(enum pmState state)
 {
+  uint32_t value = LPC_PMU->PCON & ~(PCON_PM_MASK | PCON_PM_SLEEPFLAG
+      | PCON_PM_DPDFLAG);
+
   switch (state)
   {
     case PM_SLEEP:
-      LPC_PMU->PCON &= (LPC_PMU->PCON & ~(PCON_PM_MASK | PCON_PM_SLEEPFLAG))
-          | PCON_PM_VALUE(PCON_PM_DEFAULT);
+      value = PCON_PM_SLEEPFLAG | PCON_PM(PCON_PM_DEFAULT);
       break;
 
     case PM_SUSPEND:
-      LPC_PMU->PCON &= (LPC_PMU->PCON & ~(PCON_PM_MASK | PCON_PM_DPDFLAG))
-          | PCON_PM_VALUE(PCON_PM_POWERDOWN);
+#if defined(CONFIG_PLATFORM_NXP_PM_PD)
+      value = PCON_PM_SLEEPFLAG | PCON_PM(PCON_PM_POWERDOWN);
+#elif defined(CONFIG_PLATFORM_NXP_PM_DPD)
+      value = PCON_PM_DPDFLAG | PCON_PM(PCON_PM_DEEPPOWERDOWN);
+#else
+      value = PCON_PM_SLEEPFLAG | PCON_PM(PCON_PM_DEEPSLEEP);
+#endif
       break;
 
     default:
-      break;
+      return E_OK;
   }
 
+  LPC_PMU->PCON = value;
   return E_OK;
 }
