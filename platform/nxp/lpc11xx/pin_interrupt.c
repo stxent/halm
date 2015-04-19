@@ -79,7 +79,6 @@ static void processInterrupt(uint8_t channel)
     {
       if (interrupt->callback)
         interrupt->callback(interrupt->callbackArgument);
-      break;
     }
 
     current = listNext(current);
