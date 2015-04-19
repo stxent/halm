@@ -22,10 +22,10 @@ enum
 #define CONFIG_CKSEL_MASK               BIT_FIELD(MASK(4), 3)
 #define CONFIG_CKSEL_RISING(channel)    BIT_FIELD((channel) << 1, 3)
 #define CONFIG_CKSEL_FALLING(channel)   BIT_FIELD(((channel) << 1) + 1, 3)
-#define CONFIG_NORELOAD(part)           BIT(7 + (part))
+#define CONFIG_NORELOAD(part)           BIT((part) + 7)
 #define CONFIG_INSYNC_MASK              BIT_FIELD(MASK(4), 9)
-#define CONFIG_INSYNC(channel)          BIT_FIELD(BIT((channel)), 9)
-#define CONFIG_AUTOLIMIT(part)          BIT(17 + (part))
+#define CONFIG_INSYNC(channel)          BIT_FIELD(BIT(channel), 9)
+#define CONFIG_AUTOLIMIT(part)          BIT((part) + 17)
 /*------------------Control register------------------------------------------*/
 #define CTRL_DOWN                       BIT(0)
 #define CTRL_STOP                       BIT(1)
@@ -38,8 +38,8 @@ enum
 #define STATE_MASK                      BIT_FIELD(MASK(5), 0)
 #define STATE_VALUE(reg)                FIELD_VALUE((reg), STATE_MASK, 0)
 /*------------------Input register--------------------------------------------*/
-#define INPUT_AIN(channel)              BIT((channel))
-#define INPUT_SIN(channel)              BIT(16 + (channel))
+#define INPUT_AIN(channel)              BIT(channel)
+#define INPUT_SIN(channel)              BIT((channel) + 16)
 /*------------------Bidirectional output control register---------------------*/
 enum
 {
@@ -65,20 +65,20 @@ enum
 #define RES_OUTPUT(channel, value)      BIT_FIELD((value), (channel) << 1)
 /*------------------DMA request registers-------------------------------------*/
 #define DMAREQ_DEV_MASK                 BIT_FIELD(MASK(16), 0)
-#define DMAREQ_DEV(channel)             BIT_FIELD(BIT((channel)), 0)
+#define DMAREQ_DEV(channel)             BIT_FIELD(BIT(channel), 0)
 #define DMAREQ_DRL                      BIT(30)
 #define DMAREQ_DRQ                      BIT(31) /* State of request */
 /*------------------Flag enable register--------------------------------------*/
-#define EVEN_IEN(channel)               BIT((channel))
+#define EVEN_IEN(channel)               BIT(channel)
 /*------------------Event Flag register---------------------------------------*/
 #define EVFLAG_FLAG_MASK                MASK(16)
-#define EVFLAG_FLAG(channel)            BIT((channel))
+#define EVFLAG_FLAG(channel)            BIT(channel)
 /*------------------Conflict Enable register----------------------------------*/
 #define CONEN_NCEN_MASK                 MASK(16)
-#define CONEN_NCEN(channel)             BIT((channel))
+#define CONEN_NCEN(channel)             BIT(channel)
 /*------------------Conflict Flag register------------------------------------*/
 #define CONFLAG_NCFLAG_MASK             BIT_FIELD(MASK(16), 0)
-#define CONFLAG_NCFLAG(channel)         BIT_FIELD(BIT((channel)), 0)
+#define CONFLAG_NCFLAG(channel)         BIT_FIELD(BIT(channel), 0)
 #define CONFLAG_BUSERRL                 BIT(30)
 #define CONFLAG_BUSERRH                 BIT(31)
 /*------------------Event Control registers-----------------------------------*/

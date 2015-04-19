@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Interrupt Register----------------------------------------*/
-#define IR_MATCH_INTERRUPT(channel)     BIT((channel))
+#define IR_MATCH_INTERRUPT(channel)     BIT(channel)
 #define IR_CAPTURE_INTERRUPT(channel)   BIT((channel) + 4)
 /*------------------Timer Control Register------------------------------------*/
 #define TCR_CEN                         BIT(0) /* Enable for counting */
@@ -48,6 +48,6 @@ enum
 
 #define EMR_CONTROL_MASK(channel)       BIT_FIELD(MASK(2), (channel) * 2 + 4)
 #define EMR_CONTROL(channel, value)     BIT_FIELD((value), (channel) * 2 + 4)
-#define EMR_EXTERNAL_MATCH(channel)     BIT((channel))
+#define EMR_EXTERNAL_MATCH(channel)     BIT(channel)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPTIMER_DEFS_H_ */

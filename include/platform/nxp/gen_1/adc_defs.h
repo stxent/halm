@@ -32,7 +32,7 @@
 #define GDR_OVERRUN                     BIT(30)
 #define GDR_DONE                        BIT(31)
 /*------------------Interrupt Enable register---------------------------------*/
-#define INTEN_AD(channel)               BIT((channel))
+#define INTEN_AD(channel)               BIT(channel)
 #define INTEN_ADG                       BIT(8)
 /*------------------Data Registers--------------------------------------------*/
 #define DR_RESULT_MASK                  BIT_FIELD(MASK(16), 0)
@@ -40,7 +40,7 @@
 #define DR_OVERRUN                      BIT(30)
 #define DR_DONE                         BIT(31)
 /*------------------Status register-------------------------------------------*/
-#define STAT_DONE(channel)              BIT((channel))
+#define STAT_DONE(channel)              BIT(channel)
 #define STAT_OVERRUN(channel)           BIT((channel) + 8)
 #define STAT_ADINT                      BIT(16)
 /*------------------Trim register---------------------------------------------*/

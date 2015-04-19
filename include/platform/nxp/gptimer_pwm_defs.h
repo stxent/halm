@@ -11,6 +11,6 @@
 /*------------------Interrupt Register----------------------------------------*/
 #define IR_PWM_INTERRUPT(channel)       BIT((channel) + 8)
 /*------------------PWM Control Register--------------------------------------*/
-#define PWMC_ENABLE(channel)            BIT((channel))
+#define PWMC_ENABLE(channel)            BIT(channel)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPTIMER_PWM_DEFS_H_ */
