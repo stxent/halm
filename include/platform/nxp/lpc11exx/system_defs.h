@@ -29,5 +29,10 @@
 #define PCON_PM_NODPD                   BIT(3)
 #define PCON_PM_SLEEPFLAG               BIT(8)
 #define PCON_PM_DPDFLAG                 BIT(11)
+/*------------------Interrupt wake-up enable registers------------------------*/
+#define STARTERP0_PINT(channel)         BIT(channel)
+#define STARTERP1_WWDTINT               BIT(12)
+#define STARTERP1_BODINT                BIT(13)
+#define STARTERP1_GPIOINT(channel)      BIT((channel) + 20)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC11EXX_SYSTEM_DEFS_H_ */

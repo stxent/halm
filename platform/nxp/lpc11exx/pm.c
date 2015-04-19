@@ -6,6 +6,7 @@
 
 #include <pm.h>
 #include <platform/platform_defs.h>
+#include <platform/nxp/lpc11exx/system.h>
 #include <platform/nxp/lpc11exx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 enum result pmPlatformChangeState(enum pmState);
@@ -34,7 +35,22 @@ enum result pmPlatformChangeState(enum pmState state)
     default:
       return E_OK;
   }
-
   LPC_PMU->PCON = value;
+
+#ifndef CONFIG_PLATFORM_NXP_PM_DPD
+  if (state == PM_SUSPEND)
+  {
+    uint32_t config = LPC_SYSCON->PDSLEEPCFG;
+
+    if (sysPowerStatus(PWR_BOD))
+      config &= ~BIT(PWR_BOD);
+    if (sysPowerStatus(PWR_WDTOSC))
+      config &= ~BIT(PWR_WDTOSC);
+
+    LPC_SYSCON->PDSLEEPCFG = config;
+    LPC_SYSCON->PDAWAKECFG = LPC_SYSCON->PDRUNCFG;
+  }
+#endif
+
   return E_OK;
 }

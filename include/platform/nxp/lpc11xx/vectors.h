@@ -10,8 +10,7 @@
 enum
 {
   /* Chip-specific interrupt sources */
-  WAKEUP_IRQ    = 0,
-  /* TODO */
+  WAKEUP_IRQ    = 0, /* 13 start logic wake-up interrupts */
   CAN_IRQ       = 13,
   SSP1_IRQ      = 14,
   I2C_IRQ       = 15,

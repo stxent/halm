@@ -10,8 +10,7 @@
 enum
 {
   /* Chip-specific interrupt sources */
-  WAKEUP_IRQ    = 0,
-  /* TODO Add other wakeup events */
+  WAKEUP_IRQ    = 0, /* 40 start logic wake-up interrupts */
   I2C_IRQ       = 40,
   TIMER16B0_IRQ = 41,
   TIMER16B1_IRQ = 42,

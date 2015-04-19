@@ -9,6 +9,7 @@
 #include <platform/nxp/wdt_defs.h>
 #include <platform/nxp/lpc11exx/clocking.h>
 #include <platform/nxp/lpc11exx/system.h>
+#include <platform/nxp/lpc11exx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(struct WdtBase *);
 /*----------------------------------------------------------------------------*/
@@ -71,6 +72,11 @@ static enum result wdtInit(void *object, const void *configBase)
 
   /* Select clock source */
   LPC_WDT->CLKSEL = CLKSEL_WDSEL(clockSource - 1) | CLKSEL_LOCK;
+
+#ifdef CONFIG_PM
+  /* Watchdog interrupt will wake the controller from low-power modes */
+  LPC_SYSCON->STARTERP1 |= STARTERP1_WWDTINT;
+#endif
 
   return E_OK;
 }

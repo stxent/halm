@@ -125,6 +125,10 @@ config PLATFORM_NXP_SSP_BASE
 config PLATFORM_NXP_UART_BASE
 	bool "UART"
 
+config PLATFORM_NXP_WAKEUP_INTERRUPT
+	bool "Wake-up interrupts"
+	depends on PM && (FAMILY_LPC11XX || FAMILY_LPC13XX)
+
 config PLATFORM_NXP_WDT
 	bool "Watchdog"
 

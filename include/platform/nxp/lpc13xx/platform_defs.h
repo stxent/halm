@@ -76,14 +76,28 @@ typedef struct
   __ne__ uint32_t RESERVED12[42];
 
   /* Offset 0x200 */
-  __rw__ uint32_t STARTAPRP0;
-  __rw__ uint32_t STARTERP0;
-  __rw__ uint32_t STARTRSRP0CLR;
-  __rw__ uint32_t STARTSRP0;
-  __rw__ uint32_t STARTAPRP1;
-  __rw__ uint32_t STARTERP1;
-  __rw__ uint32_t STARTRSRP1CLR;
-  __rw__ uint32_t STARTSRP1;
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t STARTAPRP0;
+      __rw__ uint32_t STARTERP0;
+      __wo__ uint32_t STARTRSRP0CLR;
+      __ro__ uint32_t STARTSRP0;
+      __rw__ uint32_t STARTAPRP1;
+      __rw__ uint32_t STARTERP1;
+      __wo__ uint32_t STARTRSRP1CLR;
+      __ro__ uint32_t STARTSRP1;
+    };
+    struct
+    {
+      __rw__ uint32_t APRP;
+      __rw__ uint32_t ERP;
+      __wo__ uint32_t RSRPCLR;
+      __ro__ uint32_t SRP;
+    } START[2];
+  };
+
   __ne__ uint32_t RESERVED13[4];
 
   /* Offset 0x230 */

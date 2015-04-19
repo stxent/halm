@@ -10,6 +10,7 @@
 #include <memory.h>
 #include <platform/nxp/pin_interrupt.h>
 #include <platform/nxp/lpc11exx/pin_defs.h>
+#include <platform/nxp/lpc11exx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline irq_t calcVector(uint8_t);
 static void processInterrupt(uint8_t);
@@ -149,6 +150,11 @@ static enum result pinInterruptInit(void *object, const void *configBase)
     LPC_GPIO_INT->SIENR = mask;
   if (config->event == PIN_FALLING || config->event == PIN_TOGGLE)
     LPC_GPIO_INT->SIENF = mask;
+
+#ifdef CONFIG_PM
+  /* Interrupt will wake the controller from low-power modes */
+  LPC_SYSCON->STARTERP0 |= STARTERP0_PINT(interrupt->channel);
+#endif
 
   /* Clear pending interrupt flags */
   LPC_GPIO_INT->IST |= mask;
