@@ -10,12 +10,12 @@
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define CHANNEL_RANGE                   4
-#define CHANNEL_INDEX(channel, index)   ((channel) * CHANNEL_RANGE + (index))
-#define CHANNEL_MISO(channel)           ((channel) * CHANNEL_RANGE + 0)
-#define CHANNEL_MOSI(channel)           ((channel) * CHANNEL_RANGE + 1)
-#define CHANNEL_SCK(channel)            ((channel) * CHANNEL_RANGE + 2)
-#define CHANNEL_SSEL(channel)           ((channel) * CHANNEL_RANGE + 3)
+#define CHANNEL_COUNT                   4
+#define CHANNEL_INDEX(channel, index)   ((channel) * CHANNEL_COUNT + (index))
+#define CHANNEL_MISO(channel)           ((channel) * CHANNEL_COUNT + 0)
+#define CHANNEL_MOSI(channel)           ((channel) * CHANNEL_COUNT + 1)
+#define CHANNEL_SCK(channel)            ((channel) * CHANNEL_COUNT + 2)
+#define CHANNEL_SSEL(channel)           ((channel) * CHANNEL_COUNT + 3)
 /*----------------------------------------------------------------------------*/
 struct SspBlockDescriptor
 {
@@ -43,7 +43,7 @@ static const struct EntityClass sspTable = {
     .deinit = sspDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct SspBlockDescriptor sspBlockEntries[2] = {
+static const struct SspBlockDescriptor sspBlockEntries[] = {
     {
         .reg = LPC_SSP0,
         .irq = SSP0_IRQ,

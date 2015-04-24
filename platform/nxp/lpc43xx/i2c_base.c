@@ -31,7 +31,7 @@ static const struct EntityClass i2cTable = {
     .deinit = i2cDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct I2cBlockDescriptor i2cBlockEntries[3] = {
+static const struct I2cBlockDescriptor i2cBlockEntries[] = {
     {
         .reg = LPC_I2C0,
         .clock = CLK_APB1_I2C0,

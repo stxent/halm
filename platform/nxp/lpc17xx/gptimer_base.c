@@ -33,7 +33,7 @@ static const struct EntityClass tmrTable = {
     .deinit = tmrDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct TimerBlockDescriptor timerBlockEntries[4] = {
+static const struct TimerBlockDescriptor timerBlockEntries[] = {
     {
         .reg = LPC_TIMER0,
         .power = PWR_TIM0,

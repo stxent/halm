@@ -35,7 +35,7 @@ static const struct EntityClass uartTable = {
     .deinit = uartDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct UartBlockDescriptor uartBlockEntries[4] = {
+static const struct UartBlockDescriptor uartBlockEntries[] = {
     {
         .reg = (LPC_UART_Type *)LPC_USART0,
         .irq = USART0_IRQ,
