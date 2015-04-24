@@ -1301,24 +1301,24 @@ typedef struct
   __rw__ uint32_t SYNCCTRL;
   __rw__ uint32_t TER;
 } LPC_UART_Type;
-///*------------------Inter IC Sound--------------------------------------------*/
-//typedef struct
-//{
-//  __rw__ uint32_t I2SDAO;
-//  __rw__ uint32_t I2SDAI;
-//  __wo__ uint32_t I2STXFIFO;
-//  __ro__ uint32_t I2SRXFIFO;
-//  __ro__ uint32_t I2SSTATE;
-//  __rw__ uint32_t I2SDMA1;
-//  __rw__ uint32_t I2SDMA2;
-//  __rw__ uint32_t I2SIRQ;
-//  __rw__ uint32_t I2STXRATE;
-//  __rw__ uint32_t I2SRXRATE;
-//  __rw__ uint32_t I2STXBITRATE;
-//  __rw__ uint32_t I2SRXBITRATE;
-//  __rw__ uint32_t I2STXMODE;
-//  __rw__ uint32_t I2SRXMODE;
-//} LPC_I2S_Type;
+/*------------------Inter IC Sound--------------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t DAO;
+  __rw__ uint32_t DAI;
+  __wo__ uint32_t TXFIFO;
+  __ro__ uint32_t RXFIFO;
+  __ro__ uint32_t STATE;
+  __rw__ uint32_t DMA1;
+  __rw__ uint32_t DMA2;
+  __rw__ uint32_t IRQ;
+  __rw__ uint32_t TXRATE;
+  __rw__ uint32_t RXRATE;
+  __rw__ uint32_t TXBITRATE;
+  __rw__ uint32_t RXBITRATE;
+  __rw__ uint32_t TXMODE;
+  __rw__ uint32_t RXMODE;
+} LPC_I2S_Type;
 ///*------------------Repetitive Interrupt Timer--------------------------------*/
 //typedef struct
 //{
@@ -1905,8 +1905,8 @@ typedef struct
 
 //#define LPC_MCPWM         ((LPC_MCPWM_Type *)LPC_MCPWM_BASE)
 #define LPC_I2C0          ((LPC_I2C_Type *)LPC_I2C0_BASE)
-//#define LPC_I2S0          ((LPC_I2S_Type *)LPC_I2S0_BASE)
-//#define LPC_I2S1          ((LPC_I2S_Type *)LPC_I2S1_BASE)
+#define LPC_I2S0          ((LPC_I2S_Type *)LPC_I2S0_BASE)
+#define LPC_I2S1          ((LPC_I2S_Type *)LPC_I2S1_BASE)
 //#define LPC_CAN1          ((LPC_CAN_Type *)LPC_CAN1_BASE)
 
 //#define LPC_RIT           ((LPC_RIT_Type *)LPC_RIT_BASE)

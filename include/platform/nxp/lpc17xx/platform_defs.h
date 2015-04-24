@@ -268,20 +268,20 @@ typedef struct
 /*------------------Inter IC Sound--------------------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t I2SDAO;
-  __rw__ uint32_t I2SDAI;
-  __wo__ uint32_t I2STXFIFO;
-  __ro__ uint32_t I2SRXFIFO;
-  __ro__ uint32_t I2SSTATE;
-  __rw__ uint32_t I2SDMA1;
-  __rw__ uint32_t I2SDMA2;
-  __rw__ uint32_t I2SIRQ;
-  __rw__ uint32_t I2STXRATE;
-  __rw__ uint32_t I2SRXRATE;
-  __rw__ uint32_t I2STXBITRATE;
-  __rw__ uint32_t I2SRXBITRATE;
-  __rw__ uint32_t I2STXMODE;
-  __rw__ uint32_t I2SRXMODE;
+  __rw__ uint32_t DAO;
+  __rw__ uint32_t DAI;
+  __wo__ uint32_t TXFIFO;
+  __ro__ uint32_t RXFIFO;
+  __ro__ uint32_t STATE;
+  __rw__ uint32_t DMA1;
+  __rw__ uint32_t DMA2;
+  __rw__ uint32_t IRQ;
+  __rw__ uint32_t TXRATE;
+  __rw__ uint32_t RXRATE;
+  __rw__ uint32_t TXBITRATE;
+  __rw__ uint32_t RXBITRATE;
+  __rw__ uint32_t TXMODE;
+  __rw__ uint32_t RXMODE;
 } LPC_I2S_Type;
 /*------------------Repetitive Interrupt Timer--------------------------------*/
 typedef struct
