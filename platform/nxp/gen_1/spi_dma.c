@@ -74,7 +74,7 @@ static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
           .source.increment = false,
           .destination.increment = true,
           .type = GPDMA_TYPE_P2M,
-          .burst = DMA_BURST_1,
+          .burst = DMA_BURST_4,
           .width = DMA_WIDTH_BYTE
       }, {
           .event = GPDMA_SSP0_TX + interface->parent.channel,
@@ -82,7 +82,7 @@ static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
           .source.increment = true,
           .destination.increment = false,
           .type = GPDMA_TYPE_M2P,
-          .burst = DMA_BURST_1,
+          .burst = DMA_BURST_4,
           .width = DMA_WIDTH_BYTE
       }
   };

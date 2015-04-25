@@ -141,7 +141,7 @@ void GPDMA_ISR(void)
 static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
     enum gpDmaEvent event)
 {
-  uint8_t minIndex = 0, minValue = 0;
+  uint8_t entryIndex = 0, entryOffset = 0, minValue = 0;
   bool found = false;
 
   assert(event < GPDMA_MEMORY);
@@ -151,30 +151,35 @@ static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
 
   for (uint8_t index = 0; index < 16; ++index)
   {
+    uint8_t entry;
     bool allowed = false;
 
-    for (uint8_t entry = 0; entry < 4; ++entry)
+    for (entry = 0; entry < 4; ++entry)
     {
       if (eventMap[index][entry] == event)
+      {
         allowed = true;
+        break;
+      }
     }
 
     if (allowed && (!found || minValue < dmaHandler->connections[index]))
     {
       found = true;
-      minIndex = index;
+      entryIndex = index;
+      entryOffset = entry;
       minValue = dmaHandler->connections[index];
     }
   }
 
   assert(found);
 
-  ++dmaHandler->connections[minIndex];
-  channel->mux.mask &= ~(0x03 << (minIndex << 1));
-  channel->mux.value = minValue << (minIndex << 1);
+  ++dmaHandler->connections[entryIndex];
+  channel->mux.mask &= ~(0x03 << (entryIndex << 1));
+  channel->mux.value = entryOffset << (entryIndex << 1);
 
   spinUnlock(&spinlock);
-  return minIndex;
+  return entryIndex;
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void)

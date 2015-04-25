@@ -8,6 +8,7 @@
 #define PLATFORM_NXP_GEN_1_DAC_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <entity.h>
+#include <interface.h>
 #include <irq.h>
 #include <pin.h>
 /*----------------------------------------------------------------------------*/
@@ -21,7 +22,7 @@ struct DacBaseConfig
 /*----------------------------------------------------------------------------*/
 struct DacBase
 {
-  struct Entity parent;
+  struct Interface parent;
 
   void *reg;
 
