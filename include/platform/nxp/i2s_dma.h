@@ -1,33 +1,24 @@
 /*
- * platform/nxp/i2s_base.h
+ * platform/nxp/i2s_dma.h
  * Copyright (C) 2015 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_I2S_BASE_H_
-#define PLATFORM_NXP_I2S_BASE_H_
+#ifndef PLATFORM_NXP_I2S_DMA_H_
+#define PLATFORM_NXP_I2S_DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <interface.h>
-#include <irq.h>
-#include <pin.h>
+#include <dma.h>
+#include <platform/nxp/i2s_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const I2sBase;
+extern const struct InterfaceClass * const I2sDma;
 /*----------------------------------------------------------------------------*/
-enum i2sWidth
+struct I2sDmaConfig
 {
-  I2S_WIDTH_8,
-  I2S_WIDTH_16,
-  I2S_WIDTH_32
-};
-/*----------------------------------------------------------------------------*/
-struct I2sRateConfig
-{
-  uint8_t x;
-  uint8_t y;
-};
-/*----------------------------------------------------------------------------*/
-struct I2sBaseConfig
-{
+  /** Mandatory: sample rate for the receiver and the transmitter. */
+  uint32_t rate;
+  /** Mandatory: size of the single buffer in elements. */
+  uint32_t size;
+
   struct
   {
     /** Optional: receive clock. */
@@ -54,21 +45,29 @@ struct I2sBaseConfig
 
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Mandatory: word width. */
+  enum i2sWidth width;
+  /** Mandatory: enable stereo format. */
+  bool stereo;
 };
 /*----------------------------------------------------------------------------*/
-struct I2sBase
+struct I2sDma
 {
-  struct Interface parent;
+  struct I2sBase parent;
 
-  void *reg;
-  void (*handler)(void *);
-  irq_t irq;
+  void (*callback)(void *);
+  void *callbackArgument;
 
-  /* Unique peripheral identifier */
-  uint8_t channel;
+  /* Direct memory access channel descriptor */
+  struct Dma *dma;
+  /* Sample rate */
+  uint32_t sampleRate;
+  /* Size of each buffer */
+  uint32_t size;
+  /* Word width */
+  enum i2sWidth width;
+  /* Stereo format enabled flag */
+  bool stereo;
 };
 /*----------------------------------------------------------------------------*/
-enum result i2sCalcRate(struct I2sBase *, uint32_t, struct I2sRateConfig *);
-uint32_t i2sGetClock(const struct I2sBase *);
-/*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_I2S_BASE_H_ */
+#endif /* PLATFORM_NXP_I2S_DMA_H_ */
