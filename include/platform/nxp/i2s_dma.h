@@ -21,32 +21,38 @@ struct I2sDmaConfig
 
   struct
   {
+    /** Mandatory: receive data. */
+    pin_t sda;
     /** Optional: receive clock. */
     pin_t sck;
     /** Optional: receive word select. */
     pin_t ws;
-    /** Optional: receive data. */
-    pin_t sda;
     /** Optional: master clock output. */
     pin_t mclk;
+    /** Mandatory: direct memory access channel. */
+    uint8_t dma;
   } rx;
 
   struct
   {
+    /** Mandatory: transmit data. */
+    pin_t sda;
     /** Optional: transmit clock. */
     pin_t sck;
     /** Optional: transmit word select. */
     pin_t ws;
-    /** Optional: transmit data. */
-    pin_t sda;
     /** Optional: master clock output. */
     pin_t mclk;
+    /** Mandatory: direct memory access channel. */
+    uint8_t dma;
   } tx;
 
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: word width. */
   enum i2sWidth width;
+  /** Optional: enable slave mode. */
+  bool slave;
   /** Mandatory: enable stereo format. */
   bool stereo;
 };
@@ -58,8 +64,8 @@ struct I2sDma
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Direct memory access channel descriptor */
-  struct Dma *dma;
+  /* Direct memory access channel descriptors */
+  struct Dma *rxDma, *txDma;
   /* Sample rate */
   uint32_t sampleRate;
   /* Size of each buffer */
@@ -68,6 +74,10 @@ struct I2sDma
   enum i2sWidth width;
   /* Stereo format enabled flag */
   bool stereo;
+  /* Receiver enabled flag */
+  bool rx;
+  /* Transmitter enabled flag */
+  bool tx;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_I2S_DMA_H_ */
