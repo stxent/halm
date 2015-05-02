@@ -11,7 +11,8 @@
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
 /*----------------------------------------------------------------------------*/
-static void dmaHandler(void *object);
+static void rxDmaHandler(void *object);
+static void txDmaHandler(void *object);
 static enum result dmaSetup(struct I2sDma *, const struct I2sDmaConfig *,
     bool, bool);
 /*----------------------------------------------------------------------------*/
@@ -37,22 +38,11 @@ static const struct InterfaceClass i2sTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const I2sDma = &i2sTable;
 /*----------------------------------------------------------------------------*/
-static void dmaHandler(void *object)
+static void rxDmaHandler(void *object)
 {
   struct I2sDma * const interface = object;
   LPC_I2S_Type * const reg = interface->parent.reg;
   bool event = false;
-
-  if (reg->DMA2 & DMA_TX_ENABLE)
-  {
-    const uint32_t count = dmaCount(interface->txDma);
-    const enum result res = dmaStatus(interface->txDma);
-
-    if (res != E_BUSY)
-      reg->DMA2 &= ~DMA_TX_ENABLE;
-    if (res != E_BUSY || !(count & 1))
-      event = true;
-  }
 
   if (reg->DMA1 & DMA_RX_ENABLE)
   {
@@ -69,9 +59,32 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
+static void txDmaHandler(void *object)
+{
+  struct I2sDma * const interface = object;
+  LPC_I2S_Type * const reg = interface->parent.reg;
+  bool event = false;
+
+  if (reg->DMA2 & DMA_TX_ENABLE)
+  {
+    const uint32_t count = dmaCount(interface->txDma);
+    const enum result res = dmaStatus(interface->txDma);
+
+    if (res != E_BUSY)
+      reg->DMA2 &= ~DMA_TX_ENABLE;
+    if (res != E_BUSY || !(count & 1))
+      event = true;
+  }
+
+  if (event && interface->callback)
+    interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct I2sDma *interface,
     const struct I2sDmaConfig *config, bool rx, bool tx)
 {
+  const uint32_t sizeInBytes = config->size * (1 << config->width)
+      * (config->mono ? 1 : 2);
   const struct GpDmaListConfig channelConfigs[] = {
       {
         .event = GPDMA_I2S0_REQ1 + (config->channel << 1),
@@ -82,7 +95,7 @@ static enum result dmaSetup(struct I2sDma *interface,
         .burst = DMA_BURST_4,
         .width = DMA_WIDTH_WORD,
         .number = BLOCK_COUNT << 1,
-        .size = config->size >> 1,
+        .size = sizeInBytes >> 3, /* Half of the size in 32-bit words */
         .silent = false
       },
       {
@@ -94,7 +107,7 @@ static enum result dmaSetup(struct I2sDma *interface,
         .burst = DMA_BURST_4,
         .width = DMA_WIDTH_WORD,
         .number = BLOCK_COUNT << 1,
-        .size = config->size >> 1,
+        .size = sizeInBytes >> 3, /* Half of the size in 32-bit words */
         .silent = false
       }
   };
@@ -104,7 +117,7 @@ static enum result dmaSetup(struct I2sDma *interface,
     interface->rxDma = init(GpDmaList, &channelConfigs[0]);
     if (!interface->rxDma)
       return E_ERROR;
-    dmaCallback(interface->rxDma, dmaHandler, interface);
+    dmaCallback(interface->rxDma, rxDmaHandler, interface);
   }
   else
     interface->rxDma = 0;
@@ -114,7 +127,7 @@ static enum result dmaSetup(struct I2sDma *interface,
     interface->txDma = init(GpDmaList, &channelConfigs[1]);
     if (!interface->txDma)
       return E_ERROR;
-    dmaCallback(interface->txDma, dmaHandler, interface);
+    dmaCallback(interface->txDma, txDmaHandler, interface);
   }
   else
     interface->txDma = 0;
@@ -143,13 +156,15 @@ static enum result updateRate(struct I2sDma *interface)
 
   masterClock = interface->sampleRate;
   bitrate = interface->sampleRate * (1 << (interface->width + 3));
-  if (interface->stereo)
+  if (interface->mono)
+  {
+    masterClock <<= 7;
+  }
+  else
   {
     bitrate <<= 1;
     masterClock <<= 8;
   }
-  else
-    masterClock <<= 7;
 
   res = i2sCalcRate((struct I2sBase *)interface, masterClock, &rateConfig);
   if (res != E_OK)
@@ -206,7 +221,7 @@ static enum result i2sInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->sampleRate = config->rate;
   interface->size = config->size;
-  interface->stereo = config->stereo;
+  interface->mono = config->mono;
   interface->width = config->width;
 
   interface->rx = config->rx.sda != 0;
@@ -246,17 +261,17 @@ static enum result i2sInit(void *object, const void *configBase)
 
   if (interface->rx)
   {
-    reg->DMA1 = DMA_RX_ENABLE | DMA_RX_DEPTH(4);
+    reg->DMA1 = DMA_RX_DEPTH(4);
 
     if (config->slave)
       dai |= DAI_WS_SEL;
-    if (!interface->stereo)
+    if (interface->mono)
       dai |= DAI_MONO;
 
     if (config->rx.mclk)
       reg->RXMODE |= RXMODE_RXMCENA;
 
-    if (!config->rx.ws || !config->rx.sck)
+    if (!config->rx.ws && !config->rx.sck)
       reg->RXMODE |= RXMODE_RX4PIN;
     else if (!config->rx.ws ^ !config->rx.sck)
       return E_VALUE;
@@ -271,17 +286,17 @@ static enum result i2sInit(void *object, const void *configBase)
   if (interface->tx)
   {
     dao |= DAO_STOP;
-    reg->DMA2 = DMA_TX_DEPTH(4);
+    reg->DMA2 = DMA_TX_DEPTH(3);
 
     if (config->slave)
       dao |= DAO_WS_SEL;
-    if (!interface->stereo)
+    if (interface->mono)
       dao |= DAO_MONO;
 
     if (config->tx.mclk)
       reg->TXMODE |= TXMODE_TXMCENA;
 
-    if (!config->tx.ws || !config->tx.sck)
+    if (!config->tx.ws && !config->tx.sck)
       reg->TXMODE |= TXMODE_TX4PIN;
     else if (!config->tx.ws ^ !config->tx.sck)
       return E_VALUE;
@@ -370,18 +385,44 @@ static enum result i2sSet(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t i2sRead(void *object, uint8_t *buffer, uint32_t length)
 {
+  struct I2sDma * const interface = object;
+  LPC_I2S_Type * const reg = interface->parent.reg;
+  const uint8_t sampleSizePow = interface->width + (interface->mono ? 0 : 1);
+  const uint32_t samples = length >> sampleSizePow;
 
+  if (!samples)
+    return 0;
+
+  /* Strict requirements on the buffer length */
+  assert(samples > (interface->size >> 1) && samples <= interface->size);
+
+  const bool ongoing = dmaStatus(interface->rxDma) == E_BUSY;
+
+  /*
+   * When the transfer is already active it will be continued.
+   * 32-bit DMA transfers are used.
+   */
+  const enum result res = dmaStart(interface->rxDma, buffer,
+      (const void *)&reg->RXFIFO, (samples << sampleSizePow) >> 2);
+
+  if (res != E_OK)
+    return 0;
+
+  if (!ongoing)
+  {
+    reg->DMA1 |= DMA_RX_ENABLE;
+    reg->DAI &= ~DAI_STOP;
+  }
+
+  return samples << sampleSizePow;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t i2sWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct I2sDma * const interface = object;
   LPC_I2S_Type * const reg = interface->parent.reg;
-  const uint8_t channels = interface->stereo ? 2 : 1;
-  uint32_t samples = length >> 2; /* 32-bit DMA transfers are used */
-
-  if (interface->width == I2S_WIDTH_32)
-    samples -= samples % channels;
+  const uint8_t sampleSizePow = interface->width + (interface->mono ? 0 : 1);
+  const uint32_t samples = length >> sampleSizePow;
 
   if (!samples)
     return 0;
@@ -391,9 +432,12 @@ static uint32_t i2sWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   const bool ongoing = dmaStatus(interface->txDma) == E_BUSY;
 
-  /* When the transfer is already active it will be continued */
+  /*
+   * When the transfer is already active it will be continued.
+   * 32-bit DMA transfers are used.
+   */
   const enum result res = dmaStart(interface->txDma, (void *)&reg->TXFIFO,
-      buffer, samples);
+      buffer, (samples << sampleSizePow) >> 2);
 
   if (res != E_OK)
     return 0;
@@ -405,5 +449,5 @@ static uint32_t i2sWrite(void *object, const uint8_t *buffer, uint32_t length)
     reg->IRQ |= IRQ_TX_ENABLE;
   }
 
-  return samples << 2;
+  return samples << sampleSizePow;
 }
