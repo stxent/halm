@@ -60,6 +60,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_I2C_BASE),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2S_BASE),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/i2s_common.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/i2s_base.c
 endif
 
