@@ -62,7 +62,7 @@ static enum result dmaSetup(struct DacDma *interface,
       .type = GPDMA_TYPE_M2P,
       .burst = DMA_BURST_1,
       .width = DMA_WIDTH_HALFWORD,
-      .number = 4,
+      .number = BLOCK_COUNT << 1,
       .size = config->size >> 1,
       .silent = false
   };
@@ -167,7 +167,7 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   const bool ongoing = dmaStatus(interface->dma) == E_BUSY;
 
-  /* When previous transfer is ongoing it will be continued */
+  /* When the transfer is already active it will be continued */
   const enum result res = dmaStart(interface->dma, (void *)&reg->CR,
       buffer, samples);
 

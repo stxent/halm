@@ -29,6 +29,9 @@ enum result pmPlatformChangeState(enum pmState state)
 #else
       value |= PCON_PM(PCON_PM_DEEP_POWERDOWN) | PCON_DPDFLAG;
 #endif
+
+    default:
+      return E_OK;
   }
 
   LPC_SC->PCON = value;

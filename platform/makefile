@@ -61,7 +61,6 @@ endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2S_BASE),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/i2s_base.c
-  CSOURCES += platform/$(PLATFORM_TYPE)/i2s_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_PIN_INTERRUPT),y)
@@ -135,6 +134,10 @@ endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2C_SLAVE),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/i2c_slave.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_NXP_I2S),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/i2s_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SCT_TIMER),y)
