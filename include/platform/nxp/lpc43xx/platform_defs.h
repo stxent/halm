@@ -1222,6 +1222,7 @@ typedef struct
     __rw__ uint32_t STATE;
     __rw__ uint32_t CTRL;
   } EV[16];
+  __ne__ uint32_t RESERVED4[96];
   struct
   {
     __rw__ uint32_t SET;

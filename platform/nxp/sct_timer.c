@@ -107,14 +107,15 @@ static enum result tmrInit(void *object, const void *configBase)
   reg->CONFIG = (reg->CONFIG & ~CONFIG_AUTOLIMIT(offset))
       | CONFIG_NORELOAD(offset);
   if (timer->parent.part == SCT_UNIFIED)
-    reg->MATCH[0] = 0xFFFFFFFF;
+    reg->MATCH[timer->event] = 0xFFFFFFFF;
   else
-    reg->MATCH_PART[0][offset] = 0xFFFF;
+    reg->MATCH_PART[timer->event][offset] = 0xFFFF;
 
   /* Configure event */
-  reg->EV[timer->event].CTRL = EVCTRL_MATCHSEL(0)
+  reg->EV[timer->event].CTRL = EVCTRL_MATCHSEL(timer->event)
       | EVCTRL_COMBMODE(COMBMODE_MATCH) | EVCTRL_MATCHMEM
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
+
   if (timer->parent.part == SCT_HIGH)
     reg->EV[timer->event].CTRL |= EVCTRL_HEVENT;
 
@@ -208,14 +209,14 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
   reg->CTRL_PART[offset] |= CTRL_STOP;
   if (timer->parent.part == SCT_UNIFIED)
   {
-    reg->MATCH[0] = overflow - 1;
+    reg->MATCH[timer->event] = overflow - 1;
     res = E_OK;
   }
   else
   {
     if (overflow <= 0x10000)
     {
-      reg->MATCH_PART[0][offset] = overflow - 1;
+      reg->MATCH_PART[timer->event][offset] = overflow - 1;
       res = E_OK;
     }
   }
@@ -234,7 +235,7 @@ static enum result tmrSetValue(void *object, uint32_t value)
   reg->CTRL_PART[offset] |= CTRL_STOP;
   if (timer->parent.part == SCT_UNIFIED)
   {
-    if (value <= reg->MATCH[0])
+    if (value <= reg->MATCH[timer->event])
     {
       reg->COUNT = value;
       res = E_OK;

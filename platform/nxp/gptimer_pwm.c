@@ -260,7 +260,7 @@ static void channelSetFrequency(void *object, uint32_t frequency)
 /*----------------------------------------------------------------------------*/
 /**
  * Create single edge PWM channel with inverse polarity.
- * @param unit Pointer to GpTimerPwmUnit object.
+ * @param unit Pointer to a GpTimerPwmUnit object.
  * @param pin Pin used as output for pulse width modulated signal.
  * @param duration Initial duration in timer ticks.
  * @return Pointer to new Pwm object on success or zero on error.

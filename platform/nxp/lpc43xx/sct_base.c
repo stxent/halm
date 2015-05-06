@@ -11,7 +11,8 @@
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define CHANNEL_COUNT 1
+#define CHANNEL_COUNT                 1
+#define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
 struct TimerHandlerConfig
 {
@@ -50,6 +51,342 @@ static const struct EntityClass tmrTable = {
     .size = 0, /* Abstract class */
     .init = tmrInit,
     .deinit = tmrDeinit
+};
+/*----------------------------------------------------------------------------*/
+const struct PinEntry sctInputPins[] = {
+    {
+        .key = PIN(PORT_1, 0), /* CTIN_3 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 3)
+    }, {
+        .key = PIN(PORT_1, 6), /* CTIN_5 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 5)
+    }, {
+        .key = PIN(PORT_2, 2), /* CTIN_6 */
+        .channel = 0,
+        .value = PACK_VALUE(5, 6)
+    }, {
+        .key = PIN(PORT_2, 3), /* CTIN_1 */
+        .channel = 0,
+        .value = PACK_VALUE(3, 1)
+    }, {
+        .key = PIN(PORT_2, 4), /* CTIN_0 */
+        .channel = 0,
+        .value = PACK_VALUE(3, 0)
+    }, {
+        .key = PIN(PORT_2, 5), /* CTIN_2 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 2)
+    }, {
+        .key = PIN(PORT_2, 6), /* CTIN_7 */
+        .channel = 0,
+        .value = PACK_VALUE(5, 7)
+    }, {
+        .key = PIN(PORT_2, 13), /* CTIN_4 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 4)
+    }, {
+        .key = PIN(PORT_4, 8), /* CTIN_5 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 5)
+    }, {
+        .key = PIN(PORT_4, 9), /* CTIN_6 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 6)
+    }, {
+        .key = PIN(PORT_4, 10), /* CTIN_2 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 2)
+    }, {
+        .key = PIN(PORT_6, 4), /* CTIN_6 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 6)
+    }, {
+        .key = PIN(PORT_7, 2), /* CTIN_4 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 4)
+    }, {
+        .key = PIN(PORT_7, 3), /* CTIN_3 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 3)
+    }, {
+        .key = PIN(PORT_B, 4), /* CTIN_5 */
+        .channel = 0,
+        .value = PACK_VALUE(5, 5)
+    }, {
+        .key = PIN(PORT_B, 5), /* CTIN_7 */
+        .channel = 0,
+        .value = PACK_VALUE(5, 7)
+    }, {
+        .key = PIN(PORT_B, 6), /* CTIN_6 */
+        .channel = 0,
+        .value = PACK_VALUE(5, 6)
+    }, {
+        .key = PIN(PORT_D, 7), /* CTIN_5 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 5)
+    }, {
+        .key = PIN(PORT_D, 8), /* CTIN_6 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 6)
+    }, {
+        .key = PIN(PORT_D, 10), /* CTIN_1 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 1)
+    }, {
+        .key = PIN(PORT_D, 13), /* CTIN_0 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 0)
+    }, {
+        .key = PIN(PORT_E, 9), /* CTIN_4 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 4)
+    }, {
+        .key = PIN(PORT_E, 10), /* CTIN_3 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 3)
+    }, {
+        .key = PIN(PORT_F, 8), /* CTIN_2 */
+        .channel = 0,
+        .value = PACK_VALUE(2, 2)
+    }, {
+        .key = 0 /* End of pin function association list */
+    }
+};
+/*----------------------------------------------------------------------------*/
+const struct PinEntry sctOutputPins[] = {
+    {
+        .key = PIN(PORT_1, 1), /* CTOUT_7 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 7)
+    }, {
+        .key = PIN(PORT_1, 2), /* CTOUT_6 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 6)
+    }, {
+        .key = PIN(PORT_1, 3), /* CTOUT_8 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 8)
+    }, {
+        .key = PIN(PORT_1, 4), /* CTOUT_9 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 9)
+    }, {
+        .key = PIN(PORT_1, 5), /* CTOUT_10 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 10)
+    }, {
+        .key = PIN(PORT_1, 7), /* CTOUT_13 */
+        .channel = 0,
+        .value = PACK_VALUE(2, 13)
+    }, {
+        .key = PIN(PORT_1, 8), /* CTOUT_12 */
+        .channel = 0,
+        .value = PACK_VALUE(2, 12)
+    }, {
+        .key = PIN(PORT_1, 9), /* CTOUT_11 */
+        .channel = 0,
+        .value = PACK_VALUE(2, 11)
+    }, {
+        .key = PIN(PORT_1, 10), /* CTOUT_14 */
+        .channel = 0,
+        .value = PACK_VALUE(2, 14)
+    }, {
+        .key = PIN(PORT_1, 11), /* CTOUT_15 */
+        .channel = 0,
+        .value = PACK_VALUE(2, 15)
+    }, {
+        .key = PIN(PORT_2, 7), /* CTOUT_1 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 1)
+    }, {
+        .key = PIN(PORT_2, 8), /* CTOUT_0 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 0)
+    }, {
+        .key = PIN(PORT_2, 9), /* CTOUT_3 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 3)
+    }, {
+        .key = PIN(PORT_2, 10), /* CTOUT_2 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 2)
+    }, {
+        .key = PIN(PORT_2, 11), /* CTOUT_5 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 5)
+    }, {
+        .key = PIN(PORT_2, 12), /* CTOUT_4 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 4)
+    }, {
+        .key = PIN(PORT_4, 1), /* CTOUT_1 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 1)
+    }, {
+        .key = PIN(PORT_4, 2), /* CTOUT_0 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 0)
+    }, {
+        .key = PIN(PORT_4, 3), /* CTOUT_3 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 3)
+    }, {
+        .key = PIN(PORT_4, 4), /* CTOUT_2 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 2)
+    }, {
+        .key = PIN(PORT_4, 5), /* CTOUT_5 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 5)
+    }, {
+        .key = PIN(PORT_4, 6), /* CTOUT_4 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 4)
+    }, {
+        .key = PIN(PORT_6, 5), /* CTOUT_6 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 6)
+    }, {
+        .key = PIN(PORT_6, 12), /* CTOUT_7 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 7)
+    }, {
+        .key = PIN(PORT_7, 0), /* CTOUT_14 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 14)
+    }, {
+        .key = PIN(PORT_7, 1), /* CTOUT_15 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 15)
+    }, {
+        .key = PIN(PORT_7, 4), /* CTOUT_13 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 13)
+    }, {
+        .key = PIN(PORT_7, 5), /* CTOUT_12 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 12)
+    }, {
+        .key = PIN(PORT_7, 6), /* CTOUT_11 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 11)
+    }, {
+        .key = PIN(PORT_7, 7), /* CTOUT_8 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 8)
+    }, {
+        .key = PIN(PORT_A, 4), /* CTOUT_9 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 9)
+    }, {
+        .key = PIN(PORT_B, 0), /* CTOUT_10 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 10)
+    }, {
+        .key = PIN(PORT_B, 1), /* CTOUT_6 */
+        .channel = 0,
+        .value = PACK_VALUE(5, 6)
+    }, {
+        .key = PIN(PORT_B, 2), /* CTOUT_7 */
+        .channel = 0,
+        .value = PACK_VALUE(5, 7)
+    }, {
+        .key = PIN(PORT_B, 3), /* CTOUT_8 */
+        .channel = 0,
+        .value = PACK_VALUE(5, 8)
+    }, {
+        .key = PIN(PORT_D, 0), /* CTOUT_15 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 15)
+    }, {
+        .key = PIN(PORT_D, 2), /* CTOUT_7 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 7)
+    }, {
+        .key = PIN(PORT_D, 3), /* CTOUT_6 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 6)
+    }, {
+        .key = PIN(PORT_D, 4), /* CTOUT_8 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 8)
+    }, {
+        .key = PIN(PORT_D, 5), /* CTOUT_9 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 9)
+    }, {
+        .key = PIN(PORT_D, 6), /* CTOUT_10 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 10)
+    }, {
+        .key = PIN(PORT_D, 9), /* CTOUT_13 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 13)
+    }, {
+        .key = PIN(PORT_D, 11), /* CTOUT_14 */
+        .channel = 0,
+        .value = PACK_VALUE(6, 14)
+    }, {
+        .key = PIN(PORT_D, 12), /* CTOUT_10 */
+        .channel = 0,
+        .value = PACK_VALUE(6, 10)
+    }, {
+        .key = PIN(PORT_D, 13), /* CTOUT_13 */
+        .channel = 0,
+        .value = PACK_VALUE(6, 13)
+    }, {
+        .key = PIN(PORT_D, 14), /* CTOUT_11 */
+        .channel = 0,
+        .value = PACK_VALUE(6, 11)
+    }, {
+        .key = PIN(PORT_D, 15), /* CTOUT_8 */
+        .channel = 0,
+        .value = PACK_VALUE(6, 8)
+    }, {
+        .key = PIN(PORT_D, 16), /* CTOUT_12 */
+        .channel = 0,
+        .value = PACK_VALUE(6, 12)
+    }, {
+        .key = PIN(PORT_E, 5), /* CTOUT_3 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 3)
+    }, {
+        .key = PIN(PORT_E, 6), /* CTOUT_2 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 2)
+    }, {
+        .key = PIN(PORT_E, 7), /* CTOUT_5 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 5)
+    }, {
+        .key = PIN(PORT_E, 8), /* CTOUT_4 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 4)
+    }, {
+        .key = PIN(PORT_E, 11), /* CTOUT_12 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 12)
+    }, {
+        .key = PIN(PORT_E, 12), /* CTOUT_11 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 11)
+    }, {
+        .key = PIN(PORT_E, 13), /* CTOUT_14 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 14)
+    }, {
+        .key = PIN(PORT_E, 15), /* CTOUT_0 */
+        .channel = 0,
+        .value = PACK_VALUE(1, 0)
+    }, {
+        .key = PIN(PORT_F, 9), /* CTOUT_1 */
+        .channel = 0,
+        .value = PACK_VALUE(2, 1)
+    }, {
+        .key = 0 /* End of pin function association list */
+    }
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const TimerHandler = &handlerTable;
