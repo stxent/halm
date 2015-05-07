@@ -141,6 +141,10 @@ ifeq ($(CONFIG_PLATFORM_NXP_I2S),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/i2s_dma.c
 endif
 
+ifeq ($(CONFIG_PLATFORM_NXP_SCT_PWM),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/sct_pwm.c
+endif
+
 ifeq ($(CONFIG_PLATFORM_NXP_SCT_TIMER),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/sct_timer.c
 endif

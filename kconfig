@@ -117,6 +117,10 @@ config PLATFORM_NXP_SCT_BASE
 	help
 	  This is the driver for the State Configurable Timer peripheral.
 
+config PLATFORM_NXP_SCT_PWM
+	bool "PWM on SCT"
+	depends on PLATFORM_NXP_SCT_BASE
+
 config PLATFORM_NXP_SCT_TIMER
 	bool "Common timer on SCT"
 	depends on PLATFORM_NXP_SCT_BASE
