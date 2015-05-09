@@ -25,6 +25,8 @@ enum
 /*----------------------------------------------------------------------------*/
 priority_t irqGetPriority(irq_t);
 void irqSetPriority(irq_t, priority_t);
+uint8_t nvicGetPriorityGrouping();
+void nvicSetPriorityGrouping(uint8_t);
 /*----------------------------------------------------------------------------*/
 static inline void interruptsDisable(void)
 {
