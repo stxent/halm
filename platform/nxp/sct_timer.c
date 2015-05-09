@@ -9,6 +9,7 @@
 #include <platform/nxp/sct_timer.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
+static void setMatchValue(struct SctTimer *, uint32_t);
 static enum result updateFrequency(struct SctTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
@@ -41,6 +42,20 @@ static void interruptHandler(void *object)
 
   if (timer->callback)
     timer->callback(timer->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static void setMatchValue(struct SctTimer *timer, uint32_t value)
+{
+  LPC_SCT_Type * const reg = timer->parent.reg;
+
+  if (timer->parent.part != SCT_UNIFIED)
+  {
+    const uint8_t offset = timer->parent.part == SCT_HIGH;
+
+    reg->MATCH_PART[timer->event][offset] = (uint16_t)value;
+  }
+  else
+    reg->MATCH[timer->event] = value;
 }
 /*----------------------------------------------------------------------------*/
 static enum result updateFrequency(struct SctTimer *timer, uint32_t frequency)
@@ -104,12 +119,9 @@ static enum result tmrInit(void *object, const void *configBase)
     return res;
 
   /* Disable match value reload and set current match register value */
-  reg->CONFIG = (reg->CONFIG & ~CONFIG_AUTOLIMIT(offset))
-      | CONFIG_NORELOAD(offset);
-  if (timer->parent.part == SCT_UNIFIED)
-    reg->MATCH[timer->event] = 0xFFFFFFFF;
-  else
-    reg->MATCH_PART[timer->event][offset] = 0xFFFF;
+  reg->CONFIG |= CONFIG_NORELOAD(offset);
+  /* Should be called after event initialization */
+  setMatchValue(timer, 0xFFFFFFFF);
 
   /* Configure event */
   reg->EV[timer->event].CTRL = EVCTRL_MATCHSEL(timer->event)
@@ -124,15 +136,6 @@ static enum result tmrInit(void *object, const void *configBase)
   reg->EV[timer->event].STATE = 0x00000001;
   /* Enable timer clearing on allocated event */
   reg->LIMIT_PART[offset] = eventMask;
-  /* Disable interrupt requests when no callback is specified */
-  reg->EVEN &= ~eventMask;
-
-  reg->DITHER_PART[offset] = 0;
-  reg->HALT_PART[offset] = 0;
-  reg->START_PART[offset] = 0;
-  reg->STOP_PART[offset] = 0;
-  /* All registers operate as match registers */
-  reg->REGMODE_PART[offset] = 0;
 
   if (!config->disabled)
     reg->CTRL_PART[offset] &= ~CTRL_HALT;
@@ -148,11 +151,16 @@ static void tmrDeinit(void *object)
 
   /* Halt the timer */
   reg->CTRL_PART[offset] = CTRL_HALT;
+  reg->EVEN &= ~timer->parent.mask;
+  reg->LIMIT_PART[offset] = 0;
 
   /* Disable allocated event */
   reg->EV[timer->event].CTRL = 0;
   reg->EV[timer->event].STATE = 0;
   sctReleaseEvent((struct SctBase *)timer, timer->event);
+
+  /* Reset to default state */
+  reg->CONFIG &= ~CONFIG_NORELOAD(offset);
 
   SctBase->deinit(timer);
 }
@@ -174,7 +182,7 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
     reg->EVEN |= eventMask;
   }
   else
-    reg->EVEN &= eventMask;
+    reg->EVEN &= ~eventMask;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetEnabled(void *object, bool state)
@@ -204,25 +212,15 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->parent.reg;
   const uint8_t offset = timer->parent.part == SCT_HIGH;
-  enum result res = E_VALUE;
+
+  if (timer->parent.part != SCT_UNIFIED && overflow >= (1 << 16))
+    return E_VALUE;
 
   reg->CTRL_PART[offset] |= CTRL_STOP;
-  if (timer->parent.part == SCT_UNIFIED)
-  {
-    reg->MATCH[timer->event] = overflow - 1;
-    res = E_OK;
-  }
-  else
-  {
-    if (overflow <= 0x10000)
-    {
-      reg->MATCH_PART[timer->event][offset] = overflow - 1;
-      res = E_OK;
-    }
-  }
+  setMatchValue(timer, overflow - 1);
   reg->CTRL_PART[offset] &= ~CTRL_STOP;
 
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrSetValue(void *object, uint32_t value)
@@ -243,7 +241,7 @@ static enum result tmrSetValue(void *object, uint32_t value)
   }
   else
   {
-    if (value <= reg->COUNT_PART[offset])
+    if (value <= reg->MATCH_PART[timer->event][offset])
     {
       reg->COUNT_PART[offset] = value;
       res = E_OK;

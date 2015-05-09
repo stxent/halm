@@ -21,7 +21,7 @@ static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static uint32_t channelGetResolution(const void *);
 static void channelSetEnabled(void *, bool);
-static void channelSetFrequency(void *, uint32_t);
+static enum result channelSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result singleEdgeInit(void *, const void *);
 static void singleEdgeDeinit(void *);
@@ -183,7 +183,7 @@ static void channelSetEnabled(void *object, bool state)
     reg->PCR |= PCR_OUTPUT_ENABLED(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
-static void channelSetFrequency(void *object, uint32_t frequency)
+static enum result channelSetFrequency(void *object, uint32_t frequency)
 {
   struct GpPwm * const pwm = object;
   struct GpPwmUnit * const unit = pwm->unit;
@@ -192,10 +192,12 @@ static void channelSetFrequency(void *object, uint32_t frequency)
   const uint32_t clockFrequency = gpPwmGetClock((struct GpPwmUnitBase *)unit);
   const uint32_t timerFrequency = frequency * unit->resolution;
 
-  assert(timerFrequency && timerFrequency <= clockFrequency);
+  if (!timerFrequency || timerFrequency > clockFrequency)
+    return E_VALUE;
 
   /* TODO Add scaling of PWM match values */
   reg->PR = clockFrequency / timerFrequency - 1;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result singleEdgeInit(void *object, const void *configBase)
