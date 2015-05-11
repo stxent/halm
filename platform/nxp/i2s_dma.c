@@ -11,10 +11,12 @@
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
 /*----------------------------------------------------------------------------*/
-static void rxDmaHandler(void *object);
-static void txDmaHandler(void *object);
 static enum result dmaSetup(struct I2sDma *, const struct I2sDmaConfig *,
     bool, bool);
+static void interruptHandler(void *);
+static void rxDmaHandler(void *);
+static void txDmaHandler(void *);
+static enum result updateRate(struct I2sDma *, bool);
 /*----------------------------------------------------------------------------*/
 static enum result i2sInit(void *, const void *);
 static void i2sDeinit(void *);
@@ -37,56 +39,6 @@ static const struct InterfaceClass i2sTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const I2sDma = &i2sTable;
-/*----------------------------------------------------------------------------*/
-static void rxDmaHandler(void *object)
-{
-  struct I2sDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->parent.reg;
-  bool event = false;
-
-  if (reg->DMA1 & DMA_RX_ENABLE)
-  {
-    const uint32_t count = dmaCount(interface->rxDma);
-    const enum result res = dmaStatus(interface->rxDma);
-
-    if (res != E_BUSY)
-    {
-      reg->DAI |= DAI_STOP;
-      reg->DMA1 &= ~DMA_RX_ENABLE;
-    }
-    if (res != E_BUSY || !(count & 1))
-      event = true;
-  }
-
-  if (event && interface->callback)
-    interface->callback(interface->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
-static void txDmaHandler(void *object)
-{
-  struct I2sDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->parent.reg;
-  bool event = false;
-
-  if (reg->DMA2 & DMA_TX_ENABLE)
-  {
-    const uint32_t count = dmaCount(interface->txDma);
-    const enum result res = dmaStatus(interface->txDma);
-
-    if (res != E_BUSY)
-    {
-      /* Workaround to transmit last sample correctly */
-      reg->TXFIFO = 0;
-
-      reg->DMA2 &= ~DMA_TX_ENABLE;
-    }
-    if (res != E_BUSY || !(count & 1))
-      event = true;
-  }
-
-  if (event && interface->callback)
-    interface->callback(interface->callbackArgument);
-}
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct I2sDma *interface,
     const struct I2sDmaConfig *config, bool rx, bool tx)
@@ -153,6 +105,56 @@ static void interruptHandler(void *object)
     reg->DAO |= DAO_STOP;
     reg->IRQ &= ~IRQ_TX_ENABLE;
   }
+}
+/*----------------------------------------------------------------------------*/
+static void rxDmaHandler(void *object)
+{
+  struct I2sDma * const interface = object;
+  LPC_I2S_Type * const reg = interface->parent.reg;
+  bool event = false;
+
+  if (reg->DMA1 & DMA_RX_ENABLE)
+  {
+    const uint32_t count = dmaCount(interface->rxDma);
+    const enum result res = dmaStatus(interface->rxDma);
+
+    if (res != E_BUSY)
+    {
+      reg->DAI |= DAI_STOP;
+      reg->DMA1 &= ~DMA_RX_ENABLE;
+    }
+    if (res != E_BUSY || !(count & 1))
+      event = true;
+  }
+
+  if (event && interface->callback)
+    interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static void txDmaHandler(void *object)
+{
+  struct I2sDma * const interface = object;
+  LPC_I2S_Type * const reg = interface->parent.reg;
+  bool event = false;
+
+  if (reg->DMA2 & DMA_TX_ENABLE)
+  {
+    const uint32_t count = dmaCount(interface->txDma);
+    const enum result res = dmaStatus(interface->txDma);
+
+    if (res != E_BUSY)
+    {
+      /* Workaround to transmit last sample correctly */
+      reg->TXFIFO = 0;
+
+      reg->DMA2 &= ~DMA_TX_ENABLE;
+    }
+    if (res != E_BUSY || !(count & 1))
+      event = true;
+  }
+
+  if (event && interface->callback)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result updateRate(struct I2sDma *interface, bool slave)
