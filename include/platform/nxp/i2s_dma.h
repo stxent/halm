@@ -50,6 +50,8 @@ struct I2sDmaConfig
     uint8_t dma;
   } tx;
 
+  /** Optional: interrupt priority. */
+  priority_t priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: word width. */

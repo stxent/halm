@@ -200,7 +200,7 @@ config PLATFORM_NXP_I2C_SLAVE
 	bool "I2C Slave"
 	depends on I2C && PLATFORM_NXP_I2C_BASE
 
-config I2S
+config PLATFORM_NXP_I2S
 	bool "I2S drivers"
 	depends on PLATFORM_NXP_I2S_BASE
 

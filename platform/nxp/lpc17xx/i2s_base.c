@@ -10,7 +10,8 @@
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_DIV CLK_DIV1
+/* PCLK for I2S must not be higher than 74 MHz */
+#define DEFAULT_DIV CLK_DIV2
 /*----------------------------------------------------------------------------*/
 static enum result configPins(struct I2sBase *, const struct I2sBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct I2sBase *,
@@ -27,6 +28,16 @@ static const struct EntityClass i2sTable = {
 /*----------------------------------------------------------------------------*/
 const struct PinEntry i2sPins[] = {
     {
+        /* Unavailable on LPC175x series */
+        .key = PIN(0, 4), /* I2SRX_CLK */
+        .channel = 0,
+        .value = 1
+    }, {
+        /* Unavailable on LPC175x series */
+        .key = PIN(0, 5), /* I2SRX_WS */
+        .channel = 0,
+        .value = 1
+    }, {
         .key = PIN(0, 6), /* I2SRX_SDA */
         .channel = 0,
         .value = 1
@@ -43,9 +54,34 @@ const struct PinEntry i2sPins[] = {
         .channel = 0,
         .value = 1
     }, {
+        /* Unavailable on LPC175x series */
+        .key = PIN(0, 23), /* I2SRX_CLK */
+        .channel = 0,
+        .value = 2
+    }, {
+        /* Unavailable on LPC175x series */
+        .key = PIN(0, 24), /* I2SRX_WS */
+        .channel = 0,
+        .value = 2
+    }, {
         .key = PIN(0, 25), /* I2SRX_SDA */
         .channel = 0,
         .value = 2
+    }, {
+        /* Unavailable on LPC175x series */
+        .key = PIN(2, 11), /* I2STX_CLK */
+        .channel = 0,
+        .value = 3
+    }, {
+        /* Unavailable on LPC175x series */
+        .key = PIN(2, 12), /* I2STX_WS */
+        .channel = 0,
+        .value = 3
+    }, {
+        /* Unavailable on LPC175x series */
+        .key = PIN(2, 13), /* I2STX_SDA */
+        .channel = 0,
+        .value = 3
     }, {
         .key = PIN(4, 28), /* RX_MCLK */
         .channel = 0,

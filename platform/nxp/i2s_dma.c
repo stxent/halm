@@ -50,7 +50,10 @@ static void rxDmaHandler(void *object)
     const enum result res = dmaStatus(interface->rxDma);
 
     if (res != E_BUSY)
+    {
+      reg->DAI |= DAI_STOP;
       reg->DMA1 &= ~DMA_RX_ENABLE;
+    }
     if (res != E_BUSY || !(count & 1))
       event = true;
   }
@@ -71,7 +74,12 @@ static void txDmaHandler(void *object)
     const enum result res = dmaStatus(interface->txDma);
 
     if (res != E_BUSY)
+    {
+      /* Workaround to transmit last sample correctly */
+      reg->TXFIFO = 0;
+
       reg->DMA2 &= ~DMA_TX_ENABLE;
+    }
     if (res != E_BUSY || !(count & 1))
       event = true;
   }
@@ -147,40 +155,52 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result updateRate(struct I2sDma *interface)
+static enum result updateRate(struct I2sDma *interface, bool slave)
 {
   LPC_I2S_Type * const reg = interface->parent.reg;
   uint32_t bitrate, masterClock;
   struct I2sRateConfig rateConfig;
+  uint8_t divisor;
   enum result res;
 
-  masterClock = interface->sampleRate;
-  bitrate = interface->sampleRate * (1 << (interface->width + 3));
-  if (interface->mono)
+  if (slave)
   {
-    masterClock <<= 7;
+    rateConfig.x = rateConfig.y = 1;
+    divisor = 1;
   }
   else
   {
-    bitrate <<= 1;
-    masterClock <<= 8;
+    masterClock = interface->sampleRate;
+    bitrate = interface->sampleRate * (1 << (interface->width + 3));
+
+    if (interface->mono)
+    {
+      masterClock <<= 7;
+    }
+    else
+    {
+      bitrate <<= 1;
+      masterClock <<= 8;
+    }
+    divisor = masterClock / bitrate;
+
+    res = i2sCalcRate((struct I2sBase *)interface, masterClock, &rateConfig);
+    if (res != E_OK)
+      return res;
   }
 
-  res = i2sCalcRate((struct I2sBase *)interface, masterClock, &rateConfig);
-  if (res != E_OK)
-    return res;
-
-  const uint8_t divisor = masterClock / bitrate;
+  const uint32_t rate = RATE_X_DIVIDER(rateConfig.x)
+      | RATE_Y_DIVIDER(rateConfig.y);
 
   if (interface->rx)
   {
     reg->RXBITRATE = divisor - 1;
-    reg->RXRATE = RATE_X_DIVIDER(rateConfig.x) | RATE_Y_DIVIDER(rateConfig.y);
+    reg->RXRATE = rate;
   }
   if (interface->tx)
   {
     reg->TXBITRATE = divisor - 1;
-    reg->TXRATE = RATE_X_DIVIDER(rateConfig.x) | RATE_Y_DIVIDER(rateConfig.y);
+    reg->TXRATE = rate;
   }
 
   return E_OK;
@@ -261,6 +281,7 @@ static enum result i2sInit(void *object, const void *configBase)
 
   if (interface->rx)
   {
+    dai |= DAI_STOP;
     reg->DMA1 = DMA_RX_DEPTH(4);
 
     if (config->slave)
@@ -301,7 +322,7 @@ static enum result i2sInit(void *object, const void *configBase)
     else if (!config->tx.ws ^ !config->tx.sck)
       return E_VALUE;
 
-    reg->IRQ = IRQ_TX_DEPTH(0);
+    reg->IRQ |= IRQ_TX_DEPTH(0);
   }
   else
   {
@@ -312,12 +333,15 @@ static enum result i2sInit(void *object, const void *configBase)
 
   reg->DAO = dao;
   reg->DAI = dai;
+
+  /* Object fields should be initialized */
+  if ((res = updateRate(interface, config->slave)) != E_OK)
+    return res;
+
   reg->DAO &= ~DAO_RESET;
   reg->DAI &= ~DAI_RESET;
 
-  if ((res = updateRate(interface)) != E_OK)
-    return res;
-
+  irqSetPriority(interface->parent.irq, config->priority);
   irqEnable(interface->parent.irq);
 
   return E_OK;
@@ -330,6 +354,7 @@ static void i2sDeinit(void *object)
 
   irqDisable(interface->parent.irq);
 
+  reg->IRQ = 0;
   reg->DMA1 = reg->DMA2 = 0;
   reg->RXRATE = reg->TXRATE = 0;
 
@@ -398,6 +423,12 @@ static uint32_t i2sRead(void *object, uint8_t *buffer, uint32_t length)
 
   const bool ongoing = dmaStatus(interface->rxDma) == E_BUSY;
 
+  if (!ongoing)
+  {
+    /* Clear FIFO */
+    reg->DAI |= DAI_RESET;
+  }
+
   /*
    * When the transfer is already active it will be continued.
    * 32-bit DMA transfers are used.
@@ -411,7 +442,7 @@ static uint32_t i2sRead(void *object, uint8_t *buffer, uint32_t length)
   if (!ongoing)
   {
     reg->DMA1 |= DMA_RX_ENABLE;
-    reg->DAI &= ~DAI_STOP;
+    reg->DAI &= ~(DAI_STOP | DAI_RESET);
   }
 
   return samples << sampleSizePow;
