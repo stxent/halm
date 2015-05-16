@@ -40,19 +40,21 @@ enum sdioCommand
 enum sdioFlags
 {
   /** Send initialization sequence to device. */
-  SDIO_INITIALIZE   = 0x01,
+  SDIO_INITIALIZE     = 0x01,
   /** Generate and check checksum. */
-  SDIO_CHECK_CRC    = 0x02,
+  SDIO_CHECK_CRC      = 0x02,
   /** Enable data transfer mode. */
-  SDIO_DATA_MODE    = 0x04,
+  SDIO_DATA_MODE      = 0x04,
   /** Clear to read data from device, set to write data to device. */
-  SDIO_WRITE_MODE   = 0x08,
-  /** Enable stream transfer mode instead of block mode. */
-  SDIO_STREAM_MODE  = 0x10,
+  SDIO_WRITE_MODE     = 0x08,
+  /** Stop the transfer when the data transfer is in progress. */
+  SDIO_STOP_TRANSFER  = 0x10,
   /** Send stop command at the end of data transfer. */
-  SDIO_AUTO_STOP    = 0x20,
+  SDIO_AUTO_STOP      = 0x20,
   /** Wait for previous data transfer completion. */
-  SDIO_WAIT_DATA    = 0x40
+  SDIO_WAIT_DATA      = 0x40,
+  /** Enable stream transfer mode instead of block mode. */
+  SDIO_STREAM_MODE    = 0x80
 };
 /*----------------------------------------------------------------------------*/
 enum sdioMode

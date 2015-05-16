@@ -34,6 +34,7 @@ static enum result identifyCard(struct SdCard *);
 static enum result initializeCard(struct SdCard *);
 static void processCardSpecificData(struct SdCard *, uint32_t *);
 static enum result setTransferState(struct SdCard *);
+static enum result stopTransfer(struct SdCard *);
 /*----------------------------------------------------------------------------*/
 static enum result cardInit(void *, const void *);
 static void cardDeinit(void *);
@@ -322,6 +323,18 @@ static enum result setTransferState(struct SdCard *device)
     return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static enum result stopTransfer(struct SdCard *device)
+{
+  const uint32_t flags = (device->crc ? SDIO_CHECK_CRC : 0)
+      | SDIO_STOP_TRANSFER;
+  enum result res;
+
+  res = executeCommand(device, SDIO_COMMAND(CMD_STOP_TRANSMISSION,
+      SDIO_RESPONSE_SHORT, flags), 0, 0);
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
 static enum result cardInit(void *object, const void *configBase)
 {
   const struct SdCardConfig * const config = configBase;
@@ -447,6 +460,9 @@ static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
   while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
     barrier();
 
+  if (res != E_OK && blocks > 1)
+    stopTransfer(device);
+
 exit:
   ifSet(device->interface, IF_RELEASE, 0);
   return res == E_OK ? length : 0;
@@ -494,6 +510,9 @@ static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
     barrier();
+
+  if (res != E_OK && blocks > 1)
+    stopTransfer(device);
 
 exit:
   ifSet(device->interface, IF_RELEASE, 0);

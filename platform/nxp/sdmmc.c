@@ -11,7 +11,9 @@
 #include <platform/nxp/sdmmc.h>
 #include <platform/nxp/sdmmc_defs.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_BLOCK_SIZE 512
+#define DEFAULT_BLOCK_SIZE  512
+#define BUSY_READ_DELAY     100 /* Milliseconds */
+#define BUSY_WRITE_DELAY    500 /* Milliseconds */
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *);
 static enum result executeCommand(struct Sdmmc *, uint32_t, uint32_t);
@@ -95,12 +97,14 @@ static void execute(struct Sdmmc *interface)
   }
   if (flags & SDIO_WRITE_MODE)
     command |= CMD_READ_WRITE;
-  if (flags & SDIO_STREAM_MODE) /* FIXME Unused mode */
-    command |= CMD_TRANSFER_MODE;
+  if (flags & SDIO_STOP_TRANSFER)
+    command |= CMD_STOP_ABORT_CMD;
   if (flags & SDIO_AUTO_STOP)
     command |= CMD_SEND_AUTO_STOP;
   if (flags & SDIO_WAIT_DATA)
     command |= CMD_WAIT_PRVDATA_COMPLETE;
+  if (flags & SDIO_STREAM_MODE)
+    command |= CMD_TRANSFER_MODE;
 
   /* Execute low-level command */
   interface->status = E_BUSY;
@@ -148,6 +152,11 @@ static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
       | CLKDIV_DIVIDER(0, divider);
   executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
       | CMD_WAIT_PRVDATA_COMPLETE, 0);
+
+  /* Update timeout values */
+  const uint32_t readTimeout = BUSY_READ_DELAY * (rate / 1000);
+
+  reg->TMOUT = TMOUT_RESPONSE_TIMEOUT(0x40) | TMOUT_DATA_TIMEOUT(readTimeout);
 
   /* Enable clock */
   reg->CLKENA = CLKENA_CCLK_ENABLE;
@@ -199,7 +208,7 @@ static void interruptHandler(void *object)
       interface->status = E_OK;
   }
 
-  if (interface->callback)
+  if (interface->status != E_BUSY && interface->callback)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -214,7 +223,8 @@ static enum result sdioInit(void *object, const void *configBase)
   const struct PinInterruptConfig finalizerConfig = {
       .pin = config->dat0,
       .event = PIN_RISING,
-      .pull = PIN_NOPULL
+      .pull = PIN_NOPULL,
+      .priority = config->priority
   };
   const struct SdmmcBaseConfig parentConfig = {
       .clk = config->clk,
@@ -255,10 +265,9 @@ static enum result sdioInit(void *object, const void *configBase)
   /* Enable interrupts */
   reg->INTMASK = 0;
   reg->CTRL = CTRL_INT_ENABLE;
+  irqSetPriority(interface->parent.irq, config->priority);
   /* Clear pending interrupts */
   reg->RINTSTS = INT_MASK;
-
-  reg->TMOUT = 0xFFFFFFFF; //TODO Add timeout calculation
 
   /* Set default block size */
   reg->BLKSIZ = DEFAULT_BLOCK_SIZE;

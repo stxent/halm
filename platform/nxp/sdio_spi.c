@@ -16,9 +16,9 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_BLOCK_SIZE    512
 #define BUSY_TIMER_FREQUENCY  100000
-#define BUSY_READ_DELAY       10
+#define BUSY_READ_DELAY       10 /* Delay in timer ticks */
 #define BUSY_READ_RETRIES     1000
-#define BUSY_WRITE_DELAY      40
+#define BUSY_WRITE_DELAY      50 /* Delay in timer ticks */
 #define BUSY_WRITE_RETRIES    1000
 #define INITIAL_CRC7          0x00
 #define INITIAL_CRC16         0x0000
@@ -439,20 +439,9 @@ static enum state stateWaitWriteAdvance(struct SdioSpi *interface)
   }
   else
   {
-    /*
-     * Error occurred, stop the transfer by injecting the Stop
-     * Transmission command. Preserve error code in temporary variable.
-     */
-    interface->status = interface->transferStatus = res;
-
-    interface->command = SDIO_COMMAND(CMD_STOP_TRANSMISSION,
-        SDIO_RESPONSE_NONE, 0);
-    interface->argument = 0;
-
-    sendCommand(interface, interface->command, interface->argument);
-    interface->retries = TOKEN_RETRIES;
-
-    return STATE_SEND_CMD;
+    /* Error occurred, stop the transfer */
+    interface->status = res;
+    return STATE_IDLE;
   }
 }
 /*----------------------------------------------------------------------------*/

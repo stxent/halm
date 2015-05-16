@@ -32,6 +32,8 @@ struct SdmmcConfig
   pin_t dat2;
   /** Optional: data line 3. */
   pin_t dat3;
+  /** Optional: interrupt priority. */
+  priority_t priority;
 };
 /*----------------------------------------------------------------------------*/
 struct Sdmmc
