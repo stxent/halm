@@ -160,7 +160,6 @@ static enum result spiInit(void *object, const void *configBase)
 
   interface->blocking = true;
   interface->callback = 0;
-  interface->dummy = DUMMY_FRAME;
 
   LPC_SSP_Type * const reg = interface->parent.reg;
 
@@ -272,6 +271,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   if (res != E_OK)
     return 0;
 
+  interface->dummy = DUMMY_FRAME;
   res = dmaStart(interface->txDma, (void *)&reg->DR, &interface->dummy, length);
   if (res != E_OK)
   {

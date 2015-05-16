@@ -233,6 +233,7 @@ static void stateReadShortEnter(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static enum state stateReadShortAdvance(struct SdioSpi *interface)
 {
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
   uint32_t value;
 
   /* Command token is preserved in the first byte of data buffer */
@@ -240,7 +241,15 @@ static enum state stateReadShortAdvance(struct SdioSpi *interface)
   interface->response[0] = fromBigEndian32(value);
   interface->status = parseResponseToken(interface, interface->buffer[0]);
 
-  return STATE_IDLE;
+  if (flags & SDIO_STOP_TRANSFER)
+  {
+    interface->retries = BUSY_WRITE_RETRIES;
+    return STATE_WRITE_BUSY;
+  }
+  else
+  {
+    return STATE_IDLE;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void stateRequestToken(struct SdioSpi *interface)
@@ -782,6 +791,10 @@ static enum result sdioSet(void *object, enum ifOption option,
   switch ((enum sdioOption)option)
   {
     case IF_SDIO_EXECUTE:
+      interface->left = 0;
+      interface->length = 0;
+      interface->rxBuffer = 0;
+      interface->txBuffer = 0;
       execute(interface);
       return E_OK;
 
@@ -841,6 +854,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   interface->left = length;
   interface->length = length;
   interface->rxBuffer = buffer;
+  interface->txBuffer = 0;
 
   /* Begin execution */
   interface->state = STATE_SEND_CMD;
@@ -884,6 +898,7 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   interface->left = length;
   interface->length = length;
+  interface->rxBuffer = 0;
   interface->txBuffer = buffer;
 
   /* Begin execution */
