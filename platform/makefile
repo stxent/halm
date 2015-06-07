@@ -141,6 +141,11 @@ ifeq ($(CONFIG_PLATFORM_NXP_I2S),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/i2s_dma.c
 endif
 
+ifeq ($(CONFIG_PLATFORM_NXP_RTC),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/rtc.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/rtc_base.c
+endif
+
 ifeq ($(CONFIG_PLATFORM_NXP_SCT_PWM),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/sct_pwm.c
 endif

@@ -1,0 +1,193 @@
+/*
+ * rtc.c
+ * Copyright (C) 2015 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
+ */
+
+#include <platform/nxp/rtc.h>
+#include <platform/nxp/gen_1/rtc_defs.h>
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *);
+/*----------------------------------------------------------------------------*/
+static enum result clkInit(void *, const void *);
+static void clkDeinit(void *);
+static enum result clkCallback(void *, void (*)(void *), void *);
+static enum result clkSetAlarm(void *, time64_t);
+static enum result clkSetTime(void *, time64_t);
+static time64_t clkTime(void *);
+/*----------------------------------------------------------------------------*/
+static const struct RtClockClass clkTable = {
+    .size = sizeof(struct Rtc),
+    .init = clkInit,
+    .deinit = clkDeinit,
+
+    .callback = clkCallback,
+    .setAlarm = clkSetAlarm,
+    .setTime = clkSetTime,
+    .time = clkTime
+};
+/*----------------------------------------------------------------------------*/
+const struct RtClockClass * const Rtc = &clkTable;
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct Rtc * const clock = object;
+  LPC_RTC_Type * const reg = clock->parent.reg;
+  bool event = false;
+
+  if (reg->ILR & ILR_RTCALF)
+  {
+    /* Disable future interrupts */
+    reg->AMR = AMR_MASK;
+
+    event = true;
+  }
+
+  /* Clear pending interrupts */
+  reg->ILR = reg->ILR;
+
+  if (event && clock->callback)
+    clock->callback(clock->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static enum result clkInit(void *object, const void *configBase)
+{
+  const struct RtcConfig * const config = configBase;
+  struct Rtc * const clock = object;
+  enum result res;
+
+  /* Call base class constructor */
+  if ((res = RtcBase->init(object, 0)) != E_OK)
+    return res;
+
+  clock->parent.handler = interruptHandler;
+  clock->callback = 0;
+
+  LPC_RTC_Type * const reg = clock->parent.reg;
+
+  if (config->timestamp)
+  {
+    /* Disable calibration counter */
+    reg->CCR |= CCR_CCALEN;
+
+    /* Reinitialize clock */
+    if ((res = clkSetTime(clock, config->timestamp)) != E_OK)
+      return res;
+  }
+
+  /* Disable interrupts */
+  reg->CIIR = CIIR_MASK;
+  reg->AMR = AMR_MASK;
+  reg->ILR = 0;
+
+  irqSetPriority(clock->parent.irq, config->priority);
+  irqEnable(clock->parent.irq);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void clkDeinit(void *object __attribute__((unused)))
+{
+  struct Rtc * const clock = object;
+  LPC_RTC_Type * const reg = clock->parent.reg;
+
+  /* Stop time counters */
+  reg->CCR &= ~CCR_CLKEN;
+
+  irqEnable(clock->parent.irq);
+  RtcBase->deinit(clock);
+}
+/*----------------------------------------------------------------------------*/
+static enum result clkCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct Rtc * const clock = object;
+
+  clock->callbackArgument = argument;
+  clock->callback = callback;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result clkSetAlarm(void *object, time64_t alarmTime)
+{
+  struct Rtc * const clock = object;
+  LPC_RTC_Type * const reg = clock->parent.reg;
+  struct RtDateTime dateTime;
+
+  rtMakeTime(&dateTime, alarmTime);
+
+  /* Initialize alarm registers */
+  reg->ALSEC = dateTime.second;
+  reg->ALMIN = dateTime.minute;
+  reg->ALHOUR = dateTime.hour;
+  reg->ALDOM = dateTime.day;
+  reg->ALMON = dateTime.month;
+  reg->ALYEAR = dateTime.year;
+
+  /* Unused fields */
+  reg->ALDOW = 0;
+  reg->ALDOY = 0;
+
+  /* Enable interrupt */
+  reg->AMR = AMR_DOW | AMR_DOY;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result clkSetTime(void *object, time64_t currentTime)
+{
+  struct Rtc * const clock = object;
+  LPC_RTC_Type * const reg = clock->parent.reg;
+  struct RtDateTime dateTime;
+
+  rtMakeTime(&dateTime, currentTime);
+
+  /* Stop and reset counters */
+  reg->CCR = (reg->CCR & ~CCR_CLKEN) | CCR_CTCRST;
+
+  reg->SEC = dateTime.second; /* Seconds in the range of 0 to 59 */
+  reg->MIN = dateTime.minute; /* Minutes in the range of 0 to 59 */
+  reg->HOUR = dateTime.hour; /* Hours in the range of 0 to 23 */
+  reg->DOM = dateTime.day; /* Days in the range of 1 to 31 */
+  reg->MONTH = dateTime.month; /* Month value in the range of 1 to 12 */
+  reg->YEAR = dateTime.year; /* Year value in the range of 0 to 4095 */
+
+  /* Unused fields */
+  reg->DOW = 0; /* Day of week in the range of 0 to 6 */
+  reg->DOY = 0; /* Day of year in the range of 0 to 366 */
+
+  /* Enable clock */
+  reg->CCR = (reg->CCR & ~CCR_CTCRST) | CCR_CLKEN;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static time64_t clkTime(void *object)
+{
+  const struct Rtc * const clock = object;
+  const LPC_RTC_Type * const reg = clock->parent.reg;
+  uint32_t ctime0, ctime1;
+
+  do
+  {
+    ctime0 = reg->CTIME0;
+    ctime1 = reg->CTIME1;
+  }
+  while (ctime0 != reg->CTIME0);
+
+  const struct RtDateTime dateTime = {
+      .second = CTIME0_SECONDS_VALUE(ctime0),
+      .minute = CTIME0_MINUTES_VALUE(ctime0),
+      .hour = CTIME0_HOURS_VALUE(ctime0),
+      .day = CTIME1_DOM_VALUE(ctime1),
+      .month = CTIME1_MONTH_VALUE(ctime1),
+      .year = CTIME1_YEAR_VALUE(ctime1)
+  };
+  time64_t timestamp;
+  enum result res;
+
+  if ((res = rtMakeEpochTime(&timestamp, &dateTime)) != E_OK)
+    return 0;
+
+  return timestamp;
+}
