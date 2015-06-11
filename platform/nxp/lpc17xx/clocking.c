@@ -11,6 +11,7 @@
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY     4000000
 #define RTC_OSC_FREQUENCY     32768
+#define USB_FREQUENCY         48000000
 #define TICK_RATE(frequency)  ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void);
@@ -34,9 +35,18 @@ static void sysPllDisable(const void *);
 static enum result sysPllEnable(const void *, const void *);
 static uint32_t sysPllFrequency(const void *);
 static bool sysPllReady(const void *);
+
+static void usbPllDisable(const void *);
+static enum result usbPllEnable(const void *, const void *);
+static uint32_t usbPllFrequency(const void *);
+static bool usbPllReady(const void *);
 /*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
+
+static enum result usbClockEnable(const void *, const void *);
+static uint32_t usbClockFrequency(const void *);
+static bool usbClockReady(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -65,6 +75,13 @@ static const struct ClockClass sysPllTable = {
     .frequency = sysPllFrequency,
     .ready = sysPllReady
 };
+
+static const struct ClockClass usbPllTable = {
+    .disable = usbPllDisable,
+    .enable = usbPllEnable,
+    .frequency = usbPllFrequency,
+    .ready = usbPllReady
+};
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
     .disable = clockDisableStub,
@@ -72,12 +89,21 @@ static const struct ClockClass mainClockTable = {
     .frequency = mainClockFrequency,
     .ready = clockReadyStub
 };
+
+static const struct ClockClass usbClockTable = {
+    .disable = clockDisableStub,
+    .enable = usbClockEnable,
+    .frequency = usbClockFrequency,
+    .ready = usbClockReady
+};
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
 const struct ClockClass * const InternalOsc = &intOscTable;
 const struct ClockClass * const RtcOsc = &rtcOscTable;
 const struct ClockClass * const SystemPll = &sysPllTable;
+const struct ClockClass * const UsbPll = &usbPllTable;
 const struct ClockClass * const MainClock = &mainClockTable;
+const struct ClockClass * const UsbClock = &usbClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
@@ -231,8 +257,8 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   }
 
   /* Update system frequency and postscaler value */
-  pllFrequency = frequency / config->divisor;
-  pllDivisor = config->divisor - 1;
+  pllFrequency = frequency;
+  pllDivisor = config->divisor;
 
   /* Set clock source */
   LPC_SC->CLKSRCSEL = source;
@@ -244,8 +270,8 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
 
   /* Enable PLL */
   LPC_SC->PLL0CON = PLL0CON_ENABLE;
-  LPC_SC->PLL0FEED  = PLLFEED_FIRST;
-  LPC_SC->PLL0FEED  = PLLFEED_SECOND;
+  LPC_SC->PLL0FEED = PLLFEED_FIRST;
+  LPC_SC->PLL0FEED = PLLFEED_SECOND;
 
   return E_OK;
 }
@@ -260,10 +286,78 @@ static bool sysPllReady(const void *clockBase __attribute__((unused)))
   return pllFrequency && (LPC_SC->PLL0STAT & PLL0STAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
+static void usbPllDisable(const void *clockBase __attribute__((unused)))
+{
+  LPC_SC->PLL1CON &= ~PLL1CON_ENABLE;
+  LPC_SC->PLL1FEED = PLLFEED_FIRST;
+  LPC_SC->PLL1FEED = PLLFEED_SECOND;
+}
+/*----------------------------------------------------------------------------*/
+static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
+{
+  const struct PllConfig * const config = configBase;
+
+  if (!config->multiplier || !config->divisor)
+    return E_VALUE;
+  if (config->source != CLOCK_EXTERNAL)
+    return E_VALUE;
+
+  /*
+   * Calculations:
+   * MSEL = USBCLK / F_OSC
+   * PSEL = F_CCO / (USBCLK * 2)
+   */
+
+  if (!extFrequency)
+    return E_ERROR;
+
+  /* CCO frequency */
+  const uint32_t frequency = extFrequency * config->multiplier;
+
+  if (frequency < 156000000 || frequency > 320000000)
+    return E_VALUE;
+
+  const uint8_t msel = USB_FREQUENCY / extFrequency - 1;
+  uint8_t counter = 0;
+  uint8_t psel = config->divisor >> 1;
+
+  if (msel < 1 || msel > 32)
+    return E_ERROR;
+
+  while (counter < 4 && psel != 1 << counter)
+    counter++;
+  /* Check whether actual divisor value found */
+  if ((psel = counter) == 4)
+    return E_VALUE;
+
+  /* Update PLL clock source */
+  LPC_SC->PLL1CFG = PLL1CFG_MSEL(msel) | PLL1CFG_PSEL(psel);
+  LPC_SC->PLL1FEED = PLLFEED_FIRST;
+  LPC_SC->PLL1FEED = PLLFEED_SECOND;
+
+  /* Enable PLL */
+  LPC_SC->PLL1CON = PLL1CON_ENABLE;
+  LPC_SC->PLL1FEED = PLLFEED_FIRST;
+  LPC_SC->PLL1FEED = PLLFEED_SECOND;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t usbPllFrequency(const void *clockBase __attribute__((unused)))
+{
+  return LPC_SC->PLL1STAT & PLL1STAT_LOCK ? USB_FREQUENCY : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool usbPllReady(const void *clockBase __attribute__((unused)))
+{
+  return (LPC_SC->PLL1STAT & PLL1STAT_LOCK) != 0;
+}
+/*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
-  const struct MainClockConfig * const config = configBase;
+  const struct CommonClockConfig * const config = configBase;
   int8_t source = -1;
 
   switch (config->source)
@@ -296,7 +390,7 @@ static enum result mainClockEnable(const void *clockBase
   }
   else
   {
-    LPC_SC->CCLKCFG = pllDivisor;
+    LPC_SC->CCLKCFG = pllDivisor - 1;
 
     /* Connect PLL */
     LPC_SC->PLL0CON |= PLL0CON_CONNECT;
@@ -325,7 +419,7 @@ static uint32_t mainClockFrequency(const void *clockBase
 
     case CLKSRCSEL_MAIN:
       if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
-        return pllFrequency;
+        return pllFrequency / pllDivisor;
       else
         return extFrequency;
 
@@ -335,4 +429,56 @@ static uint32_t mainClockFrequency(const void *clockBase
     default:
       return 0;
   }
+}
+/*----------------------------------------------------------------------------*/
+static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
+{
+  const struct CommonClockConfig * const config = configBase;
+
+  switch (config->source)
+  {
+    case CLOCK_PLL:
+    {
+      const uint8_t divisor = pllFrequency / 48000000 - 1;
+
+      if (divisor != 5 && divisor != 7 && divisor != 9)
+        return E_ERROR;
+
+      LPC_SC->USBCLKCFG = USBCLKCFG_USBSEL(divisor);
+      break;
+    }
+
+    case CLOCK_USB_PLL:
+    {
+      /* Connect PLL */
+      LPC_SC->PLL1CON |= PLL1CON_CONNECT;
+      LPC_SC->PLL1FEED = PLLFEED_FIRST;
+      LPC_SC->PLL1FEED = PLLFEED_SECOND;
+
+      /* Wait for enable and connect */
+      while (!(LPC_SC->PLL1STAT & (PLL1STAT_ENABLED | PLL1STAT_CONNECTED)));
+
+      break;
+    }
+
+    default:
+      return E_VALUE;
+  }
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t usbClockFrequency(const void *configBase)
+{
+  return usbClockReady(configBase) ? USB_FREQUENCY : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool usbClockReady(const void *configBase __attribute__((unused)))
+{
+  const uint8_t actualDivisor = USBCLKCFG_USBSEL_VALUE(LPC_SC->USBCLKCFG);
+  const uint8_t divisor = pllFrequency / 48000000 - 1;
+
+  return (actualDivisor && actualDivisor == divisor)
+      || (LPC_SC->PLL1STAT & PLL1STAT_LOCK);
 }

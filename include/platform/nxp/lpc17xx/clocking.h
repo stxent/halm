@@ -18,7 +18,9 @@ extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const RtcOsc;
 extern const struct ClockClass * const SystemPll;
+extern const struct ClockClass * const UsbPll;
 extern const struct ClockClass * const MainClock;
+extern const struct ClockClass * const UsbClock;
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -52,8 +54,8 @@ struct PllConfig
    * to 550 MHz, multiplier range is 6 to 512. Input frequency range is
    * 32 kHz to 50 MHz. When 32 kHz clock is used, an additional set of values
    * is available.
-   * @n Oscillator of the USB PLL operates in the range of 156 MHz to 320 MHz,
-   * multiplier range is 1 to 32. Input frequency range is 10 MHz to 25 MHz.
+   * @n Oscillator of the USB PLL operates in the range of 156 MHz to 320 MHz.
+   * Input frequency range is 10 MHz to 25 MHz.
    */
   uint16_t multiplier;
   /**
@@ -74,7 +76,7 @@ struct PllConfig
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
-struct MainClockConfig
+struct CommonClockConfig
 {
   /** Mandatory: clock source. */
   enum clockSource source;

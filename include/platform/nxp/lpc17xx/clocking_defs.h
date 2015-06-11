@@ -40,9 +40,18 @@
 #define PLL1CFG_PSEL_MASK               BIT_FIELD(MASK(2), 5)
 #define PLL1CFG_PSEL(value)             BIT_FIELD((value), 5)
 /*------------------PLL1 Status register--------------------------------------*/
+/* Read-back for the Enable bit */
+#define PLL1STAT_ENABLED                BIT(8)
+/* Read-back for the Connect bit */
+#define PLL1STAT_CONNECTED              BIT(9)
 #define PLL1STAT_LOCK                   BIT(10)
 /*------------------PLL Feed registers----------------------------------------*/
 #define PLLFEED_FIRST                   0xAA
 #define PLLFEED_SECOND                  0x55
+/*------------------USB Clock Configuration register--------------------------*/
+#define USBCLKCFG_USBSEL_MASK           BIT_FIELD(MASK(4), 0)
+#define USBCLKCFG_USBSEL(value)         BIT_FIELD((value), 0)
+#define USBCLKCFG_USBSEL_VALUE(reg) \
+    FIELD_VALUE((reg), USBCLKCFG_USBSEL_MASK, 0)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC17XX_CLOCKING_DEFS_H_ */
