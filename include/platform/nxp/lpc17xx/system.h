@@ -6,7 +6,7 @@
 
 /**
  * @file
- * System configuration functions for LPC17xx chips.
+ * System configuration functions for LPC175x and LPC176x series.
  */
 
 #ifndef PLATFORM_NXP_LPC17XX_SYSTEM_H_

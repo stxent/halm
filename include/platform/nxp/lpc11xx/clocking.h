@@ -4,6 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ * @file
+ * Clock configuration functions for LPC11xx series.
+ */
+
 #ifndef PLATFORM_NXP_LPC11XX_CLOCKING_H_
 #define PLATFORM_NXP_LPC11XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
@@ -62,25 +67,51 @@ extern const struct CommonClockClass * const WdtClock;
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
+  /**
+   * Mandatory: frequency of the external crystal oscillator or
+   * external clock source.
+   */
   uint32_t frequency;
+  /**
+   * Optional: enable bypass. Bypassing should be enabled when using
+   * an external clock source instead of the crystal oscillator.
+   */
   bool bypass;
 };
 /*----------------------------------------------------------------------------*/
 struct WdtOscConfig
 {
+  /** Optional: oscillator frequency. */
   enum wdtFrequency frequency;
 };
 /*----------------------------------------------------------------------------*/
 struct PllConfig
 {
+  /**
+   * Mandatory: input clock multiplier, result should be in the range of
+   * 156 MHz to 320 MHz. Multiplier range is 1 to 32. Note that the input
+   * frequency range is 10 to 25 MHz.
+   */
   uint16_t multiplier;
+  /**
+   * Mandatory: PLL output divisor. The output divisor may be set
+   * to divide by 2, 4, 8, 16.
+   */
   uint8_t divisor;
+  /**
+   * Mandatory: clock source.
+   * @n Available options for System PLL:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   */
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig
 {
+  /** Optional: input clock divisor in the range of 1 to 255. */
   uint8_t divisor;
+  /** Mandatory: clock source. */
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/

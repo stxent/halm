@@ -4,6 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+/**
+ * @file
+ * Clock configuration functions for LPC43xx series.
+ */
+
 #ifndef PLATFORM_NXP_LPC43XX_CLOCKING_H_
 #define PLATFORM_NXP_LPC43XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
@@ -93,12 +98,21 @@ extern const struct CommonClockClass * const CguOut1Clock;
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig
 {
+  /** Mandatory: clock source. */
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
+  /**
+   * Mandatory: frequency of the external crystal oscillator or
+   * external clock source.
+   */
   uint32_t frequency;
+  /**
+   * Optional: enable bypass. Bypassing should be enabled when using
+   * an external clock source instead of the crystal oscillator.
+   */
   bool bypass;
 };
 /*----------------------------------------------------------------------------*/
