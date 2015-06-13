@@ -9,8 +9,10 @@
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/clocking_defs.h>
 #include <platform/nxp/lpc43xx/system.h>
+#include <platform/nxp/lpc43xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY               12000000
+#define RTC_OSC_FREQUENCY               32768
 #define TICK_RATE(frequency)            ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcBranchReg(enum clockBranch);
@@ -26,6 +28,11 @@ static void intOscDisable(const void *);
 static enum result intOscEnable(const void *, const void *);
 static uint32_t intOscFrequency(const void *);
 static bool intOscReady(const void *);
+
+static void rtcOscDisable(const void *);
+static enum result rtcOscEnable(const void *, const void *);
+static uint32_t rtcOscFrequency(const void *);
+static bool rtcOscReady(const void *);
 
 static void pll1ClockDisable(const void *);
 static enum result pll1ClockEnable(const void *, const void *);
@@ -49,6 +56,13 @@ static const struct ClockClass intOscTable = {
     .enable = intOscEnable,
     .frequency = intOscFrequency,
     .ready = intOscReady
+};
+
+static const struct ClockClass rtcOscTable = {
+    .disable = rtcOscDisable,
+    .enable = rtcOscEnable,
+    .frequency = rtcOscFrequency,
+    .ready = rtcOscReady
 };
 
 static const struct ClockClass pll1Table = {
@@ -290,6 +304,7 @@ static const struct CommonClockClass cguOut1ClockTable = {
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
 const struct ClockClass * const InternalOsc = &intOscTable;
+const struct ClockClass * const RtcOsc = &rtcOscTable;
 const struct ClockClass * const SystemPll = &pll1Table;
 /*----------------------------------------------------------------------------*/
 const struct CommonClockClass * const MainClock = &mainClockTable;
@@ -407,6 +422,36 @@ static bool intOscReady(const void *clockBase __attribute__((unused)))
   return true;
 }
 /*----------------------------------------------------------------------------*/
+static void rtcOscDisable(const void *clockBase __attribute__((unused)))
+{
+  /* Disable and reset clock, disable outputs */
+  LPC_CREG->CREG0 = (LPC_CREG->CREG0 & ~(CREG0_EN1KHZ | CREG0_EN32KHZ))
+      | CREG0_PD32KHZ | CREG0_RESET32KHZ;
+}
+/*----------------------------------------------------------------------------*/
+static enum result rtcOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
+{
+  /* Enable and reset clock */
+  LPC_CREG->CREG0 = (LPC_CREG->CREG0 & ~CREG0_PD32KHZ) | CREG0_RESET32KHZ;
+  /* Enable clock outputs and disable reset */
+  LPC_CREG->CREG0 = (LPC_CREG->CREG0 & ~CREG0_RESET32KHZ)
+      | CREG0_EN1KHZ | CREG0_EN32KHZ;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t rtcOscFrequency(const void *clockBase __attribute__((unused)))
+{
+  return rtcOscReady(clockBase) ? RTC_OSC_FREQUENCY : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool rtcOscReady(const void *clockBase __attribute__((unused)))
+{
+  /* There is no convenient way to find out that the oscillator is running */
+  return !(LPC_CREG->CREG0 & (CREG0_PD32KHZ | CREG0_RESET32KHZ));
+}
+/*----------------------------------------------------------------------------*/
 static void pll1ClockDisable(const void *clockBase __attribute__((unused)))
 {
   LPC_CGU->PLL1_CTRL |= PLL1_CTRL_PD;
@@ -522,6 +567,9 @@ static uint32_t commonClockFrequency(const void *clockBase)
 
     case CLOCK_PLL:
       return pll1Frequency;
+
+    case CLOCK_RTC:
+      return rtcOscFrequency(RtcOsc);
 
     default:
       /* Unknown clock source */

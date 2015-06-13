@@ -67,18 +67,18 @@ static enum result clkInit(void *object, const void *configBase)
 
   if (config->timestamp)
   {
-    /* Disable calibration counter */
-    reg->CCR |= CCR_CCALEN;
-
     /* Reinitialize clock */
     if ((res = clkSetTime(clock, config->timestamp)) != E_OK)
       return res;
   }
 
   /* Disable interrupts */
-  reg->CIIR = CIIR_MASK;
+  reg->CALIBRATION = 0;
+  reg->ILR = ILR_RTCCIF | ILR_RTCALF;
   reg->AMR = AMR_MASK;
-  reg->ILR = 0;
+
+  reg->CIIR = CIIR_MASK;
+  while ((reg->CIIR & CIIR_MASK) != CIIR_MASK);
 
   irqSetPriority(clock->parent.irq, config->priority);
   irqEnable(clock->parent.irq);
@@ -143,7 +143,8 @@ static enum result clkSetTime(void *object, time64_t currentTime)
   rtMakeTime(&dateTime, currentTime);
 
   /* Stop and reset counters */
-  reg->CCR = (reg->CCR & ~CCR_CLKEN) | CCR_CTCRST;
+  reg->CCR = CCR_CTCRST | CCR_CCALEN;
+  while ((reg->CCR & (CCR_CTCRST | CCR_CCALEN)) != (CCR_CTCRST | CCR_CCALEN));
 
   reg->SEC = dateTime.second; /* Seconds in the range of 0 to 59 */
   reg->MIN = dateTime.minute; /* Minutes in the range of 0 to 59 */
@@ -157,7 +158,8 @@ static enum result clkSetTime(void *object, time64_t currentTime)
   reg->DOY = 0; /* Day of year in the range of 0 to 366 */
 
   /* Enable clock */
-  reg->CCR = (reg->CCR & ~CCR_CTCRST) | CCR_CLKEN;
+  reg->CCR = CCR_CLKEN | CCR_CCALEN;
+  while ((reg->CCR & (CCR_CLKEN | CCR_CCALEN)) != (CCR_CLKEN | CCR_CCALEN));
 
   return E_OK;
 }

@@ -398,7 +398,8 @@ static enum result mainClockEnable(const void *clockBase
     LPC_SC->PLL0FEED = PLLFEED_SECOND;
 
     /* Wait for enable and connect */
-    while (!(LPC_SC->PLL0STAT & (PLL0STAT_ENABLED | PLL0STAT_CONNECTED)));
+    const uint32_t mask = PLL0STAT_ENABLED | PLL0STAT_CONNECTED;
+    while ((LPC_SC->PLL0STAT & mask) != mask);
   }
 
   const uint32_t frequency = mainClockFrequency(MainClock);
@@ -457,7 +458,8 @@ static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
       LPC_SC->PLL1FEED = PLLFEED_SECOND;
 
       /* Wait for enable and connect */
-      while (!(LPC_SC->PLL1STAT & (PLL1STAT_ENABLED | PLL1STAT_CONNECTED)));
+      const uint32_t mask = PLL1STAT_ENABLED | PLL1STAT_CONNECTED;
+      while ((LPC_SC->PLL1STAT & mask) != mask);
 
       break;
     }
