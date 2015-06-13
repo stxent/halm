@@ -1028,6 +1028,16 @@ typedef struct
     };
   };
 } LPC_RGU_Type;
+/*------------------Serial Peripheral Interface-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR;
+  __ro__ uint32_t SR;
+  __rw__ uint32_t DR;
+  __rw__ uint32_t CCR;
+  __ne__ uint32_t RESERVED[3];
+  __rw__ uint32_t INT;
+} LPC_SPI_Type;
 /*------------------Timer/Counter---------------------------------------------*/
 typedef struct
 {
@@ -1328,53 +1338,59 @@ typedef struct
 //  __rw__ uint32_t RICTRL;
 //  __rw__ uint32_t RICOUNTER;
 //} LPC_RIT_Type;
-///*------------------Real-Time Clock-------------------------------------------*/
-//typedef struct
-//{
-//  /* Miscellaneous registers, offset 0x00 */
-//  __rw__ uint32_t ILR;
-//  __ne__ uint32_t RESERVED0;
-//  __rw__ uint32_t CCR;
-//  __rw__ uint32_t CIIR;
-//  __rw__ uint32_t AMR;
-//
-//  /* Consolidated time registers, offset 0x14 */
-//  __ro__ uint32_t CTIME0;
-//  __ro__ uint32_t CTIME1;
-//  __ro__ uint32_t CTIME2;
-//
-//  /* Time counter registers, offset 0x20 */
-//  __rw__ uint32_t SEC;
-//  __rw__ uint32_t MIN;
-//  __rw__ uint32_t HOUR;
-//  __rw__ uint32_t DOM;
-//  __rw__ uint32_t DOW;
-//  __rw__ uint32_t DOY;
-//  __rw__ uint32_t MONTH;
-//  __rw__ uint32_t YEAR;
-//  __rw__ uint32_t CALIBRATION;
-//
-//  /* General purpose registers, offset 0x44 */
-//  __rw__ uint32_t GPREG0;
-//  __rw__ uint32_t GPREG1;
-//  __rw__ uint32_t GPREG2;
-//  __rw__ uint32_t GPREG3;
-//  __rw__ uint32_t GPREG4;
-//
-//  /* Miscellaneous registers, offset 0x5C */
-//  __rw__ uint32_t RTC_AUXEN;
-//  __rw__ uint32_t RTC_AUX;
-//
-//  /* Alarm register group, offset 0x60 */
-//  __rw__ uint32_t ALSEC;
-//  __rw__ uint32_t ALMIN;
-//  __rw__ uint32_t ALHOUR;
-//  __rw__ uint32_t ALDOM;
-//  __rw__ uint32_t ALDOW;
-//  __rw__ uint32_t ALDOY;
-//  __rw__ uint32_t ALMON;
-//  __rw__ uint32_t ALYEAR;
-//} LPC_RTC_Type;
+/*------------------Alarm Timer-----------------------------------------------*/
+typedef struct
+{
+  /* Offset 0x000 */
+  __rw__ uint32_t DOWNCOUNTER;
+  __rw__ uint32_t PRESET;
+  __ne__ uint32_t RESERVED[1012];
+
+  /* Offset 0xFD8 */
+  __wo__ uint32_t CLR_EN;
+  __wo__ uint32_t SET_EN;
+  __ro__ uint32_t STATUS;
+  __ro__ uint32_t ENABLE;
+  __wo__ uint32_t CLR_STAT;
+  __wo__ uint32_t SET_STAT;
+} LPC_ATIMER_Type;
+/*------------------Real-Time Clock-------------------------------------------*/
+typedef struct
+{
+  /* Miscellaneous registers, offset 0x00 */
+  __rw__ uint32_t ILR;
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t CCR;
+  __rw__ uint32_t CIIR;
+  __rw__ uint32_t AMR;
+
+  /* Consolidated time registers, offset 0x14 */
+  __ro__ uint32_t CTIME0;
+  __ro__ uint32_t CTIME1;
+  __ro__ uint32_t CTIME2;
+
+  /* Time counter registers, offset 0x20 */
+  __rw__ uint32_t SEC;
+  __rw__ uint32_t MIN;
+  __rw__ uint32_t HOUR;
+  __rw__ uint32_t DOM;
+  __rw__ uint32_t DOW;
+  __rw__ uint32_t DOY;
+  __rw__ uint32_t MONTH;
+  __rw__ uint32_t YEAR;
+  __rw__ uint32_t CALIBRATION;
+  __ne__ uint32_t RESERVED1[7];
+
+  /* Alarm register group, offset 0x60 */
+  __rw__ uint32_t ALSEC;
+  __rw__ uint32_t ALMIN;
+  __rw__ uint32_t ALHOUR;
+  __rw__ uint32_t ALDOM;
+  __rw__ uint32_t ALDOW;
+  __rw__ uint32_t ALDOY;
+  __rw__ uint32_t ALMON;
+  __rw__ uint32_t ALYEAR;
+} LPC_RTC_Type;
 ///*------------------Digital-to-Analog Converter-------------------------------*/
 //typedef struct
 //{
@@ -1870,7 +1886,7 @@ typedef struct
 /*----------------------------------------------------------------------------*/
 /* Peripheral declaration */
 #define LPC_GPIO          ((LPC_GPIO_Type *)LPC_GPIO_BASE)
-//#define LPC_SPI           ((LPC_SPI_Type *)LPC_SPI_BASE)
+#define LPC_SPI           ((LPC_SPI_Type *)LPC_SPI_BASE)
 //#define LPC_SGPIO         ((LPC_SGPIO_Type *)LPC_SGPIO_BASE)
 
 #define LPC_SCT           ((LPC_SCT_Type *)LPC_SCT_BASE)
@@ -1925,13 +1941,13 @@ typedef struct
 #define LPC_ADC0          ((LPC_ADC_Type *)LPC_ADC0_BASE)
 #define LPC_ADC1          ((LPC_ADC_Type *)LPC_ADC1_BASE)
 
-//#define LPC_ATIMER        ((LPC_ATIMER_Type *)LPC_ATIMER_BASE)
+#define LPC_ATIMER        ((LPC_ATIMER_Type *)LPC_ATIMER_BASE)
 //#define LPC_BACKUP        ((LPC_BACKUP_Type *)LPC_BACKUP_BASE)
 #define LPC_PMC           ((LPC_PMC_Type *)LPC_PMC_BASE)
 #define LPC_CREG          ((LPC_CREG_Type *)LPC_CREG_BASE)
 //#define LPC_EVENTROUTER   ((LPC_EVENTROUTER_Type *)LPC_EVENTROUTER_BASE)
 //#define LPC_OTP           ((LPC_OTP_Type *)LPC_OTP_BASE)
-//#define LPC_RTC           ((LPC_RTC_Type *)LPC_RTC_BASE)
+#define LPC_RTC           ((LPC_RTC_Type *)LPC_RTC_BASE)
 
 #define LPC_CGU           ((LPC_CGU_Type *)LPC_CGU_BASE)
 #define LPC_CCU1          ((LPC_CCU1_Type *)LPC_CCU1_BASE)

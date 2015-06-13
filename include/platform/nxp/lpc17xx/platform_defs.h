@@ -141,6 +141,16 @@ typedef struct
   };
 
 } LPC_GPIO_INT_Type;
+/*------------------Serial Peripheral Interface-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR;
+  __ro__ uint32_t SR;
+  __rw__ uint32_t DR;
+  __rw__ uint32_t CCR;
+  __ne__ uint32_t RESERVED[3];
+  __rw__ uint32_t INT;
+} LPC_SPI_Type;
 /*------------------Timer/Counter---------------------------------------------*/
 typedef struct
 {
