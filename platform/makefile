@@ -14,6 +14,7 @@ CSOURCES += platform/pin.c
 CSOURCES += platform/$(PLATFORM_TYPE)/startup.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/clocking.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pin.c
+CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/startup.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/system.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/vectors.c
 

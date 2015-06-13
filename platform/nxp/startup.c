@@ -10,11 +10,8 @@ extern unsigned long _edata;
 extern unsigned long _bss;
 extern unsigned long _ebss;
 /*----------------------------------------------------------------------------*/
-#ifdef __REDLIB__
-extern int __main(void); /* Redlib */
-#else
-extern int main(void); /* Newlib */
-#endif
+extern int main(void);
+extern int platformStartup(void);
 /*----------------------------------------------------------------------------*/
 void RESET_ISR(void)
 {
@@ -33,11 +30,8 @@ void RESET_ISR(void)
   __libc_init_array(); /* Call C++ library initialization */
 #endif
 
-#ifdef __REDLIB__
-  __main();
-#else
+  platformStartup();
   main();
-#endif
 
 #if defined(__cplusplus)
   __libc_fini_array();

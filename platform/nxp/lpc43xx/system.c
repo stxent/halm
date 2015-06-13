@@ -19,17 +19,15 @@ void sysClockEnable(enum sysClockBranch branch)
 {
   volatile uint32_t *reg = calcBranchReg(branch);
 
-  *reg = (*reg & ~CFG_AUTO) | CFG_RUN;
+  *reg |= CFG_RUN | CFG_AUTO | CFG_WAKEUP;
 }
 /*----------------------------------------------------------------------------*/
 void sysClockDisable(enum sysClockBranch branch)
 {
   volatile uint32_t *reg = calcBranchReg(branch);
 
-  *reg |= CFG_AUTO; /* Initiate clock disable process */
+  *reg |= CFG_AUTO; /* Initiate the AHB disable protocol */
   *reg &= ~CFG_RUN; /* Disable clock */
-  /* TODO Check whether bit clearing necessary */
-  *reg &= ~CFG_AUTO;
 }
 /*----------------------------------------------------------------------------*/
 void sysFlashEnable(uint8_t bank)

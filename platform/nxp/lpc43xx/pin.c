@@ -381,8 +381,7 @@ static inline void pinHandlerAttach(void)
 
   if (!pinHandler->instances++)
   {
-    sysClockEnable(CLK_M4_GPIO);
-
+    /* CLK_M4_SCU and CLK_M4_GPIO are enabled by default */
     sysResetEnable(RST_SCU);
     sysResetEnable(RST_GPIO);
   }
@@ -393,13 +392,7 @@ static inline void pinHandlerAttach(void)
 static inline void pinHandlerDetach(void)
 {
   spinLock(&spinlock);
-
-  /* Disable clocks when no active pins exist */
-  if (!--pinHandler->instances)
-  {
-    sysClockDisable(CLK_M4_GPIO);
-  }
-
+  --pinHandler->instances;
   spinUnlock(&spinlock);
 }
 /*----------------------------------------------------------------------------*/
