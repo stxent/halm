@@ -45,7 +45,27 @@
 #define USBCtrl_LOG_ENDPOINT(value)     BIT_FIELD((value), 2)
 #define USBCtrl_LOG_ENDPOINT_VALUE(reg) \
     FIELD_VALUE((reg), USBCtrl_LOG_ENDPOINT_MASK, 2)
+/*------------------USB Command Code register---------------------------------*/
+#define USBCmdCode_CMD_PHASE_MASK       BIT_FIELD(MASK(8), 8)
+#define USBCmdCode_CMD_PHASE(value)     BIT_FIELD((value), 8)
+#define USBCmdCode_CMD_PHASE_VALUE(reg) \
+    FIELD_VALUE((reg), USBCmdCode_CMD_PHASE_MASK, 8)
+#define USBCmdCode_CMD_CODE_MASK       BIT_FIELD(MASK(8), 16)
+#define USBCmdCode_CMD_CODE(value)     BIT_FIELD((value), 16)
+#define USBCmdCode_CMD_CODE_VALUE(reg) \
+    FIELD_VALUE((reg), USBCmdCode_CMD_CODE_MASK, 16)
+#define USBCmdCode_CMD_WDATA_MASK      USBCmdCode_CMD_CODE_MASK
+#define USBCmdCode_CMD_WDATA(value)    USBCmdCode_CMD_CODE(value)
+#define USBCmdCode_CMD_WDATA_VALUE(reg) \
+    USBCmdCode_CMD_CODE_VALUE(reg)
 /*----------------------------------------------------------------------------*/
+enum usbCommandPhase
+{
+  USB_CMD_PHASE_WRITE   = 0x01,
+  USB_CMD_PHASE_READ    = 0x02,
+  USB_CMD_PHASE_COMMAND = 0x05
+};
+
 enum usbCommand
 {
   /* Device commands */

@@ -56,6 +56,11 @@ config CORE_CORTEX_SYSTICK
 	help
 	  This is the driver for the System Timer peripheral.
 
+config USB
+	bool "USB support"
+	help
+	  This enables support for Universal Serial Bus.
+
 endmenu
 
 menu "Controller peripherals"
@@ -136,6 +141,9 @@ config PLATFORM_NXP_SSP_BASE
 
 config PLATFORM_NXP_UART_BASE
 	bool "UART"
+
+config PLATFORM_NXP_USB
+	bool "USB"
 
 config PLATFORM_NXP_WAKEUP_INTERRUPT
 	bool "Wake-up interrupts"

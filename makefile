@@ -90,6 +90,9 @@ CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 ifeq ($(CONFIG_PM),y)
   CSOURCES += pm/pm.c
 endif
+ifeq ($(CONFIG_USB),y)
+  CSOURCES += usb/usb.c
+endif
 
 #Modules specific for selected platform
 include core/makefile
