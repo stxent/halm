@@ -37,18 +37,8 @@ enum usbEpStatus
 //  INACK_BO = 0x20  /* Interrupt on NACK for bulk out */
 //};
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const UsbRequest;
-/*----------------------------------------------------------------------------*/
-struct UsbRequestConfig
-{
-  /** Mandatory: maximum packet size. */
-  uint16_t size;
-};
-/*----------------------------------------------------------------------------*/
 struct UsbRequest
 {
-  struct Entity parent;
-
   uint8_t *buffer;
   uint16_t capacity;
   uint16_t length;
@@ -57,6 +47,9 @@ struct UsbRequest
   void (*callback)(struct UsbRequest *, void *);
   void *callbackArgument;
 };
+/*----------------------------------------------------------------------------*/
+enum result usbRequestInit(struct UsbRequest *, uint16_t);
+void usbRequestDeinit(struct UsbRequest *);
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbDeviceClass
@@ -77,17 +70,11 @@ struct UsbEndpointClass
 {
   CLASS_HEADER
 
-  void *(*allocate)(const void *);
-
   enum result (*enqueue)(void *, struct UsbRequest *);
   void (*erase)(void *, const struct UsbRequest *);
-  void (*stall)(void *, bool);
+  void (*setEnabled)(void *, bool);
+  void (*setStalled)(void *, bool);
 };
-/*----------------------------------------------------------------------------*/
-static inline void *usbEpAllocate(const void *endpoint)
-{
-  return ((const struct UsbEndpointClass *)CLASS(endpoint))->allocate(endpoint);
-}
 /*----------------------------------------------------------------------------*/
 static inline enum result usbEpEnqueue(void *endpoint,
     struct UsbRequest *request)
@@ -101,9 +88,16 @@ static inline void usbEpErase(void *endpoint, const struct UsbRequest *request)
   ((const struct UsbEndpointClass *)CLASS(endpoint))->erase(endpoint, request);
 }
 /*----------------------------------------------------------------------------*/
-static inline void usbEpStall(void *endpoint, bool state)
+static inline void usbEpSetEnabled(void *endpoint, bool state)
 {
-  ((const struct UsbEndpointClass *)CLASS(endpoint))->stall(endpoint, state);
+  ((const struct UsbEndpointClass *)CLASS(endpoint))->setEnabled(endpoint,
+      state);
+}
+/*----------------------------------------------------------------------------*/
+static inline void usbEpSetStalled(void *endpoint, bool state)
+{
+  ((const struct UsbEndpointClass *)CLASS(endpoint))->setStalled(endpoint,
+      state);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_H_ */

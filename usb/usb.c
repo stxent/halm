@@ -4,38 +4,24 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <stdlib.h>
 #include <usb/usb.h>
 /*----------------------------------------------------------------------------*/
-static enum result reqInit(void *, const void *);
-static void reqDeinit(void *);
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass reqTable = {
-    .size = sizeof(struct UsbRequest),
-    .init = reqInit,
-    .deinit = reqDeinit
-};
-/*----------------------------------------------------------------------------*/
-const struct EntityClass * const UsbRequest = &reqTable;
-/*----------------------------------------------------------------------------*/
-static enum result reqInit(void *object, const void *configBase)
+enum result usbRequestInit(struct UsbRequest *request, uint16_t size)
 {
-  const struct UsbRequestConfig * const config = configBase;
-  struct UsbRequest * const request = object;
-
-  request->buffer = malloc(config->size);
+  request->buffer = malloc(size);
   if (!request->buffer)
     return E_MEMORY;
 
-  request->capacity = config->size;
+  request->callback = 0;
+  request->capacity = size;
   request->length = 0;
   request->status = 0;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void reqDeinit(void *object)
+void usbRequestDeinit(struct UsbRequest *request)
 {
-  struct UsbRequest * const request = object;
-
   free(request->buffer);
 }

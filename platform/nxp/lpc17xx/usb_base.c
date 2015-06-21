@@ -57,27 +57,27 @@ const struct UsbDeviceClass * const UsbDevice = &usbTable;
 static struct UsbDevice *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbEndpoint *, uint8_t);
-static enum result epSetup(struct UsbDevice *, uint16_t, uint8_t);
+static void epSetup(struct UsbDevice *, uint8_t);
 enum result epReadData(struct UsbEndpoint *, uint8_t *, uint16_t, uint16_t *);
 enum result epWriteData(struct UsbEndpoint *, const uint8_t *, uint16_t,
     uint16_t *);
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *, const void *);
 static void epDeinit(void *);
-static void *epAllocate(const void *);
 static enum result epEnqueue(void *, struct UsbRequest *);
 static void epErase(void *, const struct UsbRequest *);
-static void epStall(void *, bool);
+static void epSetEnabled(void *, bool);
+static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct UsbEndpointClass epTable = {
     .size = sizeof(struct UsbEndpoint),
     .init = epInit,
     .deinit = epDeinit,
 
-    .allocate = epAllocate,
     .enqueue = epEnqueue,
     .erase = epErase,
-    .stall = epStall
+    .setEnabled = epSetEnabled,
+    .setStalled = epSetStalled
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbEndpointClass * const UsbEndpoint = &epTable;
@@ -349,31 +349,14 @@ void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result epSetup(struct UsbDevice *device, uint16_t size,
-    uint8_t address)
+static void epSetup(struct UsbDevice *device, uint8_t address)
 {
   LPC_USB_Type * const reg = device->reg;
-
   const uint8_t index = EP_TO_INDEX(address);
-
-  /* Only control endpoints will be enabled immediately */
-  if (index <= 1)
-  {
-    /* Realize endpoint */
-    reg->USBReEp |= 1 << index;
-    reg->USBEpInd = index;
-    reg->USBMaxPSize = size;
-    waitForInt(device, USBDevIntSt_EP_RLZED);
-
-    /* Enable endpoint */
-    usbCommandWrite(device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
-  }
 
   /* Enable interrupt */
   reg->USBEpIntEn |= 1 << index;
   reg->USBDevIntEn |= USBDevIntSt_EP_SLOW;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
@@ -483,9 +466,13 @@ static enum result epInit(void *object, const void *configBase)
   endpoint->device = device;
   endpoint->size = config->size;
 
-  res = epSetup(device, endpoint->size, endpoint->address);
-  if (res != E_OK)
-    return res;
+  epSetup(device, endpoint->address);
+
+  if (!(endpoint->address & 0x7F)) //TODO Remove magic
+  {
+    /* Enable control endpoint, call function directly */
+    epSetEnabled(endpoint, true);
+  }
 
   listPush(&device->endpoints, &endpoint);
 
@@ -497,16 +484,6 @@ static void epDeinit(void *object)
   const struct UsbEndpoint * const endpoint = object;
 
   //TODO
-}
-/*----------------------------------------------------------------------------*/
-static void *epAllocate(const void *object)
-{
-  const struct UsbEndpoint * const endpoint = object;
-  const struct UsbRequestConfig config = {
-    .size = endpoint->size
-  };
-
-  return init(UsbRequest, &config);
 }
 /*----------------------------------------------------------------------------*/
 static enum result epEnqueue(void *object, struct UsbRequest *request)
@@ -553,9 +530,34 @@ static void epErase(void *object, const struct UsbRequest *request)
 
 }
 /*----------------------------------------------------------------------------*/
-static void epStall(void *object, bool state)
+static void epSetEnabled(void *object, bool state)
 {
+  struct UsbEndpoint * const endpoint = object;
+  const uint8_t index = EP_TO_INDEX(endpoint->address);
 
+  if (state)
+  {
+    LPC_USB_Type * const reg = endpoint->device->reg;
+
+    /* Realize endpoint */
+    reg->USBReEp |= 1 << index;
+    reg->USBEpInd = index;
+    reg->USBMaxPSize = endpoint->size;
+    waitForInt(endpoint->device, USBDevIntSt_EP_RLZED);
+  }
+
+  /* Enable or disable endpoint */
+  usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index,
+      state ? 0 : SET_ENDPOINT_STATUS_DA);
+}
+/*----------------------------------------------------------------------------*/
+static void epSetStalled(void *object, bool state)
+{
+  struct UsbEndpoint * const endpoint = object;
+  const uint8_t index = EP_TO_INDEX(endpoint->address);
+
+  usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index,
+      state ? SELECT_ENDPOINT_ST : 0);
 }
 /*----------------------------------------------------------------------------*/
 void USBHwNakIntEnablex(struct UsbDevice *device, uint8_t bIntBits)
