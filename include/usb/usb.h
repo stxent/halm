@@ -20,22 +20,12 @@ enum usbEpStatus
   EP_STATUS_NACKED  = 0x10  /* EP sent NAK */
 };
 
-//enum usbDevStatus
-//{
-//  DEV_STATUS_CONNECT = 0x01,
-//  DEV_STATUS_SUSPEND = 0x02,
-//  DEV_STATUS_RESET   = 0x04
-//};
-
-//enum usbIntStatus
-//{
-//  INACK_CI = 0x01, /* Interrupt on NACK for control in */
-//  INACK_CO = 0x02, /* Interrupt on NACK for control out */
-//  INACK_II = 0x04, /* Interrupt on NACK for interrupt in */
-//  INACK_IO = 0x08, /* Interrupt on NACK for interrupt out */
-//  INACK_BI = 0x10, /* Interrupt on NACK for bulk in */
-//  INACK_BO = 0x20  /* Interrupt on NACK for bulk out */
-//};
+enum usbDevStatus
+{
+  DEV_STATUS_CONNECT = 0x01,
+  DEV_STATUS_SUSPEND = 0x02,
+  DEV_STATUS_RESET   = 0x04
+};
 /*----------------------------------------------------------------------------*/
 struct UsbRequest
 {
@@ -57,12 +47,30 @@ struct UsbDeviceClass
   CLASS_HEADER
 
   void *(*allocate)(void *, uint16_t, uint8_t);
+  void (*setAddress)(void *, uint8_t);
+  void (*setConfigured)(void *, bool); //FIXME FOXME
+  void (*setConnected)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
-static inline void *usbDevAllocate(void *device, uint16_t size, uint8_t address)
+static inline void *usbDevAllocate(void *dev, uint16_t size, uint8_t address)
 {
-  return ((const struct UsbDeviceClass *)CLASS(device))->allocate(device, size,
+  return ((const struct UsbDeviceClass *)CLASS(dev))->allocate(dev, size,
       address);
+}
+/*----------------------------------------------------------------------------*/
+static inline void usbDevSetAddress(void *dev, uint8_t address)
+{
+  ((const struct UsbDeviceClass *)CLASS(dev))->setAddress(dev, address);
+}
+/*----------------------------------------------------------------------------*/
+static inline void usbDevSetConfigured(void *dev, bool state)
+{
+  ((const struct UsbDeviceClass *)CLASS(dev))->setConfigured(dev, state);
+}
+/*----------------------------------------------------------------------------*/
+static inline void usbDevSetConnected(void *dev, bool state)
+{
+  ((const struct UsbDeviceClass *)CLASS(dev))->setConnected(dev, state);
 }
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
@@ -72,32 +80,34 @@ struct UsbEndpointClass
 
   enum result (*enqueue)(void *, struct UsbRequest *);
   void (*erase)(void *, const struct UsbRequest *);
+  uint8_t (*getStatus)(void *);
   void (*setEnabled)(void *, bool);
   void (*setStalled)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
-static inline enum result usbEpEnqueue(void *endpoint,
-    struct UsbRequest *request)
+static inline enum result usbEpEnqueue(void *ep, struct UsbRequest *request)
 {
-  return ((const struct UsbEndpointClass *)CLASS(endpoint))->enqueue(endpoint,
-      request);
+  return ((const struct UsbEndpointClass *)CLASS(ep))->enqueue(ep, request);
 }
 /*----------------------------------------------------------------------------*/
-static inline void usbEpErase(void *endpoint, const struct UsbRequest *request)
+static inline void usbEpErase(void *ep, const struct UsbRequest *request)
 {
-  ((const struct UsbEndpointClass *)CLASS(endpoint))->erase(endpoint, request);
+  ((const struct UsbEndpointClass *)CLASS(ep))->erase(ep, request);
 }
 /*----------------------------------------------------------------------------*/
-static inline void usbEpSetEnabled(void *endpoint, bool state)
+static inline uint8_t usbEpGetStatus(void *ep)
 {
-  ((const struct UsbEndpointClass *)CLASS(endpoint))->setEnabled(endpoint,
-      state);
+  return ((const struct UsbEndpointClass *)CLASS(ep))->getStatus(ep);
 }
 /*----------------------------------------------------------------------------*/
-static inline void usbEpSetStalled(void *endpoint, bool state)
+static inline void usbEpSetEnabled(void *ep, bool state)
 {
-  ((const struct UsbEndpointClass *)CLASS(endpoint))->setStalled(endpoint,
-      state);
+  ((const struct UsbEndpointClass *)CLASS(ep))->setEnabled(ep, state);
+}
+/*----------------------------------------------------------------------------*/
+static inline void usbEpSetStalled(void *ep, bool state)
+{
+  ((const struct UsbEndpointClass *)CLASS(ep))->setStalled(ep, state);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_H_ */

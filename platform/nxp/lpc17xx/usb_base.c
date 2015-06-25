@@ -16,22 +16,30 @@
 /*----------------------------------------------------------------------------*/
 static enum result configPins(struct UsbDevice *,
     const struct UsbDeviceConfig *);
+static void interruptHandler(void *);
 static enum result setDescriptor(uint8_t, const struct UsbDevice *,
     struct UsbDevice *);
 static void usbCommand(struct UsbDevice *, uint8_t);
+static uint8_t usbCommandRead(struct UsbDevice *, uint8_t);
 static void usbCommandWrite(struct UsbDevice *, uint8_t, uint16_t);
 static void waitForInt(struct UsbDevice *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result usbInit(void *, const void *);
-static void usbDeinit(void *);
-static void *usbAllocate(void *, uint16_t, uint8_t);
+static enum result devInit(void *, const void *);
+static void devDeinit(void *);
+static void *devAllocate(void *, uint16_t, uint8_t);
+static void devSetAddress(void *, uint8_t);
+static void devSetConfigured(void *, bool);
+static void devSetConnected(void *, bool);
 /*----------------------------------------------------------------------------*/
-static const struct UsbDeviceClass usbTable = {
+static const struct UsbDeviceClass devTable = {
     .size = sizeof(struct UsbDevice),
-    .init = usbInit,
-    .deinit = usbDeinit,
+    .init = devInit,
+    .deinit = devDeinit,
 
-    .allocate = usbAllocate
+    .allocate = devAllocate,
+    .setAddress = devSetAddress,
+    .setConfigured = devSetConfigured,
+    .setConnected = devSetConnected
 };
 /*----------------------------------------------------------------------------*/
 // TODO Other USB pins
@@ -53,7 +61,7 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct UsbDeviceClass * const UsbDevice = &usbTable;
+const struct UsbDeviceClass * const UsbDevice = &devTable;
 static struct UsbDevice *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbEndpoint *, uint8_t);
@@ -66,6 +74,7 @@ static enum result epInit(void *, const void *);
 static void epDeinit(void *);
 static enum result epEnqueue(void *, struct UsbRequest *);
 static void epErase(void *, const struct UsbRequest *);
+static uint8_t epGetStatus(void *);
 static void epSetEnabled(void *, bool);
 static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
@@ -76,6 +85,7 @@ static const struct UsbEndpointClass epTable = {
 
     .enqueue = epEnqueue,
     .erase = epErase,
+    .getStatus = epGetStatus,
     .setEnabled = epSetEnabled,
     .setStalled = epSetStalled
 };
@@ -106,68 +116,42 @@ static enum result configPins(struct UsbDevice *device,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct UsbDevice *state, struct UsbDevice *device)
-{
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      device) ? E_OK : E_BUSY;
-}
-/*----------------------------------------------------------------------------*/
-static void usbCommand(struct UsbDevice *device, uint8_t command)
-{
-  LPC_USB_Type * const reg = device->reg;
-
-  /* Clear CDFULL and CCEMPTY */
-  reg->USBDevIntClr = USBDevIntSt_CDFULL | USBDevIntSt_CCEMPTY;
-
-  /* Write command code */
-  reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_COMMAND)
-      | USBCmdCode_CMD_CODE(command);
-
-  waitForInt(device, USBDevIntSt_CCEMPTY);
-}
-/*----------------------------------------------------------------------------*/
-static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
-    uint16_t data)
-{
-  LPC_USB_Type * const reg = device->reg;
-
-  /* Write command code */
-  usbCommand(device, command);
-
-  /* Write command data */
-  reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_WRITE)
-      | USBCmdCode_CMD_WDATA(data);
-
-  waitForInt(device, USBDevIntSt_CCEMPTY);
-}
-/*----------------------------------------------------------------------------*/
-static void waitForInt(struct UsbDevice *device, uint32_t mask)
-{
-  LPC_USB_Type * const reg = device->reg;
-
-  /* Wait for specific interrupt */
-  while ((reg->USBDevIntSt & mask) != mask);
-  /* Clear pending interrupt flags */
-  reg->USBDevIntClr = mask;
-}
-/*----------------------------------------------------------------------------*/
-//FIXME
-bool uhan(void *object)
+static void interruptHandler(void *object)
 {
   struct UsbDevice * const device = object;
   LPC_USB_Type * const reg = device->reg;
   const uint32_t intStatus = reg->USBDevIntSt;
 
-  // Endpoint interrupt
+  /* Device status interrupt */
+  if (intStatus & USBDevIntSt_DEV_STAT)
+  {
+    reg->USBDevIntClr = USBDevIntSt_DEV_STAT;
+
+    const uint8_t devStatus = usbCommandRead(device,
+        USB_CMD_GET_DEVICE_STATUS);
+
+    if (devStatus & (DEVICE_STATUS_CON_CH
+        | DEVICE_STATUS_SUS_CH | DEVICE_STATUS_RST))
+    {
+      uint8_t status = 0;
+
+      if (devStatus & DEVICE_STATUS_CON)
+        status |= DEV_STATUS_CONNECT;
+      if (devStatus & DEVICE_STATUS_SUS)
+        status |= DEV_STATUS_SUSPEND;
+      if (devStatus & DEVICE_STATUS_RST)
+        status |= DEV_STATUS_RESET;
+
+      /* TODO Call handler */
+    }
+  }
+
+  /* Endpoint interrupt */
   if (intStatus & USBDevIntSt_EP_SLOW)
   {
-    // Clear EP_SLOW
     reg->USBDevIntClr = USBDevIntSt_EP_SLOW;
 
-    // Check registered endpoints
+    /* Check registered endpoints */
     const struct ListNode *current = listFirst(&device->endpoints);
     struct UsbEndpoint *endpoint;
 
@@ -201,19 +185,79 @@ bool uhan(void *object)
       }
       current = listNext(current);
     }
-    return true;
   }
-  else
-    return false;
+}
+/*----------------------------------------------------------------------------*/
+static enum result setDescriptor(uint8_t channel,
+    const struct UsbDevice *state, struct UsbDevice *device)
+{
+  assert(channel < ARRAY_SIZE(descriptors));
+
+  return compareExchangePointer((void **)(descriptors + channel), state,
+      device) ? E_OK : E_BUSY;
+}
+/*----------------------------------------------------------------------------*/
+static void usbCommand(struct UsbDevice *device, uint8_t command)
+{
+  LPC_USB_Type * const reg = device->reg;
+
+  /* Clear CDFULL and CCEMPTY */
+  reg->USBDevIntClr = USBDevIntSt_CDFULL | USBDevIntSt_CCEMPTY;
+
+  /* Write command code */
+  reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_COMMAND)
+      | USBCmdCode_CMD_CODE(command);
+
+  waitForInt(device, USBDevIntSt_CCEMPTY);
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t usbCommandRead(struct UsbDevice *device, uint8_t command)
+{
+  LPC_USB_Type * const reg = device->reg;
+
+  /* Write command code */
+  usbCommand(device, command);
+
+  /* Read data */
+  reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_READ)
+      | USBCmdCode_CMD_CODE(command);
+
+  waitForInt(device, USBDevIntSt_CDFULL);
+
+  return (uint8_t)reg->USBCmdData;
+}
+/*----------------------------------------------------------------------------*/
+static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
+    uint16_t data)
+{
+  LPC_USB_Type * const reg = device->reg;
+
+  /* Write command code */
+  usbCommand(device, command);
+
+  /* Write data */
+  reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_WRITE)
+      | USBCmdCode_CMD_WDATA(data);
+
+  waitForInt(device, USBDevIntSt_CCEMPTY);
+}
+/*----------------------------------------------------------------------------*/
+static void waitForInt(struct UsbDevice *device, uint32_t mask)
+{
+  LPC_USB_Type * const reg = device->reg;
+
+  /* Wait for specific interrupt */
+  while ((reg->USBDevIntSt & mask) != mask);
+  /* Clear pending interrupt flags */
+  reg->USBDevIntClr = mask;
 }
 /*----------------------------------------------------------------------------*/
 void USB_ISR(void)
 {
   descriptors[0]->handler(descriptors[0]);
-  uhan(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-static enum result usbInit(void *object, const void *configBase)
+static enum result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
   struct UsbDevice * const device = object;
@@ -236,7 +280,7 @@ static enum result usbInit(void *object, const void *configBase)
 
   sysPowerEnable(PWR_USB);
 
-  device->handler = 0;
+  device->handler = interruptHandler;
   device->irq = USB_IRQ;
   device->reg = LPC_USB;
 
@@ -257,12 +301,15 @@ static enum result usbInit(void *object, const void *configBase)
   reg->USBEpIntClr = 0xFFFFFFFF;
   reg->USBEpIntPri = 0;
 
+  /* By default, only ACKs generate interrupts */
+  usbCommandWrite(device, USB_CMD_SET_MODE, 0);
+
   irqEnable(device->irq); //FIXME
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void usbDeinit(void *object)
+static void devDeinit(void *object)
 {
   const struct UsbDevice * const device = object;
 
@@ -270,15 +317,33 @@ static void usbDeinit(void *object)
   setDescriptor(device->channel, device, 0);
 }
 /*----------------------------------------------------------------------------*/
-static void *usbAllocate(void *device, uint16_t size, uint8_t address)
+static void *devAllocate(void *object, uint16_t size, uint8_t address)
 {
   const struct UsbEndpointConfig config = {
-    .parent = device,
+    .parent = object,
     .size = size,
     .address = address
   };
 
   return init(UsbEndpoint, &config);
+}
+/*----------------------------------------------------------------------------*/
+static inline void devSetAddress(void *object, uint8_t address)
+{
+  usbCommandWrite(object, USB_CMD_SET_ADDRESS,
+      SET_ADDRESS_DEV_EN | SET_ADDRESS_DEV_ADDR(address));
+}
+/*----------------------------------------------------------------------------*/
+static inline void devSetConfigured(void *object, bool state)
+{
+  usbCommandWrite(object, USB_CMD_CONFIGURE_DEVICE,
+      state ? CONFIGURE_DEVICE_CONF_DEVICE : 0);
+}
+/*----------------------------------------------------------------------------*/
+static inline void devSetConnected(void *object, bool state)
+{
+  usbCommandWrite(object, USB_CMD_SET_DEVICE_STATUS,
+      state ? DEVICE_STATUS_CON : 0);
 }
 /*----------------------------------------------------------------------------*/
 void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
@@ -528,6 +593,14 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 static void epErase(void *object, const struct UsbRequest *request)
 {
 
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t epGetStatus(void *object)
+{
+  struct UsbEndpoint * const endpoint = object;
+  const uint8_t index = EP_TO_INDEX(endpoint->address);
+
+  return usbCommandRead(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
 }
 /*----------------------------------------------------------------------------*/
 static void epSetEnabled(void *object, bool state)
