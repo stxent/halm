@@ -92,6 +92,7 @@ ifeq ($(CONFIG_PM),y)
 endif
 ifeq ($(CONFIG_USB),y)
   CSOURCES += usb/usb.c
+  CSOURCES += usb/usb_device.c
 endif
 
 #Modules specific for selected platform

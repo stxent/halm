@@ -47,8 +47,9 @@ struct UsbDeviceClass
   CLASS_HEADER
 
   void *(*allocate)(void *, uint16_t, uint8_t);
+  enum result (*bind)(void *, void *);
   void (*setAddress)(void *, uint8_t);
-  void (*setConfigured)(void *, bool); //FIXME FOXME
+  void (*setConfigured)(void *, bool);
   void (*setConnected)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
@@ -56,6 +57,11 @@ static inline void *usbDevAllocate(void *dev, uint16_t size, uint8_t address)
 {
   return ((const struct UsbDeviceClass *)CLASS(dev))->allocate(dev, size,
       address);
+}
+/*----------------------------------------------------------------------------*/
+static inline enum result usbDevBind(void *dev, void *driver)
+{
+  return ((const struct UsbDeviceClass *)CLASS(dev))->bind(dev, driver);
 }
 /*----------------------------------------------------------------------------*/
 static inline void usbDevSetAddress(void *dev, uint8_t address)
@@ -108,6 +114,34 @@ static inline void usbEpSetEnabled(void *ep, bool state)
 static inline void usbEpSetStalled(void *ep, bool state)
 {
   ((const struct UsbEndpointClass *)CLASS(ep))->setStalled(ep, state);
+}
+/*----------------------------------------------------------------------------*/
+/* Class descriptor */
+struct UsbDriverClass
+{
+  CLASS_HEADER
+
+  enum result (*configure)(void *, const struct UsbRequest *, uint8_t *,
+      uint16_t *);
+  void (*disconnect)(void *);
+  void (*setSuspended)(void *, bool);
+};
+/*----------------------------------------------------------------------------*/
+static inline enum result usbDriverConfigure(void *driver,
+    struct UsbRequest *request, uint8_t *reply, uint16_t *length)
+{
+  return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
+      request, reply, length);
+}
+/*----------------------------------------------------------------------------*/
+static inline void usbDriverDisconnect(void *driver)
+{
+  ((const struct UsbDriverClass *)CLASS(driver))->disconnect(driver);
+}
+/*----------------------------------------------------------------------------*/
+static inline void usbDriverSetSuspended(void *driver, bool state)
+{
+  ((const struct UsbDriverClass *)CLASS(driver))->setSuspended(driver, state);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_H_ */

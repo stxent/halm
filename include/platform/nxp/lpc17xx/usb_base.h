@@ -12,22 +12,23 @@
 #include <pin.h>
 #include <containers/list.h>
 #include <containers/queue.h>
+#include <usb/usb.h>
 /*----------------------------------------------------------------------------*/
-extern const struct UsbDeviceClass * const UsbDevice;
+extern const struct UsbDeviceClass * const UsbDeviceBase;
 /*----------------------------------------------------------------------------*/
-struct UsbDeviceConfig
+struct UsbDeviceBaseConfig
 {
   /** Mandatory: USB bidirectional D- line. */
   pin_t dm;
   /** Mandatory: USB bidirectional D+ line. */
   pin_t dp;
-  /** Mandatory: USB bidirectional D+ line. */
-  pin_t usbConnect;
+  /** Mandatory: output pin used for soft connect feature. */
+  pin_t connect;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct UsbDevice
+struct UsbDeviceBase
 {
   struct Entity parent;
 
@@ -47,7 +48,7 @@ extern const struct UsbEndpointClass * const UsbEndpoint;
 struct UsbEndpointConfig
 {
   /** Mandatory: hardware device. */
-  struct UsbDevice *parent;
+  struct UsbDeviceBase *parent;
   /** Mandatory: maximum packet size. */
   uint16_t size;
   /** Mandatory: logical address of the endpoint. */
@@ -59,7 +60,7 @@ struct UsbEndpoint
   struct Entity parent;
 
   /* Parent device */
-  struct UsbDevice *device;
+  struct UsbDeviceBase *device;
   /* Pending requests */
   struct Queue requests;
   /* Maximum packet size */
