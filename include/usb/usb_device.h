@@ -12,6 +12,11 @@
 #include <usb/requests.h>
 #include <usb/usb.h>
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/usb_device_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
+/*----------------------------------------------------------------------------*/
 extern const struct UsbDeviceClass * const UsbDevice;
 /*----------------------------------------------------------------------------*/
 struct UsbDeviceConfig

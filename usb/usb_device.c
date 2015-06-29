@@ -9,7 +9,6 @@
 #include <string.h>
 #include <memory.h>
 #include <usb/usb_device.h>
-#include <platform/nxp/lpc17xx/usb_base.h> //FIXME
 /*----------------------------------------------------------------------------*/
 #define EP0_BUFFER_SIZE 64
 #define REQUEST_COUNT   4
