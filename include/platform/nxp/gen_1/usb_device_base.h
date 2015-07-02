@@ -62,7 +62,7 @@ struct UsbEndpoint
   /* Logical address */
   uint8_t address;
   /* Busy flag */
-  bool busy; // TODO Replace with spinlock
+  bool busy;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GEN_1_USB_DEVICE_BASE_H_ */

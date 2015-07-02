@@ -44,7 +44,7 @@ struct UsbDevice
 
   struct UsbSetupPacket setupPacket;
   uint8_t *buffer;
-  uint16_t dataLength;
+  uint16_t left;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_DEVICE_H_ */

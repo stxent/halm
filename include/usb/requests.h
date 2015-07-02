@@ -7,6 +7,9 @@
 #ifndef USB_REQUESTS_H_
 #define USB_REQUESTS_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
+#include <bits.h>
+/*----------------------------------------------------------------------------*/
 struct UsbSetupPacket
 {
   uint8_t requestType; /* Characteristics of the specific request */
@@ -14,57 +17,78 @@ struct UsbSetupPacket
   uint16_t value;      /* Request specific parameter */
   uint16_t index;      /* Request specific parameter */
   uint16_t length;     /* Length of data transfered in data phase */
+} __attribute__((packed));
+/*----------------------------------------------------------------------------*/
+enum requestDirection
+{
+  REQUEST_DIRECTION_TO_DEVICE = 0,
+  REQUEST_DIRECTION_TO_HOST   = 1
 };
 
-#define REQTYPE_GET_DIR(x)    (((x)>>7)&0x01)
-#define REQTYPE_GET_TYPE(x)   (((x)>>5)&0x03)
-#define REQTYPE_GET_RECIP(x)  ((x)&0x1F)
+enum requestType
+{
+  REQUEST_TYPE_STANDARD = 0,
+  REQUEST_TYPE_CLASS    = 1,
+  REQUEST_TYPE_VENDOR   = 2,
+  REQUEST_TYPE_RESERVED = 3
+};
 
-#define REQTYPE_DIR_TO_DEVICE 0
-#define REQTYPE_DIR_TO_HOST   1
+enum requestRecipient
+{
+  REQUEST_RECIPIENT_DEVICE    = 0,
+  REQUEST_RECIPIENT_INTERFACE = 1,
+  REQUEST_RECIPIENT_ENDPOINT  = 2,
+  REQUEST_RECIPIENT_OTHER     = 3
+};
+/*----------------------------------------------------------------------------*/
+#define REQUEST_DIRECTION_MASK          BIT_FIELD(MASK(1), 7)
+#define REQUEST_DIRECTION_VALUE(reg) \
+    FIELD_VALUE((reg), REQUEST_DIRECTION_MASK, 7)
+#define REQUEST_TYPE_MASK               BIT_FIELD(MASK(2), 5)
+#define REQUEST_TYPE_VALUE(reg) \
+    FIELD_VALUE((reg), REQUEST_TYPE_MASK, 5)
+#define REQUEST_RECIPIENT_MASK          BIT_FIELD(MASK(5), 0)
+#define REQUEST_RECIPIENT_VALUE(reg) \
+    FIELD_VALUE((reg), REQUEST_RECIPIENT_MASK, 0)
+/*----------------------------------------------------------------------------*/
+enum standardRequest
+{
+  REQUEST_GET_STATUS        = 0x00,
+  REQUEST_CLEAR_FEATURE     = 0x01,
+  REQUEST_SET_FEATURE       = 0x03,
+  REQUEST_SET_ADDRESS       = 0x05,
+  REQUEST_GET_DESCRIPTOR    = 0x06,
+  REQUEST_SET_DESCRIPTOR    = 0x07,
+  REQUEST_GET_CONFIGURATION = 0x08,
+  REQUEST_SET_CONFIGURATION = 0x09,
+  REQUEST_GET_INTERFACE     = 0x0A,
+  REQUEST_SET_INTERFACE     = 0x0B,
+  REQUEST_SYNCH_FRAME       = 0x0C
+};
 
-#define REQTYPE_TYPE_STANDARD 0
-#define REQTYPE_TYPE_CLASS    1
-#define REQTYPE_TYPE_VENDOR   2
-#define REQTYPE_TYPE_RESERVED 3
+enum hidRequest
+{
+  HID_GET_REPORT    = 0x01,
+  HID_GET_IDLE      = 0x02,
+  HID_GET_PROTOCOL  = 0x03,
+  HID_SET_REPORT    = 0x09,
+  HID_SET_IDLE      = 0x0A,
+  HID_SET_PROTOCOL  = 0x0B
+};
 
-#define REQTYPE_RECIP_DEVICE    0
-#define REQTYPE_RECIP_INTERFACE 1
-#define REQTYPE_RECIP_ENDPOINT  2
-#define REQTYPE_RECIP_OTHER     3
-
-/* standard requests */
-#define REQ_GET_STATUS        0x00
-#define REQ_CLEAR_FEATURE     0x01
-#define REQ_SET_FEATURE       0x03
-#define REQ_SET_ADDRESS       0x05
-#define REQ_GET_DESCRIPTOR    0x06
-#define REQ_SET_DESCRIPTOR    0x07
-#define REQ_GET_CONFIGURATION 0x08
-#define REQ_SET_CONFIGURATION 0x09
-#define REQ_GET_INTERFACE     0x0A
-#define REQ_SET_INTERFACE     0x0B
-#define REQ_SYNCH_FRAME       0x0C
-
-/* class requests HID */
-#define HID_GET_REPORT      0x01
-#define HID_GET_IDLE        0x02
-#define HID_GET_PROTOCOL    0x03
-#define HID_SET_REPORT      0x09
-#define HID_SET_IDLE        0x0A
-#define HID_SET_PROTOCOL    0x0B
-
-/* feature selectors */
-#define FEA_ENDPOINT_HALT   0x00
-#define FEA_REMOTE_WAKEUP   0x01
-#define FEA_TEST_MODE       0x02
-
+enum featureSelector
+{
+  FEA_ENDPOINT_HALT = 0x00,
+  FEA_REMOTE_WAKEUP = 0x01,
+  FEA_TEST_MODE     = 0x02
+};
+/*----------------------------------------------------------------------------*/
 struct UsbDescriptorHeader
 {
   uint8_t length;
   uint8_t type;
-};
-
+} __attribute__((packed));
+/*----------------------------------------------------------------------------*/
 #define DESC_DEVICE           1
 #define DESC_CONFIGURATION    2
 #define DESC_STRING           3

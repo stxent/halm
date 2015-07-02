@@ -49,8 +49,8 @@ static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, uint16_t,
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *, const void *);
 static void epDeinit(void *);
+static void epClear(void *);
 static enum result epEnqueue(void *, struct UsbRequest *);
-static void epErase(void *, const struct UsbRequest *);
 static uint8_t epGetStatus(void *);
 static void epSetEnabled(void *, bool);
 static void epSetStalled(void *, bool);
@@ -60,8 +60,8 @@ static const struct UsbEndpointClass epTable = {
     .init = epInit,
     .deinit = epDeinit,
 
+    .clear = epClear,
     .enqueue = epEnqueue,
-    .erase = epErase,
     .getStatus = epGetStatus,
     .setEnabled = epSetEnabled,
     .setStalled = epSetStalled
@@ -297,17 +297,17 @@ static void devSetConnected(void *object, bool state)
 /*----------------------------------------------------------------------------*/
 void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 {
-  enum result res;
+  struct UsbRequest *request = 0;
 
   if (endpoint->address & 0x80)
   {
     /* IN */
     if (!queueEmpty(&endpoint->requests))
     {
-      struct UsbRequest *request;
-
       queuePop(&endpoint->requests, &request);
-      res = epWriteData(endpoint, request->buffer, request->length, 0);
+
+      const enum result res = epWriteData(endpoint, request->buffer,
+          request->length, 0);
 
       if (res != E_OK)
       {
@@ -317,11 +317,8 @@ void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
       }
       else
       {
-        request->status = 0;
+        request->status = 0; //FIXME
       }
-
-      if (request->callback)
-        request->callback(request, request->callbackArgument);
     }
 
     if (queueEmpty(&endpoint->requests))
@@ -334,11 +331,12 @@ void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     /* OUT */
     if (!queueEmpty(&endpoint->requests))
     {
-      struct UsbRequest *request;
       uint16_t read;
 
       queuePop(&endpoint->requests, &request);
-      res = epReadData(endpoint, request->buffer, request->capacity, &read);
+
+      const enum result res = epReadData(endpoint, request->buffer,
+          request->capacity, &read);
 
       if (res != E_OK)
       {
@@ -351,15 +349,19 @@ void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
         request->length = read;
         request->status = status;
       }
-
-      if (request->callback)
-        request->callback(request, request->callbackArgument);
     }
     else
     {
-      // TODO Clear buffer
+      const uint8_t index = EP_TO_INDEX(endpoint->address);
+
+      /* Select endpoint and clear buffer */
+      usbCommand(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
+      usbCommand(endpoint->device, USB_CMD_CLEAR_BUFFER);
     }
   }
+
+  if (request && request->callback)
+    request->callback(request, request->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static void epSetup(struct UsbDeviceBase *device, uint8_t address)
@@ -413,7 +415,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
   /* Clear read enable bit */
   reg->USBCtrl = 0; //FIXME
 
-  // select endpoint and clear buffer
+  /* Select endpoint and clear buffer */
   usbCommand(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
   usbCommand(endpoint->device, USB_CMD_CLEAR_BUFFER);
 
@@ -499,18 +501,33 @@ static void epDeinit(void *object)
   //TODO
 }
 /*----------------------------------------------------------------------------*/
+static void epClear(void *object)
+{
+  struct UsbEndpoint * const endpoint = object;
+  struct UsbRequest *request = 0;
+
+  while (!queueEmpty(&endpoint->requests))
+  {
+    queuePop(&endpoint->requests, &request);
+
+    request->status = EP_STATUS_ERROR; //TODO
+    if (request->callback)
+      request->callback(request, request->callbackArgument);
+  }
+}
+/*----------------------------------------------------------------------------*/
 static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct UsbEndpoint * const endpoint = object;
+  enum result res = E_OK;
 
-  //TODO Check for duplicates
+  irqDisable(endpoint->device->parent.irq);
+
   if ((endpoint->address & 0x80) && !endpoint->busy) //FIXME Magic numbers
   {
-    endpoint->busy = true; //FIXME Spinlock
+    endpoint->busy = true;
 
-    const enum result res = epWriteData(endpoint, request->buffer,
-        request->length, 0);
-
+    res = epWriteData(endpoint, request->buffer, request->length, 0);
     if (res != E_OK)
     {
       request->length = 0;
@@ -525,17 +542,17 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
     if (request->callback)
       request->callback(request, request->callbackArgument);
   }
-  else
+  else if (!queueFull(&endpoint->requests))
   {
     queuePush(&endpoint->requests, &request);
   }
+  else
+  {
+    res = E_FULL;
+  }
 
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void epErase(void *object, const struct UsbRequest *request)
-{
-
+  irqEnable(endpoint->device->parent.irq);
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t epGetStatus(void *object)

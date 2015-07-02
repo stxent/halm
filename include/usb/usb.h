@@ -84,21 +84,21 @@ struct UsbEndpointClass
 {
   CLASS_HEADER
 
+  void (*clear)(void *);
   enum result (*enqueue)(void *, struct UsbRequest *);
-  void (*erase)(void *, const struct UsbRequest *);
   uint8_t (*getStatus)(void *);
   void (*setEnabled)(void *, bool);
   void (*setStalled)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
+static inline void usbEpClear(void *ep)
+{
+  ((const struct UsbEndpointClass *)CLASS(ep))->clear(ep);
+}
+/*----------------------------------------------------------------------------*/
 static inline enum result usbEpEnqueue(void *ep, struct UsbRequest *request)
 {
   return ((const struct UsbEndpointClass *)CLASS(ep))->enqueue(ep, request);
-}
-/*----------------------------------------------------------------------------*/
-static inline void usbEpErase(void *ep, const struct UsbRequest *request)
-{
-  ((const struct UsbEndpointClass *)CLASS(ep))->erase(ep, request);
 }
 /*----------------------------------------------------------------------------*/
 static inline uint8_t usbEpGetStatus(void *ep)
