@@ -1,6 +1,14 @@
 #Copyright (C) 2014 xent
 #Project is distributed under the terms of the GNU General Public License v3.0
 
+GEN_ADC := $(patsubst "%",%,$(CONFIG_GEN_ADC))
+GEN_DAC := $(patsubst "%",%,$(CONFIG_GEN_DAC))
+GEN_I2C := $(patsubst "%",%,$(CONFIG_GEN_I2C))
+GEN_RTC := $(patsubst "%",%,$(CONFIG_GEN_RTC))
+GEN_SPI := $(patsubst "%",%,$(CONFIG_GEN_SPI))
+GEN_UART := $(patsubst "%",%,$(CONFIG_GEN_UART))
+GEN_USB := $(patsubst "%",%,$(CONFIG_GEN_USB))
+
 ifeq ($(CONFIG_PM),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pm.c
 
@@ -8,6 +16,11 @@ ifeq ($(CONFIG_PM),y)
   FLAG_NAMES += CONFIG_PLATFORM_NXP_GPTIMER_PM
   FLAG_NAMES += CONFIG_PLATFORM_NXP_I2C_PM
   FLAG_NAMES += CONFIG_PLATFORM_NXP_SERIAL_PM
+endif
+
+ifeq ($(CONFIG_USB),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_USB)/usb_device_base.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_base.c
 endif
 
 CSOURCES += platform/pin.c
@@ -23,7 +36,7 @@ ifeq ($(CONFIG_PLATFORM_GPIO_BUS),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC_BASE),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc_unit.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_ADC)/adc_unit.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/adc_base.c
 endif
 
@@ -56,7 +69,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER_PWM),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2C_BASE),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/i2c_common.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_I2C)/i2c_common.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/i2c_base.c
 endif
 
@@ -85,7 +98,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_SSP_BASE),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_UART_BASE),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/uart_common.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_UART)/uart_common.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/uart_base.c
 endif
 
@@ -103,23 +116,23 @@ ifeq ($(CONFIG_PLATFORM_NXP_WDT),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_ADC)/adc.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC_BURST),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc_burst.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_ADC)/adc_burst.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ADC_DMA),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/adc_dma.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_ADC)/adc_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_DAC),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/dac.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_DAC)/dac.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_DAC_DMA),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/dac_dma.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_DAC)/dac_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER),y)
@@ -131,15 +144,15 @@ ifeq ($(CONFIG_PLATFORM_NXP_ONE_WIRE_SSP),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_ONE_WIRE_UART),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/one_wire_uart.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_UART)/one_wire_uart.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2C),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/i2c.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_I2C)/i2c.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2C_SLAVE),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/i2c_slave.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_I2C)/i2c_slave.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_I2S),y)
@@ -147,7 +160,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_I2S),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_RTC),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/rtc.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_RTC)/rtc.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/rtc_base.c
 endif
 
@@ -164,23 +177,23 @@ ifeq ($(CONFIG_PLATFORM_NXP_SDIO_SPI),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SERIAL),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/serial.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_UART)/serial.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SERIAL_POLL),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/serial_poll.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_UART)/serial_poll.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SERIAL_DMA),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/serial_dma.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_UART)/serial_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SPI),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/spi.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_SPI)/spi.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SPI_DMA),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GENERATION)/spi_dma.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_SPI)/spi_dma.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_SDCARD),y)

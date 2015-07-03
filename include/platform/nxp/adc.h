@@ -11,7 +11,7 @@
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/adc_unit.h>
+#define HEADER_PATH <platform/PLATFORM_TYPE/GEN_ADC/adc_unit.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
