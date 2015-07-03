@@ -25,3 +25,10 @@ void usbRequestDeinit(struct UsbRequest *request)
 {
   free(request->buffer);
 }
+/*----------------------------------------------------------------------------*/
+void usbRequestCallback(struct UsbRequest *request,
+    void (*callback)(struct UsbRequest *, void *), void *argument)
+{
+  request->callbackArgument = argument;
+  request->callback = callback;
+}

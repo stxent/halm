@@ -78,9 +78,9 @@ enum hidRequest
 
 enum featureSelector
 {
-  FEA_ENDPOINT_HALT = 0x00,
-  FEA_REMOTE_WAKEUP = 0x01,
-  FEA_TEST_MODE     = 0x02
+  FEATURE_ENDPOINT_HALT = 0x00,
+  FEATURE_REMOTE_WAKEUP = 0x01,
+  FEATURE_TEST_MODE     = 0x02
 };
 /*----------------------------------------------------------------------------*/
 struct UsbDescriptorHeader

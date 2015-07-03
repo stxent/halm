@@ -13,6 +13,15 @@
 /*----------------------------------------------------------------------------*/
 #define CONFIG_USB_REQUESTS 4
 /*----------------------------------------------------------------------------*/
+enum epStatus
+{
+  EP_STATUS_DATA    = 0x01, /* Endpoint has data */
+  EP_STATUS_STALLED = 0x02, /* Endpoint is stalled */
+  EP_STATUS_SETUP   = 0x04, /* Endpoint received setup packet */
+  EP_STATUS_ERROR   = 0x08, /* Endpoint data was overwritten by setup packet */
+  EP_STATUS_NACKED  = 0x10  /* Endpoint sent NAK */
+};
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void usbCommand(struct UsbDeviceBase *, uint8_t);
 static uint8_t usbCommandRead(struct UsbDeviceBase *, uint8_t);
@@ -41,7 +50,7 @@ static const struct UsbDeviceClass devTable = {
 const struct UsbDeviceClass * const UsbDeviceBase = &devTable;
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbEndpoint *, uint8_t);
-static void epSetup(struct UsbDeviceBase *, uint8_t);
+static void setEpInterruptEnabled(struct UsbDeviceBase *, uint8_t, bool);
 static enum result epReadData(struct UsbEndpoint *, uint8_t *, uint16_t,
     uint16_t *);
 static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, uint16_t,
@@ -51,7 +60,7 @@ static enum result epInit(void *, const void *);
 static void epDeinit(void *);
 static void epClear(void *);
 static enum result epEnqueue(void *, struct UsbRequest *);
-static uint8_t epGetStatus(void *);
+static bool epIsStalled(void *);
 static void epSetEnabled(void *, bool);
 static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
@@ -62,7 +71,7 @@ static const struct UsbEndpointClass epTable = {
 
     .clear = epClear,
     .enqueue = epEnqueue,
-    .getStatus = epGetStatus,
+    .isStalled = epIsStalled,
     .setEnabled = epSetEnabled,
     .setStalled = epSetStalled
 };
@@ -89,11 +98,11 @@ static void interruptHandler(void *object)
       uint8_t status = 0;
 
       if (devStatus & DEVICE_STATUS_CON)
-        status |= DEV_STATUS_CONNECT;
+        status |= DEVICE_STATUS_CONNECT;
       if (devStatus & DEVICE_STATUS_SUS)
-        status |= DEV_STATUS_SUSPEND;
+        status |= DEVICE_STATUS_SUSPEND;
       if (devStatus & DEVICE_STATUS_RST)
-        status |= DEV_STATUS_RESET;
+        status |= DEVICE_STATUS_RESET;
 
       /* TODO Call handler */
     }
@@ -217,6 +226,7 @@ static enum result devInit(void *object, const void *configBase)
     return res;
 
   device->parent.handler = interruptHandler;
+  device->spinlock = SPIN_UNLOCKED;
 
   LPC_USB_Type * const reg = device->parent.reg;
 
@@ -246,23 +256,33 @@ static enum result devInit(void *object, const void *configBase)
 static void devDeinit(void *object)
 {
   struct UsbDeviceBase * const device = object;
+  LPC_USB_Type * const reg = device->parent.reg;
 
   irqDisable(device->parent.irq);
+
+  /* Disable clock */
+  reg->USBClkCtrl = 0;
+
+  assert(listEmpty(&device->endpoints));
   listDeinit(&device->endpoints);
+
   UsbBase->deinit(device);
 }
 /*----------------------------------------------------------------------------*/
 static void *devAllocate(void *object, uint16_t size, uint8_t address)
 {
   struct UsbDeviceBase * const device = object;
+
+  irqDisable(device->parent.irq);
+  spinLock(&device->spinlock);
+
   const struct ListNode *current = listFirst(&device->endpoints);
   struct UsbEndpoint *endpoint;
 
-  //TODO Spinlock
   while (current)
   {
     listData(&device->endpoints, current, &endpoint);
-    //TODO Check size
+    assert(endpoint->size == size);
     if (endpoint->address == address)
       return endpoint;
     current = listNext(current);
@@ -274,7 +294,12 @@ static void *devAllocate(void *object, uint16_t size, uint8_t address)
     .address = address
   };
 
-  return init(UsbEndpoint, &config);
+  endpoint = init(UsbEndpoint, &config);
+
+  spinUnlock(&device->spinlock);
+  irqEnable(device->parent.irq);
+
+  return endpoint;
 }
 /*----------------------------------------------------------------------------*/
 static void devSetAddress(void *object, uint8_t address)
@@ -299,26 +324,16 @@ void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 {
   struct UsbRequest *request = 0;
 
-  if (endpoint->address & 0x80)
+  if (endpoint->address & EP_DIRECTION_IN)
   {
-    /* IN */
     if (!queueEmpty(&endpoint->requests))
     {
+      enum result res;
+
       queuePop(&endpoint->requests, &request);
 
-      const enum result res = epWriteData(endpoint, request->buffer,
-          request->length, 0);
-
-      if (res != E_OK)
-      {
-        request->length = 0;
-        //TODO Select error code
-        request->status = EP_STATUS_STALLED;
-      }
-      else
-      {
-        request->status = 0; //FIXME
-      }
+      res = epWriteData(endpoint, request->buffer, request->length, 0);
+      request->status = res == E_OK ? REQUEST_COMPLETED : REQUEST_ERROR;
     }
 
     if (queueEmpty(&endpoint->requests))
@@ -328,26 +343,24 @@ void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
   }
   else
   {
-    /* OUT */
     if (!queueEmpty(&endpoint->requests))
     {
       uint16_t read;
+      enum result res;
 
       queuePop(&endpoint->requests, &request);
 
-      const enum result res = epReadData(endpoint, request->buffer,
-          request->capacity, &read);
-
+      res = epReadData(endpoint, request->buffer, request->capacity, &read);
       if (res != E_OK)
       {
         request->length = 0;
-        //TODO Select error code
-        request->status = EP_STATUS_STALLED;
+        request->status = REQUEST_ERROR;
       }
       else
       {
         request->length = read;
-        request->status = status;
+        request->status = status & EP_STATUS_SETUP ?
+            REQUEST_SETUP : REQUEST_COMPLETED;
       }
     }
     else
@@ -364,25 +377,34 @@ void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     request->callback(request, request->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void epSetup(struct UsbDeviceBase *device, uint8_t address)
+static void setEpInterruptEnabled(struct UsbDeviceBase *device, uint8_t address,
+    bool state)
 {
   LPC_USB_Type * const reg = device->parent.reg;
   const uint8_t index = EP_TO_INDEX(address);
+  const uint32_t mask = 1 << index;
 
-  /* Enable interrupt */
-  reg->USBEpIntEn |= 1 << index;
-  reg->USBDevIntEn |= USBDevIntSt_EP_SLOW;
+  if (state)
+  {
+    /* Enable interrupt */
+    reg->USBEpIntEn |= mask;
+    reg->USBDevIntEn |= USBDevIntSt_EP_SLOW;
+  }
+  else
+  {
+    reg->USBEpIntEn &= ~mask;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
     uint16_t length, uint16_t *read)
 {
   LPC_USB_Type * const reg = endpoint->device->parent.reg;
-
   const uint8_t index = EP_TO_INDEX(endpoint->address);
 
   /* Set read enable bit for specific endpoint */
-  reg->USBCtrl = USBCtrl_RD_EN | ((endpoint->address & 0x0F) << 2);
+  reg->USBCtrl = USBCtrl_RD_EN
+      | USBCtrl_LOG_ENDPOINT(EP_LOGICAL_ADDRESS(endpoint->address));
 
   uint32_t packetLength;
 
@@ -400,7 +422,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
   packetLength = USBRxPLen_PKT_LNGTH_VALUE(packetLength);
 
   /* Extract data */
-  uint32_t data;
+  uint32_t data = 0;
 
   for (uint16_t position = 0; position < packetLength; ++position)
   {
@@ -413,7 +435,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
   }
 
   /* Clear read enable bit */
-  reg->USBCtrl = 0; //FIXME
+  reg->USBCtrl &= ~USBCtrl_RD_EN;
 
   /* Select endpoint and clear buffer */
   usbCommand(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
@@ -429,11 +451,11 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
     const uint8_t *buffer, uint16_t length, uint16_t *written)
 {
   LPC_USB_Type * const reg = endpoint->device->parent.reg;
-
   const uint8_t index = EP_TO_INDEX(endpoint->address);
 
   /* Set write enable for specific endpoint */
-  reg->USBCtrl = USBCtrl_WR_EN | ((endpoint->address & 0x0F) << 2);
+  reg->USBCtrl = USBCtrl_WR_EN
+      | USBCtrl_LOG_ENDPOINT(EP_LOGICAL_ADDRESS(endpoint->address));
   /* Set packet length */
   reg->USBTxPLen = length;
 
@@ -453,6 +475,8 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
     reg->USBTxData = word;
     position += chunk;
   }
+
+  /* Write enable bit is cleared automatically by hardware */
 
   /* Select endpoint and validate buffer */
   usbCommand(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
@@ -481,9 +505,9 @@ static enum result epInit(void *object, const void *configBase)
   endpoint->device = device;
   endpoint->size = config->size;
 
-  epSetup(device, endpoint->address);
+  setEpInterruptEnabled(device, endpoint->address, true);
 
-  if (!(endpoint->address & 0x7F)) //TODO Remove magic
+  if (!EP_LOGICAL_ADDRESS(endpoint->address))
   {
     /* Enable control endpoint, call function directly */
     epSetEnabled(endpoint, true);
@@ -496,21 +520,45 @@ static enum result epInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void epDeinit(void *object)
 {
-  const struct UsbEndpoint * const endpoint = object;
+  struct UsbEndpoint * const endpoint = object;
+  struct UsbDeviceBase * const device = endpoint->device;
 
-  //TODO
+  /* Disable interrupts and remove pending requests */
+  setEpInterruptEnabled(device, endpoint->address, false);
+  epSetEnabled(endpoint, false);
+  epClear(endpoint);
+
+  spinLock(&device->spinlock);
+
+  struct ListNode *current = listFirst(&device->endpoints);
+  struct UsbEndpoint *currentEndpoint;
+
+  while (current)
+  {
+    listData(&device->endpoints, current, &currentEndpoint);
+    if (currentEndpoint == endpoint)
+    {
+      listErase(&device->endpoints, current);
+      break;
+    }
+    current = listNext(current);
+  }
+
+  spinUnlock(&device->spinlock);
+
+  queueDeinit(&endpoint->requests);
 }
 /*----------------------------------------------------------------------------*/
 static void epClear(void *object)
 {
   struct UsbEndpoint * const endpoint = object;
-  struct UsbRequest *request = 0;
+  struct UsbRequest *request;
 
   while (!queueEmpty(&endpoint->requests))
   {
     queuePop(&endpoint->requests, &request);
 
-    request->status = EP_STATUS_ERROR; //TODO
+    request->status = REQUEST_FAILED;
     if (request->callback)
       request->callback(request, request->callbackArgument);
   }
@@ -523,21 +571,12 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 
   irqDisable(endpoint->device->parent.irq);
 
-  if ((endpoint->address & 0x80) && !endpoint->busy) //FIXME Magic numbers
+  if ((endpoint->address & EP_DIRECTION_IN) && !endpoint->busy)
   {
     endpoint->busy = true;
 
     res = epWriteData(endpoint, request->buffer, request->length, 0);
-    if (res != E_OK)
-    {
-      request->length = 0;
-      //TODO Select error code
-      request->status = EP_STATUS_STALLED;
-    }
-    else
-    {
-      request->status = 0;
-    }
+    request->status = res == E_OK ? REQUEST_COMPLETED : REQUEST_ERROR;
 
     if (request->callback)
       request->callback(request, request->callbackArgument);
@@ -555,12 +594,14 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t epGetStatus(void *object)
+static bool epIsStalled(void *object)
 {
   struct UsbEndpoint * const endpoint = object;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
+  const uint8_t status = usbCommandRead(endpoint->device,
+      USB_CMD_SELECT_ENDPOINT | index);
 
-  return usbCommandRead(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
+  return (status & EP_STATUS_STALLED) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void epSetEnabled(void *object, bool state)

@@ -7,6 +7,7 @@
 #ifndef PLATFORM_NXP_GEN_1_USB_DEVICE_BASE_H_
 #define PLATFORM_NXP_GEN_1_USB_DEVICE_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <spinlock.h>
 #include <containers/list.h>
 #include <containers/queue.h>
 #include <usb/usb.h>
@@ -37,6 +38,8 @@ struct UsbDeviceBase
 
   /* List of registered endpoints */
   struct List endpoints;
+  /* Protects the list of endpoints */
+  spinlock_t spinlock;
 };
 /*----------------------------------------------------------------------------*/
 struct UsbEndpointConfig

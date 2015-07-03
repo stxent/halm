@@ -62,10 +62,6 @@ CFLAGS += $(CPU_FLAGS) $(CONFIG_FLAGS) $(OPT_FLAGS)
 CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 
 #Nested makefiles
-ifeq ($(CONFIG_USB),y)
-  CSOURCES += usb/usb.c
-  CSOURCES += usb/usb_device.c
-endif
 include core/makefile
 include platform/makefile
 include pm/makefile

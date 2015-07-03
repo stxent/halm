@@ -9,22 +9,27 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
+#include <bits.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
-enum usbEpStatus
+#define EP_DIRECTION_IN                 BIT(7)
+#define EP_ADDRESS(value)               (value)
+#define EP_LOGICAL_ADDRESS(value)       ((value) & 0x7F)
+/*----------------------------------------------------------------------------*/
+enum usbDeviceStatus
 {
-  EP_STATUS_DATA    = 0x01, /* EP has data */
-  EP_STATUS_STALLED = 0x02, /* EP is stalled */
-  EP_STATUS_SETUP   = 0x04, /* EP received setup packet */
-  EP_STATUS_ERROR   = 0x08, /* EP data was overwritten by setup packet */
-  EP_STATUS_NACKED  = 0x10  /* EP sent NAK */
+  DEVICE_STATUS_CONNECT = 0x01,
+  DEVICE_STATUS_SUSPEND = 0x02,
+  DEVICE_STATUS_RESET   = 0x04
 };
 
-enum usbDevStatus
+enum usbRequestStatus
 {
-  DEV_STATUS_CONNECT = 0x01,
-  DEV_STATUS_SUSPEND = 0x02,
-  DEV_STATUS_RESET   = 0x04
+  REQUEST_COMPLETED,  /* Request completed successfully */
+  REQUEST_SETUP,      /* Request payload is a setup packet */
+  REQUEST_STALLED,    /* Endpoint is stalled */
+  REQUEST_ERROR,      /* Request is not completed */
+  REQUEST_FAILED      /* Request is removed from the queue */
 };
 /*----------------------------------------------------------------------------*/
 struct UsbRequest
@@ -32,7 +37,7 @@ struct UsbRequest
   uint8_t *buffer;
   uint16_t capacity;
   uint16_t length;
-  uint8_t status;
+  enum usbRequestStatus status;
 
   void (*callback)(struct UsbRequest *, void *);
   void *callbackArgument;
@@ -40,6 +45,8 @@ struct UsbRequest
 /*----------------------------------------------------------------------------*/
 enum result usbRequestInit(struct UsbRequest *, uint16_t);
 void usbRequestDeinit(struct UsbRequest *);
+void usbRequestCallback(struct UsbRequest *,
+    void (*)(struct UsbRequest *, void *), void *);
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbDeviceClass
@@ -86,7 +93,7 @@ struct UsbEndpointClass
 
   void (*clear)(void *);
   enum result (*enqueue)(void *, struct UsbRequest *);
-  uint8_t (*getStatus)(void *);
+  bool (*isStalled)(void *);
   void (*setEnabled)(void *, bool);
   void (*setStalled)(void *, bool);
 };
@@ -101,9 +108,9 @@ static inline enum result usbEpEnqueue(void *ep, struct UsbRequest *request)
   return ((const struct UsbEndpointClass *)CLASS(ep))->enqueue(ep, request);
 }
 /*----------------------------------------------------------------------------*/
-static inline uint8_t usbEpGetStatus(void *ep)
+static inline bool usbEpIsStalled(void *ep)
 {
-  return ((const struct UsbEndpointClass *)CLASS(ep))->getStatus(ep);
+  return ((const struct UsbEndpointClass *)CLASS(ep))->isStalled(ep);
 }
 /*----------------------------------------------------------------------------*/
 static inline void usbEpSetEnabled(void *ep, bool state)

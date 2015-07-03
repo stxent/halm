@@ -13,7 +13,7 @@
 #include <usb/usb.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/usb_device_base.h>
+#define HEADER_PATH <platform/PLATFORM_TYPE/GEN_USB/usb_device_base.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
@@ -40,7 +40,7 @@ struct UsbDevice
   void *driver;
   struct UsbEndpoint *ep0in;
   struct UsbEndpoint *ep0out;
-  struct Queue responseQueue;
+  struct Queue requestPool;
 
   struct UsbSetupPacket setupPacket;
   uint8_t *buffer;

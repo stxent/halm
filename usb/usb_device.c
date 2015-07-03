@@ -45,7 +45,7 @@ static void controlInHandler(struct UsbRequest *request, void *argument)
 {
   struct UsbDevice * const device = argument;
 
-  queuePush(&device->responseQueue, &request);
+  queuePush(&device->requestPool, &request);
 }
 /*----------------------------------------------------------------------------*/
 bool _HandleRequest(struct UsbSetupPacket *pSetup, int *piLen, uint8_t **ppbData); //FIXME
@@ -56,7 +56,13 @@ static void controlOutHandler(struct UsbRequest *request,
   struct UsbDevice * const device = argument;
   struct UsbSetupPacket * const packet = &device->setupPacket;
 
-  if (request->status & EP_STATUS_SETUP)
+  if (request->status == REQUEST_FAILED)
+  {
+    queuePush(&device->requestPool, &request);
+    return;
+  }
+
+  if (request->status == REQUEST_SETUP)
   {
     memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
     packet->value = fromLittleEndian16(packet->value);
@@ -153,14 +159,14 @@ static void sendResponse(struct UsbDevice *device, const uint8_t *data,
   if (length && !(length % EP0_BUFFER_SIZE))
     ++chunkCount;
 
-  if (queueSize(&device->responseQueue) < chunkCount)
+  if (queueSize(&device->requestPool) < chunkCount)
     return;
 
   for (uint8_t index = 0; index < chunkCount; ++index)
   {
     uint16_t chunk;
 
-    queuePop(&device->responseQueue, &request);
+    queuePop(&device->requestPool, &request);
 
     chunk = EP0_BUFFER_SIZE < length ? EP0_BUFFER_SIZE : length;
     if (chunk)
@@ -198,40 +204,37 @@ static enum result devInit(void *object, const void *configBase)
   if (!device->buffer)
     return E_MEMORY;
 
-  //FIXME Remove magic
-  device->ep0in = usbDevAllocate(device->device, EP0_BUFFER_SIZE, 0x80);
+  device->ep0in = usbDevAllocate(device->device, EP0_BUFFER_SIZE,
+      EP_DIRECTION_IN | EP_ADDRESS(0));
   if (!device->ep0in)
     return E_MEMORY;
-  device->ep0out = usbDevAllocate(device->device, EP0_BUFFER_SIZE, 0x00);
+  device->ep0out = usbDevAllocate(device->device, EP0_BUFFER_SIZE,
+      EP_ADDRESS(0));
   if (!device->ep0out)
     return E_MEMORY;
 
-  res = queueInit(&device->responseQueue, sizeof(struct UsbRequest *),
-      REQUEST_COUNT);
+  res = queueInit(&device->requestPool, sizeof(struct UsbRequest *),
+      REQUEST_COUNT * 2);
   if (res != E_OK)
     return res;
 
-  //TODO Rewrite allocation, reduce memory consumption
   for (unsigned int index = 0; index < REQUEST_COUNT; ++index)
   {
-    struct UsbRequest *request = malloc(sizeof(struct UsbRequest));
-    usbRequestInit(request, EP0_BUFFER_SIZE);
+    struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
 
-    //TODO Add function for callback setup
-    request->callback = controlInHandler;
-    request->callbackArgument = device;
-
-    queuePush(&device->responseQueue, &request);
+    if ((res = usbRequestInit(request, EP0_BUFFER_SIZE)) != E_OK)
+      return res;
+    usbRequestCallback(request, controlInHandler, device);
+    queuePush(&device->requestPool, &request);
   }
 
   for (unsigned int index = 0; index < REQUEST_COUNT; ++index)
   {
-    struct UsbRequest *request = malloc(sizeof(struct UsbRequest));
-    usbRequestInit(request, EP0_BUFFER_SIZE);
+    struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
 
-    request->callback = controlOutHandler;
-    request->callbackArgument = device;
-
+    if ((res = usbRequestInit(request, EP0_BUFFER_SIZE)) != E_OK)
+      return res;
+    usbRequestCallback(request, controlOutHandler, device);
     usbEpEnqueue(device->ep0out, request);
   }
 
@@ -241,8 +244,18 @@ static enum result devInit(void *object, const void *configBase)
 static void devDeinit(void *object)
 {
   struct UsbDevice * const device = object;
+  struct UsbRequest *request;
 
-  //TODO
+  deinit(device->ep0out);
+  deinit(device->ep0in);
+
+  while (!queueEmpty(&device->requestPool))
+  {
+    queuePop(&device->requestPool, &request);
+    usbRequestDeinit(request);
+    free(request);
+  }
+
   free(device->buffer);
 
   deinit(device->device);
