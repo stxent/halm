@@ -69,7 +69,9 @@ struct CommonClockClass
 extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const RtcOsc;
+extern const struct ClockClass * const AudioPll;
 extern const struct ClockClass * const SystemPll;
+extern const struct ClockClass * const UsbPll;
 /*----------------------------------------------------------------------------*/
 /* Base M4 clock */
 extern const struct CommonClockClass * const MainClock;

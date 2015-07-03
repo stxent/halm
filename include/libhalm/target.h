@@ -10,25 +10,56 @@
 #include <libxcore/target.h>
 /*----------------------------------------------------------------------------*/
 #if defined(LPC11XX)
-#define GENERATION      gen_1
+
+#define GEN_ADC         gen_1
+#define GEN_I2C         gen_1
+#define GEN_SPI         gen_1
+#define GEN_UART        gen_1
 #define PLATFORM        lpc11xx
 #define PLATFORM_TYPE   nxp
+
 #elif defined(LPC11EXX)
-#define GENERATION      gen_1
+
+#define GEN_ADC         gen_1
+#define GEN_I2C         gen_1
+#define GEN_SPI         gen_1
+#define GEN_UART        gen_1
 #define PLATFORM        lpc11exx
 #define PLATFORM_TYPE   nxp
+
 #elif defined(LPC13XX)
-#define GENERATION      gen_1
+
+#define GEN_ADC         gen_1
+#define GEN_I2C         gen_1
+#define GEN_SPI         gen_1
+#define GEN_UART        gen_1
+#define GEN_USB         gen_1
 #define PLATFORM        lpc13xx
 #define PLATFORM_TYPE   nxp
+
 #elif defined(LPC17XX)
-#define GENERATION      gen_1
+
+#define GEN_ADC         gen_1
+#define GEN_DAC         gen_1
+#define GEN_I2C         gen_1
+#define GEN_RTC         gen_1
+#define GEN_SPI         gen_1
+#define GEN_UART        gen_1
+#define GEN_USB         gen_1
 #define PLATFORM        lpc17xx
 #define PLATFORM_TYPE   nxp
+
 #elif defined(LPC43XX)
-#define GENERATION      gen_1
+
+#define GEN_ADC         gen_1
+#define GEN_DAC         gen_1
+#define GEN_I2C         gen_1
+#define GEN_RTC         gen_1
+#define GEN_SPI         gen_1
+#define GEN_UART        gen_1
 #define PLATFORM        lpc43xx
 #define PLATFORM_TYPE   nxp
+
 #else
 #error "Target architecture is undefined"
 #endif

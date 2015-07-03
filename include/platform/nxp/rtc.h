@@ -10,7 +10,7 @@
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/rtc_base.h>
+#define HEADER_PATH <platform/PLATFORM_TYPE/GEN_RTC/rtc_base.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/

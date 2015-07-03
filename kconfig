@@ -18,18 +18,61 @@ choice
 		bool "NXP LPC43xx"
 endchoice
 
-config CPU_FAMILY
+config CORE
 	string
-	default "LPC11XX"   if FAMILY_LPC11XX
-	default "LPC11EXX"  if FAMILY_LPC11EXX
-	default "LPC13XX"   if FAMILY_LPC13XX
-	default "LPC17XX"   if FAMILY_LPC17XX
-	default "LPC43XX"   if FAMILY_LPC43XX
+	default m0          if FAMILY_LPC11XX || FAMILY_LPC11EXX
+	default m3          if FAMILY_LPC13XX || FAMILY_LPC17XX
+	default m4          if FAMILY_LPC43XX
+
+config CORE_TYPE
+	string
+	default cortex      if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM
+	string
+	default lpc11xx     if FAMILY_LPC11XX
+	default lpc11exx    if FAMILY_LPC11EXX
+	default lpc13xx     if FAMILY_LPC13XX
+	default lpc17xx     if FAMILY_LPC17XX
+	default lpc43xx     if FAMILY_LPC43XX
+
+config PLATFORM_TYPE
+	string
+	default nxp         if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_ADC
+	string
+	default gen_1       if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_DAC
+	string
+	default gen_1       if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_I2C
+	string
+	default gen_1       if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_RTC
+	string
+	default gen_1       if FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_SPI
+	string
+	default gen_1       if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_UART
+	string
+	default gen_1       if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_USB
+	string
+	default gen_1       if FAMILY_LPC13XX || FAMILY_LPC17XX
 
 menu "Core configuration"
 
 config PM
 	bool "Power management"
+	default y
 	help
 	  This enables support for power management features.
 
@@ -53,6 +96,7 @@ endchoice
 
 config CORE_CORTEX_SYSTICK
 	bool "SysTick"
+	default y
 	help
 	  This is the driver for the System Timer peripheral.
 
@@ -62,87 +106,110 @@ menu "Controller peripherals"
 
 config PLATFORM_GPIO_BUS
 	bool "GPIO Bus"
+	default y
 
 config PLATFORM_NXP_ADC_BASE
 	bool "ADC"
+	default y
 
 config PLATFORM_NXP_DAC_BASE
 	bool "DAC"
+	default y
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_NXP_GPDMA
 	bool "GPDMA"
+	default y
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_NXP_GPTIMER_BASE
 	bool "General-purpose timer"
+	default y
 
 config PLATFORM_NXP_GPTIMER_PM
 	bool "Power management for general-purpose timers"
+	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE && PM
 
 config PLATFORM_NXP_GPTIMER
 	bool "Common timer on general-purpose timer"
+	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE
 
 config PLATFORM_NXP_GPTIMER_CAPTURE
 	bool "Input capture on general-purpose timer"
+	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE
 
 config PLATFORM_NXP_GPTIMER_PWM
 	bool "PWM on general-purpose timer"
+	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE && (FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX)
 
 config PLATFORM_NXP_GPPWM
 	bool "PWM"
+	default y
 	depends on FAMILY_LPC17XX
 
 config PLATFORM_NXP_I2C_BASE
 	bool "I2C"
+	default y
 
 config PLATFORM_NXP_I2S_BASE
 	bool "I2S"
+	default y
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_NXP_PIN_INTERRUPT
 	bool "Pin interrupts"
+	default y
 
 config PLATFORM_NXP_RTC
 	bool "Real-Time Clock"
+	default y
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_NXP_SDMMC
 	bool "SD/MMC card interface"
+	default y
 	depends on FAMILY_LPC43XX
 
 config PLATFORM_NXP_SCT_BASE
 	bool "SCT"
+	default y
 	depends on FAMILY_LPC43XX
 	help
 	  This is the driver for the State Configurable Timer peripheral.
 
 config PLATFORM_NXP_SCT_PWM
 	bool "PWM on SCT"
+	default y
 	depends on PLATFORM_NXP_SCT_BASE
 
 config PLATFORM_NXP_SCT_TIMER
 	bool "Common timer on SCT"
+	default y
 	depends on PLATFORM_NXP_SCT_BASE
 
 config PLATFORM_NXP_SSP_BASE
 	bool "SSP"
+	default y
 	help
 	  This is the driver for the Synchronous Serial Port peripheral.
 
 config PLATFORM_NXP_UART_BASE
 	bool "UART"
+	default y
+	default y
 
 config PLATFORM_NXP_WAKEUP_INTERRUPT
 	bool "Wake-up interrupts"
+	default y
 	depends on PM && (FAMILY_LPC11XX || FAMILY_LPC13XX)
 
 config PLATFORM_NXP_WDT
 	bool "Watchdog"
+	default y
 
 endmenu
 
@@ -150,102 +217,140 @@ menu "Interfaces"
 
 config ONE_WIRE
 	bool "1-Wire"
+	default y
 	depends on PLATFORM_NXP_SSP_BASE || PLATFORM_NXP_UART_BASE
 
 config PLATFORM_NXP_ONE_WIRE_SSP
 	bool "1-Wire driver on SSP peripheral"
+	default y
 	depends on ONE_WIRE && PLATFORM_NXP_SSP_BASE
 
 config PLATFORM_NXP_ONE_WIRE_UART
 	bool "1-Wire driver on UART peripheral"
+	default y
 	depends on ONE_WIRE && PLATFORM_NXP_UART_BASE
 
 config ADC
 	bool "ADC drivers"
+	default y
 	depends on PLATFORM_NXP_ADC_BASE
 
 config PLATFORM_NXP_ADC
 	bool "Simplified ADC driver with polling"
+	default y
 	depends on ADC && PLATFORM_NXP_ADC_BASE
 
 config PLATFORM_NXP_ADC_BURST
 	bool "Interrupt-driven ADC"
+	default y
 	depends on ADC && PLATFORM_NXP_ADC_BASE
 
 config PLATFORM_NXP_ADC_DMA
 	bool "Single channel ADC driver with DMA"
+	default y
 	depends on ADC && PLATFORM_NXP_ADC_BASE && PLATFORM_NXP_GPDMA
 
 config DAC
 	bool "DAC drivers"
+	default y
 	depends on PLATFORM_NXP_DAC_BASE
 
 config PLATFORM_NXP_DAC
 	bool "Simplified DAC driver"
+	default y
 	depends on DAC && PLATFORM_NXP_DAC_BASE
 
 config PLATFORM_NXP_DAC_DMA
 	bool "DAC driver with DMA"
+	default y
 	depends on DAC && PLATFORM_NXP_DAC_BASE && PLATFORM_NXP_GPDMA
 
 config I2C
 	bool "I2C drivers"
+	default y
 	depends on PLATFORM_NXP_I2C_BASE
 
 config PLATFORM_NXP_I2C_PM
 	bool "Power management for I2C drivers"
+	default y
 	depends on I2C && PM
 
 config PLATFORM_NXP_I2C
 	bool "I2C Master"
+	default y
 	depends on I2C && PLATFORM_NXP_I2C_BASE
 
 config PLATFORM_NXP_I2C_SLAVE
 	bool "I2C Slave"
+	default y
 	depends on I2C && PLATFORM_NXP_I2C_BASE
 
 config PLATFORM_NXP_I2S
 	bool "I2S drivers"
+	default y
 	depends on PLATFORM_NXP_I2S_BASE
 
 config SERIAL
 	bool "Serial port"
+	default y
 	depends on PLATFORM_NXP_UART_BASE
 
 config PLATFORM_NXP_SERIAL_PM
 	bool "Power management for serial port drivers"
+	default y
 	depends on SERIAL && PM
 
 config PLATFORM_NXP_SERIAL
 	bool "Interrupt-driven serial port driver"
+	default y
 	depends on SERIAL && PLATFORM_NXP_UART_BASE
 
 config PLATFORM_NXP_SERIAL_POLL
 	bool "Serial port driver with polling"
+	default y
 	depends on SERIAL && PLATFORM_NXP_UART_BASE
 
 config PLATFORM_NXP_SERIAL_DMA
 	bool "Serial port driver with DMA"
+	default y
 	depends on SERIAL && PLATFORM_NXP_UART_BASE && PLATFORM_NXP_GPDMA
 
 config SPI
 	bool "SPI"
+	default y
 	depends on PLATFORM_NXP_SSP_BASE
 
 config PLATFORM_NXP_SPI
 	bool "Interrupt-driven SPI Master"
+	default y
 	depends on SPI && PLATFORM_NXP_SSP_BASE
 
 config PLATFORM_NXP_SPI_DMA
 	bool "SPI Master with DMA"
+	default y
 	depends on SPI && PLATFORM_NXP_SSP_BASE && PLATFORM_NXP_GPDMA
 
 config PLATFORM_NXP_SDIO_SPI
 	bool "SDIO over SPI"
+	default y
 	depends on SPI
 
 config PLATFORM_SDCARD
 	bool "SD Card driver"
+	default y
+
+config USB
+	bool "USB support"
+	default y
+	depends on FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+	help
+	  This enables support for Universal Serial Bus.
+
+config USB_TRACE
+	bool "USB trace"
+	depends on USB
+	help
+	  This enables verbose debug tracing for USB drivers.
 
 endmenu
 

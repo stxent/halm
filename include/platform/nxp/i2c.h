@@ -11,7 +11,7 @@
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/GENERATION/i2c_base.h>
+#define HEADER_PATH <platform/PLATFORM_TYPE/GEN_I2C/i2c_base.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/

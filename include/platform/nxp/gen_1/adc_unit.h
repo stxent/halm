@@ -27,7 +27,7 @@ struct AdcUnit
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Access protection to a peripheral block */
+  /* Protects peripheral block registers */
   spinlock_t lock;
 };
 /*----------------------------------------------------------------------------*/

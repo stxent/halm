@@ -15,49 +15,24 @@ XCORE_PATH ?= $(PROJECTDIR)/../xcore
 AR = $(CROSS_COMPILE)ar
 CC = $(CROSS_COMPILE)gcc
 
-ifeq ($(CONFIG_CPU_FAMILY),"LPC11XX")
-  CORE := m0
-  CORE_TYPE := cortex
-  GENERATION := gen_1
-  PLATFORM := lpc11xx
-  PLATFORM_TYPE := nxp
+CORE := $(patsubst "%",%,$(CONFIG_CORE))
+CORE_TYPE := $(patsubst "%",%,$(CONFIG_CORE_TYPE))
+PLATFORM := $(patsubst "%",%,$(CONFIG_PLATFORM))
+PLATFORM_TYPE := $(patsubst "%",%,$(CONFIG_PLATFORM_TYPE))
 
+ifeq ($(PLATFORM),lpc11xx)
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m0 -mthumb
-else ifeq ($(CONFIG_CPU_FAMILY),"LPC11EXX")
-  CORE := m0
-  CORE_TYPE := cortex
-  GENERATION := gen_1
-  PLATFORM := lpc11exx
-  PLATFORM_TYPE := nxp
-
+else ifeq ($(PLATFORM),lpc11exx)
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m0 -mthumb
-else ifeq ($(CONFIG_CPU_FAMILY),"LPC13XX")
-  CORE := m3
-  CORE_TYPE := cortex
-  GENERATION := gen_1
-  PLATFORM := lpc13xx
-  PLATFORM_TYPE = nxp
-
+else ifeq ($(PLATFORM),lpc13xx)
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m3 -mthumb
-else ifeq ($(CONFIG_CPU_FAMILY),"LPC17XX")
-  CORE := m3
-  CORE_TYPE := cortex
-  GENERATION := gen_1
-  PLATFORM := lpc17xx
-  PLATFORM_TYPE := nxp
-
+else ifeq ($(PLATFORM),lpc17xx)
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m3 -mthumb
-else ifeq ($(CONFIG_CPU_FAMILY),"LPC43XX")
-  CORE := m4
-  CORE_TYPE := cortex
-  GENERATION := gen_1
-  PLATFORM := lpc43xx
-  PLATFORM_TYPE := nxp
-
+else ifeq ($(PLATFORM),lpc43xx)
   #Platform-specific options
   CPU_FLAGS := -mcpu=cortex-m4 -mthumb
 else
@@ -86,14 +61,11 @@ CFLAGS += -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections
 CFLAGS += $(CPU_FLAGS) $(CONFIG_FLAGS) $(OPT_FLAGS)
 CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 
-#Common modules
-ifeq ($(CONFIG_PM),y)
-  CSOURCES += pm/pm.c
-endif
-
-#Modules specific for selected platform
+#Nested makefiles
 include core/makefile
 include platform/makefile
+include pm/makefile
+include usb/makefile
 
 #Setup build flags
 define append-flag
