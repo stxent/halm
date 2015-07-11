@@ -12,11 +12,11 @@
 /*----------------------------------------------------------------------------*/
 struct UsbSetupPacket
 {
-  uint8_t requestType; /* Characteristics of the specific request */
-  uint8_t request;     /* Specific request */
-  uint16_t value;      /* Request specific parameter */
-  uint16_t index;      /* Request specific parameter */
-  uint16_t length;     /* Length of data transfered in data phase */
+  uint8_t requestType;
+  uint8_t request;
+  uint16_t value;
+  uint16_t index;
+  uint16_t length;
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 enum requestDirection
@@ -86,17 +86,96 @@ enum featureSelector
 struct UsbDescriptorHeader
 {
   uint8_t length;
-  uint8_t type;
+  uint8_t descriptorType;
+  uint8_t data[];
 } __attribute__((packed));
+
+struct UsbDeviceDescriptor
+{
+  uint8_t length;
+  uint8_t descriptorType;
+  uint16_t usb;
+  uint8_t deviceClass;
+  uint8_t deviceSubClass;
+  uint8_t deviceProtocol;
+  uint8_t maxPacketSize;
+  uint16_t idVendor;
+  uint16_t idProduct;
+  uint16_t device;
+  uint8_t manufacturer;
+  uint8_t product;
+  uint8_t serialNumber;
+  uint8_t numConfigurations;
+} __attribute__((packed));
+
+struct UsbConfigurationDescriptor
+{
+  uint8_t length;
+  uint8_t descriptorType;
+  uint16_t totalLength;
+  uint8_t numInterfaces;
+  uint8_t configurationValue;
+  uint8_t configuration;
+  uint8_t attributes;
+  uint8_t maxPower;
+} __attribute__((packed));
+
+struct UsbInterfaceDescriptor
+{
+  uint8_t length;
+  uint8_t descriptorType;
+  uint8_t interfaceNumber;
+  uint8_t alternateSettings;
+  uint8_t numEndpoints;
+  uint8_t interfaceClass;
+  uint8_t interfaceSubClass;
+  uint8_t interfaceProtocol;
+  uint8_t interface;
+} __attribute__((packed));
+
+struct UsbEndpointDescriptor
+{
+  uint8_t length;
+  uint8_t descriptorType;
+  uint8_t endpointAddress;
+  uint8_t attributes;
+  uint16_t maxPacketSize;
+  uint8_t interval;
+} __attribute__((packed));
+
+struct UsbStringHeadDescriptor
+{
+  uint8_t length;
+  uint8_t descriptorType;
+  uint16_t langid;
+};
+
+/* Special descriptor format for text conversion */
+struct UsbStringDescriptor
+{
+  uint8_t length;
+  uint8_t descriptorType;
+  const char *data;
+};
+
+struct UsbDescriptor
+{
+  const struct UsbDescriptorHeader *payload;
+  const struct UsbDescriptor *children;
+  uint8_t count;
+};
 /*----------------------------------------------------------------------------*/
-#define DESC_DEVICE           1
-#define DESC_CONFIGURATION    2
-#define DESC_STRING           3
-#define DESC_INTERFACE        4
-#define DESC_ENDPOINT         5
-#define DESC_DEVICE_QUALIFIER 6
-#define DESC_OTHER_SPEED      7
-#define DESC_INTERFACE_POWER  8
+enum usbDescriptorType
+{
+  DESCRIPTOR_DEVICE           = 1,
+  DESCRIPTOR_CONFIGURATION    = 2,
+  DESCRIPTOR_STRING           = 3,
+  DESCRIPTOR_INTERFACE        = 4,
+  DESCRIPTOR_ENDPOINT         = 5,
+  DESCRIPTOR_DEVICE_QUALIFIER = 6,
+  DESCRIPTOR_OTHER_SPEED      = 7,
+  DESCRIPTOR_INTERFACE_POWER  = 8
+};
 
 #define DESC_HID_HID        0x21
 #define DESC_HID_REPORT     0x22

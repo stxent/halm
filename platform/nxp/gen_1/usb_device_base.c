@@ -282,9 +282,11 @@ static void *devAllocate(void *object, uint16_t size, uint8_t address)
   while (current)
   {
     listData(&device->endpoints, current, &endpoint);
-    assert(endpoint->size == size);
     if (endpoint->address == address)
+    {
+      assert(endpoint->size == size);
       return endpoint;
+    }
     current = listNext(current);
   }
 
