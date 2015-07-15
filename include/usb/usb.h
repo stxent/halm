@@ -131,11 +131,12 @@ struct UsbDriverClass
   enum result (*configure)(void *, const struct UsbRequest *, uint8_t *,
       uint16_t *);
   void (*disconnect)(void *);
+  const struct UsbDescriptor *(*getDescriptor)(void *);
   void (*setSuspended)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
 static inline enum result usbDriverConfigure(void *driver,
-    struct UsbRequest *request, uint8_t *reply, uint16_t *length)
+    const struct UsbRequest *request, uint8_t *reply, uint16_t *length)
 {
   return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
       request, reply, length);
@@ -144,6 +145,11 @@ static inline enum result usbDriverConfigure(void *driver,
 static inline void usbDriverDisconnect(void *driver)
 {
   ((const struct UsbDriverClass *)CLASS(driver))->disconnect(driver);
+}
+/*----------------------------------------------------------------------------*/
+static inline const struct UsbDescriptor *usbDriverGetDescriptor(void *driver)
+{
+  return ((const struct UsbDriverClass *)CLASS(driver))->getDescriptor(driver);
 }
 /*----------------------------------------------------------------------------*/
 static inline void usbDriverSetSuspended(void *driver, bool state)

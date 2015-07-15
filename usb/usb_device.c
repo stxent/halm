@@ -37,8 +37,9 @@ const struct UsbDeviceClass * const UsbDevice = &devTable;
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *, void *);
 static void controlOutHandler(struct UsbRequest *, void *);
-static void processRequest(struct UsbDevice *, struct UsbRequest *);
-static void processStandardRequest(struct UsbDevice *, struct UsbSetupPacket *);
+static void processRequest(struct UsbDevice *, const struct UsbRequest *);
+static void processStandardRequest(struct UsbDevice *,
+    const struct UsbSetupPacket *);
 static void sendResponse(struct UsbDevice *, const uint8_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *request, void *argument)
@@ -47,8 +48,6 @@ static void controlInHandler(struct UsbRequest *request, void *argument)
 
   queuePush(&device->requestPool, &request);
 }
-/*----------------------------------------------------------------------------*/
-bool _HandleRequest(struct UsbSetupPacket *pSetup, int *piLen, uint8_t **ppbData); //FIXME
 /*----------------------------------------------------------------------------*/
 static void controlOutHandler(struct UsbRequest *request,
     void *argument)
@@ -108,7 +107,8 @@ static void controlOutHandler(struct UsbRequest *request,
   usbEpEnqueue(device->ep0out, request);
 }
 /*----------------------------------------------------------------------------*/
-static void processRequest(struct UsbDevice *device, struct UsbRequest *request)
+static void processRequest(struct UsbDevice *device,
+    const struct UsbRequest *request)
 {
   uint16_t length = EP0_BUFFER_SIZE; //FIXME Length of the buffer
   enum result res;
@@ -129,18 +129,16 @@ static void processRequest(struct UsbDevice *device, struct UsbRequest *request)
 }
 /*----------------------------------------------------------------------------*/
 static void processStandardRequest(struct UsbDevice *device,
-    struct UsbSetupPacket *packet)
+    const struct UsbSetupPacket *packet)
 {
-  int ilen = packet->length; //FIXME
-  uint8_t *bubuData = device->buffer;
+  uint16_t length;
 
-  // ask installed handler to process request
-  if (_HandleRequest(packet, &ilen, &bubuData))
+  if (usbHandleStandardRequest(device, packet, device->buffer, &length) == E_OK)
   {
-    // send smallest of requested and offered length
-    int lllen = ilen < packet->length ? ilen : packet->length;
-    // send first part (possibly a zero-length status message)
-    sendResponse(device, bubuData, lllen);
+    /* Send smallest of requested and offered lengths */
+    const uint16_t requestedLength = length < packet->length ?
+        length : packet->length;
+    sendResponse(device, device->buffer, requestedLength);
   }
   else
   {
@@ -164,11 +162,10 @@ static void sendResponse(struct UsbDevice *device, const uint8_t *data,
 
   for (uint8_t index = 0; index < chunkCount; ++index)
   {
-    uint16_t chunk;
-
     queuePop(&device->requestPool, &request);
 
-    chunk = EP0_BUFFER_SIZE < length ? EP0_BUFFER_SIZE : length;
+    const uint16_t chunk = EP0_BUFFER_SIZE < length ? EP0_BUFFER_SIZE : length;
+
     if (chunk)
       memcpy(request->buffer, data, chunk);
     request->length = chunk;
@@ -200,7 +197,8 @@ static enum result devInit(void *object, const void *configBase)
   device->driver = 0;
   device->left = 0;
 
-  device->buffer = malloc(EP0_BUFFER_SIZE); //FIXME Select size
+  //TODO Protect with spinlock
+  device->buffer = malloc(EP0_BUFFER_SIZE * 2); //FIXME Select size
   if (!device->buffer)
     return E_MEMORY;
 

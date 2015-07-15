@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <bits.h>
+#include <error.h>
 /*----------------------------------------------------------------------------*/
 struct UsbSetupPacket
 {
@@ -177,11 +178,17 @@ enum usbDescriptorType
   DESCRIPTOR_INTERFACE_POWER  = 8
 };
 
+//FIXME Consistent naming
 #define DESC_HID_HID        0x21
 #define DESC_HID_REPORT     0x22
 #define DESC_HID_PHYSICAL   0x23
 
 #define GET_DESC_TYPE(x)    (((x)>>8)&0xFF)
 #define GET_DESC_INDEX(x)   ((x)&0xFF)
+/*----------------------------------------------------------------------------*/
+struct UsbDevice;
+/*----------------------------------------------------------------------------*/
+enum result usbHandleStandardRequest(struct UsbDevice *,
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 /*----------------------------------------------------------------------------*/
 #endif /* USB_REQUESTS_H_ */
