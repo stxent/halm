@@ -182,12 +182,14 @@ static enum result handleStandardDeviceRequest(struct UsbDevice *device,
     case REQUEST_SET_CONFIGURATION:
     {
       const uint8_t configuration = packet->value & 0xFF;
+      const enum result res = setDeviceConfig(device, configuration, 0);
 
-      if (!setDeviceConfig(device, configuration, 0))
+      if (res != E_OK)
       {
         usbTrace("requests: configuration %d setup failed", configuration);
-        return E_DEVICE; //FIXME Select
+        return res;
       }
+
       usbTrace("requests: configuration %d set successfully", configuration);
       bConfiguration = configuration;
       *length = 0;
@@ -297,14 +299,13 @@ static enum result handleStandardInterfaceRequest(struct UsbDevice *device,
 static enum result setDeviceConfig(struct UsbDevice *device,
     uint8_t configuration, uint8_t alternativeSettings)
 {
-
   if (configuration == 0)
   {
     usbDevSetConfigured(device, false);
   }
   else
   {
-    if (device->driver)
+    if (!device->driver)
       return E_ERROR; //TODO Assert?
 
     const struct UsbDescriptor * const root =
@@ -365,11 +366,11 @@ static enum result traverseConfigTree(struct UsbDevice *device,
 
   for (uint8_t index = 0; index < root->count; ++index)
   {
-    const bool status = traverseConfigTree(device, root->children + index,
+    const enum result res = traverseConfigTree(device, root->children + index,
         configuration, settings, currentConfiguration, currentSettings);
 
-    if (!status)
-      return E_ERROR;
+    if (res != E_OK)
+      return res;
   }
 
   return E_OK;
