@@ -1,13 +1,7 @@
 #Copyright (C) 2014 xent
 #Project is distributed under the terms of the GNU General Public License v3.0
 
-GEN_ADC := $(patsubst "%",%,$(CONFIG_GEN_ADC))
-GEN_DAC := $(patsubst "%",%,$(CONFIG_GEN_DAC))
-GEN_I2C := $(patsubst "%",%,$(CONFIG_GEN_I2C))
-GEN_RTC := $(patsubst "%",%,$(CONFIG_GEN_RTC))
-GEN_SPI := $(patsubst "%",%,$(CONFIG_GEN_SPI))
-GEN_UART := $(patsubst "%",%,$(CONFIG_GEN_UART))
-GEN_USB := $(patsubst "%",%,$(CONFIG_GEN_USB))
+OPTION_NAMES += GEN_ADC GEN_DAC GEN_I2C GEN_RTC GEN_SPI GEN_UART GEN_USB
 
 ifeq ($(CONFIG_PM),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pm.c

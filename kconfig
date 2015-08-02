@@ -370,10 +370,10 @@ choice
 		bool "Full"
 endchoice
 
-endmenu
-
 config OPTIMIZATIONS
 	string
 	default "none" if OPTIMIZATIONS_DISABLED
 	default "size" if OPTIMIZATIONS_SIZE
 	default "full" if OPTIMIZATIONS_FULL
+
+endmenu
