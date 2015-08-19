@@ -27,8 +27,6 @@ static enum result setDeviceConfig(struct UsbDevice *, uint8_t, uint8_t);
 static enum result traverseConfigTree(struct UsbDevice *,
     const struct UsbDescriptor *, uint8_t, uint8_t, uint8_t *, uint8_t *);
 /*----------------------------------------------------------------------------*/
-static uint8_t bConfiguration = 0xFF; //FIXME
-/*----------------------------------------------------------------------------*/
 static const struct UsbDescriptor *findEntry(const struct UsbDescriptor *root,
     uint8_t type, uint8_t *offset)
 {
@@ -175,7 +173,7 @@ static enum result handleStandardDeviceRequest(struct UsbDevice *device,
     }
 
     case REQUEST_GET_CONFIGURATION:
-      buffer[0] = bConfiguration;
+      buffer[0] = device->currentConfiguration;
       *length = 1;
       break;
 
@@ -189,11 +187,12 @@ static enum result handleStandardDeviceRequest(struct UsbDevice *device,
         usbTrace("requests: configuration %d setup failed", configuration);
         return res;
       }
-
-      usbTrace("requests: configuration %d set successfully", configuration);
-      bConfiguration = configuration;
-      *length = 0;
-      break;
+      else
+      {
+        usbTrace("requests: configuration %d set successfully", configuration);
+        *length = 0;
+        break;
+      }
     }
 
     case REQUEST_CLEAR_FEATURE:
@@ -209,11 +208,8 @@ static enum result handleStandardDeviceRequest(struct UsbDevice *device,
       return E_ERROR;
 
     case REQUEST_SET_DESCRIPTOR:
-//    printf("Device req %d not implemented\n", pSetup->request);
-      return E_ERROR;
-
     default:
-//    printf("Illegal device req %d\n", pSetup->request);
+      usbTrace("requests: unsupported device request %02X", packet->request);
       return E_ERROR;
   }
 
@@ -320,7 +316,7 @@ static enum result setDeviceConfig(struct UsbDevice *device,
     if (res != E_OK)
       return res;
 
-    bConfiguration = configuration;
+    device->currentConfiguration = configuration;
     usbDevSetConfigured(device, true);
   }
 

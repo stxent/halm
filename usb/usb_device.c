@@ -194,6 +194,7 @@ static enum result devInit(void *object, const void *configBase)
   if (!device->device)
     return E_ERROR;
 
+  device->currentConfiguration = 0;
   device->driver = 0;
   device->left = 0;
 
