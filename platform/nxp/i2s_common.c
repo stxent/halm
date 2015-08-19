@@ -9,37 +9,33 @@
 enum result i2sCalcRate(struct I2sBase *interface, uint32_t clock,
     struct I2sRateConfig *config)
 {
-  /* Implemented algorithm is from NXP software examples */
+  /* Algorithm based on NXP software examples */
   const uint32_t periphClock = i2sGetClock(interface);
-  uint64_t divider;
-  uint32_t x, y;
-  uint16_t xDiv, yDiv;
-  uint16_t delta;
-  uint16_t error, minError = 0xFFFF;
+  const uint64_t divider = ((uint64_t)clock << 16) / periphClock;
+  uint16_t minError = 0xFFFF;
+  uint16_t yDiv = 0;
 
-  divider = ((uint64_t)clock << 16) / periphClock;
-
-  for (y = 255; y > 0; y--)
+  for (uint32_t y = 255; y > 0; --y)
   {
-    x = y * divider;
+    const uint32_t x = y * divider;
+
     if (x >= (1 << 24))
       continue;
 
-    delta = x & 0xFFFF;
-    error = delta > 0x8000 ? 0x10000 - delta : delta;
+    const uint16_t delta = x & 0xFFFF;
+    const uint16_t error = delta > 0x8000 ? 0x10000 - delta : delta;
 
-    if (!error)
-    {
-      yDiv = y;
-      break;
-    }
-    else if (error < minError)
+    if (error < minError)
     {
       minError = error;
       yDiv = y;
+
+      if (!minError)
+        break;
     }
   }
-  xDiv = ((uint64_t)yDiv * clock * 2) / periphClock;
+
+  const uint16_t xDiv = ((uint64_t)yDiv * clock * 2) / periphClock;
 
   if (!xDiv || xDiv >= 256)
     return E_VALUE;

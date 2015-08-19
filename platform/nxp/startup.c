@@ -26,14 +26,14 @@ void RESET_ISR(void)
   for (dst = &_bss; dst < &_ebss;)
     *dst++ = 0;
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
   __libc_init_array(); /* Call C++ library initialization */
 #endif
 
   platformStartup();
   main();
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
   __libc_fini_array();
 #endif
 
