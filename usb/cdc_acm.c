@@ -6,13 +6,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <memory.h>
+#include <irq.h>
 #include <usb/cdc_acm.h>
-#include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-//FIXME Move to other file
-#define VCOM_FIFO_SIZE  128
-
+//TODO Rewrite
 #define INT_IN_EP   0x81
 #define BULK_OUT_EP   0x05
 #define BULK_IN_EP    0x82
@@ -20,341 +17,141 @@
 #define MAX_PACKET_SIZE 64
 #define MAX_DATA_SIZE  64
 
-#define SET_LINE_CODING     0x20
-#define GET_LINE_CODING     0x21
-#define SET_CONTROL_LINE_STATE  0x22
+#define REQUEST_QUEUE_SIZE 2
 /*----------------------------------------------------------------------------*/
-//static void driverTransferHandler(struct UsbRequest *, void *);
-static enum result handleRequest(struct CdcAcm *, const struct UsbSetupPacket *,
-    const uint8_t *, uint16_t, uint8_t *, uint16_t *);
 static void cdcDataReceived(struct UsbRequest *, void *);
 static void cdcDataSent(struct UsbRequest *, void *);
 /*----------------------------------------------------------------------------*/
-static enum result driverInit(void *, const void *);
-static void driverDeinit(void *);
-static enum result driverConfigure(void *, const struct UsbRequest *,
-    uint8_t *, uint16_t *);
-static void driverDisconnect(void *);
-static const struct UsbDescriptor *driverGetDescriptor(void *);
-static void driverSetSuspended(void *, bool);
+static enum result interfaceInit(void *, const void *);
+static void interfaceDeinit(void *);
+static enum result interfaceCallback(void *, void (*)(void *), void *);
+static enum result interfaceGet(void *, enum ifOption, void *);
+static enum result interfaceSet(void *, enum ifOption, const void *);
+static uint32_t interfaceRead(void *, uint8_t *, uint32_t);
+static uint32_t interfaceWrite(void *, const uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static const struct UsbDriverClass driverTable = {
+static const struct InterfaceClass interfaceTable = {
     .size = sizeof(struct CdcAcm),
-    .init = driverInit,
-    .deinit = driverDeinit,
+    .init = interfaceInit,
+    .deinit = interfaceDeinit,
 
-    .configure = driverConfigure,
-    .disconnect = driverDisconnect,
-    .getDescriptor = driverGetDescriptor,
-    .setSuspended = driverSetSuspended
+    .callback = interfaceCallback,
+    .get = interfaceGet,
+    .set = interfaceSet,
+    .read = interfaceRead,
+    .write = interfaceWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct UsbDriverClass * const CdcAcm = &driverTable;
-/*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor rootDescriptor = {
-    .payload = 0,
-    .count = 3,
-    .children = (const struct UsbDescriptor []){
-        {
-            .payload = (const struct UsbDescriptorHeader *)
-                (const void *)&(const struct UsbDeviceDescriptor){
-                .length = sizeof(struct UsbDeviceDescriptor),
-                .descriptorType = DESCRIPTOR_DEVICE,
-                .usb = 0x0101,
-                .deviceClass = 0x02,
-                .deviceSubClass = 0x00,
-                .deviceProtocol = 0x00,
-                .maxPacketSize = MAX_PACKET_SIZE,
-                .idVendor = 0xFFFF,
-                .idProduct = 0x0005,
-                .device = 0x0100,
-                .manufacturer = 0x01,
-                .product = 0x02,
-                .serialNumber = 0x03,
-                .numConfigurations = 0x01
-            },
-            .count = 0,
-            .children = 0
-        },
-        {
-            .payload = (const struct UsbDescriptorHeader *)
-                &(const struct UsbConfigurationDescriptor){
-                .length = sizeof(struct UsbConfigurationDescriptor),
-                .descriptorType = DESCRIPTOR_CONFIGURATION,
-                .totalLength = sizeof(struct UsbConfigurationDescriptor)
-                    + 2 * sizeof(struct UsbInterfaceDescriptor)
-                    + 3 * sizeof(struct UsbEndpointDescriptor)
-                    + sizeof(struct CdcHeaderDescriptor)
-                    + sizeof(struct CdcCallManagementDescriptor)
-                    + sizeof(struct CdcAcmDescriptor)
-                    + sizeof(struct CdcUnionDescriptor),
-                .numInterfaces = 0x02,
-                .configurationValue = 0x01,
-                .configuration = 0x00,
-                .attributes = 0xC0,
-                .maxPower = 0x32
-            },
-            .count = 9,
-            .children = (const struct UsbDescriptor []){
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct UsbInterfaceDescriptor){
-                        .length = sizeof(struct UsbInterfaceDescriptor),
-                        .descriptorType = DESCRIPTOR_INTERFACE,
-                        .interfaceNumber = 0x00,
-                        .alternateSettings = 0x00,
-                        .numEndpoints = 0x01,
-                        .interfaceClass = 0x02,
-                        .interfaceSubClass = 0x02,
-                        .interfaceProtocol = 0x01,
-                        .interface = 0x00
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct CdcHeaderDescriptor){
-                        .length = sizeof(struct CdcHeaderDescriptor),
-                        .descriptorType = 0x24, //FIXME
-                        .descriptorSubType = 0x00,
-                        .cdc = 0x0110
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct CdcCallManagementDescriptor){
-                        .length =
-                            sizeof(struct CdcCallManagementDescriptor),
-                        .descriptorType = 0x24, //FIXME
-                        .descriptorSubType = 0x01,
-                        .capabilities = 0x01,
-                        .dataInterface = 0x01
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct CdcAcmDescriptor){
-                        .length = sizeof(struct CdcAcmDescriptor),
-                        .descriptorType = 0x24, //FIXME
-                        .descriptorSubType = 0x02,
-                        .capabilities = 0x02
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct CdcUnionDescriptor){
-                        .length = sizeof(struct CdcUnionDescriptor),
-                        .descriptorType = 0x24, //FIXME
-                        .descriptorSubType = 0x06,
-                        .masterInterface0 = 0x00,
-                        .slaveInterface0 = 0x01
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct UsbEndpointDescriptor){
-                        .length = sizeof(struct UsbEndpointDescriptor),
-                        .descriptorType = DESCRIPTOR_ENDPOINT,
-                        .endpointAddress = INT_IN_EP,
-                        .attributes = 0x03, //FIXME
-                        .maxPacketSize = 10, //FIXME LE
-                        .interval = 0x08
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct UsbInterfaceDescriptor){
-                        .length = sizeof(struct UsbInterfaceDescriptor),
-                        .descriptorType = DESCRIPTOR_INTERFACE,
-                        .interfaceNumber = 0x01,
-                        .alternateSettings = 0x00,
-                        .numEndpoints = 0x02,
-                        .interfaceClass = 0x0A,
-                        .interfaceSubClass = 0x00,
-                        .interfaceProtocol = 0x00,
-                        .interface = 0x00
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct UsbEndpointDescriptor){
-                        .length = sizeof(struct UsbEndpointDescriptor),
-                        .descriptorType = DESCRIPTOR_ENDPOINT,
-                        .endpointAddress = BULK_OUT_EP,
-                        .attributes = 0x02,
-                        .maxPacketSize = MAX_DATA_SIZE,
-                        .interval = 0x00
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct UsbEndpointDescriptor){
-                        .length = sizeof(struct UsbEndpointDescriptor),
-                        .descriptorType = DESCRIPTOR_ENDPOINT,
-                        .endpointAddress = BULK_IN_EP,
-                        .attributes = 0x02,
-                        .maxPacketSize = MAX_DATA_SIZE,
-                        .interval = 0x00
-                    },
-                    .count = 0,
-                    .children = 0
-                }
-            }
-        },
-        {
-            .payload = (const struct UsbDescriptorHeader *)
-                (const void *)&(const struct UsbStringHeadDescriptor){
-                .length = sizeof(struct UsbStringHeadDescriptor),
-                .descriptorType = DESCRIPTOR_STRING,
-                .langid = 0x0409
-            },
-            .count = 3,
-            .children = (const struct UsbDescriptor []){
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct UsbStringDescriptor){
-                        .length = 2 + 6,
-                        .descriptorType = DESCRIPTOR_STRING,
-                        .data = "LPCUSB"
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct UsbStringDescriptor){
-                        .length = 2 + 9,
-                        .descriptorType = DESCRIPTOR_STRING,
-                        .data = "USBSerial"
-                    },
-                    .count = 0,
-                    .children = 0
-                },
-                {
-                    .payload = (const struct UsbDescriptorHeader *)
-                        &(const struct UsbStringDescriptor){
-                        .length = 2 + 8,
-                        .descriptorType = DESCRIPTOR_STRING,
-                        .data = "DEADBEEF"
-                    },
-                    .count = 0,
-                    .children = 0
-                }
-            }
-        }
-    }
-};
-/*----------------------------------------------------------------------------*/
-static enum result handleRequest(struct CdcAcm *driver,
-    const struct UsbSetupPacket *packet, const uint8_t *input,
-    uint16_t inputLength, uint8_t *output, uint16_t *outputLength)
-{
-  switch (packet->request)
-  {
-    case SET_LINE_CODING:
-      memcpy(&driver->lineCoding, input, sizeof(driver->lineCoding));
-      *outputLength = 0;
-      usbTrace("cdc_acm: rate %u, format %u, parity %u, width %u",
-          driver->lineCoding.dteRate, driver->lineCoding.charFormat,
-          driver->lineCoding.parityType, driver->lineCoding.dataBits);
-      break;
-
-    case GET_LINE_CODING:
-      memcpy(output, &driver->lineCoding, sizeof(driver->lineCoding));
-      *outputLength = sizeof(driver->lineCoding);
-      usbTrace("cdc_acm: line coding requested");
-      break;
-
-    case SET_CONTROL_LINE_STATE:
-      // FIXME bit0 = DTR, bitWhat = RTS
-      *outputLength = 0;
-      usbTrace("cdc_acm: set control lines to %02X", packet->value);
-      break;
-
-    default:
-      usbTrace("cdc_acm: unknown request %02X", packet->request);
-      return E_INVALID;
-  }
-
-  return E_OK;
-}
+const struct InterfaceClass * const CdcAcm = &interfaceTable;
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(struct UsbRequest *request, void *argument)
 {
-  struct CdcAcm * const driver = argument;
+  struct CdcAcm * const interface = argument;
+  const uint32_t spaceLeft = byteQueueCapacity(&interface->rxQueue)
+      - byteQueueSize(&interface->rxQueue);
 
-//  pinSet(led);
-  byteQueuePushArray(&driver->rxfifo, request->buffer, request->length);
-
-  request->length = 0;
-  request->status = 0;
-  usbEpEnqueue(driver->inputDataEp, request);
-//  pinReset(led);
-
-  //XXX ONLY FOR TEST
-  while (!byteQueueEmpty(&driver->rxfifo)
-      && !queueEmpty(&driver->outputDataReqs))
+  //FIXME Check request status
+  if (spaceLeft < request->length)
   {
-    struct UsbRequest *req;
-    queuePop(&driver->outputDataReqs, &req);
-    const unsigned int length = byteQueuePopArray(&driver->rxfifo, req->buffer,
-        req->capacity);
-    req->length = length;
-    req->status = 0;
+    interface->queuedRxBytes += request->length;
+    queuePush(&interface->rxRequestQueue, &request);
+  }
+  else
+  {
+    byteQueuePushArray(&interface->rxQueue, request->buffer, request->length);
 
-    usbEpEnqueue(driver->outputDataEp, req);
+    request->length = 0;
+    request->status = 0;
+    usbEpEnqueue(interface->rxDataEp, request);
+
+    if (interface->callback)
+      interface->callback(interface->callbackArgument);
   }
 }
 /*----------------------------------------------------------------------------*/
 static void cdcDataSent(struct UsbRequest *request, void *argument)
 {
-  struct CdcAcm * const driver = argument;
+  struct CdcAcm * const interface = argument;
 
-  queuePush(&driver->outputDataReqs, &request);
+  //FIXME Check request status
+  if (byteQueueEmpty(&interface->txQueue))
+  {
+    queuePush(&interface->txRequestQueue, &request);
+    return;
+  }
+
+  uint32_t available = byteQueueSize(&interface->txQueue);
+
+  while (available)
+  {
+    const uint32_t bytesToWrite = byteQueuePopArray(&interface->txQueue,
+        request->buffer, request->capacity);
+
+    request->length = bytesToWrite;
+    request->status = 0;
+
+    usbEpEnqueue(interface->txDataEp, request);
+
+    if (!(available = byteQueueSize(&interface->txQueue)))
+      break;
+    if (queueEmpty(&interface->txRequestQueue))
+      break;
+
+    queuePop(&interface->txRequestQueue, &request);
+  }
+
+  if (available < (byteQueueCapacity(&interface->txQueue) >> 1))
+  {
+    if (interface->callback)
+      interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
-static enum result driverInit(void *object, const void *configBase)
+static enum result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
-  struct CdcAcm * const driver = object;
+  const struct CdcAcmBaseConfig parentConfig = {
+      .device = config->device
+  };
+  struct CdcAcm * const interface = object;
   enum result res;
 
-  driver->device = config->device;
-  driver->buffer = malloc(64); //FIXME Magic
-  //TODO Add function for callback setup
+  interface->driver = init(CdcAcmBase, &parentConfig);
+  if (!interface->driver)
+    return E_ERROR;
 
-  driver->lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
+  /* Input buffer should be greater or equal to endpoint buffer */
+  if (config->rxLength < MAX_DATA_SIZE)
+    return E_VALUE;
 
-  //TODO Add TX FIFO
-  if ((res = byteQueueInit(&driver->rxfifo, VCOM_FIFO_SIZE)) != E_OK)
+  res = byteQueueInit(&interface->rxQueue, config->rxLength);
+  if (res != E_OK)
+    return res;
+  res = byteQueueInit(&interface->txQueue, config->txLength);
+  if (res != E_OK)
+    return res;
+  res = queueInit(&interface->rxRequestQueue, sizeof(struct UsbRequest *),
+      REQUEST_QUEUE_SIZE);
+  if (res != E_OK)
+    return res;
+  res = queueInit(&interface->txRequestQueue, sizeof(struct UsbRequest *),
+      REQUEST_QUEUE_SIZE);
+  if (res != E_OK)
     return res;
 
-  //TODO Add rollback
-  driver->intEp = usbDevAllocate(driver->device, 10, INT_IN_EP);
-  if (!driver->intEp)
+  interface->callback = 0;
+  interface->queuedRxBytes = 0;
+
+  interface->notificationEp = usbDevAllocate(config->device, 10, INT_IN_EP);
+  if (!interface->notificationEp)
     return E_ERROR;
-  driver->inputDataEp = usbDevAllocate(driver->device, MAX_DATA_SIZE,
+  interface->rxDataEp = usbDevAllocate(config->device, MAX_DATA_SIZE,
       BULK_OUT_EP);
-  if (!driver->inputDataEp)
+  if (!interface->rxDataEp)
     return E_ERROR;
-  driver->outputDataEp = usbDevAllocate(driver->device, MAX_DATA_SIZE,
+  interface->txDataEp = usbDevAllocate(config->device, MAX_DATA_SIZE,
       BULK_IN_EP);
-  if (!driver->outputDataEp)
+  if (!interface->txDataEp)
     return E_ERROR;
 
   //TODO Rewrite allocation
@@ -364,111 +161,166 @@ static enum result driverInit(void *object, const void *configBase)
     usbRequestInit(request, MAX_DATA_SIZE);
 
     request->callback = cdcDataReceived;
-    request->callbackArgument = driver;
-    usbEpEnqueue(driver->inputDataEp, request);
+    request->callbackArgument = interface;
+    usbEpEnqueue(interface->rxDataEp, request);
   }
 
-  queueInit(&driver->outputDataReqs, sizeof(struct UsbRequest *), 2);
   for (unsigned int i = 0; i < 2; ++i)
   {
     struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
     usbRequestInit(request, MAX_DATA_SIZE);
 
     request->callback = cdcDataSent;
-    request->callbackArgument = driver;
-    queuePush(&driver->outputDataReqs, &request);
+    request->callbackArgument = interface;
+    queuePush(&interface->txRequestQueue, &request);
   }
-
-  if ((res = usbDevBind(driver->device, driver)) != E_OK)
-    return res;
-
-  usbDevSetConnected(driver->device, true);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void driverDeinit(void *object)
+static void interfaceDeinit(void *object)
 {
-  struct CdcAcm * const driver = object;
+  struct CdcAcm * const interface = object;
 
-  usbDevSetConnected(driver->device, false);
-  //TODO Free requests
-  free(driver->buffer);
+  deinit(interface->txDataEp);
+  deinit(interface->rxDataEp);
+  deinit(interface->notificationEp);
+
+  //TODO Deinit endpoints
+  queueDeinit(&interface->txRequestQueue);
+  queueDeinit(&interface->rxRequestQueue);
+  byteQueueDeinit(&interface->txQueue);
+  byteQueueDeinit(&interface->rxQueue);
+
+  deinit(interface->driver);
 }
 /*----------------------------------------------------------------------------*/
-static enum result driverConfigure(void *object,
-    const struct UsbRequest *request, uint8_t *reply, uint16_t *length)
+static enum result interfaceCallback(void *object, void (*callback)(void *),
+    void *argument)
 {
-  struct CdcAcm * const driver = object;
-  struct UsbSetupPacket * const packet = &driver->setupPacket;
-  enum result res;
+  struct CdcAcm * const interface = object;
 
-  if (request->status & REQUEST_SETUP)
+  interface->callbackArgument = argument;
+  interface->callback = callback;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result interfaceGet(void *object, enum ifOption option,
+    void *data)
+{
+  struct CdcAcm * const interface = object;
+
+  switch (option)
   {
-    memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
-    packet->value = fromLittleEndian16(packet->value);
-    packet->index = fromLittleEndian16(packet->index);
-    packet->length = fromLittleEndian16(packet->length);
-
-    const uint8_t direction = REQUEST_DIRECTION_VALUE(packet->requestType);
-    const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
-
-    if (type != REQUEST_TYPE_CLASS)
-      return E_INVALID;
-
-    driver->dataLength = packet->length;
-
-    if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
-    {
-      return handleRequest(driver, packet, 0, 0, reply, length);
-    }
-    else
-    {
-      *length = 0;
+    case IF_AVAILABLE:
+      *(uint32_t *)data = byteQueueSize(&interface->rxQueue)
+          + interface->queuedRxBytes;
       return E_OK;
-    }
-  }
-  else
-  {
-    const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
 
-    if (type != REQUEST_TYPE_CLASS)
-      return E_INVALID;
-
-    if (driver->dataLength)
-    {
-      //FIXME Rewrite
-      memcpy(driver->buffer, request->buffer, request->length);
-
-      if (driver->dataLength == request->length)
-      {
-        return handleRequest(driver, packet, driver->buffer,
-            driver->dataLength, reply, length);
-      }
-    }
-    else
-    {
-      *length = 0;
+    case IF_PENDING:
+      *(uint32_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
-    }
-  }
 
+    case IF_RATE:
+      *(uint32_t *)data = interface->driver->lineCoding.dteRate;
+      return E_OK;
+
+/* TODO Extend option list
+    case IF_WIDTH:
+      *(uint32_t *)data = interface->driver->lineCoding.dataBits;
+      return E_OK; */
+
+    default:
+      return E_ERROR;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result interfaceSet(void *object __attribute__((unused)),
+    enum ifOption option __attribute__((unused)),
+    const void *data __attribute__((unused)))
+{
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static void driverDisconnect(void *object)
+static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
 {
-  struct CdcAcm * const driver = object;
-}
-/*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor *driverGetDescriptor(void *object)
-{
-  struct CdcAcm * const driver = object;
+  struct CdcAcm * const interface = object;
+  const uint32_t sourceLength = length;
 
-  return &rootDescriptor;
+  interruptsDisable();
+
+  if (!byteQueueEmpty(&interface->rxQueue))
+  {
+    const uint32_t bytesToRead = byteQueuePopArray(&interface->rxQueue,
+        buffer, length);
+
+    buffer += bytesToRead;
+    length -= bytesToRead;
+  }
+
+  /* TODO Use queuedRxBytes to simplify logic */
+  while (!queueEmpty(&interface->rxRequestQueue))
+  {
+    struct UsbRequest *request;
+
+    queuePop(&interface->rxRequestQueue, &request);
+    interface->queuedRxBytes -= request->length;
+
+    const bool spaceAvailable = request->length < length;
+    const uint32_t bytesToRead = spaceAvailable ? request->length : length;
+
+    memcpy(buffer, request->buffer, bytesToRead);
+    buffer += bytesToRead;
+    length -= bytesToRead;
+
+    if (!spaceAvailable)
+    {
+      byteQueuePushArray(&interface->rxQueue, request->buffer + bytesToRead,
+          request->length - bytesToRead);
+    }
+
+    request->length = 0;
+    request->status = 0;
+    usbEpEnqueue(interface->rxDataEp, request);
+
+    if (!spaceAvailable)
+      break;
+  }
+
+  interruptsEnable();
+  return sourceLength - length;
 }
 /*----------------------------------------------------------------------------*/
-static void driverSetSuspended(void *object, bool state)
+static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
+    uint32_t length)
 {
-  struct CdcAcm * const driver = object;
+  struct CdcAcm * const interface = object;
+  const uint32_t sourceLength = length;
+
+  interruptsDisable();
+
+  if (byteQueueEmpty(&interface->txQueue)
+      && !queueEmpty(&interface->txRequestQueue))
+  {
+    struct UsbRequest *request;
+
+    queuePop(&interface->txRequestQueue, &request);
+
+    const uint32_t bytesToWrite = length > request->capacity ?
+        request->capacity : length;
+
+    request->length = bytesToWrite;
+    request->status = 0;
+    memcpy(request->buffer, buffer, bytesToWrite);
+    buffer += bytesToWrite;
+    length -= bytesToWrite;
+
+    usbEpEnqueue(interface->txDataEp, request);
+  }
+
+  if (length)
+    length -= byteQueuePushArray(&interface->txQueue, buffer, length);
+
+  interruptsEnable();
+  return sourceLength - length;
 }

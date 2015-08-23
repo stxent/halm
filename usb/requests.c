@@ -61,8 +61,8 @@ static enum result getDescriptorData(const struct UsbDescriptor *root,
   uint8_t descriptorType, descriptorIndex;
   bool firstIndex;
 
-  descriptorType = GET_DESC_TYPE(keyword);
-  descriptorIndex = GET_DESC_INDEX(keyword);
+  descriptorType = DESCRIPTOR_TYPE(keyword);
+  descriptorIndex = DESCRIPTOR_INDEX(keyword);
   firstIndex = descriptorIndex == 0;
 
   const struct UsbDescriptor * const descriptor = findEntry(root,
@@ -165,7 +165,7 @@ static enum result handleStandardDeviceRequest(struct UsbDevice *device,
           usbDriverGetDescriptor(device->driver);
 
       usbTrace("requests: get descriptor %d:%d, length %u",
-          GET_DESC_TYPE(packet->value), GET_DESC_INDEX(packet->value),
+          DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
           packet->length);
 
       return getDescriptorData(root, packet->value, packet->index, buffer,
@@ -207,7 +207,6 @@ static enum result handleStandardDeviceRequest(struct UsbDevice *device,
       }
       return E_ERROR;
 
-    case REQUEST_SET_DESCRIPTOR:
     default:
       usbTrace("requests: unsupported device request %02X", packet->request);
       return E_ERROR;

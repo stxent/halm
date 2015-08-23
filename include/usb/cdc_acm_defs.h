@@ -9,6 +9,19 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
+enum cdcRequestType
+{
+  CDC_SEND_ENCAPSULATED_COMMAND = 0x0,
+  CDC_GET_ENCAPSULATED_RESPONSE = 0x1,
+  CDC_SET_COMM_FEATURE          = 0x2,
+  CDC_GET_COMM_FEATURE          = 0x3,
+  CDC_CLEAR_COMM_FEATURE        = 0x4,
+  CDC_SET_LINE_CODING           = 0x20,
+  CDC_GET_LINE_CODING           = 0x21,
+  CDC_SET_CONTROL_LINE_STATE    = 0x22,
+  CDC_SEND_BREAK                = 0x23
+};
+
 struct CdcHeaderDescriptor
 {
   uint8_t length;

@@ -149,7 +149,7 @@ struct UsbStringHeadDescriptor
   uint8_t length;
   uint8_t descriptorType;
   uint16_t langid;
-};
+} __attribute__((packed));
 
 /* Special descriptor format for text conversion */
 struct UsbStringDescriptor
@@ -168,23 +168,18 @@ struct UsbDescriptor
 /*----------------------------------------------------------------------------*/
 enum usbDescriptorType
 {
-  DESCRIPTOR_DEVICE           = 1,
-  DESCRIPTOR_CONFIGURATION    = 2,
-  DESCRIPTOR_STRING           = 3,
-  DESCRIPTOR_INTERFACE        = 4,
-  DESCRIPTOR_ENDPOINT         = 5,
-  DESCRIPTOR_DEVICE_QUALIFIER = 6,
-  DESCRIPTOR_OTHER_SPEED      = 7,
-  DESCRIPTOR_INTERFACE_POWER  = 8
+  DESCRIPTOR_DEVICE           = 0x01,
+  DESCRIPTOR_CONFIGURATION    = 0x02,
+  DESCRIPTOR_STRING           = 0x03,
+  DESCRIPTOR_INTERFACE        = 0x04,
+  DESCRIPTOR_ENDPOINT         = 0x05,
+  DESCRIPTOR_DEVICE_QUALIFIER = 0x06,
+  DESCRIPTOR_OTHER_SPEED      = 0x07,
+  DESCRIPTOR_INTERFACE_POWER  = 0x08
 };
 
-//FIXME Consistent naming
-#define DESC_HID_HID        0x21
-#define DESC_HID_REPORT     0x22
-#define DESC_HID_PHYSICAL   0x23
-
-#define GET_DESC_TYPE(x)    (((x)>>8)&0xFF)
-#define GET_DESC_INDEX(x)   ((x)&0xFF)
+#define DESCRIPTOR_TYPE(value)  FIELD_VALUE((value), BIT_FIELD(MASK(8), 8), 8)
+#define DESCRIPTOR_INDEX(value) FIELD_VALUE((value), BIT_FIELD(MASK(8), 0), 0)
 /*----------------------------------------------------------------------------*/
 struct UsbDevice;
 /*----------------------------------------------------------------------------*/

@@ -7,40 +7,41 @@
 #ifndef USB_CDC_ACM_H_
 #define USB_CDC_ACM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <containers/byte_queue.h>
-#include <containers/queue.h>
-#include <usb/cdc_acm_defs.h>
-#include <usb/requests.h>
-#include <usb/usb.h>
+#include <interface.h>
+#include <usb/cdc_acm_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct UsbDriverClass * const CdcAcm;
+extern const struct InterfaceClass * const CdcAcm;
 /*----------------------------------------------------------------------------*/
 struct CdcAcmConfig
 {
   /** Mandatory: USB device. */
   void *device;
+  /** Optional: input queue size. */
+  uint32_t rxLength;
+  /** Optional: output queue size. */
+  uint32_t txLength;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcm
 {
-  struct Entity parent;
+  struct Interface parent;
 
-  struct UsbDevice *device;
+  void (*callback)(void *);
+  void *callbackArgument;
 
-  struct UsbEndpoint *inputDataEp;
-  struct UsbEndpoint *outputDataEp;
-  struct UsbEndpoint *intEp;
+  /* Low-level USB driver */
+  struct CdcAcmBase *driver;
+  /* Input and output queues */
+  struct ByteQueue rxQueue, txQueue;
+  /* Request queues */
+  struct Queue rxRequestQueue, txRequestQueue;
+  /* Size of the queued data */
+  uint16_t queuedRxBytes;
 
-  struct Queue outputDataReqs;
-
-  struct ByteQueue rxfifo;
-  struct CdcLineCoding lineCoding;
-
-  struct UsbSetupPacket setupPacket;
-  uint8_t *buffer;
-  uint16_t dataLength;
-  struct UsbRequest *request;
+  struct UsbEndpoint *rxDataEp;
+  struct UsbEndpoint *txDataEp;
+  struct UsbEndpoint *notificationEp;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* USB_CDC_ACM_H_ */

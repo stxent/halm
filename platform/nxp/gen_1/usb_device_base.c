@@ -50,11 +50,11 @@ static const struct UsbDeviceClass devTable = {
 const struct UsbDeviceClass * const UsbDeviceBase = &devTable;
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbEndpoint *, uint8_t);
-static void setEpInterruptEnabled(struct UsbDeviceBase *, uint8_t, bool);
 static enum result epReadData(struct UsbEndpoint *, uint8_t *, uint16_t,
     uint16_t *);
 static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, uint16_t,
     uint16_t *);
+static void setEpInterruptEnabled(struct UsbDeviceBase *, uint8_t, bool);
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *, const void *);
 static void epDeinit(void *);
@@ -379,25 +379,6 @@ void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     request->callback(request, request->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void setEpInterruptEnabled(struct UsbDeviceBase *device, uint8_t address,
-    bool state)
-{
-  LPC_USB_Type * const reg = device->parent.reg;
-  const uint8_t index = EP_TO_INDEX(address);
-  const uint32_t mask = 1 << index;
-
-  if (state)
-  {
-    /* Enable interrupt */
-    reg->USBEpIntEn |= mask;
-    reg->USBDevIntEn |= USBDevIntSt_EP_SLOW;
-  }
-  else
-  {
-    reg->USBEpIntEn &= ~mask;
-  }
-}
-/*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
     uint16_t length, uint16_t *read)
 {
@@ -488,6 +469,25 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
     *written = length;
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void setEpInterruptEnabled(struct UsbDeviceBase *device, uint8_t address,
+    bool state)
+{
+  LPC_USB_Type * const reg = device->parent.reg;
+  const uint8_t index = EP_TO_INDEX(address);
+  const uint32_t mask = 1 << index;
+
+  if (state)
+  {
+    /* Enable interrupt */
+    reg->USBEpIntEn |= mask;
+    reg->USBDevIntEn |= USBDevIntSt_EP_SLOW;
+  }
+  else
+  {
+    reg->USBEpIntEn &= ~mask;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *object, const void *configBase)
