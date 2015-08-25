@@ -9,14 +9,6 @@
 #include <irq.h>
 #include <usb/cdc_acm.h>
 /*----------------------------------------------------------------------------*/
-//TODO Rewrite
-#define INT_IN_EP   0x81
-#define BULK_OUT_EP   0x05
-#define BULK_IN_EP    0x82
-
-#define MAX_PACKET_SIZE 64
-#define MAX_DATA_SIZE  64
-
 #define REQUEST_QUEUE_SIZE 2
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(struct UsbRequest *, void *);
@@ -111,7 +103,17 @@ static enum result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
   const struct CdcAcmBaseConfig parentConfig = {
-      .device = config->device
+      .device = config->device,
+      .productString = config->productString,
+      .serialString = config->serialString,
+      .vendorString = config->vendorString,
+      .product = config->product,
+      .vendor = config->vendor,
+      .endpoint = {
+          .interrupt = config->endpoint.interrupt,
+          .rx = config->endpoint.rx,
+          .tx = config->endpoint.tx
+      }
   };
   struct CdcAcm * const interface = object;
   enum result res;
@@ -121,7 +123,7 @@ static enum result interfaceInit(void *object, const void *configBase)
     return E_ERROR;
 
   /* Input buffer should be greater or equal to endpoint buffer */
-  if (config->rxLength < MAX_DATA_SIZE)
+  if (config->rxLength < CDC_DATA_EP_SIZE)
     return E_VALUE;
 
   res = byteQueueInit(&interface->rxQueue, config->rxLength);
@@ -142,33 +144,34 @@ static enum result interfaceInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->queuedRxBytes = 0;
 
-  interface->notificationEp = usbDevAllocate(config->device, 10, INT_IN_EP);
+  interface->notificationEp = usbDevAllocate(config->device,
+      CDC_NOTIFICATION_EP_SIZE, config->endpoint.interrupt);
   if (!interface->notificationEp)
     return E_ERROR;
-  interface->rxDataEp = usbDevAllocate(config->device, MAX_DATA_SIZE,
-      BULK_OUT_EP);
+  interface->rxDataEp = usbDevAllocate(config->device, CDC_DATA_EP_SIZE,
+      config->endpoint.tx);
   if (!interface->rxDataEp)
     return E_ERROR;
-  interface->txDataEp = usbDevAllocate(config->device, MAX_DATA_SIZE,
-      BULK_IN_EP);
+  interface->txDataEp = usbDevAllocate(config->device, CDC_DATA_EP_SIZE,
+      config->endpoint.rx);
   if (!interface->txDataEp)
     return E_ERROR;
 
-  //TODO Rewrite allocation
-  for (unsigned int i = 0; i < 2; ++i)
+  //TODO Optimize?
+  for (uint8_t index = 0; index < REQUEST_QUEUE_SIZE; ++index)
   {
     struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
-    usbRequestInit(request, MAX_DATA_SIZE);
+    usbRequestInit(request, CDC_DATA_EP_SIZE);
 
     request->callback = cdcDataReceived;
     request->callbackArgument = interface;
     usbEpEnqueue(interface->rxDataEp, request);
   }
 
-  for (unsigned int i = 0; i < 2; ++i)
+  for (uint8_t index = 0; index < REQUEST_QUEUE_SIZE; ++index)
   {
     struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
-    usbRequestInit(request, MAX_DATA_SIZE);
+    usbRequestInit(request, CDC_DATA_EP_SIZE);
 
     request->callback = cdcDataSent;
     request->callbackArgument = interface;

@@ -20,12 +20,35 @@ struct CdcAcmBaseConfig
 {
   /** Mandatory: USB device. */
   void *device;
+
+  /** Optional: product string. */
+  const char *productString;
+  /** Optional: serial string. */
+  const char *serialString;
+  /** Optional: vendor string. */
+  const char *vendorString;
+
+  /** Optional: product ID. Vendor ID should be initialized. */
+  uint16_t product;
+  /** Optional: vendor ID. Product ID should be initialized. */
+  uint16_t vendor;
+
+  struct
+  {
+    /** Mandatory: identifier of the notification endpoint. */
+    uint8_t interrupt;
+    /** Mandatory: identifier of the input data endpoint. */
+    uint8_t rx;
+    /** Mandatory: identifier of the output data endpoint. */
+    uint8_t tx;
+  } endpoint;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcmBase
 {
   struct Entity parent;
 
+  const struct UsbDescriptor *descriptors;
   struct UsbDevice *device;
   struct CdcLineCoding lineCoding;
 

@@ -21,6 +21,28 @@ struct CdcAcmConfig
   uint32_t rxLength;
   /** Optional: output queue size. */
   uint32_t txLength;
+
+  /** Optional: product string. */
+  const char *productString;
+  /** Optional: serial string. */
+  const char *serialString;
+  /** Optional: vendor string. */
+  const char *vendorString;
+
+  /** Optional: product ID. */
+  uint16_t product;
+  /** Optional: vendor ID. */
+  uint16_t vendor;
+
+  struct
+  {
+    /** Mandatory: identifier of the notification endpoint. */
+    uint8_t interrupt;
+    /** Mandatory: identifier of the input data endpoint. */
+    uint8_t rx;
+    /** Mandatory: identifier of the output data endpoint. */
+    uint8_t tx;
+  } endpoint;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcm

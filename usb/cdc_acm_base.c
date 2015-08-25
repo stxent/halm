@@ -10,14 +10,8 @@
 #include <usb/cdc_acm_base.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-//FIXME Move to other file
-#define INT_IN_EP   0x81
-#define BULK_OUT_EP   0x05
-#define BULK_IN_EP    0x82
-
-#define MAX_PACKET_SIZE 64
-#define MAX_DATA_SIZE  64
-/*----------------------------------------------------------------------------*/
+static const void *buildDescriptors(const struct CdcAcmBaseConfig *);
+static void freeDescriptors(const struct UsbDescriptor *);
 static enum result handleRequest(struct CdcAcmBase *,
     const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
     uint16_t *);
@@ -43,24 +37,23 @@ static const struct UsbDriverClass driverTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const CdcAcmBase = &driverTable;
 /*----------------------------------------------------------------------------*/
-//FIXME Endianness for totalLength
 static const struct UsbDescriptor rootDescriptor = {
     .payload = 0,
     .count = 3,
     .children = (const struct UsbDescriptor []){
         {
             .payload = (const struct UsbDescriptorHeader *)
-                (const void *)&(const struct UsbDeviceDescriptor){
+                &(const struct UsbDeviceDescriptor){
                 .length = sizeof(struct UsbDeviceDescriptor),
                 .descriptorType = DESCRIPTOR_DEVICE,
-                .usb = 0x0101, //FIXME
+                .usb = TO_LITTLE_ENDIAN_16(0x0101),
                 .deviceClass = 0x02,
                 .deviceSubClass = 0x00,
                 .deviceProtocol = 0x00,
-                .maxPacketSize = MAX_PACKET_SIZE,
-                .idVendor = 0xFFFF, //FIXME
-                .idProduct = 0x0005, //FIXME
-                .device = 0x0100, //FIXME
+                .maxPacketSize = CDC_CONTROL_EP_SIZE,
+                .idVendor = TO_LITTLE_ENDIAN_16(0xFFFF),
+                .idProduct = TO_LITTLE_ENDIAN_16(0xFFFF),
+                .device = TO_LITTLE_ENDIAN_16(0x0100),
                 .manufacturer = 0x01,
                 .product = 0x02,
                 .serialNumber = 0x03,
@@ -74,18 +67,19 @@ static const struct UsbDescriptor rootDescriptor = {
                 &(const struct UsbConfigurationDescriptor){
                 .length = sizeof(struct UsbConfigurationDescriptor),
                 .descriptorType = DESCRIPTOR_CONFIGURATION,
-                .totalLength = sizeof(struct UsbConfigurationDescriptor)
+                .totalLength = TO_LITTLE_ENDIAN_16(
+                    sizeof(struct UsbConfigurationDescriptor)
                     + 2 * sizeof(struct UsbInterfaceDescriptor)
                     + 3 * sizeof(struct UsbEndpointDescriptor)
                     + sizeof(struct CdcHeaderDescriptor)
                     + sizeof(struct CdcCallManagementDescriptor)
                     + sizeof(struct CdcAcmDescriptor)
-                    + sizeof(struct CdcUnionDescriptor),
+                    + sizeof(struct CdcUnionDescriptor)),
                 .numInterfaces = 0x02,
                 .configurationValue = 0x01,
                 .configuration = 0x00,
                 .attributes = 0xC0,
-                .maxPower = 0x32 //FIXME
+                .maxPower = (CONFIG_USB_CURRENT >> 1)
             },
             .count = 9,
             .children = (const struct UsbDescriptor []){
@@ -111,7 +105,7 @@ static const struct UsbDescriptor rootDescriptor = {
                         .length = sizeof(struct CdcHeaderDescriptor),
                         .descriptorType = 0x24,
                         .descriptorSubType = 0x00,
-                        .cdc = 0x0110 //FIXME
+                        .cdc = TO_LITTLE_ENDIAN_16(0x0110)
                     },
                     .count = 0,
                     .children = 0
@@ -157,9 +151,10 @@ static const struct UsbDescriptor rootDescriptor = {
                         &(const struct UsbEndpointDescriptor){
                         .length = sizeof(struct UsbEndpointDescriptor),
                         .descriptorType = DESCRIPTOR_ENDPOINT,
-                        .endpointAddress = INT_IN_EP,
-                        .attributes = 0x03, //FIXME
-                        .maxPacketSize = 10, //FIXME LE
+                        .endpointAddress = 0xFF,
+                        .attributes = 0x03,
+                        .maxPacketSize =
+                            TO_LITTLE_ENDIAN_16(CDC_NOTIFICATION_EP_SIZE),
                         .interval = 0x08
                     },
                     .count = 0,
@@ -186,9 +181,9 @@ static const struct UsbDescriptor rootDescriptor = {
                         &(const struct UsbEndpointDescriptor){
                         .length = sizeof(struct UsbEndpointDescriptor),
                         .descriptorType = DESCRIPTOR_ENDPOINT,
-                        .endpointAddress = BULK_OUT_EP,
+                        .endpointAddress = 0xFF,
                         .attributes = 0x02,
-                        .maxPacketSize = MAX_DATA_SIZE, //FIXME
+                        .maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE),
                         .interval = 0x00
                     },
                     .count = 0,
@@ -199,9 +194,9 @@ static const struct UsbDescriptor rootDescriptor = {
                         &(const struct UsbEndpointDescriptor){
                         .length = sizeof(struct UsbEndpointDescriptor),
                         .descriptorType = DESCRIPTOR_ENDPOINT,
-                        .endpointAddress = BULK_IN_EP,
+                        .endpointAddress = 0xFF,
                         .attributes = 0x02,
-                        .maxPacketSize = MAX_DATA_SIZE, //FIXME
+                        .maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE),
                         .interval = 0x00
                     },
                     .count = 0,
@@ -214,16 +209,16 @@ static const struct UsbDescriptor rootDescriptor = {
                 (const void *)&(const struct UsbStringHeadDescriptor){
                 .length = sizeof(struct UsbStringHeadDescriptor),
                 .descriptorType = DESCRIPTOR_STRING,
-                .langid = 0x0409 //FIXME
+                .langid = TO_LITTLE_ENDIAN_16(0x0409)
             },
             .count = 3,
             .children = (const struct UsbDescriptor []){
                 {
                     .payload = (const struct UsbDescriptorHeader *)
                         &(const struct UsbStringDescriptor){
-                        .length = 2 + 6,
+                        .length = 2 + 7,
                         .descriptorType = DESCRIPTOR_STRING,
-                        .data = "LPCUSB" //FIXME
+                        .data = "LPC USB"
                     },
                     .count = 0,
                     .children = 0
@@ -231,9 +226,9 @@ static const struct UsbDescriptor rootDescriptor = {
                 {
                     .payload = (const struct UsbDescriptorHeader *)
                         &(const struct UsbStringDescriptor){
-                        .length = 2 + 9,
+                        .length = 2 + 10,
                         .descriptorType = DESCRIPTOR_STRING,
-                        .data = "USBSerial" //FIXME
+                        .data = "USB Serial"
                     },
                     .count = 0,
                     .children = 0
@@ -241,9 +236,9 @@ static const struct UsbDescriptor rootDescriptor = {
                 {
                     .payload = (const struct UsbDescriptorHeader *)
                         &(const struct UsbStringDescriptor){
-                        .length = 2 + 8,
+                        .length = 2 + 10,
                         .descriptorType = DESCRIPTOR_STRING,
-                        .data = "DEADBEEF" //FIXME
+                        .data = "1234567890"
                     },
                     .count = 0,
                     .children = 0
@@ -252,6 +247,145 @@ static const struct UsbDescriptor rootDescriptor = {
         }
     }
 };
+/*----------------------------------------------------------------------------*/
+static const void *buildDescriptors(const struct CdcAcmBaseConfig *config)
+{
+  struct UsbDescriptor * const root = malloc(sizeof(struct UsbDescriptor));
+
+  root->children = malloc(3 * sizeof(struct UsbDescriptor));
+  root->count = 3;
+  root->payload = 0;
+
+  memcpy((void *)root->children, rootDescriptor.children,
+      3 * sizeof(struct UsbDescriptor));
+
+  /* Create device descriptor */
+  if (config->product && config->vendor)
+  {
+    struct UsbDeviceDescriptor * const deviceDescriptor =
+        malloc(sizeof(struct UsbDeviceDescriptor));
+
+    memcpy(deviceDescriptor, rootDescriptor.children[0].payload,
+        sizeof(struct UsbDeviceDescriptor));
+    if (config->product)
+      deviceDescriptor->idProduct = config->product;
+    if (config->vendor)
+      deviceDescriptor->idVendor = config->vendor;
+
+    ((struct UsbDescriptor *)root->children)[0].payload =
+        (struct UsbDescriptorHeader *)deviceDescriptor;
+  }
+
+  /* Create endpoint descriptors */
+  struct UsbEndpointDescriptor * const endpoints =
+      malloc(3 * sizeof(struct UsbEndpointDescriptor));
+
+  memcpy(&endpoints[0], rootDescriptor.children[1].children[5].payload,
+      sizeof(struct UsbEndpointDescriptor));
+  memcpy(&endpoints[1], rootDescriptor.children[1].children[7].payload,
+      sizeof(struct UsbEndpointDescriptor));
+  memcpy(&endpoints[2], rootDescriptor.children[1].children[8].payload,
+      sizeof(struct UsbEndpointDescriptor));
+
+  endpoints[0].endpointAddress = config->endpoint.interrupt;
+  endpoints[1].endpointAddress = config->endpoint.tx;
+  endpoints[2].endpointAddress = config->endpoint.rx;
+
+  ((struct UsbDescriptor *)root->children)[1].children =
+      malloc(9 * sizeof(struct UsbDescriptor));
+  memcpy((void *)root->children[1].children,
+      rootDescriptor.children[1].children, 9 * sizeof(struct UsbDescriptor));
+
+  ((struct UsbDescriptor *)root->children[1].children)[5].payload =
+      (struct UsbDescriptorHeader *)&endpoints[0];
+  ((struct UsbDescriptor *)root->children[1].children)[7].payload =
+      (struct UsbDescriptorHeader *)&endpoints[1];
+  ((struct UsbDescriptor *)root->children[1].children)[8].payload =
+      (struct UsbDescriptorHeader *)&endpoints[2];
+
+  /* String descriptors */
+  if (config->productString || config->serialString || config->vendorString)
+  {
+    ((struct UsbDescriptor *)root->children)[2].children =
+        malloc(3 * sizeof(struct UsbDescriptor));
+
+    memcpy((void *)root->children[2].children,
+        rootDescriptor.children[2].children, 3 * sizeof(struct UsbDescriptor));
+
+    /* Serial number */
+    if (config->serialString)
+    {
+      struct UsbStringDescriptor * const stringDescriptor =
+          malloc(sizeof(struct UsbStringDescriptor));
+
+      stringDescriptor->data = config->serialString;
+      stringDescriptor->descriptorType = DESCRIPTOR_STRING;
+      stringDescriptor->length = 2 + strlen(config->serialString);
+      ((struct UsbDescriptor *)root->children[2].children)[2].payload =
+          (struct UsbDescriptorHeader *)stringDescriptor;
+    }
+
+    /* Product */
+    if (config->productString)
+    {
+      struct UsbStringDescriptor * const stringDescriptor =
+          malloc(sizeof(struct UsbStringDescriptor));
+
+      stringDescriptor->data = config->productString;
+      stringDescriptor->descriptorType = DESCRIPTOR_STRING;
+      stringDescriptor->length = 2 + strlen(config->productString);
+      ((struct UsbDescriptor *)root->children[2].children)[1].payload =
+          (struct UsbDescriptorHeader *)stringDescriptor;
+    }
+
+    /* Manufacturer */
+    if (config->vendorString)
+    {
+      struct UsbStringDescriptor * const stringDescriptor =
+          malloc(sizeof(struct UsbStringDescriptor));
+
+      stringDescriptor->data = config->vendorString;
+      stringDescriptor->descriptorType = DESCRIPTOR_STRING;
+      stringDescriptor->length = 2 + strlen(config->vendorString);
+      ((struct UsbDescriptor *)root->children[2].children)[0].payload =
+          (struct UsbDescriptorHeader *)stringDescriptor;
+    }
+  }
+
+  return root;
+}
+/*----------------------------------------------------------------------------*/
+static void freeDescriptors(const struct UsbDescriptor *root)
+{
+  /* Free string descriptors */
+  bool stringFreed = false;
+
+  for (uint8_t index = 0; index < 3; ++index)
+  {
+    if (root->children[2].children[index].payload !=
+        rootDescriptor.children[2].children[index].payload)
+    {
+      free(root->children[2].children[index].payload);
+      stringFreed = true;
+    }
+  }
+  if (stringFreed)
+    free(root->children[2].children);
+
+  /* Free endpoint descriptors */
+  free(root->children[1].children[8].payload);
+  free(root->children[1].children[7].payload);
+  free(root->children[1].children[5].payload);
+  free(root->children[1].children);
+
+  /* Free device descriptor */
+  if (root->children[0].payload != rootDescriptor.children[0].payload)
+    free(root->children[0].payload);
+
+  /* Free root */
+  if (root != &rootDescriptor)
+    free(root);
+}
 /*----------------------------------------------------------------------------*/
 static enum result handleRequest(struct CdcAcmBase *driver,
     const struct UsbSetupPacket *packet, const uint8_t *input,
@@ -296,6 +430,7 @@ static enum result driverInit(void *object, const void *configBase)
   driver->device = config->device;
   driver->buffer = malloc(64); //FIXME Magic
 
+  driver->descriptors = buildDescriptors(config);
   driver->lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
 
   if ((res = usbDevBind(driver->device, driver)) != E_OK)
@@ -311,6 +446,7 @@ static void driverDeinit(void *object)
   struct CdcAcmBase * const driver = object;
 
   usbDevSetConnected(driver->device, false);
+  freeDescriptors(driver->descriptors);
   free(driver->buffer);
 }
 /*----------------------------------------------------------------------------*/
@@ -378,10 +514,12 @@ static void driverDisconnect(void *object)
   struct CdcAcmBase * const driver = object;
 }
 /*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor *driverGetDescriptor(void *object
-    __attribute__((unused)))
+static const struct UsbDescriptor *driverGetDescriptor(void *object)
 {
-  return &rootDescriptor;
+  const struct CdcAcmBase * const driver = object;
+
+  return driver->descriptors;
+//  return &rootDescriptor;
 }
 /*----------------------------------------------------------------------------*/
 static void driverSetSuspended(void *object, bool state)

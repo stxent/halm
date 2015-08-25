@@ -9,6 +9,15 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
+#define CONFIG_CDC_SERIAL           "0000000001"
+#define CONFIG_CDC_PRODUCT          "HALM-CDC"
+#define CONFIG_CDC_VENDOR           "HALM"
+#define CONFIG_USB_CURRENT          100 /* mA */
+
+#define CDC_CONTROL_EP_SIZE         64
+#define CDC_DATA_EP_SIZE            64
+#define CDC_NOTIFICATION_EP_SIZE    10
+/*----------------------------------------------------------------------------*/
 enum cdcRequestType
 {
   CDC_SEND_ENCAPSULATED_COMMAND = 0x0,
