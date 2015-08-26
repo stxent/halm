@@ -351,6 +351,40 @@ config USB_TRACE
 	help
 	  This enables verbose debug tracing for USB drivers.
 
+config USB_DEVICE_CURRENT
+	int "USB device current"
+	default 100
+	depends on USB
+
+config USB_DEVICE_PRODUCT_ID
+	int "Product ID"
+	default 0
+	depends on USB
+
+config USB_DEVICE_VENDOR_ID
+	int "Vendor ID"
+	default 0
+	depends on USB
+
+config USB_DEVICE_PRODUCT_NAME
+	string "Product name"
+	default "USB Device"
+	depends on USB
+
+config USB_DEVICE_SERIAL
+	string "Serial number"
+	default "0000000001"
+	depends on USB
+
+config USB_DEVICE_VENDOR_NAME
+	string "Vendor name"
+	default "HALM Library"
+	depends on USB
+
+config USB_CDC
+	bool "CDC driver"
+	depends on USB
+
 endmenu
 
 menu "Build options"

@@ -21,17 +21,8 @@ struct CdcAcmBaseConfig
   /** Mandatory: USB device. */
   void *device;
 
-  /** Optional: product string. */
-  const char *productString;
-  /** Optional: serial string. */
-  const char *serialString;
-  /** Optional: vendor string. */
-  const char *vendorString;
-
-  /** Optional: product ID. Vendor ID should be initialized. */
-  uint16_t product;
-  /** Optional: vendor ID. Product ID should be initialized. */
-  uint16_t vendor;
+  /** Optional: serial number string. */
+  const char *serial;
 
   struct
   {
@@ -42,13 +33,19 @@ struct CdcAcmBaseConfig
     /** Mandatory: identifier of the output data endpoint. */
     uint8_t tx;
   } endpoint;
+
+  /** Optional: enable composite device mode. */
+  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcmBase
 {
   struct Entity parent;
 
-  const struct UsbDescriptor *descriptors;
+  const struct UsbDescriptor **descriptorArray;
+  struct UsbEndpointDescriptor *endpointDescriptors;
+  struct UsbStringDescriptor *stringDescriptors;
+
   struct UsbDevice *device;
   struct CdcLineCoding lineCoding;
 

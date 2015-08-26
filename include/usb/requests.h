@@ -84,7 +84,7 @@ enum featureSelector
   FEATURE_TEST_MODE     = 0x02
 };
 /*----------------------------------------------------------------------------*/
-struct UsbDescriptorHeader
+struct UsbDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
@@ -157,13 +157,6 @@ struct UsbStringDescriptor
   uint8_t length;
   uint8_t descriptorType;
   const char *data;
-};
-
-struct UsbDescriptor
-{
-  const struct UsbDescriptorHeader *payload;
-  const struct UsbDescriptor *children;
-  uint8_t count;
 };
 /*----------------------------------------------------------------------------*/
 enum usbDescriptorType

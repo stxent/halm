@@ -104,11 +104,8 @@ static enum result interfaceInit(void *object, const void *configBase)
   const struct CdcAcmConfig * const config = configBase;
   const struct CdcAcmBaseConfig parentConfig = {
       .device = config->device,
-      .productString = config->productString,
-      .serialString = config->serialString,
-      .vendorString = config->vendorString,
-      .product = config->product,
-      .vendor = config->vendor,
+      .serial = config->serial,
+      .composite = config->composite,
       .endpoint = {
           .interrupt = config->endpoint.interrupt,
           .rx = config->endpoint.rx,

@@ -12,10 +12,10 @@
 #include <usb/usb_device.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor *findEntry(const struct UsbDescriptor *,
-    uint8_t, uint8_t *);
-static enum result getDescriptorData(const struct UsbDescriptor *, uint16_t,
-    uint16_t, uint8_t *, uint16_t *);
+static const struct UsbDescriptor **findEntry(const struct UsbDescriptor **,
+    uint8_t, uint8_t);
+static enum result getDescriptorData(const struct UsbDescriptor **,
+    uint16_t, uint16_t, uint8_t *, uint16_t *);
 static struct UsbEndpoint *getEpByAddress(struct UsbDevice *, uint8_t);
 static enum result handleStandardDeviceRequest(struct UsbDevice *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *);
@@ -24,99 +24,78 @@ static enum result handleStandardEndpointRequest(struct UsbDevice *,
 static enum result handleStandardInterfaceRequest(struct UsbDevice *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 static enum result setDeviceConfig(struct UsbDevice *, uint8_t, uint8_t);
-static enum result traverseConfigTree(struct UsbDevice *,
-    const struct UsbDescriptor *, uint8_t, uint8_t, uint8_t *, uint8_t *);
+static enum result traverseConfigArray(struct UsbDevice *,
+    const struct UsbDescriptor **, uint8_t, uint8_t);
 /*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor *findEntry(const struct UsbDescriptor *root,
-    uint8_t type, uint8_t *offset)
+static const struct UsbDescriptor **findEntry(const struct UsbDescriptor **root,
+    uint8_t type, uint8_t offset)
 {
-  if (root->payload && root->payload->descriptorType == type)
+  while (*root)
   {
-    if (*offset)
+    if ((*root)->descriptorType == type)
     {
-      --(*offset);
+      if (!offset)
+        return root;
+      else
+        --offset;
     }
-    else
-    {
-      return root;
-    }
-  }
-
-  for (uint8_t index = 0; index < root->count; ++index)
-  {
-    const struct UsbDescriptor * const descriptor =
-        findEntry(root->children + index, type, offset);
-
-    if (descriptor)
-      return descriptor;
+    ++root;
   }
 
   return 0;
 }
 /*----------------------------------------------------------------------------*/
 //FIXME wLangID
-static enum result getDescriptorData(const struct UsbDescriptor *root,
+static enum result getDescriptorData(const struct UsbDescriptor **root,
     uint16_t keyword, uint16_t wLangID, uint8_t *buffer, uint16_t *length)
 {
-  uint8_t descriptorType, descriptorIndex;
-  bool firstIndex;
+  const uint8_t descriptorType = DESCRIPTOR_TYPE(keyword);
+  const uint8_t descriptorIndex = DESCRIPTOR_INDEX(keyword);
+  const struct UsbDescriptor * const *entry = findEntry(root,
+      descriptorType, descriptorIndex);
 
-  descriptorType = DESCRIPTOR_TYPE(keyword);
-  descriptorIndex = DESCRIPTOR_INDEX(keyword);
-  firstIndex = descriptorIndex == 0;
-
-  const struct UsbDescriptor * const descriptor = findEntry(root,
-      descriptorType, &descriptorIndex);
-
-  if (!descriptor)
+  if (!entry)
     return E_VALUE;
 
-    uint8_t chunkLength;
-
-  if (descriptor->payload->descriptorType == DESCRIPTOR_STRING && !firstIndex)
+  if ((*entry)->descriptorType == DESCRIPTOR_STRING && descriptorIndex)
   {
-    const struct UsbStringDescriptor * const payload =
-        (const struct UsbStringDescriptor *)descriptor->payload;
+    const struct UsbStringDescriptor * const data =
+        (const struct UsbStringDescriptor *)(*entry);
+    const unsigned int stringLength = uLengthToUtf16(data->data) + 1;
 
-    memcpy(buffer, descriptor->payload, 2);
-    // FIXME Ends with null character, rewrite to use returned length
-    uToUtf16((char16_t *)(buffer + 2), (const char *)payload->data,
-        (descriptor->payload->length - 2) + 1);
-    *length = 2 + (descriptor->payload->length - 2) * 2;
-    buffer[0] = *length;
+    uToUtf16((char16_t *)(buffer + 2), data->data, stringLength);
+    buffer[0] = 2 + (stringLength << 1);
+    buffer[1] = DESCRIPTOR_STRING;
+    *length = buffer[0];
+    return E_OK;
+  }
+
+  uint16_t chunkLength = 0;
+
+  if ((*entry)->descriptorType == DESCRIPTOR_CONFIGURATION)
+  {
+    const struct UsbConfigurationDescriptor * const data =
+        (const struct UsbConfigurationDescriptor *)(*entry);
+
+    chunkLength = data->totalLength;
   }
   else
   {
-    //TODO Rewrite
-    if (descriptor->payload->descriptorType == DESCRIPTOR_CONFIGURATION)
-    {
-      const struct UsbConfigurationDescriptor * const payload =
-          (const struct UsbConfigurationDescriptor *)descriptor->payload;
+    chunkLength = (*entry)->length;
+  }
 
-      chunkLength = payload->totalLength;
-    }
-    else
-    {
-      chunkLength = descriptor->payload->length;
-    }
-
+  if (chunkLength)
     *length = chunkLength;
 
-    memcpy(buffer, descriptor->payload, descriptor->payload->length);
-    buffer += descriptor->payload->length;
-    chunkLength -= descriptor->payload->length;
+  while (*entry && chunkLength)
+  {
+    const uint8_t entryLength = (*entry)->length;
 
-    for (uint8_t index = 0; chunkLength && index < descriptor->count; ++index)
-    {
-      const struct UsbDescriptor * const child = descriptor->children + index;
+    memcpy(buffer, *entry, entryLength);
+    buffer += entryLength;
+    chunkLength -= entryLength;
 
-      assert(child->payload);
-      assert(chunkLength >= child->payload->length);
-
-      memcpy(buffer, child->payload, child->payload->length);
-      buffer += child->payload->length;
-      chunkLength -= child->payload->length;
-    }
+    ++entry;
   }
 
   return E_OK;
@@ -161,7 +140,7 @@ static enum result handleStandardDeviceRequest(struct UsbDevice *device,
 
     case REQUEST_GET_DESCRIPTOR:
     {
-      const struct UsbDescriptor * const root =
+      const struct UsbDescriptor ** const root =
           usbDriverGetDescriptor(device->driver);
 
       usbTrace("requests: get descriptor %d:%d, length %u",
@@ -303,15 +282,11 @@ static enum result setDeviceConfig(struct UsbDevice *device,
     if (!device->driver)
       return E_ERROR; //TODO Assert?
 
-    const struct UsbDescriptor * const root =
+    const struct UsbDescriptor ** const root =
         usbDriverGetDescriptor(device->driver);
-    enum result res;
+    const enum result res = traverseConfigArray(device, root,
+        configuration, alternativeSettings);
 
-    uint8_t currentConfig = 0xFF;
-    uint8_t currentSettings = 0xFF;
-
-    res = traverseConfigTree(device, root, configuration, alternativeSettings,
-        &currentConfig, &currentSettings);
     if (res != E_OK)
       return res;
 
@@ -322,50 +297,46 @@ static enum result setDeviceConfig(struct UsbDevice *device,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result traverseConfigTree(struct UsbDevice *device,
-    const struct UsbDescriptor *root, uint8_t configuration, uint8_t settings,
-    uint8_t *currentConfiguration, uint8_t *currentSettings)
+static enum result traverseConfigArray(struct UsbDevice *device,
+    const struct UsbDescriptor **root, uint8_t configuration, uint8_t settings)
 {
-  if (root->payload)
+  //FIXME Choose default values
+  uint8_t currentConfiguration = 0xFF;
+  uint8_t currentSettings = 0xFF;
+
+  while (*root)
   {
-    if (root->payload->descriptorType == DESCRIPTOR_CONFIGURATION)
+    if ((*root)->descriptorType == DESCRIPTOR_CONFIGURATION)
     {
-      const struct UsbConfigurationDescriptor * const descriptor =
-          (const struct UsbConfigurationDescriptor *)root->payload;
+      const struct UsbConfigurationDescriptor * const data =
+          (const struct UsbConfigurationDescriptor *)(*root);
 
-      *currentConfiguration = descriptor->configurationValue;
+      currentConfiguration = data->configurationValue;
     }
-    else if (root->payload->descriptorType == DESCRIPTOR_INTERFACE)
+    else if ((*root)->descriptorType == DESCRIPTOR_INTERFACE)
     {
-      const struct UsbInterfaceDescriptor * const descriptor =
-          (const struct UsbInterfaceDescriptor *)root->payload;
+      const struct UsbInterfaceDescriptor * const data =
+          (const struct UsbInterfaceDescriptor *)(*root);
 
-      *currentSettings = descriptor->alternateSettings;
+      currentSettings = data->alternateSettings;
     }
-    else if (root->payload->descriptorType == DESCRIPTOR_ENDPOINT
-        && *currentConfiguration == configuration
-        && *currentSettings == settings)
+    else if ((*root)->descriptorType == DESCRIPTOR_ENDPOINT
+        && currentConfiguration == configuration
+        && currentSettings == settings)
     {
-      const struct UsbEndpointDescriptor * const descriptor =
-          (const struct UsbEndpointDescriptor *)root->payload;
+      const struct UsbEndpointDescriptor * const data =
+          (const struct UsbEndpointDescriptor *)(*root);
 
       //FIXME Byte order
       //TODO Set endpoint size descriptor->maxPacketSize
       struct UsbEndpoint * const endpoint = getEpByAddress(device,
-          descriptor->endpointAddress);
+          data->endpointAddress);
 
       assert(endpoint);
       usbEpSetEnabled(endpoint, true);
     }
-  }
 
-  for (uint8_t index = 0; index < root->count; ++index)
-  {
-    const enum result res = traverseConfigTree(device, root->children + index,
-        configuration, settings, currentConfiguration, currentSettings);
-
-    if (res != E_OK)
-      return res;
+    ++root;
   }
 
   return E_OK;

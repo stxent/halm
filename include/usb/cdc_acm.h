@@ -17,22 +17,14 @@ struct CdcAcmConfig
 {
   /** Mandatory: USB device. */
   void *device;
+
   /** Optional: input queue size. */
   uint32_t rxLength;
   /** Optional: output queue size. */
   uint32_t txLength;
 
-  /** Optional: product string. */
-  const char *productString;
-  /** Optional: serial string. */
-  const char *serialString;
-  /** Optional: vendor string. */
-  const char *vendorString;
-
-  /** Optional: product ID. */
-  uint16_t product;
-  /** Optional: vendor ID. */
-  uint16_t vendor;
+  /** Optional: serial number string. */
+  const char *serial;
 
   struct
   {
@@ -43,6 +35,9 @@ struct CdcAcmConfig
     /** Mandatory: identifier of the output data endpoint. */
     uint8_t tx;
   } endpoint;
+
+  /** Optional: enable composite device mode. */
+  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcm
