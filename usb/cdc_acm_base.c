@@ -4,14 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
 #include <usb/cdc_acm_base.h>
 #include <usb/usb_trace.h>
-/*----------------------------------------------------------------------------*/
-#define STRINGIFY(text) #text
-#define TO_STRING(text) STRINGIFY(text)
 /*----------------------------------------------------------------------------*/
 static void buildDescriptors(struct CdcAcmBase *,
     const struct CdcAcmBaseConfig *);
@@ -132,26 +130,17 @@ static const struct UsbDescriptor * const dataDescriptors[] = {
 };
 
 static const struct UsbDescriptor * const stringDescriptors[] = {
-    (const struct UsbDescriptor *)&(const struct UsbStringHeadDescriptor){
-        .length = sizeof(struct UsbStringHeadDescriptor),
+    (const struct UsbDescriptor *)&(const struct UsbStringDescriptor){
+        .length = sizeof(struct UsbStringDescriptor),
         .descriptorType = DESCRIPTOR_STRING,
         .langid = TO_LITTLE_ENDIAN_16(0x0409)
     },
-    (const struct UsbDescriptor *)&(const struct UsbStringDescriptor){
-        .length = 0,
-        .descriptorType = DESCRIPTOR_STRING,
-        .data = TO_STRING(CONFIG_USB_DEVICE_VENDOR_NAME)
-    },
-    (const struct UsbDescriptor *)&(const struct UsbStringDescriptor){
-        .length = 0,
-        .descriptorType = DESCRIPTOR_STRING,
-        .data = TO_STRING(CONFIG_USB_DEVICE_PRODUCT_NAME)
-    },
-    (const struct UsbDescriptor *)&(const struct UsbStringDescriptor){
-        .length = 0,
-        .descriptorType = DESCRIPTOR_STRING,
-        .data = TO_STRING(CONFIG_USB_DEVICE_SERIAL)
-    }
+    (const struct UsbDescriptor *)
+        (DESCRIPTOR_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_VENDOR_NAME)),
+    (const struct UsbDescriptor *)
+        (DESCRIPTOR_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_PRODUCT_NAME)),
+    (const struct UsbDescriptor *)
+        (DESCRIPTOR_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_SERIAL))
 };
 /*----------------------------------------------------------------------------*/
 static void buildDescriptors(struct CdcAcmBase *driver,
@@ -217,23 +206,28 @@ static void buildDescriptors(struct CdcAcmBase *driver,
   /* Copy string descriptors */
   for (uint8_t i = 0; i < ARRAY_SIZE(stringDescriptors); ++i)
     driver->descriptorArray[index + i] = stringDescriptors[i];
+
   if (config->serial)
   {
+    const unsigned int serialLength = strlen(config->serial) + 1;
     const uint8_t serialIndex =
         ((const struct UsbDeviceDescriptor *)deviceDescriptor)->serialNumber;
 
-    driver->stringDescriptors = malloc(sizeof(struct UsbStringDescriptor));
-    driver->stringDescriptors[0].length = 0;
-    driver->stringDescriptors[0].descriptorType = DESCRIPTOR_STRING;
-    driver->stringDescriptors[0].data = config->serial; //TODO Allocate memory?
+    assert(serialLength < 127);
 
-    driver->descriptorArray[index + serialIndex] =
-        (struct UsbDescriptor *)&driver->stringDescriptors[0];
+    /* 2 bytes for default header and 1 byte for terminating character */
+    driver->stringDescriptor = malloc(2 + serialLength);
+    driver->stringDescriptor->length = 0;
+    driver->stringDescriptor->descriptorType = DESCRIPTOR_STRING;
+    memcpy(driver->stringDescriptor->data, config->serial, serialLength);
+
+    driver->descriptorArray[index + serialIndex] = driver->stringDescriptor;
   }
   else
   {
-    driver->stringDescriptors = 0;
+    driver->stringDescriptor = 0;
   }
+
   index += ARRAY_SIZE(stringDescriptors);
 
   /* Add end of the array mark */
@@ -242,8 +236,8 @@ static void buildDescriptors(struct CdcAcmBase *driver,
 /*----------------------------------------------------------------------------*/
 static void freeDescriptors(struct CdcAcmBase *driver)
 {
-  if (driver->stringDescriptors)
-    free(driver->stringDescriptors);
+  if (driver->stringDescriptor)
+    free(driver->stringDescriptor);
   free(driver->endpointDescriptors);
   free(driver->descriptorArray);
 }

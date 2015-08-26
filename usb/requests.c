@@ -59,11 +59,10 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
 
   if ((*entry)->descriptorType == DESCRIPTOR_STRING && descriptorIndex)
   {
-    const struct UsbStringDescriptor * const data =
-        (const struct UsbStringDescriptor *)(*entry);
-    const unsigned int stringLength = uLengthToUtf16(data->data) + 1;
+    const char * const data = (const char *)((*entry)->data);
+    const unsigned int stringLength = uLengthToUtf16(data);
 
-    uToUtf16((char16_t *)(buffer + 2), data->data, stringLength);
+    uToUtf16((char16_t *)(buffer + 2), data, stringLength + 1);
     buffer[0] = 2 + (stringLength << 1);
     buffer[1] = DESCRIPTOR_STRING;
     *length = buffer[0];

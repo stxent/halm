@@ -144,20 +144,12 @@ struct UsbEndpointDescriptor
   uint8_t interval;
 } __attribute__((packed));
 
-struct UsbStringHeadDescriptor
+struct UsbStringDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
   uint16_t langid;
 } __attribute__((packed));
-
-/* Special descriptor format for text conversion */
-struct UsbStringDescriptor
-{
-  uint8_t length;
-  uint8_t descriptorType;
-  const char *data;
-};
 /*----------------------------------------------------------------------------*/
 enum usbDescriptorType
 {
@@ -173,6 +165,9 @@ enum usbDescriptorType
 
 #define DESCRIPTOR_TYPE(value)  FIELD_VALUE((value), BIT_FIELD(MASK(8), 8), 8)
 #define DESCRIPTOR_INDEX(value) FIELD_VALUE((value), BIT_FIELD(MASK(8), 0), 0)
+/*----------------------------------------------------------------------------*/
+/* Prefix for string descriptors where length is zero and type is 3 */
+#define DESCRIPTOR_PREFIX "\x00\x03"
 /*----------------------------------------------------------------------------*/
 struct UsbDevice;
 /*----------------------------------------------------------------------------*/

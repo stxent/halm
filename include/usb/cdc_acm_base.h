@@ -44,7 +44,7 @@ struct CdcAcmBase
 
   const struct UsbDescriptor **descriptorArray;
   struct UsbEndpointDescriptor *endpointDescriptors;
-  struct UsbStringDescriptor *stringDescriptors;
+  struct UsbDescriptor *stringDescriptor;
 
   struct UsbDevice *device;
   struct CdcLineCoding lineCoding;
