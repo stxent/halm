@@ -53,9 +53,9 @@ static void controlOutHandler(struct UsbRequest *request,
     void *argument)
 {
   struct UsbDevice * const device = argument;
-  struct UsbSetupPacket * const packet = &device->setupPacket;
+  struct UsbSetupPacket * const packet = &device->state.packet;
 
-  if (request->status == REQUEST_FAILED)
+  if (request->status == REQUEST_CANCELLED)
   {
     queuePush(&device->requestPool, &request);
     return;
@@ -63,6 +63,7 @@ static void controlOutHandler(struct UsbRequest *request,
 
   if (request->status == REQUEST_SETUP)
   {
+    device->state.left = 0;
     memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
     packet->value = fromLittleEndian16(packet->value);
     packet->index = fromLittleEndian16(packet->index);
@@ -72,17 +73,21 @@ static void controlOutHandler(struct UsbRequest *request,
 
     if (type != REQUEST_TYPE_STANDARD)
     {
-      device->left = 0;
+      device->state.packet.length = 0;
       processRequest(device, request);
     }
     else
     {
       const uint8_t direction = REQUEST_DIRECTION_VALUE(packet->requestType);
 
-      device->left = packet->length;
-
       if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
+      {
         processStandardRequest(device, packet);
+      }
+      else if (packet->length <= EP0_BUFFER_SIZE * 2) //FIXME
+      {
+        device->state.left = packet->length;
+      }
     }
   }
   else
@@ -93,13 +98,16 @@ static void controlOutHandler(struct UsbRequest *request,
     {
       processRequest(device, request);
     }
-    else if (device->left)
+    else if (device->state.left)
     {
-      memcpy(device->buffer + (packet->length - device->left), request->buffer,
-          request->length);
-      device->left -= request->length;
+      if (request->length > device->state.left)
+        return;
 
-      if (!device->left)
+      memcpy(device->state.buffer + (packet->length - device->state.left),
+          request->buffer, request->length);
+      device->state.left -= request->length;
+
+      if (!device->state.left)
         processStandardRequest(device, packet);
     }
   }
@@ -115,11 +123,12 @@ static void processRequest(struct UsbDevice *device,
 
   if (device->driver)
   {
-    res = usbDriverConfigure(device->driver, request, device->buffer, &length);
+    res = usbDriverConfigure(device->driver, request, device->state.buffer,
+        &length);
 
     if (res == E_OK)
     {
-      sendResponse(device, device->buffer, length);
+      sendResponse(device, device->state.buffer, length);
     }
     else
     {
@@ -132,13 +141,17 @@ static void processStandardRequest(struct UsbDevice *device,
     const struct UsbSetupPacket *packet)
 {
   uint16_t length;
+  enum result res;
 
-  if (usbHandleStandardRequest(device, packet, device->buffer, &length) == E_OK)
+  res = usbHandleStandardRequest(device, packet, device->state.buffer, &length);
+
+  if (res == E_OK)
   {
     /* Send smallest of requested and offered lengths */
     const uint16_t requestedLength = length < packet->length ?
         length : packet->length;
-    sendResponse(device, device->buffer, requestedLength);
+
+    sendResponse(device, device->state.buffer, requestedLength);
   }
   else
   {
@@ -196,12 +209,12 @@ static enum result devInit(void *object, const void *configBase)
 
   device->currentConfiguration = 0;
   device->driver = 0;
-  device->left = 0;
 
   //TODO Protect with spinlock
-  device->buffer = malloc(EP0_BUFFER_SIZE * 2); //FIXME Select size
-  if (!device->buffer)
+  device->state.buffer = malloc(EP0_BUFFER_SIZE * 2); //FIXME Select size
+  if (!device->state.buffer)
     return E_MEMORY;
+  device->state.left = 0;
 
   device->ep0in = usbDevAllocate(device->device, EP0_BUFFER_SIZE,
       EP_DIRECTION_IN | EP_ADDRESS(0));
@@ -217,24 +230,32 @@ static enum result devInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  for (unsigned int index = 0; index < REQUEST_COUNT; ++index)
-  {
-    struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
+  /* Allocate requests */
+  device->requests = malloc(2 * REQUEST_COUNT * sizeof(struct UsbRequest));
+  if (!device->requests)
+    return E_MEMORY;
 
-    if ((res = usbRequestInit(request, EP0_BUFFER_SIZE)) != E_OK)
+  int8_t index;
+
+  for (index = 0; index < 2 * REQUEST_COUNT; ++index)
+  {
+    res = usbRequestInit(device->requests + index, EP0_BUFFER_SIZE);
+    if (res != E_OK)
       return res;
+  }
+
+  for (index = 0; index < REQUEST_COUNT; ++index)
+  {
+    struct UsbRequest * const request = device->requests + index;
+
     usbRequestCallback(request, controlInHandler, device);
     queuePush(&device->requestPool, &request);
   }
 
-  for (unsigned int index = 0; index < REQUEST_COUNT; ++index)
+  for (; index < 2 * REQUEST_COUNT; ++index)
   {
-    struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
-
-    if ((res = usbRequestInit(request, EP0_BUFFER_SIZE)) != E_OK)
-      return res;
-    usbRequestCallback(request, controlOutHandler, device);
-    usbEpEnqueue(device->ep0out, request);
+    usbRequestCallback(device->requests + index, controlOutHandler, device);
+    usbEpEnqueue(device->ep0out, device->requests + index);
   }
 
   return E_OK;
@@ -243,19 +264,20 @@ static enum result devInit(void *object, const void *configBase)
 static void devDeinit(void *object)
 {
   struct UsbDevice * const device = object;
-  struct UsbRequest *request;
 
+  usbEpClear(device->ep0in);
+  usbEpClear(device->ep0out);
+
+  assert(queueSize(&device->requestPool) == 2 * REQUEST_COUNT);
+
+  for (int8_t index = 2 * REQUEST_COUNT - 1; index >= 0; --index)
+    usbRequestDeinit(device->requests + index);
+  free(device->requests);
+
+  queueDeinit(&device->requestPool);
   deinit(device->ep0out);
   deinit(device->ep0in);
-
-  while (!queueEmpty(&device->requestPool))
-  {
-    queuePop(&device->requestPool, &request);
-    usbRequestDeinit(request);
-    free(request);
-  }
-
-  free(device->buffer);
+  free(device->state.buffer);
 
   deinit(device->device);
 }

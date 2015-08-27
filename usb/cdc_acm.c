@@ -42,8 +42,7 @@ static void cdcDataReceived(struct UsbRequest *request, void *argument)
   const uint32_t spaceLeft = byteQueueCapacity(&interface->rxQueue)
       - byteQueueSize(&interface->rxQueue);
 
-  //FIXME Check request status
-  if (spaceLeft < request->length)
+  if (request->status == REQUEST_CANCELLED || spaceLeft < request->length)
   {
     interface->queuedRxBytes += request->length;
     queuePush(&interface->rxRequestQueue, &request);
@@ -65,8 +64,8 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
 {
   struct CdcAcm * const interface = argument;
 
-  //FIXME Check request status
-  if (byteQueueEmpty(&interface->txQueue))
+  if (request->status == REQUEST_CANCELLED
+      || byteQueueEmpty(&interface->txQueue))
   {
     queuePush(&interface->txRequestQueue, &request);
     return;
@@ -146,32 +145,40 @@ static enum result interfaceInit(void *object, const void *configBase)
   if (!interface->notificationEp)
     return E_ERROR;
   interface->rxDataEp = usbDevAllocate(config->device, CDC_DATA_EP_SIZE,
-      config->endpoint.tx);
+      config->endpoint.rx);
   if (!interface->rxDataEp)
     return E_ERROR;
   interface->txDataEp = usbDevAllocate(config->device, CDC_DATA_EP_SIZE,
-      config->endpoint.rx);
+      config->endpoint.tx);
   if (!interface->txDataEp)
     return E_ERROR;
 
-  //TODO Optimize?
-  for (uint8_t index = 0; index < REQUEST_QUEUE_SIZE; ++index)
-  {
-    struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
-    usbRequestInit(request, CDC_DATA_EP_SIZE);
+  /* Allocate requests */
+  interface->requests =
+      malloc(2 * REQUEST_QUEUE_SIZE * sizeof(struct UsbRequest));
+  if (!interface->requests)
+    return E_MEMORY;
 
-    request->callback = cdcDataReceived;
-    request->callbackArgument = interface;
-    usbEpEnqueue(interface->rxDataEp, request);
+  int8_t index;
+
+  for (index = 0; index < 2 * REQUEST_QUEUE_SIZE; ++index)
+  {
+    res = usbRequestInit(interface->requests + index, CDC_DATA_EP_SIZE);
+    if (res != E_OK)
+      return res;
   }
 
-  for (uint8_t index = 0; index < REQUEST_QUEUE_SIZE; ++index)
+  for (index = 0; index < REQUEST_QUEUE_SIZE; ++index)
   {
-    struct UsbRequest * const request = malloc(sizeof(struct UsbRequest));
-    usbRequestInit(request, CDC_DATA_EP_SIZE);
+    usbRequestCallback(interface->requests + index, cdcDataReceived, interface);
+    usbEpEnqueue(interface->rxDataEp, interface->requests + index);
+  }
 
-    request->callback = cdcDataSent;
-    request->callbackArgument = interface;
+  for (; index < 2 * REQUEST_QUEUE_SIZE; ++index)
+  {
+    struct UsbRequest * const request = interface->requests + index;
+
+    usbRequestCallback(request, cdcDataSent, interface);
     queuePush(&interface->txRequestQueue, &request);
   }
 
@@ -182,11 +189,21 @@ static void interfaceDeinit(void *object)
 {
   struct CdcAcm * const interface = object;
 
+  usbEpClear(interface->notificationEp);
+  usbEpClear(interface->txDataEp);
+  usbEpClear(interface->rxDataEp);
+
+  assert(queueSize(&interface->rxRequestQueue) == REQUEST_QUEUE_SIZE);
+  assert(queueSize(&interface->txRequestQueue) == REQUEST_QUEUE_SIZE);
+
+  for (int8_t index = 2 * REQUEST_QUEUE_SIZE - 1; index >= 0; --index)
+    usbRequestDeinit(interface->requests + index);
+  free(interface->requests);
+
   deinit(interface->txDataEp);
   deinit(interface->rxDataEp);
   deinit(interface->notificationEp);
 
-  //TODO Deinit endpoints
   queueDeinit(&interface->txRequestQueue);
   queueDeinit(&interface->rxRequestQueue);
   byteQueueDeinit(&interface->txQueue);
@@ -222,7 +239,7 @@ static enum result interfaceGet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_RATE:
-      *(uint32_t *)data = interface->driver->state.coding.dteRate;
+      *(uint32_t *)data = interface->driver->line.coding.dteRate;
       return E_OK;
 
 /* TODO Extend option list

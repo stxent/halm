@@ -560,7 +560,7 @@ static void epClear(void *object)
   {
     queuePop(&endpoint->requests, &request);
 
-    request->status = REQUEST_FAILED;
+    request->status = REQUEST_CANCELLED;
     if (request->callback)
       request->callback(request, request->callbackArgument);
   }

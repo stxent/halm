@@ -53,11 +53,14 @@ struct CdcAcmBase
     struct CdcLineCoding coding;
     bool dtr;
     bool rts;
-  } state;
+  } line;
 
-  struct UsbSetupPacket setupPacket;
-  uint8_t *buffer;
-  uint16_t dataLength;
+  struct
+  {
+    struct UsbSetupPacket packet;
+    uint8_t *buffer;
+    uint16_t left;
+  } state;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* USB_CDC_ACM_BASE_H_ */

@@ -29,7 +29,7 @@ enum usbRequestStatus
   REQUEST_SETUP,      /* Request payload is a setup packet */
   REQUEST_STALLED,    /* Endpoint is stalled */
   REQUEST_ERROR,      /* Request is not completed */
-  REQUEST_FAILED      /* Request is removed from the queue */
+  REQUEST_CANCELLED   /* Request is removed from the queue */
 };
 /*----------------------------------------------------------------------------*/
 struct UsbRequest

@@ -41,12 +41,16 @@ struct UsbDevice
   struct UsbEndpoint *ep0in;
   struct UsbEndpoint *ep0out;
   struct Queue requestPool;
+  struct UsbRequest *requests;
 
   uint8_t currentConfiguration;
 
-  struct UsbSetupPacket setupPacket;
-  uint8_t *buffer;
-  uint16_t left;
+  struct
+  {
+    struct UsbSetupPacket packet;
+    uint8_t *buffer;
+    uint16_t left;
+  } state;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_DEVICE_H_ */

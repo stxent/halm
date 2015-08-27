@@ -9,9 +9,10 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
+#define CDC_CONTROL_BUFFER_SIZE   12
 #define CDC_CONTROL_EP_SIZE       64
 #define CDC_DATA_EP_SIZE          64
-#define CDC_NOTIFICATION_EP_SIZE  10
+#define CDC_NOTIFICATION_EP_SIZE  12
 /*----------------------------------------------------------------------------*/
 enum
 {

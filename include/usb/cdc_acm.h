@@ -53,6 +53,8 @@ struct CdcAcm
   struct ByteQueue rxQueue, txQueue;
   /* Request queues */
   struct Queue rxRequestQueue, txRequestQueue;
+  /* Pointer to the beginning of the request pool */
+  struct UsbRequest *requests;
   /* Size of the queued data */
   uint16_t queuedRxBytes;
 

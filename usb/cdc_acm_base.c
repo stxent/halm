@@ -249,24 +249,24 @@ static enum result handleRequest(struct CdcAcmBase *driver,
   switch (packet->request)
   {
     case CDC_SET_LINE_CODING:
-      if (inputLength != sizeof(driver->state.coding))
+      if (inputLength != sizeof(driver->line.coding))
         return E_VALUE;
-      memcpy(&driver->state.coding, input, sizeof(driver->state.coding));
+      memcpy(&driver->line.coding, input, sizeof(driver->line.coding));
       *outputLength = 0;
       usbTrace("cdc_acm: rate %u, format %u, parity %u, width %u",
-          driver->state.coding.dteRate, driver->state.coding.charFormat,
-          driver->state.coding.parityType, driver->state.coding.dataBits);
+          driver->line.coding.dteRate, driver->line.coding.charFormat,
+          driver->line.coding.parityType, driver->line.coding.dataBits);
       break;
 
     case CDC_GET_LINE_CODING:
-      memcpy(output, &driver->state.coding, sizeof(driver->state.coding));
-      *outputLength = sizeof(driver->state.coding);
+      memcpy(output, &driver->line.coding, sizeof(driver->line.coding));
+      *outputLength = sizeof(driver->line.coding);
       usbTrace("cdc_acm: line coding requested");
       break;
 
     case CDC_SET_CONTROL_LINE_STATE:
-      driver->state.dtr = packet->value & 0x01;
-      driver->state.rts = packet->value & 0x02;
+      driver->line.dtr = packet->value & 0x01;
+      driver->line.rts = packet->value & 0x02;
       *outputLength = 0;
       usbTrace("cdc_acm: set control lines to %02X", packet->value);
       break;
@@ -285,12 +285,15 @@ static enum result driverInit(void *object, const void *configBase)
   struct CdcAcmBase * const driver = object;
   enum result res;
 
-  driver->buffer = malloc(64); //FIXME Magic
+  driver->state.buffer = malloc(CDC_CONTROL_BUFFER_SIZE);
+  if (!driver->state.buffer)
+    return E_MEMORY;
+  driver->state.left = 0;
 
   driver->device = config->device;
-  driver->state.coding = (struct CdcLineCoding){115200, 0, 0, 8};
-  driver->state.dtr = true;
-  driver->state.rts = true;
+  driver->line.coding = (struct CdcLineCoding){115200, 0, 0, 8};
+  driver->line.dtr = true;
+  driver->line.rts = true;
 
   buildDescriptors(driver, config);
 
@@ -307,18 +310,20 @@ static void driverDeinit(void *object)
   struct CdcAcmBase * const driver = object;
 
   usbDevSetConnected(driver->device, false);
+  usbDevBind(driver->device, 0); /* Unbind driver */
   freeDescriptors(driver);
-  free(driver->buffer);
+  free(driver->state.buffer);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
     const struct UsbRequest *request, uint8_t *reply, uint16_t *length)
 {
   struct CdcAcmBase * const driver = object;
-  struct UsbSetupPacket * const packet = &driver->setupPacket;
+  struct UsbSetupPacket * const packet = &driver->state.packet;
 
   if (request->status & REQUEST_SETUP)
   {
+    driver->state.left = 0;
     memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
     packet->value = fromLittleEndian16(packet->value);
     packet->index = fromLittleEndian16(packet->index);
@@ -330,17 +335,21 @@ static enum result driverConfigure(void *object,
     if (type != REQUEST_TYPE_CLASS)
       return E_INVALID;
 
-    driver->dataLength = packet->length;
-
     if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
     {
       //TODO Add limit
       return handleRequest(driver, packet, 0, 0, reply, length);
     }
-    else
+    else if (packet->length <= CDC_CONTROL_BUFFER_SIZE)
     {
+      driver->state.left = packet->length;
       *length = 0;
       return E_OK;
+    }
+    else
+    {
+      usbTrace("cdc_acm: control data overflow %u", packet->length);
+      return E_VALUE;
     }
   }
   else
@@ -350,15 +359,19 @@ static enum result driverConfigure(void *object,
     if (type != REQUEST_TYPE_CLASS)
       return E_INVALID;
 
-    if (driver->dataLength)
+    if (driver->state.left)
     {
-      //FIXME Rewrite
-      memcpy(driver->buffer, request->buffer, request->length);
+      if (request->length > driver->state.left)
+        return E_VALUE;
 
-      if (driver->dataLength == request->length)
+      memcpy(driver->state.buffer + (packet->length - driver->state.left),
+          request->buffer, request->length);
+      driver->state.left -= request->length;
+
+      if (!driver->state.left)
       {
-        return handleRequest(driver, packet, driver->buffer,
-            driver->dataLength, reply, length);
+        return handleRequest(driver, packet, driver->state.buffer,
+            driver->state.packet.length, reply, length);
       }
     }
     else
