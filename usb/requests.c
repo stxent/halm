@@ -57,21 +57,21 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
   if (!entry)
     return E_VALUE;
 
-  if ((*entry)->descriptorType == DESCRIPTOR_STRING && descriptorIndex)
+  if ((*entry)->descriptorType == DESCRIPTOR_TYPE_STRING && descriptorIndex)
   {
     const char * const data = (const char *)((*entry)->data);
     const unsigned int stringLength = uLengthToUtf16(data);
 
     uToUtf16((char16_t *)(buffer + 2), data, stringLength + 1);
     buffer[0] = 2 + (stringLength << 1);
-    buffer[1] = DESCRIPTOR_STRING;
+    buffer[1] = DESCRIPTOR_TYPE_STRING;
     *length = buffer[0];
     return E_OK;
   }
 
   uint16_t chunkLength = 0;
 
-  if ((*entry)->descriptorType == DESCRIPTOR_CONFIGURATION)
+  if ((*entry)->descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
   {
     const struct UsbConfigurationDescriptor * const data =
         (const struct UsbConfigurationDescriptor *)(*entry);
@@ -305,21 +305,21 @@ static enum result traverseConfigArray(struct UsbDevice *device,
 
   while (*root)
   {
-    if ((*root)->descriptorType == DESCRIPTOR_CONFIGURATION)
+    if ((*root)->descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
     {
       const struct UsbConfigurationDescriptor * const data =
           (const struct UsbConfigurationDescriptor *)(*root);
 
       currentConfiguration = data->configurationValue;
     }
-    else if ((*root)->descriptorType == DESCRIPTOR_INTERFACE)
+    else if ((*root)->descriptorType == DESCRIPTOR_TYPE_INTERFACE)
     {
       const struct UsbInterfaceDescriptor * const data =
           (const struct UsbInterfaceDescriptor *)(*root);
 
       currentSettings = data->alternateSettings;
     }
-    else if ((*root)->descriptorType == DESCRIPTOR_ENDPOINT
+    else if ((*root)->descriptorType == DESCRIPTOR_TYPE_ENDPOINT
         && currentConfiguration == configuration
         && currentSettings == settings)
     {

@@ -47,7 +47,13 @@ struct CdcAcmBase
   struct UsbDescriptor *stringDescriptor;
 
   struct UsbDevice *device;
-  struct CdcLineCoding lineCoding;
+
+  struct
+  {
+    struct CdcLineCoding coding;
+    bool dtr;
+    bool rts;
+  } state;
 
   struct UsbSetupPacket setupPacket;
   uint8_t *buffer;
