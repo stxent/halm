@@ -198,6 +198,7 @@ static enum result devInit(void *object, const void *configBase)
       .dm = config->dm,
       .dp = config->dp,
       .connect = config->connect,
+      .vbus = config->vbus,
       .channel = config->channel
   };
   struct UsbDevice * const device = object;

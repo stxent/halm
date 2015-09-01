@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <platform/nxp/lpc17xx/system.h>
-#include <platform/nxp/lpc17xx/usb_base.h>
-#include <platform/nxp/lpc17xx/usb_defs.h>
+#include <platform/nxp/lpc13xx/system.h>
+#include <platform/nxp/lpc13xx/usb_base.h>
+#include <platform/nxp/lpc13xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct UsbBase *,
@@ -24,21 +24,14 @@ static const struct EntityClass devTable = {
     .deinit = devDeinit
 };
 /*----------------------------------------------------------------------------*/
+// TODO Other USB pins
 const struct PinEntry usbPins[] = {
     {
-        .key = PIN(0, 29), /* USB_D+ */
+        .key = PIN(0, 3), /* USB_VBUS */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(0, 30), /* USB_D- */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = PIN(1, 30), /* VBUS */
-        .channel = 0,
-        .value = 2
-    }, {
-        .key = PIN(2, 9), /* USB_CONNECT */
+        .key = PIN(0, 6), /* USB_CONNECT */
         .channel = 0,
         .value = 1
     }, {
@@ -104,7 +97,8 @@ static enum result devInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  sysPowerEnable(PWR_USB);
+  sysPowerEnable(PWR_USBPAD);
+  sysClockEnable(CLK_USBREG);
 
   device->handler = 0;
   device->irq = USB_IRQ;
@@ -113,17 +107,7 @@ static enum result devInit(void *object, const void *configBase)
   /* Perform platform-specific initialization */
   LPC_USB_Type * const reg = device->reg;
 
-  /* Enable clocks */
-  reg->USBClkCtrl = USBClkCtrl_DEV_CLK_ON | USBClkCtrl_AHB_CLK_ON;
-
-  const uint32_t clockStateMask = USBClkSt_DEV_CLK_ON | USBClkSt_AHB_CLK_ON;
-  while ((reg->USBClkSt & clockStateMask) != clockStateMask);
-
-  /* Reset interrupts */
-  reg->USBDevIntPri = 0;
-  reg->USBEpIntEn = 0;
-  reg->USBEpIntClr = 0xFFFFFFFF;
-  reg->USBEpIntPri = 0;
+  reg->USBDevFIQSel = 0;
 
   return E_OK;
 }
@@ -131,11 +115,8 @@ static enum result devInit(void *object, const void *configBase)
 static void devDeinit(void *object)
 {
   struct UsbBase * const device = object;
-  LPC_USB_Type * const reg = device->reg;
 
-  /* Disable clock */
-  reg->USBClkCtrl = 0;
-
-  sysPowerDisable(PWR_USB);
+  sysClockDisable(CLK_USBREG);
+  sysPowerDisable(PWR_USBPAD);
   setDescriptor(device->channel, device, 0);
 }

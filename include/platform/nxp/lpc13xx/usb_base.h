@@ -1,25 +1,19 @@
 /*
- * usb/usb_device.h
+ * platform/nxp/lpc13xx/usb_base.h
  * Copyright (C) 2015 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_USB_DEVICE_H_
-#define USB_USB_DEVICE_H_
+#ifndef PLATFORM_NXP_LPC13XX_USB_BASE_H_
+#define PLATFORM_NXP_LPC13XX_USB_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <entity.h>
+#include <irq.h>
 #include <pin.h>
-#include <containers/queue.h>
-#include <usb/requests.h>
-#include <usb/usb.h>
 /*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/usb_device_base.h>
-#include HEADER_PATH
-#undef HEADER_PATH
+extern const struct EntityClass * const UsbBase;
 /*----------------------------------------------------------------------------*/
-extern const struct UsbDeviceClass * const UsbDevice;
-/*----------------------------------------------------------------------------*/
-struct UsbDeviceConfig
+struct UsbBaseConfig
 {
   /** Mandatory: USB bidirectional D- line. */
   pin_t dm;
@@ -33,26 +27,16 @@ struct UsbDeviceConfig
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct UsbDevice
+struct UsbBase
 {
   struct Entity parent;
 
-  struct UsbDeviceBase *device;
+  void *reg;
+  void (*handler)(void *);
+  irq_t irq;
 
-  void *driver;
-  struct UsbEndpoint *ep0in;
-  struct UsbEndpoint *ep0out;
-  struct Queue requestPool;
-  struct UsbRequest *requests;
-
-  uint8_t currentConfiguration;
-
-  struct
-  {
-    struct UsbSetupPacket packet;
-    uint8_t *buffer;
-    uint16_t left;
-  } state;
+  /* Unique peripheral identifier */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* USB_USB_DEVICE_H_ */
+#endif /* PLATFORM_NXP_LPC13XX_USB_BASE_H_ */

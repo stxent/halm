@@ -1,11 +1,11 @@
 /*
- * platform/nxp/gen_1/usb_device_base.h
+ * platform/nxp/usb_device_base.h
  * Copyright (C) 2015 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GEN_1_USB_DEVICE_BASE_H_
-#define PLATFORM_NXP_GEN_1_USB_DEVICE_BASE_H_
+#ifndef PLATFORM_NXP_USB_DEVICE_BASE_H_
+#define PLATFORM_NXP_USB_DEVICE_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <spinlock.h>
 #include <containers/list.h>
@@ -28,6 +28,8 @@ struct UsbDeviceBaseConfig
   pin_t dp;
   /** Mandatory: output pin used for soft connect feature. */
   pin_t connect;
+  /** Mandatory: monitors the presence of USB bus power. */
+  pin_t vbus;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -68,4 +70,4 @@ struct UsbEndpoint
   bool busy;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GEN_1_USB_DEVICE_BASE_H_ */
+#endif /* PLATFORM_NXP_USB_DEVICE_BASE_H_ */

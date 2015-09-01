@@ -21,6 +21,8 @@ struct UsbBaseConfig
   pin_t dp;
   /** Mandatory: output pin used for soft connect feature. */
   pin_t connect;
+  /** Mandatory: monitors the presence of USB bus power. */
+  pin_t vbus;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
