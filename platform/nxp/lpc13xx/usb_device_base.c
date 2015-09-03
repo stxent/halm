@@ -153,13 +153,10 @@ static void usbCommand(struct UsbDeviceBase *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->parent.reg;
 
-  /* Clear CDFULL and CCEMPTY */
-  reg->USBDevIntClr = USBDevIntSt_CDFULL | USBDevIntSt_CCEMPTY;
-
-  /* Write command code */
+  /* Write command code and wait for completion */
+  reg->USBDevIntClr = USBDevIntSt_CCEMPTY;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_COMMAND)
       | USBCmdCode_CMD_CODE(command);
-
   waitForInt(device, USBDevIntSt_CCEMPTY);
 }
 /*----------------------------------------------------------------------------*/
@@ -170,10 +167,10 @@ static uint8_t usbCommandRead(struct UsbDeviceBase *device, uint8_t command)
   /* Write command code */
   usbCommand(device, command);
 
-  /* Read data */
+  /* Send read request and wait for data */
+  reg->USBDevIntClr = USBDevIntSt_CDFULL;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_READ)
       | USBCmdCode_CMD_CODE(command);
-
   waitForInt(device, USBDevIntSt_CDFULL);
 
   return (uint8_t)reg->USBCmdData;
@@ -187,10 +184,10 @@ static void usbCommandWrite(struct UsbDeviceBase *device, uint8_t command,
   /* Write command code */
   usbCommand(device, command);
 
-  /* Write data */
+  /* Write data and wait for completion */
+  reg->USBDevIntClr = USBDevIntSt_CCEMPTY;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_WRITE)
       | USBCmdCode_CMD_WDATA(data);
-
   waitForInt(device, USBDevIntSt_CCEMPTY);
 }
 /*----------------------------------------------------------------------------*/

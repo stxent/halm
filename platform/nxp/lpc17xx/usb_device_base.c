@@ -114,6 +114,7 @@ static void interruptHandler(void *object)
     reg->USBDevIntClr = USBDevIntSt_EP_SLOW;
 
     /* Check registered endpoints */
+    const uint32_t epIntStatus = reg->USBEpIntSt;
     const struct ListNode *current = listFirst(&device->endpoints);
     struct UsbEndpoint *endpoint;
 
@@ -121,16 +122,16 @@ static void interruptHandler(void *object)
     {
       listData(&device->endpoints, current, &endpoint);
 
-      const uint32_t mask = 1 << EP_TO_INDEX(endpoint->address);
+      const uint8_t index = EP_TO_INDEX(endpoint->address);
+      const uint32_t mask = 1 << index;
 
-      if (reg->USBEpIntSt & mask)
+      if (epIntStatus & mask)
       {
-        reg->USBEpIntClr = mask;
-
-        waitForInt(device, USBDevIntSt_CDFULL);
-
-        const uint32_t rawEpStatus = reg->USBCmdData;
+        const uint8_t rawEpStatus = usbCommandRead(device,
+            USB_CMD_CLEAR_INTERRUPT | index);
         uint8_t status = 0;
+
+        reg->USBEpIntClr = mask;
 
         if (rawEpStatus & SELECT_ENDPOINT_FE)
           status |= EP_STATUS_DATA;
@@ -154,13 +155,10 @@ static void usbCommand(struct UsbDeviceBase *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->parent.reg;
 
-  /* Clear CDFULL and CCEMPTY */
-  reg->USBDevIntClr = USBDevIntSt_CDFULL | USBDevIntSt_CCEMPTY;
-
-  /* Write command code */
+  /* Write command code and wait for completion */
+  reg->USBDevIntClr = USBDevIntSt_CCEMPTY;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_COMMAND)
       | USBCmdCode_CMD_CODE(command);
-
   waitForInt(device, USBDevIntSt_CCEMPTY);
 }
 /*----------------------------------------------------------------------------*/
@@ -171,10 +169,10 @@ static uint8_t usbCommandRead(struct UsbDeviceBase *device, uint8_t command)
   /* Write command code */
   usbCommand(device, command);
 
-  /* Read data */
+  /* Send read request and wait for data */
+  reg->USBDevIntClr = USBDevIntSt_CDFULL;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_READ)
       | USBCmdCode_CMD_CODE(command);
-
   waitForInt(device, USBDevIntSt_CDFULL);
 
   return (uint8_t)reg->USBCmdData;
@@ -188,10 +186,10 @@ static void usbCommandWrite(struct UsbDeviceBase *device, uint8_t command,
   /* Write command code */
   usbCommand(device, command);
 
-  /* Write data */
+  /* Write data and wait for completion */
+  reg->USBDevIntClr = USBDevIntSt_CCEMPTY;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_WRITE)
       | USBCmdCode_CMD_WDATA(data);
-
   waitForInt(device, USBDevIntSt_CCEMPTY);
 }
 /*----------------------------------------------------------------------------*/
@@ -467,6 +465,7 @@ static void setEpInterruptEnabled(struct UsbDeviceBase *device, uint8_t address,
   if (state)
   {
     /* Enable interrupt */
+    //FIXME Clear pending interrupts before enabling
     reg->USBEpIntEn |= mask;
     reg->USBDevIntEn |= USBDevIntSt_EP_SLOW;
   }
