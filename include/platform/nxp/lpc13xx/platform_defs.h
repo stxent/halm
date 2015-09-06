@@ -305,20 +305,20 @@ typedef struct
 /*------------------Universal Serial Bus--------------------------------------*/
 typedef struct
 {
-  __ro__ uint32_t DevIntSt; /* USB Device Interrupt Registers */
-  __rw__ uint32_t DevIntEn;
-  __wo__ uint32_t DevIntClr;
-  __wo__ uint32_t DevIntSet;
+  __ro__ uint32_t USBDevIntSt; /* USB Device Interrupt Registers */
+  __rw__ uint32_t USBDevIntEn;
+  __wo__ uint32_t USBDevIntClr;
+  __wo__ uint32_t USBDevIntSet;
 
-  __wo__ uint32_t CmdCode; /* USB Device SIE Command Registers */
-  __ro__ uint32_t CmdData;
+  __wo__ uint32_t USBCmdCode; /* USB Device SIE Command Registers */
+  __ro__ uint32_t USBCmdData;
 
-  __ro__ uint32_t RxData; /* USB Device Transfer Registers */
-  __wo__ uint32_t TxData;
-  __ro__ uint32_t RxPLen;
-  __wo__ uint32_t TxPLen;
-  __rw__ uint32_t Ctrl;
-  __wo__ uint32_t DevFIQSel;
+  __ro__ uint32_t USBRxData; /* USB Device Transfer Registers */
+  __wo__ uint32_t USBTxData;
+  __ro__ uint32_t USBRxPLen;
+  __wo__ uint32_t USBTxPLen;
+  __rw__ uint32_t USBCtrl;
+  __wo__ uint32_t USBDevFIQSel;
 } LPC_USB_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */

@@ -13,8 +13,8 @@ ifeq ($(CONFIG_PM),y)
 endif
 
 ifeq ($(CONFIG_USB),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_USB)/usb_device_base.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_base.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_device_base.c
 endif
 
 CSOURCES += platform/pin.c

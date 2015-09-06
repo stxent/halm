@@ -15,11 +15,16 @@ static inline void __delay(uint32_t count)
       "1:\n"
       "    NOP\n"
       "    SUBS.W %[count], %[count], #1\n"
-      "    BNE 1b"
+      "    BCS 1b"
       : [count] "=r" (count)
       : "0" (count)
       : "r3"
   );
+}
+/*----------------------------------------------------------------------------*/
+static inline void delayTicks(uint32_t count)
+{
+  __delay(count >> 2);
 }
 /*----------------------------------------------------------------------------*/
 static inline void mdelay(uint32_t period)
@@ -31,7 +36,7 @@ static inline void mdelay(uint32_t period)
     uint32_t count = period > (1 << 12) ? 1 << 12 : period;
 
     period -= count;
-    count = (ticksPerSecond * count) / 4;
+    count = (ticksPerSecond * count) >> 2;
     __delay(count);
   }
 }
