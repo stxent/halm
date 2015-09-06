@@ -37,9 +37,9 @@ struct UsbDevice
 {
   struct Entity parent;
 
-  struct UsbDeviceBase *device;
+  struct UsbDeviceBase *base;
+  struct UsbDriver *driver;
 
-  void *driver;
   struct UsbEndpoint *ep0in;
   struct UsbEndpoint *ep0out;
   struct Queue requestPool;

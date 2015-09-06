@@ -20,7 +20,8 @@ enum usbDeviceStatus
 {
   DEVICE_STATUS_CONNECT = 0x01,
   DEVICE_STATUS_SUSPEND = 0x02,
-  DEVICE_STATUS_RESET   = 0x04
+  DEVICE_STATUS_RESET   = 0x04,
+  DEVICE_STATUS_FRAME   = 0x08
 };
 
 enum usbRequestStatus
@@ -132,7 +133,12 @@ struct UsbDriverClass
       uint16_t *);
   void (*disconnect)(void *);
   const struct UsbDescriptor **(*getDescriptor)(void *);
-  void (*setSuspended)(void *, bool);
+  void (*updateStatus)(void *, uint8_t);
+};
+/*----------------------------------------------------------------------------*/
+struct UsbDriver
+{
+  struct Entity parent;
 };
 /*----------------------------------------------------------------------------*/
 static inline enum result usbDriverConfigure(void *driver,
@@ -152,9 +158,9 @@ static inline const struct UsbDescriptor **usbDriverGetDescriptor(void *driver)
   return ((const struct UsbDriverClass *)CLASS(driver))->getDescriptor(driver);
 }
 /*----------------------------------------------------------------------------*/
-static inline void usbDriverSetSuspended(void *driver, bool state)
+static inline void usbDriverUpdateStatus(void *driver, uint8_t status)
 {
-  ((const struct UsbDriverClass *)CLASS(driver))->setSuspended(driver, state);
+  ((const struct UsbDriverClass *)CLASS(driver))->updateStatus(driver, status);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_H_ */

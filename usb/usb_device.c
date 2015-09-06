@@ -13,6 +13,15 @@
 #define EP0_BUFFER_SIZE 64
 #define REQUEST_COUNT   4
 /*----------------------------------------------------------------------------*/
+static void controlInHandler(struct UsbRequest *, void *);
+static void controlOutHandler(struct UsbRequest *, void *);
+static void processRequest(struct UsbDevice *, const struct UsbRequest *);
+static void processStandardRequest(struct UsbDevice *,
+    const struct UsbSetupPacket *);
+static void resetDevice(struct UsbDevice *);
+static void sendResponse(struct UsbDevice *, const uint8_t *, uint16_t);
+static void updateStatus(void *, uint8_t);
+/*----------------------------------------------------------------------------*/
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
 static enum result devBind(void *, void *);
@@ -34,13 +43,6 @@ static const struct UsbDeviceClass devTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const UsbDevice = &devTable;
-/*----------------------------------------------------------------------------*/
-static void controlInHandler(struct UsbRequest *, void *);
-static void controlOutHandler(struct UsbRequest *, void *);
-static void processRequest(struct UsbDevice *, const struct UsbRequest *);
-static void processStandardRequest(struct UsbDevice *,
-    const struct UsbSetupPacket *);
-static void sendResponse(struct UsbDevice *, const uint8_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *request, void *argument)
 {
@@ -159,6 +161,12 @@ static void processStandardRequest(struct UsbDevice *device,
   }
 }
 /*----------------------------------------------------------------------------*/
+static void resetDevice(struct UsbDevice *device)
+{
+  usbEpSetEnabled(device->ep0in, true);
+  usbEpSetEnabled(device->ep0out, true);
+}
+/*----------------------------------------------------------------------------*/
 static void sendResponse(struct UsbDevice *device, const uint8_t *data,
     uint16_t length)
 {
@@ -191,6 +199,17 @@ static void sendResponse(struct UsbDevice *device, const uint8_t *data,
   }
 }
 /*----------------------------------------------------------------------------*/
+static void updateStatus(void *object, uint8_t status)
+{
+  struct UsbDevice * const device = object;
+
+  if (status & DEVICE_STATUS_RESET)
+    resetDevice(device);
+
+  if (device->driver)
+    usbDriverUpdateStatus(device->driver, status);
+}
+/*----------------------------------------------------------------------------*/
 static enum result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
@@ -204,9 +223,11 @@ static enum result devInit(void *object, const void *configBase)
   struct UsbDevice * const device = object;
   enum result res;
 
-  device->device = init(UsbDeviceBase, &parentConfig);
-  if (!device->device)
+  device->base = init(UsbDeviceBase, &parentConfig);
+  if (!device->base)
     return E_ERROR;
+
+  usbDeviceBaseSetHandler(device->base, updateStatus, device);
 
   device->currentConfiguration = 0;
   device->driver = 0;
@@ -217,11 +238,11 @@ static enum result devInit(void *object, const void *configBase)
     return E_MEMORY;
   device->state.left = 0;
 
-  device->ep0in = usbDevAllocate(device->device, EP0_BUFFER_SIZE,
+  device->ep0in = usbDevAllocate(device->base, EP0_BUFFER_SIZE,
       EP_DIRECTION_IN | EP_ADDRESS(0));
   if (!device->ep0in)
     return E_MEMORY;
-  device->ep0out = usbDevAllocate(device->device, EP0_BUFFER_SIZE,
+  device->ep0out = usbDevAllocate(device->base, EP0_BUFFER_SIZE,
       EP_ADDRESS(0));
   if (!device->ep0out)
     return E_MEMORY;
@@ -259,6 +280,9 @@ static enum result devInit(void *object, const void *configBase)
     usbEpEnqueue(device->ep0out, device->requests + index);
   }
 
+  /* Enable interrupts */
+  resetDevice(device);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -280,14 +304,14 @@ static void devDeinit(void *object)
   deinit(device->ep0in);
   free(device->state.buffer);
 
-  deinit(device->device);
+  deinit(device->base);
 }
 /*----------------------------------------------------------------------------*/
 static void *devAllocate(void *object, uint16_t size, uint8_t address)
 {
   struct UsbDevice * const device = object;
 
-  return UsbDeviceBase->allocate(device->device, size, address);
+  return UsbDeviceBase->allocate(device->base, size, address);
 }
 /*----------------------------------------------------------------------------*/
 static enum result devBind(void *object, void *driver)
@@ -303,19 +327,19 @@ static void devSetAddress(void *object, uint8_t address)
 {
   struct UsbDevice * const device = object;
 
-  UsbDeviceBase->setAddress(device->device, address);
+  UsbDeviceBase->setAddress(device->base, address);
 }
 /*----------------------------------------------------------------------------*/
 static void devSetConfigured(void *object, bool state)
 {
   struct UsbDevice * const device = object;
 
-  UsbDeviceBase->setConfigured(device->device, state);
+  UsbDeviceBase->setConfigured(device->base, state);
 }
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)
 {
   struct UsbDevice * const device = object;
 
-  UsbDeviceBase->setConnected(device->device, state);
+  UsbDeviceBase->setConnected(device->base, state);
 }

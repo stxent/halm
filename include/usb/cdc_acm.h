@@ -13,6 +13,20 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const CdcAcm;
 /*----------------------------------------------------------------------------*/
+enum cdcAcmOption
+{
+  /** Retrieve extended information about current interface status. */
+  IF_CDC_ACM_STATUS = IF_OPTION_END
+};
+/*----------------------------------------------------------------------------*/
+enum
+{
+  CDC_ACM_RX_AVAILABLE = 0x01,
+  CDC_ACM_TX_EMPTY     = 0x02,
+  CDC_ACM_SUSPENDED    = 0x04,
+  CDC_ACM_LINE_CHANGED = 0x08
+};
+/*----------------------------------------------------------------------------*/
 struct CdcAcmConfig
 {
   /** Mandatory: USB device. */

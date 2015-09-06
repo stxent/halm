@@ -119,12 +119,6 @@ static enum result devInit(void *object, const void *configBase)
   const uint32_t clockStateMask = USBClkSt_DEV_CLK_ON | USBClkSt_AHB_CLK_ON;
   while ((reg->USBClkSt & clockStateMask) != clockStateMask);
 
-  /* Reset interrupts */
-  reg->USBDevIntPri = 0;
-  reg->USBEpIntEn = 0;
-  reg->USBEpIntClr = 0xFFFFFFFF;
-  reg->USBEpIntPri = 0;
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

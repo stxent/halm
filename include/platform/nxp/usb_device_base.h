@@ -38,6 +38,11 @@ struct UsbDeviceBase
 {
   struct UsbBase parent;
 
+  /* Function that handles changes in the USB device state */
+  void (*eventHandler)(void *, uint8_t);
+  /* Argument for the event handler */
+  void *eventHandlerArgument;
+
   /* List of registered endpoints */
   struct List endpoints;
   /* Protects the list of endpoints */
@@ -60,14 +65,15 @@ struct UsbEndpoint
 
   /* Parent device */
   struct UsbDeviceBase *device;
-  /* Pending requests */
+  /* Queued requests */
   struct Queue requests;
   /* Maximum packet size */
   uint16_t size;
   /* Logical address */
   uint8_t address;
-  /* Busy flag */
-  bool busy;
 };
+/*----------------------------------------------------------------------------*/
+void usbDeviceBaseSetHandler(struct UsbDeviceBase *, void (*)(void *, uint8_t),
+    void *);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_USB_DEVICE_BASE_H_ */

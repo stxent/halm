@@ -24,7 +24,7 @@ static enum result driverConfigure(void *, const struct UsbRequest *, uint8_t *,
     uint16_t *);
 static void driverDisconnect(void *);
 static const struct UsbDescriptor **driverGetDescriptor(void *);
-static void driverSetSuspended(void *, bool);
+static void driverUpdateStatus(void *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
     .size = sizeof(struct CdcAcmBase),
@@ -34,7 +34,7 @@ static const struct UsbDriverClass driverTable = {
     .configure = driverConfigure,
     .disconnect = driverDisconnect,
     .getDescriptor = driverGetDescriptor,
-    .setSuspended = driverSetSuspended
+    .updateStatus = driverUpdateStatus
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const CdcAcmBase = &driverTable;
@@ -246,13 +246,18 @@ static enum result handleRequest(struct CdcAcmBase *driver,
     const struct UsbSetupPacket *packet, const uint8_t *input,
     uint16_t inputLength, uint8_t *output, uint16_t *outputLength)
 {
+  bool event = false;
+
   switch (packet->request)
   {
     case CDC_SET_LINE_CODING:
       if (inputLength != sizeof(driver->line.coding))
         return E_VALUE;
+
       memcpy(&driver->line.coding, input, sizeof(driver->line.coding));
+      event = true;
       *outputLength = 0;
+
       usbTrace("cdc_acm: rate %u, format %u, parity %u, width %u",
           driver->line.coding.dteRate, driver->line.coding.charFormat,
           driver->line.coding.parityType, driver->line.coding.dataBits);
@@ -265,15 +270,30 @@ static enum result handleRequest(struct CdcAcmBase *driver,
       break;
 
     case CDC_SET_CONTROL_LINE_STATE:
-      driver->line.dtr = packet->value & 0x01;
-      driver->line.rts = packet->value & 0x02;
+    {
+      const bool dtrState = (packet->value & 0x01) != 0;
+      const bool rtsState = (packet->value & 0x02) != 0;
+
+      // TODO Compare with current state
+      driver->line.dtr = dtrState;
+      driver->line.rts = rtsState;
+      event = true;
       *outputLength = 0;
+
       usbTrace("cdc_acm: set control lines to %02X", packet->value);
       break;
+    }
 
     default:
       usbTrace("cdc_acm: unknown request %02X", packet->request);
       return E_INVALID;
+  }
+
+  if (event)
+  {
+    driver->line.updated = true;
+    if (driver->callback)
+      driver->callback(driver->callbackArgument);
   }
 
   return E_OK;
@@ -285,6 +305,10 @@ static enum result driverInit(void *object, const void *configBase)
   struct CdcAcmBase * const driver = object;
   enum result res;
 
+  driver->callback = config->callback;
+  driver->callbackArgument = config->argument;
+  driver->suspended = false;
+
   driver->state.buffer = malloc(CDC_CONTROL_BUFFER_SIZE);
   if (!driver->state.buffer)
     return E_MEMORY;
@@ -294,6 +318,7 @@ static enum result driverInit(void *object, const void *configBase)
   driver->line.coding = (struct CdcLineCoding){115200, 0, 0, 8};
   driver->line.dtr = true;
   driver->line.rts = true;
+  driver->line.updated = false;
 
   buildDescriptors(driver, config);
 
@@ -396,7 +421,11 @@ static const struct UsbDescriptor **driverGetDescriptor(void *object)
   return driver->descriptorArray;
 }
 /*----------------------------------------------------------------------------*/
-static void driverSetSuspended(void *object, bool state)
+static void driverUpdateStatus(void *object, uint8_t status)
 {
   struct CdcAcmBase * const driver = object;
+
+  driver->suspended = (status & DEVICE_STATUS_SUSPEND) != 0;
+  if (driver->callback)
+    driver->callback(driver->callbackArgument);
 }

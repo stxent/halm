@@ -13,6 +13,7 @@
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(struct UsbRequest *, void *);
 static void cdcDataSent(struct UsbRequest *, void *);
+static void eventHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
@@ -98,11 +99,21 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
   }
 }
 /*----------------------------------------------------------------------------*/
+static void eventHandler(void *object)
+{
+  struct CdcAcm * const interface = object;
+
+  if (interface->callback)
+    interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
 static enum result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
   const struct CdcAcmBaseConfig parentConfig = {
       .device = config->device,
+      .callback = eventHandler,
+      .argument = object,
       .serial = config->serial,
       .composite = config->composite,
       .endpoint = {
@@ -248,8 +259,36 @@ static enum result interfaceGet(void *object, enum ifOption option,
       return E_OK; */
 
     default:
-      return E_ERROR;
+      break;
   }
+
+  switch ((enum cdcAcmOption)option)
+  {
+    case IF_CDC_ACM_STATUS:
+    {
+      uint32_t status = 0;
+
+      if (interface->driver->line.updated)
+      {
+        interface->driver->line.updated = false;
+        status |= CDC_ACM_LINE_CHANGED;
+      }
+      if (interface->driver->suspended)
+        status |= CDC_ACM_SUSPENDED;
+      if (!byteQueueEmpty(&interface->rxQueue))
+        status |= CDC_ACM_RX_AVAILABLE;
+      if (byteQueueEmpty(&interface->txQueue))
+        status |= CDC_ACM_TX_EMPTY;
+
+      *(uint32_t *)data = status;
+      return E_OK;
+    }
+
+    default:
+      break;
+  }
+
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result interfaceSet(void *object __attribute__((unused)),

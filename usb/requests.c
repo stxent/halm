@@ -103,12 +103,12 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
 static struct UsbEndpoint *getEpByAddress(struct UsbDevice *device,
     uint8_t address)
 {
-  const struct ListNode *current = listFirst(&device->device->endpoints);
+  const struct ListNode *current = listFirst(&device->base->endpoints);
   struct UsbEndpoint *endpoint = 0;
 
   while (current)
   {
-    listData(&device->device->endpoints, current, &endpoint);
+    listData(&device->base->endpoints, current, &endpoint);
 
     if (endpoint->address == address)
       break;

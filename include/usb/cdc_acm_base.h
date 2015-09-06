@@ -20,6 +20,10 @@ struct CdcAcmBaseConfig
 {
   /** Mandatory: USB device. */
   void *device;
+  /** Optional: event callback function. */
+  void (*callback)(void *);
+  /** Optional: callback function argument. */
+  void *argument;
 
   /** Optional: serial number string. */
   const char *serial;
@@ -40,19 +44,25 @@ struct CdcAcmBaseConfig
 /*----------------------------------------------------------------------------*/
 struct CdcAcmBase
 {
-  struct Entity parent;
+  struct UsbDriver parent;
+
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  struct UsbDevice *device;
 
   const struct UsbDescriptor **descriptorArray;
   struct UsbEndpointDescriptor *endpointDescriptors;
   struct UsbDescriptor *stringDescriptor;
 
-  struct UsbDevice *device;
+  bool suspended;
 
   struct
   {
     struct CdcLineCoding coding;
     bool dtr;
     bool rts;
+    bool updated;
   } line;
 
   struct

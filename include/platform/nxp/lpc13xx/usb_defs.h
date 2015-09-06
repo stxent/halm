@@ -8,15 +8,15 @@
 #define PLATFORM_NXP_LPC13XX_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
-/*------------------USB Device Interrupt Status register----------------------*/
-#define USBDevIntSt_FRAME               BIT(0)
-#define USBDevIntSt_EP_MASK             BIT_FIELD(MASK(8), 1)
-#define USBDevIntSt_EP(index)           BIT((value) + 1)
-#define USBDevIntSt_DEV_STAT            BIT(9)
-#define USBDevIntSt_CCEMPTY             BIT(10)
-#define USBDevIntSt_CDFULL              BIT(11)
-#define USBDevIntSt_RxENDPKT            BIT(12)
-#define USBDevIntSt_TxENDPKT            BIT(13)
+/*------------------USB Device Interrupt registers----------------------------*/
+#define USBDevInt_FRAME                 BIT(0)
+#define USBDevInt_EP_MASK               BIT_FIELD(MASK(8), 1)
+#define USBDevInt_EP(index)             BIT((value) + 1)
+#define USBDevInt_DEV_STAT              BIT(9)
+#define USBDevInt_CCEMPTY               BIT(10)
+#define USBDevInt_CDFULL                BIT(11)
+#define USBDevInt_RxENDPKT              BIT(12)
+#define USBDevInt_TxENDPKT              BIT(13)
 /*------------------USB Receive Packet Length register------------------------*/
 #define USBRxPLen_PKT_LNGTH_MASK        BIT_FIELD(MASK(10), 0)
 #define USBRxPLen_PKT_LNGTH(value)      BIT_FIELD((value), 0)
