@@ -45,9 +45,9 @@ static const struct UsbDescriptor **findEntry(const struct UsbDescriptor **root,
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-//FIXME wLangID
+/* TODO Add support for language identifier */
 static enum result getDescriptorData(const struct UsbDescriptor **root,
-    uint16_t keyword, uint16_t wLangID, uint8_t *buffer, uint16_t *length)
+    uint16_t keyword, uint16_t language, uint8_t *buffer, uint16_t *length)
 {
   const uint8_t descriptorType = DESCRIPTOR_TYPE(keyword);
   const uint8_t descriptorIndex = DESCRIPTOR_INDEX(keyword);
@@ -61,6 +61,10 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
   {
     const char * const data = (const char *)((*entry)->data);
     const unsigned int stringLength = uLengthToUtf16(data);
+
+    /* Check descriptor length */
+    if (2 + (stringLength << 1) > *length)
+      return E_VALUE;
 
     uToUtf16((char16_t *)(buffer + 2), data, stringLength + 1);
     buffer[0] = 2 + (stringLength << 1);
@@ -82,6 +86,9 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
   {
     chunkLength = (*entry)->length;
   }
+
+  if (chunkLength > *length)
+    return E_VALUE;
 
   if (chunkLength)
     *length = chunkLength;
@@ -202,7 +209,7 @@ static enum result handleStandardEndpointRequest(struct UsbDevice *device,
   {
     case REQUEST_GET_STATUS:
       /* Endpoint is halted or not */
-      buffer[0] = usbEpIsStalled(endpoint) ? 1 : 0;
+      buffer[0] = (uint8_t)usbEpIsStalled(endpoint);
       buffer[1] = 0;
       *length = 2;
       return E_OK;

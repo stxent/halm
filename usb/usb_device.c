@@ -10,8 +10,8 @@
 #include <memory.h>
 #include <usb/usb_device.h>
 /*----------------------------------------------------------------------------*/
-#define EP0_BUFFER_SIZE 64
-#define REQUEST_COUNT   4
+#define EP0_BUFFER_SIZE   64
+#define DATA_BUFFER_SIZE  (EP0_BUFFER_SIZE * CONFIG_USB_CONTROL_REQUESTS)
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *, void *);
 static void controlOutHandler(struct UsbRequest *, void *);
@@ -86,7 +86,7 @@ static void controlOutHandler(struct UsbRequest *request,
       {
         processStandardRequest(device, packet);
       }
-      else if (packet->length <= EP0_BUFFER_SIZE * 2) //FIXME
+      else if (packet->length <= DATA_BUFFER_SIZE)
       {
         device->state.left = packet->length;
       }
@@ -102,6 +102,7 @@ static void controlOutHandler(struct UsbRequest *request,
     }
     else if (device->state.left)
     {
+      /* Ingore erroneous packets */
       if (request->length > device->state.left)
         return;
 
@@ -120,7 +121,7 @@ static void controlOutHandler(struct UsbRequest *request,
 static void processRequest(struct UsbDevice *device,
     const struct UsbRequest *request)
 {
-  uint16_t length = EP0_BUFFER_SIZE; //FIXME Length of the buffer
+  uint16_t length = DATA_BUFFER_SIZE;
   enum result res;
 
   if (device->driver)
@@ -142,18 +143,17 @@ static void processRequest(struct UsbDevice *device,
 static void processStandardRequest(struct UsbDevice *device,
     const struct UsbSetupPacket *packet)
 {
-  uint16_t length;
+  uint16_t length = DATA_BUFFER_SIZE;
   enum result res;
 
-  res = usbHandleStandardRequest(device, packet, device->state.buffer, &length);
+  res = usbHandleStandardRequest(device, packet, device->state.buffer,
+      &length);
 
   if (res == E_OK)
   {
     /* Send smallest of requested and offered lengths */
-    const uint16_t requestedLength = length < packet->length ?
-        length : packet->length;
-
-    sendResponse(device, device->state.buffer, requestedLength);
+    length = length < packet->length ? length : packet->length;
+    sendResponse(device, device->state.buffer, length);
   }
   else
   {
@@ -227,17 +227,15 @@ static enum result devInit(void *object, const void *configBase)
   if (!device->base)
     return E_ERROR;
 
-  usbDeviceBaseSetHandler(device->base, updateStatus, device);
-
   device->currentConfiguration = 0;
   device->driver = 0;
 
-  //TODO Protect with spinlock
-  device->state.buffer = malloc(EP0_BUFFER_SIZE * 2); //FIXME Select size
+  device->state.buffer = malloc(DATA_BUFFER_SIZE);
   if (!device->state.buffer)
     return E_MEMORY;
   device->state.left = 0;
 
+  /* Create control endpoints */
   device->ep0in = usbDevAllocate(device->base, EP0_BUFFER_SIZE,
       EP_DIRECTION_IN | EP_ADDRESS(0));
   if (!device->ep0in)
@@ -248,25 +246,26 @@ static enum result devInit(void *object, const void *configBase)
     return E_MEMORY;
 
   res = queueInit(&device->requestPool, sizeof(struct UsbRequest *),
-      REQUEST_COUNT * 2);
+      CONFIG_USB_CONTROL_REQUESTS * 2);
   if (res != E_OK)
     return res;
 
   /* Allocate requests */
-  device->requests = malloc(2 * REQUEST_COUNT * sizeof(struct UsbRequest));
+  device->requests = malloc(2 * CONFIG_USB_CONTROL_REQUESTS
+      * sizeof(struct UsbRequest));
   if (!device->requests)
     return E_MEMORY;
 
   int8_t index;
 
-  for (index = 0; index < 2 * REQUEST_COUNT; ++index)
+  for (index = 0; index < 2 * CONFIG_USB_CONTROL_REQUESTS; ++index)
   {
     res = usbRequestInit(device->requests + index, EP0_BUFFER_SIZE);
     if (res != E_OK)
       return res;
   }
 
-  for (index = 0; index < REQUEST_COUNT; ++index)
+  for (index = 0; index < CONFIG_USB_CONTROL_REQUESTS; ++index)
   {
     struct UsbRequest * const request = device->requests + index;
 
@@ -274,11 +273,13 @@ static enum result devInit(void *object, const void *configBase)
     queuePush(&device->requestPool, &request);
   }
 
-  for (; index < 2 * REQUEST_COUNT; ++index)
+  for (; index < 2 * CONFIG_USB_CONTROL_REQUESTS; ++index)
   {
     usbRequestCallback(device->requests + index, controlOutHandler, device);
     usbEpEnqueue(device->ep0out, device->requests + index);
   }
+
+  usbDeviceBaseSetHandler(device->base, updateStatus, device);
 
   /* Enable interrupts */
   resetDevice(device);
@@ -293,9 +294,9 @@ static void devDeinit(void *object)
   usbEpClear(device->ep0in);
   usbEpClear(device->ep0out);
 
-  assert(queueSize(&device->requestPool) == 2 * REQUEST_COUNT);
+  assert(queueSize(&device->requestPool) == 2 * CONFIG_USB_CONTROL_REQUESTS);
 
-  for (int8_t index = 2 * REQUEST_COUNT - 1; index >= 0; --index)
+  for (int8_t index = 2 * CONFIG_USB_CONTROL_REQUESTS - 1; index >= 0; --index)
     usbRequestDeinit(device->requests + index);
   free(device->requests);
 

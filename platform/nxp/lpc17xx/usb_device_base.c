@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <memory.h>
 #include <usb/usb.h>
 #include <platform/nxp/usb_device_base.h>
 #include <platform/nxp/lpc17xx/usb_defs.h>
@@ -373,30 +372,31 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
 
   uint32_t packetLength;
 
-  do
-  {
-    packetLength = reg->USBRxPLen;
-  }
-  while (!(packetLength & USBRxPLen_PKT_RDY));
+  /* Wait for length field to become valid */
+  while (!((packetLength = reg->USBRxPLen) & USBRxPLen_PKT_RDY));
 
   /* Check packet validity */
   if (!(packetLength & USBRxPLen_DV))
     return E_ERROR;
-
   /* Extract length */
   packetLength = USBRxPLen_PKT_LNGTH_VALUE(packetLength);
+  /* Check for buffer overflow */
+  if (packetLength > length)
+    return E_VALUE;
 
-  /* Extract data */
-  uint32_t data = 0;
+  if (read)
+    *read = packetLength;
+
+  /* Read data from internal buffer */
+  uint32_t word = 0;
 
   for (uint16_t position = 0; position < packetLength; ++position)
   {
     if (!(position & 0x03))
-      data = reg->USBRxData;
+      word = reg->USBRxData;
 
-    if (buffer && position < length)
-      buffer[position] = data & 0xFF;
-    data >>= 8; // TODO Optimize
+    buffer[position] = (uint8_t)word;
+    word >>= 8;
   }
 
   /* Clear read enable bit */
@@ -405,9 +405,6 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
   /* Select endpoint and clear buffer */
   usbCommand(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
   usbCommand(endpoint->device, USB_CMD_CLEAR_BUFFER);
-
-  if (read)
-    *read = packetLength;
 
   return E_OK;
 }
@@ -424,20 +421,23 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
   /* Set packet length */
   reg->USBTxPLen = length;
 
-  /* Write data */
+  if (written)
+    *written = length;
 
   /* Write data */
-  for (uint16_t position = 0; position < ((length + 3) >> 2); ++position)
+  uint32_t word = 0;
+  uint16_t position = 0;
+
+  while (position < length)
   {
-    uint32_t word = 0;
-    uint8_t chunk = length - position * 4;
+    *((uint8_t *)&word + (position & 0x03)) = buffer[position];
+    ++position;
 
-    if (chunk > 4)
-      chunk = 4;
-
-    memcpy(&word, buffer + position * 4, chunk);
-    /* The data is in little-endian format */
-    reg->USBTxData = word;
+    if (!(position & 0x03) || position == length)
+    {
+      reg->USBTxData = word;
+      word = 0;
+    }
   }
 
   /* Clear write enable bit */
@@ -446,9 +446,6 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
   /* Select endpoint and validate buffer */
   usbCommand(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
   usbCommand(endpoint->device, USB_CMD_VALIDATE_BUFFER);
-
-  if (written)
-    *written = length;
 
   return E_OK;
 }
