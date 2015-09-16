@@ -139,7 +139,7 @@ static const struct UsbDescriptor * const stringDescriptors[] = {
     (const struct UsbDescriptor *)
         (USB_STRING_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_PRODUCT_NAME)),
     (const struct UsbDescriptor *)
-        (USB_STRING_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_SERIAL))
+        (USB_STRING_PREFIX "Sample")
 };
 /*----------------------------------------------------------------------------*/
 static void buildDescriptors(struct CdcAcmBase *driver,

@@ -378,10 +378,6 @@ config USB_DEVICE_PRODUCT_NAME
 	string "Product name"
 	default "USB Device"
 
-config USB_DEVICE_SERIAL
-	string "Serial number"
-	default "0000000001"
-
 config USB_DEVICE_VENDOR_NAME
 	string "Vendor name"
 	default "HALM Library"

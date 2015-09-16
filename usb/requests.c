@@ -210,7 +210,7 @@ static enum result handleStandardEndpointRequest(struct UsbDevice *device,
     case REQUEST_GET_STATUS:
       /* Endpoint is halted or not */
       buffer[0] = (uint8_t)usbEpIsStalled(endpoint);
-      buffer[1] = 0;
+      buffer[1] = 0; /* Must be set to zero */
       *length = 2;
       return E_OK;
 
@@ -251,6 +251,7 @@ static enum result handleStandardInterfaceRequest(struct UsbDevice *device,
   switch (packet->request)
   {
     case REQUEST_GET_STATUS:
+      /* Two bytes are reserved for future use and must be set to zero */
       buffer[0] = 0;
       buffer[1] = 0;
       *length = 2;

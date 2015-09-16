@@ -303,6 +303,9 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
   struct CdcAcm * const interface = object;
   const uint32_t sourceLength = length;
 
+  if (!length)
+    return 0;
+
   interruptsDisable();
 
   if (!byteQueueEmpty(&interface->rxQueue))
@@ -353,6 +356,9 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
   struct CdcAcm * const interface = object;
   const uint32_t sourceLength = length;
 
+  if (!length)
+    return 0;
+
   interruptsDisable();
 
   if (byteQueueEmpty(&interface->txQueue)
@@ -378,5 +384,6 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
     length -= byteQueuePushArray(&interface->txQueue, buffer, length);
 
   interruptsEnable();
+
   return sourceLength - length;
 }
