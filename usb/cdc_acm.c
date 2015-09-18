@@ -152,15 +152,13 @@ static enum result interfaceInit(void *object, const void *configBase)
   interface->queuedRxBytes = 0;
 
   interface->notificationEp = usbDevAllocate(config->device,
-      CDC_NOTIFICATION_EP_SIZE, config->endpoint.interrupt);
+      config->endpoint.interrupt);
   if (!interface->notificationEp)
     return E_ERROR;
-  interface->rxDataEp = usbDevAllocate(config->device, CDC_DATA_EP_SIZE,
-      config->endpoint.rx);
+  interface->rxDataEp = usbDevAllocate(config->device, config->endpoint.rx);
   if (!interface->rxDataEp)
     return E_ERROR;
-  interface->txDataEp = usbDevAllocate(config->device, CDC_DATA_EP_SIZE,
-      config->endpoint.tx);
+  interface->txDataEp = usbDevAllocate(config->device, config->endpoint.tx);
   if (!interface->txDataEp)
     return E_ERROR;
 

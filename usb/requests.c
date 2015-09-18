@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <stdlib.h>
+#include <memory.h>
 #include <unicode.h>
 #include <containers/list.h>
 #include <usb/requests.h>
@@ -147,7 +147,7 @@ static enum result handleStandardDeviceRequest(struct UsbDevice *device,
     case REQUEST_GET_DESCRIPTOR:
     {
       const struct UsbDescriptor ** const root =
-          usbDriverGetDescriptor(device->driver);
+          usbDriverGetDescriptors(device->driver);
 
       usbTrace("requests: get descriptor %d:%d, length %u",
           DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
@@ -280,17 +280,17 @@ static enum result handleStandardInterfaceRequest(struct UsbDevice *device,
 static enum result setDeviceConfig(struct UsbDevice *device,
     uint8_t configuration, uint8_t alternativeSettings)
 {
-  if (configuration == 0)
+  if (!configuration)
   {
     usbDevSetConfigured(device, false);
   }
   else
   {
     if (!device->driver)
-      return E_ERROR; //TODO Assert?
+      return E_ERROR;
 
     const struct UsbDescriptor ** const root =
-        usbDriverGetDescriptor(device->driver);
+        usbDriverGetDescriptors(device->driver);
     const enum result res = traverseConfigArray(device, root,
         configuration, alternativeSettings);
 
@@ -308,7 +308,7 @@ static enum result traverseConfigArray(struct UsbDevice *device,
     const struct UsbDescriptor **root, uint8_t configuration, uint8_t settings)
 {
   //FIXME Choose default values
-  uint8_t currentConfiguration = 0xFF;
+  uint8_t currentConfiguration = 0;
   uint8_t currentSettings = 0xFF;
 
   while (*root)
@@ -333,14 +333,17 @@ static enum result traverseConfigArray(struct UsbDevice *device,
     {
       const struct UsbEndpointDescriptor * const data =
           (const struct UsbEndpointDescriptor *)(*root);
-
-      //FIXME Byte order
-      //TODO Set endpoint size descriptor->maxPacketSize
+      const uint16_t endpointSize = fromLittleEndian16(data->maxPacketSize);
       struct UsbEndpoint * const endpoint = getEpByAddress(device,
           data->endpointAddress);
 
-      assert(endpoint);
-      usbEpSetEnabled(endpoint, true);
+      if (!endpoint)
+      {
+        /* The endpoint is not allocated or the address is incorrect */
+        return E_VALUE;
+      }
+
+      usbEpSetEnabled(endpoint, true, endpointSize);
     }
 
     ++root;

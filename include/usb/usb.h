@@ -54,16 +54,16 @@ struct UsbDeviceClass
 {
   CLASS_HEADER
 
-  void *(*allocate)(void *, uint16_t, uint8_t);
+  void *(*allocate)(void *, uint8_t);
   enum result (*bind)(void *, void *);
   void (*setAddress)(void *, uint8_t);
   void (*setConfigured)(void *, bool);
   void (*setConnected)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
-static inline void *usbDevAllocate(void *dev, uint16_t size, uint8_t address)
+static inline void *usbDevAllocate(void *device, uint8_t address)
 {
-  return ((const struct UsbDeviceClass *)CLASS(dev))->allocate(dev, size,
+  return ((const struct UsbDeviceClass *)CLASS(device))->allocate(device,
       address);
 }
 /*----------------------------------------------------------------------------*/
@@ -95,7 +95,7 @@ struct UsbEndpointClass
   void (*clear)(void *);
   enum result (*enqueue)(void *, struct UsbRequest *);
   bool (*isStalled)(void *);
-  void (*setEnabled)(void *, bool);
+  void (*setEnabled)(void *, bool, uint16_t);
   void (*setStalled)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
@@ -114,14 +114,14 @@ static inline bool usbEpIsStalled(void *ep)
   return ((const struct UsbEndpointClass *)CLASS(ep))->isStalled(ep);
 }
 /*----------------------------------------------------------------------------*/
-static inline void usbEpSetEnabled(void *ep, bool state)
+static inline void usbEpSetEnabled(void *ep, bool state, uint16_t size)
 {
-  ((const struct UsbEndpointClass *)CLASS(ep))->setEnabled(ep, state);
+  ((const struct UsbEndpointClass *)CLASS(ep))->setEnabled(ep, state, size);
 }
 /*----------------------------------------------------------------------------*/
-static inline void usbEpSetStalled(void *ep, bool state)
+static inline void usbEpSetStalled(void *ep, bool stalled)
 {
-  ((const struct UsbEndpointClass *)CLASS(ep))->setStalled(ep, state);
+  ((const struct UsbEndpointClass *)CLASS(ep))->setStalled(ep, stalled);
 }
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
@@ -131,8 +131,7 @@ struct UsbDriverClass
 
   enum result (*configure)(void *, const struct UsbRequest *, uint8_t *,
       uint16_t *);
-  void (*disconnect)(void *);
-  const struct UsbDescriptor **(*getDescriptor)(void *);
+  const struct UsbDescriptor **(*getDescriptors)(void *);
   void (*updateStatus)(void *, uint8_t);
 };
 /*----------------------------------------------------------------------------*/
@@ -146,11 +145,6 @@ static inline enum result usbDriverConfigure(void *driver,
 {
   return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
       request, reply, length);
-}
-/*----------------------------------------------------------------------------*/
-static inline void usbDriverDisconnect(void *driver)
-{
-  ((const struct UsbDriverClass *)CLASS(driver))->disconnect(driver);
 }
 /*----------------------------------------------------------------------------*/
 static inline const struct UsbDescriptor **usbDriverGetDescriptor(void *driver)

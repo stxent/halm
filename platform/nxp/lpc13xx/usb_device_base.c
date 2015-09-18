@@ -22,7 +22,7 @@ static void waitForInt(struct UsbDeviceBase *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
-static void *devAllocate(void *, uint16_t, uint8_t);
+static void *devAllocate(void *, uint8_t);
 static void devSetAddress(void *, uint8_t);
 static void devSetConfigured(void *, bool);
 static void devSetConnected(void *, bool);
@@ -52,7 +52,7 @@ static void epDeinit(void *);
 static void epClear(void *);
 static enum result epEnqueue(void *, struct UsbRequest *);
 static bool epIsStalled(void *);
-static void epSetEnabled(void *, bool);
+static void epSetEnabled(void *, bool, uint16_t);
 static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct UsbEndpointClass epTable = {
@@ -247,7 +247,7 @@ static void devDeinit(void *object)
   UsbBase->deinit(device);
 }
 /*----------------------------------------------------------------------------*/
-static void *devAllocate(void *object, uint16_t size, uint8_t address)
+static void *devAllocate(void *object, uint8_t address)
 {
   struct UsbDeviceBase * const device = object;
 
@@ -261,16 +261,12 @@ static void *devAllocate(void *object, uint16_t size, uint8_t address)
   {
     listData(&device->endpoints, current, &endpoint);
     if (endpoint->address == address)
-    {
-      assert(endpoint->size == size);
       return endpoint;
-    }
     current = listNext(current);
   }
 
   const struct UsbEndpointConfig config = {
     .parent = device,
-    .size = size,
     .address = address
   };
 
@@ -458,7 +454,6 @@ static enum result epInit(void *object, const void *configBase)
 
   endpoint->address = config->address;
   endpoint->device = device;
-  endpoint->size = config->size;
 
   listPush(&device->endpoints, &endpoint);
 
@@ -471,7 +466,7 @@ static void epDeinit(void *object)
   struct UsbDeviceBase * const device = endpoint->device;
 
   /* Disable interrupts and remove pending requests */
-  epSetEnabled(endpoint, false);
+  epSetEnabled(endpoint, false, 0);
   epClear(endpoint);
 
   spinLock(&device->spinlock);
@@ -552,7 +547,8 @@ static bool epIsStalled(void *object)
   return (status & SELECT_ENDPOINT_ST) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void epSetEnabled(void *object, bool state)
+static void epSetEnabled(void *object, bool state,
+    uint16_t size __attribute__((unused)))
 {
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->parent.reg;
@@ -574,11 +570,11 @@ static void epSetEnabled(void *object, bool state)
       state ? 0 : SET_ENDPOINT_STATUS_DA);
 }
 /*----------------------------------------------------------------------------*/
-static void epSetStalled(void *object, bool state)
+static void epSetStalled(void *object, bool stalled)
 {
   struct UsbEndpoint * const endpoint = object;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
 
   usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index,
-      state ? SET_ENDPOINT_STATUS_ST : 0);
+      stalled ? SET_ENDPOINT_STATUS_ST : 0);
 }

@@ -22,8 +22,7 @@ static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbRequest *, uint8_t *,
     uint16_t *);
-static void driverDisconnect(void *);
-static const struct UsbDescriptor **driverGetDescriptor(void *);
+static const struct UsbDescriptor **driverGetDescriptors(void *);
 static void driverUpdateStatus(void *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
@@ -32,8 +31,7 @@ static const struct UsbDriverClass driverTable = {
     .deinit = driverDeinit,
 
     .configure = driverConfigure,
-    .disconnect = driverDisconnect,
-    .getDescriptor = driverGetDescriptor,
+    .getDescriptors = driverGetDescriptors,
     .updateStatus = driverUpdateStatus
 };
 /*----------------------------------------------------------------------------*/
@@ -409,12 +407,7 @@ static enum result driverConfigure(void *object,
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static void driverDisconnect(void *object)
-{
-  struct CdcAcmBase * const driver = object;
-}
-/*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor **driverGetDescriptor(void *object)
+static const struct UsbDescriptor **driverGetDescriptors(void *object)
 {
   const struct CdcAcmBase * const driver = object;
 

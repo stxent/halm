@@ -53,8 +53,6 @@ struct UsbEndpointConfig
 {
   /** Mandatory: hardware device. */
   struct UsbDeviceBase *parent;
-  /** Mandatory: maximum packet size. */
-  uint16_t size;
   /** Mandatory: logical address of the endpoint. */
   uint8_t address;
 };
@@ -67,8 +65,6 @@ struct UsbEndpoint
   struct UsbDeviceBase *device;
   /* Queued requests */
   struct Queue requests;
-  /* Maximum packet size */
-  uint16_t size;
   /* Logical address */
   uint8_t address;
 };

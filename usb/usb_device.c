@@ -25,7 +25,7 @@ static void updateStatus(void *, uint8_t);
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
 static enum result devBind(void *, void *);
-static void *devAllocate(void *, uint16_t, uint8_t);
+static void *devAllocate(void *, uint8_t);
 static void devSetAddress(void *, uint8_t);
 static void devSetConfigured(void *, bool);
 static void devSetConnected(void *, bool);
@@ -163,8 +163,8 @@ static void processStandardRequest(struct UsbDevice *device,
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbDevice *device)
 {
-  usbEpSetEnabled(device->ep0in, true);
-  usbEpSetEnabled(device->ep0out, true);
+  usbEpSetEnabled(device->ep0in, true, EP0_BUFFER_SIZE);
+  usbEpSetEnabled(device->ep0out, true, EP0_BUFFER_SIZE);
 }
 /*----------------------------------------------------------------------------*/
 static void sendResponse(struct UsbDevice *device, const uint8_t *data,
@@ -236,12 +236,10 @@ static enum result devInit(void *object, const void *configBase)
   device->state.left = 0;
 
   /* Create control endpoints */
-  device->ep0in = usbDevAllocate(device->base, EP0_BUFFER_SIZE,
-      EP_DIRECTION_IN | EP_ADDRESS(0));
+  device->ep0in = usbDevAllocate(device->base, EP_DIRECTION_IN | EP_ADDRESS(0));
   if (!device->ep0in)
     return E_MEMORY;
-  device->ep0out = usbDevAllocate(device->base, EP0_BUFFER_SIZE,
-      EP_ADDRESS(0));
+  device->ep0out = usbDevAllocate(device->base, EP_ADDRESS(0));
   if (!device->ep0out)
     return E_MEMORY;
 
@@ -308,11 +306,11 @@ static void devDeinit(void *object)
   deinit(device->base);
 }
 /*----------------------------------------------------------------------------*/
-static void *devAllocate(void *object, uint16_t size, uint8_t address)
+static void *devAllocate(void *object, uint8_t address)
 {
   struct UsbDevice * const device = object;
 
-  return UsbDeviceBase->allocate(device->base, size, address);
+  return UsbDeviceBase->allocate(device->base, address);
 }
 /*----------------------------------------------------------------------------*/
 static enum result devBind(void *object, void *driver)
