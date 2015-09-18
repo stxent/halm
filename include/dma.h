@@ -83,7 +83,6 @@ static inline uint32_t dmaCount(const void *channel)
   return ((const struct DmaClass *)CLASS(channel))->count(channel);
 }
 /*----------------------------------------------------------------------------*/
-enum result (*reconfigure)(void *, const void *);
 /**
  * Change channel settings when the channel is already initialized.
  * @param channel Pointer to a Dma object.
