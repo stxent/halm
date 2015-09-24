@@ -121,13 +121,11 @@ static void controlOutHandler(struct UsbRequest *request,
 static void processRequest(struct UsbDevice *device,
     const struct UsbRequest *request)
 {
-  uint16_t length = DATA_BUFFER_SIZE;
-  enum result res;
-
   if (device->driver)
   {
-    res = usbDriverConfigure(device->driver, request, device->state.buffer,
-        &length);
+    uint16_t length;
+    const enum result res = usbDriverConfigure(device->driver, request,
+        device->state.buffer, &length, DATA_BUFFER_SIZE);
 
     if (res == E_OK)
     {

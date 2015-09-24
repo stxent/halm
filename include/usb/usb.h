@@ -198,7 +198,7 @@ struct UsbDriverClass
   CLASS_HEADER
 
   enum result (*configure)(void *, const struct UsbRequest *, uint8_t *,
-      uint16_t *);
+      uint16_t *, uint16_t);
   const struct UsbDescriptor **(*getDescriptors)(void *);
   void (*updateStatus)(void *, uint8_t);
 };
@@ -213,18 +213,19 @@ struct UsbDriver
  * @param driver Pointer to an UsbDriver object.
  * @param request Request containing setup or data stage
  * of the control transfer.
- * @param reply Pointer to a response buffer with a size of at least
- * @b length bytes.
- * @param length Pointer to the initial buffer size. After the successful
- * completion it must contain an actual size of the response.
+ * @param response Pointer to a response buffer with a size of at least
+ * @b maxLength bytes.
+ * @param length Number of bytes used in the response buffer.
  * Zero-length responses are allowed.
+ * @param maxLength Maximum length of the response buffer in bytes.
  * @return @b E_OK on success, @b E_VALUE when the buffer is too small.
  */
 static inline enum result usbDriverConfigure(void *driver,
-    const struct UsbRequest *request, uint8_t *reply, uint16_t *length)
+    const struct UsbRequest *request, uint8_t *response, uint16_t *length,
+    uint16_t maxLength)
 {
   return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
-      request, reply, length);
+      request, response, length, maxLength);
 }
 /*----------------------------------------------------------------------------*/
 /**

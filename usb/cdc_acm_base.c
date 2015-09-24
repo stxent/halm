@@ -16,12 +16,12 @@ static void buildDescriptors(struct CdcAcmBase *,
 static void freeDescriptors(struct CdcAcmBase *);
 static enum result handleRequest(struct CdcAcmBase *,
     const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
-    uint16_t *);
+    uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbRequest *, uint8_t *,
-    uint16_t *);
+    uint16_t *, uint16_t);
 static const struct UsbDescriptor **driverGetDescriptors(void *);
 static void driverUpdateStatus(void *, uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -242,7 +242,8 @@ static void freeDescriptors(struct CdcAcmBase *driver)
 /*----------------------------------------------------------------------------*/
 static enum result handleRequest(struct CdcAcmBase *driver,
     const struct UsbSetupPacket *packet, const uint8_t *input,
-    uint16_t inputLength, uint8_t *output, uint16_t *outputLength)
+    uint16_t inputLength, uint8_t *output, uint16_t *outputLength,
+    uint16_t maxOutputLength)
 {
   bool event = false;
 
@@ -262,8 +263,12 @@ static enum result handleRequest(struct CdcAcmBase *driver,
       break;
 
     case CDC_GET_LINE_CODING:
+      if (maxOutputLength < sizeof(driver->line.coding))
+        return E_VALUE;
+
       memcpy(output, &driver->line.coding, sizeof(driver->line.coding));
       *outputLength = sizeof(driver->line.coding);
+
       usbTrace("cdc_acm: line coding requested");
       break;
 
@@ -272,7 +277,6 @@ static enum result handleRequest(struct CdcAcmBase *driver,
       const bool dtrState = (packet->value & 0x01) != 0;
       const bool rtsState = (packet->value & 0x02) != 0;
 
-      // TODO Compare with current state
       driver->line.dtr = dtrState;
       driver->line.rts = rtsState;
       event = true;
@@ -339,7 +343,8 @@ static void driverDeinit(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
-    const struct UsbRequest *request, uint8_t *reply, uint16_t *length)
+    const struct UsbRequest *request, uint8_t *response, uint16_t *length,
+    uint16_t maxLength)
 {
   struct CdcAcmBase * const driver = object;
   struct UsbSetupPacket * const packet = &driver->state.packet;
@@ -360,8 +365,7 @@ static enum result driverConfigure(void *object,
 
     if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
     {
-      //TODO Add limit
-      return handleRequest(driver, packet, 0, 0, reply, length);
+      return handleRequest(driver, packet, 0, 0, response, length, maxLength);
     }
     else if (packet->length <= CDC_CONTROL_BUFFER_SIZE)
     {
@@ -394,7 +398,7 @@ static enum result driverConfigure(void *object,
       if (!driver->state.left)
       {
         return handleRequest(driver, packet, driver->state.buffer,
-            driver->state.packet.length, reply, length);
+            driver->state.packet.length, response, length, maxLength);
       }
     }
     else
