@@ -11,8 +11,8 @@
 #include <containers/byte_queue.h>
 #include <containers/queue.h>
 #include <usb/cdc_acm_defs.h>
-#include <usb/requests.h>
 #include <usb/usb.h>
+#include <usb/usb_requests.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const CdcAcmBase;
 /*----------------------------------------------------------------------------*/

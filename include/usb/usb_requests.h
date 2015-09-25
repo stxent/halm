@@ -1,11 +1,11 @@
 /*
- * usb/requests.h
+ * usb/usb_requests.h
  * Copyright (C) 2015 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_REQUESTS_H_
-#define USB_REQUESTS_H_
+#ifndef USB_USB_REQUESTS_H_
+#define USB_USB_REQUESTS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <bits.h>
@@ -208,9 +208,9 @@ struct UsbStringDescriptor
   uint16_t langid;
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
-struct UsbDevice;
+struct UsbControl;
 /*----------------------------------------------------------------------------*/
-enum result usbHandleStandardRequest(struct UsbDevice *,
+enum result usbHandleStandardRequest(struct UsbControl *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 /*----------------------------------------------------------------------------*/
-#endif /* USB_REQUESTS_H_ */
+#endif /* USB_USB_REQUESTS_H_ */

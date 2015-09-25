@@ -8,9 +8,9 @@ ifeq ($(CONFIG_USB),y)
   FLAG_NAMES += CONFIG_USB_DEVICE_PRODUCT_ID CONFIG_USB_DEVICE_VENDOR_ID
   FLAG_NAMES += CONFIG_USB_DEVICE_PRODUCT_NAME CONFIG_USB_DEVICE_SERIAL CONFIG_USB_DEVICE_VENDOR_NAME
 
-  CSOURCES += usb/requests.c
   CSOURCES += usb/usb.c
-  CSOURCES += usb/usb_device.c
+  CSOURCES += usb/usb_control.c
+  CSOURCES += usb/usb_requests.c
 endif
 
 ifeq ($(CONFIG_USB_CDC),y)

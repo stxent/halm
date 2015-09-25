@@ -1,23 +1,24 @@
 /*
- * usb/usb_device.h
+ * platform/nxp/usb_device.h
  * Copyright (C) 2015 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_USB_DEVICE_H_
-#define USB_USB_DEVICE_H_
+#ifndef PLATFORM_NXP_USB_DEVICE_H_
+#define PLATFORM_NXP_USB_DEVICE_H_
 /*----------------------------------------------------------------------------*/
-#include <pin.h>
+#include <containers/list.h>
 #include <containers/queue.h>
-#include <usb/requests.h>
 #include <usb/usb.h>
+#include <usb/usb_control.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/usb_device_base.h>
+#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/usb_base.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDeviceClass * const UsbDevice;
+extern const struct UsbEndpointClass * const UsbEndpoint;
 /*----------------------------------------------------------------------------*/
 struct UsbDeviceConfig
 {
@@ -35,24 +36,32 @@ struct UsbDeviceConfig
 /*----------------------------------------------------------------------------*/
 struct UsbDevice
 {
-  struct Entity parent;
+  struct UsbBase parent;
 
-  struct UsbDeviceBase *base;
-  struct UsbDriver *driver;
-
-  struct UsbEndpoint *ep0in;
-  struct UsbEndpoint *ep0out;
-  struct Queue requestPool;
-  struct UsbRequest *requests;
-
-  uint8_t currentConfiguration;
-
-  struct
-  {
-    struct UsbSetupPacket packet;
-    uint8_t *buffer;
-    uint16_t left;
-  } state;
+  /* List of registered endpoints */
+  struct List endpoints;
+  /* Control message handler */
+  struct UsbControl *control;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* USB_USB_DEVICE_H_ */
+struct UsbEndpointConfig
+{
+  /** Mandatory: hardware device. */
+  struct UsbDevice *parent;
+  /** Mandatory: logical address of the endpoint. */
+  uint8_t address;
+};
+/*----------------------------------------------------------------------------*/
+struct UsbEndpoint
+{
+  struct Entity parent;
+
+  /* Parent device */
+  struct UsbDevice *device;
+  /* Queued requests */
+  struct Queue requests;
+  /* Logical address */
+  uint8_t address;
+};
+/*----------------------------------------------------------------------------*/
+#endif /* PLATFORM_NXP_USB_DEVICE_H_ */
