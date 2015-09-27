@@ -18,6 +18,7 @@
 static volatile uint32_t *calcBranchReg(enum clockBranch);
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
+static uint32_t getSourceFrequency(enum clockSource);
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *);
 static enum result extOscEnable(const void *, const void *);
@@ -357,6 +358,34 @@ static void flashLatencyUpdate(uint32_t frequency)
   sysFlashLatencyUpdate(clocks <= 10 ? clocks : 10);
 }
 /*----------------------------------------------------------------------------*/
+static uint32_t getSourceFrequency(enum clockSource source)
+{
+  switch (source)
+  {
+    case CLOCK_INTERNAL:
+      return INT_OSC_FREQUENCY;
+
+    case CLOCK_EXTERNAL:
+      return extFrequency;
+
+    case CLOCK_USB_PLL:
+      return pll0UsbFrequency;
+
+    case CLOCK_AUDIO_PLL:
+      return pll0AudioFrequency;
+
+    case CLOCK_PLL:
+      return pll1Frequency;
+
+    case CLOCK_RTC:
+      return rtcOscFrequency(RtcOsc);
+
+    default:
+      /* Unknown clock source */
+      return 0;
+  }
+}
+/*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *clockBase __attribute__((unused)))
 {
   LPC_CGU->XTAL_OSC_CTRL &= ~XTAL_ENABLE;
@@ -461,44 +490,78 @@ static enum result pll1ClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  uint32_t frequency;
-  uint8_t msel, nsel;
 
-  if (!config->multiplier || !config->divider)
+  if (config->source == CLOCK_PLL)
+    return E_VALUE;
+  if (!config->divider || !config->multiplier || config->multiplier > 256)
     return E_VALUE;
 
-  if (config->multiplier > 256 || config->divider > 4)
-    return E_VALUE;
+  uint8_t divider = config->divider;
+  uint8_t psel = 0;
 
-  msel = config->multiplier - 1;
-  nsel = config->divider - 1;
-
-  switch (config->source)
+  while (psel < 4 && !(divider & 1))
   {
-    case CLOCK_EXTERNAL:
-      frequency = extFrequency;
-      break;
-
-    case CLOCK_INTERNAL:
-      frequency = INT_OSC_FREQUENCY;
-      break;
-
-    default:
-      return E_ERROR;
+    ++psel;
+    divider >>= 1;
   }
 
-  /* Check CCO range */
-  frequency = frequency * config->multiplier;
-  if (frequency < 156000000 || frequency > 320000000)
+  if (divider > 4)
+    return E_VALUE;
+
+  const uint32_t sourceFrequency = getSourceFrequency(config->source);
+  const uint8_t msel = config->multiplier - 1;
+  const uint8_t nsel = divider - 1;
+  bool direct = false;
+
+  if (psel)
+    --psel;
+  else
+    direct = true;
+
+  if (!sourceFrequency)
     return E_ERROR;
-  pll1Frequency = frequency / config->divider;
 
-  LPC_CGU->PLL1_CTRL = PLL1_CTRL_PD;
-  LPC_CGU->PLL1_CTRL |= PLL1_CTRL_FBSEL | PLL1_CTRL_DIRECT | PLL1_CTRL_AUTOBLOCK
-      | PLL1_CTRL_PSEL(0) | PLL1_CTRL_NSEL(nsel) | PLL1_CTRL_MSEL(msel)
-      | PLL1_CTRL_CLKSEL(config->source);
-  LPC_CGU->PLL1_CTRL &= ~PLL1_CTRL_PD;
+  const uint32_t ccoFrequency = sourceFrequency * config->multiplier;
+  const uint32_t expectedFrequency = ccoFrequency / config->divider;
 
+  /* Check CCO range */
+  if (ccoFrequency < 156000000 || ccoFrequency > 320000000)
+    return E_VALUE;
+
+  uint32_t controlValue = PLL1_CTRL_AUTOBLOCK | PLL1_CTRL_CLKSEL(config->source)
+      | PLL1_CTRL_PSEL(psel) | PLL1_CTRL_NSEL(nsel) | PLL1_CTRL_MSEL(msel);
+
+  if (expectedFrequency > 110000000)
+  {
+    /* No division allowed */
+    if (!direct)
+      return E_VALUE;
+
+    /* Start at mid-range frequency by dividing output clock */
+    LPC_CGU->PLL1_CTRL = PLL1_CTRL_PD;
+    LPC_CGU->PLL1_CTRL |= controlValue;
+    LPC_CGU->PLL1_CTRL &= ~PLL1_CTRL_PD;
+
+    /* User manual recommends to add a delay for 50 microseconds */
+    udelay(50);
+
+    if (!((LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK)))
+      return E_ERROR;
+
+    /* Double the output frequency by enabling direct output */
+    LPC_CGU->PLL1_CTRL |= PLL1_CTRL_DIRECT;
+  }
+  else
+  {
+    if (direct)
+      controlValue |= PLL1_CTRL_FBSEL | PLL1_CTRL_DIRECT;
+
+    LPC_CGU->PLL1_CTRL = PLL1_CTRL_PD;
+    LPC_CGU->PLL1_CTRL |= controlValue;
+    LPC_CGU->PLL1_CTRL &= ~PLL1_CTRL_PD;
+  }
+
+  pll1Frequency = expectedFrequency;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -551,30 +614,7 @@ static uint32_t commonClockFrequency(const void *clockBase)
   const struct CommonClockClass * const clock = clockBase;
   const volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
-  switch (BASE_CLK_SEL_VALUE(*reg))
-  {
-    case CLOCK_INTERNAL:
-      return INT_OSC_FREQUENCY;
-
-    case CLOCK_EXTERNAL:
-      return extFrequency;
-
-    case CLOCK_USB_PLL:
-      return pll0UsbFrequency;
-
-    case CLOCK_AUDIO_PLL:
-      return pll0AudioFrequency;
-
-    case CLOCK_PLL:
-      return pll1Frequency;
-
-    case CLOCK_RTC:
-      return rtcOscFrequency(RtcOsc);
-
-    default:
-      /* Unknown clock source */
-      return 0;
-  }
+  return getSourceFrequency(BASE_CLK_SEL_VALUE(*reg));
 }
 /*----------------------------------------------------------------------------*/
 static bool commonClockReady(const void *clockBase)

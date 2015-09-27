@@ -121,8 +121,18 @@ struct ExternalOscConfig
 /*----------------------------------------------------------------------------*/
 struct PllConfig
 {
+  /**
+   * Mandatory: input clock multiplier, result should be in the range of
+   * 156 MHz to 320 MHz. Multiplier range is 1 to 256. Note that the input
+   * frequency range is 1 to 50 MHz.
+   */
   uint16_t multiplier;
+  /**
+   * Mandatory: PLL output divisor. The output divisor may be set to divide
+   * by 1, 2, 3, 4, 6, 8, 12, 16, 24, 32.
+   */
   uint8_t divider;
+  /** Mandatory: clock source. */
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
