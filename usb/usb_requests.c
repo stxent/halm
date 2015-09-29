@@ -201,7 +201,7 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
         /* Clear halt by unstalling */
         usbEpSetStalled(endpoint, false);
         *length = 0;
-        usbTrace("requests: unstall endpoint %02X", endpoint->address);
+        usbTrace("requests: unstall endpoint %02X", packet->index);
         return E_OK;
       }
       break;
@@ -212,14 +212,14 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
         /* Set halt by stalling */
         usbEpSetStalled(endpoint, true);
         *length = 0;
-        usbTrace("requests: stall endpoint %02X", endpoint->address);
+        usbTrace("requests: stall endpoint %02X", packet->index);
         return E_OK;
       }
       break;
 
     default:
       usbTrace("requests: unsupported request %02X to endpoint %02X",
-          packet->request, endpoint->address);
+          packet->request, packet->index);
       break;
   }
 
