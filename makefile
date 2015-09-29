@@ -2,13 +2,13 @@
 #Project is distributed under the terms of the GNU General Public License v3.0
 
 PROJECT := halm
-PROJECTDIR := $(shell pwd)
+PROJECT_DIR := $(shell pwd)
 
 CONFIG_FILE ?= .config
 CROSS_COMPILE ?= arm-none-eabi-
 
 -include $(CONFIG_FILE)
-OPTION_NAMES += CORE CORE_TYPE PLATFORM PLATFORM_TYPE
+BUILD_FLAGS += CORE CORE_TYPE PLATFORM PLATFORM_TYPE
 
 #Nested makefiles
 include core/makefile
@@ -16,14 +16,14 @@ include platform/makefile
 include pm/makefile
 include usb/makefile
 
-#Process configuration options
-define process-option
+#Expand build flags
+define process-flag
   $(1) := $$(CONFIG_$(1):"%"=%)
 endef
 
-$(foreach entry,$(OPTION_NAMES),$(eval $(call process-option,$(entry))))
+$(foreach entry,$(BUILD_FLAGS),$(eval $(call process-flag,$(entry))))
 
-#Determine build flags
+#Process build flags
 ifeq ($(CORE_TYPE),cortex)
   AR := $(CROSS_COMPILE)ar
   CC := $(CROSS_COMPILE)gcc
@@ -44,34 +44,35 @@ else
 endif
 
 #Configure common paths and libraries
-INCLUDEPATH += -Iinclude
-OUTPUTDIR = build_$(PLATFORM)
+INCLUDE_PATH += -Iinclude
+OUTPUT_DIR := build_$(PLATFORM)
+OPTION_FILE := $(OUTPUT_DIR)/.options
 
 #External libraries
-XCORE_PATH ?= $(PROJECTDIR)/../xcore
-INCLUDEPATH += -I"$(XCORE_PATH)/include"
+XCORE_PATH ?= $(PROJECT_DIR)/../xcore
+INCLUDE_PATH += -I"$(XCORE_PATH)/include"
 
 #Configure compiler options
 CFLAGS += -std=c11 -Wall -Wextra -Winline -pedantic -Wshadow
-CFLAGS += $(OPT_FLAGS) $(CPU_FLAGS) $(CONFIG_FLAGS)
+CFLAGS += $(OPT_FLAGS) $(CPU_FLAGS) @$(OPTION_FILE)
 CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 
-#Process project options
+#Process auxiliary project options
 define append-flag
   ifeq ($$($(1)),y)
-    CONFIG_FLAGS += -D$(1)
+    OPTION_STRING += -D$(1)
   else ifneq ($$($(1)),)
-    CONFIG_FLAGS += -D$(1)=$$($(1))
+    OPTION_STRING += -D$(1)=$$($(1))
   endif
 endef
 
-$(foreach entry,$(FLAG_NAMES),$(eval $(call append-flag,$(entry))))
+$(foreach entry,$(PROJECT_FLAGS),$(eval $(call append-flag,$(entry))))
 
 #Configure targets
-LIBRARY_FILE += $(OUTPUTDIR)/lib$(PROJECT).a
+LIBRARY_FILE += $(OUTPUT_DIR)/lib$(PROJECT).a
 TARGETS += $(LIBRARY_FILE)
 
-COBJECTS = $(CSOURCES:%.c=$(OUTPUTDIR)/%.o)
+COBJECTS = $(CSOURCES:%.c=$(OUTPUT_DIR)/%.o)
 
 #Define default targets
 .PHONY: all clean menuconfig
@@ -80,16 +81,21 @@ COBJECTS = $(CSOURCES:%.c=$(OUTPUTDIR)/%.o)
 
 all: $(TARGETS)
 
-$(LIBRARY_FILE): $(COBJECTS)
-	$(AR) -r $@ $^
+$(LIBRARY_FILE): $(OPTION_FILE) $(COBJECTS)
+	$(AR) -r $@ $(filter-out $(OPTION_FILE),$^)
 
-$(OUTPUTDIR)/%.o: %.c
+$(OUTPUT_DIR)/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) $(INCLUDEPATH) -MMD -MF $(@:%.o=%.d) -MT $@ $< -o $@
+	$(CC) -c $(CFLAGS) $(INCLUDE_PATH) -MMD -MF $(@:%.o=%.d) -MT $@ $< -o $@
+
+$(OPTION_FILE): $(CONFIG_FILE)
+	@mkdir -p $(@D)
+	@echo '$(OPTION_STRING)' > $@
 
 clean:
 	rm -f $(COBJECTS:%.o=%.d) $(COBJECTS)
 	rm -f $(TARGETS)
+	rm -f $(OPTION_FILE)
 
 menuconfig:
 	kconfig-mconf kconfig
