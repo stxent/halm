@@ -12,6 +12,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SctPwmUnit;
 extern const struct PwmClass * const SctPwm;
+extern const struct PwmClass * const SctPwmDoubleEdge;
 /*----------------------------------------------------------------------------*/
 struct SctPwmUnitConfig
 {
@@ -59,6 +60,33 @@ struct SctPwm
   uint8_t event;
 };
 /*----------------------------------------------------------------------------*/
+struct SctPwmDoubleEdgeConfig
+{
+  /** Mandatory: peripheral unit. */
+  struct SctPwmUnit *parent;
+  /** Optional: initial leading edge time in timer ticks. */
+  uint32_t leading;
+  /** Optional: initial trailing edge time in timer ticks. */
+  uint32_t trailing;
+  /** Mandatory: pin used as an output for modulated signal. */
+  pin_t pin;
+};
+/*----------------------------------------------------------------------------*/
+struct SctPwmDoubleEdge
+{
+  struct Pwm parent;
+
+  /* Pointer to a parent unit */
+  struct SctPwmUnit *unit;
+  /* Output channel number */
+  uint8_t channel;
+  /* Event number for leading edge */
+  uint8_t leadingEvent;
+  /* Event number for trailing edge */
+  uint8_t trailingEvent;
+};
+/*----------------------------------------------------------------------------*/
 void *sctPwmCreate(void *, pin_t, uint32_t);
+void *sctPwmCreateDoubleEdge(void *, pin_t, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SCT_PWM_H_ */

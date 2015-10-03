@@ -26,13 +26,21 @@ static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
 static void singleEdgeSetEnabled(void *, bool);
 static enum result singleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
+static enum result doubleEdgeInit(void *, const void *);
+static void doubleEdgeDeinit(void *);
+static uint32_t doubleEdgeGetResolution(const void *);
+static void doubleEdgeSetDuration(void *, uint32_t);
+static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
+static void doubleEdgeSetEnabled(void *, bool);
+static enum result doubleEdgeSetFrequency(void *, uint32_t);
+/*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct SctPwmUnit),
     .init = unitInit,
     .deinit = unitDeinit
 };
-/*----------------------------------------------------------------------------*/
-static const struct PwmClass channelTable = {
+
+static const struct PwmClass singleEdgeTable = {
     .size = sizeof(struct SctPwm),
     .init = singleEdgeInit,
     .deinit = singleEdgeDeinit,
@@ -43,10 +51,23 @@ static const struct PwmClass channelTable = {
     .setEnabled = singleEdgeSetEnabled,
     .setFrequency = singleEdgeSetFrequency
 };
+
+static const struct PwmClass doubleEdgeTable = {
+    .size = sizeof(struct SctPwm),
+    .init = doubleEdgeInit,
+    .deinit = doubleEdgeDeinit,
+
+    .getResolution = doubleEdgeGetResolution,
+    .setDuration = doubleEdgeSetDuration,
+    .setEdges = doubleEdgeSetEdges,
+    .setEnabled = doubleEdgeSetEnabled,
+    .setFrequency = doubleEdgeSetFrequency
+};
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry sctOutputPins[];
 const struct EntityClass * const SctPwmUnit = &unitTable;
-const struct PwmClass * const SctPwm = &channelTable;
+const struct PwmClass * const SctPwm = &singleEdgeTable;
+const struct PwmClass * const SctPwmDoubleEdge = &doubleEdgeTable;
 /*----------------------------------------------------------------------------*/
 static int8_t configOutputPin(uint8_t channel, pin_t key)
 {
@@ -345,12 +366,237 @@ static enum result singleEdgeSetFrequency(void *object, uint32_t frequency)
   return updateFrequency(unit, frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
+static enum result doubleEdgeInit(void *object, const void *configBase)
+{
+  const struct SctPwmDoubleEdgeConfig * const config = configBase;
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = config->parent;
+
+  /* Allocate events */
+  const int8_t leadingEvent = sctAllocateEvent((struct SctBase *)unit);
+  if (leadingEvent == -1)
+    return E_BUSY;
+  const int8_t trailingEvent = sctAllocateEvent((struct SctBase *)unit);
+  if (trailingEvent == -1)
+    return E_BUSY;
+
+  /* Initialize output pin */
+  const int8_t channel = configOutputPin(unit->parent.channel, config->pin);
+
+  if (channel == -1)
+    return E_VALUE;
+
+  pwm->channel = (uint8_t)channel;
+  pwm->leadingEvent = (uint8_t)leadingEvent;
+  pwm->trailingEvent = (uint8_t)trailingEvent;
+  pwm->unit = unit;
+
+  LPC_SCT_Type * const reg = unit->parent.reg;
+
+  /* Configure event */
+  const uint32_t controlValue = EVCTRL_OUTSEL | EVCTRL_IOSEL(pwm->channel)
+      | EVCTRL_COMBMODE(COMBMODE_MATCH)
+      | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
+
+  reg->EV[pwm->leadingEvent].CTRL = EVCTRL_MATCHSEL(pwm->leadingEvent)
+      | controlValue;
+  reg->EV[pwm->trailingEvent].CTRL = EVCTRL_MATCHSEL(pwm->trailingEvent)
+      | controlValue;
+
+  if (unit->parent.part == SCT_HIGH)
+  {
+    reg->EV[pwm->leadingEvent].CTRL |= EVCTRL_HEVENT;
+    reg->EV[pwm->trailingEvent].CTRL |= EVCTRL_HEVENT;
+  }
+
+  /* Set default match values */
+  doubleEdgeSetEdges(pwm, config->leading, config->trailing);
+
+  /* Configure setting and clearing of the output */
+  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
+      | RES_OUTPUT(pwm->channel, OUTPUT_CLEAR);
+  reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
+  reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
+
+  /* Enable allocated events in state 0 */
+  reg->EV[pwm->leadingEvent].STATE = 0x00000001;
+  reg->EV[pwm->trailingEvent].STATE = 0x00000001;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeDeinit(void *object)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  LPC_SCT_Type * const reg = unit->parent.reg;
+
+  /* Halt the timer */
+  reg->OUT[pwm->channel].SET = 0;
+  reg->OUT[pwm->channel].CLR = 0;
+  reg->RES &= ~RES_OUTPUT_MASK(pwm->channel);
+
+  /* Disable allocated event */
+  reg->EV[pwm->trailingEvent].CTRL = 0;
+  reg->EV[pwm->leadingEvent].STATE = 0;
+  sctReleaseEvent((struct SctBase *)unit, pwm->trailingEvent);
+  sctReleaseEvent((struct SctBase *)unit, pwm->leadingEvent);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t doubleEdgeGetResolution(const void *object)
+{
+  return ((const struct SctPwmDoubleEdge *)object)->unit->resolution;
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeSetDuration(void *object, uint32_t duration)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  const uint32_t resolution = unit->resolution;
+  const uint8_t offset = unit->parent.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = unit->parent.reg;
+
+  uint32_t center, leading, trailing;
+
+  if (unit->parent.part != SCT_UNIFIED)
+  {
+    leading = reg->MATCHREL_PART[pwm->leadingEvent][offset];
+    trailing = reg->MATCHREL_PART[pwm->trailingEvent][offset];
+  }
+  else
+  {
+    leading = reg->MATCHREL[pwm->leadingEvent];
+    trailing = reg->MATCHREL[pwm->trailingEvent];
+  }
+
+  if (leading > trailing)
+  {
+    const uint32_t half = resolution / 2;
+
+    center = trailing + (leading - trailing) / 2;
+    if (center < half)
+      center += half;
+    else
+      center -= half;
+  }
+  else
+  {
+    center = leading;
+    if (trailing < resolution)
+      center += (trailing - leading) / 2;
+  }
+
+  if (duration >= resolution)
+  {
+    leading = center;
+    trailing = resolution;
+  }
+  else
+  {
+    duration = duration / 2;
+
+    const uint32_t negOffset = center - duration;
+    const uint32_t posOffset = center + duration;
+
+    leading = center >= duration ? negOffset : negOffset + resolution;
+    trailing = posOffset < resolution ? posOffset : posOffset - resolution;
+  }
+
+  /* Update match reload values atomically by disabling reload */
+  reg->CONFIG |= CONFIG_NORELOAD(offset);
+  if (unit->parent.part != SCT_UNIFIED)
+  {
+    reg->MATCHREL_PART[pwm->leadingEvent][offset] = leading;
+    reg->MATCHREL_PART[pwm->trailingEvent][offset] = trailing;
+  }
+  else
+  {
+    reg->MATCHREL[pwm->leadingEvent] = leading;
+    reg->MATCHREL[pwm->trailingEvent] = trailing;
+  }
+  reg->CONFIG &= ~CONFIG_NORELOAD(offset);
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeSetEdges(void *object, uint32_t leading,
+    uint32_t trailing)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  const uint32_t resolution = unit->resolution;
+  const uint8_t offset = unit->parent.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = unit->parent.reg;
+
+  if (leading > resolution)
+    leading = resolution;
+  if (trailing > resolution)
+    trailing = resolution;
+
+  if (trailing >= leading)
+  {
+    if (trailing - leading >= resolution)
+    {
+      leading = resolution / 2;
+      trailing = resolution + 1;
+    }
+  }
+  else
+  {
+    if (leading - trailing >= resolution)
+    {
+      leading = trailing = resolution / 2;
+    }
+  }
+
+  leading = leading ? leading - 1 : resolution - 1;
+  trailing = trailing ? trailing - 1 : resolution - 1;
+
+  reg->CONFIG |= CONFIG_NORELOAD(offset);
+  if (unit->parent.part != SCT_UNIFIED)
+  {
+    reg->MATCHREL_PART[pwm->leadingEvent][offset] = leading;
+    reg->MATCHREL_PART[pwm->trailingEvent][offset] = trailing;
+  }
+  else
+  {
+    reg->MATCHREL[pwm->leadingEvent] = leading;
+    reg->MATCHREL[pwm->trailingEvent] = trailing;
+  }
+  reg->CONFIG &= ~CONFIG_NORELOAD(offset);
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeSetEnabled(void *object, bool state)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  LPC_SCT_Type * const reg = unit->parent.reg;
+
+  if (state)
+  {
+    reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
+    reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
+  }
+  else
+  {
+    /* Clear synchronously */
+    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+    reg->OUT[pwm->channel].SET = 0;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result doubleEdgeSetFrequency(void *object, uint32_t frequency)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+
+  return updateFrequency(unit, frequency * unit->resolution);
+}
+/*----------------------------------------------------------------------------*/
 /**
  * Create single edge PWM channel with inverse polarity.
  * @param unit Pointer to an SctPwmUnit object.
- * @param pin Pin used as output for pulse width modulated signal.
+ * @param pin Pin used as an output for pulse width modulated signal.
  * @param duration Initial duration in timer ticks.
- * @return Pointer to new Pwm object on success or zero on error.
+ * @return Pointer to a new Pwm object on success or zero on error.
  */
 void *sctPwmCreate(void *unit, pin_t pin, uint32_t duration)
 {
@@ -361,4 +607,25 @@ void *sctPwmCreate(void *unit, pin_t pin, uint32_t duration)
   };
 
   return init(SctPwm, &channelConfig);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Create double edge PWM channel.
+ * @param unit Pointer to a SctPwmUnit object.
+ * @param pin Pin used as an output for pulse width modulated signal.
+ * @param leading Time of the leading edge in timer ticks.
+ * @param trailing Time of the trailing edge in timer ticks.
+ * @return Pointer to a new Pwm object on success or zero on error.
+ */
+void *sctPwmCreateDoubleEdge(void *unit, pin_t pin, uint32_t leading,
+    uint32_t trailing)
+{
+  const struct SctPwmDoubleEdgeConfig channelConfig = {
+      .parent = unit,
+      .leading = leading,
+      .trailing = trailing,
+      .pin = pin
+  };
+
+  return init(SctPwmDoubleEdge, &channelConfig);
 }
