@@ -72,6 +72,10 @@ ifeq ($(CONFIG_PLATFORM_NXP_I2S_BASE),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/i2s_base.c
 endif
 
+ifeq ($(CONFIG_PLATFORM_NXP_FLASH),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/flash.c
+endif
+
 ifeq ($(CONFIG_PLATFORM_NXP_PIN_INTERRUPT),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pin_interrupt.c
 endif

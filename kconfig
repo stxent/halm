@@ -289,6 +289,12 @@ config PLATFORM_NXP_I2S
 	default y
 	depends on PLATFORM_NXP_I2S_BASE
 
+config PLATFORM_NXP_FLASH
+	bool "Flash driver"
+	default y
+	help
+	  This enables driver for internal Flash memory.
+
 config SERIAL
 	bool "Serial port"
 	default y
