@@ -5,21 +5,13 @@
  */
 
 #include <assert.h>
-#include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
-#include <bits.h>
 #include <platform/nxp/flash.h>
 #include <platform/nxp/lpc13xx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline int addressToSector(struct Flash *, uint32_t);
-static enum result blankCheckSector(int);
-static enum result compareRegions(uint32_t, const uint8_t *, uint32_t);
-static enum result copyRamToFlash(uint32_t, const uint8_t *, uint32_t);
-static enum result eraseSector(int);
-static enum iapResult iap(enum iapCommand, uint32_t *, uint8_t,
-    const uint32_t *, uint8_t);
-static enum result prepareToWrite(int);
-static uint32_t readPartId();
+static inline bool isPageAddressValid(const struct Flash *, uint32_t);
+static inline bool isSectorAddressValid(const struct Flash *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result flashInit(void *, const void *);
 static void flashDeinit(void *);
@@ -43,113 +35,16 @@ static const struct InterfaceClass flashTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Flash = &flashTable;
 /*----------------------------------------------------------------------------*/
-static inline int addressToSector(struct Flash *interface, uint32_t address)
+static inline bool isPageAddressValid(const struct Flash *interface,
+    uint32_t address)
 {
-  if (address & (FLASH_PAGE_SIZE - 1))
-    return -1;
-  if (address > interface->size)
-    return -1;
-
-  return address / FLASH_SECTOR_SIZE;
+  return !(address & (FLASH_PAGE_SIZE - 1)) && address < interface->size;
 }
 /*----------------------------------------------------------------------------*/
-static enum result blankCheckSector(int sector)
+static inline bool isSectorAddressValid(const struct Flash *interface,
+    uint32_t address)
 {
-  const uint32_t parameters[] = {(uint32_t)sector, (uint32_t)sector};
-
-  const enum iapResult res = iap(CMD_BLANK_CHECK_SECTORS, 0, 0, parameters,
-      ARRAY_SIZE(parameters));
-
-  return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static enum result copyRamToFlash(uint32_t address, const uint8_t *buffer,
-    uint32_t length)
-{
-  /* Tick rate is used directly to reduce memory usage */
-  extern uint32_t ticksPerSecond;
-
-  const uint32_t parameters[] = {
-      address,
-      (uint32_t)buffer,
-      length,
-      ticksPerSecond / 1000
-  };
-
-  const enum iapResult res = iap(CMD_COPY_RAM_TO_FLASH, 0, 0, parameters,
-      ARRAY_SIZE(parameters));
-
-  return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static enum result compareRegions(uint32_t address, const uint8_t *buffer,
-    uint32_t length)
-{
-  const uint32_t parameters[] = {
-      address,
-      (uint32_t)buffer,
-      length
-  };
-
-  const enum iapResult res = iap(CMD_COMPARE, 0, 0, parameters,
-      ARRAY_SIZE(parameters));
-
-  return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static enum result eraseSector(int sector)
-{
-  extern uint32_t ticksPerSecond;
-
-  const uint32_t parameters[] = {
-      (uint32_t)sector,
-      (uint32_t)sector,
-      ticksPerSecond / 1000
-  };
-
-  const enum iapResult res = iap(CMD_ERASE_SECTORS, 0, 0, parameters,
-      ARRAY_SIZE(parameters));
-
-  return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static enum iapResult iap(enum iapCommand command, uint32_t *results,
-    uint8_t resultsCount, const uint32_t *parameters, uint8_t parametersCount)
-{
-  if (resultsCount > 3 || parametersCount > 4)
-    return RES_INVALID_COMMAND;
-
-  unsigned long parameterBuffer[5] = {0};
-  unsigned long resultBuffer[4];
-
-  parameterBuffer[0] = (uint32_t)command;
-  for (uint8_t index = 0; index < parametersCount; ++index)
-    parameterBuffer[1 + index] = (unsigned long)parameters[index];
-
-  ((void (*)())IAP_BASE)(parameterBuffer, resultBuffer);
-
-  for (uint8_t index = 0; index < resultsCount; ++index)
-    results[index] = (uint32_t)resultBuffer[1 + index];
-
-  return (enum iapResult)resultBuffer[0];
-}
-/*----------------------------------------------------------------------------*/
-static enum result prepareToWrite(int sector)
-{
-  const uint32_t parameters[] = {(uint32_t)sector, (uint32_t)sector};
-
-  const enum iapResult res = iap(CMD_PREPARE_FOR_WRITE, 0, 0, parameters,
-      ARRAY_SIZE(parameters));
-
-  return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t readPartId()
-{
-  uint32_t id;
-
-  iap(CMD_READ_PART_ID, &id, 1, 0, 0);
-  return id;
+  return !(address & (FLASH_SECTOR_SIZE - 1)) && address < interface->size;
 }
 /*----------------------------------------------------------------------------*/
 static enum result flashInit(void *object,
@@ -157,7 +52,7 @@ static enum result flashInit(void *object,
 {
   struct Flash * const interface = object;
 
-  const uint32_t id = readPartId();
+  const uint32_t id = flashReadId();
 
   switch (id)
   {
@@ -210,7 +105,7 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
   {
     case IF_FLASH_SECTOR_SIZE:
       /* Fixed sector size. */
-      *(uint32_t *)data = 4 * 1024;
+      *(uint32_t *)data = FLASH_SECTOR_SIZE;
       return E_OK;
 
     default:
@@ -249,21 +144,15 @@ static enum result flashSet(void *object, enum ifOption option,
   {
     case IF_FLASH_ERASE_SECTOR:
     {
-      const int sector = addressToSector(interface, *(const uint32_t *)data);
+      const uint32_t address = *(const uint32_t *)data;
 
-      if (sector == -1)
+      if (!isSectorAddressValid(interface, address))
         return E_VALUE;
-      if (blankCheckSector(sector) == E_OK)
+
+      if (flashBlankCheckSector(address) == E_OK)
         return E_OK;
 
-      enum result res;
-
-      if ((res = prepareToWrite(sector)) != E_OK)
-        return res;
-      if ((res = eraseSector(sector)) != E_OK)
-        return res;
-
-      return E_OK;
+      return flashEraseSector(address);
     }
 
     default:
@@ -276,7 +165,7 @@ static enum result flashSet(void *object, enum ifOption option,
     {
       const uint32_t position = *(const uint32_t *)data;
 
-      if (addressToSector(interface, position) == -1)
+      if (!isPageAddressValid(interface, position))
         return E_VALUE;
 
       interface->position = position;
@@ -307,16 +196,12 @@ static uint32_t flashWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Flash * const interface = object;
 
+  if (!isPageAddressValid(interface, interface->position))
+    return 0;
   if (length & (FLASH_PAGE_SIZE - 1))
     return 0;
 
-  const int sector = addressToSector(interface, interface->position);
-
-  if (prepareToWrite(sector) != E_OK)
-    return 0;
-  if (copyRamToFlash(interface->position, buffer, length) != E_OK)
-    return 0;
-  if (compareRegions(interface->position, buffer, length) != E_OK)
+  if (flashWriteBuffer(interface->position, buffer, length) != E_OK)
     return 0;
 
   if (interface->callback)

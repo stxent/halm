@@ -73,6 +73,7 @@ ifeq ($(CONFIG_PLATFORM_NXP_I2S_BASE),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_FLASH),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/flash_common.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/flash.c
 endif
 

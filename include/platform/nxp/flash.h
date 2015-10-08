@@ -46,4 +46,10 @@ struct Flash
   uint32_t size;
 };
 /*----------------------------------------------------------------------------*/
+enum result flashBlankCheckSector(uint32_t);
+enum result flashErasePage(uint32_t);
+enum result flashEraseSector(uint32_t);
+uint32_t flashReadId();
+enum result flashWriteBuffer(uint32_t, const uint8_t *, uint32_t);
+/*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_FLASH_H_ */
