@@ -9,16 +9,15 @@
 #include <string.h>
 #include <bits.h>
 #include <platform/nxp/flash.h>
-#include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline int addressToSector(struct Flash *, uint32_t);
-static enum iapResult iap(enum iapCommand, unsigned long *, unsigned short,
-    const unsigned long *, unsigned short);
 static enum result blankCheckSector(int);
 static enum result compareRegions(uint32_t, const uint8_t *, uint32_t);
 static enum result copyRamToFlash(uint32_t, const uint8_t *, uint32_t);
 static enum result eraseSector(int);
+static enum iapResult iap(enum iapCommand, uint32_t *, uint8_t,
+    const uint32_t *, uint8_t);
 static enum result prepareToWrite(int);
 static uint32_t readPartId();
 /*----------------------------------------------------------------------------*/
@@ -54,50 +53,11 @@ static inline int addressToSector(struct Flash *interface, uint32_t address)
   return address / FLASH_SECTOR_SIZE;
 }
 /*----------------------------------------------------------------------------*/
-static enum iapResult iap(enum iapCommand command, unsigned long *results,
-    unsigned short resultsCount, const unsigned long *parameters,
-    unsigned short parametersCount)
-{
-  if (resultsCount > 3 || parametersCount > 4)
-    return RES_INVALID_COMMAND;
-
-  unsigned long arguments[5] = {0};
-  unsigned long resultBuffer[4];
-
-  arguments[0] = (unsigned long)command;
-  for (unsigned short index = 0; index < parametersCount; ++index)
-    arguments[1 + index] = parameters[index];
-
-  ((void (*)())IAP_BASE)(arguments, resultBuffer);
-
-  for (unsigned short index = 0; index < resultsCount; ++index)
-    results[index] = resultBuffer[1 + index];
-  return (enum iapResult)resultBuffer[0];
-}
-/*----------------------------------------------------------------------------*/
 static enum result blankCheckSector(int sector)
 {
-  const unsigned long parameters[] = {
-      (unsigned long)sector,
-      (unsigned long)sector
-  };
+  const uint32_t parameters[] = {(uint32_t)sector, (uint32_t)sector};
 
   const enum iapResult res = iap(CMD_BLANK_CHECK_SECTORS, 0, 0, parameters,
-      ARRAY_SIZE(parameters));
-
-  return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
-}
-/*----------------------------------------------------------------------------*/
-static enum result compareRegions(uint32_t address, const uint8_t *buffer,
-    uint32_t length)
-{
-  const unsigned long parameters[] = {
-      (unsigned long)address,
-      (unsigned long)buffer,
-      (unsigned long)length
-  };
-
-  const enum iapResult res = iap(CMD_COMPARE, 0, 0, parameters,
       ARRAY_SIZE(parameters));
 
   return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
@@ -106,11 +66,14 @@ static enum result compareRegions(uint32_t address, const uint8_t *buffer,
 static enum result copyRamToFlash(uint32_t address, const uint8_t *buffer,
     uint32_t length)
 {
-  const unsigned long parameters[] = {
-      (unsigned long)address,
-      (unsigned long)buffer,
-      (unsigned long)length,
-      (unsigned long)12000
+  /* Tick rate is used directly to reduce memory usage */
+  extern uint32_t ticksPerSecond;
+
+  const uint32_t parameters[] = {
+      address,
+      (uint32_t)buffer,
+      length,
+      ticksPerSecond / 1000
   };
 
   const enum iapResult res = iap(CMD_COPY_RAM_TO_FLASH, 0, 0, parameters,
@@ -119,12 +82,29 @@ static enum result copyRamToFlash(uint32_t address, const uint8_t *buffer,
   return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
+static enum result compareRegions(uint32_t address, const uint8_t *buffer,
+    uint32_t length)
+{
+  const uint32_t parameters[] = {
+      address,
+      (uint32_t)buffer,
+      length
+  };
+
+  const enum iapResult res = iap(CMD_COMPARE, 0, 0, parameters,
+      ARRAY_SIZE(parameters));
+
+  return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
+}
+/*----------------------------------------------------------------------------*/
 static enum result eraseSector(int sector)
 {
-  const unsigned long parameters[] = {
-      (unsigned long)sector,
-      (unsigned long)sector,
-      (unsigned long)12000
+  extern uint32_t ticksPerSecond;
+
+  const uint32_t parameters[] = {
+      (uint32_t)sector,
+      (uint32_t)sector,
+      ticksPerSecond / 1000
   };
 
   const enum iapResult res = iap(CMD_ERASE_SECTORS, 0, 0, parameters,
@@ -133,12 +113,30 @@ static enum result eraseSector(int sector)
   return res == RES_CMD_SUCCESS ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
+static enum iapResult iap(enum iapCommand command, uint32_t *results,
+    uint8_t resultsCount, const uint32_t *parameters, uint8_t parametersCount)
+{
+  if (resultsCount > 3 || parametersCount > 4)
+    return RES_INVALID_COMMAND;
+
+  unsigned long parameterBuffer[5] = {0};
+  unsigned long resultBuffer[4];
+
+  parameterBuffer[0] = (uint32_t)command;
+  for (uint8_t index = 0; index < parametersCount; ++index)
+    parameterBuffer[1 + index] = (unsigned long)parameters[index];
+
+  ((void (*)())IAP_BASE)(parameterBuffer, resultBuffer);
+
+  for (uint8_t index = 0; index < resultsCount; ++index)
+    results[index] = (uint32_t)resultBuffer[1 + index];
+
+  return (enum iapResult)resultBuffer[0];
+}
+/*----------------------------------------------------------------------------*/
 static enum result prepareToWrite(int sector)
 {
-  const unsigned long parameters[] = {
-      (unsigned long)sector,
-      (unsigned long)sector
-  };
+  const uint32_t parameters[] = {(uint32_t)sector, (uint32_t)sector};
 
   const enum iapResult res = iap(CMD_PREPARE_FOR_WRITE, 0, 0, parameters,
       ARRAY_SIZE(parameters));
@@ -148,10 +146,10 @@ static enum result prepareToWrite(int sector)
 /*----------------------------------------------------------------------------*/
 static uint32_t readPartId()
 {
-  unsigned long id;
+  uint32_t id;
 
   iap(CMD_READ_PART_ID, &id, 1, 0, 0);
-  return (uint32_t)id;
+  return id;
 }
 /*----------------------------------------------------------------------------*/
 static enum result flashInit(void *object,
@@ -255,7 +253,7 @@ static enum result flashSet(void *object, enum ifOption option,
 
       if (sector == -1)
         return E_VALUE;
-      if (blankCheckSector(sector) == E_OK) // TODO Distinguish error codes
+      if (blankCheckSector(sector) == E_OK)
         return E_OK;
 
       enum result res;
@@ -263,8 +261,6 @@ static enum result flashSet(void *object, enum ifOption option,
       if ((res = prepareToWrite(sector)) != E_OK)
         return res;
       if ((res = eraseSector(sector)) != E_OK)
-        return res;
-      if ((res = blankCheckSector(sector)) != E_OK)
         return res;
 
       return E_OK;
@@ -280,7 +276,6 @@ static enum result flashSet(void *object, enum ifOption option,
     {
       const uint32_t position = *(const uint32_t *)data;
 
-      // TODO Remove redundant checks
       if (addressToSector(interface, position) == -1)
         return E_VALUE;
 
@@ -299,8 +294,6 @@ static uint32_t flashRead(void *object, uint8_t *buffer, uint32_t length)
 
   if (length & (FLASH_PAGE_SIZE - 1))
     return 0;
-  if (addressToSector(interface, interface->position) == -1)
-    return 0;
 
   memcpy(buffer, (const void *)interface->position, length);
 
@@ -318,9 +311,6 @@ static uint32_t flashWrite(void *object, const uint8_t *buffer, uint32_t length)
     return 0;
 
   const int sector = addressToSector(interface, interface->position);
-
-  if (sector == -1)
-    return 0;
 
   if (prepareToWrite(sector) != E_OK)
     return 0;
