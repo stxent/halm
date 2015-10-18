@@ -15,22 +15,8 @@ enum flashOption
 {
   /** Erase sector. */
   IF_FLASH_ERASE_SECTOR = IF_OPTION_END,
-  /** Erase page in sector. Not supported on all interfaces. */
-  IF_FLASH_ERASE_PAGE,
-  /**
-   * Check page erase capability. Return @b @_OK, when this feature
-   * is supported.
-   */
-  IF_FLASH_PAGE_ERASABLE,
-  /**
-   * Check byte erase capability. Return @b @_OK, when this feature
-   * is supported.
-   */
-  IF_FLASH_BYTE_ERASABLE,
-  /** Sector size. */
-  IF_FLASH_SECTOR_SIZE,
-  /** Page size. */
-  IF_FLASH_PAGE_SIZE
+  /** Erase page in sector. Is not available on some interfaces. */
+  IF_FLASH_ERASE_PAGE
 };
 /*----------------------------------------------------------------------------*/
 struct Flash
@@ -49,6 +35,7 @@ struct Flash
 enum result flashBlankCheckSector(uint32_t);
 enum result flashErasePage(uint32_t);
 enum result flashEraseSector(uint32_t);
+void flashInitWrite();
 uint32_t flashReadId();
 enum result flashWriteBuffer(uint32_t, const uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/

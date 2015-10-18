@@ -100,29 +100,10 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
 {
   struct Flash * const interface = object;
 
-  /* Additional Flash options */
-  switch ((enum flashOption)option)
-  {
-    case IF_FLASH_SECTOR_SIZE:
-      /* Fixed sector size. */
-      *(uint32_t *)data = FLASH_SECTOR_SIZE;
-      return E_OK;
-
-    default:
-      break;
-  }
-
   switch (option)
   {
     case IF_ADDRESS:
       *(uint32_t *)data = interface->position;
-      return E_OK;
-
-    case IF_ALIGNMENT:
-      *(uint32_t *)data = FLASH_PAGE_SIZE;
-      return E_OK;
-
-    case IF_STATUS:
       return E_OK;
 
     case IF_SIZE:

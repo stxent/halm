@@ -21,6 +21,11 @@
 /*----------------------------------------------------------------------------*/
 #define IAP_BASE          0x1FFF1FF1U
 /*----------------------------------------------------------------------------*/
+static inline uint8_t addressToBank(uint32_t address __attribute__((unused)))
+{
+  return 0;
+}
+/*----------------------------------------------------------------------------*/
 static inline uint32_t addressToPage(uint32_t address)
 {
   return address / FLASH_PAGE_SIZE;
