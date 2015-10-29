@@ -131,7 +131,7 @@ struct PllConfig
    * Mandatory: PLL output divisor. The output divisor may be set to divide
    * by 1, 2, 3, 4, 6, 8, 12, 16, 24, 32.
    */
-  uint8_t divider;
+  uint8_t divisor;
   /** Mandatory: clock source. */
   enum clockSource source;
 };

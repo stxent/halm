@@ -31,7 +31,7 @@
 #define FLASH_SECTORS_OFFSET    (FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0 \
     - FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_1)
 /*----------------------------------------------------------------------------*/
-#define IAP_BASE            0x1FFF1FF1U
+#define IAP_BASE                0x1FFF1FF1U
 /*----------------------------------------------------------------------------*/
 static inline uint8_t addressToBank(uint32_t address __attribute__((unused)))
 {

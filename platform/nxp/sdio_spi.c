@@ -11,7 +11,7 @@
 #include <common/sdio.h>
 #include <common/sdio_defs.h>
 #include <crc/crc7.h>
-#include <crc/crc16.h>
+#include <crc/crc16_ccitt.h>
 #include <platform/nxp/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_BLOCK_SIZE    512
@@ -675,7 +675,7 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->crcPoolSize = config->blocks;
   if (interface->crcPoolSize)
   {
-    interface->crc16 = init(Crc16, 0);
+    interface->crc16 = init(Crc16Ccitt, 0);
     if (!interface->crc16)
       return E_MEMORY;
 

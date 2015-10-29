@@ -493,24 +493,24 @@ static enum result pll1ClockEnable(const void *clockBase
 
   if (config->source == CLOCK_PLL)
     return E_VALUE;
-  if (!config->divider || !config->multiplier || config->multiplier > 256)
+  if (!config->divisor || !config->multiplier || config->multiplier > 256)
     return E_VALUE;
 
-  uint8_t divider = config->divider;
+  uint8_t divisor = config->divisor;
   uint8_t psel = 0;
 
-  while (psel < 4 && !(divider & 1))
+  while (psel < 4 && !(divisor & 1))
   {
     ++psel;
-    divider >>= 1;
+    divisor >>= 1;
   }
 
-  if (divider > 4)
+  if (divisor > 4)
     return E_VALUE;
 
   const uint32_t sourceFrequency = getSourceFrequency(config->source);
   const uint8_t msel = config->multiplier - 1;
-  const uint8_t nsel = divider - 1;
+  const uint8_t nsel = divisor - 1;
   bool direct = false;
 
   if (psel)
@@ -522,7 +522,7 @@ static enum result pll1ClockEnable(const void *clockBase
     return E_ERROR;
 
   const uint32_t ccoFrequency = sourceFrequency * config->multiplier;
-  const uint32_t expectedFrequency = ccoFrequency / config->divider;
+  const uint32_t expectedFrequency = ccoFrequency / config->divisor;
 
   /* Check CCO range */
   if (ccoFrequency < 156000000 || ccoFrequency > 320000000)

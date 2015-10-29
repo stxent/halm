@@ -182,6 +182,8 @@ static uint32_t flashRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Flash * const interface = object;
 
+  if (!isPageAddressValid(interface, interface->position))
+    return 0;
   if (length & (FLASH_PAGE_SIZE - 1))
     return 0;
 
@@ -197,7 +199,7 @@ static uint32_t flashWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Flash * const interface = object;
 
-  if (!isSectorAddressValid(interface, interface->position))
+  if (!isPageAddressValid(interface, interface->position))
     return 0;
   if (length & (FLASH_PAGE_SIZE - 1))
     return 0;

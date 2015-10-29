@@ -162,6 +162,8 @@ static uint32_t flashRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Flash * const interface = object;
 
+  if (!isPageAddressValid(interface, interface->position))
+    return 0;
   if (length & (FLASH_PAGE_SIZE - 1))
     return 0;
 
