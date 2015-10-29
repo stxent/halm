@@ -5,6 +5,7 @@
  */
 
 #include <bits.h>
+#include <irq.h>
 #include <libhalm/target.h>
 #include <platform/nxp/flash.h>
 /*----------------------------------------------------------------------------*/
@@ -117,35 +118,51 @@ enum result flashBlankCheckSector(uint32_t address)
 /*----------------------------------------------------------------------------*/
 enum result flashErasePage(uint32_t address)
 {
-  const uint32_t frequency = clockFrequency(MainClock);
-  const uint32_t page = addressToPage(address);
-  const uint32_t parameters[] = {
-      page,
-      page,
-      frequency / 1000
-  };
-
-  return iap(CMD_ERASE_PAGE, 0, 0, parameters, ARRAY_SIZE(parameters));
-}
-/*----------------------------------------------------------------------------*/
-enum result flashEraseSector(uint32_t address)
-{
-  const uint32_t frequency = clockFrequency(MainClock);
   const uint32_t sector = addressToSector(address);
   const uint8_t bank = addressToBank(address);
   enum result res;
 
-  if ((res = prepareSectorToWrite(sector, bank)) != E_OK)
-    return res;
+  interruptsDisable();
 
-  const uint32_t parameters[] = {
-      sector,
-      sector,
-      frequency / 1000,
-      (uint32_t)bank
-  };
+  if ((res = prepareSectorToWrite(sector, bank)) == E_OK)
+  {
+    const uint32_t frequency = clockFrequency(MainClock);
+    const uint32_t parameters[] = {
+        address,
+        address,
+        frequency / 1000
+    };
 
-  return iap(CMD_ERASE_SECTORS, 0, 0, parameters, ARRAY_SIZE(parameters));
+    res = iap(CMD_ERASE_PAGE, 0, 0, parameters, ARRAY_SIZE(parameters));
+  }
+
+  interruptsEnable();
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+enum result flashEraseSector(uint32_t address)
+{
+  const uint32_t sector = addressToSector(address);
+  const uint8_t bank = addressToBank(address);
+  enum result res;
+
+  interruptsDisable();
+
+  if ((res = prepareSectorToWrite(sector, bank)) == E_OK)
+  {
+    const uint32_t frequency = clockFrequency(MainClock);
+    const uint32_t parameters[] = {
+        sector,
+        sector,
+        frequency / 1000,
+        (uint32_t)bank
+    };
+
+    res = iap(CMD_ERASE_SECTORS, 0, 0, parameters, ARRAY_SIZE(parameters));
+  }
+
+  interruptsEnable();
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 void flashInitWrite()
@@ -161,6 +178,14 @@ uint32_t flashReadId()
   return id;
 }
 /*----------------------------------------------------------------------------*/
+uint32_t flashReadConfigId()
+{
+  uint32_t id[2];
+
+  iap(CMD_READ_PART_ID, id, ARRAY_SIZE(id), 0, 0);
+  return id[1];
+}
+/*----------------------------------------------------------------------------*/
 enum result flashWriteBuffer(uint32_t address, const uint8_t *buffer,
     uint32_t length)
 {
@@ -168,12 +193,14 @@ enum result flashWriteBuffer(uint32_t address, const uint8_t *buffer,
   const uint8_t bank = addressToBank(address);
   enum result res;
 
-  if ((res = prepareSectorToWrite(sector, bank)) != E_OK)
-    return res;
-  if ((res = copyRamToFlash(address, buffer, length)) != E_OK)
-    return res;
-  if ((res = compareRegions(address, buffer, length)) != E_OK)
-    return res;
+  interruptsDisable();
 
-  return E_OK;
+  res = prepareSectorToWrite(sector, bank);
+  if (res == E_OK)
+    res = copyRamToFlash(address, buffer, length);
+  if (res == E_OK)
+    res = compareRegions(address, buffer, length);
+
+  interruptsEnable();
+  return res;
 }

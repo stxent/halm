@@ -37,6 +37,7 @@ enum result flashErasePage(uint32_t);
 enum result flashEraseSector(uint32_t);
 void flashInitWrite();
 uint32_t flashReadId();
+uint32_t flashReadConfigId();
 enum result flashWriteBuffer(uint32_t, const uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_FLASH_H_ */
