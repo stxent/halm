@@ -49,13 +49,13 @@ typedef struct
   __rw__ uint32_t ICPR[1]; /* Interrupt Clear Pending Register */
   __ne__ uint32_t RESERVED3[95];
   __rw__ uint32_t IPR[8]; /* Interrupt Priority Registers */
-}  NVIC_Type;
+} NVIC_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses of Cortex-M3 Hardware */
 #define SCS_BASE        (0xE000E000UL)
-#define SYSTICK_BASE    (SCS_BASE + 0x0010UL)
-#define NVIC_BASE       (SCS_BASE + 0x0100UL)
-#define SCB_BASE        (SCS_BASE + 0x0D00UL)
+#define SYSTICK_BASE    (SCS_BASE + 0x0010)
+#define NVIC_BASE       (SCS_BASE + 0x0100)
+#define SCB_BASE        (SCS_BASE + 0x0D00)
 /*----------------------------------------------------------------------------*/
 /* Hardware declaration */
 #define SCB             ((SCB_Type *)SCB_BASE)

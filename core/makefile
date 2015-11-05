@@ -5,6 +5,12 @@ CSOURCES += core/$(CORE_TYPE)/$(CORE)/irq.c
 CSOURCES += core/$(CORE_TYPE)/$(CORE)/memory.c
 CSOURCES += core/$(CORE_TYPE)/$(CORE)/spinlock.c
 
+ifeq ($(CONFIG_FPU),y)
+  CSOURCES += core/$(CORE_TYPE)/$(CORE)/fpu.c
+
+  PROJECT_FLAGS += CONFIG_FPU
+endif
+
 ifeq ($(CONFIG_PM),y)
   CSOURCES += core/$(CORE_TYPE)/pm.c
 endif

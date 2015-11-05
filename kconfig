@@ -70,6 +70,13 @@ config GEN_USB
 
 menu "Core configuration"
 
+config FPU
+	bool "FPU"
+	default y
+	help
+	  This enables Floating Point Unit.
+	depends on FAMILY_LPC43XX
+
 config PM
 	bool "Power management"
 	default y

@@ -55,28 +55,28 @@ static void interruptHandler(void *object)
   {
     const uint8_t data = (uint8_t)reg->RBR;
 
-
     /* Received bytes will be dropped when queue becomes full */
     if (!byteQueueFull(&interface->rxQueue))
       byteQueuePush(&interface->rxQueue, data);
   }
   if (reg->LSR & LSR_THRE)
   {
+    const uint32_t txQueueCapacity = byteQueueCapacity(&interface->txQueue);
+    const uint32_t txQueueSize = byteQueueSize(&interface->txQueue);
+
     /* Fill FIFO with selected burst size or less */
-    uint32_t count = byteQueueSize(&interface->txQueue) < TX_FIFO_SIZE
-        ? byteQueueSize(&interface->txQueue) : TX_FIFO_SIZE;
+    uint32_t count = txQueueSize < TX_FIFO_SIZE ? txQueueSize : TX_FIFO_SIZE;
 
     /* Call user handler when transmit queue becomes half empty */
-    event |= count && byteQueueSize(&interface->txQueue) - count
-        < (byteQueueCapacity(&interface->txQueue) >> 1);
+    event |= count && txQueueSize - count < (txQueueCapacity >> 1);
 
     while (count--)
       reg->THR = byteQueuePop(&interface->txQueue);
   }
 
   /* User handler will be called when receive queue becomes half full */
-  event |= byteQueueSize(&interface->rxQueue)
-      >= (byteQueueCapacity(&interface->rxQueue) >> 1);
+  event |= byteQueueSize(&interface->rxQueue) >=
+      (byteQueueCapacity(&interface->rxQueue) >> 1);
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);

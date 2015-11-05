@@ -39,6 +39,8 @@ typedef struct
   __ro__ uint32_t ADR; /* Auxiliary Feature Register */
   __ro__ uint32_t MMFR[4]; /* Memory Model Feature Register */
   __ro__ uint32_t ISAR[5]; /* ISA Feature Register */
+  __ne__ uint32_t RESERVED0[5];
+  __rw__ uint32_t CPACR; /* Coprocessor Access Control Register */
 } SCB_Type;
 /*------------------System Tick Timer-----------------------------------------*/
 typedef struct
@@ -64,18 +66,30 @@ typedef struct
   __rw__ uint8_t IP[240]; /* Interrupt Priority Registers */
   __ne__ uint32_t RESERVED5[644];
   __wo__ uint32_t STIR; /* Software Trigger Interrupt Register */
-}  NVIC_Type;
+} NVIC_Type;
 /*----------------------------------------------------------------------------*/
-/* Base addresses of Cortex-M3 Hardware */
+typedef struct
+{
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t FPCCR; /* Floating-Point Context Control Register */
+  __rw__ uint32_t FPCAR; /* Floating-Point Context Address Register */
+  __rw__ uint32_t FPDSCR; /* Floating-Point Default Status Control Register */
+  __ro__ uint32_t MVFR0; /* Media and FP Feature Register 0 */
+  __ro__ uint32_t MVFR1; /* Media and FP Feature Register 1 */
+} FPU_Type;
+/*----------------------------------------------------------------------------*/
+/* Base addresses of Cortex-M4 Hardware */
 #define SCS_BASE        (0xE000E000UL)
-#define SYSTICK_BASE    (SCS_BASE + 0x0010UL)
-#define NVIC_BASE       (SCS_BASE + 0x0100UL)
-#define SCB_BASE        (SCS_BASE + 0x0D00UL)
+#define SYSTICK_BASE    (SCS_BASE + 0x0010)
+#define NVIC_BASE       (SCS_BASE + 0x0100)
+#define SCB_BASE        (SCS_BASE + 0x0D00)
+#define FPU_BASE        (SCS_BASE + 0x0F30)
 /*----------------------------------------------------------------------------*/
 /* Hardware declaration */
 #define SCB             ((SCB_Type *)SCB_BASE)
 #define SYSTICK         ((SYSTICK_Type *)SYSTICK_BASE)
 #define NVIC            ((NVIC_Type *)NVIC_BASE)
+#define FPU             ((FPU_Type *)FPU_BASE)
 /*----------------------------------------------------------------------------*/
 #undef __wo__
 #undef __ro__

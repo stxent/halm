@@ -5,6 +5,7 @@
  */
 
 #include <bits.h>
+#include <core/cortex/fpu.h>
 #include <platform/nxp/lpc43xx/system.h>
 #include <platform/nxp/lpc43xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -70,4 +71,8 @@ void platformStartup(void)
 
   for (uint8_t index = 0; index < ARRAY_SIZE(peripheralsToDisable); ++index)
     sysClockDisable(peripheralsToDisable[index]);
+
+#ifdef CONFIG_FPU
+  fpuEnable();
+#endif
 }
