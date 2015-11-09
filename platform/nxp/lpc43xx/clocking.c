@@ -15,11 +15,17 @@
 #define RTC_OSC_FREQUENCY               32768
 #define TICK_RATE(frequency)            ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcBranchReg(enum clockBranch);
+static inline volatile uint32_t *calcBranchReg(enum clockBranch);
+static inline volatile uint32_t *calcDividerReg(enum clockSource);
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 static uint32_t getSourceFrequency(enum clockSource);
 /*----------------------------------------------------------------------------*/
+static void commonDividerDisable(const void *);
+static enum result commonDividerEnable(const void *, const void *);
+static uint32_t commonDividerFrequency(const void *);
+static bool commonDividerReady(const void *);
+
 static void extOscDisable(const void *);
 static enum result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
@@ -44,6 +50,56 @@ static void commonClockDisable(const void *);
 static enum result commonClockEnable(const void *, const void *);
 static uint32_t commonClockFrequency(const void *);
 static bool commonClockReady(const void *);
+/*----------------------------------------------------------------------------*/
+static const struct CommonDividerClass dividerATable = {
+    .parent = {
+        .disable = commonDividerDisable,
+        .enable = commonDividerEnable,
+        .frequency = commonDividerFrequency,
+        .ready = commonDividerReady
+    },
+    .channel = CLOCK_IDIVA
+};
+
+static const struct CommonDividerClass dividerBTable = {
+    .parent = {
+        .disable = commonDividerDisable,
+        .enable = commonDividerEnable,
+        .frequency = commonDividerFrequency,
+        .ready = commonDividerReady
+    },
+    .channel = CLOCK_IDIVB
+};
+
+static const struct CommonDividerClass dividerCTable = {
+    .parent = {
+        .disable = commonDividerDisable,
+        .enable = commonDividerEnable,
+        .frequency = commonDividerFrequency,
+        .ready = commonDividerReady
+    },
+    .channel = CLOCK_IDIVC
+};
+
+static const struct CommonDividerClass dividerDTable = {
+    .parent = {
+        .disable = commonDividerDisable,
+        .enable = commonDividerEnable,
+        .frequency = commonDividerFrequency,
+        .ready = commonDividerReady
+    },
+    .channel = CLOCK_IDIVD
+};
+
+static const struct CommonDividerClass dividerETable = {
+    .parent = {
+        .disable = commonDividerDisable,
+        .enable = commonDividerEnable,
+        .frequency = commonDividerFrequency,
+        .ready = commonDividerReady
+    },
+    .channel = CLOCK_IDIVE
+};
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass extOscTable = {
     .disable = extOscDisable,
@@ -303,6 +359,12 @@ static const struct CommonClockClass cguOut1ClockTable = {
     .branch = CLOCK_BASE_CGU_OUT1
 };
 /*----------------------------------------------------------------------------*/
+const struct CommonDividerClass * const DividerA = &dividerATable;
+const struct CommonDividerClass * const DividerB = &dividerBTable;
+const struct CommonDividerClass * const DividerC = &dividerCTable;
+const struct CommonDividerClass * const DividerD = &dividerDTable;
+const struct CommonDividerClass * const DividerE = &dividerETable;
+/*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
 const struct ClockClass * const InternalOsc = &intOscTable;
 const struct ClockClass * const RtcOsc = &rtcOscTable;
@@ -338,9 +400,14 @@ static uint32_t pll0AudioFrequency = 0;
 static uint32_t pll1Frequency = 0;
 uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcBranchReg(enum clockBranch source)
+static inline volatile uint32_t *calcBranchReg(enum clockBranch branch)
 {
-  return &LPC_CGU->BASE_USB0_CLK + source;
+  return &LPC_CGU->BASE_USB0_CLK + branch;
+}
+/*----------------------------------------------------------------------------*/
+static inline volatile uint32_t *calcDividerReg(enum clockSource source)
+{
+  return &LPC_CGU->IDIVA_CTRL + (source - CLOCK_IDIVA);
 }
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
@@ -362,6 +429,9 @@ static uint32_t getSourceFrequency(enum clockSource source)
 {
   switch (source)
   {
+    case CLOCK_RTC:
+      return rtcOscFrequency(RtcOsc);
+
     case CLOCK_INTERNAL:
       return INT_OSC_FREQUENCY;
 
@@ -377,13 +447,85 @@ static uint32_t getSourceFrequency(enum clockSource source)
     case CLOCK_PLL:
       return pll1Frequency;
 
-    case CLOCK_RTC:
-      return rtcOscFrequency(RtcOsc);
+    case CLOCK_IDIVA:
+      return commonDividerFrequency(DividerA);
+
+    case CLOCK_IDIVB:
+      return commonDividerFrequency(DividerB);
+
+    case CLOCK_IDIVC:
+      return commonDividerFrequency(DividerC);
+
+    case CLOCK_IDIVD:
+      return commonDividerFrequency(DividerD);
+
+    case CLOCK_IDIVE:
+      return commonDividerFrequency(DividerE);
 
     default:
       /* Unknown clock source */
       return 0;
   }
+}
+/*----------------------------------------------------------------------------*/
+static void commonDividerDisable(const void *clockBase)
+{
+  const struct CommonDividerClass * const clock = clockBase;
+  volatile uint32_t * const reg = calcDividerReg(clock->channel);
+
+  *reg |= IDIV_PD;
+}
+/*----------------------------------------------------------------------------*/
+static enum result commonDividerEnable(const void *clockBase,
+    const void *configBase)
+{
+  const struct CommonDividerClass * const clock = clockBase;
+  const struct CommonDividerConfig * const config = configBase;
+  volatile uint32_t * const reg = calcDividerReg(clock->channel);
+
+  if (!config->value)
+    return E_VALUE;
+
+  if (clock->channel == CLOCK_IDIVA)
+  {
+    if (config->value > 4)
+      return E_VALUE;
+  }
+  else if (clock->channel == CLOCK_IDIVE)
+  {
+    if (config->value > 256)
+      return E_VALUE;
+  }
+  else
+  {
+    if (config->value > 16)
+      return E_VALUE;
+  }
+
+  *reg |= IDIV_AUTOBLOCK;
+  *reg = (*reg & ~(IDIV_DIVIDER_MASK | IDIV_CLK_SEL_MASK))
+      | IDIV_DIVIDER(config->value - 1) | IDIV_CLK_SEL(config->source);
+  *reg &= ~IDIV_PD;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t commonDividerFrequency(const void *clockBase)
+{
+  const struct CommonDividerClass * const clock = clockBase;
+  const volatile uint32_t * const reg = calcDividerReg(clock->channel);
+  const uint32_t divider = IDIV_DIVIDER_VALUE(*reg) + 1;
+  const uint32_t frequency = getSourceFrequency(IDIV_CLK_SEL_VALUE(*reg));
+
+  return frequency / divider;
+}
+/*----------------------------------------------------------------------------*/
+static bool commonDividerReady(const void *clockBase)
+{
+  const struct CommonDividerClass * const clock = clockBase;
+  const volatile uint32_t * const reg = calcDividerReg(clock->channel);
+
+  return !(*reg & IDIV_PD);
 }
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *clockBase __attribute__((unused)))
@@ -581,7 +723,7 @@ static void commonClockDisable(const void *clockBase)
   const struct CommonClockClass * const clock = clockBase;
   volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
-  *reg |= BASE_CLK_PD;
+  *reg |= BASE_PD;
 }
 /*----------------------------------------------------------------------------*/
 static enum result commonClockEnable(const void *clockBase,
@@ -594,9 +736,9 @@ static enum result commonClockEnable(const void *clockBase,
   if (clock->branch == CLOCK_BASE_M4)
     flashLatencyReset();
 
-  *reg |= BASE_CLK_AUTOBLOCK;
+  *reg |= BASE_AUTOBLOCK;
   *reg = (*reg & ~BASE_CLK_SEL_MASK) | BASE_CLK_SEL(config->source);
-  *reg &= ~BASE_CLK_PD;
+  *reg &= ~BASE_PD;
 
   if (clock->branch == CLOCK_BASE_M4)
   {
@@ -622,5 +764,5 @@ static bool commonClockReady(const void *clockBase)
   const struct CommonClockClass * const clock = clockBase;
   const volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
-  return !(*reg & BASE_CLK_PD);
+  return !(*reg & BASE_PD);
 }

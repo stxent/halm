@@ -9,8 +9,8 @@
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Base clock control registers------------------------------*/
-#define BASE_CLK_PD                     BIT(0) /* Output stage power down */
-#define BASE_CLK_AUTOBLOCK              BIT(11)
+#define BASE_PD                         BIT(0) /* Output stage power down */
+#define BASE_AUTOBLOCK                  BIT(11)
 #define BASE_CLK_SEL_MASK               BIT_FIELD(MASK(5), 24)
 #define BASE_CLK_SEL(channel)           BIT_FIELD((channel), 24)
 #define BASE_CLK_SEL_VALUE(reg) \
@@ -37,5 +37,15 @@
     FIELD_VALUE((reg), PLL1_CTRL_CLKSEL_MASK, 24)
 /*------------------PLL1 Status register--------------------------------------*/
 #define PLL1_STAT_LOCK                  BIT(0)
+/*------------------Integer Divider register----------------------------------*/
+#define IDIV_PD                         BIT(0)
+#define IDIV_DIVIDER_MASK               BIT_FIELD(MASK(8), 2) /* From 2 to 8 */
+#define IDIV_DIVIDER(value)             BIT_FIELD((value), 2)
+#define IDIV_DIVIDER_VALUE(reg)         FIELD_VALUE((reg), IDIV_DIVIDER_MASK, 2)
+#define IDIV_AUTOBLOCK                  BIT(11)
+#define IDIV_CLK_SEL_MASK               BIT_FIELD(MASK(5), 24)
+#define IDIV_CLK_SEL(channel)           BIT_FIELD((channel), 24)
+#define IDIV_CLK_SEL_VALUE(reg) \
+    FIELD_VALUE((reg), IDIV_CLK_SEL_MASK, 24)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC43XX_CLOCKING_DEFS_H_ */

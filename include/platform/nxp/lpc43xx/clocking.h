@@ -66,6 +66,19 @@ struct CommonClockClass
   enum clockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
+struct CommonDividerClass
+{
+  struct ClockClass parent;
+
+  enum clockSource channel;
+};
+/*----------------------------------------------------------------------------*/
+extern const struct CommonDividerClass * const DividerA;
+extern const struct CommonDividerClass * const DividerB;
+extern const struct CommonDividerClass * const DividerC;
+extern const struct CommonDividerClass * const DividerD;
+extern const struct CommonDividerClass * const DividerE;
+/*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const RtcOsc;
@@ -101,6 +114,14 @@ extern const struct CommonClockClass * const CguOut1Clock;
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig
 {
+  /** Mandatory: clock source. */
+  enum clockSource source;
+};
+/*----------------------------------------------------------------------------*/
+struct CommonDividerConfig
+{
+  /** Mandatory: integer divider value. */
+  uint16_t value;
   /** Mandatory: clock source. */
   enum clockSource source;
 };
