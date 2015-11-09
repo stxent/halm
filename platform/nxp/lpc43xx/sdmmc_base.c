@@ -9,6 +9,9 @@
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
+#define SDDELAY_SAMPLE(value) BIT_FIELD((value), 0)
+#define SDDELAY_DRV(value)    BIT_FIELD((value), 8)
+/*----------------------------------------------------------------------------*/
 static enum result configPins(struct SdmmcBase *,
     const struct SdmmcBaseConfig *);
 static enum result setDescriptor(const struct SdmmcBase *, struct SdmmcBase *);
@@ -193,6 +196,12 @@ static enum result configPins(struct SdmmcBase *interface,
       return E_VALUE;
     pinInput((pin = pinInit(pinArray[index])));
     pinSetFunction(pin, pinEntry->value);
+
+    if (index > 0)
+    {
+      /* Enable pull-up resistors on all pins except for clock */
+      pinSetPull(pin, PIN_PULLUP);
+    }
   }
 
   interface->wide = wide;
@@ -233,6 +242,9 @@ static enum result sdioInit(void *object, const void *configBase)
   sysClockEnable(CLK_M4_SDIO);
   sysClockEnable(CLK_SDIO);
   sysResetEnable(RST_SDIO);
+
+  /* Initialize SD/MMC delay register */
+  LPC_SCU->SDDELAY = SDDELAY_SAMPLE(0x08) | SDDELAY_DRV(0x0F);
 
   interface->handler = 0;
   interface->irq = SDIO_IRQ;

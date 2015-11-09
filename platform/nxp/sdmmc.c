@@ -47,27 +47,23 @@ static void execute(struct Sdmmc *interface)
   const uint32_t code = COMMAND_CODE_VALUE(interface->command);
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
   const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
-  uint32_t waitStatus = 0;
+
+  /* Prepare interrupt mask */
+  uint32_t waitStatus = INT_EBE | INT_SBE | INT_HLE | INT_RTO | INT_RE;
 
   if (flags & SDIO_INITIALIZE)
     waitStatus |= INT_CDONE;
-
-  //FIXME Rewrite wait status generation
   if (flags & SDIO_DATA_MODE)
   {
-    /* Reset FIFO */
-    reg->CTRL |= CTRL_FIFO_RESET;
-    while (reg->CTRL & CTRL_FIFO_RESET);
-
     /* Enable data-relative interrupts */
-    waitStatus |= INT_DTO;
-    waitStatus |= INT_DCRC | INT_DRTO | INT_HTO | INT_FRUN;
+    waitStatus |= INT_DTO | INT_DRTO | INT_HTO | INT_FRUN;
+    if (flags & SDIO_CHECK_CRC)
+      waitStatus |= INT_DCRC;
   }
-
   if (!(flags & SDIO_DATA_MODE) && response != SDIO_RESPONSE_NONE)
     waitStatus |= INT_CDONE;
-
-  waitStatus |= INT_EBE | INT_SBE | INT_HLE | INT_RTO | INT_RCRC | INT_RE;
+  if (flags & SDIO_CHECK_CRC)
+    waitStatus |= INT_RCRC;
 
   /* Initialize interrupts */
   reg->RINTSTS = INT_MASK;
@@ -107,6 +103,12 @@ static void execute(struct Sdmmc *interface)
     command |= CMD_TRANSFER_MODE;
 
   /* Execute low-level command */
+  if (flags & SDIO_DATA_MODE)
+  {
+    /* Reset FIFO */
+    reg->CTRL |= CTRL_FIFO_RESET;
+    while (reg->CTRL & CTRL_FIFO_RESET);
+  }
   interface->status = E_BUSY;
   if (executeCommand(interface, command, interface->argument) != E_OK)
     interface->status = E_VALUE;
