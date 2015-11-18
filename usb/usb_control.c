@@ -15,9 +15,6 @@
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *, void *);
 static void controlOutHandler(struct UsbRequest *, void *);
-static void processRequest(struct UsbControl *, const struct UsbRequest *);
-static void processStandardRequest(struct UsbControl *,
-    const struct UsbSetupPacket *);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
@@ -51,6 +48,10 @@ static void controlOutHandler(struct UsbRequest *request,
     return;
   }
 
+  const uint8_t direction = REQUEST_DIRECTION_VALUE(packet->requestType);
+  uint16_t length = 0;
+  enum result res = E_BUSY;
+
   if (request->status == REQUEST_SETUP)
   {
     control->state.left = 0;
@@ -59,81 +60,35 @@ static void controlOutHandler(struct UsbRequest *request,
     packet->index = fromLittleEndian16(packet->index);
     packet->length = fromLittleEndian16(packet->length);
 
-    const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
-
-    if (type != REQUEST_TYPE_STANDARD)
+    if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
     {
-      control->state.packet.length = 0;
-      processRequest(control, request);
-    }
-    else
-    {
-      const uint8_t direction = REQUEST_DIRECTION_VALUE(packet->requestType);
+      res = usbHandleStandardRequest(control, packet, control->state.buffer,
+          &length, DATA_BUFFER_SIZE);
 
-      if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
+      if (res != E_OK && control->driver)
       {
-        processStandardRequest(control, packet);
-      }
-      else if (packet->length <= DATA_BUFFER_SIZE)
-      {
-        control->state.left = packet->length;
+        res = usbDriverConfigure(control->driver, packet, 0, 0,
+            control->state.buffer, &length, DATA_BUFFER_SIZE);
       }
     }
+    else if (packet->length <= DATA_BUFFER_SIZE)
+    {
+      control->state.left = packet->length;
+    }
   }
-  else
+  else if (control->state.left && request->length > control->state.left)
   {
-    const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
+    /* Erroneous packets are ignored */
+    memcpy(control->state.buffer + (packet->length - control->state.left),
+        request->buffer, request->length);
+    control->state.left -= request->length;
 
-    if (type != REQUEST_TYPE_STANDARD)
+    if (!control->state.left && control->driver)
     {
-      processRequest(control, request);
-    }
-    else if (control->state.left)
-    {
-      /* Ingore erroneous packets */
-      if (request->length > control->state.left)
-        return;
-
-      memcpy(control->state.buffer + (packet->length - control->state.left),
-          request->buffer, request->length);
-      control->state.left -= request->length;
-
-      if (!control->state.left)
-        processStandardRequest(control, packet);
+      res = usbDriverConfigure(control->driver, packet,
+          control->state.buffer, packet->length, 0, 0, 0);
     }
   }
-
-  usbEpEnqueue(control->ep0out, request);
-}
-/*----------------------------------------------------------------------------*/
-static void processRequest(struct UsbControl *control,
-    const struct UsbRequest *request)
-{
-  if (control->driver)
-  {
-    uint16_t length;
-    const enum result res = usbDriverConfigure(control->driver, request,
-        control->state.buffer, &length, DATA_BUFFER_SIZE);
-
-    if (res == E_OK)
-    {
-      sendResponse(control, control->state.buffer, length);
-    }
-    else
-    {
-      usbEpSetStalled(control->ep0in, true);
-    }
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void processStandardRequest(struct UsbControl *control,
-    const struct UsbSetupPacket *packet)
-{
-  uint16_t length = DATA_BUFFER_SIZE;
-  enum result res;
-
-  res = usbHandleStandardRequest(control, packet, control->state.buffer,
-      &length);
 
   if (res == E_OK)
   {
@@ -142,9 +97,9 @@ static void processStandardRequest(struct UsbControl *control,
     sendResponse(control, control->state.buffer, length);
   }
   else
-  {
     usbEpSetStalled(control->ep0in, true);
-  }
+
+  usbEpEnqueue(control->ep0out, request);
 }
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbControl *control)

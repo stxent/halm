@@ -20,8 +20,8 @@ static enum result handleRequest(struct CdcAcmBase *,
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
-static enum result driverConfigure(void *, const struct UsbRequest *, uint8_t *,
-    uint16_t *, uint16_t);
+static enum result driverConfigure(void *, const struct UsbSetupPacket *,
+    const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
 static const struct UsbDescriptor **driverGetDescriptors(void *);
 static void driverUpdateStatus(void *, uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -311,11 +311,6 @@ static enum result driverInit(void *object, const void *configBase)
   driver->callbackArgument = config->argument;
   driver->suspended = false;
 
-  driver->state.buffer = malloc(CDC_CONTROL_BUFFER_SIZE);
-  if (!driver->state.buffer)
-    return E_MEMORY;
-  driver->state.left = 0;
-
   driver->device = config->device;
   driver->line.coding = (struct CdcLineCoding){115200, 0, 0, 8};
   driver->line.dtr = true;
@@ -339,76 +334,23 @@ static void driverDeinit(void *object)
   usbDevSetConnected(driver->device, false);
   usbDevBind(driver->device, 0); /* Unbind driver */
   freeDescriptors(driver);
-  free(driver->state.buffer);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
-    const struct UsbRequest *request, uint8_t *response, uint16_t *length,
-    uint16_t maxLength)
+    const struct UsbSetupPacket *packet, const uint8_t *payload,
+    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    uint16_t maxResponseLength)
 {
   struct CdcAcmBase * const driver = object;
-  struct UsbSetupPacket * const packet = &driver->state.packet;
+  const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
 
-  if (request->status & REQUEST_SETUP)
-  {
-    driver->state.left = 0;
-    memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
-    packet->value = fromLittleEndian16(packet->value);
-    packet->index = fromLittleEndian16(packet->index);
-    packet->length = fromLittleEndian16(packet->length);
+  if (type != REQUEST_TYPE_CLASS)
+    return E_INVALID;
 
-    const uint8_t direction = REQUEST_DIRECTION_VALUE(packet->requestType);
-    const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
+  const enum result res = handleRequest(driver, packet, payload, payloadLength,
+      response, responseLength, maxResponseLength);
 
-    if (type != REQUEST_TYPE_CLASS)
-      return E_INVALID;
-
-    if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
-    {
-      return handleRequest(driver, packet, 0, 0, response, length, maxLength);
-    }
-    else if (packet->length <= CDC_CONTROL_BUFFER_SIZE)
-    {
-      driver->state.left = packet->length;
-      *length = 0;
-      return E_OK;
-    }
-    else
-    {
-      usbTrace("cdc_acm: control data overflow %u", packet->length);
-      return E_VALUE;
-    }
-  }
-  else
-  {
-    const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
-
-    if (type != REQUEST_TYPE_CLASS)
-      return E_INVALID;
-
-    if (driver->state.left)
-    {
-      if (request->length > driver->state.left)
-        return E_VALUE;
-
-      memcpy(driver->state.buffer + (packet->length - driver->state.left),
-          request->buffer, request->length);
-      driver->state.left -= request->length;
-
-      if (!driver->state.left)
-      {
-        return handleRequest(driver, packet, driver->state.buffer,
-            driver->state.packet.length, response, length, maxLength);
-      }
-    }
-    else
-    {
-      *length = 0;
-      return E_OK;
-    }
-  }
-
-  return E_ERROR;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static const struct UsbDescriptor **driverGetDescriptors(void *object)

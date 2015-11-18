@@ -8,8 +8,6 @@
 #define USB_CDC_ACM_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-#include <containers/byte_queue.h>
-#include <containers/queue.h>
 #include <usb/cdc_acm_defs.h>
 #include <usb/usb.h>
 #include <usb/usb_requests.h>
@@ -64,13 +62,6 @@ struct CdcAcmBase
     bool rts;
     bool updated;
   } line;
-
-  struct
-  {
-    struct UsbSetupPacket packet;
-    uint8_t *buffer;
-    uint16_t left;
-  } state;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* USB_CDC_ACM_BASE_H_ */

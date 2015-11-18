@@ -115,15 +115,6 @@ enum
 #define REQUEST_RECIPIENT_VALUE(reg) \
     FIELD_VALUE((reg), REQUEST_RECIPIENT_MASK, 0)
 /*----------------------------------------------------------------------------*/
-struct UsbSetupPacket
-{
-  uint8_t requestType;
-  uint8_t request;
-  uint16_t value;
-  uint16_t index;
-  uint16_t length;
-} __attribute__((packed));
-/*----------------------------------------------------------------------------*/
 #define DESCRIPTOR_INDEX(value) FIELD_VALUE((value), BIT_FIELD(MASK(8), 0), 0)
 #define DESCRIPTOR_TYPE(value)  FIELD_VALUE((value), BIT_FIELD(MASK(8), 8), 8)
 /* Prefix for string descriptors where length is zero and type is 3 */
@@ -211,6 +202,6 @@ struct UsbStringDescriptor
 struct UsbControl;
 /*----------------------------------------------------------------------------*/
 enum result usbHandleStandardRequest(struct UsbControl *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_REQUESTS_H_ */

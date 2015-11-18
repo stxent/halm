@@ -8,6 +8,7 @@
 #define USB_CDC_ACM_H_
 /*----------------------------------------------------------------------------*/
 #include <containers/byte_queue.h>
+#include <containers/queue.h>
 #include <interface.h>
 #include <usb/cdc_acm_base.h>
 /*----------------------------------------------------------------------------*/

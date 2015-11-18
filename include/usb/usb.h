@@ -21,6 +21,15 @@
 #define EP_ADDRESS(value)               (value)
 #define EP_LOGICAL_ADDRESS(value)       ((value) & 0x7F)
 /*----------------------------------------------------------------------------*/
+struct UsbSetupPacket
+{
+  uint8_t requestType;
+  uint8_t request;
+  uint16_t value;
+  uint16_t index;
+  uint16_t length;
+} __attribute__((packed));
+/*----------------------------------------------------------------------------*/
 enum usbDeviceStatus
 {
   DEVICE_STATUS_CONNECT = 0x01,
@@ -197,8 +206,8 @@ struct UsbDriverClass
 {
   CLASS_HEADER
 
-  enum result (*configure)(void *, const struct UsbRequest *, uint8_t *,
-      uint16_t *, uint16_t);
+  enum result (*configure)(void *, const struct UsbSetupPacket *,
+      const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
   const struct UsbDescriptor **(*getDescriptors)(void *);
   void (*updateStatus)(void *, uint8_t);
 };
@@ -211,21 +220,24 @@ struct UsbDriver
 /**
  * Process an USB Setup Packet with driver-specific handlers.
  * @param driver Pointer to an UsbDriver object.
- * @param request Request containing setup or data stage
- * of the control transfer.
+ * @param packet USB Setup Packet.
+ * @param payload Data stage of the setup packet.
+ * @param payloadLength Number of bytes in the payload buffer.
  * @param response Pointer to a response buffer with a size of at least
  * @b maxLength bytes.
- * @param length Number of bytes used in the response buffer.
+ * @param responseLength Number of bytes used in the response buffer.
  * Zero-length responses are allowed.
- * @param maxLength Maximum length of the response buffer in bytes.
+ * @param maxResponseLength Maximum length of the response buffer in bytes.
  * @return @b E_OK on success, @b E_VALUE when the buffer is too small.
  */
 static inline enum result usbDriverConfigure(void *driver,
-    const struct UsbRequest *request, uint8_t *response, uint16_t *length,
-    uint16_t maxLength)
+    const struct UsbSetupPacket *packet, const uint8_t *payload,
+    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    uint16_t maxResponseLength)
 {
   return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
-      request, response, length, maxLength);
+      packet, payload, payloadLength, response, responseLength,
+      maxResponseLength);
 }
 /*----------------------------------------------------------------------------*/
 /**

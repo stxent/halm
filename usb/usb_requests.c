@@ -15,13 +15,13 @@
 static const struct UsbDescriptor **findEntry(const struct UsbDescriptor **,
     uint8_t, uint8_t);
 static enum result getDescriptorData(const struct UsbDescriptor **,
-    uint16_t, uint16_t, uint8_t *, uint16_t *);
+    uint16_t, uint16_t, uint8_t *, uint16_t *, uint16_t);
 static enum result handleStandardDeviceRequest(struct UsbControl *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 static enum result handleStandardEndpointRequest(struct UsbControl *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 static enum result handleStandardInterfaceRequest(struct UsbControl *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 static enum result setDeviceConfig(struct UsbControl *, uint8_t, uint8_t);
 static enum result traverseConfigArray(struct UsbControl *,
     const struct UsbDescriptor **, uint8_t, uint8_t);
@@ -46,7 +46,8 @@ static const struct UsbDescriptor **findEntry(const struct UsbDescriptor **root,
 /*----------------------------------------------------------------------------*/
 /* TODO Add support for language identifier */
 static enum result getDescriptorData(const struct UsbDescriptor **root,
-    uint16_t keyword, uint16_t language, uint8_t *buffer, uint16_t *length)
+    uint16_t keyword, uint16_t language, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
   const uint8_t descriptorType = DESCRIPTOR_TYPE(keyword);
   const uint8_t descriptorIndex = DESCRIPTOR_INDEX(keyword);
@@ -56,19 +57,26 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
   if (!entry)
     return E_VALUE;
 
+  if ((*entry)->descriptorType == 0x22)
+  {
+    memcpy(response, (*entry)->data, (*entry)->length);
+    *responseLength = (*entry)->length;
+    return E_OK;
+  }
+
   if ((*entry)->descriptorType == DESCRIPTOR_TYPE_STRING && descriptorIndex)
   {
     const char * const data = (const char *)((*entry)->data);
     const unsigned int stringLength = uLengthToUtf16(data);
 
     /* Check descriptor length */
-    if (2 + (stringLength << 1) > *length)
+    if (2 + (stringLength << 1) > maxResponseLength)
       return E_VALUE;
 
-    uToUtf16((char16_t *)(buffer + 2), data, stringLength + 1);
-    buffer[0] = 2 + (stringLength << 1);
-    buffer[1] = DESCRIPTOR_TYPE_STRING;
-    *length = buffer[0];
+    uToUtf16((char16_t *)(response + 2), data, stringLength + 1);
+    response[0] = 2 + (stringLength << 1);
+    response[1] = DESCRIPTOR_TYPE_STRING;
+    *responseLength = response[0];
     return E_OK;
   }
 
@@ -86,18 +94,18 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
     chunkLength = (*entry)->length;
   }
 
-  if (chunkLength > *length)
+  if (chunkLength > maxResponseLength)
     return E_VALUE;
 
   if (chunkLength)
-    *length = chunkLength;
+    *responseLength = chunkLength;
 
   while (*entry && chunkLength)
   {
     const uint8_t entryLength = (*entry)->length;
 
-    memcpy(buffer, *entry, entryLength);
-    buffer += entryLength;
+    memcpy(response, *entry, entryLength);
+    response += entryLength;
     chunkLength -= entryLength;
 
     ++entry;
@@ -107,22 +115,23 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleStandardDeviceRequest(struct UsbControl *control,
-    const struct UsbSetupPacket *packet, uint8_t *buffer, uint16_t *length)
+    const struct UsbSetupPacket *packet, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
   switch (packet->request)
   {
     case REQUEST_GET_STATUS:
       /* Bit 0: self-powered */
       /* bit 1: remote wakeup */
-      buffer[0] = 0; //FIXME
-      buffer[1] = 0;
-      *length = 2;
+      response[0] = 0; //FIXME
+      response[1] = 0;
+      *responseLength = 2;
       break;
 
     case REQUEST_SET_ADDRESS:
       usbDevSetAddress(control->base, packet->value);
       usbTrace("requests: set address %d", packet->value);
-      *length = 0;
+      *responseLength = 0;
       break;
 
     case REQUEST_GET_DESCRIPTOR:
@@ -134,13 +143,13 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
           DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
           packet->length);
 
-      return getDescriptorData(root, packet->value, packet->index, buffer,
-          length);
+      return getDescriptorData(root, packet->value, packet->index, response,
+          responseLength, maxResponseLength);
     }
 
     case REQUEST_GET_CONFIGURATION:
-      buffer[0] = control->currentConfiguration;
-      *length = 1;
+      response[0] = control->currentConfiguration;
+      *responseLength = 1;
       break;
 
     case REQUEST_SET_CONFIGURATION:
@@ -156,7 +165,7 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
       else
       {
         usbTrace("requests: configuration %d set successfully", configuration);
-        *length = 0;
+        *responseLength = 0;
         break;
       }
     }
@@ -165,11 +174,11 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
     case REQUEST_SET_FEATURE:
       if (packet->value == FEATURE_REMOTE_WAKEUP)
       {
-        // put DEVICE_REMOTE_WAKEUP code here
+        // TODO Put DEVICE_REMOTE_WAKEUP code here
       }
       if (packet->value == FEATURE_TEST_MODE)
       {
-        // put TEST_MODE code here
+        // TODO Put TEST_MODE code here
       }
       return E_ERROR;
 
@@ -182,7 +191,9 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleStandardEndpointRequest(struct UsbControl *control,
-    const struct UsbSetupPacket *packet, uint8_t *buffer, uint16_t *length)
+    const struct UsbSetupPacket *packet, uint8_t *response,
+    uint16_t *responseLength,
+    uint16_t maxResponseLength __attribute__((unused)))
 {
   struct UsbEndpoint *endpoint = usbDevAllocate(control->base, packet->index);
 
@@ -190,9 +201,9 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
   {
     case REQUEST_GET_STATUS:
       /* Endpoint is halted or not */
-      buffer[0] = (uint8_t)usbEpIsStalled(endpoint);
-      buffer[1] = 0; /* Must be set to zero */
-      *length = 2;
+      response[0] = (uint8_t)usbEpIsStalled(endpoint);
+      response[1] = 0; /* Must be set to zero */
+      *responseLength = 2;
       return E_OK;
 
     case REQUEST_CLEAR_FEATURE:
@@ -200,7 +211,7 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
       {
         /* Clear halt by unstalling */
         usbEpSetStalled(endpoint, false);
-        *length = 0;
+        *responseLength = 0;
         usbTrace("requests: unstall endpoint %02X", packet->index);
         return E_OK;
       }
@@ -211,7 +222,7 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
       {
         /* Set halt by stalling */
         usbEpSetStalled(endpoint, true);
-        *length = 0;
+        *responseLength = 0;
         usbTrace("requests: stall endpoint %02X", packet->index);
         return E_OK;
       }
@@ -227,28 +238,42 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleStandardInterfaceRequest(struct UsbControl *control,
-    const struct UsbSetupPacket *packet, uint8_t *buffer, uint16_t *length)
+    const struct UsbSetupPacket *packet, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
   switch (packet->request)
   {
     case REQUEST_GET_STATUS:
       /* Two bytes are reserved for future use and must be set to zero */
-      buffer[0] = 0;
-      buffer[1] = 0;
-      *length = 2;
+      response[0] = 0;
+      response[1] = 0;
+      *responseLength = 2;
       break;
 
     case REQUEST_GET_INTERFACE: // TODO use bNumInterfaces
-      buffer[0] = 0;
-      *length = 1;
+      response[0] = 0;
+      *responseLength = 1;
       break;
 
     case REQUEST_SET_INTERFACE: // TODO use bNumInterfaces
       usbTrace("requests: set interface %d", packet->value);
       if (packet->value != 0)
         return E_ERROR; //FIXME
-      *length = 0;
+      *responseLength = 0;
       break;
+
+    case REQUEST_GET_DESCRIPTOR:
+    {
+      const struct UsbDescriptor ** const root =
+          usbDriverGetDescriptors(control->driver);
+
+      usbTrace("requests: get interface descriptor %d:%d, length %u",
+          DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
+          packet->length);
+
+      return getDescriptorData(root, packet->value, packet->index, response,
+          responseLength, maxResponseLength);
+    }
 
     default:
       usbTrace("requests: unsupported interface request %02X", packet->request);
@@ -334,18 +359,27 @@ static enum result traverseConfigArray(struct UsbControl *control,
 }
 /*----------------------------------------------------------------------------*/
 enum result usbHandleStandardRequest(struct UsbControl *control,
-    const struct UsbSetupPacket *packet, uint8_t *buffer, uint16_t *length)
+    const struct UsbSetupPacket *packet, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
+  const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
+
+  if (type != REQUEST_TYPE_STANDARD)
+    return E_INVALID;
+
   switch (REQUEST_RECIPIENT_VALUE(packet->requestType))
   {
     case REQUEST_RECIPIENT_DEVICE:
-      return handleStandardDeviceRequest(control, packet, buffer, length);
+      return handleStandardDeviceRequest(control, packet, response,
+          responseLength, maxResponseLength);
 
     case REQUEST_RECIPIENT_INTERFACE:
-      return handleStandardInterfaceRequest(control, packet, buffer, length);
+      return handleStandardInterfaceRequest(control, packet, response,
+          responseLength, maxResponseLength);
 
     case REQUEST_RECIPIENT_ENDPOINT:
-      return handleStandardEndpointRequest(control, packet, buffer, length);
+      return handleStandardEndpointRequest(control, packet, response,
+          responseLength, maxResponseLength);
 
     default:
       return E_INVALID;
