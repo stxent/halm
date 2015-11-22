@@ -57,13 +57,6 @@ static enum result getDescriptorData(const struct UsbDescriptor **root,
   if (!entry)
     return E_VALUE;
 
-  if ((*entry)->descriptorType == 0x22)
-  {
-    memcpy(response, (*entry)->data, (*entry)->length);
-    *responseLength = (*entry)->length;
-    return E_OK;
-  }
-
   if ((*entry)->descriptorType == DESCRIPTOR_TYPE_STRING && descriptorIndex)
   {
     const char * const data = (const char *)((*entry)->data);
@@ -261,19 +254,6 @@ static enum result handleStandardInterfaceRequest(struct UsbControl *control,
         return E_ERROR; //FIXME
       *responseLength = 0;
       break;
-
-    case REQUEST_GET_DESCRIPTOR:
-    {
-      const struct UsbDescriptor ** const root =
-          usbDriverGetDescriptors(control->driver);
-
-      usbTrace("requests: get interface descriptor %d:%d, length %u",
-          DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
-          packet->length);
-
-      return getDescriptorData(root, packet->value, packet->index, response,
-          responseLength, maxResponseLength);
-    }
 
     default:
       usbTrace("requests: unsupported interface request %02X", packet->request);

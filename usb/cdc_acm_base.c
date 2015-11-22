@@ -68,7 +68,8 @@ static const struct UsbConfigurationDescriptor configDescriptor = {
     .numInterfaces      = 2,
     .configurationValue = 1,
     .configuration      = 0, /* No configuration name */
-    .attributes         = 0xC0,
+    .attributes         = CONFIGURATION_DESCRIPTOR_DEFAULT
+        | CONFIGURATION_DESCRIPTOR_SELF_POWERED,
     .maxPower           = ((CONFIG_USB_DEVICE_CURRENT + 1) >> 1)
 };
 
@@ -130,7 +131,7 @@ static const struct UsbDescriptor * const stringDescriptors[] = {
     (const struct UsbDescriptor *)&(const struct UsbStringDescriptor){
         .length         = sizeof(struct UsbStringDescriptor),
         .descriptorType = DESCRIPTOR_TYPE_STRING,
-        .langid         = TO_LITTLE_ENDIAN_16(0x0409)
+        .langid         = TO_LITTLE_ENDIAN_16(LANGID_ENGLISH_UK)
     },
     (const struct UsbDescriptor *)
         (USB_STRING_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_VENDOR_NAME)),

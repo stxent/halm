@@ -120,6 +120,20 @@ enum
 /* Prefix for string descriptors where length is zero and type is 3 */
 #define USB_STRING_PREFIX       "\x00\x03"
 /*----------------------------------------------------------------------------*/
+#define CONFIGURATION_DESCRIPTOR_DEFAULT        0x80
+#define CONFIGURATION_DESCRIPTOR_SELF_POWERED   0x40
+#define CONFIGURATION_DESCRIPTOR_REMOTE_WAKEUP  0x20
+/*----------------------------------------------------------------------------*/
+enum
+{
+  LANGID_FRENCH     = 0x040C,
+  LANGID_GERMAN     = 0x0407,
+  LANGID_JAPANESE   = 0x0411,
+  LANGID_RUSSIAN    = 0x0419,
+  LANGID_CHINESE    = 0x0804,
+  LANGID_ENGLISH_UK = 0x0809
+};
+/*----------------------------------------------------------------------------*/
 struct UsbDescriptor
 {
   uint8_t length;

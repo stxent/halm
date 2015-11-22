@@ -48,7 +48,6 @@ static void controlOutHandler(struct UsbRequest *request,
     return;
   }
 
-  const uint8_t direction = REQUEST_DIRECTION_VALUE(packet->requestType);
   uint16_t length = 0;
   enum result res = E_BUSY;
 
@@ -59,6 +58,8 @@ static void controlOutHandler(struct UsbRequest *request,
     packet->value = fromLittleEndian16(packet->value);
     packet->index = fromLittleEndian16(packet->index);
     packet->length = fromLittleEndian16(packet->length);
+
+    const uint8_t direction = REQUEST_DIRECTION_VALUE(packet->requestType);
 
     if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
     {
@@ -76,7 +77,7 @@ static void controlOutHandler(struct UsbRequest *request,
       control->state.left = packet->length;
     }
   }
-  else if (control->state.left && request->length > control->state.left)
+  else if (control->state.left && request->length <= control->state.left)
   {
     /* Erroneous packets are ignored */
     memcpy(control->state.buffer + (packet->length - control->state.left),
@@ -96,8 +97,10 @@ static void controlOutHandler(struct UsbRequest *request,
     length = length < packet->length ? length : packet->length;
     sendResponse(control, control->state.buffer, length);
   }
-  else
+  else if (res != E_BUSY)
+  {
     usbEpSetStalled(control->ep0in, true);
+  }
 
   usbEpEnqueue(control->ep0out, request);
 }
