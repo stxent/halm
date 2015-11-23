@@ -251,19 +251,21 @@ static enum result handleRequest(struct CdcAcmBase *driver,
   switch (packet->request)
   {
     case CDC_SET_LINE_CODING:
+    {
       if (inputLength != sizeof(driver->line.coding))
         return E_VALUE;
 
       memcpy(&driver->line.coding, input, sizeof(driver->line.coding));
       event = true;
-      *outputLength = 0;
 
       usbTrace("cdc_acm: rate %u, format %u, parity %u, width %u",
           driver->line.coding.dteRate, driver->line.coding.charFormat,
           driver->line.coding.parityType, driver->line.coding.dataBits);
       break;
+    }
 
     case CDC_GET_LINE_CODING:
+    {
       if (maxOutputLength < sizeof(driver->line.coding))
         return E_VALUE;
 
@@ -272,6 +274,7 @@ static enum result handleRequest(struct CdcAcmBase *driver,
 
       usbTrace("cdc_acm: line coding requested");
       break;
+    }
 
     case CDC_SET_CONTROL_LINE_STATE:
     {
@@ -281,7 +284,6 @@ static enum result handleRequest(struct CdcAcmBase *driver,
       driver->line.dtr = dtrState;
       driver->line.rts = rtsState;
       event = true;
-      *outputLength = 0;
 
       usbTrace("cdc_acm: set control lines to %02X", packet->value);
       break;
