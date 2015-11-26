@@ -362,6 +362,10 @@ config USB_CDC
 	bool "CDC driver"
 	depends on USB
 
+config USB_HID
+	bool "HID driver"
+	depends on USB
+
 config USB_TRACE
 	bool "USB trace"
 	depends on USB

@@ -18,6 +18,11 @@ ifeq ($(CONFIG_USB_CDC),y)
   CSOURCES += usb/cdc_acm_base.c
 endif
 
+ifeq ($(CONFIG_USB_HID),y)
+  CSOURCES += usb/hid.c
+  CSOURCES += usb/hid_base.c
+endif
+
 ifeq ($(CONFIG_USB_TRACE),y)
   CSOURCES += usb/usb_trace.c
 endif
