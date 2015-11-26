@@ -120,9 +120,26 @@ enum
 /* Prefix for string descriptors where length is zero and type is 3 */
 #define USB_STRING_PREFIX       "\x00\x03"
 /*----------------------------------------------------------------------------*/
+/* Configuration attributes */
 #define CONFIGURATION_DESCRIPTOR_DEFAULT        0x80
 #define CONFIGURATION_DESCRIPTOR_SELF_POWERED   0x40
 #define CONFIGURATION_DESCRIPTOR_REMOTE_WAKEUP  0x20
+
+/* Common endpoint attributes */
+#define ENDPOINT_DESCRIPTOR_CONTROL             BIT_FIELD(0, 0)
+#define ENDPOINT_DESCRIPTOR_ISOCHRONOUS         BIT_FIELD(1, 0)
+#define ENDPOINT_DESCRIPTOR_BULK                BIT_FIELD(2, 0)
+#define ENDPOINT_DESCRIPTOR_INTERRUPT           BIT_FIELD(3, 0)
+
+/* Attributes of isochronous endpoints */
+#define ENDPOINT_DESCRIPTOR_NO_SYNC             BIT_FIELD(0, 2)
+#define ENDPOINT_DESCRIPTOR_ASYNC               BIT_FIELD(1, 2)
+#define ENDPOINT_DESCRIPTOR_ADAPTIVE            BIT_FIELD(2, 2)
+#define ENDPOINT_DESCRIPTOR_SYNC                BIT_FIELD(3, 2)
+
+#define ENDPOINT_DESCRIPTOR_DATA                BIT_FIELD(0, 4)
+#define ENDPOINT_DESCRIPTOR_FEEDBACK            BIT_FIELD(1, 4)
+#define ENDPOINT_DESCRIPTOR_EXPLICIT_FEEDBACK   BIT_FIELD(2, 4)
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -133,6 +150,15 @@ enum
   LANGID_CHINESE    = 0x0804,
   LANGID_ENGLISH_UK = 0x0809
 };
+/*----------------------------------------------------------------------------*/
+struct UsbSetupPacket
+{
+  uint8_t requestType;
+  uint8_t request;
+  uint16_t value;
+  uint16_t index;
+  uint16_t length;
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct UsbDescriptor
 {

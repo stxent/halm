@@ -21,15 +21,6 @@
 #define EP_ADDRESS(value)               (value)
 #define EP_LOGICAL_ADDRESS(value)       ((value) & 0x7F)
 /*----------------------------------------------------------------------------*/
-struct UsbSetupPacket
-{
-  uint8_t requestType;
-  uint8_t request;
-  uint16_t value;
-  uint16_t index;
-  uint16_t length;
-} __attribute__((packed));
-/*----------------------------------------------------------------------------*/
 enum usbDeviceStatus
 {
   DEVICE_STATUS_CONNECT = 0x01,
@@ -200,6 +191,8 @@ static inline void usbEpSetStalled(void *ep, bool stalled)
 {
   ((const struct UsbEndpointClass *)CLASS(ep))->setStalled(ep, stalled);
 }
+/*----------------------------------------------------------------------------*/
+struct UsbSetupPacket;
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbDriverClass

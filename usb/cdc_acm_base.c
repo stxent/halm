@@ -168,7 +168,7 @@ static void buildDescriptors(struct CdcAcmBase *driver,
   driver->endpointDescriptors[0].length = sizeof(struct UsbEndpointDescriptor);
   driver->endpointDescriptors[0].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
   driver->endpointDescriptors[0].endpointAddress = config->endpoint.interrupt;
-  driver->endpointDescriptors[0].attributes = 0x03;
+  driver->endpointDescriptors[0].attributes = ENDPOINT_DESCRIPTOR_INTERRUPT;
   driver->endpointDescriptors[0].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_NOTIFICATION_EP_SIZE);
   driver->endpointDescriptors[0].interval = 8;
@@ -184,7 +184,7 @@ static void buildDescriptors(struct CdcAcmBase *driver,
   driver->endpointDescriptors[1].length = sizeof(struct UsbEndpointDescriptor);
   driver->endpointDescriptors[1].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
   driver->endpointDescriptors[1].endpointAddress = config->endpoint.tx;
-  driver->endpointDescriptors[1].attributes = 0x02;
+  driver->endpointDescriptors[1].attributes = ENDPOINT_DESCRIPTOR_BULK;
   driver->endpointDescriptors[1].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
   driver->endpointDescriptors[1].interval = 0;
@@ -193,7 +193,7 @@ static void buildDescriptors(struct CdcAcmBase *driver,
   driver->endpointDescriptors[2].length = sizeof(struct UsbEndpointDescriptor);
   driver->endpointDescriptors[2].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
   driver->endpointDescriptors[2].endpointAddress = config->endpoint.rx;
-  driver->endpointDescriptors[2].attributes = 0x02;
+  driver->endpointDescriptors[2].attributes = ENDPOINT_DESCRIPTOR_BULK;
   driver->endpointDescriptors[2].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
   driver->endpointDescriptors[2].interval = 0;
@@ -309,6 +309,9 @@ static enum result driverInit(void *object, const void *configBase)
   const struct CdcAcmBaseConfig * const config = configBase;
   struct CdcAcmBase * const driver = object;
   enum result res;
+
+  if (!config->device)
+    return E_VALUE;
 
   driver->callback = config->callback;
   driver->callbackArgument = config->argument;

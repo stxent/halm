@@ -62,7 +62,7 @@ struct CdcAcm
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Low-level USB driver */
+  /* Lower half of the driver */
   struct CdcAcmBase *driver;
   /* Input and output queues */
   struct ByteQueue rxQueue, txQueue;
