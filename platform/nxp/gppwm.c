@@ -321,22 +321,19 @@ static void doubleEdgeDeinit(void *object)
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct GpPwmDoubleEdge * const pwm = object;
+  const uint32_t resolution = pwm->unit->resolution;
   LPC_PWM_Type * const reg = pwm->unit->parent.reg;
-  uint32_t center, leading, resolution, trailing;
 
-  leading = *pwm->leading;
-  trailing = *pwm->trailing;
-  resolution = pwm->unit->resolution;
+  uint32_t center;
+  uint32_t leading = *pwm->leading;
+  uint32_t trailing = *pwm->trailing;
 
   if (leading > trailing)
   {
-    uint32_t half = resolution / 2;
+    const uint32_t half = resolution / 2;
 
     center = trailing + (leading - trailing) / 2;
-    if (center < half)
-      center += half;
-    else
-      center -= half;
+    center = center < half ? center + half : center - half;
   }
   else
   {
@@ -354,10 +351,11 @@ static void doubleEdgeSetDuration(void *object, uint32_t duration)
   {
     duration = duration / 2;
 
-    leading = center >= duration ? center - duration
-        : center - duration + resolution;
-    trailing = center <= duration ? center + duration
-        : center + duration - resolution;
+    const uint32_t negOffset = center - duration;
+    const uint32_t posOffset = center + duration;
+
+    leading = center >= duration ? negOffset : negOffset + resolution;
+    trailing = posOffset < resolution ? posOffset : posOffset - resolution;
   }
 
   *pwm->leading = leading;
@@ -370,12 +368,13 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
     uint32_t trailing)
 {
   struct GpPwmDoubleEdge * const pwm = object;
+  const uint32_t resolution = pwm->unit->resolution;
   LPC_PWM_Type * const reg = pwm->unit->parent.reg;
 
-  assert(leading < pwm->unit->resolution);
+  assert(leading < resolution);
 
-  if (trailing >= pwm->unit->resolution)
-    trailing = pwm->unit->resolution + 1;
+  if (trailing >= resolution)
+    trailing = resolution + 1;
 
   *pwm->leading = leading;
   *pwm->trailing = trailing;
@@ -386,7 +385,7 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
 /**
  * Create single edge PWM channel.
  * @param unit Pointer to a GpPwmUnit object.
- * @param pin Pin used as output for pulse width modulated signal.
+ * @param pin Pin used as an output for pulse width modulated signal.
  * @param duration Initial duration in timer ticks.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
@@ -404,8 +403,9 @@ void *gpPwmCreate(void *unit, pin_t pin, uint32_t duration)
 /**
  * Create double edge PWM channel.
  * @param unit Pointer to a GpPwmUnit object.
- * @param pin Pin used as output for pulse width modulated signal.
- * @param duration Initial duration in timer ticks.
+ * @param pin Pin used as an output for pulse width modulated signal.
+ * @param leading Time of the leading edge in timer ticks.
+ * @param trailing Time of the trailing edge in timer ticks.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
 void *gpPwmCreateDoubleEdge(void *unit, pin_t pin, uint32_t leading,
