@@ -23,9 +23,6 @@ struct CdcAcmBaseConfig
   /** Optional: callback function argument. */
   void *argument;
 
-  /** Optional: serial number string. */
-  const char *serial;
-
   struct
   {
     /** Mandatory: identifier of the notification endpoint. */
@@ -35,9 +32,6 @@ struct CdcAcmBaseConfig
     /** Mandatory: identifier of the output data endpoint. */
     uint8_t tx;
   } endpoint;
-
-  /** Optional: enable composite device mode. */
-  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcmBase
@@ -51,7 +45,6 @@ struct CdcAcmBase
 
   const struct UsbDescriptor **descriptorArray;
   struct UsbEndpointDescriptor *endpointDescriptors;
-  struct UsbDescriptor *stringDescriptor;
 
   bool suspended;
 

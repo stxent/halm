@@ -26,17 +26,11 @@ struct HidBaseConfig
   /** Mandatory: size of the report descriptor. */
   uint16_t reportSize;
 
-  /** Optional: serial number string. */
-  const char *serial;
-
   struct
   {
     /** Mandatory: identifier of the notification endpoint. */
     uint8_t interrupt;
   } endpoint;
-
-  /** Optional: enable composite device mode. */
-  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct HidBase
@@ -49,7 +43,6 @@ struct HidBase
   const struct UsbDescriptor **descriptorArray;
   struct HidDescriptor *hidDescriptor;
   struct UsbEndpointDescriptor *endpointDescriptor;
-//  struct UsbDescriptor *stringDescriptor;
 
   const void *reportDescriptor;
   uint16_t reportDescriptorSize;

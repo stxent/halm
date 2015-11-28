@@ -114,8 +114,6 @@ static enum result interfaceInit(void *object, const void *configBase)
       .device = config->device,
       .callback = eventHandler,
       .argument = object,
-      .serial = config->serial,
-      .composite = config->composite,
       .endpoint = {
           .interrupt = config->endpoint.interrupt,
           .rx = config->endpoint.rx,

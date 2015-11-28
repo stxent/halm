@@ -11,9 +11,9 @@
 #include <usb/cdc_acm_base.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-static void buildDescriptors(struct CdcAcmBase *,
+static enum result buildDescriptors(struct CdcAcmBase *,
     const struct CdcAcmBaseConfig *);
-static void freeDescriptors(struct CdcAcmBase *);
+static inline void freeDescriptors(struct CdcAcmBase *);
 static enum result handleRequest(struct CdcAcmBase *,
     const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
     uint16_t *, uint16_t);
@@ -48,9 +48,9 @@ static const struct UsbDeviceDescriptor deviceDescriptor = {
     .idVendor           = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID),
     .idProduct          = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID),
     .device             = TO_LITTLE_ENDIAN_16(0x0100),
-    .manufacturer       = 1,
-    .product            = 2,
-    .serialNumber       = 3,
+    .manufacturer       = 0,
+    .product            = 0,
+    .serialNumber       = 0,
     .numConfigurations  = 1
 };
 
@@ -126,32 +126,27 @@ static const struct UsbDescriptor * const dataDescriptors[] = {
         .interface          = 0 /* No interface name */
     }
 };
-
-static const struct UsbDescriptor * const stringDescriptors[] = {
-    (const struct UsbDescriptor *)&(const struct UsbStringDescriptor){
-        .length         = sizeof(struct UsbStringDescriptor),
-        .descriptorType = DESCRIPTOR_TYPE_STRING,
-        .langid         = TO_LITTLE_ENDIAN_16(LANGID_ENGLISH_UK)
-    },
-    (const struct UsbDescriptor *)
-        (USB_STRING_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_VENDOR_NAME)),
-    (const struct UsbDescriptor *)
-        (USB_STRING_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_PRODUCT_NAME)),
-    (const struct UsbDescriptor *)
-        (USB_STRING_PREFIX "Sample")
-};
 /*----------------------------------------------------------------------------*/
-static void buildDescriptors(struct CdcAcmBase *driver,
+static enum result buildDescriptors(struct CdcAcmBase *driver,
     const struct CdcAcmBaseConfig *config)
 {
   /*
-   * 16 pointers to descriptors: device descriptor, configuration descriptor,
-   * 9 interface descriptors, main string descriptor, 3 string descriptors
-   * and one end marker.
+   * 12 pointers to descriptors:
+   *   1 device descriptor,
+   *   1 configuration descriptor,
+   *   2 interface descriptors,
+   *   3 endpoint descriptors,
+   *   4 class specific descriptors,
+   *   1 end marker.
    */
-  driver->descriptorArray = malloc(16 * sizeof(struct UsbDescriptor *));
+  driver->descriptorArray = malloc(12 * sizeof(struct UsbDescriptor *));
+  if (!driver->descriptorArray)
+    return E_MEMORY;
+
   driver->endpointDescriptors =
       malloc(3 * sizeof(struct UsbEndpointDescriptor));
+  if (!driver->endpointDescriptors)
+    return E_MEMORY;
 
   uint8_t index = 0;
 
@@ -203,40 +198,14 @@ static void buildDescriptors(struct CdcAcmBase *driver,
   driver->descriptorArray[index++] =
       (struct UsbDescriptor *)&driver->endpointDescriptors[2];
 
-  /* Copy string descriptors */
-  for (uint8_t i = 0; i < ARRAY_SIZE(stringDescriptors); ++i)
-    driver->descriptorArray[index + i] = stringDescriptors[i];
-
-  if (config->serial)
-  {
-    const unsigned int serialLength = strlen(config->serial) + 1;
-
-    assert(serialLength < 127);
-
-    /* 2 bytes for default header and 1 byte for terminating character */
-    driver->stringDescriptor = malloc(2 + serialLength);
-    driver->stringDescriptor->length = 0;
-    driver->stringDescriptor->descriptorType = DESCRIPTOR_TYPE_STRING;
-    memcpy(driver->stringDescriptor->data, config->serial, serialLength);
-
-    driver->descriptorArray[index + deviceDescriptor.serialNumber] =
-        driver->stringDescriptor;
-  }
-  else
-  {
-    driver->stringDescriptor = 0;
-  }
-
-  index += ARRAY_SIZE(stringDescriptors);
-
   /* Add end of the array mark */
   driver->descriptorArray[index] = 0;
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void freeDescriptors(struct CdcAcmBase *driver)
+static inline void freeDescriptors(struct CdcAcmBase *driver)
 {
-  if (driver->stringDescriptor)
-    free(driver->stringDescriptor);
   free(driver->endpointDescriptors);
   free(driver->descriptorArray);
 }

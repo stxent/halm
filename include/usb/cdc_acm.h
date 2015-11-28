@@ -38,9 +38,6 @@ struct CdcAcmConfig
   /** Optional: output queue size. */
   uint32_t txLength;
 
-  /** Optional: serial number string. */
-  const char *serial;
-
   struct
   {
     /** Mandatory: identifier of the notification endpoint. */
@@ -50,9 +47,6 @@ struct CdcAcmConfig
     /** Mandatory: identifier of the output data endpoint. */
     uint8_t tx;
   } endpoint;
-
-  /** Optional: enable composite device mode. */
-  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcm

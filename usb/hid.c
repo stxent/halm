@@ -30,9 +30,7 @@ static enum result deviceInit(void *object, const void *configBase)
       .device = config->device,
       .report = config->report,
       .reportSize = config->reportSize,
-      .serial = config->serial,
-      .endpoint.interrupt = config->endpoint.interrupt,
-      .composite = config->composite
+      .endpoint.interrupt = config->endpoint.interrupt
   };
 
   device->driver = init(HidBase, &parentConfig);

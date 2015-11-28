@@ -17,6 +17,7 @@
 /*----------------------------------------------------------------------------*/
 static enum result buildDescriptors(struct HidBase *,
     const struct HidBaseConfig *);
+static inline void freeDescriptors(struct HidBase *);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
@@ -48,9 +49,9 @@ static const struct UsbDeviceDescriptor deviceDescriptor = {
     .idVendor           = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID),
     .idProduct          = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID),
     .device             = TO_LITTLE_ENDIAN_16(0x0100),
-    .manufacturer       = 1,
-    .product            = 2,
-    .serialNumber       = 3,
+    .manufacturer       = 0,
+    .product            = 0,
+    .serialNumber       = 0,
     .numConfigurations  = 1
 };
 
@@ -81,30 +82,18 @@ static const struct UsbInterfaceDescriptor interfaceDescriptor = {
     .interfaceProtocol  = 0, //TODO
     .interface          = 0 /* No interface name */
 };
-
-static const struct UsbDescriptor * const stringDescriptors[] = {
-    (const struct UsbDescriptor *)&(const struct UsbStringDescriptor){
-        .length         = sizeof(struct UsbStringDescriptor),
-        .descriptorType = DESCRIPTOR_TYPE_STRING,
-        .langid         = TO_LITTLE_ENDIAN_16(LANGID_ENGLISH_UK)
-    },
-    (const struct UsbDescriptor *)
-        (USB_STRING_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_VENDOR_NAME)),
-    (const struct UsbDescriptor *)
-        (USB_STRING_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_PRODUCT_NAME)),
-    (const struct UsbDescriptor *)
-        (USB_STRING_PREFIX "Sample")
-};
 /*----------------------------------------------------------------------------*/
 static enum result buildDescriptors(struct HidBase *driver,
     const struct HidBaseConfig *config)
 {
   /*
-   * 10 pointers to descriptors: device descriptor, configuration descriptor,
-   * 3 interface descriptor, main string descriptor, 3 string descriptors
-   * and one end marker.
+   * 6 pointers to descriptors:
+   *   1 device descriptor,
+   *   1 configuration descriptor,
+   *   3 interface descriptor,
+   *   1 end marker.
    */
-  driver->descriptorArray = malloc(10 * sizeof(struct UsbDescriptor *));
+  driver->descriptorArray = malloc(6 * sizeof(struct UsbDescriptor *));
   if (!driver->descriptorArray)
     return E_MEMORY;
 
@@ -121,7 +110,14 @@ static enum result buildDescriptors(struct HidBase *driver,
   driver->hidDescriptor = malloc(HID_DESCRIPTOR_BASE_SIZE
       + HID_DESCRIPTOR_ENTRY_SIZE);
   if (!driver->hidDescriptor)
+  {
+    /*
+     * Previous allocations aren't freed because allocation failure means
+     * that something went completely wrong and system
+     * will not function correctly in either way.
+     */
     return E_MEMORY;
+  }
 
   driver->hidDescriptor->length = HID_DESCRIPTOR_BASE_SIZE
       + HID_DESCRIPTOR_ENTRY_SIZE;
@@ -148,15 +144,17 @@ static enum result buildDescriptors(struct HidBase *driver,
   driver->descriptorArray[index++] =
       (const struct UsbDescriptor *)driver->endpointDescriptor;
 
-  /* Copy string descriptors */
-  for (uint8_t i = 0; i < ARRAY_SIZE(stringDescriptors); ++i)
-    driver->descriptorArray[index + i] = stringDescriptors[i];
-  index += ARRAY_SIZE(stringDescriptors);
-
   /* Add end of the array mark */
   driver->descriptorArray[index] = 0;
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static inline void freeDescriptors(struct HidBase *driver)
+{
+  free(driver->endpointDescriptor);
+  free(driver->hidDescriptor);
+  free(driver->descriptorArray);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *object, const void *configBase)
@@ -193,6 +191,7 @@ static void driverDeinit(void *object)
 
   usbDevSetConnected(driver->device, false);
   usbDevBind(driver->device, 0); /* Unbind driver */
+  freeDescriptors(driver);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
