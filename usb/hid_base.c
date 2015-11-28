@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <memory.h>
 #include <usb/hid.h>
@@ -13,6 +14,9 @@
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 #define HID_CONTROL_EP_SIZE 64
+/*----------------------------------------------------------------------------*/
+static enum result buildDescriptors(struct HidBase *,
+    const struct HidBaseConfig *);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
@@ -78,65 +82,7 @@ static const struct UsbInterfaceDescriptor interfaceDescriptor = {
     .interface          = 0 /* No interface name */
 };
 
-const uint8_t HID_ReportDescriptor[] = {
-  REPORT_USAGE_PAGE_VENDOR(0x00),
-  REPORT_USAGE(0x01),
-  REPORT_COLLECTION(HID_APPLICATION),
-    REPORT_USAGE_PAGE(HID_USAGE_PAGE_BUTTON),
-    REPORT_USAGE_MIN(1),
-    REPORT_USAGE_MAX(3),
-    REPORT_LOGICAL_MIN(0),
-    REPORT_LOGICAL_MAX(1),
-    REPORT_REPORT_COUNT(3),
-    REPORT_REPORT_SIZE(1),
-    REPORT_INPUT(HID_DATA | HID_VARIABLE | HID_ABSOLUTE),
-    REPORT_REPORT_COUNT(1),
-    REPORT_REPORT_SIZE(5),
-    REPORT_INPUT(HID_CONSTANT),
-    REPORT_USAGE_PAGE(HID_USAGE_PAGE_LED),
-    REPORT_USAGE(HID_USAGE_LED_GENERIC_INDICATOR),
-    REPORT_LOGICAL_MIN(0),
-    REPORT_LOGICAL_MAX(1),
-    REPORT_REPORT_COUNT(8),
-    REPORT_REPORT_SIZE(1),
-    REPORT_OUTPUT(HID_DATA | HID_VARIABLE | HID_ABSOLUTE),
-  REPORT_END_COLLECTION
-};
-
-static const struct HidDescriptor hidDescriptor = {
-    .length                     = sizeof(struct HidDescriptor),
-    .descriptorType             = DESCRIPTOR_TYPE_HID,
-    .hid                        = TO_LITTLE_ENDIAN_16(0x0100),
-    .countryCode                = 0,
-    .numDescriptors             = 1,
-    .xtype    = DESCRIPTOR_TYPE_HID_REPORT,
-    .xlength  = sizeof(HID_ReportDescriptor)
-//    .optionalDescriptor = {
-//        .type    = DESCRIPTOR_TYPE_HID_REPORT,
-//        .length  = sizeof(HID_ReportDescriptor)
-//    }
-};
-
-static const struct UsbEndpointDescriptor intDescriptor = {
-    .length             = sizeof(struct UsbEndpointDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_ENDPOINT,
-    .endpointAddress    = 0x81,
-    .attributes         = ENDPOINT_DESCRIPTOR_INTERRUPT,
-    .maxPacketSize      = TO_LITTLE_ENDIAN_16(4),
-    .interval           = 0x20
-};
-
-//static const struct UsbDescriptor * const stringDescriptors[] = {
-//
-//
-//};
-/*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor *descriptorArray[] = {
-    (void *)&deviceDescriptor,
-    (void *)&configDescriptor,
-    (void *)&interfaceDescriptor,
-    (void *)&hidDescriptor,
-    (void *)&intDescriptor,
+static const struct UsbDescriptor * const stringDescriptors[] = {
     (const struct UsbDescriptor *)&(const struct UsbStringDescriptor){
         .length         = sizeof(struct UsbStringDescriptor),
         .descriptorType = DESCRIPTOR_TYPE_STRING,
@@ -147,9 +93,71 @@ static const struct UsbDescriptor *descriptorArray[] = {
     (const struct UsbDescriptor *)
         (USB_STRING_PREFIX EXPAND_TO_STRING(CONFIG_USB_DEVICE_PRODUCT_NAME)),
     (const struct UsbDescriptor *)
-        (USB_STRING_PREFIX "Sample"),
-    0
+        (USB_STRING_PREFIX "Sample")
 };
+/*----------------------------------------------------------------------------*/
+static enum result buildDescriptors(struct HidBase *driver,
+    const struct HidBaseConfig *config)
+{
+  /*
+   * 10 pointers to descriptors: device descriptor, configuration descriptor,
+   * 3 interface descriptor, main string descriptor, 3 string descriptors
+   * and one end marker.
+   */
+  driver->descriptorArray = malloc(10 * sizeof(struct UsbDescriptor *));
+  if (!driver->descriptorArray)
+    return E_MEMORY;
+
+  uint8_t index = 0;
+
+  driver->descriptorArray[index++] =
+      (const struct UsbDescriptor *)&deviceDescriptor;
+  driver->descriptorArray[index++] =
+      (const struct UsbDescriptor *)&configDescriptor;
+  driver->descriptorArray[index++] =
+      (const struct UsbDescriptor *)&interfaceDescriptor;
+
+  /* HID descriptor */
+  driver->hidDescriptor = malloc(HID_DESCRIPTOR_BASE_SIZE
+      + HID_DESCRIPTOR_ENTRY_SIZE);
+  if (!driver->hidDescriptor)
+    return E_MEMORY;
+
+  driver->hidDescriptor->length = HID_DESCRIPTOR_BASE_SIZE
+      + HID_DESCRIPTOR_ENTRY_SIZE;
+  driver->hidDescriptor->descriptorType = DESCRIPTOR_TYPE_HID;
+  driver->hidDescriptor->hid = TO_LITTLE_ENDIAN_16(0x0100);
+  driver->hidDescriptor->countryCode = 0;
+  driver->hidDescriptor->numDescriptors = 1;
+  driver->hidDescriptor->classDescriptors[0].type = DESCRIPTOR_TYPE_HID_REPORT;
+  driver->hidDescriptor->classDescriptors[0].length = config->reportSize;
+  driver->descriptorArray[index++] =
+      (const struct UsbDescriptor *)driver->hidDescriptor;
+
+  /* Interrupt endpoint */
+  driver->endpointDescriptor = malloc(sizeof(struct UsbEndpointDescriptor));
+  if (!driver->endpointDescriptor)
+    return E_MEMORY;
+
+  driver->endpointDescriptor->length = sizeof(struct UsbEndpointDescriptor);
+  driver->endpointDescriptor->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+  driver->endpointDescriptor->endpointAddress = config->endpoint.interrupt;
+  driver->endpointDescriptor->attributes = ENDPOINT_DESCRIPTOR_INTERRUPT;
+  driver->endpointDescriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(4); //TODO
+  driver->endpointDescriptor->interval = 0x20; //TODO
+  driver->descriptorArray[index++] =
+      (const struct UsbDescriptor *)driver->endpointDescriptor;
+
+  /* Copy string descriptors */
+  for (uint8_t i = 0; i < ARRAY_SIZE(stringDescriptors); ++i)
+    driver->descriptorArray[index + i] = stringDescriptors[i];
+  index += ARRAY_SIZE(stringDescriptors);
+
+  /* Add end of the array mark */
+  driver->descriptorArray[index] = 0;
+
+  return E_OK;
+}
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *object, const void *configBase)
 {
@@ -162,12 +170,14 @@ static enum result driverInit(void *object, const void *configBase)
 
   driver->owner = config->owner;
   driver->device = config->device;
-  driver->descriptorArray = descriptorArray;
   driver->reportDescriptor = config->report;
   driver->reportDescriptorSize = config->reportSize;
 
   driver->idleTime = 0;
   driver->protocol = 0;
+
+  if ((res = buildDescriptors(driver, config)) != E_OK)
+    return res;
 
   if ((res = usbDevBind(driver->device, driver)) != E_OK)
     return res;

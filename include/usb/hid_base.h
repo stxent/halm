@@ -13,6 +13,7 @@
 extern const struct UsbDriverClass * const HidBase;
 /*----------------------------------------------------------------------------*/
 struct Hid;
+struct HidDescriptor;
 /*----------------------------------------------------------------------------*/
 struct HidBaseConfig
 {
@@ -46,10 +47,12 @@ struct HidBase
   struct UsbDevice *device;
 
   const struct UsbDescriptor **descriptorArray;
+  struct HidDescriptor *hidDescriptor;
+  struct UsbEndpointDescriptor *endpointDescriptor;
+//  struct UsbDescriptor *stringDescriptor;
+
   const void *reportDescriptor;
   uint16_t reportDescriptorSize;
-//  struct UsbEndpointDescriptor *endpointDescriptors;
-//  struct UsbDescriptor *stringDescriptor;
 
   uint8_t idleTime;
   uint8_t protocol; //FIXME Only for boot devices

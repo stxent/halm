@@ -211,6 +211,9 @@ enum
   HID_USAGE_MODIFIER  = 0x06
 };
 /*----------------------------------------------------------------------------*/
+#define HID_DESCRIPTOR_BASE_SIZE  6
+#define HID_DESCRIPTOR_ENTRY_SIZE 3
+
 struct HidDescriptor
 {
   uint8_t length;
@@ -218,11 +221,11 @@ struct HidDescriptor
   uint16_t hid;
   uint8_t countryCode;
   uint8_t numDescriptors;
-//  struct
-//  {
-    uint8_t xtype;
-    uint16_t xlength;
-//  } optionalDescriptor __attribute__((packed));
+  struct
+  {
+    uint8_t type;
+    uint16_t length;
+  } classDescriptors[] __attribute__((packed));
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* USB_HID_DEFS_H_ */
