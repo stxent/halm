@@ -24,9 +24,16 @@ static const struct EntityClass devTable = {
     .deinit = devDeinit
 };
 /*----------------------------------------------------------------------------*/
-// TODO Other USB pins
 const struct PinEntry usbPins[] = {
     {
+        .key = PIN(PORT_USB, PIN_USB_DP), /* Mock USB_D+ pin descriptor */
+        .channel = 0,
+        .value = 0
+    }, {
+        .key = PIN(PORT_USB, PIN_USB_DM), /* Mock USB_D- pin descriptor */
+        .channel = 0,
+        .value = 0
+    }, {
         .key = PIN(0, 3), /* USB_VBUS */
         .channel = 0,
         .value = 1

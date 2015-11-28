@@ -121,19 +121,25 @@ struct Pin pinInit(pin_t id)
   struct Pin pin;
 
   pin.data.key = ~id;
-  pin.reg = calcPort(pin.data);
+  pin.reg = pin.data.port != PORT_USB ? calcPort(pin.data) : 0;
 
   return pin;
 }
 /*----------------------------------------------------------------------------*/
 void pinInput(struct Pin pin)
 {
+  if (!pin.reg)
+    return;
+
   commonPinInit(pin);
   ((LPC_GPIO_Type *)pin.reg)->DIR &= ~(1 << pin.data.offset);
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, uint8_t value)
 {
+  if (!pin.reg)
+    return;
+
   commonPinInit(pin);
   ((LPC_GPIO_Type *)pin.reg)->DIR |= 1 << pin.data.offset;
   pinWrite(pin, value);
@@ -141,6 +147,9 @@ void pinOutput(struct Pin pin, uint8_t value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
+  if (!pin.reg)
+    return;
+
   volatile uint32_t * const reg = calcControlReg(pin.data);
   const uint32_t value = *reg;
 
@@ -168,7 +177,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum pinPull pull)
 {
-  if (!isCommonPin(pin))
+  if (!pin.reg || !isCommonPin(pin))
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.data);
@@ -195,7 +204,7 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
 void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
 {
   /* Slew rate control is available only for I2C pins */
-  if (isCommonPin(pin))
+  if (!pin.reg || isCommonPin(pin))
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.data);
@@ -206,7 +215,7 @@ void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum pinType type)
 {
-  if (!isCommonPin(pin))
+  if (!pin.reg || !isCommonPin(pin))
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.data);
