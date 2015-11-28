@@ -391,14 +391,6 @@ config USB_DEVICE_VENDOR_ID
 	int "Vendor ID"
 	default 0
 
-config USB_DEVICE_PRODUCT_NAME
-	string "Product name"
-	default "USB Device"
-
-config USB_DEVICE_VENDOR_NAME
-	string "Vendor name"
-	default "HALM Library"
-
 endmenu
 
 endmenu

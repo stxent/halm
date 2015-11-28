@@ -48,7 +48,6 @@ struct HidBase
   uint16_t reportDescriptorSize;
 
   uint8_t idleTime;
-  uint8_t protocol; //FIXME Only for boot devices
 };
 /*----------------------------------------------------------------------------*/
 #endif /* USB_HID_BASE_H_ */

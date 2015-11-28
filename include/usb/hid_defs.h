@@ -30,11 +30,24 @@ enum
 
 enum
 {
+  HID_SUBCLASS_NONE = 0,
+  HID_SUBCLASS_BOOT = 1
+};
+
+enum
+{
+  HID_PROTOCOL_NONE     = 0,
+  HID_PROTOCOL_KEYBOARD = 1,
+  HID_PROTOCOL_MOUSE    = 2
+};
+
+enum
+{
   HID_REPORT_INPUT    = 0x01,
   HID_REPORT_OUTPUT   = 0x02,
   HID_REPORT_FEATURE  = 0x03
 };
-
+/*----------------------------------------------------------------------------*/
 enum
 {
   HID_USAGE_PAGE_UNDEFINED    = 0x00,
@@ -134,7 +147,19 @@ enum
   HID_USAGE_LED_AMBER                 = 0x4A,
   HID_USAGE_LED_GENERIC_INDICATOR     = 0x4B
 };
-/*----------------------------------------------------------------------------*/
+
+/* Collection items */
+enum
+{
+  HID_PHYSICAL        = 0x00,
+  HID_APPLICATION     = 0x01,
+  HID_LOGICAL         = 0x02,
+  HID_REPORT          = 0x03,
+  HID_NAMED_ARRAY     = 0x04,
+  HID_USAGE_SWITCH    = 0x05,
+  HID_USAGE_MODIFIER  = 0x06
+};
+
 /* Global Items */
 #define REPORT_USAGE_PAGE(x)            0x05, x
 #define REPORT_USAGE_PAGE_VENDOR(x)     0x06, x, 0xFF
@@ -180,7 +205,7 @@ enum
 #define REPORT_USAGE(x)                 0x09, x
 #define REPORT_USAGE_MIN(x)             0x19, x
 #define REPORT_USAGE_MAX(x)             0x29, x
-/*----------------------------------------------------------------------------*/
+
 /* Input, Output and Feature items */
 #define HID_DATA               0
 #define HID_CONSTANT           BIT(0)
@@ -199,18 +224,6 @@ enum
 #define HID_NONVOLATILE        0
 #define HID_VOLATILE           BIT(7)
 /*----------------------------------------------------------------------------*/
-/* Collection items */
-enum
-{
-  HID_PHYSICAL        = 0x00,
-  HID_APPLICATION     = 0x01,
-  HID_LOGICAL         = 0x02,
-  HID_REPORT          = 0x03,
-  HID_NAMED_ARRAY     = 0x04,
-  HID_USAGE_SWITCH    = 0x05,
-  HID_USAGE_MODIFIER  = 0x06
-};
-/*----------------------------------------------------------------------------*/
 #define HID_DESCRIPTOR_BASE_SIZE  6
 #define HID_DESCRIPTOR_ENTRY_SIZE 3
 
@@ -225,7 +238,7 @@ struct HidDescriptor
   {
     uint8_t type;
     uint16_t length;
-  } classDescriptors[] __attribute__((packed));
+  } __attribute__((packed)) classDescriptors[];
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* USB_HID_DEFS_H_ */

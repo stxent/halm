@@ -14,6 +14,8 @@
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 #define HID_CONTROL_EP_SIZE 64
+#define HID_DESCRIPTOR_SIZE \
+    (HID_DESCRIPTOR_BASE_SIZE + HID_DESCRIPTOR_ENTRY_SIZE)
 /*----------------------------------------------------------------------------*/
 static enum result buildDescriptors(struct HidBase *,
     const struct HidBaseConfig *);
@@ -62,7 +64,7 @@ static const struct UsbConfigurationDescriptor configDescriptor = {
         sizeof(struct UsbConfigurationDescriptor)
         + sizeof(struct UsbInterfaceDescriptor)
         + sizeof(struct UsbEndpointDescriptor)
-        + sizeof(struct HidDescriptor)),
+        + HID_DESCRIPTOR_SIZE),
     .numInterfaces      = 1,
     .configurationValue = 1,
     .configuration      = 0, /* No configuration name */
@@ -78,8 +80,8 @@ static const struct UsbInterfaceDescriptor interfaceDescriptor = {
     .alternateSettings  = 0,
     .numEndpoints       = 1,
     .interfaceClass     = USB_CLASS_HID,
-    .interfaceSubClass  = 0, //TODO
-    .interfaceProtocol  = 0, //TODO
+    .interfaceSubClass  = HID_SUBCLASS_NONE,
+    .interfaceProtocol  = HID_PROTOCOL_NONE,
     .interface          = 0 /* No interface name */
 };
 /*----------------------------------------------------------------------------*/
@@ -90,7 +92,9 @@ static enum result buildDescriptors(struct HidBase *driver,
    * 6 pointers to descriptors:
    *   1 device descriptor,
    *   1 configuration descriptor,
-   *   3 interface descriptor,
+   *   1 interface descriptor,
+   *   1 endpoint descriptor,
+   *   1 class specific descriptor,
    *   1 end marker.
    */
   driver->descriptorArray = malloc(6 * sizeof(struct UsbDescriptor *));
@@ -107,8 +111,7 @@ static enum result buildDescriptors(struct HidBase *driver,
       (const struct UsbDescriptor *)&interfaceDescriptor;
 
   /* HID descriptor */
-  driver->hidDescriptor = malloc(HID_DESCRIPTOR_BASE_SIZE
-      + HID_DESCRIPTOR_ENTRY_SIZE);
+  driver->hidDescriptor = malloc(HID_DESCRIPTOR_SIZE);
   if (!driver->hidDescriptor)
   {
     /*
@@ -119,14 +122,14 @@ static enum result buildDescriptors(struct HidBase *driver,
     return E_MEMORY;
   }
 
-  driver->hidDescriptor->length = HID_DESCRIPTOR_BASE_SIZE
-      + HID_DESCRIPTOR_ENTRY_SIZE;
+  driver->hidDescriptor->length = HID_DESCRIPTOR_SIZE;
   driver->hidDescriptor->descriptorType = DESCRIPTOR_TYPE_HID;
   driver->hidDescriptor->hid = TO_LITTLE_ENDIAN_16(0x0100);
   driver->hidDescriptor->countryCode = 0;
   driver->hidDescriptor->numDescriptors = 1;
   driver->hidDescriptor->classDescriptors[0].type = DESCRIPTOR_TYPE_HID_REPORT;
-  driver->hidDescriptor->classDescriptors[0].length = config->reportSize;
+  driver->hidDescriptor->classDescriptors[0].length =
+      toLittleEndian16(config->reportSize);
   driver->descriptorArray[index++] =
       (const struct UsbDescriptor *)driver->hidDescriptor;
 
@@ -170,9 +173,7 @@ static enum result driverInit(void *object, const void *configBase)
   driver->device = config->device;
   driver->reportDescriptor = config->report;
   driver->reportDescriptorSize = config->reportSize;
-
   driver->idleTime = 0;
-  driver->protocol = 0;
 
   if ((res = buildDescriptors(driver, config)) != E_OK)
     return res;
@@ -264,19 +265,6 @@ static enum result driverConfigure(void *object,
 
         driver->idleTime = (uint8_t)(packet->value >> 8); //TODO Check
         return E_OK;
-
-//      case HID_REQUEST_GET_PROTOCOL:
-//        if (maxResponseLength < 1)
-//          return E_VALUE;
-//        usbTrace("hid: get protocol %04X", packet->value);
-//        response[0] = driver->protocol;
-//        *responseLength = 1;
-//        return E_OK;
-//
-//      case HID_REQUEST_SET_PROTOCOL:
-//        usbTrace("hid: set protocol to %04X", packet->value);
-//        driver->protocol = (uint8_t)(packet->value >> 8); //TODO Check
-//        return E_OK;
 
       default:
         usbTrace("hid: unknown request %02X", packet->request);
