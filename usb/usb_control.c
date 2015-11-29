@@ -11,7 +11,8 @@
 #include <usb/usb_control.h>
 /*----------------------------------------------------------------------------*/
 #define EP0_BUFFER_SIZE   64
-#define DATA_BUFFER_SIZE  (EP0_BUFFER_SIZE * CONFIG_USB_CONTROL_REQUESTS)
+#define DATA_BUFFER_SIZE  (CONFIG_USB_CONTROL_REQUESTS * EP0_BUFFER_SIZE)
+#define REQUEST_POOL_SIZE (CONFIG_USB_CONTROL_REQUESTS * 2)
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *, void *);
 static void controlOutHandler(struct UsbRequest *, void *);
@@ -195,41 +196,39 @@ static enum result controlInit(void *object, const void *configBase)
     return E_MEMORY;
 
   res = queueInit(&control->requestPool, sizeof(struct UsbRequest *),
-      CONFIG_USB_CONTROL_REQUESTS * 2);
+      REQUEST_POOL_SIZE);
   if (res != E_OK)
     return res;
 
   /* Allocate requests */
-  control->requests = malloc(2 * CONFIG_USB_CONTROL_REQUESTS
-      * sizeof(struct UsbRequest));
+  control->requests = malloc(REQUEST_POOL_SIZE * sizeof(struct UsbRequest));
   if (!control->requests)
     return E_MEMORY;
 
-  int8_t index;
+  struct UsbRequest *request = control->requests;
+  unsigned short index;
 
-  for (index = 0; index < 2 * CONFIG_USB_CONTROL_REQUESTS; ++index)
+  for (index = 0; index < REQUEST_POOL_SIZE; ++index)
   {
     res = usbRequestInit(control->requests + index, EP0_BUFFER_SIZE);
     if (res != E_OK)
       return res;
   }
 
-  for (index = 0; index < CONFIG_USB_CONTROL_REQUESTS; ++index)
-  {
-    struct UsbRequest * const request = control->requests + index;
-
-    usbRequestCallback(request, controlInHandler, control);
-    queuePush(&control->requestPool, &request);
-  }
-
-  for (; index < 2 * CONFIG_USB_CONTROL_REQUESTS; ++index)
-  {
-    usbRequestCallback(control->requests + index, controlOutHandler, control);
-    usbEpEnqueue(control->ep0out, control->requests + index);
-  }
-
   /* Enable interrupts */
   resetDevice(control);
+
+  /* Queue requests after endpoint enabling */
+  for (index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
+  {
+    usbRequestCallback(request, controlInHandler, control);
+    queuePush(&control->requestPool, &request);
+    ++request;
+
+    usbRequestCallback(request, controlOutHandler, control);
+    usbEpEnqueue(control->ep0out, request);
+    ++request;
+  }
 
   return E_OK;
 }
@@ -241,9 +240,9 @@ static void controlDeinit(void *object)
   usbEpClear(control->ep0in);
   usbEpClear(control->ep0out);
 
-  assert(queueSize(&control->requestPool) == 2 * CONFIG_USB_CONTROL_REQUESTS);
+  assert(queueSize(&control->requestPool) == REQUEST_POOL_SIZE);
 
-  for (int8_t index = 2 * CONFIG_USB_CONTROL_REQUESTS - 1; index >= 0; --index)
+  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
     usbRequestDeinit(control->requests + index);
   free(control->requests);
 

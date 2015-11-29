@@ -118,7 +118,7 @@ static void interruptHandler(void *object)
       listData(&device->endpoints, current, &endpoint);
 
       const uint8_t index = EP_TO_INDEX(endpoint->address);
-      const uint32_t mask = 1 << index;
+      const uint32_t mask = BIT(index);
 
       if (epIntStatus & mask)
       {
@@ -523,8 +523,13 @@ static void epClear(void *object)
 static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct UsbEndpoint * const endpoint = object;
+  LPC_USB_Type * const reg = endpoint->device->parent.reg;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
   enum result res = E_OK;
+
+  /* Check whether the endpoint is enabled */
+  if (!(reg->USBDevIntEn & BIT(index)))
+    return E_IDLE;
 
   irqDisable(endpoint->device->parent.irq);
 
@@ -567,7 +572,7 @@ static void epSetEnabled(void *object, bool state, uint16_t size)
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->parent.reg;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
-  const uint32_t mask = 1 << index;
+  const uint32_t mask = BIT(index);
 
   if (state)
   {
@@ -576,7 +581,7 @@ static void epSetEnabled(void *object, bool state, uint16_t size)
     reg->USBEpIntEn |= mask;
 
     /* Realize endpoint */
-    reg->USBReEp |= 1 << index;
+    reg->USBReEp |= mask;
     reg->USBEpInd = index;
     reg->USBMaxPSize = size;
     waitForInt(endpoint->device, USBDevInt_EP_RLZED);
