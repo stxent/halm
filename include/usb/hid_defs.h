@@ -189,9 +189,9 @@ enum
     0x66, x & 0xFF, (x >> 8) & 0xFF
 #define REPORT_UNIT_LONG(x) \
     0x67, x & 0xFF, (x >> 8) & 0xFF, (x >> 16) & 0xFF, (x >> 24) & 0xFF
-#define REPORT_REPORT_SIZE(x)           0x75, x
-#define REPORT_REPORT_ID(x)             0x85, x
-#define REPORT_REPORT_COUNT(x)          0x95, x
+#define REPORT_SIZE(x)                  0x75, x
+#define REPORT_ID(x)                    0x85, x
+#define REPORT_COUNT(x)                 0x95, x
 #define REPORT_PUSH                     0xA0
 #define REPORT_POP                      0xB0
 

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
+#include <usb/cdc_acm.h>
 #include <usb/cdc_acm_base.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
@@ -264,11 +265,7 @@ static enum result handleRequest(struct CdcAcmBase *driver,
   }
 
   if (event)
-  {
-    driver->line.updated = true;
-    if (driver->callback)
-      driver->callback(driver->callbackArgument);
-  }
+    cdcAcmOnParametersChanged(driver->owner);
 
   return E_OK;
 }
@@ -279,18 +276,14 @@ static enum result driverInit(void *object, const void *configBase)
   struct CdcAcmBase * const driver = object;
   enum result res;
 
-  if (!config->device)
+  if (!config->owner || !config->device)
     return E_VALUE;
 
-  driver->callback = config->callback;
-  driver->callbackArgument = config->argument;
-  driver->suspended = false;
-
+  driver->owner = config->owner;
   driver->device = config->device;
   driver->line.coding = (struct CdcLineCoding){115200, 0, 0, 8};
   driver->line.dtr = true;
   driver->line.rts = true;
-  driver->line.updated = false;
 
   buildDescriptors(driver, config);
 
@@ -339,7 +332,5 @@ static void driverUpdateStatus(void *object, uint8_t status)
 {
   struct CdcAcmBase * const driver = object;
 
-  driver->suspended = (status & DEVICE_STATUS_SUSPEND) != 0;
-  if (driver->callback)
-    driver->callback(driver->callbackArgument);
+  cdcAcmOnStatusChanged(driver->owner, status);
 }

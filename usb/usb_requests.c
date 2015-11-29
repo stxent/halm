@@ -329,10 +329,6 @@ static enum result traverseConfigArray(struct UsbControl *control,
         return E_VALUE;
       }
 
-      /* Return queued requests to pools */
-      if (data->endpointAddress & EP_DIRECTION_IN)
-        usbEpClear(endpoint);
-
       usbEpSetEnabled(endpoint, true, endpointSize);
     }
 

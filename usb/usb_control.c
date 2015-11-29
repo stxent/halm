@@ -205,10 +205,7 @@ static enum result controlInit(void *object, const void *configBase)
   if (!control->requests)
     return E_MEMORY;
 
-  struct UsbRequest *request = control->requests;
-  unsigned short index;
-
-  for (index = 0; index < REQUEST_POOL_SIZE; ++index)
+  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
   {
     res = usbRequestInit(control->requests + index, EP0_BUFFER_SIZE);
     if (res != E_OK)
@@ -218,8 +215,10 @@ static enum result controlInit(void *object, const void *configBase)
   /* Enable interrupts */
   resetDevice(control);
 
-  /* Queue requests after endpoint enabling */
-  for (index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
+  /* Enqueue requests after endpoint enabling */
+  struct UsbRequest *request = control->requests;
+
+  for (unsigned short index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
   {
     usbRequestCallback(request, controlInHandler, control);
     queuePush(&control->requestPool, &request);

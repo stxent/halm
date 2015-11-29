@@ -14,14 +14,14 @@
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const CdcAcmBase;
 /*----------------------------------------------------------------------------*/
+struct CdcAcm;
+/*----------------------------------------------------------------------------*/
 struct CdcAcmBaseConfig
 {
+  /** Mandatory: pointer to an upper half of the driver. */
+  struct CdcAcm *owner;
   /** Mandatory: USB device. */
   void *device;
-  /** Optional: event callback function. */
-  void (*callback)(void *);
-  /** Optional: callback function argument. */
-  void *argument;
 
   struct
   {
@@ -38,22 +38,17 @@ struct CdcAcmBase
 {
   struct UsbDriver parent;
 
-  void (*callback)(void *);
-  void *callbackArgument;
-
+  struct CdcAcm *owner;
   struct UsbDevice *device;
 
   const struct UsbDescriptor **descriptorArray;
   struct UsbEndpointDescriptor *endpointDescriptors;
-
-  bool suspended;
 
   struct
   {
     struct CdcLineCoding coding;
     bool dtr;
     bool rts;
-    bool updated;
   } line;
 };
 /*----------------------------------------------------------------------------*/

@@ -284,7 +284,9 @@ static const struct UsbDescriptor **driverGetDescriptors(void *object)
   return driver->descriptorArray;
 }
 /*----------------------------------------------------------------------------*/
-static void driverUpdateStatus(void *object __attribute__((unused)), uint8_t status __attribute__((unused)))
+static void driverUpdateStatus(void *object, uint8_t status)
 {
+  struct HidBase * const driver = object;
 
+  hidUpdateStatus(driver->owner, status);
 }

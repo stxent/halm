@@ -70,6 +70,12 @@ struct CdcAcm
   struct UsbEndpoint *rxDataEp;
   struct UsbEndpoint *txDataEp;
   struct UsbEndpoint *notificationEp;
+
+  bool suspended;
+  bool updated;
 };
+/*----------------------------------------------------------------------------*/
+void cdcAcmOnParametersChanged(struct CdcAcm *);
+void cdcAcmOnStatusChanged(struct CdcAcm *, uint8_t);
 /*----------------------------------------------------------------------------*/
 #endif /* USB_CDC_ACM_H_ */

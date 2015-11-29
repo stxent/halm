@@ -16,7 +16,8 @@ static const struct HidClass deviceTable = {
     .deinit = deviceDeinit,
 
     .getReport = 0,
-    .setReport = 0
+    .setReport = 0,
+    .updateStatus = 0
 };
 /*----------------------------------------------------------------------------*/
 const struct HidClass * const Hid = &deviceTable;
