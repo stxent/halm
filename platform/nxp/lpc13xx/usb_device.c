@@ -314,50 +314,36 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 {
   struct UsbRequest *request = 0;
 
-  if (!queueEmpty(&endpoint->requests))
-    queuePop(&endpoint->requests, &request);
+  if (queueEmpty(&endpoint->requests))
+    return;
+  queuePop(&endpoint->requests, &request);
 
   if (endpoint->address & EP_DIRECTION_IN)
   {
-    if (request)
-    {
-      const enum result res = epWriteData(endpoint, request->buffer,
-          request->length, 0);
-
-      request->status = res == E_OK ? REQUEST_COMPLETED : REQUEST_ERROR;
-    }
+    if (epWriteData(endpoint, request->buffer, request->length, 0) == E_OK)
+      request->status = REQUEST_COMPLETED;
+    else
+      request->status = REQUEST_ERROR;
   }
   else
   {
-    if (request)
-    {
-      uint16_t read;
-      const enum result res = epReadData(endpoint, request->buffer,
-          request->capacity, &read);
+    uint16_t read;
 
-      if (res == E_OK)
-      {
-        request->length = read;
-        request->status = status & SELECT_ENDPOINT_STP ?
-            REQUEST_SETUP : REQUEST_COMPLETED;
-      }
-      else
-      {
-        request->length = 0;
-        request->status = REQUEST_ERROR;
-      }
+    if (epReadData(endpoint, request->buffer, request->capacity, &read) == E_OK)
+    {
+      request->length = read;
+      request->status = status & SELECT_ENDPOINT_STP ?
+          REQUEST_SETUP : REQUEST_COMPLETED;
     }
     else
     {
-      const uint8_t index = EP_TO_INDEX(endpoint->address);
-
-      /* Select endpoint and clear buffer */
-      usbCommand(endpoint->device, USB_CMD_SELECT_ENDPOINT | index);
-      usbCommand(endpoint->device, USB_CMD_CLEAR_BUFFER);
+      /* Read failed, return request to the queue */
+      queuePush(&endpoint->requests, &request);
+      return;
     }
   }
 
-  if (request && request->callback)
+  if (request->callback)
     request->callback(request, request->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -381,7 +367,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
 
   /* Check packet validity */
   if (!(packetLength & USBRxPLen_DV))
-    return E_ERROR;
+    return E_INTERFACE;
   /* Extract length */
   packetLength = USBRxPLen_PKT_LNGTH_VALUE(packetLength);
   /* Check for buffer overflow */
@@ -534,17 +520,20 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   const uint8_t status = usbCommandRead(endpoint->device,
       USB_CMD_SELECT_ENDPOINT | index);
 
-  if ((endpoint->address & EP_DIRECTION_IN) && !(status & SELECT_ENDPOINT_FE))
-  {
-    res = epWriteData(endpoint, request->buffer, request->length, 0);
-    request->status = res == E_OK ? REQUEST_COMPLETED : REQUEST_ERROR;
-
-    if (request->callback)
-      request->callback(request, request->callbackArgument);
-  }
-  else if (!queueFull(&endpoint->requests))
+  if (!queueFull(&endpoint->requests))
   {
     queuePush(&endpoint->requests, &request);
+
+    const bool schedule = ((endpoint->address & EP_DIRECTION_IN) != 0)
+        ^ ((status & SELECT_ENDPOINT_FE) != 0);
+
+    if (schedule)
+    {
+      LPC_USB_Type * const reg = endpoint->device->parent.reg;
+
+      /* Schedule interrupt */
+      reg->USBDevIntSet = BIT(index + 1);
+    }
   }
   else
   {

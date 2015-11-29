@@ -414,30 +414,47 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
 
   while (!queueEmpty(&interface->rxRequestQueue))
   {
+    const uint32_t spaceAvailable = byteQueueCapacity(&interface->rxQueue)
+        - byteQueueSize(&interface->rxQueue);
     struct UsbRequest *request;
 
-    queuePop(&interface->rxRequestQueue, &request);
+    queuePeek(&interface->rxRequestQueue, &request);
+    if (spaceAvailable < request->length)
+      break;
+
+    queuePop(&interface->rxRequestQueue, 0);
     interface->queuedRxBytes -= request->length;
 
-    const bool spaceAvailable = request->length < length;
-    const uint32_t bytesRead = spaceAvailable ? request->length : length;
+    const uint8_t *bufferPosition = request->buffer;
+    uint16_t bytesLeft = request->length;
 
-    memcpy(buffer, request->buffer, bytesRead);
-    buffer += bytesRead;
-    length -= bytesRead;
-
-    if (!spaceAvailable)
+    if (length)
     {
-      byteQueuePushArray(&interface->rxQueue, request->buffer + bytesRead,
-          request->length - bytesRead);
+      const uint16_t chunkLength = bytesLeft < length ? bytesLeft : length;
+
+      memcpy(buffer, bufferPosition, chunkLength);
+      buffer += chunkLength;
+      length -= chunkLength;
+      bufferPosition += chunkLength;
+      bytesLeft -= chunkLength;
     }
+
+    if (bytesLeft)
+      byteQueuePushArray(&interface->rxQueue, bufferPosition, bytesLeft);
 
     request->length = 0;
     request->status = 0;
-    usbEpEnqueue(interface->rxDataEp, request);
 
-    if (!spaceAvailable)
+    if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
+    {
+      /* Hardware error occurred, suspend the interface and wait for reset */
+      interface->suspended = true;
+      queuePush(&interface->rxRequestQueue, &request);
+
+      usbTrace("cdc_acm: suspended in read function");
+
       break;
+    }
   }
 
   interruptsEnable();
@@ -485,7 +502,9 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
   }
 
   if (!interface->suspended && length)
+  {
     length -= byteQueuePushArray(&interface->txQueue, buffer, length);
+  }
 
   interruptsEnable();
   return sourceLength - length;
