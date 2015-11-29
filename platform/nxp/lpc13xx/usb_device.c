@@ -86,22 +86,26 @@ static void interruptHandler(void *object)
   /* Device status interrupt */
   if (intStatus & USBDevInt_DEV_STAT)
   {
-    const uint8_t devStatus = usbCommandRead(device,
+    const uint8_t deviceStatus = usbCommandRead(device,
         USB_CMD_GET_DEVICE_STATUS);
     uint8_t status = 0;
 
-    if (devStatus & DEVICE_STATUS_RST)
+    if (deviceStatus & DEVICE_STATUS_RST)
     {
       resetDevice(device);
       status |= DEVICE_STATUS_RESET;
     }
-    if (devStatus & DEVICE_STATUS_CON)
+    if (deviceStatus & DEVICE_STATUS_CON)
       status |= DEVICE_STATUS_CONNECT;
-    if (devStatus & DEVICE_STATUS_SUS)
+    if (deviceStatus & DEVICE_STATUS_SUS)
+    {
       status |= DEVICE_STATUS_SUSPEND;
+      device->suspended = true;
+    }
+    else
+      device->suspended = false;
 
-    if (status)
-      usbControlUpdateStatus(device->control, status);
+    usbControlUpdateStatus(device->control, status);
   }
 
   /* Endpoint interrupt */
@@ -219,12 +223,14 @@ static enum result devInit(void *object, const void *configBase)
     return res;
 
   device->parent.handler = interruptHandler;
+  device->suspended = true;
 
   /* Configure interrupts */
   resetDevice(device);
   /* By default, only ACKs generate interrupts */
   usbCommandWrite(device, USB_CMD_SET_MODE, 0);
 
+  irqSetPriority(device->parent.irq, config->priority);
   irqEnable(device->parent.irq);
 
   /* Initialize control message handler */
@@ -517,12 +523,10 @@ static void epClear(void *object)
 static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct UsbEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->parent.reg;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
   enum result res = E_OK;
 
-  /* Check whether the endpoint is enabled */
-  if (!(reg->USBDevIntEn & BIT(index + 1)))
+  if (index >= 2 && endpoint->device->suspended)
     return E_IDLE;
 
   irqDisable(endpoint->device->parent.irq);

@@ -30,6 +30,8 @@ struct UsbDeviceConfig
   pin_t connect;
   /** Mandatory: monitors the presence of USB bus power. */
   pin_t vbus;
+  /** Optional: interrupt priority. */
+  priority_t priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -42,6 +44,8 @@ struct UsbDevice
   struct List endpoints;
   /* Control message handler */
   struct UsbControl *control;
+
+  bool suspended;
 };
 /*----------------------------------------------------------------------------*/
 struct UsbEndpointConfig
