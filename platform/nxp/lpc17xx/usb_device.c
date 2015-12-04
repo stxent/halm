@@ -515,13 +515,22 @@ static void epClear(void *object)
 static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct UsbEndpoint * const endpoint = object;
+  LPC_USB_Type * const reg = endpoint->device->parent.reg;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
+  const uint32_t mask = BIT(index);
   enum result res = E_OK;
 
-  if (index >= 2 && endpoint->device->suspended)
-    return E_IDLE;
-
   irqDisable(endpoint->device->parent.irq);
+
+  /*
+   * Additional checks should be performed for data endpoints
+   * to avoid USB controller hanging issues.
+   */
+  if (index >= 2 && (endpoint->device->suspended || !(reg->USBDevIntEn & mask)))
+  {
+    irqEnable(endpoint->device->parent.irq);
+    return E_IDLE;
+  }
 
   const uint8_t status = usbCommandRead(endpoint->device,
       USB_CMD_SELECT_ENDPOINT | index);
@@ -535,10 +544,8 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 
     if (schedule)
     {
-      LPC_USB_Type * const reg = endpoint->device->parent.reg;
-
       /* Schedule interrupt */
-      reg->USBDevIntSet = BIT(index);
+      reg->USBDevIntSet = mask;
     }
   }
   else
