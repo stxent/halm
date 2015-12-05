@@ -281,27 +281,28 @@ static enum result extOscEnable(const void *clockBase
   const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = 0;
 
+  if (config->frequency < 1000000 || config->frequency > 25000000)
+    return E_VALUE;
+
   if (config->bypass)
     buffer |= SYSOSCCTRL_BYPASS;
   if (config->frequency > 15000000)
     buffer |= SYSOSCCTRL_FREQRANGE;
 
-  LPC_SYSCON->SYSOSCCTRL = buffer;
+  /* Power-up oscillator */
   sysPowerEnable(PWR_SYSOSC);
+
+  LPC_SYSCON->SYSOSCCTRL = buffer;
 
   /* There is no status register so wait for 10 microseconds */
   udelay(10);
 
-  extFrequency = config->frequency;
-
   LPC_SYSCON->SYSPLLCLKSEL = PLLCLKSEL_SYSOSC;
   /* Update PLL clock source */
-  LPC_SYSCON->SYSPLLCLKUEN = CLKUEN_ENA;
   LPC_SYSCON->SYSPLLCLKUEN = 0;
   LPC_SYSCON->SYSPLLCLKUEN = CLKUEN_ENA;
-  /* Wait until updated */
-  while (!(LPC_SYSCON->SYSPLLCLKUEN & CLKUEN_ENA));
 
+  extFrequency = config->frequency;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -395,22 +396,19 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   if (!frequency)
     return E_VALUE;
 
-  pllFrequency = frequency;
+  /* Power-up PLL */
+  sysPowerEnable(PWR_SYSPLL);
 
   /* Select clock source */
   LPC_SYSCON->SYSPLLCLKSEL = config->source == CLOCK_EXTERNAL ?
       PLLCLKSEL_SYSOSC : PLLCLKSEL_IRC;
-
   /* Update clock source for changes to take effect */
-  LPC_SYSCON->SYSPLLCLKUEN = CLKUEN_ENA;
   LPC_SYSCON->SYSPLLCLKUEN = 0;
   LPC_SYSCON->SYSPLLCLKUEN = CLKUEN_ENA;
-  /* Wait until updated */
-  while (!(LPC_SYSCON->SYSPLLCLKUEN & CLKUEN_ENA));
-
+  /* Set feedback divider value and post divider ratio */
   LPC_SYSCON->SYSPLLCTRL = control;
-  sysPowerEnable(PWR_SYSPLL);
 
+  pllFrequency = frequency;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -445,19 +443,17 @@ static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
   if (frequency != USB_FREQUENCY)
     return E_VALUE;
 
+  /* Power-up PLL */
+  sysPowerEnable(PWR_USBPLL);
+
   /* Select clock source */
   LPC_SYSCON->USBPLLCLKSEL = config->source == CLOCK_EXTERNAL ?
       PLLCLKSEL_SYSOSC : PLLCLKSEL_IRC;
-
   /* Update clock source for changes to take effect */
-  LPC_SYSCON->USBPLLCLKUEN = CLKUEN_ENA;
   LPC_SYSCON->USBPLLCLKUEN = 0;
   LPC_SYSCON->USBPLLCLKUEN = CLKUEN_ENA;
-  /* Wait until updated */
-  while (!(LPC_SYSCON->USBPLLCLKUEN & CLKUEN_ENA));
-
+  /* Set feedback divider value and post divider ratio */
   LPC_SYSCON->USBPLLCTRL = control;
-  sysPowerEnable(PWR_USBPLL);
 
   return E_OK;
 }
@@ -509,11 +505,8 @@ static enum result branchEnable(const void *clockBase, const void *configBase)
   descriptor->sourceSelect = (uint32_t)source;
 
   /* Update clock source */
-  descriptor->sourceUpdate = CLKUEN_ENA;
   descriptor->sourceUpdate = 0;
   descriptor->sourceUpdate = CLKUEN_ENA;
-  /* Wait until updated */
-  while (!(descriptor->sourceUpdate & CLKUEN_ENA));
 
   /* Enable clock */
   descriptor->divider = config->divisor ? config->divisor : 1;
