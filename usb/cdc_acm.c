@@ -172,7 +172,7 @@ void cdcAcmOnParametersChanged(struct CdcAcm *interface)
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnStatusChanged(struct CdcAcm *interface, uint8_t status)
 {
-  if (!interface->suspended && (status & DEVICE_STATUS_SUSPEND))
+  if (!interface->suspended && (status & DEVICE_STATUS_SUSPENDED))
   {
     interface->suspended = true;
 
@@ -181,8 +181,6 @@ void cdcAcmOnStatusChanged(struct CdcAcm *interface, uint8_t status)
 
   if (status & DEVICE_STATUS_RESET)
   {
-    usbTrace("cdc_acm: trying to reset");
-
     interface->suspended = true;
     resetBuffers(interface);
 

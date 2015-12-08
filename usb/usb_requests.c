@@ -122,7 +122,7 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
       break;
 
     case REQUEST_SET_ADDRESS:
-      usbDevSetAddress(control->base, packet->value);
+      usbDevSetAddress(control->owner, packet->value);
       usbTrace("requests: set address %d", packet->value);
       *responseLength = 0;
       break;
@@ -141,7 +141,7 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
     }
 
     case REQUEST_GET_CONFIGURATION:
-      response[0] = control->currentConfiguration;
+      response[0] = usbDevGetConfiguration(control->owner);
       *responseLength = 1;
       break;
 
@@ -188,7 +188,7 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
     uint16_t *responseLength,
     uint16_t maxResponseLength __attribute__((unused)))
 {
-  struct UsbEndpoint *endpoint = usbDevAllocate(control->base, packet->index);
+  struct UsbEndpoint *endpoint = usbDevAllocate(control->owner, packet->index);
 
   switch (packet->request)
   {
@@ -268,7 +268,7 @@ static enum result setDeviceConfig(struct UsbControl *control,
 {
   if (!configuration)
   {
-    usbDevSetConfigured(control->base, false);
+    usbDevSetConfiguration(control->owner, 0);
   }
   else
   {
@@ -283,8 +283,13 @@ static enum result setDeviceConfig(struct UsbControl *control,
     if (res != E_OK)
       return res;
 
-    control->currentConfiguration = configuration;
-    usbDevSetConfigured(control->base, true);
+    usbDevSetConfiguration(control->owner, configuration);
+
+    if (control->driver)
+    {
+      /* Notify the driver */
+      usbDriverUpdateStatus(control->driver, DEVICE_STATUS_RESET);
+    }
   }
 
   return E_OK;

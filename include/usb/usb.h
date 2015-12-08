@@ -21,12 +21,15 @@
 #define EP_ADDRESS(value)               (value)
 #define EP_LOGICAL_ADDRESS(value)       ((value) & 0x7F)
 /*----------------------------------------------------------------------------*/
+struct UsbDescriptor;
+struct UsbSetupPacket;
+/*----------------------------------------------------------------------------*/
 enum usbDeviceStatus
 {
-  DEVICE_STATUS_CONNECT = 0x01,
-  DEVICE_STATUS_SUSPEND = 0x02,
-  DEVICE_STATUS_RESET   = 0x04,
-  DEVICE_STATUS_FRAME   = 0x08
+  DEVICE_STATUS_CONNECTED = 0x01,
+  DEVICE_STATUS_SUSPENDED = 0x02,
+  DEVICE_STATUS_RESET     = 0x04,
+  DEVICE_STATUS_FRAME     = 0x08
 };
 
 enum usbRequestStatus
@@ -66,8 +69,9 @@ struct UsbDeviceClass
 
   void *(*allocate)(void *, uint8_t);
   enum result (*bind)(void *, void *);
+  uint8_t (*getConfiguration)(const void *);
   void (*setAddress)(void *, uint8_t);
-  void (*setConfigured)(void *, bool);
+  void (*setConfiguration)(void *, uint8_t);
   void (*setConnected)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
@@ -95,6 +99,17 @@ static inline enum result usbDevBind(void *device, void *driver)
 }
 /*----------------------------------------------------------------------------*/
 /**
+ * Get current configuration of the device.
+ * @param device Pointer to an UsbDevice object.
+ * @return Number of the current configuration.
+ */
+static inline uint8_t usbDevGetConfiguration(const void *device)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->
+      getConfiguration(device);
+}
+/*----------------------------------------------------------------------------*/
+/**
  * Set the address of the device.
  * @param device Pointer to an UsbDevice object.
  * @param address Device address. Must be in the range of 0 to 127.
@@ -108,11 +123,12 @@ static inline void usbDevSetAddress(void *device, uint8_t address)
  * Set normal operation mode of the device or return the device to
  * an unconfigured state.
  * @param device Pointer to an UsbDevice object.
- * @param state Requested device state.
+ * @param configuration Requested device configuration.
  */
-static inline void usbDevSetConfigured(void *device, bool state)
+static inline void usbDevSetConfiguration(void *device, uint8_t configuration)
 {
-  ((const struct UsbDeviceClass *)CLASS(device))->setConfigured(device, state);
+  ((const struct UsbDeviceClass *)CLASS(device))->setConfiguration(device,
+      configuration);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -141,58 +157,61 @@ struct UsbEndpointClass
  * Clear the queue of the endpoint.
  * Request status will be set to @b REQUEST_CANCELLED and endpoint callback
  * function will be called.
- * @param ep Pointer to an UsbEndpoint object.
+ * @param endpoint Pointer to an UsbEndpoint object.
  */
-static inline void usbEpClear(void *ep)
+static inline void usbEpClear(void *endpoint)
 {
-  ((const struct UsbEndpointClass *)CLASS(ep))->clear(ep);
+  ((const struct UsbEndpointClass *)CLASS(endpoint))->clear(endpoint);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Add the transport request to the queue.
- * @param ep Pointer to an UsbEndpoint object.
+ * @param endpoint Pointer to an UsbEndpoint object.
  * @param request Request to be added.
  * @return @b E_OK on success, @b E_FULL when the queue is full.
  */
-static inline enum result usbEpEnqueue(void *ep, struct UsbRequest *request)
+static inline enum result usbEpEnqueue(void *endpoint,
+    struct UsbRequest *request)
 {
-  return ((const struct UsbEndpointClass *)CLASS(ep))->enqueue(ep, request);
+  return ((const struct UsbEndpointClass *)CLASS(endpoint))-> enqueue(endpoint,
+      request);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Return current state of the endpoint.
- * @param ep Pointer to an UsbEndpoint object.
+ * @param endpoint Pointer to an UsbEndpoint object.
  * @return @b true when the endpoint is halted or @b false otherwise.
  */
-static inline bool usbEpIsStalled(void *ep)
+static inline bool usbEpIsStalled(void *endpoint)
 {
-  return ((const struct UsbEndpointClass *)CLASS(ep))->isStalled(ep);
+  return ((const struct UsbEndpointClass *)CLASS(endpoint))->
+      isStalled(endpoint);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Enable or disable the endpoint.
- * @param ep Pointer to an UsbEndpoint object.
+ * @param endpoint Pointer to an UsbEndpoint object.
  * @param state State of the endpoint.
  * @param size Size of the endpoint. Should be set to zero when the endpoint
  * is going to be disabled.
  */
-static inline void usbEpSetEnabled(void *ep, bool state, uint16_t size)
+static inline void usbEpSetEnabled(void *endpoint, bool state, uint16_t size)
 {
-  ((const struct UsbEndpointClass *)CLASS(ep))->setEnabled(ep, state, size);
+  ((const struct UsbEndpointClass *)CLASS(endpoint))->setEnabled(endpoint,
+      state, size);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Set or clear stall state of the endpoint.
- * @param ep Pointer to an UsbEndpoint object.
+ * @param endpoint Pointer to an UsbEndpoint object.
  * @param stalled Should be @b true to halt the endpoint or @b false
  * to start it.
  */
-static inline void usbEpSetStalled(void *ep, bool stalled)
+static inline void usbEpSetStalled(void *endpoint, bool stalled)
 {
-  ((const struct UsbEndpointClass *)CLASS(ep))->setStalled(ep, stalled);
+  ((const struct UsbEndpointClass *)CLASS(endpoint))->setStalled(endpoint,
+      stalled);
 }
-/*----------------------------------------------------------------------------*/
-struct UsbSetupPacket;
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbDriverClass

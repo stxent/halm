@@ -24,7 +24,7 @@ struct UsbControl
 {
   struct Entity parent;
 
-  struct UsbDevice *base;
+  struct UsbDevice *owner;
   struct UsbDriver *driver;
 
   struct UsbEndpoint *ep0in;

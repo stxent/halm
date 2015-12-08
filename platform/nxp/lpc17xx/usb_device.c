@@ -23,8 +23,9 @@ static enum result devInit(void *, const void *);
 static void devDeinit(void *);
 static void *devAllocate(void *, uint8_t);
 static enum result devBind(void *, void *);
+static uint8_t devGetConfiguration(const void *);
 static void devSetAddress(void *, uint8_t);
-static void devSetConfigured(void *, bool);
+static void devSetConfiguration(void *, uint8_t);
 static void devSetConnected(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
@@ -34,8 +35,9 @@ static const struct UsbDeviceClass devTable = {
 
     .allocate = devAllocate,
     .bind = devBind,
+    .getConfiguration = devGetConfiguration,
     .setAddress = devSetAddress,
-    .setConfigured = devSetConfigured,
+    .setConfiguration = devSetConfiguration,
     .setConnected = devSetConnected
 };
 /*----------------------------------------------------------------------------*/
@@ -94,15 +96,14 @@ static void interruptHandler(void *object)
       resetDevice(device);
       status |= DEVICE_STATUS_RESET;
     }
+
     if (deviceStatus & DEVICE_STATUS_CON)
-      status |= DEVICE_STATUS_CONNECT;
+      status |= DEVICE_STATUS_CONNECTED;
+
     if (deviceStatus & DEVICE_STATUS_SUS)
-    {
-      status |= DEVICE_STATUS_SUSPEND;
-      device->suspended = true;
-    }
+      status |= DEVICE_STATUS_SUSPENDED;
     else
-      device->suspended = false;
+      device->configuration = 0;
 
     usbControlUpdateStatus(device->control, status);
   }
@@ -232,7 +233,7 @@ static enum result devInit(void *object, const void *configBase)
     return res;
 
   device->parent.handler = interruptHandler;
-  device->suspended = true;
+  device->configuration = 0; /* Inactive configuration */
 
   /* Configure interrupts */
   resetDevice(device);
@@ -301,16 +302,26 @@ static enum result devBind(void *object, void *driver)
   return usbControlSetDriver(device->control, driver);
 }
 /*----------------------------------------------------------------------------*/
+static uint8_t devGetConfiguration(const void *object)
+{
+  const struct UsbDevice * const device = object;
+
+  return device->configuration;
+}
+/*----------------------------------------------------------------------------*/
 static void devSetAddress(void *object, uint8_t address)
 {
   usbCommandWrite(object, USB_CMD_SET_ADDRESS,
       SET_ADDRESS_DEV_EN | SET_ADDRESS_DEV_ADDR(address));
 }
 /*----------------------------------------------------------------------------*/
-static void devSetConfigured(void *object, bool state)
+static void devSetConfiguration(void *object, uint8_t configuration)
 {
+  struct UsbDevice * const device = object;
+
   usbCommandWrite(object, USB_CMD_CONFIGURE_DEVICE,
-      state ? CONFIGURE_DEVICE_CONF_DEVICE : 0);
+      configuration > 0 ? CONFIGURE_DEVICE_CONF_DEVICE : 0);
+  device->configuration = configuration;
 }
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)
@@ -526,7 +537,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
    * Additional checks should be performed for data endpoints
    * to avoid USB controller hanging issues.
    */
-  if (index >= 2 && (endpoint->device->suspended || !(reg->USBDevIntEn & mask)))
+  if (index >= 2 && !endpoint->device->configuration)
   {
     irqEnable(endpoint->device->parent.irq);
     return E_IDLE;
@@ -545,7 +556,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
     if (schedule)
     {
       /* Schedule interrupt */
-      reg->USBDevIntSet = mask;
+      reg->USBEpIntSet = mask;
     }
   }
   else

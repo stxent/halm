@@ -165,7 +165,7 @@ void usbControlUpdateStatus(struct UsbControl *control, uint8_t status)
     resetDevice(control);
 
   if (control->driver)
-    usbDriverUpdateStatus(control->driver, status);
+    usbDriverUpdateStatus(control->driver, status & ~DEVICE_STATUS_RESET);
 }
 /*----------------------------------------------------------------------------*/
 static enum result controlInit(void *object, const void *configBase)
@@ -177,9 +177,8 @@ static enum result controlInit(void *object, const void *configBase)
   if (!config->parent)
     return E_VALUE;
 
-  control->base = config->parent;
+  control->owner = config->parent;
   control->driver = 0;
-  control->currentConfiguration = 0;
 
   control->state.buffer = malloc(DATA_BUFFER_SIZE);
   if (!control->state.buffer)
@@ -187,11 +186,11 @@ static enum result controlInit(void *object, const void *configBase)
   control->state.left = 0;
 
   /* Create control endpoints */
-  control->ep0in = usbDevAllocate(control->base, EP_DIRECTION_IN
+  control->ep0in = usbDevAllocate(control->owner, EP_DIRECTION_IN
       | EP_ADDRESS(0));
   if (!control->ep0in)
     return E_MEMORY;
-  control->ep0out = usbDevAllocate(control->base, EP_ADDRESS(0));
+  control->ep0out = usbDevAllocate(control->owner, EP_ADDRESS(0));
   if (!control->ep0out)
     return E_MEMORY;
 
