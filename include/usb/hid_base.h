@@ -40,7 +40,6 @@ struct HidBase
   struct Hid *owner;
   struct UsbDevice *device;
 
-  const struct UsbDescriptor **descriptorArray;
   struct HidDescriptor *hidDescriptor;
   struct UsbEndpointDescriptor *endpointDescriptor;
 

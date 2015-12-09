@@ -144,6 +144,61 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   }
 }
 /*----------------------------------------------------------------------------*/
+enum result usbControlAppendDescriptor(struct UsbControl *control,
+    const struct UsbDescriptor *descriptor)
+{
+  return listPush(&control->descriptors, &descriptor);
+}
+/*----------------------------------------------------------------------------*/
+uint8_t usbControlCompositeIndex(const struct UsbControl *control,
+    uint8_t configuration)
+{
+  const struct ListNode *currentNode = listFirst(&control->descriptors);
+  const struct UsbDescriptor *current;
+  uint8_t currentConfiguration = 0;
+  uint8_t count = 0;
+
+  while (currentNode)
+  {
+    listData(&control->descriptors, currentNode, &current);
+
+    if (current->descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
+    {
+      const struct UsbConfigurationDescriptor * const descriptor =
+          (const struct UsbConfigurationDescriptor *)current;
+
+      currentConfiguration = descriptor->configurationValue;
+    }
+    else if (current->descriptorType == DESCRIPTOR_TYPE_INTERFACE
+        && currentConfiguration == configuration)
+    {
+      ++count;
+    }
+
+    currentNode = listNext(currentNode);
+  }
+
+  return count;
+}
+/*----------------------------------------------------------------------------*/
+void usbControlEraseDescriptor(struct UsbControl *control,
+    const struct UsbDescriptor *descriptor)
+{
+  struct ListNode *currentNode = listFirst(&control->descriptors);
+  const struct UsbDescriptor *current;
+
+  while (currentNode)
+  {
+    listData(&control->descriptors, currentNode, &current);
+    if (current == descriptor)
+    {
+      listErase(&control->descriptors, currentNode);
+      return;
+    }
+    currentNode = listNext(currentNode);
+  }
+}
+/*----------------------------------------------------------------------------*/
 enum result usbControlSetDriver(struct UsbControl *control, void *driver)
 {
   if (driver)
@@ -184,6 +239,10 @@ static enum result controlInit(void *object, const void *configBase)
   if (!control->state.buffer)
     return E_MEMORY;
   control->state.left = 0;
+
+  res = listInit(&control->descriptors, sizeof(const struct UsbDescriptor *));
+  if (res != E_OK)
+    return res;
 
   /* Create control endpoints */
   control->ep0in = usbDevAllocate(control->owner, EP_DIRECTION_IN
@@ -247,5 +306,9 @@ static void controlDeinit(void *object)
   queueDeinit(&control->requestPool);
   deinit(control->ep0out);
   deinit(control->ep0in);
+
+  assert(listEmpty(&control->descriptors));
+  listDeinit(&control->descriptors);
+
   free(control->state.buffer);
 }

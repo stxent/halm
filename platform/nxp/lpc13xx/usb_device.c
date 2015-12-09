@@ -28,6 +28,9 @@ static uint8_t devGetConfiguration(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConfiguration(void *, uint8_t);
 static void devSetConnected(void *, bool);
+static enum result devAppendDescriptor(void *, const void *);
+static uint8_t devCompositeIndex(const void *, uint8_t);
+static void devEraseDescriptor(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
     .size = sizeof(struct UsbDevice),
@@ -39,7 +42,11 @@ static const struct UsbDeviceClass devTable = {
     .getConfiguration = devGetConfiguration,
     .setAddress = devSetAddress,
     .setConfiguration = devSetConfiguration,
-    .setConnected = devSetConnected
+    .setConnected = devSetConnected,
+
+    .appendDescriptor = devAppendDescriptor,
+    .compositeIndex = devCompositeIndex,
+    .eraseDescriptor = devEraseDescriptor
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const UsbDevice = &devTable;
@@ -319,6 +326,27 @@ static void devSetConnected(void *object, bool state)
 {
   usbCommandWrite(object, USB_CMD_SET_DEVICE_STATUS,
       state ? DEVICE_STATUS_CON : 0);
+}
+/*----------------------------------------------------------------------------*/
+static enum result devAppendDescriptor(void *object, const void *descriptor)
+{
+  struct UsbDevice * const device = object;
+
+  return usbControlAppendDescriptor(device->control, descriptor);
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t devCompositeIndex(const void *object, uint8_t configuration)
+{
+  const struct UsbDevice * const device = object;
+
+  return usbControlCompositeIndex(device->control, configuration);
+}
+/*----------------------------------------------------------------------------*/
+static void devEraseDescriptor(void *object, const void *descriptor)
+{
+  struct UsbDevice * const device = object;
+
+  usbControlEraseDescriptor(device->control, descriptor);
 }
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)

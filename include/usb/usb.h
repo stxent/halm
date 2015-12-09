@@ -21,7 +21,6 @@
 #define EP_ADDRESS(value)               (value)
 #define EP_LOGICAL_ADDRESS(value)       ((value) & 0x7F)
 /*----------------------------------------------------------------------------*/
-struct UsbDescriptor;
 struct UsbSetupPacket;
 /*----------------------------------------------------------------------------*/
 enum usbDeviceStatus
@@ -73,6 +72,10 @@ struct UsbDeviceClass
   void (*setAddress)(void *, uint8_t);
   void (*setConfiguration)(void *, uint8_t);
   void (*setConnected)(void *, bool);
+
+  enum result (*appendDescriptor)(void *, const void *);
+  uint8_t (*compositeIndex)(const void *, uint8_t);
+  void (*eraseDescriptor)(void *, const void *);
 };
 /*----------------------------------------------------------------------------*/
 /**
@@ -139,6 +142,43 @@ static inline void usbDevSetConfiguration(void *device, uint8_t configuration)
 static inline void usbDevSetConnected(void *device, bool state)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->setConnected(device, state);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Register device descriptor.
+ * @param device Pointer to an UsbDevice object.
+ * @param descriptor Device descriptor to be appended.
+ * @return @b E_OK on success.
+ */
+static inline enum result usbDevAppendDescriptor(void *device,
+    const void *descriptor)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->
+      appendDescriptor(device, descriptor);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get the index of the last interface descriptor.
+ * @param device Pointer to an UsbDevice object.
+ * @param configuration Device configuration number.
+ * @return Index of the last interface descriptor.
+ */
+static inline uint8_t usbDevCompositeIndex(const void *device,
+    uint8_t configuration)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->compositeIndex(device,
+      configuration);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Erase device descriptor.
+ * @param device Pointer to an UsbDevice object.
+ * @param descriptor Device descriptor to be erased.
+ */
+static inline void usbDevEraseDescriptor(void *device, const void *descriptor)
+{
+  ((const struct UsbDeviceClass *)CLASS(device))->eraseDescriptor(device,
+      descriptor);
 }
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
@@ -220,7 +260,6 @@ struct UsbDriverClass
 
   enum result (*configure)(void *, const struct UsbSetupPacket *,
       const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
-  const struct UsbDescriptor **(*getDescriptors)(void *);
   void (*updateStatus)(void *, uint8_t);
 };
 /*----------------------------------------------------------------------------*/
@@ -250,16 +289,6 @@ static inline enum result usbDriverConfigure(void *driver,
   return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
       packet, payload, payloadLength, response, responseLength,
       maxResponseLength);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Return the list of descriptors.
- * @param driver Pointer to an UsbDriver object.
- * @return Pointer to the list of descriptors.
- */
-static inline const struct UsbDescriptor **usbDriverGetDescriptors(void *driver)
-{
-  return ((const struct UsbDriverClass *)CLASS(driver))->getDescriptors(driver);
 }
 /*----------------------------------------------------------------------------*/
 /**

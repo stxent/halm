@@ -23,7 +23,6 @@ static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbSetupPacket *,
     const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
-static const struct UsbDescriptor **driverGetDescriptors(void *);
 static void driverUpdateStatus(void *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
@@ -32,7 +31,6 @@ static const struct UsbDriverClass driverTable = {
     .deinit = driverDeinit,
 
     .configure = driverConfigure,
-    .getDescriptors = driverGetDescriptors,
     .updateStatus = driverUpdateStatus
 };
 /*----------------------------------------------------------------------------*/
@@ -132,33 +130,36 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
     const struct CdcAcmBaseConfig *config)
 {
   /*
-   * 12 pointers to descriptors:
+   * 11 pointers to descriptors:
    *   1 device descriptor,
    *   1 configuration descriptor,
    *   2 interface descriptors,
    *   3 endpoint descriptors,
-   *   4 class specific descriptors,
-   *   1 end marker.
+   *   4 class specific descriptors.
    */
-  driver->descriptorArray = malloc(12 * sizeof(struct UsbDescriptor *));
-  if (!driver->descriptorArray)
-    return E_MEMORY;
 
   driver->endpointDescriptors =
       malloc(3 * sizeof(struct UsbEndpointDescriptor));
   if (!driver->endpointDescriptors)
     return E_MEMORY;
 
-  uint8_t index = 0;
+  enum result res;
 
-  driver->descriptorArray[index++] =
-      (const struct UsbDescriptor *)&deviceDescriptor;
-  driver->descriptorArray[index++] =
-      (const struct UsbDescriptor *)&configDescriptor;
+  res = usbDevAppendDescriptor(driver->device, &deviceDescriptor);
+  if (res != E_OK)
+    return res;
 
-  /* Copy control interface descriptors */
+  res = usbDevAppendDescriptor(driver->device, &configDescriptor);
+  if (res != E_OK)
+    return res;
+
+  /* Append control interface descriptors */
   for (uint8_t i = 0; i < ARRAY_SIZE(controlDescriptors); ++i)
-    driver->descriptorArray[index++] = controlDescriptors[i];
+  {
+    res = usbDevAppendDescriptor(driver->device, controlDescriptors[i]);
+    if (res != E_OK)
+      return res;
+  }
 
   /* Notification endpoint */
   driver->endpointDescriptors[0].length = sizeof(struct UsbEndpointDescriptor);
@@ -169,12 +170,17 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
       TO_LITTLE_ENDIAN_16(CDC_NOTIFICATION_EP_SIZE);
   driver->endpointDescriptors[0].interval = 8;
 
-  driver->descriptorArray[index++] =
-      (struct UsbDescriptor *)&driver->endpointDescriptors[0];
+  res = usbDevAppendDescriptor(driver->device, &driver->endpointDescriptors[0]);
+  if (res != E_OK)
+    return res;
 
-  /* Copy data interface descriptors */
+  /* Append data interface descriptors */
   for (uint8_t i = 0; i < ARRAY_SIZE(dataDescriptors); ++i)
-    driver->descriptorArray[index++] = dataDescriptors[i];
+  {
+    res = usbDevAppendDescriptor(driver->device, dataDescriptors[i]);
+    if (res != E_OK)
+      return res;
+  }
 
   /* Bulk transmit endpoint */
   driver->endpointDescriptors[1].length = sizeof(struct UsbEndpointDescriptor);
@@ -185,6 +191,10 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
   driver->endpointDescriptors[1].interval = 0;
 
+  res = usbDevAppendDescriptor(driver->device, &driver->endpointDescriptors[1]);
+  if (res != E_OK)
+    return res;
+
   /* Bulk receive endpoint */
   driver->endpointDescriptors[2].length = sizeof(struct UsbEndpointDescriptor);
   driver->endpointDescriptors[2].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
@@ -194,21 +204,28 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
   driver->endpointDescriptors[2].interval = 0;
 
-  driver->descriptorArray[index++] =
-      (struct UsbDescriptor *)&driver->endpointDescriptors[1];
-  driver->descriptorArray[index++] =
-      (struct UsbDescriptor *)&driver->endpointDescriptors[2];
-
-  /* Add end of the array mark */
-  driver->descriptorArray[index] = 0;
+  res = usbDevAppendDescriptor(driver->device, &driver->endpointDescriptors[2]);
+  if (res != E_OK)
+    return res;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static inline void freeDescriptors(struct CdcAcmBase *driver)
 {
+  for (uint8_t i = 0; i < 3; ++i)
+    usbDevEraseDescriptor(driver->device, driver->endpointDescriptors + i);
+
+  for (uint8_t i = 0; i < ARRAY_SIZE(dataDescriptors); ++i)
+    usbDevEraseDescriptor(driver->device, dataDescriptors[i]);
+
+  for (uint8_t i = 0; i < ARRAY_SIZE(controlDescriptors); ++i)
+    usbDevEraseDescriptor(driver->device, controlDescriptors[i]);
+
+  usbDevEraseDescriptor(driver->device, &configDescriptor);
+  usbDevEraseDescriptor(driver->device, &deviceDescriptor);
+
   free(driver->endpointDescriptors);
-  free(driver->descriptorArray);
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleRequest(struct CdcAcmBase *driver,
@@ -319,13 +336,6 @@ static enum result driverConfigure(void *object,
       response, responseLength, maxResponseLength);
 
   return res;
-}
-/*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor **driverGetDescriptors(void *object)
-{
-  const struct CdcAcmBase * const driver = object;
-
-  return driver->descriptorArray;
 }
 /*----------------------------------------------------------------------------*/
 static void driverUpdateStatus(void *object, uint8_t status)
