@@ -14,10 +14,14 @@
 #define DATA_BUFFER_SIZE  (CONFIG_USB_CONTROL_REQUESTS * EP0_BUFFER_SIZE)
 #define REQUEST_POOL_SIZE (CONFIG_USB_CONTROL_REQUESTS * 2)
 /*----------------------------------------------------------------------------*/
+static enum result configureDrivers(struct UsbControl *,
+    const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
+    uint16_t *, uint16_t);
 static void controlInHandler(struct UsbRequest *, void *);
 static void controlOutHandler(struct UsbRequest *, void *);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
+static void updateStatus(struct UsbControl *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result controlInit(void *, const void *);
 static void controlDeinit(void *);
@@ -29,6 +33,28 @@ static const struct EntityClass controlTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbControl = &controlTable;
+/*----------------------------------------------------------------------------*/
+static enum result configureDrivers(struct UsbControl *control,
+    const struct UsbSetupPacket *packet, const uint8_t *payload,
+    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    uint16_t maxResponseLength)
+{
+  struct ListNode *currentNode = listFirst(&control->drivers);
+  struct UsbDriver *current;
+  enum result res = E_INVALID;
+
+  while (currentNode)
+  {
+    listData(&control->drivers, currentNode, &current);
+    res = usbDriverConfigure(current, packet, payload, payloadLength,
+        response, responseLength, maxResponseLength);
+    if (res == E_OK || (res != E_OK && res != E_INVALID))
+      break;
+    currentNode = listNext(currentNode);
+  }
+
+  return res;
+}
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *request, void *argument)
 {
@@ -67,10 +93,10 @@ static void controlOutHandler(struct UsbRequest *request,
       res = usbHandleStandardRequest(control, packet, control->state.buffer,
           &length, DATA_BUFFER_SIZE);
 
-      if (res != E_OK && control->driver)
+      if (res != E_OK)
       {
-        res = usbDriverConfigure(control->driver, packet, 0, 0,
-            control->state.buffer, &length, DATA_BUFFER_SIZE);
+        res = configureDrivers(control, packet, 0, 0, control->state.buffer,
+            &length, DATA_BUFFER_SIZE);
       }
     }
     else if (packet->length <= DATA_BUFFER_SIZE)
@@ -85,10 +111,10 @@ static void controlOutHandler(struct UsbRequest *request,
         request->buffer, request->length);
     control->state.left -= request->length;
 
-    if (!control->state.left && control->driver)
+    if (!control->state.left)
     {
-      res = usbDriverConfigure(control->driver, packet,
-          control->state.buffer, packet->length, 0, 0, 0);
+      res = configureDrivers(control, packet, control->state.buffer,
+          packet->length, 0, 0, 0);
     }
   }
 
@@ -141,6 +167,19 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
     length -= chunk;
 
     usbEpEnqueue(control->ep0in, request);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void updateStatus(struct UsbControl *control, uint8_t status)
+{
+  struct ListNode *currentNode = listFirst(&control->drivers);
+  struct UsbDriver *current;
+
+  while (currentNode)
+  {
+    listData(&control->drivers, currentNode, &current);
+    usbDriverUpdateStatus(current, status);
+    currentNode = listNext(currentNode);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -199,18 +238,33 @@ void usbControlEraseDescriptor(struct UsbControl *control,
   }
 }
 /*----------------------------------------------------------------------------*/
-enum result usbControlSetDriver(struct UsbControl *control, void *driver)
+enum result usbControlBindDriver(struct UsbControl *control, void *driver)
 {
-  if (driver)
+  if (!driver)
+    return E_VALUE;
+
+  return listPush(&control->drivers, &driver);
+}
+/*----------------------------------------------------------------------------*/
+void usbControlResetDrivers(struct UsbControl *control)
+{
+  updateStatus(control, DEVICE_STATUS_RESET);
+}
+/*----------------------------------------------------------------------------*/
+void usbControlUnbindDriver(struct UsbControl *control, const void *driver)
+{
+  struct ListNode *currentNode = listFirst(&control->drivers);
+  const struct UsbDriver *current;
+
+  while (currentNode)
   {
-    return compareExchangePointer((void **)&control->driver, 0, driver) ?
-        E_OK : E_BUSY;
-  }
-  else
-  {
-    //TODO Check state
-    control->driver = driver;
-    return E_OK;
+    listData(&control->drivers, currentNode, &current);
+    if (current == driver)
+    {
+      listErase(&control->drivers, currentNode);
+      return;
+    }
+    currentNode = listNext(currentNode);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -219,8 +273,7 @@ void usbControlUpdateStatus(struct UsbControl *control, uint8_t status)
   if (status & DEVICE_STATUS_RESET)
     resetDevice(control);
 
-  if (control->driver)
-    usbDriverUpdateStatus(control->driver, status & ~DEVICE_STATUS_RESET);
+  updateStatus(control, status & ~DEVICE_STATUS_RESET);
 }
 /*----------------------------------------------------------------------------*/
 static enum result controlInit(void *object, const void *configBase)
@@ -233,7 +286,6 @@ static enum result controlInit(void *object, const void *configBase)
     return E_VALUE;
 
   control->owner = config->parent;
-  control->driver = 0;
 
   control->state.buffer = malloc(DATA_BUFFER_SIZE);
   if (!control->state.buffer)
@@ -241,6 +293,9 @@ static enum result controlInit(void *object, const void *configBase)
   control->state.left = 0;
 
   res = listInit(&control->descriptors, sizeof(const struct UsbDescriptor *));
+  if (res != E_OK)
+    return res;
+  res = listInit(&control->drivers, sizeof(const struct UsbDriver *));
   if (res != E_OK)
     return res;
 
@@ -309,6 +364,8 @@ static void controlDeinit(void *object)
 
   assert(listEmpty(&control->descriptors));
   listDeinit(&control->descriptors);
+  assert(listEmpty(&control->drivers));
+  listDeinit(&control->drivers);
 
   free(control->state.buffer);
 }

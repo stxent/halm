@@ -187,7 +187,7 @@ static void driverDeinit(void *object)
   struct HidBase * const driver = object;
 
   usbDevSetConnected(driver->device, false);
-  usbDevBind(driver->device, 0); /* Unbind driver */
+  usbDevUnbind(driver->device, driver);
   freeDescriptors(driver);
 }
 /*----------------------------------------------------------------------------*/

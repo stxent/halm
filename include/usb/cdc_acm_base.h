@@ -41,7 +41,7 @@ struct CdcAcmBase
   struct CdcAcm *owner;
   struct UsbDevice *device;
 
-  struct UsbEndpointDescriptor *endpointDescriptors;
+  struct UsbEndpointDescriptor endpointDescriptors[3];
 
   struct
   {

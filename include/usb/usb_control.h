@@ -26,17 +26,16 @@ struct UsbControl
   struct Entity parent;
 
   struct UsbDevice *owner;
-  struct UsbDriver *driver;
 
   /* List of registered descriptors */
   struct List descriptors;
+  /* List of registered drivers */
+  struct List drivers;
 
   struct UsbEndpoint *ep0in;
   struct UsbEndpoint *ep0out;
   struct Queue requestPool;
   struct UsbRequest *requests;
-
-  uint8_t currentConfiguration;
 
   struct
   {
@@ -51,7 +50,9 @@ enum result usbControlAppendDescriptor(struct UsbControl *,
 uint8_t usbControlCompositeIndex(const struct UsbControl *, uint8_t);
 void usbControlEraseDescriptor(struct UsbControl *,
     const struct UsbDescriptor *);
-enum result usbControlSetDriver(struct UsbControl *, void *);
+enum result usbControlBindDriver(struct UsbControl *, void *);
+void usbControlResetDrivers(struct UsbControl *);
+void usbControlUnbindDriver(struct UsbControl *, const void *);
 void usbControlUpdateStatus(struct UsbControl *, uint8_t);
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_CONTROL_H_ */

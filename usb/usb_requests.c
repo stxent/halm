@@ -276,22 +276,16 @@ static enum result setDeviceConfig(struct UsbControl *control,
   }
   else
   {
-    if (!control->driver)
-      return E_ERROR;
-
     const enum result res = traverseConfigList(control, configuration,
         alternativeSettings);
 
     if (res != E_OK)
       return res;
 
+    /* Set active configuration */
     usbDevSetConfiguration(control->owner, configuration);
-
-    if (control->driver)
-    {
-      /* Notify the driver */
-      usbDriverUpdateStatus(control->driver, DEVICE_STATUS_RESET);
-    }
+    /* Notify and reset drivers */
+    usbControlResetDrivers(control);
   }
 
   return E_OK;
@@ -300,9 +294,11 @@ static enum result setDeviceConfig(struct UsbControl *control,
 static enum result traverseConfigList(struct UsbControl *control,
     uint8_t configuration, uint8_t settings)
 {
-  //FIXME Choose default values
+  if (listEmpty(&control->descriptors))
+    return E_ERROR;
+
   uint8_t currentConfiguration = 0;
-  uint8_t currentSettings = 0xFF;
+  uint8_t currentSettings = 0xFF; //FIXME Choose default values
 
   const struct ListNode *currentNode = listFirst(&control->descriptors);
   const struct UsbDescriptor *current;

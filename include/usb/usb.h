@@ -67,11 +67,14 @@ struct UsbDeviceClass
   CLASS_HEADER
 
   void *(*allocate)(void *, uint8_t);
-  enum result (*bind)(void *, void *);
-  uint8_t (*getConfiguration)(const void *);
   void (*setAddress)(void *, uint8_t);
-  void (*setConfiguration)(void *, uint8_t);
   void (*setConnected)(void *, bool);
+
+  enum result (*bind)(void *, void *);
+  void (*unbind)(void *, const void *);
+
+  uint8_t (*getConfiguration)(const void *);
+  void (*setConfiguration)(void *, uint8_t);
 
   enum result (*appendDescriptor)(void *, const void *);
   uint8_t (*compositeIndex)(const void *, uint8_t);
@@ -91,6 +94,26 @@ static inline void *usbDevAllocate(void *device, uint8_t address)
 }
 /*----------------------------------------------------------------------------*/
 /**
+ * Set the address of the device.
+ * @param device Pointer to an UsbDevice object.
+ * @param address Device address. Must be in the range of 0 to 127.
+ */
+static inline void usbDevSetAddress(void *device, uint8_t address)
+{
+  ((const struct UsbDeviceClass *)CLASS(device))->setAddress(device, address);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Allow or forbid the device to connect to host.
+ * @param device Pointer to an UsbDevice object.
+ * @param state Requested device state.
+ */
+static inline void usbDevSetConnected(void *device, bool state)
+{
+  ((const struct UsbDeviceClass *)CLASS(device))->setConnected(device, state);
+}
+/*----------------------------------------------------------------------------*/
+/**
  * Attach a device driver to the hardware device.
  * @param device Pointer to an UsbDevice object.
  * @param driver Device driver.
@@ -99,6 +122,16 @@ static inline void *usbDevAllocate(void *device, uint8_t address)
 static inline enum result usbDevBind(void *device, void *driver)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->bind(device, driver);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Detach the device driver from the hardware device.
+ * @param device Pointer to an UsbDevice object.
+ * @param driver Device driver.
+ */
+static inline void usbDevUnbind(void *device, const void *driver)
+{
+  ((const struct UsbDeviceClass *)CLASS(device))->unbind(device, driver);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -113,16 +146,6 @@ static inline uint8_t usbDevGetConfiguration(const void *device)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set the address of the device.
- * @param device Pointer to an UsbDevice object.
- * @param address Device address. Must be in the range of 0 to 127.
- */
-static inline void usbDevSetAddress(void *device, uint8_t address)
-{
-  ((const struct UsbDeviceClass *)CLASS(device))->setAddress(device, address);
-}
-/*----------------------------------------------------------------------------*/
-/**
  * Set normal operation mode of the device or return the device to
  * an unconfigured state.
  * @param device Pointer to an UsbDevice object.
@@ -132,16 +155,6 @@ static inline void usbDevSetConfiguration(void *device, uint8_t configuration)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->setConfiguration(device,
       configuration);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Allow or forbid the device to connect to host.
- * @param device Pointer to an UsbDevice object.
- * @param state Requested device state.
- */
-static inline void usbDevSetConnected(void *device, bool state)
-{
-  ((const struct UsbDeviceClass *)CLASS(device))->setConnected(device, state);
 }
 /*----------------------------------------------------------------------------*/
 /**

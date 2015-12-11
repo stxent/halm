@@ -22,11 +22,12 @@ static void waitForInt(struct UsbDevice *, uint32_t);
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
 static void *devAllocate(void *, uint8_t);
-static enum result devBind(void *, void *);
-static uint8_t devGetConfiguration(const void *);
 static void devSetAddress(void *, uint8_t);
-static void devSetConfiguration(void *, uint8_t);
 static void devSetConnected(void *, bool);
+static enum result devBind(void *, void *);
+static void devUnbind(void *, const void *);
+static uint8_t devGetConfiguration(const void *);
+static void devSetConfiguration(void *, uint8_t);
 static enum result devAppendDescriptor(void *, const void *);
 static uint8_t devCompositeIndex(const void *, uint8_t);
 static void devEraseDescriptor(void *, const void *);
@@ -37,11 +38,12 @@ static const struct UsbDeviceClass devTable = {
     .deinit = devDeinit,
 
     .allocate = devAllocate,
-    .bind = devBind,
-    .getConfiguration = devGetConfiguration,
     .setAddress = devSetAddress,
-    .setConfiguration = devSetConfiguration,
     .setConnected = devSetConnected,
+    .bind = devBind,
+    .unbind = devUnbind,
+    .getConfiguration = devGetConfiguration,
+    .setConfiguration = devSetConfiguration,
 
     .appendDescriptor = devAppendDescriptor,
     .compositeIndex = devCompositeIndex,
@@ -302,11 +304,37 @@ static void *devAllocate(void *object, uint8_t address)
   return endpoint;
 }
 /*----------------------------------------------------------------------------*/
+static void devSetAddress(void *object, uint8_t address)
+{
+  usbCommandWrite(object, USB_CMD_SET_ADDRESS,
+      SET_ADDRESS_DEV_EN | SET_ADDRESS_DEV_ADDR(address));
+}
+/*----------------------------------------------------------------------------*/
+static void devSetConnected(void *object, bool state)
+{
+  usbCommandWrite(object, USB_CMD_SET_DEVICE_STATUS,
+      state ? DEVICE_STATUS_CON : 0);
+}
+/*----------------------------------------------------------------------------*/
 static enum result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
+  enum result res;
 
-  return usbControlSetDriver(device->control, driver);
+  irqDisable(device->parent.irq);
+  res = usbControlBindDriver(device->control, driver);
+  irqEnable(device->parent.irq);
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static void devUnbind(void *object, const void *driver)
+{
+  struct UsbDevice * const device = object;
+
+  irqDisable(device->parent.irq);
+  usbControlUnbindDriver(device->control, driver);
+  irqEnable(device->parent.irq);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t devGetConfiguration(const void *object)
@@ -316,12 +344,6 @@ static uint8_t devGetConfiguration(const void *object)
   return device->configuration;
 }
 /*----------------------------------------------------------------------------*/
-static void devSetAddress(void *object, uint8_t address)
-{
-  usbCommandWrite(object, USB_CMD_SET_ADDRESS,
-      SET_ADDRESS_DEV_EN | SET_ADDRESS_DEV_ADDR(address));
-}
-/*----------------------------------------------------------------------------*/
 static void devSetConfiguration(void *object, uint8_t configuration)
 {
   struct UsbDevice * const device = object;
@@ -329,12 +351,6 @@ static void devSetConfiguration(void *object, uint8_t configuration)
   usbCommandWrite(object, USB_CMD_CONFIGURE_DEVICE,
       configuration > 0 ? CONFIGURE_DEVICE_CONF_DEVICE : 0);
   device->configuration = configuration;
-}
-/*----------------------------------------------------------------------------*/
-static void devSetConnected(void *object, bool state)
-{
-  usbCommandWrite(object, USB_CMD_SET_DEVICE_STATUS,
-      state ? DEVICE_STATUS_CON : 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result devAppendDescriptor(void *object, const void *descriptor)
