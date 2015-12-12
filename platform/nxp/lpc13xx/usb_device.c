@@ -511,19 +511,10 @@ static void epDeinit(void *object)
   /* Protect endpoint queue from simultaneous access */
   irqDisable(device->parent.irq);
 
-  struct ListNode *current = listFirst(&device->endpoints);
-  struct UsbEndpoint *currentEndpoint;
+  struct ListNode * const node = listFind(&device->endpoints, &endpoint);
 
-  while (current)
-  {
-    listData(&device->endpoints, current, &currentEndpoint);
-    if (currentEndpoint == endpoint)
-    {
-      listErase(&device->endpoints, current);
-      break;
-    }
-    current = listNext(current);
-  }
+  if (node)
+    listErase(&device->endpoints, node);
 
   irqEnable(device->parent.irq);
 

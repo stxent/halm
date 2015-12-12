@@ -112,22 +112,13 @@ static enum result startLogicHandlerAttach(union PinData pin,
 static void startLogicHandlerDetach(const struct WakeupInterrupt *interrupt)
 {
   struct List * const list = &handler->list;
-  struct ListNode *current = listFirst(list);
-  struct WakeupInterrupt *entry;
+  struct ListNode * const node = listFind(list, &interrupt);
 
-  while (current)
+  if (node)
   {
-    listData(list, current, &entry);
-
-    if (entry == interrupt)
-    {
-      listErase(list, current);
-      if (listEmpty(list))
-        irqDisable(calcVector(interrupt->pin));
-      break;
-    }
-
-    current = listNext(current);
+    listErase(list, node);
+    if (listEmpty(list))
+      irqDisable(calcVector(interrupt->pin));
   }
 }
 /*----------------------------------------------------------------------------*/

@@ -149,22 +149,13 @@ static enum result pinInterruptHandlerAttach(uint8_t channel, union PinData pin,
 static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
 {
   struct List * const list = &handler->list[interrupt->channel];
-  struct ListNode *current = listFirst(list);
-  struct PinInterrupt *entry;
+  struct ListNode * const node = listFind(list, &interrupt);
 
-  while (current)
+  if (node)
   {
-    listData(list, current, &entry);
-
-    if (entry == interrupt)
-    {
-      listErase(list, current);
-      if (listEmpty(&handler->list[0]) && listEmpty(&handler->list[1]))
-        irqDisable(EINT3_IRQ);
-      break;
-    }
-
-    current = listNext(current);
+    listErase(list, node);
+    if (listEmpty(&handler->list[0]) && listEmpty(&handler->list[1]))
+      irqDisable(EINT3_IRQ);
   }
 }
 /*----------------------------------------------------------------------------*/

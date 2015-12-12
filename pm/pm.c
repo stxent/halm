@@ -94,17 +94,8 @@ void pmUnregister(const void *object)
   if (!pmHandler)
     return;
 
-  struct ListNode *current = listFirst(&pmHandler->objectList);
-  struct PmHandlerEntry entry;
+  struct ListNode * const node = listFind(&pmHandler->objectList, object);
 
-  while (current)
-  {
-    listData(&pmHandler->objectList, current, &entry);
-    if (entry.object == object)
-    {
-      listErase(&pmHandler->objectList, current);
-      return;
-    }
-    current = listNext(current);
-  }
+  if (node)
+    listErase(&pmHandler->objectList, node);
 }
