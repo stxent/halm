@@ -45,11 +45,9 @@ struct UsbControl
   } state;
 };
 /*----------------------------------------------------------------------------*/
-enum result usbControlAppendDescriptor(struct UsbControl *,
-    const struct UsbDescriptor *);
+enum result usbControlAppendDescriptor(struct UsbControl *, const void *);
 uint8_t usbControlCompositeIndex(const struct UsbControl *, uint8_t);
-void usbControlEraseDescriptor(struct UsbControl *,
-    const struct UsbDescriptor *);
+void usbControlEraseDescriptor(struct UsbControl *, const void *);
 enum result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlResetDrivers(struct UsbControl *);
 void usbControlUnbindDriver(struct UsbControl *, const void *);

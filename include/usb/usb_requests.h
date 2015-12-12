@@ -29,7 +29,7 @@ enum
   DESCRIPTOR_TYPE_KEY                     = 0x0D,
   DESCRIPTOR_TYPE_ENCRYPTION_TYPE         = 0x0E,
   DESCRIPTOR_TYPE_BOS                     = 0x0F,
-  DESCRIPTOR_TYPE_DEVICECAPABILITY        = 0x10,
+  DESCRIPTOR_TYPE_DEVICE_CAPABILITY       = 0x10,
   DESCRIPTOR_TYPE_WIRELESS_ENDPOINT_COMP  = 0x11,
 
   /* Conventional codes for class-specific descriptors */
@@ -56,7 +56,7 @@ enum
   USB_CLASS_CONTENT_SEC         = 0x0D,
   USB_CLASS_VIDEO               = 0x0E,
   USB_CLASS_WIRELESS_CONTROLLER = 0xE0,
-  USB_CLASS_MISC                = 0xEF,
+  USB_CLASS_MISCELLANEOUS       = 0xEF,
   USB_CLASS_APP_SPEC            = 0xFE,
   USB_CLASS_VENDOR_SPEC         = 0xFF
 };
@@ -227,7 +227,7 @@ struct UsbInterfaceAssociationDescriptor
   uint8_t firstInterface;
   uint8_t interfaceCount;
   uint8_t functionClass;
-  uint8_t functionSubclass;
+  uint8_t functionSubClass;
   uint8_t functionProtocol;
   uint8_t function;
 } __attribute__((packed));

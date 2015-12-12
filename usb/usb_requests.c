@@ -59,6 +59,7 @@ static enum result getDescriptorData(const struct List *descriptors,
 
   if (!entryNode)
     return E_VALUE;
+
   listData(descriptors, entryNode, &entry);
 
   if (entry->descriptorType == DESCRIPTOR_TYPE_STRING && descriptorIndex)
@@ -92,7 +93,11 @@ static enum result getDescriptorData(const struct List *descriptors,
   }
 
   if (chunkLength > maxResponseLength)
+  {
+    usbTrace("requests: descriptor %d:%d is too long: length %u",
+        descriptorType, descriptorIndex, chunkLength);
     return E_VALUE;
+  }
 
   if (chunkLength)
     *responseLength = chunkLength;

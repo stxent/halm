@@ -80,7 +80,7 @@ static const struct UsbInterfaceDescriptor controlInterface = {
     .numEndpoints       = 1,
     .interfaceClass     = USB_CLASS_CDC,
     .interfaceSubClass  = 0x02, /* Abstract Control Model */
-    .interfaceProtocol  = 0x01, /* Common AT commands */
+    .interfaceProtocol  = 0x00, /* No protocol used */
     .interface          = 0 /* No interface name */
 };
 

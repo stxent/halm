@@ -184,7 +184,7 @@ static void updateStatus(struct UsbControl *control, uint8_t status)
 }
 /*----------------------------------------------------------------------------*/
 enum result usbControlAppendDescriptor(struct UsbControl *control,
-    const struct UsbDescriptor *descriptor)
+    const void *descriptor)
 {
   return listPush(&control->descriptors, &descriptor);
 }
@@ -221,7 +221,7 @@ uint8_t usbControlCompositeIndex(const struct UsbControl *control,
 }
 /*----------------------------------------------------------------------------*/
 void usbControlEraseDescriptor(struct UsbControl *control,
-    const struct UsbDescriptor *descriptor)
+    const void *descriptor)
 {
   struct ListNode *currentNode = listFirst(&control->descriptors);
   const struct UsbDescriptor *current;
