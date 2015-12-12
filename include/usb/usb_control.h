@@ -10,6 +10,7 @@
 #include <pin.h>
 #include <containers/list.h>
 #include <containers/queue.h>
+#include <usb/composite_device.h>
 #include <usb/usb.h>
 #include <usb/usb_requests.h>
 /*----------------------------------------------------------------------------*/
@@ -31,6 +32,8 @@ struct UsbControl
   struct List descriptors;
   /* List of registered drivers */
   struct List drivers;
+
+  struct CompositeDevice *composite;
 
   struct UsbEndpoint *ep0in;
   struct UsbEndpoint *ep0out;

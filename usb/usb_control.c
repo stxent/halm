@@ -243,7 +243,34 @@ enum result usbControlBindDriver(struct UsbControl *control, void *driver)
   if (!driver)
     return E_VALUE;
 
-  return listPush(&control->drivers, &driver);
+  const enum result res = listPush(&control->drivers, &driver);
+
+  if (res == E_OK)
+  {
+    struct ListNode *currentNode = listFirst(&control->descriptors);
+    const struct UsbDescriptor *current;
+    uint16_t totalLength = 0;
+    uint8_t interfaceCount = 0;
+
+    while (currentNode)
+    {
+      listData(&control->descriptors, currentNode, &current);
+
+      if (current->descriptorType == DESCRIPTOR_TYPE_INTERFACE)
+        ++interfaceCount;
+      if (current->descriptorType != DESCRIPTOR_TYPE_DEVICE
+          && current->descriptorType != DESCRIPTOR_TYPE_STRING)
+      {
+        totalLength += current->length;
+      }
+
+      currentNode = listNext(currentNode);
+    }
+
+    compositeDeviceUpdate(control->composite, interfaceCount, totalLength);
+  }
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void usbControlResetDrivers(struct UsbControl *control)
@@ -341,6 +368,14 @@ static enum result controlInit(void *object, const void *configBase)
     usbEpEnqueue(control->ep0out, request);
     ++request;
   }
+
+  const struct CompositeDeviceConfig compositeConfig = {
+      .control = control
+  };
+
+  control->composite = init(CompositeDevice, &compositeConfig);
+  if (!control->composite)
+    return E_MEMORY;
 
   return E_OK;
 }
