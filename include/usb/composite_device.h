@@ -27,9 +27,12 @@ struct CompositeDevice
 
   struct UsbControl *control;
 
+  struct List entries;
   struct UsbConfigurationDescriptor configDescriptor;
 };
 /*----------------------------------------------------------------------------*/
+enum result compositeDeviceAttach(struct CompositeDevice *, void *);
+void compositeDeviceDetach(struct CompositeDevice *, const void *);
 void compositeDeviceUpdate(struct CompositeDevice *, uint8_t, uint16_t);
 /*----------------------------------------------------------------------------*/
 #endif /* USB_COMPOSITE_DEVICE_H_ */

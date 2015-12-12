@@ -290,7 +290,7 @@ static enum result setDeviceConfig(struct UsbControl *control,
     /* Set active configuration */
     usbDevSetConfiguration(control->owner, configuration);
     /* Notify and reset drivers */
-    usbControlResetDrivers(control);
+    usbControlResetDriver(control);
   }
 
   return E_OK;
