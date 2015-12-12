@@ -26,30 +26,25 @@ struct UsbControl
 {
   struct Entity parent;
 
+  /* Parent object */
   struct UsbDevice *owner;
 
   /* List of registered descriptors */
   struct List descriptors;
-  /* List of registered drivers */
-  struct List drivers;
 
-  struct CompositeDevice *composite;
-
+  /* Control endpoints */
   struct UsbEndpoint *ep0in;
   struct UsbEndpoint *ep0out;
-  struct Queue requestPool;
-  struct UsbRequest *requests;
 
-  struct
-  {
-    struct UsbSetupPacket packet;
-    uint8_t *buffer;
-    uint16_t left;
-  } state;
+  /* Queue containing IN requests */
+  struct Queue requestPool;
+
+  /* Project-specific data */
+  void *local;
 };
 /*----------------------------------------------------------------------------*/
 enum result usbControlAppendDescriptor(struct UsbControl *, const void *);
-uint8_t usbControlCompositeIndex(const struct UsbControl *, uint8_t);
+uint8_t usbControlCompositeIndex(const struct UsbControl *);
 void usbControlEraseDescriptor(struct UsbControl *, const void *);
 enum result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlResetDrivers(struct UsbControl *);

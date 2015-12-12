@@ -77,7 +77,7 @@ struct UsbDeviceClass
   void (*setConfiguration)(void *, uint8_t);
 
   enum result (*appendDescriptor)(void *, const void *);
-  uint8_t (*compositeIndex)(const void *, uint8_t);
+  uint8_t (*compositeIndex)(const void *);
   void (*eraseDescriptor)(void *, const void *);
 };
 /*----------------------------------------------------------------------------*/
@@ -171,16 +171,13 @@ static inline enum result usbDevAppendDescriptor(void *device,
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Get the index of the last interface descriptor.
+ * Calculate an index for a new interface descriptor.
  * @param device Pointer to an UsbDevice object.
- * @param configuration Device configuration number.
- * @return Index of the last interface descriptor.
+ * @return Index for an interface descriptor.
  */
-static inline uint8_t usbDevCompositeIndex(const void *device,
-    uint8_t configuration)
+static inline uint8_t usbDevCompositeIndex(const void *device)
 {
-  return ((const struct UsbDeviceClass *)CLASS(device))->compositeIndex(device,
-      configuration);
+  return ((const struct UsbDeviceClass *)CLASS(device))->compositeIndex(device);
 }
 /*----------------------------------------------------------------------------*/
 /**

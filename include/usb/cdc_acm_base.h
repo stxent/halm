@@ -41,14 +41,14 @@ struct CdcAcmBase
   struct CdcAcm *owner;
   struct UsbDevice *device;
 
-  struct UsbEndpointDescriptor endpointDescriptors[3];
-
   struct
   {
     struct CdcLineCoding coding;
     bool dtr;
     bool rts;
   } line;
+
+  void *local;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* USB_CDC_ACM_BASE_H_ */

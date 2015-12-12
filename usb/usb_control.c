@@ -14,14 +14,36 @@
 #define DATA_BUFFER_SIZE  (CONFIG_USB_CONTROL_REQUESTS * EP0_BUFFER_SIZE)
 #define REQUEST_POOL_SIZE (CONFIG_USB_CONTROL_REQUESTS * 2)
 /*----------------------------------------------------------------------------*/
-static enum result configureDrivers(struct UsbControl *,
+struct LocalData
+{
+#ifdef CONFIG_USB_COMPOSITE
+  struct List drivers;
+  struct CompositeDevice *composite;
+#else
+  struct UsbDriver *driver;
+#endif
+
+  struct UsbRequest requests[REQUEST_POOL_SIZE];
+
+  struct
+  {
+    struct UsbSetupPacket packet;
+    uint16_t left;
+    uint8_t buffer[DATA_BUFFER_SIZE];
+  } state;
+};
+/*----------------------------------------------------------------------------*/
+static struct LocalData *localDataAllocate(struct UsbControl *);
+static void localDataFree(struct LocalData *);
+static enum result localDataConfigureDriver(struct LocalData *,
     const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
     uint16_t *, uint16_t);
+static void localDataUpdateStatus(struct LocalData *, uint8_t);
+/*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *, void *);
 static void controlOutHandler(struct UsbRequest *, void *);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
-static void updateStatus(struct UsbControl *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result controlInit(void *, const void *);
 static void controlDeinit(void *);
@@ -34,18 +56,69 @@ static const struct EntityClass controlTable = {
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbControl = &controlTable;
 /*----------------------------------------------------------------------------*/
-static enum result configureDrivers(struct UsbControl *control,
+static struct LocalData *localDataAllocate(struct UsbControl *control)
+{
+  struct LocalData *local = malloc(sizeof(struct LocalData));
+  if (!local)
+    return 0;
+
+  local->state.left = 0;
+  memset(&local->state.packet, 0, sizeof(local->state.packet));
+
+  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
+  {
+    if (usbRequestInit(local->requests + index, EP0_BUFFER_SIZE) != E_OK)
+      return 0;
+  }
+
+#ifdef CONFIG_USB_COMPOSITE
+  if (listInit(&local->drivers, sizeof(const struct UsbDriver *)) != E_OK)
+    return 0;
+
+  const struct CompositeDeviceConfig compositeConfig = {
+      .control = control
+  };
+
+  local->composite = init(CompositeDevice, &compositeConfig);
+  if (!local->composite)
+    return 0;
+#else
+  local->driver = 0;
+#endif
+
+  return local;
+}
+/*----------------------------------------------------------------------------*/
+static void localDataFree(struct LocalData *local)
+{
+#ifdef CONFIG_USB_COMPOSITE
+  deinit(local->composite);
+
+  assert(listEmpty(&local->drivers));
+  listDeinit(&local->drivers);
+#else
+  assert(local->driver == 0);
+#endif
+
+  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
+    usbRequestDeinit(local->requests + index);
+
+  free(local);
+}
+/*----------------------------------------------------------------------------*/
+static enum result localDataConfigureDriver(struct LocalData *local,
     const struct UsbSetupPacket *packet, const uint8_t *payload,
     uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
-  struct ListNode *currentNode = listFirst(&control->drivers);
+#ifdef CONFIG_USB_COMPOSITE
+  struct ListNode *currentNode = listFirst(&local->drivers);
   struct UsbDriver *current;
   enum result res = E_INVALID;
 
   while (currentNode)
   {
-    listData(&control->drivers, currentNode, &current);
+    listData(&local->drivers, currentNode, &current);
     res = usbDriverConfigure(current, packet, payload, payloadLength,
         response, responseLength, maxResponseLength);
     if (res == E_OK || (res != E_OK && res != E_INVALID))
@@ -54,6 +127,31 @@ static enum result configureDrivers(struct UsbControl *control,
   }
 
   return res;
+#else
+  if (!local->driver)
+    return E_INVALID;
+
+  return usbDriverConfigure(local->driver, packet, payload, payloadLength,
+      response, responseLength, maxResponseLength);
+#endif
+}
+/*----------------------------------------------------------------------------*/
+static void localDataUpdateStatus(struct LocalData *local, uint8_t status)
+{
+#ifdef CONFIG_USB_COMPOSITE
+  struct ListNode *currentNode = listFirst(&local->drivers);
+  struct UsbDriver *current;
+
+  while (currentNode)
+  {
+    listData(&local->drivers, currentNode, &current);
+    usbDriverUpdateStatus(current, status);
+    currentNode = listNext(currentNode);
+  }
+#else
+  if (local->driver)
+    usbDriverUpdateStatus(local->driver, status);
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(struct UsbRequest *request, void *argument)
@@ -67,7 +165,8 @@ static void controlOutHandler(struct UsbRequest *request,
     void *argument)
 {
   struct UsbControl * const control = argument;
-  struct UsbSetupPacket * const packet = &control->state.packet;
+  struct LocalData * const local = control->local;
+  struct UsbSetupPacket * const packet = &local->state.packet;
 
   if (request->status == REQUEST_CANCELLED)
   {
@@ -80,7 +179,7 @@ static void controlOutHandler(struct UsbRequest *request,
 
   if (request->status == REQUEST_SETUP)
   {
-    control->state.left = 0;
+    local->state.left = 0;
     memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
     packet->value = fromLittleEndian16(packet->value);
     packet->index = fromLittleEndian16(packet->index);
@@ -90,31 +189,31 @@ static void controlOutHandler(struct UsbRequest *request,
 
     if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
     {
-      res = usbHandleStandardRequest(control, packet, control->state.buffer,
+      res = usbHandleStandardRequest(control, packet, local->state.buffer,
           &length, DATA_BUFFER_SIZE);
 
       if (res != E_OK)
       {
-        res = configureDrivers(control, packet, 0, 0, control->state.buffer,
-            &length, DATA_BUFFER_SIZE);
+        res = localDataConfigureDriver(control->local, packet, 0, 0,
+            local->state.buffer, &length, DATA_BUFFER_SIZE);
       }
     }
     else if (packet->length <= DATA_BUFFER_SIZE)
     {
-      control->state.left = packet->length;
+      local->state.left = packet->length;
     }
   }
-  else if (control->state.left && request->length <= control->state.left)
+  else if (local->state.left && request->length <= local->state.left)
   {
     /* Erroneous packets are ignored */
-    memcpy(control->state.buffer + (packet->length - control->state.left),
+    memcpy(local->state.buffer + (packet->length - local->state.left),
         request->buffer, request->length);
-    control->state.left -= request->length;
+    local->state.left -= request->length;
 
-    if (!control->state.left)
+    if (!local->state.left)
     {
-      res = configureDrivers(control, packet, control->state.buffer,
-          packet->length, 0, 0, 0);
+      res = localDataConfigureDriver(control->local, packet,
+          local->state.buffer, packet->length, 0, 0, 0);
     }
   }
 
@@ -122,7 +221,7 @@ static void controlOutHandler(struct UsbRequest *request,
   {
     /* Send smallest of requested and offered lengths */
     length = length < packet->length ? length : packet->length;
-    sendResponse(control, control->state.buffer, length);
+    sendResponse(control, local->state.buffer, length);
   }
   else if (res != E_BUSY)
   {
@@ -170,54 +269,31 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void updateStatus(struct UsbControl *control, uint8_t status)
-{
-  struct ListNode *currentNode = listFirst(&control->drivers);
-  struct UsbDriver *current;
-
-  while (currentNode)
-  {
-    listData(&control->drivers, currentNode, &current);
-    usbDriverUpdateStatus(current, status);
-    currentNode = listNext(currentNode);
-  }
-}
-/*----------------------------------------------------------------------------*/
 enum result usbControlAppendDescriptor(struct UsbControl *control,
     const void *descriptor)
 {
   return listPush(&control->descriptors, &descriptor);
 }
 /*----------------------------------------------------------------------------*/
-uint8_t usbControlCompositeIndex(const struct UsbControl *control,
-    uint8_t configuration)
+uint8_t usbControlCompositeIndex(const struct UsbControl *control)
 {
   const struct ListNode *currentNode = listFirst(&control->descriptors);
   const struct UsbDescriptor *current;
-  uint8_t currentConfiguration = 0;
-  uint8_t count = 0;
+  uint8_t last = 0;
 
   while (currentNode)
   {
     listData(&control->descriptors, currentNode, &current);
-
-    if (current->descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
+    if (current->descriptorType == DESCRIPTOR_TYPE_INTERFACE)
     {
-      const struct UsbConfigurationDescriptor * const descriptor =
-          (const struct UsbConfigurationDescriptor *)current;
-
-      currentConfiguration = descriptor->configurationValue;
+      struct UsbInterfaceDescriptor * const descriptor =
+          (struct UsbInterfaceDescriptor *)current;
+      last = descriptor->interfaceNumber + 1;
     }
-    else if (current->descriptorType == DESCRIPTOR_TYPE_INTERFACE
-        && currentConfiguration == configuration)
-    {
-      ++count;
-    }
-
     currentNode = listNext(currentNode);
   }
 
-  return count;
+  return last;
 }
 /*----------------------------------------------------------------------------*/
 void usbControlEraseDescriptor(struct UsbControl *control,
@@ -243,7 +319,10 @@ enum result usbControlBindDriver(struct UsbControl *control, void *driver)
   if (!driver)
     return E_VALUE;
 
-  const enum result res = listPush(&control->drivers, &driver);
+  struct LocalData * const local = control->local;
+
+#ifdef CONFIG_USB_COMPOSITE
+  const enum result res = listPush(&local->drivers, &driver);
 
   if (res == E_OK)
   {
@@ -267,32 +346,46 @@ enum result usbControlBindDriver(struct UsbControl *control, void *driver)
       currentNode = listNext(currentNode);
     }
 
-    compositeDeviceUpdate(control->composite, interfaceCount, totalLength);
+    compositeDeviceUpdate(local->composite, interfaceCount, totalLength);
   }
 
+  return res;
+#else
+  if (local->driver)
+    return E_ERROR;
+
+  local->driver = driver;
   return E_OK;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 void usbControlResetDrivers(struct UsbControl *control)
 {
-  updateStatus(control, DEVICE_STATUS_RESET);
+  localDataUpdateStatus(control->local, DEVICE_STATUS_RESET);
 }
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control, const void *driver)
 {
-  struct ListNode *currentNode = listFirst(&control->drivers);
+  struct LocalData * const local = control->local;
+
+#ifdef CONFIG_USB_COMPOSITE
+  struct ListNode *currentNode = listFirst(&local->drivers);
   const struct UsbDriver *current;
 
   while (currentNode)
   {
-    listData(&control->drivers, currentNode, &current);
+    listData(&local->drivers, currentNode, &current);
     if (current == driver)
     {
-      listErase(&control->drivers, currentNode);
+      listErase(&local->drivers, currentNode);
       return;
     }
     currentNode = listNext(currentNode);
   }
+#else
+  assert(local->driver == driver);
+  local->driver = 0;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 void usbControlUpdateStatus(struct UsbControl *control, uint8_t status)
@@ -300,7 +393,7 @@ void usbControlUpdateStatus(struct UsbControl *control, uint8_t status)
   if (status & DEVICE_STATUS_RESET)
     resetDevice(control);
 
-  updateStatus(control, status & ~DEVICE_STATUS_RESET);
+  localDataUpdateStatus(control->local, status & ~DEVICE_STATUS_RESET);
 }
 /*----------------------------------------------------------------------------*/
 static enum result controlInit(void *object, const void *configBase)
@@ -314,18 +407,6 @@ static enum result controlInit(void *object, const void *configBase)
 
   control->owner = config->parent;
 
-  control->state.buffer = malloc(DATA_BUFFER_SIZE);
-  if (!control->state.buffer)
-    return E_MEMORY;
-  control->state.left = 0;
-
-  res = listInit(&control->descriptors, sizeof(const struct UsbDescriptor *));
-  if (res != E_OK)
-    return res;
-  res = listInit(&control->drivers, sizeof(const struct UsbDriver *));
-  if (res != E_OK)
-    return res;
-
   /* Create control endpoints */
   control->ep0in = usbDevAllocate(control->owner, EP_DIRECTION_IN
       | EP_ADDRESS(0));
@@ -335,28 +416,27 @@ static enum result controlInit(void *object, const void *configBase)
   if (!control->ep0out)
     return E_MEMORY;
 
+  /* Create a list for USB descriptors */
+  res = listInit(&control->descriptors, sizeof(const struct UsbDescriptor *));
+  if (res != E_OK)
+    return res;
+
+  control->local = localDataAllocate(control);
+  if (!control->local)
+    return E_MEMORY;
+
+  /* Initialize request pool */
   res = queueInit(&control->requestPool, sizeof(struct UsbRequest *),
       REQUEST_POOL_SIZE);
   if (res != E_OK)
     return res;
 
-  /* Allocate requests */
-  control->requests = malloc(REQUEST_POOL_SIZE * sizeof(struct UsbRequest));
-  if (!control->requests)
-    return E_MEMORY;
-
-  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
-  {
-    res = usbRequestInit(control->requests + index, EP0_BUFFER_SIZE);
-    if (res != E_OK)
-      return res;
-  }
-
   /* Enable interrupts */
   resetDevice(control);
 
   /* Enqueue requests after endpoint enabling */
-  struct UsbRequest *request = control->requests;
+  struct UsbRequest *request =
+      ((struct LocalData *)control->local)->requests;
 
   for (unsigned short index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
   {
@@ -368,14 +448,6 @@ static enum result controlInit(void *object, const void *configBase)
     usbEpEnqueue(control->ep0out, request);
     ++request;
   }
-
-  const struct CompositeDeviceConfig compositeConfig = {
-      .control = control
-  };
-
-  control->composite = init(CompositeDevice, &compositeConfig);
-  if (!control->composite)
-    return E_MEMORY;
 
   return E_OK;
 }
@@ -389,18 +461,12 @@ static void controlDeinit(void *object)
 
   assert(queueSize(&control->requestPool) == REQUEST_POOL_SIZE);
 
-  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
-    usbRequestDeinit(control->requests + index);
-  free(control->requests);
-
   queueDeinit(&control->requestPool);
   deinit(control->ep0out);
   deinit(control->ep0in);
 
+  localDataFree(control->local);
+
   assert(listEmpty(&control->descriptors));
   listDeinit(&control->descriptors);
-  assert(listEmpty(&control->drivers));
-  listDeinit(&control->drivers);
-
-  free(control->state.buffer);
 }

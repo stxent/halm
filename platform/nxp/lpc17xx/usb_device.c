@@ -29,7 +29,7 @@ static void devUnbind(void *, const void *);
 static uint8_t devGetConfiguration(const void *);
 static void devSetConfiguration(void *, uint8_t);
 static enum result devAppendDescriptor(void *, const void *);
-static uint8_t devCompositeIndex(const void *, uint8_t);
+static uint8_t devCompositeIndex(const void *);
 static void devEraseDescriptor(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
@@ -360,11 +360,11 @@ static enum result devAppendDescriptor(void *object, const void *descriptor)
   return usbControlAppendDescriptor(device->control, descriptor);
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t devCompositeIndex(const void *object, uint8_t configuration)
+static uint8_t devCompositeIndex(const void *object)
 {
   const struct UsbDevice * const device = object;
 
-  return usbControlCompositeIndex(device->control, configuration);
+  return usbControlCompositeIndex(device->control);
 }
 /*----------------------------------------------------------------------------*/
 static void devEraseDescriptor(void *object, const void *descriptor)
