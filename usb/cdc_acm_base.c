@@ -25,7 +25,9 @@ struct LocalData
 /*----------------------------------------------------------------------------*/
 static enum result buildDescriptors(struct CdcAcmBase *,
     const struct CdcAcmBaseConfig *);
-static void freeDescriptors(struct CdcAcmBase *);
+static enum result descriptorEraseWrapper(void *, const void *);
+static enum result iterateOverDescriptors(struct CdcAcmBase *,
+    enum result (*)(void *, const void *));
 static enum result handleRequest(struct CdcAcmBase *,
     const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
     uint16_t *, uint16_t);
@@ -148,17 +150,7 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
     return E_MEMORY;
   driver->local = local;
 
-  enum result res;
-
-#ifndef CONFIG_USB_COMPOSITE
-  res = usbDevAppendDescriptor(driver->device, &deviceDescriptor);
-  if (res != E_OK)
-    return res;
-
-  res = usbDevAppendDescriptor(driver->device, &configDescriptor);
-  if (res != E_OK)
-    return res;
-#else
+#ifdef CONFIG_USB_COMPOSITE
   const uint8_t firstInterface = usbDevCompositeIndex(driver->device);
 
   local->associationDescriptor.length =
@@ -174,10 +166,6 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
   local->associationDescriptor.functionProtocol = 0x00;
   /* No string description */
   local->associationDescriptor.function = 0;
-
-  res = usbDevAppendDescriptor(driver->device, &local->associationDescriptor);
-  if (res != E_OK)
-    return res;
 
   local->interfaceDescriptors[0].length = sizeof(struct UsbInterfaceDescriptor);
   local->interfaceDescriptors[0].descriptorType = DESCRIPTOR_TYPE_INTERFACE;
@@ -233,91 +221,58 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
   local->endpointDescriptors[2].interval = 0;
 
-  /* Control interface descriptor */
-#ifndef CONFIG_USB_COMPOSITE
-  res = usbDevAppendDescriptor(driver->device, &controlInterfaceDescriptor);
-  if (res != E_OK)
-    return res;
+  return iterateOverDescriptors(driver, usbDevAppendDescriptor);
+}
+/*----------------------------------------------------------------------------*/
+static enum result descriptorEraseWrapper(void *device, const void *descriptor)
+{
+  usbDevEraseDescriptor(device, descriptor);
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result iterateOverDescriptors(struct CdcAcmBase *driver,
+    enum result (*action)(void *, const void *))
+{
+  struct LocalData * const local = driver->local;
+
+#ifdef CONFIG_USB_COMPOSITE
+  const void * const descriptors[] = {
+    &local->associationDescriptor,
+    &local->interfaceDescriptors[0],
+    controlDescriptors[0],
+    controlDescriptors[1],
+    controlDescriptors[2],
+    &local->unionDescriptor,
+    &local->endpointDescriptors[0],
+    &local->interfaceDescriptors[1],
+    &local->endpointDescriptors[1],
+    &local->endpointDescriptors[2]
+  };
 #else
-  res = usbDevAppendDescriptor(driver->device, &local->interfaceDescriptors[0]);
-  if (res != E_OK)
-    return res;
+  const void * const descriptors[] = {
+    &deviceDescriptor,
+    &configDescriptor,
+    &controlInterfaceDescriptor,
+    controlDescriptors[0],
+    controlDescriptors[1],
+    controlDescriptors[2],
+    &unionDescriptor,
+    &local->endpointDescriptors[0],
+    &dataInterfaceDescriptor,
+    &local->endpointDescriptors[1],
+    &local->endpointDescriptors[2]
+  };
 #endif
 
-  /* Append other control descriptors */
-  for (uint8_t i = 0; i < ARRAY_SIZE(controlDescriptors); ++i)
+  for (uint8_t i = 0; i < ARRAY_SIZE(descriptors); ++i)
   {
-    res = usbDevAppendDescriptor(driver->device, controlDescriptors[i]);
+    const enum result res = action(driver->device, descriptors[i]);
+
     if (res != E_OK)
       return res;
   }
 
-  /* Union functional descriptor */
-#ifndef CONFIG_USB_COMPOSITE
-  res = usbDevAppendDescriptor(driver->device, &unionDescriptor);
-  if (res != E_OK)
-    return res;
-#else
-  res = usbDevAppendDescriptor(driver->device, &local->unionDescriptor);
-  if (res != E_OK)
-    return res;
-#endif
-
-  /* Notification endpoint descriptor */
-  res = usbDevAppendDescriptor(driver->device, &local->endpointDescriptors[0]);
-  if (res != E_OK)
-    return res;
-
-  /* Data interface descriptor */
-#ifndef CONFIG_USB_COMPOSITE
-  res = usbDevAppendDescriptor(driver->device, &dataInterfaceDescriptor);
-  if (res != E_OK)
-    return res;
-#else
-  res = usbDevAppendDescriptor(driver->device, &local->interfaceDescriptors[1]);
-  if (res != E_OK)
-    return res;
-#endif
-
-  /* Bulk transmit endpoint descriptor */
-  res = usbDevAppendDescriptor(driver->device, &local->endpointDescriptors[1]);
-  if (res != E_OK)
-    return res;
-
-  /* Bulk receive endpoint descriptor */
-  res = usbDevAppendDescriptor(driver->device, &local->endpointDescriptors[2]);
-  if (res != E_OK)
-    return res;
-
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void freeDescriptors(struct CdcAcmBase *driver)
-{
-  struct LocalData * const local = driver->local;
-
-  for (uint8_t i = 0; i < ARRAY_SIZE(local->endpointDescriptors); ++i)
-    usbDevEraseDescriptor(driver->device, &local->endpointDescriptors[i]);
-
-  for (uint8_t i = 0; i < ARRAY_SIZE(controlDescriptors); ++i)
-    usbDevEraseDescriptor(driver->device, controlDescriptors[i]);
-
-#ifndef CONFIG_USB_COMPOSITE
-  usbDevEraseDescriptor(driver->device, &unionDescriptor);
-
-  usbDevEraseDescriptor(driver->device, &dataInterfaceDescriptor);
-  usbDevEraseDescriptor(driver->device, &controlInterfaceDescriptor);
-
-  usbDevEraseDescriptor(driver->device, &configDescriptor);
-  usbDevEraseDescriptor(driver->device, &deviceDescriptor);
-#else
-  usbDevEraseDescriptor(driver->device, &local->unionDescriptor);
-
-  usbDevEraseDescriptor(driver->device, &local->interfaceDescriptors[0]);
-  usbDevEraseDescriptor(driver->device, &local->interfaceDescriptors[1]);
-
-  usbDevEraseDescriptor(driver->device, &local->associationDescriptor);
-#endif
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleRequest(struct CdcAcmBase *driver,
@@ -415,7 +370,7 @@ static void driverDeinit(void *object)
 #endif
 
   usbDevUnbind(driver->device, driver);
-  freeDescriptors(driver);
+  iterateOverDescriptors(driver, descriptorEraseWrapper);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
