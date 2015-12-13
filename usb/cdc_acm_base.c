@@ -130,8 +130,8 @@ static const struct UsbDescriptor * const controlDescriptors[] = {
         .length             = sizeof(struct CdcCallManagementDescriptor),
         .descriptorType     = DESCRIPTOR_TYPE_CS_INTERFACE,
         .descriptorSubType  = CDC_SUBTYPE_CALL_MANAGEMENT,
-        .capabilities       = 0x01,
-        .dataInterface      = 0x01
+        .capabilities       = 0x00,
+        .dataInterface      = 0
     },
     (const struct UsbDescriptor *)&(const struct CdcAcmDescriptor){
         .length             = sizeof(struct CdcAcmDescriptor),
@@ -152,6 +152,8 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
 
 #ifdef CONFIG_USB_COMPOSITE
   const uint8_t firstInterface = usbDevCompositeIndex(driver->device);
+
+  driver->controlInterfaceIndex = firstInterface;
 
   local->associationDescriptor.length =
       sizeof(struct UsbInterfaceAssociationDescriptor);
@@ -286,46 +288,47 @@ static enum result handleRequest(struct CdcAcmBase *driver,
   {
     case CDC_SET_LINE_CODING:
     {
-      if (inputLength != sizeof(driver->line.coding))
+      if (inputLength != sizeof(driver->lineCoding))
         return E_VALUE;
 
-      memcpy(&driver->line.coding, input, sizeof(driver->line.coding));
+      memcpy(&driver->lineCoding, input, sizeof(driver->lineCoding));
       event = true;
 
-      usbTrace("cdc_acm: rate %u, format %u, parity %u, width %u",
-          driver->line.coding.dteRate, driver->line.coding.charFormat,
-          driver->line.coding.parityType, driver->line.coding.dataBits);
+      usbTrace("cdc_acm at %u: rate %u, format %u, parity %u, width %u",
+          packet->index, driver->lineCoding.dteRate,
+          driver->lineCoding.charFormat, driver->lineCoding.parityType,
+          driver->lineCoding.dataBits);
       break;
     }
 
     case CDC_GET_LINE_CODING:
     {
-      if (maxOutputLength < sizeof(driver->line.coding))
+      if (maxOutputLength < sizeof(driver->lineCoding))
         return E_VALUE;
 
-      memcpy(output, &driver->line.coding, sizeof(driver->line.coding));
-      *outputLength = sizeof(driver->line.coding);
+      memcpy(output, &driver->lineCoding, sizeof(driver->lineCoding));
+      *outputLength = sizeof(driver->lineCoding);
 
-      usbTrace("cdc_acm: line coding requested");
+      usbTrace("cdc_acm at %u: line coding requested", packet->index);
       break;
     }
 
     case CDC_SET_CONTROL_LINE_STATE:
     {
-      const bool dtrState = (packet->value & 0x01) != 0;
-      const bool rtsState = (packet->value & 0x02) != 0;
-
-      driver->line.dtr = dtrState;
-      driver->line.rts = rtsState;
+      driver->controlLineState = packet->value & 0x03;
       event = true;
 
-      usbTrace("cdc_acm: set control lines to %02X", packet->value);
+      usbTrace("cdc_acm at %u: set control lines to %02X",
+          packet->index, packet->value);
       break;
     }
 
     default:
-      usbTrace("cdc_acm: unknown request %02X", packet->request);
+    {
+      usbTrace("cdc_acm at %u: unknown request %02X",
+          packet->index, packet->request);
       return E_INVALID;
+    }
   }
 
   if (event)
@@ -345,9 +348,9 @@ static enum result driverInit(void *object, const void *configBase)
 
   driver->owner = config->owner;
   driver->device = config->device;
-  driver->line.coding = (struct CdcLineCoding){115200, 0, 0, 8};
-  driver->line.dtr = true;
-  driver->line.rts = true;
+  driver->lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
+  driver->controlLineState = 0;
+  driver->controlInterfaceIndex = 0;
 
   buildDescriptors(driver, config);
 
@@ -382,6 +385,9 @@ static enum result driverConfigure(void *object,
   const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
 
   if (type != REQUEST_TYPE_CLASS)
+    return E_INVALID;
+
+  if (packet->index != driver->controlInterfaceIndex)
     return E_INVALID;
 
   const enum result res = handleRequest(driver, packet, payload, payloadLength,

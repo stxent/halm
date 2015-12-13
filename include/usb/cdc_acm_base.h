@@ -41,12 +41,9 @@ struct CdcAcmBase
   struct CdcAcm *owner;
   struct UsbDevice *device;
 
-  struct
-  {
-    struct CdcLineCoding coding;
-    bool dtr;
-    bool rts;
-  } line;
+  struct CdcLineCoding lineCoding;
+  uint8_t controlLineState;
+  uint8_t controlInterfaceIndex;
 
   void *local;
 };

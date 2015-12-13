@@ -343,7 +343,7 @@ static enum result interfaceGet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_RATE:
-      *(uint32_t *)data = interface->driver->line.coding.dteRate;
+      *(uint32_t *)data = interface->driver->lineCoding.dteRate;
       return E_OK;
 
 /* TODO Extend option list
