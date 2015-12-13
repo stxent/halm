@@ -208,6 +208,11 @@ config PLATFORM_NXP_UART_BASE
 	bool "UART"
 	default y
 
+config PLATFORM_USB_DEVICE
+	bool "USB Device"
+	default y
+	depends on FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
 config PLATFORM_NXP_WAKEUP_INTERRUPT
 	bool "Wake-up interrupts"
 	default y
@@ -292,7 +297,7 @@ config PLATFORM_NXP_I2C_SLAVE
 	depends on I2C && PLATFORM_NXP_I2C_BASE
 
 config PLATFORM_NXP_I2S
-	bool "I2S drivers"
+	bool "I2S driver"
 	default y
 	depends on PLATFORM_NXP_I2S_BASE
 
@@ -342,7 +347,7 @@ config PLATFORM_NXP_SPI_DMA
 	default y
 	depends on SPI && PLATFORM_NXP_SSP_BASE && PLATFORM_NXP_GPDMA
 
-config PLATFORM_NXP_SDIO_SPI
+config PLATFORM_SDIO_SPI
 	bool "SDIO over SPI"
 	default y
 	depends on SPI
@@ -351,31 +356,34 @@ config PLATFORM_SDCARD
 	bool "SD Card driver"
 	default y
 
-config USB
-	bool "USB support"
+config USB_DEVICE
+	bool "USB Device drivers"
 	default y
-	depends on FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
-	help
-	  This enables support for Universal Serial Bus.
+	depends on PLATFORM_USB_DEVICE
 
-config USB_CDC
+config USB_DEVICE_COMPOSITE
+	bool "Composite device"
+	default n
+	depends on USB_DEVICE
+
+config USB_DEVICE_CDC
 	bool "CDC driver"
-	depends on USB
+	default y
+	depends on USB_DEVICE
 
-config USB_HID
+config USB_DEVICE_HID
 	bool "HID driver"
-	depends on USB
-
-config USB_TRACE
-	bool "USB trace"
-	depends on USB
-	help
-	  This enables verbose debug tracing for USB drivers.
+	default y
+	depends on USB_DEVICE
 
 menu "USB options"
-	depends on USB
+	depends on USB_DEVICE
 
-config USB_CONTROL_REQUESTS
+config USB_DEVICE_ENDPOINT_REQUESTS
+	int "Endpoint queue size"
+	default 4
+
+config USB_DEVICE_CONTROL_REQUESTS
 	int "Control queue size"
 	default 2
 
@@ -392,6 +400,13 @@ config USB_DEVICE_VENDOR_ID
 	default 0
 
 endmenu
+
+config USB_TRACE
+	bool "USB trace"
+	default n
+	depends on USB_DEVICE
+	help
+	  This enables verbose debug tracing for USB drivers.
 
 endmenu
 

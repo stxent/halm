@@ -12,11 +12,6 @@ ifeq ($(CONFIG_PM),y)
   PROJECT_FLAGS += CONFIG_PLATFORM_NXP_SERIAL_PM
 endif
 
-ifeq ($(CONFIG_USB),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_base.c
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_device.c
-endif
-
 CSOURCES += platform/pin.c
 CSOURCES += platform/$(PLATFORM_TYPE)/startup.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/clocking.c
@@ -167,10 +162,6 @@ ifeq ($(CONFIG_PLATFORM_NXP_SCT_TIMER),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/sct_timer.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_SDIO_SPI),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/sdio_spi.c
-endif
-
 ifeq ($(CONFIG_PLATFORM_NXP_SERIAL),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_UART)/serial.c
 endif
@@ -189,6 +180,15 @@ endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_SPI_DMA),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_SPI)/spi_dma.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_USB_DEVICE),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_base.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_device.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_SDIO_SPI),y)
+  CSOURCES += platform/sdio_spi.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_SDCARD),y)

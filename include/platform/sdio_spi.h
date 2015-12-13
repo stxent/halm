@@ -1,11 +1,11 @@
 /*
- * platform/nxp/sdio_spi.h
+ * platform/sdio_spi.h
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_SDIO_SPI_H_
-#define PLATFORM_NXP_SDIO_SPI_H_
+#ifndef PLATFORM_SDIO_SPI_H_
+#define PLATFORM_SDIO_SPI_H_
 /*----------------------------------------------------------------------------*/
 #include <crc.h>
 #include <interface.h>
@@ -90,4 +90,4 @@ struct SdioSpi
   struct Pin cs;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_SDIO_SPI_H_ */
+#endif /* PLATFORM_SDIO_SPI_H_ */

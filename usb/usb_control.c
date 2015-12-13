@@ -11,8 +11,8 @@
 #include <usb/usb_control.h>
 /*----------------------------------------------------------------------------*/
 #define EP0_BUFFER_SIZE   64
-#define DATA_BUFFER_SIZE  (CONFIG_USB_CONTROL_REQUESTS * EP0_BUFFER_SIZE)
-#define REQUEST_POOL_SIZE (CONFIG_USB_CONTROL_REQUESTS * 2)
+#define DATA_BUFFER_SIZE  (CONFIG_USB_DEVICE_CONTROL_REQUESTS * EP0_BUFFER_SIZE)
+#define REQUEST_POOL_SIZE (CONFIG_USB_DEVICE_CONTROL_REQUESTS * 2)
 /*----------------------------------------------------------------------------*/
 struct LocalData
 {
@@ -230,7 +230,7 @@ enum result usbControlBindDriver(struct UsbControl *control, void *driver)
   if (!driver)
     return E_VALUE;
 
-#ifdef CONFIG_USB_COMPOSITE
+#ifdef CONFIG_USB_DEVICE_COMPOSITE
   const enum result res =
       compositeDeviceAttach((struct CompositeDevice *)control->driver, driver);
 
@@ -278,7 +278,7 @@ void usbControlResetDriver(struct UsbControl *control)
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control, const void *driver)
 {
-#ifdef CONFIG_USB_COMPOSITE
+#ifdef CONFIG_USB_DEVICE_COMPOSITE
   compositeDeviceDetach((struct CompositeDevice *)control->driver, driver);
 #else
   assert(control->driver == driver);
@@ -324,7 +324,7 @@ static enum result controlInit(void *object, const void *configBase)
   if (res != E_OK)
     return E_MEMORY;
 
-#ifdef CONFIG_USB_COMPOSITE
+#ifdef CONFIG_USB_DEVICE_COMPOSITE
   const struct CompositeDeviceConfig compositeDeviceConfig = {
       .control = control
   };

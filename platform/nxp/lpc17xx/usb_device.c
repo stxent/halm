@@ -10,8 +10,6 @@
 #include <platform/nxp/usb_device.h>
 #include <platform/nxp/lpc17xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
-#define CONFIG_USB_REQUESTS 4
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
 static void usbCommand(struct UsbDevice *, uint8_t);
@@ -509,7 +507,7 @@ static enum result epInit(void *object, const void *configBase)
   enum result res;
 
   res = queueInit(&endpoint->requests, sizeof(struct UsbRequest *),
-      CONFIG_USB_REQUESTS);
+      CONFIG_USB_DEVICE_ENDPOINT_REQUESTS);
   if (res != E_OK)
     return res;
 

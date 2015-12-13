@@ -12,7 +12,7 @@
 #include <common/sdio_defs.h>
 #include <crc/crc7.h>
 #include <crc/crc16_ccitt.h>
-#include <platform/nxp/sdio_spi.h>
+#include <platform/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_BLOCK_SIZE    512
 #define BUSY_TIMER_FREQUENCY  100000

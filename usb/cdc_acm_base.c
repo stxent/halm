@@ -16,7 +16,7 @@ struct LocalData
 {
   struct UsbEndpointDescriptor endpointDescriptors[3];
 
-#ifdef CONFIG_USB_COMPOSITE
+#ifdef CONFIG_USB_DEVICE_COMPOSITE
   struct UsbInterfaceAssociationDescriptor associationDescriptor;
   struct UsbInterfaceDescriptor interfaceDescriptors[2];
   struct CdcUnionDescriptor unionDescriptor;
@@ -49,7 +49,7 @@ static const struct UsbDriverClass driverTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const CdcAcmBase = &driverTable;
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_USB_COMPOSITE
+#ifndef CONFIG_USB_DEVICE_COMPOSITE
 static const struct UsbDeviceDescriptor deviceDescriptor = {
     .length             = sizeof(struct UsbDeviceDescriptor),
     .descriptorType     = DESCRIPTOR_TYPE_DEVICE,
@@ -150,7 +150,7 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
     return E_MEMORY;
   driver->local = local;
 
-#ifdef CONFIG_USB_COMPOSITE
+#ifdef CONFIG_USB_DEVICE_COMPOSITE
   const uint8_t firstInterface = usbDevCompositeIndex(driver->device);
 
   driver->controlInterfaceIndex = firstInterface;
@@ -237,7 +237,7 @@ static enum result iterateOverDescriptors(struct CdcAcmBase *driver,
 {
   struct LocalData * const local = driver->local;
 
-#ifdef CONFIG_USB_COMPOSITE
+#ifdef CONFIG_USB_DEVICE_COMPOSITE
   const void * const descriptors[] = {
     &local->associationDescriptor,
     &local->interfaceDescriptors[0],
@@ -357,7 +357,7 @@ static enum result driverInit(void *object, const void *configBase)
   if ((res = usbDevBind(driver->device, driver)) != E_OK)
     return res;
 
-#ifndef CONFIG_USB_COMPOSITE
+#ifndef CONFIG_USB_DEVICE_COMPOSITE
   usbDevSetConnected(driver->device, true);
 #endif
 
@@ -368,7 +368,7 @@ static void driverDeinit(void *object)
 {
   struct CdcAcmBase * const driver = object;
 
-#ifndef CONFIG_USB_COMPOSITE
+#ifndef CONFIG_USB_DEVICE_COMPOSITE
   usbDevSetConnected(driver->device, false);
 #endif
 
