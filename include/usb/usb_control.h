@@ -10,7 +10,6 @@
 #include <pin.h>
 #include <containers/list.h>
 #include <containers/queue.h>
-#include <usb/composite_device.h>
 #include <usb/usb.h>
 #include <usb/usb_requests.h>
 /*----------------------------------------------------------------------------*/

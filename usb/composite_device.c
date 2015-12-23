@@ -20,7 +20,7 @@ static enum result driverConfigure(void *, const struct UsbSetupPacket *,
 static void driverUpdateStatus(void *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
-    .size = sizeof(struct CompositeDevice),
+    .size = sizeof(struct CompositeDeviceProxy),
     .init = driverInit,
     .deinit = driverDeinit,
 
@@ -28,7 +28,40 @@ static const struct UsbDriverClass driverTable = {
     .updateStatus = driverUpdateStatus
 };
 /*----------------------------------------------------------------------------*/
-const struct UsbDriverClass * const CompositeDevice = &driverTable;
+const struct UsbDriverClass * const CompositeDeviceProxy = &driverTable;
+/*----------------------------------------------------------------------------*/
+static enum result devInit(void *, const void *);
+static void devDeinit(void *);
+static void *devAllocate(void *, uint8_t);
+static void devSetAddress(void *, uint8_t);
+static void devSetConnected(void *, bool);
+static enum result devBind(void *, void *);
+static void devUnbind(void *, const void *);
+static uint8_t devGetConfiguration(const void *);
+static void devSetConfiguration(void *, uint8_t);
+static enum result devAppendDescriptor(void *, const void *);
+static uint8_t devCompositeIndex(const void *);
+static void devEraseDescriptor(void *, const void *);
+/*----------------------------------------------------------------------------*/
+static const struct UsbDeviceClass deviceTable = {
+    .size = sizeof(struct CompositeDevice),
+    .init = devInit,
+    .deinit = devDeinit,
+
+    .allocate = devAllocate,
+    .setAddress = devSetAddress,
+    .setConnected = devSetConnected,
+    .bind = devBind,
+    .unbind = devUnbind,
+    .getConfiguration = devGetConfiguration,
+    .setConfiguration = devSetConfiguration,
+
+    .appendDescriptor = devAppendDescriptor,
+    .compositeIndex = devCompositeIndex,
+    .eraseDescriptor = devEraseDescriptor
+};
+/*----------------------------------------------------------------------------*/
+const struct UsbDeviceClass * const CompositeDevice = &deviceTable;
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceDescriptor deviceDescriptor = {
     .length             = sizeof(struct UsbDeviceDescriptor),
@@ -47,68 +80,18 @@ static const struct UsbDeviceDescriptor deviceDescriptor = {
     .numConfigurations  = 1
 };
 /*----------------------------------------------------------------------------*/
-enum result compositeDeviceAttach(struct CompositeDevice *driver, void *entry)
-{
-  return listPush(&driver->entries, &entry);
-}
-/*----------------------------------------------------------------------------*/
-void compositeDeviceDetach(struct CompositeDevice *driver, const void *entry)
-{
-  struct ListNode *node = listFind(&driver->entries, &entry);
-
-  if (node)
-    listErase(&driver->entries, node);
-}
-/*----------------------------------------------------------------------------*/
-void compositeDeviceUpdate(struct CompositeDevice *driver,
-    uint8_t interfaceCount, uint16_t totalLength)
-{
-  driver->configDescriptor.numInterfaces = interfaceCount;
-  driver->configDescriptor.totalLength = toLittleEndian16(totalLength);
-}
-/*----------------------------------------------------------------------------*/
 static enum result driverInit(void *object, const void *configBase)
 {
   const struct CompositeDeviceConfig * const config = configBase;
-  struct CompositeDevice * const driver = object;
-  enum result res;
+  struct CompositeDeviceProxy * const driver = object;
 
-  driver->control = config->control;
-
-  res = listInit(&driver->entries, sizeof(const struct UsbDriver *));
-  if (res != E_OK)
-    return res;
-
-  driver->configDescriptor.length = sizeof(struct UsbConfigurationDescriptor);
-  driver->configDescriptor.descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
-  driver->configDescriptor.totalLength = 0;
-  driver->configDescriptor.numInterfaces = 0;
-  driver->configDescriptor.configurationValue = 1;
-  driver->configDescriptor.configuration = 0;
-  driver->configDescriptor.attributes = CONFIGURATION_DESCRIPTOR_DEFAULT
-      | CONFIGURATION_DESCRIPTOR_SELF_POWERED;
-  driver->configDescriptor.maxPower = (CONFIG_USB_DEVICE_CURRENT + 1) >> 1;
-
-  res = usbControlAppendDescriptor(driver->control, &deviceDescriptor);
-  if (res != E_OK)
-    return res;
-
-  res = usbControlAppendDescriptor(driver->control, &driver->configDescriptor);
-  if (res != E_OK)
-    return res;
-
+  driver->owner = config->device;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void driverDeinit(void *object)
+static void driverDeinit(void *object __attribute__((unused)))
 {
-  struct CompositeDevice * const driver = object;
 
-  usbControlEraseDescriptor(driver->control, &driver->configDescriptor);
-  usbControlEraseDescriptor(driver->control, &deviceDescriptor);
-
-  assert(listEmpty(&driver->entries));
-  listDeinit(&driver->entries);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
@@ -116,14 +99,14 @@ static enum result driverConfigure(void *object,
     uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
-  struct CompositeDevice * const driver = object;
-  struct ListNode *currentNode = listFirst(&driver->entries);
+  struct CompositeDeviceProxy * const driver = object;
+  struct ListNode *currentNode = listFirst(&driver->owner->entries);
   struct UsbDriver *current;
   enum result res = E_INVALID;
 
   while (currentNode)
   {
-    listData(&driver->entries, currentNode, &current);
+    listData(&driver->owner->entries, currentNode, &current);
     res = usbDriverConfigure(current, packet, payload, payloadLength,
         response, responseLength, maxResponseLength);
     if (res == E_OK || (res != E_OK && res != E_INVALID))
@@ -136,14 +119,187 @@ static enum result driverConfigure(void *object,
 /*----------------------------------------------------------------------------*/
 static void driverUpdateStatus(void *object, uint8_t status)
 {
-  struct CompositeDevice * const driver = object;
-  struct ListNode *currentNode = listFirst(&driver->entries);
+  struct CompositeDeviceProxy * const driver = object;
+  struct ListNode *currentNode = listFirst(&driver->owner->entries);
   struct UsbDriver *current;
 
   while (currentNode)
   {
-    listData(&driver->entries, currentNode, &current);
+    listData(&driver->owner->entries, currentNode, &current);
     usbDriverUpdateStatus(current, status);
     currentNode = listNext(currentNode);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result devInit(void *object, const void *configBase)
+{
+  const struct CompositeDeviceConfig * const config = configBase;
+  struct CompositeDevice * const device = object;
+  const struct CompositeDeviceProxyConfig parentConfig = {
+      .owner = device
+  };
+  enum result res;
+
+  device->driver = init(CompositeDeviceProxy, &parentConfig);
+  if (!device->driver)
+    return E_ERROR;
+
+  res = listInit(&device->entries, sizeof(const struct UsbDriver *));
+  if (res != E_OK)
+    return res;
+
+  device->device = config->device;
+
+  device->configDescriptor.length = sizeof(struct UsbConfigurationDescriptor);
+  device->configDescriptor.descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
+  device->configDescriptor.totalLength = device->configDescriptor.length;
+  device->configDescriptor.numInterfaces = 0;
+  device->configDescriptor.configurationValue = 1;
+  device->configDescriptor.configuration = 0;
+  device->configDescriptor.attributes = CONFIGURATION_DESCRIPTOR_DEFAULT
+      | CONFIGURATION_DESCRIPTOR_SELF_POWERED;
+  device->configDescriptor.maxPower = (CONFIG_USB_DEVICE_CURRENT + 1) >> 1;
+
+  res = usbDevAppendDescriptor(device->device, &deviceDescriptor);
+  if (res != E_OK)
+    return res;
+
+  res = usbDevAppendDescriptor(device->device, &device->configDescriptor);
+  if (res != E_OK)
+    return res;
+
+  if ((res = usbDevBind(device->device, device->driver)) != E_OK)
+    return res;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void devDeinit(void *object)
+{
+  struct CompositeDevice * const device = object;
+
+  usbDevEraseDescriptor(device->device, &device->configDescriptor);
+  usbDevEraseDescriptor(device->device, &deviceDescriptor);
+
+  assert(listEmpty(&device->entries));
+  listDeinit(&device->entries);
+
+  deinit(device->driver);
+}
+/*----------------------------------------------------------------------------*/
+static void *devAllocate(void *object, uint8_t address)
+{
+  struct CompositeDevice * const device = object;
+
+  return usbDevAllocate(device->device, address);
+}
+/*----------------------------------------------------------------------------*/
+static void devSetAddress(void *object, uint8_t address)
+{
+  struct CompositeDevice * const device = object;
+
+  usbDevSetAddress(device->device, address);
+}
+/*----------------------------------------------------------------------------*/
+static void devSetConnected(void *object, bool state)
+{
+  struct CompositeDevice * const device = object;
+
+  usbDevSetConnected(device->device, state);
+}
+/*----------------------------------------------------------------------------*/
+static enum result devBind(void *object, void *driver)
+{
+  struct CompositeDevice * const device = object;
+
+  return listPush(&device->entries, &driver);
+}
+/*----------------------------------------------------------------------------*/
+static void devUnbind(void *object, const void *driver)
+{
+  struct CompositeDevice * const device = object;
+  struct ListNode *node = listFind(&device->entries, &driver);
+
+  if (node)
+    listErase(&device->entries, node);
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t devGetConfiguration(const void *object)
+{
+  const struct CompositeDevice * const device = object;
+
+  return usbDevGetConfiguration(device->device);
+}
+/*----------------------------------------------------------------------------*/
+static void devSetConfiguration(void *object, uint8_t configuration)
+{
+  struct CompositeDevice * const device = object;
+
+  usbDevSetConfiguration(device->device, configuration);
+}
+/*----------------------------------------------------------------------------*/
+static enum result devAppendDescriptor(void *object, const void *descriptorBase)
+{
+  const struct UsbDescriptor * const descriptor = descriptorBase;
+  struct CompositeDevice * const device = object;
+  enum result res;
+
+  if ((res = usbDevAppendDescriptor(device->device, descriptor)) != E_OK)
+    return res;
+
+  uint16_t total = fromLittleEndian16(device->configDescriptor.totalLength);
+
+  /* TODO Check for configurations > 1 */
+  switch (descriptor->descriptorType)
+  {
+    case DESCRIPTOR_TYPE_STRING:
+      break;
+
+    case DESCRIPTOR_TYPE_INTERFACE:
+      ++device->configDescriptor.numInterfaces;
+    default:
+      total += descriptor->length;
+      device->configDescriptor.totalLength = toLittleEndian16(total);
+      break;
+  }
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t devCompositeIndex(const void *object)
+{
+  const struct CompositeDevice * const device = object;
+
+  return device->configDescriptor.numInterfaces;
+//  return usbDevCompositeIndex(device->device); //FIXME Select optimal
+}
+/*----------------------------------------------------------------------------*/
+static void devEraseDescriptor(void *object, const void *descriptorBase)
+{
+  const struct UsbDescriptor * const descriptor = descriptorBase;
+  struct CompositeDevice * const device = object;
+
+  usbDevEraseDescriptor(device->device, descriptor);
+
+  uint16_t total = fromLittleEndian16(device->configDescriptor.totalLength);
+
+  /* TODO Check for configurations > 1 */
+  switch (descriptor->descriptorType)
+  {
+    case DESCRIPTOR_TYPE_DEVICE:
+    case DESCRIPTOR_TYPE_STRING:
+      break;
+
+    case DESCRIPTOR_TYPE_INTERFACE:
+      assert(device->configDescriptor.numInterfaces);
+
+      --device->configDescriptor.numInterfaces;
+    default:
+      assert(descriptor->length <= total
+          - sizeof(struct UsbConfigurationDescriptor));
+
+      total -= descriptor->length;
+      device->configDescriptor.totalLength = toLittleEndian16(total);
+      break;
   }
 }

@@ -230,44 +230,12 @@ enum result usbControlBindDriver(struct UsbControl *control, void *driver)
   if (!driver)
     return E_VALUE;
 
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  const enum result res =
-      compositeDeviceAttach((struct CompositeDevice *)control->driver, driver);
-
-  if (res == E_OK)
-  {
-    struct ListNode *currentNode = listFirst(&control->descriptors);
-    const struct UsbDescriptor *current;
-    uint16_t totalLength = 0;
-    uint8_t interfaceCount = 0;
-
-    while (currentNode)
-    {
-      listData(&control->descriptors, currentNode, &current);
-
-      if (current->descriptorType == DESCRIPTOR_TYPE_INTERFACE)
-        ++interfaceCount;
-      if (current->descriptorType != DESCRIPTOR_TYPE_DEVICE
-          && current->descriptorType != DESCRIPTOR_TYPE_STRING)
-      {
-        totalLength += current->length;
-      }
-
-      currentNode = listNext(currentNode);
-    }
-
-    compositeDeviceUpdate((struct CompositeDevice *)control->driver,
-        interfaceCount, totalLength);
-  }
-
-  return res;
-#else
-  if (local->driver)
+  if (control->driver)
     return E_ERROR;
 
-  local->driver = driver;
+  control->driver = driver;
+
   return E_OK;
-#endif
 }
 /*----------------------------------------------------------------------------*/
 void usbControlResetDriver(struct UsbControl *control)
@@ -278,12 +246,8 @@ void usbControlResetDriver(struct UsbControl *control)
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control, const void *driver)
 {
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  compositeDeviceDetach((struct CompositeDevice *)control->driver, driver);
-#else
   assert(control->driver == driver);
   control->driver = 0;
-#endif
 }
 /*----------------------------------------------------------------------------*/
 void usbControlUpdateStatus(struct UsbControl *control, uint8_t status)
@@ -324,17 +288,7 @@ static enum result controlInit(void *object, const void *configBase)
   if (res != E_OK)
     return E_MEMORY;
 
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  const struct CompositeDeviceConfig compositeDeviceConfig = {
-      .control = control
-  };
-
-  control->driver = init(CompositeDevice, &compositeDeviceConfig);
-  if (!control->driver)
-    return E_ERROR;
-#else
   control->driver = 0;
-#endif
 
   /* Initialize request pool */
   res = queueInit(&control->requestPool, sizeof(struct UsbRequest *),
