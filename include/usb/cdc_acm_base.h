@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <usb/cdc_acm_defs.h>
 #include <usb/usb.h>
-#include <usb/usb_requests.h>
+#include <usb/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const CdcAcmBase;
 /*----------------------------------------------------------------------------*/

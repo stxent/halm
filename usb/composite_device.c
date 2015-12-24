@@ -40,28 +40,32 @@ static void devUnbind(void *, const void *);
 static uint8_t devGetConfiguration(const void *);
 static void devSetConfiguration(void *, uint8_t);
 static enum result devAppendDescriptor(void *, const void *);
-static uint8_t devCompositeIndex(const void *);
 static void devEraseDescriptor(void *, const void *);
+
+static uint8_t compositeDevIndex(const void *);
 /*----------------------------------------------------------------------------*/
-static const struct UsbDeviceClass deviceTable = {
-    .size = sizeof(struct CompositeDevice),
-    .init = devInit,
-    .deinit = devDeinit,
+static const struct CompositeDeviceClass deviceTable = {
+    .parent = {
+        .size = sizeof(struct CompositeDevice),
+        .init = devInit,
+        .deinit = devDeinit,
 
-    .allocate = devAllocate,
-    .setAddress = devSetAddress,
-    .setConnected = devSetConnected,
-    .bind = devBind,
-    .unbind = devUnbind,
-    .getConfiguration = devGetConfiguration,
-    .setConfiguration = devSetConfiguration,
+        .allocate = devAllocate,
+        .setAddress = devSetAddress,
+        .setConnected = devSetConnected,
+        .bind = devBind,
+        .unbind = devUnbind,
+        .getConfiguration = devGetConfiguration,
+        .setConfiguration = devSetConfiguration,
 
-    .appendDescriptor = devAppendDescriptor,
-    .compositeIndex = devCompositeIndex,
-    .eraseDescriptor = devEraseDescriptor
+        .appendDescriptor = devAppendDescriptor,
+        .eraseDescriptor = devEraseDescriptor
+    },
+
+    .index = compositeDevIndex
 };
 /*----------------------------------------------------------------------------*/
-const struct UsbDeviceClass * const CompositeDevice = &deviceTable;
+const struct CompositeDeviceClass * const CompositeDevice = &deviceTable;
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceDescriptor deviceDescriptor = {
     .length             = sizeof(struct UsbDeviceDescriptor),
@@ -218,7 +222,7 @@ static enum result devBind(void *object, void *driver)
 static void devUnbind(void *object, const void *driver)
 {
   struct CompositeDevice * const device = object;
-  struct ListNode *node = listFind(&device->entries, &driver);
+  struct ListNode * const node = listFind(&device->entries, &driver);
 
   if (node)
     listErase(&device->entries, node);
@@ -249,7 +253,6 @@ static enum result devAppendDescriptor(void *object, const void *descriptorBase)
 
   uint16_t total = fromLittleEndian16(device->configDescriptor.totalLength);
 
-  /* TODO Check for configurations > 1 */
   switch (descriptor->descriptorType)
   {
     case DESCRIPTOR_TYPE_STRING:
@@ -266,14 +269,6 @@ static enum result devAppendDescriptor(void *object, const void *descriptorBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t devCompositeIndex(const void *object)
-{
-  const struct CompositeDevice * const device = object;
-
-  return device->configDescriptor.numInterfaces;
-//  return usbDevCompositeIndex(device->device); //FIXME Select optimal
-}
-/*----------------------------------------------------------------------------*/
 static void devEraseDescriptor(void *object, const void *descriptorBase)
 {
   const struct UsbDescriptor * const descriptor = descriptorBase;
@@ -283,10 +278,8 @@ static void devEraseDescriptor(void *object, const void *descriptorBase)
 
   uint16_t total = fromLittleEndian16(device->configDescriptor.totalLength);
 
-  /* TODO Check for configurations > 1 */
   switch (descriptor->descriptorType)
   {
-    case DESCRIPTOR_TYPE_DEVICE:
     case DESCRIPTOR_TYPE_STRING:
       break;
 
@@ -302,4 +295,11 @@ static void devEraseDescriptor(void *object, const void *descriptorBase)
       device->configDescriptor.totalLength = toLittleEndian16(total);
       break;
   }
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t compositeDevIndex(const void *object)
+{
+  const struct CompositeDevice * const device = object;
+
+  return device->configDescriptor.numInterfaces;
 }

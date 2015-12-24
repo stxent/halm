@@ -11,7 +11,6 @@
 #include <containers/list.h>
 #include <containers/queue.h>
 #include <usb/usb.h>
-#include <usb/usb_requests.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbControl;
 /*----------------------------------------------------------------------------*/
@@ -45,7 +44,6 @@ struct UsbControl
 };
 /*----------------------------------------------------------------------------*/
 enum result usbControlAppendDescriptor(struct UsbControl *, const void *);
-uint8_t usbControlCompositeIndex(const struct UsbControl *);
 void usbControlEraseDescriptor(struct UsbControl *, const void *);
 enum result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlResetDriver(struct UsbControl *);

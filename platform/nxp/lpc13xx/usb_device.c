@@ -28,7 +28,6 @@ static void devUnbind(void *, const void *);
 static uint8_t devGetConfiguration(const void *);
 static void devSetConfiguration(void *, uint8_t);
 static enum result devAppendDescriptor(void *, const void *);
-static uint8_t devCompositeIndex(const void *);
 static void devEraseDescriptor(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
@@ -45,7 +44,6 @@ static const struct UsbDeviceClass devTable = {
     .setConfiguration = devSetConfiguration,
 
     .appendDescriptor = devAppendDescriptor,
-    .compositeIndex = devCompositeIndex,
     .eraseDescriptor = devEraseDescriptor
 };
 /*----------------------------------------------------------------------------*/
@@ -253,6 +251,8 @@ static void devDeinit(void *object)
 {
   struct UsbDevice * const device = object;
 
+  deinit(device->control);
+
   irqDisable(device->parent.irq);
 
   assert(listEmpty(&device->endpoints));
@@ -347,13 +347,6 @@ static enum result devAppendDescriptor(void *object, const void *descriptor)
   struct UsbDevice * const device = object;
 
   return usbControlAppendDescriptor(device->control, descriptor);
-}
-/*----------------------------------------------------------------------------*/
-static uint8_t devCompositeIndex(const void *object)
-{
-  const struct UsbDevice * const device = object;
-
-  return usbControlCompositeIndex(device->control);
 }
 /*----------------------------------------------------------------------------*/
 static void devEraseDescriptor(void *object, const void *descriptor)
@@ -532,6 +525,7 @@ static void epDeinit(void *object)
 
   irqEnable(device->parent.irq);
 
+  assert(queueEmpty(&endpoint->requests));
   queueDeinit(&endpoint->requests);
 }
 /*----------------------------------------------------------------------------*/

@@ -9,10 +9,18 @@
 /*----------------------------------------------------------------------------*/
 #include <containers/list.h>
 #include <usb/usb.h>
-#include <usb/usb_requests.h>
+#include <usb/usb_defs.h>
+/*----------------------------------------------------------------------------*/
+/* Class descriptor */
+struct CompositeDeviceClass
+{
+  struct UsbDeviceClass parent;
+
+  uint8_t (*index)(const void *);
+};
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const CompositeDeviceProxy;
-extern const struct UsbDeviceClass * const CompositeDevice;
+extern const struct CompositeDeviceClass * const CompositeDevice;
 /*----------------------------------------------------------------------------*/
 struct CompositeDevice;
 /*----------------------------------------------------------------------------*/
@@ -45,5 +53,15 @@ struct CompositeDevice
   struct List entries;
   struct UsbConfigurationDescriptor configDescriptor;
 };
+/*----------------------------------------------------------------------------*/
+/**
+ * Calculate an index for a new interface descriptor.
+ * @param device Pointer to a CompositeDevice object.
+ * @return Index for an interface descriptor.
+ */
+static inline uint8_t usbCompositeDevIndex(const void *device)
+{
+  return ((const struct CompositeDeviceClass *)CLASS(device))->index(device);
+}
 /*----------------------------------------------------------------------------*/
 #endif /* USB_COMPOSITE_DEVICE_H_ */

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <memory.h>
 #include <usb/usb_control.h>
+#include <usb/usb_requests.h>
 /*----------------------------------------------------------------------------*/
 #define EP0_BUFFER_SIZE   64
 #define DATA_BUFFER_SIZE  (CONFIG_USB_DEVICE_CONTROL_REQUESTS * EP0_BUFFER_SIZE)
@@ -195,31 +196,10 @@ enum result usbControlAppendDescriptor(struct UsbControl *control,
   return listPush(&control->descriptors, &descriptor);
 }
 /*----------------------------------------------------------------------------*/
-uint8_t usbControlCompositeIndex(const struct UsbControl *control)
-{
-  const struct ListNode *currentNode = listFirst(&control->descriptors);
-  const struct UsbDescriptor *current;
-  uint8_t last = 0;
-
-  while (currentNode)
-  {
-    listData(&control->descriptors, currentNode, &current);
-    if (current->descriptorType == DESCRIPTOR_TYPE_INTERFACE)
-    {
-      struct UsbInterfaceDescriptor * const descriptor =
-          (struct UsbInterfaceDescriptor *)current;
-      last = descriptor->interfaceNumber + 1;
-    }
-    currentNode = listNext(currentNode);
-  }
-
-  return last;
-}
-/*----------------------------------------------------------------------------*/
 void usbControlEraseDescriptor(struct UsbControl *control,
     const void *descriptor)
 {
-  struct ListNode *node = listFind(&control->descriptors, &descriptor);
+  struct ListNode * const node = listFind(&control->descriptors, &descriptor);
 
   if (node)
     listErase(&control->descriptors, node);
@@ -230,6 +210,7 @@ enum result usbControlBindDriver(struct UsbControl *control, void *driver)
   if (!driver)
     return E_VALUE;
 
+  /* A driver is already bound */
   if (control->driver)
     return E_ERROR;
 
@@ -246,6 +227,7 @@ void usbControlResetDriver(struct UsbControl *control)
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control, const void *driver)
 {
+  assert(driver);
   assert(control->driver == driver);
   control->driver = 0;
 }

@@ -10,6 +10,7 @@
 #include <memory.h>
 #include <usb/cdc_acm.h>
 #include <usb/cdc_acm_base.h>
+#include <usb/composite_device.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct LocalData
@@ -151,7 +152,7 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
   driver->local = local;
 
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
-  const uint8_t firstInterface = usbDevCompositeIndex(driver->device);
+  const uint8_t firstInterface = usbCompositeDevIndex(driver->device);
 
   driver->controlInterfaceIndex = firstInterface;
 

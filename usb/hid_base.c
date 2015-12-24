@@ -10,7 +10,7 @@
 #include <usb/hid.h>
 #include <usb/hid_base.h>
 #include <usb/hid_defs.h>
-#include <usb/usb_requests.h>
+#include <usb/usb_defs.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 #define HID_CONTROL_EP_SIZE 64
