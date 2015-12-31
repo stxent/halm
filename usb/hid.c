@@ -29,7 +29,8 @@ static enum result deviceInit(void *object, const void *configBase)
   const struct HidBaseConfig parentConfig = {
       .owner = device,
       .device = config->device,
-      .report = config->report,
+      .descriptor = config->descriptor,
+      .descriptorSize = config->descriptorSize,
       .reportSize = config->reportSize,
       .endpoint.interrupt = config->endpoint.interrupt
   };

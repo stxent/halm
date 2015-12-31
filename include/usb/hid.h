@@ -48,21 +48,17 @@ struct HidConfig
   /** Mandatory: USB device. */
   void *device;
   /** Mandatory: report descriptor. */
-  void *report;
+  void *descriptor;
   /** Mandatory: size of the report descriptor. */
+  uint16_t descriptorSize;
+  /** Mandatory: size of the report. */
   uint16_t reportSize;
-
-  /** Optional: serial number string. */
-  const char *serial;
 
   struct
   {
     /** Mandatory: identifier of the notification endpoint. */
     uint8_t interrupt;
   } endpoint;
-
-  /** Optional: enable composite device mode. */
-  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct Hid

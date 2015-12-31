@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
+#define HID_CONTROL_EP_SIZE 64
+/*----------------------------------------------------------------------------*/
 /* Descriptor types */
 enum
 {
@@ -224,21 +226,25 @@ enum
 #define HID_NONVOLATILE        0
 #define HID_VOLATILE           BIT(7)
 /*----------------------------------------------------------------------------*/
-#define HID_DESCRIPTOR_BASE_SIZE  6
-#define HID_DESCRIPTOR_ENTRY_SIZE 3
-
-struct HidDescriptor
+struct HidDescriptorBase
 {
   uint8_t length;
   uint8_t descriptorType;
   uint16_t hid;
   uint8_t countryCode;
   uint8_t numDescriptors;
-  struct
-  {
-    uint8_t type;
-    uint16_t length;
-  } __attribute__((packed)) classDescriptors[];
+} __attribute__((packed));
+
+struct HidDescriptorEntry
+{
+  uint8_t type;
+  uint16_t length;
+} __attribute__((packed));
+
+struct AbstractHidDescriptor
+{
+  struct HidDescriptorBase base;
+  struct HidDescriptorEntry entries[];
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* USB_HID_DEFS_H_ */
