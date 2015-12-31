@@ -246,6 +246,9 @@ static enum result handleStandardInterfaceRequest(struct UsbControl *control,
   switch (packet->request)
   {
     case REQUEST_GET_STATUS:
+      if (maxResponseLength < 2)
+        return E_VALUE;
+
       /* Two bytes are reserved for future use and must be set to zero */
       response[0] = 0;
       response[1] = 0;
@@ -253,12 +256,16 @@ static enum result handleStandardInterfaceRequest(struct UsbControl *control,
       break;
 
     case REQUEST_GET_INTERFACE: // TODO use bNumInterfaces
+      if (maxResponseLength < 1)
+        return E_VALUE;
+
       response[0] = 0;
       *responseLength = 1;
       break;
 
     case REQUEST_SET_INTERFACE: // TODO use bNumInterfaces
       usbTrace("requests: set interface %d", packet->value);
+
       if (packet->value != 0)
         return E_ERROR; //FIXME
       *responseLength = 0;

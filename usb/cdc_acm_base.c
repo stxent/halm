@@ -240,30 +240,30 @@ static enum result iterateOverDescriptors(struct CdcAcmBase *driver,
 
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const void * const descriptors[] = {
-    &local->associationDescriptor,
-    &local->interfaceDescriptors[0],
-    controlDescriptors[0],
-    controlDescriptors[1],
-    controlDescriptors[2],
-    &local->unionDescriptor,
-    &local->endpointDescriptors[0],
-    &local->interfaceDescriptors[1],
-    &local->endpointDescriptors[1],
-    &local->endpointDescriptors[2]
+      &local->associationDescriptor,
+      &local->interfaceDescriptors[0],
+      controlDescriptors[0],
+      controlDescriptors[1],
+      controlDescriptors[2],
+      &local->unionDescriptor,
+      &local->endpointDescriptors[0],
+      &local->interfaceDescriptors[1],
+      &local->endpointDescriptors[1],
+      &local->endpointDescriptors[2]
   };
 #else
   const void * const descriptors[] = {
-    &deviceDescriptor,
-    &configDescriptor,
-    &controlInterfaceDescriptor,
-    controlDescriptors[0],
-    controlDescriptors[1],
-    controlDescriptors[2],
-    &unionDescriptor,
-    &local->endpointDescriptors[0],
-    &dataInterfaceDescriptor,
-    &local->endpointDescriptors[1],
-    &local->endpointDescriptors[2]
+      &deviceDescriptor,
+      &configDescriptor,
+      &controlInterfaceDescriptor,
+      controlDescriptors[0],
+      controlDescriptors[1],
+      controlDescriptors[2],
+      &unionDescriptor,
+      &local->endpointDescriptors[0],
+      &dataInterfaceDescriptor,
+      &local->endpointDescriptors[1],
+      &local->endpointDescriptors[2]
   };
 #endif
 
@@ -353,7 +353,8 @@ static enum result driverInit(void *object, const void *configBase)
   driver->controlLineState = 0;
   driver->controlInterfaceIndex = 0;
 
-  buildDescriptors(driver, config);
+  if ((res = buildDescriptors(driver, config)) != E_OK)
+    return res;
 
   if ((res = usbDevBind(driver->device, driver)) != E_OK)
     return res;
@@ -375,6 +376,7 @@ static void driverDeinit(void *object)
 
   usbDevUnbind(driver->device, driver);
   iterateOverDescriptors(driver, descriptorEraseWrapper);
+  free(driver->local);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
