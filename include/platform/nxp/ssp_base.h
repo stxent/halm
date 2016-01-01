@@ -16,22 +16,22 @@ extern const struct EntityClass * const SspBase;
 struct SspBaseConfig
 {
   /** Optional: slave select pin. Available in slave mode only. */
-  pin_t cs;
+  pinNumber cs;
   /**
    * Optional: pin acts as data input in master mode and as data output
    * in slave mode.
    */
-  pin_t miso;
+  pinNumber miso;
   /**
    * Optional: pin acts as serial data output in master mode and
    * as data input in slave mode.
    */
-  pin_t mosi;
+  pinNumber mosi;
   /**
    * Optional: serial clock output for masters and input for slaves.
    * May be left unused in specific emulation modes.
    */
-  pin_t sck;
+  pinNumber sck;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -42,7 +42,7 @@ struct SspBase
 
   void *reg;
   void (*handler)(void *);
-  irq_t irq;
+  irqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;

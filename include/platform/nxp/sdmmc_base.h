@@ -16,17 +16,17 @@ extern const struct EntityClass * const SdmmcBase;
 struct SdmmcBaseConfig
 {
   /** Mandatory: clock line. */
-  pin_t clk;
+  pinNumber clk;
   /** Mandatory: command line. */
-  pin_t cmd;
+  pinNumber cmd;
   /** Mandatory: data line 0. */
-  pin_t dat0;
+  pinNumber dat0;
   /** Optional: data line 1. */
-  pin_t dat1;
+  pinNumber dat1;
   /** Optional: data line 2. */
-  pin_t dat2;
+  pinNumber dat2;
   /** Optional: data line 3. */
-  pin_t dat3;
+  pinNumber dat3;
 };
 /*----------------------------------------------------------------------------*/
 struct SdmmcBase
@@ -35,7 +35,7 @@ struct SdmmcBase
 
   void *reg;
   void (*handler)(void *);
-  irq_t irq;
+  irqNumber irq;
 
   /* 4-bit bus indicator */
   bool wide;

@@ -116,7 +116,7 @@ static enum result pinHandlerInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pin_t id)
+struct Pin pinInit(pinNumber id)
 {
   struct Pin pin;
 

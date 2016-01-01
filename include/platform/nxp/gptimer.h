@@ -19,7 +19,7 @@ struct GpTimerConfig
    */
   uint32_t frequency;
   /** Optional: timer interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Optional: do not enable the timer after the initialization. */

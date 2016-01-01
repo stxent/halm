@@ -43,7 +43,7 @@ struct GpPwmConfig
   /** Optional: initial duration in timer ticks. */
   uint32_t duration;
   /** Mandatory: pin used as an output for modulated signal. */
-  pin_t pin;
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwm
@@ -67,7 +67,7 @@ struct GpPwmDoubleEdgeConfig
   /** Optional: initial trailing edge time in timer ticks. */
   uint32_t trailing;
   /** Mandatory: pin used as an output for modulated signal. */
-  pin_t pin;
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwmDoubleEdge
@@ -84,7 +84,7 @@ struct GpPwmDoubleEdge
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-void *gpPwmCreate(void *, pin_t, uint32_t);
-void *gpPwmCreateDoubleEdge(void *, pin_t, uint32_t, uint32_t);
+void *gpPwmCreate(void *, pinNumber, uint32_t);
+void *gpPwmCreateDoubleEdge(void *, pinNumber, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPPWM_H_ */

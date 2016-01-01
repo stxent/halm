@@ -101,7 +101,7 @@ static struct I2sBase *descriptors[1] = {0};
 static enum result configPins(struct I2sBase *interface,
     const struct I2sBaseConfig *config)
 {
-  const pin_t pinArray[] = {
+  const pinNumber pinArray[] = {
       config->rx.sck, config->rx.ws, config->rx.sda, config->rx.mclk,
       config->tx.sck, config->tx.ws, config->tx.sda, config->tx.mclk
   };

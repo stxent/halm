@@ -16,9 +16,9 @@ extern const struct InterruptClass * const WakeupInterrupt;
 struct WakeupInterruptConfig
 {
   /** Mandatory: pin used as interrupt source. */
-  pin_t pin;
+  pinNumber pin;
   /** Optional: interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
   /** Mandatory: external interrupt mode. */
   enum pinEvent event;
   /** Optional: enables pull-up or pull-down resistors for input pin. */

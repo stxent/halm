@@ -19,7 +19,7 @@ struct RtcBase
 
   void *reg;
   void (*handler)(void *);
-  irq_t irq;
+  irqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GEN_1_RTC_BASE_H_ */

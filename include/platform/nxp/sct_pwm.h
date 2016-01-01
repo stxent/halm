@@ -45,7 +45,7 @@ struct SctPwmConfig
   /** Optional: initial duration in timer ticks. */
   uint32_t duration;
   /** Mandatory: pin used as an output for modulated signal. */
-  pin_t pin;
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct SctPwm
@@ -69,7 +69,7 @@ struct SctPwmDoubleEdgeConfig
   /** Optional: initial trailing edge time in timer ticks. */
   uint32_t trailing;
   /** Mandatory: pin used as an output for modulated signal. */
-  pin_t pin;
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct SctPwmDoubleEdge
@@ -86,7 +86,7 @@ struct SctPwmDoubleEdge
   uint8_t trailingEvent;
 };
 /*----------------------------------------------------------------------------*/
-void *sctPwmCreate(void *, pin_t, uint32_t);
-void *sctPwmCreateDoubleEdge(void *, pin_t, uint32_t, uint32_t);
+void *sctPwmCreate(void *, pinNumber, uint32_t);
+void *sctPwmCreateDoubleEdge(void *, pinNumber, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SCT_PWM_H_ */

@@ -23,15 +23,15 @@ extern const struct UsbEndpointClass * const UsbEndpoint;
 struct UsbDeviceConfig
 {
   /** Mandatory: USB bidirectional D- line. */
-  pin_t dm;
+  pinNumber dm;
   /** Mandatory: USB bidirectional D+ line. */
-  pin_t dp;
+  pinNumber dp;
   /** Mandatory: output pin used for soft connect feature. */
-  pin_t connect;
+  pinNumber connect;
   /** Mandatory: monitors the presence of USB bus power. */
-  pin_t vbus;
+  pinNumber vbus;
   /** Optional: interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

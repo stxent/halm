@@ -11,7 +11,7 @@
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static int8_t configOutputPin(uint8_t, pin_t);
+static int8_t configOutputPin(uint8_t, pinNumber);
 static enum result setMatchValue(struct SctPwmUnit *, uint8_t, uint32_t);
 static enum result updateFrequency(struct SctPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -69,7 +69,7 @@ const struct EntityClass * const SctPwmUnit = &unitTable;
 const struct PwmClass * const SctPwm = &singleEdgeTable;
 const struct PwmClass * const SctPwmDoubleEdge = &doubleEdgeTable;
 /*----------------------------------------------------------------------------*/
-static int8_t configOutputPin(uint8_t channel, pin_t key)
+static int8_t configOutputPin(uint8_t channel, pinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, channel);
 
@@ -598,7 +598,7 @@ static enum result doubleEdgeSetFrequency(void *object, uint32_t frequency)
  * @param duration Initial duration in timer ticks.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *sctPwmCreate(void *unit, pin_t pin, uint32_t duration)
+void *sctPwmCreate(void *unit, pinNumber pin, uint32_t duration)
 {
   const struct SctPwmConfig channelConfig = {
       .parent = unit,
@@ -617,7 +617,7 @@ void *sctPwmCreate(void *unit, pin_t pin, uint32_t duration)
  * @param trailing Time of the trailing edge in timer ticks.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *sctPwmCreateDoubleEdge(void *unit, pin_t pin, uint32_t leading,
+void *sctPwmCreateDoubleEdge(void *unit, pinNumber pin, uint32_t leading,
     uint32_t trailing)
 {
   const struct SctPwmDoubleEdgeConfig channelConfig = {

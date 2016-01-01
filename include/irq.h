@@ -10,8 +10,8 @@
 #include <stdint.h>
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
-typedef int16_t irq_t;
-typedef uint8_t priority_t;
+typedef int16_t irqNumber;
+typedef uint8_t irqPriority;
 typedef uint32_t irqState;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH

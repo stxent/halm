@@ -26,11 +26,11 @@ struct SerialConfig
   /** Mandatory: baud rate. */
   uint32_t rate;
   /** Mandatory: serial input. */
-  pin_t rx;
+  pinNumber rx;
   /** Mandatory: serial output. */
-  pin_t tx;
+  pinNumber tx;
   /** Optional: interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Optional: parity generation and checking. */

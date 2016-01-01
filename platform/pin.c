@@ -7,7 +7,7 @@
 #include <pin.h>
 /*----------------------------------------------------------------------------*/
 /* Returns 0 when no descriptor associated with pin found */
-const struct PinEntry *pinFind(const struct PinEntry *list, pin_t key,
+const struct PinEntry *pinFind(const struct PinEntry *list, pinNumber key,
     uint8_t channel)
 {
   while (list->key && (list->key != key || list->channel != channel))
@@ -17,7 +17,7 @@ const struct PinEntry *pinFind(const struct PinEntry *list, pin_t key,
 }
 /*----------------------------------------------------------------------------*/
 const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *list,
-    pin_t key, uint8_t channel)
+    pinNumber key, uint8_t channel)
 {
   union PinData begin, end, pin;
 

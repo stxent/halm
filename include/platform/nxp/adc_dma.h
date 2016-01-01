@@ -26,7 +26,7 @@ struct AdcDmaConfig
   /** Mandatory: size of the single buffer in elements. */
   uint32_t size;
   /** Mandatory: analog input. */
-  pin_t pin;
+  pinNumber pin;
   /** Mandatory: memory access channel. */
   uint8_t channel;
   /** Optional: trigger to start the conversion. */

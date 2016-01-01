@@ -23,8 +23,8 @@ enum
   SYSTICK_IRQ     = -1
 };
 /*----------------------------------------------------------------------------*/
-priority_t irqGetPriority(irq_t);
-void irqSetPriority(irq_t, priority_t);
+irqPriority irqGetPriority(irqNumber);
+void irqSetPriority(irqNumber, irqPriority);
 uint8_t nvicGetPriorityGrouping();
 void nvicSetPriorityGrouping(uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -42,22 +42,22 @@ static inline irqState irqSave(void)
   return state;
 }
 /*----------------------------------------------------------------------------*/
-static inline void irqEnable(irq_t irq)
+static inline void irqEnable(irqNumber irq)
 {
   *(NVIC->ISER + (irq >> 5)) = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
-static inline void irqDisable(irq_t irq)
+static inline void irqDisable(irqNumber irq)
 {
   *(NVIC->ICER + (irq >> 5)) = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
-static inline void irqClearPending(irq_t irq)
+static inline void irqClearPending(irqNumber irq)
 {
   *(NVIC->ICPR + (irq >> 5)) = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
-static inline void irqSetPending(irq_t irq)
+static inline void irqSetPending(irqNumber irq)
 {
   *(NVIC->ISPR + (irq >> 5)) = 1 << (irq & 0x1F);
 }

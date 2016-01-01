@@ -83,7 +83,7 @@ void ADC_ISR(void)
   descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-enum result adcConfigPin(const struct AdcUnitBase *unit, pin_t key,
+enum result adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
     struct AdcPin *adcPin)
 {
   const struct PinEntry *entry;

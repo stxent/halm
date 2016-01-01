@@ -9,7 +9,7 @@
 #define IRQ_SHIFT(value)    (((uint32_t)(value) & 0x03) << 3)
 #define CORE_OFFSET(value)  ((((uint32_t)(value) & 0x0F) - 8) >> 2)
 /*----------------------------------------------------------------------------*/
-void irqSetPriority(irq_t irq, uint8_t priority)
+void irqSetPriority(irqNumber irq, irqPriority priority)
 {
   if (irq < 0)
   {
@@ -23,7 +23,7 @@ void irqSetPriority(irq_t irq, uint8_t priority)
   }
 }
 /*----------------------------------------------------------------------------*/
-uint8_t irqGetPriority(irq_t irq)
+irqPriority irqGetPriority(irqNumber irq)
 {
   if (irq < 0)
     return SCB->SHP[CORE_OFFSET(irq)] >> IRQ_SHIFT(irq);

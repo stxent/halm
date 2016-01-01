@@ -15,7 +15,7 @@ struct StartLogicHandler
   struct List list;
 };
 /*----------------------------------------------------------------------------*/
-static inline irq_t calcVector(union PinData data);
+static inline irqNumber calcVector(union PinData data);
 /*----------------------------------------------------------------------------*/
 static enum result startLogicHandlerAttach(union PinData,
     const struct WakeupInterrupt *);
@@ -46,7 +46,7 @@ static const struct EntityClass * const StartLogicHandler = &handlerTable;
 const struct InterruptClass * const WakeupInterrupt = &wakeupInterruptTable;
 static struct StartLogicHandler *handler = 0;
 /*----------------------------------------------------------------------------*/
-static inline irq_t calcVector(union PinData data)
+static inline irqNumber calcVector(union PinData data)
 {
   return WAKEUP_IRQ + data.port * 12 + data.offset;
 }

@@ -52,7 +52,7 @@ static struct UsbBase *descriptors[1] = {0};
 static enum result configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
 {
-  const pin_t pinArray[] = {
+  const pinNumber pinArray[] = {
       config->dm, config->dp, config->connect, config->vbus
   };
   const struct PinEntry *pinEntry;

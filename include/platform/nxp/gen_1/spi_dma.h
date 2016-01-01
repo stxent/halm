@@ -17,11 +17,11 @@ struct SpiDmaConfig
   /** Mandatory: serial data rate. */
   uint32_t rate;
   /** Optional: serial data input. */
-  pin_t miso;
+  pinNumber miso;
   /** Optional: serial data output. */
-  pin_t mosi;
+  pinNumber mosi;
   /** Mandatory: serial clock output. */
-  pin_t sck;
+  pinNumber sck;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Optional: mode number. */

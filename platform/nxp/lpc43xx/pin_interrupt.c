@@ -11,7 +11,7 @@
 #include <platform/nxp/pin_interrupt.h>
 #include <platform/nxp/lpc43xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline irq_t calcVector(uint8_t);
+static inline irqNumber calcVector(uint8_t);
 static void processInterrupt(uint8_t);
 static void resetDescriptor(uint8_t);
 static int8_t setDescriptor(struct PinInterrupt *);
@@ -33,7 +33,7 @@ static const struct InterruptClass pinInterruptTable = {
 const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
 static struct PinInterrupt *descriptors[8] = {0};
 /*----------------------------------------------------------------------------*/
-static inline irq_t calcVector(uint8_t channel)
+static inline irqNumber calcVector(uint8_t channel)
 {
   return PIN_INT0_IRQ + channel;
 }
@@ -150,7 +150,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   if (config->event == PIN_FALLING || config->event == PIN_TOGGLE)
     LPC_GPIO_INT->SIENF = mask;
 
-  const irq_t irq = calcVector(interrupt->channel);
+  const irqNumber irq = calcVector(interrupt->channel);
 
   /* Clear pending interrupt flags */
   LPC_GPIO_INT->IST = mask;
@@ -166,7 +166,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 static void pinInterruptDeinit(void *object)
 {
   const struct PinInterrupt * const interrupt = object;
-  const irq_t irq = calcVector(interrupt->channel);
+  const irqNumber irq = calcVector(interrupt->channel);
   const uint8_t mask = 1 << interrupt->pin.offset;
 
   /* Disable channel interrupt in interrupt controller */
@@ -190,7 +190,7 @@ static void pinInterruptCallback(void *object, void (*callback)(void *),
 static void pinInterruptSetEnabled(void *object, bool state)
 {
   const struct PinInterrupt * const interrupt = object;
-  const irq_t irq = calcVector(interrupt->channel);
+  const irqNumber irq = calcVector(interrupt->channel);
 
   if (state)
   {

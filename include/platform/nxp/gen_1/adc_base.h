@@ -31,13 +31,14 @@ struct AdcUnitBase
 
   void *reg;
   void (*handler)(void *);
-  irq_t irq;
+  irqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-enum result adcConfigPin(const struct AdcUnitBase *, pin_t, struct AdcPin *);
+enum result adcConfigPin(const struct AdcUnitBase *, pinNumber,
+    struct AdcPin *);
 void adcReleasePin(struct AdcPin);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GEN_1_ADC_BASE_H_ */

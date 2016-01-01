@@ -267,7 +267,7 @@ static enum result channelSetFrequency(void *object, uint32_t frequency)
  * @param duration Initial duration in timer ticks.
  * @return Pointer to new Pwm object on success or zero on error.
  */
-void *gpTimerPwmCreate(void *unit, pin_t pin, uint32_t duration)
+void *gpTimerPwmCreate(void *unit, pinNumber pin, uint32_t duration)
 {
   const struct GpTimerPwmConfig channelConfig = {
       .parent = unit,

@@ -165,7 +165,7 @@ static struct SdmmcBase *descriptor = 0;
 static enum result configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
 {
-  const pin_t pinArray[] = {
+  const pinNumber pinArray[] = {
       config->clk,
       config->cmd,
       config->dat0,

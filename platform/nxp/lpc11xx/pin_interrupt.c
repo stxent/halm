@@ -17,7 +17,7 @@ struct PinInterruptHandler
 };
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t);
-static inline irq_t calcVector(uint8_t);
+static inline irqNumber calcVector(uint8_t);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptHandlerAttach(union PinData,
@@ -55,7 +55,7 @@ static inline LPC_GPIO_Type *calcPort(uint8_t port)
       ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * port);
 }
 /*----------------------------------------------------------------------------*/
-static inline irq_t calcVector(uint8_t port)
+static inline irqNumber calcVector(uint8_t port)
 {
   return PIOINT0_IRQ - port;
 }

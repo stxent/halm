@@ -405,7 +405,7 @@ static enum result pinHandlerInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pin_t id)
+struct Pin pinInit(pinNumber id)
 {
   const struct PinGroupEntry *group;
   struct Pin pin;

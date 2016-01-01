@@ -16,11 +16,11 @@ extern const struct InterfaceClass * const OneWireSsp;
 struct OneWireSspConfig
 {
   /** Mandatory: pin used for serial data reception from the bus. */
-  pin_t miso;
+  pinNumber miso;
   /** Mandatory: pin used for data transmission on the serial bus. */
-  pin_t mosi;
+  pinNumber mosi;
   /** Optional: interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

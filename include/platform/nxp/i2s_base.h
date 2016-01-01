@@ -31,25 +31,25 @@ struct I2sBaseConfig
   struct
   {
     /** Optional: receive clock. */
-    pin_t sck;
+    pinNumber sck;
     /** Optional: receive word select. */
-    pin_t ws;
+    pinNumber ws;
     /** Optional: receive data. */
-    pin_t sda;
+    pinNumber sda;
     /** Optional: master clock output. */
-    pin_t mclk;
+    pinNumber mclk;
   } rx;
 
   struct
   {
     /** Optional: transmit clock. */
-    pin_t sck;
+    pinNumber sck;
     /** Optional: transmit word select. */
-    pin_t ws;
+    pinNumber ws;
     /** Optional: transmit data. */
-    pin_t sda;
+    pinNumber sda;
     /** Optional: master clock output. */
-    pin_t mclk;
+    pinNumber mclk;
   } tx;
 
   /** Mandatory: peripheral identifier. */
@@ -62,7 +62,7 @@ struct I2sBase
 
   void *reg;
   void (*handler)(void *);
-  irq_t irq;
+  irqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;

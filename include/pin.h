@@ -11,14 +11,14 @@
 #include <stdint.h>
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
-typedef uint16_t pin_t;
+typedef uint16_t pinNumber;
 /*----------------------------------------------------------------------------*/
 /*
  * External pin id consist of port number and offset in 1's complement form.
  * Unused pins should be initialized with zero.
  * This representation supports up to 2^7 ports and 2^8 pins on each port.
  */
-#define PIN(port, offset) ((pin_t)(~(((unsigned long)(port) << 8 & 0xFF00)\
+#define PIN(port, offset) ((pinNumber)(~(((unsigned long)(port) << 8 & 0xFF00)\
     | ((unsigned long)(offset) & 0x00FF))))
 /*----------------------------------------------------------------------------*/
 /* Special function values */
@@ -63,7 +63,7 @@ enum pinType
 /*----------------------------------------------------------------------------*/
 union PinData
 {
-  pin_t key;
+  pinNumber key;
   struct
   {
     uint8_t offset;
@@ -73,15 +73,15 @@ union PinData
 /*----------------------------------------------------------------------------*/
 struct PinEntry
 {
-  pin_t key;
+  pinNumber key;
   uint8_t channel;
   uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
 struct PinGroupEntry
 {
-  pin_t begin;
-  pin_t end;
+  pinNumber begin;
+  pinNumber end;
   uint8_t channel;
   uint8_t value;
 };
@@ -92,13 +92,13 @@ struct Pin
   union PinData data;
 };
 /*----------------------------------------------------------------------------*/
-const struct PinEntry *pinFind(const struct PinEntry *, pin_t, uint8_t);
-const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *, pin_t,
-    uint8_t);
+const struct PinEntry *pinFind(const struct PinEntry *, pinNumber, uint8_t);
+const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *,
+    pinNumber, uint8_t);
 /*----------------------------------------------------------------------------*/
 static inline bool pinValid(struct Pin pin)
 {
-  return pin.data.key != (pin_t)~0 && pin.reg != 0;
+  return pin.data.key != (pinNumber)~0 && pin.reg != 0;
 }
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH

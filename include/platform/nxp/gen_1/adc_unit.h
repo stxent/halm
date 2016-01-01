@@ -17,7 +17,7 @@ struct AdcUnitConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Optional: interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
 };
 /*----------------------------------------------------------------------------*/
 struct AdcUnit

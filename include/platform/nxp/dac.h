@@ -22,7 +22,7 @@ struct DacConfig
   /** Optional: initial output value. */
   uint16_t value;
   /** Mandatory: analog output. */
-  pin_t pin;
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct Dac

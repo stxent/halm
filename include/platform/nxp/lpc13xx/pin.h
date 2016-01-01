@@ -24,7 +24,7 @@ enum
   PIN_USB_DP
 };
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pin_t);
+struct Pin pinInit(pinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, uint8_t);
 void pinSetFunction(struct Pin, uint8_t);

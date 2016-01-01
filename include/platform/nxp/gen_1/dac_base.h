@@ -17,7 +17,7 @@ extern const struct EntityClass * const DacBase;
 struct DacBaseConfig
 {
   /** Mandatory: analog output. */
-  pin_t pin;
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct DacBase
@@ -27,7 +27,7 @@ struct DacBase
   void *reg;
 
   /* Output pin */
-  pin_t pin;
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 uint32_t dacGetClock(const struct DacBase *);

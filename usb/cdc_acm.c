@@ -417,7 +417,7 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
   if (!length || interface->suspended)
     return 0;
 
-  const irqState irqState = irqSave();
+  const irqState state = irqSave();
 
   if (!byteQueueEmpty(&interface->rxQueue))
   {
@@ -472,7 +472,7 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
     }
   }
 
-  irqRestore(irqState);
+  irqRestore(state);
   return sourceLength - length;
 }
 /*----------------------------------------------------------------------------*/
@@ -485,7 +485,7 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
   if (!length || interface->suspended)
     return 0;
 
-  const irqState irqState = irqSave();
+  const irqState state = irqSave();
 
   if (byteQueueEmpty(&interface->txQueue)
       && !queueEmpty(&interface->txRequestQueue))
@@ -509,7 +509,7 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
 
       usbTrace("cdc_acm: suspended in write function");
 
-      irqRestore(irqState);
+      irqRestore(state);
       return 0;
     }
     else
@@ -522,6 +522,6 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
   if (length)
     length -= byteQueuePushArray(&interface->txQueue, buffer, length);
 
-  irqRestore(irqState);
+  irqRestore(state);
   return sourceLength - length;
 }

@@ -15,7 +15,7 @@ struct AdcBlockDescriptor
 {
   LPC_ADC_Type *reg;
   /* Peripheral interrupt request identifier */
-  irq_t irq;
+  irqNumber irq;
   /* Clock to register interface and to peripheral */
   enum sysClockBranch clock;
   /* Reset control identifier */
@@ -163,7 +163,7 @@ void ADC1_ISR(void)
   descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-enum result adcConfigPin(const struct AdcUnitBase *unit, pin_t key,
+enum result adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
     struct AdcPin *adcPin)
 {
   const struct PinGroupEntry *group;

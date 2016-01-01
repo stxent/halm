@@ -12,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
-static enum result configOutputPin(pin_t);
+static enum result configOutputPin(pinNumber);
 static enum result setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
@@ -37,7 +37,7 @@ const struct PinEntry dacPins[] = {
 const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result configOutputPin(pin_t key)
+static enum result configOutputPin(pinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
 

@@ -23,7 +23,7 @@ struct AdcBurstConfig
   /** Mandatory: peripheral unit. */
   struct AdcUnit *parent;
   /** Mandatory: analog input. */
-  pin_t pin;
+  pinNumber pin;
   /** Optional: trigger to start the conversion. */
   enum adcEvent event;
 };

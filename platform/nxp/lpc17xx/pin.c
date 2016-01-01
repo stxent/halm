@@ -42,7 +42,7 @@ static void commonPinInit(struct Pin pin)
   pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pin_t id)
+struct Pin pinInit(pinNumber id)
 {
   struct Pin pin;
 

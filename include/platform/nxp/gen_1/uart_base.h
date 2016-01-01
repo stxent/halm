@@ -29,9 +29,9 @@ struct UartRateConfig
 struct UartBaseConfig
 {
   /** Mandatory: serial input. */
-  pin_t rx;
+  pinNumber rx;
   /** Mandatory: serial output. */
-  pin_t tx;
+  pinNumber tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -42,7 +42,7 @@ struct UartBase
 
   void *reg;
   void (*handler)(void *);
-  irq_t irq;
+  irqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;

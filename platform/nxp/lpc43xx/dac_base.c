@@ -10,8 +10,8 @@
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-static enum result configOutputPin(pin_t);
-static void releaseOutputPin(pin_t);
+static enum result configOutputPin(pinNumber);
+static void releaseOutputPin(pinNumber);
 static enum result setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
@@ -36,7 +36,7 @@ const struct PinEntry dacPins[] = {
 const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result configOutputPin(pin_t key)
+static enum result configOutputPin(pinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
 
@@ -53,7 +53,7 @@ static enum result configOutputPin(pin_t key)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void releaseOutputPin(pin_t key __attribute__((unused)))
+static void releaseOutputPin(pinNumber key __attribute__((unused)))
 {
   /* Disable analog pin function */
   LPC_SCU->ENAIO2 &= ~0x01;

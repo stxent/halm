@@ -122,7 +122,7 @@ enum result flashErasePage(uint32_t address)
   const uint8_t bank = addressToBank(address);
   enum result res;
 
-  const irqState irqState = irqSave();
+  const irqState state = irqSave();
 
   if ((res = prepareSectorToWrite(sector, bank)) == E_OK)
   {
@@ -136,7 +136,7 @@ enum result flashErasePage(uint32_t address)
     res = iap(CMD_ERASE_PAGE, 0, 0, parameters, ARRAY_SIZE(parameters));
   }
 
-  irqRestore(irqState);
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -146,7 +146,7 @@ enum result flashEraseSector(uint32_t address)
   const uint8_t bank = addressToBank(address);
   enum result res;
 
-  const irqState irqState = irqSave();
+  const irqState state = irqSave();
 
   if ((res = prepareSectorToWrite(sector, bank)) == E_OK)
   {
@@ -161,7 +161,7 @@ enum result flashEraseSector(uint32_t address)
     res = iap(CMD_ERASE_SECTORS, 0, 0, parameters, ARRAY_SIZE(parameters));
   }
 
-  irqRestore(irqState);
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -193,7 +193,7 @@ enum result flashWriteBuffer(uint32_t address, const uint8_t *buffer,
   const uint8_t bank = addressToBank(address);
   enum result res;
 
-  const irqState irqState = irqSave();
+  const irqState state = irqSave();
 
   res = prepareSectorToWrite(sector, bank);
   if (res == E_OK)
@@ -201,6 +201,6 @@ enum result flashWriteBuffer(uint32_t address, const uint8_t *buffer,
   if (res == E_OK)
     res = compareRegions(address, buffer, length);
 
-  irqRestore(irqState);
+  irqRestore(state);
   return res;
 }

@@ -17,7 +17,7 @@ struct WdtConfig
   /** Watchdog timer period in milliseconds. */
   uint32_t period;
   /** Optional: interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
   /** Optional: timer clock source. */
   enum wdtClockSource source;
 };

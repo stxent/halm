@@ -20,7 +20,7 @@ struct GpTimerCaptureUnitConfig
   /** Mandatory: timer frequency. */
   uint32_t frequency;
   /** Optional: interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -38,7 +38,7 @@ struct GpTimerCaptureConfig
   /** Mandatory: peripheral unit. */
   struct GpTimerCaptureUnit *parent;
   /** Mandatory: pin used as an input. */
-  pin_t pin;
+  pinNumber pin;
   /** Mandatory: capture mode. */
   enum pinEvent event;
   /** Optional: enables pull-up or pull-down resistors for input pin. */
@@ -62,6 +62,6 @@ struct GpTimerCapture
   enum pinEvent event;
 };
 /*----------------------------------------------------------------------------*/
-void *gpTimerCaptureCreate(void *, pin_t);
+void *gpTimerCaptureCreate(void *, pinNumber);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPTIMER_CAPTURE_H_ */

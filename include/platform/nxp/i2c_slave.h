@@ -22,11 +22,11 @@ struct I2cSlaveConfig
   /** Mandatory: register map size. */
   uint16_t size;
   /** Mandatory: serial clock pin. */
-  pin_t scl;
+  pinNumber scl;
   /** Mandatory: serial data pin. */
-  pin_t sda;
+  pinNumber sda;
   /** Optional: interrupt priority. */
-  priority_t priority;
+  irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

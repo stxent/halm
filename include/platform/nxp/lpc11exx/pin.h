@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pin_t);
+struct Pin pinInit(pinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, uint8_t);
 void pinSetFunction(struct Pin, uint8_t);

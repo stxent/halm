@@ -12,7 +12,7 @@
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
-static int8_t setupMatchPin(uint8_t channel, pin_t key);
+static int8_t setupMatchPin(uint8_t channel, pinNumber key);
 /*----------------------------------------------------------------------------*/
 static enum result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
 static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
@@ -77,7 +77,7 @@ static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
       : &device->MR1 + (channel - 1);
 }
 /*----------------------------------------------------------------------------*/
-static int8_t setupMatchPin(uint8_t channel, pin_t key)
+static int8_t setupMatchPin(uint8_t channel, pinNumber key)
 {
   const struct PinEntry *pinEntry;
 
@@ -389,7 +389,7 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
  * @param duration Initial duration in timer ticks.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpPwmCreate(void *unit, pin_t pin, uint32_t duration)
+void *gpPwmCreate(void *unit, pinNumber pin, uint32_t duration)
 {
   const struct GpPwmConfig channelConfig = {
       .parent = unit,
@@ -408,7 +408,7 @@ void *gpPwmCreate(void *unit, pin_t pin, uint32_t duration)
  * @param trailing Time of the trailing edge in timer ticks.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpPwmCreateDoubleEdge(void *unit, pin_t pin, uint32_t leading,
+void *gpPwmCreateDoubleEdge(void *unit, pinNumber pin, uint32_t leading,
     uint32_t trailing)
 {
   const struct GpPwmDoubleEdgeConfig channelConfig = {
