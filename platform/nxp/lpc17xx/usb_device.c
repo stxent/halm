@@ -326,12 +326,12 @@ static enum result devBind(void *object, void *driver)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void devUnbind(void *object, const void *driver)
+static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
 
   irqDisable(device->parent.irq);
-  usbControlUnbindDriver(device->control, driver);
+  usbControlUnbindDriver(device->control);
   irqEnable(device->parent.irq);
 }
 /*----------------------------------------------------------------------------*/

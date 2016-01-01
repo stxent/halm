@@ -47,7 +47,7 @@ enum result usbControlAppendDescriptor(struct UsbControl *, const void *);
 void usbControlEraseDescriptor(struct UsbControl *, const void *);
 enum result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlResetDriver(struct UsbControl *);
-void usbControlUnbindDriver(struct UsbControl *, const void *);
+void usbControlUnbindDriver(struct UsbControl *);
 void usbControlUpdateStatus(struct UsbControl *, uint8_t);
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_CONTROL_H_ */

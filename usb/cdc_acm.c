@@ -43,9 +43,19 @@ static void cdcDataReceived(struct UsbRequest *request, void *argument)
   struct CdcAcm * const interface = argument;
   const uint32_t spaceLeft = byteQueueCapacity(&interface->rxQueue)
       - byteQueueSize(&interface->rxQueue);
+  bool error = false;
   bool event = false;
+  bool returnToPool = false;
 
-  if (request->status == REQUEST_COMPLETED)
+  if (request->status == REQUEST_CANCELLED)
+  {
+    returnToPool = true;
+  }
+  else if (request->status != REQUEST_COMPLETED)
+  {
+    error = true;
+  }
+  else
   {
     if (spaceLeft >= request->length)
     {
@@ -55,80 +65,81 @@ static void cdcDataReceived(struct UsbRequest *request, void *argument)
       request->status = 0;
 
       if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
-      {
-        /* Hardware error occurred, return request to pool and wait for reset */
-        interface->suspended = true;
-        queuePush(&interface->rxRequestQueue, &request);
-
-        usbTrace("cdc_acm: suspended in read callback");
-      }
+        error = true;
     }
     else
     {
       interface->queuedRxBytes += request->length;
-      queuePush(&interface->rxRequestQueue, &request);
+      returnToPool = true;
     }
 
     event = true;
   }
-  else
+
+  if (returnToPool || error)
   {
-    if (request->status != REQUEST_CANCELLED)
-    {
-      /* Hardware error occurred */
-      interface->suspended = true;
-      event = true;
-
-      usbTrace("cdc_acm: suspended, read request failed");
-    }
-
     queuePush(&interface->rxRequestQueue, &request);
   }
 
-  if (event && interface->callback)
+  if (error)
+  {
+    interface->suspended = true;
+    usbTrace("cdc_acm: suspended in read callback");
+  }
+  else if (event && interface->callback)
+  {
     interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void cdcDataSent(struct UsbRequest *request, void *argument)
 {
   struct CdcAcm * const interface = argument;
-  uint32_t pending = byteQueueSize(&interface->txQueue);
+  bool error = false;
+  bool returnToPool = false;
 
-  if (request->status == REQUEST_CANCELLED || !pending)
+  if (request->status == REQUEST_CANCELLED)
   {
-    queuePush(&interface->txRequestQueue, &request);
+    returnToPool = true;
   }
   else if (request->status != REQUEST_COMPLETED)
   {
-    /* Hardware error occurred */
-    interface->suspended = true;
-    queuePush(&interface->txRequestQueue, &request);
+    error = true;
+  }
+  else if (byteQueueEmpty(&interface->txQueue))
+  {
+    if (queueSize(&interface->txRequestQueue) == REQUEST_POOL_SIZE / 2 - 1
+        && request->length == CDC_DATA_EP_SIZE)
+    {
+      /* Send empty packet to finish data transfer */
+      request->length = 0;
+      request->status = 0;
 
-    usbTrace("cdc_acm: suspended, write request failed");
+      if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
+        error = true;
+    }
+    else
+    {
+      returnToPool = true;
+    }
   }
   else
   {
     /* Try to send remaining data */
-    while (pending)
+    while (1)
     {
-      const uint32_t bytesToWrite = byteQueuePopArray(&interface->txQueue,
+      request->length = byteQueuePopArray(&interface->txQueue,
           request->buffer, request->capacity);
-
-      request->length = bytesToWrite;
       request->status = 0;
 
       if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
       {
         /* Hardware error occurred, suspend the interface and wait for reset */
-        interface->suspended = true;
-        queuePush(&interface->txRequestQueue, &request);
-
-        usbTrace("cdc_acm: suspended in write callback");
-
+        error = true;
         break;
       }
 
-      if (!(pending = byteQueueSize(&interface->txQueue)))
+      if (byteQueueEmpty(&interface->txQueue))
         break;
 
       if (queueEmpty(&interface->txRequestQueue))
@@ -137,13 +148,20 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
     }
   }
 
-  /*
-   * Notify when the transmit queue is at least half-empty or
-   * when the interface state is changed.
-   */
-  if (pending < (byteQueueCapacity(&interface->txQueue) >> 1)
-      || interface->suspended)
+  if (returnToPool || error)
   {
+    queuePush(&interface->txRequestQueue, &request);
+  }
+
+  if (error)
+  {
+    interface->suspended = true;
+    usbTrace("cdc_acm: suspended in write callback");
+  }
+  else if (byteQueueSize(&interface->txQueue) <
+      (byteQueueCapacity(&interface->txQueue) >> 1))
+  {
+    /* Notify when the transmit queue is at least half-empty */
     if (interface->callback)
       interface->callback(interface->callbackArgument);
   }

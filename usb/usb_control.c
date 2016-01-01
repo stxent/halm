@@ -225,10 +225,8 @@ void usbControlResetDriver(struct UsbControl *control)
     usbDriverUpdateStatus(control->driver, DEVICE_STATUS_RESET);
 }
 /*----------------------------------------------------------------------------*/
-void usbControlUnbindDriver(struct UsbControl *control, const void *driver)
+void usbControlUnbindDriver(struct UsbControl *control)
 {
-  assert(driver);
-  assert(control->driver == driver);
   control->driver = 0;
 }
 /*----------------------------------------------------------------------------*/
