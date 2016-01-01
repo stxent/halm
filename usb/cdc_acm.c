@@ -417,7 +417,7 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
   if (!length || interface->suspended)
     return 0;
 
-  interruptsDisable();
+  const irqState irqState = irqSave();
 
   if (!byteQueueEmpty(&interface->rxQueue))
   {
@@ -468,12 +468,11 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
       queuePush(&interface->rxRequestQueue, &request);
 
       usbTrace("cdc_acm: suspended in read function");
-
       break;
     }
   }
 
-  interruptsEnable();
+  irqRestore(irqState);
   return sourceLength - length;
 }
 /*----------------------------------------------------------------------------*/
@@ -486,7 +485,7 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
   if (!length || interface->suspended)
     return 0;
 
-  interruptsDisable();
+  const irqState irqState = irqSave();
 
   if (byteQueueEmpty(&interface->txQueue)
       && !queueEmpty(&interface->txRequestQueue))
@@ -509,6 +508,9 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
       queuePush(&interface->txRequestQueue, &request);
 
       usbTrace("cdc_acm: suspended in write function");
+
+      irqRestore(irqState);
+      return 0;
     }
     else
     {
@@ -517,11 +519,9 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
     }
   }
 
-  if (!interface->suspended && length)
-  {
+  if (length)
     length -= byteQueuePushArray(&interface->txQueue, buffer, length);
-  }
 
-  interruptsEnable();
+  irqRestore(irqState);
   return sourceLength - length;
 }

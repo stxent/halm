@@ -12,6 +12,7 @@
 /*----------------------------------------------------------------------------*/
 typedef int16_t irq_t;
 typedef uint8_t priority_t;
+typedef uint32_t irqState;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <core/CORE_TYPE/irq.h>

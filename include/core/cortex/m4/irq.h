@@ -28,14 +28,18 @@ void irqSetPriority(irq_t, priority_t);
 uint8_t nvicGetPriorityGrouping();
 void nvicSetPriorityGrouping(uint8_t);
 /*----------------------------------------------------------------------------*/
-static inline void interruptsDisable(void)
+static inline void irqRestore(irqState state)
 {
-  __interruptsDisable();
+  __interruptsSetState(state);
 }
 /*----------------------------------------------------------------------------*/
-static inline void interruptsEnable(void)
+static inline irqState irqSave(void)
 {
-  __interruptsEnable();
+  const irqState state = __interruptsGetState();
+
+  __interruptsDisable();
+
+  return state;
 }
 /*----------------------------------------------------------------------------*/
 static inline void irqEnable(irq_t irq)
