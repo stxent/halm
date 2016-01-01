@@ -7,7 +7,6 @@
 #ifndef USB_CDC_ACM_H_
 #define USB_CDC_ACM_H_
 /*----------------------------------------------------------------------------*/
-#include <containers/byte_queue.h>
 #include <containers/queue.h>
 #include <interface.h>
 #include <usb/cdc_acm_base.h>
@@ -33,10 +32,13 @@ struct CdcAcmConfig
   /** Mandatory: USB device. */
   void *device;
 
-  /** Optional: input queue size. */
-  uint32_t rxLength;
-  /** Optional: output queue size. */
-  uint32_t txLength;
+  /**
+   * Mandatory: number of reception buffers. All types of buffers have
+   * fixed size of 64 bytes.
+   */
+  uint8_t rxBuffers;
+  /** Mandatory: number of transmission buffers. */
+  uint8_t txBuffers;
 
   struct
   {
@@ -58,14 +60,12 @@ struct CdcAcm
 
   /* Lower half of the driver */
   struct CdcAcmBase *driver;
-  /* Input and output queues */
-  struct ByteQueue rxQueue, txQueue;
   /* Request queues */
   struct Queue rxRequestQueue, txRequestQueue;
   /* Pointer to the beginning of the request pool */
   struct UsbRequest *requests;
-  /* Size of the queued data */
-  uint16_t queuedRxBytes;
+  /* Sizes of queued data */
+  uint16_t queuedRxBytes, queuedTxBytes;
 
   struct UsbEndpoint *rxDataEp;
   struct UsbEndpoint *txDataEp;

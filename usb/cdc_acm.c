@@ -4,13 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <irq.h>
 #include <usb/cdc_acm.h>
 #include <usb/usb_trace.h>
-/*----------------------------------------------------------------------------*/
-#define REQUEST_POOL_SIZE (2 * 2)
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(struct UsbRequest *, void *);
 static void cdcDataSent(struct UsbRequest *, void *);
@@ -41,55 +40,23 @@ const struct InterfaceClass * const CdcAcm = &interfaceTable;
 static void cdcDataReceived(struct UsbRequest *request, void *argument)
 {
   struct CdcAcm * const interface = argument;
-  const uint32_t spaceLeft = byteQueueCapacity(&interface->rxQueue)
-      - byteQueueSize(&interface->rxQueue);
-  bool error = false;
   bool event = false;
-  bool returnToPool = false;
 
-  if (request->status == REQUEST_CANCELLED)
+  queuePush(&interface->rxRequestQueue, &request);
+
+  if (request->status == REQUEST_COMPLETED)
   {
-    returnToPool = true;
-  }
-  else if (request->status != REQUEST_COMPLETED)
-  {
-    error = true;
-  }
-  else
-  {
-    if (spaceLeft >= request->length)
-    {
-      byteQueuePushArray(&interface->rxQueue, request->buffer, request->length);
-
-      request->length = 0;
-      request->status = 0;
-
-      if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
-        error = true;
-    }
-    else
-    {
-      interface->queuedRxBytes += request->length;
-      returnToPool = true;
-    }
-
+    interface->queuedRxBytes += request->length;
     event = true;
   }
-
-  if (returnToPool || error)
-  {
-    queuePush(&interface->rxRequestQueue, &request);
-  }
-
-  if (error)
+  else if (request->status != REQUEST_CANCELLED)
   {
     interface->suspended = true;
     usbTrace("cdc_acm: suspended in read callback");
   }
-  else if (event && interface->callback)
-  {
+
+  if (event && interface->callback)
     interface->callback(interface->callbackArgument);
-  }
 }
 /*----------------------------------------------------------------------------*/
 static void cdcDataSent(struct UsbRequest *request, void *argument)
@@ -106,10 +73,15 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
   {
     error = true;
   }
-  else if (byteQueueEmpty(&interface->txQueue))
+  else
   {
-    if (queueSize(&interface->txRequestQueue) == REQUEST_POOL_SIZE / 2 - 1
-        && request->length == CDC_DATA_EP_SIZE)
+    interface->queuedTxBytes -= request->length;
+
+    const unsigned int almostFull =
+        queueCapacity(&interface->txRequestQueue) - 1;
+
+    if (queueSize(&interface->txRequestQueue) == almostFull
+        && request->length == request->capacity)
     {
       /* Send empty packet to finish data transfer */
       request->length = 0;
@@ -123,30 +95,6 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
       returnToPool = true;
     }
   }
-  else
-  {
-    /* Try to send remaining data */
-    while (1)
-    {
-      request->length = byteQueuePopArray(&interface->txQueue,
-          request->buffer, request->capacity);
-      request->status = 0;
-
-      if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
-      {
-        /* Hardware error occurred, suspend the interface and wait for reset */
-        error = true;
-        break;
-      }
-
-      if (byteQueueEmpty(&interface->txQueue))
-        break;
-
-      if (queueEmpty(&interface->txRequestQueue))
-        break;
-      queuePop(&interface->txRequestQueue, &request);
-    }
-  }
 
   if (returnToPool || error)
   {
@@ -158,8 +106,8 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
     interface->suspended = true;
     usbTrace("cdc_acm: suspended in write callback");
   }
-  else if (byteQueueSize(&interface->txQueue) <
-      (byteQueueCapacity(&interface->txQueue) >> 1))
+  else if (queueSize(&interface->txRequestQueue) <
+      (queueCapacity(&interface->txRequestQueue) >> 1))
   {
     /* Notify when the transmit queue is at least half-empty */
     if (interface->callback)
@@ -173,11 +121,8 @@ static void resetBuffers(struct CdcAcm *interface)
   usbEpClear(interface->rxDataEp);
   usbEpClear(interface->txDataEp);
 
-  /* Clear byte queues */
-  byteQueueClear(&interface->rxQueue);
-  byteQueueClear(&interface->txQueue);
-
   interface->queuedRxBytes = 0;
+  interface->queuedTxBytes = 0;
 }
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *interface)
@@ -244,27 +189,18 @@ static enum result interfaceInit(void *object, const void *configBase)
   if (!interface->driver)
     return E_ERROR;
 
-  /* Input buffer should be greater or equal to endpoint buffer */
-  if (config->rxLength < CDC_DATA_EP_SIZE)
-    return E_VALUE;
-
-  res = byteQueueInit(&interface->rxQueue, config->rxLength);
-  if (res != E_OK)
-    return res;
-  res = byteQueueInit(&interface->txQueue, config->txLength);
-  if (res != E_OK)
-    return res;
   res = queueInit(&interface->rxRequestQueue, sizeof(struct UsbRequest *),
-      REQUEST_POOL_SIZE / 2);
+      config->rxBuffers);
   if (res != E_OK)
     return res;
   res = queueInit(&interface->txRequestQueue, sizeof(struct UsbRequest *),
-      REQUEST_POOL_SIZE / 2);
+      config->txBuffers);
   if (res != E_OK)
     return res;
 
   interface->callback = 0;
   interface->queuedRxBytes = 0;
+  interface->queuedTxBytes = 0;
   interface->suspended = true;
   interface->updated = false;
 
@@ -280,25 +216,31 @@ static enum result interfaceInit(void *object, const void *configBase)
     return E_ERROR;
 
   /* Allocate requests */
-  interface->requests = malloc(REQUEST_POOL_SIZE * sizeof(struct UsbRequest));
+  const unsigned short totalPoolSize = config->rxBuffers + config->txBuffers;
+
+  interface->requests = malloc(totalPoolSize * sizeof(struct UsbRequest));
   if (!interface->requests)
     return E_MEMORY;
 
-  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
+  for (unsigned short index = 0; index < totalPoolSize; ++index)
   {
     res = usbRequestInit(interface->requests + index, CDC_DATA_EP_SIZE);
     if (res != E_OK)
       return res;
   }
 
+  /* Add requests to queues */
   struct UsbRequest *request = interface->requests;
 
-  for (unsigned short index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
+  for (unsigned short index = 0; index < config->rxBuffers; ++index)
   {
     usbRequestCallback(request, cdcDataReceived, interface);
     queuePush(&interface->rxRequestQueue, &request);
     ++request;
+  }
 
+  for (unsigned short index = 0; index < config->txBuffers; ++index)
+  {
     usbRequestCallback(request, cdcDataSent, interface);
     queuePush(&interface->txRequestQueue, &request);
     ++request;
@@ -311,26 +253,32 @@ static void interfaceDeinit(void *object)
 {
   struct CdcAcm * const interface = object;
 
+  /* Return requests from endpoint queues to local pools */
   usbEpClear(interface->notificationEp);
   usbEpClear(interface->txDataEp);
   usbEpClear(interface->rxDataEp);
 
-  assert(queueSize(&interface->rxRequestQueue) == REQUEST_POOL_SIZE / 2);
-  assert(queueSize(&interface->txRequestQueue) == REQUEST_POOL_SIZE / 2);
+  assert(queueFull(&interface->rxRequestQueue));
+  assert(queueFull(&interface->txRequestQueue));
 
-  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
+  /* Delete requests and free memory  */
+  const unsigned short totalPoolSize = queueCapacity(&interface->rxRequestQueue)
+      + queueCapacity(&interface->txRequestQueue);
+
+  for (unsigned short index = 0; index < totalPoolSize; ++index)
     usbRequestDeinit(interface->requests + index);
   free(interface->requests);
 
+  /* Delete endpoints */
   deinit(interface->txDataEp);
   deinit(interface->rxDataEp);
   deinit(interface->notificationEp);
 
+  /* Delete request queues */
   queueDeinit(&interface->txRequestQueue);
   queueDeinit(&interface->rxRequestQueue);
-  byteQueueDeinit(&interface->txQueue);
-  byteQueueDeinit(&interface->rxQueue);
 
+  /* Call destructor for USB driver part */
   deinit(interface->driver);
 }
 /*----------------------------------------------------------------------------*/
@@ -352,12 +300,11 @@ static enum result interfaceGet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_AVAILABLE:
-      *(uint32_t *)data = byteQueueSize(&interface->rxQueue)
-          + interface->queuedRxBytes;
+      *(uint32_t *)data = interface->queuedRxBytes;
       return E_OK;
 
     case IF_PENDING:
-      *(uint32_t *)data = byteQueueSize(&interface->txQueue);
+      *(uint32_t *)data = interface->queuedTxBytes;
       return E_OK;
 
     case IF_RATE:
@@ -385,11 +332,16 @@ static enum result interfaceGet(void *object, enum ifOption option,
         status |= CDC_ACM_LINE_CHANGED;
       }
       if (interface->suspended)
+      {
         status |= CDC_ACM_SUSPENDED;
-      if (!byteQueueEmpty(&interface->rxQueue))
-        status |= CDC_ACM_RX_AVAILABLE;
-      if (byteQueueEmpty(&interface->txQueue))
-        status |= CDC_ACM_TX_EMPTY;
+      }
+      else
+      {
+        if (interface->queuedRxBytes)
+          status |= CDC_ACM_RX_AVAILABLE;
+        if (!interface->queuedTxBytes)
+          status |= CDC_ACM_TX_EMPTY;
+      }
 
       *(uint32_t *)data = status;
       return E_OK;
@@ -419,44 +371,21 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
 
   const irqState state = irqSave();
 
-  if (!byteQueueEmpty(&interface->rxQueue))
-  {
-    const uint32_t bytesRead = byteQueuePopArray(&interface->rxQueue,
-        buffer, length);
-
-    buffer += bytesRead;
-    length -= bytesRead;
-  }
-
   while (!queueEmpty(&interface->rxRequestQueue))
   {
-    const uint32_t spaceAvailable = byteQueueCapacity(&interface->rxQueue)
-        - byteQueueSize(&interface->rxQueue);
     struct UsbRequest *request;
-
     queuePeek(&interface->rxRequestQueue, &request);
-    if (spaceAvailable < request->length)
+
+    const uint16_t chunkLength = request->length;
+
+    if (length < chunkLength)
       break;
 
     queuePop(&interface->rxRequestQueue, 0);
-    interface->queuedRxBytes -= request->length;
-
-    const uint8_t *bufferPosition = request->buffer;
-    uint16_t bytesLeft = request->length;
-
-    if (length)
-    {
-      const uint16_t chunkLength = bytesLeft < length ? bytesLeft : length;
-
-      memcpy(buffer, bufferPosition, chunkLength);
-      buffer += chunkLength;
-      length -= chunkLength;
-      bufferPosition += chunkLength;
-      bytesLeft -= chunkLength;
-    }
-
-    if (bytesLeft)
-      byteQueuePushArray(&interface->rxQueue, bufferPosition, bytesLeft);
+    interface->queuedRxBytes -= chunkLength;
+    memcpy(buffer, request->buffer, chunkLength);
+    buffer += chunkLength;
+    length -= chunkLength;
 
     request->length = 0;
     request->status = 0;
@@ -487,15 +416,13 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
 
   const irqState state = irqSave();
 
-  if (byteQueueEmpty(&interface->txQueue)
-      && !queueEmpty(&interface->txRequestQueue))
+  while (!queueEmpty(&interface->txRequestQueue))
   {
     struct UsbRequest *request;
-
     queuePop(&interface->txRequestQueue, &request);
 
-    const uint32_t bytesToWrite = length > request->capacity ?
-        request->capacity : length;
+    const uint16_t bytesToWrite = length > request->capacity ?
+        request->capacity : (uint16_t)length;
 
     request->length = bytesToWrite;
     request->status = 0;
@@ -514,13 +441,11 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
     }
     else
     {
+      interface->queuedTxBytes += bytesToWrite;
       buffer += bytesToWrite;
       length -= bytesToWrite;
     }
   }
-
-  if (length)
-    length -= byteQueuePushArray(&interface->txQueue, buffer, length);
 
   irqRestore(state);
   return sourceLength - length;
