@@ -77,12 +77,10 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
   {
     interface->queuedTxBytes -= request->length;
 
-    const unsigned int almostFull =
-        queueCapacity(&interface->txRequestQueue) - 1;
-
-    if (queueSize(&interface->txRequestQueue) == almostFull
-        && request->length == request->capacity)
+    if (interface->zeroPacketRequired)
     {
+      interface->zeroPacketRequired = false;
+
       /* Send empty packet to finish data transfer */
       request->length = 0;
       request->status = 0;
@@ -106,10 +104,9 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
     interface->suspended = true;
     usbTrace("cdc_acm: suspended in write callback");
   }
-  else if (queueSize(&interface->txRequestQueue) <
-      (queueCapacity(&interface->txRequestQueue) >> 1))
+  else if (queueFull(&interface->txRequestQueue))
   {
-    /* Notify when the transmit queue is at least half-empty */
+    /* Notify when the pool becomes full */
     if (interface->callback)
       interface->callback(interface->callbackArgument);
   }
@@ -123,6 +120,7 @@ static void resetBuffers(struct CdcAcm *interface)
 
   interface->queuedRxBytes = 0;
   interface->queuedTxBytes = 0;
+  interface->zeroPacketRequired = false;
 }
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *interface)
@@ -203,6 +201,7 @@ static enum result interfaceInit(void *object, const void *configBase)
   interface->queuedTxBytes = 0;
   interface->suspended = true;
   interface->updated = false;
+  interface->zeroPacketRequired = false;
 
   interface->notificationEp = usbDevAllocate(config->device,
       config->endpoint.interrupt);
@@ -300,21 +299,16 @@ static enum result interfaceGet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_AVAILABLE:
-      *(uint32_t *)data = interface->queuedRxBytes;
+      *(uint32_t *)data = interface->suspended ? 0 : interface->queuedRxBytes;
       return E_OK;
 
     case IF_PENDING:
-      *(uint32_t *)data = interface->queuedTxBytes;
+      *(uint32_t *)data = interface->suspended ? 0 : interface->queuedTxBytes;
       return E_OK;
 
     case IF_RATE:
       *(uint32_t *)data = interface->driver->lineCoding.dteRate;
       return E_OK;
-
-/* TODO Extend option list
-    case IF_WIDTH:
-      *(uint32_t *)data = interface->driver->lineCoding.dataBits;
-      return E_OK; */
 
     default:
       break;
@@ -365,11 +359,10 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct CdcAcm * const interface = object;
   const uint32_t sourceLength = length;
+  irqState state;
 
-  if (!length || interface->suspended)
+  if (interface->suspended)
     return 0;
-
-  const irqState state = irqSave();
 
   while (!queueEmpty(&interface->rxRequestQueue))
   {
@@ -381,8 +374,11 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
     if (length < chunkLength)
       break;
 
+    state = irqSave();
     queuePop(&interface->rxRequestQueue, 0);
     interface->queuedRxBytes -= chunkLength;
+    irqRestore(state);
+
     memcpy(buffer, request->buffer, chunkLength);
     buffer += chunkLength;
     length -= chunkLength;
@@ -394,14 +390,16 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
     {
       /* Hardware error occurred, suspend the interface and wait for reset */
       interface->suspended = true;
+
+      state = irqSave();
       queuePush(&interface->rxRequestQueue, &request);
+      irqRestore(state);
 
       usbTrace("cdc_acm: suspended in read function");
       break;
     }
   }
 
-  irqRestore(state);
   return sourceLength - length;
 }
 /*----------------------------------------------------------------------------*/
@@ -410,43 +408,44 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
 {
   struct CdcAcm * const interface = object;
   const uint32_t sourceLength = length;
+  irqState state;
 
-  if (!length || interface->suspended)
+  if (interface->suspended)
     return 0;
 
-  const irqState state = irqSave();
-
-  while (!queueEmpty(&interface->txRequestQueue))
+  while (length && !queueEmpty(&interface->txRequestQueue))
   {
+    const uint16_t bytesToWrite = length > CDC_DATA_EP_SIZE ?
+        CDC_DATA_EP_SIZE : (uint16_t)length;
     struct UsbRequest *request;
-    queuePop(&interface->txRequestQueue, &request);
 
-    const uint16_t bytesToWrite = length > request->capacity ?
-        request->capacity : (uint16_t)length;
+    state = irqSave();
+    queuePop(&interface->txRequestQueue, &request);
+    interface->queuedTxBytes += bytesToWrite;
+    irqRestore(state);
 
     request->length = bytesToWrite;
     request->status = 0;
     memcpy(request->buffer, buffer, bytesToWrite);
+    buffer += bytesToWrite;
+    length -= bytesToWrite;
+
+    /* Append zero length packet when the last packet has maximum length */
+    interface->zeroPacketRequired = !length && bytesToWrite == CDC_DATA_EP_SIZE;
 
     if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
     {
       /* Hardware error occurred, suspend the interface and wait for reset */
       interface->suspended = true;
+
+      state = irqSave();
       queuePush(&interface->txRequestQueue, &request);
+      irqRestore(state);
 
       usbTrace("cdc_acm: suspended in write function");
-
-      irqRestore(state);
       return 0;
-    }
-    else
-    {
-      interface->queuedTxBytes += bytesToWrite;
-      buffer += bytesToWrite;
-      length -= bytesToWrite;
     }
   }
 
-  irqRestore(state);
   return sourceLength - length;
 }
