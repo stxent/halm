@@ -16,7 +16,6 @@ enum result usbRequestInit(struct UsbRequest *request, uint16_t size)
   request->callback = 0;
   request->capacity = size;
   request->length = 0;
-  request->status = 0;
 
   return E_OK;
 }
@@ -27,7 +26,8 @@ void usbRequestDeinit(struct UsbRequest *request)
 }
 /*----------------------------------------------------------------------------*/
 void usbRequestCallback(struct UsbRequest *request,
-    void (*callback)(struct UsbRequest *, void *), void *argument)
+    void (*callback)(void *, struct UsbRequest *, enum usbRequestStatus),
+    void *argument)
 {
   request->callbackArgument = argument;
   request->callback = callback;

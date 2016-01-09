@@ -368,6 +368,7 @@ static void devEraseDescriptor(void *object, const void *descriptor)
 static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 {
   struct UsbRequest *request = 0;
+  enum usbRequestStatus requestStatus = REQUEST_ERROR;
 
   if (queueEmpty(&endpoint->requests))
     return;
@@ -376,9 +377,9 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
   if (endpoint->address & EP_DIRECTION_IN)
   {
     if (epWriteData(endpoint, request->buffer, request->length, 0) == E_OK)
-      request->status = REQUEST_COMPLETED;
-    else
-      request->status = REQUEST_ERROR;
+    {
+      requestStatus = REQUEST_COMPLETED;
+    }
   }
   else
   {
@@ -387,7 +388,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     if (epReadData(endpoint, request->buffer, request->capacity, &read) == E_OK)
     {
       request->length = read;
-      request->status = status & SELECT_ENDPOINT_STP ?
+      requestStatus = status & SELECT_ENDPOINT_STP ?
           REQUEST_SETUP : REQUEST_COMPLETED;
     }
     else
@@ -398,8 +399,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     }
   }
 
-  if (request->callback)
-    request->callback(request, request->callbackArgument);
+  request->callback(request->callbackArgument, request, requestStatus);
 }
 /*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
@@ -543,10 +543,7 @@ static void epClear(void *object)
   while (!queueEmpty(&endpoint->requests))
   {
     queuePop(&endpoint->requests, &request);
-
-    request->status = REQUEST_CANCELLED;
-    if (request->callback)
-      request->callback(request, request->callbackArgument);
+    request->callback(request->callbackArgument, request, REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -557,6 +554,8 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   const uint8_t index = EP_TO_INDEX(endpoint->address);
   const uint32_t mask = BIT(index);
   enum result res = E_OK;
+
+  assert(request->callback);
 
   irqDisable(endpoint->device->parent.irq);
 

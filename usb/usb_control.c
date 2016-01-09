@@ -27,8 +27,10 @@ struct LocalData
 static enum result localDataAllocate(struct UsbControl *);
 static void localDataFree(struct UsbControl *);
 /*----------------------------------------------------------------------------*/
-static void controlInHandler(struct UsbRequest *, void *);
-static void controlOutHandler(struct UsbRequest *, void *);
+static void controlInHandler(void *, struct UsbRequest *,
+    enum usbRequestStatus);
+static void controlOutHandler(void *, struct UsbRequest *,
+    enum usbRequestStatus);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
@@ -75,21 +77,22 @@ static void localDataFree(struct UsbControl *control)
   free(local);
 }
 /*----------------------------------------------------------------------------*/
-static void controlInHandler(struct UsbRequest *request, void *argument)
+static void controlInHandler(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status __attribute__((unused)))
 {
   struct UsbControl * const control = argument;
 
   queuePush(&control->requestPool, &request);
 }
 /*----------------------------------------------------------------------------*/
-static void controlOutHandler(struct UsbRequest *request,
-    void *argument)
+static void controlOutHandler(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status)
 {
   struct UsbControl * const control = argument;
   struct LocalData * const local = control->local;
   struct UsbSetupPacket * const packet = &local->setupPacket;
 
-  if (request->status == REQUEST_CANCELLED)
+  if (status == REQUEST_CANCELLED)
   {
     queuePush(&control->requestPool, &request);
     return;
@@ -98,7 +101,7 @@ static void controlOutHandler(struct UsbRequest *request,
   uint16_t length = 0;
   enum result res = E_BUSY;
 
-  if (request->status == REQUEST_SETUP)
+  if (status == REQUEST_SETUP)
   {
     local->setupDataLeft = 0;
     memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
@@ -181,7 +184,6 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
     if (chunk)
       memcpy(request->buffer, data, chunk);
     request->length = chunk;
-    request->status = 0;
 
     data += chunk;
     length -= chunk;

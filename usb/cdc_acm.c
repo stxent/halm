@@ -11,8 +11,8 @@
 #include <usb/cdc_acm.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-static void cdcDataReceived(struct UsbRequest *, void *);
-static void cdcDataSent(struct UsbRequest *, void *);
+static void cdcDataReceived(void *, struct UsbRequest *, enum usbRequestStatus);
+static void cdcDataSent(void *, struct UsbRequest *, enum usbRequestStatus);
 static void resetBuffers(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
 static enum result interfaceInit(void *, const void *);
@@ -37,19 +37,20 @@ static const struct InterfaceClass interfaceTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const CdcAcm = &interfaceTable;
 /*----------------------------------------------------------------------------*/
-static void cdcDataReceived(struct UsbRequest *request, void *argument)
+static void cdcDataReceived(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status)
 {
   struct CdcAcm * const interface = argument;
   bool event = false;
 
   queuePush(&interface->rxRequestQueue, &request);
 
-  if (request->status == REQUEST_COMPLETED)
+  if (status == REQUEST_COMPLETED)
   {
     interface->queuedRxBytes += request->length;
     event = true;
   }
-  else if (request->status != REQUEST_CANCELLED)
+  else if (status != REQUEST_CANCELLED)
   {
     interface->suspended = true;
     usbTrace("cdc_acm: suspended in read callback");
@@ -59,17 +60,18 @@ static void cdcDataReceived(struct UsbRequest *request, void *argument)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void cdcDataSent(struct UsbRequest *request, void *argument)
+static void cdcDataSent(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status)
 {
   struct CdcAcm * const interface = argument;
   bool error = false;
   bool returnToPool = false;
 
-  if (request->status == REQUEST_CANCELLED)
+  if (status == REQUEST_CANCELLED)
   {
     returnToPool = true;
   }
-  else if (request->status != REQUEST_COMPLETED)
+  else if (status != REQUEST_COMPLETED)
   {
     error = true;
   }
@@ -83,7 +85,6 @@ static void cdcDataSent(struct UsbRequest *request, void *argument)
 
       /* Send empty packet to finish data transfer */
       request->length = 0;
-      request->status = 0;
 
       if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
         error = true;
@@ -151,7 +152,6 @@ void cdcAcmOnStatusChanged(struct CdcAcm *interface, uint8_t status)
 
       queuePop(&interface->rxRequestQueue, &request);
       request->length = 0;
-      request->status = 0;
 
       if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
       {
@@ -384,7 +384,6 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
     length -= chunkLength;
 
     request->length = 0;
-    request->status = 0;
 
     if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
     {
@@ -425,7 +424,6 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
     irqRestore(state);
 
     request->length = bytesToWrite;
-    request->status = 0;
     memcpy(request->buffer, buffer, bytesToWrite);
     buffer += bytesToWrite;
     length -= bytesToWrite;

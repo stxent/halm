@@ -50,16 +50,15 @@ struct UsbRequest
   uint8_t *buffer;
   uint16_t capacity;
   uint16_t length;
-  enum usbRequestStatus status;
 
-  void (*callback)(struct UsbRequest *, void *);
+  void (*callback)(void *, struct UsbRequest *, enum usbRequestStatus);
   void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/
 enum result usbRequestInit(struct UsbRequest *, uint16_t);
 void usbRequestDeinit(struct UsbRequest *);
 void usbRequestCallback(struct UsbRequest *,
-    void (*)(struct UsbRequest *, void *), void *);
+    void (*)(void *, struct UsbRequest *, enum usbRequestStatus), void *);
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbDeviceClass
