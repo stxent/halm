@@ -367,7 +367,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 
   if (endpoint->address & EP_DIRECTION_IN)
   {
-    if (epWriteData(endpoint, request->buffer, request->length, 0) == E_OK)
+    if (epWriteData(endpoint, request->buffer, request->base.length, 0) == E_OK)
     {
       requestStatus = REQUEST_COMPLETED;
     }
@@ -376,9 +376,10 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
   {
     uint16_t read;
 
-    if (epReadData(endpoint, request->buffer, request->capacity, &read) == E_OK)
+    if (epReadData(endpoint, request->buffer,
+        request->base.capacity, &read) == E_OK)
     {
-      request->length = read;
+      request->base.length = read;
       requestStatus = status & SELECT_ENDPOINT_STP ?
           REQUEST_SETUP : REQUEST_COMPLETED;
     }
@@ -390,7 +391,8 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     }
   }
 
-  request->callback(request->callbackArgument, request, requestStatus);
+  request->base.callback(request->base.callbackArgument, request,
+      requestStatus);
 }
 /*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
@@ -537,7 +539,8 @@ static void epClear(void *object)
   while (!queueEmpty(&endpoint->requests))
   {
     queuePop(&endpoint->requests, &request);
-    request->callback(request->callbackArgument, request, REQUEST_CANCELLED);
+    request->base.callback(request->base.callbackArgument, request,
+        REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -549,7 +552,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   const uint32_t mask = BIT(index + 1);
   enum result res = E_OK;
 
-  assert(request->callback);
+  assert(request->base.callback);
 
   irqDisable(endpoint->device->parent.irq);
 

@@ -15,9 +15,15 @@
 #define DATA_BUFFER_SIZE  (CONFIG_USB_DEVICE_CONTROL_REQUESTS * EP0_BUFFER_SIZE)
 #define REQUEST_POOL_SIZE (CONFIG_USB_DEVICE_CONTROL_REQUESTS * 2)
 /*----------------------------------------------------------------------------*/
+struct ControlUsbRequest
+{
+  struct UsbRequestBase base;
+  uint8_t buffer[EP0_BUFFER_SIZE];
+};
+
 struct LocalData
 {
-  struct UsbRequest requests[REQUEST_POOL_SIZE];
+  struct ControlUsbRequest requests[REQUEST_POOL_SIZE];
 
   struct UsbSetupPacket setupPacket;
   uint16_t setupDataLeft;
@@ -48,7 +54,6 @@ const struct EntityClass * const UsbControl = &controlTable;
 static enum result localDataAllocate(struct UsbControl *control)
 {
   struct LocalData * const local = malloc(sizeof(struct LocalData));
-  enum result res;
 
   if (!local)
     return E_MEMORY;
@@ -57,24 +62,12 @@ static enum result localDataAllocate(struct UsbControl *control)
   local->setupDataLeft = 0;
   memset(&local->setupPacket, 0, sizeof(local->setupPacket));
 
-  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
-  {
-    res = usbRequestInit(local->requests + index, EP0_BUFFER_SIZE);
-    if (res != E_OK)
-      return res;
-  }
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void localDataFree(struct UsbControl *control)
 {
-  struct LocalData * const local = control->local;
-
-  for (unsigned short index = 0; index < REQUEST_POOL_SIZE; ++index)
-    usbRequestDeinit(local->requests + index);
-
-  free(local);
+  free(control->local);
 }
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *argument, struct UsbRequest *request,
@@ -127,12 +120,12 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
       local->setupDataLeft = packet->length;
     }
   }
-  else if (local->setupDataLeft && request->length <= local->setupDataLeft)
+  else if (local->setupDataLeft && request->base.length <= local->setupDataLeft)
   {
     /* Erroneous packets are ignored */
     memcpy(local->setupData + (packet->length - local->setupDataLeft),
-        request->buffer, request->length);
-    local->setupDataLeft -= request->length;
+        request->buffer, request->base.length);
+    local->setupDataLeft -= request->base.length;
 
     if (!local->setupDataLeft)
     {
@@ -183,7 +176,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
 
     if (chunk)
       memcpy(request->buffer, data, chunk);
-    request->length = chunk;
+    request->base.length = chunk;
 
     data += chunk;
     length -= chunk;
@@ -281,18 +274,18 @@ static enum result controlInit(void *object, const void *configBase)
   /* Enable interrupts */
   resetDevice(control);
 
-  /* Enqueue requests after endpoint enabling */
-  struct UsbRequest *request =
+  /* Enqueue requests after enabling of endpoints */
+  struct ControlUsbRequest *request =
       ((struct LocalData *)control->local)->requests;
 
   for (unsigned short index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
   {
-    usbRequestCallback(request, controlInHandler, control);
+    usbRequestInit(request, EP0_BUFFER_SIZE, controlInHandler, control);
     queuePush(&control->requestPool, &request);
     ++request;
 
-    usbRequestCallback(request, controlOutHandler, control);
-    usbEpEnqueue(control->ep0out, request);
+    usbRequestInit(request, EP0_BUFFER_SIZE, controlOutHandler, control);
+    usbEpEnqueue(control->ep0out, (struct UsbRequest *)request);
     ++request;
   }
 

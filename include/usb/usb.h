@@ -45,19 +45,24 @@ enum usbRequestStatus
   REQUEST_CANCELLED
 };
 /*----------------------------------------------------------------------------*/
-struct UsbRequest
+struct UsbRequest;
+
+struct UsbRequestBase
 {
-  uint8_t *buffer;
   uint16_t capacity;
   uint16_t length;
 
   void (*callback)(void *, struct UsbRequest *, enum usbRequestStatus);
   void *callbackArgument;
 };
+
+struct UsbRequest
+{
+  struct UsbRequestBase base;
+  uint8_t buffer[];
+};
 /*----------------------------------------------------------------------------*/
-enum result usbRequestInit(struct UsbRequest *, uint16_t);
-void usbRequestDeinit(struct UsbRequest *);
-void usbRequestCallback(struct UsbRequest *,
+void usbRequestInit(void *, uint16_t,
     void (*)(void *, struct UsbRequest *, enum usbRequestStatus), void *);
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
