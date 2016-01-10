@@ -39,7 +39,7 @@ struct SerialConfig
 /*----------------------------------------------------------------------------*/
 struct Serial
 {
-  struct UartBase parent;
+  struct UartBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

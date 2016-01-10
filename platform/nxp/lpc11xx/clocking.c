@@ -80,7 +80,7 @@ static const struct ClockClass sysPllTable = {
 };
 /*----------------------------------------------------------------------------*/
 static const struct CommonClockClass clockOutputTable = {
-    .parent = {
+    .base = {
         .disable = branchDisable,
         .enable = branchEnable,
         .frequency = branchFrequency,
@@ -90,7 +90,7 @@ static const struct CommonClockClass clockOutputTable = {
 };
 
 static const struct CommonClockClass mainClockTable = {
-    .parent = {
+    .base = {
         .disable = branchDisable,
         .enable = branchEnable,
         .frequency = branchFrequency,
@@ -100,7 +100,7 @@ static const struct CommonClockClass mainClockTable = {
 };
 
 static const struct CommonClockClass wdtClockTable = {
-    .parent = {
+    .base = {
         .disable = branchDisable,
         .enable = branchEnable,
         .frequency = branchFrequency,

@@ -47,7 +47,7 @@ struct GpDmaRuntimeConfig
 /*----------------------------------------------------------------------------*/
 struct GpDma
 {
-  struct GpDmaBase parent;
+  struct GpDmaBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

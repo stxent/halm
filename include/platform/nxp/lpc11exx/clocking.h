@@ -51,7 +51,7 @@ enum wdtFrequency
 /*----------------------------------------------------------------------------*/
 struct CommonClockClass
 {
-  struct ClockClass parent;
+  struct ClockClass base;
 
   enum clockBranch branch;
 };

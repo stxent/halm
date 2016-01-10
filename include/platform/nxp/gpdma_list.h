@@ -64,7 +64,7 @@ struct GpDmaListEntry
 /*----------------------------------------------------------------------------*/
 struct GpDmaList
 {
-  struct GpDmaBase parent;
+  struct GpDmaBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

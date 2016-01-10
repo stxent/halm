@@ -34,7 +34,7 @@ struct DacDmaConfig
 /*----------------------------------------------------------------------------*/
 struct DacDma
 {
-  struct DacBase parent;
+  struct DacBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

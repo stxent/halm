@@ -38,7 +38,7 @@ static void interruptHandler(void *object)
 {
   struct AdcBurst * const interface = object;
   struct AdcUnit * const unit = interface->unit;
-  LPC_ADC_Type * const reg = unit->parent.reg;
+  LPC_ADC_Type * const reg = unit->base.reg;
 
   /* Copy conversion result and increase position in buffer */
   *interface->buffer = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
@@ -50,7 +50,7 @@ static void interruptHandler(void *object)
     reg->CR &= ~CR_START_MASK;
     /* Disable interrupts */
     reg->INTEN = 0;
-    irqDisable(unit->parent.irq);
+    irqDisable(unit->base.irq);
 
     adcUnitUnregister(unit);
 
@@ -145,7 +145,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct AdcBurst * const interface = object;
   struct AdcUnit * const unit = interface->unit;
-  LPC_ADC_Type * const reg = unit->parent.reg;
+  LPC_ADC_Type * const reg = unit->base.reg;
   const uint32_t samples = length / SAMPLE_SIZE;
 
   if (!samples)
@@ -155,7 +155,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
     return 0;
 
   /* Enable interrupt after completion of the conversion */
-  irqEnable(unit->parent.irq);
+  irqEnable(unit->base.irq);
   reg->INTEN = INTEN_AD(interface->pin.channel);
 
   /* Set conversion channel */

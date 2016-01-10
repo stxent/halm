@@ -35,7 +35,7 @@ struct AdcDmaConfig
 /*----------------------------------------------------------------------------*/
 struct AdcDma
 {
-  struct Interface parent;
+  struct Interface base;
 
   /* Pointer to a parent unit */
   struct AdcUnit *unit;

@@ -39,7 +39,7 @@ struct SdCardConfig
 /*----------------------------------------------------------------------------*/
 struct SdCard
 {
-  struct Interface parent;
+  struct Interface base;
 
   /* Parent interface */
   struct Interface *interface;

@@ -37,23 +37,23 @@ static void interruptHandler(void *object)
 static enum result wdtInit(void *object, const void *configBase)
 {
   const struct WdtConfig * const config = configBase;
-  const struct WdtBaseConfig parentConfig = {
+  const struct WdtBaseConfig baseConfig = {
       .source = config->source
   };
   struct Wdt * const timer = object;
   enum result res;
 
   /* Call base class constructor */
-  if ((res = WdtBase->init(object, &parentConfig)) != E_OK)
+  if ((res = WdtBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  timer->parent.handler = interruptHandler;
+  timer->base.handler = interruptHandler;
   timer->callback = 0;
 
   LPC_WDT->TC = (config->period * (wdtGetClock(object) / 1000)) >> 2;
   LPC_WDT->MOD = MOD_WDEN | MOD_WDRESET;
 
-  irqSetPriority(timer->parent.irq, config->priority);
+  irqSetPriority(timer->base.irq, config->priority);
 
   return E_OK;
 }
@@ -71,9 +71,9 @@ static void wdtCallback(void *object, void (*callback)(void *), void *argument)
   timer->callback = callback;
 
   if (timer->callback)
-    irqEnable(timer->parent.irq);
+    irqEnable(timer->base.irq);
   else
-    irqDisable(timer->parent.irq);
+    irqDisable(timer->base.irq);
 }
 /*----------------------------------------------------------------------------*/
 static void wdtRestart(void *object __attribute__((unused)))

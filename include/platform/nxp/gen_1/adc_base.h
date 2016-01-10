@@ -27,7 +27,7 @@ struct AdcUnitBaseConfig
 /*----------------------------------------------------------------------------*/
 struct AdcUnitBase
 {
-  struct Entity parent;
+  struct Entity base;
 
   void *reg;
   void (*handler)(void *);

@@ -26,7 +26,7 @@ struct GpPwmUnitConfig
 /*----------------------------------------------------------------------------*/
 struct GpPwmUnit
 {
-  struct GpPwmUnitBase parent;
+  struct GpPwmUnitBase base;
 
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
@@ -48,7 +48,7 @@ struct GpPwmConfig
 /*----------------------------------------------------------------------------*/
 struct GpPwm
 {
-  struct Pwm parent;
+  struct Pwm base;
 
   /* Pointer to a parent unit */
   struct GpPwmUnit *unit;
@@ -72,7 +72,7 @@ struct GpPwmDoubleEdgeConfig
 /*----------------------------------------------------------------------------*/
 struct GpPwmDoubleEdge
 {
-  struct Pwm parent;
+  struct Pwm base;
 
   /* Pointer to a parent unit */
   struct GpPwmUnit *unit;

@@ -27,7 +27,7 @@ struct AdcConfig
 /*----------------------------------------------------------------------------*/
 struct Adc
 {
-  struct Interface parent;
+  struct Interface base;
 
   /* Pointer to a parent unit */
   struct AdcUnit *unit;

@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 struct PinInterruptHandler
 {
-  struct Entity parent;
+  struct Entity base;
 
   struct List list;
 };

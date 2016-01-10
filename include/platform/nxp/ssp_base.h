@@ -38,7 +38,7 @@ struct SspBaseConfig
 /*----------------------------------------------------------------------------*/
 struct SspBase
 {
-  struct Interface parent;
+  struct Interface base;
 
   void *reg;
   void (*handler)(void *);

@@ -22,7 +22,7 @@ struct DacBaseConfig
 /*----------------------------------------------------------------------------*/
 struct DacBase
 {
-  struct Interface parent;
+  struct Interface base;
 
   void *reg;
 

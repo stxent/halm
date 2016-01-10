@@ -45,7 +45,7 @@ static void devEraseDescriptor(void *, const void *);
 static uint8_t compositeDevIndex(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct CompositeDeviceClass deviceTable = {
-    .parent = {
+    .base = {
         .size = sizeof(struct CompositeDevice),
         .init = devInit,
         .deinit = devDeinit,
@@ -139,12 +139,12 @@ static enum result devInit(void *object, const void *configBase)
 {
   const struct CompositeDeviceConfig * const config = configBase;
   struct CompositeDevice * const device = object;
-  const struct CompositeDeviceProxyConfig parentConfig = {
+  const struct CompositeDeviceProxyConfig driverConfig = {
       .owner = device
   };
   enum result res;
 
-  device->driver = init(CompositeDeviceProxy, &parentConfig);
+  device->driver = init(CompositeDeviceProxy, &driverConfig);
   if (!device->driver)
     return E_ERROR;
 

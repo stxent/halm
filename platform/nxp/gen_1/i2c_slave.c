@@ -63,7 +63,7 @@ const struct InterfaceClass * const I2cSlave = &i2cTable;
 static void interruptHandler(void *object)
 {
   struct I2cSlave * const interface = object;
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
   bool event = false;
 
   switch ((enum status)reg->STAT)
@@ -134,7 +134,7 @@ static enum result powerStateHandler(void *object, enum pmState state)
 static enum result i2cInit(void *object, const void *configBase)
 {
   const struct I2cSlaveConfig * const config = configBase;
-  const struct I2cBaseConfig parentConfig = {
+  const struct I2cBaseConfig baseConfig = {
       .channel = config->channel,
       .scl = config->scl,
       .sda = config->sda
@@ -143,14 +143,14 @@ static enum result i2cInit(void *object, const void *configBase)
   enum result res;
 
   /* Call base class constructor */
-  if ((res = I2cBase->init(object, &parentConfig)) != E_OK)
+  if ((res = I2cBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   interface->cache = malloc(config->size);
   if (!interface->cache)
     return E_MEMORY;
 
-  interface->parent.handler = interruptHandler;
+  interface->base.handler = interruptHandler;
 
   interface->callback = 0;
   interface->external = 0;
@@ -158,7 +158,7 @@ static enum result i2cInit(void *object, const void *configBase)
   interface->size = config->size;
   interface->state = STATE_IDLE;
 
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
 
   /* Clear all flags */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
@@ -168,8 +168,8 @@ static enum result i2cInit(void *object, const void *configBase)
     return res;
 #endif
 
-  irqSetPriority(interface->parent.irq, config->priority);
-  irqEnable(interface->parent.irq);
+  irqSetPriority(interface->base.irq, config->priority);
+  irqEnable(interface->base.irq);
 
   /* Enable I2C interface */
   reg->CONSET = CONSET_AA | CONSET_I2EN;
@@ -180,7 +180,7 @@ static enum result i2cInit(void *object, const void *configBase)
 static void i2cDeinit(void *object)
 {
   struct I2cSlave * const interface = object;
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
 
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
 
@@ -201,7 +201,7 @@ static enum result i2cCallback(void *object, void (*callback)(void *),
 static enum result i2cGet(void *object, enum ifOption option, void *data)
 {
   struct I2cSlave * const interface = object;
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
 
   switch (option)
   {
@@ -224,7 +224,7 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
 static enum result i2cSet(void *object, enum ifOption option, const void *data)
 {
   struct I2cSlave * const interface = object;
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
 
   switch (option)
   {

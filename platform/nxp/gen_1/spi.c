@@ -38,7 +38,7 @@ const struct InterfaceClass * const Spi = &spiTable;
 static void interruptHandler(void *object)
 {
   struct Spi * const interface = object;
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
   uint32_t count = interface->txLeft > FIFO_DEPTH ? FIFO_DEPTH
       : interface->txLeft;
 
@@ -84,7 +84,7 @@ static void interruptHandler(void *object)
 static enum result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
-  const struct SspBaseConfig parentConfig = {
+  const struct SspBaseConfig baseConfig = {
       .channel = config->channel,
       .miso = config->miso,
       .mosi = config->mosi,
@@ -95,15 +95,15 @@ static enum result spiInit(void *object, const void *configBase)
   enum result res;
 
   /* Call base class constructor */
-  if ((res = SspBase->init(object, &parentConfig)) != E_OK)
+  if ((res = SspBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  interface->parent.handler = interruptHandler;
+  interface->base.handler = interruptHandler;
 
   interface->blocking = true;
   interface->callback = 0;
 
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
 
   /* Set frame size */
   reg->CR0 = CR0_DSS(8);
@@ -120,8 +120,8 @@ static enum result spiInit(void *object, const void *configBase)
   /* Enable peripheral */
   reg->CR1 = CR1_SSE;
 
-  irqSetPriority(interface->parent.irq, config->priority);
-  irqEnable(interface->parent.irq);
+  irqSetPriority(interface->base.irq, config->priority);
+  irqEnable(interface->base.irq);
 
   return E_OK;
 }
@@ -130,7 +130,7 @@ static void spiDeinit(void *object)
 {
   struct Spi * const interface = object;
 
-  irqDisable(interface->parent.irq);
+  irqDisable(interface->base.irq);
   SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -147,7 +147,7 @@ static enum result spiCallback(void *object, void (*callback)(void *),
 static enum result spiGet(void *object, enum ifOption option, void *data)
 {
   struct Spi * const interface = object;
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
 
   switch (option)
   {
@@ -188,7 +188,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Spi * const interface = object;
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
 
   if (!length)
     return 0;
@@ -202,7 +202,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   /* Initiate reception by setting pending interrupt flag */
-  irqSetPending(interface->parent.irq);
+  irqSetPending(interface->base.irq);
 
   if (interface->blocking)
   {
@@ -216,7 +216,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Spi * const interface = object;
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
 
   if (!length)
     return 0;
@@ -230,7 +230,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
 
   /* Initiate transmission by setting pending interrupt flag */
-  irqSetPending(interface->parent.irq);
+  irqSetPending(interface->base.irq);
 
   if (interface->blocking)
   {

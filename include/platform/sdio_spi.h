@@ -35,7 +35,7 @@ struct SdioSpiConfig
 /*----------------------------------------------------------------------------*/
 struct SdioSpi
 {
-  struct Interface parent;
+  struct Interface base;
 
   void (*callback)(void *);
   void *callbackArgument;

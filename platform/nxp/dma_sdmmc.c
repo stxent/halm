@@ -81,7 +81,7 @@ static enum result controllerInit(void *object, const void *configBase)
 
   controller->capacity = config->number;
   controller->length = 0;
-  controller->reg = config->parent->parent.reg;
+  controller->reg = config->parent->base.reg;
 
   LPC_SDMMC_Type * const reg = controller->reg;
   const uint8_t burst = config->burst >= DMA_BURST_4 ?

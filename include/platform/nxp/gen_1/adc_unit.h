@@ -22,7 +22,7 @@ struct AdcUnitConfig
 /*----------------------------------------------------------------------------*/
 struct AdcUnit
 {
-  struct AdcUnitBase parent;
+  struct AdcUnitBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

@@ -86,7 +86,7 @@ static enum result adcSet(void *object __attribute__((unused)),
 static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Adc * const interface = object;
-  LPC_ADC_Type * const reg = interface->unit->parent.reg;
+  LPC_ADC_Type * const reg = interface->unit->base.reg;
   const uint32_t samples = length / SAMPLE_SIZE;
   const uint8_t channel = interface->pin.channel;
 

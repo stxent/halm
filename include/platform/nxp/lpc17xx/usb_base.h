@@ -29,7 +29,7 @@ struct UsbBaseConfig
 /*----------------------------------------------------------------------------*/
 struct UsbBase
 {
-  struct Entity parent;
+  struct Entity base;
 
   void *reg;
   void (*handler)(void *);

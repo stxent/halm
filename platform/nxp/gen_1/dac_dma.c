@@ -39,7 +39,7 @@ const struct InterfaceClass * const DacDma = &dacTable;
 static void dmaHandler(void *object)
 {
   struct DacDma * const interface = object;
-  LPC_DAC_Type * const reg = interface->parent.reg;
+  LPC_DAC_Type * const reg = interface->base.reg;
   const uint32_t count = dmaCount(interface->dma);
   const enum result res = dmaStatus(interface->dma);
 
@@ -78,7 +78,7 @@ static enum result dmaSetup(struct DacDma *interface,
 static enum result dacInit(void *object, const void *configBase)
 {
   const struct DacDmaConfig * const config = configBase;
-  const struct DacBaseConfig parentConfig = {
+  const struct DacBaseConfig baseConfig = {
       .pin = config->pin
   };
   struct DacDma * const interface = object;
@@ -88,7 +88,7 @@ static enum result dacInit(void *object, const void *configBase)
     return E_VALUE;
 
   /* Call base class constructor */
-  if ((res = DacBase->init(object, &parentConfig)) != E_OK)
+  if ((res = DacBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   if ((res = dmaSetup(interface, config)) != E_OK)
@@ -97,7 +97,7 @@ static enum result dacInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->size = config->size;
 
-  LPC_DAC_Type * const reg = interface->parent.reg;
+  LPC_DAC_Type * const reg = interface->base.reg;
 
   reg->CR = (config->value & CR_OUTPUT_MASK) | CR_BIAS;
   reg->CTRL = CTRL_DBLBUF_ENA | CTRL_DMA_ENA;
@@ -156,7 +156,7 @@ static enum result dacSet(void *object __attribute__((unused)),
 static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct DacDma * const interface = object;
-  LPC_DAC_Type * const reg = interface->parent.reg;
+  LPC_DAC_Type * const reg = interface->base.reg;
   const uint32_t samples = length / SAMPLE_SIZE;
 
   if (!samples)

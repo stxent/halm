@@ -31,7 +31,7 @@ struct DmaSdmmcEntry
 /*----------------------------------------------------------------------------*/
 struct DmaSdmmc
 {
-  struct Dma parent;
+  struct Dma base;
 
   void *reg;
 

@@ -64,7 +64,7 @@ static void adjustPins(struct OneWireUart *interface __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWireUart *interface)
 {
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
 
   uartSetRate((struct UartBase *)interface, interface->resetRate);
   interface->state = STATE_RESET;
@@ -75,7 +75,7 @@ static void beginTransmission(struct OneWireUart *interface)
 /*----------------------------------------------------------------------------*/
 static void sendWord(struct OneWireUart *interface, uint8_t word)
 {
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
   uint8_t counter = 0;
 
   while (counter < 8)
@@ -85,7 +85,7 @@ static void sendWord(struct OneWireUart *interface, uint8_t word)
 static void interruptHandler(void *object)
 {
   struct OneWireUart * const interface = object;
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
   bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
@@ -152,7 +152,7 @@ static void interruptHandler(void *object)
 static enum result oneWireInit(void *object, const void *configBase)
 {
   const struct OneWireUartConfig * const config = configBase;
-  const struct UartBaseConfig parentConfig = {
+  const struct UartBaseConfig baseConfig = {
       .channel = config->channel,
       .rx = config->rx,
       .tx = config->tx
@@ -161,7 +161,7 @@ static enum result oneWireInit(void *object, const void *configBase)
   enum result res;
 
   /* Call base class constructor */
-  if ((res = UartBase->init(object, &parentConfig)) != E_OK)
+  if ((res = UartBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   adjustPins(interface, config);
@@ -174,14 +174,14 @@ static enum result oneWireInit(void *object, const void *configBase)
   if ((res = uartCalcRate(object, RATE_RESET, &interface->resetRate)) != E_OK)
     return res;
 
-  interface->parent.handler = interruptHandler;
+  interface->base.handler = interruptHandler;
 
   interface->address = 0;
   interface->blocking = true;
   interface->callback = 0;
   interface->state = STATE_IDLE;
 
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
@@ -193,8 +193,8 @@ static enum result oneWireInit(void *object, const void *configBase)
 
   uartSetRate(object, interface->resetRate);
 
-  irqSetPriority(interface->parent.irq, config->priority);
-  irqEnable(interface->parent.irq);
+  irqSetPriority(interface->base.irq, config->priority);
+  irqEnable(interface->base.irq);
 
   return E_OK;
 }
@@ -203,7 +203,7 @@ static void oneWireDeinit(void *object)
 {
   struct OneWireUart * const interface = object;
 
-  irqDisable(interface->parent.irq);
+  irqDisable(interface->base.irq);
   byteQueueDeinit(&interface->txQueue);
   UartBase->deinit(interface);
 }
@@ -263,7 +263,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
 static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct OneWireUart * const interface = object;
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
   uint32_t read = 0;
 
   if (!length)

@@ -26,7 +26,7 @@ static enum result deviceInit(void *object, const void *configBase)
 {
   const struct HidConfig * const config = configBase;
   struct Hid * const device = object;
-  const struct HidBaseConfig parentConfig = {
+  const struct HidBaseConfig driverConfig = {
       .owner = device,
       .device = config->device,
       .descriptor = config->descriptor,
@@ -35,7 +35,7 @@ static enum result deviceInit(void *object, const void *configBase)
       .endpoint.interrupt = config->endpoint.interrupt
   };
 
-  device->driver = init(HidBase, &parentConfig);
+  device->driver = init(HidBase, &driverConfig);
   if (!device->driver)
     return E_MEMORY;
 

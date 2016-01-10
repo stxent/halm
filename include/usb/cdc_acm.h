@@ -53,7 +53,7 @@ struct CdcAcmConfig
 /*----------------------------------------------------------------------------*/
 struct CdcAcm
 {
-  struct Interface parent;
+  struct Interface base;
 
   void (*callback)(void *);
   void *callbackArgument;

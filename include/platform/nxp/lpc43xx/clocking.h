@@ -61,14 +61,14 @@ enum clockSource
 /*----------------------------------------------------------------------------*/
 struct CommonClockClass
 {
-  struct ClockClass parent;
+  struct ClockClass base;
 
   enum clockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonDividerClass
 {
-  struct ClockClass parent;
+  struct ClockClass base;
 
   enum clockSource channel;
 };

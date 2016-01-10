@@ -14,7 +14,7 @@
 /* Class descriptor */
 struct CompositeDeviceClass
 {
-  struct UsbDeviceClass parent;
+  struct UsbDeviceClass base;
 
   uint8_t (*index)(const void *);
 };
@@ -32,7 +32,7 @@ struct CompositeDeviceProxyConfig
 /*----------------------------------------------------------------------------*/
 struct CompositeDeviceProxy
 {
-  struct UsbDriver parent;
+  struct UsbDriver base;
 
   struct CompositeDevice *owner;
 };
@@ -45,7 +45,7 @@ struct CompositeDeviceConfig
 /*----------------------------------------------------------------------------*/
 struct CompositeDevice
 {
-  struct Entity parent;
+  struct Entity base;
 
   struct UsbDevice *device;
   struct CompositeDeviceProxy *driver;

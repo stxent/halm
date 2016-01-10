@@ -64,7 +64,7 @@ struct I2sDmaConfig
 /*----------------------------------------------------------------------------*/
 struct I2sDma
 {
-  struct I2sBase parent;
+  struct I2sBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

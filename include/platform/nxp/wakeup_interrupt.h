@@ -27,7 +27,7 @@ struct WakeupInterruptConfig
 /*----------------------------------------------------------------------------*/
 struct WakeupInterrupt
 {
-  struct Entity parent;
+  struct Entity base;
 
   void (*callback)(void *);
   void *callbackArgument;

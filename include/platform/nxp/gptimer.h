@@ -30,7 +30,7 @@ struct GpTimerConfig
 /*----------------------------------------------------------------------------*/
 struct GpTimer
 {
-  struct GpTimerBase parent;
+  struct GpTimerBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

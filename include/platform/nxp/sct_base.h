@@ -48,7 +48,7 @@ struct SctBaseConfig
 /*----------------------------------------------------------------------------*/
 struct SctBase
 {
-  struct Timer parent;
+  struct Timer base;
 
   void *reg;
   void (*handler)(void *);

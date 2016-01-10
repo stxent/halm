@@ -51,7 +51,7 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
 {
   const struct GpDmaConfig channels[2] = {
       {
-          .event = GPDMA_UART0_RX + interface->parent.channel,
+          .event = GPDMA_UART0_RX + interface->base.channel,
           .channel = rxChannel,
           .source.increment = false,
           .destination.increment = true,
@@ -59,7 +59,7 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
           .burst = DMA_BURST_1,
           .width = DMA_WIDTH_BYTE
       }, {
-          .event = GPDMA_UART0_TX + interface->parent.channel,
+          .event = GPDMA_UART0_TX + interface->base.channel,
           .channel = txChannel,
           .source.increment = true,
           .destination.increment = false,
@@ -105,7 +105,7 @@ static enum result powerStateHandler(void *object, enum pmState state)
 static enum result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
-  const struct UartBaseConfig parentConfig = {
+  const struct UartBaseConfig baseConfig = {
       .channel = config->channel,
       .rx = config->rx,
       .tx = config->tx
@@ -115,7 +115,7 @@ static enum result serialInit(void *object, const void *configBase)
   enum result res;
 
   /* Call base class constructor */
-  if ((res = UartBase->init(object, &parentConfig)) != E_OK)
+  if ((res = UartBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   if ((res = uartCalcRate(object, config->rate, &rateConfig)) != E_OK)
@@ -127,7 +127,7 @@ static enum result serialInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->rate = config->rate;
 
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
@@ -228,7 +228,7 @@ static enum result serialSet(void *object, enum ifOption option,
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SerialDma * const interface = object;
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
   enum result res;
 
   if (!length)
@@ -246,7 +246,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
   struct SerialDma * const interface = object;
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
   enum result res;
 
   if (!length)

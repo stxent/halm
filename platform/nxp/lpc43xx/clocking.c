@@ -52,7 +52,7 @@ static uint32_t commonClockFrequency(const void *);
 static bool commonClockReady(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct CommonDividerClass dividerATable = {
-    .parent = {
+    .base = {
         .disable = commonDividerDisable,
         .enable = commonDividerEnable,
         .frequency = commonDividerFrequency,
@@ -62,7 +62,7 @@ static const struct CommonDividerClass dividerATable = {
 };
 
 static const struct CommonDividerClass dividerBTable = {
-    .parent = {
+    .base = {
         .disable = commonDividerDisable,
         .enable = commonDividerEnable,
         .frequency = commonDividerFrequency,
@@ -72,7 +72,7 @@ static const struct CommonDividerClass dividerBTable = {
 };
 
 static const struct CommonDividerClass dividerCTable = {
-    .parent = {
+    .base = {
         .disable = commonDividerDisable,
         .enable = commonDividerEnable,
         .frequency = commonDividerFrequency,
@@ -82,7 +82,7 @@ static const struct CommonDividerClass dividerCTable = {
 };
 
 static const struct CommonDividerClass dividerDTable = {
-    .parent = {
+    .base = {
         .disable = commonDividerDisable,
         .enable = commonDividerEnable,
         .frequency = commonDividerFrequency,
@@ -92,7 +92,7 @@ static const struct CommonDividerClass dividerDTable = {
 };
 
 static const struct CommonDividerClass dividerETable = {
-    .parent = {
+    .base = {
         .disable = commonDividerDisable,
         .enable = commonDividerEnable,
         .frequency = commonDividerFrequency,
@@ -130,7 +130,7 @@ static const struct ClockClass pll1Table = {
 };
 /*----------------------------------------------------------------------------*/
 static const struct CommonClockClass mainClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -140,7 +140,7 @@ static const struct CommonClockClass mainClockTable = {
 };
 
 static const struct CommonClockClass usb0ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -150,7 +150,7 @@ static const struct CommonClockClass usb0ClockTable = {
 };
 
 static const struct CommonClockClass usb1ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -160,7 +160,7 @@ static const struct CommonClockClass usb1ClockTable = {
 };
 
 static const struct CommonClockClass periphClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -170,7 +170,7 @@ static const struct CommonClockClass periphClockTable = {
 };
 
 static const struct CommonClockClass apb1ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -180,7 +180,7 @@ static const struct CommonClockClass apb1ClockTable = {
 };
 
 static const struct CommonClockClass apb3ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -190,7 +190,7 @@ static const struct CommonClockClass apb3ClockTable = {
 };
 
 static const struct CommonClockClass spifiClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -200,7 +200,7 @@ static const struct CommonClockClass spifiClockTable = {
 };
 
 static const struct CommonClockClass spiClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -210,7 +210,7 @@ static const struct CommonClockClass spiClockTable = {
 };
 
 static const struct CommonClockClass phyRxClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -220,7 +220,7 @@ static const struct CommonClockClass phyRxClockTable = {
 };
 
 static const struct CommonClockClass phyTxClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -230,7 +230,7 @@ static const struct CommonClockClass phyTxClockTable = {
 };
 
 static const struct CommonClockClass lcdClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -240,7 +240,7 @@ static const struct CommonClockClass lcdClockTable = {
 };
 
 static const struct CommonClockClass adcHsClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -250,7 +250,7 @@ static const struct CommonClockClass adcHsClockTable = {
 };
 
 static const struct CommonClockClass sdioClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -260,7 +260,7 @@ static const struct CommonClockClass sdioClockTable = {
 };
 
 static const struct CommonClockClass ssp0ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -270,7 +270,7 @@ static const struct CommonClockClass ssp0ClockTable = {
 };
 
 static const struct CommonClockClass ssp1ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -280,7 +280,7 @@ static const struct CommonClockClass ssp1ClockTable = {
 };
 
 static const struct CommonClockClass usart0ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -290,7 +290,7 @@ static const struct CommonClockClass usart0ClockTable = {
 };
 
 static const struct CommonClockClass uart1ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -300,7 +300,7 @@ static const struct CommonClockClass uart1ClockTable = {
 };
 
 static const struct CommonClockClass usart2ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -310,7 +310,7 @@ static const struct CommonClockClass usart2ClockTable = {
 };
 
 static const struct CommonClockClass usart3ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -320,7 +320,7 @@ static const struct CommonClockClass usart3ClockTable = {
 };
 
 static const struct CommonClockClass audioClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -330,7 +330,7 @@ static const struct CommonClockClass audioClockTable = {
 };
 
 static const struct CommonClockClass outClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -340,7 +340,7 @@ static const struct CommonClockClass outClockTable = {
 };
 
 static const struct CommonClockClass cguOut0ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,
@@ -350,7 +350,7 @@ static const struct CommonClockClass cguOut0ClockTable = {
 };
 
 static const struct CommonClockClass cguOut1ClockTable = {
-    .parent = {
+    .base = {
         .disable = commonClockDisable,
         .enable = commonClockEnable,
         .frequency = commonClockFrequency,

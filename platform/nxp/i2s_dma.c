@@ -98,7 +98,7 @@ static enum result dmaSetup(struct I2sDma *interface,
 static void interruptHandler(void *object)
 {
   struct I2sDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->parent.reg;
+  LPC_I2S_Type * const reg = interface->base.reg;
 
   if ((reg->STATE & STATE_IRQ) && !(reg->DMA2 & DMA_TX_ENABLE))
   {
@@ -110,7 +110,7 @@ static void interruptHandler(void *object)
 static void rxDmaHandler(void *object)
 {
   struct I2sDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->parent.reg;
+  LPC_I2S_Type * const reg = interface->base.reg;
   bool event = false;
 
   if (reg->DMA1 & DMA_RX_ENABLE)
@@ -134,7 +134,7 @@ static void rxDmaHandler(void *object)
 static void txDmaHandler(void *object)
 {
   struct I2sDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->parent.reg;
+  LPC_I2S_Type * const reg = interface->base.reg;
   bool event = false;
 
   if (reg->DMA2 & DMA_TX_ENABLE)
@@ -159,7 +159,7 @@ static void txDmaHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result updateRate(struct I2sDma *interface, bool slave)
 {
-  LPC_I2S_Type * const reg = interface->parent.reg;
+  LPC_I2S_Type * const reg = interface->base.reg;
   uint32_t bitrate, masterClock;
   struct I2sRateConfig rateConfig;
   uint8_t divisor;
@@ -211,7 +211,7 @@ static enum result updateRate(struct I2sDma *interface, bool slave)
 static enum result i2sInit(void *object, const void *configBase)
 {
   const struct I2sDmaConfig * const config = configBase;
-  const struct I2sBaseConfig parentConfig = {
+  const struct I2sBaseConfig baseConfig = {
       .rx = {
           .sck = config->rx.sck,
           .ws = config->rx.ws,
@@ -235,10 +235,10 @@ static enum result i2sInit(void *object, const void *configBase)
     return E_ERROR;
 
   /* Call base class constructor */
-  if ((res = I2sBase->init(object, &parentConfig)) != E_OK)
+  if ((res = I2sBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  interface->parent.handler = interruptHandler;
+  interface->base.handler = interruptHandler;
 
   interface->callback = 0;
   interface->sampleRate = config->rate;
@@ -252,7 +252,7 @@ static enum result i2sInit(void *object, const void *configBase)
   if ((res = dmaSetup(interface, config, interface->rx, interface->tx)) != E_OK)
     return res;
 
-  LPC_I2S_Type * const reg = interface->parent.reg;
+  LPC_I2S_Type * const reg = interface->base.reg;
   const uint8_t halfPeriod = (1 << (interface->width + 3)) - 1;
   uint8_t width;
 
@@ -343,8 +343,8 @@ static enum result i2sInit(void *object, const void *configBase)
   reg->DAO &= ~DAO_RESET;
   reg->DAI &= ~DAI_RESET;
 
-  irqSetPriority(interface->parent.irq, config->priority);
-  irqEnable(interface->parent.irq);
+  irqSetPriority(interface->base.irq, config->priority);
+  irqEnable(interface->base.irq);
 
   return E_OK;
 }
@@ -352,9 +352,9 @@ static enum result i2sInit(void *object, const void *configBase)
 static void i2sDeinit(void *object)
 {
   struct I2sDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->parent.reg;
+  LPC_I2S_Type * const reg = interface->base.reg;
 
-  irqDisable(interface->parent.irq);
+  irqDisable(interface->base.irq);
 
   reg->IRQ = 0;
   reg->DMA1 = reg->DMA2 = 0;
@@ -413,7 +413,7 @@ static enum result i2sSet(void *object __attribute__((unused)),
 static uint32_t i2sRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct I2sDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->parent.reg;
+  LPC_I2S_Type * const reg = interface->base.reg;
   const uint8_t sampleSizePow = interface->width + (interface->mono ? 0 : 1);
   const uint32_t samples = length >> sampleSizePow;
 
@@ -453,7 +453,7 @@ static uint32_t i2sRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t i2sWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct I2sDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->parent.reg;
+  LPC_I2S_Type * const reg = interface->base.reg;
   const uint8_t sampleSizePow = interface->width + (interface->mono ? 0 : 1);
   const uint32_t samples = length >> sampleSizePow;
 

@@ -38,7 +38,7 @@ struct SdmmcConfig
 /*----------------------------------------------------------------------------*/
 struct Sdmmc
 {
-  struct SdmmcBase parent;
+  struct SdmmcBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

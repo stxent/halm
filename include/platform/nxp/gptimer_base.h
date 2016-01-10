@@ -40,7 +40,7 @@ struct GpTimerBaseConfig
 /*----------------------------------------------------------------------------*/
 struct GpTimerBase
 {
-  struct Timer parent;
+  struct Timer base;
 
   void *reg;
   void (*handler)(void *);

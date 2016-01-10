@@ -13,7 +13,7 @@
 /*----------------------------------------------------------------------------*/
 struct CdcUsbRequest
 {
-  struct UsbRequestBase parent;
+  struct UsbRequestBase base;
   uint8_t buffer[CDC_DATA_EP_SIZE];
 };
 /*----------------------------------------------------------------------------*/
@@ -178,7 +178,7 @@ static enum result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
   struct CdcAcm * const interface = object;
-  const struct CdcAcmBaseConfig parentConfig = {
+  const struct CdcAcmBaseConfig driverConfig = {
       .device = config->device,
       .owner = interface,
       .endpoint = {
@@ -189,7 +189,7 @@ static enum result interfaceInit(void *object, const void *configBase)
   };
   enum result res;
 
-  interface->driver = init(CdcAcmBase, &parentConfig);
+  interface->driver = init(CdcAcmBase, &driverConfig);
   if (!interface->driver)
     return E_ERROR;
 

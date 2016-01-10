@@ -37,7 +37,7 @@ struct SerialDmaConfig
 /*----------------------------------------------------------------------------*/
 struct SerialDma
 {
-  struct UartBase parent;
+  struct UartBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

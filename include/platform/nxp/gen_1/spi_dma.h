@@ -35,7 +35,7 @@ struct SpiDmaConfig
 /*----------------------------------------------------------------------------*/
 struct SpiDma
 {
-  struct SspBase parent;
+  struct SspBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

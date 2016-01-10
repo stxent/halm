@@ -26,7 +26,7 @@ struct RtcConfig
 /*----------------------------------------------------------------------------*/
 struct Rtc
 {
-  struct RtcBase parent;
+  struct RtcBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

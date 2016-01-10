@@ -31,7 +31,7 @@ struct OneWireUartConfig
 /*----------------------------------------------------------------------------*/
 struct OneWireUart
 {
-  struct UartBase parent;
+  struct UartBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

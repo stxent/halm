@@ -10,7 +10,7 @@
 /*----------------------------------------------------------------------------*/
 struct StartLogicHandler
 {
-  struct Entity parent;
+  struct Entity base;
 
   struct List list;
 };

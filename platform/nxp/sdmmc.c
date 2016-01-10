@@ -43,7 +43,7 @@ const struct InterfaceClass * const Sdmmc = &sdioTable;
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *interface)
 {
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
   const uint32_t code = COMMAND_CODE_VALUE(interface->command);
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
   const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
@@ -67,9 +67,9 @@ static void execute(struct Sdmmc *interface)
 
   /* Initialize interrupts */
   reg->RINTSTS = INT_MASK;
-  irqClearPending(interface->parent.irq);
+  irqClearPending(interface->base.irq);
   reg->INTMASK = waitStatus;
-  irqEnable(interface->parent.irq);
+  irqEnable(interface->base.irq);
 
   /* Prepare command */
   uint32_t command = code;
@@ -117,7 +117,7 @@ static void execute(struct Sdmmc *interface)
 static enum result executeCommand(struct Sdmmc *interface, uint32_t command,
     uint32_t argument)
 {
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
 
   /* TODO Add timeout */
   reg->CMDARG = argument;
@@ -131,7 +131,7 @@ static enum result executeCommand(struct Sdmmc *interface, uint32_t command,
 /*----------------------------------------------------------------------------*/
 static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
 {
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
   const uint32_t clock = sdmmcGetClock((struct SdmmcBase *)interface);
 
   if (rate > clock)
@@ -177,12 +177,12 @@ static void interruptHandler(void *object)
   const uint32_t timeoutErrors = INT_RTO | INT_DRTO | INT_HTO;
 
   struct Sdmmc * const interface = object;
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
   const uint32_t status = reg->MINTSTS;
 
   intSetEnabled(interface->finalizer, false);
 
-  irqDisable(interface->parent.irq);
+  irqDisable(interface->base.irq);
   reg->INTMASK = 0;
   reg->RINTSTS = INT_MASK;
 
@@ -228,7 +228,7 @@ static enum result sdioInit(void *object, const void *configBase)
       .pull = PIN_NOPULL,
       .priority = config->priority
   };
-  const struct SdmmcBaseConfig parentConfig = {
+  const struct SdmmcBaseConfig baseConfig = {
       .clk = config->clk,
       .cmd = config->cmd,
       .dat0 = config->dat0,
@@ -249,16 +249,16 @@ static enum result sdioInit(void *object, const void *configBase)
   intCallback(interface->finalizer, interruptHandler, interface);
 
   /* Call base class constructor */
-  if ((res = SdmmcBase->init(object, &parentConfig)) != E_OK)
+  if ((res = SdmmcBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  interface->parent.handler = interruptHandler;
+  interface->base.handler = interruptHandler;
   interface->argument = 0;
   interface->callback = 0;
   interface->command = 0;
   interface->status = E_OK;
 
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
 
   /* Reset specified blocks */
   reg->CTRL = CTRL_CONTROLLER_RESET;
@@ -267,7 +267,7 @@ static enum result sdioInit(void *object, const void *configBase)
   /* Enable interrupts */
   reg->INTMASK = 0;
   reg->CTRL = CTRL_INT_ENABLE;
-  irqSetPriority(interface->parent.irq, config->priority);
+  irqSetPriority(interface->base.irq, config->priority);
   /* Clear pending interrupts */
   reg->RINTSTS = INT_MASK;
 
@@ -288,7 +288,7 @@ static enum result sdioInit(void *object, const void *configBase)
 static void sdioDeinit(void *object)
 {
   struct Sdmmc * const interface = object;
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
 
   deinit(interface->dma);
   reg->CTRL &= ~CTRL_INT_ENABLE;
@@ -309,14 +309,14 @@ static enum result sdioCallback(void *object, void (*callback)(void *),
 static enum result sdioGet(void *object, enum ifOption option, void *data)
 {
   struct Sdmmc * const interface = object;
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
 
   /* Additional options */
   switch ((enum sdioOption)option)
   {
     case IF_SDIO_MODE:
     {
-      *(uint32_t *)data = interface->parent.wide ? SDIO_4BIT : SDIO_1BIT;
+      *(uint32_t *)data = interface->base.wide ? SDIO_4BIT : SDIO_1BIT;
       return E_OK;
     }
 
@@ -362,7 +362,7 @@ static enum result sdioSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Sdmmc * const interface = object;
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
 
   /* Additional options */
   switch ((enum sdioOption)option)
@@ -409,7 +409,7 @@ static enum result sdioSet(void *object, enum ifOption option,
 static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Sdmmc * const interface = object;
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
   enum result res;
 
   reg->BYTCNT = length;
@@ -426,7 +426,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Sdmmc * const interface = object;
-  LPC_SDMMC_Type * const reg = interface->parent.reg;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
   enum result res;
 
   reg->BYTCNT = length;

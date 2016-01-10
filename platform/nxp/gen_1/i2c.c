@@ -63,7 +63,7 @@ const struct InterfaceClass * const I2c = &i2cTable;
 static void interruptHandler(void *object)
 {
   struct I2c * const interface = object;
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
   bool event = false;
 
   switch ((enum status)reg->STAT)
@@ -152,7 +152,7 @@ static void interruptHandler(void *object)
   reg->CONCLR = CONCLR_SIC;
 
   if (interface->state == STATE_IDLE || interface->state == STATE_ERROR)
-    irqDisable(interface->parent.irq);
+    irqDisable(interface->base.irq);
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
@@ -161,7 +161,7 @@ static void interruptHandler(void *object)
 static enum result i2cInit(void *object, const void *configBase)
 {
   const struct I2cConfig * const config = configBase;
-  const struct I2cBaseConfig parentConfig = {
+  const struct I2cBaseConfig baseConfig = {
       .channel = config->channel,
       .scl = config->scl,
       .sda = config->sda
@@ -170,10 +170,10 @@ static enum result i2cInit(void *object, const void *configBase)
   enum result res;
 
   /* Call base class constructor */
-  if ((res = I2cBase->init(object, &parentConfig)) != E_OK)
+  if ((res = I2cBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  interface->parent.handler = interruptHandler;
+  interface->base.handler = interruptHandler;
 
   interface->address = 0;
   interface->callback = 0;
@@ -184,14 +184,14 @@ static enum result i2cInit(void *object, const void *configBase)
   /* Rate should be initialized after block selection */
   i2cSetRate(object, config->rate);
 
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
 
   /* Clear all flags */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
   /* Enable I2C interface */
   reg->CONSET = CONSET_I2EN;
 
-  irqSetPriority(interface->parent.irq, config->priority);
+  irqSetPriority(interface->base.irq, config->priority);
 
   return E_OK;
 }
@@ -199,7 +199,7 @@ static enum result i2cInit(void *object, const void *configBase)
 static void i2cDeinit(void *object)
 {
   struct I2c * const interface = object;
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
 
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
   I2cBase->deinit(interface);
@@ -277,7 +277,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct I2c * const interface = object;
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
 
   if (!length)
     return 0;
@@ -295,7 +295,7 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
    */
   if (!interface->sendStopBit)
     reg->CONCLR = CONCLR_SIC;
-  irqEnable(interface->parent.irq);
+  irqEnable(interface->base.irq);
 
   if (interface->blocking)
   {
@@ -312,7 +312,7 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct I2c * const interface = object;
-  LPC_I2C_Type * const reg = interface->parent.reg;
+  LPC_I2C_Type * const reg = interface->base.reg;
 
   if (!length)
     return 0;
@@ -329,7 +329,7 @@ static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
    * automatically.
    */
   reg->CONSET = CONSET_STA;
-  irqEnable(interface->parent.irq);
+  irqEnable(interface->base.irq);
 
   if (interface->blocking)
   {

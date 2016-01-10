@@ -28,7 +28,7 @@ struct SctPwmUnitConfig
 /*----------------------------------------------------------------------------*/
 struct SctPwmUnit
 {
-  struct SctBase parent;
+  struct SctBase base;
 
   /* Timer frequency */
   uint32_t frequency;
@@ -50,7 +50,7 @@ struct SctPwmConfig
 /*----------------------------------------------------------------------------*/
 struct SctPwm
 {
-  struct Pwm parent;
+  struct Pwm base;
 
   /* Pointer to a parent unit */
   struct SctPwmUnit *unit;
@@ -74,7 +74,7 @@ struct SctPwmDoubleEdgeConfig
 /*----------------------------------------------------------------------------*/
 struct SctPwmDoubleEdge
 {
-  struct Pwm parent;
+  struct Pwm base;
 
   /* Pointer to a parent unit */
   struct SctPwmUnit *unit;

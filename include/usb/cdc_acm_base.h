@@ -36,7 +36,7 @@ struct CdcAcmBaseConfig
 /*----------------------------------------------------------------------------*/
 struct CdcAcmBase
 {
-  struct UsbDriver parent;
+  struct UsbDriver base;
 
   struct CdcAcm *owner;
   struct UsbDevice *device;

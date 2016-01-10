@@ -69,7 +69,7 @@ static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
 {
   const struct GpDmaConfig configs[] = {
       {
-          .event = GPDMA_SSP0_RX + interface->parent.channel,
+          .event = GPDMA_SSP0_RX + interface->base.channel,
           .channel = rxChannel,
           .source.increment = false,
           .destination.increment = true,
@@ -77,7 +77,7 @@ static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
           .burst = DMA_BURST_4,
           .width = DMA_WIDTH_BYTE
       }, {
-          .event = GPDMA_SSP0_TX + interface->parent.channel,
+          .event = GPDMA_SSP0_TX + interface->base.channel,
           .channel = txChannel,
           .source.increment = true,
           .destination.increment = false,
@@ -118,7 +118,7 @@ static void dmaTxSetup(struct SpiDma *interface)
 /*----------------------------------------------------------------------------*/
 static enum result getStatus(const struct SpiDma *interface)
 {
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
   enum result res;
 
   if (reg->SR & SR_BSY)
@@ -134,7 +134,7 @@ static enum result getStatus(const struct SpiDma *interface)
 static enum result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
-  const struct SspBaseConfig parentConfig = {
+  const struct SspBaseConfig baseConfig = {
       .channel = config->channel,
       .miso = config->miso,
       .mosi = config->mosi,
@@ -148,7 +148,7 @@ static enum result spiInit(void *object, const void *configBase)
     return E_VALUE;
 
   /* Call base class constructor */
-  if ((res = SspBase->init(object, &parentConfig)) != E_OK)
+  if ((res = SspBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   const bool channelPair = config->dma[0] > config->dma[1];
@@ -161,7 +161,7 @@ static enum result spiInit(void *object, const void *configBase)
   interface->blocking = true;
   interface->callback = 0;
 
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
 
   /* Set frame size */
   reg->CR0 = CR0_DSS(8);
@@ -176,8 +176,8 @@ static enum result spiInit(void *object, const void *configBase)
   /* Enable peripheral */
   reg->CR1 = CR1_SSE;
 
-  irqSetPriority(interface->parent.irq, 0);
-  irqEnable(interface->parent.irq);
+  irqSetPriority(interface->base.irq, 0); /* TODO Set priority */
+  irqEnable(interface->base.irq);
 
   return E_OK;
 }
@@ -252,7 +252,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
 static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SpiDma * const interface = object;
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
   enum result res;
 
   if (!length)
@@ -291,7 +291,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct SpiDma * const interface = object;
-  LPC_SSP_Type * const reg = interface->parent.reg;
+  LPC_SSP_Type * const reg = interface->base.reg;
   enum result res;
 
   if (!length)

@@ -42,7 +42,7 @@ struct I2cConfig
 /*----------------------------------------------------------------------------*/
 struct I2c
 {
-  struct I2cBase parent;
+  struct I2cBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

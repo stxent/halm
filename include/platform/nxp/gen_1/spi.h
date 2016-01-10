@@ -32,7 +32,7 @@ struct SpiConfig
 /*----------------------------------------------------------------------------*/
 struct Spi
 {
-  struct SspBase parent;
+  struct SspBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

@@ -22,7 +22,7 @@ struct UsbControlConfig
 /*----------------------------------------------------------------------------*/
 struct UsbControl
 {
-  struct Entity parent;
+  struct Entity base;
 
   /* Parent object */
   struct UsbDevice *owner;

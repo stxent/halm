@@ -32,7 +32,7 @@ struct SerialPollConfig
 /*----------------------------------------------------------------------------*/
 struct SerialPoll
 {
-  struct UartBase parent;
+  struct UartBase base;
 
   /* Desired baud rate */
   uint32_t rate;

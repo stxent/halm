@@ -58,7 +58,7 @@ struct I2sBaseConfig
 /*----------------------------------------------------------------------------*/
 struct I2sBase
 {
-  struct Interface parent;
+  struct Interface base;
 
   void *reg;
   void (*handler)(void *);

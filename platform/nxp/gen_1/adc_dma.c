@@ -40,7 +40,7 @@ static void dmaHandler(void *object)
 {
   struct AdcDma * const interface = object;
   struct AdcUnit * const unit = interface->unit;
-  LPC_ADC_Type * const reg = unit->parent.reg;
+  LPC_ADC_Type * const reg = unit->base.reg;
   const uint32_t count = dmaCount(interface->dma);
   const enum result res = dmaStatus(interface->dma);
 
@@ -162,7 +162,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct AdcDma * const interface = object;
   struct AdcUnit * const unit = interface->unit;
-  LPC_ADC_Type * const reg = unit->parent.reg;
+  LPC_ADC_Type * const reg = unit->base.reg;
   const uint32_t samples = length / SAMPLE_SIZE;
 
   if (!samples)

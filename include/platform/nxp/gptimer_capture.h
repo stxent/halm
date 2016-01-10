@@ -27,7 +27,7 @@ struct GpTimerCaptureUnitConfig
 /*----------------------------------------------------------------------------*/
 struct GpTimerCaptureUnit
 {
-  struct GpTimerBase parent;
+  struct GpTimerBase base;
 
   /* Registered capture handlers */
   struct GpTimerCapture *descriptors[4];
@@ -47,7 +47,7 @@ struct GpTimerCaptureConfig
 /*----------------------------------------------------------------------------*/
 struct GpTimerCapture
 {
-  struct Capture parent;
+  struct Capture base;
 
   void (*callback)(void *);
   void *callbackArgument;

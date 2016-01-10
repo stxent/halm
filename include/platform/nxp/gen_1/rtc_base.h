@@ -15,7 +15,7 @@ extern const struct EntityClass * const RtcBase;
 /*----------------------------------------------------------------------------*/
 struct RtcBase
 {
-  struct RtClock parent;
+  struct RtClock base;
 
   void *reg;
   void (*handler)(void *);

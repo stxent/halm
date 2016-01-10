@@ -80,7 +80,7 @@ const struct UsbEndpointClass * const UsbEndpoint = &epTable;
 static void interruptHandler(void *object)
 {
   struct UsbDevice * const device = object;
-  LPC_USB_Type * const reg = device->parent.reg;
+  LPC_USB_Type * const reg = device->base.reg;
   const uint32_t intStatus = reg->USBDevIntSt;
 
   reg->USBDevIntClr = intStatus;
@@ -142,7 +142,7 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbDevice *device)
 {
-  LPC_USB_Type * const reg = device->parent.reg;
+  LPC_USB_Type * const reg = device->base.reg;
 
   /* Disable and clear all interrupts */
   reg->USBDevIntEn = 0;
@@ -153,7 +153,7 @@ static void resetDevice(struct UsbDevice *device)
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)
 {
-  LPC_USB_Type * const reg = device->parent.reg;
+  LPC_USB_Type * const reg = device->base.reg;
 
   /* Write command code and wait for completion */
   reg->USBDevIntClr = USBDevInt_CCEMPTY;
@@ -164,7 +164,7 @@ static void usbCommand(struct UsbDevice *device, uint8_t command)
 /*----------------------------------------------------------------------------*/
 static uint8_t usbCommandRead(struct UsbDevice *device, uint8_t command)
 {
-  LPC_USB_Type * const reg = device->parent.reg;
+  LPC_USB_Type * const reg = device->base.reg;
 
   /* Write command code */
   usbCommand(device, command);
@@ -181,7 +181,7 @@ static uint8_t usbCommandRead(struct UsbDevice *device, uint8_t command)
 static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
     uint16_t data)
 {
-  LPC_USB_Type * const reg = device->parent.reg;
+  LPC_USB_Type * const reg = device->base.reg;
 
   /* Write command code */
   usbCommand(device, command);
@@ -195,7 +195,7 @@ static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
 /*----------------------------------------------------------------------------*/
 static void waitForInt(struct UsbDevice *device, uint32_t mask)
 {
-  LPC_USB_Type * const reg = device->parent.reg;
+  LPC_USB_Type * const reg = device->base.reg;
 
   /* Wait for specific interrupt */
   while ((reg->USBDevIntSt & mask) != mask);
@@ -206,7 +206,7 @@ static void waitForInt(struct UsbDevice *device, uint32_t mask)
 static enum result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
-  const struct UsbBaseConfig parentConfig = {
+  const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
       .dp = config->dp,
       .connect = config->connect,
@@ -220,7 +220,7 @@ static enum result devInit(void *object, const void *configBase)
   enum result res;
 
   /* Call base class constructor */
-  res = UsbBase->init(object, &parentConfig);
+  res = UsbBase->init(object, &baseConfig);
   if (res != E_OK)
     return res;
 
@@ -228,7 +228,7 @@ static enum result devInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  device->parent.handler = interruptHandler;
+  device->base.handler = interruptHandler;
   device->configuration = 0; /* Inactive configuration */
 
   /* Configure interrupts */
@@ -236,8 +236,8 @@ static enum result devInit(void *object, const void *configBase)
   /* By default, only ACKs generate interrupts */
   usbCommandWrite(device, USB_CMD_SET_MODE, 0);
 
-  irqSetPriority(device->parent.irq, config->priority);
-  irqEnable(device->parent.irq);
+  irqSetPriority(device->base.irq, config->priority);
+  irqEnable(device->base.irq);
 
   /* Initialize control message handler */
   device->control = init(UsbControl, &controlConfig);
@@ -253,7 +253,7 @@ static void devDeinit(void *object)
 
   deinit(device->control);
 
-  irqDisable(device->parent.irq);
+  irqDisable(device->base.irq);
 
   assert(listEmpty(&device->endpoints));
   listDeinit(&device->endpoints);
@@ -266,7 +266,7 @@ static void *devAllocate(void *object, uint8_t address)
   /* Assume that this function will be called only from one thread */
   struct UsbDevice * const device = object;
 
-  irqDisable(device->parent.irq);
+  irqDisable(device->base.irq);
 
   const struct ListNode *current = listFirst(&device->endpoints);
   struct UsbEndpoint *endpoint = 0;
@@ -289,7 +289,7 @@ static void *devAllocate(void *object, uint8_t address)
     endpoint = init(UsbEndpoint, &config);
   }
 
-  irqEnable(device->parent.irq);
+  irqEnable(device->base.irq);
   return endpoint;
 }
 /*----------------------------------------------------------------------------*/
@@ -310,9 +310,9 @@ static enum result devBind(void *object, void *driver)
   struct UsbDevice * const device = object;
   enum result res;
 
-  irqDisable(device->parent.irq);
+  irqDisable(device->base.irq);
   res = usbControlBindDriver(device->control, driver);
-  irqEnable(device->parent.irq);
+  irqEnable(device->base.irq);
 
   return res;
 }
@@ -321,9 +321,9 @@ static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
 
-  irqDisable(device->parent.irq);
+  irqDisable(device->base.irq);
   usbControlUnbindDriver(device->control);
-  irqEnable(device->parent.irq);
+  irqEnable(device->base.irq);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t devGetConfiguration(const void *object)
@@ -398,7 +398,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
     uint16_t length, uint16_t *read)
 {
-  LPC_USB_Type * const reg = endpoint->device->parent.reg;
+  LPC_USB_Type * const reg = endpoint->device->base.reg;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
 
   /* Set read enable bit for specific endpoint */
@@ -450,7 +450,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
 static enum result epWriteData(struct UsbEndpoint *endpoint,
     const uint8_t *buffer, uint16_t length, uint16_t *written)
 {
-  LPC_USB_Type * const reg = endpoint->device->parent.reg;
+  LPC_USB_Type * const reg = endpoint->device->base.reg;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
 
   /* Set write enable for specific endpoint */
@@ -518,14 +518,14 @@ static void epDeinit(void *object)
   epClear(endpoint);
 
   /* Protect endpoint queue from simultaneous access */
-  irqDisable(device->parent.irq);
+  irqDisable(device->base.irq);
 
   struct ListNode * const node = listFind(&device->endpoints, &endpoint);
 
   if (node)
     listErase(&device->endpoints, node);
 
-  irqEnable(device->parent.irq);
+  irqEnable(device->base.irq);
 
   assert(queueEmpty(&endpoint->requests));
   queueDeinit(&endpoint->requests);
@@ -547,14 +547,14 @@ static void epClear(void *object)
 static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct UsbEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->parent.reg;
+  LPC_USB_Type * const reg = endpoint->device->base.reg;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
   const uint32_t mask = BIT(index + 1);
   enum result res = E_OK;
 
   assert(request->base.callback);
 
-  irqDisable(endpoint->device->parent.irq);
+  irqDisable(endpoint->device->base.irq);
 
   /*
    * Additional checks should be performed for data endpoints
@@ -562,7 +562,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
    */
   if (index >= 2 && !endpoint->device->configuration)
   {
-    irqEnable(endpoint->device->parent.irq);
+    irqEnable(endpoint->device->base.irq);
     return E_IDLE;
   }
 
@@ -587,7 +587,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
     res = E_FULL;
   }
 
-  irqEnable(endpoint->device->parent.irq);
+  irqEnable(endpoint->device->base.irq);
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -605,7 +605,7 @@ static void epSetEnabled(void *object, bool state,
     uint16_t size __attribute__((unused)))
 {
   struct UsbEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->parent.reg;
+  LPC_USB_Type * const reg = endpoint->device->base.reg;
   const uint8_t index = EP_TO_INDEX(endpoint->address);
   const uint32_t mask = BIT(index + 1);
 

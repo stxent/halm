@@ -19,7 +19,7 @@ struct GpPwmUnitBaseConfig
 /*----------------------------------------------------------------------------*/
 struct GpPwmUnitBase
 {
-  struct Entity parent;
+  struct Entity base;
 
   void *reg;
 

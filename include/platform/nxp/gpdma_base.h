@@ -43,7 +43,7 @@ struct GpDmaBaseConfig
 /*----------------------------------------------------------------------------*/
 struct GpDmaBase
 {
-  struct Entity parent;
+  struct Entity base;
 
   void *reg;
   void (*handler)(void *, enum result);

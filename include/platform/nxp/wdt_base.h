@@ -24,7 +24,7 @@ struct WdtBaseConfig
 /*----------------------------------------------------------------------------*/
 struct WdtBase
 {
-  struct Entity parent;
+  struct Entity base;
 
   void (*handler)(void *);
   irqNumber irq;

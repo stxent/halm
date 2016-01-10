@@ -24,7 +24,7 @@ struct WdtConfig
 /*----------------------------------------------------------------------------*/
 struct Wdt
 {
-  struct WdtBase parent;
+  struct WdtBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

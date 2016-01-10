@@ -10,7 +10,7 @@
 /*----------------------------------------------------------------------------*/
 struct CommonGpioBus
 {
-  struct GpioBus parent;
+  struct GpioBus base;
 
   /* Pin array */
   struct Pin *pins;

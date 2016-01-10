@@ -42,7 +42,7 @@ const struct InterfaceClass * const Serial = &serialTable;
 static void interruptHandler(void *object)
 {
   struct Serial * const interface = object;
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
   bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
@@ -105,7 +105,7 @@ static enum result powerStateHandler(void *object, enum pmState state)
 static enum result serialInit(void *object, const void *configBase)
 {
   const struct SerialConfig * const config = configBase;
-  const struct UartBaseConfig parentConfig = {
+  const struct UartBaseConfig baseConfig = {
       .channel = config->channel,
       .rx = config->rx,
       .tx = config->tx
@@ -115,13 +115,13 @@ static enum result serialInit(void *object, const void *configBase)
   enum result res;
 
   /* Call base class constructor */
-  if ((res = UartBase->init(object, &parentConfig)) != E_OK)
+  if ((res = UartBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   if ((res = uartCalcRate(object, config->rate, &rateConfig)) != E_OK)
     return res;
 
-  interface->parent.handler = interruptHandler;
+  interface->base.handler = interruptHandler;
 
   interface->callback = 0;
   interface->rate = config->rate;
@@ -131,7 +131,7 @@ static enum result serialInit(void *object, const void *configBase)
   if ((res = byteQueueInit(&interface->txQueue, config->txLength)) != E_OK)
     return res;
 
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
   reg->LCR = LCR_WORD_8BIT;
@@ -150,8 +150,8 @@ static enum result serialInit(void *object, const void *configBase)
     return res;
 #endif
 
-  irqSetPriority(interface->parent.irq, config->priority);
-  irqEnable(interface->parent.irq);
+  irqSetPriority(interface->base.irq, config->priority);
+  irqEnable(interface->base.irq);
 
   return E_OK;
 }
@@ -160,7 +160,7 @@ static void serialDeinit(void *object)
 {
   struct Serial * const interface = object;
 
-  irqDisable(interface->parent.irq);
+  irqDisable(interface->base.irq);
   byteQueueDeinit(&interface->txQueue);
   byteQueueDeinit(&interface->rxQueue);
   UartBase->deinit(interface);
@@ -224,9 +224,9 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   struct Serial * const interface = object;
   uint32_t read;
 
-  irqDisable(interface->parent.irq);
+  irqDisable(interface->base.irq);
   read = byteQueuePopArray(&interface->rxQueue, buffer, length);
-  irqEnable(interface->parent.irq);
+  irqEnable(interface->base.irq);
 
   return read;
 }
@@ -235,10 +235,10 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
   struct Serial * const interface = object;
-  LPC_UART_Type * const reg = interface->parent.reg;
+  LPC_UART_Type * const reg = interface->base.reg;
   uint32_t written = 0;
 
-  irqDisable(interface->parent.irq);
+  irqDisable(interface->base.irq);
   /* Check transmitter state */
   if (reg->LSR & LSR_THRE && byteQueueEmpty(&interface->txQueue))
   {
@@ -252,7 +252,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   /* Fill TX queue with the rest of data */
   if (length)
     written += byteQueuePushArray(&interface->txQueue, buffer, length);
-  irqEnable(interface->parent.irq);
+  irqEnable(interface->base.irq);
 
   return written;
 }

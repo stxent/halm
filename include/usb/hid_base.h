@@ -37,7 +37,7 @@ struct HidBaseConfig
 /*----------------------------------------------------------------------------*/
 struct HidBase
 {
-  struct UsbDriver parent;
+  struct UsbDriver base;
 
   struct Hid *owner;
   struct UsbDevice *device;

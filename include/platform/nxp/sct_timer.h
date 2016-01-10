@@ -30,7 +30,7 @@ struct SctTimerConfig
 /*----------------------------------------------------------------------------*/
 struct SctTimer
 {
-  struct SctBase parent;
+  struct SctBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

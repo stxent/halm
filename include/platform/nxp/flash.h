@@ -21,7 +21,7 @@ enum flashOption
 /*----------------------------------------------------------------------------*/
 struct Flash
 {
-  struct Interface parent;
+  struct Interface base;
 
   void (*callback)(void *);
   void *callbackArgument;

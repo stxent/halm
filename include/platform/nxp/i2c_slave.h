@@ -33,7 +33,7 @@ struct I2cSlaveConfig
 /*----------------------------------------------------------------------------*/
 struct I2cSlave
 {
-  struct I2cBase parent;
+  struct I2cBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

@@ -34,17 +34,17 @@ const struct InterfaceClass * const Dac = &dacTable;
 static enum result dacInit(void *object, const void *configBase)
 {
   const struct DacConfig * const config = configBase;
-  const struct DacBaseConfig parentConfig = {
+  const struct DacBaseConfig baseConfig = {
       .pin = config->pin
   };
   struct Dac * const interface = object;
   enum result res;
 
   /* Call base class constructor */
-  if ((res = DacBase->init(object, &parentConfig)) != E_OK)
+  if ((res = DacBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  LPC_DAC_Type * const reg = interface->parent.reg;
+  LPC_DAC_Type * const reg = interface->base.reg;
 
   reg->CR = (config->value & CR_OUTPUT_MASK) | CR_BIAS;
   /* DMA enable and DAC enable signals are combined on some parts */
@@ -89,7 +89,7 @@ static enum result dacSet(void *object __attribute__((unused)),
 static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Dac * const interface = object;
-  LPC_DAC_Type * const reg = interface->parent.reg;
+  LPC_DAC_Type * const reg = interface->base.reg;
   const uint32_t samples = length / SAMPLE_SIZE;
 
   if (!samples)

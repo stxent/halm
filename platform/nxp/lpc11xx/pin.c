@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 struct PinHandler
 {
-  struct Entity parent;
+  struct Entity base;
 
   /* Initialized pins count */
   uint16_t instances;

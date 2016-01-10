@@ -73,7 +73,7 @@ static void unitReleaseChannel(struct GpTimerPwmUnit *unit, uint8_t channel)
 /*----------------------------------------------------------------------------*/
 static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
-  LPC_TIMER_Type * const reg = unit->parent.reg;
+  LPC_TIMER_Type * const reg = unit->base.reg;
 
   /* Put the timer into a reset state to clear prescaler and counter */
   reg->TCR |= TCR_CRES;
@@ -93,7 +93,7 @@ static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 static enum result unitInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmUnitConfig * const config = configBase;
-  const struct GpTimerBaseConfig parentConfig = {
+  const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
   };
   struct GpTimerPwmUnit * const unit = object;
@@ -106,7 +106,7 @@ static enum result unitInit(void *object, const void *configBase)
     return E_VALUE;
 
   /* Call base class constructor */
-  if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
+  if ((res = GpTimerBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   unit->matches = 0;
@@ -116,7 +116,7 @@ static enum result unitInit(void *object, const void *configBase)
   /* Should be invoked after object initialization completion */
   unit->current = gpTimerAllocateChannel(unit->matches);
 
-  LPC_TIMER_Type * const reg = unit->parent.reg;
+  LPC_TIMER_Type * const reg = unit->base.reg;
 
   reg->TCR = 0;
 
@@ -141,7 +141,7 @@ static enum result unitInit(void *object, const void *configBase)
 static void unitDeinit(void *object)
 {
   struct GpTimerPwmUnit * const unit = object;
-  LPC_TIMER_Type * const reg = unit->parent.reg;
+  LPC_TIMER_Type * const reg = unit->base.reg;
 
   reg->TCR &= ~TCR_CEN;
   GpTimerBase->deinit(unit);
@@ -155,7 +155,7 @@ static enum result channelInit(void *object, const void *configBase)
   enum result res;
 
   /* Initialize output pin */
-  const int8_t channel = gpTimerConfigMatchPin(unit->parent.channel,
+  const int8_t channel = gpTimerConfigMatchPin(unit->base.channel,
       config->pin);
 
   if (channel == -1)
@@ -168,7 +168,7 @@ static enum result channelInit(void *object, const void *configBase)
   pwm->channel = (uint8_t)channel;
   pwm->unit = unit;
 
-  LPC_TIMER_Type * const reg = pwm->unit->parent.reg;
+  LPC_TIMER_Type * const reg = pwm->unit->base.reg;
 
   /* Calculate pointer to match register for fast access */
   pwm->value = reg->MR + pwm->channel;
@@ -183,7 +183,7 @@ static enum result channelInit(void *object, const void *configBase)
 static void channelDeinit(void *object)
 {
   struct GpTimerPwm * const pwm = object;
-  LPC_TIMER_Type * const reg = pwm->unit->parent.reg;
+  LPC_TIMER_Type * const reg = pwm->unit->base.reg;
 
   reg->PWMC &= ~PWMC_ENABLE(pwm->channel);
   unitReleaseChannel(pwm->unit, pwm->channel);
@@ -231,7 +231,7 @@ static void channelSetEdges(void *object,
 static void channelSetEnabled(void *object, bool state)
 {
   struct GpTimerPwm * const pwm = object;
-  LPC_TIMER_Type * const reg = pwm->unit->parent.reg;
+  LPC_TIMER_Type * const reg = pwm->unit->base.reg;
 
   if (!state)
   {
@@ -247,7 +247,7 @@ static enum result channelSetFrequency(void *object, uint32_t frequency)
 {
   struct GpTimerPwm * const pwm = object;
   struct GpTimerPwmUnit * const unit = pwm->unit;
-  LPC_TIMER_Type * const reg = unit->parent.reg;
+  LPC_TIMER_Type * const reg = unit->base.reg;
 
   const uint32_t clockFrequency = gpTimerGetClock((struct GpTimerBase *)unit);
   const uint32_t timerFrequency = frequency * unit->resolution;

@@ -56,22 +56,22 @@ void adcUnitUnregister(struct AdcUnit *unit)
 static enum result adcUnitInit(void *object, const void *configBase)
 {
   const struct AdcUnitConfig * const config = configBase;
-  const struct AdcUnitBaseConfig parentConfig = {
+  const struct AdcUnitBaseConfig baseConfig = {
       .channel = config->channel
   };
   struct AdcUnit * const unit = object;
   enum result res;
 
   /* Call base class constructor */
-  if ((res = AdcUnitBase->init(object, &parentConfig)) != E_OK)
+  if ((res = AdcUnitBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   unit->callback = 0;
   unit->callbackArgument = 0;
   unit->lock = SPIN_UNLOCKED;
-  unit->parent.handler = interruptHandler;
+  unit->base.handler = interruptHandler;
 
-  LPC_ADC_Type * const reg = unit->parent.reg;
+  LPC_ADC_Type * const reg = unit->base.reg;
 
   /* Disable interrupts for conversion completion */
   reg->INTEN = 0;

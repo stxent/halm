@@ -32,7 +32,7 @@ const struct RtClockClass * const Rtc = &clkTable;
 static void interruptHandler(void *object)
 {
   struct Rtc * const clock = object;
-  LPC_RTC_Type * const reg = clock->parent.reg;
+  LPC_RTC_Type * const reg = clock->base.reg;
   bool event = false;
 
   if (reg->ILR & ILR_RTCALF)
@@ -60,10 +60,10 @@ static enum result clkInit(void *object, const void *configBase)
   if ((res = RtcBase->init(object, 0)) != E_OK)
     return res;
 
-  clock->parent.handler = interruptHandler;
+  clock->base.handler = interruptHandler;
   clock->callback = 0;
 
-  LPC_RTC_Type * const reg = clock->parent.reg;
+  LPC_RTC_Type * const reg = clock->base.reg;
 
   if (config->timestamp)
   {
@@ -80,8 +80,8 @@ static enum result clkInit(void *object, const void *configBase)
   reg->CIIR = CIIR_MASK;
   while ((reg->CIIR & CIIR_MASK) != CIIR_MASK);
 
-  irqSetPriority(clock->parent.irq, config->priority);
-  irqEnable(clock->parent.irq);
+  irqSetPriority(clock->base.irq, config->priority);
+  irqEnable(clock->base.irq);
 
   return E_OK;
 }
@@ -89,12 +89,12 @@ static enum result clkInit(void *object, const void *configBase)
 static void clkDeinit(void *object __attribute__((unused)))
 {
   struct Rtc * const clock = object;
-  LPC_RTC_Type * const reg = clock->parent.reg;
+  LPC_RTC_Type * const reg = clock->base.reg;
 
   /* Stop time counters */
   reg->CCR &= ~CCR_CLKEN;
 
-  irqEnable(clock->parent.irq);
+  irqEnable(clock->base.irq);
   RtcBase->deinit(clock);
 }
 /*----------------------------------------------------------------------------*/
@@ -111,7 +111,7 @@ static enum result clkCallback(void *object, void (*callback)(void *),
 static enum result clkSetAlarm(void *object, time64_t alarmTime)
 {
   struct Rtc * const clock = object;
-  LPC_RTC_Type * const reg = clock->parent.reg;
+  LPC_RTC_Type * const reg = clock->base.reg;
   struct RtDateTime dateTime;
 
   rtMakeTime(&dateTime, alarmTime);
@@ -137,7 +137,7 @@ static enum result clkSetAlarm(void *object, time64_t alarmTime)
 static enum result clkSetTime(void *object, time64_t currentTime)
 {
   struct Rtc * const clock = object;
-  LPC_RTC_Type * const reg = clock->parent.reg;
+  LPC_RTC_Type * const reg = clock->base.reg;
   struct RtDateTime dateTime;
 
   rtMakeTime(&dateTime, currentTime);
@@ -167,7 +167,7 @@ static enum result clkSetTime(void *object, time64_t currentTime)
 static time64_t clkTime(void *object)
 {
   const struct Rtc * const clock = object;
-  const LPC_RTC_Type * const reg = clock->parent.reg;
+  const LPC_RTC_Type * const reg = clock->base.reg;
   uint32_t ctime0, ctime1;
 
   do

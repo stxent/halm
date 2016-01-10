@@ -63,7 +63,7 @@ struct HidConfig
 /*----------------------------------------------------------------------------*/
 struct Hid
 {
-  struct Entity parent;
+  struct Entity base;
 
   /* Lower half of the driver */
   struct HidBase *driver;

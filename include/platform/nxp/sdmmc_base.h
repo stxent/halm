@@ -31,7 +31,7 @@ struct SdmmcBaseConfig
 /*----------------------------------------------------------------------------*/
 struct SdmmcBase
 {
-  struct Entity parent;
+  struct Entity base;
 
   void *reg;
   void (*handler)(void *);

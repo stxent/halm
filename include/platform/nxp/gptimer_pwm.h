@@ -26,7 +26,7 @@ struct GpTimerPwmUnitConfig
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwmUnit
 {
-  struct GpTimerBase parent;
+  struct GpTimerBase base;
 
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
@@ -50,7 +50,7 @@ struct GpTimerPwmConfig
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwm
 {
-  struct Pwm parent;
+  struct Pwm base;
 
   /* Pointer to a parent unit */
   struct GpTimerPwmUnit *unit;

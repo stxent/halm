@@ -16,7 +16,7 @@
 /*----------------------------------------------------------------------------*/
 struct DmaHandler
 {
-  struct Entity parent;
+  struct Entity base;
 
   /* Channel descriptors currently in use */
   struct GpDmaBase *descriptors[8];

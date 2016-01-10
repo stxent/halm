@@ -46,11 +46,11 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static void setMatchValue(struct SctTimer *timer, uint32_t value)
 {
-  LPC_SCT_Type * const reg = timer->parent.reg;
+  LPC_SCT_Type * const reg = timer->base.reg;
 
-  if (timer->parent.part != SCT_UNIFIED)
+  if (timer->base.part != SCT_UNIFIED)
   {
-    const uint8_t offset = timer->parent.part == SCT_HIGH;
+    const uint8_t offset = timer->base.part == SCT_HIGH;
 
     reg->MATCH_PART[timer->event][offset] = (uint16_t)value;
   }
@@ -60,8 +60,8 @@ static void setMatchValue(struct SctTimer *timer, uint32_t value)
 /*----------------------------------------------------------------------------*/
 static enum result updateFrequency(struct SctTimer *timer, uint32_t frequency)
 {
-  LPC_SCT_Type * const reg = timer->parent.reg;
-  const uint8_t offset = timer->parent.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const uint8_t offset = timer->base.part == SCT_HIGH;
   const uint32_t value = (reg->CTRL_PART[offset] & ~CTRL_PRE_MASK)
       | CTRL_CLRCTR;
 
@@ -86,7 +86,7 @@ static enum result updateFrequency(struct SctTimer *timer, uint32_t frequency)
 static enum result tmrInit(void *object, const void *configBase)
 {
   const struct SctTimerConfig * const config = configBase;
-  const struct SctBaseConfig parentConfig = {
+  const struct SctBaseConfig baseConfig = {
       .channel = config->channel,
       .input = SCT_INPUT_NONE,
       .part = config->part
@@ -95,7 +95,7 @@ static enum result tmrInit(void *object, const void *configBase)
   enum result res;
 
   /* Call base class constructor */
-  if ((res = SctBase->init(object, &parentConfig)) != E_OK)
+  if ((res = SctBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   const int8_t event = sctAllocateEvent((struct SctBase *)timer);
@@ -103,15 +103,15 @@ static enum result tmrInit(void *object, const void *configBase)
   if (event == -1)
     return E_BUSY;
 
-  timer->parent.handler = interruptHandler;
+  timer->base.handler = interruptHandler;
   timer->callback = 0;
   timer->event = (uint8_t)event;
 
-  LPC_SCT_Type * const reg = timer->parent.reg;
+  LPC_SCT_Type * const reg = timer->base.reg;
   const uint16_t eventMask = 1 << timer->event;
-  const uint8_t offset = timer->parent.part == SCT_HIGH;
+  const uint8_t offset = timer->base.part == SCT_HIGH;
 
-  timer->parent.mask = eventMask;
+  timer->base.mask = eventMask;
   reg->CTRL_PART[offset] = CTRL_HALT;
 
   /* Set desired timer frequency */
@@ -128,7 +128,7 @@ static enum result tmrInit(void *object, const void *configBase)
       | EVCTRL_COMBMODE(COMBMODE_MATCH) | EVCTRL_MATCHMEM
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
-  if (timer->parent.part == SCT_HIGH)
+  if (timer->base.part == SCT_HIGH)
     reg->EV[timer->event].CTRL |= EVCTRL_HEVENT;
 
   /* Reset current state and enable allocated event in state 0 */
@@ -146,12 +146,12 @@ static enum result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *object)
 {
   struct SctTimer * const timer = object;
-  LPC_SCT_Type * const reg = timer->parent.reg;
-  const uint8_t offset = timer->parent.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const uint8_t offset = timer->base.part == SCT_HIGH;
 
   /* Halt the timer */
   reg->CTRL_PART[offset] = CTRL_HALT;
-  reg->EVEN &= ~timer->parent.mask;
+  reg->EVEN &= ~timer->base.mask;
   reg->LIMIT_PART[offset] = 0;
 
   /* Disable allocated event */
@@ -168,8 +168,8 @@ static void tmrDeinit(void *object)
 static void tmrCallback(void *object, void (*callback)(void *), void *argument)
 {
   struct SctTimer * const timer = object;
-  LPC_SCT_Type * const reg = timer->parent.reg;
-  const uint16_t eventMask = timer->parent.mask;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const uint16_t eventMask = timer->base.mask;
 
   timer->callbackArgument = argument;
   timer->callback = callback;
@@ -188,12 +188,12 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
 static void tmrSetEnabled(void *object, bool state)
 {
   struct SctTimer * const timer = object;
-  LPC_SCT_Type * const reg = timer->parent.reg;
-  const uint8_t offset = timer->parent.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const uint8_t offset = timer->base.part == SCT_HIGH;
 
   if (state)
   {
-    reg->EVFLAG = timer->parent.mask;
+    reg->EVFLAG = timer->base.mask;
     reg->CTRL_PART[offset] &= ~CTRL_HALT;
   }
   else
@@ -210,10 +210,10 @@ static enum result tmrSetFrequency(void *object, uint32_t frequency)
 static enum result tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SctTimer * const timer = object;
-  LPC_SCT_Type * const reg = timer->parent.reg;
-  const uint8_t offset = timer->parent.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const uint8_t offset = timer->base.part == SCT_HIGH;
 
-  if (timer->parent.part != SCT_UNIFIED && overflow >= (1 << 16))
+  if (timer->base.part != SCT_UNIFIED && overflow >= (1 << 16))
     return E_VALUE;
 
   reg->CTRL_PART[offset] |= CTRL_STOP;
@@ -226,12 +226,12 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
 static enum result tmrSetValue(void *object, uint32_t value)
 {
   struct SctTimer * const timer = object;
-  LPC_SCT_Type * const reg = timer->parent.reg;
-  const uint8_t offset = timer->parent.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const uint8_t offset = timer->base.part == SCT_HIGH;
   enum result res = E_VALUE;
 
   reg->CTRL_PART[offset] |= CTRL_STOP;
-  if (timer->parent.part == SCT_UNIFIED)
+  if (timer->base.part == SCT_UNIFIED)
   {
     if (value <= reg->MATCH[timer->event])
     {
@@ -255,9 +255,8 @@ static enum result tmrSetValue(void *object, uint32_t value)
 static uint32_t tmrValue(const void *object)
 {
   const struct SctTimer * const timer = object;
-  const LPC_SCT_Type * const reg = timer->parent.reg;
-  const uint8_t offset = timer->parent.part == SCT_HIGH;
+  const LPC_SCT_Type * const reg = timer->base.reg;
+  const uint8_t offset = timer->base.part == SCT_HIGH;
 
-  return timer->parent.part == SCT_UNIFIED ? reg->COUNT
-      : reg->COUNT_PART[offset];
+  return timer->base.part == SCT_UNIFIED ? reg->COUNT : reg->COUNT_PART[offset];
 }

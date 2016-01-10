@@ -30,7 +30,7 @@ struct AdcBurstConfig
 /*----------------------------------------------------------------------------*/
 struct AdcBurst
 {
-  struct Entity parent;
+  struct Entity base;
 
   /* Pointer to a parent unit */
   struct AdcUnit *unit;

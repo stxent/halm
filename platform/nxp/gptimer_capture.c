@@ -44,7 +44,7 @@ const struct CaptureClass * const GpTimerCapture = &channelTable;
 static void interruptHandler(void *object)
 {
   struct GpTimerCaptureUnit * const unit = object;
-  LPC_TIMER_Type * const reg = unit->parent.reg;
+  LPC_TIMER_Type * const reg = unit->base.reg;
   const uint32_t state = reg->IR;
 
   /* Clear pending interrupts */
@@ -75,7 +75,7 @@ static enum result unitSetDescriptor(struct GpTimerCaptureUnit *unit,
 static enum result unitInit(void *object, const void *configBase)
 {
   const struct GpTimerCaptureUnitConfig * const config = configBase;
-  const struct GpTimerBaseConfig parentConfig = {
+  const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
   };
   struct GpTimerCaptureUnit * const unit = object;
@@ -86,15 +86,15 @@ static enum result unitInit(void *object, const void *configBase)
       : clockFrequency;
 
   /* Call base class constructor */
-  if ((res = GpTimerBase->init(object, &parentConfig)) != E_OK)
+  if ((res = GpTimerBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  unit->parent.handler = interruptHandler;
+  unit->base.handler = interruptHandler;
 
   for (uint8_t index = 0; index < ARRAY_SIZE(unit->descriptors); ++index)
     unit->descriptors[index] = 0;
 
-  LPC_TIMER_Type * const reg = unit->parent.reg;
+  LPC_TIMER_Type * const reg = unit->base.reg;
 
   reg->TCR = 0;
 
@@ -108,8 +108,8 @@ static enum result unitInit(void *object, const void *configBase)
 
   reg->TCR = TCR_CEN; /* Enable peripheral */
 
-  irqSetPriority(unit->parent.irq, config->priority);
-  irqEnable(unit->parent.irq);
+  irqSetPriority(unit->base.irq, config->priority);
+  irqEnable(unit->base.irq);
 
   return E_OK;
 }
@@ -117,9 +117,9 @@ static enum result unitInit(void *object, const void *configBase)
 static void unitDeinit(void *object)
 {
   struct GpTimerCaptureUnit * const unit = object;
-  LPC_TIMER_Type * const reg = unit->parent.reg;
+  LPC_TIMER_Type * const reg = unit->base.reg;
 
-  irqDisable(unit->parent.irq);
+  irqDisable(unit->base.irq);
   reg->TCR = 0;
   GpTimerBase->deinit(unit);
 }
@@ -132,7 +132,7 @@ static enum result channelInit(void *object, const void *configBase)
   enum result res;
 
   /* Initialize output pin */
-  const int8_t channel = gpTimerConfigCapturePin(unit->parent.channel,
+  const int8_t channel = gpTimerConfigCapturePin(unit->base.channel,
       config->pin, config->pull);
 
   if (channel == -1)
@@ -147,7 +147,7 @@ static enum result channelInit(void *object, const void *configBase)
   capture->event = config->event;
   capture->unit = unit;
 
-  const LPC_TIMER_Type * const reg = capture->unit->parent.reg;
+  const LPC_TIMER_Type * const reg = capture->unit->base.reg;
 
   /* Calculate pointer to capture register for fast access */
   capture->value = reg->CR + capture->channel;
@@ -172,7 +172,7 @@ static void channelCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct GpTimerCapture * const capture = object;
-  LPC_TIMER_Type * const reg = capture->unit->parent.reg;
+  LPC_TIMER_Type * const reg = capture->unit->base.reg;
 
   capture->callbackArgument = argument;
   capture->callback = callback;
@@ -189,7 +189,7 @@ static void channelCallback(void *object, void (*callback)(void *),
 static void channelSetEnabled(void *object, bool state)
 {
   struct GpTimerCapture * const capture = object;
-  LPC_TIMER_Type * const reg = capture->unit->parent.reg;
+  LPC_TIMER_Type * const reg = capture->unit->base.reg;
 
   if (state)
   {

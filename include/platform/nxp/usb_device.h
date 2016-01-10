@@ -38,7 +38,7 @@ struct UsbDeviceConfig
 /*----------------------------------------------------------------------------*/
 struct UsbDevice
 {
-  struct UsbBase parent;
+  struct UsbBase base;
 
   /* List of registered endpoints */
   struct List endpoints;
@@ -58,7 +58,7 @@ struct UsbEndpointConfig
 /*----------------------------------------------------------------------------*/
 struct UsbEndpoint
 {
-  struct Entity parent;
+  struct Entity base;
 
   /* Parent device */
   struct UsbDevice *device;
