@@ -62,7 +62,7 @@ struct UsbRequest
   uint8_t buffer[];
 };
 /*----------------------------------------------------------------------------*/
-void usbRequestInit(void *, uint16_t,
+void usbRequestInit(struct UsbRequest *, uint16_t,
     void (*)(void *, struct UsbRequest *, enum usbRequestStatus), void *);
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */

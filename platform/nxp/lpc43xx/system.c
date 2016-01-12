@@ -26,7 +26,8 @@ void sysClockDisable(enum sysClockBranch branch)
 {
   volatile uint32_t *reg = calcBranchReg(branch);
 
-  *reg |= CFG_AUTO; /* Initiate the AHB disable protocol */
+  /* Use AHB disable protocol and do not enable clock after wake up */
+  *reg = (*reg & ~CFG_WAKEUP) | CFG_AUTO;
   *reg &= ~CFG_RUN; /* Disable clock */
 }
 /*----------------------------------------------------------------------------*/

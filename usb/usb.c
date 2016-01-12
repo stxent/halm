@@ -7,12 +7,10 @@
 #include <stdlib.h>
 #include <usb/usb.h>
 /*----------------------------------------------------------------------------*/
-void usbRequestInit(void *requestBase, uint16_t capacity,
+void usbRequestInit(struct UsbRequest *request, uint16_t capacity,
     void (*callback)(void *, struct UsbRequest *, enum usbRequestStatus),
     void *callbackArgument)
 {
-  struct UsbRequest * const request = requestBase;
-
   request->base.capacity = capacity;
   request->base.length = 0;
   request->base.callback = callback;

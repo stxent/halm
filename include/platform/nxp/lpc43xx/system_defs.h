@@ -8,6 +8,8 @@
 #define PLATFORM_NXP_LPC43XX_SYSTEM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
+/*------------------Power mode registers--------------------------------------*/
+#define PM_PD                           BIT(0)
 /*------------------Branch clock configuration registers----------------------*/
 #define CFG_RUN                         BIT(0)
 #define CFG_AUTO                        BIT(1)

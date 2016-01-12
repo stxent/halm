@@ -280,11 +280,13 @@ static enum result controlInit(void *object, const void *configBase)
 
   for (unsigned short index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
   {
-    usbRequestInit(request, EP0_BUFFER_SIZE, controlInHandler, control);
+    usbRequestInit((struct UsbRequest *)request, EP0_BUFFER_SIZE,
+        controlInHandler, control);
     queuePush(&control->requestPool, &request);
     ++request;
 
-    usbRequestInit(request, EP0_BUFFER_SIZE, controlOutHandler, control);
+    usbRequestInit((struct UsbRequest *)request, EP0_BUFFER_SIZE,
+        controlOutHandler, control);
     usbEpEnqueue(control->ep0out, (struct UsbRequest *)request);
     ++request;
   }

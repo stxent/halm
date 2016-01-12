@@ -19,9 +19,9 @@ extern const struct InterfaceClass * const Serial;
 /*----------------------------------------------------------------------------*/
 struct SerialConfig
 {
-  /** Optional: input queue size. */
+  /** Mandatory: input queue size. */
   uint32_t rxLength;
-  /** Optional: output queue size. */
+  /** Mandatory: output queue size. */
   uint32_t txLength;
   /** Mandatory: baud rate. */
   uint32_t rate;

@@ -232,14 +232,16 @@ static enum result interfaceInit(void *object, const void *configBase)
 
   for (unsigned short index = 0; index < config->rxBuffers; ++index)
   {
-    usbRequestInit(request, CDC_DATA_EP_SIZE, cdcDataReceived, interface);
+    usbRequestInit((struct UsbRequest *)request, CDC_DATA_EP_SIZE,
+        cdcDataReceived, interface);
     queuePush(&interface->rxRequestQueue, &request);
     ++request;
   }
 
   for (unsigned short index = 0; index < config->txBuffers; ++index)
   {
-    usbRequestInit(request, CDC_DATA_EP_SIZE, cdcDataSent, interface);
+    usbRequestInit((struct UsbRequest *)request, CDC_DATA_EP_SIZE,
+        cdcDataSent, interface);
     queuePush(&interface->txRequestQueue, &request);
     ++request;
   }
