@@ -249,27 +249,31 @@ static enum result identifyCard(struct SdCard *device)
 static enum result initializeCard(struct SdCard *device)
 {
   const uint32_t lowRate = ENUM_RATE;
-  uint32_t rate;
+  uint32_t originalRate;
   enum result res;
 
   /* Lock the interface */
   ifSet(device->interface, IF_ACQUIRE, 0);
 
-  if ((res = ifGet(device->interface, IF_RATE, &rate)) != E_OK)
-    return res;
-  if (rate > WORK_RATE)
-    return E_VALUE;
+  if ((res = ifGet(device->interface, IF_RATE, &originalRate)) != E_OK)
+    goto error;
+  if (originalRate > WORK_RATE)
+  {
+    res = E_VALUE;
+    goto error;
+  }
 
   /* Set low data rate for enumeration purposes */
   if ((res = ifSet(device->interface, IF_RATE, &lowRate)) != E_OK)
-    return res;
+    goto error;
 
   /* Initialize memory card */
   res = identifyCard(device);
 
   /* Restore original interface rate */
-  ifSet(device->interface, IF_RATE, &rate);
+  ifSet(device->interface, IF_RATE, &originalRate);
 
+error:
   /* Release the interface */
   ifSet(device->interface, IF_RELEASE, 0);
 

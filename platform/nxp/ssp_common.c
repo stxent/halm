@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <platform/nxp/ssp_base.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -16,17 +15,21 @@ enum result sspConfigPins(struct SspBase *interface,
   const pinNumber pinArray[] = {
       config->miso, config->mosi, config->sck, config->cs
   };
-  const struct PinEntry *pinEntry;
-  struct Pin pin;
 
   /* Direction configuration is not needed for alternate function pins */
   for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {
-      if (!(pinEntry = pinFind(sspPins, pinArray[index], interface->channel)))
+      const struct PinEntry * const pinEntry = pinFind(sspPins, pinArray[index],
+          interface->channel);
+
+      if (!pinEntry)
         return E_VALUE;
-      pinInput((pin = pinInit(pinArray[index])));
+
+      const struct Pin pin = pinInit(pinArray[index]);
+
+      pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }
@@ -42,7 +45,8 @@ enum result sspSetRate(struct SspBase *interface, uint32_t rate)
   const uint32_t divisor =
       ((sspGetClock(interface) + (rate >> 1)) >> 1) / rate - 1;
 
-  assert(divisor && divisor < 127 * 256);
+  if (!divisor || divisor >= 127 * 256)
+    return E_VALUE;
 
   LPC_SSP_Type * const reg = interface->reg;
   const uint8_t prescaler = 1 + (divisor >> 8);

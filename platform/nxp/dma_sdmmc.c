@@ -69,10 +69,8 @@ static enum result controllerInit(void *object, const void *configBase)
   const struct DmaSdmmcConfig * const config = configBase;
   struct DmaSdmmc * const controller = object;
 
-  if (!config->number)
-    return E_VALUE;
-  if (config->burst == DMA_BURST_2 || config->burst > DMA_BURST_256)
-    return E_VALUE;
+  assert(config->number);
+  assert(config->burst <= DMA_BURST_256 && config->burst != DMA_BURST_2);
 
   /* Allocation should produce memory chunks aligned along 4-byte boundary */
   controller->list = malloc(sizeof(struct DmaSdmmcEntry) * config->number);
