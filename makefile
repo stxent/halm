@@ -90,16 +90,16 @@ COBJECTS = $(CSOURCES:%.c=$(OUTPUT_DIR)/%.o)
 
 all: $(TARGETS)
 
-$(LIBRARY_FILE): $(OPTION_FILE) $(COBJECTS)
-	$(AR) -r $@ $(filter-out $(OPTION_FILE),$^)
+$(LIBRARY_FILE): $(COBJECTS)
+	$(AR) -r $@ $^
 
-$(OUTPUT_DIR)/%.o: %.c
+$(OUTPUT_DIR)/%.o: %.c $(OPTION_FILE)
 	@mkdir -p $(@D)
 	$(CC) -c $(CFLAGS) $(INCLUDE_PATH) -MMD -MF $(@:%.o=%.d) -MT $@ $< -o $@
 
 $(OPTION_FILE): $(CONFIG_FILE)
 	@mkdir -p $(@D)
-	@echo '$(OPTION_STRING)' > $@
+	echo '$(OPTION_STRING)' > $@
 
 clean:
 	rm -f $(COBJECTS:%.o=%.d) $(COBJECTS)
