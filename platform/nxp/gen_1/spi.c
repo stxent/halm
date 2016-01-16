@@ -75,7 +75,7 @@ static void interruptHandler(void *object)
 
   if (!interface->rxLeft)
   {
-    reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
+    reg->IMSC = 0;
     if (interface->callback)
       interface->callback(interface->callbackArgument);
   }
@@ -104,15 +104,20 @@ static enum result spiInit(void *object, const void *configBase)
   interface->callback = 0;
 
   LPC_SSP_Type * const reg = interface->base.reg;
+  uint32_t controlValue = 0;
 
   /* Set frame size */
-  reg->CR0 = CR0_DSS(8);
+  controlValue |= CR0_DSS(8);
 
   /* Set mode for SPI interface */
   if (config->mode & 0x01)
-    reg->CR0 |= CR0_CPHA;
+    controlValue |= CR0_CPHA;
   if (config->mode & 0x02)
-    reg->CR0 |= CR0_CPOL;
+    controlValue |= CR0_CPOL;
+
+  reg->CR0 = controlValue;
+  /* Disable all interrupts */
+  reg->IMSC = 0;
 
   if ((res = sspSetRate(object, config->rate)) != E_OK)
     return res;
@@ -129,8 +134,12 @@ static enum result spiInit(void *object, const void *configBase)
 static void spiDeinit(void *object)
 {
   struct Spi * const interface = object;
+  LPC_SSP_Type * const reg = interface->base.reg;
 
+  /* Disable peripheral */
   irqDisable(interface->base.irq);
+  reg->CR1 = 0;
+
   SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -199,7 +208,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
 
   /* Clear interrupt flags and enable interrupts */
   reg->ICR = ICR_RORIC | ICR_RTIC;
-  reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
 
   /* Initiate reception by setting pending interrupt flag */
   irqSetPending(interface->base.irq);
@@ -227,7 +236,7 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   /* Clear interrupt flags and enable interrupts */
   reg->ICR = ICR_RORIC | ICR_RTIC;
-  reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
 
   /* Initiate transmission by setting pending interrupt flag */
   irqSetPending(interface->base.irq);

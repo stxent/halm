@@ -162,22 +162,26 @@ static enum result spiInit(void *object, const void *configBase)
   interface->callback = 0;
 
   LPC_SSP_Type * const reg = interface->base.reg;
+  uint32_t controlValue = 0;
 
   /* Set frame size */
-  reg->CR0 = CR0_DSS(8);
+  controlValue |= CR0_DSS(8);
 
   /* Set mode for SPI interface */
   if (config->mode & 0x01)
-    reg->CR0 |= CR0_CPHA;
+    controlValue |= CR0_CPHA;
   if (config->mode & 0x02)
-    reg->CR0 |= CR0_CPOL;
+    controlValue |= CR0_CPOL;
 
-  sspSetRate(object, config->rate);
+  reg->CR0 = controlValue;
+  /* Disable all interrupts */
+  reg->IMSC = 0;
+
+  if ((res = sspSetRate(object, config->rate)) != E_OK)
+    return res;
+
   /* Enable peripheral */
   reg->CR1 = CR1_SSE;
-
-  irqSetPriority(interface->base.irq, 0); /* TODO Set priority */
-  irqEnable(interface->base.irq);
 
   return E_OK;
 }
@@ -185,6 +189,10 @@ static enum result spiInit(void *object, const void *configBase)
 static void spiDeinit(void *object)
 {
   struct SpiDma * const interface = object;
+  LPC_SSP_Type * const reg = interface->base.reg;
+
+  /* Disable peripheral */
+  reg->CR1 = 0;
 
   deinit(interface->txDma);
   deinit(interface->rxDma);
@@ -262,8 +270,8 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   reg->ICR = ICR_RORIC | ICR_RTIC;
 
   /* Clear DMA requests */
-  reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
-  reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
+  reg->DMACR = 0;
+  reg->DMACR = DMACR_RXDMAE | DMACR_TXDMAE;
 
   dmaRxSetup(interface);
 
@@ -301,8 +309,8 @@ static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
   reg->ICR = ICR_RORIC | ICR_RTIC;
 
   /* Clear DMA requests */
-  reg->DMACR &= ~(DMACR_RXDMAE | DMACR_TXDMAE);
-  reg->DMACR |= DMACR_RXDMAE | DMACR_TXDMAE;
+  reg->DMACR = 0;
+  reg->DMACR = DMACR_RXDMAE | DMACR_TXDMAE;
 
   dmaTxSetup(interface);
 

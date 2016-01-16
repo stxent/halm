@@ -154,7 +154,7 @@ static void interruptHandler(void *object)
 
   if (event)
   {
-    reg->IMSC &= ~(IMSC_RXIM | IMSC_RTIM);
+    reg->IMSC = 0;
 
     if (interface->callback)
       interface->callback(interface->callbackArgument);
@@ -194,8 +194,11 @@ static enum result oneWireInit(void *object, const void *configBase)
 
   /* Set frame size to 16 bit and SPI mode 0 */
   reg->CR0 = CR0_FRF_TI | CR0_DSS(16);
+  /* Disable all interrupts */
+  reg->IMSC = 0;
 
   sspSetRate(object, RATE_RESET);
+
   /* Enable peripheral */
   reg->CR1 = CR1_SSE;
 
@@ -208,8 +211,12 @@ static enum result oneWireInit(void *object, const void *configBase)
 static void oneWireDeinit(void *object)
 {
   struct OneWireSsp * const interface = object;
+  LPC_SSP_Type * const reg = interface->base.reg;
 
+  /* Disable peripheral */
   irqDisable(interface->base.irq);
+  reg->CR1 = 0;
+
   byteQueueDeinit(&interface->txQueue);
   SspBase->deinit(interface);
 }
@@ -289,7 +296,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 
   /* Clear interrupt flags, enable interrupts and start reception */
   reg->ICR = ICR_RORIC | ICR_RTIC;
-  reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
   sendWord(interface, 0xFF);
 
   if (interface->blocking)
@@ -331,7 +338,7 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
 
   /* Clear interrupt flags, enable interrupts and start transmission */
   reg->ICR = ICR_RORIC | ICR_RTIC;
-  reg->IMSC |= IMSC_RXIM | IMSC_RTIM;
+  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
   beginTransmission(interface);
 
   if (interface->blocking)
