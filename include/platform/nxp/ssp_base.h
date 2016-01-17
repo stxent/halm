@@ -48,7 +48,7 @@ struct SspBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-enum result sspConfigPins(struct SspBase *, const struct SspBaseConfig *);
+void sspConfigPins(struct SspBase *, const struct SspBaseConfig *);
 uint32_t sspGetRate(const struct SspBase *);
 enum result sspSetRate(struct SspBase *, uint32_t);
 

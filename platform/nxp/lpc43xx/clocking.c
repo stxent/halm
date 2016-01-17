@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <delay.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/lpc43xx/clocking.h>
@@ -11,9 +12,9 @@
 #include <platform/nxp/lpc43xx/system.h>
 #include <platform/nxp/lpc43xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY               12000000
-#define RTC_OSC_FREQUENCY               32768
-#define TICK_RATE(frequency)            ((frequency) / 1000)
+#define INT_OSC_FREQUENCY     12000000
+#define RTC_OSC_FREQUENCY     32768
+#define TICK_RATE(frequency)  ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcBranchReg(enum clockBranch);
 static inline volatile uint32_t *calcDividerReg(enum clockSource);
@@ -483,24 +484,11 @@ static enum result commonDividerEnable(const void *clockBase,
   const struct CommonDividerConfig * const config = configBase;
   volatile uint32_t * const reg = calcDividerReg(clock->channel);
 
-  if (!config->value)
-    return E_VALUE;
-
-  if (clock->channel == CLOCK_IDIVA)
-  {
-    if (config->value > 4)
-      return E_VALUE;
-  }
-  else if (clock->channel == CLOCK_IDIVE)
-  {
-    if (config->value > 256)
-      return E_VALUE;
-  }
-  else
-  {
-    if (config->value > 16)
-      return E_VALUE;
-  }
+  assert(config->value);
+  assert(clock->channel != CLOCK_IDIVA || config->value <= 4);
+  assert(clock->channel != CLOCK_IDIVE || config->value <= 256);
+  assert((clock->channel == CLOCK_IDIVA || clock->channel == CLOCK_IDIVE)
+      || config->value <= 16);
 
   *reg |= IDIV_AUTOBLOCK;
   *reg = (*reg & ~(IDIV_DIVIDER_MASK | IDIV_CLK_SEL_MASK))
@@ -538,6 +526,8 @@ static enum result extOscEnable(const void *clockBase __attribute__((unused)),
 {
   const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = XTAL_ENABLE;
+
+  assert(config->frequency >= 1000000 && config->frequency <= 25000000);
 
   if (config->bypass)
     buffer |= XTAL_BYPASS;
@@ -633,10 +623,9 @@ static enum result pll1ClockEnable(const void *clockBase
 {
   const struct PllConfig * const config = configBase;
 
-  if (config->source == CLOCK_PLL)
-    return E_VALUE;
-  if (!config->divisor || !config->multiplier || config->multiplier > 256)
-    return E_VALUE;
+  assert(config->source != CLOCK_PLL);
+  assert(config->divisor);
+  assert(config->multiplier && config->multiplier <= 256);
 
   uint8_t divisor = config->divisor;
   uint8_t psel = 0;
@@ -646,11 +635,13 @@ static enum result pll1ClockEnable(const void *clockBase
     ++psel;
     divisor >>= 1;
   }
-
-  if (divisor > 4)
-    return E_VALUE;
+  assert(divisor <= 4);
 
   const uint32_t sourceFrequency = getSourceFrequency(config->source);
+
+  if (!sourceFrequency)
+    return E_ERROR;
+
   const uint8_t msel = config->multiplier - 1;
   const uint8_t nsel = divisor - 1;
   bool direct = false;
@@ -660,15 +651,11 @@ static enum result pll1ClockEnable(const void *clockBase
   else
     direct = true;
 
-  if (!sourceFrequency)
-    return E_ERROR;
-
   const uint32_t ccoFrequency = sourceFrequency * config->multiplier;
   const uint32_t expectedFrequency = ccoFrequency / config->divisor;
 
   /* Check CCO range */
-  if (ccoFrequency < 156000000 || ccoFrequency > 320000000)
-    return E_VALUE;
+  assert(ccoFrequency >= 156000000 && ccoFrequency <= 320000000);
 
   uint32_t controlValue = PLL1_CTRL_AUTOBLOCK | PLL1_CTRL_CLKSEL(config->source)
       | PLL1_CTRL_PSEL(psel) | PLL1_CTRL_NSEL(nsel) | PLL1_CTRL_MSEL(msel);
@@ -676,8 +663,7 @@ static enum result pll1ClockEnable(const void *clockBase
   if (expectedFrequency > 110000000)
   {
     /* No division allowed */
-    if (!direct)
-      return E_VALUE;
+    assert(direct);
 
     /* Start at mid-range frequency by dividing output clock */
     LPC_CGU->PLL1_CTRL = PLL1_CTRL_PD;
@@ -687,6 +673,7 @@ static enum result pll1ClockEnable(const void *clockBase
     /* User manual recommends to add a delay for 50 microseconds */
     udelay(50);
 
+    /* Check PLL state */
     if (!((LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK)))
       return E_ERROR;
 

@@ -35,7 +35,7 @@ struct I2cBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-enum result i2cConfigPins(struct I2cBase *, const struct I2cBaseConfig *);
+void i2cConfigPins(struct I2cBase *, const struct I2cBaseConfig *);
 uint32_t i2cGetRate(const struct I2cBase *);
 void i2cSetRate(struct I2cBase *, uint32_t);
 

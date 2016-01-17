@@ -30,7 +30,7 @@ struct SspBlockDescriptor
   enum sysClockBranch registerBranch;
 };
 /*----------------------------------------------------------------------------*/
-static enum result configPins(struct SspBase *, const struct SspBaseConfig *);
+static void configPins(struct SspBase *, const struct SspBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct SspBase *,
     struct SspBase *);
 /*----------------------------------------------------------------------------*/
@@ -189,29 +189,27 @@ const struct PinEntry sspPins[] = {
 const struct EntityClass * const SspBase = &sspTable;
 static struct SspBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result configPins(struct SspBase *interface,
+static void configPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
   const pinNumber pinArray[] = {
       config->miso, config->mosi, config->sck, config->cs
   };
-  const struct PinEntry *pinEntry;
-  struct Pin pin;
 
   for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {
-      pinEntry = pinFind(sspPins, pinArray[index],
+      const struct PinEntry * const pinEntry = pinFind(sspPins, pinArray[index],
           CHANNEL_INDEX(interface->channel, index));
-      if (!pinEntry)
-        return E_VALUE;
-      pinInput((pin = pinInit(pinArray[index])));
+      assert(pinEntry);
+
+      const struct Pin pin = pinInit(pinArray[index]);
+
+      pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel,
@@ -270,8 +268,7 @@ static enum result sspInit(void *object, const void *configBase)
    * to the differences in the pin tables. One pin may have more than two
    * alternate functions of the same peripheral channel.
    */
-  if ((res = configPins(interface, config)) != E_OK)
-    return res;
+  configPins(interface, config);
 
   const struct SspBlockDescriptor *entry = &sspBlockEntries[interface->channel];
 

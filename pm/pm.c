@@ -76,10 +76,9 @@ enum result pmChangeState(enum pmState state)
 enum result pmRegister(void *object, PmCallback callback)
 {
   if (!pmHandler)
-  {
-    if (!(pmHandler = init(PmHandler, 0)))
-      return E_ERROR;
-  }
+    pmHandler = init(PmHandler, 0);
+  if (!pmHandler)
+    return E_ERROR;
 
   const struct PmHandlerEntry entry = {
       .object = object,
@@ -91,11 +90,10 @@ enum result pmRegister(void *object, PmCallback callback)
 /*----------------------------------------------------------------------------*/
 void pmUnregister(const void *object)
 {
-  if (!pmHandler)
-    return;
+  assert(pmHandler);
 
   struct ListNode * const node = listFind(&pmHandler->objectList, object);
+  assert(node);
 
-  if (node)
-    listErase(&pmHandler->objectList, node);
+  listErase(&pmHandler->objectList, node);
 }

@@ -66,7 +66,8 @@ static enum result unitSetDescriptor(struct GpTimerCaptureUnit *unit,
     uint8_t channel, const struct GpTimerCapture *state,
     struct GpTimerCapture *capture)
 {
-  assert(channel < ARRAY_SIZE(unit->descriptors));
+  if (channel >= ARRAY_SIZE(unit->descriptors))
+    return E_VALUE;
 
   return compareExchangePointer((void **)(unit->descriptors + channel), state,
       capture) ? E_OK : E_BUSY;

@@ -10,7 +10,7 @@
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-static enum result configOutputPin(pinNumber);
+static void configOutputPin(pinNumber);
 static void releaseOutputPin(pinNumber);
 static enum result setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
@@ -36,21 +36,18 @@ const struct PinEntry dacPins[] = {
 const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result configOutputPin(pinNumber key)
+static void configOutputPin(pinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
-
-  if (!pinEntry)
-    return E_VALUE;
+  assert(pinEntry);
 
   const struct Pin pin = pinInit(key);
+
   pinInput(pin);
   pinSetFunction(pin, pinEntry->value);
 
   /* Enable analog pin function */
   LPC_SCU->ENAIO2 |= 0x01;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void releaseOutputPin(pinNumber key __attribute__((unused)))
@@ -81,8 +78,7 @@ static enum result dacInit(void *object, const void *configBase)
   if ((res = setDescriptor(0, interface)) != E_OK)
     return res;
 
-  if ((res = configOutputPin(config->pin)) != E_OK)
-    return res;
+  configOutputPin(config->pin);
 
   /* Enable clock to register interface and peripheral */
   sysClockEnable(CLK_APB3_DAC);

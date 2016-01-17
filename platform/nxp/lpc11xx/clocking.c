@@ -4,14 +4,15 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <delay.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/lpc11xx/clocking.h>
 #include <platform/nxp/lpc11xx/clocking_defs.h>
 #include <platform/nxp/lpc11xx/system.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY               12000000
-#define TICK_RATE(frequency, latency)   ((frequency) / (latency) / 1000)
+#define INT_OSC_FREQUENCY             12000000
+#define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)
 /*----------------------------------------------------------------------------*/
 struct ClockDescriptor
 {
@@ -22,7 +23,7 @@ struct ClockDescriptor
 /*----------------------------------------------------------------------------*/
 static struct ClockDescriptor *calcBranchDescriptor(enum clockBranch);
 static uint32_t calcPllFrequency(uint16_t, uint8_t, enum clockSource);
-static enum result calcPllValues(uint16_t, uint8_t, uint32_t *);
+static uint32_t calcPllValues(uint16_t, uint8_t);
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -177,6 +178,8 @@ static struct ClockDescriptor *calcBranchDescriptor(enum clockBranch branch)
 static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
     enum clockSource source)
 {
+  assert(source == CLOCK_EXTERNAL || source == CLOCK_INTERNAL);
+
   uint32_t frequency;
 
   switch (source)
@@ -190,38 +193,33 @@ static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
       break;
 
     default:
-      return 0;
+      break;
   }
 
   /* Check CCO range */
   frequency = frequency * multiplier;
-  if (frequency < 156000000 || frequency > 320000000)
-    return 0;
+  assert(frequency >= 156000000 && frequency <= 320000000);
 
   return frequency / divisor;
 }
 /*----------------------------------------------------------------------------*/
-static enum result calcPllValues(uint16_t multiplier, uint8_t divisor,
-    uint32_t *result)
+static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
 {
-  if (!multiplier || !divisor || divisor & 1)
-    return E_VALUE;
+  assert(multiplier);
+  assert(divisor && !(divisor & 1));
 
   const uint8_t msel = multiplier / divisor - 1;
-  uint8_t counter = 0;
-  uint8_t psel = divisor >> 1;
+  uint8_t psel = 0;
+  uint8_t sourceDivisor = divisor >> 1;
 
-  if (msel >= 32)
-    return E_VALUE;
+  assert(msel < 32);
 
-  while (counter < 4 && psel != 1 << counter)
-    counter++;
+  while (psel < 4 && sourceDivisor != 1 << psel)
+    psel++;
   /* Check whether actual divisor value found */
-  if ((psel = counter) == 4)
-    return E_VALUE;
+  assert(psel != 4);
 
-  *result = PLLCTRL_MSEL(msel) | PLLCTRL_PSEL(psel);
-  return E_OK;
+  return PLLCTRL_MSEL(msel) | PLLCTRL_PSEL(psel);
 }
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
@@ -248,6 +246,8 @@ static enum result extOscEnable(const void *clockBase
 {
   const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = 0;
+
+  assert(config->frequency >= 1000000 && config->frequency <= 25000000);
 
   if (config->bypass)
     buffer |= SYSOSCCTRL_BYPASS;
@@ -317,8 +317,7 @@ static enum result wdtOscEnable(const void *clockBase __attribute__((unused)),
 {
   const struct WdtOscConfig * const config = configBase;
 
-  if (config->frequency > WDT_FREQ_4600)
-    return E_VALUE;
+  assert(config->frequency <= WDT_FREQ_4600);
 
   const uint8_t index = !config->frequency ? WDT_FREQ_600 : config->frequency;
 
@@ -349,17 +348,10 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  uint32_t control; /* Control register value */
-
-  const enum result res = calcPllValues(config->multiplier,
-      config->divisor, &control);
-  if (res != E_OK)
-    return res;
-
+  const uint32_t control = calcPllValues(config->multiplier,
+      config->divisor);
   const uint32_t frequency = calcPllFrequency(config->multiplier,
       config->divisor, config->source);
-  if (!frequency)
-    return E_VALUE;
 
   /* Power-up PLL */
   sysPowerEnable(PWR_SYSPLL);
@@ -374,6 +366,7 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   LPC_SYSCON->SYSPLLCTRL = control;
 
   pllFrequency = frequency;
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -413,9 +406,7 @@ static enum result branchEnable(const void *clockBase, const void *configBase)
       break;
     }
   }
-
-  if (source == -1)
-    return E_VALUE;
+  assert(source != -1);
 
   if (clock->branch == CLOCK_BRANCH_MAIN)
     flashLatencyReset();

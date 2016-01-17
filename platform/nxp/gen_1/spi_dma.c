@@ -144,8 +144,7 @@ static enum result spiInit(void *object, const void *configBase)
   struct SpiDma * const interface = object;
   enum result res;
 
-  if (config->dma[0] == config->dma[1])
-    return E_VALUE;
+  assert(config->dma[0] != config->dma[1]);
 
   /* Call base class constructor */
   if ((res = SspBase->init(object, &baseConfig)) != E_OK)

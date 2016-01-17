@@ -138,11 +138,9 @@ static enum result wakeupInterruptInit(void *object, const void *configBase)
   struct WakeupInterrupt * const interrupt = object;
   enum result res;
 
-  if (config->event == PIN_TOGGLE)
-    return E_INVALID;
 
-  if (!pinValid(input))
-    return E_VALUE;
+  assert(config->event != PIN_TOGGLE);
+  assert(pinValid(input));
 
   /* Try to register pin interrupt in the interrupt handler */
   if ((res = startLogicHandlerAttach(input.data, interrupt)) != E_OK)

@@ -89,9 +89,9 @@ static enum result uartInit(void *object, const void *configBase)
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-  if ((res = uartConfigPins(interface, config)) != E_OK)
-    return res;
 
+  /* Configure input and output pins */
+  uartConfigPins(interface, config);
   interface->handler = 0;
 
   sysClockEnable(CLK_UART);

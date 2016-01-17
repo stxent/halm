@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/clocking_defs.h>
@@ -157,6 +158,8 @@ static enum result extOscEnable(const void *clockBase __attribute__((unused)),
   const struct ExternalOscConfig * const config = configBase;
   uint32_t buffer = LPC_SC->SCS | SCS_OSCEN;
 
+  assert(config->frequency >= 1000000 && config->frequency <= 25000000);
+
   /*
    * Oscillator can operate in two modes: slave mode and oscillation mode.
    * Slave mode does not require any additional configuration.
@@ -205,10 +208,9 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   uint32_t frequency; /* Resulting CCO frequency */
   uint32_t source; /* Clock Source Select register value */
   uint16_t multiplier;
-  uint8_t prescaler;
 
-  if (!config->multiplier || !config->divisor)
-    return E_VALUE;
+  assert(config->multiplier);
+  assert(config->divisor);
 
   /*
    * Calculations:
@@ -234,18 +236,19 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
       break;
 
     default:
-      return E_ERROR;
+      break;
   }
+  assert(frequency);
 
   multiplier = config->multiplier;
   frequency = frequency * config->multiplier;
+
+  uint8_t prescaler;
+
   if (config->source != CLOCK_RTC)
   {
-    if (multiplier < 6 || multiplier > 512)
-      return E_VALUE;
-
-    if (frequency < 275000000 || frequency > 550000000)
-      return E_ERROR;
+    assert(multiplier >= 6 && multiplier <= 512);
+    assert(frequency >= 275000000 && frequency <= 550000000);
 
     prescaler = 2;
   }
@@ -298,10 +301,9 @@ static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
 {
   const struct PllConfig * const config = configBase;
 
-  if (!config->multiplier || !config->divisor)
-    return E_VALUE;
-  if (config->source != CLOCK_EXTERNAL)
-    return E_VALUE;
+  assert(config->multiplier);
+  assert(config->divisor);
+  assert(config->source == CLOCK_EXTERNAL);
 
   /*
    * Calculations:
@@ -309,27 +311,18 @@ static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
    * PSEL = F_CCO / (USBCLK * 2)
    */
 
-  if (!extFrequency)
-    return E_ERROR;
-
-  /* CCO frequency */
-  const uint32_t frequency = extFrequency * config->multiplier;
-
-  if (frequency < 156000000 || frequency > 320000000)
-    return E_VALUE;
+  /* Check CCO frequency */
+  assert(extFrequency * config->multiplier >= 156000000
+      && extFrequency * config->multiplier <= 320000000);
 
   const uint8_t msel = USB_FREQUENCY / extFrequency - 1;
-  uint8_t counter = 0;
-  uint8_t psel = config->divisor >> 1;
+  uint8_t psel = 0;
+  uint8_t sourceDivisor = config->divisor >> 1;
 
-  if (msel < 1 || msel > 32)
-    return E_ERROR;
-
-  while (counter < 4 && psel != 1 << counter)
-    counter++;
+  while (psel < 4 && sourceDivisor != 1 << psel)
+    psel++;
   /* Check whether actual divisor value found */
-  if ((psel = counter) == 4)
-    return E_VALUE;
+  assert(psel != 4);
 
   /* Update PLL clock source */
   LPC_SC->PLL1CFG = PLL1CFG_MSEL(msel) | PLL1CFG_PSEL(psel);
@@ -358,31 +351,33 @@ static enum result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct CommonClockConfig * const config = configBase;
-  int8_t source = -1;
 
-  switch (config->source)
+  if (config->source != CLOCK_PLL)
   {
-    case CLOCK_INTERNAL:
-      source = CLKSRCSEL_IRC;
-      break;
+    assert(config->source == CLOCK_INTERNAL
+        || config->source == CLOCK_EXTERNAL
+        || config->source == CLOCK_RTC);
 
-    case CLOCK_EXTERNAL:
-      source = CLKSRCSEL_MAIN;
-      break;
+    uint32_t source = 0;
 
-    case CLOCK_PLL:
-      break;
+    switch (config->source)
+    {
+      case CLOCK_INTERNAL:
+        source = CLKSRCSEL_IRC;
+        break;
 
-    case CLOCK_RTC:
-      source = CLKSRCSEL_RTC;
-      break;
+      case CLOCK_EXTERNAL:
+        source = CLKSRCSEL_MAIN;
+        break;
 
-    default:
-      return E_ERROR;
-  }
+      case CLOCK_RTC:
+        source = CLKSRCSEL_RTC;
+        break;
 
-  if (source != -1)
-  {
+      default:
+        break;
+    }
+
     if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
       pllDisconnect();
 
@@ -437,14 +432,14 @@ static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
 {
   const struct CommonClockConfig * const config = configBase;
 
+  assert(config->source == CLOCK_PLL || config->source == CLOCK_USB_PLL);
+
   switch (config->source)
   {
     case CLOCK_PLL:
     {
       const uint8_t divisor = pllFrequency / 48000000 - 1;
-
-      if (divisor != 5 && divisor != 7 && divisor != 9)
-        return E_ERROR;
+      assert(divisor == 5 || divisor == 7 || divisor == 9);
 
       LPC_SC->USBCLKCFG = USBCLKCFG_USBSEL(divisor);
       break;
@@ -465,7 +460,7 @@ static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
     }
 
     default:
-      return E_VALUE;
+      break;
   }
 
   return E_OK;

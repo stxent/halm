@@ -118,8 +118,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   const struct Pin input = pinInit(config->pin);
   struct PinInterrupt * const interrupt = object;
 
-  if (!pinValid(input))
-    return E_VALUE;
+  assert(pinValid(input));
 
   /* Try to allocate a new channel */
   const int8_t channel = setDescriptor(interrupt);

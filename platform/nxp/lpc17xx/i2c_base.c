@@ -130,8 +130,8 @@ static enum result i2cInit(void *object, const void *configBase)
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-  if ((res = i2cConfigPins(interface, configBase)) != E_OK)
-    return res;
+  /* Configure pins */
+  i2cConfigPins(interface, configBase);
 
   const struct I2cBlockDescriptor *entry = &i2cBlockEntries[interface->channel];
 

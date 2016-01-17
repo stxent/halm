@@ -13,7 +13,7 @@
 /* PCLK for I2S must not be higher than 74 MHz */
 #define DEFAULT_DIV CLK_DIV2
 /*----------------------------------------------------------------------------*/
-static enum result configPins(struct I2sBase *, const struct I2sBaseConfig *);
+static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct I2sBase *,
     struct I2sBase *);
 /*----------------------------------------------------------------------------*/
@@ -98,29 +98,28 @@ const struct PinEntry i2sPins[] = {
 const struct EntityClass * const I2sBase = &i2sTable;
 static struct I2sBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result configPins(struct I2sBase *interface,
+static void configPins(struct I2sBase *interface,
     const struct I2sBaseConfig *config)
 {
   const pinNumber pinArray[] = {
       config->rx.sck, config->rx.ws, config->rx.sda, config->rx.mclk,
       config->tx.sck, config->tx.ws, config->tx.sda, config->tx.mclk
   };
-  const struct PinEntry *pinEntry;
-  struct Pin pin;
 
   for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {
-      pinEntry = pinFind(i2sPins, pinArray[index], interface->channel);
-      if (!pinEntry)
-        return E_VALUE;
-      pinInput((pin = pinInit(pinArray[index])));
+      const struct PinEntry * const pinEntry = pinFind(i2sPins, pinArray[index],
+          interface->channel);
+      assert(pinEntry);
+
+      const struct Pin pin = pinInit(pinArray[index]);
+
+      pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel,
@@ -153,8 +152,7 @@ static enum result i2sInit(void *object, const void *configBase)
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-  if ((res = configPins(interface, configBase)) != E_OK)
-    return res;
+  configPins(interface, configBase);
 
   sysPowerEnable(PWR_I2S);
   sysClockControl(CLK_I2S, DEFAULT_DIV);

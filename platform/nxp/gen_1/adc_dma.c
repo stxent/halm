@@ -95,13 +95,11 @@ static enum result adcInit(void *object, const void *configBase)
 
   assert(config->event < ADC_EVENT_END);
 
-  res = adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
-      &interface->pin);
-  if (res != E_OK)
-    return res;
-
   if ((res = dmaSetup(interface, config)) != E_OK)
     return res;
+
+  adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
+      &interface->pin);
 
   interface->callback = 0;
   interface->event = config->event + 1;
@@ -115,8 +113,8 @@ static void adcDeinit(void *object)
 {
   const struct AdcDma * const interface = object;
 
-  deinit(interface->dma);
   adcReleasePin(interface->pin);
+  deinit(interface->dma);
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcCallback(void *object, void (*callback)(void *),

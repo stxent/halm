@@ -113,8 +113,8 @@ static enum result pinInterruptHandlerAttach(uint8_t channel, union PinData pin,
 {
   if (!handler)
     handler = init(PinInterruptHandler, 0);
-
-  assert(handler);
+  if (!handler)
+    return E_ERROR;
 
   struct List * const list = &handler->list[channel];
   const struct ListNode *current = listFirst(list);
@@ -183,12 +183,11 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   struct PinInterrupt * const interrupt = object;
   enum result res;
 
-  if (!pinValid(input))
-    return E_VALUE;
+  assert(pinValid(input));
 
   /* External interrupt functionality is available only on two ports */
-  if (input.data.port != 0 && input.data.port != 2)
-    return E_VALUE;
+  assert(input.data.port == 0 || input.data.port == 2);
+
   /* Map ports 0 and 2 on channels 0 and 1 */
   interrupt->channel = input.data.port >> 1;
 

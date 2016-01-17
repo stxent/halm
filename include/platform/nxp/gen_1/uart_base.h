@@ -50,7 +50,7 @@ struct UartBase
 /*----------------------------------------------------------------------------*/
 enum result uartCalcRate(const struct UartBase *, uint32_t,
     struct UartRateConfig *);
-enum result uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
+void uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
 uint32_t uartGetRate(const struct UartBase *);
 void uartSetParity(struct UartBase *, enum uartParity);
 void uartSetRate(struct UartBase *, struct UartRateConfig);

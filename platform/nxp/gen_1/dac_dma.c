@@ -84,8 +84,8 @@ static enum result dacInit(void *object, const void *configBase)
   struct DacDma * const interface = object;
   enum result res;
 
-  if (!config->frequency || !config->size)
-    return E_VALUE;
+  assert(config->frequency);
+  assert(config->size);
 
   /* Call base class constructor */
   if ((res = DacBase->init(object, &baseConfig)) != E_OK)

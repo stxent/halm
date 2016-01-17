@@ -12,8 +12,7 @@
 #define SDDELAY_SAMPLE(value) BIT_FIELD((value), 0)
 #define SDDELAY_DRV(value)    BIT_FIELD((value), 8)
 /*----------------------------------------------------------------------------*/
-static enum result configPins(struct SdmmcBase *,
-    const struct SdmmcBaseConfig *);
+static void configPins(struct SdmmcBase *, const struct SdmmcBaseConfig *);
 static enum result setDescriptor(const struct SdmmcBase *, struct SdmmcBase *);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
@@ -162,7 +161,7 @@ const struct PinEntry sdmmcPins[] = {
 const struct EntityClass * const SdmmcBase = &sdioTable;
 static struct SdmmcBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result configPins(struct SdmmcBase *interface,
+static void configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
 {
   const pinNumber pinArray[] = {
@@ -173,8 +172,6 @@ static enum result configPins(struct SdmmcBase *interface,
       config->dat2,
       config->dat3
   };
-  const struct PinEntry *pinEntry;
-  struct Pin pin;
   bool wide = true;
 
   for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
@@ -182,19 +179,19 @@ static enum result configPins(struct SdmmcBase *interface,
     if (!pinArray[index])
     {
       /* First three pins are mandatory */
-      if (index >= 3)
-      {
-        wide = false;
-        continue;
-      }
-      else
-        return E_VALUE;
+      assert(index >= 3);
+
+      wide = false;
+      continue;
     }
 
-    pinEntry = pinFind(sdmmcPins, pinArray[index], 0);
-    if (!pinEntry)
-      return E_VALUE;
-    pinInput((pin = pinInit(pinArray[index])));
+    const struct PinEntry * const pinEntry = pinFind(sdmmcPins,
+        pinArray[index], 0);
+    assert(pinEntry);
+
+    const struct Pin pin = pinInit(pinArray[index]);
+
+    pinInput(pin);
     pinSetFunction(pin, pinEntry->value);
 
     if (index > 0)
@@ -205,7 +202,6 @@ static enum result configPins(struct SdmmcBase *interface,
   }
 
   interface->wide = wide;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(const struct SdmmcBase *state,
@@ -236,8 +232,7 @@ static enum result sdioInit(void *object, const void *configBase)
   if ((res = setDescriptor(0, interface)) != E_OK)
     return res;
 
-  if ((res = configPins(interface, config)) != E_OK)
-    return res;
+  configPins(interface, config);
 
   sysClockEnable(CLK_M4_SDIO);
   sysClockEnable(CLK_SDIO);

@@ -113,9 +113,9 @@ static enum result sspInit(void *object, const void *configBase)
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-  if ((res = sspConfigPins(interface, config)) != E_OK)
-    return res;
 
+  /* Configure input and output pins */
+  sspConfigPins(interface, config);
   interface->handler = 0;
 
   switch (interface->channel)

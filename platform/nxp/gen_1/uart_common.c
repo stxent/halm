@@ -4,12 +4,13 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <platform/nxp/gen_1/uart_base.h>
 #include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];
 /*----------------------------------------------------------------------------*/
-enum result uartConfigPins(struct UartBase *interface,
+void uartConfigPins(struct UartBase *interface,
     const struct UartBaseConfig *config)
 {
   const struct PinEntry *pinEntry;
@@ -18,18 +19,16 @@ enum result uartConfigPins(struct UartBase *interface,
   /* Direction configuration is not needed for alternate function pins */
 
   /* Configure UART RX pin */
-  if (!(pinEntry = pinFind(uartPins, config->rx, interface->channel)))
-    return E_VALUE;
+  pinEntry = pinFind(uartPins, config->rx, interface->channel);
+  assert(pinEntry);
   pinInput((pin = pinInit(config->rx)));
   pinSetFunction(pin, pinEntry->value);
 
   /* Configure UART TX pin */
-  if (!(pinEntry = pinFind(uartPins, config->tx, interface->channel)))
-    return E_VALUE;
+  pinEntry = pinFind(uartPins, config->tx, interface->channel);
+  assert(pinEntry);
   pinInput((pin = pinInit(config->tx)));
   pinSetFunction(pin, pinEntry->value);
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 enum result uartCalcRate(const struct UartBase *interface, uint32_t rate,

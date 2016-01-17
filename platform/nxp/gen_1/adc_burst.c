@@ -65,15 +65,12 @@ static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcBurstConfig * const config = configBase;
   struct AdcBurst * const interface = object;
-  enum result res;
 
   assert(config->event < ADC_EVENT_END);
 
   /* Initialize input pin */
-  res = adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
+  adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
       &interface->pin);
-  if (res != E_OK)
-    return res;
 
   interface->callback = 0;
   interface->blocking = true;

@@ -478,16 +478,13 @@ static enum result timerHandlerInit(void *object, const void *configBase)
   const struct TimerHandlerConfig * const config = configBase;
   struct TimerHandler * const handler = object;
 
-  switch (config->channel)
-  {
-    case 0:
-      handler->reg = LPC_SCT;
-      break;
+  assert(config->channel == 0);
 
-    default:
-      return E_VALUE;
-  }
+#ifdef NDEBUG
+  (void)config; /* Suppress warning */
+#endif
 
+  handler->reg = LPC_SCT;
   handler->descriptors[0] = handler->descriptors[1] = 0;
   handler->events = 0;
 

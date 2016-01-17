@@ -239,8 +239,7 @@ static enum result sdioInit(void *object, const void *configBase)
   struct Sdmmc * const interface = object;
   enum result res;
 
-  if (!config->rate)
-    return E_VALUE;
+  assert(config->rate);
 
   interface->finalizer = init(PinInterrupt, &finalizerConfig);
   if (!interface->finalizer)

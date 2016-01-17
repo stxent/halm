@@ -12,7 +12,7 @@
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
-static int8_t setupMatchPin(uint8_t channel, pinNumber key);
+static uint8_t setupMatchPin(uint8_t channel, pinNumber key);
 /*----------------------------------------------------------------------------*/
 static enum result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
 static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
@@ -77,14 +77,13 @@ static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
       : &device->MR1 + (channel - 1);
 }
 /*----------------------------------------------------------------------------*/
-static int8_t setupMatchPin(uint8_t channel, pinNumber key)
+static uint8_t setupMatchPin(uint8_t channel, pinNumber key)
 {
-  const struct PinEntry *pinEntry;
+  const struct PinEntry * const pinEntry = pinFind(gpPwmPins, key, channel);
+  assert(pinEntry);
 
-  if (!(pinEntry = pinFind(gpPwmPins, key, channel)))
-    return -1;
+  const struct Pin pin = pinInit(key);
 
-  struct Pin pin = pinInit(key);
   pinOutput(pin, 0);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
@@ -126,8 +125,7 @@ static enum result unitInit(void *object, const void *configBase)
   const uint32_t clockFrequency = gpPwmGetClock(object);
   const uint32_t timerFrequency = config->frequency * config->resolution;
 
-  if (!timerFrequency || timerFrequency > clockFrequency)
-    return E_VALUE;
+  assert(timerFrequency && timerFrequency <= clockFrequency);
 
   /* Call base class constructor */
   if ((res = GpPwmUnitBase->init(object, &baseConfig)) != E_OK)
@@ -207,27 +205,25 @@ static enum result singleEdgeInit(void *object, const void *configBase)
   enum result res;
 
   /* Initialize output pin */
-  const int8_t channel = setupMatchPin(config->parent->base.channel,
+  const uint8_t channel = setupMatchPin(config->parent->base.channel,
       config->pin);
-  if (channel == -1)
-    return E_VALUE;
 
   /* Allocate channels */
   if ((res = unitAllocateChannel(config->parent, (uint8_t)channel)) != E_OK)
     return res;
 
-  pwm->channel = (uint8_t)channel;
+  pwm->channel = channel;
   pwm->unit = config->parent;
 
   LPC_PWM_Type * const reg = pwm->unit->base.reg;
 
   /* Calculate pointer to match register for fast access */
-  pwm->value = calcMatchChannel(reg, pwm->channel);
+  pwm->value = calcMatchChannel(reg, channel);
   /* Call function directly because of unfinished object construction */
   singleEdgeSetDuration(pwm, config->duration);
   /* Enable channel */
-  reg->PCR = (reg->PCR & ~PCR_DOUBLE_EDGE(pwm->channel))
-      | PCR_OUTPUT_ENABLED(pwm->channel);
+  reg->PCR = (reg->PCR & ~PCR_DOUBLE_EDGE(channel))
+      | PCR_OUTPUT_ENABLED(channel);
 
   return E_OK;
 }
@@ -281,11 +277,9 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
   enum result res;
 
   /* Initialize output pin */
-  const int8_t channel = setupMatchPin(config->parent->base.channel,
+  const uint8_t channel = setupMatchPin(config->parent->base.channel,
       config->pin);
-  /* First channel cannot be a double edged output */
-  if (channel <= 1)
-    return E_VALUE;
+  assert(channel > 1); /* First channel cannot be a double edged output */
 
   /* Allocate channels */
   if ((res = unitAllocateChannel(config->parent, (uint8_t)channel - 1)) != E_OK)
@@ -293,17 +287,17 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
   if ((res = unitAllocateChannel(config->parent, (uint8_t)channel)) != E_OK)
     return res;
 
-  pwm->channel = (uint8_t)channel;
+  pwm->channel = channel;
   pwm->unit = config->parent;
 
   LPC_PWM_Type * const reg = pwm->unit->base.reg;
 
   /* Setup channels and initial edge times */
-  pwm->leading = calcMatchChannel(reg, pwm->channel - 1);
-  pwm->trailing = calcMatchChannel(reg, pwm->channel);
+  pwm->leading = calcMatchChannel(reg, channel - 1);
+  pwm->trailing = calcMatchChannel(reg, channel);
   doubleEdgeSetEdges(pwm, config->leading, config->trailing);
   /* Select double edge mode and enable the channel */
-  reg->PCR |= PCR_DOUBLE_EDGE(pwm->channel) | PCR_OUTPUT_ENABLED(pwm->channel);
+  reg->PCR |= PCR_DOUBLE_EDGE(channel) | PCR_OUTPUT_ENABLED(channel);
 
   return E_OK;
 }

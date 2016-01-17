@@ -35,13 +35,10 @@ static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
   struct Adc * const interface = object;
-  enum result res;
 
   /* Initialize input pin */
-  res = adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
+  adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
       &interface->pin);
-  if (res != E_OK)
-    return res;
 
   interface->unit = config->parent;
 

@@ -11,7 +11,7 @@
 #include <platform/nxp/lpc17xx/usb_base.h>
 #include <platform/nxp/lpc17xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result configPins(struct UsbBase *, const struct UsbBaseConfig *);
+static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct UsbBase *,
     struct UsbBase *);
 /*----------------------------------------------------------------------------*/
@@ -49,28 +49,27 @@ const struct PinEntry usbPins[] = {
 const struct EntityClass * const UsbBase = &devTable;
 static struct UsbBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result configPins(struct UsbBase *device,
+static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
 {
   const pinNumber pinArray[] = {
       config->dm, config->dp, config->connect, config->vbus
   };
-  const struct PinEntry *pinEntry;
-  struct Pin pin;
 
   for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {
-      pinEntry = pinFind(usbPins, pinArray[index], device->channel);
-      if (!pinEntry)
-        return E_VALUE;
-      pinInput((pin = pinInit(pinArray[index])));
+      const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
+          device->channel);
+      assert(pinEntry);
+
+      const struct Pin pin = pinInit(pinArray[index]);
+
+      pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel, const struct UsbBase *state,
@@ -100,9 +99,7 @@ static enum result devInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  res = configPins(device, configBase);
-  if (res != E_OK)
-    return res;
+  configPins(device, configBase);
 
   sysPowerEnable(PWR_USB);
 

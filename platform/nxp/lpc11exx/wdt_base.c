@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <memory.h>
 #include <platform/nxp/wdt_base.h>
 #include <platform/nxp/wdt_defs.h>
@@ -56,8 +57,7 @@ static enum result wdtInit(void *object, const void *configBase)
   struct WdtBase * const timer = object;
   enum result res;
 
-  if (config->source >= WDT_CLOCK_END)
-    return E_VALUE;
+  assert(config->source < WDT_CLOCK_END);
 
   if ((res = setDescriptor(timer)) != E_OK)
     return res;

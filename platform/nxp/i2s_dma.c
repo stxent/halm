@@ -229,10 +229,9 @@ static enum result i2sInit(void *object, const void *configBase)
   struct I2sDma * const interface = object;
   enum result res;
 
-  if (!config->rate || !config->size)
-    return E_VALUE;
-  if (!config->rx.sda && !config->tx.sda)
-    return E_ERROR;
+  assert(config->rate);
+  assert(config->size);
+  assert(config->rx.sda || config->tx.sda);
 
   /* Call base class constructor */
   if ((res = I2sBase->init(object, &baseConfig)) != E_OK)
@@ -295,9 +294,13 @@ static enum result i2sInit(void *object, const void *configBase)
       reg->RXMODE |= RXMODE_RXMCENA;
 
     if (!config->rx.ws && !config->rx.sck)
+    {
       reg->RXMODE |= RXMODE_RX4PIN;
-    else if (!config->rx.ws ^ !config->rx.sck)
-      return E_VALUE;
+    }
+    else
+    {
+      assert(config->rx.ws != 0 && config->rx.sck != 0);
+    }
   }
   else
   {
@@ -320,9 +323,13 @@ static enum result i2sInit(void *object, const void *configBase)
       reg->TXMODE |= TXMODE_TXMCENA;
 
     if (!config->tx.ws && !config->tx.sck)
+    {
       reg->TXMODE |= TXMODE_TX4PIN;
-    else if (!config->tx.ws ^ !config->tx.sck)
-      return E_VALUE;
+    }
+    else
+    {
+      assert(config->tx.ws != 0 && config->tx.sck != 0);
+    }
 
     reg->IRQ |= IRQ_TX_DEPTH(0);
   }

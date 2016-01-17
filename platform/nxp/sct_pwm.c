@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/sct_defs.h>
 #include <platform/nxp/sct_pwm.h>
@@ -11,7 +12,7 @@
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static int8_t configOutputPin(uint8_t, pinNumber);
+static uint8_t configOutputPin(uint8_t, pinNumber);
 static enum result setMatchValue(struct SctPwmUnit *, uint8_t, uint32_t);
 static enum result updateFrequency(struct SctPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -69,14 +70,13 @@ const struct EntityClass * const SctPwmUnit = &unitTable;
 const struct PwmClass * const SctPwm = &singleEdgeTable;
 const struct PwmClass * const SctPwmDoubleEdge = &doubleEdgeTable;
 /*----------------------------------------------------------------------------*/
-static int8_t configOutputPin(uint8_t channel, pinNumber key)
+static uint8_t configOutputPin(uint8_t channel, pinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, channel);
-
-  if (!pinEntry)
-    return -1;
+  assert(pinEntry);
 
   const struct Pin pin = pinInit(key);
+
   pinOutput(pin, 0);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
@@ -225,12 +225,9 @@ static enum result singleEdgeInit(void *object, const void *configBase)
     return E_BUSY;
 
   /* Initialize output pin */
-  const int8_t channel = configOutputPin(unit->base.channel, config->pin);
+  const uint8_t channel = configOutputPin(unit->base.channel, config->pin);
 
-  if (channel == -1)
-    return E_VALUE;
-
-  pwm->channel = (uint8_t)channel;
+  pwm->channel = channel;
   pwm->event = (uint8_t)event;
   pwm->unit = unit;
 
@@ -238,7 +235,7 @@ static enum result singleEdgeInit(void *object, const void *configBase)
 
   /* Configure event */
   reg->EV[pwm->event].CTRL = EVCTRL_MATCHSEL(pwm->event)
-      | EVCTRL_OUTSEL | EVCTRL_IOSEL(pwm->channel)
+      | EVCTRL_OUTSEL | EVCTRL_IOSEL(channel)
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
@@ -249,10 +246,10 @@ static enum result singleEdgeInit(void *object, const void *configBase)
   singleEdgeSetDuration(pwm, config->duration);
 
   /* Configure setting and clearing of the output */
-  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
-      | RES_OUTPUT(pwm->channel, OUTPUT_CLEAR);
-  reg->OUT[pwm->channel].CLR = 1 << pwm->event;
-  reg->OUT[pwm->channel].SET = 1 << unit->event;
+  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(channel))
+      | RES_OUTPUT(channel, OUTPUT_CLEAR);
+  reg->OUT[channel].CLR = 1 << pwm->event;
+  reg->OUT[channel].SET = 1 << unit->event;
 
   /* Enable allocated event in state 0 */
   reg->EV[pwm->event].STATE = 0x00000001;
@@ -381,12 +378,9 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
     return E_BUSY;
 
   /* Initialize output pin */
-  const int8_t channel = configOutputPin(unit->base.channel, config->pin);
+  const uint8_t channel = configOutputPin(unit->base.channel, config->pin);
 
-  if (channel == -1)
-    return E_VALUE;
-
-  pwm->channel = (uint8_t)channel;
+  pwm->channel = channel;
   pwm->leadingEvent = (uint8_t)leadingEvent;
   pwm->trailingEvent = (uint8_t)trailingEvent;
   pwm->unit = unit;
@@ -394,7 +388,7 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
   LPC_SCT_Type * const reg = unit->base.reg;
 
   /* Configure event */
-  const uint32_t controlValue = EVCTRL_OUTSEL | EVCTRL_IOSEL(pwm->channel)
+  const uint32_t controlValue = EVCTRL_OUTSEL | EVCTRL_IOSEL(channel)
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
@@ -413,10 +407,10 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
   doubleEdgeSetEdges(pwm, config->leading, config->trailing);
 
   /* Configure setting and clearing of the output */
-  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
-      | RES_OUTPUT(pwm->channel, OUTPUT_CLEAR);
-  reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
-  reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
+  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(channel))
+      | RES_OUTPUT(channel, OUTPUT_CLEAR);
+  reg->OUT[channel].CLR = 1 << pwm->trailingEvent;
+  reg->OUT[channel].SET = 1 << pwm->leadingEvent;
 
   /* Enable allocated events in state 0 */
   reg->EV[pwm->leadingEvent].STATE = 0x00000001;

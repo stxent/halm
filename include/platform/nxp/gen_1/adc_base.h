@@ -37,8 +37,7 @@ struct AdcUnitBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-enum result adcConfigPin(const struct AdcUnitBase *, pinNumber,
-    struct AdcPin *);
+void adcConfigPin(const struct AdcUnitBase *, pinNumber, struct AdcPin *);
 void adcReleasePin(struct AdcPin);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GEN_1_ADC_BASE_H_ */

@@ -4,12 +4,13 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <platform/nxp/ssp_base.h>
 #include <platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry sspPins[];
 /*----------------------------------------------------------------------------*/
-enum result sspConfigPins(struct SspBase *interface,
+void sspConfigPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
   const pinNumber pinArray[] = {
@@ -23,9 +24,7 @@ enum result sspConfigPins(struct SspBase *interface,
     {
       const struct PinEntry * const pinEntry = pinFind(sspPins, pinArray[index],
           interface->channel);
-
-      if (!pinEntry)
-        return E_VALUE;
+      assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -33,8 +32,6 @@ enum result sspConfigPins(struct SspBase *interface,
       pinSetFunction(pin, pinEntry->value);
     }
   }
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 enum result sspSetRate(struct SspBase *interface, uint32_t rate)

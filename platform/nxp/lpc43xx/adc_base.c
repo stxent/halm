@@ -27,6 +27,10 @@ struct AdcBlockDescriptor
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
+static void configGroupPin(const struct PinGroupEntry *, pinNumber,
+    struct AdcPin *);
+static void configRegularPin(const struct PinEntry *, pinNumber,
+    struct AdcPin *);
 static enum result setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);
 /*----------------------------------------------------------------------------*/
@@ -144,6 +148,40 @@ const struct PinEntry adcPins[] = {
 const struct EntityClass * const AdcUnitBase = &adcUnitTable;
 static struct AdcUnitBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
+static void configGroupPin(const struct PinGroupEntry *group, pinNumber key,
+    struct AdcPin *adcPin)
+{
+  union PinData begin, current;
+
+  begin.key = ~group->begin;
+  current.key = ~key;
+
+  adcPin->channel = current.offset - begin.offset;
+  adcPin->control = -1;
+}
+/*----------------------------------------------------------------------------*/
+static void configRegularPin(const struct PinEntry *entry, pinNumber key,
+    struct AdcPin *adcPin)
+{
+  const uint8_t function = UNPACK_FUNCTION(entry->value);
+  const uint8_t index = UNPACK_CHANNEL(entry->value);
+
+  /* Fill pin structure and initialize pin as input */
+  const struct Pin pin = pinInit(key);
+
+  pinInput(pin);
+  /* Enable analog mode */
+  pinSetFunction(pin, PIN_ANALOG);
+  /* Set analog pin function */
+  pinSetFunction(pin, function);
+
+  /* Route analog input */
+  *(&LPC_SCU->ENAIO0 + entry->channel) |= 1 << index;
+
+  adcPin->channel = index;
+  adcPin->control = entry->channel;
+}
+/*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t channel,
     const struct AdcUnitBase *state, struct AdcUnitBase *unit)
 {
@@ -163,52 +201,26 @@ void ADC1_ISR(void)
   descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-enum result adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
+void adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
     struct AdcPin *adcPin)
 {
   const struct PinGroupEntry *group;
 
-  group = pinGroupFind(adcPinGroups, key, unit->channel);
-  if (group)
+  if ((group = pinGroupFind(adcPinGroups, key, unit->channel)))
   {
-    union PinData begin, current;
-
-    begin.key = ~group->begin;
-    current.key = ~key;
-
-    adcPin->channel = current.offset - begin.offset;
-    adcPin->control = -1;
-    return E_OK;
+    configGroupPin(group, key, adcPin);
   }
-
-  /* Inputs are connected to both peripherals on parts without ADCHS */
-  for (uint8_t part = 0; part < 2; ++part)
+  else
   {
-    const struct PinEntry * const entry = pinFind(adcPins, key, part);
+    /* Inputs are connected to both peripherals on parts without ADCHS */
+    const struct PinEntry *entry = 0;
 
-    if (!entry)
-      continue;
+    for (uint8_t part = 0; !entry && part < 2; ++part)
+      entry = pinFind(adcPins, key, part);
+    assert(entry);
 
-    const uint8_t function = UNPACK_FUNCTION(entry->value);
-    const uint8_t index = UNPACK_CHANNEL(entry->value);
-
-    /* Fill pin structure and initialize pin as input */
-    const struct Pin pin = pinInit(key);
-    pinInput(pin);
-    /* Enable analog mode */
-    pinSetFunction(pin, PIN_ANALOG);
-    /* Set analog pin function */
-    pinSetFunction(pin, function);
-
-    /* Route analog input */
-    *(&LPC_SCU->ENAIO0 + part) |= 1 << index;
-
-    adcPin->channel = index;
-    adcPin->control = part;
-    return E_OK;
+    configRegularPin(entry, key, adcPin);
   }
-
-  return E_VALUE;
 }
 /*----------------------------------------------------------------------------*/
 void adcReleasePin(const struct AdcPin adcPin)

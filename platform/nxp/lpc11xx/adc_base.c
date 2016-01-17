@@ -83,19 +83,18 @@ void ADC_ISR(void)
   descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-enum result adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
+void adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
     struct AdcPin *adcPin)
 {
-  const struct PinEntry *entry;
-
-  if (!(entry = pinFind(adcPins, key, unit->channel)))
-    return E_VALUE;
+  const struct PinEntry * const entry = pinFind(adcPins, key, unit->channel);
+  assert(entry);
 
   const uint8_t function = UNPACK_FUNCTION(entry->value);
   const uint8_t index = UNPACK_CHANNEL(entry->value);
 
   /* Fill pin structure and initialize pin as input */
   const struct Pin pin = pinInit(key);
+
   pinInput(pin);
   /* Enable analog pin mode bit */
   pinSetFunction(pin, PIN_ANALOG);
@@ -103,7 +102,6 @@ enum result adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
   pinSetFunction(pin, function);
 
   adcPin->channel = index;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void adcReleasePin(const struct AdcPin adcPin __attribute__((unused)))

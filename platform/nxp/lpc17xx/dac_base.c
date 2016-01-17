@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <memory.h>
 #include <platform/nxp/gen_1/dac_base.h>
 #include <platform/nxp/gen_1/dac_defs.h>
@@ -12,7 +13,7 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
-static enum result configOutputPin(pinNumber);
+static void configOutputPin(pinNumber);
 static enum result setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
@@ -37,18 +38,15 @@ const struct PinEntry dacPins[] = {
 const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result configOutputPin(pinNumber key)
+static void configOutputPin(pinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
-
-  if (!pinEntry)
-    return E_VALUE;
+  assert(pinEntry);
 
   const struct Pin pin = pinInit(key);
+
   pinInput(pin);
   pinSetFunction(pin, pinEntry->value);
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(const struct DacBase *state,
@@ -73,8 +71,7 @@ static enum result dacInit(void *object, const void *configBase)
   if ((res = setDescriptor(0, interface)) != E_OK)
     return res;
 
-  if ((res = configOutputPin(config->pin)) != E_OK)
-    return res;
+  configOutputPin(config->pin);
 
   sysClockControl(CLK_DAC, DEFAULT_DIV);
 
