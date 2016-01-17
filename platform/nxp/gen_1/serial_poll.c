@@ -92,7 +92,7 @@ static enum result serialInit(void *object, const void *configBase)
   uartSetRate(object, rateConfig);
 
 #ifdef CONFIG_SERIAL_PM
-  if ((res = pmRegister(object, powerStateHandler)) != E_OK)
+  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
     return res;
 #endif
 
@@ -101,6 +101,10 @@ static enum result serialInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
+#ifdef CONFIG_SERIAL_PM
+  pmUnregister(object);
+#endif
+
   UartBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/

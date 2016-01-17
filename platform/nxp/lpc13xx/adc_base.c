@@ -115,12 +115,12 @@ static enum result adcUnitInit(void *object, const void *configBase)
   struct AdcUnitBase * const unit = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   unit->channel = config->channel;
+  unit->handler = 0;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(unit->channel, 0, unit)) != E_OK)
     return res;
-
-  unit->handler = 0;
 
   sysPowerEnable(PWR_ADC);
   sysClockEnable(CLK_ADC);

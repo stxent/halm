@@ -83,8 +83,8 @@ static enum result unitInit(void *object, const void *configBase)
   enum result res;
 
   const uint32_t clockFrequency = gpTimerGetClock(object);
-  const uint32_t timerFrequency = config->frequency ? config->frequency
-      : clockFrequency;
+  const uint32_t timerFrequency = config->frequency ?
+      config->frequency : clockFrequency;
 
   /* Call base class constructor */
   if ((res = GpTimerBase->init(object, &baseConfig)) != E_OK)

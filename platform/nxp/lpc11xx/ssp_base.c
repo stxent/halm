@@ -127,15 +127,15 @@ static enum result sspInit(void *object, const void *configBase)
   struct SspBase * const interface = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   interface->channel = config->channel;
+  interface->handler = 0;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-
   /* Configure input and output pins */
   sspConfigPins(interface, config);
-  interface->handler = 0;
 
   /*
    * SSP1 configuration differs for latest silicon revisions and is not

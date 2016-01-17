@@ -286,11 +286,8 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 
   if (interface->blocking)
   {
-    while (interface->state != STATE_IDLE
-        && interface->state != STATE_ERROR)
-    {
+    while (interface->state != STATE_IDLE && interface->state != STATE_ERROR)
       barrier();
-    }
 
     if (interface->state == STATE_ERROR)
       return 0;
@@ -319,7 +316,9 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
         (const uint8_t *)&interface->address, length);
   }
   else
+  {
     byteQueuePush(&interface->txQueue, (uint8_t)SKIP_ROM);
+  }
   written = byteQueuePushArray(&interface->txQueue, buffer, length);
   interface->left += written;
 
@@ -327,11 +326,8 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
 
   if (interface->blocking)
   {
-    while (interface->state != STATE_IDLE
-        && interface->state != STATE_ERROR)
-    {
+    while (interface->state != STATE_IDLE && interface->state != STATE_ERROR)
       barrier();
-    }
 
     if (interface->state == STATE_ERROR)
       return 0;

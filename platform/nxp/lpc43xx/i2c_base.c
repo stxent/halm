@@ -123,8 +123,10 @@ static enum result i2cInit(void *object, const void *configBase)
   struct I2cBase * const interface = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   interface->channel = config->channel;
+  interface->handler = 0;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
@@ -138,7 +140,6 @@ static enum result i2cInit(void *object, const void *configBase)
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
 
-  interface->handler = 0;
   interface->irq = I2C0_IRQ + interface->channel;
   interface->reg = entry->reg;
 

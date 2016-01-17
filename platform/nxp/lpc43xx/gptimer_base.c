@@ -305,8 +305,10 @@ static enum result tmrInit(void *object, const void *configBase)
   struct GpTimerBase * const timer = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   timer->channel = config->channel;
+  timer->handler = 0;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(timer->channel, 0, timer)) != E_OK)
     return res;
 
@@ -317,7 +319,6 @@ static enum result tmrInit(void *object, const void *configBase)
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
 
-  timer->handler = 0;
   timer->irq = TIMER0_IRQ + timer->channel;
   timer->resolution = 32;
   timer->reg = entry->reg;

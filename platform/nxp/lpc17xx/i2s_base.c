@@ -147,8 +147,10 @@ static enum result i2sInit(void *object, const void *configBase)
   struct I2sBase * const interface = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   interface->channel = config->channel;
+  interface->handler = 0;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
@@ -157,7 +159,6 @@ static enum result i2sInit(void *object, const void *configBase)
   sysPowerEnable(PWR_I2S);
   sysClockControl(CLK_I2S, DEFAULT_DIV);
 
-  interface->handler = 0;
   interface->irq = I2S_IRQ;
   interface->reg = LPC_I2S;
 

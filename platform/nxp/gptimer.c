@@ -133,7 +133,7 @@ static enum result tmrInit(void *object, const void *configBase)
   reg->MR[timer->event] = getResolution(timer);
 
 #ifdef CONFIG_GPTIMER_PM
-  if ((res = pmRegister(object, powerStateHandler)) != E_OK)
+  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
     return res;
 #endif
 
@@ -152,6 +152,11 @@ static void tmrDeinit(void *object)
 
   irqDisable(timer->base.irq);
   reg->TCR = 0;
+
+#ifdef CONFIG_GPTIMER_PM
+  pmUnregister(interface);
+#endif
+
   GpTimerBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
@@ -234,6 +239,7 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
   }
 
   reg->TCR = enabled ? TCR_CEN : 0;
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

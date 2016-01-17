@@ -32,6 +32,7 @@ int8_t gpTimerConfigCapturePin(uint8_t channel, pinNumber key,
     return -1;
 
   const struct Pin pin = pinInit(key);
+
   pinInput(pin);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
   pinSetPull(pin, pull);
@@ -48,6 +49,7 @@ int8_t gpTimerConfigMatchPin(uint8_t channel, pinNumber key)
     return -1;
 
   const struct Pin pin = pinInit(key);
+
   pinOutput(pin, 0);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 

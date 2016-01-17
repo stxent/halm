@@ -186,10 +186,9 @@ static time64_t clkTime(void *object)
       .year = CTIME1_YEAR_VALUE(ctime1)
   };
   time64_t timestamp;
-  enum result res;
 
-  if ((res = rtMakeEpochTime(&timestamp, &dateTime)) != E_OK)
+  if (rtMakeEpochTime(&timestamp, &dateTime) == E_OK)
+    return timestamp;
+  else
     return 0;
-
-  return timestamp;
 }

@@ -116,8 +116,9 @@ static enum result unitInit(void *object, const void *configBase)
   struct GpPwmUnitBase * const unit = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   unit->channel = config->channel;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(unit->channel, 0, unit)) != E_OK)
     return res;
 

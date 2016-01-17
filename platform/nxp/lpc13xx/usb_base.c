@@ -92,11 +92,11 @@ static enum result devInit(void *object, const void *configBase)
   struct UsbBase * const device = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   device->channel = config->channel;
+  device->handler = 0;
 
-  res = setDescriptor(device->channel, 0, device);
-  if (res != E_OK)
+  /* Try to set peripheral descriptor */
+  if ((res = setDescriptor(device->channel, 0, device)) != E_OK)
     return res;
 
   configPins(device, configBase);
@@ -104,7 +104,6 @@ static enum result devInit(void *object, const void *configBase)
   sysPowerEnable(PWR_USBPAD);
   sysClockEnable(CLK_USBREG);
 
-  device->handler = 0;
   device->irq = USB_IRQ;
   device->reg = LPC_USB;
 

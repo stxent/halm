@@ -65,15 +65,15 @@ static enum result i2cInit(void *object, const void *configBase)
   struct I2cBase * const interface = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   interface->channel = config->channel;
+  interface->handler = 0;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-
   /* Configure pins */
   i2cConfigPins(interface, configBase);
-  interface->handler = 0;
 
   sysClockEnable(CLK_I2C);
   LPC_SYSCON->PRESETCTRL |= PRESETCTRL_I2C;

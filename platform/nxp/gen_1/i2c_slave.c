@@ -164,7 +164,7 @@ static enum result i2cInit(void *object, const void *configBase)
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
 
 #ifdef CONFIG_I2C_PM
-  if ((res = pmRegister(object, powerStateHandler)) != E_OK)
+  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
     return res;
 #endif
 
@@ -184,6 +184,11 @@ static void i2cDeinit(void *object)
 
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
 
+#ifdef CONFIG_SERIAL_PM
+  pmUnregister(interface);
+#endif
+
+  irqDisable(interface->base.irq);
   free(interface->cache);
   I2cBase->deinit(interface);
 }

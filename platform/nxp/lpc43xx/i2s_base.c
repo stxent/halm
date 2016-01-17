@@ -265,24 +265,23 @@ static enum result i2sInit(void *object, const void *configBase)
   struct I2sBase * const interface = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   interface->channel = config->channel;
+  interface->handler = 0;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
-
-  bool enabled = descriptors[interface->channel ^ 1] != 0;
   configPins(interface, configBase);
 
-  if (!enabled)
+  /* Check whether other channel is disabled too */
+  if (!descriptors[interface->channel ^ 1])
   {
     /* Enable clock to register interface and to peripheral */
     sysClockEnable(CLK_APB1_I2S);
     /* Reset registers to default values */
     sysResetEnable(RST_I2S);
   }
-
-  interface->handler = 0;
 
   switch (interface->channel)
   {
@@ -304,9 +303,7 @@ static void i2sDeinit(void *object)
 {
   const struct I2sBase * const interface = object;
 
-  bool enabled = descriptors[interface->channel ^ 1] != 0;
-
-  if (!enabled)
+  if (!descriptors[interface->channel ^ 1])
     sysClockDisable(CLK_APB1_I2S);
 
   setDescriptor(interface->channel, interface, 0);

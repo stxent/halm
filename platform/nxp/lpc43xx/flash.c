@@ -75,7 +75,6 @@ static enum result flashInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct Flash * const interface = object;
-
   const uint32_t id = flashReadId();
 
   if (!(id & FLASH_AVAILABLE))

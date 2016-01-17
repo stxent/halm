@@ -290,7 +290,11 @@ static void sdioDeinit(void *object)
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   deinit(interface->dma);
+
+  /* Disable interrupts */
   reg->CTRL &= ~CTRL_INT_ENABLE;
+
+  deinit(interface->finalizer);
 
   SdmmcBase->deinit(interface);
 }

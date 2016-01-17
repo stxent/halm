@@ -105,7 +105,7 @@ static enum result channelInit(void *object, const void *configBase)
   assert(config->number);
   assert(config->size && config->size <= GPDMA_MAX_TRANSFER);
 
-  /* Allocation should produce memory chunks aligned along 4-byte boundary */
+  /* Allocator must provide memory chunks aligned along 4-byte boundary */
   channel->list = malloc(sizeof(struct GpDmaListEntry) * config->number);
   if (!channel->list)
     return E_MEMORY;

@@ -172,8 +172,10 @@ static enum result uartInit(void *object, const void *configBase)
   struct UartBase * const interface = object;
   enum result res;
 
-  /* Try to set peripheral descriptor */
   interface->channel = config->channel;
+  interface->handler = 0;
+
+  /* Try to set peripheral descriptor */
   if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
     return res;
 
@@ -186,7 +188,6 @@ static enum result uartInit(void *object, const void *configBase)
   sysPowerEnable(entry->power);
   sysClockControl(entry->clock, DEFAULT_DIV);
 
-  interface->handler = 0;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 

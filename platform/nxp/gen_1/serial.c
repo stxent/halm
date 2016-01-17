@@ -146,7 +146,7 @@ static enum result serialInit(void *object, const void *configBase)
   uartSetRate(object, rateConfig);
 
 #ifdef CONFIG_SERIAL_PM
-  if ((res = pmRegister(object, powerStateHandler)) != E_OK)
+  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
     return res;
 #endif
 
@@ -161,6 +161,11 @@ static void serialDeinit(void *object)
   struct Serial * const interface = object;
 
   irqDisable(interface->base.irq);
+
+#ifdef CONFIG_SERIAL_PM
+  pmUnregister(interface);
+#endif
+
   byteQueueDeinit(&interface->txQueue);
   byteQueueDeinit(&interface->rxQueue);
   UartBase->deinit(interface);
