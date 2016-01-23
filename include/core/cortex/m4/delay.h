@@ -33,7 +33,7 @@ static inline void mdelay(uint32_t period)
 
   while (period)
   {
-    uint32_t count = period > (1 << 12) ? 1 << 12 : period;
+    uint32_t count = period > (1 << 12) ? (1 << 12) : period;
 
     period -= count;
     count = (ticksPerSecond * count) >> 2;
@@ -47,7 +47,7 @@ static inline void udelay(uint32_t period)
 
   while (period)
   {
-    uint32_t count = period > (1 << 12) ? 1 << 12 : period;
+    uint32_t count = period > (1 << 12) ? (1 << 12) : period;
 
     period -= count;
     count = (ticksPerSecond * count) / 4000;

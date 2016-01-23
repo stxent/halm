@@ -19,7 +19,7 @@ struct DmaHandler
   struct Entity base;
 
   /* Channel descriptors currently in use */
-  struct GpDmaBase *descriptors[8];
+  struct GpDmaBase *descriptors[GPDMA_CHANNEL_COUNT];
   /* Initialized descriptors count */
   uint16_t instances;
   /* Peripheral connection statuses */
@@ -233,7 +233,6 @@ static void dmaHandlerInstantiate(void)
 {
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
-  assert(dmaHandler);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaHandlerInit(void *object,

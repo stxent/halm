@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <platform/nxp/gpdma.h>
 #include <platform/nxp/spi_dma.h>
 #include <platform/nxp/ssp_defs.h>

@@ -18,7 +18,7 @@ struct DmaHandler
   struct Entity base;
 
   /* Channel descriptors currently in use */
-  struct GpDmaBase *descriptors[8];
+  struct GpDmaBase *descriptors[GPDMA_CHANNEL_COUNT];
   /* Initialized descriptors count */
   uint16_t instances;
 };
@@ -166,7 +166,6 @@ static void dmaHandlerAttach(void)
 
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
-  assert(dmaHandler);
 
   if (!dmaHandler->instances++)
   {
