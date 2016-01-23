@@ -105,36 +105,36 @@ void gpDmaSetMux(struct GpDmaBase *descriptor)
 /*----------------------------------------------------------------------------*/
 void GPDMA_ISR(void)
 {
-  const uint8_t errorStatus = LPC_GPDMA->INTERRSTAT;
-  const uint8_t terminalStatus = LPC_GPDMA->INTTCSTAT;
-  const uint8_t intStatus = errorStatus | terminalStatus;
+  const uint32_t errorStatus = LPC_GPDMA->INTERRSTAT;
+  const uint32_t terminalStatus = LPC_GPDMA->INTTCSTAT;
+  uint32_t intStatus = errorStatus | terminalStatus;
 
   LPC_GPDMA->INTERRCLEAR = errorStatus;
   LPC_GPDMA->INTTCCLEAR = terminalStatus;
 
-  for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
+  while (intStatus)
   {
-    const uint8_t mask = 1 << index;
+    const uint32_t index = 31 - countLeadingZeros32(intStatus);
+    const uint32_t mask = 1 << index;
 
-    if (intStatus & mask)
+    struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
+    LPC_GPDMACH_Type * const reg = descriptor->reg;
+    enum result res = E_OK;
+
+    if (!(reg->CONFIG & CONFIG_ENABLE))
     {
-      struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
-      LPC_GPDMACH_Type * const reg = descriptor->reg;
-      enum result res = E_OK;
-
-      if (!(reg->CONFIG & CONFIG_ENABLE))
-      {
-        /* Clear descriptor when channel is stopped or transfer is completed */
-        dmaHandler->descriptors[index] = 0;
-      }
-      else
-        res = E_BUSY;
-
-      if (errorStatus & mask)
-        res = E_ERROR;
-
-      descriptor->handler(descriptor, res);
+      /* Clear descriptor when channel is stopped or transfer is completed */
+      dmaHandler->descriptors[index] = 0;
     }
+    else
+      res = E_BUSY;
+
+    if (errorStatus & mask)
+      res = E_ERROR;
+
+    descriptor->handler(descriptor, res);
+
+    intStatus -= mask;
   }
 }
 /*----------------------------------------------------------------------------*/

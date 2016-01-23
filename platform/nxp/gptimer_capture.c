@@ -45,20 +45,23 @@ static void interruptHandler(void *object)
 {
   struct GpTimerCaptureUnit * const unit = object;
   LPC_TIMER_Type * const reg = unit->base.reg;
-  const uint32_t state = reg->IR;
+  uint32_t state = reg->IR;
 
   /* Clear pending interrupts */
   reg->IR = state;
 
-  for (uint8_t index = 0; index < ARRAY_SIZE(unit->descriptors); ++index)
+  state = IR_CAPTURE_VALUE(state);
+
+  while (state)
   {
+    const uint32_t index = 31 - countLeadingZeros32(state);
+
     struct GpTimerCapture * const descriptor = unit->descriptors[index];
 
-    if ((state & IR_CAPTURE_INTERRUPT(index)) && descriptor
-        && descriptor->callback)
-    {
+    if (descriptor->callback)
       descriptor->callback(descriptor->callbackArgument);
-    }
+
+    state -= 1 << index;
   }
 }
 /*----------------------------------------------------------------------------*/

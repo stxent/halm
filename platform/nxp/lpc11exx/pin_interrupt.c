@@ -136,7 +136,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   interrupt->pin = input.data;
 
   const uint8_t index = interrupt->channel >> 2;
-  const uint8_t mask = 1 << interrupt->channel;
+  const uint32_t mask = 1 << interrupt->channel;
 
   /* Select pin and port */
   LPC_SYSCON->PINTSEL[index] =
@@ -171,7 +171,7 @@ static void pinInterruptDeinit(void *object)
 {
   const struct PinInterrupt * const interrupt = object;
   const irqNumber irq = calcVector(interrupt->channel);
-  const uint8_t mask = 1 << interrupt->pin.offset;
+  const uint32_t mask = 1 << interrupt->pin.offset;
 
   /* Disable channel interrupt in interrupt controller */
   irqDisable(irq);

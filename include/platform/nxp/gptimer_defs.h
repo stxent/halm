@@ -11,6 +11,8 @@
 /*------------------Interrupt Register----------------------------------------*/
 #define IR_MATCH_INTERRUPT(channel)     BIT(channel)
 #define IR_CAPTURE_INTERRUPT(channel)   BIT((channel) + 4)
+#define IR_CAPTURE_MASK                 BIT_FIELD(MASK(4), 4)
+#define IR_CAPTURE_VALUE(reg)           FIELD_VALUE((reg), IR_CAPTURE_MASK, 4)
 /*------------------Timer Control Register------------------------------------*/
 #define TCR_CEN                         BIT(0) /* Enable for counting */
 #define TCR_CRES                        BIT(1) /* Synchronous reset */
