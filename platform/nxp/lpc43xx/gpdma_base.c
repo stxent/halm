@@ -131,10 +131,9 @@ void GPDMA_ISR(void)
 
     if (errorStatus & mask)
       res = E_ERROR;
+    intStatus -= mask;
 
     descriptor->handler(descriptor, res);
-
-    intStatus -= mask;
   }
 }
 /*----------------------------------------------------------------------------*/

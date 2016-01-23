@@ -4,12 +4,22 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include <pm.h>
 #include <platform/nxp/gpdma.h>
+#include <platform/nxp/gpdma_list.h>
 #include <platform/nxp/serial_dma.h>
 #include <platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
-static void dmaHandler(void *);
+/*
+ * Size of temporary buffers should be increased if the baud rate
+ * is higher than 500 kbit/s.
+ */
+#define BUFFER_SIZE 16
+/*----------------------------------------------------------------------------*/
+static void rxDmaHandler(void *);
+static void txDmaHandler(void *);
 static enum result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_SERIAL_PM
@@ -38,46 +48,87 @@ static const struct InterfaceClass serialTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SerialDma = &serialTable;
 /*----------------------------------------------------------------------------*/
-static void dmaHandler(void *object)
+static void rxDmaHandler(void *object)
 {
   struct SerialDma * const interface = object;
+  LPC_UART_Type * const reg = interface->base.reg;
+
+  byteQueuePushArray(&interface->rxQueue, interface->rxBuffer
+      + interface->rxBufferIndex * BUFFER_SIZE, BUFFER_SIZE);
+  dmaStart(interface->rxDma, interface->rxBuffer + interface->rxBufferIndex
+      * BUFFER_SIZE, (const void *)&reg->RBR, BUFFER_SIZE);
+
+  if (++interface->rxBufferIndex == 3)
+    interface->rxBufferIndex = 0;
 
   if (interface->callback)
-    interface->callback(interface->callbackArgument);
+  {
+    const uint32_t capacity = byteQueueCapacity(&interface->rxQueue);
+    const uint32_t available = byteQueueSize(&interface->rxQueue);
+
+    if (available >= (capacity >> 1))
+      interface->callback(interface->callbackArgument);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void txDmaHandler(void *object)
+{
+  struct SerialDma * const interface = object;
+  LPC_UART_Type * const reg = interface->base.reg;
+
+  if (!byteQueueEmpty(&interface->txQueue))
+  {
+    const uint32_t chunkLength = byteQueuePopArray(&interface->txQueue,
+        interface->txBuffer, BUFFER_SIZE);
+
+    dmaStart(interface->txDma, (void *)&reg->THR, interface->txBuffer,
+        chunkLength);
+  }
+
+  if (interface->callback)
+  {
+    const uint32_t capacity = byteQueueCapacity(&interface->txQueue);
+    const uint32_t left = byteQueueSize(&interface->txQueue);
+
+    if (left < (capacity >> 1))
+      interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
-  const struct GpDmaConfig channels[2] = {
-      {
-          .event = GPDMA_UART0_RX + interface->base.channel,
-          .channel = rxChannel,
-          .source.increment = false,
-          .destination.increment = true,
-          .type = GPDMA_TYPE_P2M,
-          .burst = DMA_BURST_1,
-          .width = DMA_WIDTH_BYTE
-      }, {
-          .event = GPDMA_UART0_TX + interface->base.channel,
-          .channel = txChannel,
-          .source.increment = true,
-          .destination.increment = false,
-          .type = GPDMA_TYPE_M2P,
-          .burst = DMA_BURST_1,
-          .width = DMA_WIDTH_BYTE
-      }
+  const struct GpDmaListConfig rxChannelConfig = {
+      .number = 3,
+      .size = BUFFER_SIZE,
+      .channel = rxChannel,
+      .event = GPDMA_UART0_RX + interface->base.channel,
+      .source.increment = false,
+      .destination.increment = true,
+      .type = GPDMA_TYPE_P2M,
+      .burst = DMA_BURST_1,
+      .width = DMA_WIDTH_BYTE,
+      .silent = false
+  };
+  const struct GpDmaConfig txChannelConfig = {
+      .event = GPDMA_UART0_TX + interface->base.channel,
+      .channel = txChannel,
+      .source.increment = true,
+      .destination.increment = false,
+      .type = GPDMA_TYPE_M2P,
+      .burst = DMA_BURST_1,
+      .width = DMA_WIDTH_BYTE
   };
 
-  interface->rxDma = init(GpDma, channels + 0);
+  interface->rxDma = init(GpDmaList, &rxChannelConfig);
   if (!interface->rxDma)
     return E_ERROR;
-  dmaCallback(interface->rxDma, dmaHandler, interface);
+  dmaCallback(interface->rxDma, rxDmaHandler, interface);
 
-  interface->txDma = init(GpDma, channels + 1);
+  interface->txDma = init(GpDma, &txChannelConfig);
   if (!interface->txDma)
     return E_ERROR;
-  dmaCallback(interface->txDma, dmaHandler, interface);
+  dmaCallback(interface->txDma, txDmaHandler, interface);
 
   return E_OK;
 }
@@ -121,11 +172,23 @@ static enum result serialInit(void *object, const void *configBase)
   if ((res = uartCalcRate(object, config->rate, &rateConfig)) != E_OK)
     return res;
 
-  if ((res = dmaSetup(interface, config->rxChannel, config->txChannel)) != E_OK)
+  if ((res = byteQueueInit(&interface->rxQueue, config->rxLength)) != E_OK)
     return res;
+  if ((res = byteQueueInit(&interface->txQueue, config->txLength)) != E_OK)
+    return res;
+
+  if ((res = dmaSetup(interface, config->dma[0], config->dma[1])) != E_OK)
+    return res;
+
+  /* Allocate one buffer for transmission and three buffers for reception */
+  interface->pool = malloc(BUFFER_SIZE * 4);
+  interface->txBuffer = interface->pool;
+  interface->rxBuffer = interface->pool + BUFFER_SIZE;
 
   interface->callback = 0;
   interface->rate = config->rate;
+
+  interface->rxBufferIndex = 0;
 
   LPC_UART_Type * const reg = interface->base.reg;
 
@@ -146,6 +209,10 @@ static enum result serialInit(void *object, const void *configBase)
     return res;
 #endif
 
+  /* Start reception */
+  dmaStart(interface->rxDma, interface->rxBuffer, (const void *)&reg->RBR,
+      BUFFER_SIZE * 3);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -153,13 +220,22 @@ static void serialDeinit(void *object)
 {
   struct SerialDma * const interface = object;
 
+  /* Stop channels */
+  dmaStop(interface->rxDma);
+
 #ifdef CONFIG_SERIAL_PM
   pmUnregister(interface);
 #endif
 
-  /* Free DMA channel descriptors */
+  /* Free DMA descriptors */
   deinit(interface->txDma);
   deinit(interface->rxDma);
+
+  /* Free temporary buffers and queues */
+  free(interface->pool);
+  byteQueueDeinit(&interface->txQueue);
+  byteQueueDeinit(&interface->rxQueue);
+
   /* Call base class destructor */
   UartBase->deinit(interface);
 }
@@ -181,20 +257,13 @@ static enum result serialGet(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_STATUS:
-    {
-      const enum result rxStatus = dmaStatus(interface->rxDma);
+    case IF_AVAILABLE:
+      *(uint32_t *)data = byteQueueSize(&interface->rxQueue);
+      return E_OK;
 
-      if (rxStatus != E_OK && rxStatus != E_BUSY)
-        return rxStatus;
-
-      const enum result txStatus = dmaStatus(interface->txDma);
-
-      if (txStatus != E_OK && txStatus != E_BUSY)
-        return txStatus;
-
-      return rxStatus == E_OK && txStatus == E_OK ? E_OK : E_BUSY;
-    }
+    case IF_PENDING:
+      *(uint32_t *)data = byteQueueSize(&interface->txQueue);
+      return E_OK;
 
     default:
       return E_ERROR;
@@ -210,19 +279,15 @@ static enum result serialSet(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_BLOCKING:
-      interface->blocking = true;
-      return E_OK;
-
     case IF_RATE:
       res = uartCalcRate(object, *(const uint32_t *)data, &rateConfig);
-      if (res == E_OK)
-        uartSetRate(object, rateConfig);
-      return res;
 
-    case IF_ZEROCOPY:
-      interface->blocking = false;
-      return E_OK;
+      if (res == E_OK)
+      {
+        interface->rate = *(const uint32_t *)data;
+        uartSetRate(object, rateConfig);
+      }
+      return res;
 
     default:
       return E_ERROR;
@@ -232,18 +297,14 @@ static enum result serialSet(void *object, enum ifOption option,
 static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct SerialDma * const interface = object;
-  LPC_UART_Type * const reg = interface->base.reg;
-  enum result res;
+  uint32_t read;
+  irqState state;
 
-  if (!length)
-    return 0;
+  state = irqSave();
+  read = byteQueuePopArray(&interface->rxQueue, buffer, length);
+  irqRestore(state);
 
-  res = dmaStart(interface->rxDma, buffer, (const void *)&reg->RBR, length);
-
-  if (res == E_OK && interface->blocking)
-    while ((res = dmaStatus(interface->rxDma)) == E_BUSY);
-
-  return res == E_OK ? length : 0;
+  return read;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t serialWrite(void *object, const uint8_t *buffer,
@@ -251,15 +312,36 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 {
   struct SerialDma * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  enum result res;
+  uint32_t chunkLength = 0;
+  uint32_t sourceLength = length;
 
-  if (!length)
-    return 0;
+  /*
+   * Disable interrupts before status check because DMA interrupt
+   * may be called and transmission will stall.
+   */
+  const irqState state = irqSave();
 
-  res = dmaStart(interface->txDma, (void *)&reg->THR, buffer, length);
+  if (dmaStatus(interface->txDma) != E_BUSY)
+  {
+    chunkLength = length < BUFFER_SIZE ? length : BUFFER_SIZE;
 
-  if (res == E_OK && interface->blocking)
-    while ((res = dmaStatus(interface->txDma)) == E_BUSY);
+    memcpy(interface->txBuffer, buffer, chunkLength);
 
-  return res == E_OK ? length : 0;
+    length -= chunkLength;
+    buffer += chunkLength;
+  }
+  length -= byteQueuePushArray(&interface->txQueue, buffer, length);
+
+  irqRestore(state);
+
+  if (chunkLength)
+  {
+    const enum result res = dmaStart(interface->txDma, (void *)&reg->THR,
+        interface->txBuffer, chunkLength);
+
+    if (res != E_OK)
+      return 0;
+  }
+
+  return sourceLength - length;
 }

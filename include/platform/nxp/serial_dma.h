@@ -7,6 +7,7 @@
 #ifndef PLATFORM_NXP_SERIAL_DMA_H_
 #define PLATFORM_NXP_SERIAL_DMA_H_
 /*----------------------------------------------------------------------------*/
+#include <containers/byte_queue.h>
 #include <dma.h>
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
@@ -21,16 +22,18 @@ struct SerialDmaConfig
 {
   /** Mandatory: baud rate. */
   uint32_t rate;
+  /** Mandatory: input queue size. */
+  uint32_t rxLength;
+  /** Mandatory: output queue size. */
+  uint32_t txLength;
   /** Mandatory: serial input. */
   pinNumber rx;
   /** Mandatory: serial output. */
   pinNumber tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Mandatory: incoming data channel. */
-  uint8_t rxChannel;
-  /** Mandatory: outgoing data channel. */
-  uint8_t txChannel;
+  /** Mandatory: direct memory access channels. */
+  uint8_t dma[2];
   /** Optional: parity generation and checking. */
   enum uartParity parity;
 };
@@ -42,12 +45,21 @@ struct SerialDma
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* DMA channel descriptors */
-  struct Dma *rxDma, *txDma;
   /* Desired baud rate */
   uint32_t rate;
-  /* Selection between blocking mode and zero copy mode */
-  bool blocking;
+
+  /* DMA channel descriptors */
+  struct Dma *rxDma, *txDma;
+
+  /* Bridges between interface functions and DMA operations */
+  struct ByteQueue rxQueue, txQueue;
+
+  /* Pointer to an allocated memory for temporary buffers */
+  uint8_t *pool;
+  /* Temporary buffers for DMA operations */
+  uint8_t *rxBuffer, *txBuffer;
+  /* Index of the first DMA buffer in the receive queue */
+  uint8_t rxBufferIndex;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SERIAL_DMA_H_ */
