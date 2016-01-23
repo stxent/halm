@@ -195,7 +195,7 @@ static void *devAllocate(void *object, uint8_t address)
 {
   struct CompositeDevice * const device = object;
 
-  return usbDevAllocate(device->device, address);
+  return usbDevCreateEndpoint(device->device, address);
 }
 /*----------------------------------------------------------------------------*/
 static void devSetAddress(void *object, uint8_t address)

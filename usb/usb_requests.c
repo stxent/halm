@@ -197,7 +197,8 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
     uint16_t *responseLength,
     uint16_t maxResponseLength __attribute__((unused)))
 {
-  struct UsbEndpoint *endpoint = usbDevAllocate(control->owner, packet->index);
+  struct UsbEndpoint * const endpoint = usbDevCreateEndpoint(control->owner,
+      packet->index);
 
   switch (packet->request)
   {
@@ -340,7 +341,7 @@ static enum result traverseConfigList(struct UsbControl *control,
       const struct UsbEndpointDescriptor * const data =
           (const struct UsbEndpointDescriptor *)current;
       const uint16_t endpointSize = fromLittleEndian16(data->maxPacketSize);
-      struct UsbEndpoint * const endpoint = usbDevAllocate(control->owner,
+      struct UsbEndpoint * const endpoint = usbDevCreateEndpoint(control->owner,
           data->endpointAddress);
 
       if (!endpoint)

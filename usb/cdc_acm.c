@@ -209,14 +209,16 @@ static enum result interfaceInit(void *object, const void *configBase)
   interface->updated = false;
   interface->zeroPacketRequired = false;
 
-  interface->notificationEp = usbDevAllocate(config->device,
+  interface->notificationEp = usbDevCreateEndpoint(config->device,
       config->endpoint.interrupt);
   if (!interface->notificationEp)
     return E_ERROR;
-  interface->rxDataEp = usbDevAllocate(config->device, config->endpoint.rx);
+  interface->rxDataEp = usbDevCreateEndpoint(config->device,
+      config->endpoint.rx);
   if (!interface->rxDataEp)
     return E_ERROR;
-  interface->txDataEp = usbDevAllocate(config->device, config->endpoint.tx);
+  interface->txDataEp = usbDevCreateEndpoint(config->device,
+      config->endpoint.tx);
   if (!interface->txDataEp)
     return E_ERROR;
 

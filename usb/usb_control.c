@@ -246,11 +246,11 @@ static enum result controlInit(void *object, const void *configBase)
   control->owner = config->parent;
 
   /* Create control endpoints */
-  control->ep0in = usbDevAllocate(control->owner, EP_DIRECTION_IN
+  control->ep0in = usbDevCreateEndpoint(control->owner, EP_DIRECTION_IN
       | EP_ADDRESS(0));
   if (!control->ep0in)
     return E_MEMORY;
-  control->ep0out = usbDevAllocate(control->owner, EP_ADDRESS(0));
+  control->ep0out = usbDevCreateEndpoint(control->owner, EP_ADDRESS(0));
   if (!control->ep0out)
     return E_MEMORY;
 

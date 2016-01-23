@@ -70,7 +70,7 @@ struct UsbDeviceClass
 {
   CLASS_HEADER
 
-  void *(*allocate)(void *, uint8_t);
+  void *(*createEndpoint)(void *, uint8_t);
   void (*setAddress)(void *, uint8_t);
   void (*setConnected)(void *, bool);
 
@@ -90,9 +90,9 @@ struct UsbDeviceClass
  * @param address Logical address of the endpoint.
  * @return Pointer to the UsbEndpoint object.
  */
-static inline void *usbDevAllocate(void *device, uint8_t address)
+static inline void *usbDevCreateEndpoint(void *device, uint8_t address)
 {
-  return ((const struct UsbDeviceClass *)CLASS(device))->allocate(device,
+  return ((const struct UsbDeviceClass *)CLASS(device))->createEndpoint(device,
       address);
 }
 /*----------------------------------------------------------------------------*/
