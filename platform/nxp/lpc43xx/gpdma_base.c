@@ -241,13 +241,14 @@ static enum result dmaHandlerInit(void *object,
 {
   struct DmaHandler * const handler = object;
 
-  /* TODO Add priority configuration for GPDMA interrupt */
   for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
     handler->descriptors[index] = 0;
 
   memset(handler->connections, 0, sizeof(handler->connections));
-
   handler->instances = 0;
+
+  irqSetPriority(GPDMA_IRQ, CONFIG_PLATFORM_NXP_GPDMA_PRIORITY);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

@@ -37,6 +37,8 @@ ifeq ($(CONFIG_PLATFORM_NXP_GPDMA),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/gpdma.c
   CSOURCES += platform/$(PLATFORM_TYPE)/gpdma_list.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/gpdma_base.c
+
+  PROJECT_FLAGS += CONFIG_PLATFORM_NXP_GPDMA_PRIORITY
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_GPPWM),y)
