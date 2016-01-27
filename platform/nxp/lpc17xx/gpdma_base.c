@@ -103,6 +103,13 @@ static void updateEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
   }
 }
 /*----------------------------------------------------------------------------*/
+void gpDmaClearDescriptor(uint8_t channel)
+{
+  assert(channel < GPDMA_CHANNEL_COUNT);
+
+  dmaHandler->descriptors[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
 {
   assert(channel < GPDMA_CHANNEL_COUNT);
@@ -115,7 +122,6 @@ enum result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
   assert(descriptor);
   assert(channel < GPDMA_CHANNEL_COUNT);
 
-  /* Descriptor reset is performed in interrupt handler */
   return compareExchangePointer((void **)(dmaHandler->descriptors + channel),
       0, descriptor) ? E_OK : E_BUSY;
 }
@@ -142,18 +148,15 @@ void GPDMA_ISR(void)
 
     struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
     LPC_GPDMACH_Type * const reg = descriptor->reg;
-    enum result res = E_OK;
-
-    if (!(reg->CONFIG & CONFIG_ENABLE))
-    {
-      /* Clear descriptor when channel is stopped or transfer is completed */
-      dmaHandler->descriptors[index] = 0;
-    }
-    else
-      res = E_BUSY;
+    enum result res;
 
     if (errorStatus & mask)
       res = E_ERROR;
+    else if (reg->CONFIG & CONFIG_ENABLE)
+      res = E_BUSY;
+    else
+      res = E_OK;
+
     intStatus -= mask;
 
     descriptor->handler(descriptor, res);

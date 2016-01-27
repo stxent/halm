@@ -6,13 +6,14 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <irq.h>
 #include <platform/platform_defs.h>
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
 static void appendItem(void *, void *, const void *, uint32_t);
-static void clearEntryList(void *);
 static void interruptHandler(void *, enum result);
+static void startTransfer(struct GpDmaList *, const struct GpDmaListEntry *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
@@ -43,18 +44,13 @@ static void appendItem(void *object, void *destination, const void *source,
 {
   struct GpDmaList * const channel = object;
   struct GpDmaListEntry * const entry = channel->list + channel->current;
+  struct GpDmaListEntry *previous = 0;
 
-  if (channel->unused < channel->capacity)
+  if (channel->queued)
   {
     /* There are initialized entries in the list */
-    struct GpDmaListEntry * const previous = (channel->current ?
-        entry : channel->list + channel->capacity) - 1;
-
-    /* Link current element to the previous one */
-    previous->next = (uint32_t)entry;
-
-    if (channel->silent)
-      previous->control &= ~CONTROL_INT;
+    previous = channel->current ? entry : channel->list + channel->capacity;
+    previous = previous - 1;
   }
 
   if (++channel->current >= channel->capacity)
@@ -65,28 +61,61 @@ static void appendItem(void *object, void *destination, const void *source,
   entry->control = channel->base.control | CONTROL_SIZE(size);
   entry->next = 0;
 
-  if (channel->unused)
-    --channel->unused;
-}
-/*----------------------------------------------------------------------------*/
-static void clearEntryList(void *object)
-{
-  struct GpDmaList * const channel = object;
+  if (previous)
+  {
+    /* Link current element to the previous one */
+    previous->next = (uint32_t)entry;
+  }
 
-  channel->unused = channel->capacity;
-  channel->status = E_OK;
+  ++channel->queued;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum result res)
 {
   struct GpDmaList * const channel = object;
 
-  channel->unused = (res != E_BUSY || channel->silent) ? channel->capacity
-      : channel->unused + 1;
-  channel->status = (res == E_OK || res == E_BUSY) ? E_OK : res;
+  channel->queued = channel->silent ? 0 : channel->queued - 1;
+  channel->error = res != E_OK && res != E_BUSY;
+
+  if (res == E_OK)
+  {
+    if (channel->queued)
+    {
+      /* Underrun occurred */
+      uint16_t index = channel->current;
+
+      /* Calculate index of the first stalled chunk */
+      if (index >= channel->queued)
+        index -= channel->queued;
+      else
+        index += channel->capacity - channel->queued;
+
+      /* Restart stalled transfer */
+      startTransfer(channel, channel->list + index);
+    }
+    else
+    {
+      gpDmaClearDescriptor(channel->base.number);
+    }
+  }
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static void startTransfer(struct GpDmaList *channel,
+    const struct GpDmaListEntry *entry)
+{
+  LPC_GPDMACH_Type * const reg = channel->base.reg;
+
+  reg->SRCADDR = entry->source;
+  reg->DESTADDR = entry->destination;
+  reg->CONTROL = entry->control;
+  reg->LLI = entry->next;
+  reg->CONFIG = channel->base.config;
+
+  /* Start the transfer */
+  reg->CONFIG |= CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *object, const void *configBase)
@@ -121,12 +150,13 @@ static enum result channelInit(void *object, const void *configBase)
 
   channel->callback = 0;
   channel->capacity = config->number;
-  channel->current = 0;
-  channel->status = E_OK;
   channel->silent = config->silent;
   channel->size = config->size;
-  channel->unused = config->number; /* Initial value is equal to capacity */
   channel->width = 1 << config->width;
+
+  channel->current = 0;
+  channel->queued = 0;
+  channel->error = false;
 
   /* Set four-byte burst size by default */
   uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
@@ -174,15 +204,16 @@ static uint32_t channelCount(const void *object)
 {
   const struct GpDmaList * const channel = object;
 
-  return (uint32_t)(channel->capacity - channel->unused);
+  return (uint32_t)channel->queued;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelReconfigure(void *object, const void *configBase)
 {
   const struct GpDmaListRuntimeConfig * const config = configBase;
   struct GpDmaList * const channel = object;
-  uint32_t control = channel->base.control
-      & ~(CONTROL_SRC_INC | CONTROL_DST_INC);
+  uint32_t control;
+
+  control = channel->base.control & ~(CONTROL_SRC_INC | CONTROL_DST_INC);
 
   if (config->source.increment)
     control |= CONTROL_SRC_INC;
@@ -197,64 +228,61 @@ static enum result channelStart(void *object, void *destination,
     const void *source, uint32_t size)
 {
   struct GpDmaList * const channel = object;
-  LPC_GPDMACH_Type * const reg = channel->base.reg;
-  const bool active = gpDmaGetDescriptor(channel->base.number) == object;
 
   assert(size);
 
-  if (size > (uint32_t)(channel->unused * channel->size))
+  if (size > (uint32_t)((channel->capacity - channel->queued) * channel->size))
     return E_VALUE;
+
+  const irqState state = irqSave();
+  const bool active = gpDmaGetDescriptor(channel->base.number) == object;
+
+  if (active && channel->silent)
+  {
+    irqRestore(state);
+    return E_BUSY;
+  }
 
   if (!active)
   {
     if (gpDmaSetDescriptor(channel->base.number, object) != E_OK)
+    {
+      irqRestore(state);
       return E_BUSY;
+    }
 
     gpDmaSetMux(object);
-    clearEntryList(channel);
+
+    channel->current = 0;
+    channel->queued = 0;
+    channel->error = false;
   }
 
-  uint32_t offset = 0;
-
-  while (offset < size)
+  for (uint32_t offset = 0; offset < size;)
   {
-    const uint32_t chunk = size - offset >= channel->size ?
+    const uint32_t chunkLength = size - offset >= channel->size ?
         channel->size : size - offset;
+    const uint32_t totalLength = chunkLength * channel->width;
 
-    appendItem(channel, destination, source, chunk);
+    appendItem(channel, destination, source, chunkLength);
 
-    offset += chunk;
+    offset += chunkLength;
     if (channel->base.control & CONTROL_DST_INC)
-      destination = (void *)((uint32_t)destination + chunk * channel->width);
+      destination = (void *)((uint32_t)destination + totalLength);
     if (channel->base.control & CONTROL_SRC_INC)
-      source = (const void *)((uint32_t)source + chunk * channel->width);
+      source = (const void *)((uint32_t)source + totalLength);
   }
+
+  irqRestore(state);
 
   if (!active)
   {
-    const struct GpDmaListEntry * const first = channel->list;
     const uint32_t request = 1 << channel->base.number;
 
-    reg->SRCADDR = first->source;
-    reg->DESTADDR = first->destination;
-    reg->CONTROL = first->control;
-    reg->LLI = first->next;
-    reg->CONFIG = channel->base.config;
+    LPC_GPDMA->INTTCCLEAR = request;
+    LPC_GPDMA->INTERRCLEAR = request;
 
-    LPC_GPDMA->INTTCCLEAR |= request;
-    LPC_GPDMA->INTERRCLEAR |= request;
-
-    /* Start the transfer */
-    reg->CONFIG |= CONFIG_ENABLE;
-  }
-  else
-  {
-    /* Check whether the channel is still active */
-    if (!reg->LLI)
-    {
-      /* Buffer underflow occurred, transfer should be restarted */
-      return E_TIMEOUT;
-    }
+    startTransfer(channel, channel->list);
   }
 
   return E_OK;
@@ -264,21 +292,26 @@ static enum result channelStatus(const void *object)
 {
   const struct GpDmaList * const channel = object;
 
-  if (channel->status != E_OK)
-    return channel->status;
-  else if (gpDmaGetDescriptor(channel->base.number) != object)
-    return E_OK;
-  else
+  if (channel->error)
+    return E_ERROR;
+
+  if (gpDmaGetDescriptor(channel->base.number) == object)
     return E_BUSY;
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)
 {
   struct GpDmaList * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->base.reg;
-  struct GpDmaListEntry * const next = (struct GpDmaListEntry *)reg->LLI;
+  LPC_GPDMACH_Type * const reg = channel->base.reg;
+  irqState state;
 
-  /* Transfer next chunk and stop */
-  if (next)
-    next->next = 0;
+  state = irqSave();
+  if (channel->queued > 1)
+    channel->queued = 1;
+  irqRestore(state);
+
+  /* Stop immediately */
+  reg->CONFIG &= ~CONFIG_ENABLE;
 }

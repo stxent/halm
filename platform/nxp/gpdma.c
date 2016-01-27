@@ -39,7 +39,8 @@ static void interruptHandler(void *object, enum result res)
 {
   struct GpDma * const channel = object;
 
-  channel->status = res;
+  gpDmaClearDescriptor(channel->base.number);
+  channel->error = res != E_OK;
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
@@ -69,7 +70,7 @@ static enum result channelInit(void *object, const void *configBase)
   channel->base.handler = interruptHandler;
 
   channel->callback = 0;
-  channel->status = E_OK;
+  channel->error = false;
 
   /* Set four-byte burst size by default */
   uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
@@ -151,7 +152,7 @@ static enum result channelStart(void *object, void *destination,
   gpDmaSetMux(object);
   channel->base.control = (channel->base.control & ~CONTROL_SIZE_MASK)
       | CONTROL_SIZE(size);
-  channel->status = E_OK;
+  channel->error = false;
 
   const uint32_t request = 1 << channel->base.number;
   LPC_GPDMACH_Type * const reg = channel->base.reg;
@@ -163,8 +164,8 @@ static enum result channelStart(void *object, void *destination,
   reg->LLI = 0;
 
   /* Clear interrupt requests for current channel */
-  LPC_GPDMA->INTTCCLEAR |= request;
-  LPC_GPDMA->INTERRCLEAR |= request;
+  LPC_GPDMA->INTTCCLEAR = request;
+  LPC_GPDMA->INTERRCLEAR = request;
 
   /* Start the transfer */
   reg->CONFIG |= CONFIG_ENABLE;
@@ -175,13 +176,11 @@ static enum result channelStart(void *object, void *destination,
 static enum result channelStatus(const void *object)
 {
   const struct GpDma * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->base.reg;
 
-  if (channel->status != E_OK)
-    return channel->status;
+  if (channel->error)
+    return E_ERROR;
 
-  return (gpDmaGetDescriptor(channel->base.number) == object
-      && (reg->CONFIG & CONFIG_ENABLE)) ? E_BUSY : E_OK;
+  return gpDmaGetDescriptor(channel->base.number) == object ? E_BUSY : E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)

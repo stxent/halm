@@ -79,14 +79,14 @@ struct GpDmaList
   /* Maximum size of each block */
   uint16_t size;
   /* Unused elements in the current chain */
-  uint16_t unused;
+  uint16_t queued;
   /* Width of each element in block */
   uint8_t width;
 
   /* Reduce interrupts count */
   bool silent;
   /* Last transfer status */
-  enum result status;
+  bool error;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_GPDMA_LIST_H_ */

@@ -56,6 +56,7 @@ struct GpDmaBase
   uint8_t number;
 };
 /*----------------------------------------------------------------------------*/
+void gpDmaClearDescriptor(uint8_t);
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
 enum result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
 void gpDmaSetMux(struct GpDmaBase *);
