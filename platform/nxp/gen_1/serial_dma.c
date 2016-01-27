@@ -16,7 +16,8 @@
  * Size of temporary buffers should be increased if the baud rate
  * is higher than 500 kbit/s.
  */
-#define BUFFER_SIZE 16
+#define SINGLE_BUFFER_SIZE 16
+#define RECEPTION_BUFFERS  3
 /*----------------------------------------------------------------------------*/
 static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
@@ -54,11 +55,11 @@ static void rxDmaHandler(void *object)
   LPC_UART_Type * const reg = interface->base.reg;
 
   byteQueuePushArray(&interface->rxQueue, interface->rxBuffer
-      + interface->rxBufferIndex * BUFFER_SIZE, BUFFER_SIZE);
+      + interface->rxBufferIndex * SINGLE_BUFFER_SIZE, SINGLE_BUFFER_SIZE);
   dmaStart(interface->rxDma, interface->rxBuffer + interface->rxBufferIndex
-      * BUFFER_SIZE, (const void *)&reg->RBR, BUFFER_SIZE);
+      * SINGLE_BUFFER_SIZE, (const void *)&reg->RBR, SINGLE_BUFFER_SIZE);
 
-  if (++interface->rxBufferIndex == 3)
+  if (++interface->rxBufferIndex == RECEPTION_BUFFERS)
     interface->rxBufferIndex = 0;
 
   if (interface->callback)
@@ -79,7 +80,7 @@ static void txDmaHandler(void *object)
   if (!byteQueueEmpty(&interface->txQueue))
   {
     const uint32_t chunkLength = byteQueuePopArray(&interface->txQueue,
-        interface->txBuffer, BUFFER_SIZE);
+        interface->txBuffer, SINGLE_BUFFER_SIZE);
 
     dmaStart(interface->txDma, (void *)&reg->THR, interface->txBuffer,
         chunkLength);
@@ -99,8 +100,8 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
   const struct GpDmaListConfig rxChannelConfig = {
-      .number = 3,
-      .size = BUFFER_SIZE,
+      .number = RECEPTION_BUFFERS,
+      .size = SINGLE_BUFFER_SIZE,
       .channel = rxChannel,
       .event = GPDMA_UART0_RX + interface->base.channel,
       .source.increment = false,
@@ -181,9 +182,9 @@ static enum result serialInit(void *object, const void *configBase)
     return res;
 
   /* Allocate one buffer for transmission and three buffers for reception */
-  interface->pool = malloc(BUFFER_SIZE * 4);
+  interface->pool = malloc(SINGLE_BUFFER_SIZE * (1 + RECEPTION_BUFFERS));
   interface->txBuffer = interface->pool;
-  interface->rxBuffer = interface->pool + BUFFER_SIZE;
+  interface->rxBuffer = interface->pool + SINGLE_BUFFER_SIZE;
 
   interface->callback = 0;
   interface->rate = config->rate;
@@ -211,7 +212,7 @@ static enum result serialInit(void *object, const void *configBase)
 
   /* Start reception */
   dmaStart(interface->rxDma, interface->rxBuffer, (const void *)&reg->RBR,
-      BUFFER_SIZE * 3);
+      SINGLE_BUFFER_SIZE * RECEPTION_BUFFERS);
 
   return E_OK;
 }
@@ -323,7 +324,7 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
 
   if (dmaStatus(interface->txDma) != E_BUSY)
   {
-    chunkLength = length < BUFFER_SIZE ? length : BUFFER_SIZE;
+    chunkLength = length < SINGLE_BUFFER_SIZE ? length : SINGLE_BUFFER_SIZE;
 
     memcpy(interface->txBuffer, buffer, chunkLength);
 
