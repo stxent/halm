@@ -69,12 +69,15 @@ uint32_t uartGetRate(const struct UartBase *interface)
 void uartSetParity(struct UartBase *interface, enum uartParity parity)
 {
   LPC_UART_Type * const reg = interface->reg;
+  uint32_t value = reg->LCR & ~(LCR_PARITY | LCR_PARITY_MASK);
 
   if (parity != UART_PARITY_NONE)
   {
-    reg->LCR |= LCR_PARITY;
-    reg->LCR |= parity == UART_PARITY_EVEN ? LCR_PARITY_EVEN : LCR_PARITY_ODD;
+    value |= LCR_PARITY;
+    value |= parity == UART_PARITY_EVEN ? LCR_PARITY_EVEN : LCR_PARITY_ODD;
   }
+
+  reg->LCR = value;
 }
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct UartBase *interface, struct UartRateConfig config)

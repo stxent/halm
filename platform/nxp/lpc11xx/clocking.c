@@ -180,7 +180,7 @@ static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
 {
   assert(source == CLOCK_EXTERNAL || source == CLOCK_INTERNAL);
 
-  uint32_t frequency;
+  uint32_t frequency = 0;
 
   switch (source)
   {

@@ -17,7 +17,7 @@ int8_t gpTimerAllocateChannel(uint8_t used)
 {
   int8_t pos = 4; /* Each timer has 4 match blocks */
 
-  while (--pos >= 0 && used & (1 << pos));
+  while (--pos >= 0 && (used & (1 << pos)));
 
   return pos;
 }

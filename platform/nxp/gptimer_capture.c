@@ -47,21 +47,18 @@ static void interruptHandler(void *object)
   LPC_TIMER_Type * const reg = unit->base.reg;
   uint32_t state = reg->IR;
 
-  /* Clear pending interrupts */
-  reg->IR = state;
-
+  reg->IR = state; /* Clear pending interrupts */
   state = IR_CAPTURE_VALUE(state);
 
-  while (state)
+  for (uint32_t index = 0; state; state >>= 1, ++index)
   {
-    const uint32_t index = 31 - countLeadingZeros32(state);
+    if (state & (1 << index))
+    {
+      struct GpTimerCapture * const descriptor = unit->descriptors[index];
 
-    struct GpTimerCapture * const descriptor = unit->descriptors[index];
-
-    if (descriptor->callback)
-      descriptor->callback(descriptor->callbackArgument);
-
-    state -= 1 << index;
+      if (descriptor->callback)
+        descriptor->callback(descriptor->callbackArgument);
+    }
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -72,8 +69,8 @@ static enum result unitSetDescriptor(struct GpTimerCaptureUnit *unit,
   if (channel >= ARRAY_SIZE(unit->descriptors))
     return E_VALUE;
 
-  return compareExchangePointer((void **)(unit->descriptors + channel), state,
-      capture) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)(unit->descriptors + channel),
+      state, capture) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *object, const void *configBase)
