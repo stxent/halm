@@ -34,24 +34,21 @@ void sspConfigPins(struct SspBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-enum result sspSetRate(struct SspBase *interface, uint32_t rate)
+void sspSetRate(struct SspBase *interface, uint32_t rate)
 {
-  if (!rate)
-    return E_VALUE;
+  assert(rate);
 
-  const uint32_t divisor =
-      ((sspGetClock(interface) + (rate >> 1)) >> 1) / rate - 1;
+  const uint32_t clock = sspGetClock(interface);
+  uint32_t divisor = ((clock + (rate >> 1)) >> 1) / rate - 1;
 
-  if (!divisor || divisor >= 127 * 256)
-    return E_VALUE;
+  if (divisor >= 127 * 256)
+    divisor = 127 * 256 - 1;
 
   LPC_SSP_Type * const reg = interface->reg;
   const uint8_t prescaler = 1 + (divisor >> 8);
 
   reg->CPSR = prescaler << 1;
   reg->CR0 = (reg->CR0 & ~CR0_SCR_MASK) | CR0_SCR(divisor / prescaler);
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetRate(const struct SspBase *interface)

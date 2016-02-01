@@ -177,8 +177,8 @@ static enum result spiInit(void *object, const void *configBase)
   /* Disable all interrupts */
   reg->IMSC = 0;
 
-  if ((res = sspSetRate(object, config->rate)) != E_OK)
-    return res;
+  /* Try to set the desired data rate */
+  sspSetRate(object, config->rate);
 
   /* Enable peripheral */
   reg->CR1 = CR1_SSE;
@@ -245,7 +245,8 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     case IF_RATE:
-      return sspSetRate(object, *(const uint32_t *)data);
+      sspSetRate(object, *(const uint32_t *)data);
+      return E_OK;
 
     case IF_ZEROCOPY:
       dmaCallback(interface->rxDma, dmaHandler, interface);

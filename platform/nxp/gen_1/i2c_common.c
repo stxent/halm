@@ -20,9 +20,16 @@ uint32_t i2cGetRate(const struct I2cBase *interface)
 /*----------------------------------------------------------------------------*/
 void i2cSetRate(struct I2cBase *interface, uint32_t rate)
 {
-  LPC_I2C_Type * const reg = interface->reg;
+  assert(rate);
 
-  reg->SCLL = reg->SCLH = (i2cGetClock(interface) >> 1) / rate;
+  LPC_I2C_Type * const reg = interface->reg;
+  const uint32_t clock = i2cGetClock(interface);
+  uint32_t divisor = (clock >> 1) / rate;
+
+  if (divisor > 0xFFFF)
+    divisor = 0xFFFF;
+
+  reg->SCLL = reg->SCLH = divisor;
 }
 /*----------------------------------------------------------------------------*/
 void i2cConfigPins(struct I2cBase *interface,
