@@ -206,7 +206,7 @@ static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
 static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
 {
   assert(multiplier);
-  assert(divisor && !(divisor & 1));
+  assert(divisor && (divisor & 1) == 0);
 
   const uint8_t msel = multiplier / divisor - 1;
   uint8_t psel = 0;

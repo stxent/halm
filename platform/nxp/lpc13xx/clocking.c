@@ -237,8 +237,7 @@ static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
 /*----------------------------------------------------------------------------*/
 static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
 {
-  assert(multiplier);
-  assert(divisor && !(divisor & 1));
+  assert((divisor & 1) == 0);
 
   const uint8_t msel = multiplier / divisor - 1;
   uint8_t psel = 0;
@@ -380,6 +379,10 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
+
+  assert(config->divisor);
+  assert(config->source == CLOCK_EXTERNAL || config->source == CLOCK_INTERNAL);
+
   const uint32_t control = calcPllValues(config->multiplier,
       config->divisor);
   const uint32_t frequency = calcPllFrequency(config->multiplier,
@@ -421,19 +424,22 @@ static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
+
+  assert(config->divisor);
+  assert(config->source == CLOCK_EXTERNAL);
+
   const uint32_t control = calcPllValues(config->multiplier,
       config->divisor);
 
-  const uint32_t frequency = calcPllFrequency(config->multiplier,
-      config->divisor, config->source);
-  assert(frequency == USB_FREQUENCY);
+  assert(extFrequency * config->multiplier >= 156000000
+      && extFrequency * config->multiplier <= 320000000);
+  assert(extFrequency * config->multiplier / config->divisor == USB_FREQUENCY);
 
   /* Power-up PLL */
   sysPowerEnable(PWR_USBPLL);
 
-  /* Select clock source */
-  LPC_SYSCON->USBPLLCLKSEL = config->source == CLOCK_EXTERNAL ?
-      PLLCLKSEL_SYSOSC : PLLCLKSEL_IRC;
+  /* Select clock source, system oscillator is the only choice */
+  LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_SYSOSC;
   /* Update clock source for changes to take effect */
   LPC_SYSCON->USBPLLCLKUEN = 0;
   LPC_SYSCON->USBPLLCLKUEN = CLKUEN_ENA;
