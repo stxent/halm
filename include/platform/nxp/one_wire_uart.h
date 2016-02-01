@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <containers/byte_queue.h>
 #include <libhalm/target.h>
+#include <platform/one_wire.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <platform/PLATFORM_TYPE/GEN_UART/uart_base.h>

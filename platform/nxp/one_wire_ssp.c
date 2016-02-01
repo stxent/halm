@@ -35,13 +35,23 @@ enum state
   STATE_PRESENCE,
   STATE_RECEIVE,
   STATE_TRANSMIT,
+  STATE_SEARCH_START,
+  STATE_SEARCH_REQUEST,
+  STATE_SEARCH_RESPONSE,
   STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
 static void adjustPins(struct OneWireSsp *, const struct OneWireSspConfig *);
 static void beginTransmission(struct OneWireSsp *);
-static void interruptHandler(void *);
 static void sendWord(struct OneWireSsp *, uint8_t);
+static void standardInterruptHandler(void *);
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+static void searchInterruptHandler(void *);
+static void sendSearchRequest(struct OneWireSsp *);
+static void sendSearchResponse(struct OneWireSsp *, bool);
+static void startSearch(struct OneWireSsp *);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum result oneWireInit(void *, const void *);
 static void oneWireDeinit(void *);
@@ -77,6 +87,11 @@ static void beginTransmission(struct OneWireSsp *interface)
 
   sspSetRate((struct SspBase *)interface, RATE_RESET);
   interface->state = STATE_RESET;
+
+  /* Clear interrupt flags and enable interrupts */
+  reg->ICR = ICR_RORIC | ICR_RTIC;
+  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
+
   reg->DR = PATTERN_RESET;
   reg->DR = PATTERN_PRESENCE;
 }
@@ -90,7 +105,7 @@ static void sendWord(struct OneWireSsp *interface, uint8_t word)
     reg->DR = ((word >> counter++) & 0x01) ? PATTERN_HIGH : PATTERN_LOW;
 }
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
+static void standardInterruptHandler(void *object)
 {
   struct OneWireSsp * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
@@ -127,9 +142,12 @@ static void interruptHandler(void *object)
         break;
 
       case STATE_PRESENCE:
+      {
         if (data & DATA_MASK)
         {
           sspSetRate((struct SspBase *)object, RATE_DATA);
+
+          interface->bit = 0;
           interface->state = STATE_TRANSMIT;
         }
         else
@@ -138,18 +156,21 @@ static void interruptHandler(void *object)
           event = true;
         }
         break;
+      }
 
       default:
         break;
     }
   }
 
-  if ((reg->SR & SR_TFE) && (interface->state == STATE_RECEIVE
-      || interface->state == STATE_TRANSMIT))
+  if (reg->SR & SR_TFE)
   {
-    /* Fill FIFO with next word or end the transaction */
-    if (!byteQueueEmpty(&interface->txQueue))
-      sendWord(interface, byteQueuePop(&interface->txQueue));
+    if (interface->state == STATE_RECEIVE || interface->state == STATE_TRANSMIT)
+    {
+      /* Fill FIFO with next word or end the transaction */
+      if (!byteQueueEmpty(&interface->txQueue))
+        sendWord(interface, byteQueuePop(&interface->txQueue));
+    }
   }
 
   if (event)
@@ -160,6 +181,169 @@ static void interruptHandler(void *object)
       interface->callback(interface->callbackArgument);
   }
 }
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+static void searchInterruptHandler(void *object)
+{
+  struct OneWireSsp * const interface = object;
+  LPC_SSP_Type * const reg = interface->base.reg;
+  bool event = false;
+
+  while (reg->SR & SR_RNE)
+  {
+    const uint16_t data = ~reg->DR;
+
+    switch ((enum state)interface->state)
+    {
+      case STATE_SEARCH_START:
+        if (++interface->bit == 8)
+        {
+          interface->lastZero = 0;
+          interface->left = 64;
+          interface->state = STATE_SEARCH_REQUEST;
+        }
+        break;
+
+      case STATE_SEARCH_REQUEST:
+        if (!(data & DATA_MASK))
+          interface->word |= 1 << interface->bit;
+        if (++interface->bit == 2)
+          interface->state = STATE_SEARCH_RESPONSE;
+        break;
+
+      case STATE_SEARCH_RESPONSE:
+        if (!--interface->left)
+        {
+          interface->lastDiscrepancy = interface->lastZero;
+          interface->state = STATE_IDLE;
+          event = true;
+        }
+        else
+        {
+          interface->state = STATE_SEARCH_REQUEST;
+        }
+        break;
+
+      case STATE_RESET:
+        interface->state = STATE_PRESENCE;
+        break;
+
+      case STATE_PRESENCE:
+      {
+        if (data & DATA_MASK)
+        {
+          sspSetRate((struct SspBase *)object, RATE_DATA);
+
+          interface->bit = 0;
+          interface->state = STATE_SEARCH_START;
+        }
+        else
+        {
+          interface->state = STATE_ERROR;
+          event = true;
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  if (reg->SR & SR_TFE)
+  {
+    switch (interface->state)
+    {
+      case STATE_SEARCH_START:
+        sendWord(interface, 0xF0);
+        break;
+
+      case STATE_SEARCH_REQUEST:
+        interface->bit = 0;
+        interface->word = 0;
+        sendSearchRequest(interface);
+        break;
+
+      case STATE_SEARCH_RESPONSE:
+      {
+        if (interface->word == 0x03)
+        {
+          /* No devices found */
+          interface->state = STATE_ERROR;
+          event = true;
+          break;
+        }
+
+        const uint8_t discrepancy = interface->lastDiscrepancy;
+        const uint8_t index = 64 - interface->left;
+        const uint64_t mask = 1ULL << index;
+        bool currentBit = false;
+
+        if (interface->word != 0x00)
+        {
+          currentBit = (interface->word & 0x01) != 0;
+        }
+        else
+        {
+          currentBit = (index < discrepancy && (interface->address & mask))
+              || index == discrepancy;
+
+          if (!currentBit)
+            interface->lastZero = index;
+        }
+
+        if (!currentBit)
+          interface->address &= ~mask;
+        else
+          interface->address |= mask;
+
+        sendSearchResponse(interface, currentBit);
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  if (event)
+  {
+    reg->IMSC = 0;
+
+    if (interface->callback)
+      interface->callback(interface->callbackArgument);
+  }
+}
+#endif
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+static void sendSearchRequest(struct OneWireSsp *interface)
+{
+  LPC_SSP_Type * const reg = interface->base.reg;
+
+  reg->DR = PATTERN_HIGH;
+  reg->DR = PATTERN_HIGH;
+}
+#endif
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+static void sendSearchResponse(struct OneWireSsp *interface, bool value)
+{
+  LPC_SSP_Type * const reg = interface->base.reg;
+
+  reg->DR = value ? PATTERN_HIGH : PATTERN_LOW;
+}
+#endif
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+static void startSearch(struct OneWireSsp *interface)
+{
+  /* Configure interrupts and start transmission */
+  interface->base.handler = searchInterruptHandler;
+
+  beginTransmission(interface);
+}
+#endif
 /*----------------------------------------------------------------------------*/
 static enum result oneWireInit(void *object, const void *configBase)
 {
@@ -183,12 +367,14 @@ static enum result oneWireInit(void *object, const void *configBase)
   if ((res = byteQueueInit(&interface->txQueue, TX_QUEUE_LENGTH)) != E_OK)
     return res;
 
-  interface->base.handler = interruptHandler;
-
   interface->address = 0;
   interface->blocking = true;
   interface->callback = 0;
   interface->state = STATE_IDLE;
+
+#ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+  interface->lastDiscrepancy = 0;
+#endif
 
   LPC_SSP_Type * const reg = interface->base.reg;
 
@@ -238,6 +424,10 @@ static enum result oneWireGet(void *object, enum ifOption option,
 
   switch (option)
   {
+    case IF_DEVICE:
+      *(uint64_t *)data = fromLittleEndian64(interface->address);
+      return E_OK;
+
     case IF_STATUS:
       if (!interface->blocking && interface->state == STATE_ERROR)
         return E_ERROR;
@@ -253,6 +443,31 @@ static enum result oneWireSet(void *object, enum ifOption option,
     const void *data)
 {
   struct OneWireSsp * const interface = object;
+
+#ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+  switch ((enum oneWireOption)option)
+  {
+    case IF_ONE_WIRE_START_SEARCH:
+      interface->address = 0;
+      interface->lastDiscrepancy = 0;
+      startSearch(interface);
+      return E_OK;
+
+    case IF_ONE_WIRE_FIND_NEXT:
+      if (interface->lastDiscrepancy)
+      {
+        startSearch(interface);
+        return E_OK;
+      }
+      else
+      {
+        return E_EMPTY;
+      }
+
+    default:
+      break;
+  }
+#endif
 
   switch (option)
   {
@@ -294,7 +509,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
 
   interface->state = STATE_RECEIVE;
 
-  /* Clear interrupt flags, enable interrupts and start reception */
+  /* Configure interrupts and start transmission */
   reg->ICR = ICR_RORIC | ICR_RTIC;
   reg->IMSC = IMSC_RXIM | IMSC_RTIM;
   sendWord(interface, 0xFF);
@@ -315,7 +530,6 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
     uint32_t length)
 {
   struct OneWireSsp * const interface = object;
-  LPC_SSP_Type * const reg = interface->base.reg;
   uint32_t written;
 
   if (!length)
@@ -336,9 +550,9 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
   written = byteQueuePushArray(&interface->txQueue, buffer, length);
   interface->left += written;
 
-  /* Clear interrupt flags, enable interrupts and start transmission */
-  reg->ICR = ICR_RORIC | ICR_RTIC;
-  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
+  /* Configure interrupts and start transmission */
+  interface->base.handler = standardInterruptHandler;
+
   beginTransmission(interface);
 
   if (interface->blocking)

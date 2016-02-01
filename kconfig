@@ -237,12 +237,17 @@ config ONE_WIRE
 	depends on PLATFORM_NXP_SSP_BASE || PLATFORM_NXP_UART_BASE
 
 config PLATFORM_NXP_ONE_WIRE_SSP
-	bool "1-Wire driver on SSP peripheral"
+	bool "1-Wire using SSP peripheral"
 	default y
 	depends on ONE_WIRE && PLATFORM_NXP_SSP_BASE
 
+config PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+	bool "Device search feature"
+	default y
+	depends on PLATFORM_NXP_ONE_WIRE_SSP
+
 config PLATFORM_NXP_ONE_WIRE_UART
-	bool "1-Wire driver on UART peripheral"
+	bool "1-Wire using UART peripheral"
 	default y
 	depends on ONE_WIRE && PLATFORM_NXP_UART_BASE
 

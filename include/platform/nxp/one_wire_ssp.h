@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <irq.h>
 #include <containers/byte_queue.h>
+#include <platform/one_wire.h>
 #include <platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const OneWireSsp;
@@ -32,11 +33,11 @@ struct OneWireSsp
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointer to an input buffer */
-  uint8_t *rxBuffer;
   /* Address of the device */
   uint64_t address;
-  /* Number of bytes to be transmitted */
+  /* Pointer to an input buffer */
+  uint8_t *rxBuffer;
+  /* Number of words to be transmitted */
   uint8_t left;
   /* Position in a receiving word and temporary buffer for this word */
   uint8_t bit, word;
@@ -47,6 +48,9 @@ struct OneWireSsp
   uint8_t state;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
+
+  /* Temporary variables for device search algorithm */
+  uint8_t lastDiscrepancy, lastZero;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_ONE_WIRE_SSP_H_ */
