@@ -257,7 +257,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
       interface->blocking = true;
       return E_OK;
 
-    case IF_DEVICE:
+    case IF_ADDRESS:
       interface->address = *(const uint32_t *)data;
       return E_OK;
 

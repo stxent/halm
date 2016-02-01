@@ -380,7 +380,7 @@ static enum result cardGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-    case IF_ADDRESS:
+    case IF_POSITION:
       *(uint64_t *)data = device->position;
       return E_OK;
 
@@ -400,7 +400,7 @@ static enum result cardSet(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_ADDRESS:
+    case IF_POSITION:
     {
       const uint64_t position = *(const uint64_t *)data;
 

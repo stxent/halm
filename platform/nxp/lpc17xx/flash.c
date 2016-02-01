@@ -122,7 +122,7 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-    case IF_ADDRESS:
+    case IF_POSITION:
       *(uint32_t *)data = interface->position;
       return E_OK;
 
@@ -162,7 +162,7 @@ static enum result flashSet(void *object, enum ifOption option,
 
   switch (option)
   {
-    case IF_ADDRESS:
+    case IF_POSITION:
     {
       const uint32_t position = *(const uint32_t *)data;
 
