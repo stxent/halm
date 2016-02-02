@@ -279,10 +279,14 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
     byteQueuePush(&interface->txQueue, 0xFF);
   interface->left = read;
 
+  /* Set current mode */
   interface->state = STATE_RECEIVE;
+
   /* Clear RX FIFO and set trigger level to 8 characters */
   reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_8);
-  sendWord(interface, 0xFF); /* Start reception */
+
+  /* Start reception */
+  sendWord(interface, 0xFF);
 
   if (interface->blocking)
   {
@@ -308,20 +312,24 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
   byteQueueClear(&interface->txQueue);
   interface->bit = 0;
   interface->left = 1;
-  /* Initiate new transaction by selecting the addressing mode */
+
+  /* Select the addressing mode */
   if (interface->address)
   {
     byteQueuePush(&interface->txQueue, (uint8_t)MATCH_ROM);
     interface->left += byteQueuePushArray(&interface->txQueue,
-        (const uint8_t *)&interface->address, length);
+        (const uint8_t *)&interface->address, sizeof(interface->address));
   }
   else
   {
     byteQueuePush(&interface->txQueue, (uint8_t)SKIP_ROM);
   }
+
+  /* Push packet payload */
   written = byteQueuePushArray(&interface->txQueue, buffer, length);
   interface->left += written;
 
+  /* Start sending */
   beginTransmission(interface);
 
   if (interface->blocking)

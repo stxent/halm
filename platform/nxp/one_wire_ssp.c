@@ -79,6 +79,7 @@ static void adjustPins(struct OneWireSsp *interface __attribute__((unused)),
     const struct OneWireSspConfig *config)
 {
   pinSetType(pinInit(config->mosi), PIN_OPENDRAIN);
+  pinSetPull(pinInit(config->mosi), PIN_PULLUP);
 }
 /*----------------------------------------------------------------------------*/
 static void beginTransmission(struct OneWireSsp *interface)
@@ -199,7 +200,7 @@ static void searchInterruptHandler(void *object)
         if (++interface->bit == 8)
         {
           interface->lastZero = 0;
-          interface->left = 64;
+          interface->left = sizeof(interface->address) * 8;
           interface->state = STATE_SEARCH_REQUEST;
         }
         break;
@@ -275,7 +276,7 @@ static void searchInterruptHandler(void *object)
         }
 
         const uint8_t discrepancy = interface->lastDiscrepancy;
-        const uint8_t index = 64 - interface->left;
+        const uint8_t index = sizeof(interface->address) * 8 - interface->left;
         const uint64_t mask = 1ULL << index;
         bool currentBit = false;
 
@@ -507,11 +508,14 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
     byteQueuePush(&interface->txQueue, 0xFF);
   interface->left = read;
 
+  /* Set current mode */
   interface->state = STATE_RECEIVE;
 
-  /* Configure interrupts and start transmission */
+  /* Configure interrupts */
   reg->ICR = ICR_RORIC | ICR_RTIC;
   reg->IMSC = IMSC_RXIM | IMSC_RTIM;
+
+  /* Start reception */
   sendWord(interface, 0xFF);
 
   if (interface->blocking)
@@ -538,21 +542,25 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
   byteQueueClear(&interface->txQueue);
   interface->bit = 0;
   interface->left = 1;
-  /* Initiate new transaction by selecting the addressing mode */
+
+  /* Select the addressing mode */
   if (interface->address)
   {
     byteQueuePush(&interface->txQueue, (uint8_t)MATCH_ROM);
     interface->left += byteQueuePushArray(&interface->txQueue,
-        (const uint8_t *)&interface->address, length);
+        (const uint8_t *)&interface->address, sizeof(interface->address));
   }
   else
+  {
     byteQueuePush(&interface->txQueue, (uint8_t)SKIP_ROM);
+  }
+
+  /* Push packet payload */
   written = byteQueuePushArray(&interface->txQueue, buffer, length);
   interface->left += written;
 
-  /* Configure interrupts and start transmission */
+  /* Configure interrupts and start sending */
   interface->base.handler = standardInterruptHandler;
-
   beginTransmission(interface);
 
   if (interface->blocking)
