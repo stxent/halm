@@ -2,7 +2,6 @@
 #Project is distributed under the terms of the GNU General Public License v3.0
 
 CSOURCES += core/$(CORE_TYPE)/$(CORE)/irq.c
-CSOURCES += core/$(CORE_TYPE)/$(CORE)/memory.c
 CSOURCES += core/$(CORE_TYPE)/$(CORE)/spinlock.c
 
 ifeq ($(CONFIG_FPU),y)
