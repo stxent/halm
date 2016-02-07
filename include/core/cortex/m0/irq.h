@@ -7,8 +7,8 @@
 #ifndef CORE_CORTEX_M0_IRQ_H_
 #define CORE_CORTEX_M0_IRQ_H_
 /*----------------------------------------------------------------------------*/
-#include <core/core_defs.h>
 #include <core/cortex/asm.h>
+#include <core/core_defs.h>
 /*----------------------------------------------------------------------------*/
 enum
 {

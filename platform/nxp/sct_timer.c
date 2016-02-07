@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/platform_defs.h>
 #include <platform/nxp/sct_defs.h>
 #include <platform/nxp/sct_timer.h>
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void setMatchValue(struct SctTimer *, uint32_t);

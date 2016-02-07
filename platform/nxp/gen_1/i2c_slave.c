@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
-#include <pm.h>
-#include <platform/nxp/i2c_slave.h>
 #include <platform/nxp/gen_1/i2c_defs.h>
+#include <platform/nxp/i2c_slave.h>
+#include <pm.h>
 /*----------------------------------------------------------------------------*/
 enum state
 {

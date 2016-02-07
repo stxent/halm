@@ -5,9 +5,9 @@
  */
 
 #include <memory.h>
-#include <platform/nxp/wdt_base.h>
 #include <platform/nxp/lpc11xx/clocking.h>
 #include <platform/nxp/lpc11xx/system.h>
+#include <platform/nxp/wdt_base.h>
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(struct WdtBase *);
 /*----------------------------------------------------------------------------*/

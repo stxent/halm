@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <irq.h>
-#include <platform/platform_defs.h>
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/gpdma_list.h>
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static void appendItem(void *, void *, const void *, uint32_t);
 static void interruptHandler(void *, enum result);

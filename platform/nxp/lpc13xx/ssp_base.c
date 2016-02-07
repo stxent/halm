@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <memory.h>
-#include <platform/nxp/ssp_base.h>
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/system.h>
 #include <platform/nxp/lpc13xx/system_defs.h>
+#include <platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 /* SSP clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1

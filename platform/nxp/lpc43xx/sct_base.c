@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <spinlock.h>
-#include <platform/platform_defs.h>
-#include <platform/nxp/sct_base.h>
-#include <platform/nxp/sct_defs.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
+#include <platform/nxp/sct_base.h>
+#include <platform/nxp/sct_defs.h>
+#include <platform/platform_defs.h>
+#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT                 1
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))

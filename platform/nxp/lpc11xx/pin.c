@@ -8,9 +8,9 @@
 #include <stdbool.h>
 #include <entity.h>
 #include <pin.h>
-#include <spinlock.h>
 #include <platform/nxp/lpc11xx/pin_defs.h>
 #include <platform/nxp/lpc11xx/system.h>
+#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 struct PinHandler
 {

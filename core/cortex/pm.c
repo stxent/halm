@@ -5,10 +5,10 @@
  */
 
 #include <error.h>
-#include <pm.h>
-#include <core/core_defs.h>
 #include <core/cortex/asm.h>
+#include <core/core_defs.h>
 #include <core/cortex/pm_defs.h>
+#include <pm.h>
 /*----------------------------------------------------------------------------*/
 enum result pmCoreChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/

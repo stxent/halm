@@ -6,13 +6,13 @@
 
 #include <assert.h>
 #include <string.h>
-#include <irq.h>
 #include <memory.h>
-#include <spinlock.h>
-#include <platform/platform_defs.h>
+#include <irq.h>
 #include <platform/nxp/gpdma_base.h>
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/lpc43xx/system.h>
+#include <platform/platform_defs.h>
+#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 struct DmaHandler
 {

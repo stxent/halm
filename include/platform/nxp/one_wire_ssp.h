@@ -7,10 +7,10 @@
 #ifndef PLATFORM_NXP_ONE_WIRE_SSP_H_
 #define PLATFORM_NXP_ONE_WIRE_SSP_H_
 /*----------------------------------------------------------------------------*/
-#include <irq.h>
 #include <containers/byte_queue.h>
-#include <platform/one_wire.h>
+#include <irq.h>
 #include <platform/nxp/ssp_base.h>
+#include <platform/one_wire.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const OneWireSsp;
 /*----------------------------------------------------------------------------*/

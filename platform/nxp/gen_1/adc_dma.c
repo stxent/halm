@@ -6,8 +6,8 @@
 
 #include <assert.h>
 #include <platform/nxp/adc_dma.h>
-#include <platform/nxp/gpdma_list.h>
 #include <platform/nxp/gen_1/adc_defs.h>
+#include <platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
 #define SAMPLE_SIZE sizeof(uint16_t)

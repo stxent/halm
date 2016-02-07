@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <memory.h>
-#include <platform/nxp/wdt_base.h>
-#include <platform/nxp/wdt_defs.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/system.h>
+#include <platform/nxp/wdt_base.h>
+#include <platform/nxp/wdt_defs.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/

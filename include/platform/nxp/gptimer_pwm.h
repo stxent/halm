@@ -7,9 +7,9 @@
 #ifndef PLATFORM_NXP_GPTIMER_PWM_H_
 #define PLATFORM_NXP_GPTIMER_PWM_H_
 /*----------------------------------------------------------------------------*/
+#include <platform/nxp/gptimer_base.h>
 #include <pwm.h>
 #include <spinlock.h>
-#include <platform/nxp/gptimer_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerPwmUnit;
 extern const struct PwmClass * const GpTimerPwm;

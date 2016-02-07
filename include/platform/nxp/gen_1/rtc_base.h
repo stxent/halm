@@ -7,9 +7,9 @@
 #ifndef PLATFORM_NXP_GEN_1_RTC_BASE_H_
 #define PLATFORM_NXP_GEN_1_RTC_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <realtime.h>
 #include <irq.h>
 #include <pin.h>
-#include <realtime.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const RtcBase;
 /*----------------------------------------------------------------------------*/

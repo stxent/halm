@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <entity.h>
 #include <pin.h>
-#include <spinlock.h>
 #include <platform/nxp/lpc11exx/pin_defs.h>
 #include <platform/nxp/lpc11exx/system.h>
+#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 struct PinHandler
 {

@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <pm.h>
-#include <platform/platform_defs.h>
 #include <platform/nxp/lpc11xx/system_defs.h>
+#include <platform/platform_defs.h>
+#include <pm.h>
 /*----------------------------------------------------------------------------*/
 enum result pmPlatformChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/

@@ -8,8 +8,8 @@
 #define PLATFORM_NXP_ADC_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
-#include <dma.h>
 #include <interface.h>
+#include <dma.h>
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH

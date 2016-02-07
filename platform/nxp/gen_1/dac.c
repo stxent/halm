@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/dac.h>
 #include <platform/nxp/gen_1/dac_defs.h>
+#include <platform/nxp/dac.h>
 /*----------------------------------------------------------------------------*/
 #define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/

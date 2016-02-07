@@ -6,9 +6,9 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <platform/platform_defs.h>
 #include <platform/nxp/dma_sdmmc.h>
 #include <platform/nxp/sdmmc_defs.h>
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result appendItem(void *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/

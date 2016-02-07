@@ -6,9 +6,9 @@
 
 #include <entity.h>
 #include <pin.h>
-#include <spinlock.h>
 #include <platform/nxp/lpc43xx/pin_defs.h>
 #include <platform/nxp/lpc43xx/system.h>
+#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(channel, offset) (((offset) << 3) | (channel))
 #define UNPACK_CHANNEL(value)       ((value) & 0x07)

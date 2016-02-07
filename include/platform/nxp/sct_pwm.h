@@ -7,8 +7,8 @@
 #ifndef PLATFORM_NXP_SCT_PWM_H_
 #define PLATFORM_NXP_SCT_PWM_H_
 /*----------------------------------------------------------------------------*/
-#include <pwm.h>
 #include <platform/nxp/sct_base.h>
+#include <pwm.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SctPwmUnit;
 extern const struct PwmClass * const SctPwm;

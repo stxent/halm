@@ -6,8 +6,8 @@
 
 #include <assert.h>
 #include <memory.h>
-#include <platform/nxp/i2c.h>
 #include <platform/nxp/gen_1/i2c_defs.h>
+#include <platform/nxp/i2c.h>
 /*----------------------------------------------------------------------------*/
 enum state
 {

@@ -6,11 +6,11 @@
 
 #include <assert.h>
 #include <bits.h>
-#include <irq.h>
 #include <memory.h>
-#include <platform/nxp/pin_interrupt.h>
+#include <irq.h>
 #include <platform/nxp/lpc11exx/pin_defs.h>
 #include <platform/nxp/lpc11exx/system_defs.h>
+#include <platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 static inline irqNumber calcVector(uint8_t);
 static void processInterrupt(uint8_t);

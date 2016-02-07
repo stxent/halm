@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include <platform/platform_defs.h>
 #include <platform/nxp/lpc17xx/clocking.h>
 #include <platform/nxp/lpc17xx/clocking_defs.h>
 #include <platform/nxp/lpc17xx/system.h>
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY     4000000
 #define RTC_OSC_FREQUENCY     32768

@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <irq.h>
 #include <containers/list.h>
-#include <platform/nxp/pin_interrupt.h>
+#include <irq.h>
 #include <platform/nxp/lpc17xx/pin_defs.h>
 #include <platform/nxp/lpc17xx/system.h>
+#include <platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/

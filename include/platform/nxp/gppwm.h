@@ -7,9 +7,9 @@
 #ifndef PLATFORM_NXP_GPPWM_H_
 #define PLATFORM_NXP_GPPWM_H_
 /*----------------------------------------------------------------------------*/
+#include <platform/nxp/gppwm_base.h>
 #include <pwm.h>
 #include <spinlock.h>
-#include <platform/nxp/gppwm_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpPwmUnit;
 extern const struct PwmClass * const GpPwm;

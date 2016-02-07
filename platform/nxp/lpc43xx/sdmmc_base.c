@@ -5,9 +5,9 @@
  */
 
 #include <memory.h>
-#include <platform/nxp/sdmmc_base.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
+#include <platform/nxp/sdmmc_base.h>
 /*----------------------------------------------------------------------------*/
 #define SDDELAY_SAMPLE(value) BIT_FIELD((value), 0)
 #define SDDELAY_DRV(value)    BIT_FIELD((value), 8)

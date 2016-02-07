@@ -7,8 +7,8 @@
 #ifndef PLATFORM_NXP_DAC_DMA_H_
 #define PLATFORM_NXP_DAC_DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <dma.h>
 #include <interface.h>
+#include <dma.h>
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH

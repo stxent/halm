@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <delay.h>
-#include <platform/platform_defs.h>
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/clocking_defs.h>
 #include <platform/nxp/lpc13xx/system.h>
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY             12000000
 #define USB_FREQUENCY                 48000000

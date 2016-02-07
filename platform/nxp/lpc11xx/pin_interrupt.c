@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <irq.h>
 #include <containers/list.h>
+#include <irq.h>
 #include <platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 struct PinInterruptHandler

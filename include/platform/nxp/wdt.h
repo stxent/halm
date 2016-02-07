@@ -7,8 +7,8 @@
 #ifndef PLATFORM_NXP_WDT_H_
 #define PLATFORM_NXP_WDT_H_
 /*----------------------------------------------------------------------------*/
-#include <watchdog.h>
 #include <platform/nxp/wdt_base.h>
+#include <watchdog.h>
 /*----------------------------------------------------------------------------*/
 extern const struct WatchdogClass * const Wdt;
 /*----------------------------------------------------------------------------*/

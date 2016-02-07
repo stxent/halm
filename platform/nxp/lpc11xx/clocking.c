@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <delay.h>
-#include <platform/platform_defs.h>
 #include <platform/nxp/lpc11xx/clocking.h>
 #include <platform/nxp/lpc11xx/clocking_defs.h>
 #include <platform/nxp/lpc11xx/system.h>
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY             12000000
 #define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)

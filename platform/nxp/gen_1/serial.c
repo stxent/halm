@@ -5,9 +5,9 @@
  */
 
 #include <stdbool.h>
-#include <pm.h>
-#include <platform/nxp/serial.h>
 #include <platform/nxp/gen_1/uart_defs.h>
+#include <platform/nxp/serial.h>
+#include <pm.h>
 /*----------------------------------------------------------------------------*/
 #define TX_FIFO_SIZE 8
 /*----------------------------------------------------------------------------*/

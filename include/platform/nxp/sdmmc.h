@@ -7,8 +7,8 @@
 #ifndef PLATFORM_NXP_SDMMC_H_
 #define PLATFORM_NXP_SDMMC_H_
 /*----------------------------------------------------------------------------*/
-#include <dma.h>
 #include <interface.h>
+#include <dma.h>
 #include <irq.h>
 #include <pin.h>
 #include <platform/nxp/pin_interrupt.h>

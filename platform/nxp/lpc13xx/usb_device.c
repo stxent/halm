@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <delay.h>
-#include <usb/usb.h>
-#include <platform/nxp/usb_device.h>
 #include <platform/nxp/lpc13xx/usb_defs.h>
+#include <platform/nxp/usb_device.h>
+#include <usb/usb.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);

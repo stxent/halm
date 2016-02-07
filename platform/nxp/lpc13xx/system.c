@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/platform_defs.h>
 #include <platform/nxp/lpc13xx/system.h>
 #include <platform/nxp/lpc13xx/system_defs.h>
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 uint8_t sysFlashLatency()
 {

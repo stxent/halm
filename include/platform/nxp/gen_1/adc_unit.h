@@ -7,8 +7,8 @@
 #ifndef PLATFORM_NXP_GEN_1_ADC_UNIT_H_
 #define PLATFORM_NXP_GEN_1_ADC_UNIT_H_
 /*----------------------------------------------------------------------------*/
-#include <spinlock.h>
 #include <platform/nxp/gen_1/adc_base.h>
+#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const AdcUnit;
 /*----------------------------------------------------------------------------*/

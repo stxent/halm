@@ -5,8 +5,8 @@
  */
 
 #include <bits.h>
-#include <clock.h>
 #include <memory.h>
+#include <clock.h>
 #include <core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
 #define TIMER_RESOLUTION                ((1UL << 24) - 1)
