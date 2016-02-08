@@ -66,7 +66,7 @@ static void interruptHandler(void *object)
   LPC_I2C_Type * const reg = interface->base.reg;
   bool event = false;
 
-  switch ((enum status)reg->STAT)
+  switch (reg->STAT)
   {
     case STATUS_ADDRESS_WRITE_RECEIVED:
       interface->state = STATE_ADDRESS;

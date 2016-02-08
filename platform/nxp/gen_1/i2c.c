@@ -64,9 +64,10 @@ static void interruptHandler(void *object)
 {
   struct I2c * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
+  bool clearInterrupt = true;
   bool event = false;
 
-  switch ((enum status)reg->STAT)
+  switch (reg->STAT)
   {
     /* Start or Repeated Start conditions have been transmitted */
     case STATUS_START_TRANSMITTED:
@@ -95,11 +96,11 @@ static void interruptHandler(void *object)
       interface->state = STATE_RECEIVE;
       break;
 
-    /* Data byte has been transmitted */
+    /* Data byte has been transmitted, ACK received */
     case STATUS_DATA_TRANSMITTED_ACK:
-    case STATUS_DATA_TRANSMITTED_NACK:
       if (interface->state != STATE_TRANSMIT)
         break;
+
       /* Send next byte or stop transmission */
       if (interface->txLeft)
       {
@@ -110,6 +111,9 @@ static void interruptHandler(void *object)
       {
         if (interface->sendStopBit)
           reg->CONSET = CONSET_STO;
+        else
+          clearInterrupt = false;
+
         interface->state = STATE_IDLE;
         event = true;
       }
@@ -119,6 +123,7 @@ static void interruptHandler(void *object)
     case STATUS_DATA_RECEIVED_ACK:
       --interface->rxLeft;
       *interface->rxBuffer++ = reg->DAT;
+
       if (interface->rxLeft > 1)
         reg->CONSET = CONSET_AA;
       else
@@ -129,8 +134,10 @@ static void interruptHandler(void *object)
     case STATUS_DATA_RECEIVED_NACK:
       if (interface->state != STATE_RECEIVE)
         break;
+
       --interface->rxLeft;
       *interface->rxBuffer++ = reg->DAT;
+
       reg->CONSET = CONSET_STO;
       interface->state = STATE_IDLE;
       event = true;
@@ -138,6 +145,8 @@ static void interruptHandler(void *object)
 
     /* Arbitration has been lost during transmission or reception */
     case STATUS_ARBITRATION_LOST:
+    /* Data byte has been transmitted, NACK received */
+    case STATUS_DATA_TRANSMITTED_NACK:
     /* Address and direction bit have not been acknowledged */
     case STATUS_SLAVE_WRITE_NACK:
     case STATUS_SLAVE_READ_NACK:
@@ -149,7 +158,9 @@ static void interruptHandler(void *object)
     default:
       break;
   }
-  reg->CONCLR = CONCLR_SIC;
+
+  if (clearInterrupt)
+    reg->CONCLR = CONCLR_SIC;
 
   if (interface->state == STATE_IDLE || interface->state == STATE_ERROR)
     irqDisable(interface->base.irq);
@@ -289,12 +300,11 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
 
   interface->state = STATE_ADDRESS;
   reg->CONSET = CONSET_STA;
-  /*
-   * Flag should be cleared when Repeated Start generation is enabled.
-   * Interrupt with previous interface state will be generated otherwise.
-   */
-  if (!interface->sendStopBit)
+
+  /* Continue previous transmission when Repeated Start is enabled */
+  if (reg->STAT == STATUS_DATA_TRANSMITTED_ACK)
     reg->CONCLR = CONCLR_SIC;
+
   irqEnable(interface->base.irq);
 
   if (interface->blocking)
@@ -322,12 +332,19 @@ static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
   interface->rxBuffer = 0;
   interface->txBuffer = buffer;
 
-  interface->state = STATE_ADDRESS;
+  /* Stop previous transmission when Repeated Start is enabled */
+  if (reg->STAT == STATUS_DATA_TRANSMITTED_ACK)
+  {
+    reg->CONSET = CONSET_STO;
+    reg->CONCLR = CONCLR_SIC;
+  }
+
   /*
    * Start condition generation can be delayed when the bus is not free.
    * After Stop condition being transmitted Start will be generated
    * automatically.
    */
+  interface->state = STATE_ADDRESS;
   reg->CONSET = CONSET_STA;
   irqEnable(interface->base.irq);
 
