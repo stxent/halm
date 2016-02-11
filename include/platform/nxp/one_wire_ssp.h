@@ -35,14 +35,18 @@ struct OneWireSsp
 
   /* Address of the device */
   uint64_t address;
+
   /* Pointer to an input buffer */
   uint8_t *rxBuffer;
-  /* Number of words to be transmitted */
-  uint8_t left;
-  /* Position in a receiving word and temporary buffer for this word */
-  uint8_t bit, word;
   /* Output queue containing command, address and data */
   struct ByteQueue txQueue;
+
+  /* Number of words to be transmitted */
+  uint8_t left;
+  /* Position in a receiving word */
+  uint8_t bit;
+  /* Temporary buffer for receiving word */
+  uint8_t word;
 
   /* Current interface state */
   uint8_t state;

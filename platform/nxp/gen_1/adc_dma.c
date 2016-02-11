@@ -20,7 +20,7 @@ static void adcDeinit(void *);
 static enum result adcCallback(void *, void (*)(void *), void *);
 static enum result adcGet(void *, enum ifOption, void *);
 static enum result adcSet(void *, enum ifOption, const void *);
-static uint32_t adcRead(void *, uint8_t *, uint32_t);
+static size_t adcRead(void *, void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
     .size = sizeof(struct AdcDma),
@@ -41,7 +41,7 @@ static void dmaHandler(void *object)
   struct AdcDma * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->base.reg;
-  const uint32_t count = dmaCount(interface->dma);
+  const size_t count = dmaCount(interface->dma);
   const enum result res = dmaStatus(interface->dma);
 
   /* Scatter-gather transfer finished */
@@ -156,19 +156,17 @@ static enum result adcSet(void *object __attribute__((unused)),
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t adcRead(void *object, void *buffer, size_t length)
 {
   struct AdcDma * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->base.reg;
-  const uint32_t samples = length / SAMPLE_SIZE;
-
-  if (!samples)
-    return 0;
 
   /* Strict requirements on the buffer length */
-  assert(samples > (interface->size >> 1) && samples <= interface->size);
+  assert(length / SAMPLE_SIZE > (interface->size >> 1));
+  assert(length / SAMPLE_SIZE <= interface->size);
 
+  const size_t samples = length / SAMPLE_SIZE;
   const bool ongoing = dmaStatus(interface->dma) == E_BUSY;
 
   if (!ongoing)

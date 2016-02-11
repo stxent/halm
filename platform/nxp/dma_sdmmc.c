@@ -10,14 +10,14 @@
 #include <platform/nxp/sdmmc_defs.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result appendItem(void *, uint32_t, uint32_t);
+static enum result appendItem(void *, uint32_t, unsigned int);
 /*----------------------------------------------------------------------------*/
 static enum result controllerInit(void *, const void *);
 static void controllerDeinit(void *);
 static void controllerCallback(void *, void (*)(void *), void *);
-static uint32_t controllerCount(const void *);
+static size_t controllerCount(const void *);
 static enum result controllerReconfigure(void *, const void *);
-static enum result controllerStart(void *, void *, const void *, uint32_t);
+static enum result controllerStart(void *, void *, const void *, size_t);
 static enum result controllerStatus(const void *);
 static void controllerStop(void *);
 /*----------------------------------------------------------------------------*/
@@ -36,7 +36,7 @@ static const struct DmaClass controllerTable = {
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const DmaSdmmc = &controllerTable;
 /*----------------------------------------------------------------------------*/
-static enum result appendItem(void *object, uint32_t buffer, uint32_t size)
+static enum result appendItem(void *object, uint32_t address, unsigned int size)
 {
   struct DmaSdmmc * const controller = object;
   struct DmaSdmmcEntry * const entry = controller->list + controller->length;
@@ -58,7 +58,7 @@ static enum result appendItem(void *object, uint32_t buffer, uint32_t size)
 
   entry->control = control;
   entry->size = DESC_SIZE_BS1(size);
-  entry->buffer1 = buffer;
+  entry->buffer1 = address;
   entry->buffer2 = 0;
 
   return E_OK;
@@ -124,7 +124,7 @@ static void controllerCallback(void *object __attribute__((unused)),
 
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t controllerCount(const void *object __attribute__((unused)))
+static size_t controllerCount(const void *object __attribute__((unused)))
 {
   const struct DmaSdmmc * const controller = object;
   const LPC_SDMMC_Type * const reg = controller->reg;
@@ -134,7 +134,7 @@ static uint32_t controllerCount(const void *object __attribute__((unused)))
   if (!current)
     return 0;
 
-  return (uint32_t)(controller->length - (current - controller->list));
+  return controller->length - (current - controller->list);
 }
 /*----------------------------------------------------------------------------*/
 static enum result controllerReconfigure(void *object __attribute__((unused)),
@@ -144,12 +144,13 @@ static enum result controllerReconfigure(void *object __attribute__((unused)),
 }
 /*----------------------------------------------------------------------------*/
 static enum result controllerStart(void *object, void *destination,
-    const void *source, uint32_t size)
+    const void *source, size_t size)
 {
   struct DmaSdmmc * const controller = object;
   LPC_SDMMC_Type * const reg = controller->reg;
 
-  assert(size && size <= (uint32_t)(controller->capacity * DESC_SIZE_MAX));
+  assert(size);
+  assert(size <= controller->capacity * DESC_SIZE_MAX);
   assert(!destination ^ !source);
 
   const uint32_t address = destination ?
@@ -159,16 +160,16 @@ static enum result controllerStart(void *object, void *destination,
   reg->CTRL |= CTRL_DMA_RESET | CTRL_FIFO_RESET;
   while (reg->CTRL & (CTRL_DMA_RESET | CTRL_FIFO_RESET));
 
-  uint32_t offset = 0;
+  size_t offset = 0;
 
   controller->length = 0;
   while (offset < size)
   {
-    const uint32_t chunk = size - offset >= DESC_SIZE_MAX ?
-        DESC_SIZE_MAX : size - offset;
+    const unsigned int chunkLength = (size - offset >= DESC_SIZE_MAX) ?
+        DESC_SIZE_MAX : (size - offset);
 
-    appendItem(controller, address + offset, chunk);
-    offset += chunk;
+    appendItem(controller, address + offset, chunkLength);
+    offset += chunkLength;
   }
 
   /* Clear status flags */

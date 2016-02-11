@@ -11,16 +11,16 @@
 #include <platform/nxp/gpdma_list.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-static void appendItem(void *, void *, const void *, uint32_t);
+static void appendItem(void *, void *, const void *, unsigned int);
 static void interruptHandler(void *, enum result);
 static void startTransfer(struct GpDmaList *, const struct GpDmaListEntry *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelCallback(void *, void (*)(void *), void *);
-static uint32_t channelCount(const void *);
+static size_t channelCount(const void *);
 static enum result channelReconfigure(void *, const void *);
-static enum result channelStart(void *, void *, const void *, uint32_t);
+static enum result channelStart(void *, void *, const void *, size_t);
 static enum result channelStatus(const void *);
 static void channelStop(void *);
 /*----------------------------------------------------------------------------*/
@@ -40,7 +40,7 @@ static const struct DmaClass channelTable = {
 const struct DmaClass * const GpDmaList = &channelTable;
 /*----------------------------------------------------------------------------*/
 static void appendItem(void *object, void *destination, const void *source,
-    uint32_t size)
+    unsigned int size)
 {
   struct GpDmaList * const channel = object;
   struct GpDmaListEntry * const entry = channel->list + channel->current;
@@ -200,11 +200,11 @@ static void channelCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelCount(const void *object)
+static size_t channelCount(const void *object)
 {
   const struct GpDmaList * const channel = object;
 
-  return (uint32_t)channel->queued;
+  return channel->queued;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelReconfigure(void *object, const void *configBase)
@@ -225,13 +225,15 @@ static enum result channelReconfigure(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
-    const void *source, uint32_t size)
+    const void *source, size_t size)
 {
   struct GpDmaList * const channel = object;
+  uint8_t *destinationBuffer = destination;
+  const uint8_t *sourceBuffer = source;
 
   assert(size);
 
-  if (size > (uint32_t)((channel->capacity - channel->queued) * channel->size))
+  if (size > (size_t)((channel->capacity - channel->queued) * channel->size))
     return E_VALUE;
 
   const irqState state = irqSave();
@@ -258,19 +260,19 @@ static enum result channelStart(void *object, void *destination,
     channel->error = false;
   }
 
-  for (uint32_t offset = 0; offset < size;)
+  for (size_t offset = 0; offset < size;)
   {
-    const uint32_t chunkLength = size - offset >= channel->size ?
-        channel->size : size - offset;
-    const uint32_t totalLength = chunkLength * channel->width;
+    const unsigned int chunkLength = (size - offset >= channel->size) ?
+        channel->size : (size - offset);
+    const unsigned int totalLength = chunkLength * channel->width;
 
-    appendItem(channel, destination, source, chunkLength);
+    appendItem(channel, destinationBuffer, sourceBuffer, chunkLength);
 
     offset += chunkLength;
     if (channel->base.control & CONTROL_DST_INC)
-      destination = (void *)((uint32_t)destination + totalLength);
+      destinationBuffer += totalLength;
     if (channel->base.control & CONTROL_SRC_INC)
-      source = (const void *)((uint32_t)source + totalLength);
+      sourceBuffer += totalLength;
   }
 
   irqRestore(state);

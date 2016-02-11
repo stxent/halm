@@ -112,8 +112,8 @@ static void sdioDeinit(void *);
 static enum result sdioCallback(void *, void (*)(void *), void *);
 static enum result sdioGet(void *, enum ifOption, void *);
 static enum result sdioSet(void *, enum ifOption, const void *);
-static uint32_t sdioRead(void *, uint8_t *, uint32_t);
-static uint32_t sdioWrite(void *, const uint8_t *, uint32_t);
+static size_t sdioRead(void *, void *, size_t);
+static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct StateEntry stateTable[] = {
     [STATE_IDLE]        = {0, 0, STATE_IDLE},
@@ -825,7 +825,7 @@ static enum result sdioSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t sdioRead(void *object, void *buffer, size_t length)
 {
   struct SdioSpi * const interface = object;
 
@@ -864,7 +864,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   return length;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
   struct SdioSpi * const interface = object;
 

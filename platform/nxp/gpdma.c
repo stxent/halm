@@ -14,9 +14,9 @@ static void interruptHandler(void *, enum result);
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelCallback(void *, void (*)(void *), void *);
-static uint32_t channelCount(const void *);
+static size_t channelCount(const void *);
 static enum result channelReconfigure(void *, const void *);
-static enum result channelStart(void *, void *, const void *, uint32_t);
+static enum result channelStart(void *, void *, const void *, size_t);
 static enum result channelStatus(const void *);
 static void channelStop(void *);
 /*----------------------------------------------------------------------------*/
@@ -111,7 +111,7 @@ static void channelCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelCount(const void *object)
+static size_t channelCount(const void *object)
 {
   const struct GpDma * const channel = object;
   const LPC_GPDMACH_Type * const reg = channel->base.reg;
@@ -140,7 +140,7 @@ static enum result channelReconfigure(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStart(void *object, void *destination,
-    const void *source, uint32_t size)
+    const void *source, size_t size)
 {
   struct GpDma * const channel = object;
 

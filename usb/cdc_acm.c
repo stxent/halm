@@ -26,8 +26,8 @@ static void interfaceDeinit(void *);
 static enum result interfaceCallback(void *, void (*)(void *), void *);
 static enum result interfaceGet(void *, enum ifOption, void *);
 static enum result interfaceSet(void *, enum ifOption, const void *);
-static uint32_t interfaceRead(void *, uint8_t *, uint32_t);
-static uint32_t interfaceWrite(void *, const uint8_t *, uint32_t);
+static size_t interfaceRead(void *, void *, size_t);
+static size_t interfaceWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass interfaceTable = {
     .size = sizeof(struct CdcAcm),
@@ -353,10 +353,11 @@ static enum result interfaceSet(void *object __attribute__((unused)),
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t interfaceRead(void *object, void *buffer, size_t length)
 {
   struct CdcAcm * const interface = object;
-  const uint32_t sourceLength = length;
+  uint8_t *bufferPosition = buffer;
+  const size_t sourceLength = length;
   irqState state;
 
   if (interface->suspended)
@@ -367,8 +368,7 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
     struct UsbRequest *request;
     queuePeek(&interface->rxRequestQueue, &request);
 
-    const uint16_t chunkLength = request->base.length;
-
+    const unsigned int chunkLength = request->base.length;
     if (length < chunkLength)
       break;
 
@@ -377,8 +377,8 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
     interface->queuedRxBytes -= chunkLength;
     irqRestore(state);
 
-    memcpy(buffer, request->buffer, chunkLength);
-    buffer += chunkLength;
+    memcpy(bufferPosition, request->buffer, chunkLength);
+    bufferPosition += chunkLength;
     length -= chunkLength;
 
     request->base.length = 0;
@@ -400,11 +400,11 @@ static uint32_t interfaceRead(void *object, uint8_t *buffer, uint32_t length)
   return sourceLength - length;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
-    uint32_t length)
+static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 {
   struct CdcAcm * const interface = object;
-  const uint32_t sourceLength = length;
+  const uint8_t *bufferPosition = buffer;
+  const size_t sourceLength = length;
   irqState state;
 
   if (interface->suspended)
@@ -412,7 +412,7 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
 
   while (length && !queueEmpty(&interface->txRequestQueue))
   {
-    const uint16_t bytesToWrite = length > CDC_DATA_EP_SIZE ?
+    const unsigned int bytesToWrite = length > CDC_DATA_EP_SIZE ?
         CDC_DATA_EP_SIZE : (uint16_t)length;
     struct UsbRequest *request;
 
@@ -422,8 +422,8 @@ static uint32_t interfaceWrite(void *object, const uint8_t *buffer,
     irqRestore(state);
 
     request->base.length = bytesToWrite;
-    memcpy(request->buffer, buffer, bytesToWrite);
-    buffer += bytesToWrite;
+    memcpy(request->buffer, bufferPosition, bytesToWrite);
+    bufferPosition += bytesToWrite;
     length -= bytesToWrite;
 
     /* Append zero length packet when the last packet has maximum length */

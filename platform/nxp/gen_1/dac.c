@@ -15,7 +15,7 @@ static void dacDeinit(void *);
 static enum result dacCallback(void *, void (*)(void *), void *);
 static enum result dacGet(void *, enum ifOption, void *);
 static enum result dacSet(void *, enum ifOption, const void *);
-static uint32_t dacWrite(void *, const uint8_t *, uint32_t);
+static size_t dacWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass dacTable = {
     .size = sizeof(struct Dac),
@@ -86,7 +86,7 @@ static enum result dacSet(void *object __attribute__((unused)),
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t dacWrite(void *object, const void *buffer, size_t length)
 {
   struct Dac * const interface = object;
   LPC_DAC_Type * const reg = interface->base.reg;

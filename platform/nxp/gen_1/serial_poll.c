@@ -19,8 +19,8 @@ static void serialDeinit(void *);
 static enum result serialCallback(void *, void (*)(void *), void *);
 static enum result serialGet(void *, enum ifOption, void *);
 static enum result serialSet(void *, enum ifOption, const void *);
-static uint32_t serialRead(void *, uint8_t *, uint32_t);
-static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
+static size_t serialRead(void *, void *, size_t);
+static size_t serialWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass serialTable = {
     .size = sizeof(struct SerialPoll),
@@ -146,40 +146,41 @@ static enum result serialSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct SerialPoll * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  uint32_t read = 0;
+  uint8_t *bufferPosition = buffer;
+  size_t read = 0;
 
   /* Byte will be removed from FIFO after reading from RBR register */
   while (read < length && (reg->LSR & LSR_RDR))
   {
-    *buffer++ = (uint8_t)reg->RBR;
+    *bufferPosition++ = (uint8_t)reg->RBR;
     ++read;
   }
 
   return read;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialWrite(void *object, const uint8_t *buffer,
-    uint32_t length)
+static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
   struct SerialPoll * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  uint32_t written = 0;
+  const uint8_t *bufferPosition = buffer;
+  size_t written = 0;
 
   while (written < length)
   {
     /* Check transmitter state */
     if (reg->LSR & LSR_THRE)
     {
-      const uint32_t left = length - written;
-      uint32_t count = left < TX_FIFO_SIZE ? left : TX_FIFO_SIZE;
+      const size_t left = length - written;
+      unsigned int count = left < TX_FIFO_SIZE ? left : TX_FIFO_SIZE;
 
       written += count;
       while (count--)
-        reg->THR = *buffer++;
+        reg->THR = *bufferPosition++;
     }
   }
 

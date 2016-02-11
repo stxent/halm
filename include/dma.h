@@ -12,7 +12,7 @@
 #ifndef DMA_H_
 #define DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
+#include <stddef.h>
 #include <entity.h>
 #include <error.h>
 /*----------------------------------------------------------------------------*/
@@ -47,9 +47,9 @@ struct DmaClass
   CLASS_HEADER
 
   void (*callback)(void *, void (*)(void *), void *);
-  uint32_t (*count)(const void *);
+  size_t (*count)(const void *);
   enum result (*reconfigure)(void *, const void *);
-  enum result (*start)(void *, void *, const void *, uint32_t);
+  enum result (*start)(void *, void *, const void *, size_t);
   enum result (*status)(const void *);
   void (*stop)(void *);
 };
@@ -77,7 +77,7 @@ static inline void dmaCallback(void *channel, void (*callback)(void *),
  * @param channel Pointer to a Dma object.
  * @return The number of pending transfers is returned.
  */
-static inline uint32_t dmaCount(const void *channel)
+static inline size_t dmaCount(const void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->count(channel);
 }
@@ -103,7 +103,7 @@ static inline enum result dmaReconfigure(void *channel, const void *config)
  * @return @b E_OK on success.
  */
 static inline enum result dmaStart(void *channel, void *destination,
-    const void *source, uint32_t size)
+    const void *source, size_t size)
 {
   return ((const struct DmaClass *)CLASS(channel))->start(channel, destination,
       source, size);

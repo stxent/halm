@@ -39,8 +39,8 @@ static void oneWireDeinit(void *);
 static enum result oneWireCallback(void *, void (*)(void *), void *);
 static enum result oneWireGet(void *, enum ifOption, void *);
 static enum result oneWireSet(void *, enum ifOption, const void *);
-static uint32_t oneWireRead(void *, uint8_t *, uint32_t);
-static uint32_t oneWireWrite(void *, const uint8_t *, uint32_t);
+static size_t oneWireRead(void *, void *, size_t);
+static size_t oneWireWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass oneWireTable = {
     .size = sizeof(struct OneWireUart),
@@ -260,13 +260,13 @@ static enum result oneWireSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t oneWireRead(void *object, void *buffer, size_t length)
 {
   struct OneWireUart * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  uint32_t read = 0;
+  uint8_t read = 0;
 
-  if (!length || length > TX_QUEUE_LENGTH)
+  if (!length)
     return 0;
 
   byteQueueClear(&interface->txQueue);
@@ -300,13 +300,11 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
   return read;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
-    uint32_t length)
+static size_t oneWireWrite(void *object, const void *buffer, size_t length)
 {
   struct OneWireUart * const interface = object;
-  uint32_t written;
 
-  if (!length || length > TX_QUEUE_LENGTH)
+  if (!length)
     return 0;
 
   byteQueueClear(&interface->txQueue);
@@ -316,17 +314,18 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
   /* Select the addressing mode */
   if (interface->address)
   {
-    byteQueuePush(&interface->txQueue, (uint8_t)MATCH_ROM);
+    byteQueuePush(&interface->txQueue, MATCH_ROM);
     interface->left += byteQueuePushArray(&interface->txQueue,
         (const uint8_t *)&interface->address, sizeof(interface->address));
   }
   else
   {
-    byteQueuePush(&interface->txQueue, (uint8_t)SKIP_ROM);
+    byteQueuePush(&interface->txQueue, SKIP_ROM);
   }
 
-  /* Push packet payload */
-  written = byteQueuePushArray(&interface->txQueue, buffer, length);
+  /* Push data into the trasmit queue */
+  const uint8_t written = byteQueuePushArray(&interface->txQueue,
+      buffer, length);
   interface->left += written;
 
   /* Start sending */

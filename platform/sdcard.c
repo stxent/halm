@@ -41,8 +41,8 @@ static void cardDeinit(void *);
 static enum result cardCallback(void *, void (*)(void *), void *);
 static enum result cardGet(void *, enum ifOption, void *);
 static enum result cardSet(void *, enum ifOption, const void *);
-static uint32_t cardRead(void *, uint8_t *, uint32_t);
-static uint32_t cardWrite(void *, const uint8_t *, uint32_t);
+static size_t cardRead(void *, void *, size_t);
+static size_t cardWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass cardTable = {
     .size = sizeof(struct SdCard),
@@ -421,7 +421,7 @@ static enum result cardSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t cardRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t cardRead(void *object, void *buffer, size_t length)
 {
   const uint32_t blocks = length >> BLOCK_POW;
   struct SdCard * const device = object;
@@ -472,7 +472,7 @@ exit:
   return res == E_OK ? length : 0;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t cardWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t cardWrite(void *object, const void *buffer, size_t length)
 {
   const uint32_t blocks = length >> BLOCK_POW;
   struct SdCard * const device = object;

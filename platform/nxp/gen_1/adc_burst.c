@@ -18,7 +18,7 @@ static void adcDeinit(void *);
 static enum result adcCallback(void *, void (*)(void *), void *);
 static enum result adcGet(void *, enum ifOption, void *);
 static enum result adcSet(void *, enum ifOption, const void *);
-static uint32_t adcRead(void *, uint8_t *, uint32_t);
+static size_t adcRead(void *, void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
     .size = sizeof(struct AdcBurst),
@@ -138,12 +138,12 @@ static enum result adcSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t adcRead(void *object, void *buffer, size_t length)
 {
   struct AdcBurst * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->base.reg;
-  const uint32_t samples = length / SAMPLE_SIZE;
+  const size_t samples = length / SAMPLE_SIZE;
 
   if (!samples)
     return 0;

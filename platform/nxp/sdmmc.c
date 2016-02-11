@@ -24,8 +24,8 @@ static void sdioDeinit(void *);
 static enum result sdioCallback(void *, void (*)(void *), void *);
 static enum result sdioGet(void *, enum ifOption, void *);
 static enum result sdioSet(void *, enum ifOption, const void *);
-static uint32_t sdioRead(void *, uint8_t *, uint32_t);
-static uint32_t sdioWrite(void *, const uint8_t *, uint32_t);
+static size_t sdioRead(void *, void *, size_t);
+static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass sdioTable = {
     .size = sizeof(struct Sdmmc),
@@ -409,13 +409,14 @@ static enum result sdioSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t sdioRead(void *object, void *buffer, size_t length)
 {
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
   enum result res;
 
-  reg->BYTCNT = (uint32_t)length;
+  reg->BYTCNT = length;
+
   if ((res = dmaStart(interface->dma, buffer, 0, length)) != E_OK)
   {
     interface->status = res;
@@ -426,13 +427,14 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   return length;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
   enum result res;
 
-  reg->BYTCNT = (uint32_t)length;
+  reg->BYTCNT = length;
+
   if ((res = dmaStart(interface->dma, 0, buffer, length)) != E_OK)
   {
     interface->status = res;

@@ -44,8 +44,8 @@ static void i2cDeinit(void *);
 static enum result i2cCallback(void *, void (*)(void *), void *);
 static enum result i2cGet(void *, enum ifOption, void *);
 static enum result i2cSet(void *, enum ifOption, const void *);
-static uint32_t i2cRead(void *, uint8_t *, uint32_t);
-static uint32_t i2cWrite(void *, const uint8_t *, uint32_t);
+static size_t i2cRead(void *, void *, size_t);
+static size_t i2cWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass i2cTable = {
     .size = sizeof(struct I2c),
@@ -286,13 +286,15 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t i2cRead(void *object, void *buffer, size_t length)
 {
   struct I2c * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
-  if (!length || length > USHRT_MAX)
+  if (!length)
     return 0;
+  if (length > USHRT_MAX)
+    length = USHRT_MAX;
 
   interface->rxLeft = length;
   interface->txLeft = 0;
@@ -320,13 +322,15 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
   return length;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t i2cWrite(void *object, const void *buffer, size_t length)
 {
   struct I2c * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
-  if (!length || length > USHRT_MAX)
+  if (!length)
     return 0;
+  if (length > USHRT_MAX)
+    length = USHRT_MAX;
 
   interface->rxLeft = 0;
   interface->txLeft = length;

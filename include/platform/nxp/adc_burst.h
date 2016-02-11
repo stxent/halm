@@ -41,7 +41,7 @@ struct AdcBurst
   /* Pointer to an input buffer */
   uint16_t *buffer;
   /* Number of samples to be converted */
-  uint32_t left;
+  size_t left;
   /* Pin descriptor */
   struct AdcPin pin;
   /* Hardware trigger event */

@@ -23,8 +23,8 @@ static void i2sDeinit(void *);
 static enum result i2sCallback(void *, void (*)(void *), void *);
 static enum result i2sGet(void *, enum ifOption, void *);
 static enum result i2sSet(void *, enum ifOption, const void *);
-static uint32_t i2sRead(void *, uint8_t *, uint32_t);
-static uint32_t i2sWrite(void *, const uint8_t *, uint32_t);
+static size_t i2sRead(void *, void *, size_t);
+static size_t i2sWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass i2sTable = {
     .size = sizeof(struct I2sDma),
@@ -115,7 +115,7 @@ static void rxDmaHandler(void *object)
 
   if (reg->DMA1 & DMA_RX_ENABLE)
   {
-    const uint32_t count = dmaCount(interface->rxDma);
+    const size_t count = dmaCount(interface->rxDma);
     const enum result res = dmaStatus(interface->rxDma);
 
     if (res != E_BUSY)
@@ -417,19 +417,18 @@ static enum result i2sSet(void *object __attribute__((unused)),
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t i2sRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t i2sRead(void *object, void *buffer, size_t length)
 {
   struct I2sDma * const interface = object;
   LPC_I2S_Type * const reg = interface->base.reg;
-  const uint8_t sampleSizePow = interface->width + (interface->mono ? 0 : 1);
-  const uint32_t samples = length >> sampleSizePow;
-
-  if (!samples)
-    return 0;
+  const unsigned int sampleSizePow =
+      interface->width + (interface->mono ? 0 : 1);
 
   /* Strict requirements on the buffer length */
-  assert(samples > (interface->size >> 1) && samples <= interface->size);
+  assert((length >> sampleSizePow) > (interface->size >> 1));
+  assert((length >> sampleSizePow) <= interface->size);
 
+  const size_t samples = length >> sampleSizePow;
   const bool ongoing = dmaStatus(interface->rxDma) == E_BUSY;
 
   if (!ongoing)
@@ -457,19 +456,18 @@ static uint32_t i2sRead(void *object, uint8_t *buffer, uint32_t length)
   return samples << sampleSizePow;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t i2sWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t i2sWrite(void *object, const void *buffer, size_t length)
 {
   struct I2sDma * const interface = object;
   LPC_I2S_Type * const reg = interface->base.reg;
-  const uint8_t sampleSizePow = interface->width + (interface->mono ? 0 : 1);
-  const uint32_t samples = length >> sampleSizePow;
-
-  if (!samples)
-    return 0;
+  const unsigned int sampleSizePow =
+      interface->width + (interface->mono ? 0 : 1);
 
   /* Strict requirements on the buffer length */
-  assert(samples > (interface->size >> 1) && samples <= interface->size);
+  assert((length >> sampleSizePow) > (interface->size >> 1));
+  assert((length >> sampleSizePow) <= interface->size);
 
+  const size_t samples = length >> sampleSizePow;
   const bool ongoing = dmaStatus(interface->txDma) == E_BUSY;
 
   /*

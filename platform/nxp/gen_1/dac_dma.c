@@ -20,7 +20,7 @@ static void dacDeinit(void *);
 static enum result dacCallback(void *, void (*)(void *), void *);
 static enum result dacGet(void *, enum ifOption, void *);
 static enum result dacSet(void *, enum ifOption, const void *);
-static uint32_t dacWrite(void *, const uint8_t *, uint32_t);
+static size_t dacWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass dacTable = {
     .size = sizeof(struct DacDma),
@@ -56,7 +56,7 @@ static enum result dmaSetup(struct DacDma *interface,
 {
   const struct GpDmaListConfig channelConfig = {
       .event = GPDMA_DAC,
-      .channel = config->channel,
+      .channel = config->dma,
       .source.increment = true,
       .destination.increment = false,
       .type = GPDMA_TYPE_M2P,
@@ -84,7 +84,7 @@ static enum result dacInit(void *object, const void *configBase)
   struct DacDma * const interface = object;
   enum result res;
 
-  assert(config->frequency);
+  assert(config->rate);
   assert(config->size);
 
   /* Call base class constructor */
@@ -101,7 +101,7 @@ static enum result dacInit(void *object, const void *configBase)
 
   reg->CR = (config->value & CR_OUTPUT_MASK) | CR_BIAS;
   reg->CTRL = CTRL_DBLBUF_ENA | CTRL_DMA_ENA;
-  reg->CNTVAL = dacGetClock(object) / config->frequency - 1;
+  reg->CNTVAL = dacGetClock(object) / config->rate - 1;
 
   return E_OK;
 }
@@ -153,18 +153,16 @@ static enum result dacSet(void *object __attribute__((unused)),
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t dacWrite(void *object, const void *buffer, size_t length)
 {
   struct DacDma * const interface = object;
   LPC_DAC_Type * const reg = interface->base.reg;
-  const uint32_t samples = length / SAMPLE_SIZE;
-
-  if (!samples)
-    return 0;
 
   /* Strict requirements on the buffer length */
-  assert(samples > (interface->size >> 1) && samples <= interface->size);
+  assert(length / SAMPLE_SIZE > (interface->size >> 1));
+  assert(length / SAMPLE_SIZE <= interface->size);
 
+  const size_t samples = length / SAMPLE_SIZE;
   const bool ongoing = dmaStatus(interface->dma) == E_BUSY;
 
   /* When the transfer is already active it will be continued */

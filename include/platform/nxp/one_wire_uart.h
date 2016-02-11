@@ -37,24 +37,28 @@ struct OneWireUart
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointer to an input buffer */
-  uint8_t *rxBuffer;
   /* Address of the device */
   uint64_t address;
-  /* Number of bytes to be transmitted */
-  uint8_t left;
-  /* Position in a receiving word and temporary buffer for this word */
-  uint8_t bit, word;
+
+  /* Pointer to an input buffer */
+  uint8_t *rxBuffer;
   /* Output queue containing command, address and data */
   struct ByteQueue txQueue;
 
-  /* Computed data rates for reset and data transmission modes */
-  struct UartRateConfig dataRate, resetRate;
+  /* Number of bytes to be transmitted */
+  uint8_t left;
+  /* Position in a receiving word */
+  uint8_t bit;
+  /* Temporary buffer for receiving word */
+  uint8_t word;
 
   /* Current interface state */
   uint8_t state;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
+
+  /* Computed data rates for reset and data transmission modes */
+  struct UartRateConfig dataRate, resetRate;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_ONE_WIRE_UART_H_ */

@@ -42,5 +42,5 @@ void usbTrace(const char *format, ...)
 
   memcpy(traceBuffer + length, "\r\n", 2);
 
-  ifWrite(traceInterface, (const uint8_t *)traceBuffer, (uint32_t)(length + 2));
+  ifWrite(traceInterface, traceBuffer, (unsigned long)(length + 2));
 }

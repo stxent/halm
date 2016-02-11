@@ -32,8 +32,8 @@ static void serialDeinit(void *);
 static enum result serialCallback(void *, void (*)(void *), void *);
 static enum result serialGet(void *, enum ifOption, void *);
 static enum result serialSet(void *, enum ifOption, const void *);
-static uint32_t serialRead(void *, uint8_t *, uint32_t);
-static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
+static size_t serialRead(void *, void *, size_t);
+static size_t serialWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass serialTable = {
     .size = sizeof(struct SerialDma),
@@ -295,10 +295,10 @@ static enum result serialSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
-  uint32_t read;
+  unsigned int read;
   irqState state;
 
   state = irqSave();
@@ -308,13 +308,13 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   return read;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialWrite(void *object, const uint8_t *buffer,
-    uint32_t length)
+static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  uint32_t chunkLength = 0;
-  uint32_t sourceLength = length;
+  const uint8_t *bufferPointer = buffer;
+  const size_t sourceLength = length;
+  unsigned int chunkLength = 0;
 
   /*
    * Disable interrupts before status check because DMA interrupt
@@ -326,12 +326,12 @@ static uint32_t serialWrite(void *object, const uint8_t *buffer,
   {
     chunkLength = length < SINGLE_BUFFER_SIZE ? length : SINGLE_BUFFER_SIZE;
 
-    memcpy(interface->txBuffer, buffer, chunkLength);
+    memcpy(interface->txBuffer, bufferPointer, chunkLength);
 
     length -= chunkLength;
-    buffer += chunkLength;
+    bufferPointer += chunkLength;
   }
-  length -= byteQueuePushArray(&interface->txQueue, buffer, length);
+  length -= byteQueuePushArray(&interface->txQueue, bufferPointer, length);
 
   irqRestore(state);
 

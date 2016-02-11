@@ -42,9 +42,9 @@ struct Spi
   /* Pointer to an output buffer */
   const uint8_t *txBuffer;
   /* Number of bytes to be received */
-  uint32_t rxLeft;
+  size_t rxLeft;
   /* Number of bytes to be transmitted */
-  uint32_t txLeft;
+  size_t txLeft;
 
   /* Selection between blocking mode and zero copy mode */
   bool blocking;

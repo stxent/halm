@@ -18,14 +18,14 @@ struct GpTimerConfig
    * when option is set to zero.
    */
   uint32_t frequency;
+  /** Optional: match event used as a reset source for the timer. */
+  enum gpTimerEvent event;
   /** Optional: timer interrupt priority. */
   irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Optional: do not enable the timer after the initialization. */
   bool disabled;
-  /** Optional: match event used as a reset source for the timer. */
-  enum gpTimerEvent event;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimer

@@ -18,8 +18,8 @@ static void spiDeinit(void *);
 static enum result spiCallback(void *, void (*)(void *), void *);
 static enum result spiGet(void *, enum ifOption, void *);
 static enum result spiSet(void *, enum ifOption, const void *);
-static uint32_t spiRead(void *, uint8_t *, uint32_t);
-static uint32_t spiWrite(void *, const uint8_t *, uint32_t);
+static size_t spiRead(void *, void *, size_t);
+static size_t spiWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass spiTable = {
     .size = sizeof(struct Spi),
@@ -39,8 +39,8 @@ static void interruptHandler(void *object)
 {
   struct Spi * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
-  uint32_t count = interface->txLeft > FIFO_DEPTH ? FIFO_DEPTH
-      : interface->txLeft;
+  unsigned int count = interface->txLeft > FIFO_DEPTH ?
+      FIFO_DEPTH : interface->txLeft;
 
   if (interface->rxBuffer)
   {
@@ -195,7 +195,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t spiRead(void *object, void *buffer, size_t length)
 {
   struct Spi * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
@@ -223,7 +223,7 @@ static uint32_t spiRead(void *object, uint8_t *buffer, uint32_t length)
   return length;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t spiWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t spiWrite(void *object, const void *buffer, size_t length)
 {
   struct Spi * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;

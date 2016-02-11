@@ -22,8 +22,8 @@ static void serialDeinit(void *);
 static enum result serialCallback(void *, void (*)(void *), void *);
 static enum result serialGet(void *, enum ifOption, void *);
 static enum result serialSet(void *, enum ifOption, const void *);
-static uint32_t serialRead(void *, uint8_t *, uint32_t);
-static uint32_t serialWrite(void *, const uint8_t *, uint32_t);
+static size_t serialRead(void *, void *, size_t);
+static size_t serialWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass serialTable = {
     .size = sizeof(struct Serial),
@@ -225,10 +225,10 @@ static enum result serialSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct Serial * const interface = object;
-  uint32_t read;
+  unsigned int read;
 
   irqDisable(interface->base.irq);
   read = byteQueuePopArray(&interface->rxQueue, buffer, length);
@@ -237,27 +237,29 @@ static uint32_t serialRead(void *object, uint8_t *buffer, uint32_t length)
   return read;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t serialWrite(void *object, const uint8_t *buffer,
-    uint32_t length)
+static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
   struct Serial * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  uint32_t written = 0;
+  const uint8_t *bufferPosition = buffer;
+  size_t written = 0;
 
   irqDisable(interface->base.irq);
+
   /* Check transmitter state */
   if (reg->LSR & LSR_THRE && byteQueueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle so fill TX FIFO */
-    const uint32_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
+    const unsigned int count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
 
     for (; written < count; ++written)
-      reg->THR = *buffer++;
+      reg->THR = *bufferPosition++;
     length -= written;
   }
   /* Fill TX queue with the rest of data */
   if (length)
-    written += byteQueuePushArray(&interface->txQueue, buffer, length);
+    written += byteQueuePushArray(&interface->txQueue, bufferPosition, length);
+
   irqEnable(interface->base.irq);
 
   return written;

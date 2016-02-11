@@ -18,8 +18,8 @@ static void flashDeinit(void *);
 static enum result flashCallback(void *, void (*)(void *), void *);
 static enum result flashGet(void *, enum ifOption, void *);
 static enum result flashSet(void *, enum ifOption, const void *);
-static uint32_t flashRead(void *, uint8_t *, uint32_t);
-static uint32_t flashWrite(void *, const uint8_t *, uint32_t);
+static size_t flashRead(void *, void *, size_t);
+static size_t flashWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass flashTable = {
     .size = sizeof(struct Flash),
@@ -177,7 +177,7 @@ static enum result flashSet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t flashRead(void *object, uint8_t *buffer, uint32_t length)
+static size_t flashRead(void *object, void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
@@ -194,7 +194,7 @@ static uint32_t flashRead(void *object, uint8_t *buffer, uint32_t length)
   return length;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t flashWrite(void *object, const uint8_t *buffer, uint32_t length)
+static size_t flashWrite(void *object, const void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
