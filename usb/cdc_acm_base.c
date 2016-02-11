@@ -267,7 +267,7 @@ static enum result iterateOverDescriptors(struct CdcAcmBase *driver,
   };
 #endif
 
-  for (uint8_t i = 0; i < ARRAY_SIZE(descriptors); ++i)
+  for (unsigned int i = 0; i < ARRAY_SIZE(descriptors); ++i)
   {
     const enum result res = action(driver->device, descriptors[i]);
 

@@ -330,7 +330,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
 
       if (response == SDIO_RESPONSE_LONG)
       {
-        for (uint8_t index = 0; index < 4; ++index)
+        for (unsigned int index = 0; index < 4; ++index)
           buffer[index] = reg->RESP[index];
       }
       else if (response == SDIO_RESPONSE_SHORT)
@@ -415,7 +415,7 @@ static uint32_t sdioRead(void *object, uint8_t *buffer, uint32_t length)
   LPC_SDMMC_Type * const reg = interface->base.reg;
   enum result res;
 
-  reg->BYTCNT = length;
+  reg->BYTCNT = (uint32_t)length;
   if ((res = dmaStart(interface->dma, buffer, 0, length)) != E_OK)
   {
     interface->status = res;
@@ -432,7 +432,7 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
   LPC_SDMMC_Type * const reg = interface->base.reg;
   enum result res;
 
-  reg->BYTCNT = length;
+  reg->BYTCNT = (uint32_t)length;
   if ((res = dmaStart(interface->dma, 0, buffer, length)) != E_OK)
   {
     interface->status = res;

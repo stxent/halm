@@ -138,7 +138,7 @@ static enum result identifyCard(struct SdCard *device)
     ocr |= OCR_VOLTAGE_MASK;
 
   /* Wait till card becomes ready */
-  for (uint8_t counter = 100; counter; --counter)
+  for (unsigned int counter = 100; counter; --counter)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_APP_CMD,
         responseType, 0), 0, 0);

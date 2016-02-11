@@ -94,9 +94,9 @@ enum sysClockDevice
 };
 /*----------------------------------------------------------------------------*/
 void sysClockControl(enum sysClockDevice, enum sysClockDiv);
-void sysFlashLatency(uint8_t);
+void sysFlashLatency(unsigned int);
 /*----------------------------------------------------------------------------*/
-static inline uint32_t sysClockDivToValue(enum sysClockDiv divisor)
+static inline unsigned int sysClockDivToValue(enum sysClockDiv divisor)
 {
   return 1 << divisor;
 }

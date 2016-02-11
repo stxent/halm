@@ -14,12 +14,12 @@
 struct AdcBlockDescriptor
 {
   LPC_ADC_Type *reg;
-  /* Peripheral interrupt request identifier */
-  irqNumber irq;
   /* Clock to register interface and to peripheral */
   enum sysClockBranch clock;
   /* Reset control identifier */
   enum sysDeviceReset reset;
+  /* Peripheral interrupt request identifier */
+  irqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 /* Pack or unpack conversion channel and pin function */
@@ -215,7 +215,7 @@ void adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
     /* Inputs are connected to both peripherals on parts without ADCHS */
     const struct PinEntry *entry = 0;
 
-    for (uint8_t part = 0; !entry && part < 2; ++part)
+    for (unsigned int part = 0; !entry && part < 2; ++part)
       entry = pinFind(adcPins, key, part);
     assert(entry);
 

@@ -7,6 +7,8 @@
 #ifndef PLATFORM_NXP_LPC43XX_GPDMA_BASE_H_
 #define PLATFORM_NXP_LPC43XX_GPDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
 /** Direct Memory Access controller connections. */
 enum gpDmaEvent
 {

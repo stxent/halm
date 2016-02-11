@@ -22,10 +22,10 @@ struct AdcBurstConfig
 {
   /** Mandatory: peripheral unit. */
   struct AdcUnit *parent;
-  /** Mandatory: analog input. */
-  pinNumber pin;
   /** Optional: trigger to start the conversion. */
   enum adcEvent event;
+  /** Mandatory: analog input. */
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct AdcBurst

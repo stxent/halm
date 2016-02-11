@@ -106,7 +106,7 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_SIZE:
-      *((uint32_t *)data) = interface->size;
+      *(uint32_t *)data = interface->size;
       return E_OK;
 
     default:

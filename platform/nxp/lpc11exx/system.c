@@ -8,7 +8,7 @@
 #include <platform/nxp/lpc11exx/system_defs.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-uint8_t sysFlashLatency()
+unsigned int sysFlashLatency()
 {
   return FLASHCFG_FLASHTIM_VALUE(LPC_FMC->FLASHCFG) + 1;
 }
@@ -21,7 +21,7 @@ uint8_t sysFlashLatency()
  *   - 2 clocks: up to 40 MHz.
  *   - 3 clocks: up to 50 MHz.
  */
-void sysFlashLatencyUpdate(uint8_t value)
+void sysFlashLatencyUpdate(unsigned int value)
 {
   LPC_FMC->FLASHCFG = (LPC_FMC->FLASHCFG & ~FLASHCFG_FLASHTIM_MASK)
       | FLASHCFG_FLASHTIM(value - 1);

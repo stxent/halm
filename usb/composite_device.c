@@ -32,7 +32,7 @@ const struct UsbDriverClass * const CompositeDeviceProxy = &driverTable;
 /*----------------------------------------------------------------------------*/
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
-static void *devAllocate(void *, uint8_t);
+static void *devCreateEndpoint(void *, uint8_t);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
 static enum result devBind(void *, void *);
@@ -50,7 +50,7 @@ static const struct CompositeDeviceClass deviceTable = {
         .init = devInit,
         .deinit = devDeinit,
 
-        .allocate = devAllocate,
+        .createEndpoint = devCreateEndpoint,
         .setAddress = devSetAddress,
         .setConnected = devSetConnected,
         .bind = devBind,

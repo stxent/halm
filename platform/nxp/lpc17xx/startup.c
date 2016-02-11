@@ -12,7 +12,7 @@ void platformStartup(void);
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
-  static const enum sysPowerDevice peripheralsToDisable[] = {
+  static const enum sysPowerDevice blocksToDisable[] = {
       PWR_TIM0,
       PWR_TIM1,
       PWR_UART0,
@@ -31,6 +31,6 @@ void platformStartup(void)
    * Other peripherals are disabled by default.
    */
 
-  for (uint8_t index = 0; index < ARRAY_SIZE(peripheralsToDisable); ++index)
-    sysPowerDisable(peripheralsToDisable[index]);
+  for (unsigned int index = 0; index < ARRAY_SIZE(blocksToDisable); ++index)
+    sysPowerDisable(blocksToDisable[index]);
 }

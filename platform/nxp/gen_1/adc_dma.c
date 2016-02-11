@@ -67,8 +67,8 @@ static enum result dmaSetup(struct AdcDma *interface,
     const struct AdcDmaConfig *config)
 {
   const struct GpDmaListConfig dmaConfig = {
-      .event = GPDMA_ADC0 + config->channel,
-      .channel = config->channel,
+      .event = GPDMA_ADC0 + config->parent->base.channel,
+      .channel = config->dma,
       .source.increment = false,
       .destination.increment = true,
       .type = GPDMA_TYPE_P2M,
@@ -141,7 +141,7 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
       return dmaStatus(interface->dma);
 
     case IF_WIDTH:
-      *((uint32_t *)data) = ADC_RESOLUTION;
+      *(uint32_t *)data = ADC_RESOLUTION;
       return E_OK;
 
     default:

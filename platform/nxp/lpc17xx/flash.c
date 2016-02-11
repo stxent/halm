@@ -57,7 +57,6 @@ static enum result flashInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct Flash * const interface = object;
-
   const uint32_t id = flashReadId();
 
   switch (id)
@@ -127,7 +126,7 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_SIZE:
-      *((uint32_t *)data) = interface->size;
+      *(uint32_t *)data = interface->size;
       return E_OK;
 
     default:

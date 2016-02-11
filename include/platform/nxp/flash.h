@@ -7,6 +7,7 @@
 #ifndef PLATFORM_NXP_FLASH_H_
 #define PLATFORM_NXP_FLASH_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
 #include <interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Flash;

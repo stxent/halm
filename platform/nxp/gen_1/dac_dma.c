@@ -138,7 +138,7 @@ static enum result dacGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_WIDTH:
-      *((uint32_t *)data) = DAC_RESOLUTION;
+      *(uint32_t *)data = DAC_RESOLUTION;
       return E_OK;
 
     default:

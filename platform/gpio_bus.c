@@ -87,7 +87,7 @@ static uint32_t busRead(void *object)
   struct CommonGpioBus * const bus = object;
   uint32_t result = 0;
 
-  for (uint8_t position = 0; position < bus->count; ++position)
+  for (unsigned int position = 0; position < bus->count; ++position)
     result |= pinRead(bus->pins[position]) << position;
 
   return result;
@@ -97,6 +97,6 @@ static void busWrite(void *object, uint32_t value)
 {
   struct CommonGpioBus * const bus = object;
 
-  for (uint8_t position = 0; position < bus->count; ++position)
+  for (unsigned int position = 0; position < bus->count; ++position)
     pinWrite(bus->pins[position], (value >> position) & 1);
 }

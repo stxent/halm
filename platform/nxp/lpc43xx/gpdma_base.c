@@ -28,7 +28,7 @@ struct DmaHandler
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(uint8_t);
 /*----------------------------------------------------------------------------*/
-static uint8_t dmaHandlerAllocate(struct GpDmaBase *, enum gpDmaEvent);
+static unsigned int dmaHandlerAllocate(struct GpDmaBase *, enum gpDmaEvent);
 static void dmaHandlerAttach(void);
 static void dmaHandlerDetach(void);
 static void dmaHandlerFree(struct GpDmaBase *);
@@ -120,7 +120,7 @@ void GPDMA_ISR(void)
 
   while (intStatus)
   {
-    const uint32_t index = 31 - countLeadingZeros32(intStatus);
+    const unsigned int index = 31 - countLeadingZeros32(intStatus);
     const uint32_t mask = 1 << index;
 
     struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
@@ -140,10 +140,10 @@ void GPDMA_ISR(void)
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
+static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
     enum gpDmaEvent event)
 {
-  uint8_t entryIndex = 0, entryOffset = 0, minValue = 0;
+  unsigned int entryIndex = 0, entryOffset = 0, minValue = 0;
   bool found = false;
 
   assert(event < GPDMA_MEMORY);
@@ -151,9 +151,9 @@ static uint8_t dmaHandlerAllocate(struct GpDmaBase *channel,
   spinLock(&spinlock);
   dmaHandlerInstantiate();
 
-  for (uint8_t index = 0; index < 16; ++index)
+  for (unsigned int index = 0; index < 16; ++index)
   {
-    uint8_t entry;
+    unsigned int entry;
     bool allowed = false;
 
     for (entry = 0; entry < 4; ++entry)
@@ -218,7 +218,7 @@ static void dmaHandlerDetach(void)
 static void dmaHandlerFree(struct GpDmaBase *channel)
 {
   uint32_t mask = ~channel->mux.mask;
-  uint8_t index = 0;
+  unsigned int index = 0;
 
   /* DMA Handler is already initialized */
   while (mask)
@@ -242,7 +242,7 @@ static enum result dmaHandlerInit(void *object,
 {
   struct DmaHandler * const handler = object;
 
-  for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
+  for (unsigned int index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
     handler->descriptors[index] = 0;
 
   memset(handler->connections, 0, sizeof(handler->connections));
@@ -272,7 +272,7 @@ static enum result channelInit(void *object, const void *configBase)
 
   if (config->type != GPDMA_TYPE_M2M)
   {
-    const uint8_t peripheral = dmaHandlerAllocate(channel, config->event);
+    const unsigned int peripheral = dmaHandlerAllocate(channel, config->event);
 
     /* Only AHB master 1 can access a peripheral */
     switch (config->type)

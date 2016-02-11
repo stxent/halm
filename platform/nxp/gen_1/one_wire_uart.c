@@ -266,7 +266,7 @@ static uint32_t oneWireRead(void *object, uint8_t *buffer, uint32_t length)
   LPC_UART_Type * const reg = interface->base.reg;
   uint32_t read = 0;
 
-  if (!length)
+  if (!length || length > TX_QUEUE_LENGTH)
     return 0;
 
   byteQueueClear(&interface->txQueue);
@@ -306,7 +306,7 @@ static uint32_t oneWireWrite(void *object, const uint8_t *buffer,
   struct OneWireUart * const interface = object;
   uint32_t written;
 
-  if (!length)
+  if (!length || length > TX_QUEUE_LENGTH)
     return 0;
 
   byteQueueClear(&interface->txQueue);

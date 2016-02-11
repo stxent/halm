@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <memory.h>
 #include <platform/nxp/gen_1/i2c_defs.h>
 #include <platform/nxp/i2c.h>
@@ -290,10 +291,10 @@ static uint32_t i2cRead(void *object, uint8_t *buffer, uint32_t length)
   struct I2c * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
-  if (!length)
+  if (!length || length > USHRT_MAX)
     return 0;
 
-  interface->rxLeft = (uint16_t)length;
+  interface->rxLeft = length;
   interface->txLeft = 0;
   interface->rxBuffer = buffer;
   interface->txBuffer = 0;
@@ -324,11 +325,11 @@ static uint32_t i2cWrite(void *object, const uint8_t *buffer, uint32_t length)
   struct I2c * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
-  if (!length)
+  if (!length || length > USHRT_MAX)
     return 0;
 
   interface->rxLeft = 0;
-  interface->txLeft = (uint16_t)length;
+  interface->txLeft = length;
   interface->rxBuffer = 0;
   interface->txBuffer = buffer;
 

@@ -71,7 +71,7 @@ static enum result dacGet(void *object __attribute__((unused)),
   switch (option)
   {
     case IF_WIDTH:
-      *((uint32_t *)data) = DAC_RESOLUTION;
+      *(uint32_t *)data = DAC_RESOLUTION;
       return E_OK;
 
     default:
@@ -90,9 +90,8 @@ static uint32_t dacWrite(void *object, const uint8_t *buffer, uint32_t length)
 {
   struct Dac * const interface = object;
   LPC_DAC_Type * const reg = interface->base.reg;
-  const uint32_t samples = length / SAMPLE_SIZE;
 
-  if (!samples)
+  if (length < SAMPLE_SIZE)
     return 0;
 
   reg->CR = (*((const uint16_t *)buffer) & CR_OUTPUT_MASK) | CR_BIAS;

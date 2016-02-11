@@ -18,7 +18,7 @@ void sspConfigPins(struct SspBase *interface,
   };
 
   /* Direction configuration is not needed for alternate function pins */
-  for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
+  for (unsigned int index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {
@@ -45,7 +45,7 @@ void sspSetRate(struct SspBase *interface, uint32_t rate)
     divisor = 127 * 256 - 1;
 
   LPC_SSP_Type * const reg = interface->reg;
-  const uint8_t prescaler = 1 + (divisor >> 8);
+  const unsigned int prescaler = 1 + (divisor >> 8);
 
   reg->CPSR = prescaler << 1;
   reg->CR0 = (reg->CR0 & ~CR0_SCR_MASK) | CR0_SCR(divisor / prescaler);

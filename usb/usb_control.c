@@ -168,7 +168,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   if (queueSize(&control->requestPool) < chunkCount)
     return;
 
-  for (uint8_t index = 0; index < chunkCount; ++index)
+  for (unsigned int index = 0; index < chunkCount; ++index)
   {
     queuePop(&control->requestPool, &request);
 

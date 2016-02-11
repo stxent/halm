@@ -31,18 +31,18 @@ void sysClockDisable(enum sysClockBranch branch)
   *reg &= ~CFG_RUN; /* Disable clock */
 }
 /*----------------------------------------------------------------------------*/
-void sysFlashEnable(uint8_t bank)
+void sysFlashEnable(unsigned int bank)
 {
   /* Flash bank A or B */
   LPC_CREG->FLASHCFG[bank] |= FLASHCFG_POW;
 }
 /*----------------------------------------------------------------------------*/
-void sysFlashDisable(uint8_t bank)
+void sysFlashDisable(unsigned int bank)
 {
   LPC_CREG->FLASHCFG[bank] &= ~FLASHCFG_POW;
 }
 /*----------------------------------------------------------------------------*/
-uint8_t sysFlashLatency()
+unsigned int sysFlashLatency()
 {
   /* Return access time for one of the banks */
   return FLASHCFG_FLASHTIM_VALUE(LPC_CREG->FLASHCFGA) + 1;
@@ -63,7 +63,7 @@ uint8_t sysFlashLatency()
  *   - 9 clocks: up to 193 MHz.
  *   - 10 clocks: up to 204 MHz, safe setting for all allowed conditions.
  */
-void sysFlashLatencyUpdate(uint8_t value)
+void sysFlashLatencyUpdate(unsigned int value)
 {
   const uint32_t data = FLASHCFG_FLASHTIM(value - 1);
 
@@ -75,7 +75,7 @@ void sysFlashLatencyUpdate(uint8_t value)
 void sysResetEnable(enum sysDeviceReset block)
 {
   const uint32_t mask = BIT(block & 0x1F);
-  const uint8_t index = block >> 5;
+  const unsigned int index = block >> 5;
 
   LPC_RGU->RESET_CTRL[index] = mask;
 

@@ -196,7 +196,7 @@ static void configPins(struct SspBase *interface,
       config->miso, config->mosi, config->sck, config->cs
   };
 
-  for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
+  for (unsigned int index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {

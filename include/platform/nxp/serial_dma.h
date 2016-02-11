@@ -26,6 +26,8 @@ struct SerialDmaConfig
   uint32_t rxLength;
   /** Mandatory: output queue size. */
   uint32_t txLength;
+  /** Optional: parity generation and checking. */
+  enum uartParity parity;
   /** Mandatory: serial input. */
   pinNumber rx;
   /** Mandatory: serial output. */
@@ -34,8 +36,6 @@ struct SerialDmaConfig
   uint8_t channel;
   /** Mandatory: direct memory access channels. */
   uint8_t dma[2];
-  /** Optional: parity generation and checking. */
-  enum uartParity parity;
 };
 /*----------------------------------------------------------------------------*/
 struct SerialDma

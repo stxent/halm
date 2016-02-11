@@ -290,7 +290,7 @@ static enum state stateReadLongAdvance(struct SdioSpi *interface)
 {
   const uint32_t * const buffer = (const uint32_t *)interface->buffer;
 
-  for (uint8_t index = 0; index < 4; ++index)
+  for (unsigned int index = 0; index < 4; ++index)
     interface->response[3 - index] = fromBigEndian32(buffer[index]);
 
   interface->status = E_OK;
@@ -337,7 +337,7 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
 
   if (flags & SDIO_CHECK_CRC)
   {
-    const uint16_t blockIndex = (interface->length - interface->left)
+    const unsigned int blockIndex = (interface->length - interface->left)
         / interface->blockSize - 1;
     uint16_t receivedCrc;
 
@@ -395,8 +395,8 @@ static void stateWriteTokenEnter(struct SdioSpi *interface)
 {
   /* Auto stop is enabled only during multiple block write */
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
-  interface->buffer[0] = flags & SDIO_AUTO_STOP ? TOKEN_START_MULTIPLE
-      : TOKEN_START;
+  interface->buffer[0] = flags & SDIO_AUTO_STOP ?
+      TOKEN_START_MULTIPLE : TOKEN_START;
 
   interface->retries = TOKEN_RETRIES;
   ifWrite(interface->bus, interface->buffer, 1);
@@ -416,7 +416,7 @@ static void stateWriteCrcEnter(struct SdioSpi *interface)
 
   if (flags & SDIO_CHECK_CRC)
   {
-    const uint16_t blockIndex = (interface->length - interface->left)
+    const unsigned int blockIndex = (interface->length - interface->left)
           / interface->blockSize - 1;
 
     computedCrc = interface->crcPool[blockIndex];
@@ -615,16 +615,16 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
 /*----------------------------------------------------------------------------*/
 static enum result verifyChecksum(struct SdioSpi *interface)
 {
-  const uint16_t blockCount = interface->length / interface->blockSize;
+  const unsigned int blockCount = interface->length / interface->blockSize;
   enum result res = E_OK;
 
-  for (uint16_t index = 0; index < blockCount; ++index)
+  for (unsigned int index = 0; index < blockCount; ++index)
   {
-    const uint16_t computed = crcUpdate(interface->crc16, INITIAL_CRC16,
+    const uint16_t computedCrc = crcUpdate(interface->crc16, INITIAL_CRC16,
         interface->rxBuffer + index * interface->blockSize,
         interface->blockSize);
 
-    if (computed != interface->crcPool[index])
+    if (computedCrc != interface->crcPool[index])
     {
       res = E_INTERFACE;
       break;
@@ -803,7 +803,8 @@ static enum result sdioSet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_SDIO_BLOCK_SIZE:
-      interface->blockSize = (uint16_t)(*(const uint32_t *)data);
+      /* TODO Add check */
+      interface->blockSize = *(const uint32_t *)data;
       return E_OK;
 
     case IF_SDIO_COMMAND:
@@ -876,11 +877,11 @@ static uint32_t sdioWrite(void *object, const uint8_t *buffer, uint32_t length)
 
   if (flags & SDIO_CHECK_CRC)
   {
-    const uint16_t blockCount = length / interface->blockSize;
+    const unsigned int blockCount = length / interface->blockSize;
 
     if (interface->crcPoolSize >= blockCount)
     {
-      for (uint16_t index = 0; index < blockCount; ++index)
+      for (unsigned int index = 0; index < blockCount; ++index)
       {
         interface->crcPool[index] = crcUpdate(interface->crc16, INITIAL_CRC16,
             buffer + index * interface->blockSize, interface->blockSize);

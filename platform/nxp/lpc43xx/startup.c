@@ -13,7 +13,7 @@ void platformStartup(void);
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
-  static const enum sysClockBranch peripheralsToDisable[] = {
+  static const enum sysClockBranch blocksToDisable[] = {
       CLK_APB3_I2C1,
       CLK_APB3_DAC,
       CLK_APB3_ADC0,
@@ -69,8 +69,8 @@ void platformStartup(void)
    * CLK_USB0, CLK_USB1, CLK_PERIPH_BUS, CLK_PERIPH_CORE are left untouched.
    */
 
-  for (uint8_t index = 0; index < ARRAY_SIZE(peripheralsToDisable); ++index)
-    sysClockDisable(peripheralsToDisable[index]);
+  for (unsigned int index = 0; index < ARRAY_SIZE(blocksToDisable); ++index)
+    sysClockDisable(blocksToDisable[index]);
 
 #ifdef CONFIG_FPU
   fpuEnable();

@@ -16,10 +16,10 @@ struct WdtConfig
 {
   /** Watchdog timer period in milliseconds. */
   uint32_t period;
-  /** Optional: interrupt priority. */
-  irqPriority priority;
   /** Optional: timer clock source. */
   enum wdtClockSource source;
+  /** Optional: interrupt priority. */
+  irqPriority priority;
 };
 /*----------------------------------------------------------------------------*/
 struct Wdt

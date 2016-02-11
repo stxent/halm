@@ -64,8 +64,8 @@ static void rxDmaHandler(void *object)
 
   if (interface->callback)
   {
-    const uint32_t capacity = byteQueueCapacity(&interface->rxQueue);
-    const uint32_t available = byteQueueSize(&interface->rxQueue);
+    const unsigned int capacity = byteQueueCapacity(&interface->rxQueue);
+    const unsigned int available = byteQueueSize(&interface->rxQueue);
 
     if (available >= (capacity >> 1))
       interface->callback(interface->callbackArgument);
@@ -79,7 +79,7 @@ static void txDmaHandler(void *object)
 
   if (!byteQueueEmpty(&interface->txQueue))
   {
-    const uint32_t chunkLength = byteQueuePopArray(&interface->txQueue,
+    const unsigned int chunkLength = byteQueuePopArray(&interface->txQueue,
         interface->txBuffer, SINGLE_BUFFER_SIZE);
 
     dmaStart(interface->txDma, (void *)&reg->THR, interface->txBuffer,
@@ -88,8 +88,8 @@ static void txDmaHandler(void *object)
 
   if (interface->callback)
   {
-    const uint32_t capacity = byteQueueCapacity(&interface->txQueue);
-    const uint32_t left = byteQueueSize(&interface->txQueue);
+    const unsigned int capacity = byteQueueCapacity(&interface->txQueue);
+    const unsigned int left = byteQueueSize(&interface->txQueue);
 
     if (left < (capacity >> 1))
       interface->callback(interface->callbackArgument);

@@ -61,11 +61,12 @@ static void interruptHandler(void *object)
   }
   if (reg->LSR & LSR_THRE)
   {
-    const uint32_t txQueueCapacity = byteQueueCapacity(&interface->txQueue);
-    const uint32_t txQueueSize = byteQueueSize(&interface->txQueue);
+    const unsigned int txQueueCapacity = byteQueueCapacity(&interface->txQueue);
+    const unsigned int txQueueSize = byteQueueSize(&interface->txQueue);
 
     /* Fill FIFO with selected burst size or less */
-    uint32_t count = txQueueSize < TX_FIFO_SIZE ? txQueueSize : TX_FIFO_SIZE;
+    unsigned int count = txQueueSize < TX_FIFO_SIZE ?
+        txQueueSize : TX_FIFO_SIZE;
 
     /* Call user handler when transmit queue becomes half empty */
     event |= count && txQueueSize - count < (txQueueCapacity >> 1);

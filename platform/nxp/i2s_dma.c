@@ -162,7 +162,7 @@ static enum result updateRate(struct I2sDma *interface, bool slave)
   LPC_I2S_Type * const reg = interface->base.reg;
   uint32_t bitrate, masterClock;
   struct I2sRateConfig rateConfig;
-  uint8_t divisor;
+  unsigned int divisor;
   enum result res;
 
   if (slave)
@@ -252,8 +252,8 @@ static enum result i2sInit(void *object, const void *configBase)
     return res;
 
   LPC_I2S_Type * const reg = interface->base.reg;
-  const uint8_t halfPeriod = (1 << (interface->width + 3)) - 1;
-  uint8_t width;
+  const unsigned int halfPeriod = (1 << (interface->width + 3)) - 1;
+  unsigned int width;
 
   switch (interface->width)
   {
@@ -402,7 +402,7 @@ static enum result i2sGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_WIDTH:
-      *((uint32_t *)data) = 1 << (interface->width + 3);
+      *(uint32_t *)data = 1 << (interface->width + 3);
       return E_OK;
 
     default:

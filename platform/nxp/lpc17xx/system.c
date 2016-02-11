@@ -18,7 +18,7 @@
  */
 void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
 {
-  uint32_t value;
+  unsigned int value;
 
   switch (divisor)
   {
@@ -37,7 +37,7 @@ void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
   }
 
   volatile uint32_t * const reg = &LPC_SC->PCLKSEL0 + (peripheral >> 5);
-  const uint32_t offset = peripheral & 0x1F;
+  const unsigned int offset = peripheral & 0x1F;
   const bool pllEnabled = (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED) != 0;
 
   /* PCLKSEL and PLL0 workaround */
@@ -69,7 +69,7 @@ void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
  *   - 5 clocks: up to 100 MHz or 120 MHz on some parts.
  *   - 6 clocks: safe setting will work under any conditions.
  */
-void sysFlashLatency(uint8_t value)
+void sysFlashLatency(unsigned int value)
 {
   LPC_SC->FLASHCFG = (LPC_SC->FLASHCFG & ~FLASHCFG_FLASHTIM_MASK)
       | FLASHCFG_FLASHTIM(value - 1);

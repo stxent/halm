@@ -62,8 +62,8 @@ struct SctBase
   enum sctPart part;
 };
 /*----------------------------------------------------------------------------*/
-int8_t sctAllocateEvent(struct SctBase *);
+int sctAllocateEvent(struct SctBase *);
 uint32_t sctGetClock(const struct SctBase *);
-void sctReleaseEvent(struct SctBase *, uint8_t);
+void sctReleaseEvent(struct SctBase *, int);
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_SCT_BASE_H_ */

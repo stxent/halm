@@ -71,7 +71,7 @@ static enum result wdtInit(void *object, const void *configBase)
 
   sysClockControl(CLK_WDT, DEFAULT_DIV);
 
-  const uint8_t clockSource = config->source != WDT_CLOCK_DEFAULT ?
+  const enum wdtClockSource clockSource = config->source != WDT_CLOCK_DEFAULT ?
       config->source : WDT_CLOCK_IRC;
 
   LPC_WDT->CLKSEL = CLKSEL_WDSEL(clockSource - 1) | CLKSEL_LOCK;

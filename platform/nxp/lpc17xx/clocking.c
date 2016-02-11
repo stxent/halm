@@ -119,7 +119,7 @@ static inline void flashLatencyReset(void)
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
-  const uint8_t clocks = 1 + frequency / 20000000;
+  const unsigned int clocks = 1 + frequency / 20000000;
 
   sysFlashLatency(clocks <= 5 ? clocks : 5);
 }
@@ -207,7 +207,6 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   const struct PllConfig * const config = configBase;
   uint32_t frequency = 0; /* Resulting CCO frequency */
   uint32_t source = 0; /* Clock Source Select register value */
-  uint16_t multiplier;
 
   assert(config->multiplier);
   assert(config->divisor);
@@ -240,10 +239,10 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   }
   assert(frequency);
 
-  multiplier = config->multiplier;
-  frequency = frequency * config->multiplier;
+  unsigned int multiplier = config->multiplier;
+  unsigned int prescaler;
 
-  uint8_t prescaler;
+  frequency = frequency * config->multiplier;
 
   if (config->source != CLOCK_RTC)
   {
@@ -315,11 +314,11 @@ static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
   assert(extFrequency * config->multiplier >= 156000000
       && extFrequency * config->multiplier <= 320000000);
 
-  const uint8_t msel = USB_FREQUENCY / extFrequency - 1;
-  uint8_t psel = 0;
-  uint8_t sourceDivisor = config->divisor >> 1;
+  const unsigned int msel = USB_FREQUENCY / extFrequency - 1;
+  unsigned int psel = 0;
+  unsigned int sourceDivisor = config->divisor >> 1;
 
-  while (psel < 4 && sourceDivisor != 1 << psel)
+  while (psel < 4 && sourceDivisor != 1U << psel)
     psel++;
   /* Check whether actual divisor value found */
   assert(psel != 4);
@@ -381,7 +380,7 @@ static enum result mainClockEnable(const void *clockBase
     if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
       pllDisconnect();
 
-    LPC_SC->CLKSRCSEL = (uint32_t)source;
+    LPC_SC->CLKSRCSEL = source;
   }
   else
   {
@@ -438,7 +437,7 @@ static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
   {
     case CLOCK_PLL:
     {
-      const uint8_t divisor = pllFrequency / 48000000 - 1;
+      const unsigned int divisor = pllFrequency / 48000000 - 1;
       assert(divisor == 5 || divisor == 7 || divisor == 9);
 
       LPC_SC->USBCLKCFG = USBCLKCFG_USBSEL(divisor);
@@ -473,8 +472,8 @@ static uint32_t usbClockFrequency(const void *configBase)
 /*----------------------------------------------------------------------------*/
 static bool usbClockReady(const void *configBase __attribute__((unused)))
 {
-  const uint8_t actualDivisor = USBCLKCFG_USBSEL_VALUE(LPC_SC->USBCLKCFG);
-  const uint8_t divisor = pllFrequency / 48000000 - 1;
+  const unsigned int actualDivisor = USBCLKCFG_USBSEL_VALUE(LPC_SC->USBCLKCFG);
+  const unsigned int divisor = pllFrequency / 48000000 - 1;
 
   return (actualDivisor && actualDivisor == divisor)
       || (LPC_SC->PLL1STAT & PLL1STAT_LOCK);

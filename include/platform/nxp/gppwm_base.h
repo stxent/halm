@@ -14,7 +14,8 @@ extern const struct EntityClass * const GpPwmUnitBase;
 /*----------------------------------------------------------------------------*/
 struct GpPwmUnitBaseConfig
 {
-  uint8_t channel; /* Mandatory: modulator block */
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwmUnitBase

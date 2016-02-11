@@ -110,7 +110,7 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
       return interface->left ? E_BUSY : E_OK;
 
     case IF_WIDTH:
-      *((uint32_t *)data) = ADC_RESOLUTION;
+      *(uint32_t *)data = ADC_RESOLUTION;
       return E_OK;
 
     default:
@@ -158,7 +158,7 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   /* Set conversion channel */
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->pin.channel);
 
-  interface->buffer = (void *)buffer;
+  interface->buffer = buffer;
   interface->left = samples;
 
   /* Start the conversion */

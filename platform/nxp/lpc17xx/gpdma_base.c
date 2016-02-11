@@ -24,7 +24,7 @@ struct DmaHandler
 };
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPDMACH_Type *calcPeripheral(uint8_t);
-static uint8_t eventToPeripheral(enum gpDmaEvent);
+static unsigned int eventToPeripheral(enum gpDmaEvent);
 static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void);
@@ -84,7 +84,7 @@ static inline LPC_GPDMACH_Type *calcPeripheral(uint8_t channel)
       - (uint32_t)LPC_GPDMACH0) * channel);
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t eventToPeripheral(enum gpDmaEvent event)
+static unsigned int eventToPeripheral(enum gpDmaEvent event)
 {
   assert(event < GPDMA_MEMORY);
 
@@ -95,7 +95,7 @@ static void updateEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
 {
   if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
   {
-    const uint32_t position = event - GPDMA_MAT0_0;
+    const unsigned int position = event - GPDMA_MAT0_0;
     const uint8_t mask = 1 << position;
 
     channel->mux.mask &= ~mask;
@@ -143,7 +143,7 @@ void GPDMA_ISR(void)
 
   while (intStatus)
   {
-    const uint32_t index = 31 - countLeadingZeros32(intStatus);
+    const unsigned int index = 31 - countLeadingZeros32(intStatus);
     const uint32_t mask = 1 << index;
 
     struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
@@ -200,7 +200,7 @@ static enum result dmaHandlerInit(void *object,
 {
   struct DmaHandler * const handler = object;
 
-  for (uint8_t index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
+  for (unsigned int index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
     handler->descriptors[index] = 0;
 
   handler->instances = 0;
@@ -229,7 +229,7 @@ static enum result channelInit(void *object, const void *configBase)
 
   if (config->type != GPDMA_TYPE_M2M)
   {
-    const uint8_t peripheral = eventToPeripheral(config->event);
+    const unsigned int peripheral = eventToPeripheral(config->event);
 
     switch (config->type)
     {

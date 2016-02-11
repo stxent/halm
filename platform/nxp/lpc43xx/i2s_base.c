@@ -219,7 +219,7 @@ static void configPins(struct I2sBase *interface,
       config->tx.sck, config->tx.ws, config->tx.sda, config->tx.mclk
   };
 
-  for (uint8_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
+  for (unsigned int index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {

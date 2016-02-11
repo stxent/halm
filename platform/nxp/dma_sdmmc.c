@@ -82,7 +82,7 @@ static enum result controllerInit(void *object, const void *configBase)
   controller->reg = config->parent->base.reg;
 
   LPC_SDMMC_Type * const reg = controller->reg;
-  const uint8_t burst = config->burst >= DMA_BURST_4 ?
+  const enum dmaBurst burst = config->burst >= DMA_BURST_4 ?
       config->burst - 1 : config->burst;
 
   /* Control register is originally initialized in parent class */

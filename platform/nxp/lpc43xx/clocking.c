@@ -627,8 +627,8 @@ static enum result pll1ClockEnable(const void *clockBase
   assert(config->divisor);
   assert(config->multiplier && config->multiplier <= 256);
 
-  uint8_t divisor = config->divisor;
-  uint8_t psel = 0;
+  unsigned int divisor = config->divisor;
+  unsigned int psel = 0;
 
   while (psel < 4 && !(divisor & 1))
   {
@@ -642,8 +642,8 @@ static enum result pll1ClockEnable(const void *clockBase
   if (!sourceFrequency)
     return E_ERROR;
 
-  const uint8_t msel = config->multiplier - 1;
-  const uint8_t nsel = divisor - 1;
+  const unsigned int msel = config->multiplier - 1;
+  const unsigned int nsel = divisor - 1;
   bool direct = false;
 
   if (psel)

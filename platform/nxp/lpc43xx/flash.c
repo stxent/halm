@@ -136,7 +136,7 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_SIZE:
-      *((uint32_t *)data) = FLASH_SIZE_DECODE_A(interface->size)
+      *(uint32_t *)data = FLASH_SIZE_DECODE_A(interface->size)
           + FLASH_SIZE_DECODE_B(interface->size);
       return E_OK;
 

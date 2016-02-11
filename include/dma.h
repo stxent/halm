@@ -12,7 +12,6 @@
 #ifndef DMA_H_
 #define DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <stdint.h>
 #include <entity.h>
 #include <error.h>

@@ -98,18 +98,18 @@ static enum result tmrInit(void *object, const void *configBase)
   if ((res = SctBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  const int8_t event = sctAllocateEvent((struct SctBase *)timer);
+  const int event = sctAllocateEvent((struct SctBase *)timer);
 
   if (event == -1)
     return E_BUSY;
 
   timer->base.handler = interruptHandler;
   timer->callback = 0;
-  timer->event = (uint8_t)event;
+  timer->event = event;
 
   LPC_SCT_Type * const reg = timer->base.reg;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
   const uint16_t eventMask = 1 << timer->event;
-  const uint8_t offset = timer->base.part == SCT_HIGH;
 
   timer->base.mask = eventMask;
   reg->CTRL_PART[offset] = CTRL_HALT;

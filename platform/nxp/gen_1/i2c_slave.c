@@ -234,6 +234,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch (option)
   {
     case IF_ADDRESS:
+      /* TODO Check range */
       reg->ADR0 = ADR_ADDRESS(*(const uint32_t *)data);
       return E_OK;
 

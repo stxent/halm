@@ -61,7 +61,7 @@ static void resetDescriptor(uint8_t channel)
 static int8_t setDescriptor(struct PinInterrupt *interrupt)
 {
   /* Find free interrupt */
-  for (uint8_t index = 0; index < ARRAY_SIZE(descriptors); ++index)
+  for (unsigned int index = 0; index < ARRAY_SIZE(descriptors); ++index)
   {
     if (compareExchangePointer((void **)(descriptors + index), 0, interrupt))
       return (int8_t)index;

@@ -190,13 +190,13 @@ static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
   assert(multiplier);
   assert(divisor && (divisor & 1) == 0);
 
-  const uint8_t msel = multiplier / divisor - 1;
-  uint8_t psel = 0;
-  uint8_t sourceDivisor = divisor >> 1;
+  const unsigned int msel = multiplier / divisor - 1;
+  unsigned int psel = 0;
+  unsigned int sourceDivisor = divisor >> 1;
 
   assert(msel < 32);
 
-  while (psel < 4 && sourceDivisor != 1 << psel)
+  while (psel < 4 && sourceDivisor != 1U << psel)
     psel++;
   /* Check whether actual divisor value found */
   assert(psel != 4);
@@ -210,9 +210,9 @@ static inline void flashLatencyReset(void)
   sysFlashLatencyUpdate(3);
 }
 /*----------------------------------------------------------------------------*/
-static void flashLatencyUpdate(uint32_t frequency)
+static void flashLatencyUpdate(unsigned long frequency)
 {
-  const uint8_t clocks = 1 + frequency / 20000000;
+  const unsigned int clocks = 1 + frequency / 20000000;
 
   sysFlashLatencyUpdate(clocks <= 3 ? clocks : 3);
 }
@@ -302,11 +302,12 @@ static enum result wdtOscEnable(const void *clockBase __attribute__((unused)),
 
   assert(config->frequency <= WDT_FREQ_4600);
 
-  const uint8_t index = !config->frequency ? WDT_FREQ_600 : config->frequency;
+  const unsigned int index = !config->frequency ?
+      WDT_FREQ_600 : config->frequency;
 
   sysPowerEnable(PWR_WDTOSC);
   LPC_SYSCON->WDTOSCCTRL = WDTOSCCTRL_DIVSEL(0) | WDTOSCCTRL_FREQSEL(index);
-  wdtFrequency = ((uint32_t)wdtFrequencyValues[index - 1] * 1000) >> 1;
+  wdtFrequency = (wdtFrequencyValues[index - 1] * 1000) >> 1;
 
   return E_OK;
 }
@@ -379,13 +380,13 @@ static enum result branchEnable(const void *clockBase, const void *configBase)
   const struct CommonClockConfig * const config = configBase;
   struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
-  int8_t source = -1;
+  int source = -1;
 
-  for (uint8_t index = 0; index < 4; ++index)
+  for (unsigned int index = 0; index < 4; ++index)
   {
-    if (commonClockSourceMap[clock->branch][index] == (int8_t)config->source)
+    if (commonClockSourceMap[clock->branch][index] == config->source)
     {
-      source = (int8_t)index;
+      source = index;
       break;
     }
   }
@@ -419,7 +420,7 @@ static uint32_t branchFrequency(const void *clockBase)
   const struct CommonClockClass * const clock = clockBase;
   const struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
-  const int8_t sourceType =
+  const int sourceType =
       commonClockSourceMap[clock->branch][descriptor->sourceSelect];
 
   if (!descriptor->divider || sourceType == -1)

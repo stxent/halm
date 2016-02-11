@@ -49,8 +49,8 @@ enum sysClockDevice
   CLK_SSP1        = 18
 };
 /*----------------------------------------------------------------------------*/
-void sysFlashLatencyUpdate(uint8_t);
-uint8_t sysFlashLatency();
+void sysFlashLatencyUpdate(unsigned int);
+unsigned int sysFlashLatency();
 /*----------------------------------------------------------------------------*/
 static inline void sysClockEnable(enum sysClockDevice block)
 {

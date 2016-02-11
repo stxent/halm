@@ -65,7 +65,7 @@ static enum result adcGet(void *object __attribute__((unused)),
   switch (option)
   {
     case IF_WIDTH:
-      *((uint32_t *)data) = ADC_RESOLUTION;
+      *(uint32_t *)data = ADC_RESOLUTION;
       return E_OK;
 
     default:
@@ -84,10 +84,9 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
 {
   struct Adc * const interface = object;
   LPC_ADC_Type * const reg = interface->unit->base.reg;
-  const uint32_t samples = length / SAMPLE_SIZE;
   const uint8_t channel = interface->pin.channel;
 
-  if (!samples)
+  if (length < SAMPLE_SIZE)
     return 0;
 
   if (adcUnitRegister(interface->unit, 0, interface) != E_OK)
@@ -107,5 +106,6 @@ static uint32_t adcRead(void *object, uint8_t *buffer, uint32_t length)
   *((uint16_t *)buffer) = DR_RESULT_VALUE(reg->DR[channel]);
 
   adcUnitUnregister(interface->unit);
+
   return SAMPLE_SIZE;
 }

@@ -86,8 +86,8 @@ static uint8_t configOutputPin(uint8_t channel, pinNumber key)
 static enum result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
     uint32_t value)
 {
+  const unsigned int offset = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint8_t offset = unit->base.part == SCT_HIGH;
   enum result res = E_OK;
 
   reg->CONFIG |= CONFIG_NORELOAD(offset);
@@ -113,8 +113,8 @@ static enum result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
 /*----------------------------------------------------------------------------*/
 static enum result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
 {
+  const unsigned int offset = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint8_t offset = unit->base.part == SCT_HIGH;
   const uint32_t value = (reg->CTRL_PART[offset] & ~CTRL_PRE_MASK)
       | CTRL_CLRCTR;
 
@@ -149,17 +149,17 @@ static enum result unitInit(void *object, const void *configBase)
   if ((res = SctBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  const int8_t event = sctAllocateEvent((struct SctBase *)unit);
+  const int event = sctAllocateEvent((struct SctBase *)unit);
 
   if (event == -1)
     return E_BUSY;
 
-  unit->event = (uint8_t)event;
+  unit->event = event;
   unit->resolution = config->resolution;
 
   LPC_SCT_Type * const reg = unit->base.reg;
+  const unsigned int offset = unit->base.part == SCT_HIGH;
   const uint16_t eventMask = 1 << unit->event;
-  const uint8_t offset = unit->base.part == SCT_HIGH;
 
   unit->base.mask = eventMask;
   reg->CTRL_PART[offset] = CTRL_HALT;
@@ -198,8 +198,8 @@ static enum result unitInit(void *object, const void *configBase)
 static void unitDeinit(void *object)
 {
   struct SctPwmUnit * const unit = object;
+  const unsigned int offset = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint8_t offset = unit->base.part == SCT_HIGH;
 
   /* Halt the timer */
   reg->CTRL_PART[offset] = CTRL_HALT;
@@ -219,16 +219,16 @@ static enum result singleEdgeInit(void *object, const void *configBase)
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;
 
-  const int8_t event = sctAllocateEvent((struct SctBase *)unit);
+  const int event = sctAllocateEvent((struct SctBase *)unit);
 
   if (event == -1)
     return E_BUSY;
 
   /* Initialize output pin */
-  const uint8_t channel = configOutputPin(unit->base.channel, config->pin);
+  const unsigned int channel = configOutputPin(unit->base.channel, config->pin);
 
   pwm->channel = channel;
-  pwm->event = (uint8_t)event;
+  pwm->event = event;
   pwm->unit = unit;
 
   LPC_SCT_Type * const reg = unit->base.reg;
@@ -298,7 +298,7 @@ static void singleEdgeSetDuration(void *object, uint32_t duration)
 
   if (unit->base.part != SCT_UNIFIED)
   {
-    const uint8_t offset = unit->base.part == SCT_HIGH;
+    const unsigned int offset = unit->base.part == SCT_HIGH;
 
     reg->MATCHREL_PART[pwm->event][offset] = duration;
   }
@@ -328,7 +328,7 @@ static void singleEdgeSetEdges(void *object,
 
   if (unit->base.part != SCT_UNIFIED)
   {
-    const uint8_t offset = unit->base.part == SCT_HIGH;
+    const unsigned int offset = unit->base.part == SCT_HIGH;
 
     reg->MATCHREL_PART[pwm->event][offset] = trailing;
   }
@@ -370,19 +370,20 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
   struct SctPwmUnit * const unit = config->parent;
 
   /* Allocate events */
-  const int8_t leadingEvent = sctAllocateEvent((struct SctBase *)unit);
+  const int leadingEvent = sctAllocateEvent((struct SctBase *)unit);
   if (leadingEvent == -1)
     return E_BUSY;
-  const int8_t trailingEvent = sctAllocateEvent((struct SctBase *)unit);
+
+  const int trailingEvent = sctAllocateEvent((struct SctBase *)unit);
   if (trailingEvent == -1)
     return E_BUSY;
 
   /* Initialize output pin */
-  const uint8_t channel = configOutputPin(unit->base.channel, config->pin);
+  const unsigned int channel = configOutputPin(unit->base.channel, config->pin);
 
   pwm->channel = channel;
-  pwm->leadingEvent = (uint8_t)leadingEvent;
-  pwm->trailingEvent = (uint8_t)trailingEvent;
+  pwm->leadingEvent = leadingEvent;
+  pwm->trailingEvent = trailingEvent;
   pwm->unit = unit;
 
   LPC_SCT_Type * const reg = unit->base.reg;
@@ -446,8 +447,8 @@ static void doubleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
+  const unsigned int offset = unit->base.part == SCT_HIGH;
   const uint32_t resolution = unit->resolution;
-  const uint8_t offset = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   uint32_t center, leading, trailing;
@@ -516,8 +517,8 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
+  const unsigned int offset = unit->base.part == SCT_HIGH;
   const uint32_t resolution = unit->resolution;
-  const uint8_t offset = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   if (leading > resolution)

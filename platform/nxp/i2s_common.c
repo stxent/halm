@@ -15,7 +15,7 @@ enum result i2sCalcRate(struct I2sBase *interface, uint32_t clock,
   uint16_t minError = 0xFFFF;
   uint16_t yDiv = 0;
 
-  for (uint32_t y = 255; y > 0; --y)
+  for (uint16_t y = 255; y > 0; --y)
   {
     const uint32_t x = y * divider;
 

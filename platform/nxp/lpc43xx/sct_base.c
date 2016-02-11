@@ -461,7 +461,7 @@ static void timerHandlerProcess(struct TimerHandler *handler)
 {
   const uint16_t state = handler->reg->EVFLAG;
 
-  for (uint8_t index = 0; index < 2; ++index)
+  for (unsigned int index = 0; index < 2; ++index)
   {
     struct SctBase * const descriptor = handler->descriptors[index];
 
@@ -496,14 +496,16 @@ void SCT_ISR(void)
   timerHandlerProcess(handlers[0]);
 }
 /*----------------------------------------------------------------------------*/
-int8_t sctAllocateEvent(struct SctBase *timer)
+int sctAllocateEvent(struct SctBase *timer)
 {
   spinLock(&spinlocks[timer->channel]);
 
   const uint16_t used = handlers[timer->channel]->events;
-  int8_t pos = 16; /* Each timer has 16 possible events */
+  int pos = 16; /* Each timer has 16 possible events */
 
-  while (--pos >= 0 && used & (1 << pos));
+  // TODO Rewrite with clz
+  while (--pos >= 0 && (used & (1 << pos)));
+
   if (pos >= 0)
     handlers[timer->channel]->events |= 1 << pos;
 
