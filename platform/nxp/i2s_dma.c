@@ -43,8 +43,8 @@ const struct InterfaceClass * const I2sDma = &i2sTable;
 static enum result dmaSetup(struct I2sDma *interface,
     const struct I2sDmaConfig *config, bool rx, bool tx)
 {
-  const uint32_t sizeInBytes = config->size * (1 << config->width)
-      * (config->mono ? 1 : 2);
+  const unsigned int sizeInBytes =
+      config->size * (1 << config->width) * (config->mono ? 1 : 2);
   const struct GpDmaListConfig channelConfigs[] = {
       {
         .event = GPDMA_I2S0_REQ1 + (config->channel << 1),
@@ -139,7 +139,7 @@ static void txDmaHandler(void *object)
 
   if (reg->DMA2 & DMA_TX_ENABLE)
   {
-    const uint32_t count = dmaCount(interface->txDma);
+    const size_t count = dmaCount(interface->txDma);
     const enum result res = dmaStatus(interface->txDma);
 
     if (res != E_BUSY)

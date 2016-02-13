@@ -12,7 +12,8 @@
 #include <usb/usb_requests.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-static const struct ListNode *findEntry(const struct List *, uint8_t, uint8_t);
+static const struct ListNode *findEntry(const struct List *, uint8_t,
+    unsigned int);
 static enum result getDescriptorData(const struct List *,
     uint16_t, uint16_t, uint8_t *, uint16_t *, uint16_t);
 static enum result handleStandardDeviceRequest(struct UsbControl *,
@@ -25,7 +26,7 @@ static enum result setDeviceConfig(struct UsbControl *, uint8_t, uint8_t);
 static enum result traverseConfigList(struct UsbControl *, uint8_t, uint8_t);
 /*----------------------------------------------------------------------------*/
 static const struct ListNode *findEntry(const struct List *descriptors,
-    uint8_t type, uint8_t offset)
+    uint8_t type, unsigned int offset)
 {
   const struct ListNode *currentNode = listFirst(descriptors);
   const struct UsbDescriptor *current;

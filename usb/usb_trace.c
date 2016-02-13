@@ -5,8 +5,8 @@
  */
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
@@ -42,5 +42,5 @@ void usbTrace(const char *format, ...)
 
   memcpy(traceBuffer + length, "\r\n", 2);
 
-  ifWrite(traceInterface, traceBuffer, (unsigned long)(length + 2));
+  ifWrite(traceInterface, traceBuffer, (size_t)(length + 2));
 }

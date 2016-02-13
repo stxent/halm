@@ -51,10 +51,10 @@ static const struct UsbDeviceClass devTable = {
 const struct UsbDeviceClass * const UsbDevice = &devTable;
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbEndpoint *, uint8_t);
-static enum result epReadData(struct UsbEndpoint *, uint8_t *, uint16_t,
-    uint16_t *);
-static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, uint16_t,
-    uint16_t *);
+static enum result epReadData(struct UsbEndpoint *, uint8_t *, uint32_t,
+    uint32_t *);
+static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, uint32_t,
+    uint32_t *);
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *, const void *);
 static void epDeinit(void *);
@@ -186,7 +186,7 @@ static uint8_t usbCommandRead(struct UsbDevice *device, uint8_t command)
       | USBCmdCode_CMD_CODE(command);
   waitForInt(device, USBDevInt_CDFULL);
 
-  return (uint8_t)reg->USBCmdData;
+  return reg->USBCmdData;
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
@@ -385,7 +385,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
   }
   else
   {
-    uint16_t read;
+    uint32_t read;
 
     if (epReadData(endpoint, request->buffer,
         request->base.capacity, &read) == E_OK)
@@ -407,7 +407,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 }
 /*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
-    uint16_t length, uint16_t *read)
+    uint32_t length, uint32_t *read)
 {
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
@@ -436,7 +436,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
   /* Read data from internal buffer */
   uint32_t word = 0;
 
-  for (uint16_t position = 0; position < packetLength; ++position)
+  for (uint32_t position = 0; position < packetLength; ++position)
   {
     if (!(position & 0x03))
       word = reg->USBRxData;
@@ -456,7 +456,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
 }
 /*----------------------------------------------------------------------------*/
 static enum result epWriteData(struct UsbEndpoint *endpoint,
-    const uint8_t *buffer, uint16_t length, uint16_t *written)
+    const uint8_t *buffer, uint32_t length, uint32_t *written)
 {
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
@@ -471,8 +471,8 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
     *written = length;
 
   /* Write data */
+  uint32_t position = 0;
   uint32_t word = 0;
-  uint16_t position = 0;
 
   while (position < length)
   {

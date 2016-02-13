@@ -36,9 +36,9 @@ struct CdcAcmConfig
    * Mandatory: number of reception buffers. All types of buffers have
    * fixed size of 64 bytes.
    */
-  uint8_t rxBuffers;
+  size_t rxBuffers;
   /** Mandatory: number of transmission buffers. */
-  uint8_t txBuffers;
+  size_t txBuffers;
 
   struct
   {
@@ -64,8 +64,8 @@ struct CdcAcm
   struct Queue rxRequestQueue, txRequestQueue;
   /* Pointer to the beginning of the request pool */
   void *requests;
-  /* Sizes of queued data */
-  uint16_t queuedRxBytes, queuedTxBytes;
+  /* Number of available and pending bytes */
+  size_t queuedRxBytes, queuedTxBytes;
 
   struct UsbEndpoint *rxDataEp;
   struct UsbEndpoint *txDataEp;

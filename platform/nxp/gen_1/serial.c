@@ -53,7 +53,7 @@ static void interruptHandler(void *object)
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
   {
-    const uint8_t data = (uint8_t)reg->RBR;
+    const uint8_t data = reg->RBR;
 
     /* Received bytes will be dropped when queue becomes full */
     if (!byteQueueFull(&interface->rxQueue))
@@ -61,12 +61,11 @@ static void interruptHandler(void *object)
   }
   if (reg->LSR & LSR_THRE)
   {
-    const unsigned int txQueueCapacity = byteQueueCapacity(&interface->txQueue);
-    const unsigned int txQueueSize = byteQueueSize(&interface->txQueue);
+    const size_t txQueueCapacity = byteQueueCapacity(&interface->txQueue);
+    const size_t txQueueSize = byteQueueSize(&interface->txQueue);
 
     /* Fill FIFO with selected burst size or less */
-    unsigned int count = txQueueSize < TX_FIFO_SIZE ?
-        txQueueSize : TX_FIFO_SIZE;
+    size_t count = txQueueSize < TX_FIFO_SIZE ? txQueueSize : TX_FIFO_SIZE;
 
     /* Call user handler when transmit queue becomes half empty */
     event |= count && txQueueSize - count < (txQueueCapacity >> 1);
@@ -228,7 +227,7 @@ static enum result serialSet(void *object, enum ifOption option,
 static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct Serial * const interface = object;
-  unsigned int read;
+  size_t read;
 
   irqDisable(interface->base.irq);
   read = byteQueuePopArray(&interface->rxQueue, buffer, length);
@@ -250,7 +249,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   if (reg->LSR & LSR_THRE && byteQueueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle so fill TX FIFO */
-    const unsigned int count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
+    const size_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
 
     for (; written < count; ++written)
       reg->THR = *bufferPosition++;

@@ -29,7 +29,7 @@
 /*----------------------------------------------------------------------------*/
 static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
     uint32_t *);
-static uint32_t extractBits(const uint32_t *, uint16_t, uint16_t);
+static uint32_t extractBits(const uint32_t *, unsigned int, unsigned int);
 static enum result identifyCard(struct SdCard *);
 static enum result initializeCard(struct SdCard *);
 static void processCardSpecificData(struct SdCard *, uint32_t *);
@@ -85,10 +85,11 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
   return status;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extractBits(const uint32_t *data, uint16_t start, uint16_t end)
+static uint32_t extractBits(const uint32_t *data, unsigned int start,
+    unsigned int end)
 {
-  const uint16_t index = end >> 5;
-  const uint16_t offset = start & 0x1F;
+  const unsigned int index = end >> 5;
+  const unsigned int offset = start & 0x1F;
   uint32_t value;
 
   if (index == start >> 5)
@@ -206,7 +207,7 @@ static enum result identifyCard(struct SdCard *device)
     device->address = response[0] >> 16;
   }
 
-  const uint32_t address = (uint32_t)device->address << 16;
+  const uint32_t address = device->address << 16;
 
   /* Read and process CSD register */
   res = executeCommand(device, SDIO_COMMAND(CMD_SEND_CSD,
@@ -302,7 +303,7 @@ static void processCardSpecificData(struct SdCard *device, uint32_t *response)
 static enum result setTransferState(struct SdCard *device)
 {
   /* Relative card address should be initialized */
-  const uint32_t address = (uint32_t)device->address << 16;
+  const uint32_t address = device->address << 16;
   const uint32_t flags = SDIO_WAIT_DATA | (device->crc ? SDIO_CHECK_CRC : 0);
   uint32_t response;
   enum result res;
@@ -448,7 +449,7 @@ static size_t cardRead(void *object, void *buffer, size_t length)
       SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
   const uint32_t command = SDIO_COMMAND(code, response, flags);
   const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
-      device->position : device->position >> BLOCK_POW);
+      device->position : (device->position >> BLOCK_POW));
 
   if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
     goto exit;
@@ -499,7 +500,7 @@ static size_t cardWrite(void *object, const void *buffer, size_t length)
       SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
   const uint32_t command = SDIO_COMMAND(code, response, flags);
   const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
-      device->position : device->position >> BLOCK_POW);
+      device->position : (device->position >> BLOCK_POW));
 
   if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
     goto exit;

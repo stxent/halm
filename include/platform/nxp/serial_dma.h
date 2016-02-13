@@ -23,9 +23,9 @@ struct SerialDmaConfig
   /** Mandatory: baud rate. */
   uint32_t rate;
   /** Mandatory: input queue size. */
-  uint32_t rxLength;
+  size_t rxLength;
   /** Mandatory: output queue size. */
-  uint32_t txLength;
+  size_t txLength;
   /** Optional: parity generation and checking. */
   enum uartParity parity;
   /** Mandatory: serial input. */

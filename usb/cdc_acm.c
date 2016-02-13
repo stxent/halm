@@ -223,7 +223,7 @@ static enum result interfaceInit(void *object, const void *configBase)
     return E_ERROR;
 
   /* Allocate requests */
-  const unsigned short totalPoolSize = config->rxBuffers + config->txBuffers;
+  const size_t totalPoolSize = config->rxBuffers + config->txBuffers;
 
   interface->requests = malloc(totalPoolSize * sizeof(struct CdcUsbRequest));
   if (!interface->requests)
@@ -232,7 +232,7 @@ static enum result interfaceInit(void *object, const void *configBase)
   /* Add requests to queues */
   struct CdcUsbRequest *request = interface->requests;
 
-  for (unsigned short index = 0; index < config->rxBuffers; ++index)
+  for (size_t index = 0; index < config->rxBuffers; ++index)
   {
     usbRequestInit((struct UsbRequest *)request, CDC_DATA_EP_SIZE,
         cdcDataReceived, interface);
@@ -240,7 +240,7 @@ static enum result interfaceInit(void *object, const void *configBase)
     ++request;
   }
 
-  for (unsigned short index = 0; index < config->txBuffers; ++index)
+  for (size_t index = 0; index < config->txBuffers; ++index)
   {
     usbRequestInit((struct UsbRequest *)request, CDC_DATA_EP_SIZE,
         cdcDataSent, interface);
@@ -368,7 +368,7 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
     struct UsbRequest *request;
     queuePeek(&interface->rxRequestQueue, &request);
 
-    const unsigned int chunkLength = request->base.length;
+    const size_t chunkLength = request->base.length;
     if (length < chunkLength)
       break;
 
@@ -412,7 +412,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 
   while (length && !queueEmpty(&interface->txRequestQueue))
   {
-    const unsigned int bytesToWrite = length > CDC_DATA_EP_SIZE ?
+    const size_t bytesToWrite = length > CDC_DATA_EP_SIZE ?
         CDC_DATA_EP_SIZE : (uint16_t)length;
     struct UsbRequest *request;
 

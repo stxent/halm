@@ -40,7 +40,7 @@ static void dmaHandler(void *object)
 {
   struct DacDma * const interface = object;
   LPC_DAC_Type * const reg = interface->base.reg;
-  const uint32_t count = dmaCount(interface->dma);
+  const size_t count = dmaCount(interface->dma);
   const enum result res = dmaStatus(interface->dma);
 
   /* Scatter-gather transfer finished */

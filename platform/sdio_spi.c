@@ -15,13 +15,17 @@
 #include <platform/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_BLOCK_SIZE    512
+#define MAX_BLOCK_SIZE        2048
+
 #define BUSY_TIMER_FREQUENCY  100000
 #define BUSY_READ_DELAY       10 /* Delay in timer ticks */
 #define BUSY_READ_RETRIES     1000
 #define BUSY_WRITE_DELAY      50 /* Delay in timer ticks */
 #define BUSY_WRITE_RETRIES    1000
+
 #define INITIAL_CRC7          0x00
 #define INITIAL_CRC16         0x0000
+
 #define TOKEN_RETRIES         8
 /*----------------------------------------------------------------------------*/
 enum state
@@ -73,7 +77,7 @@ struct StateEntry
 {
   void (*enter)(struct SdioSpi *);
   enum state (*advance)(struct SdioSpi *);
-  uint8_t next;
+  enum state next;
 };
 /*----------------------------------------------------------------------------*/
 static void stateInitEnter(struct SdioSpi *);

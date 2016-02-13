@@ -501,16 +501,16 @@ int sctAllocateEvent(struct SctBase *timer)
   spinLock(&spinlocks[timer->channel]);
 
   const uint16_t used = handlers[timer->channel]->events;
-  int pos = 16; /* Each timer has 16 possible events */
+  int event = 16; /* Each timer has 16 possible events */
 
   // TODO Rewrite with clz
-  while (--pos >= 0 && (used & (1 << pos)));
+  while (--event >= 0 && (used & (1 << event)));
 
-  if (pos >= 0)
-    handlers[timer->channel]->events |= 1 << pos;
+  if (event >= 0)
+    handlers[timer->channel]->events |= 1 << event;
 
   spinUnlock(&spinlocks[timer->channel]);
-  return pos;
+  return event;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sctGetClock(const struct SctBase *timer __attribute__((unused)))
@@ -518,10 +518,10 @@ uint32_t sctGetClock(const struct SctBase *timer __attribute__((unused)))
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-void sctReleaseEvent(struct SctBase *timer, uint8_t channel)
+void sctReleaseEvent(struct SctBase *timer, int event)
 {
   spinLock(&spinlocks[timer->channel]);
-  handlers[timer->channel]->events &= ~(1 << channel);
+  handlers[timer->channel]->events &= ~(1 << event);
   spinUnlock(&spinlocks[timer->channel]);
 }
 /*----------------------------------------------------------------------------*/

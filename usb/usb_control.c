@@ -278,7 +278,7 @@ static enum result controlInit(void *object, const void *configBase)
   struct ControlUsbRequest *request =
       ((struct LocalData *)control->local)->requests;
 
-  for (unsigned short index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
+  for (unsigned int index = 0; index < REQUEST_POOL_SIZE / 2; ++index)
   {
     usbRequestInit((struct UsbRequest *)request, EP0_BUFFER_SIZE,
         controlInHandler, control);

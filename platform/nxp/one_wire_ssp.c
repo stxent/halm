@@ -546,15 +546,15 @@ static size_t oneWireWrite(void *object, const void *buffer, size_t length)
   {
     byteQueuePush(&interface->txQueue, MATCH_ROM);
     interface->left += byteQueuePushArray(&interface->txQueue,
-        (const uint8_t *)&interface->address, sizeof(interface->address));
+        &interface->address, sizeof(interface->address));
   }
   else
   {
     byteQueuePush(&interface->txQueue, SKIP_ROM);
   }
 
-  /* Push data into the trasmit queue */
-  const uint8_t written = byteQueuePushArray(&interface->txQueue,
+  /* Push data into the transmit queue */
+  const size_t written = byteQueuePushArray(&interface->txQueue,
       buffer, length);
   interface->left += written;
 

@@ -64,8 +64,8 @@ static void rxDmaHandler(void *object)
 
   if (interface->callback)
   {
-    const unsigned int capacity = byteQueueCapacity(&interface->rxQueue);
-    const unsigned int available = byteQueueSize(&interface->rxQueue);
+    const size_t capacity = byteQueueCapacity(&interface->rxQueue);
+    const size_t available = byteQueueSize(&interface->rxQueue);
 
     if (available >= (capacity >> 1))
       interface->callback(interface->callbackArgument);
@@ -79,7 +79,7 @@ static void txDmaHandler(void *object)
 
   if (!byteQueueEmpty(&interface->txQueue))
   {
-    const unsigned int chunkLength = byteQueuePopArray(&interface->txQueue,
+    const size_t chunkLength = byteQueuePopArray(&interface->txQueue,
         interface->txBuffer, SINGLE_BUFFER_SIZE);
 
     dmaStart(interface->txDma, (void *)&reg->THR, interface->txBuffer,
@@ -88,8 +88,8 @@ static void txDmaHandler(void *object)
 
   if (interface->callback)
   {
-    const unsigned int capacity = byteQueueCapacity(&interface->txQueue);
-    const unsigned int left = byteQueueSize(&interface->txQueue);
+    const size_t capacity = byteQueueCapacity(&interface->txQueue);
+    const size_t left = byteQueueSize(&interface->txQueue);
 
     if (left < (capacity >> 1))
       interface->callback(interface->callbackArgument);
@@ -298,7 +298,7 @@ static enum result serialSet(void *object, enum ifOption option,
 static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
-  unsigned int read;
+  size_t read;
   irqState state;
 
   state = irqSave();
@@ -312,9 +312,9 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  const uint8_t *bufferPointer = buffer;
+  const uint8_t *bufferPosition = buffer;
   const size_t sourceLength = length;
-  unsigned int chunkLength = 0;
+  size_t chunkLength = 0;
 
   /*
    * Disable interrupts before status check because DMA interrupt
@@ -326,12 +326,12 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   {
     chunkLength = length < SINGLE_BUFFER_SIZE ? length : SINGLE_BUFFER_SIZE;
 
-    memcpy(interface->txBuffer, bufferPointer, chunkLength);
+    memcpy(interface->txBuffer, bufferPosition, chunkLength);
 
     length -= chunkLength;
-    bufferPointer += chunkLength;
+    bufferPosition += chunkLength;
   }
-  length -= byteQueuePushArray(&interface->txQueue, bufferPointer, length);
+  length -= byteQueuePushArray(&interface->txQueue, bufferPosition, length);
 
   irqRestore(state);
 

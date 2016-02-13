@@ -20,16 +20,16 @@ extern const struct InterfaceClass * const DacDma;
 /*----------------------------------------------------------------------------*/
 struct DacDmaConfig
 {
-  /** Mandatory: conversion frequency. */
-  uint32_t frequency;
+  /** Mandatory: conversion rate. */
+  uint32_t rate;
   /** Mandatory: size of the single buffer in elements. */
-  uint32_t size;
+  uint16_t size;
   /** Optional: initial output value. */
   uint16_t value;
   /** Mandatory: analog output. */
   pinNumber pin;
   /** Mandatory: memory access channel. */
-  uint8_t channel;
+  uint8_t dma;
 };
 /*----------------------------------------------------------------------------*/
 struct DacDma
@@ -42,7 +42,7 @@ struct DacDma
   struct Dma *dma;
 
   /* Size of each buffer */
-  uint32_t size;
+  uint16_t size;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_DAC_DMA_H_ */

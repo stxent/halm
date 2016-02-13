@@ -23,14 +23,14 @@ struct AdcDmaConfig
 {
   /** Mandatory: peripheral unit. */
   struct AdcUnit *parent;
-  /** Mandatory: size of the single buffer in elements. */
-  uint32_t size;
   /** Optional: trigger to start the conversion. */
   enum adcEvent event;
+  /** Mandatory: size of the single buffer in elements. */
+  uint16_t size;
   /** Mandatory: analog input. */
   pinNumber pin;
   /** Mandatory: memory access channel. */
-  uint8_t channel;
+  uint8_t dma;
 };
 /*----------------------------------------------------------------------------*/
 struct AdcDma
@@ -46,7 +46,7 @@ struct AdcDma
   /* Direct memory access channel descriptor */
   struct Dma *dma;
   /* Size of each buffer */
-  uint32_t size;
+  uint16_t size;
 
   /* Pin descriptor */
   struct AdcPin pin;
