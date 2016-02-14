@@ -270,6 +270,8 @@ static enum result sdioInit(void *object, const void *configBase)
   /* Clear pending interrupts */
   reg->RINTSTS = INT_MASK;
 
+  /* Set bus width */
+  reg->CTYPE = interface->base.wide ? CTYPE_CARD_WIDTH0_4BIT : 0;
   /* Set default block size */
   reg->BLKSIZ = DEFAULT_BLOCK_SIZE;
 
