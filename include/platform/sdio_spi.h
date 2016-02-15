@@ -28,7 +28,7 @@ struct SdioSpiConfig
    * checks or to positive value to set maximal number of blocks in
    * single transfer.
    */
-  uint16_t blocks;
+  size_t blocks;
   /** Mandatory: chip select pin. */
   pinNumber cs;
 };
@@ -51,7 +51,7 @@ struct SdioSpi
   /* Pool for results of checksum calculations */
   uint16_t *crcPool;
   /* Pool size */
-  uint16_t crcPoolSize;
+  size_t crcPoolSize;
   /* Run the deferred verification of the received data */
   bool checkReceivedCrc;
 
@@ -60,11 +60,11 @@ struct SdioSpi
   /* Pointer to an output buffer */
   const uint8_t *txBuffer;
   /* Number of bytes left */
-  uint32_t left;
+  size_t left;
   /* Number of bytes to be sent or received */
-  uint32_t length;
+  size_t length;
   /* Block size in data transfers */
-  uint16_t blockSize;
+  size_t blockSize;
 
   /* Argument for the most recent command */
   uint32_t argument;
@@ -72,19 +72,21 @@ struct SdioSpi
   uint32_t command;
   /* Command response */
   uint32_t response[4];
-  /* Retries left */
-  uint16_t retries;
   /* Buffer for temporary data */
   uint8_t buffer[18];
-  /* Current interface state */
+
+  /* Retries left */
+  unsigned short retries;
+
+  /* Current state of the FSM */
   uint8_t state;
   /* Status of the last command */
-  enum result status;
+  uint8_t commandStatus;
   /*
    * Status of the high-level command, some commands may be split up into
    * several low-level commands.
    */
-  enum result transferStatus;
+  uint8_t transferStatus;
 
   /* Pin connected to the chip select signal of the device */
   struct Pin cs;
