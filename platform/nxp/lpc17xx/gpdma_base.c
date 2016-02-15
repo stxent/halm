@@ -20,10 +20,10 @@ struct DmaHandler
   /* Channel descriptors currently in use */
   struct GpDmaBase *descriptors[GPDMA_CHANNEL_COUNT];
   /* Initialized descriptors count */
-  uint16_t instances;
+  unsigned short instances;
 };
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPDMACH_Type *calcPeripheral(uint8_t);
+static inline LPC_GPDMACH_Type *calcPeripheral(unsigned int);
 static unsigned int eventToPeripheral(enum gpDmaEvent);
 static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
@@ -78,7 +78,7 @@ const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
 static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPDMACH_Type *calcPeripheral(uint8_t channel)
+static inline LPC_GPDMACH_Type *calcPeripheral(unsigned int channel)
 {
   return (LPC_GPDMACH_Type *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
       - (uint32_t)LPC_GPDMACH0) * channel);

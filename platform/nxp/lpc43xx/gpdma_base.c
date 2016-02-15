@@ -21,12 +21,12 @@ struct DmaHandler
   /* Channel descriptors currently in use */
   struct GpDmaBase *descriptors[GPDMA_CHANNEL_COUNT];
   /* Initialized descriptors count */
-  uint16_t instances;
+  unsigned short instances;
   /* Peripheral connection statuses */
   uint8_t connections[16];
 };
 /*----------------------------------------------------------------------------*/
-static inline void *calcPeripheral(uint8_t);
+static inline void *calcPeripheral(unsigned int);
 /*----------------------------------------------------------------------------*/
 static unsigned int dmaHandlerAllocate(struct GpDmaBase *, enum gpDmaEvent);
 static void dmaHandlerAttach(void);
@@ -74,7 +74,7 @@ const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
 static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
-static inline void *calcPeripheral(uint8_t channel)
+static inline void *calcPeripheral(unsigned int channel)
 {
   return (void *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
       - (uint32_t)LPC_GPDMACH0) * channel);

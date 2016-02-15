@@ -152,8 +152,8 @@ static enum result spiInit(void *object, const void *configBase)
     return res;
 
   const bool channelPair = config->dma[0] > config->dma[1];
-  const uint8_t rxChannel = config->dma[!channelPair];
-  const uint8_t txChannel = config->dma[channelPair];
+  const uint8_t rxChannel = config->dma[channelPair];
+  const uint8_t txChannel = config->dma[!channelPair];
 
   if ((res = dmaSetup(interface, rxChannel, txChannel)) != E_OK)
     return res;

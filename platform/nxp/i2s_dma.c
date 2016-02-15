@@ -162,7 +162,7 @@ static enum result updateRate(struct I2sDma *interface, bool slave)
   LPC_I2S_Type * const reg = interface->base.reg;
   uint32_t bitrate, masterClock;
   struct I2sRateConfig rateConfig;
-  unsigned int divisor;
+  uint32_t divisor;
   enum result res;
 
   if (slave)
