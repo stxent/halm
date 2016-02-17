@@ -158,7 +158,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
     uint16_t length)
 {
   struct UsbRequest *request;
-  uint8_t chunkCount;
+  unsigned int chunkCount;
 
   chunkCount = length / EP0_BUFFER_SIZE + 1;
   /* Send zero-length packet to finalize transfer */

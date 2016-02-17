@@ -36,10 +36,10 @@ static const struct ListNode *findEntry(const struct List *descriptors,
     listData(descriptors, currentNode, &current);
     if (current->descriptorType == type)
     {
-      if (!offset)
-        return currentNode;
-      else
+      if (offset)
         --offset;
+      else
+        return currentNode;
     }
     currentNode = listNext(currentNode);
   }
@@ -66,7 +66,7 @@ static enum result getDescriptorData(const struct List *descriptors,
   if (entry->descriptorType == DESCRIPTOR_TYPE_STRING && descriptorIndex)
   {
     const char * const data = (const char *)(entry->data);
-    const unsigned int stringLength = uLengthToUtf16(data);
+    const size_t stringLength = uLengthToUtf16(data);
 
     /* Check descriptor length */
     if (2 + (stringLength << 1) > maxResponseLength)

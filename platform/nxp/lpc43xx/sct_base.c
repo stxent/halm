@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <memory.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>
 #include <platform/nxp/sct_base.h>
@@ -27,7 +28,7 @@ struct TimerHandler
   LPC_SCT_Type *reg;
   /* Timer descriptors */
   struct SctBase *descriptors[2];
-  /* Allocated events */
+  /* Free events */
   uint16_t events;
 };
 /*----------------------------------------------------------------------------*/
@@ -486,7 +487,7 @@ static enum result timerHandlerInit(void *object, const void *configBase)
 
   handler->reg = LPC_SCT;
   handler->descriptors[0] = handler->descriptors[1] = 0;
-  handler->events = 0;
+  handler->events = 0xFFFF;
 
   return E_OK;
 }
@@ -498,18 +499,16 @@ void SCT_ISR(void)
 /*----------------------------------------------------------------------------*/
 int sctAllocateEvent(struct SctBase *timer)
 {
+  int event = -1;
+
   spinLock(&spinlocks[timer->channel]);
-
-  const uint16_t used = handlers[timer->channel]->events;
-  int event = 16; /* Each timer has 16 possible events */
-
-  // TODO Rewrite with clz
-  while (--event >= 0 && (used & (1 << event)));
-
-  if (event >= 0)
-    handlers[timer->channel]->events |= 1 << event;
-
+  if (handlers[timer->channel]->events)
+  {
+    event = 31 - countLeadingZeros32(handlers[timer->channel]->events);
+    handlers[timer->channel]->events &= ~(1 << event);
+  }
   spinUnlock(&spinlocks[timer->channel]);
+
   return event;
 }
 /*----------------------------------------------------------------------------*/
@@ -521,7 +520,7 @@ uint32_t sctGetClock(const struct SctBase *timer __attribute__((unused)))
 void sctReleaseEvent(struct SctBase *timer, int event)
 {
   spinLock(&spinlocks[timer->channel]);
-  handlers[timer->channel]->events &= ~(1 << event);
+  handlers[timer->channel]->events |= 1 << event;
   spinUnlock(&spinlocks[timer->channel]);
 }
 /*----------------------------------------------------------------------------*/

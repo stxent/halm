@@ -157,7 +157,6 @@ static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
 
   /* Update timeout values */
   const uint32_t readTimeout = BUSY_READ_DELAY * (rate / 1000);
-
   reg->TMOUT = TMOUT_RESPONSE_TIMEOUT(0x40) | TMOUT_DATA_TIMEOUT(readTimeout);
 
   /* Enable clock */
