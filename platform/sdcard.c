@@ -256,6 +256,12 @@ static enum result initializeCard(struct SdCard *device)
   /* Lock the interface */
   ifSet(device->interface, IF_ACQUIRE, 0);
 
+  /* Check interface capabilities and select blocking mode */
+  if ((res = ifSet(device->interface, IF_ZEROCOPY, 0)) != E_OK)
+    goto error;
+  if ((res = ifCallback(device->interface, 0, 0)) != E_OK)
+    goto error;
+
   if ((res = ifGet(device->interface, IF_RATE, &originalRate)) != E_OK)
     goto error;
   if (originalRate > WORK_RATE)
@@ -432,6 +438,8 @@ static size_t cardRead(void *object, void *buffer, size_t length)
     return 0;
 
   ifSet(device->interface, IF_ACQUIRE, 0);
+  ifSet(device->interface, IF_ZEROCOPY, 0);
+  ifCallback(device->interface, 0, 0);
 
   if (device->native && (res = setTransferState(device)) != E_OK)
     goto exit;
@@ -483,6 +491,8 @@ static size_t cardWrite(void *object, const void *buffer, size_t length)
     return 0;
 
   ifSet(device->interface, IF_ACQUIRE, 0);
+  ifSet(device->interface, IF_ZEROCOPY, 0);
+  ifCallback(device->interface, 0, 0);
 
   if (device->native && (res = setTransferState(device)) != E_OK)
     goto exit;

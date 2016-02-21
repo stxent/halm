@@ -519,6 +519,8 @@ static void stateWriteStopEnter(struct SdioSpi *interface)
 static void execute(struct SdioSpi *interface)
 {
   ifSet(interface->bus, IF_ACQUIRE, 0);
+  ifSet(interface->bus, IF_ZEROCOPY, 0);
+  ifCallback(interface->bus, interruptHandler, interface);
 
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
 
@@ -832,6 +834,9 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
         return E_BUSY;
     }
 
+    case IF_ZEROCOPY:
+      return E_OK;
+
     default:
       return E_ERROR;
   }
@@ -864,9 +869,7 @@ static enum result sdioSet(void *object, enum ifOption option,
         return E_OK;
       }
       else
-      {
         return E_VALUE;
-      }
 
     case IF_SDIO_COMMAND:
       interface->command = *(const uint32_t *)data;
@@ -891,6 +894,8 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
   struct SdioSpi * const interface = object;
 
   ifSet(interface->bus, IF_ACQUIRE, 0);
+  ifSet(interface->bus, IF_ZEROCOPY, 0);
+  ifCallback(interface->bus, interruptHandler, interface);
 
   const size_t blockSize = interface->blockSize;
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
@@ -931,6 +936,8 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
   struct SdioSpi * const interface = object;
 
   ifSet(interface->bus, IF_ACQUIRE, 0);
+  ifSet(interface->bus, IF_ZEROCOPY, 0);
+  ifCallback(interface->bus, interruptHandler, interface);
 
   const size_t blockSize = interface->blockSize;
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);

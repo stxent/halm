@@ -265,7 +265,7 @@ static enum result driverConfigure(void *object,
     switch (packet->request)
     {
       case HID_REQUEST_GET_REPORT:
-        usbTrace("hid: get report type %02X, id %02X",
+        usbTrace("hid: get report type 0x%02X, id 0x%02X",
             (uint8_t)(packet->value >> 8), (uint8_t)packet->value);
 
         if (!maxResponseLength)
@@ -276,7 +276,7 @@ static enum result driverConfigure(void *object,
             maxResponseLength);
 
       case HID_REQUEST_SET_REPORT:
-        usbTrace("hid: set report type %02X, id %02X, length %u",
+        usbTrace("hid: set report type 0x%02X, id 0x%02X, length %u",
             (uint8_t)(packet->value >> 8), (uint8_t)packet->value,
             payloadLength);
 
@@ -287,7 +287,7 @@ static enum result driverConfigure(void *object,
             (uint8_t)packet->value, payload, payloadLength);
 
       case HID_REQUEST_GET_IDLE:
-        usbTrace("hid: get idle time %04X", packet->value);
+        usbTrace("hid: get idle time %u", packet->value);
 
         if (maxResponseLength < 1)
           return E_VALUE;
@@ -296,13 +296,13 @@ static enum result driverConfigure(void *object,
         return E_OK;
 
       case HID_REQUEST_SET_IDLE:
-        usbTrace("hid: set idle time to %04X", packet->value);
+        usbTrace("hid: set idle time to %u", packet->value);
 
-        driver->idleTime = (uint8_t)(packet->value >> 8); //TODO Check
+        driver->idleTime = (uint8_t)(packet->value >> 8);
         return E_OK;
 
       default:
-        usbTrace("hid: unknown request %02X", packet->request);
+        usbTrace("hid: unknown request 0x%02X", packet->request);
         return E_INVALID;
     }
   }

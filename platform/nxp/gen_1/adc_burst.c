@@ -9,7 +9,7 @@
 #include <platform/nxp/adc_burst.h>
 #include <platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
-#define SAMPLE_SIZE sizeof(*((struct AdcBurst *)0)->buffer)
+#define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -151,7 +151,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   if (adcUnitRegister(unit, interruptHandler, interface) != E_OK)
     return 0;
 
-  /* Enable interrupt after completion of the conversion */
+  /* Invoke interrupt routine after completion of the conversion */
   irqEnable(unit->base.irq);
   reg->INTEN = INTEN_AD(interface->pin.channel);
 
@@ -165,10 +165,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   reg->CR |= CR_START(interface->event);
 
   if (interface->blocking)
-  {
-    while (interface->left)
-      barrier();
-  }
+    while (CR_START_VALUE(reg->CR));
 
   return samples * SAMPLE_SIZE;
 }

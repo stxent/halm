@@ -197,7 +197,10 @@ static void tmrSetEnabled(void *object, bool state)
     reg->CTRL_PART[offset] &= ~CTRL_HALT;
   }
   else
+  {
     reg->CTRL_PART[offset] |= CTRL_HALT;
+    reg->EVFLAG = timer->base.mask;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrSetFrequency(void *object, uint32_t frequency)

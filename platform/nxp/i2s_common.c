@@ -9,15 +9,19 @@
 enum result i2sCalcRate(struct I2sBase *interface, uint32_t clock,
     struct I2sRateConfig *config)
 {
-  /* Algorithm based on NXP software examples */
   const uint32_t periphClock = i2sGetClock(interface);
-  const uint64_t divider = ((uint64_t)clock << 16) / periphClock;
+
+  if (periphClock < (1 << 20))
+    return E_DEVICE;
+
+  /* Algorithm based on NXP software examples */
+  const uint32_t divisor = ((uint64_t)clock << 16) / periphClock;
   uint16_t minError = 0xFFFF;
   uint16_t yDiv = 0;
 
   for (uint16_t y = 255; y > 0; --y)
   {
-    const uint32_t x = y * divider;
+    const uint32_t x = y * divisor;
 
     if (x >= (1 << 24))
       continue;

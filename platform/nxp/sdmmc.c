@@ -405,6 +405,9 @@ static enum result sdioSet(void *object, enum ifOption option,
     case IF_RATE:
       return updateRate(interface, *(const uint32_t *)data);
 
+    case IF_ZEROCOPY:
+      return E_OK;
+
     default:
       return E_ERROR;
   }

@@ -63,19 +63,21 @@ static void interruptHandler(void *object)
 static enum result setDescriptor(const struct SysTickTimer *state,
     struct SysTickTimer *timer)
 {
-  return compareExchangePointer((void **)&descriptor, state,
-      timer) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)&descriptor, state, timer) ?
+      E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static void updateInterrupt(struct SysTickTimer *timer)
 {
   if (timer->overflow && timer->callback)
   {
-    (void)SYSTICK->CTRL; /* Clear pending interrupt */
+    /* Pending interrupt will be cleared during register modification */
     SYSTICK->CTRL |= CTRL_TICKINT;
   }
   else
+  {
     SYSTICK->CTRL &= ~CTRL_TICKINT;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result updateFrequency(struct SysTickTimer *timer,
@@ -162,9 +164,16 @@ static void tmrCallback(void *object, void (*callback)(void *), void *argument)
 static void tmrSetEnabled(void *object __attribute__((unused)), bool state)
 {
   if (state)
+  {
     SYSTICK->CTRL |= CTRL_ENABLE;
+  }
   else
+  {
     SYSTICK->CTRL &= ~CTRL_ENABLE;
+
+    /* Clear possible pending interrupt */
+    (void)SYSTICK->CTRL;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrSetFrequency(void *object, uint32_t frequency)

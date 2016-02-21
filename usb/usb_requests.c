@@ -95,7 +95,7 @@ static enum result getDescriptorData(const struct List *descriptors,
 
   if (chunkLength > maxResponseLength)
   {
-    usbTrace("requests: descriptor %d:%d is too long: length %u",
+    usbTrace("requests: descriptor %u:%u is too long: length %u",
         descriptorType, descriptorIndex, chunkLength);
     return E_VALUE;
   }
@@ -136,13 +136,13 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
 
     case REQUEST_SET_ADDRESS:
       usbDevSetAddress(control->owner, packet->value);
-      usbTrace("requests: set address %d", packet->value);
+      usbTrace("requests: set address %u", packet->value);
       *responseLength = 0;
       break;
 
     case REQUEST_GET_DESCRIPTOR:
     {
-      usbTrace("requests: get descriptor %d:%d, length %u",
+      usbTrace("requests: get descriptor %u:%u, length %u",
           DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
           packet->length);
 
@@ -162,12 +162,12 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
 
       if (res != E_OK)
       {
-        usbTrace("requests: configuration %d setup failed", configuration);
+        usbTrace("requests: configuration %u setup failed", configuration);
         return res;
       }
       else
       {
-        usbTrace("requests: configuration %d set successfully", configuration);
+        usbTrace("requests: configuration %u set successfully", configuration);
         *responseLength = 0;
         break;
       }
@@ -186,7 +186,7 @@ static enum result handleStandardDeviceRequest(struct UsbControl *control,
       return E_ERROR;
 
     default:
-      usbTrace("requests: unsupported device request %02X", packet->request);
+      usbTrace("requests: unsupported device request 0x%02X", packet->request);
       return E_ERROR;
   }
 
@@ -216,7 +216,7 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
         /* Clear halt by unstalling */
         usbEpSetStalled(endpoint, false);
         *responseLength = 0;
-        usbTrace("requests: unstall endpoint %02X", packet->index);
+        usbTrace("requests: unstall endpoint 0x%02X", packet->index);
         return E_OK;
       }
       break;
@@ -227,13 +227,13 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
         /* Set halt by stalling */
         usbEpSetStalled(endpoint, true);
         *responseLength = 0;
-        usbTrace("requests: stall endpoint %02X", packet->index);
+        usbTrace("requests: stall endpoint 0x%02X", packet->index);
         return E_OK;
       }
       break;
 
     default:
-      usbTrace("requests: unsupported request %02X to endpoint %02X",
+      usbTrace("requests: unsupported request 0x%02X to endpoint 0x%02X",
           packet->request, packet->index);
       break;
   }
@@ -266,7 +266,7 @@ static enum result handleStandardInterfaceRequest(struct UsbControl *control,
       break;
 
     case REQUEST_SET_INTERFACE: // TODO use bNumInterfaces
-      usbTrace("requests: set interface %d", packet->value);
+      usbTrace("requests: set interface %u", packet->value);
 
       if (packet->value != 0)
         return E_ERROR; //FIXME
@@ -274,7 +274,8 @@ static enum result handleStandardInterfaceRequest(struct UsbControl *control,
       break;
 
     default:
-      usbTrace("requests: unsupported interface request %02X", packet->request);
+      usbTrace("requests: unsupported interface request 0x%02X",
+          packet->request);
       return E_ERROR;
   }
 
