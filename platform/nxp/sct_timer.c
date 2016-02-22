@@ -137,8 +137,7 @@ static enum result tmrInit(void *object, const void *configBase)
   /* Enable timer clearing on allocated event */
   reg->LIMIT_PART[offset] = eventMask;
 
-  if (!config->disabled)
-    reg->CTRL_PART[offset] &= ~CTRL_HALT;
+  /* Timer is left disabled by default */
 
   return E_OK;
 }

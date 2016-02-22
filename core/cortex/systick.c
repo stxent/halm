@@ -132,9 +132,8 @@ static enum result tmrInit(void *object, const void *configBase)
   if ((res = updateFrequency(timer, config->frequency, 1)) != E_OK)
     return res;
 
+  /* Timer is left disabled by default */
   SYSTICK->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
-  if (!config->disabled)
-    SYSTICK->CTRL |= CTRL_ENABLE;
 
   irqSetPriority(SYSTICK_IRQ, config->priority);
   irqEnable(SYSTICK_IRQ);

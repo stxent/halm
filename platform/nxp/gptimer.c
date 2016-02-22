@@ -140,7 +140,8 @@ static enum result tmrInit(void *object, const void *configBase)
     return res;
 #endif
 
-  reg->TCR = config->disabled ? 0 : TCR_CEN;
+  /* Timer is disabled by default */
+  reg->TCR = 0;
 
   irqSetPriority(timer->base.irq, config->priority);
   irqEnable(timer->base.irq);

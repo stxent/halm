@@ -24,8 +24,6 @@ struct GpTimerConfig
   irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Optional: do not enable the timer after the initialization. */
-  bool disabled;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimer
