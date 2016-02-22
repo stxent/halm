@@ -47,28 +47,28 @@ static enum result dmaSetup(struct I2sDma *interface,
       config->size * (1 << config->width) * (config->mono ? 1 : 2);
   const struct GpDmaListConfig channelConfigs[] = {
       {
-        .event = GPDMA_I2S0_REQ1 + (config->channel << 1),
-        .channel = config->rx.dma,
-        .source.increment = false,
-        .destination.increment = true,
-        .type = GPDMA_TYPE_P2M,
-        .burst = DMA_BURST_4,
-        .width = DMA_WIDTH_WORD,
-        .number = BLOCK_COUNT << 1,
-        .size = sizeInBytes >> 3, /* Half of the size in 32-bit words */
-        .silent = false
+          .number = BLOCK_COUNT << 1,
+          .size = sizeInBytes >> 3, /* Half of the size in 32-bit words */
+          .channel = config->rx.dma,
+          .destination.increment = true,
+          .source.increment = false,
+          .burst = DMA_BURST_4,
+          .event = GPDMA_I2S0_REQ1 + (config->channel << 1),
+          .type = GPDMA_TYPE_P2M,
+          .width = DMA_WIDTH_WORD,
+          .silent = false
       },
       {
-        .event = GPDMA_I2S0_REQ2 + (config->channel << 1),
-        .channel = config->tx.dma,
-        .source.increment = true,
-        .destination.increment = false,
-        .type = GPDMA_TYPE_M2P,
-        .burst = DMA_BURST_4,
-        .width = DMA_WIDTH_WORD,
-        .number = BLOCK_COUNT << 1,
-        .size = sizeInBytes >> 3, /* Half of the size in 32-bit words */
-        .silent = false
+          .number = BLOCK_COUNT << 1,
+          .size = sizeInBytes >> 3, /* Half of the size in 32-bit words */
+          .channel = config->tx.dma,
+          .destination.increment = false,
+          .source.increment = true,
+          .burst = DMA_BURST_4,
+          .event = GPDMA_I2S0_REQ2 + (config->channel << 1),
+          .type = GPDMA_TYPE_M2P,
+          .width = DMA_WIDTH_WORD,
+          .silent = false
       }
   };
 

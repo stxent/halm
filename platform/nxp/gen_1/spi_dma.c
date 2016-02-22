@@ -70,20 +70,20 @@ static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
 {
   const struct GpDmaConfig configs[] = {
       {
-          .event = GPDMA_SSP0_RX + interface->base.channel,
           .channel = rxChannel,
-          .source.increment = false,
           .destination.increment = true,
-          .type = GPDMA_TYPE_P2M,
+          .source.increment = false,
           .burst = DMA_BURST_4,
+          .event = GPDMA_SSP0_RX + interface->base.channel,
+          .type = GPDMA_TYPE_P2M,
           .width = DMA_WIDTH_BYTE
       }, {
-          .event = GPDMA_SSP0_TX + interface->base.channel,
           .channel = txChannel,
-          .source.increment = true,
           .destination.increment = false,
-          .type = GPDMA_TYPE_M2P,
+          .source.increment = true,
           .burst = DMA_BURST_4,
+          .event = GPDMA_SSP0_TX + interface->base.channel,
+          .type = GPDMA_TYPE_M2P,
           .width = DMA_WIDTH_BYTE
       }
   };

@@ -55,15 +55,15 @@ static enum result dmaSetup(struct DacDma *interface,
     const struct DacDmaConfig *config)
 {
   const struct GpDmaListConfig channelConfig = {
-      .event = GPDMA_DAC,
-      .channel = config->dma,
-      .source.increment = true,
-      .destination.increment = false,
-      .type = GPDMA_TYPE_M2P,
-      .burst = DMA_BURST_1,
-      .width = DMA_WIDTH_HALFWORD,
       .number = BLOCK_COUNT << 1,
       .size = config->size >> 1,
+      .channel = config->dma,
+      .destination.increment = false,
+      .source.increment = true,
+      .burst = DMA_BURST_1,
+      .event = GPDMA_DAC,
+      .type = GPDMA_TYPE_M2P,
+      .width = DMA_WIDTH_HALFWORD,
       .silent = false
   };
 

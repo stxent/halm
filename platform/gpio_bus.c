@@ -15,7 +15,7 @@ struct CommonGpioBus
   /* Pin array */
   struct Pin *pins;
   /* Number of pins in array */
-  uint8_t count;
+  uint8_t number;
 };
 /*----------------------------------------------------------------------------*/
 static enum result busInit(void *, const void *);
@@ -38,21 +38,23 @@ static enum result busInit(void *object, const void *configBase)
 {
   const struct GpioBusConfig * const config = configBase;
   struct CommonGpioBus * const bus = object;
-  uint8_t position = 0;
+  unsigned int number = 0;
 
-  while (config->pins[position] && ++position < 32);
-  if (!position || position >= 32)
+  /* Find number of pins in the array */
+  while (config->pins[number] && ++number < 32);
+
+  if (!number || number >= 32)
     return E_VALUE;
 
-  bus->count = position;
-  bus->pins = malloc(sizeof(struct Pin) * bus->count);
+  bus->number = number;
+  bus->pins = malloc(sizeof(struct Pin) * bus->number);
   if (!bus->pins)
     return E_MEMORY;
 
-  for (position = 0; position < bus->count; ++position)
+  for (unsigned int index = 0; index < bus->number; ++index)
   {
-    bus->pins[position] = pinInit(config->pins[position]);
-    if (!pinValid(bus->pins[position]))
+    bus->pins[index] = pinInit(config->pins[index]);
+    if (!pinValid(bus->pins[index]))
     {
       /* Pin does not exist or cannot be used */
       free(bus->pins);
@@ -61,15 +63,15 @@ static enum result busInit(void *object, const void *configBase)
 
     if (config->direction == PIN_OUTPUT)
     {
-      pinOutput(bus->pins[position], (config->initial >> position) & 1);
+      pinOutput(bus->pins[index], (config->initial >> index) & 1);
 
-      pinSetType(bus->pins[position], config->type);
-      pinSetSlewRate(bus->pins[position], config->rate);
+      pinSetType(bus->pins[index], config->type);
+      pinSetSlewRate(bus->pins[index], config->rate);
     }
     else
-      pinInput(bus->pins[position]);
+      pinInput(bus->pins[index]);
 
-    pinSetPull(bus->pins[position], config->pull);
+    pinSetPull(bus->pins[index], config->pull);
   }
 
   return E_OK;
@@ -87,7 +89,7 @@ static uint32_t busRead(void *object)
   struct CommonGpioBus * const bus = object;
   uint32_t result = 0;
 
-  for (unsigned int position = 0; position < bus->count; ++position)
+  for (unsigned int position = 0; position < bus->number; ++position)
     result |= pinRead(bus->pins[position]) << position;
 
   return result;
@@ -97,6 +99,6 @@ static void busWrite(void *object, uint32_t value)
 {
   struct CommonGpioBus * const bus = object;
 
-  for (unsigned int position = 0; position < bus->count; ++position)
+  for (unsigned int position = 0; position < bus->number; ++position)
     pinWrite(bus->pins[position], (value >> position) & 1);
 }

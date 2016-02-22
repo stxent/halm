@@ -103,21 +103,21 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
       .number = RECEPTION_BUFFERS,
       .size = SINGLE_BUFFER_SIZE,
       .channel = rxChannel,
-      .event = GPDMA_UART0_RX + interface->base.channel,
-      .source.increment = false,
       .destination.increment = true,
-      .type = GPDMA_TYPE_P2M,
+      .source.increment = false,
       .burst = DMA_BURST_1,
+      .event = GPDMA_UART0_RX + interface->base.channel,
+      .type = GPDMA_TYPE_P2M,
       .width = DMA_WIDTH_BYTE,
       .silent = false
   };
   const struct GpDmaConfig txChannelConfig = {
-      .event = GPDMA_UART0_TX + interface->base.channel,
       .channel = txChannel,
-      .source.increment = true,
       .destination.increment = false,
-      .type = GPDMA_TYPE_M2P,
+      .source.increment = true,
       .burst = DMA_BURST_1,
+      .event = GPDMA_UART0_TX + interface->base.channel,
+      .type = GPDMA_TYPE_M2P,
       .width = DMA_WIDTH_BYTE
   };
 

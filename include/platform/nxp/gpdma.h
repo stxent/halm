@@ -26,12 +26,12 @@ struct GpDmaConfig
   } source;
   /** Mandatory: number of transfers that make up a burst transfer request. */
   enum dmaBurst burst;
-  /** Mandatory: source and destination transfer widths. */
-  enum dmaWidth width;
   /** Mandatory: request connection to the peripheral or memory. */
   enum gpDmaEvent event;
   /** Mandatory: transfer type. */
   enum gpDmaType type;
+  /** Mandatory: source and destination transfer widths. */
+  enum dmaWidth width;
 };
 /*----------------------------------------------------------------------------*/
 struct GpDmaRuntimeConfig
