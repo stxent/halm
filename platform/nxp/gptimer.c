@@ -103,10 +103,13 @@ static enum result tmrInit(void *object, const void *configBase)
 
   assert(config->event < GPTIMER_EVENT_END);
 
-  if (config->event)
-    timer->event = config->event - 1;
+  if (!config->event)
+  {
+    /* Only 1 channel is used, allocation always succeeds */
+    timer->event = gpTimerAllocateChannel(0);
+  }
   else
-    timer->event = (uint8_t)gpTimerAllocateChannel(0);
+    timer->event = config->event - 1;
 
   /* Call base class constructor */
   if ((res = GpTimerBase->init(object, &baseConfig)) != E_OK)

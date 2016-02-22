@@ -133,18 +133,14 @@ static enum result channelInit(void *object, const void *configBase)
   enum result res;
 
   /* Initialize output pin */
-  const int8_t channel = gpTimerConfigCapturePin(unit->base.channel,
+  capture->channel = gpTimerConfigCapturePin(unit->base.channel,
       config->pin, config->pull);
 
-  if (channel == -1)
-    return E_VALUE;
-
   /* Register object */
-  if ((res = unitSetDescriptor(unit, (uint8_t)channel, 0, capture)) != E_OK)
+  if ((res = unitSetDescriptor(unit, capture->channel, 0, capture)) != E_OK)
     return res;
 
   capture->callback = 0;
-  capture->channel = (uint8_t)channel;
   capture->event = config->event;
   capture->unit = unit;
 

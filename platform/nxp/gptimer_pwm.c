@@ -51,12 +51,12 @@ static enum result unitAllocateChannel(struct GpTimerPwmUnit *unit,
 
   spinLock(&unit->spinlock);
 
-  const int8_t freeChannel = gpTimerAllocateChannel(unit->matches | mask);
+  const int freeChannel = gpTimerAllocateChannel(unit->matches | mask);
 
   if (freeChannel != -1 && !(unit->matches & mask))
   {
     unit->matches |= mask;
-    unitUpdateResolution(unit, (uint8_t)freeChannel);
+    unitUpdateResolution(unit, freeChannel);
     res = E_OK;
   }
 
@@ -155,17 +155,12 @@ static enum result channelInit(void *object, const void *configBase)
   enum result res;
 
   /* Initialize output pin */
-  const int8_t channel = gpTimerConfigMatchPin(unit->base.channel,
-      config->pin);
-
-  if (channel == -1)
-    return E_VALUE;
+  pwm->channel = gpTimerConfigMatchPin(unit->base.channel, config->pin);
 
   /* Allocate channel */
-  if ((res = unitAllocateChannel(unit, (uint8_t)channel)) != E_OK)
+  if ((res = unitAllocateChannel(unit, pwm->channel)) != E_OK)
     return res;
 
-  pwm->channel = (uint8_t)channel;
   pwm->unit = unit;
 
   LPC_TIMER_Type * const reg = pwm->unit->base.reg;

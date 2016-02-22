@@ -130,7 +130,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   pinSetPull(input, config->pull);
 
   interrupt->callback = 0;
-  interrupt->channel = (uint8_t)channel;
+  interrupt->channel = channel;
   interrupt->event = config->event;
   interrupt->pin = input.data;
 

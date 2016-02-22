@@ -12,7 +12,7 @@
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
-static uint8_t setupMatchPin(uint8_t channel, pinNumber key);
+static uint8_t configMatchPin(uint8_t channel, pinNumber key);
 /*----------------------------------------------------------------------------*/
 static enum result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
 static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
@@ -73,11 +73,11 @@ static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
 {
   assert(channel && channel <= 6);
 
-  return channel > 3 ? &device->MR4 + (channel - 4)
-      : &device->MR1 + (channel - 1);
+  return channel <= 3 ?
+      (&device->MR1 + (channel - 1)) : (&device->MR4 + (channel - 4));
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t setupMatchPin(uint8_t channel, pinNumber key)
+static uint8_t configMatchPin(uint8_t channel, pinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(gpPwmPins, key, channel);
   assert(pinEntry);
@@ -205,11 +205,11 @@ static enum result singleEdgeInit(void *object, const void *configBase)
   enum result res;
 
   /* Initialize output pin */
-  const uint8_t channel = setupMatchPin(config->parent->base.channel,
+  const uint8_t channel = configMatchPin(config->parent->base.channel,
       config->pin);
 
   /* Allocate channels */
-  if ((res = unitAllocateChannel(config->parent, (uint8_t)channel)) != E_OK)
+  if ((res = unitAllocateChannel(config->parent, channel)) != E_OK)
     return res;
 
   pwm->channel = channel;
@@ -277,14 +277,14 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
   enum result res;
 
   /* Initialize output pin */
-  const uint8_t channel = setupMatchPin(config->parent->base.channel,
+  const uint8_t channel = configMatchPin(config->parent->base.channel,
       config->pin);
   assert(channel > 1); /* First channel cannot be a double edged output */
 
   /* Allocate channels */
-  if ((res = unitAllocateChannel(config->parent, (uint8_t)channel - 1)) != E_OK)
+  if ((res = unitAllocateChannel(config->parent, channel - 1)) != E_OK)
     return res;
-  if ((res = unitAllocateChannel(config->parent, (uint8_t)channel)) != E_OK)
+  if ((res = unitAllocateChannel(config->parent, channel)) != E_OK)
     return res;
 
   pwm->channel = channel;
