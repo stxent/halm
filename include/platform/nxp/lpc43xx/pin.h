@@ -39,6 +39,7 @@ enum
   PIN_I2C0_SDA
 };
 /*----------------------------------------------------------------------------*/
+void *pinAddress(struct Pin);
 struct Pin pinInit(pinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, uint8_t);

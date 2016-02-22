@@ -405,6 +405,11 @@ static enum result pinHandlerInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+void *pinAddress(struct Pin pin)
+{
+  return (void *)&LPC_GPIO->PIN[pin.data.port];
+}
+/*----------------------------------------------------------------------------*/
 struct Pin pinInit(pinNumber id)
 {
   const struct PinGroupEntry *group;

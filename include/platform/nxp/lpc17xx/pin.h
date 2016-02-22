@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+void *pinAddress(struct Pin);
 struct Pin pinInit(pinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, uint8_t);

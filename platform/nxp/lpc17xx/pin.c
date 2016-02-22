@@ -42,6 +42,11 @@ static void commonPinInit(struct Pin pin)
   pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
+void *pinAddress(struct Pin pin)
+{
+  return (void *)&((LPC_GPIO_Type *)pin.reg)->PIN;
+}
+/*----------------------------------------------------------------------------*/
 struct Pin pinInit(pinNumber id)
 {
   struct Pin pin;
