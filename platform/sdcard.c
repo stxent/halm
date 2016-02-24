@@ -61,20 +61,27 @@ const struct InterfaceClass * const SdCard = &cardTable;
 static enum result executeCommand(struct SdCard *device, uint32_t command,
     uint32_t argument, uint32_t *response)
 {
-  enum result res, status;
+  enum result res;
 
   if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
     return res;
   if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
     return res;
-  if ((res = ifSet(device->interface, IF_SDIO_EXECUTE, 0)) != E_OK)
-    return res;
 
-  while ((status = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
-    barrier();
+  enum result status = ifSet(device->interface, IF_SDIO_EXECUTE, 0);
 
-  if (status != E_OK && status != E_IDLE)
+  if (status == E_BUSY)
+  {
+    while ((status = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
+      barrier();
+
+    if (status != E_OK && status != E_IDLE)
+      return status;
+  }
+  else if (status != E_OK)
+  {
     return status;
+  }
 
   if (response)
   {

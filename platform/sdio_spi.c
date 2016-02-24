@@ -834,9 +834,6 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
         return E_BUSY;
     }
 
-    case IF_ZEROCOPY:
-      return E_OK;
-
     default:
       return E_ERROR;
   }
@@ -856,7 +853,7 @@ static enum result sdioSet(void *object, enum ifOption option,
       interface->rxBuffer = 0;
       interface->txBuffer = 0;
       execute(interface);
-      return E_OK;
+      return E_BUSY;
 
     case IF_SDIO_ARGUMENT:
       interface->argument = *(const uint32_t *)data;
@@ -883,6 +880,9 @@ static enum result sdioSet(void *object, enum ifOption option,
   {
     case IF_RATE:
       return ifSet(interface->bus, IF_RATE, data);
+
+    case IF_ZEROCOPY:
+      return E_OK;
 
     default:
       return E_ERROR;

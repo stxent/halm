@@ -373,7 +373,7 @@ static enum result sdioSet(void *object, enum ifOption option,
   {
     case IF_SDIO_EXECUTE:
       execute(interface);
-      return E_OK;
+      return E_BUSY;
 
     case IF_SDIO_ARGUMENT:
       interface->argument = *(const uint32_t *)data;
