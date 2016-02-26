@@ -95,7 +95,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   /* Disable interrupts */
   reg->INTEN = 0;
   /* Set conversion channel */
-  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(channel);
+  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(channel);
 
   /* Perform a new conversion */
   reg->CR |= CR_START(1 + ADC_SOFTWARE);

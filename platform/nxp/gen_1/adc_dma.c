@@ -191,7 +191,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   if (!ongoing)
   {
     /* Set conversion channel */
-    reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->pin.channel);
+    reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(interface->pin.channel);
     /* Start the conversion */
     reg->CR |= CR_START(interface->event);
   }

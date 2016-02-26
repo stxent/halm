@@ -266,6 +266,11 @@ config PLATFORM_NXP_ADC_BURST
 	default y
 	depends on ADC && PLATFORM_NXP_ADC_BASE
 
+config PLATFORM_NXP_ADC_BUS
+	bool "ADC Bus"
+	default y
+	depends on ADC && PLATFORM_NXP_ADC_BASE
+
 config PLATFORM_NXP_ADC_DMA
 	bool "Single channel ADC driver with DMA"
 	default y

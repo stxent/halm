@@ -156,11 +156,11 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   reg->INTEN = INTEN_AD(interface->pin.channel);
 
   /* Set conversion channel */
-  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->pin.channel);
 
   interface->buffer = buffer;
   interface->left = samples;
 
+  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(interface->pin.channel);
   /* Start the conversion */
   reg->CR |= CR_START(interface->event);
 

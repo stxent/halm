@@ -10,7 +10,9 @@
 #include <bits.h>
 /*------------------Control Register------------------------------------------*/
 #define CR_SEL_MASK                     BIT_FIELD(MASK(8), 0)
-#define CR_SEL(channel)                 BIT_FIELD(BIT_FIELD(1, (channel)), 0)
+#define CR_SEL(value)                   BIT_FIELD((value), 0)
+#define CR_SEL_CHANNEL(channel)         BIT_FIELD(BIT(channel), 0)
+#define CR_SEL_VALUE(reg)               FIELD_VALUE((reg), CR_SEL_MASK, 0)
 #define CR_CLKDIV_MASK                  BIT_FIELD(MASK(8), 8)
 #define CR_CLKDIV(value)                BIT_FIELD((value), 8)
 #define CR_CLKDIV_VALUE(reg)            FIELD_VALUE((reg), CR_CLKDIV_MASK, 8)
