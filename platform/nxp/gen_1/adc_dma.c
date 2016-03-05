@@ -57,7 +57,7 @@ static void dmaHandler(void *object)
 
   /*
    * Each block consists of two buffers. Call user function
-   * at the end of block or at the end of transfer.
+   * at the end of the block or at the end of the transfer.
    */
   if ((res != E_BUSY || !(count & 1)) && interface->callback)
     interface->callback(interface->callbackArgument);
@@ -173,6 +173,9 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   {
     if (adcUnitRegister(unit, 0, interface) != E_OK)
       return 0;
+
+    /* Clear pending requests */
+    (void)DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
   }
 
   /* When previous transfer is ongoing it will be continued */
@@ -185,11 +188,11 @@ static size_t adcRead(void *object, void *buffer, size_t length)
     return 0;
   }
 
-  /* Enable DMA requests */
-  reg->INTEN = INTEN_AD(interface->pin.channel);
-
   if (!ongoing)
   {
+    /* Enable DMA requests */
+    reg->INTEN = INTEN_AD(interface->pin.channel);
+
     /* Set conversion channel */
     reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(interface->pin.channel);
     /* Start the conversion */

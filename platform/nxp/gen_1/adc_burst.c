@@ -39,10 +39,11 @@ static void interruptHandler(void *object)
   struct AdcBurst * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->base.reg;
+  uint16_t * const buffer = interface->buffer;
 
   /* Copy conversion result and increase position in buffer */
-  *interface->buffer = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
-  ++interface->buffer;
+  *buffer = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
+  interface->buffer = buffer + 1;
 
   if (!--interface->left)
   {
@@ -58,7 +59,9 @@ static void interruptHandler(void *object)
       interface->callback(interface->callbackArgument);
   }
   else
+  {
     reg->CR = reg->CR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *object, const void *configBase)
@@ -151,21 +154,26 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   if (adcUnitRegister(unit, interruptHandler, interface) != E_OK)
     return 0;
 
-  /* Invoke interrupt routine after completion of the conversion */
-  irqEnable(unit->base.irq);
-  reg->INTEN = INTEN_AD(interface->pin.channel);
-
-  /* Set conversion channel */
-
   interface->buffer = buffer;
   interface->left = samples;
 
+  /* Clear pending interrupts */
+  (void)DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
+  /* Enable interrupts for the channel */
+  reg->INTEN = INTEN_AD(interface->pin.channel);
+  irqEnable(unit->base.irq);
+
+  /* Allow conversions */
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(interface->pin.channel);
+
   /* Start the conversion */
   reg->CR |= CR_START(interface->event);
 
   if (interface->blocking)
-    while (CR_START_VALUE(reg->CR));
+  {
+    while (interface->left)
+      barrier();
+  }
 
   return samples * SAMPLE_SIZE;
 }

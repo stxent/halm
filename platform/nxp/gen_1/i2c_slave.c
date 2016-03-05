@@ -234,9 +234,13 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch (option)
   {
     case IF_ADDRESS:
-      /* TODO Check range */
-      reg->ADR0 = ADR_ADDRESS(*(const uint32_t *)data);
-      return E_OK;
+      if (*(const uint32_t *)data <= 127)
+      {
+        reg->ADR0 = ADR_ADDRESS(*(const uint32_t *)data);
+        return E_OK;
+      }
+      else
+        return E_VALUE;
 
     case IF_POSITION:
       if (*(const uint32_t *)data < interface->size)
@@ -245,9 +249,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
         return E_OK;
       }
       else
-      {
         return E_VALUE;
-      }
 
     default:
       return E_ERROR;

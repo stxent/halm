@@ -265,12 +265,17 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
 
   switch (option)
   {
+    case IF_ADDRESS:
+      if (*(const uint32_t *)data <= 127)
+      {
+        interface->address = *(const uint32_t *)data;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
+
     case IF_BLOCKING:
       interface->blocking = true;
-      return E_OK;
-
-    case IF_ADDRESS:
-      interface->address = *(const uint32_t *)data;
       return E_OK;
 
     case IF_RATE:

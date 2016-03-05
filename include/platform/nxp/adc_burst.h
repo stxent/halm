@@ -39,14 +39,15 @@ struct AdcBurst
   void *callbackArgument;
 
   /* Pointer to an input buffer */
-  uint16_t *buffer;
+  void *buffer;
   /* Number of samples to be converted */
   size_t left;
+
   /* Pin descriptor */
   struct AdcPin pin;
+
   /* Hardware trigger event */
   uint8_t event;
-
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
 };
