@@ -103,7 +103,8 @@ static enum result adcCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGet(void *object, enum ifOption option, void *data)
+static enum result adcGet(void *object, enum ifOption option,
+    void *data __attribute__((unused)))
 {
   struct AdcBurst * const interface = object;
 

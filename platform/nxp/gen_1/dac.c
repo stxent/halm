@@ -87,7 +87,7 @@ static size_t dacWrite(void *object, const void *buffer, size_t length)
   if (length < SAMPLE_SIZE)
     return 0;
 
-  reg->CR = (*((const uint16_t *)buffer) & CR_OUTPUT_MASK) | CR_BIAS;
+  reg->CR = (*(const uint16_t *)buffer & CR_OUTPUT_MASK) | CR_BIAS;
 
   return SAMPLE_SIZE;
 }

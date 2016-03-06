@@ -160,9 +160,10 @@ static void txDmaHandler(void *object)
 static enum result updateRate(struct I2sDma *interface, bool slave)
 {
   LPC_I2S_Type * const reg = interface->base.reg;
-  uint32_t bitrate, masterClock;
   struct I2sRateConfig rateConfig;
+  uint32_t bitrate;
   uint32_t divisor;
+  uint32_t masterClock;
   enum result res;
 
   if (slave)
@@ -391,7 +392,7 @@ static enum result i2sGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_STATUS:
-      return dmaStatus(interface->rxDma); //FIXME
+      return dmaStatus(interface->rxDma); //FIXME Check for TX busy
 
     case IF_RX_CAPACITY:
       *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->rxDma) + 1) >> 1);
@@ -410,6 +411,7 @@ static enum result i2sSet(void *object __attribute__((unused)),
     enum ifOption option __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
+  //TODO Configure rate
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/

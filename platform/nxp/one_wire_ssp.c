@@ -461,9 +461,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
         return E_OK;
       }
       else
-      {
         return E_EMPTY;
-      }
 
     default:
       break;

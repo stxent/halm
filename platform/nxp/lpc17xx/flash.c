@@ -94,7 +94,6 @@ static enum result flashInit(void *object,
       return E_ERROR;
   }
 
-  interface->callback = 0;
   interface->position = 0;
 
   return E_OK;
@@ -105,14 +104,11 @@ static void flashDeinit(void *object __attribute__((unused)))
 
 }
 /*----------------------------------------------------------------------------*/
-static enum result flashCallback(void *object, void (*callback)(void *),
-    void *argument)
+static enum result flashCallback(void *object __attribute__((unused)),
+    void (*callback)(void *) __attribute__((unused)),
+    void *argument __attribute__((unused)))
 {
-  struct Flash * const interface = object;
-
-  interface->callbackArgument = argument;
-  interface->callback = callback;
-  return E_OK;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum result flashGet(void *object, enum ifOption option, void *data)
@@ -188,9 +184,6 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 
   memcpy(buffer, (const void *)interface->position, length);
 
-  if (interface->callback)
-    interface->callback(interface->callbackArgument);
-
   return length;
 }
 /*----------------------------------------------------------------------------*/
@@ -205,9 +198,6 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
 
   if (flashWriteBuffer(interface->position, buffer, length) != E_OK)
     return 0;
-
-  if (interface->callback)
-    interface->callback(interface->callbackArgument);
 
   return length;
 }

@@ -24,9 +24,6 @@ struct Flash
 {
   struct Interface base;
 
-  void (*callback)(void *);
-  void *callbackArgument;
-
   /* Current address */
   uint32_t position;
   /* Size of the Flash memory */

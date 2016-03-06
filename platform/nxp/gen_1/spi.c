@@ -165,7 +165,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_STATUS:
-      return interface->rxLeft || reg->SR & SR_BSY ? E_BUSY : E_OK;
+      return (interface->rxLeft || reg->SR & SR_BSY) ? E_BUSY : E_OK;
 
     default:
       return E_INVALID;

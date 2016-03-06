@@ -204,13 +204,14 @@ static enum result serialSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Serial * const interface = object;
-  struct UartRateConfig rateConfig;
-  enum result res;
 
   switch (option)
   {
     case IF_RATE:
-      res = uartCalcRate(object, *(const uint32_t *)data, &rateConfig);
+    {
+      struct UartRateConfig rateConfig;
+      const enum result res = uartCalcRate(object, *(const uint32_t *)data,
+          &rateConfig);
 
       if (res == E_OK)
       {
@@ -218,6 +219,7 @@ static enum result serialSet(void *object, enum ifOption option,
         uartSetRate(object, rateConfig);
       }
       return res;
+    }
 
     default:
       return E_INVALID;
