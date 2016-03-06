@@ -232,7 +232,7 @@ static enum result oneWireGet(void *object, enum ifOption option,
         return interface->state != STATE_IDLE ? E_BUSY : E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -256,7 +256,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

@@ -394,19 +394,15 @@ static enum result i2sGet(void *object, enum ifOption option, void *data)
       return dmaStatus(interface->rxDma); //FIXME
 
     case IF_RX_CAPACITY:
-      *(uint32_t *)data = BLOCK_COUNT - ((dmaCount(interface->rxDma) + 1) >> 1);
+      *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->rxDma) + 1) >> 1);
       return E_OK;
 
     case IF_TX_CAPACITY:
-      *(uint32_t *)data = BLOCK_COUNT - ((dmaCount(interface->txDma) + 1) >> 1);
-      return E_OK;
-
-    case IF_WIDTH:
-      *(uint32_t *)data = 1 << (interface->width + 3);
+      *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->txDma) + 1) >> 1);
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -414,7 +410,7 @@ static enum result i2sSet(void *object __attribute__((unused)),
     enum ifOption option __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static size_t i2sRead(void *object, void *buffer, size_t length)

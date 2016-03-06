@@ -134,18 +134,14 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_RX_CAPACITY:
-      *(uint32_t *)data = BLOCK_COUNT - ((dmaCount(interface->dma) + 1) >> 1);
+      *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->dma) + 1) >> 1);
       return E_OK;
 
     case IF_STATUS:
       return dmaStatus(interface->dma);
 
-    case IF_WIDTH:
-      *(uint32_t *)data = ADC_RESOLUTION;
-      return E_OK;
-
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -153,7 +149,7 @@ static enum result adcSet(void *object __attribute__((unused)),
     enum ifOption option __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)

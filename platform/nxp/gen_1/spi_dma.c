@@ -229,7 +229,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
       return getStatus(interface);
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -254,7 +254,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

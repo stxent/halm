@@ -320,14 +320,14 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
   {
     case IF_SDIO_MODE:
     {
-      *(uint32_t *)data = interface->base.wide ? SDIO_4BIT : SDIO_1BIT;
+      *(uint8_t *)data = interface->base.wide ? SDIO_4BIT : SDIO_1BIT;
       return E_OK;
     }
 
     case IF_SDIO_RESPONSE:
     {
       const enum sdioResponse response = COMMAND_RESP_VALUE(interface->command);
-      uint32_t *buffer = data;
+      uint32_t * const buffer = data;
 
       if (response == SDIO_RESPONSE_LONG)
       {
@@ -339,9 +339,9 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
         buffer[0] = reg->RESP[0];
       }
       else
+      {
         return E_ERROR;
-
-      return E_OK;
+      }
     }
 
     default:
@@ -358,7 +358,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
       return interface->status;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -381,7 +381,7 @@ static enum result sdioSet(void *object, enum ifOption option,
 
     case IF_SDIO_BLOCK_SIZE:
     {
-      const uint32_t blockLength = *(const uint32_t *)data;
+      const size_t blockLength = *(const size_t *)data;
 
       if (blockLength < 0xFFFF)
       {
@@ -409,7 +409,7 @@ static enum result sdioSet(void *object, enum ifOption option,
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

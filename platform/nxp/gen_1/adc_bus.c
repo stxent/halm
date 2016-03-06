@@ -145,15 +145,11 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-     case IF_STATUS:
-       return interface->buffer ? E_BUSY : E_OK;
-
-    case IF_WIDTH:
-      *((uint32_t *)data) = ADC_RESOLUTION;
-      return E_OK;
+    case IF_STATUS:
+      return interface->buffer ? E_BUSY : E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -173,7 +169,7 @@ static enum result adcSet(void *object, enum ifOption option,
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

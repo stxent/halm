@@ -211,18 +211,18 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_ADDRESS:
-       *(uint32_t *)data = ADR_ADDRESS_VALUE(reg->ADR0);
+       *(uint8_t *)data = ADR_ADDRESS_VALUE(reg->ADR0);
       return E_OK;
 
     case IF_POSITION:
-      *(uint32_t *)data = interface->internal;
+      *(size_t *)data = interface->internal;
       return E_OK;
 
     case IF_STATUS:
       return interface->state != STATE_IDLE ? E_BUSY : E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -234,25 +234,25 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch (option)
   {
     case IF_ADDRESS:
-      if (*(const uint32_t *)data <= 127)
+      if (*(const uint8_t *)data <= 127)
       {
-        reg->ADR0 = ADR_ADDRESS(*(const uint32_t *)data);
+        reg->ADR0 = ADR_ADDRESS(*(const uint8_t *)data);
         return E_OK;
       }
       else
         return E_VALUE;
 
     case IF_POSITION:
-      if (*(const uint32_t *)data < interface->size)
+      if (*(const size_t *)data < interface->size)
       {
-        interface->internal = *(const uint32_t *)data;
+        interface->internal = *(const size_t *)data;
         return E_OK;
       }
       else
         return E_VALUE;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

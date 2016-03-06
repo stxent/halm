@@ -775,7 +775,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
   {
     case IF_SDIO_MODE:
     {
-      *(uint32_t *)data = SDIO_SPI;
+      *(uint8_t *)data = SDIO_SPI;
       return E_OK;
     }
 
@@ -835,7 +835,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
     }
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -860,9 +860,9 @@ static enum result sdioSet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_SDIO_BLOCK_SIZE:
-      if (*(const uint32_t *)data <= MAX_BLOCK_SIZE)
+      if (*(const size_t *)data <= MAX_BLOCK_SIZE)
       {
-        interface->blockSize = *(const uint32_t *)data;
+        interface->blockSize = *(const size_t *)data;
         return E_OK;
       }
       else
@@ -885,7 +885,7 @@ static enum result sdioSet(void *object, enum ifOption option,
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

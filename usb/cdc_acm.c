@@ -297,11 +297,11 @@ static enum result interfaceGet(void *object, enum ifOption option,
   switch (option)
   {
     case IF_AVAILABLE:
-      *(uint32_t *)data = interface->suspended ? 0 : interface->queuedRxBytes;
+      *(size_t *)data = interface->suspended ? 0 : interface->queuedRxBytes;
       return E_OK;
 
     case IF_PENDING:
-      *(uint32_t *)data = interface->suspended ? 0 : interface->queuedTxBytes;
+      *(size_t *)data = interface->suspended ? 0 : interface->queuedTxBytes;
       return E_OK;
 
     case IF_RATE:
@@ -316,7 +316,7 @@ static enum result interfaceGet(void *object, enum ifOption option,
   {
     case IF_CDC_ACM_STATUS:
     {
-      uint32_t status = 0;
+      uint8_t status = 0;
 
       if (interface->updated)
       {
@@ -335,22 +335,20 @@ static enum result interfaceGet(void *object, enum ifOption option,
           status |= CDC_ACM_TX_EMPTY;
       }
 
-      *(uint32_t *)data = status;
+      *(uint8_t *)data = status;
       return E_OK;
     }
 
     default:
-      break;
+      return E_INVALID;
   }
-
-  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result interfaceSet(void *object __attribute__((unused)),
     enum ifOption option __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static size_t interfaceRead(void *object, void *buffer, size_t length)

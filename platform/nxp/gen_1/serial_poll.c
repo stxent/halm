@@ -112,14 +112,14 @@ static enum result serialCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialGet(void *object __attribute__((unused)),
     enum ifOption option __attribute__((unused)),
     void *data __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum result serialSet(void *object, enum ifOption option,
@@ -142,7 +142,7 @@ static enum result serialSet(void *object, enum ifOption option,
       return res;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

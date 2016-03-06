@@ -56,28 +56,21 @@ static enum result adcCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcGet(void *object __attribute__((unused)),
-    enum ifOption option, void *data)
+    enum ifOption option __attribute__((unused)),
+    void *data __attribute__((unused)))
 {
-  switch (option)
-  {
-    case IF_WIDTH:
-      *(uint32_t *)data = ADC_RESOLUTION;
-      return E_OK;
-
-    default:
-      return E_ERROR;
-  }
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcSet(void *object __attribute__((unused)),
     enum ifOption option __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)

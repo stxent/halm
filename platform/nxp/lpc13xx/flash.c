@@ -102,15 +102,15 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_POSITION:
-      *(uint32_t *)data = interface->position;
+      *(size_t *)data = interface->position;
       return E_OK;
 
     case IF_SIZE:
-      *(uint32_t *)data = interface->size;
+      *(size_t *)data = interface->size;
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -124,7 +124,7 @@ static enum result flashSet(void *object, enum ifOption option,
   {
     case IF_FLASH_ERASE_SECTOR:
     {
-      const uint32_t address = *(const uint32_t *)data;
+      const size_t address = *(const size_t *)data;
 
       if (!isSectorAddressValid(interface, address))
         return E_VALUE;
@@ -143,7 +143,7 @@ static enum result flashSet(void *object, enum ifOption option,
   {
     case IF_POSITION:
     {
-      const uint32_t position = *(const uint32_t *)data;
+      const size_t position = *(const size_t *)data;
 
       if (!isPageAddressValid(interface, position))
         return E_VALUE;
@@ -153,7 +153,7 @@ static enum result flashSet(void *object, enum ifOption option,
     }
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

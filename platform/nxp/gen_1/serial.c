@@ -188,15 +188,15 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_AVAILABLE:
-      *(uint32_t *)data = byteQueueSize(&interface->rxQueue);
+      *(size_t *)data = byteQueueSize(&interface->rxQueue);
       return E_OK;
 
     case IF_PENDING:
-      *(uint32_t *)data = byteQueueSize(&interface->txQueue);
+      *(size_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -220,7 +220,7 @@ static enum result serialSet(void *object, enum ifOption option,
       return res;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

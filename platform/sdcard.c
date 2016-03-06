@@ -357,7 +357,7 @@ static enum result cardInit(void *object, const void *configBase)
 {
   const struct SdCardConfig * const config = configBase;
   struct SdCard * const device = object;
-  uint32_t mode;
+  unsigned int mode;
   enum result res;
 
   device->address = 0;
@@ -385,7 +385,7 @@ static enum result cardCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum result cardGet(void *object, enum ifOption option, void *data)
@@ -403,7 +403,7 @@ static enum result cardGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -431,7 +431,7 @@ static enum result cardSet(void *object, enum ifOption option,
     }
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/

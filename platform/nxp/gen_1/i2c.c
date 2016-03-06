@@ -244,7 +244,7 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -256,7 +256,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch ((enum i2cOption)option)
   {
     case IF_I2C_SENDSTOP:
-      interface->sendStopBit = *(const uint32_t *)data ? true : false;
+      interface->sendStopBit = *(const uint8_t *)data ? true : false;
       return E_OK;
 
     default:
@@ -266,9 +266,9 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch (option)
   {
     case IF_ADDRESS:
-      if (*(const uint32_t *)data <= 127)
+      if (*(const uint8_t *)data <= 127)
       {
-        interface->address = *(const uint32_t *)data;
+        interface->address = *(const uint8_t *)data;
         return E_OK;
       }
       else
@@ -287,7 +287,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     default:
-      return E_ERROR;
+      return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
