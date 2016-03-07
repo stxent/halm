@@ -9,7 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <platform/nxp/gppwm_base.h>
 #include <pwm.h>
-#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpPwmUnit;
 extern const struct PwmClass * const GpPwm;
@@ -30,8 +29,6 @@ struct GpPwmUnit
 
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
-  /* Access protection for match registers state */
-  spinlock_t spinlock;
   /* Match blocks currently in use */
   uint8_t matches;
 };

@@ -10,7 +10,6 @@
 #include <platform/nxp/sct_base.h>
 #include <platform/nxp/sct_defs.h>
 #include <platform/platform_defs.h>
-#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT                 1
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
@@ -393,25 +392,25 @@ const struct PinEntry sctOutputPins[] = {
 static const struct EntityClass * const TimerHandler = &handlerTable;
 const struct EntityClass * const SctBase = &tmrTable;
 static struct TimerHandler *handlers[CHANNEL_COUNT] = {0};
-static spinlock_t spinlocks[CHANNEL_COUNT] = {SPIN_UNLOCKED};
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(uint8_t channel)
 {
-  spinLock(&spinlocks[channel]);
+  const irqState state = irqSave();
+
   timerHandlerInstantiate(channel);
 
   const bool result = handlers[channel]->descriptors[0]
       || handlers[channel]->descriptors[1];
 
-  spinUnlock(&spinlocks[channel]);
-
+  irqRestore(state);
   return result;
 }
 /*----------------------------------------------------------------------------*/
 static enum result timerHandlerAttach(uint8_t channel, enum sctPart part,
     struct SctBase *timer)
 {
-  spinLock(&spinlocks[channel]);
+  const irqState state = irqSave();
+
   timerHandlerInstantiate(channel);
 
   struct TimerHandler * const handler = handlers[channel];
@@ -434,15 +433,17 @@ static enum result timerHandlerAttach(uint8_t channel, enum sctPart part,
       res = E_BUSY;
   }
 
-  spinUnlock(&spinlocks[channel]);
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/
 static void timerHandlerDetach(uint8_t channel, enum sctPart part)
 {
-  spinLock(&spinlocks[channel]);
+  const irqState state = irqSave();
+
   handlers[channel]->descriptors[part == SCT_HIGH] = 0;
-  spinUnlock(&spinlocks[channel]);
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void timerHandlerInstantiate(uint8_t channel)
@@ -500,15 +501,15 @@ void SCT_ISR(void)
 int sctAllocateEvent(struct SctBase *timer)
 {
   int event = -1;
+  const irqState state = irqSave();
 
-  spinLock(&spinlocks[timer->channel]);
   if (handlers[timer->channel]->events)
   {
     event = 31 - countLeadingZeros32(handlers[timer->channel]->events);
     handlers[timer->channel]->events &= ~(1 << event);
   }
-  spinUnlock(&spinlocks[timer->channel]);
 
+  irqRestore(state);
   return event;
 }
 /*----------------------------------------------------------------------------*/
@@ -519,9 +520,11 @@ uint32_t sctGetClock(const struct SctBase *timer __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 void sctReleaseEvent(struct SctBase *timer, int event)
 {
-  spinLock(&spinlocks[timer->channel]);
+  const irqState state = irqSave();
+
   handlers[timer->channel]->events |= 1 << event;
-  spinUnlock(&spinlocks[timer->channel]);
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configBase)

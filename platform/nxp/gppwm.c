@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <irq.h>
 #include <platform/nxp/gppwm.h>
 #include <platform/nxp/gppwm_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -92,25 +93,27 @@ static uint8_t configMatchPin(uint8_t channel, pinNumber key)
 /*----------------------------------------------------------------------------*/
 static enum result unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
-  const uint8_t mask = 1 << channel;
   enum result res = E_BUSY;
+  const uint8_t mask = 1 << channel;
+  const irqState state = irqSave();
 
-  spinLock(&unit->spinlock);
   if (!(unit->matches & mask))
   {
     unit->matches |= mask;
     res = E_OK;
   }
-  spinUnlock(&unit->spinlock);
 
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/
 static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
-  spinLock(&unit->spinlock);
+  const irqState state = irqSave();
+
   unit->matches &= ~(1 << channel);
-  spinUnlock(&unit->spinlock);
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *object, const void *configBase)
@@ -133,7 +136,6 @@ static enum result unitInit(void *object, const void *configBase)
 
   unit->matches = 0;
   unit->resolution = config->resolution;
-  unit->spinlock = SPIN_UNLOCKED;
 
   LPC_PWM_Type * const reg = unit->base.reg;
 

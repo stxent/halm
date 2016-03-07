@@ -5,10 +5,10 @@
  */
 
 #include <entity.h>
+#include <irq.h>
 #include <pin.h>
 #include <platform/nxp/lpc43xx/pin_defs.h>
 #include <platform/nxp/lpc43xx/system.h>
-#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(channel, offset) (((offset) << 3) | (channel))
 #define UNPACK_CHANNEL(value)       ((value) & 0x07)
@@ -294,7 +294,6 @@ const struct PinGroupEntry gpioPins[] = {
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PinHandler = &handlerTable;
 static struct PinHandler *pinHandler = 0;
-static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData data)
 {
@@ -372,7 +371,7 @@ static enum pinDriveType detectPinDriveType(volatile uint32_t *reg)
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach(void)
 {
-  spinLock(&spinlock);
+  const irqState state = irqSave();
 
   /* Create handler object on first function call */
   if (!pinHandler)
@@ -386,14 +385,16 @@ static inline void pinHandlerAttach(void)
     sysResetEnable(RST_GPIO);
   }
 
-  spinUnlock(&spinlock);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerDetach(void)
 {
-  spinLock(&spinlock);
+  const irqState state = irqSave();
+
   --pinHandler->instances;
-  spinUnlock(&spinlock);
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static enum result pinHandlerInit(void *object,

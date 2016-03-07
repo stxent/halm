@@ -46,10 +46,9 @@ const struct PwmClass * const GpTimerPwm = &channelTable;
 static enum result unitAllocateChannel(struct GpTimerPwmUnit *unit,
     uint8_t channel)
 {
-  const uint8_t mask = 1 << channel;
   enum result res = E_BUSY;
-
-  spinLock(&unit->spinlock);
+  const uint8_t mask = 1 << channel;
+  const irqState state = irqSave();
 
   const int freeChannel = gpTimerAllocateChannel(unit->matches | mask);
 
@@ -60,15 +59,17 @@ static enum result unitAllocateChannel(struct GpTimerPwmUnit *unit,
     res = E_OK;
   }
 
-  spinUnlock(&unit->spinlock);
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/
 static void unitReleaseChannel(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
-  spinLock(&unit->spinlock);
+  const irqState state = irqSave();
+
   unit->matches &= ~(1 << channel);
-  spinUnlock(&unit->spinlock);
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
@@ -110,7 +111,6 @@ static enum result unitInit(void *object, const void *configBase)
     return res;
 
   unit->matches = 0;
-  unit->spinlock = SPIN_UNLOCKED;
   unit->resolution = config->resolution;
 
   /* Should be invoked after object initialization completion */

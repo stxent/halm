@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <entity.h>
+#include <irq.h>
 #include <pin.h>
 #include <platform/nxp/lpc11exx/pin_defs.h>
 #include <platform/nxp/lpc11exx/system.h>
-#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 struct PinHandler
 {
@@ -34,7 +34,6 @@ static const struct EntityClass handlerTable = {
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PinHandler = &handlerTable;
 static struct PinHandler *pinHandler = 0;
-static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData data)
 {
@@ -63,7 +62,7 @@ static void commonPinInit(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerAttach(void)
 {
-  spinLock(&spinlock);
+  const irqState state = irqSave();
 
   /* Create handler object on first function call */
   if (!pinHandler)
@@ -76,12 +75,12 @@ static inline void pinHandlerAttach(void)
     sysClockEnable(CLK_GPIO);
   }
 
-  spinUnlock(&spinlock);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinHandlerDetach(void)
 {
-  spinLock(&spinlock);
+  const irqState state = irqSave();
 
   /* Disable clocks when no active pins exist */
   if (!--pinHandler->instances)
@@ -90,7 +89,7 @@ static inline void pinHandlerDetach(void)
     sysClockDisable(CLK_IOCON);
   }
 
-  spinUnlock(&spinlock);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static enum result pinHandlerInit(void *object,

@@ -12,7 +12,6 @@
 #include <platform/nxp/gpdma_defs.h>
 #include <platform/nxp/lpc43xx/system.h>
 #include <platform/platform_defs.h>
-#include <spinlock.h>
 /*----------------------------------------------------------------------------*/
 struct DmaHandler
 {
@@ -72,7 +71,6 @@ static const enum gpDmaEvent eventMap[16][4] = {
 static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
-static spinlock_t spinlock = SPIN_UNLOCKED;
 /*----------------------------------------------------------------------------*/
 static inline void *calcPeripheral(unsigned int channel)
 {
@@ -148,7 +146,8 @@ static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
 
   assert(event < GPDMA_MEMORY);
 
-  spinLock(&spinlock);
+  const irqState state = irqSave();
+
   dmaHandlerInstantiate();
 
   for (unsigned int index = 0; index < 16; ++index)
@@ -180,13 +179,14 @@ static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
   channel->mux.mask &= ~(0x03 << (entryIndex << 1));
   channel->mux.value = entryOffset << (entryIndex << 1);
 
-  spinUnlock(&spinlock);
+  irqRestore(state);
   return entryIndex;
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void)
 {
-  spinLock(&spinlock);
+  const irqState state = irqSave();
+
   dmaHandlerInstantiate();
 
   if (!dmaHandler->instances++)
@@ -197,12 +197,12 @@ static void dmaHandlerAttach(void)
     irqEnable(GPDMA_IRQ);
   }
 
-  spinUnlock(&spinlock);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerDetach(void)
 {
-  spinLock(&spinlock);
+  const irqState state = irqSave();
 
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)
@@ -212,7 +212,7 @@ static void dmaHandlerDetach(void)
     sysClockDisable(CLK_M4_GPDMA);
   }
 
-  spinUnlock(&spinlock);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerFree(struct GpDmaBase *channel)
