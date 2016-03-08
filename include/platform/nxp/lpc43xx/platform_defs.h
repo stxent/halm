@@ -1618,122 +1618,89 @@ typedef struct
   __rw__ uint32_t CONTROL;
   __rw__ uint32_t CONFIG;
 } LPC_GPDMACH_Type;
-///*------------------Universal Serial Bus--------------------------------------*/
-//typedef struct
-//{
-//  /* USB Host registers */
-//  __ro__ uint32_t HcRevision;
-//  __rw__ uint32_t HcControl;
-//  __rw__ uint32_t HcCommandStatus;
-//  __rw__ uint32_t HcInterruptStatus;
-//  __rw__ uint32_t HcInterruptEnable;
-//  __rw__ uint32_t HcInterruptDisable;
-//  __rw__ uint32_t HcHCCA;
-//  __ro__ uint32_t HcPeriodCurrentED;
-//  __rw__ uint32_t HcControlHeadED;
-//  __rw__ uint32_t HcControlCurrentED;
-//  __rw__ uint32_t HcBulkHeadED;
-//  __rw__ uint32_t HcBulkCurrentED;
-//  __ro__ uint32_t HcDoneHead;
-//  __rw__ uint32_t HcFmInterval;
-//  __ro__ uint32_t HcFmRemaining;
-//  __ro__ uint32_t HcFmNumber;
-//  __rw__ uint32_t HcPeriodicStart;
-//  __rw__ uint32_t HcLSTreshold;
-//  __rw__ uint32_t HcRhDescriptorA;
-//  __rw__ uint32_t HcRhDescriptorB;
-//  __rw__ uint32_t HcRhStatus;
-//  __rw__ uint32_t HcRhPortStatus1;
-//  __rw__ uint32_t HcRhPortStatus2;
-//  __ne__ uint32_t RESERVED0[40];
-//  __ro__ uint32_t Module_ID;
-//
-//  /* USB On-The-Go registers */
-//  __ro__ uint32_t OTGIntSt;
-//  __rw__ uint32_t OTGIntEn;
-//  __wo__ uint32_t OTGIntSet;
-//  __wo__ uint32_t OTGIntClr;
-//  __rw__ uint32_t OTGStCtrl;
-//  __rw__ uint32_t OTGTmr;
-//  __ne__ uint32_t RESERVED1[58];
-//
-//  /* USB Device Interrupt registers */
-//  __ro__ uint32_t USBDevIntSt;
-//  __rw__ uint32_t USBDevIntEn;
-//  __wo__ uint32_t USBDevIntClr;
-//  __wo__ uint32_t USBDevIntSet;
-//
-//  /* USB Device SIE Command registers */
-//  __wo__ uint32_t USBCmdCode;
-//  __ro__ uint32_t USBCmdData;
-//
-//  /* USB Device Transfer registers */
-//  __ro__ uint32_t USBRxData;
-//  __wo__ uint32_t USBTxData;
-//  __ro__ uint32_t USBRxPLen;
-//  __wo__ uint32_t USBTxPLen;
-//  __rw__ uint32_t USBCtrl;
-//  __wo__ uint32_t USBDevIntPri;
-//
-//  /* USB Device Endpoint Interrupt registers */
-//  __ro__ uint32_t USBEpIntSt;
-//  __rw__ uint32_t USBEpIntEn;
-//  __wo__ uint32_t USBEpIntClr;
-//  __wo__ uint32_t USBEpIntSet;
-//  __wo__ uint32_t USBEpIntPri;
-//
-//  /* USB Device Endpoint Realization registers */
-//  __rw__ uint32_t USBReEp;
-//  __wo__ uint32_t USBEpInd;
-//  __rw__ uint32_t USBMaxPSize;
-//
-//  /* USB Device DMA registers */
-//  __ro__ uint32_t USBDMARSt;
-//  __wo__ uint32_t USBDMARClr;
-//  __wo__ uint32_t USBDMARSet;
-//  __ne__ uint32_t RESERVED2[9];
-//  __rw__ uint32_t USBUDCAH;
-//  __ro__ uint32_t USBEpDMASt;
-//  __wo__ uint32_t USBEpDMAEn;
-//  __wo__ uint32_t USBEpDMADis;
-//  __ro__ uint32_t USBDMAIntSt;
-//  __rw__ uint32_t USBDMAIntEn;
-//  __ne__ uint32_t RESERVED3[2];
-//  __ro__ uint32_t USBEoTIntSt;
-//  __wo__ uint32_t USBEoTIntClr;
-//  __wo__ uint32_t USBEoTIntSet;
-//  __ro__ uint32_t USBNDDRIntSt;
-//  __wo__ uint32_t USBNDDRIntClr;
-//  __wo__ uint32_t USBNDDRIntSet;
-//  __ro__ uint32_t USBSysErrIntSt;
-//  __wo__ uint32_t USBSysErrIntClr;
-//  __wo__ uint32_t USBSysErrIntSet;
-//  __ne__ uint32_t RESERVED4[15];
-//
-//  /* USB OTG I2C registers */
-//  union
-//  {
-//    __ro__ uint32_t I2C_RX;
-//    __wo__ uint32_t I2C_TX;
-//  };
-//  __ro__ uint32_t I2C_STS;
-//  __rw__ uint32_t I2C_CTL;
-//  __rw__ uint32_t I2C_CLKHI;
-//  __wo__ uint32_t I2C_CLKLO;
-//  __ne__ uint32_t RESERVED5[824];
-//
-//  /* USB Clock Control registers */
-//  union
-//  {
-//    __rw__ uint32_t USBClkCtrl;
-//    __rw__ uint32_t OTGClkCtrl;
-//  };
-//  union
-//  {
-//    __ro__ uint32_t USBClkSt;
-//    __ro__ uint32_t OTGClkSt;
-//  };
-//} LPC_USB_Type;
+/*------------------Universal Serial Bus--------------------------------------*/
+typedef struct
+{
+  __ne__ uint32_t RESERVED0[64];
+  __ro__ uint32_t CAPLENGTH; /* Capability register length */
+  __ro__ uint32_t HCSPARAMS; /* Host controller structural parameters */
+  __ro__ uint32_t HCCPARAMS; /* Host controller capability parameters */
+  __ne__ uint32_t RESERVED1[5];
+  __ro__ uint32_t DCIVERSION;/* Device interface version number */
+  __ne__ uint32_t RESERVED2[7];
+
+  union {
+    __rw__ uint32_t USBCMD_H; /* USB command (host mode) */
+    __rw__ uint32_t USBCMD_D; /* USB command (device mode) */
+  };
+
+  union {
+    __rw__ uint32_t USBSTS_H; /* USB status (host mode) */
+    __rw__ uint32_t USBSTS_D; /* USB status (device mode) */
+  };
+
+  union {
+    __rw__ uint32_t USBINTR_H; /* USB interrupt enable (host mode) */
+    __rw__ uint32_t USBINTR_D; /* USB interrupt enable (device mode) */
+  };
+
+  union {
+    __rw__ uint32_t FRINDEX_H; /* USB frame index (host mode) */
+    __ro__ uint32_t FRINDEX_D; /* USB frame index (device mode) */
+  };
+  __ne__ uint32_t RESERVED3;
+
+  union {
+    __rw__ uint32_t PERIODICLISTBASE; /* Frame list base address */
+    __rw__ uint32_t DEVICEADDR; /* USB device address */
+  };
+
+  union {
+    /* Address of endpoint list in memory (host mode) */
+    __rw__ uint32_t ASYNCLISTADDR;
+    /* Address of endpoint list in memory (device mode) */
+    __rw__ uint32_t ENDPOINTLISTADDR;
+  };
+
+  /* Asynchronous buffer status for embedded TT (host mode) */
+  __rw__ uint32_t TTCTRL;
+  __rw__ uint32_t BURSTSIZE; /* Programmable burst size */
+  /* Host transmit pre-buffer packet tuning (host mode) */
+  __rw__ uint32_t TXFILLTUNING;
+  __ne__ uint32_t RESERVED4[2];
+  __rw__ uint32_t ULPIVIEWPORT; /* ULPI viewport, only for USB1 */
+  __rw__ uint32_t BINTERVAL; /* Length of virtual frame */
+  __rw__ uint32_t ENDPTNAK; /* Endpoint NAK (device mode) */
+  __rw__ uint32_t ENDPTNAKEN; /* Endpoint NAK Enable (device mode) */
+  __ne__ uint32_t RESERVED5;
+
+  union {
+    __rw__ uint32_t PORTSC1_H; /* Port 1 status/control (host mode) */
+    __rw__ uint32_t PORTSC1_D; /* Port 1 status/control (device mode) */
+  };
+
+  __ne__ uint32_t RESERVED6[7];
+  __rw__ uint32_t OTGSC; /* Only for USB0 */
+
+  union {
+    __rw__ uint32_t USBMODE_H; /* USB mode (host mode) */
+    __rw__ uint32_t USBMODE_D; /* USB mode (device mode) */
+  };
+
+  __rw__ uint32_t ENDPTSETUPSTAT; /* Endpoint setup status */
+  __rw__ uint32_t ENDPTPRIME; /* Endpoint initialization */
+  __rw__ uint32_t ENDPTFLUSH; /* Endpoint deinitialization */
+  __ro__ uint32_t ENDPTSTAT; /* Endpoint status */
+  __rw__ uint32_t ENDPTCOMPLETE; /* Endpoint complete */
+
+  /* Endpoint control registers */
+  __rw__ uint32_t ENDPTCTRL0;
+  __rw__ uint32_t ENDPTCTRL1;
+  __rw__ uint32_t ENDPTCTRL2;
+  __rw__ uint32_t ENDPTCTRL3;
+  __rw__ uint32_t ENDPTCTRL4;
+  __rw__ uint32_t ENDPTCTRL5;
+} LPC_USB_Type;
 ///*------------------Ethernet Media Access Controller--------------------------*/
 //typedef struct
 //{
@@ -1902,8 +1869,8 @@ typedef struct
 //#define LPC_SPIFI         ((LPC_SPIFI_Type *)LPC_SPIFI_BASE)
 #define LPC_SDMMC         ((LPC_SDMMC_Type *)LPC_SDMMC_BASE)
 //#define LPC_EMC           ((LPC_EMC_Type *)LPC_EMC_BASE)
-//#define LPC_USB0          ((LPC_USB_Type *)LPC_USB0_BASE)
-//#define LPC_USB1          ((LPC_USB_Type *)LPC_USB1_BASE)
+#define LPC_USB0          ((LPC_USB_Type *)LPC_USB0_BASE)
+#define LPC_USB1          ((LPC_USB_Type *)LPC_USB1_BASE)
 //#define LPC_LCD           ((LPC_LCD_Type *)LPC_LCD_BASE)
 //#define LPC_ETHERNET      ((LPC_ETHERNET_Type *)LPC_ETHERNET_BASE)
 
