@@ -7,6 +7,7 @@
 #ifndef PLATFORM_NXP_LPC43XX_USB_DEFS_H_
 #define PLATFORM_NXP_LPC43XX_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
 #include <bits.h>
 /*------------------USB Command register--------------------------------------*/
 /* Device mode */
@@ -81,24 +82,6 @@
 #define DEVICEADDR_USBADR_MASK          BIT_FIELD(MASK(7), 25)
 #define DEVICEADDR_USBADR_VALUE(reg) \
     FIELD_VALUE((reg), DEVICEADDR_USBADR_MASK, 25)
-///*------------------USB Endpoint NAK register---------------------------------*/
-//#define ENDPTNAK_EPRN(value)            BIT_FIELD((value), 0)
-//#define ENDPTNAK_EPRN_MASK              BIT_FIELD(MASK(6), 0)
-//#define ENDPTNAK_EPRN_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTNAK_EPRN_MASK, 0)
-//#define ENDPTNAK_EPTN(value)            BIT_FIELD((value), 16)
-//#define ENDPTNAK_EPTN_MASK              BIT_FIELD(MASK(6), 16)
-//#define ENDPTNAK_EPTN_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTNAK_EPTN_MASK, 16)
-///*------------------USB Endpoint NAK Enable register--------------------------*/
-//#define ENDPTNAKEN_EPRNE(value)         BIT_FIELD((value), 0)
-//#define ENDPTNAKEN_EPRNE_MASK           BIT_FIELD(MASK(6), 0)
-//#define ENDPTNAKEN_EPRNE_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTNAKEN_EPRNE_MASK, 0)
-//#define ENDPTNAKEN_EPTNE(value)         BIT_FIELD((value), 16)
-//#define ENDPTNAKEN_EPTNE_MASK           BIT_FIELD(MASK(6), 16)
-//#define ENDPTNAKEN_EPTNE_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTNAKEN_EPTNE_MASK, 16)
 /*------------------Port Status and Control register--------------------------*/
 enum
 {
@@ -196,50 +179,6 @@ enum
 #define USBMODE_H_ES                    BIT(2)
 #define USBMODE_H_SDIS                  BIT(4)
 #define USBMODE_H_VBPS                  BIT(5)
-///*------------------USB Endpoint Prime register-------------------------------*/
-//#define ENDPTPRIME_PERB(value)          BIT_FIELD((value), 0)
-//#define ENDPTPRIME_PERB_MASK            BIT_FIELD(MASK(6), 0)
-//#define ENDPTPRIME_PERB_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTPRIME_PERB_MASK, 0)
-//#define ENDPTPRIME_PETB(value)          BIT_FIELD((value), 16)
-//#define ENDPTPRIME_PETB_MASK            BIT_FIELD(MASK(6), 16)
-//#define ENDPTPRIME_PETB_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTPRIME_PETB_MASK, 16)
-///*------------------USB Endpoint Flush register-------------------------------*/
-//#define ENDPTFLUSH_FERB(value)          BIT_FIELD((value), 0)
-//#define ENDPTFLUSH_FERB_MASK            BIT_FIELD(MASK(6), 0)
-//#define ENDPTFLUSH_FERB_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTFLUSH_FERB_MASK, 0)
-//#define ENDPTFLUSH_FETB(value)          BIT_FIELD((value), 16)
-//#define ENDPTFLUSH_FETB_MASK            BIT_FIELD(MASK(6), 16)
-//#define ENDPTFLUSH_FETB_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTFLUSH_FETB_MASK, 16)
-///*------------------USB Endpoint Status register------------------------------*/
-//#define ENDPTSTAT_ERBR(value)           BIT_FIELD((value), 0)
-//#define ENDPTSTAT_ERBR_MASK             BIT_FIELD(MASK(6), 0)
-//#define ENDPTSTAT_ERBR_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTSTAT_ERBR_MASK, 0)
-//#define ENDPTSTAT_ETBR(value)           BIT_FIELD((value), 16)
-//#define ENDPTSTAT_ETBR_MASK             BIT_FIELD(MASK(6), 16)
-//#define ENDPTSTAT_ETBR_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTSTAT_ETBR_MASK, 16)
-///*------------------USB Endpoint Complete register----------------------------*/
-//#define ENDPTCOMPLETE_ERCE(value)       BIT_FIELD((value), 0)
-//#define ENDPTCOMPLETE_ERCE_MASK         BIT_FIELD(MASK(6), 0)
-//#define ENDPTCOMPLETE_ERCE_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTCOMPLETE_ERCE_MASK, 0)
-//#define ENDPTCOMPLETE_ETCE(value)       BIT_FIELD((value), 16)
-//#define ENDPTCOMPLETE_ETCE_MASK         BIT_FIELD(MASK(6), 16)
-//#define ENDPTCOMPLETE_ETCE_VALUE(reg) \
-//    FIELD_VALUE((reg), ENDPTCOMPLETE_ETCE_MASK, 16)
-///*------------------USB Endpoint 0 Control register---------------------------*/
-//#define ENDPTCTRL0_RXS                  BIT(0)
-//#define ENDPTCTRL0_RXT1_0(value)        BIT_FIELD((value), 2)
-//#define ENDPTCTRL0_RXE                  BIT(7)
-//#define ENDPTCTRL0_TXS                  BIT(16)
-//#define ENDPTCTRL0_TXT1_0(value)        BIT_FIELD((value), 18)
-//#define ENDPTCTRL0_TXE                  BIT(23)
-///*------------------USB Endpoint 1 to 5 Control registers---------------------*/
 /*------------------USB Endpoint Control registers----------------------------*/
 #define ENDPTCTRL_RXS                   BIT(0)
 #define ENDPTCTRL_RXT(value)            BIT_FIELD((value), 2)
@@ -252,10 +191,67 @@ enum
 #define ENDPTCTRL_TXR                   BIT(22)
 #define ENDPTCTRL_TXE                   BIT(23)
 /*------------------All endpoint registers------------------------------------*/
-#define ENDPT_BIT(ep) \
-    BIT(((ep) & 0x0F) + (((ep) & 0x80) >> 3))
+#define ENDPT_BIT(ep)                   BIT(((ep) & 0x07) + ((ep) >> 3))
+#define ENDPT_NUMBER                    12
 /*----------------------------------------------------------------------------*/
-#define EP_TO_INDEX(ep)     ((((ep) & 0xF) << 1) | (((ep) & 0x80) >> 7))
-#define INDEX_TO_EP(index)  ((((index) << 7) & 0x80) | (((index) >> 1) & 0xF))
+enum
+{
+  TOKEN_STATUS_TRANSACTION_ERROR  = 0x08,
+  TOKEN_STATUS_BUFFER_ERROR       = 0x20,
+  TOKEN_STATUS_HALTED             = 0x40,
+  TOKEN_STATUS_ACTIVE             = 0x80,
+};
+
+struct EndpointTransferDescriptor
+{
+  volatile uint32_t next;
+  volatile uint32_t token;
+  volatile uint32_t buffer0;
+  volatile uint32_t buffer1;
+  volatile uint32_t buffer2;
+  volatile uint32_t buffer3;
+  volatile uint32_t buffer4;
+  volatile uint32_t reserved;
+};
+
+struct EndpointQueueHead
+{
+  volatile uint32_t capabilities;
+  volatile uint32_t current;
+  volatile uint32_t next;
+  volatile uint32_t token;
+  volatile uint32_t buffer0;
+  volatile uint32_t buffer1;
+  volatile uint32_t buffer2;
+  volatile uint32_t buffer3;
+  volatile uint32_t buffer4;
+  volatile uint32_t reserved;
+  volatile uint32_t setup[2];
+  volatile uint32_t gap[4];
+};
+
+#define QH_IOS                          BIT(15)
+#define QH_MAX_PACKET_LENGTH(value)     BIT_FIELD((value), 16)
+#define QH_MAX_PACKET_LENGTH_MASK       BIT_FIELD(MASK(10), 16)
+#define QH_MAX_PACKET_LENGTH_VALUE(reg) \
+    FIELD_VALUE((reg), QH_MAX_PACKET_LENGTH_MASK, 16)
+#define QH_ZLT                          BIT(29)
+
+#define TD_NEXT_TERMINATE               BIT(0)
+
+#define TD_TOKEN_STATUS(value)          BIT_FIELD((value), 0)
+#define TD_TOKEN_STATUS_MASK            BIT_FIELD(MASK(8), 0)
+#define TD_TOKEN_STATUS_VALUE(reg) \
+    FIELD_VALUE((reg), TD_TOKEN_STATUS_MASK, 0)
+#define TD_TOKEN_MULTO(value)           BIT_FIELD((value), 10)
+#define TD_TOKEN_IOC                    BIT(15)
+#define TD_TOKEN_TOTAL_BYTES(value)     BIT_FIELD((value), 16)
+#define TD_TOKEN_TOTAL_BYTES_MASK       BIT_FIELD(MASK(15), 16)
+#define TD_TOKEN_TOTAL_BYTES_VALUE(reg) \
+    FIELD_VALUE((reg), TD_TOKEN_TOTAL_BYTES_MASK, 16)
+/*----------------------------------------------------------------------------*/
+#define EP_TO_DESCRIPTOR_NUMBER(ep) \
+    ((((ep) & 0xF) << 1) | (((ep) & 0x80) >> 7))
+#define EP_TO_LOGICAL_NUMBER(ep)        ((ep) & 0x07)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC43XX_USB_DEFS_H_ */

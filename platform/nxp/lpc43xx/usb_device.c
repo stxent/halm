@@ -48,10 +48,10 @@ static const struct UsbDeviceClass devTable = {
 const struct UsbDeviceClass * const UsbDevice = &devTable;
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbEndpoint *, uint8_t);
-static enum result epReadData(struct UsbEndpoint *, uint8_t *, uint32_t,
-    uint32_t *);
-static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, uint32_t,
-    uint32_t *);
+//static enum result epReadData(struct UsbEndpoint *, uint8_t *, uint32_t,
+//    uint32_t *);
+//static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, size_t,
+//    size_t *);
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *, const void *);
 static void epDeinit(void *);
@@ -75,55 +75,8 @@ static const struct UsbEndpointClass epTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbEndpointClass * const UsbEndpoint = &epTable;
 /*----------------------------------------------------------------------------*/
-/* dTD Transfer Description */
-typedef volatile struct
-{
-  volatile uint32_t next_dTD;
-  volatile uint32_t total_bytes ;
-  volatile uint32_t buffer0;
-  volatile uint32_t buffer1;
-  volatile uint32_t buffer2;
-  volatile uint32_t buffer3;
-  volatile uint32_t buffer4;
-  volatile uint32_t reserved;
-}  DTD_T;
-
-/* dQH  Queue Head */
-typedef volatile struct
-{
-  volatile uint32_t cap;
-  volatile uint32_t curr_dTD;
-  volatile uint32_t next_dTD;
-  volatile uint32_t total_bytes;
-  volatile uint32_t buffer0;
-  volatile uint32_t buffer1;
-  volatile uint32_t buffer2;
-  volatile uint32_t buffer3;
-  volatile uint32_t buffer4;
-  volatile uint32_t reserved;
-  volatile uint32_t setup[2];
-  volatile uint32_t gap[4];
-}  DQH_T;
-
-/* dQH field and bit defines */
-/* Temp fixed on max, should be taken out of table */
-#define QH_MAX_CTRL_PAYLOAD       0x03ff
-#define QH_MAX_PKT_LEN_POS            16
-#define QH_MAXP(n)                (((n) & 0x3FF)<<16)
-#define QH_IOS                    (1<<15)
-#define QH_ZLT                    (1<<29)
-
-/* dTD field and bit defines */
-#define TD_NEXT_TERMINATE         (1<<0)
-#define TD_IOC                    (1<<15)
-
-#define EP_NUM_MAX 12
-
-DQH_T ep_QH[EP_NUM_MAX] __attribute__((aligned(2048)));
-DTD_T ep_TD[EP_NUM_MAX] __attribute__((aligned(32)));
-
-static bool pendingAddress = false;
-static uint8_t adddr = 0;
+struct EndpointQueueHead ep_QH[ENDPT_NUMBER] __attribute__((aligned(2048)));
+struct EndpointTransferDescriptor ep_TD[ENDPT_NUMBER] __attribute__((aligned(32)));
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -158,16 +111,11 @@ static void interruptHandler(void *object)
 
   if (setupStatus)
   {
-    /* Clear the endpoint complete CTRL OUT & IN when */
-    /* a Setup is received */
-//    reg->ENDPTCOMPLETE = 0x00010001;
-//    /* enable NAK inetrrupts */
-    reg->ENDPTNAKEN |= 0x00010001;
-
-    /* Check registered endpoints */
+    /* Iterate over registered endpoints */
     const struct ListNode *current = listFirst(&device->endpoints);
     struct UsbEndpoint *endpoint;
 
+    /* TODO Separate container for control endpoints */
     while (current)
     {
       listData(&device->endpoints, current, &endpoint);
@@ -176,21 +124,16 @@ static void interruptHandler(void *object)
 
       if (setupStatus & mask)
       {
-        epHandler(endpoint, 1);
         reg->ENDPTCOMPLETE = mask;
+
+        epHandler(endpoint, 1);
       }
 
       current = listNext(current);
     }
-
-
-//    if (g_drv.USB_P_EP[0]){
-////                            LPC_UART1->THR = 's';
-////                              LPC_UART1->THR = '\n';
-//        g_drv.USB_P_EP[0](USB_EVT_SETUP);
   }
 
-  /* handle completion interrupts */
+  /* Handle completion interrupts */
   const uint32_t epStatus = reg->ENDPTCOMPLETE;
 
   if (epStatus)
@@ -209,52 +152,55 @@ static void interruptHandler(void *object)
       if (epStatus & mask)
       {
         if (endpoint->address & EP_DIRECTION_IN)
-          ep_TD[EP_TO_INDEX(endpoint->address)].total_bytes &= 0xC0;
-
-        epHandler(endpoint, 0);
+        {
+          // Is this needed?
+//          ep_TD[EP_TO_DESCRIPTOR_NUMBER(endpoint->address)].token &=
+//              TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE | TOKEN_STATUS_HALTED);
+        }
 
         reg->ENDPTCOMPLETE = mask;
-      }
 
-      current = listNext(current);
-    }
-  }
-
-  if (intStatus & USBSTS_D_NAKI)
-  {
-    uint32_t val = reg->ENDPTNAK;
-    val &= reg->ENDPTNAKEN;
-    /* handle NAK interrupts */
-
-
-
-    const struct ListNode *current = listFirst(&device->endpoints);
-    struct UsbEndpoint *endpoint;
-
-    while (current)
-    {
-      listData(&device->endpoints, current, &endpoint);
-
-      const uint32_t mask = ENDPT_BIT(endpoint->address);
-
-      if (val & mask)
-      {
         epHandler(endpoint, 0);
-
-        reg->ENDPTNAK = val;
       }
 
       current = listNext(current);
     }
   }
+
+//  if (intStatus & USBSTS_D_NAKI)
+//  {
+//    uint32_t val = reg->ENDPTNAK;
+//    val &= reg->ENDPTNAKEN;
+//    /* handle NAK interrupts */
+//
+//
+//
+//    const struct ListNode *current = listFirst(&device->endpoints);
+//    struct UsbEndpoint *endpoint;
+//
+//    while (current)
+//    {
+//      listData(&device->endpoints, current, &endpoint);
+//
+//      const uint32_t mask = ENDPT_BIT(endpoint->address);
+//
+//      if (val & mask)
+//      {
+//        epHandler(endpoint, 0);
+//
+//        reg->ENDPTNAK = val;
+//      }
+//
+//      current = listNext(current);
+//    }
+//  }
 }
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbDevice *device)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-//  DevStatusFS2HS = false;
-  /* disable all EPs */
+  /* Disable all endpoints */
   reg->ENDPTCTRL0 &= ~(ENDPTCTRL_RXE | ENDPTCTRL_TXE);
   reg->ENDPTCTRL1 &= ~(ENDPTCTRL_RXE | ENDPTCTRL_TXE);
   reg->ENDPTCTRL2 &= ~(ENDPTCTRL_RXE | ENDPTCTRL_TXE);
@@ -263,45 +209,36 @@ static void resetDevice(struct UsbDevice *device)
   reg->ENDPTCTRL5 &= ~(ENDPTCTRL_RXE | ENDPTCTRL_TXE);
 
   /* Clear all pending interrupts */
-  reg->ENDPTNAK   = 0xFFFFFFFF;
+  reg->ENDPTNAK = 0xFFFFFFFF;
   reg->ENDPTNAKEN = 0;
-  reg->USBSTS_D     = 0xFFFFFFFF;
+  reg->USBSTS_D = 0xFFFFFFFF;
   reg->ENDPTSETUPSTAT = reg->ENDPTSETUPSTAT;
-  reg->ENDPTCOMPLETE  = reg->ENDPTCOMPLETE;
-  while (reg->ENDPTPRIME)                  /* Wait until all bits are 0 */
-  {
-  }
+  reg->ENDPTCOMPLETE = reg->ENDPTCOMPLETE;
+
+  while (reg->ENDPTPRIME);
   reg->ENDPTFLUSH = 0xFFFFFFFF;
-  while (reg->ENDPTFLUSH); /* Wait until all bits are 0 */
+  while (reg->ENDPTFLUSH);
 
-
-  /* Set the interrupt Threshold control interval to 0 */
+  /* Set the Interrupt Threshold control interval to 0 */
   reg->USBCMD_D &= ~0x00FF0000;
 
   /* Zero out the Endpoint queue heads */
-  memset((void*)ep_QH, 0, EP_NUM_MAX * sizeof(DQH_T));
+  memset(ep_QH, 0, ENDPT_NUMBER * sizeof(struct EndpointQueueHead));
   /* Zero out the device transfer descriptors */
-  memset((void*)ep_TD, 0, EP_NUM_MAX * sizeof(DTD_T));
-//  memset((void*)ep_read_len, 0, sizeof(ep_read_len));
+  memset(ep_TD, 0, ENDPT_NUMBER * sizeof(struct EndpointTransferDescriptor));
+
   /* Configure the Endpoint List Address */
-  /* make sure it in on 64 byte boundary !!! */
-  /* init list address */
   reg->ENDPOINTLISTADDR = (uint32_t)ep_QH;
+
   /* Initialize device queue heads for non ISO endpoint only */
-  for (unsigned i = 0; i < EP_NUM_MAX; i++)
+  for (unsigned int i = 0; i < ENDPT_NUMBER; i++)
   {
-    ep_QH[i].next_dTD = (uint32_t)&ep_TD[i];
+    ep_QH[i].next = (uint32_t)&ep_TD[i];
   }
+
   /* Enable interrupts */
   reg->USBINTR_D = USBSTS_D_UI | USBSTS_D_UEI | USBSTS_D_PCI
       | USBSTS_D_URI | USBSTS_D_SLI | USBSTS_D_NAKI;
-//  reg->usbintr |= (0x1<<7);   /* Test SOF */
-
-  /* enable ep0 IN and ep0 OUT */
-  ep_QH[0].cap = QH_MAXP(64) | QH_IOS | QH_ZLT;
-  ep_QH[1].cap = QH_MAXP(64) | QH_IOS | QH_ZLT;
-  /* enable EP0 */
-  reg->ENDPTCTRL0 = ENDPTCTRL_RXE | ENDPTCTRL_RXR | ENDPTCTRL_TXE | ENDPTCTRL_TXR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result devInit(void *object, const void *configBase)
@@ -410,13 +347,10 @@ static void devSetAddress(void *object, uint8_t address)
   struct UsbDevice * const device = object;
   LPC_USB_Type * const reg = device->base.reg;
 
-  if (address) {
-    pendingAddress = true;
-    adddr = address;
-  } else {
+  if (address)
+    reg->DEVICEADDR = DEVICEADDR_USBADRA | DEVICEADDR_USBADR(address);
+  else
     reg->DEVICEADDR = DEVICEADDR_USBADR(address);
-    reg->DEVICEADDR |= DEVICEADDR_USBADRA;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)
@@ -462,7 +396,6 @@ static void devSetConfiguration(void *object, uint8_t configuration)
 {
   struct UsbDevice * const device = object;
 
-  //TODO
   device->configuration = configuration;
 }
 /*----------------------------------------------------------------------------*/
@@ -484,7 +417,7 @@ uint32_t USB_ReadSetupPkt(uint32_t EPNum, uint32_t *pData)
 {
   LPC_USB_Type *reg = LPC_USB0;
   uint32_t setup_int, cnt = 0;
-  uint32_t num = EP_TO_INDEX(EPNum);
+  uint32_t num = EP_TO_DESCRIPTOR_NUMBER(EPNum);
 
   setup_int = reg->ENDPTSETUPSTAT ;
   /* Clear the setup interrupt */
@@ -521,36 +454,36 @@ uint32_t USB_ReadSetupPkt(uint32_t EPNum, uint32_t *pData)
   return cnt;
 }
 
-void USB_ProgDTD(uint32_t Edpt, uint32_t ptrBuff, uint32_t TsfSize)
+void USB_ProgDTD(uint32_t Edpt, uint32_t ptrBuff, size_t transferSize)
 {
-  DTD_T*  pDTD;
+  struct EndpointTransferDescriptor *pDTD;
 
-  pDTD = (DTD_T*)&ep_TD[ Edpt ];
+  pDTD = (struct EndpointTransferDescriptor *)&ep_TD[ Edpt ];
 
   /* Zero out the device transfer descriptors */
-  memset((void*)pDTD, 0, sizeof(DTD_T));
+  memset((void*)pDTD, 0, sizeof(struct EndpointTransferDescriptor));
   /* The next DTD pointer is INVALID */
-  pDTD->next_dTD = 0x01 ;
+  pDTD->next = TD_NEXT_TERMINATE;
 
   /* Length */
-  pDTD->total_bytes = ((TsfSize & 0x7fff) << 16);
-  pDTD->total_bytes |= TD_IOC ;
-  pDTD->total_bytes |= 0x80 ;
+  pDTD->token = TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE) | TD_TOKEN_IOC
+      | TD_TOKEN_TOTAL_BYTES(transferSize);
 
   pDTD->buffer0 = ptrBuff;
-  pDTD->buffer1 = (ptrBuff + 0x1000) & 0xfffff000;
-  pDTD->buffer2 = (ptrBuff + 0x2000) & 0xfffff000;
-  pDTD->buffer3 = (ptrBuff + 0x3000) & 0xfffff000;
-  pDTD->buffer4 = (ptrBuff + 0x4000) & 0xfffff000;
+  pDTD->buffer1 = (ptrBuff + 0x1000) & 0xFFFFF000;
+  pDTD->buffer2 = (ptrBuff + 0x2000) & 0xFFFFF000;
+  pDTD->buffer3 = (ptrBuff + 0x3000) & 0xFFFFF000;
+  pDTD->buffer4 = (ptrBuff + 0x4000) & 0xFFFFF000;
 
-  ep_QH[Edpt].next_dTD = (uint32_t)(&ep_TD[ Edpt ]);
-  ep_QH[Edpt].total_bytes &= (~0xC0) ;
+  ep_QH[Edpt].next = (uint32_t)(&ep_TD[ Edpt ]);
+  ep_QH[Edpt].token &= ~TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE
+      | TOKEN_STATUS_HALTED);
 }
 
 uint32_t USB_ReadReqEP(uint32_t EPNum, uint8_t *pData, uint32_t len)
 {
   LPC_USB_Type *reg = LPC_USB0;
-  uint32_t num = EP_TO_INDEX(EPNum);
+  uint32_t num = EP_TO_DESCRIPTOR_NUMBER(EPNum);
   uint32_t mask = ENDPT_BIT(EPNum);
 
   USB_ProgDTD(num, (uint32_t)pData, len);
@@ -563,15 +496,12 @@ uint32_t USB_ReadReqEP(uint32_t EPNum, uint8_t *pData, uint32_t len)
 uint32_t USB_ReadEP(uint32_t EPNum, uint8_t *pData)
 {
   uint32_t cnt, n;
-  DTD_T*  pDTD ;
+  struct EndpointTransferDescriptor *pDTD ;
 
-  n = ENDPT_BIT(EPNum);
-  pDTD = (DTD_T*)&ep_TD[n];
+  n = EP_TO_DESCRIPTOR_NUMBER(EPNum);
+  pDTD = (struct EndpointTransferDescriptor *)&ep_TD[n];
 
-  /* return the total bytes read */
-  return (pDTD->total_bytes >> 16) & 0x7FFF;
-//  cnt = ep_read_len[EPNum & 0x0F] - cnt;
-//  return (cnt);
+  return TD_TOKEN_TOTAL_BYTES_VALUE(pDTD->token);
 }
 
 uint32_t USB_WriteEP(uint32_t EPNum, uint8_t *pData, uint32_t cnt)
@@ -579,7 +509,7 @@ uint32_t USB_WriteEP(uint32_t EPNum, uint8_t *pData, uint32_t cnt)
   LPC_USB_Type *reg = LPC_USB0;
   uint32_t mask = ENDPT_BIT(EPNum);
 
-  USB_ProgDTD(EP_TO_INDEX(EPNum), (uint32_t)pData, cnt);
+  USB_ProgDTD(EP_TO_DESCRIPTOR_NUMBER(EPNum), (uint32_t)pData, cnt);
   /* prime the endpoint for transmit */
   reg->ENDPTPRIME |= mask;
 
@@ -598,19 +528,12 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
   enum usbRequestStatus requestStatus = REQUEST_ERROR;
 
   if (queueEmpty(&endpoint->requests))
-    return; /* FIXME Something went wrong */
+    return;
   queuePop(&endpoint->requests, &request);
 
   if (endpoint->address & EP_DIRECTION_IN)
   {
     requestStatus = REQUEST_COMPLETED;
-
-    if (pendingAddress) {
-      pendingAddress = false;
-      LPC_USB_Type * const reg = endpoint->device->base.reg;
-      reg->DEVICEADDR = DEVICEADDR_USBADR(adddr);
-      reg->DEVICEADDR |= DEVICEADDR_USBADRA;
-    }
 
     if (!queueEmpty(&endpoint->requests))
     {
@@ -646,16 +569,16 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     {
       uint32_t xxx = USB_ReadEP(endpoint->address, request->buffer);
 
-      if (xxx)
-      {
-        request->base.length = xxx;
+//      if (xxx)
+//      {
+        request->base.length = request->base.capacity - xxx;
         requestStatus = REQUEST_COMPLETED;
-      }
-      else
-      {
-        /* Read failed, return request to the queue */
-        queuePush(&endpoint->requests, &request);
-      }
+//      }
+//      else
+//      {
+//        /* Read failed, return request to the queue */
+//        queuePush(&endpoint->requests, &request);
+//      }
     }
 
     if (!queueEmpty(&endpoint->requests))
@@ -731,31 +654,21 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int index = EP_TO_INDEX(endpoint->address);
-//  const uint32_t mask = BIT(index);
+  const uint32_t mask = ENDPT_BIT(endpoint->address);
   enum result res = E_OK;
 
   assert(request->base.callback);
 
   irqDisable(endpoint->device->base.irq);
 
-//  /*
-//   * Additional checks should be performed for data endpoints
-//   * to avoid USB controller hanging issues.
-//   */
-//  if (index >= 2 && !endpoint->device->configuration)
-//  {
-//    irqEnable(endpoint->device->base.irq);
-//    return E_IDLE;
-//  }
-
   if (!queueFull(&endpoint->requests))
   {
     queuePush(&endpoint->requests, &request);
 
-    uint32_t mmm = ENDPT_BIT(endpoint->address);
+    if (!(ep_TD[EP_TO_DESCRIPTOR_NUMBER(endpoint->address)].token & TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE)) && !(reg->ENDPTCOMPLETE & mask))
 
-    if (!(reg->ENDPTSTAT & mmm))
+
+//    if (!(reg->ENDPTSTAT & mask))
     {
       if (endpoint->address & EP_DIRECTION_IN)
       {
@@ -789,108 +702,80 @@ static bool epIsStalled(void *object)
 {
   const struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
-//  const unsigned int index = EP_TO_INDEX(endpoint->address);
+  const unsigned int number = EP_TO_LOGICAL_NUMBER(endpoint->address);
 
-  uint32_t lep = endpoint->address & 0x0F;
-  if (endpoint->address & 0x80)
-  {
-    return (((uint32_t*)&(reg->ENDPTCTRL0))[lep] & ENDPTCTRL_TXS) != 0;
-  }
-  else
-  {
-    return (((uint32_t*)&(reg->ENDPTCTRL0))[lep] & ENDPTCTRL_RXS) != 0;
-  }
+  const uint32_t stallMask = endpoint->address & 0x80 ?
+      ENDPTCTRL_TXS : ENDPTCTRL_RXS;
+
+  return (reg->ENDPTCTRL[number] & stallMask) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void epSetEnabled(void *object, bool state, uint8_t type, uint16_t size)
 {
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int index = EP_TO_INDEX(endpoint->address);
-//  const uint32_t mask = BIT(index);
+  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(endpoint->address);
+  const unsigned int number = EP_TO_LOGICAL_NUMBER(endpoint->address);
+  const uint32_t mask = ENDPT_BIT(endpoint->address);
+  const bool tx = (endpoint->address & 0x80) != 0;
 
-  if (index <= 1) //FIXME!!!11
-    return;
+  uint32_t controlValue = reg->ENDPTCTRL[number];
 
-  uint32_t ep_cfg;
-
-  const unsigned int lep = endpoint->address & 0x7F;
-
-  ep_cfg = ((uint32_t*)&(reg->ENDPTCTRL0))[lep];
-
-  /* set EP type */
+  /* Set endpoint type */
   if (type != ENDPOINT_TYPE_ISOCHRONOUS)
   {
-    /* init EP capabilities */
-    ep_QH[index].cap  = QH_MAXP(size) | QH_IOS | QH_ZLT ;
-    /* The next DTD pointer is INVALID */
-    ep_TD[index].next_dTD = 0x01 ;
+    ep_QH[index].capabilities = QH_MAX_PACKET_LENGTH(size) | QH_IOS | QH_ZLT ;
+    ep_TD[index].next = TD_NEXT_TERMINATE;
   }
   else
   {
-    /* init EP capabilities */
-    ep_QH[index].cap  = QH_MAXP(0x400) | QH_ZLT;
+    ep_QH[index].capabilities = QH_MAX_PACKET_LENGTH(0x400) | QH_ZLT;
   }
-  /* setup EP control register */
-  if (endpoint->address & 0x80)
-  {
-    ep_cfg &= ~0xFFFF0000;
-    ep_cfg |= ENDPTCTRL_TXT(type) | ENDPTCTRL_TXR;
-  }
-  else
-  {
-    ep_cfg &= ~0xFFFF;
-    ep_cfg |= ENDPTCTRL_RXT(type) | ENDPTCTRL_RXR;
-  }
-  ((uint32_t*)&(reg->ENDPTCTRL0))[lep] = ep_cfg;
 
+  /* Setup endpoint control register */
+  if (tx)
+  {
+    controlValue &= ~0xFFFF0000;
+    controlValue |= ENDPTCTRL_TXT(type);
+  }
+  else
+  {
+    controlValue &= ~0x0000FFFF;
+    controlValue |= ENDPTCTRL_RXT(type);
+  }
+  reg->ENDPTCTRL[number] = controlValue;
 
   if (state)
   {
-    if (endpoint->address & 0x80)
+    if (tx)
     {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] |= ENDPTCTRL_TXE;
+      reg->ENDPTCTRL[number] |= ENDPTCTRL_TXE;
     }
     else
     {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] |= ENDPTCTRL_RXE;
-//      /* enable NAK interrupt */
-//      uint32_t bitpos = ENDPT_BIT(endpoint->address);
-//      reg->ENDPTNAKEN |= bitpos;
+      reg->ENDPTCTRL[number] |= ENDPTCTRL_RXE;
+//      /* Enable NAK interrupt */
+//      reg->ENDPTNAKEN |= mask;
     }
-  }
-  else
-  {
-    if (endpoint->address & 0x80)
-    {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] &= ~ENDPTCTRL_TXE;
-    }
-    else
-    {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] &= ~ENDPTCTRL_RXE;
-      /* disable NAK interrupt */
-      uint32_t bitpos = ENDPT_BIT(endpoint->address);
-      reg->ENDPTNAKEN &= ~bitpos;
-    }
-  }
 
-
-  //RESET EP
-  if (state)
-  {
-    uint32_t mask = ENDPT_BIT(endpoint->address);
-
-    /* flush EP buffers */
+    /* Flush endpoint buffers */
     reg->ENDPTFLUSH = mask;
     while (reg->ENDPTFLUSH & mask);
-    /* reset data toggles */
-    if (endpoint->address & 0x80)
+
+    /* Reset data toggles */
+    reg->ENDPTCTRL[number] |= tx ? ENDPTCTRL_TXR : ENDPTCTRL_RXR;
+  }
+  else
+  {
+    if (tx)
     {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] |= ENDPTCTRL_TXR;
+      reg->ENDPTCTRL[number] &= ~ENDPTCTRL_TXE;
     }
     else
     {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] |= ENDPTCTRL_RXR;
+      reg->ENDPTCTRL[number] &= ~ENDPTCTRL_RXE;
+      /* Disable NAK interrupt */
+      reg->ENDPTNAKEN &= ~mask;
     }
   }
 }
@@ -899,34 +784,20 @@ static void epSetStalled(void *object, bool stalled)
 {
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
-//  const unsigned int index = EP_TO_INDEX(endpoint->address);
+  const unsigned int number = EP_TO_LOGICAL_NUMBER(endpoint->address);
 
-  uint32_t lep = endpoint->address & 0x0F;
+  const bool tx = (endpoint->address & 0x80) != 0;
+  const uint32_t stallMask = tx ? ENDPTCTRL_TXS : ENDPTCTRL_RXS;
 
   if (stalled)
   {
-    if (endpoint->address & 0x80)
-    {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] |= ENDPTCTRL_TXS;
-    }
-    else
-    {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] |= ENDPTCTRL_RXS;
-    }
+    reg->ENDPTCTRL[number] |= stallMask;
   }
   else
   {
-    if (endpoint->address & 0x80)
-    {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] &= ENDPTCTRL_TXS;
-      /* reset data toggle */
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] |= ENDPTCTRL_TXR;
-    }
-    else
-    {
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] &= ENDPTCTRL_RXS;
-      /* reset data toggle */
-      ((uint32_t*)&(reg->ENDPTCTRL0))[lep] |= ENDPTCTRL_RXR;
-    }
+    const uint32_t resetToggleMask = tx ? ENDPTCTRL_TXR : ENDPTCTRL_RXR;
+
+    reg->ENDPTCTRL[number] &= ~stallMask;
+    reg->ENDPTCTRL[number] |= resetToggleMask;
   }
 }

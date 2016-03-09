@@ -1629,33 +1629,39 @@ typedef struct
   __ro__ uint32_t DCIVERSION;/* Device interface version number */
   __ne__ uint32_t RESERVED2[7];
 
-  union {
+  union
+  {
     __rw__ uint32_t USBCMD_H; /* USB command (host mode) */
     __rw__ uint32_t USBCMD_D; /* USB command (device mode) */
   };
 
-  union {
+  union
+  {
     __rw__ uint32_t USBSTS_H; /* USB status (host mode) */
     __rw__ uint32_t USBSTS_D; /* USB status (device mode) */
   };
 
-  union {
+  union
+  {
     __rw__ uint32_t USBINTR_H; /* USB interrupt enable (host mode) */
     __rw__ uint32_t USBINTR_D; /* USB interrupt enable (device mode) */
   };
 
-  union {
+  union
+  {
     __rw__ uint32_t FRINDEX_H; /* USB frame index (host mode) */
     __ro__ uint32_t FRINDEX_D; /* USB frame index (device mode) */
   };
   __ne__ uint32_t RESERVED3;
 
-  union {
+  union
+  {
     __rw__ uint32_t PERIODICLISTBASE; /* Frame list base address */
     __rw__ uint32_t DEVICEADDR; /* USB device address */
   };
 
-  union {
+  union
+  {
     /* Address of endpoint list in memory (host mode) */
     __rw__ uint32_t ASYNCLISTADDR;
     /* Address of endpoint list in memory (device mode) */
@@ -1674,7 +1680,8 @@ typedef struct
   __rw__ uint32_t ENDPTNAKEN; /* Endpoint NAK Enable (device mode) */
   __ne__ uint32_t RESERVED5;
 
-  union {
+  union
+  {
     __rw__ uint32_t PORTSC1_H; /* Port 1 status/control (host mode) */
     __rw__ uint32_t PORTSC1_D; /* Port 1 status/control (device mode) */
   };
@@ -1682,7 +1689,8 @@ typedef struct
   __ne__ uint32_t RESERVED6[7];
   __rw__ uint32_t OTGSC; /* Only for USB0 */
 
-  union {
+  union
+  {
     __rw__ uint32_t USBMODE_H; /* USB mode (host mode) */
     __rw__ uint32_t USBMODE_D; /* USB mode (device mode) */
   };
@@ -1694,12 +1702,20 @@ typedef struct
   __rw__ uint32_t ENDPTCOMPLETE; /* Endpoint complete */
 
   /* Endpoint control registers */
-  __rw__ uint32_t ENDPTCTRL0;
-  __rw__ uint32_t ENDPTCTRL1;
-  __rw__ uint32_t ENDPTCTRL2;
-  __rw__ uint32_t ENDPTCTRL3;
-  __rw__ uint32_t ENDPTCTRL4;
-  __rw__ uint32_t ENDPTCTRL5;
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t ENDPTCTRL0;
+      __rw__ uint32_t ENDPTCTRL1;
+      __rw__ uint32_t ENDPTCTRL2;
+      __rw__ uint32_t ENDPTCTRL3;
+      __rw__ uint32_t ENDPTCTRL4;
+      __rw__ uint32_t ENDPTCTRL5;
+    };
+
+    __rw__ uint32_t ENDPTCTRL[6];
+  };
 } LPC_USB_Type;
 ///*------------------Ethernet Media Access Controller--------------------------*/
 //typedef struct
