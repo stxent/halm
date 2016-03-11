@@ -13,6 +13,8 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbBase;
 /*----------------------------------------------------------------------------*/
+struct EndpointQueueHead;
+/*----------------------------------------------------------------------------*/
 struct UsbBaseConfig
 {
   /** Mandatory: USB bidirectional D- line. */
@@ -35,6 +37,8 @@ struct UsbBase
   void (*handler)(void *);
   irqNumber irq;
 
+  /* Pointer to an aligned array with Queue Head descriptors */
+  struct EndpointQueueHead *queueHeads;
   /* Unique peripheral identifier */
   uint8_t channel;
 };

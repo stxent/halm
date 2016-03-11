@@ -20,8 +20,7 @@ static enum result devInit(void *, const void *);
 static void devDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass devTable = {
-    .size = sizeof(struct UsbBase), /* Abstract class */
-//    .size = 0, /* Abstract class */
+    .size = 0, /* Abstract class */
     .init = devInit,
     .deinit = devDeinit
 };
@@ -51,6 +50,15 @@ const struct PinEntry usbPins[] = {
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbBase = &devTable;
 static struct UsbBase *descriptors[2] = {0};
+
+//TODO Add kconfig options
+static struct EndpointQueueHead usb0QueueHeads[ENDPT_NUMBER]
+    __attribute__((aligned(2048)));
+static struct EndpointQueueHead usb1QueueHeads[ENDPT_NUMBER]
+    __attribute__((aligned(2048)));
+
+//static struct EndpointTransferDescriptor usb0TransferDescriptors[ENDPT_NUMBER]
+//    __attribute__((aligned(32)));
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
@@ -118,11 +126,12 @@ static enum result devInit(void *object, const void *configBase)
 
       device->irq = USB0_IRQ;
       device->reg = LPC_USB0;
+      device->queueHeads = usb0QueueHeads;
 
       LPC_CREG->CREG0 &= ~CREG0_USB0PHY;
 
-      //TODO Add speed config in structure
-//      LPC_USB0->OTGSC = OTGSC_VD | OTGSC_OT;
+      //TODO Add speed LS/FS/HS config in structure
+      LPC_USB0->OTGSC = OTGSC_VD | OTGSC_OT;
       break;
 
     case 1:
@@ -132,8 +141,9 @@ static enum result devInit(void *object, const void *configBase)
 
       device->irq = USB1_IRQ;
       device->reg = LPC_USB1;
+      device->queueHeads = usb1QueueHeads;
 
-//      LPC_USB1->PORTSC1_D |= PORTSC1_D_PFSC;
+      LPC_USB1->PORTSC1_D |= PORTSC1_D_PFSC;
       break;
   }
 
