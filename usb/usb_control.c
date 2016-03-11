@@ -150,8 +150,8 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbControl *control)
 {
-  usbEpSetEnabled(control->ep0in, true, EP0_BUFFER_SIZE);
-  usbEpSetEnabled(control->ep0out, true, EP0_BUFFER_SIZE);
+  usbEpEnable(control->ep0in, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
+  usbEpEnable(control->ep0out, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
 }
 /*----------------------------------------------------------------------------*/
 static void sendResponse(struct UsbControl *control, const uint8_t *data,

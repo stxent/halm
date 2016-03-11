@@ -51,17 +51,17 @@ static const struct UsbDeviceClass devTable = {
 const struct UsbDeviceClass * const UsbDevice = &devTable;
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbEndpoint *, uint8_t);
-static enum result epReadData(struct UsbEndpoint *, uint8_t *, uint32_t,
-    uint32_t *);
-static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, uint32_t,
-    uint32_t *);
+static enum result epReadData(struct UsbEndpoint *, uint8_t *, size_t,
+    size_t *);
+static enum result epWriteData(struct UsbEndpoint *, const uint8_t *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *, const void *);
 static void epDeinit(void *);
 static void epClear(void *);
+static void epDisable(void *);
+static void epEnable(void *, uint8_t, uint16_t);
 static enum result epEnqueue(void *, struct UsbRequest *);
 static bool epIsStalled(void *);
-static void epSetEnabled(void *, bool, uint16_t);
 static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct UsbEndpointClass epTable = {
@@ -70,9 +70,10 @@ static const struct UsbEndpointClass epTable = {
     .deinit = epDeinit,
 
     .clear = epClear,
+    .disable = epDisable,
+    .enable = epEnable,
     .enqueue = epEnqueue,
     .isStalled = epIsStalled,
-    .setEnabled = epSetEnabled,
     .setStalled = epSetStalled
 };
 /*----------------------------------------------------------------------------*/
@@ -378,14 +379,14 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 
   if (endpoint->address & EP_DIRECTION_IN)
   {
-    if (epWriteData(endpoint, request->buffer, request->base.length, 0) == E_OK)
+    if (epWriteData(endpoint, request->buffer, request->base.length) == E_OK)
     {
       requestStatus = REQUEST_COMPLETED;
     }
   }
   else
   {
-    uint32_t read;
+    size_t read;
 
     if (epReadData(endpoint, request->buffer,
         request->base.capacity, &read) == E_OK)
@@ -407,7 +408,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 }
 /*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
-    uint32_t length, uint32_t *read)
+    size_t length, size_t *read)
 {
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
@@ -416,7 +417,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
   reg->USBCtrl = USBCtrl_RD_EN
       | USBCtrl_LOG_ENDPOINT(EP_LOGICAL_ADDRESS(endpoint->address));
 
-  uint32_t packetLength;
+  size_t packetLength;
 
   /* Wait for length field to become valid */
   while (!((packetLength = reg->USBRxPLen) & USBRxPLen_PKT_RDY));
@@ -430,13 +431,12 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
   if (packetLength > length)
     return E_VALUE;
 
-  if (read)
-    *read = packetLength;
+  *read = packetLength;
 
   /* Read data from internal buffer */
   uint32_t word = 0;
 
-  for (uint32_t position = 0; position < packetLength; ++position)
+  for (size_t position = 0; position < packetLength; ++position)
   {
     if (!(position & 0x03))
       word = reg->USBRxData;
@@ -456,7 +456,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
 }
 /*----------------------------------------------------------------------------*/
 static enum result epWriteData(struct UsbEndpoint *endpoint,
-    const uint8_t *buffer, uint32_t length, uint32_t *written)
+    const uint8_t *buffer, size_t length)
 {
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
@@ -467,11 +467,8 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
   /* Set packet length */
   reg->USBTxPLen = length;
 
-  if (written)
-    *written = length;
-
   /* Write data */
-  uint32_t position = 0;
+  size_t position = 0;
   uint32_t word = 0;
 
   while (position < length)
@@ -522,7 +519,7 @@ static void epDeinit(void *object)
   struct UsbDevice * const device = endpoint->device;
 
   /* Disable interrupts and remove pending requests */
-  epSetEnabled(endpoint, false, 0);
+  epDisable(endpoint);
   epClear(endpoint);
 
   /* Protect endpoint queue from simultaneous access */
@@ -552,15 +549,49 @@ static void epClear(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result epEnqueue(void *object, struct UsbRequest *request)
+static void epDisable(void *object)
 {
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
   const uint32_t mask = BIT(index);
-  enum result res = E_OK;
 
+  reg->USBEpIntEn &= ~mask;
+
+  usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index,
+      SET_ENDPOINT_STATUS_DA);
+}
+/*----------------------------------------------------------------------------*/
+static void epEnable(void *object, uint8_t type __attribute__((unused)),
+    uint16_t size)
+{
+  struct UsbEndpoint * const endpoint = object;
+  LPC_USB_Type * const reg = endpoint->device->base.reg;
+  const unsigned int index = EP_TO_INDEX(endpoint->address);
+  const uint32_t mask = BIT(index);
+
+  /* Enable interrupt */
+  reg->USBEpIntClr = mask;
+  reg->USBEpIntEn |= mask;
+
+  /* Realize endpoint */
+  reg->USBReEp |= mask;
+  reg->USBEpInd = index;
+  reg->USBMaxPSize = size;
+  waitForInt(endpoint->device, USBDevInt_EP_RLZED);
+
+  usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
+}
+/*----------------------------------------------------------------------------*/
+static enum result epEnqueue(void *object, struct UsbRequest *request)
+{
   assert(request->base.callback);
+
+  struct UsbEndpoint * const endpoint = object;
+  LPC_USB_Type * const reg = endpoint->device->base.reg;
+  const unsigned int index = EP_TO_INDEX(endpoint->address);
+  const uint32_t mask = BIT(index);
+  enum result res = E_OK;
 
   irqDisable(endpoint->device->base.irq);
 
@@ -607,34 +638,6 @@ static bool epIsStalled(void *object)
       USB_CMD_SELECT_ENDPOINT | index);
 
   return (status & SELECT_ENDPOINT_ST) != 0;
-}
-/*----------------------------------------------------------------------------*/
-static void epSetEnabled(void *object, bool state, uint16_t size)
-{
-  struct UsbEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int index = EP_TO_INDEX(endpoint->address);
-  const uint32_t mask = BIT(index);
-
-  if (state)
-  {
-    /* Enable interrupt */
-    reg->USBEpIntClr = mask;
-    reg->USBEpIntEn |= mask;
-
-    /* Realize endpoint */
-    reg->USBReEp |= mask;
-    reg->USBEpInd = index;
-    reg->USBMaxPSize = size;
-    waitForInt(endpoint->device, USBDevInt_EP_RLZED);
-  }
-  else
-  {
-    reg->USBEpIntEn &= ~mask;
-  }
-
-  usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index,
-      state ? 0 : SET_ENDPOINT_STATUS_DA);
 }
 /*----------------------------------------------------------------------------*/
 static void epSetStalled(void *object, bool stalled)

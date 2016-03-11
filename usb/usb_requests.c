@@ -342,7 +342,6 @@ static enum result traverseConfigList(struct UsbControl *control,
     {
       const struct UsbEndpointDescriptor * const data =
           (const struct UsbEndpointDescriptor *)current;
-      const uint16_t endpointSize = fromLittleEndian16(data->maxPacketSize);
       struct UsbEndpoint * const endpoint = usbDevCreateEndpoint(control->owner,
           data->endpointAddress);
 
@@ -352,7 +351,11 @@ static enum result traverseConfigList(struct UsbControl *control,
         return E_VALUE;
       }
 
-      usbEpSetEnabled(endpoint, true, endpointSize);
+      const uint16_t endpointSize = fromLittleEndian16(data->maxPacketSize);
+      const uint8_t endpointType =
+          ENDPOINT_DESCRIPTOR_TYPE_VALUE(data->attributes);
+
+      usbEpEnable(endpoint, endpointType, endpointSize);
     }
 
     currentNode = listNext(currentNode);

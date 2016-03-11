@@ -190,9 +190,10 @@ struct UsbEndpointClass
   CLASS_HEADER
 
   void (*clear)(void *);
+  void (*disable)(void *);
+  void (*enable)(void *, uint8_t, uint16_t);
   enum result (*enqueue)(void *, struct UsbRequest *);
   bool (*isStalled)(void *);
-  void (*setEnabled)(void *, bool, uint16_t);
   void (*setStalled)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
@@ -205,6 +206,27 @@ struct UsbEndpointClass
 static inline void usbEpClear(void *endpoint)
 {
   ((const struct UsbEndpointClass *)CLASS(endpoint))->clear(endpoint);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Disable the endpoint.
+ * @param endpoint Pointer to an UsbEndpoint object.
+ */
+static inline void usbEpDisable(void *endpoint)
+{
+  ((const struct UsbEndpointClass *)CLASS(endpoint))->disable(endpoint);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Enable the endpoint.
+ * @param endpoint Pointer to an UsbEndpoint object.
+ * @param type Type of the endpoint.
+ * @param size Size of the endpoint.
+ */
+static inline void usbEpEnable(void *endpoint, uint8_t type, uint16_t size)
+{
+  ((const struct UsbEndpointClass *)CLASS(endpoint))->enable(endpoint,
+      type, size);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -229,19 +251,6 @@ static inline bool usbEpIsStalled(void *endpoint)
 {
   return ((const struct UsbEndpointClass *)CLASS(endpoint))->
       isStalled(endpoint);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Enable or disable the endpoint.
- * @param endpoint Pointer to an UsbEndpoint object.
- * @param state State of the endpoint.
- * @param size Size of the endpoint. Should be set to zero when the endpoint
- * is going to be disabled.
- */
-static inline void usbEpSetEnabled(void *endpoint, bool state, uint16_t size)
-{
-  ((const struct UsbEndpointClass *)CLASS(endpoint))->setEnabled(endpoint,
-      state, size);
 }
 /*----------------------------------------------------------------------------*/
 /**

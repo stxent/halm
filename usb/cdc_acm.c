@@ -411,7 +411,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
   while (length && !queueEmpty(&interface->txRequestQueue))
   {
     const size_t bytesToWrite = length > CDC_DATA_EP_SIZE ?
-        CDC_DATA_EP_SIZE : (uint16_t)length;
+        CDC_DATA_EP_SIZE : length;
     struct UsbRequest *request;
 
     state = irqSave();

@@ -139,7 +139,7 @@ enum usbCommand
 #define READ_ERROR_STATUS_BTSTF         BIT(6)
 #define READ_ERROR_STATUS_TGL_ERR       BIT(7)
 /*----------------------------------------------------------------------------*/
-#define EP_TO_INDEX(ep)     ((((ep) & 0xF) << 1) | (((ep) & 0x80) >> 7))
-#define INDEX_TO_EP(index)  ((((index) << 7) & 0x80) | (((index) >> 1) & 0xF))
+#define EP_TO_INDEX(ep)     ((((ep) & 0x0F) << 1) | (((ep) & 0x80) >> 7))
+#define INDEX_TO_EP(index)  ((((index) << 7) & 0x80) | (((index) >> 1) & 0x0F))
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC17XX_USB_DEFS_H_ */

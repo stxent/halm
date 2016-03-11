@@ -201,7 +201,8 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
   local->endpointDescriptors[0].length = sizeof(struct UsbEndpointDescriptor);
   local->endpointDescriptors[0].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
   local->endpointDescriptors[0].endpointAddress = config->endpoint.interrupt;
-  local->endpointDescriptors[0].attributes = ENDPOINT_DESCRIPTOR_INTERRUPT;
+  local->endpointDescriptors[0].attributes =
+      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT);
   local->endpointDescriptors[0].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_NOTIFICATION_EP_SIZE);
   local->endpointDescriptors[0].interval = 8;
@@ -210,7 +211,8 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
   local->endpointDescriptors[1].length = sizeof(struct UsbEndpointDescriptor);
   local->endpointDescriptors[1].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
   local->endpointDescriptors[1].endpointAddress = config->endpoint.tx;
-  local->endpointDescriptors[1].attributes = ENDPOINT_DESCRIPTOR_BULK;
+  local->endpointDescriptors[1].attributes =
+      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
   local->endpointDescriptors[1].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
   local->endpointDescriptors[1].interval = 0;
@@ -219,7 +221,8 @@ static enum result buildDescriptors(struct CdcAcmBase *driver,
   local->endpointDescriptors[2].length = sizeof(struct UsbEndpointDescriptor);
   local->endpointDescriptors[2].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
   local->endpointDescriptors[2].endpointAddress = config->endpoint.rx;
-  local->endpointDescriptors[2].attributes = ENDPOINT_DESCRIPTOR_BULK;
+  local->endpointDescriptors[2].attributes =
+      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
   local->endpointDescriptors[2].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
   local->endpointDescriptors[2].interval = 0;

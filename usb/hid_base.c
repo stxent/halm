@@ -139,7 +139,8 @@ static enum result buildDescriptors(struct HidBase *driver,
   local->endpointDescriptor.length = sizeof(struct UsbEndpointDescriptor);
   local->endpointDescriptor.descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
   local->endpointDescriptor.endpointAddress = config->endpoint.interrupt;
-  local->endpointDescriptor.attributes = ENDPOINT_DESCRIPTOR_INTERRUPT;
+  local->endpointDescriptor.attributes =
+      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT);
   local->endpointDescriptor.maxPacketSize =
       toLittleEndian16(config->reportSize);
   local->endpointDescriptor.interval = 0x20; //TODO

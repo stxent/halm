@@ -38,6 +38,14 @@ enum
   DESCRIPTOR_TYPE_CS_INTERFACE            = 0x24,
   DESCRIPTOR_TYPE_CS_ENDPOINT             = 0x25
 };
+
+enum
+{
+  ENDPOINT_TYPE_CONTROL     = 0,
+  ENDPOINT_TYPE_ISOCHRONOUS = 1,
+  ENDPOINT_TYPE_BULK        = 2,
+  ENDPOINT_TYPE_INTERRUPT   = 3
+};
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -135,10 +143,10 @@ enum
 #define CONFIGURATION_DESCRIPTOR_REMOTE_WAKEUP  0x20
 
 /* Common endpoint attributes */
-#define ENDPOINT_DESCRIPTOR_CONTROL             BIT_FIELD(0, 0)
-#define ENDPOINT_DESCRIPTOR_ISOCHRONOUS         BIT_FIELD(1, 0)
-#define ENDPOINT_DESCRIPTOR_BULK                BIT_FIELD(2, 0)
-#define ENDPOINT_DESCRIPTOR_INTERRUPT           BIT_FIELD(3, 0)
+#define ENDPOINT_DESCRIPTOR_TYPE(value)         BIT_FIELD((value), 0)
+#define ENDPOINT_DESCRIPTOR_TYPE_MASK           BIT_FIELD(MASK(2), 0)
+#define ENDPOINT_DESCRIPTOR_TYPE_VALUE(attribute) \
+    FIELD_VALUE((attribute), ENDPOINT_DESCRIPTOR_TYPE_MASK, 0)
 
 /* Attributes of isochronous endpoints */
 #define ENDPOINT_DESCRIPTOR_NO_SYNC             BIT_FIELD(0, 2)
