@@ -30,13 +30,17 @@ enum
   PORT_F = 0x0F,
   PORT_CLK,
   PORT_I2C,
-  PORT_ADC
+  PORT_ADC,
+  PORT_USB
 };
 /*----------------------------------------------------------------------------*/
 enum
 {
   PIN_I2C0_SCL,
-  PIN_I2C0_SDA
+  PIN_I2C0_SDA,
+  PIN_USB0_DM,
+  PIN_USB0_DP,
+  PIN_USB0_VBUS
 };
 /*----------------------------------------------------------------------------*/
 void *pinAddress(struct Pin);

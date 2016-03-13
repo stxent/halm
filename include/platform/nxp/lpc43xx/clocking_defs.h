@@ -19,22 +19,39 @@
 #define XTAL_ENABLE                     BIT(0) /* Inverted */
 #define XTAL_BYPASS                     BIT(1)
 #define XTAL_HF                         BIT(2)
+/*------------------PLL0USB Control register----------------------------------*/
+#define PLL0_CTRL_BYPASS                BIT(1)
+#define PLL0_CTRL_DIRECTI               BIT(2)
+#define PLL0_CTRL_DIRECTO               BIT(3)
+#define PLL0_CTRL_CLKEN                 BIT(4)
+#define PLL0_CTRL_FRM                   BIT(6)
+/*------------------PLL0USB M-Divider register--------------------------------*/
+#define PLL0_MDIV_MDEC_MASK             BIT_FIELD(MASK(17), 0)
+#define PLL0_MDIV_MDEC(value)           BIT_FIELD((value), 0)
+#define PLL0_MDIV_SELP_MASK             BIT_FIELD(MASK(5), 17)
+#define PLL0_MDIV_SELP(value)           BIT_FIELD((value), 17)
+#define PLL0_MDIV_SELI_MASK             BIT_FIELD(MASK(6), 22)
+#define PLL0_MDIV_SELI(value)           BIT_FIELD((value), 22)
+#define PLL0_MDIV_SELR_MASK             BIT_FIELD(MASK(4), 28)
+#define PLL0_MDIV_SELR(value)           BIT_FIELD((value), 28)
+/*------------------PLL0USB NP-Divider register-------------------------------*/
+#define PLL0_NP_DIV_PDEC_MASK           BIT_FIELD(MASK(7), 0)
+#define PLL0_NP_DIV_PDEC(value)         BIT_FIELD((value), 0)
+#define PLL0_NP_DIV_NDEC_MASK           BIT_FIELD(MASK(8), 12)
+#define PLL0_NP_DIV_NDEC(value)         BIT_FIELD((value), 12)
+/*------------------PLL0USB Status register-----------------------------------*/
+#define PLL0_STAT_LOCK                  BIT(0)
+#define PLL0_STAT_FR                    BIT(1)
 /*------------------PLL1 Control register-------------------------------------*/
-#define PLL1_CTRL_PD                    BIT(0)
 #define PLL1_CTRL_BYPASS                BIT(1)
 #define PLL1_CTRL_FBSEL                 BIT(6)
 #define PLL1_CTRL_DIRECT                BIT(7)
 #define PLL1_CTRL_PSEL_MASK             BIT_FIELD(MASK(2), 8)
 #define PLL1_CTRL_PSEL(value)           BIT_FIELD((value), 8)
-#define PLL1_CTRL_AUTOBLOCK             BIT(11)
 #define PLL1_CTRL_NSEL_MASK             BIT_FIELD(MASK(2), 12)
 #define PLL1_CTRL_NSEL(value)           BIT_FIELD((value), 12)
 #define PLL1_CTRL_MSEL_MASK             BIT_FIELD(MASK(8), 16)
 #define PLL1_CTRL_MSEL(value)           BIT_FIELD((value), 16)
-#define PLL1_CTRL_CLKSEL_MASK           BIT_FIELD(MASK(5), 24)
-#define PLL1_CTRL_CLKSEL(value)         BIT_FIELD((value), 24)
-#define PLL1_CTRL_CLKSEL_VALUE(reg) \
-    FIELD_VALUE((reg), PLL1_CTRL_CLKSEL_MASK, 24)
 /*------------------PLL1 Status register--------------------------------------*/
 #define PLL1_STAT_LOCK                  BIT(0)
 /*------------------Integer Divider register----------------------------------*/

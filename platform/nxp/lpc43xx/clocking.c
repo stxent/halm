@@ -21,6 +21,11 @@ static inline volatile uint32_t *calcDividerReg(enum clockSource);
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 static uint32_t getSourceFrequency(enum clockSource);
+static unsigned int pll0ComputeMdec(unsigned int);
+static unsigned int pll0ComputeNdec(unsigned int);
+static unsigned int pll0ComputePdec(unsigned int);
+static unsigned int pll0ComputeSelI(unsigned int);
+static unsigned int pll0ComputeSelP(unsigned int);
 /*----------------------------------------------------------------------------*/
 static void commonDividerDisable(const void *);
 static enum result commonDividerEnable(const void *, const void *);
@@ -41,6 +46,11 @@ static void rtcOscDisable(const void *);
 static enum result rtcOscEnable(const void *, const void *);
 static uint32_t rtcOscFrequency(const void *);
 static bool rtcOscReady(const void *);
+
+static void pll0UsbClockDisable(const void *);
+static enum result pll0UsbClockEnable(const void *, const void *);
+static uint32_t pll0UsbClockFrequency(const void *);
+static bool pll0UsbClockReady(const void *);
 
 static void pll1ClockDisable(const void *);
 static enum result pll1ClockEnable(const void *, const void *);
@@ -121,6 +131,13 @@ static const struct ClockClass rtcOscTable = {
     .enable = rtcOscEnable,
     .frequency = rtcOscFrequency,
     .ready = rtcOscReady
+};
+
+static const struct ClockClass pll0UsbTable = {
+    .disable = pll0UsbClockDisable,
+    .enable = pll0UsbClockEnable,
+    .frequency = pll0UsbClockFrequency,
+    .ready = pll0UsbClockReady
 };
 
 static const struct ClockClass pll1Table = {
@@ -369,6 +386,7 @@ const struct CommonDividerClass * const DividerE = &dividerETable;
 const struct ClockClass * const ExternalOsc = &extOscTable;
 const struct ClockClass * const InternalOsc = &intOscTable;
 const struct ClockClass * const RtcOsc = &rtcOscTable;
+const struct ClockClass * const UsbPll = &pll0UsbTable;
 const struct ClockClass * const SystemPll = &pll1Table;
 /*----------------------------------------------------------------------------*/
 const struct CommonClockClass * const MainClock = &mainClockTable;
@@ -467,6 +485,125 @@ static uint32_t getSourceFrequency(enum clockSource source)
       /* Unknown clock source */
       return 0;
   }
+}
+/*----------------------------------------------------------------------------*/
+static unsigned int pll0ComputeMdec(unsigned int msel)
+{
+  /*
+   * Compute multiplier MDEC from MSEL.
+   * The valid range of MSEL is from 1 to 2^15.
+   */
+
+  switch (msel)
+  {
+    case 0:
+      return 0xFFFFFFFF;
+
+    case 1:
+      return 0x18003;
+
+    case 2:
+      return 0x10003;
+
+    default:
+    {
+      unsigned x = 0x4000;
+
+      for (unsigned int im = msel; im <= (1 << 15); ++im)
+        x = (((x ^ x >> 1) & 1) << 14) | (x >> 1 & 0x3FFF);
+
+      return x;
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
+static unsigned int pll0ComputeNdec(unsigned int nsel)
+{
+  /*
+   * Compute pre-divider NDEC from NSEL.
+   * The valid range of NSEL is from 1 to 2^8.
+   */
+
+  switch (nsel)
+  {
+    case 0:
+      return 0xFFFFFFFF;
+
+    case 1:
+      return 0x302;
+
+    case 2:
+      return 0x202;
+
+    default:
+    {
+      unsigned int x = 0x80;
+
+      for (unsigned int in = nsel; in <= (1 << 8); ++in)
+        x = (((x ^ x >> 2 ^ x >> 3 ^ x >> 4) & 1) << 7) | (x >> 1 & 0x7F);
+
+      return x;
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
+static unsigned int pll0ComputePdec(unsigned int psel)
+{
+  /*
+   * Compute post-divider PDEC from PSEL.
+   * The valid range of PSEL is from 1 to 2^5
+   */
+
+  switch (psel)
+  {
+    case 0:
+      return 0xFFFFFFFF;
+
+    case 1:
+      return 0x62;
+
+    case 2:
+      return 0x42;
+
+    default:
+    {
+      unsigned int x = 0x10;
+
+      //TODO Constants PLL0_MSEL_MAX etc
+      for (unsigned int ip = psel; ip <= (1 << 5); ++ip)
+        x = (((x ^ x >> 2) & 1) << 4) | (x >> 1 & 0xF);
+
+      return x;
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
+static unsigned int pll0ComputeSelI(unsigned int msel)
+{
+  /* Bandwidth: compute SELI from MSEL */
+
+  if (msel > 16384)
+    return 1;
+  else if (msel > 8192)
+    return 2;
+  else if (msel > 2048)
+    return 4;
+  else if (msel >= 501)
+    return 8;
+  else if (msel >= 60)
+    return 4 * (1024 / (msel + 9));
+  else
+    return (msel & 0x3C) + 4;
+}
+/*----------------------------------------------------------------------------*/
+static unsigned int pll0ComputeSelP(unsigned int msel)
+{
+  /* Bandwidth: compute SELP from MSEL */
+
+  if (msel < 60)
+    return (msel >> 1) + 1;
+  else
+    return 31;
 }
 /*----------------------------------------------------------------------------*/
 static void commonDividerDisable(const void *clockBase)
@@ -613,9 +750,91 @@ static bool rtcOscReady(const void *clockBase __attribute__((unused)))
   return !(LPC_CREG->CREG0 & (CREG0_PD32KHZ | CREG0_RESET32KHZ));
 }
 /*----------------------------------------------------------------------------*/
+static void pll0UsbClockDisable(const void *clockBase __attribute__((unused)))
+{
+  LPC_CGU->PLL0USB_CTRL |= BASE_PD;
+}
+/*----------------------------------------------------------------------------*/
+static enum result pll0UsbClockEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
+{
+  const struct PllConfig * const config = configBase;
+
+  assert(config->source != CLOCK_USB_PLL);
+  assert(config->divisor);
+  assert(config->multiplier/* && config->multiplier <= 65536*/); //FIXME
+
+  const uint32_t sourceFrequency = getSourceFrequency(config->source);
+
+  if (!sourceFrequency)
+    return E_ERROR;
+
+  unsigned int divisor = config->divisor;
+  unsigned int psel = 1;
+
+  //TODO Find common dividers
+  while (psel < (1 << 5) && !(divisor & 1)) //TODO Constants
+  {
+    psel <<= 1;
+    divisor >>= 1;
+  }
+  assert(divisor <= 256);
+
+  const unsigned int msel = config->multiplier >> 1;
+  const unsigned int nsel = divisor;
+  bool directInput = false, directOutput = false;
+
+  if (psel > 1)
+    psel >>= 1;
+  else
+    directOutput = true;
+
+  if (nsel == 1)
+    directInput = true;
+
+  const uint32_t ccoFrequency = sourceFrequency * config->multiplier;
+  const uint32_t expectedFrequency = ccoFrequency / config->divisor;
+
+  /* Check CCO range */
+  assert(ccoFrequency >= 275000000 && ccoFrequency <= 550000000);
+
+  const uint32_t mDivValue = PLL0_MDIV_MDEC(pll0ComputeMdec(msel))
+      | PLL0_MDIV_SELP(pll0ComputeSelP(msel))
+      | PLL0_MDIV_SELI(pll0ComputeSelI(msel));
+  const uint32_t npDivValue = PLL0_NP_DIV_PDEC(pll0ComputePdec(psel))
+      | PLL0_NP_DIV_NDEC(pll0ComputeNdec(nsel));
+  uint32_t controlValue = PLL0_CTRL_CLKEN | BASE_AUTOBLOCK
+      | BASE_CLK_SEL(config->source);
+
+  if (directInput)
+    controlValue |= PLL0_CTRL_DIRECTI;
+  if (directOutput)
+    controlValue |= PLL0_CTRL_DIRECTO;
+
+  LPC_CGU->PLL0USB_CTRL = BASE_PD;
+  LPC_CGU->PLL0USB_MDIV = mDivValue;
+  LPC_CGU->PLL0USB_NP_DIV = npDivValue;
+  LPC_CGU->PLL0USB_CTRL |= controlValue;
+  LPC_CGU->PLL0USB_CTRL &= ~BASE_PD;
+
+  pll0UsbFrequency = expectedFrequency;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t pll0UsbClockFrequency(const void *clockBase
+    __attribute__((unused)))
+{
+  return pll0UsbFrequency;
+}
+/*----------------------------------------------------------------------------*/
+static bool pll0UsbClockReady(const void *clockBase __attribute__((unused)))
+{
+  return pll0UsbFrequency && (LPC_CGU->PLL0USB_STAT & PLL0_STAT_LOCK);
+}
+/*----------------------------------------------------------------------------*/
 static void pll1ClockDisable(const void *clockBase __attribute__((unused)))
 {
-  LPC_CGU->PLL1_CTRL |= PLL1_CTRL_PD;
+  LPC_CGU->PLL1_CTRL |= BASE_PD;
 }
 /*----------------------------------------------------------------------------*/
 static enum result pll1ClockEnable(const void *clockBase
@@ -657,7 +876,7 @@ static enum result pll1ClockEnable(const void *clockBase
   /* Check CCO range */
   assert(ccoFrequency >= 156000000 && ccoFrequency <= 320000000);
 
-  uint32_t controlValue = PLL1_CTRL_AUTOBLOCK | PLL1_CTRL_CLKSEL(config->source)
+  uint32_t controlValue = BASE_AUTOBLOCK | BASE_CLK_SEL(config->source)
       | PLL1_CTRL_PSEL(psel) | PLL1_CTRL_NSEL(nsel) | PLL1_CTRL_MSEL(msel);
 
   if (expectedFrequency > 110000000)
@@ -666,9 +885,9 @@ static enum result pll1ClockEnable(const void *clockBase
     assert(direct);
 
     /* Start at mid-range frequency by dividing output clock */
-    LPC_CGU->PLL1_CTRL = PLL1_CTRL_PD;
+    LPC_CGU->PLL1_CTRL = BASE_PD;
     LPC_CGU->PLL1_CTRL |= controlValue;
-    LPC_CGU->PLL1_CTRL &= ~PLL1_CTRL_PD;
+    LPC_CGU->PLL1_CTRL &= ~BASE_PD;
 
     /* User manual recommends to add a delay for 50 microseconds */
     udelay(50);
@@ -685,9 +904,9 @@ static enum result pll1ClockEnable(const void *clockBase
     if (direct)
       controlValue |= PLL1_CTRL_FBSEL | PLL1_CTRL_DIRECT;
 
-    LPC_CGU->PLL1_CTRL = PLL1_CTRL_PD;
+    LPC_CGU->PLL1_CTRL = BASE_PD;
     LPC_CGU->PLL1_CTRL |= controlValue;
-    LPC_CGU->PLL1_CTRL &= ~PLL1_CTRL_PD;
+    LPC_CGU->PLL1_CTRL &= ~BASE_PD;
   }
 
   pll1Frequency = expectedFrequency;
