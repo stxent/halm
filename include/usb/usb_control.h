@@ -36,10 +36,10 @@ struct UsbControl
   struct UsbEndpoint *ep0in;
   struct UsbEndpoint *ep0out;
 
-  /* Queue containing for IN requests */
+  /* Queue for IN requests */
   struct Queue inRequestPool;
-  /* Temporary queue containing for OUT requests */
-  struct Queue outRequestPool;
+  /* Single OUT request */
+  struct UsbRequest *outRequest;
 
   /* Project-specific data */
   void *local;
