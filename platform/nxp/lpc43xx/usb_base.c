@@ -52,13 +52,13 @@ const struct EntityClass * const UsbBase = &devTable;
 static struct UsbBase *descriptors[2] = {0};
 
 //TODO Add kconfig options
-static struct EndpointQueueHead usb0QueueHeads[ENDPT_NUMBER]
+static struct QueueHead usb0QueueHeads[ENDPT_NUMBER]
     __attribute__((aligned(2048)));
-static struct EndpointQueueHead usb1QueueHeads[ENDPT_NUMBER]
+static struct QueueHead usb1QueueHeads[ENDPT_NUMBER]
     __attribute__((aligned(2048)));
 
-//static struct EndpointTransferDescriptor usb0TransferDescriptors[ENDPT_NUMBER]
-//    __attribute__((aligned(32)));
+static struct TransferDescriptor usb0TransferDescriptors[16]
+    __attribute__((aligned(32)));
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
@@ -115,7 +115,14 @@ static enum result devInit(void *object, const void *configBase)
   if ((res = setDescriptor(device->channel, 0, device)) != E_OK)
     return res;
 
+  res = queueInit(&device->descriptorPool,
+      sizeof(struct TransferDescriptor *), 16); //FIXME
+  if (res != E_OK)
+    return res;
+
   configPins(device, configBase);
+
+  struct TransferDescriptor *poolMemory;
 
   switch (device->channel)
   {
@@ -127,6 +134,7 @@ static enum result devInit(void *object, const void *configBase)
       device->irq = USB0_IRQ;
       device->reg = LPC_USB0;
       device->queueHeads = usb0QueueHeads;
+      poolMemory = usb0TransferDescriptors;
 
       LPC_CREG->CREG0 &= ~CREG0_USB0PHY;
 
@@ -145,6 +153,13 @@ static enum result devInit(void *object, const void *configBase)
 
       LPC_USB1->PORTSC1_D |= PORTSC1_D_PFSC;
       break;
+  }
+
+  //FIXME
+  for (unsigned int index = 0; index < 16; ++index)
+  {
+    struct TransferDescriptor * const entry = poolMemory + index;
+    queuePush(&device->descriptorPool, &entry);
   }
 
   return E_OK;

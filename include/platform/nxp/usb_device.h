@@ -12,13 +12,13 @@
 #include <usb/usb.h>
 #include <usb/usb_control.h>
 /*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/usb_base.h>
-#include HEADER_PATH
-#undef HEADER_PATH
-/*----------------------------------------------------------------------------*/
 extern const struct UsbDeviceClass * const UsbDevice;
 extern const struct UsbEndpointClass * const UsbEndpoint;
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/usb_device.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 struct UsbDeviceConfig
 {
@@ -36,35 +36,11 @@ struct UsbDeviceConfig
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct UsbDevice
-{
-  struct UsbBase base;
-
-  /* List of registered endpoints */
-  struct List endpoints;
-  /* Control message handler */
-  struct UsbControl *control;
-  /* Active device configuration */
-  uint8_t configuration;
-};
-/*----------------------------------------------------------------------------*/
 struct UsbEndpointConfig
 {
   /** Mandatory: hardware device. */
   struct UsbDevice *parent;
   /** Mandatory: logical address of the endpoint. */
-  uint8_t address;
-};
-/*----------------------------------------------------------------------------*/
-struct UsbEndpoint
-{
-  struct Entity base;
-
-  /* Parent device */
-  struct UsbDevice *device;
-  /* Queued requests */
-  struct Queue requests;
-  /* Logical address */
   uint8_t address;
 };
 /*----------------------------------------------------------------------------*/

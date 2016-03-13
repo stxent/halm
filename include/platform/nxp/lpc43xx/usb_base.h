@@ -7,13 +7,14 @@
 #ifndef PLATFORM_NXP_LPC43XX_USB_BASE_H_
 #define PLATFORM_NXP_LPC43XX_USB_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <containers/queue.h>
 #include <entity.h>
 #include <irq.h>
 #include <pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbBase;
 /*----------------------------------------------------------------------------*/
-struct EndpointQueueHead;
+struct QueueHead;
 /*----------------------------------------------------------------------------*/
 struct UsbBaseConfig
 {
@@ -38,7 +39,9 @@ struct UsbBase
   irqNumber irq;
 
   /* Pointer to an aligned array with Queue Head descriptors */
-  struct EndpointQueueHead *queueHeads;
+  struct QueueHead *queueHeads;
+  /* Transfer descriptor pool */
+  struct Queue descriptorPool;
   /* Unique peripheral identifier */
   uint8_t channel;
 };

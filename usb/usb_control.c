@@ -75,7 +75,7 @@ static void controlInHandler(void *argument, struct UsbRequest *request,
 {
   struct UsbControl * const control = argument;
 
-  queuePush(&control->requestPool, &request);
+  queuePush(&control->inRequestPool, &request);
 }
 /*----------------------------------------------------------------------------*/
 static void controlOutHandler(void *argument, struct UsbRequest *request,
@@ -87,7 +87,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 
   if (status == REQUEST_CANCELLED)
   {
-    queuePush(&control->requestPool, &request);
+    queuePush(&control->outRequestPool, &request);
     return;
   }
 
@@ -150,8 +150,19 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbControl *control)
 {
+  usbEpClear(control->ep0in);
+  usbEpClear(control->ep0out);
+
   usbEpEnable(control->ep0in, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
   usbEpEnable(control->ep0out, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
+
+  while (!queueEmpty(&control->outRequestPool))
+  {
+    struct UsbRequest *request;
+
+    queuePop(&control->outRequestPool, &request);
+    usbEpEnqueue(control->ep0out, request);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void sendResponse(struct UsbControl *control, const uint8_t *data,
@@ -165,12 +176,12 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   if (length && !(length % EP0_BUFFER_SIZE))
     ++chunkCount;
 
-  if (queueSize(&control->requestPool) < chunkCount)
+  if (queueSize(&control->inRequestPool) < chunkCount)
     return;
 
   for (unsigned int index = 0; index < chunkCount; ++index)
   {
-    queuePop(&control->requestPool, &request);
+    queuePop(&control->inRequestPool, &request);
 
     const uint16_t chunk = EP0_BUFFER_SIZE < length ? EP0_BUFFER_SIZE : length;
 
@@ -265,9 +276,13 @@ static enum result controlInit(void *object, const void *configBase)
 
   control->driver = 0;
 
-  /* Initialize request pool */
-  res = queueInit(&control->requestPool, sizeof(struct UsbRequest *),
-      REQUEST_POOL_SIZE);
+  /* Initialize request queues */
+  res = queueInit(&control->inRequestPool, sizeof(struct UsbRequest *),
+      REQUEST_POOL_SIZE / 2);
+  if (res != E_OK)
+    return res;
+  res = queueInit(&control->outRequestPool, sizeof(struct UsbRequest *),
+      REQUEST_POOL_SIZE / 2);
   if (res != E_OK)
     return res;
 
@@ -282,12 +297,12 @@ static enum result controlInit(void *object, const void *configBase)
   {
     usbRequestInit((struct UsbRequest *)request, EP0_BUFFER_SIZE,
         controlInHandler, control);
-    queuePush(&control->requestPool, &request);
+    queuePush(&control->inRequestPool, &request);
     ++request;
 
     usbRequestInit((struct UsbRequest *)request, EP0_BUFFER_SIZE,
         controlOutHandler, control);
-    usbEpEnqueue(control->ep0out, (struct UsbRequest *)request);
+    queuePush(&control->outRequestPool, &request);
     ++request;
   }
 
@@ -301,9 +316,11 @@ static void controlDeinit(void *object)
   usbEpClear(control->ep0in);
   usbEpClear(control->ep0out);
 
-  assert(queueSize(&control->requestPool) == REQUEST_POOL_SIZE);
+  assert(queueSize(&control->inRequestPool) == REQUEST_POOL_SIZE / 2);
+  assert(queueSize(&control->outRequestPool) == REQUEST_POOL_SIZE / 2);
 
-  queueDeinit(&control->requestPool);
+  queueDeinit(&control->outRequestPool);
+  queueDeinit(&control->inRequestPool);
   deinit(control->ep0out);
   deinit(control->ep0in);
 

@@ -202,7 +202,7 @@ enum
   TOKEN_STATUS_ACTIVE             = 0x80,
 };
 
-struct EndpointTransferDescriptor
+struct TransferDescriptor
 {
   volatile uint32_t next;
   volatile uint32_t token;
@@ -211,10 +211,12 @@ struct EndpointTransferDescriptor
   volatile uint32_t buffer2;
   volatile uint32_t buffer3;
   volatile uint32_t buffer4;
-  volatile uint32_t reserved;
+
+  /* Project-specific fields */
+  volatile uint32_t listNode;
 };
 
-struct EndpointQueueHead
+struct QueueHead
 {
   volatile uint32_t capabilities;
   volatile uint32_t current;
@@ -227,7 +229,12 @@ struct EndpointQueueHead
   volatile uint32_t buffer4;
   volatile uint32_t reserved;
   volatile uint32_t setup[2];
-  volatile uint32_t gap[4];
+
+  /* Project-specific fields */
+  volatile uint32_t listHead;
+  volatile uint32_t listTail;
+
+  volatile uint32_t gap[2];
 };
 
 #define QH_IOS                          BIT(15)
@@ -251,7 +258,6 @@ struct EndpointQueueHead
     FIELD_VALUE((reg), TD_TOKEN_TOTAL_BYTES_MASK, 16)
 /*----------------------------------------------------------------------------*/
 #define EP_TO_DESCRIPTOR_NUMBER(ep) \
-    ((((ep) & 0xF) << 1) | (((ep) & 0x80) >> 7))
-#define EP_TO_LOGICAL_NUMBER(ep)        ((ep) & 0x07)
+    ((((ep) & 0x0F) << 1) | (((ep) & 0x80) >> 7))
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC43XX_USB_DEFS_H_ */
