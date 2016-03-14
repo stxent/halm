@@ -17,20 +17,20 @@
 #include <bits.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
-#define EP_DIRECTION_IN                 BIT(7)
-#define EP_ADDRESS(value)               (value)
-#define EP_LOGICAL_ADDRESS(value)       ((value) & 0x7F)
+#define EP_DIRECTION_IN           BIT(7)
+#define EP_ADDRESS(value)         (value)
+#define EP_LOGICAL_ADDRESS(value) ((value) & 0x7F)
 /*----------------------------------------------------------------------------*/
 struct UsbSetupPacket;
 /*----------------------------------------------------------------------------*/
-enum usbDeviceStatus
+enum usbDeviceEvent
 {
-  DEVICE_STATUS_CONNECTED = 0x01,
-  DEVICE_STATUS_SUSPENDED = 0x02,
-  DEVICE_STATUS_RESET     = 0x04,
-  DEVICE_STATUS_FRAME     = 0x08
+  DEVICE_EVENT_RESET,
+  DEVICE_EVENT_SUSPEND,
+  DEVICE_EVENT_RESUME,
+  DEVICE_EVENT_FRAME
 };
-
+/*----------------------------------------------------------------------------*/
 enum usbRequestStatus
 {
   /** Request completed successfully. */
@@ -272,7 +272,7 @@ struct UsbDriverClass
 
   enum result (*configure)(void *, const struct UsbSetupPacket *,
       const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
-  void (*updateStatus)(void *, uint8_t);
+  void (*event)(void *, unsigned int);
 };
 /*----------------------------------------------------------------------------*/
 struct UsbDriver
@@ -304,13 +304,13 @@ static inline enum result usbDriverConfigure(void *driver,
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Update driver status after a hardware event.
+ * Handle USB event.
  * @param driver Pointer to an UsbDriver object.
- * @param status Current device status.
+ * @param event Event identifier.
  */
-static inline void usbDriverUpdateStatus(void *driver, uint8_t status)
+static inline void usbDriverEvent(void *driver, unsigned int event)
 {
-  ((const struct UsbDriverClass *)CLASS(driver))->updateStatus(driver, status);
+  ((const struct UsbDriverClass *)CLASS(driver))->event(driver, event);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* USB_USB_H_ */

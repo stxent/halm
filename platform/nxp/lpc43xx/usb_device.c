@@ -18,8 +18,6 @@ enum endpointStatus
   STATUS_SETUP_PACKET,
   STATUS_ERROR
 };
-
-#define CONTROL_ENDPOINT_ADDRESS 0
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
@@ -62,16 +60,19 @@ static void epCommonHandler(struct UsbEndpoint *);
 static void epControlHandler(struct UsbEndpoint *);
 static struct TransferDescriptor *epAllocateDescriptor(struct UsbEndpoint *,
     struct UsbRequest *, uint8_t *, size_t);
-static enum result epAppendDescriptor(struct UsbEndpoint *,
+static void epAppendDescriptor(struct UsbEndpoint *,
     struct TransferDescriptor *);
 static enum result epEnqueueRx(struct UsbEndpoint *, struct UsbRequest *);
 static enum result epEnqueueTx(struct UsbEndpoint *, struct UsbRequest *);
-static void epFillDataLength(const struct UsbEndpoint *, struct UsbRequest *);
+static void epExtractDataLength(const struct UsbEndpoint *,
+    struct UsbRequest *);
+static void epFlush(struct UsbEndpoint *);
 static inline struct UsbRequest *epGetHeadRequest(const struct QueueHead *);
 static enum endpointStatus epGetStatus(const struct UsbEndpoint *);
 static void epPopDescriptor(struct UsbEndpoint *);
+static void epPrime(struct UsbEndpoint *);
 static enum result epReadSetupPacket(struct UsbEndpoint *, struct UsbRequest *);
-static enum result epReprimeEndpoint(struct UsbEndpoint *);
+static void epReprime(struct UsbEndpoint *);
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *, const void *);
 static void epDeinit(void *);
@@ -107,28 +108,28 @@ static void interruptHandler(void *object)
 
   if (intStatus & USBSTS_D_URI)
   {
-    uint8_t status = 0;
     resetDevice(device);
-    status |= DEVICE_STATUS_RESET;
-    usbControlUpdateStatus(device->control, status);
+    usbControlEvent(device->control, DEVICE_EVENT_RESET);
   }
 
-//  if (intStatus & USBSTS_D_SLI)
-//  {
-//    uint8_t status = 0;
-//    status |= DEVICE_STATUS_SUSPENDED;
-//    usbControlUpdateStatus(device->control, status);
-//  }
-//
-//  if (intStatus & USBSTS_D_PCI)
-//  {
-//    uint8_t status = 0;
-//    usbControlUpdateStatus(device->control, status);
-//  }
+  /* Port change detect */
+  if (intStatus & USBSTS_D_PCI)
+  {
+  }
 
+  const bool suspended = (intStatus & USBSTS_D_SLI) != 0;
+
+  if (suspended != device->suspended)
+  {
+    usbControlEvent(device->control, suspended ?
+        DEVICE_EVENT_SUSPEND : DEVICE_EVENT_RESUME);
+    device->suspended = suspended;
+  }
+
+  /* Handle setup packets */
   const uint32_t setupStatus = reg->ENDPTSETUPSTAT;
 
-  if ((setupStatus & ENDPT_BIT(CONTROL_ENDPOINT_ADDRESS)) && device->ep0out)
+  if ((setupStatus & ENDPT_BIT(0)) && device->ep0out)
   {
     epControlHandler(device->ep0out);
   }
@@ -138,9 +139,9 @@ static void interruptHandler(void *object)
 
   if (epStatus)
   {
-    if ((epStatus & ENDPT_BIT(CONTROL_ENDPOINT_ADDRESS)) && device->ep0out)
+    if ((epStatus & ENDPT_BIT(0)) && device->ep0out)
     {
-      reg->ENDPTCOMPLETE = ENDPT_BIT(CONTROL_ENDPOINT_ADDRESS);
+      reg->ENDPTCOMPLETE = ENDPT_BIT(0);
       epControlHandler(device->ep0out);
     }
     else
@@ -164,11 +165,20 @@ static void interruptHandler(void *object)
       }
     }
   }
+
+  /* Handle Start of Frame interrupt */
+  if (intStatus & USBSTS_D_SRI)
+  {
+    usbControlEvent(device->control, DEVICE_EVENT_FRAME);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbDevice *device)
 {
   LPC_USB_Type * const reg = device->base.reg;
+
+  device->configuration = 0; /* Inactive configuration */
+  device->suspended = false;
 
   /* Disable all endpoints */
   for (unsigned int index = 0; index < ENDPT_NUMBER; ++index)
@@ -250,7 +260,11 @@ static enum result devInit(void *object, const void *configBase)
   device->ep0out = 0;
 
   device->base.handler = interruptHandler;
-  device->configuration = 0; /* Inactive configuration */
+
+  /* Initialize control message handler */
+  device->control = init(UsbControl, &controlConfig);
+  if (!device->control)
+    return E_ERROR;
 
   LPC_USB_Type * const reg = device->base.reg;
 
@@ -262,19 +276,14 @@ static enum result devInit(void *object, const void *configBase)
   reg->USBMODE_D = USBMODE_D_CM(CM_DEVICE_CONTROLLER)
       | USBMODE_D_SDIS | USBMODE_D_SLOM;
 
-  /* Configure NVIC interrupts */
-  irqSetPriority(device->base.irq, config->priority);
-  irqEnable(device->base.irq);
-
   resetQueueHeads(device);
   resetDevice(device);
 
   devSetAddress(device, 0);
 
-  /* Initialize control message handler */
-  device->control = init(UsbControl, &controlConfig);
-  if (!device->control)
-    return E_ERROR;
+  /* Configure NVIC interrupts */
+  irqSetPriority(device->base.irq, config->priority);
+  irqEnable(device->base.irq);
 
   return E_OK;
 }
@@ -283,9 +292,9 @@ static void devDeinit(void *object)
 {
   struct UsbDevice * const device = object;
 
-  deinit(device->control);
-
   irqDisable(device->base.irq);
+
+  deinit(device->control);
 
   assert(listEmpty(&device->endpoints));
   listDeinit(&device->endpoints);
@@ -297,13 +306,12 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 {
   /* Assume that this function will be called only from one thread */
   struct UsbDevice * const device = object;
-  const bool ep0in = EP_ADDRESS(address) == CONTROL_ENDPOINT_ADDRESS
-      && !(address & EP_DIRECTION_IN);
+  const bool ep0out = EP_ADDRESS(address) == 0 && !(address & EP_DIRECTION_IN);
 
-  irqDisable(device->base.irq);
-
-  if (ep0in && device->ep0out)
+  if (ep0out && device->ep0out)
     return device->ep0out;
+
+  const irqState state = irqSave();
 
   const struct ListNode *current = listFirst(&device->endpoints);
   struct UsbEndpoint *endpoint = 0;
@@ -325,13 +333,13 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
     endpoint = init(UsbEndpoint, &config);
 
-    if (ep0in)
+    if (ep0out)
       device->ep0out = endpoint;
     else
       listPush(&device->endpoints, &endpoint);
   }
 
-  irqEnable(device->base.irq);
+  irqRestore(state);
   return endpoint;
 }
 /*----------------------------------------------------------------------------*/
@@ -360,22 +368,22 @@ static void devSetConnected(void *object, bool state)
 static enum result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
-  enum result res;
+  const irqState state = irqSave();
 
-  irqDisable(device->base.irq);
-  res = usbControlBindDriver(device->control, driver);
-  irqEnable(device->base.irq);
+  const enum result res = usbControlBindDriver(device->control, driver);
 
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/
 static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
+  const irqState state = irqSave();
 
-  irqDisable(device->base.irq);
   usbControlUnbindDriver(device->control);
-  irqEnable(device->base.irq);
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t devGetConfiguration(const void *object)
@@ -432,7 +440,7 @@ static void epCommonHandler(struct UsbEndpoint *ep)
       }
       else if (packetStatus == STATUS_DATA_PACKET)
       {
-        epFillDataLength(ep, request);
+        epExtractDataLength(ep, request);
         requestStatus = REQUEST_COMPLETED;
       }
     }
@@ -441,11 +449,6 @@ static void epCommonHandler(struct UsbEndpoint *ep)
 
     request->base.callback(request->base.callbackArgument, request,
         requestStatus);
-
-    uint32_t setupStatus;
-    LPC_USB_Type * const reg = ep->device->base.reg;
-    while ((setupStatus = reg->ENDPTSETUPSTAT))
-      reg->ENDPTSETUPSTAT = setupStatus;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -468,7 +471,7 @@ static void epControlHandler(struct UsbEndpoint *ep)
   }
   else if (packetStatus == STATUS_DATA_PACKET)
   {
-    epFillDataLength(ep, request);
+    epExtractDataLength(ep, request);
     requestStatus = REQUEST_COMPLETED;
   }
 
@@ -478,7 +481,7 @@ static void epControlHandler(struct UsbEndpoint *ep)
   if (packetStatus == STATUS_SETUP_PACKET
       && head->listHead != TD_NEXT_TERMINATE)
   {
-    epReprimeEndpoint(ep);
+    epReprime(ep);
   }
 
   request->base.callback(request->base.callbackArgument, request,
@@ -516,7 +519,7 @@ static struct TransferDescriptor *epAllocateDescriptor(struct UsbEndpoint *ep,
   return descriptor;
 }
 /*----------------------------------------------------------------------------*/
-static enum result epAppendDescriptor(struct UsbEndpoint *ep,
+static void epAppendDescriptor(struct UsbEndpoint *ep,
     struct TransferDescriptor *descriptor)
 {
   LPC_USB_Type * const reg = ep->device->base.reg;
@@ -526,6 +529,8 @@ static enum result epAppendDescriptor(struct UsbEndpoint *ep,
 
   if (head->listHead != TD_NEXT_TERMINATE)
   {
+    /* Linked list is not empty */
+
     struct TransferDescriptor * const tail =
         (struct TransferDescriptor *)head->listTail;
 
@@ -533,7 +538,7 @@ static enum result epAppendDescriptor(struct UsbEndpoint *ep,
     head->listTail = (uint32_t)descriptor;
 
     if (reg->ENDPTPRIME & mask)
-      return E_OK;
+      return;
 
     uint32_t endpointStatus;
 
@@ -547,27 +552,21 @@ static enum result epAppendDescriptor(struct UsbEndpoint *ep,
     reg->USBCMD_D &= ~USBCMD_D_ATDTW;
 
     if (endpointStatus & mask)
-      return E_OK;
+      return;
   }
   else
   {
-    /* Store first element of the list in unused field of Queue Head */
+    /* Store the first element of the list in unused fields of the Queue Head */
     head->listHead = (uint32_t)descriptor;
     head->listTail = (uint32_t)descriptor;
   }
 
+  /* Linked list is empty */
   head->next = (uint32_t)descriptor;
   /* Clear Active and Halt bits as mentioned in User Manual */
   head->token &= ~TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE | TOKEN_STATUS_HALTED);
 
-  /* Prime the endpoint for read */
-  reg->ENDPTPRIME |= mask;
-  /* Check if priming succeeded */
-  while (reg->ENDPTPRIME & mask);
-
-  /* TODO Error handling */
-
-  return E_OK;
+  epPrime(ep);
 }
 /*----------------------------------------------------------------------------*/
 static enum result epEnqueueRx(struct UsbEndpoint *ep,
@@ -579,7 +578,8 @@ static enum result epEnqueueRx(struct UsbEndpoint *ep,
   if (!descriptor)
     return E_EMPTY;
 
-  return epAppendDescriptor(ep, descriptor);
+  epAppendDescriptor(ep, descriptor);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result epEnqueueTx(struct UsbEndpoint *ep,
@@ -591,10 +591,11 @@ static enum result epEnqueueTx(struct UsbEndpoint *ep,
   if (!descriptor)
     return E_EMPTY;
 
-  return epAppendDescriptor(ep, descriptor);
+  epAppendDescriptor(ep, descriptor);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void epFillDataLength(const struct UsbEndpoint *ep,
+static void epExtractDataLength(const struct UsbEndpoint *ep,
     struct UsbRequest *request)
 {
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
@@ -604,6 +605,20 @@ static void epFillDataLength(const struct UsbEndpoint *ep,
 
   request->base.length = request->base.capacity
       - TD_TOKEN_TOTAL_BYTES_VALUE(descriptor->token);
+}
+/*----------------------------------------------------------------------------*/
+static void epFlush(struct UsbEndpoint *ep)
+{
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const uint32_t mask = ENDPT_BIT(ep->address);
+
+  /* Remove current descriptor from the queue */
+  do
+  {
+    reg->ENDPTFLUSH = mask;
+    while (reg->ENDPTFLUSH & mask);
+  }
+  while (reg->ENDPTSTAT & mask);
 }
 /*----------------------------------------------------------------------------*/
 static inline struct UsbRequest *epGetHeadRequest(const struct QueueHead *head)
@@ -648,7 +663,20 @@ static void epPopDescriptor(struct UsbEndpoint *ep)
       (struct TransferDescriptor *)head->listHead;
 
   head->listHead = (uint32_t)descriptor->next;
+  if (head->listHead == TD_NEXT_TERMINATE)
+    head->listTail = TD_NEXT_TERMINATE;
   queuePush(&ep->device->base.descriptorPool, &descriptor);
+}
+/*----------------------------------------------------------------------------*/
+static void epPrime(struct UsbEndpoint *ep)
+{
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const uint32_t mask = ENDPT_BIT(ep->address);
+
+  /* Prime the endpoint for read */
+  reg->ENDPTPRIME |= mask;
+  /* Wait until the bit is set */
+  while (reg->ENDPTPRIME & mask);
 }
 /*----------------------------------------------------------------------------*/
 static enum result epReadSetupPacket(struct UsbEndpoint *ep,
@@ -660,76 +688,52 @@ static enum result epReadSetupPacket(struct UsbEndpoint *ep,
   LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
   const struct QueueHead * const head = &ep->device->base.queueHeads[index];
-  const uint32_t mask = ENDPT_BIT(ep->address);
-  enum result res = E_ERROR;
+
+  epFlush(ep);
 
   uint32_t buffer[2];
   uint32_t setupStatus;
 
+  /* Clear the setup interrupt */
   setupStatus = reg->ENDPTSETUPSTAT;
-  reg->ENDPTSETUPSTAT = setupStatus; /* Clear the setup interrupt */ //FIXME
+  reg->ENDPTSETUPSTAT = setupStatus;
 
-  if (setupStatus & mask)
+  do
   {
-    do
-    {
-      /* Set the tripwire semaphore */
-      reg->USBCMD_D |= USBCMD_D_SUTW;
-
-      /* Transfer setup data to the buffer */
-      buffer[0] = head->setup[0];
-      buffer[1] = head->setup[1];
-    }
-    while (!(reg->USBCMD_D & USBCMD_D_SUTW));
-
-    /* Clear the tripwire */
-    reg->USBCMD_D &= ~USBCMD_D_SUTW;
-
-    res = E_OK;
+    /* Set the tripwire semaphore */
+    reg->USBCMD_D |= USBCMD_D_SUTW;
+    /* Transfer setup data to the buffer */
+    buffer[0] = head->setup[0];
+    buffer[1] = head->setup[1];
   }
+  while (!(reg->USBCMD_D & USBCMD_D_SUTW));
+
+  /* Clear the tripwire */
+  reg->USBCMD_D &= ~USBCMD_D_SUTW;
 
   /* Wait until setup interrupt is cleared */
   while ((setupStatus = reg->ENDPTSETUPSTAT))
     reg->ENDPTSETUPSTAT = setupStatus;
 
-  /* TODO Remove current descriptor from the queue */
-  reg->ENDPTFLUSH = mask;
-  //FIXME Move outside ISR
-//  do
-//  {
-//    reg->ENDPTFLUSH = mask;
-//  }
-//  while ((reg->ENDPTFLUSH & mask) || (reg->ENDPTSTAT & mask));
+  /* Copy content of the setup packet into the request buffer */
+  memcpy(request->buffer, buffer, sizeof(buffer));
+  request->base.length = sizeof(buffer);
 
-  if (res == E_OK)
-  {
-    memcpy(request->buffer, buffer, sizeof(buffer));
-    request->base.length = sizeof(buffer);
-  }
-
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result epReprimeEndpoint(struct UsbEndpoint *ep)
+static void epReprime(struct UsbEndpoint *ep)
 {
-  LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
   struct QueueHead * const head = &ep->device->base.queueHeads[index];
   struct TransferDescriptor * const descriptor =
       (struct TransferDescriptor *)head->listHead;
-  const uint32_t mask = ENDPT_BIT(ep->address);
 
   head->next = (uint32_t)descriptor;
   /* Clear Active and Halt bits as mentioned in User Manual */
   head->token &= ~TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE | TOKEN_STATUS_HALTED);
 
-  /* Prime the endpoint for read */
-  reg->ENDPTPRIME |= mask;
-  /* Check if priming succeeded */
-  while (reg->ENDPTPRIME & mask);
-
-  //TODO Error handling
-  return E_OK;
+  epPrime(ep);
 }
 /*----------------------------------------------------------------------------*/
 static enum result epInit(void *object, const void *configBase)
@@ -753,8 +757,8 @@ static void epDeinit(void *object)
   epDisable(endpoint);
   epClear(endpoint);
 
-  /* Protect endpoint queue from simultaneous access */
-  irqDisable(device->base.irq);
+  /* Protect endpoint list from simultaneous access */
+  const irqState state = irqSave();
 
   if (device->ep0out == endpoint)
   {
@@ -768,19 +772,14 @@ static void epDeinit(void *object)
       listErase(&device->endpoints, node);
   }
 
-  irqEnable(device->base.irq);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void epClear(void *object)
 {
   struct UsbEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->base.reg;
 
-  const uint32_t mask = ENDPT_BIT(endpoint->address);
-
-  reg->ENDPTFLUSH = mask;
-  while (reg->ENDPTFLUSH & mask);
-  //FIXME Check STAT
+  epFlush(endpoint);
 
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(endpoint->address);
   struct QueueHead * const head = &endpoint->device->base.queueHeads[index];
@@ -845,11 +844,8 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   /* Enable endpoint */
   reg->ENDPTCTRL[number] |= tx ? ENDPTCTRL_TXE : ENDPTCTRL_RXE;
 
-  /* Flush endpoint buffers */
-  const uint32_t mask = ENDPT_BIT(endpoint->address);
-
-  reg->ENDPTFLUSH = mask;
-  while (reg->ENDPTFLUSH & mask);
+  /* Flush endpoint descriptors */
+  epFlush(endpoint);
 
   /* Reset data toggles */
   reg->ENDPTCTRL[number] |= tx ? ENDPTCTRL_TXR : ENDPTCTRL_RXR;
@@ -862,13 +858,14 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   struct UsbEndpoint * const endpoint = object;
   enum result res = E_OK;
 
-  irqDisable(endpoint->device->base.irq);
+  const irqState state = irqSave();
+
   if (endpoint->address & EP_DIRECTION_IN)
     res = epEnqueueTx(endpoint, request);
   else
     res = epEnqueueRx(endpoint, request);
-  irqEnable(endpoint->device->base.irq);
 
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/

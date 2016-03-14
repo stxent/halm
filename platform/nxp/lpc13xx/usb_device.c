@@ -88,33 +88,25 @@ static void interruptHandler(void *object)
 
   reg->USBDevIntClr = intStatus;
 
-  if (intStatus & USBDevInt_FRAME)
-  {
-    usbControlUpdateStatus(device->control, DEVICE_STATUS_FRAME);
-  }
-
   /* Device status interrupt */
   if (intStatus & USBDevInt_DEV_STAT)
   {
     const uint8_t deviceStatus = usbCommandRead(device,
         USB_CMD_GET_DEVICE_STATUS);
-    uint8_t status = 0;
 
     if (deviceStatus & DEVICE_STATUS_RST)
     {
       resetDevice(device);
-      status |= DEVICE_STATUS_RESET;
+      usbControlEvent(device->control, DEVICE_EVENT_RESET);
     }
 
-    if (deviceStatus & DEVICE_STATUS_CON)
-      status |= DEVICE_STATUS_CONNECTED;
+    if (deviceStatus & DEVICE_STATUS_SUS_CH)
+    {
+      const bool suspended = (deviceStatus & DEVICE_STATUS_SUS) != 0;
 
-    if (deviceStatus & DEVICE_STATUS_SUS)
-      status |= DEVICE_STATUS_SUSPENDED;
-    else
-      device->configuration = 0;
-
-    usbControlUpdateStatus(device->control, status);
+      usbControlEvent(device->control, suspended ?
+          DEVICE_EVENT_SUSPEND : DEVICE_EVENT_RESUME);
+    }
   }
 
   /* Endpoint interrupt */
@@ -141,17 +133,24 @@ static void interruptHandler(void *object)
       current = listNext(current);
     }
   }
+
+  /* Start of Frame interrupt */
+  if (intStatus & USBDevInt_FRAME)
+  {
+    usbControlEvent(device->control, DEVICE_EVENT_FRAME);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbDevice *device)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  /* Disable and clear all interrupts */
-  reg->USBDevIntEn = 0;
-  reg->USBDevIntClr = 0xFFFFFFFF;
+  /* Set inactive configuration */
+  device->configuration = 0;
 
+  /* Configure and clear interrupts */
   reg->USBDevIntEn = USBDevInt_DEV_STAT;
+  reg->USBDevIntClr = 0xFFFFFFFF;
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)
@@ -232,20 +231,19 @@ static enum result devInit(void *object, const void *configBase)
     return res;
 
   device->base.handler = interruptHandler;
-  device->configuration = 0; /* Inactive configuration */
 
-  /* Configure interrupts */
+  /* Initialize control message handler */
+  device->control = init(UsbControl, &controlConfig);
+  if (!device->control)
+    return E_ERROR;
+
+  /* Configure interrupts and reset system variables */
   resetDevice(device);
   /* By default, only ACKs generate interrupts */
   usbCommandWrite(device, USB_CMD_SET_MODE, 0);
 
   irqSetPriority(device->base.irq, config->priority);
   irqEnable(device->base.irq);
-
-  /* Initialize control message handler */
-  device->control = init(UsbControl, &controlConfig);
-  if (!device->control)
-    return E_ERROR;
 
   return E_OK;
 }
@@ -254,9 +252,9 @@ static void devDeinit(void *object)
 {
   struct UsbDevice * const device = object;
 
-  deinit(device->control);
-
   irqDisable(device->base.irq);
+
+  deinit(device->control);
 
   assert(listEmpty(&device->endpoints));
   listDeinit(&device->endpoints);
@@ -268,11 +266,10 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 {
   /* Assume that this function will be called only from one thread */
   struct UsbDevice * const device = object;
-
-  irqDisable(device->base.irq);
-
-  const struct ListNode *current = listFirst(&device->endpoints);
   struct UsbEndpoint *endpoint = 0;
+
+  const irqState state = irqSave();
+  const struct ListNode *current = listFirst(&device->endpoints);
 
   while (current)
   {
@@ -292,7 +289,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
     endpoint = init(UsbEndpoint, &config);
   }
 
-  irqEnable(device->base.irq);
+  irqRestore(state);
   return endpoint;
 }
 /*----------------------------------------------------------------------------*/
@@ -311,22 +308,22 @@ static void devSetConnected(void *object, bool state)
 static enum result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
-  enum result res;
+  const irqState state = irqSave();
 
-  irqDisable(device->base.irq);
-  res = usbControlBindDriver(device->control, driver);
-  irqEnable(device->base.irq);
+  const enum result res = usbControlBindDriver(device->control, driver);
 
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/
 static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
+  const irqState state = irqSave();
 
-  irqDisable(device->base.irq);
   usbControlUnbindDriver(device->control);
-  irqEnable(device->base.irq);
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t devGetConfiguration(const void *object)
@@ -516,15 +513,13 @@ static void epDeinit(void *object)
   epDisable(endpoint);
   epClear(endpoint);
 
-  /* Protect endpoint queue from simultaneous access */
-  irqDisable(device->base.irq);
-
+  const irqState state = irqSave();
   struct ListNode * const node = listFind(&device->endpoints, &endpoint);
 
   if (node)
     listErase(&device->endpoints, node);
 
-  irqEnable(device->base.irq);
+  irqRestore(state);
 
   assert(queueEmpty(&endpoint->requests));
   queueDeinit(&endpoint->requests);
@@ -579,22 +574,19 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
   const uint32_t mask = BIT(index + 1);
-  enum result res = E_OK;
-
-  irqDisable(endpoint->device->base.irq);
 
   /*
    * Additional checks should be performed for data endpoints
    * to avoid USB controller hanging issues.
    */
   if (index >= 2 && !endpoint->device->configuration)
-  {
-    irqEnable(endpoint->device->base.irq);
     return E_IDLE;
-  }
+
+  const irqState state = irqSave();
 
   const uint8_t status = usbCommandRead(endpoint->device,
       USB_CMD_SELECT_ENDPOINT | index);
+  enum result res = E_OK;
 
   if (!queueFull(&endpoint->requests))
   {
@@ -614,7 +606,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
     res = E_FULL;
   }
 
-  irqEnable(endpoint->device->base.irq);
+  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/

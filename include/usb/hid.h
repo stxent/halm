@@ -16,12 +16,17 @@ struct HidClass
 {
   CLASS_HEADER
 
+  void (*event)(void *, unsigned int);
   enum result (*getReport)(void *, uint8_t, uint8_t, uint8_t *,
       uint16_t *, uint16_t);
   enum result (*setReport)(void *, uint8_t, uint8_t, const uint8_t *,
       uint16_t);
-  void (*updateStatus)(void *, uint8_t);
 };
+/*----------------------------------------------------------------------------*/
+static inline void hidEvent(void *device, unsigned int event)
+{
+  ((const struct HidClass *)CLASS(device))->event(device, event);
+}
 /*----------------------------------------------------------------------------*/
 static inline enum result hidGetReport(void *device, uint8_t reportType,
     uint8_t reportId, uint8_t *report, uint16_t *reportLength,
@@ -36,11 +41,6 @@ static inline enum result hidSetReport(void *device, uint8_t reportType,
 {
   return ((const struct HidClass *)CLASS(device))->setReport(device, reportType,
       reportId, report, reportLength);
-}
-/*----------------------------------------------------------------------------*/
-static inline void hidUpdateStatus(void *device, uint8_t status)
-{
-  ((const struct HidClass *)CLASS(device))->updateStatus(device, status);
 }
 /*----------------------------------------------------------------------------*/
 struct HidConfig

@@ -225,7 +225,7 @@ enum result usbControlBindDriver(struct UsbControl *control, void *driver)
 void usbControlResetDriver(struct UsbControl *control)
 {
   if (control->driver)
-    usbDriverUpdateStatus(control->driver, DEVICE_STATUS_RESET);
+    usbDriverEvent(control->driver, DEVICE_EVENT_RESET);
 }
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control)
@@ -233,13 +233,17 @@ void usbControlUnbindDriver(struct UsbControl *control)
   control->driver = 0;
 }
 /*----------------------------------------------------------------------------*/
-void usbControlUpdateStatus(struct UsbControl *control, uint8_t status)
+void usbControlEvent(struct UsbControl *control, unsigned int event)
 {
-  if (status & DEVICE_STATUS_RESET)
+  if (event == DEVICE_EVENT_RESET)
+  {
     resetDevice(control);
-
-  if (control->driver)
-    usbDriverUpdateStatus(control->driver, status & ~DEVICE_STATUS_RESET);
+  }
+  else
+  {
+    if (control->driver)
+      usbDriverEvent(control->driver, event);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result controlInit(void *object, const void *configBase)

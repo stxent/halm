@@ -17,7 +17,7 @@ static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbSetupPacket *,
     const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
-static void driverUpdateStatus(void *, uint8_t);
+static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
     .size = sizeof(struct CompositeDeviceProxy),
@@ -25,7 +25,7 @@ static const struct UsbDriverClass driverTable = {
     .deinit = driverDeinit,
 
     .configure = driverConfigure,
-    .updateStatus = driverUpdateStatus
+    .event = driverEvent
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const CompositeDeviceProxy = &driverTable;
@@ -121,7 +121,7 @@ static enum result driverConfigure(void *object,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void driverUpdateStatus(void *object, uint8_t status)
+static void driverEvent(void *object, unsigned int event)
 {
   struct CompositeDeviceProxy * const driver = object;
   struct ListNode *currentNode = listFirst(&driver->owner->entries);
@@ -130,7 +130,7 @@ static void driverUpdateStatus(void *object, uint8_t status)
   while (currentNode)
   {
     listData(&driver->owner->entries, currentNode, &current);
-    usbDriverUpdateStatus(current, status);
+    usbDriverEvent(current, event);
     currentNode = listNext(currentNode);
   }
 }
@@ -191,7 +191,7 @@ static void devDeinit(void *object)
   deinit(device->driver);
 }
 /*----------------------------------------------------------------------------*/
-static void *devAllocate(void *object, uint8_t address)
+static void *devCreateEndpoint(void *object, uint8_t address)
 {
   struct CompositeDevice * const device = object;
 

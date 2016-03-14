@@ -77,6 +77,6 @@ struct CdcAcm
 };
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *);
-void cdcAcmOnStatusChanged(struct CdcAcm *, uint8_t);
+void cdcAcmOnEvent(struct CdcAcm *, unsigned int);
 /*----------------------------------------------------------------------------*/
 #endif /* USB_CDC_ACM_H_ */

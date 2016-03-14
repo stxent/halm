@@ -138,16 +138,19 @@ void cdcAcmOnParametersChanged(struct CdcAcm *interface)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-void cdcAcmOnStatusChanged(struct CdcAcm *interface, uint8_t status)
+void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
 {
-  if (!interface->suspended && (status & DEVICE_STATUS_SUSPENDED))
+  if (event == DEVICE_EVENT_SUSPEND)
   {
     interface->suspended = true;
-
-    usbTrace("cdc_acm: suspended externally");
+    usbTrace("cdc_acm: suspended");
   }
-
-  if (status & DEVICE_STATUS_RESET)
+  else if (event == DEVICE_EVENT_RESUME)
+  {
+    interface->suspended = false;
+    usbTrace("cdc_acm: resumed");
+  }
+  else if (event == DEVICE_EVENT_RESET)
   {
     interface->suspended = true;
     resetBuffers(interface);
