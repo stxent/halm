@@ -1242,36 +1242,36 @@ typedef struct
 /*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
 {
-    union
-    {
-      __ro__ uint32_t RBR;
-      __wo__ uint32_t THR;
-      __rw__ uint32_t DLL;
-    };
-    union
-    {
-      __rw__ uint32_t DLM;
-      __rw__ uint32_t IER;
-    };
-    union
-    {
-      __ro__ uint32_t IIR;
-      __wo__ uint32_t FCR;
-    };
-    __rw__ uint32_t LCR;
-    __rw__ uint32_t MCR;
-    __ro__ uint32_t LSR;
-    __ro__ uint32_t MSR;
-    __rw__ uint32_t SCR;
-    __rw__ uint32_t ACR;
-    __ne__ uint32_t RESERVED0;
-    __rw__ uint32_t FDR;
-    __ne__ uint32_t RESERVED1[8];
-    __rw__ uint32_t RS485CTRL;
-    __rw__ uint32_t RS485ADRMATCH;
-    __rw__ uint32_t RS485DLY;
-    __rw__ uint32_t SYNCCTRL;
-    __rw__ uint32_t TER;
+  union
+  {
+    __ro__ uint32_t RBR;
+    __wo__ uint32_t THR;
+    __rw__ uint32_t DLL;
+  };
+  union
+  {
+    __rw__ uint32_t DLM;
+    __rw__ uint32_t IER;
+  };
+  union
+  {
+    __ro__ uint32_t IIR;
+    __wo__ uint32_t FCR;
+  };
+  __rw__ uint32_t LCR;
+  __rw__ uint32_t MCR;
+  __ro__ uint32_t LSR;
+  __ro__ uint32_t MSR;
+  __rw__ uint32_t SCR;
+  __rw__ uint32_t ACR;
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t FDR;
+  __ne__ uint32_t RESERVED1[8];
+  __rw__ uint32_t RS485CTRL;
+  __rw__ uint32_t RS485ADRMATCH;
+  __rw__ uint32_t RS485DLY;
+  __rw__ uint32_t SYNCCTRL;
+  __rw__ uint32_t TER;
 } LPC_USART_Type;
 /*------------------Extended Universal Asynchronous Receiver Transmitter------*/
 /* UART block with modem control, RS485 support and IrDA mode */
@@ -1391,14 +1391,7 @@ typedef struct
   __rw__ uint32_t ALMON;
   __rw__ uint32_t ALYEAR;
 } LPC_RTC_Type;
-///*------------------Digital-to-Analog Converter-------------------------------*/
-//typedef struct
-//{
-//  __rw__ uint32_t CR; /* Converter Register */
-//  __rw__ uint32_t CTRL; /* Control register */
-//  __rw__ uint16_t CNTVAL; /* Counter Value register */
-//} LPC_DAC_Type;
-///*------------------Watchdog Timer--------------------------------------------*/
+/*------------------Watchdog Timer--------------------------------------------*/
 typedef struct
 {
   __rw__ uint32_t MOD;
@@ -1621,13 +1614,15 @@ typedef struct
 /*------------------Universal Serial Bus--------------------------------------*/
 typedef struct
 {
-  __ne__ uint32_t RESERVED0[64];
+  __ne__ uint32_t RESERVED0[36];
+  __rw__ uint32_t SBUSCFG; /* System bus interface configuration */
+  __ne__ uint32_t RESERVED1[27];
   __ro__ uint32_t CAPLENGTH; /* Capability register length */
   __ro__ uint32_t HCSPARAMS; /* Host controller structural parameters */
   __ro__ uint32_t HCCPARAMS; /* Host controller capability parameters */
-  __ne__ uint32_t RESERVED1[5];
+  __ne__ uint32_t RESERVED2[5];
   __ro__ uint32_t DCIVERSION;/* Device interface version number */
-  __ne__ uint32_t RESERVED2[7];
+  __ne__ uint32_t RESERVED3[7];
 
   union
   {
@@ -1652,7 +1647,7 @@ typedef struct
     __rw__ uint32_t FRINDEX_H; /* USB frame index (host mode) */
     __ro__ uint32_t FRINDEX_D; /* USB frame index (device mode) */
   };
-  __ne__ uint32_t RESERVED3;
+  __ne__ uint32_t RESERVED4;
 
   union
   {
@@ -1668,17 +1663,16 @@ typedef struct
     __rw__ uint32_t ENDPOINTLISTADDR;
   };
 
-  /* Asynchronous buffer status for embedded TT (host mode) */
-  __rw__ uint32_t TTCTRL;
+
+  __rw__ uint32_t TTCTRL; /* Buffer status for embedded TT (host mode) */
   __rw__ uint32_t BURSTSIZE; /* Programmable burst size */
-  /* Host transmit pre-buffer packet tuning (host mode) */
-  __rw__ uint32_t TXFILLTUNING;
-  __ne__ uint32_t RESERVED4[2];
+  __rw__ uint32_t TXFILLTUNING; /* Control performance tuning (host mode) */
+  __ne__ uint32_t RESERVED5[2];
   __rw__ uint32_t ULPIVIEWPORT; /* ULPI viewport, only for USB1 */
   __rw__ uint32_t BINTERVAL; /* Length of virtual frame */
-  __rw__ uint32_t ENDPTNAK; /* Endpoint NAK (device mode) */
+  __rw__ uint32_t ENDPTNAK; /* Endpoint NAK status (device mode) */
   __rw__ uint32_t ENDPTNAKEN; /* Endpoint NAK Enable (device mode) */
-  __ne__ uint32_t RESERVED5;
+  __ne__ uint32_t RESERVED6;
 
   union
   {
@@ -1686,8 +1680,8 @@ typedef struct
     __rw__ uint32_t PORTSC1_D; /* Port 1 status/control (device mode) */
   };
 
-  __ne__ uint32_t RESERVED6[7];
-  __rw__ uint32_t OTGSC; /* Only for USB0 */
+  __ne__ uint32_t RESERVED7[7];
+  __rw__ uint32_t OTGSC; /* OTG Status and Control, only for USB0 */
 
   union
   {
@@ -1695,11 +1689,11 @@ typedef struct
     __rw__ uint32_t USBMODE_D; /* USB mode (device mode) */
   };
 
-  __rw__ uint32_t ENDPTSETUPSTAT; /* Endpoint setup status */
-  __rw__ uint32_t ENDPTPRIME; /* Endpoint initialization */
-  __rw__ uint32_t ENDPTFLUSH; /* Endpoint deinitialization */
-  __ro__ uint32_t ENDPTSTAT; /* Endpoint status */
-  __rw__ uint32_t ENDPTCOMPLETE; /* Endpoint complete */
+  __rw__ uint32_t ENDPTSETUPSTAT;
+  __rw__ uint32_t ENDPTPRIME;
+  __rw__ uint32_t ENDPTFLUSH;
+  __ro__ uint32_t ENDPTSTAT;
+  __rw__ uint32_t ENDPTCOMPLETE;
 
   /* Endpoint control registers */
   union
