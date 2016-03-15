@@ -12,6 +12,8 @@
 #include <platform/nxp/lpc43xx/usb_base.h>
 #include <platform/nxp/lpc43xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
+#define ENDPOINT_REQUESTS CONFIG_USB_DEVICE_ENDPOINT_REQUESTS
+/*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct UsbBase *,
     struct UsbBase *);
@@ -25,25 +27,132 @@ static const struct EntityClass devTable = {
     .deinit = devDeinit
 };
 /*----------------------------------------------------------------------------*/
-//TODO
 const struct PinEntry usbPins[] = {
     {
-        .key = PIN(PORT_USB, PIN_USB0_DP), /* USB0_D+ */
+        .key = PIN(PORT_1, 3), /* USB0_IND1 */
+        .channel = 0,
+        .value = 4
+    }, {
+        .key = PIN(PORT_1, 4), /* USB0_IND0 */
+        .channel = 0,
+        .value = 4
+    }, {
+        .key = PIN(PORT_1, 5), /* USB0_PWR_FAULT */
+        .channel = 0,
+        .value = 4
+    }, {
+        .key = PIN(PORT_1, 7), /* USB0_PPWR */
+        .channel = 0,
+        .value = 4
+    }, {
+        .key = PIN(PORT_2, 0), /* USB0_PPWR */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(PORT_2, 1), /* USB0_PWR_FAULT */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(PORT_2, 2), /* USB0_IND1 */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(PORT_2, 3), /* USB0_PPWR */
+        .channel = 0,
+        .value = 7
+    }, {
+        .key = PIN(PORT_2, 4), /* USB0_PWR_FAULT */
+        .channel = 0,
+        .value = 7
+    }, {
+        .key = PIN(PORT_2, 5), /* USB0_IND0 */
+        .channel = 0,
+        .value = 7
+    }, {
+        .key = PIN(PORT_2, 6), /* USB0_IND0 */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(PORT_6, 3), /* USB0_PPWR */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = PIN(PORT_6, 6), /* USB0_PWR_FAULT */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(PORT_6, 7), /* USB0_IND1 */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(PORT_6, 8), /* USB0_IND0 */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(PORT_8, 0), /* USB0_PWR_FAULT */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = PIN(PORT_8, 1), /* USB0_IND1 */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = PIN(PORT_8, 2), /* USB0_IND0 */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = PIN(PORT_USB, PIN_USB0_DM), /* USB0_DM */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_USB, PIN_USB0_DM), /* USB0_D- */
+        .key = PIN(PORT_USB, PIN_USB0_DP), /* USB0_DP */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_USB, PIN_USB0_VBUS), /* VBUS0 */
+        .key = PIN(PORT_USB, PIN_USB0_ID), /* USB0_ID */
         .channel = 0,
         .value = 0
     }, {
-//        .key = PIN(2, 9), /* USB_CONNECT */
-//        .channel = 0,
-//        .value = 1
-//    }, {
+        .key = PIN(PORT_USB, PIN_USB0_VBUS), /* USB0_VBUS */
+        .channel = 0,
+        .value = 0
+    }, {
+        .key = PIN(PORT_2, 5), /* USB1_VBUS1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(PORT_3, 1), /* USB1_IND1 */
+        .channel = 1,
+        .value = 3
+    }, {
+        .key = PIN(PORT_3, 2), /* USB1_IND0 */
+        .channel = 1,
+        .value = 3
+    }, {
+        .key = PIN(PORT_9, 3), /* USB1_IND1 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(PORT_9, 4), /* USB1_IND0 */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(PORT_9, 5), /* USB1_PPWR */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(PORT_9, 6), /* USB1_PWR_FAULT */
+        .channel = 1,
+        .value = 2
+    }, {
+        .key = PIN(PORT_USB, PIN_USB1_DM), /* USB1_DM */
+        .channel = 1,
+        .value = 0
+    }, {
+        .key = PIN(PORT_USB, PIN_USB1_DP), /* USB1_DP */
+        .channel = 1,
+        .value = 0
+    }, {
         .key = 0 /* End of pin function association list */
     }
 };
@@ -51,14 +160,19 @@ const struct PinEntry usbPins[] = {
 const struct EntityClass * const UsbBase = &devTable;
 static struct UsbBase *descriptors[2] = {0};
 
-//TODO Add kconfig options
+#ifdef CONFIG_PLATFORM_USB_0
 static struct QueueHead usb0QueueHeads[ENDPT_NUMBER]
     __attribute__((aligned(2048)));
+static struct TransferDescriptor usb0TransferDescriptors[ENDPOINT_REQUESTS]
+    __attribute__((aligned(32)));
+#endif
+
+#ifdef CONFIG_PLATFORM_USB_1
 static struct QueueHead usb1QueueHeads[ENDPT_NUMBER]
     __attribute__((aligned(2048)));
-
-static struct TransferDescriptor usb0TransferDescriptors[16]
+static struct TransferDescriptor usb1TransferDescriptors[ENDPOINT_REQUESTS]
     __attribute__((aligned(32)));
+#endif
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
@@ -110,53 +224,59 @@ static enum result devInit(void *object, const void *configBase)
 
   device->channel = config->channel;
   device->handler = 0;
+  device->queueHeads = 0;
 
   /* Try to set peripheral descriptor */
   if ((res = setDescriptor(device->channel, 0, device)) != E_OK)
     return res;
 
   res = queueInit(&device->descriptorPool,
-      sizeof(struct TransferDescriptor *), 16); //FIXME
+      sizeof(struct TransferDescriptor *), ENDPOINT_REQUESTS);
   if (res != E_OK)
     return res;
 
   configPins(device, configBase);
 
-  struct TransferDescriptor *poolMemory;
+  struct TransferDescriptor *poolMemory = 0;
 
-  switch (device->channel)
+  if (!device->channel)
   {
-    case 0:
-      sysClockEnable(CLK_M4_USB0);
-      sysClockEnable(CLK_USB0);
-      sysResetEnable(RST_USB0);
+    sysClockEnable(CLK_M4_USB0);
+    sysClockEnable(CLK_USB0);
+    sysResetEnable(RST_USB0);
 
-      device->irq = USB0_IRQ;
-      device->reg = LPC_USB0;
-      device->queueHeads = usb0QueueHeads;
-      poolMemory = usb0TransferDescriptors;
+    device->irq = USB0_IRQ;
+    device->reg = LPC_USB0;
 
-      LPC_CREG->CREG0 &= ~CREG0_USB0PHY;
+    LPC_CREG->CREG0 &= ~CREG0_USB0PHY;
+    LPC_USB0->OTGSC = OTGSC_VD | OTGSC_OT;
 
-      //TODO Add speed LS/FS/HS config in structure
-      LPC_USB0->OTGSC = OTGSC_VD | OTGSC_OT;
-      break;
+#ifdef CONFIG_PLATFORM_USB_0
+    device->queueHeads = usb0QueueHeads;
+    poolMemory = usb0TransferDescriptors;
+#endif
+  }
+  else
+  {
+    sysClockEnable(CLK_M4_USB1);
+    sysClockEnable(CLK_USB1);
+    sysResetEnable(RST_USB1);
 
-    case 1:
-      sysClockEnable(CLK_M4_USB1);
-      sysClockEnable(CLK_USB1);
-      sysResetEnable(RST_USB1);
+    device->irq = USB1_IRQ;
+    device->reg = LPC_USB1;
 
-      device->irq = USB1_IRQ;
-      device->reg = LPC_USB1;
-      device->queueHeads = usb1QueueHeads;
+    LPC_USB1->PORTSC1_D |= PORTSC1_D_PFSC;
+    LPC_SCU->SFSUSB = SFSUSB_ESEA | SFSUSB_EPWR | SFSUSB_VBUS;
 
-      LPC_USB1->PORTSC1_D |= PORTSC1_D_PFSC;
-      break;
+#ifdef CONFIG_PLATFORM_USB_1
+    device->queueHeads = usb1QueueHeads;
+    poolMemory = usb1TransferDescriptors;
+#endif
   }
 
-  //FIXME
-  for (unsigned int index = 0; index < 16; ++index)
+  assert(poolMemory);
+
+  for (unsigned int index = 0; index < ENDPOINT_REQUESTS; ++index)
   {
     struct TransferDescriptor * const entry = poolMemory + index;
     queuePush(&device->descriptorPool, &entry);
@@ -169,20 +289,19 @@ static void devDeinit(void *object)
 {
   struct UsbBase * const device = object;
 
-  switch (device->channel)
+  if (!device->channel)
   {
-    case 0:
-      LPC_CREG->CREG0 |= CREG0_USB0PHY;
+    LPC_CREG->CREG0 |= CREG0_USB0PHY;
 
-      sysClockDisable(CLK_USB0);
-      sysClockDisable(CLK_M4_USB0);
-      break;
+    sysClockDisable(CLK_USB0);
+    sysClockDisable(CLK_M4_USB0);
+  }
+  else
+  {
+    LPC_SCU->SFSUSB &= ~(SFSUSB_EPWR | SFSUSB_VBUS);
 
-    case 1:
-      //TODO
-      sysClockDisable(CLK_USB1);
-      sysClockDisable(CLK_M4_USB1);
-      break;
+    sysClockDisable(CLK_USB1);
+    sysClockDisable(CLK_M4_USB1);
   }
 
   setDescriptor(device->channel, device, 0);

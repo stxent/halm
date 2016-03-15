@@ -190,9 +190,17 @@ ifeq ($(CONFIG_PLATFORM_NXP_SPI_DMA),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_SPI)/spi_dma.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_USB_DEVICE),y)
+ifeq ($(CONFIG_PLATFORM_USB),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_base.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_device.c
+
+  ifeq ($(CONFIG_PLATFORM_USB_0),y)
+    PROJECT_FLAGS += CONFIG_PLATFORM_USB_0
+  endif
+
+  ifeq ($(CONFIG_PLATFORM_USB_1),y)
+    PROJECT_FLAGS += CONFIG_PLATFORM_USB_1
+  endif
 endif
 
 ifeq ($(CONFIG_PLATFORM_SDIO_SPI),y)

@@ -40,7 +40,10 @@ enum
   PIN_I2C0_SDA,
   PIN_USB0_DM,
   PIN_USB0_DP,
-  PIN_USB0_VBUS
+  PIN_USB0_ID,
+  PIN_USB0_VBUS,
+  PIN_USB1_DM,
+  PIN_USB1_DP
 };
 /*----------------------------------------------------------------------------*/
 void *pinAddress(struct Pin);
