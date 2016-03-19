@@ -333,10 +333,13 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
       {
         for (unsigned int index = 0; index < 4; ++index)
           buffer[index] = reg->RESP[index];
+
+        return E_OK;
       }
       else if (response == SDIO_RESPONSE_SHORT)
       {
         buffer[0] = reg->RESP[0];
+        return E_OK;
       }
       else
       {
