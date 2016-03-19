@@ -401,6 +401,11 @@ config USB_DEVICE_HID
 	default y
 	depends on USB_DEVICE
 
+config USB_DEVICE_MSC
+	bool "MSC driver"
+	default y
+	depends on USB_DEVICE
+
 menu "USB options"
 	depends on USB_DEVICE
 

@@ -33,3 +33,7 @@ ifeq ($(CONFIG_USB_DEVICE_HID),y)
   CSOURCES += usb/hid.c
   CSOURCES += usb/hid_base.c
 endif
+
+ifeq ($(CONFIG_USB_DEVICE_MSC),y)
+  CSOURCES += usb/msc.c
+endif
