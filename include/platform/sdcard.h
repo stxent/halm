@@ -41,22 +41,39 @@ struct SdCard
 {
   struct Interface base;
 
+  void (*callback)(void *);
+  void *callbackArgument;
+
   /* Parent interface */
   struct Interface *interface;
   /* Current position in internal memory space */
   uint64_t position;
+
   /* Relative card address */
   uint32_t blockCount;
   /* Relative card address */
   uint16_t address;
   /* Memory card capacity */
-  enum sdCardCapacity capacity;
-  /* Type of the memory card */
-  enum sdCardType type;
+  uint8_t capacity;
   /* Type of the hardware interface */
   uint8_t mode;
+  /* Type of the memory card */
+  uint8_t type;
   /* Integrity check option */
   bool crc;
+
+  /* Command argument */
+  uint32_t argument;
+  /* Transfer command */
+  uint32_t command;
+  /* User-space buffer for read or write operation */
+  uintptr_t buffer;
+  /* Transfer length */
+  size_t length;
+  /* Transfer state */
+  uint8_t state;
+  /* Enable blocking mode */
+  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_SDCARD_H_ */

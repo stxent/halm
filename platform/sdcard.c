@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <bits.h>
 #include <delay.h>
 #include <memory.h>
@@ -27,14 +28,33 @@
 #define OCR_HCS           BIT(30) /* Host Capacity Support */
 #define OCR_BUSY          BIT(31) /* Card power up status bit */
 /*----------------------------------------------------------------------------*/
+enum state
+{
+  STATE_IDLE,
+  STATE_GET_STATUS,
+  STATE_SELECT_CARD,
+  STATE_TRANSFER,
+  STATE_STOP,
+  STATE_HALT,
+  STATE_ERROR
+};
+/*----------------------------------------------------------------------------*/
 static enum result executeCommand(struct SdCard *, uint32_t, uint32_t,
-    uint32_t *);
+    uint32_t *, bool);
 static uint32_t extractBits(const uint32_t *, unsigned int, unsigned int);
 static enum result identifyCard(struct SdCard *);
 static enum result initializeCard(struct SdCard *);
+static void interruptHandler(void *);
+static enum result isCardReady(struct SdCard *);
+static inline bool isMultiBufferTransfer(struct SdCard *);
 static void processCardSpecificData(struct SdCard *, uint32_t *);
 static enum result setTransferState(struct SdCard *);
-static enum result stopTransfer(struct SdCard *);
+static enum result startCardSelection(struct SdCard *);
+static enum result startTransfer(struct SdCard *);
+static enum result startTransferStateSetup(struct SdCard *);
+static enum result terminateTransfer(struct SdCard *);
+static enum result transferBuffer(struct SdCard *, uint32_t, uint32_t,
+    uintptr_t, size_t);
 /*----------------------------------------------------------------------------*/
 static enum result cardInit(void *, const void *);
 static void cardDeinit(void *);
@@ -59,7 +79,7 @@ static const struct InterfaceClass cardTable = {
 const struct InterfaceClass * const SdCard = &cardTable;
 /*----------------------------------------------------------------------------*/
 static enum result executeCommand(struct SdCard *device, uint32_t command,
-    uint32_t argument, uint32_t *response)
+    uint32_t argument, uint32_t *response, bool await)
 {
   enum result res;
 
@@ -72,6 +92,9 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
 
   if (status == E_BUSY)
   {
+    if (!await)
+      return E_BUSY;
+
     while ((status = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
       barrier();
   }
@@ -110,13 +133,13 @@ static enum result identifyCard(struct SdCard *device)
 
   /* Send reset command */
   res = executeCommand(device, SDIO_COMMAND(CMD_GO_IDLE_STATE,
-      SDIO_RESPONSE_NONE, SDIO_INITIALIZE), 0, 0);
+      SDIO_RESPONSE_NONE, SDIO_INITIALIZE), 0, 0, true);
   if (res != E_OK && res != E_IDLE)
     return res;
 
   /* Start initialization and detect card type */
   res = executeCommand(device, SDIO_COMMAND(CMD_SEND_IF_COND,
-      SDIO_RESPONSE_SHORT, 0), CONDITION_PATTERN, response);
+      SDIO_RESPONSE_SHORT, 0), CONDITION_PATTERN, response, true);
   if (res == E_OK || res == E_IDLE)
   {
     /* Response should be equal to the command argument */
@@ -144,12 +167,12 @@ static enum result identifyCard(struct SdCard *device)
   for (unsigned int counter = 100; counter; --counter)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_APP_CMD,
-        responseType, 0), 0, 0);
+        responseType, 0), 0, 0, true);
     if (res != E_OK && res != E_IDLE)
       break;
 
     res = executeCommand(device, SDIO_COMMAND(ACMD_SD_SEND_OP_COND,
-        responseType, 0), ocr, device->mode != SDIO_SPI ? response : 0);
+        responseType, 0), ocr, device->mode != SDIO_SPI ? response : 0, true);
     if (device->mode != SDIO_SPI)
     {
       if (res == E_OK && (response[0] & OCR_BUSY))
@@ -178,7 +201,7 @@ static enum result identifyCard(struct SdCard *device)
   if (device->mode == SDIO_SPI && device->crc)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_CRC_ON_OFF,
-        SDIO_RESPONSE_SHORT, 0), CRC_ENABLED, 0);
+        SDIO_RESPONSE_SHORT, 0), CRC_ENABLED, 0, true);
     if (res != E_OK)
       return res;
   }
@@ -187,7 +210,7 @@ static enum result identifyCard(struct SdCard *device)
   if (device->mode == SDIO_SPI && device->type == SDCARD_2_0)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_READ_OCR,
-        SDIO_RESPONSE_SHORT, crcStatus), 0, response);
+        SDIO_RESPONSE_SHORT, crcStatus), 0, response, true);
     if (res != E_OK)
       return res;
 
@@ -199,12 +222,12 @@ static enum result identifyCard(struct SdCard *device)
   if (device->mode != SDIO_SPI)
   {
     res = executeCommand(device, SDIO_COMMAND(CMD_ALL_SEND_CID,
-        SDIO_RESPONSE_LONG, crcStatus), 0, response);
+        SDIO_RESPONSE_LONG, crcStatus), 0, response, true);
     if (res != E_OK)
       return res;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_SEND_RELATIVE_ADDR,
-        SDIO_RESPONSE_SHORT, crcStatus), 0, response);
+        SDIO_RESPONSE_SHORT, crcStatus), 0, response, true);
     if (res != E_OK)
       return res;
 
@@ -215,7 +238,7 @@ static enum result identifyCard(struct SdCard *device)
 
   /* Read and process CSD register */
   res = executeCommand(device, SDIO_COMMAND(CMD_SEND_CSD,
-      SDIO_RESPONSE_LONG, crcStatus), address, response);
+      SDIO_RESPONSE_LONG, crcStatus), address, response, true);
   if (res != E_OK)
     return res;
   processCardSpecificData(device, response);
@@ -227,12 +250,12 @@ static enum result identifyCard(struct SdCard *device)
       return res;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_SET_BLOCKLEN,
-        SDIO_RESPONSE_SHORT, crcStatus), 1 << BLOCK_POW, 0);
+        SDIO_RESPONSE_SHORT, crcStatus), 1 << BLOCK_POW, 0, true);
     if (res != E_OK)
       return res;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_APP_CMD,
-        SDIO_RESPONSE_SHORT, crcStatus), address, 0);
+        SDIO_RESPONSE_SHORT, crcStatus), address, 0, true);
     if (res != E_OK)
       return res;
 
@@ -240,7 +263,7 @@ static enum result identifyCard(struct SdCard *device)
         BUS_WIDTH_1BIT : BUS_WIDTH_4BIT;
 
     res = executeCommand(device, SDIO_COMMAND(ACMD_SET_BUS_WIDTH,
-        SDIO_RESPONSE_SHORT, crcStatus), width, 0);
+        SDIO_RESPONSE_SHORT, crcStatus), width, 0, true);
     if (res != E_OK)
       return res;
   }
@@ -260,7 +283,7 @@ static enum result initializeCard(struct SdCard *device)
   /* Check interface capabilities and select zero-copy mode */
   if ((res = ifSet(device->interface, IF_ZEROCOPY, 0)) != E_OK)
     goto error;
-  if ((res = ifCallback(device->interface, 0, 0)) != E_OK)
+  if ((res = ifCallback(device->interface, interruptHandler, device)) != E_OK)
     goto error;
 
   if ((res = ifGet(device->interface, IF_RATE, &originalRate)) != E_OK)
@@ -286,6 +309,139 @@ error:
   ifSet(device->interface, IF_RELEASE, 0);
 
   return res;
+}
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct SdCard * const device = object;
+  bool event = false;
+
+  switch ((enum state)device->state)
+  {
+    case STATE_GET_STATUS:
+    {
+      switch (isCardReady(device))
+      {
+        case E_OK:
+          device->state = STATE_TRANSFER;
+
+          if (startTransfer(device) != E_OK)
+          {
+            device->state = STATE_ERROR;
+            event = true;
+          }
+          break;
+
+        case E_IDLE:
+          device->state = STATE_SELECT_CARD;
+
+          if (startCardSelection(device) != E_OK)
+          {
+            event = true;
+            device->state = STATE_ERROR;
+          }
+          break;
+
+        default:
+          event = true;
+          device->state = STATE_ERROR;
+          break;
+      }
+
+      break;
+    }
+
+    case STATE_SELECT_CARD:
+    {
+      device->state = STATE_TRANSFER;
+
+      if (startTransfer(device) != E_OK)
+      {
+        device->state = STATE_ERROR;
+        event = true;
+      }
+      break;
+    }
+
+    case STATE_TRANSFER:
+    {
+      const enum result res = ifGet(device->interface, IF_STATUS, 0);
+
+      if (res != E_OK)
+      {
+        device->state = STATE_HALT;
+      }
+      else if (isMultiBufferTransfer(device))
+      {
+        device->state = STATE_STOP;
+      }
+      else
+      {
+        device->state = STATE_IDLE;
+        event = true;
+      }
+
+      if (device->state == STATE_HALT || device->state == STATE_STOP)
+      {
+        if (terminateTransfer(device) != E_OK)
+        {
+          device->state = STATE_ERROR;
+          event = true;
+        }
+      }
+      break;
+    }
+
+    case STATE_STOP:
+      device->state = STATE_IDLE;
+      event = true;
+      break;
+
+    case STATE_HALT:
+      device->state = STATE_ERROR;
+      event = true;
+
+    default:
+      break;
+  }
+
+  if (event)
+  {
+    ifSet(device->interface, IF_RELEASE, 0);
+
+    if (device->callback)
+      device->callback(device->callbackArgument);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result isCardReady(struct SdCard *device)
+{
+  uint32_t response;
+  enum result res;
+
+  if ((res = ifGet(device->interface, IF_SDIO_RESPONSE, &response)) != E_OK)
+    return res;
+
+  const uint8_t state = CURRENT_STATE(response);
+
+  switch ((enum cardState)state)
+  {
+    case CARD_TRANSFER:
+      return E_OK;
+
+    case CARD_STANDBY:
+      return E_IDLE;
+
+    default:
+      return E_BUSY;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline bool isMultiBufferTransfer(struct SdCard *device)
+{
+  const enum sdioCommand code = COMMAND_CODE_VALUE(device->command);
+
+  return code == CMD_READ_MULTIPLE_BLOCK || code == CMD_WRITE_MULTIPLE_BLOCK;
 }
 /*----------------------------------------------------------------------------*/
 static void processCardSpecificData(struct SdCard *device, uint32_t *response)
@@ -316,7 +472,7 @@ static enum result setTransferState(struct SdCard *device)
   enum result res;
 
   res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
-      SDIO_RESPONSE_SHORT, flags), address, &response);
+      SDIO_RESPONSE_SHORT, flags), address, &response, true);
   if (res != E_OK)
     return res;
 
@@ -325,7 +481,7 @@ static enum result setTransferState(struct SdCard *device)
   if (state == CARD_STANDBY)
   {
     return executeCommand(device, SDIO_COMMAND(CMD_SELECT_CARD,
-        SDIO_RESPONSE_SHORT, flags), address, 0);
+        SDIO_RESPONSE_SHORT, flags), address, 0, true);
   }
   else if (state != CARD_TRANSFER)
   {
@@ -335,14 +491,119 @@ static enum result setTransferState(struct SdCard *device)
     return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result stopTransfer(struct SdCard *device)
+static enum result startCardSelection(struct SdCard *device)
+{
+  const uint32_t address = device->address << 16;
+  const uint32_t flags = SDIO_WAIT_DATA | (device->crc ? SDIO_CHECK_CRC : 0);
+
+  const enum result res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
+      SDIO_RESPONSE_SHORT, flags), address, 0, false);
+
+  /* Operation must not be completed instantly */
+  return res == E_BUSY ? E_OK : (res == E_OK ? E_INVALID : res);
+}
+/*----------------------------------------------------------------------------*/
+static enum result startTransfer(struct SdCard *device)
+{
+  enum result res;
+
+  res = ifSet(device->interface, IF_SDIO_COMMAND, &device->command);
+  if (res != E_OK)
+    return res;
+  res = ifSet(device->interface, IF_SDIO_ARGUMENT, &device->argument);
+  if (res != E_OK)
+    return res;
+
+  const enum sdioCommand code = COMMAND_CODE_VALUE(device->command);
+  const size_t length = device->length;
+  size_t number;
+
+  if (code == CMD_READ_SINGLE_BLOCK || code == CMD_READ_MULTIPLE_BLOCK)
+  {
+    number = ifRead(device->interface, (void *)device->buffer, length);
+  }
+  else
+  {
+    number = ifWrite(device->interface, (const void *)device->buffer,
+        length);
+  }
+
+  return number == length ? E_OK : E_INTERFACE;
+}
+/*----------------------------------------------------------------------------*/
+static enum result startTransferStateSetup(struct SdCard *device)
+{
+  const uint32_t address = device->address << 16;
+  const uint32_t flags = SDIO_WAIT_DATA | (device->crc ? SDIO_CHECK_CRC : 0);
+
+  const enum result res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
+      SDIO_RESPONSE_SHORT, flags), address, 0, false);
+
+  /* Operation must not be completed instantly */
+  return res == E_BUSY ? E_OK : (res == E_OK ? E_INVALID : res);
+}
+/*----------------------------------------------------------------------------*/
+static enum result terminateTransfer(struct SdCard *device)
 {
   const uint32_t flags = (device->crc ? SDIO_CHECK_CRC : 0)
       | SDIO_STOP_TRANSFER;
+  const uint32_t command = SDIO_COMMAND(CMD_STOP_TRANSMISSION,
+      SDIO_RESPONSE_SHORT, flags);
+
+  const enum result res = executeCommand(device, command, 0, 0, false);
+
+  /* Operation must not be completed instantly */
+  return res == E_BUSY ? E_OK : (res == E_OK ? E_INVALID : res);
+}
+/*----------------------------------------------------------------------------*/
+static enum result transferBuffer(struct SdCard *device,
+    uint32_t command, uint32_t argument, uintptr_t buffer, size_t length)
+{
   enum result res;
 
-  res = executeCommand(device, SDIO_COMMAND(CMD_STOP_TRANSMISSION,
-      SDIO_RESPONSE_SHORT, flags), 0, 0);
+  ifSet(device->interface, IF_ACQUIRE, 0);
+  ifSet(device->interface, IF_ZEROCOPY, 0);
+  ifCallback(device->interface, interruptHandler, device);
+
+  device->argument = argument;
+  device->command = command;
+  device->buffer = buffer;
+  device->length = length;
+
+  if (device->mode != SDIO_SPI)
+  {
+    device->state = STATE_GET_STATUS;
+    res = startTransferStateSetup(device);
+  }
+  else
+  {
+    device->state = STATE_TRANSFER;
+    res = startTransfer(device);
+  }
+
+  if (res != E_OK)
+  {
+    device->state = STATE_ERROR;
+    ifSet(device->interface, IF_RELEASE, 0);
+
+    if (device->callback)
+      device->callback(device->callbackArgument);
+
+    return res;
+  }
+
+  if (device->blocking)
+  {
+    while (device->state != STATE_IDLE && device->state != STATE_ERROR)
+      barrier();
+
+    if (device->state == STATE_ERROR)
+      res = E_INTERFACE;
+    else
+      res = E_OK;
+  }
+  else
+    res = E_BUSY;
 
   return res;
 }
@@ -353,13 +614,19 @@ static enum result cardInit(void *object, const void *configBase)
   struct SdCard * const device = object;
   enum result res;
 
-  device->address = 0;
-  device->blockCount = 0;
-  device->capacity = SDCARD_SDSC;
-  device->crc = config->crc;
+  device->callback = 0;
+
   device->interface = config->interface;
   device->position = 0;
+
+  device->blockCount = 0;
+  device->address = 0;
+  device->capacity = SDCARD_SDSC;
   device->type = SDCARD_1_0;
+  device->crc = config->crc;
+
+  device->state = STATE_IDLE;
+  device->blocking = true;
 
   /* Get interface type */
   if ((res = ifGet(device->interface, IF_SDIO_MODE, &device->mode)) != E_OK)
@@ -368,16 +635,21 @@ static enum result cardInit(void *object, const void *configBase)
   return initializeCard(device);
 }
 /*----------------------------------------------------------------------------*/
-static void cardDeinit(void *object __attribute__((unused)))
+static void cardDeinit(void *object)
 {
+  struct SdCard * const device = object;
 
+  ifCallback(device->interface, 0, 0); //FIXME Acquire?
 }
 /*----------------------------------------------------------------------------*/
-static enum result cardCallback(void *object __attribute__((unused)),
-    void (*callback)(void *) __attribute__((unused)),
-    void *argument __attribute__((unused)))
+static enum result cardCallback(void *object, void (*callback)(void *),
+    void *argument)
 {
-  return E_INVALID;
+  struct SdCard * const device = object;
+
+  device->callbackArgument = argument;
+  device->callback = callback;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result cardGet(void *object, enum ifOption option, void *data)
@@ -394,6 +666,21 @@ static enum result cardGet(void *object, enum ifOption option, void *data)
       *(uint64_t *)data = (uint64_t)device->blockCount << BLOCK_POW;
       return E_OK;
 
+    case IF_STATUS:
+    {
+      switch ((enum state)device->state)
+      {
+        case STATE_IDLE:
+          return E_OK;
+
+        case STATE_ERROR:
+          return E_ERROR;
+
+        default:
+          return E_BUSY;
+      }
+    }
+
     default:
       return E_INVALID;
   }
@@ -406,6 +693,10 @@ static enum result cardSet(void *object, enum ifOption option,
 
   switch (option)
   {
+    case IF_BLOCKING:
+      device->blocking = true;
+      return E_OK;
+
     case IF_POSITION:
     {
       const uint64_t position = *(const uint64_t *)data;
@@ -422,6 +713,10 @@ static enum result cardSet(void *object, enum ifOption option,
       return E_OK;
     }
 
+    case IF_ZEROCOPY:
+      device->blocking = false;
+      return E_OK;
+
     default:
       return E_INVALID;
   }
@@ -429,19 +724,13 @@ static enum result cardSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static size_t cardRead(void *object, void *buffer, size_t length)
 {
+  assert((length & MASK(BLOCK_POW)) == 0);
+
   const uint32_t blocks = length >> BLOCK_POW;
   struct SdCard * const device = object;
-  enum result res;
 
   if (!blocks)
     return 0;
-
-  ifSet(device->interface, IF_ACQUIRE, 0);
-  ifSet(device->interface, IF_ZEROCOPY, 0);
-  ifCallback(device->interface, 0, 0);
-
-  if (device->mode != SDIO_SPI && (res = setTransferState(device)) != E_OK)
-    goto exit;
 
   uint32_t flags = SDIO_DATA_MODE;
 
@@ -458,43 +747,21 @@ static size_t cardRead(void *object, void *buffer, size_t length)
   const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
       device->position : (device->position >> BLOCK_POW));
 
-  if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
-    goto exit;
-  if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
-    goto exit;
+  const enum result res = transferBuffer(device, command, argument,
+      (uintptr_t)buffer, length);
 
-  if (ifRead(device->interface, buffer, length) != length)
-  {
-    res = E_INTERFACE;
-    goto exit;
-  }
-
-  while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
-    barrier();
-
-  if (res != E_OK && blocks > 1)
-    stopTransfer(device);
-
-exit:
-  ifSet(device->interface, IF_RELEASE, 0);
-  return res == E_OK ? length : 0;
+  return (res == E_OK || res == E_BUSY) ? length : 0;
 }
 /*----------------------------------------------------------------------------*/
 static size_t cardWrite(void *object, const void *buffer, size_t length)
 {
+  assert((length & MASK(BLOCK_POW)) == 0);
+
   const uint32_t blocks = length >> BLOCK_POW;
   struct SdCard * const device = object;
-  enum result res;
 
   if (!blocks)
     return 0;
-
-  ifSet(device->interface, IF_ACQUIRE, 0);
-  ifSet(device->interface, IF_ZEROCOPY, 0);
-  ifCallback(device->interface, 0, 0);
-
-  if (device->mode != SDIO_SPI && (res = setTransferState(device)) != E_OK)
-    goto exit;
 
   uint32_t flags = SDIO_DATA_MODE | SDIO_WRITE_MODE;
 
@@ -503,6 +770,7 @@ static size_t cardWrite(void *object, const void *buffer, size_t length)
   if (device->crc)
     flags |= SDIO_CHECK_CRC;
 
+  /* TODO Protect position reading */
   const enum sdioCommand code = blocks == 1 ?
       CMD_WRITE_BLOCK : CMD_WRITE_MULTIPLE_BLOCK;
   const enum sdioResponse response = device->mode != SDIO_SPI ?
@@ -511,24 +779,8 @@ static size_t cardWrite(void *object, const void *buffer, size_t length)
   const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
       device->position : (device->position >> BLOCK_POW));
 
-  if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
-    goto exit;
-  if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
-    goto exit;
+  const enum result res = transferBuffer(device, command, argument,
+      (uintptr_t)buffer, length);
 
-  if (ifWrite(device->interface, buffer, length) != length)
-  {
-    res = E_INTERFACE;
-    goto exit;
-  }
-
-  while ((res = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
-    barrier();
-
-  if (res != E_OK && blocks > 1)
-    stopTransfer(device);
-
-exit:
-  ifSet(device->interface, IF_RELEASE, 0);
-  return res == E_OK ? length : 0;
+  return (res == E_OK || res == E_BUSY) ? length : 0;
 }
