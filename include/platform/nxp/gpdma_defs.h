@@ -8,7 +8,7 @@
 #define PLATFORM_NXP_GPDMA_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
-/*------------------DMA configuration register--------------------------------*/
+/*------------------Configuration register------------------------------------*/
 enum
 {
   DMA_LITTLE_ENDIAN,
@@ -17,7 +17,7 @@ enum
 
 #define DMA_ENABLE                      BIT(0)
 #define DMA_ENDIANNESS(master, mode)    BIT_FIELD((mode), 1 + (master))
-/*------------------DMA Channel Control register------------------------------*/
+/*------------------Channel Control register----------------------------------*/
 #define CONTROL_SIZE(size)              BIT_FIELD((size), 0)
 #define CONTROL_SIZE_MASK               BIT_FIELD(MASK(12), 0)
 #define CONTROL_SIZE_VALUE(reg)         FIELD_VALUE((reg), CONTROL_SIZE_MASK, 0)
@@ -30,7 +30,7 @@ enum
 #define CONTROL_SRC_INC                 BIT(26) /* Source increment */
 #define CONTROL_DST_INC                 BIT(27) /* Destination increment */
 #define CONTROL_INT                     BIT(31) /* Terminal count interrupt */
-/*------------------DMA Channel Configuration register------------------------*/
+/*------------------Channel Configuration register----------------------------*/
 #define CONFIG_ENABLE                   BIT(0)
 #define CONFIG_SRC_PERIPH(periph)       BIT_FIELD((periph), 1)
 #define CONFIG_DST_PERIPH(periph)       BIT_FIELD((periph), 6)
@@ -45,5 +45,7 @@ enum
 /* Indicates whether FIFO not empty */
 #define CONFIG_ACTIVE                   BIT(17)
 #define CONFIG_HALT                     BIT(18)
+/*------------------Synchronization register----------------------------------*/
+#define SYNC_MASK                       BIT_FIELD(MASK(16), 0)
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_DMA_DEFS_H_ */
