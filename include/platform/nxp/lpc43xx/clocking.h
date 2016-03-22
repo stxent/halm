@@ -13,6 +13,7 @@
 #define PLATFORM_NXP_LPC43XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 enum clockBranch
 {
@@ -120,10 +121,15 @@ struct CommonClockConfig
 /*----------------------------------------------------------------------------*/
 struct CommonDividerConfig
 {
-  /** Mandatory: integer divider value. */
-  uint16_t value;
   /** Mandatory: clock source. */
   enum clockSource source;
+  /**
+   * Mandatory: integer divider value.
+   * @n The divider value for the Divider A should be in the range of 1 to 4.
+   * @n Divider values for Dividers B, C, D should be in the range of 1 to 16.
+   * @n The divider value for the Divider E should be in the range of 1 to 256.
+   */
+  uint16_t value;
 };
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
@@ -140,8 +146,18 @@ struct ExternalOscConfig
   bool bypass;
 };
 /*----------------------------------------------------------------------------*/
+struct OutputClockConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Mandatory: output pin. */
+  pinNumber pin;
+};
+/*----------------------------------------------------------------------------*/
 struct PllConfig
 {
+  /** Mandatory: clock source. */
+  enum clockSource source;
   /**
    * Mandatory: input clock multiplier, result should be in the range of
    * 156 MHz to 320 MHz. Multiplier range is 1 to 256. Note that the input
@@ -153,8 +169,6 @@ struct PllConfig
    * by 1, 2, 3, 4, 6, 8, 12, 16, 24, 32.
    */
   uint8_t divisor;
-  /** Mandatory: clock source. */
-  enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* PLATFORM_NXP_LPC43XX_CLOCKING_H_ */

@@ -34,6 +34,18 @@ const struct PinEntry usbPins[] = {
         .channel = 0,
         .value = 1
     }, {
+        .key = PIN(1, 19), /* USB_PPWR */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = PIN(1, 22), /* USB_PWRD */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = PIN(1, 27), /* USB_OVRCR */
+        .channel = 0,
+        .value = 2
+    }, {
         .key = PIN(1, 30), /* VBUS */
         .channel = 0,
         .value = 2

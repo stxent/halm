@@ -49,6 +49,16 @@ enum clockSource
 struct PllConfig
 {
   /**
+   * Mandatory: clock source.
+   * @n Available options for System PLL (PLL0):
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   *   - @b CLOCK_RTC.
+   * @n Available options for USB PLL (PLL1):
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum clockSource source;
+  /**
    * Mandatory: input clock multiplier.
    * @n Oscillator of the System PLL operates in the range of 275 MHz
    * to 550 MHz, multiplier range is 6 to 512. Input frequency range is
@@ -64,16 +74,6 @@ struct PllConfig
    * @n USB PLL accepts a limited set of values: 2, 4, 8, 16.
    */
   uint8_t divisor;
-  /**
-   * Mandatory: clock source.
-   * @n Available options for System PLL (PLL0):
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   *   - @b CLOCK_RTC.
-   * @n Available options for USB PLL (PLL1):
-   *   - @b CLOCK_EXTERNAL.
-   */
-  enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig

@@ -57,6 +57,8 @@ static enum result pll1ClockEnable(const void *, const void *);
 static uint32_t pll1ClockFrequency(const void *);
 static bool pll1ClockReady(const void *);
 
+static enum result outputClockEnable(const void *, const void *);
+
 static void commonClockDisable(const void *);
 static enum result commonClockEnable(const void *, const void *);
 static uint32_t commonClockFrequency(const void *);
@@ -344,23 +346,23 @@ static const struct CommonClockClass audioClockTable = {
         .frequency = commonClockFrequency,
         .ready = commonClockReady
     },
-    .branch = CLOCK_BASE_OUT
+    .branch = CLOCK_BASE_AUDIO
 };
 
 static const struct CommonClockClass outClockTable = {
     .base = {
         .disable = commonClockDisable,
-        .enable = commonClockEnable,
+        .enable = outputClockEnable,
         .frequency = commonClockFrequency,
         .ready = commonClockReady
     },
-    .branch = CLOCK_BASE_AUDIO
+    .branch = CLOCK_BASE_OUT
 };
 
 static const struct CommonClockClass cguOut0ClockTable = {
     .base = {
         .disable = commonClockDisable,
-        .enable = commonClockEnable,
+        .enable = outputClockEnable,
         .frequency = commonClockFrequency,
         .ready = commonClockReady
     },
@@ -370,11 +372,57 @@ static const struct CommonClockClass cguOut0ClockTable = {
 static const struct CommonClockClass cguOut1ClockTable = {
     .base = {
         .disable = commonClockDisable,
-        .enable = commonClockEnable,
+        .enable = outputClockEnable,
         .frequency = commonClockFrequency,
         .ready = commonClockReady
     },
     .branch = CLOCK_BASE_CGU_OUT1
+};
+/*----------------------------------------------------------------------------*/
+static const struct PinEntry outputClockPins[] = {
+    {
+        .key = PIN(PORT_1, 19), /* CLKOUT */
+        .channel = CLOCK_BASE_OUT,
+        .value = 4
+    }, {
+        .key = PIN(PORT_3, 3), /* CGU_OUT1 */
+        .channel = CLOCK_BASE_CGU_OUT1,
+        .value = 4
+    }, {
+        .key = PIN(PORT_8, 8), /* CGU_OUT0 */
+        .channel = CLOCK_BASE_CGU_OUT0,
+        .value = 6
+    }, {
+        .key = PIN(PORT_A, 0), /* CGU_OUT1 */
+        .channel = CLOCK_BASE_CGU_OUT1,
+        .value = 6
+    }, {
+        .key = PIN(PORT_CLK, 0), /* CLKOUT */
+        .channel = CLOCK_BASE_OUT,
+        .value = 1
+    }, {
+        .key = PIN(PORT_CLK, 1), /* CLKOUT */
+        .channel = CLOCK_BASE_OUT,
+        .value = 1
+    }, {
+        .key = PIN(PORT_CLK, 1), /* CGU_OUT0 */
+        .channel = CLOCK_BASE_CGU_OUT0,
+        .value = 5
+    }, {
+        .key = PIN(PORT_CLK, 2), /* CLKOUT */
+        .channel = CLOCK_BASE_OUT,
+        .value = 1
+    }, {
+        .key = PIN(PORT_CLK, 3), /* CLKOUT */
+        .channel = CLOCK_BASE_OUT,
+        .value = 1
+    }, {
+        .key = PIN(PORT_CLK, 3), /* CGU_OUT1 */
+        .channel = CLOCK_BASE_CGU_OUT1,
+        .value = 5
+    }, {
+        .key = 0 /* End of pin function association list */
+    }
 };
 /*----------------------------------------------------------------------------*/
 const struct CommonDividerClass * const DividerA = &dividerATable;
@@ -922,6 +970,27 @@ static uint32_t pll1ClockFrequency(const void *clockBase
 static bool pll1ClockReady(const void *clockBase __attribute__((unused)))
 {
   return pll1Frequency && (LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK);
+}
+/*----------------------------------------------------------------------------*/
+static enum result outputClockEnable(const void *clockBase,
+    const void *configBase)
+{
+  const struct CommonClockClass * const clock = clockBase;
+  const struct OutputClockConfig * const config = configBase;
+  const struct CommonClockConfig baseConfig = {
+      .source = config->source
+  };
+
+  const struct PinEntry * const pinEntry = pinFind(outputClockPins,
+      config->pin, clock->branch);
+  assert(pinEntry);
+
+  const struct Pin pin = pinInit(config->pin);
+
+  pinInput(pin);
+  pinSetFunction(pin, pinEntry->value);
+
+  return commonClockEnable(clock, &baseConfig);
 }
 /*----------------------------------------------------------------------------*/
 static void commonClockDisable(const void *clockBase)
