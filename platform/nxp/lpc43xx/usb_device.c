@@ -196,7 +196,7 @@ static void resetDevice(struct UsbDevice *device)
   while (reg->ENDPTFLUSH);
 
   /* Set the Interrupt Threshold control interval to 0 */
-  reg->USBCMD_D &= ~0x00FF0000;
+  reg->USBCMD_D &= ~USBCMD_D_ITC_MASK;
 
   /* Zero out all queue heads */
   for (unsigned int index = 0; index < ENDPT_NUMBER; ++index)
@@ -275,6 +275,9 @@ static enum result devInit(void *object, const void *configBase)
   /* Program the controller to be the USB device controller */
   reg->USBMODE_D = USBMODE_D_CM(CM_DEVICE_CONTROLLER)
       | USBMODE_D_SDIS | USBMODE_D_SLOM;
+
+  /* Recommended by NXP technical support */
+  reg->SBUSCFG = SBUSCFG_AHB_BRST(AHB_BRST_INCR16_UNSPECIFIED);
 
   resetQueueHeads(device);
   resetDevice(device);

@@ -15,7 +15,10 @@
 #define USBCMD_D_RST                    BIT(1)
 #define USBCMD_D_SUTW                   BIT(13)
 #define USBCMD_D_ATDTW                  BIT(14)
+#define USBCMD_D_ITC_MASK               BIT_FIELD(MASK(8), 16)
 #define USBCMD_D_ITC(value)             BIT_FIELD((value), 16)
+#define USBCMD_D_ITC_VALUE(reg) \
+    FIELD_VALUE((reg), USBCMD_D_ITC_MASK, 16)
 
 /* Host mode */
 #define USBCMD_H_RS                     BIT(0)
@@ -193,6 +196,29 @@ enum
 #define OTGSC_BSEIE                     BIT(28)
 #define OTGSC_MS1E                      BIT(29)
 #define OTGSC_DPIE                      BIT(30)
+/*------------------System Bus interface configuration register---------------*/
+enum
+{
+  /* Bursts of unspecified length */
+  AHB_BRST_INCR_UNSPECIFIED   = 0,
+
+  /* Non-multiple transfers will be decomposed into singles */
+  AHB_BRST_INCR4              = 1,
+  /* Non-multiple transfers will be decomposed into INCR4 or singles */
+  AHB_BRST_INCR8              = 2,
+  /* Non-multiple transfers will be decomposed into INCR8, INCR4 or singles */
+  AHB_BRST_INCR16             = 3,
+
+  /* Non-multiple transfers will be decomposed into unspecified length bursts */
+  AHB_BRST_INCR4_UNSPECIFIED  = 5,
+  AHB_BRST_INCR8_UNSPECIFIED  = 6,
+  AHB_BRST_INCR16_UNSPECIFIED = 7
+};
+
+#define SBUSCFG_AHB_BRST(value)         BIT_FIELD((value), 0)
+#define SBUSCFG_AHB_BRST_MASK           BIT_FIELD(MASK(3), 0)
+#define SBUSCFG_AHB_BRST_VALUE(reg) \
+    FIELD_VALUE((reg), SBUSCFG_AHB_BRST_MASK, 0)
 /*------------------USB1 pin configuration register---------------------------*/
 #define SFSUSB_AIM                      BIT(0)
 #define SFSUSB_ESEA                     BIT(1)
