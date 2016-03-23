@@ -16,11 +16,13 @@ struct I2sDmaConfig
 {
   /** Mandatory: sample rate for the receiver and the transmitter. */
   uint32_t rate;
+  /** Mandatory: word width. */
+  enum i2sWidth width;
   /**
-   * Mandatory: size of the single buffer in samples. When the stereo mode
+   * Mandatory: size in elements of each buffer. When the stereo mode
    * is enabled, one sample consists of two values for left and right channels.
    */
-  uint32_t size;
+  uint16_t size;
 
   struct
   {
@@ -54,8 +56,6 @@ struct I2sDmaConfig
   irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Mandatory: word width. */
-  enum i2sWidth width;
   /** Optional: enable mono format. */
   bool mono;
   /** Optional: enable slave mode. */
@@ -74,9 +74,9 @@ struct I2sDma
   /* Sample rate */
   uint32_t sampleRate;
   /* Size of each buffer */
-  uint32_t size;
+  uint16_t size;
   /* Word width */
-  enum i2sWidth width;
+  uint8_t width;
   /* Mono format enabled flag */
   bool mono;
   /* Receiver enabled flag */

@@ -16,7 +16,7 @@ struct GpDmaListConfig
 {
   /** Mandatory: number of blocks in the chain. */
   uint16_t number;
-  /** Mandatory: size of each block. */
+  /** Mandatory: size in elements of each block. */
   uint16_t size;
   /** Mandatory: channel number. */
   uint8_t channel;
@@ -32,9 +32,9 @@ struct GpDmaListConfig
   enum dmaBurst burst;
   /** Mandatory: request connection to the peripheral or memory. */
   enum gpDmaEvent event;
-  /** Mandatory: transfer type. */
+  /** Mandatory: transfer direction. */
   enum gpDmaType type;
-  /** Mandatory: source and destination transfer widths. */
+  /** Mandatory: width of source and destination transfers. */
   enum dmaWidth width;
   /**
    * Optional: set @b true to reduce channel interrupts count by disabling
@@ -79,9 +79,9 @@ struct GpDmaList
   uint16_t current;
   /* Maximum size of each block */
   uint16_t size;
-  /* Unused elements in the current chain */
+  /* Number of queued buffers */
   uint16_t queued;
-  /* Width of each element in block */
+  /* Width in bytes of each element */
   uint8_t width;
 
   /* Reduce interrupts count */

@@ -83,63 +83,63 @@ const struct PinEntry adcPins[] = {
     {
         .key = PIN(PORT_4, 1), /* ADC0_1 */
         .channel = 0,
-        .value = PACK_VALUE(7, 1)
+        .value = PACK_VALUE(0, 1)
     }, {
         .key = PIN(PORT_4, 3), /* ADC0_0 */
         .channel = 0,
-        .value = PACK_VALUE(7, 0)
+        .value = PACK_VALUE(0, 0)
     }, {
         .key = PIN(PORT_7, 4), /* ADC0_4 */
         .channel = 0,
-        .value = PACK_VALUE(7, 4)
+        .value = PACK_VALUE(0, 4)
     }, {
         .key = PIN(PORT_7, 5), /* ADC0_3 */
         .channel = 0,
-        .value = PACK_VALUE(7, 3)
+        .value = PACK_VALUE(0, 3)
     }, {
         .key = PIN(PORT_7, 7), /* ADC1_6 */
         .channel = 1,
-        .value = PACK_VALUE(7, 6)
+        .value = PACK_VALUE(0, 6)
     }, {
         .key = PIN(PORT_B, 6), /* ADC0_6 */
         .channel = 0,
-        .value = PACK_VALUE(7, 6)
+        .value = PACK_VALUE(4, 6)
     }, {
         .key = PIN(PORT_C, 0), /* ADC1_1 */
         .channel = 1,
-        .value = PACK_VALUE(7, 1)
+        .value = PACK_VALUE(1, 1)
     }, {
         .key = PIN(PORT_C, 3), /* ADC1_0 */
         .channel = 1,
-        .value = PACK_VALUE(7, 0)
+        .value = PACK_VALUE(4, 0)
     }, {
         .key = PIN(PORT_F, 5), /* ADC1_4 */
         .channel = 1,
-        .value = PACK_VALUE(7, 4)
+        .value = PACK_VALUE(4, 4)
     }, {
         .key = PIN(PORT_F, 6), /* ADC1_3 */
         .channel = 1,
-        .value = PACK_VALUE(7, 3)
+        .value = PACK_VALUE(4, 3)
     }, {
         .key = PIN(PORT_F, 7), /* ADC1_7 */
         .channel = 1,
-        .value = PACK_VALUE(7, 7)
+        .value = PACK_VALUE(4, 7)
     }, {
         .key = PIN(PORT_F, 8), /* ADC0_2 */
         .channel = 0,
-        .value = PACK_VALUE(7, 2)
+        .value = PACK_VALUE(4, 2)
     }, {
         .key = PIN(PORT_F, 9), /* ADC1_2 */
         .channel = 1,
-        .value = PACK_VALUE(7, 2)
+        .value = PACK_VALUE(4, 2)
     }, {
         .key = PIN(PORT_F, 10), /* ADC0_5 */
         .channel = 0,
-        .value = PACK_VALUE(7, 5)
+        .value = PACK_VALUE(4, 5)
     }, {
         .key = PIN(PORT_F, 11), /* ADC1_5 */
         .channel = 1,
-        .value = PACK_VALUE(7, 5)
+        .value = PACK_VALUE(4, 5)
     }, {
         .key = 0 /* End of pin function association list */
     }

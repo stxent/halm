@@ -25,7 +25,7 @@ struct AdcDmaConfig
   struct AdcUnit *parent;
   /** Optional: trigger to start the conversion. */
   enum adcEvent event;
-  /** Mandatory: size of the single buffer in elements. */
+  /** Mandatory: size in elements of each buffer. */
   uint16_t size;
   /** Mandatory: analog input. */
   pinNumber pin;

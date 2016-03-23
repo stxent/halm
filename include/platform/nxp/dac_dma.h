@@ -22,7 +22,7 @@ struct DacDmaConfig
 {
   /** Mandatory: conversion rate. */
   uint32_t rate;
-  /** Mandatory: size of the single buffer in elements. */
+  /** Mandatory: size in elements of each buffer. */
   uint16_t size;
   /** Optional: initial output value. */
   uint16_t value;

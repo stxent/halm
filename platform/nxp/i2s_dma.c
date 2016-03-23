@@ -43,8 +43,9 @@ const struct InterfaceClass * const I2sDma = &i2sTable;
 static enum result dmaSetup(struct I2sDma *interface,
     const struct I2sDmaConfig *config, bool rx, bool tx)
 {
-  const unsigned int sizeInBytes =
+  const uint32_t sizeInBytes =
       config->size * (1 << config->width) * (config->mono ? 1 : 2);
+
   const struct GpDmaListConfig channelConfigs[] = {
       {
           .number = BLOCK_COUNT << 1,
@@ -161,10 +162,7 @@ static enum result updateRate(struct I2sDma *interface, bool slave)
 {
   LPC_I2S_Type * const reg = interface->base.reg;
   struct I2sRateConfig rateConfig;
-  uint32_t bitrate;
   uint32_t divisor;
-  uint32_t masterClock;
-  enum result res;
 
   if (slave)
   {
@@ -173,8 +171,8 @@ static enum result updateRate(struct I2sDma *interface, bool slave)
   }
   else
   {
-    masterClock = interface->sampleRate;
-    bitrate = interface->sampleRate * (1 << (interface->width + 3));
+    uint32_t bitrate = interface->sampleRate * (1 << (interface->width + 3));
+    uint32_t masterClock = interface->sampleRate;
 
     if (interface->mono)
     {
@@ -187,7 +185,9 @@ static enum result updateRate(struct I2sDma *interface, bool slave)
     }
     divisor = masterClock / bitrate;
 
-    res = i2sCalcRate((struct I2sBase *)interface, masterClock, &rateConfig);
+    const enum result res = i2sCalcRate((struct I2sBase *)interface,
+        masterClock, &rateConfig);
+
     if (res != E_OK)
       return res;
   }
@@ -252,8 +252,8 @@ static enum result i2sInit(void *object, const void *configBase)
   if ((res = dmaSetup(interface, config, interface->rx, interface->tx)) != E_OK)
     return res;
 
-  LPC_I2S_Type * const reg = interface->base.reg;
   const unsigned int halfPeriod = (1 << (interface->width + 3)) - 1;
+  LPC_I2S_Type * const reg = interface->base.reg;
   unsigned int width;
 
   switch (interface->width)
@@ -392,15 +392,34 @@ static enum result i2sGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_STATUS:
-      return dmaStatus(interface->rxDma); //FIXME Check for TX busy
+    {
+      enum result res;
+
+      if (interface->rxDma && (res = dmaStatus(interface->rxDma)) != E_OK)
+        return res;
+      if (interface->txDma && (res = dmaStatus(interface->txDma)) != E_OK)
+        return res;
+
+      return E_OK;
+    }
 
     case IF_RX_CAPACITY:
-      *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->rxDma) + 1) >> 1);
-      return E_OK;
+      if (interface->rxDma)
+      {
+        *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->rxDma) + 1) >> 1);
+        return E_OK;
+      }
+      else
+        return E_INVALID;
 
     case IF_TX_CAPACITY:
-      *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->txDma) + 1) >> 1);
-      return E_OK;
+      if (interface->txDma)
+      {
+        *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->txDma) + 1) >> 1);
+        return E_OK;
+      }
+      else
+        return E_INVALID;
 
     default:
       return E_INVALID;
