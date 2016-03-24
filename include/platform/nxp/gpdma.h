@@ -16,14 +16,19 @@ struct GpDmaConfig
 {
   /** Mandatory: channel number. */
   uint8_t channel;
+
   /** Mandatory: destination configuration. */
-  struct {
+  struct
+  {
     bool increment;
   } destination;
+
   /** Mandatory: source configuration. */
-  struct {
+  struct
+  {
     bool increment;
   } source;
+
   /** Mandatory: number of transfers that make up a burst transfer request. */
   enum dmaBurst burst;
   /** Mandatory: request connection to the peripheral or memory. */
@@ -37,11 +42,14 @@ struct GpDmaConfig
 struct GpDmaRuntimeConfig
 {
   /** Mandatory: destination configuration. */
-  struct {
+  struct
+  {
     bool increment;
   } destination;
+
   /** Mandatory: source configuration. */
-  struct {
+  struct
+  {
     bool increment;
   } source;
 };

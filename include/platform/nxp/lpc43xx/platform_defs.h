@@ -16,7 +16,7 @@ typedef struct
   __rw__ uint32_t XTAL_OSC_CTRL;
   __ro__ uint32_t PLL0USB_STAT;
 
-  /* Offset 0x020 */
+  /* Offset 0x0020 */
   __rw__ uint32_t PLL0USB_CTRL;
   __rw__ uint32_t PLL0USB_MDIV;
   __rw__ uint32_t PLL0USB_NP_DIV;
@@ -26,7 +26,7 @@ typedef struct
   __rw__ uint32_t PLL0AUDIO_NP_DIV;
   __rw__ uint32_t PLL0AUDIO_FRAC;
 
-  /* Offset 0x040 */
+  /* Offset 0x0040 */
   __ro__ uint32_t PLL1_STAT;
   __rw__ uint32_t PLL1_CTRL;
   __rw__ uint32_t IDIVA_CTRL;
@@ -36,7 +36,7 @@ typedef struct
   __rw__ uint32_t IDIVE_CTRL;
   __ro__ uint32_t BASE_SAFE_CLK;
 
-  /* Offset 0x060 */
+  /* Offset 0x0060 */
   __rw__ uint32_t BASE_USB0_CLK;
   __rw__ uint32_t BASE_PERIPH_CLK;
   __rw__ uint32_t BASE_USB1_CLK;
@@ -46,7 +46,7 @@ typedef struct
   __rw__ uint32_t BASE_PHY_RX_CLK;
   __rw__ uint32_t BASE_PHY_TX_CLK;
 
-  /* Offset 0x080 */
+  /* Offset 0x0080 */
   __rw__ uint32_t BASE_APB1_CLK;
   __rw__ uint32_t BASE_APB3_CLK;
   __rw__ uint32_t BASE_LCD_CLK;
@@ -56,14 +56,14 @@ typedef struct
   __rw__ uint32_t BASE_SSP1_CLK;
   __rw__ uint32_t BASE_UART0_CLK;
 
-  /* Offset 0x0A0 */
+  /* Offset 0x00A0 */
   __rw__ uint32_t BASE_UART1_CLK;
   __rw__ uint32_t BASE_UART2_CLK;
   __rw__ uint32_t BASE_UART3_CLK;
   __rw__ uint32_t BASE_OUT_CLK;
   __ne__ uint32_t RESERVED1[4];
 
-  /* Offset 0x0C0 */
+  /* Offset 0x00C0 */
   __rw__ uint32_t BASE_AUDIO_CLK;
   __rw__ uint32_t BASE_CGU_OUT0_CLK;
   __rw__ uint32_t BASE_CGU_OUT1_CLK;
@@ -75,7 +75,7 @@ typedef struct
   __ro__ uint32_t BASE_STAT;
   __ne__ uint32_t RESERVED0[62];
 
-  /* Offset 0x100 */
+  /* Offset 0x0100 */
   __rw__ uint32_t CLK_APB3_BUS_CFG;
   __ro__ uint32_t CLK_APB3_BUS_STAT;
   __rw__ uint32_t CLK_APB3_I2C1_CFG;
@@ -90,7 +90,7 @@ typedef struct
   __ro__ uint32_t CLK_APB3_CAN0_STAT;
   __ne__ uint32_t RESERVED1[52];
 
-  /* Offset 0x200 */
+  /* Offset 0x0200 */
   __rw__ uint32_t CLK_APB1_BUS_CFG;
   __ro__ uint32_t CLK_APB1_BUS_STAT;
   __rw__ uint32_t CLK_APB1_MCPWM_CFG;
@@ -103,12 +103,12 @@ typedef struct
   __ro__ uint32_t CLK_APB1_CAN1_STAT;
   __ne__ uint32_t RESERVED2[54];
 
-  /* Offset 0x300 */
+  /* Offset 0x0300 */
   __rw__ uint32_t CLK_SPIFI_CFG;
   __ro__ uint32_t CLK_SPIFI_STAT;
   __ne__ uint32_t RESERVED3[62];
 
-  /* Offset 0x400 */
+  /* Offset 0x0400 */
   __rw__ uint32_t CLK_M4_BUS_CFG;
   __ro__ uint32_t CLK_M4_BUS_STAT;
   __rw__ uint32_t CLK_M4_SPIFI_CFG;
@@ -118,7 +118,7 @@ typedef struct
   __rw__ uint32_t CLK_M4_LCD_CFG;
   __ro__ uint32_t CLK_M4_LCD_STAT;
 
-  /* Offset 0x420 */
+  /* Offset 0x0420 */
   __rw__ uint32_t CLK_M4_ETHERNET_CFG;
   __ro__ uint32_t CLK_M4_ETHERNET_STAT;
   __rw__ uint32_t CLK_M4_USB0_CFG;
@@ -128,7 +128,7 @@ typedef struct
   __rw__ uint32_t CLK_M4_SDIO_CFG;
   __ro__ uint32_t CLK_M4_SDIO_STAT;
 
-  /* Offset 0x440 */
+  /* Offset 0x0440 */
   __rw__ uint32_t CLK_M4_DMA_CFG;
   __ro__ uint32_t CLK_M4_DMA_STAT;
   __rw__ uint32_t CLK_M4_M4CORE_CFG;
@@ -141,7 +141,7 @@ typedef struct
   __rw__ uint32_t CLK_M4_EMCDIV_CFG;
   __ro__ uint32_t CLK_M4_EMCDIV_STAT;
 
-  /* Offset 0x480 */
+  /* Offset 0x0480 */
   __rw__ uint32_t CLK_M4_FLASHA_CFG;
   __ro__ uint32_t CLK_M4_FLASHA_STAT;
   __rw__ uint32_t CLK_M4_FLASHB_CFG;
@@ -151,12 +151,12 @@ typedef struct
   __rw__ uint32_t CLK_M4_ADCHS_CFG;
   __ro__ uint32_t CLK_M4_ADCHS_STAT;
 
-  /* Offset 0x4A0 */
+  /* Offset 0x04A0 */
   __rw__ uint32_t CLK_M4_EEPROM_CFG;
   __ro__ uint32_t CLK_M4_EEPROM_STAT;
   __ne__ uint32_t RESERVED5[22];
 
-  /* Offset 0x500 */
+  /* Offset 0x0500 */
   __rw__ uint32_t CLK_M4_WWDT_CFG;
   __ro__ uint32_t CLK_M4_WWDT_STAT;
   __rw__ uint32_t CLK_M4_USART0_CFG;
@@ -166,7 +166,7 @@ typedef struct
   __rw__ uint32_t CLK_M4_SSP0_CFG;
   __ro__ uint32_t CLK_M4_SSP0_STAT;
 
-  /* Offset 0x520 */
+  /* Offset 0x0520 */
   __rw__ uint32_t CLK_M4_TIMER0_CFG;
   __ro__ uint32_t CLK_M4_TIMER0_STAT;
   __rw__ uint32_t CLK_M4_TIMER1_CFG;
@@ -177,7 +177,7 @@ typedef struct
   __ro__ uint32_t CLK_M4_CREG_STAT;
   __ne__ uint32_t RESERVED6[48];
 
-  /* Offset 0x600 */
+  /* Offset 0x0600 */
   __rw__ uint32_t CLK_M4_RIT_CFG;
   __ro__ uint32_t CLK_M4_RIT_STAT;
   __rw__ uint32_t CLK_M4_USART2_CFG;
@@ -187,7 +187,7 @@ typedef struct
   __rw__ uint32_t CLK_M4_TIMER2_CFG;
   __ro__ uint32_t CLK_M4_TIMER2_STAT;
 
-  /* Offset 0x620 */
+  /* Offset 0x0620 */
   __rw__ uint32_t CLK_M4_TIMER3_CFG;
   __ro__ uint32_t CLK_M4_TIMER3_STAT;
   __rw__ uint32_t CLK_M4_SSP1_CFG;
@@ -196,7 +196,7 @@ typedef struct
   __ro__ uint32_t CLK_M4_QEI_STAT;
   __ne__ uint32_t RESERVED7[50];
 
-  /* Offset 0x700 */
+  /* Offset 0x0700 */
   __rw__ uint32_t CLK_PERIPH_BUS_CFG;
   __ro__ uint32_t CLK_PERIPH_BUS_STAT;
   __ne__ uint32_t RESERVED8[2];
@@ -206,22 +206,22 @@ typedef struct
   __ro__ uint32_t CLK_PERIPH_SGPIO_STAT;
   __ne__ uint32_t RESERVED9[56];
 
-  /* Offset 0x800 */
+  /* Offset 0x0800 */
   __rw__ uint32_t CLK_USB0_CFG;
   __ro__ uint32_t CLK_USB0_STAT;
   __ne__ uint32_t RESERVED10[62];
 
-  /* Offset 0x900 */
+  /* Offset 0x0900 */
   __rw__ uint32_t CLK_USB1_CFG;
   __ro__ uint32_t CLK_USB1_STAT;
   __ne__ uint32_t RESERVED11[62];
 
-  /* Offset 0xA00 */
+  /* Offset 0x0A00 */
   __rw__ uint32_t CLK_SPI_CFG;
   __ro__ uint32_t CLK_SPI_STAT;
   __ne__ uint32_t RESERVED12[62];
 
-  /* Offset 0xB00 */
+  /* Offset 0x0B00 */
   __rw__ uint32_t CLK_ADCHS_CFG;
   __ro__ uint32_t CLK_ADCHS_STAT;
 } LPC_CCU1_Type;
@@ -232,42 +232,42 @@ typedef struct
   __ro__ uint32_t BASE_STAT;
   __ne__ uint32_t RESERVED0[62];
 
-  /* Offset 0x100 */
+  /* Offset 0x0100 */
   __rw__ uint32_t CLK_AUDIO_CFG;
   __ro__ uint32_t CLK_AUDIO_STAT;
   __ne__ uint32_t RESERVED1[62];
 
-  /* Offset 0x200 */
+  /* Offset 0x0200 */
   __rw__ uint32_t CLK_APB2_USART3_CFG;
   __ro__ uint32_t CLK_APB2_USART3_STAT;
   __ne__ uint32_t RESERVED2[62];
 
-  /* Offset 0x300 */
+  /* Offset 0x0300 */
   __rw__ uint32_t CLK_APB2_USART2_CFG;
   __ro__ uint32_t CLK_APB2_USART2_STAT;
   __ne__ uint32_t RESERVED3[62];
 
-  /* Offset 0x400 */
+  /* Offset 0x0400 */
   __rw__ uint32_t CLK_APB0_UART1_CFG;
   __ro__ uint32_t CLK_APB0_UART1_STAT;
   __ne__ uint32_t RESERVED4[62];
 
-  /* Offset 0x500 */
+  /* Offset 0x0500 */
   __rw__ uint32_t CLK_APB0_USART0_CFG;
   __ro__ uint32_t CLK_APB0_USART0_STAT;
   __ne__ uint32_t RESERVED5[62];
 
-  /* Offset 0x600 */
+  /* Offset 0x0600 */
   __rw__ uint32_t CLK_APB2_SSP1_CFG;
   __ro__ uint32_t CLK_APB2_SSP1_STAT;
   __ne__ uint32_t RESERVED6[62];
 
-  /* Offset 0x700 */
+  /* Offset 0x0700 */
   __rw__ uint32_t CLK_APB0_SSP0_CFG;
   __ro__ uint32_t CLK_APB0_SSP0_STAT;
   __ne__ uint32_t RESERVED7[62];
 
-  /* Offset 0x800 */
+  /* Offset 0x0800 */
   __rw__ uint32_t CLK_SDIO_CFG;
   __ro__ uint32_t CLK_SDIO_STAT;
 } LPC_CCU2_Type;
@@ -278,13 +278,13 @@ typedef struct
   __rw__ uint32_t CREG0;
   __ne__ uint32_t RESERVED1[62];
 
-  /* Offset 0x100 */
+  /* Offset 0x0100 */
   __rw__ uint32_t M4MEMMAP;
   __ne__ uint32_t RESERVED2[5];
   __rw__ uint32_t CREG5;
   __rw__ uint32_t DMAMUX;
 
-  /* Offset 0x120 */
+  /* Offset 0x0120 */
   union
   {
     __rw__ uint32_t FLASHCFG[2];
@@ -299,7 +299,7 @@ typedef struct
   __rw__ uint32_t M4TXEVENT;
   __ne__ uint32_t RESERVED3[51];
 
-  /* Offset 0x200 */
+  /* Offset 0x0200 */
   __ro__ uint32_t CHIPID;
   __ne__ uint32_t RESERVED4[65];
   __rw__ uint32_t M0SUBMEMMAP;
@@ -307,16 +307,16 @@ typedef struct
   __rw__ uint32_t M0SUBTXEVENT;
   __ne__ uint32_t RESERVED6[58];
 
-  /* Offset 0x400 */
+  /* Offset 0x0400 */
   __rw__ uint32_t M0APPTXEVENT;
   __rw__ uint32_t M0APPMEMMAP;
   __ne__ uint32_t RESERVED7[62];
 
-  /* Offset 0x500 */
+  /* Offset 0x0500 */
   __rw__ uint32_t USB0FLADJ;
   __ne__ uint32_t RESERVED8[63];
 
-  /* Offset 0x600 */
+  /* Offset 0x0600 */
   __rw__ uint32_t USB1FLADJ;
 } LPC_CREG_Type;
 /*------------------Power Management Controller-------------------------------*/
@@ -340,7 +340,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED0[30];
 
-  /* Offset 0x080 */
+  /* Offset 0x0080 */
   union
   {
     __rw__ uint32_t SFSP1[21];
@@ -371,7 +371,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED1[11];
 
-  /* Offset 0x100 */
+  /* Offset 0x0100 */
   union
   {
     __rw__ uint32_t SFSP2[14];
@@ -395,7 +395,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED2[18];
 
-  /* Offset 0x180 */
+  /* Offset 0x0180 */
   union
   {
     __rw__ uint32_t SFSP3[9];
@@ -414,7 +414,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED3[23];
 
-  /* Offset 0x200 */
+  /* Offset 0x0200 */
   union
   {
     __rw__ uint32_t SFSP4[11];
@@ -435,7 +435,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED4[21];
 
-  /* Offset 0x280 */
+  /* Offset 0x0280 */
   union
   {
     __rw__ uint32_t SFSP5[8];
@@ -453,7 +453,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED5[24];
 
-  /* Offset 0x300 */
+  /* Offset 0x0300 */
   union
   {
     __rw__ uint32_t SFSP6[13];
@@ -476,7 +476,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED6[19];
 
-  /* Offset 0x380 */
+  /* Offset 0x0380 */
   union
   {
     __rw__ uint32_t SFSP7[8];
@@ -494,7 +494,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED7[24];
 
-  /* Offset 0x400 */
+  /* Offset 0x0400 */
   union
   {
     __rw__ uint32_t SFSP8[9];
@@ -513,7 +513,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED8[23];
 
-  /* Offset 0x480 */
+  /* Offset 0x0480 */
   union
   {
     __rw__ uint32_t SFSP9[15];
@@ -538,7 +538,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED9[17];
 
-  /* Offset 0x500 */
+  /* Offset 0x0500 */
   union
   {
     __rw__ uint32_t SFSPA[5];
@@ -553,7 +553,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED11[27];
 
-  /* Offset 0x580 */
+  /* Offset 0x0580 */
   union
   {
     __rw__ uint32_t SFSPB[7];
@@ -570,7 +570,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED12[25];
 
-  /* Offset 0x600 */
+  /* Offset 0x0600 */
   union
   {
     __rw__ uint32_t SFSPC[15];
@@ -595,7 +595,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED13[17];
 
-  /* Offset 0x680 */
+  /* Offset 0x0680 */
   union
   {
     __rw__ uint32_t SFSPD[17];
@@ -622,7 +622,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED14[15];
 
-  /* Offset 0x700 */
+  /* Offset 0x0700 */
   union
   {
     __rw__ uint32_t SFSPE[16];
@@ -648,7 +648,7 @@ typedef struct
   };
   __ne__ uint32_t RESERVED15[16];
 
-  /* Offset 0x780 */
+  /* Offset 0x0780 */
   union
   {
     __rw__ uint32_t SFSPF[12];
@@ -670,14 +670,14 @@ typedef struct
   };
   __ne__ uint32_t RESERVED16[276];
 
-  /* Offset 0xC00 */
+  /* Offset 0x0C00 */
   __rw__ uint32_t SFSPCLK0;
   __rw__ uint32_t SFSPCLK1;
   __rw__ uint32_t SFSPCLK2;
   __rw__ uint32_t SFSPCLK3;
   __ne__ uint32_t RESERVED17[28];
 
-  /* Offset 0xC80 */
+  /* Offset 0x0C80 */
   __rw__ uint32_t SFSUSB;
   __rw__ uint32_t SFSI2C0;
   __rw__ uint32_t ENAIO0;
@@ -685,15 +685,15 @@ typedef struct
   __rw__ uint32_t ENAIO2;
   __ne__ uint32_t RESERVED18[27];
 
-  /* Offset 0xD00 */
+  /* Offset 0x0D00 */
   __rw__ uint32_t EMCDELAYCLK;
   __ne__ uint32_t RESERVED19[31];
 
-  /* Offset 0xD80 */
+  /* Offset 0x0D80 */
   __rw__ uint32_t SDDELAY;
   __ne__ uint32_t RESERVED20[31];
 
-  /* Offset 0xE00 */
+  /* Offset 0x0E00 */
   union
   {
     __rw__ uint32_t PINTSEL[2];
@@ -921,6 +921,66 @@ typedef struct
     };
   };
 } LPC_GPIO_Type;
+/*------------------Serial GPIO-----------------------------------------------*/
+typedef struct
+{
+  /* Offset 0x0000 */
+  __rw__ uint32_t OUT_MUX_CFG[16];
+  __rw__ uint32_t SGPIO_MUX_CFG[16];
+  __rw__ uint32_t SLICE_MUX_CFG[16];
+  __rw__ uint32_t REG[16];
+  __rw__ uint32_t REG_SS[16];
+  __rw__ uint32_t PRESET[16];
+  __rw__ uint32_t COUNT[16];
+  __rw__ uint32_t POS[16];
+
+  /* Offset 0x0200 */
+  __rw__ uint32_t MASK_A;
+  __rw__ uint32_t MASK_H;
+  __rw__ uint32_t MASK_I;
+  __rw__ uint32_t MASK_P;
+  __ro__ uint32_t GPIO_INREG;
+  __rw__ uint32_t GPIO_OUTREG;
+  __rw__ uint32_t GPIO_OENREG;
+  __rw__ uint32_t CTRL_ENABLED;
+  __rw__ uint32_t CTRL_DISABLED;
+  __ne__ uint32_t RESERVED0[823];
+
+  /* Offset 0x0F00: shift clock interrupt registers */
+  __wo__ uint32_t CLR_EN_0;
+  __wo__ uint32_t SET_EN_0;
+  __ro__ uint32_t ENABLE_0;
+  __ro__ uint32_t STATUS_0;
+  __wo__ uint32_t CTR_STATUS_0;
+  __wo__ uint32_t SET_STATUS_0;
+  __ne__ uint32_t RESERVED1[2];
+
+  /* Offset 0x0F20: exchange clock interrupt registers */
+  __wo__ uint32_t CLR_EN_1;
+  __wo__ uint32_t SET_EN_1;
+  __ro__ uint32_t ENABLE_1;
+  __ro__ uint32_t STATUS_1;
+  __wo__ uint32_t CTR_STATUS_1;
+  __wo__ uint32_t SET_STATUS_1;
+  __ne__ uint32_t RESERVED2[2];
+
+  /* Offset 0x0F40: pattern match interrupt registers */
+  __wo__ uint32_t CLR_EN_2;
+  __wo__ uint32_t SET_EN_2;
+  __ro__ uint32_t ENABLE_2;
+  __ro__ uint32_t STATUS_2;
+  __wo__ uint32_t CTR_STATUS_2;
+  __wo__ uint32_t SET_STATUS_2;
+  __ne__ uint32_t RESERVED3[2];
+
+  /* Offset 0x0F60: input bit match interrupt registers */
+  __wo__ uint32_t CLR_EN_3;
+  __wo__ uint32_t SET_EN_3;
+  __ro__ uint32_t ENABLE_3;
+  __ro__ uint32_t STATUS_3;
+  __wo__ uint32_t CTR_STATUS_3;
+  __wo__ uint32_t SET_STATUS_3;
+} LPC_SGPIO_Type;
 /*------------------Reset Generation Unit-------------------------------------*/
 typedef struct
 {
@@ -1028,6 +1088,71 @@ typedef struct
     };
   };
 } LPC_RGU_Type;
+/*------------------Analog-to-Digital Converter-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR;
+  __rw__ uint32_t GDR;
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t INTEN;
+  union
+  {
+    __ro__ uint32_t DR[8];
+    struct
+    {
+      __ro__ uint32_t DR0;
+      __ro__ uint32_t DR1;
+      __ro__ uint32_t DR2;
+      __ro__ uint32_t DR3;
+      __ro__ uint32_t DR4;
+      __ro__ uint32_t DR5;
+      __ro__ uint32_t DR6;
+      __ro__ uint32_t DR7;
+    };
+  };
+  __ro__ uint32_t STAT;
+} LPC_ADC_Type;
+/*------------------Digital-to-Analog Converter-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR; /* Converter Register */
+  __rw__ uint32_t CTRL; /* Control register */
+  __rw__ uint16_t CNTVAL; /* Counter Value register */
+} LPC_DAC_Type;
+/*------------------Inter-Integrated Circuit----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CONSET;
+  __ro__ uint32_t STAT;
+  __rw__ uint32_t DAT;
+  __rw__ uint32_t ADR0;
+  __rw__ uint32_t SCLH;
+  __rw__ uint32_t SCLL;
+  __rw__ uint32_t CONCLR;
+  __rw__ uint32_t MMCTRL;
+  __rw__ uint32_t ADR1;
+  __rw__ uint32_t ADR2;
+  __rw__ uint32_t ADR3;
+  __ro__ uint32_t DATA_BUFFER;
+  __rw__ uint32_t MASK0;
+  __rw__ uint32_t MASK1;
+  __rw__ uint32_t MASK2;
+  __rw__ uint32_t MASK3;
+} LPC_I2C_Type;
+/*------------------Synchronous Serial Port-----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR0;
+  __rw__ uint32_t CR1;
+  __rw__ uint32_t DR;
+  __ro__ uint32_t SR;
+  __rw__ uint32_t CPSR;
+  __rw__ uint32_t IMSC;
+  __rw__ uint32_t RIS;
+  __rw__ uint32_t MIS;
+  __wo__ uint32_t ICR;
+  __rw__ uint32_t DMACR;
+} LPC_SSP_Type;
 /*------------------Serial Peripheral Interface-------------------------------*/
 typedef struct
 {
@@ -1139,7 +1264,8 @@ typedef struct
     };
   };
   __ne__ uint32_t RESERVED0[9];
-  /* Offset 0x040 */
+
+  /* Offset 0x0040 */
   union
   {
     __rw__ uint32_t COUNT;
@@ -1188,7 +1314,8 @@ typedef struct
   __rw__ uint32_t EVFLAG;
   __rw__ uint32_t CONEN;
   __rw__ uint32_t CONFLAG;
-  /* Offset 0x100 */
+
+  /* Offset 0x0100 */
   union
   {
     union
@@ -1330,23 +1457,22 @@ typedef struct
   __rw__ uint32_t TXMODE;
   __rw__ uint32_t RXMODE;
 } LPC_I2S_Type;
-///*------------------Repetitive Interrupt Timer--------------------------------*/
-//typedef struct
-//{
-//  __rw__ uint32_t RICOMPVAL;
-//  __rw__ uint32_t RIMASK;
-//  __rw__ uint32_t RICTRL;
-//  __rw__ uint32_t RICOUNTER;
-//} LPC_RIT_Type;
+/*------------------Repetitive Interrupt Timer--------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t COMPVAL;
+  __rw__ uint32_t MASK;
+  __rw__ uint32_t CTRL;
+  __rw__ uint32_t COUNTER;
+} LPC_RIT_Type;
 /*------------------Alarm Timer-----------------------------------------------*/
 typedef struct
 {
-  /* Offset 0x000 */
   __rw__ uint32_t DOWNCOUNTER;
   __rw__ uint32_t PRESET;
   __ne__ uint32_t RESERVED[1012];
 
-  /* Offset 0xFD8 */
+  /* Offset 0x0FD8 */
   __wo__ uint32_t CLR_EN;
   __wo__ uint32_t SET_EN;
   __ro__ uint32_t STATUS;
@@ -1402,130 +1528,152 @@ typedef struct
   __rw__ uint32_t WARNINT;
   __rw__ uint32_t WINDOW;
 } LPC_WDT_Type;
-///*------------------Motor Control Pulse-Width Modulation----------------------*/
-//typedef struct
-//{
-//  __ro__ uint32_t MCCON;
-//  __wo__ uint32_t MCCON_SET;
-//  __wo__ uint32_t MCCON_CLR;
-//  __ro__ uint32_t MCCAPCON;
-//  __wo__ uint32_t MCCAPCON_SET;
-//  __wo__ uint32_t MCCAPCON_CLR;
-//  __rw__ uint32_t MCTIM0;
-//  __rw__ uint32_t MCTIM1;
-//  __rw__ uint32_t MCTIM2;
-//  __rw__ uint32_t MCPER0;
-//  __rw__ uint32_t MCPER1;
-//  __rw__ uint32_t MCPER2;
-//  __rw__ uint32_t MCPW0;
-//  __rw__ uint32_t MCPW1;
-//  __rw__ uint32_t MCPW2;
-//  __rw__ uint32_t MCDEADTIME;
-//  __rw__ uint32_t MCCCP;
-//  __rw__ uint32_t MCCR0;
-//  __rw__ uint32_t MCCR1;
-//  __rw__ uint32_t MCCR2;
-//  __ro__ uint32_t MCINTEN;
-//  __wo__ uint32_t MCINTEN_SET;
-//  __wo__ uint32_t MCINTEN_CLR;
-//  __ro__ uint32_t MCCNTCON;
-//  __wo__ uint32_t MCCNTCON_SET;
-//  __wo__ uint32_t MCCNTCON_CLR;
-//  __ro__ uint32_t MCINTFLAG;
-//  __wo__ uint32_t MCINTFLAG_SET;
-//  __wo__ uint32_t MCINTFLAG_CLR;
-//  __wo__ uint32_t MCCAP_CLR;
-//} LPC_MCPWM_Type;
-///*------------------Quadrature Encoder Interface------------------------------*/
-//typedef struct
-//{
-//  __wo__ uint32_t QEICON;
-//  __ro__ uint32_t QEISTAT;
-//  __rw__ uint32_t QEICONF;
-//  __ro__ uint32_t QEIPOS;
-//  __rw__ uint32_t QEIMAXPOS;
-//  __rw__ uint32_t CMPOS0;
-//  __rw__ uint32_t CMPOS1;
-//  __rw__ uint32_t CMPOS2;
-//  __ro__ uint32_t INXCNT;
-//  __rw__ uint32_t INXCMP;
-//  __rw__ uint32_t QEILOAD;
-//  __ro__ uint32_t QEITIME;
-//  __ro__ uint32_t QEIVEL;
-//  __ro__ uint32_t QEICAP;
-//  __rw__ uint32_t VELCOMP;
-//  __rw__ uint32_t FILTER;
-//  __ne__ uint32_t RESERVED0[998];
-//  __wo__ uint32_t QEIIEC;
-//  __wo__ uint32_t QEIIES;
-//  __ro__ uint32_t QEIINTSTAT;
-//  __ro__ uint32_t QEIIE;
-//  __wo__ uint32_t QEICLR;
-//  __wo__ uint32_t QEISET;
-//} LPC_QEI_Type;
-///*------------------Controller Area Network-----------------------------------*/
-///* Identifier masks */
-//typedef struct
-//{
-//  __rw__ uint32_t MASK[512];
-//} LPC_CANAF_RAM_Type;
-//
-///* Acceptance Filter registers */
-//typedef struct
-//{
-//  __rw__ uint32_t AFMR;
-//  __rw__ uint32_t SFF_SA;
-//  __rw__ uint32_t SFF_GRP_SA;
-//  __rw__ uint32_t EFF_SA;
-//  __rw__ uint32_t EFF_GRP_SA;
-//  __rw__ uint32_t ENDOFTABLE;
-//  __ro__ uint32_t LUTERRAD;
-//  __ro__ uint32_t LUTERR;
-//  __rw__ uint32_t FCANIE;
-//  __rw__ uint32_t FCANIC0;
-//  __rw__ uint32_t FCANIC1;
-//} LPC_CANAF_Type;
-//
-///* Central registers */
-//typedef struct
-//{
-//  __ro__ uint32_t TXSR;
-//  __ro__ uint32_t RXSR;
-//  __ro__ uint32_t MSR;
-//} LPC_CANCR_Type;
-//
-///* Controller registers */
-//typedef struct
-//{
-//  __rw__ uint32_t MOD;
-//  __wo__ uint32_t CMR;
-//  __rw__ uint32_t GSR;
-//  __ro__ uint32_t ICR;
-//  __rw__ uint32_t IER;
-//  __rw__ uint32_t BTR;
-//  __rw__ uint32_t EWL;
-//  __ro__ uint32_t SR;
-//  __rw__ uint32_t RFS;
-//  __rw__ uint32_t RID;
-//  __rw__ uint32_t RDA;
-//  __rw__ uint32_t RDB;
-//  __rw__ uint32_t TFI1;
-//  __rw__ uint32_t TID1;
-//  __rw__ uint32_t TDA1;
-//  __rw__ uint32_t TDB1;
-//  __rw__ uint32_t TFI2;
-//  __rw__ uint32_t TID2;
-//  __rw__ uint32_t TDA2;
-//  __rw__ uint32_t TDB2;
-//  __rw__ uint32_t TFI3;
-//  __rw__ uint32_t TID3;
-//  __rw__ uint32_t TDA3;
-//  __rw__ uint32_t TDB3;
-//} LPC_CAN_Type;
+/*------------------Motor Control Pulse-Width Modulation----------------------*/
+typedef struct
+{
+  __ro__ uint32_t CON;
+  __wo__ uint32_t CON_SET;
+  __wo__ uint32_t CON_CLR;
+  __ro__ uint32_t CAPCON;
+  __wo__ uint32_t CAPCON_SET;
+  __wo__ uint32_t CAPCON_CLR;
+  __rw__ uint32_t TC0;
+  __rw__ uint32_t TC1;
+  __rw__ uint32_t TC2;
+  __rw__ uint32_t LIM0;
+  __rw__ uint32_t LIM1;
+  __rw__ uint32_t LIM2;
+  __rw__ uint32_t MAT0;
+  __rw__ uint32_t MAT1;
+  __rw__ uint32_t MAT2;
+  __rw__ uint32_t DT;
+
+  /* Offset 0x40 */
+  __rw__ uint32_t MCCP;
+  __ro__ uint32_t CAP0;
+  __ro__ uint32_t CAP1;
+  __ro__ uint32_t CAP2;
+  __ro__ uint32_t INTEN;
+  __wo__ uint32_t INTEN_SET;
+  __wo__ uint32_t INTEN_CLR;
+  __ro__ uint32_t CNTCON;
+  __wo__ uint32_t CNTCON_SET;
+  __wo__ uint32_t CNTCON_CLR;
+  __ro__ uint32_t INTF;
+  __wo__ uint32_t INTF_SET;
+  __wo__ uint32_t INTF_CLR;
+  __wo__ uint32_t CAP_CLR;
+} LPC_MCPWM_Type;
+/*------------------Quadrature Encoder Interface------------------------------*/
+typedef struct
+{
+  __wo__ uint32_t CON;
+  __ro__ uint32_t STAT;
+  __rw__ uint32_t CONF;
+  __ro__ uint32_t POS;
+  __rw__ uint32_t MAXPOS;
+  __rw__ uint32_t CMPOS0;
+  __rw__ uint32_t CMPOS1;
+  __rw__ uint32_t CMPOS2;
+  __ro__ uint32_t INXCNT;
+  __rw__ uint32_t INXCMP0;
+  __rw__ uint32_t LOAD;
+  __ro__ uint32_t TIME;
+  __ro__ uint32_t VEL;
+  __ro__ uint32_t CAP;
+  __rw__ uint32_t VELCOMP;
+  __rw__ uint32_t FILTERPHA;
+
+  /* Offset 0x0040 */
+  __rw__ uint32_t FILTERPHB;
+  __rw__ uint32_t FILTERINX;
+  __rw__ uint32_t WINDOW;
+  __rw__ uint32_t INXCMP1;
+  __rw__ uint32_t INXCMP2;
+  __ne__ uint32_t RESERVED0[993];
+
+  /* Offset 0x0FD8 */
+  __wo__ uint32_t IEC;
+  __wo__ uint32_t IES;
+  __ro__ uint32_t INTSTAT;
+  __ro__ uint32_t IE;
+  __wo__ uint32_t CLR;
+  __wo__ uint32_t SET;
+} LPC_QEI_Type;
+/*------------------C_CAN controller------------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CNTL;
+  __rw__ uint32_t STAT;
+  __ro__ uint32_t EC;
+  __rw__ uint32_t BT;
+  __ro__ uint32_t INT;
+  __rw__ uint32_t TEST;
+  __rw__ uint32_t BRPE;
+  __ne__ uint32_t RESERVED0;
+
+  /* Offset 0x0020 */
+  __rw__ uint32_t IF1_CMDREQ;
+  union
+  {
+    __rw__ uint32_t IF1_CMDMSK_R;
+    __rw__ uint32_t IF1_CMDMSK_W;
+  };
+  __rw__ uint32_t IF1_MSK1;
+  __rw__ uint32_t IF1_MSK2;
+  __rw__ uint32_t IF1_ARB1;
+  __rw__ uint32_t IF1_ARB2;
+  __rw__ uint32_t IF1_MCTRL;
+  __rw__ uint32_t IF1_DA1;
+  __rw__ uint32_t IF1_DA2;
+  __rw__ uint32_t IF1_DB1;
+  __rw__ uint32_t IF1_DB2;
+  __ne__ uint32_t RESERVED1[13];
+
+  /* Offset 0x0080 */
+  __rw__ uint32_t IF2_CMDREQ;
+  union
+  {
+    __rw__ uint32_t IF2_CMDMSK_R;
+    __rw__ uint32_t IF2_CMDMSK_W;
+  };
+  __rw__ uint32_t IF2_MSK1;
+  __rw__ uint32_t IF2_MSK2;
+  __rw__ uint32_t IF2_ARB1;
+  __rw__ uint32_t IF2_ARB2;
+  __rw__ uint32_t IF2_MCTRL;
+  __rw__ uint32_t IF2_DA1;
+  __rw__ uint32_t IF2_DA2;
+  __rw__ uint32_t IF2_DB1;
+  __rw__ uint32_t IF2_DB2;
+  __ne__ uint32_t RESERVED2[21];
+
+  /* Offset 0x0100 */
+  __ro__ uint32_t TXREQ1;
+  __ro__ uint32_t TXREQ2;
+  __ne__ uint32_t RESERVED3[6];
+
+  /* Offset 0x0120 */
+  __ro__ uint32_t ND1;
+  __ro__ uint32_t ND2;
+  __ne__ uint32_t RESERVED4[6];
+
+  /* Offset 0x0140 */
+  __ro__ uint32_t IR1;
+  __ro__ uint32_t IR2;
+  __ne__ uint32_t RESERVED5[6];
+
+  /* Offset 0x0160 */
+  __ro__ uint32_t MSGV1;
+  __ro__ uint32_t MSGV2;
+  __ne__ uint32_t RESERVED6[6];
+
+  /* Offset 0x0180 */
+  __rw__ uint32_t CLKDIV;
+} LPC_CAN_Type;
 /*------------------SD/MMC card interface-------------------------------------*/
 typedef struct
 {
-  /* Offset 0x000 */
   __rw__ uint32_t CTRL;
   __rw__ uint32_t PWREN;
   __rw__ uint32_t CLKDIV;
@@ -1535,7 +1683,7 @@ typedef struct
   __rw__ uint32_t CTYPE;
   __rw__ uint32_t BLKSIZ;
 
-  /* Offset 0x020 */
+  /* Offset 0x0020 */
   __rw__ uint32_t BYTCNT;
   __rw__ uint32_t INTMASK;
   __rw__ uint32_t CMDARG;
@@ -1552,7 +1700,7 @@ typedef struct
     };
   };
 
-  /* Offset 0x040 */
+  /* Offset 0x0040 */
   __ro__ uint32_t MINTSTS;
   __rw__ uint32_t RINTSTS;
   __ro__ uint32_t STATUS;
@@ -1561,15 +1709,13 @@ typedef struct
   __ro__ uint32_t WRTPRT;
   __ne__ uint32_t RESERVED0;
   __ro__ uint32_t TCBCNT;
-
-  /* Offset 0x060 */
   __ro__ uint32_t TBBCNT;
   __rw__ uint32_t DEBNCE;
   __ne__ uint32_t RESERVED1[4];
   __rw__ uint32_t RST_N;
   __ne__ uint32_t RESERVED2;
 
-  /* Offset 0x080 */
+  /* Offset 0x0080 */
   __rw__ uint32_t BMOD;
   __wo__ uint32_t PLDMND;
   __rw__ uint32_t DBADDR;
@@ -1578,8 +1724,6 @@ typedef struct
   __ro__ uint32_t DSCADDR;
   __ro__ uint32_t BUFADDR;
   __ne__ uint32_t RESERVED3;
-
-  /* Offset 0x100 */
   __rw__ uint32_t DATA[];
 } LPC_SDMMC_Type;
 /*------------------General Purpose Direct Memory Access----------------------*/
@@ -1711,71 +1855,264 @@ typedef struct
     __rw__ uint32_t ENDPTCTRL[6];
   };
 } LPC_USB_Type;
-///*------------------Ethernet Media Access Controller--------------------------*/
-//typedef struct
-//{
-//  /* MAC registers */
-//  __rw__ uint32_t MAC1;
-//  __rw__ uint32_t MAC2;
-//  __rw__ uint32_t IPGT;
-//  __rw__ uint32_t IPGR;
-//  __rw__ uint32_t CLRT;
-//  __rw__ uint32_t MAXF;
-//  __rw__ uint32_t SUPP;
-//  __rw__ uint32_t TEST;
-//  __rw__ uint32_t MCFG;
-//  __rw__ uint32_t MCMD;
-//  __rw__ uint32_t MADR;
-//  __wo__ uint32_t MWTD;
-//  __ro__ uint32_t MRDD;
-//  __ro__ uint32_t MIND;
-//  __ne__ uint32_t RESERVED0[2];
-//  __rw__ uint32_t SA0;
-//  __rw__ uint32_t SA1;
-//  __rw__ uint32_t SA2;
-//  __ne__ uint32_t RESERVED1[45];
-//
-//  /* Control registers */
-//  __rw__ uint32_t Command;
-//  __ro__ uint32_t Status;
-//  __rw__ uint32_t RxDescriptor;
-//  __rw__ uint32_t RxStatus;
-//  __rw__ uint32_t RxDescriptorNumber;
-//  __ro__ uint32_t RxProduceIndex;
-//  __rw__ uint32_t RxConsumeIndex;
-//  __rw__ uint32_t TxDescriptor;
-//  __rw__ uint32_t TxStatus;
-//  __rw__ uint32_t TxDescriptorNumber;
-//  __rw__ uint32_t TxProduceIndex;
-//  __ro__ uint32_t TxConsumeIndex;
-//  __ne__ uint32_t RESERVED2[10];
-//  __ro__ uint32_t TSV0;
-//  __ro__ uint32_t TSV1;
-//  __ro__ uint32_t RSV;
-//  __ne__ uint32_t RESERVED3[3];
-//  __rw__ uint32_t FlowControlCounter;
-//  __ro__ uint32_t FlowControlStatus;
-//  __ne__ uint32_t RESERVED4[34];
-//
-//  /* Rx Filter registers */
-//  __rw__ uint32_t RxFilterCtrl;
-//  __rw__ uint32_t RxFilterWoLStatus;
-//  __rw__ uint32_t RxFilterWoLClear;
-//  __ne__ uint32_t RESERVED5;
-//  __rw__ uint32_t HashFilterL;
-//  __rw__ uint32_t HashFilterH;
-//  __ne__ uint32_t RESERVED6[882];
-//
-//  /* Module Control registers */
-//  __ro__ uint32_t IntStatus;
-//  __rw__ uint32_t IntEnable;
-//  __wo__ uint32_t IntClear;
-//  __wo__ uint32_t IntSet;
-//  __ne__ uint32_t RESERVED7;
-//  __rw__ uint32_t PowerDown;
-//  __ne__ uint32_t RESERVED8;
-//  __rw__ uint32_t Module_ID;
-//} LPC_EMAC_Type;
+/*------------------Ethernet Media Access Controller--------------------------*/
+typedef struct
+{
+  __rw__ uint32_t MAC_CONFIG;
+  __rw__ uint32_t MAC_FRAME_FILTER;
+  __rw__ uint32_t MAC_HASHTABLE_HIGH;
+  __rw__ uint32_t MAC_HASHTABLE_LOW;
+  __rw__ uint32_t MAC_MII_ADDR;
+  __rw__ uint32_t MAC_MII_DATA;
+  __rw__ uint32_t MAC_FLOW_CTRL;
+  __rw__ uint32_t MAC_VLAN_TAG;
+  __ne__ uint32_t RESERVED0;
+  __ro__ uint32_t MAC_DEBUG;
+  __rw__ uint32_t MAC_RWAKE_FRFLT;
+  __rw__ uint32_t MAC_PMT_CTRL_STAT;
+  __ne__ uint32_t RESERVED1[2];
+  __rw__ uint32_t MAC_INTR_MASK;
+  __rw__ uint32_t MAC_ADDR0_HIGH;
+  __rw__ uint32_t MAC_ADDR0_LOW;
+  __ne__ uint32_t RESERVED2[430];
+
+  /* Offset 0x0700 */
+  __rw__ uint32_t MAC_TIMESTP_CTRL;
+  __rw__ uint32_t SUBSECOND_INCR;
+  __ro__ uint32_t SECONDS;
+  __ro__ uint32_t NANOSECONDS;
+  __rw__ uint32_t SECONDSUPDATE;
+  __rw__ uint32_t NANOSECONDSUPDATE;
+  __rw__ uint32_t ADDEND;
+  __rw__ uint32_t TARGETSECONDS;
+  __rw__ uint32_t TARGETNANOSECONDS;
+  __rw__ uint32_t HIGHWORD;
+  __ro__ uint32_t TIMESTAMPSTAT;
+  __ne__ uint32_t RESERVED3[565];
+
+  /* Offset 0x1000 */
+  __rw__ uint32_t DMA_BUS_MODE;
+  __rw__ uint32_t DMA_TRANS_POLL_DEMAND;
+  __rw__ uint32_t DMA_REC_POLL_DEMAND;
+  __rw__ uint32_t DMA_REC_DES_ADDR;
+  __rw__ uint32_t DMA_TRANS_DES_ADDR;
+  __rw__ uint32_t DMA_STAT;
+  __rw__ uint32_t DMA_OP_MODE;
+  __rw__ uint32_t DMA_INT_EN;
+  __ro__ uint32_t DMA_MFRM_BUFOF;
+  __rw__ uint32_t DMA_REC_INT_WDT;
+  __ne__ uint32_t RESERVED4[8];
+  __ro__ uint32_t DMA_CURHOST_TRANS_DES;
+  __ro__ uint32_t DMA_CURHOST_REC_DES;
+  __ro__ uint32_t DMA_CURHOST_TRANS_BUF;
+  __ro__ uint32_t DMA_CURHOST_REC_BUF;
+} LPC_EMAC_Type;
+/*------------------External Memory Controller--------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CONTROL;
+  __ro__ uint32_t STATUS;
+  __rw__ uint32_t CONFIG;
+  __ne__ uint32_t RESERVED0[5];
+
+  /* Offset 0x0020 */
+  __rw__ uint32_t DYNAMICCONTROL;
+  __rw__ uint32_t DYNAMICREFRESH;
+  __rw__ uint32_t DYNAMICREADCONFIG;
+  __ne__ uint32_t RESERVED1;
+  __rw__ uint32_t DYNAMICRP;
+  __rw__ uint32_t DYNAMICRAS;
+  __rw__ uint32_t DYNAMICSREX;
+  __rw__ uint32_t DYNAMICAPR;
+  __rw__ uint32_t DYNAMICDAL;
+  __rw__ uint32_t DYNAMICWR;
+  __rw__ uint32_t DYNAMICRC;
+  __rw__ uint32_t DYNAMICRFC;
+  __rw__ uint32_t DYNAMICXSR;
+  __rw__ uint32_t DYNAMICRRD;
+  __rw__ uint32_t DYNAMICMRD;
+  __ne__ uint32_t RESERVED2[9];
+
+  /* Offset 0x0080 */
+  __rw__ uint32_t STATICEXTENDEDWAIT;
+  __ne__ uint32_t RESERVED3[31];
+
+  /* Offset 0x0100 */
+  __rw__ uint32_t DYNAMICCONFIG0;
+  __rw__ uint32_t DYNAMICRASCAS0;
+  __ne__ uint32_t RESERVED4[6];
+  __rw__ uint32_t DYNAMICCONFIG1;
+  __rw__ uint32_t DYNAMICRASCAS1;
+  __ne__ uint32_t RESERVED5[6];
+  __rw__ uint32_t DYNAMICCONFIG2;
+  __rw__ uint32_t DYNAMICRASCAS2;
+  __ne__ uint32_t RESERVED6[6];
+  __rw__ uint32_t DYNAMICCONFIG3;
+  __rw__ uint32_t DYNAMICRASCAS3;
+  __ne__ uint32_t RESERVED7[38];
+
+  /* Offset 0x0200 */
+  __rw__ uint32_t STATICCONFIG0;
+  __rw__ uint32_t STATICWAITWEN0;
+  __rw__ uint32_t STATICWAITOEN0;
+  __rw__ uint32_t STATICWAITRD0;
+  __rw__ uint32_t STATICWAITPAG0;
+  __rw__ uint32_t STATICWAITWR0;
+  __rw__ uint32_t STATICWAITTURN0;
+  __ne__ uint32_t RESERVED8;
+  __rw__ uint32_t STATICCONFIG1;
+  __rw__ uint32_t STATICWAITWEN1;
+  __rw__ uint32_t STATICWAITOEN1;
+  __rw__ uint32_t STATICWAITRD1;
+  __rw__ uint32_t STATICWAITPAG1;
+  __rw__ uint32_t STATICWAITWR1;
+  __rw__ uint32_t STATICWAITTURN1;
+  __ne__ uint32_t RESERVED9;
+  __rw__ uint32_t STATICCONFIG2;
+  __rw__ uint32_t STATICWAITWEN2;
+  __rw__ uint32_t STATICWAITOEN2;
+  __rw__ uint32_t STATICWAITRD2;
+  __rw__ uint32_t STATICWAITPAG2;
+  __rw__ uint32_t STATICWAITWR2;
+  __rw__ uint32_t STATICWAITTURN2;
+  __ne__ uint32_t RESERVED10;
+  __rw__ uint32_t STATICCONFIG3;
+  __rw__ uint32_t STATICWAITWEN3;
+  __rw__ uint32_t STATICWAITOEN3;
+  __rw__ uint32_t STATICWAITRD3;
+  __rw__ uint32_t STATICWAITPAG3;
+  __rw__ uint32_t STATICWAITWR3;
+  __rw__ uint32_t STATICWAITTURN3;
+} LPC_EMC_Type;
+/*------------------Global Input Multiplexer Array----------------------------*/
+typedef struct
+{
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t CAP0_0_IN;
+      __rw__ uint32_t CAP0_1_IN;
+      __rw__ uint32_t CAP0_2_IN;
+      __rw__ uint32_t CAP0_3_IN;
+      __rw__ uint32_t CAP1_0_IN;
+      __rw__ uint32_t CAP1_1_IN;
+      __rw__ uint32_t CAP1_2_IN;
+      __rw__ uint32_t CAP1_3_IN;
+      __rw__ uint32_t CAP2_0_IN;
+      __rw__ uint32_t CAP2_1_IN;
+      __rw__ uint32_t CAP2_2_IN;
+      __rw__ uint32_t CAP2_3_IN;
+      __rw__ uint32_t CAP3_0_IN;
+      __rw__ uint32_t CAP3_1_IN;
+      __rw__ uint32_t CAP3_2_IN;
+      __rw__ uint32_t CAP3_3_IN;
+    };
+
+    struct
+    {
+      __rw__ uint32_t IN[4];
+    } CAP[4];
+  };
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t CTIN_0_IN;
+      __rw__ uint32_t CTIN_1_IN;
+      __rw__ uint32_t CTIN_2_IN;
+      __rw__ uint32_t CTIN_3_IN;
+      __rw__ uint32_t CTIN_4_IN;
+      __rw__ uint32_t CTIN_5_IN;
+      __rw__ uint32_t CTIN_6_IN;
+      __rw__ uint32_t CTIN_7_IN;
+    };
+
+    __rw__ uint32_t CTIN_IN[8];
+  };
+
+  __rw__ uint32_t VADC_TRIGGER_IN;
+  __rw__ uint32_t EVENTROUTER_13_IN;
+  __rw__ uint32_t EVENTROUTER_14_IN;
+  __rw__ uint32_t EVENTROUTER_16_IN;
+  __rw__ uint32_t ADCSTART0_IN;
+  __rw__ uint32_t ADCSTART1_IN;
+} LPC_GIMA_Type;
+/*------------------EEPROM----------------------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CMD;
+  __ro__ uint32_t RESERVED0;
+  __rw__ uint32_t RWSTATE;
+  __rw__ uint32_t AUTOPROG;
+  __rw__ uint32_t WSTATE;
+  __rw__ uint32_t CLKDIV;
+  __rw__ uint32_t PWRDWN;
+  __ro__ uint32_t RESERVED1[1007];
+  __wo__ uint32_t INTENCLR;
+  __wo__ uint32_t INTENSET;
+  __ro__ uint32_t INTSTAT;
+  __ro__ uint32_t INTEN;
+  __wo__ uint32_t INTSTATCLR;
+} LPC_EEPROM_Type;
+/*------------------Event router----------------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t HILO;
+  __rw__ uint32_t EDGE;
+  __ro__ uint32_t RESERVED0[1012];
+  __wo__ uint32_t CLR_EN;
+  __wo__ uint32_t SET_EN;
+  __ro__ uint32_t STATUS;
+  __ro__ uint32_t ENABLE;
+  __wo__ uint32_t CLR_STAT;
+  __wo__ uint32_t SET_STAT;
+} LPC_EVENTROUTER_Type;
+/*------------------LCD controller--------------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t TIMH;
+  __rw__ uint32_t TIMV;
+  __rw__ uint32_t POL;
+  __rw__ uint32_t LE;
+  __rw__ uint32_t UPBASE;
+  __rw__ uint32_t LPBASE;
+  __rw__ uint32_t CTRL;
+  __rw__ uint32_t INTMSK;
+  __ro__ uint32_t INTRAW;
+  __ro__ uint32_t INTSTAT;
+  __wo__ uint32_t INTCLR;
+  __ro__ uint32_t UPCURR;
+  __ro__ uint32_t LPCURR;
+  __ro__ uint32_t RESERVED0[115];
+  __rw__ uint32_t PAL[256];
+  __ro__ uint32_t RESERVED1[128];
+  __rw__ uint32_t CRSR_IMG[256];
+  __rw__ uint32_t CRSR_CTRL;
+  __rw__ uint32_t CRSR_CFG;
+  __rw__ uint32_t CRSR_PAL0;
+  __rw__ uint32_t CRSR_PAL1;
+  __rw__ uint32_t CRSR_XY;
+  __rw__ uint32_t CRSR_CLIP;
+  __ro__ uint32_t RESERVED2[2];
+  __rw__ uint32_t CRSR_INTMSK;
+  __wo__ uint32_t CRSR_INTCLR;
+  __ro__ uint32_t CRSR_INTRAW;
+  __ro__ uint32_t CRSR_INTSTAT;
+} LPC_LCD_Type;
+/*------------------SPI Flash Interface---------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CTRL;
+  __rw__ uint32_t CMD;
+  __rw__ uint32_t ADDR;
+  __rw__ uint32_t IDATA;
+  __rw__ uint32_t CLIMIT;
+  __rw__ uint32_t DATA;
+  __rw__ uint32_t MCMD;
+  __rw__ uint32_t STAT;
+} LPC_SPIFI_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
 #define LPC_AHB_BASE              (0x40000000UL)
@@ -1798,6 +2135,7 @@ typedef struct
 #define LPC_USB0_BASE             (LPC_AHB_BASE + 0x06000)
 #define LPC_USB1_BASE             (LPC_AHB_BASE + 0x07000)
 #define LPC_LCD_BASE              (LPC_AHB_BASE + 0x08000)
+#define LPC_EEPROM_BASE           (LPC_AHB_BASE + 0x0E000)
 #define LPC_ETHERNET_BASE         (LPC_AHB_BASE + 0x10000)
 
 /* APB0 peripherals */
@@ -1864,7 +2202,7 @@ typedef struct
 /* Peripheral declaration */
 #define LPC_GPIO          ((LPC_GPIO_Type *)LPC_GPIO_BASE)
 #define LPC_SPI           ((LPC_SPI_Type *)LPC_SPI_BASE)
-//#define LPC_SGPIO         ((LPC_SGPIO_Type *)LPC_SGPIO_BASE)
+#define LPC_SGPIO         ((LPC_SGPIO_Type *)LPC_SGPIO_BASE)
 
 #define LPC_SCT           ((LPC_SCT_Type *)LPC_SCT_BASE)
 #define LPC_GPDMA         ((LPC_GPDMA_Type *)LPC_GPDMA_BASE)
@@ -1876,13 +2214,14 @@ typedef struct
 #define LPC_GPDMACH5      ((LPC_GPDMACH_Type *)LPC_GPDMACH5_BASE)
 #define LPC_GPDMACH6      ((LPC_GPDMACH_Type *)LPC_GPDMACH6_BASE)
 #define LPC_GPDMACH7      ((LPC_GPDMACH_Type *)LPC_GPDMACH7_BASE)
-//#define LPC_SPIFI         ((LPC_SPIFI_Type *)LPC_SPIFI_BASE)
+#define LPC_SPIFI         ((LPC_SPIFI_Type *)LPC_SPIFI_BASE)
 #define LPC_SDMMC         ((LPC_SDMMC_Type *)LPC_SDMMC_BASE)
-//#define LPC_EMC           ((LPC_EMC_Type *)LPC_EMC_BASE)
+#define LPC_EMC           ((LPC_EMC_Type *)LPC_EMC_BASE)
 #define LPC_USB0          ((LPC_USB_Type *)LPC_USB0_BASE)
 #define LPC_USB1          ((LPC_USB_Type *)LPC_USB1_BASE)
-//#define LPC_LCD           ((LPC_LCD_Type *)LPC_LCD_BASE)
-//#define LPC_ETHERNET      ((LPC_ETHERNET_Type *)LPC_ETHERNET_BASE)
+#define LPC_LCD           ((LPC_LCD_Type *)LPC_LCD_BASE)
+#define LPC_EEPROM        ((LPC_EEPROM_Type *)LPC_EEPROM_BASE)
+#define LPC_ETHERNET      ((LPC_ETHERNET_Type *)LPC_ETHERNET_BASE)
 
 #define LPC_WDT           ((LPC_WDT_Type *)LPC_WDT_BASE)
 #define LPC_USART0        ((LPC_USART_Type *)LPC_USART0_BASE)
@@ -1897,33 +2236,31 @@ typedef struct
 #define LPC_GPIO_GROUP_INT1 \
 		((LPC_GPIO_GROUP_INT_Type *)LPC_GPIO_GROUP_INT1_BASE)
 
-//#define LPC_MCPWM         ((LPC_MCPWM_Type *)LPC_MCPWM_BASE)
+#define LPC_MCPWM         ((LPC_MCPWM_Type *)LPC_MCPWM_BASE)
 #define LPC_I2C0          ((LPC_I2C_Type *)LPC_I2C0_BASE)
 #define LPC_I2S0          ((LPC_I2S_Type *)LPC_I2S0_BASE)
 #define LPC_I2S1          ((LPC_I2S_Type *)LPC_I2S1_BASE)
-//#define LPC_CAN1          ((LPC_CAN_Type *)LPC_CAN1_BASE)
+#define LPC_CAN1          ((LPC_CAN_Type *)LPC_CAN1_BASE)
 
-//#define LPC_RIT           ((LPC_RIT_Type *)LPC_RIT_BASE)
+#define LPC_RIT           ((LPC_RIT_Type *)LPC_RIT_BASE)
 #define LPC_USART2        ((LPC_USART_Type *)LPC_USART2_BASE)
 #define LPC_USART3        ((LPC_USART_Type *)LPC_USART3_BASE)
 #define LPC_TIMER2        ((LPC_TIMER_Type *)LPC_TIMER2_BASE)
 #define LPC_TIMER3        ((LPC_TIMER_Type *)LPC_TIMER3_BASE)
 #define LPC_SSP1          ((LPC_SSP_Type *)LPC_SSP1_BASE)
-//#define LPC_QEI           ((LPC_QEI_Type *)LPC_QEI_BASE)
-//#define LPC_GIMA          ((LPC_GIMA_Type *)LPC_GIMA_BASE)
+#define LPC_QEI           ((LPC_QEI_Type *)LPC_QEI_BASE)
+#define LPC_GIMA          ((LPC_GIMA_Type *)LPC_GIMA_BASE)
 
 #define LPC_I2C1          ((LPC_I2C_Type *)LPC_I2C1_BASE)
 #define LPC_DAC           ((LPC_DAC_Type *)LPC_DAC_BASE)
-//#define LPC_CAN0          ((LPC_CAN_Type *)LPC_CAN0_BASE)
+#define LPC_CAN0          ((LPC_CAN_Type *)LPC_CAN0_BASE)
 #define LPC_ADC0          ((LPC_ADC_Type *)LPC_ADC0_BASE)
 #define LPC_ADC1          ((LPC_ADC_Type *)LPC_ADC1_BASE)
 
 #define LPC_ATIMER        ((LPC_ATIMER_Type *)LPC_ATIMER_BASE)
-//#define LPC_BACKUP        ((LPC_BACKUP_Type *)LPC_BACKUP_BASE)
 #define LPC_PMC           ((LPC_PMC_Type *)LPC_PMC_BASE)
 #define LPC_CREG          ((LPC_CREG_Type *)LPC_CREG_BASE)
-//#define LPC_EVENTROUTER   ((LPC_EVENTROUTER_Type *)LPC_EVENTROUTER_BASE)
-//#define LPC_OTP           ((LPC_OTP_Type *)LPC_OTP_BASE)
+#define LPC_EVENTROUTER   ((LPC_EVENTROUTER_Type *)LPC_EVENTROUTER_BASE)
 #define LPC_RTC           ((LPC_RTC_Type *)LPC_RTC_BASE)
 
 #define LPC_CGU           ((LPC_CGU_Type *)LPC_CGU_BASE)
