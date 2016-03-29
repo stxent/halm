@@ -14,10 +14,12 @@ extern const struct EntityClass * const AdcUnit;
 /*----------------------------------------------------------------------------*/
 struct AdcUnitConfig
 {
-  /** Mandatory: peripheral identifier. */
-  uint8_t channel;
+  /** Optional: desired clock frequency. */
+  uint32_t frequency;
   /** Optional: interrupt priority. */
   irqPriority priority;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct AdcUnit

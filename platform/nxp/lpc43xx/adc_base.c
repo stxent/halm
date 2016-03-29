@@ -22,7 +22,8 @@ struct AdcBlockDescriptor
   irqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
-/* Pack or unpack conversion channel and pin function */
+#define MAX_FREQUENCY                 4500000
+/* Pack and unpack conversion channel and pin function */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)
@@ -252,11 +253,16 @@ static enum result adcUnitInit(void *object, const void *configBase)
   unit->irq = entry->irq;
   unit->reg = entry->reg;
 
+  /* Configure peripheral clock */
+
+  assert(config->frequency < MAX_FREQUENCY);
+
+  const uint32_t frequency = config->frequency ?
+      config->frequency : MAX_FREQUENCY;
   LPC_ADC_Type * const reg = unit->reg;
 
-  /* TODO Change prescaler on power mode changes */
   /* Enable converter and set system clock divider */
-  reg->CR = CR_PDN | CR_CLKDIV(clockFrequency(Apb3Clock) / 4500000);
+  reg->CR = CR_PDN | CR_CLKDIV(clockFrequency(Apb3Clock) / frequency);
 
   return E_OK;
 }

@@ -11,10 +11,11 @@
 #include <platform/nxp/lpc13xx/clocking.h>
 #include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
-/* Pack or unpack conversion channel and pin function */
-#define PACK_VALUE(function, channel)   (((channel) << 4) | (function))
-#define UNPACK_CHANNEL(value)           (((value) >> 4) & 0x0F)
-#define UNPACK_FUNCTION(value)          ((value) & 0x0F)
+#define MAX_FREQUENCY                 4500000
+/* Pack and unpack conversion channel and pin function */
+#define PACK_VALUE(function, channel) (((channel) << 4) | (function))
+#define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
+#define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);
@@ -128,10 +129,15 @@ static enum result adcUnitInit(void *object, const void *configBase)
   unit->irq = ADC_IRQ;
   unit->reg = LPC_ADC;
 
+  /* Configure peripheral clock */
+
+  assert(config->frequency <= MAX_FREQUENCY);
+
+  const uint32_t frequency = config->frequency ?
+      config->frequency : MAX_FREQUENCY;
   LPC_ADC_Type * const reg = unit->reg;
 
-  /* Set system clock divider */
-  reg->CR = CR_CLKDIV(clockFrequency(MainClock) / 4500000);
+  reg->CR = CR_CLKDIV(clockFrequency(MainClock) / frequency);
 
   return E_OK;
 }

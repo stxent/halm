@@ -21,6 +21,8 @@ extern const struct EntityClass * const AdcUnitBase;
 /*----------------------------------------------------------------------------*/
 struct AdcUnitBaseConfig
 {
+  /** Optional: desired clock. */
+  uint32_t frequency;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

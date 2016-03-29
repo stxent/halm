@@ -7,8 +7,6 @@
 #ifndef HALM_PLATFORM_NXP_LPC17XX_ADC_BASE_H_
 #define HALM_PLATFORM_NXP_LPC17XX_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
-#define ADC_RESOLUTION 12 /* Bits */
-/*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
 enum adcEvent
 {

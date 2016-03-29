@@ -57,6 +57,7 @@ static enum result adcUnitInit(void *object, const void *configBase)
 {
   const struct AdcUnitConfig * const config = configBase;
   const struct AdcUnitBaseConfig baseConfig = {
+      .frequency = config->frequency,
       .channel = config->channel
   };
   struct AdcUnit * const unit = object;
@@ -75,6 +76,9 @@ static enum result adcUnitInit(void *object, const void *configBase)
 
   /* Disable interrupts for conversion completion */
   reg->INTEN = 0;
+
+  /* Configure priority */
+  irqSetPriority(unit->base.irq, config->priority);
 
   return E_OK;
 }
