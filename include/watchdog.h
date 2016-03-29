@@ -9,8 +9,8 @@
  * Abstract watchdog class.
  */
 
-#ifndef WATCHDOG_H_
-#define WATCHDOG_H_
+#ifndef HALM_WATCHDOG_H_
+#define HALM_WATCHDOG_H_
 /*----------------------------------------------------------------------------*/
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
@@ -50,4 +50,4 @@ static inline void watchdogRestart(void *timer)
   ((const struct WatchdogClass *)CLASS(timer))->restart(timer);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* WATCHDOG_H_ */
+#endif /* HALM_WATCHDOG_H_ */

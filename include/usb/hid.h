@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_HID_H_
-#define USB_HID_H_
+#ifndef HALM_USB_HID_H_
+#define HALM_USB_HID_H_
 /*----------------------------------------------------------------------------*/
 #include <usb/hid_base.h>
 /*----------------------------------------------------------------------------*/
@@ -69,4 +69,4 @@ struct Hid
   struct HidBase *driver;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* USB_HID_H_ */
+#endif /* HALM_USB_HID_H_ */

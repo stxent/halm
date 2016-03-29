@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC43XX_PLATFORM_DEFS_H_
-#define PLATFORM_NXP_LPC43XX_PLATFORM_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_LPC43XX_PLATFORM_DEFS_H_
+#define HALM_PLATFORM_NXP_LPC43XX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 3
 /*------------------Clock Generation Unit-------------------------------------*/
@@ -2268,4 +2268,4 @@ typedef struct
 #define LPC_CCU2          ((LPC_CCU2_Type *)LPC_CCU2_BASE)
 #define LPC_RGU           ((LPC_RGU_Type *)LPC_RGU_BASE)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC43XX_PLATFORM_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC43XX_PLATFORM_DEFS_H_ */

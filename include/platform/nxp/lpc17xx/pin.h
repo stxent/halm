@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC17XX_PIN_H_
-#define PLATFORM_NXP_LPC17XX_PIN_H_
+#ifndef HALM_PLATFORM_NXP_LPC17XX_PIN_H_
+#define HALM_PLATFORM_NXP_LPC17XX_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -41,4 +41,4 @@ static inline void pinWrite(struct Pin pin, uint8_t value)
     ((LPC_GPIO_Type *)pin.reg)->CLR = 1 << pin.data.offset;
 }
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC17XX_PIN_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC17XX_PIN_H_ */

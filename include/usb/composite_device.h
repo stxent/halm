@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_COMPOSITE_DEVICE_H_
-#define USB_COMPOSITE_DEVICE_H_
+#ifndef HALM_USB_COMPOSITE_DEVICE_H_
+#define HALM_USB_COMPOSITE_DEVICE_H_
 /*----------------------------------------------------------------------------*/
 #include <containers/list.h>
 #include <usb/usb.h>
@@ -64,4 +64,4 @@ static inline uint8_t usbCompositeDevIndex(const void *device)
   return ((const struct CompositeDeviceClass *)CLASS(device))->index(device);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* USB_COMPOSITE_DEVICE_H_ */
+#endif /* HALM_USB_COMPOSITE_DEVICE_H_ */

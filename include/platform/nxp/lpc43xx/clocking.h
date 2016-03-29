@@ -9,8 +9,8 @@
  * Clock configuration functions for LPC43xx series.
  */
 
-#ifndef PLATFORM_NXP_LPC43XX_CLOCKING_H_
-#define PLATFORM_NXP_LPC43XX_CLOCKING_H_
+#ifndef HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_
+#define HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 #include <pin.h>
@@ -171,4 +171,4 @@ struct PllConfig
   uint8_t divisor;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC43XX_CLOCKING_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_ */

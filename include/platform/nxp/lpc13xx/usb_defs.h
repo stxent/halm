@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC13XX_USB_DEFS_H_
-#define PLATFORM_NXP_LPC13XX_USB_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_LPC13XX_USB_DEFS_H_
+#define HALM_PLATFORM_NXP_LPC13XX_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------USB Device Interrupt registers----------------------------*/
@@ -128,4 +128,4 @@ enum usbCommand
 #define EP_TO_INDEX(ep)     ((((ep) & 0x0F) << 1) | (((ep) & 0x80) >> 7))
 #define INDEX_TO_EP(index)  ((((index) << 7) & 0x80) | (((index) >> 1) & 0x0F))
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC13XX_USB_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC13XX_USB_DEFS_H_ */

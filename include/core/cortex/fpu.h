@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CORE_CORTEX_FPU_H_
-#define CORE_CORTEX_FPU_H_
+#ifndef HALM_CORE_CORTEX_FPU_H_
+#define HALM_CORE_CORTEX_FPU_H_
 /*----------------------------------------------------------------------------*/
 #include <libhalm/target.h>
 /*----------------------------------------------------------------------------*/
@@ -13,4 +13,4 @@
 #define HEADER_PATH <core/CORE_TYPE/CORE/fpu.h>
 #include HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* CORE_CORTEX_FPU_H_ */
+#endif /* HALM_CORE_CORTEX_FPU_H_ */

@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CORE_CORTEX_SYSTICK_H_
-#define CORE_CORTEX_SYSTICK_H_
+#ifndef HALM_CORE_CORTEX_SYSTICK_H_
+#define HALM_CORE_CORTEX_SYSTICK_H_
 /*----------------------------------------------------------------------------*/
 #include <irq.h>
 #include <timer.h>
@@ -37,4 +37,4 @@ struct SysTickTimer
   uint32_t overflow;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* CORE_CORTEX_SYSTICK_H_ */
+#endif /* HALM_CORE_CORTEX_SYSTICK_H_ */

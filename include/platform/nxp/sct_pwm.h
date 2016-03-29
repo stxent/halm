@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_SCT_PWM_H_
-#define PLATFORM_NXP_SCT_PWM_H_
+#ifndef HALM_PLATFORM_NXP_SCT_PWM_H_
+#define HALM_PLATFORM_NXP_SCT_PWM_H_
 /*----------------------------------------------------------------------------*/
 #include <platform/nxp/sct_base.h>
 #include <pwm.h>
@@ -89,4 +89,4 @@ struct SctPwmDoubleEdge
 void *sctPwmCreate(void *, pinNumber, uint32_t);
 void *sctPwmCreateDoubleEdge(void *, pinNumber, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_SCT_PWM_H_ */
+#endif /* HALM_PLATFORM_NXP_SCT_PWM_H_ */

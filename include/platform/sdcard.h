@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_SDCARD_H_
-#define PLATFORM_SDCARD_H_
+#ifndef HALM_PLATFORM_SDCARD_H_
+#define HALM_PLATFORM_SDCARD_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <pin.h>
@@ -76,4 +76,4 @@ struct SdCard
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_SDCARD_H_ */
+#endif /* HALM_PLATFORM_SDCARD_H_ */

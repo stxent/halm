@@ -9,8 +9,8 @@
  * Abstract interrupt class.
  */
 
-#ifndef INTERRUPT_H_
-#define INTERRUPT_H_
+#ifndef HALM_INTERRUPT_H_
+#define HALM_INTERRUPT_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
@@ -54,4 +54,4 @@ static inline void intSetEnabled(void *interrupt, bool state)
       state);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* INTERRUPT_H_ */
+#endif /* HALM_INTERRUPT_H_ */

@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC43XX_PIN_H_
-#define PLATFORM_NXP_LPC43XX_PIN_H_
+#ifndef HALM_PLATFORM_NXP_LPC43XX_PIN_H_
+#define HALM_PLATFORM_NXP_LPC43XX_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <assert.h>
 #include <platform/platform_defs.h>
@@ -95,4 +95,4 @@ static inline void pinSetType(struct Pin pin __attribute__((unused)),
   /* Pin type control is not supported on these devices */
 }
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC43XX_PIN_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC43XX_PIN_H_ */

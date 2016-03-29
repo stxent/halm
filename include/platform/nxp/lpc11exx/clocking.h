@@ -9,8 +9,8 @@
  * Clock configuration functions for LPC11Exx series.
  */
 
-#ifndef PLATFORM_NXP_LPC11EXX_CLOCKING_H_
-#define PLATFORM_NXP_LPC11EXX_CLOCKING_H_
+#ifndef HALM_PLATFORM_NXP_LPC11EXX_CLOCKING_H_
+#define HALM_PLATFORM_NXP_LPC11EXX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
@@ -113,4 +113,4 @@ struct CommonClockConfig
   enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC11EXX_CLOCKING_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC11EXX_CLOCKING_H_ */

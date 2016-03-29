@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GEN_1_ADC_UNIT_H_
-#define PLATFORM_NXP_GEN_1_ADC_UNIT_H_
+#ifndef HALM_PLATFORM_NXP_GEN_1_ADC_UNIT_H_
+#define HALM_PLATFORM_NXP_GEN_1_ADC_UNIT_H_
 /*----------------------------------------------------------------------------*/
 #include <platform/nxp/gen_1/adc_base.h>
 #include <spinlock.h>
@@ -34,4 +34,4 @@ struct AdcUnit
 enum result adcUnitRegister(struct AdcUnit *, void (*)(void *), void *);
 void adcUnitUnregister(struct AdcUnit *);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GEN_1_ADC_UNIT_H_ */
+#endif /* HALM_PLATFORM_NXP_GEN_1_ADC_UNIT_H_ */

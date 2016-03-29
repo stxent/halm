@@ -9,8 +9,8 @@
  * Abstract class for outputs with Pulse Width Modulation capability.
  */
 
-#ifndef PWM_H_
-#define PWM_H_
+#ifndef HALM_PWM_H_
+#define HALM_PWM_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <entity.h>
@@ -87,4 +87,4 @@ static inline enum result pwmSetFrequency(void *channel, uint32_t frequency)
       frequency);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* PWM_H_ */
+#endif /* HALM_PWM_H_ */

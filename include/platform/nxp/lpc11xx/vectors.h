@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC11XX_VECTORS_H_
-#define PLATFORM_NXP_LPC11XX_VECTORS_H_
+#ifndef HALM_PLATFORM_NXP_LPC11XX_VECTORS_H_
+#define HALM_PLATFORM_NXP_LPC11XX_VECTORS_H_
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -29,4 +29,4 @@ enum
   PIOINT0_IRQ   = 31
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC11XX_VECTORS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC11XX_VECTORS_H_ */

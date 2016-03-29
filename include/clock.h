@@ -9,8 +9,8 @@
  * Abstract class for clock subsystem components.
  */
 
-#ifndef CLOCK_H_
-#define CLOCK_H_
+#ifndef HALM_CLOCK_H_
+#define HALM_CLOCK_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <stdbool.h>
@@ -65,4 +65,4 @@ static inline bool clockReady(const void *clock)
   return ((const struct ClockClass *)clock)->ready(clock);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* CLOCK_H_ */
+#endif /* HALM_CLOCK_H_ */

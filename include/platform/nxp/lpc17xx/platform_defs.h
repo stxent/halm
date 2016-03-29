@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
-#define PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
+#define HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 5
 /*------------------System Control--------------------------------------------*/
@@ -871,4 +871,4 @@ typedef struct
 #define LPC_USB         ((LPC_USB_Type *)LPC_USB_BASE)
 #define LPC_WDT         ((LPC_WDT_Type *)LPC_WDT_BASE)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_ */

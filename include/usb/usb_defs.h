@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_USB_DEFS_H_
-#define USB_USB_DEFS_H_
+#ifndef HALM_USB_USB_DEFS_H_
+#define HALM_USB_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <bits.h>
@@ -246,4 +246,4 @@ struct UsbStringDescriptor
   uint16_t langid;
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
-#endif /* USB_USB_DEFS_H_ */
+#endif /* HALM_USB_USB_DEFS_H_ */

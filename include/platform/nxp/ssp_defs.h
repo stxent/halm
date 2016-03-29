@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_SSP_DEFS_H_
-#define PLATFORM_NXP_SSP_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_SSP_DEFS_H_
+#define HALM_PLATFORM_NXP_SSP_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Control Register 0----------------------------------------*/
@@ -68,4 +68,4 @@
 #define DMACR_RXDMAE                    BIT(0) /* Receive DMA enable */
 #define DMACR_TXDMAE                    BIT(1) /* Transmit DMA enable */
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_SSP_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_SSP_DEFS_H_ */

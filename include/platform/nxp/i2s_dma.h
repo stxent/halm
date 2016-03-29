@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_I2S_DMA_H_
-#define PLATFORM_NXP_I2S_DMA_H_
+#ifndef HALM_PLATFORM_NXP_I2S_DMA_H_
+#define HALM_PLATFORM_NXP_I2S_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <dma.h>
 #include <platform/nxp/i2s_base.h>
@@ -85,4 +85,4 @@ struct I2sDma
   bool tx;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_I2S_DMA_H_ */
+#endif /* HALM_PLATFORM_NXP_I2S_DMA_H_ */

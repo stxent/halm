@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_HID_DEFS_H_
-#define USB_HID_DEFS_H_
+#ifndef HALM_USB_HID_DEFS_H_
+#define HALM_USB_HID_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <bits.h>
@@ -247,4 +247,4 @@ struct AbstractHidDescriptor
   struct HidDescriptorEntry entries[];
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
-#endif /* USB_HID_DEFS_H_ */
+#endif /* HALM_USB_HID_DEFS_H_ */

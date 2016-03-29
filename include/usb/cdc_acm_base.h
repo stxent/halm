@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_CDC_ACM_BASE_H_
-#define USB_CDC_ACM_BASE_H_
+#ifndef HALM_USB_CDC_ACM_BASE_H_
+#define HALM_USB_CDC_ACM_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <usb/cdc_acm_defs.h>
@@ -48,4 +48,4 @@ struct CdcAcmBase
   void *local;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* USB_CDC_ACM_BASE_H_ */
+#endif /* HALM_USB_CDC_ACM_BASE_H_ */

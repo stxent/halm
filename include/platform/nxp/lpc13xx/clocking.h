@@ -9,8 +9,8 @@
  * Clock configuration functions for LPC13xx series.
  */
 
-#ifndef PLATFORM_NXP_LPC13XX_CLOCKING_H_
-#define PLATFORM_NXP_LPC13XX_CLOCKING_H_
+#ifndef HALM_PLATFORM_NXP_LPC13XX_CLOCKING_H_
+#define HALM_PLATFORM_NXP_LPC13XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
 /*----------------------------------------------------------------------------*/
@@ -121,4 +121,4 @@ struct CommonClockConfig
   uint8_t divisor;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC13XX_CLOCKING_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC13XX_CLOCKING_H_ */

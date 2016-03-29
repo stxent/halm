@@ -9,8 +9,8 @@
  * Direct Memory Access interface for embedded systems.
  */
 
-#ifndef DMA_H_
-#define DMA_H_
+#ifndef HALM_DMA_H_
+#define HALM_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <stddef.h>
 #include <entity.h>
@@ -129,4 +129,4 @@ static inline void dmaStop(void *channel)
   ((const struct DmaClass *)CLASS(channel))->stop(channel);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* DMA_H_ */
+#endif /* HALM_DMA_H_ */

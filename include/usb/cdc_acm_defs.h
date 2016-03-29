@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_CDC_ACM_DEFS_H_
-#define USB_CDC_ACM_DEFS_H_
+#ifndef HALM_USB_CDC_ACM_DEFS_H_
+#define HALM_USB_CDC_ACM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
@@ -76,4 +76,4 @@ struct CdcLineCoding
   uint8_t dataBits;
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
-#endif /* USB_CDC_ACM_DEFS_H_ */
+#endif /* HALM_USB_CDC_ACM_DEFS_H_ */

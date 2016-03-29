@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CORE_CORTEX_FPU_DEFS_H_
-#define CORE_CORTEX_FPU_DEFS_H_
+#ifndef HALM_CORE_CORTEX_FPU_DEFS_H_
+#define HALM_CORE_CORTEX_FPU_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Coprocessor Access Control Register-----------------------*/
@@ -54,4 +54,4 @@ enum
 #define FPSCR_DN                        BIT(25)
 #define FPSCR_AHP                       BIT(26)
 /*----------------------------------------------------------------------------*/
-#endif /* CORE_CORTEX_FPU_DEFS_H_ */
+#endif /* HALM_CORE_CORTEX_FPU_DEFS_H_ */

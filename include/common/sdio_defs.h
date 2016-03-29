@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef COMMON_SDIO_DEFS_H_
-#define COMMON_SDIO_DEFS_H_
+#ifndef HALM_COMMON_SDIO_DEFS_H_
+#define HALM_COMMON_SDIO_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
@@ -42,4 +42,4 @@ enum cardState
 #define CURRENT_STATE(response) \
     FIELD_VALUE((response), CURRENT_STATE_MASK, 9)
 /*----------------------------------------------------------------------------*/
-#endif /* COMMON_SDIO_DEFS_H_ */
+#endif /* HALM_COMMON_SDIO_DEFS_H_ */

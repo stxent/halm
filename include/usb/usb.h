@@ -9,8 +9,8 @@
  * Abstract classes for USB Device, USB Endpoint and USB Driver.
  */
 
-#ifndef USB_USB_H_
-#define USB_USB_H_
+#ifndef HALM_USB_USB_H_
+#define HALM_USB_USB_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
@@ -313,4 +313,4 @@ static inline void usbDriverEvent(void *driver, unsigned int event)
   ((const struct UsbDriverClass *)CLASS(driver))->event(driver, event);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* USB_USB_H_ */
+#endif /* HALM_USB_USB_H_ */

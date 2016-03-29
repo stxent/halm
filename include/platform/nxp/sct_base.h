@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_SCT_BASE_H_
-#define PLATFORM_NXP_SCT_BASE_H_
+#ifndef HALM_PLATFORM_NXP_SCT_BASE_H_
+#define HALM_PLATFORM_NXP_SCT_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <irq.h>
 #include <pin.h>
@@ -66,4 +66,4 @@ int sctAllocateEvent(struct SctBase *);
 uint32_t sctGetClock(const struct SctBase *);
 void sctReleaseEvent(struct SctBase *, int);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_SCT_BASE_H_ */
+#endif /* HALM_PLATFORM_NXP_SCT_BASE_H_ */
