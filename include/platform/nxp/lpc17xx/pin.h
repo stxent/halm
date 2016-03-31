@@ -20,7 +20,7 @@ void pinSetSlewRate(struct Pin, enum pinSlewRate);
 /*----------------------------------------------------------------------------*/
 static inline uint8_t pinRead(struct Pin pin)
 {
-  return (((LPC_GPIO_Type *)pin.reg)->PIN & (1 << pin.data.offset)) != 0;
+  return (((const LPC_GPIO_Type *)pin.reg)->PIN & (1 << pin.data.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)

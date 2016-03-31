@@ -47,8 +47,8 @@ static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union PinData data)
 {
-  return (LPC_GPIO_Type *)(((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0)
-      * data.port + (uint32_t)LPC_GPIO0);
+  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
+      + data.port * ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0));
 }
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcControlReg(union PinData data)

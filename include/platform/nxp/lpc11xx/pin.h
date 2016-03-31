@@ -19,7 +19,7 @@ void pinSetType(struct Pin, enum pinType);
 /*----------------------------------------------------------------------------*/
 static inline uint8_t pinRead(struct Pin pin)
 {
-  return (((LPC_GPIO_Type *)pin.reg)->DATA & (1 << pin.data.offset)) != 0;
+  return (((const LPC_GPIO_Type *)pin.reg)->DATA & (1 << pin.data.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)

@@ -37,12 +37,12 @@ struct GpTimerCaptureConfig
 {
   /** Mandatory: peripheral unit. */
   struct GpTimerCaptureUnit *parent;
-  /** Mandatory: pin used as an input. */
-  pinNumber pin;
   /** Mandatory: capture mode. */
   enum pinEvent event;
   /** Optional: enables pull-up or pull-down resistors for input pin. */
   enum pinPull pull;
+  /** Mandatory: pin used as an input. */
+  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerCapture
@@ -56,12 +56,10 @@ struct GpTimerCapture
   struct GpTimerCaptureUnit *unit;
   /* Pointer to a capture register */
   const volatile uint32_t *value;
-  /* Channel identifier */
-  uint8_t channel;
   /* Capture event */
   enum pinEvent event;
+  /* Channel identifier */
+  uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
-void *gpTimerCaptureCreate(void *, pinNumber);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPTIMER_CAPTURE_H_ */

@@ -22,7 +22,7 @@ struct HidBaseConfig
   /** Mandatory: USB device. */
   void *device;
   /** Mandatory: report descriptor. */
-  void *descriptor;
+  const void *descriptor;
   /** Mandatory: size of the report descriptor. */
   uint16_t descriptorSize;
   /** Mandatory: size of the report. */
