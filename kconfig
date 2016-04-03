@@ -164,6 +164,11 @@ config PLATFORM_NXP_GPTIMER_CAPTURE
 	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE
 
+config PLATFORM_NXP_GPTIMER_COUNTER
+	bool "Counter on general-purpose timer"
+	default y
+	depends on PLATFORM_NXP_GPTIMER_BASE
+
 config PLATFORM_NXP_GPTIMER_PWM
 	bool "PWM on general-purpose timer"
 	default y

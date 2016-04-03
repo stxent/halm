@@ -56,6 +56,10 @@ ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER_CAPTURE),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/gptimer_capture.c
 endif
 
+ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER_COUNTER),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/gptimer_counter.c
+endif
+
 ifeq ($(CONFIG_PLATFORM_NXP_GPTIMER_PWM),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/gptimer_pwm.c
 endif
