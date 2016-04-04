@@ -37,7 +37,7 @@ static enum result busInit(void *object, const void *configBase)
   assert(first.data.port == last.data.port);
   assert(first.data.offset < last.data.offset);
 
-  for (unsigned int index = first.data.offset; index < last.data.offset;
+  for (unsigned int index = first.data.offset; index <= last.data.offset;
       ++index)
   {
     const struct Pin pin = pinInit(PIN(first.data.port, index));
