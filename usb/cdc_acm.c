@@ -85,11 +85,9 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   {
     interface->queuedTxBytes -= request->base.length;
 
-    if (interface->zeroPacketRequired)
+    if (!interface->queuedTxBytes && request->base.length == CDC_DATA_EP_SIZE)
     {
-      interface->zeroPacketRequired = false;
-
-      /* Send empty packet to finish data transfer */
+      /* Send empty packet to finalize data transfer */
       request->base.length = 0;
 
       if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
@@ -127,7 +125,6 @@ static void resetBuffers(struct CdcAcm *interface)
 
   interface->queuedRxBytes = 0;
   interface->queuedTxBytes = 0;
-  interface->zeroPacketRequired = false;
 }
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *interface)
@@ -210,7 +207,6 @@ static enum result interfaceInit(void *object, const void *configBase)
   interface->queuedTxBytes = 0;
   interface->suspended = true;
   interface->updated = false;
-  interface->zeroPacketRequired = false;
 
   interface->notificationEp = usbDevCreateEndpoint(config->device,
       config->endpoint.interrupt);
@@ -426,9 +422,6 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     memcpy(request->buffer, bufferPosition, bytesToWrite);
     bufferPosition += bytesToWrite;
     length -= bytesToWrite;
-
-    /* Append zero length packet when the last packet has maximum length */
-    interface->zeroPacketRequired = !length && bytesToWrite == CDC_DATA_EP_SIZE;
 
     if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
     {

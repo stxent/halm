@@ -73,7 +73,6 @@ struct CdcAcm
 
   bool suspended;
   bool updated;
-  bool zeroPacketRequired;
 };
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *);
