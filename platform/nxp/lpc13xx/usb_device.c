@@ -458,19 +458,27 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
   /* Set packet length */
   reg->USBTxPLen = length;
 
-  /* Write data */
-  size_t position = 0;
-  uint32_t word = 0;
-
-  while (position < length)
+  if (length == 0)
   {
-    *((uint8_t *)&word + (position & 0x03)) = buffer[position];
-    ++position;
+    /* To send an empty packet a single write operation has to be performed */
+    reg->USBTxData = 0;
+  }
+  else
+  {
+    /* Write data */
+    size_t position = 0;
+    uint32_t word = 0;
 
-    if (!(position & 0x03) || position == length)
+    while (position < length)
     {
-      reg->USBTxData = word;
-      word = 0;
+      word |= buffer[position] << ((position & 0x03) << 3);
+      ++position;
+
+      if (!(position & 0x03) || position == length)
+      {
+        reg->USBTxData = word;
+        word = 0;
+      }
     }
   }
 

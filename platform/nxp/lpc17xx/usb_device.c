@@ -472,7 +472,7 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
 
   while (position < length)
   {
-    *((uint8_t *)&word + (position & 0x03)) = buffer[position];
+    word |= buffer[position] << ((position & 0x03) << 3);
     ++position;
 
     if (!(position & 0x03) || position == length)
