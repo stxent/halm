@@ -189,10 +189,6 @@ static enum result interfaceInit(void *object, const void *configBase)
   };
   enum result res;
 
-  interface->driver = init(CdcAcmBase, &driverConfig);
-  if (!interface->driver)
-    return E_ERROR;
-
   res = queueInit(&interface->rxRequestQueue, sizeof(struct UsbRequest *),
       config->rxBuffers);
   if (res != E_OK)
@@ -246,6 +242,11 @@ static enum result interfaceInit(void *object, const void *configBase)
     queuePush(&interface->txRequestQueue, &request);
     ++request;
   }
+
+  /* Base part should be initialized when all other parts are already created */
+  interface->driver = init(CdcAcmBase, &driverConfig);
+  if (!interface->driver)
+    return E_ERROR;
 
   return E_OK;
 }
