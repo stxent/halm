@@ -205,13 +205,6 @@ static enum result driverInit(void *object, const void *configBase)
   if ((res = buildDescriptors(driver, config)) != E_OK)
     return res;
 
-  if ((res = usbDevBind(driver->device, driver)) != E_OK)
-    return res;
-
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-  usbDevSetConnected(driver->device, true);
-#endif
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
