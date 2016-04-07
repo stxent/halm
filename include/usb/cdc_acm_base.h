@@ -38,14 +38,17 @@ struct CdcAcmBase
 {
   struct UsbDriver base;
 
+  /* Upper-half driver */
   struct CdcAcm *owner;
+  /* USB peripheral */
   struct UsbDevice *device;
 
+  /* Line settings */
   struct CdcLineCoding lineCoding;
   uint8_t controlLineState;
   uint8_t controlInterfaceIndex;
 
-  void *local;
+  void *privateData;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_CDC_ACM_BASE_H_ */

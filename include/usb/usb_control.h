@@ -42,7 +42,7 @@ struct UsbControl
   struct UsbRequest *outRequest;
 
   /* Project-specific data */
-  void *local;
+  void *privateData;
 };
 /*----------------------------------------------------------------------------*/
 enum result usbControlAppendDescriptor(struct UsbControl *, const void *);

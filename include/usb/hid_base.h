@@ -47,7 +47,7 @@ struct HidBase
   uint8_t idleTime;
   uint8_t interfaceIndex;
 
-  void *local;
+  void *privateData;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_HID_BASE_H_ */
