@@ -11,6 +11,7 @@
 /*----------------------------------------------------------------------------*/
 #define CDC_CONTROL_EP_SIZE       64
 #define CDC_DATA_EP_SIZE          64
+#define CDC_DATA_EP_SIZE_HS       512
 #define CDC_NOTIFICATION_EP_SIZE  12
 /*----------------------------------------------------------------------------*/
 enum

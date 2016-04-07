@@ -48,6 +48,9 @@ struct CdcAcmBase
   uint8_t controlLineState;
   uint8_t controlInterfaceIndex;
 
+  /* Speed of the USB interface */
+  uint8_t speed;
+
   void *privateData;
 };
 /*----------------------------------------------------------------------------*/

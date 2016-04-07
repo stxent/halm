@@ -20,6 +20,7 @@ static void waitForInt(struct UsbDevice *, uint32_t);
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
 static void *devCreateEndpoint(void *, uint8_t);
+static enum usbSpeed devGetSpeed(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
 static enum result devBind(void *, void *);
@@ -35,6 +36,7 @@ static const struct UsbDeviceClass devTable = {
     .deinit = devDeinit,
 
     .createEndpoint = devCreateEndpoint,
+    .getSpeed = devGetSpeed,
     .setAddress = devSetAddress,
     .setConnected = devSetConnected,
 
@@ -302,6 +304,11 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   irqRestore(state);
   return endpoint;
+}
+/*----------------------------------------------------------------------------*/
+static enum usbSpeed devGetSpeed(const void *object __attribute__((unused)))
+{
+  return USB_FS;
 }
 /*----------------------------------------------------------------------------*/
 static void devSetAddress(void *object, uint8_t address)

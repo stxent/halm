@@ -363,6 +363,7 @@ static enum result driverInit(void *object, const void *configBase)
   driver->lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
   driver->controlLineState = 0;
   driver->controlInterfaceIndex = 0;
+  driver->speed = USB_FS;
 
   if ((res = buildDescriptors(driver, config)) != E_OK)
     return res;
@@ -413,6 +414,27 @@ static enum result driverConfigure(void *object,
 static void driverEvent(void *object, unsigned int event)
 {
   struct CdcAcmBase * const driver = object;
+
+#ifdef CONFIG_USB_DEVICE_HS
+  if (event == DEVICE_EVENT_PORT_CHANGE)
+  {
+    driver->speed = usbDevGetSpeed(driver->device);
+
+    struct PrivateData * const privateData = driver->privateData;
+    uint16_t maxPacketSize;
+
+    if (driver->speed == USB_HS)
+      maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE_HS);
+    else
+      maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
+
+    privateData->endpointDescriptors[1].maxPacketSize = maxPacketSize;
+    privateData->endpointDescriptors[2].maxPacketSize = maxPacketSize;
+
+    usbTrace("cdc_acm: current speed is %s",
+        driver->speed == USB_HS ? "HS" : "FS");
+  }
+#endif
 
   cdcAcmOnEvent(driver->owner, event);
 }

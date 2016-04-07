@@ -203,6 +203,10 @@ ifeq ($(CONFIG_PLATFORM_USB),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_base.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/usb_device.c
 
+  ifeq ($(CONFIG_PLATFORM_USB_HS),y)
+    PROJECT_FLAGS += CONFIG_PLATFORM_USB_HS
+  endif
+
   ifeq ($(CONFIG_PLATFORM_USB_0),y)
     PROJECT_FLAGS += CONFIG_PLATFORM_USB_0
   endif

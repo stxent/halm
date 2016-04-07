@@ -23,12 +23,21 @@
 /*----------------------------------------------------------------------------*/
 struct UsbSetupPacket;
 /*----------------------------------------------------------------------------*/
+enum usbSpeed
+{
+  USB_LS,
+  USB_FS,
+  USB_HS,
+  USB_SS
+};
+/*----------------------------------------------------------------------------*/
 enum usbDeviceEvent
 {
   DEVICE_EVENT_RESET,
   DEVICE_EVENT_SUSPEND,
   DEVICE_EVENT_RESUME,
-  DEVICE_EVENT_FRAME
+  DEVICE_EVENT_FRAME,
+  DEVICE_EVENT_PORT_CHANGE
 };
 /*----------------------------------------------------------------------------*/
 enum usbRequestStatus
@@ -71,6 +80,7 @@ struct UsbDeviceClass
   CLASS_HEADER
 
   void *(*createEndpoint)(void *, uint8_t);
+  enum usbSpeed (*getSpeed)(const void *);
   void (*setAddress)(void *, uint8_t);
   void (*setConnected)(void *, bool);
 
@@ -94,6 +104,16 @@ static inline void *usbDevCreateEndpoint(void *device, uint8_t address)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->createEndpoint(device,
       address);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get current interface speed.
+ * @param device Pointer to an UsbDevice object.
+ * @return Current interface speed.
+ */
+static inline enum usbSpeed usbDevGetSpeed(const void *device)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->getSpeed(device);
 }
 /*----------------------------------------------------------------------------*/
 /**

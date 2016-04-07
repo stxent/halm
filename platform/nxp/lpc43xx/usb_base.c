@@ -213,7 +213,6 @@ static enum result devInit(void *object, const void *configBase)
     device->irq = USB1_IRQ;
     device->reg = LPC_USB1;
 
-    LPC_USB1->PORTSC1_D |= PORTSC1_D_PFSC;
     LPC_SCU->SFSUSB = SFSUSB_ESEA | SFSUSB_EPWR | SFSUSB_VBUS;
 
 #ifdef CONFIG_PLATFORM_USB_1

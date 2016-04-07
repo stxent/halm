@@ -204,6 +204,19 @@ struct UsbDeviceDescriptor
   uint8_t numConfigurations;
 } __attribute__((packed));
 
+struct UsbDeviceQualifierDescriptor
+{
+  uint8_t length;
+  uint8_t descriptorType;
+  uint16_t usb;
+  uint8_t deviceClass;
+  uint8_t deviceSubClass;
+  uint8_t deviceProtocol;
+  uint8_t maxPacketSize;
+  uint8_t numConfigurations;
+  uint8_t reserved;
+} __attribute__((packed));
+
 struct UsbEndpointDescriptor
 {
   uint8_t length;

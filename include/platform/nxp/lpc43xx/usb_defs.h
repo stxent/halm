@@ -105,7 +105,9 @@ enum
 #define PORTSC1_D_PTC3_0(value)         BIT_FIELD((value), 16)
 #define PORTSC1_D_PHCD                  BIT(23)
 #define PORTSC1_D_PFSC                  BIT(24)
-#define PORTSC1_D_PSPD(value)           BIT_FIELD((value), 26)
+#define PORTSC1_D_PSPD_MASK             BIT_FIELD(MASK(2), 26)
+#define PORTSC1_D_PSPD_VALUE(reg) \
+    FIELD_VALUE((reg), PORTSC1_D_PSPD_MASK, 26)
 
 /* Host mode */
 #define PORTSC1_H_CCS                   BIT(0)
