@@ -57,7 +57,7 @@ static enum result pll1ClockEnable(const void *, const void *);
 static uint32_t pll1ClockFrequency(const void *);
 static bool pll1ClockReady(const void *);
 
-static enum result outputClockEnable(const void *, const void *);
+static enum result clockOutputEnable(const void *, const void *);
 
 static void commonClockDisable(const void *);
 static enum result commonClockEnable(const void *, const void *);
@@ -352,7 +352,7 @@ static const struct CommonClockClass audioClockTable = {
 static const struct CommonClockClass outClockTable = {
     .base = {
         .disable = commonClockDisable,
-        .enable = outputClockEnable,
+        .enable = clockOutputEnable,
         .frequency = commonClockFrequency,
         .ready = commonClockReady
     },
@@ -362,7 +362,7 @@ static const struct CommonClockClass outClockTable = {
 static const struct CommonClockClass cguOut0ClockTable = {
     .base = {
         .disable = commonClockDisable,
-        .enable = outputClockEnable,
+        .enable = clockOutputEnable,
         .frequency = commonClockFrequency,
         .ready = commonClockReady
     },
@@ -372,14 +372,14 @@ static const struct CommonClockClass cguOut0ClockTable = {
 static const struct CommonClockClass cguOut1ClockTable = {
     .base = {
         .disable = commonClockDisable,
-        .enable = outputClockEnable,
+        .enable = clockOutputEnable,
         .frequency = commonClockFrequency,
         .ready = commonClockReady
     },
     .branch = CLOCK_BASE_CGU_OUT1
 };
 /*----------------------------------------------------------------------------*/
-static const struct PinEntry outputClockPins[] = {
+static const struct PinEntry clockOutputPins[] = {
     {
         .key = PIN(PORT_1, 19), /* CLKOUT */
         .channel = CLOCK_BASE_OUT,
@@ -972,16 +972,16 @@ static bool pll1ClockReady(const void *clockBase __attribute__((unused)))
   return pll1Frequency && (LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static enum result outputClockEnable(const void *clockBase,
+static enum result clockOutputEnable(const void *clockBase,
     const void *configBase)
 {
   const struct CommonClockClass * const clock = clockBase;
-  const struct OutputClockConfig * const config = configBase;
+  const struct ClockOutputConfig * const config = configBase;
   const struct CommonClockConfig baseConfig = {
       .source = config->source
   };
 
-  const struct PinEntry * const pinEntry = pinFind(outputClockPins,
+  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
       config->pin, clock->branch);
   assert(pinEntry);
 

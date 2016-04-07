@@ -13,14 +13,42 @@
 #define HALM_PLATFORM_NXP_LPC17XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
+#include <pin.h>
+/*----------------------------------------------------------------------------*/
+enum clockSource
+{
+  CLOCK_INTERNAL,
+  CLOCK_EXTERNAL,
+  CLOCK_PLL,
+  CLOCK_RTC,
+  CLOCK_USB_PLL,
+  CLOCK_MAIN
+};
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const RtcOsc;
 extern const struct ClockClass * const SystemPll;
 extern const struct ClockClass * const UsbPll;
+extern const struct ClockClass * const ClockOutput;
 extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const UsbClock;
+/*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Mandatory: output pin. */
+  pinNumber pin;
+  /** Optional: input clock divisor in the range of 1 to 16. */
+  uint8_t divisor;
+};
+/*----------------------------------------------------------------------------*/
+struct CommonClockConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+};
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -34,16 +62,6 @@ struct ExternalOscConfig
    * an external clock source instead of the crystal oscillator.
    */
   bool bypass;
-};
-/*----------------------------------------------------------------------------*/
-enum clockSource
-{
-  CLOCK_INTERNAL,
-  CLOCK_EXTERNAL,
-  CLOCK_PLL,
-  CLOCK_RTC,
-  CLOCK_USB_PLL,
-  CLOCK_MAIN
 };
 /*----------------------------------------------------------------------------*/
 struct PllConfig
@@ -74,12 +92,6 @@ struct PllConfig
    * @n USB PLL accepts a limited set of values: 2, 4, 8, 16.
    */
   uint8_t divisor;
-};
-/*----------------------------------------------------------------------------*/
-struct CommonClockConfig
-{
-  /** Mandatory: clock source. */
-  enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_CLOCKING_H_ */

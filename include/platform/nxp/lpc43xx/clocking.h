@@ -109,9 +109,17 @@ extern const struct CommonClockClass * const Uart1Clock;
 extern const struct CommonClockClass * const Usart2Clock;
 extern const struct CommonClockClass * const Usart3Clock;
 extern const struct CommonClockClass * const AudioClock;
-extern const struct CommonClockClass * const OutClock;
+extern const struct CommonClockClass * const ClockOutput;
 extern const struct CommonClockClass * const CguOut0Clock;
 extern const struct CommonClockClass * const CguOut1Clock;
+/*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Mandatory: output pin. */
+  pinNumber pin;
+};
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig
 {
@@ -144,14 +152,6 @@ struct ExternalOscConfig
    * an external clock source instead of the crystal oscillator.
    */
   bool bypass;
-};
-/*----------------------------------------------------------------------------*/
-struct OutputClockConfig
-{
-  /** Mandatory: clock source. */
-  enum clockSource source;
-  /** Mandatory: output pin. */
-  pinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct PllConfig

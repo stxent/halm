@@ -13,6 +13,7 @@
 #define HALM_PLATFORM_NXP_LPC11XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 enum clockBranch
 {
@@ -65,6 +66,24 @@ extern const struct CommonClockClass * const ClockOutput;
 extern const struct CommonClockClass * const MainClock;
 extern const struct CommonClockClass * const WdtClock;
 /*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Mandatory: output pin. */
+  pinNumber pin;
+  /** Optional: input clock divisor in the range of 1 to 255. */
+  uint8_t divisor;
+};
+/*----------------------------------------------------------------------------*/
+struct CommonClockConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Optional: input clock divisor in the range of 1 to 255. */
+  uint8_t divisor;
+};
+/*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
   /**
@@ -77,12 +96,6 @@ struct ExternalOscConfig
    * an external clock source instead of the crystal oscillator.
    */
   bool bypass;
-};
-/*----------------------------------------------------------------------------*/
-struct WdtOscConfig
-{
-  /** Optional: oscillator frequency. */
-  enum wdtFrequency frequency;
 };
 /*----------------------------------------------------------------------------*/
 struct PllConfig
@@ -107,12 +120,10 @@ struct PllConfig
   uint8_t divisor;
 };
 /*----------------------------------------------------------------------------*/
-struct CommonClockConfig
+struct WdtOscConfig
 {
-  /** Mandatory: clock source. */
-  enum clockSource source;
-  /** Optional: input clock divisor in the range of 1 to 255. */
-  uint8_t divisor;
+  /** Optional: oscillator frequency. */
+  enum wdtFrequency frequency;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11XX_CLOCKING_H_ */
