@@ -85,18 +85,24 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   if (adcUnitRegister(interface->unit, 0, interface) != E_OK)
     return 0;
 
-  /* Disable interrupts */
-  reg->INTEN = 0;
   /* Set conversion channel */
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(channel);
 
   /* Perform a new conversion */
+  uint32_t value;
+
   reg->CR |= CR_START(1 + ADC_SOFTWARE);
-  while (!(reg->DR[channel] & DR_DONE));
+
+  do
+  {
+    value = reg->DR[channel];
+  }
+  while (!(value & DR_DONE));
+
   reg->CR &= ~CR_START_MASK;
 
-  /* Copy result into first element of the array */
-  *((uint16_t *)buffer) = DR_RESULT_VALUE(reg->DR[channel]);
+  /* Copy a result into the first element of the array */
+  *((uint16_t *)buffer) = DR_RESULT_VALUE(value);
 
   adcUnitUnregister(interface->unit);
 

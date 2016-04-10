@@ -39,7 +39,7 @@ void sspSetRate(struct SspBase *interface, uint32_t rate)
   assert(rate);
 
   const uint32_t clock = sspGetClock(interface);
-  uint32_t divisor = ((clock + (rate >> 1)) >> 1) / rate - 1;
+  uint32_t divisor = ((clock + (rate - 1)) >> 1) / rate - 1;
 
   if (divisor >= 127 * 256)
     divisor = 127 * 256 - 1;

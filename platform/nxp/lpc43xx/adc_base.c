@@ -253,16 +253,18 @@ static enum result adcUnitInit(void *object, const void *configBase)
   unit->irq = entry->irq;
   unit->reg = entry->reg;
 
-  /* Configure peripheral clock */
+  /* Configure peripheral registers */
 
-  assert(config->frequency < MAX_FREQUENCY);
+  assert(config->frequency <= MAX_FREQUENCY);
 
   const uint32_t frequency = config->frequency ?
       config->frequency : MAX_FREQUENCY;
+  const uint32_t divisor =
+      (clockFrequency(Apb3Clock) + (frequency - 1)) / frequency;
   LPC_ADC_Type * const reg = unit->reg;
 
-  /* Enable converter and set system clock divider */
-  reg->CR = CR_PDN | CR_CLKDIV(clockFrequency(Apb3Clock) / frequency);
+  reg->INTEN = 0;
+  reg->CR = CR_PDN | CR_CLKDIV(divisor - 1); /* Enable the converter */
 
   return E_OK;
 }
