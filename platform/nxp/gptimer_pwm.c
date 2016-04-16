@@ -167,10 +167,9 @@ static enum result channelInit(void *object, const void *configBase)
 
   /* Calculate pointer to match register for fast access */
   pwm->value = reg->MR + pwm->channel;
-  /* Call function directly because of unfinished object construction */
-  channelSetDuration(pwm, config->duration);
-  /* Enable PWM channel */
-  reg->PWMC |= PWMC_ENABLE(pwm->channel);
+
+  /* Set initial duration */
+  channelSetDuration(pwm, 0);
 
   return E_OK;
 }
@@ -192,15 +191,23 @@ static uint32_t channelGetResolution(const void *object)
 static void channelSetDuration(void *object, uint32_t duration)
 {
   struct GpTimerPwm * const pwm = object;
+  const uint32_t resolution = pwm->unit->resolution;
 
-  /* Polarity is inverted */
-  if (duration >= pwm->unit->resolution)
+  if (duration)
+  {
+    if (duration > resolution)
+      duration = resolution;
+
+    /* The output is inverted */
+    duration = resolution - duration;
+  }
+  else
   {
     /*
      * If match register is set to a value greater or equal to resolution,
-     * then output stays low during all cycle.
+     * then the output stays low during all cycle.
      */
-    duration = pwm->unit->resolution;
+    duration = resolution + 1;
   }
 
   /*
@@ -213,14 +220,10 @@ static void channelSetDuration(void *object, uint32_t duration)
 static void channelSetEdges(void *object,
     uint32_t leading __attribute__((unused)), uint32_t trailing)
 {
-  struct GpTimerPwm * const pwm = object;
+  /* Leading edge time is constant in the single edge mode */
+  assert(leading == 0);
 
-  assert(!leading); /* Leading edge time is constant in single edge mode */
-
-  if (trailing >= pwm->unit->resolution)
-    trailing = pwm->unit->resolution;
-
-  *pwm->value = trailing;
+  channelSetDuration(object, trailing);
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetEnabled(void *object, bool state)
@@ -252,21 +255,20 @@ static enum result channelSetFrequency(void *object, uint32_t frequency)
 
   /* TODO Add scaling of timer match values */
   reg->PR = clockFrequency / timerFrequency - 1;
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Create single edge PWM channel with inverse polarity.
+ * Create single edge PWM channel.
  * @param unit Pointer to a GpTimerPwmUnit object.
- * @param pin Pin used as output for pulse width modulated signal.
- * @param duration Initial duration in timer ticks.
- * @return Pointer to new Pwm object on success or zero on error.
+ * @param pin Pin used as a signal output.
+ * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpTimerPwmCreate(void *unit, pinNumber pin, uint32_t duration)
+void *gpTimerPwmCreate(void *unit, pinNumber pin)
 {
   const struct GpTimerPwmConfig channelConfig = {
       .parent = unit,
-      .duration = duration,
       .pin = pin
   };
 

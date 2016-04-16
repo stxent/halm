@@ -56,8 +56,8 @@ static inline void pwmSetDuration(void *channel, uint32_t duration)
 /**
  * Set times of leading and trailing edges of the pulse.
  * @param channel Pointer to a Pwm object.
- * @param leading Time of a leading edge in timer ticks.
- * @param trailing Time of a trailing edge in timer ticks.
+ * @param leading Time of the leading edge in timer ticks.
+ * @param trailing Time of the trailing edge in timer ticks.
  */
 static inline void pwmSetEdges(void *channel, uint32_t leading,
     uint32_t trailing)
