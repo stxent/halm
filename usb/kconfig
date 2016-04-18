@@ -1,0 +1,61 @@
+menu "USB"
+	depends on PLATFORM_USB_DEVICE || PLATFORM_USB_HOST
+
+config USB_DEVICE
+	bool "USB Device drivers"
+	default y
+	depends on PLATFORM_USB_DEVICE
+
+config USB_DEVICE_HS
+	bool "High Speed device"
+	default n
+	depends on USB_DEVICE && PLATFORM_USB_HS
+	help
+	  This enables High Speed versions of drivers.
+
+config USB_DEVICE_COMPOSITE
+	bool "Composite device"
+	default n
+	depends on USB_DEVICE
+
+config USB_DEVICE_CDC
+	bool "CDC driver"
+	default y
+	depends on USB_DEVICE
+
+config USB_DEVICE_HID
+	bool "HID driver"
+	default y
+	depends on USB_DEVICE
+
+menu "USB Device settings"
+	depends on USB_DEVICE
+
+config USB_DEVICE_CONTROL_REQUESTS
+	int "Control queue size"
+	default 2
+
+config USB_DEVICE_CURRENT
+	int "USB device current"
+	default 100
+
+config USB_DEVICE_PRODUCT_ID
+	hex "Product ID"
+	range 0 0xFFFF
+	default 0
+
+config USB_DEVICE_VENDOR_ID
+	hex "Vendor ID"
+	range 0 0xFFFF
+	default 0
+
+endmenu
+
+config USB_TRACE
+	bool "USB trace"
+	default n
+	depends on USB_DEVICE
+	help
+	  This enables verbose debug tracing for USB drivers.
+
+endmenu

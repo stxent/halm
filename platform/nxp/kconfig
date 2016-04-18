@@ -1,0 +1,330 @@
+config PLATFORM
+	string
+	default lpc11xx   if FAMILY_LPC11XX
+	default lpc11exx  if FAMILY_LPC11EXX
+	default lpc13xx   if FAMILY_LPC13XX
+	default lpc17xx   if FAMILY_LPC17XX
+	default lpc43xx   if FAMILY_LPC43XX
+
+config PLATFORM_TYPE
+	string
+	default nxp
+
+config GEN_ADC
+	string
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_DAC
+	string
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_I2C
+	string
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_RTC
+	string
+	default gen_1 if FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_SPI
+	string
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config GEN_UART
+	string
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+menu "Power settings"
+
+config PM
+	bool "Power management"
+	default y
+	help
+	  This enables support for power management features.
+
+choice
+	prompt "Power-down mode in suspend state"
+	default PLATFORM_NXP_PM_DEEPSLEEP
+	depends on PM
+
+	config PLATFORM_NXP_PM_DEEPSLEEP
+		bool "Deep Sleep"
+		depends on FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+	config PLATFORM_NXP_PM_PD
+		bool "Power-down"
+		depends on FAMILY_LPC11EXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+	config PLATFORM_NXP_PM_DPD
+		bool "Deep Power-down"
+		depends on FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+endchoice
+
+endmenu
+
+menu "Peripherals"
+
+config PLATFORM_NXP_ADC_BASE
+	bool "ADC"
+	default y
+
+config PLATFORM_NXP_ADC
+	bool "Simplified ADC driver with polling"
+	default y
+	depends on PLATFORM_NXP_ADC_BASE
+
+config PLATFORM_NXP_ADC_BURST
+	bool "Interrupt-driven ADC"
+	default y
+	depends on PLATFORM_NXP_ADC_BASE
+
+config PLATFORM_NXP_ADC_BUS
+	bool "ADC Bus"
+	default y
+	depends on PLATFORM_NXP_ADC_BASE
+
+config PLATFORM_NXP_ADC_DMA
+	bool "Single channel ADC driver with DMA"
+	default y
+	depends on PLATFORM_NXP_ADC_BASE && PLATFORM_NXP_GPDMA
+
+config PLATFORM_NXP_DAC_BASE
+	bool "DAC"
+	default y
+	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM_NXP_DAC
+	bool "Simplified DAC driver"
+	default y
+	depends on PLATFORM_NXP_DAC_BASE
+
+config PLATFORM_NXP_DAC_DMA
+	bool "DAC driver with DMA"
+	default y
+	depends on PLATFORM_NXP_DAC_BASE && PLATFORM_NXP_GPDMA
+
+config PLATFORM_NXP_FAST_GPIO_BUS
+	bool "Fast GPIO Bus"
+	default y
+	help
+	  Optimized version of GPIO Bus for contiguous sets of pins.
+
+config PLATFORM_NXP_FLASH
+	bool "Flash driver"
+	default y
+	help
+	  This enables driver for internal Flash memory.
+
+config PLATFORM_NXP_GPDMA
+	bool "GPDMA"
+	default y
+	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM_NXP_GPDMA_PRIORITY
+	int "GPDMA interrupts priority"
+	default 0
+	depends on PLATFORM_NXP_GPDMA
+
+config PLATFORM_NXP_GPDMA_SYNC
+	bool "GPDMA synchronization"
+	default y
+	depends on PLATFORM_NXP_GPDMA
+	help
+	  Synchronization logic must be enabled when peripherals
+	  generating DMA requests run on different clocks to the GPDMA.
+	  For peripherals  running on the same clock as the GPDMA,
+	  disabling the synchronization logic improves the DMA request
+	  response time.
+
+config PLATFORM_NXP_GPTIMER_BASE
+	bool "General-purpose timer"
+	default y
+
+config PLATFORM_NXP_GPTIMER_PM
+	bool "Power management for general-purpose timers"
+	default y
+	depends on PLATFORM_NXP_GPTIMER_BASE && PM
+
+config PLATFORM_NXP_GPTIMER
+	bool "Common timer on general-purpose timer"
+	default y
+	depends on PLATFORM_NXP_GPTIMER_BASE
+
+config PLATFORM_NXP_GPTIMER_CAPTURE
+	bool "Input capture on general-purpose timer"
+	default y
+	depends on PLATFORM_NXP_GPTIMER_BASE
+
+config PLATFORM_NXP_GPTIMER_COUNTER
+	bool "Counter on general-purpose timer"
+	default y
+	depends on PLATFORM_NXP_GPTIMER_BASE
+
+config PLATFORM_NXP_GPTIMER_PWM
+	bool "PWM on general-purpose timer"
+	default y
+	depends on PLATFORM_NXP_GPTIMER_BASE && (FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX)
+
+config PLATFORM_NXP_GPPWM
+	bool "PWM"
+	default y
+	depends on FAMILY_LPC17XX
+
+config PLATFORM_NXP_I2C_BASE
+	bool "I2C"
+	default y
+
+config PLATFORM_NXP_I2C_PM
+	bool "Power management for I2C drivers"
+	default y
+	depends on PM && PLATFORM_NXP_I2C_BASE
+
+config PLATFORM_NXP_I2C
+	bool "I2C Master"
+	default y
+	depends on PLATFORM_NXP_I2C_BASE
+
+config PLATFORM_NXP_I2C_SLAVE
+	bool "I2C Slave"
+	default y
+	depends on PLATFORM_NXP_I2C_BASE
+
+config PLATFORM_NXP_I2S_BASE
+	bool "I2S"
+	default y
+	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM_NXP_I2S_DMA
+	bool "I2S driver with DMA"
+	default y
+	depends on PLATFORM_NXP_I2S_BASE
+
+config PLATFORM_NXP_PIN_INTERRUPT
+	bool "Pin interrupts"
+	default y
+
+config PLATFORM_NXP_RTC
+	bool "Real-Time Clock"
+	default y
+	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM_NXP_SDMMC
+	bool "SD/MMC card interface"
+	default y
+	depends on FAMILY_LPC43XX
+
+config PLATFORM_NXP_SCT_BASE
+	bool "SCT"
+	default y
+	depends on FAMILY_LPC43XX
+	help
+	  This is the driver for the State Configurable Timer peripheral.
+
+config PLATFORM_NXP_SCT_PWM
+	bool "PWM on SCT"
+	default y
+	depends on PLATFORM_NXP_SCT_BASE
+
+config PLATFORM_NXP_SCT_TIMER
+	bool "Common timer on SCT"
+	default y
+	depends on PLATFORM_NXP_SCT_BASE
+
+config PLATFORM_NXP_SSP_BASE
+	bool "SSP"
+	default y
+	help
+	  This is the driver for the Synchronous Serial Port peripheral.
+
+config PLATFORM_NXP_SPI
+	bool "Interrupt-driven SPI Master"
+	default y
+	depends on PLATFORM_NXP_SSP_BASE
+
+config PLATFORM_NXP_SPI_DMA
+	bool "SPI Master with DMA"
+	default y
+	depends on PLATFORM_NXP_SSP_BASE && PLATFORM_NXP_GPDMA
+
+config PLATFORM_NXP_ONE_WIRE_SSP
+	bool "1-Wire using SSP peripheral"
+	default y
+	depends on PLATFORM_NXP_SSP_BASE
+
+config PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
+	bool "Device search feature"
+	default y
+	depends on PLATFORM_NXP_ONE_WIRE_SSP
+
+config PLATFORM_NXP_UART_BASE
+	bool "UART"
+	default y
+
+config PLATFORM_NXP_SERIAL_PM
+	bool "Power management for serial port drivers"
+	default y
+	depends on PM && PLATFORM_NXP_UART_BASE
+
+config PLATFORM_NXP_SERIAL
+	bool "Interrupt-driven serial port driver"
+	default y
+	depends on PLATFORM_NXP_UART_BASE
+
+config PLATFORM_NXP_SERIAL_POLL
+	bool "Serial port driver with polling"
+	default y
+	depends on PLATFORM_NXP_UART_BASE
+
+config PLATFORM_NXP_SERIAL_DMA
+	bool "Serial port driver with DMA"
+	default y
+	depends on PLATFORM_NXP_UART_BASE && PLATFORM_NXP_GPDMA
+
+config PLATFORM_NXP_ONE_WIRE_UART
+	bool "1-Wire using UART peripheral"
+	default y
+	depends on PLATFORM_NXP_UART_BASE
+
+config PLATFORM_USB
+	bool "USB"
+	default y
+	depends on FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM_USB_HS
+	bool "USB HS"
+	default n
+	depends on PLATFORM_USB && FAMILY_LPC43XX
+	help
+	  This enables support for USB High Speed mode.
+
+config PLATFORM_USB_0
+	bool "USB0"
+	default y
+	depends on PLATFORM_USB && FAMILY_LPC43XX
+
+config PLATFORM_USB_1
+	bool "USB1"
+	default n
+	depends on PLATFORM_USB && FAMILY_LPC43XX
+
+config PLATFORM_USB_DEVICE
+	bool "USB Device"
+	default y
+	depends on PLATFORM_USB
+
+config USB_DEVICE_ENDPOINT_REQUESTS
+	int "Endpoint queue size"
+	default 4 if FAMILY_LPC13XX || FAMILY_LPC17XX
+	default 12 if FAMILY_LPC43XX
+	depends on PLATFORM_USB_DEVICE
+
+config PLATFORM_NXP_WAKEUP_INTERRUPT
+	bool "Wake-up interrupts"
+	default y
+	depends on PM && (FAMILY_LPC11XX || FAMILY_LPC13XX)
+
+config PLATFORM_NXP_WDT
+	bool "Watchdog"
+	default y
+
+endmenu
