@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_I2S_DMA_H_
-#define PLATFORM_NXP_I2S_DMA_H_
+#ifndef HALM_PLATFORM_NXP_I2S_DMA_H_
+#define HALM_PLATFORM_NXP_I2S_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <dma.h>
 #include <platform/nxp/i2s_base.h>
@@ -16,11 +16,13 @@ struct I2sDmaConfig
 {
   /** Mandatory: sample rate for the receiver and the transmitter. */
   uint32_t rate;
+  /** Mandatory: word width. */
+  enum i2sWidth width;
   /**
-   * Mandatory: size of the single buffer in samples. When the stereo mode
+   * Mandatory: size in elements of each buffer. When the stereo mode
    * is enabled, one sample consists of two values for left and right channels.
    */
-  uint32_t size;
+  uint16_t size;
 
   struct
   {
@@ -54,8 +56,6 @@ struct I2sDmaConfig
   irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Mandatory: word width. */
-  enum i2sWidth width;
   /** Optional: enable mono format. */
   bool mono;
   /** Optional: enable slave mode. */
@@ -74,9 +74,9 @@ struct I2sDma
   /* Sample rate */
   uint32_t sampleRate;
   /* Size of each buffer */
-  uint32_t size;
+  uint16_t size;
   /* Word width */
-  enum i2sWidth width;
+  uint8_t width;
   /* Mono format enabled flag */
   bool mono;
   /* Receiver enabled flag */
@@ -85,4 +85,4 @@ struct I2sDma
   bool tx;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_I2S_DMA_H_ */
+#endif /* HALM_PLATFORM_NXP_I2S_DMA_H_ */

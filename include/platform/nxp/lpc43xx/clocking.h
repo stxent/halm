@@ -9,10 +9,11 @@
  * Clock configuration functions for LPC43xx series.
  */
 
-#ifndef PLATFORM_NXP_LPC43XX_CLOCKING_H_
-#define PLATFORM_NXP_LPC43XX_CLOCKING_H_
+#ifndef HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_
+#define HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 enum clockBranch
 {
@@ -108,9 +109,17 @@ extern const struct CommonClockClass * const Uart1Clock;
 extern const struct CommonClockClass * const Usart2Clock;
 extern const struct CommonClockClass * const Usart3Clock;
 extern const struct CommonClockClass * const AudioClock;
-extern const struct CommonClockClass * const OutClock;
+extern const struct CommonClockClass * const ClockOutput;
 extern const struct CommonClockClass * const CguOut0Clock;
 extern const struct CommonClockClass * const CguOut1Clock;
+/*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Mandatory: output pin. */
+  pinNumber pin;
+};
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig
 {
@@ -120,10 +129,15 @@ struct CommonClockConfig
 /*----------------------------------------------------------------------------*/
 struct CommonDividerConfig
 {
-  /** Mandatory: integer divider value. */
-  uint16_t value;
   /** Mandatory: clock source. */
   enum clockSource source;
+  /**
+   * Mandatory: integer divider value.
+   * @n The divider value for the Divider A should be in the range of 1 to 4.
+   * @n Divider values for Dividers B, C, D should be in the range of 1 to 16.
+   * @n The divider value for the Divider E should be in the range of 1 to 256.
+   */
+  uint16_t value;
 };
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
@@ -142,6 +156,8 @@ struct ExternalOscConfig
 /*----------------------------------------------------------------------------*/
 struct PllConfig
 {
+  /** Mandatory: clock source. */
+  enum clockSource source;
   /**
    * Mandatory: input clock multiplier, result should be in the range of
    * 156 MHz to 320 MHz. Multiplier range is 1 to 256. Note that the input
@@ -153,8 +169,6 @@ struct PllConfig
    * by 1, 2, 3, 4, 6, 8, 12, 16, 24, 32.
    */
   uint8_t divisor;
-  /** Mandatory: clock source. */
-  enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC43XX_CLOCKING_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_ */

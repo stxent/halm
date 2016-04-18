@@ -248,6 +248,11 @@ static enum result dmaHandlerInit(void *object,
   memset(handler->connections, 0, sizeof(handler->connections));
   handler->instances = 0;
 
+#ifndef CONFIG_PLATFORM_NXP_GPDMA_SYNC
+  /* Disable synchronization logic to improve response time */
+  LPC_GPDMA->SYNC = SYNC_MASK;
+#endif
+
   irqSetPriority(GPDMA_IRQ, CONFIG_PLATFORM_NXP_GPDMA_PRIORITY);
 
   return E_OK;

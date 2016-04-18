@@ -14,11 +14,17 @@
 struct CdcUsbRequest
 {
   struct UsbRequestBase base;
+
+#ifdef CONFIG_USB_DEVICE_HS
+  uint8_t buffer[CDC_DATA_EP_SIZE_HS];
+#else
   uint8_t buffer[CDC_DATA_EP_SIZE];
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(void *, struct UsbRequest *, enum usbRequestStatus);
 static void cdcDataSent(void *, struct UsbRequest *, enum usbRequestStatus);
+static inline size_t getPacketSize(const struct CdcAcm *);
 static void resetBuffers(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
 static enum result interfaceInit(void *, const void *);
@@ -70,6 +76,7 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
     enum usbRequestStatus status)
 {
   struct CdcAcm * const interface = argument;
+  const size_t maxPacketSize = getPacketSize(interface);
   bool error = false;
   bool returnToPool = false;
 
@@ -85,11 +92,9 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   {
     interface->queuedTxBytes -= request->base.length;
 
-    if (interface->zeroPacketRequired)
+    if (!interface->queuedTxBytes && request->base.length == maxPacketSize)
     {
-      interface->zeroPacketRequired = false;
-
-      /* Send empty packet to finish data transfer */
+      /* Send empty packet to finalize data transfer */
       request->base.length = 0;
 
       if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
@@ -119,6 +124,12 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   }
 }
 /*----------------------------------------------------------------------------*/
+static inline size_t getPacketSize(const struct CdcAcm *interface)
+{
+  return interface->driver->speed == USB_HS ?
+      CDC_DATA_EP_SIZE_HS : CDC_DATA_EP_SIZE;
+}
+/*----------------------------------------------------------------------------*/
 static void resetBuffers(struct CdcAcm *interface)
 {
   /* Return queued requests to pools */
@@ -127,7 +138,6 @@ static void resetBuffers(struct CdcAcm *interface)
 
   interface->queuedRxBytes = 0;
   interface->queuedTxBytes = 0;
-  interface->zeroPacketRequired = false;
 }
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *interface)
@@ -152,6 +162,8 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
   }
   else if (event == DEVICE_EVENT_RESET)
   {
+    bool completed = true;
+
     interface->suspended = true;
     resetBuffers(interface);
 
@@ -164,13 +176,21 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
 
       if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
       {
+        completed = false;
         queuePush(&interface->rxRequestQueue, &request);
         break;
       }
     }
 
-    interface->suspended = false;
-    usbTrace("cdc_acm: reset completed");
+    if (completed)
+    {
+      interface->suspended = false;
+      usbTrace("cdc_acm: reset completed");
+    }
+    else
+    {
+      usbTrace("cdc_acm: reset failed");
+    }
   }
 
   if (interface->callback)
@@ -192,10 +212,6 @@ static enum result interfaceInit(void *object, const void *configBase)
   };
   enum result res;
 
-  interface->driver = init(CdcAcmBase, &driverConfig);
-  if (!interface->driver)
-    return E_ERROR;
-
   res = queueInit(&interface->rxRequestQueue, sizeof(struct UsbRequest *),
       config->rxBuffers);
   if (res != E_OK)
@@ -210,7 +226,6 @@ static enum result interfaceInit(void *object, const void *configBase)
   interface->queuedTxBytes = 0;
   interface->suspended = true;
   interface->updated = false;
-  interface->zeroPacketRequired = false;
 
   interface->notificationEp = usbDevCreateEndpoint(config->device,
       config->endpoint.interrupt);
@@ -237,7 +252,7 @@ static enum result interfaceInit(void *object, const void *configBase)
 
   for (size_t index = 0; index < config->rxBuffers; ++index)
   {
-    usbRequestInit((struct UsbRequest *)request, CDC_DATA_EP_SIZE,
+    usbRequestInit((struct UsbRequest *)request, sizeof(request->buffer),
         cdcDataReceived, interface);
     queuePush(&interface->rxRequestQueue, &request);
     ++request;
@@ -245,11 +260,16 @@ static enum result interfaceInit(void *object, const void *configBase)
 
   for (size_t index = 0; index < config->txBuffers; ++index)
   {
-    usbRequestInit((struct UsbRequest *)request, CDC_DATA_EP_SIZE,
+    usbRequestInit((struct UsbRequest *)request, sizeof(request->buffer),
         cdcDataSent, interface);
     queuePush(&interface->txRequestQueue, &request);
     ++request;
   }
+
+  /* Base part should be initialized when all other parts are already created */
+  interface->driver = init(CdcAcmBase, &driverConfig);
+  if (!interface->driver)
+    return E_ERROR;
 
   return E_OK;
 }
@@ -357,8 +377,8 @@ static enum result interfaceSet(void *object __attribute__((unused)),
 static size_t interfaceRead(void *object, void *buffer, size_t length)
 {
   struct CdcAcm * const interface = object;
-  uint8_t *bufferPosition = buffer;
   const size_t sourceLength = length;
+  uint8_t *bufferPosition = buffer;
   irqState state;
 
   if (interface->suspended)
@@ -404,8 +424,9 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
 static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 {
   struct CdcAcm * const interface = object;
-  const uint8_t *bufferPosition = buffer;
+  const size_t maxPacketSize = getPacketSize(interface);
   const size_t sourceLength = length;
+  const uint8_t *bufferPosition = buffer;
   irqState state;
 
   if (interface->suspended)
@@ -413,8 +434,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 
   while (length && !queueEmpty(&interface->txRequestQueue))
   {
-    const size_t bytesToWrite = length > CDC_DATA_EP_SIZE ?
-        CDC_DATA_EP_SIZE : length;
+    const size_t bytesToWrite = length > maxPacketSize ? maxPacketSize : length;
     struct UsbRequest *request;
 
     state = irqSave();
@@ -426,9 +446,6 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     memcpy(request->buffer, bufferPosition, bytesToWrite);
     bufferPosition += bytesToWrite;
     length -= bytesToWrite;
-
-    /* Append zero length packet when the last packet has maximum length */
-    interface->zeroPacketRequired = !length && bytesToWrite == CDC_DATA_EP_SIZE;
 
     if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
     {

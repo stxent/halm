@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GPPWM_BASE_H_
-#define PLATFORM_NXP_GPPWM_BASE_H_
+#ifndef HALM_PLATFORM_NXP_GPPWM_BASE_H_
+#define HALM_PLATFORM_NXP_GPPWM_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <entity.h>
@@ -30,4 +30,4 @@ struct GpPwmUnitBase
 /*----------------------------------------------------------------------------*/
 uint32_t gpPwmGetClock(const struct GpPwmUnitBase *);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GPPWM_BASE_H_ */
+#endif /* HALM_PLATFORM_NXP_GPPWM_BASE_H_ */

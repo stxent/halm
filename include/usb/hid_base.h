@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_HID_BASE_H_
-#define USB_HID_BASE_H_
+#ifndef HALM_USB_HID_BASE_H_
+#define HALM_USB_HID_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <usb/usb.h>
@@ -22,7 +22,7 @@ struct HidBaseConfig
   /** Mandatory: USB device. */
   void *device;
   /** Mandatory: report descriptor. */
-  void *descriptor;
+  const void *descriptor;
   /** Mandatory: size of the report descriptor. */
   uint16_t descriptorSize;
   /** Mandatory: size of the report. */
@@ -47,7 +47,7 @@ struct HidBase
   uint8_t idleTime;
   uint8_t interfaceIndex;
 
-  void *local;
+  void *privateData;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* USB_HID_BASE_H_ */
+#endif /* HALM_USB_HID_BASE_H_ */

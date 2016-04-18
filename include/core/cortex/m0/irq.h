@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CORE_CORTEX_M0_IRQ_H_
-#define CORE_CORTEX_M0_IRQ_H_
+#ifndef HALM_CORE_CORTEX_M0_IRQ_H_
+#define HALM_CORE_CORTEX_M0_IRQ_H_
 /*----------------------------------------------------------------------------*/
 #include <core/cortex/asm.h>
 #include <core/core_defs.h>
@@ -60,4 +60,4 @@ static inline void irqSetPending(irqNumber irq)
   *NVIC->ISPR = 1 << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* CORE_CORTEX_M0_IRQ_H_ */
+#endif /* HALM_CORE_CORTEX_M0_IRQ_H_ */

@@ -43,7 +43,7 @@ const struct TimerClass * const GpTimer = &tmrTable;
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getResolution(struct GpTimer *timer)
 {
-  return (1UL << timer->base.resolution) - 1;
+  return MASK(timer->base.resolution);
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -103,13 +103,8 @@ static enum result tmrInit(void *object, const void *configBase)
 
   assert(config->event < GPTIMER_EVENT_END);
 
-  if (!config->event)
-  {
-    /* Only 1 channel is used, allocation always succeeds */
-    timer->event = gpTimerAllocateChannel(0);
-  }
-  else
-    timer->event = config->event - 1;
+  timer->event = config->event ? config->event : GPTIMER_MATCH0;
+  --timer->event;
 
   /* Call base class constructor */
   if ((res = GpTimerBase->init(object, &baseConfig)) != E_OK)
@@ -186,7 +181,7 @@ static void tmrSetEnabled(void *object, bool state)
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
 
-  /* Temporarily disable timer */
+  /* Stop the timer */
   reg->TCR = 0;
   /* Clear pending interrupt flags and direct memory access requests */
   reg->IR = IR_MATCH_INTERRUPT(timer->event);
@@ -215,16 +210,13 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
 
   if (overflow)
   {
-    overflow = overflow - 1;
+    --overflow;
 
     if (overflow > resolution)
       return E_VALUE;
 
-    /* Reset and stop timer before configuration or simply stop it */
-    if (reg->MR[timer->event] >= overflow)
-      reg->TCR = TCR_CRES;
-    else
-      reg->TCR = 0;
+    /* Stop the timer before setup */
+    reg->TCR = reg->MR[timer->event] >= overflow ? TCR_CRES : 0;
 
     reg->MR[timer->event] = overflow;
     /* Enable timer reset after reaching match register value */

@@ -26,6 +26,7 @@ static void resetQueueHeads(struct UsbDevice *);
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
 static void *devCreateEndpoint(void *, uint8_t);
+static enum usbSpeed devGetSpeed(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
 static enum result devBind(void *, void *);
@@ -41,6 +42,7 @@ static const struct UsbDeviceClass devTable = {
     .deinit = devDeinit,
 
     .createEndpoint = devCreateEndpoint,
+    .getSpeed = devGetSpeed,
     .setAddress = devSetAddress,
     .setConnected = devSetConnected,
 
@@ -115,6 +117,7 @@ static void interruptHandler(void *object)
   /* Port change detect */
   if (intStatus & USBSTS_D_PCI)
   {
+    usbControlEvent(device->control, DEVICE_EVENT_PORT_CHANGE);
   }
 
   const bool suspended = (intStatus & USBSTS_D_SLI) != 0;
@@ -196,7 +199,7 @@ static void resetDevice(struct UsbDevice *device)
   while (reg->ENDPTFLUSH);
 
   /* Set the Interrupt Threshold control interval to 0 */
-  reg->USBCMD_D &= ~0x00FF0000;
+  reg->USBCMD_D &= ~USBCMD_D_ITC_MASK;
 
   /* Zero out all queue heads */
   for (unsigned int index = 0; index < ENDPT_NUMBER; ++index)
@@ -276,6 +279,14 @@ static enum result devInit(void *object, const void *configBase)
   reg->USBMODE_D = USBMODE_D_CM(CM_DEVICE_CONTROLLER)
       | USBMODE_D_SDIS | USBMODE_D_SLOM;
 
+  /* Recommended by NXP technical support */
+  reg->SBUSCFG = SBUSCFG_AHB_BRST(AHB_BRST_INCR16_UNSPECIFIED);
+
+#ifndef CONFIG_PLATFORM_USB_HS
+  /* Force Full Speed mode */
+  reg->PORTSC1_D |= PORTSC1_D_PFSC;
+#endif
+
   resetQueueHeads(device);
   resetDevice(device);
 
@@ -341,6 +352,15 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   irqRestore(state);
   return endpoint;
+}
+/*----------------------------------------------------------------------------*/
+static enum usbSpeed devGetSpeed(const void *object)
+{
+  const struct UsbDevice * const device = object;
+  const LPC_USB_Type * const reg = device->base.reg;
+
+  return PORTSC1_D_PSPD_VALUE(reg->PORTSC1_D) == PSPD_HIGH_SPEED ?
+      USB_HS : USB_FS;
 }
 /*----------------------------------------------------------------------------*/
 static void devSetAddress(void *object, uint8_t address)

@@ -9,8 +9,8 @@
  * System configuration functions for LPC175x and LPC176x series.
  */
 
-#ifndef PLATFORM_NXP_LPC17XX_SYSTEM_H_
-#define PLATFORM_NXP_LPC17XX_SYSTEM_H_
+#ifndef HALM_PLATFORM_NXP_LPC17XX_SYSTEM_H_
+#define HALM_PLATFORM_NXP_LPC17XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <bits.h>
@@ -116,4 +116,4 @@ static inline bool sysPowerStatus(enum sysPowerDevice block)
   return LPC_SC->PCONP & BIT(block) ? true : false;
 }
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC17XX_SYSTEM_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC17XX_SYSTEM_H_ */

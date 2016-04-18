@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_HID_H_
-#define USB_HID_H_
+#ifndef HALM_USB_HID_H_
+#define HALM_USB_HID_H_
 /*----------------------------------------------------------------------------*/
 #include <usb/hid_base.h>
 /*----------------------------------------------------------------------------*/
@@ -48,7 +48,7 @@ struct HidConfig
   /** Mandatory: USB device. */
   void *device;
   /** Mandatory: report descriptor. */
-  void *descriptor;
+  const void *descriptor;
   /** Mandatory: size of the report descriptor. */
   uint16_t descriptorSize;
   /** Mandatory: size of the report. */
@@ -69,4 +69,6 @@ struct Hid
   struct HidBase *driver;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* USB_HID_H_ */
+enum result hidBind(struct Hid *);
+/*----------------------------------------------------------------------------*/
+#endif /* HALM_USB_HID_H_ */

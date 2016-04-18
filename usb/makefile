@@ -24,6 +24,10 @@ ifeq ($(CONFIG_USB_DEVICE_COMPOSITE),y)
   CSOURCES += usb/composite_device.c
 endif
 
+ifeq ($(CONFIG_USB_DEVICE_HS),y)
+  PROJECT_FLAGS += CONFIG_USB_DEVICE_HS
+endif
+
 ifeq ($(CONFIG_USB_DEVICE_CDC),y)
   CSOURCES += usb/cdc_acm.c
   CSOURCES += usb/cdc_acm_base.c

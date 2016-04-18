@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_SCT_DEFS_H_
-#define PLATFORM_NXP_SCT_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_SCT_DEFS_H_
+#define HALM_PLATFORM_NXP_SCT_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Configuration register------------------------------------*/
@@ -122,4 +122,4 @@ enum
 #define EVCTRL_DIRECTION_MASK           BIT_FIELD(MASK(2), 21)
 #define EVCTRL_DIRECTION(value)         BIT_FIELD((value), 21)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_SCT_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_SCT_DEFS_H_ */

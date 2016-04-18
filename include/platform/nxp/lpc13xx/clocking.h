@@ -9,10 +9,11 @@
  * Clock configuration functions for LPC13xx series.
  */
 
-#ifndef PLATFORM_NXP_LPC13XX_CLOCKING_H_
-#define PLATFORM_NXP_LPC13XX_CLOCKING_H_
+#ifndef HALM_PLATFORM_NXP_LPC13XX_CLOCKING_H_
+#define HALM_PLATFORM_NXP_LPC13XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
+#include <pin.h>
 /*----------------------------------------------------------------------------*/
 enum clockBranch
 {
@@ -69,6 +70,24 @@ extern const struct CommonClockClass * const MainClock;
 extern const struct CommonClockClass * const UsbClock;
 extern const struct CommonClockClass * const WdtClock;
 /*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Mandatory: output pin. */
+  pinNumber pin;
+  /** Optional: input clock divisor in the range of 1 to 255. */
+  uint8_t divisor;
+};
+/*----------------------------------------------------------------------------*/
+struct CommonClockConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Optional: input clock divisor in the range of 1 to 255. */
+  uint8_t divisor;
+};
+/*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
   /**
@@ -83,14 +102,17 @@ struct ExternalOscConfig
   bool bypass;
 };
 /*----------------------------------------------------------------------------*/
-struct WdtOscConfig
-{
-  /** Optional: oscillator frequency. */
-  enum wdtFrequency frequency;
-};
-/*----------------------------------------------------------------------------*/
 struct PllConfig
 {
+  /**
+   * Mandatory: clock source.
+   * @n Available options for System PLL:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   * @n Available options for USB PLL:
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum clockSource source;
   /**
    * Mandatory: input clock multiplier, result should be in the range of
    * 156 MHz to 320 MHz. Multiplier range is 1 to 32. Note that the input
@@ -102,23 +124,12 @@ struct PllConfig
    * to divide by 2, 4, 8, 16.
    */
   uint8_t divisor;
-  /**
-   * Mandatory: clock source.
-   * @n Available options for System PLL:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   * @n Available options for USB PLL:
-   *   - @b CLOCK_EXTERNAL.
-   */
-  enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
-struct CommonClockConfig
+struct WdtOscConfig
 {
-  /** Optional: input clock divisor in the range of 1 to 255. */
-  uint8_t divisor;
-  /** Mandatory: clock source. */
-  enum clockSource source;
+  /** Optional: oscillator frequency. */
+  enum wdtFrequency frequency;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC13XX_CLOCKING_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC13XX_CLOCKING_H_ */

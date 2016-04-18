@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_
-#define PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_
+#define HALM_PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 2
 /*------------------System Configuration Registers----------------------------*/
@@ -17,7 +17,7 @@ typedef struct
   __rw__ uint32_t SYSPLLSTAT;
   __ne__ uint32_t RESERVED0[4];
 
-  /* Offset 0x20 */
+  /* Offset 0x0020 */
   __rw__ uint32_t SYSOSCCTRL;
   __rw__ uint32_t WDTOSCCTRL;
   __rw__ uint32_t IRCCTRL;
@@ -25,7 +25,7 @@ typedef struct
   __rw__ uint32_t SYSRESSTAT; /* System reset status */
   __ne__ uint32_t RESERVED2[3];
 
-  /* Offset 0x40 */
+  /* Offset 0x0040 */
   __rw__ uint32_t SYSPLLCLKSEL;
   __rw__ uint32_t SYSPLLCLKUEN;
   __ne__ uint32_t RESERVED3[10];
@@ -34,7 +34,7 @@ typedef struct
   __rw__ uint32_t SYSAHBCLKDIV;
   __ne__ uint32_t RESERVED4;
 
-  /* Offset 0x80 */
+  /* Offset 0x0080 */
   __rw__ uint32_t SYSAHBCLKCTRL;
   __ne__ uint32_t RESERVED5[4];
   __rw__ uint32_t SSP0CLKDIV;
@@ -42,23 +42,23 @@ typedef struct
   __rw__ uint32_t SSP1CLKDIV;
   __ne__ uint32_t RESERVED6[16];
 
-  /* Offset 0xE0 */
+  /* Offset 0x00E0 */
   __rw__ uint32_t CLKOUTCLKSEL;
   __rw__ uint32_t CLKOUTUEN;
   __rw__ uint32_t CLKOUTDIV;
   __ne__ uint32_t RESERVED7[5];
 
-  /* Offset 0x100 */
+  /* Offset 0x0100 */
   __rw__ uint32_t PIOPORCAP0;
   __rw__ uint32_t PIOPORCAP1;
   __ne__ uint32_t RESERVED10[18];
 
-  /* Offset 0x150 */
+  /* Offset 0x0150 */
   __rw__ uint32_t BODCTRL;
   __rw__ uint32_t SYSTCKCAL;
   __ne__ uint32_t RESERVED11[6];
 
-  /* Offset 0x170 */
+  /* Offset 0x0170 */
   __rw__ uint32_t IRQLATENCY;
   __rw__ uint32_t NMISRC;
   union
@@ -78,14 +78,14 @@ typedef struct
   };
   __ne__ uint32_t RESERVED12[26];
 
-  /* Offset 0x200 */
+  /* Offset 0x0200 */
   __ne__ uint32_t RESERVED13;
   __rw__ uint32_t STARTERP0;
   __ne__ uint32_t RESERVED14[3];
   __rw__ uint32_t STARTERP1;
   __ne__ uint32_t RESERVED15[6];
 
-  /* Offset 0x230 */
+  /* Offset 0x0230 */
   __rw__ uint32_t PDSLEEPCFG;
   __rw__ uint32_t PDAWAKECFG;
   __rw__ uint32_t PDRUNCFG;
@@ -99,7 +99,7 @@ typedef struct
   __rw__ uint32_t FLASHCFG;
   __ne__ uint32_t RESERVED1[3];
 
-  /* Offset 0x020 */
+  /* Offset 0x0020 */
   __rw__ uint32_t FMSSTART;
   __rw__ uint32_t FMSSTOP;
   __ne__ uint32_t RESERVED2;
@@ -113,7 +113,7 @@ typedef struct
   __ro__ uint32_t EEMSSIG;
   __ne__ uint32_t RESERVED4[974];
 
-  /* Offset 0xFE0 */
+  /* Offset 0x0FE0 */
   __ro__ uint32_t FMSTAT;
   __ne__ uint32_t RESERVED5;
   __wo__ uint32_t FMSTATCLR;
@@ -366,6 +366,63 @@ typedef struct
     };
   };
 } LPC_GPIO_Type;
+/*------------------Analog-to-Digital Converter-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR;
+  __rw__ uint32_t GDR;
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t INTEN;
+  union
+  {
+    __ro__ uint32_t DR[8];
+    struct
+    {
+      __ro__ uint32_t DR0;
+      __ro__ uint32_t DR1;
+      __ro__ uint32_t DR2;
+      __ro__ uint32_t DR3;
+      __ro__ uint32_t DR4;
+      __ro__ uint32_t DR5;
+      __ro__ uint32_t DR6;
+      __ro__ uint32_t DR7;
+    };
+  };
+  __ro__ uint32_t STAT;
+} LPC_ADC_Type;
+/*------------------Inter-Integrated Circuit----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CONSET;
+  __ro__ uint32_t STAT;
+  __rw__ uint32_t DAT;
+  __rw__ uint32_t ADR0;
+  __rw__ uint32_t SCLH;
+  __rw__ uint32_t SCLL;
+  __rw__ uint32_t CONCLR;
+  __rw__ uint32_t MMCTRL;
+  __rw__ uint32_t ADR1;
+  __rw__ uint32_t ADR2;
+  __rw__ uint32_t ADR3;
+  __ro__ uint32_t DATA_BUFFER;
+  __rw__ uint32_t MASK0;
+  __rw__ uint32_t MASK1;
+  __rw__ uint32_t MASK2;
+  __rw__ uint32_t MASK3;
+} LPC_I2C_Type;
+/*------------------Synchronous Serial Port-----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR0;
+  __rw__ uint32_t CR1;
+  __rw__ uint32_t DR;
+  __ro__ uint32_t SR;
+  __rw__ uint32_t CPSR;
+  __rw__ uint32_t IMSC;
+  __rw__ uint32_t RIS;
+  __rw__ uint32_t MIS;
+  __wo__ uint32_t ICR;
+} LPC_SSP_Type;
 /*------------------Timer/Counter---------------------------------------------*/
 typedef struct
 {
@@ -511,4 +568,4 @@ typedef struct
 #define LPC_GPIO_GROUP_INT1 \
     ((LPC_GPIO_GROUP_INT_Type *)LPC_GPIO_GROUP_INT1_BASE)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_ */

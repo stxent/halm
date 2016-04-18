@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_USB_REQUESTS_H_
-#define USB_USB_REQUESTS_H_
+#ifndef HALM_USB_USB_REQUESTS_H_
+#define HALM_USB_USB_REQUESTS_H_
 /*----------------------------------------------------------------------------*/
 #include <error.h>
 #include <usb/usb_defs.h>
@@ -15,4 +15,4 @@ struct UsbControl;
 enum result usbHandleStandardRequest(struct UsbControl *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
-#endif /* USB_USB_REQUESTS_H_ */
+#endif /* HALM_USB_USB_REQUESTS_H_ */

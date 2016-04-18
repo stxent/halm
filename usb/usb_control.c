@@ -21,7 +21,7 @@ struct ControlUsbRequest
   uint8_t buffer[EP0_BUFFER_SIZE];
 };
 
-struct LocalData
+struct PrivateData
 {
   struct ControlUsbRequest requests[REQUEST_POOL_SIZE + 1];
 
@@ -30,8 +30,8 @@ struct LocalData
   uint8_t setupData[DATA_BUFFER_SIZE];
 };
 /*----------------------------------------------------------------------------*/
-static enum result localDataAllocate(struct UsbControl *);
-static void localDataFree(struct UsbControl *);
+static enum result privateDataAllocate(struct UsbControl *);
+static void privateDataFree(struct UsbControl *);
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *, struct UsbRequest *,
     enum usbRequestStatus);
@@ -52,23 +52,23 @@ static const struct EntityClass controlTable = {
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbControl = &controlTable;
 /*----------------------------------------------------------------------------*/
-static enum result localDataAllocate(struct UsbControl *control)
+static enum result privateDataAllocate(struct UsbControl *control)
 {
-  struct LocalData * const local = malloc(sizeof(struct LocalData));
+  struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
 
-  if (!local)
+  if (!privateData)
     return E_MEMORY;
-  control->local = local;
+  control->privateData = privateData;
 
-  local->setupDataLeft = 0;
-  memset(&local->setupPacket, 0, sizeof(local->setupPacket));
+  privateData->setupDataLeft = 0;
+  memset(&privateData->setupPacket, 0, sizeof(privateData->setupPacket));
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void localDataFree(struct UsbControl *control)
+static void privateDataFree(struct UsbControl *control)
 {
-  free(control->local);
+  free(control->privateData);
 }
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *argument, struct UsbRequest *request,
@@ -83,8 +83,8 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
     enum usbRequestStatus status)
 {
   struct UsbControl * const control = argument;
-  struct LocalData * const local = control->local;
-  struct UsbSetupPacket * const packet = &local->setupPacket;
+  struct PrivateData * const privateData = control->privateData;
+  struct UsbSetupPacket * const packet = &privateData->setupPacket;
 
   if (status == REQUEST_CANCELLED)
     return;
@@ -94,7 +94,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 
   if (status == REQUEST_SETUP)
   {
-    local->setupDataLeft = 0;
+    privateData->setupDataLeft = 0;
     memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
     packet->value = fromLittleEndian16(packet->value);
     packet->index = fromLittleEndian16(packet->index);
@@ -104,30 +104,31 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 
     if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
     {
-      res = usbHandleStandardRequest(control, packet, local->setupData,
+      res = usbHandleStandardRequest(control, packet, privateData->setupData,
           &length, DATA_BUFFER_SIZE);
 
       if (res != E_OK && control->driver)
       {
         res = usbDriverConfigure(control->driver, packet, 0, 0,
-            local->setupData, &length, DATA_BUFFER_SIZE);
+            privateData->setupData, &length, DATA_BUFFER_SIZE);
       }
     }
     else if (packet->length <= DATA_BUFFER_SIZE)
     {
-      local->setupDataLeft = packet->length;
+      privateData->setupDataLeft = packet->length;
     }
   }
-  else if (local->setupDataLeft && request->base.length <= local->setupDataLeft)
+  else if (privateData->setupDataLeft
+      && request->base.length <= privateData->setupDataLeft)
   {
     /* Erroneous packets are ignored */
-    memcpy(local->setupData + (packet->length - local->setupDataLeft),
-        request->buffer, request->base.length);
-    local->setupDataLeft -= request->base.length;
+    memcpy(privateData->setupData + (packet->length
+        - privateData->setupDataLeft), request->buffer, request->base.length);
+    privateData->setupDataLeft -= request->base.length;
 
-    if (!local->setupDataLeft)
+    if (!privateData->setupDataLeft)
     {
-      res = usbDriverConfigure(control->driver, packet, local->setupData,
+      res = usbDriverConfigure(control->driver, packet, privateData->setupData,
           packet->length, 0, 0, 0);
     }
   }
@@ -136,7 +137,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
   {
     /* Send smallest of requested and offered lengths */
     length = length < packet->length ? length : packet->length;
-    sendResponse(control, local->setupData, length);
+    sendResponse(control, privateData->setupData, length);
   }
   else if (res != E_BUSY)
   {
@@ -271,7 +272,7 @@ static enum result controlInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  res = localDataAllocate(control);
+  res = privateDataAllocate(control);
   if (res != E_OK)
     return E_MEMORY;
 
@@ -287,8 +288,8 @@ static enum result controlInit(void *object, const void *configBase)
   enableEndpoints(control);
 
   /* Initialize requests */
-  struct LocalData * const localData = control->local;
-  struct ControlUsbRequest *request = localData->requests;
+  struct PrivateData * const privateData = control->privateData;
+  struct ControlUsbRequest *request = privateData->requests;
 
   for (unsigned int index = 0; index < REQUEST_POOL_SIZE; ++index)
   {
@@ -318,7 +319,7 @@ static void controlDeinit(void *object)
   deinit(control->ep0out);
   deinit(control->ep0in);
 
-  localDataFree(control);
+  privateDataFree(control);
 
   assert(listEmpty(&control->descriptors));
   listDeinit(&control->descriptors);

@@ -1,0 +1,23 @@
+config CORE
+	string
+	default m0 if CORE_CORTEX_M0
+	default m3 if CORE_CORTEX_M3
+	default m4 if CORE_CORTEX_M4
+
+config CORE_TYPE
+	string
+	default cortex if CORE_CORTEX_M0 || CORE_CORTEX_M3 || CORE_CORTEX_M4
+
+config FPU
+	bool "FPU"
+	default n
+	help
+	  This enables Floating Point Unit.
+	depends on CORE_CORTEX_M4
+
+config CORE_CORTEX_SYSTICK
+	bool "SysTick"
+	default y
+	help
+	  This is the driver for the System Timer peripheral.
+	depends on CORE_CORTEX_M0 || CORE_CORTEX_M3 || CORE_CORTEX_M4

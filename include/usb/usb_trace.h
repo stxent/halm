@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_USB_TRACE_H_
-#define USB_USB_TRACE_H_
+#ifndef HALM_USB_USB_TRACE_H_
+#define HALM_USB_USB_TRACE_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 /*----------------------------------------------------------------------------*/
@@ -18,4 +18,4 @@ void usbTrace(const char *, ...);
 #define usbTrace(...) do {} while (0)
 #endif
 /*----------------------------------------------------------------------------*/
-#endif /* USB_USB_TRACE_H_ */
+#endif /* HALM_USB_USB_TRACE_H_ */

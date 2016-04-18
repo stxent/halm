@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GPTIMER_PWM_H_
-#define PLATFORM_NXP_GPTIMER_PWM_H_
+#ifndef HALM_PLATFORM_NXP_GPTIMER_PWM_H_
+#define HALM_PLATFORM_NXP_GPTIMER_PWM_H_
 /*----------------------------------------------------------------------------*/
 #include <platform/nxp/gptimer_base.h>
 #include <pwm.h>
@@ -39,8 +39,6 @@ struct GpTimerPwmConfig
 {
   /** Mandatory: peripheral unit. */
   struct GpTimerPwmUnit *parent;
-  /** Optional: initial duration in timer ticks. */
-  uint32_t duration;
   /** Mandatory: pin used as an output for modulated signal. */
   pinNumber pin;
 };
@@ -57,6 +55,6 @@ struct GpTimerPwm
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-void *gpTimerPwmCreate(void *, pinNumber, uint32_t);
+void *gpTimerPwmCreate(void *, pinNumber);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GPTIMER_PWM_H_ */
+#endif /* HALM_PLATFORM_NXP_GPTIMER_PWM_H_ */

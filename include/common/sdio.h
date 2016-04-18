@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef COMMON_SDIO_H_
-#define COMMON_SDIO_H_
+#ifndef HALM_COMMON_SDIO_H_
+#define HALM_COMMON_SDIO_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 /*----------------------------------------------------------------------------*/
@@ -81,4 +81,4 @@ enum sdioResponse
   SDIO_RESPONSE_LONG
 };
 /*----------------------------------------------------------------------------*/
-#endif /* COMMON_SDIO_H_ */
+#endif /* HALM_COMMON_SDIO_H_ */

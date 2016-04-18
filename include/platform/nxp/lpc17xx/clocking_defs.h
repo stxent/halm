@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC17XX_CLOCKING_DEFS_H_
-#define PLATFORM_NXP_LPC17XX_CLOCKING_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_LPC17XX_CLOCKING_DEFS_H_
+#define HALM_PLATFORM_NXP_LPC17XX_CLOCKING_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------System Controls and Status register-----------------------*/
@@ -13,10 +13,32 @@
 #define SCS_OSCEN                       BIT(5)
 #define SCS_OSCSTAT                     BIT(6)
 /*------------------Clock Source Select register------------------------------*/
-#define CLKSRCSEL_MASK                  BIT_FIELD(MASK(2), 0)
-#define CLKSRCSEL_IRC                   BIT_FIELD(0, 0)
-#define CLKSRCSEL_MAIN                  BIT_FIELD(1, 0)
-#define CLKSRCSEL_RTC                   BIT_FIELD(2, 0)
+enum
+{
+  CLKSRCSEL_IRC  = 0,
+  CLKSRCSEL_MAIN = 1,
+  CLKSRCSEL_RTC  = 2
+};
+/*------------------Clock Output Configuration register-----------------------*/
+enum
+{
+  CLKOUTCFG_CPU  = 0,
+  CLKOUTCFG_MAIN = 1,
+  CLKOUTCFG_IRC  = 2,
+  CLKOUTCFG_USB  = 3,
+  CLKOUTCFG_RTC  = 4
+};
+
+#define CLKOUTCFG_SEL_MASK              BIT_FIELD(MASK(4), 0)
+#define CLKOUTCFG_SEL(value)            BIT_FIELD((value), 0)
+#define CLKOUTCFG_SEL_VALUE(reg) \
+    FIELD_VALUE((reg), CLKOUTCFG_SEL_MASK, 0)
+#define CLKOUTCFG_DIV_MASK              BIT_FIELD(MASK(4), 4)
+#define CLKOUTCFG_DIV(value)            BIT_FIELD((value), 4)
+#define CLKOUTCFG_DIV_VALUE(reg) \
+    FIELD_VALUE((reg), CLKOUTCFG_DIV_MASK, 4)
+#define CLKOUTCFG_EN                    BIT(8)
+#define CLKOUTCFG_ACT                   BIT(9)
 /*------------------PLL0 Control register-------------------------------------*/
 #define PLL0CON_ENABLE                  BIT(0)
 #define PLL0CON_CONNECT                 BIT(1)
@@ -54,4 +76,4 @@
 #define USBCLKCFG_USBSEL_VALUE(reg) \
     FIELD_VALUE((reg), USBCLKCFG_USBSEL_MASK, 0)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC17XX_CLOCKING_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC17XX_CLOCKING_DEFS_H_ */

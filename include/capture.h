@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef CAPTURE_H_
-#define CAPTURE_H_
+#ifndef HALM_CAPTURE_H_
+#define HALM_CAPTURE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
@@ -60,4 +60,4 @@ static inline uint32_t captureValue(const void *capture)
   return ((const struct CaptureClass *)CLASS(capture))->value(capture);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* CAPTURE_H_ */
+#endif /* HALM_CAPTURE_H_ */

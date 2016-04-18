@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GPDMA_BASE_H_
-#define PLATFORM_NXP_GPDMA_BASE_H_
+#ifndef HALM_PLATFORM_NXP_GPDMA_BASE_H_
+#define HALM_PLATFORM_NXP_GPDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <dma.h>
 #include <libhalm/target.h>
@@ -61,4 +61,4 @@ const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
 enum result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
 void gpDmaSetMux(struct GpDmaBase *);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GPDMA_BASE_H_ */
+#endif /* HALM_PLATFORM_NXP_GPDMA_BASE_H_ */

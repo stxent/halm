@@ -101,7 +101,7 @@ static enum result dacInit(void *object, const void *configBase)
 
   reg->CR = (config->value & CR_OUTPUT_MASK) | CR_BIAS;
   reg->CTRL = CTRL_DBLBUF_ENA | CTRL_DMA_ENA;
-  reg->CNTVAL = dacGetClock(object) / config->rate - 1;
+  reg->CNTVAL = (dacGetClock(object) + (config->rate - 1)) / config->rate - 1;
 
   return E_OK;
 }

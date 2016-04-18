@@ -48,3 +48,17 @@ static void deviceDeinit(void *object)
 
   deinit(device->driver);
 }
+/*----------------------------------------------------------------------------*/
+enum result hidBind(struct Hid *device)
+{
+  enum result res;
+
+  if ((res = usbDevBind(device->driver->device, device->driver)) != E_OK)
+    return res;
+
+#ifndef CONFIG_USB_DEVICE_COMPOSITE
+  usbDevSetConnected(device->driver->device, true);
+#endif
+
+  return E_OK;
+}

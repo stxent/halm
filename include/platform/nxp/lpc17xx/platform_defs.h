@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
-#define PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
+#define HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 5
 /*------------------System Control--------------------------------------------*/
@@ -141,6 +141,72 @@ typedef struct
   };
 
 } LPC_GPIO_INT_Type;
+/*------------------Analog-to-Digital Converter-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR;
+  __rw__ uint32_t GDR;
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t INTEN;
+  union
+  {
+    __ro__ uint32_t DR[8];
+    struct
+    {
+      __ro__ uint32_t DR0;
+      __ro__ uint32_t DR1;
+      __ro__ uint32_t DR2;
+      __ro__ uint32_t DR3;
+      __ro__ uint32_t DR4;
+      __ro__ uint32_t DR5;
+      __ro__ uint32_t DR6;
+      __ro__ uint32_t DR7;
+    };
+  };
+  __ro__ uint32_t STAT;
+  __rw__ uint32_t TRIM; /* May be unavailable on some parts */
+} LPC_ADC_Type;
+/*------------------Digital-to-Analog Converter-------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR; /* Converter Register */
+  __rw__ uint32_t CTRL; /* Control register */
+  __rw__ uint16_t CNTVAL; /* Counter Value register */
+} LPC_DAC_Type;
+/*------------------Inter-Integrated Circuit----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CONSET;
+  __ro__ uint32_t STAT;
+  __rw__ uint32_t DAT;
+  __rw__ uint32_t ADR0;
+  __rw__ uint32_t SCLH;
+  __rw__ uint32_t SCLL;
+  __rw__ uint32_t CONCLR;
+  __rw__ uint32_t MMCTRL;
+  __rw__ uint32_t ADR1;
+  __rw__ uint32_t ADR2;
+  __rw__ uint32_t ADR3;
+  __ro__ uint32_t DATA_BUFFER;
+  __rw__ uint32_t MASK0;
+  __rw__ uint32_t MASK1;
+  __rw__ uint32_t MASK2;
+  __rw__ uint32_t MASK3;
+} LPC_I2C_Type;
+/*------------------Synchronous Serial Port-----------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CR0;
+  __rw__ uint32_t CR1;
+  __rw__ uint32_t DR;
+  __ro__ uint32_t SR;
+  __rw__ uint32_t CPSR;
+  __rw__ uint32_t IMSC;
+  __rw__ uint32_t RIS;
+  __rw__ uint32_t MIS;
+  __wo__ uint32_t ICR;
+  __rw__ uint32_t DMACR;
+} LPC_SSP_Type;
 /*------------------Serial Peripheral Interface-------------------------------*/
 typedef struct
 {
@@ -189,16 +255,19 @@ typedef struct
 /*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
 {
-  union {
+  union
+  {
     __ro__ uint32_t RBR;
     __wo__ uint32_t THR;
     __rw__ uint32_t DLL;
   };
-  union {
+  union
+  {
     __rw__ uint32_t DLM;
     __rw__ uint32_t IER;
   };
-  union {
+  union
+  {
     __ro__ uint32_t IIR;
     __wo__ uint32_t FCR;
   };
@@ -360,63 +429,69 @@ typedef struct
 /*------------------Motor Control Pulse-Width Modulation----------------------*/
 typedef struct
 {
-  __ro__ uint32_t MCCON;
-  __wo__ uint32_t MCCON_SET;
-  __wo__ uint32_t MCCON_CLR;
-  __ro__ uint32_t MCCAPCON;
-  __wo__ uint32_t MCCAPCON_SET;
-  __wo__ uint32_t MCCAPCON_CLR;
-  __rw__ uint32_t MCTIM0;
-  __rw__ uint32_t MCTIM1;
-  __rw__ uint32_t MCTIM2;
-  __rw__ uint32_t MCPER0;
-  __rw__ uint32_t MCPER1;
-  __rw__ uint32_t MCPER2;
-  __rw__ uint32_t MCPW0;
-  __rw__ uint32_t MCPW1;
-  __rw__ uint32_t MCPW2;
-  __rw__ uint32_t MCDEADTIME;
-  __rw__ uint32_t MCCCP;
-  __rw__ uint32_t MCCR0;
-  __rw__ uint32_t MCCR1;
-  __rw__ uint32_t MCCR2;
-  __ro__ uint32_t MCINTEN;
-  __wo__ uint32_t MCINTEN_SET;
-  __wo__ uint32_t MCINTEN_CLR;
-  __ro__ uint32_t MCCNTCON;
-  __wo__ uint32_t MCCNTCON_SET;
-  __wo__ uint32_t MCCNTCON_CLR;
-  __ro__ uint32_t MCINTFLAG;
-  __wo__ uint32_t MCINTFLAG_SET;
-  __wo__ uint32_t MCINTFLAG_CLR;
-  __wo__ uint32_t MCCAP_CLR;
+  __ro__ uint32_t CON;
+  __wo__ uint32_t CON_SET;
+  __wo__ uint32_t CON_CLR;
+  __ro__ uint32_t CAPCON;
+  __wo__ uint32_t CAPCON_SET;
+  __wo__ uint32_t CAPCON_CLR;
+  __rw__ uint32_t TC0;
+  __rw__ uint32_t TC1;
+  __rw__ uint32_t TC2;
+  __rw__ uint32_t LIM0;
+  __rw__ uint32_t LIM1;
+  __rw__ uint32_t LIM2;
+  __rw__ uint32_t MAT0;
+  __rw__ uint32_t MAT1;
+  __rw__ uint32_t MAT2;
+  __rw__ uint32_t DT;
+
+  /* Offset 0x40 */
+  __rw__ uint32_t MCCP;
+  __ro__ uint32_t CAP0;
+  __ro__ uint32_t CAP1;
+  __ro__ uint32_t CAP2;
+  __ro__ uint32_t INTEN;
+  __wo__ uint32_t INTEN_SET;
+  __wo__ uint32_t INTEN_CLR;
+  __ro__ uint32_t CNTCON;
+  __wo__ uint32_t CNTCON_SET;
+  __wo__ uint32_t CNTCON_CLR;
+  __ro__ uint32_t INTF;
+  __wo__ uint32_t INTF_SET;
+  __wo__ uint32_t INTF_CLR;
+  __wo__ uint32_t CAP_CLR;
 } LPC_MCPWM_Type;
 /*------------------Quadrature Encoder Interface------------------------------*/
 typedef struct
 {
-  __wo__ uint32_t QEICON;
-  __ro__ uint32_t QEISTAT;
-  __rw__ uint32_t QEICONF;
-  __ro__ uint32_t QEIPOS;
-  __rw__ uint32_t QEIMAXPOS;
+  __wo__ uint32_t CON;
+  __ro__ uint32_t STAT;
+  __rw__ uint32_t CONF;
+  __ro__ uint32_t POS;
+  __rw__ uint32_t MAXPOS;
   __rw__ uint32_t CMPOS0;
   __rw__ uint32_t CMPOS1;
   __rw__ uint32_t CMPOS2;
+
+  /* Offset 0x0020 */
   __ro__ uint32_t INXCNT;
   __rw__ uint32_t INXCMP;
-  __rw__ uint32_t QEILOAD;
-  __ro__ uint32_t QEITIME;
-  __ro__ uint32_t QEIVEL;
-  __ro__ uint32_t QEICAP;
+  __rw__ uint32_t LOAD;
+  __ro__ uint32_t TIME;
+  __ro__ uint32_t VEL;
+  __ro__ uint32_t CAP;
   __rw__ uint32_t VELCOMP;
   __rw__ uint32_t FILTER;
   __ne__ uint32_t RESERVED0[998];
-  __wo__ uint32_t QEIIEC;
-  __wo__ uint32_t QEIIES;
-  __ro__ uint32_t QEIINTSTAT;
-  __ro__ uint32_t QEIIE;
-  __wo__ uint32_t QEICLR;
-  __wo__ uint32_t QEISET;
+
+  /* Offset 0x0FD8 */
+  __wo__ uint32_t IEC;
+  __wo__ uint32_t IES;
+  __ro__ uint32_t INTSTAT;
+  __ro__ uint32_t IE;
+  __wo__ uint32_t CLR;
+  __wo__ uint32_t SET;
 } LPC_QEI_Type;
 /*------------------Controller Area Network-----------------------------------*/
 /* Identifier masks */
@@ -429,13 +504,13 @@ typedef struct
 typedef struct
 {
   __rw__ uint32_t AFMR;
-  __rw__ uint32_t SFF_SA;
-  __rw__ uint32_t SFF_GRP_SA;
-  __rw__ uint32_t EFF_SA;
-  __rw__ uint32_t EFF_GRP_SA;
-  __rw__ uint32_t ENDOFTABLE;
-  __ro__ uint32_t LUTERRAD;
-  __ro__ uint32_t LUTERR;
+  __rw__ uint32_t SFF_sa;
+  __rw__ uint32_t SFF_GRP_sa;
+  __rw__ uint32_t EFF_sa;
+  __rw__ uint32_t EFF_GRP_sa;
+  __rw__ uint32_t ENDofTable;
+  __ro__ uint32_t LUTerrAd;
+  __ro__ uint32_t LUTerr;
   __rw__ uint32_t FCANIE;
   __rw__ uint32_t FCANIC0;
   __rw__ uint32_t FCANIC1;
@@ -444,8 +519,8 @@ typedef struct
 /* Central registers */
 typedef struct
 {
-  __ro__ uint32_t TXSR;
-  __ro__ uint32_t RXSR;
+  __ro__ uint32_t TxSR;
+  __ro__ uint32_t RxSR;
   __ro__ uint32_t MSR;
 } LPC_CANCR_Type;
 
@@ -684,8 +759,6 @@ typedef struct
   __wo__ uint32_t IntSet;
   __ne__ uint32_t RESERVED7;
   __rw__ uint32_t PowerDown;
-  __ne__ uint32_t RESERVED8;
-  __rw__ uint32_t Module_ID;
 } LPC_ETHERNET_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
@@ -798,4 +871,4 @@ typedef struct
 #define LPC_USB         ((LPC_USB_Type *)LPC_USB_BASE)
 #define LPC_WDT         ((LPC_WDT_Type *)LPC_WDT_BASE)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_ */

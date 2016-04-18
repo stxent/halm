@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_DAC_H_
-#define PLATFORM_NXP_DAC_H_
+#ifndef HALM_PLATFORM_NXP_DAC_H_
+#define HALM_PLATFORM_NXP_DAC_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <libhalm/target.h>
@@ -30,4 +30,4 @@ struct Dac
   struct DacBase base;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_DAC_H_ */
+#endif /* HALM_PLATFORM_NXP_DAC_H_ */

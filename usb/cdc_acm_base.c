@@ -13,7 +13,7 @@
 #include <usb/composite_device.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-struct LocalData
+struct PrivateData
 {
   struct UsbEndpointDescriptor endpointDescriptors[3];
 
@@ -145,87 +145,95 @@ static const struct UsbDescriptor * const controlDescriptors[] = {
 static enum result buildDescriptors(struct CdcAcmBase *driver,
     const struct CdcAcmBaseConfig *config)
 {
-  struct LocalData * const local = malloc(sizeof(struct LocalData));
+  struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
 
-  if (!local)
+  if (!privateData)
     return E_MEMORY;
-  driver->local = local;
+  driver->privateData = privateData;
 
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const uint8_t firstInterface = usbCompositeDevIndex(driver->device);
 
   driver->controlInterfaceIndex = firstInterface;
 
-  local->associationDescriptor.length =
+  privateData->associationDescriptor.length =
       sizeof(struct UsbInterfaceAssociationDescriptor);
-  local->associationDescriptor.descriptorType =
+  privateData->associationDescriptor.descriptorType =
       DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION;
-  local->associationDescriptor.firstInterface = firstInterface;
-  local->associationDescriptor.interfaceCount = 2;
-  local->associationDescriptor.functionClass = USB_CLASS_CDC;
+  privateData->associationDescriptor.firstInterface = firstInterface;
+  privateData->associationDescriptor.interfaceCount = 2;
+  privateData->associationDescriptor.functionClass = USB_CLASS_CDC;
   /* Abstract Control Model */
-  local->associationDescriptor.functionSubClass = 0x02;
+  privateData->associationDescriptor.functionSubClass = 0x02;
   /* No protocol used */
-  local->associationDescriptor.functionProtocol = 0x00;
+  privateData->associationDescriptor.functionProtocol = 0x00;
   /* No string description */
-  local->associationDescriptor.function = 0;
+  privateData->associationDescriptor.function = 0;
 
-  local->interfaceDescriptors[0].length = sizeof(struct UsbInterfaceDescriptor);
-  local->interfaceDescriptors[0].descriptorType = DESCRIPTOR_TYPE_INTERFACE;
-  local->interfaceDescriptors[0].interfaceNumber = firstInterface;
-  local->interfaceDescriptors[0].alternateSettings = 0;
-  local->interfaceDescriptors[0].numEndpoints = 1;
-  local->interfaceDescriptors[0].interfaceClass = USB_CLASS_CDC;
-  local->interfaceDescriptors[0].interfaceSubClass = 0x02; //TODO
-  local->interfaceDescriptors[0].interfaceProtocol = 0x00;
-  local->interfaceDescriptors[0].interface = 0;
+  privateData->interfaceDescriptors[0].length =
+      sizeof(struct UsbInterfaceDescriptor);
+  privateData->interfaceDescriptors[0].descriptorType =
+      DESCRIPTOR_TYPE_INTERFACE;
+  privateData->interfaceDescriptors[0].interfaceNumber = firstInterface;
+  privateData->interfaceDescriptors[0].alternateSettings = 0;
+  privateData->interfaceDescriptors[0].numEndpoints = 1;
+  privateData->interfaceDescriptors[0].interfaceClass = USB_CLASS_CDC;
+  privateData->interfaceDescriptors[0].interfaceSubClass = 0x02; //TODO
+  privateData->interfaceDescriptors[0].interfaceProtocol = 0x00;
+  privateData->interfaceDescriptors[0].interface = 0;
 
-  local->interfaceDescriptors[1].length = sizeof(struct UsbInterfaceDescriptor);
-  local->interfaceDescriptors[1].descriptorType = DESCRIPTOR_TYPE_INTERFACE;
-  local->interfaceDescriptors[1].interfaceNumber = firstInterface + 1;
-  local->interfaceDescriptors[1].alternateSettings = 0;
-  local->interfaceDescriptors[1].numEndpoints = 2;
-  local->interfaceDescriptors[1].interfaceClass = USB_CLASS_CDC_DATA;
-  local->interfaceDescriptors[1].interfaceSubClass = 0x00;
-  local->interfaceDescriptors[1].interfaceProtocol = 0x00;
-  local->interfaceDescriptors[1].interface = 0;
+  privateData->interfaceDescriptors[1].length =
+      sizeof(struct UsbInterfaceDescriptor);
+  privateData->interfaceDescriptors[1].descriptorType =
+      DESCRIPTOR_TYPE_INTERFACE;
+  privateData->interfaceDescriptors[1].interfaceNumber = firstInterface + 1;
+  privateData->interfaceDescriptors[1].alternateSettings = 0;
+  privateData->interfaceDescriptors[1].numEndpoints = 2;
+  privateData->interfaceDescriptors[1].interfaceClass = USB_CLASS_CDC_DATA;
+  privateData->interfaceDescriptors[1].interfaceSubClass = 0x00;
+  privateData->interfaceDescriptors[1].interfaceProtocol = 0x00;
+  privateData->interfaceDescriptors[1].interface = 0;
 
-  local->unionDescriptor.length = sizeof(struct CdcUnionDescriptor);
-  local->unionDescriptor.descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
-  local->unionDescriptor.descriptorSubType = CDC_SUBTYPE_UNION;
-  local->unionDescriptor.masterInterface0 = firstInterface;
-  local->unionDescriptor.slaveInterface0 = firstInterface + 1;
+  privateData->unionDescriptor.length = sizeof(struct CdcUnionDescriptor);
+  privateData->unionDescriptor.descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
+  privateData->unionDescriptor.descriptorSubType = CDC_SUBTYPE_UNION;
+  privateData->unionDescriptor.masterInterface0 = firstInterface;
+  privateData->unionDescriptor.slaveInterface0 = firstInterface + 1;
 #endif
 
   /* Notification endpoint */
-  local->endpointDescriptors[0].length = sizeof(struct UsbEndpointDescriptor);
-  local->endpointDescriptors[0].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  local->endpointDescriptors[0].endpointAddress = config->endpoint.interrupt;
-  local->endpointDescriptors[0].attributes =
+  privateData->endpointDescriptors[0].length =
+      sizeof(struct UsbEndpointDescriptor);
+  privateData->endpointDescriptors[0].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+  privateData->endpointDescriptors[0].endpointAddress =
+      config->endpoint.interrupt;
+  privateData->endpointDescriptors[0].attributes =
       ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT);
-  local->endpointDescriptors[0].maxPacketSize =
+  privateData->endpointDescriptors[0].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_NOTIFICATION_EP_SIZE);
-  local->endpointDescriptors[0].interval = 8;
+  privateData->endpointDescriptors[0].interval = 8;
 
   /* Bulk transmit endpoint */
-  local->endpointDescriptors[1].length = sizeof(struct UsbEndpointDescriptor);
-  local->endpointDescriptors[1].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  local->endpointDescriptors[1].endpointAddress = config->endpoint.tx;
-  local->endpointDescriptors[1].attributes =
+  privateData->endpointDescriptors[1].length =
+      sizeof(struct UsbEndpointDescriptor);
+  privateData->endpointDescriptors[1].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+  privateData->endpointDescriptors[1].endpointAddress = config->endpoint.tx;
+  privateData->endpointDescriptors[1].attributes =
       ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
-  local->endpointDescriptors[1].maxPacketSize =
+  privateData->endpointDescriptors[1].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
-  local->endpointDescriptors[1].interval = 0;
+  privateData->endpointDescriptors[1].interval = 0;
 
   /* Bulk receive endpoint */
-  local->endpointDescriptors[2].length = sizeof(struct UsbEndpointDescriptor);
-  local->endpointDescriptors[2].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  local->endpointDescriptors[2].endpointAddress = config->endpoint.rx;
-  local->endpointDescriptors[2].attributes =
+  privateData->endpointDescriptors[2].length =
+      sizeof(struct UsbEndpointDescriptor);
+  privateData->endpointDescriptors[2].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+  privateData->endpointDescriptors[2].endpointAddress = config->endpoint.rx;
+  privateData->endpointDescriptors[2].attributes =
       ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
-  local->endpointDescriptors[2].maxPacketSize =
+  privateData->endpointDescriptors[2].maxPacketSize =
       TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
-  local->endpointDescriptors[2].interval = 0;
+  privateData->endpointDescriptors[2].interval = 0;
 
   return iterateOverDescriptors(driver, usbDevAppendDescriptor);
 }
@@ -239,20 +247,20 @@ static enum result descriptorEraseWrapper(void *device, const void *descriptor)
 static enum result iterateOverDescriptors(struct CdcAcmBase *driver,
     enum result (*action)(void *, const void *))
 {
-  struct LocalData * const local = driver->local;
+  struct PrivateData * const privateData = driver->privateData;
 
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const void * const descriptors[] = {
-      &local->associationDescriptor,
-      &local->interfaceDescriptors[0],
+      &privateData->associationDescriptor,
+      &privateData->interfaceDescriptors[0],
       controlDescriptors[0],
       controlDescriptors[1],
       controlDescriptors[2],
-      &local->unionDescriptor,
-      &local->endpointDescriptors[0],
-      &local->interfaceDescriptors[1],
-      &local->endpointDescriptors[1],
-      &local->endpointDescriptors[2]
+      &privateData->unionDescriptor,
+      &privateData->endpointDescriptors[0],
+      &privateData->interfaceDescriptors[1],
+      &privateData->endpointDescriptors[1],
+      &privateData->endpointDescriptors[2]
   };
 #else
   const void * const descriptors[] = {
@@ -263,10 +271,10 @@ static enum result iterateOverDescriptors(struct CdcAcmBase *driver,
       controlDescriptors[1],
       controlDescriptors[2],
       &unionDescriptor,
-      &local->endpointDescriptors[0],
+      &privateData->endpointDescriptors[0],
       &dataInterfaceDescriptor,
-      &local->endpointDescriptors[1],
-      &local->endpointDescriptors[2]
+      &privateData->endpointDescriptors[1],
+      &privateData->endpointDescriptors[2]
   };
 #endif
 
@@ -355,6 +363,7 @@ static enum result driverInit(void *object, const void *configBase)
   driver->lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
   driver->controlLineState = 0;
   driver->controlInterfaceIndex = 0;
+  driver->speed = USB_FS;
 
   if ((res = buildDescriptors(driver, config)) != E_OK)
     return res;
@@ -379,7 +388,7 @@ static void driverDeinit(void *object)
 
   usbDevUnbind(driver->device, driver);
   iterateOverDescriptors(driver, descriptorEraseWrapper);
-  free(driver->local);
+  free(driver->privateData);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
@@ -405,6 +414,27 @@ static enum result driverConfigure(void *object,
 static void driverEvent(void *object, unsigned int event)
 {
   struct CdcAcmBase * const driver = object;
+
+#ifdef CONFIG_USB_DEVICE_HS
+  if (event == DEVICE_EVENT_PORT_CHANGE)
+  {
+    driver->speed = usbDevGetSpeed(driver->device);
+
+    struct PrivateData * const privateData = driver->privateData;
+    uint16_t maxPacketSize;
+
+    if (driver->speed == USB_HS)
+      maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE_HS);
+    else
+      maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
+
+    privateData->endpointDescriptors[1].maxPacketSize = maxPacketSize;
+    privateData->endpointDescriptors[2].maxPacketSize = maxPacketSize;
+
+    usbTrace("cdc_acm: current speed is %s",
+        driver->speed == USB_HS ? "HS" : "FS");
+  }
+#endif
 
   cdcAcmOnEvent(driver->owner, event);
 }

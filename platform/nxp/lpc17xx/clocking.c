@@ -42,6 +42,11 @@ static enum result usbPllEnable(const void *, const void *);
 static uint32_t usbPllFrequency(const void *);
 static bool usbPllReady(const void *);
 /*----------------------------------------------------------------------------*/
+static void clockOutputDisable(const void *);
+static enum result clockOutputEnable(const void *, const void *);
+static uint32_t clockOutputFrequency(const void *);
+static bool clockOutputReady(const void *);
+
 static enum result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
 
@@ -84,6 +89,13 @@ static const struct ClockClass usbPllTable = {
     .ready = usbPllReady
 };
 /*----------------------------------------------------------------------------*/
+static const struct ClockClass clockOutputTable = {
+    .disable = clockOutputDisable,
+    .enable = clockOutputEnable,
+    .frequency = clockOutputFrequency,
+    .ready = clockOutputReady
+};
+
 static const struct ClockClass mainClockTable = {
     .disable = clockDisableStub,
     .enable = mainClockEnable,
@@ -98,11 +110,22 @@ static const struct ClockClass usbClockTable = {
     .ready = usbClockReady
 };
 /*----------------------------------------------------------------------------*/
+static const struct PinEntry clockOutputPins[] = {
+    {
+        .key = PIN(1, 27), /* CLKOUT */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = 0 /* End of pin function association list */
+    }
+};
+/*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
 const struct ClockClass * const InternalOsc = &intOscTable;
 const struct ClockClass * const RtcOsc = &rtcOscTable;
 const struct ClockClass * const SystemPll = &sysPllTable;
 const struct ClockClass * const UsbPll = &usbPllTable;
+const struct ClockClass * const ClockOutput = &clockOutputTable;
 const struct ClockClass * const MainClock = &mainClockTable;
 const struct ClockClass * const UsbClock = &usbClockTable;
 /*----------------------------------------------------------------------------*/
@@ -346,6 +369,104 @@ static bool usbPllReady(const void *clockBase __attribute__((unused)))
   return (LPC_SC->PLL1STAT & PLL1STAT_LOCK) != 0;
 }
 /*----------------------------------------------------------------------------*/
+static void clockOutputDisable(const void *clockBase __attribute__((unused)))
+{
+  LPC_SC->CLKOUTCFG &= ~CLKOUTCFG_EN;
+}
+/*----------------------------------------------------------------------------*/
+static enum result clockOutputEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
+{
+  const struct ClockOutputConfig * const config = configBase;
+
+  assert(config->divisor >= 1 && config->divisor <= 16);
+  assert(config->source != CLOCK_PLL);
+
+  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
+      config->pin, 0);
+  assert(pinEntry);
+
+  const struct Pin pin = pinInit(config->pin);
+
+  pinInput(pin);
+  pinSetFunction(pin, pinEntry->value);
+
+  uint32_t value = CLKOUTCFG_EN | CLKOUTCFG_DIV(config->divisor - 1);
+
+  switch (config->source)
+  {
+    case CLOCK_INTERNAL:
+      value |= CLKOUTCFG_IRC;
+      break;
+
+    case CLOCK_EXTERNAL:
+      value |= CLKOUTCFG_MAIN;
+      break;
+
+    case CLOCK_RTC:
+      value |= CLKOUTCFG_RTC;
+      break;
+
+    case CLOCK_USB_PLL:
+      value |= CLKOUTCFG_USB;
+      break;
+
+    case CLOCK_MAIN:
+      value |= CLKOUTCFG_CPU;
+      break;
+
+    default:
+      break;
+  }
+
+  LPC_SC->CLKOUTCFG = value;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t clockOutputFrequency(const void *clockBase
+    __attribute__((unused)))
+{
+  if (!(LPC_SC->CLKOUTCFG & CLKOUTCFG_ACT))
+    return 0;
+
+  const uint32_t divisor = CLKOUTCFG_DIV_VALUE(LPC_SC->CLKOUTCFG) + 1;
+  uint32_t frequency = 0;
+
+  switch (CLKOUTCFG_SEL_VALUE(LPC_SC->CLKOUTCFG))
+  {
+    case CLKOUTCFG_CPU:
+      frequency = mainClockFrequency(MainClock);
+      break;
+
+    case CLKOUTCFG_MAIN:
+      frequency = extOscFrequency(ExternalOsc);
+      break;
+
+    case CLKOUTCFG_IRC:
+      frequency = INT_OSC_FREQUENCY;
+      break;
+
+    case CLKOUTCFG_USB:
+      frequency = usbClockFrequency(UsbClock);
+      break;
+
+    case CLKOUTCFG_RTC:
+      frequency = RTC_OSC_FREQUENCY;
+      break;
+
+    default:
+      break;
+  }
+
+  return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static bool clockOutputReady(const void *clockBase __attribute__((unused)))
+{
+  return (LPC_SC->CLKOUTCFG & CLKOUTCFG_ACT) != 0;
+}
+/*----------------------------------------------------------------------------*/
 static enum result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
@@ -465,12 +586,12 @@ static enum result usbClockEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t usbClockFrequency(const void *configBase)
+static uint32_t usbClockFrequency(const void *clockBase)
 {
-  return usbClockReady(configBase) ? USB_FREQUENCY : 0;
+  return usbClockReady(clockBase) ? USB_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool usbClockReady(const void *configBase __attribute__((unused)))
+static bool usbClockReady(const void *clockBase __attribute__((unused)))
 {
   const unsigned int actualDivisor = USBCLKCFG_USBSEL_VALUE(LPC_SC->USBCLKCFG);
   const unsigned int divisor = pllFrequency / 48000000 - 1;

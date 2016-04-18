@@ -9,18 +9,46 @@
  * Clock configuration functions for LPC175x and LPC176x series.
  */
 
-#ifndef PLATFORM_NXP_LPC17XX_CLOCKING_H_
-#define PLATFORM_NXP_LPC17XX_CLOCKING_H_
+#ifndef HALM_PLATFORM_NXP_LPC17XX_CLOCKING_H_
+#define HALM_PLATFORM_NXP_LPC17XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/
 #include <clock.h>
+#include <pin.h>
+/*----------------------------------------------------------------------------*/
+enum clockSource
+{
+  CLOCK_INTERNAL,
+  CLOCK_EXTERNAL,
+  CLOCK_PLL,
+  CLOCK_RTC,
+  CLOCK_USB_PLL,
+  CLOCK_MAIN
+};
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const RtcOsc;
 extern const struct ClockClass * const SystemPll;
 extern const struct ClockClass * const UsbPll;
+extern const struct ClockClass * const ClockOutput;
 extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const UsbClock;
+/*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+  /** Mandatory: output pin. */
+  pinNumber pin;
+  /** Optional: input clock divisor in the range of 1 to 16. */
+  uint8_t divisor;
+};
+/*----------------------------------------------------------------------------*/
+struct CommonClockConfig
+{
+  /** Mandatory: clock source. */
+  enum clockSource source;
+};
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -36,18 +64,18 @@ struct ExternalOscConfig
   bool bypass;
 };
 /*----------------------------------------------------------------------------*/
-enum clockSource
-{
-  CLOCK_INTERNAL,
-  CLOCK_EXTERNAL,
-  CLOCK_PLL,
-  CLOCK_RTC,
-  CLOCK_USB_PLL,
-  CLOCK_MAIN
-};
-/*----------------------------------------------------------------------------*/
 struct PllConfig
 {
+  /**
+   * Mandatory: clock source.
+   * @n Available options for System PLL (PLL0):
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   *   - @b CLOCK_RTC.
+   * @n Available options for USB PLL (PLL1):
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum clockSource source;
   /**
    * Mandatory: input clock multiplier.
    * @n Oscillator of the System PLL operates in the range of 275 MHz
@@ -64,22 +92,6 @@ struct PllConfig
    * @n USB PLL accepts a limited set of values: 2, 4, 8, 16.
    */
   uint8_t divisor;
-  /**
-   * Mandatory: clock source.
-   * @n Available options for System PLL (PLL0):
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   *   - @b CLOCK_RTC.
-   * @n Available options for USB PLL (PLL1):
-   *   - @b CLOCK_EXTERNAL.
-   */
-  enum clockSource source;
 };
 /*----------------------------------------------------------------------------*/
-struct CommonClockConfig
-{
-  /** Mandatory: clock source. */
-  enum clockSource source;
-};
-/*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC17XX_CLOCKING_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC17XX_CLOCKING_H_ */

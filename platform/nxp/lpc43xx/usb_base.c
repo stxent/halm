@@ -29,14 +29,6 @@ static const struct EntityClass devTable = {
 /*----------------------------------------------------------------------------*/
 const struct PinEntry usbPins[] = {
     {
-        .key = PIN(PORT_1, 3), /* USB0_IND1 */
-        .channel = 0,
-        .value = 4
-    }, {
-        .key = PIN(PORT_1, 4), /* USB0_IND0 */
-        .channel = 0,
-        .value = 4
-    }, {
         .key = PIN(PORT_1, 5), /* USB0_PWR_FAULT */
         .channel = 0,
         .value = 4
@@ -53,10 +45,6 @@ const struct PinEntry usbPins[] = {
         .channel = 0,
         .value = 3
     }, {
-        .key = PIN(PORT_2, 2), /* USB0_IND1 */
-        .channel = 0,
-        .value = 3
-    }, {
         .key = PIN(PORT_2, 3), /* USB0_PPWR */
         .channel = 0,
         .value = 7
@@ -64,14 +52,6 @@ const struct PinEntry usbPins[] = {
         .key = PIN(PORT_2, 4), /* USB0_PWR_FAULT */
         .channel = 0,
         .value = 7
-    }, {
-        .key = PIN(PORT_2, 5), /* USB0_IND0 */
-        .channel = 0,
-        .value = 7
-    }, {
-        .key = PIN(PORT_2, 6), /* USB0_IND0 */
-        .channel = 0,
-        .value = 3
     }, {
         .key = PIN(PORT_6, 3), /* USB0_PPWR */
         .channel = 0,
@@ -81,23 +61,7 @@ const struct PinEntry usbPins[] = {
         .channel = 0,
         .value = 3
     }, {
-        .key = PIN(PORT_6, 7), /* USB0_IND1 */
-        .channel = 0,
-        .value = 3
-    }, {
-        .key = PIN(PORT_6, 8), /* USB0_IND0 */
-        .channel = 0,
-        .value = 3
-    }, {
         .key = PIN(PORT_8, 0), /* USB0_PWR_FAULT */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = PIN(PORT_8, 1), /* USB0_IND1 */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = PIN(PORT_8, 2), /* USB0_IND0 */
         .channel = 0,
         .value = 1
     }, {
@@ -118,22 +82,6 @@ const struct PinEntry usbPins[] = {
         .value = 0
     }, {
         .key = PIN(PORT_2, 5), /* USB1_VBUS1 */
-        .channel = 1,
-        .value = 2
-    }, {
-        .key = PIN(PORT_3, 1), /* USB1_IND1 */
-        .channel = 1,
-        .value = 3
-    }, {
-        .key = PIN(PORT_3, 2), /* USB1_IND0 */
-        .channel = 1,
-        .value = 3
-    }, {
-        .key = PIN(PORT_9, 3), /* USB1_IND1 */
-        .channel = 1,
-        .value = 2
-    }, {
-        .key = PIN(PORT_9, 4), /* USB1_IND0 */
         .channel = 1,
         .value = 2
     }, {
@@ -265,7 +213,6 @@ static enum result devInit(void *object, const void *configBase)
     device->irq = USB1_IRQ;
     device->reg = LPC_USB1;
 
-    LPC_USB1->PORTSC1_D |= PORTSC1_D_PFSC;
     LPC_SCU->SFSUSB = SFSUSB_ESEA | SFSUSB_EPWR | SFSUSB_VBUS;
 
 #ifdef CONFIG_PLATFORM_USB_1

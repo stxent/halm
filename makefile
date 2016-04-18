@@ -40,13 +40,13 @@ ifneq ($(CONFIG_ASSERTIONS),y)
   OPT_FLAGS += -DNDEBUG
 endif
 
-ifeq ($(CONFIG_OPTIMIZATIONS),"full")
-  OPT_FLAGS += -O3
-else ifeq ($(CONFIG_OPTIMIZATIONS),"size")
-  OPT_FLAGS += -Os
-else ifeq ($(CONFIG_OPTIMIZATIONS),"none")
+ifeq ($(CONFIG_OPTIMIZATIONS_DISABLED),y)
   OPT_FLAGS += -O0 -g3
-else ifeq ($(CONFIG_OPTIMIZATIONS),"debug")
+else ifeq ($(OPTIMIZATIONS_SIZE),y)
+  OPT_FLAGS += -Os
+else ifeq ($(OPTIMIZATIONS_FULL),y)
+  OPT_FLAGS += -O3
+else ifeq ($(OPTIMIZATIONS_DEBUG),y)
   OPT_FLAGS += -Og -g3
 else
   OPT_FLAGS += $(CONFIG_OPTIMIZATIONS)

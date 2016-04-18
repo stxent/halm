@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_USB_CONTROL_H_
-#define USB_USB_CONTROL_H_
+#ifndef HALM_USB_USB_CONTROL_H_
+#define HALM_USB_USB_CONTROL_H_
 /*----------------------------------------------------------------------------*/
 #include <pin.h>
 #include <containers/list.h>
@@ -42,7 +42,7 @@ struct UsbControl
   struct UsbRequest *outRequest;
 
   /* Project-specific data */
-  void *local;
+  void *privateData;
 };
 /*----------------------------------------------------------------------------*/
 enum result usbControlAppendDescriptor(struct UsbControl *, const void *);
@@ -52,4 +52,4 @@ void usbControlResetDriver(struct UsbControl *);
 void usbControlUnbindDriver(struct UsbControl *);
 void usbControlEvent(struct UsbControl *, unsigned int);
 /*----------------------------------------------------------------------------*/
-#endif /* USB_USB_CONTROL_H_ */
+#endif /* HALM_USB_USB_CONTROL_H_ */

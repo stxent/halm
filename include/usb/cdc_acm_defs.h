@@ -4,13 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_CDC_ACM_DEFS_H_
-#define USB_CDC_ACM_DEFS_H_
+#ifndef HALM_USB_CDC_ACM_DEFS_H_
+#define HALM_USB_CDC_ACM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define CDC_CONTROL_EP_SIZE       64
 #define CDC_DATA_EP_SIZE          64
+#define CDC_DATA_EP_SIZE_HS       512
 #define CDC_NOTIFICATION_EP_SIZE  12
 /*----------------------------------------------------------------------------*/
 enum
@@ -76,4 +77,4 @@ struct CdcLineCoding
   uint8_t dataBits;
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
-#endif /* USB_CDC_ACM_DEFS_H_ */
+#endif /* HALM_USB_CDC_ACM_DEFS_H_ */

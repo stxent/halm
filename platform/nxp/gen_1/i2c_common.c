@@ -24,7 +24,7 @@ void i2cSetRate(struct I2cBase *interface, uint32_t rate)
 
   LPC_I2C_Type * const reg = interface->reg;
   const uint32_t clock = i2cGetClock(interface);
-  uint32_t divisor = (clock >> 1) / rate;
+  uint32_t divisor = ((clock + (rate - 1)) >> 1) / rate;
 
   if (divisor > 0xFFFF)
     divisor = 0xFFFF;

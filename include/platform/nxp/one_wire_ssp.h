@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_ONE_WIRE_SSP_H_
-#define PLATFORM_NXP_ONE_WIRE_SSP_H_
+#ifndef HALM_PLATFORM_NXP_ONE_WIRE_SSP_H_
+#define HALM_PLATFORM_NXP_ONE_WIRE_SSP_H_
 /*----------------------------------------------------------------------------*/
 #include <containers/byte_queue.h>
 #include <irq.h>
@@ -57,4 +57,4 @@ struct OneWireSsp
   uint8_t lastDiscrepancy, lastZero;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_ONE_WIRE_SSP_H_ */
+#endif /* HALM_PLATFORM_NXP_ONE_WIRE_SSP_H_ */

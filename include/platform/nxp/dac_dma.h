@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_DAC_DMA_H_
-#define PLATFORM_NXP_DAC_DMA_H_
+#ifndef HALM_PLATFORM_NXP_DAC_DMA_H_
+#define HALM_PLATFORM_NXP_DAC_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <dma.h>
@@ -22,7 +22,7 @@ struct DacDmaConfig
 {
   /** Mandatory: conversion rate. */
   uint32_t rate;
-  /** Mandatory: size of the single buffer in elements. */
+  /** Mandatory: size in elements of each buffer. */
   uint16_t size;
   /** Optional: initial output value. */
   uint16_t value;
@@ -45,4 +45,4 @@ struct DacDma
   uint16_t size;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_DAC_DMA_H_ */
+#endif /* HALM_PLATFORM_NXP_DAC_DMA_H_ */

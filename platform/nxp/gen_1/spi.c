@@ -39,22 +39,15 @@ static void interruptHandler(void *object)
 {
   struct Spi * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
-  unsigned int count = interface->txLeft > FIFO_DEPTH ?
-      FIFO_DEPTH : interface->txLeft;
+  const bool rx = interface->rxBuffer != 0;
 
-  if (interface->rxBuffer)
+  if (rx)
   {
     /* Read mode */
     while (reg->SR & SR_RNE)
     {
       --interface->rxLeft;
       *interface->rxBuffer++ = reg->DR;
-    }
-
-    while (count-- && reg->SR & SR_TNF)
-    {
-      reg->DR = DUMMY_FRAME;
-      --interface->txLeft;
     }
   }
   else
@@ -65,12 +58,23 @@ static void interruptHandler(void *object)
       --interface->rxLeft;
       (void)reg->DR;
     }
+  }
 
-    while (count-- && reg->SR & SR_TNF)
-    {
+  const unsigned int left = interface->rxLeft - interface->txLeft;
+  unsigned int count = interface->txLeft > FIFO_DEPTH - left ?
+      FIFO_DEPTH - left : interface->txLeft;
+
+  interface->txLeft -= count;
+
+  if (rx)
+  {
+    while (count--)
+      reg->DR = DUMMY_FRAME;
+  }
+  else
+  {
+    while (count--)
       reg->DR = *interface->txBuffer++;
-      --interface->txLeft;
-    }
   }
 
   if (!interface->rxLeft)

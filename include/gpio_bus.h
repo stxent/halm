@@ -10,8 +10,8 @@
  * General Purpose Input/Output bus.
  */
 
-#ifndef GPIO_BUS_H_
-#define GPIO_BUS_H_
+#ifndef HALM_GPIO_BUS_H_
+#define HALM_GPIO_BUS_H_
 /*----------------------------------------------------------------------------*/
 #include <entity.h>
 #include <pin.h>
@@ -69,4 +69,4 @@ struct GpioBusConfig
   enum pinType type;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* GPIO_BUS_H_ */
+#endif /* HALM_GPIO_BUS_H_ */

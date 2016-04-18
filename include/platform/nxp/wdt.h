@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_WDT_H_
-#define PLATFORM_NXP_WDT_H_
+#ifndef HALM_PLATFORM_NXP_WDT_H_
+#define HALM_PLATFORM_NXP_WDT_H_
 /*----------------------------------------------------------------------------*/
 #include <platform/nxp/wdt_base.h>
 #include <watchdog.h>
@@ -30,4 +30,4 @@ struct Wdt
   void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_WDT_H_ */
+#endif /* HALM_PLATFORM_NXP_WDT_H_ */

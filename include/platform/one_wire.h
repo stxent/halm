@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_ONE_WIRE_SSP_H_
-#define PLATFORM_ONE_WIRE_SSP_H_
+#ifndef HALM_PLATFORM_ONE_WIRE_SSP_H_
+#define HALM_PLATFORM_ONE_WIRE_SSP_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 /*----------------------------------------------------------------------------*/
@@ -20,4 +20,4 @@ enum oneWireOption
   IF_ONE_WIRE_FIND_NEXT
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_ONE_WIRE_SSP_H_ */
+#endif /* HALM_PLATFORM_ONE_WIRE_SSP_H_ */

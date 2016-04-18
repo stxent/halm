@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GEN_1_RTC_DEFS_H_
-#define PLATFORM_NXP_GEN_1_RTC_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_GEN_1_RTC_DEFS_H_
+#define HALM_PLATFORM_NXP_GEN_1_RTC_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Interrupt Location Register-------------------------------*/
@@ -62,4 +62,4 @@
 /* Set to 0 for forward calibration, to 1 for backward calibration */
 #define CALIBRATION_DIR                 BIT(17)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GEN_1_RTC_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_GEN_1_RTC_DEFS_H_ */

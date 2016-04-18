@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef LIBHALM_TARGET_H_
-#define LIBHALM_TARGET_H_
+#ifndef HALM_LIBHALM_TARGET_H_
+#define HALM_LIBHALM_TARGET_H_
 /*----------------------------------------------------------------------------*/
 #include <libxcore/target.h>
 /*----------------------------------------------------------------------------*/
@@ -64,4 +64,4 @@
 #error "Target architecture is undefined"
 #endif
 /*----------------------------------------------------------------------------*/
-#endif /* LIBHALM_TARGET_H_ */
+#endif /* HALM_LIBHALM_TARGET_H_ */

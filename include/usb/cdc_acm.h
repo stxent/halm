@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_CDC_ACM_H_
-#define USB_CDC_ACM_H_
+#ifndef HALM_USB_CDC_ACM_H_
+#define HALM_USB_CDC_ACM_H_
 /*----------------------------------------------------------------------------*/
 #include <containers/queue.h>
 #include <interface.h>
@@ -73,10 +73,9 @@ struct CdcAcm
 
   bool suspended;
   bool updated;
-  bool zeroPacketRequired;
 };
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *);
 void cdcAcmOnEvent(struct CdcAcm *, unsigned int);
 /*----------------------------------------------------------------------------*/
-#endif /* USB_CDC_ACM_H_ */
+#endif /* HALM_USB_CDC_ACM_H_ */

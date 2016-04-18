@@ -53,6 +53,8 @@ static enum result usbPllEnable(const void *, const void *);
 static uint32_t usbPllFrequency(const void *);
 static bool usbPllReady(const void *);
 /*----------------------------------------------------------------------------*/
+static enum result clockOutputEnable(const void *, const void *);
+
 static void branchDisable(const void *);
 static enum result branchEnable(const void *, const void *);
 static uint32_t branchFrequency(const void *);
@@ -96,7 +98,7 @@ static const struct ClockClass usbPllTable = {
 static const struct CommonClockClass clockOutputTable = {
     .base = {
         .disable = branchDisable,
-        .enable = branchEnable,
+        .enable = clockOutputEnable,
         .frequency = branchFrequency,
         .ready = branchReady,
     },
@@ -131,6 +133,16 @@ static const struct CommonClockClass wdtClockTable = {
         .ready = branchReady,
     },
     .branch = CLOCK_BRANCH_WDT
+};
+/*----------------------------------------------------------------------------*/
+static const struct PinEntry clockOutputPins[] = {
+    {
+        .key = PIN(0, 1), /* CLKOUT */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = 0 /* End of pin function association list */
+    }
 };
 /*----------------------------------------------------------------------------*/
 static const int8_t commonClockSourceMap[4][4] = {
@@ -237,6 +249,7 @@ static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
 /*----------------------------------------------------------------------------*/
 static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
 {
+  assert(multiplier);
   assert((divisor & 1) == 0);
 
   const unsigned int msel = multiplier / divisor - 1;
@@ -460,6 +473,27 @@ static bool usbPllReady(const void *clockBase __attribute__((unused)))
 {
   /* USB PLL should be locked */
   return (LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK) != 0;
+}
+/*----------------------------------------------------------------------------*/
+static enum result clockOutputEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
+{
+  const struct ClockOutputConfig * const config = configBase;
+  const struct CommonClockConfig baseConfig = {
+      .source = config->source,
+      .divisor = config->divisor
+  };
+
+  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
+      config->pin, 0);
+  assert(pinEntry);
+
+  const struct Pin pin = pinInit(config->pin);
+
+  pinInput(pin);
+  pinSetFunction(pin, pinEntry->value);
+
+  return branchEnable(ClockOutput, &baseConfig);
 }
 /*----------------------------------------------------------------------------*/
 static void branchDisable(const void *clockBase)

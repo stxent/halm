@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_SDMMC_DEFS_H_
-#define PLATFORM_NXP_SDMMC_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_SDMMC_DEFS_H_
+#define HALM_PLATFORM_NXP_SDMMC_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*----------------------------------------------------------------------------*/
@@ -203,4 +203,4 @@ enum
 #define DESC_SIZE_BS1(value)            BIT_FIELD((value), 0)
 #define DESC_SIZE_BS2(value)            BIT_FIELD((value), 13)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_SDMMC_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_SDMMC_DEFS_H_ */

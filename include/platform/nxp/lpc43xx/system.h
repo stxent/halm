@@ -9,8 +9,8 @@
  * System configuration functions for LPC43xx chips.
  */
 
-#ifndef PLATFORM_NXP_LPC43XX_SYSTEM_H_
-#define PLATFORM_NXP_LPC43XX_SYSTEM_H_
+#ifndef HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
+#define HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 #include <platform/platform_defs.h>
@@ -144,4 +144,4 @@ void sysFlashLatencyUpdate(unsigned int);
 void sysResetEnable(enum sysDeviceReset);
 void sysResetDisable(enum sysDeviceReset);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC43XX_SYSTEM_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_ */

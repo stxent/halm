@@ -20,7 +20,7 @@ struct SingleHidDescriptor
   struct HidDescriptorEntry entries[1];
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
-struct LocalData
+struct PrivateData
 {
   struct SingleHidDescriptor hidDescriptor;
   struct UsbEndpointDescriptor endpointDescriptor;
@@ -103,47 +103,48 @@ static const struct UsbInterfaceDescriptor interfaceDescriptor = {
 static enum result buildDescriptors(struct HidBase *driver,
     const struct HidBaseConfig *config)
 {
-  struct LocalData * const local = malloc(sizeof(struct LocalData));
+  struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
 
-  if (!local)
+  if (!privateData)
     return E_MEMORY;
-  driver->local = local;
+  driver->privateData = privateData;
 
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const uint8_t interfaceIndex = usbCompositeDevIndex(driver->device);
 
   driver->interfaceIndex = interfaceIndex;
 
-  local->interfaceDescriptor.length = sizeof(struct UsbInterfaceDescriptor);
-  local->interfaceDescriptor.descriptorType = DESCRIPTOR_TYPE_INTERFACE;
-  local->interfaceDescriptor.interfaceNumber = interfaceIndex;
-  local->interfaceDescriptor.alternateSettings = 0;
-  local->interfaceDescriptor.numEndpoints = 1;
-  local->interfaceDescriptor.interfaceClass = USB_CLASS_HID;
-  local->interfaceDescriptor.interfaceSubClass = HID_SUBCLASS_NONE;
-  local->interfaceDescriptor.interfaceProtocol = HID_PROTOCOL_NONE;
-  local->interfaceDescriptor.interface = 0;
+  privateData->interfaceDescriptor.length =
+      sizeof(struct UsbInterfaceDescriptor);
+  privateData->interfaceDescriptor.descriptorType = DESCRIPTOR_TYPE_INTERFACE;
+  privateData->interfaceDescriptor.interfaceNumber = interfaceIndex;
+  privateData->interfaceDescriptor.alternateSettings = 0;
+  privateData->interfaceDescriptor.numEndpoints = 1;
+  privateData->interfaceDescriptor.interfaceClass = USB_CLASS_HID;
+  privateData->interfaceDescriptor.interfaceSubClass = HID_SUBCLASS_NONE;
+  privateData->interfaceDescriptor.interfaceProtocol = HID_PROTOCOL_NONE;
+  privateData->interfaceDescriptor.interface = 0;
 #endif
 
   /* HID descriptor */
-  local->hidDescriptor.base.length = sizeof(struct SingleHidDescriptor);
-  local->hidDescriptor.base.descriptorType = DESCRIPTOR_TYPE_HID;
-  local->hidDescriptor.base.hid = TO_LITTLE_ENDIAN_16(0x0100);
-  local->hidDescriptor.base.countryCode = 0;
-  local->hidDescriptor.base.numDescriptors = 1;
-  local->hidDescriptor.entries[0].type = DESCRIPTOR_TYPE_HID_REPORT;
-  local->hidDescriptor.entries[0].length =
+  privateData->hidDescriptor.base.length = sizeof(struct SingleHidDescriptor);
+  privateData->hidDescriptor.base.descriptorType = DESCRIPTOR_TYPE_HID;
+  privateData->hidDescriptor.base.hid = TO_LITTLE_ENDIAN_16(0x0100);
+  privateData->hidDescriptor.base.countryCode = 0;
+  privateData->hidDescriptor.base.numDescriptors = 1;
+  privateData->hidDescriptor.entries[0].type = DESCRIPTOR_TYPE_HID_REPORT;
+  privateData->hidDescriptor.entries[0].length =
       toLittleEndian16(config->descriptorSize);
 
   /* Interrupt endpoint */
-  local->endpointDescriptor.length = sizeof(struct UsbEndpointDescriptor);
-  local->endpointDescriptor.descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  local->endpointDescriptor.endpointAddress = config->endpoint.interrupt;
-  local->endpointDescriptor.attributes =
+  privateData->endpointDescriptor.length = sizeof(struct UsbEndpointDescriptor);
+  privateData->endpointDescriptor.descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+  privateData->endpointDescriptor.endpointAddress = config->endpoint.interrupt;
+  privateData->endpointDescriptor.attributes =
       ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT);
-  local->endpointDescriptor.maxPacketSize =
+  privateData->endpointDescriptor.maxPacketSize =
       toLittleEndian16(config->reportSize);
-  local->endpointDescriptor.interval = 0x20; //TODO
+  privateData->endpointDescriptor.interval = 0x20; //TODO
 
   return iterateOverDescriptors(driver, usbDevAppendDescriptor);
 }
@@ -157,21 +158,21 @@ static enum result descriptorEraseWrapper(void *device, const void *descriptor)
 static enum result iterateOverDescriptors(struct HidBase *driver,
     enum result (*action)(void *, const void *))
 {
-  struct LocalData * const local = driver->local;
+  struct PrivateData * const privateData = driver->privateData;
 
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const void * const descriptors[] = {
-      &local->interfaceDescriptor,
-      &local->hidDescriptor,
-      &local->endpointDescriptor
+      &privateData->interfaceDescriptor,
+      &privateData->hidDescriptor,
+      &privateData->endpointDescriptor
   };
 #else
   const void * const descriptors[] = {
       &deviceDescriptor,
       &configDescriptor,
       &interfaceDescriptor,
-      &local->hidDescriptor,
-      &local->endpointDescriptor
+      &privateData->hidDescriptor,
+      &privateData->endpointDescriptor
   };
 #endif
 
@@ -205,13 +206,6 @@ static enum result driverInit(void *object, const void *configBase)
   if ((res = buildDescriptors(driver, config)) != E_OK)
     return res;
 
-  if ((res = usbDevBind(driver->device, driver)) != E_OK)
-    return res;
-
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-  usbDevSetConnected(driver->device, true);
-#endif
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -225,7 +219,7 @@ static void driverDeinit(void *object)
 
   usbDevUnbind(driver->device, driver);
   iterateOverDescriptors(driver, descriptorEraseWrapper);
-  free(driver->local);
+  free(driver->privateData);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,

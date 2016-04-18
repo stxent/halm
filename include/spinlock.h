@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef SPINLOCK_H_
-#define SPINLOCK_H_
+#ifndef HALM_SPINLOCK_H_
+#define HALM_SPINLOCK_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <libhalm/target.h>
@@ -23,4 +23,4 @@ typedef volatile uint8_t spinlock_t;
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* SPINLOCK_H_ */
+#endif /* HALM_SPINLOCK_H_ */

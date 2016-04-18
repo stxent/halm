@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GPDMA_H_
-#define PLATFORM_NXP_GPDMA_H_
+#ifndef HALM_PLATFORM_NXP_GPDMA_H_
+#define HALM_PLATFORM_NXP_GPDMA_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <platform/nxp/gpdma_base.h>
@@ -16,14 +16,19 @@ struct GpDmaConfig
 {
   /** Mandatory: channel number. */
   uint8_t channel;
+
   /** Mandatory: destination configuration. */
-  struct {
+  struct
+  {
     bool increment;
   } destination;
+
   /** Mandatory: source configuration. */
-  struct {
+  struct
+  {
     bool increment;
   } source;
+
   /** Mandatory: number of transfers that make up a burst transfer request. */
   enum dmaBurst burst;
   /** Mandatory: request connection to the peripheral or memory. */
@@ -37,11 +42,14 @@ struct GpDmaConfig
 struct GpDmaRuntimeConfig
 {
   /** Mandatory: destination configuration. */
-  struct {
+  struct
+  {
     bool increment;
   } destination;
+
   /** Mandatory: source configuration. */
-  struct {
+  struct
+  {
     bool increment;
   } source;
 };
@@ -57,4 +65,4 @@ struct GpDma
   bool error;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GPDMA_H_ */
+#endif /* HALM_PLATFORM_NXP_GPDMA_H_ */

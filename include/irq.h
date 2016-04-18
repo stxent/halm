@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef IRQ_H_
-#define IRQ_H_
+#ifndef HALM_IRQ_H_
+#define HALM_IRQ_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <libhalm/target.h>
@@ -22,4 +22,4 @@ typedef uint32_t irqState;
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* IRQ_H_ */
+#endif /* HALM_IRQ_H_ */

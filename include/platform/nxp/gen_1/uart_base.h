@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GEN_1_UART_BASE_H_
-#define PLATFORM_NXP_GEN_1_UART_BASE_H_
+#ifndef HALM_PLATFORM_NXP_GEN_1_UART_BASE_H_
+#define HALM_PLATFORM_NXP_GEN_1_UART_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <irq.h>
@@ -57,4 +57,4 @@ void uartSetRate(struct UartBase *, struct UartRateConfig);
 
 uint32_t uartGetClock(const struct UartBase *);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GEN_1_UART_BASE_H_ */
+#endif /* HALM_PLATFORM_NXP_GEN_1_UART_BASE_H_ */

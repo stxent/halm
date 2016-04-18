@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_SERIAL_DMA_H_
-#define PLATFORM_NXP_SERIAL_DMA_H_
+#ifndef HALM_PLATFORM_NXP_SERIAL_DMA_H_
+#define HALM_PLATFORM_NXP_SERIAL_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <containers/byte_queue.h>
 #include <dma.h>
@@ -62,4 +62,4 @@ struct SerialDma
   uint8_t rxBufferIndex;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_SERIAL_DMA_H_ */
+#endif /* HALM_PLATFORM_NXP_SERIAL_DMA_H_ */

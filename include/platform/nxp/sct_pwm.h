@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_SCT_PWM_H_
-#define PLATFORM_NXP_SCT_PWM_H_
+#ifndef HALM_PLATFORM_NXP_SCT_PWM_H_
+#define HALM_PLATFORM_NXP_SCT_PWM_H_
 /*----------------------------------------------------------------------------*/
 #include <platform/nxp/sct_base.h>
 #include <pwm.h>
@@ -42,8 +42,6 @@ struct SctPwmConfig
 {
   /** Mandatory: peripheral unit. */
   struct SctPwmUnit *parent;
-  /** Optional: initial duration in timer ticks. */
-  uint32_t duration;
   /** Mandatory: pin used as an output for modulated signal. */
   pinNumber pin;
 };
@@ -64,10 +62,6 @@ struct SctPwmDoubleEdgeConfig
 {
   /** Mandatory: peripheral unit. */
   struct SctPwmUnit *parent;
-  /** Optional: initial leading edge time in timer ticks. */
-  uint32_t leading;
-  /** Optional: initial trailing edge time in timer ticks. */
-  uint32_t trailing;
   /** Mandatory: pin used as an output for modulated signal. */
   pinNumber pin;
 };
@@ -86,7 +80,7 @@ struct SctPwmDoubleEdge
   uint8_t trailingEvent;
 };
 /*----------------------------------------------------------------------------*/
-void *sctPwmCreate(void *, pinNumber, uint32_t);
-void *sctPwmCreateDoubleEdge(void *, pinNumber, uint32_t, uint32_t);
+void *sctPwmCreate(void *, pinNumber);
+void *sctPwmCreateDoubleEdge(void *, pinNumber);
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_SCT_PWM_H_ */
+#endif /* HALM_PLATFORM_NXP_SCT_PWM_H_ */

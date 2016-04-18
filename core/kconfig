@@ -1,0 +1,3 @@
+if CORE_CORTEX_M0 || CORE_CORTEX_M3 || CORE_CORTEX_M4
+	source "core/cortex/kconfig"
+endif

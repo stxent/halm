@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_GEN_1_ADC_DEFS_H_
-#define PLATFORM_NXP_GEN_1_ADC_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_GEN_1_ADC_DEFS_H_
+#define HALM_PLATFORM_NXP_GEN_1_ADC_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <bits.h>
 /*------------------Control Register------------------------------------------*/
@@ -52,4 +52,4 @@
 #define TRIM_VALUE_MASK                 BIT_FIELD(MASK(4), 8)
 #define TRIM_VALUE(reg)                 FIELD_VALUE((reg), TRIM_VALUE_MASK, 8)
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_GEN_1_ADC_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_GEN_1_ADC_DEFS_H_ */

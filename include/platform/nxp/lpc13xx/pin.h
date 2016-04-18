@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_NXP_LPC13XX_PIN_H_
-#define PLATFORM_NXP_LPC13XX_PIN_H_
+#ifndef HALM_PLATFORM_NXP_LPC13XX_PIN_H_
+#define HALM_PLATFORM_NXP_LPC13XX_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -34,7 +34,7 @@ void pinSetType(struct Pin, enum pinType);
 /*----------------------------------------------------------------------------*/
 static inline uint8_t pinRead(struct Pin pin)
 {
-  return (((LPC_GPIO_Type *)pin.reg)->DATA & (1 << pin.data.offset)) != 0;
+  return (((const LPC_GPIO_Type *)pin.reg)->DATA & (1 << pin.data.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
@@ -53,4 +53,4 @@ static inline void pinWrite(struct Pin pin, uint8_t value)
       value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_NXP_LPC13XX_PIN_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC13XX_PIN_H_ */

@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef USB_CDC_ACM_BASE_H_
-#define USB_CDC_ACM_BASE_H_
+#ifndef HALM_USB_CDC_ACM_BASE_H_
+#define HALM_USB_CDC_ACM_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <usb/cdc_acm_defs.h>
@@ -38,14 +38,20 @@ struct CdcAcmBase
 {
   struct UsbDriver base;
 
+  /* Upper-half driver */
   struct CdcAcm *owner;
+  /* USB peripheral */
   struct UsbDevice *device;
 
+  /* Line settings */
   struct CdcLineCoding lineCoding;
   uint8_t controlLineState;
   uint8_t controlInterfaceIndex;
 
-  void *local;
+  /* Speed of the USB interface */
+  uint8_t speed;
+
+  void *privateData;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* USB_CDC_ACM_BASE_H_ */
+#endif /* HALM_USB_CDC_ACM_BASE_H_ */

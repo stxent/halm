@@ -9,8 +9,8 @@
  * Power Management interface for embedded systems.
  */
 
-#ifndef PM_H_
-#define PM_H_
+#ifndef HALM_PM_H_
+#define HALM_PM_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
@@ -60,4 +60,4 @@ enum result pmRegister(void *object, PmCallback callback);
  */
 void pmUnregister(const void *object);
 /*----------------------------------------------------------------------------*/
-#endif /* PM_H_ */
+#endif /* HALM_PM_H_ */

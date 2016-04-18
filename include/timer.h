@@ -9,8 +9,8 @@
  * Abstract timer class.
  */
 
-#ifndef TIMER_H_
-#define TIMER_H_
+#ifndef HALM_TIMER_H_
+#define HALM_TIMER_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
@@ -102,4 +102,4 @@ static inline uint32_t timerValue(const void *timer)
   return ((const struct TimerClass *)CLASS(timer))->value(timer);
 }
 /*----------------------------------------------------------------------------*/
-#endif /* TIMER_H_ */
+#endif /* HALM_TIMER_H_ */

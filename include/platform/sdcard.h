@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PLATFORM_SDCARD_H_
-#define PLATFORM_SDCARD_H_
+#ifndef HALM_PLATFORM_SDCARD_H_
+#define HALM_PLATFORM_SDCARD_H_
 /*----------------------------------------------------------------------------*/
 #include <interface.h>
 #include <pin.h>
@@ -31,7 +31,7 @@ enum sdCardType
 /*----------------------------------------------------------------------------*/
 struct SdCardConfig
 {
-  /** Mandatory: low-level interface. */
+  /** Mandatory: hardware interface. */
   struct Interface *interface;
   /** Optional: enable integrity checking for all transfers. */
   bool crc;
@@ -44,36 +44,36 @@ struct SdCard
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Parent interface */
+  /* Hardware interface */
   struct Interface *interface;
-  /* Current position in internal memory space */
+  /* Current position in the internal memory space */
   uint64_t position;
 
-  /* Relative card address */
+  /* Number of blocks on the card */
   uint32_t blockCount;
   /* Relative card address */
   uint16_t address;
-  /* Memory card capacity */
+  /* Memory card capacity, possible values are SC, HC or XC */
   uint8_t capacity;
-  /* Type of the hardware interface */
+  /* Subclass of the hardware interface */
   uint8_t mode;
   /* Type of the memory card */
   uint8_t type;
-  /* Integrity check option */
+  /* Integrity check flag */
   bool crc;
 
   /* Command argument */
   uint32_t argument;
-  /* Transfer command */
+  /* Interface command */
   uint32_t command;
-  /* User-space buffer for read or write operation */
+  /* Address of the user-space buffer */
   uintptr_t buffer;
-  /* Transfer length */
+  /* Length of the current transfer */
   size_t length;
   /* Transfer state */
   uint8_t state;
-  /* Enable blocking mode */
+  /* Blocking mode flag */
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* PLATFORM_SDCARD_H_ */
+#endif /* HALM_PLATFORM_SDCARD_H_ */

@@ -37,8 +37,8 @@ enum result uartCalcRate(const struct UartBase *interface, uint32_t rate,
   if (!rate)
     return E_VALUE;
 
-  const uint32_t divisor = ((uartGetClock(interface) + (rate >> 1)) >> 4)
-      / rate;
+  const uint32_t divisor =
+      ((uartGetClock(interface) + (rate >> 1)) >> 4) / rate;
 
   if (divisor && divisor < (1 << 16))
   {

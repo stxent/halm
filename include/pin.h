@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef PIN_H_
-#define PIN_H_
+#ifndef HALM_PIN_H_
+#define HALM_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
@@ -106,4 +106,4 @@ static inline bool pinValid(struct Pin pin)
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* PIN_H_ */
+#endif /* HALM_PIN_H_ */
