@@ -162,6 +162,8 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
   }
   else if (event == DEVICE_EVENT_RESET)
   {
+    bool completed = true;
+
     interface->suspended = true;
     resetBuffers(interface);
 
@@ -174,13 +176,21 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
 
       if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
       {
+        completed = false;
         queuePush(&interface->rxRequestQueue, &request);
         break;
       }
     }
 
-    interface->suspended = false;
-    usbTrace("cdc_acm: reset completed");
+    if (completed)
+    {
+      interface->suspended = false;
+      usbTrace("cdc_acm: reset completed");
+    }
+    else
+    {
+      usbTrace("cdc_acm: reset failed");
+    }
   }
 
   if (interface->callback)
