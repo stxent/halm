@@ -75,4 +75,8 @@ void platformStartup(void)
 #ifdef CONFIG_FPU
   fpuEnable();
 #endif
+
+  /* Reset SCU and GPIO blocks */
+  sysResetEnable(RST_SCU);
+  sysResetEnable(RST_GPIO);
 }

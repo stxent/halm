@@ -12,5 +12,9 @@ void platformStartup(void);
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
+  sysClockDisable(CLK_SSP0);
+  sysClockDisable(CLK_USBREG);
 
+  /* Enable clock for IOCON block, clock for GPIO is enabled by default */
+  sysClockEnable(CLK_IOCON);
 }
