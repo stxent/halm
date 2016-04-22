@@ -184,7 +184,7 @@ static void i2cDeinit(void *object)
 
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
 
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_I2C_PM
   pmUnregister(interface);
 #endif
 

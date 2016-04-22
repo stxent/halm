@@ -17,6 +17,10 @@ static enum result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static void dmaTxSetup(struct SpiDma *);
 static enum result getStatus(const struct SpiDma *);
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_SSP_PM
+static enum result powerStateHandler(void *, enum pmState);
+#endif
+/*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
 static enum result spiCallback(void *, void (*)(void *), void *);
@@ -132,6 +136,20 @@ static enum result getStatus(const struct SpiDma *interface)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_SSP_PM
+static enum result powerStateHandler(void *object, enum pmState state)
+{
+  struct SpiDma * const interface = object;
+
+  if (state == PM_ACTIVE)
+  {
+    sspSetRate(object, interface->rate);
+  }
+
+  return E_OK;
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
@@ -158,8 +176,9 @@ static enum result spiInit(void *object, const void *configBase)
   if ((res = dmaSetup(interface, rxChannel, txChannel)) != E_OK)
     return res;
 
-  interface->blocking = true;
   interface->callback = 0;
+  interface->rate = config->rate;
+  interface->blocking = true;
 
   LPC_SSP_Type * const reg = interface->base.reg;
   uint32_t controlValue = 0;
@@ -167,7 +186,7 @@ static enum result spiInit(void *object, const void *configBase)
   /* Set frame size */
   controlValue |= CR0_DSS(8);
 
-  /* Set mode for SPI interface */
+  /* Set mode for the interface */
   if (config->mode & 0x01)
     controlValue |= CR0_CPHA;
   if (config->mode & 0x02)
@@ -178,9 +197,14 @@ static enum result spiInit(void *object, const void *configBase)
   reg->IMSC = 0;
 
   /* Try to set the desired data rate */
-  sspSetRate(object, config->rate);
+  sspSetRate(object, interface->rate);
 
-  /* Enable peripheral */
+#ifdef CONFIG_SSP_PM
+  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
+    return res;
+#endif
+
+  /* Enable the peripheral */
   reg->CR1 = CR1_SSE;
 
   return E_OK;
@@ -191,8 +215,12 @@ static void spiDeinit(void *object)
   struct SpiDma * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
 
-  /* Disable peripheral */
+  /* Disable the peripheral */
   reg->CR1 = 0;
+
+#ifdef CONFIG_SSP_PM
+  pmUnregister(interface);
+#endif
 
   deinit(interface->txDma);
   deinit(interface->rxDma);
@@ -217,7 +245,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_RATE:
-      *(uint32_t *)data = sspGetRate(object);
+      *(uint32_t *)data = interface->rate;
       return E_OK;
 
     case IF_STATUS:
@@ -245,7 +273,8 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     case IF_RATE:
-      sspSetRate(object, *(const uint32_t *)data);
+      interface->rate = *(const uint32_t *)data;
+      sspSetRate(object, interface->rate);
       return E_OK;
 
     case IF_ZEROCOPY:

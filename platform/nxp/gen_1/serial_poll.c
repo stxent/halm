@@ -10,7 +10,7 @@
 /*----------------------------------------------------------------------------*/
 #define TX_FIFO_SIZE 8
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
 static enum result powerStateHandler(void *, enum pmState);
 #endif
 /*----------------------------------------------------------------------------*/
@@ -36,7 +36,7 @@ static const struct InterfaceClass serialTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SerialPoll = &serialTable;
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
 static enum result powerStateHandler(void *object, enum pmState state)
 {
   struct SerialPoll * const interface = object;
@@ -91,7 +91,7 @@ static enum result serialInit(void *object, const void *configBase)
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);
 
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
   if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
     return res;
 #endif
@@ -101,7 +101,7 @@ static enum result serialInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
   pmUnregister(object);
 #endif
 
