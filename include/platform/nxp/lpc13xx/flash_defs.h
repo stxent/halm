@@ -9,12 +9,12 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
-#define CODE_LPC1311      0x2C42502B
-#define CODE_LPC1311_01   0x1816902B
-#define CODE_LPC1313      0x2C40102B
-#define CODE_LPC1313_01   0x1830102B
-#define CODE_LPC1342      0x3D01402B
-#define CODE_LPC1343      0x3D00002B
+#define CODE_LPC1311      0x2C42502BU
+#define CODE_LPC1311_01   0x1816902BU
+#define CODE_LPC1313      0x2C40102BU
+#define CODE_LPC1313_01   0x1830102BU
+#define CODE_LPC1342      0x3D01402BU
+#define CODE_LPC1343      0x3D00002BU
 /*----------------------------------------------------------------------------*/
 #define FLASH_PAGE_SIZE   256
 #define FLASH_SECTOR_SIZE 4096

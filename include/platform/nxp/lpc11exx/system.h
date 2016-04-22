@@ -14,14 +14,17 @@
 /* Power-down configuration register */
 enum sysPowerDevice
 {
-  PWR_IRCOUT  = 0,
-  PWR_IRC     = 1,
-  PWR_FLASH   = 2,
-  PWR_BOD     = 3,
-  PWR_ADC     = 4,
-  PWR_SYSOSC  = 5,
-  PWR_WDTOSC  = 6,
-  PWR_SYSPLL  = 7
+  PWR_IRCOUT    = 0,
+  PWR_IRC       = 1,
+  PWR_FLASH     = 2,
+  PWR_BOD       = 3,
+  PWR_ADC       = 4,
+  PWR_SYSOSC    = 5,
+  PWR_WDTOSC    = 6,
+  PWR_SYSPLL    = 7,
+  PWR_USBPLL    = 8,  /* Only for LPC11U6x */
+  PWR_USBPAD    = 10, /* Only for LPC11U6x */
+  PWR_TEMPSENSE = 13  /* Only for LPC11U6x and LPC11E6x */
 };
 /*----------------------------------------------------------------------------*/
 /* System AHB clock control register */
@@ -41,14 +44,22 @@ enum sysClockDevice
   CLK_SSP0        = 11,
   CLK_USART       = 12,
   CLK_ADC         = 13,
+  CLK_USB         = 13, /* Only for LPC11U6x */
   CLK_WWDT        = 15,
   CLK_IOCON       = 16,
   CLK_SSP1        = 18,
   CLK_PINT        = 19,
+  CLK_USART1      = 20, /* Only for LPC11U6x and LPC11E6x */
+  CLK_USART2      = 21, /* Only for LPC11U6x and LPC11E6x */
+  CLK_USART3_4    = 22, /* Only for LPC11U6x and LPC11E6x */
   CLK_GROUP0INT   = 23,
   CLK_GROUP1INT   = 24,
   CLK_RAM1        = 26,
-  CLK_RAM2        = 27
+  CLK_RAM2        = 27,
+  CLK_CRC         = 28, /* Only for LPC11U6x and LPC11E6x */
+  CLK_DMA         = 29, /* Only for LPC11U6x and LPC11E6x */
+  CLK_RTC         = 30, /* Only for LPC11U6x and LPC11E6x */
+  CLK_SCT0_1      = 31  /* Only for LPC11U6x and LPC11E6x */
 };
 /*----------------------------------------------------------------------------*/
 void sysFlashLatencyUpdate(unsigned int);
