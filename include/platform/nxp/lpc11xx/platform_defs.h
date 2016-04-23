@@ -1,6 +1,6 @@
 /*
  * platform/nxp/lpc11xx/platform_defs.h
- * Based on original by NXP
+ * Based on original from NXP
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
@@ -417,8 +417,8 @@ typedef struct
 } LPC_CAN_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
-#define LPC_APB_BASE            (0x40000000UL)
-#define LPC_AHB_BASE            (0x50000000UL)
+#define LPC_APB_BASE            0x40000000UL
+#define LPC_AHB_BASE            0x50000000UL
 
 /* APB peripherals */
 #define LPC_I2C_BASE            (LPC_APB_BASE + 0x00000)

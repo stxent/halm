@@ -13,6 +13,8 @@
 #include <platform/nxp/lpc43xx/system.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+#define GPDMA_CHANNEL_COUNT ARRAY_SIZE(LPC_GPDMA->CHANNELS)
+/*----------------------------------------------------------------------------*/
 struct DmaHandler
 {
   struct Entity base;
@@ -24,8 +26,6 @@ struct DmaHandler
   /* Peripheral connection statuses */
   uint8_t connections[16];
 };
-/*----------------------------------------------------------------------------*/
-static inline void *calcPeripheral(unsigned int);
 /*----------------------------------------------------------------------------*/
 static unsigned int dmaHandlerAllocate(struct GpDmaBase *, enum gpDmaEvent);
 static void dmaHandlerAttach(void);
@@ -72,12 +72,6 @@ static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
 /*----------------------------------------------------------------------------*/
-static inline void *calcPeripheral(unsigned int channel)
-{
-  return (void *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
-      - (uint32_t)LPC_GPDMACH0) * channel);
-}
-/*----------------------------------------------------------------------------*/
 void gpDmaClearDescriptor(uint8_t channel)
 {
   assert(channel < GPDMA_CHANNEL_COUNT);
@@ -122,7 +116,7 @@ void GPDMA_ISR(void)
     const uint32_t mask = 1 << index;
 
     struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
-    LPC_GPDMACH_Type * const reg = descriptor->reg;
+    LPC_GPDMA_CHANNEL_Type * const reg = descriptor->reg;
     enum result res;
 
     if (errorStatus & mask)
@@ -269,7 +263,7 @@ static enum result channelInit(void *object, const void *configBase)
   channel->control = 0;
   channel->handler = 0;
   channel->number = config->channel;
-  channel->reg = calcPeripheral(channel->number);
+  channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
 
   /* Reset multiplexer mask and value */
   channel->mux.mask = 0xFFFFFFFF;

@@ -15,7 +15,6 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#define GPDMA_CHANNEL_COUNT 8
 #define GPDMA_MAX_TRANSFER  ((1 << 12) - 1)
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpDmaBase;
