@@ -13,7 +13,7 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
 static enum result powerStateHandler(void *, enum pmState);
 #endif
 /*----------------------------------------------------------------------------*/
@@ -82,7 +82,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
 static enum result powerStateHandler(void *object, enum pmState state)
 {
   struct Serial * const interface = object;
@@ -145,7 +145,7 @@ static enum result serialInit(void *object, const void *configBase)
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);
 
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
   if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
     return res;
 #endif
@@ -162,7 +162,7 @@ static void serialDeinit(void *object)
 
   irqDisable(interface->base.irq);
 
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
   pmUnregister(interface);
 #endif
 

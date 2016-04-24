@@ -44,9 +44,6 @@ static void processInterrupt(uint8_t channel)
 
   LPC_GPIO_INT->IST = 1 << channel;
 
-  if (!interrupt)
-    return;
-
   if (interrupt->callback)
     interrupt->callback(interrupt->callbackArgument);
 }

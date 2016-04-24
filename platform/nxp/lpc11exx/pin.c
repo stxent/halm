@@ -11,29 +11,8 @@
 #include <platform/nxp/lpc11exx/pin_defs.h>
 #include <platform/nxp/lpc11exx/system.h>
 /*----------------------------------------------------------------------------*/
-struct PinHandler
-{
-  struct Entity base;
-
-  /* Initialized pins count */
-  uint16_t instances;
-};
-/*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData);
 static void commonPinInit(struct Pin);
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach(void);
-static inline void pinHandlerDetach(void);
-static enum result pinHandlerInit(void *, const void *);
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
-    .size = sizeof(struct PinHandler),
-    .init = pinHandlerInit,
-    .deinit = 0
-};
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass * const PinHandler = &handlerTable;
-static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData data)
 {
@@ -52,53 +31,9 @@ static volatile uint32_t *calcControlReg(union PinData data)
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
 {
-  /* Register new pin in the handler */
-  pinHandlerAttach();
-
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
   pinSetType(pin, PIN_PUSHPULL);
-}
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach(void)
-{
-  const irqState state = irqSave();
-
-  /* Create handler object on first function call */
-  if (!pinHandler)
-    pinHandler = init(PinHandler, 0);
-  assert(pinHandler);
-
-  if (!pinHandler->instances++)
-  {
-    sysClockEnable(CLK_IOCON);
-    sysClockEnable(CLK_GPIO);
-  }
-
-  irqRestore(state);
-}
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerDetach(void)
-{
-  const irqState state = irqSave();
-
-  /* Disable clocks when no active pins exist */
-  if (!--pinHandler->instances)
-  {
-    sysClockDisable(CLK_GPIO);
-    sysClockDisable(CLK_IOCON);
-  }
-
-  irqRestore(state);
-}
-/*----------------------------------------------------------------------------*/
-static enum result pinHandlerInit(void *object,
-    const void *configBase __attribute__((unused)))
-{
-  struct PinHandler * const handler = object;
-
-  handler->instances = 0;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(pinNumber id)

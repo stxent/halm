@@ -114,7 +114,7 @@ static void channelCallback(void *object, void (*callback)(void *),
 static size_t channelCount(const void *object)
 {
   const struct GpDma * const channel = object;
-  const LPC_GPDMACH_Type * const reg = channel->base.reg;
+  const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
 
   if (gpDmaGetDescriptor(channel->base.number) != object)
     return 0;
@@ -155,7 +155,7 @@ static enum result channelStart(void *object, void *destination,
   channel->error = false;
 
   const uint32_t request = 1 << channel->base.number;
-  LPC_GPDMACH_Type * const reg = channel->base.reg;
+  LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
 
   reg->SRCADDR = (uint32_t)source;
   reg->DESTADDR = (uint32_t)destination;
@@ -185,7 +185,7 @@ static enum result channelStatus(const void *object)
 /*----------------------------------------------------------------------------*/
 static void channelStop(void *object)
 {
-  LPC_GPDMACH_Type * const reg = ((struct GpDma *)object)->base.reg;
+  LPC_GPDMA_CHANNEL_Type * const reg = ((struct GpDma *)object)->base.reg;
 
   reg->CONFIG &= ~CONFIG_ENABLE;
 }

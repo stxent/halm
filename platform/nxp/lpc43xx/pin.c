@@ -21,28 +21,10 @@ enum pinDriveType
   HIGH_SPEED_PIN
 };
 /*----------------------------------------------------------------------------*/
-struct PinHandler
-{
-  struct Entity base;
-
-  /* Initialized pins count */
-  uint16_t instances;
-};
-/*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData);
 static union PinData calcPinData(volatile uint32_t *);
 static void commonPinInit(struct Pin);
 static enum pinDriveType detectPinDriveType(volatile uint32_t *);
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach(void);
-static inline void pinHandlerDetach(void);
-static enum result pinHandlerInit(void *, const void *);
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
-    .size = sizeof(struct PinHandler),
-    .init = pinHandlerInit,
-    .deinit = 0
-};
 /*----------------------------------------------------------------------------*/
 const struct PinGroupEntry gpioPins[] = {
     {
@@ -292,9 +274,6 @@ const struct PinGroupEntry gpioPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const PinHandler = &handlerTable;
-static struct PinHandler *pinHandler = 0;
-/*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(union PinData data)
 {
   if (data.port < PORT_CLK)
@@ -339,9 +318,6 @@ static union PinData calcPinData(volatile uint32_t *reg)
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
 {
-  /* Register new pin in the handler */
-  pinHandlerAttach();
-
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
   pinSetSlewRate(pin, PIN_SLEW_FAST);
@@ -367,43 +343,6 @@ static enum pinDriveType detectPinDriveType(volatile uint32_t *reg)
     return HIGH_SPEED_PIN;
   else
     return NORMAL_DRIVE_PIN;
-}
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach(void)
-{
-  const irqState state = irqSave();
-
-  /* Create handler object on first function call */
-  if (!pinHandler)
-    pinHandler = init(PinHandler, 0);
-  assert(pinHandler);
-
-  if (!pinHandler->instances++)
-  {
-    /* CLK_M4_SCU and CLK_M4_GPIO are enabled by default */
-    sysResetEnable(RST_SCU);
-    sysResetEnable(RST_GPIO);
-  }
-
-  irqRestore(state);
-}
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerDetach(void)
-{
-  const irqState state = irqSave();
-
-  --pinHandler->instances;
-
-  irqRestore(state);
-}
-/*----------------------------------------------------------------------------*/
-static enum result pinHandlerInit(void *object,
-    const void *configBase __attribute__((unused)))
-{
-  struct PinHandler * const handler = object;
-
-  handler->instances = 0;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void *pinAddress(struct Pin pin)

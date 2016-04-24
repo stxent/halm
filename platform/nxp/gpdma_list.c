@@ -106,7 +106,7 @@ static void interruptHandler(void *object, enum result res)
 static void startTransfer(struct GpDmaList *channel,
     const struct GpDmaListEntry *entry)
 {
-  LPC_GPDMACH_Type * const reg = channel->base.reg;
+  LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
 
   reg->SRCADDR = entry->source;
   reg->DESTADDR = entry->destination;
@@ -306,7 +306,7 @@ static enum result channelStatus(const void *object)
 static void channelStop(void *object)
 {
   struct GpDmaList * const channel = object;
-  LPC_GPDMACH_Type * const reg = channel->base.reg;
+  LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
   irqState state;
 
   state = irqSave();

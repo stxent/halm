@@ -23,7 +23,7 @@ static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
 static enum result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
 static enum result powerStateHandler(void *, enum pmState);
 #endif
 /*----------------------------------------------------------------------------*/
@@ -134,7 +134,7 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
 static enum result powerStateHandler(void *object, enum pmState state)
 {
   struct SerialDma * const interface = object;
@@ -205,7 +205,7 @@ static enum result serialInit(void *object, const void *configBase)
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);
 
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
   if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
     return res;
 #endif
@@ -224,7 +224,7 @@ static void serialDeinit(void *object)
   /* Stop channels */
   dmaStop(interface->rxDma);
 
-#ifdef CONFIG_SERIAL_PM
+#ifdef CONFIG_UART_PM
   pmUnregister(interface);
 #endif
 

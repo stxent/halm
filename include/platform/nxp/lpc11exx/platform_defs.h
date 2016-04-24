@@ -521,8 +521,8 @@ typedef struct
 } LPC_WDT_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
-#define LPC_APB_BASE                (0x40000000UL)
-#define LPC_AHB_BASE                (0x50000000UL)
+#define LPC_APB_BASE                0x40000000UL
+#define LPC_AHB_BASE                0x50000000UL
 
 /* APB peripherals */
 #define LPC_I2C_BASE                (LPC_APB_BASE + 0x00000)

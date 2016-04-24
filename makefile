@@ -40,16 +40,14 @@ ifneq ($(CONFIG_ASSERTIONS),y)
   OPT_FLAGS += -DNDEBUG
 endif
 
-ifeq ($(CONFIG_OPTIMIZATIONS_DISABLED),y)
-  OPT_FLAGS += -O0 -g3
-else ifeq ($(OPTIMIZATIONS_SIZE),y)
+ifeq ($(CONFIG_OPTIMIZATIONS_SIZE),y)
   OPT_FLAGS += -Os
-else ifeq ($(OPTIMIZATIONS_FULL),y)
+else ifeq ($(CONFIG_OPTIMIZATIONS_FULL),y)
   OPT_FLAGS += -O3
-else ifeq ($(OPTIMIZATIONS_DEBUG),y)
+else ifeq ($(CONFIG_OPTIMIZATIONS_DEBUG),y)
   OPT_FLAGS += -Og -g3
 else
-  OPT_FLAGS += $(CONFIG_OPTIMIZATIONS)
+  OPT_FLAGS += -O0 -g3
 endif
 
 #Configure common paths and libraries

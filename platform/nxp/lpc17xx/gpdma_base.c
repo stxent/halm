@@ -12,6 +12,8 @@
 #include <platform/nxp/lpc17xx/system.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+#define GPDMA_CHANNEL_COUNT ARRAY_SIZE(LPC_GPDMA->CHANNELS)
+/*----------------------------------------------------------------------------*/
 struct DmaHandler
 {
   struct Entity base;
@@ -22,7 +24,6 @@ struct DmaHandler
   unsigned short instances;
 };
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPDMACH_Type *calcPeripheral(unsigned int);
 static unsigned int eventToPeripheral(enum gpDmaEvent);
 static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
 /*----------------------------------------------------------------------------*/
@@ -75,12 +76,6 @@ static const uint8_t eventTranslationMap[] = {
 static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
-/*----------------------------------------------------------------------------*/
-static inline LPC_GPDMACH_Type *calcPeripheral(unsigned int channel)
-{
-  return (LPC_GPDMACH_Type *)((uint32_t)LPC_GPDMACH0 + ((uint32_t)LPC_GPDMACH1
-      - (uint32_t)LPC_GPDMACH0) * channel);
-}
 /*----------------------------------------------------------------------------*/
 static unsigned int eventToPeripheral(enum gpDmaEvent event)
 {
@@ -145,7 +140,7 @@ void GPDMA_ISR(void)
     const uint32_t mask = 1 << index;
 
     struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
-    LPC_GPDMACH_Type * const reg = descriptor->reg;
+    LPC_GPDMA_CHANNEL_Type * const reg = descriptor->reg;
     enum result res;
 
     if (errorStatus & mask)
@@ -224,7 +219,7 @@ static enum result channelInit(void *object, const void *configBase)
   channel->control = 0;
   channel->handler = 0;
   channel->number = config->channel;
-  channel->reg = calcPeripheral(channel->number);
+  channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
 
   /* Reset multiplexer mask and value */
   channel->mux.mask = 0xFF;

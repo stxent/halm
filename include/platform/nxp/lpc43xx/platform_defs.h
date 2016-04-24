@@ -1,6 +1,6 @@
 /*
  * platform/nxp/lpc43xx/platform_defs.h
- * Based on original by NXP
+ * Based on original from NXP
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
@@ -1726,7 +1726,18 @@ typedef struct
   __ne__ uint32_t RESERVED3;
   __rw__ uint32_t DATA[];
 } LPC_SDMMC_Type;
-/*------------------General Purpose Direct Memory Access----------------------*/
+/*------------------General Purpose Direct Memory Access controller-----------*/
+/* Channel registers */
+typedef struct
+{
+  __rw__ uint32_t SRCADDR;
+  __rw__ uint32_t DESTADDR;
+  __rw__ uint32_t LLI;
+  __rw__ uint32_t CONTROL;
+  __rw__ uint32_t CONFIG;
+  __ne__ uint32_t RESERVED[3];
+} LPC_GPDMA_CHANNEL_Type;
+
 /* Common registers */
 typedef struct
 {
@@ -1744,17 +1755,11 @@ typedef struct
   __rw__ uint32_t SOFTLSREQ;
   __rw__ uint32_t CONFIG;
   __rw__ uint32_t SYNC;
-} LPC_GPDMA_Type;
+  __ne__ uint32_t RESERVED[50];
 
-/* Channel registers */
-typedef struct
-{
-  __rw__ uint32_t SRCADDR;
-  __rw__ uint32_t DESTADDR;
-  __rw__ uint32_t LLI;
-  __rw__ uint32_t CONTROL;
-  __rw__ uint32_t CONFIG;
-} LPC_GPDMACH_Type;
+  /* Offset 0x100: channel registers */
+  LPC_GPDMA_CHANNEL_Type CHANNELS[8];
+} LPC_GPDMA_Type;
 /*------------------Universal Serial Bus--------------------------------------*/
 typedef struct
 {
@@ -2188,16 +2193,6 @@ typedef struct
 #define LPC_CCU1_BASE             (LPC_CLK_DOMAIN_BASE + 0x1000)
 #define LPC_CCU2_BASE             (LPC_CLK_DOMAIN_BASE + 0x2000)
 #define LPC_RGU_BASE              (LPC_CLK_DOMAIN_BASE + 0x3000)
-
-/* GPDMA channels */
-#define LPC_GPDMACH0_BASE         (LPC_GPDMA_BASE + 0x0100)
-#define LPC_GPDMACH1_BASE         (LPC_GPDMA_BASE + 0x0120)
-#define LPC_GPDMACH2_BASE         (LPC_GPDMA_BASE + 0x0140)
-#define LPC_GPDMACH3_BASE         (LPC_GPDMA_BASE + 0x0160)
-#define LPC_GPDMACH4_BASE         (LPC_GPDMA_BASE + 0x0180)
-#define LPC_GPDMACH5_BASE         (LPC_GPDMA_BASE + 0x01A0)
-#define LPC_GPDMACH6_BASE         (LPC_GPDMA_BASE + 0x01C0)
-#define LPC_GPDMACH7_BASE         (LPC_GPDMA_BASE + 0x01E0)
 /*----------------------------------------------------------------------------*/
 /* Peripheral declaration */
 #define LPC_GPIO          ((LPC_GPIO_Type *)LPC_GPIO_BASE)
@@ -2206,14 +2201,6 @@ typedef struct
 
 #define LPC_SCT           ((LPC_SCT_Type *)LPC_SCT_BASE)
 #define LPC_GPDMA         ((LPC_GPDMA_Type *)LPC_GPDMA_BASE)
-#define LPC_GPDMACH0      ((LPC_GPDMACH_Type *)LPC_GPDMACH0_BASE)
-#define LPC_GPDMACH1      ((LPC_GPDMACH_Type *)LPC_GPDMACH1_BASE)
-#define LPC_GPDMACH2      ((LPC_GPDMACH_Type *)LPC_GPDMACH2_BASE)
-#define LPC_GPDMACH3      ((LPC_GPDMACH_Type *)LPC_GPDMACH3_BASE)
-#define LPC_GPDMACH4      ((LPC_GPDMACH_Type *)LPC_GPDMACH4_BASE)
-#define LPC_GPDMACH5      ((LPC_GPDMACH_Type *)LPC_GPDMACH5_BASE)
-#define LPC_GPDMACH6      ((LPC_GPDMACH_Type *)LPC_GPDMACH6_BASE)
-#define LPC_GPDMACH7      ((LPC_GPDMACH_Type *)LPC_GPDMACH7_BASE)
 #define LPC_SPIFI         ((LPC_SPIFI_Type *)LPC_SPIFI_BASE)
 #define LPC_SDMMC         ((LPC_SDMMC_Type *)LPC_SDMMC_BASE)
 #define LPC_EMC           ((LPC_EMC_Type *)LPC_EMC_BASE)

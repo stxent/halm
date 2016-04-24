@@ -13,6 +13,10 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_SSP_PM
+static enum result powerStateHandler(void *, enum pmState);
+#endif
+/*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
 static enum result spiCallback(void *, void (*)(void *), void *);
@@ -85,6 +89,18 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_SSP_PM
+static enum result powerStateHandler(void *object, enum pmState state)
+{
+  struct Spi * const interface = object;
+
+  if (state == PM_ACTIVE)
+    sspSetRate(object, interface->rate);
+
+  return E_OK;
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
@@ -104,8 +120,9 @@ static enum result spiInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
 
-  interface->blocking = true;
   interface->callback = 0;
+  interface->rate = config->rate;
+  interface->blocking = true;
 
   LPC_SSP_Type * const reg = interface->base.reg;
   uint32_t controlValue = 0;
@@ -113,7 +130,7 @@ static enum result spiInit(void *object, const void *configBase)
   /* Set frame size */
   controlValue |= CR0_DSS(8);
 
-  /* Set mode for SPI interface */
+  /* Set mode for the interface */
   if (config->mode & 0x01)
     controlValue |= CR0_CPHA;
   if (config->mode & 0x02)
@@ -124,9 +141,14 @@ static enum result spiInit(void *object, const void *configBase)
   reg->IMSC = 0;
 
   /* Try to set the desired data rate */
-  sspSetRate(object, config->rate);
+  sspSetRate(object, interface->rate);
 
-  /* Enable peripheral */
+#ifdef CONFIG_SSP_PM
+  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
+    return res;
+#endif
+
+  /* Enable the peripheral */
   reg->CR1 = CR1_SSE;
 
   irqSetPriority(interface->base.irq, config->priority);
@@ -140,9 +162,13 @@ static void spiDeinit(void *object)
   struct Spi * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
 
-  /* Disable peripheral */
+  /* Disable the peripheral */
   irqDisable(interface->base.irq);
   reg->CR1 = 0;
+
+#ifdef CONFIG_SSP_PM
+  pmUnregister(interface);
+#endif
 
   SspBase->deinit(interface);
 }
@@ -165,7 +191,7 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_RATE:
-      *(uint32_t *)data = sspGetRate(object);
+      *(uint32_t *)data = interface->rate;
       return E_OK;
 
     case IF_STATUS:
@@ -187,7 +213,8 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     case IF_RATE:
-      sspSetRate(object, *(const uint32_t *)data);
+      interface->rate = *(const uint32_t *)data;
+      sspSetRate(object, interface->rate);
       return E_OK;
 
     case IF_ZEROCOPY:

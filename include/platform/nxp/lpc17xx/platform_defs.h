@@ -1,6 +1,6 @@
 /*
  * platform/nxp/lpc17xx/platform_defs.h
- * Based on original by NXP
+ * Based on original from NXP
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
@@ -552,7 +552,18 @@ typedef struct
   __rw__ uint32_t TDA3;
   __rw__ uint32_t TDB3;
 } LPC_CAN_Type;
-/*------------------General Purpose Direct Memory Access----------------------*/
+/*------------------General Purpose Direct Memory Access controller-----------*/
+/* Channel registers */
+typedef struct
+{
+  __rw__ uint32_t SRCADDR;
+  __rw__ uint32_t DESTADDR;
+  __rw__ uint32_t LLI;
+  __rw__ uint32_t CONTROL;
+  __rw__ uint32_t CONFIG;
+  __ne__ uint32_t RESERVED[3];
+} LPC_GPDMA_CHANNEL_Type;
+
 /* Common registers */
 typedef struct
 {
@@ -570,17 +581,11 @@ typedef struct
   __rw__ uint32_t SOFTLSREQ;
   __rw__ uint32_t CONFIG;
   __rw__ uint32_t SYNC;
-} LPC_GPDMA_Type;
+  __ne__ uint32_t RESERVED[50];
 
-/* Channel registers */
-typedef struct
-{
-  __rw__ uint32_t SRCADDR;
-  __rw__ uint32_t DESTADDR;
-  __rw__ uint32_t LLI;
-  __rw__ uint32_t CONTROL;
-  __rw__ uint32_t CONFIG;
-} LPC_GPDMACH_Type;
+  /* Offset 0x100: channel registers */
+  LPC_GPDMA_CHANNEL_Type CHANNELS[8];
+} LPC_GPDMA_Type;
 /*------------------Universal Serial Bus--------------------------------------*/
 typedef struct
 {
@@ -762,10 +767,10 @@ typedef struct
 } LPC_ETHERNET_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
-#define LPC_GPIO_BASE           (0x2009C000UL)
-#define LPC_APB0_BASE           (0x40000000UL)
-#define LPC_APB1_BASE           (0x40080000UL)
-#define LPC_AHB_BASE            (0x50000000UL)
+#define LPC_GPIO_BASE           0x2009C000UL
+#define LPC_APB0_BASE           0x40000000UL
+#define LPC_APB1_BASE           0x40080000UL
+#define LPC_AHB_BASE            0x50000000UL
 
 /* APB0 peripherals */
 #define LPC_WDT_BASE            (LPC_APB0_BASE + 0x00000)
@@ -805,14 +810,6 @@ typedef struct
 /* AHB peripherals */
 #define LPC_ETHERNET_BASE       (LPC_AHB_BASE + 0x00000)
 #define LPC_GPDMA_BASE          (LPC_AHB_BASE + 0x04000)
-#define LPC_GPDMACH0_BASE       (LPC_AHB_BASE + 0x04100)
-#define LPC_GPDMACH1_BASE       (LPC_AHB_BASE + 0x04120)
-#define LPC_GPDMACH2_BASE       (LPC_AHB_BASE + 0x04140)
-#define LPC_GPDMACH3_BASE       (LPC_AHB_BASE + 0x04160)
-#define LPC_GPDMACH4_BASE       (LPC_AHB_BASE + 0x04180)
-#define LPC_GPDMACH5_BASE       (LPC_AHB_BASE + 0x041A0)
-#define LPC_GPDMACH6_BASE       (LPC_AHB_BASE + 0x041C0)
-#define LPC_GPDMACH7_BASE       (LPC_AHB_BASE + 0x041E0)
 #define LPC_USB_BASE            (LPC_AHB_BASE + 0x0C000)
 
 /* General Purpose Input/Output */
@@ -833,14 +830,6 @@ typedef struct
 #define LPC_DAC         ((LPC_DAC_Type *)LPC_DAC_BASE)
 #define LPC_ETHERNET    ((LPC_ETHERNET_Type *)LPC_ETHERNET_BASE)
 #define LPC_GPDMA       ((LPC_GPDMA_Type *)LPC_GPDMA_BASE)
-#define LPC_GPDMACH0    ((LPC_GPDMACH_Type *)LPC_GPDMACH0_BASE)
-#define LPC_GPDMACH1    ((LPC_GPDMACH_Type *)LPC_GPDMACH1_BASE)
-#define LPC_GPDMACH2    ((LPC_GPDMACH_Type *)LPC_GPDMACH2_BASE)
-#define LPC_GPDMACH3    ((LPC_GPDMACH_Type *)LPC_GPDMACH3_BASE)
-#define LPC_GPDMACH4    ((LPC_GPDMACH_Type *)LPC_GPDMACH4_BASE)
-#define LPC_GPDMACH5    ((LPC_GPDMACH_Type *)LPC_GPDMACH5_BASE)
-#define LPC_GPDMACH6    ((LPC_GPDMACH_Type *)LPC_GPDMACH6_BASE)
-#define LPC_GPDMACH7    ((LPC_GPDMACH_Type *)LPC_GPDMACH7_BASE)
 #define LPC_GPIO0       ((LPC_GPIO_Type *)LPC_GPIO0_BASE)
 #define LPC_GPIO1       ((LPC_GPIO_Type *)LPC_GPIO1_BASE)
 #define LPC_GPIO2       ((LPC_GPIO_Type *)LPC_GPIO2_BASE)

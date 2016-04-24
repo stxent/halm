@@ -12,28 +12,10 @@
 #include <platform/nxp/lpc11xx/pin_defs.h>
 #include <platform/nxp/lpc11xx/system.h>
 /*----------------------------------------------------------------------------*/
-struct PinHandler
-{
-  struct Entity base;
-
-  /* Initialized pins count */
-  uint16_t instances;
-};
-/*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union PinData);
 static inline volatile uint32_t *calcControlReg(union PinData);
 static void commonPinInit(struct Pin);
 static bool isCommonPin(struct Pin);
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach(void);
-static inline void pinHandlerDetach(void);
-static enum result pinHandlerInit(void *, const void *);
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
-    .size = sizeof(struct PinHandler),
-    .init = pinHandlerInit,
-    .deinit = 0
-};
 /*----------------------------------------------------------------------------*/
 static const uint8_t pinRegMap[4][12] = {
     {0x0C, 0x10, 0x1C, 0x2C, 0x30, 0x34, 0x4C, 0x50, 0x60, 0x64, 0x68, 0x74},
@@ -41,9 +23,6 @@ static const uint8_t pinRegMap[4][12] = {
     {0x08, 0x28, 0x5C, 0x8C, 0x40, 0x44, 0x00, 0x20, 0x24, 0x54, 0x58, 0x70},
     {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
 };
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass * const PinHandler = &handlerTable;
-static struct PinHandler *pinHandler = 0;
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(union PinData data)
 {
@@ -59,9 +38,6 @@ static inline volatile uint32_t *calcControlReg(union PinData data)
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
 {
-  /* Register new pin in the handler */
-  pinHandlerAttach();
-
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
   pinSetSlewRate(pin, PIN_SLEW_NORMAL);
@@ -72,47 +48,6 @@ static bool isCommonPin(struct Pin pin)
 {
   /* PIO0_4 and PIO0_5 are I2C pins with different function set */
   return pin.data.port != 0 || (pin.data.offset < 4 || pin.data.offset > 5);
-}
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerAttach(void)
-{
-  const irqState state = irqSave();
-
-  /* Create handler object on first function call */
-  if (!pinHandler)
-    pinHandler = init(PinHandler, 0);
-  assert(pinHandler);
-
-  if (!pinHandler->instances++)
-  {
-    sysClockEnable(CLK_IOCON);
-    sysClockEnable(CLK_GPIO);
-  }
-
-  irqRestore(state);
-}
-/*----------------------------------------------------------------------------*/
-static inline void pinHandlerDetach(void)
-{
-  const irqState state = irqSave();
-
-  /* Disable clocks when no active pins exist */
-  if (!--pinHandler->instances)
-  {
-    sysClockDisable(CLK_GPIO);
-    sysClockDisable(CLK_IOCON);
-  }
-
-  irqRestore(state);
-}
-/*----------------------------------------------------------------------------*/
-static enum result pinHandlerInit(void *object,
-    const void *configBase __attribute__((unused)))
-{
-  struct PinHandler * const handler = object;
-
-  handler->instances = 0;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(pinNumber id)

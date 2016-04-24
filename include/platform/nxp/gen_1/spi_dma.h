@@ -40,6 +40,8 @@ struct SpiDma
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* Desired baud rate */
+  uint32_t rate;
   /* Direct memory access channel descriptors */
   struct Dma *rxDma, *txDma;
   /*
