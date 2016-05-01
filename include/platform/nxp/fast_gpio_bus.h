@@ -13,6 +13,8 @@ extern const struct GpioBusClass * const FastGpioBus;
 /*----------------------------------------------------------------------------*/
 struct FastGpioBusConfig
 {
+  /** Mandatory: pointer to an array of pins terminated with a zero element. */
+  const pinNumber *pins;
   /** Optional: initial output value for pins configured as outputs. */
   uint32_t initial;
   /** Mandatory: direction of pins in the bus. */
@@ -23,10 +25,6 @@ struct FastGpioBusConfig
   enum pinSlewRate rate;
   /** Optional: push-pull or open-drain configuration for output pins. */
   enum pinType type;
-  /** Mandatory: first pin of the set. */
-  pinNumber first;
-  /** Mandatory: last pin of the set. */
-  pinNumber last;
 };
 /*----------------------------------------------------------------------------*/
 struct FastGpioBus
@@ -39,5 +37,8 @@ struct FastGpioBus
   /* First pin of the bus */
   struct Pin first;
 };
+/*----------------------------------------------------------------------------*/
+void fastGpioBusConfigPins(struct FastGpioBus *,
+    const struct FastGpioBusConfig *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_FAST_GPIO_BUS_H_ */

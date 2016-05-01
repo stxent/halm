@@ -31,9 +31,9 @@ struct GpioBus
 };
 /*----------------------------------------------------------------------------*/
 /**
- * Read logical levels from bus lines.
+ * Read logic levels from bus lines.
  * @param bus Pointer to a GpioBus object.
- * @return Current logical levels on bus lines.
+ * @return Current logic levels on bus lines.
  */
 static inline uint32_t gpioBusRead(void *bus)
 {
@@ -41,21 +41,21 @@ static inline uint32_t gpioBusRead(void *bus)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set logical values on bus lines.
+ * Set logic levels on bus lines.
  * @param bus Pointer to a GpioBus object.
- * @param value Signal values to be set.
+ * @param value Logic levels to be set.
  */
 static inline void gpioBusWrite(void *bus, uint32_t value)
 {
   ((const struct GpioBusClass *)CLASS(bus))->write(bus, value);
 }
 /*----------------------------------------------------------------------------*/
-/** Reference GpioBus implementation based on the pin array. */
-extern const struct GpioBusClass * const GpioBus;
+/** Simple GpioBus implementation based on a pin array. */
+extern const struct GpioBusClass * const SimpleGpioBus;
 /*----------------------------------------------------------------------------*/
-struct GpioBusConfig
+struct SimpleGpioBusConfig
 {
-  /** Mandatory: pointer to an array of pins terminated with zero element. */
+  /** Mandatory: pointer to an array of pins terminated with a zero element. */
   const pinNumber *pins;
   /** Optional: initial output value for pins configured as outputs. */
   uint32_t initial;

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <gpio_bus.h>
 /*----------------------------------------------------------------------------*/
-struct CommonGpioBus
+struct SimpleGpioBus
 {
   struct GpioBus base;
 
@@ -24,7 +24,7 @@ static uint32_t busRead(void *);
 static void busWrite(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct GpioBusClass gpioBusTable = {
-    .size = sizeof(struct CommonGpioBus),
+    .size = sizeof(struct SimpleGpioBus),
     .init = busInit,
     .deinit = busDeinit,
 
@@ -32,18 +32,18 @@ static const struct GpioBusClass gpioBusTable = {
     .write = busWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct GpioBusClass * const GpioBus = &gpioBusTable;
+const struct GpioBusClass * const SimpleGpioBus = &gpioBusTable;
 /*----------------------------------------------------------------------------*/
 static enum result busInit(void *object, const void *configBase)
 {
-  const struct GpioBusConfig * const config = configBase;
-  struct CommonGpioBus * const bus = object;
+  const struct SimpleGpioBusConfig * const config = configBase;
+  struct SimpleGpioBus * const bus = object;
   unsigned int number = 0;
 
   /* Find number of pins in the array */
   while (config->pins[number] && ++number < 32);
 
-  assert(number && number < 32);
+  assert(number && number <= 32);
 
   bus->number = number;
   bus->pins = malloc(sizeof(struct Pin) * bus->number);
@@ -81,14 +81,14 @@ static enum result busInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void busDeinit(void *object)
 {
-  struct CommonGpioBus * const bus = object;
+  struct SimpleGpioBus * const bus = object;
 
   free(bus->pins);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t busRead(void *object)
 {
-  const struct CommonGpioBus * const bus = object;
+  const struct SimpleGpioBus * const bus = object;
   uint32_t result = 0;
 
   for (unsigned int position = 0; position < bus->number; ++position)
@@ -99,7 +99,7 @@ static uint32_t busRead(void *object)
 /*----------------------------------------------------------------------------*/
 static void busWrite(void *object, uint32_t value)
 {
-  const struct CommonGpioBus * const bus = object;
+  const struct SimpleGpioBus * const bus = object;
 
   for (unsigned int position = 0; position < bus->number; ++position)
     pinWrite(bus->pins[position], (value >> position) & 1);
