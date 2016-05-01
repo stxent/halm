@@ -26,6 +26,7 @@ ifeq ($(CONFIG_PLATFORM_GPIO_BUS),y)
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_FAST_GPIO_BUS),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/fast_gpio_bus_common.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/fast_gpio_bus.c
 endif
 

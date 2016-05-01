@@ -10,7 +10,7 @@ config CORE_TYPE
 
 config FPU
 	bool "FPU"
-	default n
+	default y
 	help
 	  This enables Floating Point Unit.
 	depends on CORE_CORTEX_M4

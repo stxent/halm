@@ -29,36 +29,7 @@ static enum result busInit(void *object, const void *configBase)
   const struct FastGpioBusConfig * const config = configBase;
   struct FastGpioBus * const bus = object;
 
-  const struct Pin first = pinInit(config->first);
-  const struct Pin last = pinInit(config->last);
-
-  assert(pinValid(first));
-  assert(pinValid(last));
-  assert(first.data.port == last.data.port);
-  assert(first.data.offset < last.data.offset);
-
-  for (unsigned int index = first.data.offset; index <= last.data.offset;
-      ++index)
-  {
-    const struct Pin pin = pinInit(PIN(first.data.port, index));
-
-    if (config->direction == PIN_OUTPUT)
-    {
-      pinOutput(pin, (config->initial >> index) & 1);
-      pinSetType(pin, config->type);
-      pinSetSlewRate(pin, config->rate);
-    }
-    else
-    {
-      pinInput(pin);
-    }
-
-    pinSetPull(pin, config->pull);
-  }
-
-  bus->mask = BIT_FIELD(MASK(last.data.offset - first.data.offset + 1),
-      first.data.offset);
-  bus->first = first;
+  fastGpioBusConfigPins(bus, config);
 
   return E_OK;
 }
