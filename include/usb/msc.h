@@ -40,18 +40,20 @@ struct Msc
 
   struct Queue rxRequestQueue;
   struct Queue txRequestQueue;
-  void *requests;
 
   struct UsbEndpoint *rxEp;
   struct UsbEndpoint *txEp;
 
+//  /* Buffer between USB and memory interface */
+//  uint8_t *storageBuffer;
+
   uint8_t stage;
 
-  uint32_t offset; /* R/W offset */
+  uint64_t position; /* R/W offset */
   uint32_t length; /* R/W length */
   size_t chunk; //FIXME
 
-  void *local;
+  void *privateData;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* USB_MSC_H_ */
