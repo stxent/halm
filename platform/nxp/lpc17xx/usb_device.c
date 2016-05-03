@@ -385,7 +385,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 
   if (endpoint->address & EP_DIRECTION_IN)
   {
-    if (epWriteData(endpoint, request->buffer, request->base.length) == E_OK)
+    if (epWriteData(endpoint, request->buffer, request->length) == E_OK)
     {
       requestStatus = REQUEST_COMPLETED;
     }
@@ -394,10 +394,9 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
   {
     size_t read;
 
-    if (epReadData(endpoint, request->buffer,
-        request->base.capacity, &read) == E_OK)
+    if (epReadData(endpoint, request->buffer, request->capacity, &read) == E_OK)
     {
-      request->base.length = read;
+      request->length = read;
       requestStatus = status & SELECT_ENDPOINT_STP ?
           REQUEST_SETUP : REQUEST_COMPLETED;
     }
@@ -409,8 +408,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     }
   }
 
-  request->base.callback(request->base.callbackArgument, request,
-      requestStatus);
+  request->callback(request->callbackArgument, request, requestStatus);
 }
 /*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
@@ -548,8 +546,7 @@ static void epClear(void *object)
   while (!queueEmpty(&endpoint->requests))
   {
     queuePop(&endpoint->requests, &request);
-    request->base.callback(request->base.callbackArgument, request,
-        REQUEST_CANCELLED);
+    request->callback(request->callbackArgument, request, REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -589,7 +586,7 @@ static void epEnable(void *object, uint8_t type __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request->base.callback);
+  assert(request->callback);
 
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;

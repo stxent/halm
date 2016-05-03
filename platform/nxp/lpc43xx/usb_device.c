@@ -467,8 +467,7 @@ static void epCommonHandler(struct UsbEndpoint *ep)
 
     epPopDescriptor(ep);
 
-    request->base.callback(request->base.callbackArgument, request,
-        requestStatus);
+    request->callback(request->callbackArgument, request, requestStatus);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -504,8 +503,7 @@ static void epControlHandler(struct UsbEndpoint *ep)
     epReprime(ep);
   }
 
-  request->base.callback(request->base.callbackArgument, request,
-      requestStatus);
+  request->callback(request->callbackArgument, request, requestStatus);
 }
 /*----------------------------------------------------------------------------*/
 static struct TransferDescriptor *epAllocateDescriptor(struct UsbEndpoint *ep,
@@ -593,7 +591,7 @@ static enum result epEnqueueRx(struct UsbEndpoint *ep,
     struct UsbRequest *request)
 {
   struct TransferDescriptor * const descriptor = epAllocateDescriptor(ep,
-      request, request->buffer, request->base.capacity);
+      request, request->buffer, request->capacity);
 
   if (!descriptor)
     return E_EMPTY;
@@ -606,7 +604,7 @@ static enum result epEnqueueTx(struct UsbEndpoint *ep,
     struct UsbRequest *request)
 {
   struct TransferDescriptor * const descriptor = epAllocateDescriptor(ep,
-      request, request->buffer, request->base.length);
+      request, request->buffer, request->length);
 
   if (!descriptor)
     return E_EMPTY;
@@ -623,7 +621,7 @@ static void epExtractDataLength(const struct UsbEndpoint *ep,
   const struct TransferDescriptor * const descriptor =
       (const struct TransferDescriptor *)head->listHead;
 
-  request->base.length = request->base.capacity
+  request->length = request->capacity
       - TD_TOKEN_TOTAL_BYTES_VALUE(descriptor->token);
 }
 /*----------------------------------------------------------------------------*/
@@ -702,7 +700,7 @@ static void epPrime(struct UsbEndpoint *ep)
 static enum result epReadSetupPacket(struct UsbEndpoint *ep,
     struct UsbRequest *request)
 {
-  if (request->base.capacity < 8)
+  if (request->capacity < 8)
     return E_VALUE;
 
   LPC_USB_Type * const reg = ep->device->base.reg;
@@ -737,7 +735,7 @@ static enum result epReadSetupPacket(struct UsbEndpoint *ep,
 
   /* Copy content of the setup packet into the request buffer */
   memcpy(request->buffer, buffer, sizeof(buffer));
-  request->base.length = sizeof(buffer);
+  request->length = sizeof(buffer);
 
   return E_OK;
 }
@@ -808,8 +806,7 @@ static void epClear(void *object)
   {
     struct UsbRequest * const request = epGetHeadRequest(head);
 
-    request->base.callback(request->base.callbackArgument, request,
-        REQUEST_CANCELLED);
+    request->callback(request->callbackArgument, request, REQUEST_CANCELLED);
 
     epPopDescriptor(endpoint);
   }
@@ -873,7 +870,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request->base.callback);
+  assert(request->callback);
 
   struct UsbEndpoint * const endpoint = object;
   enum result res = E_OK;

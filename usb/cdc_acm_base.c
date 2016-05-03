@@ -290,9 +290,9 @@ static enum result iterateOverDescriptors(struct CdcAcmBase *driver,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleRequest(struct CdcAcmBase *driver,
-    const struct UsbSetupPacket *packet, const uint8_t *input,
-    uint16_t inputLength, uint8_t *output, uint16_t *outputLength,
-    uint16_t maxOutputLength)
+    const struct UsbSetupPacket *packet, const uint8_t *payload,
+    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    uint16_t maxResponseLength)
 {
   bool event = false;
 
@@ -300,10 +300,10 @@ static enum result handleRequest(struct CdcAcmBase *driver,
   {
     case CDC_SET_LINE_CODING:
     {
-      if (inputLength != sizeof(driver->lineCoding))
+      if (payloadLength != sizeof(driver->lineCoding))
         return E_VALUE;
 
-      memcpy(&driver->lineCoding, input, sizeof(driver->lineCoding));
+      memcpy(&driver->lineCoding, payload, sizeof(driver->lineCoding));
       event = true;
 
       usbTrace("cdc_acm at %u: rate %u, format %u, parity %u, width %u",
@@ -315,11 +315,11 @@ static enum result handleRequest(struct CdcAcmBase *driver,
 
     case CDC_GET_LINE_CODING:
     {
-      if (maxOutputLength < sizeof(driver->lineCoding))
+      if (maxResponseLength < sizeof(driver->lineCoding))
         return E_VALUE;
 
-      memcpy(output, &driver->lineCoding, sizeof(driver->lineCoding));
-      *outputLength = sizeof(driver->lineCoding);
+      memcpy(response, &driver->lineCoding, sizeof(driver->lineCoding));
+      *responseLength = sizeof(driver->lineCoding);
 
       usbTrace("cdc_acm at %u: line coding requested", packet->index);
       break;

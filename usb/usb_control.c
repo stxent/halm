@@ -17,8 +17,9 @@
 /*----------------------------------------------------------------------------*/
 struct ControlUsbRequest
 {
-  struct UsbRequestBase base;
-  uint8_t buffer[EP0_BUFFER_SIZE];
+  struct UsbRequest base;
+
+  uint8_t payload[EP0_BUFFER_SIZE];
 };
 
 struct PrivateData
@@ -119,12 +120,12 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
     }
   }
   else if (privateData->setupDataLeft
-      && request->base.length <= privateData->setupDataLeft)
+      && request->length <= privateData->setupDataLeft)
   {
     /* Erroneous packets are ignored */
     memcpy(privateData->setupData + (packet->length
-        - privateData->setupDataLeft), request->buffer, request->base.length);
-    privateData->setupDataLeft -= request->base.length;
+        - privateData->setupDataLeft), request->buffer, request->length);
+    privateData->setupDataLeft -= request->length;
 
     if (!privateData->setupDataLeft)
     {
@@ -185,7 +186,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
 
     if (chunk)
       memcpy(request->buffer, data, chunk);
-    request->base.length = chunk;
+    request->length = chunk;
 
     data += chunk;
     length -= chunk;
@@ -293,15 +294,15 @@ static enum result controlInit(void *object, const void *configBase)
 
   for (unsigned int index = 0; index < REQUEST_POOL_SIZE; ++index)
   {
-    usbRequestInit((struct UsbRequest *)request, EP0_BUFFER_SIZE,
-        controlInHandler, control);
+    usbRequestInit((struct UsbRequest *)request, request->payload,
+        sizeof(request->payload), controlInHandler, control);
     queuePush(&control->inRequestPool, &request);
     ++request;
   }
 
   control->outRequest = (struct UsbRequest *)request;
-  usbRequestInit(control->outRequest, EP0_BUFFER_SIZE, controlOutHandler,
-      control);
+  usbRequestInit(control->outRequest, request->payload,
+      sizeof(request->payload), controlOutHandler, control);
 
   return E_OK;
 }
