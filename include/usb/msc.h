@@ -38,20 +38,23 @@ struct Msc
   struct UsbDevice *device;
   struct Interface *storage;
 
-  struct Queue rxRequestQueue;
-  struct Queue txRequestQueue;
+  struct Queue controlQueue;
+  struct Queue rxQueue;
+  struct Queue txQueue;
 
   struct UsbEndpoint *rxEp;
   struct UsbEndpoint *txEp;
 
-//  /* Buffer between USB and memory interface */
-//  uint8_t *storageBuffer;
-
-  uint8_t stage;
+  uint8_t state;
 
   uint64_t position; /* R/W offset */
   uint32_t length; /* R/W length */
+  /* Length of the current chunk */
   size_t chunk; //FIXME
+
+  uint32_t blockCount;
+  uint32_t blockLength;
+  uint16_t packetSize;
 
   void *privateData;
 };
