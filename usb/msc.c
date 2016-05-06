@@ -60,8 +60,15 @@ struct PrivateData
   struct UsbInterfaceDescriptor interfaceDescriptor;
 #endif
 
-  /* Pending command block */
-  struct CBW cbw;
+  struct
+  {
+    /* Current position in the storage */
+    uint64_t position;
+    /* Bytes left */
+    uint32_t left;
+    /* Pending command */
+    struct CBW cbw;
+  } context;
 };
 /*----------------------------------------------------------------------------*/
 struct StateEntry
@@ -81,35 +88,34 @@ static enum state stateReadCapacityEnter(struct Msc *);
 static enum state stateReadSetupEnter(struct Msc *);
 static enum state stateReadEnter(struct Msc *);
 static enum state stateReadRun(struct Msc *);
-static enum state stateReadWaitEnter(struct Msc *);
 static enum state stateReadWaitRun(struct Msc *);
 static enum state stateWriteSetupEnter(struct Msc *);
 static enum state stateWriteEnter(struct Msc *);
 static enum state stateWriteRun(struct Msc *);
-static enum state stateWriteWaitEnter(struct Msc *);
 static enum state stateWriteWaitRun(struct Msc *);
 static enum state stateVerifyEnter(struct Msc *);
 static enum state stateVerifyRun(struct Msc *);
 static enum state stateCompletedEnter(struct Msc *);
+static enum state stateCompletedRun(struct Msc *);
 static enum state stateFailureEnter(struct Msc *);
 static enum state stateFailureRun(struct Msc *);
 static enum state stateErrorEnter(struct Msc *);
 static enum state stateErrorRun(struct Msc *);
 static enum state stateSuspendEnter(struct Msc *);
-static enum state stateSuspendRun(struct Msc *);
-
-static enum state stateStubCompleted(struct Msc *);
 
 static void runStateMachine(struct Msc *);
 /*----------------------------------------------------------------------------*/
-static enum result buildDescriptors(struct Msc *, const struct MscConfig *);
-static enum result descriptorEraseWrapper(void *, const void *);
-static enum result iterateOverDescriptors(struct Msc *,
-    enum result (*)(void *, const void *));
-static enum result handleRequest(struct Msc *,
-    const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
-    uint16_t *, uint16_t);
+static void mscCommandReceived(void *, struct UsbRequest *,
+    enum usbRequestStatus);
+static void mscDataReceived(void *, struct UsbRequest *, enum usbRequestStatus);
+static void mscDataReceivedQuietly(void *, struct UsbRequest *,
+    enum usbRequestStatus);
+static void mscDataSent(void *, struct UsbRequest *, enum usbRequestStatus);
+static void mscDataSentQuietly(void *, struct UsbRequest *,
+    enum usbRequestStatus);
+static void mscStatusSent(void *, struct UsbRequest *, enum usbRequestStatus);
 /*----------------------------------------------------------------------------*/
+static inline size_t calcNextChunk(uint32_t);
 static enum result enqueueControlRequest(struct Msc *);
 static enum result enqueueDataRequests(struct Msc *, size_t);
 static bool isInputDataValid(const struct CBW *);
@@ -123,15 +129,18 @@ static enum result storageWrite(struct Msc *);
 
 static void storageCallback(void *);
 /*----------------------------------------------------------------------------*/
-static void mscCommandReceived(void *, struct UsbRequest *,
-    enum usbRequestStatus);
-static void mscDataReceived(void *, struct UsbRequest *, enum usbRequestStatus);
-static void mscDataReceivedQuietly(void *, struct UsbRequest *,
-    enum usbRequestStatus);
-static void mscDataSent(void *, struct UsbRequest *, enum usbRequestStatus);
-static void mscDataSentQuietly(void *, struct UsbRequest *,
-    enum usbRequestStatus);
-static void mscStatusSent(void *, struct UsbRequest *, enum usbRequestStatus);
+static enum result buildDescriptors(struct Msc *, struct PrivateData *,
+    const struct MscConfig *);
+static enum result descriptorEraseWrapper(void *, const void *);
+static enum result handleRequest(struct Msc *,
+    const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
+    uint16_t *, uint16_t);
+static enum result initPrivateData(struct Msc *, const struct MscConfig *);
+static enum result initRequestQueues(struct Msc *, struct PrivateData *);
+static enum result iterateOverDescriptors(const struct Msc *,
+    enum result (*)(void *, const void *));
+static void freePrivateData(struct Msc *);
+static void resetBuffers(struct Msc *);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
@@ -152,23 +161,23 @@ const struct UsbDriverClass * const Msc = &driverTable;
 /*----------------------------------------------------------------------------*/
 static const struct StateEntry stateTable[] = {
     [STATE_IDLE]            = {stateIdleEnter, stateIdleRun},
-    [STATE_TEST_UNIT_READY] = {stateTestUnitReadyEnter, stateStubCompleted},
-    [STATE_REQUEST_SENSE]   = {stateRequestSenseEnter, stateStubCompleted},
-    [STATE_INQUIRY]         = {stateInquiryEnter, stateStubCompleted},
-    [STATE_MODE_SENSE]      = {stateModeSenseEnter, stateStubCompleted},
-    [STATE_READ_CAPACITIES] = {stateReadCapacitiesEnter, stateStubCompleted},
-    [STATE_READ_CAPACITY]   = {stateReadCapacityEnter, stateStubCompleted},
+    [STATE_TEST_UNIT_READY] = {stateTestUnitReadyEnter, 0},
+    [STATE_REQUEST_SENSE]   = {stateRequestSenseEnter, 0},
+    [STATE_INQUIRY]         = {stateInquiryEnter, 0},
+    [STATE_MODE_SENSE]      = {stateModeSenseEnter, 0},
+    [STATE_READ_CAPACITIES] = {stateReadCapacitiesEnter, 0},
+    [STATE_READ_CAPACITY]   = {stateReadCapacityEnter, 0},
     [STATE_READ_SETUP]      = {stateReadSetupEnter, 0},
     [STATE_READ]            = {stateReadEnter, stateReadRun},
-    [STATE_READ_WAIT]       = {stateReadWaitEnter, stateReadWaitRun},
+    [STATE_READ_WAIT]       = {0, stateReadWaitRun},
     [STATE_WRITE_SETUP]     = {stateWriteSetupEnter, 0},
     [STATE_WRITE]           = {stateWriteEnter, stateWriteRun},
-    [STATE_WRITE_WAIT]      = {stateWriteWaitEnter, stateWriteWaitRun},
+    [STATE_WRITE_WAIT]      = {0, stateWriteWaitRun},
     [STATE_VERIFY]          = {stateVerifyEnter, stateVerifyRun},
-    [STATE_COMPLETED]       = {stateCompletedEnter, stateStubCompleted},
+    [STATE_COMPLETED]       = {stateCompletedEnter, stateCompletedRun},
     [STATE_FAILURE]         = {stateFailureEnter, stateFailureRun},
     [STATE_ERROR]           = {stateErrorEnter, stateErrorRun},
-    [STATE_SUSPEND]         = {stateSuspendEnter, stateSuspendRun}
+    [STATE_SUSPEND]         = {stateSuspendEnter, 0}
 };
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_USB_DEVICE_COMPOSITE
@@ -179,7 +188,7 @@ static const struct UsbDeviceDescriptor deviceDescriptor = {
     .deviceClass        = USB_CLASS_PER_INTERFACE,
     .deviceSubClass     = 0x00, /* Reserved value */
     .deviceProtocol     = 0x00, /* No class specific protocol */
-    .maxPacketSize      = 64, //FIXME
+    .maxPacketSize      = MSC_CONTROL_EP_SIZE,
     .idVendor           = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID),
     .idProduct          = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID),
     .device             = TO_LITTLE_ENDIAN_16(0x0100),
@@ -219,22 +228,29 @@ static const struct UsbInterfaceDescriptor interfaceDescriptor = {
 /*----------------------------------------------------------------------------*/
 static enum state stateIdleEnter(struct Msc *driver)
 {
+  struct PrivateData * const privateData = driver->privateData;
+
   if (enqueueControlRequest(driver) == E_OK)
+  {
+    memset(&privateData->context.cbw, 0, sizeof(privateData->context.cbw));
     return STATE_IDLE;
+  }
   else
     return STATE_SUSPEND;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateIdleRun(struct Msc *driver)
 {
-  const struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  struct PrivateData * const privateData = driver->privateData;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
   if (cbw->signature != CBW_SIGNATURE)
     return STATE_IDLE;
 
   if (cbw->lun != 0 || !cbw->cbLength || cbw->cbLength > 16) //FIXME LUN
-    return STATE_FAILURE;
+    return STATE_ERROR;
+
+  privateData->context.left = cbw->dataTransferLength;
 
   switch (cbw->cb[0])
   {
@@ -271,34 +287,29 @@ static enum state stateIdleRun(struct Msc *driver)
       return STATE_VERIFY;
 
     default:
+      usbTrace("msc: unsupported command 0x%02X", cbw->cb[0]);
       return STATE_FAILURE;
   }
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateTestUnitReadyEnter(struct Msc *driver)
 {
-  struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct PrivateData * const privateData = driver->privateData;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
-  if (cbw->dataTransferLength != 0)
-  {
-    return STATE_ERROR;
-  }
-  else
+  if (!cbw->dataTransferLength)
   {
     usbTrace("msc: test unit ready");
-
-    if (sendResponse(driver, cbw, 0, 0) == E_OK)
-      return STATE_TEST_UNIT_READY;
-    else
-      return STATE_SUSPEND;
+    return STATE_COMPLETED;
   }
+  else
+    return STATE_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateRequestSenseEnter(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
   if (!isInputDataValid(cbw))
     return STATE_ERROR;
@@ -316,7 +327,7 @@ static enum state stateRequestSenseEnter(struct Msc *driver)
   usbTrace("msc: request sense");
 
   if (sendResponse(driver, cbw, buffer, sizeof(*buffer)) == E_OK)
-    return STATE_REQUEST_SENSE;
+    return STATE_COMPLETED;
   else
     return STATE_SUSPEND;
 }
@@ -324,7 +335,7 @@ static enum state stateRequestSenseEnter(struct Msc *driver)
 static enum state stateInquiryEnter(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
   if (!isInputDataValid(cbw))
     return STATE_ERROR;
@@ -347,7 +358,7 @@ static enum state stateInquiryEnter(struct Msc *driver)
   usbTrace("msc: inquiry");
 
   if (sendResponse(driver, cbw, buffer, sizeof(*buffer)) == E_OK)
-    return STATE_INQUIRY;
+    return STATE_COMPLETED;
   else
     return STATE_SUSPEND;
 }
@@ -355,7 +366,7 @@ static enum state stateInquiryEnter(struct Msc *driver)
 static enum state stateModeSenseEnter(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
   if (!isInputDataValid(cbw))
     return STATE_ERROR;
@@ -374,7 +385,7 @@ static enum state stateModeSenseEnter(struct Msc *driver)
     memcpy(privateData->buffer, BulkBuf, sizeof(BulkBuf));
 
     if (sendResponse(driver, cbw, privateData->buffer, sizeof(BulkBuf)) == E_OK)
-      return STATE_MODE_SENSE;
+      return STATE_COMPLETED;
     else
       return STATE_SUSPEND;
   }
@@ -396,7 +407,7 @@ static enum state stateModeSenseEnter(struct Msc *driver)
     memcpy(privateData->buffer, BulkBuf, sizeof(BulkBuf));
 
     if (sendResponse(driver, cbw, privateData->buffer, sizeof(BulkBuf)) == E_OK)
-      return STATE_MODE_SENSE;
+      return STATE_COMPLETED;
     else
       return STATE_SUSPEND;
   }
@@ -405,7 +416,7 @@ static enum state stateModeSenseEnter(struct Msc *driver)
 static enum state stateReadCapacitiesEnter(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
   if (!isInputDataValid(cbw))
     return STATE_ERROR;
@@ -434,7 +445,7 @@ static enum state stateReadCapacitiesEnter(struct Msc *driver)
   memcpy(privateData->buffer, BulkBuf, sizeof(BulkBuf));
 
   if (sendResponse(driver, cbw, privateData->buffer, sizeof(BulkBuf)) == E_OK)
-    return STATE_READ_CAPACITIES;
+    return STATE_COMPLETED;
   else
     return STATE_SUSPEND;
 }
@@ -442,7 +453,7 @@ static enum state stateReadCapacitiesEnter(struct Msc *driver)
 static enum state stateReadCapacityEnter(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
   if (!isInputDataValid(cbw))
     return STATE_ERROR;
@@ -453,11 +464,11 @@ static enum state stateReadCapacityEnter(struct Msc *driver)
   buffer->lastLogicalBlockAddress = toBigEndian32(driver->blockCount - 1);
   buffer->blockLength = toBigEndian32(driver->blockLength);
 
-  usbTrace("msc: read capacity, block number %"PRIu32", block length %"PRIu32,
+  usbTrace("msc: read capacity, %"PRIu32" blocks, block length %"PRIu32,
       driver->blockCount, driver->blockLength);
 
   if (sendResponse(driver, cbw, buffer, sizeof(*buffer)) == E_OK)
-    return STATE_READ_CAPACITY;
+    return STATE_COMPLETED;
   else
     return STATE_SUSPEND;
 }
@@ -465,8 +476,9 @@ static enum state stateReadCapacityEnter(struct Msc *driver)
 static enum state stateReadSetupEnter(struct Msc *driver)
 {
   const struct PrivateData * const privateData = driver->privateData;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
-  if (setupReadWrite(driver, &privateData->cbw) == E_OK)
+  if (setupReadWrite(driver, cbw) == E_OK)
     return STATE_READ;
   else
     return STATE_FAILURE;
@@ -477,39 +489,43 @@ static enum state stateReadEnter(struct Msc *driver)
   if (storageRead(driver) == E_OK)
     return STATE_READ;
   else
-    return STATE_ERROR; //FIXME
+    return STATE_FAILURE;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateReadRun(struct Msc *driver)
 {
-  const struct PrivateData * const privateData = driver->privateData;
+  struct PrivateData * const privateData = driver->privateData;
+  const enum result status = ifGet(driver->storage, IF_STATUS, 0);
 
-  if (sendBuffer(driver, privateData->buffer, driver->chunk, true) == E_OK)
-    return STATE_READ_WAIT;
+  if (status == E_OK)
+  {
+    const size_t chunkLength = calcNextChunk(privateData->context.left);
+
+    /* Data read successfully from the storage */
+    privateData->context.left -= chunkLength;
+
+    if (sendBuffer(driver, privateData->buffer, chunkLength, true) == E_OK)
+      return STATE_READ_WAIT;
+    else
+      return STATE_SUSPEND; /* Unrecoverable USB error */
+  }
   else
-    return STATE_SUSPEND; /* Unrecoverable USB error */
-}
-/*----------------------------------------------------------------------------*/
-static enum state stateReadWaitEnter(struct Msc *driver __attribute__((unused)))
-{
-  return STATE_READ_WAIT;
+    return STATE_FAILURE;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateReadWaitRun(struct Msc *driver)
 {
-  const enum result status = ifGet(driver->storage, IF_STATUS, 0);
+  const struct PrivateData * const privateData = driver->privateData;
 
-  if (status == E_OK)
-    return driver->length ? STATE_READ : STATE_COMPLETED;
-  else
-    return STATE_ERROR; //FIXME
+  return privateData->context.left ? STATE_READ : STATE_COMPLETED;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateWriteSetupEnter(struct Msc *driver)
 {
   const struct PrivateData * const privateData = driver->privateData;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
-  if (setupReadWrite(driver, &privateData->cbw) == E_OK)
+  if (setupReadWrite(driver, cbw) == E_OK)
     return STATE_WRITE;
   else
     return STATE_FAILURE;
@@ -517,8 +533,8 @@ static enum state stateWriteSetupEnter(struct Msc *driver)
 /*----------------------------------------------------------------------------*/
 static enum state stateWriteEnter(struct Msc *driver)
 {
-  //FIXME Calc request count and select chunk length
-  driver->chunk = 512;
+  const struct PrivateData * const privateData = driver->privateData;
+  const size_t chunkLength = calcNextChunk(privateData->context.left);
 
   if (enqueueDataRequests(driver, queueSize(&driver->rxQueue)) == E_OK)
     return STATE_WRITE;
@@ -531,23 +547,21 @@ static enum state stateWriteRun(struct Msc *driver)
   if (storageWrite(driver) == E_OK)
     return STATE_WRITE_WAIT;
   else
-    return STATE_ERROR; //FIXME
-}
-/*----------------------------------------------------------------------------*/
-static enum state stateWriteWaitEnter(struct Msc *driver
-    __attribute__((unused)))
-{
-  return STATE_WRITE_WAIT;
+    return STATE_FAILURE;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateWriteWaitRun(struct Msc *driver)
 {
+  struct PrivateData * const privateData = driver->privateData;
   const enum result status = ifGet(driver->storage, IF_STATUS, 0);
 
   if (status == E_OK)
-    return driver->length ? STATE_WRITE : STATE_COMPLETED;
+  {
+    privateData->context.left -= calcNextChunk(privateData->context.left);
+    return privateData->context.left ? STATE_WRITE : STATE_COMPLETED;
+  }
   else
-    return STATE_ERROR; //FIXME
+    return STATE_FAILURE;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateVerifyEnter(struct Msc *driver)
@@ -563,36 +577,49 @@ static enum state stateVerifyRun(struct Msc *driver)
 static enum state stateCompletedEnter(struct Msc *driver)
 {
   const struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct CBW * const cbw = &privateData->context.cbw;
+  const uint32_t left = privateData->context.left;
 
-  sendStatus(driver, cbw->tag, 0, CSW_CMD_PASSED);
-  return STATE_COMPLETED;
+  if (sendStatus(driver, cbw->tag, left, CSW_CMD_PASSED) == E_OK)
+    return STATE_COMPLETED;
+  else
+    return STATE_SUSPEND;
+}
+/*----------------------------------------------------------------------------*/
+static enum state stateCompletedRun(struct Msc *driver)
+{
+  const struct PrivateData * const privateData = driver->privateData;
+
+  if (privateData->context.left)
+    usbEpSetStalled(driver->txEp, true);
+
+  return STATE_IDLE;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateFailureEnter(struct Msc *driver)
 {
   const struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct CBW * const cbw = &privateData->context.cbw;
+  const uint32_t left = privateData->context.left;
 
-  sendStatus(driver, cbw->tag, cbw->dataTransferLength, CSW_CMD_FAILED);
-  return STATE_FAILURE;
+  if (sendStatus(driver, cbw->tag, left, CSW_CMD_FAILED) == E_OK)
+    return STATE_FAILURE;
+  else
+    return STATE_SUSPEND;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateFailureRun(struct Msc *driver)
 {
-  struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct PrivateData * const privateData = driver->privateData;
+  const struct CBW * const cbw = &privateData->context.cbw;
 
   if (cbw->dataTransferLength)
   {
-    if (!(cbw->flags & CBW_FLAG_DIRECTION_TO_HOST))
-      usbEpSetStalled(driver->rxEp, true);
-    else
+    if (cbw->flags & CBW_FLAG_DIRECTION_TO_HOST)
       usbEpSetStalled(driver->txEp, true);
+    else
+      usbEpSetStalled(driver->rxEp, true);
   }
-
-  /* Request completed, clear command wrapper */
-  memset(&privateData->cbw, 0, sizeof(privateData->cbw));
 
   return STATE_IDLE;
 }
@@ -600,52 +627,27 @@ static enum state stateFailureRun(struct Msc *driver)
 static enum state stateErrorEnter(struct Msc *driver)
 {
   const struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
+  const struct CBW * const cbw = &privateData->context.cbw;
+  const uint32_t left = cbw->dataTransferLength;
 
-  sendStatus(driver, cbw->tag, cbw->dataTransferLength, CSW_PHASE_ERROR);
-  return STATE_ERROR;
+  if (sendStatus(driver, cbw->tag, left, CSW_PHASE_ERROR) == E_OK)
+    return STATE_ERROR;
+  else
+    return STATE_SUSPEND;
 }
 /*----------------------------------------------------------------------------*/
-static enum state stateErrorRun(struct Msc *driver)
+static enum state stateErrorRun(struct Msc *driver __attribute__((unused)))
 {
-  struct PrivateData * const privateData = driver->privateData;
-  const struct CBW * const cbw = &privateData->cbw;
-
-  //TODO Replace with failure - call previous function
-  if (cbw->dataTransferLength)
-  {
-    if (!(cbw->flags & CBW_FLAG_DIRECTION_TO_HOST))
-      usbEpSetStalled(driver->rxEp, true);
-    else
-      usbEpSetStalled(driver->txEp, true);
-  }
-
-  /* Request completed, clear command wrapper */
-  memset(&privateData->cbw, 0, sizeof(privateData->cbw));
-
-  return STATE_IDLE;
+  return STATE_SUSPEND;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateSuspendEnter(struct Msc *driver)
 {
+  usbTrace("msc: suspended");
+
   usbEpSetStalled(driver->rxEp, true);
   usbEpSetStalled(driver->txEp, true);
   return STATE_SUSPEND;
-}
-/*----------------------------------------------------------------------------*/
-static enum state stateSuspendRun(struct Msc *driver __attribute__((unused)))
-{
-  return STATE_SUSPEND;
-}
-/*----------------------------------------------------------------------------*/
-static enum state stateStubCompleted(struct Msc *driver)
-{
-  struct PrivateData * const privateData = driver->privateData;
-
-  /* Request completed, clear command wrapper */
-  memset(&privateData->cbw, 0, sizeof(privateData->cbw));
-
-  return STATE_IDLE;
 }
 /*----------------------------------------------------------------------------*/
 static void runStateMachine(struct Msc *driver)
@@ -653,24 +655,125 @@ static void runStateMachine(struct Msc *driver)
   enum state current = driver->state;
   enum state previous = current;
 
-  assert(stateTable[current].run);
-  current = stateTable[current].run(driver);
+  if (stateTable[current].run)
+    current = stateTable[current].run(driver);
 
   while (current != previous)
   {
+    if (current == STATE_FAILURE)
+      usbTrace("msc: failure in state %u", (unsigned int)previous);
+    if (current == STATE_ERROR)
+      usbTrace("msc: critical error in state %u", (unsigned int)previous);
+
     previous = current;
 
-    assert(stateTable[current].enter);
-    current = stateTable[current].enter(driver);
-
-    if ((current == STATE_ERROR || current == STATE_FAILURE)
-        && current != previous)
-    {
-      usbTrace("msc: error in state %u", (unsigned int)previous);
-    }
+    if (stateTable[current].enter)
+      current = stateTable[current].enter(driver);
   }
 
   driver->state = current;
+}
+/*----------------------------------------------------------------------------*/
+static void mscCommandReceived(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status)
+{
+  struct Msc * const driver = argument;
+  struct PrivateData * const privateData = driver->privateData;
+
+  if (status == REQUEST_COMPLETED)
+  {
+    if (request->length == sizeof(struct CBW))
+    {
+      memcpy(&privateData->context.cbw, request->buffer,
+          sizeof(privateData->context.cbw));
+      privateData->context.cbw.dataTransferLength =
+          fromLittleEndian32(privateData->context.cbw.dataTransferLength);
+
+      queuePush(&driver->controlQueue, &request);
+      runStateMachine(driver);
+    }
+    else
+    {
+      //TODO Suspend
+      queuePush(&driver->controlQueue, &request);
+    }
+  }
+  else
+  {
+    queuePush(&driver->controlQueue, &request);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void mscDataReceived(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status)
+{
+  struct Msc * const driver = argument;
+
+  queuePush(&driver->rxQueue, &request);
+
+  if (status == REQUEST_COMPLETED)
+  {
+    runStateMachine(driver);
+  }
+  else if (status != REQUEST_CANCELLED)
+  {
+    //TODO Suspend
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void mscDataReceivedQuietly(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status __attribute__((unused)))
+{
+  struct Msc * const driver = argument;
+
+  queuePush(&driver->rxQueue, &request);
+}
+/*----------------------------------------------------------------------------*/
+static void mscDataSent(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status __attribute__((unused)))
+{
+  struct Msc * const driver = argument;
+
+  queuePush(&driver->txQueue, &request);
+
+  if (status == REQUEST_COMPLETED)
+  {
+    runStateMachine(driver);
+  }
+  else if (status != REQUEST_CANCELLED)
+  {
+    //TODO Suspend
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void mscDataSentQuietly(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status __attribute__((unused)))
+{
+  struct Msc * const driver = argument;
+
+  queuePush(&driver->txQueue, &request);
+}
+/*----------------------------------------------------------------------------*/
+static void mscStatusSent(void *argument, struct UsbRequest *request,
+    enum usbRequestStatus status __attribute__((unused)))
+{
+  struct Msc * const driver = argument;
+
+  queuePush(&driver->controlQueue, &request);
+
+  if (status == REQUEST_COMPLETED)
+  {
+    runStateMachine(driver);
+  }
+  else if (status != REQUEST_CANCELLED)
+  {
+    //TODO Suspend
+  }
+}
+/*----------------------------------------------------------------------------*/
+static inline size_t calcNextChunk(uint32_t left)
+{
+  return left >= MSC_BUFFER_SIZE ? MSC_BUFFER_SIZE : left;
 }
 /*----------------------------------------------------------------------------*/
 static enum result enqueueControlRequest(struct Msc *driver)
@@ -764,25 +867,19 @@ static enum result sendBuffer(struct Msc *driver, const void *buffer,
 static enum result sendResponse(struct Msc *driver, const struct CBW *cbw,
     const void *buffer, size_t length)
 {
-  uint32_t bytesLeft;
-  enum result res;
+  struct PrivateData * const privateData = driver->privateData;
 
   if (buffer && length)
   {
     const size_t chunkLength = length > cbw->dataTransferLength ?
         cbw->dataTransferLength : length;
+    const enum result res = sendBuffer(driver, buffer, chunkLength, false);
 
-    if ((res = sendBuffer(driver, buffer, chunkLength, false)) != E_OK)
+    if (res != E_OK)
       return res;
-    bytesLeft = cbw->dataTransferLength - chunkLength;
-  }
-  else
-  {
-    bytesLeft = 0;
-  }
 
-  if ((res = sendStatus(driver, cbw->tag, bytesLeft, CSW_CMD_PASSED)) != E_OK)
-    return res;
+    privateData->context.left -= chunkLength;
+  }
 
   return E_OK;
 }
@@ -791,15 +888,15 @@ static enum result sendStatus(struct Msc *driver, uint32_t tag,
     uint32_t dataResidue, uint8_t status)
 {
   const struct CSW csw = {
-      .signature = CSW_SIGNATURE, //TODO
+      .signature = CSW_SIGNATURE,
       .tag = tag,
-      .dataResidue = dataResidue,
+      .dataResidue = toLittleEndian32(dataResidue),
       .status = status
   };
   struct UsbRequest *request;
 
   queuePop(&driver->controlQueue, &request);
-  request->callback = mscStatusSent;//XXX : mscStatusSentQuietly;
+  request->callback = mscStatusSent;
   request->callbackArgument = driver;
   request->length = sizeof(csw);
   memcpy(request->buffer, &csw, sizeof(csw));
@@ -815,13 +912,14 @@ static enum result sendStatus(struct Msc *driver, uint32_t tag,
 /*----------------------------------------------------------------------------*/
 static enum result setupReadWrite(struct Msc *driver, const struct CBW *cbw)
 {
+  struct PrivateData * const privateData = driver->privateData;
   uint32_t firstBlockAddress;
 
   //TODO structures
   memcpy(&firstBlockAddress, cbw->cb + 2, sizeof(firstBlockAddress));
   firstBlockAddress = fromBigEndian32(firstBlockAddress);
 
-  driver->position = firstBlockAddress * driver->blockLength;
+  privateData->context.position = firstBlockAddress * driver->blockLength;
 
   uint32_t numberOfBlocks;
 
@@ -843,15 +941,15 @@ static enum result setupReadWrite(struct Msc *driver, const struct CBW *cbw)
       break;
   }
 
-  driver->length = numberOfBlocks * driver->blockLength;
-  driver->chunk = 0;
+  const uint32_t transferLength = numberOfBlocks * driver->blockLength;
 
-  if (!cbw->dataTransferLength || cbw->dataTransferLength != driver->length)
+  if (!cbw->dataTransferLength || cbw->dataTransferLength != transferLength)
     return E_ERROR;
   if (firstBlockAddress + numberOfBlocks > driver->blockCount)
     return E_ERROR; /* TODO Check validity */
 
-  usbTrace("msc: rw setup %012"PRIX64" %u", driver->position, driver->length);
+  usbTrace("msc: rw setup %012"PRIX64" %u", privateData->context.position,
+      privateData->context.left);
 
   return E_OK;
 }
@@ -859,16 +957,15 @@ static enum result setupReadWrite(struct Msc *driver, const struct CBW *cbw)
 static enum result storageRead(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const size_t chunkLength = driver->length > sizeof(privateData->buffer) ?
-      sizeof(privateData->buffer) : driver->length;
+  const size_t chunkLength = calcNextChunk(privateData->context.left);
   enum result res;
 
   usbTrace("msc: read from %012"PRIX64", length %zu",
-      driver->position, chunkLength);
+      privateData->context.position, chunkLength);
 
   ifCallback(driver->storage, storageCallback, driver);
 
-  res = ifSet(driver->storage, IF_POSITION, &driver->position);
+  res = ifSet(driver->storage, IF_POSITION, &privateData->context.position);
   if (res != E_OK)
     return res;
 
@@ -876,9 +973,7 @@ static enum result storageRead(struct Msc *driver)
   if (res != E_OK)
     return res;
 
-  driver->length -= chunkLength;
-  driver->position += chunkLength;
-  driver->chunk = chunkLength;
+  privateData->context.position += chunkLength;
 
   return E_OK;
 }
@@ -891,22 +986,22 @@ static enum result storageRead(struct Msc *driver)
 static enum result storageWrite(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
+  const size_t chunkLength = calcNextChunk(privateData->context.left);
   enum result res;
 
   usbTrace("msc: write to %012"PRIX64", length %zu",
-      driver->position, driver->chunk);
+      privateData->context.position, chunkLength);
 
   ifCallback(driver->storage, storageCallback, driver);
 
-  res = ifSet(driver->storage, IF_POSITION, &driver->position);
+  res = ifSet(driver->storage, IF_POSITION, &privateData->context.position);
   if (res != E_OK)
     return res;
-  res = ifWrite(driver->storage, privateData->buffer, driver->chunk);
+  res = ifWrite(driver->storage, privateData->buffer, chunkLength);
   if (res != E_OK)
     return res;
 
-  driver->position += driver->chunk;
-  driver->length -= driver->chunk;
+  privateData->context.position += chunkLength;
 
   return E_OK;
 }
@@ -918,109 +1013,9 @@ static void storageCallback(void *argument)
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static void mscCommandReceived(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status)
-{
-  struct Msc * const driver = argument;
-  struct PrivateData * const privateData = driver->privateData;
-
-  if (status == REQUEST_COMPLETED)
-  {
-    if (request->length == sizeof(struct CBW))
-    {
-      memcpy(&privateData->cbw, request->buffer, sizeof(struct CBW));
-
-      queuePush(&driver->controlQueue, &request);
-      runStateMachine(driver);
-    }
-    else
-    {
-      //TODO Suspend
-      queuePush(&driver->controlQueue, &request);
-    }
-  }
-  else
-  {
-    queuePush(&driver->controlQueue, &request);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void mscDataReceived(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status)
-{
-  struct Msc * const driver = argument;
-
-  queuePush(&driver->rxQueue, &request);
-
-  if (status == REQUEST_COMPLETED)
-  {
-    runStateMachine(driver);
-  }
-  else if (status != REQUEST_CANCELLED)
-  {
-    //TODO Suspend
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void mscDataReceivedQuietly(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status __attribute__((unused)))
-{
-  struct Msc * const driver = argument;
-
-  queuePush(&driver->rxQueue, &request);
-}
-/*----------------------------------------------------------------------------*/
-static void mscDataSent(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status __attribute__((unused)))
-{
-  struct Msc * const driver = argument;
-
-  queuePush(&driver->txQueue, &request);
-
-  if (status == REQUEST_COMPLETED)
-  {
-    runStateMachine(driver);
-  }
-  else if (status != REQUEST_CANCELLED)
-  {
-    //TODO Suspend
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void mscDataSentQuietly(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status __attribute__((unused)))
-{
-  struct Msc * const driver = argument;
-
-  queuePush(&driver->txQueue, &request);
-}
-/*----------------------------------------------------------------------------*/
-static void mscStatusSent(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status __attribute__((unused)))
-{
-  struct Msc * const driver = argument;
-
-  queuePush(&driver->controlQueue, &request);
-
-  if (status == REQUEST_COMPLETED)
-  {
-    runStateMachine(driver);
-  }
-  else if (status != REQUEST_CANCELLED)
-  {
-    //TODO Suspend
-  }
-}
-/*----------------------------------------------------------------------------*/
 static enum result buildDescriptors(struct Msc *driver,
-    const struct MscConfig *config)
+    struct PrivateData *privateData, const struct MscConfig *config)
 {
-  struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
-
-  if (!privateData)
-    return E_MEMORY;
-  driver->privateData = privateData;
-
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const uint8_t firstInterface = usbCompositeDevIndex(driver->device);
 
@@ -1057,10 +1052,111 @@ static enum result descriptorEraseWrapper(void *device, const void *descriptor)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result iterateOverDescriptors(struct Msc *driver,
+static enum result handleRequest(struct Msc *driver,
+    const struct UsbSetupPacket *packet,
+    const uint8_t *payload __attribute__((unused)),
+    uint16_t payloadLength __attribute__((unused)), uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
+{
+  switch (packet->request)
+  {
+    case MSC_REQUEST_RESET:
+      resetBuffers(driver);
+      *responseLength = 0;
+
+      usbTrace("msc at %u: reset requested", packet->index);
+      break;
+
+    case MSC_REQUEST_GET_MAX_LUN:
+      if (maxResponseLength < 1)
+        return E_VALUE;
+
+      response[0] = 0; //FIXME
+      *responseLength = 1;
+
+      usbTrace("msc at %u: max LUN requested", packet->index);
+      break;
+
+    default:
+      usbTrace("msc at %u: unknown request %02X",
+          packet->index, packet->request);
+      return E_INVALID;
+  }
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result initPrivateData(struct Msc *driver,
+    const struct MscConfig *config)
+{
+  struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
+  enum result res;
+
+  if (!privateData)
+    return E_MEMORY;
+  driver->privateData = privateData;
+
+  memset(&privateData->context.cbw, 0, sizeof(privateData->context.cbw));
+
+  if ((res = buildDescriptors(driver, privateData, config)) != E_OK)
+    return res;
+
+  if ((res = initRequestQueues(driver, privateData)) != E_OK)
+    return res;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result initRequestQueues(struct Msc *driver,
+    struct PrivateData *privateData)
+{
+  enum result res;
+
+  res = queueInit(&driver->rxQueue, sizeof(struct UsbRequest *), RX_QUEUE_SIZE);
+  if (res != E_OK)
+    return res;
+  res = queueInit(&driver->txQueue, sizeof(struct UsbRequest *), TX_QUEUE_SIZE);
+  if (res != E_OK)
+    return res;
+  res = queueInit(&driver->controlQueue, sizeof(struct UsbRequest *),
+      CONTROL_QUEUE_SIZE);
+  if (res != E_OK)
+    return res;
+
+  /* Add requests to queues */
+  for (size_t index = 0; index < RX_QUEUE_SIZE; ++index)
+  {
+    struct UsbRequest * const request = privateData->rxRequests + index;
+
+    usbRequestInit(request, 0, 0, 0, 0);
+    queuePush(&driver->rxQueue, &request);
+  }
+
+  for (size_t index = 0; index < TX_QUEUE_SIZE; ++index)
+  {
+    struct UsbRequest * const request = privateData->txRequests + index;
+
+    usbRequestInit(request, 0, 0, 0, 0);
+    queuePush(&driver->txQueue, &request);
+  }
+
+  for (size_t index = 0; index < CONTROL_QUEUE_SIZE; ++index)
+  {
+    struct MscControlRequest * const request =
+        privateData->controlRequests + index;
+
+    usbRequestInit((struct UsbRequest *)request, request->payload,
+        sizeof(request->payload), 0, 0);
+    queuePush(&driver->controlQueue, &request);
+  }
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result iterateOverDescriptors(const struct Msc *driver,
     enum result (*action)(void *, const void *))
 {
-  struct PrivateData * const privateData = driver->privateData;
+  const struct PrivateData * const privateData = driver->privateData;
 
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const void * const descriptors[] = {
@@ -1090,37 +1186,36 @@ static enum result iterateOverDescriptors(struct Msc *driver,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleRequest(struct Msc *driver,
-    const struct UsbSetupPacket *packet,
-    const uint8_t *payload __attribute__((unused)),
-    uint16_t payloadLength __attribute__((unused)), uint8_t *response,
-    uint16_t *responseLength, uint16_t maxResponseLength)
+static void freePrivateData(struct Msc *driver)
 {
-  switch (packet->request)
-  {
-    case MSC_REQUEST_RESET:
-      usbTrace("msc at %u: request reset", packet->index);
+  assert(queueFull(&driver->controlQueue));
+  assert(queueFull(&driver->txQueue));
+  assert(queueFull(&driver->rxQueue));
 
-      driver->state = STATE_IDLE;
-      *responseLength = 0; //FIXME
-      break;
+  queueDeinit(&driver->controlQueue);
+  queueDeinit(&driver->txQueue);
+  queueDeinit(&driver->rxQueue);
 
-    case MSC_REQUEST_GET_MAX_LUN:
-      usbTrace("msc at %u: get max LUN", packet->index);
+  iterateOverDescriptors(driver, descriptorEraseWrapper);
 
-      if (maxResponseLength < 1)
-        return E_VALUE;
-      response[0] = 0; //FIXME
-      *responseLength = 1;
-      break;
+  free(driver->privateData);
+}
+/*----------------------------------------------------------------------------*/
+static void resetBuffers(struct Msc *driver)
+{
+  struct PrivateData * const privateData = driver->privateData;
 
-    default:
-      usbTrace("msc at %u: unknown request %02X",
-          packet->index, packet->request);
-      return E_INVALID;
-  }
+  /* Return queued requests to pools */
+  usbEpClear(driver->rxEp);
+  usbEpClear(driver->txEp);
 
-  return E_OK;
+  /* Enqueue buffer for first CBW and reset state machine */
+  memset(&privateData->context.cbw, 0, sizeof(privateData->context.cbw));
+
+  if (enqueueControlRequest(driver) == E_OK)
+    driver->state = STATE_IDLE;
+  else
+    driver->state = STATE_SUSPEND; /* Unrecoverable error */
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *object, const void *configBase)
@@ -1143,29 +1238,10 @@ static enum result driverInit(void *object, const void *configBase)
 
   driver->blockLength = MSC_BLOCK_SIZE;
   driver->blockCount = storageSize / driver->blockLength;
-  driver->packetSize = MSC_DATA_EP_SIZE; //TODO FS/HS
+  driver->packetSize = MSC_DATA_EP_SIZE;
 
-  /* Initialize state machine */
-  driver->state = STATE_IDLE;
-
-  if ((res = buildDescriptors(driver, config)) != E_OK)
-    return res;
-
-  if ((res = usbDevBind(driver->device, driver)) != E_OK)
-    return res;
-
-  res = queueInit(&driver->rxQueue, sizeof(struct UsbRequest *),
-      RX_QUEUE_SIZE);
-  if (res != E_OK)
-    return res;
-  res = queueInit(&driver->txQueue, sizeof(struct UsbRequest *),
-      TX_QUEUE_SIZE);
-  if (res != E_OK)
-    return res;
-  res = queueInit(&driver->controlQueue, sizeof(struct UsbRequest *),
-      CONTROL_QUEUE_SIZE);
-  if (res != E_OK)
-    return res;
+  /* Suspend state machine */
+  driver->state = STATE_SUSPEND;
 
   driver->rxEp = usbDevCreateEndpoint(config->device, config->endpoint.rx);
   if (!driver->rxEp)
@@ -1174,36 +1250,12 @@ static enum result driverInit(void *object, const void *configBase)
   if (!driver->txEp)
     return E_ERROR;
 
-  /* Add requests to queues */
-  struct PrivateData * const privateData = driver->privateData;
+  if ((res = initPrivateData(driver, config)) != E_OK)
+    return res;
 
-  memset(&privateData->cbw, 0, sizeof(privateData->cbw));
-
-  for (size_t index = 0; index < RX_QUEUE_SIZE; ++index)
-  {
-    struct UsbRequest * const request = privateData->rxRequests + index;
-
-    usbRequestInit(request, 0, 0, 0, 0);
-    queuePush(&driver->rxQueue, &request);
-  }
-
-  for (size_t index = 0; index < TX_QUEUE_SIZE; ++index)
-  {
-    struct UsbRequest * const request = privateData->txRequests + index;
-
-    usbRequestInit(request, 0, 0, 0, 0);
-    queuePush(&driver->txQueue, &request);
-  }
-
-  for (size_t index = 0; index < CONTROL_QUEUE_SIZE; ++index)
-  {
-    struct MscControlRequest * const request =
-        privateData->controlRequests + index;
-
-    usbRequestInit((struct UsbRequest *)request, request->payload,
-        sizeof(request->payload), 0, 0);
-    queuePush(&driver->controlQueue, &request);
-  }
+  /* Bind driver and connect device */
+  if ((res = usbDevBind(driver->device, driver)) != E_OK)
+    return res;
 
 #ifndef CONFIG_USB_DEVICE_COMPOSITE
   usbDevSetConnected(driver->device, true);
@@ -1216,14 +1268,23 @@ static void driverDeinit(void *object)
 {
   struct Msc * const driver = object;
 
+  /* Disconnect device */
 #ifndef CONFIG_USB_DEVICE_COMPOSITE
   usbDevSetConnected(driver->device, false);
 #endif
 
-  //TODO
   usbDevUnbind(driver->device, driver);
-  iterateOverDescriptors(driver, descriptorEraseWrapper);
-  free(driver->privateData);
+
+  /* Clear endpoint queues */
+  usbEpClear(driver->txEp);
+  usbEpClear(driver->rxEp);
+
+  /* Delete private data and queues */
+  freePrivateData(driver);
+
+  /* Delete endpoints */
+  deinit(driver->txEp);
+  deinit(driver->rxEp);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
@@ -1246,26 +1307,34 @@ static enum result driverConfigure(void *object,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void resetBuffers(struct Msc *driver) //FIXME
-{
-  /* Return queued requests to pools */
-  usbEpClear(driver->rxEp);
-  usbEpClear(driver->txEp);
-}
-/*----------------------------------------------------------------------------*/
 static void driverEvent(void *object, unsigned int event)
 {
   struct Msc * const driver = object;
 
+#ifdef CONFIG_USB_DEVICE_HS
+  if (event == DEVICE_EVENT_PORT_CHANGE)
+  {
+    const enum usbSpeed speed = usbDevGetSpeed(driver->device);
+    struct PrivateData * const privateData = driver->privateData;
+    uint16_t maxPacketSize;
+
+    if (speed == USB_HS)
+      maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE_HS);
+    else
+      maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
+
+    privateData->endpointDescriptors[0].maxPacketSize = maxPacketSize;
+    privateData->endpointDescriptors[1].maxPacketSize = maxPacketSize;
+    driver->packetSize = maxPacketSize;
+
+    usbTrace("msc: current speed is %s", speed == USB_HS ? "HS" : "FS");
+  }
+#endif
+
   if (event == DEVICE_EVENT_RESET)
   {
-    driver->state = STATE_IDLE;
-
-//    driver->suspended = true; //TODO
     resetBuffers(driver);
-    enqueueControlRequest(driver);
 
-//    driver->suspended = false;
     usbTrace("msc: reset completed");
   }
 }

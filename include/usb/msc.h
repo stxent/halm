@@ -45,16 +45,11 @@ struct Msc
   struct UsbEndpoint *rxEp;
   struct UsbEndpoint *txEp;
 
-  uint8_t state;
-
-  uint64_t position; /* R/W offset */
-  uint32_t length; /* R/W length */
-  /* Length of the current chunk */
-  size_t chunk; //FIXME
-
   uint32_t blockCount;
   uint32_t blockLength;
   uint16_t packetSize;
+
+  uint8_t state;
 
   void *privateData;
 };
