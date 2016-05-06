@@ -278,6 +278,9 @@ static void interfaceDeinit(void *object)
 {
   struct CdcAcm * const interface = object;
 
+  /* Call destructor for USB driver part */
+  deinit(interface->driver);
+
   /* Return requests from endpoint queues to local pools */
   usbEpClear(interface->notificationEp);
   usbEpClear(interface->txDataEp);
@@ -297,9 +300,6 @@ static void interfaceDeinit(void *object)
   /* Delete request queues */
   queueDeinit(&interface->txRequestQueue);
   queueDeinit(&interface->rxRequestQueue);
-
-  /* Call destructor for USB driver part */
-  deinit(interface->driver);
 }
 /*----------------------------------------------------------------------------*/
 static enum result interfaceCallback(void *object, void (*callback)(void *),

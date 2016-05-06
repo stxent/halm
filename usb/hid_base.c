@@ -33,7 +33,7 @@ struct PrivateData
 static enum result buildDescriptors(struct HidBase *,
     const struct HidBaseConfig *);
 static enum result descriptorEraseWrapper(void *, const void *);
-static enum result iterateOverDescriptors(struct HidBase *,
+static enum result iterateOverDescriptors(const struct HidBase *,
     enum result (*)(void *, const void *));
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
@@ -155,10 +155,10 @@ static enum result descriptorEraseWrapper(void *device, const void *descriptor)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result iterateOverDescriptors(struct HidBase *driver,
+static enum result iterateOverDescriptors(const struct HidBase *driver,
     enum result (*action)(void *, const void *))
 {
-  struct PrivateData * const privateData = driver->privateData;
+  const struct PrivateData * const privateData = driver->privateData;
 
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const void * const descriptors[] = {
