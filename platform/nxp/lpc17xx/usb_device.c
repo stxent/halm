@@ -377,7 +377,6 @@ static void devEraseDescriptor(void *object, const void *descriptor)
 static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 {
   struct UsbRequest *request = 0;
-  enum usbRequestStatus requestStatus = REQUEST_ERROR;
 
   if (queueEmpty(&endpoint->requests))
     return;
@@ -385,9 +384,21 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 
   if (endpoint->address & EP_DIRECTION_IN)
   {
-    if (epWriteData(endpoint, request->buffer, request->length) == E_OK)
+    struct UsbRequest *next = 0;
+
+    if (!queueEmpty(&endpoint->requests))
+      queuePeek(&endpoint->requests, &next);
+
+    request->callback(request->callbackArgument, request, REQUEST_COMPLETED);
+
+    /* Send next packet */
+    if (next)
     {
-      requestStatus = REQUEST_COMPLETED;
+      if (epWriteData(endpoint, next->buffer, next->length) != E_OK)
+      {
+        queuePop(&endpoint->requests, 0);
+        next->callback(next->callbackArgument, next, REQUEST_ERROR);
+      }
     }
   }
   else
@@ -396,9 +407,11 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
 
     if (epReadData(endpoint, request->buffer, request->capacity, &read) == E_OK)
     {
-      request->length = read;
-      requestStatus = status & SELECT_ENDPOINT_STP ?
+      const enum usbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
           REQUEST_SETUP : REQUEST_COMPLETED;
+
+      request->length = read;
+      request->callback(request->callbackArgument, request, requestStatus);
     }
     else
     {
@@ -407,8 +420,6 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
       return;
     }
   }
-
-  request->callback(request->callbackArgument, request, requestStatus);
 }
 /*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
@@ -595,7 +606,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 
   /*
    * Additional checks should be performed for data endpoints
-   * to avoid USB controller hanging issues.
+   * to avoid USB controller hanging.
    */
   if (index >= 2 && !endpoint->device->configuration)
     return E_IDLE;
@@ -608,21 +619,28 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 
   if (!queueFull(&endpoint->requests))
   {
-    queuePush(&endpoint->requests, &request);
-
-    const bool schedule = ((endpoint->address & EP_DIRECTION_IN) != 0)
-        ^ ((status & SELECT_ENDPOINT_FE) != 0);
-
-    if (schedule)
+    if (endpoint->address & EP_DIRECTION_IN)
     {
-      /* Schedule interrupt */
-      reg->USBEpIntSet = mask;
+      if (!(status & SELECT_ENDPOINT_FE) && queueEmpty(&endpoint->requests))
+      {
+        if (epWriteData(endpoint, request->buffer, request->length) != E_OK)
+          res = E_ERROR;
+      }
     }
+    else
+    {
+      if (status & SELECT_ENDPOINT_FE)
+      {
+        /* Schedule interrupt */
+        reg->USBDevIntSet = mask;
+      }
+    }
+
+    if (res == E_OK)
+      queuePush(&endpoint->requests, &request);
   }
   else
-  {
     res = E_FULL;
-  }
 
   irqRestore(state);
   return res;
