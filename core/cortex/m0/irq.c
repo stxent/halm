@@ -4,29 +4,47 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
+#include <bits.h>
 #include <irq.h>
+#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define IRQ_SHIFT(value)    (((uint32_t)(value) & 0x03) << 3)
 #define CORE_OFFSET(value)  ((((uint32_t)(value) & 0x0F) - 8) >> 2)
+
+#define PRIORITY_TO_VALUE(priority) \
+    ((((1 << NVIC_PRIORITY_SIZE) - 1) - (priority)) << (8 - NVIC_PRIORITY_SIZE))
+#define VALUE_TO_PRIORITY(value) \
+    (((1 << NVIC_PRIORITY_SIZE) - 1) - ((value) >> (8 - NVIC_PRIORITY_SIZE)))
 /*----------------------------------------------------------------------------*/
 void irqSetPriority(irqNumber irq, irqPriority priority)
 {
+  assert(priority < (1 << NVIC_PRIORITY_SIZE));
+
+  const uint32_t shift = IRQ_SHIFT(irq);
+  const uint32_t mask = ~BIT_FIELD(MASK(8), shift);
+  const uint32_t value = PRIORITY_TO_VALUE(priority) << shift;
+
   if (irq < 0)
   {
-    SCB->SHP[CORE_OFFSET(irq)] = (SCB->SHP[CORE_OFFSET(irq)]
-        & ~(0xFF << IRQ_SHIFT(irq))) | ((priority) << IRQ_SHIFT(irq));
+    const uint32_t offset = CORE_OFFSET(irq);
+
+    SCB->SHP[offset] = (SCB->SHP[offset] & mask) | value;
   }
   else
   {
-    NVIC->IPR[irq >> 2] = (NVIC->IPR[irq >> 2] & ~(0xFF << IRQ_SHIFT(irq)))
-        | ((priority) << IRQ_SHIFT(irq));
+    const uint32_t offset = irq >> 2;
+
+    NVIC->IPR[offset] = (NVIC->IPR[offset] & mask) | value;
   }
 }
 /*----------------------------------------------------------------------------*/
 irqPriority irqGetPriority(irqNumber irq)
 {
+  const uint32_t shift = IRQ_SHIFT(irq);
+
   if (irq < 0)
-    return SCB->SHP[CORE_OFFSET(irq)] >> IRQ_SHIFT(irq);
+    return SCB->SHP[CORE_OFFSET(irq)] >> shift;
   else
-    return NVIC->IPR[irq >> 2] >> IRQ_SHIFT(irq);
+    return NVIC->IPR[irq >> 2] >> shift;
 }

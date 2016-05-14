@@ -14,20 +14,25 @@
 #define AIRCR_PRIGROUP_MASK       BIT_FIELD(MASK(3), 8)
 #define AIRCR_PRIGROUP(value)     BIT_FIELD((value), 8)
 #define AIRCR_PRIGROUP_VALUE(reg) FIELD_VALUE((reg), AIRCR_PRIGROUP_MASK, 8)
-/*----------------------------------------------------------------------------*/
+
 #define GROUPS_TO_VALUE(groups)   ((7 - NVIC_PRIORITY_SIZE) + (groups))
 #define VALUE_TO_GROUPS(value)    ((value) - (7 - NVIC_PRIORITY_SIZE))
+
 #define PRIORITY_TO_VALUE(priority) \
     ((((1 << NVIC_PRIORITY_SIZE) - 1) - (priority)) << (8 - NVIC_PRIORITY_SIZE))
 #define VALUE_TO_PRIORITY(value) \
-    ((((1 << NVIC_PRIORITY_SIZE) - 1) - (value)) << (8 - NVIC_PRIORITY_SIZE))
+    (((1 << NVIC_PRIORITY_SIZE) - 1) - ((value) >> (8 - NVIC_PRIORITY_SIZE)))
 /*----------------------------------------------------------------------------*/
 void irqSetPriority(irqNumber irq, irqPriority priority)
 {
+  assert(priority < (1 << NVIC_PRIORITY_SIZE));
+
+  const uint32_t value = PRIORITY_TO_VALUE(priority) & 0xFF;
+
   if (irq < 0)
-    SCB->SHP[(irq & 0x0F) - 4] = PRIORITY_TO_VALUE(priority) & 0xFF;
+    SCB->SHP[(irq & 0x0F) - 4] = value;
   else
-    NVIC->IP[irq] = PRIORITY_TO_VALUE(priority) & 0xFF;
+    NVIC->IP[irq] = value;
 }
 /*----------------------------------------------------------------------------*/
 irqPriority irqGetPriority(irqNumber irq)
