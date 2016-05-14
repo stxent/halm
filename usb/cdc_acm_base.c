@@ -443,7 +443,7 @@ static void driverEvent(void *object, unsigned int event)
   struct CdcAcmBase * const driver = object;
 
 #ifdef CONFIG_USB_DEVICE_HS
-  if (event == DEVICE_EVENT_PORT_CHANGE)
+  if (event == USB_DEVICE_EVENT_PORT_CHANGE)
   {
     driver->speed = usbDevGetSpeed(driver->device);
 

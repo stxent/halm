@@ -20,6 +20,15 @@ struct MscConfig
   /** Mandatory: storage interface. */
   struct Interface *storage;
 
+  /**
+   * Optional: pointer to a buffer for a temporary data. When the pointer is
+   * left uninitialized, a memory for the buffer will be allocated in the heap.
+   * Buffer should be aligned along 4-byte boundary.
+   */
+  void *buffer;
+  /** Mandatory: buffer size. */
+  size_t size;
+
   struct
   {
     /** Mandatory: identifier of the input endpoint. */
@@ -43,8 +52,21 @@ struct Msc
   struct UsbEndpoint *rxEp;
   struct UsbEndpoint *txEp;
 
+  /*
+   * Buffer for temporary data. It holds responses to control commands,
+   * data received from the host or data to be sent to the host.
+   */
+  uint8_t *buffer;
+  /* Size of the buffer */
+  size_t bufferSize;
+
   uint32_t blockCount;
   uint32_t blockLength;
+
+  /*
+   * Size of the USB packet. Packet size is initialized during interface
+   * configuration and depends on the speed of the interface.
+   */
   uint16_t packetSize;
 
   /* Interface index in configurations with multiple interface */
