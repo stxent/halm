@@ -20,11 +20,11 @@ struct PinInterruptHandler
   struct List list[2];
 };
 /*----------------------------------------------------------------------------*/
-static void disableInterrupt(uint8_t, union PinData);
-static void enableInterrupt(uint8_t, union PinData, enum pinEvent);
+static void disableInterrupt(uint8_t, struct PinData);
+static void enableInterrupt(uint8_t, struct PinData, enum pinEvent);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerAttach(uint8_t, union PinData,
+static enum result pinInterruptHandlerAttach(uint8_t, struct PinData,
     const struct PinInterrupt *);
 static void pinInterruptHandlerDetach(const struct PinInterrupt *);
 static enum result pinInterruptHandlerInit(void *, const void *);
@@ -53,7 +53,7 @@ static const struct EntityClass * const PinInterruptHandler = &handlerTable;
 const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
 static struct PinInterruptHandler *handler = 0;
 /*----------------------------------------------------------------------------*/
-static void disableInterrupt(uint8_t channel, union PinData pin)
+static void disableInterrupt(uint8_t channel, struct PinData pin)
 {
   const uint32_t mask = 1 << pin.offset;
 
@@ -61,7 +61,7 @@ static void disableInterrupt(uint8_t channel, union PinData pin)
   LPC_GPIO_INT->PORT[channel].ENR &= ~mask;
 }
 /*----------------------------------------------------------------------------*/
-static void enableInterrupt(uint8_t channel, union PinData pin,
+static void enableInterrupt(uint8_t channel, struct PinData pin,
     enum pinEvent event)
 {
   const uint32_t mask = 1 << pin.offset;
@@ -108,8 +108,8 @@ void EINT3_ISR(void)
     processInterrupt(1);
 }
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerAttach(uint8_t channel, union PinData pin,
-    const struct PinInterrupt *interrupt)
+static enum result pinInterruptHandlerAttach(uint8_t channel,
+    struct PinData pin, const struct PinInterrupt *interrupt)
 {
   if (!handler)
     handler = init(PinInterruptHandler, 0);
@@ -125,7 +125,7 @@ static enum result pinInterruptHandlerAttach(uint8_t channel, union PinData pin,
   {
     listData(list, current, &entry);
 
-    if (entry->pin.key == pin.key)
+    if (entry->pin.port == pin.port && entry->pin.offset == pin.offset)
       return E_BUSY;
 
     current = listNext(current);

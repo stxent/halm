@@ -20,7 +20,7 @@ static inline LPC_GPIO_Type *calcPort(uint8_t);
 static inline irqNumber calcVector(uint8_t);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerAttach(union PinData,
+static enum result pinInterruptHandlerAttach(struct PinData,
     const struct PinInterrupt *);
 static void pinInterruptHandlerDetach(const struct PinInterrupt *);
 static enum result pinInterruptHandlerInit(void *, const void *);
@@ -105,7 +105,7 @@ void PIO3_ISR(void)
   processInterrupt(3);
 }
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerAttach(union PinData pin,
+static enum result pinInterruptHandlerAttach(struct PinData pin,
     const struct PinInterrupt *interrupt)
 {
   if (!handlers[pin.port])
@@ -122,7 +122,7 @@ static enum result pinInterruptHandlerAttach(union PinData pin,
   {
     listData(list, current, &entry);
 
-    if (entry->pin.key == pin.key)
+    if (entry->pin.port == pin.port && entry->pin.offset == pin.offset)
       return E_BUSY;
 
     current = listNext(current);
@@ -211,7 +211,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void pinInterruptDeinit(void *object)
 {
-  const union PinData data = ((struct PinInterrupt *)object)->pin;
+  const struct PinData data = ((struct PinInterrupt *)object)->pin;
   const uint32_t mask = 1 << data.offset;
   LPC_GPIO_Type * const reg = calcPort(data.port);
 
@@ -232,7 +232,7 @@ static void pinInterruptCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static void pinInterruptSetEnabled(void *object, bool state)
 {
-  const union PinData data = ((struct PinInterrupt *)object)->pin;
+  const struct PinData data = ((struct PinInterrupt *)object)->pin;
   const uint32_t mask = 1 << data.offset;
   LPC_GPIO_Type * const reg = calcPort(data.port);
 

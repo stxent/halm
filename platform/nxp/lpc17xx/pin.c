@@ -7,30 +7,30 @@
 #include <pin.h>
 #include <platform/nxp/lpc17xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union PinData);
-static inline volatile uint32_t *calcPinSelect(union PinData);
-static inline volatile uint32_t *calcPinMode(union PinData);
-static inline volatile uint32_t *calcPinType(union PinData);
+static inline LPC_GPIO_Type *calcPort(struct PinData);
+static inline volatile uint32_t *calcPinSelect(struct PinData);
+static inline volatile uint32_t *calcPinMode(struct PinData);
+static inline volatile uint32_t *calcPinType(struct PinData);
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin);
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union PinData pin)
+static inline LPC_GPIO_Type *calcPort(struct PinData pin)
 {
   return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
       + pin.port * ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0));
 }
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcPinSelect(union PinData pin)
+static inline volatile uint32_t *calcPinSelect(struct PinData pin)
 {
   return &LPC_PINCON->PINSEL0 + (pin.offset >> 4) + (pin.port << 1);
 }
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcPinMode(union PinData pin)
+static inline volatile uint32_t *calcPinMode(struct PinData pin)
 {
   return &LPC_PINCON->PINMODE0 + (pin.offset >> 4) + (pin.port << 1);
 }
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcPinType(union PinData pin)
+static inline volatile uint32_t *calcPinType(struct PinData pin)
 {
   return &LPC_PINCON->PINMODE_OD0 + pin.port;
 }
@@ -51,7 +51,8 @@ struct Pin pinInit(pinNumber id)
 {
   struct Pin pin;
 
-  pin.data.key = ~id;
+  pin.data.port = PIN_TO_PORT(id);
+  pin.data.offset = PIN_TO_OFFSET(id);
   pin.reg = calcPort(pin.data);
 
   return pin;

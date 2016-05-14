@@ -12,8 +12,8 @@
 #include <platform/nxp/lpc13xx/pin_defs.h>
 #include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union PinData);
-static inline volatile uint32_t *calcControlReg(union PinData);
+static inline LPC_GPIO_Type *calcPort(struct PinData);
+static inline volatile uint32_t *calcControlReg(struct PinData);
 static void commonPinInit(struct Pin);
 static bool isCommonPin(struct Pin);
 /*----------------------------------------------------------------------------*/
@@ -24,13 +24,13 @@ static const uint8_t pinRegMap[4][12] = {
     {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
 };
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(union PinData data)
+static inline LPC_GPIO_Type *calcPort(struct PinData data)
 {
   return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
       + data.port * ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0));
 }
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcControlReg(union PinData data)
+static inline volatile uint32_t *calcControlReg(struct PinData data)
 {
   return (volatile uint32_t *)((uint32_t)LPC_IOCON
       + pinRegMap[data.port][data.offset]);
@@ -54,7 +54,8 @@ struct Pin pinInit(pinNumber id)
 {
   struct Pin pin;
 
-  pin.data.key = ~id;
+  pin.data.port = PIN_TO_PORT(id);
+  pin.data.offset = PIN_TO_OFFSET(id);
   pin.reg = pin.data.port != PORT_USB ? calcPort(pin.data) : 0;
 
   return pin;

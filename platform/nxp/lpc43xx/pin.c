@@ -21,8 +21,8 @@ enum pinDriveType
   HIGH_SPEED_PIN
 };
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcControlReg(union PinData);
-static union PinData calcPinData(volatile uint32_t *);
+static volatile uint32_t *calcControlReg(struct PinData);
+static struct PinData calcPinData(volatile uint32_t *);
 static void commonPinInit(struct Pin);
 static enum pinDriveType detectPinDriveType(volatile uint32_t *);
 /*----------------------------------------------------------------------------*/
@@ -274,7 +274,7 @@ const struct PinGroupEntry gpioPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcControlReg(union PinData data)
+static volatile uint32_t *calcControlReg(struct PinData data)
 {
   if (data.port < PORT_CLK)
   {
@@ -293,9 +293,9 @@ static volatile uint32_t *calcControlReg(union PinData data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static union PinData calcPinData(volatile uint32_t *reg)
+static struct PinData calcPinData(volatile uint32_t *reg)
 {
-  union PinData pin;
+  struct PinData pin;
 
   if (reg >= &LPC_SCU->SFSPCLK0 && reg <= &LPC_SCU->SFSPCLK3)
   {
@@ -312,7 +312,8 @@ static union PinData calcPinData(volatile uint32_t *reg)
     pin.offset = totalOffset % portMapSize;
   }
 
-  pin.key = ~pin.key;
+  pin.port = ~pin.port;
+  pin.offset = ~pin.offset;
   return pin;
 }
 /*----------------------------------------------------------------------------*/
@@ -325,7 +326,7 @@ static void commonPinInit(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static enum pinDriveType detectPinDriveType(volatile uint32_t *reg)
 {
-  const union PinData pin = calcPinData(reg);
+  const struct PinData pin = calcPinData(reg);
   bool highDrive = false;
   bool highSpeed = false;
 
@@ -353,17 +354,20 @@ void *pinAddress(struct Pin pin)
 struct Pin pinInit(pinNumber id)
 {
   const struct PinGroupEntry *group;
+  struct PinData current = {
+      .offset = PIN_TO_OFFSET(id),
+      .port = PIN_TO_PORT(id),
+  };
   struct Pin pin;
-  union PinData current;
 
-  current.key = ~id;
   pin.reg = (void *)calcControlReg(current);
 
   if ((group = pinGroupFind(gpioPins, id, 0)))
   {
-    union PinData begin;
-
-    begin.key = ~group->begin;
+    struct PinData begin = {
+        .offset = PIN_TO_OFFSET(group->begin),
+        .port = PIN_TO_PORT(group->begin)
+    };
 
     pin.data.port = UNPACK_CHANNEL(group->value);
     pin.data.offset = current.offset - begin.offset
@@ -372,7 +376,8 @@ struct Pin pinInit(pinNumber id)
   else
   {
     /* Some pins do not have GPIO function */
-    pin.data.key = ~0;
+    pin.data.port = ~0;
+    pin.data.offset = ~0;
 
     switch (current.port)
     {

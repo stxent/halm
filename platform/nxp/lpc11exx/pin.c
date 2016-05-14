@@ -11,10 +11,10 @@
 #include <platform/nxp/lpc11exx/pin_defs.h>
 #include <platform/nxp/lpc11exx/system.h>
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcControlReg(union PinData);
+static volatile uint32_t *calcControlReg(struct PinData);
 static void commonPinInit(struct Pin);
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcControlReg(union PinData data)
+static volatile uint32_t *calcControlReg(struct PinData data)
 {
   switch (data.port)
   {
@@ -40,7 +40,8 @@ struct Pin pinInit(pinNumber id)
 {
   struct Pin pin;
 
-  pin.data.key = ~id;
+  pin.data.port = PIN_TO_PORT(id);
+  pin.data.offset = PIN_TO_OFFSET(id);
   pin.reg = (void *)calcControlReg(pin.data);
 
   return pin;

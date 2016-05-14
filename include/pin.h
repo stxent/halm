@@ -18,8 +18,11 @@ typedef uint16_t pinNumber;
  * Unused pins should be initialized with zero.
  * This representation supports up to 2^7 ports and 2^8 pins on each port.
  */
-#define PIN(port, offset) ((pinNumber)(~(((unsigned long)(port) << 8 & 0xFF00)\
-    | ((unsigned long)(offset) & 0x00FF))))
+#define PIN(port, offset) \
+    ((pinNumber)~((((port) & 0xFF) << 8) | ((offset) & 0xFF)))
+
+#define PIN_TO_OFFSET(key)  (~(key) & 0xFF)
+#define PIN_TO_PORT(key)    ((~(key) >> 8) & 0xFF)
 /*----------------------------------------------------------------------------*/
 /* Special function values */
 enum
@@ -61,14 +64,10 @@ enum pinType
   PIN_OPENDRAIN
 };
 /*----------------------------------------------------------------------------*/
-union PinData
+struct PinData
 {
-  pinNumber key;
-  struct
-  {
-    uint8_t offset;
-    uint8_t port;
-  };
+  uint8_t offset;
+  uint8_t port;
 };
 /*----------------------------------------------------------------------------*/
 struct PinEntry
@@ -89,7 +88,7 @@ struct PinGroupEntry
 struct Pin
 {
   void *reg;
-  union PinData data;
+  struct PinData data;
 };
 /*----------------------------------------------------------------------------*/
 const struct PinEntry *pinFind(const struct PinEntry *, pinNumber, uint8_t);
@@ -98,7 +97,7 @@ const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *,
 /*----------------------------------------------------------------------------*/
 static inline bool pinValid(struct Pin pin)
 {
-  return pin.data.key != (pinNumber)~0 && pin.reg != 0;
+  return pin.data.port != 0xFF && pin.data.offset != 0xFF && pin.reg != 0;
 }
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH

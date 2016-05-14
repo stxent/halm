@@ -42,7 +42,7 @@ static void busDeinit(void *object __attribute__((unused)))
 static uint32_t busRead(void *object)
 {
   const struct FastGpioBus * const bus = object;
-  const union PinData data = bus->first.data;
+  const struct PinData data = bus->first.data;
 
   return (LPC_GPIO->PIN[data.port] & bus->mask) >> data.offset;
 }
@@ -50,7 +50,7 @@ static uint32_t busRead(void *object)
 static void busWrite(void *object, uint32_t value)
 {
   struct FastGpioBus * const bus = object;
-  const union PinData data = bus->first.data;
+  const struct PinData data = bus->first.data;
 
   const uint32_t set = (value << data.offset) & bus->mask;
   const uint32_t clear = ~set & bus->mask;

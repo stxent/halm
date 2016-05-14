@@ -152,10 +152,14 @@ static struct AdcUnitBase *descriptors[2] = {0};
 static void configGroupPin(const struct PinGroupEntry *group, pinNumber key,
     struct AdcPin *adcPin)
 {
-  union PinData begin, current;
-
-  begin.key = ~group->begin;
-  current.key = ~key;
+  const struct PinData begin = {
+      .offset = PIN_TO_OFFSET(group->begin),
+      .port = PIN_TO_PORT(group->begin)
+  };
+  const struct PinData current = {
+      .offset = PIN_TO_OFFSET(key),
+      .port = PIN_TO_PORT(key)
+  };
 
   adcPin->channel = current.offset - begin.offset;
   adcPin->control = -1;

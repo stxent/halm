@@ -32,7 +32,7 @@ struct PinInterrupt
   void *callbackArgument;
 
   /* Descriptor of the input pin used as interrupt source */
-  union PinData pin;
+  struct PinData pin;
   /* Edge sensitivity mode */
   enum pinEvent event;
   /* Interrupt channel identifier */

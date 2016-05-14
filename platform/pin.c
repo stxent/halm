@@ -19,17 +19,23 @@ const struct PinEntry *pinFind(const struct PinEntry *list, pinNumber key,
 const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *list,
     pinNumber key, uint8_t channel)
 {
-  union PinData begin, end, pin;
+  struct PinData pin;
 
-  pin.key = ~key;
+  pin.port = PIN_TO_PORT(key);
+  pin.offset = PIN_TO_OFFSET(key);
 
   while (list->begin && list->end)
   {
     if (list->channel == channel)
     {
-      begin.key = ~list->begin;
-      end.key = ~list->end;
-
+      const struct PinData begin = {
+          .offset = PIN_TO_OFFSET(list->begin),
+          .port = PIN_TO_PORT(list->begin)
+      };
+      const struct PinData end = {
+          .offset = PIN_TO_OFFSET(list->end),
+          .port = PIN_TO_PORT(list->end)
+      };
       const bool found = pin.port >= begin.port && pin.port <= end.port
           && pin.offset >= begin.offset && pin.offset <= end.offset;
 

@@ -15,9 +15,9 @@ struct StartLogicHandler
   struct List list;
 };
 /*----------------------------------------------------------------------------*/
-static inline irqNumber calcVector(union PinData data);
+static inline irqNumber calcVector(struct PinData data);
 /*----------------------------------------------------------------------------*/
-static enum result startLogicHandlerAttach(union PinData,
+static enum result startLogicHandlerAttach(struct PinData,
     const struct WakeupInterrupt *);
 static void startLogicHandlerDetach(const struct WakeupInterrupt *);
 static enum result startLogicHandlerInit(void *, const void *);
@@ -46,7 +46,7 @@ static const struct EntityClass * const StartLogicHandler = &handlerTable;
 const struct InterruptClass * const WakeupInterrupt = &wakeupInterruptTable;
 static struct StartLogicHandler *handler = 0;
 /*----------------------------------------------------------------------------*/
-static inline irqNumber calcVector(union PinData data)
+static inline irqNumber calcVector(struct PinData data)
 {
   return WAKEUP_IRQ + data.port * 12 + data.offset;
 }
@@ -78,7 +78,7 @@ void WAKEUP_ISR(void)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result startLogicHandlerAttach(union PinData pin,
+static enum result startLogicHandlerAttach(struct PinData pin,
     const struct WakeupInterrupt *interrupt)
 {
   if (!handler)
@@ -95,7 +95,7 @@ static enum result startLogicHandlerAttach(union PinData pin,
   {
     listData(list, current, &entry);
 
-    if (entry->pin.key == pin.key)
+    if (entry->pin.port == pin.port && entry->pin.offset == pin.offset)
       return E_BUSY;
 
     current = listNext(current);
@@ -184,9 +184,9 @@ static enum result wakeupInterruptInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void wakeupInterruptDeinit(void *object)
 {
-  const union PinData data = ((struct WakeupInterrupt *)object)->pin;
-  const uint8_t index = data.port * 12 + data.offset;
-  const uint8_t group = index >> 5;
+  const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
+  const unsigned int index = data.port * 12 + data.offset;
+  const unsigned int group = index >> 5;
   const uint32_t mask = 1 << (index & 0x1F);
 
   irqDisable(calcVector(data));
@@ -206,9 +206,9 @@ static void wakeupInterruptCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static void wakeupInterruptSetEnabled(void *object, bool state)
 {
-  const union PinData data = ((struct WakeupInterrupt *)object)->pin;
-  const uint8_t index = data.port * 12 + data.offset;
-  const uint8_t group = index >> 5;
+  const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
+  const unsigned int index = data.port * 12 + data.offset;
+  const unsigned int group = index >> 5;
   const uint32_t mask = 1 << (index & 0x1F);
 
   if (state)
