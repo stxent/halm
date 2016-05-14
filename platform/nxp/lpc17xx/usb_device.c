@@ -98,7 +98,7 @@ static void interruptHandler(void *object)
     if (deviceStatus & DEVICE_STATUS_RST)
     {
       resetDevice(device);
-      usbControlEvent(device->control, DEVICE_EVENT_RESET);
+      usbControlEvent(device->control, USB_DEVICE_EVENT_RESET);
     }
 
     if (deviceStatus & DEVICE_STATUS_SUS_CH)
@@ -106,7 +106,7 @@ static void interruptHandler(void *object)
       const bool suspended = (deviceStatus & DEVICE_STATUS_SUS) != 0;
 
       usbControlEvent(device->control, suspended ?
-          DEVICE_EVENT_SUSPEND : DEVICE_EVENT_RESUME);
+          USB_DEVICE_EVENT_SUSPEND : USB_DEVICE_EVENT_RESUME);
     }
   }
 
@@ -143,7 +143,7 @@ static void interruptHandler(void *object)
   /* Start of Frame interrupt */
   if (intStatus & USBDevInt_FRAME)
   {
-    usbControlEvent(device->control, DEVICE_EVENT_FRAME);
+    usbControlEvent(device->control, USB_DEVICE_EVENT_FRAME);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -382,14 +382,15 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     return;
   queuePop(&endpoint->requests, &request);
 
-  if (endpoint->address & EP_DIRECTION_IN)
+  if (endpoint->address & USB_EP_DIRECTION_IN)
   {
     struct UsbRequest *next = 0;
 
     if (!queueEmpty(&endpoint->requests))
       queuePeek(&endpoint->requests, &next);
 
-    request->callback(request->callbackArgument, request, REQUEST_COMPLETED);
+    request->callback(request->callbackArgument, request,
+        USB_REQUEST_COMPLETED);
 
     /* Send next packet */
     if (next)
@@ -397,7 +398,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
       if (epWriteData(endpoint, next->buffer, next->length) != E_OK)
       {
         queuePop(&endpoint->requests, 0);
-        next->callback(next->callbackArgument, next, REQUEST_ERROR);
+        next->callback(next->callbackArgument, next, USB_REQUEST_ERROR);
       }
     }
   }
@@ -408,7 +409,7 @@ static void epHandler(struct UsbEndpoint *endpoint, uint8_t status)
     if (epReadData(endpoint, request->buffer, request->capacity, &read) == E_OK)
     {
       const enum usbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
-          REQUEST_SETUP : REQUEST_COMPLETED;
+          USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
 
       request->length = read;
       request->callback(request->callbackArgument, request, requestStatus);
@@ -430,7 +431,7 @@ static enum result epReadData(struct UsbEndpoint *endpoint, uint8_t *buffer,
 
   /* Set read enable bit for specific endpoint */
   reg->USBCtrl = USBCtrl_RD_EN
-      | USBCtrl_LOG_ENDPOINT(EP_LOGICAL_ADDRESS(endpoint->address));
+      | USBCtrl_LOG_ENDPOINT(USB_EP_LOGICAL_ADDRESS(endpoint->address));
 
   size_t packetLength;
 
@@ -478,7 +479,7 @@ static enum result epWriteData(struct UsbEndpoint *endpoint,
 
   /* Set write enable for specific endpoint */
   reg->USBCtrl = USBCtrl_WR_EN
-      | USBCtrl_LOG_ENDPOINT(EP_LOGICAL_ADDRESS(endpoint->address));
+      | USBCtrl_LOG_ENDPOINT(USB_EP_LOGICAL_ADDRESS(endpoint->address));
   /* Set packet length */
   reg->USBTxPLen = length;
 
@@ -557,7 +558,8 @@ static void epClear(void *object)
   while (!queueEmpty(&endpoint->requests))
   {
     queuePop(&endpoint->requests, &request);
-    request->callback(request->callbackArgument, request, REQUEST_CANCELLED);
+    request->callback(request->callbackArgument, request,
+        USB_REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -619,7 +621,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 
   if (!queueFull(&endpoint->requests))
   {
-    if (endpoint->address & EP_DIRECTION_IN)
+    if (endpoint->address & USB_EP_DIRECTION_IN)
     {
       if (!(status & SELECT_ENDPOINT_FE) && queueEmpty(&endpoint->requests))
       {

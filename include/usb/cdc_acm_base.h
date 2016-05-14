@@ -7,10 +7,7 @@
 #ifndef HALM_USB_CDC_ACM_BASE_H_
 #define HALM_USB_CDC_ACM_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
-#include <usb/cdc_acm_defs.h>
 #include <usb/usb.h>
-#include <usb/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const CdcAcmBase;
 /*----------------------------------------------------------------------------*/
@@ -43,15 +40,14 @@ struct CdcAcmBase
   /* USB peripheral */
   struct UsbDevice *device;
 
-  /* Line settings */
-  struct CdcLineCoding lineCoding;
-  uint8_t controlLineState;
+  /* Interface index in configurations with multiple interface */
   uint8_t controlInterfaceIndex;
-
   /* Speed of the USB interface */
   uint8_t speed;
 
   void *privateData;
 };
+/*----------------------------------------------------------------------------*/
+uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_CDC_ACM_BASE_H_ */

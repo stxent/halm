@@ -7,8 +7,6 @@
 #ifndef HALM_PLATFORM_NXP_USB_DEVICE_H_
 #define HALM_PLATFORM_NXP_USB_DEVICE_H_
 /*----------------------------------------------------------------------------*/
-#include <containers/list.h>
-#include <containers/queue.h>
 #include <usb/usb.h>
 #include <usb/usb_control.h>
 /*----------------------------------------------------------------------------*/

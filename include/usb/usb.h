@@ -17,9 +17,9 @@
 #include <bits.h>
 #include <entity.h>
 /*----------------------------------------------------------------------------*/
-#define EP_DIRECTION_IN           BIT(7)
-#define EP_ADDRESS(value)         (value)
-#define EP_LOGICAL_ADDRESS(value) ((value) & 0x7F)
+#define USB_EP_DIRECTION_IN           BIT(7)
+#define USB_EP_ADDRESS(value)         (value)
+#define USB_EP_LOGICAL_ADDRESS(value) ((value) & 0x7F)
 /*----------------------------------------------------------------------------*/
 struct UsbSetupPacket;
 /*----------------------------------------------------------------------------*/
@@ -33,25 +33,25 @@ enum usbSpeed
 /*----------------------------------------------------------------------------*/
 enum usbDeviceEvent
 {
-  DEVICE_EVENT_RESET,
-  DEVICE_EVENT_SUSPEND,
-  DEVICE_EVENT_RESUME,
-  DEVICE_EVENT_FRAME,
-  DEVICE_EVENT_PORT_CHANGE
+  USB_DEVICE_EVENT_RESET,
+  USB_DEVICE_EVENT_SUSPEND,
+  USB_DEVICE_EVENT_RESUME,
+  USB_DEVICE_EVENT_FRAME,
+  USB_DEVICE_EVENT_PORT_CHANGE
 };
 /*----------------------------------------------------------------------------*/
 enum usbRequestStatus
 {
   /** Request completed successfully. */
-  REQUEST_COMPLETED,
+  USB_REQUEST_COMPLETED,
   /** Request payload is a setup packet. */
-  REQUEST_SETUP,
+  USB_REQUEST_SETUP,
   /** Endpoint is stalled. */
-  REQUEST_STALLED,
+  USB_REQUEST_STALLED,
   /** Request is not completed. */
-  REQUEST_ERROR,
+  USB_REQUEST_ERROR,
   /** Request is removed from the queue. */
-  REQUEST_CANCELLED
+  USB_REQUEST_CANCELLED
 };
 /*----------------------------------------------------------------------------*/
 struct UsbRequest

@@ -7,10 +7,8 @@
 #ifndef USB_MSC_H_
 #define USB_MSC_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <containers/queue.h>
 #include <usb/usb.h>
-#include <usb/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const Msc;
 /*----------------------------------------------------------------------------*/
@@ -49,6 +47,9 @@ struct Msc
   uint32_t blockLength;
   uint16_t packetSize;
 
+  /* Interface index in configurations with multiple interface */
+  uint8_t controlInterfaceIndex;
+  /* Current state of the FSM */
   uint8_t state;
 
   void *privateData;

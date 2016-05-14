@@ -9,6 +9,7 @@
 #include <string.h>
 #include <irq.h>
 #include <usb/cdc_acm.h>
+#include <usb/cdc_acm_defs.h>
 #include <usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct CdcUsbRequest
@@ -57,12 +58,12 @@ static void cdcDataReceived(void *argument, struct UsbRequest *request,
 
   queuePush(&interface->rxRequestQueue, &request);
 
-  if (status == REQUEST_COMPLETED)
+  if (status == USB_REQUEST_COMPLETED)
   {
     interface->queuedRxBytes += request->length;
     event = true;
   }
-  else if (status != REQUEST_CANCELLED)
+  else if (status != USB_REQUEST_CANCELLED)
   {
     interface->suspended = true;
     usbTrace("cdc_acm: suspended in read callback");
@@ -80,11 +81,11 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   bool error = false;
   bool returnToPool = false;
 
-  if (status == REQUEST_CANCELLED)
+  if (status == USB_REQUEST_CANCELLED)
   {
     returnToPool = true;
   }
-  else if (status != REQUEST_COMPLETED)
+  else if (status != USB_REQUEST_COMPLETED)
   {
     error = true;
   }
@@ -150,17 +151,17 @@ void cdcAcmOnParametersChanged(struct CdcAcm *interface)
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
 {
-  if (event == DEVICE_EVENT_SUSPEND)
+  if (event == USB_DEVICE_EVENT_SUSPEND)
   {
     interface->suspended = true;
     usbTrace("cdc_acm: suspended");
   }
-  else if (event == DEVICE_EVENT_RESUME)
+  else if (event == USB_DEVICE_EVENT_RESUME)
   {
     interface->suspended = false;
     usbTrace("cdc_acm: resumed");
   }
-  else if (event == DEVICE_EVENT_RESET)
+  else if (event == USB_DEVICE_EVENT_RESET)
   {
     bool completed = true;
 
@@ -328,7 +329,7 @@ static enum result interfaceGet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_RATE:
-      *(uint32_t *)data = interface->driver->lineCoding.dteRate;
+      *(uint32_t *)data = cdcAcmBaseGetRate(interface->driver);
       return E_OK;
 
     default:

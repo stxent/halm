@@ -87,13 +87,13 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
   struct PrivateData * const privateData = control->privateData;
   struct UsbSetupPacket * const packet = &privateData->setupPacket;
 
-  if (status == REQUEST_CANCELLED)
+  if (status == USB_REQUEST_CANCELLED)
     return;
 
   uint16_t length = 0;
   enum result res = E_BUSY;
 
-  if (status == REQUEST_SETUP)
+  if (status == USB_REQUEST_SETUP)
   {
     privateData->setupDataLeft = 0;
     memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
@@ -227,7 +227,7 @@ enum result usbControlBindDriver(struct UsbControl *control, void *driver)
 void usbControlResetDriver(struct UsbControl *control)
 {
   if (control->driver)
-    usbDriverEvent(control->driver, DEVICE_EVENT_RESET);
+    usbDriverEvent(control->driver, USB_DEVICE_EVENT_RESET);
 }
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control)
@@ -237,7 +237,7 @@ void usbControlUnbindDriver(struct UsbControl *control)
 /*----------------------------------------------------------------------------*/
 void usbControlEvent(struct UsbControl *control, unsigned int event)
 {
-  if (event == DEVICE_EVENT_RESET)
+  if (event == USB_DEVICE_EVENT_RESET)
   {
     resetDevice(control);
   }
@@ -260,11 +260,11 @@ static enum result controlInit(void *object, const void *configBase)
   control->owner = config->parent;
 
   /* Create control endpoints */
-  control->ep0in = usbDevCreateEndpoint(control->owner, EP_DIRECTION_IN
-      | EP_ADDRESS(0));
+  control->ep0in = usbDevCreateEndpoint(control->owner, USB_EP_DIRECTION_IN
+      | USB_EP_ADDRESS(0));
   if (!control->ep0in)
     return E_MEMORY;
-  control->ep0out = usbDevCreateEndpoint(control->owner, EP_ADDRESS(0));
+  control->ep0out = usbDevCreateEndpoint(control->owner, USB_EP_ADDRESS(0));
   if (!control->ep0out)
     return E_MEMORY;
 

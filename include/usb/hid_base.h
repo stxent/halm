@@ -7,13 +7,11 @@
 #ifndef HALM_USB_HID_BASE_H_
 #define HALM_USB_HID_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const HidBase;
 /*----------------------------------------------------------------------------*/
 struct Hid;
-struct HidDescriptor;
 /*----------------------------------------------------------------------------*/
 struct HidBaseConfig
 {

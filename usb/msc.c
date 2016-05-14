@@ -138,7 +138,7 @@ static enum result handleRequest(struct Msc *,
 static enum result initPrivateData(struct Msc *, const struct MscConfig *);
 static enum result initRequestQueues(struct Msc *, struct PrivateData *);
 static enum result iterateOverDescriptors(const struct Msc *,
-    enum result (*)(void *, const void *));
+    struct PrivateData *, enum result (*)(void *, const void *));
 static void freePrivateData(struct Msc *);
 static void resetBuffers(struct Msc *);
 /*----------------------------------------------------------------------------*/
@@ -680,7 +680,7 @@ static void mscCommandReceived(void *argument, struct UsbRequest *request,
   struct Msc * const driver = argument;
   struct PrivateData * const privateData = driver->privateData;
 
-  if (status == REQUEST_COMPLETED)
+  if (status == USB_REQUEST_COMPLETED)
   {
     if (request->length == sizeof(struct CBW))
     {
@@ -711,11 +711,11 @@ static void mscDataReceived(void *argument, struct UsbRequest *request,
 
   queuePush(&driver->rxQueue, &request);
 
-  if (status == REQUEST_COMPLETED)
+  if (status == USB_REQUEST_COMPLETED)
   {
     runStateMachine(driver);
   }
-  else if (status != REQUEST_CANCELLED)
+  else if (status != USB_REQUEST_CANCELLED)
   {
     //TODO Suspend
   }
@@ -736,11 +736,11 @@ static void mscDataSent(void *argument, struct UsbRequest *request,
 
   queuePush(&driver->txQueue, &request);
 
-  if (status == REQUEST_COMPLETED)
+  if (status == USB_REQUEST_COMPLETED)
   {
     runStateMachine(driver);
   }
-  else if (status != REQUEST_CANCELLED)
+  else if (status != USB_REQUEST_CANCELLED)
   {
     //TODO Suspend
   }
@@ -761,11 +761,11 @@ static void mscStatusSent(void *argument, struct UsbRequest *request,
 
   queuePush(&driver->controlQueue, &request);
 
-  if (status == REQUEST_COMPLETED)
+  if (status == USB_REQUEST_COMPLETED)
   {
     runStateMachine(driver);
   }
-  else if (status != REQUEST_CANCELLED)
+  else if (status != USB_REQUEST_CANCELLED)
   {
     //TODO Suspend
   }
@@ -1043,7 +1043,7 @@ static enum result buildDescriptors(struct Msc *driver,
       TO_LITTLE_ENDIAN_16(MSC_DATA_EP_SIZE);
   privateData->endpointDescriptors[1].interval = 0;
 
-  return iterateOverDescriptors(driver, usbDevAppendDescriptor);
+  return iterateOverDescriptors(driver, privateData, usbDevAppendDescriptor);
 }
 /*----------------------------------------------------------------------------*/
 static enum result descriptorEraseWrapper(void *device, const void *descriptor)
@@ -1154,10 +1154,9 @@ static enum result initRequestQueues(struct Msc *driver,
 }
 /*----------------------------------------------------------------------------*/
 static enum result iterateOverDescriptors(const struct Msc *driver,
+    struct PrivateData *privateData,
     enum result (*action)(void *, const void *))
 {
-  const struct PrivateData * const privateData = driver->privateData;
-
 #ifdef CONFIG_USB_DEVICE_COMPOSITE
   const void * const descriptors[] = {
       &privateData->associationDescriptor,
@@ -1196,7 +1195,7 @@ static void freePrivateData(struct Msc *driver)
   queueDeinit(&driver->txQueue);
   queueDeinit(&driver->rxQueue);
 
-  iterateOverDescriptors(driver, descriptorEraseWrapper);
+  iterateOverDescriptors(driver, driver->privateData, descriptorEraseWrapper);
 
   free(driver->privateData);
 }
@@ -1229,6 +1228,7 @@ static enum result driverInit(void *object, const void *configBase)
 
   driver->device = config->device;
   driver->storage = config->storage;
+  driver->controlInterfaceIndex = 0;
 
   /* Calculate storage geometry */
   uint64_t storageSize;
@@ -1293,18 +1293,15 @@ static enum result driverConfigure(void *object,
     uint16_t maxResponseLength)
 {
   struct Msc * const driver = object;
-  const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
 
-  if (type != REQUEST_TYPE_CLASS)
+  if (REQUEST_TYPE_VALUE(packet->requestType) != REQUEST_TYPE_CLASS)
     return E_INVALID;
 
-//  if (packet->index != driver->controlInterfaceIndex)
-//    return E_INVALID;
+  if (packet->index != driver->controlInterfaceIndex)
+    return E_INVALID;
 
-  const enum result res = handleRequest(driver, packet, payload, payloadLength,
-      response, responseLength, maxResponseLength);
-
-  return res;
+  return handleRequest(driver, packet, payload, payloadLength, response,
+      responseLength, maxResponseLength);
 }
 /*----------------------------------------------------------------------------*/
 static void driverEvent(void *object, unsigned int event)
@@ -1331,7 +1328,7 @@ static void driverEvent(void *object, unsigned int event)
   }
 #endif
 
-  if (event == DEVICE_EVENT_RESET)
+  if (event == USB_DEVICE_EVENT_RESET)
   {
     resetBuffers(driver);
 

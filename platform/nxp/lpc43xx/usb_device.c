@@ -111,13 +111,13 @@ static void interruptHandler(void *object)
   if (intStatus & USBSTS_D_URI)
   {
     resetDevice(device);
-    usbControlEvent(device->control, DEVICE_EVENT_RESET);
+    usbControlEvent(device->control, USB_DEVICE_EVENT_RESET);
   }
 
   /* Port change detect */
   if (intStatus & USBSTS_D_PCI)
   {
-    usbControlEvent(device->control, DEVICE_EVENT_PORT_CHANGE);
+    usbControlEvent(device->control, USB_DEVICE_EVENT_PORT_CHANGE);
   }
 
   const bool suspended = (intStatus & USBSTS_D_SLI) != 0;
@@ -125,7 +125,7 @@ static void interruptHandler(void *object)
   if (suspended != device->suspended)
   {
     usbControlEvent(device->control, suspended ?
-        DEVICE_EVENT_SUSPEND : DEVICE_EVENT_RESUME);
+        USB_DEVICE_EVENT_SUSPEND : USB_DEVICE_EVENT_RESUME);
     device->suspended = suspended;
   }
 
@@ -172,7 +172,7 @@ static void interruptHandler(void *object)
   /* Handle Start of Frame interrupt */
   if (intStatus & USBSTS_D_SRI)
   {
-    usbControlEvent(device->control, DEVICE_EVENT_FRAME);
+    usbControlEvent(device->control, USB_DEVICE_EVENT_FRAME);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -317,7 +317,8 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 {
   /* Assume that this function will be called only from one thread */
   struct UsbDevice * const device = object;
-  const bool ep0out = EP_ADDRESS(address) == 0 && !(address & EP_DIRECTION_IN);
+  const bool ep0out = !USB_EP_ADDRESS(address)
+      && !(address & USB_EP_DIRECTION_IN);
 
   if (ep0out && device->ep0out)
     return device->ep0out;
@@ -444,24 +445,24 @@ static void epCommonHandler(struct UsbEndpoint *ep)
   while ((packetStatus = epGetStatus(ep)) != STATUS_IDLE)
   {
     struct UsbRequest * const request = epGetHeadRequest(head);
-    enum usbRequestStatus requestStatus = REQUEST_ERROR;
+    enum usbRequestStatus requestStatus = USB_REQUEST_ERROR;
 
-    if (ep->address & EP_DIRECTION_IN)
+    if (ep->address & USB_EP_DIRECTION_IN)
     {
       if (packetStatus == STATUS_DATA_PACKET)
-        requestStatus = REQUEST_COMPLETED;
+        requestStatus = USB_REQUEST_COMPLETED;
     }
     else
     {
       if (packetStatus == STATUS_SETUP_PACKET)
       {
         if (epReadSetupPacket(ep, request) == E_OK)
-          requestStatus = REQUEST_SETUP;
+          requestStatus = USB_REQUEST_SETUP;
       }
       else if (packetStatus == STATUS_DATA_PACKET)
       {
         epExtractDataLength(ep, request);
-        requestStatus = REQUEST_COMPLETED;
+        requestStatus = USB_REQUEST_COMPLETED;
       }
     }
 
@@ -481,17 +482,17 @@ static void epControlHandler(struct UsbEndpoint *ep)
     return;
 
   struct UsbRequest * const request = epGetHeadRequest(head);
-  enum usbRequestStatus requestStatus = REQUEST_ERROR;
+  enum usbRequestStatus requestStatus = USB_REQUEST_ERROR;
 
   if (packetStatus == STATUS_SETUP_PACKET)
   {
     if (epReadSetupPacket(ep, request) == E_OK)
-      requestStatus = REQUEST_SETUP;
+      requestStatus = USB_REQUEST_SETUP;
   }
   else if (packetStatus == STATUS_DATA_PACKET)
   {
     epExtractDataLength(ep, request);
-    requestStatus = REQUEST_COMPLETED;
+    requestStatus = USB_REQUEST_COMPLETED;
   }
 
   epPopDescriptor(ep);
@@ -806,7 +807,8 @@ static void epClear(void *object)
   {
     struct UsbRequest * const request = epGetHeadRequest(head);
 
-    request->callback(request->callbackArgument, request, REQUEST_CANCELLED);
+    request->callback(request->callbackArgument, request,
+        USB_REQUEST_CANCELLED);
 
     epPopDescriptor(endpoint);
   }
@@ -816,7 +818,7 @@ static void epDisable(void *object)
 {
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int number = EP_LOGICAL_ADDRESS(endpoint->address);
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(endpoint->address);
 
   reg->ENDPTCTRL[number] &= endpoint->address & 0x80 ?
       ~ENDPTCTRL_TXE : ~ENDPTCTRL_RXE;
@@ -827,7 +829,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(endpoint->address);
-  const unsigned int number = EP_LOGICAL_ADDRESS(endpoint->address);
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(endpoint->address);
   struct QueueHead * const head = &endpoint->device->base.queueHeads[index];
 
   //TODO Different sequence for Control and Common endpoints
@@ -877,7 +879,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 
   const irqState state = irqSave();
 
-  if (endpoint->address & EP_DIRECTION_IN)
+  if (endpoint->address & USB_EP_DIRECTION_IN)
     res = epEnqueueTx(endpoint, request);
   else
     res = epEnqueueRx(endpoint, request);
@@ -890,7 +892,7 @@ static bool epIsStalled(void *object)
 {
   const struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int number = EP_LOGICAL_ADDRESS(endpoint->address);
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(endpoint->address);
 
   const uint32_t stallMask = endpoint->address & 0x80 ?
       ENDPTCTRL_TXS : ENDPTCTRL_RXS;
@@ -902,7 +904,7 @@ static void epSetStalled(void *object, bool stalled)
 {
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int number = EP_LOGICAL_ADDRESS(endpoint->address);
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(endpoint->address);
 
   const bool tx = (endpoint->address & 0x80) != 0;
   const uint32_t stallMask = tx ? ENDPTCTRL_TXS : ENDPTCTRL_RXS;
