@@ -64,12 +64,10 @@ struct PrivateData
     /* Bytes left */
     uint32_t left;
 
-    /* Chunks in the transfer queue */
-    size_t queuedChunks;
-    /* Total chunks in the transfer */
-    size_t totalChunks;
     /* Current position in the buffer */
     uintptr_t bufferPosition;
+    /* Chunks to be transmitted */
+    size_t bufferedDataLeft;
 
     /* Pending command */
     struct CBW cbw;
@@ -123,11 +121,10 @@ static void mscStatusSent(void *, struct UsbRequest *, enum usbRequestStatus);
 static inline size_t calcNextTransferLength(const struct Msc *, uint32_t);
 static enum result enqueueControlRequest(struct Msc *);
 static enum result enqueueDataRx(struct Msc *, void *, size_t);
-static enum result enqueueDataTx(struct Msc *, const void *, size_t);
+static enum result enqueueDataTx(struct Msc *, const void *, size_t, bool);
 static bool isInputDataValid(const struct CBW *);
-static void prepareDataRx(struct Msc *, struct UsbRequest *, bool);
-static void prepareDataTx(struct Msc *, struct UsbRequest *, bool);
-static enum result sendBuffer(struct Msc *, const void *, size_t, bool);
+static size_t prepareDataRx(struct Msc *, struct UsbRequest *, size_t);
+static size_t prepareDataTx(struct Msc *, struct UsbRequest *, size_t, bool);
 static enum result sendResponse(struct Msc *, const struct CBW *,
     const void *, size_t);
 static enum result sendStatus(struct Msc *, uint32_t, uint32_t, uint8_t);
@@ -561,7 +558,7 @@ static enum state stateReadRun(struct Msc *driver)
     /* Data read successfully from the storage */
     privateData->context.left -= transferLength;
 
-    if (enqueueDataTx(driver, driver->buffer, transferLength) == E_OK)
+    if (enqueueDataTx(driver, driver->buffer, transferLength, true) == E_OK)
       return STATE_READ_WAIT;
     else
       return STATE_SUSPEND; /* Unrecoverable USB error */
@@ -837,16 +834,13 @@ static void mscDataReceivedQuietly(void *argument, struct UsbRequest *request,
 
   if (status == USB_REQUEST_COMPLETED)
   {
-    const size_t chunksLeft = privateData->context.totalChunks
-        - privateData->context.queuedChunks;
-
-    if (chunksLeft)
+    if (privateData->context.bufferedDataLeft)
     {
-      prepareDataRx(driver, request, chunksLeft == 1);
+      privateData->context.bufferedDataLeft -=
+          prepareDataRx(driver, request, privateData->context.bufferedDataLeft);
 
       if (usbEpEnqueue(driver->rxEp, request) == E_OK)
       {
-        ++privateData->context.queuedChunks;
         returnToQueue = false;
       }
       else
@@ -890,16 +884,13 @@ static void mscDataSentQuietly(void *argument, struct UsbRequest *request,
 
   if (status == USB_REQUEST_COMPLETED)
   {
-    const size_t chunksLeft = privateData->context.totalChunks
-        - privateData->context.queuedChunks;
-
-    if (chunksLeft)
+    if (privateData->context.bufferedDataLeft)
     {
-      prepareDataTx(driver, request, chunksLeft == 1);
+      privateData->context.bufferedDataLeft -= prepareDataTx(driver, request,
+          privateData->context.bufferedDataLeft, true);
 
       if (usbEpEnqueue(driver->txEp, request) == E_OK)
       {
-        ++privateData->context.queuedChunks;
         returnToQueue = false;
       }
       else
@@ -963,33 +954,27 @@ static enum result enqueueDataRx(struct Msc *driver, void *buffer,
 {
   const size_t maxChunks = queueSize(&driver->rxQueue);
   struct PrivateData * const privateData = driver->privateData;
-  size_t chunks = length / driver->packetSize;
+  size_t chunks = (length + driver->packetSize - 1) / driver->packetSize;
 
-  usbTrace("msc: receive %zu chunks, total length %zu",
-      chunks, length);
+  usbTrace("msc: receive %zu chunks, total length %zu", chunks, length);
+
+  if (chunks > maxChunks)
+    chunks = maxChunks;
 
   privateData->context.bufferPosition = (uintptr_t)buffer;
-  privateData->context.queuedChunks = 0;
-  privateData->context.totalChunks = chunks;
+  privateData->context.bufferedDataLeft = length;
 
-  const bool moreChunksNeeded = chunks > maxChunks;
   enum result res = E_OK;
-
-  if (moreChunksNeeded)
-    chunks = maxChunks;
 
   while (chunks--)
   {
     struct UsbRequest *request;
     queuePop(&driver->rxQueue, &request);
 
-    prepareDataRx(driver, request, !(moreChunksNeeded || chunks));
+    privateData->context.bufferedDataLeft -= prepareDataRx(driver, request,
+        privateData->context.bufferedDataLeft);
 
-    if ((res = usbEpEnqueue(driver->rxEp, request)) == E_OK)
-    {
-      ++privateData->context.queuedChunks;
-    }
-    else
+    if ((res = usbEpEnqueue(driver->rxEp, request)) != E_OK)
     {
       queuePush(&driver->rxQueue, &request);
       break;
@@ -1000,37 +985,31 @@ static enum result enqueueDataRx(struct Msc *driver, void *buffer,
 }
 /*----------------------------------------------------------------------------*/
 static enum result enqueueDataTx(struct Msc *driver, const void *buffer,
-    size_t length)
+    size_t length, bool notify)
 {
   const size_t maxChunks = queueSize(&driver->txQueue) - 1;
   struct PrivateData * const privateData = driver->privateData;
-  size_t chunks = length / driver->packetSize;
+  size_t chunks = (length + driver->packetSize - 1) / driver->packetSize;
 
-  usbTrace("msc: send %zu chunks, total length %zu",
-      chunks, length);
+  usbTrace("msc: send %zu chunks, total length %zu", chunks, length);
+
+  if (chunks > maxChunks)
+    chunks = maxChunks;
 
   privateData->context.bufferPosition = (uintptr_t)buffer;
-  privateData->context.queuedChunks = 0;
-  privateData->context.totalChunks = chunks;
+  privateData->context.bufferedDataLeft = length;
 
-  const bool moreChunksNeeded = chunks > maxChunks;
   enum result res = E_OK;
-
-  if (moreChunksNeeded)
-    chunks = maxChunks;
 
   while (chunks--)
   {
     struct UsbRequest *request;
     queuePop(&driver->txQueue, &request);
 
-    prepareDataTx(driver, request, !(moreChunksNeeded || chunks));
+    privateData->context.bufferedDataLeft -= prepareDataTx(driver, request,
+        privateData->context.bufferedDataLeft, notify);
 
-    if ((res = usbEpEnqueue(driver->txEp, request)) == E_OK)
-    {
-      ++privateData->context.queuedChunks;
-    }
-    else
+    if ((res = usbEpEnqueue(driver->txEp, request)) != E_OK)
     {
       queuePush(&driver->txQueue, &request);
       break;
@@ -1050,87 +1029,57 @@ static bool isInputDataValid(const struct CBW *cbw)
     return true;
 }
 /*----------------------------------------------------------------------------*/
-static void prepareDataRx(struct Msc *driver, struct UsbRequest *request,
-    bool lastRequest)
+static size_t prepareDataRx(struct Msc *driver, struct UsbRequest *request,
+    size_t left)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const uintptr_t bufferPosition = privateData->context.bufferPosition
-      + privateData->context.queuedChunks * driver->packetSize;
+  const size_t chunkLength = left > driver->packetSize ?
+      driver->packetSize : left;
 
-  request->buffer = (uint8_t *)bufferPosition;
-  request->capacity = driver->packetSize;
+  request->buffer = (uint8_t *)privateData->context.bufferPosition;
+  request->capacity = chunkLength;
   request->length = 0;
   request->callbackArgument = driver;
-  request->callback = lastRequest ? mscDataReceived : mscDataReceivedQuietly;
+  request->callback = chunkLength == left ?
+      mscDataReceived : mscDataReceivedQuietly;
+
+  privateData->context.bufferPosition += chunkLength;
+  return chunkLength;
 }
 /*----------------------------------------------------------------------------*/
-static void prepareDataTx(struct Msc *driver, struct UsbRequest *request,
-    bool lastRequest)
+static size_t prepareDataTx(struct Msc *driver, struct UsbRequest *request,
+    size_t left, bool notify)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const uintptr_t bufferPosition = privateData->context.bufferPosition
-      + privateData->context.queuedChunks * driver->packetSize;
+  const size_t chunkLength = left > driver->packetSize ?
+      driver->packetSize : left;
 
-  request->buffer = (uint8_t *)bufferPosition;
-  request->capacity = request->length = driver->packetSize;
+  request->buffer = (uint8_t *)privateData->context.bufferPosition;
+  request->capacity = request->length = chunkLength;
   request->callbackArgument = driver;
-  request->callback = lastRequest ? mscDataSent : mscDataSentQuietly;
-}
-/*----------------------------------------------------------------------------*/
-static enum result sendBuffer(struct Msc *driver, const void *buffer,
-    size_t length, bool notify)
-{
-  struct PrivateData * const privateData = driver->privateData;
-  uintptr_t bufferPosition = (uintptr_t)buffer;
+  request->callback = (notify && chunkLength == left) ?
+      mscDataSent : mscDataSentQuietly;
 
-  privateData->context.queuedChunks = 0;
-  privateData->context.totalChunks = 0;
-
-  while (length)
-  {
-    struct UsbRequest *request;
-    queuePop(&driver->txQueue, &request);
-
-    const size_t chunkLength = length > driver->packetSize ?
-        driver->packetSize : length;
-
-    request->buffer = (uint8_t *)bufferPosition;
-    request->capacity = request->length = chunkLength;
-    request->callbackArgument = driver;
-    request->callback = (length == chunkLength && notify) ?
-        mscDataSent : mscDataSentQuietly;
-
-    if (usbEpEnqueue(driver->txEp, request) != E_OK)
-    {
-      queuePush(&driver->txQueue, &request);
-      return E_ERROR;
-    }
-
-    length -= chunkLength;
-    bufferPosition += chunkLength;
-  }
-
-  return E_OK;
+  privateData->context.bufferPosition += chunkLength;
+  return chunkLength;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sendResponse(struct Msc *driver, const struct CBW *cbw,
     const void *buffer, size_t length)
 {
   struct PrivateData * const privateData = driver->privateData;
+  enum result res = E_OK;
 
   if (buffer && length)
   {
     const size_t chunkLength = length > cbw->dataTransferLength ?
         cbw->dataTransferLength : length;
-    const enum result res = sendBuffer(driver, buffer, chunkLength, false);
 
-    if (res != E_OK)
-      return res;
-
-    privateData->context.left -= chunkLength;
+    if ((res = enqueueDataTx(driver, buffer, chunkLength, false)) == E_OK)
+      privateData->context.left -= chunkLength;
   }
 
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sendStatus(struct Msc *driver, uint32_t tag,
