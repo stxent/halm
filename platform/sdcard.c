@@ -393,9 +393,13 @@ static void interruptHandler(void *object)
     }
 
     case STATE_STOP:
-      device->state = STATE_IDLE;
+    {
+      const enum result res = ifGet(device->interface, IF_STATUS, 0);
+
+      device->state = res == E_OK ? STATE_IDLE : STATE_ERROR;
       event = true;
       break;
+    }
 
     case STATE_HALT:
       device->state = STATE_ERROR;

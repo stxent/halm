@@ -17,6 +17,7 @@
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *);
 static enum result executeCommand(struct Sdmmc *, uint32_t, uint32_t);
+static void interruptHandler(void *);
 static enum result updateRate(struct Sdmmc *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
@@ -129,45 +130,6 @@ static enum result executeCommand(struct Sdmmc *interface, uint32_t command,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
-{
-  LPC_SDMMC_Type * const reg = interface->base.reg;
-  const uint32_t clock = sdmmcGetClock((struct SdmmcBase *)interface);
-
-  if (rate > clock)
-    return E_VALUE;
-
-  const uint32_t current = CLKDIV_VALUE(0, reg->CLKDIV);
-  const uint32_t divider = ((clock + (rate >> 1)) / rate) >> 1;
-
-  if (divider == current && (reg->CLKENA & CLKENA_CCLK_ENABLE))
-    return E_OK; /* Closest rate is already set */
-
-  /* Disable clock and reset divider */
-  reg->CLKENA = 0;
-  reg->CLKSRC = 0;
-  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
-      | CMD_WAIT_PRVDATA_COMPLETE, 0);
-
-  /* Set divider 0 to desired value */
-  reg->CLKDIV = (reg->CLKDIV & ~CLKDIV_MASK(0))
-      | CLKDIV_DIVIDER(0, divider);
-  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
-      | CMD_WAIT_PRVDATA_COMPLETE, 0);
-
-  /* Update timeout values */
-  const uint32_t readTimeout = BUSY_READ_DELAY * (rate / 1000);
-  reg->TMOUT = TMOUT_RESPONSE_TIMEOUT(0x40) | TMOUT_DATA_TIMEOUT(readTimeout);
-
-  /* Enable clock */
-  reg->CLKENA = CLKENA_CCLK_ENABLE;
-  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
-      | CMD_WAIT_PRVDATA_COMPLETE, 0);
-
-  interface->rate = rate;
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   const uint32_t hostErrors = INT_FRUN | INT_HLE;
@@ -211,6 +173,45 @@ static void interruptHandler(void *object)
 
   if (interface->status != E_BUSY && interface->callback)
     interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
+{
+  LPC_SDMMC_Type * const reg = interface->base.reg;
+  const uint32_t clock = sdmmcGetClock((struct SdmmcBase *)interface);
+
+  if (rate > clock)
+    return E_VALUE;
+
+  const uint32_t current = CLKDIV_VALUE(0, reg->CLKDIV);
+  const uint32_t divider = ((clock + (rate >> 1)) / rate) >> 1;
+
+  if (divider == current && (reg->CLKENA & CLKENA_CCLK_ENABLE))
+    return E_OK; /* Closest rate is already set */
+
+  /* Disable clock and reset divider */
+  reg->CLKENA = 0;
+  reg->CLKSRC = 0;
+  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
+      | CMD_WAIT_PRVDATA_COMPLETE, 0);
+
+  /* Set divider 0 to desired value */
+  reg->CLKDIV = (reg->CLKDIV & ~CLKDIV_MASK(0))
+      | CLKDIV_DIVIDER(0, divider);
+  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
+      | CMD_WAIT_PRVDATA_COMPLETE, 0);
+
+  /* Update timeout values */
+  const uint32_t readTimeout = BUSY_READ_DELAY * (rate / 1000);
+  reg->TMOUT = TMOUT_RESPONSE_TIMEOUT(0x40) | TMOUT_DATA_TIMEOUT(readTimeout);
+
+  /* Enable clock */
+  reg->CLKENA = CLKENA_CCLK_ENABLE;
+  executeCommand(interface, CMD_UPDATE_CLOCK_REGISTERS
+      | CMD_WAIT_PRVDATA_COMPLETE, 0);
+
+  interface->rate = rate;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *object, const void *configBase)
