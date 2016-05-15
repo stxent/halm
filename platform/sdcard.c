@@ -500,7 +500,7 @@ static enum result startCardSelection(struct SdCard *device)
   const uint32_t address = device->address << 16;
   const uint32_t flags = SDIO_WAIT_DATA | (device->crc ? SDIO_CHECK_CRC : 0);
 
-  const enum result res = executeCommand(device, SDIO_COMMAND(CMD_SEND_STATUS,
+  const enum result res = executeCommand(device, SDIO_COMMAND(CMD_SELECT_CARD,
       SDIO_RESPONSE_SHORT, flags), address, 0, false);
 
   /* Operation must not be completed instantly */

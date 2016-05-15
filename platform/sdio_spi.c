@@ -696,7 +696,6 @@ static enum result sdioInit(void *object, const void *configBase)
   if (interface->timer)
   {
     /* TODO Add priority configuration */
-    timerSetEnabled(interface->timer, false);
     timerCallback(interface->timer, interruptHandler, interface);
 
     res = timerSetFrequency(interface->timer, BUSY_TIMER_FREQUENCY);

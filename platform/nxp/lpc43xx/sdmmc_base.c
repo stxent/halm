@@ -193,12 +193,6 @@ static void configPins(struct SdmmcBase *interface,
 
     pinInput(pin);
     pinSetFunction(pin, pinEntry->value);
-
-    if (index > 0)
-    {
-      /* Enable pull-up resistors on all pins except for clock */
-      pinSetPull(pin, PIN_PULLUP);
-    }
   }
 
   interface->wide = wide;
@@ -219,6 +213,7 @@ void SDIO_ISR(void)
 uint32_t sdmmcGetClock(const struct SdmmcBase *interface
     __attribute__((unused)))
 {
+  /* Clock frequency should not exceed 52 MHz */
   return clockFrequency(SdioClock);
 }
 /*----------------------------------------------------------------------------*/

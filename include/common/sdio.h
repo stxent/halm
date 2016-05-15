@@ -25,6 +25,7 @@ enum sdioCommand
   CMD_WRITE_MULTIPLE_BLOCK  = 25,
   CMD_APP_CMD               = 55,
   ACMD_SD_SEND_OP_COND      = 41,
+  ACMD_SET_CLR_CARD_DETECT  = 42,
 
   /* Commands available only in SDIO mode */
   CMD_ALL_SEND_CID          = 2,

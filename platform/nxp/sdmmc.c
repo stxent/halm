@@ -80,11 +80,12 @@ static void execute(struct Sdmmc *interface)
   if (flags & SDIO_CHECK_CRC)
     command |= CMD_CHECK_RESPONSE_CRC;
   if (flags & SDIO_DATA_MODE)
-    command |= CMD_DATA_EXPECTED | CMD_WAIT_PRVDATA_COMPLETE;
+    command |= CMD_DATA_EXPECTED;
   switch (response)
   {
     case SDIO_RESPONSE_LONG:
       command |= CMD_RESPONSE_LENGTH;
+      /* No break */
     case SDIO_RESPONSE_SHORT:
       command |= CMD_RESPONSE_EXPECT;
       break;
@@ -98,18 +99,19 @@ static void execute(struct Sdmmc *interface)
     command |= CMD_STOP_ABORT_CMD;
   if (flags & SDIO_AUTO_STOP)
     command |= CMD_SEND_AUTO_STOP;
-  if (flags & SDIO_WAIT_DATA)
+  if (flags & (SDIO_WAIT_DATA | SDIO_DATA_MODE))
     command |= CMD_WAIT_PRVDATA_COMPLETE;
   if (flags & SDIO_STREAM_MODE)
     command |= CMD_TRANSFER_MODE;
 
-  /* Execute low-level command */
+  /* Reset FIFO when data mode is requested */
   if (flags & SDIO_DATA_MODE)
   {
-    /* Reset FIFO */
     reg->CTRL |= CTRL_FIFO_RESET;
     while (reg->CTRL & CTRL_FIFO_RESET);
   }
+
+  /* Execute low-level command */
   interface->status = E_BUSY;
   if (executeCommand(interface, command, interface->argument) != E_OK)
     interface->status = E_VALUE;
@@ -132,10 +134,10 @@ static enum result executeCommand(struct Sdmmc *interface, uint32_t command,
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  const uint32_t hostErrors = INT_FRUN | INT_HLE;
-  const uint32_t integrityErrors = INT_RE | INT_RCRC | INT_DCRC
+  static const uint32_t hostErrors = INT_FRUN | INT_HLE;
+  static const uint32_t integrityErrors = INT_RE | INT_RCRC | INT_DCRC
       | INT_SBE | INT_EBE;
-  const uint32_t timeoutErrors = INT_RTO | INT_DRTO | INT_HTO;
+  static const uint32_t timeoutErrors = INT_RTO | INT_DRTO | INT_HTO;
 
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
@@ -159,16 +161,21 @@ static void interruptHandler(void *object)
   {
     interface->status = E_TIMEOUT;
   }
+  else if (!(reg->STATUS & STATUS_DATA_BUSY))
+  {
+    interface->status = E_OK;
+  }
   else
   {
-    if (reg->STATUS & STATUS_DATA_BUSY)
+    intSetEnabled(interface->finalizer, true);
+
+    if (!(reg->STATUS & STATUS_DATA_BUSY))
     {
-      interface->status = E_BUSY;
-      intSetEnabled(interface->finalizer, true);
-      /* TODO Check whether operation is already completed */
+      interface->status = E_OK;
+      intSetEnabled(interface->finalizer, false);
     }
     else
-      interface->status = E_OK;
+      interface->status = E_BUSY;
   }
 
   if (interface->status != E_BUSY && interface->callback)
