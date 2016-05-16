@@ -21,10 +21,6 @@ CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/startup.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/system.c
 CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/vectors.c
 
-ifeq ($(CONFIG_PLATFORM_GPIO_BUS),y)
-  CSOURCES += platform/gpio_bus.c
-endif
-
 ifeq ($(CONFIG_PLATFORM_NXP_FAST_GPIO_BUS),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/fast_gpio_bus_common.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/fast_gpio_bus.c
@@ -216,12 +212,4 @@ ifeq ($(CONFIG_PLATFORM_USB),y)
   ifeq ($(CONFIG_PLATFORM_USB_1),y)
     PROJECT_FLAGS += CONFIG_PLATFORM_USB_1
   endif
-endif
-
-ifeq ($(CONFIG_PLATFORM_SDIO_SPI),y)
-  CSOURCES += platform/sdio_spi.c
-endif
-
-ifeq ($(CONFIG_PLATFORM_SDCARD),y)
-  CSOURCES += platform/sdcard.c
 endif

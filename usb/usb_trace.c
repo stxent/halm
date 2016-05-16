@@ -5,7 +5,6 @@
  */
 
 #include <stdarg.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <usb/usb_trace.h>

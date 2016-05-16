@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <error.h>
 #include <core/cortex/asm.h>
 #include <core/core_defs.h>
 #include <core/cortex/pm_defs.h>

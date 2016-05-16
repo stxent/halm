@@ -12,9 +12,7 @@
 #ifndef HALM_DMA_H_
 #define HALM_DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <stddef.h>
 #include <entity.h>
-#include <error.h>
 /*----------------------------------------------------------------------------*/
 /** DMA burst transfer size. */
 enum dmaBurst
