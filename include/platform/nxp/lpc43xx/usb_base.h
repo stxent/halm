@@ -44,6 +44,8 @@ struct UsbBase
   struct Queue descriptorPool;
   /* Unique peripheral identifier */
   uint8_t channel;
+  /* Number of logical endpoints */
+  uint8_t numberOfEndpoints;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC43XX_USB_BASE_H_ */

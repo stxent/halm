@@ -12,7 +12,9 @@
 #include <platform/nxp/lpc43xx/usb_base.h>
 #include <platform/nxp/lpc43xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
-#define ENDPOINT_REQUESTS CONFIG_USB_DEVICE_ENDPOINT_REQUESTS
+#define ENDPOINT_REQUESTS     CONFIG_USB_DEVICE_ENDPOINT_REQUESTS
+#define USB0_ENDPOINT_NUMBER  12
+#define USB1_ENDPOINT_NUMBER  8
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct UsbBase *,
@@ -109,14 +111,14 @@ const struct EntityClass * const UsbBase = &devTable;
 static struct UsbBase *descriptors[2] = {0};
 
 #ifdef CONFIG_PLATFORM_USB_0
-static struct QueueHead usb0QueueHeads[ENDPT_NUMBER]
+static struct QueueHead usb0QueueHeads[USB0_ENDPOINT_NUMBER]
     __attribute__((aligned(2048)));
 static struct TransferDescriptor usb0TransferDescriptors[ENDPOINT_REQUESTS]
     __attribute__((aligned(32)));
 #endif
 
 #ifdef CONFIG_PLATFORM_USB_1
-static struct QueueHead usb1QueueHeads[ENDPT_NUMBER]
+static struct QueueHead usb1QueueHeads[USB1_ENDPOINT_NUMBER]
     __attribute__((aligned(2048)));
 static struct TransferDescriptor usb1TransferDescriptors[ENDPOINT_REQUESTS]
     __attribute__((aligned(32)));
@@ -195,6 +197,7 @@ static enum result devInit(void *object, const void *configBase)
 
     device->irq = USB0_IRQ;
     device->reg = LPC_USB0;
+    device->numberOfEndpoints = USB0_ENDPOINT_NUMBER;
 
     LPC_CREG->CREG0 &= ~CREG0_USB0PHY;
     LPC_USB0->OTGSC = OTGSC_VD | OTGSC_OT;
@@ -212,6 +215,7 @@ static enum result devInit(void *object, const void *configBase)
 
     device->irq = USB1_IRQ;
     device->reg = LPC_USB1;
+    device->numberOfEndpoints = USB1_ENDPOINT_NUMBER;
 
     LPC_SCU->SFSUSB = SFSUSB_ESEA | SFSUSB_EPWR | SFSUSB_VBUS;
 

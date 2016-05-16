@@ -167,7 +167,6 @@ enum
 #define ENDPTCTRL_TXE                   BIT(23)
 /*------------------All endpoint registers------------------------------------*/
 #define ENDPT_BIT(ep)                   BIT(((ep) & 0x07) + ((ep) >> 3))
-#define ENDPT_NUMBER                    12
 /*------------------OTG Status and Control register---------------------------*/
 #define OTGSC_VD                        BIT(0)
 #define OTGSC_VC                        BIT(1)

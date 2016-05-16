@@ -21,10 +21,8 @@ struct UsbDevice
 {
   struct UsbBase base;
 
-  /* List of registered endpoints */
-  struct List endpoints;
-  /* Control OUT endpoint */
-  struct UsbEndpoint *ep0out;
+  /* Array of logical endpoints */
+  struct UsbEndpoint **endpoints;
   /* Control message handler */
   struct UsbControl *control;
   /* Active device configuration */
