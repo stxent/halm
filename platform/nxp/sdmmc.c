@@ -101,8 +101,6 @@ static void execute(struct Sdmmc *interface)
     command |= CMD_SEND_AUTO_STOP;
   if (flags & (SDIO_WAIT_DATA | SDIO_DATA_MODE))
     command |= CMD_WAIT_PRVDATA_COMPLETE;
-  if (flags & SDIO_STREAM_MODE)
-    command |= CMD_TRANSFER_MODE;
 
   /* Reset FIFO when data mode is requested */
   if (flags & SDIO_DATA_MODE)

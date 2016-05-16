@@ -50,12 +50,10 @@ enum sdioFlags
   SDIO_WRITE_MODE     = 0x08,
   /** Stop the transfer when the data transfer is in progress. */
   SDIO_STOP_TRANSFER  = 0x10,
-  /** Send stop command at the end of data transfer. */
-  SDIO_AUTO_STOP      = 0x20,
   /** Wait for previous data transfer completion. */
-  SDIO_WAIT_DATA      = 0x40,
-  /** Enable stream transfer mode instead of block mode. */
-  SDIO_STREAM_MODE    = 0x80
+  SDIO_WAIT_DATA      = 0x20,
+  /** Send stop command at the end of data transfer. */
+  SDIO_AUTO_STOP      = 0x40
 };
 /*----------------------------------------------------------------------------*/
 enum sdioMode

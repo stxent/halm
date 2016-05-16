@@ -409,9 +409,7 @@ static enum state stateReadDelayAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateWriteTokenEnter(struct SdioSpi *interface)
 {
-  /* Auto stop is enabled only during multiple block write */
-  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
-  interface->buffer[0] = flags & SDIO_AUTO_STOP ?
+  interface->buffer[0] = interface->length / interface->blockSize > 1 ?
       TOKEN_START_MULTIPLE : TOKEN_START;
 
   interface->retries = TOKEN_RETRIES;

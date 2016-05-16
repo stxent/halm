@@ -252,7 +252,7 @@ static inline void usbEpEnable(void *endpoint, uint8_t type, uint16_t size)
 static inline enum result usbEpEnqueue(void *endpoint,
     struct UsbRequest *request)
 {
-  return ((const struct UsbEndpointClass *)CLASS(endpoint))-> enqueue(endpoint,
+  return ((const struct UsbEndpointClass *)CLASS(endpoint))->enqueue(endpoint,
       request);
 }
 /*----------------------------------------------------------------------------*/

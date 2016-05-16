@@ -371,17 +371,13 @@ static void interruptHandler(void *object)
       {
         device->state = STATE_HALT;
       }
-      else if (isMultiBufferTransfer(device))
-      {
-        device->state = STATE_STOP;
-      }
       else
       {
         device->state = STATE_IDLE;
         event = true;
       }
 
-      if (device->state == STATE_HALT || device->state == STATE_STOP)
+      if (device->state == STATE_HALT)
       {
         if (terminateTransfer(device) != E_OK)
         {
