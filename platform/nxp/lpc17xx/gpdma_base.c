@@ -127,17 +127,21 @@ void gpDmaSetMux(struct GpDmaBase *descriptor)
 /*----------------------------------------------------------------------------*/
 void GPDMA_ISR(void)
 {
-  const uint32_t errorStatus = LPC_GPDMA->INTERRSTAT;
-  const uint32_t terminalStatus = LPC_GPDMA->INTTCSTAT;
-  uint32_t intStatus = errorStatus | terminalStatus;
+  uint32_t errorStatus = LPC_GPDMA->INTERRSTAT;
+  uint32_t terminalStatus = LPC_GPDMA->INTTCSTAT;
 
   LPC_GPDMA->INTERRCLEAR = errorStatus;
   LPC_GPDMA->INTTCCLEAR = terminalStatus;
 
-  while (intStatus)
+  errorStatus = reverseBits32(errorStatus);
+  terminalStatus = reverseBits32(terminalStatus);
+
+  uint32_t intStatus = errorStatus | terminalStatus;
+
+  do
   {
-    const unsigned int index = 31 - countLeadingZeros32(intStatus);
-    const uint32_t mask = 1 << index;
+    const unsigned int index = countLeadingZeros32(intStatus);
+    const uint32_t mask = BIT(31) >> index;
 
     struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
     LPC_GPDMA_CHANNEL_Type * const reg = descriptor->reg;
@@ -154,6 +158,7 @@ void GPDMA_ISR(void)
 
     descriptor->handler(descriptor, res);
   }
+  while (intStatus);
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void)
