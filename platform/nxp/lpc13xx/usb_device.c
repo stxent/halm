@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <delay.h>
+#include <memory.h>
 #include <platform/nxp/lpc13xx/usb_defs.h>
 #include <platform/nxp/usb_device.h>
 #include <usb/usb.h>
@@ -114,26 +115,18 @@ static void interruptHandler(void *object)
   /* Endpoint interrupt */
   if (intStatus & USBDevInt_EP_MASK)
   {
-    /* Check registered endpoints */
-    const struct ListNode *current = listFirst(&device->endpoints);
-    struct UsbEndpoint *endpoint;
+    uint32_t epIntStatus = reverseBits32((intStatus >> 1) & 0xFF);
 
-    while (current)
+    do
     {
-      listData(&device->endpoints, current, &endpoint);
+      const unsigned int index = countLeadingZeros32(epIntStatus);
+      const uint8_t status = usbCommandRead(device,
+          USB_CMD_CLEAR_INTERRUPT | index);
 
-      const unsigned int index = EP_TO_INDEX(endpoint->address);
-      const uint32_t mask = BIT(index + 1);
-
-      if (intStatus & mask)
-      {
-        const uint8_t status = usbCommandRead(device,
-            USB_CMD_CLEAR_INTERRUPT | index);
-
-        epHandler(endpoint, status);
-      }
-      current = listNext(current);
+      epIntStatus -= BIT(31) >> index;
+      epHandler(device->endpoints[index], status);
     }
+    while (epIntStatus);
   }
 
   /* Start of Frame interrupt */
@@ -228,11 +221,8 @@ static enum result devInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  res = listInit(&device->endpoints, sizeof(struct UsbEndpoint *));
-  if (res != E_OK)
-    return res;
-
   device->base.handler = interruptHandler;
+  memset(device->endpoints, 0, sizeof(device->endpoints));
 
   /* Initialize control message handler */
   device->control = init(UsbControl, &controlConfig);
@@ -257,39 +247,27 @@ static void devDeinit(void *object)
   irqDisable(device->base.irq);
 
   deinit(device->control);
-
-  assert(listEmpty(&device->endpoints));
-  listDeinit(&device->endpoints);
-
   UsbBase->deinit(device);
 }
 /*----------------------------------------------------------------------------*/
 static void *devCreateEndpoint(void *object, uint8_t address)
 {
-  /* Assume that this function will be called only from one thread */
   struct UsbDevice * const device = object;
+  const unsigned int index = EP_TO_INDEX(address);
+  const irqState state = irqSave();
+
   struct UsbEndpoint *endpoint = 0;
 
-  const irqState state = irqSave();
-  const struct ListNode *current = listFirst(&device->endpoints);
-
-  while (current)
-  {
-    listData(&device->endpoints, current, &endpoint);
-    if (endpoint->address == address)
-      break;
-    current = listNext(current);
-  }
-
-  if (!current)
+  if (!device->endpoints[index])
   {
     const struct UsbEndpointConfig config = {
       .parent = device,
       .address = address
     };
 
-    endpoint = init(UsbEndpoint, &config);
+    device->endpoints[index] = init(UsbEndpoint, &config);
   }
+  endpoint = device->endpoints[index];
 
   irqRestore(state);
   return endpoint;
@@ -524,8 +502,6 @@ static enum result epInit(void *object, const void *configBase)
   endpoint->address = config->address;
   endpoint->device = device;
 
-  listPush(&device->endpoints, &endpoint);
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -538,12 +514,10 @@ static void epDeinit(void *object)
   epDisable(endpoint);
   epClear(endpoint);
 
+  const unsigned int index = EP_TO_INDEX(endpoint->address);
+
   const irqState state = irqSave();
-  struct ListNode * const node = listFind(&device->endpoints, &endpoint);
-
-  if (node)
-    listErase(&device->endpoints, node);
-
+  device->endpoints[index] = 0;
   irqRestore(state);
 
   assert(queueEmpty(&endpoint->requests));

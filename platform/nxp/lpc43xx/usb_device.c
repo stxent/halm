@@ -154,15 +154,16 @@ static void interruptHandler(void *object)
       epControlHandler(device->endpoints[CONTROL_OUT]);
     }
 
+    epStatus = reverseBits32(epStatus);
+
     while (epStatus)
     {
-      /* Convert interrupt flag position to logical endpoint number */
-      const unsigned int position = 31 - countLeadingZeros32(epStatus);
+      /* Convert interrupt flag position to physical endpoint number */
+      const unsigned int position = countLeadingZeros32(epStatus);
       const unsigned int number = ((position & 0xF) << 1) + (position >> 4);
-      const uint32_t mask = 1 << position;
 
-      epStatus -= mask;
-      reg->ENDPTCOMPLETE = mask;
+      epStatus -= BIT(31) >> position;
+      reg->ENDPTCOMPLETE = BIT(position);
 
       epCommonHandler(device->endpoints[number]);
     }
@@ -756,11 +757,10 @@ static void epDeinit(void *object)
   epDisable(endpoint);
   epClear(endpoint);
 
-  /* Protect endpoint list from simultaneous access */
+  /* Protect endpoint array from simultaneous access */
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(endpoint->address);
-  irqState state;
 
-  state = irqSave();
+  const irqState state = irqSave();
   device->endpoints[index] = 0;
   irqRestore(state);
 }

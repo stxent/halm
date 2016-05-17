@@ -15,18 +15,6 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-struct UsbDevice
-{
-  struct UsbBase base;
-
-  /* List of registered endpoints */
-  struct List endpoints;
-  /* Control message handler */
-  struct UsbControl *control;
-  /* Active device configuration */
-  uint8_t configuration;
-};
-/*----------------------------------------------------------------------------*/
 struct UsbEndpoint
 {
   struct Entity base;
@@ -37,6 +25,18 @@ struct UsbEndpoint
   struct Queue requests;
   /* Logical address */
   uint8_t address;
+};
+/*----------------------------------------------------------------------------*/
+struct UsbDevice
+{
+  struct UsbBase base;
+
+  /* Array of registered endpoints */
+  struct UsbEndpoint *endpoints[32];
+  /* Control message handler */
+  struct UsbControl *control;
+  /* Active device configuration */
+  uint8_t configuration;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_USB_DEVICE_H_ */
