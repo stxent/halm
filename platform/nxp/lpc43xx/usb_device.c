@@ -154,6 +154,8 @@ static void interruptHandler(void *object)
       epControlHandler(device->endpoints[CONTROL_OUT]);
     }
 
+    struct UsbEndpoint ** const endpointArray = device->endpoints;
+
     epStatus = reverseBits32(epStatus);
 
     while (epStatus)
@@ -165,7 +167,7 @@ static void interruptHandler(void *object)
       epStatus -= BIT(31) >> position;
       reg->ENDPTCOMPLETE = BIT(position);
 
-      epCommonHandler(device->endpoints[number]);
+      epCommonHandler(endpointArray[number]);
     }
   }
 
@@ -317,9 +319,11 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 {
   struct UsbDevice * const device = object;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(address);
-  const irqState state = irqSave();
+
+  assert(index < device->base.numberOfEndpoints);
 
   struct UsbEndpoint *endpoint = 0;
+  const irqState state = irqSave();
 
   if (!device->endpoints[index])
   {

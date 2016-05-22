@@ -112,25 +112,30 @@ void GPDMA_ISR(void)
   errorStatus = reverseBits32(errorStatus);
   terminalStatus = reverseBits32(terminalStatus);
 
+  struct GpDmaBase ** const descriptorArray = dmaHandler->descriptors;
   uint32_t intStatus = errorStatus | terminalStatus;
 
   do
   {
     const unsigned int index = countLeadingZeros32(intStatus);
+    struct GpDmaBase * const descriptor = descriptorArray[index];
     const uint32_t mask = BIT(31) >> index;
 
-    struct GpDmaBase * const descriptor = dmaHandler->descriptors[index];
-    LPC_GPDMA_CHANNEL_Type * const reg = descriptor->reg;
-    enum result res;
+    intStatus -= mask;
+
+    enum result res = E_OK;
 
     if (errorStatus & mask)
+    {
       res = E_ERROR;
-    else if (reg->CONFIG & CONFIG_ENABLE)
-      res = E_BUSY;
+    }
     else
-      res = E_OK;
+    {
+      const LPC_GPDMA_CHANNEL_Type * const reg = descriptor->reg;
 
-    intStatus -= mask;
+      if (reg->CONFIG & CONFIG_ENABLE)
+        res = E_BUSY;
+    }
 
     descriptor->handler(descriptor, res);
   }

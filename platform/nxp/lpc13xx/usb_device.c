@@ -115,6 +115,7 @@ static void interruptHandler(void *object)
   /* Endpoint interrupt */
   if (intStatus & USBDevInt_EP_MASK)
   {
+    struct UsbEndpoint ** const endpointArray = device->endpoints;
     uint32_t epIntStatus = reverseBits32((intStatus >> 1) & 0xFF);
 
     do
@@ -124,7 +125,7 @@ static void interruptHandler(void *object)
           USB_CMD_CLEAR_INTERRUPT | index);
 
       epIntStatus -= BIT(31) >> index;
-      epHandler(device->endpoints[index], status);
+      epHandler(endpointArray[index], status);
     }
     while (epIntStatus);
   }
@@ -254,9 +255,11 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 {
   struct UsbDevice * const device = object;
   const unsigned int index = EP_TO_INDEX(address);
-  const irqState state = irqSave();
+
+  assert(index < ARRAY_SIZE(device->endpoints));
 
   struct UsbEndpoint *endpoint = 0;
+  const irqState state = irqSave();
 
   if (!device->endpoints[index])
   {

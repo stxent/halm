@@ -529,8 +529,6 @@ void sctReleaseEvent(struct SctBase *timer, int event)
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configBase)
 {
-  const uint32_t configMask = CONFIG_UNIFY | CONFIG_CLKMODE_MASK
-      | CONFIG_CKSEL_MASK;
   const struct SctBaseConfig * const config = configBase;
   struct SctBase * const timer = object;
   uint32_t desiredConfig = 0;
@@ -556,8 +554,10 @@ static enum result tmrInit(void *object, const void *configBase)
       desiredConfig |= CONFIG_CKSEL_FALLING(config->input);
   }
 
-  LPC_SCT_Type * const reg = LPC_SCT;
+  static const uint32_t configMask =
+      CONFIG_UNIFY | CONFIG_CLKMODE_MASK | CONFIG_CKSEL_MASK;
   const bool enabled = timerHandlerActive(timer->channel);
+  LPC_SCT_Type * const reg = LPC_SCT;
 
   if (enabled)
   {

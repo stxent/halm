@@ -82,7 +82,7 @@ static void interruptHandler(void *object, enum result res)
     if (channel->queued)
     {
       /* Underrun occurred */
-      uint16_t index = channel->current;
+      unsigned int index = channel->current;
 
       /* Calculate index of the first stalled chunk */
       if (index >= channel->queued)
@@ -94,9 +94,7 @@ static void interruptHandler(void *object, enum result res)
       startTransfer(channel, channel->list + index);
     }
     else
-    {
       gpDmaClearDescriptor(channel->base.number);
-    }
   }
 
   if (channel->callback)

@@ -249,7 +249,6 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->finalizer = init(PinInterrupt, &finalizerConfig);
   if (!interface->finalizer)
     return E_ERROR;
-  intSetEnabled(interface->finalizer, false);
   intCallback(interface->finalizer, interruptHandler, interface);
 
   /* Call base class constructor */
