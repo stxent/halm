@@ -7,11 +7,11 @@
 #include <assert.h>
 #include <bits.h>
 #include <memory.h>
-#include <irq.h>
 #include <platform/nxp/lpc43xx/pin_defs.h>
 #include <platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 static inline irqNumber calcVector(uint8_t);
+static void changeEnabledState(struct PinInterrupt *, bool);
 static void processInterrupt(uint8_t);
 static void resetDescriptor(uint8_t);
 static int8_t setDescriptor(struct PinInterrupt *);
@@ -36,6 +36,20 @@ static struct PinInterrupt *descriptors[8] = {0};
 static inline irqNumber calcVector(uint8_t channel)
 {
   return PIN_INT0_IRQ + channel;
+}
+/*----------------------------------------------------------------------------*/
+static void changeEnabledState(struct PinInterrupt *interrupt, bool state)
+{
+  const irqNumber irq = calcVector(interrupt->channel);
+
+  if (state)
+  {
+    LPC_GPIO_INT->IST = 1 << interrupt->pin.offset;
+    irqClearPending(irq);
+    irqEnable(irq);
+  }
+  else
+    irqDisable(irq);
 }
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
@@ -128,6 +142,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 
   interrupt->callback = 0;
   interrupt->channel = channel;
+  interrupt->enabled = false;
   interrupt->event = config->event;
   interrupt->pin = input.data;
 
@@ -138,7 +153,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   LPC_SCU->PINTSEL[index] =
       (LPC_SCU->PINTSEL[index] & ~PINTSEL_CHANNEL_MASK(channel))
       | PINTSEL_CHANNEL(channel, input.data.port, input.data.offset);
-  /* Configure interrupt as edge sensitive*/
+  /* Configure interrupt as edge sensitive */
   LPC_GPIO_INT->ISEL &= ~mask;
   /* Configure edge sensitivity options */
   if (config->event == PIN_RISING || config->event == PIN_TOGGLE)
@@ -146,15 +161,9 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   if (config->event == PIN_FALLING || config->event == PIN_TOGGLE)
     LPC_GPIO_INT->SIENF = mask;
 
+  /* Configure interrupt priority, interrupt is disabled by default */
   const irqNumber irq = calcVector(interrupt->channel);
-
-  /* Clear pending interrupt flags */
-  LPC_GPIO_INT->IST = mask;
-  irqClearPending(irq);
-
-  /* Enable interrupt */
   irqSetPriority(irq, config->priority);
-  irqEnable(irq);
 
   return E_OK;
 }
@@ -181,19 +190,13 @@ static void pinInterruptCallback(void *object, void (*callback)(void *),
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
+  changeEnabledState(interrupt, callback != 0 && interrupt->enabled);
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptSetEnabled(void *object, bool state)
 {
-  const struct PinInterrupt * const interrupt = object;
-  const irqNumber irq = calcVector(interrupt->channel);
+  struct PinInterrupt * const interrupt = object;
 
-  if (state)
-  {
-    LPC_GPIO_INT->IST = 1 << interrupt->channel;
-    irqClearPending(irq);
-    irqEnable(irq);
-  }
-  else
-    irqDisable(irq);
+  interrupt->enabled = state;
+  changeEnabledState(interrupt, state && interrupt->callback != 0);
 }

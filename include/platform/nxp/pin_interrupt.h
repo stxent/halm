@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_NXP_PIN_INTERRUPT_H_
 /*----------------------------------------------------------------------------*/
 #include <interrupt.h>
+#include <irq.h>
 #include <pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterruptClass * const PinInterrupt;
@@ -33,10 +34,12 @@ struct PinInterrupt
 
   /* Descriptor of the input pin used as interrupt source */
   struct PinData pin;
-  /* Edge sensitivity mode */
-  enum pinEvent event;
   /* Interrupt channel identifier */
   uint8_t channel;
+  /* Edge sensitivity mode */
+  uint8_t event;
+  /* Is interrupt enabled */
+  bool enabled;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_PIN_INTERRUPT_H_ */

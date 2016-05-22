@@ -66,7 +66,7 @@ void WAKEUP_ISR(void)
   {
     listData(list, current, &interrupt);
 
-    const uint8_t index = interrupt->pin.port * 12 + interrupt->pin.offset;
+    const unsigned int index = interrupt->pin.port * 12 + interrupt->pin.offset;
 
     if (state[index >> 5] & 1 << (index & 0x1F))
     {
@@ -102,12 +102,7 @@ static enum result startLogicHandlerAttach(struct PinData pin,
   }
 
   /* Add to list */
-  const enum result res = listPush(list, &interrupt);
-
-  if (res == E_OK)
-    irqEnable(calcVector(pin));
-
-  return res;
+  return listPush(list, &interrupt);
 }
 /*----------------------------------------------------------------------------*/
 static void startLogicHandlerDetach(const struct WakeupInterrupt *interrupt)
@@ -116,11 +111,7 @@ static void startLogicHandlerDetach(const struct WakeupInterrupt *interrupt)
   struct ListNode * const node = listFind(list, &interrupt);
 
   if (node)
-  {
     listErase(list, node);
-    if (listEmpty(list))
-      irqDisable(calcVector(interrupt->pin));
-  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result startLogicHandlerInit(void *object,
@@ -138,7 +129,6 @@ static enum result wakeupInterruptInit(void *object, const void *configBase)
   struct WakeupInterrupt * const interrupt = object;
   enum result res;
 
-
   assert(config->event != PIN_TOGGLE);
   assert(pinValid(input));
 
@@ -154,8 +144,8 @@ static enum result wakeupInterruptInit(void *object, const void *configBase)
   interrupt->event = config->event;
   interrupt->pin = input.data;
 
-  const uint8_t index = interrupt->pin.port * 12 + interrupt->pin.offset;
-  const uint8_t group = index >> 5;
+  const unsigned int index = interrupt->pin.port * 12 + interrupt->pin.offset;
+  const unsigned int group = index >> 5;
   const uint32_t mask = 1 << (index & 0x1F);
 
   /* Configure edge sensitivity options */
@@ -174,9 +164,7 @@ static enum result wakeupInterruptInit(void *object, const void *configBase)
   }
   /* Clear status flag */
   LPC_SYSCON->START[group].RSRPCLR = mask;
-  /* Enable start signal for start logic input */
-  LPC_SYSCON->START[group].ERP |= mask;
-  /* Enable interrupt */
+  /* Enable interrupt in NVIC, interrupt is masked by default */
   irqEnable(calcVector(interrupt->pin));
 
   return E_OK;
@@ -187,10 +175,9 @@ static void wakeupInterruptDeinit(void *object)
   const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
   const unsigned int index = data.port * 12 + data.offset;
   const unsigned int group = index >> 5;
-  const uint32_t mask = 1 << (index & 0x1F);
 
   irqDisable(calcVector(data));
-  LPC_SYSCON->START[group].ERP &= ~mask;
+  LPC_SYSCON->START[group].ERP &= ~(1 << (index & 0x1F));
 
   startLogicHandlerDetach(object);
 }

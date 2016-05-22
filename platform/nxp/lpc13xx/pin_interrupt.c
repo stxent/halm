@@ -5,23 +5,30 @@
  */
 
 #include <assert.h>
-#include <containers/list.h>
-#include <irq.h>
+#include <string.h>
+#include <bits.h>
+#include <memory.h>
 #include <platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
+struct PinInterruptHandlerConfig
+{
+  uint8_t channel;
+};
+
 struct PinInterruptHandler
 {
   struct Entity base;
 
-  struct List list;
+  struct PinInterrupt *interrupts[12];
 };
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t);
 static inline irqNumber calcVector(uint8_t);
+static void changeEnabledState(struct PinInterrupt *, bool);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptHandlerAttach(struct PinData,
-    const struct PinInterrupt *);
+    struct PinInterrupt *);
 static void pinInterruptHandlerDetach(const struct PinInterrupt *);
 static enum result pinInterruptHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -60,29 +67,41 @@ static inline irqNumber calcVector(uint8_t port)
   return PIOINT0_IRQ - port;
 }
 /*----------------------------------------------------------------------------*/
+static void changeEnabledState(struct PinInterrupt *interrupt, bool state)
+{
+  const struct PinData data = interrupt->pin;
+  const uint32_t mask = 1 << data.offset;
+  LPC_GPIO_Type * const reg = calcPort(data.port);
+
+  if (state)
+  {
+    reg->IC = mask;
+    reg->IE |= mask;
+  }
+  else
+    reg->IE &= ~mask;
+}
+/*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  const struct List * const list = &handlers[channel]->list;
-  const struct ListNode *current = listFirst(list);
+  struct PinInterrupt ** const interruptArray = handlers[channel]->interrupts;
   LPC_GPIO_Type * const reg = calcPort(channel);
-  const uint32_t state = reg->MIS;
-  struct PinInterrupt *interrupt;
+  uint32_t state = reg->MIS;
 
   /* Synchronizer logic causes a delay of 2 clocks */
   reg->IC = state;
 
-  while (current)
+  state = reverseBits32(state);
+
+  do
   {
-    listData(list, current, &interrupt);
+    const unsigned int index = countLeadingZeros32(state);
+    struct PinInterrupt * const interrupt = interruptArray[index];
 
-    if (state & (1 << interrupt->pin.offset))
-    {
-      if (interrupt->callback)
-        interrupt->callback(interrupt->callbackArgument);
-    }
-
-    current = listNext(current);
+    state -= BIT(31) >> index;
+    interrupt->callback(interrupt->callbackArgument);
   }
+  while (state);
 }
 /*----------------------------------------------------------------------------*/
 void PIO0_ISR(void)
@@ -106,57 +125,46 @@ void PIO3_ISR(void)
 }
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptHandlerAttach(struct PinData pin,
-    const struct PinInterrupt *interrupt)
+    struct PinInterrupt *interrupt)
 {
   if (!handlers[pin.port])
-    handlers[pin.port] = init(PinInterruptHandler, 0);
-
-  assert(handlers[pin.port]);
-
-  struct List * const list = &handlers[pin.port]->list;
-  const struct ListNode *current = listFirst(list);
-  struct PinInterrupt *entry;
-
-  /* Check for duplicates */
-  while (current)
   {
-    listData(list, current, &entry);
+    const struct PinInterruptHandlerConfig handlerConfig = {
+        .channel = pin.port
+    };
 
-    if (entry->pin.port == pin.port && entry->pin.offset == pin.offset)
-      return E_BUSY;
-
-    current = listNext(current);
+    handlers[pin.port] = init(PinInterruptHandler, &handlerConfig);
   }
 
-  /* Add to list */
-  const bool empty = listEmpty(list);
-  const enum result res = listPush(list, &interrupt);
+  struct PinInterruptHandler * const handler = handlers[pin.port];
 
-  if (res == E_OK && empty)
-    irqEnable(calcVector(pin.port));
+  assert(handler);
 
-  return res;
+  if (!handler->interrupts[pin.offset])
+  {
+    handler->interrupts[pin.offset] = interrupt;
+    return E_OK;
+  }
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
 {
-  struct List * const list = &handlers[interrupt->pin.port]->list;
-  struct ListNode * const node = listFind(list, &interrupt);
+  const struct PinData pin = interrupt->pin;
 
-  if (node)
-  {
-    listErase(list, node);
-    if (listEmpty(list))
-      irqDisable(calcVector(interrupt->pin.port));
-  }
+  handlers[pin.port]->interrupts[pin.offset] = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerInit(void *object,
-    const void *configBase __attribute__((unused)))
+static enum result pinInterruptHandlerInit(void *object, const void *configBase)
 {
   struct PinInterruptHandler * const handler = object;
+  const struct PinInterruptHandlerConfig * const config = configBase;
 
-  return listInit(&handler->list, sizeof(struct PinInterrupt *));
+  memset(handler->interrupts, 0, sizeof(handler->interrupts));
+  irqEnable(calcVector(config->channel));
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptInit(void *object, const void *configBase)
@@ -178,15 +186,18 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 
   interrupt->callback = 0;
   interrupt->channel = 0; /* Channel field is left unused */
+  interrupt->enabled = false;
   interrupt->event = config->event;
   interrupt->pin = input.data;
 
   LPC_GPIO_Type * const reg = calcPort(interrupt->pin.port);
   const uint32_t mask = 1 << interrupt->pin.offset;
 
-  /* Configure interrupt as edge sensitive*/
+  /* Configure interrupt as edge sensitive */
   reg->IS &= ~mask;
   /* Configure edge sensitivity options */
+  reg->IBE &= ~mask;
+
   switch (config->event)
   {
     case PIN_RISING:
@@ -201,10 +212,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
       reg->IBE |= mask;
       break;
   }
-  /* Clear pending interrupt flag */
-  reg->IC = mask;
-  /* Disable interrupt masking */
-  reg->IE |= mask;
+  /* Interrupt is disabled by default */
 
   return E_OK;
 }
@@ -212,12 +220,9 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 static void pinInterruptDeinit(void *object)
 {
   const struct PinData data = ((struct PinInterrupt *)object)->pin;
-  const uint32_t mask = 1 << data.offset;
   LPC_GPIO_Type * const reg = calcPort(data.port);
 
-  reg->IE &= ~mask;
-  reg->IBE &= ~mask;
-  reg->IEV &= ~mask;
+  reg->IE &= ~(1 << data.offset);
   pinInterruptHandlerDetach(object);
 }
 /*----------------------------------------------------------------------------*/
@@ -228,19 +233,13 @@ static void pinInterruptCallback(void *object, void (*callback)(void *),
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
+  changeEnabledState(interrupt, callback != 0 && interrupt->enabled);
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptSetEnabled(void *object, bool state)
 {
-  const struct PinData data = ((struct PinInterrupt *)object)->pin;
-  const uint32_t mask = 1 << data.offset;
-  LPC_GPIO_Type * const reg = calcPort(data.port);
+  struct PinInterrupt * const interrupt = object;
 
-  if (state)
-  {
-    reg->IC = mask;
-    reg->IE |= mask;
-  }
-  else
-    reg->IE &= ~mask;
+  interrupt->enabled = state;
+  changeEnabledState(interrupt, state && interrupt->callback != 0);
 }
