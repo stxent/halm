@@ -125,14 +125,34 @@ struct CSW
 struct InquiryData
 {
   uint8_t peripheralDeviceType;
-  uint8_t flags;
+  uint8_t flags0; /* RMB */
   uint8_t version;
-  uint8_t responseDataFormat;
-  uint8_t additionalLength;
-  uint8_t reserved0[2];
-  uint8_t vendorInformation[8];
+  uint8_t flags1; /* NormACA, HiSup, Response Data Format */
+  uint8_t additionalLength; /* N - 4 */
+  uint8_t flags2; /* SCCS, ACC, TPGS, 3PC, PROPTECT */
+  uint8_t flags3; /* EncServ, VS, MultiP, ADDR16 */
+  uint8_t flags4; /* WBUS16, SYNC, CmdQue, VS */
+  uint8_t vendorIdentification[8];
   uint8_t productIdentification[16];
   uint8_t productRevisionLevel[4];
+} __attribute__((packed));
+
+struct ModeParameterHeader6
+{
+  uint8_t modeDataLength;
+  uint8_t mediumType;
+  uint8_t deviceSpecificParameter;
+  uint8_t blockDescriptorLength;
+} __attribute__((packed));
+
+struct ModeParameterHeader10
+{
+  uint16_t modeDataLength;
+  uint8_t mediumType;
+  uint8_t deviceSpecificParameter;
+  uint8_t flags; /* LONGLBA */
+  uint8_t reserved;
+  uint16_t blockDescriptorLength;
 } __attribute__((packed));
 
 struct ModeSense6Command
@@ -241,6 +261,25 @@ struct Write12Command
   uint32_t transferLength;
   uint8_t groupNumber;
   uint8_t control;
+} __attribute__((packed));
+/*----------------------------------------------------------------------------*/
+struct CapacityListHeader
+{
+  uint8_t reserved[3];
+  uint8_t capacityListLength;
+} __attribute__((packed));
+
+struct CapacityDescriptor
+{
+  uint32_t numberOfBlocks;
+  uint8_t flags;
+  uint8_t blockLength[3];
+} __attribute__((packed));
+
+struct ReadFormatCapacitiesData
+{
+  struct CapacityListHeader header;
+  struct CapacityDescriptor descriptors[];
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_MSC_DEFS_H_ */
