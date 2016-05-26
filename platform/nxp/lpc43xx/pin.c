@@ -4,11 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <entity.h>
-#include <irq.h>
 #include <pin.h>
 #include <platform/nxp/lpc43xx/pin_defs.h>
-#include <platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(channel, offset) (((offset) << 3) | (channel))
 #define UNPACK_CHANNEL(value)       ((value) & 0x07)

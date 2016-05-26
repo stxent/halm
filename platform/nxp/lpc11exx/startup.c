@@ -8,8 +8,6 @@
 #include <platform/nxp/lpc11exx/system.h>
 #include <platform/nxp/lpc11exx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-void platformStartup(void);
-/*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
   sysClockDisable(CLK_SSP0);

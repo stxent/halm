@@ -9,8 +9,6 @@
 #include <platform/nxp/lpc43xx/system.h>
 #include <platform/nxp/lpc43xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-void platformStartup(void);
-/*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
   static const enum sysClockBranch blocksToDisable[] = {

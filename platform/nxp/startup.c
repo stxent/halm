@@ -11,7 +11,7 @@ extern unsigned long _bss;
 extern unsigned long _ebss;
 /*----------------------------------------------------------------------------*/
 extern int main(void);
-extern int platformStartup(void);
+extern void platformStartup(void);
 /*----------------------------------------------------------------------------*/
 void RESET_ISR(void)
 {

@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <bits.h>
 #include <memory.h>
 #include <platform/nxp/lpc43xx/clocking.h>
 #include <platform/nxp/lpc43xx/system.h>

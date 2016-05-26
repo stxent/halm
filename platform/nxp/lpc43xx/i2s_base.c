@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <bits.h>
 #include <memory.h>
 #include <platform/nxp/i2s_base.h>
 #include <platform/nxp/lpc43xx/clocking.h>

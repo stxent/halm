@@ -4,12 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <entity.h>
-#include <irq.h>
 #include <pin.h>
 #include <platform/nxp/lpc11exx/pin_defs.h>
-#include <platform/nxp/lpc11exx/system.h>
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(struct PinData);
 static void commonPinInit(struct Pin);

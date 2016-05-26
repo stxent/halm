@@ -535,22 +535,38 @@ typedef struct
   __rw__ uint32_t BTR;
   __rw__ uint32_t EWL;
   __ro__ uint32_t SR;
+
   __rw__ uint32_t RFS;
   __rw__ uint32_t RID;
   __rw__ uint32_t RDA;
   __rw__ uint32_t RDB;
-  __rw__ uint32_t TFI1;
-  __rw__ uint32_t TID1;
-  __rw__ uint32_t TDA1;
-  __rw__ uint32_t TDB1;
-  __rw__ uint32_t TFI2;
-  __rw__ uint32_t TID2;
-  __rw__ uint32_t TDA2;
-  __rw__ uint32_t TDB2;
-  __rw__ uint32_t TFI3;
-  __rw__ uint32_t TID3;
-  __rw__ uint32_t TDA3;
-  __rw__ uint32_t TDB3;
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t TFI1;
+      __rw__ uint32_t TID1;
+      __rw__ uint32_t TDA1;
+      __rw__ uint32_t TDB1;
+      __rw__ uint32_t TFI2;
+      __rw__ uint32_t TID2;
+      __rw__ uint32_t TDA2;
+      __rw__ uint32_t TDB2;
+      __rw__ uint32_t TFI3;
+      __rw__ uint32_t TID3;
+      __rw__ uint32_t TDA3;
+      __rw__ uint32_t TDB3;
+    };
+
+    struct
+    {
+      __rw__ uint32_t TFI;
+      __rw__ uint32_t TID;
+      __rw__ uint32_t TDA;
+      __rw__ uint32_t TDB;
+    } TX[3];
+  };
 } LPC_CAN_Type;
 /*------------------General Purpose Direct Memory Access controller-----------*/
 /* Channel registers */

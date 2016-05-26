@@ -12,7 +12,6 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 #define HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
-#include <bits.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals register */
@@ -64,7 +63,7 @@ enum sysDeviceReset
   RST_M0APP   = 0x20 + 24,
   RST_SGPIO   = 0x20 + 25,
   RST_SPI     = 0x20 + 26,
-  RST_ADCHS   = 0x20 + 28,
+  RST_ADCHS   = 0x20 + 28
 };
 /*----------------------------------------------------------------------------*/
 /* Enable or disable clock branches */

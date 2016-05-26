@@ -8,8 +8,6 @@
 #include <platform/nxp/lpc17xx/system.h>
 #include <platform/nxp/lpc17xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-void platformStartup(void);
-/*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
   static const enum sysPowerDevice blocksToDisable[] = {

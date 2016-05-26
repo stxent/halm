@@ -4,13 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdbool.h>
-#include <entity.h>
-#include <irq.h>
 #include <pin.h>
 #include <platform/nxp/lpc13xx/pin_defs.h>
-#include <platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(struct PinData);
 static inline volatile uint32_t *calcControlReg(struct PinData);
