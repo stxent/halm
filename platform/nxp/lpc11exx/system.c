@@ -6,7 +6,6 @@
 
 #include <platform/nxp/lpc11exx/system.h>
 #include <platform/nxp/lpc11exx/system_defs.h>
-#include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 unsigned int sysFlashLatency()
 {

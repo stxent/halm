@@ -17,7 +17,7 @@ struct I2cBlockDescriptor
   /* Clock to register interface and to peripheral */
   enum sysClockBranch clock;
   /* Reset control identifier */
-  enum sysDeviceReset reset;
+  enum sysBlockReset reset;
 };
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, const struct I2cBase *,

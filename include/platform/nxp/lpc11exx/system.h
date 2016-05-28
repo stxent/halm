@@ -12,7 +12,7 @@
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
-enum sysPowerDevice
+enum sysBlockPower
 {
   PWR_IRCOUT    = 0,
   PWR_IRC       = 1,
@@ -28,7 +28,7 @@ enum sysPowerDevice
 };
 /*----------------------------------------------------------------------------*/
 /* System AHB clock control register */
-enum sysClockDevice
+enum sysClockBranch
 {
   CLK_SYS         = 0,
   CLK_ROM         = 1,
@@ -65,27 +65,27 @@ enum sysClockDevice
 void sysFlashLatencyUpdate(unsigned int);
 unsigned int sysFlashLatency();
 /*----------------------------------------------------------------------------*/
-static inline void sysClockEnable(enum sysClockDevice block)
+static inline void sysClockEnable(enum sysClockBranch branch)
 {
-  LPC_SYSCON->SYSAHBCLKCTRL |= BIT(block);
+  LPC_SYSCON->SYSAHBCLKCTRL |= BIT(branch);
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysClockDisable(enum sysClockDevice block)
+static inline void sysClockDisable(enum sysClockBranch branch)
 {
-  LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT(block);
+  LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT(branch);
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerEnable(enum sysPowerDevice block)
+static inline void sysPowerEnable(enum sysBlockPower block)
 {
   LPC_SYSCON->PDRUNCFG &= ~BIT(block);
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerDisable(enum sysPowerDevice block)
+static inline void sysPowerDisable(enum sysBlockPower block)
 {
   LPC_SYSCON->PDRUNCFG |= BIT(block);
 }
 /*----------------------------------------------------------------------------*/
-static inline bool sysPowerStatus(enum sysPowerDevice block)
+static inline bool sysPowerStatus(enum sysBlockPower block)
 {
   return LPC_SYSCON->PDRUNCFG & BIT(block) ? false : true;
 }

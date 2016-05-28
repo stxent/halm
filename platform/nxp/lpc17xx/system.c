@@ -11,12 +11,12 @@
 /*----------------------------------------------------------------------------*/
 /**
  * Set the peripheral clock prescaler.
- * @param peripheral Peripheral to be configured.
+ * @param branch Clock branch.
  * @param divisor Clock divisor.
  * @b CLK_DIV6 is only used for CAN1, CAN2 and CAN Filtering peripherals.
  * @b CLK_DIV8 is unavailable for CAN peripherals.
  */
-void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
+void sysClockControl(enum sysClockBranch branch, enum sysClockDiv divisor)
 {
   unsigned int value;
 
@@ -36,8 +36,8 @@ void sysClockControl(enum sysClockDevice peripheral, enum sysClockDiv divisor)
       break;
   }
 
-  volatile uint32_t * const reg = &LPC_SC->PCLKSEL0 + (peripheral >> 5);
-  const unsigned int offset = peripheral & 0x1F;
+  volatile uint32_t * const reg = &LPC_SC->PCLKSEL0 + (branch >> 5);
+  const unsigned int offset = branch & 0x1F;
   const bool pllEnabled = (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED) != 0;
 
   /* PCLKSEL and PLL0 workaround */

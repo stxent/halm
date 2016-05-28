@@ -17,7 +17,7 @@ struct AdcBlockDescriptor
   /* Clock to register interface and to peripheral */
   enum sysClockBranch clock;
   /* Reset control identifier */
-  enum sysDeviceReset reset;
+  enum sysBlockReset reset;
   /* Peripheral interrupt request identifier */
   irqNumber irq;
 };

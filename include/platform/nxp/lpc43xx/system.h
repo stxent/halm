@@ -15,7 +15,7 @@
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals register */
-enum sysDeviceReset
+enum sysBlockReset
 {
   RST_CORE    = 0,
   RST_PERIPH  = 1,
@@ -140,7 +140,7 @@ void sysFlashEnable(unsigned int);
 void sysFlashDisable(unsigned int);
 unsigned int sysFlashLatency();
 void sysFlashLatencyUpdate(unsigned int);
-void sysResetEnable(enum sysDeviceReset);
-void sysResetDisable(enum sysDeviceReset);
+void sysResetEnable(enum sysBlockReset);
+void sysResetDisable(enum sysBlockReset);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_ */

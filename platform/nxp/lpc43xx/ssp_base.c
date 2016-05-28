@@ -24,7 +24,7 @@ struct SspBlockDescriptor
   /* Peripheral interrupt request identifier */
   irqNumber irq;
   /* Reset control identifier */
-  enum sysDeviceReset reset;
+  enum sysBlockReset reset;
   /* Peripheral clock branch */
   enum sysClockBranch periperalBranch;
   /* Clock to register interface */

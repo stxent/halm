@@ -72,7 +72,7 @@ void sysFlashLatencyUpdate(unsigned int value)
   LPC_CREG->FLASHCFGB = (LPC_CREG->FLASHCFGB & ~FLASHCFG_FLASHTIM_MASK) | data;
 }
 /*----------------------------------------------------------------------------*/
-void sysResetEnable(enum sysDeviceReset block)
+void sysResetEnable(enum sysBlockReset block)
 {
   const uint32_t mask = BIT(block & 0x1F);
   const unsigned int index = block >> 5;
@@ -83,7 +83,7 @@ void sysResetEnable(enum sysDeviceReset block)
     while (!(LPC_RGU->RESET_ACTIVE_STATUS[index] & mask));
 }
 /*----------------------------------------------------------------------------*/
-void sysResetDisable(enum sysDeviceReset block)
+void sysResetDisable(enum sysBlockReset block)
 {
   if (block == RST_M0SUB || block == RST_M0APP)
     LPC_RGU->RESET_CTRL[block >> 5] = 0;

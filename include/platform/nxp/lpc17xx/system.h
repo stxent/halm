@@ -17,7 +17,7 @@
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
-enum sysPowerDevice
+enum sysBlockPower
 {
   PWR_TIM0  = 1,
   PWR_TIM1  = 2,
@@ -59,7 +59,7 @@ enum sysClockDiv
 };
 /*----------------------------------------------------------------------------*/
 /* Peripheral clock selection registers */
-enum sysClockDevice
+enum sysClockBranch
 {
   /* PCLKSEL0 */
   CLK_WDT      = 0,
@@ -93,7 +93,7 @@ enum sysClockDevice
   CLK_MC       = 0x20 + 30
 };
 /*----------------------------------------------------------------------------*/
-void sysClockControl(enum sysClockDevice, enum sysClockDiv);
+void sysClockControl(enum sysClockBranch, enum sysClockDiv);
 void sysFlashLatency(unsigned int);
 /*----------------------------------------------------------------------------*/
 static inline unsigned int sysClockDivToValue(enum sysClockDiv divisor)
@@ -101,17 +101,17 @@ static inline unsigned int sysClockDivToValue(enum sysClockDiv divisor)
   return 1 << divisor;
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerEnable(enum sysPowerDevice block)
+static inline void sysPowerEnable(enum sysBlockPower block)
 {
   LPC_SC->PCONP |= BIT(block);
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerDisable(enum sysPowerDevice block)
+static inline void sysPowerDisable(enum sysBlockPower block)
 {
   LPC_SC->PCONP &= ~BIT(block);
 }
 /*----------------------------------------------------------------------------*/
-static inline bool sysPowerStatus(enum sysPowerDevice block)
+static inline bool sysPowerStatus(enum sysBlockPower block)
 {
   return LPC_SC->PCONP & BIT(block) ? true : false;
 }

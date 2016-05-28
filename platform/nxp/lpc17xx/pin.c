@@ -67,8 +67,8 @@ void pinInput(struct Pin pin)
 void pinOutput(struct Pin pin, uint8_t value)
 {
   commonPinInit(pin);
-  ((LPC_GPIO_Type *)pin.reg)->DIR |= 1 << pin.data.offset;
   pinWrite(pin, value);
+  ((LPC_GPIO_Type *)pin.reg)->DIR |= 1 << pin.data.offset;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
