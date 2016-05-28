@@ -417,10 +417,10 @@ void pinOutput(struct Pin pin, uint8_t value)
 
   if (pinGpioValid(pin))
   {
-    /* Set default output value */
-    pinWrite(pin, value);
     /* Configure pin as output */
     LPC_GPIO->DIR[pin.data.port] |= 1 << pin.data.offset;
+    /* Set default output value */
+    pinWrite(pin, value);
   }
 }
 /*----------------------------------------------------------------------------*/
