@@ -60,6 +60,11 @@
 #define PLATFORM        lpc43xx
 #define PLATFORM_TYPE   nxp
 
+#elif defined(STM32F1XX)
+
+#define PLATFORM        stm32f1xx
+#define PLATFORM_TYPE   stm
+
 #else
 #error "Target architecture is undefined"
 #endif

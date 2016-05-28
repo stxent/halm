@@ -1,0 +1,7 @@
+config PLATFORM
+	string
+	default stm32f1xx if FAMILY_STM32F1XX
+
+config PLATFORM_TYPE
+	string
+	default stm

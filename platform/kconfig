@@ -17,3 +17,7 @@ endmenu
 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
 	source "platform/nxp/kconfig"
 endif
+
+if FAMILY_STM32F1XX
+	source "platform/stm/kconfig"
+endif

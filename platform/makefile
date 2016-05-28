@@ -14,3 +14,4 @@ ifeq ($(CONFIG_PLATFORM_SDCARD),y)
 endif
 
 include platform/nxp/makefile
+include platform/stm/makefile

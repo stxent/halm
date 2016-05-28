@@ -35,6 +35,10 @@ choice
 	config FAMILY_LPC43XX
 		bool "NXP LPC43xx"
 		depends on CORE_CORTEX_M4
+
+	config FAMILY_STM32F1XX
+		bool "ST STM32F1xx"
+		depends on CORE_CORTEX_M3
 endchoice
 
 menu "Core settings"
