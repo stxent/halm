@@ -89,7 +89,7 @@ static void updateEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
   if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
   {
     const unsigned int position = event - GPDMA_MAT0_0;
-    const uint8_t mask = 1 << position;
+    const uint8_t mask = 1UL << position;
 
     channel->mux.mask &= ~mask;
     channel->mux.value |= mask;
@@ -143,7 +143,7 @@ void GPDMA_ISR(void)
   {
     const unsigned int index = countLeadingZeros32(intStatus);
     struct GpDmaBase * const descriptor = descriptorArray[index];
-    const uint32_t mask = BIT(31) >> index;
+    const uint32_t mask = (1UL << 31) >> index;
 
     intStatus -= mask;
 

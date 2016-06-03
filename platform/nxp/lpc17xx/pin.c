@@ -61,13 +61,13 @@ struct Pin pinInit(pinNumber id)
 void pinInput(struct Pin pin)
 {
   commonPinInit(pin);
-  ((LPC_GPIO_Type *)pin.reg)->DIR &= ~(1 << pin.data.offset);
+  ((LPC_GPIO_Type *)pin.reg)->DIR &= ~(1UL << pin.data.offset);
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, uint8_t value)
 {
   commonPinInit(pin);
-  ((LPC_GPIO_Type *)pin.reg)->DIR |= 1 << pin.data.offset;
+  ((LPC_GPIO_Type *)pin.reg)->DIR |= 1UL << pin.data.offset;
   pinWrite(pin, value);
 }
 /*----------------------------------------------------------------------------*/
@@ -85,9 +85,11 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   }
 
   volatile uint32_t * const reg = calcPinSelect(pin.data);
+  uint32_t value = *reg & ~PIN_OFFSET(PIN_MASK, pin.data.offset);
 
-  *reg = (*reg & ~PIN_OFFSET(PIN_MASK, pin.data.offset))
-      | PIN_OFFSET(function, pin.data.offset);
+  value |= PIN_OFFSET(function, pin.data.offset);
+
+  *reg = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum pinPull pull)
@@ -139,11 +141,11 @@ void pinSetType(struct Pin pin, enum pinType type)
   switch (type)
   {
     case PIN_PUSHPULL:
-      value &= ~(1 << pin.data.offset);
+      value &= ~(1UL << pin.data.offset);
       break;
 
     case PIN_OPENDRAIN:
-      value |= 1 << pin.data.offset;
+      value |= 1UL << pin.data.offset;
       break;
   }
 

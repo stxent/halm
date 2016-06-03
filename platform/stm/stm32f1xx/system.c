@@ -18,7 +18,7 @@ enum
 void sysClockEnable(enum sysClockBranch branch)
 {
   const unsigned int index = branch >> 5;
-  const uint32_t value = 1 << (branch & 0x1F);
+  const uint32_t value = 1UL << (branch & 0x1F);
 
   switch (index)
   {
@@ -39,7 +39,7 @@ void sysClockEnable(enum sysClockBranch branch)
 void sysClockDisable(enum sysClockBranch branch)
 {
   const unsigned int index = branch >> 5;
-  const uint32_t mask = ~(1 << (branch & 0x1F));
+  const uint32_t mask = ~(1UL << (branch & 0x1F));
 
   switch (index)
   {
@@ -60,7 +60,7 @@ void sysClockDisable(enum sysClockBranch branch)
 bool sysClockStatus(enum sysClockBranch branch)
 {
   const unsigned int index = branch >> 5;
-  const uint32_t mask = ~(1 << (branch & 0x1F));
+  const uint32_t mask = ~(1UL << (branch & 0x1F));
   uint32_t value = 0;
 
   switch (index)
@@ -103,7 +103,7 @@ void sysFlashLatencyUpdate(unsigned int value)
 void sysResetEnable(enum sysBlockReset block)
 {
   const unsigned int index = block >> 5;
-  const uint32_t value = 1 << (block & 0x1F);
+  const uint32_t value = 1UL << (block & 0x1F);
 
   switch (index)
   {
@@ -124,7 +124,7 @@ void sysResetEnable(enum sysBlockReset block)
 void sysResetDisable(enum sysBlockReset block)
 {
   const unsigned int index = block >> 5;
-  const uint32_t mask = ~(1 << (block & 0x1F));
+  const uint32_t mask = ~(1UL << (block & 0x1F));
 
   switch (index)
   {

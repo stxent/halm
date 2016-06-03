@@ -74,7 +74,7 @@ void sysFlashLatencyUpdate(unsigned int value)
 /*----------------------------------------------------------------------------*/
 void sysResetEnable(enum sysBlockReset block)
 {
-  const uint32_t mask = BIT(block & 0x1F);
+  const uint32_t mask = 1UL << (block & 0x1F);
   const unsigned int index = block >> 5;
 
   LPC_RGU->RESET_CTRL[index] = mask;

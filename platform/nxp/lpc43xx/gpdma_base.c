@@ -119,7 +119,7 @@ void GPDMA_ISR(void)
   {
     const unsigned int index = countLeadingZeros32(intStatus);
     struct GpDmaBase * const descriptor = descriptorArray[index];
-    const uint32_t mask = BIT(31) >> index;
+    const uint32_t mask = (1UL << 31) >> index;
 
     intStatus -= mask;
 

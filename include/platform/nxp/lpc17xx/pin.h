@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_NXP_LPC17XX_PIN_H_
 #define HALM_PLATFORM_NXP_LPC17XX_PIN_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 void *pinAddress(struct Pin);
@@ -18,27 +19,31 @@ void pinSetPull(struct Pin, enum pinPull);
 void pinSetType(struct Pin, enum pinType);
 void pinSetSlewRate(struct Pin, enum pinSlewRate);
 /*----------------------------------------------------------------------------*/
-static inline uint8_t pinRead(struct Pin pin)
+static inline bool pinRead(struct Pin pin)
 {
-  return (((const LPC_GPIO_Type *)pin.reg)->PIN & (1 << pin.data.offset)) != 0;
+  const uint32_t mask = 1UL << pin.data.offset;
+
+  return (((const LPC_GPIO_Type *)pin.reg)->PIN & mask) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
 {
-  ((LPC_GPIO_Type *)pin.reg)->CLR = 1 << pin.data.offset;
+  ((LPC_GPIO_Type *)pin.reg)->CLR = 1UL << pin.data.offset;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSet(struct Pin pin)
 {
-  ((LPC_GPIO_Type *)pin.reg)->SET = 1 << pin.data.offset;
+  ((LPC_GPIO_Type *)pin.reg)->SET = 1UL << pin.data.offset;
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinWrite(struct Pin pin, uint8_t value)
+static inline void pinWrite(struct Pin pin, bool value)
 {
+  const uint32_t mask = 1UL << pin.data.offset;
+
   if (value)
-    ((LPC_GPIO_Type *)pin.reg)->SET = 1 << pin.data.offset;
+    ((LPC_GPIO_Type *)pin.reg)->SET = mask;
   else
-    ((LPC_GPIO_Type *)pin.reg)->CLR = 1 << pin.data.offset;
+    ((LPC_GPIO_Type *)pin.reg)->CLR = mask;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_PIN_H_ */

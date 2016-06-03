@@ -68,7 +68,7 @@ static inline irqNumber calcVector(uint8_t port)
 static void changeEnabledState(struct PinInterrupt *interrupt, bool state)
 {
   const struct PinData data = interrupt->pin;
-  const uint32_t mask = 1 << data.offset;
+  const uint32_t mask = 1UL << data.offset;
   LPC_GPIO_Type * const reg = calcPort(data.port);
 
   if (state)
@@ -95,7 +95,7 @@ static void processInterrupt(uint8_t channel)
   {
     listData(list, current, &interrupt);
 
-    if (state & (1 << interrupt->pin.offset))
+    if (state & (1UL << interrupt->pin.offset))
       interrupt->callback(interrupt->callbackArgument);
 
     current = listNext(current);
@@ -203,7 +203,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   interrupt->pin = input.data;
 
   LPC_GPIO_Type * const reg = calcPort(interrupt->pin.port);
-  const uint32_t mask = 1 << interrupt->pin.offset;
+  const uint32_t mask = 1UL << interrupt->pin.offset;
 
   /* Configure interrupt as edge sensitive */
   reg->IS &= ~mask;
@@ -234,7 +234,7 @@ static void pinInterruptDeinit(void *object)
   const struct PinData data = ((struct PinInterrupt *)object)->pin;
   LPC_GPIO_Type * const reg = calcPort(data.port);
 
-  reg->IE &= ~(1 << data.offset);
+  reg->IE &= ~(1UL << data.offset);
   pinInterruptHandlerDetach(object);
 }
 /*----------------------------------------------------------------------------*/

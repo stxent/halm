@@ -67,7 +67,7 @@ void WAKEUP_ISR(void)
 
     const unsigned int index = interrupt->pin.port * 12 + interrupt->pin.offset;
 
-    if (state & 1 << (index & 0x1F))
+    if (state & 1UL << (index & 0x1F))
     {
       if (interrupt->callback)
         interrupt->callback(interrupt->callbackArgument);
@@ -146,7 +146,7 @@ static enum result wakeupInterruptInit(void *object, const void *configBase)
   interrupt->event = config->event;
   interrupt->pin = input.data;
 
-  const uint32_t mask = 1 << index;
+  const uint32_t mask = 1UL << index;
 
   /* Configure edge sensitivity options */
   switch (config->event)
@@ -176,7 +176,7 @@ static void wakeupInterruptDeinit(void *object)
   const unsigned int index = data.port * 12 + data.offset;
 
   irqDisable(calcVector(data));
-  LPC_SYSCON->STARTERP0 &= ~(1 << index);
+  LPC_SYSCON->STARTERP0 &= ~(1UL << index);
 
   startLogicHandlerDetach(object);
 }
@@ -194,7 +194,7 @@ static void wakeupInterruptSetEnabled(void *object, bool state)
 {
   const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
   const unsigned int index = data.port * 12 + data.offset;
-  const uint32_t mask = 1 << index;
+  const uint32_t mask = 1UL << index;
 
   if (state)
   {

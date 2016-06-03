@@ -250,7 +250,7 @@ static enum result identifyCard(struct SdCard *device)
       return res;
 
     res = executeCommand(device, SDIO_COMMAND(CMD_SET_BLOCKLEN,
-        SDIO_RESPONSE_SHORT, crcStatus), 1 << BLOCK_POW, 0, true);
+        SDIO_RESPONSE_SHORT, crcStatus), 1UL << BLOCK_POW, 0, true);
     if (res != E_OK)
       return res;
 

@@ -7,6 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_LPC11EXX_PIN_H_
 #define HALM_PLATFORM_NXP_LPC11EXX_PIN_H_
 /*----------------------------------------------------------------------------*/
+#include <assert.h>
+#include <stdbool.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(pinNumber);
@@ -16,9 +18,9 @@ void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum pinPull);
 void pinSetType(struct Pin, enum pinType);
 /*----------------------------------------------------------------------------*/
-static inline uint8_t pinRead(struct Pin pin)
+static inline bool pinRead(struct Pin pin)
 {
-  return LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset];
+  return (bool)LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset];
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
@@ -31,10 +33,10 @@ static inline void pinSet(struct Pin pin)
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 1;
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinWrite(struct Pin pin, uint8_t value)
+static inline void pinWrite(struct Pin pin, bool value)
 {
   /* Only 0 and 1 are allowed */
-  LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = value;
+  LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = (uint8_t)value;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSetSlewRate(struct Pin pin __attribute__((unused)),

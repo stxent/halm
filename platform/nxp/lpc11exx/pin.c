@@ -46,13 +46,13 @@ struct Pin pinInit(pinNumber id)
 void pinInput(struct Pin pin)
 {
   commonPinInit(pin);
-  LPC_GPIO->DIR[pin.data.port] &= ~(1 << pin.data.offset);
+  LPC_GPIO->DIR[pin.data.port] &= ~(1UL << pin.data.offset);
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, uint8_t value)
 {
   commonPinInit(pin);
-  LPC_GPIO->DIR[pin.data.port] |= 1 << pin.data.offset;
+  LPC_GPIO->DIR[pin.data.port] |= 1UL << pin.data.offset;
   pinWrite(pin, value);
 }
 /*----------------------------------------------------------------------------*/

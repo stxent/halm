@@ -55,7 +55,7 @@ static struct PinInterruptHandler *handlers[2] = {0};
 static void changeEnabledState(struct PinInterrupt *interrupt, bool state)
 {
   const unsigned int channel = interrupt->channel;
-  const uint32_t mask = 1 << interrupt->pin.offset;
+  const uint32_t mask = 1UL << interrupt->pin.offset;
   const enum pinEvent event = interrupt->event;
 
   if (state)
@@ -89,7 +89,7 @@ static void processInterrupt(uint8_t channel)
     const unsigned int index = countLeadingZeros32(state);
     struct PinInterrupt * const interrupt = interruptArray[index];
 
-    state -= BIT(31) >> index;
+    state -= (1UL << 31) >> index;
     interrupt->callback(interrupt->callbackArgument);
   }
   while (state);

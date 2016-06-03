@@ -55,7 +55,7 @@ enum pinSlewRate
 {
   PIN_SLEW_FAST,
   PIN_SLEW_NORMAL,
-  PIN_SLEW_SLOW,
+  PIN_SLEW_SLOW
 };
 /*----------------------------------------------------------------------------*/
 enum pinType

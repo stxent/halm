@@ -44,7 +44,7 @@ static void changeEnabledState(struct PinInterrupt *interrupt, bool state)
 
   if (state)
   {
-    LPC_GPIO_INT->IST = 1 << interrupt->pin.offset;
+    LPC_GPIO_INT->IST = 1UL << interrupt->pin.offset;
     irqClearPending(irq);
     irqEnable(irq);
   }
@@ -56,7 +56,7 @@ static void processInterrupt(uint8_t channel)
 {
   struct PinInterrupt * const interrupt = descriptors[channel];
 
-  LPC_GPIO_INT->IST = 1 << channel;
+  LPC_GPIO_INT->IST = 1UL << channel;
 
   if (interrupt->callback)
     interrupt->callback(interrupt->callbackArgument);
@@ -147,7 +147,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   interrupt->pin = input.data;
 
   const uint8_t index = interrupt->channel >> 2;
-  const uint32_t mask = 1 << interrupt->channel;
+  const uint32_t mask = 1UL << interrupt->channel;
 
   /* Select pin and port */
   LPC_SCU->PINTSEL[index] =
@@ -172,7 +172,7 @@ static void pinInterruptDeinit(void *object)
 {
   const struct PinInterrupt * const interrupt = object;
   const irqNumber irq = calcVector(interrupt->channel);
-  const uint32_t mask = 1 << interrupt->pin.offset;
+  const uint32_t mask = 1UL << interrupt->pin.offset;
 
   /* Disable channel interrupt in interrupt controller */
   irqDisable(irq);

@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_NXP_LPC43XX_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <assert.h>
+#include <stdbool.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 enum
@@ -60,11 +61,11 @@ static inline bool pinGpioValid(struct Pin pin)
   return pin.data.port < 8;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint8_t pinRead(struct Pin pin)
+static inline bool pinRead(struct Pin pin)
 {
   assert(pinGpioValid(pin));
 
-  return LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset];
+  return (bool)LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset];
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
@@ -81,12 +82,12 @@ static inline void pinSet(struct Pin pin)
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 1;
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinWrite(struct Pin pin, uint8_t value)
+static inline void pinWrite(struct Pin pin, bool value)
 {
   assert(pinGpioValid(pin));
 
   /* Only 0 and 1 are allowed */
-  LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = value;
+  LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = (uint8_t)value;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSetType(struct Pin pin __attribute__((unused)),

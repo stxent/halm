@@ -43,9 +43,9 @@ enum result pmPlatformChangeState(enum pmState state)
     uint32_t config = LPC_SYSCON->PDSLEEPCFG;
 
     if (sysPowerStatus(PWR_BOD))
-      config &= ~BIT(PWR_BOD);
+      config &= ~(1UL << PWR_BOD);
     if (sysPowerStatus(PWR_WDTOSC))
-      config &= ~BIT(PWR_WDTOSC);
+      config &= ~(1UL << PWR_WDTOSC);
 
     LPC_SYSCON->PDSLEEPCFG = config;
     LPC_SYSCON->PDAWAKECFG = LPC_SYSCON->PDRUNCFG;

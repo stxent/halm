@@ -42,9 +42,9 @@ enum result pmPlatformChangeState(enum pmState state)
     uint32_t config = 0x000000FF;
 
     if (sysPowerStatus(PWR_BOD))
-      config &= ~BIT(PWR_BOD);
+      config &= ~(1UL << PWR_BOD);
     if (sysPowerStatus(PWR_WDTOSC))
-      config &= ~BIT(PWR_WDTOSC);
+      config &= ~(1UL << PWR_WDTOSC);
 
     /* Detect chip version */
     if (LPC_SYSCON->DEVICE_ID >> 24 == 0x18)

@@ -31,22 +31,29 @@ void pinSetSlewRate(struct Pin, enum pinSlewRate);
 /*----------------------------------------------------------------------------*/
 static inline uint8_t pinRead(struct Pin pin)
 {
-  return (((const STM_GPIO_Type *)pin.reg)->IDR & (1 << pin.data.offset)) != 0;
+  const STM_GPIO_Type * const reg = pin.reg;
+
+  return (reg->IDR & (1UL << pin.data.offset)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
 {
-  ((STM_GPIO_Type *)pin.reg)->BRR = 1 << pin.data.offset;
+  ((STM_GPIO_Type *)pin.reg)->BRR = 1UL << pin.data.offset;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSet(struct Pin pin)
 {
-  ((STM_GPIO_Type *)pin.reg)->BSRR = 1 << pin.data.offset;
+  ((STM_GPIO_Type *)pin.reg)->BSRR = 1UL << pin.data.offset;
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinWrite(struct Pin pin, uint8_t value)
+static inline void pinWrite(struct Pin pin, bool value)
 {
-  ((STM_GPIO_Type *)pin.reg)->BSRR = (1 << pin.data.offset) << (value ? 0 : 16);
+  const uint32_t mask = 1UL << pin.data.offset;
+
+  if (value)
+    ((STM_GPIO_Type *)pin.reg)->BSRR = mask;
+  else
+    ((STM_GPIO_Type *)pin.reg)->BRR = mask;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_STM32F1XX_PIN_H_ */

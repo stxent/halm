@@ -44,22 +44,22 @@ static inline irqState irqSave(void)
 /*----------------------------------------------------------------------------*/
 static inline void irqEnable(irqNumber irq)
 {
-  *(NVIC->ISER + (irq >> 5)) = 1 << (irq & 0x1F);
+  *(NVIC->ISER + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
 static inline void irqDisable(irqNumber irq)
 {
-  *(NVIC->ICER + (irq >> 5)) = 1 << (irq & 0x1F);
+  *(NVIC->ICER + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
 static inline void irqClearPending(irqNumber irq)
 {
-  *(NVIC->ICPR + (irq >> 5)) = 1 << (irq & 0x1F);
+  *(NVIC->ICPR + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
 static inline void irqSetPending(irqNumber irq)
 {
-  *(NVIC->ISPR + (irq >> 5)) = 1 << (irq & 0x1F);
+  *(NVIC->ISPR + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_M4_IRQ_H_ */

@@ -124,7 +124,7 @@ static void interruptHandler(void *object)
       const uint8_t status = usbCommandRead(device,
           USB_CMD_CLEAR_INTERRUPT | index);
 
-      epIntStatus -= BIT(31) >> index;
+      epIntStatus -= (1UL << 31) >> index;
       epHandler(endpointArray[index], status);
     }
     while (epIntStatus);
@@ -545,7 +545,7 @@ static void epDisable(void *object)
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
-  const uint32_t mask = BIT(index + 1);
+  const uint32_t mask = 1UL << (index + 1);
 
   reg->USBDevIntEn &= ~mask;
 
@@ -559,7 +559,7 @@ static void epEnable(void *object, uint8_t type __attribute__((unused)),
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
-  const uint32_t mask = BIT(index + 1);
+  const uint32_t mask = 1UL << (index + 1);
 
   // TODO Check whether SIE clear is needed
   reg->USBDevIntClr = mask;
@@ -575,7 +575,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   struct UsbEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
-  const uint32_t mask = BIT(index + 1);
+  const uint32_t mask = 1UL << (index + 1);
 
   /*
    * Additional checks should be performed for data endpoints

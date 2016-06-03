@@ -52,27 +52,27 @@ unsigned int sysFlashLatency();
 /*----------------------------------------------------------------------------*/
 static inline void sysClockEnable(enum sysClockBranch branch)
 {
-  LPC_SYSCON->SYSAHBCLKCTRL |= BIT(branch);
+  LPC_SYSCON->SYSAHBCLKCTRL |= 1UL << branch;
 }
 /*----------------------------------------------------------------------------*/
 static inline void sysClockDisable(enum sysClockBranch branch)
 {
-  LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT(branch);
+  LPC_SYSCON->SYSAHBCLKCTRL &= ~(1UL << branch);
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerEnable(enum sysBlockPower block)
+static inline void sysPowerEnable(enum sysBlockPower branch)
 {
-  LPC_SYSCON->PDRUNCFG &= ~BIT(block);
+  LPC_SYSCON->PDRUNCFG &= ~(1UL << branch);
 }
 /*----------------------------------------------------------------------------*/
 static inline void sysPowerDisable(enum sysBlockPower block)
 {
-  LPC_SYSCON->PDRUNCFG |= BIT(block);
+  LPC_SYSCON->PDRUNCFG |= 1UL << block;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool sysPowerStatus(enum sysBlockPower block)
 {
-  return LPC_SYSCON->PDRUNCFG & BIT(block) ? false : true;
+  return LPC_SYSCON->PDRUNCFG & (1UL << block) ? false : true;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11XX_SYSTEM_H_ */

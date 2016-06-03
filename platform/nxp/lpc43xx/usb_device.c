@@ -164,8 +164,8 @@ static void interruptHandler(void *object)
       const unsigned int position = countLeadingZeros32(epStatus);
       const unsigned int number = ((position & 0xF) << 1) + (position >> 4);
 
-      epStatus -= BIT(31) >> position;
-      reg->ENDPTCOMPLETE = BIT(position);
+      epStatus -= (1UL << 31) >> position;
+      reg->ENDPTCOMPLETE = 1UL << position;
 
       epCommonHandler(endpointArray[number]);
     }

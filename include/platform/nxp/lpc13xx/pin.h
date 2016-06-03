@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_NXP_LPC13XX_PIN_H_
 #define HALM_PLATFORM_NXP_LPC13XX_PIN_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 enum
@@ -32,25 +33,32 @@ void pinSetPull(struct Pin, enum pinPull);
 void pinSetSlewRate(struct Pin, enum pinSlewRate);
 void pinSetType(struct Pin, enum pinType);
 /*----------------------------------------------------------------------------*/
-static inline uint8_t pinRead(struct Pin pin)
+static inline bool pinRead(struct Pin pin)
 {
-  return (((const LPC_GPIO_Type *)pin.reg)->DATA & (1 << pin.data.offset)) != 0;
+  const uint32_t mask = 1UL << pin.data.offset;
+
+  return (((const LPC_GPIO_Type *)pin.reg)->DATA & mask) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
 {
-  ((LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[1 << pin.data.offset] = 0x000;
+  const uint32_t mask = 1UL << pin.data.offset;
+
+  ((const LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[mask] = 0x000;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSet(struct Pin pin)
 {
-  ((LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[1 << pin.data.offset] = 0xFFF;
+  const uint32_t mask = 1UL << pin.data.offset;
+
+  ((const LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[mask] = 0xFFF;
 }
 /*----------------------------------------------------------------------------*/
-static inline void pinWrite(struct Pin pin, uint8_t value)
+static inline void pinWrite(struct Pin pin, bool value)
 {
-  ((LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[1 << pin.data.offset] =
-      value ? 0xFFF : 0x000;
+  const uint32_t mask = 1UL << pin.data.offset;
+
+  ((const LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[mask] = value ? 0xFFF : 0x000;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC13XX_PIN_H_ */

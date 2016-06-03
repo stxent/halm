@@ -103,17 +103,17 @@ static inline unsigned int sysClockDivToValue(enum sysClockDiv divisor)
 /*----------------------------------------------------------------------------*/
 static inline void sysPowerEnable(enum sysBlockPower block)
 {
-  LPC_SC->PCONP |= BIT(block);
+  LPC_SC->PCONP |= 1UL << block;
 }
 /*----------------------------------------------------------------------------*/
 static inline void sysPowerDisable(enum sysBlockPower block)
 {
-  LPC_SC->PCONP &= ~BIT(block);
+  LPC_SC->PCONP &= ~(1UL << block);
 }
 /*----------------------------------------------------------------------------*/
 static inline bool sysPowerStatus(enum sysBlockPower block)
 {
-  return LPC_SC->PCONP & BIT(block) ? true : false;
+  return LPC_SC->PCONP & (1UL << block) ? true : false;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_SYSTEM_H_ */
