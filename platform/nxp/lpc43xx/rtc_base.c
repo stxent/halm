@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <memory.h>
-#include <platform/nxp/gen_1/rtc_base.h>
-#include <platform/nxp/lpc43xx/system.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gen_1/rtc_base.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 static enum result clkInit(void *, const void *);
 static void clkDeinit(void *);

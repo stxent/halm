@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/i2s_base.h>
+#include <halm/platform/nxp/i2s_base.h>
 /*----------------------------------------------------------------------------*/
 enum result i2sCalcRate(struct I2sBase *interface, uint32_t clock,
     struct I2sRateConfig *config)

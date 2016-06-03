@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <memory.h>
-#include <platform/nxp/lpc43xx/clocking.h>
-#include <platform/nxp/lpc43xx/system.h>
-#include <platform/nxp/sct_base.h>
-#include <platform/nxp/sct_defs.h>
-#include <platform/platform_defs.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc43xx/clocking.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
+#include <halm/platform/nxp/sct_base.h>
+#include <halm/platform/nxp/sct_defs.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT                 1
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))

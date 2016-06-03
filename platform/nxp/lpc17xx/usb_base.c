@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <platform/nxp/lpc17xx/system.h>
-#include <platform/nxp/lpc17xx/usb_base.h>
-#include <platform/nxp/lpc17xx/usb_defs.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc17xx/system.h>
+#include <halm/platform/nxp/lpc17xx/usb_base.h>
+#include <halm/platform/nxp/lpc17xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static enum result setDescriptor(uint8_t, const struct UsbBase *,

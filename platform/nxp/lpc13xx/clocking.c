@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <delay.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/clocking_defs.h>
-#include <platform/nxp/lpc13xx/system.h>
-#include <platform/platform_defs.h>
+#include <halm/delay.h>
+#include <halm/platform/nxp/lpc13xx/clocking.h>
+#include <halm/platform/nxp/lpc13xx/clocking_defs.h>
+#include <halm/platform/nxp/lpc13xx/system.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY             12000000
 #define USB_FREQUENCY                 48000000

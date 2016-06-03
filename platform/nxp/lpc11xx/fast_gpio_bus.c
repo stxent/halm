@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/fast_gpio_bus.h>
-#include <platform/nxp/lpc11xx/pin_defs.h>
+#include <halm/platform/nxp/fast_gpio_bus.h>
+#include <halm/platform/nxp/lpc11xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result busInit(void *, const void *);
 static void busDeinit(void *);

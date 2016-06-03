@@ -6,11 +6,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <memory.h>
-#include <unicode.h>
-#include <usb/usb_control.h>
-#include <usb/usb_requests.h>
-#include <usb/usb_trace.h>
+#include <xcore/memory.h>
+#include <xcore/unicode.h>
+#include <halm/usb/usb_control.h>
+#include <halm/usb/usb_requests.h>
+#include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 static const struct ListNode *findEntry(const struct List *, uint8_t,
     unsigned int);

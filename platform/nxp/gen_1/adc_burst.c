@@ -6,8 +6,8 @@
 
 #include <assert.h>
 #include <string.h>
-#include <platform/nxp/adc_burst.h>
-#include <platform/nxp/gen_1/adc_defs.h>
+#include <halm/platform/nxp/adc_burst.h>
+#include <halm/platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
 #define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/

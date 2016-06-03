@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <usb/usb_trace.h>
+#include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 #define CONFIG_TRACE_BUFFER_SIZE 80
 /*----------------------------------------------------------------------------*/

@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <memory.h>
-#include <platform/nxp/wdt_base.h>
-#include <platform/nxp/wdt_defs.h>
-#include <platform/nxp/lpc43xx/clocking.h>
-#include <platform/nxp/lpc43xx/system.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/wdt_base.h>
+#include <halm/platform/nxp/wdt_defs.h>
+#include <halm/platform/nxp/lpc43xx/clocking.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(struct WdtBase *);
 /*----------------------------------------------------------------------------*/

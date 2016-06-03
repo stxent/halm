@@ -6,11 +6,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <platform/nxp/gen_1/uart_defs.h>
-#include <platform/nxp/gpdma.h>
-#include <platform/nxp/gpdma_list.h>
-#include <platform/nxp/serial_dma.h>
-#include <pm.h>
+#include <halm/platform/nxp/gen_1/uart_defs.h>
+#include <halm/platform/nxp/gpdma.h>
+#include <halm/platform/nxp/gpdma_list.h>
+#include <halm/platform/nxp/serial_dma.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 /*
  * Size of temporary buffers should be increased if the baud rate

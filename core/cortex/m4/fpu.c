@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <core/core_defs.h>
-#include <core/cortex/m4/fpu_defs.h>
+#include <halm/core/core_defs.h>
+#include <halm/core/cortex/m4/fpu_defs.h>
 /*----------------------------------------------------------------------------*/
 void fpuDisable()
 {

@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <bits.h>
-#include <memory.h>
-#include <platform/nxp/lpc11exx/pin_defs.h>
-#include <platform/nxp/lpc11exx/system_defs.h>
-#include <platform/nxp/pin_interrupt.h>
+#include <xcore/bits.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc11exx/pin_defs.h>
+#include <halm/platform/nxp/lpc11exx/system_defs.h>
+#include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 static inline irqNumber calcVector(uint8_t);
 static void changeEnabledState(struct PinInterrupt *, bool);

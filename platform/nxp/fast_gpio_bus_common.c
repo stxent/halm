@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <bits.h>
-#include <platform/nxp/fast_gpio_bus.h>
+#include <xcore/bits.h>
+#include <halm/platform/nxp/fast_gpio_bus.h>
 /*----------------------------------------------------------------------------*/
 void fastGpioBusConfigPins(struct FastGpioBus *bus,
     const struct FastGpioBusConfig *config)

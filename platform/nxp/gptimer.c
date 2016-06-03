@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/gptimer.h>
-#include <platform/nxp/gptimer_defs.h>
-#include <pm.h>
+#include <halm/platform/nxp/gptimer.h>
+#include <halm/platform/nxp/gptimer_defs.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getResolution(struct GpTimer *);
 static void interruptHandler(void *);

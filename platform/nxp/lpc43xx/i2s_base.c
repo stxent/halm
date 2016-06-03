@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <bits.h>
-#include <memory.h>
-#include <platform/nxp/i2s_base.h>
-#include <platform/nxp/lpc43xx/clocking.h>
-#include <platform/nxp/lpc43xx/system.h>
+#include <xcore/bits.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/i2s_base.h>
+#include <halm/platform/nxp/lpc43xx/clocking.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT                   8
 #define CHANNEL_INDEX(channel, index)   ((channel) * CHANNEL_COUNT + (index))

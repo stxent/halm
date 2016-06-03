@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <containers/list.h>
-#include <platform/nxp/wakeup_interrupt.h>
+#include <xcore/containers/list.h>
+#include <halm/platform/nxp/wakeup_interrupt.h>
 /*----------------------------------------------------------------------------*/
 struct StartLogicHandler
 {

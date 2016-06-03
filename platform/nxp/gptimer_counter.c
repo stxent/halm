@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/gptimer_counter.h>
-#include <platform/nxp/gptimer_defs.h>
+#include <halm/platform/nxp/gptimer_counter.h>
+#include <halm/platform/nxp/gptimer_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getResolution(struct GpTimerCounter *);
 static void interruptHandler(void *);

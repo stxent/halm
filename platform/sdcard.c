@@ -5,12 +5,12 @@
  */
 
 #include <assert.h>
-#include <bits.h>
-#include <delay.h>
-#include <memory.h>
-#include <common/sdio.h>
-#include <common/sdio_defs.h>
-#include <platform/sdcard.h>
+#include <xcore/bits.h>
+#include <xcore/memory.h>
+#include <halm/common/sdio.h>
+#include <halm/common/sdio_defs.h>
+#include <halm/delay.h>
+#include <halm/platform/sdcard.h>
 /*----------------------------------------------------------------------------*/
 #define ENUM_RATE         400000
 #define WORK_RATE         25000000

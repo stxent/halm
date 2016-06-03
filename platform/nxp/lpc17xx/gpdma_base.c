@@ -5,12 +5,12 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <irq.h>
-#include <platform/nxp/gpdma_base.h>
-#include <platform/nxp/gpdma_defs.h>
-#include <platform/nxp/lpc17xx/system.h>
-#include <platform/platform_defs.h>
+#include <xcore/memory.h>
+#include <halm/irq.h>
+#include <halm/platform/nxp/gpdma_base.h>
+#include <halm/platform/nxp/gpdma_defs.h>
+#include <halm/platform/nxp/lpc17xx/system.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define GPDMA_CHANNEL_COUNT ARRAY_SIZE(LPC_GPDMA->CHANNELS)
 /*----------------------------------------------------------------------------*/

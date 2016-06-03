@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/gen_1/adc_base.h>
-#include <platform/nxp/gen_1/adc_defs.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/system.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gen_1/adc_base.h>
+#include <halm/platform/nxp/gen_1/adc_defs.h>
+#include <halm/platform/nxp/lpc13xx/clocking.h>
+#include <halm/platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY                 4500000
 /* Pack and unpack conversion channel and pin function */

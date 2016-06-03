@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/gen_1/uart_base.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/system.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gen_1/uart_base.h>
+#include <halm/platform/nxp/lpc13xx/clocking.h>
+#include <halm/platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
 /* UART clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1

@@ -7,12 +7,12 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <memory.h>
-#include <usb/cdc_acm.h>
-#include <usb/cdc_acm_base.h>
-#include <usb/cdc_acm_defs.h>
-#include <usb/composite_device.h>
-#include <usb/usb_trace.h>
+#include <xcore/memory.h>
+#include <halm/usb/cdc_acm.h>
+#include <halm/usb/cdc_acm_base.h>
+#include <halm/usb/cdc_acm_defs.h>
+#include <halm/usb/composite_device.h>
+#include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct PrivateData
 {

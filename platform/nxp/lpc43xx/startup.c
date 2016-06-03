@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <bits.h>
-#include <core/cortex/fpu.h>
-#include <platform/nxp/lpc43xx/system.h>
-#include <platform/nxp/lpc43xx/system_defs.h>
+#include <xcore/bits.h>
+#include <halm/core/cortex/fpu.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
+#include <halm/platform/nxp/lpc43xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {

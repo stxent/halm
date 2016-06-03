@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <pin.h>
-#include <platform/stm/stm32f1xx/pin_defs.h>
-#include <platform/stm/stm32f1xx/system.h>
+#include <halm/pin.h>
+#include <halm/platform/stm/stm32f1xx/pin_defs.h>
+#include <halm/platform/stm/stm32f1xx/system.h>
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(struct PinData);
 static void commonPinInit(struct PinData);

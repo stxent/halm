@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <bits.h>
-#include <irq.h>
-#include <platform/platform_defs.h>
+#include <xcore/bits.h>
+#include <halm/irq.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define AIRCR_VECTKEY_MASK        BIT_FIELD(MASK(16), 16)
 #define AIRCR_VECTKEY(value)      BIT_FIELD((value), 16)

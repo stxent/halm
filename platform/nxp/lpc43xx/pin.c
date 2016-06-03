@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <pin.h>
-#include <platform/nxp/lpc43xx/pin_defs.h>
+#include <halm/pin.h>
+#include <halm/platform/nxp/lpc43xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(channel, offset) (((offset) << 3) | (channel))
 #define UNPACK_CHANNEL(value)       ((value) & 0x07)

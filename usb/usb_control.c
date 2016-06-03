@@ -7,9 +7,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <memory.h>
-#include <usb/usb_control.h>
-#include <usb/usb_requests.h>
+#include <xcore/memory.h>
+#include <halm/usb/usb_control.h>
+#include <halm/usb/usb_requests.h>
 /*----------------------------------------------------------------------------*/
 #define EP0_BUFFER_SIZE   64
 #define DATA_BUFFER_SIZE  (CONFIG_USB_DEVICE_CONTROL_REQUESTS * EP0_BUFFER_SIZE)

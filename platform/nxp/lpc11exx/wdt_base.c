@@ -5,12 +5,12 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/lpc11exx/clocking.h>
-#include <platform/nxp/lpc11exx/system.h>
-#include <platform/nxp/lpc11exx/system_defs.h>
-#include <platform/nxp/wdt_base.h>
-#include <platform/nxp/wdt_defs.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc11exx/clocking.h>
+#include <halm/platform/nxp/lpc11exx/system.h>
+#include <halm/platform/nxp/lpc11exx/system_defs.h>
+#include <halm/platform/nxp/wdt_base.h>
+#include <halm/platform/nxp/wdt_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(struct WdtBase *);
 /*----------------------------------------------------------------------------*/

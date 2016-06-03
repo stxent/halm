@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/lpc11exx/clocking.h>
-#include <platform/nxp/lpc11exx/system.h>
-#include <platform/nxp/lpc11exx/system_defs.h>
-#include <platform/nxp/ssp_base.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc11exx/clocking.h>
+#include <halm/platform/nxp/lpc11exx/system.h>
+#include <halm/platform/nxp/lpc11exx/system_defs.h>
+#include <halm/platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 /* SSP clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1

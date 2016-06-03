@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/gen_1/uart_defs.h>
-#include <platform/nxp/serial_poll.h>
-#include <pm.h>
+#include <halm/platform/nxp/gen_1/uart_defs.h>
+#include <halm/platform/nxp/serial_poll.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 #define TX_FIFO_SIZE 8
 /*----------------------------------------------------------------------------*/

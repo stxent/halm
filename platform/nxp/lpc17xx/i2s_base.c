@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/i2s_base.h>
-#include <platform/nxp/lpc17xx/clocking.h>
-#include <platform/nxp/lpc17xx/system.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/i2s_base.h>
+#include <halm/platform/nxp/lpc17xx/clocking.h>
+#include <halm/platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 /* PCLK for I2S must not be higher than 74 MHz */
 #define DEFAULT_DIV CLK_DIV2

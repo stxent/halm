@@ -6,11 +6,11 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <platform/nxp/lpc43xx/usb_defs.h>
-#include <platform/nxp/usb_device.h>
-#include <usb/usb.h>
-#include <usb/usb_defs.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc43xx/usb_defs.h>
+#include <halm/platform/nxp/usb_device.h>
+#include <halm/usb/usb.h>
+#include <halm/usb/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 #define CONTROL_OUT 0
 /*----------------------------------------------------------------------------*/

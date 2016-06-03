@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/gptimer_capture.h>
-#include <platform/nxp/gptimer_defs.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gptimer_capture.h>
+#include <halm/platform/nxp/gptimer_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/

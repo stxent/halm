@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/gptimer_pwm.h>
-#include <platform/nxp/gptimer_pwm_defs.h>
+#include <halm/platform/nxp/gptimer_pwm.h>
+#include <halm/platform/nxp/gptimer_pwm_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result unitAllocateChannel(struct GpTimerPwmUnit *, uint8_t);
 static void unitReleaseChannel(struct GpTimerPwmUnit *, uint8_t);

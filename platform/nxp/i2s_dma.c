@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/gpdma_list.h>
-#include <platform/nxp/i2s_defs.h>
-#include <platform/nxp/i2s_dma.h>
+#include <halm/platform/nxp/gpdma_list.h>
+#include <halm/platform/nxp/i2s_defs.h>
+#include <halm/platform/nxp/i2s_dma.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
 /*----------------------------------------------------------------------------*/

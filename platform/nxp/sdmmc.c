@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <common/sdio.h>
-#include <common/sdio_defs.h>
-#include <platform/nxp/dma_sdmmc.h>
-#include <platform/nxp/sdmmc.h>
-#include <platform/nxp/sdmmc_defs.h>
-#include <platform/platform_defs.h>
+#include <halm/common/sdio.h>
+#include <halm/common/sdio_defs.h>
+#include <halm/platform/nxp/dma_sdmmc.h>
+#include <halm/platform/nxp/sdmmc.h>
+#include <halm/platform/nxp/sdmmc_defs.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_BLOCK_SIZE  512
 #define BUSY_READ_DELAY     100 /* Milliseconds */

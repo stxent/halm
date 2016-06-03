@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/lpc17xx/clocking.h>
-#include <platform/nxp/lpc17xx/system.h>
-#include <platform/nxp/ssp_base.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc17xx/clocking.h>
+#include <halm/platform/nxp/lpc17xx/system.h>
+#include <halm/platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/

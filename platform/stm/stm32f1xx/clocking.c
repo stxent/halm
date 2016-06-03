@@ -6,10 +6,8 @@
 
 #include <assert.h>
 #include <stdbool.h>
-
-#include <clock.h>
-
-#include <platform/platform_defs.h>
+#include <halm/clock.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define HSI_OSC_FREQUENCY     8000000
 #define TICK_RATE(frequency)  ((frequency) / 1000)

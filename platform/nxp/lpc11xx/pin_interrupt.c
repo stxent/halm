@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <containers/list.h>
-#include <platform/nxp/pin_interrupt.h>
+#include <xcore/containers/list.h>
+#include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 struct PinInterruptHandlerConfig
 {

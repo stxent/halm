@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/gen_1/i2c_base.h>
-#include <platform/nxp/lpc11exx/clocking.h>
-#include <platform/nxp/lpc11exx/system.h>
-#include <platform/nxp/lpc11exx/system_defs.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gen_1/i2c_base.h>
+#include <halm/platform/nxp/lpc11exx/clocking.h>
+#include <halm/platform/nxp/lpc11exx/system.h>
+#include <halm/platform/nxp/lpc11exx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result setDescriptor(uint8_t, const struct I2cBase *,
     struct I2cBase *);

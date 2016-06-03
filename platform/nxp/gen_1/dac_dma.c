@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/dac_dma.h>
-#include <platform/nxp/gen_1/dac_defs.h>
-#include <platform/nxp/gpdma_list.h>
+#include <halm/platform/nxp/dac_dma.h>
+#include <halm/platform/nxp/gen_1/dac_defs.h>
+#include <halm/platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
 #define SAMPLE_SIZE sizeof(uint16_t)

@@ -5,10 +5,10 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/gptimer_base.h>
-#include <platform/nxp/lpc13xx/clocking.h>
-#include <platform/nxp/lpc13xx/system.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gptimer_base.h>
+#include <halm/platform/nxp/lpc13xx/clocking.h>
+#include <halm/platform/nxp/lpc13xx/system.h>
 /*----------------------------------------------------------------------------*/
 /* Pack capture or match channel and pin function in one value */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))

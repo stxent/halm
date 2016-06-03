@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <pin.h>
+#include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 /* Returns 0 when no descriptor associated with pin found */
 const struct PinEntry *pinFind(const struct PinEntry *list, pinNumber key,

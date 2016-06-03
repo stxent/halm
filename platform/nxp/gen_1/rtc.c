@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/gen_1/rtc_defs.h>
-#include <platform/nxp/rtc.h>
+#include <halm/platform/nxp/gen_1/rtc_defs.h>
+#include <halm/platform/nxp/rtc.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/

@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <platform/nxp/gen_1/adc_base.h>
-#include <platform/nxp/gen_1/adc_defs.h>
-#include <platform/nxp/lpc17xx/clocking.h>
-#include <platform/nxp/lpc17xx/system.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gen_1/adc_base.h>
+#include <halm/platform/nxp/gen_1/adc_defs.h>
+#include <halm/platform/nxp/lpc17xx/clocking.h>
+#include <halm/platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV                   CLK_DIV1
 #define MAX_FREQUENCY                 13000000

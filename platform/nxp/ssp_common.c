@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/ssp_base.h>
-#include <platform/nxp/ssp_defs.h>
+#include <halm/platform/nxp/ssp_base.h>
+#include <halm/platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry sspPins[];
 /*----------------------------------------------------------------------------*/

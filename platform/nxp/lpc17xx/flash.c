@@ -7,8 +7,8 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
-#include <platform/nxp/flash.h>
-#include <platform/nxp/lpc17xx/flash_defs.h>
+#include <halm/platform/nxp/flash.h>
+#include <halm/platform/nxp/lpc17xx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline bool isPageAddressValid(const struct Flash *, uint32_t);
 static inline bool isSectorAddressValid(const struct Flash *, uint32_t);

@@ -5,7 +5,7 @@
  */
 
 #include <stdlib.h>
-#include <usb/usb.h>
+#include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 void usbRequestInit(struct UsbRequest *request, void *buffer, uint16_t capacity,
     void (*callback)(void *, struct UsbRequest *, enum usbRequestStatus),

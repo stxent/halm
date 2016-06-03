@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <bits.h>
-#include <memory.h>
-#include <platform/nxp/lpc43xx/clocking.h>
-#include <platform/nxp/lpc43xx/system.h>
-#include <platform/nxp/sdmmc_base.h>
+#include <xcore/bits.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc43xx/clocking.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
+#include <halm/platform/nxp/sdmmc_base.h>
 /*----------------------------------------------------------------------------*/
 #define SDDELAY_SAMPLE(value) BIT_FIELD((value), 0)
 #define SDDELAY_DRV(value)    BIT_FIELD((value), 8)

@@ -8,12 +8,12 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <irq.h>
-#include <memory.h>
-#include <usb/composite_device.h>
-#include <usb/msc.h>
-#include <usb/msc_defs.h>
-#include <usb/usb_trace.h>
+#include <xcore/memory.h>
+#include <halm/irq.h>
+#include <halm/usb/composite_device.h>
+#include <halm/usb/msc.h>
+#include <halm/usb/msc_defs.h>
+#include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 enum state
 {

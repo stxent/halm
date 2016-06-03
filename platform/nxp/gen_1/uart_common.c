@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/gen_1/uart_base.h>
-#include <platform/nxp/gen_1/uart_defs.h>
+#include <halm/platform/nxp/gen_1/uart_base.h>
+#include <halm/platform/nxp/gen_1/uart_defs.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];
 /*----------------------------------------------------------------------------*/

@@ -6,11 +6,11 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <platform/nxp/lpc43xx/system.h>
-#include <platform/nxp/lpc43xx/system_defs.h>
-#include <platform/nxp/lpc43xx/usb_base.h>
-#include <platform/nxp/lpc43xx/usb_defs.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
+#include <halm/platform/nxp/lpc43xx/system_defs.h>
+#include <halm/platform/nxp/lpc43xx/usb_base.h>
+#include <halm/platform/nxp/lpc43xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 #define ENDPOINT_REQUESTS     CONFIG_USB_DEVICE_ENDPOINT_REQUESTS
 #define USB0_ENDPOINT_NUMBER  12

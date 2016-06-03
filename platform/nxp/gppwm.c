@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <irq.h>
-#include <platform/nxp/gppwm.h>
-#include <platform/nxp/gppwm_defs.h>
+#include <halm/irq.h>
+#include <halm/platform/nxp/gppwm.h>
+#include <halm/platform/nxp/gppwm_defs.h>
 /*----------------------------------------------------------------------------*/
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)

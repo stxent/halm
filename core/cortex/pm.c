@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <core/cortex/asm.h>
-#include <core/core_defs.h>
-#include <core/cortex/pm_defs.h>
-#include <pm.h>
+#include <xcore/core/cortex/asm.h>
+#include <halm/core/core_defs.h>
+#include <halm/core/cortex/pm_defs.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 enum result pmCoreChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/

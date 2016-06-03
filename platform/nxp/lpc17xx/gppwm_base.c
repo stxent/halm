@@ -5,11 +5,11 @@
  */
 
 #include <assert.h>
-#include <memory.h>
-#include <pin.h>
-#include <platform/nxp/gppwm_base.h>
-#include <platform/nxp/lpc17xx/clocking.h>
-#include <platform/nxp/lpc17xx/system.h>
+#include <xcore/memory.h>
+#include <halm/pin.h>
+#include <halm/platform/nxp/gppwm_base.h>
+#include <halm/platform/nxp/lpc17xx/clocking.h>
+#include <halm/platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /* Pack match channel and pin function in one value */

@@ -5,16 +5,16 @@
  */
 
 #include <assert.h>
-#include <bits.h>
-#include <irq.h>
-#include <libhalm/target.h>
-#include <platform/nxp/flash.h>
+#include <xcore/bits.h>
+#include <halm/irq.h>
+#include <halm/platform/nxp/flash.h>
+#include <halm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/flash_defs.h>
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/flash_defs.h>
 #include HEADER_PATH
 #undef HEADER_PATH
-#define HEADER_PATH <platform/PLATFORM_TYPE/PLATFORM/clocking.h>
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/clocking.h>
 #include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 enum iapCommand

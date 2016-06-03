@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <platform/nxp/gpdma.h>
-#include <platform/nxp/spi_dma.h>
-#include <platform/nxp/ssp_defs.h>
+#include <halm/platform/nxp/gpdma.h>
+#include <halm/platform/nxp/spi_dma.h>
+#include <halm/platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
 #define DUMMY_FRAME 0xFF
 /*----------------------------------------------------------------------------*/

@@ -6,9 +6,9 @@
 
 #include <assert.h>
 #include <limits.h>
-#include <memory.h>
-#include <platform/nxp/gen_1/i2c_defs.h>
-#include <platform/nxp/i2c.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gen_1/i2c_defs.h>
+#include <halm/platform/nxp/i2c.h>
 /*----------------------------------------------------------------------------*/
 enum state
 {

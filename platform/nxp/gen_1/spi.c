@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <memory.h>
-#include <platform/nxp/spi.h>
-#include <platform/nxp/ssp_defs.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/spi.h>
+#include <halm/platform/nxp/ssp_defs.h>
 /*----------------------------------------------------------------------------*/
 #define DUMMY_FRAME 0xFF
 #define FIFO_DEPTH  8

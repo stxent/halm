@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <irq.h>
-#include <platform/nxp/gpdma_defs.h>
-#include <platform/nxp/gpdma_list.h>
-#include <platform/platform_defs.h>
+#include <halm/irq.h>
+#include <halm/platform/nxp/gpdma_defs.h>
+#include <halm/platform/nxp/gpdma_list.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static void appendItem(void *, void *, const void *, unsigned int);
 static void interruptHandler(void *, enum result);

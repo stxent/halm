@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/nxp/wdt.h>
-#include <platform/nxp/wdt_defs.h>
-#include <platform/platform_defs.h>
+#include <halm/platform/nxp/wdt.h>
+#include <halm/platform/nxp/wdt_defs.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/

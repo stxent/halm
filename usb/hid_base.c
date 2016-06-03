@@ -6,13 +6,13 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <memory.h>
-#include <usb/composite_device.h>
-#include <usb/hid.h>
-#include <usb/hid_base.h>
-#include <usb/hid_defs.h>
-#include <usb/usb_defs.h>
-#include <usb/usb_trace.h>
+#include <xcore/memory.h>
+#include <halm/usb/composite_device.h>
+#include <halm/usb/hid.h>
+#include <halm/usb/hid_base.h>
+#include <halm/usb/hid_defs.h>
+#include <halm/usb/usb_defs.h>
+#include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct SingleHidDescriptor
 {

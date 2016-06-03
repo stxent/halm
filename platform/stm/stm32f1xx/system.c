@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <platform/platform_defs.h>
-#include <platform/stm/stm32f1xx/system.h>
-#include <platform/stm/stm32f1xx/system_defs.h>
+#include <halm/platform/platform_defs.h>
+#include <halm/platform/stm/stm32f1xx/system.h>
+#include <halm/platform/stm/stm32f1xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
 enum
 {

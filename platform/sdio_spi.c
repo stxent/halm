@@ -7,12 +7,12 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <crc/crc7.h>
-#include <crc/crc16_ccitt.h>
-#include <memory.h>
-#include <common/sdio.h>
-#include <common/sdio_defs.h>
-#include <platform/sdio_spi.h>
+#include <xcore/crc/crc7.h>
+#include <xcore/crc/crc16_ccitt.h>
+#include <xcore/memory.h>
+#include <halm/common/sdio.h>
+#include <halm/common/sdio_defs.h>
+#include <halm/platform/sdio_spi.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_BLOCK_SIZE    512
 #define MAX_BLOCK_SIZE        2048

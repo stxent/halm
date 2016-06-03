@@ -7,10 +7,10 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <memory.h>
-#include <platform/nxp/gen_1/i2c_defs.h>
-#include <platform/nxp/i2c_slave.h>
-#include <pm.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/gen_1/i2c_defs.h>
+#include <halm/platform/nxp/i2c_slave.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 enum state
 {

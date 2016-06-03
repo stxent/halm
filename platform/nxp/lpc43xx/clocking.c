@@ -5,12 +5,12 @@
  */
 
 #include <assert.h>
-#include <delay.h>
-#include <platform/nxp/lpc43xx/clocking.h>
-#include <platform/nxp/lpc43xx/clocking_defs.h>
-#include <platform/nxp/lpc43xx/system.h>
-#include <platform/nxp/lpc43xx/system_defs.h>
-#include <platform/platform_defs.h>
+#include <halm/delay.h>
+#include <halm/platform/nxp/lpc43xx/clocking.h>
+#include <halm/platform/nxp/lpc43xx/clocking_defs.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
+#include <halm/platform/nxp/lpc43xx/system_defs.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY     12000000
 #define RTC_OSC_FREQUENCY     32768

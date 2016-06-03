@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <string.h>
-#include <memory.h>
-#include <platform/nxp/lpc17xx/pin_defs.h>
-#include <platform/nxp/lpc17xx/system.h>
-#include <platform/nxp/pin_interrupt.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc17xx/pin_defs.h>
+#include <halm/platform/nxp/lpc17xx/system.h>
+#include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/

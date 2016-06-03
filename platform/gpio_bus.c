@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <gpio_bus.h>
+#include <halm/gpio_bus.h>
 /*----------------------------------------------------------------------------*/
 struct SimpleGpioBus
 {

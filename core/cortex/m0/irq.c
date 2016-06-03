@@ -5,9 +5,9 @@
  */
 
 #include <assert.h>
-#include <bits.h>
-#include <irq.h>
-#include <platform/platform_defs.h>
+#include <xcore/bits.h>
+#include <halm/irq.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define IRQ_SHIFT(value)    (((uint32_t)(value) & 0x03) << 3)
 #define CORE_OFFSET(value)  ((((uint32_t)(value) & 0x0F) - 8) >> 2)

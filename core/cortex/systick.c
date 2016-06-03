@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <bits.h>
-#include <memory.h>
-#include <clock.h>
-#include <core/cortex/systick.h>
+#include <xcore/bits.h>
+#include <xcore/memory.h>
+#include <halm/clock.h>
+#include <halm/core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
 #define TIMER_RESOLUTION                ((1UL << 24) - 1)
 /*----------------------------------------------------------------------------*/

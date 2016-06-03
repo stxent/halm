@@ -7,10 +7,10 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <irq.h>
-#include <usb/cdc_acm.h>
-#include <usb/cdc_acm_defs.h>
-#include <usb/usb_trace.h>
+#include <halm/irq.h>
+#include <halm/usb/cdc_acm.h>
+#include <halm/usb/cdc_acm_defs.h>
+#include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct CdcUsbRequest
 {

@@ -6,10 +6,10 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <platform/nxp/lpc17xx/usb_defs.h>
-#include <platform/nxp/usb_device.h>
-#include <usb/usb.h>
+#include <xcore/memory.h>
+#include <halm/platform/nxp/lpc17xx/usb_defs.h>
+#include <halm/platform/nxp/usb_device.h>
+#include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);

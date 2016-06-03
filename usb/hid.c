@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <usb/hid.h>
-#include <usb/hid_defs.h>
+#include <halm/usb/hid.h>
+#include <halm/usb/hid_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum result deviceInit(void *, const void *);
 static void deviceDeinit(void *);

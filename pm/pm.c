@@ -6,9 +6,9 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <containers/list.h>
-#include <entity.h>
-#include <pm.h>
+#include <xcore/containers/list.h>
+#include <xcore/entity.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 struct PmHandlerEntry
 {
