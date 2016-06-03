@@ -78,4 +78,9 @@ config ASSERTIONS
 	depends on (OPTIMIZATIONS_DISABLED || OPTIMIZATIONS_DEBUG)
 	default y
 
+config LTO
+	bool "Link Time Optimization"
+	depends on (OPTIMIZATIONS_SIZE || OPTIMIZATIONS_FULL)
+	default y
+
 endmenu
