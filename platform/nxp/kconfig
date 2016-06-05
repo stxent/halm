@@ -98,6 +98,16 @@ config PLATFORM_NXP_CAN
 	default y
 	depends on FAMILY_LPC11EXX || FAMILY_LPC17XX || FAMILY_LPC43XX
 
+config PLATFORM_NXP_CAN_TSEG1
+	int "TSEG1 quanta"
+	default 8
+	depends on PLATFORM_NXP_CAN
+
+config PLATFORM_NXP_CAN_TSEG2
+	int "TSEG2 quanta"
+	default 1
+	depends on PLATFORM_NXP_CAN
+
 config PLATFORM_NXP_DAC_BASE
 	bool "DAC"
 	default y

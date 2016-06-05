@@ -315,7 +315,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   struct SerialDma * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
   const uint8_t *bufferPosition = buffer;
-  const size_t sourceLength = length;
+  const size_t initialLength = length;
   size_t chunkLength = 0;
 
   /*
@@ -346,5 +346,5 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
       return 0;
   }
 
-  return sourceLength - length;
+  return initialLength - length;
 }

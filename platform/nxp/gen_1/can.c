@@ -13,10 +13,6 @@
 #include <halm/platform/nxp/gen_1/can_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-//TODO Move to kconfig
-#define CONFIG_CAN_TSEG1 11
-#define CONFIG_CAN_TSEG2 3
-/*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(struct Can *, uint32_t, uint8_t, uint8_t);
 static void interruptHandler(void *);
 static uint32_t sendMessage(struct Can *, const struct CanMessage *, uint32_t);
@@ -224,8 +220,8 @@ static enum result canInit(void *object, const void *configBase)
   reg->IER = 0; /* Disable Receive Interrupt */
   reg->GSR = 0; /* Reset error counter */
 
-  reg->BTR = calcBusTimings(interface, config->rate, CONFIG_CAN_TSEG1,
-      CONFIG_CAN_TSEG2);
+  reg->BTR = calcBusTimings(interface, config->rate,
+      CONFIG_PLATFORM_NXP_CAN_TSEG1, CONFIG_PLATFORM_NXP_CAN_TSEG2);
   reg->MOD = 0; /* CAN in normal operation mode */
 
   LPC_CANAF->AFMR = AFMR_AccBP; //FIXME

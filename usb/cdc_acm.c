@@ -378,8 +378,8 @@ static enum result interfaceSet(void *object __attribute__((unused)),
 static size_t interfaceRead(void *object, void *buffer, size_t length)
 {
   struct CdcAcm * const interface = object;
-  const size_t sourceLength = length;
   uint8_t *bufferPosition = buffer;
+  const size_t initialLength = length;
   irqState state;
 
   if (interface->suspended)
@@ -419,15 +419,15 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
     }
   }
 
-  return sourceLength - length;
+  return initialLength - length;
 }
 /*----------------------------------------------------------------------------*/
 static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 {
   struct CdcAcm * const interface = object;
-  const size_t maxPacketSize = getPacketSize(interface);
-  const size_t sourceLength = length;
   const uint8_t *bufferPosition = buffer;
+  const size_t initialLength = length;
+  const size_t maxPacketSize = getPacketSize(interface);
   irqState state;
 
   if (interface->suspended)
@@ -462,5 +462,5 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     }
   }
 
-  return sourceLength - length;
+  return initialLength - length;
 }
