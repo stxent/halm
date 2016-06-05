@@ -21,6 +21,7 @@
 #elif defined(LPC11EXX)
 
 #define GEN_ADC         gen_1
+#define GEN_CAN         gen_2
 #define GEN_I2C         gen_1
 #define GEN_SPI         gen_1
 #define GEN_UART        gen_1
@@ -40,6 +41,7 @@
 #elif defined(LPC17XX)
 
 #define GEN_ADC         gen_1
+#define GEN_CAN         gen_1
 #define GEN_DAC         gen_1
 #define GEN_I2C         gen_1
 #define GEN_RTC         gen_1
@@ -52,6 +54,7 @@
 #elif defined(LPC43XX)
 
 #define GEN_ADC         gen_1
+#define GEN_CAN         gen_2
 #define GEN_DAC         gen_1
 #define GEN_I2C         gen_1
 #define GEN_RTC         gen_1

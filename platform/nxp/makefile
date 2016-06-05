@@ -1,7 +1,7 @@
 #Copyright (C) 2014 xent
 #Project is distributed under the terms of the GNU General Public License v3.0
 
-BUILD_FLAGS += GEN_ADC GEN_DAC GEN_I2C GEN_RTC GEN_SPI GEN_UART
+BUILD_FLAGS += GEN_ADC GEN_CAN GEN_DAC GEN_I2C GEN_RTC GEN_SPI GEN_UART
 
 ifeq ($(CONFIG_PM),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pm.c
@@ -29,6 +29,11 @@ endif
 ifeq ($(CONFIG_PLATFORM_NXP_ADC_BASE),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_ADC)/adc_unit.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/adc_base.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_NXP_CAN),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(GEN_CAN)/can.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/can_base.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_DAC_BASE),y)
