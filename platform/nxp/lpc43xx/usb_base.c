@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <malloc.h>
 #include <stdlib.h>
 #include <xcore/memory.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
@@ -109,20 +110,6 @@ const struct PinEntry usbPins[] = {
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbBase = &devTable;
 static struct UsbBase *descriptors[2] = {0};
-
-#ifdef CONFIG_PLATFORM_USB_0
-static struct QueueHead usb0QueueHeads[USB0_ENDPOINT_NUMBER]
-    __attribute__((aligned(2048)));
-static struct TransferDescriptor usb0TransferDescriptors[ENDPOINT_REQUESTS]
-    __attribute__((aligned(32)));
-#endif
-
-#ifdef CONFIG_PLATFORM_USB_1
-static struct QueueHead usb1QueueHeads[USB1_ENDPOINT_NUMBER]
-    __attribute__((aligned(2048)));
-static struct TransferDescriptor usb1TransferDescriptors[ENDPOINT_REQUESTS]
-    __attribute__((aligned(32)));
-#endif
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
@@ -187,8 +174,6 @@ static enum result devInit(void *object, const void *configBase)
 
   configPins(device, configBase);
 
-  struct TransferDescriptor *poolMemory = 0;
-
   if (!device->channel)
   {
     sysClockEnable(CLK_M4_USB0);
@@ -201,11 +186,6 @@ static enum result devInit(void *object, const void *configBase)
 
     LPC_CREG->CREG0 &= ~CREG0_USB0PHY;
     LPC_USB0->OTGSC = OTGSC_VD | OTGSC_OT;
-
-#ifdef CONFIG_PLATFORM_USB_0
-    device->queueHeads = usb0QueueHeads;
-    poolMemory = usb0TransferDescriptors;
-#endif
   }
   else
   {
@@ -218,18 +198,21 @@ static enum result devInit(void *object, const void *configBase)
     device->numberOfEndpoints = USB1_ENDPOINT_NUMBER;
 
     LPC_SCU->SFSUSB = SFSUSB_ESEA | SFSUSB_EPWR | SFSUSB_VBUS;
-
-#ifdef CONFIG_PLATFORM_USB_1
-    device->queueHeads = usb1QueueHeads;
-    poolMemory = usb1TransferDescriptors;
-#endif
   }
 
-  assert(poolMemory);
+  device->queueHeads = memalign(2048, sizeof(struct QueueHead)
+      * device->numberOfEndpoints);
+  if (!device->queueHeads)
+    return E_MEMORY;
+
+  device->poolMemory = memalign(32, sizeof(struct TransferDescriptor)
+      * ENDPOINT_REQUESTS);
+  if (!device->poolMemory)
+    return E_MEMORY;
 
   for (unsigned int index = 0; index < ENDPOINT_REQUESTS; ++index)
   {
-    struct TransferDescriptor * const entry = poolMemory + index;
+    struct TransferDescriptor * const entry = device->poolMemory + index;
     queuePush(&device->descriptorPool, &entry);
   }
 
@@ -239,6 +222,9 @@ static enum result devInit(void *object, const void *configBase)
 static void devDeinit(void *object)
 {
   struct UsbBase * const device = object;
+
+  free(device->poolMemory);
+  free(device->queueHeads);
 
   if (!device->channel)
   {

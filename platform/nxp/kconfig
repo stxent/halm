@@ -96,7 +96,7 @@ config PLATFORM_NXP_ADC_DMA
 config PLATFORM_NXP_CAN
 	bool "CAN"
 	default y
-	depends on FAMILY_LPC11EXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+	depends on FAMILY_LPC17XX
 
 config PLATFORM_NXP_CAN_TSEG1
 	int "TSEG1 quanta"
@@ -132,6 +132,7 @@ config PLATFORM_NXP_FAST_GPIO_BUS
 config PLATFORM_NXP_FLASH
 	bool "Flash driver"
 	default y
+	depends on FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
 	help
 	  This enables driver for internal Flash memory.
 
@@ -321,16 +322,6 @@ config PLATFORM_USB_HS
 	depends on PLATFORM_USB && FAMILY_LPC43XX
 	help
 	  This enables support for USB High Speed mode.
-
-config PLATFORM_USB_0
-	bool "USB0"
-	default y
-	depends on PLATFORM_USB && FAMILY_LPC43XX
-
-config PLATFORM_USB_1
-	bool "USB1"
-	default n
-	depends on PLATFORM_USB && FAMILY_LPC43XX
 
 config PLATFORM_USB_DEVICE
 	bool "USB Device"

@@ -15,6 +15,7 @@
 extern const struct EntityClass * const UsbBase;
 /*----------------------------------------------------------------------------*/
 struct QueueHead;
+struct TransferDescriptor;
 /*----------------------------------------------------------------------------*/
 struct UsbBaseConfig
 {
@@ -40,6 +41,8 @@ struct UsbBase
 
   /* Pointer to an aligned array with Queue Head descriptors */
   struct QueueHead *queueHeads;
+  /* Transfer descriptor pool memory */
+  struct TransferDescriptor *poolMemory;
   /* Transfer descriptor pool */
   struct Queue descriptorPool;
   /* Unique peripheral identifier */
