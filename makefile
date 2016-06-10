@@ -54,6 +54,12 @@ ifneq ($(CONFIG_ASSERTIONS),y)
   OPT_FLAGS += -DNDEBUG
 endif
 
+ifeq ($(VERBOSE),)
+  Q := @
+else
+  Q :=
+endif
+
 #Configure common paths and libraries
 INCLUDE_PATH += -Iinclude
 OUTPUT_DIR ?= build_$(PLATFORM)
@@ -93,15 +99,17 @@ COBJECTS = $(CSOURCES:%.c=$(OUTPUT_DIR)/%.o)
 all: $(TARGETS)
 
 $(LIBRARY_FILE): $(COBJECTS)
-	$(AR) -r $@ $^
+	@echo "$(AR): $@"
+	$(Q)$(AR) -c -r $@ $^
 
 $(OUTPUT_DIR)/%.o: %.c $(OPTION_FILE)
+	@echo "$(CC): $@"
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) $(INCLUDE_PATH) -MMD -MF $(@:%.o=%.d) -MT $@ $< -o $@
+	$(Q)$(CC) -c $(CFLAGS) $(INCLUDE_PATH) -MMD -MF $(@:%.o=%.d) -MT $@ $< -o $@
 
 $(OPTION_FILE): $(CONFIG_FILE)
 	@mkdir -p $(@D)
-	echo '$(OPTION_STRING)' > $@
+	$(Q)echo '$(OPTION_STRING)' > $@
 
 clean:
 	rm -f $(COBJECTS:%.o=%.d) $(COBJECTS)
