@@ -266,7 +266,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   switch (option)
   {
     case IF_ADDRESS:
-      if (*(const uint8_t *)data <= 127)
+      if (*(const uint16_t *)data <= 127)
       {
         interface->address = *(const uint8_t *)data;
         return E_OK;
