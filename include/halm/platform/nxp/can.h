@@ -51,6 +51,8 @@ struct Can
   void *poolBuffer;
   /* Desired baud rate */
   uint32_t rate;
+  /* Current interface mode */
+  uint8_t mode;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_SERIAL_H_ */

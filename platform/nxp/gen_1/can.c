@@ -13,6 +13,13 @@
 #include <halm/platform/nxp/gen_1/can_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
+enum mode
+{
+  MODE_LISTENER,
+  MODE_ACTIVE,
+  MODE_LOOPBACK
+};
+/*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(struct Can *, uint32_t, uint8_t, uint8_t);
 static void interruptHandler(void *);
 static uint32_t sendMessage(struct Can *, const struct CanMessage *, uint32_t);
@@ -55,6 +62,36 @@ static uint32_t calcBusTimings(struct Can *interface, uint32_t rate,
       | BTR_TSEG1(tseg1 - 1) | BTR_TSEG2(tseg2 - 1);
 
   return regValue;
+}
+/*----------------------------------------------------------------------------*/
+static void changeMode(struct Can *interface, enum mode mode)
+{
+  if (interface->mode != mode)
+  {
+    interface->mode = mode;
+
+    LPC_CAN_Type * const reg = interface->base.reg;
+    uint32_t value = reg->MOD;
+
+    switch (interface->mode)
+    {
+      case MODE_LISTENER:
+        value = (value & ~MOD_STM) | MOD_LOM;
+        break;
+
+      case MODE_ACTIVE:
+        value &= ~(MOD_LOM | MOD_STM);
+        break;
+
+      case MODE_LOOPBACK:
+        value = (value & ~MOD_LOM) | MOD_STM;
+        break;
+    }
+
+    /* LOM and STM bits can only be written in the Reset mode */
+    reg->MOD |= MOD_RM;
+    reg->MOD = value;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -144,7 +181,11 @@ static uint32_t sendMessage(struct Can *interface,
   //TODO Assert length, id
 
   uint32_t data[2] = {0};
+  uint32_t command = CMR_TR | CMR_STB(index);
   uint32_t information = TFI_DLC(message->length);
+
+  if (interface->mode == MODE_LOOPBACK)
+    command |= CMR_SRR;
 
   if (message->flags & CAN_EXTID)
     information |= TFI_FF;
@@ -158,8 +199,8 @@ static uint32_t sendMessage(struct Can *interface,
   reg->TX[index].TDA = data[0];
   reg->TX[index].TDB = data[1];
 
-  reg->CMR = CMR_TR | CMR_STB(index);
   reg->IER |= mask;
+  reg->CMR = command;
 
   return status & ~SR_TBS(index);
 }
@@ -188,18 +229,19 @@ static enum result canInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
   interface->callback = 0;
-  interface->rate = config->rate;
+  interface->mode = MODE_LISTENER;
 
-  //FIXME
   const size_t poolSize = config->rxBuffers + config->txBuffers;
 
-  res = queueInit(&interface->pool, 4, poolSize);
+  res = queueInit(&interface->pool, sizeof(struct CanMessage *), poolSize);
   if (res != E_OK)
     return res;
-  res = queueInit(&interface->rxQueue, 4, config->rxBuffers);
+  res = queueInit(&interface->rxQueue, sizeof(struct CanMessage *),
+      config->rxBuffers);
   if (res != E_OK)
     return res;
-  res = queueInit(&interface->txQueue, 4, config->txBuffers);
+  res = queueInit(&interface->txQueue, sizeof(struct CanMessage *),
+      config->txBuffers);
   if (res != E_OK)
     return res;
 
@@ -220,9 +262,12 @@ static enum result canInit(void *object, const void *configBase)
   reg->IER = 0; /* Disable Receive Interrupt */
   reg->GSR = 0; /* Reset error counter */
 
+  interface->rate = config->rate; //TODO Check value
   reg->BTR = calcBusTimings(interface, config->rate,
       CONFIG_PLATFORM_NXP_CAN_TSEG1, CONFIG_PLATFORM_NXP_CAN_TSEG2);
-  reg->MOD = 0; /* CAN in normal operation mode */
+
+  /* Disable Reset mode and activate Listen Only mode */
+  reg->MOD = MOD_LOM;
 
   LPC_CANAF->AFMR = AFMR_AccBP; //FIXME
 
@@ -279,6 +324,10 @@ static enum result canGet(void *object, enum ifOption option, void *data)
 //      *(size_t *)data = byteQueueSize(&interface->txQueue);
 //      return E_OK;
 
+    case IF_RATE:
+      *(uint32_t *)data = interface->rate;
+      return E_OK;
+
     default:
       return E_INVALID;
   }
@@ -288,9 +337,39 @@ static enum result canSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Can * const interface = object;
+  LPC_CAN_Type * const reg = interface->base.reg;
+
+  switch ((enum canOption)option)
+  {
+    case IF_CAN_ACTIVE:
+      changeMode(interface, MODE_ACTIVE);
+      return E_OK;
+
+    case IF_CAN_LISTENER:
+      changeMode(interface, MODE_LISTENER);
+      return E_OK;
+
+    case IF_CAN_LOOPBACK:
+      changeMode(interface, MODE_LOOPBACK);
+      return E_OK;
+
+    default:
+      break;
+  }
 
   switch (option)
   {
+    case IF_RATE:
+    {
+      const uint32_t rate = *(const uint32_t *)data;
+
+      interface->rate = rate; //TODO Check value
+      reg->BTR = calcBusTimings(interface, rate, CONFIG_PLATFORM_NXP_CAN_TSEG1,
+          CONFIG_PLATFORM_NXP_CAN_TSEG2);
+
+      return E_OK;
+    }
+
     default:
       return E_INVALID;
   }
@@ -326,6 +405,10 @@ static size_t canRead(void *object, void *buffer, size_t length)
 static size_t canWrite(void *object, const void *buffer, size_t length)
 {
   struct Can * const interface = object;
+
+  if (interface->mode == MODE_LISTENER)
+    return 0;
+
   LPC_CAN_Type * const reg = interface->base.reg;
   const size_t initialLength = length;
 

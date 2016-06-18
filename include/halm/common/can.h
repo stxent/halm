@@ -8,12 +8,23 @@
 #define HALM_COMMON_CAN_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 enum canFlags
 {
   CAN_EXTID = 0x01,
   CAN_RTR   = 0x02,
   CAN_FD    = 0x04
+};
+/*----------------------------------------------------------------------------*/
+enum canOption
+{
+  /** Enable active mode. */
+  IF_CAN_ACTIVE = IF_OPTION_END,
+  /** Enable listener mode. This mode is set by default. */
+  IF_CAN_LISTENER,
+  /** Enable loopback mode. */
+  IF_CAN_LOOPBACK
 };
 /*----------------------------------------------------------------------------*/
 struct CanMessage
