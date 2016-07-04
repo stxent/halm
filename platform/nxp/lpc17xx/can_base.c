@@ -49,11 +49,11 @@ static const struct PinEntry canPins[] = {
         /* Unavailable on LPC175x series */
         .key = PIN(0, 21), /* RD1 */
         .channel = 0,
-        .value = 2
+        .value = 3
     }, {
         .key = PIN(0, 22), /* TD1 */
         .channel = 0,
-        .value = 2
+        .value = 3
     }, {
         .key = PIN(2, 7), /* RD2 */
         .channel = 1,

@@ -380,7 +380,8 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
   struct CdcAcm * const interface = object;
   uint8_t *bufferPosition = buffer;
   const size_t initialLength = length;
-  irqState state;
+
+  assert(length >= maxPacketSize);
 
   if (interface->suspended)
     return 0;
@@ -388,11 +389,13 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
   while (!queueEmpty(&interface->rxRequestQueue))
   {
     struct UsbRequest *request;
+    irqState state;
+
     queuePeek(&interface->rxRequestQueue, &request);
+    if (length < request->length)
+      break;
 
     const size_t chunkLength = request->length;
-    if (length < chunkLength)
-      break;
 
     state = irqSave();
     queuePop(&interface->rxRequestQueue, 0);
@@ -428,7 +431,6 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
   const uint8_t *bufferPosition = buffer;
   const size_t initialLength = length;
   const size_t maxPacketSize = getPacketSize(interface);
-  irqState state;
 
   if (interface->suspended)
     return 0;
@@ -437,6 +439,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
   {
     const size_t bytesToWrite = length > maxPacketSize ? maxPacketSize : length;
     struct UsbRequest *request;
+    irqState state;
 
     state = irqSave();
     queuePop(&interface->txRequestQueue, &request);

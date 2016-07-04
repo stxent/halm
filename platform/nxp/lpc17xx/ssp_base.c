@@ -74,6 +74,10 @@ const struct PinEntry sspPins[] = {
         .channel = 0,
         .value = 3
     }, {
+        .key = PIN(1, 31), /* SSP1_SCK */
+        .channel = 1,
+        .value = 2
+    }, {
         .key = 0 /* End of pin function association list */
     }
 };
