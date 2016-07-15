@@ -391,6 +391,24 @@ static enum result i2sGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
+    case IF_AVAILABLE:
+      if (interface->rxDma)
+      {
+        *(size_t *)data = (dmaCount(interface->rxDma) + 1) >> 1;
+        return E_OK;
+      }
+      else
+        return E_INVALID;
+
+    case IF_PENDING:
+      if (interface->txDma)
+      {
+        *(size_t *)data = (dmaCount(interface->txDma) + 1) >> 1;
+        return E_OK;
+      }
+      else
+        return E_INVALID;
+
     case IF_STATUS:
     {
       enum result res;
@@ -402,24 +420,6 @@ static enum result i2sGet(void *object, enum ifOption option, void *data)
 
       return E_OK;
     }
-
-    case IF_RX_CAPACITY:
-      if (interface->rxDma)
-      {
-        *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->rxDma) + 1) >> 1);
-        return E_OK;
-      }
-      else
-        return E_INVALID;
-
-    case IF_TX_CAPACITY:
-      if (interface->txDma)
-      {
-        *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->txDma) + 1) >> 1);
-        return E_OK;
-      }
-      else
-        return E_INVALID;
 
     default:
       return E_INVALID;

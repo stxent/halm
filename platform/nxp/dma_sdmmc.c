@@ -156,6 +156,10 @@ static enum result controllerStart(void *object, void *destination,
   const uint32_t address = destination ?
       (uint32_t)destination : (uint32_t)source;
 
+  /* Address and size must be aligned along 4-byte boundary */
+  assert(!(address & 0x03));
+  assert(!(size & 0x03));
+
   /* Reset DMA */
   reg->CTRL |= CTRL_DMA_RESET | CTRL_FIFO_RESET;
   while (reg->CTRL & (CTRL_DMA_RESET | CTRL_FIFO_RESET));

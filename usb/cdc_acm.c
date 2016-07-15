@@ -381,7 +381,7 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
   uint8_t *bufferPosition = buffer;
   const size_t initialLength = length;
 
-  assert(length >= maxPacketSize);
+  assert(length >= getPacketSize(interface));
 
   if (interface->suspended)
     return 0;

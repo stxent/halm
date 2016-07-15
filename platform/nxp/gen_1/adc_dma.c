@@ -133,8 +133,8 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-    case IF_RX_CAPACITY:
-      *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->dma) + 1) >> 1);
+    case IF_AVAILABLE:
+      *(size_t *)data = (dmaCount(interface->dma) + 1) >> 1;
       return E_OK;
 
     case IF_STATUS:

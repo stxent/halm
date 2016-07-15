@@ -36,7 +36,7 @@ void sspConfigPins(struct SspBase *interface,
 /*----------------------------------------------------------------------------*/
 void sspSetRate(struct SspBase *interface, uint32_t rate)
 {
-  assert(rate);
+  assert(rate != 0);
 
   const uint32_t clock = sspGetClock(interface);
   uint32_t divisor = ((clock + (rate - 1)) >> 1) / rate - 1;

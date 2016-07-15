@@ -133,8 +133,8 @@ static enum result dacGet(void *object, enum ifOption option, void *data)
     case IF_STATUS:
       return dmaStatus(interface->dma);
 
-    case IF_TX_CAPACITY:
-      *(size_t *)data = BLOCK_COUNT - ((dmaCount(interface->dma) + 1) >> 1);
+    case IF_PENDING:
+      *(size_t *)data = (dmaCount(interface->dma) + 1) >> 1;
       return E_OK;
 
     default:

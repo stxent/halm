@@ -47,13 +47,12 @@ static const struct ListNode *findEntry(const struct List *descriptors,
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-/* TODO Add support for language identifier */
 static enum result getDescriptorData(const struct List *descriptors,
-    uint16_t keyword, uint16_t language, uint8_t *response,
-    uint16_t *responseLength, uint16_t maxResponseLength)
+    uint16_t keyword, uint16_t language __attribute__((unused)),
+    uint8_t *response, uint16_t *responseLength, uint16_t maxResponseLength)
 {
-  const uint8_t descriptorType = DESCRIPTOR_TYPE(keyword);
   const uint8_t descriptorIndex = DESCRIPTOR_INDEX(keyword);
+  const uint8_t descriptorType = DESCRIPTOR_TYPE(keyword);
   const struct ListNode *entryNode = findEntry(descriptors,
       descriptorType, descriptorIndex);
   const struct UsbDescriptor *entry;
@@ -89,9 +88,7 @@ static enum result getDescriptorData(const struct List *descriptors,
     chunkLength = data->totalLength;
   }
   else
-  {
     chunkLength = entry->length;
-  }
 
   if (chunkLength > maxResponseLength)
   {
@@ -101,20 +98,21 @@ static enum result getDescriptorData(const struct List *descriptors,
   }
 
   if (chunkLength)
+  {
     *responseLength = chunkLength;
 
-  while (chunkLength)
-  {
-    const uint8_t entryLength = entry->length;
+    while (chunkLength)
+    {
+      const uint8_t entryLength = entry->length;
 
-    memcpy(response, entry, entryLength);
-    response += entryLength;
-    chunkLength -= entryLength;
+      memcpy(response, entry, entryLength);
+      response += entryLength;
+      chunkLength -= entryLength;
 
-    // TODO Rewrite loop to reduce operation count
-    if (!(entryNode = listNext(entryNode)))
-      break;
-    listData(descriptors, entryNode, &entry);
+      if (!(entryNode = listNext(entryNode)))
+        break;
+      listData(descriptors, entryNode, &entry);
+    }
   }
 
   return E_OK;
@@ -241,9 +239,9 @@ static enum result handleStandardEndpointRequest(struct UsbControl *control,
   return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleStandardInterfaceRequest(struct UsbControl *control,
-    const struct UsbSetupPacket *packet, uint8_t *response,
-    uint16_t *responseLength, uint16_t maxResponseLength)
+static enum result handleStandardInterfaceRequest(struct UsbControl *control
+    __attribute__((unused)), const struct UsbSetupPacket *packet,
+    uint8_t *response, uint16_t *responseLength, uint16_t maxResponseLength)
 {
   switch (packet->request)
   {
@@ -257,7 +255,7 @@ static enum result handleStandardInterfaceRequest(struct UsbControl *control,
       *responseLength = 2;
       break;
 
-    case REQUEST_GET_INTERFACE: // TODO use bNumInterfaces
+    case REQUEST_GET_INTERFACE:
       if (maxResponseLength < 1)
         return E_VALUE;
 
@@ -265,11 +263,12 @@ static enum result handleStandardInterfaceRequest(struct UsbControl *control,
       *responseLength = 1;
       break;
 
-    case REQUEST_SET_INTERFACE: // TODO use bNumInterfaces
+    case REQUEST_SET_INTERFACE:
       usbTrace("requests: set interface %u", packet->value);
 
+      /* Only one interface is supported */
       if (packet->value != 0)
-        return E_ERROR; //FIXME
+        return E_ERROR;
       *responseLength = 0;
       break;
 

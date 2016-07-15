@@ -20,7 +20,7 @@ uint32_t i2cGetRate(const struct I2cBase *interface)
 /*----------------------------------------------------------------------------*/
 void i2cSetRate(struct I2cBase *interface, uint32_t rate)
 {
-  assert(rate);
+  assert(rate != 0);
 
   LPC_I2C_Type * const reg = interface->reg;
   const uint32_t clock = i2cGetClock(interface);
