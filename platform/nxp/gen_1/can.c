@@ -20,7 +20,7 @@ enum mode
   MODE_LOOPBACK
 };
 /*----------------------------------------------------------------------------*/
-static uint32_t calcBusTimings(struct Can *, uint32_t, uint8_t, uint8_t);
+static uint32_t calcBusTimings(struct Can *, uint32_t);
 static void interruptHandler(void *);
 static uint32_t sendMessage(struct Can *, const struct CanMessage *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -50,16 +50,17 @@ static const struct InterfaceClass canTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Can = &canTable;
 /*----------------------------------------------------------------------------*/
-static uint32_t calcBusTimings(struct Can *interface, uint32_t rate,
-    uint8_t tseg1, uint8_t tseg2)
+static uint32_t calcBusTimings(struct Can *interface, uint32_t rate)
 {
   assert(rate != 0);
 
-  const unsigned int bitsPerFrame = 1 + tseg1 + tseg2;
+  const unsigned int bitsPerFrame = 1 + CONFIG_PLATFORM_NXP_CAN_TSEG1
+      + CONFIG_PLATFORM_NXP_CAN_TSEG2;
   const uint32_t clock = canGetClock((struct CanBase *)interface);
   const uint32_t prescaler = clock / rate / bitsPerFrame;
   const uint32_t regValue = BTR_BRP(prescaler - 1) | BTR_SJW(0)
-      | BTR_TSEG1(tseg1 - 1) | BTR_TSEG2(tseg2 - 1);
+      | BTR_TSEG1(CONFIG_PLATFORM_NXP_CAN_TSEG1 - 1)
+      | BTR_TSEG2(CONFIG_PLATFORM_NXP_CAN_TSEG2 - 1);
 
   return regValue;
 }
@@ -158,6 +159,9 @@ static void interruptHandler(void *object)
 static uint32_t sendMessage(struct Can *interface,
     const struct CanMessage *message, uint32_t status)
 {
+  assert(message->id < ((message->flags & CAN_EXTID) ? 1UL << 29 : 1UL << 11));
+  assert(message->length <= 8);
+
   LPC_CAN_Type * const reg = interface->base.reg;
   unsigned int index;
   uint32_t mask;
@@ -177,8 +181,6 @@ static uint32_t sendMessage(struct Can *interface,
     index = 2;
     mask = IER_TIE3;
   }
-
-  //TODO Assert length, id
 
   uint32_t data[2] = {0};
   uint32_t command = CMR_TR | CMR_STB(index);
@@ -245,7 +247,6 @@ static enum result canInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  //TODO CAN FD
   interface->poolBuffer = malloc(sizeof(struct CanStandardMessage) * poolSize);
 
   struct CanStandardMessage *message = interface->poolBuffer;
@@ -262,9 +263,8 @@ static enum result canInit(void *object, const void *configBase)
   reg->IER = 0; /* Disable Receive Interrupt */
   reg->GSR = 0; /* Reset error counter */
 
-  interface->rate = config->rate; //TODO Check value
-  reg->BTR = calcBusTimings(interface, config->rate,
-      CONFIG_PLATFORM_NXP_CAN_TSEG1, CONFIG_PLATFORM_NXP_CAN_TSEG2);
+  interface->rate = config->rate;
+  reg->BTR = calcBusTimings(interface, interface->rate);
 
   /* Disable Reset mode and activate Listen Only mode */
   reg->MOD = MOD_LOM;
@@ -316,13 +316,13 @@ static enum result canGet(void *object, enum ifOption option, void *data)
 
   switch (option)
   {
-//    case IF_AVAILABLE:
-//      *(size_t *)data = byteQueueSize(&interface->rxQueue);
-//      return E_OK;
-//
-//    case IF_PENDING:
-//      *(size_t *)data = byteQueueSize(&interface->txQueue);
-//      return E_OK;
+    case IF_AVAILABLE:
+      *(size_t *)data = queueSize(&interface->rxQueue);
+      return E_OK;
+
+    case IF_PENDING:
+      *(size_t *)data = queueSize(&interface->txQueue);
+      return E_OK;
 
     case IF_RATE:
       *(uint32_t *)data = interface->rate;
@@ -363,9 +363,11 @@ static enum result canSet(void *object, enum ifOption option,
     {
       const uint32_t rate = *(const uint32_t *)data;
 
-      interface->rate = rate; //TODO Check value
-      reg->BTR = calcBusTimings(interface, rate, CONFIG_PLATFORM_NXP_CAN_TSEG1,
-          CONFIG_PLATFORM_NXP_CAN_TSEG2);
+      interface->rate = rate;
+
+      reg->MOD |= MOD_RM; /* Enable Reset mode */
+      reg->BTR = calcBusTimings(interface, rate);
+      reg->MOD &= ~MOD_RM;
 
       return E_OK;
     }
