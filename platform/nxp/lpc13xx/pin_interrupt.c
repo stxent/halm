@@ -58,8 +58,8 @@ static struct PinInterruptHandler *handlers[4] = {0};
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t port)
 {
-  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0 +
-      ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0) * port);
+  return (LPC_GPIO_Type *)((uintptr_t)LPC_GPIO0 +
+      ((uintptr_t)LPC_GPIO1 - (uintptr_t)LPC_GPIO0) * port);
 }
 /*----------------------------------------------------------------------------*/
 static inline irqNumber calcVector(uint8_t port)

@@ -21,13 +21,13 @@ static const uint8_t pinRegMap[4][12] = {
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(struct PinData data)
 {
-  return (LPC_GPIO_Type *)((uint32_t)LPC_GPIO0
-      + data.port * ((uint32_t)LPC_GPIO1 - (uint32_t)LPC_GPIO0));
+  return (LPC_GPIO_Type *)((uintptr_t)LPC_GPIO0
+      + data.port * ((uintptr_t)LPC_GPIO1 - (uintptr_t)LPC_GPIO0));
 }
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcControlReg(struct PinData data)
 {
-  return (volatile uint32_t *)((uint32_t)LPC_IOCON
+  return (volatile uint32_t *)((uintptr_t)LPC_IOCON
       + pinRegMap[data.port][data.offset]);
 }
 /*----------------------------------------------------------------------------*/

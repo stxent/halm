@@ -9,8 +9,8 @@
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcBranchReg(enum sysClockBranch branch)
 {
-  const uint32_t address = branch < 0x200 ? (uint32_t)LPC_CCU1 + (branch << 3)
-      : (uint32_t)LPC_CCU2 + ((branch - 0x200) << 3);
+  const uint32_t address = branch < 0x200 ? (uintptr_t)LPC_CCU1 + (branch << 3)
+      : (uintptr_t)LPC_CCU2 + ((branch - 0x200) << 3);
 
   return (volatile uint32_t *)address;
 }

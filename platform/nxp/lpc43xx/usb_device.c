@@ -580,7 +580,7 @@ static enum result epEnqueueRx(struct UsbEndpoint *ep,
       request, request->buffer, request->capacity);
 
   if (!descriptor)
-    return E_EMPTY;
+    return E_MEMORY;
 
   epAppendDescriptor(ep, descriptor);
   return E_OK;
@@ -593,7 +593,7 @@ static enum result epEnqueueTx(struct UsbEndpoint *ep,
       request, request->buffer, request->length);
 
   if (!descriptor)
-    return E_EMPTY;
+    return E_MEMORY;
 
   epAppendDescriptor(ep, descriptor);
   return E_OK;

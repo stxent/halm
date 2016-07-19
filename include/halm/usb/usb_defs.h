@@ -112,16 +112,6 @@ enum
   REQUEST_TYPE_RESERVED = 3
 };
 /*----------------------------------------------------------------------------*/
-enum
-{
-  LANGID_FRENCH     = 0x040C,
-  LANGID_GERMAN     = 0x0407,
-  LANGID_JAPANESE   = 0x0411,
-  LANGID_RUSSIAN    = 0x0419,
-  LANGID_CHINESE    = 0x0804,
-  LANGID_ENGLISH_UK = 0x0809
-};
-/*----------------------------------------------------------------------------*/
 #define REQUEST_DIRECTION_MASK          BIT_FIELD(MASK(1), 7)
 #define REQUEST_DIRECTION_VALUE(reg) \
     FIELD_VALUE((reg), REQUEST_DIRECTION_MASK, 7)
