@@ -225,7 +225,7 @@ static enum result singleEdgeInit(void *object, const void *configBase)
     return E_BUSY;
 
   /* Initialize output pin */
-  const unsigned int channel = configOutputPin(unit->base.channel, config->pin);
+  const uint8_t channel = configOutputPin(unit->base.channel, config->pin);
 
   pwm->channel = channel;
   pwm->event = event;
@@ -359,7 +359,7 @@ static enum result doubleEdgeInit(void *object, const void *configBase)
     return E_BUSY;
 
   /* Initialize output pin */
-  const unsigned int channel = configOutputPin(unit->base.channel, config->pin);
+  const uint8_t channel = configOutputPin(unit->base.channel, config->pin);
 
   pwm->channel = channel;
   pwm->leadingEvent = leadingEvent;

@@ -61,22 +61,20 @@ static void interruptHandler(void *object)
   }
   if (reg->LSR & LSR_THRE)
   {
-    const size_t txQueueCapacity = byteQueueCapacity(&interface->txQueue);
     const size_t txQueueSize = byteQueueSize(&interface->txQueue);
 
     /* Fill FIFO with selected burst size or less */
     size_t count = txQueueSize < TX_FIFO_SIZE ? txQueueSize : TX_FIFO_SIZE;
 
-    /* Call user handler when transmit queue becomes half empty */
-    event |= count && txQueueSize - count < (txQueueCapacity >> 1);
+    /* Call user handler when transmit queue is empty */
+    event |= count == txQueueSize;
 
     while (count--)
       reg->THR = byteQueuePop(&interface->txQueue);
   }
 
-  /* User handler will be called when receive queue becomes half full */
-  event |= byteQueueSize(&interface->rxQueue) >=
-      (byteQueueCapacity(&interface->rxQueue) >> 1);
+  /* User handler will be called when receive queue is not empty */
+  event |= byteQueueEmpty(&interface->rxQueue) == false;
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);

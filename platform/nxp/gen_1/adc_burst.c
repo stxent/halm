@@ -155,7 +155,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   interface->left = samples;
 
   /* Clear pending interrupts */
-  (void)DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
+  (void)reg->DR[interface->pin.channel];
   /* Enable interrupts for the channel */
   reg->INTEN = INTEN_AD(interface->pin.channel);
   irqEnable(unit->base.irq);

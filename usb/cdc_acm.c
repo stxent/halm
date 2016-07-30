@@ -119,7 +119,7 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   }
   else if (queueFull(&interface->txRequestQueue))
   {
-    /* Notify when the pool becomes full */
+    /* Notify when all data has been sent */
     if (interface->callback)
       interface->callback(interface->callbackArgument);
   }

@@ -190,7 +190,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   interface->buffer = buffer;
 
   /* Clear pending interrupts */
-  (void)DR_RESULT_VALUE(reg->DR[interface->event]);
+  (void)reg->DR[interface->event];
   /* Enable interrupts for the channel with the highest number */
   reg->INTEN = INTEN_AD(interface->event);
   irqEnable(unit->base.irq);
