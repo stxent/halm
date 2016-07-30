@@ -22,8 +22,6 @@ struct DacDmaConfig
 {
   /** Mandatory: conversion rate. */
   uint32_t rate;
-  /** Mandatory: size in elements of each buffer. */
-  uint16_t size;
   /** Optional: initial output value. */
   uint16_t value;
   /** Mandatory: analog output. */
@@ -40,9 +38,6 @@ struct DacDma
   void *callbackArgument;
 
   struct Dma *dma;
-
-  /* Size of each buffer */
-  uint16_t size;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_DAC_DMA_H_ */

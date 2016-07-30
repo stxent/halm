@@ -14,44 +14,12 @@ extern const struct DmaClass * const GpDma;
 /*----------------------------------------------------------------------------*/
 struct GpDmaConfig
 {
-  /** Mandatory: channel number. */
-  uint8_t channel;
-
-  /** Mandatory: destination configuration. */
-  struct
-  {
-    bool increment;
-  } destination;
-
-  /** Mandatory: source configuration. */
-  struct
-  {
-    bool increment;
-  } source;
-
-  /** Mandatory: number of transfers that make up a burst transfer request. */
-  enum dmaBurst burst;
   /** Mandatory: request connection to the peripheral or memory. */
   enum gpDmaEvent event;
   /** Mandatory: transfer type. */
   enum gpDmaType type;
-  /** Mandatory: source and destination transfer widths. */
-  enum dmaWidth width;
-};
-/*----------------------------------------------------------------------------*/
-struct GpDmaRuntimeConfig
-{
-  /** Mandatory: destination configuration. */
-  struct
-  {
-    bool increment;
-  } destination;
-
-  /** Mandatory: source configuration. */
-  struct
-  {
-    bool increment;
-  } source;
+  /** Mandatory: channel number. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct GpDma
@@ -61,8 +29,15 @@ struct GpDma
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Status of the last transfer */
-  bool error;
+  /* Control register value */
+  uint32_t control;
+  /* The destination address of the data to be transferred */
+  uintptr_t destination;
+  /* The source address of the data */
+  uintptr_t source;
+
+  /* State of the transfer */
+  uint8_t state;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPDMA_H_ */

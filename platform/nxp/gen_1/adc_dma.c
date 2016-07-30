@@ -10,7 +10,6 @@
 #include <halm/platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
-#define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static enum result dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
@@ -40,48 +39,61 @@ static void dmaHandler(void *object)
 {
   struct AdcDma * const interface = object;
   struct AdcUnit * const unit = interface->unit;
-  LPC_ADC_Type * const reg = unit->base.reg;
-  const size_t count = dmaCount(interface->dma);
-  const enum result res = dmaStatus(interface->dma);
+  bool event = false;
 
   /* Scatter-gather transfer finished */
-  if (res != E_BUSY)
+  if (dmaStatus(interface->dma) != E_BUSY)
   {
+    LPC_ADC_Type * const reg = unit->base.reg;
+
     /* Stop automatic conversion */
     reg->CR &= ~CR_START_MASK;
     /* Disable requests */
     reg->INTEN = 0;
 
     adcUnitUnregister(unit);
+    event = true;
+  }
+  else if ((dmaPending(interface->dma) & 1) == 0)
+  {
+    /*
+     * Each block consists of two buffers. Call user function
+     * at the end of the block or at the end of the transfer.
+     */
+    event = true;
   }
 
-  /*
-   * Each block consists of two buffers. Call user function
-   * at the end of the block or at the end of the transfer.
-   */
-  if ((res != E_BUSY || !(count & 1)) && interface->callback)
+  if (event && interface->callback)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct AdcDma *interface,
     const struct AdcDmaConfig *config)
 {
+  static const struct GpDmaSettings dmaSettings = {
+      .source = {
+          .burst = DMA_BURST_1,
+          .width = DMA_WIDTH_HALFWORD,
+          .increment = false
+      },
+      .destination = {
+          .burst = DMA_BURST_4,
+          .width = DMA_WIDTH_HALFWORD,
+          .increment = true
+      }
+  };
   const struct GpDmaListConfig dmaConfig = {
       .number = BLOCK_COUNT << 1,
-      .size = config->size >> 1,
-      .channel = config->dma,
-      .destination.increment = true,
-      .source.increment = false,
-      .burst = DMA_BURST_1,
       .event = GPDMA_ADC0 + config->parent->base.channel,
       .type = GPDMA_TYPE_P2M,
-      .width = DMA_WIDTH_HALFWORD,
+      .channel = config->dma,
       .silent = false
   };
 
   interface->dma = init(GpDmaList, &dmaConfig);
   if (!interface->dma)
     return E_ERROR;
+  dmaConfigure(interface->dma, &dmaSettings);
   dmaCallback(interface->dma, dmaHandler, interface);
 
   return E_OK;
@@ -103,7 +115,6 @@ static enum result adcInit(void *object, const void *configBase)
 
   interface->callback = 0;
   interface->event = config->event + 1;
-  interface->size = config->size;
   interface->unit = config->parent;
 
   return E_OK;
@@ -134,7 +145,7 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_AVAILABLE:
-      *(size_t *)data = (dmaCount(interface->dma) + 1) >> 1;
+      *(size_t *)data = (dmaPending(interface->dma) + 1) >> 1;
       return E_OK;
 
     case IF_STATUS:
@@ -156,44 +167,48 @@ static size_t adcRead(void *object, void *buffer, size_t length)
 {
   struct AdcDma * const interface = object;
   struct AdcUnit * const unit = interface->unit;
+  const size_t samples = length / sizeof(uint16_t);
+  const uint8_t channel = interface->pin.channel;
+
+  /* At least 2 samples */
+  assert(samples >= 2);
+
+  const size_t parts[] = {samples / 2, samples - samples / 2};
   LPC_ADC_Type * const reg = unit->base.reg;
+  const uint32_t * const source = (const uint32_t *)(reg->DR + channel);
+  uint16_t *destination = buffer;
 
-  /* Strict requirements on the buffer length */
-  assert(length / SAMPLE_SIZE > (interface->size >> 1));
-  assert(length / SAMPLE_SIZE <= interface->size);
+  /* When the previous transfer is ongoing it will be continued */
+  dmaAppend(interface->dma, destination, source, parts[0]);
+  destination += parts[0];
+  dmaAppend(interface->dma, destination, source, parts[1]);
 
-  const size_t samples = length / SAMPLE_SIZE;
-  const bool ongoing = dmaStatus(interface->dma) == E_BUSY;
-
-  if (!ongoing)
+  if (dmaStatus(interface->dma) != E_BUSY)
   {
-    if (adcUnitRegister(unit, 0, interface) != E_OK)
-      return 0;
-
     /* Clear pending requests */
-    (void)DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
-  }
+    (void)(*source);
 
-  /* When previous transfer is ongoing it will be continued */
-  const enum result res = dmaStart(interface->dma, buffer,
-      (void *)&reg->DR[interface->pin.channel], samples);
+    if (adcUnitRegister(unit, 0, interface) != E_OK)
+      goto error;
 
-  if (res != E_OK)
-  {
-    adcUnitUnregister(unit);
-    return 0;
-  }
+    if (dmaEnable(interface->dma) != E_OK)
+    {
+      adcUnitUnregister(unit);
+      goto error;
+    }
 
-  if (!ongoing)
-  {
     /* Enable DMA requests */
-    reg->INTEN = INTEN_AD(interface->pin.channel);
+    reg->INTEN = INTEN_AD(channel);
 
     /* Set conversion channel */
-    reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(interface->pin.channel);
+    reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(channel);
     /* Start the conversion */
     reg->CR |= CR_START(interface->event);
   }
 
-  return samples * SAMPLE_SIZE;
+  return samples * sizeof(uint16_t);
+
+error:
+  dmaClear(interface->dma);
+  return 0;
 }

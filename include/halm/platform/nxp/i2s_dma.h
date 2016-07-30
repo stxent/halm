@@ -18,11 +18,6 @@ struct I2sDmaConfig
   uint32_t rate;
   /** Mandatory: word width. */
   enum i2sWidth width;
-  /**
-   * Mandatory: size in elements of each buffer. When the stereo mode
-   * is enabled, one sample consists of two values for left and right channels.
-   */
-  uint16_t size;
 
   struct
   {
@@ -73,16 +68,12 @@ struct I2sDma
   struct Dma *rxDma, *txDma;
   /* Sample rate */
   uint32_t sampleRate;
-  /* Size of each buffer */
-  uint16_t size;
-  /* Word width */
-  uint8_t width;
-  /* Mono format enabled flag */
+  /* Size of the sample in power of two format */
+  uint8_t sampleSize;
+  /* Enable mono mode */
   bool mono;
-  /* Receiver enabled flag */
-  bool rx;
-  /* Transmitter enabled flag */
-  bool tx;
+  /* Enable slave mode */
+  bool slave;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_I2S_DMA_H_ */

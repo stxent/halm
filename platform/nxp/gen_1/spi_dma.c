@@ -12,9 +12,9 @@
 #define DUMMY_FRAME 0xFF
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
-static void dmaRxSetup(struct SpiDma *);
 static enum result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
-static void dmaTxSetup(struct SpiDma *);
+static void dmaSetupRx(struct Dma *, struct Dma *);
+static void dmaSetupTx(struct Dma *, struct Dma *);
 static enum result getStatus(const struct SpiDma *);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_SSP_PM
@@ -51,74 +51,97 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void dmaRxSetup(struct SpiDma *interface)
-{
-  static const struct GpDmaRuntimeConfig configs[] = {
-      {
-          .source.increment = false,
-          .destination.increment = true
-      },
-      {
-          .source.increment = false,
-          .destination.increment = false
-      }
-  };
-
-  /* Return values are ignored, increment setup cannot fail */
-  dmaReconfigure(interface->rxDma, &configs[0]);
-  dmaReconfigure(interface->txDma, &configs[1]);
-}
-/*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
-  const struct GpDmaConfig configs[] = {
+  const struct GpDmaConfig dmaConfigs[] = {
       {
-          .channel = rxChannel,
-          .destination.increment = true,
-          .source.increment = false,
-          .burst = DMA_BURST_4,
           .event = GPDMA_SSP0_RX + interface->base.channel,
           .type = GPDMA_TYPE_P2M,
-          .width = DMA_WIDTH_BYTE
-      }, {
-          .channel = txChannel,
-          .destination.increment = false,
-          .source.increment = true,
-          .burst = DMA_BURST_4,
+          .channel = rxChannel
+      },
+      {
           .event = GPDMA_SSP0_TX + interface->base.channel,
           .type = GPDMA_TYPE_M2P,
-          .width = DMA_WIDTH_BYTE
+          .channel = txChannel
       }
   };
 
-  interface->rxDma = init(GpDma, &configs[0]);
+  interface->rxDma = init(GpDma, &dmaConfigs[0]);
   if (!interface->rxDma)
     return E_ERROR;
 
-  interface->txDma = init(GpDma, &configs[1]);
+  interface->txDma = init(GpDma, &dmaConfigs[1]);
   if (!interface->txDma)
     return E_ERROR;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void dmaTxSetup(struct SpiDma *interface)
+static void dmaSetupRx(struct Dma *rx, struct Dma *tx)
 {
-  static const struct GpDmaRuntimeConfig configs[] = {
+  static const struct GpDmaSettings dmaSettings[] = {
       {
-          .source.increment = false,
-          .destination.increment = false
+          .source = {
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          },
+          .destination = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = true
+          }
       },
       {
-          .source.increment = true,
-          .destination.increment = false
+          .source = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          },
+          .destination = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          }
       }
   };
 
-  /* Return values are ignored, increment setup cannot fail */
-  dmaReconfigure(interface->rxDma, &configs[0]);
-  dmaReconfigure(interface->txDma, &configs[1]);
+  dmaConfigure(rx, &dmaSettings[0]);
+  dmaConfigure(tx, &dmaSettings[1]);
+}
+/*----------------------------------------------------------------------------*/
+static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
+{
+  static const struct GpDmaSettings dmaSettings[] = {
+      {
+          .source = {
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          },
+          .destination = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          }
+      },
+      {
+          .source = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = true
+          },
+          .destination = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          }
+      }
+  };
+
+  dmaConfigure(rx, &dmaSettings[0]);
+  dmaConfigure(tx, &dmaSettings[1]);
 }
 /*----------------------------------------------------------------------------*/
 static enum result getStatus(const struct SpiDma *interface)
@@ -128,8 +151,6 @@ static enum result getStatus(const struct SpiDma *interface)
 
   if (reg->SR & SR_BSY)
     return E_BUSY;
-  if ((res = dmaStatus(interface->txDma)) != E_OK)
-    return res;
   if ((res = dmaStatus(interface->rxDma)) != E_OK)
     return res;
 
@@ -291,7 +312,6 @@ static size_t spiRead(void *object, void *buffer, size_t length)
 {
   struct SpiDma * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
-  enum result res;
 
   if (!length)
     return 0;
@@ -303,34 +323,40 @@ static size_t spiRead(void *object, void *buffer, size_t length)
   reg->DMACR = 0;
   reg->DMACR = DMACR_RXDMAE | DMACR_TXDMAE;
 
-  dmaRxSetup(interface);
-
-  res = dmaStart(interface->rxDma, buffer, (const void *)&reg->DR, length);
-  if (res != E_OK)
-    return 0;
-
+  dmaSetupRx(interface->rxDma, interface->txDma);
   interface->dummy = DUMMY_FRAME;
-  res = dmaStart(interface->txDma, (void *)&reg->DR, &interface->dummy, length);
-  if (res != E_OK)
+
+  const void * const dummy = &interface->dummy;
+  void * const target = (void *)&reg->DR;
+
+  dmaAppend(interface->rxDma, buffer, target, length);
+  dmaAppend(interface->txDma, target, dummy, length);
+
+  if (dmaEnable(interface->rxDma) != E_OK)
+    goto error;
+  if (dmaEnable(interface->txDma) != E_OK)
   {
-    dmaStop(interface->rxDma);
-    return 0;
+    dmaDisable(interface->rxDma);
+    goto error;
   }
+
+  enum result res = E_OK;
 
   if (interface->blocking)
-  {
-    while ((res = getStatus(interface)) == E_BUSY)
-      barrier();
-  }
+    while ((res = getStatus(interface)) == E_BUSY);
 
   return res == E_OK ? length : 0;
+
+error:
+  dmaClear(interface->txDma);
+  dmaClear(interface->rxDma);
+  return 0;
 }
 /*----------------------------------------------------------------------------*/
 static size_t spiWrite(void *object, const void *buffer, size_t length)
 {
   struct SpiDma * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
-  enum result res;
 
   if (!length)
     return 0;
@@ -342,25 +368,31 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
   reg->DMACR = 0;
   reg->DMACR = DMACR_RXDMAE | DMACR_TXDMAE;
 
-  dmaTxSetup(interface);
+  dmaSetupTx(interface->rxDma, interface->txDma);
 
-  res = dmaStart(interface->rxDma, &interface->dummy, (const void *)&reg->DR,
-      length);
-  if (res != E_OK)
-    return 0;
+  void * const dummy = &interface->dummy;
+  void * const target = (void *)&reg->DR;
 
-  res = dmaStart(interface->txDma, (void *)&reg->DR, buffer, length);
-  if (res != E_OK)
+  dmaAppend(interface->rxDma, dummy, target, length);
+  dmaAppend(interface->txDma, target, buffer, length);
+
+  if (dmaEnable(interface->rxDma) != E_OK)
+    goto error;
+  if (dmaEnable(interface->txDma) != E_OK)
   {
-    dmaStop(interface->rxDma);
-    return 0;
+    dmaDisable(interface->rxDma);
+    goto error;
   }
+
+  enum result res = E_OK;
 
   if (interface->blocking)
-  {
-    while ((res = getStatus(interface)) == E_BUSY)
-      barrier();
-  }
+    while ((res = getStatus(interface)) == E_BUSY);
 
   return res == E_OK ? length : 0;
+
+error:
+  dmaClear(interface->txDma);
+  dmaClear(interface->rxDma);
+  return 0;
 }

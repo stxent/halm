@@ -9,16 +9,31 @@
 #include <halm/platform/nxp/gpdma_defs.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+enum state
+{
+  STATE_IDLE,
+  STATE_READY,
+  STATE_DONE,
+  STATE_BUSY,
+  STATE_ERROR
+};
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *, enum result);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
+
 static void channelCallback(void *, void (*)(void *), void *);
-static size_t channelCount(const void *);
-static enum result channelReconfigure(void *, const void *);
-static enum result channelStart(void *, void *, const void *, size_t);
+static void channelConfigure(void *, const void *);
+
+static enum result channelEnable(void *);
+static void channelDisable(void *);
+static size_t channelPending(const void *);
+static size_t channelResidue(const void *);
 static enum result channelStatus(const void *);
-static void channelStop(void *);
+
+static void channelAppend(void *, void *, const void *, size_t);
+static void channelClear(void *);
 /*----------------------------------------------------------------------------*/
 static const struct DmaClass channelTable = {
     .size = sizeof(struct GpDma),
@@ -26,11 +41,16 @@ static const struct DmaClass channelTable = {
     .deinit = channelDeinit,
 
     .callback = channelCallback,
-    .count = channelCount,
-    .reconfigure = channelReconfigure,
-    .start = channelStart,
+    .configure = channelConfigure,
+
+    .enable = channelEnable,
+    .disable = channelDisable,
+    .pending = channelPending,
+    .residue = channelResidue,
     .status = channelStatus,
-    .stop = channelStop
+
+    .append = channelAppend,
+    .clear = channelClear
 };
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDma = &channelTable;
@@ -40,7 +60,7 @@ static void interruptHandler(void *object, enum result res)
   struct GpDma * const channel = object;
 
   gpDmaClearDescriptor(channel->base.number);
-  channel->error = res != E_OK;
+  channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
@@ -50,49 +70,22 @@ static enum result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaConfig * const config = configBase;
   const struct GpDmaBaseConfig baseConfig = {
-      .channel = config->channel,
       .event = config->event,
-      .type = config->type
+      .type = config->type,
+      .channel = config->channel
   };
   struct GpDma * const channel = object;
   enum result res;
-
-  assert(config->burst != DMA_BURST_2 && config->burst <= DMA_BURST_256);
-  assert(config->width <= DMA_WIDTH_WORD);
 
   /* Call base class constructor */
   if ((res = GpDmaBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  channel->base.control |= CONTROL_INT | CONTROL_SRC_WIDTH(config->width)
-      | CONTROL_DST_WIDTH(config->width);
-  channel->base.config |= CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
   channel->base.handler = interruptHandler;
 
   channel->callback = 0;
-  channel->error = false;
-
-  /* Set four-byte burst size by default */
-  uint8_t dstBurst = DMA_BURST_4, srcBurst = DMA_BURST_4;
-
-  if (config->type == GPDMA_TYPE_M2P)
-    dstBurst = config->burst;
-  if (config->type == GPDMA_TYPE_P2M)
-    srcBurst = config->burst;
-
-  /* Two-byte burst requests are unsupported */
-  if (srcBurst >= DMA_BURST_4)
-    --srcBurst;
-  if (dstBurst >= DMA_BURST_4)
-    --dstBurst;
-
-  channel->base.control |= CONTROL_SRC_BURST(srcBurst)
-      | CONTROL_DST_BURST(dstBurst);
-
-  if (config->source.increment)
-    channel->base.control |= CONTROL_SRC_INC;
-  if (config->destination.increment)
-    channel->base.control |= CONTROL_DST_INC;
+  channel->control = 0;
+  channel->state = STATE_IDLE;
 
   return E_OK;
 }
@@ -111,81 +104,119 @@ static void channelCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static size_t channelCount(const void *object)
+static void channelConfigure(void *object, const void *settingsBase)
 {
-  const struct GpDma * const channel = object;
-  const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
-
-  if (gpDmaGetDescriptor(channel->base.number) != object)
-    return 0;
-
-  return CONTROL_SIZE_VALUE(channel->base.control)
-      - CONTROL_SIZE_VALUE(reg->CONTROL);
-}
-/*----------------------------------------------------------------------------*/
-static enum result channelReconfigure(void *object, const void *configBase)
-{
-  const struct GpDmaRuntimeConfig * const config = configBase;
-  struct GpDma * const channel = object;
-  uint32_t control = channel->base.control
-      & ~(CONTROL_SRC_INC | CONTROL_DST_INC);
-
-  if (config->source.increment)
-    control |= CONTROL_SRC_INC;
-  if (config->destination.increment)
-    control |= CONTROL_DST_INC;
-
-  channel->base.control = control;
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static enum result channelStart(void *object, void *destination,
-    const void *source, size_t size)
-{
+  const struct GpDmaSettings * const settings = settingsBase;
   struct GpDma * const channel = object;
 
-  assert(size && size <= GPDMA_MAX_TRANSFER);
+  channel->control = gpDmaBaseCalcControl(settings);
+  channel->control |= CONTROL_INT;
+}
+/*----------------------------------------------------------------------------*/
+static enum result channelEnable(void *object)
+{
+  struct GpDma * const channel = object;
+  LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+  const uint8_t number = channel->base.number;
 
-  if (gpDmaSetDescriptor(channel->base.number, object) != E_OK)
-    return E_BUSY;
+  assert(channel->state == STATE_READY);
+
+  const enum result res = gpDmaSetDescriptor(number, object);
+  if (res != E_OK)
+    return res;
 
   gpDmaSetMux(object);
-  channel->base.control = (channel->base.control & ~CONTROL_SIZE_MASK)
-      | CONTROL_SIZE(size);
-  channel->error = false;
 
-  const uint32_t request = 1 << channel->base.number;
-  LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
-
-  reg->SRCADDR = (uint32_t)source;
-  reg->DESTADDR = (uint32_t)destination;
-  reg->CONTROL = channel->base.control;
+  reg->SRCADDR = channel->source;
+  reg->DESTADDR = channel->destination;
+  reg->CONTROL = channel->control;
   reg->CONFIG = channel->base.config;
   reg->LLI = 0;
+
+  const uint32_t request = 1 << number;
 
   /* Clear interrupt requests for current channel */
   LPC_GPDMA->INTTCCLEAR = request;
   LPC_GPDMA->INTERRCLEAR = request;
 
   /* Start the transfer */
+  channel->state = STATE_BUSY;
   reg->CONFIG |= CONFIG_ENABLE;
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void channelDisable(void *object)
+{
+  struct GpDma * const channel = object;
+  LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+
+  if (channel->state == STATE_BUSY)
+  {
+    reg->CONFIG &= ~CONFIG_ENABLE;
+    channel->state = STATE_IDLE;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static size_t channelPending(const void *object)
+{
+  const struct GpDma * const channel = object;
+
+  return channel->state == STATE_BUSY ? 1 : 0;
+}
+/*----------------------------------------------------------------------------*/
+static size_t channelResidue(const void *object)
+{
+  const struct GpDma * const channel = object;
+  const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+
+  if (channel->state == STATE_BUSY)
+  {
+    return CONTROL_SIZE_VALUE(channel->control)
+        - CONTROL_SIZE_VALUE(reg->CONTROL);
+  }
+  else
+    return 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelStatus(const void *object)
 {
   const struct GpDma * const channel = object;
 
-  if (channel->error)
-    return E_ERROR;
+  switch ((enum state)channel->state)
+  {
+    case STATE_IDLE:
+    case STATE_READY:
+    case STATE_DONE:
+      return E_OK;
 
-  return gpDmaGetDescriptor(channel->base.number) == object ? E_BUSY : E_OK;
+    case STATE_BUSY:
+      return E_BUSY;
+
+    default:
+      return E_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
-static void channelStop(void *object)
+static void channelAppend(void *object, void *destination, const void *source,
+    size_t size)
 {
-  LPC_GPDMA_CHANNEL_Type * const reg = ((struct GpDma *)object)->base.reg;
+  struct GpDma * const channel = object;
 
-  reg->CONFIG &= ~CONFIG_ENABLE;
+  assert(destination != 0 && source != 0);
+  assert(size > 0 && size <= GPDMA_MAX_TRANSFER);
+  assert(channel->state != STATE_BUSY && channel->state != STATE_READY);
+
+  channel->destination = (uintptr_t)destination;
+  channel->source = (uintptr_t)source;
+  channel->control = (channel->control & ~CONTROL_SIZE_MASK)
+      | CONTROL_SIZE(size);
+  channel->state = STATE_READY;
+}
+/*----------------------------------------------------------------------------*/
+static void channelClear(void *object)
+{
+  struct GpDma * const channel = object;
+
+  channel->state = STATE_IDLE;
 }

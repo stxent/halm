@@ -425,34 +425,42 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
 {
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
-  enum result res;
 
   reg->BYTCNT = length;
+  dmaAppend(interface->dma, buffer, 0, length);
 
-  if ((res = dmaStart(interface->dma, buffer, 0, length)) != E_OK)
+  const enum result res = dmaEnable(interface->dma);
+
+  if (res != E_OK)
   {
     interface->status = res;
     return 0;
   }
-
-  execute(interface);
-  return length;
+  else
+  {
+    execute(interface);
+    return length;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
-  enum result res;
 
   reg->BYTCNT = length;
+  dmaAppend(interface->dma, 0, buffer, length);
 
-  if ((res = dmaStart(interface->dma, 0, buffer, length)) != E_OK)
+  const enum result res = dmaEnable(interface->dma);
+
+  if (res != E_OK)
   {
     interface->status = res;
     return 0;
   }
-
-  execute(interface);
-  return length;
+  else
+  {
+    execute(interface);
+    return length;
+  }
 }

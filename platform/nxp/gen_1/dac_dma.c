@@ -10,7 +10,6 @@
 #include <halm/platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
-#define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
 static enum result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
@@ -40,36 +39,50 @@ static void dmaHandler(void *object)
 {
   struct DacDma * const interface = object;
   LPC_DAC_Type * const reg = interface->base.reg;
-  const size_t count = dmaCount(interface->dma);
-  const enum result res = dmaStatus(interface->dma);
+  bool event = false;
 
-  /* Scatter-gather transfer finished */
-  if (res != E_BUSY)
+  if (dmaStatus(interface->dma) != E_BUSY)
+  {
+    /* Scatter-gather transfer finished */
     reg->CTRL &= ~(CTRL_INT_DMA_REQ | CTRL_CNT_ENA);
+    event = true;
+  }
+  else if ((dmaPending(interface->dma) & 1) == 0)
+  {
+    event = true;
+  }
 
-  if ((res != E_BUSY || !(count & 1)) && interface->callback)
+  if (event && interface->callback)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct DacDma *interface,
     const struct DacDmaConfig *config)
 {
-  const struct GpDmaListConfig channelConfig = {
+  static const struct GpDmaSettings dmaSettings = {
+      .source = {
+          .burst = DMA_BURST_4,
+          .width = DMA_WIDTH_HALFWORD,
+          .increment = true
+      },
+      .destination = {
+          .burst = DMA_BURST_1,
+          .width = DMA_WIDTH_HALFWORD,
+          .increment = false
+      }
+  };
+  const struct GpDmaListConfig dmaConfig = {
       .number = BLOCK_COUNT << 1,
-      .size = config->size >> 1,
-      .channel = config->dma,
-      .destination.increment = false,
-      .source.increment = true,
-      .burst = DMA_BURST_1,
       .event = GPDMA_DAC,
       .type = GPDMA_TYPE_M2P,
-      .width = DMA_WIDTH_HALFWORD,
+      .channel = config->dma,
       .silent = false
   };
 
-  interface->dma = init(GpDmaList, &channelConfig);
+  interface->dma = init(GpDmaList, &dmaConfig);
   if (!interface->dma)
     return E_ERROR;
+  dmaConfigure(interface->dma, &dmaSettings);
   dmaCallback(interface->dma, dmaHandler, interface);
 
   return E_OK;
@@ -85,7 +98,6 @@ static enum result dacInit(void *object, const void *configBase)
   enum result res;
 
   assert(config->rate);
-  assert(config->size);
 
   /* Call base class constructor */
   if ((res = DacBase->init(object, &baseConfig)) != E_OK)
@@ -95,7 +107,6 @@ static enum result dacInit(void *object, const void *configBase)
     return res;
 
   interface->callback = 0;
-  interface->size = config->size;
 
   LPC_DAC_Type * const reg = interface->base.reg;
 
@@ -134,7 +145,7 @@ static enum result dacGet(void *object, enum ifOption option, void *data)
       return dmaStatus(interface->dma);
 
     case IF_PENDING:
-      *(size_t *)data = (dmaCount(interface->dma) + 1) >> 1;
+      *(size_t *)data = (dmaPending(interface->dma) + 1) >> 1;
       return E_OK;
 
     default:
@@ -152,27 +163,31 @@ static enum result dacSet(void *object __attribute__((unused)),
 static size_t dacWrite(void *object, const void *buffer, size_t length)
 {
   struct DacDma * const interface = object;
+  const size_t samples = length / sizeof(uint16_t);
+
+  /* At least 2 samples */
+  assert(samples >= 2);
+
+  const size_t parts[] = {samples / 2, samples - samples / 2};
   LPC_DAC_Type * const reg = interface->base.reg;
-
-  /* Strict requirements on the buffer length */
-  assert(length / SAMPLE_SIZE > (interface->size >> 1));
-  assert(length / SAMPLE_SIZE <= interface->size);
-
-  const size_t samples = length / SAMPLE_SIZE;
-  const bool ongoing = dmaStatus(interface->dma) == E_BUSY;
+  const uint16_t *source = buffer;
 
   /* When the transfer is already active it will be continued */
-  const enum result res = dmaStart(interface->dma, (void *)&reg->CR,
-      buffer, samples);
+  dmaAppend(interface->dma, (void *)&reg->CR, source, parts[0]);
+  source += parts[0];
+  dmaAppend(interface->dma, (void *)&reg->CR, source, parts[1]);
 
-  if (res != E_OK)
-    return 0;
-
-  if (!ongoing)
+  if (dmaStatus(interface->dma) != E_BUSY)
   {
+    if (dmaEnable(interface->dma) != E_OK)
+    {
+      dmaClear(interface->dma);
+      return 0;
+    }
+
     /* Enable counter to generate memory access requests */
     reg->CTRL |= CTRL_CNT_ENA;
   }
 
-  return samples * SAMPLE_SIZE;
+  return samples * sizeof(uint16_t);
 }

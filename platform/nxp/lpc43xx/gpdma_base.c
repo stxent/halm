@@ -97,8 +97,38 @@ enum result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
 /*----------------------------------------------------------------------------*/
 void gpDmaSetMux(struct GpDmaBase *descriptor)
 {
-  LPC_CREG->DMAMUX = (LPC_CREG->DMAMUX & descriptor->mux.mask)
-      | descriptor->mux.value;
+  LPC_CREG->DMAMUX =
+      (LPC_CREG->DMAMUX & descriptor->mux.mask) | descriptor->mux.value;
+}
+/*----------------------------------------------------------------------------*/
+uint32_t gpDmaBaseCalcControl(const struct GpDmaSettings *settings)
+{
+  assert(settings->burst != DMA_BURST_2 && settings->burst <= DMA_BURST_256);
+  assert(settings->width <= DMA_WIDTH_WORD);
+
+  uint32_t control = CONTROL_SRC_MASTER(1) | CONTROL_DST_MASTER(1);
+
+  control |= CONTROL_SRC_WIDTH(settings->source.width);
+  control |= CONTROL_DST_WIDTH(settings->destination.width);
+
+  /* Set four-byte burst size by default */
+  uint8_t dstBurst = settings->destination.burst;
+  uint8_t srcBurst = settings->source.burst;
+
+  /* Two-byte burst requests are unsupported */
+  if (srcBurst >= DMA_BURST_4)
+    --srcBurst;
+  if (dstBurst >= DMA_BURST_4)
+    --dstBurst;
+
+  control |= CONTROL_SRC_BURST(srcBurst) | CONTROL_DST_BURST(dstBurst);
+
+  if (settings->source.increment)
+    control |= CONTROL_SRC_INC;
+  if (settings->destination.increment)
+    control |= CONTROL_DST_INC;
+
+  return control;
 }
 /*----------------------------------------------------------------------------*/
 void GPDMA_ISR(void)
@@ -269,8 +299,7 @@ static enum result channelInit(void *object, const void *configBase)
 
   assert(config->channel < GPDMA_CHANNEL_COUNT);
 
-  channel->config = 0;
-  channel->control = 0;
+  channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;;
   channel->handler = 0;
   channel->number = config->channel;
   channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
@@ -288,12 +317,10 @@ static enum result channelInit(void *object, const void *configBase)
     {
       case GPDMA_TYPE_M2P:
         channel->config |= CONFIG_DST_PERIPH(peripheral);
-        channel->control |= CONTROL_DST_MASTER(1);
         break;
 
       case GPDMA_TYPE_P2M:
         channel->config |= CONFIG_SRC_PERIPH(peripheral);
-        channel->control |= CONTROL_SRC_MASTER(1);
         break;
 
       default:

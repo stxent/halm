@@ -42,7 +42,7 @@ struct SpiDma
 
   /* Desired baud rate */
   uint32_t rate;
-  /* Direct memory access channel descriptors */
+  /* DMA descriptors for data transfers */
   struct Dma *rxDma, *txDma;
   /*
    * Dummy frame to be sent over transmit line in the receive mode or

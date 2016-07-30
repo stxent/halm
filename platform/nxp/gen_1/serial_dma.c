@@ -16,8 +16,8 @@
  * Size of temporary buffers should be increased if the baud rate
  * is higher than 500 kbit/s.
  */
-#define SINGLE_BUFFER_SIZE 16
-#define RECEPTION_BUFFERS  3
+#define BUFFER_SIZE 16
+#define RX_BUFFERS  3
 /*----------------------------------------------------------------------------*/
 static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
@@ -52,83 +52,105 @@ const struct InterfaceClass * const SerialDma = &serialTable;
 static void rxDmaHandler(void *object)
 {
   struct SerialDma * const interface = object;
-  LPC_UART_Type * const reg = interface->base.reg;
+  const enum result status = dmaStatus(interface->rxDma);
+  void * const desination = interface->rxBuffer
+      + interface->rxBufferIndex * BUFFER_SIZE;
 
-  byteQueuePushArray(&interface->rxQueue, interface->rxBuffer
-      + interface->rxBufferIndex * SINGLE_BUFFER_SIZE, SINGLE_BUFFER_SIZE);
-  dmaStart(interface->rxDma, interface->rxBuffer + interface->rxBufferIndex
-      * SINGLE_BUFFER_SIZE, (const void *)&reg->RBR, SINGLE_BUFFER_SIZE);
+  if (status != E_ERROR)
+    byteQueuePushArray(&interface->rxQueue, desination, BUFFER_SIZE);
 
-  if (++interface->rxBufferIndex == RECEPTION_BUFFERS)
+  const LPC_UART_Type * const reg = interface->base.reg;
+
+  dmaAppend(interface->rxDma, desination, (const void *)&reg->RBR, BUFFER_SIZE);
+
+  if (status != E_BUSY)
+  {
+    /* Restart the channel when an overrun occurred */
+    const enum result res = dmaEnable(interface->rxDma);
+    assert(res == E_OK);
+    (void)res;
+  }
+
+  if (++interface->rxBufferIndex == RX_BUFFERS)
     interface->rxBufferIndex = 0;
 
   if (interface->callback)
-  {
-    const size_t capacity = byteQueueCapacity(&interface->rxQueue);
-    const size_t available = byteQueueSize(&interface->rxQueue);
-
-    if (available >= (capacity >> 1))
-      interface->callback(interface->callbackArgument);
-  }
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static void txDmaHandler(void *object)
 {
   struct SerialDma * const interface = object;
-  LPC_UART_Type * const reg = interface->base.reg;
 
   if (!byteQueueEmpty(&interface->txQueue))
   {
-    const size_t chunkLength = byteQueuePopArray(&interface->txQueue,
-        interface->txBuffer, SINGLE_BUFFER_SIZE);
+    const size_t length = byteQueuePopArray(&interface->txQueue,
+        interface->txBuffer, BUFFER_SIZE);
+    LPC_UART_Type * const reg = interface->base.reg;
 
-    dmaStart(interface->txDma, (void *)&reg->THR, interface->txBuffer,
-        chunkLength);
+    dmaAppend(interface->txDma, (void *)&reg->THR, interface->txBuffer, length);
+
+    const enum result res = dmaEnable(interface->txDma);
+    assert(res == E_OK);
+    (void)res;
   }
 
-  if (interface->callback)
-  {
-    const size_t capacity = byteQueueCapacity(&interface->txQueue);
-    const size_t left = byteQueueSize(&interface->txQueue);
-
-    if (left < (capacity >> 1))
-      interface->callback(interface->callbackArgument);
-  }
+  if (byteQueueEmpty(&interface->txQueue) && interface->callback)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
-  const struct GpDmaListConfig rxChannelConfig = {
-      .number = RECEPTION_BUFFERS,
-      .size = SINGLE_BUFFER_SIZE,
-      .channel = rxChannel,
-      .destination.increment = true,
-      .source.increment = false,
-      .burst = DMA_BURST_1,
+  static const struct GpDmaSettings dmaSettings[] = {
+      {
+          .source = {
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          },
+          .destination = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = true
+          }
+      },
+      {
+          .source = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = true
+          },
+          .destination = {
+              .burst = DMA_BURST_8,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          }
+      }
+  };
+  const struct GpDmaListConfig rxDmaConfig = {
+      .number = RX_BUFFERS,
       .event = GPDMA_UART0_RX + interface->base.channel,
       .type = GPDMA_TYPE_P2M,
-      .width = DMA_WIDTH_BYTE,
+      .channel = rxChannel,
       .silent = false
   };
-  const struct GpDmaConfig txChannelConfig = {
-      .channel = txChannel,
-      .destination.increment = false,
-      .source.increment = true,
-      .burst = DMA_BURST_1,
+  const struct GpDmaConfig txDmaConfig = {
       .event = GPDMA_UART0_TX + interface->base.channel,
       .type = GPDMA_TYPE_M2P,
-      .width = DMA_WIDTH_BYTE
+      .channel = txChannel
   };
 
-  interface->rxDma = init(GpDmaList, &rxChannelConfig);
+  interface->rxDma = init(GpDmaList, &rxDmaConfig);
   if (!interface->rxDma)
     return E_ERROR;
+  dmaConfigure(interface->rxDma, &dmaSettings[0]);;
   dmaCallback(interface->rxDma, rxDmaHandler, interface);
 
-  interface->txDma = init(GpDma, &txChannelConfig);
+  interface->txDma = init(GpDma, &txDmaConfig);
   if (!interface->txDma)
     return E_ERROR;
+  dmaConfigure(interface->txDma, &dmaSettings[1]);
   dmaCallback(interface->txDma, txDmaHandler, interface);
 
   return E_OK;
@@ -182,9 +204,9 @@ static enum result serialInit(void *object, const void *configBase)
     return res;
 
   /* Allocate one buffer for transmission and three buffers for reception */
-  interface->pool = malloc(SINGLE_BUFFER_SIZE * (1 + RECEPTION_BUFFERS));
+  interface->pool = malloc(BUFFER_SIZE * (1 + RX_BUFFERS));
   interface->txBuffer = interface->pool;
-  interface->rxBuffer = interface->pool + SINGLE_BUFFER_SIZE;
+  interface->rxBuffer = interface->pool + BUFFER_SIZE;
 
   interface->callback = 0;
   interface->rate = config->rate;
@@ -211,8 +233,16 @@ static enum result serialInit(void *object, const void *configBase)
 #endif
 
   /* Start reception */
-  dmaStart(interface->rxDma, interface->rxBuffer, (const void *)&reg->RBR,
-      SINGLE_BUFFER_SIZE * RECEPTION_BUFFERS);
+  const void * const source = (const void *)&reg->RBR;
+  uint8_t *destination = interface->rxBuffer;
+
+  for (size_t index = 0; index < RX_BUFFERS; ++index)
+  {
+    dmaAppend(interface->rxDma, destination, source, BUFFER_SIZE);
+    destination += BUFFER_SIZE;
+  }
+  if ((res = dmaEnable(interface->rxDma)) != E_OK)
+    return res;
 
   return E_OK;
 }
@@ -222,7 +252,7 @@ static void serialDeinit(void *object)
   struct SerialDma * const interface = object;
 
   /* Stop channels */
-  dmaStop(interface->rxDma);
+  dmaDisable(interface->rxDma);
 
 #ifdef CONFIG_UART_PM
   pmUnregister(interface);
@@ -300,11 +330,9 @@ static enum result serialSet(void *object, enum ifOption option,
 static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
-  size_t read;
-  irqState state;
 
-  state = irqSave();
-  read = byteQueuePopArray(&interface->rxQueue, buffer, length);
+  const irqState state = irqSave();
+  const size_t read = byteQueuePopArray(&interface->rxQueue, buffer, length);
   irqRestore(state);
 
   return read;
@@ -313,7 +341,6 @@ static size_t serialRead(void *object, void *buffer, size_t length)
 static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
-  LPC_UART_Type * const reg = interface->base.reg;
   const uint8_t *bufferPosition = buffer;
   const size_t initialLength = length;
   size_t chunkLength = 0;
@@ -326,7 +353,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
 
   if (dmaStatus(interface->txDma) != E_BUSY)
   {
-    chunkLength = length < SINGLE_BUFFER_SIZE ? length : SINGLE_BUFFER_SIZE;
+    chunkLength = length < BUFFER_SIZE ? length : BUFFER_SIZE;
 
     memcpy(interface->txBuffer, bufferPosition, chunkLength);
 
@@ -339,11 +366,16 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
 
   if (chunkLength)
   {
-    const enum result res = dmaStart(interface->txDma, (void *)&reg->THR,
-        interface->txBuffer, chunkLength);
+    LPC_UART_Type * const reg = interface->base.reg;
 
-    if (res != E_OK)
+    dmaAppend(interface->txDma, (void *)&reg->THR, interface->txBuffer,
+        chunkLength);
+
+    if (dmaEnable(interface->txDma) != E_OK)
+    {
+      dmaClear(interface->txDma);
       return 0;
+    }
   }
 
   return initialLength - length;

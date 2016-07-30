@@ -15,10 +15,10 @@ extern const struct DmaClass * const DmaSdmmc;
 struct DmaSdmmcConfig
 {
   const struct Sdmmc *parent;
+  /** Mandatory: number of blocks in the chain. */
+  size_t number;
   /** Mandatory: number of transfers that make up a burst transfer request. */
   enum dmaBurst burst;
-  /** Mandatory: number of blocks in the chain. */
-  uint16_t number;
 };
 /*----------------------------------------------------------------------------*/
 struct DmaSdmmcEntry
@@ -39,9 +39,9 @@ struct DmaSdmmc
   struct DmaSdmmcEntry *list;
 
   /* List capacity */
-  uint16_t capacity;
+  size_t capacity;
   /* Current list length */
-  uint16_t length;
+  size_t length;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_DMA_SDMMC_H_ */

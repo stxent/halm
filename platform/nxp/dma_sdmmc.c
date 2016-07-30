@@ -5,46 +5,58 @@
  */
 
 #include <assert.h>
+#include <malloc.h>
 #include <stdlib.h>
 #include <halm/platform/nxp/dma_sdmmc.h>
 #include <halm/platform/nxp/sdmmc_defs.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result appendItem(void *, uint32_t, unsigned int);
+static enum result appendItem(void *object, uintptr_t address, size_t size);
 /*----------------------------------------------------------------------------*/
-static enum result controllerInit(void *, const void *);
-static void controllerDeinit(void *);
-static void controllerCallback(void *, void (*)(void *), void *);
-static size_t controllerCount(const void *);
-static enum result controllerReconfigure(void *, const void *);
-static enum result controllerStart(void *, void *, const void *, size_t);
-static enum result controllerStatus(const void *);
-static void controllerStop(void *);
-/*----------------------------------------------------------------------------*/
-static const struct DmaClass controllerTable = {
-    .size = sizeof(struct DmaSdmmc),
-    .init = controllerInit,
-    .deinit = controllerDeinit,
+static enum result channelInit(void *, const void *);
+static void channelDeinit(void *);
 
-    .callback = controllerCallback,
-    .count = controllerCount,
-    .reconfigure = controllerReconfigure,
-    .start = controllerStart,
-    .status = controllerStatus,
-    .stop = controllerStop
+static void channelCallback(void *, void (*)(void *), void *);
+static void channelConfigure(void *, const void *);
+
+static enum result channelEnable(void *);
+static void channelDisable(void *);
+static size_t channelPending(const void *);
+static size_t channelResidue(const void *);
+static enum result channelStatus(const void *);
+
+static void channelAppend(void *, void *, const void *, size_t);
+static void channelClear(void *);
+/*----------------------------------------------------------------------------*/
+static const struct DmaClass channelTable = {
+    .size = sizeof(struct DmaSdmmc),
+    .init = channelInit,
+    .deinit = channelDeinit,
+
+    .callback = channelCallback,
+    .configure = channelConfigure,
+
+    .enable = channelEnable,
+    .disable = channelDisable,
+    .pending = channelPending,
+    .residue = channelResidue,
+    .status = channelStatus,
+
+    .append = channelAppend,
+    .clear = channelClear
 };
 /*----------------------------------------------------------------------------*/
-const struct DmaClass * const DmaSdmmc = &controllerTable;
+const struct DmaClass * const DmaSdmmc = &channelTable;
 /*----------------------------------------------------------------------------*/
-static enum result appendItem(void *object, uint32_t address, unsigned int size)
+static enum result appendItem(void *object, uintptr_t address, size_t size)
 {
-  struct DmaSdmmc * const controller = object;
-  struct DmaSdmmcEntry * const entry = controller->list + controller->length;
+  struct DmaSdmmc * const channel = object;
+  struct DmaSdmmcEntry * const entry = channel->list + channel->length;
   uint32_t control = DESC_CONTROL_OWN | DESC_CONTROL_CH | DESC_CONTROL_LD;
 
-  if (controller->length++)
+  if (channel->length++)
   {
-    struct DmaSdmmcEntry *previous = entry - 1;
+    struct DmaSdmmcEntry * const previous = entry - 1;
 
     /* Link current element to the previous one */
     previous->buffer2 = (uint32_t)entry;
@@ -64,30 +76,30 @@ static enum result appendItem(void *object, uint32_t address, unsigned int size)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result controllerInit(void *object, const void *configBase)
+static enum result channelInit(void *object, const void *configBase)
 {
   const struct DmaSdmmcConfig * const config = configBase;
-  struct DmaSdmmc * const controller = object;
+  struct DmaSdmmc * const channel = object;
 
   assert(config->number);
   assert(config->burst <= DMA_BURST_256 && config->burst != DMA_BURST_2);
 
   /* Allocation should produce memory chunks aligned along 4-byte boundary */
-  controller->list = malloc(sizeof(struct DmaSdmmcEntry) * config->number);
-  if (!controller->list)
+  channel->list = memalign(4, sizeof(struct DmaSdmmcEntry) * config->number);
+  if (!channel->list)
     return E_MEMORY;
 
-  controller->capacity = config->number;
-  controller->length = 0;
-  controller->reg = config->parent->base.reg;
+  channel->capacity = config->number;
+  channel->length = 0;
+  channel->reg = config->parent->base.reg;
 
-  LPC_SDMMC_Type * const reg = controller->reg;
+  LPC_SDMMC_Type * const reg = channel->reg;
   const enum dmaBurst burst = config->burst >= DMA_BURST_4 ?
       config->burst - 1 : config->burst;
 
   /* Control register is originally initialized in parent class */
 
-  /* Reset DMA controller */
+  /* Reset DMA channel */
   reg->BMOD = BMOD_SWR;
   /* Reset DMA interface */
   reg->CTRL |= CTRL_DMA_RESET;
@@ -106,55 +118,94 @@ static enum result controllerInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void controllerDeinit(void *object)
+static void channelDeinit(void *object)
 {
-  struct DmaSdmmc * const controller = object;
-  LPC_SDMMC_Type * const reg = controller->reg;
+  struct DmaSdmmc * const channel = object;
+  LPC_SDMMC_Type * const reg = channel->reg;
 
   reg->CTRL &= ~CTRL_USE_INTERNAL_DMAC;
   reg->BMOD = 0;
 
-  free(controller->list);
+  free(channel->list);
 }
 /*----------------------------------------------------------------------------*/
-static void controllerCallback(void *object __attribute__((unused)),
+static void channelCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
 
 }
 /*----------------------------------------------------------------------------*/
-static size_t controllerCount(const void *object __attribute__((unused)))
+static void channelConfigure(void *object __attribute__((unused)),
+    const void *settingsBase __attribute__((unused)))
 {
-  const struct DmaSdmmc * const controller = object;
-  const LPC_SDMMC_Type * const reg = controller->reg;
+
+}
+/*----------------------------------------------------------------------------*/
+static enum result channelEnable(void *object)
+{
+  struct DmaSdmmc * const channel = object;
+  LPC_SDMMC_Type * const reg = channel->reg;
+
+  /* Clear status flags */
+  reg->IDSTS = IDINTEN_TI | IDINTEN_RI | IDINTEN_FBE | IDINTEN_DU | IDINTEN_CES;
+  /* Set DMA descriptor base address */
+  reg->DBADDR = (uint32_t)channel->list;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void channelDisable(void *object __attribute__((unused)))
+{
+
+}
+/*----------------------------------------------------------------------------*/
+static size_t channelPending(const void *object)
+{
+  const struct DmaSdmmc * const channel = object;
+
+  return channel->length;
+}
+/*----------------------------------------------------------------------------*/
+static size_t channelResidue(const void *object)
+{
+  const struct DmaSdmmc * const channel = object;
+  const LPC_SDMMC_Type * const reg = channel->reg;
   const struct DmaSdmmcEntry * const current =
       (const struct DmaSdmmcEntry *)reg->DSCADDR;
 
   if (!current)
     return 0;
 
-  return controller->length - (current - controller->list);
+  return channel->length - (current - channel->list);
 }
 /*----------------------------------------------------------------------------*/
-static enum result controllerReconfigure(void *object __attribute__((unused)),
-    const void *configBase __attribute__((unused)))
+static enum result channelStatus(const void *object)
 {
-  return E_ERROR;
+  const struct DmaSdmmc * const channel = object;
+  const LPC_SDMMC_Type * const reg = channel->reg;
+  const uint32_t status = reg->IDINTEN;
+
+  if (status & IDINTEN_AIS)
+    return E_INTERFACE;
+  else if (status & IDINTEN_NIS)
+    return E_OK;
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-static enum result controllerStart(void *object, void *destination,
-    const void *source, size_t size)
+static void channelAppend(void *object, void *destination, const void *source,
+    size_t size)
 {
-  struct DmaSdmmc * const controller = object;
-  LPC_SDMMC_Type * const reg = controller->reg;
+  struct DmaSdmmc * const channel = object;
+  LPC_SDMMC_Type * const reg = channel->reg;
 
   assert(size);
-  assert(size <= controller->capacity * DESC_SIZE_MAX);
+  assert(size <= channel->capacity * DESC_SIZE_MAX);
   assert(!destination ^ !source);
 
-  const uint32_t address = destination ?
-      (uint32_t)destination : (uint32_t)source;
+  const uintptr_t address = destination != 0 ?
+      (uintptr_t)destination : (uintptr_t)source;
 
   /* Address and size must be aligned along 4-byte boundary */
   assert(!(address & 0x03));
@@ -166,39 +217,18 @@ static enum result controllerStart(void *object, void *destination,
 
   size_t offset = 0;
 
-  controller->length = 0;
+  channel->length = 0;
   while (offset < size)
   {
-    const unsigned int chunkLength = (size - offset >= DESC_SIZE_MAX) ?
+    const size_t chunkLength = (size - offset >= DESC_SIZE_MAX) ?
         DESC_SIZE_MAX : (size - offset);
 
-    appendItem(controller, address + offset, chunkLength);
+    appendItem(channel, address + offset, chunkLength);
     offset += chunkLength;
   }
-
-  /* Clear status flags */
-  reg->IDSTS = IDINTEN_TI | IDINTEN_RI | IDINTEN_FBE | IDINTEN_DU | IDINTEN_CES;
-  /* Set DMA descriptor base address */
-  reg->DBADDR = (uint32_t)controller->list;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result controllerStatus(const void *object)
-{
-  const struct DmaSdmmc * const controller = object;
-  const LPC_SDMMC_Type * const reg = controller->reg;
-  const uint32_t status = reg->IDINTEN;
-
-  if (status & IDINTEN_AIS)
-    return E_INTERFACE;
-  else if (status & IDINTEN_NIS)
-    return E_OK;
-  else
-    return E_BUSY;
-}
-/*----------------------------------------------------------------------------*/
-static void controllerStop(void *object __attribute__((unused)))
+static void channelClear(void *object __attribute__((unused)))
 {
 
 }

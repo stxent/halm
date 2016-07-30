@@ -15,61 +15,18 @@ extern const struct DmaClass * const GpDmaList;
 struct GpDmaListConfig
 {
   /** Mandatory: number of blocks in the chain. */
-  uint16_t number;
-  /** Mandatory: size in elements of each block. */
-  uint16_t size;
-  /** Mandatory: channel number. */
-  uint8_t channel;
-
-  /** Mandatory: destination configuration. */
-  struct
-  {
-    bool increment;
-  } destination;
-
-  /** Mandatory: source configuration. */
-  struct
-  {
-    bool increment;
-  } source;
-
-  /** Mandatory: number of transfers that make up a burst transfer request. */
-  enum dmaBurst burst;
+  size_t number;
   /** Mandatory: request connection to the peripheral or memory. */
   enum gpDmaEvent event;
-  /** Mandatory: transfer direction. */
+  /** Mandatory: transfer type. */
   enum gpDmaType type;
-  /** Mandatory: width of source and destination transfers. */
-  enum dmaWidth width;
+  /** Mandatory: channel number. */
+  uint8_t channel;
   /**
-   * Optional: set @b true to reduce channel interrupts count by disabling
-   * requests for intermediate states of the transfer.
+   * Optional: set @b true to call a user function only in the end of the list.
    */
   bool silent;
 };
-/*----------------------------------------------------------------------------*/
-struct GpDmaListRuntimeConfig
-{
-  /** Mandatory: destination configuration. */
-  struct
-  {
-    bool increment;
-  } destination;
-
-  /** Mandatory: source configuration. */
-  struct
-  {
-    bool increment;
-  } source;
-};
-/*----------------------------------------------------------------------------*/
-struct GpDmaListEntry
-{
-  uint32_t source;
-  uint32_t destination;
-  uint32_t next;
-  uint32_t control;
-} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct GpDmaList
 {
@@ -78,24 +35,22 @@ struct GpDmaList
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Descriptor list container */
-  struct GpDmaListEntry *list;
+  /* Linked list items */
+  struct GpDmaEntry *list;
+  /* Maximum size of the list */
+  size_t capacity;
+  /* Index of the last item */
+  size_t index;
+  /* Current size of the list */
+  size_t queued;
 
-  /* Capacity of the chain in blocks */
-  uint16_t capacity;
-  /* Current block in the chain */
-  uint16_t current;
-  /* Maximum size of each block */
-  uint16_t size;
-  /* Number of queued buffers */
-  uint16_t queued;
-  /* Width in bytes of each element */
-  uint8_t width;
+  /* Control register value */
+  uint32_t control;
 
-  /* Reduce interrupts count */
+  /* State of the transfer */
+  uint8_t state;
+  /* Call user function only in the end of the list */
   bool silent;
-  /* Last transfer status */
-  bool error;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPDMA_LIST_H_ */
