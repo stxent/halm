@@ -93,6 +93,7 @@ const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
 enum result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
 void gpDmaSetMux(struct GpDmaBase *);
 
-uint32_t gpDmaBaseCalcControl(const struct GpDmaSettings *);
+uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *,
+    const struct GpDmaSettings *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPDMA_BASE_H_ */

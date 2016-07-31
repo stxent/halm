@@ -96,6 +96,41 @@ static void updateEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
   }
 }
 /*----------------------------------------------------------------------------*/
+uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
+    __attribute__((unused)), const struct GpDmaSettings *settings)
+{
+  assert(settings->source.burst != DMA_BURST_2);
+  assert(settings->source.burst <= DMA_BURST_256);
+  assert(settings->source.width <= DMA_WIDTH_WORD);
+  assert(settings->destination.burst != DMA_BURST_2);
+  assert(settings->destination.burst <= DMA_BURST_256);
+  assert(settings->destination.width <= DMA_WIDTH_WORD);
+
+  uint32_t control = 0;
+
+  control |= CONTROL_SRC_WIDTH(settings->source.width);
+  control |= CONTROL_DST_WIDTH(settings->destination.width);
+
+  /* Set four-byte burst size by default */
+  uint8_t dstBurst = settings->destination.burst;
+  uint8_t srcBurst = settings->source.burst;
+
+  /* Two-byte burst requests are unsupported */
+  if (srcBurst >= DMA_BURST_4)
+    --srcBurst;
+  if (dstBurst >= DMA_BURST_4)
+    --dstBurst;
+
+  control |= CONTROL_SRC_BURST(srcBurst) | CONTROL_DST_BURST(dstBurst);
+
+  if (settings->source.increment)
+    control |= CONTROL_SRC_INC;
+  if (settings->destination.increment)
+    control |= CONTROL_DST_INC;
+
+  return control;
+}
+/*----------------------------------------------------------------------------*/
 void gpDmaClearDescriptor(uint8_t channel)
 {
   assert(channel < GPDMA_CHANNEL_COUNT);
@@ -123,36 +158,6 @@ void gpDmaSetMux(struct GpDmaBase *descriptor)
 {
   LPC_SC->DMAREQSEL =
       (LPC_SC->DMAREQSEL & descriptor->mux.mask) | descriptor->mux.value;
-}
-/*----------------------------------------------------------------------------*/
-uint32_t gpDmaBaseCalcControl(const struct GpDmaSettings *settings)
-{
-  assert(settings->burst != DMA_BURST_2 && settings->burst <= DMA_BURST_256);
-  assert(settings->width <= DMA_WIDTH_WORD);
-
-  uint32_t control = 0;
-
-  control |= CONTROL_SRC_WIDTH(settings->source.width);
-  control |= CONTROL_DST_WIDTH(settings->destination.width);
-
-  /* Set four-byte burst size by default */
-  uint8_t dstBurst = settings->destination.burst;
-  uint8_t srcBurst = settings->source.burst;
-
-  /* Two-byte burst requests are unsupported */
-  if (srcBurst >= DMA_BURST_4)
-    --srcBurst;
-  if (dstBurst >= DMA_BURST_4)
-    --dstBurst;
-
-  control |= CONTROL_SRC_BURST(srcBurst) | CONTROL_DST_BURST(dstBurst);
-
-  if (settings->source.increment)
-    control |= CONTROL_SRC_INC;
-  if (settings->destination.increment)
-    control |= CONTROL_DST_INC;
-
-  return control;
 }
 /*----------------------------------------------------------------------------*/
 void GPDMA_ISR(void)

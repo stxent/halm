@@ -246,7 +246,7 @@ static enum result i2sInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
 
-  assert(config->width >= I2S_WIDTH_8 && config->width <= I2S_WIDTH_32);
+  assert(config->width <= I2S_WIDTH_32);
 
   interface->callback = 0;
   interface->sampleRate = 0;

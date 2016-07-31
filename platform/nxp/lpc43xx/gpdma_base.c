@@ -72,6 +72,56 @@ static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
 /*----------------------------------------------------------------------------*/
+uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel,
+    const struct GpDmaSettings *settings)
+{
+  assert(settings->source.burst != DMA_BURST_2);
+  assert(settings->source.burst <= DMA_BURST_256);
+  assert(settings->source.width <= DMA_WIDTH_WORD);
+  assert(settings->destination.burst != DMA_BURST_2);
+  assert(settings->destination.burst <= DMA_BURST_256);
+  assert(settings->destination.width <= DMA_WIDTH_WORD);
+
+  const uint32_t type = CONFIG_TYPE_VALUE(channel->config);
+  uint32_t control = 0;
+
+  switch (type)
+  {
+    case GPDMA_TYPE_M2P:
+      control |= CONTROL_DST_MASTER(1);
+      break;
+
+    case GPDMA_TYPE_P2M:
+      control |= CONTROL_SRC_MASTER(1);
+      break;
+
+    default:
+      break;
+  }
+
+  control |= CONTROL_SRC_WIDTH(settings->source.width);
+  control |= CONTROL_DST_WIDTH(settings->destination.width);
+
+  /* Set four-byte burst size by default */
+  uint8_t dstBurst = settings->destination.burst;
+  uint8_t srcBurst = settings->source.burst;
+
+  /* Two-byte burst requests are unsupported */
+  if (srcBurst >= DMA_BURST_4)
+    --srcBurst;
+  if (dstBurst >= DMA_BURST_4)
+    --dstBurst;
+
+  control |= CONTROL_SRC_BURST(srcBurst) | CONTROL_DST_BURST(dstBurst);
+
+  if (settings->source.increment)
+    control |= CONTROL_SRC_INC;
+  if (settings->destination.increment)
+    control |= CONTROL_DST_INC;
+
+  return control;
+}
+/*----------------------------------------------------------------------------*/
 void gpDmaClearDescriptor(uint8_t channel)
 {
   assert(channel < GPDMA_CHANNEL_COUNT);
@@ -99,36 +149,6 @@ void gpDmaSetMux(struct GpDmaBase *descriptor)
 {
   LPC_CREG->DMAMUX =
       (LPC_CREG->DMAMUX & descriptor->mux.mask) | descriptor->mux.value;
-}
-/*----------------------------------------------------------------------------*/
-uint32_t gpDmaBaseCalcControl(const struct GpDmaSettings *settings)
-{
-  assert(settings->burst != DMA_BURST_2 && settings->burst <= DMA_BURST_256);
-  assert(settings->width <= DMA_WIDTH_WORD);
-
-  uint32_t control = CONTROL_SRC_MASTER(1) | CONTROL_DST_MASTER(1);
-
-  control |= CONTROL_SRC_WIDTH(settings->source.width);
-  control |= CONTROL_DST_WIDTH(settings->destination.width);
-
-  /* Set four-byte burst size by default */
-  uint8_t dstBurst = settings->destination.burst;
-  uint8_t srcBurst = settings->source.burst;
-
-  /* Two-byte burst requests are unsupported */
-  if (srcBurst >= DMA_BURST_4)
-    --srcBurst;
-  if (dstBurst >= DMA_BURST_4)
-    --dstBurst;
-
-  control |= CONTROL_SRC_BURST(srcBurst) | CONTROL_DST_BURST(dstBurst);
-
-  if (settings->source.increment)
-    control |= CONTROL_SRC_INC;
-  if (settings->destination.increment)
-    control |= CONTROL_DST_INC;
-
-  return control;
 }
 /*----------------------------------------------------------------------------*/
 void GPDMA_ISR(void)
@@ -175,7 +195,8 @@ void GPDMA_ISR(void)
 static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
     enum gpDmaEvent event)
 {
-  unsigned int entryIndex = 0, entryOffset = 0, minValue = 0;
+  size_t entryIndex = 0, entryOffset = 0;
+  unsigned int minValue = 0;
   bool found = false;
 
   assert(event < GPDMA_MEMORY);
@@ -184,9 +205,9 @@ static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
 
   dmaHandlerInstantiate();
 
-  for (unsigned int index = 0; index < 16; ++index)
+  for (size_t index = 0; index < 16; ++index)
   {
-    unsigned int entry;
+    size_t entry;
     bool allowed = false;
 
     for (entry = 0; entry < 4; ++entry)
@@ -299,7 +320,7 @@ static enum result channelInit(void *object, const void *configBase)
 
   assert(config->channel < GPDMA_CHANNEL_COUNT);
 
-  channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;;
+  channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
   channel->handler = 0;
   channel->number = config->channel;
   channel->reg = &LPC_GPDMA->CHANNELS[channel->number];

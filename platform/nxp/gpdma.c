@@ -109,7 +109,7 @@ static void channelConfigure(void *object, const void *settingsBase)
   const struct GpDmaSettings * const settings = settingsBase;
   struct GpDma * const channel = object;
 
-  channel->control = gpDmaBaseCalcControl(settings);
+  channel->control = gpDmaBaseCalcControl(object, settings);
   channel->control |= CONTROL_INT;
 }
 /*----------------------------------------------------------------------------*/

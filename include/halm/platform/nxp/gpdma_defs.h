@@ -36,6 +36,8 @@ enum
 #define CONFIG_DST_PERIPH(periph)       BIT_FIELD((periph), 6)
 /* Transfer type */
 #define CONFIG_TYPE(type)               BIT_FIELD((type), 11)
+#define CONFIG_TYPE_MASK                BIT_FIELD(MASK(3), 11)
+#define CONFIG_TYPE_VALUE(reg)          FIELD_VALUE((reg), CONFIG_TYPE_MASK, 11)
 /* Interrupt error mask */
 #define CONFIG_IE                       BIT(14)
 /* Terminal count interrupt mask */

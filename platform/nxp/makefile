@@ -44,6 +44,7 @@ endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_GPDMA),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/gpdma.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/gpdma_circular.c
   CSOURCES += platform/$(PLATFORM_TYPE)/gpdma_list.c
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/gpdma_base.c
 
