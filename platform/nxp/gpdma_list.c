@@ -207,7 +207,7 @@ static void channelDisable(void *object)
   if (channel->state == STATE_BUSY)
   {
     reg->CONFIG &= ~CONFIG_ENABLE;
-    channel->state = STATE_IDLE;
+    channel->state = STATE_DONE;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -215,23 +215,29 @@ static size_t channelPending(const void *object)
 {
   const struct GpDmaList * const channel = object;
 
-  return channel->queued;
+  if (channel->state != STATE_IDLE && channel->state != STATE_READY)
+    return channel->queued;
+  else
+    return 0;
 }
 /*----------------------------------------------------------------------------*/
 static size_t channelResidue(const void *object)
 {
   const struct GpDmaList * const channel = object;
-  const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
 
-  if (channel->state == STATE_BUSY)
+  if (channel->state != STATE_IDLE && channel->state != STATE_READY)
   {
-    size_t current = channel->index + (channel->capacity - channel->queued);
+    const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+    size_t currentEntry = channel->index + channel->capacity - channel->queued;
 
-    if (current >= channel->capacity)
-      current -= channel->capacity;
+    if (currentEntry >= channel->capacity)
+      currentEntry -= channel->capacity;
 
-    return CONTROL_SIZE_VALUE(channel->list[current].control)
-        - CONTROL_SIZE_VALUE(reg->CONTROL);
+    const size_t initialTransfers =
+        CONTROL_SIZE_VALUE(channel->list[currentEntry].control);
+    const size_t completedTransfers = CONTROL_SIZE_VALUE(reg->CONTROL);
+
+    return initialTransfers - completedTransfers;
   }
   else
     return 0;
