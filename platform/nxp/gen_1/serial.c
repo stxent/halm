@@ -43,12 +43,13 @@ static void interruptHandler(void *object)
 {
   struct Serial * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  bool event = false;
+  bool event;
 
   /* Interrupt status cleared when performed read operation on IIR register */
   const uint32_t state = reg->IIR;
+
   /* Call user handler when receive timeout occurs */
-  event |= (state & IIR_INT_MASK) == IIR_INT_CTI;
+  event = (state & IIR_INT_MASK) == IIR_INT_CTI;
 
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
@@ -63,18 +64,21 @@ static void interruptHandler(void *object)
   {
     const size_t txQueueSize = byteQueueSize(&interface->txQueue);
 
-    /* Fill FIFO with selected burst size or less */
-    size_t count = txQueueSize < TX_FIFO_SIZE ? txQueueSize : TX_FIFO_SIZE;
+    if (txQueueSize > 0)
+    {
+      /* Fill FIFO with selected burst size or less */
+      size_t count = txQueueSize < TX_FIFO_SIZE ? txQueueSize : TX_FIFO_SIZE;
 
-    /* Call user handler when transmit queue is empty */
-    event |= count == txQueueSize;
+      /* Call user handler when transmit queue is empty */
+      event = event || count == txQueueSize;
 
-    while (count--)
-      reg->THR = byteQueuePop(&interface->txQueue);
+      while (count--)
+        reg->THR = byteQueuePop(&interface->txQueue);
+    }
   }
 
   /* User handler will be called when receive queue is not empty */
-  event |= byteQueueEmpty(&interface->rxQueue) == false;
+  event = event || !byteQueueEmpty(&interface->rxQueue);
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
@@ -246,7 +250,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   irqDisable(interface->base.irq);
 
   /* Check transmitter state */
-  if (reg->LSR & LSR_THRE && byteQueueEmpty(&interface->txQueue))
+  if ((reg->LSR & LSR_THRE) && byteQueueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle so fill TX FIFO */
     const size_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;

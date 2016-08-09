@@ -336,8 +336,7 @@ static enum result traverseConfigList(struct UsbControl *control,
       currentSettings = data->alternateSettings;
     }
     else if (current->descriptorType == DESCRIPTOR_TYPE_ENDPOINT
-        && currentConfiguration == configuration
-        && currentSettings == settings)
+        && currentConfiguration == configuration && currentSettings == settings)
     {
       const struct UsbEndpointDescriptor * const data =
           (const struct UsbEndpointDescriptor *)current;

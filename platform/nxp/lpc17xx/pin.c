@@ -22,17 +22,17 @@ static inline LPC_GPIO_Type *calcPort(struct PinData pin)
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinSelect(struct PinData pin)
 {
-  return &LPC_PINCON->PINSEL0 + (pin.offset >> 4) + (pin.port << 1);
+  return LPC_PINCON->PINSEL + (pin.offset >> 4) + (pin.port << 1);
 }
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinMode(struct PinData pin)
 {
-  return &LPC_PINCON->PINMODE0 + (pin.offset >> 4) + (pin.port << 1);
+  return LPC_PINCON->PINMODE + (pin.offset >> 4) + (pin.port << 1);
 }
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinType(struct PinData pin)
 {
-  return &LPC_PINCON->PINMODE_OD0 + pin.port;
+  return LPC_PINCON->PINMODE_OD + pin.port;
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)

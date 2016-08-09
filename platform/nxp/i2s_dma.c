@@ -387,22 +387,18 @@ static enum result i2sGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_AVAILABLE:
-      if (interface->rxDma)
-      {
-        *(size_t *)data = (dmaPending(interface->rxDma) + 1) >> 1;
-        return E_OK;
-      }
-      else
+      if (!interface->rxDma)
         return E_INVALID;
 
+      *(size_t *)data = BLOCK_COUNT - ((dmaPending(interface->rxDma) + 1) >> 1);
+      return E_OK;
+
     case IF_PENDING:
-      if (interface->txDma)
-      {
-        *(size_t *)data = (dmaPending(interface->txDma) + 1) >> 1;
-        return E_OK;
-      }
-      else
+      if (!interface->txDma)
         return E_INVALID;
+
+      *(size_t *)data = (dmaPending(interface->txDma) + 1) >> 1;
+      return E_OK;
 
     case IF_STATUS:
     {

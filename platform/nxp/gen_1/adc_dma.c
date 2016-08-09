@@ -145,7 +145,7 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_AVAILABLE:
-      *(size_t *)data = (dmaPending(interface->dma) + 1) >> 1;
+      *(size_t *)data = BLOCK_COUNT - ((dmaPending(interface->dma) + 1) >> 1);
       return E_OK;
 
     case IF_STATUS:
