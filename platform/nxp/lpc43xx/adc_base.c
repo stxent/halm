@@ -44,7 +44,7 @@ static const struct EntityClass adcUnitTable = {
     .deinit = adcUnitDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct AdcBlockDescriptor adcBlockEntries[4] = {
+static const struct AdcBlockDescriptor adcBlockEntries[] = {
     {
         .reg = LPC_ADC0,
         .irq = ADC0_IRQ,
@@ -181,7 +181,7 @@ static void configRegularPin(const struct PinEntry *entry, pinNumber key,
   pinSetFunction(pin, function);
 
   /* Route analog input */
-  *(&LPC_SCU->ENAIO0 + entry->channel) |= 1 << index;
+  LPC_SCU->ENAIO[entry->channel] |= 1 << index;
 
   adcPin->channel = index;
   adcPin->control = entry->channel;
@@ -231,7 +231,7 @@ void adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
 void adcReleasePin(const struct AdcPin adcPin)
 {
   if (adcPin.control != -1)
-    *(&LPC_SCU->ENAIO0 + adcPin.control) &= ~(1 << adcPin.channel);
+    LPC_SCU->ENAIO[adcPin.control] &= ~(1 << adcPin.channel);
 }
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *object, const void *configBase)

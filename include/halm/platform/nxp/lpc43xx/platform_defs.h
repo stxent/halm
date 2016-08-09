@@ -680,9 +680,18 @@ typedef struct
   /* Offset 0x0C80 */
   __rw__ uint32_t SFSUSB;
   __rw__ uint32_t SFSI2C0;
-  __rw__ uint32_t ENAIO0;
-  __rw__ uint32_t ENAIO1;
-  __rw__ uint32_t ENAIO2;
+
+  union
+  {
+    __rw__ uint32_t ENAIO[3];
+    struct
+    {
+      __rw__ uint32_t ENAIO0;
+      __rw__ uint32_t ENAIO1;
+      __rw__ uint32_t ENAIO2;
+    };
+  };
+
   __ne__ uint32_t RESERVED18[27];
 
   /* Offset 0x0D00 */
