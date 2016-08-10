@@ -18,6 +18,8 @@ struct AdcUnitConfig
   uint32_t frequency;
   /** Optional: interrupt priority. */
   irqPriority priority;
+  /** Optional: number of bits of accuracy. */
+  uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

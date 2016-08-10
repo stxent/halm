@@ -9,8 +9,6 @@
 #include <halm/platform/nxp/adc_burst.h>
 #include <halm/platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
-#define SAMPLE_SIZE sizeof(uint16_t)
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *, const void *);
@@ -39,16 +37,16 @@ static void interruptHandler(void *object)
   struct AdcBurst * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->base.reg;
-  uint16_t * const buffer = interface->buffer;
+  uint16_t *buffer = interface->buffer;
 
   /* Copy conversion result and increase position in buffer */
-  *buffer = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
-  interface->buffer = buffer + 1;
+  *buffer++ = DR_RESULT_VALUE(reg->DR[interface->pin.channel]);
+  interface->buffer = buffer;
 
   if (!--interface->left)
   {
     /* Stop automatic conversion */
-    reg->CR &= ~CR_START_MASK;
+    reg->CR &= ~(CR_BURST | CR_START_MASK);
     /* Disable interrupts */
     reg->INTEN = 0;
     irqDisable(unit->base.irq);
@@ -70,6 +68,7 @@ static enum result adcInit(void *object, const void *configBase)
   struct AdcBurst * const interface = object;
 
   assert(config->event < ADC_EVENT_END);
+  assert(config->event != ADC_SOFTWARE);
 
   /* Initialize input pin */
   adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
@@ -81,7 +80,7 @@ static enum result adcInit(void *object, const void *configBase)
   interface->left = 0;
   interface->unit = config->parent;
   /* Convert enumerator constant to register value */
-  interface->event = 1 + config->event;
+  interface->event = config->event;
 
   return E_OK;
 }
@@ -143,7 +142,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   struct AdcBurst * const interface = object;
   struct AdcUnit * const unit = interface->unit;
   LPC_ADC_Type * const reg = unit->base.reg;
-  const size_t samples = length / SAMPLE_SIZE;
+  const size_t samples = length / sizeof(uint16_t);
 
   if (!samples)
     return 0;
@@ -164,7 +163,10 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(interface->pin.channel);
 
   /* Start the conversion */
-  reg->CR |= CR_START(interface->event);
+  if (interface->event == ADC_BURST)
+    reg->CR |= CR_BURST;
+  else
+    reg->CR |= CR_START(interface->event);
 
   if (interface->blocking)
   {
@@ -172,5 +174,5 @@ static size_t adcRead(void *object, void *buffer, size_t length)
       barrier();
   }
 
-  return samples * SAMPLE_SIZE;
+  return samples * sizeof(uint16_t);
 }

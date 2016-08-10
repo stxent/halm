@@ -58,6 +58,7 @@ static enum result adcUnitInit(void *object, const void *configBase)
   const struct AdcUnitConfig * const config = configBase;
   const struct AdcUnitBaseConfig baseConfig = {
       .frequency = config->frequency,
+      .accuracy = config->accuracy,
       .channel = config->channel
   };
   struct AdcUnit * const unit = object;

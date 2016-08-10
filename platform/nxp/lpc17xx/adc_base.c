@@ -132,10 +132,11 @@ static enum result adcUnitInit(void *object, const void *configBase)
 
   /* Configure peripheral registers */
 
+  assert(!config->accuracy);
   assert(config->frequency <= MAX_FREQUENCY);
 
-  const uint32_t frequency = config->frequency ?
-      config->frequency : MAX_FREQUENCY;
+  const uint32_t frequency =
+      config->frequency ? config->frequency : MAX_FREQUENCY;
   const uint32_t divisor =
       (clockFrequency(MainClock) + (frequency - 1)) / frequency;
   LPC_ADC_Type * const reg = unit->reg;

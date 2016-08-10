@@ -47,8 +47,8 @@ static void dmaHandler(void *object)
     LPC_ADC_Type * const reg = unit->base.reg;
 
     /* Stop automatic conversion */
-    reg->CR &= ~CR_START_MASK;
-    /* Disable requests */
+    reg->CR &= ~(CR_BURST | CR_START_MASK);
+    /* Disable further requests */
     reg->INTEN = 0;
 
     adcUnitUnregister(unit);
@@ -106,6 +106,7 @@ static enum result adcInit(void *object, const void *configBase)
   enum result res;
 
   assert(config->event < ADC_EVENT_END);
+  assert(config->event != ADC_SOFTWARE);
 
   if ((res = dmaSetup(interface, config)) != E_OK)
     return res;
@@ -114,7 +115,7 @@ static enum result adcInit(void *object, const void *configBase)
       &interface->pin);
 
   interface->callback = 0;
-  interface->event = config->event + 1;
+  interface->event = config->event;
   interface->unit = config->parent;
 
   return E_OK;
@@ -202,8 +203,12 @@ static size_t adcRead(void *object, void *buffer, size_t length)
 
     /* Set conversion channel */
     reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(channel);
+
     /* Start the conversion */
-    reg->CR |= CR_START(interface->event);
+    if (interface->event == ADC_BURST)
+      reg->CR |= CR_BURST;
+    else
+      reg->CR |= CR_START(interface->event);
   }
 
   return samples * sizeof(uint16_t);

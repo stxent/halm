@@ -10,6 +10,7 @@
 /* ADC trigger sources */
 enum adcEvent
 {
+  ADC_BURST,
   ADC_SOFTWARE,
   ADC_PIN_0_2,
   ADC_PIN_1_5,

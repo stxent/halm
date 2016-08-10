@@ -23,6 +23,8 @@ struct AdcUnitBaseConfig
 {
   /** Optional: desired clock. */
   uint32_t frequency;
+  /** Optional: number of bits of accuracy. */
+  uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
