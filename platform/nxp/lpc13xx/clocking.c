@@ -259,7 +259,7 @@ static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
   assert(msel < 32);
 
   while (psel < 4 && sourceDivisor != 1U << psel)
-    psel++;
+    ++psel;
   /* Check whether actual divisor value found */
   assert(psel != 4);
 

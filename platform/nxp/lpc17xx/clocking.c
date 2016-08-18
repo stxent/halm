@@ -342,7 +342,7 @@ static enum result usbPllEnable(const void *clockBase __attribute__((unused)),
   unsigned int sourceDivisor = config->divisor >> 1;
 
   while (psel < 4 && sourceDivisor != 1U << psel)
-    psel++;
+    ++psel;
   /* Check whether actual divisor value found */
   assert(psel != 4);
 

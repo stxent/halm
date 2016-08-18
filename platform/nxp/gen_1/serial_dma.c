@@ -17,7 +17,7 @@
  * is higher than 500 kbit/s.
  */
 #define BUFFER_SIZE 16
-#define RX_BUFFERS  3
+#define RX_BUFFERS  2
 /*----------------------------------------------------------------------------*/
 static enum result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
 static enum result enqueueRxBuffers(struct SerialDma *);
@@ -207,7 +207,7 @@ static enum result serialInit(void *object, const void *configBase)
   if ((res = dmaSetup(interface, config->dma[0], config->dma[1])) != E_OK)
     return res;
 
-  /* Allocate one buffer for transmission and three buffers for reception */
+  /* Allocate one buffer for transmission and multiple buffers for reception */
   interface->pool = malloc(BUFFER_SIZE * (1 + RX_BUFFERS));
   interface->txBuffer = interface->pool;
   interface->rxBuffer = interface->pool + BUFFER_SIZE;

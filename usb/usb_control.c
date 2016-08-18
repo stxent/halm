@@ -170,9 +170,9 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   struct UsbRequest *request;
   unsigned int chunkCount;
 
-  chunkCount = length / EP0_BUFFER_SIZE + 1;
+  chunkCount = (length + (EP0_BUFFER_SIZE - 1)) / EP0_BUFFER_SIZE;
   /* Send zero-length packet to finalize transfer */
-  if (length && !(length % EP0_BUFFER_SIZE))
+  if (length % EP0_BUFFER_SIZE == 0)
     ++chunkCount;
 
   if (queueSize(&control->inRequestPool) < chunkCount)
