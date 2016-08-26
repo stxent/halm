@@ -95,20 +95,38 @@ enum result usbExtractDescriptorData(const void *driver, uint16_t keyword,
 /*----------------------------------------------------------------------------*/
 enum result usbHandleDeviceRequest(void *driver, void *device,
     const struct UsbSetupPacket *packet, uint8_t *response,
-    uint16_t *responseLength, uint16_t maxResponseLength)
+    uint16_t *responseLength)
 {
-  (void)maxResponseLength;
-
   switch (packet->request)
   {
     case REQUEST_GET_STATUS:
-      assert(maxResponseLength >= 2);
+    {
+      uint8_t status = 0;
+      bool selfPowered, remoteWakeup;
 
-      /* Bit 0: self-powered, bit 1: remote wake-up */
-      response[0] = 0;
+      usbDevGetParameter(device, USB_SELF_POWERED, &selfPowered);
+      usbDevGetParameter(device, USB_REMOTE_WAKEUP, &remoteWakeup);
+
+      if (selfPowered)
+        status |= STATUS_SELF_POWERED;
+      if (remoteWakeup)
+        status |= STATUS_REMOTE_WAKEUP;
+
+      response[0] = status;
       response[1] = 0;
       *responseLength = 2;
       return E_OK;
+    }
+
+    case REQUEST_CLEAR_FEATURE:
+    case REQUEST_SET_FEATURE:
+    {
+      if (packet->value != FEATURE_REMOTE_WAKEUP)
+        return E_VALUE;
+
+      const bool value = packet->request == REQUEST_SET_FEATURE;
+      return usbDevSetParameter(device, USB_REMOTE_WAKEUP, &value);
+    }
 
     case REQUEST_SET_ADDRESS:
       usbTrace("requests: set address %u", packet->value);
@@ -118,16 +136,14 @@ enum result usbHandleDeviceRequest(void *driver, void *device,
       return E_OK;
 
     case REQUEST_GET_CONFIGURATION:
-      assert(maxResponseLength >= 1);
-
       response[0] = 1;
       *responseLength = 1;
       return E_OK;
 
     case REQUEST_SET_CONFIGURATION:
-      usbTrace("requests: set configuration %u", packet->value & 0xFF);
+      usbTrace("requests: set configuration %u", packet->value);
 
-      if ((packet->value & 0xFF) == 1)
+      if (packet->value == 1)
       {
         usbDriverEvent(driver, USB_DEVICE_EVENT_RESET);
         return E_OK;
@@ -145,8 +161,6 @@ enum result usbHandleEndpointRequest(void *device,
     const struct UsbSetupPacket *packet, uint8_t *response,
     uint16_t *responseLength)
 {
-  /* It is guaranteed that the response fits into the response buffer */
-
   struct UsbEndpoint * const endpoint = usbDevCreateEndpoint(device,
       packet->index);
 
@@ -163,10 +177,11 @@ enum result usbHandleEndpointRequest(void *device,
       if (packet->value == FEATURE_ENDPOINT_HALT)
         return E_VALUE;
 
+      usbTrace("requests: enable endpoint 0x%02X", packet->index);
+
       /* Clear halt by endpoint enabling */
       usbEpSetStalled(endpoint, false);
       *responseLength = 0;
-      usbTrace("requests: enable endpoint 0x%02X", packet->index);
       return E_OK;
 
     case REQUEST_SET_FEATURE:
@@ -187,29 +202,23 @@ enum result usbHandleEndpointRequest(void *device,
 }
 /*----------------------------------------------------------------------------*/
 enum result usbHandleInterfaceRequest(const struct UsbSetupPacket *packet,
-    uint8_t *response, uint16_t *responseLength, uint16_t maxResponseLength)
+    uint8_t *response, uint16_t *responseLength)
 {
-  (void)maxResponseLength;
-
   switch (packet->request)
   {
     case REQUEST_GET_STATUS:
-      assert(maxResponseLength >= 2);
-
       /* Two bytes are reserved for future use and must be set to zero */
       response[0] = response[1] = 0;
       *responseLength = 2;
       return E_OK;
 
     case REQUEST_GET_INTERFACE:
-      assert(maxResponseLength >= 1);
-
       response[0] = 0;
       *responseLength = 1;
       return E_OK;
 
     case REQUEST_SET_INTERFACE:
-      usbTrace("cdc_acm: set interface %u", packet->value);
+      usbTrace("requests: set interface %u", packet->value);
 
       /* Only one interface is supported by default */
       if (packet->value == 0)

@@ -63,8 +63,8 @@ static void *devCreateEndpoint(void *, uint8_t);
 static uint8_t devGetInterface(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
-static enum result devGetOption(const void *, enum usbOption, void *);
-static enum result devSetOption(void *, enum usbOption, const void *);
+static enum result devGetParameter(const void *, enum usbParameter, void *);
+static enum result devSetParameter(void *, enum usbParameter, const void *);
 static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -78,8 +78,8 @@ static const struct UsbDeviceClass deviceTable = {
     .setAddress = devSetAddress,
     .setConnected = devSetConnected,
 
-    .getOption = devGetOption,
-    .setOption = devSetOption,
+    .getParameter = devGetParameter,
+    .setParameter = devSetParameter,
 
     .bind = devBind,
     .unbind = devUnbind
@@ -255,7 +255,7 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
 
     default:
       return usbHandleDeviceRequest(driver, driver->owner->device, packet,
-          response, responseLength, maxResponseLength);
+          response, responseLength);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -358,11 +358,9 @@ static void driverEvent(void *object, unsigned int event)
   }
 }
 /*----------------------------------------------------------------------------*/
-static const usbDescriptorFunctor *driverDescribe(const void *object)
+static const usbDescriptorFunctor *driverDescribe(const void *object
+    __attribute__((unused)))
 {
-  const struct CompositeDevice * const driver = object;
-
-  // FIXME
   return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -431,28 +429,28 @@ static void devSetConnected(void *object, bool state)
   usbDevSetConnected(device->device, state);
 }
 /*----------------------------------------------------------------------------*/
-static enum result devGetOption(const void *object, enum usbOption option,
-    void *value)
+static enum result devGetParameter(const void *object,
+    enum usbParameter parameter, void *value)
 {
   const struct CompositeDevice * const device = object;
 
-  switch (option)
+  switch (parameter)
   {
     case USB_COMPOSITE:
       *(bool *)value = true;
       return E_OK;
 
     default:
-      return usbDevGetOption(device->device, option, value);
+      return usbDevGetParameter(device->device, parameter, value);
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result devSetOption(void *object, enum usbOption option,
+static enum result devSetParameter(void *object, enum usbParameter parameter,
     const void *value)
 {
   struct CompositeDevice * const device = object;
 
-  return usbDevSetOption(device->device, option, value);
+  return usbDevSetParameter(device->device, parameter, value);
 }
 /*----------------------------------------------------------------------------*/
 static enum result devBind(void *object, void *driver)

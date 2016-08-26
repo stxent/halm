@@ -111,6 +111,12 @@ enum
   REQUEST_TYPE_VENDOR   = 2,
   REQUEST_TYPE_RESERVED = 3
 };
+
+enum
+{
+  STATUS_SELF_POWERED   = 0x01,
+  STATUS_REMOTE_WAKEUP  = 0x02
+};
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DEVICE_CONFIGURATION 1
 /*----------------------------------------------------------------------------*/

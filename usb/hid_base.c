@@ -245,7 +245,7 @@ static enum result handleDeviceRequest(struct HidBase *driver,
 
     default:
       return usbHandleDeviceRequest(driver, driver->device, packet,
-          response, responseLength, maxResponseLength);
+          response, responseLength);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -300,10 +300,7 @@ static enum result driverConfigure(void *object,
 
       case REQUEST_RECIPIENT_INTERFACE:
         if (packet->index == driver->interfaceIndex)
-        {
-          return usbHandleInterfaceRequest(packet, response, responseLength,
-              maxResponseLength);
-        }
+          return usbHandleInterfaceRequest(packet, response, responseLength);
         else
           return E_INVALID;
 

@@ -10,6 +10,7 @@
 #include <halm/platform/nxp/lpc17xx/usb_defs.h>
 #include <halm/platform/nxp/usb_device.h>
 #include <halm/usb/usb.h>
+#include <halm/usb/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
@@ -24,8 +25,8 @@ static void *devCreateEndpoint(void *, uint8_t);
 static uint8_t devGetInterface(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
-static enum result devGetOption(const void *, enum usbOption, void *);
-static enum result devSetOption(void *, enum usbOption, const void *);
+static enum result devGetParameter(const void *, enum usbParameter, void *);
+static enum result devSetParameter(void *, enum usbParameter, const void *);
 static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -39,8 +40,8 @@ static const struct UsbDeviceClass devTable = {
     .setAddress = devSetAddress,
     .setConnected = devSetConnected,
 
-    .getOption = devGetOption,
-    .setOption = devSetOption,
+    .getParameter = devGetParameter,
+    .setParameter = devSetParameter,
 
     .bind = devBind,
     .unbind = devUnbind
@@ -227,6 +228,7 @@ static enum result devInit(void *object, const void *configBase)
     return res;
 
   device->base.handler = interruptHandler;
+  device->status = 0;
   memset(device->endpoints, 0, sizeof(device->endpoints));
 
   /* Initialize control message handler */
@@ -303,22 +305,27 @@ static void devSetConnected(void *object, bool state)
       state ? DEVICE_STATUS_CON : 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result devGetOption(const void *object, enum usbOption option,
-    void *value)
+static enum result devGetParameter(const void *object,
+    enum usbParameter parameter, void *value)
 {
   const struct UsbDevice * const device = object;
 
-  switch (option)
+  switch (parameter)
   {
     case USB_SPEED:
       *(enum usbSpeed *)value = USB_FS;
       return E_OK;
 
     case USB_COMPOSITE:
-    case USB_SELF_POWERED:
-      //FIXME
-    case USB_REMOTE_WAKEUP:
       *(bool *)value = false;
+      return E_OK;
+
+    case USB_SELF_POWERED:
+      *(bool *)value = (device->status & STATUS_SELF_POWERED) != 0;
+      return E_OK;
+
+    case USB_REMOTE_WAKEUP:
+      *(bool *)value = (device->status & STATUS_REMOTE_WAKEUP) != 0;
       return E_OK;
 
     default:
@@ -326,16 +333,25 @@ static enum result devGetOption(const void *object, enum usbOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result devSetOption(void *object, enum usbOption option,
+static enum result devSetParameter(void *object, enum usbParameter parameter,
     const void *value)
 {
   struct UsbDevice * const device = object;
 
-  switch (option)
+  switch (parameter)
   {
     case USB_SELF_POWERED:
+      if (*(const bool *)value)
+        device->status |= STATUS_SELF_POWERED;
+      else
+        device->status &= ~STATUS_SELF_POWERED;
+      return E_OK;
+
     case USB_REMOTE_WAKEUP:
-      // FIXME
+      if (*(const bool *)value)
+        device->status |= STATUS_REMOTE_WAKEUP;
+      else
+        device->status &= ~STATUS_REMOTE_WAKEUP;
       return E_OK;
 
     default:

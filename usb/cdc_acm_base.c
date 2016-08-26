@@ -410,7 +410,7 @@ static enum result handleDeviceRequest(struct CdcAcmBase *driver,
 
     default:
       return usbHandleDeviceRequest(driver, driver->device, packet,
-          response, responseLength, maxResponseLength);
+          response, responseLength);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -437,7 +437,7 @@ static enum result driverInit(void *object, const void *configBase)
   driver->device = config->device;
   driver->speed = USB_FS;
 
-  usbDevGetOption(driver->device, USB_COMPOSITE, &driver->composite);
+  usbDevGetParameter(driver->device, USB_COMPOSITE, &driver->composite);
 
   struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
   if (!privateData)
@@ -487,10 +487,7 @@ static enum result driverConfigure(void *object,
 
       case REQUEST_RECIPIENT_INTERFACE:
         if (packet->index == driver->controlInterfaceIndex)
-        {
-          return usbHandleInterfaceRequest(packet, response, responseLength,
-              maxResponseLength);
-        }
+          return usbHandleInterfaceRequest(packet, response, responseLength);
         else
           return E_INVALID;
 
@@ -526,7 +523,7 @@ static void driverEvent(void *object, unsigned int event)
   {
     enum usbSpeed speed;
 
-    usbDevGetOption(driver->device, USB_SPEED, &speed);
+    usbDevGetParameter(driver->device, USB_SPEED, &speed);
     driver->speed = (uint8_t)speed;
 
     usbTrace("cdc_acm: current speed is %s", speed == USB_HS ? "HS" : "FS");

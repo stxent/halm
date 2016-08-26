@@ -36,14 +36,12 @@ enum usbDeviceEvent
   USB_DEVICE_EVENT_PORT_CHANGE
 };
 /*----------------------------------------------------------------------------*/
-enum usbOption
+enum usbParameter
 {
   USB_SPEED,
   USB_COMPOSITE,
   USB_SELF_POWERED,
-  USB_REMOTE_WAKEUP,
-
-  USB_OPTION_END
+  USB_REMOTE_WAKEUP
 };
 /*----------------------------------------------------------------------------*/
 enum usbRequestStatus
@@ -92,8 +90,8 @@ struct UsbDeviceClass
   void (*setAddress)(void *, uint8_t);
   void (*setConnected)(void *, bool);
 
-  enum result (*getOption)(const void *, enum usbOption, void *);
-  enum result (*setOption)(void *, enum usbOption, const void *);
+  enum result (*getParameter)(const void *, enum usbParameter, void *);
+  enum result (*setParameter)(void *, enum usbParameter, const void *);
 
   enum result (*bind)(void *, void *);
   void (*unbind)(void *, const void *);
@@ -141,35 +139,35 @@ static inline void usbDevSetConnected(void *device, bool state)
   ((const struct UsbDeviceClass *)CLASS(device))->setConnected(device, state);
 }
 /*----------------------------------------------------------------------------*/
-enum result (*getOption)(void *, enum usbOption, void *);
-enum result (*setOption)(void *, enum usbOption, const void *);
+enum result (*getOption)(void *, enum usbParameter, void *);
+enum result (*setOption)(void *, enum usbParameter, const void *);
 /*----------------------------------------------------------------------------*/
 /**
- * Get the device option.
+ * Get the device parameter.
  * @param device Pointer to an UsbDevice object.
- * @param option Option to be read.
- * @param value Pointer to a buffer where a value of the option will be stored.
+ * @param parameter Parameter to be read.
+ * @param value Pointer to a buffer where a parameter value will be stored.
  * @return @b E_OK on success.
  */
-static inline enum result usbDevGetOption(const void *device,
-    enum usbOption option, void *value)
+static inline enum result usbDevGetParameter(const void *device,
+    enum usbParameter parameter, void *value)
 {
-  return ((const struct UsbDeviceClass *)CLASS(device))->getOption(device,
-      option, value);
+  return ((const struct UsbDeviceClass *)CLASS(device))->getParameter(device,
+      parameter, value);
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set the device option.
+ * Set the device parameter.
  * @param device Pointer to an UsbDevice object.
- * @param option Option to be set.
- * @param value Pointer to a new value of the option.
+ * @param parameter Parameter to be set.
+ * @param value Pointer to a new value of the parameter.
  * @return @b E_OK on success.
  */
-static inline enum result usbDevSetOption(void *device, enum usbOption option,
-    const void *value)
+static inline enum result usbDevSetParameter(void *device,
+    enum usbParameter parameter, const void *value)
 {
-  return ((const struct UsbDeviceClass *)CLASS(device))->setOption(device,
-      option, value);
+  return ((const struct UsbDeviceClass *)CLASS(device))->setParameter(device,
+      parameter, value);
 }
 /*----------------------------------------------------------------------------*/
 /**

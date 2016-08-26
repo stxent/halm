@@ -154,6 +154,7 @@ static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbSetupPacket *,
     const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
+static const usbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
@@ -162,6 +163,7 @@ static const struct UsbDriverClass driverTable = {
     .deinit = driverDeinit,
 
     .configure = driverConfigure,
+    .describe = driverDescribe,
     .event = driverEvent
 };
 /*----------------------------------------------------------------------------*/
@@ -1156,8 +1158,8 @@ static void storageCallback(void *argument)
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
-    void *payload)
+static void deviceDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
 {
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
@@ -1302,7 +1304,7 @@ static enum result handleDeviceRequest(struct Msc *driver,
 
     default:
       return usbHandleDeviceRequest(driver, driver->device, packet,
-          response, responseLength, maxResponseLength);
+          response, responseLength);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -1506,10 +1508,7 @@ static enum result driverConfigure(void *object,
 
       case REQUEST_RECIPIENT_INTERFACE:
         if (packet->index == driver->interfaceIndex)
-        {
-          return usbHandleInterfaceRequest(packet, response, responseLength,
-              maxResponseLength);
-        }
+          return usbHandleInterfaceRequest(packet, response, responseLength);
         else
           return E_INVALID;
 
@@ -1530,6 +1529,12 @@ static enum result driverConfigure(void *object,
     return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
+static const usbDescriptorFunctor *driverDescribe(const void *object
+    __attribute__((unused)))
+{
+  return deviceDescriptorTable;
+}
+/*----------------------------------------------------------------------------*/
 static void driverEvent(void *object, unsigned int event)
 {
   struct Msc * const driver = object;
@@ -1539,7 +1544,7 @@ static void driverEvent(void *object, unsigned int event)
   {
     enum usbSpeed speed;
 
-    usbDevGetOption(driver->device, USB_SPEED, &speed);
+    usbDevGetParameter(driver->device, USB_SPEED, &speed);
     if (speed == USB_HS)
       driver->packetSize = TO_LITTLE_ENDIAN_16(MSC_DATA_EP_SIZE_HS);
     else

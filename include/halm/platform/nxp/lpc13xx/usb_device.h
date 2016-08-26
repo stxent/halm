@@ -35,7 +35,9 @@ struct UsbDevice
   struct UsbEndpoint *endpoints[10];
   /* Control message handler */
   struct UsbControl *control;
-  /* Device status flag */
+  /* Device status */
+  uint8_t status;
+  /* Device is configured */
   bool configured;
 };
 /*----------------------------------------------------------------------------*/

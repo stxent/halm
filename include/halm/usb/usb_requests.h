@@ -12,10 +12,10 @@
 enum result usbExtractDescriptorData(const void *, uint16_t, uint16_t, void *,
     uint16_t *, uint16_t);
 enum result usbHandleDeviceRequest(void *, void *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 enum result usbHandleEndpointRequest(void *, const struct UsbSetupPacket *,
     uint8_t *, uint16_t *);
 enum result usbHandleInterfaceRequest(const struct UsbSetupPacket *,
-    uint8_t *, uint16_t *, uint16_t);
+    uint8_t *, uint16_t *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_REQUESTS_H_ */
