@@ -28,7 +28,7 @@ struct CdcAcmBaseConfig
     uint8_t rx;
     /** Mandatory: identifier of the output data endpoint. */
     uint8_t tx;
-  } endpoint;
+  } endpoints;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcmBase
@@ -40,10 +40,20 @@ struct CdcAcmBase
   /* USB peripheral */
   struct UsbDevice *device;
 
-  /* Interface index in configurations with multiple interface */
+  /* Addresses of endpoints */
+  struct
+  {
+    uint8_t interrupt;
+    uint8_t rx;
+    uint8_t tx;
+  } endpoints;
+
+  /* Interface index in configurations with multiple interfaces */
   uint8_t controlInterfaceIndex;
   /* Speed of the USB interface */
   uint8_t speed;
+  /* Composite device flag */
+  bool composite;
 
   void *privateData;
 };

@@ -6,24 +6,16 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
 #include <xcore/memory.h>
 #include <halm/usb/cdc_acm.h>
 #include <halm/usb/cdc_acm_base.h>
 #include <halm/usb/cdc_acm_defs.h>
-#include <halm/usb/composite_device.h>
+#include <halm/usb/usb_defs.h>
+#include <halm/usb/usb_requests.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct PrivateData
 {
-  struct UsbEndpointDescriptor endpointDescriptors[3];
-
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  struct UsbInterfaceAssociationDescriptor associationDescriptor;
-  struct UsbInterfaceDescriptor interfaceDescriptors[2];
-  struct CdcUnionDescriptor unionDescriptor;
-#endif
-
   /* Line settings */
   struct
   {
@@ -32,19 +24,39 @@ struct PrivateData
   } state;
 };
 /*----------------------------------------------------------------------------*/
-static enum result buildDescriptors(struct CdcAcmBase *,
-    struct PrivateData *, const struct CdcAcmBaseConfig *);
-static enum result descriptorEraseWrapper(void *, const void *);
-static enum result handleRequest(struct CdcAcmBase *,
-    const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
-    uint16_t *, uint16_t);
-static enum result iterateOverDescriptors(const struct CdcAcmBase *,
-    struct PrivateData *, enum result (*)(void *, const void *));
+static void interfaceAssociationDescriptor(const void *, struct UsbDescriptor *,
+    void *);
+static void deviceDescriptor(const void *, struct UsbDescriptor *, void *);
+static void configDescriptor(const void *, struct UsbDescriptor *, void *);
+static void controlInterfaceDescriptor(const void *, struct UsbDescriptor *,
+    void *);
+static void cdcHeaderDescriptor(const void *, struct UsbDescriptor *, void *);
+static void cdcCallManagementDescriptor(const void *, struct UsbDescriptor *,
+    void *);
+static void cdcAcmDescriptor(const void *, struct UsbDescriptor *, void *);
+static void unionDescriptor(const void *, struct UsbDescriptor *, void *);
+static void notificationEndpointDescriptor(const void *, struct UsbDescriptor *,
+    void *);
+static void dataInterfaceDescriptor(const void *, struct UsbDescriptor *,
+    void *);
+static void dataEndpointDescriptor(const void *, struct UsbDescriptor *,
+    void *);
+static void bulkReceiveEndpointDescriptor(const void *, struct UsbDescriptor *,
+    void *);
+static void bulkTransmitEndpointDescriptor(const void *, struct UsbDescriptor *,
+    void *);
+/*----------------------------------------------------------------------------*/
+static enum result handleClassRequest(struct CdcAcmBase *,
+    const struct UsbSetupPacket *, const uint8_t *, uint16_t,
+    uint8_t *, uint16_t *, uint16_t);
+static enum result handleDeviceRequest(struct CdcAcmBase *,
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbSetupPacket *,
     const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
+static const usbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
@@ -53,204 +65,271 @@ static const struct UsbDriverClass driverTable = {
     .deinit = driverDeinit,
 
     .configure = driverConfigure,
+    .describe = driverDescribe,
     .event = driverEvent
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const CdcAcmBase = &driverTable;
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-static const struct UsbDeviceDescriptor deviceDescriptor = {
-    .length             = sizeof(struct UsbDeviceDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_DEVICE,
-    .usb                = TO_LITTLE_ENDIAN_16(0x0200),
-    .deviceClass        = USB_CLASS_CDC,
-    .deviceSubClass     = 0x00, /* Reserved value */
-    .deviceProtocol     = 0x00, /* No class specific protocol */
-    .maxPacketSize      = CDC_CONTROL_EP_SIZE,
-    .idVendor           = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID),
-    .idProduct          = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID),
-    .device             = TO_LITTLE_ENDIAN_16(0x0100),
-    .manufacturer       = 0,
-    .product            = 0,
-    .serialNumber       = 0,
-    .numConfigurations  = 1
-};
+static const usbDescriptorFunctor deviceDescriptorTable[] = {
+    deviceDescriptor,
+    configDescriptor,
 
-static const struct UsbConfigurationDescriptor configDescriptor = {
-    .length             = sizeof(struct UsbConfigurationDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_CONFIGURATION,
-    .totalLength        = TO_LITTLE_ENDIAN_16(
+    interfaceAssociationDescriptor,
+
+    controlInterfaceDescriptor,
+    cdcHeaderDescriptor,
+    cdcCallManagementDescriptor,
+    cdcAcmDescriptor,
+    unionDescriptor,
+    notificationEndpointDescriptor,
+    dataInterfaceDescriptor,
+    bulkReceiveEndpointDescriptor,
+    bulkTransmitEndpointDescriptor,
+    0
+};
+/*----------------------------------------------------------------------------*/
+static void interfaceAssociationDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  const struct CdcAcmBase * const driver = object;
+
+  header->length = sizeof(struct UsbInterfaceAssociationDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION;
+
+  if (payload)
+  {
+    struct UsbInterfaceAssociationDescriptor * const descriptor = payload;
+
+    descriptor->firstInterface = driver->controlInterfaceIndex;
+    descriptor->interfaceCount = 2;
+    descriptor->functionClass = USB_CLASS_CDC;
+    descriptor->functionSubClass = 0x02; /* Abstract Control Model */
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void deviceDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
+{
+  header->length = sizeof(struct UsbDeviceDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
+
+  if (payload)
+  {
+    struct UsbDeviceDescriptor * const descriptor = payload;
+
+    descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
+    descriptor->deviceClass = USB_CLASS_CDC;
+    descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_CONTROL_EP_SIZE);
+    descriptor->idVendor = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID);
+    descriptor->idProduct = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID);
+    descriptor->device = TO_LITTLE_ENDIAN_16(0x0100);
+    descriptor->numConfigurations = 1;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void configDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
+{
+  header->length = sizeof(struct UsbConfigurationDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
+
+  if (payload)
+  {
+    struct UsbConfigurationDescriptor * const descriptor = payload;
+
+    descriptor->totalLength = TO_LITTLE_ENDIAN_16(
         sizeof(struct UsbConfigurationDescriptor)
         + sizeof(struct UsbInterfaceDescriptor) * 2
         + sizeof(struct UsbEndpointDescriptor) * 3
         + sizeof(struct CdcHeaderDescriptor)
         + sizeof(struct CdcCallManagementDescriptor)
         + sizeof(struct CdcAcmDescriptor)
-        + sizeof(struct CdcUnionDescriptor)),
-    .numInterfaces      = 2,
-    .configurationValue = 1,
-    .configuration      = 0, /* No configuration name */
-    .attributes         = CONFIGURATION_DESCRIPTOR_DEFAULT
-        | CONFIGURATION_DESCRIPTOR_SELF_POWERED,
-    .maxPower           = ((CONFIG_USB_DEVICE_CURRENT + 1) >> 1)
-};
-
-static const struct UsbInterfaceDescriptor controlInterfaceDescriptor = {
-    .length             = sizeof(struct UsbInterfaceDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_INTERFACE,
-    .interfaceNumber    = 0,
-    .alternateSettings  = 0,
-    .numEndpoints       = 1,
-    .interfaceClass     = USB_CLASS_CDC,
-    .interfaceSubClass  = 0x02, /* Abstract Control Model */
-    .interfaceProtocol  = 0x00, /* No protocol used */
-    .interface          = 0 /* No interface name */
-};
-
-static const struct UsbInterfaceDescriptor dataInterfaceDescriptor = {
-    .length             = sizeof(struct UsbInterfaceDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_INTERFACE,
-    .interfaceNumber    = 1,
-    .alternateSettings  = 0,
-    .numEndpoints       = 2,
-    .interfaceClass     = USB_CLASS_CDC_DATA,
-    .interfaceSubClass  = 0x00, /* None */
-    .interfaceProtocol  = 0x00, /* None */
-    .interface          = 0 /* No interface name */
-};
-
-static const struct CdcUnionDescriptor unionDescriptor = {
-    .length             = sizeof(struct CdcUnionDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_CS_INTERFACE,
-    .descriptorSubType  = CDC_SUBTYPE_UNION,
-    .masterInterface0   = 0x00,
-    .slaveInterface0    = 0x01
-};
-#endif
-/*----------------------------------------------------------------------------*/
-static const struct UsbDescriptor * const controlDescriptors[] = {
-    (const struct UsbDescriptor *)&(const struct CdcHeaderDescriptor){
-        .length             = sizeof(struct CdcHeaderDescriptor),
-        .descriptorType     = DESCRIPTOR_TYPE_CS_INTERFACE,
-        .descriptorSubType  = CDC_SUBTYPE_HEADER,
-        .cdc                = TO_LITTLE_ENDIAN_16(0x0110)
-    },
-    (const struct UsbDescriptor *)&(const struct CdcCallManagementDescriptor){
-        .length             = sizeof(struct CdcCallManagementDescriptor),
-        .descriptorType     = DESCRIPTOR_TYPE_CS_INTERFACE,
-        .descriptorSubType  = CDC_SUBTYPE_CALL_MANAGEMENT,
-        .capabilities       = 0x00,
-        .dataInterface      = 0
-    },
-    (const struct UsbDescriptor *)&(const struct CdcAcmDescriptor){
-        .length             = sizeof(struct CdcAcmDescriptor),
-        .descriptorType     = DESCRIPTOR_TYPE_CS_INTERFACE,
-        .descriptorSubType  = CDC_SUBTYPE_ACM,
-        .capabilities       = 0x02
-    }
-};
-/*----------------------------------------------------------------------------*/
-static enum result buildDescriptors(struct CdcAcmBase *driver,
-    struct PrivateData *privateData, const struct CdcAcmBaseConfig *config)
-{
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  const uint8_t firstInterface = usbCompositeDevIndex(driver->device);
-
-  driver->controlInterfaceIndex = firstInterface;
-
-  privateData->associationDescriptor.length =
-      sizeof(struct UsbInterfaceAssociationDescriptor);
-  privateData->associationDescriptor.descriptorType =
-      DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION;
-  privateData->associationDescriptor.firstInterface = firstInterface;
-  privateData->associationDescriptor.interfaceCount = 2;
-  privateData->associationDescriptor.functionClass = USB_CLASS_CDC;
-  /* Abstract Control Model */
-  privateData->associationDescriptor.functionSubClass = 0x02;
-  /* No protocol used */
-  privateData->associationDescriptor.functionProtocol = 0x00;
-  /* No string description */
-  privateData->associationDescriptor.function = 0;
-
-  privateData->interfaceDescriptors[0].length =
-      sizeof(struct UsbInterfaceDescriptor);
-  privateData->interfaceDescriptors[0].descriptorType =
-      DESCRIPTOR_TYPE_INTERFACE;
-  privateData->interfaceDescriptors[0].interfaceNumber = firstInterface;
-  privateData->interfaceDescriptors[0].alternateSettings = 0;
-  privateData->interfaceDescriptors[0].numEndpoints = 1;
-  privateData->interfaceDescriptors[0].interfaceClass = USB_CLASS_CDC;
-  privateData->interfaceDescriptors[0].interfaceSubClass = 0x02; //TODO
-  privateData->interfaceDescriptors[0].interfaceProtocol = 0x00;
-  privateData->interfaceDescriptors[0].interface = 0;
-
-  privateData->interfaceDescriptors[1].length =
-      sizeof(struct UsbInterfaceDescriptor);
-  privateData->interfaceDescriptors[1].descriptorType =
-      DESCRIPTOR_TYPE_INTERFACE;
-  privateData->interfaceDescriptors[1].interfaceNumber = firstInterface + 1;
-  privateData->interfaceDescriptors[1].alternateSettings = 0;
-  privateData->interfaceDescriptors[1].numEndpoints = 2;
-  privateData->interfaceDescriptors[1].interfaceClass = USB_CLASS_CDC_DATA;
-  privateData->interfaceDescriptors[1].interfaceSubClass = 0x00;
-  privateData->interfaceDescriptors[1].interfaceProtocol = 0x00;
-  privateData->interfaceDescriptors[1].interface = 0;
-
-  privateData->unionDescriptor.length = sizeof(struct CdcUnionDescriptor);
-  privateData->unionDescriptor.descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
-  privateData->unionDescriptor.descriptorSubType = CDC_SUBTYPE_UNION;
-  privateData->unionDescriptor.masterInterface0 = firstInterface;
-  privateData->unionDescriptor.slaveInterface0 = firstInterface + 1;
-#endif
-
-  /* Notification endpoint */
-  privateData->endpointDescriptors[0].length =
-      sizeof(struct UsbEndpointDescriptor);
-  privateData->endpointDescriptors[0].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  privateData->endpointDescriptors[0].endpointAddress =
-      config->endpoint.interrupt;
-  privateData->endpointDescriptors[0].attributes =
-      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT);
-  privateData->endpointDescriptors[0].maxPacketSize =
-      TO_LITTLE_ENDIAN_16(CDC_NOTIFICATION_EP_SIZE);
-  privateData->endpointDescriptors[0].interval = 8;
-
-  /* Bulk transmit endpoint */
-  privateData->endpointDescriptors[1].length =
-      sizeof(struct UsbEndpointDescriptor);
-  privateData->endpointDescriptors[1].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  privateData->endpointDescriptors[1].endpointAddress = config->endpoint.tx;
-  privateData->endpointDescriptors[1].attributes =
-      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
-  privateData->endpointDescriptors[1].maxPacketSize =
-      TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
-  privateData->endpointDescriptors[1].interval = 0;
-
-  /* Bulk receive endpoint */
-  privateData->endpointDescriptors[2].length =
-      sizeof(struct UsbEndpointDescriptor);
-  privateData->endpointDescriptors[2].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  privateData->endpointDescriptors[2].endpointAddress = config->endpoint.rx;
-  privateData->endpointDescriptors[2].attributes =
-      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
-  privateData->endpointDescriptors[2].maxPacketSize =
-      TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
-  privateData->endpointDescriptors[2].interval = 0;
-
-  return iterateOverDescriptors(driver, privateData, usbDevAppendDescriptor);
+        + sizeof(struct CdcUnionDescriptor));
+    descriptor->numInterfaces = 2;
+    descriptor->configurationValue = 1;
+    descriptor->attributes = CONFIGURATION_DESCRIPTOR_DEFAULT
+        | CONFIGURATION_DESCRIPTOR_SELF_POWERED;
+    descriptor->maxPower = ((CONFIG_USB_DEVICE_CURRENT + 1) >> 1);
+  }
 }
 /*----------------------------------------------------------------------------*/
-static enum result descriptorEraseWrapper(void *device, const void *descriptor)
+static void controlInterfaceDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
 {
-  usbDevEraseDescriptor(device, descriptor);
-  return E_OK;
+  const struct CdcAcmBase * const driver = object;
+
+  header->length = sizeof(struct UsbInterfaceDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
+
+  if (payload)
+  {
+    struct UsbInterfaceDescriptor * const descriptor = payload;
+
+    descriptor->interfaceNumber = driver->controlInterfaceIndex;
+    descriptor->numEndpoints = 1;
+    descriptor->interfaceClass = USB_CLASS_CDC;
+    descriptor->interfaceSubClass = 0x02; /* Abstract Control Model */
+  }
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleRequest(struct CdcAcmBase *driver,
+static void cdcHeaderDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
+{
+  header->length = sizeof(struct CdcHeaderDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
+
+  if (payload)
+  {
+    struct CdcHeaderDescriptor * const descriptor = payload;
+
+    descriptor->descriptorSubType = CDC_SUBTYPE_HEADER;
+    descriptor->cdc = TO_LITTLE_ENDIAN_16(0x0110);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void cdcCallManagementDescriptor(const void *object
+    __attribute__((unused)), struct UsbDescriptor *header, void *payload)
+{
+  header->length = sizeof(struct CdcCallManagementDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
+
+  if (payload)
+  {
+    struct CdcCallManagementDescriptor * const descriptor = payload;
+
+    descriptor->descriptorSubType = CDC_SUBTYPE_CALL_MANAGEMENT;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void cdcAcmDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
+{
+  header->length = sizeof(struct CdcAcmDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
+
+  if (payload)
+  {
+    struct CdcAcmDescriptor * const descriptor = payload;
+
+    descriptor->descriptorSubType = CDC_SUBTYPE_ACM;
+    descriptor->capabilities = 0x02;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void unionDescriptor(const void *object, struct UsbDescriptor *header,
+    void *payload)
+{
+  const struct CdcAcmBase * const driver = object;
+
+  header->length = sizeof(struct CdcUnionDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
+
+  if (payload)
+  {
+    struct CdcUnionDescriptor * const descriptor = payload;
+
+    descriptor->descriptorSubType = CDC_SUBTYPE_UNION;
+    descriptor->masterInterface0 = driver->controlInterfaceIndex;
+    descriptor->slaveInterface0 = driver->controlInterfaceIndex + 1;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void notificationEndpointDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  const struct CdcAcmBase * const driver = object;
+
+  header->length = sizeof(struct UsbEndpointDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+
+  if (payload)
+  {
+    struct UsbEndpointDescriptor * const descriptor = payload;
+
+    descriptor->endpointAddress = driver->endpoints.interrupt;
+    descriptor->attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT);
+    descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_NOTIFICATION_EP_SIZE);
+    descriptor->interval = 8;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void dataInterfaceDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  const struct CdcAcmBase * const driver = object;
+
+  header->length = sizeof(struct UsbInterfaceDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
+
+  if (payload)
+  {
+    struct UsbInterfaceDescriptor * const descriptor = payload;
+
+    descriptor->interfaceNumber = driver->controlInterfaceIndex + 1;
+    descriptor->numEndpoints = 2;
+    descriptor->interfaceClass = USB_CLASS_CDC_DATA;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void dataEndpointDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  const struct CdcAcmBase * const driver = object;
+
+  header->length = sizeof(struct UsbEndpointDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+
+  if (payload)
+  {
+    struct UsbEndpointDescriptor * const descriptor = payload;
+
+    descriptor->attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
+    descriptor->interval = 0;
+
+    if (driver->speed == USB_HS)
+      descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE_HS);
+    else
+      descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void bulkTransmitEndpointDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  dataEndpointDescriptor(object, header, payload);
+
+  if (payload)
+  {
+    const struct CdcAcmBase * const driver = object;
+    struct UsbEndpointDescriptor * const descriptor = payload;
+
+    descriptor->endpointAddress = driver->endpoints.tx;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void bulkReceiveEndpointDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  dataEndpointDescriptor(object, header, payload);
+
+  if (payload)
+  {
+    const struct CdcAcmBase * const driver = object;
+    struct UsbEndpointDescriptor * const descriptor = payload;
+
+    descriptor->endpointAddress = driver->endpoints.rx;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result handleClassRequest(struct CdcAcmBase *driver,
     const struct UsbSetupPacket *packet, const uint8_t *payload,
     uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
+  if (packet->index != driver->controlInterfaceIndex)
+    return E_VALUE;
+
   struct PrivateData * const privateData = driver->privateData;
   bool event = false;
 
@@ -259,7 +338,7 @@ static enum result handleRequest(struct CdcAcmBase *driver,
     case CDC_SET_LINE_CODING:
     {
       if (payloadLength != sizeof(privateData->state.lineCoding))
-        return E_VALUE;
+        return E_VALUE; /* Incorrect packet */
 
       const struct CdcLineCoding * const lineCoding =
           (const struct CdcLineCoding *)payload;
@@ -280,8 +359,7 @@ static enum result handleRequest(struct CdcAcmBase *driver,
 
     case CDC_GET_LINE_CODING:
     {
-      if (maxResponseLength < sizeof(privateData->state.lineCoding))
-        return E_VALUE;
+      assert(maxResponseLength >= sizeof(struct CdcLineCoding));
 
       struct CdcLineCoding * const lineCoding =
           (struct CdcLineCoding *)response;
@@ -298,21 +376,17 @@ static enum result handleRequest(struct CdcAcmBase *driver,
     }
 
     case CDC_SET_CONTROL_LINE_STATE:
-    {
       privateData->state.controlLineState = packet->value & 0x03;
       event = true;
 
       usbTrace("cdc_acm at %u: set control lines to %02X",
           packet->index, packet->value);
       break;
-    }
 
     default:
-    {
       usbTrace("cdc_acm at %u: unknown request %02X",
           packet->index, packet->request);
       return E_INVALID;
-    }
   }
 
   if (event)
@@ -321,48 +395,23 @@ static enum result handleRequest(struct CdcAcmBase *driver,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result iterateOverDescriptors(const struct CdcAcmBase *driver,
-    struct PrivateData *privateData,
-    enum result (*action)(void *, const void *))
+static enum result handleDeviceRequest(struct CdcAcmBase *driver,
+    const struct UsbSetupPacket *packet, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  const void * const descriptors[] = {
-      &privateData->associationDescriptor,
-      &privateData->interfaceDescriptors[0],
-      controlDescriptors[0],
-      controlDescriptors[1],
-      controlDescriptors[2],
-      &privateData->unionDescriptor,
-      &privateData->endpointDescriptors[0],
-      &privateData->interfaceDescriptors[1],
-      &privateData->endpointDescriptors[1],
-      &privateData->endpointDescriptors[2]
-  };
-#else
-  const void * const descriptors[] = {
-      &deviceDescriptor,
-      &configDescriptor,
-      &controlInterfaceDescriptor,
-      controlDescriptors[0],
-      controlDescriptors[1],
-      controlDescriptors[2],
-      &unionDescriptor,
-      &privateData->endpointDescriptors[0],
-      &dataInterfaceDescriptor,
-      &privateData->endpointDescriptors[1],
-      &privateData->endpointDescriptors[2]
-  };
-#endif
-
-  for (unsigned int i = 0; i < ARRAY_SIZE(descriptors); ++i)
+  switch (packet->request)
   {
-    const enum result res = action(driver->device, descriptors[i]);
+    case REQUEST_GET_DESCRIPTOR:
+      usbTrace("cdc_acm: get descriptor %u:%u, length %u",
+          DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
+          packet->length);
+      return usbExtractDescriptorData(driver, packet->value, packet->index,
+          response, responseLength, maxResponseLength);
 
-    if (res != E_OK)
-      return res;
+    default:
+      return usbHandleDeviceRequest(driver, driver->device, packet,
+          response, responseLength, maxResponseLength);
   }
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
@@ -382,12 +431,15 @@ static enum result driverInit(void *object, const void *configBase)
     return E_VALUE;
 
   driver->owner = config->owner;
+  driver->endpoints.interrupt = config->endpoints.interrupt;
+  driver->endpoints.tx = config->endpoints.tx;
+  driver->endpoints.rx = config->endpoints.rx;
   driver->device = config->device;
-  driver->controlInterfaceIndex = 0;
   driver->speed = USB_FS;
 
-  struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
+  usbDevGetOption(driver->device, USB_COMPOSITE, &driver->composite);
 
+  struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
   if (!privateData)
     return E_MEMORY;
 
@@ -395,15 +447,12 @@ static enum result driverInit(void *object, const void *configBase)
   privateData->state.controlLineState = 0;
   driver->privateData = privateData;
 
-  if ((res = buildDescriptors(driver, privateData, config)) != E_OK)
-    return res;
-
+  driver->controlInterfaceIndex = usbDevGetInterface(driver->device);
   if ((res = usbDevBind(driver->device, driver)) != E_OK)
     return res;
 
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-  usbDevSetConnected(driver->device, true);
-#endif
+  if (!driver->composite)
+    usbDevSetConnected(driver->device, true);
 
   return E_OK;
 }
@@ -412,12 +461,10 @@ static void driverDeinit(void *object)
 {
   struct CdcAcmBase * const driver = object;
 
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-  usbDevSetConnected(driver->device, false);
-#endif
+  if (!driver->composite)
+    usbDevSetConnected(driver->device, false);
 
   usbDevUnbind(driver->device, driver);
-  iterateOverDescriptors(driver, driver->privateData, descriptorEraseWrapper);
   free(driver->privateData);
 }
 /*----------------------------------------------------------------------------*/
@@ -427,15 +474,47 @@ static enum result driverConfigure(void *object,
     uint16_t maxResponseLength)
 {
   struct CdcAcmBase * const driver = object;
+  const uint8_t recipient = REQUEST_RECIPIENT_VALUE(packet->requestType);
+  const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
 
-  if (REQUEST_TYPE_VALUE(packet->requestType) != REQUEST_TYPE_CLASS)
+  if (type == REQUEST_TYPE_STANDARD)
+  {
+    switch (recipient)
+    {
+      case REQUEST_RECIPIENT_DEVICE:
+        return handleDeviceRequest(driver, packet, response, responseLength,
+            maxResponseLength);
+
+      case REQUEST_RECIPIENT_INTERFACE:
+        if (packet->index == driver->controlInterfaceIndex)
+        {
+          return usbHandleInterfaceRequest(packet, response, responseLength,
+              maxResponseLength);
+        }
+        else
+          return E_INVALID;
+
+      case REQUEST_RECIPIENT_ENDPOINT:
+        return usbHandleEndpointRequest(driver->device, packet, response,
+            responseLength);
+
+      default:
+        return E_INVALID;
+    }
+  }
+  else if (type == REQUEST_TYPE_CLASS)
+  {
+    return handleClassRequest(object, packet, payload, payloadLength, response,
+        responseLength, maxResponseLength);
+  }
+  else
     return E_INVALID;
-
-  if (packet->index != driver->controlInterfaceIndex)
-    return E_INVALID;
-
-  return handleRequest(driver, packet, payload, payloadLength, response,
-      responseLength, maxResponseLength);
+}
+/*----------------------------------------------------------------------------*/
+static const usbDescriptorFunctor *driverDescribe(const void *object
+    __attribute__((unused)))
+{
+  return deviceDescriptorTable;
 }
 /*----------------------------------------------------------------------------*/
 static void driverEvent(void *object, unsigned int event)
@@ -445,21 +524,12 @@ static void driverEvent(void *object, unsigned int event)
 #ifdef CONFIG_USB_DEVICE_HS
   if (event == USB_DEVICE_EVENT_PORT_CHANGE)
   {
-    driver->speed = usbDevGetSpeed(driver->device);
+    enum usbSpeed speed;
 
-    struct PrivateData * const privateData = driver->privateData;
-    uint16_t maxPacketSize;
+    usbDevGetOption(driver->device, USB_SPEED, &speed);
+    driver->speed = (uint8_t)speed;
 
-    if (driver->speed == USB_HS)
-      maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE_HS);
-    else
-      maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_DATA_EP_SIZE);
-
-    privateData->endpointDescriptors[1].maxPacketSize = maxPacketSize;
-    privateData->endpointDescriptors[2].maxPacketSize = maxPacketSize;
-
-    usbTrace("cdc_acm: current speed is %s",
-        driver->speed == USB_HS ? "HS" : "FS");
+    usbTrace("cdc_acm: current speed is %s", speed == USB_HS ? "HS" : "FS");
   }
 #endif
 

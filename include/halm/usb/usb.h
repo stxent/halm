@@ -21,15 +21,11 @@
 #define USB_EP_ADDRESS(value)         (value)
 #define USB_EP_LOGICAL_ADDRESS(value) ((value) & 0x7F)
 /*----------------------------------------------------------------------------*/
+struct UsbDescriptor;
 struct UsbSetupPacket;
-/*----------------------------------------------------------------------------*/
-enum usbSpeed
-{
-  USB_LS,
-  USB_FS,
-  USB_HS,
-  USB_SS
-};
+
+typedef void (*usbDescriptorFunctor)(const void *, struct UsbDescriptor *,
+    void *);
 /*----------------------------------------------------------------------------*/
 enum usbDeviceEvent
 {
@@ -38,6 +34,16 @@ enum usbDeviceEvent
   USB_DEVICE_EVENT_RESUME,
   USB_DEVICE_EVENT_FRAME,
   USB_DEVICE_EVENT_PORT_CHANGE
+};
+/*----------------------------------------------------------------------------*/
+enum usbOption
+{
+  USB_SPEED,
+  USB_COMPOSITE,
+  USB_SELF_POWERED,
+  USB_REMOTE_WAKEUP,
+
+  USB_OPTION_END
 };
 /*----------------------------------------------------------------------------*/
 enum usbRequestStatus
@@ -52,6 +58,14 @@ enum usbRequestStatus
   USB_REQUEST_ERROR,
   /** Request is removed from the queue. */
   USB_REQUEST_CANCELLED
+};
+/*----------------------------------------------------------------------------*/
+enum usbSpeed
+{
+  USB_LS,
+  USB_FS,
+  USB_HS,
+  USB_SS
 };
 /*----------------------------------------------------------------------------*/
 struct UsbRequest
@@ -74,18 +88,15 @@ struct UsbDeviceClass
   CLASS_HEADER
 
   void *(*createEndpoint)(void *, uint8_t);
-  enum usbSpeed (*getSpeed)(const void *);
+  uint8_t (*getInterface)(const void *);
   void (*setAddress)(void *, uint8_t);
   void (*setConnected)(void *, bool);
 
+  enum result (*getOption)(const void *, enum usbOption, void *);
+  enum result (*setOption)(void *, enum usbOption, const void *);
+
   enum result (*bind)(void *, void *);
   void (*unbind)(void *, const void *);
-
-  uint8_t (*getConfiguration)(const void *);
-  void (*setConfiguration)(void *, uint8_t);
-
-  enum result (*appendDescriptor)(void *, const void *);
-  void (*eraseDescriptor)(void *, const void *);
 };
 /*----------------------------------------------------------------------------*/
 /**
@@ -101,13 +112,13 @@ static inline void *usbDevCreateEndpoint(void *device, uint8_t address)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Get current interface speed.
+ * Get an index of a free interface.
  * @param device Pointer to an UsbDevice object.
- * @return Current interface speed.
+ * @return @b Number of a free interface.
  */
-static inline enum usbSpeed usbDevGetSpeed(const void *device)
+static inline uint8_t usbDevGetInterface(const void *device)
 {
-  return ((const struct UsbDeviceClass *)CLASS(device))->getSpeed(device);
+  return ((const struct UsbDeviceClass *)CLASS(device))->getInterface(device);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -123,11 +134,42 @@ static inline void usbDevSetAddress(void *device, uint8_t address)
 /**
  * Allow or forbid the device to connect to host.
  * @param device Pointer to an UsbDevice object.
- * @param state Requested device state.
+ * @param state Device state.
  */
 static inline void usbDevSetConnected(void *device, bool state)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->setConnected(device, state);
+}
+/*----------------------------------------------------------------------------*/
+enum result (*getOption)(void *, enum usbOption, void *);
+enum result (*setOption)(void *, enum usbOption, const void *);
+/*----------------------------------------------------------------------------*/
+/**
+ * Get the device option.
+ * @param device Pointer to an UsbDevice object.
+ * @param option Option to be read.
+ * @param value Pointer to a buffer where a value of the option will be stored.
+ * @return @b E_OK on success.
+ */
+static inline enum result usbDevGetOption(const void *device,
+    enum usbOption option, void *value)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->getOption(device,
+      option, value);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set the device option.
+ * @param device Pointer to an UsbDevice object.
+ * @param option Option to be set.
+ * @param value Pointer to a new value of the option.
+ * @return @b E_OK on success.
+ */
+static inline enum result usbDevSetOption(void *device, enum usbOption option,
+    const void *value)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->setOption(device,
+      option, value);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -149,53 +191,6 @@ static inline enum result usbDevBind(void *device, void *driver)
 static inline void usbDevUnbind(void *device, const void *driver)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->unbind(device, driver);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Get current configuration of the device.
- * @param device Pointer to an UsbDevice object.
- * @return Number of the current configuration.
- */
-static inline uint8_t usbDevGetConfiguration(const void *device)
-{
-  return ((const struct UsbDeviceClass *)CLASS(device))->
-      getConfiguration(device);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Set normal operation mode of the device or return the device to
- * an unconfigured state.
- * @param device Pointer to an UsbDevice object.
- * @param configuration Requested device configuration.
- */
-static inline void usbDevSetConfiguration(void *device, uint8_t configuration)
-{
-  ((const struct UsbDeviceClass *)CLASS(device))->setConfiguration(device,
-      configuration);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Register device descriptor.
- * @param device Pointer to an UsbDevice object.
- * @param descriptor Device descriptor to be appended.
- * @return @b E_OK on success.
- */
-static inline enum result usbDevAppendDescriptor(void *device,
-    const void *descriptor)
-{
-  return ((const struct UsbDeviceClass *)CLASS(device))->
-      appendDescriptor(device, descriptor);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Erase device descriptor.
- * @param device Pointer to an UsbDevice object.
- * @param descriptor Device descriptor to be erased.
- */
-static inline void usbDevEraseDescriptor(void *device, const void *descriptor)
-{
-  ((const struct UsbDeviceClass *)CLASS(device))->eraseDescriptor(device,
-      descriptor);
 }
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
@@ -286,6 +281,7 @@ struct UsbDriverClass
 
   enum result (*configure)(void *, const struct UsbSetupPacket *,
       const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
+  const usbDescriptorFunctor *(*describe)(const void *);
   void (*event)(void *, unsigned int);
 };
 /*----------------------------------------------------------------------------*/
@@ -315,6 +311,16 @@ static inline enum result usbDriverConfigure(void *driver,
   return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
       packet, payload, payloadLength, response, responseLength,
       maxResponseLength);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get a list of descriptor functors.
+ * @param driver Pointer to an UsbDriver object.
+ * @return List of descriptor functors.
+ */
+static inline const usbDescriptorFunctor *usbDriverDescribe(const void *driver)
+{
+  return ((const struct UsbDriverClass *)CLASS(driver))->describe(driver);
 }
 /*----------------------------------------------------------------------------*/
 /**

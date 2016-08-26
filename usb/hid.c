@@ -32,7 +32,8 @@ static enum result deviceInit(void *object, const void *configBase)
       .descriptor = config->descriptor,
       .descriptorSize = config->descriptorSize,
       .reportSize = config->reportSize,
-      .endpoint.interrupt = config->endpoint.interrupt
+      .endpoints.interrupt = config->endpoints.interrupt,
+      .composite = config->composite
   };
 
   device->driver = init(HidBase, &driverConfig);
@@ -56,9 +57,8 @@ enum result hidBind(struct Hid *device)
   if ((res = usbDevBind(device->driver->device, device->driver)) != E_OK)
     return res;
 
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-  usbDevSetConnected(device->driver->device, true);
-#endif
+  if (device->driver->composite)
+    usbDevSetConnected(device->driver->device, true);
 
   return E_OK;
 }

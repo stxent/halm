@@ -9,6 +9,7 @@
 #include <string.h>
 #include <xcore/memory.h>
 #include <halm/usb/usb_control.h>
+#include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_requests.h>
 /*----------------------------------------------------------------------------*/
 #define EP0_BUFFER_SIZE   64
@@ -26,9 +27,9 @@ struct PrivateData
 {
   struct ControlUsbRequest requests[REQUEST_POOL_SIZE + 1];
 
-  struct UsbSetupPacket setupPacket;
-  uint16_t setupDataLeft;
-  uint8_t setupData[DATA_BUFFER_SIZE];
+  struct UsbSetupPacket packet;
+  uint16_t left;
+  uint8_t data[DATA_BUFFER_SIZE];
 };
 /*----------------------------------------------------------------------------*/
 static enum result privateDataAllocate(struct UsbControl *);
@@ -61,8 +62,8 @@ static enum result privateDataAllocate(struct UsbControl *control)
     return E_MEMORY;
   control->privateData = privateData;
 
-  privateData->setupDataLeft = 0;
-  memset(&privateData->setupPacket, 0, sizeof(privateData->setupPacket));
+  privateData->left = 0;
+  memset(&privateData->packet, 0, sizeof(privateData->packet));
 
   return E_OK;
 }
@@ -85,7 +86,9 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 {
   struct UsbControl * const control = argument;
   struct PrivateData * const privateData = control->privateData;
-  struct UsbSetupPacket * const packet = &privateData->setupPacket;
+  struct UsbSetupPacket * const packet = &privateData->packet;
+
+  assert(control->driver);
 
   if (status == USB_REQUEST_CANCELLED)
     return;
@@ -95,7 +98,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 
   if (status == USB_REQUEST_SETUP)
   {
-    privateData->setupDataLeft = 0;
+    privateData->left = 0;
     memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
     packet->value = fromLittleEndian16(packet->value);
     packet->index = fromLittleEndian16(packet->index);
@@ -105,31 +108,24 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 
     if (!packet->length || direction == REQUEST_DIRECTION_TO_HOST)
     {
-      res = usbHandleStandardRequest(control, packet, privateData->setupData,
+      res = usbDriverConfigure(control->driver, packet, 0, 0, privateData->data,
           &length, DATA_BUFFER_SIZE);
-
-      if (res != E_OK && control->driver)
-      {
-        res = usbDriverConfigure(control->driver, packet, 0, 0,
-            privateData->setupData, &length, DATA_BUFFER_SIZE);
-      }
     }
     else if (packet->length <= DATA_BUFFER_SIZE)
     {
-      privateData->setupDataLeft = packet->length;
+      privateData->left = packet->length;
     }
   }
-  else if (privateData->setupDataLeft
-      && request->length <= privateData->setupDataLeft)
+  else if (privateData->left && request->length <= privateData->left)
   {
     /* Erroneous packets are ignored */
-    memcpy(privateData->setupData + (packet->length
-        - privateData->setupDataLeft), request->buffer, request->length);
-    privateData->setupDataLeft -= request->length;
+    memcpy(privateData->data + (packet->length - privateData->left),
+        request->buffer, request->length);
+    privateData->left -= request->length;
 
-    if (!privateData->setupDataLeft)
+    if (!privateData->left)
     {
-      res = usbDriverConfigure(control->driver, packet, privateData->setupData,
+      res = usbDriverConfigure(control->driver, packet, privateData->data,
           packet->length, 0, 0, 0);
     }
   }
@@ -138,7 +134,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
   {
     /* Send smallest of requested and offered lengths */
     length = length < packet->length ? length : packet->length;
-    sendResponse(control, privateData->setupData, length);
+    sendResponse(control, privateData->data, length);
   }
   else if (res != E_BUSY)
   {
@@ -167,7 +163,6 @@ static void resetDevice(struct UsbControl *control)
 static void sendResponse(struct UsbControl *control, const uint8_t *data,
     uint16_t length)
 {
-  struct UsbRequest *request;
   unsigned int chunkCount;
 
   chunkCount = (length + (EP0_BUFFER_SIZE - 1)) / EP0_BUFFER_SIZE;
@@ -180,6 +175,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
 
   for (unsigned int index = 0; index < chunkCount; ++index)
   {
+    struct UsbRequest *request;
     queuePop(&control->inRequestPool, &request);
 
     const uint16_t chunk = EP0_BUFFER_SIZE < length ? EP0_BUFFER_SIZE : length;
@@ -195,39 +191,13 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   }
 }
 /*----------------------------------------------------------------------------*/
-enum result usbControlAppendDescriptor(struct UsbControl *control,
-    const void *descriptor)
-{
-  return listPush(&control->descriptors, &descriptor);
-}
-/*----------------------------------------------------------------------------*/
-void usbControlEraseDescriptor(struct UsbControl *control,
-    const void *descriptor)
-{
-  struct ListNode * const node = listFind(&control->descriptors, &descriptor);
-
-  if (node)
-    listErase(&control->descriptors, node);
-}
-/*----------------------------------------------------------------------------*/
 enum result usbControlBindDriver(struct UsbControl *control, void *driver)
 {
-  if (!driver)
-    return E_VALUE;
-
-  /* A driver is already bound */
-  if (control->driver)
-    return E_ERROR;
+  assert(driver);
+  assert(!control->driver);
 
   control->driver = driver;
-
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-void usbControlResetDriver(struct UsbControl *control)
-{
-  if (control->driver)
-    usbDriverEvent(control->driver, USB_DEVICE_EVENT_RESET);
 }
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control)
@@ -237,15 +207,12 @@ void usbControlUnbindDriver(struct UsbControl *control)
 /*----------------------------------------------------------------------------*/
 void usbControlEvent(struct UsbControl *control, unsigned int event)
 {
+  assert(control->driver);
+
   if (event == USB_DEVICE_EVENT_RESET)
-  {
     resetDevice(control);
-  }
   else
-  {
-    if (control->driver)
-      usbDriverEvent(control->driver, event);
-  }
+    usbDriverEvent(control->driver, event);
 }
 /*----------------------------------------------------------------------------*/
 static enum result controlInit(void *object, const void *configBase)
@@ -267,11 +234,6 @@ static enum result controlInit(void *object, const void *configBase)
   control->ep0out = usbDevCreateEndpoint(control->owner, USB_EP_ADDRESS(0));
   if (!control->ep0out)
     return E_MEMORY;
-
-  /* Create a list for USB descriptors */
-  res = listInit(&control->descriptors, sizeof(const struct UsbDescriptor *));
-  if (res != E_OK)
-    return res;
 
   res = privateDataAllocate(control);
   if (res != E_OK)
@@ -321,7 +283,4 @@ static void controlDeinit(void *object)
   deinit(control->ep0in);
 
   privateDataFree(control);
-
-  assert(listEmpty(&control->descriptors));
-  listDeinit(&control->descriptors);
 }

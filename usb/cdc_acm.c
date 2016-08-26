@@ -10,6 +10,7 @@
 #include <halm/irq.h>
 #include <halm/usb/cdc_acm.h>
 #include <halm/usb/cdc_acm_defs.h>
+#include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct CdcUsbRequest
@@ -26,7 +27,7 @@ struct CdcUsbRequest
 static void cdcDataReceived(void *, struct UsbRequest *, enum usbRequestStatus);
 static void cdcDataSent(void *, struct UsbRequest *, enum usbRequestStatus);
 static inline size_t getPacketSize(const struct CdcAcm *);
-static void resetBuffers(struct CdcAcm *);
+static bool resetEndpoints(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
 static enum result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
@@ -131,14 +132,46 @@ static inline size_t getPacketSize(const struct CdcAcm *interface)
       CDC_DATA_EP_SIZE_HS : CDC_DATA_EP_SIZE;
 }
 /*----------------------------------------------------------------------------*/
-static void resetBuffers(struct CdcAcm *interface)
+static bool resetEndpoints(struct CdcAcm *interface)
 {
+  bool completed = true;
+
   /* Return queued requests to pools */
   usbEpClear(interface->rxDataEp);
   usbEpClear(interface->txDataEp);
 
+  interface->suspended = true;
   interface->queuedRxBytes = 0;
   interface->queuedTxBytes = 0;
+
+  /* Enable endpoints */
+  const size_t maxPacketSize = getPacketSize(interface);
+
+  usbEpEnable(interface->notificationEp, ENDPOINT_TYPE_INTERRUPT,
+      CDC_NOTIFICATION_EP_SIZE);
+  usbEpEnable(interface->txDataEp, ENDPOINT_TYPE_BULK, maxPacketSize);
+  usbEpEnable(interface->rxDataEp, ENDPOINT_TYPE_BULK, maxPacketSize);
+
+  /* Fill OUT endpoint queue */
+  while (!queueEmpty(&interface->rxRequestQueue))
+  {
+    struct UsbRequest *request;
+
+    queuePop(&interface->rxRequestQueue, &request);
+    request->length = 0;
+
+    if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
+    {
+      completed = false;
+      queuePush(&interface->rxRequestQueue, &request);
+      break;
+    }
+  }
+
+  if (completed)
+    interface->suspended = false;
+
+  return completed;
 }
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *interface)
@@ -151,47 +184,30 @@ void cdcAcmOnParametersChanged(struct CdcAcm *interface)
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
 {
-  if (event == USB_DEVICE_EVENT_SUSPEND)
+  switch (event)
   {
-    interface->suspended = true;
-    usbTrace("cdc_acm: suspended");
-  }
-  else if (event == USB_DEVICE_EVENT_RESUME)
-  {
-    interface->suspended = false;
-    usbTrace("cdc_acm: resumed");
-  }
-  else if (event == USB_DEVICE_EVENT_RESET)
-  {
-    bool completed = true;
-
-    interface->suspended = true;
-    resetBuffers(interface);
-
-    while (!queueEmpty(&interface->rxRequestQueue))
-    {
-      struct UsbRequest *request;
-
-      queuePop(&interface->rxRequestQueue, &request);
-      request->length = 0;
-
-      if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
+    case USB_DEVICE_EVENT_RESET:
+      if (resetEndpoints(interface))
       {
-        completed = false;
-        queuePush(&interface->rxRequestQueue, &request);
-        break;
+        interface->suspended = false;
+        usbTrace("cdc_acm: reset completed");
       }
-    }
+      else
+        usbTrace("cdc_acm: reset failed");
+      break;
 
-    if (completed)
-    {
+    case USB_DEVICE_EVENT_SUSPEND:
+      interface->suspended = true;
+      usbTrace("cdc_acm: suspended");
+      break;
+
+    case USB_DEVICE_EVENT_RESUME:
       interface->suspended = false;
-      usbTrace("cdc_acm: reset completed");
-    }
-    else
-    {
-      usbTrace("cdc_acm: reset failed");
-    }
+      usbTrace("cdc_acm: resumed");
+      break;
+
+    default:
+      return;
   }
 
   if (interface->callback)
@@ -205,10 +221,10 @@ static enum result interfaceInit(void *object, const void *configBase)
   const struct CdcAcmBaseConfig driverConfig = {
       .device = config->device,
       .owner = interface,
-      .endpoint = {
-          .interrupt = config->endpoint.interrupt,
-          .rx = config->endpoint.rx,
-          .tx = config->endpoint.tx
+      .endpoints = {
+          .interrupt = config->endpoints.interrupt,
+          .rx = config->endpoints.rx,
+          .tx = config->endpoints.tx
       }
   };
   enum result res;
@@ -229,15 +245,15 @@ static enum result interfaceInit(void *object, const void *configBase)
   interface->updated = false;
 
   interface->notificationEp = usbDevCreateEndpoint(config->device,
-      config->endpoint.interrupt);
+      config->endpoints.interrupt);
   if (!interface->notificationEp)
     return E_ERROR;
   interface->rxDataEp = usbDevCreateEndpoint(config->device,
-      config->endpoint.rx);
+      config->endpoints.rx);
   if (!interface->rxDataEp)
     return E_ERROR;
   interface->txDataEp = usbDevCreateEndpoint(config->device,
-      config->endpoint.tx);
+      config->endpoints.tx);
   if (!interface->txDataEp)
     return E_ERROR;
 

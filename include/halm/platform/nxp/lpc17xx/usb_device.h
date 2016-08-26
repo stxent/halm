@@ -35,8 +35,8 @@ struct UsbDevice
   struct UsbEndpoint *endpoints[32];
   /* Control message handler */
   struct UsbControl *control;
-  /* Active device configuration */
-  uint8_t configuration;
+  /* Device status flag */
+  uint8_t configured;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_USB_DEVICE_H_ */

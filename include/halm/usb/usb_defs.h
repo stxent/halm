@@ -112,6 +112,8 @@ enum
   REQUEST_TYPE_RESERVED = 3
 };
 /*----------------------------------------------------------------------------*/
+#define DEFAULT_DEVICE_CONFIGURATION 1
+/*----------------------------------------------------------------------------*/
 #define REQUEST_DIRECTION_MASK          BIT_FIELD(MASK(1), 7)
 #define REQUEST_DIRECTION_VALUE(reg) \
     FIELD_VALUE((reg), REQUEST_DIRECTION_MASK, 7)

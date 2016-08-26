@@ -25,8 +25,6 @@ struct UsbDevice
   struct UsbEndpoint **endpoints;
   /* Control message handler */
   struct UsbControl *control;
-  /* Active device configuration */
-  uint8_t configuration;
   /* Suspend flag */
   bool suspended;
 };

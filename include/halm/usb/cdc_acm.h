@@ -48,7 +48,7 @@ struct CdcAcmConfig
     uint8_t rx;
     /** Mandatory: identifier of the output data endpoint. */
     uint8_t tx;
-  } endpoint;
+  } endpoints;
 };
 /*----------------------------------------------------------------------------*/
 struct CdcAcm

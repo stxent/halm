@@ -7,7 +7,6 @@
 #ifndef HALM_USB_USB_CONTROL_H_
 #define HALM_USB_USB_CONTROL_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/list.h>
 #include <xcore/containers/queue.h>
 #include <halm/pin.h>
 #include <halm/usb/usb.h>
@@ -27,8 +26,6 @@ struct UsbControl
   /* Parent object */
   struct UsbDevice *owner;
 
-  /* List of registered descriptors */
-  struct List descriptors;
   /* Device driver that is currently active */
   struct UsbDriver *driver;
 
@@ -45,10 +42,7 @@ struct UsbControl
   void *privateData;
 };
 /*----------------------------------------------------------------------------*/
-enum result usbControlAppendDescriptor(struct UsbControl *, const void *);
-void usbControlEraseDescriptor(struct UsbControl *, const void *);
 enum result usbControlBindDriver(struct UsbControl *, void *);
-void usbControlResetDriver(struct UsbControl *);
 void usbControlUnbindDriver(struct UsbControl *);
 void usbControlEvent(struct UsbControl *, unsigned int);
 /*----------------------------------------------------------------------------*/

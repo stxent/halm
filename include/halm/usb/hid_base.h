@@ -19,6 +19,7 @@ struct HidBaseConfig
   struct Hid *owner;
   /** Mandatory: USB device. */
   void *device;
+
   /** Mandatory: report descriptor. */
   const void *descriptor;
   /** Mandatory: size of the report descriptor. */
@@ -30,7 +31,10 @@ struct HidBaseConfig
   {
     /** Mandatory: identifier of the notification endpoint. */
     uint8_t interrupt;
-  } endpoint;
+  } endpoints;
+
+  /** Optional: enable composite device mode. */
+  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct HidBase
@@ -43,9 +47,13 @@ struct HidBase
   const void *reportDescriptor;
   uint16_t reportDescriptorSize;
   uint8_t idleTime;
-  uint8_t interfaceIndex;
 
-  void *privateData;
+  /* Address of the interrupt endpoint */
+  uint8_t endpointAddress;
+  /* Interface index in configurations with multiple interfaces */
+  uint8_t interfaceIndex;
+  /* Composite device flag */
+  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_HID_BASE_H_ */

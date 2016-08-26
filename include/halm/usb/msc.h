@@ -35,7 +35,7 @@ struct MscConfig
     uint8_t rx;
     /** Mandatory: identifier of the output endpoint. */
     uint8_t tx;
-  } endpoint;
+  } endpoints;
 };
 /*----------------------------------------------------------------------------*/
 struct Msc
@@ -69,8 +69,15 @@ struct Msc
    */
   uint16_t packetSize;
 
+  /* Addresses of endpoints */
+  struct
+  {
+    uint8_t rx;
+    uint8_t tx;
+  } endpoints;
+
   /* Interface index in configurations with multiple interface */
-  uint8_t controlInterfaceIndex;
+  uint8_t interfaceIndex;
   /* Current state of the FSM */
   uint8_t state;
 

@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <xcore/memory.h>
 #include <halm/platform/nxp/lpc43xx/usb_defs.h>
 #include <halm/platform/nxp/usb_device.h>
@@ -29,15 +30,13 @@ static void resetQueueHeads(struct UsbDevice *);
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
 static void *devCreateEndpoint(void *, uint8_t);
-static enum usbSpeed devGetSpeed(const void *);
+static uint8_t devGetInterface(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
+static enum result devGetOption(const void *, enum usbOption, void *);
+static enum result devSetOption(void *, enum usbOption, const void *);
 static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
-static uint8_t devGetConfiguration(const void *);
-static void devSetConfiguration(void *, uint8_t);
-static enum result devAppendDescriptor(void *, const void *);
-static void devEraseDescriptor(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
     .size = sizeof(struct UsbDevice),
@@ -45,18 +44,15 @@ static const struct UsbDeviceClass devTable = {
     .deinit = devDeinit,
 
     .createEndpoint = devCreateEndpoint,
-    .getSpeed = devGetSpeed,
+    .getInterface = devGetInterface,
     .setAddress = devSetAddress,
     .setConnected = devSetConnected,
 
+    .getOption = devGetOption,
+    .setOption = devSetOption,
+
     .bind = devBind,
-    .unbind = devUnbind,
-
-    .getConfiguration = devGetConfiguration,
-    .setConfiguration = devSetConfiguration,
-
-    .appendDescriptor = devAppendDescriptor,
-    .eraseDescriptor = devEraseDescriptor
+    .unbind = devUnbind
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const UsbDevice = &devTable;
@@ -182,7 +178,6 @@ static void resetDevice(struct UsbDevice *device)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  device->configuration = 0; /* Inactive configuration */
   device->suspended = false;
 
   /* Disable all endpoints */
@@ -340,13 +335,9 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   return endpoint;
 }
 /*----------------------------------------------------------------------------*/
-static enum usbSpeed devGetSpeed(const void *object)
+static uint8_t devGetInterface(const void *object __attribute__((unused)))
 {
-  const struct UsbDevice * const device = object;
-  const LPC_USB_Type * const reg = device->base.reg;
-
-  return PORTSC1_D_PSPD_VALUE(reg->PORTSC1_D) == PSPD_HIGH_SPEED ?
-      USB_HS : USB_FS;
+  return 0;
 }
 /*----------------------------------------------------------------------------*/
 static void devSetAddress(void *object, uint8_t address)
@@ -371,53 +362,69 @@ static void devSetConnected(void *object, bool state)
     reg->USBCMD_D &= ~USBCMD_D_RS;
 }
 /*----------------------------------------------------------------------------*/
+static enum result devGetOption(const void *object, enum usbOption option,
+    void *value)
+{
+  const struct UsbDevice * const device = object;
+
+  switch (option)
+  {
+    case USB_SPEED:
+    {
+      const LPC_USB_Type * const reg = device->base.reg;
+      const bool high = PORTSC1_D_PSPD_VALUE(reg->PORTSC1_D) == PSPD_HIGH_SPEED;
+
+      *(enum usbSpeed *)value = high ? USB_HS : USB_FS;
+      return E_OK;
+    }
+
+    case USB_COMPOSITE:
+    case USB_SELF_POWERED:
+      //FIXME
+    case USB_REMOTE_WAKEUP:
+      *(bool *)value = false;
+      return E_OK;
+
+    default:
+      return E_INVALID;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result devSetOption(void *object, enum usbOption option,
+    const void *value)
+{
+  struct UsbDevice * const device = object;
+
+  switch (option)
+  {
+    case USB_SELF_POWERED:
+    case USB_REMOTE_WAKEUP:
+      // FIXME
+      return E_OK;
+
+    default:
+      return E_INVALID;
+  }
+}
+/*----------------------------------------------------------------------------*/
 static enum result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
+
   const irqState state = irqSave();
-
   const enum result res = usbControlBindDriver(device->control, driver);
-
   irqRestore(state);
+
   return res;
 }
 /*----------------------------------------------------------------------------*/
 static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
+
   const irqState state = irqSave();
-
   usbControlUnbindDriver(device->control);
-
   irqRestore(state);
-}
-/*----------------------------------------------------------------------------*/
-static uint8_t devGetConfiguration(const void *object)
-{
-  const struct UsbDevice * const device = object;
-
-  return device->configuration;
-}
-/*----------------------------------------------------------------------------*/
-static void devSetConfiguration(void *object, uint8_t configuration)
-{
-  struct UsbDevice * const device = object;
-
-  device->configuration = configuration;
-}
-/*----------------------------------------------------------------------------*/
-static enum result devAppendDescriptor(void *object, const void *descriptor)
-{
-  struct UsbDevice * const device = object;
-
-  return usbControlAppendDescriptor(device->control, descriptor);
-}
-/*----------------------------------------------------------------------------*/
-static void devEraseDescriptor(void *object, const void *descriptor)
-{
-  struct UsbDevice * const device = object;
-
-  usbControlEraseDescriptor(device->control, descriptor);
 }
 /*----------------------------------------------------------------------------*/
 static void epCommonHandler(struct UsbEndpoint *ep)

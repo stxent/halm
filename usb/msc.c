@@ -13,6 +13,8 @@
 #include <halm/usb/composite_device.h>
 #include <halm/usb/msc.h>
 #include <halm/usb/msc_defs.h>
+#include <halm/usb/usb_defs.h>
+#include <halm/usb/usb_requests.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 enum state
@@ -50,13 +52,6 @@ struct PrivateData
   struct UsbRequest rxRequests[RX_QUEUE_SIZE];
   struct UsbRequest txRequests[TX_QUEUE_SIZE];
   struct MscControlRequest controlRequests[CONTROL_QUEUE_SIZE];
-
-  struct UsbEndpointDescriptor endpointDescriptors[2];
-
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  struct UsbInterfaceAssociationDescriptor associationDescriptor;
-  struct UsbInterfaceDescriptor interfaceDescriptor;
-#endif
 
   struct
   {
@@ -140,16 +135,18 @@ static enum result storageWrite(struct Msc *);
 
 static void storageCallback(void *);
 /*----------------------------------------------------------------------------*/
-static enum result buildDescriptors(struct Msc *, struct PrivateData *,
-    const struct MscConfig *);
-static enum result descriptorEraseWrapper(void *, const void *);
-static enum result handleRequest(struct Msc *,
-    const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
-    uint16_t *, uint16_t);
-static enum result initPrivateData(struct Msc *, const struct MscConfig *);
+static void deviceDescriptor(const void *, struct UsbDescriptor *, void *);
+static void configDescriptor(const void *, struct UsbDescriptor *, void *);
+static void interfaceDescriptor(const void *, struct UsbDescriptor *, void *);
+static void rxEndpointDescriptor(const void *, struct UsbDescriptor *, void *);
+static void txEndpointDescriptor(const void *, struct UsbDescriptor *, void *);
+/*----------------------------------------------------------------------------*/
+static enum result handleClassRequest(struct Msc *,
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
+static enum result handleDeviceRequest(struct Msc *,
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
+static enum result initPrivateData(struct Msc *);
 static enum result initRequestQueues(struct Msc *, struct PrivateData *);
-static enum result iterateOverDescriptors(const struct Msc *,
-    struct PrivateData *, enum result (*)(void *, const void *));
 static void freePrivateData(struct Msc *);
 static void resetBuffers(struct Msc *);
 /*----------------------------------------------------------------------------*/
@@ -169,6 +166,15 @@ static const struct UsbDriverClass driverTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const Msc = &driverTable;
+/*----------------------------------------------------------------------------*/
+static const usbDescriptorFunctor deviceDescriptorTable[] = {
+    deviceDescriptor,
+    configDescriptor,
+    interfaceDescriptor,
+    rxEndpointDescriptor,
+    txEndpointDescriptor,
+    0
+};
 /*----------------------------------------------------------------------------*/
 static const struct StateEntry stateTable[] = {
     [STATE_IDLE]                    = {stateIdleEnter, stateIdleRun},
@@ -191,52 +197,6 @@ static const struct StateEntry stateTable[] = {
     [STATE_ERROR]                   = {stateErrorEnter, stateErrorRun},
     [STATE_SUSPEND]                 = {stateSuspendEnter, 0}
 };
-/*----------------------------------------------------------------------------*/
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-static const struct UsbDeviceDescriptor deviceDescriptor = {
-    .length             = sizeof(struct UsbDeviceDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_DEVICE,
-    .usb                = TO_LITTLE_ENDIAN_16(0x0200),
-    .deviceClass        = USB_CLASS_PER_INTERFACE,
-    .deviceSubClass     = 0x00, /* Reserved value */
-    .deviceProtocol     = 0x00, /* No class specific protocol */
-    .maxPacketSize      = MSC_CONTROL_EP_SIZE,
-    .idVendor           = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID),
-    .idProduct          = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID),
-    .device             = TO_LITTLE_ENDIAN_16(0x0100),
-    .manufacturer       = 0,
-    .product            = 0,
-    .serialNumber       = 0,
-    .numConfigurations  = 1
-};
-
-static const struct UsbConfigurationDescriptor configDescriptor = {
-    .length             = sizeof(struct UsbConfigurationDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_CONFIGURATION,
-    .totalLength        = TO_LITTLE_ENDIAN_16(
-        sizeof(struct UsbConfigurationDescriptor)
-        + sizeof(struct UsbInterfaceDescriptor)
-        + sizeof(struct UsbEndpointDescriptor) * 2),
-    .numInterfaces      = 1,
-    .configurationValue = 1,
-    .configuration      = 0, /* No configuration name */
-    .attributes         = CONFIGURATION_DESCRIPTOR_DEFAULT
-        | CONFIGURATION_DESCRIPTOR_SELF_POWERED,
-    .maxPower           = ((CONFIG_USB_DEVICE_CURRENT + 1) >> 1)
-};
-
-static const struct UsbInterfaceDescriptor interfaceDescriptor = {
-    .length             = sizeof(struct UsbInterfaceDescriptor),
-    .descriptorType     = DESCRIPTOR_TYPE_INTERFACE,
-    .interfaceNumber    = 0,
-    .alternateSettings  = 0,
-    .numEndpoints       = 2,
-    .interfaceClass     = USB_CLASS_MASS_STORAGE,
-    .interfaceSubClass  = MSC_SUBCLASS_SCSI,
-    .interfaceProtocol  = MSC_PROTOCOL_BBB,
-    .interface          = 0 /* No interface name */
-};
-#endif
 /*----------------------------------------------------------------------------*/
 static inline uint32_t fromBigEndian24(const uint8_t *input, uint32_t mask)
 {
@@ -1196,81 +1156,157 @@ static void storageCallback(void *argument)
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static enum result buildDescriptors(struct Msc *driver,
-    struct PrivateData *privateData, const struct MscConfig *config)
+static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
+    void *payload)
 {
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  const uint8_t firstInterface = usbCompositeDevIndex(driver->device);
+  header->length = sizeof(struct UsbDeviceDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
-  driver->controlInterfaceIndex = firstInterface;
-  //TODO
-#endif
+  if (payload)
+  {
+    struct UsbDeviceDescriptor * const descriptor = payload;
 
-  privateData->endpointDescriptors[0].length =
-      sizeof(struct UsbEndpointDescriptor);
-  privateData->endpointDescriptors[0].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  privateData->endpointDescriptors[0].endpointAddress = config->endpoint.tx;
-  privateData->endpointDescriptors[0].attributes =
-      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
-  privateData->endpointDescriptors[0].maxPacketSize =
-      TO_LITTLE_ENDIAN_16(MSC_DATA_EP_SIZE);
-  privateData->endpointDescriptors[0].interval = 0;
-
-  privateData->endpointDescriptors[1].length =
-      sizeof(struct UsbEndpointDescriptor);
-  privateData->endpointDescriptors[1].descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
-  privateData->endpointDescriptors[1].endpointAddress = config->endpoint.rx;
-  privateData->endpointDescriptors[1].attributes =
-      ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
-  privateData->endpointDescriptors[1].maxPacketSize =
-      TO_LITTLE_ENDIAN_16(MSC_DATA_EP_SIZE);
-  privateData->endpointDescriptors[1].interval = 0;
-
-  return iterateOverDescriptors(driver, privateData, usbDevAppendDescriptor);
+    descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
+    descriptor->deviceClass = USB_CLASS_PER_INTERFACE;
+    descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(MSC_CONTROL_EP_SIZE);
+    descriptor->idVendor = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID);
+    descriptor->idProduct = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID);
+    descriptor->device = TO_LITTLE_ENDIAN_16(0x0100);
+    descriptor->numConfigurations = 1;
+  }
 }
 /*----------------------------------------------------------------------------*/
-static enum result descriptorEraseWrapper(void *device, const void *descriptor)
+static void configDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
 {
-  usbDevEraseDescriptor(device, descriptor);
-  return E_OK;
+  header->length = sizeof(struct UsbConfigurationDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
+
+  if (payload)
+  {
+    struct UsbConfigurationDescriptor * const descriptor = payload;
+
+    descriptor->totalLength = TO_LITTLE_ENDIAN_16(
+        sizeof(struct UsbConfigurationDescriptor)
+        + sizeof(struct UsbInterfaceDescriptor)
+        + sizeof(struct UsbEndpointDescriptor) * 2);
+    descriptor->numInterfaces = 1;
+    descriptor->configurationValue = 1;
+    descriptor->attributes = CONFIGURATION_DESCRIPTOR_DEFAULT
+        | CONFIGURATION_DESCRIPTOR_SELF_POWERED;
+    descriptor->maxPower = ((CONFIG_USB_DEVICE_CURRENT + 1) >> 1);
+  }
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleRequest(struct Msc *driver,
-    const struct UsbSetupPacket *packet,
-    const uint8_t *payload __attribute__((unused)),
-    uint16_t payloadLength __attribute__((unused)), uint8_t *response,
+static void interfaceDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  const struct Msc * const driver = object;
+
+  header->length = sizeof(struct UsbInterfaceDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
+
+  if (payload)
+  {
+    struct UsbInterfaceDescriptor * const descriptor = payload;
+
+    descriptor->interfaceNumber = driver->interfaceIndex;
+    descriptor->numEndpoints = 2;
+    descriptor->interfaceClass = USB_CLASS_MASS_STORAGE;
+    descriptor->interfaceSubClass = MSC_SUBCLASS_SCSI;
+    descriptor->interfaceProtocol = MSC_PROTOCOL_BBB;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void rxEndpointDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  const struct Msc * const driver = object;
+
+  header->length = sizeof(struct UsbEndpointDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+
+  if (payload)
+  {
+    struct UsbEndpointDescriptor * const descriptor = payload;
+
+    descriptor->endpointAddress = driver->endpoints.rx;
+    descriptor->attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
+    descriptor->maxPacketSize = toLittleEndian16(driver->packetSize);
+    descriptor->interval = 0;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void txEndpointDescriptor(const void *object,
+    struct UsbDescriptor *header, void *payload)
+{
+  const struct Msc * const driver = object;
+
+  header->length = sizeof(struct UsbEndpointDescriptor);
+  header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
+
+  if (payload)
+  {
+    struct UsbEndpointDescriptor * const descriptor = payload;
+
+    descriptor->endpointAddress = driver->endpoints.tx;
+    descriptor->attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
+    descriptor->maxPacketSize = toLittleEndian16(driver->packetSize);
+    descriptor->interval = 0;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result handleClassRequest(struct Msc *driver,
+    const struct UsbSetupPacket *packet, uint8_t *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
+  (void)maxResponseLength;
+
   switch (packet->request)
   {
     case MSC_REQUEST_RESET:
+      usbTrace("msc at %u: reset requested", packet->index);
+
       resetBuffers(driver);
       *responseLength = 0;
-
-      usbTrace("msc at %u: reset requested", packet->index);
-      break;
+      return E_OK;
 
     case MSC_REQUEST_GET_MAX_LUN:
-      if (maxResponseLength < 1)
-        return E_VALUE;
+      assert(maxResponseLength >= 1);
+
+      usbTrace("msc at %u: max LUN requested", packet->index);
 
       response[0] = 0; //FIXME
       *responseLength = 1;
-
-      usbTrace("msc at %u: max LUN requested", packet->index);
-      break;
+      return E_OK;
 
     default:
       usbTrace("msc at %u: unknown request %02X",
           packet->index, packet->request);
       return E_INVALID;
   }
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result initPrivateData(struct Msc *driver,
-    const struct MscConfig *config)
+static enum result handleDeviceRequest(struct Msc *driver,
+    const struct UsbSetupPacket *packet, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
+{
+  switch (packet->request)
+  {
+    case REQUEST_GET_DESCRIPTOR:
+      usbTrace("msc: get descriptor %u:%u, length %u",
+          DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
+          packet->length);
+      return usbExtractDescriptorData(driver, packet->value, packet->index,
+          response, responseLength, maxResponseLength);
+
+    default:
+      return usbHandleDeviceRequest(driver, driver->device, packet,
+          response, responseLength, maxResponseLength);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result initPrivateData(struct Msc *driver)
 {
   struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
   enum result res;
@@ -1280,9 +1316,6 @@ static enum result initPrivateData(struct Msc *driver,
   driver->privateData = privateData;
 
   memset(&privateData->context.cbw, 0, sizeof(privateData->context.cbw));
-
-  if ((res = buildDescriptors(driver, privateData, config)) != E_OK)
-    return res;
 
   if ((res = initRequestQueues(driver, privateData)) != E_OK)
     return res;
@@ -1336,38 +1369,6 @@ static enum result initRequestQueues(struct Msc *driver,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result iterateOverDescriptors(const struct Msc *driver,
-    struct PrivateData *privateData,
-    enum result (*action)(void *, const void *))
-{
-#ifdef CONFIG_USB_DEVICE_COMPOSITE
-  const void * const descriptors[] = {
-      &privateData->associationDescriptor,
-      &privateData->interfaceDescriptor,
-      &privateData->endpointDescriptors[0],
-      &privateData->endpointDescriptors[1]
-  };
-#else
-  const void * const descriptors[] = {
-      &deviceDescriptor,
-      &configDescriptor,
-      &interfaceDescriptor,
-      &privateData->endpointDescriptors[0],
-      &privateData->endpointDescriptors[1]
-  };
-#endif
-
-  for (unsigned int i = 0; i < ARRAY_SIZE(descriptors); ++i)
-  {
-    const enum result res = action(driver->device, descriptors[i]);
-
-    if (res != E_OK)
-      return res;
-  }
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
 static void freePrivateData(struct Msc *driver)
 {
   assert(queueFull(&driver->controlQueue));
@@ -1377,8 +1378,6 @@ static void freePrivateData(struct Msc *driver)
   queueDeinit(&driver->controlQueue);
   queueDeinit(&driver->txQueue);
   queueDeinit(&driver->rxQueue);
-
-  iterateOverDescriptors(driver, driver->privateData, descriptorEraseWrapper);
 
   free(driver->privateData);
 }
@@ -1411,7 +1410,8 @@ static enum result driverInit(void *object, const void *configBase)
 
   driver->device = config->device;
   driver->storage = config->storage;
-  driver->controlInterfaceIndex = 0;
+  driver->endpoints.rx = config->endpoints.rx;
+  driver->endpoints.tx = config->endpoints.tx;
 
   /* Setup temporary buffer */
   if (!config->size || config->size & (MSC_BLOCK_SIZE - 1))
@@ -1442,17 +1442,17 @@ static enum result driverInit(void *object, const void *configBase)
   /* Suspend state machine */
   driver->state = STATE_SUSPEND;
 
-  driver->rxEp = usbDevCreateEndpoint(config->device, config->endpoint.rx);
+  driver->rxEp = usbDevCreateEndpoint(config->device, config->endpoints.rx);
   if (!driver->rxEp)
     return E_ERROR;
-  driver->txEp = usbDevCreateEndpoint(config->device, config->endpoint.tx);
+  driver->txEp = usbDevCreateEndpoint(config->device, config->endpoints.tx);
   if (!driver->txEp)
     return E_ERROR;
 
-  if ((res = initPrivateData(driver, config)) != E_OK)
+  if ((res = initPrivateData(driver)) != E_OK)
     return res;
 
-  /* Bind driver and connect device */
+  driver->interfaceIndex = usbDevGetInterface(driver->device);
   if ((res = usbDevBind(driver->device, driver)) != E_OK)
     return res;
 
@@ -1487,20 +1487,47 @@ static void driverDeinit(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
-    const struct UsbSetupPacket *packet, const uint8_t *payload,
-    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
-    uint16_t maxResponseLength)
+    const struct UsbSetupPacket *packet,
+    const uint8_t *payload __attribute__((unused)),
+    uint16_t payloadLength __attribute__((unused)),
+    uint8_t *response, uint16_t *responseLength, uint16_t maxResponseLength)
 {
   struct Msc * const driver = object;
+  const uint8_t recipient = REQUEST_RECIPIENT_VALUE(packet->requestType);
+  const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
 
-  if (REQUEST_TYPE_VALUE(packet->requestType) != REQUEST_TYPE_CLASS)
+  if (type == REQUEST_TYPE_STANDARD)
+  {
+    switch (recipient)
+    {
+      case REQUEST_RECIPIENT_DEVICE:
+        return handleDeviceRequest(driver, packet, response, responseLength,
+            maxResponseLength);
+
+      case REQUEST_RECIPIENT_INTERFACE:
+        if (packet->index == driver->interfaceIndex)
+        {
+          return usbHandleInterfaceRequest(packet, response, responseLength,
+              maxResponseLength);
+        }
+        else
+          return E_INVALID;
+
+      case REQUEST_RECIPIENT_ENDPOINT:
+        return usbHandleEndpointRequest(driver->device, packet, response,
+            responseLength);
+
+      default:
+        return E_INVALID;
+    }
+  }
+  else if (type == REQUEST_TYPE_CLASS)
+  {
+    return handleClassRequest(object, packet, response, responseLength,
+        maxResponseLength);
+  }
+  else
     return E_INVALID;
-
-  if (packet->index != driver->controlInterfaceIndex)
-    return E_INVALID;
-
-  return handleRequest(driver, packet, payload, payloadLength, response,
-      responseLength, maxResponseLength);
 }
 /*----------------------------------------------------------------------------*/
 static void driverEvent(void *object, unsigned int event)
@@ -1510,18 +1537,13 @@ static void driverEvent(void *object, unsigned int event)
 #ifdef CONFIG_USB_DEVICE_HS
   if (event == USB_DEVICE_EVENT_PORT_CHANGE)
   {
-    const enum usbSpeed speed = usbDevGetSpeed(driver->device);
-    struct PrivateData * const privateData = driver->privateData;
-    uint16_t maxPacketSize;
+    enum usbSpeed speed;
 
+    usbDevGetOption(driver->device, USB_SPEED, &speed);
     if (speed == USB_HS)
-      maxPacketSize = TO_LITTLE_ENDIAN_16(MSC_DATA_EP_SIZE_HS);
+      driver->packetSize = TO_LITTLE_ENDIAN_16(MSC_DATA_EP_SIZE_HS);
     else
-      maxPacketSize = TO_LITTLE_ENDIAN_16(MSC_DATA_EP_SIZE);
-
-    privateData->endpointDescriptors[0].maxPacketSize = maxPacketSize;
-    privateData->endpointDescriptors[1].maxPacketSize = maxPacketSize;
-    driver->packetSize = maxPacketSize;
+      driver->packetSize = TO_LITTLE_ENDIAN_16(MSC_DATA_EP_SIZE);
 
     usbTrace("msc: current speed is %s", speed == USB_HS ? "HS" : "FS");
   }
