@@ -87,9 +87,11 @@ static const struct UsbDeviceClass deviceTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const CompositeDevice = &deviceTable;
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor(const void *object __attribute__((unused)),
-    struct UsbDescriptor *header, void *payload)
+static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
+    void *payload)
 {
+  const struct CompositeDeviceProxy * const driver = object;
+
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
@@ -97,13 +99,12 @@ static void deviceDescriptor(const void *object __attribute__((unused)),
   {
     struct UsbDeviceDescriptor * const descriptor = payload;
 
+    usbFillDeviceDescriptor(driver->owner, descriptor);
     descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
     descriptor->deviceClass = USB_CLASS_MISCELLANEOUS;
     descriptor->deviceSubClass = 0x02; /* Required for multiple IAD */
     descriptor->deviceProtocol = 0x01; /* Required for multiple IAD */
     descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(COMPOSITE_CONTROL_EP_SIZE);
-    descriptor->idVendor = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID);
-    descriptor->idProduct = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID);
     descriptor->device = TO_LITTLE_ENDIAN_16(0x0100);
     descriptor->numConfigurations = 1;
   }
@@ -121,14 +122,12 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
   if (!payload)
     return;
 
-  struct UsbConfigurationDescriptor * const rootDescriptor = payload;
+  struct UsbConfigurationDescriptor * const descriptor = payload;
 
-  rootDescriptor->totalLength = toLittleEndian16(device->configurationLength);
-  rootDescriptor->numInterfaces = device->interfaceCount;
-  rootDescriptor->configurationValue = 1;
-  rootDescriptor->attributes = CONFIGURATION_DESCRIPTOR_DEFAULT
-      | CONFIGURATION_DESCRIPTOR_SELF_POWERED;
-  rootDescriptor->maxPower = ((CONFIG_USB_DEVICE_CURRENT + 1) >> 1);
+  usbFillConfigurationDescriptor(device, descriptor);
+  descriptor->totalLength = toLittleEndian16(device->configurationLength);
+  descriptor->numInterfaces = device->interfaceCount;
+  descriptor->configurationValue = 1;
 
   uint8_t *payloadPosition = (uint8_t *)payload
       + sizeof(struct UsbConfigurationDescriptor);

@@ -28,6 +28,10 @@ struct UsbDeviceConfig
   pinNumber connect;
   /** Mandatory: monitors the presence of USB bus power. */
   pinNumber vbus;
+  /** Mandatory: Vendor Identifier. */
+  uint16_t vid;
+  /** Mandatory: Product Identifier. */
+  uint16_t pid;
   /** Optional: interrupt priority. */
   irqPriority priority;
   /** Mandatory: peripheral identifier. */

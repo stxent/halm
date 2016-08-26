@@ -25,6 +25,12 @@ struct UsbDevice
   struct UsbEndpoint **endpoints;
   /* Control message handler */
   struct UsbControl *control;
+
+  /* Maximum power consumption of the device in mA */
+  uint16_t power;
+  /* Vendor and Product identifiers */
+  uint16_t vid, pid;
+
   /* Device status */
   uint8_t status;
   /* Device is suspended */

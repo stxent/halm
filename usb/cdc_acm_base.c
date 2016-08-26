@@ -108,8 +108,8 @@ static void interfaceAssociationDescriptor(const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor(const void *object __attribute__((unused)),
-    struct UsbDescriptor *header, void *payload)
+static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
@@ -118,18 +118,17 @@ static void deviceDescriptor(const void *object __attribute__((unused)),
   {
     struct UsbDeviceDescriptor * const descriptor = payload;
 
+    usbFillDeviceDescriptor(object, descriptor);
     descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
     descriptor->deviceClass = USB_CLASS_CDC;
     descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_CONTROL_EP_SIZE);
-    descriptor->idVendor = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_VENDOR_ID);
-    descriptor->idProduct = TO_LITTLE_ENDIAN_16(CONFIG_USB_DEVICE_PRODUCT_ID);
     descriptor->device = TO_LITTLE_ENDIAN_16(0x0100);
     descriptor->numConfigurations = 1;
   }
 }
 /*----------------------------------------------------------------------------*/
-static void configDescriptor(const void *object __attribute__((unused)),
-    struct UsbDescriptor *header, void *payload)
+static void configDescriptor(const void *object, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
@@ -138,6 +137,7 @@ static void configDescriptor(const void *object __attribute__((unused)),
   {
     struct UsbConfigurationDescriptor * const descriptor = payload;
 
+    usbFillConfigurationDescriptor(object, descriptor);
     descriptor->totalLength = TO_LITTLE_ENDIAN_16(
         sizeof(struct UsbConfigurationDescriptor)
         + sizeof(struct UsbInterfaceDescriptor) * 2
@@ -148,9 +148,6 @@ static void configDescriptor(const void *object __attribute__((unused)),
         + sizeof(struct CdcUnionDescriptor));
     descriptor->numInterfaces = 2;
     descriptor->configurationValue = 1;
-    descriptor->attributes = CONFIGURATION_DESCRIPTOR_DEFAULT
-        | CONFIGURATION_DESCRIPTOR_SELF_POWERED;
-    descriptor->maxPower = ((CONFIG_USB_DEVICE_CURRENT + 1) >> 1);
   }
 }
 /*----------------------------------------------------------------------------*/

@@ -219,7 +219,10 @@ static enum result devInit(void *object, const void *configBase)
     return res;
 
   device->base.handler = interruptHandler;
-  device->status = 0;
+  device->power = 0;
+  device->vid = config->vid;
+  device->pid = config->pid;
+  device->status = STATUS_SELF_POWERED;
   memset(device->endpoints, 0, sizeof(device->endpoints));
 
   /* Initialize control message handler */
@@ -303,25 +306,39 @@ static enum result devGetParameter(const void *object,
 
   switch (parameter)
   {
+    case USB_VID:
+      *(uint16_t *)value = device->vid;
+      break;
+
+    case USB_PID:
+      *(uint16_t *)value = device->pid;
+      break;
+
+    case USB_MAX_POWER:
+      *(uint16_t *)value = device->power;
+      break;
+
     case USB_SPEED:
       *(enum usbSpeed *)value = USB_FS;
-      return E_OK;
+      break;
 
     case USB_COMPOSITE:
       *(bool *)value = false;
-      return E_OK;
+      break;
 
     case USB_SELF_POWERED:
       *(bool *)value = (device->status & STATUS_SELF_POWERED) != 0;
-      return E_OK;
+      break;
 
     case USB_REMOTE_WAKEUP:
       *(bool *)value = (device->status & STATUS_REMOTE_WAKEUP) != 0;
-      return E_OK;
+      break;
 
     default:
       return E_INVALID;
   }
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result devSetParameter(void *object, enum usbParameter parameter,
@@ -331,23 +348,29 @@ static enum result devSetParameter(void *object, enum usbParameter parameter,
 
   switch (parameter)
   {
+    case USB_MAX_POWER:
+      device->power = *(const uint16_t *)value;
+      break;
+
     case USB_SELF_POWERED:
       if (*(const bool *)value)
         device->status |= STATUS_SELF_POWERED;
       else
         device->status &= ~STATUS_SELF_POWERED;
-      return E_OK;
+      break;
 
     case USB_REMOTE_WAKEUP:
       if (*(const bool *)value)
         device->status |= STATUS_REMOTE_WAKEUP;
       else
         device->status &= ~STATUS_REMOTE_WAKEUP;
-      return E_OK;
+      break;
 
     default:
       return E_INVALID;
   }
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result devBind(void *object, void *driver)

@@ -38,6 +38,9 @@ enum usbDeviceEvent
 /*----------------------------------------------------------------------------*/
 enum usbParameter
 {
+  USB_VID,
+  USB_PID,
+  USB_MAX_POWER,
   USB_SPEED,
   USB_COMPOSITE,
   USB_SELF_POWERED,

@@ -40,20 +40,6 @@ config USB_DEVICE_CONTROL_REQUESTS
 	int "Control queue size"
 	default 2
 
-config USB_DEVICE_CURRENT
-	int "USB device current"
-	default 100
-
-config USB_DEVICE_PRODUCT_ID
-	hex "Product ID"
-	range 0 0xFFFF
-	default 0
-
-config USB_DEVICE_VENDOR_ID
-	hex "Vendor ID"
-	range 0 0xFFFF
-	default 0
-
 endmenu
 
 config USB_TRACE

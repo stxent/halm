@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <xcore/memory.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_requests.h>
 #include <halm/usb/usb_trace.h>
@@ -91,6 +92,36 @@ enum result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   }
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+void usbFillConfigurationDescriptor(const void *device, void *buffer)
+{
+  struct UsbConfigurationDescriptor * const descriptor = buffer;
+  uint16_t maxPower;
+  bool selfPowered, remoteWakeup;
+
+  usbDevGetParameter(device, USB_MAX_POWER, &maxPower);
+  usbDevGetParameter(device, USB_SELF_POWERED, &selfPowered);
+  usbDevGetParameter(device, USB_REMOTE_WAKEUP, &remoteWakeup);
+
+  descriptor->attributes = CONFIGURATION_DESCRIPTOR_DEFAULT;
+  if (selfPowered)
+    descriptor->attributes |= CONFIGURATION_DESCRIPTOR_SELF_POWERED;
+  if (remoteWakeup)
+    descriptor->attributes |= CONFIGURATION_DESCRIPTOR_REMOTE_WAKEUP;
+  descriptor->maxPower = ((maxPower + 1) >> 1);
+}
+/*----------------------------------------------------------------------------*/
+void usbFillDeviceDescriptor(const void *device, void *buffer)
+{
+  struct UsbDeviceDescriptor * const descriptor = buffer;
+  uint16_t vid, pid;
+
+  usbDevGetParameter(device, USB_VID, &vid);
+  usbDevGetParameter(device, USB_PID, &pid);
+
+  descriptor->idVendor = toLittleEndian16(vid);
+  descriptor->idProduct = toLittleEndian16(pid);
 }
 /*----------------------------------------------------------------------------*/
 enum result usbHandleDeviceRequest(void *driver, void *device,
