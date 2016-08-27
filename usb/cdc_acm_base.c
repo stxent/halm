@@ -111,6 +111,8 @@ static void interfaceAssociationDescriptor(const void *object,
 static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
     void *payload)
 {
+  const struct CdcAcmBase * const driver = object;
+
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
@@ -118,7 +120,7 @@ static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
   {
     struct UsbDeviceDescriptor * const descriptor = payload;
 
-    usbFillDeviceDescriptor(object, descriptor);
+    usbFillDeviceDescriptor(driver->device, descriptor);
     descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
     descriptor->deviceClass = USB_CLASS_CDC;
     descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_CONTROL_EP_SIZE);
@@ -130,6 +132,8 @@ static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
 static void configDescriptor(const void *object, struct UsbDescriptor *header,
     void *payload)
 {
+  const struct CdcAcmBase * const driver = object;
+
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
 
@@ -137,7 +141,7 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
   {
     struct UsbConfigurationDescriptor * const descriptor = payload;
 
-    usbFillConfigurationDescriptor(object, descriptor);
+    usbFillConfigurationDescriptor(driver->device, descriptor);
     descriptor->totalLength = TO_LITTLE_ENDIAN_16(
         sizeof(struct UsbConfigurationDescriptor)
         + sizeof(struct UsbInterfaceDescriptor) * 2
