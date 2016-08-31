@@ -20,6 +20,8 @@ extern const struct InterfaceClass * const Can;
 /*----------------------------------------------------------------------------*/
 struct CanConfig
 {
+  /** Optional: timer for a message time stamp generation. */
+  void *timer;
   /** Mandatory: baud rate. */
   uint32_t rate;
   /** Mandatory: input queue size. */
@@ -42,6 +44,9 @@ struct Can
 
   void (*callback)(void *);
   void *callbackArgument;
+
+  /* Timer for the time stamp generation */
+  void *timer;
 
   /* Message pool */
   struct Queue pool;

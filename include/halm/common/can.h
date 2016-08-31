@@ -12,9 +12,10 @@
 /*----------------------------------------------------------------------------*/
 enum canFlags
 {
-  CAN_EXTID = 0x01,
-  CAN_RTR   = 0x02,
-  CAN_FD    = 0x04
+  CAN_EXT_ID  = 0x01,
+  CAN_RTR     = 0x02,
+  CAN_FD      = 0x04,
+  CAN_SELF_RX = 0x08
 };
 /*----------------------------------------------------------------------------*/
 enum canOption
@@ -29,6 +30,7 @@ enum canOption
 /*----------------------------------------------------------------------------*/
 struct CanMessage
 {
+  uint32_t timestamp;
   uint32_t id;
   uint8_t flags;
   uint8_t length;
@@ -37,6 +39,7 @@ struct CanMessage
 
 struct CanStandardMessage
 {
+  uint32_t timestamp;
   uint32_t id;
   uint8_t flags;
   uint8_t length;
@@ -45,6 +48,7 @@ struct CanStandardMessage
 
 struct CanFdMessage
 {
+  uint32_t timestamp;
   uint32_t id;
   uint8_t flags;
   uint8_t length;

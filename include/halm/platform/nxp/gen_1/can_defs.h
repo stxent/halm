@@ -35,6 +35,13 @@
 #define GSR_TS                          BIT(5) /* Transmit Status */
 #define GSR_ES                          BIT(6) /* Error Status */
 #define GSR_BS                          BIT(7) /* Bus Status */
+
+#define GSR_RXERR(value)                BIT_FIELD((value), 16)
+#define GSR_RXERR_MASK                  BIT_FIELD(MASK(8), 16)
+#define GSR_RXERR_VALUE(reg)            FIELD_VALUE((reg), GSR_RXERR_MASK, 16)
+#define GSR_TXERR(value)                BIT_FIELD((value), 24)
+#define GSR_TXERR_MASK                  BIT_FIELD(MASK(8), 24)
+#define GSR_TXERR_VALUE(reg)            FIELD_VALUE((reg), GSR_TXERR_MASK, 24)
 /*------------------Interrupt and Capture Register----------------------------*/
 #define ICR_RI                          BIT(0) /* Receive Interrupt */
 #define ICR_TI1                         BIT(1) /* Transmit Interrupt 1 */

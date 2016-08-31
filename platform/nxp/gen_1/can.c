@@ -12,6 +12,7 @@
 #include <halm/platform/nxp/can.h>
 #include <halm/platform/nxp/gen_1/can_defs.h>
 #include <halm/pm.h>
+#include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 enum mode
 {
@@ -81,7 +82,7 @@ static void changeMode(struct Can *interface, enum mode mode)
         break;
 
       case MODE_ACTIVE:
-        value &= ~(MOD_LOM | MOD_STM);
+        value = value & ~(MOD_LOM | MOD_STM);
         break;
 
       case MODE_LOOPBACK:
@@ -89,8 +90,11 @@ static void changeMode(struct Can *interface, enum mode mode)
         break;
     }
 
-    /* LOM and STM bits can only be written in the Reset mode */
+    /* LOM and STM bits can be written only in the Reset mode */
     reg->MOD |= MOD_RM;
+    /* Error counters can be cleared only in the Reset mode */
+    reg->GSR &= ~(GSR_RXERR_MASK | GSR_TXERR_MASK);
+
     reg->MOD = value;
   }
 }
@@ -106,17 +110,21 @@ static void interruptHandler(void *object)
   {
     if (!queueEmpty(&interface->pool))
     {
+      const uint32_t timestamp = interface->timer ?
+          timerValue(interface->timer) : 0;
+
       const uint32_t data[2] = {reg->RDA, reg->RDB};
       const uint32_t information = reg->RFS;
       struct CanStandardMessage *message;
 
       queuePop(&interface->pool, &message);
 
+      message->timestamp = timestamp;
       message->id = reg->RID;
       message->length = RFS_DLC_VALUE(information);
       message->flags = 0;
       if (information & RFS_FF)
-        message->flags |= CAN_EXTID;
+        message->flags |= CAN_EXT_ID;
       if (information & RFS_RTR)
         message->flags |= CAN_RTR;
       memcpy(message->data, data, sizeof(data));
@@ -152,6 +160,15 @@ static void interruptHandler(void *object)
     }
   }
 
+  if (status & SR_BS)
+  {
+    /*
+     * The controller is forced into a bus-off state, RM bit should be cleared
+     * to continue normal operation.
+     */
+    reg->MOD &= ~MOD_RM;
+  }
+
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
 }
@@ -159,7 +176,7 @@ static void interruptHandler(void *object)
 static uint32_t sendMessage(struct Can *interface,
     const struct CanMessage *message, uint32_t status)
 {
-  assert(message->id < ((message->flags & CAN_EXTID) ? 1UL << 29 : 1UL << 11));
+  assert(message->id < ((message->flags & CAN_EXT_ID) ? 1UL << 29 : 1UL << 11));
   assert(message->length <= 8);
 
   LPC_CAN_Type * const reg = interface->base.reg;
@@ -186,10 +203,10 @@ static uint32_t sendMessage(struct Can *interface,
   uint32_t command = CMR_TR | CMR_STB(index);
   uint32_t information = TFI_DLC(message->length);
 
-  if (interface->mode == MODE_LOOPBACK)
+  if ((message->flags & CAN_SELF_RX) || interface->mode == MODE_LOOPBACK)
     command |= CMR_SRR;
 
-  if (message->flags & CAN_EXTID)
+  if (message->flags & CAN_EXT_ID)
     information |= TFI_FF;
   if (message->flags & CAN_RTR)
     information |= TFI_RTR;
@@ -231,6 +248,7 @@ static enum result canInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
   interface->callback = 0;
+  interface->timer = config->timer;
   interface->mode = MODE_LISTENER;
 
   const size_t poolSize = config->rxBuffers + config->txBuffers;
@@ -278,7 +296,8 @@ static enum result canInit(void *object, const void *configBase)
 
   irqSetPriority(interface->base.irq, config->priority);
 
-  reg->IER = IER_RIE; /* Enable receive interrupts */
+  /* Enable interrupts on message reception and bus error */
+  reg->IER = IER_RIE | IER_BEIE;
 
   return E_OK;
 }
