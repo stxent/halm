@@ -7,6 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_LPC11XX_WDT_BASE_H_
 #define HALM_PLATFORM_NXP_LPC11XX_WDT_BASE_H_
 /*----------------------------------------------------------------------------*/
+#define WDT_TIMER_RESOLUTION 24
+/*----------------------------------------------------------------------------*/
 enum wdtClockSource
 {
   WDT_CLOCK_DEFAULT

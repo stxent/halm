@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <halm/platform/nxp/wdt.h>
 #include <halm/platform/nxp/wdt_defs.h>
 #include <halm/platform/platform_defs.h>
@@ -50,7 +51,13 @@ static enum result wdtInit(void *object, const void *configBase)
   timer->base.handler = interruptHandler;
   timer->callback = 0;
 
-  LPC_WDT->TC = (config->period * (wdtGetClock(object) / 1000)) >> 2;
+  const uint32_t clock = wdtGetClock(object) / 4;
+  const uint32_t prescaler = config->period * (clock / 1000);
+
+  assert(prescaler >= 1 << 8);
+  assert(prescaler <= 0xFFFFFFFF >> (32 - WDT_TIMER_RESOLUTION));
+
+  LPC_WDT->TC = prescaler;
   LPC_WDT->MOD = MOD_WDEN | MOD_WDRESET;
 
   irqSetPriority(timer->base.irq, config->priority);
