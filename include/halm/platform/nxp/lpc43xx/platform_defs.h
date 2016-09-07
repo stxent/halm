@@ -2127,6 +2127,25 @@ typedef struct
   __rw__ uint32_t MCMD;
   __rw__ uint32_t STAT;
 } LPC_SPIFI_Type;
+/*------------------Battery-powered Backup registers--------------------------*/
+typedef struct
+{
+  __rw__ uint8_t DATA[256];
+} LPC_BACKUP_Type;
+/*------------------One-Time Programmable memory------------------------------*/
+typedef struct
+{
+  /*
+   * Contains unique part identifier for flashless parts.
+   * Reserved for parts with on-chip flash.
+   */
+  __ro__ uint32_t BANK0[4];
+
+  /* User-programmable memory */
+  __ro__ uint32_t BANK1[4];
+  __ro__ uint32_t BANK2[4];
+  __ro__ uint32_t BANK3[4];
+} LPC_OTP_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
 #define LPC_AHB_BASE              (0x40000000UL)
@@ -2254,9 +2273,11 @@ typedef struct
 #define LPC_ADC1          ((LPC_ADC_Type *)LPC_ADC1_BASE)
 
 #define LPC_ATIMER        ((LPC_ATIMER_Type *)LPC_ATIMER_BASE)
+#define LPC_BACKUP        ((LPC_BACKUP_Type *)LPC_BACKUP_BASE)
 #define LPC_PMC           ((LPC_PMC_Type *)LPC_PMC_BASE)
 #define LPC_CREG          ((LPC_CREG_Type *)LPC_CREG_BASE)
 #define LPC_EVENTROUTER   ((LPC_EVENTROUTER_Type *)LPC_EVENTROUTER_BASE)
+#define LPC_OTP           ((LPC_OTP_Type *)LPC_OTP_BASE)
 #define LPC_RTC           ((LPC_RTC_Type *)LPC_RTC_BASE)
 
 #define LPC_CGU           ((LPC_CGU_Type *)LPC_CGU_BASE)
