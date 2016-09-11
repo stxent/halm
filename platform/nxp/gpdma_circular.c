@@ -75,7 +75,8 @@ static void interruptHandler(void *object, enum result res)
       break;
   }
 
-  channel->callback(channel->callbackArgument);
+  if (channel->callback)
+    channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static void startTransfer(struct GpDmaCircular *channel,
@@ -159,7 +160,6 @@ static void channelConfigure(void *object, const void *settingsBase)
   struct GpDmaCircular * const channel = object;
 
   channel->control = gpDmaBaseCalcControl(object, settings);
-  channel->control |= CONTROL_INT;
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelEnable(void *object)
