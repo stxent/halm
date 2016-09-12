@@ -70,7 +70,7 @@ XCORE_PATH ?= $(PROJECT_DIR)/../xcore
 INCLUDE_PATH += -I"$(XCORE_PATH)/include"
 
 #Configure compiler options
-CFLAGS += -std=c11 -Wall -Wextra -Winline -pedantic -Wshadow
+CFLAGS += -std=c11 -Wall -Wextra -pedantic -Wshadow
 CFLAGS += $(OPT_FLAGS) $(CPU_FLAGS) @$(OPTION_FILE)
 CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
 

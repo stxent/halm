@@ -381,9 +381,8 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
     interface->command = SDIO_COMMAND(CMD_STOP_TRANSMISSION,
         SDIO_RESPONSE_NONE, 0);
     interface->argument = 0;
-
-    sendCommand(interface, interface->command, interface->argument);
     interface->retries = TOKEN_RETRIES;
+
     return STATE_SEND_CMD;
   }
   else
