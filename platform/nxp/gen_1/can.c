@@ -103,10 +103,9 @@ static void interruptHandler(void *object)
 {
   struct Can * const interface = object;
   LPC_CAN_Type * const reg = interface->base.reg;
-  uint32_t status = reg->SR;
   bool event = false;
 
-  if (status & SR_RBS)
+  while (reg->SR & SR_RBS)
   {
     if (!queueEmpty(&interface->pool))
     {
@@ -136,6 +135,8 @@ static void interruptHandler(void *object)
     /* Release receive buffer */
     reg->CMR = CMR_RRB;
   }
+
+  uint32_t status = reg->SR;
 
   if (status & SR_TBS_MASK)
   {
@@ -176,7 +177,6 @@ static void interruptHandler(void *object)
 static uint32_t sendMessage(struct Can *interface,
     const struct CanMessage *message, uint32_t status)
 {
-  assert(message->id < ((message->flags & CAN_EXT_ID) ? 1UL << 29 : 1UL << 11));
   assert(message->length <= 8);
 
   LPC_CAN_Type * const reg = interface->base.reg;
@@ -207,9 +207,18 @@ static uint32_t sendMessage(struct Can *interface,
     command |= CMR_SRR;
 
   if (message->flags & CAN_EXT_ID)
+  {
+    assert(message->id < 1UL << 29);
     information |= TFI_FF;
+  }
+  else
+    assert(message->id < 1UL << 11);
+
   if (message->flags & CAN_RTR)
+  {
+    assert(message->length == 0);
     information |= TFI_RTR;
+  }
 
   memcpy(data, message->data, message->length);
 
@@ -398,14 +407,13 @@ static enum result canSet(void *object, enum ifOption option,
 /*----------------------------------------------------------------------------*/
 static size_t canRead(void *object, void *buffer, size_t length)
 {
-  struct Can * const interface = object;
-  size_t read = 0;
-
   assert(length % sizeof(struct CanStandardMessage) == 0);
 
+  struct Can * const interface = object;
   struct CanStandardMessage *output = buffer;
+  size_t read = 0;
 
-  while (length && !queueEmpty(&interface->rxQueue))
+  while (read < length && !queueEmpty(&interface->rxQueue))
   {
     struct CanMessage *input;
     const irqState state = irqSave();
@@ -425,17 +433,17 @@ static size_t canRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t canWrite(void *object, const void *buffer, size_t length)
 {
+  assert(length % sizeof(struct CanStandardMessage) == 0);
+
   struct Can * const interface = object;
 
   if (interface->mode == MODE_LISTENER)
     return 0;
 
   LPC_CAN_Type * const reg = interface->base.reg;
+  const struct CanStandardMessage *input = buffer;
   const size_t initialLength = length;
 
-  assert(length % sizeof(struct CanStandardMessage) == 0);
-
-  const struct CanStandardMessage *input = buffer;
   const irqState state = irqSave();
 
   if (queueEmpty(&interface->txQueue))
