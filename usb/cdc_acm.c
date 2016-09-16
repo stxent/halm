@@ -160,7 +160,10 @@ static bool resetEndpoints(struct CdcAcm *interface)
     queuePop(&interface->rxRequestQueue, &request);
     request->length = 0;
 
-    if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
+    const enum result res = usbEpEnqueue(interface->rxDataEp, request);
+    assert(res != E_MEMORY);
+
+    if (res != E_OK)
     {
       completed = false;
       queuePush(&interface->rxRequestQueue, &request);
@@ -464,10 +467,11 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 
     request->length = bytesToWrite;
     memcpy(request->buffer, bufferPosition, bytesToWrite);
-    bufferPosition += bytesToWrite;
-    length -= bytesToWrite;
 
-    if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
+    const enum result res = usbEpEnqueue(interface->txDataEp, request);
+    assert(res != E_MEMORY);
+
+    if (res != E_OK)
     {
       /* Hardware error occurred, suspend the interface and wait for reset */
       interface->suspended = true;
@@ -477,7 +481,12 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
       irqRestore(state);
 
       usbTrace("cdc_acm: suspended in write function");
-      return 0;
+      break;
+    }
+    else
+    {
+      bufferPosition += bytesToWrite;
+      length -= bytesToWrite;
     }
   }
 

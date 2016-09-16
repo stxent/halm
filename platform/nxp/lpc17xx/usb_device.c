@@ -650,7 +650,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
       if (!(status & SELECT_ENDPOINT_FE) && queueEmpty(&endpoint->requests))
       {
         if (epWriteData(endpoint, request->buffer, request->length) != E_OK)
-          res = E_ERROR;
+          res = E_INTERFACE;
       }
     }
     else
@@ -666,7 +666,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
       queuePush(&endpoint->requests, &request);
   }
   else
-    res = E_FULL;
+    res = E_MEMORY;
 
   irqRestore(state);
   return res;
