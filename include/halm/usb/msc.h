@@ -80,6 +80,8 @@ struct Msc
   uint8_t interfaceIndex;
   /* Current state of the FSM */
   uint8_t state;
+  /* Composite device flag */
+  bool composite;
 
   void *privateData;
 };

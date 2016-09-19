@@ -471,7 +471,12 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     const enum result res = usbEpEnqueue(interface->txDataEp, request);
     assert(res != E_MEMORY);
 
-    if (res != E_OK)
+    if (res == E_OK)
+    {
+      bufferPosition += bytesToWrite;
+      length -= bytesToWrite;
+    }
+    else
     {
       /* Hardware error occurred, suspend the interface and wait for reset */
       interface->suspended = true;
@@ -482,11 +487,6 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 
       usbTrace("cdc_acm: suspended in write function");
       break;
-    }
-    else
-    {
-      bufferPosition += bytesToWrite;
-      length -= bytesToWrite;
     }
   }
 

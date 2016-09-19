@@ -149,6 +149,7 @@ static enum result initPrivateData(struct Msc *);
 static enum result initRequestQueues(struct Msc *, struct PrivateData *);
 static void freePrivateData(struct Msc *);
 static void resetBuffers(struct Msc *);
+static void resetEndpoints(struct Msc *);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
@@ -948,14 +949,19 @@ static enum result enqueueDataRx(struct Msc *driver, void *buffer,
     const size_t prepared = prepareDataRx(driver, request, bufferPosition,
         length);
 
-    if ((res = usbEpEnqueue(driver->rxEp, request)) != E_OK)
+    res = usbEpEnqueue(driver->rxEp, request);
+    assert(res != E_MEMORY);
+
+    if (res == E_OK)
+    {
+      length -= prepared;
+      bufferPosition += prepared;
+    }
+    else
     {
       queuePush(&driver->rxQueue, &request);
       break;
     }
-
-    length -= prepared;
-    bufferPosition += prepared;
   }
 
   if (res == E_OK)
@@ -985,14 +991,20 @@ static enum result enqueueDataTx(struct Msc *driver, const void *buffer,
     const size_t prepared = prepareDataTx(driver, request, bufferPosition,
         length, notify);
 
-    if ((res = usbEpEnqueue(driver->txEp, request)) != E_OK)
+    res = usbEpEnqueue(driver->txEp, request);
+    assert(res != E_MEMORY);
+
+    if (res == E_OK)
     {
+      length -= prepared;
+      bufferPosition += prepared;
+    }
+    else
+    {
+      /* Hardware error occurred */
       queuePush(&driver->txQueue, &request);
       break;
     }
-
-    length -= prepared;
-    bufferPosition += prepared;
   }
 
   if (res == E_OK)
@@ -1112,13 +1124,16 @@ static enum result storageRead(struct Msc *driver)
   if (res != E_OK)
     return res;
 
-  res = ifRead(driver->storage, driver->buffer, transferLength);
-  if (res != E_OK)
-    return res;
+  const size_t bytesRead = ifRead(driver->storage, driver->buffer,
+      transferLength);
 
-  privateData->context.position += transferLength;
-
-  return E_OK;
+  if (bytesRead == transferLength)
+  {
+    privateData->context.position += transferLength;
+    return E_OK;
+  }
+  else
+    return E_INTERFACE;
 }
 /*----------------------------------------------------------------------------*/
 //static enum result storageVerify(struct Msc *driver, struct UsbRequest *request)
@@ -1142,13 +1157,16 @@ static enum result storageWrite(struct Msc *driver)
   if (res != E_OK)
     return res;
 
-  res = ifWrite(driver->storage, driver->buffer, transferLength);
-  if (res != E_OK)
-    return res;
+  const size_t bytesWritten = ifWrite(driver->storage, driver->buffer,
+      transferLength);
 
-  privateData->context.position += transferLength;
-
-  return E_OK;
+  if (bytesWritten == transferLength)
+  {
+    privateData->context.position += transferLength;
+    return E_OK;
+  }
+  else
+    return E_INTERFACE;
 }
 /*----------------------------------------------------------------------------*/
 static void storageCallback(void *argument)
@@ -1402,6 +1420,12 @@ static void resetBuffers(struct Msc *driver)
     driver->state = STATE_SUSPEND; /* Unrecoverable error */
 }
 /*----------------------------------------------------------------------------*/
+static void resetEndpoints(struct Msc *driver)
+{
+  usbEpEnable(driver->rxEp, ENDPOINT_TYPE_BULK, driver->packetSize);
+  usbEpEnable(driver->txEp, ENDPOINT_TYPE_BULK, driver->packetSize);
+}
+/*----------------------------------------------------------------------------*/
 static enum result driverInit(void *object, const void *configBase)
 {
   const struct MscConfig * const config = configBase;
@@ -1415,6 +1439,8 @@ static enum result driverInit(void *object, const void *configBase)
   driver->storage = config->storage;
   driver->endpoints.rx = config->endpoints.rx;
   driver->endpoints.tx = config->endpoints.tx;
+
+  usbDevGetParameter(driver->device, USB_COMPOSITE, &driver->composite);
 
   /* Setup temporary buffer */
   if (!config->size || config->size & (MSC_BLOCK_SIZE - 1))
@@ -1459,9 +1485,8 @@ static enum result driverInit(void *object, const void *configBase)
   if ((res = usbDevBind(driver->device, driver)) != E_OK)
     return res;
 
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-  usbDevSetConnected(driver->device, true);
-#endif
+  if (!driver->composite)
+    usbDevSetConnected(driver->device, true);
 
   return E_OK;
 }
@@ -1470,10 +1495,9 @@ static void driverDeinit(void *object)
 {
   struct Msc * const driver = object;
 
-  /* Disconnect device */
-#ifndef CONFIG_USB_DEVICE_COMPOSITE
-  usbDevSetConnected(driver->device, false);
-#endif
+  /* Disconnect the device */
+  if (!driver->composite)
+    usbDevSetConnected(driver->device, false);
 
   usbDevUnbind(driver->device, driver);
 
@@ -1557,6 +1581,7 @@ static void driverEvent(void *object, unsigned int event)
 
   if (event == USB_DEVICE_EVENT_RESET)
   {
+    resetEndpoints(driver);
     resetBuffers(driver);
 
     usbTrace("msc: reset completed");
