@@ -14,7 +14,7 @@ static inline irqNumber calcVector(uint8_t);
 static void changeEnabledState(struct PinInterrupt *, bool);
 static void processInterrupt(uint8_t);
 static void resetDescriptor(uint8_t);
-static int8_t setDescriptor(struct PinInterrupt *);
+static int setDescriptor(struct PinInterrupt *);
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptInit(void *, const void *);
 static void pinInterruptDeinit(void *);
@@ -69,13 +69,13 @@ static void resetDescriptor(uint8_t channel)
   descriptors[channel] = 0;
 }
 /*----------------------------------------------------------------------------*/
-static int8_t setDescriptor(struct PinInterrupt *interrupt)
+static int setDescriptor(struct PinInterrupt *interrupt)
 {
   /* Find free interrupt */
   for (unsigned int index = 0; index < ARRAY_SIZE(descriptors); ++index)
   {
     if (compareExchangePointer((void **)(descriptors + index), 0, interrupt))
-      return (int8_t)index;
+      return (int)index;
   }
 
   /* All interrupts are busy */
@@ -131,7 +131,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   assert(pinValid(input));
 
   /* Try to allocate a new channel */
-  const int8_t channel = setDescriptor(interrupt);
+  const int channel = setDescriptor(interrupt);
 
   if (channel == -1)
     return E_BUSY;
