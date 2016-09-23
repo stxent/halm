@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-extern unsigned long _etext;
-extern unsigned long _data;
+extern unsigned long _sdata;
 extern unsigned long _edata;
-extern unsigned long _bss;
+extern unsigned long _sidata;
+extern unsigned long _sbss;
 extern unsigned long _ebss;
 /*----------------------------------------------------------------------------*/
 extern int main(void);
@@ -19,23 +19,15 @@ void RESET_ISR(void)
   register unsigned long *src __asm__ ("r1");
 
   /* Copy the data segment initializers from flash to RAM */
-  for (dst = &_data, src = &_etext; dst < &_edata;)
+  for (dst = &_sdata, src = &_sidata; dst < &_edata;)
     *dst++ = *src++;
 
   /* Zero fill the BSS segment */
-  for (dst = &_bss; dst < &_ebss;)
+  for (dst = &_sbss; dst < &_ebss;)
     *dst++ = 0;
-
-#ifdef __cplusplus
-  __libc_init_array(); /* Call C++ library initialization */
-#endif
 
   platformStartup();
   main();
-
-#ifdef __cplusplus
-  __libc_fini_array();
-#endif
 
   while (1);
 }
