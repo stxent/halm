@@ -39,17 +39,15 @@ struct SdioSpi
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Parent SPI interface */
+  /* Base SPI interface */
   struct Interface *bus;
   /* Timer to generate periodic interrupt requests */
   struct Timer *timer;
 
-  /* Pool for results of checksum calculations */
+  /* Pool for results of checksum computation */
   uint16_t *crcPool;
   /* Pool size */
   size_t crcPoolSize;
-  /* Run the deferred verification of the received data */
-  bool checkReceivedCrc;
 
   /* Pointer to an input buffer */
   uint8_t *rxBuffer;

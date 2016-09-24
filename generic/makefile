@@ -7,6 +7,8 @@ endif
 
 ifeq ($(CONFIG_GENERIC_SDIO_SPI),y)
   CSOURCES += generic/sdio_spi.c
+
+  PROJECT_FLAGS += CONFIG_GENERIC_SDIO_SPI_CRC
 endif
 
 ifeq ($(CONFIG_GENERIC_SDCARD),y)
