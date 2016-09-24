@@ -13,7 +13,7 @@ enum result pmPlatformChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/
 enum result pmPlatformChangeState(enum pmState state)
 {
-  uint32_t value = STM_PWR->CR & ~(PWR_CR_LPDS | PWR_CR_PDDS) | PWR_CR_CWUF;
+  uint32_t value = (STM_PWR->CR & ~(PWR_CR_LPDS | PWR_CR_PDDS)) | PWR_CR_CWUF;
 
   switch (state)
   {

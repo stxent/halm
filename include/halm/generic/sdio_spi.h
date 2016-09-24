@@ -7,7 +7,6 @@
 #ifndef HALM_GENERIC_SDIO_SPI_H_
 #define HALM_GENERIC_SDIO_SPI_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/crc.h>
 #include <xcore/interface.h>
 #include <halm/pin.h>
 #include <halm/timer.h>
@@ -39,9 +38,6 @@ struct SdioSpi
 
   void (*callback)(void *);
   void *callbackArgument;
-
-  struct CrcEngine *crc7;
-  struct CrcEngine *crc16;
 
   /* Parent SPI interface */
   struct Interface *bus;

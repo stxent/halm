@@ -640,8 +640,7 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
   interface->buffer[0] = 0xFF;
   interface->buffer[1] = COMMAND_CODE_VALUE(command) | 0x40;
   memcpy(interface->buffer + 2, &argument, sizeof(argument));
-  interface->buffer[6] = crcUpdate(interface->crc7, INITIAL_CRC7,
-      interface->buffer + 1, 5);
+  interface->buffer[6] = crc7Update(INITIAL_CRC7, interface->buffer + 1, 5);
   /* Add end bit */
   interface->buffer[6] = (interface->buffer[6] << 1) | 0x01;
   interface->buffer[7] = 0xFF;
@@ -657,7 +656,7 @@ static enum result verifyChecksum(struct SdioSpi *interface)
 
   for (size_t index = 0; index < blockCount; ++index)
   {
-    const uint16_t computedCrc = crcUpdate(interface->crc16, INITIAL_CRC16,
+    const uint16_t computedCrc = crc16CCITTUpdate(INITIAL_CRC16,
         interface->rxBuffer + index * blockSize, blockSize);
 
     if (computedCrc != interface->crcPool[index])
@@ -700,29 +699,18 @@ static enum result sdioInit(void *object, const void *configBase)
       return res;
   }
 
-  /* Command verification part */
-  interface->crc7 = init(Crc7, 0);
-  if (!interface->crc7)
-    return E_MEMORY;
-
   /* Data verification part */
   interface->checkReceivedCrc = false;
   interface->crcPoolSize = config->blocks;
+
   if (interface->crcPoolSize)
   {
-    interface->crc16 = init(Crc16CCITT, 0);
-    if (!interface->crc16)
-      return E_MEMORY;
-
-    interface->crcPool = malloc(2 * interface->crcPoolSize);
+    interface->crcPool = malloc(interface->crcPoolSize * sizeof(uint16_t));
     if (!interface->crcPool)
       return E_MEMORY;
   }
   else
-  {
-    interface->crc16 = 0;
     interface->crcPool = 0;
-  }
 
   /* Data transfer part */
   interface->blockSize = DEFAULT_BLOCK_SIZE;
@@ -750,6 +738,8 @@ static void sdioDeinit(void *object __attribute__((unused)))
     timerCallback(interface->timer, 0, 0);
 
   ifCallback(interface->bus, 0, 0);
+
+  free(interface->crcPool);
 }
 /*----------------------------------------------------------------------------*/
 static enum result sdioCallback(void *object, void (*callback)(void *),
@@ -950,7 +940,7 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
     {
       for (size_t index = 0; index < blockCount; ++index)
       {
-        interface->crcPool[index] = crcUpdate(interface->crc16, INITIAL_CRC16,
+        interface->crcPool[index] = crc16CCITTUpdate(INITIAL_CRC16,
             bufferPosition + index * blockSize, blockSize);
       }
     }
