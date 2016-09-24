@@ -49,6 +49,7 @@ endmenu
 
 menu "Peripheral drivers"
 
+source "generic/kconfig"
 source "platform/kconfig"
 source "usb/kconfig"
 

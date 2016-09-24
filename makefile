@@ -12,6 +12,7 @@ BUILD_FLAGS += CORE CORE_TYPE PLATFORM PLATFORM_TYPE
 
 #Nested makefiles
 include core/makefile
+include generic/makefile
 include platform/makefile
 include pm/makefile
 include usb/makefile

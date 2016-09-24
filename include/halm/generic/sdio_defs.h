@@ -1,11 +1,11 @@
 /*
- * halm/common/sdio_defs.h
+ * halm/generic/sdio_defs.h
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_COMMON_SDIO_DEFS_H_
-#define HALM_COMMON_SDIO_DEFS_H_
+#ifndef HALM_GENERIC_SDIO_DEFS_H_
+#define HALM_GENERIC_SDIO_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*----------------------------------------------------------------------------*/
@@ -42,4 +42,4 @@ enum cardState
 #define CURRENT_STATE(response) \
     FIELD_VALUE((response), CURRENT_STATE_MASK, 9)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_COMMON_SDIO_DEFS_H_ */
+#endif /* HALM_GENERIC_SDIO_DEFS_H_ */

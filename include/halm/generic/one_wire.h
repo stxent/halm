@@ -1,11 +1,11 @@
 /*
- * halm/common/one_wire.h
+ * halm/generic/one_wire.h
  * Copyright (C) 2016 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_COMMON_ONE_WIRE_H_
-#define HALM_COMMON_ONE_WIRE_H_
+#ifndef HALM_GENERIC_ONE_WIRE_H_
+#define HALM_GENERIC_ONE_WIRE_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
@@ -20,4 +20,4 @@ enum oneWireOption
   IF_ONE_WIRE_FIND_NEXT
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_COMMON_ONE_WIRE_H_ */
+#endif /* HALM_GENERIC_ONE_WIRE_H_ */

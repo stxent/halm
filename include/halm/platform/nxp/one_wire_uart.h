@@ -8,7 +8,7 @@
 #define HALM_PLATFORM_NXP_ONE_WIRE_UART_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/containers/byte_queue.h>
-#include <halm/common/one_wire.h>
+#include <halm/generic/one_wire.h>
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH

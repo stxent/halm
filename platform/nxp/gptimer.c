@@ -190,6 +190,7 @@ static void tmrSetEnabled(void *object, bool state)
   {
     /* Clear match value to avoid undefined output level */
     reg->EMR &= ~EMR_EXTERNAL_MATCH(timer->event);
+
     reg->TCR = TCR_CEN;
   }
 }

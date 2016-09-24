@@ -1,0 +1,19 @@
+menu "Generic drivers"
+
+config GENERIC_GPIO_BUS
+	bool "GPIO Bus"
+	default y
+
+config GENERIC_SDIO_SPI
+	bool "SDIO over SPI"
+	default y
+
+config GENERIC_SDCARD
+	bool "SD Card driver"
+	default y
+
+config GENERIC_WORK_QUEUE
+	bool "Work Queue"
+	default y
+
+endmenu

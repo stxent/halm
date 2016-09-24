@@ -1,11 +1,11 @@
 /*
- * halm/common/sdio.h
+ * halm/generic/sdio.h
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_COMMON_SDIO_H_
-#define HALM_COMMON_SDIO_H_
+#ifndef HALM_GENERIC_SDIO_H_
+#define HALM_GENERIC_SDIO_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
@@ -80,4 +80,4 @@ enum sdioResponse
   SDIO_RESPONSE_LONG
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_COMMON_SDIO_H_ */
+#endif /* HALM_GENERIC_SDIO_H_ */

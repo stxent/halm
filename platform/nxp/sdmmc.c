@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <halm/common/sdio.h>
-#include <halm/common/sdio_defs.h>
+#include <halm/generic/sdio.h>
+#include <halm/generic/sdio_defs.h>
 #include <halm/platform/nxp/dma_sdmmc.h>
 #include <halm/platform/nxp/sdmmc.h>
 #include <halm/platform/nxp/sdmmc_defs.h>
