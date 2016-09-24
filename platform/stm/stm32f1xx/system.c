@@ -83,7 +83,7 @@ bool sysClockStatus(enum sysClockBranch branch)
 /*----------------------------------------------------------------------------*/
 unsigned int sysFlashLatency()
 {
-  return ACR_LATENCY(STM_FLASH->ACR) + 1;
+  return FLASH_ACR_LATENCY(STM_FLASH->ACR) + 1;
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -96,8 +96,8 @@ unsigned int sysFlashLatency()
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {
-  STM_FLASH->ACR = (STM_FLASH->ACR & ~ACR_LATENCY_MASK)
-      | ACR_LATENCY(value - 1);
+  STM_FLASH->ACR = (STM_FLASH->ACR & ~FLASH_ACR_LATENCY_MASK)
+      | FLASH_ACR_LATENCY(value - 1);
 }
 /*----------------------------------------------------------------------------*/
 void sysResetEnable(enum sysBlockReset block)

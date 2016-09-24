@@ -5,3 +5,27 @@ config PLATFORM
 config PLATFORM_TYPE
 	string
 	default stm
+
+menu "Power settings"
+
+config PM
+	bool "Power management"
+	default y
+	help
+	  This enables support for power management features.
+
+choice
+	prompt "Power-down mode in suspend state"
+	default PLATFORM_STM_PM_STOP
+	depends on PM
+
+	config PLATFORM_STM_PM_STOP
+		bool "Stop"
+		depends on FAMILY_STM32F1XX
+
+	config PLATFORM_STM_PM_STANDBY
+		bool "Standby"
+		depends on FAMILY_STM32F1XX
+endchoice
+
+endmenu
