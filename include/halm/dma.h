@@ -65,7 +65,7 @@ struct Dma
 };
 /*----------------------------------------------------------------------------*/
 /**
- * Set callback function for the transmission completion event.
+ * Set the callback function for the transmission completion event.
  * @param channel Pointer to a Dma object.
  * @param callback Callback function.
  * @param argument Callback function argument.
@@ -117,7 +117,7 @@ static inline size_t dmaPending(const void *channel)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Get the number of pending transfers.
+ * Get a number of pending transfers.
  * @param channel Pointer to a Dma object.
  * @return The number of pending transfers is returned.
  */
@@ -127,7 +127,7 @@ static inline size_t dmaResidue(const void *channel)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Get status of the transfer.
+ * Get the status of the transfer.
  * @param channel Pointer to a Dma object.
  * @return @b E_OK when the transfer is completed successfully; @b E_BUSY when
  * the transfer is not finished yet; other error types in case of errors.

@@ -24,7 +24,7 @@ struct SpiDmaConfig
   pinNumber sck;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Optional: mode number. */
+  /** Mandatory: mode number. */
   uint8_t mode;
   /**
    * Mandatory: direct memory access channels for incoming and outgoing data,

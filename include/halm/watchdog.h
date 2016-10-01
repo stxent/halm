@@ -29,7 +29,7 @@ struct Watchdog
 };
 /*----------------------------------------------------------------------------*/
 /**
- * Set watchdog interrupt callback.
+ * Set the interrupt callback.
  * @param timer Pointer to a Watchdog object.
  * @param callback Callback function.
  * @param argument Callback function argument.
@@ -42,7 +42,7 @@ static inline void watchdogCallback(void *timer, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Restart internal timer.
+ * Restart the internal timer.
  * @param timer Pointer to a Watchdog object.
  */
 static inline void watchdogRestart(void *timer)

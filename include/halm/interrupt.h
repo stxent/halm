@@ -31,7 +31,7 @@ struct Interrupt
 };
 /*----------------------------------------------------------------------------*/
 /**
- * Set interrupt callback.
+ * Set the interrupt callback.
  * @param interrupt Pointer to an Interrupt object.
  * @param callback Callback function.
  * @param argument Callback function argument.
@@ -44,7 +44,7 @@ static inline void intCallback(void *interrupt, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Enable or disable interrupt processing.
+ * Enable or disable the interrupt generation.
  * @param interrupt Pointer to an Interrupt object.
  * @param state Interrupt state: @b true to enable or @b false to disable.
  */

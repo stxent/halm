@@ -15,19 +15,16 @@
 #include <halm/generic/sdio_spi.h>
 #include <halm/generic/work_queue.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_BLOCK_SIZE    512
-#define MAX_BLOCK_SIZE        2048
+#define BLOCK_SIZE_DEFAULT  512
+#define BLOCK_SIZE_MAX      2048
 
-#define BUSY_TIMER_FREQUENCY  100000
-#define BUSY_READ_DELAY       10 /* Delay in timer ticks */
-#define BUSY_READ_RETRIES     1000
-#define BUSY_WRITE_DELAY      50 /* Delay in timer ticks */
-#define BUSY_WRITE_RETRIES    1000
+#define BUSY_READ_RETRIES   1000
+#define BUSY_WRITE_RETRIES  5000
 
-#define INITIAL_CRC7          0x00
-#define INITIAL_CRC16         0x0000
+#define INITIAL_CRC7        0x00
+#define INITIAL_CRC16       0x0000
 
-#define TOKEN_RETRIES         8
+#define TOKEN_RETRIES       8
 /*----------------------------------------------------------------------------*/
 enum state
 {
@@ -214,17 +211,11 @@ static enum state stateWaitRespAdvance(struct SdioSpi *interface)
       if (flags & SDIO_WRITE_MODE)
       {
         /* Write data mode */
-        if (interface->timer)
-          timerSetOverflow(interface->timer, BUSY_WRITE_DELAY);
-
         return STATE_WRITE_TOKEN;
       }
       else
       {
         /* Read data mode */
-        if (interface->timer)
-          timerSetOverflow(interface->timer, BUSY_READ_DELAY);
-
         interface->retries = BUSY_READ_RETRIES;
         return STATE_WAIT_READ;
       }
@@ -757,13 +748,7 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->timer = config->timer;
 
   if (interface->timer)
-  {
     timerCallback(interface->timer, interruptHandler, interface);
-
-    res = timerSetFrequency(interface->timer, BUSY_TIMER_FREQUENCY);
-    if (res != E_OK)
-      return res;
-  }
 
   /* Data verification part */
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
@@ -783,7 +768,7 @@ static enum result sdioInit(void *object, const void *configBase)
 #endif
 
   /* Data transfer part */
-  interface->blockSize = DEFAULT_BLOCK_SIZE;
+  interface->blockSize = BLOCK_SIZE_DEFAULT;
   interface->left = 0;
   interface->length = 0;
   interface->rxBuffer = 0;
@@ -909,23 +894,18 @@ static enum result sdioSet(void *object, enum ifOption option,
       interface->argument = *(const uint32_t *)data;
       return E_OK;
 
+    case IF_SDIO_COMMAND:
+      interface->command = *(const uint32_t *)data;
+      return E_OK;
+
     case IF_SDIO_BLOCK_SIZE:
-      if (*(const size_t *)data <= MAX_BLOCK_SIZE)
+      if (*(const size_t *)data <= BLOCK_SIZE_MAX)
       {
         interface->blockSize = *(const size_t *)data;
         return E_OK;
       }
       else
         return E_VALUE;
-
-    case IF_SDIO_COMMAND:
-      interface->command = *(const uint32_t *)data;
-
-#ifndef CONFIG_GENERIC_SDIO_SPI_CRC
-      assert(!(COMMAND_FLAG_VALUE(interface->command) & SDIO_CHECK_CRC));
-#endif
-
-      return E_OK;
 
     default:
       break;

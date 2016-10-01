@@ -26,7 +26,7 @@ struct SpiConfig
   irqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Optional: mode number. */
+  /** Mandatory: mode number. */
   uint8_t mode;
 };
 /*----------------------------------------------------------------------------*/
