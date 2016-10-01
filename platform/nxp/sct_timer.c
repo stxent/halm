@@ -50,7 +50,7 @@ static void setMatchValue(struct SctTimer *timer, uint32_t value)
 
   if (timer->base.part != SCT_UNIFIED)
   {
-    const uint8_t offset = timer->base.part == SCT_HIGH;
+    const unsigned int offset = timer->base.part == SCT_HIGH;
 
     reg->MATCH_PART[timer->event][offset] = (uint16_t)value;
   }
@@ -61,13 +61,13 @@ static void setMatchValue(struct SctTimer *timer, uint32_t value)
 static enum result updateFrequency(struct SctTimer *timer, uint32_t frequency)
 {
   LPC_SCT_Type * const reg = timer->base.reg;
-  const uint8_t offset = timer->base.part == SCT_HIGH;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
   const uint32_t value = (reg->CTRL_PART[offset] & ~CTRL_PRE_MASK)
       | CTRL_CLRCTR;
 
   if (frequency)
   {
-    /* TODO Check whether the clock is from internal source */
+    /* TODO Check whether the clock is from the internal source */
     const uint32_t baseClock = sctGetClock((struct SctBase *)timer);
     const uint16_t prescaler = baseClock / frequency - 1;
 
@@ -146,7 +146,7 @@ static void tmrDeinit(void *object)
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
-  const uint8_t offset = timer->base.part == SCT_HIGH;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
 
   /* Halt the timer */
   reg->CTRL_PART[offset] = CTRL_HALT;
@@ -188,7 +188,7 @@ static void tmrSetEnabled(void *object, bool state)
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
-  const uint8_t offset = timer->base.part == SCT_HIGH;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
 
   if (state)
   {
@@ -213,10 +213,10 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
-  const uint8_t offset = timer->base.part == SCT_HIGH;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
 
-  if (timer->base.part != SCT_UNIFIED && overflow >= (1 << 16))
-    return E_VALUE;
+  if (timer->base.part != SCT_UNIFIED)
+    assert(overflow < (1 << 16));
 
   reg->CTRL_PART[offset] |= CTRL_STOP;
   setMatchValue(timer, overflow - 1);
@@ -229,7 +229,7 @@ static enum result tmrSetValue(void *object, uint32_t value)
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
-  const uint8_t offset = timer->base.part == SCT_HIGH;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
   enum result res = E_VALUE;
 
   reg->CTRL_PART[offset] |= CTRL_STOP;
@@ -258,7 +258,7 @@ static uint32_t tmrValue(const void *object)
 {
   const struct SctTimer * const timer = object;
   const LPC_SCT_Type * const reg = timer->base.reg;
-  const uint8_t offset = timer->base.part == SCT_HIGH;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
 
   return timer->base.part == SCT_UNIFIED ? reg->COUNT : reg->COUNT_PART[offset];
 }

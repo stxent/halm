@@ -9,7 +9,7 @@
 #include <halm/platform/nxp/gptimer_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getResolution(struct GpTimer *);
+static inline uint32_t getMaxValue(struct GpTimer *);
 static void interruptHandler(void *);
 static enum result updateFrequency(struct GpTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -41,7 +41,7 @@ static const struct TimerClass tmrTable = {
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const GpTimer = &tmrTable;
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getResolution(struct GpTimer *timer)
+static inline uint32_t getMaxValue(struct GpTimer *timer)
 {
   return MASK(timer->base.resolution);
 }
@@ -51,15 +51,11 @@ static void interruptHandler(void *object)
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
 
+  /* Clear all pending interrupts */
+  reg->IR = reg->IR;
+
   if (timer->callback)
     timer->callback(timer->callbackArgument);
-
-  /* Clear all pending interrupts */
-  do
-  {
-    reg->IR = reg->IR;
-  }
-  while (reg->IR);
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_GPTIMER_PM
@@ -80,7 +76,7 @@ static enum result updateFrequency(struct GpTimer *timer, uint32_t frequency)
     const uint32_t baseClock = gpTimerGetClock((struct GpTimerBase *)timer);
     const uint32_t divisor = baseClock / frequency - 1;
 
-    if (frequency > baseClock || divisor > getResolution(timer))
+    if (frequency > baseClock || divisor > getMaxValue(timer))
       return E_VALUE;
 
     reg->PR = divisor;
@@ -121,14 +117,15 @@ static enum result tmrInit(void *object, const void *configBase)
   reg->IR = reg->IR; /* Clear pending interrupts */
   reg->CCR = 0;
   reg->CTCR = 0;
-  reg->EMR = 0;
   reg->MCR = 0;
 
   if ((res = updateFrequency(timer, config->frequency)) != E_OK)
     return res;
 
   /* Configure prescaler and default match value */
-  reg->MR[timer->event] = getResolution(timer);
+  reg->MR[timer->event] = getMaxValue(timer);
+  /* Enable external match to generate signals to other peripherals */
+  reg->EMR = EMR_CONTROL(timer->event, CONTROL_TOGGLE);
 
 #ifdef CONFIG_GPTIMER_PM
   if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
@@ -206,37 +203,27 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
-  const uint32_t resolution = getResolution(timer);
+  const uint32_t resolution = getMaxValue(timer);
   const bool enabled = reg->TCR & TCR_CEN;
 
-  if (overflow)
+  /* Stop the timer before reconfiguration */
+  reg->TCR = 0;
+
+  assert((overflow - 1) <= resolution);
+  overflow = (overflow - 1) & resolution;
+
+  /* Setup the match register */
+  reg->MR[timer->event] = overflow;
+
+  if (overflow != resolution)
   {
-    --overflow;
-
-    if (overflow > resolution)
-      return E_VALUE;
-
-    /* Stop the timer before setup */
-    reg->TCR = reg->MR[timer->event] >= overflow ? TCR_CRES : 0;
-
-    reg->MR[timer->event] = overflow;
-    /* Enable timer reset after reaching match register value */
+    /* Reset the timer after reaching match register value */
     reg->MCR |= MCR_RESET(timer->event);
-    /* Enable external match to generate signals to other peripherals */
-    reg->EMR |= EMR_CONTROL(timer->event, CONTROL_TOGGLE);
   }
   else
-  {
-    reg->TCR = 0;
-
-    reg->MR[timer->event] = resolution;
-    /* Disable timer reset and clear external match output value */
     reg->MCR &= ~MCR_RESET(timer->event);
-    reg->EMR &= ~EMR_CONTROL_MASK(timer->event);
-  }
 
   reg->TCR = enabled ? TCR_CEN : 0;
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
