@@ -34,6 +34,7 @@ enum
 #define CTRL_BIDIR                      BIT(4)
 #define CTRL_PRE_MASK                   BIT_FIELD(MASK(8), 5)
 #define CTRL_PRE(value)                 BIT_FIELD((value), 5)
+#define CTRL_PRE_VALUE(reg)             FIELD_VALUE((reg), CTRL_PRE_MASK, 5)
 /*------------------State register--------------------------------------------*/
 #define STATE_MASK                      BIT_FIELD(MASK(5), 0)
 #define STATE_VALUE(reg)                FIELD_VALUE((reg), STATE_MASK, 0)

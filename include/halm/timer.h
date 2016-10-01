@@ -23,10 +23,14 @@ struct TimerClass
 
   void (*callback)(void *, void (*)(void *), void *);
   void (*setEnabled)(void *, bool);
+
+  uint32_t (*getFrequency)(const void *);
   enum result (*setFrequency)(void *, uint32_t);
+
   enum result (*setOverflow)(void *, uint32_t);
+
+  uint32_t (*getValue)(const void *);
   enum result (*setValue)(void *, uint32_t);
-  uint32_t (*value)(const void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Timer
@@ -35,7 +39,7 @@ struct Timer
 };
 /*----------------------------------------------------------------------------*/
 /**
- * Set callback function for timer overflow event.
+ * Set the callback function for the timer overflow event.
  * @param timer Pointer to a Timer object.
  * @param callback Callback function.
  * @param argument Callback function argument.
@@ -58,7 +62,17 @@ static inline void timerSetEnabled(void *timer, bool state)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set fundamental timer frequency.
+ * Get the current frequency of the timer.
+ * @param timer Pointer to a Timer object.
+ * @return Frequency of the timer in Hz.
+ */
+static inline uint32_t timerGetFrequency(const void *timer)
+{
+  return ((const struct TimerClass *)CLASS(timer))->getFrequency(timer);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set the frequency of the timer.
  * @param timer Pointer to a Timer object.
  * @param frequency Frequency in Hz.
  * @return @b E_OK on success.
@@ -70,7 +84,7 @@ static inline enum result timerSetFrequency(void *timer, uint32_t frequency)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set timer overflow rate.
+ * Set the timer overflow rate.
  * @param timer Pointer to a Timer object.
  * @param overflow Number of timer ticks after which overflow event occurs.
  * @return @b E_OK on success.
@@ -82,7 +96,17 @@ static inline enum result timerSetOverflow(void *timer, uint32_t overflow)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Set timer value.
+ * Get the current value of a timer.
+ * @param timer Pointer to a Timer object.
+ * @return Value of the counter measured in timer ticks.
+ */
+static inline uint32_t timerGetValue(const void *timer)
+{
+  return ((const struct TimerClass *)CLASS(timer))->getValue(timer);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set the timer value.
  * @param timer Pointer to a Timer object.
  * @param value New timer value.
  * @return @b E_OK on success.
@@ -90,16 +114,6 @@ static inline enum result timerSetOverflow(void *timer, uint32_t overflow)
 static inline enum result timerSetValue(void *timer, uint32_t value)
 {
   return ((const struct TimerClass *)CLASS(timer))->setValue(timer, value);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Get value of the internal counter.
- * @param timer Pointer to a Timer object.
- * @return Value of the counter measured in timer ticks.
- */
-static inline uint32_t timerValue(const void *timer)
-{
-  return ((const struct TimerClass *)CLASS(timer))->value(timer);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_TIMER_H_ */

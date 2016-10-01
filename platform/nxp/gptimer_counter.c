@@ -15,10 +15,11 @@ static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
+static uint32_t tmrGetFrequency(const void *);
 static enum result tmrSetFrequency(void *, uint32_t);
 static enum result tmrSetOverflow(void *, uint32_t);
+static uint32_t tmrGetValue(const void *);
 static enum result tmrSetValue(void *, uint32_t);
-static uint32_t tmrValue(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass tmrTable = {
     .size = sizeof(struct GpTimerCounter),
@@ -27,10 +28,11 @@ static const struct TimerClass tmrTable = {
 
     .callback = tmrCallback,
     .setEnabled = tmrSetEnabled,
+    .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
     .setOverflow = tmrSetOverflow,
-    .setValue = tmrSetValue,
-    .value = tmrValue
+    .getValue = tmrGetValue,
+    .setValue = tmrSetValue
 };
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const GpTimerCounter = &tmrTable;
@@ -158,6 +160,12 @@ static void tmrSetEnabled(void *object, bool state)
     reg->TCR = TCR_CEN;
 }
 /*----------------------------------------------------------------------------*/
+static uint32_t tmrGetFrequency(const void *object __attribute__((unused)))
+{
+  /* Current frequency is undefined for this class of timers */
+  return 0;
+}
+/*----------------------------------------------------------------------------*/
 static enum result tmrSetFrequency(void *object __attribute__((unused)),
     uint32_t frequency __attribute__((unused)))
 {
@@ -196,6 +204,14 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static uint32_t tmrGetValue(const void *object)
+{
+  const struct GpTimerCounter * const timer = object;
+  const LPC_TIMER_Type * const reg = timer->base.reg;
+
+  return reg->TC;
+}
+/*----------------------------------------------------------------------------*/
 static enum result tmrSetValue(void *object, uint32_t value)
 {
   struct GpTimerCounter * const timer = object;
@@ -216,12 +232,4 @@ static enum result tmrSetValue(void *object, uint32_t value)
   }
   else
     return E_VALUE;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t tmrValue(const void *object)
-{
-  const struct GpTimerCounter * const timer = object;
-  const LPC_TIMER_Type * const reg = timer->base.reg;
-
-  return reg->TC;
 }

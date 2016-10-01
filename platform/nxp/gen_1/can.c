@@ -110,7 +110,7 @@ static void interruptHandler(void *object)
     if (!queueEmpty(&interface->pool))
     {
       const uint32_t timestamp = interface->timer ?
-          timerValue(interface->timer) : 0;
+          timerGetValue(interface->timer) : 0;
 
       const uint32_t data[2] = {reg->RDA, reg->RDB};
       const uint32_t information = reg->RFS;
