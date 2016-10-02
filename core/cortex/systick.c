@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <xcore/bits.h>
 #include <xcore/memory.h>
 #include <halm/clock.h>
@@ -24,17 +25,17 @@ static void interruptHandler(void *);
 static enum result setDescriptor(const struct SysTickTimer *,
     struct SysTickTimer *);
 static void updateInterrupt(struct SysTickTimer *);
-static enum result updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
+static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
-static enum result tmrSetFrequency(void *, uint32_t);
-static enum result tmrSetOverflow(void *, uint32_t);
+static void tmrSetFrequency(void *, uint32_t);
+static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
-static enum result tmrSetValue(void *, uint32_t);
+static void tmrSetValue(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass tmrTable = {
     .size = sizeof(struct SysTickTimer),
@@ -82,11 +83,10 @@ static void updateInterrupt(struct SysTickTimer *timer)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result updateFrequency(struct SysTickTimer *timer,
-    uint32_t frequency, uint32_t overflow)
+static void updateFrequency(struct SysTickTimer *timer, uint32_t frequency,
+    uint32_t overflow)
 {
-  if (overflow > TIMER_RESOLUTION)
-    return E_VALUE;
+  assert(overflow <= TIMER_RESOLUTION);
 
   const uint32_t limit = overflow ? overflow : 1;
 
@@ -95,8 +95,7 @@ static enum result updateFrequency(struct SysTickTimer *timer,
     const uint32_t divisor =
         (clockFrequency(MainClock) / frequency) * limit - 1;
 
-    if (divisor > TIMER_RESOLUTION)
-      return E_VALUE;
+    assert(divisor <= TIMER_RESOLUTION);
 
     SYSTICK->LOAD = divisor;
   }
@@ -105,8 +104,6 @@ static enum result updateFrequency(struct SysTickTimer *timer,
 
   timer->frequency = frequency;
   timer->overflow = overflow;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void SYSTICK_ISR(void)
@@ -128,8 +125,7 @@ static enum result tmrInit(void *object, const void *configBase)
 
   SYSTICK->CTRL = 0; /* Stop the timer */
 
-  if ((res = updateFrequency(timer, config->frequency, 1)) != E_OK)
-    return res;
+  updateFrequency(timer, config->frequency, 1);
 
   /* Timer is left disabled by default */
   SYSTICK->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
@@ -185,31 +181,25 @@ static uint32_t tmrGetFrequency(const void *object)
     return baseClock;
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetFrequency(void *object, uint32_t frequency)
+static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   struct SysTickTimer * const timer = object;
   const uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
-  enum result res;
 
   SYSTICK->CTRL &= ~CTRL_ENABLE;
-  res = updateFrequency(timer, frequency, timer->overflow);
+  updateFrequency(timer, frequency, timer->overflow);
   SYSTICK->CTRL |= state;
-
-  return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetOverflow(void *object, uint32_t overflow)
+static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SysTickTimer * const timer = object;
   const uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
-  enum result res;
 
   SYSTICK->CTRL &= ~CTRL_ENABLE;
-  if ((res = updateFrequency(timer, timer->frequency, overflow)) == E_OK)
-    updateInterrupt(timer);
+  updateFrequency(timer, timer->frequency, overflow);
+  updateInterrupt(timer);
   SYSTICK->CTRL |= state;
-
-  return res;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object __attribute__((unused)))
@@ -217,9 +207,7 @@ static uint32_t tmrGetValue(const void *object __attribute__((unused)))
   return SYSTICK->VAL;
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetValue(void *object __attribute__((unused)),
-    uint32_t value)
+static void tmrSetValue(void *object __attribute__((unused)), uint32_t value)
 {
   SYSTICK->VAL = value;
-  return E_OK;
 }

@@ -4,23 +4,24 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <halm/platform/nxp/sct_defs.h>
 #include <halm/platform/nxp/sct_timer.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void setMatchValue(struct SctTimer *, uint32_t);
-static enum result updateFrequency(struct SctTimer *, uint32_t);
+static void updateFrequency(struct SctTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
-static enum result tmrSetFrequency(void *, uint32_t);
-static enum result tmrSetOverflow(void *, uint32_t);
+static void tmrSetFrequency(void *, uint32_t);
+static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
-static enum result tmrSetValue(void *, uint32_t);
+static void tmrSetValue(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass tmrTable = {
     .size = sizeof(struct SctTimer),
@@ -60,12 +61,12 @@ static void setMatchValue(struct SctTimer *timer, uint32_t value)
     reg->MATCH[timer->event] = value;
 }
 /*----------------------------------------------------------------------------*/
-static enum result updateFrequency(struct SctTimer *timer, uint32_t frequency)
+static void updateFrequency(struct SctTimer *timer, uint32_t frequency)
 {
   LPC_SCT_Type * const reg = timer->base.reg;
   const unsigned int offset = timer->base.part == SCT_HIGH;
-  const uint32_t value = (reg->CTRL_PART[offset] & ~CTRL_PRE_MASK)
-      | CTRL_CLRCTR;
+  const uint32_t value =
+      (reg->CTRL_PART[offset] & ~CTRL_PRE_MASK) | CTRL_CLRCTR;
 
   if (frequency)
   {
@@ -73,8 +74,7 @@ static enum result updateFrequency(struct SctTimer *timer, uint32_t frequency)
     const uint32_t baseClock = sctGetClock((struct SctBase *)timer);
     const uint16_t prescaler = baseClock / frequency - 1;
 
-    if (prescaler >= 256)
-      return E_VALUE;
+    assert(prescaler < 256);
 
     reg->CTRL_PART[offset] = value | CTRL_PRE(prescaler);
   }
@@ -82,7 +82,6 @@ static enum result updateFrequency(struct SctTimer *timer, uint32_t frequency)
     reg->CTRL_PART[offset] = value;
 
   timer->frequency = frequency;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configBase)
@@ -117,8 +116,7 @@ static enum result tmrInit(void *object, const void *configBase)
   reg->CTRL_PART[offset] = CTRL_HALT;
 
   /* Set desired timer frequency */
-  if ((res = updateFrequency(timer, config->frequency)) != E_OK)
-    return res;
+  updateFrequency(timer, config->frequency);
 
   /* Disable match value reload and set current match register value */
   reg->CONFIG |= CONFIG_NORELOAD(offset);
@@ -215,14 +213,12 @@ static uint32_t tmrGetFrequency(const void *object)
   return baseClock / prescaler;
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetFrequency(void *object, uint32_t frequency)
+static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  struct SctTimer * const timer = object;
-
-  return updateFrequency(timer, frequency);
+  updateFrequency(object, frequency);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetOverflow(void *object, uint32_t overflow)
+static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
@@ -234,8 +230,6 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
   reg->CTRL_PART[offset] |= CTRL_STOP;
   setMatchValue(timer, overflow - 1);
   reg->CTRL_PART[offset] &= ~CTRL_STOP;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
@@ -247,31 +241,22 @@ static uint32_t tmrGetValue(const void *object)
   return timer->base.part == SCT_UNIFIED ? reg->COUNT : reg->COUNT_PART[offset];
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetValue(void *object, uint32_t value)
+static void tmrSetValue(void *object, uint32_t value)
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
   const unsigned int offset = timer->base.part == SCT_HIGH;
-  enum result res = E_VALUE;
 
   reg->CTRL_PART[offset] |= CTRL_STOP;
   if (timer->base.part == SCT_UNIFIED)
   {
-    if (value <= reg->MATCH[timer->event])
-    {
-      reg->COUNT = value;
-      res = E_OK;
-    }
+    assert(value <= reg->MATCH[timer->event]);
+    reg->COUNT = value;
   }
   else
   {
-    if (value <= reg->MATCH_PART[timer->event][offset])
-    {
-      reg->COUNT_PART[offset] = value;
-      res = E_OK;
-    }
+    assert(value <= reg->MATCH_PART[timer->event][offset]);
+    reg->COUNT_PART[offset] = value;
   }
   reg->CTRL_PART[offset] &= ~CTRL_STOP;
-
-  return res;
 }

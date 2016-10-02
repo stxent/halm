@@ -9,9 +9,9 @@
 #include <halm/platform/nxp/gptimer_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(struct GpTimer *);
+static inline uint32_t getMaxValue(const struct GpTimer *);
 static void interruptHandler(void *);
-static enum result updateFrequency(struct GpTimer *, uint32_t);
+static void updateFrequency(struct GpTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_GPTIMER_PM
 static enum result powerStateHandler(void *, enum pmState);
@@ -22,10 +22,10 @@ static void tmrDeinit(void *);
 static void tmrCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
-static enum result tmrSetFrequency(void *, uint32_t);
-static enum result tmrSetOverflow(void *, uint32_t);
+static void tmrSetFrequency(void *, uint32_t);
+static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
-static enum result tmrSetValue(void *, uint32_t);
+static void tmrSetValue(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass tmrTable = {
     .size = sizeof(struct GpTimer),
@@ -43,7 +43,7 @@ static const struct TimerClass tmrTable = {
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const GpTimer = &tmrTable;
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(struct GpTimer *timer)
+static inline uint32_t getMaxValue(const struct GpTimer *timer)
 {
   return MASK(timer->base.resolution);
 }
@@ -69,7 +69,7 @@ static enum result powerStateHandler(void *object, enum pmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result updateFrequency(struct GpTimer *timer, uint32_t frequency)
+static void updateFrequency(struct GpTimer *timer, uint32_t frequency)
 {
   LPC_TIMER_Type * const reg = timer->base.reg;
 
@@ -78,8 +78,8 @@ static enum result updateFrequency(struct GpTimer *timer, uint32_t frequency)
     const uint32_t baseClock = gpTimerGetClock((struct GpTimerBase *)timer);
     const uint32_t divisor = baseClock / frequency - 1;
 
-    if (frequency > baseClock || divisor > getMaxValue(timer))
-      return E_VALUE;
+    assert(frequency <= baseClock);
+    assert(divisor <= getMaxValue(timer));
 
     reg->PR = divisor;
   }
@@ -87,7 +87,6 @@ static enum result updateFrequency(struct GpTimer *timer, uint32_t frequency)
     reg->PR = 0;
 
   timer->frequency = frequency;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configBase)
@@ -121,8 +120,7 @@ static enum result tmrInit(void *object, const void *configBase)
   reg->CTCR = 0;
   reg->MCR = 0;
 
-  if ((res = updateFrequency(timer, config->frequency)) != E_OK)
-    return res;
+  updateFrequency(timer, config->frequency);
 
   /* Configure prescaler and default match value */
   reg->MR[timer->event] = getMaxValue(timer);
@@ -203,19 +201,17 @@ static uint32_t tmrGetFrequency(const void *object)
   return baseClock / (reg->PR + 1);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetFrequency(void *object, uint32_t frequency)
+static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  struct GpTimer * const timer = object;
-
-  return updateFrequency(timer, frequency);
+  updateFrequency(object, frequency);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetOverflow(void *object, uint32_t overflow)
+static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
   const uint32_t resolution = getMaxValue(timer);
-  const bool enabled = reg->TCR & TCR_CEN;
+  const uint32_t state = reg->TCR & TCR_CEN;
 
   /* Stop the timer before reconfiguration */
   reg->TCR = 0;
@@ -234,8 +230,7 @@ static enum result tmrSetOverflow(void *object, uint32_t overflow)
   else
     reg->MCR &= ~MCR_RESET(timer->event);
 
-  reg->TCR = enabled ? TCR_CEN : 0;
-  return E_OK;
+  reg->TCR = state;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
@@ -246,24 +241,18 @@ static uint32_t tmrGetValue(const void *object)
   return reg->TC;
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrSetValue(void *object, uint32_t value)
+static void tmrSetValue(void *object, uint32_t value)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
-  const bool enabled = reg->TCR & TCR_CEN;
+  const uint32_t state = reg->TCR & TCR_CEN;
 
-  if (value <= reg->MR[timer->event])
-  {
-    reg->TCR = 0;
+  assert(value <= reg->MR[timer->event]);
 
-    reg->PC = 0;
-    reg->TC = value;
+  reg->TCR = 0;
 
-    if (enabled)
-      reg->TCR = TCR_CEN;
+  reg->PC = 0;
+  reg->TC = value;
 
-    return E_OK;
-  }
-  else
-    return E_VALUE;
+  reg->TCR = state;
 }

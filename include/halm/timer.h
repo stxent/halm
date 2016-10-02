@@ -25,12 +25,12 @@ struct TimerClass
   void (*setEnabled)(void *, bool);
 
   uint32_t (*getFrequency)(const void *);
-  enum result (*setFrequency)(void *, uint32_t);
+  void (*setFrequency)(void *, uint32_t);
 
-  enum result (*setOverflow)(void *, uint32_t);
+  void (*setOverflow)(void *, uint32_t);
 
   uint32_t (*getValue)(const void *);
-  enum result (*setValue)(void *, uint32_t);
+  void (*setValue)(void *, uint32_t);
 };
 /*----------------------------------------------------------------------------*/
 struct Timer
@@ -75,24 +75,20 @@ static inline uint32_t timerGetFrequency(const void *timer)
  * Set the frequency of the timer.
  * @param timer Pointer to a Timer object.
  * @param frequency Frequency in Hz.
- * @return @b E_OK on success.
  */
-static inline enum result timerSetFrequency(void *timer, uint32_t frequency)
+static inline void timerSetFrequency(void *timer, uint32_t frequency)
 {
-  return ((const struct TimerClass *)CLASS(timer))->setFrequency(timer,
-      frequency);
+  ((const struct TimerClass *)CLASS(timer))->setFrequency(timer, frequency);
 }
 /*----------------------------------------------------------------------------*/
 /**
  * Set the timer overflow rate.
  * @param timer Pointer to a Timer object.
  * @param overflow Number of timer ticks after which overflow event occurs.
- * @return @b E_OK on success.
  */
-static inline enum result timerSetOverflow(void *timer, uint32_t overflow)
+static inline void timerSetOverflow(void *timer, uint32_t overflow)
 {
-  return ((const struct TimerClass *)CLASS(timer))->setOverflow(timer,
-      overflow);
+  ((const struct TimerClass *)CLASS(timer))->setOverflow(timer, overflow);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -109,11 +105,10 @@ static inline uint32_t timerGetValue(const void *timer)
  * Set the timer value.
  * @param timer Pointer to a Timer object.
  * @param value New timer value.
- * @return @b E_OK on success.
  */
-static inline enum result timerSetValue(void *timer, uint32_t value)
+static inline void timerSetValue(void *timer, uint32_t value)
 {
-  return ((const struct TimerClass *)CLASS(timer))->setValue(timer, value);
+  ((const struct TimerClass *)CLASS(timer))->setValue(timer, value);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_TIMER_H_ */
