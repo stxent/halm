@@ -20,7 +20,7 @@ extern const struct InterfaceClass * const I2cSlave;
 struct I2cSlaveConfig
 {
   /** Mandatory: register map size. Map size is limited by 64 kB. */
-  uint16_t size;
+  size_t size;
   /** Mandatory: serial clock pin. */
   pinNumber scl;
   /** Mandatory: serial data pin. */
@@ -44,7 +44,7 @@ struct I2cSlave
   uint16_t size;
   /* Position in register cache for external access */
   uint16_t external;
-  /* Position in register cache for internal operations */
+  /* Position in register cache for program access */
   uint16_t internal;
 
   /* Current interface state */

@@ -430,10 +430,10 @@ static enum result oneWireGet(void *object, enum ifOption option,
       return E_OK;
 
     case IF_STATUS:
-      if (!interface->blocking && interface->state == STATE_ERROR)
-        return E_ERROR;
-      else
+      if (interface->blocking || interface->state != STATE_ERROR)
         return interface->state != STATE_IDLE ? E_BUSY : E_OK;
+      else
+        return E_ERROR;
 
     default:
       return E_INVALID;

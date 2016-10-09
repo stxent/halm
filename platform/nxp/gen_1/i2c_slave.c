@@ -149,6 +149,7 @@ static enum result i2cInit(void *object, const void *configBase)
   interface->cache = malloc(config->size);
   if (!interface->cache)
     return E_MEMORY;
+  memset(interface->cache, 0, config->size);
 
   interface->base.handler = interruptHandler;
 
@@ -215,7 +216,7 @@ static enum result i2cGet(void *object, enum ifOption option, void *data)
       return E_OK;
 
     case IF_POSITION:
-      *(size_t *)data = interface->internal;
+      *(uint32_t *)data = interface->internal;
       return E_OK;
 
     case IF_STATUS:
@@ -243,9 +244,9 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
         return E_VALUE;
 
     case IF_POSITION:
-      if (*(const size_t *)data < interface->size)
+      if (*(const uint32_t *)data < interface->size)
       {
-        interface->internal = *(const size_t *)data;
+        interface->internal = *(const uint32_t *)data;
         return E_OK;
       }
       else

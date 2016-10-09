@@ -15,8 +15,6 @@ static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
-static uint32_t tmrGetFrequency(const void *);
-static void tmrSetFrequency(void *, uint32_t);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
@@ -28,8 +26,8 @@ static const struct TimerClass tmrTable = {
 
     .callback = tmrCallback,
     .setEnabled = tmrSetEnabled,
-    .getFrequency = tmrGetFrequency,
-    .setFrequency = tmrSetFrequency,
+    .getFrequency = 0,
+    .setFrequency = 0,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
@@ -158,18 +156,6 @@ static void tmrSetEnabled(void *object, bool state)
 
   if (state)
     reg->TCR = TCR_CEN;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t tmrGetFrequency(const void *object __attribute__((unused)))
-{
-  /* Current frequency is undefined for this class of timers */
-  return 0;
-}
-/*----------------------------------------------------------------------------*/
-static void tmrSetFrequency(void *object __attribute__((unused)),
-    uint32_t frequency __attribute__((unused)))
-{
-  assert(0);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
