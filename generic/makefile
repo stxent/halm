@@ -15,6 +15,10 @@ ifeq ($(CONFIG_GENERIC_SDCARD),y)
   CSOURCES += generic/sdcard.c
 endif
 
+ifeq ($(CONFIG_GENERIC_SOFTWARE_TIMER),y)
+  CSOURCES += generic/software_timer.c
+endif
+
 ifeq ($(CONFIG_GENERIC_WORK_QUEUE),y)
   CSOURCES += generic/work_queue.c
 endif

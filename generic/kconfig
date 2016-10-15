@@ -17,6 +17,10 @@ config GENERIC_SDCARD
 	bool "SD Card driver"
 	default y
 
+config GENERIC_SOFTWARE_TIMER
+	bool "Software Timer Factory"
+	default y
+
 config GENERIC_WORK_QUEUE
 	bool "Work Queue"
 	default y
