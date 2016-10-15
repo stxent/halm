@@ -91,7 +91,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   /* Perform a new conversion */
   uint32_t value;
 
-  reg->CR |= CR_START(1 + ADC_SOFTWARE);
+  reg->CR |= CR_START(ADC_SOFTWARE);
 
   do
   {
