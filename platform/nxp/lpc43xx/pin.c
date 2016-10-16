@@ -411,7 +411,7 @@ void pinInput(struct Pin pin)
   }
 }
 /*----------------------------------------------------------------------------*/
-void pinOutput(struct Pin pin, uint8_t value)
+void pinOutput(struct Pin pin, bool value)
 {
   commonPinInit(pin);
 

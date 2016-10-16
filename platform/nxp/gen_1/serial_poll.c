@@ -158,7 +158,7 @@ static size_t serialRead(void *object, void *buffer, size_t length)
   /* Byte will be removed from FIFO after reading from RBR register */
   while (read < length && (reg->LSR & LSR_RDR))
   {
-    *bufferPosition++ = (uint8_t)reg->RBR;
+    *bufferPosition++ = reg->RBR;
     ++read;
   }
 

@@ -20,10 +20,10 @@ struct SctPwmUnitConfig
   uint32_t frequency;
   /** Mandatory: cycle resolution. */
   uint32_t resolution;
-  /** Mandatory: peripheral identifier. */
-  uint8_t channel;
   /** Optional: timer part. */
   enum sctPart part;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 struct SctPwmUnit

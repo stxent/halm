@@ -23,13 +23,13 @@ enum
 void *pinAddress(struct Pin);
 struct Pin pinInit(pinNumber);
 void pinInput(struct Pin);
-void pinOutput(struct Pin, uint8_t);
+void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum pinPull);
 void pinSetType(struct Pin, enum pinType);
 void pinSetSlewRate(struct Pin, enum pinSlewRate);
 /*----------------------------------------------------------------------------*/
-static inline uint8_t pinRead(struct Pin pin)
+static inline bool pinRead(struct Pin pin)
 {
   const STM_GPIO_Type * const reg = pin.reg;
 

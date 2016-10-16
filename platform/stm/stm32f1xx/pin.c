@@ -73,7 +73,7 @@ void pinInput(struct Pin pin)
   reg->CR[index] = configValue;
 }
 /*----------------------------------------------------------------------------*/
-void pinOutput(struct Pin pin, uint8_t value)
+void pinOutput(struct Pin pin, bool value)
 {
   assert(pin.reg);
 

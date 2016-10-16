@@ -77,7 +77,7 @@ static uint8_t configOutputPin(uint8_t channel, pinNumber key)
 
   const struct Pin pin = pinInit(key);
 
-  pinOutput(pin, 0);
+  pinOutput(pin, false);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
   return UNPACK_CHANNEL(pinEntry->value);

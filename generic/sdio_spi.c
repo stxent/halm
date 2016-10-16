@@ -736,7 +736,7 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->cs = pinInit(config->cs);
   if (!pinValid(interface->cs))
     return E_VALUE;
-  pinOutput(interface->cs, 1);
+  pinOutput(interface->cs, true);
 
   interface->bus = config->interface;
 

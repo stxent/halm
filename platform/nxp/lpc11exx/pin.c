@@ -49,7 +49,7 @@ void pinInput(struct Pin pin)
   LPC_GPIO->DIR[pin.data.port] &= ~(1UL << pin.data.offset);
 }
 /*----------------------------------------------------------------------------*/
-void pinOutput(struct Pin pin, uint8_t value)
+void pinOutput(struct Pin pin, bool value)
 {
   commonPinInit(pin);
   LPC_GPIO->DIR[pin.data.port] |= 1UL << pin.data.offset;
