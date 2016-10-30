@@ -158,24 +158,13 @@ static void interruptHandler(void *object)
 static void removeTimer(struct SoftwareTimerFactory *factory,
     const struct SoftwareTimer *timer)
 {
-  if (factory->head == timer)
-  {
-    factory->head = factory->head->next;
-  }
-  else
-  {
-    struct SoftwareTimer *current = factory->head;
+  struct SoftwareTimer **current = &factory->head;
 
-    while (current->next)
-    {
-      if (current->next == timer)
-      {
-        current->next = current->next->next;
-        break;
-      }
-      current = current->next;
-    }
-  }
+  while (*current != timer)
+    current = &(*current)->next;
+  assert(current);
+
+  *current = timer->next;
 }
 /*----------------------------------------------------------------------------*/
 static enum result factoryInit(void *object, const void *configBase)
@@ -250,6 +239,7 @@ static void tmrSetEnabled(void *object, bool state)
   else
   {
     removeTimer(timer->factory, timer);
+    timer->next = 0;
     timer->period = 0;
   }
 

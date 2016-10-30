@@ -113,7 +113,7 @@ static inline void sysPowerDisable(enum sysBlockPower block)
 /*----------------------------------------------------------------------------*/
 static inline bool sysPowerStatus(enum sysBlockPower block)
 {
-  return LPC_SC->PCONP & (1UL << block) ? true : false;
+  return (LPC_SC->PCONP & (1UL << block)) != 0;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_SYSTEM_H_ */
