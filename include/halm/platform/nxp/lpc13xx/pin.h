@@ -35,30 +35,27 @@ void pinSetType(struct Pin, enum pinType);
 /*----------------------------------------------------------------------------*/
 static inline bool pinRead(struct Pin pin)
 {
-  const uint32_t mask = 1UL << pin.data.offset;
-
-  return (((const LPC_GPIO_Type *)pin.reg)->DATA & mask) != 0;
+  return *(const volatile uint32_t *)pin.reg != 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinReset(struct Pin pin)
 {
-  const uint32_t mask = 1UL << pin.data.offset;
-
-  ((LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[mask] = 0x000;
+  *(volatile uint32_t *)pin.reg = 0x000;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSet(struct Pin pin)
 {
-  const uint32_t mask = 1UL << pin.data.offset;
-
-  ((LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[mask] = 0xFFF;
+  *(volatile uint32_t *)pin.reg = 0xFFF;
+}
+/*----------------------------------------------------------------------------*/
+static inline void pinToggle(struct Pin pin)
+{
+  *(volatile uint32_t *)pin.reg = ~(*(volatile uint32_t *)pin.reg);
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinWrite(struct Pin pin, bool value)
 {
-  const uint32_t mask = 1UL << pin.data.offset;
-
-  ((LPC_GPIO_Type *)pin.reg)->MASKED_ACCESS[mask] = value ? 0xFFF : 0x000;
+  *(volatile uint32_t *)pin.reg = 0xFFF * value;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC13XX_PIN_H_ */

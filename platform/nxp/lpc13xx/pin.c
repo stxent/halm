@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(struct PinData);
 static inline volatile uint32_t *calcControlReg(struct PinData);
+static void *calcMaskedReg(struct PinData);
 static void commonPinInit(struct Pin);
 static bool isCommonPin(struct Pin);
 /*----------------------------------------------------------------------------*/
@@ -31,6 +32,17 @@ static inline volatile uint32_t *calcControlReg(struct PinData data)
       + pinRegMap[data.port][data.offset]);
 }
 /*----------------------------------------------------------------------------*/
+static void *calcMaskedReg(struct PinData data)
+{
+  if (data.port != PORT_USB)
+  {
+    LPC_GPIO_Type * const reg = calcPort(data);
+    return (void *)(reg->MASKED_ACCESS + (1UL << data.offset));
+  }
+  else
+    return 0;
+}
+/*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
 {
   pinSetFunction(pin, PIN_DEFAULT);
@@ -51,7 +63,7 @@ struct Pin pinInit(pinNumber id)
 
   pin.data.port = PIN_TO_PORT(id);
   pin.data.offset = PIN_TO_OFFSET(id);
-  pin.reg = pin.data.port != PORT_USB ? calcPort(pin.data) : 0;
+  pin.reg = calcMaskedReg(pin.data);
 
   return pin;
 }
@@ -61,8 +73,10 @@ void pinInput(struct Pin pin)
   if (!pin.reg)
     return;
 
+  LPC_GPIO_Type * const reg = calcPort(pin.data);
+
   commonPinInit(pin);
-  ((LPC_GPIO_Type *)pin.reg)->DIR &= ~(1 << pin.data.offset);
+  reg->DIR &= ~(1 << pin.data.offset);
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
@@ -70,8 +84,10 @@ void pinOutput(struct Pin pin, bool value)
   if (!pin.reg)
     return;
 
+  LPC_GPIO_Type * const reg = calcPort(pin.data);
+
   commonPinInit(pin);
-  ((LPC_GPIO_Type *)pin.reg)->DIR |= 1 << pin.data.offset;
+  reg->DIR |= 1 << pin.data.offset;
   pinWrite(pin, value);
 }
 /*----------------------------------------------------------------------------*/

@@ -82,12 +82,17 @@ static inline void pinSet(struct Pin pin)
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 1;
 }
 /*----------------------------------------------------------------------------*/
+static inline void pinToggle(struct Pin pin)
+{
+  LPC_GPIO->NOT[pin.data.port] = 1UL << pin.data.offset;
+}
+/*----------------------------------------------------------------------------*/
 static inline void pinWrite(struct Pin pin, bool value)
 {
   assert(pinGpioValid(pin));
 
   /* Only 0 and 1 are allowed */
-  LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = (uint8_t)value;
+  LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = value;
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSetType(struct Pin pin __attribute__((unused)),

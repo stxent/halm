@@ -14,6 +14,7 @@ void *pinAddress(struct Pin);
 struct Pin pinInit(pinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
+void pinToggle(struct Pin);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum pinPull);
 void pinSetType(struct Pin, enum pinType);

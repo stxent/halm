@@ -71,6 +71,11 @@ void pinOutput(struct Pin pin, bool value)
   pinWrite(pin, value);
 }
 /*----------------------------------------------------------------------------*/
+void pinToggle(struct Pin pin)
+{
+  pinWrite(pin, !pinRead(pin));
+}
+/*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
   /* Function should not be used outside platform drivers */
