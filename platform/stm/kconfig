@@ -29,3 +29,16 @@ choice
 endchoice
 
 endmenu
+
+menu "Peripherals"
+
+config PLATFORM_STM_UART_BASE
+    bool "UART"
+    default y
+
+config PLATFORM_STM_SERIAL
+    bool "Interrupt-driven serial port driver"
+    default y
+    depends on PLATFORM_STM_UART_BASE
+
+endmenu

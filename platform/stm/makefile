@@ -6,3 +6,12 @@ ifeq ($(CONFIG_PM),y)
 
   PROJECT_FLAGS += CONFIG_PLATFORM_STM_PM_STOP CONFIG_PLATFORM_STM_PM_STANDBY
 endif
+
+ifeq ($(CONFIG_PLATFORM_STM_UART_BASE),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/uart_common.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/uart_base.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_STM_SERIAL),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/serial.c
+endif
