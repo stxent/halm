@@ -77,8 +77,11 @@ static void interruptHandler(void *object)
     }
   }
 
-  /* User handler will be called when receive queue is not empty */
-  event = event || !byteQueueEmpty(&interface->rxQueue);
+  /* User handler will be called when receive queue is half-full */
+  const size_t rxQueueLevel = byteQueueCapacity(&interface->rxQueue) / 2;
+  const size_t rxQueueSize = byteQueueSize(&interface->rxQueue);
+
+  event = event || rxQueueSize >= rxQueueLevel;
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
