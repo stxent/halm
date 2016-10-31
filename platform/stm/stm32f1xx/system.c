@@ -60,7 +60,7 @@ void sysClockDisable(enum sysClockBranch branch)
 bool sysClockStatus(enum sysClockBranch branch)
 {
   const unsigned int index = branch >> 5;
-  const uint32_t mask = ~(1UL << (branch & 0x1F));
+  const uint32_t mask = 1UL << (branch & 0x1F);
   uint32_t value = 0;
 
   switch (index)

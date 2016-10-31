@@ -59,9 +59,13 @@ static inline void pinToggle(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static inline void pinWrite(struct Pin pin, bool value)
 {
-  const uint32_t mask = 1UL << (pin.data.offset + 16 * value);
+  STM_GPIO_Type * const reg = pin.reg;
+  const uint32_t mask = 1UL << pin.data.offset;
 
-  ((STM_GPIO_Type *)pin.reg)->BSRR = mask;
+  if (value)
+    reg->BSRR = mask;
+  else
+    reg->BRR = mask;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_STM32F1XX_PIN_H_ */
