@@ -42,8 +42,9 @@ void WAKEUP_ISR(void) __attribute__((weak, alias("defaultHandler")));
 extern void _stack(void); /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
 __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
-    /* Core interrupt sources */
+    /* The top of the stack */
     &_stack,
+    /* Core interrupts */
     RESET_ISR,
     NMI_ISR,
     HARDFAULT_ISR,
@@ -60,7 +61,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     PENDSV_ISR,
     SYSTICK_ISR,
 
-    /* PIO0 wake-up sources */
+    /* PIO0 wake-up interrupts */
     WAKEUP_ISR,
     WAKEUP_ISR,
     WAKEUP_ISR,
@@ -74,7 +75,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     WAKEUP_ISR,
     WAKEUP_ISR,
 
-    /* PIO1 wake-up sources */
+    /* PIO1 wake-up interrupts */
     WAKEUP_ISR,
     WAKEUP_ISR,
     WAKEUP_ISR,
@@ -88,7 +89,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     WAKEUP_ISR,
     WAKEUP_ISR,
 
-    /* PIO2 wake-up sources */
+    /* PIO2 wake-up interrupts */
     WAKEUP_ISR,
     WAKEUP_ISR,
     WAKEUP_ISR,
@@ -102,13 +103,13 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     WAKEUP_ISR,
     WAKEUP_ISR,
 
-    /* PIO3 wake-up sources */
+    /* PIO3 wake-up interrupts */
     WAKEUP_ISR,
     WAKEUP_ISR,
     WAKEUP_ISR,
     WAKEUP_ISR,
 
-    /* Other LPC13xx interrupt sources */
+    /* Other LPC13xx interrupts */
     I2C_ISR,
     TIMER16B0_ISR,
     TIMER16B1_ISR,

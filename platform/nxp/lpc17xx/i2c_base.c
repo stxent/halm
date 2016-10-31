@@ -135,7 +135,8 @@ static enum result i2cInit(void *object, const void *configBase)
   /* Configure pins */
   i2cConfigPins(interface, configBase);
 
-  const struct I2cBlockDescriptor *entry = &i2cBlockEntries[interface->channel];
+  const struct I2cBlockDescriptor * const entry =
+      &i2cBlockEntries[interface->channel];
 
   sysPowerEnable(entry->power);
   sysClockControl(entry->clock, DEFAULT_DIV);

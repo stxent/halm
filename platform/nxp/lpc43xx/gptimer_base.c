@@ -313,7 +313,8 @@ static enum result tmrInit(void *object, const void *configBase)
   if ((res = setDescriptor(timer->channel, 0, timer)) != E_OK)
     return res;
 
-  const struct TimerBlockDescriptor *entry = &timerBlockEntries[timer->channel];
+  const struct TimerBlockDescriptor * const entry =
+      &timerBlockEntries[timer->channel];
 
   /* Enable clock to register interface and peripheral */
   sysClockEnable(entry->clock);

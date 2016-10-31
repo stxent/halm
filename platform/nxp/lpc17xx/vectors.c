@@ -58,8 +58,9 @@ void CAN_ACT_ISR(void) __attribute__((weak, alias("defaultHandler")));
 extern void _stack(void); /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
 __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
-    /* Core interrupt sources */
+    /* The top of the stack */
     &_stack,
+    /* Core interrupts */
     RESET_ISR,
     NMI_ISR,
     HARDFAULT_ISR,
@@ -76,6 +77,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     PENDSV_ISR,
     SYSTICK_ISR,
 
+    /* Chip-specific interrupts */
     WDT_ISR,
     TIMER0_ISR,
     TIMER1_ISR,

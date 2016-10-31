@@ -42,8 +42,9 @@ void PIO0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 extern void _stack(void); /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
 __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
-    /* Core interrupt sources */
+    /* The top of the stack */
     &_stack,
+    /* Core interrupts */
     RESET_ISR,
     NMI_ISR,
     HARDFAULT_ISR,
@@ -60,7 +61,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     PENDSV_ISR,
     SYSTICK_ISR,
 
-    /* PIO0 wake-up sources */
+    /* PIO0 wake-up interrupts */
     WAKEUP_ISR,
     WAKEUP_ISR,
     WAKEUP_ISR,
@@ -74,10 +75,10 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     WAKEUP_ISR,
     WAKEUP_ISR,
 
-    /* PIO1 wake-up sources */
+    /* PIO1 wake-up interrupts */
     WAKEUP_ISR,
 
-    /* Other LPC11xx interrupt sources */
+    /* Other LPC11xx interrupts */
     CAN_ISR,
     SSP1_ISR,
     I2C_ISR,

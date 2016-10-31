@@ -247,7 +247,8 @@ static enum result adcUnitInit(void *object, const void *configBase)
   if ((res = setDescriptor(unit->channel, 0, unit)) != E_OK)
     return res;
 
-  const struct AdcBlockDescriptor *entry = &adcBlockEntries[unit->channel];
+  const struct AdcBlockDescriptor * const entry =
+      &adcBlockEntries[unit->channel];
 
   /* Enable clock to register interface and peripheral */
   sysClockEnable(entry->clock);

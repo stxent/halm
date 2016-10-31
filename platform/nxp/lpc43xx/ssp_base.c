@@ -273,7 +273,8 @@ static enum result sspInit(void *object, const void *configBase)
    */
   configPins(interface, config);
 
-  const struct SspBlockDescriptor *entry = &sspBlockEntries[interface->channel];
+  const struct SspBlockDescriptor * const entry =
+      &sspBlockEntries[interface->channel];
 
   /* Enable clocks to register interface and peripheral */
   sysClockEnable(entry->periperalBranch);
@@ -290,7 +291,8 @@ static enum result sspInit(void *object, const void *configBase)
 static void sspDeinit(void *object)
 {
   const struct SspBase * const interface = object;
-  const struct SspBlockDescriptor *entry = &sspBlockEntries[interface->channel];
+  const struct SspBlockDescriptor * const entry =
+      &sspBlockEntries[interface->channel];
 
   sysClockDisable(entry->registerBranch);
   sysClockDisable(entry->periperalBranch);

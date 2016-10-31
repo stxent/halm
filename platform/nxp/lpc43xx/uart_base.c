@@ -243,6 +243,8 @@ void USART3_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)
 {
+  assert(interface->channel <= 3);
+
   const void *clock = 0;
 
   switch (interface->channel)
@@ -262,9 +264,6 @@ uint32_t uartGetClock(const struct UartBase *interface)
     case 3:
       clock = Usart3Clock;
       break;
-
-    default:
-      return 0;
   }
 
   return clockFrequency(clock);
@@ -286,7 +285,7 @@ static enum result uartInit(void *object, const void *configBase)
   /* Configure input and output pins */
   uartConfigPins(interface, config);
 
-  const struct UartBlockDescriptor *entry =
+  const struct UartBlockDescriptor * const entry =
       &uartBlockEntries[interface->channel];
 
   /* Enable clocks to register interface and peripheral */
@@ -304,7 +303,7 @@ static enum result uartInit(void *object, const void *configBase)
 static void uartDeinit(void *object)
 {
   const struct UartBase * const interface = object;
-  const struct UartBlockDescriptor *entry =
+  const struct UartBlockDescriptor * const entry =
       &uartBlockEntries[interface->channel];
 
   sysClockDisable(entry->registerBranch);

@@ -182,7 +182,7 @@ static enum result uartInit(void *object, const void *configBase)
   /* Configure input and output pins */
   uartConfigPins(interface, config);
 
-  const struct UartBlockDescriptor *entry =
+  const struct UartBlockDescriptor * const entry =
       &uartBlockEntries[interface->channel];
 
   sysPowerEnable(entry->power);
