@@ -10,9 +10,6 @@
 #include <halm/usb/usb.h>
 #include <halm/usb/usb_control.h>
 /*----------------------------------------------------------------------------*/
-extern const struct UsbDeviceClass * const UsbDevice;
-extern const struct UsbEndpointClass * const UsbEndpoint;
-/*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/usb_device.h>
 #include HEADER_PATH

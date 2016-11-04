@@ -11,6 +11,7 @@
 #include <halm/usb/cdc_acm.h>
 #include <halm/usb/cdc_acm_defs.h>
 #include <halm/usb/usb_defs.h>
+#include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct CdcUsbRequest

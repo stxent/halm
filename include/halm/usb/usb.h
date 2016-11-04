@@ -22,6 +22,7 @@
 #define USB_EP_LOGICAL_ADDRESS(value) ((value) & 0x7F)
 /*----------------------------------------------------------------------------*/
 struct UsbDescriptor;
+struct UsbRequest;
 struct UsbSetupPacket;
 
 typedef void (*usbDescriptorFunctor)(const void *, struct UsbDescriptor *,
@@ -34,17 +35,6 @@ enum usbDeviceEvent
   USB_DEVICE_EVENT_RESUME,
   USB_DEVICE_EVENT_FRAME,
   USB_DEVICE_EVENT_PORT_CHANGE
-};
-/*----------------------------------------------------------------------------*/
-enum usbParameter
-{
-  USB_VID,
-  USB_PID,
-  USB_MAX_POWER,
-  USB_SPEED,
-  USB_COMPOSITE,
-  USB_SELF_POWERED,
-  USB_REMOTE_WAKEUP
 };
 /*----------------------------------------------------------------------------*/
 enum usbRequestStatus
@@ -69,20 +59,6 @@ enum usbSpeed
   USB_SS
 };
 /*----------------------------------------------------------------------------*/
-struct UsbRequest
-{
-  uint16_t capacity;
-  uint16_t length;
-
-  void (*callback)(void *, struct UsbRequest *, enum usbRequestStatus);
-  void *callbackArgument;
-
-  uint8_t *buffer;
-};
-/*----------------------------------------------------------------------------*/
-void usbRequestInit(struct UsbRequest *, void *, uint16_t,
-    void (*)(void *, struct UsbRequest *, enum usbRequestStatus), void *);
-/*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbDeviceClass
 {
@@ -93,11 +69,11 @@ struct UsbDeviceClass
   void (*setAddress)(void *, uint8_t);
   void (*setConnected)(void *, bool);
 
-  enum result (*getParameter)(const void *, enum usbParameter, void *);
-  enum result (*setParameter)(void *, enum usbParameter, const void *);
-
   enum result (*bind)(void *, void *);
   void (*unbind)(void *, const void *);
+
+  void (*setPower)(void *, uint16_t);
+  enum usbSpeed (*getSpeed)(const void *);
 };
 /*----------------------------------------------------------------------------*/
 /**
@@ -142,37 +118,6 @@ static inline void usbDevSetConnected(void *device, bool state)
   ((const struct UsbDeviceClass *)CLASS(device))->setConnected(device, state);
 }
 /*----------------------------------------------------------------------------*/
-enum result (*getOption)(void *, enum usbParameter, void *);
-enum result (*setOption)(void *, enum usbParameter, const void *);
-/*----------------------------------------------------------------------------*/
-/**
- * Get the device parameter.
- * @param device Pointer to an UsbDevice object.
- * @param parameter Parameter to be read.
- * @param value Pointer to a buffer where a parameter value will be stored.
- * @return @b E_OK on success.
- */
-static inline enum result usbDevGetParameter(const void *device,
-    enum usbParameter parameter, void *value)
-{
-  return ((const struct UsbDeviceClass *)CLASS(device))->getParameter(device,
-      parameter, value);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Set the device parameter.
- * @param device Pointer to an UsbDevice object.
- * @param parameter Parameter to be set.
- * @param value Pointer to a new value of the parameter.
- * @return @b E_OK on success.
- */
-static inline enum result usbDevSetParameter(void *device,
-    enum usbParameter parameter, const void *value)
-{
-  return ((const struct UsbDeviceClass *)CLASS(device))->setParameter(device,
-      parameter, value);
-}
-/*----------------------------------------------------------------------------*/
 /**
  * Attach a device driver to the hardware device.
  * @param device Pointer to an UsbDevice object.
@@ -194,6 +139,27 @@ static inline void usbDevUnbind(void *device, const void *driver)
   ((const struct UsbDeviceClass *)CLASS(device))->unbind(device, driver);
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Set the maximum device current.
+ * @param device Pointer to an UsbDevice object.
+ * @param current Current drawn by the device in mA. When this parameter is set
+ * to zero, the device is considered self-powered.
+ */
+static inline void usbDevSetPower(void *device, uint16_t current)
+{
+  ((const struct UsbDeviceClass *)CLASS(device))->setPower(device, current);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Return the speed of the physical interface.
+ * @param device Pointer to an UsbDevice object.
+ * @return USB interface speed.
+ */
+static inline enum usbSpeed usbDevGetSpeed(const void *device)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->getSpeed(device);
+}
+/*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbEndpointClass
 {
@@ -205,6 +171,11 @@ struct UsbEndpointClass
   enum result (*enqueue)(void *, struct UsbRequest *);
   bool (*isStalled)(void *);
   void (*setStalled)(void *, bool);
+};
+/*----------------------------------------------------------------------------*/
+struct UsbEndpoint
+{
+  struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
 /**

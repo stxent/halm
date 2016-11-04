@@ -32,9 +32,6 @@ struct HidBaseConfig
     /** Mandatory: identifier of the notification endpoint. */
     uint8_t interrupt;
   } endpoints;
-
-  /** Optional: enable composite device mode. */
-  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct HidBase
@@ -52,8 +49,6 @@ struct HidBase
   uint8_t endpointAddress;
   /* Interface index in configurations with multiple interfaces */
   uint8_t interfaceIndex;
-  /* Composite device flag */
-  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_HID_BASE_H_ */

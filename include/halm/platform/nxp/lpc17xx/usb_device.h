@@ -8,16 +8,20 @@
 #define HALM_PLATFORM_NXP_LPC17XX_USB_DEVICE_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/usb/usb.h>
-#include <halm/usb/usb_control.h>
+/*----------------------------------------------------------------------------*/
+extern const struct UsbDeviceClass * const UsbDevice;
+extern const struct UsbEndpointClass * const UsbSieEndpoint;
+
+struct UsbControl;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/usb_base.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-struct UsbEndpoint
+struct UsbSieEndpoint
 {
-  struct Entity base;
+  struct UsbEndpoint base;
 
   /* Parent device */
   struct UsbDevice *device;
@@ -36,13 +40,6 @@ struct UsbDevice
   /* Control message handler */
   struct UsbControl *control;
 
-  /* Maximum power consumption of the device in mA */
-  uint16_t power;
-  /* Vendor and Product identifiers */
-  uint16_t vid, pid;
-
-  /* Device status */
-  uint8_t status;
   /* Device is configured */
   bool configured;
 };

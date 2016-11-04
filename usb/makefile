@@ -11,9 +11,8 @@ ifeq ($(CONFIG_USB_DEVICE),y)
   PROJECT_FLAGS += CONFIG_USB_DEVICE_ENDPOINT_REQUESTS
   PROJECT_FLAGS += CONFIG_USB_DEVICE_CONTROL_REQUESTS
 
-  CSOURCES += usb/usb.c
   CSOURCES += usb/usb_control.c
-  CSOURCES += usb/usb_requests.c
+  CSOURCES += usb/usb_request.c
 endif
 
 ifeq ($(CONFIG_USB_DEVICE_COMPOSITE),y)

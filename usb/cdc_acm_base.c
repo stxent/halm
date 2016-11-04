@@ -11,7 +11,7 @@
 #include <halm/usb/cdc_acm_base.h>
 #include <halm/usb/cdc_acm_defs.h>
 #include <halm/usb/usb_defs.h>
-#include <halm/usb/usb_requests.h>
+#include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 struct PrivateData
@@ -108,11 +108,9 @@ static void interfaceAssociationDescriptor(const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
-    void *payload)
+static void deviceDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
 {
-  const struct CdcAcmBase * const driver = object;
-
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
@@ -120,7 +118,6 @@ static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
   {
     struct UsbDeviceDescriptor * const descriptor = payload;
 
-    usbFillDeviceDescriptor(driver->device, descriptor);
     descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
     descriptor->deviceClass = USB_CLASS_CDC;
     descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(CDC_CONTROL_EP_SIZE);
@@ -129,11 +126,9 @@ static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void configDescriptor(const void *object, struct UsbDescriptor *header,
-    void *payload)
+static void configDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
 {
-  const struct CdcAcmBase * const driver = object;
-
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
 
@@ -141,7 +136,6 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
   {
     struct UsbConfigurationDescriptor * const descriptor = payload;
 
-    usbFillConfigurationDescriptor(driver->device, descriptor);
     descriptor->totalLength = TO_LITTLE_ENDIAN_16(
         sizeof(struct UsbConfigurationDescriptor)
         + sizeof(struct UsbInterfaceDescriptor) * 2
@@ -400,19 +394,17 @@ static enum result handleDeviceRequest(struct CdcAcmBase *driver,
     const struct UsbSetupPacket *packet, uint8_t *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
-  switch (packet->request)
+  if (packet->request == REQUEST_GET_DESCRIPTOR)
   {
-    case REQUEST_GET_DESCRIPTOR:
-      usbTrace("cdc_acm: get descriptor %u:%u, length %u",
-          DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
-          packet->length);
-      return usbExtractDescriptorData(driver, packet->value, packet->index,
-          response, responseLength, maxResponseLength);
+    usbTrace("cdc_acm: get descriptor %u:%u, length %u",
+        DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
+        packet->length);
 
-    default:
-      return usbHandleDeviceRequest(driver, driver->device, packet,
-          response, responseLength);
+    return usbExtractDescriptorData(driver, packet->value, packet->index,
+        response, responseLength, maxResponseLength);
   }
+  else
+    return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
@@ -438,8 +430,6 @@ static enum result driverInit(void *object, const void *configBase)
   driver->device = config->device;
   driver->speed = USB_FS;
 
-  usbDevGetParameter(driver->device, USB_COMPOSITE, &driver->composite);
-
   struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
   if (!privateData)
     return E_MEMORY;
@@ -452,18 +442,12 @@ static enum result driverInit(void *object, const void *configBase)
   if ((res = usbDevBind(driver->device, driver)) != E_OK)
     return res;
 
-  if (!driver->composite)
-    usbDevSetConnected(driver->device, true);
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void driverDeinit(void *object)
 {
   struct CdcAcmBase * const driver = object;
-
-  if (!driver->composite)
-    usbDevSetConnected(driver->device, false);
 
   usbDevUnbind(driver->device, driver);
   free(driver->privateData);
@@ -477,36 +461,25 @@ static enum result driverConfigure(void *object,
   struct CdcAcmBase * const driver = object;
   const uint8_t recipient = REQUEST_RECIPIENT_VALUE(packet->requestType);
   const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
+  enum result res = E_INVALID;
 
-  if (type == REQUEST_TYPE_STANDARD)
+  switch (type)
   {
-    switch (recipient)
-    {
-      case REQUEST_RECIPIENT_DEVICE:
-        return handleDeviceRequest(driver, packet, response, responseLength,
+    case REQUEST_TYPE_STANDARD:
+      if (recipient == REQUEST_RECIPIENT_DEVICE)
+      {
+        res = handleDeviceRequest(driver, packet, response, responseLength,
             maxResponseLength);
+      }
+      break;
 
-      case REQUEST_RECIPIENT_INTERFACE:
-        if (packet->index == driver->controlInterfaceIndex)
-          return usbHandleInterfaceRequest(packet, response, responseLength);
-        else
-          return E_INVALID;
-
-      case REQUEST_RECIPIENT_ENDPOINT:
-        return usbHandleEndpointRequest(driver->device, packet, response,
-            responseLength);
-
-      default:
-        return E_INVALID;
-    }
+    case REQUEST_TYPE_CLASS:
+      res = handleClassRequest(object, packet, payload, payloadLength,
+          response, responseLength, maxResponseLength);
+      break;
   }
-  else if (type == REQUEST_TYPE_CLASS)
-  {
-    return handleClassRequest(object, packet, payload, payloadLength, response,
-        responseLength, maxResponseLength);
-  }
-  else
-    return E_INVALID;
+
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static const usbDescriptorFunctor *driverDescribe(const void *object
@@ -522,12 +495,10 @@ static void driverEvent(void *object, unsigned int event)
 #ifdef CONFIG_USB_DEVICE_HS
   if (event == USB_DEVICE_EVENT_PORT_CHANGE)
   {
-    enum usbSpeed speed;
+    driver->speed = usbDevGetSpeed(driver->device);
 
-    usbDevGetParameter(driver->device, USB_SPEED, &speed);
-    driver->speed = (uint8_t)speed;
-
-    usbTrace("cdc_acm: current speed is %s", speed == USB_HS ? "HS" : "FS");
+    usbTrace("cdc_acm: current speed is %s",
+        driver->speed == USB_HS ? "HS" : "FS");
   }
 #endif
 

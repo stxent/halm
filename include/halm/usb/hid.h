@@ -60,9 +60,6 @@ struct HidConfig
     /** Mandatory: identifier of the notification endpoint. */
     uint8_t interrupt;
   } endpoints;
-
-  /** Optional: enable composite device mode. */
-  bool composite;
 };
 /*----------------------------------------------------------------------------*/
 struct Hid

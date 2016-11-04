@@ -52,8 +52,6 @@ struct CdcAcmBase
   uint8_t controlInterfaceIndex;
   /* Speed of the USB interface */
   uint8_t speed;
-  /* Composite device flag */
-  bool composite;
 
   void *privateData;
 };

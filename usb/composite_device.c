@@ -6,11 +6,10 @@
 
 #include <assert.h>
 #include <limits.h>
-#include <string.h>
 #include <xcore/memory.h>
 #include <halm/usb/composite_device.h>
 #include <halm/usb/usb_defs.h>
-#include <halm/usb/usb_requests.h>
+#include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 #define COMPOSITE_CONTROL_EP_SIZE 64
@@ -63,10 +62,10 @@ static void *devCreateEndpoint(void *, uint8_t);
 static uint8_t devGetInterface(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
-static enum result devGetParameter(const void *, enum usbParameter, void *);
-static enum result devSetParameter(void *, enum usbParameter, const void *);
 static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
+static void devSetPower(void *, uint16_t);
+static enum usbSpeed devGetSpeed(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass deviceTable = {
     .size = sizeof(struct CompositeDevice),
@@ -78,20 +77,18 @@ static const struct UsbDeviceClass deviceTable = {
     .setAddress = devSetAddress,
     .setConnected = devSetConnected,
 
-    .getParameter = devGetParameter,
-    .setParameter = devSetParameter,
-
     .bind = devBind,
-    .unbind = devUnbind
+    .unbind = devUnbind,
+
+    .setPower = devSetPower,
+    .getSpeed = devGetSpeed
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const CompositeDevice = &deviceTable;
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
-    void *payload)
+static void deviceDescriptor(const void *object __attribute__((unused)),
+    struct UsbDescriptor *header, void *payload)
 {
-  const struct CompositeDeviceProxy * const driver = object;
-
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
@@ -99,7 +96,6 @@ static void deviceDescriptor(const void *object, struct UsbDescriptor *header,
   {
     struct UsbDeviceDescriptor * const descriptor = payload;
 
-    usbFillDeviceDescriptor(driver->owner, descriptor);
     descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
     descriptor->deviceClass = USB_CLASS_MISCELLANEOUS;
     descriptor->deviceSubClass = 0x02; /* Required for multiple IAD */
@@ -124,7 +120,6 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
 
   struct UsbConfigurationDescriptor * const descriptor = payload;
 
-  usbFillConfigurationDescriptor(device, descriptor);
   descriptor->totalLength = toLittleEndian16(device->configurationLength);
   descriptor->numInterfaces = device->interfaceCount;
   descriptor->configurationValue = 1;
@@ -213,49 +208,46 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
     const struct UsbSetupPacket *packet, uint8_t *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
-  switch (packet->request)
+  enum result res = E_INVALID;
+
+  if (packet->request == REQUEST_GET_DESCRIPTOR)
   {
-    case REQUEST_GET_DESCRIPTOR:
+    const uint8_t descriptorIndex = DESCRIPTOR_INDEX(packet->value);
+    const uint8_t descriptorType = DESCRIPTOR_TYPE(packet->value);
+
+    usbTrace("composite: get descriptor %u:%u, length %u",
+        descriptorType, descriptorIndex, packet->length);
+
+    if (descriptorType == DESCRIPTOR_TYPE_DEVICE)
     {
-      const uint8_t descriptorIndex = DESCRIPTOR_INDEX(packet->value);
-      const uint8_t descriptorType = DESCRIPTOR_TYPE(packet->value);
+      const size_t descriptorSize = sizeof(struct UsbDeviceDescriptor);
+      assert(descriptorSize <= maxResponseLength);
 
-      usbTrace("composite: get descriptor %u:%u, length %u",
-          descriptorType, descriptorIndex, packet->length);
+      memset(response, 0, descriptorSize);
+      deviceDescriptor(driver, (struct UsbDescriptor *)response, response);
+      *responseLength = descriptorSize;
 
-      if (descriptorType == DESCRIPTOR_TYPE_DEVICE)
-      {
-        const size_t descriptorSize = sizeof(struct UsbDeviceDescriptor);
-        assert(descriptorSize <= maxResponseLength);
-
-        memset(response, 0, descriptorSize);
-        deviceDescriptor(driver, (struct UsbDescriptor *)response, response);
-        *responseLength = descriptorSize;
-
-        return E_OK;
-      }
-      else if (descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
-      {
-        const size_t descriptorSize = driver->owner->configurationLength;
-        assert(descriptorSize <= maxResponseLength);
-
-        memset(response, 0, descriptorSize);
-        configDescriptor(driver, (struct UsbDescriptor *)response, response);
-        *responseLength = descriptorSize;
-
-        return E_OK;
-      }
-      else
-      {
-        return lookupDescriptor(driver, descriptorType, descriptorIndex,
-            response, responseLength, maxResponseLength);
-      }
+      res = E_OK;
     }
+    else if (descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
+    {
+      const size_t descriptorSize = driver->owner->configurationLength;
+      assert(descriptorSize <= maxResponseLength);
 
-    default:
-      return usbHandleDeviceRequest(driver, driver->owner->device, packet,
-          response, responseLength);
+      memset(response, 0, descriptorSize);
+      configDescriptor(driver, (struct UsbDescriptor *)response, response);
+      *responseLength = descriptorSize;
+
+      res = E_OK;
+    }
+    else
+    {
+      res = lookupDescriptor(driver, descriptorType, descriptorIndex,
+          response, responseLength, maxResponseLength);
+    }
   }
+
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum result lookupDescriptor(struct CompositeDeviceProxy *driver,
@@ -305,23 +297,10 @@ static enum result driverConfigure(void *object,
   const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
   enum result res = E_INVALID;
 
-  if (type == REQUEST_TYPE_STANDARD)
+  if (type == REQUEST_TYPE_STANDARD && recipient == REQUEST_RECIPIENT_DEVICE)
   {
-    switch (recipient)
-    {
-      case REQUEST_RECIPIENT_DEVICE:
-        res = handleDeviceRequest(driver, packet, response, responseLength,
-            maxResponseLength);
-        break;
-
-      case REQUEST_RECIPIENT_ENDPOINT:
-        res = usbHandleEndpointRequest(driver->owner->device, packet, response,
-            responseLength);
-        break;
-
-      default:
-        break;
-    }
+    res = handleDeviceRequest(driver, packet, response, responseLength,
+        maxResponseLength);
   }
 
   if (res == E_INVALID)
@@ -428,30 +407,6 @@ static void devSetConnected(void *object, bool state)
   usbDevSetConnected(device->device, state);
 }
 /*----------------------------------------------------------------------------*/
-static enum result devGetParameter(const void *object,
-    enum usbParameter parameter, void *value)
-{
-  const struct CompositeDevice * const device = object;
-
-  switch (parameter)
-  {
-    case USB_COMPOSITE:
-      *(bool *)value = true;
-      return E_OK;
-
-    default:
-      return usbDevGetParameter(device->device, parameter, value);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static enum result devSetParameter(void *object, enum usbParameter parameter,
-    const void *value)
-{
-  struct CompositeDevice * const device = object;
-
-  return usbDevSetParameter(device->device, parameter, value);
-}
-/*----------------------------------------------------------------------------*/
 static enum result devBind(void *object, void *driver)
 {
   struct CompositeDevice * const device = object;
@@ -493,4 +448,14 @@ static void devUnbind(void *object, const void *driver)
     device->interfaceCount -= interfaces;
     device->configurationLength -= length;
   }
+}
+/*----------------------------------------------------------------------------*/
+static void devSetPower(void *object, uint16_t current)
+{
+  usbDevSetPower(((const struct CompositeDevice *)object)->device, current);
+}
+/*----------------------------------------------------------------------------*/
+static enum usbSpeed devGetSpeed(const void *object)
+{
+  return usbDevGetSpeed(((const struct CompositeDevice *)object)->device);
 }

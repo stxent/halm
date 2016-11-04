@@ -17,6 +17,10 @@ struct UsbControlConfig
 {
   /** Mandatory: parent device. */
   struct UsbDevice *parent;
+  /** Mandatory: Vendor Identifier. */
+  uint16_t vid;
+  /** Mandatory: Product Identifier. */
+  uint16_t pid;
 };
 /*----------------------------------------------------------------------------*/
 struct UsbControl
@@ -38,6 +42,15 @@ struct UsbControl
   /* Single OUT request */
   struct UsbRequest *outRequest;
 
+  /* Maximum current drawn by the device in mA */
+  uint16_t current;
+  /* Vendor Identifier */
+  uint16_t vid;
+  /* Product Identifier */
+  uint16_t pid;
+  /* Remote wake-up flag */
+  bool rwu;
+
   /* Project-specific data */
   void *privateData;
 };
@@ -45,5 +58,6 @@ struct UsbControl
 enum result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlUnbindDriver(struct UsbControl *);
 void usbControlEvent(struct UsbControl *, unsigned int);
+void usbControlSetPower(struct UsbControl *, uint16_t);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_CONTROL_H_ */
