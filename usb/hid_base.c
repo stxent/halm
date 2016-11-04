@@ -212,32 +212,21 @@ static enum result handleDeviceRequest(struct HidBase *driver,
 {
   enum result res = E_INVALID;
 
-  if (packet->request == REQUEST_GET_DESCRIPTOR)
+  if (packet->request == REQUEST_GET_DESCRIPTOR
+      && DESCRIPTOR_TYPE(packet->value) == DESCRIPTOR_TYPE_HID_REPORT)
   {
-    if (DESCRIPTOR_TYPE(packet->value) == DESCRIPTOR_TYPE_HID_REPORT)
-    {
-      usbTrace("hid: get report descriptor, length %u",
-          driver->reportDescriptorSize);
+    usbTrace("hid: get report descriptor, length %u",
+        driver->reportDescriptorSize);
 
-      if (driver->reportDescriptorSize <= maxResponseLength)
-      {
-        memcpy(response, driver->reportDescriptor,
-            driver->reportDescriptorSize);
-        *responseLength = driver->reportDescriptorSize;
-        res = E_OK;
-      }
-      else
-        res = E_VALUE;
+    if (driver->reportDescriptorSize <= maxResponseLength)
+    {
+      memcpy(response, driver->reportDescriptor,
+          driver->reportDescriptorSize);
+      *responseLength = driver->reportDescriptorSize;
+      res = E_OK;
     }
     else
-    {
-      usbTrace("hid: get descriptor %u:%u, length %u",
-          DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
-          packet->length);
-
-      res = usbExtractDescriptorData(driver, packet->value, packet->index,
-          response, responseLength, maxResponseLength);
-    }
+      res = E_VALUE;
   }
 
   return res;

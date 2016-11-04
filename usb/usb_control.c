@@ -39,7 +39,7 @@ static enum result driverConfigure(struct UsbControl *,
 static void fillConfigurationDescriptor(const struct UsbControl *, void *);
 static void fillDeviceDescriptor(const struct UsbControl *, void *);
 static enum result handleDeviceRequest(struct UsbControl *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 static enum result handleEndpointRequest(struct UsbControl *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 static enum result handleInterfaceRequest(const struct UsbSetupPacket *,
@@ -82,7 +82,8 @@ static enum result driverConfigure(struct UsbControl *control,
     switch (recipient)
     {
       case REQUEST_RECIPIENT_DEVICE:
-        res = handleDeviceRequest(control, packet, response, responseLength);
+        res = handleDeviceRequest(control, packet, response, responseLength,
+            maxResponseLength);
         break;
 
       case REQUEST_RECIPIENT_INTERFACE:
@@ -141,7 +142,7 @@ static void fillDeviceDescriptor(const struct UsbControl *control, void *buffer)
 /*----------------------------------------------------------------------------*/
 static enum result handleDeviceRequest(struct UsbControl *control,
     const struct UsbSetupPacket *packet, uint8_t *response,
-    uint16_t *responseLength)
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
   switch (packet->request)
   {
@@ -184,6 +185,14 @@ static enum result handleDeviceRequest(struct UsbControl *control,
       usbDevSetAddress(control->owner, packet->value);
       *responseLength = 0;
       return E_OK;
+
+    case REQUEST_GET_DESCRIPTOR:
+      usbTrace("control: get descriptor %u:%u, length %u",
+          DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
+          packet->length);
+
+      return usbExtractDescriptorData(control->driver, packet->value,
+          response, responseLength, maxResponseLength);
 
     case REQUEST_GET_CONFIGURATION:
       response[0] = 1;

@@ -35,7 +35,7 @@ static uint16_t extendConfigurationDescriptor(const void *, uint8_t *);
 static enum result handleDeviceRequest(struct CompositeDeviceProxy *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 static enum result lookupDescriptor(struct CompositeDeviceProxy *,
-    uint8_t, uint8_t, uint8_t *, uint16_t *, uint16_t);
+    uint8_t, uint8_t *, uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
@@ -212,7 +212,6 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
 
   if (packet->request == REQUEST_GET_DESCRIPTOR)
   {
-    const uint8_t descriptorIndex = DESCRIPTOR_INDEX(packet->value);
     const uint8_t descriptorType = DESCRIPTOR_TYPE(packet->value);
 
     usbTrace("composite: get descriptor %u:%u, length %u",
@@ -242,8 +241,8 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
     }
     else
     {
-      res = lookupDescriptor(driver, descriptorType, descriptorIndex,
-          response, responseLength, maxResponseLength);
+      res = lookupDescriptor(driver, descriptorType, response, responseLength,
+          maxResponseLength);
     }
   }
 
@@ -251,7 +250,7 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
 }
 /*----------------------------------------------------------------------------*/
 static enum result lookupDescriptor(struct CompositeDeviceProxy *driver,
-    uint8_t type, uint8_t index, uint8_t *response, uint16_t *responseLength,
+    uint8_t type, uint8_t *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
   struct ListNode *currentNode = listFirst(&driver->owner->entries);
@@ -261,7 +260,7 @@ static enum result lookupDescriptor(struct CompositeDeviceProxy *driver,
   {
     listData(&driver->owner->entries, currentNode, &current);
 
-    const enum result res = usbExtractDescriptorData(current, type, index,
+    const enum result res = usbExtractDescriptorData(current, type,
         response, responseLength, maxResponseLength);
 
     if (res == E_OK)
@@ -270,7 +269,7 @@ static enum result lookupDescriptor(struct CompositeDeviceProxy *driver,
     currentNode = listNext(currentNode);
   }
 
-  return E_INVALID;
+  return E_VALUE;
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *object, const void *configBase)

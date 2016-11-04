@@ -49,8 +49,6 @@ static void bulkTransmitEndpointDescriptor(const void *, struct UsbDescriptor *,
 static enum result handleClassRequest(struct CdcAcmBase *,
     const struct UsbSetupPacket *, const uint8_t *, uint16_t,
     uint8_t *, uint16_t *, uint16_t);
-static enum result handleDeviceRequest(struct CdcAcmBase *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
@@ -390,23 +388,6 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleDeviceRequest(struct CdcAcmBase *driver,
-    const struct UsbSetupPacket *packet, uint8_t *response,
-    uint16_t *responseLength, uint16_t maxResponseLength)
-{
-  if (packet->request == REQUEST_GET_DESCRIPTOR)
-  {
-    usbTrace("cdc_acm: get descriptor %u:%u, length %u",
-        DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
-        packet->length);
-
-    return usbExtractDescriptorData(driver, packet->value, packet->index,
-        response, responseLength, maxResponseLength);
-  }
-  else
-    return E_INVALID;
-}
-/*----------------------------------------------------------------------------*/
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
 {
   const struct PrivateData * const privateData = driver->privateData;
@@ -458,28 +439,13 @@ static enum result driverConfigure(void *object,
     uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
-  struct CdcAcmBase * const driver = object;
-  const uint8_t recipient = REQUEST_RECIPIENT_VALUE(packet->requestType);
-  const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
-  enum result res = E_INVALID;
-
-  switch (type)
+  if (REQUEST_TYPE_VALUE(packet->requestType) == REQUEST_TYPE_CLASS)
   {
-    case REQUEST_TYPE_STANDARD:
-      if (recipient == REQUEST_RECIPIENT_DEVICE)
-      {
-        res = handleDeviceRequest(driver, packet, response, responseLength,
-            maxResponseLength);
-      }
-      break;
-
-    case REQUEST_TYPE_CLASS:
-      res = handleClassRequest(object, packet, payload, payloadLength,
-          response, responseLength, maxResponseLength);
-      break;
+    return handleClassRequest(object, packet, payload, payloadLength,
+        response, responseLength, maxResponseLength);
   }
-
-  return res;
+  else
+    return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static const usbDescriptorFunctor *driverDescribe(const void *object
