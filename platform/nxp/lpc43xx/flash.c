@@ -105,7 +105,6 @@ static enum result flashInit(void *object,
   }
 
   interface->position = 0;
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -183,7 +182,7 @@ static enum result flashSet(void *object, enum ifOption option,
   {
     case IF_POSITION:
     {
-      const size_t position = *(const size_t *)data;
+      const uint32_t position = *(const uint32_t *)data;
 
       if (!isPageAddressValid(interface, position))
         return E_VALUE;

@@ -1,6 +1,6 @@
 /*
  * flash.c
- * Copyright (C) 2015 xent
+ * Copyright (C) 2016 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <halm/platform/nxp/flash.h>
-#include <halm/platform/nxp/lpc17xx/flash_defs.h>
+#include <halm/platform/nxp/lpc11exx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline bool isPageAddressValid(const struct Flash *, uint32_t);
 static inline bool isSectorAddressValid(const struct Flash *, uint32_t);
@@ -61,33 +61,43 @@ static enum result flashInit(void *object,
 
   switch (id)
   {
-    case CODE_LPC1751_00:
-    case CODE_LPC1751:
+    case CODE_LPC11E11_101:
+      interface->size = 8 * 1024;
+      break;
+
+    case CODE_LPC11E12_201:
+      interface->size = 16 * 1024;
+      break;
+
+    case CODE_LPC11E13_301:
+      interface->size = 24 * 1024;
+      break;
+
+    case CODE_LPC11E14_401:
       interface->size = 32 * 1024;
       break;
 
-    case CODE_LPC1752:
+    case CODE_LPC11E66:
+    case CODE_LPC11U66:
       interface->size = 64 * 1024;
       break;
 
-    case CODE_LPC1754:
-    case CODE_LPC1764:
+    case CODE_LPC11E36_501:
+      interface->size = 96 * 1024;
+      break;
+
+    case CODE_LPC11E37_401:
+    case CODE_LPC11E37_501:
+    case CODE_LPC11E67:
+    case CODE_LPC11U67_1:
+    case CODE_LPC11U67_2:
       interface->size = 128 * 1024;
       break;
 
-    case CODE_LPC1756:
-    case CODE_LPC1763:
-    case CODE_LPC1765:
-    case CODE_LPC1766:
+    case CODE_LPC11E68:
+    case CODE_LPC11U68_1:
+    case CODE_LPC11U68_2:
       interface->size = 256 * 1024;
-      break;
-
-    case CODE_LPC1758:
-    case CODE_LPC1759:
-    case CODE_LPC1767:
-    case CODE_LPC1768:
-    case CODE_LPC1769:
-      interface->size = 512 * 1024;
       break;
 
     default:

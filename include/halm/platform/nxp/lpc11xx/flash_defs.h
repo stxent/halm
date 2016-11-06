@@ -67,12 +67,14 @@
 #define IS_LPC1113(id)      (((id) & 0xFFFF0000U) == 0x00030000U\
     || ((id) & 0xFFF00000U) == 0x04300000U\
     || ((id) & 0xFFFF0000U) == 0x25320000U)
-#define IS_LPC1114(id)      (((id) & 0xFFFF0000U) == 0x00040000U\
+#define IS_LPC1114(id)      (((id) & 0xFFFF0070U) == 0x00040040U\
     || ((id) & 0x0FFF0000U) == 0x0A400000U\
     || ((id) & 0xFFF00000U) == 0x04400000U\
     || ((id) & 0xFFFF0000U) == 0x25400000U)
 #define IS_LPC1115(id)      (((id) & 0xFFFF0000U) == 0x00050000U)
 #define IS_LPC11CXX(id)     (((id) & 0xFF000000U) == 0x14000000U)
+#define IS_LPC11CX2(id)     (((id) & 0xFF010000U) == 0x14010000U)
+#define IS_LPC11CX4(id)     (((id) & 0xFF010000U) == 0x14000000U)
 /*----------------------------------------------------------------------------*/
 #define FLASH_PAGE_SIZE   256
 #define FLASH_SECTOR_SIZE 4096
