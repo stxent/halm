@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <xcore/bits.h>
 #include <xcore/entity.h>
+#include <halm/usb/usb_string.h>
 /*----------------------------------------------------------------------------*/
 #define USB_EP_DIRECTION_IN           BIT(7)
 #define USB_EP_ADDRESS(value)         (value)
@@ -74,6 +75,9 @@ struct UsbDeviceClass
 
   void (*setPower)(void *, uint16_t);
   enum usbSpeed (*getSpeed)(const void *);
+
+  enum result (*stringAppend)(void *, struct UsbString);
+  void (*stringErase)(void *, struct UsbString);
 };
 /*----------------------------------------------------------------------------*/
 /**
@@ -158,6 +162,29 @@ static inline void usbDevSetPower(void *device, uint16_t current)
 static inline enum usbSpeed usbDevGetSpeed(const void *device)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->getSpeed(device);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Append string descriptor.
+ * @param device Pointer to an UsbDevice object.
+ * @param string String descriptor.
+ * @return @b E_OK on success.
+ */
+static inline enum result usbDevStringAppend(void *device,
+    struct UsbString string)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->stringAppend(device,
+      string);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Erase string descriptor from the descriptor list.
+ * @param device Pointer to an UsbDevice object.
+ * @param string String descriptor.
+ */
+static inline void usbDevStringErase(void *device, struct UsbString string)
+{
+  ((const struct UsbDeviceClass *)CLASS(device))->stringErase(device, string);
 }
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */

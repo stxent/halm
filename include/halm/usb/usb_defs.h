@@ -132,8 +132,6 @@ enum
 /*----------------------------------------------------------------------------*/
 #define DESCRIPTOR_INDEX(value) FIELD_VALUE((value), BIT_FIELD(MASK(8), 0), 0)
 #define DESCRIPTOR_TYPE(value)  FIELD_VALUE((value), BIT_FIELD(MASK(8), 8), 8)
-/* Prefix for string descriptors where length is zero and type is 3 */
-#define USB_STRING_PREFIX       "\x00\x03"
 /*----------------------------------------------------------------------------*/
 /* Configuration attributes */
 #define CONFIGURATION_DESCRIPTOR_DEFAULT        0x80
@@ -254,7 +252,7 @@ struct UsbStringDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
-  uint16_t langid;
+  uint16_t langid[];
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_DEFS_H_ */

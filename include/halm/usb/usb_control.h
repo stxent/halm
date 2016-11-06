@@ -7,6 +7,7 @@
 #ifndef HALM_USB_USB_CONTROL_H_
 #define HALM_USB_USB_CONTROL_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/containers/list.h>
 #include <xcore/containers/queue.h>
 #include <halm/pin.h>
 #include <halm/usb/usb.h>
@@ -42,6 +43,9 @@ struct UsbControl
   /* Single OUT request */
   struct UsbRequest *outRequest;
 
+  /* List of descriptor strings */
+  struct List strings;
+
   /* Maximum current drawn by the device in mA */
   uint16_t current;
   /* Vendor Identifier */
@@ -59,5 +63,7 @@ enum result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlUnbindDriver(struct UsbControl *);
 void usbControlEvent(struct UsbControl *, unsigned int);
 void usbControlSetPower(struct UsbControl *, uint16_t);
+enum result usbControlStringAppend(struct UsbControl *, struct UsbString);
+void usbControlStringErase(struct UsbControl *, struct UsbString);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_CONTROL_H_ */

@@ -11,6 +11,7 @@
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
+#include <halm/usb/usb_string.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 #define EP0_BUFFER_SIZE   64
@@ -44,6 +45,8 @@ static enum result handleEndpointRequest(struct UsbControl *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 static enum result handleInterfaceRequest(const struct UsbSetupPacket *,
     uint8_t *, uint16_t *);
+static enum result handleStringRequest(struct UsbControl *, uint16_t, uint16_t,
+    uint8_t *, uint16_t *, uint16_t);
 static enum result privateDataAllocate(struct UsbControl *);
 static void privateDataFree(struct UsbControl *);
 /*----------------------------------------------------------------------------*/
@@ -138,6 +141,36 @@ static void fillDeviceDescriptor(const struct UsbControl *control, void *buffer)
 
   descriptor->idVendor = toLittleEndian16(control->vid);
   descriptor->idProduct = toLittleEndian16(control->pid);
+
+  const struct ListNode *current = listFirst(&control->strings);
+  struct UsbString entry;
+  size_t index = 0;
+
+  while (current)
+  {
+    listData(&control->strings, current, &entry);
+
+    switch ((enum usbStringType)entry.type)
+    {
+      case USB_STRING_VENDOR:
+        descriptor->manufacturer = index;
+        break;
+
+      case USB_STRING_PRODUCT:
+        descriptor->product = index;
+        break;
+
+      case USB_STRING_SERIAL:
+        descriptor->serialNumber = index;
+        break;
+
+      default:
+        break;
+    }
+
+    current = listNext(current);
+    ++index;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleDeviceRequest(struct UsbControl *control,
@@ -187,12 +220,24 @@ static enum result handleDeviceRequest(struct UsbControl *control,
       return E_OK;
 
     case REQUEST_GET_DESCRIPTOR:
+    {
+      enum result res;
+
       usbTrace("control: get descriptor %u:%u, length %u",
           DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
           packet->length);
 
-      return usbExtractDescriptorData(control->driver, packet->value,
+      res = usbExtractDescriptorData(control->driver, packet->value,
           response, responseLength, maxResponseLength);
+
+      if (res == E_INVALID)
+      {
+        res = handleStringRequest(control, packet->value, packet->index,
+            response, responseLength, maxResponseLength);
+      }
+
+      return res;
+    }
 
     case REQUEST_GET_CONFIGURATION:
       response[0] = 1;
@@ -291,6 +336,44 @@ static enum result handleInterfaceRequest(const struct UsbSetupPacket *packet,
           packet->request);
       return E_INVALID;
   }
+}
+/*----------------------------------------------------------------------------*/
+static enum result handleStringRequest(struct UsbControl *control,
+    uint16_t keyword, uint16_t langid, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
+{
+  const uint8_t descriptorIndex = DESCRIPTOR_INDEX(keyword);
+  const uint8_t descriptorType = DESCRIPTOR_TYPE(keyword);
+
+  if (descriptorType != DESCRIPTOR_TYPE_STRING)
+    return E_INVALID;
+
+  const struct ListNode *current = listFirst(&control->strings);
+  size_t index = 0;
+
+  while (current)
+  {
+    struct UsbString entry;
+    listData(&control->strings, current, &entry);
+
+    if (index == descriptorIndex)
+    {
+      struct UsbDescriptor * const header = (struct UsbDescriptor *)response;
+
+      assert((entry.functor(entry.argument, langid, header, 0),
+          header->length <= maxResponseLength));
+      (void)maxResponseLength;
+
+      entry.functor(entry.argument, langid, header, response);
+      *responseLength = header->length;
+      return E_OK;
+    }
+
+    current = listNext(current);
+    ++index;
+  }
+
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum result privateDataAllocate(struct UsbControl *control)
@@ -459,6 +542,30 @@ void usbControlSetPower(struct UsbControl *control, uint16_t current)
   control->current = current;
 }
 /*----------------------------------------------------------------------------*/
+enum result usbControlStringAppend(struct UsbControl *control,
+    struct UsbString string)
+{
+  if (!listFind(&control->strings, &string))
+  {
+    if (string.type == USB_STRING_HEADER)
+      assert(listEmpty(&control->strings));
+    else
+      assert(!listEmpty(&control->strings));
+
+    return listPush(&control->strings, &string);
+  }
+  else
+    return E_EXIST;
+}
+/*----------------------------------------------------------------------------*/
+void usbControlStringErase(struct UsbControl *control, struct UsbString string)
+{
+  struct ListNode * const node = listFind(&control->strings, &string);
+
+  if (node)
+    listErase(&control->strings, node);
+}
+/*----------------------------------------------------------------------------*/
 static enum result controlInit(void *object, const void *configBase)
 {
   const struct UsbControlConfig * const config = configBase;
@@ -489,9 +596,14 @@ static enum result controlInit(void *object, const void *configBase)
   control->pid = config->pid;
   control->rwu = false;
 
-  /* Initialize request queues */
+  /* Initialize request queue */
   res = queueInit(&control->inRequestPool, sizeof(struct UsbRequest *),
       REQUEST_POOL_SIZE);
+  if (res != E_OK)
+    return res;
+
+  /* Initialize string list */
+  res = listInit(&control->strings, sizeof(struct UsbString));
   if (res != E_OK)
     return res;
 
@@ -526,6 +638,7 @@ static void controlDeinit(void *object)
 
   assert(queueSize(&control->inRequestPool) == REQUEST_POOL_SIZE);
 
+  listDeinit(&control->strings);
   queueDeinit(&control->inRequestPool);
   deinit(control->ep0out);
   deinit(control->ep0in);

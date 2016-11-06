@@ -59,7 +59,7 @@ enum result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   {
     usbTrace("control: descriptor %u:%u not found",
         descriptorType, descriptorIndex);
-    return E_VALUE;
+    return E_INVALID;
   }
 
   struct UsbDescriptor header;

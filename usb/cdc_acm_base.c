@@ -353,6 +353,7 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
     case CDC_GET_LINE_CODING:
     {
       assert(maxResponseLength >= sizeof(struct CdcLineCoding));
+      (void)maxResponseLength;
 
       struct CdcLineCoding * const lineCoding =
           (struct CdcLineCoding *)response;

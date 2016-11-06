@@ -38,6 +38,8 @@ static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
 static enum usbSpeed devGetSpeed(const void *);
+static enum result devStringAppend(void *, struct UsbString);
+static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
     .size = sizeof(struct UsbDevice),
@@ -53,7 +55,10 @@ static const struct UsbDeviceClass devTable = {
     .unbind = devUnbind,
 
     .setPower = devSetPower,
-    .getSpeed = devGetSpeed
+    .getSpeed = devGetSpeed,
+
+    .stringAppend = devStringAppend,
+    .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const UsbDevice = &devTable;
@@ -398,6 +403,20 @@ static enum usbSpeed devGetSpeed(const void *object)
   const bool high = PORTSC1_D_PSPD_VALUE(reg->PORTSC1_D) == PSPD_HIGH_SPEED;
 
   return high ? USB_HS : USB_FS;
+}
+/*----------------------------------------------------------------------------*/
+static enum result devStringAppend(void *object, struct UsbString string)
+{
+  struct UsbDevice * const device = object;
+
+  return usbControlStringAppend(device->control, string);
+}
+/*----------------------------------------------------------------------------*/
+static void devStringErase(void *object, struct UsbString string)
+{
+  struct UsbDevice * const device = object;
+
+  usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
 static void epCommonHandler(struct UsbDmaEndpoint *ep)

@@ -13,6 +13,7 @@ ifeq ($(CONFIG_USB_DEVICE),y)
 
   CSOURCES += usb/usb_control.c
   CSOURCES += usb/usb_request.c
+  CSOURCES += usb/usb_string.c
 endif
 
 ifeq ($(CONFIG_USB_DEVICE_COMPOSITE),y)
