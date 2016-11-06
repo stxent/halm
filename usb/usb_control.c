@@ -39,6 +39,8 @@ static enum result driverConfigure(struct UsbControl *,
     uint16_t *, uint16_t);
 static void fillConfigurationDescriptor(const struct UsbControl *, void *);
 static void fillDeviceDescriptor(const struct UsbControl *, void *);
+static enum result handleDescriptorRequest(struct UsbControl *,
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 static enum result handleDeviceRequest(struct UsbControl *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 static enum result handleEndpointRequest(struct UsbControl *,
@@ -173,10 +175,29 @@ static void fillDeviceDescriptor(const struct UsbControl *control, void *buffer)
   }
 }
 /*----------------------------------------------------------------------------*/
+static enum result handleDescriptorRequest(struct UsbControl *control,
+    const struct UsbSetupPacket *packet, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
+{
+  enum result res = usbExtractDescriptorData(control->driver, packet->value,
+      response, responseLength, maxResponseLength);
+
+  if (res == E_INVALID)
+  {
+    res = handleStringRequest(control, packet->value, packet->index,
+        response, responseLength, maxResponseLength);
+  }
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
 static enum result handleDeviceRequest(struct UsbControl *control,
     const struct UsbSetupPacket *packet, uint8_t *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
+  enum result res = E_INVALID;
+  uint16_t length = 0;
+
   switch (packet->request)
   {
     case REQUEST_GET_STATUS:
@@ -190,8 +211,9 @@ static enum result handleDeviceRequest(struct UsbControl *control,
 
       response[0] = status;
       response[1] = 0;
-      *responseLength = 2;
-      return E_OK;
+      length = 2;
+      res = E_OK;
+      break;
     }
 
     case REQUEST_CLEAR_FEATURE:
@@ -205,44 +227,34 @@ static enum result handleDeviceRequest(struct UsbControl *control,
       if (packet->value == FEATURE_REMOTE_WAKEUP)
       {
         control->rwu = set;
-        *responseLength = 0;
-        return E_OK;
+        res = E_OK;
       }
       else
-        return E_VALUE;
+        res = E_VALUE;
+      break;
     }
 
     case REQUEST_SET_ADDRESS:
       usbTrace("control: set address %u", packet->value);
 
       usbDevSetAddress(control->owner, packet->value);
-      *responseLength = 0;
-      return E_OK;
+      res = E_OK;
+      break;
 
     case REQUEST_GET_DESCRIPTOR:
-    {
-      enum result res;
-
       usbTrace("control: get descriptor %u:%u, length %u",
           DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
           packet->length);
 
-      res = usbExtractDescriptorData(control->driver, packet->value,
-          response, responseLength, maxResponseLength);
-
-      if (res == E_INVALID)
-      {
-        res = handleStringRequest(control, packet->value, packet->index,
-            response, responseLength, maxResponseLength);
-      }
-
-      return res;
-    }
+      res = handleDescriptorRequest(control, packet, response, &length,
+          maxResponseLength);
+      break;
 
     case REQUEST_GET_CONFIGURATION:
       response[0] = 1;
-      *responseLength = 1;
-      return E_OK;
+      length = 1;
+      res = E_OK;
+      break;
 
     case REQUEST_SET_CONFIGURATION:
       usbTrace("control: set configuration %u", packet->value);
@@ -250,16 +262,19 @@ static enum result handleDeviceRequest(struct UsbControl *control,
       if (packet->value == 1)
       {
         usbDriverEvent(control->driver, USB_DEVICE_EVENT_RESET);
-        *responseLength = 0;
-        return E_OK;
+        res = E_OK;
       }
       else
-        return E_VALUE;
+        res = E_VALUE;
+      break;
 
     default:
       usbTrace("control: unsupported device request 0x%02X", packet->request);
-      return E_INVALID;
+      break;
   }
+
+  *responseLength = length;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleEndpointRequest(struct UsbControl *control,
@@ -273,7 +288,7 @@ static enum result handleEndpointRequest(struct UsbControl *control,
   {
     case REQUEST_GET_STATUS:
       /* Is endpoint halted or not */
-      response[0] = (uint8_t)usbEpIsStalled(endpoint);
+      response[0] = usbEpIsStalled(endpoint);
       response[1] = 0; /* Must be set to zero */
       *responseLength = 2;
       return E_OK;
