@@ -10,7 +10,7 @@
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(struct WdtBase *);
+static bool setDescriptor(struct WdtBase *);
 /*----------------------------------------------------------------------------*/
 static enum result wdtInit(void *, const void *);
 static void wdtDeinit(void *);
@@ -24,9 +24,9 @@ static const struct EntityClass wdtTable = {
 const struct EntityClass * const WdtBase = &wdtTable;
 static struct WdtBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(struct WdtBase *timer)
+static bool setDescriptor(struct WdtBase *timer)
 {
-  return compareExchangePointer((void **)&descriptor, 0, timer) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)&descriptor, 0, timer);
 }
 /*----------------------------------------------------------------------------*/
 void WWDT_ISR(void)
@@ -43,10 +43,9 @@ static enum result wdtInit(void *object, const void *configBase
     __attribute__((unused)))
 {
   struct WdtBase * const timer = object;
-  enum result res;
 
-  if ((res = setDescriptor(timer)) != E_OK)
-    return res;
+  if (!setDescriptor(timer))
+    return E_BUSY;
 
   timer->handler = 0;
   timer->irq = WWDT_IRQ;

@@ -23,8 +23,7 @@
 #define CHANNEL_TX_MCLK(channel)        ((channel) * CHANNEL_COUNT + 7)
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
-static enum result setDescriptor(uint8_t, const struct I2sBase *,
-    struct I2sBase *);
+static bool setDescriptor(uint8_t, const struct I2sBase *, struct I2sBase *);
 /*----------------------------------------------------------------------------*/
 static enum result i2sInit(void *, const void *);
 static void i2sDeinit(void *);
@@ -236,13 +235,13 @@ static void configPins(struct I2sBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct I2sBase *state, struct I2sBase *interface)
+static bool setDescriptor(uint8_t channel, const struct I2sBase *state,
+    struct I2sBase *interface)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
-      interface) ? E_OK : E_BUSY;
+      interface);
 }
 /*----------------------------------------------------------------------------*/
 void I2S0_ISR(void)
@@ -264,14 +263,13 @@ static enum result i2sInit(void *object, const void *configBase)
 {
   const struct I2sBaseConfig * const config = configBase;
   struct I2sBase * const interface = object;
-  enum result res;
 
   interface->channel = config->channel;
   interface->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
-    return res;
+  if (!setDescriptor(interface->channel, 0, interface))
+    return E_BUSY;
 
   configPins(interface, configBase);
 

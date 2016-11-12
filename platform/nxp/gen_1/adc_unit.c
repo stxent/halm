@@ -34,7 +34,7 @@ enum result adcUnitRegister(struct AdcUnit *unit, void (*callback)(void *),
   if (!spinTryLock(&unit->lock))
     return E_BUSY;
 
-  if (unit->callback || unit->callbackArgument)
+  if (unit->callback)
   {
     spinUnlock(&unit->lock);
     return E_BUSY;

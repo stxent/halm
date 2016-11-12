@@ -18,7 +18,7 @@
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, const struct AdcUnitBase *state,
+static bool setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *, const void *);
@@ -73,13 +73,12 @@ const struct PinEntry adcPins[] = {
 const struct EntityClass * const AdcUnitBase = &adcUnitTable;
 static struct AdcUnitBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct AdcUnitBase *state, struct AdcUnitBase *unit)
+static bool setDescriptor(uint8_t channel, const struct AdcUnitBase *state,
+    struct AdcUnitBase *unit)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
-  return compareExchangePointer((void **)(descriptors + channel),
-      state, unit) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)(descriptors + channel), state, unit);
 }
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
@@ -115,14 +114,13 @@ static enum result adcUnitInit(void *object, const void *configBase)
 {
   const struct AdcUnitBaseConfig * const config = configBase;
   struct AdcUnitBase * const unit = object;
-  enum result res;
 
   unit->channel = config->channel;
   unit->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(unit->channel, 0, unit)) != E_OK)
-    return res;
+  if (!setDescriptor(unit->channel, 0, unit))
+    return E_BUSY;
 
   sysPowerEnable(PWR_ADC);
   sysClockControl(CLK_ADC, DEFAULT_DIV);

@@ -12,8 +12,7 @@
 #include <halm/platform/nxp/lpc13xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
-static enum result setDescriptor(uint8_t, const struct UsbBase *,
-    struct UsbBase *);
+static bool setDescriptor(uint8_t, const struct UsbBase *, struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum result devInit(void *, const void *);
 static void devDeinit(void *);
@@ -72,13 +71,13 @@ static void configPins(struct UsbBase *device,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, const struct UsbBase *state,
+static bool setDescriptor(uint8_t channel, const struct UsbBase *state,
     struct UsbBase *device)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
-      device) ? E_OK : E_BUSY;
+      device);
 }
 /*----------------------------------------------------------------------------*/
 void USB_ISR(void)
@@ -90,14 +89,13 @@ static enum result devInit(void *object, const void *configBase)
 {
   const struct UsbBaseConfig * const config = configBase;
   struct UsbBase * const device = object;
-  enum result res;
 
   device->channel = config->channel;
   device->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(device->channel, 0, device)) != E_OK)
-    return res;
+  if (!setDescriptor(device->channel, 0, device))
+    return E_BUSY;
 
   configPins(device, configBase);
 

@@ -14,7 +14,7 @@
 #define SDDELAY_DRV(value)    BIT_FIELD((value), 8)
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SdmmcBase *, const struct SdmmcBaseConfig *);
-static enum result setDescriptor(const struct SdmmcBase *, struct SdmmcBase *);
+static bool setDescriptor(const struct SdmmcBase *, struct SdmmcBase *);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -199,11 +199,10 @@ static void configPins(struct SdmmcBase *interface,
   interface->wide = wide;
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(const struct SdmmcBase *state,
+static bool setDescriptor(const struct SdmmcBase *state,
     struct SdmmcBase *interface)
 {
-  return compareExchangePointer((void **)&descriptor, state,
-      interface) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)&descriptor, state, interface);
 }
 /*----------------------------------------------------------------------------*/
 void SDIO_ISR(void)
@@ -222,11 +221,10 @@ static enum result sdioInit(void *object, const void *configBase)
 {
   const struct SdmmcBaseConfig * const config = configBase;
   struct SdmmcBase * const interface = object;
-  enum result res;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(0, interface)) != E_OK)
-    return res;
+  if (!setDescriptor(0, interface))
+    return E_BUSY;
 
   configPins(interface, config);
 

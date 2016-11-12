@@ -22,8 +22,7 @@
 #define CTRL_COUNTFLAG                  BIT(16)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static enum result setDescriptor(const struct SysTickTimer *,
-    struct SysTickTimer *);
+static bool setDescriptor(const struct SysTickTimer *, struct SysTickTimer *);
 static void updateInterrupt(struct SysTickTimer *);
 static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -63,11 +62,10 @@ static void interruptHandler(void *object)
     device->callback(device->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(const struct SysTickTimer *state,
+static bool setDescriptor(const struct SysTickTimer *state,
     struct SysTickTimer *timer)
 {
-  return compareExchangePointer((void **)&descriptor, state, timer) ?
-      E_OK : E_BUSY;
+  return compareExchangePointer((void **)&descriptor, state, timer);
 }
 /*----------------------------------------------------------------------------*/
 static void updateInterrupt(struct SysTickTimer *timer)
@@ -115,11 +113,10 @@ static enum result tmrInit(void *object, const void *configBase)
 {
   const struct SysTickTimerConfig * const config = configBase;
   struct SysTickTimer * const timer = object;
-  enum result res;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(0, timer)) != E_OK)
-    return res;
+  if (!setDescriptor(0, timer))
+    return E_BUSY;
 
   timer->handler = interruptHandler;
 

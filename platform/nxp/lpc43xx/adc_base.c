@@ -32,7 +32,7 @@ static void configGroupPin(const struct PinGroupEntry *, pinNumber,
     struct AdcPin *);
 static void configRegularPin(const struct PinEntry *, pinNumber,
     struct AdcPin *);
-static enum result setDescriptor(uint8_t, const struct AdcUnitBase *state,
+static bool setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum result adcUnitInit(void *, const void *);
@@ -187,13 +187,12 @@ static void configRegularPin(const struct PinEntry *entry, pinNumber key,
   adcPin->control = entry->channel;
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct AdcUnitBase *state, struct AdcUnitBase *unit)
+static bool setDescriptor(uint8_t channel, const struct AdcUnitBase *state,
+    struct AdcUnitBase *unit)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
-  return compareExchangePointer((void **)(descriptors + channel),
-      state, unit) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)(descriptors + channel), state, unit);
 }
 /*----------------------------------------------------------------------------*/
 void ADC0_ISR(void)
@@ -238,14 +237,13 @@ static enum result adcUnitInit(void *object, const void *configBase)
 {
   const struct AdcUnitBaseConfig * const config = configBase;
   struct AdcUnitBase * const unit = object;
-  enum result res;
 
   unit->channel = config->channel;
   unit->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(unit->channel, 0, unit)) != E_OK)
-    return res;
+  if (!setDescriptor(unit->channel, 0, unit))
+    return E_BUSY;
 
   const struct AdcBlockDescriptor * const entry =
       &adcBlockEntries[unit->channel];

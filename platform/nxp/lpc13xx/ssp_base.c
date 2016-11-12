@@ -15,8 +15,7 @@
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, const struct SspBase *,
-    struct SspBase *);
+static bool setDescriptor(uint8_t, const struct SspBase *, struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum result sspInit(void *, const void *);
 static void sspDeinit(void *);
@@ -77,13 +76,13 @@ const struct PinEntry sspPins[] = {
 const struct EntityClass * const SspBase = &sspTable;
 static struct SspBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct SspBase *state, struct SspBase *interface)
+static bool setDescriptor(uint8_t channel, const struct SspBase *state,
+    struct SspBase *interface)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
-      interface) ? E_OK : E_BUSY;
+      interface);
 }
 /*----------------------------------------------------------------------------*/
 void SSP0_ISR(void)
@@ -106,14 +105,13 @@ static enum result sspInit(void *object, const void *configBase)
 {
   const struct SspBaseConfig * const config = configBase;
   struct SspBase * const interface = object;
-  enum result res;
 
   interface->channel = config->channel;
   interface->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
-    return res;
+  if (!setDescriptor(interface->channel, 0, interface))
+    return E_BUSY;
 
   /* Configure input and output pins */
   sspConfigPins(interface, config);

@@ -15,7 +15,7 @@
 /* Pack match channel and pin function in one value */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, const struct GpPwmUnitBase *,
+static bool setDescriptor(uint8_t, const struct GpPwmUnitBase *,
     struct GpPwmUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum result unitInit(void *, const void *);
@@ -96,13 +96,12 @@ const struct PinEntry gpPwmPins[] = {
 const struct EntityClass * const GpPwmUnitBase = &unitTable;
 static struct GpPwmUnitBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct GpPwmUnitBase *state, struct GpPwmUnitBase *unit)
+static bool setDescriptor(uint8_t channel, const struct GpPwmUnitBase *state,
+    struct GpPwmUnitBase *unit)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      unit) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)(descriptors + channel), state, unit);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpPwmGetClock(const struct GpPwmUnitBase *unit __attribute__((unused)))
@@ -114,13 +113,12 @@ static enum result unitInit(void *object, const void *configBase)
 {
   const struct GpPwmUnitBaseConfig * const config = configBase;
   struct GpPwmUnitBase * const unit = object;
-  enum result res;
 
   unit->channel = config->channel;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(unit->channel, 0, unit)) != E_OK)
-    return res;
+  if (!setDescriptor(unit->channel, 0, unit))
+    return E_BUSY;
 
   sysPowerEnable(PWR_PWM1);
   sysClockControl(CLK_PWM1, DEFAULT_DIV);

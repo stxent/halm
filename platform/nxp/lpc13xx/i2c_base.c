@@ -11,8 +11,7 @@
 #include <halm/platform/nxp/lpc13xx/system.h>
 #include <halm/platform/nxp/lpc13xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, const struct I2cBase *,
-    struct I2cBase *);
+static bool setDescriptor(uint8_t, const struct I2cBase *, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *, const void *);
 static void i2cDeinit(void *);
@@ -40,13 +39,13 @@ const struct PinEntry i2cPins[] = {
 const struct EntityClass * const I2cBase = &i2cTable;
 static struct I2cBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct I2cBase *state, struct I2cBase *interface)
+static bool setDescriptor(uint8_t channel, const struct I2cBase *state,
+    struct I2cBase *interface)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
-      interface) ? E_OK : E_BUSY;
+      interface);
 }
 /*----------------------------------------------------------------------------*/
 void I2C_ISR(void)
@@ -63,14 +62,13 @@ static enum result i2cInit(void *object, const void *configBase)
 {
   const struct I2cBaseConfig * const config = configBase;
   struct I2cBase * const interface = object;
-  enum result res;
 
   interface->channel = config->channel;
   interface->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
-    return res;
+  if (!setDescriptor(interface->channel, 0, interface))
+    return E_BUSY;
 
   /* Configure pins */
   i2cConfigPins(interface, configBase);

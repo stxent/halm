@@ -12,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(pinNumber);
 static void releaseOutputPin(pinNumber);
-static enum result setDescriptor(const struct DacBase *, struct DacBase *);
+static bool setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
 static void dacDeinit(void *);
@@ -56,11 +56,10 @@ static void releaseOutputPin(pinNumber key __attribute__((unused)))
   LPC_SCU->ENAIO2 &= ~0x01;
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(const struct DacBase *state,
+static bool setDescriptor(const struct DacBase *state,
     struct DacBase *interface)
 {
-  return compareExchangePointer((void **)&descriptor, state,
-      interface) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)&descriptor, state, interface);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t dacGetClock(const struct DacBase *interface __attribute__((unused)))
@@ -72,11 +71,10 @@ static enum result dacInit(void *object, const void *configBase)
 {
   const struct DacBaseConfig * const config = configBase;
   struct DacBase * const interface = object;
-  enum result res;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(0, interface)) != E_OK)
-    return res;
+  if (!setDescriptor(0, interface))
+    return E_BUSY;
 
   configOutputPin(config->pin);
 

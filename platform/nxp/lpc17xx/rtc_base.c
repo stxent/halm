@@ -8,6 +8,8 @@
 #include <halm/platform/nxp/gen_1/rtc_base.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
+static bool setDescriptor(const struct RtcBase *, struct RtcBase *);
+/*----------------------------------------------------------------------------*/
 static enum result clkInit(void *, const void *);
 static void clkDeinit(void *);
 /*----------------------------------------------------------------------------*/
@@ -20,11 +22,9 @@ static const struct EntityClass clkTable = {
 const struct EntityClass * const RtcBase = &clkTable;
 static struct RtcBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(const struct RtcBase *state,
-    struct RtcBase *clock)
+static bool setDescriptor(const struct RtcBase *state, struct RtcBase *clock)
 {
-  return compareExchangePointer((void **)(&descriptor), state, clock) ?
-      E_OK : E_BUSY;
+  return compareExchangePointer((void **)&descriptor, state, clock);
 }
 /*----------------------------------------------------------------------------*/
 void RTC_ISR(void)
@@ -36,10 +36,9 @@ static enum result clkInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct RtcBase * const clock = object;
-  enum result res;
 
-  if ((res = setDescriptor(0, clock)) != E_OK)
-    return res;
+  if (!setDescriptor(0, clock))
+    return E_BUSY;
 
   clock->handler = 0;
   clock->irq = RTC_IRQ;

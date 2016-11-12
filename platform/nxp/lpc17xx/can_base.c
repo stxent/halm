@@ -14,7 +14,7 @@
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBase *, const struct CanBaseConfig *);
-static enum result setDescriptor(uint8_t, const struct CanBase *state,
+static bool setDescriptor(uint8_t, const struct CanBase *state,
     struct CanBase *);
 /*----------------------------------------------------------------------------*/
 static enum result canInit(void *, const void *);
@@ -89,13 +89,13 @@ static void configPins(const struct CanBase *interface,
   pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel,
-    const struct CanBase *state, struct CanBase *interface)
+static bool setDescriptor(uint8_t channel, const struct CanBase *state,
+    struct CanBase *interface)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
-  return compareExchangePointer((void **)(descriptors + channel),
-      state, interface) ? E_OK : E_BUSY;
+  return compareExchangePointer((void **)(descriptors + channel), state,
+      interface);
 }
 /*----------------------------------------------------------------------------*/
 void CAN_ISR(void)
@@ -118,14 +118,13 @@ static enum result canInit(void *object, const void *configBase)
 {
   const struct CanBaseConfig * const config = configBase;
   struct CanBase * const interface = object;
-  enum result res;
 
   interface->channel = config->channel;
   interface->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
-    return res;
+  if (!setDescriptor(interface->channel, 0, interface))
+    return E_BUSY;
 
   /* Configure input and output pins */
   configPins(interface, config);

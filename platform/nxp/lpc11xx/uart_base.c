@@ -14,8 +14,7 @@
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t, const struct UartBase *,
-    struct UartBase *);
+static bool setDescriptor(uint8_t, const struct UartBase *, struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum result uartInit(void *, const void *);
 static void uartDeinit(void *);
@@ -58,13 +57,13 @@ const struct PinEntry uartPins[] = {
 const struct EntityClass * const UartBase = &uartTable;
 static struct UartBase *descriptors[1] = {0};
 /*----------------------------------------------------------------------------*/
-static enum result setDescriptor(uint8_t channel, const struct UartBase *state,
+static bool setDescriptor(uint8_t channel, const struct UartBase *state,
     struct UartBase *interface)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
   return compareExchangePointer((void **)(descriptors + channel), state,
-      interface) ? E_OK : E_BUSY;
+      interface);
 }
 /*----------------------------------------------------------------------------*/
 void UART_ISR(void)
@@ -82,14 +81,13 @@ static enum result uartInit(void *object, const void *configBase)
 {
   const struct UartBaseConfig * const config = configBase;
   struct UartBase * const interface = object;
-  enum result res;
 
   interface->channel = config->channel;
   interface->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if ((res = setDescriptor(interface->channel, 0, interface)) != E_OK)
-    return res;
+  if (!setDescriptor(interface->channel, 0, interface))
+    return E_BUSY;
 
   /* Configure input and output pins */
   uartConfigPins(interface, config);
