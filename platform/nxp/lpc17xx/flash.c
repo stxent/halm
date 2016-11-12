@@ -8,8 +8,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <halm/platform/nxp/flash.h>
+#include <halm/platform/nxp/iap.h>
 #include <halm/platform/nxp/lpc17xx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
+static inline bool isAddressValid(const struct Flash *, uint32_t, size_t);
 static inline bool isPageAddressValid(const struct Flash *, uint32_t);
 static inline bool isSectorAddressValid(const struct Flash *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -34,6 +36,12 @@ static const struct InterfaceClass flashTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Flash = &flashTable;
+/*----------------------------------------------------------------------------*/
+static inline bool isAddressValid(const struct Flash *interface,
+    uint32_t address, size_t length)
+{
+  return address < interface->size && address + length <= interface->size;
+}
 /*----------------------------------------------------------------------------*/
 static inline bool isPageAddressValid(const struct Flash *interface,
     uint32_t address)
@@ -142,7 +150,7 @@ static enum result flashSet(void *object, enum ifOption option,
       const uint32_t address = *(const uint32_t *)data;
 
       if (!isSectorAddressValid(interface, address))
-        return E_VALUE;
+        return E_ADDRESS;
 
       if (flashBlankCheckSector(address) == E_OK)
         return E_OK;
@@ -160,11 +168,13 @@ static enum result flashSet(void *object, enum ifOption option,
     {
       const uint32_t position = *(const uint32_t *)data;
 
-      if (!isPageAddressValid(interface, position))
-        return E_VALUE;
-
-      interface->position = position;
-      return E_OK;
+      if (isPageAddressValid(interface, position))
+      {
+        interface->position = position;
+        return E_OK;
+      }
+      else
+        return E_ADDRESS;
     }
 
     default:
@@ -176,27 +186,21 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  if (!isPageAddressValid(interface, interface->position))
+  if (isAddressValid(interface, interface->position, length))
+  {
+    memcpy(buffer, (const void *)interface->position, length);
+    return length;
+  }
+  else
     return 0;
-  if (length & (FLASH_PAGE_SIZE - 1))
-    return 0;
-
-  memcpy(buffer, (const void *)interface->position, length);
-
-  return length;
 }
 /*----------------------------------------------------------------------------*/
 static size_t flashWrite(void *object, const void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  if (!isPageAddressValid(interface, interface->position))
+  if (flashWriteBuffer(interface->position, buffer, length) == E_OK)
+    return length;
+  else
     return 0;
-  if (length & (FLASH_PAGE_SIZE - 1))
-    return 0;
-
-  if (flashWriteBuffer(interface->position, buffer, length) != E_OK)
-    return 0;
-
-  return length;
 }

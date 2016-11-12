@@ -1,5 +1,5 @@
 /*
- * flash_common.c
+ * iap.c
  * Copyright (C) 2015 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <xcore/bits.h>
 #include <halm/irq.h>
-#include <halm/platform/nxp/flash.h>
+#include <halm/platform/nxp/iap.h>
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
@@ -32,7 +32,7 @@ enum iapCommand
   CMD_ERASE_PAGE              = 59,
   CMD_SET_ACTIVE_BOOT_BANK    = 60,
   CMD_EEPROM_WRITE            = 61,
-  CMD_EEPROM_READ             = 61
+  CMD_EEPROM_READ             = 62
 };
 
 enum iapResult
@@ -51,14 +51,14 @@ enum iapResult
   RES_BUSY                    = 11
 };
 /*----------------------------------------------------------------------------*/
-static enum result compareRegions(uint32_t, const void *, uint32_t);
-static enum result copyRamToFlash(uint32_t, const void *, uint32_t);
+static enum result compareRegions(uint32_t, const void *, size_t);
+static enum result copyRamToFlash(uint32_t, const void *, size_t);
 static enum result iap(enum iapCommand, unsigned long *, unsigned int,
     const unsigned long *, unsigned int);
 static enum result prepareSectorToWrite(unsigned int, unsigned int);
 /*----------------------------------------------------------------------------*/
 static enum result copyRamToFlash(uint32_t address, const void *buffer,
-    uint32_t length)
+    size_t length)
 {
   const unsigned long frequency = clockFrequency(MainClock);
   const unsigned long parameters[] = {
@@ -72,7 +72,7 @@ static enum result copyRamToFlash(uint32_t address, const void *buffer,
 }
 /*----------------------------------------------------------------------------*/
 static enum result compareRegions(uint32_t address, const void *buffer,
-    uint32_t length)
+    size_t length)
 {
   const unsigned long parameters[] = {
       address,
@@ -112,11 +112,43 @@ static enum result prepareSectorToWrite(unsigned int sector, unsigned int bank)
   return iap(CMD_PREPARE_FOR_WRITE, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
+enum result eepromReadBuffer(uint32_t address, void *buffer, size_t length)
+{
+  const unsigned long frequency = clockFrequency(MainClock);
+  const unsigned long parameters[] = {
+      address,
+      (unsigned long)buffer,
+      length,
+      frequency / 1000
+  };
+
+  return iap(CMD_EEPROM_READ, 0, 0, parameters, ARRAY_SIZE(parameters));
+}
+/*----------------------------------------------------------------------------*/
+enum result eepromWriteBuffer(uint32_t address, const void *buffer,
+    size_t length)
+{
+  const unsigned long frequency = clockFrequency(MainClock);
+  const unsigned long parameters[] = {
+      address,
+      (unsigned long)buffer,
+      length,
+      frequency / 1000
+  };
+
+  return iap(CMD_EEPROM_WRITE, 0, 0, parameters, ARRAY_SIZE(parameters));
+}
+
+/*----------------------------------------------------------------------------*/
 enum result flashBlankCheckSector(uint32_t address)
 {
   const unsigned int sector = addressToSector(address);
   const unsigned int bank = addressToBank(address);
-  const unsigned long parameters[] = {sector, sector, bank};
+  const unsigned long parameters[] = {
+      sector,
+      sector,
+      bank
+  };
 
   return iap(CMD_BLANK_CHECK_SECTORS, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
@@ -133,8 +165,8 @@ enum result flashErasePage(uint32_t address)
   {
     const unsigned long frequency = clockFrequency(MainClock);
     const unsigned long parameters[] = {
-        address,
-        address,
+        addressToPage(address),
+        addressToPage(address),
         frequency / 1000
     };
 
@@ -194,7 +226,7 @@ uint32_t flashReadConfigId()
 }
 /*----------------------------------------------------------------------------*/
 enum result flashWriteBuffer(uint32_t address, const void *buffer,
-    uint32_t length)
+    size_t length)
 {
   const unsigned int sector = addressToSector(address);
   const unsigned int bank = addressToBank(address);

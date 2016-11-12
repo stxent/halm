@@ -56,7 +56,7 @@ static inline uint8_t addressToBank(uint32_t address)
 /*----------------------------------------------------------------------------*/
 static inline uint32_t addressToPage(uint32_t address)
 {
-  return (address & FLASH_BANK_MASK) / FLASH_PAGE_SIZE;
+  return address;
 }
 /*----------------------------------------------------------------------------*/
 static inline uint32_t addressToSector(uint32_t address)

@@ -84,8 +84,15 @@ ifeq ($(CONFIG_PLATFORM_NXP_I2S_BASE),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/i2s_base.c
 endif
 
-ifeq ($(CONFIG_PLATFORM_NXP_FLASH),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/flash_common.c
+ifeq ($(CONFIG_PLATFORM_NXP_IAP),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/iap.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_NXP_IAP_EEPROM),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/eeprom.c
+endif
+
+ifeq ($(CONFIG_PLATFORM_NXP_IAP_FLASH),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/flash.c
 endif
 

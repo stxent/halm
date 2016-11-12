@@ -8,8 +8,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <halm/platform/nxp/flash.h>
+#include <halm/platform/nxp/iap.h>
 #include <halm/platform/nxp/lpc43xx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
+static bool isAddressValid(const struct Flash *, uint32_t);
 static bool isPageAddressValid(const struct Flash *, uint32_t);
 static bool isSectorAddressValid(const struct Flash *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -35,12 +37,8 @@ static const struct InterfaceClass flashTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Flash = &flashTable;
 /*----------------------------------------------------------------------------*/
-static bool isPageAddressValid(const struct Flash *interface,
-    uint32_t address)
+static bool isAddressValid(const struct Flash *interface, uint32_t address)
 {
-  if (address & (FLASH_PAGE_SIZE - 1))
-    return false;
-
   const uint32_t localAddress = address & FLASH_BANK_MASK;
   const uint32_t sizeBankA = FLASH_SIZE_DECODE_A(interface->size);
   const uint32_t sizeBankB = FLASH_SIZE_DECODE_B(interface->size);
@@ -52,23 +50,28 @@ static bool isPageAddressValid(const struct Flash *interface,
     return address >= FLASH_BANK_B && localAddress < sizeBankB;
 }
 /*----------------------------------------------------------------------------*/
+static bool isPageAddressValid(const struct Flash *interface,
+    uint32_t address)
+{
+  if (!isAddressValid(interface, address))
+    return false;
+  if (address & (FLASH_PAGE_SIZE - 1))
+    return false;
+
+  return true;
+}
+/*----------------------------------------------------------------------------*/
 static bool isSectorAddressValid(const struct Flash *interface,
     uint32_t address)
 {
+  if (!isAddressValid(interface, address))
+    return false;
+
   const uint32_t localAddress = address & FLASH_BANK_MASK;
-  const uint32_t sizeBankA = FLASH_SIZE_DECODE_A(interface->size);
-  const uint32_t sizeBankB = FLASH_SIZE_DECODE_B(interface->size);
-  const uint8_t bank = addressToBank(address);
+  const uint32_t mask = localAddress < FLASH_SECTORS_BORDER ?
+      FLASH_SECTOR_SIZE_0 - 1 : FLASH_SECTOR_SIZE_1 - 1;
 
-  if (!bank && (address < FLASH_BANK_A || localAddress >= sizeBankA))
-    return false;
-  if (bank && (address < FLASH_BANK_B || localAddress >= sizeBankB))
-    return false;
-
-  if (localAddress < FLASH_SECTORS_BORDER)
-    return !(localAddress & (FLASH_SECTOR_SIZE_0 - 1));
-  else
-    return !(localAddress & (FLASH_SECTOR_SIZE_1 - 1));
+  return !(localAddress & mask);
 }
 /*----------------------------------------------------------------------------*/
 static enum result flashInit(void *object,
@@ -153,7 +156,7 @@ static enum result flashSet(void *object, enum ifOption option,
       const uint32_t address = *(const uint32_t *)data;
 
       if (!isSectorAddressValid(interface, address))
-        return E_VALUE;
+        return E_ADDRESS;
       if (flashBlankCheckSector(address) == E_OK)
         return E_OK;
 
@@ -167,7 +170,7 @@ static enum result flashSet(void *object, enum ifOption option,
       const uint32_t address = *(const uint32_t *)data;
 
       if (!isPageAddressValid(interface, address))
-        return E_VALUE;
+        return E_ADDRESS;
 
       flashInitWrite();
 
@@ -184,11 +187,13 @@ static enum result flashSet(void *object, enum ifOption option,
     {
       const uint32_t position = *(const uint32_t *)data;
 
-      if (!isPageAddressValid(interface, position))
-        return E_VALUE;
-
-      interface->position = position;
-      return E_OK;
+      if (isPageAddressValid(interface, position))
+      {
+        interface->position = position;
+        return E_OK;
+      }
+      else
+        return E_ADDRESS;
     }
 
     default:
@@ -200,11 +205,12 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  if (length & (FLASH_PAGE_SIZE - 1))
+  if (!isAddressValid(interface, interface->position))
+    return 0;
+  if (!isAddressValid(interface, interface->position + length - 1))
     return 0;
 
   memcpy(buffer, (const void *)interface->position, length);
-
   return length;
 }
 /*----------------------------------------------------------------------------*/
@@ -212,15 +218,10 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  if (!isPageAddressValid(interface, interface->position))
-    return 0;
-  if (length & (FLASH_PAGE_SIZE - 1))
-    return 0;
-
   flashInitWrite();
 
-  if (flashWriteBuffer(interface->position, buffer, length) != E_OK)
+  if (flashWriteBuffer(interface->position, buffer, length) == E_OK)
+    return length;
+  else
     return 0;
-
-  return length;
 }

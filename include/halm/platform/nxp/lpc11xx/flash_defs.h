@@ -86,9 +86,9 @@ static inline uint8_t addressToBank(uint32_t address __attribute__((unused)))
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t addressToPage(uint32_t address)
+static inline uint32_t addressToPage(uint32_t address __attribute__((unused)))
 {
-  return address / FLASH_PAGE_SIZE;
+  return 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline uint32_t addressToSector(uint32_t address)
