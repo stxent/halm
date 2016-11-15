@@ -298,7 +298,7 @@ static enum result handleEndpointRequest(struct UsbControl *control,
     {
       const bool set = packet->request == REQUEST_SET_FEATURE;
 
-      usbTrace("control: %s endpoint %0x02X feature %u",
+      usbTrace("control: %s endpoint 0x%02X feature %u",
           set ? "set" : "clear", packet->index, packet->value);
 
       if (packet->value == FEATURE_ENDPOINT_HALT)

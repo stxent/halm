@@ -212,10 +212,11 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
 
   if (packet->request == REQUEST_GET_DESCRIPTOR)
   {
-    const uint8_t descriptorType = DESCRIPTOR_TYPE(packet->value);
-
     usbTrace("composite: get descriptor %u:%u, length %u",
-        descriptorType, descriptorIndex, packet->length);
+        DESCRIPTOR_TYPE(packet->value), DESCRIPTOR_INDEX(packet->value),
+        packet->length);
+
+    const uint8_t descriptorType = DESCRIPTOR_TYPE(packet->value);
 
     if (descriptorType == DESCRIPTOR_TYPE_DEVICE)
     {

@@ -491,8 +491,9 @@ static enum state stateReadSetupEnter(struct Msc *driver)
 
   privateData->context.position = logicalBlockAddress * driver->blockLength;
 
-  usbTrace("msc: read command, position %012"PRIX64", length %"PRIu32,
-      privateData->context.position, transferLength);
+  usbTrace("msc: read command, start block %"PRIu32", count %"PRIu32,
+      (uint32_t)(privateData->context.position / driver->blockLength),
+      transferLength / driver->blockLength);
 
   return STATE_READ;
 }
@@ -597,8 +598,9 @@ static enum state stateWriteSetupEnter(struct Msc *driver)
 
   privateData->context.position = logicalBlockAddress * driver->blockLength;
 
-  usbTrace("msc: write command, position %012"PRIX64", length %"PRIu32,
-      privateData->context.position, transferLength);
+  usbTrace("msc: write command, start block %"PRIu32", count %"PRIu32,
+      (uint32_t)(privateData->context.position / driver->blockLength),
+      transferLength / driver->blockLength);
 
   return STATE_WRITE;
 }
@@ -761,9 +763,9 @@ static void runStateMachine(struct Msc *driver)
   while (current != previous)
   {
     if (current == STATE_FAILURE)
-      usbTrace("msc: failure in state %u", (unsigned int)previous);
+      usbTrace("msc: failure in state %u", previous);
     if (current == STATE_ERROR)
-      usbTrace("msc: critical error in state %u", (unsigned int)previous);
+      usbTrace("msc: critical error in state %u", previous);
 
     previous = current;
 
@@ -935,7 +937,7 @@ static enum result enqueueDataRx(struct Msc *driver, void *buffer,
   uintptr_t bufferPosition = (uintptr_t)buffer;
   enum result res = E_OK;
 
-  usbTrace("msc: OUT %zu bytes, %zu chunks", length,
+  usbTrace("msc: OUT %"PRIu32" bytes, %"PRIu32" chunks", length,
       (length + driver->packetSize - 1) / driver->packetSize);
 
   while (!queueEmpty(&driver->rxQueue) && length)
@@ -977,7 +979,7 @@ static enum result enqueueDataTx(struct Msc *driver, const void *buffer,
   uintptr_t bufferPosition = (uintptr_t)buffer;
   enum result res = E_OK;
 
-  usbTrace("msc: IN %zu bytes, %zu chunks", length,
+  usbTrace("msc: IN %"PRIu32" bytes, %"PRIu32" chunks", length,
       (length + driver->packetSize - 1) / driver->packetSize);
 
   while (queueSize(&driver->txQueue) > 1 && length)
@@ -1112,8 +1114,9 @@ static enum result storageRead(struct Msc *driver)
       privateData->context.left);
   enum result res;
 
-  usbTrace("msc: read from %012"PRIX64", length %zu",
-      privateData->context.position, transferLength);
+  usbTrace("msc: read block %"PRIu32", count %"PRIu32,
+      (uint32_t)(privateData->context.position / driver->blockLength),
+      transferLength / driver->blockLength);
 
   ifCallback(driver->storage, storageCallback, driver);
 
@@ -1145,8 +1148,9 @@ static enum result storageWrite(struct Msc *driver)
       privateData->context.left);
   enum result res;
 
-  usbTrace("msc: write to %012"PRIX64", length %zu",
-      privateData->context.position, transferLength);
+  usbTrace("msc: write block %"PRIu32", count %"PRIu32,
+      (uint32_t)(privateData->context.position / driver->blockLength),
+      transferLength / driver->blockLength);
 
   ifCallback(driver->storage, storageCallback, driver);
 
