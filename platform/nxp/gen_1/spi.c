@@ -50,8 +50,8 @@ static void interruptHandler(void *object)
     /* Read mode */
     while (reg->SR & SR_RNE)
     {
-      --interface->rxLeft;
       *interface->rxBuffer++ = reg->DR;
+      --interface->rxLeft;
     }
   }
   else
@@ -59,14 +59,14 @@ static void interruptHandler(void *object)
     /* Write mode */
     while (reg->SR & SR_RNE)
     {
-      --interface->rxLeft;
       (void)reg->DR;
+      --interface->rxLeft;
     }
   }
 
-  const unsigned int left = interface->rxLeft - interface->txLeft;
-  unsigned int count = interface->txLeft > FIFO_DEPTH - left ?
-      FIFO_DEPTH - left : interface->txLeft;
+  const size_t pending = interface->rxLeft - interface->txLeft;
+  const size_t space = FIFO_DEPTH - pending;
+  size_t count = interface->txLeft >= space ? space : interface->txLeft;
 
   interface->txLeft -= count;
 

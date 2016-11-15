@@ -519,14 +519,9 @@ static enum result startTransfer(struct SdCard *device)
   size_t number;
 
   if (code == CMD_READ_SINGLE_BLOCK || code == CMD_READ_MULTIPLE_BLOCK)
-  {
     number = ifRead(device->interface, (void *)device->buffer, length);
-  }
   else
-  {
-    number = ifWrite(device->interface, (const void *)device->buffer,
-        length);
-  }
+    number = ifWrite(device->interface, (const void *)device->buffer, length);
 
   return number == length ? E_OK : E_INTERFACE;
 }
