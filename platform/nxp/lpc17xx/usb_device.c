@@ -646,4 +646,22 @@ static void epSetStalled(void *object, bool stalled)
 
   usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index,
       stalled ? SET_ENDPOINT_STATUS_ST : 0);
+
+  /*
+   * The buffer is flushed when the endpoint is unstalled. Pending IN request
+   * should be rewritten to the buffer.
+   */
+  if (!stalled && (endpoint->address & USB_EP_DIRECTION_IN)
+      && !queueEmpty(&endpoint->requests))
+  {
+    struct UsbRequest *next;
+    queuePeek(&endpoint->requests, &next);
+
+    /* Try to send next packet */
+    if (epWriteData(endpoint, next->buffer, next->length) != E_OK)
+    {
+      queuePop(&endpoint->requests, 0);
+      next->callback(next->callbackArgument, next, USB_REQUEST_ERROR);
+    }
+  }
 }
