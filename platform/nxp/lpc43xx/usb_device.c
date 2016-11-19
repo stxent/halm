@@ -578,13 +578,10 @@ static enum result epEnqueueRx(struct UsbDmaEndpoint *ep,
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
       request, request->buffer, request->capacity);
 
-  if (descriptor)
-  {
-    epAppendDescriptor(ep, descriptor);
-    return E_OK;
-  }
-  else
-    return E_MEMORY;
+  assert(descriptor);
+  epAppendDescriptor(ep, descriptor);
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum result epEnqueueTx(struct UsbDmaEndpoint *ep,
@@ -593,13 +590,10 @@ static enum result epEnqueueTx(struct UsbDmaEndpoint *ep,
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
       request, request->buffer, request->length);
 
-  if (descriptor)
-  {
-    epAppendDescriptor(ep, descriptor);
-    return E_OK;
-  }
-  else
-    return E_MEMORY;
+  assert(descriptor);
+  epAppendDescriptor(ep, descriptor);
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void epExtractDataLength(const struct UsbDmaEndpoint *ep,

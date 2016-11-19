@@ -161,10 +161,7 @@ static bool resetEndpoints(struct CdcAcm *interface)
     queuePop(&interface->rxRequestQueue, &request);
     request->length = 0;
 
-    const enum result res = usbEpEnqueue(interface->rxDataEp, request);
-    assert(res != E_MEMORY);
-
-    if (res != E_OK)
+    if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
     {
       completed = false;
       queuePush(&interface->rxRequestQueue, &request);
@@ -469,10 +466,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     request->length = bytesToWrite;
     memcpy(request->buffer, bufferPosition, bytesToWrite);
 
-    const enum result res = usbEpEnqueue(interface->txDataEp, request);
-    assert(res != E_MEMORY);
-
-    if (res == E_OK)
+    if (usbEpEnqueue(interface->txDataEp, request) == E_OK)
     {
       bufferPosition += bytesToWrite;
       length -= bytesToWrite;

@@ -948,10 +948,7 @@ static enum result enqueueDataRx(struct Msc *driver, void *buffer,
     const size_t prepared = prepareDataRx(driver, request, bufferPosition,
         length);
 
-    res = usbEpEnqueue(driver->rxEp, request);
-    assert(res != E_MEMORY);
-
-    if (res == E_OK)
+    if ((res = usbEpEnqueue(driver->rxEp, request)) == E_OK)
     {
       length -= prepared;
       bufferPosition += prepared;
@@ -990,10 +987,7 @@ static enum result enqueueDataTx(struct Msc *driver, const void *buffer,
     const size_t prepared = prepareDataTx(driver, request, bufferPosition,
         length, notify);
 
-    res = usbEpEnqueue(driver->txEp, request);
-    assert(res != E_MEMORY);
-
-    if (res == E_OK)
+    if ((res = usbEpEnqueue(driver->txEp, request)) == E_OK)
     {
       length -= prepared;
       bufferPosition += prepared;

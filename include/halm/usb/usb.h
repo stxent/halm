@@ -241,8 +241,7 @@ static inline void usbEpEnable(void *endpoint, uint8_t type, uint16_t size)
  * Add the request to the endpoint queue.
  * @param endpoint Pointer to an UsbEndpoint object.
  * @param request Request to be added.
- * @return @b E_OK on success, @b E_MEMORY when there is not enough free memory
- * for the request.
+ * @return @b E_OK on success.
  */
 static inline enum result usbEpEnqueue(void *endpoint,
     struct UsbRequest *request)
