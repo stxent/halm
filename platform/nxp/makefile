@@ -42,6 +42,10 @@ ifeq ($(CONFIG_PLATFORM_NXP_DAC_BASE),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/dac_base.c
 endif
 
+ifeq ($(CONFIG_PLATFORM_NXP_EEPROM),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/eeprom.c
+endif
+
 ifeq ($(CONFIG_PLATFORM_NXP_GPDMA),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/gpdma.c
   CSOURCES += platform/$(PLATFORM_TYPE)/gpdma_circular.c
@@ -86,10 +90,6 @@ endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_IAP),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/iap.c
-endif
-
-ifeq ($(CONFIG_PLATFORM_NXP_IAP_EEPROM),y)
-  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/eeprom.c
 endif
 
 ifeq ($(CONFIG_PLATFORM_NXP_IAP_FLASH),y)

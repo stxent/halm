@@ -123,6 +123,14 @@ config PLATFORM_NXP_DAC_DMA
 	default y
 	depends on PLATFORM_NXP_DAC_BASE && PLATFORM_NXP_GPDMA
 
+config PLATFORM_NXP_EEPROM
+	bool "EEPROM"
+	default y
+	depends on FAMILY_LPC11EXX || FAMILY_LPC43XX
+	select PLATFORM_NXP_IAP if FAMILY_LPC11EXX
+	help
+	  This enables driver for the internal EEPROM memory.
+
 config PLATFORM_NXP_FAST_GPIO_BUS
 	bool "Fast GPIO Bus"
 	default y
@@ -218,13 +226,6 @@ config PLATFORM_NXP_IAP
 	default y
 	help
 	  This enables support for In-Application Programming.
-
-config PLATFORM_NXP_IAP_EEPROM
-	bool "EEPROM driver"
-	default y
-	depends on PLATFORM_NXP_IAP && FAMILY_LPC11EXX
-	help
-	  This enables driver for the internal EEPROM memory.
 
 config PLATFORM_NXP_IAP_FLASH
 	bool "Flash driver"

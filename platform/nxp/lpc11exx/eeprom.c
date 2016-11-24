@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/iap.h>
 #include <halm/platform/nxp/lpc11exx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline bool isAddressValid(const struct Eeprom *, uint32_t);
+static inline bool isAddressValid(const struct Eeprom *, uintptr_t);
 /*----------------------------------------------------------------------------*/
 static enum result eepromInit(void *, const void *);
 static void eepromDeinit(void *);
@@ -36,7 +36,7 @@ static const struct InterfaceClass eepromTable = {
 const struct InterfaceClass * const Eeprom = &eepromTable;
 /*----------------------------------------------------------------------------*/
 static inline bool isAddressValid(const struct Eeprom *interface,
-    uint32_t address)
+    uintptr_t address)
 {
   return address < interface->size;
 }
@@ -124,7 +124,7 @@ static enum result eepromSet(void *object, enum ifOption option,
   {
     case IF_POSITION:
     {
-      const uint32_t position = *(const uint32_t *)data;
+      const uintptr_t position = *(const uint32_t *)data;
 
       if (isAddressValid(interface, position))
       {
