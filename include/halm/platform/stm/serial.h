@@ -39,8 +39,10 @@ struct Serial
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Input and output queues */
-  struct ByteQueue rxQueue, txQueue;
+  /* Input queue */
+  struct ByteQueue rxQueue;
+  /* Output queue */
+  struct ByteQueue txQueue;
   /* Desired baud rate */
   uint32_t rate;
 };

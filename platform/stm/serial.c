@@ -198,11 +198,16 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   STM_USART_Type * const reg = interface->base.reg;
   size_t written;
 
-  irqDisable(interface->base.irq);
-  written = byteQueuePushArray(&interface->txQueue, buffer, length);
-  if (!(reg->CR1 & CR1_TXEIE))
-    reg->CR1 |= CR1_TXEIE;
-  irqEnable(interface->base.irq);
+  if (length)
+  {
+    irqDisable(interface->base.irq);
+    written = byteQueuePushArray(&interface->txQueue, buffer, length);
+    if (!(reg->CR1 & CR1_TXEIE))
+      reg->CR1 |= CR1_TXEIE;
+    irqEnable(interface->base.irq);
+  }
+  else
+    written = 0;
 
   return written;
 }
