@@ -22,7 +22,7 @@ struct CompositeDevice
 {
   struct Entity base;
 
-  struct UsbDevice *device;
+  struct UsbDevice *parent;
   struct CompositeDeviceProxy *driver;
 
   struct List entries;

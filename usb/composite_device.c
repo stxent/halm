@@ -66,6 +66,8 @@ static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
 static enum usbSpeed devGetSpeed(const void *);
+static enum result devStringAppend(void *, struct UsbString);
+static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass deviceTable = {
     .size = sizeof(struct CompositeDevice),
@@ -81,7 +83,10 @@ static const struct UsbDeviceClass deviceTable = {
     .unbind = devUnbind,
 
     .setPower = devSetPower,
-    .getSpeed = devGetSpeed
+    .getSpeed = devGetSpeed,
+
+    .stringAppend = devStringAppend,
+    .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const CompositeDevice = &deviceTable;
@@ -359,11 +364,11 @@ static enum result devInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  device->device = config->device;
+  device->parent = config->device;
   device->configurationLength = sizeof(struct UsbConfigurationDescriptor);
   device->interfaceCount = 0;
 
-  if ((res = usbDevBind(device->device, device->driver)) != E_OK)
+  if ((res = usbDevBind(device->parent, device->driver)) != E_OK)
     return res;
 
   return E_OK;
@@ -383,7 +388,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 {
   struct CompositeDevice * const device = object;
 
-  return usbDevCreateEndpoint(device->device, address);
+  return usbDevCreateEndpoint(device->parent, address);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t devGetInterface(const void *object)
@@ -397,14 +402,14 @@ static void devSetAddress(void *object, uint8_t address)
 {
   struct CompositeDevice * const device = object;
 
-  usbDevSetAddress(device->device, address);
+  usbDevSetAddress(device->parent, address);
 }
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)
 {
   struct CompositeDevice * const device = object;
 
-  usbDevSetConnected(device->device, state);
+  usbDevSetConnected(device->parent, state);
 }
 /*----------------------------------------------------------------------------*/
 static enum result devBind(void *object, void *driver)
@@ -452,10 +457,20 @@ static void devUnbind(void *object, const void *driver)
 /*----------------------------------------------------------------------------*/
 static void devSetPower(void *object, uint16_t current)
 {
-  usbDevSetPower(((const struct CompositeDevice *)object)->device, current);
+  usbDevSetPower(((const struct CompositeDevice *)object)->parent, current);
 }
 /*----------------------------------------------------------------------------*/
 static enum usbSpeed devGetSpeed(const void *object)
 {
-  return usbDevGetSpeed(((const struct CompositeDevice *)object)->device);
+  return usbDevGetSpeed(((const struct CompositeDevice *)object)->parent);
+}
+/*----------------------------------------------------------------------------*/
+static enum result devStringAppend(void *object, struct UsbString string)
+{
+  return usbDevStringAppend(((struct CompositeDevice *)object)->parent, string);
+}
+/*----------------------------------------------------------------------------*/
+static void devStringErase(void *object, struct UsbString string)
+{
+  usbDevStringErase(((struct CompositeDevice *)object)->parent, string);
 }
