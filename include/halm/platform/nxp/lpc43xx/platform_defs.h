@@ -1952,51 +1952,27 @@ typedef struct
   __ne__ uint32_t RESERVED3[31];
 
   /* Offset 0x0100 */
-  __rw__ uint32_t DYNAMICCONFIG0;
-  __rw__ uint32_t DYNAMICRASCAS0;
-  __ne__ uint32_t RESERVED4[6];
-  __rw__ uint32_t DYNAMICCONFIG1;
-  __rw__ uint32_t DYNAMICRASCAS1;
-  __ne__ uint32_t RESERVED5[6];
-  __rw__ uint32_t DYNAMICCONFIG2;
-  __rw__ uint32_t DYNAMICRASCAS2;
-  __ne__ uint32_t RESERVED6[6];
-  __rw__ uint32_t DYNAMICCONFIG3;
-  __rw__ uint32_t DYNAMICRASCAS3;
-  __ne__ uint32_t RESERVED7[38];
+  struct
+  {
+    __rw__ uint32_t CONFIG;
+    __rw__ uint32_t RASCAS;
+    __ne__ uint32_t RESERVED[6];
+  } DYNAMIC[4];
+
+  __ne__ uint32_t RESERVED4[32];
 
   /* Offset 0x0200 */
-  __rw__ uint32_t STATICCONFIG0;
-  __rw__ uint32_t STATICWAITWEN0;
-  __rw__ uint32_t STATICWAITOEN0;
-  __rw__ uint32_t STATICWAITRD0;
-  __rw__ uint32_t STATICWAITPAG0;
-  __rw__ uint32_t STATICWAITWR0;
-  __rw__ uint32_t STATICWAITTURN0;
-  __ne__ uint32_t RESERVED8;
-  __rw__ uint32_t STATICCONFIG1;
-  __rw__ uint32_t STATICWAITWEN1;
-  __rw__ uint32_t STATICWAITOEN1;
-  __rw__ uint32_t STATICWAITRD1;
-  __rw__ uint32_t STATICWAITPAG1;
-  __rw__ uint32_t STATICWAITWR1;
-  __rw__ uint32_t STATICWAITTURN1;
-  __ne__ uint32_t RESERVED9;
-  __rw__ uint32_t STATICCONFIG2;
-  __rw__ uint32_t STATICWAITWEN2;
-  __rw__ uint32_t STATICWAITOEN2;
-  __rw__ uint32_t STATICWAITRD2;
-  __rw__ uint32_t STATICWAITPAG2;
-  __rw__ uint32_t STATICWAITWR2;
-  __rw__ uint32_t STATICWAITTURN2;
-  __ne__ uint32_t RESERVED10;
-  __rw__ uint32_t STATICCONFIG3;
-  __rw__ uint32_t STATICWAITWEN3;
-  __rw__ uint32_t STATICWAITOEN3;
-  __rw__ uint32_t STATICWAITRD3;
-  __rw__ uint32_t STATICWAITPAG3;
-  __rw__ uint32_t STATICWAITWR3;
-  __rw__ uint32_t STATICWAITTURN3;
+  struct
+  {
+    __rw__ uint32_t CONFIG;
+    __rw__ uint32_t WAITWEN;
+    __rw__ uint32_t WAITOEN;
+    __rw__ uint32_t WAITRD;
+    __rw__ uint32_t WAITPAG;
+    __rw__ uint32_t WAITWR;
+    __rw__ uint32_t WAITTURN;
+    __ne__ uint32_t RESERVED;
+  } STATIC[4];
 } LPC_EMC_Type;
 /*------------------Global Input Multiplexer Array----------------------------*/
 typedef struct

@@ -46,6 +46,11 @@ ifeq ($(CONFIG_PLATFORM_NXP_EEPROM),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/eeprom.c
 endif
 
+ifeq ($(CONFIG_PLATFORM_NXP_EMC),y)
+  CSOURCES += platform/$(PLATFORM_TYPE)/emc_sram.c
+  CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/emc_base.c
+endif
+
 ifeq ($(CONFIG_PLATFORM_NXP_GPDMA),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/gpdma.c
   CSOURCES += platform/$(PLATFORM_TYPE)/gpdma_circular.c
