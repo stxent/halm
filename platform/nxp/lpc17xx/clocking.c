@@ -265,7 +265,7 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   unsigned int multiplier = config->multiplier;
   unsigned int prescaler;
 
-  frequency = frequency * config->multiplier;
+  frequency = frequency * multiplier;
 
   if (config->source != CLOCK_RTC)
   {
@@ -276,6 +276,8 @@ static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
   }
   else
   {
+    frequency <<= 1;
+
     /* Low-frequency source supports only a limited set of multiplier values */
     /* No check is performed due to complexity */
     prescaler = 1 + frequency / 550000000;
@@ -528,22 +530,25 @@ static enum result mainClockEnable(const void *clockBase
 static uint32_t mainClockFrequency(const void *clockBase
     __attribute__((unused)))
 {
-  switch (LPC_SC->CLKSRCSEL)
+  const uint32_t source = LPC_SC->CLKSRCSEL;
+
+  if (source == CLKSRCSEL_IRC)
   {
-    case CLKSRCSEL_IRC:
-      return INT_OSC_FREQUENCY;
-
-    case CLKSRCSEL_MAIN:
-      if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
-        return pllFrequency / pllDivisor;
-      else
+    return INT_OSC_FREQUENCY;
+  }
+  else
+  {
+    if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
+    {
+      return pllFrequency / pllDivisor;
+    }
+    else
+    {
+      if (source == CLKSRCSEL_MAIN)
         return extFrequency;
-
-    case CLKSRCSEL_RTC:
-      return RTC_OSC_FREQUENCY;
-
-    default:
-      return 0;
+      else
+        return RTC_OSC_FREQUENCY;
+    }
   }
 }
 /*----------------------------------------------------------------------------*/
