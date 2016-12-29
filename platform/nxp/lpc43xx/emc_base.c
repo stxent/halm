@@ -4,7 +4,40 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
+#include <stddef.h>
+#include <xcore/bits.h>
+#include <halm/irq.h>
 #include <halm/platform/nxp/emc_base.h>
+#include <halm/platform/nxp/emc_defs.h>
+#include <halm/platform/nxp/lpc43xx/clocking.h>
+#include <halm/platform/nxp/lpc43xx/system.h>
+#include <halm/pm.h>
+/*----------------------------------------------------------------------------*/
+struct EmcHandler
+{
+  struct Entity base;
+
+  struct Entity *dm[4];
+  struct Entity *sm[4];
+};
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_EMC_PM
+static enum result powerStateHandler(void *, enum pmState);
+#endif
+/*----------------------------------------------------------------------------*/
+static bool emcHandlerInstantiate(void);
+static void emcSwitchEnabled(bool);
+
+static enum result emcHandlerInit(void *, const void *);
+/*----------------------------------------------------------------------------*/
+static const struct EntityClass handlerTable = {
+    .size = sizeof(struct EmcHandler),
+    .init = emcHandlerInit,
+    .deinit = 0
+};
+/*----------------------------------------------------------------------------*/
+static const struct EntityClass * const EmcHandler = &handlerTable;
 /*----------------------------------------------------------------------------*/
 const struct PinGroupEntry emcAddressPins[] = {
     {
@@ -222,3 +255,155 @@ const pinNumber emcDataPinMap[] = {
     PIN(PORT_E, 5),  PIN(PORT_E, 6),  PIN(PORT_E, 7),  PIN(PORT_E, 8),
     PIN(PORT_E, 9),  PIN(PORT_E, 10), PIN(PORT_E, 11), PIN(PORT_E, 12)
 };
+/*----------------------------------------------------------------------------*/
+static struct EmcHandler *emcHandler = 0;
+/*----------------------------------------------------------------------------*/
+uint32_t emcGetClock(void)
+{
+  return clockFrequency(MainClock);
+}
+/*----------------------------------------------------------------------------*/
+bool emcSetDynamicMemoryDescriptor(uint8_t channel,
+    const struct Entity *current, struct Entity *memory)
+{
+  const irqState state = irqSave();
+  bool completed = false;
+
+  if (emcHandlerInstantiate())
+  {
+    assert(channel < ARRAY_SIZE(emcHandler->dm));
+
+    completed = emcHandler->dm[channel] == current;
+
+    if (completed)
+    {
+      emcHandler->dm[channel] = memory;
+      emcSwitchEnabled(memory != 0);
+    }
+  }
+
+  irqRestore(state);
+  return completed;
+}
+/*----------------------------------------------------------------------------*/
+bool emcSetStaticMemoryDescriptor(uint8_t channel,
+    const struct Entity *current, struct Entity *memory)
+{
+  const irqState state = irqSave();
+  bool completed = false;
+
+  if (emcHandlerInstantiate())
+  {
+    assert(channel < ARRAY_SIZE(emcHandler->sm));
+
+    completed = emcHandler->sm[channel] == current;
+
+    if (completed)
+    {
+      emcHandler->sm[channel] = memory;
+      emcSwitchEnabled(memory != 0);
+    }
+  }
+
+  irqRestore(state);
+  return completed;
+}
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_EMC_PM
+static enum result powerStateHandler(void *object, enum pmState state)
+{
+  struct EmcHandler * const handler = object;
+  enum result res;
+
+  if (state == PM_ACTIVE)
+  {
+    /* Exit low-power mode */
+    LPC_EMC->CONTROL &= ~CONTROL_L;
+  }
+  else
+  {
+    /* Enter low-power mode */
+    LPC_EMC->CONTROL |= CONTROL_L;
+  }
+
+  return E_OK;
+}
+#endif
+/*----------------------------------------------------------------------------*/
+static bool emcHandlerInstantiate(void)
+{
+  const irqState state = irqSave();
+
+  if (!emcHandler)
+    emcHandler = init(EmcHandler, 0);
+
+  irqRestore(state);
+  return emcHandler != 0;
+}
+/*----------------------------------------------------------------------------*/
+static void emcSwitchEnabled(bool state)
+{
+  if (state && !(LPC_EMC->CONTROL & CONTROL_E))
+  {
+    /* Enable clocks to register memory and peripheral */
+    sysClockEnable(CLK_M4_EMC);
+    sysClockEnable(CLK_M4_EMCDIV);
+    /* Reset registers to their default values */
+    sysResetEnable(RST_EMC);
+
+    /* Enable peripheral */
+    LPC_EMC->CONTROL = CONTROL_E;
+  }
+  else if (!state && (LPC_EMC->CONTROL & CONTROL_E))
+  {
+    bool allChannelsDisabled = true;
+
+    for (size_t channel = 0; channel < ARRAY_SIZE(emcHandler->dm); ++channel)
+    {
+      if (emcHandler->dm[channel])
+      {
+        allChannelsDisabled = false;
+        break;
+      }
+    }
+
+    for (size_t channel = 0; channel < ARRAY_SIZE(emcHandler->sm); ++channel)
+    {
+      if (emcHandler->sm[channel])
+      {
+        allChannelsDisabled = false;
+        break;
+      }
+    }
+
+    if (allChannelsDisabled)
+    {
+      /* Disable peripheral */
+      LPC_EMC->CONTROL &= ~CONTROL_E;
+
+      /* Disable clocks */
+      sysClockDisable(CLK_M4_EMCDIV);
+      sysClockDisable(CLK_M4_EMC);
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum result emcHandlerInit(void *object,
+    const void *configBase __attribute__((unused)))
+{
+  struct EmcHandler * const handler = object;
+
+  for (size_t channel = 0; channel < ARRAY_SIZE(handler->dm); ++channel)
+    handler->dm[channel] = 0;
+  for (size_t channel = 0; channel < ARRAY_SIZE(handler->sm); ++channel)
+    handler->sm[channel] = 0;
+
+#ifdef CONFIG_EMC_PM
+  const enum result res = pmRegister(handler, powerStateHandler);
+
+  if (res != E_OK)
+    return res;
+#endif
+
+  return E_OK;
+}

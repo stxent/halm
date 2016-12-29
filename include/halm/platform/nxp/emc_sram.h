@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_NXP_EMC_SRAM_H_
 #define HALM_PLATFORM_NXP_EMC_SRAM_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const EmcSram;
@@ -17,8 +18,23 @@ struct EmcSramConfig
   size_t addressWidth;
   /** Mandatory: data bus width. */
   size_t dataWidth;
-  /** Mandatory: chip select number. */
+
+  struct
+  {
+    /** Mandatory: read cycle time, ns. */
+    uint32_t rc;
+    /** Mandatory: address access time, ns. */
+    uint32_t oe;
+    /** Mandatory: write cycle time, ns. */
+    uint32_t wc;
+    /** Mandatory: write enable time, ns. */
+    uint32_t we;
+  } timings;
+
+  /** Mandatory: channel number. */
   uint8_t channel;
+  /** Optional: use Byte Lane Select signals along with Write Enable signal. */
+  bool partitioned;
 };
 /*----------------------------------------------------------------------------*/
 struct EmcSram
