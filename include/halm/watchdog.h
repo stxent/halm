@@ -19,8 +19,8 @@ struct WatchdogClass
 {
   CLASS_HEADER
 
-  void (*callback)(void *, void (*)(void *), void *);
-  void (*restart)(void *);
+  enum result (*callback)(void *, void (*)(void *), void *);
+  void (*reload)(void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Watchdog
@@ -34,10 +34,10 @@ struct Watchdog
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
-static inline void watchdogCallback(void *timer, void (*callback)(void *),
-    void *argument)
+static inline enum result watchdogCallback(void *timer,
+    void (*callback)(void *), void *argument)
 {
-  ((const struct WatchdogClass *)CLASS(timer))->callback(timer,
+  return ((const struct WatchdogClass *)CLASS(timer))->callback(timer,
       callback, argument);
 }
 /*----------------------------------------------------------------------------*/
@@ -45,9 +45,9 @@ static inline void watchdogCallback(void *timer, void (*callback)(void *),
  * Restart the internal timer.
  * @param timer Pointer to a Watchdog object.
  */
-static inline void watchdogRestart(void *timer)
+static inline void watchdogReload(void *timer)
 {
-  ((const struct WatchdogClass *)CLASS(timer))->restart(timer);
+  ((const struct WatchdogClass *)CLASS(timer))->reload(timer);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_WATCHDOG_H_ */

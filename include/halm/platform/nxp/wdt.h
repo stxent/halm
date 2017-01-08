@@ -18,16 +18,11 @@ struct WdtConfig
   uint32_t period;
   /** Optional: timer clock source. */
   enum wdtClockSource source;
-  /** Optional: interrupt priority. */
-  irqPriority priority;
 };
 /*----------------------------------------------------------------------------*/
 struct Wdt
 {
   struct WdtBase base;
-
-  void (*callback)(void *);
-  void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_WDT_H_ */
