@@ -195,10 +195,17 @@ typedef struct
 typedef struct
 {
   __rw__ uint32_t PCON;
-  __rw__ uint32_t GPREG0;
-  __rw__ uint32_t GPREG1;
-  __rw__ uint32_t GPREG2;
-  __rw__ uint32_t GPREG3;
+  union
+  {
+    __rw__ uint32_t GPREG[4];
+    struct
+    {
+      __rw__ uint32_t GPREG0;
+      __rw__ uint32_t GPREG1;
+      __rw__ uint32_t GPREG2;
+      __rw__ uint32_t GPREG3;
+    };
+  };
   __rw__ uint32_t GPREG4;
 } LPC_PMU_Type;
 /*------------------General Purpose Input/Output------------------------------*/

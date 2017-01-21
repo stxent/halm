@@ -273,7 +273,8 @@ typedef struct
     {
       __ro__ uint32_t CR0;
       __ro__ uint32_t CR1;
-      __ne__ uint32_t RESERVED0[2];
+      __ro__ uint32_t CR2;
+      __ro__ uint32_t CR3;
     };
   };
   __rw__ uint32_t EMR;
@@ -425,11 +426,18 @@ typedef struct
   __rw__ uint32_t CALIBRATION;
 
   /* General purpose registers, offset 0x44 */
-  __rw__ uint32_t GPREG0;
-  __rw__ uint32_t GPREG1;
-  __rw__ uint32_t GPREG2;
-  __rw__ uint32_t GPREG3;
-  __rw__ uint32_t GPREG4;
+  union
+  {
+    __rw__ uint32_t GPREG[5];
+    struct
+    {
+      __rw__ uint32_t GPREG0;
+      __rw__ uint32_t GPREG1;
+      __rw__ uint32_t GPREG2;
+      __rw__ uint32_t GPREG3;
+      __rw__ uint32_t GPREG4;
+    };
+  };
 
   /* Miscellaneous registers, offset 0x5C */
   __rw__ uint32_t RTC_AUXEN;

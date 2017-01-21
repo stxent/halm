@@ -1,0 +1,24 @@
+/*
+ * halm/platform/nxp/lpc13xx/backup_domain.h
+ * Copyright (C) 2017 xent
+ * Project is distributed under the terms of the GNU General Public License v3.0
+ */
+
+#ifndef HALM_PLATFORM_NXP_LPC13XX_BACKUP_DOMAIN_H_
+#define HALM_PLATFORM_NXP_LPC13XX_BACKUP_DOMAIN_H_
+/*----------------------------------------------------------------------------*/
+#include <stddef.h>
+#include <halm/target.h>
+#include <halm/platform/platform_defs.h>
+/*----------------------------------------------------------------------------*/
+static inline void *backupDomainAddress(void)
+{
+  return (void *)LPC_PMU->GPREG;
+}
+/*----------------------------------------------------------------------------*/
+static inline size_t backupDomainSize(void)
+{
+  return sizeof(LPC_PMU->GPREG);
+}
+/*----------------------------------------------------------------------------*/
+#endif /* HALM_PLATFORM_NXP_LPC13XX_BACKUP_DOMAIN_H_ */
