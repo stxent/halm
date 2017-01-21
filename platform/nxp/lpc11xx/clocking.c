@@ -242,9 +242,10 @@ static inline void flashLatencyReset(void)
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
-  const unsigned int clocks = 1 + frequency / 20000000;
+  static const uint32_t frequencyStep = 20000000;
+  const unsigned int clocks = (frequency + (frequencyStep - 1)) / frequencyStep;
 
-  sysFlashLatencyUpdate(clocks <= 3 ? clocks : 3);
+  sysFlashLatency(clocks <= 3 ? clocks : 3);
 }
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *clockBase __attribute__((unused)))
