@@ -10,7 +10,6 @@
 #include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/i2c_defs.h>
 #include <halm/platform/nxp/i2c_slave.h>
-#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 enum state
 {
@@ -33,10 +32,6 @@ enum status
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_I2C_PM
-static enum result powerStateHandler(void *, enum pmState);
-#endif
 /*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *, const void *);
 static void i2cDeinit(void *);
@@ -116,21 +111,6 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_I2C_PM
-static enum result powerStateHandler(void *object, enum pmState state)
-{
-  struct I2cSlave * const interface = object;
-
-  if ((state == PM_SLEEP || state == PM_SUSPEND)
-      && interface->state != STATE_IDLE)
-  {
-    return E_BUSY;
-  }
-
-  return E_OK;
-}
-#endif
-/*----------------------------------------------------------------------------*/
 static enum result i2cInit(void *object, const void *configBase)
 {
   const struct I2cSlaveConfig * const config = configBase;
@@ -164,11 +144,6 @@ static enum result i2cInit(void *object, const void *configBase)
   /* Clear all flags */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
 
-#ifdef CONFIG_I2C_PM
-  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
-    return res;
-#endif
-
   irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);
 
@@ -184,10 +159,6 @@ static void i2cDeinit(void *object)
   LPC_I2C_Type * const reg = interface->base.reg;
 
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
-
-#ifdef CONFIG_I2C_PM
-  pmUnregister(interface);
-#endif
 
   irqDisable(interface->base.irq);
   free(interface->cache);

@@ -10,8 +10,8 @@
 /*----------------------------------------------------------------------------*/
 #define TX_FIFO_SIZE 8
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_UART_PM
-static enum result powerStateHandler(void *, enum pmState);
+#ifdef CONFIG_PLATFORM_NXP_UART_PM
+static void powerStateHandler(void *, enum pmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
@@ -36,23 +36,19 @@ static const struct InterfaceClass serialTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SerialPoll = &serialTable;
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_UART_PM
-static enum result powerStateHandler(void *object, enum pmState state)
+#ifdef CONFIG_PLATFORM_NXP_UART_PM
+static void powerStateHandler(void *object, enum pmState state)
 {
   struct SerialPoll * const interface = object;
-  struct UartRateConfig rateConfig;
-  enum result res;
 
   if (state == PM_ACTIVE)
   {
+    struct UartRateConfig rateConfig;
+
     /* Recalculate and set baud rate */
-    if ((res = uartCalcRate(object, interface->rate, &rateConfig)) != E_OK)
-      return res;
-
-    uartSetRate(object, rateConfig);
+    if (uartCalcRate(object, interface->rate, &rateConfig))
+      uartSetRate(object, rateConfig);
   }
-
-  return E_OK;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -91,8 +87,8 @@ static enum result serialInit(void *object, const void *configBase)
   uartSetParity(object, config->parity);
   uartSetRate(object, rateConfig);
 
-#ifdef CONFIG_UART_PM
-  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
+#ifdef CONFIG_PLATFORM_NXP_UART_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
     return res;
 #endif
 
@@ -101,7 +97,7 @@ static enum result serialInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void serialDeinit(void *object)
 {
-#ifdef CONFIG_UART_PM
+#ifdef CONFIG_PLATFORM_NXP_UART_PM
   pmUnregister(object);
 #endif
 

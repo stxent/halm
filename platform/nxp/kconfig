@@ -103,6 +103,11 @@ config PLATFORM_NXP_CAN_TSEG2
 	default 1
 	depends on PLATFORM_NXP_CAN
 
+config PLATFORM_NXP_CAN_PM
+	bool "Power management for CAN drivers"
+	default n
+	depends on PM && PLATFORM_NXP_CAN
+
 config PLATFORM_NXP_DAC_BASE
 	bool "DAC"
 	default y
@@ -200,7 +205,7 @@ config PLATFORM_NXP_I2C_BASE
 
 config PLATFORM_NXP_I2C_PM
 	bool "Power management for I2C drivers"
-	default y
+	default n
 	depends on PM && PLATFORM_NXP_I2C_BASE
 
 config PLATFORM_NXP_I2C

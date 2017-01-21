@@ -12,7 +12,6 @@
 #include <halm/platform/nxp/emc_defs.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
-#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 struct EmcHandler
 {
@@ -21,10 +20,6 @@ struct EmcHandler
   struct Entity *dm[4];
   struct Entity *sm[4];
 };
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_EMC_PM
-static enum result powerStateHandler(void *, enum pmState);
-#endif
 /*----------------------------------------------------------------------------*/
 static bool emcHandlerInstantiate(void);
 static void emcSwitchEnabled(bool);
@@ -309,27 +304,6 @@ bool emcSetStaticMemoryDescriptor(uint8_t channel,
   return completed;
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_EMC_PM
-static enum result powerStateHandler(void *object, enum pmState state)
-{
-  struct EmcHandler * const handler = object;
-  enum result res;
-
-  if (state == PM_ACTIVE)
-  {
-    /* Exit low-power mode */
-    LPC_EMC->CONTROL &= ~CONTROL_L;
-  }
-  else
-  {
-    /* Enter low-power mode */
-    LPC_EMC->CONTROL |= CONTROL_L;
-  }
-
-  return E_OK;
-}
-#endif
-/*----------------------------------------------------------------------------*/
 static bool emcHandlerInstantiate(void)
 {
   const irqState state = irqSave();
@@ -397,13 +371,6 @@ static enum result emcHandlerInit(void *object,
     handler->dm[channel] = 0;
   for (size_t channel = 0; channel < ARRAY_SIZE(handler->sm); ++channel)
     handler->sm[channel] = 0;
-
-#ifdef CONFIG_EMC_PM
-  const enum result res = pmRegister(handler, powerStateHandler);
-
-  if (res != E_OK)
-    return res;
-#endif
 
   return E_OK;
 }

@@ -13,8 +13,8 @@ static inline uint32_t getMaxValue(const struct GpTimer *);
 static void interruptHandler(void *);
 static void updateFrequency(struct GpTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_GPTIMER_PM
-static enum result powerStateHandler(void *, enum pmState);
+#ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
+static void powerStateHandler(void *, enum pmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
@@ -60,12 +60,13 @@ static void interruptHandler(void *object)
     timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_GPTIMER_PM
-static enum result powerStateHandler(void *object, enum pmState state)
+#ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
+static void powerStateHandler(void *object, enum pmState state)
 {
   struct GpTimer * const timer = object;
 
-  return state == PM_ACTIVE ? updateFrequency(timer, timer->frequency) : E_OK;
+  if (state == PM_ACTIVE)
+    updateFrequency(timer, timer->frequency);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -127,8 +128,8 @@ static enum result tmrInit(void *object, const void *configBase)
   /* Enable external match to generate signals to other peripherals */
   reg->EMR = EMR_CONTROL(timer->event, CONTROL_TOGGLE);
 
-#ifdef CONFIG_GPTIMER_PM
-  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
+#ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
+  if ((res = pmRegister(powerStateHandler, timer)) != E_OK)
     return res;
 #endif
 
@@ -149,8 +150,8 @@ static void tmrDeinit(void *object)
   irqDisable(timer->base.irq);
   reg->TCR = 0;
 
-#ifdef CONFIG_GPTIMER_PM
-  pmUnregister(interface);
+#ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
+  pmUnregister(timer);
 #endif
 
   GpTimerBase->deinit(timer);

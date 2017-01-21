@@ -7,14 +7,15 @@
 #include <xcore/memory.h>
 #include <halm/platform/nxp/spi.h>
 #include <halm/platform/nxp/ssp_defs.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 #define DUMMY_FRAME 0xFF
 #define FIFO_DEPTH  8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SSP_PM
-static enum result powerStateHandler(void *, enum pmState);
+#ifdef CONFIG_PLATFORM_NXP_SSP_PM
+static void powerStateHandler(void *, enum pmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
@@ -89,15 +90,13 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SSP_PM
-static enum result powerStateHandler(void *object, enum pmState state)
+#ifdef CONFIG_PLATFORM_NXP_SSP_PM
+static void powerStateHandler(void *object, enum pmState state)
 {
   struct Spi * const interface = object;
 
   if (state == PM_ACTIVE)
     sspSetRate(object, interface->rate);
-
-  return E_OK;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -143,8 +142,8 @@ static enum result spiInit(void *object, const void *configBase)
   /* Try to set the desired data rate */
   sspSetRate(object, interface->rate);
 
-#ifdef CONFIG_SSP_PM
-  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
+#ifdef CONFIG_PLATFORM_NXP_SSP_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
     return res;
 #endif
 
@@ -166,7 +165,7 @@ static void spiDeinit(void *object)
   irqDisable(interface->base.irq);
   reg->CR1 = 0;
 
-#ifdef CONFIG_SSP_PM
+#ifdef CONFIG_PLATFORM_NXP_SSP_PM
   pmUnregister(interface);
 #endif
 

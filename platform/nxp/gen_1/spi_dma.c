@@ -8,6 +8,7 @@
 #include <halm/platform/nxp/gpdma.h>
 #include <halm/platform/nxp/spi_dma.h>
 #include <halm/platform/nxp/ssp_defs.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 #define DUMMY_FRAME 0xFF
 /*----------------------------------------------------------------------------*/
@@ -17,8 +18,8 @@ static void dmaSetupRx(struct Dma *, struct Dma *);
 static void dmaSetupTx(struct Dma *, struct Dma *);
 static enum result getStatus(const struct SpiDma *);
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SSP_PM
-static enum result powerStateHandler(void *, enum pmState);
+#ifdef CONFIG_PLATFORM_NXP_SSP_PM
+static void powerStateHandler(void *, enum pmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
@@ -157,17 +158,13 @@ static enum result getStatus(const struct SpiDma *interface)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_SSP_PM
-static enum result powerStateHandler(void *object, enum pmState state)
+#ifdef CONFIG_PLATFORM_NXP_SSP_PM
+static void powerStateHandler(void *object, enum pmState state)
 {
   struct SpiDma * const interface = object;
 
   if (state == PM_ACTIVE)
-  {
     sspSetRate(object, interface->rate);
-  }
-
-  return E_OK;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -220,8 +217,8 @@ static enum result spiInit(void *object, const void *configBase)
   /* Try to set the desired data rate */
   sspSetRate(object, interface->rate);
 
-#ifdef CONFIG_SSP_PM
-  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
+#ifdef CONFIG_PLATFORM_NXP_SSP_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
     return res;
 #endif
 
@@ -239,7 +236,7 @@ static void spiDeinit(void *object)
   /* Disable the peripheral */
   reg->CR1 = 0;
 
-#ifdef CONFIG_SSP_PM
+#ifdef CONFIG_PLATFORM_NXP_SSP_PM
   pmUnregister(interface);
 #endif
 

@@ -22,11 +22,13 @@ enum mode
 };
 /*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(struct Can *, uint32_t);
+static void changeMode(struct Can *, enum mode);
+static void changeRate(struct Can *, uint32_t);
 static void interruptHandler(void *);
 static uint32_t sendMessage(struct Can *, const struct CanMessage *, uint32_t);
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_CAN_PM
-static enum result powerStateHandler(void *, enum pmState);
+#ifdef CONFIG_PLATFORM_NXP_CAN_PM
+static void powerStateHandler(void *, enum pmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result canInit(void *, const void *);
@@ -97,6 +99,15 @@ static void changeMode(struct Can *interface, enum mode mode)
 
     reg->MOD = value;
   }
+}
+/*----------------------------------------------------------------------------*/
+static void changeRate(struct Can *interface, uint32_t rate)
+{
+  LPC_CAN_Type * const reg = interface->base.reg;
+
+  reg->MOD |= MOD_RM; /* Enable Reset mode */
+  reg->BTR = calcBusTimings(interface, rate);
+  reg->MOD &= ~MOD_RM;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -233,10 +244,15 @@ static uint32_t sendMessage(struct Can *interface,
   return status & ~SR_TBS(index);
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_CAN_PM
-static enum result powerStateHandler(void *object, enum pmState state)
+#ifdef CONFIG_PLATFORM_NXP_CAN_PM
+static void powerStateHandler(void *object, enum pmState state)
 {
-  return E_OK;
+  if (state == PM_ACTIVE)
+  {
+    struct Can * const interface = object;
+
+    changeRate(interface, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -298,8 +314,8 @@ static enum result canInit(void *object, const void *configBase)
 
   LPC_CANAF->AFMR = AFMR_AccBP; //FIXME
 
-#ifdef CONFIG_CAN_PM
-  if ((res = pmRegister(interface, powerStateHandler)) != E_OK)
+#ifdef CONFIG_PLATFORM_NXP_CAN_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
     return res;
 #endif
 
@@ -319,7 +335,7 @@ static void canDeinit(void *object)
   /* Disable all interrupts */
   reg->IER = 0;
 
-#ifdef CONFIG_CAN_PM
+#ifdef CONFIG_PLATFORM_NXP_CAN_PM
   pmUnregister(interface);
 #endif
 
@@ -365,7 +381,6 @@ static enum result canSet(void *object, enum ifOption option,
     const void *data)
 {
   struct Can * const interface = object;
-  LPC_CAN_Type * const reg = interface->base.reg;
 
   switch ((enum canOption)option)
   {
@@ -391,11 +406,8 @@ static enum result canSet(void *object, enum ifOption option,
     {
       const uint32_t rate = *(const uint32_t *)data;
 
+      changeRate(interface, rate);
       interface->rate = rate;
-
-      reg->MOD |= MOD_RM; /* Enable Reset mode */
-      reg->BTR = calcBusTimings(interface, rate);
-      reg->MOD &= ~MOD_RM;
 
       return E_OK;
     }
