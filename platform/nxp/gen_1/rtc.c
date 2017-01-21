@@ -77,8 +77,8 @@ static enum result clkInit(void *object, const void *configBase)
   reg->ILR = ILR_RTCCIF | ILR_RTCALF;
   reg->AMR = AMR_MASK;
 
-  reg->CIIR = CIIR_MASK;
-  while ((reg->CIIR & CIIR_MASK) != CIIR_MASK);
+  reg->CIIR = 0;
+  while ((reg->CIIR & CIIR_MASK) != 0);
 
   irqSetPriority(clock->base.irq, config->priority);
   irqEnable(clock->base.irq);
