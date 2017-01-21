@@ -504,6 +504,7 @@ static enum result mainClockEnable(const void *clockBase
     if (LPC_SC->PLL0STAT & PLL0STAT_CONNECTED)
       pllDisconnect();
 
+    LPC_SC->CCLKCFG = 0;
     LPC_SC->CLKSRCSEL = source;
   }
   else
