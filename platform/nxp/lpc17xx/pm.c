@@ -8,32 +8,35 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-enum result pmPlatformChangeState(enum pmState);
+void pmPlatformChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/
-enum result pmPlatformChangeState(enum pmState state)
+void pmPlatformChangeState(enum pmState state)
 {
-  uint32_t value = LPC_SC->PCON & ~(PCON_PM_MASK | PCON_SMFLAG | PCON_DSFLAG
-      | PCON_PDFLAG | PCON_DPDFLAG);
+  static const uint32_t mask =
+      ~(PCON_PM_MASK | PCON_SMFLAG | PCON_DSFLAG | PCON_PDFLAG | PCON_DPDFLAG);
+  uint32_t value;
 
   switch (state)
   {
     case PM_SLEEP:
-      value |= PCON_PM(PCON_PM_SLEEP) | PCON_SMFLAG;
+      value = PCON_PM(PCON_PM_SLEEP) | PCON_SMFLAG;
       break;
 
     case PM_SUSPEND:
 #if defined(CONFIG_PLATFORM_NXP_PM_PD)
-      value |= PCON_PM(PCON_PM_SLEEP) | PCON_DSFLAG;
-#elif defined(CONFIG_PLATFORM_NXP_PM_DPD)
-      value |= PCON_PM(PCON_PM_POWERDOWN) | PCON_PDFLAG;
+      value = PCON_PM(PCON_PM_POWERDOWN) | PCON_PDFLAG;
 #else
-      value |= PCON_PM(PCON_PM_DEEP_POWERDOWN) | PCON_DPDFLAG;
+      value = PCON_PM(PCON_PM_SLEEP) | PCON_DSFLAG;
 #endif
+      break;
+
+    case PM_SHUTDOWN:
+      value = PCON_PM(PCON_PM_DEEP_POWERDOWN) | PCON_DPDFLAG;
+      break;
 
     default:
-      return E_OK;
+      return;
   }
 
-  LPC_SC->PCON = value;
-  return E_OK;
+  LPC_SC->PCON = (LPC_SC->PCON & mask) | value;
 }

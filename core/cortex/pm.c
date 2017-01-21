@@ -9,26 +9,22 @@
 #include <halm/core/cortex/pm_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-enum result pmCoreChangeState(enum pmState);
+void pmCoreChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/
-enum result pmCoreChangeState(enum pmState state)
+void pmCoreChangeState(enum pmState state)
 {
-  switch (state)
+  if (state != PM_ACTIVE)
   {
-    case PM_SLEEP:
+    if (state == PM_SLEEP)
+    {
       SCB->SCR &= ~SCR_SLEEPDEEP;
-      break;
-
-    case PM_SUSPEND:
+    }
+    else
+    {
       SCB->SCR |= SCR_SLEEPDEEP;
-      break;
+    }
 
-    default:
-      return E_OK;
+    __dsb();
+    __wfi();
   }
-
-  __dsb();
-  __wfi();
-
-  return E_OK;
 }

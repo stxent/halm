@@ -54,15 +54,10 @@ choice
 
 	config PLATFORM_NXP_PM_DEEPSLEEP
 		bool "Deep Sleep"
-		depends on FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
 
 	config PLATFORM_NXP_PM_PD
 		bool "Power-down"
 		depends on FAMILY_LPC11EXX || FAMILY_LPC17XX || FAMILY_LPC43XX
-
-	config PLATFORM_NXP_PM_DPD
-		bool "Deep Power-down"
-		depends on FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
 endchoice
 
 endmenu

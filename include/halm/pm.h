@@ -21,18 +21,23 @@ enum pmState
   /** Normal operational mode. */
   PM_ACTIVE,
   /**
-   * Lower power consumption mode. The system is able to resume normal
-   * mode almost immediately.
+   * Low power mode with a slightly lower power consumption than active mode.
+   * The system is able to resume normal mode almost immediately.
    */
   PM_SLEEP,
   /**
-   * The lowest power consumption mode. Resuming from this mode takes longer
-   * time and may require additional hardware features.
+   * Lower power consumption mode. Logic states and system memory are
+   * maintained. Resuming from this mode takes longer time and may require
+   * additional hardware features.
    */
-  PM_SUSPEND
+  PM_SUSPEND,
+  /**
+   * The lowest power consumption mode. The logic state of the entire system
+   * with the exception of backup domain is lost. Resuming from this mode
+   * requires complete reinitialization of hardware.
+   */
+  PM_SHUTDOWN
 };
-/*----------------------------------------------------------------------------*/
-typedef enum result (*PmCallback)(void *, enum pmState);
 /*----------------------------------------------------------------------------*/
 /**
  * Change the system state.
@@ -41,10 +46,9 @@ typedef enum result (*PmCallback)(void *, enum pmState);
  * @b pmPlatformChangeState for platform-dependent code.
  * When the low power mode is selected, function returns after resuming from
  * that mode to the active state.
- * @param state Next system state.
- * @return @b E_OK on success or error otherwise.
+ * @param state Requested low-power state.
  */
-enum result pmChangeState(enum pmState state);
+void pmChangeState(enum pmState state);
 /*----------------------------------------------------------------------------*/
 /**
  * Register a callback function.
@@ -52,7 +56,7 @@ enum result pmChangeState(enum pmState state);
  * @param callback Callback function.
  * @return @b E_OK on success.
  */
-enum result pmRegister(void *object, PmCallback callback);
+enum result pmRegister(void (*)(void *, enum pmState), void *object);
 /*----------------------------------------------------------------------------*/
 /**
  * Unregister the callback function.

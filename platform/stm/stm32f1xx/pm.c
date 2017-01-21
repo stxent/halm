@@ -9,9 +9,9 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-enum result pmPlatformChangeState(enum pmState);
+void pmPlatformChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/
-enum result pmPlatformChangeState(enum pmState state)
+void pmPlatformChangeState(enum pmState state)
 {
   uint32_t value = (STM_PWR->CR & ~(PWR_CR_LPDS | PWR_CR_PDDS)) | PWR_CR_CWUF;
 
@@ -21,17 +21,16 @@ enum result pmPlatformChangeState(enum pmState state)
       break;
 
     case PM_SUSPEND:
-#ifdef CONFIG_PLATFORM_STM_PM_STOP
       value |= PWR_CR_LPDS;
-#else
+      break;
+
+    case PM_SHUTDOWN:
       value |= PWR_CR_PDDS | PWR_CR_CSBF;
-#endif
       break;
 
     default:
-      return E_OK;
+      return;
   }
 
   STM_PWR->CR = value;
-  return E_OK;
 }

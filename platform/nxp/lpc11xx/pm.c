@@ -9,33 +9,34 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-enum result pmPlatformChangeState(enum pmState);
+void pmPlatformChangeState(enum pmState);
 /*----------------------------------------------------------------------------*/
-enum result pmPlatformChangeState(enum pmState state)
+void pmPlatformChangeState(enum pmState state)
 {
-  uint32_t value = LPC_PMU->PCON & ~(PCON_SLEEPFLAG | PCON_DPDFLAG);
+  static const uint32_t mask = ~(PCON_SLEEPFLAG | PCON_DPDFLAG | PCON_DPDEN);
+  uint32_t value;
 
   switch (state)
   {
     case PM_SLEEP:
-      value = (value & ~PCON_DPDEN) | PCON_SLEEPFLAG;
+      value = PCON_SLEEPFLAG;
       break;
 
     case PM_SUSPEND:
-#ifdef CONFIG_PLATFORM_NXP_PM_DPD
-      value |= PCON_DPDEN | PCON_SLEEPFLAG | PCON_DPDFLAG;
-#else
       value = (value & ~PCON_DPDEN) | PCON_SLEEPFLAG;
       LPC_SYSCON->PDAWAKECFG = LPC_SYSCON->PDRUNCFG;
-#endif
+      break;
+
+    case PM_SHUTDOWN:
+      value = PCON_DPDEN | PCON_SLEEPFLAG | PCON_DPDFLAG;
       break;
 
     default:
-      return E_OK;
+      return;
   }
-  LPC_PMU->PCON = value;
 
-#ifndef CONFIG_PLATFORM_NXP_PM_DPD
+  LPC_PMU->PCON = (LPC_PMU->PCON & mask) | value;
+
   if (state == PM_SUSPEND)
   {
     /* Prepare magic number */
@@ -48,7 +49,4 @@ enum result pmPlatformChangeState(enum pmState state)
 
     LPC_SYSCON->PDSLEEPCFG = config;
   }
-#endif
-
-  return E_OK;
 }

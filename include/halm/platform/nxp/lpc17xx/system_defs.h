@@ -15,8 +15,11 @@
 #define PCON_PM_SLEEP                   0
 #define PCON_PM_POWERDOWN               1
 #define PCON_PM_DEEP_POWERDOWN          3
-#define PCON_PM_MASK                    BIT_FIELD(MASK(4), 0)
+#define PCON_PM_MASK                    BIT_FIELD(MASK(2), 0)
 #define PCON_PM(value)                  BIT_FIELD((value), 0)
+#define PCON_BODRPM                     BIT(2)
+#define PCON_BOGD                       BIT(3)
+#define PCON_BORD                       BIT(4)
 #define PCON_SMFLAG                     BIT(8)
 #define PCON_DSFLAG                     BIT(9)
 #define PCON_PDFLAG                     BIT(10)
