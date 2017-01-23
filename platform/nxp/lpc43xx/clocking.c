@@ -669,15 +669,15 @@ static enum result commonDividerEnable(const void *clockBase,
   const struct CommonDividerConfig * const config = configBase;
   volatile uint32_t * const reg = calcDividerReg(clock->channel);
 
-  assert(config->value);
-  assert(clock->channel != CLOCK_IDIVA || config->value <= 4);
-  assert(clock->channel != CLOCK_IDIVE || config->value <= 256);
-  assert((clock->channel == CLOCK_IDIVA || clock->channel == CLOCK_IDIVE)
-      || config->value <= 16);
+  assert(config->divisor);
+  assert(clock->channel != CLOCK_IDIVA || config->divisor <= 4);
+  assert(clock->channel != CLOCK_IDIVE || config->divisor <= 256);
+  assert(clock->channel == CLOCK_IDIVA || clock->channel == CLOCK_IDIVE
+      || config->divisor <= 16);
 
   *reg |= IDIV_AUTOBLOCK;
   *reg = (*reg & ~(IDIV_DIVIDER_MASK | IDIV_CLK_SEL_MASK))
-      | IDIV_DIVIDER(config->value - 1) | IDIV_CLK_SEL(config->source);
+      | IDIV_DIVIDER(config->divisor - 1) | IDIV_CLK_SEL(config->source);
   *reg &= ~IDIV_PD;
 
   return E_OK;

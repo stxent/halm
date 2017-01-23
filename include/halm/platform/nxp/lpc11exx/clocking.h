@@ -68,10 +68,10 @@ struct ClockOutputConfig
 {
   /** Mandatory: clock source. */
   enum clockSource source;
+  /** Optional: input clock divisor in the range of 1 to 255. */
+  uint16_t divisor;
   /** Mandatory: output pin. */
   pinNumber pin;
-  /** Optional: input clock divisor in the range of 1 to 255. */
-  uint8_t divisor;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig
@@ -79,7 +79,7 @@ struct CommonClockConfig
   /** Mandatory: clock source. */
   enum clockSource source;
   /** Optional: input clock divisor in the range of 1 to 255. */
-  uint8_t divisor;
+  uint16_t divisor;
 };
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
@@ -106,16 +106,16 @@ struct PllConfig
    */
   enum clockSource source;
   /**
+   * Mandatory: PLL output divisor. The output divisor may be set
+   * to divide by 2, 4, 8, 16.
+   */
+  uint16_t divisor;
+  /**
    * Mandatory: input clock multiplier, result should be in the range of
    * 156 MHz to 320 MHz. Multiplier range is 1 to 32. Note that the input
    * frequency range is 10 to 25 MHz.
    */
   uint16_t multiplier;
-  /**
-   * Mandatory: PLL output divisor. The output divisor may be set
-   * to divide by 2, 4, 8, 16.
-   */
-  uint8_t divisor;
 };
 /*----------------------------------------------------------------------------*/
 struct WdtOscConfig

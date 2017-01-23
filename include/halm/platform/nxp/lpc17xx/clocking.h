@@ -38,10 +38,10 @@ struct ClockOutputConfig
 {
   /** Mandatory: clock source. */
   enum clockSource source;
+  /** Optional: input clock divisor in the range of 1 to 16. */
+  uint16_t divisor;
   /** Mandatory: output pin. */
   pinNumber pin;
-  /** Optional: input clock divisor in the range of 1 to 16. */
-  uint8_t divisor;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig
@@ -77,6 +77,12 @@ struct PllConfig
    */
   enum clockSource source;
   /**
+   * Mandatory: PLL output divisor.
+   * @n System PLL accepts values in the range of 1 to 32.
+   * @n USB PLL accepts a limited set of values: 2, 4, 8, 16.
+   */
+  uint16_t divisor;
+  /**
    * Mandatory: input clock multiplier.
    * @n Oscillator of the System PLL operates in the range of 275 MHz
    * to 550 MHz, multiplier range is 6 to 512. Input frequency range is
@@ -86,12 +92,6 @@ struct PllConfig
    * Input frequency range is 10 MHz to 25 MHz.
    */
   uint16_t multiplier;
-  /**
-   * Mandatory: PLL output divisor.
-   * @n System PLL accepts values in the range of 1 to 32.
-   * @n USB PLL accepts a limited set of values: 2, 4, 8, 16.
-   */
-  uint8_t divisor;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_CLOCKING_H_ */

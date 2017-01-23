@@ -5,7 +5,6 @@ PROJECT := halm
 PROJECT_DIR := $(shell pwd)
 
 CONFIG_FILE ?= .config
-CROSS_COMPILE ?= arm-none-eabi-
 
 -include $(CONFIG_FILE)
 BUILD_FLAGS += CORE CORE_TYPE PLATFORM PLATFORM_TYPE
@@ -26,6 +25,7 @@ $(foreach entry,$(BUILD_FLAGS),$(eval $(call process-flag,$(entry))))
 
 #Process build flags
 ifeq ($(CORE_TYPE),cortex)
+  CROSS_COMPILE ?= arm-none-eabi-
   AR := $(CROSS_COMPILE)ar
   CC := $(CROSS_COMPILE)gcc
   CPU_FLAGS += -mcpu=cortex-$(CORE) -mthumb

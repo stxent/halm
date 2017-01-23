@@ -137,7 +137,7 @@ struct CommonDividerConfig
    * @n Divider values for Dividers B, C, D should be in the range of 1 to 16.
    * @n The divider value for the Divider E should be in the range of 1 to 256.
    */
-  uint16_t value;
+  uint16_t divisor;
 };
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
@@ -159,16 +159,16 @@ struct PllConfig
   /** Mandatory: clock source. */
   enum clockSource source;
   /**
+   * Mandatory: PLL output divisor. The output divisor may be set to divide
+   * by 1, 2, 3, 4, 6, 8, 12, 16, 24, 32.
+   */
+  uint16_t divisor;
+  /**
    * Mandatory: input clock multiplier, result should be in the range of
    * 156 MHz to 320 MHz. Multiplier range is 1 to 256. Note that the input
    * frequency range is 1 to 50 MHz.
    */
   uint16_t multiplier;
-  /**
-   * Mandatory: PLL output divisor. The output divisor may be set to divide
-   * by 1, 2, 3, 4, 6, 8, 12, 16, 24, 32.
-   */
-  uint8_t divisor;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_ */
