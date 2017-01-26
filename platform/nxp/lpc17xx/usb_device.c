@@ -61,26 +61,26 @@ static enum result epReadData(struct UsbSieEndpoint *, uint8_t *,
 static enum result epWriteData(struct UsbSieEndpoint *, const uint8_t *,
     size_t);
 /*----------------------------------------------------------------------------*/
-static enum result epInit(void *, const void *);
-static void epDeinit(void *);
-static void epClear(void *);
-static void epDisable(void *);
-static void epEnable(void *, uint8_t, uint16_t);
-static enum result epEnqueue(void *, struct UsbRequest *);
-static bool epIsStalled(void *);
-static void epSetStalled(void *, bool);
+static enum result sieEpInit(void *, const void *);
+static void sieEpDeinit(void *);
+static void sieEpClear(void *);
+static void sieEpDisable(void *);
+static void sieEpEnable(void *, uint8_t, uint16_t);
+static enum result sieEpEnqueue(void *, struct UsbRequest *);
+static bool sieEpIsStalled(void *);
+static void sieEpSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct UsbEndpointClass epTable = {
     .size = sizeof(struct UsbSieEndpoint),
-    .init = epInit,
-    .deinit = epDeinit,
+    .init = sieEpInit,
+    .deinit = sieEpDeinit,
 
-    .clear = epClear,
-    .disable = epDisable,
-    .enable = epEnable,
-    .enqueue = epEnqueue,
-    .isStalled = epIsStalled,
-    .setStalled = epSetStalled
+    .clear = sieEpClear,
+    .disable = sieEpDisable,
+    .enable = sieEpEnable,
+    .enqueue = sieEpEnqueue,
+    .isStalled = sieEpIsStalled,
+    .setStalled = sieEpSetStalled
 };
 /*----------------------------------------------------------------------------*/
 const struct UsbEndpointClass * const UsbSieEndpoint = &epTable;
@@ -494,7 +494,7 @@ static enum result epWriteData(struct UsbSieEndpoint *endpoint,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result epInit(void *object, const void *configBase)
+static enum result sieEpInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbDevice * const device = config->parent;
@@ -512,14 +512,14 @@ static enum result epInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void epDeinit(void *object)
+static void sieEpDeinit(void *object)
 {
   struct UsbSieEndpoint * const endpoint = object;
   struct UsbDevice * const device = endpoint->device;
 
   /* Disable interrupts and remove pending requests */
-  epDisable(endpoint);
-  epClear(endpoint);
+  sieEpDisable(endpoint);
+  sieEpClear(endpoint);
 
   const unsigned int index = EP_TO_INDEX(endpoint->address);
 
@@ -531,7 +531,7 @@ static void epDeinit(void *object)
   queueDeinit(&endpoint->requests);
 }
 /*----------------------------------------------------------------------------*/
-static void epClear(void *object)
+static void sieEpClear(void *object)
 {
   struct UsbSieEndpoint * const endpoint = object;
   struct UsbRequest *request;
@@ -544,7 +544,7 @@ static void epClear(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void epDisable(void *object)
+static void sieEpDisable(void *object)
 {
   struct UsbSieEndpoint * const endpoint = object;
   LPC_USB_Type * const reg = endpoint->device->base.reg;
@@ -557,7 +557,7 @@ static void epDisable(void *object)
       SET_ENDPOINT_STATUS_DA);
 }
 /*----------------------------------------------------------------------------*/
-static void epEnable(void *object, uint8_t type __attribute__((unused)),
+static void sieEpEnable(void *object, uint8_t type __attribute__((unused)),
     uint16_t size)
 {
   struct UsbSieEndpoint * const endpoint = object;
@@ -578,7 +578,7 @@ static void epEnable(void *object, uint8_t type __attribute__((unused)),
   usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result epEnqueue(void *object, struct UsbRequest *request)
+static enum result sieEpEnqueue(void *object, struct UsbRequest *request)
 {
   assert(request->callback);
 
@@ -627,7 +627,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static bool epIsStalled(void *object)
+static bool sieEpIsStalled(void *object)
 {
   struct UsbSieEndpoint * const endpoint = object;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
@@ -637,7 +637,7 @@ static bool epIsStalled(void *object)
   return (status & SELECT_ENDPOINT_ST) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void epSetStalled(void *object, bool stalled)
+static void sieEpSetStalled(void *object, bool stalled)
 {
   struct UsbSieEndpoint * const endpoint = object;
   const unsigned int index = EP_TO_INDEX(endpoint->address);
