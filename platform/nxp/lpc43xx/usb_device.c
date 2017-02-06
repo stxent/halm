@@ -8,9 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <xcore/memory.h>
+#include <halm/platform/nxp/lpc43xx/usb_base.h>
 #include <halm/platform/nxp/lpc43xx/usb_defs.h>
 #include <halm/platform/nxp/usb_device.h>
-#include <halm/usb/usb.h>
+#include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 /*----------------------------------------------------------------------------*/
@@ -22,6 +23,29 @@ enum endpointStatus
   STATUS_DATA_PACKET,
   STATUS_SETUP_PACKET,
   STATUS_ERROR
+};
+/*----------------------------------------------------------------------------*/
+struct UsbDmaEndpoint
+{
+  struct UsbEndpoint base;
+
+  /* Parent device */
+  struct UsbDevice *device;
+  /* Logical address */
+  uint8_t address;
+};
+
+struct UsbDevice
+{
+  struct UsbBase base;
+
+  /* Array of logical endpoints */
+  struct UsbEndpoint **endpoints;
+  /* Control message handler */
+  struct UsbControl *control;
+
+  /* Device is suspended */
+  bool suspended;
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
@@ -508,7 +532,7 @@ static struct TransferDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *ep,
   descriptor->token = TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE) | TD_TOKEN_IOC
       | TD_TOKEN_TOTAL_BYTES(length);
 
-  /* Store pointer to USB Request structure in reserved field */
+  /* Store pointer to the USB Request structure in reserved field */
   descriptor->listNode = (uint32_t)node;
 
   const uint32_t basePage = (uint32_t)buffer & 0xFFFFF000;

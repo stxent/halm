@@ -336,6 +336,12 @@ config PLATFORM_USB
 	bool "USB"
 	default y
 	depends on FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
+	select PLATFORM_USB_DMA if FAMILY_LPC43XX
+
+config PLATFORM_USB_DMA
+	bool "USB DMA"
+	default y
+	depends on PLATFORM_USB && (FAMILY_LPC17XX || FAMILY_LPC43XX)
 
 config PLATFORM_USB_HS
 	bool "USB HS"
@@ -349,11 +355,15 @@ config PLATFORM_USB_DEVICE
 	default y
 	depends on PLATFORM_USB
 
-config USB_DEVICE_ENDPOINT_REQUESTS
+config PLATFORM_USB_DEVICE_EP_REQUESTS
 	int "Endpoint queue size"
-	default 4 if FAMILY_LPC13XX || FAMILY_LPC17XX
-	default 12 if FAMILY_LPC43XX
-	depends on PLATFORM_USB_DEVICE
+	default 4
+	depends on PLATFORM_USB_DEVICE && (FAMILY_LPC13XX || FAMILY_LPC17XX)
+
+config PLATFORM_USB_DEVICE_POOL_SIZE
+	int "Descriptor pool size"
+	default 12
+	depends on PLATFORM_USB_DEVICE && PLATFORM_USB_DMA
 
 config PLATFORM_NXP_WAKEUP_INTERRUPT
 	bool "Wake-up interrupts"

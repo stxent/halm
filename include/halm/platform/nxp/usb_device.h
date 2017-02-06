@@ -7,13 +7,12 @@
 #ifndef HALM_PLATFORM_NXP_USB_DEVICE_H_
 #define HALM_PLATFORM_NXP_USB_DEVICE_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/usb/usb.h>
-#include <halm/usb/usb_control.h>
+#include <halm/irq.h>
+#include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/usb_device.h>
-#include HEADER_PATH
-#undef HEADER_PATH
+extern const struct UsbDeviceClass * const UsbDevice;
+/*----------------------------------------------------------------------------*/
+struct UsbDevice;
 /*----------------------------------------------------------------------------*/
 struct UsbDeviceConfig
 {

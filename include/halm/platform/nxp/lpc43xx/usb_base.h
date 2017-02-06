@@ -39,12 +39,13 @@ struct UsbBase
   void (*handler)(void *);
   irqNumber irq;
 
-  /* Pointer to an aligned array with Queue Head descriptors */
+  /* Pointer to an aligned array of Queue Head descriptors */
   struct QueueHead *queueHeads;
-  /* Transfer descriptor pool memory */
+  /* Memory allocated for Transfer descriptors */
   struct TransferDescriptor *poolMemory;
   /* Transfer descriptor pool */
   struct Queue descriptorPool;
+
   /* Unique peripheral identifier */
   uint8_t channel;
   /* Number of logical endpoints */

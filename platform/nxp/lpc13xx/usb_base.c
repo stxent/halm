@@ -55,7 +55,7 @@ static void configPins(struct UsbBase *device,
       config->dm, config->dp, config->connect, config->vbus
   };
 
-  for (unsigned int index = 0; index < ARRAY_SIZE(pinArray); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {

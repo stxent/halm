@@ -13,7 +13,7 @@
 #include <halm/platform/nxp/lpc43xx/usb_base.h>
 #include <halm/platform/nxp/lpc43xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
-#define ENDPOINT_REQUESTS     CONFIG_USB_DEVICE_ENDPOINT_REQUESTS
+#define ENDPOINT_REQUESTS     CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
 #define USB0_ENDPOINT_NUMBER  12
 #define USB1_ENDPOINT_NUMBER  8
 /*----------------------------------------------------------------------------*/
@@ -117,7 +117,7 @@ static void configPins(struct UsbBase *device,
       config->dm, config->dp, config->connect, config->vbus
   };
 
-  for (unsigned int index = 0; index < ARRAY_SIZE(pinArray); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {
@@ -209,7 +209,7 @@ static enum result devInit(void *object, const void *configBase)
   if (!device->poolMemory)
     return E_MEMORY;
 
-  for (unsigned int index = 0; index < ENDPOINT_REQUESTS; ++index)
+  for (size_t index = 0; index < ENDPOINT_REQUESTS; ++index)
   {
     struct TransferDescriptor * const entry = device->poolMemory + index;
     queuePush(&device->descriptorPool, &entry);

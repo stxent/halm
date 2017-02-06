@@ -8,11 +8,37 @@
 #include <string.h>
 #include <xcore/memory.h>
 #include <halm/delay.h>
+#include <halm/platform/nxp/lpc13xx/usb_base.h>
 #include <halm/platform/nxp/lpc13xx/usb_defs.h>
 #include <halm/platform/nxp/usb_device.h>
-#include <halm/usb/usb.h>
+#include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
+/*----------------------------------------------------------------------------*/
+struct UsbSieEndpoint
+{
+  struct UsbEndpoint base;
+
+  /* Parent device */
+  struct UsbDevice *device;
+  /* Queued requests */
+  struct Queue requests;
+  /* Logical address */
+  uint8_t address;
+};
+
+struct UsbDevice
+{
+  struct UsbBase base;
+
+  /* Array of registered endpoints */
+  struct UsbEndpoint *endpoints[10];
+  /* Control message handler */
+  struct UsbControl *control;
+
+  /* Device is configured */
+  bool configured;
+};
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
@@ -502,7 +528,7 @@ static enum result epInit(void *object, const void *configBase)
   enum result res;
 
   res = queueInit(&endpoint->requests, sizeof(struct UsbRequest *),
-      CONFIG_USB_DEVICE_ENDPOINT_REQUESTS);
+      CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS);
   if (res != E_OK)
     return res;
 
@@ -596,7 +622,8 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 
   if (endpoint->address & USB_EP_DIRECTION_IN)
   {
-    if (!(status & SELECT_ENDPOINT_FE) && queueEmpty(&endpoint->requests))
+    if (!(status & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST))
+        && queueEmpty(&endpoint->requests))
     {
       if (epWriteData(endpoint, request->buffer, request->length) != E_OK)
         res = E_INTERFACE;
@@ -639,10 +666,7 @@ static void epSetStalled(void *object, bool stalled)
   usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index,
       stalled ? SET_ENDPOINT_STATUS_ST : 0);
 
-  /*
-   * The buffer is flushed when the endpoint is unstalled. Pending IN request
-   * should be rewritten to the buffer.
-   */
+  /* Write pending IN request */
   if (!stalled && (endpoint->address & USB_EP_DIRECTION_IN)
       && !queueEmpty(&endpoint->requests))
   {
