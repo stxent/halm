@@ -348,7 +348,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   assert(index < device->base.numberOfEndpoints);
 
-  struct UsbEndpoint *endpoint = 0;
+  struct UsbEndpoint *ep = 0;
   const irqState state = irqSave();
 
   if (!device->endpoints[index])
@@ -360,10 +360,10 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
     device->endpoints[index] = init(UsbDmaEndpoint, &config);
   }
-  endpoint = device->endpoints[index];
+  ep = device->endpoints[index];
 
   irqRestore(state);
-  return endpoint;
+  return ep;
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t devGetInterface(const void *object __attribute__((unused)))
@@ -765,25 +765,25 @@ static enum result epInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbDevice * const device = config->parent;
-  struct UsbDmaEndpoint * const endpoint = object;
+  struct UsbDmaEndpoint * const ep = object;
 
-  endpoint->address = config->address;
-  endpoint->device = device;
+  ep->address = config->address;
+  ep->device = device;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void epDeinit(void *object)
 {
-  struct UsbDmaEndpoint * const endpoint = object;
-  struct UsbDevice * const device = endpoint->device;
+  struct UsbDmaEndpoint * const ep = object;
+  struct UsbDevice * const device = ep->device;
 
   /* Disable interrupts and remove pending requests */
-  epDisable(endpoint);
-  epClear(endpoint);
+  epDisable(ep);
+  epClear(ep);
 
   /* Protect endpoint array from simultaneous access */
-  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(endpoint->address);
+  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
 
   const irqState state = irqSave();
   device->endpoints[index] = 0;
@@ -792,12 +792,12 @@ static void epDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static void epClear(void *object)
 {
-  struct UsbDmaEndpoint * const endpoint = object;
+  struct UsbDmaEndpoint * const ep = object;
 
-  epFlush(endpoint);
+  epFlush(ep);
 
-  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(endpoint->address);
-  struct QueueHead * const head = &endpoint->device->base.queueHeads[index];
+  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
+  struct QueueHead * const head = &ep->device->base.queueHeads[index];
 
   while (head->listHead != TD_NEXT_TERMINATE)
   {
@@ -806,27 +806,27 @@ static void epClear(void *object)
     request->callback(request->callbackArgument, request,
         USB_REQUEST_CANCELLED);
 
-    epPopDescriptor(endpoint);
+    epPopDescriptor(ep);
   }
 }
 /*----------------------------------------------------------------------------*/
 static void epDisable(void *object)
 {
-  struct UsbDmaEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int number = USB_EP_LOGICAL_ADDRESS(endpoint->address);
+  struct UsbDmaEndpoint * const ep = object;
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
-  reg->ENDPTCTRL[number] &= endpoint->address & 0x80 ?
+  reg->ENDPTCTRL[number] &= ep->address & 0x80 ?
       ~ENDPTCTRL_TXE : ~ENDPTCTRL_RXE;
 }
 /*----------------------------------------------------------------------------*/
 static void epEnable(void *object, uint8_t type, uint16_t size)
 {
-  struct UsbDmaEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(endpoint->address);
-  const unsigned int number = USB_EP_LOGICAL_ADDRESS(endpoint->address);
-  struct QueueHead * const head = &endpoint->device->base.queueHeads[index];
+  struct UsbDmaEndpoint * const ep = object;
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  struct QueueHead * const head = &ep->device->base.queueHeads[index];
 
   //TODO Different sequence for Control and Common endpoints
   /* Set endpoint type */
@@ -841,7 +841,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   }
 
   /* Setup endpoint control register */
-  const bool tx = (endpoint->address & 0x80) != 0;
+  const bool tx = (ep->address & 0x80) != 0;
   uint32_t controlValue = reg->ENDPTCTRL[number];
 
   if (tx)
@@ -860,7 +860,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   reg->ENDPTCTRL[number] |= tx ? ENDPTCTRL_TXE : ENDPTCTRL_RXE;
 
   /* Flush endpoint descriptors */
-  epFlush(endpoint);
+  epFlush(ep);
 
   /* Reset data toggles */
   reg->ENDPTCTRL[number] |= tx ? ENDPTCTRL_TXR : ENDPTCTRL_RXR;
@@ -870,15 +870,15 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 {
   assert(request->callback);
 
-  struct UsbDmaEndpoint * const endpoint = object;
+  struct UsbDmaEndpoint * const ep = object;
   enum result res;
 
   const irqState state = irqSave();
 
-  if (endpoint->address & USB_EP_DIRECTION_IN)
-    res = epEnqueueTx(endpoint, request);
+  if (ep->address & USB_EP_DIRECTION_IN)
+    res = epEnqueueTx(ep, request);
   else
-    res = epEnqueueRx(endpoint, request);
+    res = epEnqueueRx(ep, request);
 
   irqRestore(state);
   return res;
@@ -886,23 +886,21 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
 /*----------------------------------------------------------------------------*/
 static bool epIsStalled(void *object)
 {
-  const struct UsbDmaEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int number = USB_EP_LOGICAL_ADDRESS(endpoint->address);
-
-  const uint32_t stallMask = endpoint->address & 0x80 ?
-      ENDPTCTRL_TXS : ENDPTCTRL_RXS;
+  const struct UsbDmaEndpoint * const ep = object;
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  const uint32_t stallMask = ep->address & 0x80 ? ENDPTCTRL_TXS : ENDPTCTRL_RXS;
 
   return (reg->ENDPTCTRL[number] & stallMask) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void epSetStalled(void *object, bool stalled)
 {
-  struct UsbDmaEndpoint * const endpoint = object;
-  LPC_USB_Type * const reg = endpoint->device->base.reg;
-  const unsigned int number = USB_EP_LOGICAL_ADDRESS(endpoint->address);
+  struct UsbDmaEndpoint * const ep = object;
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
-  const bool tx = (endpoint->address & 0x80) != 0;
+  const bool tx = (ep->address & 0x80) != 0;
   const uint32_t stallMask = tx ? ENDPTCTRL_TXS : ENDPTCTRL_RXS;
 
   if (stalled)
