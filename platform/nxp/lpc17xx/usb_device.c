@@ -315,10 +315,13 @@ static void resetDevice(struct UsbDevice *device)
   reg->USBEpIntEn = 0;
   reg->USBEpIntClr = 0xFFFFFFFF;
   reg->USBEpIntPri = 0;
-
-  reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW;
+  /* Clear DMA interrupts */
+  reg->USBEpDMADis = 0xFFFFFFFF;
   reg->USBDMARClr = 0xFFFFFFFF;
-  reg->USBDMAIntEn = 0x01; //FIXME
+  reg->USBEoTIntClr = 0xFFFFFFFF;
+
+  reg->USBDMAIntEn = USBDMAIntEn_EOT;
+  reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW;
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)
@@ -842,7 +845,6 @@ static void dmaEpHandler(struct UsbDmaEndpoint *ep)
   struct DmaDescriptorPool * const pool = ep->device->pool;
   const unsigned int index = EP_TO_INDEX(ep->address);
 
-  //TODO Rewrite
   while (ep->head && (ep->head->status & DD_STATUS_RETIRED))
   {
     struct UsbRequest * const request =
@@ -885,14 +887,16 @@ static void dmaEpHandler(struct UsbDmaEndpoint *ep)
         LPC_USB_Type * const reg = ep->device->base.reg;
         const uint32_t mask = 1UL << index;
 
-        ep->tail = 0;
         pool->heads[index] = 0;
-        reg->USBEpDMADis = mask; //FIXME Does not affect
+        ep->tail = 0;
+
+        reg->USBEpDMADis = mask;
         reg->USBDMARClr = mask;
       }
     }
     else
     {
+      /* Preserve current descriptor as a mock descriptor */
       ep->head->request = 0;
     }
 
@@ -923,7 +927,9 @@ static struct DmaDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *ep,
         | DD_CONTROL_DMA_BUFFER_LENGTH(1);
   }
   else
+  {
     descriptor->control |= DD_CONTROL_DMA_BUFFER_LENGTH(length);
+  }
 
   descriptor->buffer = (uint32_t)buffer;
   descriptor->status = 0;
@@ -951,59 +957,22 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
     ep->tail->next = (uint32_t)descriptor;
     ep->tail->control |= DD_CONTROL_NEXT_DD_VALID;
     ep->tail = descriptor;
-
-    if (!(reg->USBEpDMASt & mask))
-    {
-      //TODO Remove copy-paste
-      const uint8_t status = usbCommandRead(ep->device,
-          USB_CMD_SELECT_ENDPOINT | index);
-      bool restart = false;
-
-      if (ep->address & USB_EP_DIRECTION_IN)
-      {
-        if (!(status & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST)))
-          restart = true;
-      }
-      else
-      {
-        if (status & SELECT_ENDPOINT_FE)
-          restart = true;
-      }
-
-      if (restart)
-        reg->USBDMARSet = mask; /* Initiate a transfer */
-
-      reg->USBEpDMAEn = mask; /* Enable DMA operation */
-    }
   }
   else
   {
     pool->heads[index] = descriptor;
     ep->head = ep->tail = descriptor;
+  }
 
-    const uint8_t status = usbCommandRead(ep->device,
-        USB_CMD_SELECT_ENDPOINT | index);
-    bool restart = false;
-    bool st = true;
+  const uint8_t status = usbCommandRead(ep->device,
+      USB_CMD_SELECT_ENDPOINT | index);
 
-    if (ep->address & USB_EP_DIRECTION_IN)
-    {
-      if (!(status & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST)))
-        restart = true;
-      if (status & SELECT_ENDPOINT_ST)
-        st = false;
-    }
-    else
-    {
-      if (status & SELECT_ENDPOINT_FE)
-        restart = true;
-    }
-
-    if (restart)
+  if (!(status & SELECT_ENDPOINT_ST) && !(reg->USBEpDMASt & mask))
+  {
+    if (!(ep->address & USB_EP_DIRECTION_IN) ^ !(status & SELECT_ENDPOINT_FE))
       reg->USBDMARSet = mask; /* Initiate a transfer */
 
-    if (st)
-      reg->USBEpDMAEn = mask;
+    reg->USBEpDMAEn = mask;
   }
 
   irqRestore(state);
@@ -1055,7 +1024,6 @@ static void dmaEpDeinit(void *object)
 
   /* Remove pending requests */
   dmaEpDisable(ep);
-  dmaEpClear(ep);
 
   const unsigned int index = EP_TO_INDEX(ep->address);
 
@@ -1067,14 +1035,14 @@ static void dmaEpDeinit(void *object)
 static void dmaEpClear(void *object)
 {
   struct UsbDmaEndpoint * const ep = object;
-  struct DmaDescriptorPool * const pool = ep->device->pool;
   LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int index = EP_TO_INDEX(ep->address);
   const uint32_t mask = 1UL << index;
 
   reg->USBEpDMADis = mask;
-  reg->USBDMARClr = mask; //FIXME Is this necessary?
+  reg->USBDMARClr = mask;
 
+  struct DmaDescriptorPool * const pool = ep->device->pool;
   struct DmaDescriptor *current = pool->heads[index];
 
   while (current)
@@ -1087,17 +1055,15 @@ static void dmaEpClear(void *object)
   }
 
   pool->heads[index] = 0;
+  ep->head = ep->tail = 0;
 }
 /*----------------------------------------------------------------------------*/
 static void dmaEpDisable(void *object)
 {
   struct UsbDmaEndpoint * const ep = object;
-  LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int index = EP_TO_INDEX(ep->address);
-  const uint32_t mask = 1UL << index;
 
-  reg->USBEpDMADis = mask;
-  reg->USBDMARClr = mask;
+  dmaEpClear(ep);
 
   usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index,
       SET_ENDPOINT_STATUS_DA);
@@ -1112,9 +1078,11 @@ static void dmaEpEnable(void *object, uint8_t type, uint16_t size)
 
   ep->type = type;
 
+  /* Disable slave mode */
+  reg->USBEpIntEn &= ~mask;
+  /* Clear pending interrupts */
+  reg->USBEoTIntClr = mask;
   reg->USBEpIntClr = mask;
-  reg->USBDMARClr = mask; /* Clear pending interrupts FIXME */
-  reg->USBEpIntEn &= ~mask; /* Disable slave mode */
 
   /* Realize endpoint */
   reg->USBReEp |= mask;
@@ -1157,23 +1125,22 @@ static void dmaEpSetStalled(void *object, bool stalled)
 {
   struct UsbDmaEndpoint * const ep = object;
   struct DmaDescriptorPool * const pool = ep->device->pool;
+  LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int index = EP_TO_INDEX(ep->address);
+  const uint32_t mask = 1UL << index;
 
   usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index,
       stalled ? SET_ENDPOINT_STATUS_ST : 0);
 
   if (stalled)
   {
-    LPC_USB_Type * const reg = ep->device->base.reg;
-    reg->USBDMARClr = 1UL << index;
-    reg->USBEpDMADis = 1UL << index;
+    reg->USBEpDMADis = mask;
+    reg->USBDMARClr = mask;
   }
-
-  if (!stalled && (ep->address & USB_EP_DIRECTION_IN) && pool->heads[index])
+  else if (pool->heads[index])
   {
-    LPC_USB_Type * const reg = ep->device->base.reg;
-    reg->USBEpDMADis = 1UL << index; /* FIXME Refetch DD */
-    reg->USBEpDMAEn = 1UL << index; /* FIXME Refetch DD */
-    reg->USBDMARSet = 1UL << index;
+    if (ep->address & USB_EP_DIRECTION_IN)
+      reg->USBDMARSet = mask;
+    reg->USBEpDMAEn = mask;
   }
 }
