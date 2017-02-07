@@ -138,6 +138,74 @@ enum usbCommand
 #define READ_ERROR_STATUS_B_OVRN        BIT(5)
 #define READ_ERROR_STATUS_BTSTF         BIT(6)
 #define READ_ERROR_STATUS_TGL_ERR       BIT(7)
+/*------------------USB DMA Interrupt Enable register-------------------------*/
+#define USBDMAIntEn_EOT                 BIT(0)
+#define USBDMAIntEn_NDDR                BIT(1)
+#define USBDMAIntEn_ERR                 BIT(2)
+/*----------------------------------------------------------------------------*/
+struct DmaDescriptor
+{
+  volatile uint32_t next;
+  volatile uint32_t control;
+  volatile uint32_t buffer;
+  volatile uint32_t status;
+  volatile uint32_t size; /* Isochronous endpoints only */
+  volatile uint32_t request; /* Project-specific field */
+};
+/*----------------------------------------------------------------------------*/
+enum
+{
+  DMA_MODE_NORMAL = 0,
+  DMA_MODE_ATLE   = 1
+};
+
+enum
+{
+  DD_NOT_SERVICED       = 0,
+  DD_BEING_SERVICES     = 1,
+  DD_NORMAL_COMPLETION  = 2,
+  DD_DATA_UNDERRUN      = 3,
+  DD_DATA_OVERRUN       = 8,
+  DD_SYSTEM_ERROR       = 9
+};
+
+#define DD_CONTROL_DMA_MODE(value)      BIT_FIELD((value), 0)
+#define DD_CONTROL_NEXT_DD_VALID        BIT(2)
+#define DD_CONTROL_ISOCHRONOUS_EP       BIT(4)
+
+#define DD_CONTROL_MAX_PACKET_SIZE(value) \
+    BIT_FIELD((value), 5)
+#define DD_CONTROL_MAX_PACKET_SIZE_MASK \
+    BIT_FIELD(MASK(10), 5)
+#define DD_CONTROL_MAX_PACKET_SIZE_VALUE(reg) \
+    FIELD_VALUE((reg), TD_MAX_PACKET_SIZE_MASK, 5)
+
+#define DD_CONTROL_DMA_BUFFER_LENGTH(value) \
+    BIT_FIELD((value), 16)
+#define DD_CONTROL_DMA_BUFFER_LENGTH_MASK \
+    BIT_FIELD(MASK(16), 16)
+#define DD_CONTROL_DMA_BUFFER_LENGTH_VALUE(reg) \
+    FIELD_VALUE((reg), DD_STATUS_DMA_BUFFER_LENGTH_MASK, 16)
+
+#define DD_STATUS_RETIRED               BIT(0)
+#define DD_STATUS_PACKET_VALID          BIT(5)
+#define DD_STATUS_LS_BYTE_EXTRACTED     BIT(6)
+#define DD_STATUS_MS_BYTE_EXTRACTED     BIT(7)
+
+#define DD_STATUS_MASK                  BIT_FIELD(MASK(4), 1)
+#define DD_STATUS_VALUE(reg)            FIELD_VALUE((reg), DD_STATUS_MASK, 1)
+
+#define DD_STATUS_MESSAGE_LENGTH_POSITION(value) \
+    BIT_FIELD((value), 8)
+#define DD_STATUS_MESSAGE_LENGTH_POSITION_MASK \
+    BIT_FIELD(MASK(6), 8)
+#define DD_STATUS_MESSAGE_LENGTH_POSITION_VALUE(reg) \
+    FIELD_VALUE((reg), DD_STATUS_MESSAGE_LENGTH_POSITION_MASK, 8)
+
+#define DD_STATUS_PRESENT_DMA_COUNT_MASK \
+    BIT_FIELD(MASK(16), 16)
+#define DD_STATUS_PRESENT_DMA_COUNT_VALUE(reg) \
+    FIELD_VALUE((reg), DD_STATUS_PRESENT_DMA_COUNT_MASK, 16)
 /*----------------------------------------------------------------------------*/
 #define EP_TO_INDEX(ep)     ((((ep) & 0x0F) << 1) | (((ep) & 0x80) >> 7))
 #define INDEX_TO_EP(index)  ((((index) << 7) & 0x80) | (((index) >> 1) & 0x0F))

@@ -5,13 +5,43 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 #include <xcore/memory.h>
+#include <halm/platform/nxp/lpc17xx/usb_base.h>
 #include <halm/platform/nxp/lpc17xx/usb_defs.h>
 #include <halm/platform/nxp/usb_device.h>
-#include <halm/usb/usb.h>
+#include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
+/*----------------------------------------------------------------------------*/
+struct UsbSieEndpoint
+{
+  struct UsbEndpoint base;
+
+  /* Parent device */
+  struct UsbDevice *device;
+  /* Queued requests */
+  struct Queue requests;
+  /* Logical address */
+  uint8_t address;
+};
+
+struct UsbDevice
+{
+  struct UsbBase base;
+
+  /* Array of registered endpoints */
+  struct UsbEndpoint *endpoints[32];
+  /* Control message handler */
+  struct UsbControl *control;
+
+  /* DMA descriptors */
+  struct DmaDescriptorPool *pool;
+
+  /* Device is configured */
+  bool configured;
+};
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
@@ -55,11 +85,11 @@ static const struct UsbDeviceClass devTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const UsbDevice = &devTable;
 /*----------------------------------------------------------------------------*/
-static void epHandler(struct UsbSieEndpoint *, uint8_t);
 static enum result epReadData(struct UsbSieEndpoint *, uint8_t *,
     size_t, size_t *);
 static enum result epWriteData(struct UsbSieEndpoint *, const uint8_t *,
     size_t);
+static void sieEpHandler(struct UsbSieEndpoint *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result sieEpInit(void *, const void *);
 static void sieEpDeinit(void *);
@@ -70,7 +100,7 @@ static enum result sieEpEnqueue(void *, struct UsbRequest *);
 static bool sieEpIsStalled(void *);
 static void sieEpSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
-static const struct UsbEndpointClass epTable = {
+static const struct UsbEndpointClass sieEpTable = {
     .size = sizeof(struct UsbSieEndpoint),
     .init = sieEpInit,
     .deinit = sieEpDeinit,
@@ -83,7 +113,7 @@ static const struct UsbEndpointClass epTable = {
     .setStalled = sieEpSetStalled
 };
 /*----------------------------------------------------------------------------*/
-const struct UsbEndpointClass * const UsbSieEndpoint = &epTable;
+const struct UsbEndpointClass * const UsbSieEndpoint = &sieEpTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -131,7 +161,7 @@ static void interruptHandler(void *object)
       epIntStatus -= (1UL << 31) >> index;
       reg->USBEpIntClr = 1UL << index;
 
-      epHandler((struct UsbSieEndpoint *)endpointArray[index], status);
+      sieEpHandler((struct UsbSieEndpoint *)endpointArray[index], status);
     }
   }
 
@@ -359,55 +389,6 @@ static void devStringErase(void *object, struct UsbString string)
   usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
-static void epHandler(struct UsbSieEndpoint *endpoint, uint8_t status)
-{
-  if (queueEmpty(&endpoint->requests))
-    return;
-
-  struct UsbRequest *request;
-  queuePop(&endpoint->requests, &request);
-
-  if (endpoint->address & USB_EP_DIRECTION_IN)
-  {
-    struct UsbRequest *next = 0;
-
-    if (!queueEmpty(&endpoint->requests))
-      queuePeek(&endpoint->requests, &next);
-
-    /*
-     * An upper-level function should be called after extraction of the next
-     * request because that function can append a new request to the queue.
-     */
-    request->callback(request->callbackArgument, request,
-        USB_REQUEST_COMPLETED);
-
-    /* Try to send next packet */
-    if (next && epWriteData(endpoint, next->buffer, next->length) != E_OK)
-    {
-      queuePop(&endpoint->requests, 0);
-      next->callback(next->callbackArgument, next, USB_REQUEST_ERROR);
-    }
-  }
-  else
-  {
-    size_t read;
-
-    if (epReadData(endpoint, request->buffer, request->capacity, &read) == E_OK)
-    {
-      const enum usbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
-          USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
-
-      request->length = read;
-      request->callback(request->callbackArgument, request, requestStatus);
-    }
-    else
-    {
-      /* Read failed, return request to the queue */
-      queuePush(&endpoint->requests, &request);
-    }
-  }
-}
-/*----------------------------------------------------------------------------*/
 static enum result epReadData(struct UsbSieEndpoint *endpoint, uint8_t *buffer,
     size_t length, size_t *read)
 {
@@ -494,6 +475,55 @@ static enum result epWriteData(struct UsbSieEndpoint *endpoint,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+static void sieEpHandler(struct UsbSieEndpoint *endpoint, uint8_t status)
+{
+  if (queueEmpty(&endpoint->requests))
+    return;
+
+  struct UsbRequest *request;
+  queuePop(&endpoint->requests, &request);
+
+  if (endpoint->address & USB_EP_DIRECTION_IN)
+  {
+    struct UsbRequest *next = 0;
+
+    if (!queueEmpty(&endpoint->requests))
+      queuePeek(&endpoint->requests, &next);
+
+    /*
+     * An upper-level function should be called after extraction of the next
+     * request because that function can append a new request to the queue.
+     */
+    request->callback(request->callbackArgument, request,
+        USB_REQUEST_COMPLETED);
+
+    /* Try to send next packet */
+    if (next && epWriteData(endpoint, next->buffer, next->length) != E_OK)
+    {
+      queuePop(&endpoint->requests, 0);
+      next->callback(next->callbackArgument, next, USB_REQUEST_ERROR);
+    }
+  }
+  else
+  {
+    size_t read;
+
+    if (epReadData(endpoint, request->buffer, request->capacity, &read) == E_OK)
+    {
+      const enum usbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
+          USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
+
+      request->length = read;
+      request->callback(request->callbackArgument, request, requestStatus);
+    }
+    else
+    {
+      /* Read failed, return request to the queue */
+      queuePush(&endpoint->requests, &request);
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
 static enum result sieEpInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
@@ -502,7 +532,7 @@ static enum result sieEpInit(void *object, const void *configBase)
   enum result res;
 
   res = queueInit(&endpoint->requests, sizeof(struct UsbRequest *),
-      CONFIG_USB_DEVICE_ENDPOINT_REQUESTS);
+      CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS);
   if (res != E_OK)
     return res;
 
@@ -602,7 +632,8 @@ static enum result sieEpEnqueue(void *object, struct UsbRequest *request)
 
   if (endpoint->address & USB_EP_DIRECTION_IN)
   {
-    if (!(status & SELECT_ENDPOINT_FE) && queueEmpty(&endpoint->requests))
+    if (!(status & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST))
+        && queueEmpty(&endpoint->requests))
     {
       if (epWriteData(endpoint, request->buffer, request->length) != E_OK)
         res = E_INTERFACE;
@@ -645,10 +676,7 @@ static void sieEpSetStalled(void *object, bool stalled)
   usbCommandWrite(endpoint->device, USB_CMD_SET_ENDPOINT_STATUS | index,
       stalled ? SET_ENDPOINT_STATUS_ST : 0);
 
-  /*
-   * The buffer is flushed when the endpoint is unstalled. Pending IN request
-   * should be rewritten to the buffer.
-   */
+  /* Write pending IN request */
   if (!stalled && (endpoint->address & USB_EP_DIRECTION_IN)
       && !queueEmpty(&endpoint->requests))
   {
