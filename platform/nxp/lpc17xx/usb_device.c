@@ -5,8 +5,10 @@
  */
 
 #include <assert.h>
+#include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
+#include <xcore/containers/array.h>
 #include <xcore/memory.h>
 #include <halm/platform/nxp/lpc17xx/usb_base.h>
 #include <halm/platform/nxp/lpc17xx/usb_defs.h>
@@ -15,6 +17,36 @@
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
+#define CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
+#endif
+
+struct DmaDescriptorPool
+{
+  /* Transfer descriptor pool */
+  struct Array descriptors;
+  /* Pointer to an aligned array of Queue Head descriptors */
+  struct DmaDescriptor **heads;
+  /* Memory allocated for Transfer descriptors */
+  struct DmaDescriptor memory[CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE];
+};
+/*----------------------------------------------------------------------------*/
+struct UsbDmaEndpoint
+{
+  struct UsbEndpoint base;
+
+  /* Parent device */
+  struct UsbDevice *device;
+  /* Head of the Transfer Descriptor list */
+  struct DmaDescriptor *head;
+  /* Tail of the Transfer Descriptor list */
+  struct DmaDescriptor *tail;
+  /* Logical address */
+  uint8_t address;
+  /* Endpoint type */
+  uint8_t type;
+};
+
 struct UsbSieEndpoint
 {
   struct UsbEndpoint base;
@@ -43,6 +75,11 @@ struct UsbDevice
   bool configured;
 };
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_USB_DMA
+static void deinitDescriptorPool(struct UsbDevice *);
+static enum result initDescriptorPool(struct UsbDevice *);
+#endif
+
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
 static void usbCommand(struct UsbDevice *, uint8_t);
@@ -115,6 +152,78 @@ static const struct UsbEndpointClass sieEpTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbEndpointClass * const UsbSieEndpoint = &sieEpTable;
 /*----------------------------------------------------------------------------*/
+static void dmaEpHandler(struct UsbDmaEndpoint *);
+/*----------------------------------------------------------------------------*/
+static enum result dmaEpInit(void *, const void *);
+static void dmaEpDeinit(void *);
+static void dmaEpClear(void *);
+static void dmaEpDisable(void *);
+static void dmaEpEnable(void *, uint8_t, uint16_t);
+static enum result dmaEpEnqueue(void *, struct UsbRequest *);
+static bool dmaEpIsStalled(void *);
+static void dmaEpSetStalled(void *, bool);
+/*----------------------------------------------------------------------------*/
+static const struct UsbEndpointClass dmaEpTable = {
+    .size = sizeof(struct UsbDmaEndpoint),
+    .init = dmaEpInit,
+    .deinit = dmaEpDeinit,
+
+    .clear = dmaEpClear,
+    .disable = dmaEpDisable,
+    .enable = dmaEpEnable,
+    .enqueue = dmaEpEnqueue,
+    .isStalled = dmaEpIsStalled,
+    .setStalled = dmaEpSetStalled
+};
+/*----------------------------------------------------------------------------*/
+const struct UsbEndpointClass * const UsbDmaEndpoint = &dmaEpTable;
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_USB_DMA
+static void deinitDescriptorPool(struct UsbDevice *device)
+{
+  struct DmaDescriptorPool * const pool = device->pool;
+
+  free(pool->heads);
+  arrayDeinit(&pool->descriptors);
+}
+#endif
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_USB_DMA
+static enum result initDescriptorPool(struct UsbDevice *device)
+{
+  struct DmaDescriptorPool * const pool =
+      malloc(sizeof(struct DmaDescriptorPool));
+  if (!pool)
+    return E_MEMORY;
+
+  enum result res;
+
+  /* Allocate memory for Transfer Descriptors */
+  res = arrayInit(&pool->descriptors, sizeof(struct DmaDescriptor *),
+      ARRAY_SIZE(pool->memory));
+  if (res != E_OK)
+    return res;
+
+  //TODO Remove magic numbers
+  pool->heads = memalign(128, 32 * sizeof(struct DmaDescriptor *));
+  if (!pool->heads)
+    return E_MEMORY;
+  memset(pool->heads, 0, 32 * sizeof(struct DmaDescriptor *));
+
+  for (size_t index = 0; index < ARRAY_SIZE(pool->memory); ++index)
+  {
+    struct DmaDescriptor * const entry = pool->memory + index;
+    arrayPushBack(&pool->descriptors, &entry);
+  }
+
+  /* Configure USB Device Communication Area */
+  ((LPC_USB_Type *)device->base.reg)->USBUDCAH = (uint32_t)pool->heads;
+
+  device->pool = pool;
+  return E_OK;
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct UsbDevice * const device = object;
@@ -165,6 +274,25 @@ static void interruptHandler(void *object)
     }
   }
 
+  /* DMA transfer completion interrupt */
+  uint32_t dmaStatus = reg->USBEoTIntSt;
+
+  if (dmaStatus)
+  {
+    struct UsbEndpoint ** const endpointArray = device->endpoints;
+
+    dmaStatus = reverseBits32(dmaStatus);
+    while (dmaStatus)
+    {
+      const unsigned int index = countLeadingZeros32(dmaStatus);
+
+      dmaStatus -= (1UL << 31) >> index;
+      reg->USBEoTIntClr = 1UL << index;
+
+      dmaEpHandler((struct UsbDmaEndpoint *)endpointArray[index]);
+    }
+  }
+
   /* Start of Frame interrupt */
   if (intStatus & USBDevInt_FRAME)
   {
@@ -189,6 +317,8 @@ static void resetDevice(struct UsbDevice *device)
   reg->USBEpIntPri = 0;
 
   reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW;
+  reg->USBDMARClr = 0xFFFFFFFF;
+  reg->USBDMAIntEn = 0x01; //FIXME
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)
@@ -279,6 +409,11 @@ static enum result devInit(void *object, const void *configBase)
   /* By default, only ACKs generate interrupts */
   usbCommandWrite(device, USB_CMD_SET_MODE, 0);
 
+#ifdef CONFIG_PLATFORM_USB_DMA
+  if ((res = initDescriptorPool(device)) != E_OK)
+    return res;
+#endif
+
   irqSetPriority(device->base.irq, config->priority);
   irqEnable(device->base.irq);
 
@@ -290,6 +425,10 @@ static void devDeinit(void *object)
   struct UsbDevice * const device = object;
 
   irqDisable(device->base.irq);
+
+#ifdef CONFIG_PLATFORM_USB_DMA
+  deinitDescriptorPool(device);
+#endif
 
   deinit(device->control);
   UsbBase->deinit(device);
@@ -311,8 +450,15 @@ static void *devCreateEndpoint(void *object, uint8_t address)
       .parent = device,
       .address = address
     };
+    const struct UsbEndpointClass *type;
 
-    device->endpoints[index] = init(UsbSieEndpoint, &config);
+#ifdef CONFIG_PLATFORM_USB_DMA
+    type = index >= 2 ? UsbDmaEndpoint : UsbSieEndpoint;
+#else
+    type = UsbSieEndpoint;
+#endif
+
+    device->endpoints[index] = init(type, &config);
   }
   endpoint = device->endpoints[index];
 
@@ -689,5 +835,346 @@ static void sieEpSetStalled(void *object, bool stalled)
       queuePop(&endpoint->requests, 0);
       next->callback(next->callbackArgument, next, USB_REQUEST_ERROR);
     }
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void dmaEpHandler(struct UsbDmaEndpoint *ep)
+{
+  struct DmaDescriptorPool * const pool = ep->device->pool;
+  const unsigned int index = EP_TO_INDEX(ep->address);
+
+  //TODO Rewrite
+  while (ep->head && (ep->head->status & DD_STATUS_RETIRED))
+  {
+    struct UsbRequest * const request =
+        (struct UsbRequest *)ep->head->request;
+
+    if (!request)
+    {
+      /* It is a mock descriptor, return it to pool */
+      arrayPushBack(&pool->descriptors, &ep->head);
+      ep->head = (struct DmaDescriptor *)ep->head->next;
+      continue;
+    }
+
+    enum usbRequestStatus requestStatus;
+
+    switch (DD_STATUS_VALUE(ep->head->status))
+    {
+      case DD_NORMAL_COMPLETION:
+      case DD_DATA_UNDERRUN:
+        requestStatus = USB_REQUEST_COMPLETED;
+        break;
+
+      default:
+        requestStatus = USB_REQUEST_ERROR;
+        break;
+    }
+
+    if (!(ep->address & USB_EP_DIRECTION_IN))
+    {
+      request->length = DD_STATUS_PRESENT_DMA_COUNT_VALUE(ep->head->status);
+    }
+
+    if (!ep->head->next || ep->head != pool->heads[index])
+    {
+      arrayPushBack(&pool->descriptors, &ep->head);
+      ep->head = (struct DmaDescriptor *)ep->head->next;
+
+      if (!ep->head)
+      {
+        LPC_USB_Type * const reg = ep->device->base.reg;
+        const uint32_t mask = 1UL << index;
+
+        ep->tail = 0;
+        pool->heads[index] = 0;
+        reg->USBEpDMADis = mask; //FIXME Does not affect
+        reg->USBDMARClr = mask;
+      }
+    }
+    else
+    {
+      ep->head->request = 0;
+    }
+
+    request->callback(request->callbackArgument, request, requestStatus);
+
+    if (!ep->head->request)
+      break;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static struct DmaDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *ep,
+    struct UsbRequest *node, uint8_t *buffer, size_t length)
+{
+  struct DmaDescriptorPool * const pool = ep->device->pool;
+  struct DmaDescriptor *descriptor;
+
+  if (arrayEmpty(&pool->descriptors))
+    return 0;
+  arrayPopBack(&pool->descriptors, &descriptor);
+
+  descriptor->next = 0;
+  descriptor->control = DD_CONTROL_DMA_MODE(DMA_MODE_NORMAL)
+      | DD_CONTROL_MAX_PACKET_SIZE(node->capacity);
+
+  if (ep->type == ENDPOINT_TYPE_ISOCHRONOUS)
+  {
+    descriptor->control |= DD_CONTROL_ISOCHRONOUS_EP
+        | DD_CONTROL_DMA_BUFFER_LENGTH(1);
+  }
+  else
+    descriptor->control |= DD_CONTROL_DMA_BUFFER_LENGTH(length);
+
+  descriptor->buffer = (uint32_t)buffer;
+  descriptor->status = 0;
+  descriptor->size = 0;
+
+  /* Store pointer to the USB Request structure in reserved field */
+  descriptor->request = (uint32_t)node;
+
+  return descriptor;
+}
+/*----------------------------------------------------------------------------*/
+static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
+    struct DmaDescriptor *descriptor)
+{
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  struct DmaDescriptorPool * const pool = ep->device->pool;
+  const unsigned int index = EP_TO_INDEX(ep->address);
+  const uint32_t mask = 1UL << index;
+
+  const irqState state = irqSave();
+
+  if (pool->heads[index])
+  {
+    /* Linked list is not empty */
+    ep->tail->next = (uint32_t)descriptor;
+    ep->tail->control |= DD_CONTROL_NEXT_DD_VALID;
+    ep->tail = descriptor;
+
+    if (!(reg->USBEpDMASt & mask))
+    {
+      //TODO Remove copy-paste
+      const uint8_t status = usbCommandRead(ep->device,
+          USB_CMD_SELECT_ENDPOINT | index);
+      bool restart = false;
+
+      if (ep->address & USB_EP_DIRECTION_IN)
+      {
+        if (!(status & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST)))
+          restart = true;
+      }
+      else
+      {
+        if (status & SELECT_ENDPOINT_FE)
+          restart = true;
+      }
+
+      if (restart)
+        reg->USBDMARSet = mask; /* Initiate a transfer */
+
+      reg->USBEpDMAEn = mask; /* Enable DMA operation */
+    }
+  }
+  else
+  {
+    pool->heads[index] = descriptor;
+    ep->head = ep->tail = descriptor;
+
+    const uint8_t status = usbCommandRead(ep->device,
+        USB_CMD_SELECT_ENDPOINT | index);
+    bool restart = false;
+    bool st = true;
+
+    if (ep->address & USB_EP_DIRECTION_IN)
+    {
+      if (!(status & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST)))
+        restart = true;
+      if (status & SELECT_ENDPOINT_ST)
+        st = false;
+    }
+    else
+    {
+      if (status & SELECT_ENDPOINT_FE)
+        restart = true;
+    }
+
+    if (restart)
+      reg->USBDMARSet = mask; /* Initiate a transfer */
+
+    if (st)
+      reg->USBEpDMAEn = mask;
+  }
+
+  irqRestore(state);
+}
+/*----------------------------------------------------------------------------*/
+static enum result epEnqueueRx(struct UsbDmaEndpoint *ep,
+    struct UsbRequest *request)
+{
+  struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request,
+      request->buffer, request->capacity);
+
+  assert(descriptor);
+  epAppendDescriptor(ep, descriptor);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result epEnqueueTx(struct UsbDmaEndpoint *ep,
+    struct UsbRequest *request)
+{
+  struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request,
+      request->buffer, request->length);
+
+  assert(descriptor);
+  epAppendDescriptor(ep, descriptor);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum result dmaEpInit(void *object, const void *configBase)
+{
+  const struct UsbEndpointConfig * const config = configBase;
+  struct UsbDevice * const device = config->parent;
+  struct UsbDmaEndpoint * const ep = object;
+
+  ep->address = config->address;
+  ep->device = device;
+  ep->head = 0;
+  ep->tail = 0;
+  ep->type = 0;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void dmaEpDeinit(void *object)
+{
+  struct UsbDmaEndpoint * const ep = object;
+  struct UsbDevice * const device = ep->device;
+
+  /* Remove pending requests */
+  dmaEpDisable(ep);
+  dmaEpClear(ep);
+
+  const unsigned int index = EP_TO_INDEX(ep->address);
+
+  const irqState state = irqSave();
+  device->endpoints[index] = 0;
+  irqRestore(state);
+}
+/*----------------------------------------------------------------------------*/
+static void dmaEpClear(void *object)
+{
+  struct UsbDmaEndpoint * const ep = object;
+  struct DmaDescriptorPool * const pool = ep->device->pool;
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int index = EP_TO_INDEX(ep->address);
+  const uint32_t mask = 1UL << index;
+
+  reg->USBEpDMADis = mask;
+  reg->USBDMARClr = mask; //FIXME Is this necessary?
+
+  struct DmaDescriptor *current = pool->heads[index];
+
+  while (current)
+  {
+    struct UsbRequest * const request = (struct UsbRequest *)current->request;
+
+    request->callback(request->callbackArgument, request,
+        USB_REQUEST_CANCELLED);
+    current = (struct DmaDescriptor *)current->next;
+  }
+
+  pool->heads[index] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static void dmaEpDisable(void *object)
+{
+  struct UsbDmaEndpoint * const ep = object;
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int index = EP_TO_INDEX(ep->address);
+  const uint32_t mask = 1UL << index;
+
+  reg->USBEpDMADis = mask;
+  reg->USBDMARClr = mask;
+
+  usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index,
+      SET_ENDPOINT_STATUS_DA);
+}
+/*----------------------------------------------------------------------------*/
+static void dmaEpEnable(void *object, uint8_t type, uint16_t size)
+{
+  struct UsbDmaEndpoint * const ep = object;
+  LPC_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int index = EP_TO_INDEX(ep->address);
+  const uint32_t mask = 1UL << index;
+
+  ep->type = type;
+
+  reg->USBEpIntClr = mask;
+  reg->USBDMARClr = mask; /* Clear pending interrupts FIXME */
+  reg->USBEpIntEn &= ~mask; /* Disable slave mode */
+
+  /* Realize endpoint */
+  reg->USBReEp |= mask;
+  reg->USBEpInd = index;
+  reg->USBMaxPSize = size;
+  waitForInt(ep->device, USBDevInt_EP_RLZED);
+
+  usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
+}
+/*----------------------------------------------------------------------------*/
+static enum result dmaEpEnqueue(void *object, struct UsbRequest *request)
+{
+  assert(request->callback);
+
+  struct UsbDmaEndpoint * const ep = object;
+  enum result res;
+
+  const irqState state = irqSave();
+
+  if (ep->address & USB_EP_DIRECTION_IN)
+    res = epEnqueueTx(ep, request);
+  else
+    res = epEnqueueRx(ep, request);
+
+  irqRestore(state);
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static bool dmaEpIsStalled(void *object)
+{
+  struct UsbDmaEndpoint * const ep = object;
+  const unsigned int index = EP_TO_INDEX(ep->address);
+  const uint8_t status = usbCommandRead(ep->device,
+      USB_CMD_SELECT_ENDPOINT | index);
+
+  return (status & SELECT_ENDPOINT_ST) != 0;
+}
+/*----------------------------------------------------------------------------*/
+static void dmaEpSetStalled(void *object, bool stalled)
+{
+  struct UsbDmaEndpoint * const ep = object;
+  struct DmaDescriptorPool * const pool = ep->device->pool;
+  const unsigned int index = EP_TO_INDEX(ep->address);
+
+  usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index,
+      stalled ? SET_ENDPOINT_STATUS_ST : 0);
+
+  if (stalled)
+  {
+    LPC_USB_Type * const reg = ep->device->base.reg;
+    reg->USBDMARClr = 1UL << index;
+    reg->USBEpDMADis = 1UL << index;
+  }
+
+  if (!stalled && (ep->address & USB_EP_DIRECTION_IN) && pool->heads[index])
+  {
+    LPC_USB_Type * const reg = ep->device->base.reg;
+    reg->USBEpDMADis = 1UL << index; /* FIXME Refetch DD */
+    reg->USBEpDMAEn = 1UL << index; /* FIXME Refetch DD */
+    reg->USBDMARSet = 1UL << index;
   }
 }
