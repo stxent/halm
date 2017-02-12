@@ -469,5 +469,15 @@ static void driverEvent(void *object, unsigned int event)
   }
 #endif
 
-  cdcAcmOnEvent(driver->owner, event);
+  switch ((enum usbDeviceEvent)event)
+  {
+    case USB_DEVICE_EVENT_RESET:
+    case USB_DEVICE_EVENT_SUSPEND:
+    case USB_DEVICE_EVENT_RESUME:
+      cdcAcmOnEvent(driver->owner, event);
+      break;
+
+    default:
+      break;
+  }
 }

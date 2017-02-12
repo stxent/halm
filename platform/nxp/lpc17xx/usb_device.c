@@ -275,18 +275,17 @@ static void interruptHandler(void *object)
   }
 
   /* DMA transfer completion interrupt */
-  uint32_t dmaStatus = reg->USBEoTIntSt;
+  uint32_t dmaIntStatus = reverseBits32(reg->USBEoTIntSt);
 
-  if (dmaStatus)
+  if (dmaIntStatus)
   {
     struct UsbEndpoint ** const endpointArray = device->endpoints;
 
-    dmaStatus = reverseBits32(dmaStatus);
-    while (dmaStatus)
+    while (dmaIntStatus)
     {
-      const unsigned int index = countLeadingZeros32(dmaStatus);
+      const unsigned int index = countLeadingZeros32(dmaIntStatus);
 
-      dmaStatus -= (1UL << 31) >> index;
+      dmaIntStatus -= (1UL << 31) >> index;
       reg->USBEoTIntClr = 1UL << index;
 
       dmaEpHandler((struct UsbDmaEndpoint *)endpointArray[index]);
@@ -634,7 +633,7 @@ static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
       queuePeek(&ep->requests, &next);
 
     /*
-     * An upper-level function should be called after extraction of the next
+     * An upper-level function should be called before extraction of the next
      * request because that function can append a new request to the queue.
      */
     request->callback(request->callbackArgument, request,

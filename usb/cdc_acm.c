@@ -185,7 +185,7 @@ void cdcAcmOnParametersChanged(struct CdcAcm *interface)
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
 {
-  switch (event)
+  switch ((enum usbDeviceEvent)event)
   {
     case USB_DEVICE_EVENT_RESET:
       if (resetEndpoints(interface))
@@ -208,7 +208,7 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
       break;
 
     default:
-      return;
+      break;
   }
 
   if (interface->callback)

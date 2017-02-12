@@ -384,7 +384,7 @@ static void epHandler(struct UsbSieEndpoint *ep, uint8_t status)
       queuePeek(&ep->requests, &next);
 
     /*
-     * An upper-level function should be called after extraction of the next
+     * An upper-level function should be called before extraction of the next
      * request because that function can append a new request to the queue.
      */
     request->callback(request->callbackArgument, request,
