@@ -197,12 +197,6 @@ static void interruptHandler(void *object)
       epCommonHandler((struct UsbDmaEndpoint *)endpointArray[number]);
     }
   }
-
-  /* Handle Start of Frame interrupt */
-  if (intStatus & USBSTS_D_SRI)
-  {
-    usbControlEvent(device->control, USB_DEVICE_EVENT_FRAME);
-  }
 }
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbDevice *device)
@@ -250,7 +244,7 @@ static void resetDevice(struct UsbDevice *device)
 
   /* Enable interrupts */
   reg->USBINTR_D = USBSTS_D_UI | USBSTS_D_UEI | USBSTS_D_PCI
-      | USBSTS_D_URI | USBSTS_D_SLI | USBSTS_D_SRI;
+      | USBSTS_D_URI | USBSTS_D_SLI;
 }
 /*----------------------------------------------------------------------------*/
 static void resetQueueHeads(struct UsbDevice *device)

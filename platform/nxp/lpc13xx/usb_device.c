@@ -158,12 +158,6 @@ static void interruptHandler(void *object)
     }
     while (epIntStatus);
   }
-
-  /* Start of Frame interrupt */
-  if (intStatus & USBDevInt_FRAME)
-  {
-    usbControlEvent(device->control, USB_DEVICE_EVENT_FRAME);
-  }
 }
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbDevice *device)
