@@ -296,6 +296,8 @@ static void interruptHandler(void *object)
   /* Start of Frame interrupt */
   if (intStatus & USBDevInt_FRAME)
   {
+    reg->USBDevIntClr = USBDevInt_FRAME;
+
     usbControlEvent(device->control, USB_DEVICE_EVENT_FRAME);
   }
 }
@@ -321,7 +323,7 @@ static void resetDevice(struct UsbDevice *device)
   reg->USBEoTIntClr = 0xFFFFFFFF;
 
   reg->USBDMAIntEn = USBDMAIntEn_EOT;
-  reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW;
+  reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW | USBDevInt_FRAME;
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)
