@@ -348,8 +348,8 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   if (!device->endpoints[index])
   {
     const struct UsbEndpointConfig config = {
-      .parent = device,
-      .address = address
+        .parent = device,
+        .address = address
     };
 
     device->endpoints[index] = init(UsbDmaEndpoint, &config);
