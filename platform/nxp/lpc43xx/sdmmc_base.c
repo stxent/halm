@@ -175,7 +175,7 @@ static void configPins(struct SdmmcBase *interface,
   };
   bool wide = true;
 
-  for (unsigned int index = 0; index < ARRAY_SIZE(pinArray); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (!pinArray[index])
     {

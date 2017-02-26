@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <stddef.h>
 #include <xcore/bits.h>
 #include <halm/core/cortex/fpu.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
@@ -67,7 +68,7 @@ void platformStartup(void)
    * CLK_USB0, CLK_USB1, CLK_PERIPH_BUS, CLK_PERIPH_CORE are left untouched.
    */
 
-  for (unsigned int index = 0; index < ARRAY_SIZE(clocksToDisable); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(clocksToDisable); ++index)
     sysClockDisable(clocksToDisable[index]);
 
 #ifdef CONFIG_FPU

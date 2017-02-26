@@ -18,7 +18,7 @@ void sspConfigPins(struct SspBase *interface,
   };
 
   /* Direction configuration is not needed for alternate function pins */
-  for (unsigned int index = 0; index < ARRAY_SIZE(pinArray); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
     {

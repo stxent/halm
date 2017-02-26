@@ -50,7 +50,7 @@ static void interruptHandler(void *object)
   reg->IR = state; /* Clear pending interrupts */
   state = IR_CAPTURE_VALUE(state);
 
-  for (unsigned int index = 0; state; state >>= 1, ++index)
+  for (size_t index = 0; state; state >>= 1, ++index)
   {
     if (state & (1 << index))
     {
@@ -92,7 +92,7 @@ static enum result unitInit(void *object, const void *configBase)
 
   unit->base.handler = interruptHandler;
 
-  for (unsigned int index = 0; index < ARRAY_SIZE(unit->descriptors); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(unit->descriptors); ++index)
     unit->descriptors[index] = 0;
 
   LPC_TIMER_Type * const reg = unit->base.reg;
