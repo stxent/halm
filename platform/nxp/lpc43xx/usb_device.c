@@ -512,12 +512,12 @@ static void epControlHandler(struct UsbDmaEndpoint *ep)
 static struct TransferDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *ep,
     struct UsbRequest *node, uint8_t *buffer, size_t length)
 {
-  if (queueEmpty(&ep->device->base.descriptorPool))
+  if (arrayEmpty(&ep->device->base.descriptorPool))
     return 0;
 
   struct TransferDescriptor *descriptor;
 
-  queuePop(&ep->device->base.descriptorPool, &descriptor);
+  arrayPopBack(&ep->device->base.descriptorPool, &descriptor);
 
   /* The next descriptor pointer is invalid */
   descriptor->next = TD_NEXT_TERMINATE;
@@ -684,7 +684,7 @@ static void epPopDescriptor(struct UsbDmaEndpoint *ep)
   head->listHead = (uint32_t)descriptor->next;
   if (head->listHead == TD_NEXT_TERMINATE)
     head->listTail = TD_NEXT_TERMINATE;
-  queuePush(&ep->device->base.descriptorPool, &descriptor);
+  arrayPushBack(&ep->device->base.descriptorPool, &descriptor);
 }
 /*----------------------------------------------------------------------------*/
 static void epPrime(struct UsbDmaEndpoint *ep)

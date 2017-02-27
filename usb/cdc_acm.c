@@ -111,7 +111,7 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
 
   if (returnToPool || error)
   {
-    queuePush(&interface->txRequestQueue, &request);
+    arrayPushBack(&interface->txRequestPool, &request);
   }
 
   if (error)
@@ -119,7 +119,7 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
     interface->suspended = true;
     usbTrace("cdc_acm: suspended in write callback");
   }
-  else if (queueFull(&interface->txRequestQueue))
+  else if (arrayFull(&interface->txRequestPool))
   {
     /* Notify when all data has been sent */
     if (interface->callback)
@@ -234,7 +234,7 @@ static enum result interfaceInit(void *object, const void *configBase)
       config->rxBuffers);
   if (res != E_OK)
     return res;
-  res = queueInit(&interface->txRequestQueue, sizeof(struct UsbRequest *),
+  res = arrayInit(&interface->txRequestPool, sizeof(struct UsbRequest *),
       config->txBuffers);
   if (res != E_OK)
     return res;
@@ -280,7 +280,7 @@ static enum result interfaceInit(void *object, const void *configBase)
   {
     usbRequestInit((struct UsbRequest *)request, request->payload,
         sizeof(request->payload), cdcDataSent, interface);
-    queuePush(&interface->txRequestQueue, &request);
+    arrayPushBack(&interface->txRequestPool, &request);
     ++request;
   }
 
@@ -305,7 +305,7 @@ static void interfaceDeinit(void *object)
   usbEpClear(interface->rxDataEp);
 
   assert(queueFull(&interface->rxRequestQueue));
-  assert(queueFull(&interface->txRequestQueue));
+  assert(arrayFull(&interface->txRequestPool));
 
   /* Delete requests and free memory */
   free(interface->requests);
@@ -316,7 +316,7 @@ static void interfaceDeinit(void *object)
   deinit(interface->notificationEp);
 
   /* Delete request queues */
-  queueDeinit(&interface->txRequestQueue);
+  arrayDeinit(&interface->txRequestPool);
   queueDeinit(&interface->rxRequestQueue);
 }
 /*----------------------------------------------------------------------------*/
@@ -452,14 +452,14 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
   if (interface->suspended)
     return 0;
 
-  while (length && !queueEmpty(&interface->txRequestQueue))
+  while (length && !arrayEmpty(&interface->txRequestPool))
   {
     const size_t bytesToWrite = length > maxPacketSize ? maxPacketSize : length;
     struct UsbRequest *request;
     irqState state;
 
     state = irqSave();
-    queuePop(&interface->txRequestQueue, &request);
+    arrayPopBack(&interface->txRequestPool, &request);
     interface->queuedTxBytes += bytesToWrite;
     irqRestore(state);
 
@@ -477,7 +477,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
       interface->suspended = true;
 
       state = irqSave();
-      queuePush(&interface->txRequestQueue, &request);
+      arrayPushBack(&interface->txRequestPool, &request);
       irqRestore(state);
 
       usbTrace("cdc_acm: suspended in write function");

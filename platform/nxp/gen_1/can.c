@@ -118,7 +118,7 @@ static void interruptHandler(void *object)
 
   while (reg->SR & SR_RBS)
   {
-    if (!queueEmpty(&interface->pool))
+    if (!arrayEmpty(&interface->pool))
     {
       const uint32_t timestamp = interface->timer ?
           timerGetValue(interface->timer) : 0;
@@ -127,7 +127,7 @@ static void interruptHandler(void *object)
       const uint32_t information = reg->RFS;
       struct CanStandardMessage *message;
 
-      queuePop(&interface->pool, &message);
+      arrayPopBack(&interface->pool, &message);
 
       message->timestamp = timestamp;
       message->id = reg->RID;
@@ -278,7 +278,7 @@ static enum result canInit(void *object, const void *configBase)
 
   const size_t poolSize = config->rxBuffers + config->txBuffers;
 
-  res = queueInit(&interface->pool, sizeof(struct CanMessage *), poolSize);
+  res = arrayInit(&interface->pool, sizeof(struct CanMessage *), poolSize);
   if (res != E_OK)
     return res;
   res = queueInit(&interface->rxQueue, sizeof(struct CanMessage *),
@@ -296,7 +296,7 @@ static enum result canInit(void *object, const void *configBase)
 
   for (size_t index = 0; index < poolSize; ++index)
   {
-    queuePush(&interface->pool, &message);
+    arrayPushBack(&interface->pool, &message);
     ++message;
   }
 
@@ -341,6 +341,7 @@ static void canDeinit(void *object)
 
   queueDeinit(&interface->txQueue);
   queueDeinit(&interface->rxQueue);
+  arrayDeinit(&interface->pool);
   CanBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -432,7 +433,7 @@ static size_t canRead(void *object, void *buffer, size_t length)
 
     queuePop(&interface->rxQueue, &input);
     memcpy(output, input, sizeof(*output));
-    queuePush(&interface->pool, &input);
+    arrayPushBack(&interface->pool, &input);
 
     irqRestore(state);
 
@@ -476,7 +477,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   {
     struct CanMessage *output;
 
-    queuePop(&interface->pool, &output);
+    arrayPopBack(&interface->pool, &output);
     memcpy(output, input, sizeof(*input));
     queuePush(&interface->txQueue, &output);
     length -= sizeof(*input);

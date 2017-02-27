@@ -166,7 +166,7 @@ static enum result devInit(void *object, const void *configBase)
   if (!setDescriptor(device->channel, 0, device))
     return E_BUSY;
 
-  res = queueInit(&device->descriptorPool, sizeof(struct TransferDescriptor *),
+  res = arrayInit(&device->descriptorPool, sizeof(struct TransferDescriptor *),
       ENDPOINT_REQUESTS);
   if (res != E_OK)
     return res;
@@ -204,15 +204,15 @@ static enum result devInit(void *object, const void *configBase)
   if (!device->queueHeads)
     return E_MEMORY;
 
-  device->poolMemory = memalign(32, sizeof(struct TransferDescriptor)
+  device->descriptorMemory = memalign(32, sizeof(struct TransferDescriptor)
       * ENDPOINT_REQUESTS);
-  if (!device->poolMemory)
+  if (!device->descriptorMemory)
     return E_MEMORY;
 
   for (size_t index = 0; index < ENDPOINT_REQUESTS; ++index)
   {
-    struct TransferDescriptor * const entry = device->poolMemory + index;
-    queuePush(&device->descriptorPool, &entry);
+    struct TransferDescriptor * const entry = device->descriptorMemory + index;
+    arrayPushBack(&device->descriptorPool, &entry);
   }
 
   return E_OK;
@@ -222,7 +222,7 @@ static void devDeinit(void *object)
 {
   struct UsbBase * const device = object;
 
-  free(device->poolMemory);
+  free(device->descriptorMemory);
   free(device->queueHeads);
 
   if (!device->channel)

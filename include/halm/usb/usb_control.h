@@ -7,8 +7,8 @@
 #ifndef HALM_USB_USB_CONTROL_H_
 #define HALM_USB_USB_CONTROL_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/containers/array.h>
 #include <xcore/containers/list.h>
-#include <xcore/containers/queue.h>
 #include <halm/pin.h>
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
@@ -38,8 +38,8 @@ struct UsbControl
   struct UsbEndpoint *ep0in;
   struct UsbEndpoint *ep0out;
 
-  /* Queue for IN requests */
-  struct Queue inRequestPool;
+  /* Pool for IN requests */
+  struct Array inRequestPool;
   /* Single OUT request */
   struct UsbRequest *outRequest;
 

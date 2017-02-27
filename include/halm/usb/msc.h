@@ -7,6 +7,7 @@
 #ifndef HALM_USB_MSC_H_
 #define HALM_USB_MSC_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/containers/array.h>
 #include <xcore/containers/queue.h>
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
@@ -45,9 +46,9 @@ struct Msc
   struct UsbDevice *device;
   struct Interface *storage;
 
-  struct Queue controlQueue;
+  struct Array controlPool;
   struct Queue rxQueue;
-  struct Queue txQueue;
+  struct Array txPool;
 
   struct UsbEndpoint *rxEp;
   struct UsbEndpoint *txEp;

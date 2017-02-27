@@ -415,7 +415,7 @@ static void controlInHandler(void *argument, struct UsbRequest *request,
 {
   struct UsbControl * const control = argument;
 
-  queuePush(&control->inRequestPool, &request);
+  arrayPushBack(&control->inRequestPool, &request);
 }
 /*----------------------------------------------------------------------------*/
 static void controlOutHandler(void *argument, struct UsbRequest *request,
@@ -507,13 +507,13 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   if (length % EP0_BUFFER_SIZE == 0)
     ++chunkCount;
 
-  if (queueSize(&control->inRequestPool) < chunkCount)
+  if (arraySize(&control->inRequestPool) < chunkCount)
     return;
 
   for (unsigned int index = 0; index < chunkCount; ++index)
   {
     struct UsbRequest *request;
-    queuePop(&control->inRequestPool, &request);
+    arrayPopBack(&control->inRequestPool, &request);
 
     const uint16_t chunk = EP0_BUFFER_SIZE < length ? EP0_BUFFER_SIZE : length;
 
@@ -612,7 +612,7 @@ static enum result controlInit(void *object, const void *configBase)
   control->rwu = false;
 
   /* Initialize request queue */
-  res = queueInit(&control->inRequestPool, sizeof(struct UsbRequest *),
+  res = arrayInit(&control->inRequestPool, sizeof(struct UsbRequest *),
       REQUEST_POOL_SIZE);
   if (res != E_OK)
     return res;
@@ -633,7 +633,7 @@ static enum result controlInit(void *object, const void *configBase)
   {
     usbRequestInit((struct UsbRequest *)request, request->payload,
         sizeof(request->payload), controlInHandler, control);
-    queuePush(&control->inRequestPool, &request);
+    arrayPushBack(&control->inRequestPool, &request);
     ++request;
   }
 
@@ -651,10 +651,10 @@ static void controlDeinit(void *object)
   usbEpClear(control->ep0in);
   usbEpClear(control->ep0out);
 
-  assert(queueSize(&control->inRequestPool) == REQUEST_POOL_SIZE);
+  assert(arraySize(&control->inRequestPool) == REQUEST_POOL_SIZE);
 
   listDeinit(&control->strings);
-  queueDeinit(&control->inRequestPool);
+  arrayDeinit(&control->inRequestPool);
   deinit(control->ep0out);
   deinit(control->ep0in);
 

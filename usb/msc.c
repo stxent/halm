@@ -791,13 +791,13 @@ static void mscCommandReceived(void *argument, struct UsbRequest *request,
       privateData->context.cbw.dataTransferLength =
           fromLittleEndian32(privateData->context.cbw.dataTransferLength);
 
-      queuePush(&driver->controlQueue, &request);
+      arrayPushBack(&driver->controlPool, &request);
       runStateMachine(driver);
     }
     else
     {
       //TODO Suspend
-      queuePush(&driver->controlQueue, &request);
+      arrayPushBack(&driver->controlPool, &request);
     }
   }
   else
@@ -807,7 +807,7 @@ static void mscCommandReceived(void *argument, struct UsbRequest *request,
       //TODO Suspend
     }
 
-    queuePush(&driver->controlQueue, &request);
+    arrayPushBack(&driver->controlPool, &request);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -855,7 +855,7 @@ static void mscDataSent(void *argument, struct UsbRequest *request,
 {
   struct Msc * const driver = argument;
 
-  queuePush(&driver->txQueue, &request);
+  arrayPushBack(&driver->txPool, &request);
 
   if (status == USB_REQUEST_COMPLETED)
   {
@@ -873,11 +873,11 @@ static void mscDataSentQuietly(void *argument, struct UsbRequest *request,
   struct Msc * const driver = argument;
   struct PrivateData * const privateData = driver->privateData;
 
-  queuePush(&driver->txQueue, &request);
+  arrayPushBack(&driver->txPool, &request);
 
   if (status == USB_REQUEST_COMPLETED)
   {
-    if (queueSize(&driver->txQueue) >= queueCapacity(&driver->txQueue) >> 1
+    if (arraySize(&driver->txPool) >= arrayCapacity(&driver->txPool) >> 1
         && privateData->context.bufferedDataLeft)
     {
       runStateMachine(driver);
@@ -894,7 +894,7 @@ static void mscStatusSent(void *argument, struct UsbRequest *request,
 {
   struct Msc * const driver = argument;
 
-  queuePush(&driver->controlQueue, &request);
+  arrayPushBack(&driver->controlPool, &request);
 
   if (status == USB_REQUEST_COMPLETED)
   {
@@ -916,14 +916,14 @@ static enum result enqueueControlRequest(struct Msc *driver)
 {
   struct UsbRequest *request;
 
-  queuePop(&driver->controlQueue, &request);
+  arrayPopBack(&driver->controlPool, &request);
   request->callback = mscCommandReceived;
   request->callbackArgument = driver;
   request->length = 0;
 
   if (usbEpEnqueue(driver->rxEp, request) != E_OK)
   {
-    queuePush(&driver->controlQueue, &request);
+    arrayPushBack(&driver->controlPool, &request);
     return E_ERROR;
   }
   else
@@ -979,10 +979,10 @@ static enum result enqueueDataTx(struct Msc *driver, const void *buffer,
   usbTrace("msc: IN %"PRIu32" bytes, %"PRIu32" chunks", length,
       (length + driver->packetSize - 1) / driver->packetSize);
 
-  while (queueSize(&driver->txQueue) > 1 && length)
+  while (arraySize(&driver->txPool) > 1 && length)
   {
     struct UsbRequest *request;
-    queuePop(&driver->txQueue, &request);
+    arrayPopBack(&driver->txPool, &request);
 
     const size_t prepared = prepareDataTx(driver, request, bufferPosition,
         length, notify);
@@ -995,7 +995,7 @@ static enum result enqueueDataTx(struct Msc *driver, const void *buffer,
     else
     {
       /* Hardware error occurred */
-      queuePush(&driver->txQueue, &request);
+      arrayPushBack(&driver->txPool, &request);
       break;
     }
   }
@@ -1086,7 +1086,7 @@ static enum result sendStatus(struct Msc *driver, uint32_t tag,
   };
   struct UsbRequest *request;
 
-  queuePop(&driver->controlQueue, &request);
+  arrayPopBack(&driver->controlPool, &request);
   request->callback = mscStatusSent;
   request->callbackArgument = driver;
   request->length = sizeof(csw);
@@ -1094,7 +1094,7 @@ static enum result sendStatus(struct Msc *driver, uint32_t tag,
 
   if (usbEpEnqueue(driver->txEp, request) != E_OK)
   {
-    queuePush(&driver->controlQueue, &request);
+    arrayPushBack(&driver->controlPool, &request);
     return E_ERROR;
   }
   else
@@ -1322,10 +1322,10 @@ static enum result initRequestQueues(struct Msc *driver,
   res = queueInit(&driver->rxQueue, sizeof(struct UsbRequest *), RX_QUEUE_SIZE);
   if (res != E_OK)
     return res;
-  res = queueInit(&driver->txQueue, sizeof(struct UsbRequest *), TX_QUEUE_SIZE);
+  res = arrayInit(&driver->txPool, sizeof(struct UsbRequest *), TX_QUEUE_SIZE);
   if (res != E_OK)
     return res;
-  res = queueInit(&driver->controlQueue, sizeof(struct UsbRequest *),
+  res = arrayInit(&driver->controlPool, sizeof(struct UsbRequest *),
       CONTROL_QUEUE_SIZE);
   if (res != E_OK)
     return res;
@@ -1344,7 +1344,7 @@ static enum result initRequestQueues(struct Msc *driver,
     struct UsbRequest * const request = privateData->txRequests + index;
 
     usbRequestInit(request, 0, 0, 0, 0);
-    queuePush(&driver->txQueue, &request);
+    arrayPushBack(&driver->txPool, &request);
   }
 
   for (size_t index = 0; index < CONTROL_QUEUE_SIZE; ++index)
@@ -1354,7 +1354,7 @@ static enum result initRequestQueues(struct Msc *driver,
 
     usbRequestInit((struct UsbRequest *)request, request->payload,
         sizeof(request->payload), 0, 0);
-    queuePush(&driver->controlQueue, &request);
+    arrayPushBack(&driver->controlPool, &request);
   }
 
   return E_OK;
@@ -1362,12 +1362,12 @@ static enum result initRequestQueues(struct Msc *driver,
 /*----------------------------------------------------------------------------*/
 static void freePrivateData(struct Msc *driver)
 {
-  assert(queueFull(&driver->controlQueue));
-  assert(queueFull(&driver->txQueue));
+  assert(arrayFull(&driver->controlPool));
+  assert(arrayFull(&driver->txPool));
   assert(queueFull(&driver->rxQueue));
 
-  queueDeinit(&driver->controlQueue);
-  queueDeinit(&driver->txQueue);
+  arrayDeinit(&driver->controlPool);
+  arrayDeinit(&driver->txPool);
   queueDeinit(&driver->rxQueue);
 
   free(driver->privateData);

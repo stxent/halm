@@ -7,7 +7,7 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_USB_BASE_H_
 #define HALM_PLATFORM_NXP_LPC43XX_USB_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/queue.h>
+#include <xcore/containers/array.h>
 #include <xcore/entity.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
@@ -42,9 +42,9 @@ struct UsbBase
   /* Pointer to an aligned array of Queue Head descriptors */
   struct QueueHead *queueHeads;
   /* Memory allocated for Transfer descriptors */
-  struct TransferDescriptor *poolMemory;
-  /* Transfer descriptor pool */
-  struct Queue descriptorPool;
+  struct TransferDescriptor *descriptorMemory;
+  /* Pool for transfer descriptors */
+  struct Array descriptorPool;
 
   /* Unique peripheral identifier */
   uint8_t channel;

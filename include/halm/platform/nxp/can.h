@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_NXP_CAN_H_
 #define HALM_PLATFORM_NXP_CAN_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/containers/array.h>
 #include <xcore/containers/queue.h>
 #include <xcore/interface.h>
 #include <halm/target.h>
@@ -49,7 +50,7 @@ struct Can
   void *timer;
 
   /* Message pool */
-  struct Queue pool;
+  struct Array pool;
   /* Input and output queues */
   struct Queue rxQueue, txQueue;
   /* Pointer to a memory region used as a message pool */

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <xcore/containers/array.h>
+#include <xcore/containers/queue.h>
 #include <xcore/memory.h>
 #include <halm/platform/nxp/lpc17xx/usb_base.h>
 #include <halm/platform/nxp/lpc17xx/usb_defs.h>
