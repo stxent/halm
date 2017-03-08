@@ -123,6 +123,8 @@ static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
 static enum result unitInit(void *object, const void *configBase)
 {
   const struct GpPwmUnitConfig * const config = configBase;
+  assert(config);
+
   const struct GpPwmUnitBaseConfig baseConfig = {
       .channel = config->channel
   };
@@ -190,6 +192,8 @@ static enum result channelSetFrequency(struct GpPwmUnit *unit,
 static enum result singleEdgeInit(void *object, const void *configBase)
 {
   const struct GpPwmConfig * const config = configBase;
+  assert(config);
+
   struct GpPwm * const pwm = object;
   enum result res;
 
@@ -285,6 +289,8 @@ static enum result singleEdgeSetFrequency(void *object, uint32_t frequency)
 static enum result doubleEdgeInit(void *object, const void *configBase)
 {
   const struct GpPwmDoubleEdgeConfig * const config = configBase;
+  assert(config);
+
   struct GpPwmDoubleEdge * const pwm = object;
   enum result res;
 

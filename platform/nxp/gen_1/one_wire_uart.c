@@ -152,6 +152,8 @@ static void interruptHandler(void *object)
 static enum result oneWireInit(void *object, const void *configBase)
 {
   const struct OneWireUartConfig * const config = configBase;
+  assert(config);
+
   const struct UartBaseConfig baseConfig = {
       .channel = config->channel,
       .rx = config->rx,

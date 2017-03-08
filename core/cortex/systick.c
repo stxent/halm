@@ -112,6 +112,8 @@ void SYSTICK_ISR(void)
 static enum result tmrInit(void *object, const void *configBase)
 {
   const struct SysTickTimerConfig * const config = configBase;
+  assert(config);
+
   struct SysTickTimer * const timer = object;
 
   /* Try to set peripheral descriptor */

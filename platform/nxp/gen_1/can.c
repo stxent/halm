@@ -259,6 +259,8 @@ static void powerStateHandler(void *object, enum pmState state)
 static enum result canInit(void *object, const void *configBase)
 {
   const struct CanConfig * const config = configBase;
+  assert(config);
+
   const struct CanBaseConfig baseConfig = {
       .channel = config->channel,
       .rx = config->rx,

@@ -93,6 +93,8 @@ static void updateFrequency(struct GpTimer *timer, uint32_t frequency)
 static enum result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerConfig * const config = configBase;
+  assert(config);
+
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
   };

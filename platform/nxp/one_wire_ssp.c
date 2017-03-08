@@ -349,6 +349,8 @@ static void startSearch(struct OneWireSsp *interface)
 static enum result oneWireInit(void *object, const void *configBase)
 {
   const struct OneWireSspConfig * const config = configBase;
+  assert(config);
+
   const struct SspBaseConfig baseConfig = {
       .channel = config->channel,
       .miso = config->miso,

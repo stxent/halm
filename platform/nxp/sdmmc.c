@@ -222,6 +222,8 @@ static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
 static enum result sdioInit(void *object, const void *configBase)
 {
   const struct SdmmcConfig * const config = configBase;
+  assert(config);
+
   const struct DmaSdmmcConfig dmaConfig = {
       .burst = DMA_BURST_4,
       .number = 16,

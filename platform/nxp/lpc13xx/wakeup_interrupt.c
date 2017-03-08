@@ -125,6 +125,8 @@ static enum result startLogicHandlerInit(void *object,
 static enum result wakeupInterruptInit(void *object, const void *configBase)
 {
   const struct WakeupInterruptConfig * const config = configBase;
+  assert(config);
+
   const struct Pin input = pinInit(config->pin);
   struct WakeupInterrupt * const interrupt = object;
   enum result res;

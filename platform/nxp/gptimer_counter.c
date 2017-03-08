@@ -59,6 +59,8 @@ static void interruptHandler(void *object)
 static enum result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerCounterConfig * const config = configBase;
+  assert(config);
+
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
   };

@@ -69,6 +69,8 @@ static void interruptHandler(void *object, enum result res)
 static enum result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaConfig * const config = configBase;
+  assert(config);
+
   const struct GpDmaBaseConfig baseConfig = {
       .event = config->event,
       .type = config->type,

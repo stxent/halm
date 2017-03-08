@@ -125,6 +125,8 @@ void PIN_INT7_ISR(void)
 static enum result pinInterruptInit(void *object, const void *configBase)
 {
   const struct PinInterruptConfig * const config = configBase;
+  assert(config);
+
   const struct Pin input = pinInit(config->pin);
   struct PinInterrupt * const interrupt = object;
 

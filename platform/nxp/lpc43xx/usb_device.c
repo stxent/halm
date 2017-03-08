@@ -261,6 +261,8 @@ static void resetQueueHeads(struct UsbDevice *device)
 static enum result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
+  assert(config);
+
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
       .dp = config->dp,

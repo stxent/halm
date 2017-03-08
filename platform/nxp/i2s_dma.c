@@ -219,6 +219,8 @@ static enum result updateRate(struct I2sDma *interface, uint32_t sampleRate)
 static enum result i2sInit(void *object, const void *configBase)
 {
   const struct I2sDmaConfig * const config = configBase;
+  assert(config);
+
   const struct I2sBaseConfig baseConfig = {
       .rx = {
           .sck = config->rx.sck,

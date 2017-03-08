@@ -28,6 +28,8 @@ const struct WatchdogClass * const Wdt = &wdtTable;
 static enum result wdtInit(void *object, const void *configBase)
 {
   const struct WdtConfig * const config = configBase;
+  assert(config);
+
   const struct WdtBaseConfig baseConfig = {
       .source = config->source
   };

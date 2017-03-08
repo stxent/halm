@@ -139,6 +139,8 @@ static enum result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
 static enum result unitInit(void *object, const void *configBase)
 {
   const struct SctPwmUnitConfig * const config = configBase;
+  assert(config);
+
   const struct SctBaseConfig baseConfig = {
       .channel = config->channel
   };
@@ -216,6 +218,8 @@ static void unitDeinit(void *object)
 static enum result singleEdgeInit(void *object, const void *configBase)
 {
   const struct SctPwmConfig * const config = configBase;
+  assert(config);
+
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;
 
@@ -346,6 +350,8 @@ static enum result singleEdgeSetFrequency(void *object, uint32_t frequency)
 static enum result doubleEdgeInit(void *object, const void *configBase)
 {
   const struct SctPwmDoubleEdgeConfig * const config = configBase;
+  assert(config);
+
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;
 

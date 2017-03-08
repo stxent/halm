@@ -227,6 +227,8 @@ static void waitForInt(struct UsbDevice *device, uint32_t mask)
 static enum result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
+  assert(config);
+
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
       .dp = config->dp,

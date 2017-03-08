@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <xcore/memory.h>
 #include <halm/platform/nxp/spi.h>
 #include <halm/platform/nxp/ssp_defs.h>
@@ -103,6 +104,8 @@ static void powerStateHandler(void *object, enum pmState state)
 static enum result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
+  assert(config);
+
   const struct SspBaseConfig baseConfig = {
       .channel = config->channel,
       .miso = config->miso,

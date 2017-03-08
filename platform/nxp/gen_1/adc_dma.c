@@ -102,6 +102,8 @@ static enum result dmaSetup(struct AdcDma *interface,
 static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
+  assert(config);
+
   struct AdcDma * const interface = object;
   enum result res;
 

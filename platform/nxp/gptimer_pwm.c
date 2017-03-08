@@ -94,6 +94,8 @@ static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 static enum result unitInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmUnitConfig * const config = configBase;
+  assert(config);
+
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
   };
@@ -150,6 +152,8 @@ static void unitDeinit(void *object)
 static enum result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmConfig * const config = configBase;
+  assert(config);
+
   struct GpTimerPwm * const pwm = object;
   struct GpTimerPwmUnit * const unit = config->parent;
   enum result res;

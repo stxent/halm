@@ -92,6 +92,8 @@ static void setupChannels(struct AdcBus *interface, const pinNumber *pins)
 static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcBusConfig * const config = configBase;
+  assert(config);
+
   struct AdcBus * const interface = object;
 
   /* Initialize input pins */

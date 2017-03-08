@@ -87,6 +87,8 @@ static void updateFrequency(struct SctTimer *timer, uint32_t frequency)
 static enum result tmrInit(void *object, const void *configBase)
 {
   const struct SctTimerConfig * const config = configBase;
+  assert(config);
+
   const struct SctBaseConfig baseConfig = {
       .channel = config->channel,
       .input = SCT_INPUT_NONE,

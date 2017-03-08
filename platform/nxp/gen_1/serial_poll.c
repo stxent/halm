@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <halm/platform/nxp/gen_1/uart_defs.h>
 #include <halm/platform/nxp/serial_poll.h>
 #include <halm/pm.h>
@@ -55,6 +56,8 @@ static void powerStateHandler(void *object, enum pmState state)
 static enum result serialInit(void *object, const void *configBase)
 {
   const struct SerialPollConfig * const config = configBase;
+  assert(config);
+
   const struct UartBaseConfig baseConfig = {
       .channel = config->channel,
       .rx = config->rx,

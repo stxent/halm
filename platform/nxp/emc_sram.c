@@ -37,6 +37,8 @@ static inline uint32_t max(uint32_t a, uint32_t b)
 static enum result sramInit(void *object, const void *configBase)
 {
   const struct EmcSramConfig * const config = configBase;
+  assert(config);
+
   struct EmcSram * const memory = object;
 
   /* Try to register module */

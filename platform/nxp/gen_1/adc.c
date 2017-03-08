@@ -34,6 +34,8 @@ const struct InterfaceClass * const Adc = &adcTable;
 static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
+  assert(config);
+
   struct Adc * const interface = object;
 
   /* Initialize input pin */

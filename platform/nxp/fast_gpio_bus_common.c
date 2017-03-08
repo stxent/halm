@@ -11,14 +11,16 @@
 void fastGpioBusConfigPins(struct FastGpioBus *bus,
     const struct FastGpioBusConfig *config)
 {
-  unsigned int number = 0;
+  assert(config);
+
+  size_t number = 0;
 
   /* Find number of pins in the array */
   while (config->pins[number] && ++number < 32);
 
   assert(number && number <= 32);
 
-  for (unsigned int index = 0; index < number; ++index)
+  for (size_t index = 0; index < number; ++index)
   {
     const struct Pin pin = pinInit(config->pins[index]);
     assert(pinValid(pin));

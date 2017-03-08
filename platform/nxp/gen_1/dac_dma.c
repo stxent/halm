@@ -91,6 +91,8 @@ static enum result dmaSetup(struct DacDma *interface,
 static enum result dacInit(void *object, const void *configBase)
 {
   const struct DacDmaConfig * const config = configBase;
+  assert(config);
+
   const struct DacBaseConfig baseConfig = {
       .pin = config->pin
   };

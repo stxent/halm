@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <halm/platform/nxp/gen_1/rtc_defs.h>
 #include <halm/platform/nxp/rtc.h>
 /*----------------------------------------------------------------------------*/
@@ -53,6 +54,8 @@ static void interruptHandler(void *object)
 static enum result clkInit(void *object, const void *configBase)
 {
   const struct RtcConfig * const config = configBase;
+  assert(config);
+
   struct Rtc * const clock = object;
   enum result res;
 

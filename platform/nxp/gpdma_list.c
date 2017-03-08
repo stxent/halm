@@ -118,6 +118,8 @@ static void startTransfer(struct GpDmaList *channel,
 static enum result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaListConfig * const config = configBase;
+  assert(config);
+
   const struct GpDmaBaseConfig baseConfig = {
       .event = config->event,
       .type = config->type,

@@ -82,6 +82,8 @@ static void interruptHandler(void *object)
 static enum result serialInit(void *object, const void *configBase)
 {
   const struct SerialConfig * const config = configBase;
+  assert(config);
+
   const struct UartBaseConfig baseConfig = {
       .channel = config->channel,
       .rx = config->rx,

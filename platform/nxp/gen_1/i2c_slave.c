@@ -114,6 +114,8 @@ static void interruptHandler(void *object)
 static enum result i2cInit(void *object, const void *configBase)
 {
   const struct I2cSlaveConfig * const config = configBase;
+  assert(config);
+
   const struct I2cBaseConfig baseConfig = {
       .channel = config->channel,
       .scl = config->scl,

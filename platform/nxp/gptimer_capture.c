@@ -128,6 +128,8 @@ static void unitDeinit(void *object)
 static enum result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerCaptureConfig * const config = configBase;
+  assert(config);
+
   struct GpTimerCapture * const capture = object;
   struct GpTimerCaptureUnit * const unit = config->parent;
   enum result res;

@@ -65,6 +65,8 @@ static void interruptHandler(void *object)
 static enum result adcInit(void *object, const void *configBase)
 {
   const struct AdcBurstConfig * const config = configBase;
+  assert(config);
+
   struct AdcBurst * const interface = object;
 
   assert(config->event < ADC_EVENT_END);

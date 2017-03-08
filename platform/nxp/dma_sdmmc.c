@@ -79,6 +79,8 @@ static enum result appendItem(void *object, uintptr_t address, size_t size)
 static enum result channelInit(void *object, const void *configBase)
 {
   const struct DmaSdmmcConfig * const config = configBase;
+  assert(config);
+
   struct DmaSdmmc * const channel = object;
 
   assert(config->number);

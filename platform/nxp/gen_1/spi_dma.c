@@ -171,6 +171,8 @@ static void powerStateHandler(void *object, enum pmState state)
 static enum result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
+  assert(config);
+
   const struct SspBaseConfig baseConfig = {
       .channel = config->channel,
       .miso = config->miso,

@@ -24,7 +24,7 @@ struct MscConfig
   /**
    * Optional: pointer to a buffer for a temporary data. When the pointer is
    * left uninitialized, a memory for the buffer will be allocated in the heap.
-   * Buffer should be aligned along 4-byte boundary.
+   * Buffer should be aligned.
    */
   void *buffer;
   /** Mandatory: buffer size. */

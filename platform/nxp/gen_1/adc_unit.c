@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <halm/platform/nxp/gen_1/adc_defs.h>
 #include <halm/platform/nxp/gen_1/adc_unit.h>
 /*----------------------------------------------------------------------------*/
@@ -56,6 +57,8 @@ void adcUnitUnregister(struct AdcUnit *unit)
 static enum result adcUnitInit(void *object, const void *configBase)
 {
   const struct AdcUnitConfig * const config = configBase;
+  assert(config);
+
   const struct AdcUnitBaseConfig baseConfig = {
       .frequency = config->frequency,
       .accuracy = config->accuracy,

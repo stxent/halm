@@ -34,6 +34,8 @@ const struct InterfaceClass * const Dac = &dacTable;
 static enum result dacInit(void *object, const void *configBase)
 {
   const struct DacConfig * const config = configBase;
+  assert(config);
+
   const struct DacBaseConfig baseConfig = {
       .pin = config->pin
   };

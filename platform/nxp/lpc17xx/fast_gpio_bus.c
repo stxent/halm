@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/fast_gpio_bus.h>
 #include <halm/platform/nxp/lpc17xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -26,11 +25,7 @@ const struct GpioBusClass * const FastGpioBus = &gpioBusTable;
 /*----------------------------------------------------------------------------*/
 static enum result busInit(void *object, const void *configBase)
 {
-  const struct FastGpioBusConfig * const config = configBase;
-  struct FastGpioBus * const bus = object;
-
-  fastGpioBusConfigPins(bus, config);
-
+  fastGpioBusConfigPins(object, configBase);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
