@@ -169,6 +169,7 @@ static void interruptHandler(void *object)
 
       queuePop(&interface->txQueue, &message);
       status = sendMessage(interface, message, status);
+      arrayPushBack(&interface->pool, &message);
     }
   }
 
