@@ -23,6 +23,11 @@ config USB_DEVICE_CDC
 	default y
 	depends on USB_DEVICE
 
+config USB_DEVICE_DFU
+	bool "DFU driver"
+	default y
+	depends on USB_DEVICE
+
 config USB_DEVICE_HID
 	bool "HID driver"
 	default y

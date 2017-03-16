@@ -30,6 +30,10 @@ ifeq ($(CONFIG_USB_DEVICE_CDC),y)
   CSOURCES += usb/cdc_acm_base.c
 endif
 
+ifeq ($(CONFIG_USB_DEVICE_DFU),y)
+  CSOURCES += usb/dfu.c
+endif
+
 ifeq ($(CONFIG_USB_DEVICE_HID),y)
   CSOURCES += usb/hid.c
   CSOURCES += usb/hid_base.c
