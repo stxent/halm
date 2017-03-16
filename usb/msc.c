@@ -1399,26 +1399,23 @@ static void resetEndpoints(struct Msc *driver)
 static enum result driverInit(void *object, const void *configBase)
 {
   const struct MscConfig * const config = configBase;
+  assert(config);
+  assert(config->device);
+  assert(config->storage);
+  assert(config->size && !(config->size & (MSC_BLOCK_SIZE - 1)));
+
   struct Msc * const driver = object;
   enum result res;
 
-  if (!config->device || !config->storage)
-    return E_VALUE;
-
   driver->device = config->device;
   driver->storage = config->storage;
+  driver->bufferSize = config->size;
   driver->endpoints.rx = config->endpoints.rx;
   driver->endpoints.tx = config->endpoints.tx;
 
-  /* Setup temporary buffer */
-  if (!config->size || config->size & (MSC_BLOCK_SIZE - 1))
-    return E_VALUE;
-
-  driver->bufferSize = config->size;
-
   if (!config->buffer)
   {
-    driver->buffer = malloc(config->size);
+    driver->buffer = malloc(driver->bufferSize);
 
     if (!driver->buffer)
       return E_MEMORY;

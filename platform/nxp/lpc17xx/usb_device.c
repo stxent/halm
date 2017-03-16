@@ -540,8 +540,8 @@ static enum result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
   const unsigned int index = EP_TO_INDEX(ep->address);
 
   /* Set read enable bit for specific endpoint */
-  reg->USBCtrl = USBCtrl_RD_EN
-      | USBCtrl_LOG_ENDPOINT(USB_EP_LOGICAL_ADDRESS(ep->address));
+  reg->USBCtrl =
+      USBCtrl_RD_EN | USBCtrl_LOG_ENDPOINT(USB_EP_LOGICAL_ADDRESS(ep->address));
 
   size_t packetLength;
 
@@ -588,8 +588,8 @@ static void epWriteData(struct UsbSieEndpoint *ep, const uint8_t *buffer,
   const unsigned int index = EP_TO_INDEX(ep->address);
 
   /* Set write enable for specific endpoint */
-  reg->USBCtrl = USBCtrl_WR_EN
-      | USBCtrl_LOG_ENDPOINT(USB_EP_LOGICAL_ADDRESS(ep->address));
+  reg->USBCtrl =
+      USBCtrl_WR_EN | USBCtrl_LOG_ENDPOINT(USB_EP_LOGICAL_ADDRESS(ep->address));
   /* Set packet length */
   reg->USBTxPLen = length;
 

@@ -167,16 +167,16 @@ static enum result handleClassRequest(struct HidBase *driver,
   switch (packet->request)
   {
     case HID_REQUEST_GET_REPORT:
-      usbTrace("hid: get report type 0x%02X, id 0x%02X",
-          (uint8_t)(packet->value >> 8), (uint8_t)packet->value);
+      usbTrace("hid at %u: get report type 0x%02X, id 0x%02X",
+          packet->index, (uint8_t)(packet->value >> 8), (uint8_t)packet->value);
 
       return hidGetReport(driver->owner, packet->value >> 8,
           packet->value, response, responseLength,
           maxResponseLength);
 
     case HID_REQUEST_SET_REPORT:
-      usbTrace("hid: set report type 0x%02X, id 0x%02X, length %u",
-          (uint8_t)(packet->value >> 8), (uint8_t)packet->value,
+      usbTrace("hid at %u: set report type 0x%02X, id 0x%02X, length %u",
+          packet->index, (uint8_t)(packet->value >> 8), (uint8_t)packet->value,
           payloadLength);
 
       if (payloadLength)
@@ -188,20 +188,21 @@ static enum result handleClassRequest(struct HidBase *driver,
         return E_VALUE;
 
     case HID_REQUEST_GET_IDLE:
-      usbTrace("hid: get idle time %u", packet->value);
+      usbTrace("hid at %u: get idle time %u", packet->index, packet->value);
 
       response[0] = driver->idleTime;
       *responseLength = 1;
       return E_OK;
 
     case HID_REQUEST_SET_IDLE:
-      usbTrace("hid: set idle time to %u", packet->value);
+      usbTrace("hid at %u: set idle time to %u", packet->index, packet->value);
 
       driver->idleTime = packet->value >> 8;
       return E_OK;
 
     default:
-      usbTrace("hid: unknown request 0x%02X", packet->request);
+      usbTrace("hid at %u: unknown request 0x%02X",
+          packet->index, packet->request);
       return E_INVALID;
   }
 }

@@ -218,6 +218,9 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
 static enum result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
+  assert(config);
+  assert(config->device);
+
   struct CdcAcm * const interface = object;
   const struct CdcAcmBaseConfig driverConfig = {
       .device = config->device,

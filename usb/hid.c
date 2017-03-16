@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <assert.h>
 #include <halm/usb/hid.h>
 #include <halm/usb/hid_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -25,6 +26,12 @@ const struct HidClass * const Hid = &deviceTable;
 static enum result deviceInit(void *object, const void *configBase)
 {
   const struct HidConfig * const config = configBase;
+  assert(config);
+  assert(config->device);
+  assert(config->descriptor);
+  assert(config->descriptorSize);
+  assert(config->reportSize);
+
   struct Hid * const device = object;
   const struct HidBaseConfig driverConfig = {
       .owner = device,
@@ -37,7 +44,7 @@ static enum result deviceInit(void *object, const void *configBase)
 
   device->driver = init(HidBase, &driverConfig);
   if (!device->driver)
-    return E_MEMORY;
+    return E_ERROR;
 
   return E_OK;
 }
