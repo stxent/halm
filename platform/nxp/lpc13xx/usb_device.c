@@ -237,7 +237,9 @@ static enum result devInit(void *object, const void *configBase)
       .channel = config->channel
   };
   const struct UsbControlConfig controlConfig = {
-      .parent = object
+      .parent = object,
+      .vid = config->vid,
+      .pid = config->pid
   };
   struct UsbDevice * const device = object;
   enum result res;
