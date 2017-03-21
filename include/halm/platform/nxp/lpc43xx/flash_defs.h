@@ -24,16 +24,17 @@
 #define CODE_LPC4315_17         0xA001CB3FU
 #define CODE_LPC4312_13         0xA00BCB3FU
 
-#define FLASH_AVAILABLE         0x00010000
-#define FLASH_SIZE_MASK         0x000000FF
-#define FLASH_SIZE_256_256      0x00000044
-#define FLASH_SIZE_384_384      0x00000022
-#define FLASH_SIZE_512_0        0x00000080
-#define FLASH_SIZE_512_512      0x00000000
+#define FLASH_AVAILABLE         0x00010000U
+#define FLASH_SIZE_MASK         0x000000FFU
+#define FLASH_SIZE_256_256      0x00000044U
+#define FLASH_SIZE_384_384      0x00000022U
+#define FLASH_SIZE_512_0        0x00000080U
+#define FLASH_SIZE_512_512      0x00000000U
 /*----------------------------------------------------------------------------*/
-#define FLASH_BANK_A            0x1A000000
-#define FLASH_BANK_B            0x1B000000
-#define FLASH_BANK_MASK         0x0007FFFF
+#define FLASH_BANK_A            0x1A000000U
+#define FLASH_BANK_B            0x1B000000U
+#define FLASH_BANK_MASK         0x0007FFFFU
+#define FLASH_BANKS_BORDER      0x80000
 #define FLASH_PAGE_SIZE         512
 #define FLASH_SECTOR_SIZE_0     8192
 #define FLASH_SECTOR_SIZE_1     65536

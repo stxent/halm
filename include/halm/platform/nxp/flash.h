@@ -7,15 +7,17 @@
 #ifndef HALM_PLATFORM_NXP_FLASH_H_
 #define HALM_PLATFORM_NXP_FLASH_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
+#include <stddef.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Flash;
 /*----------------------------------------------------------------------------*/
 enum flashOption
 {
+  /** Get page size. */
+  IF_FLASH_PAGE_SIZE = IF_OPTION_END,
   /** Erase sector. */
-  IF_FLASH_ERASE_SECTOR = IF_OPTION_END,
+  IF_FLASH_ERASE_SECTOR,
   /** Erase page in sector. */
   IF_FLASH_ERASE_PAGE
 };
@@ -25,9 +27,9 @@ struct Flash
   struct Interface base;
 
   /* Current address */
-  uint32_t position;
+  size_t position;
   /* Size of the Flash memory */
-  uint32_t size;
+  size_t size;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_FLASH_H_ */

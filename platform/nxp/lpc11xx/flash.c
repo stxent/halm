@@ -10,9 +10,7 @@
 #include <halm/platform/nxp/iap.h>
 #include <halm/platform/nxp/lpc11xx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline bool isAddressValid(const struct Flash *, uint32_t, size_t);
-static inline bool isPageAddressValid(const struct Flash *, uint32_t);
-static inline bool isSectorAddressValid(const struct Flash *, uint32_t);
+static inline bool isSectorPositionValid(const struct Flash *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum result flashInit(void *, const void *);
 static void flashDeinit(void *);
@@ -36,22 +34,10 @@ static const struct InterfaceClass flashTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Flash = &flashTable;
 /*----------------------------------------------------------------------------*/
-static inline bool isAddressValid(const struct Flash *interface,
-    uint32_t address, size_t length)
+static inline bool isSectorPositionValid(const struct Flash *interface,
+    size_t position)
 {
-  return address < interface->size && address + length <= interface->size;
-}
-/*----------------------------------------------------------------------------*/
-static inline bool isPageAddressValid(const struct Flash *interface,
-    uint32_t address)
-{
-  return !(address & (FLASH_PAGE_SIZE - 1)) && address < interface->size;
-}
-/*----------------------------------------------------------------------------*/
-static inline bool isSectorAddressValid(const struct Flash *interface,
-    uint32_t address)
-{
-  return !(address & (FLASH_SECTOR_SIZE - 1)) && address < interface->size;
+  return !(position & (FLASH_SECTOR_SIZE - 1)) && position < interface->size;
 }
 /*----------------------------------------------------------------------------*/
 static enum result flashInit(void *object,
@@ -102,11 +88,15 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
   switch (option)
   {
     case IF_POSITION:
-      *(uint32_t *)data = interface->position;
+      *(size_t *)data = interface->position;
       return E_OK;
 
     case IF_SIZE:
-      *(uint32_t *)data = interface->size;
+      *(size_t *)data = interface->size;
+      return E_OK;
+
+    case IF_FLASH_PAGE_SIZE:
+      *(size_t *)data = FLASH_PAGE_SIZE;
       return E_OK;
 
     default:
@@ -124,15 +114,15 @@ static enum result flashSet(void *object, enum ifOption option,
   {
     case IF_FLASH_ERASE_SECTOR:
     {
-      const uint32_t address = *(const uint32_t *)data;
+      const size_t position = *(const size_t *)data;
 
-      if (!isSectorAddressValid(interface, address))
+      if (!isSectorPositionValid(interface, position))
         return E_ADDRESS;
 
-      if (flashBlankCheckSector(address) == E_OK)
+      if (flashBlankCheckSector(position) == E_OK)
         return E_OK;
 
-      return flashEraseSector(address);
+      return flashEraseSector(position);
     }
 
     default:
@@ -143,9 +133,9 @@ static enum result flashSet(void *object, enum ifOption option,
   {
     case IF_POSITION:
     {
-      const uint32_t position = *(const uint32_t *)data;
+      const size_t position = *(const size_t *)data;
 
-      if (isPageAddressValid(interface, position))
+      if (position < interface->size)
       {
         interface->position = position;
         return E_OK;
@@ -163,7 +153,7 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  if (isAddressValid(interface, interface->position, length))
+  if (interface->position + length <= interface->size)
   {
     memcpy(buffer, (const void *)interface->position, length);
     return length;
