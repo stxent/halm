@@ -13,6 +13,12 @@
 /*----------------------------------------------------------------------------*/
 #define DFU_CONTROL_EP_SIZE 64
 /*----------------------------------------------------------------------------*/
+enum
+{
+  APP_SPEC_PROTOCOL_DFU_RUNTIME = 0x01,
+  APP_SPEC_PROTOCOL_DFU_MODE    = 0x02
+};
+/*----------------------------------------------------------------------------*/
 /* Class-specific descriptor types */
 enum
 {
@@ -30,7 +36,7 @@ enum
   DFU_REQUEST_ABORT     = 6
 };
 /*----------------------------------------------------------------------------*/
-enum {
+enum dfuStatus {
   DFU_STATUS_OK               = 0x00,
   DFU_STATUS_ERR_TARGET       = 0x01,
   DFU_STATUS_ERR_FILE         = 0x02,
@@ -49,7 +55,7 @@ enum {
   DFU_STATUS_ERR_STALLEDPKT   = 0x0F
 };
 
-enum state {
+enum dfuState {
   STATE_APP_IDLE                = 0,
   STATE_APP_DETACH              = 1,
   STATE_DFU_IDLE                = 2,

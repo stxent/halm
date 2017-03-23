@@ -67,6 +67,13 @@ enum
   USB_CLASS_APP_SPEC            = 0xFE,
   USB_CLASS_VENDOR_SPEC         = 0xFF
 };
+
+enum
+{
+  APP_SPEC_SUBCLASS_DFU   = 0x01,
+  APP_SPEC_SUBCLASS_IRDA  = 0x02,
+  APP_SPEC_SUBCLASS_TEST  = 0x03
+};
 /*----------------------------------------------------------------------------*/
 enum
 {
