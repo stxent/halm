@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <stddef.h>
 #include <halm/delay.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/clocking_defs.h>
@@ -485,11 +486,20 @@ static inline void flashLatencyReset(void)
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
-  const uint32_t divisor = frequency / 43000000;
-  const uint32_t remainder = frequency - divisor * 43000000;
-  const uint8_t clocks = 1 + (divisor << 1) + (remainder >= 21000000 ? 1 : 0);
+  static const uint8_t frequencyToClocks[] = {
+      21, 43, 64, 86, 107, 129, 150, 172, 193
+  };
 
-  sysFlashLatencyUpdate(clocks <= 10 ? clocks : 10);
+  const unsigned int encodedFrequency = frequency / 1000000;
+  size_t index;
+
+  for (index = 0; index < ARRAY_SIZE(frequencyToClocks); ++index)
+  {
+    if (encodedFrequency <= frequencyToClocks[index])
+      break;
+  }
+
+  sysFlashLatencyUpdate(index + 1);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t getSourceFrequency(enum clockSource source)

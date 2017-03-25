@@ -94,7 +94,8 @@ enum sysClockBranch
 };
 /*----------------------------------------------------------------------------*/
 void sysClockControl(enum sysClockBranch, enum sysClockDiv);
-void sysFlashLatency(unsigned int);
+unsigned int sysFlashLatency(void);
+void sysFlashLatencyUpdate(unsigned int);
 /*----------------------------------------------------------------------------*/
 static inline unsigned int sysClockDivToValue(enum sysClockDiv divisor)
 {

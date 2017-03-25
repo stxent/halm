@@ -58,6 +58,11 @@ void sysClockControl(enum sysClockBranch branch, enum sysClockDiv divisor)
   }
 }
 /*----------------------------------------------------------------------------*/
+unsigned int sysFlashLatency(void)
+{
+  return FLASHCFG_FLASHTIM_VALUE(LPC_SC->FLASHCFG) + 1;
+}
+/*----------------------------------------------------------------------------*/
 /**
  * Set the flash access time.
  * @param value Flash access time in CPU clocks.
@@ -69,7 +74,7 @@ void sysClockControl(enum sysClockBranch branch, enum sysClockDiv divisor)
  *   - 5 clocks: up to 100 MHz or 120 MHz on some parts.
  *   - 6 clocks: safe setting will work under any conditions.
  */
-void sysFlashLatency(unsigned int value)
+void sysFlashLatencyUpdate(unsigned int value)
 {
   LPC_SC->FLASHCFG = (LPC_SC->FLASHCFG & ~FLASHCFG_FLASHTIM_MASK)
       | FLASHCFG_FLASHTIM(value - 1);

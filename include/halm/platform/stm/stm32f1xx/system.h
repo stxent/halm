@@ -124,7 +124,7 @@ enum sysClockBranch
 void sysClockEnable(enum sysClockBranch);
 void sysClockDisable(enum sysClockBranch);
 bool sysClockStatus(enum sysClockBranch);
-unsigned int sysFlashLatency();
+unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
 void sysResetEnable(enum sysBlockReset);
 void sysResetDisable(enum sysBlockReset);

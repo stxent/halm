@@ -62,8 +62,8 @@ enum sysClockBranch
   CLK_SCT0_1      = 31  /* Only for LPC11U6x and LPC11E6x */
 };
 /*----------------------------------------------------------------------------*/
+unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
-unsigned int sysFlashLatency();
 /*----------------------------------------------------------------------------*/
 static inline void sysClockEnable(enum sysClockBranch branch)
 {

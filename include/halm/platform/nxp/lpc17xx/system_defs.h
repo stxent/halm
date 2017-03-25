@@ -11,6 +11,8 @@
 /*------------------Flash Accelerator Configuration register------------------*/
 #define FLASHCFG_FLASHTIM_MASK          BIT_FIELD(MASK(4), 12)
 #define FLASHCFG_FLASHTIM(value)        BIT_FIELD((value), 12)
+#define FLASHCFG_FLASHTIM_VALUE(reg) \
+    FIELD_VALUE((reg), FLASHCFG_FLASHTIM_MASK, 12)
 /*------------------Power Mode Control register-------------------------------*/
 #define PCON_PM_SLEEP                   0
 #define PCON_PM_POWERDOWN               1

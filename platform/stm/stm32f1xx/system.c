@@ -81,7 +81,7 @@ bool sysClockStatus(enum sysClockBranch branch)
   return (value & mask) != 0;
 }
 /*----------------------------------------------------------------------------*/
-unsigned int sysFlashLatency()
+unsigned int sysFlashLatency(void)
 {
   return FLASH_ACR_LATENCY(STM_FLASH->ACR) + 1;
 }

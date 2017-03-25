@@ -7,7 +7,7 @@
 #include <halm/platform/nxp/lpc13xx/system.h>
 #include <halm/platform/nxp/lpc13xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-unsigned int sysFlashLatency()
+unsigned int sysFlashLatency(void)
 {
   return FLASHCFG_FLASHTIM_VALUE(LPC_FMC->FLASHCFG) + 1;
 }

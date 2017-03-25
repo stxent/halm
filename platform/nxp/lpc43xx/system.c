@@ -42,7 +42,7 @@ void sysFlashDisable(unsigned int bank)
   LPC_CREG->FLASHCFG[bank] &= ~FLASHCFG_POW;
 }
 /*----------------------------------------------------------------------------*/
-unsigned int sysFlashLatency()
+unsigned int sysFlashLatency(void)
 {
   /* Return access time for one of the banks */
   return FLASHCFG_FLASHTIM_VALUE(LPC_CREG->FLASHCFGA) + 1;

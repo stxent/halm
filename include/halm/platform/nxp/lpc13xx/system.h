@@ -49,8 +49,8 @@ enum sysClockBranch
   CLK_SSP1        = 18
 };
 /*----------------------------------------------------------------------------*/
+unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
-unsigned int sysFlashLatency();
 /*----------------------------------------------------------------------------*/
 static inline void sysClockEnable(enum sysClockBranch branch)
 {

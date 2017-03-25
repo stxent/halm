@@ -137,7 +137,7 @@ uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY);
 static inline void flashLatencyReset(void)
 {
   /* Select safe setting */
-  sysFlashLatency(6);
+  sysFlashLatencyUpdate(6);
 }
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
@@ -145,7 +145,7 @@ static void flashLatencyUpdate(uint32_t frequency)
   static const uint32_t frequencyStep = 20000000;
   const unsigned int clocks = (frequency + (frequencyStep - 1)) / frequencyStep;
 
-  sysFlashLatency(clocks <= 5 ? clocks : 5);
+  sysFlashLatencyUpdate(clocks <= 5 ? clocks : 5);
 }
 /*----------------------------------------------------------------------------*/
 static void pllDisconnect(void)
