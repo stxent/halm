@@ -25,8 +25,6 @@ enum
 /*----------------------------------------------------------------------------*/
 irqPriority irqGetPriority(irqNumber);
 void irqSetPriority(irqNumber, irqPriority);
-uint8_t nvicGetPriorityGrouping();
-void nvicSetPriorityGrouping(uint8_t);
 /*----------------------------------------------------------------------------*/
 static inline void irqRestore(irqState state)
 {
