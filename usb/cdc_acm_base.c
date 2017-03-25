@@ -47,8 +47,8 @@ static void bulkTransmitEndpointDescriptor(const void *, struct UsbDescriptor *,
     void *);
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct CdcAcmBase *,
-    const struct UsbSetupPacket *, const uint8_t *, uint16_t,
-    uint8_t *, uint16_t *, uint16_t);
+    const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
+    uint16_t *);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
@@ -317,8 +317,7 @@ static void bulkReceiveEndpointDescriptor(const void *object,
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct CdcAcmBase *driver,
     const struct UsbSetupPacket *packet, const uint8_t *payload,
-    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
-    uint16_t maxResponseLength)
+    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength)
 {
   if (packet->index != driver->controlInterfaceIndex)
     return E_VALUE;
@@ -330,7 +329,7 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
   {
     case CDC_SET_LINE_CODING:
     {
-      if (payloadLength != sizeof(privateData->state.lineCoding))
+      if (payloadLength != sizeof(struct CdcLineCoding))
         return E_VALUE; /* Incorrect packet */
 
       const struct CdcLineCoding * const lineCoding =
@@ -352,9 +351,6 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
 
     case CDC_GET_LINE_CODING:
     {
-      assert(maxResponseLength >= sizeof(struct CdcLineCoding));
-      (void)maxResponseLength;
-
       struct CdcLineCoding * const lineCoding =
           (struct CdcLineCoding *)response;
 
@@ -363,7 +359,7 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
       lineCoding->charFormat = privateData->state.lineCoding.charFormat;
       lineCoding->parityType = privateData->state.lineCoding.parityType;
       lineCoding->dataBits = privateData->state.lineCoding.dataBits;
-      *responseLength = sizeof(privateData->state.lineCoding);
+      *responseLength = sizeof(struct CdcLineCoding);
 
       usbTrace("cdc_acm at %u: line coding requested", packet->index);
       break;
@@ -438,12 +434,12 @@ static void driverDeinit(void *object)
 static enum result driverConfigure(void *object,
     const struct UsbSetupPacket *packet, const uint8_t *payload,
     uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
-    uint16_t maxResponseLength)
+    uint16_t maxResponseLength __attribute__((unused)))
 {
   if (REQUEST_TYPE_VALUE(packet->requestType) == REQUEST_TYPE_CLASS)
   {
     return handleClassRequest(object, packet, payload, payloadLength,
-        response, responseLength, maxResponseLength);
+        response, responseLength);
   }
   else
     return E_INVALID;
