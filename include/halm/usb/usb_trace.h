@@ -10,7 +10,7 @@
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 enum result usbTraceInit(struct Interface *);
-void usbTraceDeinit();
+void usbTraceDeinit(void);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_USB_TRACE
 void usbTrace(const char *, ...);

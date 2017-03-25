@@ -16,9 +16,9 @@ enum result eepromWriteBuffer(uint32_t, const void *, size_t);
 enum result flashBlankCheckSector(uint32_t);
 enum result flashErasePage(uint32_t);
 enum result flashEraseSector(uint32_t);
-void flashInitWrite();
-uint32_t flashReadId();
-uint32_t flashReadConfigId();
+void flashInitWrite(void);
+uint32_t flashReadId(void);
+uint32_t flashReadConfigId(void);
 enum result flashWriteBuffer(uint32_t, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_IAP_H_ */

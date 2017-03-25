@@ -202,12 +202,12 @@ enum result flashEraseSector(uint32_t address)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-void flashInitWrite()
+void flashInitWrite(void)
 {
   iap(CMD_INIT, 0, 0, 0, 0);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t flashReadId()
+uint32_t flashReadId(void)
 {
   unsigned long id[1];
 
@@ -216,7 +216,7 @@ uint32_t flashReadId()
   return id[0];
 }
 /*----------------------------------------------------------------------------*/
-uint32_t flashReadConfigId()
+uint32_t flashReadConfigId(void)
 {
   unsigned long id[2];
 

@@ -21,7 +21,7 @@ enum result usbTraceInit(struct Interface *interface)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void usbTraceDeinit()
+void usbTraceDeinit(void)
 {
   traceInterface = 0;
 }

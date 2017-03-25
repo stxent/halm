@@ -7,12 +7,12 @@
 #include <halm/core/core_defs.h>
 #include <halm/core/cortex/m4/fpu_defs.h>
 /*----------------------------------------------------------------------------*/
-void fpuDisable()
+void fpuDisable(void)
 {
   SCB->CPACR &= ~(CPACR_CP10_MASK | CPACR_CP11_MASK);
 }
 /*----------------------------------------------------------------------------*/
-void fpuEnable()
+void fpuEnable(void)
 {
   SCB->CPACR |= CPACR_CP10(CPACR_FULL_ACCESS) | CPACR_CP11(CPACR_FULL_ACCESS);
 }
