@@ -19,6 +19,11 @@ static void interfaceDescriptor(const void *, struct UsbDescriptor *, void *);
 static void functionalDescriptor(const void *, struct UsbDescriptor *, void *);
 /*----------------------------------------------------------------------------*/
 static void onTimerOverflow(void *);
+static enum result processDownloadRequest(struct Dfu *, const uint8_t *,
+    uint16_t);
+static void processGetStatusRequest(struct Dfu *, uint8_t *, uint16_t *);
+static enum result processUploadRequest(struct Dfu *, uint16_t, uint8_t *,
+    uint16_t *);
 static void resetDriver(struct Dfu *);
 static void setStatus(struct Dfu *, enum dfuStatus);
 static inline void toLittleEndian24(uint8_t *, uint32_t);
@@ -151,6 +156,123 @@ static void onTimerOverflow(void *argument)
   usbTrace("dfu at %u: timer event", driver->interfaceIndex);
 }
 /*----------------------------------------------------------------------------*/
+static enum result processDownloadRequest(struct Dfu *driver,
+    const uint8_t *buffer, uint16_t length)
+{
+  if (!driver->onDownloadRequest)
+  {
+    setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+    return E_INVALID;
+  }
+
+  if (driver->state == STATE_DFU_IDLE && length)
+  {
+    driver->position = 0;
+  }
+  else if (driver->state == STATE_DFU_IDLE
+      || driver->state != STATE_DFU_DNLOAD_IDLE)
+  {
+    setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+    usbTrace("dfu at %u: incorrect sequence", driver->interfaceIndex);
+    return E_ERROR;
+  }
+
+  const size_t written = driver->onDownloadRequest(driver->position,
+      buffer, length, &driver->timeout);
+
+  /*
+   * User-space code must not use timeouts when the timer is not
+   * initialized.
+   */
+  assert(driver->timer || !driver->timeout);
+
+  if (written == length)
+  {
+    /* Write succeeded, update internal position */
+    driver->position += length;
+    driver->state = length ? STATE_DFU_DNLOAD_SYNC : STATE_DFU_MANIFEST_SYNC;
+    return E_OK;
+  }
+  else
+  {
+    /* Write failed */
+    setStatus(driver, DFU_STATUS_ERR_WRITE);
+    usbTrace("dfu at %u: write failed at %u",
+        driver->interfaceIndex, driver->position);
+    return E_INTERFACE;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void processGetStatusRequest(struct Dfu *driver, uint8_t *response,
+    uint16_t *responseLength)
+{
+  const bool enableTimer = driver->timer && driver->timeout;
+
+  switch ((enum dfuState)driver->state)
+  {
+    case STATE_DFU_DNLOAD_SYNC:
+      driver->state = enableTimer ? STATE_DFU_DNBUSY : STATE_DFU_DNLOAD_IDLE;
+      break;
+
+    case STATE_DFU_MANIFEST_SYNC:
+      driver->state = enableTimer ? STATE_DFU_MANIFEST : STATE_DFU_IDLE;
+      break;
+
+    default:
+      break;
+  }
+
+  if (enableTimer)
+  {
+    timerSetOverflow(driver->timer, driver->timeout);
+    timerSetValue(driver->timer, 0);
+    timerSetEnabled(driver->timer, true);
+  }
+
+  struct DfuGetStatusResponse * const statusResponse =
+      (struct DfuGetStatusResponse *)response;
+
+  toLittleEndian24(statusResponse->pollTimeout, driver->timeout);
+  statusResponse->status = driver->status;
+  statusResponse->state = driver->state;
+  statusResponse->string = 0;
+  *responseLength = sizeof(struct DfuGetStatusResponse);
+
+  usbTrace("dfu at %u: state %u, status %u, timeout %u",
+      driver->interfaceIndex, driver->state, driver->status, driver->timeout);
+}
+/*----------------------------------------------------------------------------*/
+static enum result processUploadRequest(struct Dfu *driver,
+    uint16_t requestedLength, uint8_t *response, uint16_t *responseLength)
+{
+  if (!driver->onUploadRequest)
+  {
+    setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+    return E_INVALID;
+  }
+
+  if (driver->state == STATE_DFU_IDLE)
+  {
+    driver->position = 0;
+  }
+  else if (driver->state != STATE_DFU_UPLOAD_IDLE)
+  {
+    setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+    usbTrace("dfu at %u: incorrect upload sequence", driver->interfaceIndex);
+    return E_ERROR;
+  }
+
+  const size_t read = driver->onUploadRequest(driver->position, response,
+      requestedLength);
+
+  driver->position += read;
+  driver->state = read == requestedLength ?
+      STATE_DFU_UPLOAD_IDLE : STATE_DFU_IDLE;
+
+  *responseLength = (uint16_t)read;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
 static void resetDriver(struct Dfu *driver)
 {
   driver->position = 0;
@@ -226,136 +348,22 @@ static enum result driverConfigure(void *object,
 
   switch (packet->request)
   {
-    case DFU_REQUEST_DETACH:
-      setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-      usbTrace("dfu at %u: detach request", packet->index);
-      return E_INVALID;
-
     case DFU_REQUEST_DNLOAD:
-      if (!driver->onDownloadRequest || packet->length != payloadLength)
-      {
-        setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-        usbTrace("dfu at %u: download unsupported", packet->index);
-        return E_INVALID;
-      }
-
-      switch ((enum dfuState)driver->state)
-      {
-        case STATE_DFU_IDLE:
-          if (!packet->length)
-          {
-            setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-            usbTrace("dfu at %u: incorrect sequence", packet->index);
-            return E_INVALID;
-          }
-
-          driver->position = 0;
-          /* No break */
-        case STATE_DFU_DNLOAD_IDLE:
-          if (packet->length > 0)
-          {
-            const size_t written = driver->onDownloadRequest(driver->position,
-                payload, packet->length, &driver->timeout);
-
-            /*
-             * User-space code must not use timeouts when the timer is not
-             * initialized.
-             */
-            assert(driver->timer || !driver->timeout);
-
-            if (written != packet->length)
-            {
-              setStatus(driver, DFU_STATUS_ERR_WRITE);
-              return E_INVALID;
-            }
-            else
-              driver->state = STATE_DFU_DNLOAD_SYNC;
-
-            driver->position += packet->length;
-          }
-          else
-            driver->state = STATE_DFU_MANIFEST_SYNC;
-
-          return E_OK;
-
-        default:
-          setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-          usbTrace("dfu at %u: incorrect download sequence", packet->index);
-          return E_INVALID;
-      }
+      if (packet->length == payloadLength)
+        return processDownloadRequest(driver, payload, packet->length);
+      else
+        return E_VALUE;
 
     case DFU_REQUEST_UPLOAD:
-      if (!driver->onUploadRequest)
-      {
-        setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-        usbTrace("dfu at %u: upload unsupported", packet->index);
-        return E_INVALID;
-      }
-
-      switch ((enum dfuState)driver->state)
-      {
-        case STATE_DFU_IDLE:
-          driver->position = 0;
-          /* No break */
-        case STATE_DFU_UPLOAD_IDLE:
-        {
-          const size_t read = driver->onUploadRequest(driver->position,
-              response, packet->length);
-
-          driver->position += read;
-
-          if (read == packet->length)
-            driver->state = STATE_DFU_UPLOAD_IDLE;
-          else
-            driver->state = STATE_DFU_IDLE;
-
-          *responseLength = (uint16_t)read;
-          return E_OK;
-        }
-
-        default:
-          usbTrace("dfu at %u: incorrect upload sequence", packet->index);
-          return E_INVALID;
-      }
+      return processUploadRequest(driver, packet->length, response,
+          responseLength);
 
     case DFU_REQUEST_GETSTATUS:
-      switch ((enum dfuState)driver->state)
-      {
-        case STATE_DFU_DNLOAD_SYNC:
-          if (driver->timer && driver->timeout)
-          {
-            driver->state = STATE_DFU_DNBUSY;
-            timerSetOverflow(driver->timer, driver->timeout);
-            timerSetValue(driver->timer, 0);
-            timerSetEnabled(driver->timer, true);
-          }
-          else
-            driver->state = STATE_DFU_DNLOAD_IDLE;
-
-          break;
-
-        case STATE_DFU_MANIFEST_SYNC:
-          driver->state = STATE_DFU_IDLE;
-          break;
-
-        default:
-          break;
-      }
-
-      struct DfuGetStatusResponse * const statusResponse =
-          (struct DfuGetStatusResponse *)response;
-
-      toLittleEndian24(statusResponse->pollTimeout, driver->timeout);
-      statusResponse->status = driver->status;
-      statusResponse->state = driver->state;
-      statusResponse->string = 0;
-      *responseLength = sizeof(struct DfuGetStatusResponse);
-
-      usbTrace("dfu at %u: state %u, status %u, timeout %u",
-          packet->index, driver->state, driver->status, driver->timeout);
+      processGetStatusRequest(driver, response, responseLength);
       return E_OK;
 
     case DFU_REQUEST_CLRSTATUS:
+    {
       switch ((enum dfuState)driver->state)
       {
         case STATE_DFU_ERROR:
@@ -369,13 +377,10 @@ static enum result driverConfigure(void *object,
           usbTrace("dfu at %u: clear failed", driver->interfaceIndex);
           return E_INVALID;
       }
-
-    case DFU_REQUEST_GETSTATE:
-      response[0] = driver->state;
-      usbTrace("dfu at %u: state requested", packet->index);
-      return E_OK;
+    }
 
     case DFU_REQUEST_ABORT:
+    {
       switch (driver->state)
       {
         case STATE_DFU_IDLE:
@@ -392,6 +397,16 @@ static enum result driverConfigure(void *object,
           usbTrace("dfu at %u: abort failed", driver->interfaceIndex);
           return E_INVALID;
       }
+    }
+
+    case DFU_REQUEST_DETACH:
+      setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+      usbTrace("dfu at %u: detach request", driver->interfaceIndex);
+      return E_INVALID;
+
+    case DFU_REQUEST_GETSTATE:
+      response[0] = driver->state;
+      return E_OK;
 
     default:
       setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
