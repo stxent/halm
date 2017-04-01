@@ -141,7 +141,7 @@ static void rxEndpointDescriptor(const void *, struct UsbDescriptor *, void *);
 static void txEndpointDescriptor(const void *, struct UsbDescriptor *, void *);
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct Msc *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 static enum result initPrivateData(struct Msc *);
 static enum result initRequestQueues(struct Msc *, struct PrivateData *);
 static void freePrivateData(struct Msc *);
@@ -1268,23 +1268,19 @@ static void txEndpointDescriptor(const void *object,
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct Msc *driver,
     const struct UsbSetupPacket *packet, uint8_t *response,
-    uint16_t *responseLength, uint16_t maxResponseLength)
+    uint16_t *responseLength)
 {
-  (void)maxResponseLength;
-
   switch (packet->request)
   {
     case MSC_REQUEST_RESET:
-      usbTrace("msc at %u: reset requested", packet->index);
+      usbTrace("msc at %u: reset requested", driver->interfaceIndex);
 
       resetBuffers(driver);
       *responseLength = 0;
       return E_OK;
 
     case MSC_REQUEST_GET_MAX_LUN:
-      assert(maxResponseLength >= 1);
-
-      usbTrace("msc at %u: max LUN requested", packet->index);
+      usbTrace("msc at %u: max LUN requested", driver->interfaceIndex);
 
       response[0] = 0; //FIXME
       *responseLength = 1;
@@ -1292,7 +1288,7 @@ static enum result handleClassRequest(struct Msc *driver,
 
     default:
       usbTrace("msc at %u: unknown request %02X",
-          packet->index, packet->request);
+          driver->interfaceIndex, packet->request);
       return E_INVALID;
   }
 }
@@ -1475,13 +1471,11 @@ static enum result driverConfigure(void *object,
     const struct UsbSetupPacket *packet,
     const uint8_t *payload __attribute__((unused)),
     uint16_t payloadLength __attribute__((unused)),
-    uint8_t *response, uint16_t *responseLength, uint16_t maxResponseLength)
+    uint8_t *response, uint16_t *responseLength,
+    uint16_t maxResponseLength __attribute__((unused)))
 {
   if (REQUEST_TYPE_VALUE(packet->requestType) == REQUEST_TYPE_CLASS)
-  {
-    return handleClassRequest(object, packet, response, responseLength,
-        maxResponseLength);
-  }
+    return handleClassRequest(object, packet, response, responseLength);
   else
     return E_INVALID;
 }

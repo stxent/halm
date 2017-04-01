@@ -344,8 +344,8 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
       event = true;
 
       usbTrace("cdc_acm at %u: rate %u, format %u, parity %u, width %u",
-          packet->index, lineCoding->dteRate, lineCoding->charFormat,
-          lineCoding->parityType, lineCoding->dataBits);
+          driver->controlInterfaceIndex, lineCoding->dteRate,
+          lineCoding->charFormat, lineCoding->parityType, lineCoding->dataBits);
       break;
     }
 
@@ -361,7 +361,8 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
       lineCoding->dataBits = privateData->state.lineCoding.dataBits;
       *responseLength = sizeof(struct CdcLineCoding);
 
-      usbTrace("cdc_acm at %u: line coding requested", packet->index);
+      usbTrace("cdc_acm at %u: line coding requested",
+          driver->controlInterfaceIndex);
       break;
     }
 
@@ -370,12 +371,12 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
       event = true;
 
       usbTrace("cdc_acm at %u: set control lines to %02X",
-          packet->index, packet->value);
+          driver->controlInterfaceIndex, packet->value);
       break;
 
     default:
       usbTrace("cdc_acm at %u: unknown request %02X",
-          packet->index, packet->request);
+          driver->controlInterfaceIndex, packet->request);
       return E_INVALID;
   }
 

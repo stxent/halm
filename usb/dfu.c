@@ -361,12 +361,12 @@ static enum result driverConfigure(void *object,
         case STATE_DFU_ERROR:
           driver->status = DFU_STATUS_OK;
           driver->state = STATE_DFU_IDLE;
-          usbTrace("dfu at %u: status cleared", packet->index);
+          usbTrace("dfu at %u: status cleared", driver->interfaceIndex);
           return E_OK;
 
         default:
           setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-          usbTrace("dfu at %u: clear failed", packet->index);
+          usbTrace("dfu at %u: clear failed", driver->interfaceIndex);
           return E_INVALID;
       }
 
@@ -384,19 +384,19 @@ static enum result driverConfigure(void *object,
         case STATE_DFU_MANIFEST_SYNC:
         case STATE_DFU_UPLOAD_IDLE:
           driver->state = STATE_DFU_IDLE;
-          usbTrace("dfu at %u: aborted", packet->index);
+          usbTrace("dfu at %u: aborted", driver->interfaceIndex);
           return E_OK;
 
         default:
           setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-          usbTrace("dfu at %u: abort failed", packet->index);
+          usbTrace("dfu at %u: abort failed", driver->interfaceIndex);
           return E_INVALID;
       }
 
     default:
       setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
       usbTrace("dfu at %u: unknown request 0x%02X",
-          packet->index, packet->request);
+          driver->interfaceIndex, packet->request);
       return E_INVALID;
   }
 }
@@ -423,8 +423,6 @@ void dfuOnDownloadCompleted(struct Dfu *driver, bool status)
   {
     case STATE_DFU_DNLOAD_SYNC:
     case STATE_DFU_DNBUSY:
-      usbTrace("dfu at %u: download status %u", driver->interfaceIndex, status);
-
       if (!status)
         driver->status = DFU_STATUS_ERR_WRITE;
       break;
