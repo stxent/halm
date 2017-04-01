@@ -141,7 +141,7 @@ static void rxEndpointDescriptor(const void *, struct UsbDescriptor *, void *);
 static void txEndpointDescriptor(const void *, struct UsbDescriptor *, void *);
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct Msc *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
+    const struct UsbSetupPacket *, void *, uint16_t *);
 static enum result initPrivateData(struct Msc *);
 static enum result initRequestQueues(struct Msc *, struct PrivateData *);
 static void freePrivateData(struct Msc *);
@@ -151,7 +151,7 @@ static void resetEndpoints(struct Msc *);
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbSetupPacket *,
-    const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
+    const void *, uint16_t, void *, uint16_t *, uint16_t);
 static const usbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
@@ -1267,7 +1267,7 @@ static void txEndpointDescriptor(const void *object,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct Msc *driver,
-    const struct UsbSetupPacket *packet, uint8_t *response,
+    const struct UsbSetupPacket *packet, void *response,
     uint16_t *responseLength)
 {
   switch (packet->request)
@@ -1282,7 +1282,7 @@ static enum result handleClassRequest(struct Msc *driver,
     case MSC_REQUEST_GET_MAX_LUN:
       usbTrace("msc at %u: max LUN requested", driver->interfaceIndex);
 
-      response[0] = 0; //FIXME
+      ((uint8_t *)response)[0] = 0; //FIXME
       *responseLength = 1;
       return E_OK;
 
@@ -1469,9 +1469,9 @@ static void driverDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
     const struct UsbSetupPacket *packet,
-    const uint8_t *payload __attribute__((unused)),
+    const void *payload __attribute__((unused)),
     uint16_t payloadLength __attribute__((unused)),
-    uint8_t *response, uint16_t *responseLength,
+    void *response, uint16_t *responseLength,
     uint16_t maxResponseLength __attribute__((unused)))
 {
   if (REQUEST_TYPE_VALUE(packet->requestType) == REQUEST_TYPE_CLASS)

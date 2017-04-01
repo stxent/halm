@@ -47,13 +47,13 @@ static void bulkTransmitEndpointDescriptor(const void *, struct UsbDescriptor *,
     void *);
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct CdcAcmBase *,
-    const struct UsbSetupPacket *, const uint8_t *, uint16_t, uint8_t *,
+    const struct UsbSetupPacket *, const void *, uint16_t, void *,
     uint16_t *);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbSetupPacket *,
-    const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
+    const void *, uint16_t, void *, uint16_t *, uint16_t);
 static const usbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
@@ -316,8 +316,8 @@ static void bulkReceiveEndpointDescriptor(const void *object,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct CdcAcmBase *driver,
-    const struct UsbSetupPacket *packet, const uint8_t *payload,
-    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength)
+    const struct UsbSetupPacket *packet, const void *payload,
+    uint16_t payloadLength, void *response, uint16_t *responseLength)
 {
   if (packet->index != driver->controlInterfaceIndex)
     return E_VALUE;
@@ -332,8 +332,7 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
       if (payloadLength != sizeof(struct CdcLineCoding))
         return E_VALUE; /* Incorrect packet */
 
-      const struct CdcLineCoding * const lineCoding =
-          (const struct CdcLineCoding *)payload;
+      const struct CdcLineCoding * const lineCoding = payload;
 
       privateData->state.lineCoding.dteRate =
           fromLittleEndian32(lineCoding->dteRate);
@@ -351,8 +350,7 @@ static enum result handleClassRequest(struct CdcAcmBase *driver,
 
     case CDC_GET_LINE_CODING:
     {
-      struct CdcLineCoding * const lineCoding =
-          (struct CdcLineCoding *)response;
+      struct CdcLineCoding * const lineCoding = response;
 
       lineCoding->dteRate =
           toLittleEndian32(privateData->state.lineCoding.dteRate);
@@ -433,8 +431,8 @@ static void driverDeinit(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
-    const struct UsbSetupPacket *packet, const uint8_t *payload,
-    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    const struct UsbSetupPacket *packet, const void *payload,
+    uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength __attribute__((unused)))
 {
   if (REQUEST_TYPE_VALUE(packet->requestType) == REQUEST_TYPE_CLASS)

@@ -26,15 +26,15 @@ static void hidDescriptor(const void *, struct UsbDescriptor *, void *);
 static void endpointDescriptor(const void *, struct UsbDescriptor *, void *);
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct HidBase *,
-    const struct UsbSetupPacket *, const uint8_t *, uint16_t,
-    uint8_t *, uint16_t *, uint16_t);
+    const struct UsbSetupPacket *, const void *, uint16_t,
+    void *, uint16_t *, uint16_t);
 static enum result handleDeviceRequest(struct HidBase *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
+    const struct UsbSetupPacket *, void *, uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbSetupPacket *,
-    const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
+    const void *, uint16_t, void *, uint16_t *, uint16_t);
 static const usbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
@@ -157,8 +157,8 @@ static void endpointDescriptor(const void *object,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleClassRequest(struct HidBase *driver,
-    const struct UsbSetupPacket *packet, const uint8_t *payload,
-    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    const struct UsbSetupPacket *packet, const void *payload,
+    uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
   if (packet->index != driver->interfaceIndex)
@@ -192,7 +192,7 @@ static enum result handleClassRequest(struct HidBase *driver,
       usbTrace("hid at %u: get idle time %u",
           driver->interfaceIndex, packet->value);
 
-      response[0] = driver->idleTime;
+      ((uint8_t *)response)[0] = driver->idleTime;
       *responseLength = 1;
       return E_OK;
 
@@ -211,7 +211,7 @@ static enum result handleClassRequest(struct HidBase *driver,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleDeviceRequest(struct HidBase *driver,
-    const struct UsbSetupPacket *packet, uint8_t *response,
+    const struct UsbSetupPacket *packet, void *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
   enum result res = E_INVALID;
@@ -265,8 +265,8 @@ static void driverDeinit(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
-    const struct UsbSetupPacket *packet, const uint8_t *payload,
-    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    const struct UsbSetupPacket *packet, const void *payload,
+    uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
   struct HidBase * const driver = object;

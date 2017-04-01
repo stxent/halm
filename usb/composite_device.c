@@ -33,14 +33,14 @@ static void configDescriptor(const void *, struct UsbDescriptor *, void *);
 static void computeDescriptionProperties(const void *, uint16_t *, uint8_t *);
 static uint16_t extendConfigurationDescriptor(const void *, uint8_t *);
 static enum result handleDeviceRequest(struct CompositeDeviceProxy *,
-    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
+    const struct UsbSetupPacket *, void *, uint16_t *, uint16_t);
 static enum result lookupDescriptor(struct CompositeDeviceProxy *,
-    uint8_t, uint8_t *, uint16_t *, uint16_t);
+    uint8_t, void *, uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum result driverConfigure(void *, const struct UsbSetupPacket *,
-    const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
+    const void *, uint16_t, void *, uint16_t *, uint16_t);
 static const usbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
@@ -210,7 +210,7 @@ static uint16_t extendConfigurationDescriptor(const void *driver,
 }
 /*----------------------------------------------------------------------------*/
 static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
-    const struct UsbSetupPacket *packet, uint8_t *response,
+    const struct UsbSetupPacket *packet, void *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
   enum result res = E_INVALID;
@@ -229,7 +229,7 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
       assert(descriptorSize <= maxResponseLength);
 
       memset(response, 0, descriptorSize);
-      deviceDescriptor(driver, (struct UsbDescriptor *)response, response);
+      deviceDescriptor(driver, response, response);
       *responseLength = descriptorSize;
 
       res = E_OK;
@@ -240,7 +240,7 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
       assert(descriptorSize <= maxResponseLength);
 
       memset(response, 0, descriptorSize);
-      configDescriptor(driver, (struct UsbDescriptor *)response, response);
+      configDescriptor(driver, response, response);
       *responseLength = descriptorSize;
 
       res = E_OK;
@@ -256,7 +256,7 @@ static enum result handleDeviceRequest(struct CompositeDeviceProxy *driver,
 }
 /*----------------------------------------------------------------------------*/
 static enum result lookupDescriptor(struct CompositeDeviceProxy *driver,
-    uint8_t type, uint8_t *response, uint16_t *responseLength,
+    uint8_t type, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
   struct ListNode *currentNode = listFirst(&driver->owner->entries);
@@ -293,8 +293,8 @@ static void driverDeinit(void *object __attribute__((unused)))
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,
-    const struct UsbSetupPacket *packet, const uint8_t *payload,
-    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    const struct UsbSetupPacket *packet, const void *payload,
+    uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
   struct CompositeDeviceProxy * const driver = object;

@@ -279,7 +279,7 @@ struct UsbDriverClass
   CLASS_HEADER
 
   enum result (*configure)(void *, const struct UsbSetupPacket *,
-      const uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t);
+      const void *, uint16_t, void *, uint16_t *, uint16_t);
   const usbDescriptorFunctor *(*describe)(const void *);
   void (*event)(void *, unsigned int);
 };
@@ -303,8 +303,8 @@ struct UsbDriver
  * @return @b E_OK on success, @b E_VALUE when the buffer is too small.
  */
 static inline enum result usbDriverConfigure(void *driver,
-    const struct UsbSetupPacket *packet, const uint8_t *payload,
-    uint16_t payloadLength, uint8_t *response, uint16_t *responseLength,
+    const struct UsbSetupPacket *packet, const void *payload,
+    uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
   return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
