@@ -148,6 +148,10 @@ static void onTimerOverflow(void *argument)
       driver->state = STATE_DFU_DNLOAD_SYNC;
       break;
 
+    case STATE_DFU_MANIFEST:
+      driver->state = STATE_DFU_MANIFEST_SYNC;
+      break;
+
     default:
       break;
   }
@@ -221,13 +225,6 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
       break;
   }
 
-  if (enableTimer)
-  {
-    timerSetOverflow(driver->timer, driver->timeout);
-    timerSetValue(driver->timer, 0);
-    timerSetEnabled(driver->timer, true);
-  }
-
   struct DfuGetStatusResponse * const statusResponse = response;
 
   toLittleEndian24(statusResponse->pollTimeout, driver->timeout);
@@ -238,6 +235,13 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
 
   usbTrace("dfu at %u: state %u, status %u, timeout %u",
       driver->interfaceIndex, driver->state, driver->status, driver->timeout);
+
+  if (enableTimer)
+  {
+    timerSetOverflow(driver->timer, driver->timeout);
+    timerSetValue(driver->timer, 0);
+    timerSetEnabled(driver->timer, true);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result processUploadRequest(struct Dfu *driver,
