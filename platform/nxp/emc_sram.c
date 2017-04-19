@@ -52,10 +52,11 @@ static enum result sramInit(void *object, const void *configBase)
   assert(config->timings.rc >= config->timings.oe);
   assert(config->timings.wc >= config->timings.we);
 
+  memory->channel = config->channel;
+  memory->address = emcGetStaticMemoryAddress(memory->channel);
+
   const struct PinGroupEntry *group;
   struct Pin pin;
-
-  memory->channel = config->channel;
 
   /* Address bus */
   for (size_t index = 0; index < config->addressWidth; ++index)

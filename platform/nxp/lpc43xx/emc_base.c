@@ -258,6 +258,52 @@ uint32_t emcGetClock(void)
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
+void *emcGetDynamicMemoryAddress(uint8_t channel)
+{
+  assert(channel < ARRAY_SIZE(emcHandler->dm));
+
+  switch (channel)
+  {
+    case 0:
+      return (void *)LPC_EMC_DYCS0_BASE;
+
+    case 1:
+      return (void *)LPC_EMC_DYCS1_BASE;
+
+    case 2:
+      return (void *)LPC_EMC_DYCS2_BASE;
+
+    case 3:
+      return (void *)LPC_EMC_DYCS3_BASE;
+
+    default:
+      return 0;
+  }
+}
+/*----------------------------------------------------------------------------*/
+void *emcGetStaticMemoryAddress(uint8_t channel)
+{
+  assert(channel < ARRAY_SIZE(emcHandler->sm));
+
+  switch (channel)
+  {
+    case 0:
+      return (void *)LPC_EMC_CS0_BASE;
+
+    case 1:
+      return (void *)LPC_EMC_CS1_BASE;
+
+    case 2:
+      return (void *)LPC_EMC_CS2_BASE;
+
+    case 3:
+      return (void *)LPC_EMC_CS3_BASE;
+
+    default:
+      return 0;
+  }
+}
+/*----------------------------------------------------------------------------*/
 bool emcSetDynamicMemoryDescriptor(uint8_t channel,
     const struct Entity *current, struct Entity *memory)
 {

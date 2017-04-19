@@ -41,8 +41,15 @@ struct EmcSram
 {
   struct Entity base;
 
+  /* Starting address of the memory bank */
+  void *address;
   /* Peripheral identifier */
   uint8_t channel;
 };
+/*----------------------------------------------------------------------------*/
+static inline void *emcSramAddress(const struct EmcSram *memory)
+{
+  return memory->address;
+}
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_EMC_SRAM_H_ */

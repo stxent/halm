@@ -2124,16 +2124,26 @@ typedef struct
 } LPC_OTP_Type;
 /*----------------------------------------------------------------------------*/
 /* Base addresses */
-#define LPC_AHB_BASE              (0x40000000UL)
-#define LPC_RTC_DOMAIN_BASE       (0x40040000UL)
-#define LPC_CLK_DOMAIN_BASE       (0x40050000UL)
-#define LPC_APB0_BASE             (0x40080000UL)
-#define LPC_APB1_BASE             (0x400A0000UL)
-#define LPC_APB2_BASE             (0x400C0000UL)
-#define LPC_APB3_BASE             (0x400E0000UL)
-#define LPC_GPIO_BASE             (0x400F4000UL)
-#define LPC_SPI_BASE              (0x40100000UL)
-#define LPC_SGPIO_BASE            (0x40101000UL)
+#define LPC_AHB_BASE              0x40000000UL
+#define LPC_RTC_DOMAIN_BASE       0x40040000UL
+#define LPC_CLK_DOMAIN_BASE       0x40050000UL
+#define LPC_APB0_BASE             0x40080000UL
+#define LPC_APB1_BASE             0x400A0000UL
+#define LPC_APB2_BASE             0x400C0000UL
+#define LPC_APB3_BASE             0x400E0000UL
+#define LPC_GPIO_BASE             0x400F4000UL
+#define LPC_SPI_BASE              0x40100000UL
+#define LPC_SGPIO_BASE            0x40101000UL
+
+/* External memory regions */
+#define LPC_EMC_CS0_BASE          0x1C000000UL
+#define LPC_EMC_CS1_BASE          0x1D000000UL
+#define LPC_EMC_CS2_BASE          0x1E000000UL
+#define LPC_EMC_CS3_BASE          0x1F000000UL
+#define LPC_EMC_DYCS0_BASE        0x28000000UL
+#define LPC_EMC_DYCS1_BASE        0x30000000UL
+#define LPC_EMC_DYCS2_BASE        0x60000000UL
+#define LPC_EMC_DYCS3_BASE        0x70000000UL
 
 /* AHB peripherals */
 #define LPC_SCT_BASE              (LPC_AHB_BASE + 0x00000)
