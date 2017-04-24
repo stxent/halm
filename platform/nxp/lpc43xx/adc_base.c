@@ -19,7 +19,7 @@ struct AdcBlockDescriptor
   /* Reset control identifier */
   enum sysBlockReset reset;
   /* Peripheral interrupt request identifier */
-  irqNumber irq;
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY                 4500000
@@ -28,9 +28,9 @@ struct AdcBlockDescriptor
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static void configGroupPin(const struct PinGroupEntry *, pinNumber,
+static void configGroupPin(const struct PinGroupEntry *, PinNumber,
     struct AdcPin *);
-static void configRegularPin(const struct PinEntry *, pinNumber,
+static void configRegularPin(const struct PinEntry *, PinNumber,
     struct AdcPin *);
 static bool setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);
@@ -149,7 +149,7 @@ const struct PinEntry adcPins[] = {
 const struct EntityClass * const AdcUnitBase = &adcUnitTable;
 static struct AdcUnitBase *descriptors[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void configGroupPin(const struct PinGroupEntry *group, pinNumber key,
+static void configGroupPin(const struct PinGroupEntry *group, PinNumber key,
     struct AdcPin *adcPin)
 {
   const struct PinData begin = {
@@ -165,7 +165,7 @@ static void configGroupPin(const struct PinGroupEntry *group, pinNumber key,
   adcPin->control = -1;
 }
 /*----------------------------------------------------------------------------*/
-static void configRegularPin(const struct PinEntry *entry, pinNumber key,
+static void configRegularPin(const struct PinEntry *entry, PinNumber key,
     struct AdcPin *adcPin)
 {
   const uint8_t function = UNPACK_FUNCTION(entry->value);
@@ -205,7 +205,7 @@ void ADC1_ISR(void)
   descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-void adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
+void adcConfigPin(const struct AdcUnitBase *unit, PinNumber key,
     struct AdcPin *adcPin)
 {
   const struct PinGroupEntry *group;

@@ -23,39 +23,39 @@ enum
   SYSTICK_IRQ     = -1
 };
 /*----------------------------------------------------------------------------*/
-irqPriority irqGetPriority(irqNumber);
-void irqSetPriority(irqNumber, irqPriority);
+IrqPriority irqGetPriority(IrqNumber);
+void irqSetPriority(IrqNumber, IrqPriority);
 /*----------------------------------------------------------------------------*/
-static inline void irqRestore(irqState state)
+static inline void irqRestore(IrqState state)
 {
   __interruptsSetState(state);
 }
 /*----------------------------------------------------------------------------*/
-static inline irqState irqSave(void)
+static inline IrqState irqSave(void)
 {
-  const irqState state = __interruptsGetState();
+  const IrqState state = __interruptsGetState();
 
   __interruptsDisable();
 
   return state;
 }
 /*----------------------------------------------------------------------------*/
-static inline void irqEnable(irqNumber irq)
+static inline void irqEnable(IrqNumber irq)
 {
   *(NVIC->ISER + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
-static inline void irqDisable(irqNumber irq)
+static inline void irqDisable(IrqNumber irq)
 {
   *(NVIC->ICER + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
-static inline void irqClearPending(irqNumber irq)
+static inline void irqClearPending(IrqNumber irq)
 {
   *(NVIC->ICPR + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
 /*----------------------------------------------------------------------------*/
-static inline void irqSetPending(irqNumber irq)
+static inline void irqSetPending(IrqNumber irq)
 {
   *(NVIC->ISPR + (irq >> 5)) = 1UL << (irq & 0x1F);
 }

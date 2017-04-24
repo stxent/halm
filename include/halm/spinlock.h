@@ -16,7 +16,7 @@ enum
   SPIN_LOCKED
 };
 /*----------------------------------------------------------------------------*/
-typedef volatile uint8_t spinlock_t;
+typedef volatile uint8_t Spinlock;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/core/CORE_TYPE/spinlock.h>

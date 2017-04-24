@@ -21,7 +21,7 @@ struct RtcConfig
   /** Optional: initial time. */
   time64_t timestamp;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
 };
 /*----------------------------------------------------------------------------*/
 struct Rtc

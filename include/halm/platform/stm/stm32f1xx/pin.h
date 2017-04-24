@@ -21,7 +21,7 @@ enum
 };
 /*----------------------------------------------------------------------------*/
 void *pinAddress(struct Pin);
-struct Pin pinInit(pinNumber);
+struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);

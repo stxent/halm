@@ -44,7 +44,7 @@ static inline enum sysClockBranch portToClockBranch(struct PinData pin)
   return CLK_IOPA + pin.port;
 }
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pinNumber id)
+struct Pin pinInit(PinNumber id)
 {
   struct Pin pin;
 

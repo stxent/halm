@@ -23,7 +23,7 @@ int gpTimerAllocateChannel(uint8_t mask)
   return pos;
 }
 /*----------------------------------------------------------------------------*/
-uint8_t gpTimerConfigCapturePin(uint8_t channel, pinNumber key,
+uint8_t gpTimerConfigCapturePin(uint8_t channel, PinNumber key,
     enum pinPull pull)
 {
   const struct PinEntry * const pinEntry =
@@ -39,7 +39,7 @@ uint8_t gpTimerConfigCapturePin(uint8_t channel, pinNumber key,
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-uint8_t gpTimerConfigMatchPin(uint8_t channel, pinNumber key)
+uint8_t gpTimerConfigMatchPin(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry =
       pinFind(gpTimerMatchPins, key, channel);

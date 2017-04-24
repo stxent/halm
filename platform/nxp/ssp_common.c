@@ -13,7 +13,7 @@ extern const struct PinEntry sspPins[];
 void sspConfigPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
-  const pinNumber pinArray[] = {
+  const PinNumber pinArray[] = {
       config->miso, config->mosi, config->sck, config->cs
   };
 

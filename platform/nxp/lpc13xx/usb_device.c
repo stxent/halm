@@ -286,7 +286,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   assert(index < ARRAY_SIZE(device->endpoints));
 
   struct UsbEndpoint *ep = 0;
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (!device->endpoints[index])
   {
@@ -330,7 +330,7 @@ static enum result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   const enum result res = usbControlBindDriver(device->control, driver);
   irqRestore(state);
 
@@ -341,7 +341,7 @@ static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   usbControlUnbindDriver(device->control);
   irqRestore(state);
 }
@@ -543,7 +543,7 @@ static void epDeinit(void *object)
 
   const unsigned int index = EP_TO_INDEX(ep->address);
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   device->endpoints[index] = 0;
   irqRestore(state);
 
@@ -606,7 +606,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   if (index >= 2 && !ep->device->configured)
     return E_IDLE;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   const uint8_t status = usbCommandRead(ep->device,
       USB_CMD_SELECT_ENDPOINT | index);

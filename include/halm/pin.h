@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
-typedef uint16_t pinNumber;
+typedef uint16_t PinNumber;
 /*----------------------------------------------------------------------------*/
 /*
  * External pin id consist of port number and offset in 1's complement form.
@@ -19,7 +19,7 @@ typedef uint16_t pinNumber;
  * This representation supports up to 2^7 ports and 2^8 pins on each port.
  */
 #define PIN(port, offset) \
-    ((pinNumber)~((((port) & 0xFF) << 8) | ((offset) & 0xFF)))
+    ((PinNumber)~((((port) & 0xFF) << 8) | ((offset) & 0xFF)))
 
 #define PIN_TO_OFFSET(key)  (~(key) & 0xFF)
 #define PIN_TO_PORT(key)    ((~(key) >> 8) & 0xFF)
@@ -72,15 +72,15 @@ struct PinData
 /*----------------------------------------------------------------------------*/
 struct PinEntry
 {
-  pinNumber key;
+  PinNumber key;
   uint8_t channel;
   uint8_t value;
 };
 /*----------------------------------------------------------------------------*/
 struct PinGroupEntry
 {
-  pinNumber begin;
-  pinNumber end;
+  PinNumber begin;
+  PinNumber end;
   uint8_t channel;
   uint8_t value;
 };
@@ -91,9 +91,9 @@ struct Pin
   struct PinData data;
 };
 /*----------------------------------------------------------------------------*/
-const struct PinEntry *pinFind(const struct PinEntry *, pinNumber, uint8_t);
+const struct PinEntry *pinFind(const struct PinEntry *, PinNumber, uint8_t);
 const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *,
-    pinNumber, uint8_t);
+    PinNumber, uint8_t);
 /*----------------------------------------------------------------------------*/
 static inline bool pinValid(struct Pin pin)
 {

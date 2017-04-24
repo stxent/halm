@@ -118,7 +118,7 @@ struct ClockOutputConfig
   /** Mandatory: clock source. */
   enum clockSource source;
   /** Mandatory: output pin. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig

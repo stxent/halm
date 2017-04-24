@@ -432,7 +432,7 @@ static size_t canRead(void *object, void *buffer, size_t length)
   while (read < length && !queueEmpty(&interface->rxQueue))
   {
     struct CanMessage *input;
-    const irqState state = irqSave();
+    const IrqState state = irqSave();
 
     queuePop(&interface->rxQueue, &input);
     memcpy(output, input, sizeof(*output));
@@ -460,7 +460,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   const struct CanStandardMessage *input = buffer;
   const size_t initialLength = length;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (queueEmpty(&interface->txQueue))
   {

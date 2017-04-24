@@ -440,7 +440,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   assert(index < ARRAY_SIZE(device->endpoints));
 
   struct UsbEndpoint *ep = 0;
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (!device->endpoints[index])
   {
@@ -491,7 +491,7 @@ static enum result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   const enum result res = usbControlBindDriver(device->control, driver);
   irqRestore(state);
 
@@ -502,7 +502,7 @@ static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   usbControlUnbindDriver(device->control);
   irqRestore(state);
 }
@@ -693,7 +693,7 @@ static void sieEpDeinit(void *object)
 
   const unsigned int index = EP_TO_INDEX(ep->address);
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   device->endpoints[index] = 0;
   irqRestore(state);
 
@@ -762,7 +762,7 @@ static enum result sieEpEnqueue(void *object, struct UsbRequest *request)
   if (index >= 2 && !ep->device->configured)
     return E_IDLE;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   const uint8_t status = usbCommandRead(ep->device,
       USB_CMD_SELECT_ENDPOINT | index);
@@ -943,7 +943,7 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
   const unsigned int index = EP_TO_INDEX(ep->address);
   const uint32_t mask = 1UL << index;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (pool->heads[index])
   {
@@ -1021,7 +1021,7 @@ static void dmaEpDeinit(void *object)
 
   const unsigned int index = EP_TO_INDEX(ep->address);
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   device->endpoints[index] = 0;
   irqRestore(state);
 }
@@ -1094,7 +1094,7 @@ static enum result dmaEpEnqueue(void *object, struct UsbRequest *request)
   struct UsbDmaEndpoint * const ep = object;
   enum result res;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (ep->address & USB_EP_DIRECTION_IN)
     res = epEnqueueTx(ep, request);

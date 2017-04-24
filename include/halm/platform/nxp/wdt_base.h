@@ -27,7 +27,7 @@ struct WdtBase
   struct Entity base;
 
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 uint32_t wdtGetClock(const struct WdtBase *);

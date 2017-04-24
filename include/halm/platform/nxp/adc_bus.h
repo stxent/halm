@@ -23,7 +23,7 @@ struct AdcBusConfig
   /** Mandatory: peripheral unit. */
   struct AdcUnit *parent;
   /** Mandatory: pointer to an array of pins terminated with zero element. */
-  const pinNumber *pins;
+  const PinNumber *pins;
 };
 /*----------------------------------------------------------------------------*/
 struct AdcBus

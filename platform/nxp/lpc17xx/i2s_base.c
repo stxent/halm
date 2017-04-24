@@ -100,7 +100,7 @@ static struct I2sBase *descriptors[1] = {0};
 static void configPins(struct I2sBase *interface,
     const struct I2sBaseConfig *config)
 {
-  const pinNumber pinArray[] = {
+  const PinNumber pinArray[] = {
       config->rx.sck, config->rx.ws, config->rx.sda, config->rx.mclk,
       config->tx.sck, config->tx.ws, config->tx.sda, config->tx.mclk
   };

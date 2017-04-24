@@ -83,7 +83,7 @@ void ADC_ISR(void)
   descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-void adcConfigPin(const struct AdcUnitBase *unit, pinNumber key,
+void adcConfigPin(const struct AdcUnitBase *unit, PinNumber key,
     struct AdcPin *adcPin)
 {
   const struct PinEntry * const entry = pinFind(adcPins, key, unit->channel);

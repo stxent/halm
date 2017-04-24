@@ -201,7 +201,7 @@ static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
 
   assert(event < GPDMA_MEMORY);
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   dmaHandlerInstantiate();
 
   for (size_t index = 0; index < 16; ++index)
@@ -239,7 +239,7 @@ static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   dmaHandlerInstantiate();
 
   if (!dmaHandler->instances++)
@@ -255,7 +255,7 @@ static void dmaHandlerAttach(void)
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerDetach(void)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)
@@ -286,7 +286,7 @@ static void dmaHandlerFree(struct GpDmaBase *channel)
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerInstantiate(void)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);

@@ -22,11 +22,11 @@ struct I2cSlaveConfig
   /** Mandatory: register map size. Map size is limited by 64 kB. */
   size_t size;
   /** Mandatory: serial clock pin. */
-  pinNumber scl;
+  PinNumber scl;
   /** Mandatory: serial data pin. */
-  pinNumber sda;
+  PinNumber sda;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

@@ -16,9 +16,9 @@ extern const struct EntityClass * const I2cBase;
 struct I2cBaseConfig
 {
   /** Mandatory: serial clock pin. */
-  pinNumber scl;
+  PinNumber scl;
   /** Mandatory: serial data pin. */
-  pinNumber sda;
+  PinNumber sda;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -29,7 +29,7 @@ struct I2cBase
 
   void *reg;
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;

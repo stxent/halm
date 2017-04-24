@@ -21,7 +21,7 @@ struct GpTimerConfig
   /** Optional: match event used as a reset source for the timer. */
   enum gpTimerEvent event;
   /** Optional: timer interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

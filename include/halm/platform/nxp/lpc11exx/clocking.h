@@ -71,7 +71,7 @@ struct ClockOutputConfig
   /** Optional: input clock divisor in the range of 1 to 255. */
   uint16_t divisor;
   /** Mandatory: output pin. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonClockConfig

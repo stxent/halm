@@ -14,7 +14,7 @@
 #define SAMPLE_SIZE   sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static void setupChannels(struct AdcBus *, const pinNumber *);
+static void setupChannels(struct AdcBus *, const PinNumber *);
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *, const void *);
 static void adcDeinit(void *);
@@ -63,7 +63,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void setupChannels(struct AdcBus *interface, const pinNumber *pins)
+static void setupChannels(struct AdcBus *interface, const PinNumber *pins)
 {
   interface->mask = 0x00;
   interface->event = 0;
@@ -97,7 +97,7 @@ static enum result adcInit(void *object, const void *configBase)
   struct AdcBus * const interface = object;
 
   /* Initialize input pins */
-  const pinNumber *currentPin = config->pins;
+  const PinNumber *currentPin = config->pins;
   size_t number = 0;
 
   while (*currentPin++ && number < MAX_CHANNELS)

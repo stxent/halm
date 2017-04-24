@@ -57,7 +57,7 @@ static bool isCommonPin(struct Pin pin)
   return pin.data.port != 0 || (pin.data.offset < 4 || pin.data.offset > 5);
 }
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pinNumber id)
+struct Pin pinInit(PinNumber id)
 {
   struct Pin pin;
 

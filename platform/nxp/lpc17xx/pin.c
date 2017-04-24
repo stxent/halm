@@ -47,7 +47,7 @@ void *pinAddress(struct Pin pin)
   return (void *)&((LPC_GPIO_Type *)pin.reg)->PIN;
 }
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pinNumber id)
+struct Pin pinInit(PinNumber id)
 {
   struct Pin pin;
 

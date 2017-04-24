@@ -43,7 +43,7 @@ struct SctPwmConfig
   /** Mandatory: peripheral unit. */
   struct SctPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct SctPwm
@@ -63,7 +63,7 @@ struct SctPwmDoubleEdgeConfig
   /** Mandatory: peripheral unit. */
   struct SctPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct SctPwmDoubleEdge
@@ -80,7 +80,7 @@ struct SctPwmDoubleEdge
   uint8_t trailingEvent;
 };
 /*----------------------------------------------------------------------------*/
-void *sctPwmCreate(void *, pinNumber);
-void *sctPwmCreateDoubleEdge(void *, pinNumber);
+void *sctPwmCreate(void *, PinNumber);
+void *sctPwmCreateDoubleEdge(void *, PinNumber);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_SCT_PWM_H_ */

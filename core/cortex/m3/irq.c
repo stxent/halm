@@ -13,7 +13,7 @@
 #define VALUE_TO_PRIORITY(value) \
     (((1 << NVIC_PRIORITY_SIZE) - 1) - ((value) >> (8 - NVIC_PRIORITY_SIZE)))
 /*----------------------------------------------------------------------------*/
-void irqSetPriority(irqNumber irq, irqPriority priority)
+void irqSetPriority(IrqNumber irq, IrqPriority priority)
 {
   assert(priority < (1 << NVIC_PRIORITY_SIZE));
 
@@ -25,7 +25,7 @@ void irqSetPriority(irqNumber irq, irqPriority priority)
     NVIC->IP[irq] = value;
 }
 /*----------------------------------------------------------------------------*/
-irqPriority irqGetPriority(irqNumber irq)
+IrqPriority irqGetPriority(IrqNumber irq)
 {
   if (irq < 0)
     return VALUE_TO_PRIORITY(SCB->SHP[(irq & 0x0F) - 4]);

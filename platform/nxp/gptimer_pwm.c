@@ -48,7 +48,7 @@ static enum result unitAllocateChannel(struct GpTimerPwmUnit *unit,
 {
   enum result res = E_BUSY;
   const uint8_t mask = 1 << channel;
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   const int freeChannel = gpTimerAllocateChannel(unit->matches | mask);
 
@@ -65,7 +65,7 @@ static enum result unitAllocateChannel(struct GpTimerPwmUnit *unit,
 /*----------------------------------------------------------------------------*/
 static void unitReleaseChannel(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   unit->matches &= ~(1 << channel);
 
@@ -269,7 +269,7 @@ static enum result channelSetFrequency(void *object, uint32_t frequency)
  * @param pin Pin used as a signal output.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpTimerPwmCreate(void *unit, pinNumber pin)
+void *gpTimerPwmCreate(void *unit, PinNumber pin)
 {
   const struct GpTimerPwmConfig channelConfig = {
       .parent = unit,

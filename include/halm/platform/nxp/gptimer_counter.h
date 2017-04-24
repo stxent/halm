@@ -17,9 +17,9 @@ struct GpTimerCounterConfig
   /** Mandatory: active edge. */
   enum pinEvent edge;
   /** Mandatory: pin used as an input. */
-  pinNumber pin;
+  PinNumber pin;
   /** Optional: timer interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

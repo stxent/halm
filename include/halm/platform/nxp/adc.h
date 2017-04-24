@@ -22,7 +22,7 @@ struct AdcConfig
   /** Mandatory: peripheral unit. */
   struct AdcUnit *parent;
   /** Mandatory: analog input. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct Adc

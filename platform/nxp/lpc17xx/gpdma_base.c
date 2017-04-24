@@ -203,7 +203,7 @@ void GPDMA_ISR(void)
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
@@ -220,7 +220,7 @@ static void dmaHandlerAttach(void)
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerDetach(void)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)

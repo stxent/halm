@@ -12,17 +12,17 @@
 /*----------------------------------------------------------------------------*/
 struct EmcPinDescription
 {
-  pinNumber cas;
-  pinNumber oe;
-  pinNumber ras;
-  pinNumber we;
+  PinNumber cas;
+  PinNumber oe;
+  PinNumber ras;
+  PinNumber we;
 
-  pinNumber bls[4];
-  pinNumber ckeout[4];
-  pinNumber clk[4];
-  pinNumber cs[4];
-  pinNumber dqmout[4];
-  pinNumber dycs[4];
+  PinNumber bls[4];
+  PinNumber ckeout[4];
+  PinNumber clk[4];
+  PinNumber cs[4];
+  PinNumber dqmout[4];
+  PinNumber dycs[4];
 };
 /*----------------------------------------------------------------------------*/
 uint32_t emcGetClock(void);

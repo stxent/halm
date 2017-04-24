@@ -19,7 +19,7 @@ struct RtcBase
 
   void *reg;
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_RTC_BASE_H_ */

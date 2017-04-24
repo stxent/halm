@@ -20,7 +20,7 @@ struct GpTimerCaptureUnitConfig
   /** Mandatory: timer frequency. */
   uint32_t frequency;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -42,7 +42,7 @@ struct GpTimerCaptureConfig
   /** Optional: enables pull-up or pull-down resistors for input pin. */
   enum pinPull pull;
   /** Mandatory: pin used as an input. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerCapture

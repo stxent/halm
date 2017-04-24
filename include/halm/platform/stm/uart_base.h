@@ -23,9 +23,9 @@ enum uartParity
 struct UartBaseConfig
 {
   /** Mandatory: serial input. */
-  pinNumber rx;
+  PinNumber rx;
   /** Mandatory: serial output. */
-  pinNumber tx;
+  PinNumber tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -36,7 +36,7 @@ struct UartBase
 
   void *reg;
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;

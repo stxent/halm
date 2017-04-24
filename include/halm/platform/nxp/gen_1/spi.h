@@ -17,13 +17,13 @@ struct SpiConfig
   /** Mandatory: serial data rate. */
   uint32_t rate;
   /** Optional: serial data input. */
-  pinNumber miso;
+  PinNumber miso;
   /** Optional: serial data output. */
-  pinNumber mosi;
+  PinNumber mosi;
   /** Mandatory: serial clock output. */
-  pinNumber sck;
+  PinNumber sck;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: mode number. */

@@ -395,7 +395,7 @@ static struct TimerHandler *handlers[CHANNEL_COUNT] = {0};
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(uint8_t channel)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   timerHandlerInstantiate(channel);
 
@@ -409,7 +409,7 @@ static bool timerHandlerActive(uint8_t channel)
 static enum result timerHandlerAttach(uint8_t channel, enum sctPart part,
     struct SctBase *timer)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   timerHandlerInstantiate(channel);
 
@@ -439,7 +439,7 @@ static enum result timerHandlerAttach(uint8_t channel, enum sctPart part,
 /*----------------------------------------------------------------------------*/
 static void timerHandlerDetach(uint8_t channel, enum sctPart part)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   handlers[channel]->descriptors[part == SCT_HIGH] = 0;
 
@@ -501,7 +501,7 @@ void SCT_ISR(void)
 int sctAllocateEvent(struct SctBase *timer)
 {
   int event = -1;
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (handlers[timer->channel]->events)
   {
@@ -520,7 +520,7 @@ uint32_t sctGetClock(const struct SctBase *timer __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 void sctReleaseEvent(struct SctBase *timer, int event)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   handlers[timer->channel]->events |= 1 << event;
 

@@ -11,7 +11,7 @@
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 void *pinAddress(struct Pin);
-struct Pin pinInit(pinNumber);
+struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinToggle(struct Pin);

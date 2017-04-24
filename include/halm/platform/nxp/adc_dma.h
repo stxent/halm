@@ -26,7 +26,7 @@ struct AdcDmaConfig
   /** Optional: trigger to start the conversion. */
   enum adcEvent event;
   /** Mandatory: analog input. */
-  pinNumber pin;
+  PinNumber pin;
   /** Mandatory: memory access channel. */
   uint8_t dma;
 };

@@ -347,7 +347,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   assert(index < device->base.numberOfEndpoints);
 
   struct UsbEndpoint *ep = 0;
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (!device->endpoints[index])
   {
@@ -395,7 +395,7 @@ static enum result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   const enum result res = usbControlBindDriver(device->control, driver);
   irqRestore(state);
 
@@ -406,7 +406,7 @@ static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   usbControlUnbindDriver(device->control);
   irqRestore(state);
 }
@@ -783,7 +783,7 @@ static void epDeinit(void *object)
   /* Protect endpoint array from simultaneous access */
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   device->endpoints[index] = 0;
   irqRestore(state);
 }
@@ -871,7 +871,7 @@ static enum result epEnqueue(void *object, struct UsbRequest *request)
   struct UsbDmaEndpoint * const ep = object;
   enum result res;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (ep->address & USB_EP_DIRECTION_IN)
     res = epEnqueueTx(ep, request);

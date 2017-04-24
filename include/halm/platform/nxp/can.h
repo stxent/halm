@@ -30,11 +30,11 @@ struct CanConfig
   /** Mandatory: output queue size. */
   size_t txBuffers;
   /** Mandatory: receiver input. */
-  pinNumber rx;
+  PinNumber rx;
   /** Mandatory: transmitter output. */
-  pinNumber tx;
+  PinNumber tx;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

@@ -57,7 +57,7 @@ enum result workQueueAdd(void (*callback)(void *), void *argument)
       .callback = callback,
       .argument = argument
   };
-  irqState state;
+  IrqState state;
 
   state = irqSave();
   queuePush(&wqHandler->queue, &descriptor);
@@ -96,7 +96,7 @@ void workQueueStart(void *argument __attribute__((unused)))
     while (!queueEmpty(&wqHandler->queue))
     {
       struct WorkDescriptor descriptor;
-      irqState state;
+      IrqState state;
 
       state = irqSave();
       queuePop(&wqHandler->queue, &descriptor);

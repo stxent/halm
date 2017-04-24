@@ -209,7 +209,7 @@ static enum result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *object)
 {
   struct SoftwareTimer * const timer = object;
-  const irqState irq = irqSave();
+  const IrqState irq = irqSave();
 
   removeTimer(timer->factory, timer);
 
@@ -229,7 +229,7 @@ static void tmrSetEnabled(void *object, bool state)
   struct SoftwareTimer * const timer = object;
   struct SoftwareTimerFactory * const factory = timer->factory;
 
-  const irqState irq = irqSave();
+  const IrqState irq = irqSave();
 
   if (state)
   {
@@ -278,7 +278,7 @@ static void tmrSetValue(void *object, uint32_t value)
 {
   struct SoftwareTimer * const timer = object;
 
-  const irqState irq = irqSave();
+  const IrqState irq = irqSave();
   const uint32_t current = distance(timer->factory->counter, timer->timestamp);
 
   if (current > value)

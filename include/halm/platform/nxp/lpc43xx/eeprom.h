@@ -16,7 +16,7 @@ extern const struct InterfaceClass * const Eeprom;
 struct EepromConfig
 {
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
 };
 /*----------------------------------------------------------------------------*/
 struct Eeprom

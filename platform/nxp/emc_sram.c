@@ -23,11 +23,11 @@ static const struct EntityClass sramTable = {
 const struct EntityClass * const EmcSram = &sramTable;
 /*----------------------------------------------------------------------------*/
 extern const struct PinGroupEntry emcAddressPins[];
-extern const pinNumber emcAddressPinMap[];
+extern const PinNumber emcAddressPinMap[];
 extern const struct PinGroupEntry emcControlPins[];
 extern const struct EmcPinDescription emcControlPinMap;
 extern const struct PinGroupEntry emcDataPins[];
-extern const pinNumber emcDataPinMap[];
+extern const PinNumber emcDataPinMap[];
 /*----------------------------------------------------------------------------*/
 static inline uint32_t max(uint32_t a, uint32_t b)
 {

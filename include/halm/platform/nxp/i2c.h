@@ -31,11 +31,11 @@ struct I2cConfig
   /** Mandatory: data rate. */
   uint32_t rate;
   /** Mandatory: serial clock pin. */
-  pinNumber scl;
+  PinNumber scl;
   /** Mandatory: serial data pin. */
-  pinNumber sda;
+  PinNumber sda;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

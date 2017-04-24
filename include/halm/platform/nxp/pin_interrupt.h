@@ -16,9 +16,9 @@ extern const struct InterruptClass * const PinInterrupt;
 struct PinInterruptConfig
 {
   /** Mandatory: pin used as interrupt source. */
-  pinNumber pin;
+  PinNumber pin;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: external interrupt mode. */
   enum pinEvent event;
   /** Optional: enables pull-up or pull-down resistors for input pin. */

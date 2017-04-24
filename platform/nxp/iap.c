@@ -159,7 +159,7 @@ enum result flashErasePage(uint32_t address)
   const unsigned int bank = addressToBank(address);
   enum result res;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if ((res = prepareSectorToWrite(sector, bank)) == E_OK)
   {
@@ -183,7 +183,7 @@ enum result flashEraseSector(uint32_t address)
   const unsigned int bank = addressToBank(address);
   enum result res;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if ((res = prepareSectorToWrite(sector, bank)) == E_OK)
   {
@@ -232,7 +232,7 @@ enum result flashWriteBuffer(uint32_t address, const void *buffer,
   const unsigned int bank = addressToBank(address);
   enum result res;
 
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   res = prepareSectorToWrite(sector, bank);
   if (res == E_OK)

@@ -14,7 +14,7 @@ extern const struct GpioBusClass * const FastGpioBus;
 struct FastGpioBusConfig
 {
   /** Mandatory: pointer to an array of pins terminated with a zero element. */
-  const pinNumber *pins;
+  const PinNumber *pins;
   /** Optional: initial output value for pins configured as outputs. */
   uint32_t initial;
   /** Mandatory: direction of pins in the bus. */

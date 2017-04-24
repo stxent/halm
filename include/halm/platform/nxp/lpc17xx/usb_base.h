@@ -16,13 +16,13 @@ extern const struct EntityClass * const UsbBase;
 struct UsbBaseConfig
 {
   /** Mandatory: USB bidirectional D- line. */
-  pinNumber dm;
+  PinNumber dm;
   /** Mandatory: USB bidirectional D+ line. */
-  pinNumber dp;
+  PinNumber dp;
   /** Mandatory: output pin used for soft connect feature. */
-  pinNumber connect;
+  PinNumber connect;
   /** Mandatory: monitors the presence of USB bus power. */
-  pinNumber vbus;
+  PinNumber vbus;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -33,7 +33,7 @@ struct UsbBase
 
   void *reg;
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;

@@ -62,7 +62,7 @@ static struct UsbBase *descriptors[1] = {0};
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
 {
-  const pinNumber pinArray[] = {
+  const PinNumber pinArray[] = {
       config->dm, config->dp, config->connect, config->vbus
   };
 

@@ -10,8 +10,8 @@
 #include <stdbool.h>
 #include <xcore/error.h>
 /*----------------------------------------------------------------------------*/
-void spinLock(spinlock_t *);
-bool spinTryLock(spinlock_t *);
-void spinUnlock(spinlock_t *);
+void spinLock(Spinlock *);
+bool spinTryLock(Spinlock *);
+void spinUnlock(Spinlock *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_SPINLOCK_H_ */

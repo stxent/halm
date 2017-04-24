@@ -1166,7 +1166,7 @@ static enum result storageWrite(struct Msc *driver)
 /*----------------------------------------------------------------------------*/
 static void storageCallback(void *argument)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   runStateMachine(argument);
   irqRestore(state);
 }

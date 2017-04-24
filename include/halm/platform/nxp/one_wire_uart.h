@@ -21,11 +21,11 @@ extern const struct InterfaceClass * const OneWireUart;
 struct OneWireUartConfig
 {
   /** Mandatory: serial input. */
-  pinNumber rx;
+  PinNumber rx;
   /** Mandatory: serial output. */
-  pinNumber tx;
+  PinNumber tx;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

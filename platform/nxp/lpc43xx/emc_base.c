@@ -92,7 +92,7 @@ const struct PinGroupEntry emcAddressPins[] = {
     }
 };
 
-const pinNumber emcAddressPinMap[] = {
+const PinNumber emcAddressPinMap[] = {
     PIN(PORT_2, 9),  PIN(PORT_2, 10), PIN(PORT_2, 11), PIN(PORT_2, 12),
     PIN(PORT_2, 13), PIN(PORT_1, 0),  PIN(PORT_1, 1),  PIN(PORT_1, 2),
     PIN(PORT_2, 8),  PIN(PORT_2, 7),  PIN(PORT_2, 6),  PIN(PORT_2, 2),
@@ -240,7 +240,7 @@ const struct PinGroupEntry emcDataPins[] = {
     }
 };
 
-const pinNumber emcDataPinMap[] = {
+const PinNumber emcDataPinMap[] = {
     PIN(PORT_1, 7),  PIN(PORT_1, 8),  PIN(PORT_1, 9),  PIN(PORT_1, 10),
     PIN(PORT_1, 11), PIN(PORT_1, 12), PIN(PORT_1, 13), PIN(PORT_1, 14),
     PIN(PORT_5, 4),  PIN(PORT_5, 5),  PIN(PORT_5, 6),  PIN(PORT_5, 7),
@@ -307,7 +307,7 @@ void *emcGetStaticMemoryAddress(uint8_t channel)
 bool emcSetDynamicMemoryDescriptor(uint8_t channel,
     const struct Entity *current, struct Entity *memory)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   bool completed = false;
 
   if (emcHandlerInstantiate())
@@ -330,7 +330,7 @@ bool emcSetDynamicMemoryDescriptor(uint8_t channel,
 bool emcSetStaticMemoryDescriptor(uint8_t channel,
     const struct Entity *current, struct Entity *memory)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
   bool completed = false;
 
   if (emcHandlerInstantiate())
@@ -352,7 +352,7 @@ bool emcSetStaticMemoryDescriptor(uint8_t channel,
 /*----------------------------------------------------------------------------*/
 static bool emcHandlerInstantiate(void)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (!emcHandler)
     emcHandler = init(EmcHandler, 0);

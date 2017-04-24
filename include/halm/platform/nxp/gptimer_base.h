@@ -44,7 +44,7 @@ struct GpTimerBase
 
   void *reg;
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 
   /* External clock input pin */
   struct Pin input;
@@ -55,8 +55,8 @@ struct GpTimerBase
 };
 /*----------------------------------------------------------------------------*/
 int gpTimerAllocateChannel(uint8_t);
-uint8_t gpTimerConfigCapturePin(uint8_t, pinNumber, enum pinPull);
-uint8_t gpTimerConfigMatchPin(uint8_t, pinNumber);
+uint8_t gpTimerConfigCapturePin(uint8_t, PinNumber, enum pinPull);
+uint8_t gpTimerConfigMatchPin(uint8_t, PinNumber);
 
 uint32_t gpTimerGetClock(const struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/

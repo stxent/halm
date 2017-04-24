@@ -165,7 +165,7 @@ static struct SdmmcBase *descriptor = 0;
 static void configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
 {
-  const pinNumber pinArray[] = {
+  const PinNumber pinArray[] = {
       config->clk,
       config->cmd,
       config->dat0,

@@ -10,8 +10,8 @@
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-static void configOutputPin(pinNumber);
-static void releaseOutputPin(pinNumber);
+static void configOutputPin(PinNumber);
+static void releaseOutputPin(PinNumber);
 static bool setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
@@ -36,7 +36,7 @@ const struct PinEntry dacPins[] = {
 const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *descriptor = 0;
 /*----------------------------------------------------------------------------*/
-static void configOutputPin(pinNumber key)
+static void configOutputPin(PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
   assert(pinEntry);
@@ -50,7 +50,7 @@ static void configOutputPin(pinNumber key)
   LPC_SCU->ENAIO2 |= 0x01;
 }
 /*----------------------------------------------------------------------------*/
-static void releaseOutputPin(pinNumber key __attribute__((unused)))
+static void releaseOutputPin(PinNumber key __attribute__((unused)))
 {
   /* Disable analog pin function */
   LPC_SCU->ENAIO2 &= ~0x01;

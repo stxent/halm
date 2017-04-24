@@ -17,7 +17,7 @@ struct SysTickTimerConfig
   /** Mandatory: timer fundamental frequency. */
   uint32_t frequency;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
 };
 /*----------------------------------------------------------------------------*/
 struct SysTickTimer

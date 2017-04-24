@@ -348,7 +348,7 @@ void *pinAddress(struct Pin pin)
   return (void *)&LPC_GPIO->PIN[pin.data.port];
 }
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pinNumber id)
+struct Pin pinInit(PinNumber id)
 {
   const struct PinGroupEntry *group;
   struct PinData current = {

@@ -21,19 +21,19 @@ struct SdmmcConfig
   /** Mandatory: data rate. */
   uint32_t rate;
   /** Mandatory: clock line. */
-  pinNumber clk;
+  PinNumber clk;
   /** Mandatory: command line. */
-  pinNumber cmd;
+  PinNumber cmd;
   /** Mandatory: data line 0. */
-  pinNumber dat0;
+  PinNumber dat0;
   /** Optional: data line 1. */
-  pinNumber dat1;
+  PinNumber dat1;
   /** Optional: data line 2. */
-  pinNumber dat2;
+  PinNumber dat2;
   /** Optional: data line 3. */
-  pinNumber dat3;
+  PinNumber dat3;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
 };
 /*----------------------------------------------------------------------------*/
 struct Sdmmc

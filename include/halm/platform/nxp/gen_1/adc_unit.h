@@ -17,7 +17,7 @@ struct AdcUnitConfig
   /** Optional: desired clock frequency. */
   uint32_t frequency;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Optional: number of bits of accuracy. */
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
@@ -32,7 +32,7 @@ struct AdcUnit
   void *callbackArgument;
 
   /* Protects peripheral block registers */
-  spinlock_t lock;
+  Spinlock lock;
 };
 /*----------------------------------------------------------------------------*/
 enum result adcUnitRegister(struct AdcUnit *, void (*)(void *), void *);

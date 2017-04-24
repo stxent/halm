@@ -16,9 +16,9 @@ extern const struct EntityClass * const CanBase;
 struct CanBaseConfig
 {
   /** Mandatory: receiver input. */
-  pinNumber rx;
+  PinNumber rx;
   /** Mandatory: transmitter output. */
-  pinNumber tx;
+  PinNumber tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -29,7 +29,7 @@ struct CanBase
 
   void *reg;
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;

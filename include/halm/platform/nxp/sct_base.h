@@ -52,7 +52,7 @@ struct SctBase
 
   void *reg;
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 
   /* Events that may cause interrupt request */
   uint16_t mask;

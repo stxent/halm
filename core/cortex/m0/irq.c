@@ -17,7 +17,7 @@
 #define VALUE_TO_PRIORITY(value) \
     (((1 << NVIC_PRIORITY_SIZE) - 1) - ((value) >> (8 - NVIC_PRIORITY_SIZE)))
 /*----------------------------------------------------------------------------*/
-void irqSetPriority(irqNumber irq, irqPriority priority)
+void irqSetPriority(IrqNumber irq, IrqPriority priority)
 {
   assert(priority < (1 << NVIC_PRIORITY_SIZE));
 
@@ -39,7 +39,7 @@ void irqSetPriority(irqNumber irq, irqPriority priority)
   }
 }
 /*----------------------------------------------------------------------------*/
-irqPriority irqGetPriority(irqNumber irq)
+IrqPriority irqGetPriority(IrqNumber irq)
 {
   const uint32_t shift = IRQ_SHIFT(irq);
 

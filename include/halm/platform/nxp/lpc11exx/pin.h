@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-struct Pin pinInit(pinNumber);
+struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);

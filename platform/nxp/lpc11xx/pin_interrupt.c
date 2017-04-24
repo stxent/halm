@@ -21,7 +21,7 @@ struct PinInterruptHandler
 };
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t);
-static inline irqNumber calcVector(uint8_t);
+static inline IrqNumber calcVector(uint8_t);
 static void changeEnabledState(struct PinInterrupt *, bool);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -60,7 +60,7 @@ static inline LPC_GPIO_Type *calcPort(uint8_t port)
       ((uintptr_t)LPC_GPIO1 - (uintptr_t)LPC_GPIO0) * port);
 }
 /*----------------------------------------------------------------------------*/
-static inline irqNumber calcVector(uint8_t port)
+static inline IrqNumber calcVector(uint8_t port)
 {
   return PIOINT0_IRQ - port;
 }

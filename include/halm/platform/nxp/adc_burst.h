@@ -25,7 +25,7 @@ struct AdcBurstConfig
   /** Optional: trigger to start the conversion. */
   enum adcEvent event;
   /** Mandatory: analog input. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct AdcBurst

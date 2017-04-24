@@ -21,7 +21,7 @@ struct SctTimerConfig
   /** Optional: timer part. */
   enum sctPart part;
   /** Optional: timer interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

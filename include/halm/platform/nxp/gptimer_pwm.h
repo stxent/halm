@@ -40,7 +40,7 @@ struct GpTimerPwmConfig
   /** Mandatory: peripheral unit. */
   struct GpTimerPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpTimerPwm
@@ -55,6 +55,6 @@ struct GpTimerPwm
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-void *gpTimerPwmCreate(void *, pinNumber);
+void *gpTimerPwmCreate(void *, PinNumber);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPTIMER_PWM_H_ */

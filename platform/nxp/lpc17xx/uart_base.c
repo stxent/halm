@@ -15,7 +15,7 @@
 struct UartBlockDescriptor
 {
   LPC_UART_Type *reg;
-  irqNumber irq;
+  IrqNumber irq;
   enum sysBlockPower power;
   enum sysClockBranch clock;
 };

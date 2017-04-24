@@ -28,11 +28,11 @@ struct SerialConfig
   /** Optional: parity generation and checking. */
   enum uartParity parity;
   /** Mandatory: serial input. */
-  pinNumber rx;
+  PinNumber rx;
   /** Mandatory: serial output. */
-  pinNumber tx;
+  PinNumber tx;
   /** Optional: interrupt priority. */
-  irqPriority priority;
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

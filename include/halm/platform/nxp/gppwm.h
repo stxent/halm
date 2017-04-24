@@ -38,7 +38,7 @@ struct GpPwmConfig
   /** Mandatory: peripheral unit. */
   struct GpPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwm
@@ -58,7 +58,7 @@ struct GpPwmDoubleEdgeConfig
   /** Mandatory: peripheral unit. */
   struct GpPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
-  pinNumber pin;
+  PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
 struct GpPwmDoubleEdge
@@ -75,7 +75,7 @@ struct GpPwmDoubleEdge
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-void *gpPwmCreate(void *, pinNumber);
-void *gpPwmCreateDoubleEdge(void *, pinNumber);
+void *gpPwmCreate(void *, PinNumber);
+void *gpPwmCreateDoubleEdge(void *, PinNumber);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPPWM_H_ */

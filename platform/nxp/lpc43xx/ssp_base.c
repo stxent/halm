@@ -22,7 +22,7 @@ struct SspBlockDescriptor
 {
   LPC_SSP_Type *reg;
   /* Peripheral interrupt request identifier */
-  irqNumber irq;
+  IrqNumber irq;
   /* Reset control identifier */
   enum sysBlockReset reset;
   /* Peripheral clock branch */
@@ -192,7 +192,7 @@ static struct SspBase *descriptors[2] = {0};
 static void configPins(struct SspBase *interface,
     const struct SspBaseConfig *config)
 {
-  const pinNumber pinArray[] = {
+  const PinNumber pinArray[] = {
       config->miso, config->mosi, config->sck, config->cs
   };
 

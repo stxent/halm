@@ -7,12 +7,7 @@
 #ifndef HALM_IRQ_H_
 #define HALM_IRQ_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <halm/target.h>
-/*----------------------------------------------------------------------------*/
-typedef int16_t irqNumber;
-typedef uint8_t irqPriority;
-typedef uint32_t irqState;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/core/CORE_TYPE/irq.h>

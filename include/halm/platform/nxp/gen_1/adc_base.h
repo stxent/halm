@@ -35,13 +35,13 @@ struct AdcUnitBase
 
   void *reg;
   void (*handler)(void *);
-  irqNumber irq;
+  IrqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-void adcConfigPin(const struct AdcUnitBase *, pinNumber, struct AdcPin *);
+void adcConfigPin(const struct AdcUnitBase *, PinNumber, struct AdcPin *);
 void adcReleasePin(struct AdcPin);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_ADC_BASE_H_ */

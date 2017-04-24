@@ -7,7 +7,7 @@
 #include <xcore/core/cortex/m0/asm.h>
 #include <halm/spinlock.h>
 /*----------------------------------------------------------------------------*/
-void spinLock(spinlock_t *lock)
+void spinLock(Spinlock *lock)
 {
   /* Wait until lock becomes free */
   while (1)
@@ -24,7 +24,7 @@ void spinLock(spinlock_t *lock)
   }
 }
 /*----------------------------------------------------------------------------*/
-bool spinTryLock(spinlock_t *lock)
+bool spinTryLock(Spinlock *lock)
 {
   __interruptsDisable();
   if (*lock == SPIN_UNLOCKED)
@@ -38,7 +38,7 @@ bool spinTryLock(spinlock_t *lock)
   return false; /* Already locked */
 }
 /*----------------------------------------------------------------------------*/
-void spinUnlock(spinlock_t *lock)
+void spinUnlock(Spinlock *lock)
 {
   __dmb(); /* Ensure memory operations completed before releasing lock */
   *lock = SPIN_UNLOCKED;

@@ -409,7 +409,7 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
   while (!queueEmpty(&interface->rxRequestQueue))
   {
     struct UsbRequest *request;
-    irqState state;
+    IrqState state;
 
     queuePeek(&interface->rxRequestQueue, &request);
     if (length < request->length)
@@ -459,7 +459,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
   {
     const size_t bytesToWrite = length > maxPacketSize ? maxPacketSize : length;
     struct UsbRequest *request;
-    irqState state;
+    IrqState state;
 
     state = irqSave();
     arrayPopBack(&interface->txRequestPool, &request);

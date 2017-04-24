@@ -29,7 +29,7 @@ struct SdioSpiConfig
    */
   size_t blocks;
   /** Mandatory: chip select pin. */
-  pinNumber cs;
+  PinNumber cs;
 };
 /*----------------------------------------------------------------------------*/
 struct SdioSpi

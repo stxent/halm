@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/lpc11exx/system_defs.h>
 #include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
-static inline irqNumber calcVector(uint8_t);
+static inline IrqNumber calcVector(uint8_t);
 static void changeEnabledState(struct PinInterrupt *, bool);
 static void processInterrupt(uint8_t);
 static void resetDescriptor(uint8_t);
@@ -34,14 +34,14 @@ static const struct InterruptClass pinInterruptTable = {
 const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
 static struct PinInterrupt *descriptors[8] = {0};
 /*----------------------------------------------------------------------------*/
-static inline irqNumber calcVector(uint8_t channel)
+static inline IrqNumber calcVector(uint8_t channel)
 {
   return PIN_INT0_IRQ + channel;
 }
 /*----------------------------------------------------------------------------*/
 static void changeEnabledState(struct PinInterrupt *interrupt, bool state)
 {
-  const irqNumber irq = calcVector(interrupt->channel);
+  const IrqNumber irq = calcVector(interrupt->channel);
 
   if (state)
   {
@@ -170,7 +170,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 #endif
 
   /* Configure interrupt priority, interrupt is disabled by default */
-  const irqNumber irq = calcVector(interrupt->channel);
+  const IrqNumber irq = calcVector(interrupt->channel);
   irqSetPriority(irq, config->priority);
 
   return E_OK;
@@ -179,7 +179,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 static void pinInterruptDeinit(void *object)
 {
   const struct PinInterrupt * const interrupt = object;
-  const irqNumber irq = calcVector(interrupt->channel);
+  const IrqNumber irq = calcVector(interrupt->channel);
   const uint32_t mask = 1UL << interrupt->pin.offset;
 
   /* Disable channel interrupt in interrupt controller */

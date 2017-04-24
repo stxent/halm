@@ -71,7 +71,7 @@ static enum result wdtCallback(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static void wdtReload(void *object __attribute__((unused)))
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   LPC_WDT->FEED = FEED_FIRST;
   LPC_WDT->FEED = FEED_SECOND;

@@ -12,7 +12,7 @@
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static uint8_t configOutputPin(uint8_t, pinNumber);
+static uint8_t configOutputPin(uint8_t, PinNumber);
 static enum result setMatchValue(struct SctPwmUnit *, uint8_t, uint32_t);
 static enum result updateFrequency(struct SctPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -70,7 +70,7 @@ const struct EntityClass * const SctPwmUnit = &unitTable;
 const struct PwmClass * const SctPwm = &singleEdgeTable;
 const struct PwmClass * const SctPwmDoubleEdge = &doubleEdgeTable;
 /*----------------------------------------------------------------------------*/
-static uint8_t configOutputPin(uint8_t channel, pinNumber key)
+static uint8_t configOutputPin(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, channel);
   assert(pinEntry);
@@ -577,7 +577,7 @@ static enum result doubleEdgeSetFrequency(void *object, uint32_t frequency)
  * @param pin Pin used as a signal output.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *sctPwmCreate(void *unit, pinNumber pin)
+void *sctPwmCreate(void *unit, PinNumber pin)
 {
   const struct SctPwmConfig channelConfig = {
       .parent = unit,
@@ -593,7 +593,7 @@ void *sctPwmCreate(void *unit, pinNumber pin)
  * @param pin Pin used as a signal output.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *sctPwmCreateDoubleEdge(void *unit, pinNumber pin)
+void *sctPwmCreateDoubleEdge(void *unit, PinNumber pin)
 {
   const struct SctPwmDoubleEdgeConfig channelConfig = {
       .parent = unit,

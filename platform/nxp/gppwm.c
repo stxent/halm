@@ -13,7 +13,7 @@
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
-static uint8_t configMatchPin(uint8_t channel, pinNumber key);
+static uint8_t configMatchPin(uint8_t channel, PinNumber key);
 /*----------------------------------------------------------------------------*/
 static enum result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
 static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
@@ -82,7 +82,7 @@ static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
       (&device->MR1 + (channel - 1)) : (&device->MR4 + (channel - 4));
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t configMatchPin(uint8_t channel, pinNumber key)
+static uint8_t configMatchPin(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(gpPwmPins, key, channel);
   assert(pinEntry);
@@ -99,7 +99,7 @@ static enum result unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
   enum result res = E_BUSY;
   const uint8_t mask = 1 << channel;
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   if (!(unit->matches & mask))
   {
@@ -113,7 +113,7 @@ static enum result unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
 /*----------------------------------------------------------------------------*/
 static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
-  const irqState state = irqSave();
+  const IrqState state = irqSave();
 
   unit->matches &= ~(1 << channel);
 
@@ -435,7 +435,7 @@ static enum result doubleEdgeSetFrequency(void *object, uint32_t frequency)
  * @param pin Pin used as a signal output.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpPwmCreate(void *unit, pinNumber pin)
+void *gpPwmCreate(void *unit, PinNumber pin)
 {
   const struct GpPwmConfig channelConfig = {
       .parent = unit,
@@ -451,7 +451,7 @@ void *gpPwmCreate(void *unit, pinNumber pin)
  * @param pin Pin used as a signal output.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpPwmCreateDoubleEdge(void *unit, pinNumber pin)
+void *gpPwmCreateDoubleEdge(void *unit, PinNumber pin)
 {
   const struct GpPwmDoubleEdgeConfig channelConfig = {
       .parent = unit,
