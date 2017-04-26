@@ -47,10 +47,11 @@ const struct EntityClass * const SoftwareTimerFactory = &factoryTable;
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
-static void tmrCallback(void *, void (*)(void *), void *);
+static void tmrSetCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
+static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
@@ -60,10 +61,11 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
-    .callback = tmrCallback,
+    .setCallback = tmrSetCallback,
     .setEnabled = tmrSetEnabled,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
+    .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
@@ -178,7 +180,7 @@ static enum result factoryInit(void *object, const void *configBase)
   factory->head = 0;
   factory->counter = 0;
 
-  timerCallback(factory->timer, interruptHandler, factory);
+  timerSetCallback(factory->timer, interruptHandler, factory);
 
   return E_OK;
 }
@@ -189,7 +191,7 @@ static void factoryDeinit(void *object)
 
   assert(!factory->head);
 
-  timerCallback(factory->timer, 0, 0);
+  timerSetCallback(factory->timer, 0, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *object, const void *configBase)
@@ -216,7 +218,8 @@ static void tmrDeinit(void *object)
   irqRestore(irq);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrCallback(void *object, void (*callback)(void *), void *argument)
+static void tmrSetCallback(void *object, void (*callback)(void *),
+    void *argument)
 {
   struct SoftwareTimer * const timer = object;
 
@@ -258,6 +261,13 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   const struct SoftwareTimer * const timer = object;
 
   timerSetFrequency(timer->factory->timer, frequency);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t tmrGetOverflow(const void *object)
+{
+  const struct SoftwareTimer * const timer = object;
+
+  return timer->period;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)

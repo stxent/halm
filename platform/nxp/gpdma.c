@@ -23,7 +23,7 @@ static void interruptHandler(void *, enum result);
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
-static void channelCallback(void *, void (*)(void *), void *);
+static void channelSetCallback(void *, void (*)(void *), void *);
 static void channelConfigure(void *, const void *);
 
 static enum result channelEnable(void *);
@@ -40,7 +40,7 @@ static const struct DmaClass channelTable = {
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .callback = channelCallback,
+    .setCallback = channelSetCallback,
     .configure = channelConfigure,
 
     .enable = channelEnable,
@@ -97,7 +97,7 @@ static void channelDeinit(void *object)
   GpDmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static void channelCallback(void *object, void (*callback)(void *),
+static void channelSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct GpDma * const channel = object;

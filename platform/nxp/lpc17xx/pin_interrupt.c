@@ -30,7 +30,7 @@ static enum result pinInterruptHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptInit(void *, const void *);
 static void pinInterruptDeinit(void *);
-static void pinInterruptCallback(void *, void (*)(void *), void *);
+static void pinInterruptSetCallback(void *, void (*)(void *), void *);
 static void pinInterruptSetEnabled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -44,7 +44,7 @@ static const struct InterruptClass pinInterruptTable = {
     .init = pinInterruptInit,
     .deinit = pinInterruptDeinit,
 
-    .callback = pinInterruptCallback,
+    .setCallback = pinInterruptSetCallback,
     .setEnabled = pinInterruptSetEnabled
 };
 /*----------------------------------------------------------------------------*/
@@ -189,7 +189,7 @@ static void pinInterruptDeinit(void *object)
   pinInterruptHandlerDetach(interrupt);
 }
 /*----------------------------------------------------------------------------*/
-static void pinInterruptCallback(void *object, void (*callback)(void *),
+static void pinInterruptSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct PinInterrupt * const interrupt = object;

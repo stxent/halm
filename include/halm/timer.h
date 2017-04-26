@@ -21,12 +21,13 @@ struct TimerClass
 {
   CLASS_HEADER
 
-  void (*callback)(void *, void (*)(void *), void *);
+  void (*setCallback)(void *, void (*)(void *), void *);
   void (*setEnabled)(void *, bool);
 
   uint32_t (*getFrequency)(const void *);
   void (*setFrequency)(void *, uint32_t);
 
+  uint32_t (*getOverflow)(const void *);
   void (*setOverflow)(void *, uint32_t);
 
   uint32_t (*getValue)(const void *);
@@ -44,10 +45,10 @@ struct Timer
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
-static inline void timerCallback(void *timer, void (*callback)(void *),
+static inline void timerSetCallback(void *timer, void (*callback)(void *),
     void *argument)
 {
-  ((const struct TimerClass *)CLASS(timer))->callback(timer, callback,
+  ((const struct TimerClass *)CLASS(timer))->setCallback(timer, callback,
       argument);
 }
 /*----------------------------------------------------------------------------*/
@@ -79,6 +80,16 @@ static inline uint32_t timerGetFrequency(const void *timer)
 static inline void timerSetFrequency(void *timer, uint32_t frequency)
 {
   ((const struct TimerClass *)CLASS(timer))->setFrequency(timer, frequency);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Get the timer overflow rate.
+ * @param timer Pointer to a Timer object.
+ * @return Number of timer ticks after which overflow event occurs.
+ */
+static inline uint32_t timerGetOverflow(const void *timer)
+{
+  return ((const struct TimerClass *)CLASS(timer))->getOverflow(timer);
 }
 /*----------------------------------------------------------------------------*/
 /**

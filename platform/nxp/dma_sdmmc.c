@@ -16,7 +16,7 @@ static enum result appendItem(void *object, uintptr_t address, size_t size);
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
-static void channelCallback(void *, void (*)(void *), void *);
+static void channelSetCallback(void *, void (*)(void *), void *);
 static void channelConfigure(void *, const void *);
 
 static enum result channelEnable(void *);
@@ -33,7 +33,7 @@ static const struct DmaClass channelTable = {
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .callback = channelCallback,
+    .setCallback = channelSetCallback,
     .configure = channelConfigure,
 
     .enable = channelEnable,
@@ -131,7 +131,7 @@ static void channelDeinit(void *object)
   free(channel->list);
 }
 /*----------------------------------------------------------------------------*/
-static void channelCallback(void *object __attribute__((unused)),
+static void channelSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {

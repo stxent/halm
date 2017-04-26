@@ -83,7 +83,7 @@ static enum result dmaSetup(struct DacDma *interface,
   if (!interface->dma)
     return E_ERROR;
   dmaConfigure(interface->dma, &dmaSettings);
-  dmaCallback(interface->dma, dmaHandler, interface);
+  dmaSetCallback(interface->dma, dmaHandler, interface);
 
   return E_OK;
 }

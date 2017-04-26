@@ -18,9 +18,9 @@ static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
-static void channelCallback(void *, void (*)(void *), void *);
+static void channelSetCallback(void *, void (*)(void *), void *);
 static void channelSetEnabled(void *, bool);
-static uint32_t channelValue(const void *);
+static uint32_t channelGetValue(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct GpTimerCaptureUnit),
@@ -33,9 +33,9 @@ static const struct CaptureClass channelTable = {
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .callback = channelCallback,
+    .setCallback = channelSetCallback,
     .setEnabled = channelSetEnabled,
-    .value = channelValue
+    .getValue = channelGetValue
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const GpTimerCaptureUnit = &unitTable;
@@ -167,7 +167,7 @@ static void channelDeinit(void *object)
   unitSetDescriptor(capture->unit, capture->channel, capture, 0);
 }
 /*----------------------------------------------------------------------------*/
-static void channelCallback(void *object, void (*callback)(void *),
+static void channelSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct GpTimerCapture * const capture = object;
@@ -205,7 +205,7 @@ static void channelSetEnabled(void *object, bool state)
     reg->CCR &= ~CCR_MASK(capture->channel);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelValue(const void *object)
+static uint32_t channelGetValue(const void *object)
 {
   const struct GpTimerCapture * const capture = object;
 

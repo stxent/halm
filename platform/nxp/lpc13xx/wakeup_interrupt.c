@@ -24,7 +24,7 @@ static enum result startLogicHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result wakeupInterruptInit(void *, const void *);
 static void wakeupInterruptDeinit(void *);
-static void wakeupInterruptCallback(void *, void (*)(void *), void *);
+static void wakeupInterruptSetCallback(void *, void (*)(void *), void *);
 static void wakeupInterruptSetEnabled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -38,7 +38,7 @@ static const struct InterruptClass wakeupInterruptTable = {
     .init = wakeupInterruptInit,
     .deinit = wakeupInterruptDeinit,
 
-    .callback = wakeupInterruptCallback,
+    .setCallback = wakeupInterruptSetCallback,
     .setEnabled = wakeupInterruptSetEnabled
 };
 /*----------------------------------------------------------------------------*/
@@ -184,7 +184,7 @@ static void wakeupInterruptDeinit(void *object)
   startLogicHandlerDetach(object);
 }
 /*----------------------------------------------------------------------------*/
-static void wakeupInterruptCallback(void *object, void (*callback)(void *),
+static void wakeupInterruptSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct WakeupInterrupt * const interrupt = object;

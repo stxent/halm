@@ -288,7 +288,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
   switch (option)
   {
     case IF_BLOCKING:
-      dmaCallback(interface->rxDma, 0, 0);
+      dmaSetCallback(interface->rxDma, 0, 0);
       interface->blocking = true;
       return E_OK;
 
@@ -298,7 +298,7 @@ static enum result spiSet(void *object, enum ifOption option, const void *data)
       return E_OK;
 
     case IF_ZEROCOPY:
-      dmaCallback(interface->rxDma, dmaHandler, interface);
+      dmaSetCallback(interface->rxDma, dmaHandler, interface);
       interface->blocking = false;
       return E_OK;
 

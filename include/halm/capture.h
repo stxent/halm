@@ -17,9 +17,9 @@ struct CaptureClass
 {
   CLASS_HEADER
 
-  void (*callback)(void *, void (*)(void *), void *);
+  void (*setCallback)(void *, void (*)(void *), void *);
   void (*setEnabled)(void *, bool);
-  uint32_t (*value)(const void *);
+  uint32_t (*getValue)(const void *);
 };
 /*----------------------------------------------------------------------------*/
 struct Capture
@@ -33,10 +33,10 @@ struct Capture
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
-static inline void captureCallback(void *capture, void (*callback)(void *),
+static inline void captureSetCallback(void *capture, void (*callback)(void *),
     void *argument)
 {
-  ((const struct CaptureClass *)CLASS(capture))->callback(capture, callback,
+  ((const struct CaptureClass *)CLASS(capture))->setCallback(capture, callback,
       argument);
 }
 /*----------------------------------------------------------------------------*/
@@ -55,9 +55,9 @@ static inline void captureSetEnabled(void *capture, bool state)
  * @param capture Pointer to a Capture object.
  * @return Value of the counter measured in timer ticks.
  */
-static inline uint32_t captureValue(const void *capture)
+static inline uint32_t captureGetValue(const void *capture)
 {
-  return ((const struct CaptureClass *)CLASS(capture))->value(capture);
+  return ((const struct CaptureClass *)CLASS(capture))->getValue(capture);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CAPTURE_H_ */

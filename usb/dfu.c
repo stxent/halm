@@ -314,7 +314,7 @@ static enum result driverInit(void *object, const void *configBase)
   driver->transferSize = config->transferSize;
 
   if (driver->timer)
-    timerCallback(driver->timer, onTimerOverflow, driver);
+    timerSetCallback(driver->timer, onTimerOverflow, driver);
 
   resetDriver(driver);
 
@@ -332,7 +332,7 @@ static void driverDeinit(void *object)
   usbDevUnbind(driver->device, driver);
 
   if (driver->timer)
-    timerCallback(driver->timer, 0, 0);
+    timerSetCallback(driver->timer, 0, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum result driverConfigure(void *object,

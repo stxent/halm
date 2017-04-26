@@ -28,10 +28,11 @@ static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
-static void tmrCallback(void *, void (*)(void *), void *);
+static void tmrSetCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
+static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
@@ -41,10 +42,11 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
-    .callback = tmrCallback,
+    .setCallback = tmrSetCallback,
     .setEnabled = tmrSetEnabled,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
+    .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
@@ -144,7 +146,8 @@ static void tmrDeinit(void *object __attribute__((unused)))
   setDescriptor(timer, 0);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrCallback(void *object, void (*callback)(void *), void *argument)
+static void tmrSetCallback(void *object, void (*callback)(void *),
+    void *argument)
 {
   struct SysTickTimer * const timer = object;
 
@@ -188,6 +191,13 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   SYSTICK->CTRL &= ~CTRL_ENABLE;
   updateFrequency(timer, frequency, timer->overflow);
   SYSTICK->CTRL |= state;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t tmrGetOverflow(const void *object)
+{
+  const struct SysTickTimer * const timer = object;
+
+  return timer->overflow;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)

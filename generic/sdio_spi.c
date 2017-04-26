@@ -748,7 +748,7 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->timer = config->timer;
 
   if (interface->timer)
-    timerCallback(interface->timer, interruptHandler, interface);
+    timerSetCallback(interface->timer, interruptHandler, interface);
 
   /* Data verification part */
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
@@ -789,7 +789,7 @@ static void sdioDeinit(void *object __attribute__((unused)))
   struct SdioSpi * const interface = object;
 
   if (interface->timer)
-    timerCallback(interface->timer, 0, 0);
+    timerSetCallback(interface->timer, 0, 0);
 
   ifCallback(interface->bus, 0, 0);
 

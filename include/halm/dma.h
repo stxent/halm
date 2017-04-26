@@ -44,7 +44,7 @@ struct DmaClass
 {
   CLASS_HEADER
 
-  void (*callback)(void *, void (*)(void *), void *);
+  void (*setCallback)(void *, void (*)(void *), void *);
   void (*configure)(void *, const void *);
 
   /* Transfer management */
@@ -70,10 +70,10 @@ struct Dma
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
-static inline void dmaCallback(void *channel, void (*callback)(void *),
+static inline void dmaSetCallback(void *channel, void (*callback)(void *),
     void *argument)
 {
-  ((const struct DmaClass *)CLASS(channel))->callback(channel, callback,
+  ((const struct DmaClass *)CLASS(channel))->setCallback(channel, callback,
       argument);
 }
 /*----------------------------------------------------------------------------*/

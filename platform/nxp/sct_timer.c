@@ -15,10 +15,11 @@ static void updateFrequency(struct SctTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
-static void tmrCallback(void *, void (*)(void *), void *);
+static void tmrSetCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
+static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
@@ -28,10 +29,11 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
-    .callback = tmrCallback,
+    .setCallback = tmrSetCallback,
     .setEnabled = tmrSetEnabled,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
+    .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
@@ -166,7 +168,7 @@ static void tmrDeinit(void *object)
   SctBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrCallback(void *object, void (*callback)(void *), void *argument)
+static void tmrSetCallback(void *object, void (*callback)(void *), void *argument)
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
@@ -218,6 +220,18 @@ static uint32_t tmrGetFrequency(const void *object)
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   updateFrequency(object, frequency);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t tmrGetOverflow(const void *object)
+{
+  const struct SctTimer * const timer = object;
+  const LPC_SCT_Type * const reg = timer->base.reg;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
+
+  if (timer->base.part != SCT_UNIFIED)
+    return (uint16_t)(reg->MATCH_PART[timer->event][offset] + 1);
+  else
+    return reg->MATCH[timer->event] + 1;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)

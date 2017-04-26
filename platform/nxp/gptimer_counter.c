@@ -13,8 +13,9 @@ static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
-static void tmrCallback(void *, void (*)(void *), void *);
+static void tmrSetCallback(void *, void (*)(void *), void *);
 static void tmrSetEnabled(void *, bool);
+static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
@@ -24,10 +25,11 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
-    .callback = tmrCallback,
+    .setCallback = tmrSetCallback,
     .setEnabled = tmrSetEnabled,
     .getFrequency = 0,
     .setFrequency = 0,
+    .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
@@ -130,7 +132,8 @@ static void tmrDeinit(void *object)
   GpTimerBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrCallback(void *object, void (*callback)(void *), void *argument)
+static void tmrSetCallback(void *object, void (*callback)(void *),
+    void *argument)
 {
   struct GpTimerCounter * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
@@ -158,6 +161,14 @@ static void tmrSetEnabled(void *object, bool state)
 
   if (state)
     reg->TCR = TCR_CEN;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t tmrGetOverflow(const void *object)
+{
+  const struct GpTimerCounter * const timer = object;
+  const LPC_TIMER_Type * const reg = timer->base.reg;
+
+  return (reg->MR[timer->event] + 1) & getMaxValue(timer);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)

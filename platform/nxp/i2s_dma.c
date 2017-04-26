@@ -85,7 +85,7 @@ static enum result dmaSetup(struct I2sDma *interface,
       return E_ERROR;
 
     dmaConfigure(interface->rxDma, &dmaSettings[0]);
-    dmaCallback(interface->rxDma, rxDmaHandler, interface);
+    dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
   }
   else
     interface->rxDma = 0;
@@ -105,7 +105,7 @@ static enum result dmaSetup(struct I2sDma *interface,
       return E_ERROR;
 
     dmaConfigure(interface->txDma, &dmaSettings[1]);
-    dmaCallback(interface->txDma, txDmaHandler, interface);
+    dmaSetCallback(interface->txDma, txDmaHandler, interface);
   }
   else
     interface->txDma = 0;

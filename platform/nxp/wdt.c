@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 static enum result wdtInit(void *, const void *);
 static void wdtDeinit(void *);
-static enum result wdtCallback(void *, void (*)(void *), void *);
+static enum result wdtSetCallback(void *, void (*)(void *), void *);
 static void wdtReload(void *);
 /*----------------------------------------------------------------------------*/
 static const struct WatchdogClass wdtTable = {
@@ -19,7 +19,7 @@ static const struct WatchdogClass wdtTable = {
     .init = wdtInit,
     .deinit = wdtDeinit,
 
-    .callback = wdtCallback,
+    .setCallback = wdtSetCallback,
     .reload = wdtReload
 };
 /*----------------------------------------------------------------------------*/
@@ -58,7 +58,7 @@ static void wdtDeinit(void *object __attribute__((unused)))
   /* Watchdog timer cannot be disabled */
 }
 /*----------------------------------------------------------------------------*/
-static enum result wdtCallback(void *object __attribute__((unused)),
+static enum result wdtSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {

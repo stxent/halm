@@ -96,13 +96,13 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
   if (!interface->rxDma)
     return E_ERROR;
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
-  dmaCallback(interface->rxDma, rxDmaHandler, interface);
+  dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
   interface->txDma = init(GpDma, &txDmaConfig);
   if (!interface->txDma)
     return E_ERROR;
   dmaConfigure(interface->txDma, &dmaSettings[1]);
-  dmaCallback(interface->txDma, txDmaHandler, interface);
+  dmaSetCallback(interface->txDma, txDmaHandler, interface);
 
   return E_OK;
 }

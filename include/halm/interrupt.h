@@ -21,7 +21,7 @@ struct InterruptClass
 {
   CLASS_HEADER
 
-  void (*callback)(void *, void (*)(void *), void *);
+  void (*setCallback)(void *, void (*)(void *), void *);
   void (*setEnabled)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
@@ -36,10 +36,10 @@ struct Interrupt
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
-static inline void intCallback(void *interrupt, void (*callback)(void *),
+static inline void intSetCallback(void *interrupt, void (*callback)(void *),
     void *argument)
 {
-  ((const struct InterruptClass *)CLASS(interrupt))->callback(interrupt,
+  ((const struct InterruptClass *)CLASS(interrupt))->setCallback(interrupt,
       callback, argument);
 }
 /*----------------------------------------------------------------------------*/
