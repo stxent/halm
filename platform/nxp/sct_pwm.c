@@ -21,18 +21,20 @@ static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static enum result singleEdgeInit(void *, const void *);
 static void singleEdgeDeinit(void *);
+static void singleEdgeEnable(void *);
+static void singleEdgeDisable(void *);
 static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
-static void singleEdgeSetEnabled(void *, bool);
 static enum result singleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result doubleEdgeInit(void *, const void *);
 static void doubleEdgeDeinit(void *);
+static void doubleEdgeEnable(void *);
+static void doubleEdgeDisable(void *);
 static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
-static void doubleEdgeSetEnabled(void *, bool);
 static enum result doubleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
@@ -46,10 +48,11 @@ static const struct PwmClass singleEdgeTable = {
     .init = singleEdgeInit,
     .deinit = singleEdgeDeinit,
 
+    .enable = singleEdgeEnable,
+    .disable = singleEdgeDisable,
     .getResolution = singleEdgeGetResolution,
     .setDuration = singleEdgeSetDuration,
     .setEdges = singleEdgeSetEdges,
-    .setEnabled = singleEdgeSetEnabled,
     .setFrequency = singleEdgeSetFrequency
 };
 
@@ -58,10 +61,11 @@ static const struct PwmClass doubleEdgeTable = {
     .init = doubleEdgeInit,
     .deinit = doubleEdgeDeinit,
 
+    .enable = doubleEdgeEnable,
+    .disable = doubleEdgeDisable,
     .getResolution = doubleEdgeGetResolution,
     .setDuration = doubleEdgeSetDuration,
     .setEdges = doubleEdgeSetEdges,
-    .setEnabled = doubleEdgeSetEnabled,
     .setFrequency = doubleEdgeSetFrequency
 };
 /*----------------------------------------------------------------------------*/
@@ -279,6 +283,27 @@ static void singleEdgeDeinit(void *object)
   sctReleaseEvent((struct SctBase *)unit, pwm->event);
 }
 /*----------------------------------------------------------------------------*/
+static void singleEdgeEnable(void *object)
+{
+  struct SctPwm * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  LPC_SCT_Type * const reg = unit->base.reg;
+
+  reg->OUT[pwm->channel].CLR = 1 << pwm->event;
+  reg->OUT[pwm->channel].SET = 1 << unit->event;
+}
+/*----------------------------------------------------------------------------*/
+static void singleEdgeDisable(void *object)
+{
+  struct SctPwm * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  LPC_SCT_Type * const reg = unit->base.reg;
+
+  /* Clear synchronously */
+  reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  reg->OUT[pwm->channel].SET = 0;
+}
+/*----------------------------------------------------------------------------*/
 static uint32_t singleEdgeGetResolution(const void *object)
 {
   return ((const struct SctPwm *)object)->unit->resolution;
@@ -318,25 +343,6 @@ static void singleEdgeSetEdges(void *object,
   assert(leading == 0);
 
   singleEdgeSetDuration(object, trailing);
-}
-/*----------------------------------------------------------------------------*/
-static void singleEdgeSetEnabled(void *object, bool state)
-{
-  struct SctPwm * const pwm = object;
-  struct SctPwmUnit * const unit = pwm->unit;
-  LPC_SCT_Type * const reg = unit->base.reg;
-
-  if (state)
-  {
-    reg->OUT[pwm->channel].CLR = 1 << pwm->event;
-    reg->OUT[pwm->channel].SET = 1 << unit->event;
-  }
-  else
-  {
-    /* Clear synchronously */
-    reg->OUT[pwm->channel].CLR = 1 << unit->event;
-    reg->OUT[pwm->channel].SET = 0;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result singleEdgeSetFrequency(void *object, uint32_t frequency)
@@ -423,6 +429,27 @@ static void doubleEdgeDeinit(void *object)
   reg->EV[pwm->leadingEvent].STATE = 0;
   sctReleaseEvent((struct SctBase *)unit, pwm->trailingEvent);
   sctReleaseEvent((struct SctBase *)unit, pwm->leadingEvent);
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeEnable(void *object)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  LPC_SCT_Type * const reg = unit->base.reg;
+
+  reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
+  reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeDisable(void *object)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  LPC_SCT_Type * const reg = unit->base.reg;
+
+  /* Clear synchronously */
+  reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  reg->OUT[pwm->channel].SET = 0;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t doubleEdgeGetResolution(const void *object)
@@ -542,25 +569,6 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
     reg->MATCHREL[pwm->trailingEvent] = trailing;
   }
   reg->CONFIG &= ~CONFIG_NORELOAD(offset);
-}
-/*----------------------------------------------------------------------------*/
-static void doubleEdgeSetEnabled(void *object, bool state)
-{
-  struct SctPwmDoubleEdge * const pwm = object;
-  struct SctPwmUnit * const unit = pwm->unit;
-  LPC_SCT_Type * const reg = unit->base.reg;
-
-  if (state)
-  {
-    reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
-    reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
-  }
-  else
-  {
-    /* Clear synchronously */
-    reg->OUT[pwm->channel].CLR = 1 << unit->event;
-    reg->OUT[pwm->channel].SET = 0;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static enum result doubleEdgeSetFrequency(void *object, uint32_t frequency)

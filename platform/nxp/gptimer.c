@@ -19,8 +19,9 @@ static void powerStateHandler(void *, enum pmState);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
+static void tmrEnable(void *);
+static void tmrDisable(void *);
 static void tmrSetCallback(void *, void (*)(void *), void *);
-static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
 static uint32_t tmrGetOverflow(const void *);
@@ -33,8 +34,9 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
+    .enable = tmrEnable,
+    .disable = tmrDisable,
     .setCallback = tmrSetCallback,
-    .setEnabled = tmrSetEnabled,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
     .getOverflow = tmrGetOverflow,
@@ -161,6 +163,27 @@ static void tmrDeinit(void *object)
   GpTimerBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
+static void tmrEnable(void *object)
+{
+  struct GpTimer * const timer = object;
+  LPC_TIMER_Type * const reg = timer->base.reg;
+
+  /* Clear pending interrupt flags and direct memory access requests */
+  reg->IR = IR_MATCH_INTERRUPT(timer->event);
+  /* Clear match value to avoid undefined output level */
+  reg->EMR &= ~EMR_EXTERNAL_MATCH(timer->event);
+  /* Start the timer */
+  reg->TCR = TCR_CEN;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrDisable(void *object)
+{
+  struct GpTimer * const timer = object;
+  LPC_TIMER_Type * const reg = timer->base.reg;
+
+  reg->TCR = 0;
+}
+/*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -177,25 +200,6 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   }
   else
     reg->MCR &= ~MCR_INTERRUPT(timer->event);
-}
-/*----------------------------------------------------------------------------*/
-static void tmrSetEnabled(void *object, bool state)
-{
-  struct GpTimer * const timer = object;
-  LPC_TIMER_Type * const reg = timer->base.reg;
-
-  /* Stop the timer */
-  reg->TCR = 0;
-  /* Clear pending interrupt flags and direct memory access requests */
-  reg->IR = IR_MATCH_INTERRUPT(timer->event);
-
-  if (state)
-  {
-    /* Clear match value to avoid undefined output level */
-    reg->EMR &= ~EMR_EXTERNAL_MATCH(timer->event);
-
-    reg->TCR = TCR_CEN;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object)

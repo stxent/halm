@@ -47,8 +47,9 @@ const struct EntityClass * const SoftwareTimerFactory = &factoryTable;
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
+static void tmrEnable(void *);
+static void tmrDisable(void *);
 static void tmrSetCallback(void *, void (*)(void *), void *);
-static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
 static uint32_t tmrGetOverflow(const void *);
@@ -61,8 +62,9 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
+    .enable = tmrEnable,
+    .disable = tmrDisable,
     .setCallback = tmrSetCallback,
-    .setEnabled = tmrSetEnabled,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
     .getOverflow = tmrGetOverflow,
@@ -218,6 +220,30 @@ static void tmrDeinit(void *object)
   irqRestore(irq);
 }
 /*----------------------------------------------------------------------------*/
+static void tmrEnable(void *object)
+{
+  struct SoftwareTimer * const timer = object;
+  struct SoftwareTimerFactory * const factory = timer->factory;
+  const IrqState irq = irqSave();
+
+  timer->timestamp = factory->counter + timer->period;
+  insertTimer(factory, timer);
+
+  irqRestore(irq);
+}
+/*----------------------------------------------------------------------------*/
+static void tmrDisable(void *object)
+{
+  struct SoftwareTimer * const timer = object;
+  const IrqState irq = irqSave();
+
+  removeTimer(timer->factory, timer);
+  timer->next = 0;
+  timer->period = 0;
+
+  irqRestore(irq);
+}
+/*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -225,28 +251,6 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 
   timer->callbackArgument = argument;
   timer->callback = callback;
-}
-/*----------------------------------------------------------------------------*/
-static void tmrSetEnabled(void *object, bool state)
-{
-  struct SoftwareTimer * const timer = object;
-  struct SoftwareTimerFactory * const factory = timer->factory;
-
-  const IrqState irq = irqSave();
-
-  if (state)
-  {
-    timer->timestamp = factory->counter + timer->period;
-    insertTimer(factory, timer);
-  }
-  else
-  {
-    removeTimer(timer->factory, timer);
-    timer->next = 0;
-    timer->period = 0;
-  }
-
-  irqRestore(irq);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object)

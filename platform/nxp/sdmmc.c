@@ -141,7 +141,7 @@ static void interruptHandler(void *object)
   LPC_SDMMC_Type * const reg = interface->base.reg;
   const uint32_t status = reg->MINTSTS;
 
-  intSetEnabled(interface->finalizer, false);
+  interruptDisable(interface->finalizer);
 
   irqDisable(interface->base.irq);
   reg->INTMASK = 0;
@@ -165,12 +165,12 @@ static void interruptHandler(void *object)
   }
   else
   {
-    intSetEnabled(interface->finalizer, true);
+    interruptEnable(interface->finalizer);
 
     if (!(reg->STATUS & STATUS_DATA_BUSY))
     {
       interface->status = E_OK;
-      intSetEnabled(interface->finalizer, false);
+      interruptDisable(interface->finalizer);
     }
     else
       interface->status = E_BUSY;
@@ -251,7 +251,7 @@ static enum result sdioInit(void *object, const void *configBase)
   interface->finalizer = init(PinInterrupt, &finalizerConfig);
   if (!interface->finalizer)
     return E_ERROR;
-  intSetCallback(interface->finalizer, interruptHandler, interface);
+  interruptSetCallback(interface->finalizer, interruptHandler, interface);
 
   /* Call base class constructor */
   if ((res = SdmmcBase->init(object, &baseConfig)) != E_OK)

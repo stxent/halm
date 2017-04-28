@@ -15,8 +15,9 @@ static void updateFrequency(struct SctTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
+static void tmrEnable(void *);
+static void tmrDisable(void *);
 static void tmrSetCallback(void *, void (*)(void *), void *);
-static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
 static uint32_t tmrGetOverflow(const void *);
@@ -29,8 +30,9 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
+    .enable = tmrEnable,
+    .disable = tmrDisable,
     .setCallback = tmrSetCallback,
-    .setEnabled = tmrSetEnabled,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
     .getOverflow = tmrGetOverflow,
@@ -168,7 +170,27 @@ static void tmrDeinit(void *object)
   SctBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetCallback(void *object, void (*callback)(void *), void *argument)
+static void tmrEnable(void *object)
+{
+  struct SctTimer * const timer = object;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
+
+  reg->EVFLAG = timer->base.mask;
+  reg->CTRL_PART[offset] &= ~CTRL_HALT;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrDisable(void *object)
+{
+  struct SctTimer * const timer = object;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const unsigned int offset = timer->base.part == SCT_HIGH;
+
+  reg->CTRL_PART[offset] |= CTRL_HALT;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetCallback(void *object, void (*callback)(void *),
+    void *argument)
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
@@ -186,24 +208,6 @@ static void tmrSetCallback(void *object, void (*callback)(void *), void *argumen
   }
   else
     reg->EVEN &= ~eventMask;
-}
-/*----------------------------------------------------------------------------*/
-static void tmrSetEnabled(void *object, bool state)
-{
-  struct SctTimer * const timer = object;
-  LPC_SCT_Type * const reg = timer->base.reg;
-  const unsigned int offset = timer->base.part == SCT_HIGH;
-
-  if (state)
-  {
-    reg->EVFLAG = timer->base.mask;
-    reg->CTRL_PART[offset] &= ~CTRL_HALT;
-  }
-  else
-  {
-    reg->CTRL_PART[offset] |= CTRL_HALT;
-    reg->EVFLAG = timer->base.mask;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object)

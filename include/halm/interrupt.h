@@ -21,8 +21,10 @@ struct InterruptClass
 {
   CLASS_HEADER
 
+  void (*enable)(void *);
+  void (*disable)(void *);
+
   void (*setCallback)(void *, void (*)(void *), void *);
-  void (*setEnabled)(void *, bool);
 };
 /*----------------------------------------------------------------------------*/
 struct Interrupt
@@ -31,27 +33,34 @@ struct Interrupt
 };
 /*----------------------------------------------------------------------------*/
 /**
- * Set the interrupt callback.
+ * Enable the interrupt generation.
+ * @param interrupt Pointer to an Interrupt object.
+ */
+static inline void interruptEnable(void *interrupt)
+{
+  ((const struct InterruptClass *)CLASS(interrupt))->enable(interrupt);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Disable the interrupt generation.
+ * @param interrupt Pointer to an Interrupt object.
+ */
+static inline void interruptDisable(void *interrupt)
+{
+  ((const struct InterruptClass *)CLASS(interrupt))->disable(interrupt);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Set a callback function for an interrupt.
  * @param interrupt Pointer to an Interrupt object.
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
-static inline void intSetCallback(void *interrupt, void (*callback)(void *),
-    void *argument)
+static inline void interruptSetCallback(void *interrupt,
+    void (*callback)(void *), void *argument)
 {
   ((const struct InterruptClass *)CLASS(interrupt))->setCallback(interrupt,
       callback, argument);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Enable or disable the interrupt generation.
- * @param interrupt Pointer to an Interrupt object.
- * @param state Interrupt state: @b true to enable or @b false to disable.
- */
-static inline void intSetEnabled(void *interrupt, bool state)
-{
-  ((const struct InterruptClass *)CLASS(interrupt))->setEnabled(interrupt,
-      state);
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_INTERRUPT_H_ */

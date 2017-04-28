@@ -16,10 +16,11 @@ static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
+static void channelEnable(void *);
+static void channelDisable(void *);
 static uint32_t channelGetResolution(const void *);
 static void channelSetDuration(void *, uint32_t);
 static void channelSetEdges(void *, uint32_t, uint32_t);
-static void channelSetEnabled(void *, bool);
 static enum result channelSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
@@ -33,10 +34,11 @@ static const struct PwmClass channelTable = {
     .init = channelInit,
     .deinit = channelDeinit,
 
+    .enable = channelEnable,
+    .disable = channelDisable,
     .getResolution = channelGetResolution,
     .setDuration = channelSetDuration,
     .setEdges = channelSetEdges,
-    .setEnabled = channelSetEnabled,
     .setFrequency = channelSetFrequency
 };
 /*----------------------------------------------------------------------------*/
@@ -181,10 +183,27 @@ static enum result channelInit(void *object, const void *configBase)
 static void channelDeinit(void *object)
 {
   struct GpTimerPwm * const pwm = object;
+
+  channelDisable(pwm);
+  unitReleaseChannel(pwm->unit, pwm->channel);
+}
+/*----------------------------------------------------------------------------*/
+static void channelEnable(void *object)
+{
+  struct GpTimerPwm * const pwm = object;
+  LPC_TIMER_Type * const reg = pwm->unit->base.reg;
+
+  reg->PWMC |= PWMC_ENABLE(pwm->channel);
+}
+/*----------------------------------------------------------------------------*/
+static void channelDisable(void *object)
+{
+  struct GpTimerPwm * const pwm = object;
   LPC_TIMER_Type * const reg = pwm->unit->base.reg;
 
   reg->PWMC &= ~PWMC_ENABLE(pwm->channel);
-  unitReleaseChannel(pwm->unit, pwm->channel);
+  /* Clear match value to avoid undefined output level */
+  reg->EMR &= ~EMR_EXTERNAL_MATCH(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelGetResolution(const void *object)
@@ -228,21 +247,6 @@ static void channelSetEdges(void *object,
   assert(leading == 0);
 
   channelSetDuration(object, trailing);
-}
-/*----------------------------------------------------------------------------*/
-static void channelSetEnabled(void *object, bool state)
-{
-  struct GpTimerPwm * const pwm = object;
-  LPC_TIMER_Type * const reg = pwm->unit->base.reg;
-
-  if (!state)
-  {
-    reg->PWMC &= ~PWMC_ENABLE(pwm->channel);
-    /* Clear match value to avoid undefined output level */
-    reg->EMR &= ~EMR_EXTERNAL_MATCH(pwm->channel);
-  }
-  else
-    reg->PWMC |= PWMC_ENABLE(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static enum result channelSetFrequency(void *object, uint32_t frequency)

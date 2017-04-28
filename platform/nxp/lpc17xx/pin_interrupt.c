@@ -20,7 +20,8 @@ struct PinInterruptHandler
   struct PinInterrupt *interrupts[32];
 };
 /*----------------------------------------------------------------------------*/
-static void changeEnabledState(struct PinInterrupt *, bool);
+static void disableInterrupt(const struct PinInterrupt *);
+static void enableInterrupt(const struct PinInterrupt *);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptHandlerAttach(uint8_t, struct PinData,
@@ -30,8 +31,9 @@ static enum result pinInterruptHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptInit(void *, const void *);
 static void pinInterruptDeinit(void *);
+static void pinInterruptEnable(void *);
+static void pinInterruptDisable(void *);
 static void pinInterruptSetCallback(void *, void (*)(void *), void *);
-static void pinInterruptSetEnabled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct PinInterruptHandler),
@@ -44,35 +46,37 @@ static const struct InterruptClass pinInterruptTable = {
     .init = pinInterruptInit,
     .deinit = pinInterruptDeinit,
 
-    .setCallback = pinInterruptSetCallback,
-    .setEnabled = pinInterruptSetEnabled
+    .enable = pinInterruptEnable,
+    .disable = pinInterruptDisable,
+    .setCallback = pinInterruptSetCallback
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PinInterruptHandler = &handlerTable;
 const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
 static struct PinInterruptHandler *handlers[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void changeEnabledState(struct PinInterrupt *interrupt, bool state)
+static void disableInterrupt(const struct PinInterrupt *interrupt)
+{
+  const unsigned int channel = interrupt->channel;
+  const uint32_t mask = 1UL << interrupt->pin.offset;
+
+  LPC_GPIO_INT->PORT[channel].ENF &= ~mask;
+  LPC_GPIO_INT->PORT[channel].ENR &= ~mask;
+}
+/*----------------------------------------------------------------------------*/
+static void enableInterrupt(const struct PinInterrupt *interrupt)
 {
   const unsigned int channel = interrupt->channel;
   const uint32_t mask = 1UL << interrupt->pin.offset;
   const enum pinEvent event = interrupt->event;
 
-  if (state)
-  {
-    /* Clear pending interrupt flag */
-    LPC_GPIO_INT->PORT[channel].CLR = mask;
-    /* Configure edge sensitivity options */
-    if (event != PIN_RISING)
-      LPC_GPIO_INT->PORT[channel].ENF |= mask;
-    if (event != PIN_FALLING)
-      LPC_GPIO_INT->PORT[channel].ENR |= mask;
-  }
-  else
-  {
-    LPC_GPIO_INT->PORT[channel].ENF &= ~mask;
-    LPC_GPIO_INT->PORT[channel].ENR &= ~mask;
-  }
+  /* Clear pending interrupt flag */
+  LPC_GPIO_INT->PORT[channel].CLR = mask;
+  /* Configure edge sensitivity options */
+  if (event != PIN_RISING)
+    LPC_GPIO_INT->PORT[channel].ENF |= mask;
+  if (event != PIN_FALLING)
+    LPC_GPIO_INT->PORT[channel].ENR |= mask;
 }
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
@@ -176,7 +180,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
   interrupt->event = config->event;
   interrupt->pin = input.data;
 
-  changeEnabledState(interrupt, false);
+  disableInterrupt(interrupt);
 
   return E_OK;
 }
@@ -185,8 +189,26 @@ static void pinInterruptDeinit(void *object)
 {
   struct PinInterrupt * const interrupt = object;
 
-  changeEnabledState(interrupt, false);
+  disableInterrupt(interrupt);
   pinInterruptHandlerDetach(interrupt);
+}
+/*----------------------------------------------------------------------------*/
+static void pinInterruptEnable(void *object)
+{
+  struct PinInterrupt * const interrupt = object;
+
+  interrupt->enabled = true;
+
+  if (interrupt->callback)
+    enableInterrupt(interrupt);
+}
+/*----------------------------------------------------------------------------*/
+static void pinInterruptDisable(void *object)
+{
+  struct PinInterrupt * const interrupt = object;
+
+  interrupt->enabled = false;
+  disableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptSetCallback(void *object, void (*callback)(void *),
@@ -196,13 +218,9 @@ static void pinInterruptSetCallback(void *object, void (*callback)(void *),
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
-  changeEnabledState(interrupt, callback != 0 && interrupt->enabled);
-}
-/*----------------------------------------------------------------------------*/
-static void pinInterruptSetEnabled(void *object, bool state)
-{
-  struct PinInterrupt * const interrupt = object;
 
-  interrupt->enabled = state;
-  changeEnabledState(interrupt, state && interrupt->callback != 0);
+  if (interrupt->enabled && callback)
+    enableInterrupt(interrupt);
+  else
+    disableInterrupt(interrupt);
 }

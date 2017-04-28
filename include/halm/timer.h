@@ -21,8 +21,10 @@ struct TimerClass
 {
   CLASS_HEADER
 
+  void (*enable)(void *);
+  void (*disable)(void *);
+
   void (*setCallback)(void *, void (*)(void *), void *);
-  void (*setEnabled)(void *, bool);
 
   uint32_t (*getFrequency)(const void *);
   void (*setFrequency)(void *, uint32_t);
@@ -40,6 +42,24 @@ struct Timer
 };
 /*----------------------------------------------------------------------------*/
 /**
+ * Enable the timer and continue counting from the previous value.
+ * @param timer Pointer to a Timer object.
+ */
+static inline void timerEnable(void *timer)
+{
+  ((const struct TimerClass *)CLASS(timer))->enable(timer);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Stop the timer and preserve current value.
+ * @param timer Pointer to a Timer object.
+ */
+static inline void timerDisable(void *timer)
+{
+  ((const struct TimerClass *)CLASS(timer))->disable(timer);
+}
+/*----------------------------------------------------------------------------*/
+/**
  * Set the callback function for the timer overflow event.
  * @param timer Pointer to a Timer object.
  * @param callback Callback function.
@@ -50,16 +70,6 @@ static inline void timerSetCallback(void *timer, void (*callback)(void *),
 {
   ((const struct TimerClass *)CLASS(timer))->setCallback(timer, callback,
       argument);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Start or stop the timer.
- * @param timer Pointer to a Timer object.
- * @param state Timer state: @b true to start timer or @b false to stop timer.
- */
-static inline void timerSetEnabled(void *timer, bool state)
-{
-  ((const struct TimerClass *)CLASS(timer))->setEnabled(timer, state);
 }
 /*----------------------------------------------------------------------------*/
 /**

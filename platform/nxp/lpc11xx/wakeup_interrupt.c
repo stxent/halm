@@ -24,8 +24,9 @@ static enum result startLogicHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum result wakeupInterruptInit(void *, const void *);
 static void wakeupInterruptDeinit(void *);
+static void wakeupInterruptEnable(void *);
+static void wakeupInterruptDisable(void *);
 static void wakeupInterruptSetCallback(void *, void (*)(void *), void *);
-static void wakeupInterruptSetEnabled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct StartLogicHandler),
@@ -38,8 +39,9 @@ static const struct InterruptClass wakeupInterruptTable = {
     .init = wakeupInterruptInit,
     .deinit = wakeupInterruptDeinit,
 
-    .setCallback = wakeupInterruptSetCallback,
-    .setEnabled = wakeupInterruptSetEnabled
+    .enable = wakeupInterruptEnable,
+    .disable = wakeupInterruptDisable,
+    .setCallback = wakeupInterruptSetCallback
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const StartLogicHandler = &handlerTable;
@@ -183,6 +185,24 @@ static void wakeupInterruptDeinit(void *object)
   startLogicHandlerDetach(object);
 }
 /*----------------------------------------------------------------------------*/
+static void wakeupInterruptEnable(void *object)
+{
+  const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
+  const unsigned int index = data.port * 12 + data.offset;
+  const uint32_t mask = 1UL << index;
+
+  LPC_SYSCON->STARTRSRP0CLR = mask;
+  LPC_SYSCON->STARTERP0 |= mask;
+}
+/*----------------------------------------------------------------------------*/
+static void wakeupInterruptDisable(void *object)
+{
+  const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
+  const unsigned int index = data.port * 12 + data.offset;
+
+  LPC_SYSCON->STARTERP0 &= ~(1UL << index);
+}
+/*----------------------------------------------------------------------------*/
 static void wakeupInterruptSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -190,19 +210,4 @@ static void wakeupInterruptSetCallback(void *object, void (*callback)(void *),
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
-}
-/*----------------------------------------------------------------------------*/
-static void wakeupInterruptSetEnabled(void *object, bool state)
-{
-  const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
-  const unsigned int index = data.port * 12 + data.offset;
-  const uint32_t mask = 1UL << index;
-
-  if (state)
-  {
-    LPC_SYSCON->STARTRSRP0CLR = mask;
-    LPC_SYSCON->STARTERP0 |= mask;
-  }
-  else
-    LPC_SYSCON->STARTERP0 &= ~mask;
 }

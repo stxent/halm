@@ -28,8 +28,9 @@ static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
+static void tmrEnable(void *);
+static void tmrDisable(void *);
 static void tmrSetCallback(void *, void (*)(void *), void *);
-static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
 static uint32_t tmrGetOverflow(const void *);
@@ -42,8 +43,9 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
+    .enable = tmrEnable,
+    .disable = tmrDisable,
     .setCallback = tmrSetCallback,
-    .setEnabled = tmrSetEnabled,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
     .getOverflow = tmrGetOverflow,
@@ -146,6 +148,19 @@ static void tmrDeinit(void *object __attribute__((unused)))
   setDescriptor(timer, 0);
 }
 /*----------------------------------------------------------------------------*/
+static void tmrEnable(void *object __attribute__((unused)))
+{
+  /* Clear pending interrupt */
+  (void)SYSTICK->CTRL;
+
+  SYSTICK->CTRL |= CTRL_ENABLE;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrDisable(void *object __attribute__((unused)))
+{
+  SYSTICK->CTRL &= ~CTRL_ENABLE;
+}
+/*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -155,21 +170,6 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
 
   updateInterrupt(timer);
-}
-/*----------------------------------------------------------------------------*/
-static void tmrSetEnabled(void *object __attribute__((unused)), bool state)
-{
-  if (state)
-  {
-    SYSTICK->CTRL |= CTRL_ENABLE;
-  }
-  else
-  {
-    SYSTICK->CTRL &= ~CTRL_ENABLE;
-
-    /* Clear possible pending interrupt */
-    (void)SYSTICK->CTRL;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object)

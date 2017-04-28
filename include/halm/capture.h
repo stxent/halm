@@ -17,8 +17,10 @@ struct CaptureClass
 {
   CLASS_HEADER
 
+  void (*enable)(void *);
+  void (*disable)(void *);
+
   void (*setCallback)(void *, void (*)(void *), void *);
-  void (*setEnabled)(void *, bool);
   uint32_t (*getValue)(const void *);
 };
 /*----------------------------------------------------------------------------*/
@@ -26,6 +28,24 @@ struct Capture
 {
   struct Entity base;
 };
+/*----------------------------------------------------------------------------*/
+/**
+ * Start event capture.
+ * @param capture Pointer to a Capture object.
+ */
+static inline void captureEnable(void *capture)
+{
+  ((const struct CaptureClass *)CLASS(capture))->enable(capture);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Stop event capture.
+ * @param capture Pointer to a Capture object.
+ */
+static inline void captureDisable(void *capture)
+{
+  ((const struct CaptureClass *)CLASS(capture))->disable(capture);
+}
 /*----------------------------------------------------------------------------*/
 /**
  * Set callback function for capture event.
@@ -38,16 +58,6 @@ static inline void captureSetCallback(void *capture, void (*callback)(void *),
 {
   ((const struct CaptureClass *)CLASS(capture))->setCallback(capture, callback,
       argument);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Start or stop event capture.
- * @param capture Pointer to a Capture object.
- * @param state Capture state: @b true to enable or @b false to disable.
- */
-static inline void captureSetEnabled(void *capture, bool state)
-{
-  ((const struct CaptureClass *)CLASS(capture))->setEnabled(capture, state);
 }
 /*----------------------------------------------------------------------------*/
 /**

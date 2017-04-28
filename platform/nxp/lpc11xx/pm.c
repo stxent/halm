@@ -23,7 +23,7 @@ void pmPlatformChangeState(enum pmState state)
       break;
 
     case PM_SUSPEND:
-      value = (value & ~PCON_DPDEN) | PCON_SLEEPFLAG;
+      value = PCON_SLEEPFLAG;
       LPC_SYSCON->PDAWAKECFG = LPC_SYSCON->PDRUNCFG;
       break;
 

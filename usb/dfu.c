@@ -140,7 +140,7 @@ static void onTimerOverflow(void *argument)
 {
   struct Dfu * const driver = argument;
 
-  timerSetEnabled(driver->timer, false);
+  timerDisable(driver->timer);
 
   switch ((enum dfuState)driver->state)
   {
@@ -240,7 +240,7 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
   {
     timerSetOverflow(driver->timer, driver->timeout);
     timerSetValue(driver->timer, 0);
-    timerSetEnabled(driver->timer, true);
+    timerEnable(driver->timer);
   }
 }
 /*----------------------------------------------------------------------------*/

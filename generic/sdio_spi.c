@@ -402,13 +402,13 @@ static enum state stateReadCrcAdvance(struct SdioSpi *interface)
 static void stateDelayEnter(struct SdioSpi *interface)
 {
   timerSetValue(interface->timer, 0);
-  timerSetEnabled(interface->timer, true);
+  timerEnable(interface->timer);
   --interface->retries;
 }
 /*----------------------------------------------------------------------------*/
 static enum state stateReadDelayAdvance(struct SdioSpi *interface)
 {
-  timerSetEnabled(interface->timer, false);
+  timerDisable(interface->timer);
   return STATE_WAIT_READ;
 }
 /*----------------------------------------------------------------------------*/
@@ -476,7 +476,7 @@ static enum state stateWaitWriteAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static enum state stateWriteDelayAdvance(struct SdioSpi *interface)
 {
-  timerSetEnabled(interface->timer, false);
+  timerDisable(interface->timer);
   return STATE_WRITE_BUSY;
 }
 /*----------------------------------------------------------------------------*/

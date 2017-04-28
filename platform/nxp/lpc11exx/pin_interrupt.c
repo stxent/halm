@@ -12,23 +12,26 @@
 #include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(uint8_t);
-static void changeEnabledState(struct PinInterrupt *, bool);
+static void disableInterrupt(const struct PinInterrupt *);
+static void enableInterrupt(const struct PinInterrupt *);
 static void processInterrupt(uint8_t);
 static void resetDescriptor(uint8_t);
 static int setDescriptor(struct PinInterrupt *);
 /*----------------------------------------------------------------------------*/
 static enum result pinInterruptInit(void *, const void *);
 static void pinInterruptDeinit(void *);
+static void pinInterruptEnable(void *);
+static void pinInterruptDisable(void *);
 static void pinInterruptSetCallback(void *, void (*)(void *), void *);
-static void pinInterruptSetEnabled(void *, bool);
 /*----------------------------------------------------------------------------*/
 static const struct InterruptClass pinInterruptTable = {
     .size = sizeof(struct PinInterrupt),
     .init = pinInterruptInit,
     .deinit = pinInterruptDeinit,
 
-    .setCallback = pinInterruptSetCallback,
-    .setEnabled = pinInterruptSetEnabled
+    .enable = pinInterruptEnable,
+    .disable = pinInterruptDisable,
+    .setCallback = pinInterruptSetCallback
 };
 /*----------------------------------------------------------------------------*/
 const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
@@ -39,18 +42,18 @@ static inline IrqNumber calcVector(uint8_t channel)
   return PIN_INT0_IRQ + channel;
 }
 /*----------------------------------------------------------------------------*/
-static void changeEnabledState(struct PinInterrupt *interrupt, bool state)
+static void disableInterrupt(const struct PinInterrupt *interrupt)
+{
+  irqDisable(calcVector(interrupt->channel));
+}
+/*----------------------------------------------------------------------------*/
+static void enableInterrupt(const struct PinInterrupt *interrupt)
 {
   const IrqNumber irq = calcVector(interrupt->channel);
 
-  if (state)
-  {
-    LPC_GPIO_INT->IST = 1UL << interrupt->pin.offset;
-    irqClearPending(irq);
-    irqEnable(irq);
-  }
-  else
-    irqDisable(irq);
+  LPC_GPIO_INT->IST = 1UL << interrupt->pin.offset;
+  irqClearPending(irq);
+  irqEnable(irq);
 }
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
@@ -170,8 +173,7 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 #endif
 
   /* Configure interrupt priority, interrupt is disabled by default */
-  const IrqNumber irq = calcVector(interrupt->channel);
-  irqSetPriority(irq, config->priority);
+  irqSetPriority(calcVector(interrupt->channel), config->priority);
 
   return E_OK;
 }
@@ -179,16 +181,33 @@ static enum result pinInterruptInit(void *object, const void *configBase)
 static void pinInterruptDeinit(void *object)
 {
   const struct PinInterrupt * const interrupt = object;
-  const IrqNumber irq = calcVector(interrupt->channel);
   const uint32_t mask = 1UL << interrupt->pin.offset;
 
-  /* Disable channel interrupt in interrupt controller */
-  irqDisable(irq);
+  /* Disable channel interrupt in the interrupt controller */
+  disableInterrupt(interrupt);
   /* Disable interrupt sources */
   LPC_GPIO_INT->CIENR = mask;
   LPC_GPIO_INT->CIENF = mask;
 
   resetDescriptor(interrupt->channel);
+}
+/*----------------------------------------------------------------------------*/
+static void pinInterruptEnable(void *object)
+{
+  struct PinInterrupt * const interrupt = object;
+
+  interrupt->enabled = true;
+
+  if (interrupt->callback)
+    enableInterrupt(interrupt);
+}
+/*----------------------------------------------------------------------------*/
+static void pinInterruptDisable(void *object)
+{
+  struct PinInterrupt * const interrupt = object;
+
+  interrupt->enabled = false;
+  disableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptSetCallback(void *object, void (*callback)(void *),
@@ -198,13 +217,9 @@ static void pinInterruptSetCallback(void *object, void (*callback)(void *),
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
-  changeEnabledState(interrupt, callback != 0 && interrupt->enabled);
-}
-/*----------------------------------------------------------------------------*/
-static void pinInterruptSetEnabled(void *object, bool state)
-{
-  struct PinInterrupt * const interrupt = object;
 
-  interrupt->enabled = state;
-  changeEnabledState(interrupt, state && interrupt->callback != 0);
+  if (interrupt->enabled && callback)
+    enableInterrupt(interrupt);
+  else
+    disableInterrupt(interrupt);
 }

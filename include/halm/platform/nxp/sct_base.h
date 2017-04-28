@@ -29,9 +29,9 @@ enum sctInput
 /*----------------------------------------------------------------------------*/
 enum sctPart
 {
-  SCT_UNIFIED,
+  SCT_HIGH,
   SCT_LOW,
-  SCT_HIGH
+  SCT_UNIFIED
 };
 /*----------------------------------------------------------------------------*/
 struct SctBaseConfig

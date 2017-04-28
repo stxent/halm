@@ -18,8 +18,9 @@ static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static enum result channelInit(void *, const void *);
 static void channelDeinit(void *);
+static void channelEnable(void *);
+static void channelDisable(void *);
 static void channelSetCallback(void *, void (*)(void *), void *);
-static void channelSetEnabled(void *, bool);
 static uint32_t channelGetValue(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
@@ -33,8 +34,9 @@ static const struct CaptureClass channelTable = {
     .init = channelInit,
     .deinit = channelDeinit,
 
+    .enable = channelEnable,
+    .disable = channelDisable,
     .setCallback = channelSetCallback,
-    .setEnabled = channelSetEnabled,
     .getValue = channelGetValue
 };
 /*----------------------------------------------------------------------------*/
@@ -152,9 +154,9 @@ static enum result channelInit(void *object, const void *configBase)
   capture->value = reg->CR + capture->channel;
   /*
    * Configure capture events. Function should be called when
-   * the initialization of the current object is completed.
+   * the initialization of the object is completed.
    */
-  channelSetEnabled(capture, true);
+  channelEnable(capture);
 
   return E_OK;
 }
@@ -163,8 +165,30 @@ static void channelDeinit(void *object)
 {
   struct GpTimerCapture * const capture = object;
 
-  channelSetEnabled(object, false);
+  channelDisable(object);
   unitSetDescriptor(capture->unit, capture->channel, capture, 0);
+}
+/*----------------------------------------------------------------------------*/
+static void channelEnable(void *object)
+{
+  struct GpTimerCapture * const capture = object;
+  LPC_TIMER_Type * const reg = capture->unit->base.reg;
+  uint32_t value = 0;
+
+  if (capture->event != PIN_RISING)
+    value |= CCR_FALLING_EDGE(capture->channel);
+  if (capture->event != PIN_FALLING)
+    value |= CCR_RISING_EDGE(capture->channel);
+
+  reg->CCR = (reg->CCR & ~CCR_MASK(capture->channel)) | value;
+}
+/*----------------------------------------------------------------------------*/
+static void channelDisable(void *object)
+{
+  struct GpTimerCapture * const capture = object;
+  LPC_TIMER_Type * const reg = capture->unit->base.reg;
+
+  reg->CCR &= ~CCR_MASK(capture->channel);
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetCallback(void *object, void (*callback)(void *),
@@ -183,26 +207,6 @@ static void channelSetCallback(void *object, void (*callback)(void *),
   }
   else
     reg->CCR &= ~CCR_INTERRUPT(capture->channel);
-}
-/*----------------------------------------------------------------------------*/
-static void channelSetEnabled(void *object, bool state)
-{
-  struct GpTimerCapture * const capture = object;
-  LPC_TIMER_Type * const reg = capture->unit->base.reg;
-
-  if (state)
-  {
-    uint32_t value = 0;
-
-    if (capture->event != PIN_RISING)
-      value |= CCR_FALLING_EDGE(capture->channel);
-    if (capture->event != PIN_FALLING)
-      value |= CCR_RISING_EDGE(capture->channel);
-
-    reg->CCR = (reg->CCR & ~CCR_MASK(capture->channel)) | value;
-  }
-  else
-    reg->CCR &= ~CCR_MASK(capture->channel);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t channelGetValue(const void *object)

@@ -24,18 +24,20 @@ static enum result channelSetFrequency(struct GpPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result singleEdgeInit(void *, const void *);
 static void singleEdgeDeinit(void *);
+static void singleEdgeEnable(void *);
+static void singleEdgeDisable(void *);
 static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
-static void singleEdgeSetEnabled(void *, bool);
 static enum result singleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result doubleEdgeInit(void *, const void *);
 static void doubleEdgeDeinit(void *);
+static void doubleEdgeEnable(void *);
+static void doubleEdgeDisable(void *);
 static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
-static void doubleEdgeSetEnabled(void *, bool);
 static enum result doubleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
@@ -49,10 +51,11 @@ static const struct PwmClass singleEdgeTable = {
     .init = singleEdgeInit,
     .deinit = singleEdgeDeinit,
 
+    .enable = singleEdgeEnable,
+    .disable = singleEdgeDisable,
     .getResolution = singleEdgeGetResolution,
     .setDuration = singleEdgeSetDuration,
     .setEdges = singleEdgeSetEdges,
-    .setEnabled = singleEdgeSetEnabled,
     .setFrequency = singleEdgeSetFrequency
 };
 /*----------------------------------------------------------------------------*/
@@ -61,10 +64,11 @@ static const struct PwmClass doubleEdgeTable = {
     .init = doubleEdgeInit,
     .deinit = doubleEdgeDeinit,
 
+    .enable = doubleEdgeEnable,
+    .disable = doubleEdgeDisable,
     .getResolution = doubleEdgeGetResolution,
     .setDuration = doubleEdgeSetDuration,
     .setEdges = doubleEdgeSetEdges,
-    .setEnabled = doubleEdgeSetEnabled,
     .setFrequency = doubleEdgeSetFrequency
 };
 /*----------------------------------------------------------------------------*/
@@ -231,6 +235,22 @@ static void singleEdgeDeinit(void *object)
   unitReleaseChannel(pwm->unit, pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
+static void singleEdgeEnable(void *object)
+{
+  struct GpPwm * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->base.reg;
+
+  reg->PCR |= PCR_OUTPUT_ENABLED(pwm->channel);
+}
+/*----------------------------------------------------------------------------*/
+static void singleEdgeDisable(void *object)
+{
+  struct GpPwm * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->base.reg;
+
+  reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
+}
+/*----------------------------------------------------------------------------*/
 static uint32_t singleEdgeGetResolution(const void *object)
 {
   return ((const struct GpPwm *)object)->unit->resolution;
@@ -265,18 +285,6 @@ static void singleEdgeSetEdges(void *object,
   assert(leading == 0);
 
   singleEdgeSetDuration(object, trailing);
-}
-/*----------------------------------------------------------------------------*/
-static void singleEdgeSetEnabled(void *object, bool state)
-{
-  struct GpPwm * const pwm = object;
-  LPC_PWM_Type * const reg = pwm->unit->base.reg;
-  const uint8_t channel = pwm->channel;
-
-  if (state)
-    reg->PCR |= PCR_OUTPUT_ENABLED(channel);
-  else
-    reg->PCR &= ~PCR_OUTPUT_ENABLED(channel);
 }
 /*----------------------------------------------------------------------------*/
 static enum result singleEdgeSetFrequency(void *object, uint32_t frequency)
@@ -331,6 +339,22 @@ static void doubleEdgeDeinit(void *object)
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
   unitReleaseChannel(pwm->unit, pwm->channel);
   unitReleaseChannel(pwm->unit, pwm->channel - 1);
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeEnable(void *object)
+{
+  struct GpPwmDoubleEdge * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->base.reg;
+
+  reg->PCR |= PCR_OUTPUT_ENABLED(pwm->channel);
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeDisable(void *object)
+{
+  struct GpPwmDoubleEdge * const pwm = object;
+  LPC_PWM_Type * const reg = pwm->unit->base.reg;
+
+  reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t doubleEdgeGetResolution(const void *object)
@@ -408,18 +432,6 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
   *pwm->leading = leading;
   *pwm->trailing = trailing;
   reg->LER |= mask;
-}
-/*----------------------------------------------------------------------------*/
-static void doubleEdgeSetEnabled(void *object, bool state)
-{
-  struct GpPwmDoubleEdge * const pwm = object;
-  LPC_PWM_Type * const reg = pwm->unit->base.reg;
-  const uint8_t channel = pwm->channel;
-
-  if (state)
-    reg->PCR |= PCR_OUTPUT_ENABLED(channel);
-  else
-    reg->PCR &= ~PCR_OUTPUT_ENABLED(channel);
 }
 /*----------------------------------------------------------------------------*/
 static enum result doubleEdgeSetFrequency(void *object, uint32_t frequency)

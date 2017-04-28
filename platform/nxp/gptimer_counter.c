@@ -13,8 +13,9 @@ static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
+static void tmrEnable(void *);
+static void tmrDisable(void *);
 static void tmrSetCallback(void *, void (*)(void *), void *);
-static void tmrSetEnabled(void *, bool);
 static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
@@ -25,8 +26,9 @@ static const struct TimerClass tmrTable = {
     .init = tmrInit,
     .deinit = tmrDeinit,
 
+    .enable = tmrEnable,
+    .disable = tmrDisable,
     .setCallback = tmrSetCallback,
-    .setEnabled = tmrSetEnabled,
     .getFrequency = 0,
     .setFrequency = 0,
     .getOverflow = tmrGetOverflow,
@@ -132,6 +134,25 @@ static void tmrDeinit(void *object)
   GpTimerBase->deinit(timer);
 }
 /*----------------------------------------------------------------------------*/
+static void tmrEnable(void *object)
+{
+  struct GpTimerCounter * const timer = object;
+  LPC_TIMER_Type * const reg = timer->base.reg;
+
+  /* Clear pending interrupts */
+  reg->IR = IR_MATCH_INTERRUPT(timer->event);
+  /* Start the timer */
+  reg->TCR = TCR_CEN;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrDisable(void *object)
+{
+  struct GpTimerCounter * const timer = object;
+  LPC_TIMER_Type * const reg = timer->base.reg;
+
+  reg->TCR = 0;
+}
+/*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -148,19 +169,6 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   }
   else
     reg->MCR &= ~MCR_INTERRUPT(timer->event);
-}
-/*----------------------------------------------------------------------------*/
-static void tmrSetEnabled(void *object, bool state)
-{
-  struct GpTimerCounter * const timer = object;
-  LPC_TIMER_Type * const reg = timer->base.reg;
-
-  /* Stop the timer and clear pending interrupts */
-  reg->TCR = 0;
-  reg->IR = IR_MATCH_INTERRUPT(timer->event);
-
-  if (state)
-    reg->TCR = TCR_CEN;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)

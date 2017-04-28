@@ -21,10 +21,12 @@ struct PwmClass
 {
   CLASS_HEADER
 
+  void (*enable)(void *);
+  void (*disable)(void *);
+
   uint32_t (*getResolution)(const void *);
   void (*setDuration)(void *, uint32_t);
   void (*setEdges)(void *, uint32_t, uint32_t);
-  void (*setEnabled)(void *, bool);
   enum result (*setFrequency)(void *, uint32_t);
 };
 /*----------------------------------------------------------------------------*/
@@ -32,6 +34,24 @@ struct Pwm
 {
   struct Entity base;
 };
+/*----------------------------------------------------------------------------*/
+/**
+ * Enable pulse width modulation.
+ * @param channel Pointer to a Pwm object.
+ */
+static inline void pwmEnable(void *channel)
+{
+  ((const struct PwmClass *)CLASS(channel))->enable(channel);
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Disable pulse width modulation.
+ * @param channel Pointer to a Pwm object.
+ */
+static inline void pwmDisable(void *channel)
+{
+  ((const struct PwmClass *)CLASS(channel))->disable(channel);
+}
 /*----------------------------------------------------------------------------*/
 /**
  * Get channel resolution.
@@ -64,16 +84,6 @@ static inline void pwmSetEdges(void *channel, uint32_t leading,
 {
   ((const struct PwmClass *)CLASS(channel))->setEdges(channel, leading,
       trailing);
-}
-/*----------------------------------------------------------------------------*/
-/**
- * Start or stop pulse width modulation output.
- * @param channel Pointer to a Pwm object.
- * @param state Output state: @b true to start or @b false to stop output.
- */
-static inline void pwmSetEnabled(void *channel, bool state)
-{
-  ((const struct PwmClass *)CLASS(channel))->setEnabled(channel, state);
 }
 /*----------------------------------------------------------------------------*/
 /**
