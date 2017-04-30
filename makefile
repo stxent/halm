@@ -100,11 +100,11 @@ COBJECTS = $(CSOURCES:%.c=$(OUTPUT_DIR)/%.o)
 all: $(TARGETS)
 
 $(LIBRARY_FILE): $(COBJECTS)
-	@echo "$(AR): $@"
+	@echo "$(AR): $(@:$(OUTPUT_DIR)/%=%)"
 	$(Q)$(AR) -c -r $@ $^
 
 $(OUTPUT_DIR)/%.o: %.c $(OPTION_FILE)
-	@echo "$(CC): $@"
+	@echo "$(CC): $(@:$(OUTPUT_DIR)/%=%)"
 	@mkdir -p $(@D)
 	$(Q)$(CC) -c $(CFLAGS) $(INCLUDE_PATH) -MMD -MF $(@:%.o=%.d) -MT $@ $< -o $@
 
