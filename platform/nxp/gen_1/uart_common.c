@@ -31,7 +31,7 @@ void uartConfigPins(struct UartBase *interface,
   pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-enum result uartCalcRate(const struct UartBase *interface, uint32_t rate,
+enum Result uartCalcRate(const struct UartBase *interface, uint32_t rate,
     struct UartRateConfig *output)
 {
   if (!rate)

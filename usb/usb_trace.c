@@ -14,7 +14,7 @@
 static struct Interface *traceInterface = 0;
 static char traceBuffer[CONFIG_TRACE_BUFFER_SIZE];
 /*----------------------------------------------------------------------------*/
-enum result usbTraceInit(struct Interface *interface)
+enum Result usbTraceInit(struct Interface *interface)
 {
   traceInterface = interface;
 

@@ -12,13 +12,13 @@
 #define BLOCK_COUNT 2
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
-static enum result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
+static enum Result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
 /*----------------------------------------------------------------------------*/
-static enum result dacInit(void *, const void *);
+static enum Result dacInit(void *, const void *);
 static void dacDeinit(void *);
-static enum result dacSetCallback(void *, void (*)(void *), void *);
-static enum result dacGetParam(void *, enum IfParameter, void *);
-static enum result dacSetParam(void *, enum IfParameter, const void *);
+static enum Result dacSetCallback(void *, void (*)(void *), void *);
+static enum Result dacGetParam(void *, enum IfParameter, void *);
+static enum Result dacSetParam(void *, enum IfParameter, const void *);
 static size_t dacWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass dacTable = {
@@ -56,7 +56,7 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct DacDma *interface,
+static enum Result dmaSetup(struct DacDma *interface,
     const struct DacDmaConfig *config)
 {
   static const struct GpDmaSettings dmaSettings = {
@@ -88,7 +88,7 @@ static enum result dmaSetup(struct DacDma *interface,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacInit(void *object, const void *configBase)
+static enum Result dacInit(void *object, const void *configBase)
 {
   const struct DacDmaConfig * const config = configBase;
   assert(config);
@@ -97,7 +97,7 @@ static enum result dacInit(void *object, const void *configBase)
       .pin = config->pin
   };
   struct DacDma * const interface = object;
-  enum result res;
+  enum Result res;
 
   assert(config->rate);
 
@@ -127,7 +127,7 @@ static void dacDeinit(void *object)
   DacBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacSetCallback(void *object, void (*callback)(void *),
+static enum Result dacSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct DacDma * const interface = object;
@@ -137,7 +137,7 @@ static enum result dacSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacGetParam(void *object, enum IfParameter parameter,
+static enum Result dacGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct DacDma * const interface = object;
@@ -156,7 +156,7 @@ static enum result dacGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacSetParam(void *object __attribute__((unused)),
+static enum Result dacSetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {

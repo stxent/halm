@@ -32,9 +32,9 @@ static void dmaHandlerAttach(void);
 static void dmaHandlerDetach(void);
 static void dmaHandlerFree(struct GpDmaBase *);
 static void dmaHandlerInstantiate(void);
-static enum result dmaHandlerInit(void *, const void *);
+static enum Result dmaHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *, const void *);
+static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -136,7 +136,7 @@ const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
   return dmaHandler->descriptors[channel];
 }
 /*----------------------------------------------------------------------------*/
-enum result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
+enum Result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
 {
   assert(descriptor);
   assert(channel < GPDMA_CHANNEL_COUNT);
@@ -173,7 +173,7 @@ void GPDMA_ISR(void)
 
     intStatus -= mask;
 
-    enum result res = E_OK;
+    enum Result res = E_OK;
 
     if (errorStatus & mask)
     {
@@ -294,7 +294,7 @@ static void dmaHandlerInstantiate(void)
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dmaHandlerInit(void *object,
+static enum Result dmaHandlerInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct DmaHandler * const handler = object;
@@ -315,7 +315,7 @@ static enum result dmaHandlerInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configBase)
+static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaBaseConfig * const config = configBase;
   struct GpDmaBase * const channel = object;

@@ -24,11 +24,11 @@ static inline bool isAddressValid(const struct Eeprom *, uintptr_t);
 static void programNextChunk(struct Eeprom *);
 static bool setDescriptor(const struct Eeprom *, struct Eeprom *);
 /*----------------------------------------------------------------------------*/
-static enum result eepromInit(void *, const void *);
+static enum Result eepromInit(void *, const void *);
 static void eepromDeinit(void *);
-static enum result eepromSetCallback(void *, void (*)(void *), void *);
-static enum result eepromGetParam(void *, enum IfParameter, void *);
-static enum result eepromSetParam(void *, enum IfParameter, const void *);
+static enum Result eepromSetCallback(void *, void (*)(void *), void *);
+static enum Result eepromGetParam(void *, enum IfParameter, void *);
+static enum Result eepromSetParam(void *, enum IfParameter, const void *);
 static size_t eepromRead(void *, void *, size_t);
 static size_t eepromWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -92,7 +92,7 @@ void EEPROM_ISR(void)
     programNextChunk(descriptor);
 }
 /*----------------------------------------------------------------------------*/
-static enum result eepromInit(void *object, const void *configBase)
+static enum Result eepromInit(void *object, const void *configBase)
 {
   const struct EepromConfig * const config = configBase;
   struct Eeprom * const interface = object;
@@ -127,7 +127,7 @@ static void eepromDeinit(void *object __attribute__((unused)))
   sysClockDisable(CLK_M4_EEPROM);
 }
 /*----------------------------------------------------------------------------*/
-static enum result eepromSetCallback(void *object, void (*callback)(void *),
+static enum Result eepromSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Eeprom * const interface = object;
@@ -137,7 +137,7 @@ static enum result eepromSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result eepromGetParam(void *object, enum IfParameter parameter,
+static enum Result eepromGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Eeprom * const interface = object;
@@ -157,7 +157,7 @@ static enum result eepromGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result eepromSetParam(void *object, enum IfParameter parameter,
+static enum Result eepromSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Eeprom * const interface = object;

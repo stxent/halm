@@ -10,7 +10,7 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-static enum result adcUnitInit(void *, const void *);
+static enum Result adcUnitInit(void *, const void *);
 static void adcUnitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass adcUnitTable = {
@@ -29,7 +29,7 @@ static void interruptHandler(void *object)
     unit->callback(unit->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-enum result adcUnitRegister(struct AdcUnit *unit, void (*callback)(void *),
+enum Result adcUnitRegister(struct AdcUnit *unit, void (*callback)(void *),
     void *argument)
 {
   if (!spinTryLock(&unit->lock))
@@ -54,7 +54,7 @@ void adcUnitUnregister(struct AdcUnit *unit)
   unit->callbackArgument = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcUnitInit(void *object, const void *configBase)
+static enum Result adcUnitInit(void *object, const void *configBase)
 {
   const struct AdcUnitConfig * const config = configBase;
   assert(config);
@@ -65,7 +65,7 @@ static enum result adcUnitInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct AdcUnit * const unit = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = AdcUnitBase->init(object, &baseConfig)) != E_OK)

@@ -8,20 +8,20 @@
 #include <halm/platform/nxp/gptimer_pwm.h>
 #include <halm/platform/nxp/gptimer_pwm_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result unitAllocateChannel(struct GpTimerPwmUnit *, uint8_t);
+static enum Result unitAllocateChannel(struct GpTimerPwmUnit *, uint8_t);
 static void unitReleaseChannel(struct GpTimerPwmUnit *, uint8_t);
 static void unitUpdateResolution(struct GpTimerPwmUnit *, uint8_t);
-static enum result unitInit(void *, const void *);
+static enum Result unitInit(void *, const void *);
 static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *, const void *);
+static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelEnable(void *);
 static void channelDisable(void *);
 static uint32_t channelGetResolution(const void *);
 static void channelSetDuration(void *, uint32_t);
 static void channelSetEdges(void *, uint32_t, uint32_t);
-static enum result channelSetFrequency(void *, uint32_t);
+static enum Result channelSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct GpTimerPwmUnit),
@@ -45,10 +45,10 @@ static const struct PwmClass channelTable = {
 const struct EntityClass * const GpTimerPwmUnit = &unitTable;
 const struct PwmClass * const GpTimerPwm = &channelTable;
 /*----------------------------------------------------------------------------*/
-static enum result unitAllocateChannel(struct GpTimerPwmUnit *unit,
+static enum Result unitAllocateChannel(struct GpTimerPwmUnit *unit,
     uint8_t channel)
 {
-  enum result res = E_BUSY;
+  enum Result res = E_BUSY;
   const uint8_t mask = 1 << channel;
   const IrqState state = irqSave();
 
@@ -93,7 +93,7 @@ static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
   reg->TCR &= ~TCR_CRES;
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *object, const void *configBase)
+static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmUnitConfig * const config = configBase;
   assert(config);
@@ -102,7 +102,7 @@ static enum result unitInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct GpTimerPwmUnit * const unit = object;
-  enum result res;
+  enum Result res;
 
   const uint32_t clockFrequency = gpTimerGetClock(object);
   const uint32_t timerFrequency = config->frequency * config->resolution;
@@ -151,14 +151,14 @@ static void unitDeinit(void *object)
   GpTimerBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configBase)
+static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmConfig * const config = configBase;
   assert(config);
 
   struct GpTimerPwm * const pwm = object;
   struct GpTimerPwmUnit * const unit = config->parent;
-  enum result res;
+  enum Result res;
 
   /* Initialize output pin */
   pwm->channel = gpTimerConfigMatchPin(unit->base.channel, config->pin);
@@ -249,7 +249,7 @@ static void channelSetEdges(void *object,
   channelSetDuration(object, trailing);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelSetFrequency(void *object, uint32_t frequency)
+static enum Result channelSetFrequency(void *object, uint32_t frequency)
 {
   struct GpTimerPwm * const pwm = object;
   struct GpTimerPwmUnit * const unit = pwm->unit;

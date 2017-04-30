@@ -19,11 +19,11 @@ static void interruptHandler(void *);
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result spiInit(void *, const void *);
+static enum Result spiInit(void *, const void *);
 static void spiDeinit(void *);
-static enum result spiSetCallback(void *, void (*)(void *), void *);
-static enum result spiGetParam(void *, enum IfParameter, void *);
-static enum result spiSetParam(void *, enum IfParameter, const void *);
+static enum Result spiSetCallback(void *, void (*)(void *), void *);
+static enum Result spiGetParam(void *, enum IfParameter, void *);
+static enum Result spiSetParam(void *, enum IfParameter, const void *);
 static size_t spiRead(void *, void *, size_t);
 static size_t spiWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -101,7 +101,7 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result spiInit(void *object, const void *configBase)
+static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
   assert(config);
@@ -114,7 +114,7 @@ static enum result spiInit(void *object, const void *configBase)
       .cs = 0
   };
   struct Spi * const interface = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = SspBase->init(object, &baseConfig)) != E_OK)
@@ -175,7 +175,7 @@ static void spiDeinit(void *object)
   SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiSetCallback(void *object, void (*callback)(void *),
+static enum Result spiSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Spi * const interface = object;
@@ -185,7 +185,7 @@ static enum result spiSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiGetParam(void *object, enum IfParameter parameter,
+static enum Result spiGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Spi * const interface = object;
@@ -205,7 +205,7 @@ static enum result spiGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiSetParam(void *object, enum IfParameter parameter,
+static enum Result spiSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Spi * const interface = object;

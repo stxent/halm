@@ -11,7 +11,7 @@
 static inline uint32_t getMaxValue(const struct GpTimerCounter *);
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *, const void *);
+static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
@@ -60,7 +60,7 @@ static void interruptHandler(void *object)
   while (reg->IR);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configBase)
+static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerCounterConfig * const config = configBase;
   assert(config);
@@ -69,7 +69,7 @@ static enum result tmrInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct GpTimerCounter * const timer = object;
-  enum result res;
+  enum Result res;
 
   /* Configure clock input and polarity */
   const uint32_t captureChannel = gpTimerConfigCapturePin(config->channel,

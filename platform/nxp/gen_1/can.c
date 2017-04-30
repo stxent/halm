@@ -31,11 +31,11 @@ static uint32_t sendMessage(struct Can *, const struct CanMessage *, uint32_t);
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result canInit(void *, const void *);
+static enum Result canInit(void *, const void *);
 static void canDeinit(void *);
-static enum result canSetCallback(void *, void (*)(void *), void *);
-static enum result canGetParam(void *, enum IfParameter, void *);
-static enum result canSetParam(void *, enum IfParameter, const void *);
+static enum Result canSetCallback(void *, void (*)(void *), void *);
+static enum Result canGetParam(void *, enum IfParameter, void *);
+static enum Result canSetParam(void *, enum IfParameter, const void *);
 static size_t canRead(void *, void *, size_t);
 static size_t canWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -257,7 +257,7 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result canInit(void *object, const void *configBase)
+static enum Result canInit(void *object, const void *configBase)
 {
   const struct CanConfig * const config = configBase;
   assert(config);
@@ -268,7 +268,7 @@ static enum result canInit(void *object, const void *configBase)
       .tx = config->tx
   };
   struct Can * const interface = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = CanBase->init(object, &baseConfig)) != E_OK)
@@ -348,7 +348,7 @@ static void canDeinit(void *object)
   CanBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result canSetCallback(void *object, void (*callback)(void *),
+static enum Result canSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Can * const interface = object;
@@ -358,7 +358,7 @@ static enum result canSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result canGetParam(void *object, enum IfParameter parameter,
+static enum Result canGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Can * const interface = object;
@@ -382,7 +382,7 @@ static enum result canGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result canSetParam(void *object, enum IfParameter parameter,
+static enum Result canSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Can * const interface = object;

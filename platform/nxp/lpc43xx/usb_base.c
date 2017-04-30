@@ -20,7 +20,7 @@
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static bool setDescriptor(uint8_t, const struct UsbBase *, struct UsbBase *);
 /*----------------------------------------------------------------------------*/
-static enum result devInit(void *, const void *);
+static enum Result devInit(void *, const void *);
 static void devDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass devTable = {
@@ -152,11 +152,11 @@ void USB1_ISR(void)
   descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-static enum result devInit(void *object, const void *configBase)
+static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbBaseConfig * const config = configBase;
   struct UsbBase * const device = object;
-  enum result res;
+  enum Result res;
 
   device->channel = config->channel;
   device->handler = 0;

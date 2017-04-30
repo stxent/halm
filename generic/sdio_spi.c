@@ -123,16 +123,16 @@ static enum State stateVerifyCrcAdvance(struct SdioSpi *);
 static void autoStopTransmission(struct SdioSpi *);
 static void execute(struct SdioSpi *);
 static void interruptHandler(void *);
-static enum result parseDataToken(struct SdioSpi *, uint8_t, enum SdioToken);
-static enum result parseResponseToken(struct SdioSpi *, uint8_t);
-static enum Status resultToStatus(enum result);
+static enum Result parseDataToken(struct SdioSpi *, uint8_t, enum SdioToken);
+static enum Result parseResponseToken(struct SdioSpi *, uint8_t);
+static enum Status resultToStatus(enum Result);
 static void sendCommand(struct SdioSpi *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result sdioInit(void *, const void *);
+static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
-static enum result sdioSetCallback(void *, void (*)(void *), void *);
-static enum result sdioGetParam(void *, enum IfParameter, void *);
-static enum result sdioSetParam(void *, enum IfParameter, const void *);
+static enum Result sdioSetCallback(void *, void (*)(void *), void *);
+static enum Result sdioGetParam(void *, enum IfParameter, void *);
+static enum Result sdioSetParam(void *, enum IfParameter, const void *);
 static size_t sdioRead(void *, void *, size_t);
 static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -200,7 +200,7 @@ static void stateWaitRespEnter(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitRespAdvance(struct SdioSpi *interface)
 {
-  const enum result res = parseResponseToken(interface, interface->buffer[0]);
+  const enum Result res = parseResponseToken(interface, interface->buffer[0]);
 
   if (res == E_OK || res == E_IDLE)
   {
@@ -263,7 +263,7 @@ static enum State stateReadShortAdvance(struct SdioSpi *interface)
   memcpy(&value, interface->buffer + 1, sizeof(value));
   interface->response[0] = fromBigEndian32(value);
 
-  const enum result res = parseResponseToken(interface, interface->buffer[0]);
+  const enum Result res = parseResponseToken(interface, interface->buffer[0]);
   interface->commandStatus = resultToStatus(res);
 
   if (flags & SDIO_STOP_TRANSFER)
@@ -285,7 +285,7 @@ static void stateRequestToken(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitLongAdvance(struct SdioSpi *interface)
 {
-  const enum result res = parseDataToken(interface, interface->buffer[0],
+  const enum Result res = parseDataToken(interface, interface->buffer[0],
       TOKEN_START);
 
   if (res == E_OK)
@@ -324,7 +324,7 @@ static enum State stateReadLongAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitReadAdvance(struct SdioSpi *interface)
 {
-  const enum result res = parseDataToken(interface, interface->buffer[0],
+  const enum Result res = parseDataToken(interface, interface->buffer[0],
       TOKEN_START);
 
   if (res == E_OK)
@@ -454,7 +454,7 @@ static void stateWriteCrcEnter(struct SdioSpi *interface)
 static enum State stateWaitWriteAdvance(struct SdioSpi *interface)
 {
   const uint8_t token = interface->buffer[0] & 0x1F;
-  const enum result res = parseDataToken(interface, token, TOKEN_DATA_ACCEPTED);
+  const enum Result res = parseDataToken(interface, token, TOKEN_DATA_ACCEPTED);
 
   if (res == E_OK)
   {
@@ -655,10 +655,10 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result parseDataToken(struct SdioSpi *interface, uint8_t token,
+static enum Result parseDataToken(struct SdioSpi *interface, uint8_t token,
     enum SdioToken expected)
 {
-  enum result res;
+  enum Result res;
 
   if (token == 0xFF)
     res = !interface->retries ? E_TIMEOUT : E_BUSY;
@@ -670,9 +670,9 @@ static enum result parseDataToken(struct SdioSpi *interface, uint8_t token,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum result parseResponseToken(struct SdioSpi *interface, uint8_t token)
+static enum Result parseResponseToken(struct SdioSpi *interface, uint8_t token)
 {
-  enum result res;
+  enum Result res;
 
   if (token == 0xFF)
     res = !interface->retries ? E_TIMEOUT : E_BUSY;
@@ -690,7 +690,7 @@ static enum result parseResponseToken(struct SdioSpi *interface, uint8_t token)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum Status resultToStatus(enum result res)
+static enum Status resultToStatus(enum Result res)
 {
   switch (res)
   {
@@ -727,11 +727,11 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
   ifWrite(interface->bus, interface->buffer, 8);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioInit(void *object, const void *configBase)
+static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdioSpiConfig * const config = configBase;
   struct SdioSpi * const interface = object;
-  enum result res;
+  enum Result res;
 
   interface->cs = pinInit(config->cs);
   if (!pinValid(interface->cs))
@@ -798,7 +798,7 @@ static void sdioDeinit(void *object __attribute__((unused)))
   free(interface->crcPool);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioSetCallback(void *object, void (*callback)(void *),
+static enum Result sdioSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SdioSpi * const interface = object;
@@ -808,7 +808,7 @@ static enum result sdioSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioGetParam(void *object, enum IfParameter parameter,
+static enum Result sdioGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct SdioSpi * const interface = object;
@@ -877,7 +877,7 @@ static enum result sdioGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioSetParam(void *object, enum IfParameter parameter,
+static enum Result sdioSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct SdioSpi * const interface = object;

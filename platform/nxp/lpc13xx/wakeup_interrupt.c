@@ -17,12 +17,12 @@ struct StartLogicHandler
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(struct PinData);
 /*----------------------------------------------------------------------------*/
-static enum result startLogicHandlerAttach(struct PinData,
+static enum Result startLogicHandlerAttach(struct PinData,
     const struct WakeupInterrupt *);
 static void startLogicHandlerDetach(const struct WakeupInterrupt *);
-static enum result startLogicHandlerInit(void *, const void *);
+static enum Result startLogicHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static enum result wakeupInterruptInit(void *, const void *);
+static enum Result wakeupInterruptInit(void *, const void *);
 static void wakeupInterruptDeinit(void *);
 static void wakeupInterruptEnable(void *);
 static void wakeupInterruptDisable(void *);
@@ -80,7 +80,7 @@ void WAKEUP_ISR(void)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result startLogicHandlerAttach(struct PinData pin,
+static enum Result startLogicHandlerAttach(struct PinData pin,
     const struct WakeupInterrupt *interrupt)
 {
   if (!handler)
@@ -116,7 +116,7 @@ static void startLogicHandlerDetach(const struct WakeupInterrupt *interrupt)
     listErase(list, node);
 }
 /*----------------------------------------------------------------------------*/
-static enum result startLogicHandlerInit(void *object,
+static enum Result startLogicHandlerInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct StartLogicHandler * const startLogicHandler = object;
@@ -124,14 +124,14 @@ static enum result startLogicHandlerInit(void *object,
   return listInit(&startLogicHandler->list, sizeof(struct WakeupInterrupt *));
 }
 /*----------------------------------------------------------------------------*/
-static enum result wakeupInterruptInit(void *object, const void *configBase)
+static enum Result wakeupInterruptInit(void *object, const void *configBase)
 {
   const struct WakeupInterruptConfig * const config = configBase;
   assert(config);
 
   const struct Pin input = pinInit(config->pin);
   struct WakeupInterrupt * const interrupt = object;
-  enum result res;
+  enum Result res;
 
   assert(config->event != PIN_TOGGLE);
   assert(pinValid(input));

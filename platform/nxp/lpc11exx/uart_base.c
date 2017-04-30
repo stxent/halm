@@ -16,7 +16,7 @@
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(uint8_t, const struct UartBase *, struct UartBase *);
 /*----------------------------------------------------------------------------*/
-static enum result uartInit(void *, const void *);
+static enum Result uartInit(void *, const void *);
 static void uartDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass uartTable = {
@@ -86,7 +86,7 @@ uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
       / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result uartInit(void *object, const void *configBase)
+static enum Result uartInit(void *object, const void *configBase)
 {
   const struct UartBaseConfig * const config = configBase;
   struct UartBase * const interface = object;

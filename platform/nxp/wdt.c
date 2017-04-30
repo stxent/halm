@@ -9,9 +9,9 @@
 #include <halm/platform/nxp/wdt_defs.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result wdtInit(void *, const void *);
+static enum Result wdtInit(void *, const void *);
 static void wdtDeinit(void *);
-static enum result wdtSetCallback(void *, void (*)(void *), void *);
+static enum Result wdtSetCallback(void *, void (*)(void *), void *);
 static void wdtReload(void *);
 /*----------------------------------------------------------------------------*/
 static const struct WatchdogClass wdtTable = {
@@ -25,7 +25,7 @@ static const struct WatchdogClass wdtTable = {
 /*----------------------------------------------------------------------------*/
 const struct WatchdogClass * const Wdt = &wdtTable;
 /*----------------------------------------------------------------------------*/
-static enum result wdtInit(void *object, const void *configBase)
+static enum Result wdtInit(void *object, const void *configBase)
 {
   const struct WdtConfig * const config = configBase;
   assert(config);
@@ -33,7 +33,7 @@ static enum result wdtInit(void *object, const void *configBase)
   const struct WdtBaseConfig baseConfig = {
       .source = config->source
   };
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = WdtBase->init(object, &baseConfig)) != E_OK)
@@ -58,7 +58,7 @@ static void wdtDeinit(void *object __attribute__((unused)))
   /* Watchdog timer cannot be disabled */
 }
 /*----------------------------------------------------------------------------*/
-static enum result wdtSetCallback(void *object __attribute__((unused)),
+static enum Result wdtSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {

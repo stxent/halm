@@ -19,17 +19,17 @@ static void interfaceDescriptor(const void *, struct UsbDescriptor *, void *);
 static void functionalDescriptor(const void *, struct UsbDescriptor *, void *);
 /*----------------------------------------------------------------------------*/
 static void onTimerOverflow(void *);
-static enum result processDownloadRequest(struct Dfu *, const void *, uint16_t);
+static enum Result processDownloadRequest(struct Dfu *, const void *, uint16_t);
 static void processGetStatusRequest(struct Dfu *, void *, uint16_t *);
-static enum result processUploadRequest(struct Dfu *, uint16_t, void *,
+static enum Result processUploadRequest(struct Dfu *, uint16_t, void *,
     uint16_t *);
 static void resetDriver(struct Dfu *);
 static void setStatus(struct Dfu *, enum DfuStatus);
 static inline void toLittleEndian24(uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result driverInit(void *, const void *);
+static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
-static enum result driverConfigure(void *, const struct UsbSetupPacket *,
+static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
     const void *, uint16_t, void *, uint16_t *, uint16_t);
 static const usbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
@@ -159,7 +159,7 @@ static void onTimerOverflow(void *argument)
   usbTrace("dfu at %u: timer event", driver->interfaceIndex);
 }
 /*----------------------------------------------------------------------------*/
-static enum result processDownloadRequest(struct Dfu *driver,
+static enum Result processDownloadRequest(struct Dfu *driver,
     const void *payload, uint16_t payloadLength)
 {
   if (!driver->onDownloadRequest)
@@ -244,7 +244,7 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result processUploadRequest(struct Dfu *driver,
+static enum Result processUploadRequest(struct Dfu *driver,
     uint16_t requestedLength, void *response, uint16_t *responseLength)
 {
   if (!driver->onUploadRequest)
@@ -297,7 +297,7 @@ static inline void toLittleEndian24(uint8_t *output, uint32_t input)
   output[2] = (uint8_t)(input >> 16);
 }
 /*----------------------------------------------------------------------------*/
-static enum result driverInit(void *object, const void *configBase)
+static enum Result driverInit(void *object, const void *configBase)
 {
   const struct DfuConfig * const config = configBase;
   assert(config);
@@ -305,7 +305,7 @@ static enum result driverInit(void *object, const void *configBase)
   assert(config->transferSize);
 
   struct Dfu * const driver = object;
-  enum result res;
+  enum Result res;
 
   driver->device = config->device;
   driver->timer = config->timer;
@@ -335,7 +335,7 @@ static void driverDeinit(void *object)
     timerSetCallback(driver->timer, 0, 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result driverConfigure(void *object,
+static enum Result driverConfigure(void *object,
     const struct UsbSetupPacket *packet, const void *payload,
     uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength __attribute__((unused)))

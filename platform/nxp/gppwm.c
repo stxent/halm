@@ -15,30 +15,30 @@
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
 static uint8_t configMatchPin(uint8_t channel, PinNumber key);
 /*----------------------------------------------------------------------------*/
-static enum result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
+static enum Result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
 static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
-static enum result unitInit(void *, const void *);
+static enum Result unitInit(void *, const void *);
 static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static enum result channelSetFrequency(struct GpPwmUnit *, uint32_t);
+static enum Result channelSetFrequency(struct GpPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result singleEdgeInit(void *, const void *);
+static enum Result singleEdgeInit(void *, const void *);
 static void singleEdgeDeinit(void *);
 static void singleEdgeEnable(void *);
 static void singleEdgeDisable(void *);
 static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
-static enum result singleEdgeSetFrequency(void *, uint32_t);
+static enum Result singleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result doubleEdgeInit(void *, const void *);
+static enum Result doubleEdgeInit(void *, const void *);
 static void doubleEdgeDeinit(void *);
 static void doubleEdgeEnable(void *);
 static void doubleEdgeDisable(void *);
 static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
-static enum result doubleEdgeSetFrequency(void *, uint32_t);
+static enum Result doubleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct GpPwmUnit),
@@ -99,9 +99,9 @@ static uint8_t configMatchPin(uint8_t channel, PinNumber key)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
+static enum Result unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
-  enum result res = E_BUSY;
+  enum Result res = E_BUSY;
   const uint8_t mask = 1 << channel;
   const IrqState state = irqSave();
 
@@ -124,7 +124,7 @@ static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *object, const void *configBase)
+static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpPwmUnitConfig * const config = configBase;
   assert(config);
@@ -133,7 +133,7 @@ static enum result unitInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct GpPwmUnit * const unit = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = GpPwmUnitBase->init(object, &baseConfig)) != E_OK)
@@ -176,7 +176,7 @@ static void unitDeinit(void *object)
   GpPwmUnitBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelSetFrequency(struct GpPwmUnit *unit,
+static enum Result channelSetFrequency(struct GpPwmUnit *unit,
     uint32_t frequency)
 {
   LPC_PWM_Type * const reg = unit->base.reg;
@@ -193,13 +193,13 @@ static enum result channelSetFrequency(struct GpPwmUnit *unit,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result singleEdgeInit(void *object, const void *configBase)
+static enum Result singleEdgeInit(void *object, const void *configBase)
 {
   const struct GpPwmConfig * const config = configBase;
   assert(config);
 
   struct GpPwm * const pwm = object;
-  enum result res;
+  enum Result res;
 
   /* Initialize output pin */
   const uint8_t channel = configMatchPin(config->parent->base.channel,
@@ -287,20 +287,20 @@ static void singleEdgeSetEdges(void *object,
   singleEdgeSetDuration(object, trailing);
 }
 /*----------------------------------------------------------------------------*/
-static enum result singleEdgeSetFrequency(void *object, uint32_t frequency)
+static enum Result singleEdgeSetFrequency(void *object, uint32_t frequency)
 {
   struct GpPwm * const pwm = object;
 
   return channelSetFrequency(pwm->unit, frequency);
 }
 /*----------------------------------------------------------------------------*/
-static enum result doubleEdgeInit(void *object, const void *configBase)
+static enum Result doubleEdgeInit(void *object, const void *configBase)
 {
   const struct GpPwmDoubleEdgeConfig * const config = configBase;
   assert(config);
 
   struct GpPwmDoubleEdge * const pwm = object;
-  enum result res;
+  enum Result res;
 
   /* Initialize output pin */
   const uint8_t channel = configMatchPin(config->parent->base.channel,
@@ -434,7 +434,7 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
   reg->LER |= mask;
 }
 /*----------------------------------------------------------------------------*/
-static enum result doubleEdgeSetFrequency(void *object, uint32_t frequency)
+static enum Result doubleEdgeSetFrequency(void *object, uint32_t frequency)
 {
   struct GpPwmDoubleEdge * const pwm = object;
 

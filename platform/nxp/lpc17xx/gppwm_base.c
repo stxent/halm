@@ -18,7 +18,7 @@
 static bool setDescriptor(uint8_t, const struct GpPwmUnitBase *,
     struct GpPwmUnitBase *);
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *, const void *);
+static enum Result unitInit(void *, const void *);
 static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
@@ -109,7 +109,7 @@ uint32_t gpPwmGetClock(const struct GpPwmUnitBase *unit __attribute__((unused)))
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *object, const void *configBase)
+static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpPwmUnitBaseConfig * const config = configBase;
   struct GpPwmUnitBase * const unit = object;

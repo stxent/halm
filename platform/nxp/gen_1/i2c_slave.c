@@ -33,11 +33,11 @@ enum Status
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-static enum result i2cInit(void *, const void *);
+static enum Result i2cInit(void *, const void *);
 static void i2cDeinit(void *);
-static enum result i2cSetCallback(void *, void (*)(void *), void *);
-static enum result i2cGetParam(void *, enum IfParameter, void *);
-static enum result i2cSetParam(void *, enum IfParameter, const void *);
+static enum Result i2cSetCallback(void *, void (*)(void *), void *);
+static enum Result i2cGetParam(void *, enum IfParameter, void *);
+static enum Result i2cSetParam(void *, enum IfParameter, const void *);
 static size_t i2cRead(void *, void *, size_t);
 static size_t i2cWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -111,7 +111,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2cInit(void *object, const void *configBase)
+static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2cSlaveConfig * const config = configBase;
   assert(config);
@@ -122,7 +122,7 @@ static enum result i2cInit(void *object, const void *configBase)
       .sda = config->sda
   };
   struct I2cSlave * const interface = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = I2cBase->init(object, &baseConfig)) != E_OK)
@@ -167,7 +167,7 @@ static void i2cDeinit(void *object)
   I2cBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2cSetCallback(void *object, void (*callback)(void *),
+static enum Result i2cSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct I2cSlave * const interface = object;
@@ -177,7 +177,7 @@ static enum result i2cSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2cGetParam(void *object, enum IfParameter parameter,
+static enum Result i2cGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct I2cSlave * const interface = object;
@@ -201,7 +201,7 @@ static enum result i2cGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2cSetParam(void *object, enum IfParameter parameter,
+static enum Result i2cSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct I2cSlave * const interface = object;

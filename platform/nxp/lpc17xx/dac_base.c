@@ -16,7 +16,7 @@
 static void configOutputPin(PinNumber);
 static bool setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
-static enum result dacInit(void *, const void *);
+static enum Result dacInit(void *, const void *);
 static void dacDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass dacTable = {
@@ -60,7 +60,7 @@ uint32_t dacGetClock(const struct DacBase *interface __attribute__((unused)))
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacInit(void *object, const void *configBase)
+static enum Result dacInit(void *object, const void *configBase)
 {
   const struct DacBaseConfig * const config = configBase;
   struct DacBase * const interface = object;

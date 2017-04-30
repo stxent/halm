@@ -15,7 +15,7 @@
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(struct WdtBase *);
 /*----------------------------------------------------------------------------*/
-static enum result wdtInit(void *, const void *);
+static enum Result wdtInit(void *, const void *);
 static void wdtDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass wdtTable = {
@@ -55,7 +55,7 @@ uint32_t wdtGetClock(const struct WdtBase *timer __attribute__((unused)))
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result wdtInit(void *object, const void *configBase)
+static enum Result wdtInit(void *object, const void *configBase)
 {
   const struct WdtBaseConfig * const config = configBase;
   struct WdtBase * const timer = object;

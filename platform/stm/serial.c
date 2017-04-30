@@ -10,11 +10,11 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(void *, const void *);
+static enum Result serialInit(void *, const void *);
 static void serialDeinit(void *);
-static enum result serialSetCallback(void *, void (*)(void *), void *);
-static enum result serialGetParam(void *, enum IfParameter, void *);
-static enum result serialSetParam(void *, enum IfParameter, const void *);
+static enum Result serialSetCallback(void *, void (*)(void *), void *);
+static enum Result serialGetParam(void *, enum IfParameter, void *);
+static enum Result serialSetParam(void *, enum IfParameter, const void *);
 static size_t serialRead(void *, void *, size_t);
 static size_t serialWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -79,7 +79,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(void *object, const void *configBase)
+static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialConfig * const config = configBase;
   assert(config);
@@ -90,7 +90,7 @@ static enum result serialInit(void *object, const void *configBase)
       .tx = config->tx
   };
   struct Serial * const interface = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = UartBase->init(object, &baseConfig)) != E_OK)
@@ -136,7 +136,7 @@ static void serialDeinit(void *object)
   UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetCallback(void *object, void (*callback)(void *),
+static enum Result serialSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Serial * const interface = object;
@@ -146,7 +146,7 @@ static enum result serialSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGetParam(void *object, enum IfParameter parameter,
+static enum Result serialGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Serial * const interface = object;
@@ -166,7 +166,7 @@ static enum result serialGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetParam(void *object, enum IfParameter parameter,
+static enum Result serialSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Serial * const interface = object;

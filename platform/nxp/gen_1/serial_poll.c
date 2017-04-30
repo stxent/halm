@@ -15,11 +15,11 @@
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(void *, const void *);
+static enum Result serialInit(void *, const void *);
 static void serialDeinit(void *);
-static enum result serialSetCallback(void *, void (*)(void *), void *);
-static enum result serialGetParam(void *, enum IfParameter, void *);
-static enum result serialSetParam(void *, enum IfParameter, const void *);
+static enum Result serialSetCallback(void *, void (*)(void *), void *);
+static enum Result serialGetParam(void *, enum IfParameter, void *);
+static enum Result serialSetParam(void *, enum IfParameter, const void *);
 static size_t serialRead(void *, void *, size_t);
 static size_t serialWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -53,7 +53,7 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(void *object, const void *configBase)
+static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialPollConfig * const config = configBase;
   assert(config);
@@ -65,7 +65,7 @@ static enum result serialInit(void *object, const void *configBase)
   };
   struct SerialPoll * const interface = object;
   struct UartRateConfig rateConfig;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = UartBase->init(object, &baseConfig)) != E_OK)
@@ -107,21 +107,21 @@ static void serialDeinit(void *object)
   UartBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetCallback(void *object __attribute__((unused)),
+static enum Result serialSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGetParam(void *object __attribute__((unused)),
+static enum Result serialGetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),
     void *data __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetParam(void *object, enum IfParameter parameter,
+static enum Result serialSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct SerialPoll * const interface = object;
@@ -131,7 +131,7 @@ static enum result serialSetParam(void *object, enum IfParameter parameter,
     case IF_RATE:
     {
       struct UartRateConfig rateConfig;
-      const enum result res = uartCalcRate(object, *(const uint32_t *)data,
+      const enum Result res = uartCalcRate(object, *(const uint32_t *)data,
           &rateConfig);
 
       if (res == E_OK)

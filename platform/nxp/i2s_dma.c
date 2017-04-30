@@ -11,18 +11,18 @@
 /*----------------------------------------------------------------------------*/
 #define BLOCK_COUNT 2
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct I2sDma *, const struct I2sDmaConfig *,
+static enum Result dmaSetup(struct I2sDma *, const struct I2sDmaConfig *,
     bool, bool);
 static void interruptHandler(void *);
 static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
-static enum result updateRate(struct I2sDma *, uint32_t);
+static enum Result updateRate(struct I2sDma *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result i2sInit(void *, const void *);
+static enum Result i2sInit(void *, const void *);
 static void i2sDeinit(void *);
-static enum result i2sSetCallback(void *, void (*)(void *), void *);
-static enum result i2sGetParam(void *, enum IfParameter, void *);
-static enum result i2sSetParam(void *, enum IfParameter, const void *);
+static enum Result i2sSetCallback(void *, void (*)(void *), void *);
+static enum Result i2sGetParam(void *, enum IfParameter, void *);
+static enum Result i2sSetParam(void *, enum IfParameter, const void *);
 static size_t i2sRead(void *, void *, size_t);
 static size_t i2sWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -40,7 +40,7 @@ static const struct InterfaceClass i2sTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const I2sDma = &i2sTable;
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct I2sDma *interface,
+static enum Result dmaSetup(struct I2sDma *interface,
     const struct I2sDmaConfig *config, bool rx, bool tx)
 {
   static const struct GpDmaSettings dmaSettings[] = {
@@ -173,7 +173,7 @@ static void txDmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result updateRate(struct I2sDma *interface, uint32_t sampleRate)
+static enum Result updateRate(struct I2sDma *interface, uint32_t sampleRate)
 {
   LPC_I2S_Type * const reg = interface->base.reg;
   struct I2sRateConfig rateConfig;
@@ -191,7 +191,7 @@ static enum result updateRate(struct I2sDma *interface, uint32_t sampleRate)
 
     divisor = masterClock / bitrate;
 
-    const enum result res = i2sCalcRate((struct I2sBase *)interface,
+    const enum Result res = i2sCalcRate((struct I2sBase *)interface,
         masterClock, &rateConfig);
 
     if (res != E_OK)
@@ -216,7 +216,7 @@ static enum result updateRate(struct I2sDma *interface, uint32_t sampleRate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2sInit(void *object, const void *configBase)
+static enum Result i2sInit(void *object, const void *configBase)
 {
   const struct I2sDmaConfig * const config = configBase;
   assert(config);
@@ -237,7 +237,7 @@ static enum result i2sInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct I2sDma * const interface = object;
-  enum result res;
+  enum Result res;
 
   assert(config->rate);
   assert(config->rx.sda || config->tx.sda);
@@ -372,7 +372,7 @@ static void i2sDeinit(void *object)
   I2sBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2sSetCallback(void *object, void (*callback)(void *),
+static enum Result i2sSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct I2sDma * const interface = object;
@@ -382,7 +382,7 @@ static enum result i2sSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2sGetParam(void *object, enum IfParameter parameter,
+static enum Result i2sGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct I2sDma * const interface = object;
@@ -405,7 +405,7 @@ static enum result i2sGetParam(void *object, enum IfParameter parameter,
 
     case IF_STATUS:
     {
-      enum result res;
+      enum Result res;
 
       if (interface->rxDma && (res = dmaStatus(interface->rxDma)) != E_OK)
         return res;
@@ -420,7 +420,7 @@ static enum result i2sGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2sSetParam(void *object, enum IfParameter parameter,
+static enum Result i2sSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct I2sDma * const interface = object;

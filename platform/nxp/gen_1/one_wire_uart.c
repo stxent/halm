@@ -34,11 +34,11 @@ static void beginTransmission(struct OneWireUart *);
 static void interruptHandler(void *);
 static void sendWord(struct OneWireUart *, uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum result oneWireInit(void *, const void *);
+static enum Result oneWireInit(void *, const void *);
 static void oneWireDeinit(void *);
-static enum result oneWireSetCallback(void *, void (*)(void *), void *);
-static enum result oneWireGetParam(void *, enum IfParameter, void *);
-static enum result oneWireSetParam(void *, enum IfParameter, const void *);
+static enum Result oneWireSetCallback(void *, void (*)(void *), void *);
+static enum Result oneWireGetParam(void *, enum IfParameter, void *);
+static enum Result oneWireSetParam(void *, enum IfParameter, const void *);
 static size_t oneWireRead(void *, void *, size_t);
 static size_t oneWireWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -149,7 +149,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireInit(void *object, const void *configBase)
+static enum Result oneWireInit(void *object, const void *configBase)
 {
   const struct OneWireUartConfig * const config = configBase;
   assert(config);
@@ -160,7 +160,7 @@ static enum result oneWireInit(void *object, const void *configBase)
       .tx = config->tx
   };
   struct OneWireUart * const interface = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = UartBase->init(object, &baseConfig)) != E_OK)
@@ -210,7 +210,7 @@ static void oneWireDeinit(void *object)
   UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireSetCallback(void *object, void (*callback)(void *),
+static enum Result oneWireSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct OneWireUart * const interface = object;
@@ -220,7 +220,7 @@ static enum result oneWireSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireGetParam(void *object, enum IfParameter parameter,
+static enum Result oneWireGetParam(void *object, enum IfParameter parameter,
     void *data __attribute__((unused)))
 {
   struct OneWireUart * const interface = object;
@@ -238,7 +238,7 @@ static enum result oneWireGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireSetParam(void *object, enum IfParameter parameter,
+static enum Result oneWireSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct OneWireUart * const interface = object;

@@ -32,13 +32,13 @@ struct TimerHandler
 };
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(uint8_t);
-static enum result timerHandlerAttach(uint8_t, enum SctPart, struct SctBase *);
+static enum Result timerHandlerAttach(uint8_t, enum SctPart, struct SctBase *);
 static void timerHandlerDetach(uint8_t, enum SctPart);
 static void timerHandlerInstantiate(uint8_t channel);
 static void timerHandlerProcess(struct TimerHandler *);
-static enum result timerHandlerInit(void *, const void *);
+static enum Result timerHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *, const void *);
+static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
@@ -406,7 +406,7 @@ static bool timerHandlerActive(uint8_t channel)
   return result;
 }
 /*----------------------------------------------------------------------------*/
-static enum result timerHandlerAttach(uint8_t channel, enum SctPart part,
+static enum Result timerHandlerAttach(uint8_t channel, enum SctPart part,
     struct SctBase *timer)
 {
   const IrqState state = irqSave();
@@ -414,7 +414,7 @@ static enum result timerHandlerAttach(uint8_t channel, enum SctPart part,
   timerHandlerInstantiate(channel);
 
   struct TimerHandler * const handler = handlers[channel];
-  enum result res = E_OK;
+  enum Result res = E_OK;
 
   if (part == SCT_UNIFIED)
   {
@@ -475,7 +475,7 @@ static void timerHandlerProcess(struct TimerHandler *handler)
   handler->reg->EVFLAG = state;
 }
 /*----------------------------------------------------------------------------*/
-static enum result timerHandlerInit(void *object, const void *configBase)
+static enum Result timerHandlerInit(void *object, const void *configBase)
 {
   const struct TimerHandlerConfig * const config = configBase;
   struct TimerHandler * const handler = object;
@@ -527,12 +527,12 @@ void sctReleaseEvent(struct SctBase *timer, int event)
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configBase)
+static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctBaseConfig * const config = configBase;
   struct SctBase * const timer = object;
   uint32_t desiredConfig = 0;
-  enum result res;
+  enum Result res;
 
   assert(config->edge < PIN_TOGGLE);
   assert(config->input < SCT_INPUT_END);

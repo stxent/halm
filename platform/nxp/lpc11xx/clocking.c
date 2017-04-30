@@ -28,29 +28,29 @@ static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *);
-static enum result extOscEnable(const void *, const void *);
+static enum Result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
 static bool extOscReady(const void *);
 
 static void intOscDisable(const void *);
-static enum result intOscEnable(const void *, const void *);
+static enum Result intOscEnable(const void *, const void *);
 static uint32_t intOscFrequency(const void *);
 static bool intOscReady(const void *);
 
 static void wdtOscDisable(const void *);
-static enum result wdtOscEnable(const void *, const void *);
+static enum Result wdtOscEnable(const void *, const void *);
 static uint32_t wdtOscFrequency(const void *);
 static bool wdtOscReady(const void *);
 
 static void sysPllDisable(const void *);
-static enum result sysPllEnable(const void *, const void *);
+static enum Result sysPllEnable(const void *, const void *);
 static uint32_t sysPllFrequency(const void *);
 static bool sysPllReady(const void *);
 /*----------------------------------------------------------------------------*/
-static enum result clockOutputEnable(const void *, const void *);
+static enum Result clockOutputEnable(const void *, const void *);
 
 static void branchDisable(const void *);
-static enum result branchEnable(const void *, const void *);
+static enum Result branchEnable(const void *, const void *);
 static uint32_t branchFrequency(const void *);
 static bool branchReady(const void *);
 /*----------------------------------------------------------------------------*/
@@ -254,7 +254,7 @@ static void extOscDisable(const void *clockBase __attribute__((unused)))
   extFrequency = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscEnable(const void *clockBase
+static enum Result extOscEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
@@ -301,7 +301,7 @@ static void intOscDisable(const void *clockBase __attribute__((unused)))
   sysPowerDisable(PWR_IRC);
 }
 /*----------------------------------------------------------------------------*/
-static enum result intOscEnable(const void *clockBase __attribute__((unused)),
+static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase __attribute__((unused)))
 {
   sysPowerEnable(PWR_IRC);
@@ -326,7 +326,7 @@ static void wdtOscDisable(const void *clockBase __attribute__((unused)))
   wdtFrequency = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result wdtOscEnable(const void *clockBase __attribute__((unused)),
+static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct WdtOscConfig * const config = configBase;
@@ -359,7 +359,7 @@ static void sysPllDisable(const void *clockBase __attribute__((unused)))
   pllFrequency = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sysPllEnable(const void *clockBase __attribute__((unused)),
+static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
@@ -399,7 +399,7 @@ static bool sysPllReady(const void *clockBase __attribute__((unused)))
   return pllFrequency && (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static enum result clockOutputEnable(const void *clockBase
+static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
@@ -430,7 +430,7 @@ static void branchDisable(const void *clockBase)
     descriptor->divider = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result branchEnable(const void *clockBase, const void *configBase)
+static enum Result branchEnable(const void *clockBase, const void *configBase)
 {
   const struct CommonClockClass * const clock = clockBase;
   const struct CommonClockConfig * const config = configBase;

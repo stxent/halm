@@ -8,7 +8,7 @@
 #include <halm/usb/hid.h>
 #include <halm/usb/hid_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result deviceInit(void *, const void *);
+static enum Result deviceInit(void *, const void *);
 static void deviceDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct HidClass deviceTable = {
@@ -23,7 +23,7 @@ static const struct HidClass deviceTable = {
 /*----------------------------------------------------------------------------*/
 const struct HidClass * const Hid = &deviceTable;
 /*----------------------------------------------------------------------------*/
-static enum result deviceInit(void *object, const void *configBase)
+static enum Result deviceInit(void *object, const void *configBase)
 {
   const struct HidConfig * const config = configBase;
   assert(config);
@@ -56,9 +56,9 @@ static void deviceDeinit(void *object)
   deinit(device->driver);
 }
 /*----------------------------------------------------------------------------*/
-enum result hidBind(struct Hid *device)
+enum Result hidBind(struct Hid *device)
 {
-  enum result res;
+  enum Result res;
 
   if ((res = usbDevBind(device->driver->device, device->driver)) != E_OK)
     return res;

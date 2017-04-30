@@ -12,13 +12,13 @@
 #define BLOCK_COUNT 2
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
-static enum result dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
+static enum Result dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *, const void *);
+static enum Result adcInit(void *, const void *);
 static void adcDeinit(void *);
-static enum result adcSetCallback(void *, void (*)(void *), void *);
-static enum result adcGetParam(void *, enum IfParameter, void *);
-static enum result adcSetParam(void *, enum IfParameter, const void *);
+static enum Result adcSetCallback(void *, void (*)(void *), void *);
+static enum Result adcGetParam(void *, enum IfParameter, void *);
+static enum Result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
@@ -67,7 +67,7 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct AdcDma *interface,
+static enum Result dmaSetup(struct AdcDma *interface,
     const struct AdcDmaConfig *config)
 {
   static const struct GpDmaSettings dmaSettings = {
@@ -99,13 +99,13 @@ static enum result dmaSetup(struct AdcDma *interface,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *object, const void *configBase)
+static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
   assert(config);
 
   struct AdcDma * const interface = object;
-  enum result res;
+  enum Result res;
 
   assert(config->event < ADC_EVENT_END);
   assert(config->event != ADC_SOFTWARE);
@@ -131,7 +131,7 @@ static void adcDeinit(void *object)
   deinit(interface->dma);
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSetCallback(void *object, void (*callback)(void *),
+static enum Result adcSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct AdcDma * const interface = object;
@@ -141,7 +141,7 @@ static enum result adcSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGetParam(void *object, enum IfParameter parameter,
+static enum Result adcGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct AdcDma * const interface = object;
@@ -160,7 +160,7 @@ static enum result adcGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSetParam(void *object __attribute__((unused)),
+static enum Result adcSetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {

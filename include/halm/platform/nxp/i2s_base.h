@@ -68,7 +68,7 @@ struct I2sBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-enum result i2sCalcRate(struct I2sBase *, uint32_t, struct I2sRateConfig *);
+enum Result i2sCalcRate(struct I2sBase *, uint32_t, struct I2sRateConfig *);
 uint32_t i2sGetClock(const struct I2sBase *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_I2S_BASE_H_ */

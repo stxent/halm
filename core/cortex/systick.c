@@ -26,7 +26,7 @@ static bool setDescriptor(const struct SysTickTimer *, struct SysTickTimer *);
 static void updateInterrupt(struct SysTickTimer *);
 static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *, const void *);
+static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
@@ -113,7 +113,7 @@ void SYSTICK_ISR(void)
   descriptor->handler(descriptor);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configBase)
+static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SysTickTimerConfig * const config = configBase;
   assert(config);

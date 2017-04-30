@@ -34,7 +34,7 @@ static void interruptHandler(void *);
 static void removeTimer(struct SoftwareTimerFactory *,
     const struct SoftwareTimer *);
 /*----------------------------------------------------------------------------*/
-static enum result factoryInit(void *, const void *);
+static enum Result factoryInit(void *, const void *);
 static void factoryDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass factoryTable = {
@@ -45,7 +45,7 @@ static const struct EntityClass factoryTable = {
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SoftwareTimerFactory = &factoryTable;
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *, const void *);
+static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
@@ -171,7 +171,7 @@ static void removeTimer(struct SoftwareTimerFactory *factory,
   *current = timer->next;
 }
 /*----------------------------------------------------------------------------*/
-static enum result factoryInit(void *object, const void *configBase)
+static enum Result factoryInit(void *object, const void *configBase)
 {
   const struct SoftwareTimerFactoryConfig * const config = configBase;
   struct SoftwareTimerFactory * const factory = object;
@@ -196,7 +196,7 @@ static void factoryDeinit(void *object)
   timerSetCallback(factory->timer, 0, 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configBase)
+static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SoftwareTimerConfig * const config = configBase;
   struct SoftwareTimer * const timer = object;

@@ -13,7 +13,7 @@
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(uint8_t, const struct I2cBase *, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
-static enum result i2cInit(void *, const void *);
+static enum Result i2cInit(void *, const void *);
 static void i2cDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass i2cTable = {
@@ -58,7 +58,7 @@ uint32_t i2cGetClock(const struct I2cBase *interface __attribute__((unused)))
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2cInit(void *object, const void *configBase)
+static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2cBaseConfig * const config = configBase;
   struct I2cBase * const interface = object;

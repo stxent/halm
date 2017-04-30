@@ -51,13 +51,13 @@ enum IapResult
   RES_BUSY                    = 11
 };
 /*----------------------------------------------------------------------------*/
-static enum result compareRegions(uint32_t, const void *, size_t);
-static enum result copyRamToFlash(uint32_t, const void *, size_t);
-static enum result iap(enum IapCommand, unsigned long *, unsigned int,
+static enum Result compareRegions(uint32_t, const void *, size_t);
+static enum Result copyRamToFlash(uint32_t, const void *, size_t);
+static enum Result iap(enum IapCommand, unsigned long *, unsigned int,
     const unsigned long *, unsigned int);
-static enum result prepareSectorToWrite(unsigned int, unsigned int);
+static enum Result prepareSectorToWrite(unsigned int, unsigned int);
 /*----------------------------------------------------------------------------*/
-static enum result copyRamToFlash(uint32_t address, const void *buffer,
+static enum Result copyRamToFlash(uint32_t address, const void *buffer,
     size_t length)
 {
   const unsigned long frequency = clockFrequency(MainClock);
@@ -71,7 +71,7 @@ static enum result copyRamToFlash(uint32_t address, const void *buffer,
   return iap(CMD_COPY_RAM_TO_FLASH, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
-static enum result compareRegions(uint32_t address, const void *buffer,
+static enum Result compareRegions(uint32_t address, const void *buffer,
     size_t length)
 {
   const unsigned long parameters[] = {
@@ -83,7 +83,7 @@ static enum result compareRegions(uint32_t address, const void *buffer,
   return iap(CMD_COMPARE, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
-static enum result iap(enum IapCommand command, unsigned long *results,
+static enum Result iap(enum IapCommand command, unsigned long *results,
     unsigned int resultsCount, const unsigned long *parameters,
     unsigned int parametersCount)
 {
@@ -105,14 +105,14 @@ static enum result iap(enum IapCommand command, unsigned long *results,
   return (enum IapResult)resultBuffer[0] == RES_CMD_SUCCESS ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result prepareSectorToWrite(unsigned int sector, unsigned int bank)
+static enum Result prepareSectorToWrite(unsigned int sector, unsigned int bank)
 {
   const unsigned long parameters[] = {sector, sector, bank};
 
   return iap(CMD_PREPARE_FOR_WRITE, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
-enum result eepromReadBuffer(uint32_t address, void *buffer, size_t length)
+enum Result eepromReadBuffer(uint32_t address, void *buffer, size_t length)
 {
   const unsigned long frequency = clockFrequency(MainClock);
   const unsigned long parameters[] = {
@@ -125,7 +125,7 @@ enum result eepromReadBuffer(uint32_t address, void *buffer, size_t length)
   return iap(CMD_EEPROM_READ, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
-enum result eepromWriteBuffer(uint32_t address, const void *buffer,
+enum Result eepromWriteBuffer(uint32_t address, const void *buffer,
     size_t length)
 {
   const unsigned long frequency = clockFrequency(MainClock);
@@ -140,7 +140,7 @@ enum result eepromWriteBuffer(uint32_t address, const void *buffer,
 }
 
 /*----------------------------------------------------------------------------*/
-enum result flashBlankCheckSector(uint32_t address)
+enum Result flashBlankCheckSector(uint32_t address)
 {
   const unsigned int sector = addressToSector(address);
   const unsigned int bank = addressToBank(address);
@@ -153,11 +153,11 @@ enum result flashBlankCheckSector(uint32_t address)
   return iap(CMD_BLANK_CHECK_SECTORS, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
-enum result flashErasePage(uint32_t address)
+enum Result flashErasePage(uint32_t address)
 {
   const unsigned int sector = addressToSector(address);
   const unsigned int bank = addressToBank(address);
-  enum result res;
+  enum Result res;
 
   const IrqState state = irqSave();
 
@@ -177,11 +177,11 @@ enum result flashErasePage(uint32_t address)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-enum result flashEraseSector(uint32_t address)
+enum Result flashEraseSector(uint32_t address)
 {
   const unsigned int sector = addressToSector(address);
   const unsigned int bank = addressToBank(address);
-  enum result res;
+  enum Result res;
 
   const IrqState state = irqSave();
 
@@ -225,12 +225,12 @@ uint32_t flashReadConfigId(void)
   return id[1];
 }
 /*----------------------------------------------------------------------------*/
-enum result flashWriteBuffer(uint32_t address, const void *buffer,
+enum Result flashWriteBuffer(uint32_t address, const void *buffer,
     size_t length)
 {
   const unsigned int sector = addressToSector(address);
   const unsigned int bank = addressToBank(address);
-  enum result res;
+  enum Result res;
 
   const IrqState state = irqSave();
 

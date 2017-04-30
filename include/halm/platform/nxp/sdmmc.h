@@ -54,7 +54,7 @@ struct Sdmmc
   /* Data rate */
   uint32_t rate;
   /* Status of the last command */
-  enum result status;
+  enum Result status;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_SDMMC_H_ */

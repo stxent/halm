@@ -13,7 +13,7 @@ static void interruptHandler(void *);
 static void setMatchValue(struct SctTimer *, uint32_t);
 static void updateFrequency(struct SctTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *, const void *);
+static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
@@ -88,7 +88,7 @@ static void updateFrequency(struct SctTimer *timer, uint32_t frequency)
   timer->frequency = frequency;
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configBase)
+static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctTimerConfig * const config = configBase;
   assert(config);
@@ -99,7 +99,7 @@ static enum result tmrInit(void *object, const void *configBase)
       .part = config->part
   };
   struct SctTimer * const timer = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = SctBase->init(object, &baseConfig)) != E_OK)

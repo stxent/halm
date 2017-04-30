@@ -17,7 +17,7 @@ static void processInterrupt(uint8_t);
 static void resetDescriptor(uint8_t);
 static int setDescriptor(struct PinInterrupt *);
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptInit(void *, const void *);
+static enum Result pinInterruptInit(void *, const void *);
 static void pinInterruptDeinit(void *);
 static void pinInterruptEnable(void *);
 static void pinInterruptDisable(void *);
@@ -125,7 +125,7 @@ void PIN_INT7_ISR(void)
   processInterrupt(7);
 }
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptInit(void *object, const void *configBase)
+static enum Result pinInterruptInit(void *object, const void *configBase)
 {
   const struct PinInterruptConfig * const config = configBase;
   assert(config);

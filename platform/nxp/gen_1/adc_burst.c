@@ -11,11 +11,11 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *, const void *);
+static enum Result adcInit(void *, const void *);
 static void adcDeinit(void *);
-static enum result adcSetCallback(void *, void (*)(void *), void *);
-static enum result adcGetParam(void *, enum IfParameter, void *);
-static enum result adcSetParam(void *, enum IfParameter, const void *);
+static enum Result adcSetCallback(void *, void (*)(void *), void *);
+static enum Result adcGetParam(void *, enum IfParameter, void *);
+static enum Result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
@@ -62,7 +62,7 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *object, const void *configBase)
+static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcBurstConfig * const config = configBase;
   assert(config);
@@ -94,7 +94,7 @@ static void adcDeinit(void *object)
   adcReleasePin(interface->pin);
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSetCallback(void *object, void (*callback)(void *),
+static enum Result adcSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct AdcBurst * const interface = object;
@@ -104,7 +104,7 @@ static enum result adcSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGetParam(void *object, enum IfParameter parameter,
+static enum Result adcGetParam(void *object, enum IfParameter parameter,
     void *data __attribute__((unused)))
 {
   struct AdcBurst * const interface = object;
@@ -119,7 +119,7 @@ static enum result adcGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSetParam(void *object, enum IfParameter parameter,
+static enum Result adcSetParam(void *object, enum IfParameter parameter,
     const void *data __attribute__((unused)))
 {
   struct AdcBurst * const interface = object;

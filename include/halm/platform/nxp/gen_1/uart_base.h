@@ -48,7 +48,7 @@ struct UartBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-enum result uartCalcRate(const struct UartBase *, uint32_t,
+enum Result uartCalcRate(const struct UartBase *, uint32_t,
     struct UartRateConfig *);
 void uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
 uint32_t uartGetRate(const struct UartBase *);

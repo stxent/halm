@@ -30,11 +30,11 @@ static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
 static inline size_t getPacketSize(const struct CdcAcm *);
 static bool resetEndpoints(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
-static enum result interfaceInit(void *, const void *);
+static enum Result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
-static enum result interfaceSetCallback(void *, void (*)(void *), void *);
-static enum result interfaceGetParam(void *, enum IfParameter, void *);
-static enum result interfaceSetParam(void *, enum IfParameter, const void *);
+static enum Result interfaceSetCallback(void *, void (*)(void *), void *);
+static enum Result interfaceGetParam(void *, enum IfParameter, void *);
+static enum Result interfaceSetParam(void *, enum IfParameter, const void *);
 static size_t interfaceRead(void *, void *, size_t);
 static size_t interfaceWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -215,7 +215,7 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result interfaceInit(void *object, const void *configBase)
+static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
   assert(config);
@@ -231,7 +231,7 @@ static enum result interfaceInit(void *object, const void *configBase)
           .tx = config->endpoints.tx
       }
   };
-  enum result res;
+  enum Result res;
 
   res = queueInit(&interface->rxRequestQueue, sizeof(struct UsbRequest *),
       config->rxBuffers);
@@ -323,7 +323,7 @@ static void interfaceDeinit(void *object)
   queueDeinit(&interface->rxRequestQueue);
 }
 /*----------------------------------------------------------------------------*/
-static enum result interfaceSetCallback(void *object, void (*callback)(void *),
+static enum Result interfaceSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct CdcAcm * const interface = object;
@@ -333,7 +333,7 @@ static enum result interfaceSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result interfaceGetParam(void *object, enum IfParameter parameter,
+static enum Result interfaceGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct CdcAcm * const interface = object;
@@ -388,7 +388,7 @@ static enum result interfaceGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result interfaceSetParam(void *object __attribute__((unused)),
+static enum Result interfaceSetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {

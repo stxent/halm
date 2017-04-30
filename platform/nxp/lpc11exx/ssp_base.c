@@ -17,7 +17,7 @@
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(uint8_t, const struct SspBase *, struct SspBase *);
 /*----------------------------------------------------------------------------*/
-static enum result sspInit(void *, const void *);
+static enum Result sspInit(void *, const void *);
 static void sspDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass sspTable = {
@@ -117,7 +117,7 @@ uint32_t sspGetClock(const struct SspBase *interface __attribute__((unused)))
       / DEFAULT_DIV_VALUE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sspInit(void *object, const void *configBase)
+static enum Result sspInit(void *object, const void *configBase)
 {
   const struct SspBaseConfig * const config = configBase;
   struct SspBase * const interface = object;

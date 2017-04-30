@@ -10,11 +10,11 @@
 /*----------------------------------------------------------------------------*/
 #define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *, const void *);
+static enum Result adcInit(void *, const void *);
 static void adcDeinit(void *);
-static enum result adcSetCallback(void *, void (*)(void *), void *);
-static enum result adcGetParam(void *, enum IfParameter, void *);
-static enum result adcSetParam(void *, enum IfParameter, const void *);
+static enum Result adcSetCallback(void *, void (*)(void *), void *);
+static enum Result adcGetParam(void *, enum IfParameter, void *);
+static enum Result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
@@ -31,7 +31,7 @@ static const struct InterfaceClass adcTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Adc = &adcTable;
 /*----------------------------------------------------------------------------*/
-static enum result adcInit(void *object, const void *configBase)
+static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
   assert(config);
@@ -54,21 +54,21 @@ static void adcDeinit(void *object)
   adcReleasePin(interface->pin);
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSetCallback(void *object __attribute__((unused)),
+static enum Result adcSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGetParam(void *object __attribute__((unused)),
+static enum Result adcGetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),
     void *data __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSetParam(void *object __attribute__((unused)),
+static enum Result adcSetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {

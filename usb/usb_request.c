@@ -47,7 +47,7 @@ void usbRequestInit(struct UsbRequest *request, void *buffer, uint16_t capacity,
   request->buffer = buffer;
 }
 /*----------------------------------------------------------------------------*/
-enum result usbExtractDescriptorData(const void *driver, uint16_t keyword,
+enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
     void *response, uint16_t *responseLength, uint16_t maxResponseLength)
 {
   const uint8_t descriptorIndex = DESCRIPTOR_INDEX(keyword);

@@ -10,11 +10,11 @@
 /*----------------------------------------------------------------------------*/
 #define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
-static enum result dacInit(void *, const void *);
+static enum Result dacInit(void *, const void *);
 static void dacDeinit(void *);
-static enum result dacSetCallback(void *, void (*)(void *), void *);
-static enum result dacGetParam(void *, enum IfParameter, void *);
-static enum result dacSetParam(void *, enum IfParameter, const void *);
+static enum Result dacSetCallback(void *, void (*)(void *), void *);
+static enum Result dacGetParam(void *, enum IfParameter, void *);
+static enum Result dacSetParam(void *, enum IfParameter, const void *);
 static size_t dacWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass dacTable = {
@@ -31,7 +31,7 @@ static const struct InterfaceClass dacTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Dac = &dacTable;
 /*----------------------------------------------------------------------------*/
-static enum result dacInit(void *object, const void *configBase)
+static enum Result dacInit(void *object, const void *configBase)
 {
   const struct DacConfig * const config = configBase;
   assert(config);
@@ -40,7 +40,7 @@ static enum result dacInit(void *object, const void *configBase)
       .pin = config->pin
   };
   struct Dac * const interface = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = DacBase->init(object, &baseConfig)) != E_OK)
@@ -60,21 +60,21 @@ static void dacDeinit(void *object)
   DacBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacSetCallback(void *object __attribute__((unused)),
+static enum Result dacSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacGetParam(void *object __attribute__((unused)),
+static enum Result dacGetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),
     void *data __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacSetParam(void *object __attribute__((unused)),
+static enum Result dacSetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {

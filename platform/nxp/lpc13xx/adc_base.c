@@ -20,7 +20,7 @@
 static bool setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);
 /*----------------------------------------------------------------------------*/
-static enum result adcUnitInit(void *, const void *);
+static enum Result adcUnitInit(void *, const void *);
 static void adcUnitDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass adcUnitTable = {
@@ -109,7 +109,7 @@ void adcReleasePin(const struct AdcPin adcPin __attribute__((unused)))
 
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcUnitInit(void *object, const void *configBase)
+static enum Result adcUnitInit(void *object, const void *configBase)
 {
   const struct AdcUnitBaseConfig * const config = configBase;
   struct AdcUnitBase * const unit = object;

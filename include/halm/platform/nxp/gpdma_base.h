@@ -78,7 +78,7 @@ struct GpDmaBase
   struct Entity base;
 
   void *reg;
-  void (*handler)(void *, enum result);
+  void (*handler)(void *, enum Result);
 
   /* Precalculated value of Channel Configuration register */
   uint32_t config;
@@ -90,7 +90,7 @@ struct GpDmaBase
 /*----------------------------------------------------------------------------*/
 void gpDmaClearDescriptor(uint8_t);
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
-enum result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
+enum Result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
 void gpDmaSetMux(struct GpDmaBase *);
 
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *,

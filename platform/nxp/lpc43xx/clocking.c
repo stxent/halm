@@ -29,39 +29,39 @@ static unsigned int pll0ComputeSelI(unsigned int);
 static unsigned int pll0ComputeSelP(unsigned int);
 /*----------------------------------------------------------------------------*/
 static void commonDividerDisable(const void *);
-static enum result commonDividerEnable(const void *, const void *);
+static enum Result commonDividerEnable(const void *, const void *);
 static uint32_t commonDividerFrequency(const void *);
 static bool commonDividerReady(const void *);
 
 static void extOscDisable(const void *);
-static enum result extOscEnable(const void *, const void *);
+static enum Result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
 static bool extOscReady(const void *);
 
 static void intOscDisable(const void *);
-static enum result intOscEnable(const void *, const void *);
+static enum Result intOscEnable(const void *, const void *);
 static uint32_t intOscFrequency(const void *);
 static bool intOscReady(const void *);
 
 static void rtcOscDisable(const void *);
-static enum result rtcOscEnable(const void *, const void *);
+static enum Result rtcOscEnable(const void *, const void *);
 static uint32_t rtcOscFrequency(const void *);
 static bool rtcOscReady(const void *);
 
 static void pll0UsbClockDisable(const void *);
-static enum result pll0UsbClockEnable(const void *, const void *);
+static enum Result pll0UsbClockEnable(const void *, const void *);
 static uint32_t pll0UsbClockFrequency(const void *);
 static bool pll0UsbClockReady(const void *);
 
 static void pll1ClockDisable(const void *);
-static enum result pll1ClockEnable(const void *, const void *);
+static enum Result pll1ClockEnable(const void *, const void *);
 static uint32_t pll1ClockFrequency(const void *);
 static bool pll1ClockReady(const void *);
 
-static enum result clockOutputEnable(const void *, const void *);
+static enum Result clockOutputEnable(const void *, const void *);
 
 static void commonClockDisable(const void *);
-static enum result commonClockEnable(const void *, const void *);
+static enum Result commonClockEnable(const void *, const void *);
 static uint32_t commonClockFrequency(const void *);
 static bool commonClockReady(const void *);
 /*----------------------------------------------------------------------------*/
@@ -672,7 +672,7 @@ static void commonDividerDisable(const void *clockBase)
   *reg |= IDIV_PD;
 }
 /*----------------------------------------------------------------------------*/
-static enum result commonDividerEnable(const void *clockBase,
+static enum Result commonDividerEnable(const void *clockBase,
     const void *configBase)
 {
   const struct CommonDividerClass * const clock = clockBase;
@@ -716,7 +716,7 @@ static void extOscDisable(const void *clockBase __attribute__((unused)))
   LPC_CGU->XTAL_OSC_CTRL &= ~XTAL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result extOscEnable(const void *clockBase __attribute__((unused)),
+static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
@@ -762,7 +762,7 @@ static void intOscDisable(const void *clockBase __attribute__((unused)))
   /* Unsupported */
 }
 /*----------------------------------------------------------------------------*/
-static enum result intOscEnable(const void *clockBase __attribute__((unused)),
+static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase __attribute__((unused)))
 {
   return E_OK;
@@ -785,7 +785,7 @@ static void rtcOscDisable(const void *clockBase __attribute__((unused)))
       | CREG0_PD32KHZ | CREG0_RESET32KHZ;
 }
 /*----------------------------------------------------------------------------*/
-static enum result rtcOscEnable(const void *clockBase __attribute__((unused)),
+static enum Result rtcOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase __attribute__((unused)))
 {
   /* Enable and reset clock */
@@ -813,7 +813,7 @@ static void pll0UsbClockDisable(const void *clockBase __attribute__((unused)))
   LPC_CGU->PLL0USB_CTRL |= BASE_PD;
 }
 /*----------------------------------------------------------------------------*/
-static enum result pll0UsbClockEnable(const void *clockBase
+static enum Result pll0UsbClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct PllConfig * const config = configBase;
@@ -895,7 +895,7 @@ static void pll1ClockDisable(const void *clockBase __attribute__((unused)))
   LPC_CGU->PLL1_CTRL |= BASE_PD;
 }
 /*----------------------------------------------------------------------------*/
-static enum result pll1ClockEnable(const void *clockBase
+static enum Result pll1ClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct PllConfig * const config = configBase;
@@ -982,7 +982,7 @@ static bool pll1ClockReady(const void *clockBase __attribute__((unused)))
   return pll1Frequency && (LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static enum result clockOutputEnable(const void *clockBase,
+static enum Result clockOutputEnable(const void *clockBase,
     const void *configBase)
 {
   const struct CommonClockClass * const clock = clockBase;
@@ -1011,7 +1011,7 @@ static void commonClockDisable(const void *clockBase)
   *reg |= BASE_PD;
 }
 /*----------------------------------------------------------------------------*/
-static enum result commonClockEnable(const void *clockBase,
+static enum Result commonClockEnable(const void *clockBase,
     const void *configBase)
 {
   const struct CommonClockClass * const clock = clockBase;

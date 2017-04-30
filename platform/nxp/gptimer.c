@@ -17,7 +17,7 @@ static void updateFrequency(struct GpTimer *, uint32_t);
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *, const void *);
+static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
@@ -94,7 +94,7 @@ static void updateFrequency(struct GpTimer *timer, uint32_t frequency)
   timer->frequency = frequency;
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configBase)
+static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerConfig * const config = configBase;
   assert(config);
@@ -103,7 +103,7 @@ static enum result tmrInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct GpTimer * const timer = object;
-  enum result res;
+  enum Result res;
 
   assert(config->event < GPTIMER_EVENT_END);
 

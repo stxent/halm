@@ -78,7 +78,7 @@ struct UsbDevice
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_USB_DMA
 static void deinitDescriptorPool(struct UsbDevice *);
-static enum result initDescriptorPool(struct UsbDevice *);
+static enum Result initDescriptorPool(struct UsbDevice *);
 #endif
 
 static void interruptHandler(void *);
@@ -88,17 +88,17 @@ static uint8_t usbCommandRead(struct UsbDevice *, uint8_t);
 static void usbCommandWrite(struct UsbDevice *, uint8_t, uint16_t);
 static void waitForInt(struct UsbDevice *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result devInit(void *, const void *);
+static enum Result devInit(void *, const void *);
 static void devDeinit(void *);
 static void *devCreateEndpoint(void *, uint8_t);
 static uint8_t devGetInterface(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
-static enum result devBind(void *, void *);
+static enum Result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
 static enum UsbSpeed devGetSpeed(const void *);
-static enum result devStringAppend(void *, struct UsbString);
+static enum Result devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
@@ -123,17 +123,17 @@ static const struct UsbDeviceClass devTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const UsbDevice = &devTable;
 /*----------------------------------------------------------------------------*/
-static enum result epReadData(struct UsbSieEndpoint *, uint8_t *,
+static enum Result epReadData(struct UsbSieEndpoint *, uint8_t *,
     size_t, size_t *);
 static void epWriteData(struct UsbSieEndpoint *, const uint8_t *, size_t);
 static void sieEpHandler(struct UsbSieEndpoint *, uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum result sieEpInit(void *, const void *);
+static enum Result sieEpInit(void *, const void *);
 static void sieEpDeinit(void *);
 static void sieEpClear(void *);
 static void sieEpDisable(void *);
 static void sieEpEnable(void *, uint8_t, uint16_t);
-static enum result sieEpEnqueue(void *, struct UsbRequest *);
+static enum Result sieEpEnqueue(void *, struct UsbRequest *);
 static bool sieEpIsStalled(void *);
 static void sieEpSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
@@ -154,12 +154,12 @@ const struct UsbEndpointClass * const UsbSieEndpoint = &sieEpTable;
 /*----------------------------------------------------------------------------*/
 static void dmaEpHandler(struct UsbDmaEndpoint *);
 /*----------------------------------------------------------------------------*/
-static enum result dmaEpInit(void *, const void *);
+static enum Result dmaEpInit(void *, const void *);
 static void dmaEpDeinit(void *);
 static void dmaEpClear(void *);
 static void dmaEpDisable(void *);
 static void dmaEpEnable(void *, uint8_t, uint16_t);
-static enum result dmaEpEnqueue(void *, struct UsbRequest *);
+static enum Result dmaEpEnqueue(void *, struct UsbRequest *);
 static bool dmaEpIsStalled(void *);
 static void dmaEpSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
@@ -189,14 +189,14 @@ static void deinitDescriptorPool(struct UsbDevice *device)
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_USB_DMA
-static enum result initDescriptorPool(struct UsbDevice *device)
+static enum Result initDescriptorPool(struct UsbDevice *device)
 {
   struct DmaDescriptorPool * const pool =
       malloc(sizeof(struct DmaDescriptorPool));
   if (!pool)
     return E_MEMORY;
 
-  enum result res;
+  enum Result res;
 
   /* Allocate memory for Transfer Descriptors */
   res = arrayInit(&pool->descriptors, sizeof(struct DmaDescriptor *),
@@ -369,7 +369,7 @@ static void waitForInt(struct UsbDevice *device, uint32_t mask)
   reg->USBDevIntClr = mask;
 }
 /*----------------------------------------------------------------------------*/
-static enum result devInit(void *object, const void *configBase)
+static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
   assert(config);
@@ -387,7 +387,7 @@ static enum result devInit(void *object, const void *configBase)
       .pid = config->pid
   };
   struct UsbDevice * const device = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   res = UsbBase->init(object, &baseConfig);
@@ -487,12 +487,12 @@ static void devSetConnected(void *object, bool state)
       state ? DEVICE_STATUS_CON : 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result devBind(void *object, void *driver)
+static enum Result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
 
   const IrqState state = irqSave();
-  const enum result res = usbControlBindDriver(device->control, driver);
+  const enum Result res = usbControlBindDriver(device->control, driver);
   irqRestore(state);
 
   return res;
@@ -519,7 +519,7 @@ static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
   return USB_FS;
 }
 /*----------------------------------------------------------------------------*/
-static enum result devStringAppend(void *object, struct UsbString string)
+static enum Result devStringAppend(void *object, struct UsbString string)
 {
   struct UsbDevice * const device = object;
 
@@ -533,7 +533,7 @@ static void devStringErase(void *object, struct UsbString string)
   usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
-static enum result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
+static enum Result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
     size_t length, size_t *read)
 {
   LPC_USB_Type * const reg = ep->device->base.reg;
@@ -664,13 +664,13 @@ static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result sieEpInit(void *object, const void *configBase)
+static enum Result sieEpInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbDevice * const device = config->parent;
   struct UsbSieEndpoint * const ep = object;
 
-  const enum result res = queueInit(&ep->requests,
+  const enum Result res = queueInit(&ep->requests,
       sizeof(struct UsbRequest *), CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS);
 
   if (res == E_OK)
@@ -748,7 +748,7 @@ static void sieEpEnable(void *object, uint8_t type __attribute__((unused)),
   usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sieEpEnqueue(void *object, struct UsbRequest *request)
+static enum Result sieEpEnqueue(void *object, struct UsbRequest *request)
 {
   assert(request->callback);
 
@@ -972,7 +972,7 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static enum result epEnqueueRx(struct UsbDmaEndpoint *ep,
+static enum Result epEnqueueRx(struct UsbDmaEndpoint *ep,
     struct UsbRequest *request)
 {
   struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request,
@@ -984,7 +984,7 @@ static enum result epEnqueueRx(struct UsbDmaEndpoint *ep,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result epEnqueueTx(struct UsbDmaEndpoint *ep,
+static enum Result epEnqueueTx(struct UsbDmaEndpoint *ep,
     struct UsbRequest *request)
 {
   struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request,
@@ -996,7 +996,7 @@ static enum result epEnqueueTx(struct UsbDmaEndpoint *ep,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dmaEpInit(void *object, const void *configBase)
+static enum Result dmaEpInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbDevice * const device = config->parent;
@@ -1087,12 +1087,12 @@ static void dmaEpEnable(void *object, uint8_t type, uint16_t size)
   usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dmaEpEnqueue(void *object, struct UsbRequest *request)
+static enum Result dmaEpEnqueue(void *object, struct UsbRequest *request)
 {
   assert(request->callback);
 
   struct UsbDmaEndpoint * const ep = object;
-  enum result res;
+  enum Result res;
 
   const IrqState state = irqSave();
 

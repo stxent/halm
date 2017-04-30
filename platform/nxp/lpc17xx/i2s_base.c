@@ -16,7 +16,7 @@
 static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
 static bool setDescriptor(uint8_t, const struct I2sBase *, struct I2sBase *);
 /*----------------------------------------------------------------------------*/
-static enum result i2sInit(void *, const void *);
+static enum Result i2sInit(void *, const void *);
 static void i2sDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass i2sTable = {
@@ -140,7 +140,7 @@ uint32_t i2sGetClock(const struct I2sBase *interface __attribute__((unused)))
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2sInit(void *object, const void *configBase)
+static enum Result i2sInit(void *object, const void *configBase)
 {
   const struct I2sBaseConfig * const config = configBase;
   struct I2sBase * const interface = object;

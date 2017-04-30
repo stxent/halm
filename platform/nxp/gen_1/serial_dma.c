@@ -19,8 +19,8 @@
 #define BUFFER_SIZE 16
 #define RX_BUFFERS  2
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
-static enum result enqueueRxBuffers(struct SerialDma *);
+static enum Result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
+static enum Result enqueueRxBuffers(struct SerialDma *);
 static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -28,11 +28,11 @@ static void txDmaHandler(void *);
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(void *, const void *);
+static enum Result serialInit(void *, const void *);
 static void serialDeinit(void *);
-static enum result serialSetCallback(void *, void (*)(void *), void *);
-static enum result serialGetParam(void *, enum IfParameter, void *);
-static enum result serialSetParam(void *, enum IfParameter, const void *);
+static enum Result serialSetCallback(void *, void (*)(void *), void *);
+static enum Result serialGetParam(void *, enum IfParameter, void *);
+static enum Result serialSetParam(void *, enum IfParameter, const void *);
 static size_t serialRead(void *, void *, size_t);
 static size_t serialWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -50,7 +50,7 @@ static const struct InterfaceClass serialTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SerialDma = &serialTable;
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
+static enum Result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
   static const struct GpDmaSettings dmaSettings[] = {
@@ -107,7 +107,7 @@ static enum result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result enqueueRxBuffers(struct SerialDma *interface)
+static enum Result enqueueRxBuffers(struct SerialDma *interface)
 {
   const LPC_UART_Type * const reg = interface->base.reg;
   const void * const source = (const void *)&reg->RBR;
@@ -151,7 +151,7 @@ static void txDmaHandler(void *object)
 
     dmaAppend(interface->txDma, (void *)&reg->THR, interface->txBuffer, length);
 
-    const enum result res = dmaEnable(interface->txDma);
+    const enum Result res = dmaEnable(interface->txDma);
     assert(res == E_OK);
     (void)res;
   }
@@ -176,7 +176,7 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result serialInit(void *object, const void *configBase)
+static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
   assert(config);
@@ -188,7 +188,7 @@ static enum result serialInit(void *object, const void *configBase)
   };
   struct SerialDma * const interface = object;
   struct UartRateConfig rateConfig;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = UartBase->init(object, &baseConfig)) != E_OK)
@@ -264,7 +264,7 @@ static void serialDeinit(void *object)
   UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetCallback(void *object, void (*callback)(void *),
+static enum Result serialSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SerialDma * const interface = object;
@@ -274,7 +274,7 @@ static enum result serialSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGetParam(void *object, enum IfParameter parameter,
+static enum Result serialGetParam(void *object, enum IfParameter parameter,
     void *data __attribute__((unused)))
 {
   struct SerialDma * const interface = object;
@@ -294,7 +294,7 @@ static enum result serialGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSetParam(void *object, enum IfParameter parameter,
+static enum Result serialSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct SerialDma * const interface = object;
@@ -304,7 +304,7 @@ static enum result serialSetParam(void *object, enum IfParameter parameter,
     case IF_RATE:
     {
       struct UartRateConfig rateConfig;
-      const enum result res = uartCalcRate(object, *(const uint32_t *)data,
+      const enum Result res = uartCalcRate(object, *(const uint32_t *)data,
           &rateConfig);
 
       if (res == E_OK)

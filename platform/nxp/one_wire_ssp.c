@@ -53,11 +53,11 @@ static void sendSearchResponse(struct OneWireSsp *, bool);
 static void startSearch(struct OneWireSsp *);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result oneWireInit(void *, const void *);
+static enum Result oneWireInit(void *, const void *);
 static void oneWireDeinit(void *);
-static enum result oneWireSetCallback(void *, void (*)(void *), void *);
-static enum result oneWireGetParam(void *, enum IfParameter, void *);
-static enum result oneWireSetParam(void *, enum IfParameter, const void *);
+static enum Result oneWireSetCallback(void *, void (*)(void *), void *);
+static enum Result oneWireGetParam(void *, enum IfParameter, void *);
+static enum Result oneWireSetParam(void *, enum IfParameter, const void *);
 static size_t oneWireRead(void *, void *, size_t);
 static size_t oneWireWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -346,7 +346,7 @@ static void startSearch(struct OneWireSsp *interface)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result oneWireInit(void *object, const void *configBase)
+static enum Result oneWireInit(void *object, const void *configBase)
 {
   const struct OneWireSspConfig * const config = configBase;
   assert(config);
@@ -359,7 +359,7 @@ static enum result oneWireInit(void *object, const void *configBase)
       .cs = 0
   };
   struct OneWireSsp * const interface = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = SspBase->init(object, &baseConfig)) != E_OK)
@@ -410,7 +410,7 @@ static void oneWireDeinit(void *object)
   SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireSetCallback(void *object, void (*callback)(void *),
+static enum Result oneWireSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct OneWireSsp * const interface = object;
@@ -420,7 +420,7 @@ static enum result oneWireSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireGetParam(void *object, enum IfParameter parameter,
+static enum Result oneWireGetParam(void *object, enum IfParameter parameter,
     void *data __attribute__((unused)))
 {
   struct OneWireSsp * const interface = object;
@@ -442,7 +442,7 @@ static enum result oneWireGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireSetParam(void *object, enum IfParameter parameter,
+static enum Result oneWireSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct OneWireSsp * const interface = object;

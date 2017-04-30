@@ -35,7 +35,7 @@ struct AdcUnit
   Spinlock lock;
 };
 /*----------------------------------------------------------------------------*/
-enum result adcUnitRegister(struct AdcUnit *, void (*)(void *), void *);
+enum Result adcUnitRegister(struct AdcUnit *, void (*)(void *), void *);
 void adcUnitUnregister(struct AdcUnit *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_ADC_UNIT_H_ */

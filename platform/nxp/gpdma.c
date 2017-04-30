@@ -18,19 +18,19 @@ enum State
   STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *, enum result);
+static void interruptHandler(void *, enum Result);
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *, const void *);
+static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
 static void channelSetCallback(void *, void (*)(void *), void *);
 static void channelConfigure(void *, const void *);
 
-static enum result channelEnable(void *);
+static enum Result channelEnable(void *);
 static void channelDisable(void *);
 static size_t channelPending(const void *);
 static size_t channelResidue(const void *);
-static enum result channelStatus(const void *);
+static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
 static void channelClear(void *);
@@ -55,7 +55,7 @@ static const struct DmaClass channelTable = {
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDma = &channelTable;
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object, enum result res)
+static void interruptHandler(void *object, enum Result res)
 {
   struct GpDma * const channel = object;
 
@@ -66,7 +66,7 @@ static void interruptHandler(void *object, enum result res)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configBase)
+static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaConfig * const config = configBase;
   assert(config);
@@ -77,7 +77,7 @@ static enum result channelInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct GpDma * const channel = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = GpDmaBase->init(object, &baseConfig)) != E_OK)
@@ -115,7 +115,7 @@ static void channelConfigure(void *object, const void *settingsBase)
   channel->control |= CONTROL_INT;
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelEnable(void *object)
+static enum Result channelEnable(void *object)
 {
   struct GpDma * const channel = object;
   LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
@@ -123,7 +123,7 @@ static enum result channelEnable(void *object)
 
   assert(channel->state == STATE_READY);
 
-  const enum result res = gpDmaSetDescriptor(number, object);
+  const enum Result res = gpDmaSetDescriptor(number, object);
   if (res != E_OK)
     return res;
 
@@ -187,7 +187,7 @@ static size_t channelResidue(const void *object)
     return 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelStatus(const void *object)
+static enum Result channelStatus(const void *object)
 {
   const struct GpDma * const channel = object;
 

@@ -10,8 +10,8 @@
 #include <stddef.h>
 #include <xcore/error.h>
 /*----------------------------------------------------------------------------*/
-enum result workQueueAdd(void (*)(void *), void *);
-enum result workQueueInit(size_t);
+enum Result workQueueAdd(void (*)(void *), void *);
+enum Result workQueueInit(size_t);
 void workQueueStart(void *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_WORK_QUEUE_H_ */

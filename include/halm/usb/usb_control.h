@@ -59,11 +59,11 @@ struct UsbControl
   void *privateData;
 };
 /*----------------------------------------------------------------------------*/
-enum result usbControlBindDriver(struct UsbControl *, void *);
+enum Result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlUnbindDriver(struct UsbControl *);
 void usbControlEvent(struct UsbControl *, unsigned int);
 void usbControlSetPower(struct UsbControl *, uint16_t);
-enum result usbControlStringAppend(struct UsbControl *, struct UsbString);
+enum Result usbControlStringAppend(struct UsbControl *, struct UsbString);
 void usbControlStringErase(struct UsbControl *, struct UsbString);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_CONTROL_H_ */

@@ -34,22 +34,22 @@ struct PrivateData
   uint8_t data[DATA_BUFFER_SIZE];
 };
 /*----------------------------------------------------------------------------*/
-static enum result driverConfigure(struct UsbControl *,
+static enum Result driverConfigure(struct UsbControl *,
     const struct UsbSetupPacket *, const void *, uint16_t, void *,
     uint16_t *, uint16_t);
 static void fillConfigurationDescriptor(const struct UsbControl *, void *);
 static void fillDeviceDescriptor(const struct UsbControl *, void *);
-static enum result handleDescriptorRequest(struct UsbControl *,
+static enum Result handleDescriptorRequest(struct UsbControl *,
     const struct UsbSetupPacket *, void *, uint16_t *, uint16_t);
-static enum result handleDeviceRequest(struct UsbControl *,
+static enum Result handleDeviceRequest(struct UsbControl *,
     const struct UsbSetupPacket *, void *, uint16_t *, uint16_t);
-static enum result handleEndpointRequest(struct UsbControl *,
+static enum Result handleEndpointRequest(struct UsbControl *,
     const struct UsbSetupPacket *, void *, uint16_t *);
-static enum result handleInterfaceRequest(const struct UsbSetupPacket *,
+static enum Result handleInterfaceRequest(const struct UsbSetupPacket *,
     void *, uint16_t *);
-static enum result handleStringRequest(struct UsbControl *, uint16_t, uint16_t,
+static enum Result handleStringRequest(struct UsbControl *, uint16_t, uint16_t,
     void *, uint16_t *, uint16_t);
-static enum result privateDataAllocate(struct UsbControl *);
+static enum Result privateDataAllocate(struct UsbControl *);
 static void privateDataFree(struct UsbControl *);
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *, struct UsbRequest *,
@@ -60,7 +60,7 @@ static void enableEndpoints(struct UsbControl *);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
-static enum result controlInit(void *, const void *);
+static enum Result controlInit(void *, const void *);
 static void controlDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass controlTable = {
@@ -71,7 +71,7 @@ static const struct EntityClass controlTable = {
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbControl = &controlTable;
 /*----------------------------------------------------------------------------*/
-static enum result driverConfigure(struct UsbControl *control,
+static enum Result driverConfigure(struct UsbControl *control,
     const struct UsbSetupPacket *packet, const void *payload,
     uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
@@ -79,7 +79,7 @@ static enum result driverConfigure(struct UsbControl *control,
   const uint8_t recipient = REQUEST_RECIPIENT_VALUE(packet->requestType);
   const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
 
-  enum result res = usbDriverConfigure(control->driver, packet,
+  enum Result res = usbDriverConfigure(control->driver, packet,
       payload, payloadLength, response, responseLength, maxResponseLength);
 
   if (res == E_INVALID && type == REQUEST_TYPE_STANDARD)
@@ -175,11 +175,11 @@ static void fillDeviceDescriptor(const struct UsbControl *control, void *buffer)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleDescriptorRequest(struct UsbControl *control,
+static enum Result handleDescriptorRequest(struct UsbControl *control,
     const struct UsbSetupPacket *packet, void *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
-  enum result res = usbExtractDescriptorData(control->driver, packet->value,
+  enum Result res = usbExtractDescriptorData(control->driver, packet->value,
       response, responseLength, maxResponseLength);
 
   if (res == E_INVALID)
@@ -191,11 +191,11 @@ static enum result handleDescriptorRequest(struct UsbControl *control,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleDeviceRequest(struct UsbControl *control,
+static enum Result handleDeviceRequest(struct UsbControl *control,
     const struct UsbSetupPacket *packet, void *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
-  enum result res = E_INVALID;
+  enum Result res = E_INVALID;
   uint16_t length = 0;
 
   switch (packet->request)
@@ -278,7 +278,7 @@ static enum result handleDeviceRequest(struct UsbControl *control,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleEndpointRequest(struct UsbControl *control,
+static enum Result handleEndpointRequest(struct UsbControl *control,
     const struct UsbSetupPacket *packet, void *response,
     uint16_t *responseLength)
 {
@@ -323,7 +323,7 @@ static enum result handleEndpointRequest(struct UsbControl *control,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleInterfaceRequest(const struct UsbSetupPacket *packet,
+static enum Result handleInterfaceRequest(const struct UsbSetupPacket *packet,
     void *response, uint16_t *responseLength)
 {
   switch (packet->request)
@@ -362,7 +362,7 @@ static enum result handleInterfaceRequest(const struct UsbSetupPacket *packet,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleStringRequest(struct UsbControl *control,
+static enum Result handleStringRequest(struct UsbControl *control,
     uint16_t keyword, uint16_t langid, void *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
@@ -400,7 +400,7 @@ static enum result handleStringRequest(struct UsbControl *control,
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result privateDataAllocate(struct UsbControl *control)
+static enum Result privateDataAllocate(struct UsbControl *control)
 {
   struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
 
@@ -440,7 +440,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
     return;
 
   uint16_t length = 0;
-  enum result res = E_BUSY;
+  enum Result res = E_BUSY;
 
   if (status == USB_REQUEST_SETUP)
   {
@@ -537,7 +537,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   }
 }
 /*----------------------------------------------------------------------------*/
-enum result usbControlBindDriver(struct UsbControl *control, void *driver)
+enum Result usbControlBindDriver(struct UsbControl *control, void *driver)
 {
   assert(driver);
   assert(!control->driver);
@@ -566,7 +566,7 @@ void usbControlSetPower(struct UsbControl *control, uint16_t current)
   control->current = current;
 }
 /*----------------------------------------------------------------------------*/
-enum result usbControlStringAppend(struct UsbControl *control,
+enum Result usbControlStringAppend(struct UsbControl *control,
     struct UsbString string)
 {
   if (!listFind(&control->strings, &string))
@@ -590,11 +590,11 @@ void usbControlStringErase(struct UsbControl *control, struct UsbString string)
     listErase(&control->strings, node);
 }
 /*----------------------------------------------------------------------------*/
-static enum result controlInit(void *object, const void *configBase)
+static enum Result controlInit(void *object, const void *configBase)
 {
   const struct UsbControlConfig * const config = configBase;
   struct UsbControl * const control = object;
-  enum result res;
+  enum Result res;
 
   if (!config->parent)
     return E_VALUE;

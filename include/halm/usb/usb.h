@@ -70,13 +70,13 @@ struct UsbDeviceClass
   void (*setAddress)(void *, uint8_t);
   void (*setConnected)(void *, bool);
 
-  enum result (*bind)(void *, void *);
+  enum Result (*bind)(void *, void *);
   void (*unbind)(void *, const void *);
 
   void (*setPower)(void *, uint16_t);
   enum UsbSpeed (*getSpeed)(const void *);
 
-  enum result (*stringAppend)(void *, struct UsbString);
+  enum Result (*stringAppend)(void *, struct UsbString);
   void (*stringErase)(void *, struct UsbString);
 };
 /*----------------------------------------------------------------------------*/
@@ -128,7 +128,7 @@ static inline void usbDevSetConnected(void *device, bool state)
  * @param driver Device driver.
  * @return @b E_OK on success.
  */
-static inline enum result usbDevBind(void *device, void *driver)
+static inline enum Result usbDevBind(void *device, void *driver)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->bind(device, driver);
 }
@@ -170,7 +170,7 @@ static inline enum UsbSpeed usbDevGetSpeed(const void *device)
  * @param string String descriptor.
  * @return @b E_OK on success.
  */
-static inline enum result usbDevStringAppend(void *device,
+static inline enum Result usbDevStringAppend(void *device,
     struct UsbString string)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->stringAppend(device,
@@ -195,7 +195,7 @@ struct UsbEndpointClass
   void (*clear)(void *);
   void (*disable)(void *);
   void (*enable)(void *, uint8_t, uint16_t);
-  enum result (*enqueue)(void *, struct UsbRequest *);
+  enum Result (*enqueue)(void *, struct UsbRequest *);
   bool (*isStalled)(void *);
   void (*setStalled)(void *, bool);
 };
@@ -243,7 +243,7 @@ static inline void usbEpEnable(void *endpoint, uint8_t type, uint16_t size)
  * @param request Request to be added.
  * @return @b E_OK on success.
  */
-static inline enum result usbEpEnqueue(void *endpoint,
+static inline enum Result usbEpEnqueue(void *endpoint,
     struct UsbRequest *request)
 {
   return ((const struct UsbEndpointClass *)CLASS(endpoint))->enqueue(endpoint,
@@ -278,7 +278,7 @@ struct UsbDriverClass
 {
   CLASS_HEADER
 
-  enum result (*configure)(void *, const struct UsbSetupPacket *,
+  enum Result (*configure)(void *, const struct UsbSetupPacket *,
       const void *, uint16_t, void *, uint16_t *, uint16_t);
   const usbDescriptorFunctor *(*describe)(const void *);
   void (*event)(void *, unsigned int);
@@ -302,7 +302,7 @@ struct UsbDriver
  * @param maxResponseLength Maximum length of the response buffer in bytes.
  * @return @b E_OK on success, @b E_VALUE when the buffer is too small.
  */
-static inline enum result usbDriverConfigure(void *driver,
+static inline enum Result usbDriverConfigure(void *driver,
     const struct UsbSetupPacket *packet, const void *payload,
     uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength)

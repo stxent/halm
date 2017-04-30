@@ -16,7 +16,7 @@
 static void configPins(struct SdmmcBase *, const struct SdmmcBaseConfig *);
 static bool setDescriptor(const struct SdmmcBase *, struct SdmmcBase *);
 /*----------------------------------------------------------------------------*/
-static enum result sdioInit(void *, const void *);
+static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass sdioTable = {
@@ -217,7 +217,7 @@ uint32_t sdmmcGetClock(const struct SdmmcBase *interface
   return clockFrequency(SdioClock);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioInit(void *object, const void *configBase)
+static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdmmcBaseConfig * const config = configBase;
   struct SdmmcBase * const interface = object;

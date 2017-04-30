@@ -17,7 +17,7 @@ static void configPins(const struct CanBase *, const struct CanBaseConfig *);
 static bool setDescriptor(uint8_t, const struct CanBase *state,
     struct CanBase *);
 /*----------------------------------------------------------------------------*/
-static enum result canInit(void *, const void *);
+static enum Result canInit(void *, const void *);
 static void canDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass canTable = {
@@ -114,7 +114,7 @@ uint32_t canGetClock(const struct CanBase *interface __attribute__((unused)))
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
-static enum result canInit(void *object, const void *configBase)
+static enum Result canInit(void *object, const void *configBase)
 {
   const struct CanBaseConfig * const config = configBase;
   struct CanBase * const interface = object;

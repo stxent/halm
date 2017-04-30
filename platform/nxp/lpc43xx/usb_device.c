@@ -52,17 +52,17 @@ static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
 static void resetQueueHeads(struct UsbDevice *);
 /*----------------------------------------------------------------------------*/
-static enum result devInit(void *, const void *);
+static enum Result devInit(void *, const void *);
 static void devDeinit(void *);
 static void *devCreateEndpoint(void *, uint8_t);
 static uint8_t devGetInterface(const void *);
 static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
-static enum result devBind(void *, void *);
+static enum Result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
 static enum UsbSpeed devGetSpeed(const void *);
-static enum result devStringAppend(void *, struct UsbString);
+static enum Result devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
@@ -93,8 +93,8 @@ static struct TransferDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *,
     struct UsbRequest *, uint8_t *, size_t);
 static void epAppendDescriptor(struct UsbDmaEndpoint *,
     struct TransferDescriptor *);
-static enum result epEnqueueRx(struct UsbDmaEndpoint *, struct UsbRequest *);
-static enum result epEnqueueTx(struct UsbDmaEndpoint *, struct UsbRequest *);
+static enum Result epEnqueueRx(struct UsbDmaEndpoint *, struct UsbRequest *);
+static enum Result epEnqueueTx(struct UsbDmaEndpoint *, struct UsbRequest *);
 static void epExtractDataLength(const struct UsbDmaEndpoint *,
     struct UsbRequest *);
 static void epFlush(struct UsbDmaEndpoint *);
@@ -102,16 +102,16 @@ static inline struct UsbRequest *epGetHeadRequest(const struct QueueHead *);
 static enum EndpointStatus epGetStatus(const struct UsbDmaEndpoint *);
 static void epPopDescriptor(struct UsbDmaEndpoint *);
 static void epPrime(struct UsbDmaEndpoint *);
-static enum result epReadSetupPacket(struct UsbDmaEndpoint *,
+static enum Result epReadSetupPacket(struct UsbDmaEndpoint *,
     struct UsbRequest *);
 static void epReprime(struct UsbDmaEndpoint *);
 /*----------------------------------------------------------------------------*/
-static enum result epInit(void *, const void *);
+static enum Result epInit(void *, const void *);
 static void epDeinit(void *);
 static void epClear(void *);
 static void epDisable(void *);
 static void epEnable(void *, uint8_t, uint16_t);
-static enum result epEnqueue(void *, struct UsbRequest *);
+static enum Result epEnqueue(void *, struct UsbRequest *);
 static bool epIsStalled(void *);
 static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
@@ -258,7 +258,7 @@ static void resetQueueHeads(struct UsbDevice *device)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result devInit(void *object, const void *configBase)
+static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
   assert(config);
@@ -276,7 +276,7 @@ static enum result devInit(void *object, const void *configBase)
       .pid = config->pid
   };
   struct UsbDevice * const device = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   res = UsbBase->init(object, &baseConfig);
@@ -391,12 +391,12 @@ static void devSetConnected(void *object, bool state)
     reg->USBCMD_D &= ~USBCMD_D_RS;
 }
 /*----------------------------------------------------------------------------*/
-static enum result devBind(void *object, void *driver)
+static enum Result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
 
   const IrqState state = irqSave();
-  const enum result res = usbControlBindDriver(device->control, driver);
+  const enum Result res = usbControlBindDriver(device->control, driver);
   irqRestore(state);
 
   return res;
@@ -427,7 +427,7 @@ static enum UsbSpeed devGetSpeed(const void *object)
   return high ? USB_HS : USB_FS;
 }
 /*----------------------------------------------------------------------------*/
-static enum result devStringAppend(void *object, struct UsbString string)
+static enum Result devStringAppend(void *object, struct UsbString string)
 {
   struct UsbDevice * const device = object;
 
@@ -594,7 +594,7 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
   epPrime(ep);
 }
 /*----------------------------------------------------------------------------*/
-static enum result epEnqueueRx(struct UsbDmaEndpoint *ep,
+static enum Result epEnqueueRx(struct UsbDmaEndpoint *ep,
     struct UsbRequest *request)
 {
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
@@ -606,7 +606,7 @@ static enum result epEnqueueRx(struct UsbDmaEndpoint *ep,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result epEnqueueTx(struct UsbDmaEndpoint *ep,
+static enum Result epEnqueueTx(struct UsbDmaEndpoint *ep,
     struct UsbRequest *request)
 {
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
@@ -702,7 +702,7 @@ static void epPrime(struct UsbDmaEndpoint *ep)
   while (reg->ENDPTPRIME & mask);
 }
 /*----------------------------------------------------------------------------*/
-static enum result epReadSetupPacket(struct UsbDmaEndpoint *ep,
+static enum Result epReadSetupPacket(struct UsbDmaEndpoint *ep,
     struct UsbRequest *request)
 {
   if (request->capacity < 8)
@@ -759,7 +759,7 @@ static void epReprime(struct UsbDmaEndpoint *ep)
   epPrime(ep);
 }
 /*----------------------------------------------------------------------------*/
-static enum result epInit(void *object, const void *configBase)
+static enum Result epInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbDevice * const device = config->parent;
@@ -864,12 +864,12 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   reg->ENDPTCTRL[number] |= tx ? ENDPTCTRL_TXR : ENDPTCTRL_RXR;
 }
 /*----------------------------------------------------------------------------*/
-static enum result epEnqueue(void *object, struct UsbRequest *request)
+static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
   assert(request->callback);
 
   struct UsbDmaEndpoint * const ep = object;
-  enum result res;
+  enum Result res;
 
   const IrqState state = irqSave();
 

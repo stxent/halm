@@ -24,7 +24,7 @@ struct EmcHandler
 static bool emcHandlerInstantiate(void);
 static void emcSwitchEnabled(bool);
 
-static enum result emcHandlerInit(void *, const void *);
+static enum Result emcHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct EmcHandler),
@@ -408,7 +408,7 @@ static void emcSwitchEnabled(bool state)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result emcHandlerInit(void *object,
+static enum Result emcHandlerInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct EmcHandler * const handler = object;

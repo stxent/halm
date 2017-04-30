@@ -11,14 +11,14 @@
 #include <stdint.h>
 #include <xcore/error.h>
 /*----------------------------------------------------------------------------*/
-enum result eepromReadBuffer(uint32_t, void *, size_t);
-enum result eepromWriteBuffer(uint32_t, const void *, size_t);
-enum result flashBlankCheckSector(uint32_t);
-enum result flashErasePage(uint32_t);
-enum result flashEraseSector(uint32_t);
+enum Result eepromReadBuffer(uint32_t, void *, size_t);
+enum Result eepromWriteBuffer(uint32_t, const void *, size_t);
+enum Result flashBlankCheckSector(uint32_t);
+enum Result flashErasePage(uint32_t);
+enum Result flashEraseSector(uint32_t);
 void flashInitWrite(void);
 uint32_t flashReadId(void);
 uint32_t flashReadConfigId(void);
-enum result flashWriteBuffer(uint32_t, const void *, size_t);
+enum Result flashWriteBuffer(uint32_t, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_IAP_H_ */

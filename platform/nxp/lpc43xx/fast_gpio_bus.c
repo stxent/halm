@@ -7,7 +7,7 @@
 #include <halm/platform/nxp/fast_gpio_bus.h>
 #include <halm/platform/nxp/lpc43xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result busInit(void *, const void *);
+static enum Result busInit(void *, const void *);
 static void busDeinit(void *);
 static uint32_t busRead(void *);
 static void busWrite(void *, uint32_t);
@@ -23,7 +23,7 @@ static const struct GpioBusClass gpioBusTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioBusClass * const FastGpioBus = &gpioBusTable;
 /*----------------------------------------------------------------------------*/
-static enum result busInit(void *object, const void *configBase)
+static enum Result busInit(void *object, const void *configBase)
 {
   fastGpioBusConfigPins(object, configBase);
   return E_OK;

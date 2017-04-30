@@ -16,15 +16,15 @@
 #define BUSY_WRITE_DELAY    500 /* Milliseconds */
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *);
-static enum result executeCommand(struct Sdmmc *, uint32_t, uint32_t);
+static enum Result executeCommand(struct Sdmmc *, uint32_t, uint32_t);
 static void interruptHandler(void *);
-static enum result updateRate(struct Sdmmc *, uint32_t);
+static enum Result updateRate(struct Sdmmc *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result sdioInit(void *, const void *);
+static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
-static enum result sdioSetCallback(void *, void (*)(void *), void *);
-static enum result sdioGetParam(void *, enum IfParameter, void *);
-static enum result sdioSetParam(void *, enum IfParameter, const void *);
+static enum Result sdioSetCallback(void *, void (*)(void *), void *);
+static enum Result sdioGetParam(void *, enum IfParameter, void *);
+static enum Result sdioSetParam(void *, enum IfParameter, const void *);
 static size_t sdioRead(void *, void *, size_t);
 static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -115,7 +115,7 @@ static void execute(struct Sdmmc *interface)
     interface->status = E_VALUE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result executeCommand(struct Sdmmc *interface, uint32_t command,
+static enum Result executeCommand(struct Sdmmc *interface, uint32_t command,
     uint32_t argument)
 {
   LPC_SDMMC_Type * const reg = interface->base.reg;
@@ -180,7 +180,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
+static enum Result updateRate(struct Sdmmc *interface, uint32_t rate)
 {
   LPC_SDMMC_Type * const reg = interface->base.reg;
   const uint32_t clock = sdmmcGetClock((struct SdmmcBase *)interface);
@@ -219,7 +219,7 @@ static enum result updateRate(struct Sdmmc *interface, uint32_t rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioInit(void *object, const void *configBase)
+static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdmmcConfig * const config = configBase;
   assert(config);
@@ -244,7 +244,7 @@ static enum result sdioInit(void *object, const void *configBase)
       .dat3 = config->dat3
   };
   struct Sdmmc * const interface = object;
-  enum result res;
+  enum Result res;
 
   assert(config->rate);
 
@@ -307,7 +307,7 @@ static void sdioDeinit(void *object)
   SdmmcBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioSetCallback(void *object, void (*callback)(void *),
+static enum Result sdioSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Sdmmc * const interface = object;
@@ -317,7 +317,7 @@ static enum result sdioSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioGetParam(void *object, enum IfParameter parameter,
+static enum Result sdioGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Sdmmc * const interface = object;
@@ -373,7 +373,7 @@ static enum result sdioGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioSetParam(void *object, enum IfParameter parameter,
+static enum Result sdioSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Sdmmc * const interface = object;
@@ -432,7 +432,7 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
   reg->BYTCNT = length;
   dmaAppend(interface->dma, buffer, 0, length);
 
-  const enum result res = dmaEnable(interface->dma);
+  const enum Result res = dmaEnable(interface->dma);
 
   if (res != E_OK)
   {
@@ -454,7 +454,7 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
   reg->BYTCNT = length;
   dmaAppend(interface->dma, 0, buffer, length);
 
-  const enum result res = dmaEnable(interface->dma);
+  const enum Result res = dmaEnable(interface->dma);
 
   if (res != E_OK)
   {

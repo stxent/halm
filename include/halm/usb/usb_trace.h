@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum result usbTraceInit(struct Interface *);
+enum Result usbTraceInit(struct Interface *);
 void usbTraceDeinit(void);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_USB_TRACE

@@ -17,9 +17,9 @@ struct HidClass
   CLASS_HEADER
 
   void (*event)(void *, unsigned int);
-  enum result (*getReport)(void *, uint8_t, uint8_t, uint8_t *,
+  enum Result (*getReport)(void *, uint8_t, uint8_t, uint8_t *,
       uint16_t *, uint16_t);
-  enum result (*setReport)(void *, uint8_t, uint8_t, const uint8_t *,
+  enum Result (*setReport)(void *, uint8_t, uint8_t, const uint8_t *,
       uint16_t);
 };
 /*----------------------------------------------------------------------------*/
@@ -28,7 +28,7 @@ static inline void hidEvent(void *device, unsigned int event)
   ((const struct HidClass *)CLASS(device))->event(device, event);
 }
 /*----------------------------------------------------------------------------*/
-static inline enum result hidGetReport(void *device, uint8_t reportType,
+static inline enum Result hidGetReport(void *device, uint8_t reportType,
     uint8_t reportId, uint8_t *report, uint16_t *reportLength,
     uint16_t maxReportLength)
 {
@@ -36,7 +36,7 @@ static inline enum result hidGetReport(void *device, uint8_t reportType,
       reportId, report, reportLength, maxReportLength);
 }
 /*----------------------------------------------------------------------------*/
-static inline enum result hidSetReport(void *device, uint8_t reportType,
+static inline enum Result hidSetReport(void *device, uint8_t reportType,
     uint8_t reportId, const uint8_t *report, uint16_t reportLength)
 {
   return ((const struct HidClass *)CLASS(device))->setReport(device, reportType,
@@ -70,6 +70,6 @@ struct Hid
   struct HidBase *driver;
 };
 /*----------------------------------------------------------------------------*/
-enum result hidBind(struct Hid *);
+enum Result hidBind(struct Hid *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_HID_H_ */

@@ -17,7 +17,7 @@ static uint32_t apb1ClockFrequency(const void *);
 static uint32_t apb2ClockFrequency(const void *);
 
 static void clockDisableStub(const void *);
-static enum result clockEnableStub(const void *, const void *);
+static enum Result clockEnableStub(const void *, const void *);
 static bool clockReadyStub(const void *);
 /*----------------------------------------------------------------------------*/
 static const struct ClockClass mainClockTable = {
@@ -70,7 +70,7 @@ static void clockDisableStub(const void *clockBase __attribute__((unused)))
 
 }
 /*----------------------------------------------------------------------------*/
-static enum result clockEnableStub(const void *clockBase
+static enum Result clockEnableStub(const void *clockBase
     __attribute__((unused)), const void *configBase __attribute__((unused)))
 {
   return E_OK;

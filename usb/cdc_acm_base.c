@@ -46,13 +46,13 @@ static void bulkReceiveEndpointDescriptor(const void *, struct UsbDescriptor *,
 static void bulkTransmitEndpointDescriptor(const void *, struct UsbDescriptor *,
     void *);
 /*----------------------------------------------------------------------------*/
-static enum result handleClassRequest(struct CdcAcmBase *,
+static enum Result handleClassRequest(struct CdcAcmBase *,
     const struct UsbSetupPacket *, const void *, uint16_t, void *,
     uint16_t *);
 /*----------------------------------------------------------------------------*/
-static enum result driverInit(void *, const void *);
+static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
-static enum result driverConfigure(void *, const struct UsbSetupPacket *,
+static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
     const void *, uint16_t, void *, uint16_t *, uint16_t);
 static const usbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
@@ -315,7 +315,7 @@ static void bulkReceiveEndpointDescriptor(const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result handleClassRequest(struct CdcAcmBase *driver,
+static enum Result handleClassRequest(struct CdcAcmBase *driver,
     const struct UsbSetupPacket *packet, const void *payload,
     uint16_t payloadLength, void *response, uint16_t *responseLength)
 {
@@ -391,11 +391,11 @@ uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
   return privateData->state.lineCoding.dteRate;
 }
 /*----------------------------------------------------------------------------*/
-static enum result driverInit(void *object, const void *configBase)
+static enum Result driverInit(void *object, const void *configBase)
 {
   const struct CdcAcmBaseConfig * const config = configBase;
   struct CdcAcmBase * const driver = object;
-  enum result res;
+  enum Result res;
 
   if (!config->owner || !config->device)
     return E_VALUE;
@@ -430,7 +430,7 @@ static void driverDeinit(void *object)
   free(driver->privateData);
 }
 /*----------------------------------------------------------------------------*/
-static enum result driverConfigure(void *object,
+static enum Result driverConfigure(void *object,
     const struct UsbSetupPacket *packet, const void *payload,
     uint16_t payloadLength, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength __attribute__((unused)))

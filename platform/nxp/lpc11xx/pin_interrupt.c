@@ -26,12 +26,12 @@ static void disableInterrupt(const struct PinInterrupt *);
 static void enableInterrupt(const struct PinInterrupt *);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerAttach(struct PinData,
+static enum Result pinInterruptHandlerAttach(struct PinData,
     const struct PinInterrupt *);
 static void pinInterruptHandlerDetach(const struct PinInterrupt *);
-static enum result pinInterruptHandlerInit(void *, const void *);
+static enum Result pinInterruptHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptInit(void *, const void *);
+static enum Result pinInterruptInit(void *, const void *);
 static void pinInterruptDeinit(void *);
 static void pinInterruptEnable(void *);
 static void pinInterruptDisable(void *);
@@ -128,7 +128,7 @@ void PIO3_ISR(void)
   processInterrupt(3);
 }
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerAttach(struct PinData pin,
+static enum Result pinInterruptHandlerAttach(struct PinData pin,
     const struct PinInterrupt *interrupt)
 {
   if (!handlers[pin.port])
@@ -170,12 +170,12 @@ static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
     listErase(list, node);
 }
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptHandlerInit(void *object,
+static enum Result pinInterruptHandlerInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct PinInterruptHandler * const handler = object;
   const struct PinInterruptHandlerConfig * const config = configBase;
-  enum result res;
+  enum Result res;
 
   if ((res = listInit(&handler->list, sizeof(struct PinInterrupt *))) != E_OK)
     return res;
@@ -185,14 +185,14 @@ static enum result pinInterruptHandlerInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result pinInterruptInit(void *object, const void *configBase)
+static enum Result pinInterruptInit(void *object, const void *configBase)
 {
   const struct PinInterruptConfig * const config = configBase;
   assert(config);
 
   const struct Pin input = pinInit(config->pin);
   struct PinInterrupt * const interrupt = object;
-  enum result res;
+  enum Result res;
 
   assert(pinValid(input));
 

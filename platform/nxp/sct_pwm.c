@@ -13,29 +13,29 @@
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static uint8_t configOutputPin(uint8_t, PinNumber);
-static enum result setMatchValue(struct SctPwmUnit *, uint8_t, uint32_t);
-static enum result updateFrequency(struct SctPwmUnit *, uint32_t);
+static enum Result setMatchValue(struct SctPwmUnit *, uint8_t, uint32_t);
+static enum Result updateFrequency(struct SctPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *, const void *);
+static enum Result unitInit(void *, const void *);
 static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static enum result singleEdgeInit(void *, const void *);
+static enum Result singleEdgeInit(void *, const void *);
 static void singleEdgeDeinit(void *);
 static void singleEdgeEnable(void *);
 static void singleEdgeDisable(void *);
 static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
-static enum result singleEdgeSetFrequency(void *, uint32_t);
+static enum Result singleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result doubleEdgeInit(void *, const void *);
+static enum Result doubleEdgeInit(void *, const void *);
 static void doubleEdgeDeinit(void *);
 static void doubleEdgeEnable(void *);
 static void doubleEdgeDisable(void *);
 static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
-static enum result doubleEdgeSetFrequency(void *, uint32_t);
+static enum Result doubleEdgeSetFrequency(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct SctPwmUnit),
@@ -87,12 +87,12 @@ static uint8_t configOutputPin(uint8_t channel, PinNumber key)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static enum result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
+static enum Result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
     uint32_t value)
 {
   const unsigned int offset = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
-  enum result res = E_OK;
+  enum Result res = E_OK;
 
   reg->CONFIG |= CONFIG_NORELOAD(offset);
   if (unit->base.part != SCT_UNIFIED)
@@ -115,7 +115,7 @@ static enum result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
+static enum Result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
 {
   const unsigned int offset = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
@@ -140,7 +140,7 @@ static enum result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *object, const void *configBase)
+static enum Result unitInit(void *object, const void *configBase)
 {
   const struct SctPwmUnitConfig * const config = configBase;
   assert(config);
@@ -149,7 +149,7 @@ static enum result unitInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct SctPwmUnit * const unit = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = SctBase->init(object, &baseConfig)) != E_OK)
@@ -219,7 +219,7 @@ static void unitDeinit(void *object)
   SctBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
-static enum result singleEdgeInit(void *object, const void *configBase)
+static enum Result singleEdgeInit(void *object, const void *configBase)
 {
   const struct SctPwmConfig * const config = configBase;
   assert(config);
@@ -345,7 +345,7 @@ static void singleEdgeSetEdges(void *object,
   singleEdgeSetDuration(object, trailing);
 }
 /*----------------------------------------------------------------------------*/
-static enum result singleEdgeSetFrequency(void *object, uint32_t frequency)
+static enum Result singleEdgeSetFrequency(void *object, uint32_t frequency)
 {
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
@@ -353,7 +353,7 @@ static enum result singleEdgeSetFrequency(void *object, uint32_t frequency)
   return updateFrequency(unit, frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
-static enum result doubleEdgeInit(void *object, const void *configBase)
+static enum Result doubleEdgeInit(void *object, const void *configBase)
 {
   const struct SctPwmDoubleEdgeConfig * const config = configBase;
   assert(config);
@@ -571,7 +571,7 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
   reg->CONFIG &= ~CONFIG_NORELOAD(offset);
 }
 /*----------------------------------------------------------------------------*/
-static enum result doubleEdgeSetFrequency(void *object, uint32_t frequency)
+static enum Result doubleEdgeSetFrequency(void *object, uint32_t frequency)
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;

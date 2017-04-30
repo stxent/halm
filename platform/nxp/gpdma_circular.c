@@ -19,20 +19,20 @@ enum State
   STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *, enum result);
+static void interruptHandler(void *, enum Result);
 static void startTransfer(struct GpDmaCircular *, const struct GpDmaEntry *);
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *, const void *);
+static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
 static void channelSetCallback(void *, void (*)(void *), void *);
 static void channelConfigure(void *, const void *);
 
-static enum result channelEnable(void *);
+static enum Result channelEnable(void *);
 static void channelDisable(void *);
 static size_t channelPending(const void *);
 static size_t channelResidue(const void *);
-static enum result channelStatus(const void *);
+static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
 static void channelClear(void *);
@@ -57,7 +57,7 @@ static const struct DmaClass channelTable = {
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDmaCircular = &channelTable;
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object, enum result res)
+static void interruptHandler(void *object, enum Result res)
 {
   struct GpDmaCircular * const channel = object;
 
@@ -94,7 +94,7 @@ static void startTransfer(struct GpDmaCircular *channel,
   reg->CONFIG |= CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configBase)
+static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaCircularConfig * const config = configBase;
   assert(config);
@@ -105,7 +105,7 @@ static enum result channelInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct GpDmaCircular * const channel = object;
-  enum result res;
+  enum Result res;
 
   assert(config->number > 0);
 
@@ -164,7 +164,7 @@ static void channelConfigure(void *object, const void *settingsBase)
   channel->control = gpDmaBaseCalcControl(object, settings);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelEnable(void *object)
+static enum Result channelEnable(void *object)
 {
   struct GpDmaCircular * const channel = object;
 
@@ -234,7 +234,7 @@ static size_t channelResidue(const void *object)
     return 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelStatus(const void *object)
+static enum Result channelStatus(const void *object)
 {
   const struct GpDmaCircular * const channel = object;
 

@@ -11,19 +11,19 @@
 #include <halm/platform/nxp/sdmmc_defs.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-static enum result appendItem(void *object, uintptr_t address, size_t size);
+static enum Result appendItem(void *object, uintptr_t address, size_t size);
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *, const void *);
+static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
 static void channelSetCallback(void *, void (*)(void *), void *);
 static void channelConfigure(void *, const void *);
 
-static enum result channelEnable(void *);
+static enum Result channelEnable(void *);
 static void channelDisable(void *);
 static size_t channelPending(const void *);
 static size_t channelResidue(const void *);
-static enum result channelStatus(const void *);
+static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
 static void channelClear(void *);
@@ -48,7 +48,7 @@ static const struct DmaClass channelTable = {
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const DmaSdmmc = &channelTable;
 /*----------------------------------------------------------------------------*/
-static enum result appendItem(void *object, uintptr_t address, size_t size)
+static enum Result appendItem(void *object, uintptr_t address, size_t size)
 {
   struct DmaSdmmc * const channel = object;
   struct DmaSdmmcEntry * const entry = channel->list + channel->length;
@@ -76,7 +76,7 @@ static enum result appendItem(void *object, uintptr_t address, size_t size)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configBase)
+static enum Result channelInit(void *object, const void *configBase)
 {
   const struct DmaSdmmcConfig * const config = configBase;
   assert(config);
@@ -144,7 +144,7 @@ static void channelConfigure(void *object __attribute__((unused)),
 
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelEnable(void *object)
+static enum Result channelEnable(void *object)
 {
   struct DmaSdmmc * const channel = object;
   LPC_SDMMC_Type * const reg = channel->reg;
@@ -182,7 +182,7 @@ static size_t channelResidue(const void *object)
   return channel->length - (current - channel->list);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelStatus(const void *object)
+static enum Result channelStatus(const void *object)
 {
   const struct DmaSdmmc * const channel = object;
   const LPC_SDMMC_Type * const reg = channel->reg;

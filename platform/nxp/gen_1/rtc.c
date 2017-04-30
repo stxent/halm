@@ -10,11 +10,11 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-static enum result clkInit(void *, const void *);
+static enum Result clkInit(void *, const void *);
 static void clkDeinit(void *);
-static enum result clkCallback(void *, void (*)(void *), void *);
-static enum result clkSetAlarm(void *, time64_t);
-static enum result clkSetTime(void *, time64_t);
+static enum Result clkCallback(void *, void (*)(void *), void *);
+static enum Result clkSetAlarm(void *, time64_t);
+static enum Result clkSetTime(void *, time64_t);
 static time64_t clkTime(void *);
 /*----------------------------------------------------------------------------*/
 static const struct RtClockClass clkTable = {
@@ -51,13 +51,13 @@ static void interruptHandler(void *object)
     clock->callback(clock->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result clkInit(void *object, const void *configBase)
+static enum Result clkInit(void *object, const void *configBase)
 {
   const struct RtcConfig * const config = configBase;
   assert(config);
 
   struct Rtc * const clock = object;
-  enum result res;
+  enum Result res;
 
   /* Call base class constructor */
   if ((res = RtcBase->init(object, 0)) != E_OK)
@@ -101,7 +101,7 @@ static void clkDeinit(void *object __attribute__((unused)))
   RtcBase->deinit(clock);
 }
 /*----------------------------------------------------------------------------*/
-static enum result clkCallback(void *object, void (*callback)(void *),
+static enum Result clkCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Rtc * const clock = object;
@@ -111,7 +111,7 @@ static enum result clkCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result clkSetAlarm(void *object, time64_t alarmTime)
+static enum Result clkSetAlarm(void *object, time64_t alarmTime)
 {
   struct Rtc * const clock = object;
   LPC_RTC_Type * const reg = clock->base.reg;
@@ -137,7 +137,7 @@ static enum result clkSetAlarm(void *object, time64_t alarmTime)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result clkSetTime(void *object, time64_t currentTime)
+static enum Result clkSetTime(void *object, time64_t currentTime)
 {
   struct Rtc * const clock = object;
   LPC_RTC_Type * const reg = clock->base.reg;

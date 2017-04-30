@@ -11,12 +11,12 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
-static enum result unitSetDescriptor(struct GpTimerCaptureUnit *, uint8_t,
+static enum Result unitSetDescriptor(struct GpTimerCaptureUnit *, uint8_t,
     const struct GpTimerCapture *, struct GpTimerCapture *);
-static enum result unitInit(void *, const void *);
+static enum Result unitInit(void *, const void *);
 static void unitDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *, const void *);
+static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 static void channelEnable(void *);
 static void channelDisable(void *);
@@ -64,7 +64,7 @@ static void interruptHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitSetDescriptor(struct GpTimerCaptureUnit *unit,
+static enum Result unitSetDescriptor(struct GpTimerCaptureUnit *unit,
     uint8_t channel, const struct GpTimerCapture *state,
     struct GpTimerCapture *capture)
 {
@@ -75,14 +75,14 @@ static enum result unitSetDescriptor(struct GpTimerCaptureUnit *unit,
       state, capture) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-static enum result unitInit(void *object, const void *configBase)
+static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpTimerCaptureUnitConfig * const config = configBase;
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
   };
   struct GpTimerCaptureUnit * const unit = object;
-  enum result res;
+  enum Result res;
 
   const uint32_t clockFrequency = gpTimerGetClock(object);
   const uint32_t timerFrequency = config->frequency ?
@@ -127,14 +127,14 @@ static void unitDeinit(void *object)
   GpTimerBase->deinit(unit);
 }
 /*----------------------------------------------------------------------------*/
-static enum result channelInit(void *object, const void *configBase)
+static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerCaptureConfig * const config = configBase;
   assert(config);
 
   struct GpTimerCapture * const capture = object;
   struct GpTimerCaptureUnit * const unit = config->parent;
-  enum result res;
+  enum Result res;
 
   /* Initialize output pin */
   capture->channel = gpTimerConfigCapturePin(unit->base.channel,

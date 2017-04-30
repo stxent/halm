@@ -18,7 +18,7 @@ struct SimpleGpioBus
   uint8_t number;
 };
 /*----------------------------------------------------------------------------*/
-static enum result busInit(void *, const void *);
+static enum Result busInit(void *, const void *);
 static void busDeinit(void *);
 static uint32_t busRead(void *);
 static void busWrite(void *, uint32_t);
@@ -34,7 +34,7 @@ static const struct GpioBusClass gpioBusTable = {
 /*----------------------------------------------------------------------------*/
 const struct GpioBusClass * const SimpleGpioBus = &gpioBusTable;
 /*----------------------------------------------------------------------------*/
-static enum result busInit(void *object, const void *configBase)
+static enum Result busInit(void *object, const void *configBase)
 {
   const struct SimpleGpioBusConfig * const config = configBase;
   struct SimpleGpioBus * const bus = object;

@@ -56,7 +56,7 @@ void pmChangeState(enum PmState state);
  * @param callback Callback function.
  * @return @b E_OK on success.
  */
-enum result pmRegister(void (*)(void *, enum PmState), void *object);
+enum Result pmRegister(void (*)(void *, enum PmState), void *object);
 /*----------------------------------------------------------------------------*/
 /**
  * Unregister the callback function.

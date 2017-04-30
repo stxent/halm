@@ -33,7 +33,7 @@ struct WorkDescriptor
   void *argument;
 };
 /*----------------------------------------------------------------------------*/
-static enum result wqInit(void *, const void *);
+static enum Result wqInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass wqTable = {
     .size = sizeof(struct SimpleWorkQueue),
@@ -44,7 +44,7 @@ static const struct EntityClass wqTable = {
 static const struct EntityClass * const SimpleWorkQueue = &wqTable;
 static struct SimpleWorkQueue *wqHandler = 0;
 /*----------------------------------------------------------------------------*/
-enum result workQueueAdd(void (*callback)(void *), void *argument)
+enum Result workQueueAdd(void (*callback)(void *), void *argument)
 {
   assert(wqHandler != 0);
 
@@ -67,7 +67,7 @@ enum result workQueueAdd(void (*callback)(void *), void *argument)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-enum result workQueueInit(size_t size)
+enum Result workQueueInit(size_t size)
 {
   assert(wqHandler == 0);
 
@@ -107,11 +107,11 @@ void workQueueStart(void *argument __attribute__((unused)))
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result wqInit(void *object, const void *configBase)
+static enum Result wqInit(void *object, const void *configBase)
 {
   const struct SimpleWorkQueueConfig * const config = configBase;
   struct SimpleWorkQueue * const wq = object;
-  enum result res;
+  enum Result res;
 
   res = queueInit(&wq->queue, sizeof(struct WorkDescriptor), config->size);
   if (res != E_OK)

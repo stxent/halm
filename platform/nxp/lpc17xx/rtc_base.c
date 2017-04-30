@@ -10,7 +10,7 @@
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(const struct RtcBase *, struct RtcBase *);
 /*----------------------------------------------------------------------------*/
-static enum result clkInit(void *, const void *);
+static enum Result clkInit(void *, const void *);
 static void clkDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass clkTable = {
@@ -32,7 +32,7 @@ void RTC_ISR(void)
   descriptor->handler(descriptor);
 }
 /*----------------------------------------------------------------------------*/
-static enum result clkInit(void *object,
+static enum Result clkInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct RtcBase * const clock = object;

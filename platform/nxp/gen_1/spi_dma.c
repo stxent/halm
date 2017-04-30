@@ -13,20 +13,20 @@
 #define DUMMY_FRAME 0xFF
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
-static enum result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
+static enum Result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static void dmaSetupRx(struct Dma *, struct Dma *);
 static void dmaSetupTx(struct Dma *, struct Dma *);
-static enum result getStatus(const struct SpiDma *);
+static enum Result getStatus(const struct SpiDma *);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result spiInit(void *, const void *);
+static enum Result spiInit(void *, const void *);
 static void spiDeinit(void *);
-static enum result spiSetCallback(void *, void (*)(void *), void *);
-static enum result spiGetParam(void *, enum IfParameter, void *);
-static enum result spiSetParam(void *, enum IfParameter, const void *);
+static enum Result spiSetCallback(void *, void (*)(void *), void *);
+static enum Result spiGetParam(void *, enum IfParameter, void *);
+static enum Result spiSetParam(void *, enum IfParameter, const void *);
 static size_t spiRead(void *, void *, size_t);
 static size_t spiWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -52,7 +52,7 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
+static enum Result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
   const struct GpDmaConfig dmaConfigs[] = {
@@ -145,10 +145,10 @@ static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
   dmaConfigure(tx, &dmaSettings[1]);
 }
 /*----------------------------------------------------------------------------*/
-static enum result getStatus(const struct SpiDma *interface)
+static enum Result getStatus(const struct SpiDma *interface)
 {
   LPC_SSP_Type * const reg = interface->base.reg;
-  enum result res;
+  enum Result res;
 
   if (reg->SR & SR_BSY)
     return E_BUSY;
@@ -168,7 +168,7 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum result spiInit(void *object, const void *configBase)
+static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
   assert(config);
@@ -181,7 +181,7 @@ static enum result spiInit(void *object, const void *configBase)
       .cs = 0
   };
   struct SpiDma * const interface = object;
-  enum result res;
+  enum Result res;
 
   assert(config->dma[0] != config->dma[1]);
 
@@ -248,7 +248,7 @@ static void spiDeinit(void *object)
   SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiSetCallback(void *object, void (*callback)(void *),
+static enum Result spiSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SpiDma * const interface = object;
@@ -258,7 +258,7 @@ static enum result spiSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiGetParam(void *object, enum IfParameter parameter,
+static enum Result spiGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct SpiDma * const interface = object;
@@ -282,7 +282,7 @@ static enum result spiGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiSetParam(void *object, enum IfParameter parameter,
+static enum Result spiSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct SpiDma * const interface = object;
@@ -341,7 +341,7 @@ static size_t spiRead(void *object, void *buffer, size_t length)
     goto error;
   }
 
-  enum result res = E_OK;
+  enum Result res = E_OK;
 
   if (interface->blocking)
     while ((res = getStatus(interface)) == E_BUSY);
@@ -385,7 +385,7 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
     goto error;
   }
 
-  enum result res = E_OK;
+  enum Result res = E_OK;
 
   if (interface->blocking)
     while ((res = getStatus(interface)) == E_BUSY);

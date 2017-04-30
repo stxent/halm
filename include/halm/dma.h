@@ -48,11 +48,11 @@ struct DmaClass
   void (*configure)(void *, const void *);
 
   /* Transfer management */
-  enum result (*enable)(void *);
+  enum Result (*enable)(void *);
   void (*disable)(void *);
   size_t (*pending)(const void *);
   size_t (*residue)(const void *);
-  enum result (*status)(const void *);
+  enum Result (*status)(const void *);
 
   /* List management */
   void (*append)(void *, void *, const void *, size_t);
@@ -92,7 +92,7 @@ static inline void dmaConfigure(void *channel, const void *config)
  * @param channel Pointer to a Dma object.
  * @return @b E_OK on success.
  */
-static inline enum result dmaEnable(void *channel)
+static inline enum Result dmaEnable(void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->enable(channel);
 }
@@ -132,7 +132,7 @@ static inline size_t dmaResidue(const void *channel)
  * @return @b E_OK when the transfer is completed successfully; @b E_BUSY when
  * the transfer is not finished yet; other error types in case of errors.
  */
-static inline enum result dmaStatus(const void *channel)
+static inline enum Result dmaStatus(const void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->status(channel);
 }

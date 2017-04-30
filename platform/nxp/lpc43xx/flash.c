@@ -15,11 +15,11 @@ static bool isSectorPositionValid(const struct Flash *, size_t);
 static uint32_t positionToAddress(const struct Flash *, size_t);
 static size_t totalFlashSize(size_t);
 /*----------------------------------------------------------------------------*/
-static enum result flashInit(void *, const void *);
+static enum Result flashInit(void *, const void *);
 static void flashDeinit(void *);
-static enum result flashSetCallback(void *, void (*)(void *), void *);
-static enum result flashGetParam(void *, enum IfParameter, void *);
-static enum result flashSetParam(void *, enum IfParameter, const void *);
+static enum Result flashSetCallback(void *, void (*)(void *), void *);
+static enum Result flashGetParam(void *, enum IfParameter, void *);
+static enum Result flashSetParam(void *, enum IfParameter, const void *);
 static size_t flashRead(void *, void *, size_t);
 static size_t flashWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -75,7 +75,7 @@ static size_t totalFlashSize(size_t size)
   return FLASH_SIZE_DECODE_A(size) + FLASH_SIZE_DECODE_B(size);
 }
 /*----------------------------------------------------------------------------*/
-static enum result flashInit(void *object,
+static enum Result flashInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct Flash * const interface = object;
@@ -117,14 +117,14 @@ static void flashDeinit(void *object __attribute__((unused)))
 
 }
 /*----------------------------------------------------------------------------*/
-static enum result flashSetCallback(void *object __attribute__((unused)),
+static enum Result flashSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result flashGetParam(void *object, enum IfParameter parameter,
+static enum Result flashGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Flash * const interface = object;
@@ -148,7 +148,7 @@ static enum result flashGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result flashSetParam(void *object, enum IfParameter parameter,
+static enum Result flashSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Flash * const interface = object;

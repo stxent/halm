@@ -23,11 +23,11 @@ struct PmHandler
   struct List objectList;
 };
 /*----------------------------------------------------------------------------*/
-static enum result pmHandlerInit(void *, const void *);
+static enum Result pmHandlerInit(void *, const void *);
 static void notifyHandlerEntries(enum PmState);
 /*----------------------------------------------------------------------------*/
-extern enum result pmCoreChangeState(enum PmState);
-extern enum result pmPlatformChangeState(enum PmState);
+extern enum Result pmCoreChangeState(enum PmState);
+extern enum Result pmPlatformChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct PmHandler),
@@ -38,7 +38,7 @@ static const struct EntityClass handlerTable = {
 static const struct EntityClass * const PmHandler = &handlerTable;
 static struct PmHandler *pmHandler = 0;
 /*----------------------------------------------------------------------------*/
-static enum result pmHandlerInit(void *object,
+static enum Result pmHandlerInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct PmHandler * const handler = object;
@@ -74,7 +74,7 @@ void pmChangeState(enum PmState state)
   pmCoreChangeState(state);
 }
 /*----------------------------------------------------------------------------*/
-enum result pmRegister(void (*callback)(void *, enum PmState), void *object)
+enum Result pmRegister(void (*callback)(void *, enum PmState), void *object)
 {
   if (!pmHandler)
     pmHandler = init(PmHandler, 0);

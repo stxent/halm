@@ -23,7 +23,7 @@ struct TimerBlockDescriptor
 static bool setDescriptor(uint8_t, const struct GpTimerBase *,
     struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *, const void *);
+static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass tmrTable = {
@@ -172,7 +172,7 @@ uint32_t gpTimerGetClock(const struct GpTimerBase *timer
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-static enum result tmrInit(void *object, const void *configBase)
+static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerBaseConfig * const config = configBase;
   struct GpTimerBase * const timer = object;

@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 static inline uint32_t max(uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
-static enum result sramInit(void *, const void *);
+static enum Result sramInit(void *, const void *);
 static void sramDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass sramTable = {
@@ -34,7 +34,7 @@ static inline uint32_t max(uint32_t a, uint32_t b)
   return a > b ? a : b;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sramInit(void *object, const void *configBase)
+static enum Result sramInit(void *object, const void *configBase)
 {
   const struct EmcSramConfig * const config = configBase;
   assert(config);
