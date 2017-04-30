@@ -68,7 +68,7 @@ static void enableInterrupt(const struct PinInterrupt *interrupt)
 {
   const unsigned int channel = interrupt->channel;
   const uint32_t mask = 1UL << interrupt->pin.offset;
-  const enum pinEvent event = interrupt->event;
+  const enum PinEvent event = interrupt->event;
 
   /* Clear pending interrupt flag */
   LPC_GPIO_INT->PORT[channel].CLR = mask;

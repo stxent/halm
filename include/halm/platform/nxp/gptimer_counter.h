@@ -15,7 +15,7 @@ extern const struct TimerClass * const GpTimerCounter;
 struct GpTimerCounterConfig
 {
   /** Mandatory: active edge. */
-  enum pinEvent edge;
+  enum PinEvent edge;
   /** Mandatory: pin used as an input. */
   PinNumber pin;
   /** Optional: timer interrupt priority. */

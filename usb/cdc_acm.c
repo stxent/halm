@@ -25,8 +25,8 @@ struct CdcUsbRequest
 #endif
 };
 /*----------------------------------------------------------------------------*/
-static void cdcDataReceived(void *, struct UsbRequest *, enum usbRequestStatus);
-static void cdcDataSent(void *, struct UsbRequest *, enum usbRequestStatus);
+static void cdcDataReceived(void *, struct UsbRequest *, enum UsbRequestStatus);
+static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
 static inline size_t getPacketSize(const struct CdcAcm *);
 static bool resetEndpoints(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
@@ -53,7 +53,7 @@ static const struct InterfaceClass interfaceTable = {
 const struct InterfaceClass * const CdcAcm = &interfaceTable;
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status)
+    enum UsbRequestStatus status)
 {
   struct CdcAcm * const interface = argument;
   bool event = false;
@@ -76,7 +76,7 @@ static void cdcDataReceived(void *argument, struct UsbRequest *request,
 }
 /*----------------------------------------------------------------------------*/
 static void cdcDataSent(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status)
+    enum UsbRequestStatus status)
 {
   struct CdcAcm * const interface = argument;
   const size_t maxPacketSize = getPacketSize(interface);
@@ -185,7 +185,7 @@ void cdcAcmOnParametersChanged(struct CdcAcm *interface)
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
 {
-  switch ((enum usbDeviceEvent)event)
+  switch ((enum UsbDeviceEvent)event)
   {
     case USB_DEVICE_EVENT_RESET:
       if (resetEndpoints(interface))
@@ -356,7 +356,7 @@ static enum result interfaceGet(void *object, enum ifOption option,
       break;
   }
 
-  switch ((enum cdcAcmOption)option)
+  switch ((enum CdcAcmOption)option)
   {
     case IF_CDC_ACM_STATUS:
     {

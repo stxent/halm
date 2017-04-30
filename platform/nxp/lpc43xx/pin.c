@@ -11,7 +11,7 @@
 #define UNPACK_CHANNEL(value)       ((value) & 0x07)
 #define UNPACK_OFFSET(value)        (((value) >> 3) & 0x1F)
 /*----------------------------------------------------------------------------*/
-enum pinDriveType
+enum PinDriveType
 {
   NORMAL_DRIVE_PIN,
   HIGH_DRIVE_PIN,
@@ -21,7 +21,7 @@ enum pinDriveType
 static volatile uint32_t *calcControlReg(struct PinData);
 static struct PinData calcPinData(volatile uint32_t *);
 static void commonPinInit(struct Pin);
-static enum pinDriveType detectPinDriveType(volatile uint32_t *);
+static enum PinDriveType detectPinDriveType(volatile uint32_t *);
 /*----------------------------------------------------------------------------*/
 const struct PinGroupEntry gpioPins[] = {
     {
@@ -321,7 +321,7 @@ static void commonPinInit(struct Pin pin)
   pinSetSlewRate(pin, PIN_SLEW_FAST);
 }
 /*----------------------------------------------------------------------------*/
-static enum pinDriveType detectPinDriveType(volatile uint32_t *reg)
+static enum PinDriveType detectPinDriveType(volatile uint32_t *reg)
 {
   const struct PinData pin = calcPinData(reg);
   bool highDrive = false;
@@ -460,7 +460,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   *reg = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetPull(struct Pin pin, enum pinPull pull)
+void pinSetPull(struct Pin pin, enum PinPull pull)
 {
   if (!pin.reg)
     return;
@@ -486,7 +486,7 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
   *reg = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
+void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   if (pin.data.port == PORT_I2C)
   {
@@ -504,7 +504,7 @@ void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
     return;
 
   volatile uint32_t * const reg = pin.reg;
-  const enum pinDriveType type = detectPinDriveType(reg);
+  const enum PinDriveType type = detectPinDriveType(reg);
   uint32_t value = *reg & ~(SFS_STRENGTH_MASK | SFS_ZIF);
 
   if (type == HIGH_SPEED_PIN)

@@ -20,7 +20,7 @@
 
 #define TX_QUEUE_LENGTH   24
 /*----------------------------------------------------------------------------*/
-enum command
+enum Command
 {
   SEARCH_ROM  = 0xF0,
   READ_ROM    = 0x33,
@@ -28,7 +28,7 @@ enum command
   SKIP_ROM    = 0xCC
 };
 /*----------------------------------------------------------------------------*/
-enum state
+enum State
 {
   STATE_IDLE,
   STATE_RESET,
@@ -116,7 +116,7 @@ static void standardInterruptHandler(void *object)
   {
     const uint16_t data = ~reg->DR;
 
-    switch ((enum state)interface->state)
+    switch ((enum State)interface->state)
     {
       case STATE_RECEIVE:
         if (!(data & DATA_MASK))
@@ -194,7 +194,7 @@ static void searchInterruptHandler(void *object)
   {
     const uint16_t data = ~reg->DR;
 
-    switch ((enum state)interface->state)
+    switch ((enum State)interface->state)
     {
       case STATE_SEARCH_START:
         if (++interface->bit == 8)
@@ -448,7 +448,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
   struct OneWireSsp * const interface = object;
 
 #ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
-  switch ((enum oneWireOption)option)
+  switch ((enum OneWireOption)option)
   {
     case IF_ONE_WIRE_START_SEARCH:
       interface->address = 0;

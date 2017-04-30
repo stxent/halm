@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include <xcore/error.h>
 /*----------------------------------------------------------------------------*/
-enum pmState
+enum PmState
 {
   /** Normal operational mode. */
   PM_ACTIVE,
@@ -48,7 +48,7 @@ enum pmState
  * that mode to the active state.
  * @param state Requested low-power state.
  */
-void pmChangeState(enum pmState state);
+void pmChangeState(enum PmState state);
 /*----------------------------------------------------------------------------*/
 /**
  * Register a callback function.
@@ -56,7 +56,7 @@ void pmChangeState(enum pmState state);
  * @param callback Callback function.
  * @return @b E_OK on success.
  */
-enum result pmRegister(void (*)(void *, enum pmState), void *object);
+enum result pmRegister(void (*)(void *, enum PmState), void *object);
 /*----------------------------------------------------------------------------*/
 /**
  * Unregister the callback function.

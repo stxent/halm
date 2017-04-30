@@ -16,7 +16,7 @@
  * @b CLK_DIV6 is only used for CAN1, CAN2 and CAN Filtering peripherals.
  * @b CLK_DIV8 is unavailable for CAN peripherals.
  */
-void sysClockControl(enum sysClockBranch branch, enum sysClockDiv divisor)
+void sysClockControl(enum SysClockBranch branch, enum SysClockDiv divisor)
 {
   unsigned int value;
 

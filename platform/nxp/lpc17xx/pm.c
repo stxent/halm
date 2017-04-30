@@ -8,9 +8,9 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-void pmPlatformChangeState(enum pmState);
+void pmPlatformChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
-void pmPlatformChangeState(enum pmState state)
+void pmPlatformChangeState(enum PmState state)
 {
   static const uint32_t mask =
       ~(PCON_PM_MASK | PCON_SMFLAG | PCON_DSFLAG | PCON_PDFLAG | PCON_DPDFLAG);

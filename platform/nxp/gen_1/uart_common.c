@@ -66,7 +66,7 @@ uint32_t uartGetRate(const struct UartBase *interface)
   return !config.divisor ? 0 : rate / config.divisor;
 }
 /*----------------------------------------------------------------------------*/
-void uartSetParity(struct UartBase *interface, enum uartParity parity)
+void uartSetParity(struct UartBase *interface, enum UartParity parity)
 {
   LPC_UART_Type * const reg = interface->reg;
   uint32_t value = reg->LCR & ~(LCR_PARITY | LCR_PARITY_MASK);

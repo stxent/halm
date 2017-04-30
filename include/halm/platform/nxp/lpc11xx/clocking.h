@@ -15,14 +15,14 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum clockBranch
+enum ClockBranch
 {
   CLOCK_BRANCH_MAIN,
   CLOCK_BRANCH_OUTPUT,
   CLOCK_BRANCH_WDT
 };
 /*----------------------------------------------------------------------------*/
-enum clockSource
+enum ClockSource
 {
   CLOCK_INTERNAL,
   CLOCK_EXTERNAL,
@@ -31,7 +31,7 @@ enum clockSource
   CLOCK_MAIN
 };
 /*----------------------------------------------------------------------------*/
-enum wdtFrequency
+enum WdtFrequency
 {
   /* Watchdog oscillator analog output frequency in kHz */
   WDT_FREQ_600 = 0x01,
@@ -55,7 +55,7 @@ struct CommonClockClass
 {
   struct ClockClass base;
 
-  enum clockBranch branch;
+  enum ClockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const ExternalOsc;
@@ -69,7 +69,7 @@ extern const struct CommonClockClass * const WdtClock;
 struct ClockOutputConfig
 {
   /** Mandatory: clock source. */
-  enum clockSource source;
+  enum ClockSource source;
   /** Optional: input clock divisor in the range of 1 to 255. */
   uint16_t divisor;
   /** Mandatory: output pin. */
@@ -79,7 +79,7 @@ struct ClockOutputConfig
 struct CommonClockConfig
 {
   /** Mandatory: clock source. */
-  enum clockSource source;
+  enum ClockSource source;
   /** Optional: input clock divisor in the range of 1 to 255. */
   uint16_t divisor;
 };
@@ -106,7 +106,7 @@ struct PllConfig
    *   - @b CLOCK_INTERNAL.
    *   - @b CLOCK_EXTERNAL.
    */
-  enum clockSource source;
+  enum ClockSource source;
   /**
    * Mandatory: PLL output divisor. The output divisor may be set
    * to divide by 2, 4, 8, 16.
@@ -123,7 +123,7 @@ struct PllConfig
 struct WdtOscConfig
 {
   /** Optional: oscillator frequency. */
-  enum wdtFrequency frequency;
+  enum WdtFrequency frequency;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11XX_CLOCKING_H_ */

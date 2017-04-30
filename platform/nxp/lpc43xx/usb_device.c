@@ -17,7 +17,7 @@
 /*----------------------------------------------------------------------------*/
 #define CONTROL_OUT 0
 /*----------------------------------------------------------------------------*/
-enum endpointStatus
+enum EndpointStatus
 {
   STATUS_IDLE,
   STATUS_DATA_PACKET,
@@ -61,7 +61,7 @@ static void devSetConnected(void *, bool);
 static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
-static enum usbSpeed devGetSpeed(const void *);
+static enum UsbSpeed devGetSpeed(const void *);
 static enum result devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
@@ -99,7 +99,7 @@ static void epExtractDataLength(const struct UsbDmaEndpoint *,
     struct UsbRequest *);
 static void epFlush(struct UsbDmaEndpoint *);
 static inline struct UsbRequest *epGetHeadRequest(const struct QueueHead *);
-static enum endpointStatus epGetStatus(const struct UsbDmaEndpoint *);
+static enum EndpointStatus epGetStatus(const struct UsbDmaEndpoint *);
 static void epPopDescriptor(struct UsbDmaEndpoint *);
 static void epPrime(struct UsbDmaEndpoint *);
 static enum result epReadSetupPacket(struct UsbDmaEndpoint *,
@@ -418,7 +418,7 @@ static void devSetPower(void *object, uint16_t current)
   usbControlSetPower(device->control, current);
 }
 /*----------------------------------------------------------------------------*/
-static enum usbSpeed devGetSpeed(const void *object)
+static enum UsbSpeed devGetSpeed(const void *object)
 {
   const struct UsbDevice * const device = object;
   const LPC_USB_Type * const reg = device->base.reg;
@@ -446,12 +446,12 @@ static void epCommonHandler(struct UsbDmaEndpoint *ep)
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
   struct QueueHead * const head = &ep->device->base.queueHeads[index];
 
-  enum endpointStatus packetStatus;
+  enum EndpointStatus packetStatus;
 
   while ((packetStatus = epGetStatus(ep)) != STATUS_IDLE)
   {
     struct UsbRequest * const request = epGetHeadRequest(head);
-    enum usbRequestStatus requestStatus = USB_REQUEST_ERROR;
+    enum UsbRequestStatus requestStatus = USB_REQUEST_ERROR;
 
     if (ep->address & USB_EP_DIRECTION_IN)
     {
@@ -482,13 +482,13 @@ static void epControlHandler(struct UsbDmaEndpoint *ep)
 {
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
   struct QueueHead * const head = &ep->device->base.queueHeads[index];
-  const enum endpointStatus packetStatus = epGetStatus(ep);
+  const enum EndpointStatus packetStatus = epGetStatus(ep);
 
   if (packetStatus == STATUS_IDLE)
     return;
 
   struct UsbRequest * const request = epGetHeadRequest(head);
-  enum usbRequestStatus requestStatus = USB_REQUEST_ERROR;
+  enum UsbRequestStatus requestStatus = USB_REQUEST_ERROR;
 
   if (packetStatus == STATUS_SETUP_PACKET)
   {
@@ -652,7 +652,7 @@ static inline struct UsbRequest *epGetHeadRequest(const struct QueueHead *head)
   return (struct UsbRequest *)descriptor->listNode;
 }
 /*----------------------------------------------------------------------------*/
-static enum endpointStatus epGetStatus(const struct UsbDmaEndpoint *ep)
+static enum EndpointStatus epGetStatus(const struct UsbDmaEndpoint *ep)
 {
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
   const struct QueueHead * const head = &ep->device->base.queueHeads[index];

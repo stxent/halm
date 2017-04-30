@@ -31,34 +31,34 @@ enum
   PIN_ANALOG  = 0x7E
 };
 /*----------------------------------------------------------------------------*/
-enum pinDirection
+enum PinDirection
 {
   PIN_INPUT,
   PIN_OUTPUT
 };
 /*----------------------------------------------------------------------------*/
-enum pinEvent
+enum PinEvent
 {
   PIN_RISING,
   PIN_FALLING,
   PIN_TOGGLE
 };
 /*----------------------------------------------------------------------------*/
-enum pinPull
+enum PinPull
 {
   PIN_NOPULL,
   PIN_PULLUP,
   PIN_PULLDOWN
 };
 /*----------------------------------------------------------------------------*/
-enum pinSlewRate
+enum PinSlewRate
 {
   PIN_SLEW_FAST,
   PIN_SLEW_NORMAL,
   PIN_SLEW_SLOW
 };
 /*----------------------------------------------------------------------------*/
-enum pinType
+enum PinType
 {
   PIN_PUSHPULL,
   PIN_OPENDRAIN

@@ -14,7 +14,7 @@
 #include <halm/pm.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-enum mode
+enum Mode
 {
   MODE_LISTENER,
   MODE_ACTIVE,
@@ -22,13 +22,13 @@ enum mode
 };
 /*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(struct Can *, uint32_t);
-static void changeMode(struct Can *, enum mode);
+static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
 static void interruptHandler(void *);
 static uint32_t sendMessage(struct Can *, const struct CanMessage *, uint32_t);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_CAN_PM
-static void powerStateHandler(void *, enum pmState);
+static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result canInit(void *, const void *);
@@ -68,7 +68,7 @@ static uint32_t calcBusTimings(struct Can *interface, uint32_t rate)
   return regValue;
 }
 /*----------------------------------------------------------------------------*/
-static void changeMode(struct Can *interface, enum mode mode)
+static void changeMode(struct Can *interface, enum Mode mode)
 {
   if (interface->mode != mode)
   {
@@ -246,7 +246,7 @@ static uint32_t sendMessage(struct Can *interface,
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_CAN_PM
-static void powerStateHandler(void *object, enum pmState state)
+static void powerStateHandler(void *object, enum PmState state)
 {
   if (state == PM_ACTIVE)
   {
@@ -386,7 +386,7 @@ static enum result canSet(void *object, enum ifOption option,
 {
   struct Can * const interface = object;
 
-  switch ((enum canOption)option)
+  switch ((enum CanOption)option)
   {
     case IF_CAN_ACTIVE:
       changeMode(interface, MODE_ACTIVE);

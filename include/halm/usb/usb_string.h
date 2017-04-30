@@ -12,10 +12,10 @@
 /*----------------------------------------------------------------------------*/
 struct UsbDescriptor;
 
-typedef void (*usbStringFunctor)(void *, enum usbLangId, struct UsbDescriptor *,
+typedef void (*usbStringFunctor)(void *, enum UsbLangId, struct UsbDescriptor *,
     void *);
 /*----------------------------------------------------------------------------*/
-enum usbStringType
+enum UsbStringType
 {
   USB_STRING_HEADER,
   USB_STRING_VENDOR,
@@ -31,10 +31,10 @@ struct UsbString
   uint8_t type;
 };
 /*----------------------------------------------------------------------------*/
-struct UsbString usbStringBuild(usbStringFunctor, void *, enum usbStringType);
-void usbStringHeader(struct UsbDescriptor *, void *, enum usbLangId);
+struct UsbString usbStringBuild(usbStringFunctor, void *, enum UsbStringType);
+void usbStringHeader(struct UsbDescriptor *, void *, enum UsbLangId);
 void usbStringMultiHeader(struct UsbDescriptor *, void *,
-    const enum usbLangId *, size_t);
+    const enum UsbLangId *, size_t);
 void usbStringWrap(struct UsbDescriptor *, void *, const char *);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_STRING_H_ */

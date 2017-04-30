@@ -12,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
-  static const enum sysClockBranch clocksToDisable[] = {
+  static const enum SysClockBranch clocksToDisable[] = {
       CLK_APB3_I2C1,
       CLK_APB3_DAC,
       CLK_APB3_ADC0,

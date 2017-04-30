@@ -24,7 +24,7 @@ static void processGetStatusRequest(struct Dfu *, void *, uint16_t *);
 static enum result processUploadRequest(struct Dfu *, uint16_t, void *,
     uint16_t *);
 static void resetDriver(struct Dfu *);
-static void setStatus(struct Dfu *, enum dfuStatus);
+static void setStatus(struct Dfu *, enum DfuStatus);
 static inline void toLittleEndian24(uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result driverInit(void *, const void *);
@@ -142,7 +142,7 @@ static void onTimerOverflow(void *argument)
 
   timerDisable(driver->timer);
 
-  switch ((enum dfuState)driver->state)
+  switch ((enum DfuState)driver->state)
   {
     case STATE_DFU_DNBUSY:
       driver->state = STATE_DFU_DNLOAD_SYNC;
@@ -211,7 +211,7 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
 {
   const bool enableTimer = driver->timer && driver->timeout;
 
-  switch ((enum dfuState)driver->state)
+  switch ((enum DfuState)driver->state)
   {
     case STATE_DFU_DNLOAD_SYNC:
       driver->state = enableTimer ? STATE_DFU_DNBUSY : STATE_DFU_DNLOAD_IDLE;
@@ -283,7 +283,7 @@ static void resetDriver(struct Dfu *driver)
   driver->timeout = 0;
 }
 /*----------------------------------------------------------------------------*/
-static void setStatus(struct Dfu *driver, enum dfuStatus status)
+static void setStatus(struct Dfu *driver, enum DfuStatus status)
 {
   if (status != DFU_STATUS_OK)
     driver->state = STATE_DFU_ERROR;
@@ -366,7 +366,7 @@ static enum result driverConfigure(void *object,
 
     case DFU_REQUEST_CLRSTATUS:
     {
-      switch ((enum dfuState)driver->state)
+      switch ((enum DfuState)driver->state)
       {
         case STATE_DFU_ERROR:
           driver->status = DFU_STATUS_OK;
@@ -437,7 +437,7 @@ void dfuOnDownloadCompleted(struct Dfu *driver, bool status)
 {
   driver->timeout = 0;
 
-  switch ((enum dfuState)driver->state)
+  switch ((enum DfuState)driver->state)
   {
     case STATE_DFU_DNLOAD_SYNC:
     case STATE_DFU_DNBUSY:

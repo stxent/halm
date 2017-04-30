@@ -52,8 +52,8 @@ struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);
-void pinSetPull(struct Pin, enum pinPull);
-void pinSetSlewRate(struct Pin, enum pinSlewRate);
+void pinSetPull(struct Pin, enum PinPull);
+void pinSetSlewRate(struct Pin, enum PinSlewRate);
 /*----------------------------------------------------------------------------*/
 static inline bool pinGpioValid(struct Pin pin)
 {
@@ -96,7 +96,7 @@ static inline void pinWrite(struct Pin pin, bool value)
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSetType(struct Pin pin __attribute__((unused)),
-    enum pinType type __attribute__((unused)))
+    enum PinType type __attribute__((unused)))
 {
   /* Pin type control is not supported on these devices */
 }

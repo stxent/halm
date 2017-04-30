@@ -11,8 +11,8 @@
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(struct PinData);
 static void commonPinInit(struct PinData);
-static inline enum sysBlockReset portToBlockReset(struct PinData);
-static inline enum sysClockBranch portToClockBranch(struct PinData);
+static inline enum SysBlockReset portToBlockReset(struct PinData);
+static inline enum SysClockBranch portToClockBranch(struct PinData);
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(struct PinData pin)
 {
@@ -22,11 +22,11 @@ static inline STM_GPIO_Type *calcPort(struct PinData pin)
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct PinData pin)
 {
-  const enum sysClockBranch branch = portToClockBranch(pin);
+  const enum SysClockBranch branch = portToClockBranch(pin);
 
   if (!sysClockStatus(branch))
   {
-    const enum sysBlockReset reset = portToBlockReset(pin);
+    const enum SysBlockReset reset = portToBlockReset(pin);
 
     sysClockEnable(branch);
     sysResetEnable(reset);
@@ -34,12 +34,12 @@ static void commonPinInit(struct PinData pin)
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline enum sysBlockReset portToBlockReset(struct PinData pin)
+static inline enum SysBlockReset portToBlockReset(struct PinData pin)
 {
   return RST_IOPA + pin.port;
 }
 /*----------------------------------------------------------------------------*/
-static inline enum sysClockBranch portToClockBranch(struct PinData pin)
+static inline enum SysClockBranch portToClockBranch(struct PinData pin)
 {
   return CLK_IOPA + pin.port;
 }
@@ -137,7 +137,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   reg->CR[index] = configValue;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetPull(struct Pin pin, enum pinPull pull)
+void pinSetPull(struct Pin pin, enum PinPull pull)
 {
   const unsigned int index = pin.data.offset >> 3;
   STM_GPIO_Type * const reg = pin.reg;
@@ -159,7 +159,7 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
   reg->CR[index] = configValue;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
+void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   const unsigned int index = pin.data.offset >> 3;
   STM_GPIO_Type * const reg = pin.reg;
@@ -190,7 +190,7 @@ void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
   reg->CR[index] = configValue;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetType(struct Pin pin, enum pinType type)
+void pinSetType(struct Pin pin, enum PinType type)
 {
   const unsigned int index = pin.data.offset >> 3;
   STM_GPIO_Type * const reg = pin.reg;

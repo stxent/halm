@@ -97,7 +97,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   *reg = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetPull(struct Pin pin, enum pinPull pull)
+void pinSetPull(struct Pin pin, enum PinPull pull)
 {
   volatile uint32_t * const reg = calcPinMode(pin.data);
   uint32_t value = *reg & ~PIN_OFFSET(PIN_MASK, pin.data.offset);
@@ -120,7 +120,7 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
   *reg = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
+void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   /* Slew rate control is available only for I2C pins */
   if (pin.data.port == 0 && (pin.data.offset >= 27 && pin.data.offset <= 28))
@@ -138,7 +138,7 @@ void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
   }
 }
 /*----------------------------------------------------------------------------*/
-void pinSetType(struct Pin pin, enum pinType type)
+void pinSetType(struct Pin pin, enum PinType type)
 {
   volatile uint32_t * const reg = calcPinType(pin.data);
   uint32_t value = *reg;

@@ -27,7 +27,7 @@ struct DmaHandler
   uint8_t connections[16];
 };
 /*----------------------------------------------------------------------------*/
-static unsigned int dmaHandlerAllocate(struct GpDmaBase *, enum gpDmaEvent);
+static unsigned int dmaHandlerAllocate(struct GpDmaBase *, enum GpDmaEvent);
 static void dmaHandlerAttach(void);
 static void dmaHandlerDetach(void);
 static void dmaHandlerFree(struct GpDmaBase *);
@@ -49,7 +49,7 @@ static const struct EntityClass channelTable = {
     .deinit = channelDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const enum gpDmaEvent eventMap[16][4] = {
+static const enum GpDmaEvent eventMap[16][4] = {
     {GPDMA_SPIFI,   GPDMA_SCT_OUT2,   GPDMA_SGPIO14,    GPDMA_MAT3_1},
     {GPDMA_MAT0_0,  GPDMA_UART0_TX,   GPDMA_EVENT_END,  GPDMA_EVENT_END},
     {GPDMA_MAT0_1,  GPDMA_UART0_RX,   GPDMA_EVENT_END,  GPDMA_EVENT_END},
@@ -193,7 +193,7 @@ void GPDMA_ISR(void)
 }
 /*----------------------------------------------------------------------------*/
 static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
-    enum gpDmaEvent event)
+    enum GpDmaEvent event)
 {
   size_t entryIndex = 0, entryOffset = 0;
   unsigned int minValue = 0;

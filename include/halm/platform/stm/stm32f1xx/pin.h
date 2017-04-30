@@ -25,9 +25,9 @@ struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);
-void pinSetPull(struct Pin, enum pinPull);
-void pinSetType(struct Pin, enum pinType);
-void pinSetSlewRate(struct Pin, enum pinSlewRate);
+void pinSetPull(struct Pin, enum PinPull);
+void pinSetType(struct Pin, enum PinType);
+void pinSetSlewRate(struct Pin, enum PinSlewRate);
 /*----------------------------------------------------------------------------*/
 static inline bool pinRead(struct Pin pin)
 {

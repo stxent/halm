@@ -22,8 +22,8 @@ struct ClockDescriptor
   volatile uint32_t divider;
 };
 /*----------------------------------------------------------------------------*/
-static struct ClockDescriptor *calcBranchDescriptor(enum clockBranch);
-static uint32_t calcPllFrequency(uint16_t, uint8_t, enum clockSource);
+static struct ClockDescriptor *calcBranchDescriptor(enum ClockBranch);
+static uint32_t calcPllFrequency(uint16_t, uint8_t, enum ClockSource);
 static uint32_t calcPllValues(uint16_t, uint8_t);
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
@@ -193,7 +193,7 @@ static uint32_t pllFrequency = 0;
 static uint32_t wdtFrequency = 0;
 uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY, 3);
 /*----------------------------------------------------------------------------*/
-static struct ClockDescriptor *calcBranchDescriptor(enum clockBranch branch)
+static struct ClockDescriptor *calcBranchDescriptor(enum ClockBranch branch)
 {
   volatile uint32_t *base = 0;
 
@@ -220,7 +220,7 @@ static struct ClockDescriptor *calcBranchDescriptor(enum clockBranch branch)
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
-    enum clockSource source)
+    enum ClockSource source)
 {
   assert(source == CLOCK_EXTERNAL || source == CLOCK_INTERNAL);
 

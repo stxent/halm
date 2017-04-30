@@ -17,7 +17,7 @@
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
-enum sysBlockPower
+enum SysBlockPower
 {
   PWR_TIM0  = 1,
   PWR_TIM1  = 2,
@@ -49,7 +49,7 @@ enum sysBlockPower
 };
 /*----------------------------------------------------------------------------*/
 /* Divider values for peripheral clock control registers */
-enum sysClockDiv
+enum SysClockDiv
 {
   CLK_DIV1 = 0,
   CLK_DIV2 = 1,
@@ -59,7 +59,7 @@ enum sysClockDiv
 };
 /*----------------------------------------------------------------------------*/
 /* Peripheral clock selection registers */
-enum sysClockBranch
+enum SysClockBranch
 {
   /* PCLKSEL0 */
   CLK_WDT      = 0,
@@ -93,26 +93,26 @@ enum sysClockBranch
   CLK_MC       = 0x20 + 30
 };
 /*----------------------------------------------------------------------------*/
-void sysClockControl(enum sysClockBranch, enum sysClockDiv);
+void sysClockControl(enum SysClockBranch, enum SysClockDiv);
 unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
 /*----------------------------------------------------------------------------*/
-static inline unsigned int sysClockDivToValue(enum sysClockDiv divisor)
+static inline unsigned int sysClockDivToValue(enum SysClockDiv divisor)
 {
   return 1 << divisor;
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerEnable(enum sysBlockPower block)
+static inline void sysPowerEnable(enum SysBlockPower block)
 {
   LPC_SC->PCONP |= 1UL << block;
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerDisable(enum sysBlockPower block)
+static inline void sysPowerDisable(enum SysBlockPower block)
 {
   LPC_SC->PCONP &= ~(1UL << block);
 }
 /*----------------------------------------------------------------------------*/
-static inline bool sysPowerStatus(enum sysBlockPower block)
+static inline bool sysPowerStatus(enum SysBlockPower block)
 {
   return (LPC_SC->PCONP & (1UL << block)) != 0;
 }

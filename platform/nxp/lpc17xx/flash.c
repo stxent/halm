@@ -132,7 +132,7 @@ static enum result flashSet(void *object, enum ifOption option,
   struct Flash * const interface = object;
 
   /* Additional Flash options */
-  switch ((enum flashOption)option)
+  switch ((enum FlashOption)option)
   {
     case IF_FLASH_ERASE_SECTOR:
     {

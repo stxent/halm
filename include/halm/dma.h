@@ -15,7 +15,7 @@
 #include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 /** DMA burst transfer size. */
-enum dmaBurst
+enum DmaBurst
 {
   DMA_BURST_1,
   DMA_BURST_2,
@@ -31,7 +31,7 @@ enum dmaBurst
 };
 /*----------------------------------------------------------------------------*/
 /** DMA transfer width. */
-enum dmaWidth
+enum DmaWidth
 {
   DMA_WIDTH_BYTE,
   DMA_WIDTH_HALFWORD,

@@ -24,7 +24,7 @@ int gpTimerAllocateChannel(uint8_t mask)
 }
 /*----------------------------------------------------------------------------*/
 uint8_t gpTimerConfigCapturePin(uint8_t channel, PinNumber key,
-    enum pinPull pull)
+    enum PinPull pull)
 {
   const struct PinEntry * const pinEntry =
       pinFind(gpTimerCapturePins, key, channel);

@@ -12,7 +12,7 @@
 #define RATE_DATA       115200
 #define TX_QUEUE_LENGTH 24
 /*----------------------------------------------------------------------------*/
-enum command
+enum Command
 {
   SEARCH_ROM  = 0xF0,
   READ_ROM    = 0x33,
@@ -20,7 +20,7 @@ enum command
   SKIP_ROM    = 0xCC
 };
 /*----------------------------------------------------------------------------*/
-enum state
+enum State
 {
   STATE_IDLE,
   STATE_RESET,
@@ -97,7 +97,7 @@ static void interruptHandler(void *object)
   {
     const uint8_t data = reg->RBR;
 
-    switch ((enum state)interface->state)
+    switch ((enum State)interface->state)
     {
       case STATE_RESET:
         if (data ^ 0xF0)

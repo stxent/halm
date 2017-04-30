@@ -10,7 +10,7 @@
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /** Direct Memory Access controller connections. */
-enum gpDmaEvent
+enum GpDmaEvent
 {
   GPDMA_SSP0_RX,
   GPDMA_SSP1_RX,

@@ -15,7 +15,7 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum clockBranch
+enum ClockBranch
 {
   CLOCK_BASE_USB0     = 0,
   CLOCK_BASE_PERIPH   = 1,
@@ -42,7 +42,7 @@ enum clockBranch
   CLOCK_BASE_CGU_OUT1 = 26
 };
 
-enum clockSource
+enum ClockSource
 {
   CLOCK_RTC         = 0x00,
   CLOCK_INTERNAL    = 0x01,
@@ -64,14 +64,14 @@ struct CommonClockClass
 {
   struct ClockClass base;
 
-  enum clockBranch branch;
+  enum ClockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonDividerClass
 {
   struct ClockClass base;
 
-  enum clockSource channel;
+  enum ClockSource channel;
 };
 /*----------------------------------------------------------------------------*/
 extern const struct CommonDividerClass * const DividerA;
@@ -116,7 +116,7 @@ extern const struct CommonClockClass * const CguOut1Clock;
 struct ClockOutputConfig
 {
   /** Mandatory: clock source. */
-  enum clockSource source;
+  enum ClockSource source;
   /** Mandatory: output pin. */
   PinNumber pin;
 };
@@ -124,13 +124,13 @@ struct ClockOutputConfig
 struct CommonClockConfig
 {
   /** Mandatory: clock source. */
-  enum clockSource source;
+  enum ClockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct CommonDividerConfig
 {
   /** Mandatory: clock source. */
-  enum clockSource source;
+  enum ClockSource source;
   /**
    * Mandatory: integer divider value.
    * @n The divider value for the Divider A should be in the range of 1 to 4.
@@ -157,7 +157,7 @@ struct ExternalOscConfig
 struct PllConfig
 {
   /** Mandatory: clock source. */
-  enum clockSource source;
+  enum ClockSource source;
   /**
    * Mandatory: PLL output divisor. The output divisor may be set to divide
    * by 1, 2, 3, 4, 6, 8, 12, 16, 24, 32.

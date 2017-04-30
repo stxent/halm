@@ -17,7 +17,7 @@ struct WdtConfig
   /** Watchdog timer period in milliseconds. */
   uint32_t period;
   /** Optional: timer clock source. */
-  enum wdtClockSource source;
+  enum WdtClockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct Wdt

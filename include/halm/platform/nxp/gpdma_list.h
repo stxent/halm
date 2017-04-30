@@ -17,9 +17,9 @@ struct GpDmaListConfig
   /** Mandatory: number of blocks in the chain. */
   size_t number;
   /** Mandatory: request connection to the peripheral or memory. */
-  enum gpDmaEvent event;
+  enum GpDmaEvent event;
   /** Mandatory: transfer type. */
-  enum gpDmaType type;
+  enum GpDmaType type;
   /** Mandatory: channel number. */
   uint8_t channel;
   /**

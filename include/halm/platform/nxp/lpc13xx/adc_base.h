@@ -8,7 +8,7 @@
 #define HALM_PLATFORM_NXP_LPC13XX_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
-enum adcEvent
+enum AdcEvent
 {
   ADC_BURST,
   ADC_SOFTWARE,

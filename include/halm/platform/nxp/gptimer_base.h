@@ -22,7 +22,7 @@ enum
   GPTIMER_CT32B1
 };
 /*----------------------------------------------------------------------------*/
-enum gpTimerEvent
+enum GpTimerEvent
 {
   GPTIMER_MATCH_AUTO,
   GPTIMER_MATCH0,
@@ -55,7 +55,7 @@ struct GpTimerBase
 };
 /*----------------------------------------------------------------------------*/
 int gpTimerAllocateChannel(uint8_t);
-uint8_t gpTimerConfigCapturePin(uint8_t, PinNumber, enum pinPull);
+uint8_t gpTimerConfigCapturePin(uint8_t, PinNumber, enum PinPull);
 uint8_t gpTimerConfigMatchPin(uint8_t, PinNumber);
 
 uint32_t gpTimerGetClock(const struct GpTimerBase *);

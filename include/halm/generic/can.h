@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum canFlags
+enum CanFlags
 {
   CAN_EXT_ID  = 0x01,
   CAN_RTR     = 0x02,
@@ -18,7 +18,7 @@ enum canFlags
   CAN_SELF_RX = 0x08
 };
 /*----------------------------------------------------------------------------*/
-enum canOption
+enum CanOption
 {
   /** Enable active mode. */
   IF_CAN_ACTIVE = IF_OPTION_END,

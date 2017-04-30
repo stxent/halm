@@ -106,7 +106,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   *reg = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
-void pinSetPull(struct Pin pin, enum pinPull pull)
+void pinSetPull(struct Pin pin, enum PinPull pull)
 {
   if (!isCommonPin(pin))
     return;
@@ -132,7 +132,7 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
   *reg = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
+void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   /* Slew rate control is available only for I2C pins */
   if (isCommonPin(pin))
@@ -144,7 +144,7 @@ void pinSetSlewRate(struct Pin pin, enum pinSlewRate rate)
       | (rate == PIN_SLEW_FAST ? IOCON_I2C_PLUS : 0);
 }
 /*----------------------------------------------------------------------------*/
-void pinSetType(struct Pin pin, enum pinType type)
+void pinSetType(struct Pin pin, enum PinType type)
 {
   if (!isCommonPin(pin))
     return;

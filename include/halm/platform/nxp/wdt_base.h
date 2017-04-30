@@ -19,7 +19,7 @@ extern const struct EntityClass * const WdtBase;
 /*----------------------------------------------------------------------------*/
 struct WdtBaseConfig
 {
-  enum wdtClockSource source;
+  enum WdtClockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct WdtBase

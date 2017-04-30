@@ -10,7 +10,7 @@
 #include <halm/platform/nxp/gpdma_list.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-enum state
+enum State
 {
   STATE_IDLE,
   STATE_READY,
@@ -249,7 +249,7 @@ static enum result channelStatus(const void *object)
 {
   const struct GpDmaList * const channel = object;
 
-  switch ((enum state)channel->state)
+  switch ((enum State)channel->state)
   {
     case STATE_IDLE:
     case STATE_READY:

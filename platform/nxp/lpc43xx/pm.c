@@ -8,9 +8,9 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-void pmPlatformChangeState(enum pmState);
+void pmPlatformChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
-void pmPlatformChangeState(enum pmState state)
+void pmPlatformChangeState(enum PmState state)
 {
   switch (state)
   {

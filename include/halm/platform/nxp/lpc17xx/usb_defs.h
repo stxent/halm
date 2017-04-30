@@ -59,14 +59,14 @@
 #define USBCmdCode_CMD_WDATA_VALUE(reg) \
     USBCmdCode_CMD_CODE_VALUE(reg)
 /*----------------------------------------------------------------------------*/
-enum usbCommandPhase
+enum UsbCommandPhase
 {
   USB_CMD_PHASE_WRITE   = 0x01,
   USB_CMD_PHASE_READ    = 0x02,
   USB_CMD_PHASE_COMMAND = 0x05
 };
 
-enum usbCommand
+enum UsbCommand
 {
   /* Device commands */
   USB_CMD_SET_ADDRESS               = 0xD0,

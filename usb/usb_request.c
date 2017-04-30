@@ -37,7 +37,7 @@ static const usbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
 }
 /*----------------------------------------------------------------------------*/
 void usbRequestInit(struct UsbRequest *request, void *buffer, uint16_t capacity,
-    void (*callback)(void *, struct UsbRequest *, enum usbRequestStatus),
+    void (*callback)(void *, struct UsbRequest *, enum UsbRequestStatus),
     void *callbackArgument)
 {
   request->capacity = capacity;

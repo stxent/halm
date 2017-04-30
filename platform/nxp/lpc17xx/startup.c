@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
-  static const enum sysBlockPower blocksToDisable[] = {
+  static const enum SysBlockPower blocksToDisable[] = {
       PWR_TIM0,
       PWR_TIM1,
       PWR_UART0,

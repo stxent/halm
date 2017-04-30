@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
-enum sysBlockReset
+enum SysBlockReset
 {
   RST_OTGFS   = 12,
   RST_ETHMAC  = 14,
@@ -63,7 +63,7 @@ enum sysBlockReset
   RST_TIM11   = 0x40 + 21
 };
 /*----------------------------------------------------------------------------*/
-enum sysClockBranch
+enum SysClockBranch
 {
   CLK_DMA1      = 0,
   CLK_DMA2      = 1,
@@ -121,12 +121,12 @@ enum sysClockBranch
   CLK_TIM11     = 0x40 + 21
 };
 /*----------------------------------------------------------------------------*/
-void sysClockEnable(enum sysClockBranch);
-void sysClockDisable(enum sysClockBranch);
-bool sysClockStatus(enum sysClockBranch);
+void sysClockEnable(enum SysClockBranch);
+void sysClockDisable(enum SysClockBranch);
+bool sysClockStatus(enum SysClockBranch);
 unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
-void sysResetEnable(enum sysBlockReset);
-void sysResetDisable(enum sysBlockReset);
+void sysResetEnable(enum SysBlockReset);
+void sysResetDisable(enum SysBlockReset);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_STM32F1XX_SYSTEM_H_ */

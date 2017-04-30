@@ -15,9 +15,9 @@ struct I2cBlockDescriptor
 {
   LPC_I2C_Type *reg;
   /* Clock to register interface and to peripheral */
-  enum sysClockBranch clock;
+  enum SysClockBranch clock;
   /* Reset control identifier */
-  enum sysBlockReset reset;
+  enum SysBlockReset reset;
 };
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(uint8_t, const struct I2cBase *, struct I2cBase *);

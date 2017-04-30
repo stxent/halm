@@ -29,7 +29,7 @@ void uartConfigPins(struct UartBase *interface,
   pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-void uartSetParity(struct UartBase *interface, enum uartParity parity)
+void uartSetParity(struct UartBase *interface, enum UartParity parity)
 {
   STM_USART_Type * const reg = interface->reg;
   uint32_t value = reg->CR1 & ~(CR1_PS | CR1_PCE | CR1_M);

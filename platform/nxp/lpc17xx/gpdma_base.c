@@ -24,8 +24,8 @@ struct DmaHandler
   unsigned short instances;
 };
 /*----------------------------------------------------------------------------*/
-static unsigned int eventToPeripheral(enum gpDmaEvent);
-static void updateEventMux(struct GpDmaBase *, enum gpDmaEvent);
+static unsigned int eventToPeripheral(enum GpDmaEvent);
+static void updateEventMux(struct GpDmaBase *, enum GpDmaEvent);
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void);
 static void dmaHandlerDetach(void);
@@ -77,14 +77,14 @@ static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHandler *dmaHandler = 0;
 /*----------------------------------------------------------------------------*/
-static unsigned int eventToPeripheral(enum gpDmaEvent event)
+static unsigned int eventToPeripheral(enum GpDmaEvent event)
 {
   assert(event < GPDMA_MEMORY);
 
   return eventTranslationMap[event];
 }
 /*----------------------------------------------------------------------------*/
-static void updateEventMux(struct GpDmaBase *channel, enum gpDmaEvent event)
+static void updateEventMux(struct GpDmaBase *channel, enum GpDmaEvent event)
 {
   if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
   {

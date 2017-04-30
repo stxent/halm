@@ -13,7 +13,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UartBase;
 /*----------------------------------------------------------------------------*/
-enum uartParity
+enum UartParity
 {
   UART_PARITY_NONE,
   UART_PARITY_ODD,
@@ -44,7 +44,7 @@ struct UartBase
 /*----------------------------------------------------------------------------*/
 void uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
 uint32_t uartGetClock(const struct UartBase *);
-void uartSetParity(struct UartBase *, enum uartParity);
+void uartSetParity(struct UartBase *, enum UartParity);
 void uartSetRate(struct UartBase *, uint32_t);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_UART_BASE_H_ */

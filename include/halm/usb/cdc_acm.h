@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const CdcAcm;
 /*----------------------------------------------------------------------------*/
-enum cdcAcmOption
+enum CdcAcmOption
 {
   /** Retrieve extended information about current interface status. */
   IF_CDC_ACM_STATUS = IF_OPTION_END

@@ -17,7 +17,7 @@
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/clocking.h>
 #include HEADER_PATH
 /*----------------------------------------------------------------------------*/
-enum iapCommand
+enum IapCommand
 {
   CMD_INIT                    = 49,
   CMD_PREPARE_FOR_WRITE       = 50,
@@ -35,7 +35,7 @@ enum iapCommand
   CMD_EEPROM_READ             = 62
 };
 
-enum iapResult
+enum IapResult
 {
   RES_CMD_SUCCESS             = 0,
   RES_INVALID_COMMAND         = 1,
@@ -53,7 +53,7 @@ enum iapResult
 /*----------------------------------------------------------------------------*/
 static enum result compareRegions(uint32_t, const void *, size_t);
 static enum result copyRamToFlash(uint32_t, const void *, size_t);
-static enum result iap(enum iapCommand, unsigned long *, unsigned int,
+static enum result iap(enum IapCommand, unsigned long *, unsigned int,
     const unsigned long *, unsigned int);
 static enum result prepareSectorToWrite(unsigned int, unsigned int);
 /*----------------------------------------------------------------------------*/
@@ -83,7 +83,7 @@ static enum result compareRegions(uint32_t address, const void *buffer,
   return iap(CMD_COMPARE, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
-static enum result iap(enum iapCommand command, unsigned long *results,
+static enum result iap(enum IapCommand command, unsigned long *results,
     unsigned int resultsCount, const unsigned long *parameters,
     unsigned int parametersCount)
 {
@@ -102,7 +102,7 @@ static enum result iap(enum iapCommand command, unsigned long *results,
   for (unsigned int index = 0; index < resultsCount; ++index)
     results[index] = resultBuffer[1 + index];
 
-  return (enum iapResult)resultBuffer[0] == RES_CMD_SUCCESS ? E_OK : E_ERROR;
+  return (enum IapResult)resultBuffer[0] == RES_CMD_SUCCESS ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum result prepareSectorToWrite(unsigned int sector, unsigned int bank)

@@ -7,7 +7,7 @@
 #ifndef HALM_USB_USB_LANGID_H_
 #define HALM_USB_USB_LANGID_H_
 /*----------------------------------------------------------------------------*/
-enum usbLangId
+enum UsbLangId
 {
   LANGID_AFRIKAANS            = 0x0436,
   LANGID_ALBANIAN             = 0x041C,

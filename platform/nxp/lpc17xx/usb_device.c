@@ -97,7 +97,7 @@ static void devSetConnected(void *, bool);
 static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
-static enum usbSpeed devGetSpeed(const void *);
+static enum UsbSpeed devGetSpeed(const void *);
 static enum result devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
@@ -514,7 +514,7 @@ static void devSetPower(void *object, uint16_t current)
   usbControlSetPower(device->control, current);
 }
 /*----------------------------------------------------------------------------*/
-static enum usbSpeed devGetSpeed(const void *object __attribute__((unused)))
+static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
 {
   return USB_FS;
 }
@@ -655,7 +655,7 @@ static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
     {
       queuePop(&ep->requests, 0);
 
-      const enum usbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
+      const enum UsbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
           USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
 
       request->length = read;
@@ -852,7 +852,7 @@ static void dmaEpHandler(struct UsbDmaEndpoint *ep)
       continue;
     }
 
-    enum usbRequestStatus requestStatus;
+    enum UsbRequestStatus requestStatus;
 
     switch (DD_STATUS_VALUE(ep->head->status))
     {

@@ -11,7 +11,7 @@
 #include <halm/usb/usb_string.h>
 /*----------------------------------------------------------------------------*/
 struct UsbString usbStringBuild(usbStringFunctor functor, void *argument,
-    enum usbStringType type)
+    enum UsbStringType type)
 {
   return (struct UsbString){
     .functor = functor,
@@ -21,7 +21,7 @@ struct UsbString usbStringBuild(usbStringFunctor functor, void *argument,
 }
 /*----------------------------------------------------------------------------*/
 void usbStringHeader(struct UsbDescriptor *header, void *payload,
-    enum usbLangId langid)
+    enum UsbLangId langid)
 {
   header->length = sizeof(struct UsbStringDescriptor) + sizeof(uint16_t);
   header->descriptorType = DESCRIPTOR_TYPE_STRING;
@@ -36,7 +36,7 @@ void usbStringHeader(struct UsbDescriptor *header, void *payload,
 }
 /*----------------------------------------------------------------------------*/
 void usbStringMultiHeader(struct UsbDescriptor *header, void *payload,
-    const enum usbLangId *languages, size_t languageCount)
+    const enum UsbLangId *languages, size_t languageCount)
 {
   assert(languageCount >= 1);
 

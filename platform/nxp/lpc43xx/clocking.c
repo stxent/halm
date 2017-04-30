@@ -17,11 +17,11 @@
 #define RTC_OSC_FREQUENCY     32768
 #define TICK_RATE(frequency)  ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcBranchReg(enum clockBranch);
-static inline volatile uint32_t *calcDividerReg(enum clockSource);
+static inline volatile uint32_t *calcBranchReg(enum ClockBranch);
+static inline volatile uint32_t *calcDividerReg(enum ClockSource);
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
-static uint32_t getSourceFrequency(enum clockSource);
+static uint32_t getSourceFrequency(enum ClockSource);
 static unsigned int pll0ComputeMdec(unsigned int);
 static unsigned int pll0ComputeNdec(unsigned int);
 static unsigned int pll0ComputePdec(unsigned int);
@@ -468,12 +468,12 @@ static uint32_t pll0AudioFrequency = 0;
 static uint32_t pll1Frequency = 0;
 uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcBranchReg(enum clockBranch branch)
+static inline volatile uint32_t *calcBranchReg(enum ClockBranch branch)
 {
   return &LPC_CGU->BASE_USB0_CLK + branch;
 }
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcDividerReg(enum clockSource source)
+static inline volatile uint32_t *calcDividerReg(enum ClockSource source)
 {
   return &LPC_CGU->IDIVA_CTRL + (source - CLOCK_IDIVA);
 }
@@ -502,7 +502,7 @@ static void flashLatencyUpdate(uint32_t frequency)
   sysFlashLatencyUpdate(index + 1);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t getSourceFrequency(enum clockSource source)
+static uint32_t getSourceFrequency(enum ClockSource source)
 {
   switch (source)
   {

@@ -14,14 +14,14 @@ struct UsbRequest
   uint16_t capacity;
   uint16_t length;
 
-  void (*callback)(void *, struct UsbRequest *, enum usbRequestStatus);
+  void (*callback)(void *, struct UsbRequest *, enum UsbRequestStatus);
   void *callbackArgument;
 
   uint8_t *buffer;
 };
 /*----------------------------------------------------------------------------*/
 void usbRequestInit(struct UsbRequest *, void *, uint16_t,
-    void (*)(void *, struct UsbRequest *, enum usbRequestStatus), void *);
+    void (*)(void *, struct UsbRequest *, enum UsbRequestStatus), void *);
 /*----------------------------------------------------------------------------*/
 enum result usbExtractDescriptorData(const void *, uint16_t, void *, uint16_t *,
     uint16_t);

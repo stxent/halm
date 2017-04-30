@@ -17,7 +17,7 @@ struct I2sDmaConfig
   /** Mandatory: sample rate for the receiver and the transmitter. */
   uint32_t rate;
   /** Mandatory: word width. */
-  enum i2sWidth width;
+  enum I2sWidth width;
 
   struct
   {

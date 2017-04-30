@@ -13,7 +13,7 @@
 struct PmHandlerEntry
 {
   void *object;
-  void (*callback)(void *, enum pmState);
+  void (*callback)(void *, enum PmState);
 };
 /*----------------------------------------------------------------------------*/
 struct PmHandler
@@ -24,10 +24,10 @@ struct PmHandler
 };
 /*----------------------------------------------------------------------------*/
 static enum result pmHandlerInit(void *, const void *);
-static void notifyHandlerEntries(enum pmState);
+static void notifyHandlerEntries(enum PmState);
 /*----------------------------------------------------------------------------*/
-extern enum result pmCoreChangeState(enum pmState);
-extern enum result pmPlatformChangeState(enum pmState);
+extern enum result pmCoreChangeState(enum PmState);
+extern enum result pmPlatformChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct PmHandler),
@@ -46,7 +46,7 @@ static enum result pmHandlerInit(void *object,
   return listInit(&handler->objectList, sizeof(struct PmHandlerEntry));
 }
 /*----------------------------------------------------------------------------*/
-static void notifyHandlerEntries(enum pmState state)
+static void notifyHandlerEntries(enum PmState state)
 {
   if (!pmHandler)
     return;
@@ -62,7 +62,7 @@ static void notifyHandlerEntries(enum pmState state)
   }
 }
 /*----------------------------------------------------------------------------*/
-void pmChangeState(enum pmState state)
+void pmChangeState(enum PmState state)
 {
   if (state != PM_SLEEP)
     notifyHandlerEntries(state);
@@ -74,7 +74,7 @@ void pmChangeState(enum pmState state)
   pmCoreChangeState(state);
 }
 /*----------------------------------------------------------------------------*/
-enum result pmRegister(void (*callback)(void *, enum pmState), void *object)
+enum result pmRegister(void (*callback)(void *, enum PmState), void *object)
 {
   if (!pmHandler)
     pmHandler = init(PmHandler, 0);

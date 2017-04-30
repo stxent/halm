@@ -15,9 +15,9 @@ extern const struct DmaClass * const GpDma;
 struct GpDmaConfig
 {
   /** Mandatory: request connection to the peripheral or memory. */
-  enum gpDmaEvent event;
+  enum GpDmaEvent event;
   /** Mandatory: transfer type. */
-  enum gpDmaType type;
+  enum GpDmaType type;
   /** Mandatory: channel number. */
   uint8_t channel;
 };

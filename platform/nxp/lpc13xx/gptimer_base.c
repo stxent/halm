@@ -17,7 +17,7 @@ struct TimerBlockDescriptor
 {
   LPC_TIMER_Type *reg;
   uint8_t resolution;
-  enum sysClockBranch clock;
+  enum SysClockBranch clock;
 };
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(uint8_t, const struct GpTimerBase *,

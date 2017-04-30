@@ -82,7 +82,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   *reg = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
 }
 /*----------------------------------------------------------------------------*/
-void pinSetPull(struct Pin pin, enum pinPull pull)
+void pinSetPull(struct Pin pin, enum PinPull pull)
 {
   volatile uint32_t * const reg = pin.reg;
   uint32_t value = *reg & ~IOCON_MODE_MASK;
@@ -105,7 +105,7 @@ void pinSetPull(struct Pin pin, enum pinPull pull)
   *reg = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetType(struct Pin pin, enum pinType type)
+void pinSetType(struct Pin pin, enum PinType type)
 {
   volatile uint32_t * const reg = pin.reg;
 

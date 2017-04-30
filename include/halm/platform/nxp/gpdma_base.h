@@ -20,7 +20,7 @@
 extern const struct EntityClass * const GpDmaBase;
 /*----------------------------------------------------------------------------*/
 /** Direct Memory Access transfer type. */
-enum gpDmaType
+enum GpDmaType
 {
   /** Memory to memory. */
   GPDMA_TYPE_M2M,
@@ -44,9 +44,9 @@ struct GpDmaSettings
   struct
   {
     /** Mandatory: number of transfers that make up a burst transfer request. */
-    enum dmaBurst burst;
+    enum DmaBurst burst;
     /** Mandatory: source transfer width. */
-    enum dmaWidth width;
+    enum DmaWidth width;
     /** Mandatory: enable increment of the source address. */
     bool increment;
   } source;
@@ -55,9 +55,9 @@ struct GpDmaSettings
   struct
   {
     /** Mandatory: number of transfers that make up a burst transfer request. */
-    enum dmaBurst burst;
+    enum DmaBurst burst;
     /** Mandatory: destination transfer width. */
-    enum dmaWidth width;
+    enum DmaWidth width;
     /** Mandatory: enable increment of the destination address. */
     bool increment;
   } destination;
@@ -66,9 +66,9 @@ struct GpDmaSettings
 struct GpDmaBaseConfig
 {
   /** Mandatory: request connection to the peripheral or memory. */
-  enum gpDmaEvent event;
+  enum GpDmaEvent event;
   /** Mandatory: transfer type. */
-  enum gpDmaType type;
+  enum GpDmaType type;
   /** Mandatory: channel number. */
   uint8_t channel;
 };

@@ -20,9 +20,9 @@ struct WakeupInterruptConfig
   /** Optional: interrupt priority. */
   IrqPriority priority;
   /** Mandatory: external interrupt mode. */
-  enum pinEvent event;
+  enum PinEvent event;
   /** Optional: enables pull-up or pull-down resistors for input pin. */
-  enum pinPull pull;
+  enum PinPull pull;
 };
 /*----------------------------------------------------------------------------*/
 struct WakeupInterrupt
@@ -35,7 +35,7 @@ struct WakeupInterrupt
   /* Descriptor of the input pin used as interrupt source */
   struct PinData pin;
   /* Edge sensitivity mode */
-  enum pinEvent event;
+  enum PinEvent event;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_WAKEUP_INTERRUPT_H_ */

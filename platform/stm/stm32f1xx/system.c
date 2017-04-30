@@ -15,7 +15,7 @@ enum
   INDEX_APB2
 };
 /*----------------------------------------------------------------------------*/
-void sysClockEnable(enum sysClockBranch branch)
+void sysClockEnable(enum SysClockBranch branch)
 {
   const unsigned int index = branch >> 5;
   const uint32_t value = 1UL << (branch & 0x1F);
@@ -36,7 +36,7 @@ void sysClockEnable(enum sysClockBranch branch)
   }
 }
 /*----------------------------------------------------------------------------*/
-void sysClockDisable(enum sysClockBranch branch)
+void sysClockDisable(enum SysClockBranch branch)
 {
   const unsigned int index = branch >> 5;
   const uint32_t mask = ~(1UL << (branch & 0x1F));
@@ -57,7 +57,7 @@ void sysClockDisable(enum sysClockBranch branch)
   }
 }
 /*----------------------------------------------------------------------------*/
-bool sysClockStatus(enum sysClockBranch branch)
+bool sysClockStatus(enum SysClockBranch branch)
 {
   const unsigned int index = branch >> 5;
   const uint32_t mask = 1UL << (branch & 0x1F);
@@ -100,7 +100,7 @@ void sysFlashLatencyUpdate(unsigned int value)
       | FLASH_ACR_LATENCY(value - 1);
 }
 /*----------------------------------------------------------------------------*/
-void sysResetEnable(enum sysBlockReset block)
+void sysResetEnable(enum SysBlockReset block)
 {
   const unsigned int index = block >> 5;
   const uint32_t value = 1UL << (block & 0x1F);
@@ -121,7 +121,7 @@ void sysResetEnable(enum sysBlockReset block)
   }
 }
 /*----------------------------------------------------------------------------*/
-void sysResetDisable(enum sysBlockReset block)
+void sysResetDisable(enum SysBlockReset block)
 {
   const unsigned int index = block >> 5;
   const uint32_t mask = ~(1UL << (block & 0x1F));

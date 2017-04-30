@@ -21,7 +21,7 @@ struct SctPwmUnitConfig
   /** Mandatory: cycle resolution. */
   uint32_t resolution;
   /** Optional: timer part. */
-  enum sctPart part;
+  enum SctPart part;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

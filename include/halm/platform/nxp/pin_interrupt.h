@@ -20,9 +20,9 @@ struct PinInterruptConfig
   /** Optional: interrupt priority. */
   IrqPriority priority;
   /** Mandatory: external interrupt mode. */
-  enum pinEvent event;
+  enum PinEvent event;
   /** Optional: enables pull-up or pull-down resistors for input pin. */
-  enum pinPull pull;
+  enum PinPull pull;
 };
 /*----------------------------------------------------------------------------*/
 struct PinInterrupt

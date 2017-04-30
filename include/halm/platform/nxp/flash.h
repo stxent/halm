@@ -12,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Flash;
 /*----------------------------------------------------------------------------*/
-enum flashOption
+enum FlashOption
 {
   /** Get page size. */
   IF_FLASH_PAGE_SIZE = IF_OPTION_END,

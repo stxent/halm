@@ -9,9 +9,9 @@
 #include <halm/core/cortex/pm_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-void pmCoreChangeState(enum pmState);
+void pmCoreChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
-void pmCoreChangeState(enum pmState state)
+void pmCoreChangeState(enum PmState state)
 {
   if (state != PM_ACTIVE)
   {

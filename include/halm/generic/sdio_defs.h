@@ -25,7 +25,7 @@
 #define SDIO_COMMAND(code, response, flags) \
     (COMMAND_CODE(code) | COMMAND_RESP(response) | COMMAND_FLAG(flags))
 /*----------------------------------------------------------------------------*/
-enum cardState
+enum CardState
 {
   CARD_IDLE,
   CARD_READY,

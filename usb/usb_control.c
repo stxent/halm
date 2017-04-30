@@ -53,9 +53,9 @@ static enum result privateDataAllocate(struct UsbControl *);
 static void privateDataFree(struct UsbControl *);
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *, struct UsbRequest *,
-    enum usbRequestStatus);
+    enum UsbRequestStatus);
 static void controlOutHandler(void *, struct UsbRequest *,
-    enum usbRequestStatus);
+    enum UsbRequestStatus);
 static void enableEndpoints(struct UsbControl *);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
@@ -152,7 +152,7 @@ static void fillDeviceDescriptor(const struct UsbControl *control, void *buffer)
   {
     listData(&control->strings, current, &entry);
 
-    switch ((enum usbStringType)entry.type)
+    switch ((enum UsbStringType)entry.type)
     {
       case USB_STRING_VENDOR:
         descriptor->manufacturer = index;
@@ -420,7 +420,7 @@ static void privateDataFree(struct UsbControl *control)
 }
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status __attribute__((unused)))
+    enum UsbRequestStatus status __attribute__((unused)))
 {
   struct UsbControl * const control = argument;
 
@@ -428,7 +428,7 @@ static void controlInHandler(void *argument, struct UsbRequest *request,
 }
 /*----------------------------------------------------------------------------*/
 static void controlOutHandler(void *argument, struct UsbRequest *request,
-    enum usbRequestStatus status)
+    enum UsbRequestStatus status)
 {
   struct UsbControl * const control = argument;
   struct PrivateData * const privateData = control->privateData;

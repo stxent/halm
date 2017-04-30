@@ -13,7 +13,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SctBase;
 /*----------------------------------------------------------------------------*/
-enum sctInput
+enum SctInput
 {
   SCT_INPUT_NONE,
   SCT_INPUT_0,
@@ -27,7 +27,7 @@ enum sctInput
   SCT_INPUT_END
 };
 /*----------------------------------------------------------------------------*/
-enum sctPart
+enum SctPart
 {
   SCT_HIGH,
   SCT_LOW,
@@ -39,11 +39,11 @@ struct SctBaseConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Optional: edge sensitivity of the selected clock input. */
-  enum pinEvent edge;
+  enum PinEvent edge;
   /** Optional: clock input. */
-  enum sctInput input;
+  enum SctInput input;
   /** Optional: timer part. */
-  enum sctPart part;
+  enum SctPart part;
 };
 /*----------------------------------------------------------------------------*/
 struct SctBase
@@ -59,7 +59,7 @@ struct SctBase
   /* Unique peripheral identifier */
   uint8_t channel;
   /* Timer configuration */
-  enum sctPart part;
+  enum SctPart part;
 };
 /*----------------------------------------------------------------------------*/
 int sctAllocateEvent(struct SctBase *);

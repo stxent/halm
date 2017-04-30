@@ -15,9 +15,9 @@ struct AdcBlockDescriptor
 {
   LPC_ADC_Type *reg;
   /* Clock to register interface and to peripheral */
-  enum sysClockBranch clock;
+  enum SysClockBranch clock;
   /* Reset control identifier */
-  enum sysBlockReset reset;
+  enum SysBlockReset reset;
   /* Peripheral interrupt request identifier */
   IrqNumber irq;
 };

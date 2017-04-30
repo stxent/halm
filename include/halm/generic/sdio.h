@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum sdioCommand
+enum SdioCommand
 {
   /* Common commands */
   CMD_GO_IDLE_STATE         = 0,
@@ -38,7 +38,7 @@ enum sdioCommand
   CMD_CRC_ON_OFF            = 59
 };
 /*----------------------------------------------------------------------------*/
-enum sdioFlags
+enum SdioFlags
 {
   /** Send initialization sequence to device. */
   SDIO_INITIALIZE     = 0x01,
@@ -56,14 +56,14 @@ enum sdioFlags
   SDIO_AUTO_STOP      = 0x40
 };
 /*----------------------------------------------------------------------------*/
-enum sdioMode
+enum SdioMode
 {
   SDIO_SPI,
   SDIO_1BIT,
   SDIO_4BIT
 };
 /*----------------------------------------------------------------------------*/
-enum sdioOption
+enum SdioOption
 {
   IF_SDIO_MODE = IF_OPTION_END,
   IF_SDIO_EXECUTE,
@@ -73,7 +73,7 @@ enum sdioOption
   IF_SDIO_BLOCK_SIZE
 };
 /*----------------------------------------------------------------------------*/
-enum sdioResponse
+enum SdioResponse
 {
   SDIO_RESPONSE_NONE,
   SDIO_RESPONSE_SHORT,

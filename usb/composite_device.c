@@ -65,7 +65,7 @@ static void devSetConnected(void *, bool);
 static enum result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
-static enum usbSpeed devGetSpeed(const void *);
+static enum UsbSpeed devGetSpeed(const void *);
 static enum result devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
@@ -460,7 +460,7 @@ static void devSetPower(void *object, uint16_t current)
   usbDevSetPower(((const struct CompositeDevice *)object)->parent, current);
 }
 /*----------------------------------------------------------------------------*/
-static enum usbSpeed devGetSpeed(const void *object)
+static enum UsbSpeed devGetSpeed(const void *object)
 {
   return usbDevGetSpeed(((const struct CompositeDevice *)object)->parent);
 }

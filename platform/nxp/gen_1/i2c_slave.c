@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/gen_1/i2c_defs.h>
 #include <halm/platform/nxp/i2c_slave.h>
 /*----------------------------------------------------------------------------*/
-enum state
+enum State
 {
   STATE_IDLE,
   STATE_ADDRESS,
@@ -19,7 +19,7 @@ enum state
 };
 /*----------------------------------------------------------------------------*/
 /* Slave receiver and transmitter modes except general call modes */
-enum status
+enum Status
 {
   STATUS_ADDRESS_WRITE_RECEIVED = 0x60,
   STATUS_DATA_RECEIVED_ACK      = 0x80,

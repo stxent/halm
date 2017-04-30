@@ -15,7 +15,7 @@
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals register */
-enum sysBlockReset
+enum SysBlockReset
 {
   RST_CORE    = 0,
   RST_PERIPH  = 1,
@@ -67,7 +67,7 @@ enum sysBlockReset
 };
 /*----------------------------------------------------------------------------*/
 /* Enable or disable clock branches */
-enum sysClockBranch
+enum SysClockBranch
 {
   /* Offsets from the beginning of the CCU1 peripheral */
   CLK_APB3_BUS      = 0x020,
@@ -134,13 +134,13 @@ enum sysClockBranch
   CLK_SDIO          = 0x200 + 0x100
 };
 /*----------------------------------------------------------------------------*/
-void sysClockEnable(enum sysClockBranch);
-void sysClockDisable(enum sysClockBranch);
+void sysClockEnable(enum SysClockBranch);
+void sysClockDisable(enum SysClockBranch);
 void sysFlashEnable(unsigned int);
 void sysFlashDisable(unsigned int);
 unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
-void sysResetEnable(enum sysBlockReset);
-void sysResetDisable(enum sysBlockReset);
+void sysResetEnable(enum SysBlockReset);
+void sysResetDisable(enum SysBlockReset);
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_ */

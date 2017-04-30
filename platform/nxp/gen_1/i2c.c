@@ -10,7 +10,7 @@
 #include <halm/platform/nxp/gen_1/i2c_defs.h>
 #include <halm/platform/nxp/i2c.h>
 /*----------------------------------------------------------------------------*/
-enum state
+enum State
 {
   STATE_IDLE,
   STATE_ADDRESS,
@@ -20,7 +20,7 @@ enum state
 };
 /*----------------------------------------------------------------------------*/
 /* Master transmitter and receiver modes */
-enum status
+enum Status
 {
   /* Start condition transmitted */
   STATUS_START_TRANSMITTED      = 0x08,
@@ -255,7 +255,7 @@ static enum result i2cSet(void *object, enum ifOption option, const void *data)
   struct I2c * const interface = object;
 
   /* Additional I2C options */
-  switch ((enum i2cOption)option)
+  switch ((enum I2cOption)option)
   {
     case IF_I2C_SENDSTOP:
       interface->sendStopBit = *(const bool *)data;

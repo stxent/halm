@@ -32,8 +32,8 @@ struct TimerHandler
 };
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(uint8_t);
-static enum result timerHandlerAttach(uint8_t, enum sctPart, struct SctBase *);
-static void timerHandlerDetach(uint8_t, enum sctPart);
+static enum result timerHandlerAttach(uint8_t, enum SctPart, struct SctBase *);
+static void timerHandlerDetach(uint8_t, enum SctPart);
 static void timerHandlerInstantiate(uint8_t channel);
 static void timerHandlerProcess(struct TimerHandler *);
 static enum result timerHandlerInit(void *, const void *);
@@ -406,7 +406,7 @@ static bool timerHandlerActive(uint8_t channel)
   return result;
 }
 /*----------------------------------------------------------------------------*/
-static enum result timerHandlerAttach(uint8_t channel, enum sctPart part,
+static enum result timerHandlerAttach(uint8_t channel, enum SctPart part,
     struct SctBase *timer)
 {
   const IrqState state = irqSave();
@@ -437,7 +437,7 @@ static enum result timerHandlerAttach(uint8_t channel, enum sctPart part,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void timerHandlerDetach(uint8_t channel, enum sctPart part)
+static void timerHandlerDetach(uint8_t channel, enum SctPart part)
 {
   const IrqState state = irqSave();
 

@@ -17,9 +17,9 @@ struct UartBlockDescriptor
   /* Peripheral interrupt request identifier */
   IrqNumber irq;
   /* Reset control identifier */
-  enum sysBlockReset reset;
+  enum SysBlockReset reset;
   /* Peripheral clock branch */
-  enum sysClockBranch branch;
+  enum SysClockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(uint8_t, const struct UartBase *, struct UartBase *);

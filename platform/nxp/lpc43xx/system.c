@@ -7,7 +7,7 @@
 #include <halm/platform/nxp/lpc43xx/system.h>
 #include <halm/platform/nxp/lpc43xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcBranchReg(enum sysClockBranch branch)
+static volatile uint32_t *calcBranchReg(enum SysClockBranch branch)
 {
   const uint32_t address = branch < 0x200 ? (uintptr_t)LPC_CCU1 + (branch << 3)
       : (uintptr_t)LPC_CCU2 + ((branch - 0x200) << 3);
@@ -15,14 +15,14 @@ static volatile uint32_t *calcBranchReg(enum sysClockBranch branch)
   return (volatile uint32_t *)address;
 }
 /*----------------------------------------------------------------------------*/
-void sysClockEnable(enum sysClockBranch branch)
+void sysClockEnable(enum SysClockBranch branch)
 {
   volatile uint32_t *reg = calcBranchReg(branch);
 
   *reg |= CFG_RUN | CFG_AUTO | CFG_WAKEUP;
 }
 /*----------------------------------------------------------------------------*/
-void sysClockDisable(enum sysClockBranch branch)
+void sysClockDisable(enum SysClockBranch branch)
 {
   volatile uint32_t *reg = calcBranchReg(branch);
 
@@ -72,7 +72,7 @@ void sysFlashLatencyUpdate(unsigned int value)
   LPC_CREG->FLASHCFGB = (LPC_CREG->FLASHCFGB & ~FLASHCFG_FLASHTIM_MASK) | data;
 }
 /*----------------------------------------------------------------------------*/
-void sysResetEnable(enum sysBlockReset block)
+void sysResetEnable(enum SysBlockReset block)
 {
   const uint32_t mask = 1UL << (block & 0x1F);
   const unsigned int index = block >> 5;
@@ -83,7 +83,7 @@ void sysResetEnable(enum sysBlockReset block)
     while (!(LPC_RGU->RESET_ACTIVE_STATUS[index] & mask));
 }
 /*----------------------------------------------------------------------------*/
-void sysResetDisable(enum sysBlockReset block)
+void sysResetDisable(enum SysBlockReset block)
 {
   if (block == RST_M0SUB || block == RST_M0APP)
     LPC_RGU->RESET_CTRL[block >> 5] = 0;

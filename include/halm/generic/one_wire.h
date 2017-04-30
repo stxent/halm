@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum oneWireOption
+enum OneWireOption
 {
   /** Start the device search. */
   IF_ONE_WIRE_START_SEARCH = IF_OPTION_END,

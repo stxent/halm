@@ -17,7 +17,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2c;
 /*----------------------------------------------------------------------------*/
-enum i2cOption
+enum I2cOption
 {
   /**
    * Send stop after write operation. Option controls the repeated start

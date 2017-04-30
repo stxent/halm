@@ -18,7 +18,7 @@ struct DmaSdmmcConfig
   /** Mandatory: number of blocks in the chain. */
   size_t number;
   /** Mandatory: number of transfers that make up a burst transfer request. */
-  enum dmaBurst burst;
+  enum DmaBurst burst;
 };
 /*----------------------------------------------------------------------------*/
 struct DmaSdmmcEntry

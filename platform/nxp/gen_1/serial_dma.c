@@ -25,7 +25,7 @@ static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_UART_PM
-static void powerStateHandler(void *, enum pmState);
+static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
@@ -161,7 +161,7 @@ static void txDmaHandler(void *object)
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_UART_PM
-static void powerStateHandler(void *object, enum pmState state)
+static void powerStateHandler(void *object, enum PmState state)
 {
   struct SerialDma * const interface = object;
 

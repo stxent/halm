@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #define WDT_TIMER_RESOLUTION 32
 /*----------------------------------------------------------------------------*/
-enum wdtClockSource
+enum WdtClockSource
 {
   WDT_CLOCK_DEFAULT,
   WDT_CLOCK_IRC,

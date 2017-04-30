@@ -14,8 +14,8 @@ struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);
-void pinSetPull(struct Pin, enum pinPull);
-void pinSetType(struct Pin, enum pinType);
+void pinSetPull(struct Pin, enum PinPull);
+void pinSetType(struct Pin, enum PinType);
 /*----------------------------------------------------------------------------*/
 static inline bool pinRead(struct Pin pin)
 {
@@ -44,7 +44,7 @@ static inline void pinWrite(struct Pin pin, bool value)
 }
 /*----------------------------------------------------------------------------*/
 static inline void pinSetSlewRate(struct Pin pin __attribute__((unused)),
-    enum pinSlewRate rate __attribute__((unused)))
+    enum PinSlewRate rate __attribute__((unused)))
 {
   /* Slew rate control is not supported on these devices */
 }

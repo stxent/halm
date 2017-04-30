@@ -12,7 +12,7 @@
 #define TX_FIFO_SIZE 8
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_UART_PM
-static void powerStateHandler(void *, enum pmState);
+static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
@@ -38,7 +38,7 @@ static const struct InterfaceClass serialTable = {
 const struct InterfaceClass * const SerialPoll = &serialTable;
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_UART_PM
-static void powerStateHandler(void *object, enum pmState state)
+static void powerStateHandler(void *object, enum PmState state)
 {
   struct SerialPoll * const interface = object;
 

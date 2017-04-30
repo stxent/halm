@@ -14,7 +14,7 @@ static void interruptHandler(void *);
 static void updateFrequency(struct GpTimer *, uint32_t);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
-static void powerStateHandler(void *, enum pmState);
+static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result tmrInit(void *, const void *);
@@ -65,7 +65,7 @@ static void interruptHandler(void *object)
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
-static void powerStateHandler(void *object, enum pmState state)
+static void powerStateHandler(void *object, enum PmState state)
 {
   struct GpTimer * const timer = object;
 

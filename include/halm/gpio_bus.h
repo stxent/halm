@@ -60,13 +60,13 @@ struct SimpleGpioBusConfig
   /** Optional: initial output value for pins configured as outputs. */
   uint32_t initial;
   /** Mandatory: direction of pins in the bus. */
-  enum pinDirection direction;
+  enum PinDirection direction;
   /** Optional: pull-up and pull-down configuration. */
-  enum pinPull pull;
+  enum PinPull pull;
   /** Optional: slew rate control of output pins. */
-  enum pinSlewRate rate;
+  enum PinSlewRate rate;
   /** Optional: push-pull or open-drain configuration for output pins. */
-  enum pinType type;
+  enum PinType type;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GPIO_BUS_H_ */

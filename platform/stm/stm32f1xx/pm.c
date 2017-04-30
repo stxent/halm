@@ -9,9 +9,9 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
-void pmPlatformChangeState(enum pmState);
+void pmPlatformChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
-void pmPlatformChangeState(enum pmState state)
+void pmPlatformChangeState(enum PmState state)
 {
   uint32_t value = (STM_PWR->CR & ~(PWR_CR_LPDS | PWR_CR_PDDS)) | PWR_CR_CWUF;
 

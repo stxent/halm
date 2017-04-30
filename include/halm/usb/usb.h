@@ -29,7 +29,7 @@ struct UsbSetupPacket;
 typedef void (*usbDescriptorFunctor)(const void *, struct UsbDescriptor *,
     void *);
 /*----------------------------------------------------------------------------*/
-enum usbDeviceEvent
+enum UsbDeviceEvent
 {
   USB_DEVICE_EVENT_RESET,
   USB_DEVICE_EVENT_SUSPEND,
@@ -38,7 +38,7 @@ enum usbDeviceEvent
   USB_DEVICE_EVENT_PORT_CHANGE
 };
 /*----------------------------------------------------------------------------*/
-enum usbRequestStatus
+enum UsbRequestStatus
 {
   /** Request completed successfully. */
   USB_REQUEST_COMPLETED,
@@ -52,7 +52,7 @@ enum usbRequestStatus
   USB_REQUEST_CANCELLED
 };
 /*----------------------------------------------------------------------------*/
-enum usbSpeed
+enum UsbSpeed
 {
   USB_LS,
   USB_FS,
@@ -74,7 +74,7 @@ struct UsbDeviceClass
   void (*unbind)(void *, const void *);
 
   void (*setPower)(void *, uint16_t);
-  enum usbSpeed (*getSpeed)(const void *);
+  enum UsbSpeed (*getSpeed)(const void *);
 
   enum result (*stringAppend)(void *, struct UsbString);
   void (*stringErase)(void *, struct UsbString);
@@ -159,7 +159,7 @@ static inline void usbDevSetPower(void *device, uint16_t current)
  * @param device Pointer to an UsbDevice object.
  * @return USB interface speed.
  */
-static inline enum usbSpeed usbDevGetSpeed(const void *device)
+static inline enum UsbSpeed usbDevGetSpeed(const void *device)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->getSpeed(device);
 }

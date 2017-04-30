@@ -16,8 +16,8 @@ struct UartBlockDescriptor
 {
   LPC_UART_Type *reg;
   IrqNumber irq;
-  enum sysBlockPower power;
-  enum sysClockBranch clock;
+  enum SysBlockPower power;
+  enum SysClockBranch clock;
 };
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(uint8_t, const struct UartBase *, struct UartBase *);

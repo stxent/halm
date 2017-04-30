@@ -19,7 +19,7 @@ struct SctTimerConfig
    */
   uint32_t frequency;
   /** Optional: timer part. */
-  enum sctPart part;
+  enum SctPart part;
   /** Optional: timer interrupt priority. */
   IrqPriority priority;
   /** Mandatory: peripheral identifier. */

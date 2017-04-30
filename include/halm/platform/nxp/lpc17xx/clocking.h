@@ -15,7 +15,7 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum clockSource
+enum ClockSource
 {
   CLOCK_INTERNAL,
   CLOCK_EXTERNAL,
@@ -37,7 +37,7 @@ extern const struct ClockClass * const UsbClock;
 struct ClockOutputConfig
 {
   /** Mandatory: clock source. */
-  enum clockSource source;
+  enum ClockSource source;
   /** Optional: input clock divisor in the range of 1 to 16. */
   uint16_t divisor;
   /** Mandatory: output pin. */
@@ -47,7 +47,7 @@ struct ClockOutputConfig
 struct CommonClockConfig
 {
   /** Mandatory: clock source. */
-  enum clockSource source;
+  enum ClockSource source;
 };
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
@@ -75,7 +75,7 @@ struct PllConfig
    * @n Available options for USB PLL (PLL1):
    *   - @b CLOCK_EXTERNAL.
    */
-  enum clockSource source;
+  enum ClockSource source;
   /**
    * Mandatory: PLL output divisor.
    * @n System PLL accepts values in the range of 1 to 32.

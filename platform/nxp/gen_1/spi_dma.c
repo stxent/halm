@@ -19,7 +19,7 @@ static void dmaSetupTx(struct Dma *, struct Dma *);
 static enum result getStatus(const struct SpiDma *);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
-static void powerStateHandler(void *, enum pmState);
+static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
@@ -159,7 +159,7 @@ static enum result getStatus(const struct SpiDma *interface)
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
-static void powerStateHandler(void *object, enum pmState state)
+static void powerStateHandler(void *object, enum PmState state)
 {
   struct SpiDma * const interface = object;
 

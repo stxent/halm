@@ -16,7 +16,7 @@
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
-static void powerStateHandler(void *, enum pmState);
+static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
@@ -92,7 +92,7 @@ static void interruptHandler(void *object)
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
-static void powerStateHandler(void *object, enum pmState state)
+static void powerStateHandler(void *object, enum PmState state)
 {
   struct Spi * const interface = object;
 

@@ -12,7 +12,7 @@
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
-enum sysBlockPower
+enum SysBlockPower
 {
   PWR_IRCOUT  = 0,
   PWR_IRC     = 1,
@@ -27,7 +27,7 @@ enum sysBlockPower
 };
 /*----------------------------------------------------------------------------*/
 /* System AHB clock control register */
-enum sysClockBranch
+enum SysClockBranch
 {
   CLK_SYS         = 0,
   CLK_ROM         = 1,
@@ -52,27 +52,27 @@ enum sysClockBranch
 unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
 /*----------------------------------------------------------------------------*/
-static inline void sysClockEnable(enum sysClockBranch branch)
+static inline void sysClockEnable(enum SysClockBranch branch)
 {
   LPC_SYSCON->SYSAHBCLKCTRL |= 1UL << branch;
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysClockDisable(enum sysClockBranch branch)
+static inline void sysClockDisable(enum SysClockBranch branch)
 {
   LPC_SYSCON->SYSAHBCLKCTRL &= ~(1UL << branch);
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerEnable(enum sysBlockPower branch)
+static inline void sysPowerEnable(enum SysBlockPower branch)
 {
   LPC_SYSCON->PDRUNCFG &= ~(1UL << branch);
 }
 /*----------------------------------------------------------------------------*/
-static inline void sysPowerDisable(enum sysBlockPower block)
+static inline void sysPowerDisable(enum SysBlockPower block)
 {
   LPC_SYSCON->PDRUNCFG |= 1UL << block;
 }
 /*----------------------------------------------------------------------------*/
-static inline bool sysPowerStatus(enum sysBlockPower block)
+static inline bool sysPowerStatus(enum SysBlockPower block)
 {
   return (LPC_SYSCON->PDRUNCFG & (1UL << block)) == 0;
 }

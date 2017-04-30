@@ -28,7 +28,7 @@
 #define OCR_HCS           BIT(30) /* Host Capacity Support */
 #define OCR_BUSY          BIT(31) /* Card power up status bit */
 /*----------------------------------------------------------------------------*/
-enum state
+enum State
 {
   STATE_IDLE,
   STATE_GET_STATUS,
@@ -154,7 +154,7 @@ static enum result identifyCard(struct SdCard *device)
     return res;
   }
 
-  const enum sdioResponse responseType = device->mode != SDIO_SPI ?
+  const enum SdioResponse responseType = device->mode != SDIO_SPI ?
       SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
   uint32_t ocr = 0;
 
@@ -316,7 +316,7 @@ static void interruptHandler(void *object)
   struct SdCard * const device = object;
   bool event = false;
 
-  switch ((enum state)device->state)
+  switch ((enum State)device->state)
   {
     case STATE_GET_STATUS:
     {
@@ -424,7 +424,7 @@ static enum result isCardReady(struct SdCard *device)
 
   const uint8_t state = CURRENT_STATE(response);
 
-  switch ((enum cardState)state)
+  switch ((enum CardState)state)
   {
     case CARD_TRANSFER:
       return E_OK;
@@ -439,7 +439,7 @@ static enum result isCardReady(struct SdCard *device)
 /*----------------------------------------------------------------------------*/
 static inline bool isMultiBufferTransfer(struct SdCard *device)
 {
-  const enum sdioCommand code = COMMAND_CODE_VALUE(device->command);
+  const enum SdioCommand code = COMMAND_CODE_VALUE(device->command);
 
   return code == CMD_READ_MULTIPLE_BLOCK || code == CMD_WRITE_MULTIPLE_BLOCK;
 }
@@ -514,7 +514,7 @@ static enum result startTransfer(struct SdCard *device)
   if (res != E_OK)
     return res;
 
-  const enum sdioCommand code = COMMAND_CODE_VALUE(device->command);
+  const enum SdioCommand code = COMMAND_CODE_VALUE(device->command);
   const size_t length = device->length;
   size_t number;
 
@@ -663,7 +663,7 @@ static enum result cardGet(void *object, enum ifOption option, void *data)
 
     case IF_STATUS:
     {
-      switch ((enum state)device->state)
+      switch ((enum State)device->state)
       {
         case STATE_IDLE:
           return E_OK;
@@ -734,9 +734,9 @@ static size_t cardRead(void *object, void *buffer, size_t length)
   if (device->crc)
     flags |= SDIO_CHECK_CRC;
 
-  const enum sdioCommand code = blocks == 1 ?
+  const enum SdioCommand code = blocks == 1 ?
       CMD_READ_SINGLE_BLOCK : CMD_READ_MULTIPLE_BLOCK;
-  const enum sdioResponse response = device->mode != SDIO_SPI ?
+  const enum SdioResponse response = device->mode != SDIO_SPI ?
       SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
   const uint32_t command = SDIO_COMMAND(code, response, flags);
   const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?
@@ -766,9 +766,9 @@ static size_t cardWrite(void *object, const void *buffer, size_t length)
     flags |= SDIO_CHECK_CRC;
 
   /* TODO Protect position reading */
-  const enum sdioCommand code = blocks == 1 ?
+  const enum SdioCommand code = blocks == 1 ?
       CMD_WRITE_BLOCK : CMD_WRITE_MULTIPLE_BLOCK;
-  const enum sdioResponse response = device->mode != SDIO_SPI ?
+  const enum SdioResponse response = device->mode != SDIO_SPI ?
       SDIO_RESPONSE_SHORT : SDIO_RESPONSE_NONE;
   const uint32_t command = SDIO_COMMAND(code, response, flags);
   const uint32_t argument = (uint32_t)(device->capacity == SDCARD_SDSC ?

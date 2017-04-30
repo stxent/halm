@@ -12,14 +12,14 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdCard;
 /*----------------------------------------------------------------------------*/
-enum sdCardCapacity
+enum SdCardCapacity
 {
   SDCARD_SDSC,
   SDCARD_SDHC,
   SDCARD_SDXC
 };
 /*----------------------------------------------------------------------------*/
-enum sdCardType
+enum SdCardType
 {
   SDCARD_1_0,
   SDCARD_1_1,

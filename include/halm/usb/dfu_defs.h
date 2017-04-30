@@ -36,7 +36,8 @@ enum
   DFU_REQUEST_ABORT     = 6
 };
 /*----------------------------------------------------------------------------*/
-enum dfuStatus {
+enum DfuStatus
+{
   DFU_STATUS_OK               = 0x00,
   DFU_STATUS_ERR_TARGET       = 0x01,
   DFU_STATUS_ERR_FILE         = 0x02,
@@ -55,7 +56,8 @@ enum dfuStatus {
   DFU_STATUS_ERR_STALLEDPKT   = 0x0F
 };
 
-enum dfuState {
+enum DfuState
+{
   STATE_APP_IDLE                = 0,
   STATE_APP_DETACH              = 1,
   STATE_DFU_IDLE                = 2,

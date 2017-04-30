@@ -464,7 +464,7 @@ static void driverEvent(void *object, unsigned int event)
   }
 #endif
 
-  switch ((enum usbDeviceEvent)event)
+  switch ((enum UsbDeviceEvent)event)
   {
     case USB_DEVICE_EVENT_RESET:
     case USB_DEVICE_EVENT_SUSPEND:

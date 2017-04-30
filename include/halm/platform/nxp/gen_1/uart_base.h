@@ -13,7 +13,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UartBase;
 /*----------------------------------------------------------------------------*/
-enum uartParity
+enum UartParity
 {
   UART_PARITY_NONE,
   UART_PARITY_ODD,
@@ -52,7 +52,7 @@ enum result uartCalcRate(const struct UartBase *, uint32_t,
     struct UartRateConfig *);
 void uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
 uint32_t uartGetRate(const struct UartBase *);
-void uartSetParity(struct UartBase *, enum uartParity);
+void uartSetParity(struct UartBase *, enum UartParity);
 void uartSetRate(struct UartBase *, struct UartRateConfig);
 
 uint32_t uartGetClock(const struct UartBase *);
