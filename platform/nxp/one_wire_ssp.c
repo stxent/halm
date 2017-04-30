@@ -55,9 +55,9 @@ static void startSearch(struct OneWireSsp *);
 /*----------------------------------------------------------------------------*/
 static enum result oneWireInit(void *, const void *);
 static void oneWireDeinit(void *);
-static enum result oneWireCallback(void *, void (*)(void *), void *);
-static enum result oneWireGet(void *, enum ifOption, void *);
-static enum result oneWireSet(void *, enum ifOption, const void *);
+static enum result oneWireSetCallback(void *, void (*)(void *), void *);
+static enum result oneWireGetParam(void *, enum IfParameter, void *);
+static enum result oneWireSetParam(void *, enum IfParameter, const void *);
 static size_t oneWireRead(void *, void *, size_t);
 static size_t oneWireWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -66,9 +66,9 @@ static const struct InterfaceClass oneWireTable = {
     .init = oneWireInit,
     .deinit = oneWireDeinit,
 
-    .callback = oneWireCallback,
-    .get = oneWireGet,
-    .set = oneWireSet,
+    .setCallback = oneWireSetCallback,
+    .getParam = oneWireGetParam,
+    .setParam = oneWireSetParam,
     .read = oneWireRead,
     .write = oneWireWrite
 };
@@ -410,7 +410,7 @@ static void oneWireDeinit(void *object)
   SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireCallback(void *object, void (*callback)(void *),
+static enum result oneWireSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct OneWireSsp * const interface = object;
@@ -420,12 +420,12 @@ static enum result oneWireCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireGet(void *object, enum ifOption option,
+static enum result oneWireGetParam(void *object, enum IfParameter parameter,
     void *data __attribute__((unused)))
 {
   struct OneWireSsp * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_ADDRESS:
       *(uint64_t *)data = fromLittleEndian64(interface->address);
@@ -442,13 +442,13 @@ static enum result oneWireGet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireSet(void *object, enum ifOption option,
+static enum result oneWireSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct OneWireSsp * const interface = object;
 
 #ifdef CONFIG_PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
-  switch ((enum OneWireOption)option)
+  switch ((enum OneWireParameter)parameter)
   {
     case IF_ONE_WIRE_START_SEARCH:
       interface->address = 0;
@@ -470,7 +470,7 @@ static enum result oneWireSet(void *object, enum ifOption option,
   }
 #endif
 
-  switch (option)
+  switch (parameter)
   {
     case IF_BLOCKING:
       interface->blocking = true;

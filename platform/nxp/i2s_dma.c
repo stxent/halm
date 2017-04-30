@@ -20,9 +20,9 @@ static enum result updateRate(struct I2sDma *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result i2sInit(void *, const void *);
 static void i2sDeinit(void *);
-static enum result i2sCallback(void *, void (*)(void *), void *);
-static enum result i2sGet(void *, enum ifOption, void *);
-static enum result i2sSet(void *, enum ifOption, const void *);
+static enum result i2sSetCallback(void *, void (*)(void *), void *);
+static enum result i2sGetParam(void *, enum IfParameter, void *);
+static enum result i2sSetParam(void *, enum IfParameter, const void *);
 static size_t i2sRead(void *, void *, size_t);
 static size_t i2sWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -31,9 +31,9 @@ static const struct InterfaceClass i2sTable = {
     .init = i2sInit,
     .deinit = i2sDeinit,
 
-    .callback = i2sCallback,
-    .get = i2sGet,
-    .set = i2sSet,
+    .setCallback = i2sSetCallback,
+    .getParam = i2sGetParam,
+    .setParam = i2sSetParam,
     .read = i2sRead,
     .write = i2sWrite
 };
@@ -372,7 +372,7 @@ static void i2sDeinit(void *object)
   I2sBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2sCallback(void *object, void (*callback)(void *),
+static enum result i2sSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct I2sDma * const interface = object;
@@ -382,11 +382,12 @@ static enum result i2sCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2sGet(void *object, enum ifOption option, void *data)
+static enum result i2sGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct I2sDma * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_AVAILABLE:
       if (!interface->rxDma)
@@ -419,12 +420,12 @@ static enum result i2sGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result i2sSet(void *object, enum ifOption option,
+static enum result i2sSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct I2sDma * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_RATE:
       return updateRate(interface, *(const uint32_t *)data);

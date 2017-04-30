@@ -16,9 +16,9 @@ static enum result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
 static void dacDeinit(void *);
-static enum result dacCallback(void *, void (*)(void *), void *);
-static enum result dacGet(void *, enum ifOption, void *);
-static enum result dacSet(void *, enum ifOption, const void *);
+static enum result dacSetCallback(void *, void (*)(void *), void *);
+static enum result dacGetParam(void *, enum IfParameter, void *);
+static enum result dacSetParam(void *, enum IfParameter, const void *);
 static size_t dacWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass dacTable = {
@@ -26,9 +26,9 @@ static const struct InterfaceClass dacTable = {
     .init = dacInit,
     .deinit = dacDeinit,
 
-    .callback = dacCallback,
-    .get = dacGet,
-    .set = dacSet,
+    .setCallback = dacSetCallback,
+    .getParam = dacGetParam,
+    .setParam = dacSetParam,
     .read = 0,
     .write = dacWrite
 };
@@ -127,7 +127,7 @@ static void dacDeinit(void *object)
   DacBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacCallback(void *object, void (*callback)(void *),
+static enum result dacSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct DacDma * const interface = object;
@@ -137,11 +137,12 @@ static enum result dacCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacGet(void *object, enum ifOption option, void *data)
+static enum result dacGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct DacDma * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_STATUS:
       return dmaStatus(interface->dma);
@@ -155,8 +156,8 @@ static enum result dacGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacSet(void *object __attribute__((unused)),
-    enum ifOption option __attribute__((unused)),
+static enum result dacSetParam(void *object __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

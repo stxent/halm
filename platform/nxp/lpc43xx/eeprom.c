@@ -26,9 +26,9 @@ static bool setDescriptor(const struct Eeprom *, struct Eeprom *);
 /*----------------------------------------------------------------------------*/
 static enum result eepromInit(void *, const void *);
 static void eepromDeinit(void *);
-static enum result eepromCallback(void *, void (*)(void *), void *);
-static enum result eepromGet(void *, enum ifOption, void *);
-static enum result eepromSet(void *, enum ifOption, const void *);
+static enum result eepromSetCallback(void *, void (*)(void *), void *);
+static enum result eepromGetParam(void *, enum IfParameter, void *);
+static enum result eepromSetParam(void *, enum IfParameter, const void *);
 static size_t eepromRead(void *, void *, size_t);
 static size_t eepromWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -37,9 +37,9 @@ static const struct InterfaceClass eepromTable = {
     .init = eepromInit,
     .deinit = eepromDeinit,
 
-    .callback = eepromCallback,
-    .get = eepromGet,
-    .set = eepromSet,
+    .setCallback = eepromSetCallback,
+    .getParam = eepromGetParam,
+    .setParam = eepromSetParam,
     .read = eepromRead,
     .write = eepromWrite
 };
@@ -127,7 +127,7 @@ static void eepromDeinit(void *object __attribute__((unused)))
   sysClockDisable(CLK_M4_EEPROM);
 }
 /*----------------------------------------------------------------------------*/
-static enum result eepromCallback(void *object, void (*callback)(void *),
+static enum result eepromSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Eeprom * const interface = object;
@@ -137,11 +137,12 @@ static enum result eepromCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result eepromGet(void *object, enum ifOption option, void *data)
+static enum result eepromGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct Eeprom * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_POSITION:
       *(uint32_t *)data = interface->position;
@@ -156,12 +157,12 @@ static enum result eepromGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result eepromSet(void *object, enum ifOption option,
+static enum result eepromSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Eeprom * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_BLOCKING:
       interface->blocking = true;

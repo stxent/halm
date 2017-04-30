@@ -14,9 +14,9 @@ static inline bool isSectorPositionValid(const struct Flash *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum result flashInit(void *, const void *);
 static void flashDeinit(void *);
-static enum result flashCallback(void *, void (*)(void *), void *);
-static enum result flashGet(void *, enum ifOption, void *);
-static enum result flashSet(void *, enum ifOption, const void *);
+static enum result flashSetCallback(void *, void (*)(void *), void *);
+static enum result flashGetParam(void *, enum IfParameter, void *);
+static enum result flashSetParam(void *, enum IfParameter, const void *);
 static size_t flashRead(void *, void *, size_t);
 static size_t flashWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -25,9 +25,9 @@ static const struct InterfaceClass flashTable = {
     .init = flashInit,
     .deinit = flashDeinit,
 
-    .callback = flashCallback,
-    .get = flashGet,
-    .set = flashSet,
+    .setCallback = flashSetCallback,
+    .getParam = flashGetParam,
+    .setParam = flashSetParam,
     .read = flashRead,
     .write = flashWrite
 };
@@ -74,18 +74,19 @@ static void flashDeinit(void *object __attribute__((unused)))
 
 }
 /*----------------------------------------------------------------------------*/
-static enum result flashCallback(void *object __attribute__((unused)),
+static enum result flashSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result flashGet(void *object, enum ifOption option, void *data)
+static enum result flashGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct Flash * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_POSITION:
       *(size_t *)data = interface->position;
@@ -104,13 +105,13 @@ static enum result flashGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result flashSet(void *object, enum ifOption option,
+static enum result flashSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Flash * const interface = object;
 
   /* Additional Flash options */
-  switch ((enum FlashOption)option)
+  switch ((enum FlashParameter)parameter)
   {
     case IF_FLASH_ERASE_SECTOR:
     {
@@ -129,7 +130,7 @@ static enum result flashSet(void *object, enum ifOption option,
       break;
   }
 
-  switch (option)
+  switch (parameter)
   {
     case IF_POSITION:
     {

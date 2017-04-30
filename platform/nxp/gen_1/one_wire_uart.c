@@ -36,9 +36,9 @@ static void sendWord(struct OneWireUart *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum result oneWireInit(void *, const void *);
 static void oneWireDeinit(void *);
-static enum result oneWireCallback(void *, void (*)(void *), void *);
-static enum result oneWireGet(void *, enum ifOption, void *);
-static enum result oneWireSet(void *, enum ifOption, const void *);
+static enum result oneWireSetCallback(void *, void (*)(void *), void *);
+static enum result oneWireGetParam(void *, enum IfParameter, void *);
+static enum result oneWireSetParam(void *, enum IfParameter, const void *);
 static size_t oneWireRead(void *, void *, size_t);
 static size_t oneWireWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -47,9 +47,9 @@ static const struct InterfaceClass oneWireTable = {
     .init = oneWireInit,
     .deinit = oneWireDeinit,
 
-    .callback = oneWireCallback,
-    .get = oneWireGet,
-    .set = oneWireSet,
+    .setCallback = oneWireSetCallback,
+    .getParam = oneWireGetParam,
+    .setParam = oneWireSetParam,
     .read = oneWireRead,
     .write = oneWireWrite
 };
@@ -210,7 +210,7 @@ static void oneWireDeinit(void *object)
   UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireCallback(void *object, void (*callback)(void *),
+static enum result oneWireSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct OneWireUart * const interface = object;
@@ -220,12 +220,12 @@ static enum result oneWireCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireGet(void *object, enum ifOption option,
+static enum result oneWireGetParam(void *object, enum IfParameter parameter,
     void *data __attribute__((unused)))
 {
   struct OneWireUart * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_STATUS:
       if (interface->blocking || interface->state != STATE_ERROR)
@@ -238,12 +238,12 @@ static enum result oneWireGet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result oneWireSet(void *object, enum ifOption option,
+static enum result oneWireSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct OneWireUart * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_BLOCKING:
       interface->blocking = true;

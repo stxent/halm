@@ -130,9 +130,9 @@ static void sendCommand(struct SdioSpi *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
-static enum result sdioCallback(void *, void (*)(void *), void *);
-static enum result sdioGet(void *, enum ifOption, void *);
-static enum result sdioSet(void *, enum ifOption, const void *);
+static enum result sdioSetCallback(void *, void (*)(void *), void *);
+static enum result sdioGetParam(void *, enum IfParameter, void *);
+static enum result sdioSetParam(void *, enum IfParameter, const void *);
 static size_t sdioRead(void *, void *, size_t);
 static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -170,9 +170,9 @@ static const struct InterfaceClass sdioTable = {
     .init = sdioInit,
     .deinit = sdioDeinit,
 
-    .callback = sdioCallback,
-    .get = sdioGet,
-    .set = sdioSet,
+    .setCallback = sdioSetCallback,
+    .getParam = sdioGetParam,
+    .setParam = sdioSetParam,
     .read = sdioRead,
     .write = sdioWrite
 };
@@ -597,9 +597,9 @@ static void autoStopTransmission(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *interface)
 {
-  ifSet(interface->bus, IF_ACQUIRE, 0);
-  ifSet(interface->bus, IF_ZEROCOPY, 0);
-  ifCallback(interface->bus, interruptHandler, interface);
+  ifSetParam(interface->bus, IF_ACQUIRE, 0);
+  ifSetParam(interface->bus, IF_ZEROCOPY, 0);
+  ifSetCallback(interface->bus, interruptHandler, interface);
 
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
 
@@ -648,7 +648,7 @@ static void interruptHandler(void *object)
 
     /* Finalize the transfer */
     pinSet(interface->cs);
-    ifSet(interface->bus, IF_RELEASE, 0);
+    ifSetParam(interface->bus, IF_RELEASE, 0);
 
     if (interface->callback)
       interface->callback(interface->callbackArgument);
@@ -740,9 +740,11 @@ static enum result sdioInit(void *object, const void *configBase)
 
   interface->bus = config->interface;
 
-  if ((res = ifSet(interface->bus, IF_ZEROCOPY, 0)) != E_OK)
+  res = ifSetParam(interface->bus, IF_ZEROCOPY, 0);
+  if (res != E_OK)
     return res;
-  if ((res = ifCallback(interface->bus, interruptHandler, interface)) != E_OK)
+  res = ifSetCallback(interface->bus, interruptHandler, interface);
+  if (res != E_OK)
     return res;
 
   interface->timer = config->timer;
@@ -791,12 +793,12 @@ static void sdioDeinit(void *object __attribute__((unused)))
   if (interface->timer)
     timerSetCallback(interface->timer, 0, 0);
 
-  ifCallback(interface->bus, 0, 0);
+  ifSetCallback(interface->bus, 0, 0);
 
   free(interface->crcPool);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioCallback(void *object, void (*callback)(void *),
+static enum result sdioSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SdioSpi * const interface = object;
@@ -806,12 +808,13 @@ static enum result sdioCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioGet(void *object, enum ifOption option, void *data)
+static enum result sdioGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct SdioSpi * const interface = object;
 
   /* Additional options */
-  switch ((enum SdioOption)option)
+  switch ((enum SdioParameter)parameter)
   {
     case IF_SDIO_MODE:
     {
@@ -835,10 +838,10 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
       break;
   }
 
-  switch (option)
+  switch (parameter)
   {
     case IF_RATE:
-      return ifGet(interface->bus, IF_RATE, data);
+      return ifGetParam(interface->bus, IF_RATE, data);
 
     case IF_STATUS:
     {
@@ -874,13 +877,13 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioSet(void *object, enum ifOption option,
+static enum result sdioSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct SdioSpi * const interface = object;
 
   /* Additional options */
-  switch ((enum SdioOption)option)
+  switch ((enum SdioParameter)parameter)
   {
     case IF_SDIO_EXECUTE:
       interface->left = 0;
@@ -911,10 +914,10 @@ static enum result sdioSet(void *object, enum ifOption option,
       break;
   }
 
-  switch (option)
+  switch (parameter)
   {
     case IF_RATE:
-      return ifSet(interface->bus, IF_RATE, data);
+      return ifSetParam(interface->bus, IF_RATE, data);
 
     case IF_ZEROCOPY:
       return E_OK;
@@ -935,9 +938,9 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
     assert(length / interface->blockSize <= interface->crcPoolSize);
 
   /* Configure interface */
-  ifSet(interface->bus, IF_ACQUIRE, 0);
-  ifSet(interface->bus, IF_ZEROCOPY, 0);
-  ifCallback(interface->bus, interruptHandler, interface);
+  ifSetParam(interface->bus, IF_ACQUIRE, 0);
+  ifSetParam(interface->bus, IF_ZEROCOPY, 0);
+  ifSetCallback(interface->bus, interruptHandler, interface);
 
   interface->commandStatus = interface->transferStatus = STATUS_BUSY;
 
@@ -965,9 +968,9 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
     assert(length / interface->blockSize <= interface->crcPoolSize);
 
   /* Configure interface */
-  ifSet(interface->bus, IF_ACQUIRE, 0);
-  ifSet(interface->bus, IF_ZEROCOPY, 0);
-  ifCallback(interface->bus, interruptHandler, interface);
+  ifSetParam(interface->bus, IF_ACQUIRE, 0);
+  ifSetParam(interface->bus, IF_ZEROCOPY, 0);
+  ifSetCallback(interface->bus, interruptHandler, interface);
 
   interface->commandStatus = interface->transferStatus = STATUS_BUSY;
 

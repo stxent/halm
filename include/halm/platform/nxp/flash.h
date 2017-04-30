@@ -12,10 +12,10 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Flash;
 /*----------------------------------------------------------------------------*/
-enum FlashOption
+enum FlashParameter
 {
   /** Get page size. */
-  IF_FLASH_PAGE_SIZE = IF_OPTION_END,
+  IF_FLASH_PAGE_SIZE = IF_PARAMETER_END,
   /** Erase sector. */
   IF_FLASH_ERASE_SECTOR,
   /** Erase page in sector. */

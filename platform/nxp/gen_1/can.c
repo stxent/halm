@@ -33,9 +33,9 @@ static void powerStateHandler(void *, enum PmState);
 /*----------------------------------------------------------------------------*/
 static enum result canInit(void *, const void *);
 static void canDeinit(void *);
-static enum result canCallback(void *, void (*)(void *), void *);
-static enum result canGet(void *, enum ifOption, void *);
-static enum result canSet(void *, enum ifOption, const void *);
+static enum result canSetCallback(void *, void (*)(void *), void *);
+static enum result canGetParam(void *, enum IfParameter, void *);
+static enum result canSetParam(void *, enum IfParameter, const void *);
 static size_t canRead(void *, void *, size_t);
 static size_t canWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -44,9 +44,9 @@ static const struct InterfaceClass canTable = {
     .init = canInit,
     .deinit = canDeinit,
 
-    .callback = canCallback,
-    .get = canGet,
-    .set = canSet,
+    .setCallback = canSetCallback,
+    .getParam = canGetParam,
+    .setParam = canSetParam,
     .read = canRead,
     .write = canWrite
 };
@@ -348,7 +348,7 @@ static void canDeinit(void *object)
   CanBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result canCallback(void *object, void (*callback)(void *),
+static enum result canSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Can * const interface = object;
@@ -358,11 +358,12 @@ static enum result canCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result canGet(void *object, enum ifOption option, void *data)
+static enum result canGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct Can * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_AVAILABLE:
       *(size_t *)data = queueSize(&interface->rxQueue);
@@ -381,12 +382,12 @@ static enum result canGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result canSet(void *object, enum ifOption option,
+static enum result canSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Can * const interface = object;
 
-  switch ((enum CanOption)option)
+  switch ((enum CanParameter)parameter)
   {
     case IF_CAN_ACTIVE:
       changeMode(interface, MODE_ACTIVE);
@@ -404,7 +405,7 @@ static enum result canSet(void *object, enum ifOption option,
       break;
   }
 
-  switch (option)
+  switch (parameter)
   {
     case IF_RATE:
     {

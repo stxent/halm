@@ -58,9 +58,9 @@ static enum result transferBuffer(struct SdCard *, uint32_t, uint32_t,
 /*----------------------------------------------------------------------------*/
 static enum result cardInit(void *, const void *);
 static void cardDeinit(void *);
-static enum result cardCallback(void *, void (*)(void *), void *);
-static enum result cardGet(void *, enum ifOption, void *);
-static enum result cardSet(void *, enum ifOption, const void *);
+static enum result cardSetCallback(void *, void (*)(void *), void *);
+static enum result cardGetParam(void *, enum IfParameter, void *);
+static enum result cardSetParam(void *, enum IfParameter, const void *);
 static size_t cardRead(void *, void *, size_t);
 static size_t cardWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -69,9 +69,9 @@ static const struct InterfaceClass cardTable = {
     .init = cardInit,
     .deinit = cardDeinit,
 
-    .callback = cardCallback,
-    .get = cardGet,
-    .set = cardSet,
+    .setCallback = cardSetCallback,
+    .getParam = cardGetParam,
+    .setParam = cardSetParam,
     .read = cardRead,
     .write = cardWrite
 };
@@ -83,19 +83,21 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
 {
   enum result res;
 
-  if ((res = ifSet(device->interface, IF_SDIO_COMMAND, &command)) != E_OK)
+  res = ifSetParam(device->interface, IF_SDIO_COMMAND, &command);
+  if (res != E_OK)
     return res;
-  if ((res = ifSet(device->interface, IF_SDIO_ARGUMENT, &argument)) != E_OK)
+  res = ifSetParam(device->interface, IF_SDIO_ARGUMENT, &argument);
+  if (res != E_OK)
     return res;
 
-  enum result status = ifSet(device->interface, IF_SDIO_EXECUTE, 0);
+  enum result status = ifSetParam(device->interface, IF_SDIO_EXECUTE, 0);
 
   if (status == E_BUSY)
   {
     if (!await)
       return E_BUSY;
 
-    while ((status = ifGet(device->interface, IF_STATUS, 0)) == E_BUSY)
+    while ((status = ifGetParam(device->interface, IF_STATUS, 0)) == E_BUSY)
       barrier();
   }
 
@@ -104,7 +106,8 @@ static enum result executeCommand(struct SdCard *device, uint32_t command,
 
   if (response)
   {
-    if ((res = ifGet(device->interface, IF_SDIO_RESPONSE, response)) != E_OK)
+    res = ifGetParam(device->interface, IF_SDIO_RESPONSE, response);
+    if (res != E_OK)
       return res;
   }
 
@@ -278,15 +281,18 @@ static enum result initializeCard(struct SdCard *device)
   enum result res;
 
   /* Lock the interface */
-  ifSet(device->interface, IF_ACQUIRE, 0);
+  ifSetParam(device->interface, IF_ACQUIRE, 0);
 
   /* Check interface capabilities and select zero-copy mode */
-  if ((res = ifSet(device->interface, IF_ZEROCOPY, 0)) != E_OK)
+  res = ifSetParam(device->interface, IF_ZEROCOPY, 0);
+  if (res != E_OK)
     goto error;
-  if ((res = ifCallback(device->interface, interruptHandler, device)) != E_OK)
+  res = ifSetCallback(device->interface, interruptHandler, device);
+  if (res != E_OK)
     goto error;
 
-  if ((res = ifGet(device->interface, IF_RATE, &originalRate)) != E_OK)
+  res = ifGetParam(device->interface, IF_RATE, &originalRate);
+  if (res != E_OK)
     goto error;
   if (originalRate > WORK_RATE)
   {
@@ -295,18 +301,19 @@ static enum result initializeCard(struct SdCard *device)
   }
 
   /* Set low data rate for enumeration purposes */
-  if ((res = ifSet(device->interface, IF_RATE, &lowRate)) != E_OK)
+  res = ifSetParam(device->interface, IF_RATE, &lowRate);
+  if (res != E_OK)
     goto error;
 
   /* Initialize memory card */
   res = identifyCard(device);
 
   /* Restore original interface rate */
-  ifSet(device->interface, IF_RATE, &originalRate);
+  ifSetParam(device->interface, IF_RATE, &originalRate);
 
 error:
   /* Release the interface */
-  ifSet(device->interface, IF_RELEASE, 0);
+  ifSetParam(device->interface, IF_RELEASE, 0);
 
   return res;
 }
@@ -365,7 +372,7 @@ static void interruptHandler(void *object)
 
     case STATE_TRANSFER:
     {
-      const enum result res = ifGet(device->interface, IF_STATUS, 0);
+      const enum result res = ifGetParam(device->interface, IF_STATUS, 0);
 
       if (res != E_OK)
       {
@@ -390,7 +397,7 @@ static void interruptHandler(void *object)
 
     case STATE_STOP:
     {
-      const enum result res = ifGet(device->interface, IF_STATUS, 0);
+      const enum result res = ifGetParam(device->interface, IF_STATUS, 0);
 
       device->state = res == E_OK ? STATE_IDLE : STATE_ERROR;
       event = true;
@@ -407,7 +414,7 @@ static void interruptHandler(void *object)
 
   if (event)
   {
-    ifSet(device->interface, IF_RELEASE, 0);
+    ifSetParam(device->interface, IF_RELEASE, 0);
 
     if (device->callback)
       device->callback(device->callbackArgument);
@@ -417,14 +424,14 @@ static void interruptHandler(void *object)
 static enum result isCardReady(struct SdCard *device)
 {
   uint32_t response;
-  enum result res;
 
-  if ((res = ifGet(device->interface, IF_SDIO_RESPONSE, &response)) != E_OK)
+  const enum result res = ifGetParam(device->interface, IF_SDIO_RESPONSE,
+      &response);
+
+  if (res != E_OK)
     return res;
 
-  const uint8_t state = CURRENT_STATE(response);
-
-  switch ((enum CardState)state)
+  switch ((enum CardState)CURRENT_STATE(response))
   {
     case CARD_TRANSFER:
       return E_OK;
@@ -507,10 +514,10 @@ static enum result startTransfer(struct SdCard *device)
 {
   enum result res;
 
-  res = ifSet(device->interface, IF_SDIO_COMMAND, &device->command);
+  res = ifSetParam(device->interface, IF_SDIO_COMMAND, &device->command);
   if (res != E_OK)
     return res;
-  res = ifSet(device->interface, IF_SDIO_ARGUMENT, &device->argument);
+  res = ifSetParam(device->interface, IF_SDIO_ARGUMENT, &device->argument);
   if (res != E_OK)
     return res;
 
@@ -556,9 +563,9 @@ static enum result transferBuffer(struct SdCard *device,
 {
   enum result res;
 
-  ifSet(device->interface, IF_ACQUIRE, 0);
-  ifSet(device->interface, IF_ZEROCOPY, 0);
-  ifCallback(device->interface, interruptHandler, device);
+  ifSetParam(device->interface, IF_ACQUIRE, 0);
+  ifSetParam(device->interface, IF_ZEROCOPY, 0);
+  ifSetCallback(device->interface, interruptHandler, device);
 
   device->argument = argument;
   device->command = command;
@@ -579,7 +586,7 @@ static enum result transferBuffer(struct SdCard *device,
   if (res != E_OK)
   {
     device->state = STATE_ERROR;
-    ifSet(device->interface, IF_RELEASE, 0);
+    ifSetParam(device->interface, IF_RELEASE, 0);
 
     if (device->callback)
       device->callback(device->callbackArgument);
@@ -607,7 +614,6 @@ static enum result cardInit(void *object, const void *configBase)
 {
   const struct SdCardConfig * const config = configBase;
   struct SdCard * const device = object;
-  enum result res;
 
   device->callback = 0;
 
@@ -624,7 +630,10 @@ static enum result cardInit(void *object, const void *configBase)
   device->blocking = true;
 
   /* Get interface type */
-  if ((res = ifGet(device->interface, IF_SDIO_MODE, &device->mode)) != E_OK)
+  const enum result res = ifGetParam(device->interface, IF_SDIO_MODE,
+      &device->mode);
+
+  if (res != E_OK)
     return res;
 
   return initializeCard(device);
@@ -634,10 +643,10 @@ static void cardDeinit(void *object)
 {
   struct SdCard * const device = object;
 
-  ifCallback(device->interface, 0, 0); //FIXME Acquire?
+  ifSetCallback(device->interface, 0, 0); //FIXME Acquire?
 }
 /*----------------------------------------------------------------------------*/
-static enum result cardCallback(void *object, void (*callback)(void *),
+static enum result cardSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SdCard * const device = object;
@@ -647,11 +656,12 @@ static enum result cardCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result cardGet(void *object, enum ifOption option, void *data)
+static enum result cardGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct SdCard * const device = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_POSITION:
       *(uint64_t *)data = device->position;
@@ -681,12 +691,12 @@ static enum result cardGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result cardSet(void *object, enum ifOption option,
+static enum result cardSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct SdCard * const device = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_BLOCKING:
       device->blocking = true;

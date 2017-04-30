@@ -24,9 +24,9 @@ static void powerStateHandler(void *, enum PmState);
 /*----------------------------------------------------------------------------*/
 static enum result spiInit(void *, const void *);
 static void spiDeinit(void *);
-static enum result spiCallback(void *, void (*)(void *), void *);
-static enum result spiGet(void *, enum ifOption, void *);
-static enum result spiSet(void *, enum ifOption, const void *);
+static enum result spiSetCallback(void *, void (*)(void *), void *);
+static enum result spiGetParam(void *, enum IfParameter, void *);
+static enum result spiSetParam(void *, enum IfParameter, const void *);
 static size_t spiRead(void *, void *, size_t);
 static size_t spiWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -35,9 +35,9 @@ static const struct InterfaceClass spiTable = {
     .init = spiInit,
     .deinit = spiDeinit,
 
-    .callback = spiCallback,
-    .get = spiGet,
-    .set = spiSet,
+    .setCallback = spiSetCallback,
+    .getParam = spiGetParam,
+    .setParam = spiSetParam,
     .read = spiRead,
     .write = spiWrite
 };
@@ -248,7 +248,7 @@ static void spiDeinit(void *object)
   SspBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiCallback(void *object, void (*callback)(void *),
+static enum result spiSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SpiDma * const interface = object;
@@ -258,11 +258,12 @@ static enum result spiCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiGet(void *object, enum ifOption option, void *data)
+static enum result spiGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct SpiDma * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_RATE:
       *(uint32_t *)data = interface->rate;
@@ -281,11 +282,12 @@ static enum result spiGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result spiSet(void *object, enum ifOption option, const void *data)
+static enum result spiSetParam(void *object, enum IfParameter parameter,
+    const void *data)
 {
   struct SpiDma * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_BLOCKING:
       dmaSetCallback(interface->rxDma, 0, 0);

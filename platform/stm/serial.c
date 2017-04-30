@@ -12,9 +12,9 @@ static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum result serialInit(void *, const void *);
 static void serialDeinit(void *);
-static enum result serialCallback(void *, void (*)(void *), void *);
-static enum result serialGet(void *, enum ifOption, void *);
-static enum result serialSet(void *, enum ifOption, const void *);
+static enum result serialSetCallback(void *, void (*)(void *), void *);
+static enum result serialGetParam(void *, enum IfParameter, void *);
+static enum result serialSetParam(void *, enum IfParameter, const void *);
 static size_t serialRead(void *, void *, size_t);
 static size_t serialWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -23,9 +23,9 @@ static const struct InterfaceClass serialTable = {
     .init = serialInit,
     .deinit = serialDeinit,
 
-    .callback = serialCallback,
-    .get = serialGet,
-    .set = serialSet,
+    .setCallback = serialSetCallback,
+    .getParam = serialGetParam,
+    .setParam = serialSetParam,
     .read = serialRead,
     .write = serialWrite
 };
@@ -136,7 +136,7 @@ static void serialDeinit(void *object)
   UartBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialCallback(void *object, void (*callback)(void *),
+static enum result serialSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Serial * const interface = object;
@@ -146,11 +146,12 @@ static enum result serialCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialGet(void *object, enum ifOption option, void *data)
+static enum result serialGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct Serial * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_AVAILABLE:
       *(size_t *)data = byteQueueSize(&interface->rxQueue);
@@ -165,12 +166,12 @@ static enum result serialGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result serialSet(void *object, enum ifOption option,
+static enum result serialSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Serial * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_RATE:
       interface->rate = *(const uint32_t *)data;

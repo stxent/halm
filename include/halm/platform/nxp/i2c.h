@@ -17,13 +17,13 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2c;
 /*----------------------------------------------------------------------------*/
-enum I2cOption
+enum I2cParameter
 {
   /**
    * Send stop after write operation. Option controls the repeated start
    * condition generation. This option is enabled by default.
    */
-  IF_I2C_SENDSTOP = IF_OPTION_END
+  IF_I2C_SENDSTOP = IF_PARAMETER_END
 };
 /*----------------------------------------------------------------------------*/
 struct I2cConfig

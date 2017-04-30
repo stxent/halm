@@ -18,9 +18,9 @@ static void setupChannels(struct AdcBus *, const PinNumber *);
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *, const void *);
 static void adcDeinit(void *);
-static enum result adcCallback(void *, void (*)(void *), void *);
-static enum result adcGet(void *, enum ifOption, void *);
-static enum result adcSet(void *, enum ifOption, const void *);
+static enum result adcSetCallback(void *, void (*)(void *), void *);
+static enum result adcGetParam(void *, enum IfParameter, void *);
+static enum result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
@@ -28,9 +28,9 @@ static const struct InterfaceClass adcTable = {
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .callback = adcCallback,
-    .get = adcGet,
-    .set = adcSet,
+    .setCallback = adcSetCallback,
+    .getParam = adcGetParam,
+    .setParam = adcSetParam,
     .read = adcRead,
     .write = 0
 };
@@ -131,7 +131,7 @@ static void adcDeinit(void *object)
   free(interface->pins);
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcCallback(void *object, void (*callback)(void *),
+static enum result adcSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct AdcBus * const interface = object;
@@ -141,12 +141,12 @@ static enum result adcCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGet(void *object, enum ifOption option,
+static enum result adcGetParam(void *object, enum IfParameter parameter,
     void *data __attribute__((unused)))
 {
   struct AdcBus * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_STATUS:
       return interface->buffer ? E_BUSY : E_OK;
@@ -156,12 +156,12 @@ static enum result adcGet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSet(void *object, enum ifOption option,
+static enum result adcSetParam(void *object, enum IfParameter parameter,
     const void *data __attribute__((unused)))
 {
   struct AdcBus * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_BLOCKING:
       interface->blocking = true;

@@ -16,9 +16,9 @@ static enum result dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *, const void *);
 static void adcDeinit(void *);
-static enum result adcCallback(void *, void (*)(void *), void *);
-static enum result adcGet(void *, enum ifOption, void *);
-static enum result adcSet(void *, enum ifOption, const void *);
+static enum result adcSetCallback(void *, void (*)(void *), void *);
+static enum result adcGetParam(void *, enum IfParameter, void *);
+static enum result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
@@ -26,9 +26,9 @@ static const struct InterfaceClass adcTable = {
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .callback = adcCallback,
-    .get = adcGet,
-    .set = adcSet,
+    .setCallback = adcSetCallback,
+    .getParam = adcGetParam,
+    .setParam = adcSetParam,
     .read = adcRead,
     .write = 0
 };
@@ -131,7 +131,7 @@ static void adcDeinit(void *object)
   deinit(interface->dma);
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcCallback(void *object, void (*callback)(void *),
+static enum result adcSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct AdcDma * const interface = object;
@@ -141,11 +141,12 @@ static enum result adcCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGet(void *object, enum ifOption option, void *data)
+static enum result adcGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct AdcDma * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_AVAILABLE:
       *(size_t *)data = BLOCK_COUNT - ((dmaPending(interface->dma) + 1) >> 1);
@@ -159,8 +160,8 @@ static enum result adcGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSet(void *object __attribute__((unused)),
-    enum ifOption option __attribute__((unused)),
+static enum result adcSetParam(void *object __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

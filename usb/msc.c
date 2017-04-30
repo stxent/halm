@@ -509,7 +509,7 @@ static enum State stateReadEnter(struct Msc *driver)
 static enum State stateReadRun(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const enum result status = ifGet(driver->storage, IF_STATUS, 0);
+  const enum result status = ifGetParam(driver->storage, IF_STATUS, 0);
 
   if (status == E_OK)
   {
@@ -642,7 +642,7 @@ static enum State stateWriteRun(struct Msc *driver)
 static enum State stateWriteWaitRun(struct Msc *driver)
 {
   struct PrivateData * const privateData = driver->privateData;
-  const enum result status = ifGet(driver->storage, IF_STATUS, 0);
+  const enum result status = ifGetParam(driver->storage, IF_STATUS, 0);
 
   if (status == E_OK)
   {
@@ -1106,15 +1106,16 @@ static enum result storageRead(struct Msc *driver)
   struct PrivateData * const privateData = driver->privateData;
   const size_t transferLength = calcNextTransferLength(driver,
       privateData->context.left);
-  enum result res;
 
   usbTrace("msc: read block %"PRIu32", count %"PRIu32,
       (uint32_t)(privateData->context.position / driver->blockLength),
       transferLength / driver->blockLength);
 
-  ifCallback(driver->storage, storageCallback, driver);
+  ifSetCallback(driver->storage, storageCallback, driver);
 
-  res = ifSet(driver->storage, IF_POSITION, &privateData->context.position);
+  const enum result res = ifSetParam(driver->storage, IF_POSITION,
+      &privateData->context.position);
+
   if (res != E_OK)
     return res;
 
@@ -1140,15 +1141,16 @@ static enum result storageWrite(struct Msc *driver)
   struct PrivateData * const privateData = driver->privateData;
   const size_t transferLength = calcNextTransferLength(driver,
       privateData->context.left);
-  enum result res;
 
   usbTrace("msc: write block %"PRIu32", count %"PRIu32,
       (uint32_t)(privateData->context.position / driver->blockLength),
       transferLength / driver->blockLength);
 
-  ifCallback(driver->storage, storageCallback, driver);
+  ifSetCallback(driver->storage, storageCallback, driver);
 
-  res = ifSet(driver->storage, IF_POSITION, &privateData->context.position);
+  const enum result res = ifSetParam(driver->storage, IF_POSITION,
+      &privateData->context.position);
+
   if (res != E_OK)
     return res;
 
@@ -1422,7 +1424,7 @@ static enum result driverInit(void *object, const void *configBase)
   /* Calculate storage geometry */
   uint64_t storageSize;
 
-  if ((res = ifGet(driver->storage, IF_SIZE, &storageSize)) != E_OK)
+  if ((res = ifGetParam(driver->storage, IF_SIZE, &storageSize)) != E_OK)
     return res;
 
   driver->blockLength = MSC_BLOCK_SIZE;

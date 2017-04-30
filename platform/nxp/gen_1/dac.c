@@ -12,9 +12,9 @@
 /*----------------------------------------------------------------------------*/
 static enum result dacInit(void *, const void *);
 static void dacDeinit(void *);
-static enum result dacCallback(void *, void (*)(void *), void *);
-static enum result dacGet(void *, enum ifOption, void *);
-static enum result dacSet(void *, enum ifOption, const void *);
+static enum result dacSetCallback(void *, void (*)(void *), void *);
+static enum result dacGetParam(void *, enum IfParameter, void *);
+static enum result dacSetParam(void *, enum IfParameter, const void *);
 static size_t dacWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass dacTable = {
@@ -22,9 +22,9 @@ static const struct InterfaceClass dacTable = {
     .init = dacInit,
     .deinit = dacDeinit,
 
-    .callback = dacCallback,
-    .get = dacGet,
-    .set = dacSet,
+    .setCallback = dacSetCallback,
+    .getParam = dacGetParam,
+    .setParam = dacSetParam,
     .read = 0,
     .write = dacWrite
 };
@@ -60,22 +60,22 @@ static void dacDeinit(void *object)
   DacBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacCallback(void *object __attribute__((unused)),
+static enum result dacSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacGet(void *object __attribute__((unused)),
-    enum ifOption option __attribute__((unused)),
+static enum result dacGetParam(void *object __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     void *data __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result dacSet(void *object __attribute__((unused)),
-    enum ifOption option __attribute__((unused)),
+static enum result dacSetParam(void *object __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

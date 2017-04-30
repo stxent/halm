@@ -63,9 +63,9 @@ enum SdioMode
   SDIO_4BIT
 };
 /*----------------------------------------------------------------------------*/
-enum SdioOption
+enum SdioParameter
 {
-  IF_SDIO_MODE = IF_OPTION_END,
+  IF_SDIO_MODE = IF_PARAMETER_END,
   IF_SDIO_EXECUTE,
   IF_SDIO_ARGUMENT,
   IF_SDIO_COMMAND,

@@ -9,10 +9,10 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum OneWireOption
+enum OneWireParameter
 {
   /** Start the device search. */
-  IF_ONE_WIRE_START_SEARCH = IF_OPTION_END,
+  IF_ONE_WIRE_START_SEARCH = IF_PARAMETER_END,
   /**
    * Read an address of the next device. Returns @b E_EMPTY when
    * all devices have already been found or @b E_OK otherwise.

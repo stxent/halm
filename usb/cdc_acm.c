@@ -32,9 +32,9 @@ static bool resetEndpoints(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
 static enum result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
-static enum result interfaceCallback(void *, void (*)(void *), void *);
-static enum result interfaceGet(void *, enum ifOption, void *);
-static enum result interfaceSet(void *, enum ifOption, const void *);
+static enum result interfaceSetCallback(void *, void (*)(void *), void *);
+static enum result interfaceGetParam(void *, enum IfParameter, void *);
+static enum result interfaceSetParam(void *, enum IfParameter, const void *);
 static size_t interfaceRead(void *, void *, size_t);
 static size_t interfaceWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -43,9 +43,9 @@ static const struct InterfaceClass interfaceTable = {
     .init = interfaceInit,
     .deinit = interfaceDeinit,
 
-    .callback = interfaceCallback,
-    .get = interfaceGet,
-    .set = interfaceSet,
+    .setCallback = interfaceSetCallback,
+    .getParam = interfaceGetParam,
+    .setParam = interfaceSetParam,
     .read = interfaceRead,
     .write = interfaceWrite
 };
@@ -323,7 +323,7 @@ static void interfaceDeinit(void *object)
   queueDeinit(&interface->rxRequestQueue);
 }
 /*----------------------------------------------------------------------------*/
-static enum result interfaceCallback(void *object, void (*callback)(void *),
+static enum result interfaceSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct CdcAcm * const interface = object;
@@ -333,12 +333,12 @@ static enum result interfaceCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result interfaceGet(void *object, enum ifOption option,
+static enum result interfaceGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct CdcAcm * const interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_AVAILABLE:
       *(size_t *)data = interface->suspended ? 0 : interface->queuedRxBytes;
@@ -356,7 +356,7 @@ static enum result interfaceGet(void *object, enum ifOption option,
       break;
   }
 
-  switch ((enum CdcAcmOption)option)
+  switch ((enum CdcAcmParameter)parameter)
   {
     case IF_CDC_ACM_STATUS:
     {
@@ -388,8 +388,8 @@ static enum result interfaceGet(void *object, enum ifOption option,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result interfaceSet(void *object __attribute__((unused)),
-    enum ifOption option __attribute__((unused)),
+static enum result interfaceSetParam(void *object __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

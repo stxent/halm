@@ -12,9 +12,9 @@
 /*----------------------------------------------------------------------------*/
 static enum result adcInit(void *, const void *);
 static void adcDeinit(void *);
-static enum result adcCallback(void *, void (*)(void *), void *);
-static enum result adcGet(void *, enum ifOption, void *);
-static enum result adcSet(void *, enum ifOption, const void *);
+static enum result adcSetCallback(void *, void (*)(void *), void *);
+static enum result adcGetParam(void *, enum IfParameter, void *);
+static enum result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
@@ -22,9 +22,9 @@ static const struct InterfaceClass adcTable = {
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .callback = adcCallback,
-    .get = adcGet,
-    .set = adcSet,
+    .setCallback = adcSetCallback,
+    .getParam = adcGetParam,
+    .setParam = adcSetParam,
     .read = adcRead,
     .write = 0
 };
@@ -54,22 +54,22 @@ static void adcDeinit(void *object)
   adcReleasePin(interface->pin);
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcCallback(void *object __attribute__((unused)),
+static enum result adcSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcGet(void *object __attribute__((unused)),
-    enum ifOption option __attribute__((unused)),
+static enum result adcGetParam(void *object __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     void *data __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum result adcSet(void *object __attribute__((unused)),
-    enum ifOption option __attribute__((unused)),
+static enum result adcSetParam(void *object __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

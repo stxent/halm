@@ -18,10 +18,10 @@ enum CanFlags
   CAN_SELF_RX = 0x08
 };
 /*----------------------------------------------------------------------------*/
-enum CanOption
+enum CanParameter
 {
   /** Enable active mode. */
-  IF_CAN_ACTIVE = IF_OPTION_END,
+  IF_CAN_ACTIVE = IF_PARAMETER_END,
   /** Enable listener mode. This mode is set by default. */
   IF_CAN_LISTENER,
   /** Enable loopback mode. */

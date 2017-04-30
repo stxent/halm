@@ -22,9 +22,9 @@ static enum result updateRate(struct Sdmmc *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
-static enum result sdioCallback(void *, void (*)(void *), void *);
-static enum result sdioGet(void *, enum ifOption, void *);
-static enum result sdioSet(void *, enum ifOption, const void *);
+static enum result sdioSetCallback(void *, void (*)(void *), void *);
+static enum result sdioGetParam(void *, enum IfParameter, void *);
+static enum result sdioSetParam(void *, enum IfParameter, const void *);
 static size_t sdioRead(void *, void *, size_t);
 static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -33,9 +33,9 @@ static const struct InterfaceClass sdioTable = {
     .init = sdioInit,
     .deinit = sdioDeinit,
 
-    .callback = sdioCallback,
-    .get = sdioGet,
-    .set = sdioSet,
+    .setCallback = sdioSetCallback,
+    .getParam = sdioGetParam,
+    .setParam = sdioSetParam,
     .read = sdioRead,
     .write = sdioWrite
 };
@@ -307,7 +307,7 @@ static void sdioDeinit(void *object)
   SdmmcBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioCallback(void *object, void (*callback)(void *),
+static enum result sdioSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Sdmmc * const interface = object;
@@ -317,13 +317,14 @@ static enum result sdioCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioGet(void *object, enum ifOption option, void *data)
+static enum result sdioGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   /* Additional options */
-  switch ((enum SdioOption)option)
+  switch ((enum SdioParameter)parameter)
   {
     case IF_SDIO_MODE:
     {
@@ -358,7 +359,7 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
       break;
   }
 
-  switch (option)
+  switch (parameter)
   {
     case IF_RATE:
       *(uint32_t *)data = interface->rate;
@@ -372,14 +373,14 @@ static enum result sdioGet(void *object, enum ifOption option, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum result sdioSet(void *object, enum ifOption option,
+static enum result sdioSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   /* Additional options */
-  switch ((enum SdioOption)option)
+  switch ((enum SdioParameter)parameter)
   {
     case IF_SDIO_EXECUTE:
       execute(interface);
@@ -410,7 +411,7 @@ static enum result sdioSet(void *object, enum ifOption option,
       break;
   }
 
-  switch (option)
+  switch (parameter)
   {
     case IF_RATE:
       return updateRate(interface, *(const uint32_t *)data);
