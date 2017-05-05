@@ -97,11 +97,6 @@ static enum Result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
   reg->CONFIG |= CONFIG_NORELOAD(offset);
   if (unit->base.part != SCT_UNIFIED)
   {
-    reg->MATCH[channel] = value;
-    reg->MATCHREL[channel] = value;
-  }
-  else
-  {
     if (value < (1 << 16))
     {
       reg->MATCH_PART[channel][offset] = value;
@@ -109,6 +104,11 @@ static enum Result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
     }
     else
       res = E_VALUE;
+  }
+  else
+  {
+    reg->MATCH[channel] = value;
+    reg->MATCHREL[channel] = value;
   }
   reg->CONFIG &= ~CONFIG_NORELOAD(offset);
 
@@ -146,7 +146,10 @@ static enum Result unitInit(void *object, const void *configBase)
   assert(config);
 
   const struct SctBaseConfig baseConfig = {
-      .channel = config->channel
+      .channel = config->channel,
+      .edge = PIN_RISING,
+      .input = SCT_INPUT_NONE,
+      .part = config->part
   };
   struct SctPwmUnit * const unit = object;
   enum Result res;

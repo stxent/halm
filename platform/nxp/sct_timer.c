@@ -95,6 +95,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   const struct SctBaseConfig baseConfig = {
       .channel = config->channel,
+      .edge = PIN_RISING,
       .input = SCT_INPUT_NONE,
       .part = config->part
   };
