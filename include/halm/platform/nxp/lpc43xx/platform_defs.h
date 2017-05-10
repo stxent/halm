@@ -1622,60 +1622,43 @@ typedef struct
   __ne__ uint32_t RESERVED0;
 
   /* Offset 0x0020 */
-  __rw__ uint32_t IF1_CMDREQ;
-  union
+  struct
   {
-    __rw__ uint32_t IF1_CMDMSK_R;
-    __rw__ uint32_t IF1_CMDMSK_W;
-  };
-  __rw__ uint32_t IF1_MSK1;
-  __rw__ uint32_t IF1_MSK2;
-  __rw__ uint32_t IF1_ARB1;
-  __rw__ uint32_t IF1_ARB2;
-  __rw__ uint32_t IF1_MCTRL;
-  __rw__ uint32_t IF1_DA1;
-  __rw__ uint32_t IF1_DA2;
-  __rw__ uint32_t IF1_DB1;
-  __rw__ uint32_t IF1_DB2;
-  __ne__ uint32_t RESERVED1[13];
+    __rw__ uint32_t CMDREQ;
+    __rw__ uint32_t CMDMSK;
+    __rw__ uint32_t MSK1;
+    __rw__ uint32_t MSK2;
+    __rw__ uint32_t ARB1;
+    __rw__ uint32_t ARB2;
+    __rw__ uint32_t MCTRL;
+    __rw__ uint32_t DA1;
+    __rw__ uint32_t DA2;
+    __rw__ uint32_t DB1;
+    __rw__ uint32_t DB2;
+    __ne__ uint32_t RESERVED[13];
+  } IF[2];
 
-  /* Offset 0x0080 */
-  __rw__ uint32_t IF2_CMDREQ;
-  union
-  {
-    __rw__ uint32_t IF2_CMDMSK_R;
-    __rw__ uint32_t IF2_CMDMSK_W;
-  };
-  __rw__ uint32_t IF2_MSK1;
-  __rw__ uint32_t IF2_MSK2;
-  __rw__ uint32_t IF2_ARB1;
-  __rw__ uint32_t IF2_ARB2;
-  __rw__ uint32_t IF2_MCTRL;
-  __rw__ uint32_t IF2_DA1;
-  __rw__ uint32_t IF2_DA2;
-  __rw__ uint32_t IF2_DB1;
-  __rw__ uint32_t IF2_DB2;
-  __ne__ uint32_t RESERVED2[21];
+  __ne__ uint32_t RESERVED1[8];
 
   /* Offset 0x0100 */
   __ro__ uint32_t TXREQ1;
   __ro__ uint32_t TXREQ2;
-  __ne__ uint32_t RESERVED3[6];
+  __ne__ uint32_t RESERVED2[6];
 
   /* Offset 0x0120 */
   __ro__ uint32_t ND1;
   __ro__ uint32_t ND2;
-  __ne__ uint32_t RESERVED4[6];
+  __ne__ uint32_t RESERVED3[6];
 
   /* Offset 0x0140 */
   __ro__ uint32_t IR1;
   __ro__ uint32_t IR2;
-  __ne__ uint32_t RESERVED5[6];
+  __ne__ uint32_t RESERVED4[6];
 
   /* Offset 0x0160 */
   __ro__ uint32_t MSGV1;
   __ro__ uint32_t MSGV2;
-  __ne__ uint32_t RESERVED6[6];
+  __ne__ uint32_t RESERVED5[6];
 
   /* Offset 0x0180 */
   __rw__ uint32_t CLKDIV;
