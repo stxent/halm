@@ -21,7 +21,7 @@ enum Mode
   MODE_LOOPBACK
 };
 /*----------------------------------------------------------------------------*/
-static uint32_t calcBusTimings(struct Can *, uint32_t);
+static uint32_t calcBusTimings(const struct Can *, uint32_t);
 static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
 static void interruptHandler(void *);
@@ -53,13 +53,13 @@ static const struct InterfaceClass canTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Can = &canTable;
 /*----------------------------------------------------------------------------*/
-static uint32_t calcBusTimings(struct Can *interface, uint32_t rate)
+static uint32_t calcBusTimings(const struct Can *interface, uint32_t rate)
 {
   assert(rate != 0);
 
   const unsigned int bitsPerFrame = 1 + CONFIG_PLATFORM_NXP_CAN_TSEG1
       + CONFIG_PLATFORM_NXP_CAN_TSEG2;
-  const uint32_t clock = canGetClock((struct CanBase *)interface);
+  const uint32_t clock = canGetClock(&interface->base);
   const uint32_t prescaler = clock / rate / bitsPerFrame;
   const uint32_t regValue = BTR_BRP(prescaler - 1) | BTR_SJW(0)
       | BTR_TSEG1(CONFIG_PLATFORM_NXP_CAN_TSEG1 - 1)
@@ -211,7 +211,6 @@ static uint32_t sendMessage(struct Can *interface,
     mask = IER_TIE3;
   }
 
-  uint32_t data[2] = {0};
   uint32_t command = CMR_TR | CMR_STB(index);
   uint32_t information = TFI_DLC(message->length);
 
@@ -220,24 +219,30 @@ static uint32_t sendMessage(struct Can *interface,
 
   if (message->flags & CAN_EXT_ID)
   {
-    assert(message->id < 1UL << 29);
+    assert(message->id < (1UL << 29));
     information |= TFI_FF;
   }
   else
-    assert(message->id < 1UL << 11);
-
-  if (message->flags & CAN_RTR)
   {
-    assert(message->length == 0);
+    assert(message->id < (1UL << 11));
+  }
+
+  if (!(message->flags & CAN_RTR))
+  {
+    uint32_t data[2] = {0};
+
+    memcpy(data, message->data, message->length);
+
+    reg->TX[index].TDA = data[0];
+    reg->TX[index].TDB = data[1];
+  }
+  else
+  {
     information |= TFI_RTR;
   }
 
-  memcpy(data, message->data, message->length);
-
   reg->TX[index].TFI = information;
   reg->TX[index].TID = message->id;
-  reg->TX[index].TDA = data[0];
-  reg->TX[index].TDB = data[1];
 
   reg->IER |= mask;
   reg->CMR = command;
@@ -461,6 +466,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   const struct CanStandardMessage *input = buffer;
   const size_t initialLength = length;
 
+  /* Synchronize access to the message queue and the CAN core */
   const IrqState state = irqSave();
 
   if (queueEmpty(&interface->txQueue))
