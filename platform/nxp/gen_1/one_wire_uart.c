@@ -66,7 +66,7 @@ static void beginTransmission(struct OneWireUart *interface)
 {
   LPC_UART_Type * const reg = interface->base.reg;
 
-  uartSetRate((struct UartBase *)interface, interface->resetRate);
+  uartSetRate(&interface->base, interface->resetRate);
   interface->state = STATE_RESET;
   /* Clear RX FIFO and set trigger level to 1 character */
   reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_1);
@@ -102,7 +102,7 @@ static void interruptHandler(void *object)
       case STATE_RESET:
         if (data ^ 0xF0)
         {
-          uartSetRate((struct UartBase *)interface, interface->dataRate);
+          uartSetRate(&interface->base, interface->dataRate);
           interface->state = STATE_TRANSMIT;
         }
         else

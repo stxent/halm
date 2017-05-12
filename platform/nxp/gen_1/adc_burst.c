@@ -73,8 +73,7 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(config->event != ADC_SOFTWARE);
 
   /* Initialize input pin */
-  adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
-      &interface->pin);
+  adcConfigPin(&config->parent->base, config->pin, &interface->pin);
 
   interface->callback = 0;
   interface->blocking = true;

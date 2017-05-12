@@ -75,7 +75,7 @@ static void updateFrequency(struct SctTimer *timer, uint32_t frequency)
   if (frequency)
   {
     /* TODO Check whether the clock is from the internal source */
-    const uint32_t baseClock = sctGetClock((struct SctBase *)timer);
+    const uint32_t baseClock = sctGetClock(&timer->base);
     const uint16_t prescaler = baseClock / frequency - 1;
 
     assert(prescaler < 256);
@@ -106,7 +106,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   if ((res = SctBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  const int event = sctAllocateEvent((struct SctBase *)timer);
+  const int event = sctAllocateEvent(&timer->base);
 
   if (event == -1)
     return E_BUSY;
@@ -163,7 +163,7 @@ static void tmrDeinit(void *object)
   /* Disable allocated event */
   reg->EV[timer->event].CTRL = 0;
   reg->EV[timer->event].STATE = 0;
-  sctReleaseEvent((struct SctBase *)timer, timer->event);
+  sctReleaseEvent(&timer->base, timer->event);
 
   /* Reset to default state */
   reg->CONFIG &= ~CONFIG_NORELOAD(offset);
@@ -216,7 +216,7 @@ static uint32_t tmrGetFrequency(const void *object)
   const struct SctTimer * const timer = object;
   const LPC_SCT_Type * const reg = timer->base.reg;
   const unsigned int offset = timer->base.part == SCT_HIGH;
-  const uint32_t baseClock = sctGetClock((const struct SctBase *)timer);
+  const uint32_t baseClock = sctGetClock(&timer->base);
   const uint16_t prescaler = CTRL_PRE_VALUE(reg->CTRL_PART[offset]) + 1;
 
   return baseClock / prescaler;

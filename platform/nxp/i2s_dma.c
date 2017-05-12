@@ -191,8 +191,8 @@ static enum Result updateRate(struct I2sDma *interface, uint32_t sampleRate)
 
     divisor = masterClock / bitrate;
 
-    const enum Result res = i2sCalcRate((struct I2sBase *)interface,
-        masterClock, &rateConfig);
+    const enum Result res = i2sCalcRate(&interface->base, masterClock,
+        &rateConfig);
 
     if (res != E_OK)
       return res;

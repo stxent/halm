@@ -255,7 +255,7 @@ static enum Result channelSetFrequency(void *object, uint32_t frequency)
   struct GpTimerPwmUnit * const unit = pwm->unit;
   LPC_TIMER_Type * const reg = unit->base.reg;
 
-  const uint32_t clockFrequency = gpTimerGetClock((struct GpTimerBase *)unit);
+  const uint32_t clockFrequency = gpTimerGetClock(&unit->base);
   const uint32_t timerFrequency = frequency * unit->resolution;
 
   if (!timerFrequency || timerFrequency > clockFrequency)

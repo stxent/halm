@@ -80,7 +80,7 @@ static void updateFrequency(struct GpTimer *timer, uint32_t frequency)
 
   if (frequency)
   {
-    const uint32_t baseClock = gpTimerGetClock((struct GpTimerBase *)timer);
+    const uint32_t baseClock = gpTimerGetClock(&timer->base);
     const uint32_t divisor = baseClock / frequency - 1;
 
     assert(frequency <= baseClock);
@@ -206,7 +206,7 @@ static uint32_t tmrGetFrequency(const void *object)
 {
   const struct GpTimer * const timer = object;
   const LPC_TIMER_Type * const reg = timer->base.reg;
-  const uint32_t baseClock = gpTimerGetClock((const struct GpTimerBase *)timer);
+  const uint32_t baseClock = gpTimerGetClock(&timer->base);
 
   return baseClock / (reg->PR + 1);
 }

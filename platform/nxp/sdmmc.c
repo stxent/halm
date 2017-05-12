@@ -183,7 +183,7 @@ static void interruptHandler(void *object)
 static enum Result updateRate(struct Sdmmc *interface, uint32_t rate)
 {
   LPC_SDMMC_Type * const reg = interface->base.reg;
-  const uint32_t clock = sdmmcGetClock((struct SdmmcBase *)interface);
+  const uint32_t clock = sdmmcGetClock(&interface->base);
 
   if (rate > clock)
     return E_VALUE;

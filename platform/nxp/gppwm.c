@@ -181,7 +181,7 @@ static enum Result channelSetFrequency(struct GpPwmUnit *unit,
 {
   LPC_PWM_Type * const reg = unit->base.reg;
 
-  const uint32_t clockFrequency = gpPwmGetClock((struct GpPwmUnitBase *)unit);
+  const uint32_t clockFrequency = gpPwmGetClock(&unit->base);
   const uint32_t timerFrequency = frequency * unit->resolution;
 
   if (!timerFrequency || timerFrequency > clockFrequency)

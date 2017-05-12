@@ -70,8 +70,7 @@ static void setupChannels(struct AdcBus *interface, const PinNumber *pins)
 
   for (unsigned int index = 0; index < interface->number; ++index)
   {
-    adcConfigPin((struct AdcUnitBase *)interface->unit, pins[index],
-        &interface->pins[index]);
+    adcConfigPin(&interface->unit->base, pins[index], &interface->pins[index]);
 
     const unsigned int channel = interface->pins[index].channel;
 

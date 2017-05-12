@@ -125,7 +125,7 @@ static enum Result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
   if (frequency)
   {
     /* TODO Check whether the clock is from internal source */
-    const uint32_t baseClock = sctGetClock((struct SctBase *)unit);
+    const uint32_t baseClock = sctGetClock(&unit->base);
     const uint16_t prescaler = baseClock / frequency - 1;
 
     if (prescaler >= 256)
@@ -158,7 +158,7 @@ static enum Result unitInit(void *object, const void *configBase)
   if ((res = SctBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  const int event = sctAllocateEvent((struct SctBase *)unit);
+  const int event = sctAllocateEvent(&unit->base);
 
   if (event == -1)
     return E_BUSY;
@@ -217,7 +217,7 @@ static void unitDeinit(void *object)
   /* Disable allocated event */
   reg->EV[unit->event].CTRL = 0;
   reg->EV[unit->event].STATE = 0;
-  sctReleaseEvent((struct SctBase *)unit, unit->event);
+  sctReleaseEvent(&unit->base, unit->event);
 
   SctBase->deinit(unit);
 }
@@ -230,7 +230,7 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;
 
-  const int event = sctAllocateEvent((struct SctBase *)unit);
+  const int event = sctAllocateEvent(&unit->base);
 
   if (event == -1)
     return E_BUSY;
@@ -283,7 +283,7 @@ static void singleEdgeDeinit(void *object)
   /* Disable allocated event */
   reg->EV[pwm->event].CTRL = 0;
   reg->EV[pwm->event].STATE = 0;
-  sctReleaseEvent((struct SctBase *)unit, pwm->event);
+  sctReleaseEvent(&unit->base, pwm->event);
 }
 /*----------------------------------------------------------------------------*/
 static void singleEdgeEnable(void *object)
@@ -365,11 +365,11 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   struct SctPwmUnit * const unit = config->parent;
 
   /* Allocate events */
-  const int leadingEvent = sctAllocateEvent((struct SctBase *)unit);
+  const int leadingEvent = sctAllocateEvent(&unit->base);
   if (leadingEvent == -1)
     return E_BUSY;
 
-  const int trailingEvent = sctAllocateEvent((struct SctBase *)unit);
+  const int trailingEvent = sctAllocateEvent(&unit->base);
   if (trailingEvent == -1)
     return E_BUSY;
 
@@ -430,8 +430,8 @@ static void doubleEdgeDeinit(void *object)
   /* Disable allocated event */
   reg->EV[pwm->trailingEvent].CTRL = 0;
   reg->EV[pwm->leadingEvent].STATE = 0;
-  sctReleaseEvent((struct SctBase *)unit, pwm->trailingEvent);
-  sctReleaseEvent((struct SctBase *)unit, pwm->leadingEvent);
+  sctReleaseEvent(&unit->base, pwm->trailingEvent);
+  sctReleaseEvent(&unit->base, pwm->leadingEvent);
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeEnable(void *object)

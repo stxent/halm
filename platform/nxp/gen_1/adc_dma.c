@@ -113,8 +113,7 @@ static enum Result adcInit(void *object, const void *configBase)
   if ((res = dmaSetup(interface, config)) != E_OK)
     return res;
 
-  adcConfigPin((struct AdcUnitBase *)config->parent, config->pin,
-      &interface->pin);
+  adcConfigPin(&config->parent->base, config->pin, &interface->pin);
 
   interface->callback = 0;
   interface->event = config->event;

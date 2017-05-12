@@ -86,7 +86,7 @@ static void beginTransmission(struct OneWireSsp *interface)
 {
   LPC_SSP_Type * const reg = interface->base.reg;
 
-  sspSetRate((struct SspBase *)interface, RATE_RESET);
+  sspSetRate(&interface->base, RATE_RESET);
   interface->state = STATE_RESET;
 
   /* Clear interrupt flags and enable interrupts */
@@ -146,7 +146,7 @@ static void standardInterruptHandler(void *object)
       {
         if (data & DATA_MASK)
         {
-          sspSetRate((struct SspBase *)object, RATE_DATA);
+          sspSetRate(&interface->base, RATE_DATA);
 
           interface->bit = 0;
           interface->state = STATE_TRANSMIT;
@@ -233,7 +233,7 @@ static void searchInterruptHandler(void *object)
       {
         if (data & DATA_MASK)
         {
-          sspSetRate((struct SspBase *)object, RATE_DATA);
+          sspSetRate(&interface->base, RATE_DATA);
 
           interface->bit = 0;
           interface->state = STATE_SEARCH_START;
