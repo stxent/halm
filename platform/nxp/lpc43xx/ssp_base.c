@@ -23,12 +23,12 @@ struct SspBlockDescriptor
   LPC_SSP_Type *reg;
   /* Peripheral interrupt request identifier */
   IrqNumber irq;
-  /* Reset control identifier */
-  enum SysBlockReset reset;
   /* Peripheral clock branch */
   enum SysClockBranch periperalBranch;
   /* Clock to register interface */
   enum SysClockBranch registerBranch;
+  /* Reset control identifier */
+  enum SysBlockReset reset;
 };
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SspBase *, const struct SspBaseConfig *);
@@ -233,23 +233,7 @@ void SSP1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetClock(const struct SspBase *interface)
 {
-  const void *clock = 0;
-
-  switch (interface->channel)
-  {
-    case 0:
-      clock = Ssp0Clock;
-      break;
-
-    case 1:
-      clock = Ssp1Clock;
-      break;
-
-    default:
-      return 0;
-  }
-
-  return clockFrequency(clock);
+  return clockFrequency(interface->channel == 0 ? Ssp0Clock : Ssp1Clock);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *object, const void *configBase)

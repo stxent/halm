@@ -98,23 +98,7 @@ void I2C1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetClock(const struct I2cBase *interface)
 {
-  const void *clock = 0;
-
-  switch (interface->channel)
-  {
-    case 0:
-      clock = Apb1Clock;
-      break;
-
-    case 1:
-      clock = Apb3Clock;
-      break;
-
-    default:
-      return 0;
-  }
-
-  return clockFrequency(clock);
+  return clockFrequency(interface->channel == 0 ? Apb1Clock : Apb3Clock);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *object, const void *configBase)

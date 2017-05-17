@@ -167,11 +167,7 @@ void UART5_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)
 {
-  assert(interface->channel <= 4);
-
-  const void * const clock = !interface->channel ? Apb2Clock : Apb1Clock;
-
-  return clockFrequency(clock);
+  return clockFrequency(interface->channel == 0 ? Apb2Clock : Apb1Clock);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *object, const void *configBase)

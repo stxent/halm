@@ -242,8 +242,6 @@ void USART3_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)
 {
-  assert(interface->channel <= 3);
-
   const void *clock = 0;
 
   switch (interface->channel)

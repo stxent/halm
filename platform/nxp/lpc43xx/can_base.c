@@ -40,13 +40,13 @@ static const struct CanBlockDescriptor canBlockEntries[] = {
         .reg = LPC_CAN0,
         .irq = CAN0_IRQ,
         .clock = CLK_APB3_CAN0,
-        .reset = RST_SSP0
+        .reset = RST_CAN0
     },
     {
         .reg = LPC_CAN1,
         .irq = CAN1_IRQ,
         .clock = CLK_APB1_CAN1,
-        .reset = RST_SSP1
+        .reset = RST_CAN1
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -139,8 +139,6 @@ void CAN1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t canGetClock(const struct CanBase *interface)
 {
-  assert(interface->channel < ARRAY_SIZE(descriptors));
-
   return clockFrequency(interface->channel == 0 ? Apb3Clock : Apb1Clock);
 }
 /*----------------------------------------------------------------------------*/
