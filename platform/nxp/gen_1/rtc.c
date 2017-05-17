@@ -97,7 +97,7 @@ static void clkDeinit(void *object __attribute__((unused)))
   /* Stop time counters */
   reg->CCR &= ~CCR_CLKEN;
 
-  irqEnable(clock->base.irq);
+  irqDisable(clock->base.irq);
   RtcBase->deinit(clock);
 }
 /*----------------------------------------------------------------------------*/

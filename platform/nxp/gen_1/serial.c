@@ -233,12 +233,11 @@ static enum Result serialSetParam(void *object, enum IfParameter parameter,
 static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct Serial * const interface = object;
-  size_t read;
+  const IrqState state = irqSave();
 
-  irqDisable(interface->base.irq);
-  read = byteQueuePopArray(&interface->rxQueue, buffer, length);
-  irqEnable(interface->base.irq);
+  const size_t read = byteQueuePopArray(&interface->rxQueue, buffer, length);
 
+  irqRestore(state);
   return read;
 }
 /*----------------------------------------------------------------------------*/
@@ -249,7 +248,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   const uint8_t *bufferPosition = buffer;
   size_t written = 0;
 
-  irqDisable(interface->base.irq);
+  const IrqState state = irqSave();
 
   /* Check transmitter state */
   if ((reg->LSR & LSR_THRE) && byteQueueEmpty(&interface->txQueue))
@@ -265,7 +264,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   if (length)
     written += byteQueuePushArray(&interface->txQueue, bufferPosition, length);
 
-  irqEnable(interface->base.irq);
+  irqRestore(state);
 
   return written;
 }
