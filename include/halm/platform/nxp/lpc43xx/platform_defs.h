@@ -1641,23 +1641,51 @@ typedef struct
   __ne__ uint32_t RESERVED1[8];
 
   /* Offset 0x0100 */
-  __ro__ uint32_t TXREQ1;
-  __ro__ uint32_t TXREQ2;
+  union
+  {
+    __ro__ uint32_t TXREQ[2];
+    struct
+    {
+      __ro__ uint32_t TXREQ1;
+      __ro__ uint32_t TXREQ2;
+    };
+  };
   __ne__ uint32_t RESERVED2[6];
 
   /* Offset 0x0120 */
-  __ro__ uint32_t ND1;
-  __ro__ uint32_t ND2;
+  union
+  {
+    __ro__ uint32_t ND[2];
+    struct
+    {
+      __ro__ uint32_t ND1;
+      __ro__ uint32_t ND2;
+    };
+  };
   __ne__ uint32_t RESERVED3[6];
 
   /* Offset 0x0140 */
-  __ro__ uint32_t IR1;
-  __ro__ uint32_t IR2;
+  union
+  {
+    __ro__ uint32_t IR[2];
+    struct
+    {
+      __ro__ uint32_t IR1;
+      __ro__ uint32_t IR2;
+    };
+  };
   __ne__ uint32_t RESERVED4[6];
 
   /* Offset 0x0160 */
-  __ro__ uint32_t MSGV1;
-  __ro__ uint32_t MSGV2;
+  union
+  {
+    __ro__ uint32_t MSGV[2];
+    struct
+    {
+      __ro__ uint32_t MSGV1;
+      __ro__ uint32_t MSGV2;
+    };
+  };
   __ne__ uint32_t RESERVED5[6];
 
   /* Offset 0x0180 */

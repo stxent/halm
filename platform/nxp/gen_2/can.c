@@ -24,17 +24,20 @@ enum Mode
 #define MAX_MESSAGES  32
 
 #define RX_OBJECT     1
-#define TX_OBJECT     (MAX_MESSAGES / 2)
+#define RX_REG_INDEX       ((RX_OBJECT - 1) / 16)
+#define TX_OBJECT     (1 + (MAX_MESSAGES / 2))
+#define TX_REG_INDEX       ((TX_OBJECT - 1) / 16)
 /*----------------------------------------------------------------------------*/
+static void buildAcceptanceFilters(struct Can *);
 static uint32_t calcBusTimings(const struct Can *, uint32_t);
 static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
+static bool dropMessage(struct Can *, size_t);
 static void interruptHandler(void *);
-static void invalidateMessage(struct Can *, unsigned int);
-static void listenMessage(struct Can *, unsigned int);
-static void readMessage(struct Can *, struct CanMessage *, unsigned int);
-static void sendMessage(struct Can *, const struct CanMessage *, unsigned int,
-    bool);
+static void invalidateMessage(struct Can *, size_t);
+static void listenForMessage(struct Can *, size_t, bool);
+static bool readMessage(struct Can *, struct CanMessage *, size_t);
+static void writeMessage(struct Can *, const struct CanMessage *, size_t, bool);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
 static void canDeinit(void *);
@@ -58,14 +61,22 @@ static const struct InterfaceClass canTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Can = &canTable;
 /*----------------------------------------------------------------------------*/
+static void buildAcceptanceFilters(struct Can *interface)
+{
+  for (size_t index = RX_OBJECT; index < TX_OBJECT; ++index)
+  {
+    listenForMessage(interface, index, index == TX_OBJECT - 1);
+  }
+}
+/*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(const struct Can *interface, uint32_t rate)
 {
   assert(rate != 0);
 
   const LPC_CAN_Type * const reg = interface->base.reg;
 
-  const unsigned int bitsPerFrame = 1 + CONFIG_PLATFORM_NXP_CAN_TSEG1
-      + CONFIG_PLATFORM_NXP_CAN_TSEG2;
+  const unsigned int bitsPerFrame =
+      1 + CONFIG_PLATFORM_NXP_CAN_TSEG1 + CONFIG_PLATFORM_NXP_CAN_TSEG2;
   const uint32_t clock = canGetClock(&interface->base) / (reg->CLKDIV + 1);
   const uint32_t prescaler = clock / rate / bitsPerFrame;
   const uint32_t regValue = BT_BRP(prescaler - 1) | BT_SJW(0)
@@ -107,11 +118,25 @@ static void changeMode(struct Can *interface, enum Mode mode)
 static void changeRate(struct Can *interface, uint32_t rate)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
+  const uint32_t state = reg->CNTL;
 
-  reg->CNTL |= CNTL_CCE;
+  reg->CNTL = state | CNTL_INIT | CNTL_CCE;
   reg->BRPE = 0;
   reg->BT = calcBusTimings(interface, rate);
-  reg->CNTL &= ~CNTL_CCE;
+  reg->CNTL = state;
+}
+/*----------------------------------------------------------------------------*/
+static bool dropMessage(struct Can *interface, size_t index)
+{
+  LPC_CAN_Type * const reg = interface->base.reg;
+
+  /* Clear pending interrupt and new data flag  */
+  reg->IF[0].CMDMSK = CMDMSK_NEWDAT | CMDMSK_CLRINTPND | CMDMSK_CTRL;
+  reg->IF[0].CMDREQ = index;
+  while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
+
+  /* Return true when this Message Object is the end of the FIFO */
+  return (reg->IF[0].MCTRL & MCTRL_EOB) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -121,52 +146,69 @@ static void interruptHandler(void *object)
   uint32_t id;
   bool event = false;
 
-  while ((id = INT_ID_VALUE(reg->INT)) != 0)
+  while ((id = INT_ID_VALUE(reg->INT)) != INT_NONE)
   {
+    const uint32_t status = reg->STAT;
+
+    /* Clear all flags, update Last Error Code */
+    reg->STAT = STAT_LEC(LEC_UNUSED);
+
     if (id == INT_STATUS)
     {
-      /* Clear all flags except TXOK and RXOK */
-      reg->STAT &= STAT_TXOK | STAT_RXOK;
-    }
-    else if (STAT_LEC_VALUE(reg->STAT) == LEC_NO_ERROR)
-    {
-      reg->STAT &= ~(STAT_RXOK | STAT_TXOK); // TODO Move
-
-      // TODO Rewrite and optimize buffer invalidation
-      if (id >= TX_OBJECT)
+      if (status & STAT_BOFF)
       {
-        invalidateMessage(interface, id);
+        /* Exit bus-off state */
+        reg->CNTL &= ~CNTL_INIT;
       }
-      else if (reg->ND1 & (1UL << (id - 1)))
+    }
+    else if (id < TX_OBJECT)
+    {
+      /* Receive messages */
+      bool endOfChain = false;
+
+      while (!endOfChain && reg->ND[RX_REG_INDEX] & (1UL << (id - 1)))
       {
-        if (!arrayEmpty(&interface->pool))
+        const uint32_t timestamp = interface->timer ?
+            timerGetValue(interface->timer) : 0;
+
+        if (!queueFull(&interface->rxQueue))
         {
           struct CanMessage *message;
 
           arrayPopBack(&interface->pool, &message);
-          readMessage(interface, message, id);
+          endOfChain = readMessage(interface, message, id);
+          message->timestamp = timestamp;
           queuePush(&interface->rxQueue, &message);
           event = true;
         }
+        else
+        {
+          /* Received message will be lost when queue is full */
+          endOfChain = dropMessage(interface, id);
+        }
 
-        /* Received message will be lost when queue is full */
-        listenMessage(interface, id);
+        ++id;
       }
+    }
+    else
+    {
+      /* Clear pending transmit interrupt */
+      invalidateMessage(interface, id);
     }
   }
 
-  if (!queueEmpty(&interface->txQueue) && !reg->TXREQ2)
+  if (!queueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
   {
     const size_t pendingMessages = queueSize(&interface->txQueue);
-    const size_t lastMessageIndex = pendingMessages < MAX_MESSAGES / 2 ?
-        pendingMessages : MAX_MESSAGES / 2;
+    const size_t lastMessageIndex = pendingMessages >= MAX_MESSAGES / 2 ?
+        (MAX_MESSAGES / 2 - 1) : pendingMessages;
 
     for (size_t index = 0; index <= lastMessageIndex; ++index)
     {
       const struct CanMessage *message;
 
       queuePop(&interface->txQueue, &message);
-      sendMessage(interface, message, TX_OBJECT + index,
+      writeMessage(interface, message, TX_OBJECT + index,
           index == lastMessageIndex);
       arrayPushBack(&interface->pool, &message);
     }
@@ -176,34 +218,33 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void invalidateMessage(struct Can *interface, unsigned int index)
+static void invalidateMessage(struct Can *interface, size_t index)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
-
-  /* Wait until previous read/write action is finished */
-  while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 
   /* Clear Message Valid flag */
   reg->IF[0].ARB1 = 0;
   reg->IF[0].ARB2 = 0;
 
   /* Disable reception and transmission interrupts, clear transmit request */
-  reg->IF[0].MCTRL = MCTRL_EOB | MCTRL_DLC(8);
+  reg->IF[0].MCTRL = 0;
 
-  /* Write control bits back */
-  reg->IF[0].CMDMSK = CMDMSK_WR | CMDMSK_CLRINTPND | CMDMSK_CTRL | CMDMSK_ARB;
+  reg->IF[0].CMDMSK = CMDMSK_WR | CMDMSK_CTRL | CMDMSK_ARB;
   reg->IF[0].CMDREQ = index;
+
+  /* Wait until read/write action is finished */
+  while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 }
 /*----------------------------------------------------------------------------*/
-//TODO Make FIFO
-static void listenMessage(struct Can *interface, unsigned int index)
+static void listenForMessage(struct Can *interface, size_t index, bool last)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
+  uint32_t control = MCTRL_UMASK | MCTRL_RXIE | MCTRL_DLC(8);
 
-  /* Wait until previous read/write action is finished */
-  while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
+  if (last)
+    control |= MCTRL_EOB;
 
-  reg->IF[0].MCTRL = MCTRL_UMASK | MCTRL_RXIE | MCTRL_EOB | MCTRL_DLC(8);
+  reg->IF[0].MCTRL = control;
 
   reg->IF[0].MSK1 = 0;
   reg->IF[0].MSK2 = 0;
@@ -211,34 +252,48 @@ static void listenMessage(struct Can *interface, unsigned int index)
   reg->IF[0].ARB1 = 0;
   reg->IF[0].ARB2 = ARB2_MSGVAL;
 
-  reg->IF[0].CMDMSK = CMDMSK_CLRINTPND | CMDMSK_CTRL | CMDMSK_ARB | CMDMSK_MASK
-      | CMDMSK_WR;
+  reg->IF[0].CMDMSK = CMDMSK_WR | CMDMSK_CTRL | CMDMSK_ARB | CMDMSK_MASK;
   reg->IF[0].CMDREQ = index;
+
+  /* Wait until read/write action is finished */
+  while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 }
 /*----------------------------------------------------------------------------*/
-static void readMessage(struct Can *interface, struct CanMessage *message,
-    unsigned int index)
+static bool readMessage(struct Can *interface, struct CanMessage *message,
+    size_t index)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
 
-  /* Read from Message Object to system memory */
-  reg->IF[0].CMDMSK = CMDMSK_DATA_A | CMDMSK_DATA_B | CMDMSK_CTRL | CMDMSK_ARB;
+  /* Read from Message Object to system memory and clear interrupt flag */
+  reg->IF[0].CMDMSK = CMDMSK_DATA_A | CMDMSK_DATA_B
+      | CMDMSK_NEWDAT | CMDMSK_CLRINTPND | CMDMSK_CTRL | CMDMSK_ARB;
   reg->IF[0].CMDREQ = index;
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 
-  /* Fill message structure */
   const uint32_t arb1 = reg->IF[0].ARB1;
   const uint32_t arb2 = reg->IF[0].ARB2;
-  const uint16_t data[] = {
-      reg->IF[0].DA1,
-      reg->IF[0].DA2,
-      reg->IF[0].DB1,
-      reg->IF[0].DB2
-  };
+  const uint32_t control = reg->IF[0].MCTRL;
 
+  /* Fill message structure */
   message->flags = 0;
-  message->length = MCTRL_DLC_VALUE(reg->IF[0].MCTRL);
-  memcpy(message->data, data, message->length);
+
+  if (arb2 & ARB2_DIR)
+  {
+    message->flags |= CAN_RTR;
+    message->length = 0;
+  }
+  else
+  {
+    const uint16_t data[] = {
+        reg->IF[0].DA1,
+        reg->IF[0].DA2,
+        reg->IF[0].DB1,
+        reg->IF[0].DB2
+    };
+
+    message->length = MCTRL_DLC_VALUE(control);
+    memcpy(message->data, data, message->length);
+  }
 
   if (arb2 & ARB2_XTD)
   {
@@ -250,32 +305,43 @@ static void readMessage(struct Can *interface, struct CanMessage *message,
     message->id = ARB2_STD_ID_VALUE(arb2);
   }
 
-  if (arb2 & ARB2_DIR)
-  {
-    message->flags |= CAN_RTR;
-  }
+  /* Return true when this Message Object is the end of the FIFO */
+  return (control & MCTRL_EOB) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void sendMessage(struct Can *interface, const struct CanMessage *message,
-    unsigned int index, bool last)
+static void writeMessage(struct Can *interface,
+    const struct CanMessage *message, size_t index, bool last)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
 
-  /* Wait until previous read/write action is finished */
-  while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
-
-  /* Configure message control register */
-  uint32_t control = MCTRL_TXIE | MCTRL_TXRQST | MCTRL_DLC(message->length);
-
-  if (last)
-    control |= MCTRL_EOB;
-
-  reg->IF[0].MCTRL = control;
-
-  /* Configure command arbitration registers */
+  /* Prepare values for the message interface registers */
   uint32_t arb1 = 0;
   uint32_t arb2 = ARB2_MSGVAL;
-  uint32_t mask = CMDMSK_CLRINTPND | CMDMSK_CTRL | CMDMSK_ARB | CMDMSK_WR;
+  uint32_t control = MCTRL_EOB | MCTRL_TXRQST | MCTRL_NEWDAT;
+  uint32_t mask = CMDMSK_WR | CMDMSK_CTRL | CMDMSK_ARB;
+
+  if (last)
+    control |= MCTRL_TXIE;
+
+  if (!(message->flags & CAN_RTR))
+  {
+    uint16_t data[4] = {0};
+
+    /* Message is not a Remote Transmission Request */
+    arb2 |= ARB2_DIR;
+
+    /* Fill data registers */
+    control |= MCTRL_DLC(message->length);
+    memcpy(data, message->data, message->length);
+
+    reg->IF[0].DA1 = data[0];
+    reg->IF[0].DA2 = data[1];
+    reg->IF[0].DB1 = data[2];
+    reg->IF[0].DB2 = data[3];
+
+    /* Issue copying of data to Message Object */
+    mask |= CMDMSK_DATA_A | CMDMSK_DATA_B;
+  }
 
   if (message->flags & CAN_EXT_ID)
   {
@@ -293,30 +359,16 @@ static void sendMessage(struct Can *interface, const struct CanMessage *message,
     arb2 |= ARB2_STD_ID_FROM_ID(message->id);
   }
 
-  if (!(message->flags & CAN_RTR))
-  {
-    uint16_t data[4] = {0};
-
-    /* Message is not a Remote Transmission Request */
-    arb2 |= ARB2_DIR;
-
-    /* Fill data registers */
-    memcpy(data, message->data, message->length);
-
-    reg->IF[0].DA1 = data[0];
-    reg->IF[0].DA2 = data[1];
-    reg->IF[0].DB1 = data[2];
-    reg->IF[0].DB2 = data[3];
-
-    /* Issue copying of data to Message Object */
-    mask |= CMDMSK_DATA_A | CMDMSK_DATA_B;
-  }
+  reg->IF[0].MCTRL = control;
 
   reg->IF[0].ARB1 = arb1;
   reg->IF[0].ARB2 = arb2;
 
   reg->IF[0].CMDMSK = mask;
   reg->IF[0].CMDREQ = index;
+
+  /* Wait until read/write action is finished */
+  while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *object, const void *configBase)
@@ -379,15 +431,15 @@ static enum Result canInit(void *object, const void *configBase)
   interface->rate = config->rate;
   changeRate(interface, interface->rate);
 
-  /* Message Objects should be reset manually */
-  for (unsigned int index = 0; index < MAX_MESSAGES; ++index)
+  /* All Message Objects should be reset manually */
+  for (size_t index = 1; index <= MAX_MESSAGES; ++index)
     invalidateMessage(interface, index);
 
-  /* TODO Prepare Message Objects for reception */
-  listenMessage(interface, RX_OBJECT);
+  /* Prepare RX Message Objects */
+  buildAcceptanceFilters(interface);
 
-  reg->CNTL = CNTL_IE | CNTL_SIE | CNTL_EIE;
-  while (reg->CNTL & CNTL_INIT);
+  /* Enable normal operation, enable interrupts */
+  reg->CNTL = CNTL_IE | CNTL_EIE;
 
   irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);
@@ -526,7 +578,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   /* Synchronize access to the message queue and the CAN core */
   const IrqState state = irqSave();
 
-  if (queueEmpty(&interface->txQueue) && !reg->TXREQ2)
+  if (queueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
   {
     const size_t totalMessages = length / sizeof(struct CanStandardMessage);
     const size_t messageCount = totalMessages < MAX_MESSAGES / 2 ?
@@ -534,7 +586,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
 
     for (size_t index = 0; index < messageCount; ++index)
     {
-      sendMessage(interface, (const struct CanMessage *)(input + index),
+      writeMessage(interface, (const struct CanMessage *)(input + index),
           TX_OBJECT + index, index == (messageCount - 1));
     }
 

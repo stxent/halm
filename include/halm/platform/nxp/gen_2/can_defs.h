@@ -26,15 +26,17 @@
 /*------------------Status register-------------------------------------------*/
 enum
 {
-  LEC_NO_ERROR,
-  LEC_STUFF_ERROR,
-  LEC_FORM_ERROR,
-  LEC_ACK_ERROR,
-  LEC_BIT_1_ERROR,
-  LEC_BIT_0_ERROR,
-  LEC_CRC_ERROR
+  LEC_NO_ERROR    = 0x00,
+  LEC_STUFF_ERROR = 0x01,
+  LEC_FORM_ERROR  = 0x02,
+  LEC_ACK_ERROR   = 0x03,
+  LEC_BIT_1_ERROR = 0x04,
+  LEC_BIT_0_ERROR = 0x05,
+  LEC_CRC_ERROR   = 0x06,
+  LEC_UNUSED      = 0x07
 };
 
+#define STAT_LEC(value)                 BIT_FIELD((value), 0)
 #define STAT_LEC_MASK                   BIT_FIELD(MASK(3), 0)
 #define STAT_LEC_VALUE(reg)             FIELD_VALUE((reg), STAT_LEC_MASK, 0)
 
