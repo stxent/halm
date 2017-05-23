@@ -90,17 +90,17 @@ static uint8_t configOutputPin(uint8_t channel, PinNumber key)
 static enum Result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
     uint32_t value)
 {
-  const unsigned int offset = unit->base.part == SCT_HIGH;
+  const unsigned int part = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
   enum Result res = E_OK;
 
-  reg->CONFIG |= CONFIG_NORELOAD(offset);
+  reg->CONFIG |= CONFIG_NORELOAD(part);
   if (unit->base.part != SCT_UNIFIED)
   {
     if (value < (1 << 16))
     {
-      reg->MATCH_PART[channel][offset] = value;
-      reg->MATCHREL_PART[channel][offset] = value;
+      reg->MATCH_PART[channel][part] = value;
+      reg->MATCHREL_PART[channel][part] = value;
     }
     else
       res = E_VALUE;
@@ -110,17 +110,18 @@ static enum Result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
     reg->MATCH[channel] = value;
     reg->MATCHREL[channel] = value;
   }
-  reg->CONFIG &= ~CONFIG_NORELOAD(offset);
+  reg->CONFIG &= ~CONFIG_NORELOAD(part);
 
   return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
 {
-  const unsigned int offset = unit->base.part == SCT_HIGH;
+  const unsigned int part = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint32_t value = (reg->CTRL_PART[offset] & ~CTRL_PRE_MASK)
-      | CTRL_CLRCTR;
+
+  /* Counter clearing is recommended by the user manual */
+  const uint32_t value = (reg->CTRL_PART[part] & ~CTRL_PRE_MASK) | CTRL_CLRCTR;
 
   if (frequency)
   {
@@ -131,7 +132,7 @@ static enum Result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
     if (prescaler >= 256)
       return E_VALUE;
 
-    reg->CTRL_PART[offset] = value | CTRL_PRE(prescaler);
+    reg->CTRL_PART[part] = value | CTRL_PRE(prescaler);
   }
   else
     return E_VALUE;
@@ -167,11 +168,11 @@ static enum Result unitInit(void *object, const void *configBase)
   unit->resolution = config->resolution;
 
   LPC_SCT_Type * const reg = unit->base.reg;
-  const unsigned int offset = unit->base.part == SCT_HIGH;
+  const unsigned int part = unit->base.part == SCT_HIGH;
   const uint16_t eventMask = 1 << unit->event;
 
   unit->base.mask = eventMask;
-  reg->CTRL_PART[offset] = CTRL_HALT;
+  reg->CTRL_PART[part] = CTRL_HALT;
 
   /* Set desired unit frequency */
   res = updateFrequency(unit, config->frequency * config->resolution);
@@ -179,7 +180,7 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 
   /* Set current match register value */
-  reg->CONFIG &= ~(CONFIG_AUTOLIMIT(offset) | CONFIG_NORELOAD(offset));
+  reg->CONFIG &= ~(CONFIG_AUTOLIMIT(part) | CONFIG_NORELOAD(part));
 
   /* Should be called after event initialization */
   if ((res = setMatchValue(unit, unit->event, unit->resolution - 1)) != E_OK)
@@ -193,13 +194,13 @@ static enum Result unitInit(void *object, const void *configBase)
     reg->EV[unit->event].CTRL |= EVCTRL_HEVENT;
 
   /* Reset current state and enable allocated event in state 0 */
-  reg->STATE_PART[offset] = 0;
+  reg->STATE_PART[part] = 0;
   reg->EV[unit->event].STATE = 0x00000001;
   /* Enable timer clearing on allocated event */
-  reg->LIMIT_PART[offset] = eventMask;
+  reg->LIMIT_PART[part] = eventMask;
 
   /* Enable counter */
-  reg->CTRL_PART[offset] &= ~CTRL_HALT;
+  reg->CTRL_PART[part] &= ~CTRL_HALT;
 
   return E_OK;
 }
@@ -207,12 +208,12 @@ static enum Result unitInit(void *object, const void *configBase)
 static void unitDeinit(void *object)
 {
   struct SctPwmUnit * const unit = object;
-  const unsigned int offset = unit->base.part == SCT_HIGH;
+  const unsigned int part = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   /* Halt the timer */
-  reg->CTRL_PART[offset] = CTRL_HALT;
-  reg->LIMIT_PART[offset] = 0;
+  reg->CTRL_PART[part] = CTRL_HALT;
+  reg->LIMIT_PART[part] = 0;
 
   /* Disable allocated event */
   reg->EV[unit->event].CTRL = 0;
@@ -331,9 +332,9 @@ static void singleEdgeSetDuration(void *object, uint32_t duration)
 
   if (unit->base.part != SCT_UNIFIED)
   {
-    const unsigned int offset = unit->base.part == SCT_HIGH;
+    const unsigned int part = unit->base.part == SCT_HIGH;
 
-    reg->MATCHREL_PART[pwm->event][offset] = duration;
+    reg->MATCHREL_PART[pwm->event][part] = duration;
   }
   else
     reg->MATCHREL[pwm->event] = duration;
@@ -464,7 +465,7 @@ static void doubleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
-  const unsigned int offset = unit->base.part == SCT_HIGH;
+  const unsigned int part = unit->base.part == SCT_HIGH;
   const uint32_t resolution = unit->resolution;
   LPC_SCT_Type * const reg = unit->base.reg;
 
@@ -472,8 +473,8 @@ static void doubleEdgeSetDuration(void *object, uint32_t duration)
 
   if (unit->base.part != SCT_UNIFIED)
   {
-    leading = reg->MATCHREL_PART[pwm->leadingEvent][offset];
-    trailing = reg->MATCHREL_PART[pwm->trailingEvent][offset];
+    leading = reg->MATCHREL_PART[pwm->leadingEvent][part];
+    trailing = reg->MATCHREL_PART[pwm->trailingEvent][part];
   }
   else
   {
@@ -515,18 +516,18 @@ static void doubleEdgeSetDuration(void *object, uint32_t duration)
   }
 
   /* Update match reload values atomically by disabling reload */
-  reg->CONFIG |= CONFIG_NORELOAD(offset);
+  reg->CONFIG |= CONFIG_NORELOAD(part);
   if (unit->base.part != SCT_UNIFIED)
   {
-    reg->MATCHREL_PART[pwm->leadingEvent][offset] = leading;
-    reg->MATCHREL_PART[pwm->trailingEvent][offset] = trailing;
+    reg->MATCHREL_PART[pwm->leadingEvent][part] = leading;
+    reg->MATCHREL_PART[pwm->trailingEvent][part] = trailing;
   }
   else
   {
     reg->MATCHREL[pwm->leadingEvent] = leading;
     reg->MATCHREL[pwm->trailingEvent] = trailing;
   }
-  reg->CONFIG &= ~CONFIG_NORELOAD(offset);
+  reg->CONFIG &= ~CONFIG_NORELOAD(part);
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeSetEdges(void *object, uint32_t leading,
@@ -534,7 +535,7 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
-  const unsigned int offset = unit->base.part == SCT_HIGH;
+  const unsigned int part = unit->base.part == SCT_HIGH;
   const uint32_t resolution = unit->resolution;
   LPC_SCT_Type * const reg = unit->base.reg;
 
@@ -560,18 +561,18 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
   leading = leading ? leading - 1 : resolution - 1;
   trailing = trailing ? trailing - 1 : resolution - 1;
 
-  reg->CONFIG |= CONFIG_NORELOAD(offset);
+  reg->CONFIG |= CONFIG_NORELOAD(part);
   if (unit->base.part != SCT_UNIFIED)
   {
-    reg->MATCHREL_PART[pwm->leadingEvent][offset] = leading;
-    reg->MATCHREL_PART[pwm->trailingEvent][offset] = trailing;
+    reg->MATCHREL_PART[pwm->leadingEvent][part] = leading;
+    reg->MATCHREL_PART[pwm->trailingEvent][part] = trailing;
   }
   else
   {
     reg->MATCHREL[pwm->leadingEvent] = leading;
     reg->MATCHREL[pwm->trailingEvent] = trailing;
   }
-  reg->CONFIG &= ~CONFIG_NORELOAD(offset);
+  reg->CONFIG &= ~CONFIG_NORELOAD(part);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeSetFrequency(void *object, uint32_t frequency)

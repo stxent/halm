@@ -276,11 +276,11 @@ static bool readMessage(struct Can *interface, struct CanMessage *message,
 
   /* Fill message structure */
   message->flags = 0;
+  message->length = MCTRL_DLC_VALUE(control);
 
   if (arb2 & ARB2_DIR)
   {
     message->flags |= CAN_RTR;
-    message->length = 0;
   }
   else
   {
@@ -291,7 +291,6 @@ static bool readMessage(struct Can *interface, struct CanMessage *message,
         reg->IF[0].DB2
     };
 
-    message->length = MCTRL_DLC_VALUE(control);
     memcpy(message->data, data, message->length);
   }
 

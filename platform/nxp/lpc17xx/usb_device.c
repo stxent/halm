@@ -704,10 +704,11 @@ static void sieEpDeinit(void *object)
 static void sieEpClear(void *object)
 {
   struct UsbSieEndpoint * const ep = object;
-  struct UsbRequest *request;
 
   while (!queueEmpty(&ep->requests))
   {
+    struct UsbRequest *request;
+
     queuePop(&ep->requests, &request);
     request->callback(request->callbackArgument, request,
         USB_REQUEST_CANCELLED);

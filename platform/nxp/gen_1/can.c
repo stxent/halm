@@ -25,6 +25,7 @@ static uint32_t calcBusTimings(const struct Can *, uint32_t);
 static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
 static void interruptHandler(void *);
+static void readMessage(struct Can *, struct CanMessage *);
 static uint32_t sendMessage(struct Can *, const struct CanMessage *, uint32_t);
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_CAN_PM
@@ -57,8 +58,8 @@ static uint32_t calcBusTimings(const struct Can *interface, uint32_t rate)
 {
   assert(rate != 0);
 
-  const unsigned int bitsPerFrame = 1 + CONFIG_PLATFORM_NXP_CAN_TSEG1
-      + CONFIG_PLATFORM_NXP_CAN_TSEG2;
+  const unsigned int bitsPerFrame =
+      1 + CONFIG_PLATFORM_NXP_CAN_TSEG1 + CONFIG_PLATFORM_NXP_CAN_TSEG2;
   const uint32_t clock = canGetClock(&interface->base);
   const uint32_t prescaler = clock / rate / bitsPerFrame;
   const uint32_t regValue = BTR_BRP(prescaler - 1) | BTR_SJW(0)
@@ -118,27 +119,16 @@ static void interruptHandler(void *object)
 
   while (reg->SR & SR_RBS)
   {
-    if (!arrayEmpty(&interface->pool))
-    {
-      const uint32_t timestamp = interface->timer ?
-          timerGetValue(interface->timer) : 0;
+    const uint32_t timestamp = interface->timer ?
+        timerGetValue(interface->timer) : 0;
 
-      const uint32_t data[2] = {reg->RDA, reg->RDB};
-      const uint32_t information = reg->RFS;
-      struct CanStandardMessage *message;
+    if (!queueFull(&interface->rxQueue))
+    {
+      struct CanMessage *message;
 
       arrayPopBack(&interface->pool, &message);
-
+      readMessage(interface, message);
       message->timestamp = timestamp;
-      message->id = reg->RID;
-      message->length = RFS_DLC_VALUE(information);
-      message->flags = 0;
-      if (information & RFS_FF)
-        message->flags |= CAN_EXT_ID;
-      if (information & RFS_RTR)
-        message->flags |= CAN_RTR;
-      memcpy(message->data, data, sizeof(data));
-
       queuePush(&interface->rxQueue, &message);
       event = true;
     }
@@ -184,6 +174,35 @@ static void interruptHandler(void *object)
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static void readMessage(struct Can *interface, struct CanMessage *message)
+{
+  LPC_CAN_Type * const reg = interface->base.reg;
+  const uint32_t information = reg->RFS;
+
+  message->id = reg->RID;
+  message->flags = 0;
+  message->length = RFS_DLC_VALUE(information);
+
+  if (information & RFS_RTR)
+  {
+    message->flags |= CAN_RTR;
+  }
+  else
+  {
+    const uint32_t data[2] = {
+        reg->RDA,
+        reg->RDB
+    };
+
+    memcpy(message->data, data, message->length);
+  }
+
+  if (information & RFS_FF)
+  {
+    message->flags |= CAN_EXT_ID;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t sendMessage(struct Can *interface,

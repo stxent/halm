@@ -11,7 +11,6 @@
 #include <halm/platform/nxp/sct_defs.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-#define CHANNEL_COUNT                 1
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
 struct TimerHandlerConfig
@@ -391,7 +390,7 @@ const struct PinEntry sctOutputPins[] = {
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const TimerHandler = &handlerTable;
 const struct EntityClass * const SctBase = &tmrTable;
-static struct TimerHandler *handlers[CHANNEL_COUNT] = {0};
+static struct TimerHandler *handlers[1] = {0};
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(uint8_t channel)
 {
@@ -406,7 +405,7 @@ static bool timerHandlerActive(uint8_t channel)
   return result;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result timerHandlerAttach(uint8_t channel, enum SctPart part,
+static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
     struct SctBase *timer)
 {
   const IrqState state = irqSave();
@@ -416,7 +415,7 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart part,
   struct TimerHandler * const handler = handlers[channel];
   enum Result res = E_OK;
 
-  if (part == SCT_UNIFIED)
+  if (timerPart == SCT_UNIFIED)
   {
     if (!handler->descriptors[0] && !handler->descriptors[1])
       handler->descriptors[0] = timer;
@@ -425,10 +424,10 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart part,
   }
   else
   {
-    const uint8_t offset = part == SCT_HIGH;
+    const unsigned int part = timerPart == SCT_HIGH;
 
-    if (!handler->descriptors[offset])
-      handler->descriptors[offset] = timer;
+    if (!handler->descriptors[part])
+      handler->descriptors[part] = timer;
     else
       res = E_BUSY;
   }
@@ -437,13 +436,11 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart part,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void timerHandlerDetach(uint8_t channel, enum SctPart part)
+static void timerHandlerDetach(uint8_t channel, enum SctPart timerPart)
 {
-  const IrqState state = irqSave();
+  const unsigned int part = timerPart == SCT_HIGH;
 
-  handlers[channel]->descriptors[part == SCT_HIGH] = 0;
-
-  irqRestore(state);
+  handlers[channel]->descriptors[part] = 0;
 }
 /*----------------------------------------------------------------------------*/
 static void timerHandlerInstantiate(uint8_t channel)
@@ -463,7 +460,7 @@ static void timerHandlerProcess(struct TimerHandler *handler)
 {
   const uint16_t state = handler->reg->EVFLAG;
 
-  for (unsigned int index = 0; index < 2; ++index)
+  for (unsigned int index = 0; index < sizeof(handler->descriptors); ++index)
   {
     struct SctBase * const descriptor = handler->descriptors[index];
 

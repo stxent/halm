@@ -409,13 +409,13 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
   while (!queueEmpty(&interface->rxRequestQueue))
   {
     struct UsbRequest *request;
-    IrqState state;
 
     queuePeek(&interface->rxRequestQueue, &request);
     if (length < request->length)
       break;
 
     const size_t chunkLength = request->length;
+    IrqState state;
 
     state = irqSave();
     queuePop(&interface->rxRequestQueue, 0);
