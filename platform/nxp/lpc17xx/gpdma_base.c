@@ -12,20 +12,20 @@
 #include <halm/platform/nxp/lpc17xx/system.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-#define GPDMA_CHANNEL_COUNT ARRAY_SIZE(LPC_GPDMA->CHANNELS)
+#define CHANNEL_COUNT ARRAY_SIZE(LPC_GPDMA->CHANNELS)
 /*----------------------------------------------------------------------------*/
 struct DmaHandler
 {
   struct Entity base;
 
   /* Channel descriptors currently in use */
-  struct GpDmaBase *descriptors[GPDMA_CHANNEL_COUNT];
+  struct GpDmaBase *descriptors[CHANNEL_COUNT];
   /* Initialized descriptors count */
-  unsigned short instances;
+  unsigned int instances;
 };
 /*----------------------------------------------------------------------------*/
+static struct GpDmaMuxConfig calcEventMux(enum GpDmaType, enum GpDmaEvent);
 static unsigned int eventToPeripheral(enum GpDmaEvent);
-static void updateEventMux(struct GpDmaBase *, enum GpDmaEvent);
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void);
 static void dmaHandlerDetach(void);
@@ -84,15 +84,24 @@ static unsigned int eventToPeripheral(enum GpDmaEvent event)
   return eventTranslationMap[event];
 }
 /*----------------------------------------------------------------------------*/
-static void updateEventMux(struct GpDmaBase *channel, enum GpDmaEvent event)
+static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,
+    enum GpDmaEvent event)
 {
-  if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
+  if (type != GPDMA_TYPE_M2M && event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
   {
     const unsigned int position = event - GPDMA_MAT0_0;
-    const uint8_t mask = 1UL << position;
 
-    channel->mux.mask &= ~mask;
-    channel->mux.value |= mask;
+    return (struct GpDmaMuxConfig){
+        .mask = 1 << position,
+        .value = position
+    };
+  }
+  else
+  {
+    return (struct GpDmaMuxConfig){
+        .mask = 0xFF,
+        .value = 0
+    };
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -133,14 +142,14 @@ uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
 /*----------------------------------------------------------------------------*/
 void gpDmaClearDescriptor(uint8_t channel)
 {
-  assert(channel < GPDMA_CHANNEL_COUNT);
+  assert(channel < CHANNEL_COUNT);
 
   dmaHandler->descriptors[channel] = 0;
 }
 /*----------------------------------------------------------------------------*/
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
 {
-  assert(channel < GPDMA_CHANNEL_COUNT);
+  assert(channel < CHANNEL_COUNT);
 
   return dmaHandler->descriptors[channel];
 }
@@ -148,7 +157,7 @@ const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
 enum Result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
 {
   assert(descriptor);
-  assert(channel < GPDMA_CHANNEL_COUNT);
+  assert(channel < CHANNEL_COUNT);
 
   return compareExchangePointer((void **)(dmaHandler->descriptors + channel),
       0, descriptor) ? E_OK : E_BUSY;
@@ -203,8 +212,6 @@ void GPDMA_ISR(void)
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerAttach(void)
 {
-  const IrqState state = irqSave();
-
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
 
@@ -214,14 +221,10 @@ static void dmaHandlerAttach(void)
     LPC_GPDMA->CONFIG |= DMA_ENABLE;
     irqEnable(GPDMA_IRQ);
   }
-
-  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void dmaHandlerDetach(void)
 {
-  const IrqState state = irqSave();
-
   /* Disable peripheral when no active descriptors exist */
   if (!--dmaHandler->instances)
   {
@@ -229,8 +232,6 @@ static void dmaHandlerDetach(void)
     LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
     sysPowerDisable(PWR_GPDMA);
   }
-
-  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dmaHandlerInit(void *object,
@@ -238,7 +239,7 @@ static enum Result dmaHandlerInit(void *object,
 {
   struct DmaHandler * const handler = object;
 
-  for (unsigned int index = 0; index < GPDMA_CHANNEL_COUNT; ++index)
+  for (size_t index = 0; index < CHANNEL_COUNT; ++index)
     handler->descriptors[index] = 0;
 
   handler->instances = 0;
@@ -258,16 +259,15 @@ static enum Result channelInit(void *object, const void *configBase)
   const struct GpDmaBaseConfig * const config = configBase;
   struct GpDmaBase * const channel = object;
 
-  assert(config->channel < GPDMA_CHANNEL_COUNT);
+  assert(config->channel < CHANNEL_COUNT);
 
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
   channel->handler = 0;
   channel->number = config->channel;
   channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
 
-  /* Reset multiplexer mask and value */
-  channel->mux.mask = 0xFF;
-  channel->mux.value = 0;
+  /* Calculate multiplexer mask and value */
+  channel->mux = calcEventMux(config->type, config->event);
 
   if (config->type != GPDMA_TYPE_M2M)
   {
@@ -286,9 +286,6 @@ static enum Result channelInit(void *object, const void *configBase)
       default:
         break;
     }
-
-    /* Calculate new mask and value for event multiplexer */
-    updateEventMux(channel, config->event);
   }
 
   /* Register new descriptor */

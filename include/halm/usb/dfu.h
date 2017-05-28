@@ -19,7 +19,7 @@ struct DfuConfig
   /** Optional: state transition timer. */
   void *timer;
   /** Mandatory: maximum transfer size. */
-  size_t transferSize;
+  uint16_t transferSize;
 };
 /*----------------------------------------------------------------------------*/
 struct Dfu
@@ -35,7 +35,7 @@ struct Dfu
   /* Current offset */
   size_t position;
   /* Maximum transfer size */
-  size_t transferSize;
+  uint16_t transferSize;
 
   /* Timeout for the current operation */
   uint16_t timeout;

@@ -48,30 +48,22 @@ const struct PwmClass * const GpTimerPwm = &channelTable;
 static enum Result unitAllocateChannel(struct GpTimerPwmUnit *unit,
     uint8_t channel)
 {
-  enum Result res = E_BUSY;
   const uint8_t mask = 1 << channel;
-  const IrqState state = irqSave();
-
   const int freeChannel = gpTimerAllocateChannel(unit->matches | mask);
 
   if (freeChannel != -1 && !(unit->matches & mask))
   {
     unit->matches |= mask;
     unitUpdateResolution(unit, freeChannel);
-    res = E_OK;
+    return E_OK;
   }
-
-  irqRestore(state);
-  return res;
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static void unitReleaseChannel(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
-  const IrqState state = irqSave();
-
   unit->matches &= ~(1 << channel);
-
-  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)

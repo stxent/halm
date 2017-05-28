@@ -101,27 +101,20 @@ static uint8_t configMatchPin(uint8_t channel, PinNumber key)
 /*----------------------------------------------------------------------------*/
 static enum Result unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
-  enum Result res = E_BUSY;
   const uint8_t mask = 1 << channel;
-  const IrqState state = irqSave();
 
   if (!(unit->matches & mask))
   {
     unit->matches |= mask;
-    res = E_OK;
+    return E_OK;
   }
-
-  irqRestore(state);
-  return res;
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
-  const IrqState state = irqSave();
-
   unit->matches &= ~(1 << channel);
-
-  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *object, const void *configBase)

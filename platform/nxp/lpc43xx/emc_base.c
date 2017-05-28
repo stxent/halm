@@ -307,7 +307,6 @@ void *emcGetStaticMemoryAddress(uint8_t channel)
 bool emcSetDynamicMemoryDescriptor(uint8_t channel,
     const struct Entity *current, struct Entity *memory)
 {
-  const IrqState state = irqSave();
   bool completed = false;
 
   if (emcHandlerInstantiate())
@@ -323,14 +322,12 @@ bool emcSetDynamicMemoryDescriptor(uint8_t channel,
     }
   }
 
-  irqRestore(state);
   return completed;
 }
 /*----------------------------------------------------------------------------*/
 bool emcSetStaticMemoryDescriptor(uint8_t channel,
     const struct Entity *current, struct Entity *memory)
 {
-  const IrqState state = irqSave();
   bool completed = false;
 
   if (emcHandlerInstantiate())
@@ -346,18 +343,14 @@ bool emcSetStaticMemoryDescriptor(uint8_t channel,
     }
   }
 
-  irqRestore(state);
   return completed;
 }
 /*----------------------------------------------------------------------------*/
 static bool emcHandlerInstantiate(void)
 {
-  const IrqState state = irqSave();
-
   if (!emcHandler)
     emcHandler = init(EmcHandler, 0);
 
-  irqRestore(state);
   return emcHandler != 0;
 }
 /*----------------------------------------------------------------------------*/
