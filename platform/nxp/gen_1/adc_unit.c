@@ -5,10 +5,9 @@
  */
 
 #include <assert.h>
+#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/adc_defs.h>
 #include <halm/platform/nxp/gen_1/adc_unit.h>
-/*----------------------------------------------------------------------------*/
-static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcUnitInit(void *, const void *);
 static void adcUnitDeinit(void *);
@@ -21,37 +20,24 @@ static const struct EntityClass adcUnitTable = {
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const AdcUnit = &adcUnitTable;
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
+enum Result adcUnitRegister(struct AdcUnit *unit, void (*handler)(void *),
+    void *instance)
 {
-  struct AdcUnit * const unit = object;
+  assert(instance);
 
-  if (unit->callback)
-    unit->callback(unit->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
-enum Result adcUnitRegister(struct AdcUnit *unit, void (*callback)(void *),
-    void *argument)
-{
-  if (!spinTryLock(&unit->lock))
-    return E_BUSY;
-
-  if (unit->callback)
+  if (compareExchangePointer((void **)&unit->base.instance, 0, instance))
   {
-    spinUnlock(&unit->lock);
-    return E_BUSY;
+    unit->base.handler = handler;
+    return E_OK;
   }
-
-  unit->callback = callback;
-  unit->callbackArgument = argument;
-
-  spinUnlock(&unit->lock);
-  return E_OK;
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 void adcUnitUnregister(struct AdcUnit *unit)
 {
-  unit->callback = 0;
-  unit->callbackArgument = 0;
+  unit->base.handler = 0;
+  unit->base.instance = 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcUnitInit(void *object, const void *configBase)
@@ -70,11 +56,6 @@ static enum Result adcUnitInit(void *object, const void *configBase)
   /* Call base class constructor */
   if ((res = AdcUnitBase->init(object, &baseConfig)) != E_OK)
     return res;
-
-  unit->callback = 0;
-  unit->callbackArgument = 0;
-  unit->lock = SPIN_UNLOCKED;
-  unit->base.handler = interruptHandler;
 
   LPC_ADC_Type * const reg = unit->base.reg;
 

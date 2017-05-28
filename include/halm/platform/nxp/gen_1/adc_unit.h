@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_NXP_GEN_1_ADC_UNIT_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/nxp/gen_1/adc_base.h>
-#include <halm/spinlock.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const AdcUnit;
 /*----------------------------------------------------------------------------*/
@@ -27,12 +26,6 @@ struct AdcUnitConfig
 struct AdcUnit
 {
   struct AdcUnitBase base;
-
-  void (*callback)(void *);
-  void *callbackArgument;
-
-  /* Protects peripheral block registers */
-  Spinlock lock;
 };
 /*----------------------------------------------------------------------------*/
 enum Result adcUnitRegister(struct AdcUnit *, void (*)(void *), void *);

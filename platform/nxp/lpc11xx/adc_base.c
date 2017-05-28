@@ -80,7 +80,9 @@ static bool setDescriptor(uint8_t channel, const struct AdcUnitBase *state,
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  struct AdcUnitBase * const descriptor = descriptors[0];
+
+  descriptor->handler(descriptor->instance);
 }
 /*----------------------------------------------------------------------------*/
 void adcConfigPin(const struct AdcUnitBase *unit, PinNumber key,
@@ -116,7 +118,9 @@ static enum Result adcUnitInit(void *object, const void *configBase)
 
   unit->channel = config->channel;
   unit->handler = 0;
+  unit->instance = 0;
 
+  /* Try to set peripheral descriptor */
   if (!setDescriptor(unit->channel, 0, unit))
     return E_BUSY;
 

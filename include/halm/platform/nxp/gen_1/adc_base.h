@@ -34,8 +34,10 @@ struct AdcUnitBase
   struct Entity base;
 
   void *reg;
-  void (*handler)(void *);
   IrqNumber irq;
+
+  void (*handler)(void *);
+  void *instance;
 
   /* Unique peripheral identifier */
   uint8_t channel;
