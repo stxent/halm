@@ -77,7 +77,7 @@ void sysResetEnable(enum SysBlockReset block)
   const uint32_t mask = 1UL << (block & 0x1F);
   const unsigned int index = block >> 5;
 
-  LPC_RGU->RESET_CTRL[index] = mask;
+  LPC_RGU->RESET_CTRL[index] = ~LPC_RGU->RESET_ACTIVE_STATUS[index] | mask;
 
   if (block != RST_M0SUB && block != RST_M0APP)
     while (!(LPC_RGU->RESET_ACTIVE_STATUS[index] & mask));
@@ -85,6 +85,9 @@ void sysResetEnable(enum SysBlockReset block)
 /*----------------------------------------------------------------------------*/
 void sysResetDisable(enum SysBlockReset block)
 {
+  const uint32_t mask = 1UL << (block & 0x1F);
+  const unsigned int index = block >> 5;
+
   if (block == RST_M0SUB || block == RST_M0APP)
-    LPC_RGU->RESET_CTRL[block >> 5] = 0;
+    LPC_RGU->RESET_CTRL[index] = ~(LPC_RGU->RESET_ACTIVE_STATUS[index] | mask);
 }
