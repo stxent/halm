@@ -22,6 +22,8 @@ struct SerialDmaConfig
 {
   /** Mandatory: baud rate. */
   uint32_t rate;
+  /** Mandatory: size of the input buffer, input is double buffered. */
+  size_t rxChunk;
   /** Mandatory: input queue size. */
   size_t rxLength;
   /** Mandatory: output queue size. */
@@ -51,15 +53,17 @@ struct SerialDma
   /* DMA channel descriptors */
   struct Dma *rxDma, *txDma;
 
-  /* Bridges between interface functions and DMA operations */
+  /* Input and output queues */
   struct ByteQueue rxQueue, txQueue;
 
-  /* Pointer to an allocated memory for temporary buffers */
-  uint8_t *pool;
-  /* Temporary buffers for DMA operations */
-  uint8_t *rxBuffer, *txBuffer;
+  /* Temporary buffer for received bytes */
+  uint8_t *rxBuffer;
   /* Index of the first DMA buffer in the receive queue */
-  uint8_t rxBufferIndex;
+  size_t rxBufferIndex;
+  /* Size of the single DMA RX buffer */
+  size_t rxBufferSize;
+  /* Size of the DMA TX transfer */
+  size_t txBufferSize;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_SERIAL_DMA_H_ */
