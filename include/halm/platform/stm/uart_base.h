@@ -11,8 +11,6 @@
 #include <halm/irq.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const UartBase;
-/*----------------------------------------------------------------------------*/
 enum UartParity
 {
   UART_PARITY_NONE,
@@ -20,6 +18,8 @@ enum UartParity
   UART_PARITY_EVEN
 };
 /*----------------------------------------------------------------------------*/
+extern const struct EntityClass * const UartBase;
+
 struct UartBaseConfig
 {
   /** Mandatory: serial input. */
@@ -29,7 +29,7 @@ struct UartBaseConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct UartBase
 {
   struct Interface base;
@@ -42,9 +42,14 @@ struct UartBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
-uint32_t uartGetClock(const struct UartBase *);
 void uartSetParity(struct UartBase *, enum UartParity);
 void uartSetRate(struct UartBase *, uint32_t);
+
+uint32_t uartGetClock(const struct UartBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_UART_BASE_H_ */

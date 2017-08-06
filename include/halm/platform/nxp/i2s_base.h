@@ -11,21 +11,21 @@
 #include <halm/irq.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const I2sBase;
-/*----------------------------------------------------------------------------*/
 enum I2sWidth
 {
   I2S_WIDTH_8,
   I2S_WIDTH_16,
   I2S_WIDTH_32
 };
-/*----------------------------------------------------------------------------*/
+
 struct I2sRateConfig
 {
   uint8_t x;
   uint8_t y;
 };
 /*----------------------------------------------------------------------------*/
+extern const struct EntityClass * const I2sBase;
+
 struct I2sBaseConfig
 {
   struct
@@ -55,7 +55,7 @@ struct I2sBaseConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct I2sBase
 {
   struct Interface base;
@@ -68,7 +68,11 @@ struct I2sBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 enum Result i2sCalcRate(struct I2sBase *, uint32_t, struct I2sRateConfig *);
 uint32_t i2sGetClock(const struct I2sBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_I2S_BASE_H_ */

@@ -18,7 +18,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const AdcUnitBase;
-/*----------------------------------------------------------------------------*/
+
 struct AdcUnitBaseConfig
 {
   /** Optional: desired clock. */
@@ -28,7 +28,7 @@ struct AdcUnitBaseConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct AdcUnitBase
 {
   struct Entity base;
@@ -43,7 +43,11 @@ struct AdcUnitBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void adcConfigPin(const struct AdcUnitBase *, PinNumber, struct AdcPin *);
 void adcReleasePin(struct AdcPin);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_ADC_BASE_H_ */

@@ -15,7 +15,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct RtClockClass * const Rtc;
-/*----------------------------------------------------------------------------*/
+
 struct RtcConfig
 {
   /** Optional: initial time. */
@@ -23,7 +23,7 @@ struct RtcConfig
   /** Optional: interrupt priority. */
   IrqPriority priority;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Rtc
 {
   struct RtcBase base;

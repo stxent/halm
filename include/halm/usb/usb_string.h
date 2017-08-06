@@ -8,13 +8,14 @@
 #define HALM_USB_USB_STRING_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+#include <xcore/helpers.h>
 #include <halm/usb/usb_langid.h>
 /*----------------------------------------------------------------------------*/
 struct UsbDescriptor;
 
-typedef void (*usbStringFunctor)(void *, enum UsbLangId, struct UsbDescriptor *,
-    void *);
-/*----------------------------------------------------------------------------*/
+typedef void (*usbStringFunctor)(void *, enum UsbLangId,
+    struct UsbDescriptor *, void *);
+
 enum UsbStringType
 {
   USB_STRING_HEADER,
@@ -23,7 +24,7 @@ enum UsbStringType
   USB_STRING_SERIAL,
   USB_STRING_CUSTOM
 };
-/*----------------------------------------------------------------------------*/
+
 struct UsbString
 {
   usbStringFunctor functor;
@@ -31,10 +32,14 @@ struct UsbString
   uint8_t type;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 struct UsbString usbStringBuild(usbStringFunctor, void *, enum UsbStringType);
 void usbStringHeader(struct UsbDescriptor *, void *, enum UsbLangId);
 void usbStringMultiHeader(struct UsbDescriptor *, void *,
     const enum UsbLangId *, size_t);
 void usbStringWrap(struct UsbDescriptor *, void *, const char *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_STRING_H_ */

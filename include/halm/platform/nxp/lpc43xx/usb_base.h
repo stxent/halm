@@ -13,10 +13,10 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbBase;
-/*----------------------------------------------------------------------------*/
+
 struct QueueHead;
 struct TransferDescriptor;
-/*----------------------------------------------------------------------------*/
+
 struct UsbBaseConfig
 {
   /** Mandatory: USB bidirectional D- line. */
@@ -30,7 +30,7 @@ struct UsbBaseConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct UsbBase
 {
   struct Entity base;

@@ -23,12 +23,14 @@ struct CaptureClass
   void (*setCallback)(void *, void (*)(void *), void *);
   uint32_t (*getValue)(const void *);
 };
-/*----------------------------------------------------------------------------*/
+
 struct Capture
 {
   struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Start event capture.
  * @param capture Pointer to a Capture object.
@@ -37,7 +39,7 @@ static inline void captureEnable(void *capture)
 {
   ((const struct CaptureClass *)CLASS(capture))->enable(capture);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Stop event capture.
  * @param capture Pointer to a Capture object.
@@ -46,7 +48,7 @@ static inline void captureDisable(void *capture)
 {
   ((const struct CaptureClass *)CLASS(capture))->disable(capture);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Set callback function for capture event.
  * @param capture Pointer to a Capture object.
@@ -59,7 +61,7 @@ static inline void captureSetCallback(void *capture, void (*callback)(void *),
   ((const struct CaptureClass *)CLASS(capture))->setCallback(capture, callback,
       argument);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Get captured value.
  * @param capture Pointer to a Capture object.
@@ -69,5 +71,7 @@ static inline uint32_t captureGetValue(const void *capture)
 {
   return ((const struct CaptureClass *)CLASS(capture))->getValue(capture);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CAPTURE_H_ */

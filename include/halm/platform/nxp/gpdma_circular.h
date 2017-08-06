@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/gpdma_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const GpDmaCircular;
-/*----------------------------------------------------------------------------*/
+
 struct GpDmaCircularConfig
 {
   /** Mandatory: number of blocks in the chain. */
@@ -27,7 +27,7 @@ struct GpDmaCircularConfig
    */
   bool silent;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpDmaCircular
 {
   struct GpDmaBase base;

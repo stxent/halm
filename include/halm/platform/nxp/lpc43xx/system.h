@@ -12,6 +12,7 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 #define HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/helpers.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals register */
@@ -65,7 +66,7 @@ enum SysBlockReset
   RST_SPI     = 0x20 + 26,
   RST_ADCHS   = 0x20 + 28
 };
-/*----------------------------------------------------------------------------*/
+
 /* Enable or disable clock branches */
 enum SysClockBranch
 {
@@ -134,6 +135,8 @@ enum SysClockBranch
   CLK_SDIO          = 0x200 + 0x100
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void sysClockEnable(enum SysClockBranch);
 void sysClockDisable(enum SysClockBranch);
 void sysFlashEnable(unsigned int);
@@ -142,5 +145,7 @@ unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
 void sysResetEnable(enum SysBlockReset);
 void sysResetDisable(enum SysBlockReset);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_ */

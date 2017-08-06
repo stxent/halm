@@ -16,7 +16,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Adc;
-/*----------------------------------------------------------------------------*/
+
 struct AdcConfig
 {
   /** Mandatory: peripheral unit. */
@@ -24,7 +24,7 @@ struct AdcConfig
   /** Mandatory: analog input. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Adc
 {
   struct Interface base;

@@ -10,13 +10,13 @@
 #include <stdint.h>
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
+typedef volatile uint8_t Spinlock;
+
 enum
 {
   SPIN_UNLOCKED,
   SPIN_LOCKED
 };
-/*----------------------------------------------------------------------------*/
-typedef volatile uint8_t Spinlock;
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/core/CORE_TYPE/spinlock.h>

@@ -12,13 +12,13 @@
 #include <halm/irq.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Eeprom;
-/*----------------------------------------------------------------------------*/
+
 struct EepromConfig
 {
   /** Optional: interrupt priority. */
   IrqPriority priority;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Eeprom
 {
   struct Interface base;

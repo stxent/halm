@@ -9,9 +9,14 @@
 /*----------------------------------------------------------------------------*/
 #include <stddef.h>
 #include <xcore/error.h>
+#include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 enum Result workQueueAdd(void (*)(void *), void *);
 enum Result workQueueInit(size_t);
 void workQueueStart(void *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_WORK_QUEUE_H_ */

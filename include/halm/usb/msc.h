@@ -12,7 +12,7 @@
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const Msc;
-/*----------------------------------------------------------------------------*/
+
 struct MscConfig
 {
   /** Mandatory: USB device. */
@@ -38,7 +38,7 @@ struct MscConfig
     uint8_t tx;
   } endpoints;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Msc
 {
   struct UsbDriver base;

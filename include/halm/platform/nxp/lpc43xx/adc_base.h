@@ -19,7 +19,7 @@ enum AdcEvent
   ADC_MCOA2,
   ADC_EVENT_END
 };
-/*----------------------------------------------------------------------------*/
+
 struct AdcPin
 {
   /* Peripheral channel */

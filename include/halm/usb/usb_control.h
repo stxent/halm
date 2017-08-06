@@ -13,7 +13,7 @@
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbControl;
-/*----------------------------------------------------------------------------*/
+
 struct UsbControlConfig
 {
   /** Mandatory: parent device. */
@@ -23,7 +23,7 @@ struct UsbControlConfig
   /** Mandatory: Product Identifier. */
   uint16_t pid;
 };
-/*----------------------------------------------------------------------------*/
+
 struct UsbControl
 {
   struct Entity base;
@@ -59,11 +59,15 @@ struct UsbControl
   void *privateData;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 enum Result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlUnbindDriver(struct UsbControl *);
 void usbControlEvent(struct UsbControl *, unsigned int);
 void usbControlSetPower(struct UsbControl *, uint16_t);
 enum Result usbControlStringAppend(struct UsbControl *, struct UsbString);
 void usbControlStringErase(struct UsbControl *, struct UsbString);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_CONTROL_H_ */

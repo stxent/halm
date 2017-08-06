@@ -29,12 +29,14 @@ struct PwmClass
   void (*setEdges)(void *, uint32_t, uint32_t);
   enum Result (*setFrequency)(void *, uint32_t);
 };
-/*----------------------------------------------------------------------------*/
+
 struct Pwm
 {
   struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Enable pulse width modulation.
  * @param channel Pointer to a Pwm object.
@@ -43,7 +45,7 @@ static inline void pwmEnable(void *channel)
 {
   ((const struct PwmClass *)CLASS(channel))->enable(channel);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Disable pulse width modulation.
  * @param channel Pointer to a Pwm object.
@@ -52,7 +54,7 @@ static inline void pwmDisable(void *channel)
 {
   ((const struct PwmClass *)CLASS(channel))->disable(channel);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Get channel resolution.
  * @param channel Pointer to a Pwm object.
@@ -62,7 +64,7 @@ static inline uint32_t pwmGetResolution(const void *channel)
 {
   return ((const struct PwmClass *)CLASS(channel))->getResolution(channel);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Set duration of the pulse.
  * @param channel Pointer to a Pwm object.
@@ -72,7 +74,7 @@ static inline void pwmSetDuration(void *channel, uint32_t duration)
 {
   ((const struct PwmClass *)CLASS(channel))->setDuration(channel, duration);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Set times of leading and trailing edges of the pulse.
  * @param channel Pointer to a Pwm object.
@@ -85,7 +87,7 @@ static inline void pwmSetEdges(void *channel, uint32_t leading,
   ((const struct PwmClass *)CLASS(channel))->setEdges(channel, leading,
       trailing);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Change switching frequency of the channel.
  * @param channel Pointer to a Pwm object.
@@ -96,5 +98,7 @@ static inline enum Result pwmSetFrequency(void *channel, uint32_t frequency)
   return ((const struct PwmClass *)CLASS(channel))->setFrequency(channel,
       frequency);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PWM_H_ */

@@ -10,7 +10,7 @@
 #include <halm/platform/nxp/gptimer_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const GpTimer;
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerConfig
 {
   /**
@@ -25,7 +25,7 @@ struct GpTimerConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpTimer
 {
   struct GpTimerBase base;

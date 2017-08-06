@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/gpdma_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const GpDma;
-/*----------------------------------------------------------------------------*/
+
 struct GpDmaConfig
 {
   /** Mandatory: request connection to the peripheral or memory. */
@@ -21,7 +21,7 @@ struct GpDmaConfig
   /** Mandatory: channel number. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpDma
 {
   struct GpDmaBase base;

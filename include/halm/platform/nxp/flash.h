@@ -10,8 +10,6 @@
 #include <stddef.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const Flash;
-/*----------------------------------------------------------------------------*/
 enum FlashParameter
 {
   /** Get page size. */
@@ -22,6 +20,8 @@ enum FlashParameter
   IF_FLASH_ERASE_PAGE
 };
 /*----------------------------------------------------------------------------*/
+extern const struct InterfaceClass * const Flash;
+
 struct Flash
 {
   struct Interface base;

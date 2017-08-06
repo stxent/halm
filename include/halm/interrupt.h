@@ -26,12 +26,14 @@ struct InterruptClass
 
   void (*setCallback)(void *, void (*)(void *), void *);
 };
-/*----------------------------------------------------------------------------*/
+
 struct Interrupt
 {
   struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Enable the interrupt generation.
  * @param interrupt Pointer to an Interrupt object.
@@ -40,7 +42,7 @@ static inline void interruptEnable(void *interrupt)
 {
   ((const struct InterruptClass *)CLASS(interrupt))->enable(interrupt);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Disable the interrupt generation.
  * @param interrupt Pointer to an Interrupt object.
@@ -49,7 +51,7 @@ static inline void interruptDisable(void *interrupt)
 {
   ((const struct InterruptClass *)CLASS(interrupt))->disable(interrupt);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Set a callback function for an interrupt.
  * @param interrupt Pointer to an Interrupt object.
@@ -62,5 +64,7 @@ static inline void interruptSetCallback(void *interrupt,
   ((const struct InterruptClass *)CLASS(interrupt))->setCallback(interrupt,
       callback, argument);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_INTERRUPT_H_ */

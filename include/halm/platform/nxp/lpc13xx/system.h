@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <xcore/bits.h>
+#include <xcore/helpers.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
@@ -25,7 +26,7 @@ enum SysBlockPower
   PWR_USBPLL  = 8,
   PWR_USBPAD  = 10
 };
-/*----------------------------------------------------------------------------*/
+
 /* System AHB clock control register */
 enum SysClockBranch
 {
@@ -49,32 +50,40 @@ enum SysClockBranch
   CLK_SSP1        = 18
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline void sysClockEnable(enum SysClockBranch branch)
 {
   LPC_SYSCON->SYSAHBCLKCTRL |= 1UL << branch;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void sysClockDisable(enum SysClockBranch branch)
 {
   LPC_SYSCON->SYSAHBCLKCTRL &= ~(1UL << branch);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void sysPowerEnable(enum SysBlockPower branch)
 {
   LPC_SYSCON->PDRUNCFG &= ~(1UL << branch);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void sysPowerDisable(enum SysBlockPower block)
 {
   LPC_SYSCON->PDRUNCFG |= 1UL << block;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline bool sysPowerStatus(enum SysBlockPower block)
 {
   return (LPC_SYSCON->PDRUNCFG & (1UL << block)) == 0;
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC13XX_SYSTEM_H_ */

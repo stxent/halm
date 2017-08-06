@@ -17,7 +17,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const OneWireUart;
-/*----------------------------------------------------------------------------*/
+
 struct OneWireUartConfig
 {
   /** Mandatory: serial input. */
@@ -29,7 +29,7 @@ struct OneWireUartConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct OneWireUart
 {
   struct UartBase base;

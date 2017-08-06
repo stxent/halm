@@ -14,6 +14,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <xcore/bits.h>
+#include <xcore/helpers.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
@@ -47,7 +48,7 @@ enum SysBlockPower
   PWR_ENET  = 30,
   PWR_USB   = 31
 };
-/*----------------------------------------------------------------------------*/
+
 /* Divider values for peripheral clock control registers */
 enum SysClockDiv
 {
@@ -57,7 +58,7 @@ enum SysClockDiv
   CLK_DIV6 = 3, /* For CAN1, CAN2 and CAN Filtering */
   CLK_DIV8 = 3
 };
-/*----------------------------------------------------------------------------*/
+
 /* Peripheral clock selection registers */
 enum SysClockBranch
 {
@@ -93,28 +94,36 @@ enum SysClockBranch
   CLK_MC       = 0x20 + 30
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void sysClockControl(enum SysClockBranch, enum SysClockDiv);
 unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline unsigned int sysClockDivToValue(enum SysClockDiv divisor)
 {
   return 1 << divisor;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void sysPowerEnable(enum SysBlockPower block)
 {
   LPC_SC->PCONP |= 1UL << block;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void sysPowerDisable(enum SysBlockPower block)
 {
   LPC_SC->PCONP &= ~(1UL << block);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline bool sysPowerStatus(enum SysBlockPower block)
 {
   return (LPC_SC->PCONP & (1UL << block)) != 0;
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_SYSTEM_H_ */

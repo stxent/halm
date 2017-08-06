@@ -11,8 +11,6 @@
 #include <halm/pin.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const SctBase;
-/*----------------------------------------------------------------------------*/
 enum SctInput
 {
   SCT_INPUT_NONE,
@@ -26,7 +24,7 @@ enum SctInput
   SCT_INPUT_7,
   SCT_INPUT_END
 };
-/*----------------------------------------------------------------------------*/
+
 enum SctPart
 {
   SCT_LOW,
@@ -34,6 +32,8 @@ enum SctPart
   SCT_UNIFIED
 };
 /*----------------------------------------------------------------------------*/
+extern const struct EntityClass * const SctBase;
+
 struct SctBaseConfig
 {
   /** Mandatory: peripheral identifier. */
@@ -45,7 +45,7 @@ struct SctBaseConfig
   /** Optional: timer part. */
   enum SctPart part;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SctBase
 {
   struct Timer base;
@@ -62,8 +62,12 @@ struct SctBase
   enum SctPart part;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 int sctAllocateEvent(struct SctBase *);
 uint32_t sctGetClock(const struct SctBase *);
 void sctReleaseEvent(struct SctBase *, int);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_SCT_BASE_H_ */

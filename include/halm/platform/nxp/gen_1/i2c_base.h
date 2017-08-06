@@ -12,7 +12,7 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const I2cBase;
-/*----------------------------------------------------------------------------*/
+
 struct I2cBaseConfig
 {
   /** Mandatory: serial clock pin. */
@@ -22,7 +22,7 @@ struct I2cBaseConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct I2cBase
 {
   struct Interface base;
@@ -35,10 +35,14 @@ struct I2cBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void i2cConfigPins(struct I2cBase *, const struct I2cBaseConfig *);
 uint32_t i2cGetRate(const struct I2cBase *);
 void i2cSetRate(struct I2cBase *, uint32_t);
 
 uint32_t i2cGetClock(const struct I2cBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_I2C_BASE_H_ */

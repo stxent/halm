@@ -11,8 +11,7 @@
 #include <halm/pwm.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpPwmUnit;
-extern const struct PwmClass * const GpPwm;
-/*----------------------------------------------------------------------------*/
+
 struct GpPwmUnitConfig
 {
   /** Mandatory: switching frequency. */
@@ -22,7 +21,7 @@ struct GpPwmUnitConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpPwmUnit
 {
   struct GpPwmUnitBase base;
@@ -33,6 +32,8 @@ struct GpPwmUnit
   uint8_t matches;
 };
 /*----------------------------------------------------------------------------*/
+extern const struct PwmClass * const GpPwm;
+
 struct GpPwmConfig
 {
   /** Mandatory: peripheral unit. */
@@ -40,7 +41,7 @@ struct GpPwmConfig
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpPwm
 {
   struct Pwm base;
@@ -53,6 +54,8 @@ struct GpPwm
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+extern const struct PwmClass * const GpPwmDoubleEdge;
+
 struct GpPwmDoubleEdgeConfig
 {
   /** Mandatory: peripheral unit. */
@@ -60,7 +63,7 @@ struct GpPwmDoubleEdgeConfig
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpPwmDoubleEdge
 {
   struct Pwm base;
@@ -75,7 +78,11 @@ struct GpPwmDoubleEdge
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void *gpPwmCreate(void *, PinNumber);
 void *gpPwmCreateDoubleEdge(void *, PinNumber);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPPWM_H_ */

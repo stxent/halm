@@ -13,7 +13,7 @@
 #include <halm/platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const OneWireSsp;
-/*----------------------------------------------------------------------------*/
+
 struct OneWireSspConfig
 {
   /** Mandatory: pin used for serial data reception from the bus. */
@@ -25,7 +25,7 @@ struct OneWireSspConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct OneWireSsp
 {
   struct SspBase base;

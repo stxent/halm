@@ -12,7 +12,7 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const RtcBase;
-/*----------------------------------------------------------------------------*/
+
 struct RtcBase
 {
   struct RtClock base;

@@ -16,12 +16,12 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const WdtBase;
-/*----------------------------------------------------------------------------*/
+
 struct WdtBaseConfig
 {
   enum WdtClockSource source;
 };
-/*----------------------------------------------------------------------------*/
+
 struct WdtBase
 {
   struct Entity base;
@@ -30,6 +30,10 @@ struct WdtBase
   IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint32_t wdtGetClock(const struct WdtBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_WDT_BASE_H_ */

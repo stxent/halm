@@ -18,7 +18,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const AdcDma;
-/*----------------------------------------------------------------------------*/
+
 struct AdcDmaConfig
 {
   /** Mandatory: peripheral unit. */
@@ -30,7 +30,7 @@ struct AdcDmaConfig
   /** Mandatory: memory access channel. */
   uint8_t dma;
 };
-/*----------------------------------------------------------------------------*/
+
 struct AdcDma
 {
   struct Interface base;

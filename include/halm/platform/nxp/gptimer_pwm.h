@@ -11,8 +11,7 @@
 #include <halm/pwm.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerPwmUnit;
-extern const struct PwmClass * const GpTimerPwm;
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerPwmUnitConfig
 {
   /** Mandatory: switching frequency. */
@@ -22,7 +21,7 @@ struct GpTimerPwmUnitConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerPwmUnit
 {
   struct GpTimerBase base;
@@ -35,6 +34,8 @@ struct GpTimerPwmUnit
   uint8_t matches;
 };
 /*----------------------------------------------------------------------------*/
+extern const struct PwmClass * const GpTimerPwm;
+
 struct GpTimerPwmConfig
 {
   /** Mandatory: peripheral unit. */
@@ -42,7 +43,7 @@ struct GpTimerPwmConfig
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerPwm
 {
   struct Pwm base;
@@ -55,6 +56,10 @@ struct GpTimerPwm
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void *gpTimerPwmCreate(void *, PinNumber);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPTIMER_PWM_H_ */

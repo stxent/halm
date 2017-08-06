@@ -12,7 +12,7 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SdmmcBase;
-/*----------------------------------------------------------------------------*/
+
 struct SdmmcBaseConfig
 {
   /** Mandatory: clock line. */
@@ -28,7 +28,7 @@ struct SdmmcBaseConfig
   /** Optional: data line 3. */
   PinNumber dat3;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SdmmcBase
 {
   struct Entity base;
@@ -41,6 +41,10 @@ struct SdmmcBase
   bool wide;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint32_t sdmmcGetClock(const struct SdmmcBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_SDMMC_BASE_H_ */

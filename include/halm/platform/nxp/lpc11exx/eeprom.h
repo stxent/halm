@@ -11,7 +11,7 @@
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Eeprom;
-/*----------------------------------------------------------------------------*/
+
 struct Eeprom
 {
   struct Interface base;

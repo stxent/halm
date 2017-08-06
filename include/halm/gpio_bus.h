@@ -24,12 +24,14 @@ struct GpioBusClass
   uint32_t (*read)(void *);
   void (*write)(void *, uint32_t);
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpioBus
 {
   struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Read logic levels from bus lines.
  * @param bus Pointer to a GpioBus object.
@@ -39,7 +41,7 @@ static inline uint32_t gpioBusRead(void *bus)
 {
   return ((const struct GpioBusClass *)CLASS(bus))->read(bus);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Set logic levels on bus lines.
  * @param bus Pointer to a GpioBus object.
@@ -49,10 +51,12 @@ static inline void gpioBusWrite(void *bus, uint32_t value)
 {
   ((const struct GpioBusClass *)CLASS(bus))->write(bus, value);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 /** Simple GpioBus implementation based on a pin array. */
 extern const struct GpioBusClass * const SimpleGpioBus;
-/*----------------------------------------------------------------------------*/
+
 struct SimpleGpioBusConfig
 {
   /** Mandatory: pointer to an array of pins terminated with a zero element. */

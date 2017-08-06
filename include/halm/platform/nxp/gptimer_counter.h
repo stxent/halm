@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/gptimer_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const GpTimerCounter;
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerCounterConfig
 {
   /** Mandatory: active edge. */
@@ -23,7 +23,7 @@ struct GpTimerCounterConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerCounter
 {
   struct GpTimerBase base;

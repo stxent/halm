@@ -12,7 +12,7 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const CanBase;
-/*----------------------------------------------------------------------------*/
+
 struct CanBaseConfig
 {
   /** Mandatory: receiver input. */
@@ -22,7 +22,7 @@ struct CanBaseConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CanBase
 {
   struct Entity base;
@@ -35,6 +35,10 @@ struct CanBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint32_t canGetClock(const struct CanBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_CAN_BASE_H_ */

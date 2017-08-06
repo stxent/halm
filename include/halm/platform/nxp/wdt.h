@@ -11,7 +11,7 @@
 #include <halm/watchdog.h>
 /*----------------------------------------------------------------------------*/
 extern const struct WatchdogClass * const Wdt;
-/*----------------------------------------------------------------------------*/
+
 struct WdtConfig
 {
   /** Watchdog timer period in milliseconds. */
@@ -19,7 +19,7 @@ struct WdtConfig
   /** Optional: timer clock source. */
   enum WdtClockSource source;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Wdt
 {
   struct WdtBase base;

@@ -11,7 +11,7 @@
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const Dfu;
-/*----------------------------------------------------------------------------*/
+
 struct DfuConfig
 {
   /** Mandatory: USB device. */
@@ -21,7 +21,7 @@ struct DfuConfig
   /** Mandatory: maximum transfer size. */
   uint16_t transferSize;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Dfu
 {
   struct UsbDriver base;
@@ -48,10 +48,14 @@ struct Dfu
   uint8_t status;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void dfuOnDownloadCompleted(struct Dfu *, bool);
 void dfuSetDownloadRequestCallback(struct Dfu *,
     size_t (*)(size_t, const void *, size_t, uint16_t *));
 void dfuSetUploadRequestCallback(struct Dfu *,
     size_t (*)(size_t, void *, size_t));
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_DFU_H_ */

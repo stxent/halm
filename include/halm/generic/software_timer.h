@@ -10,15 +10,15 @@
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SoftwareTimerFactory;
-/*----------------------------------------------------------------------------*/
+
 struct SoftwareTimer;
-/*----------------------------------------------------------------------------*/
+
 struct SoftwareTimerFactoryConfig
 {
   /** Mandatory: timer for delay measurement. */
   struct Timer *timer;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SoftwareTimerFactory
 {
   struct Entity base;
@@ -29,6 +29,10 @@ struct SoftwareTimerFactory
   uint32_t counter;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void *softwareTimerCreate(void *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_SOFTWARE_TIMER_H_ */

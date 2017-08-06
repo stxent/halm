@@ -43,13 +43,13 @@ struct ClockOutputConfig
   /** Mandatory: output pin. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CommonClockConfig
 {
   /** Mandatory: clock source. */
   enum ClockSource source;
 };
-/*----------------------------------------------------------------------------*/
+
 struct ExternalOscConfig
 {
   /**
@@ -63,7 +63,7 @@ struct ExternalOscConfig
    */
   bool bypass;
 };
-/*----------------------------------------------------------------------------*/
+
 struct PllConfig
 {
   /**

@@ -15,7 +15,7 @@
 #include <halm/platform/nxp/sdmmc_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Sdmmc;
-/*----------------------------------------------------------------------------*/
+
 struct SdmmcConfig
 {
   /** Mandatory: data rate. */
@@ -35,7 +35,7 @@ struct SdmmcConfig
   /** Optional: interrupt priority. */
   IrqPriority priority;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Sdmmc
 {
   struct SdmmcBase base;

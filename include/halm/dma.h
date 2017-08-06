@@ -29,7 +29,7 @@ enum DmaBurst
   DMA_BURST_512,
   DMA_BURST_1024
 };
-/*----------------------------------------------------------------------------*/
+
 /** DMA transfer width. */
 enum DmaWidth
 {
@@ -58,12 +58,14 @@ struct DmaClass
   void (*append)(void *, void *, const void *, size_t);
   void (*clear)(void *);
 };
-/*----------------------------------------------------------------------------*/
+
 struct Dma
 {
   struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Set the callback function for the transmission completion event.
  * @param channel Pointer to a Dma object.
@@ -76,7 +78,7 @@ static inline void dmaSetCallback(void *channel, void (*callback)(void *),
   ((const struct DmaClass *)CLASS(channel))->setCallback(channel, callback,
       argument);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Change channel settings when the channel is already initialized.
  * @param channel Pointer to a Dma object.
@@ -86,7 +88,7 @@ static inline void dmaConfigure(void *channel, const void *config)
 {
   ((const struct DmaClass *)CLASS(channel))->configure(channel, config);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Enable the channel.
  * @param channel Pointer to a Dma object.
@@ -96,7 +98,7 @@ static inline enum Result dmaEnable(void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->enable(channel);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Disable the channel.
  * @param channel Pointer to a Dma object.
@@ -105,7 +107,7 @@ static inline void dmaDisable(void *channel)
 {
   ((const struct DmaClass *)CLASS(channel))->disable(channel);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Get a number of pending items.
  * @param channel Pointer to a Dma object.
@@ -115,7 +117,7 @@ static inline size_t dmaPending(const void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->pending(channel);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Get a number of pending transfers.
  * @param channel Pointer to a Dma object.
@@ -125,7 +127,7 @@ static inline size_t dmaResidue(const void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->residue(channel);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Get the status of the transfer.
  * @param channel Pointer to a Dma object.
@@ -136,7 +138,7 @@ static inline enum Result dmaStatus(const void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->status(channel);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Append a new descriptor to the descriptor chain.
  * @param channel Pointer to a Dma object.
@@ -150,7 +152,7 @@ static inline void dmaAppend(void *channel, void *destination,
   ((const struct DmaClass *)CLASS(channel))->append(channel, destination,
       source, size);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Remove all descriptors from the descriptor chain.
  * @param channel Pointer to a Dma object.
@@ -159,5 +161,7 @@ static inline void dmaClear(void *channel)
 {
   ((const struct DmaClass *)CLASS(channel))->clear(channel);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_DMA_H_ */

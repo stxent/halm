@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <xcore/bits.h>
+#include <xcore/helpers.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
@@ -26,7 +27,7 @@ enum SysBlockPower
   PWR_USBPAD    = 10, /* Only for LPC11U6x */
   PWR_TEMPSENSE = 13  /* Only for LPC11U6x and LPC11E6x */
 };
-/*----------------------------------------------------------------------------*/
+
 /* System AHB clock control register */
 enum SysClockBranch
 {
@@ -62,32 +63,40 @@ enum SysClockBranch
   CLK_SCT0_1      = 31  /* Only for LPC11U6x and LPC11E6x */
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline void sysClockEnable(enum SysClockBranch branch)
 {
   LPC_SYSCON->SYSAHBCLKCTRL |= 1UL << branch;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void sysClockDisable(enum SysClockBranch branch)
 {
   LPC_SYSCON->SYSAHBCLKCTRL &= ~(1UL << branch);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void sysPowerEnable(enum SysBlockPower block)
 {
   LPC_SYSCON->PDRUNCFG &= ~(1UL << block);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void sysPowerDisable(enum SysBlockPower block)
 {
   LPC_SYSCON->PDRUNCFG |= 1UL << block;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline bool sysPowerStatus(enum SysBlockPower block)
 {
   return LPC_SYSCON->PDRUNCFG & (1UL << block) ? false : true;
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11EXX_SYSTEM_H_ */

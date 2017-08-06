@@ -11,8 +11,6 @@
 #include <halm/pin.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const GpTimerBase;
-/*----------------------------------------------------------------------------*/
 /** Symbolic names for two different types of timers. */
 enum
 {
@@ -21,7 +19,7 @@ enum
   GPTIMER_CT32B0,
   GPTIMER_CT32B1
 };
-/*----------------------------------------------------------------------------*/
+
 enum GpTimerEvent
 {
   GPTIMER_MATCH_AUTO,
@@ -32,12 +30,14 @@ enum GpTimerEvent
   GPTIMER_EVENT_END
 };
 /*----------------------------------------------------------------------------*/
+extern const struct EntityClass * const GpTimerBase;
+
 struct GpTimerBaseConfig
 {
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerBase
 {
   struct Timer base;
@@ -54,10 +54,14 @@ struct GpTimerBase
   uint8_t resolution;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 int gpTimerAllocateChannel(uint8_t);
 uint8_t gpTimerConfigCapturePin(uint8_t, PinNumber, enum PinPull);
 uint8_t gpTimerConfigMatchPin(uint8_t, PinNumber);
 
 uint32_t gpTimerGetClock(const struct GpTimerBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPTIMER_BASE_H_ */

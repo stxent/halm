@@ -26,9 +26,9 @@ struct UsbDescriptor;
 struct UsbRequest;
 struct UsbSetupPacket;
 
-typedef void (*usbDescriptorFunctor)(const void *, struct UsbDescriptor *,
-    void *);
-/*----------------------------------------------------------------------------*/
+typedef void (*usbDescriptorFunctor)(const void *,
+    struct UsbDescriptor *, void *);
+
 enum UsbDeviceEvent
 {
   USB_DEVICE_EVENT_RESET,
@@ -37,7 +37,7 @@ enum UsbDeviceEvent
   USB_DEVICE_EVENT_FRAME,
   USB_DEVICE_EVENT_PORT_CHANGE
 };
-/*----------------------------------------------------------------------------*/
+
 enum UsbRequestStatus
 {
   /** Request completed successfully. */
@@ -51,7 +51,7 @@ enum UsbRequestStatus
   /** Request is removed from the queue. */
   USB_REQUEST_CANCELLED
 };
-/*----------------------------------------------------------------------------*/
+
 enum UsbSpeed
 {
   USB_LS,
@@ -80,6 +80,8 @@ struct UsbDeviceClass
   void (*stringErase)(void *, struct UsbString);
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Allocate an endpoint with specified logical address.
  * @param device Pointer to an UsbDevice object.
@@ -91,7 +93,7 @@ static inline void *usbDevCreateEndpoint(void *device, uint8_t address)
   return ((const struct UsbDeviceClass *)CLASS(device))->createEndpoint(device,
       address);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Get an index of a free interface.
  * @param device Pointer to an UsbDevice object.
@@ -101,7 +103,7 @@ static inline uint8_t usbDevGetInterface(const void *device)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->getInterface(device);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Set the address of the device.
  * @param device Pointer to an UsbDevice object.
@@ -111,7 +113,7 @@ static inline void usbDevSetAddress(void *device, uint8_t address)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->setAddress(device, address);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Allow or forbid the device to connect to host.
  * @param device Pointer to an UsbDevice object.
@@ -121,7 +123,7 @@ static inline void usbDevSetConnected(void *device, bool state)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->setConnected(device, state);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Attach a device driver to the hardware device.
  * @param device Pointer to an UsbDevice object.
@@ -132,7 +134,7 @@ static inline enum Result usbDevBind(void *device, void *driver)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->bind(device, driver);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Detach the device driver from the hardware device.
  * @param device Pointer to an UsbDevice object.
@@ -142,7 +144,7 @@ static inline void usbDevUnbind(void *device, const void *driver)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->unbind(device, driver);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Set the maximum device current.
  * @param device Pointer to an UsbDevice object.
@@ -153,7 +155,7 @@ static inline void usbDevSetPower(void *device, uint16_t current)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->setPower(device, current);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Return the speed of the physical interface.
  * @param device Pointer to an UsbDevice object.
@@ -163,7 +165,7 @@ static inline enum UsbSpeed usbDevGetSpeed(const void *device)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->getSpeed(device);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Append string descriptor.
  * @param device Pointer to an UsbDevice object.
@@ -176,7 +178,7 @@ static inline enum Result usbDevStringAppend(void *device,
   return ((const struct UsbDeviceClass *)CLASS(device))->stringAppend(device,
       string);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Erase string descriptor from the descriptor list.
  * @param device Pointer to an UsbDevice object.
@@ -186,6 +188,8 @@ static inline void usbDevStringErase(void *device, struct UsbString string)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->stringErase(device, string);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbEndpointClass
@@ -199,12 +203,14 @@ struct UsbEndpointClass
   bool (*isStalled)(void *);
   void (*setStalled)(void *, bool);
 };
-/*----------------------------------------------------------------------------*/
+
 struct UsbEndpoint
 {
   struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Clear the queue of the endpoint.
  * Request status will be set to @b REQUEST_CANCELLED and endpoint callback
@@ -215,7 +221,7 @@ static inline void usbEpClear(void *endpoint)
 {
   ((const struct UsbEndpointClass *)CLASS(endpoint))->clear(endpoint);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Disable the endpoint.
  * @param endpoint Pointer to an UsbEndpoint object.
@@ -224,7 +230,7 @@ static inline void usbEpDisable(void *endpoint)
 {
   ((const struct UsbEndpointClass *)CLASS(endpoint))->disable(endpoint);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Enable the endpoint.
  * @param endpoint Pointer to an UsbEndpoint object.
@@ -236,7 +242,7 @@ static inline void usbEpEnable(void *endpoint, uint8_t type, uint16_t size)
   ((const struct UsbEndpointClass *)CLASS(endpoint))->enable(endpoint,
       type, size);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Add the request to the endpoint queue.
  * @param endpoint Pointer to an UsbEndpoint object.
@@ -249,7 +255,7 @@ static inline enum Result usbEpEnqueue(void *endpoint,
   return ((const struct UsbEndpointClass *)CLASS(endpoint))->enqueue(endpoint,
       request);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Return current state of the endpoint.
  * @param endpoint Pointer to an UsbEndpoint object.
@@ -260,7 +266,7 @@ static inline bool usbEpIsStalled(void *endpoint)
   return ((const struct UsbEndpointClass *)CLASS(endpoint))->
       isStalled(endpoint);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Set or clear stall state of the endpoint.
  * @param endpoint Pointer to an UsbEndpoint object.
@@ -272,6 +278,8 @@ static inline void usbEpSetStalled(void *endpoint, bool stalled)
   ((const struct UsbEndpointClass *)CLASS(endpoint))->setStalled(endpoint,
       stalled);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct UsbDriverClass
@@ -283,12 +291,14 @@ struct UsbDriverClass
   const usbDescriptorFunctor *(*describe)(const void *);
   void (*event)(void *, unsigned int);
 };
-/*----------------------------------------------------------------------------*/
+
 struct UsbDriver
 {
   struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Process an USB Setup Packet with driver-specific handlers.
  * @param driver Pointer to an UsbDriver object.
@@ -311,7 +321,7 @@ static inline enum Result usbDriverConfigure(void *driver,
       packet, payload, payloadLength, response, responseLength,
       maxResponseLength);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Get a list of descriptor functors.
  * @param driver Pointer to an UsbDriver object.
@@ -321,7 +331,7 @@ static inline const usbDescriptorFunctor *usbDriverDescribe(const void *driver)
 {
   return ((const struct UsbDriverClass *)CLASS(driver))->describe(driver);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Handle USB event.
  * @param driver Pointer to an UsbDriver object.
@@ -331,5 +341,7 @@ static inline void usbDriverEvent(void *driver, unsigned int event)
 {
   ((const struct UsbDriverClass *)CLASS(driver))->event(driver, event);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_H_ */

@@ -11,9 +11,7 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDeviceClass * const UsbDevice;
-/*----------------------------------------------------------------------------*/
-struct UsbDevice;
-/*----------------------------------------------------------------------------*/
+
 struct UsbDeviceConfig
 {
   /** Mandatory: USB bidirectional D- line. */
@@ -34,6 +32,8 @@ struct UsbDeviceConfig
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+struct UsbDevice;
+
 struct UsbEndpointConfig
 {
   /** Mandatory: hardware device. */

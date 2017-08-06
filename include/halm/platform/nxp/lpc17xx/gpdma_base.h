@@ -39,7 +39,7 @@ enum GpDmaEvent
   GPDMA_MEMORY,
   GPDMA_EVENT_END
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpDmaMuxConfig
 {
   uint8_t mask;

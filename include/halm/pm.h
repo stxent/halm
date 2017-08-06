@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <xcore/error.h>
+#include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 enum PmState
 {
@@ -39,6 +40,8 @@ enum PmState
   PM_SHUTDOWN
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Change the system state.
  * Two processor-specific functions should be defined externally:
@@ -49,7 +52,7 @@ enum PmState
  * @param state Requested low-power state.
  */
 void pmChangeState(enum PmState state);
-/*----------------------------------------------------------------------------*/
+
 /**
  * Register a callback function.
  * @param object Pointer to an object used as function argument.
@@ -57,11 +60,13 @@ void pmChangeState(enum PmState state);
  * @return @b E_OK on success.
  */
 enum Result pmRegister(void (*)(void *, enum PmState), void *object);
-/*----------------------------------------------------------------------------*/
+
 /**
  * Unregister the callback function.
  * @param object Pointer to an object to be deleted from the list.
  */
 void pmUnregister(const void *object);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PM_H_ */

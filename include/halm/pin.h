@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
+#include <xcore/helpers.h>
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
 typedef uint16_t PinNumber;
@@ -30,34 +31,34 @@ enum
   PIN_DEFAULT = 0x7F,
   PIN_ANALOG  = 0x7E
 };
-/*----------------------------------------------------------------------------*/
+
 enum PinDirection
 {
   PIN_INPUT,
   PIN_OUTPUT
 };
-/*----------------------------------------------------------------------------*/
+
 enum PinEvent
 {
   PIN_RISING,
   PIN_FALLING,
   PIN_TOGGLE
 };
-/*----------------------------------------------------------------------------*/
+
 enum PinPull
 {
   PIN_NOPULL,
   PIN_PULLUP,
   PIN_PULLDOWN
 };
-/*----------------------------------------------------------------------------*/
+
 enum PinSlewRate
 {
   PIN_SLEW_FAST,
   PIN_SLEW_NORMAL,
   PIN_SLEW_SLOW
 };
-/*----------------------------------------------------------------------------*/
+
 enum PinType
 {
   PIN_PUSHPULL,
@@ -69,14 +70,14 @@ struct PinData
   uint8_t offset;
   uint8_t port;
 };
-/*----------------------------------------------------------------------------*/
+
 struct PinEntry
 {
   PinNumber key;
   uint8_t channel;
   uint8_t value;
 };
-/*----------------------------------------------------------------------------*/
+
 struct PinGroupEntry
 {
   PinNumber begin;
@@ -84,21 +85,29 @@ struct PinGroupEntry
   uint8_t channel;
   uint8_t value;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Pin
 {
   void *reg;
   struct PinData data;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 const struct PinEntry *pinFind(const struct PinEntry *, PinNumber, uint8_t);
 const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *,
     PinNumber, uint8_t);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline bool pinValid(struct Pin pin)
 {
   return pin.data.port != 0xFF && pin.data.offset != 0xFF && pin.reg != 0;
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/pin.h>

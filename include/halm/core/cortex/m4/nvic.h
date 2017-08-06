@@ -7,11 +7,16 @@
 #ifndef HALM_CORE_CORTEX_M4_NVIC_H_
 #define HALM_CORE_CORTEX_M4_NVIC_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/helpers.h>
 #include <halm/core/core_defs.h>
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint8_t nvicGetPriorityGrouping(void);
 void nvicSetPriorityGrouping(uint8_t);
 void nvicResetCore(void);
 void nvicSetVectorTableOffset(uint32_t);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_M4_NVIC_H_ */

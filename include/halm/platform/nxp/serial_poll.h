@@ -15,7 +15,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SerialPoll;
-/*----------------------------------------------------------------------------*/
+
 struct SerialPollConfig
 {
   /** Mandatory: baud rate. */
@@ -29,7 +29,7 @@ struct SerialPollConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SerialPoll
 {
   struct UartBase base;

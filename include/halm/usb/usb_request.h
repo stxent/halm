@@ -20,10 +20,14 @@ struct UsbRequest
   uint8_t *buffer;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void usbRequestInit(struct UsbRequest *, void *, uint16_t,
     void (*)(void *, struct UsbRequest *, enum UsbRequestStatus), void *);
-/*----------------------------------------------------------------------------*/
+
 enum Result usbExtractDescriptorData(const void *, uint16_t, void *, uint16_t *,
     uint16_t);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_REQUEST_H_ */

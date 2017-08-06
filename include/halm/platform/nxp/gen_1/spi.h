@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Spi;
-/*----------------------------------------------------------------------------*/
+
 struct SpiConfig
 {
   /** Mandatory: serial data rate. */
@@ -29,7 +29,7 @@ struct SpiConfig
   /** Mandatory: mode number. */
   uint8_t mode;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Spi
 {
   struct SspBase base;

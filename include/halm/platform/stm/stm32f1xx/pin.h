@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_STM_STM32F1XX_PIN_H_
 #define HALM_PLATFORM_STM_STM32F1XX_PIN_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/helpers.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 enum
@@ -20,6 +21,8 @@ enum
   PORT_G
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void *pinAddress(struct Pin);
 struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
@@ -28,24 +31,28 @@ void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum PinPull);
 void pinSetType(struct Pin, enum PinType);
 void pinSetSlewRate(struct Pin, enum PinSlewRate);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline bool pinRead(struct Pin pin)
 {
   const STM_GPIO_Type * const reg = pin.reg;
 
   return (reg->IDR & (1UL << pin.data.offset)) != 0;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void pinReset(struct Pin pin)
 {
   ((STM_GPIO_Type *)pin.reg)->BRR = 1UL << pin.data.offset;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void pinSet(struct Pin pin)
 {
   ((STM_GPIO_Type *)pin.reg)->BSRR = 1UL << pin.data.offset;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void pinToggle(struct Pin pin)
 {
   STM_GPIO_Type * const reg = pin.reg;
@@ -56,7 +63,7 @@ static inline void pinToggle(struct Pin pin)
   else
     reg->BSRR = mask;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void pinWrite(struct Pin pin, bool value)
 {
   STM_GPIO_Type * const reg = pin.reg;
@@ -67,5 +74,7 @@ static inline void pinWrite(struct Pin pin, bool value)
   else
     reg->BRR = mask;
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_STM32F1XX_PIN_H_ */

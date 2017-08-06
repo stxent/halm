@@ -7,7 +7,13 @@
 #ifndef HALM_CORE_CORTEX_M4_FPU_H_
 #define HALM_CORE_CORTEX_M4_FPU_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/helpers.h>
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void fpuDisable(void);
 void fpuEnable(void);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_M4_FPU_H_ */

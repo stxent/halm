@@ -11,13 +11,13 @@
 #include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpPwmUnitBase;
-/*----------------------------------------------------------------------------*/
+
 struct GpPwmUnitBaseConfig
 {
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpPwmUnitBase
 {
   struct Entity base;
@@ -28,6 +28,10 @@ struct GpPwmUnitBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint32_t gpPwmGetClock(const struct GpPwmUnitBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPPWM_BASE_H_ */

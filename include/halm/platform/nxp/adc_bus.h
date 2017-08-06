@@ -17,7 +17,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const AdcBus;
-/*----------------------------------------------------------------------------*/
+
 struct AdcBusConfig
 {
   /** Mandatory: peripheral unit. */
@@ -25,7 +25,7 @@ struct AdcBusConfig
   /** Mandatory: pointer to an array of pins terminated with zero element. */
   const PinNumber *pins;
 };
-/*----------------------------------------------------------------------------*/
+
 struct AdcBus
 {
   struct Entity parent;

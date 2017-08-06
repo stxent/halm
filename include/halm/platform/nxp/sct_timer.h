@@ -10,7 +10,7 @@
 #include <halm/platform/nxp/sct_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const SctTimer;
-/*----------------------------------------------------------------------------*/
+
 struct SctTimerConfig
 {
   /**
@@ -25,7 +25,7 @@ struct SctTimerConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SctTimer
 {
   struct SctBase base;

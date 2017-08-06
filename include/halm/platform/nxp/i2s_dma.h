@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/i2s_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2sDma;
-/*----------------------------------------------------------------------------*/
+
 struct I2sDmaConfig
 {
   /** Mandatory: sample rate for the receiver and the transmitter. */
@@ -56,7 +56,7 @@ struct I2sDmaConfig
   /** Optional: enable slave mode. */
   bool slave;
 };
-/*----------------------------------------------------------------------------*/
+
 struct I2sDma
 {
   struct I2sBase base;

@@ -10,15 +10,13 @@
 #include <xcore/interface.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const SdCard;
-/*----------------------------------------------------------------------------*/
 enum SdCardCapacity
 {
   SDCARD_SDSC,
   SDCARD_SDHC,
   SDCARD_SDXC
 };
-/*----------------------------------------------------------------------------*/
+
 enum SdCardType
 {
   SDCARD_1_0,
@@ -29,6 +27,8 @@ enum SdCardType
   SDCARD_4_1
 };
 /*----------------------------------------------------------------------------*/
+extern const struct InterfaceClass * const SdCard;
+
 struct SdCardConfig
 {
   /** Mandatory: hardware interface. */
@@ -36,7 +36,7 @@ struct SdCardConfig
   /** Optional: enable integrity checking for all transfers. */
   bool crc;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SdCard
 {
   struct Interface base;

@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/gpdma_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const GpDmaList;
-/*----------------------------------------------------------------------------*/
+
 struct GpDmaListConfig
 {
   /** Mandatory: number of blocks in the chain. */
@@ -27,7 +27,7 @@ struct GpDmaListConfig
    */
   bool silent;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpDmaList
 {
   struct GpDmaBase base;

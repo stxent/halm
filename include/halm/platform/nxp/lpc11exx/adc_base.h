@@ -20,7 +20,7 @@ enum AdcEvent
   ADC_CT16B0_MAT1,
   ADC_EVENT_END
 };
-/*----------------------------------------------------------------------------*/
+
 struct AdcPin
 {
   /* Peripheral channel */

@@ -13,6 +13,7 @@
 #define HALM_PLATFORM_STM_STM32F1XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
+#include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 enum SysBlockReset
 {
@@ -62,7 +63,7 @@ enum SysBlockReset
   RST_TIM10   = 0x40 + 20,
   RST_TIM11   = 0x40 + 21
 };
-/*----------------------------------------------------------------------------*/
+
 enum SysClockBranch
 {
   CLK_DMA1      = 0,
@@ -121,6 +122,8 @@ enum SysClockBranch
   CLK_TIM11     = 0x40 + 21
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void sysClockEnable(enum SysClockBranch);
 void sysClockDisable(enum SysClockBranch);
 bool sysClockStatus(enum SysClockBranch);
@@ -128,5 +131,7 @@ unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
 void sysResetEnable(enum SysBlockReset);
 void sysResetDisable(enum SysBlockReset);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_STM32F1XX_SYSTEM_H_ */

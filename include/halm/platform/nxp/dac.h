@@ -16,7 +16,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Dac;
-/*----------------------------------------------------------------------------*/
+
 struct DacConfig
 {
   /** Optional: initial output value. */
@@ -24,7 +24,7 @@ struct DacConfig
   /** Mandatory: analog output. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Dac
 {
   struct DacBase base;

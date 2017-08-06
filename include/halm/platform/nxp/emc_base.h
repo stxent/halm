@@ -25,6 +25,8 @@ struct EmcPinDescription
   PinNumber dycs[4];
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint32_t emcGetClock(void);
 void *emcGetDynamicMemoryAddress(uint8_t);
 void *emcGetStaticMemoryAddress(uint8_t);
@@ -32,5 +34,7 @@ bool emcSetDynamicMemoryDescriptor(uint8_t, const struct Entity *,
     struct Entity *);
 bool emcSetStaticMemoryDescriptor(uint8_t, const struct Entity *,
     struct Entity *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_EMC_BASE_H_ */

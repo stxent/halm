@@ -22,12 +22,14 @@ struct WatchdogClass
   enum Result (*setCallback)(void *, void (*)(void *), void *);
   void (*reload)(void *);
 };
-/*----------------------------------------------------------------------------*/
+
 struct Watchdog
 {
   struct Entity base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Set the interrupt callback.
  * @param timer Pointer to a Watchdog object.
@@ -40,7 +42,7 @@ static inline enum Result watchdogSetCallback(void *timer,
   return ((const struct WatchdogClass *)CLASS(timer))->setCallback(timer,
       callback, argument);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Restart the internal timer.
  * @param timer Pointer to a Watchdog object.
@@ -49,5 +51,7 @@ static inline void watchdogReload(void *timer)
 {
   ((const struct WatchdogClass *)CLASS(timer))->reload(timer);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_WATCHDOG_H_ */

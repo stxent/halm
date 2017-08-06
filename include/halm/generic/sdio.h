@@ -37,7 +37,7 @@ enum SdioCommand
   CMD_READ_OCR              = 58,
   CMD_CRC_ON_OFF            = 59
 };
-/*----------------------------------------------------------------------------*/
+
 enum SdioFlags
 {
   /** Send initialization sequence to device. */
@@ -55,14 +55,14 @@ enum SdioFlags
   /** Send stop command at the end of data transfer. */
   SDIO_AUTO_STOP      = 0x40
 };
-/*----------------------------------------------------------------------------*/
+
 enum SdioMode
 {
   SDIO_SPI,
   SDIO_1BIT,
   SDIO_4BIT
 };
-/*----------------------------------------------------------------------------*/
+
 enum SdioParameter
 {
   IF_SDIO_MODE = IF_PARAMETER_END,
@@ -72,7 +72,7 @@ enum SdioParameter
   IF_SDIO_RESPONSE,
   IF_SDIO_BLOCK_SIZE
 };
-/*----------------------------------------------------------------------------*/
+
 enum SdioResponse
 {
   SDIO_RESPONSE_NONE,

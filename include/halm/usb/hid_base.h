@@ -10,9 +10,9 @@
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const HidBase;
-/*----------------------------------------------------------------------------*/
+
 struct Hid;
-/*----------------------------------------------------------------------------*/
+
 struct HidBaseConfig
 {
   /** Mandatory: pointer to an upper half of the driver. */
@@ -33,7 +33,7 @@ struct HidBaseConfig
     uint8_t interrupt;
   } endpoints;
 };
-/*----------------------------------------------------------------------------*/
+
 struct HidBase
 {
   struct UsbDriver base;

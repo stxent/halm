@@ -10,7 +10,7 @@
 #include <halm/platform/nxp/gen_1/adc_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const AdcUnit;
-/*----------------------------------------------------------------------------*/
+
 struct AdcUnitConfig
 {
   /** Optional: desired clock frequency. */
@@ -22,13 +22,17 @@ struct AdcUnitConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct AdcUnit
 {
   struct AdcUnitBase base;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 enum Result adcUnitRegister(struct AdcUnit *, void (*)(void *), void *);
 void adcUnitUnregister(struct AdcUnit *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_ADC_UNIT_H_ */

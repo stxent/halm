@@ -66,7 +66,7 @@ struct CommonClockClass
 
   enum ClockBranch branch;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CommonDividerClass
 {
   struct ClockClass base;
@@ -79,14 +79,14 @@ extern const struct CommonDividerClass * const DividerB;
 extern const struct CommonDividerClass * const DividerC;
 extern const struct CommonDividerClass * const DividerD;
 extern const struct CommonDividerClass * const DividerE;
-/*----------------------------------------------------------------------------*/
+
 extern const struct ClockClass * const ExternalOsc;
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const RtcOsc;
 extern const struct ClockClass * const AudioPll;
 extern const struct ClockClass * const SystemPll;
 extern const struct ClockClass * const UsbPll;
-/*----------------------------------------------------------------------------*/
+
 /* Base M4 clock */
 extern const struct CommonClockClass * const MainClock;
 extern const struct CommonClockClass * const Usb0Clock;
@@ -120,13 +120,13 @@ struct ClockOutputConfig
   /** Mandatory: output pin. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CommonClockConfig
 {
   /** Mandatory: clock source. */
   enum ClockSource source;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CommonDividerConfig
 {
   /** Mandatory: clock source. */
@@ -139,7 +139,7 @@ struct CommonDividerConfig
    */
   uint16_t divisor;
 };
-/*----------------------------------------------------------------------------*/
+
 struct ExternalOscConfig
 {
   /**
@@ -153,7 +153,7 @@ struct ExternalOscConfig
    */
   bool bypass;
 };
-/*----------------------------------------------------------------------------*/
+
 struct PllConfig
 {
   /** Mandatory: clock source. */

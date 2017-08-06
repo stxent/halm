@@ -11,7 +11,7 @@
 #include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const EmcSram;
-/*----------------------------------------------------------------------------*/
+
 struct EmcSramConfig
 {
   /** Mandatory: address bus width. */
@@ -36,7 +36,7 @@ struct EmcSramConfig
   /** Optional: use Byte Lane Select signals along with Write Enable signal. */
   bool partitioned;
 };
-/*----------------------------------------------------------------------------*/
+
 struct EmcSram
 {
   struct Entity base;
@@ -47,9 +47,13 @@ struct EmcSram
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline void *emcSramAddress(const struct EmcSram *memory)
 {
   return memory->address;
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_EMC_SRAM_H_ */

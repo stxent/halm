@@ -9,8 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/usb/hid_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct HidClass * const Hid;
-/*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct HidClass
 {
@@ -23,11 +21,13 @@ struct HidClass
       uint16_t);
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline void hidEvent(void *device, unsigned int event)
 {
   ((const struct HidClass *)CLASS(device))->event(device, event);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline enum Result hidGetReport(void *device, uint8_t reportType,
     uint8_t reportId, uint8_t *report, uint16_t *reportLength,
     uint16_t maxReportLength)
@@ -35,14 +35,18 @@ static inline enum Result hidGetReport(void *device, uint8_t reportType,
   return ((const struct HidClass *)CLASS(device))->getReport(device, reportType,
       reportId, report, reportLength, maxReportLength);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline enum Result hidSetReport(void *device, uint8_t reportType,
     uint8_t reportId, const uint8_t *report, uint16_t reportLength)
 {
   return ((const struct HidClass *)CLASS(device))->setReport(device, reportType,
       reportId, report, reportLength);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
+extern const struct HidClass * const Hid;
+
 struct HidConfig
 {
   /** Mandatory: USB device. */
@@ -61,7 +65,7 @@ struct HidConfig
     uint8_t interrupt;
   } endpoints;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Hid
 {
   struct Entity base;
@@ -70,6 +74,10 @@ struct Hid
   struct HidBase *driver;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 enum Result hidBind(struct Hid *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_HID_H_ */

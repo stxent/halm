@@ -10,9 +10,9 @@
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const CdcAcmBase;
-/*----------------------------------------------------------------------------*/
+
 struct CdcAcm;
-/*----------------------------------------------------------------------------*/
+
 struct CdcAcmBaseConfig
 {
   /** Mandatory: pointer to an upper half of the driver. */
@@ -30,7 +30,7 @@ struct CdcAcmBaseConfig
     uint8_t tx;
   } endpoints;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CdcAcmBase
 {
   struct UsbDriver base;
@@ -56,6 +56,10 @@ struct CdcAcmBase
   void *privateData;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_CDC_ACM_BASE_H_ */

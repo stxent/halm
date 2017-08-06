@@ -17,7 +17,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const DacDma;
-/*----------------------------------------------------------------------------*/
+
 struct DacDmaConfig
 {
   /** Mandatory: conversion rate. */
@@ -29,7 +29,7 @@ struct DacDmaConfig
   /** Mandatory: memory access channel. */
   uint8_t dma;
 };
-/*----------------------------------------------------------------------------*/
+
 struct DacDma
 {
   struct DacBase base;

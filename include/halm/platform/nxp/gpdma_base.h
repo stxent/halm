@@ -17,8 +17,6 @@
 /*----------------------------------------------------------------------------*/
 #define GPDMA_MAX_TRANSFER  ((1 << 12) - 1)
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const GpDmaBase;
-/*----------------------------------------------------------------------------*/
 /** Direct Memory Access transfer type. */
 enum GpDmaType
 {
@@ -38,6 +36,18 @@ struct GpDmaEntry
   uint32_t control;
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
+extern const struct EntityClass * const GpDmaBase;
+
+struct GpDmaBaseConfig
+{
+  /** Mandatory: request connection to the peripheral or memory. */
+  enum GpDmaEvent event;
+  /** Mandatory: transfer type. */
+  enum GpDmaType type;
+  /** Mandatory: channel number. */
+  uint8_t channel;
+};
+
 struct GpDmaSettings
 {
   /** Mandatory: source configuration. */
@@ -62,17 +72,7 @@ struct GpDmaSettings
     bool increment;
   } destination;
 };
-/*----------------------------------------------------------------------------*/
-struct GpDmaBaseConfig
-{
-  /** Mandatory: request connection to the peripheral or memory. */
-  enum GpDmaEvent event;
-  /** Mandatory: transfer type. */
-  enum GpDmaType type;
-  /** Mandatory: channel number. */
-  uint8_t channel;
-};
-/*----------------------------------------------------------------------------*/
+
 struct GpDmaBase
 {
   struct Entity base;
@@ -88,6 +88,8 @@ struct GpDmaBase
   uint8_t number;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void gpDmaClearDescriptor(uint8_t);
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
 enum Result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
@@ -95,5 +97,7 @@ void gpDmaSetMux(struct GpDmaBase *);
 
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *,
     const struct GpDmaSettings *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPDMA_BASE_H_ */

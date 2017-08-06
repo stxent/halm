@@ -11,13 +11,13 @@
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDeviceClass * const CompositeDevice;
-/*----------------------------------------------------------------------------*/
+
 struct CompositeDeviceConfig
 {
   /** Mandatory: USB device. */
   void *device;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CompositeDevice
 {
   struct Entity base;

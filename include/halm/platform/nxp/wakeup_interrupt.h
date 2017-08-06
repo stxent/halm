@@ -12,7 +12,7 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterruptClass * const WakeupInterrupt;
-/*----------------------------------------------------------------------------*/
+
 struct WakeupInterruptConfig
 {
   /** Mandatory: pin used as interrupt source. */
@@ -24,7 +24,7 @@ struct WakeupInterruptConfig
   /** Optional: enables pull-up or pull-down resistors for input pin. */
   enum PinPull pull;
 };
-/*----------------------------------------------------------------------------*/
+
 struct WakeupInterrupt
 {
   struct Entity base;

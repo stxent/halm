@@ -16,7 +16,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2cSlave;
-/*----------------------------------------------------------------------------*/
+
 struct I2cSlaveConfig
 {
   /** Mandatory: register map size. Map size is limited by 64 kB. */
@@ -30,7 +30,7 @@ struct I2cSlaveConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct I2cSlave
 {
   struct I2cBase base;

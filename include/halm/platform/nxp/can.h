@@ -18,7 +18,7 @@
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Can;
-/*----------------------------------------------------------------------------*/
+
 struct CanConfig
 {
   /** Optional: timer for a message time stamp generation. */
@@ -38,7 +38,7 @@ struct CanConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct Can
 {
   struct CanBase base;

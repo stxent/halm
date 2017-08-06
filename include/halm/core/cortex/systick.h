@@ -11,7 +11,7 @@
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const SysTickTimer;
-/*----------------------------------------------------------------------------*/
+
 struct SysTickTimerConfig
 {
   /** Mandatory: timer fundamental frequency. */
@@ -19,7 +19,7 @@ struct SysTickTimerConfig
   /** Optional: interrupt priority. */
   IrqPriority priority;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SysTickTimer
 {
   struct Timer parent;

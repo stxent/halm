@@ -23,14 +23,20 @@ enum
   SYSTICK_IRQ     = -1
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 IrqPriority irqGetPriority(IrqNumber);
 void irqSetPriority(IrqNumber, IrqPriority);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline void irqRestore(IrqState state)
 {
   __interruptsSetState(state);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline IrqState irqSave(void)
 {
   const IrqState state = __interruptsGetState();
@@ -39,25 +45,27 @@ static inline IrqState irqSave(void)
 
   return state;
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void irqEnable(IrqNumber irq)
 {
   *(NVIC->ISER + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void irqDisable(IrqNumber irq)
 {
   *(NVIC->ICER + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void irqClearPending(IrqNumber irq)
 {
   *(NVIC->ICPR + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void irqSetPending(IrqNumber irq)
 {
   *(NVIC->ISPR + (irq >> 5)) = 1UL << (irq & 0x1F);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_M4_IRQ_H_ */

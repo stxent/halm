@@ -11,9 +11,7 @@
 #include <halm/pwm.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SctPwmUnit;
-extern const struct PwmClass * const SctPwm;
-extern const struct PwmClass * const SctPwmDoubleEdge;
-/*----------------------------------------------------------------------------*/
+
 struct SctPwmUnitConfig
 {
   /** Mandatory: switching frequency. */
@@ -25,7 +23,7 @@ struct SctPwmUnitConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SctPwmUnit
 {
   struct SctBase base;
@@ -38,6 +36,8 @@ struct SctPwmUnit
   uint8_t event;
 };
 /*----------------------------------------------------------------------------*/
+extern const struct PwmClass * const SctPwm;
+
 struct SctPwmConfig
 {
   /** Mandatory: peripheral unit. */
@@ -45,7 +45,7 @@ struct SctPwmConfig
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SctPwm
 {
   struct Pwm base;
@@ -58,6 +58,8 @@ struct SctPwm
   uint8_t event;
 };
 /*----------------------------------------------------------------------------*/
+extern const struct PwmClass * const SctPwmDoubleEdge;
+
 struct SctPwmDoubleEdgeConfig
 {
   /** Mandatory: peripheral unit. */
@@ -65,7 +67,7 @@ struct SctPwmDoubleEdgeConfig
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SctPwmDoubleEdge
 {
   struct Pwm base;
@@ -80,7 +82,11 @@ struct SctPwmDoubleEdge
   uint8_t trailingEvent;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void *sctPwmCreate(void *, PinNumber);
 void *sctPwmCreateDoubleEdge(void *, PinNumber);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_SCT_PWM_H_ */

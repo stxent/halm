@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <xcore/error.h>
+#include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 /* Simplified descriptor for abstract class */
 struct ClockClass
@@ -25,6 +26,8 @@ struct ClockClass
   bool (*ready)(const void *);
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 /**
  * Stop specified clock source.
  * @param clock Class descriptor.
@@ -33,7 +36,7 @@ static inline void clockDisable(const void *clock)
 {
   ((const struct ClockClass *)clock)->disable(clock);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Start or restart clock with specified parameters.
  * @param clock Class descriptor.
@@ -44,7 +47,7 @@ static inline enum Result clockEnable(const void *clock, const void *config)
 {
   return ((const struct ClockClass *)clock)->enable(clock, config);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Get clock frequency.
  * @param clock Class descriptor.
@@ -54,7 +57,7 @@ static inline uint32_t clockFrequency(const void *clock)
 {
   return ((const struct ClockClass *)clock)->frequency(clock);
 }
-/*----------------------------------------------------------------------------*/
+
 /**
  * Check whether clock is ready or not.
  * @param clock Class descriptor.
@@ -64,5 +67,7 @@ static inline bool clockReady(const void *clock)
 {
   return ((const struct ClockClass *)clock)->ready(clock);
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CLOCK_H_ */

@@ -15,8 +15,6 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const I2c;
-/*----------------------------------------------------------------------------*/
 enum I2cParameter
 {
   /**
@@ -26,6 +24,8 @@ enum I2cParameter
   IF_I2C_SENDSTOP = IF_PARAMETER_END
 };
 /*----------------------------------------------------------------------------*/
+extern const struct InterfaceClass * const I2c;
+
 struct I2cConfig
 {
   /** Mandatory: data rate. */
@@ -39,7 +39,7 @@ struct I2cConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct I2c
 {
   struct I2cBase base;

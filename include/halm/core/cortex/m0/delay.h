@@ -8,7 +8,10 @@
 #define HALM_CORE_CORTEX_M0_DELAY_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
+#include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 static inline void __delay(uint32_t count)
 {
   __asm__ volatile (
@@ -23,12 +26,12 @@ static inline void __delay(uint32_t count)
       : "r3"
   );
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void delayTicks(uint32_t count)
 {
   __delay(count >> 2);
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void mdelay(uint32_t period)
 {
   extern uint32_t ticksPerSecond;
@@ -42,7 +45,7 @@ static inline void mdelay(uint32_t period)
     __delay(count);
   }
 }
-/*----------------------------------------------------------------------------*/
+
 static inline void udelay(uint32_t period)
 {
   extern uint32_t ticksPerSecond;
@@ -56,5 +59,7 @@ static inline void udelay(uint32_t period)
     __delay(count);
   }
 }
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_M0_DELAY_H_ */

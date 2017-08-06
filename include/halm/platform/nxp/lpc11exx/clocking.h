@@ -20,7 +20,7 @@ enum ClockBranch
   CLOCK_BRANCH_MAIN,
   CLOCK_BRANCH_OUTPUT
 };
-/*----------------------------------------------------------------------------*/
+
 enum ClockSource
 {
   CLOCK_INTERNAL,
@@ -29,7 +29,7 @@ enum ClockSource
   CLOCK_WDT,
   CLOCK_MAIN
 };
-/*----------------------------------------------------------------------------*/
+
 enum WdtFrequency
 {
   /* Watchdog oscillator analog output frequency in kHz */
@@ -73,7 +73,7 @@ struct ClockOutputConfig
   /** Mandatory: output pin. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CommonClockConfig
 {
   /** Mandatory: clock source. */
@@ -81,7 +81,7 @@ struct CommonClockConfig
   /** Optional: input clock divisor in the range of 1 to 255. */
   uint16_t divisor;
 };
-/*----------------------------------------------------------------------------*/
+
 struct ExternalOscConfig
 {
   /**
@@ -95,7 +95,7 @@ struct ExternalOscConfig
    */
   bool bypass;
 };
-/*----------------------------------------------------------------------------*/
+
 struct PllConfig
 {
   /**
@@ -117,7 +117,7 @@ struct PllConfig
    */
   uint16_t multiplier;
 };
-/*----------------------------------------------------------------------------*/
+
 struct WdtOscConfig
 {
   /** Optional: oscillator frequency. */

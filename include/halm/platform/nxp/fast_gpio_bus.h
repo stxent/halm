@@ -10,7 +10,7 @@
 #include <halm/gpio_bus.h>
 /*----------------------------------------------------------------------------*/
 extern const struct GpioBusClass * const FastGpioBus;
-/*----------------------------------------------------------------------------*/
+
 struct FastGpioBusConfig
 {
   /** Mandatory: pointer to an array of pins terminated with a zero element. */
@@ -26,7 +26,7 @@ struct FastGpioBusConfig
   /** Optional: push-pull or open-drain configuration for output pins. */
   enum PinType type;
 };
-/*----------------------------------------------------------------------------*/
+
 struct FastGpioBus
 {
   struct GpioBus base;
@@ -38,7 +38,11 @@ struct FastGpioBus
   struct Pin first;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void fastGpioBusConfigPins(struct FastGpioBus *,
     const struct FastGpioBusConfig *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_FAST_GPIO_BUS_H_ */

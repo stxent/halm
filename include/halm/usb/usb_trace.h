@@ -9,13 +9,17 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 enum Result usbTraceInit(struct Interface *);
 void usbTraceDeinit(void);
-/*----------------------------------------------------------------------------*/
+
 #ifdef CONFIG_USB_TRACE
 void usbTrace(const char *, ...);
 #else
 #define usbTrace(...) do {} while (0)
 #endif
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_TRACE_H_ */

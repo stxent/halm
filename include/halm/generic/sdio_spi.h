@@ -12,7 +12,7 @@
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdioSpi;
-/*----------------------------------------------------------------------------*/
+
 struct SdioSpiConfig
 {
   /** Mandatory: underlying serial interface. */
@@ -31,7 +31,7 @@ struct SdioSpiConfig
   /** Mandatory: chip select pin. */
   PinNumber cs;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SdioSpi
 {
   struct Interface base;

@@ -12,7 +12,7 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SspBase;
-/*----------------------------------------------------------------------------*/
+
 struct SspBaseConfig
 {
   /** Optional: slave select pin. Available in slave mode only. */
@@ -35,7 +35,7 @@ struct SspBaseConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SspBase
 {
   struct Interface base;
@@ -48,10 +48,14 @@ struct SspBase
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void sspConfigPins(struct SspBase *, const struct SspBaseConfig *);
 uint32_t sspGetRate(const struct SspBase *);
 void sspSetRate(struct SspBase *, uint32_t);
 
 uint32_t sspGetClock(const struct SspBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_SSP_BASE_H_ */

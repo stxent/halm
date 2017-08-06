@@ -9,9 +9,14 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <xcore/error.h>
+#include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void spinLock(Spinlock *);
 bool spinTryLock(Spinlock *);
 void spinUnlock(Spinlock *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_SPINLOCK_H_ */

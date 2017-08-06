@@ -12,14 +12,12 @@
 #include <xcore/interface.h>
 #include <halm/usb/cdc_acm_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const CdcAcm;
-/*----------------------------------------------------------------------------*/
 enum CdcAcmParameter
 {
   /** Retrieve extended information about current interface status. */
   IF_CDC_ACM_STATUS = IF_PARAMETER_END
 };
-/*----------------------------------------------------------------------------*/
+
 enum
 {
   CDC_ACM_RX_AVAILABLE = 0x01,
@@ -28,6 +26,8 @@ enum
   CDC_ACM_LINE_CHANGED = 0x08
 };
 /*----------------------------------------------------------------------------*/
+extern const struct InterfaceClass * const CdcAcm;
+
 struct CdcAcmConfig
 {
   /** Mandatory: USB device. */
@@ -51,7 +51,7 @@ struct CdcAcmConfig
     uint8_t tx;
   } endpoints;
 };
-/*----------------------------------------------------------------------------*/
+
 struct CdcAcm
 {
   struct Interface base;
@@ -78,7 +78,11 @@ struct CdcAcm
   bool updated;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 void cdcAcmOnParametersChanged(struct CdcAcm *);
 void cdcAcmOnEvent(struct CdcAcm *, unsigned int);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_CDC_ACM_H_ */

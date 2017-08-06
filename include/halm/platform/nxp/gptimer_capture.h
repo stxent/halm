@@ -11,10 +11,9 @@
 #include <halm/platform/nxp/gptimer_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerCaptureUnit;
-extern const struct CaptureClass * const GpTimerCapture;
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerCapture;
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerCaptureUnitConfig
 {
   /** Mandatory: timer frequency. */
@@ -24,7 +23,7 @@ struct GpTimerCaptureUnitConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerCaptureUnit
 {
   struct GpTimerBase base;
@@ -33,6 +32,8 @@ struct GpTimerCaptureUnit
   struct GpTimerCapture *descriptors[4];
 };
 /*----------------------------------------------------------------------------*/
+extern const struct CaptureClass * const GpTimerCapture;
+
 struct GpTimerCaptureConfig
 {
   /** Mandatory: peripheral unit. */
@@ -44,7 +45,7 @@ struct GpTimerCaptureConfig
   /** Mandatory: pin used as an input. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct GpTimerCapture
 {
   struct Capture base;

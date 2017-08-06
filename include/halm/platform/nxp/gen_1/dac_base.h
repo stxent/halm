@@ -13,13 +13,13 @@
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const DacBase;
-/*----------------------------------------------------------------------------*/
+
 struct DacBaseConfig
 {
   /** Mandatory: analog output. */
   PinNumber pin;
 };
-/*----------------------------------------------------------------------------*/
+
 struct DacBase
 {
   struct Interface base;
@@ -30,6 +30,10 @@ struct DacBase
   PinNumber pin;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint32_t dacGetClock(const struct DacBase *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_DAC_BASE_H_ */

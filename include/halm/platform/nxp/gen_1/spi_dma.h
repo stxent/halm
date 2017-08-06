@@ -11,7 +11,7 @@
 #include <halm/platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SpiDma;
-/*----------------------------------------------------------------------------*/
+
 struct SpiDmaConfig
 {
   /** Mandatory: serial data rate. */
@@ -32,7 +32,7 @@ struct SpiDmaConfig
    */
   uint8_t dma[2];
 };
-/*----------------------------------------------------------------------------*/
+
 struct SpiDma
 {
   struct SspBase base;
