@@ -5,9 +5,15 @@ PROJECT := halm
 PROJECT_DIR := $(shell pwd)
 
 CONFIG_FILE ?= .config
-
 -include $(CONFIG_FILE)
+
+#Expand build flags
+define process-flag
+  $(1) := $$(CONFIG_$(1):"%"=%)
+endef
+
 BUILD_FLAGS += CORE CORE_TYPE PLATFORM PLATFORM_TYPE
+$(foreach entry,$(BUILD_FLAGS),$(eval $(call process-flag,$(entry))))
 
 #Nested makefiles
 include core/makefile
@@ -16,12 +22,16 @@ include platform/makefile
 include pm/makefile
 include usb/makefile
 
-#Expand build flags
-define process-flag
-  $(1) := $$(CONFIG_$(1):"%"=%)
+#Process auxiliary project options
+define append-flag
+  ifeq ($$($(1)),y)
+    OPTION_STRING += -D$(1)
+  else ifneq ($$($(1)),)
+    OPTION_STRING += -D$(1)=$$($(1))
+  endif
 endef
 
-$(foreach entry,$(BUILD_FLAGS),$(eval $(call process-flag,$(entry))))
+$(foreach entry,$(PROJECT_FLAGS),$(eval $(call append-flag,$(entry))))
 
 #Process build flags
 ifeq ($(CORE_TYPE),cortex)
@@ -74,17 +84,6 @@ INCLUDE_PATH += -I"$(XCORE_PATH)/include"
 CFLAGS += -std=c11 -Wall -Wextra -pedantic -Wshadow
 CFLAGS += $(OPT_FLAGS) $(CPU_FLAGS) @$(OPTION_FILE)
 CFLAGS += -D$(shell echo $(PLATFORM) | tr a-z A-Z)
-
-#Process auxiliary project options
-define append-flag
-  ifeq ($$($(1)),y)
-    OPTION_STRING += -D$(1)
-  else ifneq ($$($(1)),)
-    OPTION_STRING += -D$(1)=$$($(1))
-  endif
-endef
-
-$(foreach entry,$(PROJECT_FLAGS),$(eval $(call append-flag,$(entry))))
 
 #Configure targets
 LIBRARY_FILE += $(OUTPUT_DIR)/lib$(PROJECT).a

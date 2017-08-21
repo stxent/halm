@@ -1,4 +1,4 @@
 #Copyright (C) 2016 xent
 #Project is distributed under the terms of the GNU General Public License v3.0
 
-include core/cortex/makefile
+include core/$(CORE_TYPE)/makefile

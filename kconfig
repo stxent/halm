@@ -1,5 +1,5 @@
 choice
-	prompt "Controller core"
+	prompt "Processor core"
 	default CORE_CORTEX_M0
 
 	config CORE_CORTEX_M0
@@ -13,7 +13,7 @@ choice
 endchoice
 
 choice
-	prompt "Controller family"
+	prompt "Processor family"
 	default FAMILY_LPC11XX
 
 	config FAMILY_LPC11XX

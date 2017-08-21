@@ -1,7 +1,16 @@
 #Copyright (C) 2014 xent
 #Project is distributed under the terms of the GNU General Public License v3.0
 
-BUILD_FLAGS += GEN_ADC GEN_CAN GEN_DAC GEN_I2C GEN_RTC GEN_SPI GEN_UART
+PLATFORM_FLAGS += GEN_ADC GEN_CAN GEN_DAC GEN_I2C GEN_RTC GEN_SPI GEN_UART
+$(foreach entry,$(PLATFORM_FLAGS),$(eval $(call process-flag,$(entry))))
+
+CSOURCES += platform/pin.c
+CSOURCES += platform/$(PLATFORM_TYPE)/startup.c
+CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/clocking.c
+CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pin.c
+CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/startup.c
+CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/system.c
+CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/vectors.c
 
 ifeq ($(CONFIG_PM),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pm.c
@@ -13,14 +22,6 @@ ifeq ($(CONFIG_PM),y)
   PROJECT_FLAGS += CONFIG_PLATFORM_NXP_SSP_PM
   PROJECT_FLAGS += CONFIG_PLATFORM_NXP_UART_PM
 endif
-
-CSOURCES += platform/pin.c
-CSOURCES += platform/$(PLATFORM_TYPE)/startup.c
-CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/clocking.c
-CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/pin.c
-CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/startup.c
-CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/system.c
-CSOURCES += platform/$(PLATFORM_TYPE)/$(PLATFORM)/vectors.c
 
 ifeq ($(CONFIG_PLATFORM_NXP_FAST_GPIO_BUS),y)
   CSOURCES += platform/$(PLATFORM_TYPE)/fast_gpio_bus_common.c
