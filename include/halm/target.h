@@ -68,6 +68,11 @@
 #define PLATFORM        stm32f1xx
 #define PLATFORM_TYPE   stm
 
+#elif defined(GENERIC)
+
+#define PLATFORM        generic
+#define PLATFORM_TYPE   linux
+
 #else
 #error "Target architecture is undefined"
 #endif

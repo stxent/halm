@@ -2,6 +2,12 @@ choice
 	prompt "Processor core"
 	default CORE_CORTEX_M0
 
+	config CORE_X86
+		bool "x86"
+
+	config CORE_X86_64
+		bool "x86_64"
+
 	config CORE_CORTEX_M0
 		bool "Cortex-M0"
 
@@ -15,6 +21,10 @@ endchoice
 choice
 	prompt "Processor family"
 	default FAMILY_LPC11XX
+
+	config FAMILY_LINUX_GENERIC
+		bool "Generic Linux"
+		depends on CORE_X86 || CORE_X86_64
 
 	config FAMILY_LPC11XX
 		bool "NXP LPC11xx"

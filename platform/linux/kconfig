@@ -1,0 +1,31 @@
+config PLATFORM
+	string
+	default generic
+
+config PLATFORM_TYPE
+	string
+	default linux
+
+menu "Interfaces"
+
+config PLATFORM_LINUX_CONSOLE
+	bool "Console"
+	default y
+
+config PLATFORM_LINUX_MMF
+	bool "Memory mapped file"
+	default y
+
+config PLATFORM_LINUX_RTC
+	bool "RTC"
+	default y
+
+config PLATFORM_LINUX_SERIAL
+	bool "Serial stream"
+	default y
+
+config PLATFORM_LINUX_UDP
+	bool "UDP stream"
+	default y
+
+endmenu

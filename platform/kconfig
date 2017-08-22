@@ -1,3 +1,7 @@
+if FAMILY_LINUX_GENERIC
+	source "platform/linux/kconfig"
+endif
+
 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
 	source "platform/nxp/kconfig"
 endif
