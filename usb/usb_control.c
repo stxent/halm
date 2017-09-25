@@ -479,7 +479,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
   if (res == E_OK)
   {
     /* Send smallest of requested and offered lengths */
-    length = length < packet->length ? length : packet->length;
+    length = MIN(length, packet->length);
     sendResponse(control, privateData->data, length);
   }
   else if (res != E_BUSY)
@@ -524,7 +524,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
     struct UsbRequest *request;
     arrayPopBack(&control->inRequestPool, &request);
 
-    const uint16_t chunk = EP0_BUFFER_SIZE < length ? EP0_BUFFER_SIZE : length;
+    const uint16_t chunk = MIN(length, EP0_BUFFER_SIZE);
 
     if (chunk)
       memcpy(request->buffer, data, chunk);

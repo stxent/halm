@@ -177,10 +177,10 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
     if (reg->LSR & LSR_THRE)
     {
       const size_t left = length - written;
-      unsigned int count = left < TX_FIFO_SIZE ? left : TX_FIFO_SIZE;
+      size_t bytesToWrite = MIN(left, TX_FIFO_SIZE);
 
-      written += count;
-      while (count--)
+      written += bytesToWrite;
+      while (bytesToWrite--)
         reg->THR = *bufferPosition++;
     }
   }

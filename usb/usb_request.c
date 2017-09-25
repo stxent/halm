@@ -10,13 +10,13 @@
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-static const usbDescriptorFunctor *findEntry(const void *, uint8_t,
+static const UsbDescriptorFunctor *findEntry(const void *, uint8_t,
     unsigned int);
 /*----------------------------------------------------------------------------*/
-static const usbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
+static const UsbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
     unsigned int offset)
 {
-  const usbDescriptorFunctor *descriptors = usbDriverDescribe(driver);
+  const UsbDescriptorFunctor *descriptors = usbDriverDescribe(driver);
   struct UsbDescriptor header;
 
   while (*descriptors)
@@ -37,8 +37,7 @@ static const usbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
 }
 /*----------------------------------------------------------------------------*/
 void usbRequestInit(struct UsbRequest *request, void *buffer, uint16_t capacity,
-    void (*callback)(void *, struct UsbRequest *, enum UsbRequestStatus),
-    void *callbackArgument)
+    UsbRequestCallback callback, void *callbackArgument)
 {
   request->capacity = capacity;
   request->length = 0;
@@ -52,7 +51,7 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
 {
   const uint8_t descriptorIndex = DESCRIPTOR_INDEX(keyword);
   const uint8_t descriptorType = DESCRIPTOR_TYPE(keyword);
-  const usbDescriptorFunctor *entry = findEntry(driver,
+  const UsbDescriptorFunctor *entry = findEntry(driver,
       descriptorType, descriptorIndex);
 
   if (!entry)

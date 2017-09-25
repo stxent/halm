@@ -222,8 +222,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   channel->length = 0;
   while (offset < size)
   {
-    const size_t chunkLength = (size - offset >= DESC_SIZE_MAX) ?
-        DESC_SIZE_MAX : (size - offset);
+    const size_t chunkLength = MIN(size - offset, DESC_SIZE_MAX);
 
     appendItem(channel, address + offset, chunkLength);
     offset += chunkLength;

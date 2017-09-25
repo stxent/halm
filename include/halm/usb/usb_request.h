@@ -9,12 +9,15 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
+typedef void (*UsbRequestCallback)(void *, struct UsbRequest *,
+    enum UsbRequestStatus);
+
 struct UsbRequest
 {
   uint16_t capacity;
   uint16_t length;
 
-  void (*callback)(void *, struct UsbRequest *, enum UsbRequestStatus);
+  UsbRequestCallback callback;
   void *callbackArgument;
 
   uint8_t *buffer;
@@ -23,10 +26,10 @@ struct UsbRequest
 BEGIN_DECLS
 
 void usbRequestInit(struct UsbRequest *, void *, uint16_t,
-    void (*)(void *, struct UsbRequest *, enum UsbRequestStatus), void *);
+    UsbRequestCallback, void *);
 
-enum Result usbExtractDescriptorData(const void *, uint16_t, void *, uint16_t *,
-    uint16_t);
+enum Result usbExtractDescriptorData(const void *, uint16_t,
+    void *, uint16_t *, uint16_t);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
