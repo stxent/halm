@@ -7,11 +7,12 @@
 #ifndef HALM_USB_MSC_H_
 #define HALM_USB_MSC_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/array.h>
-#include <xcore/containers/queue.h>
+#include <xcore/interface.h>
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const Msc;
+
+struct MscQueryHandler;
 
 struct MscConfig
 {
@@ -46,18 +47,14 @@ struct Msc
   struct UsbDevice *device;
   struct Interface *storage;
 
-  struct Array controlPool;
-  struct Queue rxQueue;
-  struct Array txPool;
-
   struct UsbEndpoint *rxEp;
   struct UsbEndpoint *txEp;
 
   /*
-   * Buffer for temporary data. It holds responses to control commands,
+   * Buffer for temporary data. It stores commands, responses,
    * data received from the host or data to be sent to the host.
    */
-  uint8_t *buffer;
+  void *buffer;
   /* Size of the buffer */
   size_t bufferSize;
 
@@ -79,10 +76,29 @@ struct Msc
 
   /* Interface index in configurations with multiple interface */
   uint8_t interfaceIndex;
-  /* Current state of the FSM */
-  uint8_t state;
 
-  void *privateData;
+  struct
+  {
+    /* Pending command */
+    struct
+    {
+      uint32_t length;
+      uint32_t tag;
+      uint8_t cb[16];
+      uint8_t flags;
+      uint8_t lun;
+    } cbw;
+
+    /* Current position in the storage */
+    uint64_t position;
+    /* Bytes left */
+    uint32_t left;
+
+    /* Current state of the FSM */
+    uint8_t state;
+  } context;
+
+  struct MscQueryHandler *datapath;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_MSC_H_ */

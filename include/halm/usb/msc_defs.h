@@ -11,15 +11,13 @@
 #include <xcore/bits.h>
 #include <xcore/memory.h>
 /*----------------------------------------------------------------------------*/
-#define MSC_CONTROL_EP_SIZE     64
-#define MSC_DATA_EP_SIZE        64
-#define MSC_DATA_EP_SIZE_HS     512
+#define MSC_CONTROL_EP_SIZE 64
+#define MSC_DATA_EP_SIZE    64
+#define MSC_DATA_EP_SIZE_HS 512
 
-#define MSC_BLOCK_SIZE          512
+#define MSC_BLOCK_SIZE      512
 
-#define RX_QUEUE_SIZE           (MSC_BLOCK_SIZE / MSC_DATA_EP_SIZE)
-#define TX_QUEUE_SIZE           (MSC_BLOCK_SIZE / MSC_DATA_EP_SIZE + 1)
-#define CONTROL_QUEUE_SIZE      2
+#define DATA_QUEUE_SIZE     (MSC_BLOCK_SIZE / MSC_DATA_EP_SIZE + 1)
 /*----------------------------------------------------------------------------*/
 enum
 {
