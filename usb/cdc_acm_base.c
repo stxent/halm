@@ -54,7 +54,7 @@ static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
     const void *, uint16_t, void *, uint16_t *, uint16_t);
-static const usbDescriptorFunctor *driverDescribe(const void *);
+static const UsbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
@@ -69,7 +69,7 @@ static const struct UsbDriverClass driverTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const CdcAcmBase = &driverTable;
 /*----------------------------------------------------------------------------*/
-static const usbDescriptorFunctor deviceDescriptorTable[] = {
+static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     deviceDescriptor,
     configDescriptor,
 
@@ -395,7 +395,6 @@ static enum Result driverInit(void *object, const void *configBase)
 {
   const struct CdcAcmBaseConfig * const config = configBase;
   struct CdcAcmBase * const driver = object;
-  enum Result res;
 
   if (!config->owner || !config->device)
     return E_VALUE;
@@ -416,10 +415,7 @@ static enum Result driverInit(void *object, const void *configBase)
   driver->privateData = privateData;
 
   driver->controlInterfaceIndex = usbDevGetInterface(driver->device);
-  if ((res = usbDevBind(driver->device, driver)) != E_OK)
-    return res;
-
-  return E_OK;
+  return usbDevBind(driver->device, driver);
 }
 /*----------------------------------------------------------------------------*/
 static void driverDeinit(void *object)
@@ -444,7 +440,7 @@ static enum Result driverConfigure(void *object,
     return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static const usbDescriptorFunctor *driverDescribe(const void *object
+static const UsbDescriptorFunctor *driverDescribe(const void *object
     __attribute__((unused)))
 {
   return deviceDescriptorTable;

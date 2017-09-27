@@ -50,8 +50,7 @@ static struct Eeprom *descriptor = 0;
 static size_t calcChunkLength(uintptr_t address, size_t left)
 {
   const uintptr_t pageAddress = (address + PAGE_SIZE) & ~(PAGE_SIZE - 1);
-  const size_t chunkLength = pageAddress - address < left ?
-      pageAddress - address : left;
+  const size_t chunkLength = MIN(left, pageAddress - address);
 
   return chunkLength;
 }

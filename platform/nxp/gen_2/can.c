@@ -580,8 +580,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   if (queueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
   {
     const size_t totalMessages = length / sizeof(struct CanStandardMessage);
-    const size_t messageCount = totalMessages < MAX_MESSAGES / 2 ?
-        totalMessages : MAX_MESSAGES / 2;
+    const size_t messageCount = MIN(totalMessages, MAX_MESSAGES / 2);
 
     for (size_t index = 0; index < messageCount; ++index)
     {

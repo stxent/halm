@@ -67,12 +67,12 @@ static void interruptHandler(void *object)
     if (txQueueSize > 0)
     {
       /* Fill FIFO with selected burst size or less */
-      size_t count = txQueueSize < TX_FIFO_SIZE ? txQueueSize : TX_FIFO_SIZE;
+      size_t bytesToWrite = MIN(txQueueSize, TX_FIFO_SIZE);
 
       /* Call user handler when transmit queue is empty */
-      event = event || count == txQueueSize;
+      event = event || bytesToWrite == txQueueSize;
 
-      while (count--)
+      while (bytesToWrite--)
         reg->THR = byteQueuePop(&interface->txQueue);
     }
   }
@@ -254,9 +254,9 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   if ((reg->LSR & LSR_THRE) && byteQueueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle so fill TX FIFO */
-    const size_t count = length < TX_FIFO_SIZE ? length : TX_FIFO_SIZE;
+    const size_t bytesToWrite = MIN(length, TX_FIFO_SIZE);
 
-    for (; written < count; ++written)
+    for (; written < bytesToWrite; ++written)
       reg->THR = *bufferPosition++;
     length -= written;
   }

@@ -383,8 +383,8 @@ static void epHandler(struct UsbSieEndpoint *ep, uint8_t status)
 
     while (!queueEmpty(&ep->requests))
     {
-      const uint8_t epStatus = usbCommandRead(ep->device,
-          USB_CMD_SELECT_ENDPOINT | index);
+      const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
+      const uint8_t epStatus = usbCommandRead(ep->device, epCode);
 
       if (!(epStatus & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST)))
       {
@@ -609,40 +609,34 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
 
   const IrqState state = irqSave();
 
-  const uint8_t status = usbCommandRead(ep->device,
-      USB_CMD_SELECT_ENDPOINT | index);
-  bool enqueue;
-
   assert(!queueFull(&ep->requests));
+
+  const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
+  const uint8_t epStatus = usbCommandRead(ep->device, epCode);
+  bool invokeHandler = false;
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
-    enqueue = (status & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST))
-        || queueSize(&ep->requests);
+    static const uint8_t mask = SELECT_ENDPOINT_ST
+        | SELECT_ENDPOINT_B1FULL | SELECT_ENDPOINT_B2FULL;
 
-    if (!enqueue)
-    {
-      epWriteData(ep, request->buffer, request->length);
-      request->callback(request->callbackArgument, request,
-          USB_REQUEST_COMPLETED);
-    }
+    invokeHandler = !(epStatus & mask) && !queueSize(&ep->requests);
   }
-  else
+  else if (epStatus & SELECT_ENDPOINT_FE)
   {
-    enqueue = true;
-
-    if (status & SELECT_ENDPOINT_FE)
-    {
-      LPC_USB_Type * const reg = ep->device->base.reg;
-      const uint32_t mask = 1UL << (index + 1);
-
-      /* Schedule interrupt */
-      reg->USBDevIntSet = mask;
-    }
+    invokeHandler = true;
   }
 
-  if (enqueue)
-    queuePush(&ep->requests, &request);
+  queuePush(&ep->requests, &request);
+
+  if (invokeHandler)
+  {
+    LPC_USB_Type * const reg = ep->device->base.reg;
+    const uint32_t mask = 1UL << (index + 1);
+
+    /* Schedule interrupt */
+    reg->USBDevIntSet = mask;
+  }
 
   irqRestore(state);
   return E_OK;

@@ -26,7 +26,7 @@ struct UsbDescriptor;
 struct UsbRequest;
 struct UsbSetupPacket;
 
-typedef void (*usbDescriptorFunctor)(const void *,
+typedef void (*UsbDescriptorFunctor)(const void *,
     struct UsbDescriptor *, void *);
 
 enum UsbDeviceEvent
@@ -288,7 +288,7 @@ struct UsbDriverClass
 
   enum Result (*configure)(void *, const struct UsbSetupPacket *,
       const void *, uint16_t, void *, uint16_t *, uint16_t);
-  const usbDescriptorFunctor *(*describe)(const void *);
+  const UsbDescriptorFunctor *(*describe)(const void *);
   void (*event)(void *, unsigned int);
 };
 
@@ -327,7 +327,7 @@ static inline enum Result usbDriverConfigure(void *driver,
  * @param driver Pointer to an UsbDriver object.
  * @return List of descriptor functors.
  */
-static inline const usbDescriptorFunctor *usbDriverDescribe(const void *driver)
+static inline const UsbDescriptorFunctor *usbDriverDescribe(const void *driver)
 {
   return ((const struct UsbDriverClass *)CLASS(driver))->describe(driver);
 }

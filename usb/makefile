@@ -40,5 +40,6 @@ ifeq ($(CONFIG_USB_DEVICE_HID),y)
 endif
 
 ifeq ($(CONFIG_USB_DEVICE_MSC),y)
+  CSOURCES += usb/msc_datapath.c
   CSOURCES += usb/msc.c
 endif

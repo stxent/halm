@@ -68,18 +68,18 @@ static void interruptHandler(void *object)
 
   const size_t pending = interface->rxLeft - interface->txLeft;
   const size_t space = FIFO_DEPTH - pending;
-  size_t count = interface->txLeft >= space ? space : interface->txLeft;
+  size_t bytesToWrite = MIN(space, interface->txLeft);
 
-  interface->txLeft -= count;
+  interface->txLeft -= bytesToWrite;
 
   if (rx)
   {
-    while (count--)
+    while (bytesToWrite--)
       reg->DR = DUMMY_FRAME;
   }
   else
   {
-    while (count--)
+    while (bytesToWrite--)
       reg->DR = *interface->txBuffer++;
   }
 

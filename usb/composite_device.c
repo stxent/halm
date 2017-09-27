@@ -41,7 +41,7 @@ static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
     const void *, uint16_t, void *, uint16_t *, uint16_t);
-static const usbDescriptorFunctor *driverDescribe(const void *);
+static const UsbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
@@ -146,7 +146,7 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
 static void computeDescriptionProperties(const void *driver, uint16_t *length,
     uint8_t *interfaces)
 {
-  const usbDescriptorFunctor *entry = usbDriverDescribe(driver);
+  const UsbDescriptorFunctor *entry = usbDriverDescribe(driver);
   uint16_t descriptionLength = 0;
   uint8_t descriptionInterfaces = 0;
 
@@ -180,7 +180,7 @@ static void computeDescriptionProperties(const void *driver, uint16_t *length,
 static uint16_t extendConfigurationDescriptor(const void *driver,
     uint8_t *response)
 {
-  const usbDescriptorFunctor *entry = usbDriverDescribe(driver);
+  const UsbDescriptorFunctor *entry = usbDriverDescribe(driver);
   uint16_t total = 0;
 
   while (*entry)
@@ -341,7 +341,7 @@ static void driverEvent(void *object, unsigned int event)
   }
 }
 /*----------------------------------------------------------------------------*/
-static const usbDescriptorFunctor *driverDescribe(const void *object
+static const UsbDescriptorFunctor *driverDescribe(const void *object
     __attribute__((unused)))
 {
   return 0;

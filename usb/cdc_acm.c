@@ -287,12 +287,9 @@ static enum Result interfaceInit(void *object, const void *configBase)
     ++request;
   }
 
-  /* Base part should be initialized when all other parts are already created */
+  /* Core part should be initialized when all other parts are already created */
   interface->driver = init(CdcAcmBase, &driverConfig);
-  if (!interface->driver)
-    return E_ERROR;
-
-  return E_OK;
+  return interface->driver ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static void interfaceDeinit(void *object)
@@ -457,7 +454,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 
   while (length && !arrayEmpty(&interface->txRequestPool))
   {
-    const size_t bytesToWrite = length > maxPacketSize ? maxPacketSize : length;
+    const size_t bytesToWrite = MIN(length, maxPacketSize);
     struct UsbRequest *request;
     IrqState state;
 

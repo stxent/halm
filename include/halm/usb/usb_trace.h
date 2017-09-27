@@ -8,10 +8,11 @@
 #define HALM_USB_USB_TRACE_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
+#include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-enum Result usbTraceInit(struct Interface *);
+enum Result usbTraceInit(struct Interface *, struct Timer *);
 void usbTraceDeinit(void);
 
 #ifdef CONFIG_USB_TRACE

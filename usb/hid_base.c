@@ -35,7 +35,7 @@ static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
 static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
     const void *, uint16_t, void *, uint16_t *, uint16_t);
-static const usbDescriptorFunctor *driverDescribe(const void *);
+static const UsbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass driverTable = {
@@ -50,7 +50,7 @@ static const struct UsbDriverClass driverTable = {
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const HidBase = &driverTable;
 /*----------------------------------------------------------------------------*/
-static const usbDescriptorFunctor deviceDescriptorTable[] = {
+static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     deviceDescriptor,
     configDescriptor,
     interfaceDescriptor,
@@ -293,7 +293,7 @@ static enum Result driverConfigure(void *object,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static const usbDescriptorFunctor *driverDescribe(const void *object
+static const UsbDescriptorFunctor *driverDescribe(const void *object
     __attribute__((unused)))
 {
   return deviceDescriptorTable;
