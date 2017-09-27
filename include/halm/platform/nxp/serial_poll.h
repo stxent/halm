@@ -20,7 +20,7 @@ struct SerialPollConfig
 {
   /** Mandatory: baud rate. */
   uint32_t rate;
-  /** Optional: parity generation and checking. */
+  /** Optional: parity bit setting. */
   enum UartParity parity;
   /** Mandatory: serial input. */
   PinNumber rx;

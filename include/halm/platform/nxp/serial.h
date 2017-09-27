@@ -25,7 +25,7 @@ struct SerialConfig
   size_t rxLength;
   /** Mandatory: output queue size. */
   size_t txLength;
-  /** Optional: parity generation and checking. */
+  /** Optional: parity bit setting. */
   enum UartParity parity;
   /** Mandatory: serial input. */
   PinNumber rx;
