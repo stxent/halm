@@ -1,15 +1,3 @@
-config PLATFORM
-	string
-	default lpc11xx   if FAMILY_LPC11XX
-	default lpc11exx  if FAMILY_LPC11EXX
-	default lpc13xx   if FAMILY_LPC13XX
-	default lpc17xx   if FAMILY_LPC17XX
-	default lpc43xx   if FAMILY_LPC43XX
-
-config PLATFORM_TYPE
-	string
-	default nxp
-
 config GEN_ADC
 	string
 	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
@@ -53,11 +41,11 @@ choice
 	depends on PM
 
 	config PLATFORM_NXP_PM_DEEPSLEEP
-		bool "Deep Sleep"
+	  bool "Deep Sleep"
 
 	config PLATFORM_NXP_PM_PD
-		bool "Power-down"
-		depends on FAMILY_LPC11EXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+	  bool "Power-down"
+	  depends on FAMILY_LPC11EXX || FAMILY_LPC17XX || FAMILY_LPC43XX
 endchoice
 
 endmenu

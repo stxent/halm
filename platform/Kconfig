@@ -1,11 +1,11 @@
 if FAMILY_LINUX_GENERIC
-	source "platform/linux/kconfig"
+	source "platform/linux/Kconfig"
 endif
 
 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
-	source "platform/nxp/kconfig"
+	source "platform/nxp/Kconfig"
 endif
 
 if FAMILY_STM32F1XX
-	source "platform/stm/kconfig"
+	source "platform/stm/Kconfig"
 endif

@@ -1,11 +1,3 @@
-config PLATFORM
-	string
-	default generic
-
-config PLATFORM_TYPE
-	string
-	default linux
-
 menu "Interfaces"
 
 config PLATFORM_LINUX_CONSOLE

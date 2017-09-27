@@ -1,0 +1,22 @@
+menu "Power settings"
+
+config PM
+	bool "Power management"
+	default y
+	help
+	  This enables support for power management features.
+
+endmenu
+
+menu "Peripherals"
+
+config PLATFORM_STM_UART_BASE
+	bool "UART"
+	default y
+
+config PLATFORM_STM_SERIAL
+	bool "Interrupt-driven serial port driver"
+	default y
+	depends on PLATFORM_STM_UART_BASE
+
+endmenu

@@ -1,6 +1,6 @@
 choice
 	prompt "Processor core"
-	default CORE_CORTEX_M0
+	default CORE_X86_64
 
 	config CORE_X86
 		bool "x86"
@@ -20,7 +20,7 @@ endchoice
 
 choice
 	prompt "Processor family"
-	default FAMILY_LPC11XX
+	default FAMILY_LINUX_GENERIC
 
 	config FAMILY_LINUX_GENERIC
 		bool "Generic Linux"
@@ -53,45 +53,14 @@ endchoice
 
 menu "Core settings"
 
-source "core/kconfig"
+source "core/Kconfig"
 
 endmenu
 
 menu "Peripheral drivers"
 
-source "generic/kconfig"
-source "platform/kconfig"
-source "usb/kconfig"
-
-endmenu
-
-menu "Build options"
-
-choice
-	prompt "Optimization level"
-	default OPTIMIZATIONS_DISABLED
-
-	config OPTIMIZATIONS_DISABLED
-		bool "None"
-
-	config OPTIMIZATIONS_SIZE
-		bool "Size"
-
-	config OPTIMIZATIONS_FULL
-		bool "Full"
-
-	config OPTIMIZATIONS_DEBUG
-		bool "Debug"
-endchoice
-
-config ASSERTIONS
-	bool "Enable assertions"
-	depends on (OPTIMIZATIONS_DISABLED || OPTIMIZATIONS_DEBUG)
-	default y
-
-config LTO
-	bool "Link Time Optimization"
-	depends on (OPTIMIZATIONS_SIZE || OPTIMIZATIONS_FULL)
-	default y
+source "generic/Kconfig"
+source "platform/Kconfig"
+source "usb/Kconfig"
 
 endmenu

@@ -1,7 +1,7 @@
 if CORE_X86 || CORE_X86_64
-	source "core/intel/kconfig"
+	source "core/x86/Kconfig"
 endif
 
 if CORE_CORTEX_M0 || CORE_CORTEX_M3 || CORE_CORTEX_M4
-	source "core/cortex/kconfig"
+	source "core/cortex/Kconfig"
 endif

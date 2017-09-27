@@ -1,8 +1,0 @@
-config CORE
-	string
-	default x86 if CORE_X86
-	default x86_64 if CORE_X86_64
-
-config CORE_TYPE
-	string
-	default intel
