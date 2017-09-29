@@ -451,7 +451,7 @@ static void timerHandlerProcess(struct TimerHandler *handler)
 {
   const uint16_t state = handler->reg->EVFLAG;
 
-  for (unsigned int index = 0; index < sizeof(handler->descriptors); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(handler->descriptors); ++index)
   {
     struct SctBase * const descriptor = handler->descriptors[index];
 

@@ -8,6 +8,7 @@ set(CMAKE_SYSTEM_PROCESSOR "cortex-m0")
 
 set(CMAKE_C_COMPILER "arm-none-eabi-gcc")
 set(CMAKE_CXX_COMPILER "arm-none-eabi-g++")
+set(CMAKE_SIZE "arm-none-eabi-size")
 
 set(FLAGS_CPU "-mthumb -nostartfiles -mcpu=cortex-m0")
 

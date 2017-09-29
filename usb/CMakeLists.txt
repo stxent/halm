@@ -34,6 +34,7 @@ endif()
 
 if(${CONFIG_USB_DEVICE_MSC})
     list(APPEND SOURCE_FILES "msc.c")
+    list(APPEND SOURCE_FILES "msc_datapath.c")
 endif()
 
 prepend(SOURCE_FILES_LIST "${PROJECT_SOURCE_DIR}/usb" ${SOURCE_FILES})

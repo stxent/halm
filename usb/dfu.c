@@ -305,7 +305,6 @@ static enum Result driverInit(void *object, const void *configBase)
   assert(config->transferSize);
 
   struct Dfu * const driver = object;
-  enum Result res;
 
   driver->device = config->device;
   driver->timer = config->timer;

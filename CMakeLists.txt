@@ -1,7 +1,7 @@
 #Copyright (C) 2017 xent
 #Project is distributed under the terms of the GNU General Public License v3.0
 
-project(halm)
+project(halm C)
 cmake_minimum_required(VERSION 3.6)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -30,7 +30,7 @@ foreach(ENTRY ${CONFIG_DATA})
             list(GET SPLITTED_ENTRY 0 ENTRY_NAME)
             list(GET SPLITTED_ENTRY 1 ENTRY_VALUE)
             set(${ENTRY_NAME} ${ENTRY_VALUE})
-            set(FLAGS_LIBRARY "${FLAGS_LIBRARY} -D${ENTRY}")
+            set(FLAGS_LIBRARY "${FLAGS_LIBRARY} -D${ENTRY_NAME}=${${ENTRY_NAME}}")
         endif()
     endif()
 endforeach()
@@ -54,6 +54,7 @@ include("${PROJECT_SOURCE_DIR}/usb/CMakeLists.txt")
 #Default compiler flags
 set(FLAGS_DEFAULT "-fdata-sections -ffunction-sections -fmessage-length=0 -Wall -Wextra -Wshadow -pedantic")
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS_DEFAULT} ${FLAGS_CPU} ${FLAGS_PLATFORM} ${FLAGS_LIBRARY}")
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g3")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
