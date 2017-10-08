@@ -14,8 +14,8 @@ enum State
 {
   STATE_IDLE,
   STATE_READY,
-  STATE_DONE,
   STATE_BUSY,
+  STATE_DONE,
   STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
