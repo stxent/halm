@@ -11,11 +11,11 @@
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
-static size_t enqueueUsbRx(struct MscQueryHandler *, uintptr_t, size_t,
-    UsbRequestCallback, UsbRequestCallback);
+static bool enqueueUsbRx(struct MscQueryHandler *, uintptr_t, size_t,
+    UsbRequestCallback, UsbRequestCallback, size_t *);
 static bool enqueueUsbRxRequests(struct MscQueryHandler *, struct MscQuery *);
-static size_t enqueueUsbTx(struct MscQueryHandler *, uintptr_t, size_t,
-    UsbRequestCallback, UsbRequestCallback);
+static bool enqueueUsbTx(struct MscQueryHandler *, uintptr_t, size_t,
+    UsbRequestCallback, UsbRequestCallback, size_t *);
 static bool enqueueUsbTxRequests(struct MscQueryHandler *, struct MscQuery *);
 static void fillStorageReadQueue(struct MscQueryHandler *);
 static void fillUsbReadQueue(struct MscQueryHandler *);
@@ -43,9 +43,9 @@ static void usbTxLastCallback(void *, struct UsbRequest *,
 static void usbTxSilentCallback(void *, struct UsbRequest *,
     enum UsbRequestStatus);
 /*----------------------------------------------------------------------------*/
-static size_t enqueueUsbRx(struct MscQueryHandler *handler,
+static bool enqueueUsbRx(struct MscQueryHandler *handler,
     uintptr_t buffer, size_t length, UsbRequestCallback silent,
-    UsbRequestCallback last)
+    UsbRequestCallback last, size_t *queued)
 {
   struct Msc * const driver = handler->driver;
   uintptr_t position = buffer;
@@ -69,11 +69,13 @@ static size_t enqueueUsbRx(struct MscQueryHandler *handler,
     {
       /* Hardware error occurred */
       arrayPushBack(&handler->usbPool, &request);
-      return 0;
+      return false;
     }
   }
 
-  return position - buffer;
+  if (queued)
+    *queued = position - buffer;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static bool enqueueUsbRxRequests(struct MscQueryHandler *handler,
@@ -82,11 +84,10 @@ static bool enqueueUsbRxRequests(struct MscQueryHandler *handler,
   if (query->length == query->offset)
     return true;
 
-  const size_t enqueuedBytes = enqueueUsbRx(handler,
-      query->data + query->offset, query->length - query->offset,
-      usbRxSilentCallback, usbRxLastCallback);
+  size_t enqueuedBytes;
 
-  if (enqueuedBytes)
+  if (enqueueUsbRx(handler, query->data + query->offset, query->length
+      - query->offset, usbRxSilentCallback, usbRxLastCallback, &enqueuedBytes))
   {
     query->offset += enqueuedBytes;
     return true;
@@ -95,9 +96,9 @@ static bool enqueueUsbRxRequests(struct MscQueryHandler *handler,
     return false;
 }
 /*----------------------------------------------------------------------------*/
-static size_t enqueueUsbTx(struct MscQueryHandler *handler,
+static bool enqueueUsbTx(struct MscQueryHandler *handler,
     uintptr_t buffer, size_t length, UsbRequestCallback silent,
-    UsbRequestCallback last)
+    UsbRequestCallback last, size_t *queued)
 {
   struct Msc * const driver = handler->driver;
   uintptr_t position = buffer;
@@ -121,11 +122,13 @@ static size_t enqueueUsbTx(struct MscQueryHandler *handler,
     {
       /* Hardware error occurred */
       arrayPushBack(&handler->usbPool, &request);
-      return 0;
+      return false;
     }
   }
 
-  return position - buffer;
+  if (queued)
+    *queued = position - buffer;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static bool enqueueUsbTxRequests(struct MscQueryHandler *handler,
@@ -134,11 +137,10 @@ static bool enqueueUsbTxRequests(struct MscQueryHandler *handler,
   if (query->length == query->offset)
     return true;
 
-  const size_t enqueuedBytes = enqueueUsbTx(handler,
-      query->data + query->offset, query->length - query->offset,
-      usbTxSilentCallback, usbTxLastCallback);
+  size_t enqueuedBytes;
 
-  if (enqueuedBytes)
+  if (enqueueUsbTx(handler, query->data + query->offset, query->length
+      - query->offset, usbTxSilentCallback, usbTxLastCallback, &enqueuedBytes))
   {
     query->offset += enqueuedBytes;
     return true;
@@ -197,6 +199,7 @@ static void handleIncomingFlow(struct MscQueryHandler *handler)
       /* Transfer failed, notify parent FSM */
       handler->currentStatus = E_INTERFACE;
       handler->trampoline(handler->driver);
+      return;
     }
   }
 
@@ -216,6 +219,7 @@ static void handleIncomingFlow(struct MscQueryHandler *handler)
         /* Transfer failed, notify parent FSM */
         handler->currentStatus = E_INTERFACE;
         handler->trampoline(handler->driver);
+        return;
       }
     }
   }
@@ -242,6 +246,7 @@ static void handleOutgoingFlow(struct MscQueryHandler *handler)
       /* Transfer failed, notify parent FSM */
       handler->currentStatus = E_INTERFACE;
       handler->trampoline(handler->driver);
+      return;
     }
   }
 
@@ -599,7 +604,7 @@ bool datapathReceiveControl(struct MscQueryHandler *handler, void *buffer,
     size_t length)
 {
   return enqueueUsbRx(handler, (uintptr_t)buffer, length,
-      usbControlCallback, 0) == length;
+      usbControlCallback, 0, 0);
 }
 /*----------------------------------------------------------------------------*/
 bool datapathSendResponseAndStatus(struct MscQueryHandler *handler,
