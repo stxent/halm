@@ -321,8 +321,11 @@ static void usbCommand(struct UsbDevice *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
+  /* Clear command and data interrupt flags */
+  reg->USBDevIntClr = USBDevInt_CCEMPTY | USBDevInt_CDFULL;
+  while (reg->USBDevIntSt & USBDevInt_CDFULL);
+
   /* Write command code and wait for completion */
-  reg->USBDevIntClr = USBDevInt_CCEMPTY;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_COMMAND)
       | USBCmdCode_CMD_CODE(command);
   waitForInt(device, USBDevInt_CCEMPTY);
@@ -336,7 +339,6 @@ static uint8_t usbCommandRead(struct UsbDevice *device, uint8_t command)
   usbCommand(device, command);
 
   /* Send read request and wait for data */
-  reg->USBDevIntClr = USBDevInt_CDFULL;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_READ)
       | USBCmdCode_CMD_CODE(command);
   waitForInt(device, USBDevInt_CDFULL);
@@ -353,7 +355,6 @@ static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
   usbCommand(device, command);
 
   /* Write data and wait for completion */
-  reg->USBDevIntClr = USBDevInt_CCEMPTY;
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_WRITE)
       | USBCmdCode_CMD_WDATA(data);
   waitForInt(device, USBDevInt_CCEMPTY);
