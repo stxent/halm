@@ -176,7 +176,7 @@ static void powerStateHandler(void *object, enum PmState state)
     struct UartRateConfig rateConfig;
 
     /* Recalculate and set baud rate */
-    if (uartCalcRate(object, interface->rate, &rateConfig))
+    if (uartCalcRate(object, interface->rate, &rateConfig) == E_OK)
       uartSetRate(object, rateConfig);
   }
 }

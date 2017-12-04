@@ -14,8 +14,8 @@ enum State
 {
   STATE_IDLE,
   STATE_READY,
-  STATE_DONE,
   STATE_BUSY,
+  STATE_DONE,
   STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
@@ -82,7 +82,7 @@ static void interruptHandler(void *object, enum Result res)
         index += channel->capacity - channel->queued;
 
       /* Restart stalled transfer */
-      startTransfer(channel, channel->list + index);
+      startTransfer(channel, &channel->list[index]);
     }
     else
       channel->state = STATE_DONE;
@@ -273,7 +273,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   assert(size > 0 && size <= GPDMA_MAX_TRANSFER);
   assert(channel->queued < channel->capacity);
 
-  if (channel->state == STATE_ERROR)
+  if (channel->state == STATE_DONE || channel->state == STATE_ERROR)
   {
     channel->index = 0;
     channel->queued = 0;
@@ -286,7 +286,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   {
     /* There are initialized entries in the list */
     previous = channel->index ? entry : channel->list + channel->capacity;
-    previous = previous - 1;
+    --previous;
   }
 
   if (++channel->index >= channel->capacity)
