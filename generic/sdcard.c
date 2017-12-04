@@ -334,8 +334,8 @@ static void interruptHandler(void *object)
 
           if (startTransfer(device) != E_OK)
           {
-            device->state = STATE_ERROR;
             event = true;
+            device->state = STATE_ERROR;
           }
           break;
 
@@ -364,8 +364,8 @@ static void interruptHandler(void *object)
 
       if (startTransfer(device) != E_OK)
       {
-        device->state = STATE_ERROR;
         event = true;
+        device->state = STATE_ERROR;
       }
       break;
     }
@@ -380,16 +380,16 @@ static void interruptHandler(void *object)
       }
       else
       {
-        device->state = STATE_IDLE;
         event = true;
+        device->state = STATE_IDLE;
       }
 
       if (device->state == STATE_HALT)
       {
         if (terminateTransfer(device) != E_OK)
         {
-          device->state = STATE_ERROR;
           event = true;
+          device->state = STATE_ERROR;
         }
       }
       break;
@@ -399,14 +399,15 @@ static void interruptHandler(void *object)
     {
       const enum Result res = ifGetParam(device->interface, IF_STATUS, 0);
 
-      device->state = res == E_OK ? STATE_IDLE : STATE_ERROR;
       event = true;
+      device->state = res == E_OK ? STATE_IDLE : STATE_ERROR;
       break;
     }
 
     case STATE_HALT:
-      device->state = STATE_ERROR;
       event = true;
+      device->state = STATE_ERROR;
+      break;
 
     default:
       break;
