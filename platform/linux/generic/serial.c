@@ -7,6 +7,7 @@
 #include <ev.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -39,6 +40,7 @@ struct Serial
   struct ByteQueue rxQueue;
   pthread_mutex_t rxQueueLock;
 
+  struct termios initialSettings;
   struct InterfaceWatcher watcher;
   int descriptor;
 };
@@ -61,7 +63,8 @@ static const struct StreamRateEntry rateList[] = {
 };
 /*----------------------------------------------------------------------------*/
 static void interfaceCallback(EV_P_ ev_io *, int);
-static void setPortParameters(int, const struct SerialConfig *);
+static void setPortParameters(struct Serial *, const struct SerialConfig *);
+static void setPortRate(struct Serial *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *, const void *);
 static void streamDeinit(void *);
@@ -102,56 +105,71 @@ static void interfaceCallback(EV_P_ ev_io *w,
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void setPortParameters(int descriptor, const struct SerialConfig *config)
+static void setPortParameters(struct Serial *interface,
+    const struct SerialConfig *config)
+{
+  struct termios settings;
+
+  tcgetattr(interface->descriptor, &settings);
+  interface->initialSettings = settings;
+
+  /* Enable raw mode, 8N1 */
+  settings.c_iflag &=
+      ~(BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+  settings.c_iflag |= INPCK | IGNPAR | IGNBRK;
+  settings.c_oflag &= ~OPOST;
+  settings.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+  settings.c_cflag |= CLOCAL | CREAD;
+  settings.c_cflag = (settings.c_cflag & ~CSIZE) | CS8;
+
+  settings.c_cc[VMIN] = 0;  /* Minimal data packet length */
+  settings.c_cc[VTIME] = 0; /* Time to wait for data */
+
+  switch (config->parity)
+  {
+    case SERIAL_PARITY_ODD:
+      settings.c_cflag |= PARENB;  /* Use parity */
+      settings.c_cflag |= PARODD;  /* Odd parity */
+      break;
+
+    case SERIAL_PARITY_EVEN:
+      settings.c_cflag |= PARENB;  /* Use parity */
+      settings.c_cflag &= ~PARODD; /* Even parity */
+      break;
+
+    default:
+      settings.c_cflag &= ~PARENB; /* Disable parity */
+      break;
+  }
+
+  tcsetattr(interface->descriptor, TCSANOW, &settings);
+
+  /* Configure baud rate */
+  setPortRate(interface, config->rate);
+}
+/*----------------------------------------------------------------------------*/
+static void setPortRate(struct Serial *interface, uint32_t desiredRate)
 {
   speed_t rate = 0;
 
   for (size_t index = 0; index < ARRAY_SIZE(rateList); ++index)
   {
-    if (rateList[index].value == config->rate)
+    if (rateList[index].value == desiredRate)
     {
       rate = rateList[index].value;
       break;
     }
   }
   if (!rate)
-    rate = config->rate;
+    rate = desiredRate;
 
-  struct termios options;
-  tcgetattr(descriptor, &options);
+  struct termios settings;
 
-  /* Enable raw mode */
-  options.c_iflag &= ~(BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
-  options.c_iflag |= INPCK | IGNPAR | IGNBRK;
-  options.c_oflag &= ~OPOST;
-  options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-  options.c_cflag |= CLOCAL | CREAD;
-  options.c_cflag = (options.c_cflag & ~CSIZE) | CS8;
-
-  options.c_cc[VMIN] = 0; /* Minimal data packet length */
-  options.c_cc[VTIME] = 1; /* Time to wait for data */
-
-  switch (config->parity)
-  {
-    case SERIAL_PARITY_ODD:
-      options.c_cflag |= PARENB; /* Use parity */
-      options.c_cflag |= PARODD; /* Odd parity */
-      break;
-
-    case SERIAL_PARITY_EVEN:
-      options.c_cflag |= PARENB; /* Use parity */
-      options.c_cflag &= ~PARODD; /* Even parity */
-      break;
-
-    default:
-      options.c_cflag &= ~PARENB; /* Disable parity */
-      break;
-  }
-
-  cfsetispeed(&options, rate);
-  cfsetospeed(&options, rate);
-
-  tcsetattr(descriptor, TCSANOW, &options);
+  /* Update baud rate settings, initial configuration must be already saved */
+  tcgetattr(interface->descriptor, &settings);
+  cfsetispeed(&settings, rate);
+  cfsetospeed(&settings, rate);
+  tcsetattr(interface->descriptor, TCSANOW, &settings);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
@@ -176,7 +194,7 @@ static enum Result streamInit(void *object, const void *configBase)
   }
 
   fcntl(interface->descriptor, F_SETFL, 0);
-  setPortParameters(interface->descriptor, config);
+  setPortParameters(interface, config);
 
   interface->watcher.instance = interface;
   ev_init(&interface->watcher.io, interfaceCallback);
@@ -197,10 +215,15 @@ static void streamDeinit(void *object)
   struct Serial * const interface = object;
 
   ev_io_stop(ev_default_loop(0), &interface->watcher.io);
+
+  /* Restore terminal settings and close device */
+  tcsetattr(STDIN_FILENO, TCSANOW, &interface->initialSettings);
   close(interface->descriptor);
 
   byteQueueDeinit(&interface->rxQueue);
   pthread_mutex_destroy(&interface->rxQueueLock);
+
+  raise(SIGUSR1);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamSetCallback(void *object, void (*callback)(void *),
@@ -213,12 +236,31 @@ static enum Result streamSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamGetParam(void *object, enum IfParameter option,
+static enum Result streamGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Serial * const interface = object;
 
-  switch (option)
+  switch ((enum SerialParameter)parameter)
+  {
+    case IF_SERIAL_CTS:
+    {
+      int value;
+
+      if (ioctl(interface->descriptor, TIOCMGET, &value) != -1)
+      {
+        *(bool *)data = (value & TIOCM_CTS) ? 1 : 0;
+        return E_OK;
+      }
+      else
+        return E_INTERFACE;
+    }
+
+    default:
+      break;
+  }
+
+  switch (parameter)
   {
     case IF_AVAILABLE:
       pthread_mutex_lock(&interface->rxQueueLock);
@@ -231,37 +273,16 @@ static enum Result streamGetParam(void *object, enum IfParameter option,
       return E_OK;
 
     default:
-      break;
-  }
-
-  switch ((enum SerialOption)option)
-  {
-    case IF_SERIAL_CTS:
-    {
-      int value;
-
-      if (ioctl(interface->descriptor, TIOCMGET, &value) != -1)
-      {
-        *(unsigned int *)data = (value & TIOCM_CTS) ? 1 : 0;
-        return E_OK;
-      }
-      else
-      {
-        return E_INTERFACE;
-      }
-    }
-
-    default:
       return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamSetParam(void *object, enum IfParameter option,
+static enum Result streamSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Serial * const interface = object;
 
-  switch ((enum SerialOption)option)
+  switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_RTS:
     {
@@ -270,16 +291,26 @@ static enum Result streamSetParam(void *object, enum IfParameter option,
       if (ioctl(interface->descriptor, TIOCMGET, &value) == -1)
         return E_INTERFACE;
 
-      if (*(const unsigned int *)data)
+      if (*(const bool *)data)
         value |= TIOCM_RTS;
       else
         value &= ~TIOCM_RTS;
 
-      if (ioctl(interface->descriptor, TIOCMSET, &value) == -1)
-        return E_INTERFACE;
-      else
+      if (ioctl(interface->descriptor, TIOCMSET, &value) != -1)
         return E_OK;
+      else
+        return E_INTERFACE;
     }
+
+    default:
+      break;
+  }
+
+  switch (parameter)
+  {
+    case IF_RATE:
+      setPortRate(interface, *(const uint32_t *)data);
+      return E_OK;
 
     default:
       return E_INVALID;

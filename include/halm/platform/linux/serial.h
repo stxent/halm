@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum SerialOption
+enum SerialParameter
 {
   IF_SERIAL_CTS = IF_PARAMETER_END,
   IF_SERIAL_RTS
