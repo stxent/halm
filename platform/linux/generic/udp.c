@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <ev.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <xcore/containers/byte_queue.h>
@@ -18,6 +19,7 @@
 enum Cleanup
 {
   CLEANUP_ALL,
+  CLEANUP_NETWORK,
   CLEANUP_MUTEX,
   CLEANUP_QUEUE
 };
@@ -75,6 +77,9 @@ static void cleanup(struct Udp *interface, enum Cleanup step)
   switch (step)
   {
     case CLEANUP_ALL:
+      ev_io_stop(ev_default_loop(0), &interface->watcher.io);
+      /* Falls through */
+    case CLEANUP_NETWORK:
       close(interface->server);
       close(interface->client);
       /* Falls through */
@@ -203,10 +208,8 @@ static enum Result streamInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void streamDeinit(void *object)
 {
-  struct Udp * const interface = object;
-
-  ev_io_stop(ev_default_loop(0), &interface->watcher.io);
-  cleanup(interface, CLEANUP_ALL);
+  cleanup(object, CLEANUP_ALL);
+  raise(SIGUSR1);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamSetCallback(void *object, void (*callback)(void *),
@@ -219,12 +222,12 @@ static enum Result streamSetCallback(void *object, void (*callback)(void *),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamGetParam(void *object, enum IfParameter option,
+static enum Result streamGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Udp *interface = object;
 
-  switch (option)
+  switch (parameter)
   {
     case IF_AVAILABLE:
       pthread_mutex_lock(&interface->rxQueueLock);
@@ -242,7 +245,7 @@ static enum Result streamGetParam(void *object, enum IfParameter option,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamSetParam(void *object __attribute__((unused)),
-    enum IfParameter option __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

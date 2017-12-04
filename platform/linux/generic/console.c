@@ -6,6 +6,7 @@
 
 #include <ev.h>
 #include <pthread.h>
+#include <signal.h>
 #include <termios.h>
 #include <unistd.h>
 #include <xcore/containers/byte_queue.h>
@@ -39,10 +40,11 @@ struct Console
   struct ByteQueue rxQueue;
   pthread_mutex_t rxQueueLock;
 
+  struct termios initialSettings;
   struct InterfaceWatcher watcher;
 };
 /*----------------------------------------------------------------------------*/
-static void configurePort(void);
+static void configurePort(struct Console *);
 static void interfaceCallback(EV_P_ ev_io *, int);
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *, const void *);
@@ -67,16 +69,18 @@ static const struct InterfaceClass streamTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Console = &streamTable;
 /*----------------------------------------------------------------------------*/
-static void configurePort(void)
+static void configurePort(struct Console *interface)
 {
-  struct termios options;
-  tcgetattr(STDIN_FILENO, &options);
+  struct termios settings;
 
-  options.c_lflag &= ~ICANON;
-  options.c_cc[VMIN] = 0; /* Minimal data packet length */
-  options.c_cc[VTIME] = 1; /* Time to wait for data */
+  tcgetattr(STDIN_FILENO, &settings);
+  interface->initialSettings = settings;
 
-  tcsetattr(STDIN_FILENO, TCSANOW, &options);
+  settings.c_lflag &= ~(ISIG | ICANON | ECHO);
+  settings.c_cc[VMIN] = 0; /* Minimal data packet length */
+  settings.c_cc[VTIME] = 0; /* Time to wait for data */
+
+  tcsetattr(STDIN_FILENO, TCSANOW, &settings);
 }
 /*----------------------------------------------------------------------------*/
 static void interfaceCallback(EV_P_ ev_io *w,
@@ -113,7 +117,7 @@ static enum Result streamInit(void *object,
     return res;
   }
 
-  configurePort();
+  configurePort(interface);
 
   interface->watcher.instance = interface;
   ev_init(&interface->watcher.io, interfaceCallback);
@@ -122,17 +126,22 @@ static enum Result streamInit(void *object,
 
   return E_OK;
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 static void streamDeinit(void *object __attribute__((unused)))
 {
   struct Console * const interface = object;
 
   ev_io_stop(ev_default_loop(0), &interface->watcher.io);
 
+  /* Restore terminal settings */
+  tcsetattr(STDIN_FILENO, TCSANOW, &interface->initialSettings);
+
   byteQueueDeinit(&interface->rxQueue);
   pthread_mutex_destroy(&interface->rxQueueLock);
+
+  raise(SIGUSR1);
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 static enum Result streamSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -142,7 +151,7 @@ static enum Result streamSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
   return E_OK;
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 static enum Result streamGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
@@ -164,14 +173,14 @@ static enum Result streamGetParam(void *object, enum IfParameter parameter,
       return E_INVALID;
   }
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 static enum Result streamSetParam(void *object __attribute__((unused)),
-    enum IfParameter option __attribute__((unused)),
+    enum IfParameter parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 static size_t streamRead(void *object, void *buffer, size_t length)
 {
   struct Console * const interface = object;
@@ -182,7 +191,7 @@ static size_t streamRead(void *object, void *buffer, size_t length)
 
   return read;
 }
-//------------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 static size_t streamWrite(void *object __attribute__((unused)),
     const void *buffer, size_t length)
 {
