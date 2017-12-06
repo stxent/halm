@@ -1,3 +1,5 @@
+menu "Platform settings"
+
 choice
 	prompt "Processor core"
 	default CORE_X86_64
@@ -50,6 +52,12 @@ choice
 		bool "ST STM32F1xx"
 		depends on CORE_CORTEX_M3
 endchoice
+
+config DISABLE_DEINIT
+	bool "Disable destructors"
+	default n
+
+endmenu
 
 menu "Core settings"
 

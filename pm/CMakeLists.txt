@@ -1,12 +1,10 @@
-#Copyright (C) 2017 xent
-#Project is distributed under the terms of the GNU General Public License v3.0
-
-set(SOURCE_FILES "")
-set(SOURCE_FILES_LIST "")
+# Copyright (C) 2017 xent
+# Project is distributed under the terms of the GNU General Public License v3.0
 
 if(${CONFIG_PM})
-    list(APPEND SOURCE_FILES "pm.c")
+    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/pm.c")
 endif()
 
-prepend(SOURCE_FILES_LIST "${PROJECT_SOURCE_DIR}/pm" ${SOURCE_FILES})
-list(APPEND LIBRARY_SOURCES ${SOURCE_FILES_LIST})
+if(SOURCE_FILES)
+    add_library(pm OBJECT ${SOURCE_FILES})
+endif()
