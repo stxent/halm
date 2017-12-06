@@ -16,7 +16,6 @@ static uint32_t positionToAddress(const struct Flash *, size_t);
 static size_t totalFlashSize(size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *, const void *);
-static void flashDeinit(void *);
 static enum Result flashSetCallback(void *, void (*)(void *), void *);
 static enum Result flashGetParam(void *, enum IfParameter, void *);
 static enum Result flashSetParam(void *, enum IfParameter, const void *);
@@ -26,7 +25,7 @@ static size_t flashWrite(void *, const void *, size_t);
 static const struct InterfaceClass flashTable = {
     .size = sizeof(struct Flash),
     .init = flashInit,
-    .deinit = flashDeinit,
+    .deinit = 0, /* Default destructor */
 
     .setCallback = flashSetCallback,
     .getParam = flashGetParam,
@@ -110,11 +109,6 @@ static enum Result flashInit(void *object,
 
   interface->position = 0;
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void flashDeinit(void *object __attribute__((unused)))
-{
-
 }
 /*----------------------------------------------------------------------------*/
 static enum Result flashSetCallback(void *object __attribute__((unused)),

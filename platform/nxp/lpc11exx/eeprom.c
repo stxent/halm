@@ -13,7 +13,6 @@
 static inline bool isAddressValid(const struct Eeprom *, uintptr_t);
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *, const void *);
-static void eepromDeinit(void *);
 static enum Result eepromSetCallback(void *, void (*)(void *), void *);
 static enum Result eepromGetParam(void *, enum IfParameter, void *);
 static enum Result eepromSetParam(void *, enum IfParameter, const void *);
@@ -23,7 +22,7 @@ static size_t eepromWrite(void *, const void *, size_t);
 static const struct InterfaceClass eepromTable = {
     .size = sizeof(struct Eeprom),
     .init = eepromInit,
-    .deinit = eepromDeinit,
+    .deinit = 0, /* Default destructor */
 
     .setCallback = eepromSetCallback,
     .getParam = eepromGetParam,
@@ -81,11 +80,6 @@ static enum Result eepromInit(void *object,
 
   interface->position = 0;
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void eepromDeinit(void *object __attribute__((unused)))
-{
-
 }
 /*----------------------------------------------------------------------------*/
 static enum Result eepromSetCallback(void *object __attribute__((unused)),

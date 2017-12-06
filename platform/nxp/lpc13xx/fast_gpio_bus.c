@@ -8,14 +8,13 @@
 #include <halm/platform/nxp/lpc13xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum Result busInit(void *, const void *);
-static void busDeinit(void *);
 static uint32_t busRead(void *);
 static void busWrite(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static const struct GpioBusClass gpioBusTable = {
     .size = sizeof(struct FastGpioBus),
     .init = busInit,
-    .deinit = busDeinit,
+    .deinit = 0, /* Default destructor */
 
     .read = busRead,
     .write = busWrite
@@ -27,11 +26,6 @@ static enum Result busInit(void *object, const void *configBase)
 {
   fastGpioBusConfigPins(object, configBase);
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void busDeinit(void *object __attribute__((unused)))
-{
-
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t busRead(void *object)

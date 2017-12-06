@@ -12,12 +12,11 @@
 static bool setDescriptor(struct WdtBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
-static void wdtDeinit(void *);
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass wdtTable = {
     .size = 0, /* Abstract class */
     .init = wdtInit,
-    .deinit = wdtDeinit
+    .deinit = 0 /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const WdtBase = &wdtTable;
@@ -52,9 +51,4 @@ static enum Result wdtInit(void *object, const void *configBase
   sysClockEnable(CLK_WDT);
 
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void wdtDeinit(void *object __attribute__((unused)))
-{
-  /* Watchdog timer cannot be disabled */
 }
