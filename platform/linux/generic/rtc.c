@@ -8,7 +8,6 @@
 #include <halm/platform/linux/rtc.h>
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
-static void clkDeinit(void *);
 static enum Result clkCallback(void *, void (*)(void *), void *);
 static enum Result clkSetAlarm(void *, time64_t);
 static enum Result clkSetTime(void *, time64_t);
