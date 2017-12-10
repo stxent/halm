@@ -16,34 +16,29 @@ static enum Result appendItem(void *object, uintptr_t address, size_t size);
 static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
-static void channelSetCallback(void *, void (*)(void *), void *);
-static void channelConfigure(void *, const void *);
-
 static enum Result channelEnable(void *);
-static void channelDisable(void *);
 static size_t channelPending(const void *);
 static size_t channelResidue(const void *);
 static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
-static void channelClear(void *);
 /*----------------------------------------------------------------------------*/
 static const struct DmaClass channelTable = {
     .size = sizeof(struct DmaSdmmc),
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .setCallback = channelSetCallback,
-    .configure = channelConfigure,
+    .setCallback = 0,
+    .configure = 0,
 
     .enable = channelEnable,
-    .disable = channelDisable,
+    .disable = 0,
     .pending = channelPending,
     .residue = channelResidue,
     .status = channelStatus,
 
     .append = channelAppend,
-    .clear = channelClear
+    .clear = 0
 };
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const DmaSdmmc = &channelTable;
@@ -131,19 +126,6 @@ static void channelDeinit(void *object)
   free(channel->list);
 }
 /*----------------------------------------------------------------------------*/
-static void channelSetCallback(void *object __attribute__((unused)),
-    void (*callback)(void *) __attribute__((unused)),
-    void *argument __attribute__((unused)))
-{
-
-}
-/*----------------------------------------------------------------------------*/
-static void channelConfigure(void *object __attribute__((unused)),
-    const void *settingsBase __attribute__((unused)))
-{
-
-}
-/*----------------------------------------------------------------------------*/
 static enum Result channelEnable(void *object)
 {
   struct DmaSdmmc * const channel = object;
@@ -155,11 +137,6 @@ static enum Result channelEnable(void *object)
   reg->DBADDR = (uint32_t)channel->list;
 
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void channelDisable(void *object __attribute__((unused)))
-{
-
 }
 /*----------------------------------------------------------------------------*/
 static size_t channelPending(const void *object)
@@ -227,9 +204,4 @@ static void channelAppend(void *object, void *destination, const void *source,
     appendItem(channel, address + offset, chunkLength);
     offset += chunkLength;
   }
-}
-/*----------------------------------------------------------------------------*/
-static void channelClear(void *object __attribute__((unused)))
-{
-
 }
