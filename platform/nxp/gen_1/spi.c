@@ -13,7 +13,10 @@
 #define DUMMY_FRAME 0xFF
 #define FIFO_DEPTH  8
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *);
+static void rxInterruptHandler(void *);
+static void txInterruptHandler(void *);
+static size_t transferData(struct Spi *, void *, const void *, size_t);
+
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
@@ -40,29 +43,23 @@ static const struct InterfaceClass spiTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
+static void rxInterruptHandler(void *object)
 {
   struct Spi * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
-  const bool rx = interface->rxBuffer != 0;
 
-  if (rx)
+  if (reg->RIS & RIS_RXRIS)
   {
-    /* Read mode */
-    while (reg->SR & SR_RNE)
-    {
+    /* FIFO is at least half full */
+    for (size_t i = 0; i < FIFO_DEPTH / 2; ++i)
       *interface->rxBuffer++ = reg->DR;
-      --interface->rxLeft;
-    }
+
+    interface->rxLeft -= FIFO_DEPTH / 2;
   }
-  else
+  while (reg->SR & SR_RNE)
   {
-    /* Write mode */
-    while (reg->SR & SR_RNE)
-    {
-      (void)reg->DR;
-      --interface->rxLeft;
-    }
+    *interface->rxBuffer++ = reg->DR;
+    --interface->rxLeft;
   }
 
   const size_t pending = interface->rxLeft - interface->txLeft;
@@ -71,16 +68,44 @@ static void interruptHandler(void *object)
 
   interface->txLeft -= bytesToWrite;
 
-  if (rx)
+  while (bytesToWrite--)
+    reg->DR = DUMMY_FRAME;
+
+  if (!interface->rxLeft)
   {
-    while (bytesToWrite--)
-      reg->DR = DUMMY_FRAME;
+    reg->IMSC = 0;
+    if (interface->callback)
+      interface->callback(interface->callbackArgument);
   }
-  else
+}
+/*----------------------------------------------------------------------------*/
+static void txInterruptHandler(void *object)
+{
+  struct Spi * const interface = object;
+  LPC_SSP_Type * const reg = interface->base.reg;
+
+  if (reg->RIS & RIS_RXRIS)
   {
-    while (bytesToWrite--)
-      reg->DR = *interface->txBuffer++;
+    /* FIFO is at least half full */
+    for (size_t i = 0; i < FIFO_DEPTH / 2; ++i)
+      (void)reg->DR;
+
+    interface->rxLeft -= FIFO_DEPTH / 2;
   }
+  while (reg->SR & SR_RNE)
+  {
+    (void)reg->DR;
+    --interface->rxLeft;
+  }
+
+  const size_t pending = interface->rxLeft - interface->txLeft;
+  const size_t space = FIFO_DEPTH - pending;
+  size_t bytesToWrite = MIN(space, interface->txLeft);
+
+  interface->txLeft -= bytesToWrite;
+
+  while (bytesToWrite--)
+    reg->DR = *interface->txBuffer++;
 
   if (!interface->rxLeft)
   {
@@ -100,6 +125,31 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
+static size_t transferData(struct Spi *interface, void *rxBuffer,
+    const void *txBuffer, size_t length)
+{
+  LPC_SSP_Type * const reg = interface->base.reg;
+
+  interface->rxBuffer = rxBuffer;
+  interface->txBuffer = txBuffer;
+  interface->rxLeft = interface->txLeft = length;
+
+  /* Clear interrupt flags and enable interrupts */
+  reg->ICR = ICR_RORIC | ICR_RTIC;
+  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
+
+  /* Initiate transmission by setting pending interrupt flag */
+  irqSetPending(interface->base.irq);
+
+  if (interface->blocking)
+  {
+    while (interface->rxLeft || reg->SR & SR_BSY)
+      barrier();
+  }
+
+  return length;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
@@ -118,8 +168,6 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Call base class constructor */
   if ((res = SspBase->init(object, &baseConfig)) != E_OK)
     return res;
-
-  interface->base.handler = interruptHandler;
 
   interface->callback = 0;
   interface->rate = config->rate;
@@ -231,56 +279,22 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
 /*----------------------------------------------------------------------------*/
 static size_t spiRead(void *object, void *buffer, size_t length)
 {
-  struct Spi * const interface = object;
-  LPC_SSP_Type * const reg = interface->base.reg;
-
   if (!length)
     return 0;
 
-  interface->rxBuffer = buffer;
-  interface->txBuffer = 0;
-  interface->rxLeft = interface->txLeft = length;
+  struct Spi * const interface = object;
 
-  /* Clear interrupt flags and enable interrupts */
-  reg->ICR = ICR_RORIC | ICR_RTIC;
-  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
-
-  /* Initiate reception by setting pending interrupt flag */
-  irqSetPending(interface->base.irq);
-
-  if (interface->blocking)
-  {
-    while (interface->rxLeft || reg->SR & SR_BSY)
-      barrier();
-  }
-
-  return length;
+  interface->base.handler = rxInterruptHandler;
+  return transferData(interface, buffer, 0, length);
 }
 /*----------------------------------------------------------------------------*/
 static size_t spiWrite(void *object, const void *buffer, size_t length)
 {
-  struct Spi * const interface = object;
-  LPC_SSP_Type * const reg = interface->base.reg;
-
   if (!length)
     return 0;
 
-  interface->rxBuffer = 0;
-  interface->txBuffer = buffer;
-  interface->rxLeft = interface->txLeft = length;
+  struct Spi * const interface = object;
 
-  /* Clear interrupt flags and enable interrupts */
-  reg->ICR = ICR_RORIC | ICR_RTIC;
-  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
-
-  /* Initiate transmission by setting pending interrupt flag */
-  irqSetPending(interface->base.irq);
-
-  if (interface->blocking)
-  {
-    while (interface->rxLeft || reg->SR & SR_BSY)
-      barrier();
-  }
-
-  return length;
+  interface->base.handler = txInterruptHandler;
+  return transferData(interface, 0, buffer, length);
 }
