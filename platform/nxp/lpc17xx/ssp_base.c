@@ -15,7 +15,12 @@
 static bool setDescriptor(uint8_t, const struct SspBase *, struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_SSP_NO_DEINIT
 static void sspDeinit(void *);
+#else
+#define sspDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass sspTable = {
     .size = 0, /* Abstract class */
@@ -143,6 +148,7 @@ static enum Result sspInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_SSP_NO_DEINIT
 static void sspDeinit(void *object)
 {
   const struct SspBase * const interface = object;
@@ -159,3 +165,4 @@ static void sspDeinit(void *object)
   }
   setDescriptor(interface->channel, interface, 0);
 }
+#endif

@@ -32,13 +32,21 @@ struct TimerHandler
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(uint8_t);
 static enum Result timerHandlerAttach(uint8_t, enum SctPart, struct SctBase *);
-static void timerHandlerDetach(uint8_t, enum SctPart);
 static void timerHandlerInstantiate(uint8_t channel);
 static void timerHandlerProcess(struct TimerHandler *);
 static enum Result timerHandlerInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
+static void timerHandlerDetach(uint8_t, enum SctPart);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void tmrDeinit(void *);
+#else
+#define tmrDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct TimerHandler),
@@ -427,12 +435,14 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
   return res;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void timerHandlerDetach(uint8_t channel, enum SctPart timerPart)
 {
   const unsigned int part = timerPart == SCT_HIGH;
 
   handlers[channel]->descriptors[part] = 0;
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void timerHandlerInstantiate(uint8_t channel)
 {
@@ -574,6 +584,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void tmrDeinit(void *object)
 {
   struct SctBase * const timer = object;
@@ -587,3 +598,4 @@ static void tmrDeinit(void *object)
     sysClockDisable(CLK_M4_SCT);
   }
 }
+#endif

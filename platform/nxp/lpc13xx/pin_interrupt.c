@@ -30,14 +30,22 @@ static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptHandlerAttach(struct PinData,
     struct PinInterrupt *);
-static void pinInterruptHandlerDetach(const struct PinInterrupt *);
 static enum Result pinInterruptHandlerInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
+static void pinInterruptHandlerDetach(const struct PinInterrupt *);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptInit(void *, const void *);
-static void pinInterruptDeinit(void *);
 static void pinInterruptEnable(void *);
 static void pinInterruptDisable(void *);
 static void pinInterruptSetCallback(void *, void (*)(void *), void *);
+
+#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
+static void pinInterruptDeinit(void *);
+#else
+#define pinInterruptDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct PinInterruptHandler),
@@ -155,12 +163,14 @@ static enum Result pinInterruptHandlerAttach(struct PinData pin,
     return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
 static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
 {
   const struct PinData pin = interrupt->pin;
 
   handlers[pin.port]->interrupts[pin.offset] = 0;
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptHandlerInit(void *object, const void *configBase)
 {
@@ -225,11 +235,13 @@ static enum Result pinInterruptInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
 static void pinInterruptDeinit(void *object)
 {
   disableInterrupt(object);
   pinInterruptHandlerDetach(object);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void pinInterruptEnable(void *object)
 {

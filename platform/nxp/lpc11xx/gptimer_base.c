@@ -24,7 +24,12 @@ static bool setDescriptor(uint8_t, const struct GpTimerBase *,
     struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void tmrDeinit(void *);
+#else
+#define tmrDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass tmrTable = {
     .size = 0, /* Abstract class */
@@ -196,6 +201,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void tmrDeinit(void *object)
 {
   const struct GpTimerBase * const timer = object;
@@ -203,3 +209,4 @@ static void tmrDeinit(void *object)
   sysClockDisable(timerBlockEntries[timer->channel].clock);
   setDescriptor(timer->channel, timer, 0);
 }
+#endif

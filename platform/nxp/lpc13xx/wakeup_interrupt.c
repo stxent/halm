@@ -18,14 +18,22 @@ struct StartLogicHandler
 static inline IrqNumber calcVector(struct PinData);
 static enum Result startLogicHandlerAttach(struct PinData,
     const struct WakeupInterrupt *);
-static void startLogicHandlerDetach(const struct WakeupInterrupt *);
 static enum Result startLogicHandlerInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
+static void startLogicHandlerDetach(const struct WakeupInterrupt *);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result wakeupInterruptInit(void *, const void *);
-static void wakeupInterruptDeinit(void *);
 static void wakeupInterruptEnable(void *);
 static void wakeupInterruptDisable(void *);
 static void wakeupInterruptSetCallback(void *, void (*)(void *), void *);
+
+#ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
+static void wakeupInterruptDeinit(void *);
+#else
+#define wakeupInterruptDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct StartLogicHandler),
@@ -106,6 +114,7 @@ static enum Result startLogicHandlerAttach(struct PinData pin,
   return listPush(list, &interrupt);
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
 static void startLogicHandlerDetach(const struct WakeupInterrupt *interrupt)
 {
   struct List * const list = &handler->list;
@@ -114,6 +123,7 @@ static void startLogicHandlerDetach(const struct WakeupInterrupt *interrupt)
   if (node)
     listErase(list, node);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result startLogicHandlerInit(void *object,
     const void *configBase __attribute__((unused)))
@@ -173,6 +183,7 @@ static enum Result wakeupInterruptInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
 static void wakeupInterruptDeinit(void *object)
 {
   const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
@@ -184,6 +195,7 @@ static void wakeupInterruptDeinit(void *object)
 
   startLogicHandlerDetach(object);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void wakeupInterruptEnable(void *object)
 {

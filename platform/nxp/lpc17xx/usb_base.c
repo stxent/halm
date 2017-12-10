@@ -14,7 +14,12 @@ static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static bool setDescriptor(uint8_t, const struct UsbBase *, struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_USB_NO_DEINIT
 static void devDeinit(void *);
+#else
+#define devDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass devTable = {
     .size = 0, /* Abstract class */
@@ -127,6 +132,7 @@ static enum Result devInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_USB_NO_DEINIT
 static void devDeinit(void *object)
 {
   struct UsbBase * const device = object;
@@ -138,3 +144,4 @@ static void devDeinit(void *object)
   sysPowerDisable(PWR_USB);
   setDescriptor(device->channel, device, 0);
 }
+#endif

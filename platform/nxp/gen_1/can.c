@@ -33,12 +33,17 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
-static void canDeinit(void *);
 static enum Result canSetCallback(void *, void (*)(void *), void *);
 static enum Result canGetParam(void *, enum IfParameter, void *);
 static enum Result canSetParam(void *, enum IfParameter, const void *);
 static size_t canRead(void *, void *, size_t);
 static size_t canWrite(void *, const void *, size_t);
+
+#ifndef CONFIG_PLATFORM_NXP_CAN_NO_DEINIT
+static void canDeinit(void *);
+#else
+#define canDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass canTable = {
     .size = sizeof(struct Can),
@@ -354,6 +359,7 @@ static enum Result canInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_CAN_NO_DEINIT
 static void canDeinit(void *object)
 {
   struct Can * const interface = object;
@@ -371,6 +377,7 @@ static void canDeinit(void *object)
   arrayDeinit(&interface->pool);
   CanBase->deinit(interface);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result canSetCallback(void *object, void (*callback)(void *),
     void *argument)

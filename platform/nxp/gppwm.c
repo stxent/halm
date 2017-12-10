@@ -15,29 +15,48 @@
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
 static uint8_t configMatchPin(uint8_t channel, PinNumber key);
 static enum Result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
+
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
 static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
+#endif
+/*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
 static void unitDeinit(void *);
+#else
+#define unitDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result channelSetFrequency(struct GpPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result singleEdgeInit(void *, const void *);
-static void singleEdgeDeinit(void *);
 static void singleEdgeEnable(void *);
 static void singleEdgeDisable(void *);
 static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
 static enum Result singleEdgeSetFrequency(void *, uint32_t);
+
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
+static void singleEdgeDeinit(void *);
+#else
+#define singleEdgeDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeInit(void *, const void *);
-static void doubleEdgeDeinit(void *);
 static void doubleEdgeEnable(void *);
 static void doubleEdgeDisable(void *);
 static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
 static enum Result doubleEdgeSetFrequency(void *, uint32_t);
+
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
+static void doubleEdgeDeinit(void *);
+#else
+#define doubleEdgeDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct GpPwmUnit),
@@ -111,10 +130,12 @@ static enum Result unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
     return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
 static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
   unit->matches &= ~(1 << channel);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *object, const void *configBase)
 {
@@ -159,6 +180,7 @@ static enum Result unitInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
 static void unitDeinit(void *object)
 {
   struct GpPwmUnit * const unit = object;
@@ -167,6 +189,7 @@ static void unitDeinit(void *object)
   reg->TCR &= ~(TCR_CEN | TCR_PWM_ENABLE);
   GpPwmUnitBase->deinit(unit);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result channelSetFrequency(struct GpPwmUnit *unit,
     uint32_t frequency)
@@ -218,6 +241,7 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
 static void singleEdgeDeinit(void *object)
 {
   struct GpPwm * const pwm = object;
@@ -226,6 +250,7 @@ static void singleEdgeDeinit(void *object)
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
   unitReleaseChannel(pwm->unit, pwm->channel);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void singleEdgeEnable(void *object)
 {
@@ -323,6 +348,7 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
 static void doubleEdgeDeinit(void *object)
 {
   struct GpPwmDoubleEdge * const pwm = object;
@@ -332,6 +358,7 @@ static void doubleEdgeDeinit(void *object)
   unitReleaseChannel(pwm->unit, pwm->channel);
   unitReleaseChannel(pwm->unit, pwm->channel - 1);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeEnable(void *object)
 {

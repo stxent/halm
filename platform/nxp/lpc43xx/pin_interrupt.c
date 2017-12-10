@@ -14,14 +14,22 @@ static inline IrqNumber calcVector(uint8_t);
 static void disableInterrupt(const struct PinInterrupt *);
 static void enableInterrupt(const struct PinInterrupt *);
 static void processInterrupt(uint8_t);
-static void resetDescriptor(uint8_t);
 static int setDescriptor(struct PinInterrupt *);
+
+#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
+static void resetDescriptor(uint8_t);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptInit(void *, const void *);
-static void pinInterruptDeinit(void *);
 static void pinInterruptEnable(void *);
 static void pinInterruptDisable(void *);
 static void pinInterruptSetCallback(void *, void (*)(void *), void *);
+
+#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
+static void pinInterruptDeinit(void *);
+#else
+#define pinInterruptDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct InterruptClass pinInterruptTable = {
     .size = sizeof(struct PinInterrupt),
@@ -65,12 +73,14 @@ static void processInterrupt(uint8_t channel)
     interrupt->callback(interrupt->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
 static void resetDescriptor(uint8_t channel)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
   descriptors[channel] = 0;
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static int setDescriptor(struct PinInterrupt *interrupt)
 {
@@ -172,6 +182,7 @@ static enum Result pinInterruptInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
 static void pinInterruptDeinit(void *object)
 {
   const struct PinInterrupt * const interrupt = object;
@@ -185,6 +196,7 @@ static void pinInterruptDeinit(void *object)
 
   resetDescriptor(interrupt->channel);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void pinInterruptEnable(void *object)
 {

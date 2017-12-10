@@ -53,7 +53,6 @@ static void resetDevice(struct UsbDevice *);
 static void resetQueueHeads(struct UsbDevice *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
-static void devDeinit(void *);
 static void *devCreateEndpoint(void *, uint8_t);
 static uint8_t devGetInterface(const void *);
 static void devSetAddress(void *, uint8_t);
@@ -64,6 +63,12 @@ static void devSetPower(void *, uint16_t);
 static enum UsbSpeed devGetSpeed(const void *);
 static enum Result devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
+
+#ifndef CONFIG_PLATFORM_USB_NO_DEINIT
+static void devDeinit(void *);
+#else
+#define devDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct UsbDeviceClass devTable = {
     .size = sizeof(struct UsbDevice),
@@ -328,6 +333,7 @@ static enum Result devInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_USB_NO_DEINIT
 static void devDeinit(void *object)
 {
   struct UsbDevice * const device = object;
@@ -338,6 +344,7 @@ static void devDeinit(void *object)
   free(device->endpoints);
   UsbBase->deinit(device);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void *devCreateEndpoint(void *object, uint8_t address)
 {

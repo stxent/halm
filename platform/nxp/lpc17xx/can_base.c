@@ -18,7 +18,12 @@ static bool setDescriptor(uint8_t, const struct CanBase *state,
     struct CanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_CAN_NO_DEINIT
 static void canDeinit(void *);
+#else
+#define canDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass canTable = {
     .size = 0, /* Abstract class */
@@ -154,6 +159,7 @@ static enum Result canInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_CAN_NO_DEINIT
 static void canDeinit(void *object)
 {
   const struct CanBase * const interface = object;
@@ -174,3 +180,4 @@ static void canDeinit(void *object)
 
   setDescriptor(interface->channel, interface, 0);
 }
+#endif

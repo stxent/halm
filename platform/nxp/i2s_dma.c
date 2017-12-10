@@ -19,12 +19,17 @@ static void txDmaHandler(void *);
 static enum Result updateRate(struct I2sDma *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
-static void i2sDeinit(void *);
 static enum Result i2sSetCallback(void *, void (*)(void *), void *);
 static enum Result i2sGetParam(void *, enum IfParameter, void *);
 static enum Result i2sSetParam(void *, enum IfParameter, const void *);
 static size_t i2sRead(void *, void *, size_t);
 static size_t i2sWrite(void *, const void *, size_t);
+
+#ifndef CONFIG_PLATFORM_NXP_I2S_NO_DEINIT
+static void i2sDeinit(void *);
+#else
+#define i2sDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass i2sTable = {
     .size = sizeof(struct I2sDma),
@@ -354,6 +359,7 @@ static enum Result i2sInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_I2S_NO_DEINIT
 static void i2sDeinit(void *object)
 {
   struct I2sDma * const interface = object;
@@ -371,6 +377,7 @@ static void i2sDeinit(void *object)
     deinit(interface->rxDma);
   I2sBase->deinit(interface);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result i2sSetCallback(void *object, void (*callback)(void *),
     void *argument)

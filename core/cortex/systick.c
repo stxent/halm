@@ -27,7 +27,6 @@ static void updateInterrupt(struct SysTickTimer *);
 static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
-static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
 static void tmrSetCallback(void *, void (*)(void *), void *);
@@ -37,6 +36,12 @@ static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
+
+#ifndef CONFIG_CORE_CORTEX_SYSTICK_NO_DEINIT
+static void tmrDeinit(void *);
+#else
+#define tmrDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass tmrTable = {
     .size = sizeof(struct SysTickTimer),
@@ -139,6 +144,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_CORE_CORTEX_SYSTICK_NO_DEINIT
 static void tmrDeinit(void *object __attribute__((unused)))
 {
   const struct SysTickTimer * const timer = object;
@@ -147,6 +153,7 @@ static void tmrDeinit(void *object __attribute__((unused)))
   SYSTICK->CTRL &= ~CTRL_ENABLE;
   setDescriptor(timer, 0);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void tmrEnable(void *object __attribute__((unused)))
 {

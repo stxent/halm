@@ -9,19 +9,33 @@
 #include <halm/platform/nxp/gptimer_pwm_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum Result unitAllocateChannel(struct GpTimerPwmUnit *, uint8_t);
-static void unitReleaseChannel(struct GpTimerPwmUnit *, uint8_t);
 static void unitUpdateResolution(struct GpTimerPwmUnit *, uint8_t);
+
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
+static void unitReleaseChannel(struct GpTimerPwmUnit *, uint8_t);
+#endif
+/*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void unitDeinit(void *);
+#else
+#define unitDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
-static void channelDeinit(void *);
 static void channelEnable(void *);
 static void channelDisable(void *);
 static uint32_t channelGetResolution(const void *);
 static void channelSetDuration(void *, uint32_t);
 static void channelSetEdges(void *, uint32_t, uint32_t);
 static enum Result channelSetFrequency(void *, uint32_t);
+
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
+static void channelDeinit(void *);
+#else
+#define channelDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct GpTimerPwmUnit),
@@ -61,10 +75,12 @@ static enum Result unitAllocateChannel(struct GpTimerPwmUnit *unit,
     return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void unitReleaseChannel(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
   unit->matches &= ~(1 << channel);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 {
@@ -134,6 +150,7 @@ static enum Result unitInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void unitDeinit(void *object)
 {
   struct GpTimerPwmUnit * const unit = object;
@@ -142,6 +159,7 @@ static void unitDeinit(void *object)
   reg->TCR &= ~TCR_CEN;
   GpTimerBase->deinit(unit);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
@@ -172,6 +190,7 @@ static enum Result channelInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void channelDeinit(void *object)
 {
   struct GpTimerPwm * const pwm = object;
@@ -179,6 +198,7 @@ static void channelDeinit(void *object)
   channelDisable(pwm);
   unitReleaseChannel(pwm->unit, pwm->channel);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void channelEnable(void *object)
 {

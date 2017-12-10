@@ -27,7 +27,12 @@ struct UartBlockDescriptor
 static bool setDescriptor(uint8_t, const struct UartBase *, struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_UART_NO_DEINIT
 static void uartDeinit(void *);
+#else
+#define uartDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass uartTable = {
     .size = 0, /* Abstract class */
@@ -296,6 +301,7 @@ static enum Result uartInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_UART_NO_DEINIT
 static void uartDeinit(void *object)
 {
   const struct UartBase * const interface = object;
@@ -306,3 +312,4 @@ static void uartDeinit(void *object)
   sysClockDisable(entry->periperalBranch);
   setDescriptor(interface->channel, interface, 0);
 }
+#endif

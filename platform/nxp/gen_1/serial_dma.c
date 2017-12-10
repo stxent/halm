@@ -25,12 +25,17 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result serialInit(void *, const void *);
-static void serialDeinit(void *);
 static enum Result serialSetCallback(void *, void (*)(void *), void *);
 static enum Result serialGetParam(void *, enum IfParameter, void *);
 static enum Result serialSetParam(void *, enum IfParameter, const void *);
 static size_t serialRead(void *, void *, size_t);
 static size_t serialWrite(void *, const void *, size_t);
+
+#ifndef CONFIG_PLATFORM_NXP_UART_NO_DEINIT
+static void serialDeinit(void *);
+#else
+#define serialDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass serialTable = {
     .size = sizeof(struct SerialDma),
@@ -248,6 +253,7 @@ static enum Result serialInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_UART_NO_DEINIT
 static void serialDeinit(void *object)
 {
   struct SerialDma * const interface = object;
@@ -271,6 +277,7 @@ static void serialDeinit(void *object)
   /* Call base class destructor */
   UartBase->deinit(interface);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result serialSetCallback(void *object, void (*callback)(void *),
     void *argument)

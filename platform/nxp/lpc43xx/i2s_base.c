@@ -26,7 +26,12 @@ static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
 static bool setDescriptor(uint8_t, const struct I2sBase *, struct I2sBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_I2S_NO_DEINIT
 static void i2sDeinit(void *);
+#else
+#define i2sDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass i2sTable = {
     .size = 0, /* Abstract class */
@@ -298,6 +303,7 @@ static enum Result i2sInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_I2S_NO_DEINIT
 static void i2sDeinit(void *object)
 {
   const struct I2sBase * const interface = object;
@@ -307,3 +313,4 @@ static void i2sDeinit(void *object)
 
   setDescriptor(interface->channel, interface, 0);
 }
+#endif

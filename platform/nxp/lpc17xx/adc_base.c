@@ -22,7 +22,12 @@ static bool setDescriptor(uint8_t, const struct AdcUnitBase *state,
     struct AdcUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcUnitInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
 static void adcUnitDeinit(void *);
+#else
+#define adcUnitDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass adcUnitTable = {
     .size = 0, /* Abstract class */
@@ -147,6 +152,7 @@ static enum Result adcUnitInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
 static void adcUnitDeinit(void *object)
 {
   const struct AdcUnitBase * const unit = object;
@@ -154,3 +160,4 @@ static void adcUnitDeinit(void *object)
   sysPowerDisable(PWR_ADC);
   setDescriptor(unit->channel, unit, 0);
 }
+#endif

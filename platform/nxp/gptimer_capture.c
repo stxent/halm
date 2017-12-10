@@ -14,14 +14,24 @@ static void interruptHandler(void *);
 static enum Result unitSetDescriptor(struct GpTimerCaptureUnit *, uint8_t,
     const struct GpTimerCapture *, struct GpTimerCapture *);
 static enum Result unitInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void unitDeinit(void *);
+#else
+#define unitDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
-static void channelDeinit(void *);
 static void channelEnable(void *);
 static void channelDisable(void *);
 static void channelSetCallback(void *, void (*)(void *), void *);
 static uint32_t channelGetValue(const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
+static void channelDeinit(void *);
+#else
+#define channelDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct GpTimerCaptureUnit),
@@ -117,6 +127,7 @@ static enum Result unitInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void unitDeinit(void *object)
 {
   struct GpTimerCaptureUnit * const unit = object;
@@ -126,6 +137,7 @@ static void unitDeinit(void *object)
   reg->TCR = 0;
   GpTimerBase->deinit(unit);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
@@ -161,6 +173,7 @@ static enum Result channelInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void channelDeinit(void *object)
 {
   struct GpTimerCapture * const capture = object;
@@ -168,6 +181,7 @@ static void channelDeinit(void *object)
   channelDisable(object);
   unitSetDescriptor(capture->unit, capture->channel, capture, 0);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void channelEnable(void *object)
 {

@@ -11,3 +11,8 @@ config CORE_CORTEX_SYSTICK
 	depends on CORE_CORTEX_M0 || CORE_CORTEX_M3 || CORE_CORTEX_M4
 	help
 	  This is the driver for the System Timer peripheral.
+
+config CORE_CORTEX_SYSTICK_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on CORE_CORTEX_SYSTICK

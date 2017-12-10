@@ -22,12 +22,17 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *, const void *);
-static void spiDeinit(void *);
 static enum Result spiSetCallback(void *, void (*)(void *), void *);
 static enum Result spiGetParam(void *, enum IfParameter, void *);
 static enum Result spiSetParam(void *, enum IfParameter, const void *);
 static size_t spiRead(void *, void *, size_t);
 static size_t spiWrite(void *, const void *, size_t);
+
+#ifndef CONFIG_PLATFORM_NXP_SSP_NO_DEINIT
+static void spiDeinit(void *);
+#else
+#define spiDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass spiTable = {
     .size = sizeof(struct Spi),
@@ -206,6 +211,7 @@ static enum Result spiInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_SSP_NO_DEINIT
 static void spiDeinit(void *object)
 {
   struct Spi * const interface = object;
@@ -221,6 +227,7 @@ static void spiDeinit(void *object)
 
   SspBase->deinit(interface);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result spiSetCallback(void *object, void (*callback)(void *),
     void *argument)

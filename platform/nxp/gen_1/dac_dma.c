@@ -15,11 +15,16 @@ static void dmaHandler(void *object);
 static enum Result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
-static void dacDeinit(void *);
 static enum Result dacSetCallback(void *, void (*)(void *), void *);
 static enum Result dacGetParam(void *, enum IfParameter, void *);
 static enum Result dacSetParam(void *, enum IfParameter, const void *);
 static size_t dacWrite(void *, const void *, size_t);
+
+#ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
+static void dacDeinit(void *);
+#else
+#define dacDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass dacTable = {
     .size = sizeof(struct DacDma),
@@ -119,6 +124,7 @@ static enum Result dacInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
 static void dacDeinit(void *object)
 {
   struct DacDma * const interface = object;
@@ -126,6 +132,7 @@ static void dacDeinit(void *object)
   deinit(interface->dma);
   DacBase->deinit(interface);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result dacSetCallback(void *object, void (*callback)(void *),
     void *argument)

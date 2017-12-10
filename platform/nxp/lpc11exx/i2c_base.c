@@ -14,7 +14,12 @@
 static bool setDescriptor(uint8_t, const struct I2cBase *, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_I2C_NO_DEINIT
 static void i2cDeinit(void *);
+#else
+#define i2cDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass i2cTable = {
     .size = 0, /* Abstract class */
@@ -81,6 +86,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_I2C_NO_DEINIT
 static void i2cDeinit(void *object)
 {
   const struct I2cBase * const interface = object;
@@ -89,3 +95,4 @@ static void i2cDeinit(void *object)
   sysClockDisable(CLK_I2C);
   setDescriptor(interface->channel, interface, 0);
 }
+#endif

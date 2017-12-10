@@ -11,7 +11,12 @@
 #include <halm/platform/nxp/emc_sram.h>
 /*----------------------------------------------------------------------------*/
 static enum Result sramInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_EMC_NO_DEINIT
 static void sramDeinit(void *);
+#else
+#define sramDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass sramTable = {
     .size = sizeof(struct EmcSram),
@@ -153,9 +158,11 @@ static enum Result sramInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_EMC_NO_DEINIT
 static void sramDeinit(void *object)
 {
   struct EmcSram * const memory = object;
 
   emcSetStaticMemoryDescriptor(memory->channel, object, 0);
 }
+#endif

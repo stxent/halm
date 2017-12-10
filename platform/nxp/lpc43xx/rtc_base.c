@@ -11,7 +11,12 @@
 static bool setDescriptor(const struct RtcBase *, struct RtcBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_RTC_NO_DEINIT
 static void clkDeinit(void *);
+#else
+#define clkDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass clkTable = {
     .size = sizeof(struct RtcBase),
@@ -49,7 +54,9 @@ static enum Result clkInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_RTC_NO_DEINIT
 static void clkDeinit(void *object)
 {
   setDescriptor(object, 0);
 }
+#endif

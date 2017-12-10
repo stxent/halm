@@ -17,25 +17,40 @@ static enum Result setMatchValue(struct SctPwmUnit *, uint8_t, uint32_t);
 static enum Result updateFrequency(struct SctPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void unitDeinit(void *);
+#else
+#define unitDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result singleEdgeInit(void *, const void *);
-static void singleEdgeDeinit(void *);
 static void singleEdgeEnable(void *);
 static void singleEdgeDisable(void *);
 static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
 static enum Result singleEdgeSetFrequency(void *, uint32_t);
+
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
+static void singleEdgeDeinit(void *);
+#else
+#define singleEdgeDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeInit(void *, const void *);
-static void doubleEdgeDeinit(void *);
 static void doubleEdgeEnable(void *);
 static void doubleEdgeDisable(void *);
 static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
 static enum Result doubleEdgeSetFrequency(void *, uint32_t);
+
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
+static void doubleEdgeDeinit(void *);
+#else
+#define doubleEdgeDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = sizeof(struct SctPwmUnit),
@@ -205,6 +220,7 @@ static enum Result unitInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void unitDeinit(void *object)
 {
   struct SctPwmUnit * const unit = object;
@@ -222,6 +238,7 @@ static void unitDeinit(void *object)
 
   SctBase->deinit(unit);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result singleEdgeInit(void *object, const void *configBase)
 {
@@ -270,6 +287,7 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void singleEdgeDeinit(void *object)
 {
   struct SctPwm * const pwm = object;
@@ -286,6 +304,7 @@ static void singleEdgeDeinit(void *object)
   reg->EV[pwm->event].STATE = 0;
   sctReleaseEvent(&unit->base, pwm->event);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void singleEdgeEnable(void *object)
 {
@@ -417,6 +436,7 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void doubleEdgeDeinit(void *object)
 {
   struct SctPwmDoubleEdge * const pwm = object;
@@ -434,6 +454,7 @@ static void doubleEdgeDeinit(void *object)
   sctReleaseEvent(&unit->base, pwm->trailingEvent);
   sctReleaseEvent(&unit->base, pwm->leadingEvent);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeEnable(void *object)
 {

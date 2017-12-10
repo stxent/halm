@@ -11,11 +11,16 @@
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
-static void clkDeinit(void *);
 static enum Result clkCallback(void *, void (*)(void *), void *);
 static enum Result clkSetAlarm(void *, time64_t);
 static enum Result clkSetTime(void *, time64_t);
 static time64_t clkTime(void *);
+
+#ifndef CONFIG_PLATFORM_NXP_RTC_NO_DEINIT
+static void clkDeinit(void *);
+#else
+#define clkDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct RtClockClass clkTable = {
     .size = sizeof(struct Rtc),
@@ -89,6 +94,7 @@ static enum Result clkInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_RTC_NO_DEINIT
 static void clkDeinit(void *object __attribute__((unused)))
 {
   struct Rtc * const clock = object;
@@ -100,6 +106,7 @@ static void clkDeinit(void *object __attribute__((unused)))
   irqDisable(clock->base.irq);
   RtcBase->deinit(clock);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result clkCallback(void *object, void (*callback)(void *),
     void *argument)

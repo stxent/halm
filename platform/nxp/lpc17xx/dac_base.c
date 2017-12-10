@@ -17,7 +17,12 @@ static void configOutputPin(PinNumber);
 static bool setDescriptor(const struct DacBase *, struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
 static void dacDeinit(void *);
+#else
+#define dacDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass dacTable = {
     .size = 0, /* Abstract class */
@@ -79,9 +84,11 @@ static enum Result dacInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
 static void dacDeinit(void *object)
 {
   const struct DacBase * const interface = object;
 
   setDescriptor(interface, 0);
 }
+#endif

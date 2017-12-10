@@ -11,11 +11,19 @@
 #include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(PinNumber);
-static void releaseOutputPin(PinNumber);
 static bool setDescriptor(const struct DacBase *, struct DacBase *);
+
+#ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
+static void releaseOutputPin(PinNumber);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
 static void dacDeinit(void *);
+#else
+#define dacDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass dacTable = {
     .size = 0, /* Abstract class */
@@ -50,11 +58,13 @@ static void configOutputPin(PinNumber key)
   LPC_SCU->ENAIO2 |= 0x01;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
 static void releaseOutputPin(PinNumber key __attribute__((unused)))
 {
   /* Disable analog pin function */
   LPC_SCU->ENAIO2 &= ~0x01;
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static bool setDescriptor(const struct DacBase *state,
     struct DacBase *interface)
@@ -89,6 +99,7 @@ static enum Result dacInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
 static void dacDeinit(void *object)
 {
   const struct DacBase * const interface = object;
@@ -97,3 +108,4 @@ static void dacDeinit(void *object)
   releaseOutputPin(interface->pin);
   setDescriptor(interface, 0);
 }
+#endif

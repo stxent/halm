@@ -15,11 +15,16 @@ static void dmaHandler(void *);
 static enum Result dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
-static void adcDeinit(void *);
 static enum Result adcSetCallback(void *, void (*)(void *), void *);
 static enum Result adcGetParam(void *, enum IfParameter, void *);
 static enum Result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
+
+#ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
+static void adcDeinit(void *);
+#else
+#define adcDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
     .size = sizeof(struct AdcDma),
@@ -122,6 +127,7 @@ static enum Result adcInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
 static void adcDeinit(void *object)
 {
   const struct AdcDma * const interface = object;
@@ -129,6 +135,7 @@ static void adcDeinit(void *object)
   adcReleasePin(interface->pin);
   deinit(interface->dma);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result adcSetCallback(void *object, void (*callback)(void *),
     void *argument)

@@ -19,7 +19,12 @@ static bool setDescriptor(uint8_t, const struct GpPwmUnitBase *,
     struct GpPwmUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
 static void unitDeinit(void *);
+#else
+#define unitDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass unitTable = {
     .size = 0, /* Abstract class */
@@ -127,6 +132,7 @@ static enum Result unitInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
 static void unitDeinit(void *object)
 {
   const struct GpPwmUnitBase * const unit = object;
@@ -134,3 +140,4 @@ static void unitDeinit(void *object)
   sysPowerDisable(PWR_PWM1);
   setDescriptor(unit->channel, unit, 0);
 }
+#endif

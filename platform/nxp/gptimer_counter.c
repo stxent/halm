@@ -12,7 +12,6 @@ static inline uint32_t getMaxValue(const struct GpTimerCounter *);
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
-static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
 static void tmrSetCallback(void *, void (*)(void *), void *);
@@ -20,6 +19,12 @@ static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
+
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
+static void tmrDeinit(void *);
+#else
+#define tmrDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct TimerClass tmrTable = {
     .size = sizeof(struct GpTimerCounter),
@@ -123,6 +128,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
 static void tmrDeinit(void *object)
 {
   struct GpTimerCounter * const timer = object;
@@ -133,6 +139,7 @@ static void tmrDeinit(void *object)
 
   GpTimerBase->deinit(timer);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void tmrEnable(void *object)
 {

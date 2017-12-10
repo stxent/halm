@@ -34,12 +34,17 @@ enum Status
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
-static void i2cDeinit(void *);
 static enum Result i2cSetCallback(void *, void (*)(void *), void *);
 static enum Result i2cGetParam(void *, enum IfParameter, void *);
 static enum Result i2cSetParam(void *, enum IfParameter, const void *);
 static size_t i2cRead(void *, void *, size_t);
 static size_t i2cWrite(void *, const void *, size_t);
+
+#ifndef CONFIG_PLATFORM_NXP_I2C_NO_DEINIT
+static void i2cDeinit(void *);
+#else
+#define i2cDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass i2cTable = {
     .size = sizeof(struct I2cSlave),
@@ -155,6 +160,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NXP_I2C_NO_DEINIT
 static void i2cDeinit(void *object)
 {
   struct I2cSlave * const interface = object;
@@ -166,6 +172,7 @@ static void i2cDeinit(void *object)
   free(interface->cache);
   I2cBase->deinit(interface);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result i2cSetCallback(void *object, void (*callback)(void *),
     void *argument)

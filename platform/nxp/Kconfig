@@ -56,6 +56,11 @@ config PLATFORM_NXP_ADC_BASE
 	bool "ADC"
 	default y
 
+config PLATFORM_NXP_ADC_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_ADC_BASE
+
 config PLATFORM_NXP_ADC
 	bool "Single channel ADC with polling"
 	default y
@@ -80,6 +85,11 @@ config PLATFORM_NXP_CAN
 	bool "CAN"
 	default y
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM_NXP_CAN_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_CAN
 
 config PLATFORM_NXP_CAN_TSEG1
 	int "TSEG1 quanta"
@@ -106,6 +116,11 @@ config PLATFORM_NXP_DAC
 	default y
 	depends on PLATFORM_NXP_DAC_BASE
 
+config PLATFORM_NXP_DAC_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_DAC_BASE
+
 config PLATFORM_NXP_DAC_DMA
 	bool "DAC driver with DMA"
 	default y
@@ -125,6 +140,11 @@ config PLATFORM_NXP_EMC
 	depends on FAMILY_LPC43XX
 	help
 	  This enables driver for the External Memory Controller.
+
+config PLATFORM_NXP_EMC_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_EMC
 
 config PLATFORM_NXP_FAST_GPIO_BUS
 	bool "Fast GPIO Bus"
@@ -157,6 +177,11 @@ config PLATFORM_NXP_GPTIMER_BASE
 	bool "General Purpose Timer"
 	default y
 
+config PLATFORM_NXP_GPTIMER_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_GPTIMER_BASE
+
 config PLATFORM_NXP_GPTIMER_PM
 	bool "Power management"
 	default n
@@ -187,9 +212,19 @@ config PLATFORM_NXP_GPPWM
 	default y
 	depends on FAMILY_LPC17XX
 
+config PLATFORM_NXP_GPPWM_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_GPPWM
+
 config PLATFORM_NXP_I2C_BASE
 	bool "I2C"
 	default y
+
+config PLATFORM_NXP_I2C_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_I2C_BASE
 
 config PLATFORM_NXP_I2C_PM
 	bool "Power management"
@@ -211,6 +246,11 @@ config PLATFORM_NXP_I2S_BASE
 	default y
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
+config PLATFORM_NXP_I2S_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_I2S_BASE
+
 config PLATFORM_NXP_I2S_DMA
 	bool "I2S driver with DMA"
 	default y
@@ -229,14 +269,24 @@ config PLATFORM_NXP_IAP_FLASH
 	help
 	  This enables driver for the internal Flash memory.
 
-config PLATFORM_NXP_PIN_INTERRUPT
+config PLATFORM_NXP_PININT
 	bool "Pin Interrupts"
 	default y
+
+config PLATFORM_NXP_PININT_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_PININT
 
 config PLATFORM_NXP_RTC
 	bool "Real-Time Clock"
 	default y
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM_NXP_RTC_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_RTC
 
 config PLATFORM_NXP_SDMMC
 	bool "SD/MMC card interface"
@@ -249,6 +299,11 @@ config PLATFORM_NXP_SCT_BASE
 	depends on FAMILY_LPC43XX
 	help
 	  This is the driver for the State Configurable Timer peripheral.
+
+config PLATFORM_NXP_SCT_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_SCT_BASE
 
 config PLATFORM_NXP_SCT_PWM
 	bool "PWM on SCT"
@@ -265,6 +320,11 @@ config PLATFORM_NXP_SSP_BASE
 	default y
 	help
 	  This is the driver for the Synchronous Serial Port peripheral.
+
+config PLATFORM_NXP_SSP_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_SSP_BASE
 
 config PLATFORM_NXP_SSP_PM
 	bool "Power management"
@@ -294,6 +354,11 @@ config PLATFORM_NXP_ONE_WIRE_SSP_SEARCH
 config PLATFORM_NXP_UART_BASE
 	bool "UART"
 	default y
+
+config PLATFORM_NXP_UART_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_UART_BASE
 
 config PLATFORM_NXP_UART_PM
 	bool "Power management"
@@ -326,6 +391,11 @@ config PLATFORM_USB
 	depends on FAMILY_LPC13XX || FAMILY_LPC17XX || FAMILY_LPC43XX
 	select PLATFORM_USB_DMA if FAMILY_LPC43XX
 
+config PLATFORM_USB_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_USB
+
 config PLATFORM_USB_DMA
 	bool "USB DMA"
 	default y
@@ -353,10 +423,15 @@ config PLATFORM_USB_DEVICE_POOL_SIZE
 	default 12
 	depends on PLATFORM_USB_DEVICE && PLATFORM_USB_DMA
 
-config PLATFORM_NXP_WAKEUP_INTERRUPT
+config PLATFORM_NXP_WAKEUPINT
 	bool "Wake-up interrupts"
 	default y
 	depends on PM && (FAMILY_LPC11XX || FAMILY_LPC13XX)
+
+config PLATFORM_NXP_WAKEUPINT_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_WAKEUPINT
 
 config PLATFORM_NXP_WDT
 	bool "Watchdog"
