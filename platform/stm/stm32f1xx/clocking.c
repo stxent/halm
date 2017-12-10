@@ -67,7 +67,6 @@ static uint32_t apb2ClockFrequency(const void *clockBase
 /*----------------------------------------------------------------------------*/
 static void clockDisableStub(const void *clockBase __attribute__((unused)))
 {
-
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clockEnableStub(const void *clockBase

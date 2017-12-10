@@ -14,7 +14,6 @@
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
 static uint8_t configMatchPin(uint8_t channel, PinNumber key);
-/*----------------------------------------------------------------------------*/
 static enum Result unitAllocateChannel(struct GpPwmUnit *, uint8_t);
 static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
 static enum Result unitInit(void *, const void *);

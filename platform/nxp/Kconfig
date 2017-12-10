@@ -57,24 +57,24 @@ config PLATFORM_NXP_ADC_BASE
 	default y
 
 config PLATFORM_NXP_ADC
-	bool "Simplified ADC driver with polling"
-	default y
-	depends on PLATFORM_NXP_ADC_BASE
-
-config PLATFORM_NXP_ADC_BURST
-	bool "Interrupt-driven ADC"
-	default y
-	depends on PLATFORM_NXP_ADC_BASE
-
-config PLATFORM_NXP_ADC_BUS
-	bool "ADC Bus"
+	bool "Single channel ADC with polling"
 	default y
 	depends on PLATFORM_NXP_ADC_BASE
 
 config PLATFORM_NXP_ADC_DMA
-	bool "Single channel ADC driver with DMA"
+	bool "Single channel ADC with DMA"
 	default y
 	depends on PLATFORM_NXP_ADC_BASE && PLATFORM_NXP_GPDMA
+
+config PLATFORM_NXP_ADC_BURST
+	bool "Single channel interrupt-driven ADC"
+	default y
+	depends on PLATFORM_NXP_ADC_BASE
+
+config PLATFORM_NXP_ADC_BUS
+	bool "Interrupt-driven ADC bus"
+	default y
+	depends on PLATFORM_NXP_ADC_BASE
 
 config PLATFORM_NXP_CAN
 	bool "CAN"
@@ -92,7 +92,7 @@ config PLATFORM_NXP_CAN_TSEG2
 	depends on PLATFORM_NXP_CAN
 
 config PLATFORM_NXP_CAN_PM
-	bool "Power management for CAN drivers"
+	bool "Power management"
 	default n
 	depends on PM && PLATFORM_NXP_CAN
 
@@ -154,36 +154,36 @@ config PLATFORM_NXP_GPDMA_SYNC
 	  response time.
 
 config PLATFORM_NXP_GPTIMER_BASE
-	bool "General-purpose timer"
+	bool "General Purpose Timer"
 	default y
 
 config PLATFORM_NXP_GPTIMER_PM
-	bool "Power management for general-purpose timer drivers"
+	bool "Power management"
 	default n
 	depends on PLATFORM_NXP_GPTIMER_BASE && PM
 
 config PLATFORM_NXP_GPTIMER
-	bool "Common timer on general-purpose timer"
+	bool "Common timer"
 	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE
 
 config PLATFORM_NXP_GPTIMER_CAPTURE
-	bool "Input capture on general-purpose timer"
+	bool "Input capture"
 	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE
 
 config PLATFORM_NXP_GPTIMER_COUNTER
-	bool "Counter on general-purpose timer"
+	bool "Pulse counter"
 	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE
 
 config PLATFORM_NXP_GPTIMER_PWM
-	bool "PWM on general-purpose timer"
+	bool "PWM"
 	default y
 	depends on PLATFORM_NXP_GPTIMER_BASE && (FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX)
 
 config PLATFORM_NXP_GPPWM
-	bool "PWM"
+	bool "General Purpose PWM"
 	default y
 	depends on FAMILY_LPC17XX
 
@@ -192,7 +192,7 @@ config PLATFORM_NXP_I2C_BASE
 	default y
 
 config PLATFORM_NXP_I2C_PM
-	bool "Power management for I2C drivers"
+	bool "Power management"
 	default n
 	depends on PM && PLATFORM_NXP_I2C_BASE
 
@@ -230,7 +230,7 @@ config PLATFORM_NXP_IAP_FLASH
 	  This enables driver for the internal Flash memory.
 
 config PLATFORM_NXP_PIN_INTERRUPT
-	bool "Pin interrupts"
+	bool "Pin Interrupts"
 	default y
 
 config PLATFORM_NXP_RTC
@@ -267,7 +267,7 @@ config PLATFORM_NXP_SSP_BASE
 	  This is the driver for the Synchronous Serial Port peripheral.
 
 config PLATFORM_NXP_SSP_PM
-	bool "Power management for SSP drivers"
+	bool "Power management"
 	default n
 	depends on PLATFORM_NXP_SSP_BASE && PM
 
@@ -296,7 +296,7 @@ config PLATFORM_NXP_UART_BASE
 	default y
 
 config PLATFORM_NXP_UART_PM
-	bool "Power management for UART drivers"
+	bool "Power management"
 	default n
 	depends on PM && PLATFORM_NXP_UART_BASE
 

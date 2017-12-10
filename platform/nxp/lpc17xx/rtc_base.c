@@ -52,8 +52,6 @@ static enum Result clkInit(void *object,
 /*----------------------------------------------------------------------------*/
 static void clkDeinit(void *object)
 {
-  const struct RtcBase * const clock = object;
-
   sysPowerDisable(PWR_RTC);
-  setDescriptor(clock, 0);
+  setDescriptor(object, 0);
 }

@@ -83,13 +83,14 @@ static enum Result dacSetParam(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static size_t dacWrite(void *object, const void *buffer, size_t length)
 {
-  struct Dac * const interface = object;
-  LPC_DAC_Type * const reg = interface->base.reg;
+  if (length >= SAMPLE_SIZE)
+  {
+    struct Dac * const interface = object;
+    LPC_DAC_Type * const reg = interface->base.reg;
 
-  if (length < SAMPLE_SIZE)
+    reg->CR = (*(const uint16_t *)buffer & CR_OUTPUT_MASK) | CR_BIAS;
+    return SAMPLE_SIZE;
+  }
+  else
     return 0;
-
-  reg->CR = (*(const uint16_t *)buffer & CR_OUTPUT_MASK) | CR_BIAS;
-
-  return SAMPLE_SIZE;
 }

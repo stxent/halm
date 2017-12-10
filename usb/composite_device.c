@@ -289,7 +289,6 @@ static enum Result driverInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void driverDeinit(void *object __attribute__((unused)))
 {
-
 }
 /*----------------------------------------------------------------------------*/
 static enum Result driverConfigure(void *object,

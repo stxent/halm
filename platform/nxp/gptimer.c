@@ -12,7 +12,7 @@
 static inline uint32_t getMaxValue(const struct GpTimer *);
 static void interruptHandler(void *);
 static void updateFrequency(struct GpTimer *, uint32_t);
-/*----------------------------------------------------------------------------*/
+
 #ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
 static void powerStateHandler(void *, enum PmState);
 #endif

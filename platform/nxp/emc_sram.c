@@ -5,11 +5,10 @@
  */
 
 #include <assert.h>
+#include <xcore/helpers.h>
 #include <halm/platform/nxp/emc_base.h>
 #include <halm/platform/nxp/emc_defs.h>
 #include <halm/platform/nxp/emc_sram.h>
-/*----------------------------------------------------------------------------*/
-static inline uint32_t max(uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result sramInit(void *, const void *);
 static void sramDeinit(void *);
@@ -28,11 +27,6 @@ extern const struct PinGroupEntry emcControlPins[];
 extern const struct EmcPinDescription emcControlPinMap;
 extern const struct PinGroupEntry emcDataPins[];
 extern const PinNumber emcDataPinMap[];
-/*----------------------------------------------------------------------------*/
-static inline uint32_t max(uint32_t a, uint32_t b)
-{
-  return a > b ? a : b;
-}
 /*----------------------------------------------------------------------------*/
 static enum Result sramInit(void *object, const void *configBase)
 {
@@ -135,9 +129,9 @@ static enum Result sramInit(void *object, const void *configBase)
   const uint32_t wc = 10 * config->timings.wc;
   const uint32_t we = 10 * config->timings.we;
 
-  const uint32_t aaTime = max(rc, cycleTime);
-  const uint32_t weTime = max(we, cycleTime);
-  const uint32_t weDelay = max(wc, 3 * cycleTime) - weTime - cycleTime;
+  const uint32_t aaTime = MAX(rc, cycleTime);
+  const uint32_t weTime = MAX(we, cycleTime);
+  const uint32_t weDelay = MAX(wc, 3 * cycleTime) - weTime - cycleTime;
 
   /* Results are in HCLK ticks */
   const uint32_t oeTicks = (oe + (cycleTime - 1)) / cycleTime;

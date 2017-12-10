@@ -51,7 +51,7 @@ static void interruptHandler(void *object)
   irqDisable(unit->base.irq);
 
   /* Read values and clear interrupt flags */
-  for (unsigned int index = 0; index < interface->number; ++index)
+  for (size_t index = 0; index < interface->number; ++index)
     *buffer++ = DR_RESULT_VALUE(reg->DR[interface->pins[index].channel]);
 
   /* Reset buffer pointer to notify that the conversion is completed */
@@ -68,11 +68,11 @@ static void setupChannels(struct AdcBus *interface, const PinNumber *pins)
   interface->mask = 0x00;
   interface->event = 0;
 
-  for (unsigned int index = 0; index < interface->number; ++index)
+  for (size_t index = 0; index < interface->number; ++index)
   {
     adcConfigPin(&interface->unit->base, pins[index], &interface->pins[index]);
 
-    const unsigned int channel = interface->pins[index].channel;
+    const uint8_t channel = interface->pins[index].channel;
 
     /*
      * Check whether the order of pins is correct and all pins
@@ -124,7 +124,7 @@ static void adcDeinit(void *object)
 {
   const struct AdcBus * const interface = object;
 
-  for (unsigned int index = 0; index < interface->number; ++index)
+  for (size_t index = 0; index < interface->number; ++index)
     adcReleasePin(interface->pins[index]);
 
   free(interface->pins);

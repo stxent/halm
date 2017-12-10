@@ -16,7 +16,6 @@ struct StartLogicHandler
 };
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(struct PinData);
-/*----------------------------------------------------------------------------*/
 static enum Result startLogicHandlerAttach(struct PinData,
     const struct WakeupInterrupt *);
 static void startLogicHandlerDetach(const struct WakeupInterrupt *);

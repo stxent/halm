@@ -17,7 +17,6 @@ static enum Result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static void dmaSetupRx(struct Dma *, struct Dma *);
 static void dmaSetupTx(struct Dma *, struct Dma *);
 static enum Result getStatus(const struct SpiDma *);
-/*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
 static void powerStateHandler(void *, enum PmState);
 #endif

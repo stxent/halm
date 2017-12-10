@@ -109,7 +109,6 @@ void adcConfigPin(const struct AdcUnitBase *unit, PinNumber key,
 /*----------------------------------------------------------------------------*/
 void adcReleasePin(const struct AdcPin adcPin __attribute__((unused)))
 {
-
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcUnitInit(void *object, const void *configBase)

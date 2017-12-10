@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-__attribute__((weak)) void defaultHandler(void);
+void defaultHandler(void) __attribute__((weak));
 /*----------------------------------------------------------------------------*/
 /* Core Cortex-M3 IRQ handlers */
 void RESET_ISR(void) __attribute__((weak, alias("defaultHandler")));

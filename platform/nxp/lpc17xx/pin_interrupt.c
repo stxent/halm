@@ -187,10 +187,8 @@ static enum Result pinInterruptInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void pinInterruptDeinit(void *object)
 {
-  struct PinInterrupt * const interrupt = object;
-
-  disableInterrupt(interrupt);
-  pinInterruptHandlerDetach(interrupt);
+  disableInterrupt(object);
+  pinInterruptHandlerDetach(object);
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptEnable(void *object)

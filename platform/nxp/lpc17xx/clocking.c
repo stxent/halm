@@ -157,7 +157,6 @@ static void pllDisconnect(void)
 /*----------------------------------------------------------------------------*/
 static void clockDisableStub(const void *clockBase __attribute__((unused)))
 {
-
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clockEnableStub(const void *clockBase

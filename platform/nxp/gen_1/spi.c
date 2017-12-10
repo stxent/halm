@@ -14,7 +14,6 @@
 #define FIFO_DEPTH  8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-/*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
