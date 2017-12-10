@@ -22,7 +22,7 @@ struct Rtc
 static const struct RtClockClass clkTable = {
     .size = sizeof(struct Rtc),
     .init = clkInit,
-    .deinit = clkDeinit,
+    .deinit = 0, /* Default destructor */
 
     .callback = clkCallback,
     .setAlarm = clkSetAlarm,
@@ -36,11 +36,6 @@ static enum Result clkInit(void *object __attribute__((unused)),
     const void *configBase __attribute__((unused)))
 {
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void clkDeinit(void *object __attribute__((unused)))
-{
-
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clkCallback(void *object __attribute__((unused)),

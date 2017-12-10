@@ -29,7 +29,7 @@ static enum Result emcHandlerInit(void *, const void *);
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct EmcHandler),
     .init = emcHandlerInit,
-    .deinit = 0
+    .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const EmcHandler = &handlerTable;

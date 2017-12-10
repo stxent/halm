@@ -42,7 +42,7 @@ static void pinInterruptSetCallback(void *, void (*)(void *), void *);
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct PinInterruptHandler),
     .init = pinInterruptHandlerInit,
-    .deinit = 0
+    .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
 static const struct InterruptClass pinInterruptTable = {

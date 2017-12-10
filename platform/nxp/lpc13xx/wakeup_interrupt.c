@@ -31,7 +31,7 @@ static void wakeupInterruptSetCallback(void *, void (*)(void *), void *);
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct StartLogicHandler),
     .init = startLogicHandlerInit,
-    .deinit = 0
+    .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
 static const struct InterruptClass wakeupInterruptTable = {

@@ -43,7 +43,7 @@ static void tmrDeinit(void *);
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct TimerHandler),
     .init = timerHandlerInit,
-    .deinit = 0
+    .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass tmrTable = {

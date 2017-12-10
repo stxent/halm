@@ -32,7 +32,7 @@ extern enum Result pmPlatformChangeState(enum PmState);
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct PmHandler),
     .init = pmHandlerInit,
-    .deinit = 0
+    .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PmHandler = &handlerTable;

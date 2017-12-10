@@ -42,7 +42,7 @@ static void channelDeinit(void *);
 static const struct EntityClass handlerTable = {
     .size = sizeof(struct DmaHandler),
     .init = dmaHandlerInit,
-    .deinit = 0
+    .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass channelTable = {

@@ -10,14 +10,13 @@
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
-static void wdtDeinit(void *);
 static enum Result wdtSetCallback(void *, void (*)(void *), void *);
 static void wdtReload(void *);
 /*----------------------------------------------------------------------------*/
 static const struct WatchdogClass wdtTable = {
     .size = sizeof(struct Wdt),
     .init = wdtInit,
-    .deinit = wdtDeinit,
+    .deinit = 0, /* Default destructor */
 
     .setCallback = wdtSetCallback,
     .reload = wdtReload
@@ -51,11 +50,6 @@ static enum Result wdtInit(void *object, const void *configBase)
   wdtReload(object);
 
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void wdtDeinit(void *object __attribute__((unused)))
-{
-  /* Watchdog timer cannot be disabled */
 }
 /*----------------------------------------------------------------------------*/
 static enum Result wdtSetCallback(void *object __attribute__((unused)),

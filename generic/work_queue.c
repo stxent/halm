@@ -38,7 +38,7 @@ static enum Result wqInit(void *, const void *);
 static const struct EntityClass wqTable = {
     .size = sizeof(struct SimpleWorkQueue),
     .init = wqInit,
-    .deinit = 0
+    .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const SimpleWorkQueue = &wqTable;
