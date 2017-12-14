@@ -7,7 +7,6 @@
 #include <ev.h>
 #include <fcntl.h>
 #include <pthread.h>
-#include <signal.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -222,8 +221,6 @@ static void streamDeinit(void *object)
 
   byteQueueDeinit(&interface->rxQueue);
   pthread_mutex_destroy(&interface->rxQueueLock);
-
-  raise(SIGUSR1);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamSetCallback(void *object, void (*callback)(void *),

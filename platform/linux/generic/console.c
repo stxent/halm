@@ -6,7 +6,6 @@
 
 #include <ev.h>
 #include <pthread.h>
-#include <signal.h>
 #include <termios.h>
 #include <unistd.h>
 #include <xcore/containers/byte_queue.h>
@@ -138,8 +137,6 @@ static void streamDeinit(void *object __attribute__((unused)))
 
   byteQueueDeinit(&interface->rxQueue);
   pthread_mutex_destroy(&interface->rxQueueLock);
-
-  raise(SIGUSR1);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamSetCallback(void *object, void (*callback)(void *),

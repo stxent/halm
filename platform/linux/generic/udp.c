@@ -7,7 +7,6 @@
 #include <arpa/inet.h>
 #include <ev.h>
 #include <pthread.h>
-#include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <xcore/containers/byte_queue.h>
@@ -209,7 +208,6 @@ static enum Result streamInit(void *object, const void *configBase)
 static void streamDeinit(void *object)
 {
   cleanup(object, CLEANUP_ALL);
-  raise(SIGUSR1);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamSetCallback(void *object, void (*callback)(void *),
