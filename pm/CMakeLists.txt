@@ -2,7 +2,7 @@
 # Project is distributed under the terms of the GNU General Public License v3.0
 
 if(${CONFIG_PM})
-    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/pm.c")
+    list(APPEND SOURCE_FILES "pm.c")
 endif()
 
 if(SOURCE_FILES)
