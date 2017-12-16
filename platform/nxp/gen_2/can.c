@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <halm/generic/can.h>
-#include <halm/platform/nxp/can.h>
+#include <halm/platform/nxp/gen_2/can.h>
 #include <halm/platform/nxp/gen_2/can_defs.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/

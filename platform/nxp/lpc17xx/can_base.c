@@ -105,12 +105,10 @@ static bool setDescriptor(uint8_t channel, const struct CanBase *state,
 /*----------------------------------------------------------------------------*/
 void CAN_ISR(void)
 {
-  static const uint32_t mask = ICR_RI | ICR_TI_MASK;
-
-  if (descriptors[0] && (LPC_CAN1->ICR & mask))
+  if (descriptors[0])
     descriptors[0]->handler(descriptors[0]);
 
-  if (descriptors[1] && (LPC_CAN2->ICR & mask))
+  if (descriptors[1])
     descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/

@@ -8,8 +8,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <xcore/memory.h>
 #include <halm/generic/can.h>
-#include <halm/platform/nxp/can.h>
+#include <halm/platform/nxp/gen_1/can.h>
 #include <halm/platform/nxp/gen_1/can_defs.h>
 #include <halm/pm.h>
 #include <halm/timer.h>
@@ -26,8 +27,8 @@ static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
 static void interruptHandler(void *);
 static void readMessage(struct Can *, struct CanMessage *);
-static uint32_t sendMessage(struct Can *, const struct CanMessage *, uint32_t);
-/*----------------------------------------------------------------------------*/
+static void sendMessage(struct Can *, const struct CanMessage *, uint32_t *);
+
 #ifdef CONFIG_PLATFORM_NXP_CAN_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
@@ -98,11 +99,9 @@ static void changeMode(struct Can *interface, enum Mode mode)
         break;
     }
 
-    /* LOM and STM bits can be written only in the Reset mode */
+    /* Enable Reset mode to configure LOM and STM bits */
     reg->MOD |= MOD_RM;
-    /* Error counters can be cleared only in the Reset mode */
-    reg->GSR &= ~(GSR_RXERR_MASK | GSR_TXERR_MASK);
-
+    /* Change test settings and disable Reset Mode */
     reg->MOD = value;
   }
 }
@@ -120,55 +119,61 @@ static void interruptHandler(void *object)
 {
   struct Can * const interface = object;
   LPC_CAN_Type * const reg = interface->base.reg;
+  const uint32_t icr = reg->ICR;
   bool event = false;
 
-  while (reg->SR & SR_RBS)
+  if (icr & ICR_RI)
   {
-    const uint32_t timestamp = interface->timer ?
-        timerGetValue(interface->timer) : 0;
-
-    if (!queueFull(&interface->rxQueue))
+    while (reg->SR & SR_RBS)
     {
-      struct CanMessage *message;
+      const uint32_t timestamp = interface->timer ?
+          timerGetValue(interface->timer) : 0;
 
-      arrayPopBack(&interface->pool, &message);
-      readMessage(interface, message);
-      message->timestamp = timestamp;
-      queuePush(&interface->rxQueue, &message);
-      event = true;
-    }
+      if (!queueFull(&interface->rxQueue))
+      {
+        struct CanMessage *message;
 
-    /* Release receive buffer */
-    reg->CMR = CMR_RRB;
-  }
+        arrayPopBack(&interface->pool, &message);
+        readMessage(interface, message);
+        message->timestamp = timestamp;
+        queuePush(&interface->rxQueue, &message);
+        event = true;
+      }
 
-  uint32_t status = reg->SR;
-
-  if (status & SR_TBS_MASK)
-  {
-    /* Disable interrupts for completed transmit buffers */
-    uint32_t enabledInterrupts = reg->IER;
-
-    if (status & SR_TBS(0))
-      enabledInterrupts &= ~IER_TIE1;
-    if (status & SR_TBS(1))
-      enabledInterrupts &= ~IER_TIE2;
-    if (status & SR_TBS(2))
-      enabledInterrupts &= ~IER_TIE3;
-
-    reg->IER = enabledInterrupts;
-
-    while (!queueEmpty(&interface->txQueue) && (status & SR_TBS_MASK))
-    {
-      const struct CanMessage *message;
-
-      queuePop(&interface->txQueue, &message);
-      status = sendMessage(interface, message, status);
-      arrayPushBack(&interface->pool, &message);
+      /* Release receive buffer */
+      reg->CMR = CMR_RRB | CMR_CDO;
     }
   }
 
-  if (status & SR_BS)
+  const uint32_t sr = reg->SR;
+
+  if ((icr & (ICR_EPI | ICR_TI_MASK)) && !(sr & SR_BS))
+  {
+    uint32_t status = sr & SR_TBS_MASK;
+
+    /*
+     * Enqueue new messages when:
+     *   - no sequence restart occurred.
+     *   - when sequence restart occurred and hardware queue was drained.
+     */
+    if (interface->sequence || status == SR_TBS_MASK)
+    {
+      while (!queueEmpty(&interface->txQueue) && status)
+      {
+        const struct CanMessage *message;
+
+        queuePop(&interface->txQueue, &message);
+        sendMessage(interface, message, &status);
+        arrayPushBack(&interface->pool, &message);
+
+        /* Check whether sequence restart occurred or not */
+        if (!interface->sequence)
+          break;
+      }
+    }
+  }
+
+  if ((icr & ICR_BEI) && (sr & SR_BS))
   {
     /*
      * The controller is forced into a bus-off state, RM bit should be cleared
@@ -210,32 +215,12 @@ static void readMessage(struct Can *interface, struct CanMessage *message)
   }
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sendMessage(struct Can *interface,
-    const struct CanMessage *message, uint32_t status)
+static void sendMessage(struct Can *interface,
+    const struct CanMessage *message, uint32_t *status)
 {
   assert(message->length <= 8);
 
-  LPC_CAN_Type * const reg = interface->base.reg;
-  unsigned int index;
-  uint32_t mask;
-
-  if (status & SR_TBS(0))
-  {
-    index = 0;
-    mask = IER_TIE1;
-  }
-  else if (status & SR_TBS(1))
-  {
-    index = 1;
-    mask = IER_TIE2;
-  }
-  else
-  {
-    index = 2;
-    mask = IER_TIE3;
-  }
-
-  uint32_t command = CMR_TR | CMR_STB(index);
+  uint32_t command = CMR_TR;
   uint32_t information = TFI_DLC(message->length);
 
   if ((message->flags & CAN_SELF_RX) || interface->mode == MODE_LOOPBACK)
@@ -251,6 +236,10 @@ static uint32_t sendMessage(struct Can *interface,
     assert(message->id < (1UL << 11));
   }
 
+  LPC_CAN_Type * const reg = interface->base.reg;
+  const unsigned int position = countLeadingZeros32(reverseBits32(*status));
+  const unsigned int index = SR_TBS_VALUE_TO_CHANNEL(position);
+
   if (!(message->flags & CAN_RTR))
   {
     uint32_t data[2] = {0};
@@ -265,13 +254,13 @@ static uint32_t sendMessage(struct Can *interface,
     information |= TFI_RTR;
   }
 
-  reg->TX[index].TFI = information;
+  reg->TX[index].TFI = information | TFI_PRIO(interface->sequence);
   reg->TX[index].TID = message->id;
 
-  reg->IER |= mask;
-  reg->CMR = command;
+  reg->CMR = command | CMR_STB(index);
 
-  return status & ~SR_TBS(index);
+  *status &= ~BIT(position);
+  ++interface->sequence;
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_CAN_PM
@@ -307,6 +296,7 @@ static enum Result canInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->timer = config->timer;
   interface->mode = MODE_LISTENER;
+  interface->sequence = 0;
 
   const size_t poolSize = config->rxBuffers + config->txBuffers;
 
@@ -341,8 +331,8 @@ static enum Result canInit(void *object, const void *configBase)
   interface->rate = config->rate;
   reg->BTR = calcBusTimings(interface, interface->rate);
 
-  /* Disable Reset mode and activate Listen Only mode */
-  reg->MOD = MOD_LOM;
+  /* Activate Listen Only mode and enable local priority for transmit buffers */
+  reg->MOD = MOD_LOM | MOD_TPM;
 
   LPC_CANAF->AFMR = AFMR_AccBP; //FIXME
 
@@ -354,7 +344,7 @@ static enum Result canInit(void *object, const void *configBase)
   irqSetPriority(interface->base.irq, config->priority);
 
   /* Enable interrupts on message reception and bus error */
-  reg->IER = IER_RIE | IER_BEIE;
+  reg->IER = IER_RIE | IER_EPIE | IER_BEIE | IER_TIE_MASK;
 
   return E_OK;
 }
@@ -492,20 +482,27 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   const struct CanStandardMessage *input = buffer;
   const size_t initialLength = length;
 
-  /* Synchronize access to the message queue and the CAN core */
+  /* Synchronize access to the message queue */
   const IrqState state = irqSave();
 
   if (queueEmpty(&interface->txQueue))
   {
-    uint32_t status = reg->SR;
+    uint32_t status = reg->SR & SR_TBS_MASK;
 
-    while (length && (status & SR_TBS_MASK))
+    if (interface->sequence || status == SR_TBS_MASK)
     {
-      /* One of transmit buffers is empty */
-      status = sendMessage(interface, (const struct CanMessage *)input, status);
+      while (length && status)
+      {
+        /* One of transmit buffers is empty, write new message into it */
+        sendMessage(interface, (const struct CanMessage *)input, &status);
 
-      length -= sizeof(*input);
-      ++input;
+        length -= sizeof(*input);
+        ++input;
+
+        /* Stop after sequence restart */
+        if (!interface->sequence)
+          break;
+      }
     }
   }
 

@@ -112,14 +112,15 @@
 /* Data Overrun Status */
 #define SR_DOS                          BIT(1)
 /* Transmit Buffer Status: 0 when locked, 1 when released */
-#define SR_TBS(channel)                 BIT((channel) * 8 + 2)
+#define SR_TBS(channel)                 BIT(((channel) << 3) + 2)
 #define SR_TBS_MASK                     (SR_TBS(0) | SR_TBS(1) | SR_TBS(2))
+#define SR_TBS_VALUE_TO_CHANNEL(reg)    (((reg) - 2) >> 3)
 /* Transmission Complete Status: 0 when incomplete, 1 when complete */
-#define SR_TCS(channel)                 BIT((channel) * 8 + 3)
+#define SR_TCS(channel)                 BIT(((channel) << 3) + 3)
 /* Receive Status */
 #define SR_RS                           BIT(4)
 /* Transmit Status: 0 when no transmission, 1 when transmission is ongoing */
-#define SR_TS(channel)                  BIT((channel) * 8 + 5)
+#define SR_TS(channel)                  BIT(((channel) << 3) + 5)
 /* Error Status */
 #define SR_ES                           BIT(6)
 /* Bus Status */
