@@ -92,6 +92,9 @@ static void changeMode(struct Can *interface, enum Mode mode)
   uint32_t control = reg->CNTL | CNTL_TEST;
   uint32_t test = 0;
 
+  /* Enable write access to the Test register */
+  reg->CNTL = control;
+
   switch (mode)
   {
     case MODE_LISTENER:
@@ -107,6 +110,10 @@ static void changeMode(struct Can *interface, enum Mode mode)
       break;
   }
 
+  /*
+   * Test functions are only active when the TEST bit
+   * in the Control register is set.
+   */
   reg->TEST = test;
   reg->CNTL = control;
 }
@@ -116,7 +123,7 @@ static void changeRate(struct Can *interface, uint32_t rate)
   LPC_CAN_Type * const reg = interface->base.reg;
   const uint32_t state = reg->CNTL;
 
-  reg->CNTL = state | CNTL_INIT | CNTL_CCE;
+  reg->CNTL = state | (CNTL_INIT | CNTL_CCE);
   reg->BRPE = 0;
   reg->BT = calcBusTimings(interface, rate);
   reg->CNTL = state;
@@ -413,7 +420,10 @@ static enum Result canInit(void *object, const void *configBase)
 
   LPC_CAN_Type * const reg = interface->base.reg;
 
-  reg->CNTL = CNTL_INIT;
+  /* Enable write access to the Test register and enter initialization mode */
+  reg->CNTL = CNTL_INIT | CNTL_TEST;
+  /* Enable listen only mode */
+  reg->TEST = TEST_SILENT;
 
   /* Configure clock divider to achieve 50 MHz or less peripheral clock */
   const uint32_t frequency = canGetClock(&interface->base);
@@ -432,8 +442,8 @@ static enum Result canInit(void *object, const void *configBase)
   /* Prepare RX Message Objects */
   buildAcceptanceFilters(interface);
 
-  /* Enable normal operation, enable interrupts */
-  reg->CNTL = CNTL_IE | CNTL_EIE;
+  /* Enable interrupts and exit initialization mode */
+  reg->CNTL = (reg->CNTL & ~CNTL_INIT) | (CNTL_IE | CNTL_EIE);
 
   irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);

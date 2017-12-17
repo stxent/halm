@@ -82,26 +82,29 @@ static void changeMode(struct Can *interface, enum Mode mode)
     interface->mode = mode;
 
     LPC_CAN_Type * const reg = interface->base.reg;
-    uint32_t value = reg->MOD;
+    uint32_t value = reg->MOD & ~(MOD_LOM | MOD_STM);
 
     switch (interface->mode)
     {
       case MODE_LISTENER:
-        value = (value & ~MOD_STM) | MOD_LOM;
-        break;
-
-      case MODE_ACTIVE:
-        value = value & ~(MOD_LOM | MOD_STM);
+        /*
+         * Notice: CAN peripheral in the Listen Only mode cannot receive
+         * unacknowledged messages due to a hardware issue in the CPU.
+         */
+        value |= MOD_LOM;
         break;
 
       case MODE_LOOPBACK:
-        value = (value & ~MOD_LOM) | MOD_STM;
+        value |= MOD_STM;
+        break;
+
+      default:
         break;
     }
 
     /* Enable Reset mode to configure LOM and STM bits */
     reg->MOD |= MOD_RM;
-    /* Change test settings and disable Reset Mode */
+    /* Change test settings */
     reg->MOD = value;
   }
 }
@@ -220,11 +223,8 @@ static void sendMessage(struct Can *interface,
 {
   assert(message->length <= 8);
 
-  uint32_t command = CMR_TR;
+  uint32_t command = interface->mode != MODE_LOOPBACK ? CMR_TR : CMR_SRR;
   uint32_t information = TFI_DLC(message->length);
-
-  if ((message->flags & CAN_SELF_RX) || interface->mode == MODE_LOOPBACK)
-    command |= CMR_SRR;
 
   if (message->flags & CAN_EXT_ID)
   {
@@ -474,10 +474,6 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   assert(length % sizeof(struct CanStandardMessage) == 0);
 
   struct Can * const interface = object;
-
-  if (interface->mode == MODE_LISTENER)
-    return 0;
-
   LPC_CAN_Type * const reg = interface->base.reg;
   const struct CanStandardMessage *input = buffer;
   const size_t initialLength = length;
