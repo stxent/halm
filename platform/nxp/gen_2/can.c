@@ -13,20 +13,20 @@
 #include <halm/platform/nxp/gen_2/can_defs.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
+#define MAX_FREQUENCY 50000000
+#define MAX_MESSAGES  32
+
+#define RX_OBJECT     1
+#define RX_REG_INDEX  ((RX_OBJECT - 1) / 16)
+#define TX_OBJECT     (1 + (MAX_MESSAGES / 2))
+#define TX_REG_INDEX  ((TX_OBJECT - 1) / 16)
+/*----------------------------------------------------------------------------*/
 enum Mode
 {
   MODE_LISTENER,
   MODE_ACTIVE,
   MODE_LOOPBACK
 };
-/*----------------------------------------------------------------------------*/
-#define MAX_FREQUENCY 50000000
-#define MAX_MESSAGES  32
-
-#define RX_OBJECT     1
-#define RX_REG_INDEX       ((RX_OBJECT - 1) / 16)
-#define TX_OBJECT     (1 + (MAX_MESSAGES / 2))
-#define TX_REG_INDEX       ((TX_OBJECT - 1) / 16)
 /*----------------------------------------------------------------------------*/
 static void buildAcceptanceFilters(struct Can *);
 static uint32_t calcBusTimings(const struct Can *, uint32_t);
@@ -88,31 +88,27 @@ static uint32_t calcBusTimings(const struct Can *interface, uint32_t rate)
 /*----------------------------------------------------------------------------*/
 static void changeMode(struct Can *interface, enum Mode mode)
 {
-  if (interface->mode != mode)
+  LPC_CAN_Type * const reg = interface->base.reg;
+  uint32_t control = reg->CNTL | CNTL_TEST;
+  uint32_t test = 0;
+
+  switch (mode)
   {
-    interface->mode = mode;
+    case MODE_LISTENER:
+      test = TEST_SILENT;
+      break;
 
-    LPC_CAN_Type * const reg = interface->base.reg;
-    uint32_t test = 0;
+    case MODE_LOOPBACK:
+      test = TEST_SILENT | TEST_LBACK;
+      break;
 
-    switch (interface->mode)
-    {
-      case MODE_LISTENER:
-        test = TEST_SILENT;
-        break;
-
-      case MODE_LOOPBACK:
-        test = TEST_SILENT | TEST_LBACK;
-        break;
-
-      default:
-        break;
-    }
-
-    reg->CNTL |= CNTL_TEST;
-    reg->TEST = test;
-    reg->CNTL &= ~CNTL_TEST;
+    default:
+      control &= ~CNTL_TEST;
+      break;
   }
+
+  reg->TEST = test;
+  reg->CNTL = control;
 }
 /*----------------------------------------------------------------------------*/
 static void changeRate(struct Can *interface, uint32_t rate)
@@ -390,7 +386,6 @@ static enum Result canInit(void *object, const void *configBase)
   interface->base.handler = interruptHandler;
   interface->callback = 0;
   interface->timer = config->timer;
-  interface->mode = MODE_LISTENER;
 
   const size_t poolSize = config->rxBuffers + config->txBuffers;
 
@@ -566,10 +561,6 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   assert(length % sizeof(struct CanStandardMessage) == 0);
 
   struct Can * const interface = object;
-
-  if (interface->mode == MODE_LISTENER)
-    return 0;
-
   LPC_CAN_Type * const reg = interface->base.reg;
   const struct CanStandardMessage *input = buffer;
   const size_t initialLength = length;
