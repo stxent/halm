@@ -474,6 +474,8 @@ static enum Result mainClockEnable(const void *clockBase
 {
   const struct CommonClockConfig * const config = configBase;
 
+  flashLatencyReset();
+
   if (config->source != CLOCK_PLL)
   {
     assert(config->source == CLOCK_INTERNAL
