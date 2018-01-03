@@ -551,13 +551,12 @@ static size_t canRead(void *object, void *buffer, size_t length)
   while (read < length && !queueEmpty(&interface->rxQueue))
   {
     struct CanMessage *input;
-    const IrqState state = irqSave();
 
+    irqDisable(interface->base.irq);
     queuePop(&interface->rxQueue, &input);
     memcpy(output, input, sizeof(*output));
     arrayPushBack(&interface->pool, &input);
-
-    irqRestore(state);
+    irqEnable(interface->base.irq);
 
     read += sizeof(*output);
     ++output;
@@ -576,7 +575,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   const size_t initialLength = length;
 
   /* Synchronize access to the message queue and the CAN core */
-  const IrqState state = irqSave();
+  irqDisable(interface->base.irq);
 
   if (queueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
   {
@@ -604,7 +603,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
     ++input;
   }
 
-  irqRestore(state);
+  irqEnable(interface->base.irq);
 
   return initialLength - length;
 }

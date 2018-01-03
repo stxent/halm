@@ -39,6 +39,8 @@ struct UsbDevice
 
   /* Device is configured */
   bool configured;
+  /* Device is enabled */
+  bool enabled;
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
@@ -256,6 +258,7 @@ static enum Result devInit(void *object, const void *configBase)
     return res;
 
   device->base.handler = interruptHandler;
+  device->enabled = false;
   memset(device->endpoints, 0, sizeof(device->endpoints));
 
   /* Initialize control message handler */
@@ -298,6 +301,9 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   if (!device->endpoints[index])
   {
+    /* Initialization of endpoint is only available before the driver starts */
+    assert(!device->enabled);
+
     const struct UsbEndpointConfig config = {
         .parent = device,
         .address = address
@@ -330,28 +336,23 @@ static void devSetAddress(void *object, uint8_t address)
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)
 {
-  usbCommandWrite(object, USB_CMD_SET_DEVICE_STATUS,
+  struct UsbDevice * const device = object;
+
+  usbCommandWrite(device, USB_CMD_SET_DEVICE_STATUS,
       state ? DEVICE_STATUS_CON : 0);
+  device->enabled = state;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
-
-  const IrqState state = irqSave();
-  const enum Result res = usbControlBindDriver(device->control, driver);
-  irqRestore(state);
-
-  return res;
+  return usbControlBindDriver(device->control, driver);
 }
 /*----------------------------------------------------------------------------*/
 static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
-
-  const IrqState state = irqSave();
   usbControlUnbindDriver(device->control);
-  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void devSetPower(void *object, uint16_t current)
@@ -612,8 +613,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
   if (index >= 2 && !ep->device->configured)
     return E_IDLE;
 
-  const IrqState state = irqSave();
-
+  irqDisable(ep->device->base.irq);
   assert(!queueFull(&ep->requests));
 
   const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
@@ -643,7 +643,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
     reg->USBDevIntSet = mask;
   }
 
-  irqRestore(state);
+  irqEnable(ep->device->base.irq);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

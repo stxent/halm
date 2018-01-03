@@ -401,21 +401,13 @@ static void devSetConnected(void *object, bool state)
 static enum Result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
-
-  const IrqState state = irqSave();
-  const enum Result res = usbControlBindDriver(device->control, driver);
-  irqRestore(state);
-
-  return res;
+  return usbControlBindDriver(device->control, driver);
 }
 /*----------------------------------------------------------------------------*/
 static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
-
-  const IrqState state = irqSave();
   usbControlUnbindDriver(device->control);
-  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void devSetPower(void *object, uint16_t current)
@@ -875,14 +867,13 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
   struct UsbDmaEndpoint * const ep = object;
   enum Result res;
 
-  const IrqState state = irqSave();
-
+  irqDisable(ep->device->base.irq);
   if (ep->address & USB_EP_DIRECTION_IN)
     res = epEnqueueTx(ep, request);
   else
     res = epEnqueueRx(ep, request);
+  irqEnable(ep->device->base.irq);
 
-  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/

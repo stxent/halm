@@ -74,6 +74,8 @@ struct UsbDevice
 
   /* Device is configured */
   bool configured;
+  /* Device is enabled */
+  bool enabled;
 };
 /*----------------------------------------------------------------------------*/
 #if defined(CONFIG_PLATFORM_USB_DMA) && !defined(CONFIG_PLATFORM_USB_NO_DEINIT)
@@ -404,6 +406,7 @@ static enum Result devInit(void *object, const void *configBase)
     return res;
 
   device->base.handler = interruptHandler;
+  device->enabled = false;
   memset(device->endpoints, 0, sizeof(device->endpoints));
 
   /* Initialize control message handler */
@@ -455,6 +458,9 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   if (!device->endpoints[index])
   {
+    /* Initialization of endpoint is only available before the driver starts */
+    assert(!device->enabled);
+
     const struct UsbEndpointConfig config = {
         .parent = device,
         .address = address
@@ -494,28 +500,23 @@ static void devSetAddress(void *object, uint8_t address)
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)
 {
-  usbCommandWrite(object, USB_CMD_SET_DEVICE_STATUS,
+  struct UsbDevice * const device = object;
+
+  usbCommandWrite(device, USB_CMD_SET_DEVICE_STATUS,
       state ? DEVICE_STATUS_CON : 0);
+  device->enabled = state;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devBind(void *object, void *driver)
 {
   struct UsbDevice * const device = object;
-
-  const IrqState state = irqSave();
-  const enum Result res = usbControlBindDriver(device->control, driver);
-  irqRestore(state);
-
-  return res;
+  return usbControlBindDriver(device->control, driver);
 }
 /*----------------------------------------------------------------------------*/
 static void devUnbind(void *object, const void *driver __attribute__((unused)))
 {
   struct UsbDevice * const device = object;
-
-  const IrqState state = irqSave();
   usbControlUnbindDriver(device->control);
-  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void devSetPower(void *object, uint16_t current)
@@ -771,8 +772,7 @@ static enum Result sieEpEnqueue(void *object, struct UsbRequest *request)
   if (index >= 2 && !ep->device->configured)
     return E_IDLE;
 
-  const IrqState state = irqSave();
-
+  irqDisable(ep->device->base.irq);
   assert(!queueFull(&ep->requests));
 
   const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
@@ -802,7 +802,7 @@ static enum Result sieEpEnqueue(void *object, struct UsbRequest *request)
     reg->USBEpIntSet = mask;
   }
 
-  irqRestore(state);
+  irqEnable(ep->device->base.irq);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -946,7 +946,7 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
   const unsigned int index = EP_TO_INDEX(ep->address);
   const uint32_t mask = 1UL << index;
 
-  const IrqState state = irqSave();
+  irqDisable(ep->device->base.irq);
 
   if (pool->heads[index])
   {
@@ -972,7 +972,7 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
     reg->USBEpDMAEn = mask;
   }
 
-  irqRestore(state);
+  irqEnable(ep->device->base.irq);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueueRx(struct UsbDmaEndpoint *ep,
@@ -1097,14 +1097,13 @@ static enum Result dmaEpEnqueue(void *object, struct UsbRequest *request)
   struct UsbDmaEndpoint * const ep = object;
   enum Result res;
 
-  const IrqState state = irqSave();
-
+  irqDisable(ep->device->base.irq);
   if (ep->address & USB_EP_DIRECTION_IN)
     res = epEnqueueTx(ep, request);
   else
     res = epEnqueueRx(ep, request);
+  irqEnable(ep->device->base.irq);
 
-  irqRestore(state);
   return res;
 }
 /*----------------------------------------------------------------------------*/

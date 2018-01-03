@@ -339,9 +339,9 @@ static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
 
-  const IrqState state = irqSave();
+  irqDisable(GPDMA_IRQ);
   const size_t read = byteQueuePopArray(&interface->rxQueue, buffer, length);
-  irqRestore(state);
+  irqEnable(GPDMA_IRQ);
 
   return read;
 }
@@ -357,7 +357,8 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
    * Disable interrupts before status check because DMA interrupt
    * may be called and transmission will stall.
    */
-  const IrqState state = irqSave();
+  irqDisable(GPDMA_IRQ);
+
   const size_t written = byteQueuePushArray(&interface->txQueue,
       buffer, length);
 
@@ -376,6 +377,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
     (void)res;
   }
 
-  irqRestore(state);
+  irqEnable(GPDMA_IRQ);
+
   return written;
 }

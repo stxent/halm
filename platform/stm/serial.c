@@ -194,9 +194,9 @@ static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct Serial * const interface = object;
 
-  const IrqState state = irqSave();
+  irqDisable(interface->base.irq);
   const size_t read = byteQueuePopArray(&interface->rxQueue, buffer, length);
-  irqRestore(state);
+  irqEnable(interface->base.irq);
 
   return read;
 }
@@ -209,13 +209,11 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
 
   if (length)
   {
-    const IrqState state = irqSave();
-
+    irqDisable(interface->base.irq);
     written = byteQueuePushArray(&interface->txQueue, buffer, length);
     if (!(reg->CR1 & CR1_TXEIE))
       reg->CR1 |= CR1_TXEIE;
-
-    irqRestore(state);
+    irqEnable(interface->base.irq);
   }
   else
     written = 0;
