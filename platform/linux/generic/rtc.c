@@ -41,19 +41,19 @@ static enum Result clkCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clkSetAlarm(void *object __attribute__((unused)),
     time64_t alarmTime __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clkSetTime(void *object __attribute__((unused)),
     time64_t currentTime __attribute__((unused)))
 {
-  return E_ERROR;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static time64_t clkTime(void *object __attribute__((unused)))

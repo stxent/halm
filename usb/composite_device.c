@@ -386,29 +386,22 @@ static void devDeinit(void *object)
 static void *devCreateEndpoint(void *object, uint8_t address)
 {
   struct CompositeDevice * const device = object;
-
   return usbDevCreateEndpoint(device->parent, address);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t devGetInterface(const void *object)
 {
-  const struct CompositeDevice * const device = object;
-
-  return device->interfaceCount;
+  return ((struct CompositeDevice *)object)->interfaceCount;
 }
 /*----------------------------------------------------------------------------*/
 static void devSetAddress(void *object, uint8_t address)
 {
-  struct CompositeDevice * const device = object;
-
-  usbDevSetAddress(device->parent, address);
+  usbDevSetAddress(((struct CompositeDevice *)object)->parent, address);
 }
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)
 {
-  struct CompositeDevice * const device = object;
-
-  usbDevSetConnected(device->parent, state);
+  usbDevSetConnected(((struct CompositeDevice *)object)->parent, state);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devBind(void *object, void *driver)

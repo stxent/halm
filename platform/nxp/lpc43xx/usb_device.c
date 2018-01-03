@@ -421,7 +421,6 @@ static void devUnbind(void *object, const void *driver __attribute__((unused)))
 static void devSetPower(void *object, uint16_t current)
 {
   struct UsbDevice * const device = object;
-
   usbControlSetPower(device->control, current);
 }
 /*----------------------------------------------------------------------------*/
@@ -437,14 +436,12 @@ static enum UsbSpeed devGetSpeed(const void *object)
 static enum Result devStringAppend(void *object, struct UsbString string)
 {
   struct UsbDevice * const device = object;
-
   return usbControlStringAppend(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
 static void devStringErase(void *object, struct UsbString string)
 {
   struct UsbDevice * const device = object;
-
   usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
