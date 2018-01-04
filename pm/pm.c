@@ -23,8 +23,8 @@ struct PmHandler
   struct List objectList;
 };
 /*----------------------------------------------------------------------------*/
-static enum Result pmHandlerInit(void *, const void *);
 static void notifyHandlerEntries(enum PmState);
+static enum Result pmHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 extern enum Result pmCoreChangeState(enum PmState);
 extern enum Result pmPlatformChangeState(enum PmState);
@@ -37,14 +37,6 @@ static const struct EntityClass handlerTable = {
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PmHandler = &handlerTable;
 static struct PmHandler *pmHandler = 0;
-/*----------------------------------------------------------------------------*/
-static enum Result pmHandlerInit(void *object,
-    const void *configBase __attribute__((unused)))
-{
-  struct PmHandler * const handler = object;
-
-  return listInit(&handler->objectList, sizeof(struct PmHandlerEntry));
-}
 /*----------------------------------------------------------------------------*/
 static void notifyHandlerEntries(enum PmState state)
 {
@@ -60,6 +52,13 @@ static void notifyHandlerEntries(enum PmState state)
     entry.callback(entry.object, state);
     current = listNext(current);
   }
+}
+/*----------------------------------------------------------------------------*/
+static enum Result pmHandlerInit(void *object,
+    const void *configBase __attribute__((unused)))
+{
+  struct PmHandler * const handler = object;
+  return listInit(&handler->objectList, sizeof(struct PmHandlerEntry));
 }
 /*----------------------------------------------------------------------------*/
 void pmChangeState(enum PmState state)
@@ -93,8 +92,17 @@ void pmUnregister(const void *object)
 {
   assert(pmHandler);
 
-  struct ListNode * const node = listFind(&pmHandler->objectList, object);
-  assert(node);
+  struct ListNode *current = listFirst(&pmHandler->objectList);
+  struct PmHandlerEntry entry;
 
-  listErase(&pmHandler->objectList, node);
+  while (current)
+  {
+    listData(&pmHandler->objectList, current, &entry);
+    if (entry.object == object)
+      break;
+    current = listNext(current);
+  }
+  assert(current);
+
+  listErase(&pmHandler->objectList, current);
 }
