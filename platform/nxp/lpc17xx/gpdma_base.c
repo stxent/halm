@@ -87,22 +87,34 @@ static unsigned int eventToPeripheral(enum GpDmaEvent event)
 static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,
     enum GpDmaEvent event)
 {
-  if (type != GPDMA_TYPE_M2M && event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
+  if (type != GPDMA_TYPE_M2M)
   {
-    const unsigned int position = event - GPDMA_MAT0_0;
+    if (event >= GPDMA_UART0_RX && event <= GPDMA_UART3_TX)
+    {
+      const unsigned int position = event - GPDMA_UART0_RX;
+      const uint8_t mask = 1UL << position;
 
-    return (struct GpDmaMuxConfig){
-        .mask = 1 << position,
-        .value = position
-    };
+      return (struct GpDmaMuxConfig){
+          .mask = ~mask,
+          .value = 0
+      };
+    }
+    else if (event >= GPDMA_MAT0_0 && event <= GPDMA_MAT3_1)
+    {
+      const unsigned int position = event - GPDMA_MAT0_0;
+      const uint8_t mask = 1UL << position;
+
+      return (struct GpDmaMuxConfig){
+          .mask = ~mask,
+          .value = mask
+      };
+    }
   }
-  else
-  {
-    return (struct GpDmaMuxConfig){
-        .mask = 0xFF,
-        .value = 0
-    };
-  }
+
+  return (struct GpDmaMuxConfig){
+      .mask = 0xFF,
+      .value = 0
+  };
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
