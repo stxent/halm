@@ -5,7 +5,7 @@
  */
 
 #include <assert.h>
-#include <halm/platform/nxp/gpdma.h>
+#include <halm/platform/nxp/gpdma_oneshot.h>
 #include <halm/platform/nxp/spi_dma.h>
 #include <halm/platform/nxp/ssp_defs.h>
 #include <halm/pm.h>
@@ -62,7 +62,7 @@ static void dmaHandler(void *object)
 static enum Result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
-  const struct GpDmaConfig dmaConfigs[] = {
+  const struct GpDmaOneShotConfig dmaConfigs[] = {
       {
           .event = GPDMA_SSP0_RX + interface->base.channel,
           .type = GPDMA_TYPE_P2M,
@@ -75,11 +75,11 @@ static enum Result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
       }
   };
 
-  interface->rxDma = init(GpDma, &dmaConfigs[0]);
+  interface->rxDma = init(GpDmaOneShot, &dmaConfigs[0]);
   if (!interface->rxDma)
     return E_ERROR;
 
-  interface->txDma = init(GpDma, &dmaConfigs[1]);
+  interface->txDma = init(GpDmaOneShot, &dmaConfigs[1]);
   if (!interface->txDma)
     return E_ERROR;
 

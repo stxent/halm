@@ -1,18 +1,18 @@
 /*
- * halm/platform/nxp/gpdma.h
+ * halm/platform/nxp/gpdma_oneshot.h
  * Copyright (C) 2012 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_NXP_GPDMA_H_
-#define HALM_PLATFORM_NXP_GPDMA_H_
+#ifndef HALM_PLATFORM_NXP_GPDMA_ONESHOT_H_
+#define HALM_PLATFORM_NXP_GPDMA_ONESHOT_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <halm/platform/nxp/gpdma_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct DmaClass * const GpDma;
+extern const struct DmaClass * const GpDmaOneShot;
 
-struct GpDmaConfig
+struct GpDmaOneShotConfig
 {
   /** Mandatory: request connection to the peripheral or memory. */
   enum GpDmaEvent event;
@@ -22,7 +22,7 @@ struct GpDmaConfig
   uint8_t channel;
 };
 
-struct GpDma
+struct GpDmaOneShot
 {
   struct GpDmaBase base;
 
@@ -40,4 +40,4 @@ struct GpDma
   uint8_t state;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NXP_GPDMA_H_ */
+#endif /* HALM_PLATFORM_NXP_GPDMA_ONESHOT_H_ */

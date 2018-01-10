@@ -8,8 +8,8 @@
 #include <string.h>
 #include <halm/generic/byte_queue_extensions.h>
 #include <halm/platform/nxp/gen_1/uart_defs.h>
-#include <halm/platform/nxp/gpdma.h>
 #include <halm/platform/nxp/gpdma_circular.h>
+#include <halm/platform/nxp/gpdma_oneshot.h>
 #include <halm/platform/nxp/serial_dma.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
@@ -87,7 +87,7 @@ static enum Result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
       .channel = rxChannel,
       .silent = false
   };
-  const struct GpDmaConfig txDmaConfig = {
+  const struct GpDmaOneShotConfig txDmaConfig = {
       .event = GPDMA_UART0_TX + interface->base.channel,
       .type = GPDMA_TYPE_M2P,
       .channel = txChannel
@@ -99,7 +99,7 @@ static enum Result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
-  interface->txDma = init(GpDma, &txDmaConfig);
+  interface->txDma = init(GpDmaOneShot, &txDmaConfig);
   if (!interface->txDma)
     return E_ERROR;
   dmaConfigure(interface->txDma, &dmaSettings[1]);

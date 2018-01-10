@@ -44,9 +44,9 @@ if(${CONFIG_PLATFORM_NXP_EMC})
 endif()
 
 if(${CONFIG_PLATFORM_NXP_GPDMA})
-    list(APPEND SOURCE_FILES "gpdma.c")
     list(APPEND SOURCE_FILES "gpdma_circular.c")
     list(APPEND SOURCE_FILES "gpdma_list.c")
+    list(APPEND SOURCE_FILES "gpdma_oneshot.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gpdma_base.c")
 endif()
 
