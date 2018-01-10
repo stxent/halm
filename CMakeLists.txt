@@ -3,6 +3,7 @@
 
 project(halm C)
 cmake_minimum_required(VERSION 3.6)
+cmake_policy(SET CMP0054 NEW)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build: Debug Release." FORCE)
@@ -15,20 +16,20 @@ set(CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE STRING "Path to the config
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(ParseConfig)
-parse_config(FLAGS_LIBRARY "${CONFIG_FILE}")
+parse_config("${CONFIG_FILE}")
 
 # Default compiler flags
 set(FLAGS_DEFAULT "-fdata-sections -ffunction-sections -Wall -Wextra -Wshadow -pedantic")
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS_DEFAULT} ${FLAGS_CPU} ${FLAGS_LIBRARY}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS_DEFAULT} ${FLAGS_CPU}")
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
 if(${USE_LTO})
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto -ffat-lto-objects")
 endif()
 if(DEFINED PLATFORM)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${PLATFORM}")
+    add_definitions(-D${PLATFORM})
 endif()
 
 include_directories("${PATH_XCORE}/include")
