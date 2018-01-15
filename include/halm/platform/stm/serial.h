@@ -22,9 +22,9 @@ struct SerialConfig
   size_t txLength;
   /** Optional: parity bit setting. */
   enum UartParity parity;
-  /** Mandatory: serial input. */
+  /** Optional: serial input. */
   PinNumber rx;
-  /** Mandatory: serial output. */
+  /** Optional: serial output. */
   PinNumber tx;
   /** Optional: interrupt priority. */
   IrqPriority priority;

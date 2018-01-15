@@ -13,20 +13,31 @@ extern const struct PinEntry uartPins[];
 void uartConfigPins(struct UartBase *interface,
     const struct UartBaseConfig *config)
 {
-  const struct PinEntry *pinEntry;
-  struct Pin pin;
+  if (config->rx)
+  {
+    /* Configure UART RX pin */
+    const struct PinEntry * const pinEntry = pinFind(uartPins,
+        config->rx, interface->channel);
+    assert(pinEntry);
 
-  /* Configure UART RX pin */
-  pinEntry = pinFind(uartPins, config->rx, interface->channel);
-  assert(pinEntry);
-  pinInput((pin = pinInit(config->rx)));
-  pinSetFunction(pin, pinEntry->value);
+    const struct Pin pin = pinInit(config->rx);
 
-  /* Configure UART TX pin */
-  pinEntry = pinFind(uartPins, config->tx, interface->channel);
-  assert(pinEntry);
-  pinOutput((pin = pinInit(config->tx)), true);
-  pinSetFunction(pin, pinEntry->value);
+    pinInput(pin);
+    pinSetFunction(pin, pinEntry->value);
+  }
+
+  if (config->tx)
+  {
+    /* Configure UART TX pin */
+    const struct PinEntry * const pinEntry = pinFind(uartPins,
+        config->tx, interface->channel);
+    assert(pinEntry);
+
+    const struct Pin pin = pinInit(config->tx);
+
+    pinOutput(pin, true);
+    pinSetFunction(pin, pinEntry->value);
+  }
 }
 /*----------------------------------------------------------------------------*/
 void uartSetParity(struct UartBase *interface, enum UartParity parity)

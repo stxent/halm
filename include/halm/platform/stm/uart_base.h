@@ -22,9 +22,9 @@ extern const struct EntityClass * const UartBase;
 
 struct UartBaseConfig
 {
-  /** Mandatory: serial input. */
+  /** Optional: serial input. */
   PinNumber rx;
-  /** Mandatory: serial output. */
+  /** Optional: serial output. */
   PinNumber tx;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
