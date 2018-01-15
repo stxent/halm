@@ -132,7 +132,6 @@ static enum Result channelEnable(void *object)
   reg->SRCADDR = channel->source;
   reg->DESTADDR = channel->destination;
   reg->CONTROL = channel->control;
-  reg->CONFIG = channel->base.config;
   reg->LLI = 0;
 
   const uint32_t request = 1 << number;
@@ -143,7 +142,7 @@ static enum Result channelEnable(void *object)
 
   /* Start the transfer */
   channel->state = STATE_BUSY;
-  reg->CONFIG |= CONFIG_ENABLE;
+  reg->CONFIG = channel->base.config | CONFIG_ENABLE;
 
   return E_OK;
 }

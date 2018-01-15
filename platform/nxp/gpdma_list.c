@@ -109,10 +109,7 @@ static void startTransfer(struct GpDmaList *channel,
   reg->DESTADDR = entry->destination;
   reg->CONTROL = entry->control;
   reg->LLI = entry->next;
-  reg->CONFIG = channel->base.config;
-
-  /* Start the transfer */
-  reg->CONFIG |= CONFIG_ENABLE;
+  reg->CONFIG = channel->base.config | CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
