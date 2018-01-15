@@ -15,9 +15,7 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#define GPDMA_MAX_TRANSFER  ((1 << 12) - 1)
-/*----------------------------------------------------------------------------*/
-/** Direct Memory Access transfer type. */
+/** DMA transfer type. */
 enum GpDmaType
 {
   /** Memory to memory. */

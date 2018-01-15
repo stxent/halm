@@ -80,7 +80,6 @@ static struct DmaHandler *dmaHandler = 0;
 static unsigned int eventToPeripheral(enum GpDmaEvent event)
 {
   assert(event < GPDMA_MEMORY);
-
   return eventTranslationMap[event];
 }
 /*----------------------------------------------------------------------------*/
@@ -155,14 +154,12 @@ uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
 void gpDmaClearDescriptor(uint8_t channel)
 {
   assert(channel < CHANNEL_COUNT);
-
   dmaHandler->descriptors[channel] = 0;
 }
 /*----------------------------------------------------------------------------*/
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
 {
   assert(channel < CHANNEL_COUNT);
-
   return dmaHandler->descriptors[channel];
 }
 /*----------------------------------------------------------------------------*/

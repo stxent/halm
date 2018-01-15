@@ -184,7 +184,7 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Set frame size */
   controlValue |= CR0_DSS(8);
 
-  /* Set mode for the interface */
+  /* Set mode of the interface */
   if (config->mode & 0x01)
     controlValue |= CR0_CPHA;
   if (config->mode & 0x02)
@@ -194,7 +194,7 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Disable all interrupts */
   reg->IMSC = 0;
 
-  /* Try to set the desired data rate */
+  /* Set the desired data rate */
   sspSetRate(object, interface->rate);
 
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM

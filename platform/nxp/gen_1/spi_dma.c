@@ -17,8 +17,7 @@ static enum Result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static void dmaSetupRx(struct Dma *, struct Dma *);
 static void dmaSetupTx(struct Dma *, struct Dma *);
 static enum Result getStatus(const struct SpiDma *);
-static size_t transferData(struct SpiDma *interface,
-    const void *, void *, size_t);
+static size_t transferData(struct SpiDma *, const void *, void *, size_t);
 
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
 static void powerStateHandler(void *, enum PmState);
@@ -158,11 +157,11 @@ static enum Result getStatus(const struct SpiDma *interface)
   enum Result res;
 
   if (reg->SR & SR_BSY)
-    return E_BUSY;
-  if ((res = dmaStatus(interface->rxDma)) != E_OK)
-    return res;
+    res = E_BUSY;
+  else
+    res = dmaStatus(interface->rxDma);
 
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
@@ -201,9 +200,7 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
   enum Result res = E_OK;
 
   if (interface->blocking)
-  {
     while ((res = getStatus(interface)) == E_BUSY);
-  }
 
   return res == E_OK ? length : 0;
 
@@ -251,7 +248,7 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Set frame size */
   controlValue |= CR0_DSS(8);
 
-  /* Set mode for the interface */
+  /* Set mode of the interface */
   if (config->mode & 0x01)
     controlValue |= CR0_CPHA;
   if (config->mode & 0x02)
@@ -261,7 +258,7 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Disable all interrupts */
   reg->IMSC = 0;
 
-  /* Try to set the desired data rate */
+  /* Set the desired data rate */
   sspSetRate(object, interface->rate);
 
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM

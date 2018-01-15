@@ -42,8 +42,10 @@ struct SpiDma
 
   /* Desired baud rate */
   uint32_t rate;
-  /* DMA descriptors for data transfers */
-  struct Dma *rxDma, *txDma;
+  /* DMA descriptor for RX channel */
+  struct Dma *rxDma;
+  /* DMA descriptor for TX channel */
+  struct Dma *txDma;
   /*
    * Dummy frame to be sent over transmit line in the receive mode or
    * to be received in the transmit mode. The peripheral descriptor structure

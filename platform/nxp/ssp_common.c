@@ -22,8 +22,8 @@ void sspConfigPins(struct SspBase *interface,
   {
     if (pinArray[index])
     {
-      const struct PinEntry * const pinEntry = pinFind(sspPins, pinArray[index],
-          interface->channel);
+      const struct PinEntry * const pinEntry = pinFind(sspPins,
+          pinArray[index], interface->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);

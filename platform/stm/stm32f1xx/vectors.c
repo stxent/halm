@@ -88,7 +88,7 @@ void CAN2_RX1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void CAN2_SCE_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void OTG_FS_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
-/* Mock IRQ handlers */
+/* Virtual IRQ handlers */
 void ADC1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void ADC2_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void USB_HP_ISR(void) __attribute__((weak, alias("defaultHandler")));

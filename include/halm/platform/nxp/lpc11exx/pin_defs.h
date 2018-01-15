@@ -28,7 +28,7 @@
 #define IOCON_DIGITAL                   BIT(7)
 #define IOCON_OD                        BIT(10)
 /*----------------------------------------------------------------------------*/
-#define PINTSEL_CHANNEL_MASK(channel)   BIT_FIELD(MASK(8), channel << 3)
+#define PINTSEL_CHANNEL_MASK(channel)   BIT_FIELD(MASK(8), (channel) << 3)
 #define PINTSEL_CHANNEL(channel, port, offset) \
     BIT_FIELD(((port) << 5) | (offset), (channel) << 3)
 /*----------------------------------------------------------------------------*/

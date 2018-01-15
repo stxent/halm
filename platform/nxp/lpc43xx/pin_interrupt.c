@@ -77,7 +77,6 @@ static void processInterrupt(uint8_t channel)
 static void resetDescriptor(uint8_t channel)
 {
   assert(channel < ARRAY_SIZE(descriptors));
-
   descriptors[channel] = 0;
 }
 #endif
