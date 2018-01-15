@@ -1,19 +1,19 @@
 /*
- * uart_base.c
+ * spi_base.c
  * Copyright (C) 2016 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
-#include <xcore/bits.h>
 #include <xcore/memory.h>
 #include <halm/platform/stm/stm32f1xx/clocking.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
-#include <halm/platform/stm/uart_base.h>
+#include <halm/platform/stm/spi_base.h>
+#include <halm/platform/stm/spi_defs.h>
 /*----------------------------------------------------------------------------*/
-struct UartBlockDescriptor
+struct SpiBlockDescriptor
 {
-  STM_USART_Type *reg;
+  STM_SPI_Type *reg;
   /* Peripheral interrupt request identifier */
   IrqNumber irq;
   /* Reset control identifier */
@@ -22,142 +22,142 @@ struct UartBlockDescriptor
   enum SysClockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct UartBase *, struct UartBase *);
+static bool setDescriptor(uint8_t, const struct SpiBase *, struct SpiBase *);
 /*----------------------------------------------------------------------------*/
-static enum Result uartInit(void *, const void *);
+static enum Result spiInit(void *, const void *);
 
-#ifndef CONFIG_PLATFORM_STM_UART_NO_DEINIT
-static void uartDeinit(void *);
+#ifndef CONFIG_PLATFORM_STM_SPI_NO_DEINIT
+static void spiDeinit(void *);
 #else
-#define uartDeinit deletedDestructorTrap
+#define spiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass uartTable = {
+static const struct EntityClass spiTable = {
     .size = 0, /* Abstract class */
-    .init = uartInit,
-    .deinit = uartDeinit
+    .init = spiInit,
+    .deinit = spiDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct UartBlockDescriptor uartBlockEntries[] = {
+static const struct SpiBlockDescriptor spiBlockEntries[] = {
     {
-        .reg = STM_USART1,
-        .irq = USART1_IRQ,
-        .branch = CLK_USART1,
-        .reset = RST_USART1
+        .reg = STM_SPI1,
+        .irq = SPI1_IRQ,
+        .branch = CLK_SPI1,
+        .reset = RST_SPI1
     },
     {
-        .reg = STM_USART2,
-        .irq = USART2_IRQ,
-        .branch = CLK_USART2,
-        .reset = RST_USART2
+        .reg = STM_SPI2,
+        .irq = SPI2_IRQ,
+        .branch = CLK_SPI2,
+        .reset = RST_SPI2
     },
     {
-        .reg = STM_USART3,
-        .irq = USART3_IRQ,
-        .branch = CLK_USART3,
-        .reset = RST_USART3
-    },
-    {
-        .reg = STM_UART4,
-        .irq = UART4_IRQ,
-        .branch = CLK_UART4,
-        .reset = RST_UART4
-    },
-    {
-        .reg = STM_UART5,
-        .irq = UART5_IRQ,
-        .branch = CLK_UART5,
-        .reset = RST_UART5
+        .reg = STM_SPI3,
+        .irq = SPI3_IRQ,
+        .branch = CLK_SPI3,
+        .reset = RST_SPI3
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct PinEntry uartPins[] = {
+const struct PinEntry spiPins[] = {
     {
-        .key = PIN(PORT_A, 9), /* USART1_TX */
+        .key = PIN(PORT_A, 4), /* SPI1_NSS */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_A, 10), /* USART1_RX */
+        .key = PIN(PORT_A, 5), /* SPI1_SCK */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_B, 6), /* USART1_TX */
+        .key = PIN(PORT_A, 6), /* SPI1_MISO */
+        .channel = 0,
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 7), /* SPI1_MOSI */
+        .channel = 0,
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 15), /* SPI1_NSS */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(PORT_B, 7), /* USART1_RX */
+        .key = PIN(PORT_B, 3), /* SPI1_SCK */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(PORT_A, 2), /* USART2_TX */
+        .key = PIN(PORT_B, 4), /* SPI1_MISO */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = PIN(PORT_B, 5), /* SPI1_MOSI */
+        .channel = 0,
+        .value = 1
+    }, {
+        .key = PIN(PORT_B, 12), /* SPI2_NSS */
         .channel = 1,
         .value = 0
     }, {
-        .key = PIN(PORT_A, 3), /* USART2_RX */
+        .key = PIN(PORT_B, 13), /* SPI2_SCK */
         .channel = 1,
         .value = 0
     }, {
-        .key = PIN(PORT_D, 5), /* USART2_TX */
+        .key = PIN(PORT_B, 14), /* SPI2_MISO */
         .channel = 1,
-        .value = 1
-    }, {
-        .key = PIN(PORT_D, 6), /* USART2_RX */
-        .channel = 1,
-        .value = 1
-    }, {
-        .key = PIN(PORT_B, 10), /* USART3_TX */
-        .channel = 2,
         .value = 0
     }, {
-        .key = PIN(PORT_B, 11), /* USART3_RX */
-        .channel = 2,
+        .key = PIN(PORT_B, 15), /* SPI2_MOSI */
+        .channel = 1,
         .value = 0
     }, {
-        .key = PIN(PORT_C, 10), /* USART3_TX */
-        .channel = 2,
-        .value = 1
-    }, {
-        .key = PIN(PORT_C, 11), /* USART3_RX */
-        .channel = 2,
-        .value = 1
-    }, {
-        .key = PIN(PORT_D, 8), /* USART3_TX */
-        .channel = 2,
-        .value = 1
-    }, {
-        .key = PIN(PORT_D, 9), /* USART3_RX */
+        /* Available on STM32F105 and STM32F107 series only */
+        .key = PIN(PORT_A, 4), /* SPI3_NSS */
         .channel = 2,
         .value = 1
     }, {
         /* Available on STM32F105 and STM32F107 series only */
-        .key = PIN(PORT_C, 10), /* UART4_TX */
-        .channel = 3,
+        .key = PIN(PORT_A, 15), /* SPI3_NSS */
+        .channel = 2,
         .value = 0
     }, {
         /* Available on STM32F105 and STM32F107 series only */
-        .key = PIN(PORT_C, 11), /* UART4_RX */
-        .channel = 3,
+        .key = PIN(PORT_B, 3), /* SPI3_SCK */
+        .channel = 2,
         .value = 0
     }, {
         /* Available on STM32F105 and STM32F107 series only */
-        .key = PIN(PORT_C, 12), /* UART5_TX */
-        .channel = 4,
+        .key = PIN(PORT_B, 4), /* SPI3_MISO */
+        .channel = 2,
         .value = 0
     }, {
         /* Available on STM32F105 and STM32F107 series only */
-        .key = PIN(PORT_D, 2), /* UART5_RX */
-        .channel = 4,
+        .key = PIN(PORT_B, 5), /* SPI3_MOSI */
+        .channel = 2,
         .value = 0
+    }, {
+        /* Available on STM32F105 and STM32F107 series only */
+        .key = PIN(PORT_C, 10), /* SPI3_SCK */
+        .channel = 2,
+        .value = 1
+    }, {
+        /* Available on STM32F105 and STM32F107 series only */
+        .key = PIN(PORT_C, 11), /* SPI3_MISO */
+        .channel = 2,
+        .value = 1
+    }, {
+        /* Available on STM32F105 and STM32F107 series only */
+        .key = PIN(PORT_C, 12), /* SPI3_MOSI */
+        .channel = 2,
+        .value = 1
     }, {
         .key = 0 /* End of pin function association list */
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const UartBase = &uartTable;
-static struct UartBase *descriptors[5] = {0};
+const struct EntityClass * const SpiBase = &spiTable;
+static struct SpiBase *descriptors[3] = {0};
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct UartBase *state,
-    struct UartBase *interface)
+static bool setDescriptor(uint8_t channel, const struct SpiBase *state,
+    struct SpiBase *interface)
 {
   assert(channel < ARRAY_SIZE(descriptors));
 
@@ -165,40 +165,30 @@ static bool setDescriptor(uint8_t channel, const struct UartBase *state,
       interface);
 }
 /*----------------------------------------------------------------------------*/
-void USART1_ISR(void)
+void SPI1_ISR(void)
 {
   descriptors[0]->handler(descriptors[0]);
 }
 /*----------------------------------------------------------------------------*/
-void USART2_ISR(void)
+void SPI2_ISR(void)
 {
   descriptors[1]->handler(descriptors[1]);
 }
 /*----------------------------------------------------------------------------*/
-void USART3_ISR(void)
+void SPI3_ISR(void)
 {
   descriptors[2]->handler(descriptors[2]);
 }
 /*----------------------------------------------------------------------------*/
-void UART4_ISR(void)
-{
-  descriptors[3]->handler(descriptors[3]);
-}
-/*----------------------------------------------------------------------------*/
-void UART5_ISR(void)
-{
-  descriptors[4]->handler(descriptors[4]);
-}
-/*----------------------------------------------------------------------------*/
-uint32_t uartGetClock(const struct UartBase *interface)
+uint32_t spiGetClock(const struct SpiBase *interface)
 {
   return clockFrequency(interface->channel == 0 ? Apb2Clock : Apb1Clock);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result uartInit(void *object, const void *configBase)
+static enum Result spiInit(void *object, const void *configBase)
 {
-  const struct UartBaseConfig * const config = configBase;
-  struct UartBase * const interface = object;
+  const struct SpiBaseConfig * const config = configBase;
+  struct SpiBase * const interface = object;
 
   interface->channel = config->channel;
   interface->handler = 0;
@@ -208,10 +198,10 @@ static enum Result uartInit(void *object, const void *configBase)
     return E_BUSY;
 
   /* Configure input and output pins */
-  uartConfigPins(interface, config);
+  spiConfigPins(interface, config);
 
-  const struct UartBlockDescriptor * const entry =
-      &uartBlockEntries[interface->channel];
+  const struct SpiBlockDescriptor * const entry =
+      &spiBlockEntries[interface->channel];
 
   /* Enable clocks to register interface and peripheral */
   sysClockEnable(entry->branch);
@@ -225,12 +215,12 @@ static enum Result uartInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_STM_UART_NO_DEINIT
-static void uartDeinit(void *object)
+#ifndef CONFIG_PLATFORM_STM_SPI_NO_DEINIT
+static void spiDeinit(void *object)
 {
-  const struct UartBase * const interface = object;
+  const struct SpiBase * const interface = object;
 
-  sysClockDisable(uartBlockEntries[interface->channel].branch);
+  sysClockDisable(spiBlockEntries[interface->channel].branch);
   setDescriptor(interface->channel, interface, 0);
 }
 #endif

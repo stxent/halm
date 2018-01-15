@@ -15,6 +15,20 @@ if(${CONFIG_PM})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pm.c")
 endif()
 
+if(${CONFIG_PLATFORM_STM_DMA})
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dma_base.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dma_oneshot.c")
+endif()
+
+if(${CONFIG_PLATFORM_STM_SPI_BASE})
+    list(APPEND SOURCE_FILES "spi_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/spi_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_STM_SPI})
+    list(APPEND SOURCE_FILES "spi.c")
+endif()
+
 if(${CONFIG_PLATFORM_STM_UART_BASE})
     list(APPEND SOURCE_FILES "uart_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/uart_base.c")

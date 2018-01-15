@@ -10,6 +10,26 @@ endmenu
 
 menu "Peripherals"
 
+config PLATFORM_STM_DMA
+	bool "DMA"
+	default y
+
+config PLATFORM_STM_SPI_BASE
+	bool "SPI"
+	default y
+	help
+	  This is the driver for the Serial Peripheral Interface.
+
+config PLATFORM_STM_SPI_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_STM_SPI_BASE
+
+config PLATFORM_STM_SPI
+	bool "SPI Master with DMA"
+	default y
+	depends on PLATFORM_STM_SPI_BASE && PLATFORM_STM_DMA
+
 config PLATFORM_STM_UART_BASE
 	bool "UART"
 	default y
