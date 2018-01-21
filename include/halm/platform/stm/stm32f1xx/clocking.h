@@ -15,13 +15,94 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-//extern const struct ClockClass * const ExternalOsc;
-//extern const struct ClockClass * const InternalOsc;
-//extern const struct ClockClass * const RtcOsc;
-//extern const struct ClockClass * const SystemPll;
-//extern const struct ClockClass * const UsbPll;
+enum ClockSource
+{
+  CLOCK_INTERNAL,
+  CLOCK_EXTERNAL,
+  CLOCK_PLL,
+  CLOCK_PLL2,
+  CLOCK_PLL3,
+  CLOCK_SYSTEM
+};
 /*----------------------------------------------------------------------------*/
+struct ExternalOscConfig
+{
+  /**
+   * Mandatory: frequency of the external crystal oscillator or
+   * external clock source. The input frequency range for connectivity-line
+   * devices is 3 to 25 MHz, the range for other devices is 4 to 16 MHz.
+   */
+  uint32_t frequency;
+  /**
+   * Optional: enable bypass. Bypassing should be enabled when using
+   * an external clock source instead of the crystal oscillator.
+   */
+  bool bypass;
+};
+
+/* Requires an ExternalOscConfig structure */
+extern const struct ClockClass * const ExternalOsc;
+/*----------------------------------------------------------------------------*/
+/* May be called with the null pointer */
+extern const struct ClockClass * const InternalOsc;
+/*----------------------------------------------------------------------------*/
+struct MainPllConfig
+{
+  /**
+   * Mandatory: clock source.
+   * @n Available options for connectivity-line devices:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   *   - @b CLOCK_PLL2.
+   * @n Available options for low-, medium-, high- and XL-density devices:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum ClockSource source;
+  /**
+   * Mandatory: PLL input divisor.
+   * @n Available options for connectivity-line devices:
+   *   - @b CLOCK_INTERNAL: division by 2.
+   *   - @b CLOCK_EXTERNAL: divisor range is 1 to 16.
+   * @n Available options for other devices:
+   *   - @b CLOCK_INTERNAL: division by 2.
+   *   - @b CLOCK_EXTERNAL: division by 1 or 2.
+   */
+  uint16_t divisor;
+  /**
+   * Mandatory: PLL multiplier. The multiplier range for connectivity-line
+   * devices is 4 to 9, the range for other devices is 2 to 16.
+   */
+  uint16_t multiplier;
+};
+
+/* Requires a MainPllConfig structure */
+extern const struct ClockClass * const MainPll;
+/*----------------------------------------------------------------------------*/
+extern const struct ClockClass * const Pll2;
+extern const struct ClockClass * const Pll3;
+/*----------------------------------------------------------------------------*/
+struct SystemClockConfig
+{
+  /**
+   * Mandatory: system clock source. Available sources are:
+   * @b CLOCK_INTERNAL, @b CLOCK_EXTERNAL and @b CLOCK_PLL.
+   */
+  enum ClockSource source;
+};
+
+/* Requires a SystemClockConfig structure */
+extern const struct ClockClass * const SystemClock;
+/*----------------------------------------------------------------------------*/
+struct BusClockConfig
+{
+  /** Mandatory: bus clock divisor. */
+  uint16_t divisor;
+};
+
+/* Require a BusClockConfig structure */
 extern const struct ClockClass * const MainClock;
+extern const struct ClockClass * const AdcClock;
 extern const struct ClockClass * const Apb1Clock;
 extern const struct ClockClass * const Apb2Clock;
 /*----------------------------------------------------------------------------*/
