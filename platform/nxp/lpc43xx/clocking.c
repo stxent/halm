@@ -555,7 +555,7 @@ static unsigned int pll0ComputeMdec(unsigned int msel)
   switch (msel)
   {
     case 0:
-      return 0xFFFFFFFF;
+      return 0xFFFFFFFFUL;
 
     case 1:
       return 0x18003;
@@ -565,7 +565,7 @@ static unsigned int pll0ComputeMdec(unsigned int msel)
 
     default:
     {
-      unsigned x = 0x4000;
+      unsigned int x = 0x4000;
 
       for (unsigned int im = msel; im <= (1 << 15); ++im)
         x = (((x ^ x >> 1) & 1) << 14) | (x >> 1 & 0x3FFF);
@@ -585,7 +585,7 @@ static unsigned int pll0ComputeNdec(unsigned int nsel)
   switch (nsel)
   {
     case 0:
-      return 0xFFFFFFFF;
+      return 0xFFFFFFFFUL;
 
     case 1:
       return 0x302;
@@ -615,7 +615,7 @@ static unsigned int pll0ComputePdec(unsigned int psel)
   switch (psel)
   {
     case 0:
-      return 0xFFFFFFFF;
+      return 0xFFFFFFFFUL;
 
     case 1:
       return 0x62;

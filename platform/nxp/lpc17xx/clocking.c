@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <xcore/memory.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
 #include <halm/platform/nxp/lpc17xx/clocking_defs.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
@@ -145,7 +146,7 @@ static void flashLatencyUpdate(uint32_t frequency)
   static const uint32_t frequencyStep = 20000000;
   const unsigned int clocks = (frequency + (frequencyStep - 1)) / frequencyStep;
 
-  sysFlashLatencyUpdate(clocks <= 5 ? clocks : 5);
+  sysFlashLatencyUpdate(MIN(clocks, 5));
 }
 /*----------------------------------------------------------------------------*/
 static void pllDisconnect(void)
@@ -340,13 +341,10 @@ static enum Result usbPllEnable(const void *clockBase __attribute__((unused)),
       && extFrequency * config->multiplier <= 320000000);
 
   const unsigned int msel = USB_FREQUENCY / extFrequency - 1;
-  unsigned int psel = 0;
-  unsigned int sourceDivisor = config->divisor >> 1;
+  const unsigned int psel = 31 - countLeadingZeros32(config->divisor);
 
-  while (psel < 4 && sourceDivisor != 1U << psel)
-    ++psel;
-  /* Check whether actual divisor value found */
-  assert(psel != 4);
+  assert(msel < 32);
+  assert(psel < 4 && 1 << psel == config->divisor);
 
   /* Update PLL clock source */
   LPC_SC->PLL1CFG = PLL1CFG_MSEL(msel) | PLL1CFG_PSEL(psel);
@@ -438,11 +436,11 @@ static uint32_t clockOutputFrequency(const void *clockBase
   switch (CLKOUTCFG_SEL_VALUE(LPC_SC->CLKOUTCFG))
   {
     case CLKOUTCFG_CPU:
-      frequency = mainClockFrequency(MainClock);
+      frequency = mainClockFrequency(0);
       break;
 
     case CLKOUTCFG_MAIN:
-      frequency = extOscFrequency(ExternalOsc);
+      frequency = extOscFrequency(0);
       break;
 
     case CLKOUTCFG_IRC:
@@ -450,7 +448,7 @@ static uint32_t clockOutputFrequency(const void *clockBase
       break;
 
     case CLKOUTCFG_USB:
-      frequency = usbClockFrequency(UsbClock);
+      frequency = usbClockFrequency(0);
       break;
 
     case CLKOUTCFG_RTC:
@@ -517,12 +515,12 @@ static enum Result mainClockEnable(const void *clockBase
     LPC_SC->PLL0FEED = PLLFEED_FIRST;
     LPC_SC->PLL0FEED = PLLFEED_SECOND;
 
-    /* Wait for enable and connect */
+    /* Wait for PLL enabled and connected */
     const uint32_t mask = PLL0STAT_ENABLED | PLL0STAT_CONNECTED;
     while ((LPC_SC->PLL0STAT & mask) != mask);
   }
 
-  const uint32_t frequency = mainClockFrequency(MainClock);
+  const uint32_t frequency = mainClockFrequency(0);
 
   flashLatencyUpdate(frequency);
   ticksPerSecond = TICK_RATE(frequency);
@@ -580,7 +578,7 @@ static enum Result usbClockEnable(const void *clockBase __attribute__((unused)),
       LPC_SC->PLL1FEED = PLLFEED_FIRST;
       LPC_SC->PLL1FEED = PLLFEED_SECOND;
 
-      /* Wait for enable and connect */
+      /* Wait for PLL enabled and connected */
       const uint32_t mask = PLL1STAT_ENABLED | PLL1STAT_CONNECTED;
       while ((LPC_SC->PLL1STAT & mask) != mask);
 

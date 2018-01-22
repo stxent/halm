@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <xcore/memory.h>
 #include <halm/delay.h>
 #include <halm/platform/nxp/lpc13xx/clocking.h>
 #include <halm/platform/nxp/lpc13xx/clocking_defs.h>
@@ -253,15 +254,10 @@ static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
   assert((divisor & 1) == 0);
 
   const unsigned int msel = multiplier / divisor - 1;
-  unsigned int psel = 0;
-  unsigned int sourceDivisor = divisor >> 1;
+  const unsigned int psel = 31 - countLeadingZeros32(divisor);
 
   assert(msel < 32);
-
-  while (psel < 4 && sourceDivisor != 1U << psel)
-    ++psel;
-  /* Check whether actual divisor value found */
-  assert(psel != 4);
+  assert(psel < 4 && 1 << psel == divisor);
 
   return PLLCTRL_MSEL(msel) | PLLCTRL_PSEL(psel);
 }
@@ -277,7 +273,7 @@ static void flashLatencyUpdate(uint32_t frequency)
   static const uint32_t frequencyStep = 20000000;
   const unsigned int clocks = (frequency + (frequencyStep - 1)) / frequencyStep;
 
-  sysFlashLatencyUpdate(clocks <= 3 ? clocks : 3);
+  sysFlashLatencyUpdate(MIN(clocks, 3));
 }
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *clockBase __attribute__((unused)))
