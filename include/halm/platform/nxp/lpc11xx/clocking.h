@@ -50,40 +50,13 @@ enum WdtFrequency
   WDT_FREQ_4400,
   WDT_FREQ_4600
 };
-/*----------------------------------------------------------------------------*/
+
 struct CommonClockClass
 {
   struct ClockClass base;
-
   enum ClockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
-extern const struct ClockClass * const ExternalOsc;
-extern const struct ClockClass * const InternalOsc;
-extern const struct ClockClass * const WdtOsc;
-extern const struct ClockClass * const SystemPll;
-extern const struct CommonClockClass * const ClockOutput;
-extern const struct CommonClockClass * const MainClock;
-extern const struct CommonClockClass * const WdtClock;
-/*----------------------------------------------------------------------------*/
-struct ClockOutputConfig
-{
-  /** Mandatory: clock source. */
-  enum ClockSource source;
-  /** Optional: input clock divisor in the range of 1 to 255. */
-  uint16_t divisor;
-  /** Mandatory: output pin. */
-  PinNumber pin;
-};
-
-struct CommonClockConfig
-{
-  /** Mandatory: clock source. */
-  enum ClockSource source;
-  /** Optional: input clock divisor in the range of 1 to 255. */
-  uint16_t divisor;
-};
-
 struct ExternalOscConfig
 {
   /**
@@ -98,6 +71,21 @@ struct ExternalOscConfig
   bool bypass;
 };
 
+/* Requires an ExternalOscConfig structure */
+extern const struct ClockClass * const ExternalOsc;
+/*----------------------------------------------------------------------------*/
+/* May be called with the null pointer */
+extern const struct ClockClass * const InternalOsc;
+/*----------------------------------------------------------------------------*/
+struct WdtOscConfig
+{
+  /** Optional: oscillator frequency. */
+  enum WdtFrequency frequency;
+};
+
+/* Requires a WdtOscConfig structure */
+extern const struct ClockClass * const WdtOsc;
+/*----------------------------------------------------------------------------*/
 struct PllConfig
 {
   /**
@@ -120,10 +108,32 @@ struct PllConfig
   uint16_t multiplier;
 };
 
-struct WdtOscConfig
+/* Requires a PllConfig structure */
+extern const struct ClockClass * const SystemPll;
+/*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
 {
-  /** Optional: oscillator frequency. */
-  enum WdtFrequency frequency;
+  /** Mandatory: clock source. */
+  enum ClockSource source;
+  /** Optional: input clock divisor in the range of 1 to 255. */
+  uint16_t divisor;
+  /** Mandatory: output pin. */
+  PinNumber pin;
 };
+
+/* Requires a ClockOutputConfig structure */
+extern const struct CommonClockClass * const ClockOutput;
+/*----------------------------------------------------------------------------*/
+struct CommonClockConfig
+{
+  /** Mandatory: clock source. */
+  enum ClockSource source;
+  /** Optional: input clock divisor in the range of 1 to 255. */
+  uint16_t divisor;
+};
+
+/* Requires a CommonClockConfig structure */
+extern const struct CommonClockClass * const MainClock;
+extern const struct CommonClockClass * const WdtClock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11XX_CLOCKING_H_ */

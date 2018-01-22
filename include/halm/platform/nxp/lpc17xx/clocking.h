@@ -25,31 +25,6 @@ enum ClockSource
   CLOCK_MAIN
 };
 /*----------------------------------------------------------------------------*/
-extern const struct ClockClass * const ExternalOsc;
-extern const struct ClockClass * const InternalOsc;
-extern const struct ClockClass * const RtcOsc;
-extern const struct ClockClass * const SystemPll;
-extern const struct ClockClass * const UsbPll;
-extern const struct ClockClass * const ClockOutput;
-extern const struct ClockClass * const MainClock;
-extern const struct ClockClass * const UsbClock;
-/*----------------------------------------------------------------------------*/
-struct ClockOutputConfig
-{
-  /** Mandatory: clock source. */
-  enum ClockSource source;
-  /** Optional: input clock divisor in the range of 1 to 16. */
-  uint16_t divisor;
-  /** Mandatory: output pin. */
-  PinNumber pin;
-};
-
-struct CommonClockConfig
-{
-  /** Mandatory: clock source. */
-  enum ClockSource source;
-};
-
 struct ExternalOscConfig
 {
   /**
@@ -64,6 +39,13 @@ struct ExternalOscConfig
   bool bypass;
 };
 
+/* Requires an ExternalOscConfig structure */
+extern const struct ClockClass * const ExternalOsc;
+/*----------------------------------------------------------------------------*/
+/* May be called with the null pointer */
+extern const struct ClockClass * const InternalOsc;
+extern const struct ClockClass * const RtcOsc;
+/*----------------------------------------------------------------------------*/
 struct PllConfig
 {
   /**
@@ -93,5 +75,32 @@ struct PllConfig
    */
   uint16_t multiplier;
 };
+
+/* Require a PllConfig structure */
+extern const struct ClockClass * const SystemPll;
+extern const struct ClockClass * const UsbPll;
+/*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Mandatory: clock source. */
+  enum ClockSource source;
+  /** Optional: input clock divisor in the range of 1 to 16. */
+  uint16_t divisor;
+  /** Mandatory: output pin. */
+  PinNumber pin;
+};
+
+/* Requires a ClockOutputConfig structure */
+extern const struct ClockClass * const ClockOutput;
+/*----------------------------------------------------------------------------*/
+struct CommonClockConfig
+{
+  /** Mandatory: clock source. */
+  enum ClockSource source;
+};
+
+/* Require a CommonClockConfig structure */
+extern const struct ClockClass * const MainClock;
+extern const struct ClockClass * const UsbClock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_CLOCKING_H_ */

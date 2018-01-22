@@ -59,74 +59,19 @@ enum ClockSource
   CLOCK_IDIVD       = 0x0F,
   CLOCK_IDIVE       = 0x10
 };
-/*----------------------------------------------------------------------------*/
+
 struct CommonClockClass
 {
   struct ClockClass base;
-
   enum ClockBranch branch;
 };
 
 struct CommonDividerClass
 {
   struct ClockClass base;
-
   enum ClockSource channel;
 };
 /*----------------------------------------------------------------------------*/
-extern const struct CommonDividerClass * const DividerA;
-extern const struct CommonDividerClass * const DividerB;
-extern const struct CommonDividerClass * const DividerC;
-extern const struct CommonDividerClass * const DividerD;
-extern const struct CommonDividerClass * const DividerE;
-
-extern const struct ClockClass * const ExternalOsc;
-extern const struct ClockClass * const InternalOsc;
-extern const struct ClockClass * const RtcOsc;
-extern const struct ClockClass * const AudioPll;
-extern const struct ClockClass * const SystemPll;
-extern const struct ClockClass * const UsbPll;
-
-/* Base M4 clock */
-extern const struct CommonClockClass * const MainClock;
-extern const struct CommonClockClass * const Usb0Clock;
-extern const struct CommonClockClass * const Usb1Clock;
-/* APB0 and APB2 clocks */
-extern const struct CommonClockClass * const PeriphClock;
-extern const struct CommonClockClass * const Apb1Clock;
-extern const struct CommonClockClass * const Apb3Clock;
-extern const struct CommonClockClass * const SpifiClock;
-extern const struct CommonClockClass * const SpiClock;
-extern const struct CommonClockClass * const PhyRxClock;
-extern const struct CommonClockClass * const PhyTxClock;
-extern const struct CommonClockClass * const LcdClock;
-extern const struct CommonClockClass * const AdcHsClock;
-extern const struct CommonClockClass * const SdioClock;
-extern const struct CommonClockClass * const Ssp0Clock;
-extern const struct CommonClockClass * const Ssp1Clock;
-extern const struct CommonClockClass * const Usart0Clock;
-extern const struct CommonClockClass * const Uart1Clock;
-extern const struct CommonClockClass * const Usart2Clock;
-extern const struct CommonClockClass * const Usart3Clock;
-extern const struct CommonClockClass * const AudioClock;
-extern const struct CommonClockClass * const ClockOutput;
-extern const struct CommonClockClass * const CguOut0Clock;
-extern const struct CommonClockClass * const CguOut1Clock;
-/*----------------------------------------------------------------------------*/
-struct ClockOutputConfig
-{
-  /** Mandatory: clock source. */
-  enum ClockSource source;
-  /** Mandatory: output pin. */
-  PinNumber pin;
-};
-
-struct CommonClockConfig
-{
-  /** Mandatory: clock source. */
-  enum ClockSource source;
-};
-
 struct CommonDividerConfig
 {
   /** Mandatory: clock source. */
@@ -140,6 +85,13 @@ struct CommonDividerConfig
   uint16_t divisor;
 };
 
+/* Require a CommonDividerConfig structure */
+extern const struct CommonDividerClass * const DividerA;
+extern const struct CommonDividerClass * const DividerB;
+extern const struct CommonDividerClass * const DividerC;
+extern const struct CommonDividerClass * const DividerD;
+extern const struct CommonDividerClass * const DividerE;
+/*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
   /**
@@ -154,6 +106,13 @@ struct ExternalOscConfig
   bool bypass;
 };
 
+/* Requires an ExternalOscConfig structure */
+extern const struct ClockClass * const ExternalOsc;
+/*----------------------------------------------------------------------------*/
+/* May be called with the null pointer */
+extern const struct ClockClass * const InternalOsc;
+extern const struct ClockClass * const RtcOsc;
+/*----------------------------------------------------------------------------*/
 struct PllConfig
 {
   /** Mandatory: clock source. */
@@ -170,5 +129,51 @@ struct PllConfig
    */
   uint16_t multiplier;
 };
+
+/* Require a PllConfig structure */
+extern const struct ClockClass * const AudioPll;
+extern const struct ClockClass * const SystemPll;
+extern const struct ClockClass * const UsbPll;
+/*----------------------------------------------------------------------------*/
+struct CommonClockConfig
+{
+  /** Mandatory: clock source. */
+  enum ClockSource source;
+};
+
+/* Require a CommonClockConfig structure */
+extern const struct CommonClockClass * const MainClock; /* Base M4 clock */
+extern const struct CommonClockClass * const Usb0Clock;
+extern const struct CommonClockClass * const Usb1Clock;
+extern const struct CommonClockClass * const PeriphClock; /* APB0 and APB2 */
+extern const struct CommonClockClass * const Apb1Clock;
+extern const struct CommonClockClass * const Apb3Clock;
+extern const struct CommonClockClass * const SpifiClock;
+extern const struct CommonClockClass * const SpiClock;
+extern const struct CommonClockClass * const PhyRxClock;
+extern const struct CommonClockClass * const PhyTxClock;
+extern const struct CommonClockClass * const LcdClock;
+extern const struct CommonClockClass * const AdcHsClock;
+extern const struct CommonClockClass * const SdioClock;
+extern const struct CommonClockClass * const Ssp0Clock;
+extern const struct CommonClockClass * const Ssp1Clock;
+extern const struct CommonClockClass * const Usart0Clock;
+extern const struct CommonClockClass * const Uart1Clock;
+extern const struct CommonClockClass * const Usart2Clock;
+extern const struct CommonClockClass * const Usart3Clock;
+extern const struct CommonClockClass * const AudioClock;
+/*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Mandatory: clock source. */
+  enum ClockSource source;
+  /** Mandatory: output pin. */
+  PinNumber pin;
+};
+
+/* Require a ClockOutputConfig structure */
+extern const struct CommonClockClass * const ClockOutput;
+extern const struct CommonClockClass * const CguOut0Clock;
+extern const struct CommonClockClass * const CguOut1Clock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_ */
