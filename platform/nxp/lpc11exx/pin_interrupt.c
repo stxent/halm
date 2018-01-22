@@ -8,6 +8,7 @@
 #include <xcore/bits.h>
 #include <xcore/memory.h>
 #include <halm/platform/nxp/lpc11exx/pin_defs.h>
+#include <halm/platform/nxp/lpc11exx/system.h>
 #include <halm/platform/nxp/lpc11exx/system_defs.h>
 #include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
@@ -163,6 +164,10 @@ static enum Result pinInterruptInit(void *object, const void *configBase)
 
   const uint8_t index = interrupt->channel >> 2;
   const uint32_t mask = 1UL << interrupt->channel;
+
+  /* Enable peripheral */
+  if (!sysClockStatus(CLK_PINT))
+    sysClockEnable(CLK_PINT);
 
   /* Select pin and port */
   LPC_SYSCON->PINTSEL[index] =

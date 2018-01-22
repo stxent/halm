@@ -82,6 +82,11 @@ static inline void sysClockDisable(enum SysClockBranch branch)
   LPC_SYSCON->SYSAHBCLKCTRL &= ~(1UL << branch);
 }
 
+static inline bool sysClockStatus(enum SysClockBranch branch)
+{
+  return (LPC_SYSCON->SYSAHBCLKCTRL & (1UL << branch)) != 0;
+}
+
 static inline void sysPowerEnable(enum SysBlockPower block)
 {
   LPC_SYSCON->PDRUNCFG &= ~(1UL << block);
@@ -94,7 +99,7 @@ static inline void sysPowerDisable(enum SysBlockPower block)
 
 static inline bool sysPowerStatus(enum SysBlockPower block)
 {
-  return LPC_SYSCON->PDRUNCFG & (1UL << block) ? false : true;
+  return (LPC_SYSCON->PDRUNCFG & (1UL << block)) == 0;
 }
 
 END_DECLS
