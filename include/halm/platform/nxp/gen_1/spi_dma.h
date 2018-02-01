@@ -55,6 +55,8 @@ struct SpiDma
   uint8_t dummy;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
+  /* Synchronize DMA TX and RX handlers */
+  bool invoked;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_SPI_DMA_H_ */

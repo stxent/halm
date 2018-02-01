@@ -55,7 +55,12 @@ static void dmaHandler(void *object)
   struct SpiDma * const interface = object;
 
   if (interface->callback)
-    interface->callback(interface->callbackArgument);
+  {
+    if (interface->invoked)
+      interface->callback(interface->callbackArgument);
+    else
+      interface->invoked = true;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
@@ -186,6 +191,7 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
   reg->DMACR = 0;
   reg->DMACR = DMACR_RXDMAE | DMACR_TXDMAE;
 
+  interface->invoked = false;
   dmaAppend(interface->rxDma, rxSink, (const void *)&reg->DR, length);
   dmaAppend(interface->txDma, (void *)&reg->DR, txSource, length);
 
@@ -231,9 +237,10 @@ static enum Result spiInit(void *object, const void *configBase)
   if ((res = SspBase->init(object, &baseConfig)) != E_OK)
     return res;
 
+  /* RX channel should have higher DMA priority */
   const bool channelPair = config->dma[0] > config->dma[1];
-  const uint8_t rxChannel = config->dma[!channelPair];
-  const uint8_t txChannel = config->dma[channelPair];
+  const uint8_t rxChannel = config->dma[channelPair];
+  const uint8_t txChannel = config->dma[!channelPair];
 
   if ((res = dmaSetup(interface, rxChannel, txChannel)) != E_OK)
     return res;
@@ -335,6 +342,7 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
   {
     case IF_BLOCKING:
       dmaSetCallback(interface->rxDma, 0, 0);
+      dmaSetCallback(interface->txDma, 0, 0);
       interface->blocking = true;
       return E_OK;
 
@@ -345,6 +353,7 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
 
     case IF_ZEROCOPY:
       dmaSetCallback(interface->rxDma, dmaHandler, interface);
+      dmaSetCallback(interface->txDma, dmaHandler, interface);
       interface->blocking = false;
       return E_OK;
 
