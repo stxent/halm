@@ -121,11 +121,20 @@ static enum Result serialSetCallback(void *object __attribute__((unused)),
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result serialGetParam(void *object __attribute__((unused)),
-    enum IfParameter parameter __attribute__((unused)),
-    void *data __attribute__((unused)))
+static enum Result serialGetParam(void *object, enum IfParameter parameter,
+    void *data)
 {
-  return E_INVALID;
+  struct SerialPoll * const interface = object;
+
+  switch (parameter)
+  {
+    case IF_RATE:
+      *(uint32_t *)data = interface->rate;
+      return E_OK;
+
+    default:
+      return E_INVALID;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result serialSetParam(void *object, enum IfParameter parameter,

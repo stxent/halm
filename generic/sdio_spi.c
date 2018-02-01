@@ -767,6 +767,7 @@ static enum Result sdioInit(void *object, const void *configBase)
 #else
   assert(config->blocks == 0);
   interface->crcPool = 0;
+  interface->crcPoolSize = 0;
 #endif
 
   /* Data transfer part */

@@ -206,6 +206,10 @@ static enum Result serialGetParam(void *object, enum IfParameter parameter,
       *(size_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
 
+    case IF_RATE:
+      *(uint32_t *)data = interface->rate;
+      return E_OK;
+
     default:
       return E_INVALID;
   }

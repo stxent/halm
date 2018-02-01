@@ -410,6 +410,10 @@ static enum Result i2sGetParam(void *object, enum IfParameter parameter,
       *(size_t *)data = (dmaPending(interface->txDma) + 1) >> 1;
       return E_OK;
 
+    case IF_RATE:
+      *(uint32_t *)data = interface->sampleRate;
+      return E_OK;
+
     case IF_STATUS:
     {
       enum Result res;

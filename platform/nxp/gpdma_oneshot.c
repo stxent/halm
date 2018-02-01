@@ -162,11 +162,7 @@ static void channelDisable(void *object)
 static size_t channelPending(const void *object)
 {
   const struct GpDmaOneShot * const channel = object;
-
-  if (channel->state != STATE_IDLE && channel->state != STATE_READY)
-    return 1;
-  else
-    return 0;
+  return channel->state != STATE_IDLE && channel->state != STATE_READY ? 1 : 0;
 }
 /*----------------------------------------------------------------------------*/
 static size_t channelResidue(const void *object)
