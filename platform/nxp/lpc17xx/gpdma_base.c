@@ -14,36 +14,16 @@
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT ARRAY_SIZE(LPC_GPDMA->CHANNELS)
 /*----------------------------------------------------------------------------*/
-struct DmaHandler
-{
-  struct Entity base;
-
-  /* Channel descriptors currently in use */
-  struct GpDmaBase *descriptors[CHANNEL_COUNT];
-  /* Initialized descriptors count */
-  unsigned int instances;
-};
-/*----------------------------------------------------------------------------*/
 static struct GpDmaMuxConfig calcEventMux(enum GpDmaType, enum GpDmaEvent);
+static void dmaPeripheralInit(void);
 static unsigned int eventToPeripheral(enum GpDmaEvent);
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerAttach(void);
-static void dmaHandlerDetach(void);
-static enum Result dmaHandlerInit(void *, const void *);
-/*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
-static void channelDeinit(void *);
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
-    .size = sizeof(struct DmaHandler),
-    .init = dmaHandlerInit,
-    .deinit = deletedDestructorTrap
-};
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass channelTable = {
     .size = 0, /* Abstract class */
     .init = channelInit,
-    .deinit = channelDeinit
+    .deinit = 0 /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static const uint8_t eventTranslationMap[] = {
@@ -73,15 +53,8 @@ static const uint8_t eventTranslationMap[] = {
     [GPDMA_DAC]       = 7
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const DmaHandler = &handlerTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
-static struct DmaHandler *dmaHandler = 0;
-/*----------------------------------------------------------------------------*/
-static unsigned int eventToPeripheral(enum GpDmaEvent event)
-{
-  assert(event < GPDMA_MEMORY);
-  return eventTranslationMap[event];
-}
+static struct GpDmaBase *descriptors[CHANNEL_COUNT] = {0};
 /*----------------------------------------------------------------------------*/
 static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,
     enum GpDmaEvent event)
@@ -114,6 +87,27 @@ static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,
       .mask = 0xFF,
       .value = 0
   };
+}
+/*----------------------------------------------------------------------------*/
+static void dmaPeripheralInit(void)
+{
+  sysPowerEnable(PWR_GPDMA);
+
+  LPC_GPDMA->CONFIG |= DMA_ENABLE;
+
+#ifndef CONFIG_PLATFORM_NXP_GPDMA_SYNC
+  /* Disable synchronization logic to improve response time */
+  LPC_GPDMA->SYNC = SYNC_MASK;
+#endif
+
+  irqSetPriority(GPDMA_IRQ, CONFIG_PLATFORM_NXP_GPDMA_PRIORITY);
+  irqEnable(GPDMA_IRQ);
+}
+/*----------------------------------------------------------------------------*/
+static unsigned int eventToPeripheral(enum GpDmaEvent event)
+{
+  assert(event < GPDMA_MEMORY);
+  return eventTranslationMap[event];
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
@@ -154,13 +148,13 @@ uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
 void gpDmaClearDescriptor(uint8_t channel)
 {
   assert(channel < CHANNEL_COUNT);
-  dmaHandler->descriptors[channel] = 0;
+  descriptors[channel] = 0;
 }
 /*----------------------------------------------------------------------------*/
 const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
 {
   assert(channel < CHANNEL_COUNT);
-  return dmaHandler->descriptors[channel];
+  return descriptors[channel];
 }
 /*----------------------------------------------------------------------------*/
 enum Result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
@@ -168,7 +162,7 @@ enum Result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
   assert(descriptor);
   assert(channel < CHANNEL_COUNT);
 
-  return compareExchangePointer((void **)(dmaHandler->descriptors + channel),
+  return compareExchangePointer((void **)(descriptors + channel),
       0, descriptor) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
@@ -189,7 +183,7 @@ void GPDMA_ISR(void)
   errorStatus = reverseBits32(errorStatus);
   terminalStatus = reverseBits32(terminalStatus);
 
-  struct GpDmaBase ** const descriptorArray = dmaHandler->descriptors;
+  struct GpDmaBase ** const descriptorArray = descriptors;
   uint32_t intStatus = errorStatus | terminalStatus;
 
   do
@@ -197,10 +191,9 @@ void GPDMA_ISR(void)
     const unsigned int index = countLeadingZeros32(intStatus);
     struct GpDmaBase * const descriptor = descriptorArray[index];
     const uint32_t mask = (1UL << 31) >> index;
+    enum Result res = E_OK;
 
     intStatus -= mask;
-
-    enum Result res = E_OK;
 
     if (errorStatus & mask)
     {
@@ -217,50 +210,6 @@ void GPDMA_ISR(void)
     descriptor->handler(descriptor, res);
   }
   while (intStatus);
-}
-/*----------------------------------------------------------------------------*/
-static void dmaHandlerAttach(void)
-{
-  if (!dmaHandler)
-    dmaHandler = init(DmaHandler, 0);
-
-  if (!dmaHandler->instances++)
-  {
-    sysPowerEnable(PWR_GPDMA);
-    LPC_GPDMA->CONFIG |= DMA_ENABLE;
-    irqEnable(GPDMA_IRQ);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void dmaHandlerDetach(void)
-{
-  /* Disable peripheral when no active descriptors exist */
-  if (!--dmaHandler->instances)
-  {
-    irqDisable(GPDMA_IRQ);
-    LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
-    sysPowerDisable(PWR_GPDMA);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static enum Result dmaHandlerInit(void *object,
-    const void *configBase __attribute__((unused)))
-{
-  struct DmaHandler * const handler = object;
-
-  for (size_t index = 0; index < CHANNEL_COUNT; ++index)
-    handler->descriptors[index] = 0;
-
-  handler->instances = 0;
-
-#ifndef CONFIG_PLATFORM_NXP_GPDMA_SYNC
-  /* Disable synchronization logic to improve response time */
-  LPC_GPDMA->SYNC = SYNC_MASK;
-#endif
-
-  irqSetPriority(GPDMA_IRQ, CONFIG_PLATFORM_NXP_GPDMA_PRIORITY);
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
@@ -297,13 +246,8 @@ static enum Result channelInit(void *object, const void *configBase)
     }
   }
 
-  /* Register new descriptor */
-  dmaHandlerAttach();
+  if (!sysPowerStatus(PWR_GPDMA))
+    dmaPeripheralInit();
 
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void channelDeinit(void *object __attribute__((unused)))
-{
-  dmaHandlerDetach();
 }

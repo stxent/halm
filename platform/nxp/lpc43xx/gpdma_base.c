@@ -23,15 +23,11 @@ struct DmaHandler
 
   /* Channel descriptors currently in use */
   struct GpDmaBase *descriptors[CHANNEL_COUNT];
-  /* Initialized descriptors count */
-  unsigned int instances;
   /* Peripheral connection statuses */
   uint8_t connections[16];
 };
 /*----------------------------------------------------------------------------*/
 static unsigned int dmaHandlerAllocate(struct GpDmaBase *, enum GpDmaEvent);
-static void dmaHandlerAttach(void);
-static void dmaHandlerDetach(void);
 static void dmaHandlerFree(struct GpDmaBase *);
 static void dmaHandlerInstantiate(void);
 static enum Result dmaHandlerInit(void *, const void *);
@@ -170,10 +166,9 @@ void GPDMA_ISR(void)
     const unsigned int index = countLeadingZeros32(intStatus);
     struct GpDmaBase * const descriptor = descriptorArray[index];
     const uint32_t mask = (1UL << 31) >> index;
+    enum Result res = E_OK;
 
     intStatus -= mask;
-
-    enum Result res = E_OK;
 
     if (errorStatus & mask)
     {
@@ -236,30 +231,6 @@ static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
   return entryIndex;
 }
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerAttach(void)
-{
-  dmaHandlerInstantiate();
-
-  if (!dmaHandler->instances++)
-  {
-    sysClockEnable(CLK_M4_GPDMA);
-    sysResetEnable(RST_GPDMA);
-    LPC_GPDMA->CONFIG |= DMA_ENABLE;
-    irqEnable(GPDMA_IRQ);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void dmaHandlerDetach(void)
-{
-  /* Disable peripheral when no active descriptors exist */
-  if (!--dmaHandler->instances)
-  {
-    irqDisable(GPDMA_IRQ);
-    LPC_GPDMA->CONFIG &= ~DMA_ENABLE;
-    sysClockDisable(CLK_M4_GPDMA);
-  }
-}
-/*----------------------------------------------------------------------------*/
 static void dmaHandlerFree(struct GpDmaBase *channel)
 {
   uint32_t mask = ~channel->mux.mask;
@@ -280,6 +251,7 @@ static void dmaHandlerInstantiate(void)
 {
   if (!dmaHandler)
     dmaHandler = init(DmaHandler, 0);
+  assert(dmaHandler);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dmaHandlerInit(void *object,
@@ -289,9 +261,12 @@ static enum Result dmaHandlerInit(void *object,
 
   for (size_t index = 0; index < CHANNEL_COUNT; ++index)
     handler->descriptors[index] = 0;
-
   memset(handler->connections, 0, sizeof(handler->connections));
-  handler->instances = 0;
+
+  sysClockEnable(CLK_M4_GPDMA);
+  sysResetEnable(RST_GPDMA);
+
+  LPC_GPDMA->CONFIG |= DMA_ENABLE;
 
 #ifndef CONFIG_PLATFORM_NXP_GPDMA_SYNC
   /* Disable synchronization logic to improve response time */
@@ -299,6 +274,7 @@ static enum Result dmaHandlerInit(void *object,
 #endif
 
   irqSetPriority(GPDMA_IRQ, CONFIG_PLATFORM_NXP_GPDMA_PRIORITY);
+  irqEnable(GPDMA_IRQ);
 
   return E_OK;
 }
@@ -339,14 +315,10 @@ static enum Result channelInit(void *object, const void *configBase)
     }
   }
 
-  /* Register new descriptor */
-  dmaHandlerAttach();
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
   dmaHandlerFree(object);
-  dmaHandlerDetach();
 }
