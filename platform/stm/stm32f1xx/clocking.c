@@ -249,7 +249,7 @@ static enum Result mainPllEnable(const void *clockBase
     STM_RCC->CFGR &= ~CFGR_PLLSRC;
     frequency = HSI_OSC_FREQUENCY / 2;
   }
-  else if (config->source == CLOCK_EXTERNAL)
+  else
   {
     assert(config->divisor >= 1 && config->divisor <= 2);
 

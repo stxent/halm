@@ -828,11 +828,13 @@ static enum Result sdioGetParam(void *object, enum IfParameter parameter,
       const enum SdioResponse response = COMMAND_RESP_VALUE(interface->command);
       const uint8_t length = response == SDIO_RESPONSE_LONG ? 16 : 4;
 
-      if (response == SDIO_RESPONSE_NONE)
+      if (response != SDIO_RESPONSE_NONE)
+      {
+        memcpy(data, interface->response, length);
+        return E_OK;
+      }
+      else
         return E_ERROR;
-
-      memcpy(data, interface->response, length);
-      return E_OK;
     }
 
     default:

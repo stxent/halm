@@ -350,9 +350,7 @@ static enum Result sdioGetParam(void *object, enum IfParameter parameter,
         return E_OK;
       }
       else
-      {
         return E_ERROR;
-      }
     }
 
     default:

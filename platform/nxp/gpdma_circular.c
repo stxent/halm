@@ -131,7 +131,9 @@ static void channelDeinit(void *object)
   struct GpDmaCircular * const channel = object;
 
   free(channel->list);
-  GpDmaBase->deinit(channel);
+
+  if (GpDmaBase->deinit)
+    GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetCallback(void *object, void (*callback)(void *),

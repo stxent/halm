@@ -244,10 +244,10 @@ static enum Result i2cGetParam(void *object, enum IfParameter parameter,
   switch (parameter)
   {
     case IF_STATUS:
-      if (!interface->blocking && interface->state == STATE_ERROR)
-        return E_ERROR;
-      else
+      if (interface->blocking || interface->state != STATE_ERROR)
         return interface->state != STATE_IDLE ? E_BUSY : E_OK;
+      else
+        return E_ERROR;
 
     case IF_RATE:
       *(uint32_t *)data = i2cGetRate(object);

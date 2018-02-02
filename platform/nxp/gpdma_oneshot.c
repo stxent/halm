@@ -94,7 +94,8 @@ static enum Result channelInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  GpDmaBase->deinit(object);
+  if (GpDmaBase->deinit)
+    GpDmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetCallback(void *object, void (*callback)(void *),

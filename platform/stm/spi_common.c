@@ -75,6 +75,5 @@ void spiSetRate(struct SpiBase *interface, uint32_t rate)
     prescalerExp = 7;
 
   STM_SPI_Type * const reg = interface->reg;
-
   reg->CR1 = (reg->CR1 & ~CR1_BR_MASK) | CR1_BR(prescalerExp);
 }
