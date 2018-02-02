@@ -25,6 +25,11 @@ config PLATFORM_STM_SPI_NO_DEINIT
 	default n
 	depends on PLATFORM_STM_SPI_BASE
 
+config PLATFORM_STM_SPI_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_STM_SPI_BASE
+
 config PLATFORM_STM_SPI
 	bool "SPI Master with DMA"
 	default y
@@ -37,6 +42,11 @@ config PLATFORM_STM_UART_BASE
 config PLATFORM_STM_UART_NO_DEINIT
 	bool "Disable destructors"
 	default n
+	depends on PLATFORM_STM_UART_BASE
+
+config PLATFORM_STM_UART_RC
+	bool "Runtime configuration"
+	default y
 	depends on PLATFORM_STM_UART_BASE
 
 config PLATFORM_STM_SERIAL

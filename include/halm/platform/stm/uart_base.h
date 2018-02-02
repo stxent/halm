@@ -8,15 +8,9 @@
 #define HALM_PLATFORM_STM_UART_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
+#include <halm/generic/serial.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
-/*----------------------------------------------------------------------------*/
-enum UartParity
-{
-  UART_PARITY_NONE,
-  UART_PARITY_ODD,
-  UART_PARITY_EVEN
-};
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UartBase;
 
@@ -45,7 +39,9 @@ struct UartBase
 BEGIN_DECLS
 
 void uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
-void uartSetParity(struct UartBase *, enum UartParity);
+enum SerialParity uartGetParity(const struct UartBase *);
+uint32_t uartGetRate(const struct UartBase *);
+void uartSetParity(struct UartBase *, enum SerialParity);
 void uartSetRate(struct UartBase *, uint32_t);
 
 uint32_t uartGetClock(const struct UartBase *);

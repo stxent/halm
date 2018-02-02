@@ -34,29 +34,37 @@ void sspConfigPins(struct SspBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-void sspSetRate(struct SspBase *interface, uint32_t rate)
-{
-  assert(rate != 0);
-
-  const uint32_t clock = sspGetClock(interface);
-  uint32_t divisor = ((clock + (rate - 1)) >> 1) / rate - 1;
-
-  if (divisor >= 127 * 256)
-    divisor = 127 * 256 - 1;
-
-  LPC_SSP_Type * const reg = interface->reg;
-  const unsigned int prescaler = 1 + (divisor >> 8);
-
-  reg->CPSR = prescaler << 1;
-  reg->CR0 = (reg->CR0 & ~CR0_SCR_MASK) | CR0_SCR(divisor / prescaler);
-}
-/*----------------------------------------------------------------------------*/
 uint32_t sspGetRate(const struct SspBase *interface)
 {
   LPC_SSP_Type * const reg = interface->reg;
+  const uint32_t value = reg->CPSR;
 
-  if (!reg->CPSR)
-    return 0;
+  return value ?
+      (sspGetClock(interface) / value / (CR0_SCR_VALUE(reg->CR0) + 1)) : 0;
+}
+/*----------------------------------------------------------------------------*/
+void sspSetRate(struct SspBase *interface, uint32_t rate)
+{
+  LPC_SSP_Type * const reg = interface->reg;
+  uint32_t clockPrescaleReg;
+  uint32_t controlReg0 = reg->CR0 & ~CR0_SCR_MASK;
 
-  return sspGetClock(interface) / reg->CPSR / (CR0_SCR_VALUE(reg->CR0) + 1);
+  if (rate)
+  {
+    const uint32_t clock = sspGetClock(interface);
+    uint32_t divisor = ((clock + (rate - 1)) >> 1) / rate - 1;
+
+    if (divisor >= 127 * 256)
+      divisor = 127 * 256 - 1;
+
+    const uint32_t prescaler = 1 + (divisor >> 8);
+
+    clockPrescaleReg = prescaler << 1;
+    controlReg0 |= CR0_SCR(divisor / prescaler);
+  }
+  else
+    clockPrescaleReg = 0;
+
+  reg->CPSR = clockPrescaleReg;
+  reg->CR0 = controlReg0;
 }

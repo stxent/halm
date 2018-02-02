@@ -124,23 +124,50 @@ static enum Result serialSetCallback(void *object __attribute__((unused)),
 static enum Result serialGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
-  struct SerialPoll * const interface = object;
+#ifdef CONFIG_PLATFORM_NXP_UART_RC
+  switch ((enum SerialParameter)parameter)
+  {
+    case IF_SERIAL_PARITY:
+      *(uint8_t *)data = (uint8_t)uartGetParity(object);
+      return E_OK;
+
+    default:
+      break;
+  }
 
   switch (parameter)
   {
     case IF_RATE:
-      *(uint32_t *)data = interface->rate;
+      *(uint32_t *)data = uartGetRate(object);
       return E_OK;
 
     default:
       return E_INVALID;
   }
+#else
+  (void)object;
+  (void)parameter;
+  (void)data;
+
+  return E_INVALID;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static enum Result serialSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct SerialPoll * const interface = object;
+
+#ifdef CONFIG_PLATFORM_NXP_UART_RC
+  switch ((enum SerialParameter)parameter)
+  {
+    case IF_SERIAL_PARITY:
+      uartSetParity(object, (enum SerialParity)(*(const uint8_t *)data));
+      return E_OK;
+
+    default:
+      break;
+  }
 
   switch (parameter)
   {
@@ -161,6 +188,13 @@ static enum Result serialSetParam(void *object, enum IfParameter parameter,
     default:
       return E_INVALID;
   }
+#else
+  (void)interface;
+  (void)parameter;
+  (void)data;
+
+  return E_INVALID;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static size_t serialRead(void *object, void *buffer, size_t length)

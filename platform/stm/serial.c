@@ -158,6 +158,18 @@ static enum Result serialGetParam(void *object, enum IfParameter parameter,
 {
   struct Serial * const interface = object;
 
+#ifdef CONFIG_PLATFORM_STM_UART_RC
+  switch ((enum SerialParameter)parameter)
+  {
+    case IF_SERIAL_PARITY:
+      *(uint8_t *)data = (uint8_t)uartGetParity(object);
+      return E_OK;
+
+    default:
+      break;
+  }
+#endif
+
   switch (parameter)
   {
     case IF_AVAILABLE:
@@ -168,9 +180,11 @@ static enum Result serialGetParam(void *object, enum IfParameter parameter,
       *(size_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
 
+#ifdef CONFIG_PLATFORM_STM_UART_RC
     case IF_RATE:
-      *(uint32_t *)data = interface->rate;
+      *(uint32_t *)data = uartGetRate(object);
       return E_OK;
+#endif
 
     default:
       return E_INVALID;
@@ -182,6 +196,17 @@ static enum Result serialSetParam(void *object, enum IfParameter parameter,
 {
   struct Serial * const interface = object;
 
+#ifdef CONFIG_PLATFORM_STM_UART_RC
+  switch ((enum SerialParameter)parameter)
+  {
+    case IF_SERIAL_PARITY:
+      uartSetParity(object, (enum SerialParity)(*(const uint8_t *)data));
+      return E_OK;
+
+    default:
+      break;
+  }
+
   switch (parameter)
   {
     case IF_RATE:
@@ -192,6 +217,13 @@ static enum Result serialSetParam(void *object, enum IfParameter parameter,
     default:
       return E_INVALID;
   }
+#else
+  (void)interface;
+  (void)parameter;
+  (void)data;
+
+  return E_INVALID;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static size_t serialRead(void *object, void *buffer, size_t length)

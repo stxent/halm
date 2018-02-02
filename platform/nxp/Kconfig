@@ -331,6 +331,11 @@ config PLATFORM_NXP_SSP_PM
 	default n
 	depends on PLATFORM_NXP_SSP_BASE && PM
 
+config PLATFORM_NXP_SSP_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_NXP_SSP_BASE
+
 config PLATFORM_NXP_SPI
 	bool "Interrupt-driven SPI Master"
 	default y
@@ -364,6 +369,11 @@ config PLATFORM_NXP_UART_PM
 	bool "Power management"
 	default n
 	depends on PM && PLATFORM_NXP_UART_BASE
+
+config PLATFORM_NXP_UART_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_NXP_UART_BASE
 
 config PLATFORM_NXP_SERIAL
 	bool "Interrupt-driven serial port driver"

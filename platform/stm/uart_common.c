@@ -40,15 +40,34 @@ void uartConfigPins(struct UartBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-void uartSetParity(struct UartBase *interface, enum UartParity parity)
+enum SerialParity uartGetParity(const struct UartBase *interface)
+{
+  const STM_USART_Type * const reg = interface->reg;
+  const uint32_t value = reg->CR1;
+
+  if (value & CR1_PCE)
+    return (value & CR1_PS) ? SERIAL_PARITY_ODD : SERIAL_PARITY_EVEN;
+  else
+    return SERIAL_PARITY_NONE;
+}
+/*----------------------------------------------------------------------------*/
+uint32_t uartGetRate(const struct UartBase *interface)
+{
+  const STM_USART_Type * const reg = interface->reg;
+  const uint32_t value = reg->BRR;
+
+  return value ? (uartGetClock(interface) / value) : 0;
+}
+/*----------------------------------------------------------------------------*/
+void uartSetParity(struct UartBase *interface, enum SerialParity parity)
 {
   STM_USART_Type * const reg = interface->reg;
   uint32_t value = reg->CR1 & ~(CR1_PS | CR1_PCE | CR1_M);
 
-  if (parity != UART_PARITY_NONE)
+  if (parity != SERIAL_PARITY_NONE)
   {
     value |= CR1_PCE | CR1_M;
-    if (parity == UART_PARITY_ODD)
+    if (parity == SERIAL_PARITY_ODD)
       value |= CR1_PS;
   }
 
@@ -57,10 +76,6 @@ void uartSetParity(struct UartBase *interface, enum UartParity parity)
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct UartBase *interface, uint32_t rate)
 {
-  assert(rate);
-
   STM_USART_Type * const reg = interface->reg;
-  const uint32_t clock = uartGetClock(interface);
-
-  reg->BRR = (clock + rate / 2) / rate;
+  reg->BRR = rate ? ((uartGetClock(interface) + rate / 2) / rate) : 0;
 }

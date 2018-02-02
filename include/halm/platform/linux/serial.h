@@ -9,19 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <xcore/interface.h>
-/*----------------------------------------------------------------------------*/
-enum SerialParameter
-{
-  IF_SERIAL_CTS = IF_PARAMETER_END,
-  IF_SERIAL_RTS
-};
-
-enum SerialParity
-{
-  SERIAL_PARITY_NONE,
-  SERIAL_PARITY_ODD,
-  SERIAL_PARITY_EVEN
-};
+#include <halm/generic/serial.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Serial;
 

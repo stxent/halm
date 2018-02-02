@@ -29,7 +29,7 @@ struct SerialDmaConfig
   /** Mandatory: output queue size. */
   size_t txLength;
   /** Optional: parity bit setting. */
-  enum UartParity parity;
+  enum SerialParity parity;
   /** Mandatory: serial input. */
   PinNumber rx;
   /** Mandatory: serial output. */

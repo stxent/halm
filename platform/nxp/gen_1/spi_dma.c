@@ -316,9 +316,11 @@ static enum Result spiGetParam(void *object, enum IfParameter parameter,
 
   switch (parameter)
   {
+#ifdef CONFIG_PLATFORM_NXP_SSP_RC
     case IF_RATE:
-      *(uint32_t *)data = interface->rate;
+      *(uint32_t *)data = sspGetRate(object);
       return E_OK;
+#endif
 
     case IF_STATUS:
       /*
@@ -346,10 +348,12 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
       interface->blocking = true;
       return E_OK;
 
+#ifdef CONFIG_PLATFORM_NXP_SSP_RC
     case IF_RATE:
       interface->rate = *(const uint32_t *)data;
       sspSetRate(object, interface->rate);
       return E_OK;
+#endif
 
     case IF_ZEROCOPY:
       dmaSetCallback(interface->rxDma, dmaHandler, interface);
