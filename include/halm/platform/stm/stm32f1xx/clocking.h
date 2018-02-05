@@ -29,7 +29,7 @@ struct ExternalOscConfig
 {
   /**
    * Mandatory: frequency of the external crystal oscillator or
-   * external clock source. The input frequency range for connectivity-line
+   * an external clock source. The input frequency range for connectivity-line
    * devices is 3 to 25 MHz, the range for other devices is 4 to 16 MHz.
    */
   uint32_t frequency;
@@ -43,7 +43,7 @@ struct ExternalOscConfig
 /* Requires an ExternalOscConfig structure */
 extern const struct ClockClass * const ExternalOsc;
 /*----------------------------------------------------------------------------*/
-/* May be called with the null pointer */
+/* May be initialized with the null pointer */
 extern const struct ClockClass * const InternalOsc;
 /*----------------------------------------------------------------------------*/
 struct MainPllConfig

@@ -53,7 +53,7 @@ enum WdtFrequency
   WDT_FREQ_4600
 };
 
-struct CommonClockClass
+struct GenericClockClass
 {
   struct ClockClass base;
   enum ClockBranch branch;
@@ -63,7 +63,7 @@ struct ExternalOscConfig
 {
   /**
    * Mandatory: frequency of the external crystal oscillator or
-   * external clock source.
+   * an external clock source.
    */
   uint32_t frequency;
   /**
@@ -76,7 +76,7 @@ struct ExternalOscConfig
 /* Requires an ExternalOscConfig structure */
 extern const struct ClockClass * const ExternalOsc;
 /*----------------------------------------------------------------------------*/
-/* May be called with the null pointer */
+/* May be initialized with the null pointer */
 extern const struct ClockClass * const InternalOsc;
 /*----------------------------------------------------------------------------*/
 struct WdtOscConfig
@@ -127,9 +127,9 @@ struct ClockOutputConfig
 };
 
 /* Requires a ClockOutputConfig structure */
-extern const struct CommonClockClass * const ClockOutput;
+extern const struct GenericClockClass * const ClockOutput;
 /*----------------------------------------------------------------------------*/
-struct CommonClockConfig
+struct GenericClockConfig
 {
   /** Mandatory: clock source. */
   enum ClockSource source;
@@ -137,9 +137,9 @@ struct CommonClockConfig
   uint16_t divisor;
 };
 
-/* Require a CommonClockConfig structure */
-extern const struct CommonClockClass * const MainClock;
-extern const struct CommonClockClass * const UsbClock;
-extern const struct CommonClockClass * const WdtClock;
+/* Require a GenericClockConfig structure */
+extern const struct GenericClockClass * const MainClock;
+extern const struct GenericClockClass * const UsbClock;
+extern const struct GenericClockClass * const WdtClock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC13XX_CLOCKING_H_ */

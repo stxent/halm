@@ -29,7 +29,7 @@ struct ExternalOscConfig
 {
   /**
    * Mandatory: frequency of the external crystal oscillator or
-   * external clock source.
+   * an external clock source.
    */
   uint32_t frequency;
   /**
@@ -42,7 +42,7 @@ struct ExternalOscConfig
 /* Requires an ExternalOscConfig structure */
 extern const struct ClockClass * const ExternalOsc;
 /*----------------------------------------------------------------------------*/
-/* May be called with the null pointer */
+/* May be initialized with the null pointer */
 extern const struct ClockClass * const InternalOsc;
 extern const struct ClockClass * const RtcOsc;
 /*----------------------------------------------------------------------------*/
@@ -93,13 +93,13 @@ struct ClockOutputConfig
 /* Requires a ClockOutputConfig structure */
 extern const struct ClockClass * const ClockOutput;
 /*----------------------------------------------------------------------------*/
-struct CommonClockConfig
+struct GenericClockConfig
 {
   /** Mandatory: clock source. */
   enum ClockSource source;
 };
 
-/* Require a CommonClockConfig structure */
+/* Require a GenericClockConfig structure */
 extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const UsbClock;
 /*----------------------------------------------------------------------------*/

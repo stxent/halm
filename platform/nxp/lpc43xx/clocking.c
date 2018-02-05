@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <xcore/memory.h>
 #include <halm/delay.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/clocking_defs.h>
@@ -28,10 +29,10 @@ static unsigned int pll0ComputePdec(unsigned int);
 static unsigned int pll0ComputeSelI(unsigned int);
 static unsigned int pll0ComputeSelP(unsigned int);
 /*----------------------------------------------------------------------------*/
-static void commonDividerDisable(const void *);
-static enum Result commonDividerEnable(const void *, const void *);
-static uint32_t commonDividerFrequency(const void *);
-static bool commonDividerReady(const void *);
+static void genericDividerDisable(const void *);
+static enum Result genericDividerEnable(const void *, const void *);
+static uint32_t genericDividerFrequency(const void *);
+static bool genericDividerReady(const void *);
 
 static void extOscDisable(const void *);
 static enum Result extOscEnable(const void *, const void *);
@@ -48,10 +49,10 @@ static enum Result rtcOscEnable(const void *, const void *);
 static uint32_t rtcOscFrequency(const void *);
 static bool rtcOscReady(const void *);
 
-static void pll0UsbClockDisable(const void *);
-static enum Result pll0UsbClockEnable(const void *, const void *);
-static uint32_t pll0UsbClockFrequency(const void *);
-static bool pll0UsbClockReady(const void *);
+static void pll0ClockDisable(const void *);
+static enum Result pll0ClockEnable(const void *, const void *);
+static uint32_t pll0ClockFrequency(const void *);
+static bool pll0ClockReady(const void *);
 
 static void pll1ClockDisable(const void *);
 static enum Result pll1ClockEnable(const void *, const void *);
@@ -60,57 +61,57 @@ static bool pll1ClockReady(const void *);
 
 static enum Result clockOutputEnable(const void *, const void *);
 
-static void commonClockDisable(const void *);
-static enum Result commonClockEnable(const void *, const void *);
-static uint32_t commonClockFrequency(const void *);
-static bool commonClockReady(const void *);
+static void genericClockDisable(const void *);
+static enum Result genericClockEnable(const void *, const void *);
+static uint32_t genericClockFrequency(const void *);
+static bool genericClockReady(const void *);
 /*----------------------------------------------------------------------------*/
-static const struct CommonDividerClass dividerATable = {
+static const struct GenericDividerClass dividerATable = {
     .base = {
-        .disable = commonDividerDisable,
-        .enable = commonDividerEnable,
-        .frequency = commonDividerFrequency,
-        .ready = commonDividerReady
+        .disable = genericDividerDisable,
+        .enable = genericDividerEnable,
+        .frequency = genericDividerFrequency,
+        .ready = genericDividerReady
     },
     .channel = CLOCK_IDIVA
 };
 
-static const struct CommonDividerClass dividerBTable = {
+static const struct GenericDividerClass dividerBTable = {
     .base = {
-        .disable = commonDividerDisable,
-        .enable = commonDividerEnable,
-        .frequency = commonDividerFrequency,
-        .ready = commonDividerReady
+        .disable = genericDividerDisable,
+        .enable = genericDividerEnable,
+        .frequency = genericDividerFrequency,
+        .ready = genericDividerReady
     },
     .channel = CLOCK_IDIVB
 };
 
-static const struct CommonDividerClass dividerCTable = {
+static const struct GenericDividerClass dividerCTable = {
     .base = {
-        .disable = commonDividerDisable,
-        .enable = commonDividerEnable,
-        .frequency = commonDividerFrequency,
-        .ready = commonDividerReady
+        .disable = genericDividerDisable,
+        .enable = genericDividerEnable,
+        .frequency = genericDividerFrequency,
+        .ready = genericDividerReady
     },
     .channel = CLOCK_IDIVC
 };
 
-static const struct CommonDividerClass dividerDTable = {
+static const struct GenericDividerClass dividerDTable = {
     .base = {
-        .disable = commonDividerDisable,
-        .enable = commonDividerEnable,
-        .frequency = commonDividerFrequency,
-        .ready = commonDividerReady
+        .disable = genericDividerDisable,
+        .enable = genericDividerEnable,
+        .frequency = genericDividerFrequency,
+        .ready = genericDividerReady
     },
     .channel = CLOCK_IDIVD
 };
 
-static const struct CommonDividerClass dividerETable = {
+static const struct GenericDividerClass dividerETable = {
     .base = {
-        .disable = commonDividerDisable,
-        .enable = commonDividerEnable,
-        .frequency = commonDividerFrequency,
-        .ready = commonDividerReady
+        .disable = genericDividerDisable,
+        .enable = genericDividerEnable,
+        .frequency = genericDividerFrequency,
+        .ready = genericDividerReady
     },
     .channel = CLOCK_IDIVE
 };
@@ -136,11 +137,24 @@ static const struct ClockClass rtcOscTable = {
     .ready = rtcOscReady
 };
 
-static const struct ClockClass pll0UsbTable = {
-    .disable = pll0UsbClockDisable,
-    .enable = pll0UsbClockEnable,
-    .frequency = pll0UsbClockFrequency,
-    .ready = pll0UsbClockReady
+static const struct GenericPllClass pll0AudioTable = {
+    .base = {
+        .disable = pll0ClockDisable,
+        .enable = pll0ClockEnable,
+        .frequency = pll0ClockFrequency,
+        .ready = pll0ClockReady
+    },
+    .channel = CLOCK_AUDIO_PLL
+};
+
+static const struct GenericPllClass pll0UsbTable = {
+    .base = {
+        .disable = pll0ClockDisable,
+        .enable = pll0ClockEnable,
+        .frequency = pll0ClockFrequency,
+        .ready = pll0ClockReady
+    },
+    .channel = CLOCK_USB_PLL
 };
 
 static const struct ClockClass pll1Table = {
@@ -150,232 +164,232 @@ static const struct ClockClass pll1Table = {
     .ready = pll1ClockReady
 };
 /*----------------------------------------------------------------------------*/
-static const struct CommonClockClass mainClockTable = {
+static const struct GenericClockClass mainClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_M4
 };
 
-static const struct CommonClockClass usb0ClockTable = {
+static const struct GenericClockClass usb0ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_USB0
 };
 
-static const struct CommonClockClass usb1ClockTable = {
+static const struct GenericClockClass usb1ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_USB1
 };
 
-static const struct CommonClockClass periphClockTable = {
+static const struct GenericClockClass periphClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_PERIPH
 };
 
-static const struct CommonClockClass apb1ClockTable = {
+static const struct GenericClockClass apb1ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_APB1
 };
 
-static const struct CommonClockClass apb3ClockTable = {
+static const struct GenericClockClass apb3ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_APB3
 };
 
-static const struct CommonClockClass spifiClockTable = {
+static const struct GenericClockClass spifiClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_SPIFI
 };
 
-static const struct CommonClockClass spiClockTable = {
+static const struct GenericClockClass spiClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_SPI
 };
 
-static const struct CommonClockClass phyRxClockTable = {
+static const struct GenericClockClass phyRxClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_PHY_RX
 };
 
-static const struct CommonClockClass phyTxClockTable = {
+static const struct GenericClockClass phyTxClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_PHY_TX
 };
 
-static const struct CommonClockClass lcdClockTable = {
+static const struct GenericClockClass lcdClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_LCD
 };
 
-static const struct CommonClockClass adcHsClockTable = {
+static const struct GenericClockClass adcHsClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_ADCHS
 };
 
-static const struct CommonClockClass sdioClockTable = {
+static const struct GenericClockClass sdioClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_SDIO
 };
 
-static const struct CommonClockClass ssp0ClockTable = {
+static const struct GenericClockClass ssp0ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_SSP0
 };
 
-static const struct CommonClockClass ssp1ClockTable = {
+static const struct GenericClockClass ssp1ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_SSP1
 };
 
-static const struct CommonClockClass usart0ClockTable = {
+static const struct GenericClockClass usart0ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_USART0
 };
 
-static const struct CommonClockClass uart1ClockTable = {
+static const struct GenericClockClass uart1ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_UART1
 };
 
-static const struct CommonClockClass usart2ClockTable = {
+static const struct GenericClockClass usart2ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_USART2
 };
 
-static const struct CommonClockClass usart3ClockTable = {
+static const struct GenericClockClass usart3ClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_USART3
 };
 
-static const struct CommonClockClass audioClockTable = {
+static const struct GenericClockClass audioClockTable = {
     .base = {
-        .disable = commonClockDisable,
-        .enable = commonClockEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .disable = genericClockDisable,
+        .enable = genericClockEnable,
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_AUDIO
 };
 
-static const struct CommonClockClass outClockTable = {
+static const struct GenericClockClass outClockTable = {
     .base = {
-        .disable = commonClockDisable,
+        .disable = genericClockDisable,
         .enable = clockOutputEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_OUT
 };
 
-static const struct CommonClockClass cguOut0ClockTable = {
+static const struct GenericClockClass cguOut0ClockTable = {
     .base = {
-        .disable = commonClockDisable,
+        .disable = genericClockDisable,
         .enable = clockOutputEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_CGU_OUT0
 };
 
-static const struct CommonClockClass cguOut1ClockTable = {
+static const struct GenericClockClass cguOut1ClockTable = {
     .base = {
-        .disable = commonClockDisable,
+        .disable = genericClockDisable,
         .enable = clockOutputEnable,
-        .frequency = commonClockFrequency,
-        .ready = commonClockReady
+        .frequency = genericClockFrequency,
+        .ready = genericClockReady
     },
     .branch = CLOCK_BASE_CGU_OUT1
 };
@@ -426,45 +440,46 @@ static const struct PinEntry clockOutputPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct CommonDividerClass * const DividerA = &dividerATable;
-const struct CommonDividerClass * const DividerB = &dividerBTable;
-const struct CommonDividerClass * const DividerC = &dividerCTable;
-const struct CommonDividerClass * const DividerD = &dividerDTable;
-const struct CommonDividerClass * const DividerE = &dividerETable;
+const struct GenericDividerClass * const DividerA = &dividerATable;
+const struct GenericDividerClass * const DividerB = &dividerBTable;
+const struct GenericDividerClass * const DividerC = &dividerCTable;
+const struct GenericDividerClass * const DividerD = &dividerDTable;
+const struct GenericDividerClass * const DividerE = &dividerETable;
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &extOscTable;
 const struct ClockClass * const InternalOsc = &intOscTable;
 const struct ClockClass * const RtcOsc = &rtcOscTable;
-const struct ClockClass * const UsbPll = &pll0UsbTable;
 const struct ClockClass * const SystemPll = &pll1Table;
+const struct GenericPllClass * const AudioPll = &pll0AudioTable;
+const struct GenericPllClass * const UsbPll = &pll0UsbTable;
 /*----------------------------------------------------------------------------*/
-const struct CommonClockClass * const MainClock = &mainClockTable;
-const struct CommonClockClass * const Usb0Clock = &usb0ClockTable;
-const struct CommonClockClass * const Usb1Clock = &usb1ClockTable;
-const struct CommonClockClass * const PeriphClock = &periphClockTable;
-const struct CommonClockClass * const Apb1Clock = &apb1ClockTable;
-const struct CommonClockClass * const Apb3Clock = &apb3ClockTable;
-const struct CommonClockClass * const SpifiClock = &spifiClockTable;
-const struct CommonClockClass * const SpiClock = &spiClockTable;
-const struct CommonClockClass * const PhyRxClock = &phyRxClockTable;
-const struct CommonClockClass * const PhyTxClock = &phyTxClockTable;
-const struct CommonClockClass * const LcdClock = &lcdClockTable;
-const struct CommonClockClass * const AdcHsClock = &adcHsClockTable;
-const struct CommonClockClass * const SdioClock = &sdioClockTable;
-const struct CommonClockClass * const Ssp0Clock = &ssp0ClockTable;
-const struct CommonClockClass * const Ssp1Clock = &ssp1ClockTable;
-const struct CommonClockClass * const Usart0Clock = &usart0ClockTable;
-const struct CommonClockClass * const Uart1Clock = &uart1ClockTable;
-const struct CommonClockClass * const Usart2Clock = &usart2ClockTable;
-const struct CommonClockClass * const Usart3Clock = &usart3ClockTable;
-const struct CommonClockClass * const AudioClock = &audioClockTable;
-const struct CommonClockClass * const OutClock = &outClockTable;
-const struct CommonClockClass * const CguOut0Clock = &cguOut0ClockTable;
-const struct CommonClockClass * const CguOut1Clock = &cguOut1ClockTable;
+const struct GenericClockClass * const MainClock = &mainClockTable;
+const struct GenericClockClass * const Usb0Clock = &usb0ClockTable;
+const struct GenericClockClass * const Usb1Clock = &usb1ClockTable;
+const struct GenericClockClass * const PeriphClock = &periphClockTable;
+const struct GenericClockClass * const Apb1Clock = &apb1ClockTable;
+const struct GenericClockClass * const Apb3Clock = &apb3ClockTable;
+const struct GenericClockClass * const SpifiClock = &spifiClockTable;
+const struct GenericClockClass * const SpiClock = &spiClockTable;
+const struct GenericClockClass * const PhyRxClock = &phyRxClockTable;
+const struct GenericClockClass * const PhyTxClock = &phyTxClockTable;
+const struct GenericClockClass * const LcdClock = &lcdClockTable;
+const struct GenericClockClass * const AdcHsClock = &adcHsClockTable;
+const struct GenericClockClass * const SdioClock = &sdioClockTable;
+const struct GenericClockClass * const Ssp0Clock = &ssp0ClockTable;
+const struct GenericClockClass * const Ssp1Clock = &ssp1ClockTable;
+const struct GenericClockClass * const Usart0Clock = &usart0ClockTable;
+const struct GenericClockClass * const Uart1Clock = &uart1ClockTable;
+const struct GenericClockClass * const Usart2Clock = &usart2ClockTable;
+const struct GenericClockClass * const Usart3Clock = &usart3ClockTable;
+const struct GenericClockClass * const AudioClock = &audioClockTable;
+const struct GenericClockClass * const OutClock = &outClockTable;
+const struct GenericClockClass * const CguOut0Clock = &cguOut0ClockTable;
+const struct GenericClockClass * const CguOut1Clock = &cguOut1ClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
-static uint32_t pll0UsbFrequency = 0;
 static uint32_t pll0AudioFrequency = 0;
+static uint32_t pll0UsbFrequency = 0;
 static uint32_t pll1Frequency = 0;
 uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
@@ -476,6 +491,11 @@ static inline volatile uint32_t *calcBranchReg(enum ClockBranch branch)
 static inline volatile uint32_t *calcDividerReg(enum ClockSource source)
 {
   return &LPC_CGU->IDIVA_CTRL + (source - CLOCK_IDIVA);
+}
+/*----------------------------------------------------------------------------*/
+static inline LPC_CGU_PLL0_Type *calcPllReg(enum ClockSource source)
+{
+  return source == CLOCK_AUDIO_PLL ? &LPC_CGU->PLL0AUDIO : &LPC_CGU->PLL0USB;
 }
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
@@ -525,19 +545,19 @@ static uint32_t getSourceFrequency(enum ClockSource source)
       return pll1Frequency;
 
     case CLOCK_IDIVA:
-      return commonDividerFrequency(DividerA);
+      return genericDividerFrequency(DividerA);
 
     case CLOCK_IDIVB:
-      return commonDividerFrequency(DividerB);
+      return genericDividerFrequency(DividerB);
 
     case CLOCK_IDIVC:
-      return commonDividerFrequency(DividerC);
+      return genericDividerFrequency(DividerC);
 
     case CLOCK_IDIVD:
-      return commonDividerFrequency(DividerD);
+      return genericDividerFrequency(DividerD);
 
     case CLOCK_IDIVE:
-      return commonDividerFrequency(DividerE);
+      return genericDividerFrequency(DividerE);
 
     default:
       /* Unknown clock source */
@@ -657,26 +677,20 @@ static unsigned int pll0ComputeSelI(unsigned int msel)
 static unsigned int pll0ComputeSelP(unsigned int msel)
 {
   /* Bandwidth: compute SELP from MSEL */
-
-  if (msel < 60)
-    return (msel >> 1) + 1;
-  else
-    return 31;
+  return msel < 60 ? ((msel >> 1) + 1) : 31;
 }
 /*----------------------------------------------------------------------------*/
-static void commonDividerDisable(const void *clockBase)
+static void genericDividerDisable(const void *clockBase)
 {
-  const struct CommonDividerClass * const clock = clockBase;
-  volatile uint32_t * const reg = calcDividerReg(clock->channel);
-
-  *reg |= IDIV_PD;
+  const struct GenericDividerClass * const clock = clockBase;
+  *calcDividerReg(clock->channel) |= IDIV_PD;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result commonDividerEnable(const void *clockBase,
+static enum Result genericDividerEnable(const void *clockBase,
     const void *configBase)
 {
-  const struct CommonDividerClass * const clock = clockBase;
-  const struct CommonDividerConfig * const config = configBase;
+  const struct GenericDividerClass * const clock = clockBase;
+  const struct GenericDividerConfig * const config = configBase;
   volatile uint32_t * const reg = calcDividerReg(clock->channel);
 
   assert(config->divisor);
@@ -693,22 +707,19 @@ static enum Result commonDividerEnable(const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t commonDividerFrequency(const void *clockBase)
+static uint32_t genericDividerFrequency(const void *clockBase)
 {
-  const struct CommonDividerClass * const clock = clockBase;
-  const volatile uint32_t * const reg = calcDividerReg(clock->channel);
-  const uint32_t divider = IDIV_DIVIDER_VALUE(*reg) + 1;
-  const uint32_t frequency = getSourceFrequency(IDIV_CLK_SEL_VALUE(*reg));
-
+  const struct GenericDividerClass * const clock = clockBase;
+  const uint32_t value = *calcDividerReg(clock->channel);
+  const uint32_t divider = IDIV_DIVIDER_VALUE(value) + 1;
+  const uint32_t frequency = getSourceFrequency(IDIV_CLK_SEL_VALUE(value));
   return frequency / divider;
 }
 /*----------------------------------------------------------------------------*/
-static bool commonDividerReady(const void *clockBase)
+static bool genericDividerReady(const void *clockBase)
 {
-  const struct CommonDividerClass * const clock = clockBase;
-  const volatile uint32_t * const reg = calcDividerReg(clock->channel);
-
-  return !(*reg & IDIV_PD);
+  const struct GenericDividerClass * const clock = clockBase;
+  return !(*calcDividerReg(clock->channel) & IDIV_PD);
 }
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *clockBase __attribute__((unused)))
@@ -808,53 +819,46 @@ static bool rtcOscReady(const void *clockBase __attribute__((unused)))
   return !(LPC_CREG->CREG0 & (CREG0_PD32KHZ | CREG0_RESET32KHZ));
 }
 /*----------------------------------------------------------------------------*/
-static void pll0UsbClockDisable(const void *clockBase __attribute__((unused)))
+static void pll0ClockDisable(const void *clockBase)
 {
-  LPC_CGU->PLL0USB_CTRL |= BASE_PD;
+  const struct GenericPllClass * const clock = clockBase;
+  calcPllReg(clock->channel)->CTRL |= BASE_PD;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result pll0UsbClockEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase)
+static enum Result pll0ClockEnable(const void *clockBase,
+    const void *configBase)
 {
+  const struct GenericPllClass * const clock = clockBase;
   const struct PllConfig * const config = configBase;
+  assert(config->source != CLOCK_AUDIO_PLL && config->source != CLOCK_USB_PLL);
 
-  assert(config->source != CLOCK_USB_PLL);
-  assert(config->divisor);
-  assert(config->multiplier/* && config->multiplier <= 65536*/); //FIXME
+  if (!config->divisor || config->divisor > 64)
+    return E_VALUE;
+  if (config->divisor > 1 && (config->divisor & 1) != 0)
+    return E_VALUE;
+  if (!config->multiplier || config->multiplier > 32768)
+    return E_VALUE;
 
-  const uint32_t sourceFrequency = getSourceFrequency(config->source);
+  const bool multiplierIsEven = (config->multiplier & 1) == 0;
+  const unsigned int psel = config->divisor > 1 ? config->divisor >> 1 : 0;
+  const unsigned int nsel = multiplierIsEven ? 1 : 2;
+  const unsigned int msel = multiplierIsEven ?
+      config->multiplier >> 1 : config->multiplier;
 
-  if (!sourceFrequency)
-    return E_ERROR;
+  const bool directInput = nsel == 1;
+  const bool directOutput = psel == 0;
 
-  unsigned int divisor = config->divisor;
-  unsigned int psel = 1;
+  const uint32_t inputFrequency = getSourceFrequency(config->source);
+  if (!inputFrequency)
+    return E_IDLE;
 
-  //TODO Find common dividers
-  while (psel < (1 << 5) && !(divisor & 1)) //TODO Constants
-  {
-    psel <<= 1;
-    divisor >>= 1;
-  }
-  assert(divisor <= 256);
+  const uint32_t ccoFrequency = (inputFrequency / nsel) * (msel << 1);
+  const uint32_t expectedFrequency =
+      psel ? ccoFrequency / (psel << 1) : ccoFrequency;
 
-  const unsigned int msel = config->multiplier >> 1;
-  const unsigned int nsel = divisor;
-  bool directInput = false, directOutput = false;
-
-  if (psel > 1)
-    psel >>= 1;
-  else
-    directOutput = true;
-
-  if (nsel == 1)
-    directInput = true;
-
-  const uint32_t ccoFrequency = sourceFrequency * config->multiplier;
-  const uint32_t expectedFrequency = ccoFrequency / config->divisor;
-
-  /* Check CCO range */
-  assert(ccoFrequency >= 275000000 && ccoFrequency <= 550000000);
+  /* Check CCO frequency */
+  if (ccoFrequency < 275000000 || ccoFrequency > 550000000)
+    return E_VALUE;
 
   const uint32_t mDivValue = PLL0_MDIV_MDEC(pll0ComputeMdec(msel))
       | PLL0_MDIV_SELP(pll0ComputeSelP(msel))
@@ -868,26 +872,38 @@ static enum Result pll0UsbClockEnable(const void *clockBase
     controlValue |= PLL0_CTRL_DIRECTI;
   if (directOutput)
     controlValue |= PLL0_CTRL_DIRECTO;
+  if (clock->channel == CLOCK_AUDIO_PLL)
+    controlValue |= PLL0_SEL_EXT | PLL0_MOD_PD;
 
-  LPC_CGU->PLL0USB_CTRL = BASE_PD;
-  LPC_CGU->PLL0USB_MDIV = mDivValue;
-  LPC_CGU->PLL0USB_NP_DIV = npDivValue;
-  LPC_CGU->PLL0USB_CTRL |= controlValue;
-  LPC_CGU->PLL0USB_CTRL &= ~BASE_PD;
+  LPC_CGU_PLL0_Type * const reg = calcPllReg(clock->channel);
 
-  pll0UsbFrequency = expectedFrequency;
+  reg->CTRL |= BASE_PD | BASE_AUTOBLOCK;
+  reg->MDIV = mDivValue;
+  reg->NP_DIV = npDivValue;
+  reg->CTRL = controlValue;
+
+  if (clock->channel == CLOCK_AUDIO_PLL)
+    pll0AudioFrequency = expectedFrequency;
+  else
+    pll0UsbFrequency = expectedFrequency;
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t pll0UsbClockFrequency(const void *clockBase
-    __attribute__((unused)))
+static uint32_t pll0ClockFrequency(const void *clockBase)
 {
-  return pll0UsbFrequency;
+  const struct GenericPllClass * const clock = clockBase;
+
+  return clock->channel == CLOCK_AUDIO_PLL ?
+      pll0AudioFrequency : pll0UsbFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool pll0UsbClockReady(const void *clockBase __attribute__((unused)))
+static bool pll0ClockReady(const void *clockBase)
 {
-  return pll0UsbFrequency && (LPC_CGU->PLL0USB_STAT & PLL0_STAT_LOCK);
+  const struct GenericPllClass * const clock = clockBase;
+  const uint32_t frequency = pll0ClockFrequency(clock);
+
+  return frequency && calcPllReg(clock->channel)->STAT & PLL0_STAT_LOCK;
 }
 /*----------------------------------------------------------------------------*/
 static void pll1ClockDisable(const void *clockBase __attribute__((unused)))
@@ -899,53 +915,46 @@ static enum Result pll1ClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-
   assert(config->source != CLOCK_PLL);
-  assert(config->divisor);
-  assert(config->multiplier && config->multiplier <= 256);
 
-  unsigned int divisor = config->divisor;
-  unsigned int psel = 0;
+  if (!config->divisor)
+    return E_VALUE;
+  if (!config->multiplier || config->multiplier > 256)
+    return E_VALUE;
 
-  while (psel < 4 && !(divisor & 1))
-  {
-    ++psel;
-    divisor >>= 1;
-  }
-  assert(divisor <= 4);
+  const unsigned int psel = countLeadingZeros32(reverseBits32(config->divisor));
+  const unsigned int nsel = config->divisor >> psel;
 
-  const uint32_t sourceFrequency = getSourceFrequency(config->source);
+  if (psel > 4 || nsel > 4 || nsel << psel != config->divisor)
+    return E_VALUE;
 
-  if (!sourceFrequency)
+  const uint32_t inputFrequency = getSourceFrequency(config->source);
+  if (!inputFrequency)
     return E_ERROR;
 
-  const unsigned int msel = config->multiplier - 1;
-  const unsigned int nsel = divisor - 1;
-  bool direct = false;
+  const uint32_t ccoFrequency = (inputFrequency / nsel) * config->multiplier;
+  const uint32_t expectedFrequency = ccoFrequency >> psel;
 
-  if (psel)
-    --psel;
-  else
-    direct = true;
-
-  const uint32_t ccoFrequency = sourceFrequency * config->multiplier;
-  const uint32_t expectedFrequency = ccoFrequency / config->divisor;
-
-  /* Check CCO range */
-  assert(ccoFrequency >= 156000000 && ccoFrequency <= 320000000);
+  /* Check CCO frequency */
+  if (ccoFrequency < 156000000 || ccoFrequency > 320000000)
+    return E_VALUE;
 
   uint32_t controlValue = BASE_AUTOBLOCK | BASE_CLK_SEL(config->source)
-      | PLL1_CTRL_PSEL(psel) | PLL1_CTRL_NSEL(nsel) | PLL1_CTRL_MSEL(msel);
+      | PLL1_CTRL_NSEL(nsel - 1) | PLL1_CTRL_MSEL(config->multiplier - 1);
+  const bool direct = psel == 0;
+
+  if (!direct)
+    controlValue |= PLL1_CTRL_PSEL(psel - 1);
 
   if (expectedFrequency > 110000000)
   {
     /* No division allowed */
-    assert(direct);
+    if (!direct)
+      return E_VALUE;
 
     /* Start at mid-range frequency by dividing output clock */
-    LPC_CGU->PLL1_CTRL = BASE_PD;
-    LPC_CGU->PLL1_CTRL |= controlValue;
-    LPC_CGU->PLL1_CTRL &= ~BASE_PD;
+    LPC_CGU->PLL1_CTRL |= BASE_PD | BASE_AUTOBLOCK;
+    LPC_CGU->PLL1_CTRL = controlValue;
 
     /* User manual recommends to add a delay for 50 microseconds */
     udelay(50);
@@ -962,9 +971,8 @@ static enum Result pll1ClockEnable(const void *clockBase
     if (direct)
       controlValue |= PLL1_CTRL_FBSEL | PLL1_CTRL_DIRECT;
 
-    LPC_CGU->PLL1_CTRL = BASE_PD;
-    LPC_CGU->PLL1_CTRL |= controlValue;
-    LPC_CGU->PLL1_CTRL &= ~BASE_PD;
+    LPC_CGU->PLL1_CTRL |= BASE_PD | BASE_AUTOBLOCK;
+    LPC_CGU->PLL1_CTRL = controlValue;
   }
 
   pll1Frequency = expectedFrequency;
@@ -985,9 +993,9 @@ static bool pll1ClockReady(const void *clockBase __attribute__((unused)))
 static enum Result clockOutputEnable(const void *clockBase,
     const void *configBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
+  const struct GenericClockClass * const clock = clockBase;
   const struct ClockOutputConfig * const config = configBase;
-  const struct CommonClockConfig baseConfig = {
+  const struct GenericClockConfig baseConfig = {
       .source = config->source
   };
 
@@ -1000,22 +1008,20 @@ static enum Result clockOutputEnable(const void *clockBase,
   pinInput(pin);
   pinSetFunction(pin, pinEntry->value);
 
-  return commonClockEnable(clock, &baseConfig);
+  return genericClockEnable(clock, &baseConfig);
 }
 /*----------------------------------------------------------------------------*/
-static void commonClockDisable(const void *clockBase)
+static void genericClockDisable(const void *clockBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
-  volatile uint32_t * const reg = calcBranchReg(clock->branch);
-
-  *reg |= BASE_PD;
+  const struct GenericClockClass * const clock = clockBase;
+  *calcBranchReg(clock->branch) |= BASE_PD;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result commonClockEnable(const void *clockBase,
+static enum Result genericClockEnable(const void *clockBase,
     const void *configBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
-  const struct CommonClockConfig * const config = configBase;
+  const struct GenericClockClass * const clock = clockBase;
+  const struct GenericClockConfig * const config = configBase;
   volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
   if (clock->branch == CLOCK_BASE_M4)
@@ -1027,7 +1033,7 @@ static enum Result commonClockEnable(const void *clockBase,
 
   if (clock->branch == CLOCK_BASE_M4)
   {
-    const uint32_t frequency = commonClockFrequency(clockBase);
+    const uint32_t frequency = genericClockFrequency(clockBase);
 
     flashLatencyUpdate(frequency);
     ticksPerSecond = TICK_RATE(frequency);
@@ -1036,18 +1042,14 @@ static enum Result commonClockEnable(const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t commonClockFrequency(const void *clockBase)
+static uint32_t genericClockFrequency(const void *clockBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
-  const volatile uint32_t * const reg = calcBranchReg(clock->branch);
-
-  return getSourceFrequency(BASE_CLK_SEL_VALUE(*reg));
+  const struct GenericClockClass * const clock = clockBase;
+  return getSourceFrequency(BASE_CLK_SEL_VALUE(*calcBranchReg(clock->branch)));
 }
 /*----------------------------------------------------------------------------*/
-static bool commonClockReady(const void *clockBase)
+static bool genericClockReady(const void *clockBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
-  const volatile uint32_t * const reg = calcBranchReg(clock->branch);
-
-  return !(*reg & BASE_PD);
+  const struct GenericClockClass * const clock = clockBase;
+  return !(*calcBranchReg(clock->branch) & BASE_PD);
 }

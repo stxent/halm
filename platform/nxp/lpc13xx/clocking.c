@@ -96,7 +96,7 @@ static const struct ClockClass usbPllTable = {
     .ready = usbPllReady
 };
 /*----------------------------------------------------------------------------*/
-static const struct CommonClockClass clockOutputTable = {
+static const struct GenericClockClass clockOutputTable = {
     .base = {
         .disable = branchDisable,
         .enable = clockOutputEnable,
@@ -106,7 +106,7 @@ static const struct CommonClockClass clockOutputTable = {
     .branch = CLOCK_BRANCH_OUTPUT
 };
 
-static const struct CommonClockClass mainClockTable = {
+static const struct GenericClockClass mainClockTable = {
     .base = {
         .disable = branchDisable,
         .enable = branchEnable,
@@ -116,7 +116,7 @@ static const struct CommonClockClass mainClockTable = {
     .branch = CLOCK_BRANCH_MAIN
 };
 
-static const struct CommonClockClass usbClockTable = {
+static const struct GenericClockClass usbClockTable = {
     .base = {
         .disable = branchDisable,
         .enable = branchEnable,
@@ -126,7 +126,7 @@ static const struct CommonClockClass usbClockTable = {
     .branch = CLOCK_BRANCH_USB
 };
 
-static const struct CommonClockClass wdtClockTable = {
+static const struct GenericClockClass wdtClockTable = {
     .base = {
         .disable = branchDisable,
         .enable = branchEnable,
@@ -184,10 +184,10 @@ const struct ClockClass * const InternalOsc = &intOscTable;
 const struct ClockClass * const WdtOsc = &wdtOscTable;
 const struct ClockClass * const SystemPll = &sysPllTable;
 const struct ClockClass * const UsbPll = &usbPllTable;
-const struct CommonClockClass * const ClockOutput = &clockOutputTable;
-const struct CommonClockClass * const MainClock = &mainClockTable;
-const struct CommonClockClass * const UsbClock = &usbClockTable;
-const struct CommonClockClass * const WdtClock = &wdtClockTable;
+const struct GenericClockClass * const ClockOutput = &clockOutputTable;
+const struct GenericClockClass * const MainClock = &mainClockTable;
+const struct GenericClockClass * const UsbClock = &usbClockTable;
+const struct GenericClockClass * const WdtClock = &wdtClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
@@ -476,7 +476,7 @@ static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
-  const struct CommonClockConfig baseConfig = {
+  const struct GenericClockConfig baseConfig = {
       .source = config->source,
       .divisor = config->divisor
   };
@@ -495,7 +495,7 @@ static enum Result clockOutputEnable(const void *clockBase
 /*----------------------------------------------------------------------------*/
 static void branchDisable(const void *clockBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
+  const struct GenericClockClass * const clock = clockBase;
   struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
 
@@ -505,8 +505,8 @@ static void branchDisable(const void *clockBase)
 /*----------------------------------------------------------------------------*/
 static enum Result branchEnable(const void *clockBase, const void *configBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
-  const struct CommonClockConfig * const config = configBase;
+  const struct GenericClockClass * const clock = clockBase;
+  const struct GenericClockConfig * const config = configBase;
   struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
   int source = -1;
@@ -546,7 +546,7 @@ static enum Result branchEnable(const void *clockBase, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static uint32_t branchFrequency(const void *clockBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
+  const struct GenericClockClass * const clock = clockBase;
   const struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
   const int sourceType =
@@ -589,7 +589,7 @@ static uint32_t branchFrequency(const void *clockBase)
 /*----------------------------------------------------------------------------*/
 static bool branchReady(const void *clockBase)
 {
-  const struct CommonClockClass * const clock = clockBase;
+  const struct GenericClockClass * const clock = clockBase;
   const struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
 

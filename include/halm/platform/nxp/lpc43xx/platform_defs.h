@@ -11,22 +11,42 @@
 /*------------------Clock Generation Unit-------------------------------------*/
 typedef struct
 {
+  __ro__ uint32_t STAT;
+  __rw__ uint32_t CTRL;
+  __rw__ uint32_t MDIV;
+  __rw__ uint32_t NP_DIV;
+} LPC_CGU_PLL0_Type;
+
+typedef struct
+{
   __ne__ uint32_t RESERVED0[5];
   __rw__ uint32_t FREQ_MON;
   __rw__ uint32_t XTAL_OSC_CTRL;
-  __ro__ uint32_t PLL0USB_STAT;
 
-  /* Offset 0x0020 */
-  __rw__ uint32_t PLL0USB_CTRL;
-  __rw__ uint32_t PLL0USB_MDIV;
-  __rw__ uint32_t PLL0USB_NP_DIV;
-  __ro__ uint32_t PLL0AUDIO_STAT;
-  __rw__ uint32_t PLL0AUDIO_CTRL;
-  __rw__ uint32_t PLL0AUDIO_MDIV;
-  __rw__ uint32_t PLL0AUDIO_NP_DIV;
+  union
+  {
+    struct
+    {
+      __ro__ uint32_t PLL0USB_STAT;
+      __rw__ uint32_t PLL0USB_CTRL;
+      __rw__ uint32_t PLL0USB_MDIV;
+      __rw__ uint32_t PLL0USB_NP_DIV;
+
+      __ro__ uint32_t PLL0AUDIO_STAT;
+      __rw__ uint32_t PLL0AUDIO_CTRL;
+      __rw__ uint32_t PLL0AUDIO_MDIV;
+      __rw__ uint32_t PLL0AUDIO_NP_DIV;
+    };
+
+    struct
+    {
+      LPC_CGU_PLL0_Type PLL0USB;
+      LPC_CGU_PLL0_Type PLL0AUDIO;
+    };
+  };
+
+  /* Offset 0x003C */
   __rw__ uint32_t PLL0AUDIO_FRAC;
-
-  /* Offset 0x0040 */
   __ro__ uint32_t PLL1_STAT;
   __rw__ uint32_t PLL1_CTRL;
   __rw__ uint32_t IDIVA_CTRL;

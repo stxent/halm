@@ -19,13 +19,17 @@
 #define XTAL_ENABLE                     BIT(0) /* Inverted */
 #define XTAL_BYPASS                     BIT(1)
 #define XTAL_HF                         BIT(2)
-/*------------------PLL0USB Control register----------------------------------*/
+/*------------------Common PLL0 Control registers-----------------------------*/
 #define PLL0_CTRL_BYPASS                BIT(1)
 #define PLL0_CTRL_DIRECTI               BIT(2)
 #define PLL0_CTRL_DIRECTO               BIT(3)
 #define PLL0_CTRL_CLKEN                 BIT(4)
 #define PLL0_CTRL_FRM                   BIT(6)
-/*------------------PLL0USB M-Divider register--------------------------------*/
+/*------------------Audio PLL0 Control register-------------------------------*/
+#define PLL0_PLLFRACT_REQ               BIT(12)
+#define PLL0_SEL_EXT                    BIT(13)
+#define PLL0_MOD_PD                     BIT(14)
+/*------------------PLL0 M-Divider register-----------------------------------*/
 #define PLL0_MDIV_MDEC_MASK             BIT_FIELD(MASK(17), 0)
 #define PLL0_MDIV_MDEC(value)           BIT_FIELD((value), 0)
 #define PLL0_MDIV_SELP_MASK             BIT_FIELD(MASK(5), 17)
@@ -34,12 +38,12 @@
 #define PLL0_MDIV_SELI(value)           BIT_FIELD((value), 22)
 #define PLL0_MDIV_SELR_MASK             BIT_FIELD(MASK(4), 28)
 #define PLL0_MDIV_SELR(value)           BIT_FIELD((value), 28)
-/*------------------PLL0USB NP-Divider register-------------------------------*/
+/*------------------PLL0 NP-Divider register----------------------------------*/
 #define PLL0_NP_DIV_PDEC_MASK           BIT_FIELD(MASK(7), 0)
 #define PLL0_NP_DIV_PDEC(value)         BIT_FIELD((value), 0)
 #define PLL0_NP_DIV_NDEC_MASK           BIT_FIELD(MASK(8), 12)
 #define PLL0_NP_DIV_NDEC(value)         BIT_FIELD((value), 12)
-/*------------------PLL0USB Status register-----------------------------------*/
+/*------------------PLL0 Status register--------------------------------------*/
 #define PLL0_STAT_LOCK                  BIT(0)
 #define PLL0_STAT_FR                    BIT(1)
 /*------------------PLL1 Control register-------------------------------------*/
