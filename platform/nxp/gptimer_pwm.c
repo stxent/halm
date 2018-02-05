@@ -270,13 +270,14 @@ static enum Result channelSetFrequency(void *object, uint32_t frequency)
   const uint32_t clockFrequency = gpTimerGetClock(&unit->base);
   const uint32_t timerFrequency = frequency * unit->resolution;
 
-  if (!timerFrequency || timerFrequency > clockFrequency)
+  if (timerFrequency && timerFrequency <= clockFrequency)
+  {
+    /* TODO Add scaling of timer match values */
+    reg->PR = clockFrequency / timerFrequency - 1;
+    return E_OK;
+  }
+  else
     return E_VALUE;
-
-  /* TODO Add scaling of timer match values */
-  reg->PR = clockFrequency / timerFrequency - 1;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 /**

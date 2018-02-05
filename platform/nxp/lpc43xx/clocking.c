@@ -647,7 +647,6 @@ static unsigned int pll0ComputePdec(unsigned int psel)
     {
       unsigned int x = 0x10;
 
-      //TODO Constants PLL0_MSEL_MAX etc
       for (unsigned int ip = psel; ip <= (1 << 5); ++ip)
         x = (((x ^ x >> 2) & 1) << 4) | (x >> 1 & 0xF);
 

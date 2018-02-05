@@ -314,6 +314,10 @@ static enum Result spiGetParam(void *object, enum IfParameter parameter,
 {
   struct SpiDma * const interface = object;
 
+#ifndef CONFIG_PLATFORM_NXP_SSP_RC
+  (void)data;
+#endif
+
   switch (parameter)
   {
 #ifdef CONFIG_PLATFORM_NXP_SSP_RC
@@ -339,6 +343,10 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct SpiDma * const interface = object;
+
+#ifndef CONFIG_PLATFORM_NXP_SSP_RC
+  (void)data;
+#endif
 
   switch (parameter)
   {

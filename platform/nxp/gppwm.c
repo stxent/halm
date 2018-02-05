@@ -199,13 +199,14 @@ static enum Result channelSetFrequency(struct GpPwmUnit *unit,
   const uint32_t clockFrequency = gpPwmGetClock(&unit->base);
   const uint32_t timerFrequency = frequency * unit->resolution;
 
-  if (!timerFrequency || timerFrequency > clockFrequency)
+  if (timerFrequency && timerFrequency <= clockFrequency)
+  {
+    /* TODO Add scaling of PWM match values */
+    reg->PR = clockFrequency / timerFrequency - 1;
+    return E_OK;
+  }
+  else
     return E_VALUE;
-
-  /* TODO Add scaling of PWM match values */
-  reg->PR = clockFrequency / timerFrequency - 1;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result singleEdgeInit(void *object, const void *configBase)

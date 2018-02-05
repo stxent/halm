@@ -243,7 +243,10 @@ static enum Result spiGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
   struct Spi * const interface = object;
-  LPC_SSP_Type * const reg = interface->base.reg;
+
+#ifndef CONFIG_PLATFORM_NXP_SSP_RC
+  (void)data;
+#endif
 
   switch (parameter)
   {
@@ -254,7 +257,10 @@ static enum Result spiGetParam(void *object, enum IfParameter parameter,
 #endif
 
     case IF_STATUS:
+    {
+      const LPC_SSP_Type * const reg = interface->base.reg;
       return (interface->rxLeft || reg->SR & SR_BSY) ? E_BUSY : E_OK;
+    }
 
     default:
       return E_INVALID;
@@ -265,6 +271,10 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Spi * const interface = object;
+
+#ifndef CONFIG_PLATFORM_NXP_SSP_RC
+  (void)data;
+#endif
 
   switch (parameter)
   {

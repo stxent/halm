@@ -279,6 +279,10 @@ static enum Result spiGetParam(void *object, enum IfParameter parameter,
 {
   struct Spi * const interface = object;
 
+#ifndef CONFIG_PLATFORM_STM_SPI_RC
+  (void)data;
+#endif
+
   switch (parameter)
   {
 #ifdef CONFIG_PLATFORM_STM_SPI_RC
@@ -299,6 +303,10 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
   struct Spi * const interface = object;
+
+#ifndef CONFIG_PLATFORM_STM_SPI_RC
+  (void)data;
+#endif
 
   switch (parameter)
   {
