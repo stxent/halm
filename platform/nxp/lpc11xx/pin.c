@@ -57,7 +57,7 @@ struct Pin pinInit(PinNumber id)
 
   pin.data.port = PIN_TO_PORT(id);
   pin.data.offset = PIN_TO_OFFSET(id);
-  pin.reg = calcMaskedReg(pin.data);
+  pin.reg = id ? calcMaskedReg(pin.data) : 0;
 
   return pin;
 }

@@ -631,7 +631,7 @@ static enum Result controlInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  /* Enable endpoints before request queuing */
+  /* Enable endpoints before adding requests in the queues */
   enableEndpoints(control);
 
   /* Initialize requests */

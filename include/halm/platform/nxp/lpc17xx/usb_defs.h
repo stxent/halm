@@ -50,12 +50,12 @@
 #define USBCmdCode_CMD_PHASE(value)     BIT_FIELD((value), 8)
 #define USBCmdCode_CMD_PHASE_VALUE(reg) \
     FIELD_VALUE((reg), USBCmdCode_CMD_PHASE_MASK, 8)
-#define USBCmdCode_CMD_CODE_MASK       BIT_FIELD(MASK(8), 16)
-#define USBCmdCode_CMD_CODE(value)     BIT_FIELD((value), 16)
+#define USBCmdCode_CMD_CODE_MASK        BIT_FIELD(MASK(8), 16)
+#define USBCmdCode_CMD_CODE(value)      BIT_FIELD((value), 16)
 #define USBCmdCode_CMD_CODE_VALUE(reg) \
     FIELD_VALUE((reg), USBCmdCode_CMD_CODE_MASK, 16)
-#define USBCmdCode_CMD_WDATA_MASK      USBCmdCode_CMD_CODE_MASK
-#define USBCmdCode_CMD_WDATA(value)    USBCmdCode_CMD_CODE(value)
+#define USBCmdCode_CMD_WDATA_MASK       USBCmdCode_CMD_CODE_MASK
+#define USBCmdCode_CMD_WDATA(value)     USBCmdCode_CMD_CODE(value)
 #define USBCmdCode_CMD_WDATA_VALUE(reg) \
     USBCmdCode_CMD_CODE_VALUE(reg)
 /*----------------------------------------------------------------------------*/

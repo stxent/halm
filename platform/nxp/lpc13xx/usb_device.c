@@ -338,9 +338,9 @@ static void devSetConnected(void *object, bool state)
 {
   struct UsbDevice * const device = object;
 
+  device->enabled = state;
   usbCommandWrite(device, USB_CMD_SET_DEVICE_STATUS,
       state ? DEVICE_STATUS_CON : 0);
-  device->enabled = state;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devBind(void *object, void *driver)
@@ -523,7 +523,6 @@ static void epWriteData(struct UsbSieEndpoint *ep, const uint8_t *buffer,
 static enum Result epInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
-  struct UsbDevice * const device = config->parent;
   struct UsbSieEndpoint * const ep = object;
 
   const enum Result res = queueInit(&ep->requests,
@@ -532,7 +531,7 @@ static enum Result epInit(void *object, const void *configBase)
   if (res == E_OK)
   {
     ep->address = config->address;
-    ep->device = device;
+    ep->device = config->parent;
   }
 
   return res;
@@ -542,12 +541,11 @@ static void epDeinit(void *object)
 {
   struct UsbSieEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
+  const unsigned int index = EP_TO_INDEX(ep->address);
 
   /* Disable interrupts and remove pending requests */
   epDisable(ep);
   epClear(ep);
-
-  const unsigned int index = EP_TO_INDEX(ep->address);
 
   const IrqState state = irqSave();
   device->endpoints[index] = 0;
