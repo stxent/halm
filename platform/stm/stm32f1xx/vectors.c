@@ -5,6 +5,7 @@
  */
 
 void defaultHandler(void) __attribute__((weak));
+static void emptyHandler(void);
 /*----------------------------------------------------------------------------*/
 /* Core Cortex-M3 IRQ handlers */
 void RESET_ISR(void) __attribute__((weak, alias("defaultHandler")));
@@ -89,29 +90,29 @@ void CAN2_SCE_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void OTG_FS_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
 /* Virtual IRQ handlers */
-void ADC1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void ADC2_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void USB_HP_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void CAN1_TX_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void USB_LP_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void CAN1_RX0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM1_BRK_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM15_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM1_UP_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM16_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM1_TRG_COM_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM17_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void USB_WAKEUP_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void CEC_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM8_BRK_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM12_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM8_UP_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM13_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM8_TRG_COM_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM14_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void DAC_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIM6_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void DMA2_CHANNEL4_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void ADC1_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void ADC2_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void USB_HP_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void CAN1_TX_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void USB_LP_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void CAN1_RX0_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM1_BRK_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM15_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM1_UP_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM16_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM1_TRG_COM_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM17_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void USB_WAKEUP_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void CEC_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM8_BRK_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM12_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM8_UP_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM13_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM8_TRG_COM_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM14_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void DAC_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void TIM6_ISR(void) __attribute__((weak, alias("emptyHandler")));
+void DMA2_CHANNEL4_ISR(void) __attribute__((weak, alias("emptyHandler")));
 /*----------------------------------------------------------------------------*/
 extern void _stack(void); /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
@@ -209,6 +210,10 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
 void defaultHandler(void)
 {
   while (1);
+}
+/*----------------------------------------------------------------------------*/
+static void emptyHandler(void)
+{
 }
 /*----------------------------------------------------------------------------*/
 void ADC1_2_ISR(void)

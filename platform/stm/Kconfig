@@ -54,4 +54,23 @@ config PLATFORM_STM_SERIAL
 	default y
 	depends on PLATFORM_STM_UART_BASE
 
+config PLATFORM_USB
+	bool "USB"
+	default y
+
+config PLATFORM_USB_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_USB
+
+config PLATFORM_USB_DEVICE
+	bool "USB Device"
+	default y
+	depends on PLATFORM_USB
+
+config PLATFORM_USB_DEVICE_EP_REQUESTS
+	int "Endpoint queue size"
+	default 4
+	depends on PLATFORM_USB_DEVICE
+
 endmenu

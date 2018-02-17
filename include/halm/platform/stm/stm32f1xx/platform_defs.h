@@ -193,6 +193,34 @@ typedef struct
   __rw__ uint32_t DMACHTBAR;
   __rw__ uint32_t DMACHRBAR;
 } STM_ETHERNET_Type;
+/*------------------USB full-speed device-------------------------------------*/
+typedef struct
+{
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t EP0R;
+      __rw__ uint32_t EP1R;
+      __rw__ uint32_t EP2R;
+      __rw__ uint32_t EP3R;
+      __rw__ uint32_t EP4R;
+      __rw__ uint32_t EP5R;
+      __rw__ uint32_t EP6R;
+      __rw__ uint32_t EP7R;
+    };
+    __rw__ uint32_t EPR[8];
+  };
+
+  __ne__ uint32_t RESERVED0[8];
+
+  /* Offset 0x40 */
+  __rw__ uint32_t CNTR;
+  __rw__ uint32_t ISTR;
+  __rw__ uint32_t FNR;
+  __rw__ uint32_t DADDR;
+  __rw__ uint32_t BTABLE;
+} STM_USB_Type;
 /*------------------External Interrupt/Event Controller-----------------------*/
 typedef struct
 {
@@ -475,6 +503,8 @@ typedef struct
 #define STM_UART5_BASE          (STM_APB1_BASE + 0x5000)
 #define STM_I2C1_BASE           (STM_APB1_BASE + 0x5400)
 #define STM_I2C2_BASE           (STM_APB1_BASE + 0x5800)
+#define STM_USB_BASE            (STM_APB1_BASE + 0x5C00)
+#define STM_CAN_USB_SRAM_BASE   (STM_APB1_BASE + 0x6000)
 #define STM_CAN1_BASE           (STM_APB1_BASE + 0x6400)
 #define STM_CAN2_BASE           (STM_APB1_BASE + 0x6800)
 #define STM_PWR_BASE            (STM_APB1_BASE + 0x7000)
@@ -536,6 +566,7 @@ typedef struct
 #define STM_UART5               ((STM_USART_Type *)STM_UART5_BASE)
 #define STM_I2C1                ((STM_I2C_Type *)STM_I2C1_BASE)
 #define STM_I2C2                ((STM_I2C_Type *)STM_I2C2_BASE)
+#define STM_USB                 ((STM_USB_Type *)STM_USB_BASE)
 #define STM_CAN1                ((STM_CAN_Type *)STM_CAN1_BASE)
 #define STM_CAN2                ((STM_CAN_Type *)STM_CAN2_BASE)
 #define STM_BKP                 ((STM_BKP_Type *)STM_BKP_BASE)

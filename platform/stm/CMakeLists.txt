@@ -38,4 +38,9 @@ if(${CONFIG_PLATFORM_STM_SERIAL})
     list(APPEND SOURCE_FILES "serial.c")
 endif()
 
+if(${CONFIG_PLATFORM_USB})
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_device.c")
+endif()
+
 add_library(platform OBJECT ${SOURCE_FILES})
