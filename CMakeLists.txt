@@ -28,8 +28,13 @@ set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 if(${USE_LTO})
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto -ffat-lto-objects")
 endif()
+
 if(DEFINED PLATFORM)
     add_definitions(-D${PLATFORM})
+else()
+    if(UNIX)
+        add_definitions(-D_POSIX_C_SOURCE=200809L)
+    endif()
 endif()
 
 include_directories("${PATH_XCORE}/include")

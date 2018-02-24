@@ -4,7 +4,9 @@
 include(FindPkgConfig)
 pkg_check_modules(LIBEV libev)
 
-set(CMAKE_SYSTEM_SOC "generic")
+if(UNIX)
+    set(CMAKE_SYSTEM_SOC "posix")
+endif()
 
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/console.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/mmf.c")

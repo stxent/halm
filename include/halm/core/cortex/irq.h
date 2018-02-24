@@ -16,5 +16,9 @@ typedef uint32_t IrqState;
 #undef HEADER_PATH
 #define HEADER_PATH <halm/core/CORE_TYPE/CORE/irq.h>
 #include HEADER_PATH
+
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/vectors.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_IRQ_H_ */

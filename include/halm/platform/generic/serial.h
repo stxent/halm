@@ -1,11 +1,11 @@
 /*
- * halm/platform/linux/serial.h
+ * halm/platform/generic/serial.h
  * Copyright (C) 2017 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_LINUX_SERIAL_H_
-#define HALM_PLATFORM_LINUX_SERIAL_H_
+#ifndef HALM_PLATFORM_GENERIC_SERIAL_H_
+#define HALM_PLATFORM_GENERIC_SERIAL_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <xcore/interface.h>
@@ -23,4 +23,4 @@ struct SerialConfig
   enum SerialParity parity;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LINUX_SERIAL_H_ */
+#endif /* HALM_PLATFORM_GENERIC_SERIAL_H_ */

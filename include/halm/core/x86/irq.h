@@ -1,14 +1,21 @@
 /*
- * halm/platform/linux/console.h
- * Copyright (C) 2017 xent
+ * halm/core/x86/irq.h
+ * Copyright (C) 2018 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_LINUX_CONSOLE_H_
-#define HALM_PLATFORM_LINUX_CONSOLE_H_
+#ifndef HALM_CORE_X86_IRQ_H_
+#define HALM_CORE_X86_IRQ_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/interface.h>
+typedef unsigned int IrqState;
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const Console;
+static inline void irqRestore(IrqState state __attribute__((unused)))
+{
+}
+
+static inline IrqState irqSave(void)
+{
+  return 0;
+}
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LINUX_CONSOLE_H_ */
+#endif /* HALM_CORE_X86_IRQ_H_ */

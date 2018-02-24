@@ -1,11 +1,11 @@
 /*
- * halm/platform/linux/udp.h
+ * halm/platform/generic/udp.h
  * Copyright (C) 2017 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_LINUX_UDP_H_
-#define HALM_PLATFORM_LINUX_UDP_H_
+#ifndef HALM_PLATFORM_GENERIC_UDP_H_
+#define HALM_PLATFORM_GENERIC_UDP_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
@@ -18,4 +18,4 @@ struct UdpConfig
   uint16_t serverPort;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LINUX_UDP_H_ */
+#endif /* HALM_PLATFORM_GENERIC_UDP_H_ */

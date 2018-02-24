@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <xcore/bits.h>
 #include <xcore/containers/byte_queue.h>
-#include <halm/platform/linux/serial.h>
+#include <halm/platform/generic/serial.h>
 /*----------------------------------------------------------------------------*/
 #define BUFFER_SIZE 64
 #define QUEUE_SIZE  2048

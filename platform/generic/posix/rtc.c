@@ -5,7 +5,7 @@
  */
 
 #include <time.h>
-#include <halm/platform/linux/rtc.h>
+#include <halm/platform/generic/rtc.h>
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
 static enum Result clkCallback(void *, void (*)(void *), void *);

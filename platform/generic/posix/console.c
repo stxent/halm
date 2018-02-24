@@ -9,7 +9,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <xcore/containers/byte_queue.h>
-#include <halm/platform/linux/console.h>
+#include <halm/platform/generic/console.h>
 /*----------------------------------------------------------------------------*/
 #define BUFFER_SIZE 64
 #define QUEUE_SIZE  2048

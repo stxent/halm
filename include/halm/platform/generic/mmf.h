@@ -1,14 +1,14 @@
 /*
- * halm/platform/linux/rtc.h
+ * halm/platform/generic/mmf.h
  * Copyright (C) 2017 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_LINUX_RTC_H_
-#define HALM_PLATFORM_LINUX_RTC_H_
+#ifndef HALM_PLATFORM_GENERIC_MMF_H_
+#define HALM_PLATFORM_GENERIC_MMF_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/realtime.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-extern const struct RtClockClass * const Rtc;
+extern const struct InterfaceClass * const MemoryMappedFile;
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LINUX_RTC_H_ */
+#endif /* HALM_PLATFORM_GENERIC_MMF_H_ */

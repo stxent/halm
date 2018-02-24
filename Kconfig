@@ -20,10 +20,10 @@ endchoice
 
 choice
 	prompt "Processor family"
-	default FAMILY_LINUX_GENERIC
+	default FAMILY_GENERIC_POSIX
 
-	config FAMILY_LINUX_GENERIC
-		bool "Generic Linux"
+	config FAMILY_GENERIC_POSIX
+		bool "Generic POSIX"
 		depends on CORE_X86 || CORE_X86_64
 
 	config FAMILY_LPC11XX

@@ -1,17 +1,14 @@
 /*
- * halm/irq.h
- * Copyright (C) 2013 xent
+ * halm/platform/generic/rtc.h
+ * Copyright (C) 2018 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_IRQ_H_
-#define HALM_IRQ_H_
+#ifndef HALM_PLATFORM_GENERIC_RTC_H_
+#define HALM_PLATFORM_GENERIC_RTC_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/target.h>
+#include <xcore/realtime.h>
 /*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/core/CORE_TYPE/irq.h>
-#include HEADER_PATH
-#undef HEADER_PATH
+extern const struct RtClockClass * const Rtc;
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_IRQ_H_ */
+#endif /* HALM_PLATFORM_GENERIC_RTC_H_ */

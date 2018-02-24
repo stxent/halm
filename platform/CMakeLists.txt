@@ -1,9 +1,7 @@
 # Copyright (C) 2017 xent
 # Project is distributed under the terms of the GNU General Public License v3.0
 
-string(FIND "${CMAKE_SYSTEM_NAME}" "Generic" SYSTEM_IS_GENERIC)
-
-if(${SYSTEM_IS_GENERIC} EQUAL 0)
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Generic")
     if(NOT DEFINED PLATFORM)
         message(FATAL_ERROR "PLATFORM not defined")
     endif()
@@ -17,6 +15,6 @@ if(${SYSTEM_IS_GENERIC} EQUAL 0)
         add_subdirectory(stm)
     endif()
 else()
-    string(TOLOWER ${CMAKE_SYSTEM_NAME} CONVERTED_NAME)
-    add_subdirectory(${CONVERTED_NAME})
+    # Target system is not a bare-metal system, generic drivers are used
+    add_subdirectory(generic)
 endif()

@@ -11,9 +11,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <xcore/memory.h>
-#include <halm/platform/linux/mmf.h>
-/*----------------------------------------------------------------------------*/
-#define MMF_SECTOR_EXP 9
+#include <halm/platform/generic/mmf.h>
 /*----------------------------------------------------------------------------*/
 static enum Result mmfInit(void *, const void *);
 static void mmfDeinit(void *);
@@ -185,47 +183,4 @@ static size_t mmfWrite(void *object, const void *buffer, size_t length)
   dev->position += length;
 
   return length;
-}
-/*----------------------------------------------------------------------------*/
-enum Result mmfSetPartition(void *object, struct MbrDescriptor *desc)
-{
-  const char validTypes[] = {0x0B, 0x0C, 0x1B, 0x1C, 0x00};
-  struct MemoryMappedFile * const dev = object;
-
-  if (!strchr(validTypes, desc->type))
-    return E_ERROR;
-
-  dev->size = desc->size << MMF_SECTOR_EXP;
-  dev->offset = desc->offset << MMF_SECTOR_EXP;
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-enum Result mmfReadTable(void *object, uint32_t sector, uint8_t index,
-    struct MbrDescriptor *desc)
-{
-  struct MemoryMappedFile * const dev = object;
-  uint8_t *ptr;
-  uint64_t position = sector << MMF_SECTOR_EXP;
-  uint8_t buffer[1 << MMF_SECTOR_EXP];
-
-  dev->offset = 0;
-
-  /* TODO Lock interface during table read */
-  if (ifSetParam(object, IF_POSITION, &position) != E_OK)
-    return E_INTERFACE;
-  if (ifRead(object, buffer, sizeof(buffer)) != sizeof(buffer))
-    return E_INTERFACE;
-  if (fromBigEndian16(*(uint16_t *)(buffer + 0x01FE)) != 0x55AA)
-    return E_ERROR;
-
-  ptr = buffer + 0x01BE + (index << 4); /* Pointer to partition entry */
-  if (!*(ptr + 0x04)) /* Empty entry */
-    return E_ERROR;
-
-  desc->type = *(ptr + 0x04); /* File system descriptor */
-  desc->offset = *(uint32_t *)(ptr + 0x08);
-  desc->size = *(uint32_t *)(ptr + 0x0C);
-
-  return E_OK;
 }

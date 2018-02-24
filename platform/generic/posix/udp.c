@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <xcore/containers/byte_queue.h>
-#include <halm/platform/linux/udp.h>
+#include <halm/platform/generic/udp.h>
 /*----------------------------------------------------------------------------*/
 #define BUFFER_SIZE 1536
 #define QUEUE_SIZE  2048
