@@ -10,6 +10,14 @@
 #include <stdbool.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+enum
+{
+  PORT_0,
+  PORT_1,
+  PORT_2,
+  PORT_3
+};
+/*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
 struct Pin pinInit(PinNumber);

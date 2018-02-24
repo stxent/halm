@@ -749,7 +749,7 @@ static void epReprime(struct UsbDmaEndpoint *ep)
       (struct TransferDescriptor *)head->listHead;
 
   head->next = (uint32_t)descriptor;
-  /* Clear Active and Halt bits as mentioned in User Manual */
+  /* Clear Active and Halt bits as mentioned in the User Manual */
   head->token &= ~TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE | TOKEN_STATUS_HALTED);
 
   epPrime(ep);
@@ -758,11 +758,10 @@ static void epReprime(struct UsbDmaEndpoint *ep)
 static enum Result epInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
-  struct UsbDevice * const device = config->parent;
   struct UsbDmaEndpoint * const ep = object;
 
   ep->address = config->address;
-  ep->device = device;
+  ep->device = config->parent;
 
   return E_OK;
 }
@@ -771,14 +770,13 @@ static void epDeinit(void *object)
 {
   struct UsbDmaEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
+  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
 
   /* Disable interrupts and remove pending requests */
   epDisable(ep);
   epClear(ep);
 
   /* Protect endpoint array from simultaneous access */
-  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
-
   const IrqState state = irqSave();
   device->endpoints[index] = 0;
   irqRestore(state);
@@ -850,7 +848,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   }
   reg->ENDPTCTRL[number] = controlValue;
 
-  /* Enable endpoint */
+  /* Enable the endpoint */
   reg->ENDPTCTRL[number] |= tx ? ENDPTCTRL_TXE : ENDPTCTRL_RXE;
 
   /* Flush endpoint descriptors */

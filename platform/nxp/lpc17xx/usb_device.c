@@ -502,9 +502,9 @@ static void devSetConnected(void *object, bool state)
 {
   struct UsbDevice * const device = object;
 
+  device->enabled = state;
   usbCommandWrite(device, USB_CMD_SET_DEVICE_STATUS,
       state ? DEVICE_STATUS_CON : 0);
-  device->enabled = state;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devBind(void *object, void *driver)
@@ -676,7 +676,6 @@ static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
 static enum Result sieEpInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
-  struct UsbDevice * const device = config->parent;
   struct UsbSieEndpoint * const ep = object;
 
   const enum Result res = queueInit(&ep->requests,
@@ -685,7 +684,7 @@ static enum Result sieEpInit(void *object, const void *configBase)
   if (res == E_OK)
   {
     ep->address = config->address;
-    ep->device = device;
+    ep->device = config->parent;
   }
 
   return res;
@@ -695,12 +694,11 @@ static void sieEpDeinit(void *object)
 {
   struct UsbSieEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
+  const unsigned int index = EP_TO_INDEX(ep->address);
 
   /* Disable interrupts and remove pending requests */
   sieEpDisable(ep);
   sieEpClear(ep);
-
-  const unsigned int index = EP_TO_INDEX(ep->address);
 
   const IrqState state = irqSave();
   device->endpoints[index] = 0;
@@ -1002,11 +1000,10 @@ static enum Result epEnqueueTx(struct UsbDmaEndpoint *ep,
 static enum Result dmaEpInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
-  struct UsbDevice * const device = config->parent;
   struct UsbDmaEndpoint * const ep = object;
 
   ep->address = config->address;
-  ep->device = device;
+  ep->device = config->parent;
   ep->head = 0;
   ep->tail = 0;
   ep->type = 0;
@@ -1018,11 +1015,10 @@ static void dmaEpDeinit(void *object)
 {
   struct UsbDmaEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
+  const unsigned int index = EP_TO_INDEX(ep->address);
 
   /* Remove pending requests */
   dmaEpDisable(ep);
-
-  const unsigned int index = EP_TO_INDEX(ep->address);
 
   const IrqState state = irqSave();
   device->endpoints[index] = 0;

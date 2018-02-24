@@ -7,18 +7,18 @@
 #include <halm/pin.h>
 #include <halm/platform/nxp/lpc11exx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcControlReg(struct PinData);
+static void *calcControlReg(struct PinData);
 static void commonPinInit(struct Pin);
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcControlReg(struct PinData data)
+static void *calcControlReg(struct PinData data)
 {
   switch (data.port)
   {
     case 0:
-      return &LPC_IOCON->PIO0[data.offset];
+      return (void *)&LPC_IOCON->PIO0[data.offset];
 
     case 1:
-      return &LPC_IOCON->PIO1[data.offset];
+      return (void *)&LPC_IOCON->PIO1[data.offset];
 
     default:
       return 0;
@@ -38,7 +38,7 @@ struct Pin pinInit(PinNumber id)
 
   pin.data.port = PIN_TO_PORT(id);
   pin.data.offset = PIN_TO_OFFSET(id);
-  pin.reg = (void *)calcControlReg(pin.data);
+  pin.reg = id ? calcControlReg(pin.data) : 0;
 
   return pin;
 }

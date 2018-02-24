@@ -34,7 +34,7 @@ static inline volatile uint32_t *calcControlReg(struct PinData data)
 /*----------------------------------------------------------------------------*/
 static void *calcMaskedReg(struct PinData data)
 {
-  if (data.port != PORT_USB)
+  if (data.port < PORT_USB)
   {
     LPC_GPIO_Type * const reg = calcPort(data);
     return (void *)(reg->MASKED_ACCESS + (1UL << data.offset));
