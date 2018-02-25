@@ -24,8 +24,6 @@ struct SysTickTimer
 {
   struct Timer parent;
 
-  /* Hardware interrupt handler */
-  void (*handler)(void *);
   /* User interrupt handler */
   void (*callback)(void *);
   /* User interrupt handler argument */

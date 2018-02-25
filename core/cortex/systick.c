@@ -21,8 +21,8 @@
 /* Counter flag is set when counter counts down to zero */
 #define CTRL_COUNTFLAG                  BIT(16)
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *);
-static bool setDescriptor(const struct SysTickTimer *, struct SysTickTimer *);
+static void resetInstance(void);
+static bool setInstance(void *);
 static void updateInterrupt(struct SysTickTimer *);
 static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -61,20 +61,17 @@ static const struct TimerClass tmrTable = {
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const MainClock;
 const struct TimerClass * const SysTickTimer = &tmrTable;
-static struct SysTickTimer *descriptor = 0;
+static struct SysTickTimer *instance = 0;
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
+static void resetInstance(void)
 {
-  struct SysTickTimer * const device = object;
-
-  if ((SYSTICK->CTRL & CTRL_COUNTFLAG) && device->callback)
-    device->callback(device->callbackArgument);
+  instance = 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(const struct SysTickTimer *state,
-    struct SysTickTimer *timer)
+static bool setInstance(void *object)
 {
-  return compareExchangePointer((void **)&descriptor, state, timer);
+  void *expected = 0;
+  return compareExchangePointer(&instance, &expected, object);
 }
 /*----------------------------------------------------------------------------*/
 static void updateInterrupt(struct SysTickTimer *timer)
@@ -115,7 +112,8 @@ static void updateFrequency(struct SysTickTimer *timer, uint32_t frequency,
 /*----------------------------------------------------------------------------*/
 void SYSTICK_ISR(void)
 {
-  descriptor->handler(descriptor);
+  if ((SYSTICK->CTRL & CTRL_COUNTFLAG) && instance->callback)
+    instance->callback(instance->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
@@ -125,33 +123,27 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   struct SysTickTimer * const timer = object;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(0, timer))
+  if (setInstance(timer))
+  {
+    SYSTICK->CTRL = 0; /* Stop the timer */
+    updateFrequency(timer, config->frequency, 1);
+    SYSTICK->CTRL = CTRL_CLKSOURCE;
+
+    irqSetPriority(SYSTICK_IRQ, config->priority);
+    irqEnable(SYSTICK_IRQ);
+
+    return E_OK;
+  }
+  else
     return E_BUSY;
-
-  timer->handler = interruptHandler;
-
-  SYSTICK->CTRL = 0; /* Stop the timer */
-
-  updateFrequency(timer, config->frequency, 1);
-
-  /* Timer is left disabled by default */
-  SYSTICK->CTRL = CTRL_ENABLE | CTRL_CLKSOURCE;
-
-  irqSetPriority(SYSTICK_IRQ, config->priority);
-  irqEnable(SYSTICK_IRQ);
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_CORE_CORTEX_SYSTICK_NO_DEINIT
 static void tmrDeinit(void *object __attribute__((unused)))
 {
-  const struct SysTickTimer * const timer = object;
-
   irqDisable(SYSTICK_IRQ);
   SYSTICK->CTRL &= ~CTRL_ENABLE;
-  setDescriptor(timer, 0);
+  resetInstance();
 }
 #endif
 /*----------------------------------------------------------------------------*/
