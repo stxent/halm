@@ -1,11 +1,11 @@
 /*
- * halm/core/cortex/fpu_defs.h
+ * halm/core/cortex/armv7em/fpu_defs.h
  * Copyright (C) 2015 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_CORE_CORTEX_FPU_DEFS_H_
-#define HALM_CORE_CORTEX_FPU_DEFS_H_
+#ifndef HALM_CORE_CORTEX_ARMV7EM_FPU_DEFS_H_
+#define HALM_CORE_CORTEX_ARMV7EM_FPU_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Coprocessor Access Control Register-----------------------*/
@@ -38,7 +38,7 @@ enum
   FPSCR_RMODE_RN = 0, /* Round to nearest */
   FPSCR_RMODE_RP = 1, /* Round towards Plus Infinity */
   FPSCR_RMODE_RM = 2, /* Round towards Minus Infinity */
-  FPSCR_RMODE_RZ = 3 /* Round towards Zero */
+  FPSCR_RMODE_RZ = 3  /* Round towards Zero */
 };
 
 #define FPSCR_IOC                       BIT(0)
@@ -54,4 +54,4 @@ enum
 #define FPSCR_DN                        BIT(25)
 #define FPSCR_AHP                       BIT(26)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_CORE_CORTEX_FPU_DEFS_H_ */
+#endif /* HALM_CORE_CORTEX_ARMV7EM_FPU_DEFS_H_ */

@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/core/cortex/m3/asm.h>
+#include <xcore/core/cortex/asm.h>
 #include <halm/spinlock.h>
 /*----------------------------------------------------------------------------*/
 void spinLock(Spinlock *lock)
@@ -28,8 +28,6 @@ bool spinTryLock(Spinlock *lock)
       __dmb();
       return true;
     }
-    else
-      return false;
   }
 
   __clrex();

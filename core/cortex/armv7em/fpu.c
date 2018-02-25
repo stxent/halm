@@ -5,7 +5,7 @@
  */
 
 #include <halm/core/core_defs.h>
-#include <halm/core/cortex/m4/fpu_defs.h>
+#include <halm/core/cortex/armv7em/fpu_defs.h>
 /*----------------------------------------------------------------------------*/
 void fpuDisable(void)
 {

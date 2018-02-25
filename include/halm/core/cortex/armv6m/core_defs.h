@@ -1,11 +1,11 @@
 /*
- * halm/core/cortex/m0/core_defs.h
+ * halm/core/cortex/armv6m/core_defs.h
  * Based on original from ARM Limited
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_CORE_CORTEX_M0_CORE_DEFS_H_
-#define HALM_CORE_CORTEX_M0_CORE_DEFS_H_
+#ifndef HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_
+#define HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
@@ -67,4 +67,4 @@ typedef struct
 #undef __rw__
 #undef __ne__
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_CORE_CORTEX_M0_CORE_DEFS_H_ */
+#endif /* HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_ */

@@ -1,11 +1,11 @@
 /*
- * halm/core/cortex/m4/core_defs.h
+ * halm/core/cortex/armv7m/core_defs.h
  * Based on original from ARM Limited
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_CORE_CORTEX_M4_CORE_DEFS_H_
-#define HALM_CORE_CORTEX_M4_CORE_DEFS_H_
+#ifndef HALM_CORE_CORTEX_ARMV7M_CORE_DEFS_H_
+#define HALM_CORE_CORTEX_ARMV7M_CORE_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
@@ -96,4 +96,4 @@ typedef struct
 #undef __rw__
 #undef __ne__
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_CORE_CORTEX_M4_CORE_DEFS_H_ */
+#endif /* HALM_CORE_CORTEX_ARMV7M_CORE_DEFS_H_ */

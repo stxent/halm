@@ -1,11 +1,11 @@
 /*
- * halm/core/cortex/m3/delay.h
+ * halm/core/cortex/armv6m/delay.h
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_CORE_CORTEX_M3_DELAY_H_
-#define HALM_CORE_CORTEX_M3_DELAY_H_
+#ifndef HALM_CORE_CORTEX_ARMV6M_DELAY_H_
+#define HALM_CORE_CORTEX_ARMV6M_DELAY_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <xcore/helpers.h>
@@ -15,10 +15,12 @@ BEGIN_DECLS
 static inline void __delay(uint32_t count)
 {
   __asm__ volatile (
+      ".syntax unified\n"
       "1:\n"
       "    NOP\n"
-      "    SUBS.W %[count], %[count], #1\n"
-      "    BCS 1b"
+      "    SUBS %[count], %[count], #1\n"
+      "    BCS 1b\n"
+      ".syntax divided"
       : [count] "=r" (count)
       : "0" (count)
       : "r3"
@@ -60,4 +62,4 @@ static inline void udelay(uint32_t period)
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_CORE_CORTEX_M3_DELAY_H_ */
+#endif /* HALM_CORE_CORTEX_ARMV6M_DELAY_H_ */

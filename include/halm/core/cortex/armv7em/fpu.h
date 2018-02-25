@@ -1,11 +1,11 @@
 /*
- * halm/core/cortex/m4/fpu.h
+ * halm/core/cortex/armv7em/fpu.h
  * Copyright (C) 2015 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_CORE_CORTEX_M4_FPU_H_
-#define HALM_CORE_CORTEX_M4_FPU_H_
+#ifndef HALM_CORE_CORTEX_ARMV7EM_FPU_H_
+#define HALM_CORE_CORTEX_ARMV7EM_FPU_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
@@ -16,4 +16,4 @@ void fpuEnable(void);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_CORE_CORTEX_M4_FPU_H_ */
+#endif /* HALM_CORE_CORTEX_ARMV7EM_FPU_H_ */

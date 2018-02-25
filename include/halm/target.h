@@ -78,7 +78,7 @@
 #      define PLATFORM    posix
 #    endif
 #  else
-#    error "Target platform is unknown"
+#    error "Target platform is not supported"
 #  endif
 
 #endif

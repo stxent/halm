@@ -5,28 +5,17 @@
  */
 
 #include <assert.h>
-#include <xcore/bits.h>
+#include <halm/core/core_defs.h>
+#include <halm/core/cortex/armv7m/nvic_defs.h>
 #include <halm/core/cortex/nvic.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-#define AIRCR_VECTRESET           BIT(0)
-#define AIRCR_VECTCLRACTIVE       BIT(1)
-#define AIRCR_SYSRESETREQ         BIT(2)
-
-#define AIRCR_VECTKEY_MASK        BIT_FIELD(MASK(16), 16)
-#define AIRCR_VECTKEY(value)      BIT_FIELD((value), 16)
-
-#define AIRCR_PRIGROUP_MASK       BIT_FIELD(MASK(3), 8)
-#define AIRCR_PRIGROUP(value)     BIT_FIELD((value), 8)
-#define AIRCR_PRIGROUP_VALUE(reg) FIELD_VALUE((reg), AIRCR_PRIGROUP_MASK, 8)
-
 #define GROUPS_TO_VALUE(groups)   ((7 - NVIC_PRIORITY_SIZE) + (groups))
 #define VALUE_TO_GROUPS(value)    ((value) - (7 - NVIC_PRIORITY_SIZE))
 /*----------------------------------------------------------------------------*/
 uint8_t nvicGetPriorityGrouping(void)
 {
   const int8_t groupBits = VALUE_TO_GROUPS(AIRCR_PRIGROUP_VALUE(SCB->AIRCR));
-
   return groupBits < 0 ? 0 : groupBits;
 }
 /*----------------------------------------------------------------------------*/
