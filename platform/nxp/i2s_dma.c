@@ -11,8 +11,7 @@
 /*----------------------------------------------------------------------------*/
 #define BUFFER_COUNT 2
 /*----------------------------------------------------------------------------*/
-static enum Result dmaSetup(struct I2sDma *, const struct I2sDmaConfig *,
-    bool, bool);
+static bool dmaSetup(struct I2sDma *, const struct I2sDmaConfig *, bool, bool);
 static void interruptHandler(void *);
 static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
@@ -45,7 +44,7 @@ static const struct InterfaceClass i2sTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const I2sDma = &i2sTable;
 /*----------------------------------------------------------------------------*/
-static enum Result dmaSetup(struct I2sDma *interface,
+static bool dmaSetup(struct I2sDma *interface,
     const struct I2sDmaConfig *config, bool rx, bool tx)
 {
   static const struct GpDmaSettings dmaSettings[] = {
@@ -87,7 +86,7 @@ static enum Result dmaSetup(struct I2sDma *interface,
 
     interface->rxDma = init(GpDmaList, &dmaConfig);
     if (!interface->rxDma)
-      return E_ERROR;
+      return false;
 
     dmaConfigure(interface->rxDma, &dmaSettings[0]);
     dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
@@ -107,7 +106,7 @@ static enum Result dmaSetup(struct I2sDma *interface,
 
     interface->txDma = init(GpDmaList, &dmaConfig);
     if (!interface->txDma)
-      return E_ERROR;
+      return false;
 
     dmaConfigure(interface->txDma, &dmaSettings[1]);
     dmaSetCallback(interface->txDma, txDmaHandler, interface);
@@ -115,7 +114,7 @@ static enum Result dmaSetup(struct I2sDma *interface,
   else
     interface->txDma = 0;
 
-  return E_OK;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -259,9 +258,8 @@ static enum Result i2sInit(void *object, const void *configBase)
   interface->mono = config->mono;
   interface->slave = config->slave;
 
-  res = dmaSetup(interface, config, config->rx.sda != 0, config->tx.sda != 0);
-  if (res != E_OK)
-    return res;
+  if (!dmaSetup(interface, config, config->rx.sda != 0, config->tx.sda != 0))
+    return E_ERROR;
 
   static const unsigned int wordWidthMap[] = {
       WORDWIDTH_8BIT,

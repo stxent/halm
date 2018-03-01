@@ -15,7 +15,7 @@
 /*----------------------------------------------------------------------------*/
 #define RX_BUFFERS 2
 /*----------------------------------------------------------------------------*/
-static enum Result dmaSetup(struct SerialDma *, uint8_t, uint8_t);
+static bool dmaSetup(struct SerialDma *, uint8_t, uint8_t);
 static enum Result enqueueRxBuffers(struct SerialDma *);
 static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
@@ -51,7 +51,7 @@ static const struct InterfaceClass serialTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SerialDma = &serialTable;
 /*----------------------------------------------------------------------------*/
-static enum Result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
+static bool dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
   static const struct GpDmaSettings dmaSettings[] = {
@@ -95,17 +95,17 @@ static enum Result dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
 
   interface->rxDma = init(GpDmaCircular, &rxDmaConfig);
   if (!interface->rxDma)
-    return E_ERROR;
+    return false;
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
   interface->txDma = init(GpDmaOneShot, &txDmaConfig);
   if (!interface->txDma)
-    return E_ERROR;
+    return false;
   dmaConfigure(interface->txDma, &dmaSettings[1]);
   dmaSetCallback(interface->txDma, txDmaHandler, interface);
 
-  return E_OK;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result enqueueRxBuffers(struct SerialDma *interface)
@@ -218,8 +218,8 @@ static enum Result serialInit(void *object, const void *configBase)
   if ((res = byteQueueInit(&interface->txQueue, config->txLength)) != E_OK)
     return res;
 
-  if ((res = dmaSetup(interface, config->dma[0], config->dma[1])) != E_OK)
-    return res;
+  if (!dmaSetup(interface, config->dma[0], config->dma[1]))
+    return E_ERROR;
 
   interface->callback = 0;
   interface->rate = config->rate;

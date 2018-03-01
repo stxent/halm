@@ -13,7 +13,7 @@
 #define DUMMY_FRAME 0xFF
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
-static enum Result dmaSetup(struct SpiDma *, uint8_t, uint8_t);
+static bool dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static void dmaSetupRx(struct Dma *, struct Dma *);
 static void dmaSetupTx(struct Dma *, struct Dma *);
 static enum Result getStatus(const struct SpiDma *);
@@ -63,7 +63,7 @@ static void dmaHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
+static bool dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
   const struct GpDmaOneShotConfig dmaConfigs[] = {
@@ -81,13 +81,13 @@ static enum Result dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
 
   interface->rxDma = init(GpDmaOneShot, &dmaConfigs[0]);
   if (!interface->rxDma)
-    return E_ERROR;
+    return false;
 
   interface->txDma = init(GpDmaOneShot, &dmaConfigs[1]);
   if (!interface->txDma)
-    return E_ERROR;
+    return false;
 
-  return E_OK;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static void dmaSetupRx(struct Dma *rx, struct Dma *tx)
@@ -242,8 +242,8 @@ static enum Result spiInit(void *object, const void *configBase)
   const uint8_t rxChannel = config->dma[channelPair];
   const uint8_t txChannel = config->dma[!channelPair];
 
-  if ((res = dmaSetup(interface, rxChannel, txChannel)) != E_OK)
-    return res;
+  if (!dmaSetup(interface, rxChannel, txChannel))
+    return E_ERROR;
 
   interface->callback = 0;
   interface->rate = config->rate;

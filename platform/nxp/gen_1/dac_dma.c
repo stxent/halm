@@ -12,7 +12,7 @@
 #define BUFFER_COUNT 2
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
-static enum Result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
+static bool dmaSetup(struct DacDma *, const struct DacDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
 static enum Result dacSetCallback(void *, void (*)(void *), void *);
@@ -63,7 +63,7 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result dmaSetup(struct DacDma *interface,
+static bool dmaSetup(struct DacDma *interface,
     const struct DacDmaConfig *config)
 {
   static const struct GpDmaSettings dmaSettings = {
@@ -87,12 +87,15 @@ static enum Result dmaSetup(struct DacDma *interface,
   };
 
   interface->dma = init(GpDmaList, &dmaConfig);
-  if (!interface->dma)
-    return E_ERROR;
-  dmaConfigure(interface->dma, &dmaSettings);
-  dmaSetCallback(interface->dma, dmaHandler, interface);
 
-  return E_OK;
+  if (interface->dma)
+  {
+    dmaConfigure(interface->dma, &dmaSettings);
+    dmaSetCallback(interface->dma, dmaHandler, interface);
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *object, const void *configBase)
@@ -112,8 +115,8 @@ static enum Result dacInit(void *object, const void *configBase)
   if ((res = DacBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  if ((res = dmaSetup(interface, config)) != E_OK)
-    return res;
+  if (!dmaSetup(interface, config))
+    return E_ERROR;
 
   interface->callback = 0;
 
