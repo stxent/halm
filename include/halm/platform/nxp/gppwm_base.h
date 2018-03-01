@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 #include <xcore/entity.h>
+#include <halm/irq.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpPwmUnitBase;
 
@@ -23,6 +24,8 @@ struct GpPwmUnitBase
   struct Entity base;
 
   void *reg;
+  void (*handler)(void *);
+  IrqNumber irq;
 
   /* Unique peripheral identifier */
   uint8_t channel;

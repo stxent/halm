@@ -115,6 +115,10 @@ static bool setInstance(struct GpPwmUnitBase *object)
   else
     return false;
 }
+/*----------------------------------------------------------------------------*/
+void PWM1_ISR(void)
+{
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpPwmGetClock(const struct GpPwmUnitBase *unit __attribute__((unused)))
@@ -130,6 +134,8 @@ static enum Result unitInit(void *object, const void *configBase)
   if (setInstance(unit))
   {
     unit->reg = LPC_PWM1;
+    unit->irq = PWM1_IRQ;
+    unit->handler = 0;
     unit->channel = config->channel;
 
     sysPowerEnable(PWR_PWM1);
