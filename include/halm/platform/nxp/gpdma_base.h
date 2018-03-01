@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_NXP_GPDMA_BASE_H_
 #define HALM_PLATFORM_NXP_GPDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <halm/dma.h>
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
@@ -88,9 +89,8 @@ struct GpDmaBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void gpDmaClearDescriptor(uint8_t);
-const struct GpDmaBase *gpDmaGetDescriptor(uint8_t);
-enum Result gpDmaSetDescriptor(uint8_t, struct GpDmaBase *);
+void gpDmaResetInstance(uint8_t);
+bool gpDmaSetInstance(uint8_t, struct GpDmaBase *);
 void gpDmaSetMux(struct GpDmaBase *);
 
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *,

@@ -166,15 +166,13 @@ static void channelConfigure(void *object, const void *settingsBase)
 static enum Result channelEnable(void *object)
 {
   struct GpDmaCircular * const channel = object;
+  const uint8_t number = channel->base.number;
+  const uint32_t request = 1 << number;
 
   assert(channel->state == STATE_READY);
-
-  if (gpDmaSetDescriptor(channel->base.number, object) != E_OK)
+  if (!gpDmaSetInstance(number, object))
     return E_BUSY;
-
   gpDmaSetMux(object);
-
-  const uint32_t request = 1 << channel->base.number;
 
   /* Clear interrupt requests for the current channel */
   LPC_GPDMA->INTTCCLEAR = request;

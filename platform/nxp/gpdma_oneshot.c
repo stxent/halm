@@ -59,7 +59,7 @@ static void interruptHandler(void *object, enum Result res)
 {
   struct GpDmaOneShot * const channel = object;
 
-  gpDmaClearDescriptor(channel->base.number);
+  gpDmaResetInstance(channel->base.number);
   channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
   if (channel->callback)
@@ -121,21 +121,17 @@ static enum Result channelEnable(void *object)
   struct GpDmaOneShot * const channel = object;
   LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
   const uint8_t number = channel->base.number;
+  const uint32_t request = 1 << number;
 
   assert(channel->state == STATE_READY);
-
-  const enum Result res = gpDmaSetDescriptor(number, object);
-  if (res != E_OK)
-    return res;
-
+  if (!gpDmaSetInstance(number, object))
+    return E_BUSY;
   gpDmaSetMux(object);
 
   reg->SRCADDR = channel->source;
   reg->DESTADDR = channel->destination;
   reg->CONTROL = channel->control;
   reg->LLI = 0;
-
-  const uint32_t request = 1 << number;
 
   /* Clear interrupt requests for current channel */
   LPC_GPDMA->INTTCCLEAR = request;

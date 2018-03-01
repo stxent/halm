@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/dac_base.h>
 #include <halm/platform/nxp/gen_1/dac_defs.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
@@ -14,7 +13,8 @@
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(PinNumber);
-static bool setDescriptor(const struct DacBase *, struct DacBase *);
+static void resetInstance(void);
+static bool setInstance(struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
 
@@ -41,7 +41,7 @@ const struct PinEntry dacPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const DacBase = &dacTable;
-static struct DacBase *descriptor = 0;
+static struct DacBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(PinNumber key)
 {
@@ -54,10 +54,20 @@ static void configOutputPin(PinNumber key)
   pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(const struct DacBase *state,
-    struct DacBase *interface)
+static void resetInstance(void)
 {
-  return compareExchangePointer((void **)&descriptor, state, interface);
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(struct DacBase *object)
+{
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t dacGetClock(const struct DacBase *interface __attribute__((unused)))
@@ -70,25 +80,21 @@ static enum Result dacInit(void *object, const void *configBase)
   const struct DacBaseConfig * const config = configBase;
   struct DacBase * const interface = object;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(0, interface))
+  if (!setInstance(interface))
     return E_BUSY;
-
-  configOutputPin(config->pin);
-
-  sysClockControl(CLK_DAC, DEFAULT_DIV);
 
   interface->pin = config->pin;
   interface->reg = LPC_DAC;
+
+  configOutputPin(interface->pin);
+  sysClockControl(CLK_DAC, DEFAULT_DIV);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
-static void dacDeinit(void *object)
+static void dacDeinit(void *object __attribute__((unused)))
 {
-  const struct DacBase * const interface = object;
-
-  setDescriptor(interface, 0);
+  resetInstance();
 }
 #endif

@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/i2s_base.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
@@ -14,7 +13,8 @@
 #define DEFAULT_DIV CLK_DIV2
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
-static bool setDescriptor(uint8_t, const struct I2sBase *, struct I2sBase *);
+static void resetInstance(void);
+static bool setInstance(struct I2sBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
 
@@ -100,7 +100,7 @@ const struct PinEntry i2sPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const I2sBase = &i2sTable;
-static struct I2sBase *descriptors[1] = {0};
+static struct I2sBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2sBase *interface,
     const struct I2sBaseConfig *config)
@@ -126,18 +126,25 @@ static void configPins(struct I2sBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct I2sBase *state,
-    struct I2sBase *interface)
+static void resetInstance(void)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface);
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(struct I2sBase *object)
+{
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void I2S_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t i2sGetClock(const struct I2sBase *interface __attribute__((unused)))
@@ -150,30 +157,28 @@ static enum Result i2sInit(void *object, const void *configBase)
   const struct I2sBaseConfig * const config = configBase;
   struct I2sBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
+  assert(config->channel == 0);
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(interface->channel, 0, interface))
+  if (!setInstance(interface))
     return E_BUSY;
+
+  interface->irq = I2S_IRQ;
+  interface->reg = LPC_I2S;
+  interface->handler = 0;
+  interface->channel = config->channel;
 
   configPins(interface, configBase);
 
   sysPowerEnable(PWR_I2S);
   sysClockControl(CLK_I2S, DEFAULT_DIV);
 
-  interface->irq = I2S_IRQ;
-  interface->reg = LPC_I2S;
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_I2S_NO_DEINIT
-static void i2sDeinit(void *object)
+static void i2sDeinit(void *object __attribute__((unused)))
 {
-  const struct I2sBase * const interface = object;
-
   sysPowerDisable(PWR_I2S);
-  setDescriptor(interface->channel, interface, 0);
+  resetInstance();
 }
 #endif

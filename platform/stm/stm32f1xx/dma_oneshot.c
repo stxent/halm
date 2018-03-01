@@ -65,7 +65,7 @@ static void interruptHandler(void *object, enum Result res)
   /* Disable the NVIC interrupt */
   irqDisable(stream->base.irq);
 
-  dmaClearDescriptor(stream->base.number);
+  dmaResetInstance(stream->base.number);
   stream->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
   if (stream->callback)
@@ -152,14 +152,14 @@ static void streamConfigure(void *object, const void *settingsBase)
 static enum Result streamEnable(void *object)
 {
   struct DmaOneShot * const stream = object;
-  STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
   const uint8_t number = stream->base.number;
 
   assert(stream->state == STATE_READY);
-  const enum Result res = dmaSetDescriptor(number, object);
 
-  if (res == E_OK)
+  if (dmaSetInstance(number, object))
   {
+    STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
+
     reg->CMAR = stream->memoryAddress;
     reg->CPAR = stream->periphAddress;
     reg->CNDTR = stream->transfers;
@@ -168,9 +168,11 @@ static enum Result streamEnable(void *object)
     stream->state = STATE_BUSY;
     irqEnable(stream->base.irq);
     reg->CCR = stream->base.config | CCR_EN;
-  }
 
-  return res;
+    return E_OK;
+  }
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static void streamDisable(void *object)
@@ -188,11 +190,7 @@ static void streamDisable(void *object)
 static size_t streamPending(const void *object)
 {
   const struct DmaOneShot * const stream = object;
-
-  if (stream->state != STATE_IDLE && stream->state != STATE_READY)
-    return 1;
-  else
-    return 0;
+  return (stream->state != STATE_IDLE && stream->state != STATE_READY) ? 1 : 0;
 }
 /*----------------------------------------------------------------------------*/
 static size_t streamResidue(const void *object)

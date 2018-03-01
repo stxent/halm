@@ -17,27 +17,27 @@
 #define EVENT_COUNT   16
 #define EVENT_SOURCES 4
 /*----------------------------------------------------------------------------*/
-struct DmaHandler
+struct DmaHub
 {
   struct Entity base;
 
   /* Channel descriptors currently in use */
-  struct GpDmaBase *descriptors[CHANNEL_COUNT];
+  struct GpDmaBase *instances[CHANNEL_COUNT];
   /* Peripheral connection statuses */
   uint8_t connections[16];
 };
 /*----------------------------------------------------------------------------*/
-static unsigned int dmaHandlerAllocate(struct GpDmaBase *, enum GpDmaEvent);
-static void dmaHandlerFree(struct GpDmaBase *);
-static void dmaHandlerInstantiate(void);
-static enum Result dmaHandlerInit(void *, const void *);
+static unsigned int dmaHubAllocate(struct GpDmaBase *, enum GpDmaEvent);
+static void dmaHubFree(struct GpDmaBase *);
+static void dmaHubInstantiate(void);
+static enum Result dmaHubInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
-    .size = sizeof(struct DmaHandler),
-    .init = dmaHandlerInit,
+static const struct EntityClass hubTable = {
+    .size = sizeof(struct DmaHub),
+    .init = dmaHubInit,
     .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
@@ -66,9 +66,9 @@ static const enum GpDmaEvent eventMap[EVENT_COUNT][EVENT_SOURCES] = {
     {GPDMA_DAC,     GPDMA_SCT_OUT3,   GPDMA_SGPIO15,    GPDMA_MAT3_0}
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const DmaHandler = &handlerTable;
+static const struct EntityClass * const DmaHub = &hubTable;
 const struct EntityClass * const GpDmaBase = &channelTable;
-static struct DmaHandler *dmaHandler = 0;
+static struct DmaHub *hub = 0;
 /*----------------------------------------------------------------------------*/
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel,
     const struct GpDmaSettings *settings)
@@ -120,25 +120,17 @@ uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel,
   return control;
 }
 /*----------------------------------------------------------------------------*/
-void gpDmaClearDescriptor(uint8_t channel)
+void gpDmaResetInstance(uint8_t channel)
 {
-  assert(channel < CHANNEL_COUNT);
-  dmaHandler->descriptors[channel] = 0;
+  hub->instances[channel] = 0;
 }
 /*----------------------------------------------------------------------------*/
-const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
+bool gpDmaSetInstance(uint8_t channel, struct GpDmaBase *object)
 {
-  assert(channel < CHANNEL_COUNT);
-  return dmaHandler->descriptors[channel];
-}
-/*----------------------------------------------------------------------------*/
-enum Result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
-{
-  assert(descriptor);
   assert(channel < CHANNEL_COUNT);
 
-  return compareExchangePointer((void **)(dmaHandler->descriptors + channel),
-      0, descriptor) ? E_OK : E_BUSY;
+  void *expected = 0;
+  return compareExchangePointer(&hub->instances[channel], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
 void gpDmaSetMux(struct GpDmaBase *descriptor)
@@ -149,22 +141,19 @@ void gpDmaSetMux(struct GpDmaBase *descriptor)
 /*----------------------------------------------------------------------------*/
 void GPDMA_ISR(void)
 {
+  const uint32_t terminalStatus = LPC_GPDMA->INTTCSTAT;
   uint32_t errorStatus = LPC_GPDMA->INTERRSTAT;
-  uint32_t terminalStatus = LPC_GPDMA->INTTCSTAT;
 
-  LPC_GPDMA->INTERRCLEAR = errorStatus;
   LPC_GPDMA->INTTCCLEAR = terminalStatus;
-
+  LPC_GPDMA->INTERRCLEAR = errorStatus;
   errorStatus = reverseBits32(errorStatus);
-  terminalStatus = reverseBits32(terminalStatus);
 
-  struct GpDmaBase ** const descriptorArray = dmaHandler->descriptors;
-  uint32_t intStatus = errorStatus | terminalStatus;
+  uint32_t intStatus = errorStatus | reverseBits32(terminalStatus);
 
   do
   {
     const unsigned int index = countLeadingZeros32(intStatus);
-    struct GpDmaBase * const descriptor = descriptorArray[index];
+    struct GpDmaBase * const descriptor = hub->instances[index];
     const uint32_t mask = (1UL << 31) >> index;
     enum Result res = E_OK;
 
@@ -187,7 +176,7 @@ void GPDMA_ISR(void)
   while (intStatus);
 }
 /*----------------------------------------------------------------------------*/
-static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
+static unsigned int dmaHubAllocate(struct GpDmaBase *channel,
     enum GpDmaEvent event)
 {
   assert(event < GPDMA_MEMORY);
@@ -196,7 +185,7 @@ static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
   unsigned int minValue = 0;
   bool found = false;
 
-  dmaHandlerInstantiate();
+  dmaHubInstantiate();
 
   for (size_t index = 0; index < EVENT_COUNT; ++index)
   {
@@ -213,25 +202,25 @@ static unsigned int dmaHandlerAllocate(struct GpDmaBase *channel,
     }
     while (++entry < EVENT_SOURCES);
 
-    if (allowed && (!found || minValue < dmaHandler->connections[index]))
+    if (allowed && (!found || minValue < hub->connections[index]))
     {
       found = true;
       entryIndex = index;
       entryOffset = entry;
-      minValue = dmaHandler->connections[index];
+      minValue = hub->connections[index];
     }
   }
 
   assert(found);
 
-  ++dmaHandler->connections[entryIndex];
+  ++hub->connections[entryIndex];
   channel->mux.mask &= ~(0x03 << (entryIndex << 1));
   channel->mux.value = entryOffset << (entryIndex << 1);
 
   return entryIndex;
 }
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerFree(struct GpDmaBase *channel)
+static void dmaHubFree(struct GpDmaBase *channel)
 {
   uint32_t mask = ~channel->mux.mask;
   size_t index = 0;
@@ -240,27 +229,27 @@ static void dmaHandlerFree(struct GpDmaBase *channel)
   while (mask)
   {
     if (mask & 0x03)
-      --dmaHandler->connections[index];
+      --hub->connections[index];
 
     ++index;
     mask >>= 2;
   }
 }
 /*----------------------------------------------------------------------------*/
-static void dmaHandlerInstantiate(void)
+static void dmaHubInstantiate(void)
 {
-  if (!dmaHandler)
-    dmaHandler = init(DmaHandler, 0);
-  assert(dmaHandler);
+  if (!hub)
+    hub = init(DmaHub, 0);
+  assert(hub);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result dmaHandlerInit(void *object,
+static enum Result dmaHubInit(void *object,
     const void *configBase __attribute__((unused)))
 {
-  struct DmaHandler * const handler = object;
+  struct DmaHub * const handler = object;
 
   for (size_t index = 0; index < CHANNEL_COUNT; ++index)
-    handler->descriptors[index] = 0;
+    handler->instances[index] = 0;
   memset(handler->connections, 0, sizeof(handler->connections));
 
   sysClockEnable(CLK_M4_GPDMA);
@@ -297,7 +286,7 @@ static enum Result channelInit(void *object, const void *configBase)
 
   if (config->type != GPDMA_TYPE_M2M)
   {
-    const unsigned int peripheral = dmaHandlerAllocate(channel, config->event);
+    const unsigned int peripheral = dmaHubAllocate(channel, config->event);
 
     /* Only AHB master 1 can access a peripheral */
     switch (config->type)
@@ -320,5 +309,5 @@ static enum Result channelInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  dmaHandlerFree(object);
+  dmaHubFree(object);
 }

@@ -22,7 +22,8 @@ extern unsigned long _eeeprom;
 static size_t calcChunkLength(uintptr_t, size_t);
 static inline bool isAddressValid(const struct Eeprom *, uintptr_t);
 static void programNextChunk(struct Eeprom *);
-static bool setDescriptor(const struct Eeprom *, struct Eeprom *);
+static void resetInstance(void);
+static bool setInstance(struct Eeprom *);
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *, const void *);
 static void eepromDeinit(void *);
@@ -45,7 +46,7 @@ static const struct InterfaceClass eepromTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Eeprom = &eepromTable;
-static struct Eeprom *descriptor = 0;
+static struct Eeprom *instance = 0;
 /*----------------------------------------------------------------------------*/
 static size_t calcChunkLength(uintptr_t address, size_t left)
 {
@@ -64,15 +65,26 @@ static inline bool isAddressValid(const struct Eeprom *interface,
 static void programNextChunk(struct Eeprom *interface)
 {
   const size_t nextChunkLength = calcChunkLength(interface->offset,
-      descriptor->left);
+      instance->left);
 
   memcpy((void *)interface->offset, interface->buffer, nextChunkLength);
   LPC_EEPROM->CMD = CMD_ERASE_PROGRAM;
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(const struct Eeprom *state, struct Eeprom *interface)
+static void resetInstance(void)
 {
-  return compareExchangePointer((void **)&descriptor, state, interface);
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(struct Eeprom *object)
+{
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void EEPROM_ISR(void)
@@ -80,15 +92,15 @@ void EEPROM_ISR(void)
   /* Clear pending interrupt flag */
   LPC_EEPROM->INTSTATCLR = INT_PROG_DONE;
 
-  const size_t currentChunkLength = calcChunkLength(descriptor->offset,
-      descriptor->left);
+  const size_t currentChunkLength = calcChunkLength(instance->offset,
+      instance->left);
 
-  descriptor->buffer += currentChunkLength;
-  descriptor->left -= currentChunkLength;
-  descriptor->offset += currentChunkLength;
+  instance->buffer += currentChunkLength;
+  instance->left -= currentChunkLength;
+  instance->offset += currentChunkLength;
 
-  if (descriptor->left)
-    programNextChunk(descriptor);
+  if (instance->left)
+    programNextChunk(instance);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *object, const void *configBase)
@@ -96,7 +108,7 @@ static enum Result eepromInit(void *object, const void *configBase)
   const struct EepromConfig * const config = configBase;
   struct Eeprom * const interface = object;
 
-  if (!setDescriptor(0, interface))
+  if (!setInstance(interface))
     return E_BUSY;
 
   interface->position = 0;
@@ -124,6 +136,7 @@ static void eepromDeinit(void *object __attribute__((unused)))
 {
   irqDisable(EEPROM_IRQ);
   sysClockDisable(CLK_M4_EEPROM);
+  resetInstance();
 }
 /*----------------------------------------------------------------------------*/
 static enum Result eepromSetCallback(void *object, void (*callback)(void *),

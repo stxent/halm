@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_STM_STM32F1XX_DMA_BASE_H_
 #define HALM_PLATFORM_STM_STM32F1XX_DMA_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <stdint.h>
 #include <halm/dma.h>
 #include <halm/irq.h>
@@ -90,9 +91,9 @@ struct DmaBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void dmaClearDescriptor(uint8_t);
-const struct DmaBase *dmaGetDescriptor(uint8_t);
-enum Result dmaSetDescriptor(uint8_t, struct DmaBase *);
+const struct DmaBase *dmaGetInstance(uint8_t);
+void dmaResetInstance(uint8_t);
+bool dmaSetInstance(uint8_t, struct DmaBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

@@ -4,11 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/rtc_base.h>
-#include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(const struct RtcBase *, struct RtcBase *);
+static void resetInstance(void);
+static bool setInstance(struct RtcBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
 
@@ -25,16 +24,27 @@ static const struct EntityClass clkTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const RtcBase = &clkTable;
-static struct RtcBase *descriptor = 0;
+static struct RtcBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(const struct RtcBase *state, struct RtcBase *clock)
+static void resetInstance(void)
 {
-  return compareExchangePointer((void **)&descriptor, state, clock);
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(struct RtcBase *object)
+{
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void RTC_ISR(void)
 {
-  descriptor->handler(descriptor);
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *object,
@@ -42,21 +52,23 @@ static enum Result clkInit(void *object,
 {
   struct RtcBase * const clock = object;
 
-  if (!setDescriptor(0, clock))
+  if (setInstance(clock))
+  {
+    /* CLK_M4_BUS is already enabled */
+
+    clock->reg = LPC_RTC;
+    clock->irq = RTC_IRQ;
+    clock->handler = 0;
+
+    return E_OK;
+  }
+  else
     return E_BUSY;
-
-  clock->handler = 0;
-  clock->irq = RTC_IRQ;
-  clock->reg = LPC_RTC;
-
-  /* CLK_M4_BUS is already enabled */
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_RTC_NO_DEINIT
-static void clkDeinit(void *object)
+static void clkDeinit(void *object __attribute__((unused)))
 {
-  setDescriptor(object, 0);
+  resetInstance();
 }
 #endif

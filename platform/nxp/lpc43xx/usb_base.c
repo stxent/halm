@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <malloc.h>
 #include <stdlib.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 #include <halm/platform/nxp/lpc43xx/system_defs.h>
 #include <halm/platform/nxp/lpc43xx/usb_base.h>
@@ -18,7 +17,8 @@
 #define USB1_ENDPOINT_NUMBER  8
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
-static bool setDescriptor(uint8_t, const struct UsbBase *, struct UsbBase *);
+static void resetInstance(uint8_t);
+static bool setInstance(uint8_t, struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
 
@@ -113,7 +113,7 @@ const struct PinEntry usbPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbBase = &devTable;
-static struct UsbBase *descriptors[2] = {0};
+static struct UsbBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
@@ -138,23 +138,32 @@ static void configPins(struct UsbBase *device,
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct UsbBase *state,
-    struct UsbBase *device)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct UsbBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      device);
+  if (!instances[channel])
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void USB0_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void USB1_ISR(void)
 {
-  descriptors[1]->handler(descriptors[1]);
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -167,8 +176,7 @@ static enum Result devInit(void *object, const void *configBase)
   device->handler = 0;
   device->queueHeads = 0;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(device->channel, 0, device))
+  if (!setInstance(device->channel, device))
     return E_BUSY;
 
   res = arrayInit(&device->descriptorPool, sizeof(struct TransferDescriptor *),
@@ -246,6 +254,6 @@ static void devDeinit(void *object)
     sysClockDisable(CLK_M4_USB1);
   }
 
-  setDescriptor(device->channel, device, 0);
+  resetInstance(device->channel);
 }
 #endif

@@ -5,8 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/bits.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/i2s_base.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
@@ -23,7 +21,8 @@
 #define CHANNEL_TX_MCLK(channel)        ((channel) * CHANNEL_COUNT + 7)
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
-static bool setDescriptor(uint8_t, const struct I2sBase *, struct I2sBase *);
+static void resetInstance(uint8_t);
+static bool setInstance(uint8_t, struct I2sBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
 
@@ -214,7 +213,7 @@ const struct PinEntry i2sPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const I2sBase = &i2sTable;
-static struct I2sBase *descriptors[2] = {0};
+static struct I2sBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2sBase *interface,
     const struct I2sBaseConfig *config)
@@ -240,23 +239,32 @@ static void configPins(struct I2sBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct I2sBase *state,
-    struct I2sBase *interface)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct I2sBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface);
+  if (!instances[channel])
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void I2S0_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void I2S1_ISR(void)
 {
-  descriptors[1]->handler(descriptors[1]);
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t i2sGetClock(const struct I2sBase *interface __attribute__((unused)))
@@ -272,14 +280,13 @@ static enum Result i2sInit(void *object, const void *configBase)
   interface->channel = config->channel;
   interface->handler = 0;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(interface->channel, 0, interface))
+  if (!setInstance(interface->channel, interface))
     return E_BUSY;
 
   configPins(interface, configBase);
 
   /* Check whether other channel is disabled too */
-  if (!descriptors[interface->channel ^ 1])
+  if (!instances[interface->channel ^ 1])
   {
     /* Enable clock to register interface and to peripheral */
     sysClockEnable(CLK_APB1_I2S);
@@ -308,9 +315,8 @@ static void i2sDeinit(void *object)
 {
   const struct I2sBase * const interface = object;
 
-  if (!descriptors[interface->channel ^ 1])
+  if (!instances[interface->channel ^ 1])
     sysClockDisable(CLK_APB1_I2S);
-
-  setDescriptor(interface->channel, interface, 0);
+  resetInstance(interface->channel);
 }
 #endif

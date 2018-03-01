@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/memory.h>
+#include <xcore/asm.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 #include <halm/platform/nxp/sct_base.h>
@@ -25,7 +25,7 @@ struct TimerHandler
   /* Pointer to peripheral registers */
   LPC_SCT_Type *reg;
   /* Timer descriptors */
-  struct SctBase *descriptors[2];
+  struct SctBase *instances[2];
   /* Free events */
   uint16_t events;
 };
@@ -403,8 +403,7 @@ static struct TimerHandler *handlers[1] = {0};
 static bool timerHandlerActive(uint8_t channel)
 {
   timerHandlerInstantiate(channel);
-
-  return handlers[channel]->descriptors[0] || handlers[channel]->descriptors[1];
+  return handlers[channel]->instances[0] || handlers[channel]->instances[1];
 }
 /*----------------------------------------------------------------------------*/
 static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
@@ -417,8 +416,8 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
 
   if (timerPart == SCT_UNIFIED)
   {
-    if (!handler->descriptors[0] && !handler->descriptors[1])
-      handler->descriptors[0] = timer;
+    if (!handler->instances[0] && !handler->instances[1])
+      handler->instances[0] = timer;
     else
       res = E_BUSY;
   }
@@ -426,8 +425,8 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
   {
     const unsigned int part = timerPart == SCT_HIGH;
 
-    if (!handler->descriptors[part])
-      handler->descriptors[part] = timer;
+    if (!handler->instances[part])
+      handler->instances[part] = timer;
     else
       res = E_BUSY;
   }
@@ -439,8 +438,7 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
 static void timerHandlerDetach(uint8_t channel, enum SctPart timerPart)
 {
   const unsigned int part = timerPart == SCT_HIGH;
-
-  handlers[channel]->descriptors[part] = 0;
+  handlers[channel]->instances[part] = 0;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -461,9 +459,9 @@ static void timerHandlerProcess(struct TimerHandler *handler)
 {
   const uint16_t state = handler->reg->EVFLAG;
 
-  for (size_t index = 0; index < ARRAY_SIZE(handler->descriptors); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(handler->instances); ++index)
   {
-    struct SctBase * const descriptor = handler->descriptors[index];
+    struct SctBase * const descriptor = handler->instances[index];
 
     if (descriptor && descriptor->mask & state)
       descriptor->handler(descriptor);
@@ -485,7 +483,7 @@ static enum Result timerHandlerInit(void *object, const void *configBase)
 #endif
 
   handler->reg = LPC_SCT;
-  handler->descriptors[0] = handler->descriptors[1] = 0;
+  handler->instances[0] = handler->instances[1] = 0;
   handler->events = 0xFFFF;
 
   return E_OK;
@@ -524,7 +522,6 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct SctBaseConfig * const config = configBase;
   struct SctBase * const timer = object;
   uint32_t desiredConfig = 0;
-  enum Result res;
 
   assert(config->edge < PIN_TOGGLE);
   assert(config->input < SCT_INPUT_END);
@@ -555,33 +552,36 @@ static enum Result tmrInit(void *object, const void *configBase)
   {
     /*
      * Compare current timer configuration with proposed one
-     * when timer is already enabled.
+     * if the timer is already enabled.
      */
     if (desiredConfig != (reg->CONFIG & configMask))
       return E_BUSY;
   }
 
-  if ((res = timerHandlerAttach(timer->channel, timer->part, timer)) != E_OK)
-    return res;
+  const enum Result res = timerHandlerAttach(timer->channel,
+      timer->part, timer);
 
-  timer->handler = 0;
-  timer->irq = SCT_IRQ;
-  timer->mask = 0;
-  timer->reg = reg;
-
-  if (!enabled)
+  if (res == E_OK)
   {
-    /* Enable clock to peripheral */
-    sysClockEnable(CLK_M4_SCT);
-    /* Reset registers to default values */
-    sysResetEnable(RST_SCT);
-    /* Enable common interrupt */
-    irqEnable(timer->irq);
+    timer->handler = 0;
+    timer->irq = SCT_IRQ;
+    timer->mask = 0;
+    timer->reg = reg;
+
+    if (!enabled)
+    {
+      /* Enable clock to peripheral */
+      sysClockEnable(CLK_M4_SCT);
+      /* Reset registers to default values */
+      sysResetEnable(RST_SCT);
+      /* Enable common interrupt */
+      irqEnable(timer->irq);
+    }
+
+    reg->CONFIG = (reg->CONFIG & ~configMask) | desiredConfig;
   }
 
-  reg->CONFIG = (reg->CONFIG & ~configMask) | desiredConfig;
-
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT

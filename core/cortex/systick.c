@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <xcore/bits.h>
-#include <xcore/memory.h>
 #include <halm/clock.h>
 #include <halm/core/cortex/systick.h>
 /*----------------------------------------------------------------------------*/
@@ -22,7 +21,7 @@
 #define CTRL_COUNTFLAG                  BIT(16)
 /*----------------------------------------------------------------------------*/
 static void resetInstance(void);
-static bool setInstance(void *);
+static bool setInstance(struct SysTickTimer *);
 static void updateInterrupt(struct SysTickTimer *);
 static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -68,10 +67,15 @@ static void resetInstance(void)
   instance = 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool setInstance(void *object)
+static bool setInstance(struct SysTickTimer *object)
 {
-  void *expected = 0;
-  return compareExchangePointer(&instance, &expected, object);
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 static void updateInterrupt(struct SysTickTimer *timer)

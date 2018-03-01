@@ -31,27 +31,27 @@ static const struct EntityClass streamTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const DmaBase = &streamTable;
-static struct DmaBase *descriptors[STREAM_COUNT] = {0};
+static struct DmaBase *instances[STREAM_COUNT] = {0};
 /*----------------------------------------------------------------------------*/
-void dmaClearDescriptor(uint8_t stream)
+const struct DmaBase *dmaGetInstance(uint8_t stream)
 {
-  assert(stream < STREAM_COUNT);
-  descriptors[stream] = 0;
+  assert(stream < ARRAY_SIZE(instances));
+  return instances[stream];
 }
 /*----------------------------------------------------------------------------*/
-const struct DmaBase *dmaGetDescriptor(uint8_t stream)
+void dmaResetInstance(uint8_t stream)
 {
-  assert(stream < STREAM_COUNT);
-  return descriptors[stream];
+  assert(stream < ARRAY_SIZE(instances));
+  instances[stream] = 0;
 }
 /*----------------------------------------------------------------------------*/
-enum Result dmaSetDescriptor(uint8_t stream, struct DmaBase *descriptor)
+bool dmaSetInstance(uint8_t stream, struct DmaBase *object)
 {
-  assert(descriptor);
-  assert(stream < STREAM_COUNT);
+  assert(object);
+  assert(stream < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + stream),
-      0, descriptor) ? E_OK : E_BUSY;
+  void *expected = 0;
+  return compareExchangePointer(&instances[stream], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
 void DMA1_CHANNEL1_ISR(void)
@@ -118,7 +118,7 @@ void DMA2_CHANNEL5_ISR(void)
 /*----------------------------------------------------------------------------*/
 static void dma1StreamHandler(uint8_t number)
 {
-  struct DmaBase * const stream = descriptors[STREAM_ENCODE(0, number)];
+  struct DmaBase * const stream = instances[STREAM_ENCODE(0, number)];
   const uint32_t rawStatus = STM_DMA1->ISR & ISR_CHANNEL_MASK(number);
   const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, number);
   enum Result res = E_OK;
@@ -134,7 +134,7 @@ static void dma1StreamHandler(uint8_t number)
 /*----------------------------------------------------------------------------*/
 static void dma2StreamHandler(uint8_t number)
 {
-  struct DmaBase * const stream = descriptors[STREAM_ENCODE(1, number)];
+  struct DmaBase * const stream = instances[STREAM_ENCODE(1, number)];
   const uint32_t rawStatus = STM_DMA2->ISR & ISR_CHANNEL_MASK(number);
   const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, number);
   enum Result res = E_OK;
@@ -153,7 +153,7 @@ static enum Result streamInit(void *object, const void *configBase)
   const struct DmaBaseConfig * const config = configBase;
   struct DmaBase * const stream = object;
 
-  assert(config->stream < STREAM_COUNT);
+  assert(config->stream < ARRAY_SIZE(instances));
   assert(config->priority < 4);
 
   const unsigned int controller = config->stream >= DMA1_STREAM_COUNT;

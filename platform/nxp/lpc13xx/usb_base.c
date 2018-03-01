@@ -12,7 +12,8 @@
 #include <halm/platform/nxp/lpc13xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
-static bool setDescriptor(uint8_t, const struct UsbBase *, struct UsbBase *);
+static void resetInstance(void);
+static bool setInstance(struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
 
@@ -51,7 +52,7 @@ const struct PinEntry usbPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbBase = &devTable;
-static struct UsbBase *descriptors[1] = {0};
+static struct UsbBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
@@ -76,18 +77,25 @@ static void configPins(struct UsbBase *device,
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct UsbBase *state,
-    struct UsbBase *device)
+static void resetInstance(void)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      device);
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(struct UsbBase *object)
+{
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void USB_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -95,36 +103,33 @@ static enum Result devInit(void *object, const void *configBase)
   const struct UsbBaseConfig * const config = configBase;
   struct UsbBase * const device = object;
 
-  device->channel = config->channel;
-  device->handler = 0;
+  assert(config->channel == 0);
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(device->channel, 0, device))
+  if (!setInstance(device))
     return E_BUSY;
+
+  device->reg = LPC_USB;
+  device->irq = USB_IRQ;
+  device->handler = 0;
+  device->channel = config->channel;
 
   configPins(device, configBase);
 
   sysPowerEnable(PWR_USBPAD);
   sysClockEnable(CLK_USBREG);
 
-  device->irq = USB_IRQ;
-  device->reg = LPC_USB;
-
   /* Perform platform-specific initialization */
   LPC_USB_Type * const reg = device->reg;
-
   reg->USBDevFIQSel = 0;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_USB_NO_DEINIT
-static void devDeinit(void *object)
+static void devDeinit(void *object __attribute__((unused)))
 {
-  struct UsbBase * const device = object;
-
   sysClockDisable(CLK_USBREG);
   sysPowerDisable(PWR_USBPAD);
-  setDescriptor(device->channel, device, 0);
+  resetInstance();
 }
 #endif

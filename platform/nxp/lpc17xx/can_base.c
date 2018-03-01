@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/can_base.h>
 #include <halm/platform/nxp/gen_1/can_defs.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
@@ -14,8 +13,8 @@
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBase *, const struct CanBaseConfig *);
-static bool setDescriptor(uint8_t, const struct CanBase *state,
-    struct CanBase *);
+static void resetInstance(uint8_t);
+static bool setInstance(uint8_t, struct CanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
 
@@ -73,7 +72,7 @@ static const struct PinEntry canPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const CanBase = &canTable;
-static struct CanBase *descriptors[2] = {0};
+static struct CanBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBase *interface,
     const struct CanBaseConfig *config)
@@ -94,22 +93,31 @@ static void configPins(const struct CanBase *interface,
   pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct CanBase *state,
-    struct CanBase *interface)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct CanBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface);
+  if (!instances[channel])
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void CAN_ISR(void)
 {
-  if (descriptors[0])
-    descriptors[0]->handler(descriptors[0]);
+  if (instances[0])
+    instances[0]->handler(instances[0]);
 
-  if (descriptors[1])
-    descriptors[1]->handler(descriptors[1]);
+  if (instances[1])
+    instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t canGetClock(const struct CanBase *interface __attribute__((unused)))
@@ -125,8 +133,7 @@ static enum Result canInit(void *object, const void *configBase)
   interface->channel = config->channel;
   interface->handler = 0;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(interface->channel, 0, interface))
+  if (!setInstance(interface->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
@@ -151,7 +158,7 @@ static enum Result canInit(void *object, const void *configBase)
   sysClockControl(CLK_CAN2, DEFAULT_DIV);
   sysClockControl(CLK_ACF, DEFAULT_DIV);
 
-  if (!descriptors[!interface->channel])
+  if (!instances[!interface->channel])
     irqEnable(CAN_IRQ);
 
   return E_OK;
@@ -162,7 +169,7 @@ static void canDeinit(void *object)
 {
   const struct CanBase * const interface = object;
 
-  if (!descriptors[!interface->channel])
+  if (!instances[!interface->channel])
     irqDisable(CAN_IRQ);
 
   switch (interface->channel)
@@ -176,6 +183,6 @@ static void canDeinit(void *object)
       break;
   }
 
-  setDescriptor(interface->channel, interface, 0);
+  resetInstance(interface->channel);
 }
 #endif

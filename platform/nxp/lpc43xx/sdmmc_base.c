@@ -5,7 +5,6 @@
  */
 
 #include <xcore/bits.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 #include <halm/platform/nxp/sdmmc_base.h>
@@ -14,7 +13,8 @@
 #define SDDELAY_DRV(value)    BIT_FIELD((value), 8)
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SdmmcBase *, const struct SdmmcBaseConfig *);
-static bool setDescriptor(const struct SdmmcBase *, struct SdmmcBase *);
+static void resetInstance(void);
+static bool setInstance(struct SdmmcBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -160,7 +160,7 @@ const struct PinEntry sdmmcPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SdmmcBase = &sdioTable;
-static struct SdmmcBase *descriptor = 0;
+static struct SdmmcBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
@@ -199,15 +199,25 @@ static void configPins(struct SdmmcBase *interface,
   interface->wide = wide;
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(const struct SdmmcBase *state,
-    struct SdmmcBase *interface)
+static void resetInstance(void)
 {
-  return compareExchangePointer((void **)&descriptor, state, interface);
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(struct SdmmcBase *object)
+{
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void SDIO_ISR(void)
 {
-  descriptor->handler(descriptor);
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sdmmcGetClock(const struct SdmmcBase *interface
@@ -222,8 +232,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   const struct SdmmcBaseConfig * const config = configBase;
   struct SdmmcBase * const interface = object;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(0, interface))
+  if (!setInstance(interface))
     return E_BUSY;
 
   configPins(interface, config);
@@ -242,12 +251,10 @@ static enum Result sdioInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void sdioDeinit(void *object)
+static void sdioDeinit(void *object __attribute__((unused)))
 {
-  struct SdmmcBase * const interface = object;
-
   sysClockDisable(CLK_SDIO);
   sysClockDisable(CLK_M4_SDIO);
 
-  setDescriptor(interface, 0);
+  resetInstance();
 }

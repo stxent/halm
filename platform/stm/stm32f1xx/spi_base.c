@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/stm/stm32f1xx/clocking.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
 #include <halm/platform/stm/spi_base.h>
@@ -22,7 +21,8 @@ struct SpiBlockDescriptor
   enum SysClockBranch branch;
 };
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct SpiBase *, struct SpiBase *);
+static void resetInstance(uint8_t);
+static bool setInstance(uint8_t, struct SpiBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *, const void *);
 
@@ -154,30 +154,39 @@ const struct PinEntry spiPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SpiBase = &spiTable;
-static struct SpiBase *descriptors[3] = {0};
+static struct SpiBase *instances[3] = {0};
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct SpiBase *state,
-    struct SpiBase *interface)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct SpiBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface);
+  if (!instances[channel])
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void SPI1_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void SPI2_ISR(void)
 {
-  descriptors[1]->handler(descriptors[1]);
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 void SPI3_ISR(void)
 {
-  descriptors[2]->handler(descriptors[2]);
+  instances[2]->handler(instances[2]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t spiGetClock(const struct SpiBase *interface)
@@ -193,8 +202,7 @@ static enum Result spiInit(void *object, const void *configBase)
   interface->channel = config->channel;
   interface->handler = 0;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(interface->channel, 0, interface))
+  if (!setInstance(interface->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
@@ -221,6 +229,6 @@ static void spiDeinit(void *object)
   const struct SpiBase * const interface = object;
 
   sysClockDisable(spiBlockEntries[interface->channel].branch);
-  setDescriptor(interface->channel, interface, 0);
+  resetInstance(interface->channel);
 }
 #endif

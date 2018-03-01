@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 #include <halm/platform/nxp/wdt_base.h>
@@ -13,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(struct WdtBase *);
+static bool setInstance(struct WdtBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -24,11 +23,17 @@ static const struct EntityClass wdtTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const WdtBase = &wdtTable;
-static struct WdtBase *descriptor = 0;
+static struct WdtBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(struct WdtBase *timer)
+static bool setInstance(struct WdtBase *object)
 {
-  return compareExchangePointer((void **)&descriptor, 0, timer);
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t wdtGetClock(const struct WdtBase *timer __attribute__((unused)))
@@ -56,7 +61,7 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   assert(config->source < WDT_CLOCK_END);
 
-  if (!setDescriptor(timer))
+  if (!setInstance(timer))
     return E_BUSY;
 
   timer->handler = 0;
@@ -66,7 +71,6 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   const enum WdtClockSource clockSource = config->source != WDT_CLOCK_DEFAULT ?
       config->source : WDT_CLOCK_IRC;
-
   LPC_WDT->CLKSEL = CLKSEL_WDSEL(clockSource - 1) | CLKSEL_LOCK;
 
   return E_OK;

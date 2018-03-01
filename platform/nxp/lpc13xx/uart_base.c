@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/uart_base.h>
 #include <halm/platform/nxp/lpc13xx/clocking.h>
 #include <halm/platform/nxp/lpc13xx/system.h>
@@ -14,7 +13,8 @@
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct UartBase *, struct UartBase *);
+static void resetInstance(void);
+static bool setInstance(struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *, const void *);
 
@@ -45,20 +45,27 @@ const struct PinEntry uartPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UartBase = &uartTable;
-static struct UartBase *descriptors[1] = {0};
+static struct UartBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct UartBase *state,
-    struct UartBase *interface)
+static void resetInstance(void)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface);
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(struct UartBase *object)
+{
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void UART_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
@@ -72,31 +79,30 @@ static enum Result uartInit(void *object, const void *configBase)
   const struct UartBaseConfig * const config = configBase;
   struct UartBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
+  assert(config->channel == 0);
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(interface->channel, 0, interface))
+  if (!setInstance(interface))
     return E_BUSY;
+
+  interface->reg = LPC_UART;
+  interface->irq = UART_IRQ;
+  interface->handler = 0;
+  interface->channel = config->channel;
 
   /* Configure input and output pins */
   uartConfigPins(interface, config);
 
   sysClockEnable(CLK_UART);
   LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV;
-  interface->reg = LPC_UART;
-  interface->irq = UART_IRQ;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_UART_NO_DEINIT
-static void uartDeinit(void *object)
+static void uartDeinit(void *object __attribute__((unused)))
 {
-  const struct UartBase * const interface = object;
-
   LPC_SYSCON->UARTCLKDIV = 0; /* Disable peripheral clock */
   sysClockDisable(CLK_UART);
-  setDescriptor(interface->channel, interface, 0);
+  resetInstance();
 }
 #endif

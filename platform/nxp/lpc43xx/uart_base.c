@@ -5,8 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/bits.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/uart_base.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
@@ -24,7 +22,8 @@ struct UartBlockDescriptor
   enum SysClockBranch registerBranch;
 };
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct UartBase *, struct UartBase *);
+static void resetInstance(uint8_t);
+static bool setInstance(uint8_t, struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *, const void *);
 
@@ -214,35 +213,44 @@ const struct PinEntry uartPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UartBase = &uartTable;
-static struct UartBase *descriptors[4] = {0};
+static struct UartBase *instances[4] = {0};
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct UartBase *state,
-    struct UartBase *interface)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct UartBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface);
+  if (!instances[channel])
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void USART0_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void UART1_ISR(void)
 {
-  descriptors[1]->handler(descriptors[1]);
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 void USART2_ISR(void)
 {
-  descriptors[2]->handler(descriptors[2]);
+  instances[2]->handler(instances[2]);
 }
 /*----------------------------------------------------------------------------*/
 void USART3_ISR(void)
 {
-  descriptors[3]->handler(descriptors[3]);
+  instances[3]->handler(instances[3]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)
@@ -279,8 +287,7 @@ static enum Result uartInit(void *object, const void *configBase)
   interface->channel = config->channel;
   interface->handler = 0;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(interface->channel, 0, interface))
+  if (!setInstance(interface->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
@@ -310,6 +317,6 @@ static void uartDeinit(void *object)
 
   sysClockDisable(entry->registerBranch);
   sysClockDisable(entry->periperalBranch);
-  setDescriptor(interface->channel, interface, 0);
+  resetInstance(interface->channel);
 }
 #endif

@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/pin.h>
 #include <halm/platform/nxp/gppwm_base.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
@@ -15,8 +14,8 @@
 /* Pack match channel and pin function in one value */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct GpPwmUnitBase *,
-    struct GpPwmUnitBase *);
+static void resetInstance(void);
+static bool setInstance(struct GpPwmUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
 
@@ -99,14 +98,23 @@ const struct PinEntry gpPwmPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const GpPwmUnitBase = &unitTable;
-static struct GpPwmUnitBase *descriptors[1] = {0};
+static struct GpPwmUnitBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct GpPwmUnitBase *state,
-    struct GpPwmUnitBase *unit)
+static void resetInstance(void)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state, unit);
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(struct GpPwmUnitBase *object)
+{
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
+}
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpPwmGetClock(const struct GpPwmUnitBase *unit __attribute__((unused)))
@@ -119,25 +127,24 @@ static enum Result unitInit(void *object, const void *configBase)
   const struct GpPwmUnitBaseConfig * const config = configBase;
   struct GpPwmUnitBase * const unit = object;
 
-  unit->channel = config->channel;
+  if (setInstance(unit))
+  {
+    unit->reg = LPC_PWM1;
+    unit->channel = config->channel;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(unit->channel, 0, unit))
+    sysPowerEnable(PWR_PWM1);
+    sysClockControl(CLK_PWM1, DEFAULT_DIV);
+
+    return E_OK;
+  }
+  else
     return E_BUSY;
-
-  sysPowerEnable(PWR_PWM1);
-  sysClockControl(CLK_PWM1, DEFAULT_DIV);
-  unit->reg = LPC_PWM1;
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_GPPWM_NO_DEINIT
-static void unitDeinit(void *object)
+static void unitDeinit(void *object __attribute__((unused)))
 {
-  const struct GpPwmUnitBase * const unit = object;
-
   sysPowerDisable(PWR_PWM1);
-  setDescriptor(unit->channel, unit, 0);
+  resetInstance();
 }
 #endif

@@ -54,7 +54,7 @@ static const uint8_t eventTranslationMap[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const GpDmaBase = &channelTable;
-static struct GpDmaBase *descriptors[CHANNEL_COUNT] = {0};
+static struct GpDmaBase *instances[CHANNEL_COUNT] = {0};
 /*----------------------------------------------------------------------------*/
 static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,
     enum GpDmaEvent event)
@@ -145,25 +145,17 @@ uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
   return control;
 }
 /*----------------------------------------------------------------------------*/
-void gpDmaClearDescriptor(uint8_t channel)
+void gpDmaResetInstance(uint8_t channel)
 {
-  assert(channel < CHANNEL_COUNT);
-  descriptors[channel] = 0;
+  instances[channel] = 0;
 }
 /*----------------------------------------------------------------------------*/
-const struct GpDmaBase *gpDmaGetDescriptor(uint8_t channel)
+bool gpDmaSetInstance(uint8_t channel, struct GpDmaBase *object)
 {
-  assert(channel < CHANNEL_COUNT);
-  return descriptors[channel];
-}
-/*----------------------------------------------------------------------------*/
-enum Result gpDmaSetDescriptor(uint8_t channel, struct GpDmaBase *descriptor)
-{
-  assert(descriptor);
   assert(channel < CHANNEL_COUNT);
 
-  return compareExchangePointer((void **)(descriptors + channel),
-      0, descriptor) ? E_OK : E_BUSY;
+  void *expected = 0;
+  return compareExchangePointer(&instances[channel], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
 void gpDmaSetMux(struct GpDmaBase *descriptor)
@@ -174,22 +166,19 @@ void gpDmaSetMux(struct GpDmaBase *descriptor)
 /*----------------------------------------------------------------------------*/
 void GPDMA_ISR(void)
 {
+  const uint32_t terminalStatus = LPC_GPDMA->INTTCSTAT;
   uint32_t errorStatus = LPC_GPDMA->INTERRSTAT;
-  uint32_t terminalStatus = LPC_GPDMA->INTTCSTAT;
 
-  LPC_GPDMA->INTERRCLEAR = errorStatus;
   LPC_GPDMA->INTTCCLEAR = terminalStatus;
-
+  LPC_GPDMA->INTERRCLEAR = errorStatus;
   errorStatus = reverseBits32(errorStatus);
-  terminalStatus = reverseBits32(terminalStatus);
 
-  struct GpDmaBase ** const descriptorArray = descriptors;
-  uint32_t intStatus = errorStatus | terminalStatus;
+  uint32_t intStatus = errorStatus | reverseBits32(terminalStatus);
 
   do
   {
     const unsigned int index = countLeadingZeros32(intStatus);
-    struct GpDmaBase * const descriptor = descriptorArray[index];
+    struct GpDmaBase * const descriptor = instances[index];
     const uint32_t mask = (1UL << 31) >> index;
     enum Result res = E_OK;
 

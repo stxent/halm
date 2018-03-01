@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gptimer_base.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
@@ -21,8 +20,8 @@ struct TimerBlockDescriptor
   enum SysClockBranch clock;
 };
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct GpTimerBase *,
-    struct GpTimerBase *);
+static void resetInstance(uint8_t);
+static bool setInstance(uint8_t, struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
 
@@ -165,34 +164,44 @@ const struct PinEntry gpTimerMatchPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const GpTimerBase = &tmrTable;
-static struct GpTimerBase *descriptors[4] = {0};
+static struct GpTimerBase *instances[4] = {0};
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct GpTimerBase *state,
-    struct GpTimerBase *timer)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct GpTimerBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + channel), state, timer);
+  if (!instances[channel])
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void TIMER0_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER1_ISR(void)
 {
-  descriptors[1]->handler(descriptors[1]);
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER2_ISR(void)
 {
-  descriptors[2]->handler(descriptors[2]);
+  instances[2]->handler(instances[2]);
 }
 /*----------------------------------------------------------------------------*/
 void TIMER3_ISR(void)
 {
-  descriptors[3]->handler(descriptors[3]);
+  instances[3]->handler(instances[3]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpTimerGetClock(const struct GpTimerBase *timer
@@ -210,7 +219,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   timer->handler = 0;
 
   /* Try to set peripheral descriptor */
-  if (!setDescriptor(timer->channel, 0, timer))
+  if (!setInstance(timer->channel, timer))
     return E_BUSY;
 
   const struct TimerBlockDescriptor * const entry =
@@ -232,6 +241,6 @@ static void tmrDeinit(void *object)
   const struct GpTimerBase * const timer = object;
 
   sysPowerDisable(timerBlockEntries[timer->channel].power);
-  setDescriptor(timer->channel, timer, 0);
+  resetInstance(timer->channel);
 }
 #endif

@@ -5,8 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/bits.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/lpc11exx/pin_defs.h>
 #include <halm/platform/nxp/lpc11exx/system.h>
 #include <halm/platform/nxp/lpc11exx/system_defs.h>
@@ -16,10 +14,10 @@ static inline IrqNumber calcVector(uint8_t);
 static void disableInterrupt(const struct PinInterrupt *);
 static void enableInterrupt(const struct PinInterrupt *);
 static void processInterrupt(uint8_t);
-static int setDescriptor(struct PinInterrupt *);
+static int setInstance(struct PinInterrupt *);
 
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void resetDescriptor(uint8_t);
+static void resetInstance(uint8_t);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptInit(void *, const void *);
@@ -44,7 +42,7 @@ static const struct InterruptClass pinInterruptTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
-static struct PinInterrupt *descriptors[8] = {0};
+static struct PinInterrupt *instances[8] = {0};
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(uint8_t channel)
 {
@@ -67,7 +65,7 @@ static void enableInterrupt(const struct PinInterrupt *interrupt)
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  struct PinInterrupt * const interrupt = descriptors[channel];
+  struct PinInterrupt * const interrupt = instances[channel];
 
   LPC_GPIO_INT->IST = 1UL << channel;
 
@@ -76,20 +74,22 @@ static void processInterrupt(uint8_t channel)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void resetDescriptor(uint8_t channel)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
-  descriptors[channel] = 0;
+  instances[channel] = 0;
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static int setDescriptor(struct PinInterrupt *interrupt)
+static int setInstance(struct PinInterrupt *interrupt)
 {
   /* Find free interrupt */
-  for (size_t index = 0; index < ARRAY_SIZE(descriptors); ++index)
+  for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
   {
-    if (compareExchangePointer((void **)(descriptors + index), 0, interrupt))
+    if (!instances[index])
+    {
+      instances[index] = interrupt;
       return (int)index;
+    }
   }
 
   /* All interrupts are busy */
@@ -142,12 +142,11 @@ static enum Result pinInterruptInit(void *object, const void *configBase)
   assert(config);
 
   const struct Pin input = pinInit(config->pin);
-  struct PinInterrupt * const interrupt = object;
-
   assert(pinValid(input));
 
   /* Try to allocate a new channel */
-  const int channel = setDescriptor(interrupt);
+  struct PinInterrupt * const interrupt = object;
+  const int channel = setInstance(interrupt);
 
   if (channel == -1)
     return E_BUSY;
@@ -204,7 +203,7 @@ static void pinInterruptDeinit(void *object)
   LPC_GPIO_INT->CIENR = mask;
   LPC_GPIO_INT->CIENF = mask;
 
-  resetDescriptor(interrupt->channel);
+  resetInstance(interrupt->channel);
 }
 #endif
 /*----------------------------------------------------------------------------*/

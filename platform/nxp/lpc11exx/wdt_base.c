@@ -5,14 +5,13 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/lpc11exx/clocking.h>
 #include <halm/platform/nxp/lpc11exx/system.h>
 #include <halm/platform/nxp/lpc11exx/system_defs.h>
 #include <halm/platform/nxp/wdt_base.h>
 #include <halm/platform/nxp/wdt_defs.h>
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(struct WdtBase *);
+static bool setInstance(struct WdtBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -23,16 +22,22 @@ static const struct EntityClass wdtTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const WdtBase = &wdtTable;
-static struct WdtBase *descriptor = 0;
+static struct WdtBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(struct WdtBase *timer)
+static bool setInstance(struct WdtBase *object)
 {
-  return compareExchangePointer((void **)&descriptor, 0, timer);
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void WWDT_ISR(void)
 {
-  descriptor->handler(descriptor);
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t wdtGetClock(const struct WdtBase *timer __attribute__((unused)))
@@ -57,7 +62,7 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   assert(config->source < WDT_CLOCK_END);
 
-  if (!setDescriptor(timer))
+  if (!setInstance(timer))
     return E_BUSY;
 
   timer->handler = 0;

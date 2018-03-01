@@ -5,14 +5,14 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 #include <halm/platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct SspBase *, struct SspBase *);
+static void resetInstance(uint8_t);
+static bool setInstance(uint8_t, struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *, const void *);
 
@@ -87,25 +87,34 @@ const struct PinEntry sspPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SspBase = &sspTable;
-static struct SspBase *descriptors[2] = {0};
+static struct SspBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct SspBase *state,
-    struct SspBase *interface)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct SspBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface);
+  if (!instances[channel])
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void SSP0_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void SSP1_ISR(void)
 {
-  descriptors[1]->handler(descriptors[1]);
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetClock(const struct SspBase *interface __attribute__((unused)))
@@ -121,8 +130,7 @@ static enum Result sspInit(void *object, const void *configBase)
   interface->channel = config->channel;
   interface->handler = 0;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(interface->channel, 0, interface))
+  if (!setInstance(interface->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
@@ -163,6 +171,6 @@ static void sspDeinit(void *object)
       sysPowerDisable(PWR_SSP1);
       break;
   }
-  setDescriptor(interface->channel, interface, 0);
+  resetInstance(interface->channel);
 }
 #endif

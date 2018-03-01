@@ -4,13 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/memory.h>
 #include <halm/platform/nxp/wdt_base.h>
 #include <halm/platform/nxp/wdt_defs.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(struct WdtBase *);
+static bool setInstance(struct WdtBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -21,16 +20,22 @@ static const struct EntityClass wdtTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const WdtBase = &wdtTable;
-static struct WdtBase *descriptor = 0;
+static struct WdtBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(struct WdtBase *timer)
+static bool setInstance(struct WdtBase *object)
 {
-  return compareExchangePointer((void **)&descriptor, 0, timer);
+  if (!instance)
+  {
+    instance = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void WWDT_ISR(void)
 {
-  descriptor->handler(descriptor);
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t wdtGetClock(const struct WdtBase *timer __attribute__((unused)))
@@ -43,13 +48,13 @@ static enum Result wdtInit(void *object, const void *configBase
 {
   struct WdtBase * const timer = object;
 
-  if (!setDescriptor(timer))
+  if (setInstance(timer))
+  {
+    timer->handler = 0;
+    timer->irq = WWDT_IRQ;
+    sysClockEnable(CLK_M4_WWDT);
+    return E_OK;
+  }
+  else
     return E_BUSY;
-
-  timer->handler = 0;
-  timer->irq = WWDT_IRQ;
-
-  sysClockEnable(CLK_M4_WWDT);
-
-  return E_OK;
 }

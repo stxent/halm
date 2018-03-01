@@ -5,8 +5,6 @@
  */
 
 #include <assert.h>
-#include <xcore/bits.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/i2c_base.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
@@ -20,7 +18,8 @@ struct I2cBlockDescriptor
   enum SysBlockReset reset;
 };
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct I2cBase *, struct I2cBase *);
+static void resetInstance(uint8_t);
+static bool setInstance(uint8_t, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
 
@@ -80,25 +79,34 @@ const struct PinEntry i2cPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const I2cBase = &i2cTable;
-static struct I2cBase *descriptors[2] = {0};
+static struct I2cBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct I2cBase *state,
-    struct I2cBase *interface)
+static void resetInstance(uint8_t channel)
 {
-  assert(channel < ARRAY_SIZE(descriptors));
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct I2cBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  return compareExchangePointer((void **)(descriptors + channel), state,
-      interface);
+  if (!instances[channel])
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 void I2C0_ISR(void)
 {
-  descriptors[0]->handler(descriptors[0]);
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void I2C1_ISR(void)
 {
-  descriptors[1]->handler(descriptors[1]);
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetClock(const struct I2cBase *interface)
@@ -114,8 +122,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->channel = config->channel;
   interface->handler = 0;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(interface->channel, 0, interface))
+  if (!setInstance(interface->channel, interface))
     return E_BUSY;
 
   /* Configure pins */
@@ -142,6 +149,6 @@ static void i2cDeinit(void *object)
 
   /* Main peripheral bus clock is left enabled */
   sysClockDisable(i2cBlockEntries[interface->channel].clock);
-  setDescriptor(interface->channel, interface, 0);
+  resetInstance(interface->channel);
 }
 #endif
