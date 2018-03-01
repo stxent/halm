@@ -83,6 +83,7 @@ static void interruptHandler(void *object, enum Result res)
 
       /* Restart stalled transfer */
       startTransfer(channel, &channel->list[index]);
+      event = true;
     }
     else
       channel->state = STATE_DONE;
