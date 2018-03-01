@@ -5,8 +5,8 @@
  */
 
 #include <assert.h>
+#include <xcore/asm.h>
 #include <xcore/bits.h>
-#include <xcore/memory.h>
 #include <halm/delay.h>
 #include <halm/generic/sdcard.h>
 #include <halm/generic/sdio.h>
