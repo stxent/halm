@@ -1,14 +1,15 @@
 /*
- * adc.c
+ * adc_oneshot.c
  * Copyright (C) 2013 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
-#include <halm/platform/nxp/adc.h>
+#include <string.h>
+#include <halm/platform/nxp/adc_oneshot.h>
 #include <halm/platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
-#define SAMPLE_SIZE sizeof(uint16_t)
+static uint16_t makeChannelConversion(struct AdcOneShot *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static enum Result adcSetCallback(void *, void (*)(void *), void *);
@@ -23,7 +24,7 @@ static void adcDeinit(void *);
 #endif
 /*----------------------------------------------------------------------------*/
 static const struct InterfaceClass adcTable = {
-    .size = sizeof(struct Adc),
+    .size = sizeof(struct AdcOneShot),
     .init = adcInit,
     .deinit = adcDeinit,
 
@@ -34,29 +35,62 @@ static const struct InterfaceClass adcTable = {
     .write = 0
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Adc = &adcTable;
+const struct InterfaceClass * const AdcOneShot = &adcTable;
+/*----------------------------------------------------------------------------*/
+static uint16_t makeChannelConversion(struct AdcOneShot *interface)
+{
+  LPC_ADC_Type * const reg = interface->base.reg;
+  uint32_t value;
+
+  /* Reconfigure peripheral and start the conversion */
+  reg->CR = interface->base.control;
+
+  do
+  {
+    value = reg->DR[interface->pin.channel];
+  }
+  while (!(value & DR_DONE));
+
+  reg->CR = 0;
+
+  return DR_RESULT_VALUE(value);
+}
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
 {
-  const struct AdcConfig * const config = configBase;
+  const struct AdcOneShotConfig * const config = configBase;
   assert(config);
 
-  struct Adc * const interface = object;
+  const struct AdcBaseConfig baseConfig = {
+      .frequency = config->frequency,
+      .accuracy = 0,
+      .channel = config->channel
+  };
+  struct AdcOneShot * const interface = object;
 
-  /* Initialize input pin */
-  adcConfigPin(&config->parent->base, config->pin, &interface->pin);
+  /* Call base class constructor */
+  const enum Result res = AdcBase->init(interface, &baseConfig);
 
-  interface->unit = config->parent;
+  if (res == E_OK)
+  {
+    /* Enable analog function on the input pin */
+    adcConfigPin(&interface->base, config->pin, &interface->pin);
+    /* Calculate Control register value */
+    interface->base.control |= CR_START(ADC_SOFTWARE)
+        | CR_SEL_CHANNEL(interface->pin.channel);
+  }
 
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
 static void adcDeinit(void *object)
 {
-  const struct Adc * const interface = object;
+  struct AdcOneShot * const interface = object;
 
   adcReleasePin(interface->pin);
+  if (AdcBase->deinit)
+    AdcBase->deinit(interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -83,36 +117,20 @@ static enum Result adcSetParam(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)
 {
-  struct Adc * const interface = object;
-  LPC_ADC_Type * const reg = interface->unit->base.reg;
-  const uint8_t channel = interface->pin.channel;
+  /* Ensure proper alignment of the output buffer */
+  assert(!((uintptr_t)buffer & 1));
 
-  if (length < SAMPLE_SIZE)
+  if (length < sizeof(uint16_t))
     return 0;
 
-  if (adcUnitRegister(interface->unit, 0, interface) != E_OK)
-    return 0;
+  struct AdcOneShot * const interface = object;
 
-  /* Set conversion channel */
-  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(channel);
-
-  /* Perform a new conversion */
-  uint32_t value;
-
-  reg->CR |= CR_START(ADC_SOFTWARE);
-
-  do
+  if (adcSetInstance(interface->base.channel, &interface->base))
   {
-    value = reg->DR[channel];
+    *(uint16_t *)buffer = makeChannelConversion(interface);
+    adcResetInstance(interface->base.channel);
+    return sizeof(uint16_t);
   }
-  while (!(value & DR_DONE));
-
-  reg->CR &= ~CR_START_MASK;
-
-  /* Copy a result into the first element of the array */
-  *((uint16_t *)buffer) = DR_RESULT_VALUE(value);
-
-  adcUnitUnregister(interface->unit);
-
-  return SAMPLE_SIZE;
+  else
+    return 0;
 }

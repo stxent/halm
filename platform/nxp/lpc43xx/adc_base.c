@@ -32,21 +32,13 @@ static void configGroupPin(const struct PinGroupEntry *, PinNumber,
     struct AdcPin *);
 static void configRegularPin(const struct PinEntry *, PinNumber,
     struct AdcPin *);
-static bool setDescriptor(uint8_t, const struct AdcUnitBase *state,
-    struct AdcUnitBase *);
 /*----------------------------------------------------------------------------*/
-static enum Result adcUnitInit(void *, const void *);
-
-#ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
-static void adcUnitDeinit(void *);
-#else
-#define adcUnitDeinit deletedDestructorTrap
-#endif
+static enum Result adcInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass adcUnitTable = {
+static const struct EntityClass adcTable = {
     .size = 0, /* Abstract class */
-    .init = adcUnitInit,
-    .deinit = adcUnitDeinit
+    .init = adcInit,
+    .deinit = 0 /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static const struct AdcBlockDescriptor adcBlockEntries[] = {
@@ -151,8 +143,8 @@ const struct PinEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const AdcUnitBase = &adcUnitTable;
-static struct AdcUnitBase *descriptors[2] = {0};
+const struct EntityClass * const AdcBase = &adcTable;
+static struct AdcBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static void configGroupPin(const struct PinGroupEntry *group, PinNumber key,
     struct AdcPin *adcPin)
@@ -192,29 +184,17 @@ static void configRegularPin(const struct PinEntry *entry, PinNumber key,
   adcPin->control = entry->channel;
 }
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct AdcUnitBase *state,
-    struct AdcUnitBase *unit)
-{
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state, unit);
-}
-/*----------------------------------------------------------------------------*/
 void ADC0_ISR(void)
 {
-  struct AdcUnitBase * const descriptor = descriptors[0];
-
-  descriptor->handler(descriptor->instance);
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void ADC1_ISR(void)
 {
-  struct AdcUnitBase * const descriptor = descriptors[1];
-
-  descriptor->handler(descriptor->instance);
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-void adcConfigPin(const struct AdcUnitBase *unit, PinNumber key,
+void adcConfigPin(const struct AdcBase *unit, PinNumber key,
     struct AdcPin *adcPin)
 {
   const struct PinGroupEntry *group;
@@ -242,54 +222,53 @@ void adcReleasePin(const struct AdcPin adcPin)
     LPC_SCU->ENAIO[adcPin.control] &= ~(1 << adcPin.channel);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcUnitInit(void *object, const void *configBase)
+void adcResetInstance(uint8_t channel)
 {
-  const struct AdcUnitBaseConfig * const config = configBase;
-  struct AdcUnitBase * const unit = object;
+  instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+bool adcSetInstance(uint8_t channel, struct AdcBase *object)
+{
+  assert(channel < ARRAY_SIZE(instances));
 
-  unit->channel = config->channel;
-  unit->handler = 0;
-  unit->instance = 0;
+  void *expected = 0;
+  return compareExchangePointer(&instances[channel], &expected, object);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result adcInit(void *object, const void *configBase)
+{
+  const struct AdcBaseConfig * const config = configBase;
+  struct AdcBase * const interface = object;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(unit->channel, 0, unit))
-    return E_BUSY;
+  assert(config->channel < ARRAY_SIZE(instances));
 
   const struct AdcBlockDescriptor * const entry =
-      &adcBlockEntries[unit->channel];
+      &adcBlockEntries[config->channel];
 
-  /* Enable clock to register interface and peripheral */
-  sysClockEnable(entry->clock);
-  /* Reset registers to default values */
-  sysResetEnable(entry->reset);
+  if (!sysClockStatus(entry->clock))
+  {
+    /* Enable clock to register interface and peripheral */
+    sysClockEnable(entry->clock);
+    /* Reset registers to default values */
+    sysResetEnable(entry->reset);
+  }
 
-  unit->irq = entry->irq;
-  unit->reg = entry->reg;
+  interface->irq = entry->irq;
+  interface->reg = entry->reg;
+  interface->handler = 0;
+  interface->channel = config->channel;
 
   /* Configure peripheral registers */
 
   assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
   assert(config->frequency <= MAX_FREQUENCY);
 
-  const uint32_t clocks = config->accuracy ? 10 - config->accuracy : 0;
-  const uint32_t frequency =
-      config->frequency ? config->frequency : MAX_FREQUENCY;
-  const uint32_t divisor =
-      (clockFrequency(Apb3Clock) + (frequency - 1)) / frequency;
-  LPC_ADC_Type * const reg = unit->reg;
+  const uint32_t ticks = config->accuracy ? (10 - config->accuracy) : 0;
+  const uint32_t adcClock = config->frequency ?
+      config->frequency : MAX_FREQUENCY;
+  const uint32_t apbClock = clockFrequency(Apb3Clock);
+  const uint32_t divisor = (apbClock + (adcClock - 1)) / adcClock;
 
-  reg->INTEN = 0;
-  reg->CR = CR_PDN | CR_CLKDIV(divisor - 1) | CR_CLKS(clocks);
-
+  interface->control = CR_PDN | CR_CLKDIV(divisor - 1) | CR_CLKS(ticks);
   return E_OK;
 }
-/*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
-static void adcUnitDeinit(void *object)
-{
-  const struct AdcUnitBase * const unit = object;
-
-  sysClockDisable(adcBlockEntries[unit->channel].clock);
-  setDescriptor(unit->channel, unit, 0);
-}
-#endif

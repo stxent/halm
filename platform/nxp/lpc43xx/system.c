@@ -17,14 +17,17 @@ static volatile uint32_t *calcBranchReg(enum SysClockBranch branch)
 /*----------------------------------------------------------------------------*/
 void sysClockEnable(enum SysClockBranch branch)
 {
-  volatile uint32_t *reg = calcBranchReg(branch);
-
-  *reg |= CFG_RUN | CFG_AUTO | CFG_WAKEUP;
+  *calcBranchReg(branch) |= CFG_RUN | CFG_AUTO | CFG_WAKEUP;
+}
+/*----------------------------------------------------------------------------*/
+bool sysClockStatus(enum SysClockBranch branch)
+{
+  return (*calcBranchReg(branch) & CFG_RUN) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void sysClockDisable(enum SysClockBranch branch)
 {
-  volatile uint32_t *reg = calcBranchReg(branch);
+  volatile uint32_t * const reg = calcBranchReg(branch);
 
   /* Use AHB disable protocol and do not enable clock after wake up */
   *reg = (*reg & ~CFG_WAKEUP) | CFG_AUTO;

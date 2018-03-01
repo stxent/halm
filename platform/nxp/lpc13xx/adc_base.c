@@ -17,21 +17,12 @@
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t, const struct AdcUnitBase *state,
-    struct AdcUnitBase *);
+static enum Result adcInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static enum Result adcUnitInit(void *, const void *);
-
-#ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
-static void adcUnitDeinit(void *);
-#else
-#define adcUnitDeinit deletedDestructorTrap
-#endif
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass adcUnitTable = {
+static const struct EntityClass adcTable = {
     .size = 0, /* Abstract class */
-    .init = adcUnitInit,
-    .deinit = adcUnitDeinit
+    .init = adcInit,
+    .deinit = 0 /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 const struct PinEntry adcPins[] = {
@@ -72,28 +63,19 @@ const struct PinEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const AdcUnitBase = &adcUnitTable;
-static struct AdcUnitBase *descriptors[1] = {0};
-/*----------------------------------------------------------------------------*/
-static bool setDescriptor(uint8_t channel, const struct AdcUnitBase *state,
-    struct AdcUnitBase *unit)
-{
-  assert(channel < ARRAY_SIZE(descriptors));
-
-  return compareExchangePointer((void **)(descriptors + channel), state, unit);
-}
+const struct EntityClass * const AdcBase = &adcTable;
+static struct AdcBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
 {
-  struct AdcUnitBase * const descriptor = descriptors[0];
-
-  descriptor->handler(descriptor->instance);
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-void adcConfigPin(const struct AdcUnitBase *unit, PinNumber key,
+void adcConfigPin(const struct AdcBase *interface, PinNumber key,
     struct AdcPin *adcPin)
 {
-  const struct PinEntry * const entry = pinFind(adcPins, key, unit->channel);
+  const struct PinEntry * const entry = pinFind(adcPins, key,
+      interface->channel);
   assert(entry);
 
   const uint8_t function = UNPACK_FUNCTION(entry->value);
@@ -115,50 +97,47 @@ void adcReleasePin(const struct AdcPin adcPin __attribute__((unused)))
 {
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcUnitInit(void *object, const void *configBase)
+void adcResetInstance(uint8_t channel __attribute__((unused)))
 {
-  const struct AdcUnitBaseConfig * const config = configBase;
-  struct AdcUnitBase * const unit = object;
+  instance = 0;
+}
+/*----------------------------------------------------------------------------*/
+bool adcSetInstance(uint8_t channel __attribute__((unused)),
+    struct AdcBase *object)
+{
+  assert(channel == 0);
 
-  unit->channel = config->channel;
-  unit->handler = 0;
-  unit->instance = 0;
+  void *expected = 0;
+  return compareExchangePointer(&instance, &expected, object);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result adcInit(void *object, const void *configBase)
+{
+  const struct AdcBaseConfig * const config = configBase;
+  struct AdcBase * const interface = object;
 
-  /* Try to set peripheral descriptor */
-  if (!setDescriptor(unit->channel, 0, unit))
-    return E_BUSY;
+  assert(config->channel == 0);
 
-  sysPowerEnable(PWR_ADC);
-  sysClockEnable(CLK_ADC);
+  interface->reg = LPC_ADC;
+  interface->irq = ADC_IRQ;
+  interface->handler = 0;
+  interface->channel = config->channel;
 
-  unit->irq = ADC_IRQ;
-  unit->reg = LPC_ADC;
-
-  /* Configure peripheral registers */
+  if (!sysPowerStatus(PWR_ADC))
+  {
+    sysPowerEnable(PWR_ADC);
+    sysClockEnable(CLK_ADC);
+  }
 
   assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
   assert(config->frequency <= MAX_FREQUENCY);
 
-  const uint32_t clocks = config->accuracy ? 10 - config->accuracy : 0;
-  const uint32_t frequency =
-      config->frequency ? config->frequency : MAX_FREQUENCY;
-  const uint32_t divisor =
-      (clockFrequency(MainClock) + (frequency - 1)) / frequency;
-  LPC_ADC_Type * const reg = unit->reg;
+  const uint32_t ticks = config->accuracy ? (10 - config->accuracy) : 0;
+  const uint32_t adcClock = config->frequency ?
+      config->frequency : MAX_FREQUENCY;
+  const uint32_t apbClock = clockFrequency(MainClock);
+  const uint32_t divisor = (apbClock + (adcClock - 1)) / adcClock;
 
-  reg->INTEN = 0;
-  reg->CR = CR_CLKDIV(divisor - 1) | CR_CLKS(clocks);
-
+  interface->control = CR_CLKDIV(divisor - 1) | CR_CLKS(ticks);
   return E_OK;
 }
-/*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
-static void adcUnitDeinit(void *object)
-{
-  const struct AdcUnitBase * const unit = object;
-
-  sysClockDisable(CLK_ADC);
-  sysPowerDisable(PWR_ADC);
-  setDescriptor(unit->channel, unit, 0);
-}
-#endif

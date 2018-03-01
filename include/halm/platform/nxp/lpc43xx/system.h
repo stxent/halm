@@ -12,6 +12,7 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 #define HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <xcore/helpers.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -139,6 +140,7 @@ BEGIN_DECLS
 
 void sysClockEnable(enum SysClockBranch);
 void sysClockDisable(enum SysClockBranch);
+bool sysClockStatus(enum SysClockBranch);
 void sysFlashEnable(unsigned int);
 void sysFlashDisable(unsigned int);
 unsigned int sysFlashLatency(void);

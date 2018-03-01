@@ -9,10 +9,10 @@
 #include <halm/platform/nxp/gen_1/adc_defs.h>
 #include <halm/platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
-#define BLOCK_COUNT 2
+#define BUFFER_COUNT 2
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
-static enum Result dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
+static bool dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static enum Result adcSetCallback(void *, void (*)(void *), void *);
@@ -43,20 +43,19 @@ const struct InterfaceClass * const AdcDma = &adcTable;
 static void dmaHandler(void *object)
 {
   struct AdcDma * const interface = object;
-  struct AdcUnit * const unit = interface->unit;
   bool event = false;
 
   /* Scatter-gather transfer finished */
   if (dmaStatus(interface->dma) != E_BUSY)
   {
-    LPC_ADC_Type * const reg = unit->base.reg;
+    LPC_ADC_Type * const reg = interface->base.reg;
 
     /* Stop automatic conversion */
-    reg->CR &= ~(CR_BURST | CR_START_MASK);
+    reg->CR = 0;
     /* Disable further requests */
     reg->INTEN = 0;
 
-    adcUnitUnregister(unit);
+    adcResetInstance(interface->base.channel);
     event = true;
   }
   else if ((dmaPending(interface->dma) & 1) == 0)
@@ -72,7 +71,7 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result dmaSetup(struct AdcDma *interface,
+static bool dmaSetup(struct AdcDma *interface,
     const struct AdcDmaConfig *config)
 {
   static const struct GpDmaSettings dmaSettings = {
@@ -88,20 +87,23 @@ static enum Result dmaSetup(struct AdcDma *interface,
       }
   };
   const struct GpDmaListConfig dmaConfig = {
-      .number = BLOCK_COUNT << 1,
-      .event = GPDMA_ADC0 + config->parent->base.channel,
+      .number = BUFFER_COUNT << 1,
+      .event = GPDMA_ADC0 + config->channel,
       .type = GPDMA_TYPE_P2M,
       .channel = config->dma,
       .silent = false
   };
 
   interface->dma = init(GpDmaList, &dmaConfig);
-  if (!interface->dma)
-    return E_ERROR;
-  dmaConfigure(interface->dma, &dmaSettings);
-  dmaSetCallback(interface->dma, dmaHandler, interface);
 
-  return E_OK;
+  if (interface->dma)
+  {
+    dmaConfigure(interface->dma, &dmaSettings);
+    dmaSetCallback(interface->dma, dmaHandler, interface);
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
@@ -109,31 +111,49 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcDmaConfig * const config = configBase;
   assert(config);
 
+  const struct AdcBaseConfig baseConfig = {
+      .frequency = config->frequency,
+      .accuracy = config->accuracy,
+      .channel = config->channel
+  };
   struct AdcDma * const interface = object;
-  enum Result res;
 
   assert(config->event < ADC_EVENT_END);
   assert(config->event != ADC_SOFTWARE);
 
-  if ((res = dmaSetup(interface, config)) != E_OK)
-    return res;
+  /* Call base class constructor */
+  const enum Result res = AdcBase->init(interface, &baseConfig);
 
-  adcConfigPin(&config->parent->base, config->pin, &interface->pin);
+  if (res == E_OK)
+  {
+    if (!dmaSetup(interface, config))
+      return E_ERROR;
 
-  interface->callback = 0;
-  interface->event = config->event;
-  interface->unit = config->parent;
+    /* Enable analog function on the input pin */
+    adcConfigPin(&interface->base, config->pin, &interface->pin);
 
-  return E_OK;
+    interface->callback = 0;
+    interface->base.control |= CR_SEL_CHANNEL(interface->pin.channel);
+
+    if (config->event == ADC_BURST)
+      interface->base.control |= CR_BURST;
+    else
+      interface->base.control |= CR_START(config->event);
+  }
+
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
 static void adcDeinit(void *object)
 {
-  const struct AdcDma * const interface = object;
+  struct AdcDma * const interface = object;
 
   adcReleasePin(interface->pin);
   deinit(interface->dma);
+
+  if (AdcBase->deinit)
+    AdcBase->deinit(interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -155,7 +175,7 @@ static enum Result adcGetParam(void *object, enum IfParameter parameter,
   switch (parameter)
   {
     case IF_AVAILABLE:
-      *(size_t *)data = BLOCK_COUNT - ((dmaPending(interface->dma) + 1) >> 1);
+      *(size_t *)data = BUFFER_COUNT - ((dmaPending(interface->dma) + 1) >> 1);
       return E_OK;
 
     case IF_STATUS:
@@ -175,49 +195,45 @@ static enum Result adcSetParam(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)
 {
+  /* Ensure proper alignment of the output buffer */
+  assert(!((uintptr_t)buffer & 1));
+
+  /* The buffer should be at least 2 samples long */
+  if (length < 2 * sizeof(uint16_t))
+    return 0;
+
   struct AdcDma * const interface = object;
-  struct AdcUnit * const unit = interface->unit;
+  LPC_ADC_Type * const reg = interface->base.reg;
   const size_t samples = length / sizeof(uint16_t);
   const uint8_t channel = interface->pin.channel;
 
-  /* At least 2 samples */
-  assert(samples >= 2);
-
+  /* Prepare linked list of DMA descriptors */
   const size_t parts[] = {samples / 2, samples - samples / 2};
-  LPC_ADC_Type * const reg = unit->base.reg;
-  const uint32_t * const source = (const uint32_t *)(reg->DR + channel);
-  uint16_t *destination = buffer;
+  const uint16_t * const source = (const uint16_t *)&reg->DR[channel];
+  uint16_t * const sink = buffer;
 
   /* When the previous transfer is ongoing it will be continued */
-  dmaAppend(interface->dma, destination, source, parts[0]);
-  destination += parts[0];
-  dmaAppend(interface->dma, destination, source, parts[1]);
+  dmaAppend(interface->dma, sink, source, parts[0]);
+  dmaAppend(interface->dma, sink + parts[0], source, parts[1]);
 
   if (dmaStatus(interface->dma) != E_BUSY)
   {
     /* Clear pending requests */
     (void)(*source);
 
-    if (adcUnitRegister(unit, 0, interface) != E_OK)
+    if (!adcSetInstance(interface->base.channel, &interface->base))
       goto error;
 
     if (dmaEnable(interface->dma) != E_OK)
     {
-      adcUnitUnregister(unit);
+      adcResetInstance(interface->base.channel);
       goto error;
     }
 
     /* Enable DMA requests */
     reg->INTEN = INTEN_AD(channel);
-
-    /* Set conversion channel */
-    reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL_CHANNEL(channel);
-
-    /* Start the conversion */
-    if (interface->event == ADC_BURST)
-      reg->CR |= CR_BURST;
-    else
-      reg->CR |= CR_START(interface->event);
+    /* Reconfigure peripheral and start the conversion */
+    reg->CR = interface->base.control;
   }
 
   return samples * sizeof(uint16_t);

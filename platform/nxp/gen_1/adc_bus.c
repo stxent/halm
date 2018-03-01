@@ -10,11 +10,8 @@
 #include <halm/platform/nxp/adc_bus.h>
 #include <halm/platform/nxp/gen_1/adc_defs.h>
 /*----------------------------------------------------------------------------*/
-#define MAX_CHANNELS  8
-#define SAMPLE_SIZE   sizeof(uint16_t)
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static void setupChannels(struct AdcBus *, const PinNumber *);
+static size_t setupChannels(struct AdcBus *, const PinNumber *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static enum Result adcSetCallback(void *, void (*)(void *), void *);
@@ -45,52 +42,62 @@ const struct InterfaceClass * const AdcBus = &adcTable;
 static void interruptHandler(void *object)
 {
   struct AdcBus * const interface = object;
-  struct AdcUnit * const unit = interface->unit;
-  LPC_ADC_Type * const reg = unit->base.reg;
-  uint16_t *buffer = interface->buffer;
+  LPC_ADC_Type * const reg = interface->base.reg;
 
-  /* Stop automatic conversion */
-  reg->CR &= ~CR_BURST;
-  /* Disable interrupts */
-  reg->INTEN = 0;
-  irqDisable(unit->base.irq);
+  /* Further conversions should be stopped immediately after entering the ISR */
+  if (!--interface->cycles)
+  {
+    /* Stop further conversions */
+    reg->CR = 0;
+    /* Disable interrupts */
+    reg->INTEN = 0;
+    irqDisable(interface->base.irq);
+  }
 
   /* Read values and clear interrupt flags */
-  for (size_t index = 0; index < interface->number; ++index)
-    *buffer++ = DR_RESULT_VALUE(reg->DR[interface->pins[index].channel]);
+  for (size_t i = 0; i < interface->count; ++i)
+    interface->buffer[i] = DR_RESULT_VALUE(reg->DR[interface->pins[i].channel]);
 
-  /* Reset buffer pointer to notify that the conversion is completed */
-  interface->buffer = 0;
+  if (!interface->cycles)
+  {
+    adcResetInstance(interface->base.channel);
 
-  adcUnitUnregister(unit);
-
-  if (interface->callback)
-    interface->callback(interface->callbackArgument);
+    if (interface->callback)
+      interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
-static void setupChannels(struct AdcBus *interface, const PinNumber *pins)
+static size_t setupChannels(struct AdcBus *interface, const PinNumber *pins)
 {
-  interface->mask = 0x00;
-  interface->event = 0;
+  unsigned int event = 0;
+  unsigned int mask = 0;
+  size_t index = 0;
 
-  for (size_t index = 0; index < interface->number; ++index)
+  while (pins[index])
   {
-    adcConfigPin(&interface->unit->base, pins[index], &interface->pins[index]);
-
-    const uint8_t channel = interface->pins[index].channel;
+    assert(index < ARRAY_SIZE(interface->pins));
+    adcConfigPin(&interface->base, pins[index], &interface->pins[index]);
 
     /*
      * Check whether the order of pins is correct and all pins
      * are unique. Pins must be sorted by analog channel number to ensure
-     * direct connection between pins in the configuration and resulting values
-     * after a conversion.
+     * direct connection between pins in the configuration
+     * and an array of measured values.
      */
-    assert(!(interface->mask >> channel));
+    const unsigned int channel = interface->pins[index].channel;
+    assert(!(mask >> channel));
 
-    if (channel > interface->event)
-      interface->event = channel;
-    interface->mask |= 1 << channel;
+    if (channel > event)
+      event = channel;
+    mask |= 1 << channel;
+
+    ++index;
   }
+
+  interface->base.control |= CR_SEL(mask);
+  interface->event = event;
+
+  return index;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
@@ -98,42 +105,48 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcBusConfig * const config = configBase;
   assert(config);
 
+  const struct AdcBaseConfig baseConfig = {
+      .frequency = config->frequency,
+      .accuracy = config->accuracy,
+      .channel = config->channel
+  };
   struct AdcBus * const interface = object;
 
-  /* Initialize input pins */
-  const PinNumber *currentPin = config->pins;
-  size_t number = 0;
+  /* Call base class constructor */
+  const enum Result res = AdcBase->init(interface, &baseConfig);
 
-  while (*currentPin++ && number < MAX_CHANNELS)
-    ++number;
+  if (res == E_OK)
+  {
+    interface->base.handler = interruptHandler;
+    interface->callback = 0;
+    interface->buffer = 0;
+    interface->cycles = 0;
+    interface->priority = config->priority;
+    interface->blocking = true;
 
-  assert(number && number <= MAX_CHANNELS);
+    if (config->event == ADC_BURST)
+      interface->base.control |= CR_BURST;
+    else
+      interface->base.control |= CR_START(config->event);
 
-  interface->pins = malloc(number * sizeof(struct AdcPin));
-  if (!interface->pins)
-    return E_MEMORY;
+    /* Initialize input pins */
+    interface->count = setupChannels(interface, config->pins);
+  }
 
-  interface->number = number;
-  interface->unit = config->parent;
-
-  setupChannels(interface, config->pins);
-
-  interface->callback = 0;
-  interface->blocking = true;
-  interface->buffer = 0;
-
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
 static void adcDeinit(void *object)
 {
-  const struct AdcBus * const interface = object;
+  struct AdcBus * const interface = object;
 
-  for (size_t index = 0; index < interface->number; ++index)
+  for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
-
   free(interface->pins);
+
+  if (AdcBase->deinit)
+    AdcBase->deinit(interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -185,35 +198,33 @@ static enum Result adcSetParam(void *object, enum IfParameter parameter,
 static size_t adcRead(void *object, void *buffer, size_t length)
 {
   struct AdcBus * const interface = object;
-  struct AdcUnit * const unit = interface->unit;
-  LPC_ADC_Type * const reg = unit->base.reg;
-  const size_t samples = length / SAMPLE_SIZE;
+  LPC_ADC_Type * const reg = interface->base.reg;
+  const size_t cycles = length / (interface->count * sizeof(uint16_t));
 
-  if (samples < interface->number)
+  if (!cycles)
     return 0;
-
-  if (adcUnitRegister(unit, interruptHandler, interface) != E_OK)
+  if (!adcSetInstance(interface->base.channel, &interface->base))
     return 0;
 
   interface->buffer = buffer;
+  interface->cycles = cycles;
 
   /* Clear pending interrupts */
   (void)reg->DR[interface->event];
+
   /* Enable interrupts for the channel with the highest number */
   reg->INTEN = INTEN_AD(interface->event);
-  irqEnable(unit->base.irq);
+  irqSetPriority(interface->base.irq, interface->priority);
+  irqEnable(interface->base.irq);
 
-  /* Enable channels */
-  reg->CR = (reg->CR & ~CR_SEL_MASK) | CR_SEL(interface->mask);
-
-  /* Start the conversion */
-  reg->CR |= CR_BURST;
+  /* Reconfigure peripheral and start the conversion */
+  reg->CR = interface->base.control;
 
   if (interface->blocking)
   {
-    while (interface->buffer)
+    while (interface->cycles)
       barrier();
   }
 
-  return samples * SAMPLE_SIZE;
+  return cycles * interface->count * sizeof(uint16_t);
 }

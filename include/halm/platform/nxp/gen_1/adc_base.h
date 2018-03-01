@@ -7,8 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_GEN_1_ADC_BASE_H_
 #define HALM_PLATFORM_NXP_GEN_1_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <stdint.h>
-#include <xcore/entity.h>
+#include <xcore/interface.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
@@ -17,36 +18,39 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const AdcUnitBase;
+extern const struct EntityClass * const AdcBase;
 
-struct AdcUnitBaseConfig
+struct AdcBaseConfig
 {
-  /** Optional: desired clock. */
+  /** Optional: desired converter clock. */
   uint32_t frequency;
-  /** Optional: number of bits of accuracy. */
+  /** Optional: number of clocks used for each conversion. */
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
 
-struct AdcUnitBase
+struct AdcBase
 {
-  struct Entity base;
+  struct Interface base;
 
   void *reg;
-  IrqNumber irq;
-
   void (*handler)(void *);
-  void *instance;
 
+  /* Precalculated value of Control Register */
+  uint32_t control;
+  /* Unique interrupt identifier */
+  IrqNumber irq;
   /* Unique peripheral identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void adcConfigPin(const struct AdcUnitBase *, PinNumber, struct AdcPin *);
+void adcConfigPin(const struct AdcBase *, PinNumber, struct AdcPin *);
 void adcReleasePin(struct AdcPin);
+void adcResetInstance(uint8_t);
+bool adcSetInstance(uint8_t, struct AdcBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

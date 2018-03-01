@@ -21,7 +21,6 @@ if(${CONFIG_PLATFORM_NXP_FAST_GPIO_BUS})
 endif()
 
 if(${CONFIG_PLATFORM_NXP_ADC_BASE})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_unit.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/adc_base.c")
 endif()
 
@@ -123,20 +122,16 @@ if(${CONFIG_PLATFORM_NXP_WDT})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/wdt_base.c")
 endif()
 
-if(${CONFIG_PLATFORM_NXP_ADC})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc.c")
-endif()
-
-if(${CONFIG_PLATFORM_NXP_ADC_BURST})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_burst.c")
-endif()
-
 if(${CONFIG_PLATFORM_NXP_ADC_BUS})
     list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_bus.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_ADC_DMA})
     list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_dma.c")
+endif()
+
+if(${CONFIG_PLATFORM_NXP_ADC_ONESHOT})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_oneshot.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_DAC})

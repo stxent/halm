@@ -7,13 +7,11 @@
 #ifndef HALM_PLATFORM_NXP_ADC_DMA_H_
 #define HALM_PLATFORM_NXP_ADC_DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <xcore/interface.h>
 #include <halm/dma.h>
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_ADC/adc_unit.h>
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_ADC/adc_base.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
@@ -21,33 +19,31 @@ extern const struct InterfaceClass * const AdcDma;
 
 struct AdcDmaConfig
 {
-  /** Mandatory: peripheral unit. */
-  struct AdcUnit *parent;
+  /** Optional: desired converter clock. */
+  uint32_t frequency;
   /** Optional: trigger to start the conversion. */
   enum AdcEvent event;
   /** Mandatory: analog input. */
   PinNumber pin;
-  /** Mandatory: memory access channel. */
+  /** Optional: number of clocks used for each conversion. */
+  uint8_t accuracy;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+  /** Mandatory: DMA channel. */
   uint8_t dma;
 };
 
 struct AdcDma
 {
-  struct Interface base;
-
-  /* Pointer to a parent unit */
-  struct AdcUnit *unit;
+  struct AdcBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Direct memory access channel descriptor */
+  /* DMA channel handle */
   struct Dma *dma;
-
   /* Pin descriptor */
   struct AdcPin pin;
-  /* Hardware trigger event */
-  uint8_t event;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_ADC_DMA_H_ */

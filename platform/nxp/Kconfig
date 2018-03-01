@@ -61,7 +61,7 @@ config PLATFORM_NXP_ADC_NO_DEINIT
 	default n
 	depends on PLATFORM_NXP_ADC_BASE
 
-config PLATFORM_NXP_ADC
+config PLATFORM_NXP_ADC_ONESHOT
 	bool "Single channel ADC with polling"
 	default y
 	depends on PLATFORM_NXP_ADC_BASE
@@ -70,11 +70,6 @@ config PLATFORM_NXP_ADC_DMA
 	bool "Single channel ADC with DMA"
 	default y
 	depends on PLATFORM_NXP_ADC_BASE && PLATFORM_NXP_GPDMA
-
-config PLATFORM_NXP_ADC_BURST
-	bool "Single channel interrupt-driven ADC"
-	default y
-	depends on PLATFORM_NXP_ADC_BASE
 
 config PLATFORM_NXP_ADC_BUS
 	bool "Interrupt-driven ADC bus"
