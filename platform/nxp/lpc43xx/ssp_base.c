@@ -19,14 +19,14 @@
 struct SspBlockDescriptor
 {
   LPC_SSP_Type *reg;
-  /* Peripheral interrupt request identifier */
-  IrqNumber irq;
   /* Peripheral clock branch */
   enum SysClockBranch periperalBranch;
   /* Clock to register interface */
   enum SysClockBranch registerBranch;
   /* Reset control identifier */
   enum SysBlockReset reset;
+  /* Peripheral interrupt request identifier */
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SspBase *, const struct SspBaseConfig *);
@@ -50,17 +50,17 @@ static const struct EntityClass sspTable = {
 static const struct SspBlockDescriptor sspBlockEntries[] = {
     {
         .reg = LPC_SSP0,
-        .irq = SSP0_IRQ,
         .registerBranch = CLK_M4_SSP0,
         .periperalBranch = CLK_APB0_SSP0,
-        .reset = RST_SSP0
+        .reset = RST_SSP0,
+        .irq = SSP0_IRQ
     },
     {
         .reg = LPC_SSP1,
-        .irq = SSP1_IRQ,
         .registerBranch = CLK_M4_SSP1,
         .periperalBranch = CLK_APB2_SSP1,
-        .reset = RST_SSP1
+        .reset = RST_SSP1,
+        .irq = SSP1_IRQ
     }
 };
 /*----------------------------------------------------------------------------*/

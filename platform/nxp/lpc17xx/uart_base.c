@@ -14,9 +14,9 @@
 struct UartBlockDescriptor
 {
   LPC_UART_Type *reg;
-  IrqNumber irq;
   enum SysBlockPower power;
   enum SysClockBranch clock;
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 static void resetInstance(uint8_t);
@@ -39,27 +39,27 @@ static const struct EntityClass uartTable = {
 static const struct UartBlockDescriptor uartBlockEntries[] = {
     {
         .reg = LPC_UART0,
-        .irq = UART0_IRQ,
         .power = PWR_UART0,
-        .clock = CLK_UART0
+        .clock = CLK_UART0,
+        .irq = UART0_IRQ
     },
     {
         .reg = (LPC_UART_Type *)LPC_UART1,
-        .irq = UART1_IRQ,
         .power = PWR_UART1,
-        .clock = CLK_UART1
+        .clock = CLK_UART1,
+        .irq = UART1_IRQ
     },
     {
         .reg = LPC_UART2,
-        .irq = UART2_IRQ,
         .power = PWR_UART2,
-        .clock = CLK_UART2
+        .clock = CLK_UART2,
+        .irq = UART2_IRQ
     },
     {
         .reg = LPC_UART3,
-        .irq = UART3_IRQ,
         .power = PWR_UART3,
-        .clock = CLK_UART3
+        .clock = CLK_UART3,
+        .irq = UART3_IRQ
     }
 };
 /*----------------------------------------------------------------------------*/

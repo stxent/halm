@@ -15,8 +15,8 @@
 struct TimerBlockDescriptor
 {
   LPC_TIMER_Type *reg;
-  uint8_t resolution;
   enum SysClockBranch clock;
+  uint8_t resolution;
 };
 /*----------------------------------------------------------------------------*/
 static void resetInstance(uint8_t);
@@ -39,23 +39,23 @@ static const struct EntityClass tmrTable = {
 static const struct TimerBlockDescriptor timerBlockEntries[] = {
     {
         .reg = LPC_TIMER16B0,
-        .resolution = 16,
-        .clock = CLK_CT16B0
+        .clock = CLK_CT16B0,
+        .resolution = 16
     },
     {
         .reg = LPC_TIMER16B1,
-        .resolution = 16,
-        .clock = CLK_CT16B1
+        .clock = CLK_CT16B1,
+        .resolution = 16
     },
     {
         .reg = LPC_TIMER32B0,
-        .resolution = 32,
-        .clock = CLK_CT32B0
+        .clock = CLK_CT32B0,
+        .resolution = 32
     },
     {
         .reg = LPC_TIMER32B1,
-        .resolution = 32,
-        .clock = CLK_CT32B1
+        .clock = CLK_CT32B1,
+        .resolution = 32
     }
 };
 /*----------------------------------------------------------------------------*/

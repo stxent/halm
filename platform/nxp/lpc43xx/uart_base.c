@@ -12,14 +12,14 @@
 struct UartBlockDescriptor
 {
   LPC_UART_Type *reg;
-  /* Peripheral interrupt request identifier */
-  IrqNumber irq;
   /* Reset control identifier */
   enum SysBlockReset reset;
   /* Peripheral clock branch */
   enum SysClockBranch periperalBranch;
   /* Clock to register interface */
   enum SysClockBranch registerBranch;
+  /* Peripheral interrupt request identifier */
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 static void resetInstance(uint8_t);
@@ -42,31 +42,31 @@ static const struct EntityClass uartTable = {
 static const struct UartBlockDescriptor uartBlockEntries[] = {
     {
         .reg = (LPC_UART_Type *)LPC_USART0,
-        .irq = USART0_IRQ,
         .registerBranch = CLK_M4_USART0,
         .periperalBranch = CLK_APB0_USART0,
-        .reset = RST_USART0
+        .reset = RST_USART0,
+        .irq = USART0_IRQ
     },
     {
         .reg = LPC_UART1,
-        .irq = UART1_IRQ,
         .registerBranch = CLK_M4_UART1,
         .periperalBranch = CLK_APB0_UART1,
-        .reset = RST_UART1
+        .reset = RST_UART1,
+        .irq = UART1_IRQ
     },
     {
         .reg = (LPC_UART_Type *)LPC_USART2,
-        .irq = USART2_IRQ,
         .registerBranch = CLK_M4_USART2,
         .periperalBranch = CLK_APB2_USART2,
-        .reset = RST_USART2
+        .reset = RST_USART2,
+        .irq = USART2_IRQ
     },
     {
         .reg = (LPC_UART_Type *)LPC_USART3,
-        .irq = USART3_IRQ,
         .registerBranch = CLK_M4_USART3,
         .periperalBranch = CLK_APB2_USART3,
-        .reset = RST_USART3
+        .reset = RST_USART3,
+        .irq = USART3_IRQ
     }
 };
 /*----------------------------------------------------------------------------*/

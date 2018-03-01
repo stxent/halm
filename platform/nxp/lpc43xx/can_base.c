@@ -13,12 +13,12 @@
 struct CanBlockDescriptor
 {
   LPC_CAN_Type *reg;
-  /* Peripheral interrupt request identifier */
-  IrqNumber irq;
   /* Peripheral clock and clock for register interface */
   enum SysClockBranch clock;
   /* Reset control identifier */
   enum SysBlockReset reset;
+  /* Peripheral interrupt request identifier */
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBase *, const struct CanBaseConfig *);
@@ -42,15 +42,15 @@ static const struct EntityClass canTable = {
 static const struct CanBlockDescriptor canBlockEntries[] = {
     {
         .reg = LPC_CAN0,
-        .irq = CAN0_IRQ,
         .clock = CLK_APB3_CAN0,
-        .reset = RST_CAN0
+        .reset = RST_CAN0,
+        .irq = CAN0_IRQ
     },
     {
         .reg = LPC_CAN1,
-        .irq = CAN1_IRQ,
         .clock = CLK_APB1_CAN1,
-        .reset = RST_CAN1
+        .reset = RST_CAN1,
+        .irq = CAN1_IRQ
     }
 };
 /*----------------------------------------------------------------------------*/

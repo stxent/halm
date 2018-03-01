@@ -13,12 +13,12 @@
 struct SpiBlockDescriptor
 {
   STM_SPI_Type *reg;
-  /* Peripheral interrupt request identifier */
-  IrqNumber irq;
   /* Reset control identifier */
   enum SysBlockReset reset;
   /* Peripheral clock branch */
   enum SysClockBranch branch;
+  /* Peripheral interrupt request identifier */
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 static void resetInstance(uint8_t);
@@ -41,21 +41,21 @@ static const struct EntityClass spiTable = {
 static const struct SpiBlockDescriptor spiBlockEntries[] = {
     {
         .reg = STM_SPI1,
-        .irq = SPI1_IRQ,
         .branch = CLK_SPI1,
-        .reset = RST_SPI1
+        .reset = RST_SPI1,
+        .irq = SPI1_IRQ
     },
     {
         .reg = STM_SPI2,
-        .irq = SPI2_IRQ,
         .branch = CLK_SPI2,
-        .reset = RST_SPI2
+        .reset = RST_SPI2,
+        .irq = SPI2_IRQ
     },
     {
         .reg = STM_SPI3,
-        .irq = SPI3_IRQ,
         .branch = CLK_SPI3,
-        .reset = RST_SPI3
+        .reset = RST_SPI3,
+        .irq = SPI3_IRQ
     }
 };
 /*----------------------------------------------------------------------------*/
