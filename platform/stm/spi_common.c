@@ -5,7 +5,7 @@
  */
 
 #include <assert.h>
-#include <xcore/memory.h>
+#include <xcore/asm.h>
 #include <halm/platform/stm/spi_base.h>
 #include <halm/platform/stm/spi_defs.h>
 /*----------------------------------------------------------------------------*/

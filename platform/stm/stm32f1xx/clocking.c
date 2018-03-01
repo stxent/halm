@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
-#include <xcore/memory.h>
+#include <xcore/asm.h>
 #include <halm/clock.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm/stm32f1xx/clocking.h>

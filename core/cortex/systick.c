@@ -96,11 +96,10 @@ static void updateFrequency(struct SysTickTimer *timer, uint32_t frequency,
 
   if (frequency)
   {
-    const uint32_t divisor =
-        (clockFrequency(MainClock) / frequency) * limit - 1;
+    const uint32_t clock = clockFrequency(MainClock);
+    const uint32_t divisor = (clock / frequency) * limit - 1;
 
     assert(divisor <= TIMER_RESOLUTION);
-
     SYSTICK->LOAD = divisor;
   }
   else
@@ -151,7 +150,6 @@ static void tmrEnable(void *object __attribute__((unused)))
 {
   /* Clear pending interrupt */
   (void)SYSTICK->CTRL;
-
   SYSTICK->CTRL |= CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
@@ -195,7 +193,6 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 static uint32_t tmrGetOverflow(const void *object)
 {
   const struct SysTickTimer * const timer = object;
-
   return timer->overflow;
 }
 /*----------------------------------------------------------------------------*/

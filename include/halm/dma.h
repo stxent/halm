@@ -111,7 +111,7 @@ static inline void dmaDisable(void *channel)
 /**
  * Get a number of pending items.
  * @param channel Pointer to a Dma object.
- * @return Number of pending items is returned.
+ * @return The number of pending items is returned.
  */
 static inline size_t dmaPending(const void *channel)
 {

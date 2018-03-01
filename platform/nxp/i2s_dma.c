@@ -9,7 +9,7 @@
 #include <halm/platform/nxp/i2s_defs.h>
 #include <halm/platform/nxp/i2s_dma.h>
 /*----------------------------------------------------------------------------*/
-#define BLOCK_COUNT 2
+#define BUFFER_COUNT 2
 /*----------------------------------------------------------------------------*/
 static enum Result dmaSetup(struct I2sDma *, const struct I2sDmaConfig *,
     bool, bool);
@@ -78,7 +78,7 @@ static enum Result dmaSetup(struct I2sDma *interface,
   if (rx)
   {
     const struct GpDmaListConfig dmaConfig = {
-        .number = BLOCK_COUNT << 1,
+        .number = BUFFER_COUNT << 1,
         .event = GPDMA_I2S0_REQ1 + (config->channel << 1),
         .type = GPDMA_TYPE_P2M,
         .channel = config->rx.dma,
@@ -98,7 +98,7 @@ static enum Result dmaSetup(struct I2sDma *interface,
   if (tx)
   {
     const struct GpDmaListConfig dmaConfig = {
-        .number = BLOCK_COUNT << 1,
+        .number = BUFFER_COUNT << 1,
         .event = GPDMA_I2S0_REQ2 + (config->channel << 1),
         .type = GPDMA_TYPE_M2P,
         .channel = config->tx.dma,
@@ -246,15 +246,13 @@ static enum Result i2sInit(void *object, const void *configBase)
 
   assert(config->rate);
   assert(config->rx.sda || config->tx.sda);
+  assert(config->width <= I2S_WIDTH_32);
 
   /* Call base class constructor */
   if ((res = I2sBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   interface->base.handler = interruptHandler;
-
-  assert(config->width <= I2S_WIDTH_32);
-
   interface->callback = 0;
   interface->sampleRate = 0;
   interface->sampleSize = config->width + (config->mono ? 0 : 1);
@@ -400,7 +398,7 @@ static enum Result i2sGetParam(void *object, enum IfParameter parameter,
       if (!interface->rxDma)
         return E_INVALID;
 
-      *(size_t *)data = BLOCK_COUNT - ((dmaPending(interface->rxDma) + 1) >> 1);
+      *(size_t *)data = BUFFER_COUNT - ((dmaPending(interface->rxDma) + 1) >> 1);
       return E_OK;
 
     case IF_PENDING:

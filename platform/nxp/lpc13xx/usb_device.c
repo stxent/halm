@@ -6,8 +6,8 @@
 
 #include <assert.h>
 #include <string.h>
+#include <xcore/asm.h>
 #include <xcore/containers/queue.h>
-#include <xcore/memory.h>
 #include <halm/delay.h>
 #include <halm/platform/nxp/lpc13xx/usb_base.h>
 #include <halm/platform/nxp/lpc13xx/usb_defs.h>

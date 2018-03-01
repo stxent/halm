@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <xcore/memory.h>
+#include <xcore/asm.h>
 #include <halm/delay.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/clocking_defs.h>

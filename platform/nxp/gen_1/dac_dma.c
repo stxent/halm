@@ -9,7 +9,7 @@
 #include <halm/platform/nxp/gen_1/dac_defs.h>
 #include <halm/platform/nxp/gpdma_list.h>
 /*----------------------------------------------------------------------------*/
-#define BLOCK_COUNT 2
+#define BUFFER_COUNT 2
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
 static enum Result dmaSetup(struct DacDma *, const struct DacDmaConfig *);
@@ -43,13 +43,15 @@ const struct InterfaceClass * const DacDma = &dacTable;
 static void dmaHandler(void *object)
 {
   struct DacDma * const interface = object;
-  LPC_DAC_Type * const reg = interface->base.reg;
   bool event = false;
 
   if (dmaStatus(interface->dma) != E_BUSY)
   {
-    /* Scatter-gather transfer finished */
+    LPC_DAC_Type * const reg = interface->base.reg;
+
+    /* Scatter-gather transfer finished, disable further requests */
     reg->CTRL &= ~(CTRL_INT_DMA_REQ | CTRL_CNT_ENA);
+
     event = true;
   }
   else if ((dmaPending(interface->dma) & 1) == 0)
@@ -77,7 +79,7 @@ static enum Result dmaSetup(struct DacDma *interface,
       }
   };
   const struct GpDmaListConfig dmaConfig = {
-      .number = BLOCK_COUNT << 1,
+      .number = BUFFER_COUNT << 1,
       .event = GPDMA_DAC,
       .type = GPDMA_TYPE_M2P,
       .channel = config->dma,
