@@ -126,6 +126,7 @@ static void standardInterruptHandler(void *object)
       case STATE_RECEIVE:
         if (!(data & DATA_MASK))
           interface->word |= 1 << interface->bit;
+        /* Falls through */
       case STATE_TRANSMIT:
         if (++interface->bit == 8)
         {

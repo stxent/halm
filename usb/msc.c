@@ -54,14 +54,13 @@ static enum State stateTestUnitReadyEnter(struct Msc *);
 static enum State stateRequestSenseEnter(struct Msc *);
 static enum State stateInquiryEnter(struct Msc *);
 static enum State stateModeSenseEnter(struct Msc *);
+static enum State stateReadWriteRun(struct Msc *);
 static enum State stateReadFormatCapacitiesEnter(struct Msc *);
 static enum State stateReadCapacityEnter(struct Msc *);
 static enum State stateReadSetupEnter(struct Msc *);
 static enum State stateReadEnter(struct Msc *);
-static enum State stateReadRun(struct Msc *);
 static enum State stateWriteSetupEnter(struct Msc *);
 static enum State stateWriteEnter(struct Msc *);
-static enum State stateWriteRun(struct Msc *);
 static enum State stateVerifyEnter(struct Msc *);
 static enum State stateVerifyRun(struct Msc *);
 static enum State stateAckEnter(struct Msc *);
@@ -126,9 +125,9 @@ static const struct StateEntry stateTable[] = {
     [STATE_READ_FORMAT_CAPACITIES]  = {stateReadFormatCapacitiesEnter, 0},
     [STATE_READ_CAPACITY]           = {stateReadCapacityEnter, 0},
     [STATE_READ_SETUP]              = {stateReadSetupEnter, 0},
-    [STATE_READ]                    = {stateReadEnter, stateReadRun},
+    [STATE_READ]                    = {stateReadEnter, stateReadWriteRun},
     [STATE_WRITE_SETUP]             = {stateWriteSetupEnter, 0},
-    [STATE_WRITE]                   = {stateWriteEnter, stateWriteRun},
+    [STATE_WRITE]                   = {stateWriteEnter, stateReadWriteRun},
     [STATE_VERIFY]                  = {stateVerifyEnter, stateVerifyRun},
     [STATE_ACK]                     = {stateAckEnter, stateAckRun},
     [STATE_ACK_STALL]               = {0, stateAckStallRun},
@@ -328,6 +327,22 @@ static enum State stateModeSenseEnter(struct Msc *driver)
       driver->context.cbw.length, driver->buffer, length);
 }
 /*----------------------------------------------------------------------------*/
+static enum State stateReadWriteRun(struct Msc *driver)
+{
+  /* Verify completion of the transfer */
+  const enum Result status = datapathStatus(driver->datapath);
+
+  switch (status)
+  {
+    case E_OK:
+      return STATE_ACK;
+    case E_ERROR:
+      return STATE_SUSPEND;
+    default:
+      return STATE_FAILURE;
+  }
+}
+/*----------------------------------------------------------------------------*/
 static enum State stateReadFormatCapacitiesEnter(struct Msc *driver)
 {
   if (!isInputDataValid(driver->context.cbw.length, driver->context.cbw.flags))
@@ -433,22 +448,6 @@ static enum State stateReadEnter(struct Msc *driver)
   return queued ? STATE_READ : STATE_FAILURE;
 }
 /*----------------------------------------------------------------------------*/
-static enum State stateReadRun(struct Msc *driver)
-{
-  /* Verify completion of the transfer */
-  const enum Result status = datapathStatus(driver->datapath);
-
-  switch (status)
-  {
-    case E_OK:
-      return STATE_ACK;
-    case E_ERROR:
-      return STATE_SUSPEND;
-    default:
-      return STATE_FAILURE;
-  }
-}
-/*----------------------------------------------------------------------------*/
 static enum State stateWriteSetupEnter(struct Msc *driver)
 {
   uint32_t logicalBlockAddress = 0;
@@ -512,22 +511,6 @@ static enum State stateWriteEnter(struct Msc *driver)
       driver->context.position, driver->context.left);
 
   return queued ? STATE_WRITE : STATE_FAILURE;
-}
-/*----------------------------------------------------------------------------*/
-static enum State stateWriteRun(struct Msc *driver)
-{
-  /* Verify completion of the transfer */
-  const enum Result status = datapathStatus(driver->datapath);
-
-  switch (status)
-  {
-    case E_OK:
-      return STATE_ACK;
-    case E_ERROR:
-      return STATE_SUSPEND;
-    default:
-      return STATE_FAILURE;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateVerifyEnter(struct Msc *driver)

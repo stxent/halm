@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(struct PinData);
 static inline volatile uint32_t *calcControlReg(struct PinData);
-static inline void *calcMaskedReg(struct PinData);
+static inline volatile uint32_t *calcMaskedReg(struct PinData);
 static void commonPinInit(struct Pin);
 static bool isCommonPin(struct Pin);
 /*----------------------------------------------------------------------------*/
@@ -32,9 +32,9 @@ static inline volatile uint32_t *calcControlReg(struct PinData data)
       + pinRegMap[data.port][data.offset]);
 }
 /*----------------------------------------------------------------------------*/
-static inline void *calcMaskedReg(struct PinData data)
+static inline volatile uint32_t *calcMaskedReg(struct PinData data)
 {
-  return (void *)(calcPort(data)->MASKED_ACCESS + (1UL << data.offset));
+  return calcPort(data)->MASKED_ACCESS + (1UL << data.offset);
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
@@ -57,7 +57,7 @@ struct Pin pinInit(PinNumber id)
 
   pin.data.port = PIN_TO_PORT(id);
   pin.data.offset = PIN_TO_OFFSET(id);
-  pin.reg = id ? calcMaskedReg(pin.data) : 0;
+  pin.reg = id ? (void *)calcMaskedReg(pin.data) : 0;
 
   return pin;
 }
@@ -67,7 +67,7 @@ void pinInput(struct Pin pin)
   LPC_GPIO_Type * const reg = calcPort(pin.data);
 
   commonPinInit(pin);
-  reg->DIR &= ~(1 << pin.data.offset);
+  reg->DIR &= ~(1UL << pin.data.offset);
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
@@ -75,7 +75,7 @@ void pinOutput(struct Pin pin, bool value)
   LPC_GPIO_Type * const reg = calcPort(pin.data);
 
   commonPinInit(pin);
-  reg->DIR |= 1 << pin.data.offset;
+  reg->DIR |= 1UL << pin.data.offset;
   pinWrite(pin, value);
 }
 /*----------------------------------------------------------------------------*/

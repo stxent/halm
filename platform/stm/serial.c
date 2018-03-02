@@ -41,7 +41,7 @@ static void interruptHandler(void *object)
 {
   struct Serial * const interface = object;
   STM_USART_Type * const reg = interface->base.reg;
-  bool event;
+  bool event = false;
 
   const uint32_t status = reg->SR;
 

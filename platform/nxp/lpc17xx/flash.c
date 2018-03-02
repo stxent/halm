@@ -102,6 +102,17 @@ static enum Result flashGetParam(void *object, enum IfParameter parameter,
 {
   struct Flash * const interface = object;
 
+  /* Additional Flash parameters */
+  switch ((enum FlashParameter)parameter)
+  {
+    case IF_FLASH_PAGE_SIZE:
+      *(size_t *)data = FLASH_PAGE_SIZE;
+      return E_OK;
+
+    default:
+      break;
+  }
+
   switch (parameter)
   {
     case IF_POSITION:
@@ -110,10 +121,6 @@ static enum Result flashGetParam(void *object, enum IfParameter parameter,
 
     case IF_SIZE:
       *(size_t *)data = interface->size;
-      return E_OK;
-
-    case IF_FLASH_PAGE_SIZE:
-      *(size_t *)data = FLASH_PAGE_SIZE;
       return E_OK;
 
     default:
@@ -126,7 +133,7 @@ static enum Result flashSetParam(void *object, enum IfParameter parameter,
 {
   struct Flash * const interface = object;
 
-  /* Additional Flash options */
+  /* Additional Flash parameters */
   switch ((enum FlashParameter)parameter)
   {
     case IF_FLASH_ERASE_SECTOR:

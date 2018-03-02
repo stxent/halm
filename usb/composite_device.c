@@ -23,7 +23,6 @@ struct CompositeDeviceProxyConfig
 struct CompositeDeviceProxy
 {
   struct UsbDriver base;
-
   struct CompositeDevice *owner;
 };
 /*----------------------------------------------------------------------------*/
@@ -165,7 +164,7 @@ static void computeDescriptionProperties(const void *driver, uint16_t *length,
 
       case DESCRIPTOR_TYPE_INTERFACE:
         ++descriptionInterfaces;
-        /* No break */
+        /* Falls through */
       default:
         descriptionLength += header.length;
         break;
@@ -317,7 +316,7 @@ static enum Result driverConfigure(void *object,
       listData(&driver->owner->entries, currentNode, &current);
       res = usbDriverConfigure(current, packet, payload, payloadLength,
           response, responseLength, maxResponseLength);
-      if (res == E_OK || (res != E_OK && res != E_INVALID))
+      if (res == E_OK || res != E_INVALID)
         break;
       currentNode = listNext(currentNode);
     }

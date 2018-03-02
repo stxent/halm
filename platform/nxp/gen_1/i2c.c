@@ -263,7 +263,7 @@ static enum Result i2cSetParam(void *object, enum IfParameter parameter,
 {
   struct I2c * const interface = object;
 
-  /* Additional I2C options */
+  /* Additional I2C parameters */
   switch ((enum I2cParameter)parameter)
   {
     case IF_I2C_SENDSTOP:

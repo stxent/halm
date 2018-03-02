@@ -219,7 +219,7 @@ void adcConfigPin(const struct AdcBase *unit, PinNumber key,
 void adcReleasePin(const struct AdcPin adcPin)
 {
   if (adcPin.control != -1)
-    LPC_SCU->ENAIO[adcPin.control] &= ~(1 << adcPin.channel);
+    LPC_SCU->ENAIO[adcPin.control] &= ~(1UL << adcPin.channel);
 }
 /*----------------------------------------------------------------------------*/
 void adcResetInstance(uint8_t channel)

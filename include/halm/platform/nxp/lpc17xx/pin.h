@@ -38,7 +38,6 @@ BEGIN_DECLS
 static inline bool pinRead(struct Pin pin)
 {
   const uint32_t mask = 1UL << pin.data.offset;
-
   return (((const LPC_GPIO_Type *)pin.reg)->PIN & mask) != 0;
 }
 

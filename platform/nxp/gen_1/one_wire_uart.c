@@ -120,6 +120,7 @@ static void interruptHandler(void *object)
       case STATE_RECEIVE:
         if (data & 0x01)
           interface->word |= 1 << interface->bit;
+        /* Falls through */
       case STATE_TRANSMIT:
         if (++interface->bit == 8)
         {

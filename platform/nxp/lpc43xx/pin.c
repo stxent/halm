@@ -18,7 +18,7 @@ enum PinDriveType
   HIGH_SPEED_PIN
 };
 /*----------------------------------------------------------------------------*/
-static void *calcControlReg(struct PinData);
+static volatile uint32_t *calcControlReg(struct PinData);
 static struct PinData calcPinData(volatile uint32_t *);
 static void commonPinInit(struct Pin);
 static enum PinDriveType detectPinDriveType(volatile uint32_t *);
@@ -271,18 +271,18 @@ const struct PinGroupEntry gpioPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static void *calcControlReg(struct PinData data)
+static volatile uint32_t *calcControlReg(struct PinData data)
 {
   if (data.port < PORT_CLK)
   {
     const uint32_t portMapSize = ((uint32_t)&LPC_SCU->SFSP1
         - (uint32_t)&LPC_SCU->SFSP0) / sizeof(LPC_SCU->SFSP0[0]);
 
-    return (void *)(LPC_SCU->SFSP0 + portMapSize * data.port + data.offset);
+    return LPC_SCU->SFSP0 + portMapSize * data.port + data.offset;
   }
   else if (data.port == PORT_CLK)
   {
-    return (void *)(&LPC_SCU->SFSPCLK0 + data.offset);
+    return &LPC_SCU->SFSPCLK0 + data.offset;
   }
   else
   {
@@ -357,7 +357,7 @@ struct Pin pinInit(PinNumber id)
   };
   struct Pin pin;
 
-  pin.reg = calcControlReg(current);
+  pin.reg = (void *)calcControlReg(current);
 
   if ((group = pinGroupFind(gpioPins, id, 0)))
   {

@@ -70,21 +70,18 @@ static inline bool pinGpioValid(struct Pin pin)
 static inline bool pinRead(struct Pin pin)
 {
   assert(pinGpioValid(pin));
-
   return (bool)LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset];
 }
 
 static inline void pinReset(struct Pin pin)
 {
   assert(pinGpioValid(pin));
-
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 0;
 }
 
 static inline void pinSet(struct Pin pin)
 {
   assert(pinGpioValid(pin));
-
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = 1;
 }
 
