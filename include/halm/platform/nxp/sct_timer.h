@@ -10,6 +10,7 @@
 #include <halm/platform/nxp/sct_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const SctTimer;
+extern const struct TimerClass * const SctUnifiedTimer;
 
 struct SctTimerConfig
 {

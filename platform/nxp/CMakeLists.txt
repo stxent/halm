@@ -100,6 +100,7 @@ if(${CONFIG_PLATFORM_NXP_SDMMC})
 endif()
 
 if(${CONFIG_PLATFORM_NXP_SCT_BASE})
+    list(APPEND SOURCE_FILES "sct_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/sct_base.c")
 endif()
 

@@ -13,7 +13,6 @@
 /*----------------------------------------------------------------------------*/
 static uint8_t configOutputPin(uint8_t, PinNumber);
 static void setUnitResolution(struct SctPwmUnit *, uint8_t, uint32_t);
-static void updateFrequency(struct SctPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
 
@@ -163,30 +162,6 @@ static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
   reg->CONFIG &= ~CONFIG_NORELOAD(part);
 }
 /*----------------------------------------------------------------------------*/
-static void updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
-{
-  const unsigned int part = unit->base.part == SCT_HIGH;
-  LPC_SCT_Type * const reg = unit->base.reg;
-
-  /* Counter reset is recommended by the user manual */
-  const uint32_t value = (reg->CTRL_PART[part] & ~CTRL_PRE_MASK) | CTRL_CLRCTR;
-
-  if (frequency)
-  {
-    /* TODO Check whether the clock is from internal source */
-    const uint32_t apbClock = sctGetClock(&unit->base);
-    const uint16_t prescaler = apbClock / frequency - 1;
-
-    assert(prescaler < 256);
-
-    reg->CTRL_PART[part] = value | CTRL_PRE(prescaler);
-  }
-  else
-    reg->CTRL_PART[part] = 0;
-
-  unit->frequency = frequency;
-}
-/*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct SctPwmUnitConfig * const config = configBase;
@@ -217,8 +192,9 @@ static enum Result unitInit(void *object, const void *configBase)
   reg->CTRL_PART[part] = CTRL_HALT;
 
   /* Set desired unit frequency */
+  unit->frequency = config->frequency;
   unit->resolution = config->resolution;
-  updateFrequency(unit, config->frequency * config->resolution);
+  sctSetFrequency(&unit->base, unit->frequency * unit->resolution);
 
   reg->CONFIG &= ~(CONFIG_AUTOLIMIT(part) | CONFIG_NORELOAD(part));
 
@@ -398,7 +374,8 @@ static void singleEdgeSetFrequency(void *object, uint32_t frequency)
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
 
-  updateFrequency(unit, frequency * unit->resolution);
+  unit->frequency = frequency;
+  sctSetFrequency(&unit->base, unit->frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeInit(void *object, const void *configBase)
@@ -602,7 +579,8 @@ static void doubleEdgeSetFrequency(void *object, uint32_t frequency)
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
 
-  updateFrequency(unit, frequency * unit->resolution);
+  unit->frequency = frequency;
+  sctSetFrequency(&unit->base, unit->frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
 /**

@@ -300,6 +300,11 @@ config PLATFORM_NXP_SCT_NO_DEINIT
 	default n
 	depends on PLATFORM_NXP_SCT_BASE
 
+config PLATFORM_NXP_SCT_PM
+	bool "Power management"
+	default n
+	depends on PM && PLATFORM_NXP_SCT_BASE
+
 config PLATFORM_NXP_SCT_PWM
 	bool "PWM on SCT"
 	default y
