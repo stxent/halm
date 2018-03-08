@@ -115,7 +115,7 @@ static void updateFrequency(struct SysTickTimer *timer, uint32_t frequency,
 /*----------------------------------------------------------------------------*/
 void SYSTICK_ISR(void)
 {
-  if ((SYSTICK->CTRL & CTRL_COUNTFLAG) && instance->callback)
+  if (SYSTICK->CTRL & CTRL_COUNTFLAG)
     instance->callback(instance->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/

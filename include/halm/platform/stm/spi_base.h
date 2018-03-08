@@ -52,10 +52,12 @@ struct SpiBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+/* Common functions */
 void spiConfigPins(struct SpiBase *, const struct SpiBaseConfig *);
 uint32_t spiGetRate(const struct SpiBase *);
 void spiSetRate(struct SpiBase *, uint32_t);
 
+/* Platform-specific functions */
 uint32_t spiGetClock(const struct SpiBase *);
 
 END_DECLS

@@ -56,11 +56,13 @@ struct GpTimerBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+/* Common functions */
 int gpTimerAllocateChannel(uint8_t);
 uint8_t gpTimerConfigCapturePin(uint8_t, PinNumber, enum PinPull);
 uint8_t gpTimerConfigMatchPin(uint8_t, PinNumber);
 void gpTimerSetFrequency(struct GpTimerBase *, uint32_t);
 
+/* Platform-specific functions */
 uint32_t gpTimerGetClock(const struct GpTimerBase *);
 
 END_DECLS

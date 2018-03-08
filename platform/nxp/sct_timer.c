@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <halm/platform/nxp/sct_defs.h>
 #include <halm/platform/nxp/sct_timer.h>
-#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static void setMatchValue(struct SctTimer *, uint32_t);

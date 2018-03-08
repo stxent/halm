@@ -64,6 +64,10 @@ struct SctBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+/* Common functions */
+void sctSetFrequency(struct SctBase *, uint32_t);
+
+/* Platform-specific functions */
 bool sctAllocateEvent(struct SctBase *, uint8_t *);
 uint32_t sctGetClock(const struct SctBase *);
 void sctReleaseEvent(struct SctBase *, uint8_t);

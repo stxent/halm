@@ -64,8 +64,7 @@ static void interruptHandler(void *object)
   /* Clear all pending interrupts */
   reg->IR = reg->IR;
 
-  if (timer->callback)
-    timer->callback(timer->callbackArgument);
+  timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM

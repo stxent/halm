@@ -70,7 +70,10 @@ struct I2sBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+/* Common functions */
 enum Result i2sCalcRate(struct I2sBase *, uint32_t, struct I2sRateConfig *);
+
+/* Platform-specific functions */
 uint32_t i2sGetClock(const struct I2sBase *);
 
 END_DECLS

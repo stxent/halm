@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <halm/platform/nxp/sct_defs.h>
 #include <halm/platform/nxp/sct_pwm.h>
-#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)

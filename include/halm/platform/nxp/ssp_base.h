@@ -50,10 +50,12 @@ struct SspBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+/* Common functions */
 void sspConfigPins(struct SspBase *, const struct SspBaseConfig *);
 uint32_t sspGetRate(const struct SspBase *);
 void sspSetRate(struct SspBase *, uint32_t);
 
+/* Platform-specific functions */
 uint32_t sspGetClock(const struct SspBase *);
 
 END_DECLS
