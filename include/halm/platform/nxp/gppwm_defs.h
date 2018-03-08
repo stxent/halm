@@ -16,6 +16,6 @@
 /* Available for channels from 1 to 6 */
 #define PCR_OUTPUT_ENABLED(channel)     BIT((channel) + 8)
 /*------------------PWM Latch Enable Register---------------------------------*/
-#define LER_ENABLE_LATCH(channel)       BIT(channel)
+#define LER_ENABLE(channel)             BIT(channel)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPPWM_DEFS_H_ */

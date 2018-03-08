@@ -27,7 +27,7 @@ struct PwmClass
   uint32_t (*getResolution)(const void *);
   void (*setDuration)(void *, uint32_t);
   void (*setEdges)(void *, uint32_t, uint32_t);
-  enum Result (*setFrequency)(void *, uint32_t);
+  void (*setFrequency)(void *, uint32_t);
 };
 
 struct Pwm
@@ -93,10 +93,9 @@ static inline void pwmSetEdges(void *channel, uint32_t leading,
  * @param channel Pointer to a Pwm object.
  * @param frequency New switching frequency in Hz or zero to use default value.
  */
-static inline enum Result pwmSetFrequency(void *channel, uint32_t frequency)
+static inline void pwmSetFrequency(void *channel, uint32_t frequency)
 {
-  return ((const struct PwmClass *)CLASS(channel))->setFrequency(channel,
-      frequency);
+  ((const struct PwmClass *)CLASS(channel))->setFrequency(channel, frequency);
 }
 
 END_DECLS

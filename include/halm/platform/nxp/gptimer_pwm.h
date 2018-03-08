@@ -26,10 +26,12 @@ struct GpTimerPwmUnit
 {
   struct GpTimerBase base;
 
+  /* Desired timer frequency */
+  uint32_t frequency;
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
   /* Match block used for period configuration */
-  uint8_t current;
+  uint8_t limiter;
   /* Match blocks currently in use */
   uint8_t matches;
 };

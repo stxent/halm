@@ -8,11 +8,17 @@
 #include <xcore/memory.h>
 #include <halm/platform/nxp/gptimer_capture.h>
 #include <halm/platform/nxp/gptimer_defs.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
+
+#ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
+static void powerStateHandler(void *, enum PmState);
+#endif
 /*----------------------------------------------------------------------------*/
-static enum Result unitSetDescriptor(struct GpTimerCaptureUnit *, uint8_t,
-    const struct GpTimerCapture *, struct GpTimerCapture *);
+static void unitResetInstance(struct GpTimerCaptureUnit *, uint8_t);
+static bool unitSetInstance(struct GpTimerCaptureUnit *, uint8_t,
+    struct GpTimerCapture *);
 static enum Result unitInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
@@ -60,29 +66,46 @@ static void interruptHandler(void *object)
   uint32_t state = reg->IR;
 
   reg->IR = state; /* Clear pending interrupts */
-  state = IR_CAPTURE_VALUE(state);
+  state = IR_CAPTURE_VALUE(state); /* Extract capture channel flags */
 
   for (size_t index = 0; state; state >>= 1, ++index)
   {
-    if (state & (1 << index))
+    if (state & 1)
     {
-      struct GpTimerCapture * const descriptor = unit->descriptors[index];
-
-      if (descriptor->callback)
-        descriptor->callback(descriptor->callbackArgument);
+      struct GpTimerCapture * const instance = unit->instances[index];
+      instance->callback(instance->callbackArgument);
     }
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result unitSetDescriptor(struct GpTimerCaptureUnit *unit,
-    uint8_t channel, const struct GpTimerCapture *state,
-    struct GpTimerCapture *capture)
+#ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
+static void powerStateHandler(void *object, enum PmState state)
 {
-  if (channel >= ARRAY_SIZE(unit->descriptors))
-    return E_VALUE;
+  if (state == PM_ACTIVE)
+  {
+    struct GpTimerCaptureUnit * const unit = object;
+    gpTimerSetFrequency(&unit->base, unit->frequency);
+  }
+}
+#endif
+/*----------------------------------------------------------------------------*/
+static void unitResetInstance(struct GpTimerCaptureUnit *unit, uint8_t channel)
+{
+  unit->instances[channel] = 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool unitSetInstance(struct GpTimerCaptureUnit *unit,
+    uint8_t channel, struct GpTimerCapture *capture)
+{
+  assert(channel < ARRAY_SIZE(unit->instances));
 
-  return compareExchangePointer((void **)(unit->descriptors + channel),
-      state, capture) ? E_OK : E_BUSY;
+  if (!unit->instances[channel])
+  {
+    unit->instances[channel] = capture;
+    return true;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *object, const void *configBase)
@@ -94,37 +117,39 @@ static enum Result unitInit(void *object, const void *configBase)
   struct GpTimerCaptureUnit * const unit = object;
   enum Result res;
 
-  const uint32_t clockFrequency = gpTimerGetClock(object);
-  const uint32_t timerFrequency = config->frequency ?
-      config->frequency : clockFrequency;
-
   /* Call base class constructor */
-  if ((res = GpTimerBase->init(object, &baseConfig)) != E_OK)
+  if ((res = GpTimerBase->init(unit, &baseConfig)) != E_OK)
     return res;
 
   unit->base.handler = interruptHandler;
-
-  for (size_t index = 0; index < ARRAY_SIZE(unit->descriptors); ++index)
-    unit->descriptors[index] = 0;
+  for (size_t index = 0; index < ARRAY_SIZE(unit->instances); ++index)
+    unit->instances[index] = 0;
 
   LPC_TIMER_Type * const reg = unit->base.reg;
 
-  reg->TCR = 0;
+  reg->TCR = TCR_CRES;
 
   reg->IR = reg->IR; /* Clear pending interrupts */
-  reg->PC = reg->TC = 0;
-  reg->CTCR = 0;
   reg->CCR = 0;
+  reg->CTCR = 0;
   reg->EMR = 0;
   reg->MCR = 0;
-  reg->PR = clockFrequency / timerFrequency - 1; /* Configure frequency */
 
-  reg->TCR = TCR_CEN; /* Enable peripheral */
+  unit->frequency = config->frequency;
+  gpTimerSetFrequency(&unit->base, unit->frequency);
+
+#ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
+  if ((res = pmRegister(powerStateHandler, unit)) != E_OK)
+    return res;
+#endif
+
+  /* Start counting */
+  reg->TCR = TCR_CEN;
 
   irqSetPriority(unit->base.irq, config->priority);
   irqEnable(unit->base.irq);
 
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
@@ -135,6 +160,11 @@ static void unitDeinit(void *object)
 
   irqDisable(unit->base.irq);
   reg->TCR = 0;
+
+#ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
+  pmUnregister(unit);
+#endif
+
   GpTimerBase->deinit(unit);
 }
 #endif
@@ -146,31 +176,33 @@ static enum Result channelInit(void *object, const void *configBase)
 
   struct GpTimerCapture * const capture = object;
   struct GpTimerCaptureUnit * const unit = config->parent;
-  enum Result res;
 
   /* Initialize output pin */
   capture->channel = gpTimerConfigCapturePin(unit->base.channel,
       config->pin, config->pull);
 
   /* Register object */
-  if ((res = unitSetDescriptor(unit, capture->channel, 0, capture)) != E_OK)
-    return res;
+  if (unitSetInstance(unit, capture->channel, capture))
+  {
+    capture->callback = 0;
+    capture->event = config->event;
+    capture->unit = unit;
 
-  capture->callback = 0;
-  capture->event = config->event;
-  capture->unit = unit;
+    LPC_TIMER_Type * const reg = capture->unit->base.reg;
+    uint32_t captureControlValue = reg->CCR & CCR_MASK(capture->channel);
 
-  const LPC_TIMER_Type * const reg = capture->unit->base.reg;
+    capture->value = &reg->CR[capture->channel];
 
-  /* Calculate pointer to capture register for fast access */
-  capture->value = reg->CR + capture->channel;
-  /*
-   * Configure capture events. Function should be called when
-   * the initialization of the object is completed.
-   */
-  channelEnable(capture);
+    if (capture->event != PIN_RISING)
+      captureControlValue |= CCR_FALLING_EDGE(capture->channel);
+    if (capture->event != PIN_FALLING)
+      captureControlValue |= CCR_RISING_EDGE(capture->channel);
+    reg->CCR = captureControlValue;
 
-  return E_OK;
+    return E_OK;
+  }
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_GPTIMER_NO_DEINIT
@@ -179,7 +211,7 @@ static void channelDeinit(void *object)
   struct GpTimerCapture * const capture = object;
 
   channelDisable(object);
-  unitSetDescriptor(capture->unit, capture->channel, capture, 0);
+  unitResetInstance(capture->unit, capture->channel);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -187,14 +219,9 @@ static void channelEnable(void *object)
 {
   struct GpTimerCapture * const capture = object;
   LPC_TIMER_Type * const reg = capture->unit->base.reg;
-  uint32_t value = 0;
 
-  if (capture->event != PIN_RISING)
-    value |= CCR_FALLING_EDGE(capture->channel);
-  if (capture->event != PIN_FALLING)
-    value |= CCR_RISING_EDGE(capture->channel);
-
-  reg->CCR = (reg->CCR & ~CCR_MASK(capture->channel)) | value;
+  if (capture->callback)
+    reg->CCR |= CCR_INTERRUPT(capture->channel);
 }
 /*----------------------------------------------------------------------------*/
 static void channelDisable(void *object)
@@ -202,7 +229,7 @@ static void channelDisable(void *object)
   struct GpTimerCapture * const capture = object;
   LPC_TIMER_Type * const reg = capture->unit->base.reg;
 
-  reg->CCR &= ~CCR_MASK(capture->channel);
+  reg->CCR &= ~CCR_INTERRUPT(capture->channel);
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetCallback(void *object, void (*callback)(void *),
@@ -216,7 +243,7 @@ static void channelSetCallback(void *object, void (*callback)(void *),
 
   if (callback)
   {
-    reg->IR = reg->IR;
+    reg->IR = IR_CAPTURE_INTERRUPT(capture->channel);
     reg->CCR |= CCR_INTERRUPT(capture->channel);
   }
   else
@@ -225,7 +252,28 @@ static void channelSetCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static uint32_t channelGetValue(const void *object)
 {
-  const struct GpTimerCapture * const capture = object;
+  return *((const struct GpTimerCapture *)object)->value;
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Create capture channel.
+ * @param unit Pointer to a GpTimerCaptureUnit object.
+ * @param pin Pin used as a signal input.
+ * @param event Event type, possible values are @b PIN_RISING, @b PIN_FALLING
+ * and @b PIN_TOGGLE.
+ * @param pull Pull-up and pull-down control, possible values are @b PIN_NOPULL,
+ * @b PIN_PULLUP and @b PIN_PULLDOWN.
+ * @return Pointer to a new Capture object on success or zero on error.
+ */
+void *gpTimerCaptureCreate(void *unit, PinNumber pin, enum PinEvent event,
+    enum PinPull pull)
+{
+  const struct GpTimerCaptureConfig channelConfig = {
+      .parent = unit,
+      .event = event,
+      .pull = pull,
+      .pin = pin
+  };
 
-  return *capture->value;
+  return init(GpTimerCapture, &channelConfig);
 }

@@ -494,17 +494,16 @@ void SCT_ISR(void)
   timerHandlerProcess(handlers[0]);
 }
 /*----------------------------------------------------------------------------*/
-int sctAllocateEvent(struct SctBase *timer)
+bool sctAllocateEvent(struct SctBase *timer, uint8_t *event)
 {
-  int event = -1;
-
   if (handlers[timer->channel]->events)
   {
-    event = 31 - countLeadingZeros32(handlers[timer->channel]->events);
-    handlers[timer->channel]->events &= ~(1 << event);
+    *event = 31 - countLeadingZeros32(handlers[timer->channel]->events);
+    handlers[timer->channel]->events &= ~(1 << *event);
+    return true;
   }
-
-  return event;
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sctGetClock(const struct SctBase *timer __attribute__((unused)))
@@ -512,7 +511,7 @@ uint32_t sctGetClock(const struct SctBase *timer __attribute__((unused)))
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-void sctReleaseEvent(struct SctBase *timer, int event)
+void sctReleaseEvent(struct SctBase *timer, uint8_t event)
 {
   handlers[timer->channel]->events |= 1 << event;
 }
@@ -543,8 +542,6 @@ static enum Result tmrInit(void *object, const void *configBase)
       desiredConfig |= CONFIG_CKSEL_FALLING(config->input);
   }
 
-  static const uint32_t configMask =
-      CONFIG_UNIFY | CONFIG_CLKMODE_MASK | CONFIG_CKSEL_MASK;
   const bool enabled = timerHandlerActive(timer->channel);
   LPC_SCT_Type * const reg = LPC_SCT;
 
@@ -554,7 +551,7 @@ static enum Result tmrInit(void *object, const void *configBase)
      * Compare current timer configuration with proposed one
      * if the timer is already enabled.
      */
-    if (desiredConfig != (reg->CONFIG & configMask))
+    if (desiredConfig != (reg->CONFIG & CONFIG_SHARED_MASK))
       return E_BUSY;
   }
 
@@ -578,7 +575,7 @@ static enum Result tmrInit(void *object, const void *configBase)
       irqEnable(timer->irq);
     }
 
-    reg->CONFIG = (reg->CONFIG & ~configMask) | desiredConfig;
+    reg->CONFIG = (reg->CONFIG & ~CONFIG_SHARED_MASK) | desiredConfig;
   }
 
   return res;

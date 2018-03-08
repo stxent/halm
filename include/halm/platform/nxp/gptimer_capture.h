@@ -29,7 +29,9 @@ struct GpTimerCaptureUnit
   struct GpTimerBase base;
 
   /* Registered capture handlers */
-  struct GpTimerCapture *descriptors[4];
+  struct GpTimerCapture *instances[4];
+  /* Desired timer frequency */
+  uint32_t frequency;
 };
 /*----------------------------------------------------------------------------*/
 extern const struct CaptureClass * const GpTimerCapture;
@@ -62,5 +64,11 @@ struct GpTimerCapture
   /* Channel identifier */
   uint8_t channel;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+void *gpTimerCaptureCreate(void *, PinNumber, enum PinEvent, enum PinPull);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPTIMER_CAPTURE_H_ */

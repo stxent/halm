@@ -37,6 +37,7 @@ struct SctPwmUnit
 };
 /*----------------------------------------------------------------------------*/
 extern const struct PwmClass * const SctPwm;
+extern const struct PwmClass * const SctUnifiedPwm;
 
 struct SctPwmConfig
 {
@@ -52,6 +53,8 @@ struct SctPwm
 
   /* Pointer to a parent unit */
   struct SctPwmUnit *unit;
+  /* Pointer to a match register */
+  volatile void *value;
   /* Output channel number */
   uint8_t channel;
   /* Event number */
@@ -59,6 +62,7 @@ struct SctPwm
 };
 /*----------------------------------------------------------------------------*/
 extern const struct PwmClass * const SctPwmDoubleEdge;
+extern const struct PwmClass * const SctUnifiedPwmDoubleEdge;
 
 struct SctPwmDoubleEdgeConfig
 {
@@ -74,6 +78,10 @@ struct SctPwmDoubleEdge
 
   /* Pointer to a parent unit */
   struct SctPwmUnit *unit;
+  /* Pointer to a match register containing leading edge time */
+  volatile void *leading;
+  /* Pointer to a match register containing trailing edge time */
+  volatile void *trailing;
   /* Output channel number */
   uint8_t channel;
   /* Event number for leading edge */

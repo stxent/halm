@@ -64,9 +64,9 @@ struct SctBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-int sctAllocateEvent(struct SctBase *);
+bool sctAllocateEvent(struct SctBase *, uint8_t *);
 uint32_t sctGetClock(const struct SctBase *);
-void sctReleaseEvent(struct SctBase *, int);
+void sctReleaseEvent(struct SctBase *, uint8_t);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

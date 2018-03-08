@@ -97,7 +97,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   }
 
   /* Call base class constructor */
-  if ((res = GpTimerBase->init(object, &baseConfig)) != E_OK)
+  if ((res = GpTimerBase->init(timer, &baseConfig)) != E_OK)
     return res;
 
   timer->base.handler = interruptHandler;

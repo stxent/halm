@@ -11,7 +11,6 @@
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getMaxValue(const struct GpTimer *);
 static void interruptHandler(void *);
-static void updateFrequency(struct GpTimer *, uint32_t);
 
 #ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
 static void powerStateHandler(void *, enum PmState);
@@ -72,32 +71,13 @@ static void interruptHandler(void *object)
 #ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct GpTimer * const timer = object;
-
   if (state == PM_ACTIVE)
-    updateFrequency(timer, timer->frequency);
+  {
+    struct GpTimer * const timer = object;
+    gpTimerSetFrequency(&timer->base, timer->frequency);
+  }
 }
 #endif
-/*----------------------------------------------------------------------------*/
-static void updateFrequency(struct GpTimer *timer, uint32_t frequency)
-{
-  LPC_TIMER_Type * const reg = timer->base.reg;
-
-  if (frequency)
-  {
-    const uint32_t baseClock = gpTimerGetClock(&timer->base);
-    const uint32_t divisor = baseClock / frequency - 1;
-
-    assert(frequency <= baseClock);
-    assert(divisor <= getMaxValue(timer));
-
-    reg->PR = divisor;
-  }
-  else
-    reg->PR = 0;
-
-  timer->frequency = frequency;
-}
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
@@ -112,15 +92,13 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   assert(config->event < GPTIMER_EVENT_END);
 
-  timer->event = config->event ? config->event : GPTIMER_MATCH0;
-  --timer->event;
-
   /* Call base class constructor */
-  if ((res = GpTimerBase->init(object, &baseConfig)) != E_OK)
+  if ((res = GpTimerBase->init(timer, &baseConfig)) != E_OK)
     return res;
 
   timer->base.handler = interruptHandler;
   timer->callback = 0;
+  timer->event = (config->event ? config->event : GPTIMER_MATCH0) - 1;
 
   /* Initialize peripheral block */
   LPC_TIMER_Type * const reg = timer->base.reg;
@@ -132,7 +110,8 @@ static enum Result tmrInit(void *object, const void *configBase)
   reg->CTCR = 0;
   reg->MCR = 0;
 
-  updateFrequency(timer, config->frequency);
+  timer->frequency = config->frequency;
+  gpTimerSetFrequency(&timer->base, timer->frequency);
 
   /* Configure prescaler and default match value */
   reg->MR[timer->event] = getMaxValue(timer);
@@ -144,7 +123,7 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 #endif
 
-  /* Timer is disabled by default */
+  /* Clear timer reset flag, but do not enable */
   reg->TCR = 0;
 
   irqSetPriority(timer->base.irq, config->priority);
@@ -220,7 +199,10 @@ static uint32_t tmrGetFrequency(const void *object)
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  updateFrequency(object, frequency);
+  struct GpTimer * const timer = object;
+
+  timer->frequency = frequency;
+  gpTimerSetFrequency(&timer->base, timer->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)
@@ -275,9 +257,7 @@ static void tmrSetValue(void *object, uint32_t value)
   assert(value <= reg->MR[timer->event]);
 
   reg->TCR = 0;
-
   reg->PC = 0;
   reg->TC = value;
-
   reg->TCR = state;
 }

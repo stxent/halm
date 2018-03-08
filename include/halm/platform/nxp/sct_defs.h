@@ -26,6 +26,9 @@ enum
 #define CONFIG_INSYNC_MASK              BIT_FIELD(MASK(4), 9)
 #define CONFIG_INSYNC(channel)          BIT_FIELD(BIT(channel), 9)
 #define CONFIG_AUTOLIMIT(part)          BIT((part) + 17)
+
+#define CONFIG_SHARED_MASK \
+    (CONFIG_UNIFY | CONFIG_CLKMODE_MASK | CONFIG_CKSEL_MASK)
 /*------------------Control register------------------------------------------*/
 #define CTRL_DOWN                       BIT(0)
 #define CTRL_STOP                       BIT(1)

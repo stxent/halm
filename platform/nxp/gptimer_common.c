@@ -17,9 +17,7 @@ extern const struct PinEntry gpTimerMatchPins[];
 int gpTimerAllocateChannel(uint8_t mask)
 {
   int pos = 4; /* Each timer has 4 match blocks */
-
   while (--pos >= 0 && (mask & (1 << pos)));
-
   return pos;
 }
 /*----------------------------------------------------------------------------*/
@@ -51,4 +49,22 @@ uint8_t gpTimerConfigMatchPin(uint8_t channel, PinNumber key)
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
   return UNPACK_CHANNEL(pinEntry->value);
+}
+/*----------------------------------------------------------------------------*/
+void gpTimerSetFrequency(struct GpTimerBase *timer, uint32_t frequency)
+{
+  LPC_TIMER_Type * const reg = timer->reg;
+
+  if (frequency)
+  {
+    const uint32_t apbClock = gpTimerGetClock(timer);
+    const uint32_t divisor = apbClock / frequency - 1;
+
+    assert(frequency <= apbClock);
+    assert(divisor <= MASK(timer->resolution));
+
+    reg->PR = divisor;
+  }
+  else
+    reg->PR = 0;
 }

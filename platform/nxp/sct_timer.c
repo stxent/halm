@@ -109,17 +109,14 @@ static enum Result tmrInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = SctBase->init(object, &baseConfig)) != E_OK)
+  if ((res = SctBase->init(timer, &baseConfig)) != E_OK)
     return res;
 
-  const int event = sctAllocateEvent(&timer->base);
-
-  if (event == -1)
+  if (!sctAllocateEvent(&timer->base, &timer->event))
     return E_BUSY;
 
   timer->base.handler = interruptHandler;
   timer->callback = 0;
-  timer->event = event;
 
   LPC_SCT_Type * const reg = timer->base.reg;
   const unsigned int part = timer->base.part == SCT_HIGH;
@@ -225,7 +222,7 @@ static uint32_t tmrGetFrequency(const void *object)
   const LPC_SCT_Type * const reg = timer->base.reg;
   const unsigned int part = timer->base.part == SCT_HIGH;
   const uint32_t baseClock = sctGetClock(&timer->base);
-  const uint16_t prescaler = CTRL_PRE_VALUE(reg->CTRL_PART[part]) + 1;
+  const uint32_t prescaler = CTRL_PRE_VALUE(reg->CTRL_PART[part]) + 1;
 
   return baseClock / prescaler;
 }

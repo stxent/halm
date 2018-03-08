@@ -13,8 +13,8 @@
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 static uint8_t configOutputPin(uint8_t, PinNumber);
-static enum Result setMatchValue(struct SctPwmUnit *, uint8_t, uint32_t);
-static enum Result updateFrequency(struct SctPwmUnit *, uint32_t);
+static void setUnitResolution(struct SctPwmUnit *, uint8_t, uint32_t);
+static void updateFrequency(struct SctPwmUnit *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
 
@@ -29,8 +29,10 @@ static void singleEdgeEnable(void *);
 static void singleEdgeDisable(void *);
 static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
+static void singleEdgeSetDurationUnified(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
-static enum Result singleEdgeSetFrequency(void *, uint32_t);
+static void singleEdgeSetEdgesUnified(void *, uint32_t, uint32_t);
+static void singleEdgeSetFrequency(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void singleEdgeDeinit(void *);
@@ -43,8 +45,10 @@ static void doubleEdgeEnable(void *);
 static void doubleEdgeDisable(void *);
 static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
+static void doubleEdgeSetDurationUnified(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
-static enum Result doubleEdgeSetFrequency(void *, uint32_t);
+static void doubleEdgeSetEdgesUnified(void *, uint32_t, uint32_t);
+static void doubleEdgeSetFrequency(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_NXP_SCT_NO_DEINIT
 static void doubleEdgeDeinit(void *);
@@ -71,6 +75,19 @@ static const struct PwmClass singleEdgeTable = {
     .setFrequency = singleEdgeSetFrequency
 };
 
+static const struct PwmClass singleEdgeUnifiedTable = {
+    .size = sizeof(struct SctPwm),
+    .init = singleEdgeInit,
+    .deinit = singleEdgeDeinit,
+
+    .enable = singleEdgeEnable,
+    .disable = singleEdgeDisable,
+    .getResolution = singleEdgeGetResolution,
+    .setDuration = singleEdgeSetDurationUnified,
+    .setEdges = singleEdgeSetEdgesUnified,
+    .setFrequency = singleEdgeSetFrequency
+};
+
 static const struct PwmClass doubleEdgeTable = {
     .size = sizeof(struct SctPwm),
     .init = doubleEdgeInit,
@@ -83,11 +100,26 @@ static const struct PwmClass doubleEdgeTable = {
     .setEdges = doubleEdgeSetEdges,
     .setFrequency = doubleEdgeSetFrequency
 };
+
+static const struct PwmClass doubleEdgeUnifiedTable = {
+    .size = sizeof(struct SctPwm),
+    .init = doubleEdgeInit,
+    .deinit = doubleEdgeDeinit,
+
+    .enable = doubleEdgeEnable,
+    .disable = doubleEdgeDisable,
+    .getResolution = doubleEdgeGetResolution,
+    .setDuration = doubleEdgeSetDurationUnified,
+    .setEdges = doubleEdgeSetEdgesUnified,
+    .setFrequency = doubleEdgeSetFrequency
+};
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry sctOutputPins[];
 const struct EntityClass * const SctPwmUnit = &unitTable;
 const struct PwmClass * const SctPwm = &singleEdgeTable;
+const struct PwmClass * const SctUnifiedPwm = &singleEdgeUnifiedTable;
 const struct PwmClass * const SctPwmDoubleEdge = &doubleEdgeTable;
+const struct PwmClass * const SctUnifiedPwmDoubleEdge = &doubleEdgeUnifiedTable;
 /*----------------------------------------------------------------------------*/
 static uint8_t configOutputPin(uint8_t channel, PinNumber key)
 {
@@ -102,64 +134,65 @@ static uint8_t configOutputPin(uint8_t channel, PinNumber key)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result setMatchValue(struct SctPwmUnit *unit, uint8_t channel,
+static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
     uint32_t value)
 {
   const unsigned int part = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
-  enum Result res = E_OK;
 
   reg->CONFIG |= CONFIG_NORELOAD(part);
+
   if (unit->base.part != SCT_UNIFIED)
   {
-    if (value < (1 << 16))
-    {
-      reg->MATCH_PART[channel][part] = value;
-      reg->MATCHREL_PART[channel][part] = value;
-    }
-    else
-      res = E_VALUE;
+    assert(value <= 0xFFFF);
+
+    reg->MATCH_PART[channel][part] = value;
+    reg->MATCHREL_PART[channel][part] = value;
   }
   else
   {
+    /*
+     * Max 32-bit value is reserved for the case when a PWM output
+     * should stay high during all cycle.
+     */
+    assert(value < 0xFFFFFFFFUL);
+
     reg->MATCH[channel] = value;
     reg->MATCHREL[channel] = value;
   }
-  reg->CONFIG &= ~CONFIG_NORELOAD(part);
 
-  return res;
+  reg->CONFIG &= ~CONFIG_NORELOAD(part);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
+static void updateFrequency(struct SctPwmUnit *unit, uint32_t frequency)
 {
   const unsigned int part = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  /* Counter clearing is recommended by the user manual */
+  /* Counter reset is recommended by the user manual */
   const uint32_t value = (reg->CTRL_PART[part] & ~CTRL_PRE_MASK) | CTRL_CLRCTR;
 
   if (frequency)
   {
     /* TODO Check whether the clock is from internal source */
-    const uint32_t baseClock = sctGetClock(&unit->base);
-    const uint16_t prescaler = baseClock / frequency - 1;
+    const uint32_t apbClock = sctGetClock(&unit->base);
+    const uint16_t prescaler = apbClock / frequency - 1;
 
-    if (prescaler >= 256)
-      return E_VALUE;
+    assert(prescaler < 256);
 
     reg->CTRL_PART[part] = value | CTRL_PRE(prescaler);
   }
   else
-    return E_VALUE;
+    reg->CTRL_PART[part] = 0;
 
   unit->frequency = frequency;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct SctPwmUnitConfig * const config = configBase;
   assert(config);
+  assert(config->resolution >= 2);
 
   const struct SctBaseConfig baseConfig = {
       .channel = config->channel,
@@ -174,13 +207,8 @@ static enum Result unitInit(void *object, const void *configBase)
   if ((res = SctBase->init(object, &baseConfig)) != E_OK)
     return res;
 
-  const int event = sctAllocateEvent(&unit->base);
-
-  if (event == -1)
+  if (!sctAllocateEvent(&unit->base, &unit->event))
     return E_BUSY;
-
-  unit->event = event;
-  unit->resolution = config->resolution;
 
   LPC_SCT_Type * const reg = unit->base.reg;
   const unsigned int part = unit->base.part == SCT_HIGH;
@@ -190,16 +218,13 @@ static enum Result unitInit(void *object, const void *configBase)
   reg->CTRL_PART[part] = CTRL_HALT;
 
   /* Set desired unit frequency */
-  res = updateFrequency(unit, config->frequency * config->resolution);
-  if (res != E_OK)
-    return res;
+  unit->resolution = config->resolution;
+  updateFrequency(unit, config->frequency * config->resolution);
 
-  /* Set current match register value */
   reg->CONFIG &= ~(CONFIG_AUTOLIMIT(part) | CONFIG_NORELOAD(part));
 
-  /* Should be called after event initialization */
-  if ((res = setMatchValue(unit, unit->event, unit->resolution - 1)) != E_OK)
-    return res;
+  /* Match value should be configured after event initialization */
+  setUnitResolution(unit, unit->event, unit->resolution - 1);
 
   /* Configure event */
   reg->EV[unit->event].CTRL = EVCTRL_MATCHSEL(unit->event)
@@ -248,38 +273,35 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;
 
-  const int event = sctAllocateEvent(&unit->base);
-
-  if (event == -1)
+  if (!sctAllocateEvent(&unit->base, &pwm->event))
     return E_BUSY;
 
   /* Initialize output pin */
-  const uint8_t channel = configOutputPin(unit->base.channel, config->pin);
-
-  pwm->channel = channel;
-  pwm->event = event;
+  pwm->channel = configOutputPin(unit->base.channel, config->pin);
   pwm->unit = unit;
 
   LPC_SCT_Type * const reg = unit->base.reg;
 
+  if (unit->base.part == SCT_UNIFIED)
+    pwm->value = &reg->MATCHREL[pwm->event];
+  else
+    pwm->value = &reg->MATCHREL_PART[pwm->event][unit->base.part];
+
   /* Configure event */
   reg->EV[pwm->event].CTRL = EVCTRL_MATCHSEL(pwm->event)
-      | EVCTRL_OUTSEL | EVCTRL_IOSEL(channel)
+      | EVCTRL_OUTSEL | EVCTRL_IOSEL(pwm->channel)
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
   if (unit->base.part == SCT_HIGH)
     reg->EV[pwm->event].CTRL |= EVCTRL_HEVENT;
 
-  /* Set default match value */
-  singleEdgeSetDuration(pwm, 0);
-
-  /* Configure setting and clearing of the output */
-  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(channel))
-      | RES_OUTPUT(channel, OUTPUT_CLEAR);
+  /* Clear the output when both events occur in the same clock cycle */
+  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
+      | RES_OUTPUT(pwm->channel, OUTPUT_CLEAR);
   /* Disable modulation by default */
-  reg->OUT[channel].CLR = 1 << unit->event;
-  reg->OUT[channel].SET = 0;
+  reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  reg->OUT[pwm->channel].SET = 0;
 
   /* Enable allocated event in state 0 */
   reg->EV[pwm->event].STATE = 0x00000001;
@@ -294,12 +316,12 @@ static void singleEdgeDeinit(void *object)
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  /* Halt the timer */
+  /* Disable output */
   reg->OUT[pwm->channel].SET = 0;
   reg->OUT[pwm->channel].CLR = 0;
   reg->RES &= ~RES_OUTPUT_MASK(pwm->channel);
 
-  /* Disable allocated event */
+  /* Release allocated event */
   reg->EV[pwm->event].CTRL = 0;
   reg->EV[pwm->event].STATE = 0;
   sctReleaseEvent(&unit->base, pwm->event);
@@ -335,45 +357,49 @@ static uint32_t singleEdgeGetResolution(const void *object)
 static void singleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct SctPwm * const pwm = object;
-  struct SctPwmUnit * const unit = pwm->unit;
-  LPC_SCT_Type * const reg = unit->base.reg;
+  const uint32_t resolution = pwm->unit->resolution;
 
-  if (duration >= unit->resolution)
-  {
-    duration = unit->resolution;
-  }
-  else
-  {
-    if (!duration)
-      duration = unit->resolution;
-    --duration;
-  }
+  if (duration >= resolution)
+    duration = resolution + 1;
+  else if (!duration)
+    duration = resolution;
 
-  if (unit->base.part != SCT_UNIFIED)
-  {
-    const unsigned int part = unit->base.part == SCT_HIGH;
+  *(volatile uint16_t *)pwm->value = duration - 1;
+}
+/*----------------------------------------------------------------------------*/
+static void singleEdgeSetDurationUnified(void *object, uint32_t duration)
+{
+  struct SctPwm * const pwm = object;
+  const uint32_t resolution = pwm->unit->resolution;
 
-    reg->MATCHREL_PART[pwm->event][part] = duration;
-  }
-  else
-    reg->MATCHREL[pwm->event] = duration;
+  if (duration >= resolution)
+    duration = resolution + 1;
+  else if (!duration)
+    duration = resolution;
+
+  *(volatile uint32_t *)pwm->value = duration - 1;
 }
 /*----------------------------------------------------------------------------*/
 static void singleEdgeSetEdges(void *object,
     uint32_t leading __attribute__((unused)), uint32_t trailing)
 {
-  /* Leading edge time is constant in the single edge mode */
-  assert(leading == 0);
-
+  assert(leading == 0); /* Leading edge time must be zero */
   singleEdgeSetDuration(object, trailing);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result singleEdgeSetFrequency(void *object, uint32_t frequency)
+static void singleEdgeSetEdgesUnified(void *object,
+    uint32_t leading __attribute__((unused)), uint32_t trailing)
+{
+  assert(leading == 0); /* Leading edge time must be zero */
+  singleEdgeSetDurationUnified(object, trailing);
+}
+/*----------------------------------------------------------------------------*/
+static void singleEdgeSetFrequency(void *object, uint32_t frequency)
 {
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
 
-  return updateFrequency(unit, frequency * unit->resolution);
+  updateFrequency(unit, frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeInit(void *object, const void *configBase)
@@ -385,26 +411,30 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   struct SctPwmUnit * const unit = config->parent;
 
   /* Allocate events */
-  const int leadingEvent = sctAllocateEvent(&unit->base);
-  if (leadingEvent == -1)
+  if (!sctAllocateEvent(&unit->base, &pwm->leadingEvent))
     return E_BUSY;
-
-  const int trailingEvent = sctAllocateEvent(&unit->base);
-  if (trailingEvent == -1)
+  if (!sctAllocateEvent(&unit->base, &pwm->trailingEvent))
     return E_BUSY;
 
   /* Initialize output pin */
-  const uint8_t channel = configOutputPin(unit->base.channel, config->pin);
-
-  pwm->channel = channel;
-  pwm->leadingEvent = leadingEvent;
-  pwm->trailingEvent = trailingEvent;
+  pwm->channel = configOutputPin(unit->base.channel, config->pin);
   pwm->unit = unit;
 
   LPC_SCT_Type * const reg = unit->base.reg;
 
+  if (unit->base.part == SCT_UNIFIED)
+  {
+    pwm->leading = &reg->MATCHREL[pwm->leadingEvent];
+    pwm->trailing = &reg->MATCHREL[pwm->trailingEvent];
+  }
+  else
+  {
+    pwm->leading = &reg->MATCHREL_PART[pwm->leadingEvent][unit->base.part];
+    pwm->trailing = &reg->MATCHREL_PART[pwm->trailingEvent][unit->base.part];
+  }
+
   /* Configure event */
-  const uint32_t controlValue = EVCTRL_OUTSEL | EVCTRL_IOSEL(channel)
+  const uint32_t controlValue = EVCTRL_OUTSEL | EVCTRL_IOSEL(pwm->channel)
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
@@ -419,15 +449,12 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
     reg->EV[pwm->trailingEvent].CTRL |= EVCTRL_HEVENT;
   }
 
-  /* Set initial match values */
-  doubleEdgeSetEdges(pwm, 0, 0);
-
-  /* Configure setting and clearing of the output */
-  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(channel))
-      | RES_OUTPUT(channel, OUTPUT_CLEAR);
+  /* Clear the output when both events occur in the same clock cycle */
+  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
+      | RES_OUTPUT(pwm->channel, OUTPUT_CLEAR);
   /* Disable modulation by default */
-  reg->OUT[channel].CLR = 1 << unit->event;
-  reg->OUT[channel].SET = 0;
+  reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  reg->OUT[pwm->channel].SET = 0;
 
   /* Enable allocated events in state 0 */
   reg->EV[pwm->leadingEvent].STATE = 0x00000001;
@@ -443,12 +470,12 @@ static void doubleEdgeDeinit(void *object)
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  /* Halt the timer */
+  /* Disable output */
   reg->OUT[pwm->channel].SET = 0;
   reg->OUT[pwm->channel].CLR = 0;
   reg->RES &= ~RES_OUTPUT_MASK(pwm->channel);
 
-  /* Disable allocated event */
+  /* Release allocated events */
   reg->EV[pwm->trailingEvent].CTRL = 0;
   reg->EV[pwm->leadingEvent].STATE = 0;
   sctReleaseEvent(&unit->base, pwm->trailingEvent);
@@ -485,70 +512,45 @@ static uint32_t doubleEdgeGetResolution(const void *object)
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct SctPwmDoubleEdge * const pwm = object;
-  struct SctPwmUnit * const unit = pwm->unit;
-  const unsigned int part = unit->base.part == SCT_HIGH;
-  const uint32_t resolution = unit->resolution;
-  LPC_SCT_Type * const reg = unit->base.reg;
-
-  uint32_t center, leading, trailing;
-
-  if (unit->base.part != SCT_UNIFIED)
-  {
-    leading = reg->MATCHREL_PART[pwm->leadingEvent][part];
-    trailing = reg->MATCHREL_PART[pwm->trailingEvent][part];
-  }
-  else
-  {
-    leading = reg->MATCHREL[pwm->leadingEvent];
-    trailing = reg->MATCHREL[pwm->trailingEvent];
-  }
-
-  if (leading > trailing)
-  {
-    const uint32_t half = resolution / 2;
-
-    center = trailing + (leading - trailing) / 2;
-    if (center < half)
-      center += half;
-    else
-      center -= half;
-  }
-  else
-  {
-    center = leading;
-    if (trailing < resolution)
-      center += (trailing - leading) / 2;
-  }
+  const uint32_t resolution = pwm->unit->resolution;
+  const uint32_t leading = *(const volatile uint16_t *)pwm->leading + 1;
+  uint32_t trailing;
 
   if (duration >= resolution)
   {
-    leading = center;
-    trailing = resolution;
+    trailing = resolution + 1;
   }
   else
   {
-    duration = duration / 2;
-
-    const uint32_t negOffset = center - duration;
-    const uint32_t posOffset = center + duration;
-
-    leading = center >= duration ? negOffset : negOffset + resolution;
-    trailing = posOffset < resolution ? posOffset : posOffset - resolution;
+    if (leading >= resolution - duration)
+      trailing = leading - (resolution - duration);
+    else
+      trailing = leading + duration;
   }
 
-  /* Update match reload values atomically by disabling reload */
-  reg->CONFIG |= CONFIG_NORELOAD(part);
-  if (unit->base.part != SCT_UNIFIED)
+  doubleEdgeSetEdges(pwm, leading, trailing);
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeSetDurationUnified(void *object, uint32_t duration)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  const uint32_t resolution = pwm->unit->resolution;
+  const uint32_t leading = *(const volatile uint32_t *)pwm->leading + 1;
+  uint32_t trailing;
+
+  if (duration >= resolution)
   {
-    reg->MATCHREL_PART[pwm->leadingEvent][part] = leading;
-    reg->MATCHREL_PART[pwm->trailingEvent][part] = trailing;
+    trailing = resolution + 1;
   }
   else
   {
-    reg->MATCHREL[pwm->leadingEvent] = leading;
-    reg->MATCHREL[pwm->trailingEvent] = trailing;
+    if (leading >= resolution - duration)
+      trailing = leading - (resolution - duration);
+    else
+      trailing = leading + duration;
   }
-  reg->CONFIG &= ~CONFIG_NORELOAD(part);
+
+  doubleEdgeSetEdgesUnified(pwm, leading, trailing);
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeSetEdges(void *object, uint32_t leading,
@@ -556,52 +558,52 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
-  const unsigned int part = unit->base.part == SCT_HIGH;
-  const uint32_t resolution = unit->resolution;
   LPC_SCT_Type * const reg = unit->base.reg;
+  const uint32_t mask = CONFIG_NORELOAD(unit->base.part == SCT_HIGH);
+  const uint32_t resolution = unit->resolution;
 
-  if (leading > resolution)
+  assert(leading < (1UL << 16));
+  assert(trailing < (1UL << 16));
+
+  if (!leading)
     leading = resolution;
-  if (trailing > resolution)
+  if (!trailing)
     trailing = resolution;
 
-  if (trailing >= leading)
-  {
-    if (trailing - leading >= resolution)
-    {
-      leading = resolution / 2;
-      trailing = resolution + 1;
-    }
-  }
-  else
-  {
-    if (leading - trailing >= resolution)
-      leading = trailing = resolution / 2;
-  }
-
-  leading = leading ? leading - 1 : resolution - 1;
-  trailing = trailing ? trailing - 1 : resolution - 1;
-
-  reg->CONFIG |= CONFIG_NORELOAD(part);
-  if (unit->base.part != SCT_UNIFIED)
-  {
-    reg->MATCHREL_PART[pwm->leadingEvent][part] = leading;
-    reg->MATCHREL_PART[pwm->trailingEvent][part] = trailing;
-  }
-  else
-  {
-    reg->MATCHREL[pwm->leadingEvent] = leading;
-    reg->MATCHREL[pwm->trailingEvent] = trailing;
-  }
-  reg->CONFIG &= ~CONFIG_NORELOAD(part);
+  /* Update match reload values atomically by disabling reload */
+  reg->CONFIG |= mask;
+  *(volatile uint16_t *)pwm->leading = leading - 1;
+  *(volatile uint16_t *)pwm->trailing = trailing - 1;
+  reg->CONFIG &= ~mask;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result doubleEdgeSetFrequency(void *object, uint32_t frequency)
+static void doubleEdgeSetEdgesUnified(void *object, uint32_t leading,
+    uint32_t trailing)
+{
+  struct SctPwmDoubleEdge * const pwm = object;
+  struct SctPwmUnit * const unit = pwm->unit;
+  LPC_SCT_Type * const reg = unit->base.reg;
+  const uint32_t mask = CONFIG_NORELOAD(SCT_LOW);
+  const uint32_t resolution = unit->resolution;
+
+  if (!leading)
+    leading = resolution;
+  if (!trailing)
+    trailing = resolution;
+
+  /* Update match reload values atomically by disabling reload */
+  reg->CONFIG |= mask;
+  *(volatile uint32_t *)pwm->leading = leading - 1;
+  *(volatile uint32_t *)pwm->trailing = trailing - 1;
+  reg->CONFIG &= ~mask;
+}
+/*----------------------------------------------------------------------------*/
+static void doubleEdgeSetFrequency(void *object, uint32_t frequency)
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
 
-  return updateFrequency(unit, frequency * unit->resolution);
+  updateFrequency(unit, frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -610,14 +612,16 @@ static enum Result doubleEdgeSetFrequency(void *object, uint32_t frequency)
  * @param pin Pin used as a signal output.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *sctPwmCreate(void *unit, PinNumber pin)
+void *sctPwmCreate(void *object, PinNumber pin)
 {
+  struct SctPwmUnit * const unit = object;
   const struct SctPwmConfig channelConfig = {
       .parent = unit,
       .pin = pin
   };
 
-  return init(SctPwm, &channelConfig);
+  return init(unit->base.part == SCT_UNIFIED ?
+      SctUnifiedPwm : SctPwm, &channelConfig);
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -626,12 +630,14 @@ void *sctPwmCreate(void *unit, PinNumber pin)
  * @param pin Pin used as a signal output.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *sctPwmCreateDoubleEdge(void *unit, PinNumber pin)
+void *sctPwmCreateDoubleEdge(void *object, PinNumber pin)
 {
+  struct SctPwmUnit * const unit = object;
   const struct SctPwmDoubleEdgeConfig channelConfig = {
       .parent = unit,
       .pin = pin
   };
 
-  return init(SctPwmDoubleEdge, &channelConfig);
+  return init(unit->base.part == SCT_UNIFIED ?
+      SctUnifiedPwmDoubleEdge : SctPwmDoubleEdge, &channelConfig);
 }

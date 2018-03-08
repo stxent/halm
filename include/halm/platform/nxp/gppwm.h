@@ -26,6 +26,8 @@ struct GpPwmUnit
 {
   struct GpPwmUnitBase base;
 
+  /* Desired timer frequency */
+  uint32_t frequency;
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
   /* Match blocks currently in use */
@@ -52,6 +54,8 @@ struct GpPwm
   volatile uint32_t *value;
   /* Match channel number */
   uint8_t channel;
+  /* Mask for the Latch Enable Register */
+  uint8_t latch;
 };
 /*----------------------------------------------------------------------------*/
 extern const struct PwmClass * const GpPwmDoubleEdge;
@@ -76,6 +80,8 @@ struct GpPwmDoubleEdge
   volatile uint32_t *trailing;
   /* Number of the main match channel */
   uint8_t channel;
+  /* Mask for the Latch Enable Register */
+  uint8_t latch;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
