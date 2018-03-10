@@ -15,13 +15,12 @@ if(${CONFIG_PM})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pm.c")
 endif()
 
-if(${CONFIG_PLATFORM_NXP_FAST_GPIO_BUS})
-    list(APPEND SOURCE_FILES "fast_gpio_bus_common.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/fast_gpio_bus.c")
-endif()
-
 if(${CONFIG_PLATFORM_NXP_ADC_BASE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/adc_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_NXP_BOD})
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/bod.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_CAN})
@@ -40,6 +39,11 @@ endif()
 if(${CONFIG_PLATFORM_NXP_EMC})
     list(APPEND SOURCE_FILES "emc_sram.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/emc_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_NXP_FAST_GPIO_BUS})
+    list(APPEND SOURCE_FILES "fast_gpio_bus_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/fast_gpio_bus.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_GPDMA})

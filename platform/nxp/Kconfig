@@ -76,6 +76,10 @@ config PLATFORM_NXP_ADC_BUS
 	default y
 	depends on PLATFORM_NXP_ADC_BASE
 
+config PLATFORM_NXP_BOD
+	bool "Brownout detection"
+	default y
+
 config PLATFORM_NXP_CAN
 	bool "CAN"
 	default y

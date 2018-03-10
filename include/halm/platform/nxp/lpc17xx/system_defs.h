@@ -26,5 +26,10 @@
 #define PCON_DSFLAG                     BIT(9)
 #define PCON_PDFLAG                     BIT(10)
 #define PCON_DPDFLAG                    BIT(11)
+/*------------------Reset Source Identification register----------------------*/
+#define RSID_POR                        BIT(0)
+#define RSID_EXTR                       BIT(1)
+#define RSID_WDTR                       BIT(2)
+#define RSID_BODR                       BIT(3)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_SYSTEM_DEFS_H_ */

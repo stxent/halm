@@ -27,7 +27,7 @@ struct PinInterruptConfig
 
 struct PinInterrupt
 {
-  struct Entity base;
+  struct Interrupt base;
 
   void (*callback)(void *);
   void *callbackArgument;
