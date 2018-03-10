@@ -40,13 +40,13 @@ typedef struct
 /*------------------Power Management Unit-------------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t ISER[1]; /* Interrupt Set Enable Register */
+  __rw__ uint32_t ISER; /* Interrupt Set Enable Register */
   __ne__ uint32_t RESERVED0[31];
-  __rw__ uint32_t ICER[1]; /* Interrupt Clear Enable Register */
+  __rw__ uint32_t ICER; /* Interrupt Clear Enable Register */
   __ne__ uint32_t RESERVED1[31];
-  __rw__ uint32_t ISPR[1]; /* Interrupt Set Pending Register */
+  __rw__ uint32_t ISPR; /* Interrupt Set Pending Register */
   __ne__ uint32_t RESERVED2[31];
-  __rw__ uint32_t ICPR[1]; /* Interrupt Clear Pending Register */
+  __rw__ uint32_t ICPR; /* Interrupt Clear Pending Register */
   __ne__ uint32_t RESERVED3[95];
   __rw__ uint32_t IPR[8]; /* Interrupt Priority Registers */
 } NVIC_Type;

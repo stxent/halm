@@ -7,6 +7,7 @@
 #ifndef HALM_CORE_CORTEX_ARMV7M_IRQ_H_
 #define HALM_CORE_CORTEX_ARMV7M_IRQ_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <xcore/core/cortex/asm.h>
 #include <halm/core/core_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -46,22 +47,27 @@ static inline IrqState irqSave(void)
 
 static inline void irqEnable(IrqNumber irq)
 {
-  *(NVIC->ISER + (irq >> 5)) = 1UL << (irq & 0x1F);
+  NVIC->ISER[irq >> 5] = 1UL << (irq & 0x1F);
 }
 
 static inline void irqDisable(IrqNumber irq)
 {
-  *(NVIC->ICER + (irq >> 5)) = 1UL << (irq & 0x1F);
+  NVIC->ICER[irq >> 5] = 1UL << (irq & 0x1F);
 }
 
 static inline void irqClearPending(IrqNumber irq)
 {
-  *(NVIC->ICPR + (irq >> 5)) = 1UL << (irq & 0x1F);
+  NVIC->ICPR[irq >> 5] = 1UL << (irq & 0x1F);
 }
 
 static inline void irqSetPending(IrqNumber irq)
 {
-  *(NVIC->ISPR + (irq >> 5)) = 1UL << (irq & 0x1F);
+  NVIC->ISPR[irq >> 5] = 1UL << (irq & 0x1F);
+}
+
+static inline bool irqStatus(IrqNumber irq)
+{
+  return (NVIC->ISER[irq >> 5] & (1UL << (irq & 0x1F))) != 0;
 }
 
 END_DECLS
