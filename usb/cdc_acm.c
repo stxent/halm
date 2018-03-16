@@ -159,8 +159,6 @@ static bool resetEndpoints(struct CdcAcm *interface)
     struct UsbRequest *request;
 
     queuePop(&interface->rxRequestQueue, &request);
-    request->length = 0;
-
     if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
     {
       completed = false;
@@ -422,8 +420,6 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
     memcpy(bufferPosition, request->buffer, chunkLength);
     bufferPosition += chunkLength;
     length -= chunkLength;
-
-    request->length = 0;
 
     if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
     {

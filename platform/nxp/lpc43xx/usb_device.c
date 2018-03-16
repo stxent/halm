@@ -98,8 +98,8 @@ static struct TransferDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *,
     struct UsbRequest *, uint8_t *, size_t);
 static void epAppendDescriptor(struct UsbDmaEndpoint *,
     struct TransferDescriptor *);
-static enum Result epEnqueueRx(struct UsbDmaEndpoint *, struct UsbRequest *);
-static enum Result epEnqueueTx(struct UsbDmaEndpoint *, struct UsbRequest *);
+static void epEnqueueRx(struct UsbDmaEndpoint *, struct UsbRequest *);
+static void epEnqueueTx(struct UsbDmaEndpoint *, struct UsbRequest *);
 static void epExtractDataLength(const struct UsbDmaEndpoint *,
     struct UsbRequest *);
 static void epFlush(struct UsbDmaEndpoint *);
@@ -516,7 +516,6 @@ static struct TransferDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *ep,
     return 0;
 
   struct TransferDescriptor *descriptor;
-
   arrayPopBack(&ep->device->base.descriptorPool, &descriptor);
 
   /* The next descriptor pointer is invalid */
@@ -590,28 +589,22 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
   epPrime(ep);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result epEnqueueRx(struct UsbDmaEndpoint *ep,
-    struct UsbRequest *request)
+static void epEnqueueRx(struct UsbDmaEndpoint *ep, struct UsbRequest *request)
 {
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
       request, request->buffer, request->capacity);
 
   assert(descriptor);
   epAppendDescriptor(ep, descriptor);
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result epEnqueueTx(struct UsbDmaEndpoint *ep,
-    struct UsbRequest *request)
+static void epEnqueueTx(struct UsbDmaEndpoint *ep, struct UsbRequest *request)
 {
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
       request, request->buffer, request->length);
 
   assert(descriptor);
   epAppendDescriptor(ep, descriptor);
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void epExtractDataLength(const struct UsbDmaEndpoint *ep,
@@ -863,16 +856,15 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
   assert(request->callback);
 
   struct UsbDmaEndpoint * const ep = object;
-  enum Result res;
 
-  irqDisable(ep->device->base.irq);
+  irqDisable(ep->device->base.irq); // TODO Reduce scope
   if (ep->address & USB_EP_DIRECTION_IN)
-    res = epEnqueueTx(ep, request);
+    epEnqueueTx(ep, request);
   else
-    res = epEnqueueRx(ep, request);
+    epEnqueueRx(ep, request);
   irqEnable(ep->device->base.irq);
 
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static bool epIsStalled(void *object)

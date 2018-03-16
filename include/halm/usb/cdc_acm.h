@@ -63,7 +63,7 @@ struct CdcAcm
   struct CdcAcmBase *driver;
   /* Queue for OUT requests */
   struct Queue rxRequestQueue;
-  /* Pool to IN requests */
+  /* Pool for IN requests */
   struct Array txRequestPool;
   /* Pointer to the beginning of the request pool */
   void *requests;

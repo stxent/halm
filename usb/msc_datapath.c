@@ -296,7 +296,6 @@ static size_t prepareDataRx(struct MscQueryHandler *handler,
 
   request->buffer = (uint8_t *)buffer;
   request->capacity = length;
-  request->length = 0;
   request->callbackArgument = handler;
   request->callback = (last && length == left) ? last : silent;
 
