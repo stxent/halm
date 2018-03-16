@@ -8,29 +8,16 @@
 #include <xcore/bits.h>
 #include <halm/clock.h>
 #include <halm/core/cortex/systick.h>
-/*----------------------------------------------------------------------------*/
-#define TIMER_RESOLUTION                ((1UL << 24) - 1)
-/*----------------------------------------------------------------------------*/
-/* System Tick counter enable */
-#define CTRL_ENABLE                     BIT(0)
-/* Interrupt enable */
-#define CTRL_TICKINT                    BIT(1)
-/* Clock source selection: 0 for external clock, 1 for processor clock */
-#define CTRL_CLKSOURCE                  BIT(2)
-/* Counter flag is set when counter counts down to zero */
-#define CTRL_COUNTFLAG                  BIT(16)
+#include <halm/core/cortex/systick_defs.h>
 /*----------------------------------------------------------------------------*/
 static void resetInstance(void);
 static bool setInstance(struct SysTickTimer *);
-static void updateInterrupt(struct SysTickTimer *);
-static void updateFrequency(struct SysTickTimer *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
-static void tmrSetFrequency(void *, uint32_t);
 static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
@@ -51,7 +38,7 @@ static const struct TimerClass tmrTable = {
     .disable = tmrDisable,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = tmrSetFrequency,
+    .setFrequency = 0,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -78,43 +65,9 @@ static bool setInstance(struct SysTickTimer *object)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-static void updateInterrupt(struct SysTickTimer *timer)
-{
-  if (timer->overflow && timer->callback)
-  {
-    /* Pending interrupt will be cleared during register modification */
-    SYSTICK->CTRL |= CTRL_TICKINT;
-  }
-  else
-  {
-    SYSTICK->CTRL &= ~CTRL_TICKINT;
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void updateFrequency(struct SysTickTimer *timer, uint32_t frequency,
-    uint32_t overflow)
-{
-  assert(overflow <= TIMER_RESOLUTION);
-
-  const uint32_t limit = overflow ? overflow : 1;
-
-  if (frequency)
-  {
-    const uint32_t clock = clockFrequency(MainClock);
-    const uint32_t divisor = (clock / frequency) * limit - 1;
-
-    assert(divisor <= TIMER_RESOLUTION);
-    SYSTICK->LOAD = divisor;
-  }
-  else
-    SYSTICK->LOAD = limit - 1;
-
-  timer->frequency = frequency;
-  timer->overflow = overflow;
-}
-/*----------------------------------------------------------------------------*/
 void SYSTICK_ISR(void)
 {
+  /* Reading of CTRL register will clear the COUNTFLAG bit */
   if (SYSTICK->CTRL & CTRL_COUNTFLAG)
     instance->callback(instance->callbackArgument);
 }
@@ -122,18 +75,16 @@ void SYSTICK_ISR(void)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SysTickTimerConfig * const config = configBase;
-  assert(config);
-
   struct SysTickTimer * const timer = object;
 
   if (setInstance(timer))
   {
-    SYSTICK->CTRL = 0; /* Stop the timer */
-    updateFrequency(timer, config->frequency, 1);
+    /* Configure the timer but leave it in the disabled state */
     SYSTICK->CTRL = CTRL_CLKSOURCE;
+    SYSTICK->LOAD = TIMER_RESOLUTION;
 
-    irqSetPriority(SYSTICK_IRQ, config->priority);
-    irqEnable(SYSTICK_IRQ);
+    if (config)
+      irqSetPriority(SYSTICK_IRQ, config->priority);
 
     return E_OK;
   }
@@ -144,16 +95,13 @@ static enum Result tmrInit(void *object, const void *configBase)
 #ifndef CONFIG_CORE_CORTEX_SYSTICK_NO_DEINIT
 static void tmrDeinit(void *object __attribute__((unused)))
 {
-  irqDisable(SYSTICK_IRQ);
-  SYSTICK->CTRL &= ~CTRL_ENABLE;
+  SYSTICK->CTRL = 0;
   resetInstance();
 }
 #endif
 /*----------------------------------------------------------------------------*/
 static void tmrEnable(void *object __attribute__((unused)))
 {
-  /* Clear pending interrupt */
-  (void)SYSTICK->CTRL;
   SYSTICK->CTRL |= CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
@@ -170,45 +118,32 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callback = callback;
   timer->callbackArgument = argument;
 
-  updateInterrupt(timer);
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t tmrGetFrequency(const void *object)
-{
-  const struct SysTickTimer * const timer = object;
-  const uint32_t baseClock = clockFrequency(MainClock);
-
-  if (timer->frequency)
-    return baseClock / (SYSTICK->LOAD + 1);
+  if (timer->callback)
+    SYSTICK->CTRL |= CTRL_TICKINT;
   else
-    return baseClock;
+    SYSTICK->CTRL &= ~CTRL_TICKINT;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetFrequency(void *object, uint32_t frequency)
+static uint32_t tmrGetFrequency(const void *object __attribute__((unused)))
 {
-  struct SysTickTimer * const timer = object;
-  const uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
+  return clockFrequency(MainClock);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t tmrGetOverflow(const void *object __attribute__((unused)))
+{
+  return SYSTICK->LOAD + 1;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetOverflow(void *object __attribute__((unused)),
+    uint32_t overflow)
+{
+  const uint32_t state = SYSTICK->CTRL & ~CTRL_COUNTFLAG;
 
-  SYSTICK->CTRL &= ~CTRL_ENABLE;
-  updateFrequency(timer, frequency, timer->overflow);
-  SYSTICK->CTRL |= state;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t tmrGetOverflow(const void *object)
-{
-  const struct SysTickTimer * const timer = object;
-  return timer->overflow;
-}
-/*----------------------------------------------------------------------------*/
-static void tmrSetOverflow(void *object, uint32_t overflow)
-{
-  struct SysTickTimer * const timer = object;
-  const uint32_t state = SYSTICK->CTRL & CTRL_ENABLE;
+  assert(overflow <= TIMER_RESOLUTION);
 
-  SYSTICK->CTRL &= ~CTRL_ENABLE;
-  updateFrequency(timer, timer->frequency, overflow);
-  updateInterrupt(timer);
-  SYSTICK->CTRL |= state;
+  SYSTICK->CTRL = 0;
+  SYSTICK->LOAD = overflow ? overflow - 1 : TIMER_RESOLUTION;
+  SYSTICK->CTRL = state;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object __attribute__((unused)))
@@ -218,5 +153,6 @@ static uint32_t tmrGetValue(const void *object __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 static void tmrSetValue(void *object __attribute__((unused)), uint32_t value)
 {
+  assert(value <= TIMER_RESOLUTION);
   SYSTICK->VAL = value;
 }

@@ -12,10 +12,12 @@
 /*----------------------------------------------------------------------------*/
 extern const struct TimerClass * const SysTickTimer;
 
+/*
+ * All configuration fields are optional, it is allowed to pass
+ * a null pointer as the constructor argument.
+ */
 struct SysTickTimerConfig
 {
-  /** Mandatory: timer fundamental frequency. */
-  uint32_t frequency;
   /** Optional: interrupt priority. */
   IrqPriority priority;
 };
@@ -28,11 +30,6 @@ struct SysTickTimer
   void (*callback)(void *);
   /* User interrupt handler argument */
   void *callbackArgument;
-
-  /* Desired timer frequency */
-  uint32_t frequency;
-  /* Overflow value in ticks of desired frequency */
-  uint32_t overflow;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_SYSTICK_H_ */
