@@ -55,6 +55,8 @@ struct Spi
   uint8_t dummy;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
+  /* Synchronize DMA TX and RX handlers */
+  bool invoked;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_SPI_H_ */

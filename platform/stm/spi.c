@@ -54,7 +54,12 @@ static void dmaHandler(void *object)
   struct Spi * const interface = object;
 
   if (interface->callback)
-    interface->callback(interface->callbackArgument);
+  {
+    if (interface->invoked)
+      interface->callback(interface->callbackArgument);
+    else
+      interface->invoked = true;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static bool dmaSetup(struct Spi *interface, uint8_t rxStream,
@@ -160,6 +165,7 @@ static size_t transferData(struct Spi *interface, const void *txSource,
 {
   STM_SPI_Type * const reg = interface->base.reg;
 
+  interface->invoked = false;
   dmaAppend(interface->rxDma, rxSink, (const void *)&reg->DR, length);
   dmaAppend(interface->txDma, (void *)&reg->DR, txSource, length);
 
@@ -312,6 +318,7 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
   {
     case IF_BLOCKING:
       dmaSetCallback(interface->rxDma, 0, 0);
+      dmaSetCallback(interface->txDma, 0, 0);
       interface->blocking = true;
       return E_OK;
 
@@ -324,6 +331,7 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
 
     case IF_ZEROCOPY:
       dmaSetCallback(interface->rxDma, dmaHandler, interface);
+      dmaSetCallback(interface->txDma, dmaHandler, interface);
       interface->blocking = false;
       return E_OK;
 
