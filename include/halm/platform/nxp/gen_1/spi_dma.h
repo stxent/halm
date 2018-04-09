@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_NXP_GEN_1_SPI_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
+#include <halm/generic/spi.h>
 #include <halm/platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SpiDma;
@@ -42,10 +43,14 @@ struct SpiDma
 
   /* Desired baud rate */
   uint32_t rate;
+
   /* DMA descriptor for RX channel */
   struct Dma *rxDma;
   /* DMA descriptor for TX channel */
   struct Dma *txDma;
+  /* Pointer to an input buffer for bidirectional transfers */
+  uint8_t *sink;
+
   /*
    * Dummy frame to be sent over transmit line in the receive mode or
    * to be received in the transmit mode. The peripheral descriptor structure
@@ -53,10 +58,13 @@ struct SpiDma
    * is used in sleep mode because main memory may be unavailable for use.
    */
   uint8_t dummy;
+
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
   /* Synchronize DMA TX and RX handlers */
   bool invoked;
+  /* Selection between unidirectional and bidirectional modes */
+  bool unidir;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_SPI_DMA_H_ */

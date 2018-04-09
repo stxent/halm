@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_STM_SPI_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
+#include <halm/generic/spi.h>
 #include <halm/platform/stm/dma_oneshot.h>
 #include <halm/platform/stm/spi_base.h>
 /*----------------------------------------------------------------------------*/
@@ -44,10 +45,14 @@ struct Spi
 
   /* Desired baud rate */
   uint32_t rate;
+
   /* DMA descriptor for RX channel */
   struct Dma *rxDma;
   /* DMA descriptor for TX channel */
   struct Dma *txDma;
+  /* Pointer to an input buffer for bidirectional transfers */
+  uint8_t *sink;
+
   /*
    * Dummy frame to be sent over transmit line in the receive mode or
    * to be received in the transmit mode.
@@ -57,6 +62,8 @@ struct Spi
   bool blocking;
   /* Synchronize DMA TX and RX handlers */
   bool invoked;
+  /* Selection between unidirectional and bidirectional modes */
+  bool unidir;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_SPI_H_ */

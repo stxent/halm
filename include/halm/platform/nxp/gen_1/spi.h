@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_NXP_GEN_1_SPI_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
+#include <halm/generic/spi.h>
 #include <halm/platform/nxp/ssp_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Spi;
@@ -50,6 +51,8 @@ struct Spi
 
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
+  /* Selection between unidirectional and bidirectional modes */
+  bool unidir;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GEN_1_SPI_H_ */

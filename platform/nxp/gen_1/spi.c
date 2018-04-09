@@ -13,9 +13,8 @@
 #define DUMMY_FRAME 0xFF
 #define FIFO_DEPTH  8
 /*----------------------------------------------------------------------------*/
-static void rxInterruptHandler(void *);
-static void txInterruptHandler(void *);
-static size_t transferData(struct Spi *, void *, const void *, size_t);
+static void interruptHandler(void *);
+static size_t transferData(struct Spi *, size_t);
 
 #ifdef CONFIG_PLATFORM_NXP_SSP_PM
 static void powerStateHandler(void *, enum PmState);
@@ -48,73 +47,75 @@ static const struct InterfaceClass spiTable = {
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
-static void rxInterruptHandler(void *object)
+static void interruptHandler(void *object)
 {
   struct Spi * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
+  size_t received = 0;
 
   if (reg->RIS & RIS_RXRIS)
   {
     /* FIFO is at least half full */
-    for (size_t i = 0; i < FIFO_DEPTH / 2; ++i)
+    if (interface->rxBuffer)
+    {
+      for (size_t i = 0; i < FIFO_DEPTH / 2; ++i)
+        *interface->rxBuffer++ = reg->DR;
+    }
+    else
+    {
+      for (size_t i = 0; i < FIFO_DEPTH / 2; ++i)
+        (void)reg->DR;
+    }
+
+    received += FIFO_DEPTH / 2;
+  }
+
+  if (interface->rxBuffer)
+  {
+    while (reg->SR & SR_RNE)
+    {
       *interface->rxBuffer++ = reg->DR;
-
-    interface->rxLeft -= FIFO_DEPTH / 2;
+      ++received;
+    }
   }
-  while (reg->SR & SR_RNE)
+  else
   {
-    *interface->rxBuffer++ = reg->DR;
-    --interface->rxLeft;
-  }
-
-  const size_t pending = interface->rxLeft - interface->txLeft;
-  const size_t space = FIFO_DEPTH - pending;
-  size_t bytesToWrite = MIN(space, interface->txLeft);
-
-  interface->txLeft -= bytesToWrite;
-
-  while (bytesToWrite--)
-    reg->DR = DUMMY_FRAME;
-
-  if (!interface->rxLeft)
-  {
-    reg->IMSC = 0;
-    if (interface->callback)
-      interface->callback(interface->callbackArgument);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static void txInterruptHandler(void *object)
-{
-  struct Spi * const interface = object;
-  LPC_SSP_Type * const reg = interface->base.reg;
-
-  if (reg->RIS & RIS_RXRIS)
-  {
-    /* FIFO is at least half full */
-    for (size_t i = 0; i < FIFO_DEPTH / 2; ++i)
+    while (reg->SR & SR_RNE)
+    {
       (void)reg->DR;
-
-    interface->rxLeft -= FIFO_DEPTH / 2;
+      ++received;
+    }
   }
-  while (reg->SR & SR_RNE)
+
+  interface->rxLeft -= received;
+
+  const size_t space = FIFO_DEPTH - (interface->rxLeft - interface->txLeft);
+  size_t pending = MIN(space, interface->txLeft);
+
+  interface->txLeft -= pending;
+
+  if (interface->txBuffer)
   {
-    (void)reg->DR;
-    --interface->rxLeft;
+    while (pending--)
+      reg->DR = *interface->txBuffer++;
   }
-
-  const size_t pending = interface->rxLeft - interface->txLeft;
-  const size_t space = FIFO_DEPTH - pending;
-  size_t bytesToWrite = MIN(space, interface->txLeft);
-
-  interface->txLeft -= bytesToWrite;
-
-  while (bytesToWrite--)
-    reg->DR = *interface->txBuffer++;
+  else
+  {
+    while (pending--)
+      reg->DR = DUMMY_FRAME;
+  }
 
   if (!interface->rxLeft)
   {
+    /* Disable interrupts */
     reg->IMSC = 0;
+
+    /*
+     * Reset the pointer to an input buffer only. The pointer for
+     * an output buffer will be reinitialized in read and write functions.
+     */
+    interface->rxBuffer = 0;
+
     if (interface->callback)
       interface->callback(interface->callbackArgument);
   }
@@ -130,13 +131,10 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static size_t transferData(struct Spi *interface, void *rxBuffer,
-    const void *txBuffer, size_t length)
+static size_t transferData(struct Spi *interface, size_t length)
 {
   LPC_SSP_Type * const reg = interface->base.reg;
 
-  interface->rxBuffer = rxBuffer;
-  interface->txBuffer = txBuffer;
   interface->rxLeft = interface->txLeft = length;
 
   /* Clear interrupt flags and enable interrupts */
@@ -174,9 +172,12 @@ static enum Result spiInit(void *object, const void *configBase)
   if ((res = SspBase->init(object, &baseConfig)) != E_OK)
     return res;
 
+  interface->base.handler = interruptHandler;
   interface->callback = 0;
   interface->rate = config->rate;
+  interface->rxBuffer = 0;
   interface->blocking = true;
+  interface->unidir = true;
 
   LPC_SSP_Type * const reg = interface->base.reg;
   uint32_t controlValue = 0;
@@ -276,6 +277,20 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
   (void)data;
 #endif
 
+  switch ((enum SpiParameter)parameter)
+  {
+    case IF_SPI_BIDIRECTIONAL:
+      interface->unidir = false;
+      return E_OK;
+
+    case IF_SPI_UNIDIRECTIONAL:
+      interface->unidir = true;
+      return E_OK;
+
+    default:
+      break;
+  }
+
   switch (parameter)
   {
     case IF_BLOCKING:
@@ -305,8 +320,14 @@ static size_t spiRead(void *object, void *buffer, size_t length)
 
   struct Spi * const interface = object;
 
-  interface->base.handler = rxInterruptHandler;
-  return transferData(interface, buffer, 0, length);
+  interface->rxBuffer = buffer;
+  if (interface->unidir)
+  {
+    interface->txBuffer = 0;
+    return transferData(interface, length);
+  }
+  else
+    return length;
 }
 /*----------------------------------------------------------------------------*/
 static size_t spiWrite(void *object, const void *buffer, size_t length)
@@ -316,6 +337,6 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
 
   struct Spi * const interface = object;
 
-  interface->base.handler = txInterruptHandler;
-  return transferData(interface, 0, buffer, length);
+  interface->txBuffer = buffer;
+  return transferData(interface, length);
 }

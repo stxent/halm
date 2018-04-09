@@ -15,6 +15,7 @@
 static void dmaHandler(void *);
 static bool dmaSetup(struct SpiDma *, uint8_t, uint8_t);
 static void dmaSetupRx(struct Dma *, struct Dma *);
+static void dmaSetupRxTx(struct Dma *, struct Dma *);
 static void dmaSetupTx(struct Dma *, struct Dma *);
 static enum Result getStatus(const struct SpiDma *);
 static size_t transferData(struct SpiDma *, const void *, void *, size_t);
@@ -123,6 +124,39 @@ static void dmaSetupRx(struct Dma *rx, struct Dma *tx)
   dmaConfigure(tx, &dmaSettings[1]);
 }
 /*----------------------------------------------------------------------------*/
+static void dmaSetupRxTx(struct Dma *rx, struct Dma *tx)
+{
+  static const struct GpDmaSettings dmaSettings[] = {
+      {
+          .source = {
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          },
+          .destination = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = true
+          }
+      },
+      {
+          .source = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = true
+          },
+          .destination = {
+              .burst = DMA_BURST_4,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          }
+      }
+  };
+
+  dmaConfigure(rx, &dmaSettings[0]);
+  dmaConfigure(tx, &dmaSettings[1]);
+}
+/*----------------------------------------------------------------------------*/
 static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
 {
   static const struct GpDmaSettings dmaSettings[] = {
@@ -184,19 +218,19 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
 {
   LPC_SSP_Type * const reg = interface->base.reg;
 
-  /* Clear timeout interrupt flags */
-  reg->ICR = ICR_RORIC | ICR_RTIC;
-
   /* Clear DMA requests */
   reg->DMACR = 0;
   reg->DMACR = DMACR_RXDMAE | DMACR_TXDMAE;
 
   interface->invoked = false;
+  interface->sink = 0;
   dmaAppend(interface->rxDma, rxSink, (const void *)&reg->DR, length);
   dmaAppend(interface->txDma, (void *)&reg->DR, txSource, length);
 
   if (dmaEnable(interface->rxDma) != E_OK)
+  {
     goto error;
+  }
   if (dmaEnable(interface->txDma) != E_OK)
   {
     dmaDisable(interface->rxDma);
@@ -247,7 +281,9 @@ static enum Result spiInit(void *object, const void *configBase)
 
   interface->callback = 0;
   interface->rate = config->rate;
+  interface->sink = 0;
   interface->blocking = true;
+  interface->unidir = true;
 
   LPC_SSP_Type * const reg = interface->base.reg;
   uint32_t controlValue = 0;
@@ -348,6 +384,20 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
   (void)data;
 #endif
 
+  switch ((enum SpiParameter)parameter)
+  {
+    case IF_SPI_BIDIRECTIONAL:
+      interface->unidir = false;
+      return E_OK;
+
+    case IF_SPI_UNIDIRECTIONAL:
+      interface->unidir = true;
+      return E_OK;
+
+    default:
+      break;
+  }
+
   switch (parameter)
   {
     case IF_BLOCKING:
@@ -381,9 +431,17 @@ static size_t spiRead(void *object, void *buffer, size_t length)
 
   struct SpiDma * const interface = object;
 
-  dmaSetupRx(interface->rxDma, interface->txDma);
-  interface->dummy = DUMMY_FRAME;
-  return transferData(interface, &interface->dummy, buffer, length);
+  if (interface->unidir)
+  {
+    interface->dummy = DUMMY_FRAME;
+    dmaSetupRx(interface->rxDma, interface->txDma);
+    return transferData(interface, &interface->dummy, buffer, length);
+  }
+  else
+  {
+    interface->sink = buffer;
+    return length;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static size_t spiWrite(void *object, const void *buffer, size_t length)
@@ -393,6 +451,16 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
 
   struct SpiDma * const interface = object;
 
-  dmaSetupTx(interface->rxDma, interface->txDma);
-  return transferData(interface, buffer, &interface->dummy, length);
+  if (!interface->sink)
+  {
+    dmaSetupTx(interface->rxDma, interface->txDma);
+    return transferData(interface, buffer, &interface->dummy, length);
+  }
+  else
+  {
+    assert(!interface->unidir);
+
+    dmaSetupRxTx(interface->rxDma, interface->txDma);
+    return transferData(interface, buffer, interface->sink, length);
+  }
 }
