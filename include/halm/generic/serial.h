@@ -19,12 +19,16 @@ enum SerialParity
 
 enum SerialParameter
 {
-  /** Access parity settings. */
+  /** Enable parity checking or read current parity settings. */
   IF_SERIAL_PARITY = IF_PARAMETER_END,
-  /** Controls the Clear to Send signal. */
+  /** Read the CTS status line. */
   IF_SERIAL_CTS,
-  /** Controls the Request to Send signal. */
-  IF_SERIAL_RTS
+  /** Write the RTS status line. */
+  IF_SERIAL_RTS,
+  /** Read the DSR status line. */
+  IF_SERIAL_DSR,
+  /** Write the DTR status line. */
+  IF_SERIAL_DTR
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_SERIAL_H_ */

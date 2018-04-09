@@ -61,9 +61,13 @@ static const struct StreamRateEntry rateList[] = {
     {.key = 1000000, .value = B1000000}
 };
 /*----------------------------------------------------------------------------*/
+static bool changePortFlag(struct Serial *, int, bool);
+static bool getPortFlag(struct Serial *, int, bool *);
+static bool getPortParity(struct Serial *, enum SerialParity *);
+static bool getPortRate(struct Serial *, uint32_t *);
 static void interfaceCallback(EV_P_ ev_io *, int);
 static void setPortParameters(struct Serial *, const struct SerialConfig *);
-static void setPortRate(struct Serial *, uint32_t);
+static bool setPortRate(struct Serial *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *, const void *);
 static void streamDeinit(void *);
@@ -86,6 +90,65 @@ static const struct InterfaceClass streamTable = {
 };
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Serial = &streamTable;
+/*----------------------------------------------------------------------------*/
+static bool changePortFlag(struct Serial *interface, int flag, bool state)
+{
+  const int cmd = state ? TIOCMBIS : TIOCMBIC;
+  return ioctl(interface->descriptor, cmd, &flag) != -1;
+}
+/*----------------------------------------------------------------------------*/
+static bool getPortFlag(struct Serial *interface, int flag, bool *state)
+{
+  int value;
+
+  if (ioctl(interface->descriptor, TIOCMGET, &value) != -1)
+  {
+    *state = (value & flag) ? 1 : 0;
+    return true;
+  }
+  else
+    return false;
+}
+/*----------------------------------------------------------------------------*/
+static bool getPortParity(struct Serial *interface, enum SerialParity *parity)
+{
+  struct termios settings;
+
+  if (tcgetattr(interface->descriptor, &settings) != -1)
+  {
+    if (!(settings.c_cflag & PARENB))
+      *parity = SERIAL_PARITY_NONE;
+    else if (!(settings.c_cflag & PARODD))
+      *parity = SERIAL_PARITY_EVEN;
+    else
+      *parity = SERIAL_PARITY_ODD;
+
+    return true;
+  }
+  else
+    return false;
+}
+/*----------------------------------------------------------------------------*/
+static bool getPortRate(struct Serial *interface, uint32_t *actualRate)
+{
+  struct termios settings;
+
+  if (tcgetattr(interface->descriptor, &settings) != -1)
+  {
+    const speed_t encodedRate = cfgetispeed(&settings);
+
+    for (size_t index = 0; index < ARRAY_SIZE(rateList); ++index)
+    {
+      if (rateList[index].value == encodedRate)
+      {
+        *actualRate = rateList[index].key;
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
 /*----------------------------------------------------------------------------*/
 static void interfaceCallback(EV_P_ ev_io *w,
     int revents __attribute__((unused)))
@@ -147,13 +210,13 @@ static void setPortParameters(struct Serial *interface,
   setPortRate(interface, config->rate);
 }
 /*----------------------------------------------------------------------------*/
-static void setPortRate(struct Serial *interface, uint32_t desiredRate)
+static bool setPortRate(struct Serial *interface, uint32_t desiredRate)
 {
   speed_t rate = 0;
 
   for (size_t index = 0; index < ARRAY_SIZE(rateList); ++index)
   {
-    if (rateList[index].value == desiredRate)
+    if (rateList[index].key == desiredRate)
     {
       rate = rateList[index].value;
       break;
@@ -165,10 +228,15 @@ static void setPortRate(struct Serial *interface, uint32_t desiredRate)
   struct termios settings;
 
   /* Update baud rate settings, initial configuration must be already saved */
-  tcgetattr(interface->descriptor, &settings);
-  cfsetispeed(&settings, rate);
-  cfsetospeed(&settings, rate);
-  tcsetattr(interface->descriptor, TCSANOW, &settings);
+  if (tcgetattr(interface->descriptor, &settings) != -1)
+  {
+    cfsetispeed(&settings, rate);
+    cfsetospeed(&settings, rate);
+
+    return tcsetattr(interface->descriptor, TCSANOW, &settings) != -1;
+  }
+  else
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
@@ -240,18 +308,20 @@ static enum Result streamGetParam(void *object, enum IfParameter parameter,
 
   switch ((enum SerialParameter)parameter)
   {
-    case IF_SERIAL_CTS:
-    {
-      int value;
+    case IF_SERIAL_PARITY:
+      return getPortParity(interface, data) ? E_OK : E_INTERFACE;
 
-      if (ioctl(interface->descriptor, TIOCMGET, &value) != -1)
-      {
-        *(bool *)data = (value & TIOCM_CTS) ? 1 : 0;
-        return E_OK;
-      }
-      else
-        return E_INTERFACE;
-    }
+    case IF_SERIAL_CTS:
+      return getPortFlag(interface, TIOCM_CTS, data) ? E_OK : E_INTERFACE;
+
+    case IF_SERIAL_RTS:
+      return getPortFlag(interface, TIOCM_RTS, data) ? E_OK : E_INTERFACE;
+
+    case IF_SERIAL_DSR:
+      return getPortFlag(interface, TIOCM_DSR, data) ? E_OK : E_INTERFACE;
+
+    case IF_SERIAL_DTR:
+      return getPortFlag(interface, TIOCM_DTR, data) ? E_OK : E_INTERFACE;
 
     default:
       break;
@@ -269,6 +339,9 @@ static enum Result streamGetParam(void *object, enum IfParameter parameter,
       *(size_t *)data = 0;
       return E_OK;
 
+    case IF_RATE:
+      return getPortRate(interface, data) ? E_OK : E_INTERFACE;
+
     default:
       return E_INVALID;
   }
@@ -282,22 +355,12 @@ static enum Result streamSetParam(void *object, enum IfParameter parameter,
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_RTS:
-    {
-      int value;
+      return changePortFlag(interface, TIOCM_RTS, *(const bool *)data) ?
+          E_OK : E_INTERFACE;
 
-      if (ioctl(interface->descriptor, TIOCMGET, &value) == -1)
-        return E_INTERFACE;
-
-      if (*(const bool *)data)
-        value |= TIOCM_RTS;
-      else
-        value &= ~TIOCM_RTS;
-
-      if (ioctl(interface->descriptor, TIOCMSET, &value) != -1)
-        return E_OK;
-      else
-        return E_INTERFACE;
-    }
+    case IF_SERIAL_DTR:
+      return changePortFlag(interface, TIOCM_DTR, *(const bool *)data) ?
+          E_OK : E_INTERFACE;
 
     default:
       break;
@@ -306,8 +369,8 @@ static enum Result streamSetParam(void *object, enum IfParameter parameter,
   switch (parameter)
   {
     case IF_RATE:
-      setPortRate(interface, *(const uint32_t *)data);
-      return E_OK;
+      return setPortRate(interface, *(const uint32_t *)data) ?
+          E_OK : E_INTERFACE;
 
     default:
       return E_INVALID;
