@@ -277,6 +277,16 @@ config PLATFORM_NXP_PININT_NO_DEINIT
 	default n
 	depends on PLATFORM_NXP_PININT
 
+config PLATFORM_NXP_RIT
+	bool "Repetitive Interrupt Timer"
+	default y
+	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
+
+config PLATFORM_NXP_RIT_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_RIT
+
 config PLATFORM_NXP_RTC
 	bool "Real-Time Clock"
 	default y

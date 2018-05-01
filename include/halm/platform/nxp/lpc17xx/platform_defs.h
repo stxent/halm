@@ -394,10 +394,10 @@ typedef struct
 /*------------------Repetitive Interrupt Timer--------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t RICOMPVAL;
-  __rw__ uint32_t RIMASK;
-  __rw__ uint32_t RICTRL;
-  __rw__ uint32_t RICOUNTER;
+  __rw__ uint32_t COMPVAL;
+  __rw__ uint32_t MASK;
+  __rw__ uint32_t CTRL;
+  __rw__ uint32_t COUNTER;
 } LPC_RIT_Type;
 /*------------------Real-Time Clock-------------------------------------------*/
 typedef struct

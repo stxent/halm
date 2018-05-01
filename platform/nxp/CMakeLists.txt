@@ -171,6 +171,11 @@ if(${CONFIG_PLATFORM_NXP_I2S_DMA})
     list(APPEND SOURCE_FILES "i2s_dma.c")
 endif()
 
+if(${CONFIG_PLATFORM_NXP_RIT})
+    list(APPEND SOURCE_FILES "rit.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/rit_base.c")
+endif()
+
 if(${CONFIG_PLATFORM_NXP_RTC})
     list(APPEND SOURCE_FILES "${CONFIG_GEN_RTC}/rtc.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/rtc_base.c")
