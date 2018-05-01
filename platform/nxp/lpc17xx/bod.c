@@ -17,7 +17,7 @@ static void bodEnable(void *);
 static void bodDisable(void *);
 static void bodSetCallback(void *, void (*)(void *), void *);
 
-#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
+#ifndef CONFIG_PLATFORM_NXP_BOD_NO_DEINIT
 static void bodDeinit(void *);
 #else
 #define bodDeinit deletedDestructorTrap
@@ -84,7 +84,7 @@ static enum Result bodInit(void *object, const void *configBase)
     return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
+#ifndef CONFIG_PLATFORM_NXP_BOD_NO_DEINIT
 static void bodDeinit(void *object __attribute__((unused)))
 {
   irqDisable(BOD_IRQ);

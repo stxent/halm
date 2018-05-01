@@ -79,6 +79,12 @@ config PLATFORM_NXP_ADC_BUS
 config PLATFORM_NXP_BOD
 	bool "Brownout detection"
 	default y
+	depends on FAMILY_LPC17XX
+
+config PLATFORM_NXP_BOD_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_NXP_BOD
 
 config PLATFORM_NXP_CAN
 	bool "CAN"

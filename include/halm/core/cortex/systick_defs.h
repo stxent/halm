@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*----------------------------------------------------------------------------*/
-#define TIMER_RESOLUTION                ((1UL << 24) - 1)
+#define TIMER_RESOLUTION                0xFFFFFFUL
 
 /* Enables counter operation */
 #define CTRL_ENABLE                     BIT(0)

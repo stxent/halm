@@ -165,9 +165,15 @@ static void interruptHandler(void *object)
     const bool setup = (reg->EPR[number] & EPR_SETUP) != 0;
 
     if (!(intStatus & ISTR_DIR))
-      reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK & ~EPR_CTR_TX)) | EPR_CTR_RX;
+    {
+      reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK & ~EPR_CTR_TX))
+          | EPR_CTR_RX;
+    }
     else
-      reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK & ~EPR_CTR_RX)) | EPR_CTR_TX;
+    {
+      reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK & ~EPR_CTR_RX))
+          | EPR_CTR_TX;
+    }
 
     epHandler((struct UsbSieEndpoint *)device->endpoints[EP_TO_INDEX(ep)],
         setup);
@@ -565,7 +571,8 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   if (ep->address & USB_EP_DIRECTION_IN)
   {
     *calcTxEpAddr(reg, number) = ep->device->position;
-    reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK | EPR_DTOG_TX)) | (EPR_CTR_RX | EPR_CTR_TX);
+    reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK | EPR_DTOG_TX))
+        | (EPR_CTR_RX | EPR_CTR_TX);
     changeTxStat(&reg->EPR[number], EPR_STAT_NAK);
     ep->device->position += size;
   }
@@ -573,7 +580,8 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   {
     *calcRxEpAddr(reg, number) = ep->device->position;
     setRxEpBufferSize(ep, number, size);
-    reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK | EPR_DTOG_RX)) | (EPR_CTR_RX | EPR_CTR_TX);
+    reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK | EPR_DTOG_RX))
+        | (EPR_CTR_RX | EPR_CTR_TX);
     changeRxStat(&reg->EPR[number], EPR_STAT_NAK);
     ep->device->position += size;
   }
