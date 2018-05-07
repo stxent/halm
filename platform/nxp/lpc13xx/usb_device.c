@@ -91,9 +91,11 @@ static const struct UsbDeviceClass devTable = {
 const struct UsbDeviceClass * const UsbDevice = &devTable;
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbSieEndpoint *, uint8_t);
-static enum Result epReadData(struct UsbSieEndpoint *, uint8_t *,
-    size_t, size_t *);
+static enum Result epReadData(struct UsbSieEndpoint *, uint8_t *, size_t,
+    size_t *);
+static void epReadPacketMemory(LPC_USB_Type *, uint8_t *, size_t);
 static void epWriteData(struct UsbSieEndpoint *, const uint8_t *, size_t);
+static void epWritePacketMemory(LPC_USB_Type *, const uint8_t *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result epInit(void *, const void *);
 static void epDeinit(void *);
@@ -429,11 +431,10 @@ static enum Result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
     size_t length, size_t *read)
 {
   LPC_USB_Type * const reg = ep->device->base.reg;
-  const unsigned int index = EP_TO_INDEX(ep->address);
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
   /* Set read enable bit for specific endpoint */
-  reg->USBCtrl =
-      USBCtrl_RD_EN | USBCtrl_LOG_ENDPOINT(USB_EP_LOGICAL_ADDRESS(ep->address));
+  reg->USBCtrl = USBCtrl_RD_EN | USBCtrl_LOG_ENDPOINT(number);
 
   /*
    * User Manual says that it takes 3 clock cycle to fetch the packet length
@@ -450,41 +451,63 @@ static enum Result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
   packetLength = USBRxPLen_PKT_LNGTH_VALUE(packetLength);
   /* Check for buffer overflow */
   if (packetLength > length)
-    return E_VALUE;
+    return E_MEMORY;
 
+  /* Read data from the internal packet memory */
   *read = packetLength;
-
-  /* Read data from internal buffer */
-  uint32_t word = 0;
-
-  for (size_t position = 0; position < packetLength; ++position)
-  {
-    if (!(position & 0x03))
-      word = reg->USBRxData;
-
-    buffer[position] = (uint8_t)word;
-    word >>= 8;
-  }
+  epReadPacketMemory(reg, buffer, packetLength);
 
   /* Clear read enable bit */
   reg->USBCtrl = 0;
 
   /* Select endpoint and clear buffer */
-  usbCommand(ep->device, USB_CMD_SELECT_ENDPOINT | index);
+  usbCommand(ep->device, USB_CMD_SELECT_ENDPOINT | EP_TO_INDEX(ep->address));
   usbCommand(ep->device, USB_CMD_CLEAR_BUFFER);
 
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void epReadPacketMemory(LPC_USB_Type *reg, uint8_t *buffer,
+    size_t length)
+{
+  uint32_t *start = (uint32_t *)buffer;
+  uint32_t * const end = start + (length >> 2);
+
+  buffer = (uint8_t *)end;
+  length &= 3;
+
+  while (start < end)
+    *start++ = reg->USBRxData;
+
+  if (length)
+  {
+    uint32_t lastWord = reg->USBRxData;
+
+    switch (length)
+    {
+      case 3:
+        *buffer++ = (uint8_t)lastWord;
+        lastWord >>= 8;
+        /* Falls through */
+      case 2:
+        *buffer++ = (uint8_t)lastWord;
+        lastWord >>= 8;
+        /* Falls through */
+      case 1:
+        *buffer = (uint8_t)lastWord;
+        break;
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void epWriteData(struct UsbSieEndpoint *ep, const uint8_t *buffer,
     size_t length)
 {
   LPC_USB_Type * const reg = ep->device->base.reg;
-  const unsigned int index = EP_TO_INDEX(ep->address);
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
   /* Set write enable for specific endpoint */
-  reg->USBCtrl =
-      USBCtrl_WR_EN | USBCtrl_LOG_ENDPOINT(USB_EP_LOGICAL_ADDRESS(ep->address));
+  reg->USBCtrl = USBCtrl_WR_EN | USBCtrl_LOG_ENDPOINT(number);
   /* Set packet length */
   reg->USBTxPLen = length;
 
@@ -495,29 +518,49 @@ static void epWriteData(struct UsbSieEndpoint *ep, const uint8_t *buffer,
   }
   else
   {
-    /* Write data */
-    size_t position = 0;
-    uint32_t word = 0;
-
-    while (position < length)
-    {
-      word |= buffer[position] << ((position & 0x03) << 3);
-      ++position;
-
-      if (!(position & 0x03) || position == length)
-      {
-        reg->USBTxData = word;
-        word = 0;
-      }
-    }
+    /* Write data into the internal packet memory */
+    epWritePacketMemory(reg, buffer, length);
   }
 
   /* Clear write enable bit */
   reg->USBCtrl = 0;
 
   /* Select endpoint and validate buffer */
-  usbCommand(ep->device, USB_CMD_SELECT_ENDPOINT | index);
+  usbCommand(ep->device, USB_CMD_SELECT_ENDPOINT | EP_TO_INDEX(ep->address));
   usbCommand(ep->device, USB_CMD_VALIDATE_BUFFER);
+}
+/*----------------------------------------------------------------------------*/
+static void epWritePacketMemory(LPC_USB_Type *reg, const uint8_t *buffer,
+    size_t length)
+{
+  const uint32_t *start = (const uint32_t *)buffer;
+  const uint32_t * const end = start + (length >> 2);
+
+  buffer = (const uint8_t *)end;
+  length &= 3;
+
+  while (start < end)
+    reg->USBTxData = *start++;
+
+  if (length)
+  {
+    uint32_t lastWord = 0;
+
+    switch (length)
+    {
+      case 3:
+        lastWord = buffer[2] << 16;
+        /* Falls through */
+      case 2:
+        lastWord |= buffer[1] << 8;
+        /* Falls through */
+      case 1:
+        lastWord |= buffer[0];
+        break;
+    }
+
+    reg->USBTxData = lastWord;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result epInit(void *object, const void *configBase)
