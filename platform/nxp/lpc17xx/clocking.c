@@ -55,56 +55,56 @@ static enum Result usbClockEnable(const void *, const void *);
 static uint32_t usbClockFrequency(const void *);
 static bool usbClockReady(const void *);
 /*----------------------------------------------------------------------------*/
-static const struct ClockClass extOscTable = {
+const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .disable = extOscDisable,
     .enable = extOscEnable,
     .frequency = extOscFrequency,
     .ready = extOscReady
 };
 
-static const struct ClockClass intOscTable = {
+const struct ClockClass * const InternalOsc = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = clockEnableStub,
     .frequency = intOscFrequency,
     .ready = clockReadyStub
 };
 
-static const struct ClockClass rtcOscTable = {
+const struct ClockClass * const RtcOsc = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = clockEnableStub,
     .frequency = rtcOscFrequency,
     .ready = clockReadyStub
 };
 
-static const struct ClockClass sysPllTable = {
+const struct ClockClass * const SystemPll = &(const struct ClockClass){
     .disable = sysPllDisable,
     .enable = sysPllEnable,
     .frequency = sysPllFrequency,
     .ready = sysPllReady
 };
 
-static const struct ClockClass usbPllTable = {
+const struct ClockClass * const UsbPll = &(const struct ClockClass){
     .disable = usbPllDisable,
     .enable = usbPllEnable,
     .frequency = usbPllFrequency,
     .ready = usbPllReady
 };
 /*----------------------------------------------------------------------------*/
-static const struct ClockClass clockOutputTable = {
+const struct ClockClass * const ClockOutput = &(const struct ClockClass){
     .disable = clockOutputDisable,
     .enable = clockOutputEnable,
     .frequency = clockOutputFrequency,
     .ready = clockOutputReady
 };
 
-static const struct ClockClass mainClockTable = {
+const struct ClockClass * const MainClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = mainClockEnable,
     .frequency = mainClockFrequency,
     .ready = clockReadyStub
 };
 
-static const struct ClockClass usbClockTable = {
+const struct ClockClass * const UsbClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = usbClockEnable,
     .frequency = usbClockFrequency,
@@ -120,15 +120,6 @@ static const struct PinEntry clockOutputPins[] = {
         .key = 0 /* End of pin function association list */
     }
 };
-/*----------------------------------------------------------------------------*/
-const struct ClockClass * const ExternalOsc = &extOscTable;
-const struct ClockClass * const InternalOsc = &intOscTable;
-const struct ClockClass * const RtcOsc = &rtcOscTable;
-const struct ClockClass * const SystemPll = &sysPllTable;
-const struct ClockClass * const UsbPll = &usbPllTable;
-const struct ClockClass * const ClockOutput = &clockOutputTable;
-const struct ClockClass * const MainClock = &mainClockTable;
-const struct ClockClass * const UsbClock = &usbClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;

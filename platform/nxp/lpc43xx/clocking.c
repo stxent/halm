@@ -66,7 +66,8 @@ static enum Result genericClockEnable(const void *, const void *);
 static uint32_t genericClockFrequency(const void *);
 static bool genericClockReady(const void *);
 /*----------------------------------------------------------------------------*/
-static const struct GenericDividerClass dividerATable = {
+const struct GenericDividerClass * const DividerA =
+    &(const struct GenericDividerClass){
     .base = {
         .disable = genericDividerDisable,
         .enable = genericDividerEnable,
@@ -76,7 +77,8 @@ static const struct GenericDividerClass dividerATable = {
     .channel = CLOCK_IDIVA
 };
 
-static const struct GenericDividerClass dividerBTable = {
+const struct GenericDividerClass * const DividerB =
+    &(const struct GenericDividerClass){
     .base = {
         .disable = genericDividerDisable,
         .enable = genericDividerEnable,
@@ -86,7 +88,8 @@ static const struct GenericDividerClass dividerBTable = {
     .channel = CLOCK_IDIVB
 };
 
-static const struct GenericDividerClass dividerCTable = {
+const struct GenericDividerClass * const DividerC =
+    &(const struct GenericDividerClass){
     .base = {
         .disable = genericDividerDisable,
         .enable = genericDividerEnable,
@@ -96,7 +99,8 @@ static const struct GenericDividerClass dividerCTable = {
     .channel = CLOCK_IDIVC
 };
 
-static const struct GenericDividerClass dividerDTable = {
+const struct GenericDividerClass * const DividerD =
+    &(const struct GenericDividerClass){
     .base = {
         .disable = genericDividerDisable,
         .enable = genericDividerEnable,
@@ -106,7 +110,8 @@ static const struct GenericDividerClass dividerDTable = {
     .channel = CLOCK_IDIVD
 };
 
-static const struct GenericDividerClass dividerETable = {
+const struct GenericDividerClass * const DividerE =
+    &(const struct GenericDividerClass){
     .base = {
         .disable = genericDividerDisable,
         .enable = genericDividerEnable,
@@ -116,28 +121,29 @@ static const struct GenericDividerClass dividerETable = {
     .channel = CLOCK_IDIVE
 };
 /*----------------------------------------------------------------------------*/
-static const struct ClockClass extOscTable = {
+const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .disable = extOscDisable,
     .enable = extOscEnable,
     .frequency = extOscFrequency,
     .ready = extOscReady
 };
 
-static const struct ClockClass intOscTable = {
+const struct ClockClass * const InternalOsc = &(const struct ClockClass){
     .disable = intOscDisable,
     .enable = intOscEnable,
     .frequency = intOscFrequency,
     .ready = intOscReady
 };
 
-static const struct ClockClass rtcOscTable = {
+const struct ClockClass * const RtcOsc = &(const struct ClockClass){
     .disable = rtcOscDisable,
     .enable = rtcOscEnable,
     .frequency = rtcOscFrequency,
     .ready = rtcOscReady
 };
 
-static const struct GenericPllClass pll0AudioTable = {
+const struct GenericPllClass * const AudioPll =
+    &(const struct GenericPllClass){
     .base = {
         .disable = pll0ClockDisable,
         .enable = pll0ClockEnable,
@@ -147,7 +153,8 @@ static const struct GenericPllClass pll0AudioTable = {
     .channel = CLOCK_AUDIO_PLL
 };
 
-static const struct GenericPllClass pll0UsbTable = {
+const struct GenericPllClass * const UsbPll =
+    &(const struct GenericPllClass){
     .base = {
         .disable = pll0ClockDisable,
         .enable = pll0ClockEnable,
@@ -157,14 +164,15 @@ static const struct GenericPllClass pll0UsbTable = {
     .channel = CLOCK_USB_PLL
 };
 
-static const struct ClockClass pll1Table = {
+const struct ClockClass * const SystemPll = &(const struct ClockClass){
     .disable = pll1ClockDisable,
     .enable = pll1ClockEnable,
     .frequency = pll1ClockFrequency,
     .ready = pll1ClockReady
 };
 /*----------------------------------------------------------------------------*/
-static const struct GenericClockClass mainClockTable = {
+const struct GenericClockClass * const MainClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -174,7 +182,8 @@ static const struct GenericClockClass mainClockTable = {
     .branch = CLOCK_BASE_M4
 };
 
-static const struct GenericClockClass usb0ClockTable = {
+const struct GenericClockClass * const Usb0Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -184,7 +193,8 @@ static const struct GenericClockClass usb0ClockTable = {
     .branch = CLOCK_BASE_USB0
 };
 
-static const struct GenericClockClass usb1ClockTable = {
+const struct GenericClockClass * const Usb1Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -194,7 +204,8 @@ static const struct GenericClockClass usb1ClockTable = {
     .branch = CLOCK_BASE_USB1
 };
 
-static const struct GenericClockClass periphClockTable = {
+const struct GenericClockClass * const PeriphClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -204,7 +215,8 @@ static const struct GenericClockClass periphClockTable = {
     .branch = CLOCK_BASE_PERIPH
 };
 
-static const struct GenericClockClass apb1ClockTable = {
+const struct GenericClockClass * const Apb1Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -214,7 +226,8 @@ static const struct GenericClockClass apb1ClockTable = {
     .branch = CLOCK_BASE_APB1
 };
 
-static const struct GenericClockClass apb3ClockTable = {
+const struct GenericClockClass * const Apb3Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -224,7 +237,8 @@ static const struct GenericClockClass apb3ClockTable = {
     .branch = CLOCK_BASE_APB3
 };
 
-static const struct GenericClockClass spifiClockTable = {
+const struct GenericClockClass * const SpifiClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -234,7 +248,8 @@ static const struct GenericClockClass spifiClockTable = {
     .branch = CLOCK_BASE_SPIFI
 };
 
-static const struct GenericClockClass spiClockTable = {
+const struct GenericClockClass * const SpiClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -244,7 +259,8 @@ static const struct GenericClockClass spiClockTable = {
     .branch = CLOCK_BASE_SPI
 };
 
-static const struct GenericClockClass phyRxClockTable = {
+const struct GenericClockClass * const PhyRxClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -254,7 +270,8 @@ static const struct GenericClockClass phyRxClockTable = {
     .branch = CLOCK_BASE_PHY_RX
 };
 
-static const struct GenericClockClass phyTxClockTable = {
+const struct GenericClockClass * const PhyTxClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -264,7 +281,8 @@ static const struct GenericClockClass phyTxClockTable = {
     .branch = CLOCK_BASE_PHY_TX
 };
 
-static const struct GenericClockClass lcdClockTable = {
+const struct GenericClockClass * const LcdClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -274,7 +292,8 @@ static const struct GenericClockClass lcdClockTable = {
     .branch = CLOCK_BASE_LCD
 };
 
-static const struct GenericClockClass adcHsClockTable = {
+const struct GenericClockClass * const AdcHsClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -284,7 +303,8 @@ static const struct GenericClockClass adcHsClockTable = {
     .branch = CLOCK_BASE_ADCHS
 };
 
-static const struct GenericClockClass sdioClockTable = {
+const struct GenericClockClass * const SdioClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -294,7 +314,8 @@ static const struct GenericClockClass sdioClockTable = {
     .branch = CLOCK_BASE_SDIO
 };
 
-static const struct GenericClockClass ssp0ClockTable = {
+const struct GenericClockClass * const Ssp0Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -304,7 +325,8 @@ static const struct GenericClockClass ssp0ClockTable = {
     .branch = CLOCK_BASE_SSP0
 };
 
-static const struct GenericClockClass ssp1ClockTable = {
+const struct GenericClockClass * const Ssp1Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -314,7 +336,8 @@ static const struct GenericClockClass ssp1ClockTable = {
     .branch = CLOCK_BASE_SSP1
 };
 
-static const struct GenericClockClass usart0ClockTable = {
+const struct GenericClockClass * const Usart0Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -324,7 +347,8 @@ static const struct GenericClockClass usart0ClockTable = {
     .branch = CLOCK_BASE_USART0
 };
 
-static const struct GenericClockClass uart1ClockTable = {
+const struct GenericClockClass * const Uart1Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -334,7 +358,8 @@ static const struct GenericClockClass uart1ClockTable = {
     .branch = CLOCK_BASE_UART1
 };
 
-static const struct GenericClockClass usart2ClockTable = {
+const struct GenericClockClass * const Usart2Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -344,7 +369,8 @@ static const struct GenericClockClass usart2ClockTable = {
     .branch = CLOCK_BASE_USART2
 };
 
-static const struct GenericClockClass usart3ClockTable = {
+const struct GenericClockClass * const Usart3Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -354,7 +380,8 @@ static const struct GenericClockClass usart3ClockTable = {
     .branch = CLOCK_BASE_USART3
 };
 
-static const struct GenericClockClass audioClockTable = {
+const struct GenericClockClass * const AudioClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = genericClockEnable,
@@ -364,7 +391,8 @@ static const struct GenericClockClass audioClockTable = {
     .branch = CLOCK_BASE_AUDIO
 };
 
-static const struct GenericClockClass outClockTable = {
+const struct GenericClockClass * const OutClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = clockOutputEnable,
@@ -374,7 +402,8 @@ static const struct GenericClockClass outClockTable = {
     .branch = CLOCK_BASE_OUT
 };
 
-static const struct GenericClockClass cguOut0ClockTable = {
+const struct GenericClockClass * const CguOut0Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = clockOutputEnable,
@@ -384,7 +413,8 @@ static const struct GenericClockClass cguOut0ClockTable = {
     .branch = CLOCK_BASE_CGU_OUT0
 };
 
-static const struct GenericClockClass cguOut1ClockTable = {
+const struct GenericClockClass * const CguOut1Clock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,
         .enable = clockOutputEnable,
@@ -439,43 +469,6 @@ static const struct PinEntry clockOutputPins[] = {
         .key = 0 /* End of pin function association list */
     }
 };
-/*----------------------------------------------------------------------------*/
-const struct GenericDividerClass * const DividerA = &dividerATable;
-const struct GenericDividerClass * const DividerB = &dividerBTable;
-const struct GenericDividerClass * const DividerC = &dividerCTable;
-const struct GenericDividerClass * const DividerD = &dividerDTable;
-const struct GenericDividerClass * const DividerE = &dividerETable;
-/*----------------------------------------------------------------------------*/
-const struct ClockClass * const ExternalOsc = &extOscTable;
-const struct ClockClass * const InternalOsc = &intOscTable;
-const struct ClockClass * const RtcOsc = &rtcOscTable;
-const struct ClockClass * const SystemPll = &pll1Table;
-const struct GenericPllClass * const AudioPll = &pll0AudioTable;
-const struct GenericPllClass * const UsbPll = &pll0UsbTable;
-/*----------------------------------------------------------------------------*/
-const struct GenericClockClass * const MainClock = &mainClockTable;
-const struct GenericClockClass * const Usb0Clock = &usb0ClockTable;
-const struct GenericClockClass * const Usb1Clock = &usb1ClockTable;
-const struct GenericClockClass * const PeriphClock = &periphClockTable;
-const struct GenericClockClass * const Apb1Clock = &apb1ClockTable;
-const struct GenericClockClass * const Apb3Clock = &apb3ClockTable;
-const struct GenericClockClass * const SpifiClock = &spifiClockTable;
-const struct GenericClockClass * const SpiClock = &spiClockTable;
-const struct GenericClockClass * const PhyRxClock = &phyRxClockTable;
-const struct GenericClockClass * const PhyTxClock = &phyTxClockTable;
-const struct GenericClockClass * const LcdClock = &lcdClockTable;
-const struct GenericClockClass * const AdcHsClock = &adcHsClockTable;
-const struct GenericClockClass * const SdioClock = &sdioClockTable;
-const struct GenericClockClass * const Ssp0Clock = &ssp0ClockTable;
-const struct GenericClockClass * const Ssp1Clock = &ssp1ClockTable;
-const struct GenericClockClass * const Usart0Clock = &usart0ClockTable;
-const struct GenericClockClass * const Uart1Clock = &uart1ClockTable;
-const struct GenericClockClass * const Usart2Clock = &usart2ClockTable;
-const struct GenericClockClass * const Usart3Clock = &usart3ClockTable;
-const struct GenericClockClass * const AudioClock = &audioClockTable;
-const struct GenericClockClass * const OutClock = &outClockTable;
-const struct GenericClockClass * const CguOut0Clock = &cguOut0ClockTable;
-const struct GenericClockClass * const CguOut1Clock = &cguOut1ClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pll0AudioFrequency = 0;

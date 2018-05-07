@@ -70,7 +70,8 @@ static void devDeinit(void *);
 #define devDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct UsbDeviceClass devTable = {
+const struct UsbDeviceClass * const UsbDevice =
+    &(const struct UsbDeviceClass){
     .size = sizeof(struct UsbDevice),
     .init = devInit,
     .deinit = devDeinit,
@@ -89,8 +90,6 @@ static const struct UsbDeviceClass devTable = {
     .stringAppend = devStringAppend,
     .stringErase = devStringErase
 };
-/*----------------------------------------------------------------------------*/
-const struct UsbDeviceClass * const UsbDevice = &devTable;
 /*----------------------------------------------------------------------------*/
 static void epCommonHandler(struct UsbDmaEndpoint *);
 static void epControlHandler(struct UsbDmaEndpoint *);
@@ -120,7 +119,8 @@ static enum Result epEnqueue(void *, struct UsbRequest *);
 static bool epIsStalled(void *);
 static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
-static const struct UsbEndpointClass epTable = {
+static const struct UsbEndpointClass * const UsbDmaEndpoint =
+    &(const struct UsbEndpointClass){
     .size = sizeof(struct UsbDmaEndpoint),
     .init = epInit,
     .deinit = epDeinit,
@@ -132,8 +132,6 @@ static const struct UsbEndpointClass epTable = {
     .isStalled = epIsStalled,
     .setStalled = epSetStalled
 };
-/*----------------------------------------------------------------------------*/
-const struct UsbEndpointClass * const UsbDmaEndpoint = &epTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {

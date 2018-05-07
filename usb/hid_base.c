@@ -38,7 +38,7 @@ static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
 static const UsbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
-static const struct UsbDriverClass driverTable = {
+const struct UsbDriverClass * const HidBase = &(const struct UsbDriverClass){
     .size = sizeof(struct HidBase),
     .init = driverInit,
     .deinit = driverDeinit,
@@ -47,8 +47,6 @@ static const struct UsbDriverClass driverTable = {
     .describe = driverDescribe,
     .event = driverEvent
 };
-/*----------------------------------------------------------------------------*/
-const struct UsbDriverClass * const HidBase = &driverTable;
 /*----------------------------------------------------------------------------*/
 static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     deviceDescriptor,

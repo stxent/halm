@@ -11,7 +11,7 @@
 static enum Result deviceInit(void *, const void *);
 static void deviceDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct HidClass deviceTable = {
+const struct HidClass * const Hid = &(const struct HidClass){
     .size = 0, /* Abstract class */
     .init = deviceInit,
     .deinit = deviceDeinit,
@@ -20,8 +20,6 @@ static const struct HidClass deviceTable = {
     .getReport = 0,
     .setReport = 0
 };
-/*----------------------------------------------------------------------------*/
-const struct HidClass * const Hid = &deviceTable;
 /*----------------------------------------------------------------------------*/
 static enum Result deviceInit(void *object, const void *configBase)
 {

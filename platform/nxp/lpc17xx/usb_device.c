@@ -111,7 +111,8 @@ static void devDeinit(void *);
 #define devDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct UsbDeviceClass devTable = {
+const struct UsbDeviceClass * const UsbDevice =
+    &(const struct UsbDeviceClass){
     .size = sizeof(struct UsbDevice),
     .init = devInit,
     .deinit = devDeinit,
@@ -131,8 +132,6 @@ static const struct UsbDeviceClass devTable = {
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
-const struct UsbDeviceClass * const UsbDevice = &devTable;
-/*----------------------------------------------------------------------------*/
 static enum Result epReadData(struct UsbSieEndpoint *, uint8_t *, size_t,
     size_t *);
 static void epReadPacketMemory(LPC_USB_Type *, uint8_t *, size_t);
@@ -149,7 +148,8 @@ static enum Result sieEpEnqueue(void *, struct UsbRequest *);
 static bool sieEpIsStalled(void *);
 static void sieEpSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
-static const struct UsbEndpointClass sieEpTable = {
+static const struct UsbEndpointClass * const UsbSieEndpoint =
+    &(const struct UsbEndpointClass){
     .size = sizeof(struct UsbSieEndpoint),
     .init = sieEpInit,
     .deinit = sieEpDeinit,
@@ -161,8 +161,6 @@ static const struct UsbEndpointClass sieEpTable = {
     .isStalled = sieEpIsStalled,
     .setStalled = sieEpSetStalled
 };
-/*----------------------------------------------------------------------------*/
-const struct UsbEndpointClass * const UsbSieEndpoint = &sieEpTable;
 /*----------------------------------------------------------------------------*/
 static void dmaEpHandler(struct UsbDmaEndpoint *);
 static void dmaEpUpdateChain(struct UsbDmaEndpoint *);
@@ -181,7 +179,8 @@ static enum Result dmaEpEnqueue(void *, struct UsbRequest *);
 static bool dmaEpIsStalled(void *);
 static void dmaEpSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
-static const struct UsbEndpointClass dmaEpTable = {
+static const struct UsbEndpointClass * const UsbDmaEndpoint =
+    &(const struct UsbEndpointClass){
     .size = sizeof(struct UsbDmaEndpoint),
     .init = dmaEpInit,
     .deinit = dmaEpDeinit,
@@ -193,8 +192,6 @@ static const struct UsbEndpointClass dmaEpTable = {
     .isStalled = dmaEpIsStalled,
     .setStalled = dmaEpSetStalled
 };
-/*----------------------------------------------------------------------------*/
-const struct UsbEndpointClass * const UsbDmaEndpoint = &dmaEpTable;
 /*----------------------------------------------------------------------------*/
 #if defined(CONFIG_PLATFORM_USB_DMA) && !defined(CONFIG_PLATFORM_USB_NO_DEINIT)
 static void deinitDescriptorPool(struct UsbDevice *device)
@@ -722,11 +719,10 @@ static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
 
     if (epReadData(ep, request->buffer, request->capacity, &read) == E_OK)
     {
-      queuePop(&ep->requests, 0);
-
       const enum UsbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
           USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
 
+      queuePop(&ep->requests, 0);
       request->length = read;
       request->callback(request->callbackArgument, request, requestStatus);
     }

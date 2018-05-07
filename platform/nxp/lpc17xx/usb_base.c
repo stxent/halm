@@ -21,7 +21,7 @@ static void devDeinit(void *);
 #define devDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass devTable = {
+const struct EntityClass * const UsbBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = devInit,
     .deinit = devDeinit
@@ -61,7 +61,6 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const UsbBase = &devTable;
 static struct UsbBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,

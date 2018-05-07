@@ -53,70 +53,61 @@ static uint32_t apb1ClockFrequency(const void *);
 static enum Result apb2ClockEnable(const void *, const void *);
 static uint32_t apb2ClockFrequency(const void *);
 /*----------------------------------------------------------------------------*/
-static const struct ClockClass extOscTable = {
+const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .disable = extOscDisable,
     .enable = extOscEnable,
     .frequency = extOscFrequency,
     .ready = extOscReady
 };
 
-static const struct ClockClass intOscTable = {
+const struct ClockClass * const InternalOsc = &(const struct ClockClass){
     .disable = intOscDisable,
     .enable = intOscEnable,
     .frequency = intOscFrequency,
     .ready = intOscReady
 };
 
-static const struct ClockClass sysClockTable = {
+const struct ClockClass * const SystemClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = systemClockEnable,
     .frequency = systemClockFrequency,
     .ready = clockReadyStub
 };
 
-static const struct ClockClass mainPllTable = {
+const struct ClockClass * const MainPll = &(const struct ClockClass){
     .disable = mainPllDisable,
     .enable = mainPllEnable,
     .frequency = mainPllFrequency,
     .ready = mainPllReady
 };
 
-static const struct ClockClass mainClockTable = {
+const struct ClockClass * const MainClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = mainClockEnable,
     .frequency = mainClockFrequency,
     .ready = clockReadyStub
 };
 
-static const struct ClockClass adcClockTable = {
+const struct ClockClass * const AdcClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = adcClockEnable,
     .frequency = adcClockFrequency,
     .ready = clockReadyStub
 };
 
-static const struct ClockClass apb1ClockTable = {
+const struct ClockClass * const Apb1Clock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = apb1ClockEnable,
     .frequency = apb1ClockFrequency,
     .ready = clockReadyStub
 };
 
-static const struct ClockClass apb2ClockTable = {
+const struct ClockClass * const Apb2Clock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = apb2ClockEnable,
     .frequency = apb2ClockFrequency,
     .ready = clockReadyStub
 };
-/*----------------------------------------------------------------------------*/
-const struct ClockClass * const ExternalOsc = &extOscTable;
-const struct ClockClass * const InternalOsc = &intOscTable;
-const struct ClockClass * const SystemClock = &sysClockTable;
-const struct ClockClass * const MainPll = &mainPllTable;
-const struct ClockClass * const MainClock = &mainClockTable;
-const struct ClockClass * const AdcClock = &adcClockTable;
-const struct ClockClass * const Apb1Clock = &apb1ClockTable;
-const struct ClockClass * const Apb2Clock = &apb2ClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;

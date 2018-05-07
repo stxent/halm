@@ -68,7 +68,8 @@ static void devDeinit(void *);
 #define devDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct UsbDeviceClass devTable = {
+const struct UsbDeviceClass * const UsbDevice =
+    &(const struct UsbDeviceClass){
     .size = sizeof(struct UsbDevice),
     .init = devInit,
     .deinit = devDeinit,
@@ -88,8 +89,6 @@ static const struct UsbDeviceClass devTable = {
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
-const struct UsbDeviceClass * const UsbDevice = &devTable;
-/*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbSieEndpoint *, uint8_t);
 static enum Result epReadData(struct UsbSieEndpoint *, uint8_t *, size_t,
     size_t *);
@@ -106,7 +105,8 @@ static enum Result epEnqueue(void *, struct UsbRequest *);
 static bool epIsStalled(void *);
 static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
-static const struct UsbEndpointClass epTable = {
+static const struct UsbEndpointClass * const UsbSieEndpoint =
+    &(const struct UsbEndpointClass){
     .size = sizeof(struct UsbSieEndpoint),
     .init = epInit,
     .deinit = epDeinit,
@@ -118,8 +118,6 @@ static const struct UsbEndpointClass epTable = {
     .isStalled = epIsStalled,
     .setStalled = epSetStalled
 };
-/*----------------------------------------------------------------------------*/
-const struct UsbEndpointClass * const UsbSieEndpoint = &epTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -416,11 +414,10 @@ static void epHandler(struct UsbSieEndpoint *ep, uint8_t status)
 
     if (epReadData(ep, request->buffer, request->capacity, &read) == E_OK)
     {
-      queuePop(&ep->requests, 0);
-
       const enum UsbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
           USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
 
+      queuePop(&ep->requests, 0);
       request->length = read;
       request->callback(request->callbackArgument, request, requestStatus);
     }

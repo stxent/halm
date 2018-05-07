@@ -63,13 +63,11 @@ static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
 static enum Result controlInit(void *, const void *);
 static void controlDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass controlTable = {
+const struct EntityClass * const UsbControl = &(const struct EntityClass){
     .size = sizeof(struct UsbControl),
     .init = controlInit,
     .deinit = controlDeinit
 };
-/*----------------------------------------------------------------------------*/
-const struct EntityClass * const UsbControl = &controlTable;
 /*----------------------------------------------------------------------------*/
 static enum Result driverConfigure(struct UsbControl *control,
     const struct UsbSetupPacket *packet, const void *payload,

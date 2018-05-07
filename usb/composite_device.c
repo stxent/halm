@@ -43,7 +43,8 @@ static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
 static const UsbDescriptorFunctor *driverDescribe(const void *);
 static void driverEvent(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
-static const struct UsbDriverClass driverTable = {
+static const struct UsbDriverClass * const CompositeDeviceProxy =
+    &(const struct UsbDriverClass){
     .size = sizeof(struct CompositeDeviceProxy),
     .init = driverInit,
     .deinit = driverDeinit,
@@ -52,8 +53,6 @@ static const struct UsbDriverClass driverTable = {
     .describe = driverDescribe,
     .event = driverEvent
 };
-/*----------------------------------------------------------------------------*/
-static const struct UsbDriverClass * const CompositeDeviceProxy = &driverTable;
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
 static void devDeinit(void *);

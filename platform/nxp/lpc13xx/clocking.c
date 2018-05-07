@@ -61,42 +61,43 @@ static enum Result branchEnable(const void *, const void *);
 static uint32_t branchFrequency(const void *);
 static bool branchReady(const void *);
 /*----------------------------------------------------------------------------*/
-static const struct ClockClass extOscTable = {
+const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .disable = extOscDisable,
     .enable = extOscEnable,
     .frequency = extOscFrequency,
     .ready = extOscReady
 };
 
-static const struct ClockClass intOscTable = {
+const struct ClockClass * const InternalOsc = &(const struct ClockClass){
     .disable = intOscDisable,
     .enable = intOscEnable,
     .frequency = intOscFrequency,
     .ready = intOscReady
 };
 
-static const struct ClockClass wdtOscTable = {
+const struct ClockClass * const WdtOsc = &(const struct ClockClass){
     .disable = wdtOscDisable,
     .enable = wdtOscEnable,
     .frequency = wdtOscFrequency,
     .ready = wdtOscReady
 };
 
-static const struct ClockClass sysPllTable = {
+const struct ClockClass * const SystemPll = &(const struct ClockClass){
     .disable = sysPllDisable,
     .enable = sysPllEnable,
     .frequency = sysPllFrequency,
     .ready = sysPllReady
 };
 
-static const struct ClockClass usbPllTable = {
+const struct ClockClass * const UsbPll = &(const struct ClockClass){
     .disable = usbPllDisable,
     .enable = usbPllEnable,
     .frequency = usbPllFrequency,
     .ready = usbPllReady
 };
 /*----------------------------------------------------------------------------*/
-static const struct GenericClockClass clockOutputTable = {
+const struct GenericClockClass * const ClockOutput =
+    &(const struct GenericClockClass){
     .base = {
         .disable = branchDisable,
         .enable = clockOutputEnable,
@@ -106,7 +107,8 @@ static const struct GenericClockClass clockOutputTable = {
     .branch = CLOCK_BRANCH_OUTPUT
 };
 
-static const struct GenericClockClass mainClockTable = {
+const struct GenericClockClass * const MainClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = branchDisable,
         .enable = branchEnable,
@@ -116,7 +118,8 @@ static const struct GenericClockClass mainClockTable = {
     .branch = CLOCK_BRANCH_MAIN
 };
 
-static const struct GenericClockClass usbClockTable = {
+const struct GenericClockClass * const UsbClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = branchDisable,
         .enable = branchEnable,
@@ -126,7 +129,8 @@ static const struct GenericClockClass usbClockTable = {
     .branch = CLOCK_BRANCH_USB
 };
 
-static const struct GenericClockClass wdtClockTable = {
+const struct GenericClockClass * const WdtClock =
+    &(const struct GenericClockClass){
     .base = {
         .disable = branchDisable,
         .enable = branchEnable,
@@ -178,16 +182,6 @@ static const uint16_t wdtFrequencyValues[15] = {
     4400,
     4600
 };
-/*----------------------------------------------------------------------------*/
-const struct ClockClass * const ExternalOsc = &extOscTable;
-const struct ClockClass * const InternalOsc = &intOscTable;
-const struct ClockClass * const WdtOsc = &wdtOscTable;
-const struct ClockClass * const SystemPll = &sysPllTable;
-const struct ClockClass * const UsbPll = &usbPllTable;
-const struct GenericClockClass * const ClockOutput = &clockOutputTable;
-const struct GenericClockClass * const MainClock = &mainClockTable;
-const struct GenericClockClass * const UsbClock = &usbClockTable;
-const struct GenericClockClass * const WdtClock = &wdtClockTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
