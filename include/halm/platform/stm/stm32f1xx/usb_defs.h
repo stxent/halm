@@ -100,9 +100,9 @@ enum
 #define EPR_DTOG_RX                     BIT(14)
 #define EPR_CTR_RX                      BIT(15)
 
+#define EPR_CTR_MASK                    (EPR_CTR_TX | EPR_CTR_RX)
 #define EPR_TOGGLE_MASK \
-    (EPR_EA_MASK | EPR_CTR_TX | EPR_EP_KIND | EPR_EP_TYPE_MASK \
-        | EPR_SETUP | EPR_CTR_RX)
+    (EPR_EA_MASK | EPR_EP_TYPE_MASK | EPR_EP_KIND | EPR_SETUP)
 /*------------------Reception byte count--------------------------------------*/
 #define COUNT_RX_MASK                   BIT_FIELD(MASK(10), 0)
 #define COUNT_RX(value)                 BIT_FIELD((value), 0)

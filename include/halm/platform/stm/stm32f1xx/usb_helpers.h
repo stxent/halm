@@ -10,46 +10,53 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm/stm32f1xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcRxEpAddr(const STM_USB_Type *reg, unsigned int ep)
+static inline uint32_t *calcEpAddr(const STM_USB_Type *reg, unsigned int entry)
 {
-  return (uint32_t *)(STM_CAN_USB_SRAM_BASE + (reg->BTABLE + ep * 8 + 4) * 2);
+  return (uint32_t *)(STM_CAN_USB_SRAM_BASE + (reg->BTABLE + entry * 4) * 2);
 }
 
-static inline void *calcRxEpBuffer(const STM_USB_Type *reg, unsigned int ep)
+static inline void *calcEpBuffer(const STM_USB_Type *reg, unsigned int entry)
 {
-  return (void *)(STM_CAN_USB_SRAM_BASE + *calcRxEpAddr(reg, ep) * 2);
+  return (void *)(STM_CAN_USB_SRAM_BASE + *calcEpAddr(reg, entry) * 2);
 }
 
-static inline uint32_t *calcRxEpCount(const STM_USB_Type *reg, unsigned int ep)
+static inline uint32_t *calcEpCount(const STM_USB_Type *reg, unsigned int entry)
 {
-  return (uint32_t *)(STM_CAN_USB_SRAM_BASE + (reg->BTABLE + ep * 8 + 6) * 2);
+  return calcEpAddr(reg, entry) + 1;
 }
 
-static inline uint32_t *calcTxEpAddr(const STM_USB_Type *reg, unsigned int ep)
+static inline unsigned int calcDbEpEntry(unsigned int ep)
 {
-  return (uint32_t *)(STM_CAN_USB_SRAM_BASE + (reg->BTABLE + ep * 8 + 0) * 2);
+  return ep * 2;
 }
 
-static inline void *calcTxEpBuffer(const STM_USB_Type *reg, unsigned int ep)
+static inline unsigned int calcRxEpEntry(unsigned int ep)
 {
-  return (void *)(STM_CAN_USB_SRAM_BASE + *calcTxEpAddr(reg, ep) * 2);
+  return ep * 2 + 1;
 }
 
-static inline uint32_t *calcTxEpCount(const STM_USB_Type *reg, unsigned int ep)
+static inline unsigned int calcTxEpEntry(unsigned int ep)
 {
-  return (uint32_t *)(STM_CAN_USB_SRAM_BASE + (reg->BTABLE + ep * 8 + 2) * 2);
+  return ep * 2;
 }
 
-static inline void changeRxStat(volatile uint32_t *reg, uint32_t stat)
+static inline uint32_t eprMakeRxStat(uint32_t epr, uint32_t stat)
 {
-  *reg = ((*reg & (EPR_TOGGLE_MASK | EPR_STAT_RX_MASK)) ^ EPR_STAT_RX(stat))
-      | (EPR_CTR_RX | EPR_CTR_TX);
+  return ((epr & (EPR_TOGGLE_MASK | EPR_STAT_RX_MASK)) ^ EPR_STAT_RX(stat))
+      | EPR_CTR_MASK;
 }
 
-static inline void changeTxStat(volatile uint32_t *reg, uint32_t stat)
+static inline uint32_t eprMakeTxStat(uint32_t epr, uint32_t stat)
 {
-  *reg = ((*reg & (EPR_TOGGLE_MASK | EPR_STAT_TX_MASK)) ^ EPR_STAT_TX(stat))
-      | (EPR_CTR_RX | EPR_CTR_TX);
+  return ((epr & (EPR_TOGGLE_MASK | EPR_STAT_TX_MASK)) ^ EPR_STAT_TX(stat))
+      | EPR_CTR_MASK;
+}
+
+static inline uint32_t eprMakeDtog(uint32_t epr, uint32_t set, uint32_t reset,
+    uint32_t toggle)
+{
+  return ((epr ^ set) & (EPR_TOGGLE_MASK | set | reset)) | toggle
+      | EPR_CTR_MASK;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_STM32F1XX_USB_HELPERS_H_ */

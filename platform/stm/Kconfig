@@ -68,6 +68,11 @@ config PLATFORM_USB_DEVICE
 	default y
 	depends on PLATFORM_USB
 
+config PLATFORM_USB_DOUBLE_BUFFERING
+	bool "Double-buffered bulk endpoints"
+	default y
+	depends on PLATFORM_USB
+
 config PLATFORM_USB_DEVICE_EP_REQUESTS
 	int "Endpoint queue size"
 	default 4

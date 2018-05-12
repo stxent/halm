@@ -7,8 +7,6 @@
 #include <assert.h>
 #include <string.h>
 #include <xcore/containers/queue.h>
-#include <xcore/memory.h>
-#include <halm/delay.h>
 #include <halm/platform/stm/stm32f1xx/usb_base.h>
 #include <halm/platform/stm/stm32f1xx/usb_defs.h>
 #include <halm/platform/stm/stm32f1xx/usb_helpers.h>
@@ -17,16 +15,32 @@
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 /*----------------------------------------------------------------------------*/
+struct UsbSieEndpoint;
+
+/* Endpoint subclass descriptor */
+struct SieEndpointClass
+{
+  void (*enable)(struct UsbSieEndpoint *, uint8_t, uint16_t);
+  void (*enqueue)(struct UsbSieEndpoint *, struct UsbRequest *);
+  void (*isr)(struct UsbSieEndpoint *, bool);
+};
+
 struct UsbSieEndpoint
 {
   struct UsbEndpoint base;
 
+  /* Endpoint subclass */
+  const struct SieEndpointClass *subclass;
   /* Parent device */
   struct UsbDevice *device;
   /* Queued requests */
   struct Queue requests;
   /* Logical address */
   uint8_t address;
+  /* Pending transfers */
+  uint8_t pending;
+  /* First transfer indicator */
+  bool first;
 };
 
 struct UsbDevice
@@ -34,7 +48,7 @@ struct UsbDevice
   struct UsbBase base;
 
   /* Array of registered endpoints */
-  struct UsbEndpoint *endpoints[16];
+  struct UsbSieEndpoint *endpoints[16];
   /* Control message handler */
   struct UsbControl *control;
 
@@ -92,13 +106,24 @@ const struct UsbDeviceClass * const UsbDevice =
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
-static void epHandler(struct UsbSieEndpoint *, bool);
-static enum Result epReadData(struct UsbSieEndpoint *, uint8_t *,
-    size_t, size_t *);
 static void epReadPacketMemory(void *, const void *, size_t);
-static void epWriteData(struct UsbSieEndpoint *, const uint8_t *, size_t);
+static uint8_t epTypeToPlatformType(uint8_t);
 static void epWritePacketMemory(void *, const void *, size_t);
-static void setRxEpBufferSize(struct UsbSieEndpoint *, unsigned int, size_t);
+static uint32_t sizeToNumBlocks(size_t);
+
+static void dbEpEnable(struct UsbSieEndpoint *, uint8_t, uint16_t);
+static void dbEpEnqueue(struct UsbSieEndpoint *, struct UsbRequest *);
+static void dbEpHandler(struct UsbSieEndpoint *, bool);
+static bool dbEpReadData(struct UsbSieEndpoint *, uint8_t *, size_t, size_t *);
+static void dbEpSetBufferSize(struct UsbSieEndpoint *, size_t);
+static void dbEpWriteData(struct UsbSieEndpoint *, const uint8_t *, size_t);
+
+static void sbEpEnable(struct UsbSieEndpoint *, uint8_t, uint16_t);
+static void sbEpEnqueue(struct UsbSieEndpoint *, struct UsbRequest *);
+static void sbEpHandler(struct UsbSieEndpoint *, bool);
+static bool sbEpReadData(struct UsbSieEndpoint *, uint8_t *, size_t, size_t *);
+static void sbEpSetBufferSize(struct UsbSieEndpoint *, size_t);
+static void sbEpWriteData(struct UsbSieEndpoint *, const uint8_t *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result epInit(void *, const void *);
 static void epDeinit(void *);
@@ -109,6 +134,20 @@ static enum Result epEnqueue(void *, struct UsbRequest *);
 static bool epIsStalled(void *);
 static void epSetStalled(void *, bool);
 /*----------------------------------------------------------------------------*/
+static const struct SieEndpointClass * const DoubleBufferedEndpoint =
+    &(const struct SieEndpointClass){
+    .enable = dbEpEnable,
+    .enqueue = dbEpEnqueue,
+    .isr = dbEpHandler
+};
+
+static const struct SieEndpointClass * const SingleBufferedEndpoint =
+    &(const struct SieEndpointClass){
+    .enable = sbEpEnable,
+    .enqueue = sbEpEnqueue,
+    .isr = sbEpHandler
+};
+
 static const struct UsbEndpointClass * const UsbSieEndpoint =
     &(const struct UsbEndpointClass){
     .size = sizeof(struct UsbSieEndpoint),
@@ -154,27 +193,22 @@ static void interruptHandler(void *object)
 
   if (intStatus & ISTR_CTR)
   {
-    unsigned int ep = ISTR_EP_ID_VALUE(intStatus);
-    const unsigned int number = ep;
+    unsigned int id = ISTR_EP_ID_VALUE(intStatus);
+    volatile uint32_t * const eprReg = &reg->EPR[id];
+    const uint32_t epr = *eprReg;
+    const bool setup = (epr & EPR_SETUP) != 0;
 
     if (!(intStatus & ISTR_DIR))
-      ep |= USB_EP_DIRECTION_IN;
+      id |= USB_EP_DIRECTION_IN;
 
-    const bool setup = (reg->EPR[number] & EPR_SETUP) != 0;
+    struct UsbSieEndpoint * const ep = device->endpoints[EP_TO_INDEX(id)];
 
-    if (!(intStatus & ISTR_DIR))
-    {
-      reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK & ~EPR_CTR_TX))
-          | EPR_CTR_RX;
-    }
+    if (intStatus & ISTR_DIR)
+      *eprReg = (epr & EPR_TOGGLE_MASK) | EPR_CTR_TX;
     else
-    {
-      reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK & ~EPR_CTR_RX))
-          | EPR_CTR_TX;
-    }
+      *eprReg = (epr & EPR_TOGGLE_MASK) | EPR_CTR_RX;
 
-    epHandler((struct UsbSieEndpoint *)device->endpoints[EP_TO_INDEX(ep)],
-        setup);
+    ep->subclass->isr(ep, setup);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -190,8 +224,10 @@ static void resetDevice(struct UsbDevice *device)
 
   for (size_t i = 0; i < 8; ++i)
   {
-    changeTxStat(&reg->EPR[i], EPR_STAT_DISABLED);
-    changeRxStat(&reg->EPR[i], EPR_STAT_DISABLED);
+    const uint32_t epr = reg->EPR[i];
+
+    reg->EPR[i] = eprMakeRxStat(epr, EPR_STAT_DISABLED)
+        | eprMakeTxStat(epr, EPR_STAT_DISABLED);
   }
 
   devSetAddress(device, 0);
@@ -267,7 +303,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   assert(index < ARRAY_SIZE(device->endpoints));
 
-  struct UsbEndpoint *ep = 0;
+  struct UsbSieEndpoint *ep = 0;
   const IrqState state = irqSave();
 
   if (!device->endpoints[index])
@@ -349,7 +385,318 @@ static void devStringErase(void *object, struct UsbString string)
   usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
-static void epHandler(struct UsbSieEndpoint *ep, bool setup)
+static void epReadPacketMemory(void *dst, const void *src, size_t length)
+{
+  /* Global address space, 32-bit words where the upper half is unused */
+  const uint32_t *buffer = src;
+
+  /* Local USB address space, 16-bit words */
+  uint16_t *start = dst;
+  uint16_t * const end = start + (length >> 1);
+
+  while (start < end)
+    *start++ = *buffer++;
+
+  if (length & 1)
+    *(uint8_t *)start = (uint8_t)*buffer;
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t epTypeToPlatformType(uint8_t type)
+{
+  static const uint8_t epTypeTable[] = {
+      [ENDPOINT_TYPE_CONTROL] = EPR_TYPE_CONTROL,
+      [ENDPOINT_TYPE_ISOCHRONOUS] = EPR_TYPE_ISO,
+      [ENDPOINT_TYPE_BULK] = EPR_TYPE_BULK,
+      [ENDPOINT_TYPE_INTERRUPT] = EPR_TYPE_INTERRUPT
+  };
+
+  return epTypeTable[type];
+}
+/*----------------------------------------------------------------------------*/
+static void epWritePacketMemory(void *dst, const void *src, size_t length)
+{
+  /* Local USB address space */
+  const uint16_t *buffer = src;
+
+  /* Global address space */
+  uint32_t *start = dst;
+  uint32_t * const end = start + (length >> 1);
+
+  while (start < end)
+    *start++ = *buffer++;
+
+  if (length & 1)
+    *start = *(const uint8_t *)buffer;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t sizeToNumBlocks(size_t size)
+{
+  if (size <= 62)
+    return COUNT_RX_NUM_BLOCK((size + 1) >> 1);
+  else
+    return COUNT_RX_NUM_BLOCK((size + 31) >> 5) | COUNT_RX_BLSIZE;
+}
+/*----------------------------------------------------------------------------*/
+static void dbEpEnable(struct UsbSieEndpoint *ep, uint8_t type, uint16_t size)
+{
+  STM_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  const unsigned int entry = calcDbEpEntry(number);
+
+  volatile uint32_t * const eprReg = &reg->EPR[number];
+  uint32_t value = (*eprReg & ~EPR_TOGGLE_MASK) | EPR_EP_KIND;
+  value |= EPR_EA(number) | EPR_EP_TYPE(epTypeToPlatformType(type));
+
+  ep->pending = 0;
+  ep->first = true;
+
+  *calcEpAddr(reg, entry) = ep->device->position;
+  *calcEpAddr(reg, entry + 1) = ep->device->position + size;
+  ep->device->position += size * 2;
+
+  if (ep->address & USB_EP_DIRECTION_IN)
+  {
+    /* DTOG_TX = 0, SW_BUF = 0 */
+    *eprReg = eprMakeDtog(value, 0, EPR_DTOG_RX | EPR_DTOG_TX, 0);
+    *eprReg = eprMakeTxStat(value, EPR_STAT_NAK) & ~EPR_CTR_MASK;
+  }
+  else
+  {
+    dbEpSetBufferSize(ep, size);
+    /* DTOG_RX = 0, SW_BUF = 0 */
+    *eprReg = eprMakeDtog(value, 0, EPR_DTOG_RX | EPR_DTOG_TX, 0);
+    *eprReg = eprMakeRxStat(value, EPR_STAT_NAK) & ~EPR_CTR_MASK;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void dbEpEnqueue(struct UsbSieEndpoint *ep, struct UsbRequest *request)
+{
+  if (ep->address & USB_EP_DIRECTION_IN)
+  {
+    if (ep->pending < 2 && ep->pending == queueSize(&ep->requests))
+    {
+      dbEpWriteData(ep, request->buffer, request->length);
+      ++ep->pending;
+    }
+  }
+  else
+  {
+    if (queueEmpty(&ep->requests))
+    {
+      STM_USB_Type * const reg = ep->device->base.reg;
+      const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+
+      if (ep->first)
+      {
+        ep->first = false;
+
+        /* Start new double buffered sequence */
+        reg->EPR[number] = eprMakeRxStat(reg->EPR[number], EPR_STAT_VALID);
+      }
+      else
+      {
+        /* Toggle software buffer selector */
+        reg->EPR[number] = eprMakeDtog(reg->EPR[number], 0, 0, EPR_DTOG_TX);
+      }
+    }
+  }
+
+  queuePush(&ep->requests, &request);
+}
+/*----------------------------------------------------------------------------*/
+static void dbEpHandler(struct UsbSieEndpoint *ep,
+    bool setup __attribute__((unused)))
+{
+  if (queueEmpty(&ep->requests))
+    return;
+
+  STM_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+
+  if (ep->address & USB_EP_DIRECTION_IN)
+  {
+    if (ep->pending > 1)
+    {
+      const uint32_t epr = reg->EPR[number];
+      const uint32_t dtog = epr & (EPR_DTOG_RX | EPR_DTOG_TX);
+
+      if (!dtog || !(dtog ^ (EPR_DTOG_RX | EPR_DTOG_TX)))
+      {
+        /* Start deferred transfer */
+        reg->EPR[number] = eprMakeDtog(reg->EPR[number], 0, 0, EPR_DTOG_RX);
+      }
+    }
+
+    struct UsbRequest *req;
+
+    queuePop(&ep->requests, &req);
+    req->callback(req->callbackArgument, req, USB_REQUEST_COMPLETED);
+    --ep->pending;
+
+    while (ep->pending < 2 && ep->pending < queueSize(&ep->requests))
+    {
+      req = *(struct UsbRequest **)queueAt(&ep->requests, ep->pending);
+      dbEpWriteData(ep, req->buffer, req->length);
+      ++ep->pending;
+    }
+  }
+  else
+  {
+    struct UsbRequest *req;
+    size_t read;
+
+    queuePeek(&ep->requests, &req);
+
+    if (dbEpReadData(ep, req->buffer, req->capacity, &read))
+    {
+      queuePop(&ep->requests, 0);
+      req->length = read;
+      req->callback(req->callbackArgument, req, USB_REQUEST_COMPLETED);
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
+static bool dbEpReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
+    size_t length, size_t *read)
+{
+  STM_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+
+  const uint32_t epr = reg->EPR[number];
+  const bool dtog = (epr & EPR_DTOG_RX) != 0;
+  const bool swbuf = (epr & EPR_DTOG_TX) != 0;
+  const unsigned int entry = calcDbEpEntry(number) + !dtog;
+  const size_t available = COUNT_RX_VALUE(*calcEpCount(reg, entry));
+  const bool ok = available <= length;
+
+  if ((queueSize(&ep->requests) > 1 || !ok) && dtog == swbuf)
+  {
+    /* Switch buffers */
+    reg->EPR[number] = eprMakeDtog(epr, 0, 0, EPR_DTOG_TX);
+  }
+
+  if (ok)
+  {
+    epReadPacketMemory(buffer, calcEpBuffer(reg, entry), available);
+    *read = available;
+  }
+
+  return ok;
+}
+/*----------------------------------------------------------------------------*/
+static void dbEpSetBufferSize(struct UsbSieEndpoint *ep, size_t size)
+{
+  assert(size > 0 && size <= 512);
+
+  const unsigned int entry = calcDbEpEntry(USB_EP_LOGICAL_ADDRESS(ep->address));
+  STM_USB_Type * const reg = ep->device->base.reg;
+  const uint32_t numBlocks = sizeToNumBlocks(size);
+
+  *calcEpCount(reg, entry) = numBlocks;
+  *calcEpCount(reg, entry + 1) = numBlocks;
+}
+/*----------------------------------------------------------------------------*/
+static void dbEpWriteData(struct UsbSieEndpoint *ep, const uint8_t *buffer,
+    size_t length)
+{
+  STM_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  const unsigned int entry = calcDbEpEntry(number);
+
+  if (!ep->pending)
+  {
+    const unsigned int current = (reg->EPR[number] & EPR_DTOG_RX) != 0;
+
+    /* All buffers empty, use first buffer */
+    epWritePacketMemory(calcEpBuffer(reg, entry + current), buffer, length);
+    *calcEpCount(reg, entry + current) = length;
+
+    if (ep->first)
+    {
+      ep->first = false;
+
+      /* Workaround for the first packet */
+      *calcEpCount(reg, entry + !current) = 0;
+      /* Initiate first transaction in a double buffered sequence */
+      reg->EPR[number] = eprMakeTxStat(reg->EPR[number], EPR_STAT_VALID);
+    }
+    else
+    {
+      const uint32_t epr = reg->EPR[number];
+      const uint32_t dtog = epr & (EPR_DTOG_RX | EPR_DTOG_TX);
+
+      if (!dtog || !(dtog ^ (EPR_DTOG_RX | EPR_DTOG_TX)))
+      {
+        /* Toggle software buffer selector */
+        reg->EPR[number] = eprMakeDtog(reg->EPR[number], 0, 0, EPR_DTOG_RX);
+      }
+    }
+  }
+  else
+  {
+    const uint32_t epr = reg->EPR[number];
+    const uint32_t dtog = (epr & EPR_DTOG_TX) != 0;
+    const uint32_t swbuf = (epr & EPR_DTOG_RX) != 0;
+
+    /* Workaround for the first packet */
+    const unsigned int current = dtog != swbuf ? swbuf : 1;
+
+    /* One of the buffers is already filled */
+    epWritePacketMemory(calcEpBuffer(reg, entry + current), buffer, length);
+    *calcEpCount(reg, entry + current) = length;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void sbEpEnable(struct UsbSieEndpoint *ep, uint8_t type, uint16_t size)
+{
+  STM_USB_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+
+  volatile uint32_t * const eprReg = &reg->EPR[number];
+  uint32_t value = *eprReg & ~EPR_TOGGLE_MASK;
+  value |= EPR_EA(number) | EPR_EP_TYPE(epTypeToPlatformType(type));
+
+  /* Pending transfers number and first packet indicator are unused */
+
+  if (ep->address & USB_EP_DIRECTION_IN)
+  {
+    *calcEpAddr(reg, calcTxEpEntry(number)) = ep->device->position;
+
+    *eprReg = eprMakeDtog(value, 0, EPR_DTOG_TX, 0);
+    *eprReg = eprMakeTxStat(value, EPR_STAT_NAK) & ~EPR_CTR_TX;
+  }
+  else
+  {
+    *calcEpAddr(reg, calcRxEpEntry(number)) = ep->device->position;
+    sbEpSetBufferSize(ep, size);
+
+    *eprReg = eprMakeDtog(value, 0, EPR_DTOG_RX, 0);
+    *eprReg = eprMakeRxStat(value, EPR_STAT_NAK) & ~EPR_CTR_RX;
+  }
+
+  ep->device->position += size;
+}
+/*----------------------------------------------------------------------------*/
+static void sbEpEnqueue(struct UsbSieEndpoint *ep, struct UsbRequest *request)
+{
+  if (queueEmpty(&ep->requests))
+  {
+    if (ep->address & USB_EP_DIRECTION_IN)
+    {
+      sbEpWriteData(ep, request->buffer, request->length);
+    }
+    else
+    {
+      STM_USB_Type * const reg = ep->device->base.reg;
+      const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+
+      reg->EPR[number] = eprMakeRxStat(reg->EPR[number], EPR_STAT_VALID);
+    }
+  }
+  queuePush(&ep->requests, &request);
+}
+/*----------------------------------------------------------------------------*/
+static void sbEpHandler(struct UsbSieEndpoint *ep, bool setup)
 {
   if (queueEmpty(&ep->requests))
     return;
@@ -383,7 +730,7 @@ static void epHandler(struct UsbSieEndpoint *ep, bool setup)
     if (!queueEmpty(&ep->requests))
     {
       queuePeek(&ep->requests, &request);
-      epWriteData(ep, request->buffer, request->length);
+      sbEpWriteData(ep, request->buffer, request->length);
     }
   }
   else
@@ -393,97 +740,57 @@ static void epHandler(struct UsbSieEndpoint *ep, bool setup)
 
     queuePeek(&ep->requests, &request);
 
-    if (epReadData(ep, request->buffer, request->capacity, &read) == E_OK)
+    if (sbEpReadData(ep, request->buffer, request->capacity, &read))
     {
-      queuePop(&ep->requests, 0);
-
-      if (!queueEmpty(&ep->requests))
-        changeRxStat(&reg->EPR[number], EPR_STAT_VALID);
-
       const enum UsbRequestStatus requestStatus = setup ?
           USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
 
+      queuePop(&ep->requests, 0);
       request->length = read;
       request->callback(request->callbackArgument, request, requestStatus);
-    }
-    else
-    {
-      /* The queue contains at least one request */
-      changeRxStat(&reg->EPR[number], EPR_STAT_VALID);
     }
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
+static bool sbEpReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
     size_t length, size_t *read)
 {
   STM_USB_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
-  const size_t available = COUNT_RX_VALUE(*calcRxEpCount(reg, number));
+  const unsigned int entry = calcRxEpEntry(number);
+  const size_t available = COUNT_RX_VALUE(*calcEpCount(reg, entry));
+  const bool ok = available <= length;
 
-  if (available <= length)
+  if (ok)
   {
-    epReadPacketMemory(buffer, calcRxEpBuffer(reg, number), available);
+    epReadPacketMemory(buffer, calcEpBuffer(reg, entry), available);
     *read = available;
-    return E_OK;
   }
-  else
-    return E_ERROR;
+
+  if (!ok || !queueEmpty(&ep->requests))
+    reg->EPR[number] = eprMakeRxStat(reg->EPR[number], EPR_STAT_VALID);
+
+  return ok;
 }
 /*----------------------------------------------------------------------------*/
-static void epReadPacketMemory(void *dst, const void *src, size_t length)
+static void sbEpSetBufferSize(struct UsbSieEndpoint *ep, size_t size)
 {
-  /* Local USB address space, 16-bit words */
-  uint16_t *dstBuffer = dst;
-  /* Global address space, 32-bit words where the upper half is unused */
-  const uint32_t *srcBuffer = src;
+  assert(size > 0 && size <= 512);
 
-  for (; length >= 2; length -= 2)
-    *dstBuffer++ = (uint32_t)(*srcBuffer++);
-
-  if (length)
-    *(uint8_t *)dstBuffer = (uint8_t)*srcBuffer;
+  const unsigned int entry = calcRxEpEntry(USB_EP_LOGICAL_ADDRESS(ep->address));
+  *calcEpCount(ep->device->base.reg, entry) = sizeToNumBlocks(size);
 }
 /*----------------------------------------------------------------------------*/
-static void epWriteData(struct UsbSieEndpoint *ep, const uint8_t *buffer,
+static void sbEpWriteData(struct UsbSieEndpoint *ep, const uint8_t *buffer,
     size_t length)
 {
   STM_USB_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  const unsigned int entry = calcTxEpEntry(number);
 
-  epWritePacketMemory(calcTxEpBuffer(reg, number), buffer, length);
-  *calcTxEpCount(reg, number) = length;
-  changeTxStat(&reg->EPR[number], EPR_STAT_VALID);
-}
-/*----------------------------------------------------------------------------*/
-static void epWritePacketMemory(void *dst, const void *src, size_t length)
-{
-  /* Global address space */
-  uint32_t *dstBuffer = dst;
-  /* Local USB address space */
-  const uint16_t *srcBuffer = src;
-
-  for (; length >= 2; length -= 2)
-    *dstBuffer++ = *srcBuffer++;
-
-  if (length)
-    *dstBuffer = *(const uint8_t *)srcBuffer;
-}
-/*----------------------------------------------------------------------------*/
-static void setRxEpBufferSize(struct UsbSieEndpoint *ep, unsigned int number,
-    size_t size)
-{
-  assert(size > 0 && size <= 512);
-
-  STM_USB_Type * const reg = ep->device->base.reg;
-  uint32_t value;
-
-  if (size <= 62)
-    value = COUNT_RX_NUM_BLOCK((size + 1) >> 1);
-  else
-    value = COUNT_RX_NUM_BLOCK((size + 31) >> 5) | COUNT_RX_BLSIZE;
-
-  *calcRxEpCount(reg, number) = value;
+  epWritePacketMemory(calcEpBuffer(reg, entry), buffer, length);
+  *calcEpCount(reg, entry) = length;
+  reg->EPR[number] = eprMakeTxStat(reg->EPR[number], EPR_STAT_VALID);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result epInit(void *object, const void *configBase)
@@ -491,13 +798,14 @@ static enum Result epInit(void *object, const void *configBase)
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbSieEndpoint * const ep = object;
 
-  const enum Result res = queueInit(&ep->requests,
-      sizeof(struct UsbRequest *), CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS);
+  const enum Result res = queueInit(&ep->requests, sizeof(struct UsbRequest *),
+      CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS);
 
   if (res == E_OK)
   {
-    ep->address = config->address;
+    ep->subclass = 0;
     ep->device = config->parent;
+    ep->address = config->address;
   }
 
   return res;
@@ -539,50 +847,34 @@ static void epDisable(void *object)
   struct UsbSieEndpoint * const ep = object;
   STM_USB_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  uint32_t epr = reg->EPR[number] & (EPR_TOGGLE_MASK & ~EPR_EP_KIND);
 
   if (ep->address & USB_EP_DIRECTION_IN)
-    changeTxStat(&reg->EPR[number], EPR_STAT_DISABLED);
+    epr = eprMakeTxStat(epr, EPR_STAT_DISABLED);
   else
-    changeRxStat(&reg->EPR[number], EPR_STAT_DISABLED);
+    epr = eprMakeRxStat(epr, EPR_STAT_DISABLED);
+
+  reg->EPR[number] = epr;
 }
 /*----------------------------------------------------------------------------*/
 static void epEnable(void *object, uint8_t type, uint16_t size)
 {
-  static const uint8_t epTypeTable[] = {
-      [ENDPOINT_TYPE_CONTROL] = EPR_TYPE_CONTROL,
-      [ENDPOINT_TYPE_ISOCHRONOUS] = EPR_TYPE_ISO,
-      [ENDPOINT_TYPE_BULK] = EPR_TYPE_BULK,
-      [ENDPOINT_TYPE_INTERRUPT] = EPR_TYPE_INTERRUPT
-  };
-
   struct UsbSieEndpoint * const ep = object;
-  STM_USB_Type * const reg = ep->device->base.reg;
-  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
-  uint32_t value = 0;
 
-  /* Translate USB endpoint type to platform-specific code */
-  value |= EPR_EA(number);
-  value |= EPR_EP_TYPE(epTypeTable[type]);
-
-  reg->EPR[number] = value;
-
-  if (ep->address & USB_EP_DIRECTION_IN)
+  switch (type)
   {
-    *calcTxEpAddr(reg, number) = ep->device->position;
-    reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK | EPR_DTOG_TX))
-        | (EPR_CTR_RX | EPR_CTR_TX);
-    changeTxStat(&reg->EPR[number], EPR_STAT_NAK);
-    ep->device->position += size;
+    case ENDPOINT_TYPE_BULK:
+#ifdef CONFIG_PLATFORM_USB_DOUBLE_BUFFERING
+      ep->subclass = DoubleBufferedEndpoint;
+      break;
+#endif
+
+    default:
+      ep->subclass = SingleBufferedEndpoint;
+      break;
   }
-  else
-  {
-    *calcRxEpAddr(reg, number) = ep->device->position;
-    setRxEpBufferSize(ep, number, size);
-    reg->EPR[number] = (reg->EPR[number] & (EPR_TOGGLE_MASK | EPR_DTOG_RX))
-        | (EPR_CTR_RX | EPR_CTR_TX);
-    changeRxStat(&reg->EPR[number], EPR_STAT_NAK);
-    ep->device->position += size;
-  }
+
+  ep->subclass->enable(ep, type, size);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
@@ -590,35 +882,25 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
   assert(request->callback);
 
   struct UsbSieEndpoint * const ep = object;
-  STM_USB_Type * const reg = ep->device->base.reg;
-  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
   irqDisable(ep->device->base.irq);
   assert(!queueFull(&ep->requests));
-
-  if (queueEmpty(&ep->requests))
-  {
-    if (ep->address & USB_EP_DIRECTION_IN)
-      epWriteData(ep, request->buffer, request->length);
-    else
-      changeRxStat(&reg->EPR[number], EPR_STAT_VALID);
-  }
-  queuePush(&ep->requests, &request);
-
+  ep->subclass->enqueue(ep, request);
   irqEnable(ep->device->base.irq);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static bool epIsStalled(void *object)
 {
-  struct UsbSieEndpoint * const ep = object;
-  STM_USB_Type * const reg = ep->device->base.reg;
-  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  const struct UsbSieEndpoint * const ep = object;
+  const STM_USB_Type * const reg = ep->device->base.reg;
+  const uint32_t epr = reg->EPR[USB_EP_LOGICAL_ADDRESS(ep->address)];
 
   if (ep->address & USB_EP_DIRECTION_IN)
-    return EPR_STAT_TX_VALUE(reg->EPR[number]) == EPR_STAT_STALL;
+    return EPR_STAT_TX_VALUE(epr) == EPR_STAT_STALL;
   else
-    return EPR_STAT_RX_VALUE(reg->EPR[number]) == EPR_STAT_STALL;
+    return EPR_STAT_RX_VALUE(epr) == EPR_STAT_STALL;
 }
 /*----------------------------------------------------------------------------*/
 static void epSetStalled(void *object, bool stalled)
@@ -626,19 +908,21 @@ static void epSetStalled(void *object, bool stalled)
   struct UsbSieEndpoint * const ep = object;
   STM_USB_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  volatile uint32_t * const eprReg = &reg->EPR[number];
+  const uint32_t epr = *eprReg;
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
     if (!stalled)
-      reg->EPR[number] = reg->EPR[number] & (EPR_TOGGLE_MASK | EPR_DTOG_TX);
+      *eprReg = eprMakeDtog(epr, 0, EPR_DTOG_TX, 0);
 
-    changeTxStat(&reg->EPR[number], stalled ? EPR_STAT_STALL : EPR_STAT_NAK);
+    *eprReg = eprMakeTxStat(epr, stalled ? EPR_STAT_STALL : EPR_STAT_NAK);
   }
   else
   {
     if (!stalled)
-      reg->EPR[number] = reg->EPR[number] & (EPR_TOGGLE_MASK | EPR_DTOG_RX);
+      *eprReg = eprMakeDtog(epr, 0, EPR_DTOG_RX, 0);
 
-    changeRxStat(&reg->EPR[number], stalled ? EPR_STAT_STALL : EPR_STAT_NAK);
+    *eprReg = eprMakeRxStat(epr, stalled ? EPR_STAT_STALL : EPR_STAT_NAK);
   }
 }
