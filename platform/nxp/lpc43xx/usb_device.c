@@ -6,8 +6,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
-#include <xcore/asm.h>
 #include <halm/platform/nxp/lpc43xx/usb_base.h>
 #include <halm/platform/nxp/lpc43xx/usb_defs.h>
 #include <halm/platform/nxp/usb_device.h>

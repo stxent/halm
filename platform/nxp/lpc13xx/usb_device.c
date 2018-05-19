@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <string.h>
 #include <xcore/asm.h>
 #include <xcore/containers/queue.h>
 #include <halm/delay.h>
@@ -537,7 +536,10 @@ static void epWritePacketMemory(LPC_USB_Type *reg, const uint8_t *buffer,
   length &= 3;
 
   while (start < end)
+  {
     reg->USBTxData = *start++;
+    __dsb();
+  }
 
   if (length)
   {

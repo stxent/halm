@@ -6,8 +6,6 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <stdlib.h>
-#include <string.h>
 #include <xcore/asm.h>
 #include <xcore/containers/array.h>
 #include <xcore/containers/queue.h>
@@ -660,7 +658,10 @@ static void epWritePacketMemory(LPC_USB_Type *reg, const uint8_t *buffer,
   length &= 3;
 
   while (start < end)
+  {
     reg->USBTxData = *start++;
+    __dsb();
+  }
 
   if (length)
   {
