@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <xcore/asm.h>
 #include <halm/core/core_defs.h>
 #include <halm/core/cortex/armv7m/nvic_defs.h>
 #include <halm/core/cortex/nvic.h>
@@ -36,7 +37,16 @@ void nvicResetCore(void)
 
   value = SCB->AIRCR & ~AIRCR_VECTKEY_MASK;
   value |= AIRCR_VECTKEY(0x5FA) | AIRCR_SYSRESETREQ;
+
+  /* The reset sequence recommended by ARM application notes */
+  __dsb();
+  __interruptsDisable();
+
+  /* Execute reset */
   SCB->AIRCR = value;
+
+  /* Wait until reset */
+  while (1);
 }
 /*----------------------------------------------------------------------------*/
 void nvicSetVectorTableOffset(uint32_t offset)
