@@ -53,7 +53,7 @@ void spiConfigPins(struct SpiBase *interface,
 uint32_t spiGetRate(const struct SpiBase *interface)
 {
   STM_SPI_Type * const reg = interface->reg;
-  return spiGetClock(interface) / (1UL << CR1_BR_VALUE(reg->CR1));
+  return spiGetClock(interface) / (1UL << (CR1_BR_VALUE(reg->CR1) + 1));
 }
 /*----------------------------------------------------------------------------*/
 void spiSetRate(struct SpiBase *interface, uint32_t rate)
@@ -62,7 +62,7 @@ void spiSetRate(struct SpiBase *interface, uint32_t rate)
 
   const uint32_t clock = spiGetClock(interface);
   uint32_t divisor = (clock + (rate - 1)) / rate;
-  uint32_t prescalerExp = 32 - countLeadingZeros32(divisor);
+  uint32_t prescalerExp = 31 - countLeadingZeros32(divisor);
 
   if (prescalerExp && !(divisor & (divisor - 1)))
   {

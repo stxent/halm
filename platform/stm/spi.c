@@ -263,14 +263,17 @@ static enum Result spiInit(void *object, const void *configBase)
   interface->unidir = true;
 
   STM_SPI_Type * const reg = interface->base.reg;
-  uint32_t controlValue = CR1_MSTR | CR1_SPE;
 
   /* Set mode of the interface */
+  uint32_t controlValue = CR1_MSTR;
+
   if (config->mode & 0x01)
     controlValue |= CR1_CPHA;
   if (config->mode & 0x02)
     controlValue |= CR1_CPOL;
+  reg->CR1 = controlValue;
 
+  /* Set desired baud rate */
   spiSetRate(object, interface->rate);
 
 #ifdef CONFIG_PLATFORM_STM_SPI_PM
@@ -280,7 +283,7 @@ static enum Result spiInit(void *object, const void *configBase)
 
   /* Enable the peripheral */
   reg->CR2 = CR2_RXDMAEN | CR2_TXDMAEN | CR2_SSOE;
-  reg->CR1 = controlValue;
+  reg->CR1 |= CR1_SPE;
 
   return E_OK;
 }
