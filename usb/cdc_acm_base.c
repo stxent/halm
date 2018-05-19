@@ -318,7 +318,7 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
     uint16_t payloadLength, void *response, uint16_t *responseLength)
 {
   if (packet->index != driver->controlInterfaceIndex)
-    return E_VALUE;
+    return E_INVALID;
 
   struct PrivateData * const privateData = driver->privateData;
   bool event = false;

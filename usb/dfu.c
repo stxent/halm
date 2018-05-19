@@ -340,7 +340,7 @@ static enum Result driverConfigure(void *object,
   if (type != REQUEST_TYPE_CLASS)
     return E_INVALID;
   if (packet->index != driver->interfaceIndex)
-    return E_VALUE;
+    return E_INVALID;
 
   switch (packet->request)
   {

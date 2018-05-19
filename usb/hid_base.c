@@ -160,7 +160,7 @@ static enum Result handleClassRequest(struct HidBase *driver,
     uint16_t maxResponseLength)
 {
   if (packet->index != driver->interfaceIndex)
-    return E_VALUE;
+    return E_INVALID;
 
   switch (packet->request)
   {

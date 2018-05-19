@@ -779,6 +779,9 @@ static enum Result handleClassRequest(struct Msc *driver,
     const struct UsbSetupPacket *packet, void *response,
     uint16_t *responseLength)
 {
+  if (packet->index != driver->interfaceIndex)
+    return E_INVALID;
+
   switch (packet->request)
   {
     case MSC_REQUEST_RESET:
@@ -791,7 +794,7 @@ static enum Result handleClassRequest(struct Msc *driver,
     case MSC_REQUEST_GET_MAX_LUN:
       usbTrace("msc at %u: max LUN requested", driver->interfaceIndex);
 
-      ((uint8_t *)response)[0] = 0; //FIXME
+      ((uint8_t *)response)[0] = 0; // TODO
       *responseLength = 1;
       return E_OK;
 

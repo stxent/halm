@@ -365,10 +365,7 @@ static enum Result devInit(void *object, const void *configBase)
   device->configurationLength = sizeof(struct UsbConfigurationDescriptor);
   device->interfaceCount = 0;
 
-  if ((res = usbDevBind(device->parent, device->driver)) != E_OK)
-    return res;
-
-  return E_OK;
+  return usbDevBind(device->parent, device->driver);
 }
 /*----------------------------------------------------------------------------*/
 static void devDeinit(void *object)
