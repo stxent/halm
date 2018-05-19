@@ -250,6 +250,27 @@ static void handleOutgoingFlow(struct MscQueryHandler *handler)
     }
   }
 
+  if (!queueEmpty(&handler->storageQueries))
+  {
+    struct MscQuery *query;
+    queuePeek(&handler->storageQueries, &query);
+
+    if (query->offset != query->length)
+    {
+      if (storageRead(handler, query))
+      {
+        query->offset = query->length;
+      }
+      else
+      {
+        /* Transfer failed, notify parent FSM */
+        handler->currentStatus = E_INTERFACE;
+        handler->trampoline(handler->driver);
+        return;
+      }
+    }
+  }
+
   if (arrayFull(&handler->queryPool) && !handler->currentQueryLength)
   {
     /* Transfer completed, invoke parent FSM */
@@ -367,13 +388,6 @@ static void storageReadCallback(void *argument)
     queuePop(&handler->storageQueries, &transfer);
     transfer->offset = 0;
     queuePush(&handler->usbQueries, &transfer);
-
-    /* Process next query if available */
-    if (!queueEmpty(&handler->storageQueries))
-    {
-      queuePeek(&handler->storageQueries, &transfer);
-      storageRead(handler, transfer);
-    }
 
     /* Handle USB transfers */
     handleOutgoingFlow(handler);
@@ -739,6 +753,9 @@ bool datapathReadAndSendData(struct MscQueryHandler *handler,
 
   struct MscQuery *query;
   queuePeek(&handler->storageQueries, &query);
+
+  /* Mark query as pending */
+  query->offset = query->length;
 
   return storageRead(handler, query);
 }
