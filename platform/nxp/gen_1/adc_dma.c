@@ -130,7 +130,7 @@ static enum Result adcInit(void *object, const void *configBase)
       return E_ERROR;
 
     /* Enable analog function on the input pin */
-    adcConfigPin(&interface->base, config->pin, &interface->pin);
+    interface->pin = adcConfigPin(&interface->base, config->pin);
 
     interface->callback = 0;
     interface->base.control |= CR_SEL_CHANNEL(interface->pin.channel);

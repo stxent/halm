@@ -76,7 +76,7 @@ static size_t setupChannels(struct AdcBus *interface, const PinNumber *pins)
   while (pins[index])
   {
     assert(index < ARRAY_SIZE(interface->pins));
-    adcConfigPin(&interface->base, pins[index], &interface->pins[index]);
+    interface->pins[index] = adcConfigPin(&interface->base, pins[index]);
 
     /*
      * Check whether the order of pins is correct and all pins

@@ -74,7 +74,7 @@ static enum Result adcInit(void *object, const void *configBase)
   if (res == E_OK)
   {
     /* Enable analog function on the input pin */
-    adcConfigPin(&interface->base, config->pin, &interface->pin);
+    interface->pin = adcConfigPin(&interface->base, config->pin);
     /* Calculate Control register value */
     interface->base.control |= CR_START(ADC_SOFTWARE)
         | CR_SEL_CHANNEL(interface->pin.channel);

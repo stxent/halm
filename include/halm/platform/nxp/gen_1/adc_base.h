@@ -47,7 +47,7 @@ struct AdcBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void adcConfigPin(const struct AdcBase *, PinNumber, struct AdcPin *);
+struct AdcPin adcConfigPin(const struct AdcBase *, PinNumber);
 void adcReleasePin(struct AdcPin);
 void adcResetInstance(uint8_t);
 bool adcSetInstance(uint8_t, struct AdcBase *);

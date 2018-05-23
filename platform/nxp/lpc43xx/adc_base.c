@@ -28,10 +28,8 @@ struct AdcBlockDescriptor
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static void configGroupPin(const struct PinGroupEntry *, PinNumber,
-    struct AdcPin *);
-static void configRegularPin(const struct PinEntry *, PinNumber,
-    struct AdcPin *);
+static struct AdcPin configGroupPin(const struct PinGroupEntry *, PinNumber);
+static struct AdcPin configRegularPin(const struct PinEntry *, PinNumber);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -146,8 +144,8 @@ const struct PinEntry adcPins[] = {
 const struct EntityClass * const AdcBase = &adcTable;
 static struct AdcBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void configGroupPin(const struct PinGroupEntry *group, PinNumber key,
-    struct AdcPin *adcPin)
+static struct AdcPin configGroupPin(const struct PinGroupEntry *group,
+    PinNumber key)
 {
   const struct PinData begin = {
       .offset = PIN_TO_OFFSET(group->begin),
@@ -158,12 +156,14 @@ static void configGroupPin(const struct PinGroupEntry *group, PinNumber key,
       .port = PIN_TO_PORT(key)
   };
 
-  adcPin->channel = current.offset - begin.offset;
-  adcPin->control = -1;
+  return (struct AdcPin){
+      .channel = current.offset - begin.offset,
+      .control = -1
+  };
 }
 /*----------------------------------------------------------------------------*/
-static void configRegularPin(const struct PinEntry *entry, PinNumber key,
-    struct AdcPin *adcPin)
+static struct AdcPin configRegularPin(const struct PinEntry *entry,
+    PinNumber key)
 {
   const uint8_t function = UNPACK_FUNCTION(entry->value);
   const uint8_t index = UNPACK_CHANNEL(entry->value);
@@ -180,8 +180,10 @@ static void configRegularPin(const struct PinEntry *entry, PinNumber key,
   /* Route analog input */
   LPC_SCU->ENAIO[entry->channel] |= 1 << index;
 
-  adcPin->channel = index;
-  adcPin->control = entry->channel;
+  return (struct AdcPin){
+      .channel = index,
+      .control = entry->channel
+  };
 }
 /*----------------------------------------------------------------------------*/
 void ADC0_ISR(void)
@@ -194,14 +196,14 @@ void ADC1_ISR(void)
   instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-void adcConfigPin(const struct AdcBase *unit, PinNumber key,
-    struct AdcPin *adcPin)
+struct AdcPin adcConfigPin(const struct AdcBase *unit, PinNumber key)
 {
-  const struct PinGroupEntry *group;
+  const struct PinGroupEntry * const group = pinGroupFind(adcPinGroups,
+      key, unit->channel);
 
-  if ((group = pinGroupFind(adcPinGroups, key, unit->channel)))
+  if (group)
   {
-    configGroupPin(group, key, adcPin);
+    return configGroupPin(group, key);
   }
   else
   {
@@ -212,7 +214,7 @@ void adcConfigPin(const struct AdcBase *unit, PinNumber key,
       entry = pinFind(adcPins, key, part);
     assert(entry);
 
-    configRegularPin(entry, key, adcPin);
+    return configRegularPin(entry, key);
   }
 }
 /*----------------------------------------------------------------------------*/

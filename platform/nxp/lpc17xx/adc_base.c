@@ -74,8 +74,7 @@ void ADC_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-void adcConfigPin(const struct AdcBase *interface, PinNumber key,
-    struct AdcPin *adcPin)
+struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
 {
   const struct PinEntry * const entry = pinFind(adcPins, key,
       interface->channel);
@@ -86,7 +85,7 @@ void adcConfigPin(const struct AdcBase *interface, PinNumber key,
   pinInput(pin);
   pinSetFunction(pin, UNPACK_FUNCTION(entry->value));
 
-  adcPin->channel = UNPACK_CHANNEL(entry->value);
+  return (struct AdcPin){UNPACK_CHANNEL(entry->value)};
 }
 /*----------------------------------------------------------------------------*/
 void adcReleasePin(const struct AdcPin adcPin __attribute__((unused)))
