@@ -1,0 +1,12 @@
+[
+  {
+    "address": "0xE0000000",
+    "name": "PPB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x0E010", "name": "SYSTICK", "type": "SYSTICK_Type"},
+      {"offset": "0x0E100", "name": "NVIC", "type": "NVIC_Type"},
+      {"offset": "0x0ED00", "name": "SCB", "type": "SCB_Type"}
+    ]
+  }
+]

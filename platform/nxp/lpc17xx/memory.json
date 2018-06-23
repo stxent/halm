@@ -1,0 +1,57 @@
+[
+  {
+    "address": "0x40000000",
+    "name": "APB0_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "WDT", "type": "LPC_WDT_Type"},
+      {"offset": "0x04000", "name": "TIMER0", "type": "LPC_TIMER_Type"},
+      {"offset": "0x08000", "name": "TIMER1", "type": "LPC_TIMER_Type"},
+      {"offset": "0x0C000", "name": "UART0", "type": "LPC_UART_Type"},
+      {"offset": "0x10000", "name": "UART1", "type": "LPC_USART_Type"},
+      {"offset": "0x18000", "name": "PWM1", "type": "LPC_PWM_Type"},
+      {"offset": "0x1C000", "name": "I2C0", "type": "LPC_I2C_Type"},
+      {"offset": "0x20000", "name": "SPI", "type": "LPC_SPI_Type"},
+      {"offset": "0x24000", "name": "RTC", "type": "LPC_RTC_Type"},
+      {"offset": "0x28080", "name": "GPIO_INT", "type": "LPC_GPIO_INT_Type"},
+      {"offset": "0x2C000", "name": "PINCON", "type": "LPC_PINCON_Type"},
+      {"offset": "0x30000", "name": "SSP1", "type": "LPC_SSP_Type"},
+      {"offset": "0x34000", "name": "ADC", "type": "LPC_ADC_Type"},
+      {"offset": "0x38000", "name": "CANAF_RAM", "type": "LPC_CANAF_RAM_Type"},
+      {"offset": "0x3C000", "name": "CANAF", "type": "LPC_CANAF_Type"},
+      {"offset": "0x40000", "name": "CANCR", "type": "LPC_CANCR_Type"},
+      {"offset": "0x44000", "name": "CAN1", "type": "LPC_CAN_Type"},
+      {"offset": "0x48000", "name": "CAN2", "type": "LPC_CAN_Type"},
+      {"offset": "0x5C000", "name": "I2C1", "type": "LPC_I2C_Type"}
+    ]
+  },
+  {
+    "address": "0x40080000",
+    "name": "APB1_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x08000", "name": "SSP0", "type": "LPC_SSP_Type"},
+      {"offset": "0x0C000", "name": "DAC", "type": "LPC_DAC_Type"},
+      {"offset": "0x10000", "name": "TIMER2", "type": "LPC_TIMER_Type"},
+      {"offset": "0x14000", "name": "TIMER3", "type": "LPC_TIMER_Type"},
+      {"offset": "0x18000", "name": "UART2", "type": "LPC_UART_Type"},
+      {"offset": "0x1C000", "name": "UART3", "type": "LPC_UART_Type"},
+      {"offset": "0x20000", "name": "I2C2", "type": "LPC_I2C_Type"},
+      {"offset": "0x28000", "name": "I2S", "type": "LPC_I2S_Type"},
+      {"offset": "0x30000", "name": "RIT", "type": "LPC_RIT_Type"},
+      {"offset": "0x38000", "name": "MCPWM", "type": "LPC_MCPWM_Type"},
+      {"offset": "0x3C000", "name": "QEI", "type": "LPC_QEI_Type"},
+      {"offset": "0x7C000", "name": "SC", "type": "LPC_SC_Type"}
+    ]
+  },
+  {
+    "address": "0x50000000",
+    "name": "AHB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "ETHERNET", "type": "LPC_ETHERNET_Type"},
+      {"offset": "0x04000", "name": "GPDMA", "type": "LPC_GPDMA_Type"},
+      {"offset": "0x0C000", "name": "USB", "type": "LPC_USB_Type"}
+    ]
+  }
+]

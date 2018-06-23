@@ -1,0 +1,32 @@
+[
+  {
+    "address": "0x40000000",
+    "name": "APB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "I2C", "type": "LPC_I2C_Type"},
+      {"offset": "0x04000", "name": "WWDT", "type": "LPC_WWDT_Type"},
+      {"offset": "0x08000", "name": "UART", "type": "LPC_UART_Type"},
+      {"offset": "0x0C000", "name": "TIMER16B0", "type": "LPC_TIMER_Type"},
+      {"offset": "0x10000", "name": "TIMER16B1", "type": "LPC_TIMER_Type"},
+      {"offset": "0x14000", "name": "TIMER32B0", "type": "LPC_TIMER_Type"},
+      {"offset": "0x18000", "name": "TIMER32B1", "type": "LPC_TIMER_Type"},
+      {"offset": "0x1C000", "name": "ADC", "type": "LPC_ADC_Type"},
+      {"offset": "0x20000", "name": "USB", "type": "LPC_USB_Type"},
+      {"offset": "0x38000", "name": "PMU", "type": "LPC_PMU_Type"},
+      {"offset": "0x3C000", "name": "FMC", "type": "LPC_FMC_Type"},
+      {"offset": "0x40000", "name": "SSP0", "type": "LPC_SSP_Type"},
+      {"offset": "0x44000", "name": "IOCON", "type": "LPC_IOCON_Type"},
+      {"offset": "0x48000", "name": "SYSCON", "type": "LPC_SYSCON_Type"},
+      {"offset": "0x58000", "name": "SSP1", "type": "LPC_SSP_Type"}
+    ]
+  },
+  {
+    "address": "0x50000000",
+    "name": "AHB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "GPIO", "type": "LPC_GPIO_Type", "array": 4}
+    ]
+  }
+]

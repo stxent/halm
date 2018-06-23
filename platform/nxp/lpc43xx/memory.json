@@ -1,0 +1,102 @@
+[
+  {
+    "address": "0x40000000",
+    "name": "AHB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "SCT", "type": "LPC_SCT_Type"},
+      {"offset": "0x02000", "name": "GPDMA", "type": "LPC_GPDMA_Type"},
+      {"offset": "0x03000", "name": "SPIFI", "type": "LPC_SPIFI_Type"},
+      {"offset": "0x04000", "name": "SDMMC", "type": "LPC_SDMMC_Type"},
+      {"offset": "0x05000", "name": "EMC", "type": "LPC_EMC_Type"},
+      {"offset": "0x06000", "name": "USB0", "type": "LPC_USB_Type"},
+      {"offset": "0x07000", "name": "USB1", "type": "LPC_USB_Type"},
+      {"offset": "0x08000", "name": "LCD", "type": "LPC_LCD_Type"},
+      {"offset": "0x0C000", "name": "FMCA", "type": "LPC_FMC_Type"},
+      {"offset": "0x0D000", "name": "FMCB", "type": "LPC_FMC_Type"},
+      {"offset": "0x0E000", "name": "EEPROM", "type": "LPC_EEPROM_Type"},
+      {"offset": "0x10000", "name": "ETHERNET", "type": "LPC_ETHERNET_Type"}
+    ]
+  },
+  {
+    "address": "0x40040000",
+    "name": "RTC_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "ATIMER", "type": "LPC_ATIMER_Type"},
+      {"offset": "0x01000", "name": "BACKUP", "type": "LPC_BACKUP_Type"},
+      {"offset": "0x02000", "name": "PMC", "type": "LPC_PMC_Type"},
+      {"offset": "0x03000", "name": "CREG", "type": "LPC_CREG_Type"},
+      {"offset": "0x04000", "name": "EVENTROUTER", "type": "LPC_EVENTROUTER_Type"},
+      {"offset": "0x05000", "name": "OTP", "type": "LPC_OTP_Type"},
+      {"offset": "0x06000", "name": "RTC", "type": "LPC_RTC_Type"}
+    ]
+  },
+  {
+    "address": "0x40050000",
+    "name": "CLK_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "CGU", "type": "LPC_CGU_Type"},
+      {"offset": "0x01000", "name": "CCU1", "type": "LPC_CCU1_Type"},
+      {"offset": "0x02000", "name": "CCU2", "type": "LPC_CCU2_Type"},
+      {"offset": "0x03000", "name": "RGU", "type": "LPC_RGU_Type"}
+    ]
+  },
+  {
+    "address": "0x40080000",
+    "name": "APB0_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "WWDT", "type": "LPC_WWDT_Type"},
+      {"offset": "0x01000", "name": "USART0", "type": "LPC_USART_Type"},
+      {"offset": "0x02000", "name": "UART1", "type": "LPC_UART_Type"},
+      {"offset": "0x03000", "name": "SSP0", "type": "LPC_SSP_Type"},
+      {"offset": "0x04000", "name": "TIMER0", "type": "LPC_TIMER_Type"},
+      {"offset": "0x05000", "name": "TIMER1", "type": "LPC_TIMER_Type"},
+      {"offset": "0x06000", "name": "SCU", "type": "LPC_SCU_Type"},
+      {"offset": "0x07000", "name": "GPIO_INT", "type": "LPC_GPIO_INT_Type"},
+      {"offset": "0x08000", "name": "GPIO_GROUP_INT0", "type": "LPC_GPIO_GROUP_INT_Type"},
+      {"offset": "0x09000", "name": "GPIO_GROUP_INT1", "type": "LPC_GPIO_GROUP_INT_Type"}
+    ]
+  },
+  {
+    "address": "0x400A0000",
+    "name": "APB1_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "MCPWM", "type": "LPC_MCPWM_Type"},
+      {"offset": "0x01000", "name": "I2C0", "type": "LPC_I2C_Type"},
+      {"offset": "0x02000", "name": "I2S0", "type": "LPC_I2S_Type"},
+      {"offset": "0x03000", "name": "I2S1", "type": "LPC_I2S_Type"},
+      {"offset": "0x04000", "name": "CAN1", "type": "LPC_CAN_Type"}
+    ]
+  },
+  {
+    "address": "0x400C0000",
+    "name": "APB2_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "RIT", "type": "LPC_RIT_Type"},
+      {"offset": "0x01000", "name": "USART2", "type": "LPC_USART_Type"},
+      {"offset": "0x02000", "name": "USART3", "type": "LPC_USART_Type"},
+      {"offset": "0x03000", "name": "TIMER2", "type": "LPC_TIMER_Type"},
+      {"offset": "0x04000", "name": "TIMER3", "type": "LPC_TIMER_Type"},
+      {"offset": "0x05000", "name": "SSP1", "type": "LPC_SSP_Type"},
+      {"offset": "0x06000", "name": "QEI", "type": "LPC_QEI_Type"},
+      {"offset": "0x07000", "name": "GIMA", "type": "LPC_GIMA_Type"}
+    ]
+  },
+  {
+    "address": "0x400E0000",
+    "name": "APB3_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "I2C1", "type": "LPC_I2C_Type"},
+      {"offset": "0x01000", "name": "DAC", "type": "LPC_DAC_Type"},
+      {"offset": "0x02000", "name": "CAN0", "type": "LPC_CAN_Type"},
+      {"offset": "0x03000", "name": "ADC0", "type": "LPC_ADC_Type"},
+      {"offset": "0x04000", "name": "ADC1", "type": "LPC_ADC_Type"}
+    ]
+  }
+]
