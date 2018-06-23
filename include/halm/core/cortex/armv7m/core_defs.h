@@ -6,20 +6,13 @@
 
 #ifndef HALM_CORE_CORTEX_ARMV7M_CORE_DEFS_H_
 #define HALM_CORE_CORTEX_ARMV7M_CORE_DEFS_H_
-/*----------------------------------------------------------------------------*/
-#include <stdint.h>
-/*----------------------------------------------------------------------------*/
-/* No effect or reserved registers */
-#define __ne__ __attribute__((deprecated))
-/* Registers with read and write access types */
-#define __rw__ volatile
-/* Read-only registers */
-#define __ro__ const volatile
-/* Write-only registers */
-#define __wo__ volatile
 /*------------------System Control Block--------------------------------------*/
 typedef struct
 {
+  __ne__ uint32_t RESERVED0;
+  __ro__ uint32_t ICTR; /* Interrupt Controller Type Register */
+  __rw__ uint32_t ACTLR; /* Auxiliary Control Register */
+  __ne__ uint32_t RESERVED1[829];
   __ro__ uint32_t CPUID; /* CPU ID Base Register */
   __rw__ uint32_t ICSR; /* Interrupt Control State Register */
   __rw__ uint32_t VTOR; /* Vector Table Offset Register */
@@ -39,8 +32,10 @@ typedef struct
   __ro__ uint32_t ADR; /* Auxiliary Feature Register */
   __ro__ uint32_t MMFR[4]; /* Memory Model Feature Register */
   __ro__ uint32_t ISAR[5]; /* ISA Feature Register */
-  __ne__ uint32_t RESERVED0[5];
+  __ne__ uint32_t RESERVED2[5];
   __rw__ uint32_t CPACR; /* Coprocessor Access Control Register */
+  __ne__ uint32_t RESERVED3[93];
+  __wo__ uint32_t STIR; /* Software Trigger Interrupt Register */
 } SCB_Type;
 /*------------------System Tick Timer-----------------------------------------*/
 typedef struct
@@ -63,14 +58,26 @@ typedef struct
   __ne__ uint32_t RESERVED3[24];
   __rw__ uint32_t IABR[8]; /* Interrupt Active bit Register */
   __ne__ uint32_t RESERVED4[56];
-  __rw__ uint8_t IP[240]; /* Interrupt Priority Registers */
-  __ne__ uint32_t RESERVED5[644];
-  __wo__ uint32_t STIR; /* Software Trigger Interrupt Register */
+  __rw__ uint8_t IPR[240]; /* Interrupt Priority Registers */
 } NVIC_Type;
 /*----------------------------------------------------------------------------*/
 typedef struct
 {
-  __ne__ uint32_t RESERVED0;
+  __ro__ uint32_t TYPE;
+  __rw__ uint32_t CTRL;
+  __rw__ uint32_t RNR;
+  __rw__ uint32_t RBAR;
+  __rw__ uint32_t RASR;
+  __rw__ uint32_t RBAR_A1;
+  __rw__ uint32_t RASR_A1;
+  __rw__ uint32_t RBAR_A2;
+  __rw__ uint32_t RASR_A2;
+  __rw__ uint32_t RBAR_A3;
+  __rw__ uint32_t RASR_A3;
+} MPU_Type;
+/*----------------------------------------------------------------------------*/
+typedef struct
+{
   __rw__ uint32_t FPCCR; /* Floating-Point Context Control Register */
   __rw__ uint32_t FPCAR; /* Floating-Point Context Address Register */
   __rw__ uint32_t FPDSCR; /* Floating-Point Default Status Control Register */
@@ -78,22 +85,34 @@ typedef struct
   __ro__ uint32_t MVFR1; /* Media and FP Feature Register 1 */
 } FPU_Type;
 /*----------------------------------------------------------------------------*/
-/* Base addresses of Cortex-M4 Hardware */
-#define SCS_BASE        (0xE000E000UL)
-#define SYSTICK_BASE    (SCS_BASE + 0x0010)
-#define NVIC_BASE       (SCS_BASE + 0x0100)
-#define SCB_BASE        (SCS_BASE + 0x0D00)
-#define FPU_BASE        (SCS_BASE + 0x0F30)
+typedef struct
+{
+  union
+  {
+    struct
+    {
+      __ne__ uint8_t RESERVED0[0xE010];
+      SYSTICK_Type SYSTICK;
+      __ne__ uint8_t RESERVED1[0xF0 - sizeof(SYSTICK_Type)];
+      NVIC_Type NVIC;
+      __ne__ uint8_t RESERVED2[0xC90 - sizeof(NVIC_Type)];
+      MPU_Type MPU;
+      __ne__ uint8_t RESERVED3[0x1A4 - sizeof(MPU_Type)];
+      FPU_Type FPU;
+    };
+
+    struct
+    {
+      __ne__ uint8_t RESERVED4[0xE000];
+      SCB_Type SCB;
+    };
+  };
+} PPB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
-/* Hardware declaration */
-#define SCB             ((SCB_Type *)SCB_BASE)
-#define SYSTICK         ((SYSTICK_Type *)SYSTICK_BASE)
-#define NVIC            ((NVIC_Type *)NVIC_BASE)
-#define FPU             ((FPU_Type *)FPU_BASE)
+extern PPB_DOMAIN_Type PPB_DOMAIN;
 /*----------------------------------------------------------------------------*/
-#undef __wo__
-#undef __ro__
-#undef __rw__
-#undef __ne__
+#define SCB       (&PPB_DOMAIN.SCB)
+#define SYSTICK   (&PPB_DOMAIN.SYSTICK)
+#define NVIC      (&PPB_DOMAIN.NVIC)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_ARMV7M_CORE_DEFS_H_ */

@@ -44,7 +44,7 @@ static const struct UartBlockDescriptor uartBlockEntries[] = {
         .irq = UART0_IRQ
     },
     {
-        .reg = (LPC_UART_Type *)LPC_UART1,
+        .reg = &LPC_UART1->BASE,
         .power = PWR_UART1,
         .clock = CLK_UART1,
         .irq = UART1_IRQ

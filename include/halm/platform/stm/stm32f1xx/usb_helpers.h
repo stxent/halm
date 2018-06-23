@@ -10,17 +10,25 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm/stm32f1xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t *calcEpAddr(const STM_USB_Type *reg, unsigned int entry)
+static inline volatile uint32_t *calcEpAddr(const STM_USB_Type *reg,
+    unsigned int entry)
 {
-  return (uint32_t *)(STM_CAN_USB_SRAM_BASE + (reg->BTABLE + entry * 4) * 2);
+  /*
+   * Although packet memory actually consists of 16-bit words aligned to
+   * 32-bit word boundaries, it is more convenient and fast to apply
+   * pointer arithmetics to an array of 16-bit values instead of 32-bit ones.
+   */
+  return (volatile uint32_t *)&STM_CAN_USB_SRAM[reg->BTABLE + entry * 4];
 }
 
-static inline void *calcEpBuffer(const STM_USB_Type *reg, unsigned int entry)
+static inline volatile void *calcEpBuffer(const STM_USB_Type *reg,
+    unsigned int entry)
 {
-  return (void *)(STM_CAN_USB_SRAM_BASE + *calcEpAddr(reg, entry) * 2);
+  return &STM_CAN_USB_SRAM[*calcEpAddr(reg, entry)];
 }
 
-static inline uint32_t *calcEpCount(const STM_USB_Type *reg, unsigned int entry)
+static inline volatile uint32_t *calcEpCount(const STM_USB_Type *reg,
+    unsigned int entry)
 {
   return calcEpAddr(reg, entry) + 1;
 }

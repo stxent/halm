@@ -42,7 +42,7 @@ void WWDT_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t wdtGetClock(const struct WdtBase *timer __attribute__((unused)))
 {
-  switch (CLKSEL_WDSEL_VALUE(LPC_WDT->CLKSEL) + 1)
+  switch (CLKSEL_WDSEL_VALUE(LPC_WWDT->CLKSEL) + 1)
   {
     case WDT_CLOCK_IRC:
       return clockFrequency(InternalOsc);
@@ -74,7 +74,7 @@ static enum Result wdtInit(void *object, const void *configBase)
       config->source : WDT_CLOCK_IRC;
 
   /* Select clock source */
-  LPC_WDT->CLKSEL = CLKSEL_WDSEL(clockSource - 1) | CLKSEL_LOCK;
+  LPC_WWDT->CLKSEL = CLKSEL_WDSEL(clockSource - 1) | CLKSEL_LOCK;
 
 #ifdef CONFIG_PM
   /* Watchdog interrupt will wake the controller from low-power modes */

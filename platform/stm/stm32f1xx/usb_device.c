@@ -118,9 +118,9 @@ const struct UsbDeviceClass * const UsbDevice =
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
-static void epReadPacketMemory(void *, const void *, size_t);
+static void epReadPacketMemory(void *, const volatile void *, size_t);
 static uint8_t epTypeToPlatformType(uint8_t);
-static void epWritePacketMemory(void *, const void *, size_t);
+static void epWritePacketMemory(volatile void *, const void *, size_t);
 static uint32_t sizeToNumBlocks(size_t);
 
 static void dbEpEnable(struct UsbSieEndpoint *, uint8_t, uint16_t);
@@ -400,10 +400,11 @@ static void devStringErase(void *object, struct UsbString string)
   usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
-static void epReadPacketMemory(void *dst, const void *src, size_t length)
+static void epReadPacketMemory(void *dst, const volatile void *src,
+    size_t length)
 {
   /* Global address space, 32-bit words where the upper half is unused */
-  const uint32_t *buffer = src;
+  const volatile uint32_t *buffer = src;
 
   /* Local USB address space, 16-bit words */
   uint16_t *start = dst;
@@ -428,14 +429,15 @@ static uint8_t epTypeToPlatformType(uint8_t type)
   return epTypeTable[type];
 }
 /*----------------------------------------------------------------------------*/
-static void epWritePacketMemory(void *dst, const void *src, size_t length)
+static void epWritePacketMemory(volatile void *dst, const void *src,
+    size_t length)
 {
   /* Local USB address space */
   const uint16_t *buffer = src;
 
   /* Global address space */
-  uint32_t *start = dst;
-  uint32_t * const end = start + (length >> 1);
+  volatile uint32_t *start = dst;
+  volatile uint32_t * const end = start + (length >> 1);
 
   while (start < end)
     *start++ = *buffer++;

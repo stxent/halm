@@ -32,6 +32,17 @@ typedef struct
   __rw__ uint32_t JDR4;
   __rw__ uint32_t DR;
 } STM_ADC_Type;
+/*------------------Backup registers------------------------------------------*/
+typedef struct
+{
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t DRL[10]; /* Lower part of registers, DR1..DR10 */
+  __rw__ uint32_t RTCCR;
+  __rw__ uint32_t CR;
+  __rw__ uint32_t CSR;
+  __ne__ uint32_t RESERVED1[2];
+  __rw__ uint32_t DRH[32]; /* Higher part of registers, DR11..DR42 */
+} STM_BKP_Type;
 /*------------------Controller Area Network-----------------------------------*/
 typedef struct
 {
@@ -81,7 +92,7 @@ typedef struct
   __ne__ uint32_t RESERVED5[8];
 
   /* Offset 0x240: filter registers, 14 for CL parts, 28 for other parts */
-  STM_CAN_FILTER_Type FILTERS[];
+  STM_CAN_FILTER_Type FILTERS[28];
 } STM_CAN_Type;
 /*------------------CRC calculation unit--------------------------------------*/
 typedef struct
@@ -124,7 +135,7 @@ typedef struct
   __rw__ uint32_t IFCR;
 
   /* Offset 0x08: channel registers, 7 for DMA1 and 5 for DMA2 */
-  STM_DMA_CHANNEL_Type CHANNELS[];
+  STM_DMA_CHANNEL_Type CHANNELS[7];
 } STM_DMA_Type;
 /*------------------Ethernet MAC----------------------------------------------*/
 typedef struct
@@ -330,6 +341,7 @@ typedef struct
   __rw__ uint32_t BSRR;
   __rw__ uint32_t BRR;
   __rw__ uint32_t LCKR;
+  __ne__ uint32_t RESERVED0[249];
 } STM_GPIO_Type;
 /*------------------Alternate Function Input/Output---------------------------*/
 typedef struct
@@ -477,131 +489,185 @@ typedef struct
   __rw__ uint32_t SR;
 } STM_WWDG_Type;
 /*----------------------------------------------------------------------------*/
-#define STM_OB_BASE             0x1FFFF800UL
-#define STM_APB1_BASE           0x40000000UL
-#define STM_APB2_BASE           0x40010000UL
-#define STM_AHB_BASE            0x40020000UL
-#define STM_FSMC_BASE           0xA0000000UL
+typedef struct
+{
+  STM_TIM_Type TIM2;
+  __ne__ uint8_t RESERVED0[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM3;
+  __ne__ uint8_t RESERVED1[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM4;
+  __ne__ uint8_t RESERVED2[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM5;
+  __ne__ uint8_t RESERVED3[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM6;
+  __ne__ uint8_t RESERVED4[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM7;
+  __ne__ uint8_t RESERVED5[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM12;
+  __ne__ uint8_t RESERVED6[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM13;
+  __ne__ uint8_t RESERVED7[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM14;
+  __ne__ uint8_t RESERVED8[0x800 - sizeof(STM_TIM_Type)];
+  STM_RTC_Type RTC;
+  __ne__ uint8_t RESERVED9[0x400 - sizeof(STM_RTC_Type)];
+  STM_WWDG_Type WWDG;
+  __ne__ uint8_t RESERVED10[0x400 - sizeof(STM_WWDG_Type)];
+  STM_IWDG_Type IWDG;
+  __ne__ uint8_t RESERVED11[0x800 - sizeof(STM_IWDG_Type)];
+  STM_SPI_Type SPI2;
+  __ne__ uint8_t RESERVED12[0x400 - sizeof(STM_SPI_Type)];
+  STM_SPI_Type SPI3;
+  __ne__ uint8_t RESERVED13[0x800 - sizeof(STM_SPI_Type)];
+  STM_USART_Type USART2;
+  __ne__ uint8_t RESERVED14[0x400 - sizeof(STM_USART_Type)];
+  STM_USART_Type USART3;
+  __ne__ uint8_t RESERVED15[0x400 - sizeof(STM_USART_Type)];
+  STM_USART_Type UART4;
+  __ne__ uint8_t RESERVED16[0x400 - sizeof(STM_USART_Type)];
+  STM_USART_Type UART5;
+  __ne__ uint8_t RESERVED17[0x400 - sizeof(STM_USART_Type)];
+  STM_I2C_Type I2C1;
+  __ne__ uint8_t RESERVED18[0x400 - sizeof(STM_I2C_Type)];
+  STM_I2C_Type I2C2;
+  __ne__ uint8_t RESERVED19[0x400 - sizeof(STM_I2C_Type)];
+  STM_USB_Type USB;
+  __ne__ uint8_t RESERVED20[0x400 - sizeof(STM_USB_Type)];
+  __rw__ uint16_t CAN_USB_SRAM[512];
+  STM_CAN_Type CAN1;
+  __ne__ uint8_t RESERVED21[0x400 - sizeof(STM_CAN_Type)];
+  STM_CAN_Type CAN2;
+  __ne__ uint8_t RESERVED22[0x400 - sizeof(STM_CAN_Type)];
+  STM_BKP_Type BKP;
+  __ne__ uint8_t RESERVED23[0x400 - sizeof(STM_BKP_Type)];
+  STM_PWR_Type PWR;
+  __ne__ uint8_t RESERVED24[0x400 - sizeof(STM_PWR_Type)];
+  STM_DAC_Type DAC;
+} APB1_DOMAIN_Type;
 
-#define STM_TIM2_BASE           (STM_APB1_BASE + 0x0000)
-#define STM_TIM3_BASE           (STM_APB1_BASE + 0x0400)
-#define STM_TIM4_BASE           (STM_APB1_BASE + 0x0800)
-#define STM_TIM5_BASE           (STM_APB1_BASE + 0x0C00)
-#define STM_TIM6_BASE           (STM_APB1_BASE + 0x1000)
-#define STM_TIM7_BASE           (STM_APB1_BASE + 0x1400)
-#define STM_TIM12_BASE          (STM_APB1_BASE + 0x1800)
-#define STM_TIM13_BASE          (STM_APB1_BASE + 0x1C00)
-#define STM_TIM14_BASE          (STM_APB1_BASE + 0x2000)
-#define STM_RTC_BASE            (STM_APB1_BASE + 0x2800)
-#define STM_WWDG_BASE           (STM_APB1_BASE + 0x2C00)
-#define STM_IWDG_BASE           (STM_APB1_BASE + 0x3000)
-#define STM_SPI2_BASE           (STM_APB1_BASE + 0x3800)
-#define STM_SPI3_BASE           (STM_APB1_BASE + 0x3C00)
-#define STM_USART2_BASE         (STM_APB1_BASE + 0x4400)
-#define STM_USART3_BASE         (STM_APB1_BASE + 0x4800)
-#define STM_UART4_BASE          (STM_APB1_BASE + 0x4C00)
-#define STM_UART5_BASE          (STM_APB1_BASE + 0x5000)
-#define STM_I2C1_BASE           (STM_APB1_BASE + 0x5400)
-#define STM_I2C2_BASE           (STM_APB1_BASE + 0x5800)
-#define STM_USB_BASE            (STM_APB1_BASE + 0x5C00)
-#define STM_CAN_USB_SRAM_BASE   (STM_APB1_BASE + 0x6000)
-#define STM_CAN1_BASE           (STM_APB1_BASE + 0x6400)
-#define STM_CAN2_BASE           (STM_APB1_BASE + 0x6800)
-#define STM_PWR_BASE            (STM_APB1_BASE + 0x7000)
-#define STM_DAC_BASE            (STM_APB1_BASE + 0x7400)
+typedef struct
+{
+  STM_AFIO_Type AFIO;
+  __ne__ uint8_t RESERVED0[0x400 - sizeof(STM_AFIO_Type)];
+  STM_EXTI_Type EXTI;
+  __ne__ uint8_t RESERVED1[0x400 - sizeof(STM_EXTI_Type)];
+  STM_GPIO_Type GPIO[7];
+  STM_ADC_Type ADC1;
+  __ne__ uint8_t RESERVED2[0x400 - sizeof(STM_ADC_Type)];
+  STM_ADC_Type ADC2;
+  __ne__ uint8_t RESERVED3[0x400 - sizeof(STM_ADC_Type)];
+  STM_TIM_Type TIM1;
+  __ne__ uint8_t RESERVED4[0x400 - sizeof(STM_TIM_Type)];
+  STM_SPI_Type SPI1;
+  __ne__ uint8_t RESERVED5[0x400 - sizeof(STM_SPI_Type)];
+  STM_TIM_Type TIM8;
+  __ne__ uint8_t RESERVED6[0x400 - sizeof(STM_TIM_Type)];
+  STM_USART_Type USART1;
+  __ne__ uint8_t RESERVED7[0x400 - sizeof(STM_USART_Type)];
+  STM_ADC_Type ADC3;
+  __ne__ uint8_t RESERVED8[0x400 - sizeof(STM_ADC_Type)];
+  STM_TIM_Type TIM15;
+  __ne__ uint8_t RESERVED9[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM16;
+  __ne__ uint8_t RESERVED10[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM17;
+  __ne__ uint8_t RESERVED11[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM9;
+  __ne__ uint8_t RESERVED12[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM10;
+  __ne__ uint8_t RESERVED13[0x400 - sizeof(STM_TIM_Type)];
+  STM_TIM_Type TIM11;
+} APB2_DOMAIN_Type;
 
-#define STM_AFIO_BASE           (STM_APB2_BASE + 0x0000)
-#define STM_EXTI_BASE           (STM_APB2_BASE + 0x0400)
-#define STM_GPIOA_BASE          (STM_APB2_BASE + 0x0800)
-#define STM_GPIOB_BASE          (STM_APB2_BASE + 0x0C00)
-#define STM_GPIOC_BASE          (STM_APB2_BASE + 0x1000)
-#define STM_GPIOD_BASE          (STM_APB2_BASE + 0x1400)
-#define STM_GPIOE_BASE          (STM_APB2_BASE + 0x1800)
-#define STM_GPIOF_BASE          (STM_APB2_BASE + 0x1C00)
-#define STM_GPIOG_BASE          (STM_APB2_BASE + 0x2000)
-#define STM_ADC1_BASE           (STM_APB2_BASE + 0x2400)
-#define STM_ADC2_BASE           (STM_APB2_BASE + 0x2800)
-#define STM_TIM1_BASE           (STM_APB2_BASE + 0x2C00)
-#define STM_SPI1_BASE           (STM_APB2_BASE + 0x3000)
-#define STM_TIM8_BASE           (STM_APB2_BASE + 0x3400)
-#define STM_USART1_BASE         (STM_APB2_BASE + 0x3800)
-#define STM_ADC3_BASE           (STM_APB2_BASE + 0x3C00)
-#define STM_TIM15_BASE          (STM_APB2_BASE + 0x4000)
-#define STM_TIM16_BASE          (STM_APB2_BASE + 0x4400)
-#define STM_TIM17_BASE          (STM_APB2_BASE + 0x4800)
-#define STM_TIM9_BASE           (STM_APB2_BASE + 0x4C00)
-#define STM_TIM10_BASE          (STM_APB2_BASE + 0x5000)
-#define STM_TIM11_BASE          (STM_APB2_BASE + 0x5400)
+typedef struct
+{
+  STM_SDIO_Type SDIO;
+  __ne__ uint8_t RESERVED0[0x8000 - sizeof(STM_SDIO_Type)];
+  STM_DMA_Type DMA1;
+  __ne__ uint8_t RESERVED1[0x400 - sizeof(STM_DMA_Type)];
+  STM_DMA_Type DMA2;
+  __ne__ uint8_t RESERVED2[0xC00 - sizeof(STM_DMA_Type)];
+  STM_RCC_Type RCC;
+  __ne__ uint8_t RESERVED3[0x1000 - sizeof(STM_RCC_Type)];
+  STM_FLASH_Type FLASH;
+  __ne__ uint8_t RESERVED4[0x1000 - sizeof(STM_FLASH_Type)];
+  STM_CRC_Type CRC;
+  __ne__ uint8_t RESERVED5[0x5000 - sizeof(STM_CRC_Type)];
+  STM_ETHERNET_Type ETHERNET;
+} AHB_DOMAIN_Type;
+/*----------------------------------------------------------------------------*/
+extern APB1_DOMAIN_Type APB1_DOMAIN;
+extern APB2_DOMAIN_Type APB2_DOMAIN;
+extern AHB_DOMAIN_Type  AHB_DOMAIN;
+extern STM_OB_Type      OB_DOMAIN;
+extern STM_FSMC_Type    FSMC_DOMAIN;
+/*----------------------------------------------------------------------------*/
+//#define STM_ETHERNET_MAC_BASE   (STM_ETHERNET_BASE)
+//#define STM_ETHERNET_MMC_BASE   (STM_ETHERNET_BASE + 0x0100)
+//#define STM_ETHERNET_PTP_BASE   (STM_ETHERNET_BASE + 0x0700)
+//#define STM_ETHERNET_DMA_BASE   (STM_ETHERNET_BASE + 0x1000)
 
-#define STM_SDIO_BASE           (STM_AHB_BASE - 0x2000)
-#define STM_DMA1_BASE           (STM_AHB_BASE + 0x0000)
-#define STM_DMA2_BASE           (STM_AHB_BASE + 0x0400)
-#define STM_RCC_BASE            (STM_AHB_BASE + 0x1000)
-#define STM_FLASH_BASE          (STM_AHB_BASE + 0x2000)
-#define STM_CRC_BASE            (STM_AHB_BASE + 0x3000)
-#define STM_ETHERNET_BASE       (STM_AHB_BASE + 0x8000)
+#define STM_TIM2          (&APB1_DOMAIN.TIM2)
+#define STM_TIM3          (&APB1_DOMAIN.TIM3)
+#define STM_TIM4          (&APB1_DOMAIN.TIM4)
+#define STM_TIM5          (&APB1_DOMAIN.TIM5)
+#define STM_TIM6          (&APB1_DOMAIN.TIM6)
+#define STM_TIM7          (&APB1_DOMAIN.TIM7)
+#define STM_TIM12         (&APB1_DOMAIN.TIM12)
+#define STM_TIM13         (&APB1_DOMAIN.TIM13)
+#define STM_TIM14         (&APB1_DOMAIN.TIM14)
+#define STM_RTC           (&APB1_DOMAIN.RTC)
+#define STM_WWDG          (&APB1_DOMAIN.WWDG)
+#define STM_IWDG          (&APB1_DOMAIN.IWDG)
+#define STM_SPI2          (&APB1_DOMAIN.SPI2)
+#define STM_SPI3          (&APB1_DOMAIN.SPI3)
+#define STM_USART2        (&APB1_DOMAIN.USART2)
+#define STM_USART3        (&APB1_DOMAIN.USART3)
+#define STM_UART4         (&APB1_DOMAIN.UART4)
+#define STM_UART5         (&APB1_DOMAIN.UART5)
+#define STM_I2C1          (&APB1_DOMAIN.I2C1)
+#define STM_I2C2          (&APB1_DOMAIN.I2C2)
+#define STM_CAN_USB_SRAM  (APB1_DOMAIN.CAN_USB_SRAM)
+#define STM_USB           (&APB1_DOMAIN.USB)
+#define STM_CAN1          (&APB1_DOMAIN.CAN1)
+#define STM_CAN2          (&APB1_DOMAIN.CAN2)
+#define STM_BKP           (&APB1_DOMAIN.BKP)
+#define STM_PWR           (&APB1_DOMAIN.PWR)
+#define STM_DAC           (&APB1_DOMAIN.DAC)
 
-#define STM_ETHERNET_MAC_BASE   (STM_ETHERNET_BASE)
-#define STM_ETHERNET_MMC_BASE   (STM_ETHERNET_BASE + 0x0100)
-#define STM_ETHERNET_PTP_BASE   (STM_ETHERNET_BASE + 0x0700)
-#define STM_ETHERNET_DMA_BASE   (STM_ETHERNET_BASE + 0x1000)
+#define STM_AFIO          (&APB2_DOMAIN.AFIO)
+#define STM_EXTI          (&APB2_DOMAIN.EXTI)
+#define STM_GPIO          (APB2_DOMAIN.GPIO)
+#define STM_GPIOA         (&APB2_DOMAIN.GPIO[0])
+#define STM_GPIOB         (&APB2_DOMAIN.GPIO[1])
+#define STM_GPIOC         (&APB2_DOMAIN.GPIO[2])
+#define STM_GPIOD         (&APB2_DOMAIN.GPIO[3])
+#define STM_GPIOE         (&APB2_DOMAIN.GPIO[4])
+#define STM_GPIOF         (&APB2_DOMAIN.GPIO[5])
+#define STM_GPIOG         (&APB2_DOMAIN.GPIO[6])
+#define STM_ADC1          (&APB2_DOMAIN.ADC1)
+#define STM_ADC2          (&APB2_DOMAIN.ADC2)
+#define STM_TIM1          (&APB2_DOMAIN.TIM1)
+#define STM_SPI1          (&APB2_DOMAIN.SPI1)
+#define STM_TIM8          (&APB2_DOMAIN.TIM8)
+#define STM_USART1        (&APB2_DOMAIN.USART1)
+#define STM_ADC3          (&APB2_DOMAIN.ADC3)
+#define STM_TIM15         (&APB2_DOMAIN.ADC15)
+#define STM_TIM16         (&APB2_DOMAIN.ADC16)
+#define STM_TIM17         (&APB2_DOMAIN.ADC17)
+#define STM_TIM9          (&APB2_DOMAIN.ADC9)
+#define STM_TIM10         (&APB2_DOMAIN.ADC10)
+#define STM_TIM11         (&APB2_DOMAIN.ADC11)
 
-#define STM_TIM2                ((STM_TIM_Type *)STM_TIM2_BASE)
-#define STM_TIM3                ((STM_TIM_Type *)STM_TIM3_BASE)
-#define STM_TIM4                ((STM_TIM_Type *)STM_TIM4_BASE)
-#define STM_TIM5                ((STM_TIM_Type *)STM_TIM5_BASE)
-#define STM_TIM6                ((STM_TIM_Type *)STM_TIM6_BASE)
-#define STM_TIM7                ((STM_TIM_Type *)STM_TIM7_BASE)
-#define STM_TIM12               ((STM_TIM_Type *)STM_TIM12_BASE)
-#define STM_TIM13               ((STM_TIM_Type *)STM_TIM13_BASE)
-#define STM_TIM14               ((STM_TIM_Type *)STM_TIM14_BASE)
-#define STM_RTC                 ((STM_RTC_Type *)STM_RTC_BASE)
-#define STM_WWDG                ((STM_WWDG_Type *)STM_WWDG_BASE)
-#define STM_IWDG                ((STM_IWDG_Type *)STM_IWDG_BASE)
-#define STM_SPI2                ((STM_SPI_Type *)STM_SPI2_BASE)
-#define STM_SPI3                ((STM_SPI_Type *)STM_SPI3_BASE)
-#define STM_USART2              ((STM_USART_Type *)STM_USART2_BASE)
-#define STM_USART3              ((STM_USART_Type *)STM_USART3_BASE)
-#define STM_UART4               ((STM_USART_Type *)STM_UART4_BASE)
-#define STM_UART5               ((STM_USART_Type *)STM_UART5_BASE)
-#define STM_I2C1                ((STM_I2C_Type *)STM_I2C1_BASE)
-#define STM_I2C2                ((STM_I2C_Type *)STM_I2C2_BASE)
-#define STM_USB                 ((STM_USB_Type *)STM_USB_BASE)
-#define STM_CAN1                ((STM_CAN_Type *)STM_CAN1_BASE)
-#define STM_CAN2                ((STM_CAN_Type *)STM_CAN2_BASE)
-#define STM_BKP                 ((STM_BKP_Type *)STM_BKP_BASE)
-#define STM_PWR                 ((STM_PWR_Type *)STM_PWR_BASE)
-#define STM_DAC                 ((STM_DAC_Type *)STM_DAC_BASE)
-#define STM_AFIO                ((STM_AFIO_Type *)STM_AFIO_BASE)
-#define STM_EXTI                ((STM_EXTI_Type *)STM_EXTI_BASE)
-#define STM_GPIOA               ((STM_GPIO_Type *)STM_GPIOA_BASE)
-#define STM_GPIOB               ((STM_GPIO_Type *)STM_GPIOB_BASE)
-#define STM_GPIOC               ((STM_GPIO_Type *)STM_GPIOC_BASE)
-#define STM_GPIOD               ((STM_GPIO_Type *)STM_GPIOD_BASE)
-#define STM_GPIOE               ((STM_GPIO_Type *)STM_GPIOE_BASE)
-#define STM_GPIOF               ((STM_GPIO_Type *)STM_GPIOF_BASE)
-#define STM_GPIOG               ((STM_GPIO_Type *)STM_GPIOG_BASE)
-#define STM_ADC1                ((STM_ADC_Type *)STM_ADC1_BASE)
-#define STM_ADC2                ((STM_ADC_Type *)STM_ADC2_BASE)
-#define STM_TIM1                ((STM_TIM_Type *)STM_TIM1_BASE)
-#define STM_SPI1                ((STM_SPI_Type *)STM_SPI1_BASE)
-#define STM_TIM8                ((STM_TIM_Type *)STM_TIM8_BASE)
-#define STM_USART1              ((STM_USART_Type *)STM_USART1_BASE)
-#define STM_ADC3                ((STM_ADC_Type *)STM_ADC3_BASE)
-#define STM_TIM15               ((STM_TIM_Type *)STM_TIM15_BASE)
-#define STM_TIM16               ((STM_TIM_Type *)STM_TIM16_BASE)
-#define STM_TIM17               ((STM_TIM_Type *)STM_TIM17_BASE)
-#define STM_TIM9                ((STM_TIM_Type *)STM_TIM9_BASE)
-#define STM_TIM10               ((STM_TIM_Type *)STM_TIM10_BASE)
-#define STM_TIM11               ((STM_TIM_Type *)STM_TIM11_BASE)
-#define STM_SDIO                ((STM_SDIO_Type *)STM_SDIO_BASE)
-#define STM_DMA1                ((STM_DMA_Type *)STM_DMA1_BASE)
-#define STM_DMA2                ((STM_DMA_Type *)STM_DMA2_BASE)
-#define STM_RCC                 ((STM_RCC_Type *)STM_RCC_BASE)
-#define STM_CRC                 ((STM_CRC_Type *)STM_CRC_BASE)
-#define STM_FLASH               ((STM_FLASH_Type *)STM_FLASH_BASE)
-#define STM_OB                  ((STM_OB_Type *)STM_OB_BASE)
-#define STM_ETHERNET            ((STM_ETHERNET_Type *)STM_ETHERNET_BASE)
-#define STM_FSMC                ((STM_FSMC_Type *)STM_FSMC_BASE)
+#define STM_SDIO          (&AHB_DOMAIN.SDIO)
+#define STM_DMA1          (&AHB_DOMAIN.DMA1)
+#define STM_DMA2          (&AHB_DOMAIN.DMA2)
+#define STM_RCC           (&AHB_DOMAIN.RCC)
+#define STM_CRC           (&AHB_DOMAIN.CRC)
+#define STM_FLASH         (&AHB_DOMAIN.FLASH)
+#define STM_ETHERNET      (&AHB_DOMAIN.ETHERNET)
+
+#define STM_OB            (&OB_DOMAIN)
+#define STM_FSMC          (&FSMC_DOMAIN)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM_STM32F1XX_PLATFORM_DEFS_H_ */

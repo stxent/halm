@@ -22,8 +22,7 @@ static const uint8_t pinRegMap[4][12] = {
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(struct PinData data)
 {
-  return (LPC_GPIO_Type *)((uintptr_t)LPC_GPIO0
-      + data.port * ((uintptr_t)LPC_GPIO1 - (uintptr_t)LPC_GPIO0));
+  return &LPC_GPIO[data.port];
 }
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcControlReg(struct PinData data)

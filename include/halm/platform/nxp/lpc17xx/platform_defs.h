@@ -311,41 +311,49 @@ typedef struct
   __ne__ uint32_t RESERVED2;
   __rw__ uint32_t TER;
 } LPC_UART_Type;
-/*------------------Extended Universal Asynchronous Receiver Transmitter------*/
+/*------------------Universal Synchronous Asynchronous Receiver Transmitter---*/
 /* UART block with modem control, RS485 support and IrDA mode */
 typedef struct
 {
   union
   {
-    __ro__ uint32_t RBR;
-    __wo__ uint32_t THR;
-    __rw__ uint32_t DLL;
+    struct
+    {
+      union
+      {
+        __ro__ uint32_t RBR;
+        __wo__ uint32_t THR;
+        __rw__ uint32_t DLL;
+      };
+      union
+      {
+        __rw__ uint32_t DLM;
+        __rw__ uint32_t IER;
+      };
+      union
+      {
+        __ro__ uint32_t IIR;
+        __wo__ uint32_t FCR;
+      };
+      __rw__ uint32_t LCR;
+      __rw__ uint32_t MCR;
+      __ro__ uint32_t LSR;
+      __ro__ uint32_t MSR;
+      __rw__ uint32_t SCR;
+      __rw__ uint32_t ACR;
+      __rw__ uint32_t ICR;
+      __rw__ uint32_t FDR;
+      __ne__ uint32_t RESERVED0;
+      __rw__ uint32_t TER;
+    };
+
+    LPC_UART_Type BASE;
   };
-  union
-  {
-    __rw__ uint32_t DLM;
-    __rw__ uint32_t IER;
-  };
-  union
-  {
-    __ro__ uint32_t IIR;
-    __wo__ uint32_t FCR;
-  };
-  __rw__ uint32_t LCR;
-  __rw__ uint32_t MCR;
-  __ro__ uint32_t LSR;
-  __ro__ uint32_t MSR;
-  __rw__ uint32_t SCR;
-  __rw__ uint32_t ACR;
-  __rw__ uint32_t ICR;
-  __rw__ uint32_t FDR;
-  __ne__ uint32_t RESERVED0;
-  __rw__ uint32_t TER;
   __ne__ uint32_t RESERVED1[6];
   __rw__ uint32_t RS485CTRL;
   __rw__ uint32_t RS485ADRMATCH;
   __rw__ uint32_t RS485DLY;
-} LPC_UART_MODEM_Type;
+} LPC_USART_Type;
 /*------------------Pulse-Width Modulator-------------------------------------*/
 typedef struct
 {
@@ -818,98 +826,131 @@ typedef struct
   __rw__ uint32_t PowerDown;
 } LPC_ETHERNET_Type;
 /*----------------------------------------------------------------------------*/
-/* Base addresses */
-#define LPC_GPIO_BASE           0x2009C000UL
-#define LPC_APB0_BASE           0x40000000UL
-#define LPC_APB1_BASE           0x40080000UL
-#define LPC_AHB_BASE            0x50000000UL
+typedef struct
+{
+  LPC_WDT_Type WDT;
+  __ne__ uint8_t RESERVED0[0x4000 - sizeof(LPC_WDT_Type)];
+  LPC_TIMER_Type TIMER0;
+  __ne__ uint8_t RESERVED1[0x4000 - sizeof(LPC_TIMER_Type)];
+  LPC_TIMER_Type TIMER1;
+  __ne__ uint8_t RESERVED2[0x4000 - sizeof(LPC_TIMER_Type)];
+  LPC_UART_Type UART0;
+  __ne__ uint8_t RESERVED3[0x4000 - sizeof(LPC_UART_Type)];
+  LPC_USART_Type UART1;
+  __ne__ uint8_t RESERVED4[0x8000 - sizeof(LPC_USART_Type)];
+  LPC_PWM_Type PWM1;
+  __ne__ uint8_t RESERVED5[0x4000 - sizeof(LPC_PWM_Type)];
+  LPC_I2C_Type I2C0;
+  __ne__ uint8_t RESERVED6[0x4000 - sizeof(LPC_I2C_Type)];
+  LPC_SPI_Type SPI;
+  __ne__ uint8_t RESERVED7[0x4000 - sizeof(LPC_SPI_Type)];
+  LPC_RTC_Type RTC;
+  __ne__ uint8_t RESERVED8[0x4080 - sizeof(LPC_RTC_Type)];
+  LPC_GPIO_INT_Type GPIO_INT;
+  __ne__ uint8_t RESERVED9[0x3F80 - sizeof(LPC_GPIO_INT_Type)];
+  LPC_PINCON_Type PINCON;
+  __ne__ uint8_t RESERVED10[0x4000 - sizeof(LPC_PINCON_Type)];
+  LPC_SSP_Type SSP1;
+  __ne__ uint8_t RESERVED11[0x4000 - sizeof(LPC_SSP_Type)];
+  LPC_ADC_Type ADC;
+  __ne__ uint8_t RESERVED12[0x4000 - sizeof(LPC_ADC_Type)];
+  LPC_CANAF_RAM_Type CANAF_RAM;
+  __ne__ uint8_t RESERVED13[0x4000 - sizeof(LPC_CANAF_RAM_Type)];
+  LPC_CANAF_Type CANAF;
+  __ne__ uint8_t RESERVED14[0x4000 - sizeof(LPC_CANAF_Type)];
+  LPC_CANCR_Type CANCR;
+  __ne__ uint8_t RESERVED15[0x4000 - sizeof(LPC_CANCR_Type)];
+  LPC_CAN_Type CAN1;
+  __ne__ uint8_t RESERVED16[0x4000 - sizeof(LPC_CAN_Type)];
+  LPC_CAN_Type CAN2;
+  __ne__ uint8_t RESERVED17[0x14000 - sizeof(LPC_CAN_Type)];
+  LPC_I2C_Type I2C1;
+} APB0_DOMAIN_Type;
 
-/* APB0 peripherals */
-#define LPC_WDT_BASE            (LPC_APB0_BASE + 0x00000)
-#define LPC_TIMER0_BASE         (LPC_APB0_BASE + 0x04000)
-#define LPC_TIMER1_BASE         (LPC_APB0_BASE + 0x08000)
-#define LPC_UART0_BASE          (LPC_APB0_BASE + 0x0C000)
-#define LPC_UART1_BASE          (LPC_APB0_BASE + 0x10000)
-#define LPC_PWM1_BASE           (LPC_APB0_BASE + 0x18000)
-#define LPC_I2C0_BASE           (LPC_APB0_BASE + 0x1C000)
-#define LPC_SPI_BASE            (LPC_APB0_BASE + 0x20000)
-#define LPC_RTC_BASE            (LPC_APB0_BASE + 0x24000)
-#define LPC_GPIO_INT_BASE       (LPC_APB0_BASE + 0x28080)
-#define LPC_PINCON_BASE         (LPC_APB0_BASE + 0x2C000)
-#define LPC_SSP1_BASE           (LPC_APB0_BASE + 0x30000)
-#define LPC_ADC_BASE            (LPC_APB0_BASE + 0x34000)
-#define LPC_CANAF_RAM_BASE      (LPC_APB0_BASE + 0x38000)
-#define LPC_CANAF_BASE          (LPC_APB0_BASE + 0x3C000)
-#define LPC_CANCR_BASE          (LPC_APB0_BASE + 0x40000)
-#define LPC_CAN1_BASE           (LPC_APB0_BASE + 0x44000)
-#define LPC_CAN2_BASE           (LPC_APB0_BASE + 0x48000)
-#define LPC_I2C1_BASE           (LPC_APB0_BASE + 0x5C000)
+typedef struct
+{
+  __ne__ uint8_t RESERVED0[0x8000];
+  LPC_SSP_Type SSP0;
+  __ne__ uint8_t RESERVED1[0x4000 - sizeof(LPC_SSP_Type)];
+  LPC_DAC_Type DAC;
+  __ne__ uint8_t RESERVED2[0x4000 - sizeof(LPC_DAC_Type)];
+  LPC_TIMER_Type TIMER2;
+  __ne__ uint8_t RESERVED3[0x4000 - sizeof(LPC_TIMER_Type)];
+  LPC_TIMER_Type TIMER3;
+  __ne__ uint8_t RESERVED4[0x4000 - sizeof(LPC_TIMER_Type)];
+  LPC_UART_Type UART2;
+  __ne__ uint8_t RESERVED5[0x4000 - sizeof(LPC_UART_Type)];
+  LPC_UART_Type UART3;
+  __ne__ uint8_t RESERVED6[0x4000 - sizeof(LPC_UART_Type)];
+  LPC_I2C_Type I2C2;
+  __ne__ uint8_t RESERVED7[0x8000 - sizeof(LPC_I2C_Type)];
+  LPC_I2S_Type I2S;
+  __ne__ uint8_t RESERVED8[0x8000 - sizeof(LPC_I2S_Type)];
+  LPC_RIT_Type RIT;
+  __ne__ uint8_t RESERVED9[0x8000 - sizeof(LPC_RIT_Type)];
+  LPC_MCPWM_Type MCPWM;
+  __ne__ uint8_t RESERVED10[0x4000 - sizeof(LPC_MCPWM_Type)];
+  LPC_QEI_Type QEI;
+  __ne__ uint8_t RESERVED11[0x40000 - sizeof(LPC_QEI_Type)];
+  LPC_SC_Type SC;
+} APB1_DOMAIN_Type;
 
-/* APB1 peripherals */
-#define LPC_SSP0_BASE           (LPC_APB1_BASE + 0x08000)
-#define LPC_DAC_BASE            (LPC_APB1_BASE + 0x0C000)
-#define LPC_TIMER2_BASE         (LPC_APB1_BASE + 0x10000)
-#define LPC_TIMER3_BASE         (LPC_APB1_BASE + 0x14000)
-#define LPC_UART2_BASE          (LPC_APB1_BASE + 0x18000)
-#define LPC_UART3_BASE          (LPC_APB1_BASE + 0x1C000)
-#define LPC_I2C2_BASE           (LPC_APB1_BASE + 0x20000)
-#define LPC_I2S_BASE            (LPC_APB1_BASE + 0x28000)
-#define LPC_RIT_BASE            (LPC_APB1_BASE + 0x30000)
-#define LPC_MCPWM_BASE          (LPC_APB1_BASE + 0x38000)
-#define LPC_QEI_BASE            (LPC_APB1_BASE + 0x3C000)
-#define LPC_SC_BASE             (LPC_APB1_BASE + 0x7C000)
-
-/* AHB peripherals */
-#define LPC_ETHERNET_BASE       (LPC_AHB_BASE + 0x00000)
-#define LPC_GPDMA_BASE          (LPC_AHB_BASE + 0x04000)
-#define LPC_USB_BASE            (LPC_AHB_BASE + 0x0C000)
-
-/* General Purpose Input/Output */
-#define LPC_GPIO0_BASE          (LPC_GPIO_BASE + 0x00000)
-#define LPC_GPIO1_BASE          (LPC_GPIO_BASE + 0x00020)
-#define LPC_GPIO2_BASE          (LPC_GPIO_BASE + 0x00040)
-#define LPC_GPIO3_BASE          (LPC_GPIO_BASE + 0x00060)
-#define LPC_GPIO4_BASE          (LPC_GPIO_BASE + 0x00080)
+typedef struct
+{
+  LPC_ETHERNET_Type ETHERNET;
+  __ne__ uint8_t RESERVED0[0x4000 - sizeof(LPC_ETHERNET_Type)];
+  LPC_GPDMA_Type GPDMA;
+  __ne__ uint8_t RESERVED1[0x8000 - sizeof(LPC_GPDMA_Type)];
+  LPC_USB_Type USB;
+} AHB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
-/* Peripheral declaration */
-#define LPC_SC          ((LPC_SC_Type *)LPC_SC_BASE)
-#define LPC_ADC         ((LPC_ADC_Type *)LPC_ADC_BASE)
-#define LPC_CAN1        ((LPC_CAN_Type *)LPC_CAN1_BASE)
-#define LPC_CAN2        ((LPC_CAN_Type *)LPC_CAN2_BASE)
-#define LPC_CANAF       ((LPC_CANAF_Type *)LPC_CANAF_BASE)
-#define LPC_CANAF_RAM   ((LPC_CANAF_RAM_Type *)LPC_CANAF_RAM_BASE)
-#define LPC_CANCR       ((LPC_CANCR_Type *)LPC_CANCR_BASE)
-#define LPC_DAC         ((LPC_DAC_Type *)LPC_DAC_BASE)
-#define LPC_ETHERNET    ((LPC_ETHERNET_Type *)LPC_ETHERNET_BASE)
-#define LPC_GPDMA       ((LPC_GPDMA_Type *)LPC_GPDMA_BASE)
-#define LPC_GPIO0       ((LPC_GPIO_Type *)LPC_GPIO0_BASE)
-#define LPC_GPIO1       ((LPC_GPIO_Type *)LPC_GPIO1_BASE)
-#define LPC_GPIO2       ((LPC_GPIO_Type *)LPC_GPIO2_BASE)
-#define LPC_GPIO3       ((LPC_GPIO_Type *)LPC_GPIO3_BASE)
-#define LPC_GPIO4       ((LPC_GPIO_Type *)LPC_GPIO4_BASE)
-#define LPC_GPIO_INT    ((LPC_GPIO_INT_Type *)LPC_GPIO_INT_BASE)
-#define LPC_I2C0        ((LPC_I2C_Type *)LPC_I2C0_BASE)
-#define LPC_I2C1        ((LPC_I2C_Type *)LPC_I2C1_BASE)
-#define LPC_I2C2        ((LPC_I2C_Type *)LPC_I2C2_BASE)
-#define LPC_I2S         ((LPC_I2S_Type *)LPC_I2S_BASE)
-#define LPC_MCPWM       ((LPC_MCPWM_Type *)LPC_MCPWM_BASE)
-#define LPC_PINCON      ((LPC_PINCON_Type *)LPC_PINCON_BASE)
-#define LPC_PWM1        ((LPC_PWM_Type *)LPC_PWM1_BASE)
-#define LPC_QEI         ((LPC_QEI_Type *)LPC_QEI_BASE)
-#define LPC_RIT         ((LPC_RIT_Type *)LPC_RIT_BASE)
-#define LPC_RTC         ((LPC_RTC_Type *)LPC_RTC_BASE)
-#define LPC_SPI         ((LPC_SPI_Type *)LPC_SPI_BASE)
-#define LPC_SSP0        ((LPC_SSP_Type *)LPC_SSP0_BASE)
-#define LPC_SSP1        ((LPC_SSP_Type *)LPC_SSP1_BASE)
-#define LPC_TIMER0      ((LPC_TIMER_Type *)LPC_TIMER0_BASE)
-#define LPC_TIMER1      ((LPC_TIMER_Type *)LPC_TIMER1_BASE)
-#define LPC_TIMER2      ((LPC_TIMER_Type *)LPC_TIMER2_BASE)
-#define LPC_TIMER3      ((LPC_TIMER_Type *)LPC_TIMER3_BASE)
-#define LPC_UART0       ((LPC_UART_Type *)LPC_UART0_BASE)
-#define LPC_UART1       ((LPC_UART_MODEM_Type *)LPC_UART1_BASE)
-#define LPC_UART2       ((LPC_UART_Type *)LPC_UART2_BASE)
-#define LPC_UART3       ((LPC_UART_Type *)LPC_UART3_BASE)
-#define LPC_USB         ((LPC_USB_Type *)LPC_USB_BASE)
-#define LPC_WDT         ((LPC_WDT_Type *)LPC_WDT_BASE)
+extern LPC_GPIO_Type    GPIO_DOMAIN[5];
+extern APB0_DOMAIN_Type APB0_DOMAIN;
+extern APB1_DOMAIN_Type APB1_DOMAIN;
+extern AHB_DOMAIN_Type  AHB_DOMAIN;
+/*----------------------------------------------------------------------------*/
+#define LPC_GPIO      (GPIO_DOMAIN)
+#define LPC_GPIO0     (&GPIO_DOMAIN[0])
+#define LPC_GPIO1     (&GPIO_DOMAIN[1])
+#define LPC_GPIO2     (&GPIO_DOMAIN[2])
+#define LPC_GPIO3     (&GPIO_DOMAIN[3])
+#define LPC_GPIO4     (&GPIO_DOMAIN[4])
+
+#define LPC_WDT       (&APB0_DOMAIN.WDT)
+#define LPC_TIMER0    (&APB0_DOMAIN.TIMER0)
+#define LPC_TIMER1    (&APB0_DOMAIN.TIMER1)
+#define LPC_UART0     (&APB0_DOMAIN.UART0)
+#define LPC_UART1     (&APB0_DOMAIN.UART1)
+#define LPC_PWM1      (&APB0_DOMAIN.PWM1)
+#define LPC_I2C0      (&APB0_DOMAIN.I2C0)
+#define LPC_SPI       (&APB0_DOMAIN.SPI)
+#define LPC_RTC       (&APB0_DOMAIN.RTC)
+#define LPC_GPIO_INT  (&APB0_DOMAIN.GPIO_INT)
+#define LPC_PINCON    (&APB0_DOMAIN.PINCON)
+#define LPC_SSP1      (&APB0_DOMAIN.SSP1)
+#define LPC_ADC       (&APB0_DOMAIN.ADC)
+#define LPC_CANAF_RAM (&APB0_DOMAIN.CANAF_RAM)
+#define LPC_CANAF     (&APB0_DOMAIN.CANAF)
+#define LPC_CANCR     (&APB0_DOMAIN.CANCR)
+#define LPC_CAN1      (&APB0_DOMAIN.CAN1)
+#define LPC_CAN2      (&APB0_DOMAIN.CAN2)
+#define LPC_I2C1      (&APB0_DOMAIN.I2C1)
+
+#define LPC_SSP0      (&APB1_DOMAIN.SSP0)
+#define LPC_DAC       (&APB1_DOMAIN.DAC)
+#define LPC_TIMER2    (&APB1_DOMAIN.TIMER2)
+#define LPC_TIMER3    (&APB1_DOMAIN.TIMER3)
+#define LPC_UART2     (&APB1_DOMAIN.UART2)
+#define LPC_UART3     (&APB1_DOMAIN.UART3)
+#define LPC_I2C2      (&APB1_DOMAIN.I2C2)
+#define LPC_I2S       (&APB1_DOMAIN.I2S)
+#define LPC_RIT       (&APB1_DOMAIN.RIT)
+#define LPC_MCPWM     (&APB1_DOMAIN.MCPWM)
+#define LPC_QEI       (&APB1_DOMAIN.QEI)
+#define LPC_SC        (&APB1_DOMAIN.SC)
+
+#define LPC_ETHERNET  (&AHB_DOMAIN.ETHERNET)
+#define LPC_GPDMA     (&AHB_DOMAIN.GPDMA)
+#define LPC_USB       (&AHB_DOMAIN.USB)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_ */

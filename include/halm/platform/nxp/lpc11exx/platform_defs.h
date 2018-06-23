@@ -103,10 +103,7 @@ typedef struct
   __rw__ uint32_t FMSSTART;
   __rw__ uint32_t FMSSTOP;
   __ne__ uint32_t RESERVED2;
-  __ro__ uint32_t FMSW0;
-  __ro__ uint32_t FMSW1;
-  __ro__ uint32_t FMSW2;
-  __ro__ uint32_t FMSW3;
+  __ro__ uint32_t FMSW[4];
   __ne__ uint32_t RESERVED3[24];
   __rw__ uint32_t EEMSSTART;
   __rw__ uint32_t EEMSSTOP;
@@ -522,57 +519,86 @@ typedef struct
   __rw__ uint32_t TC;
   __wo__ uint32_t FEED;
   __ro__ uint32_t TV;
+} LPC_WDT_Type;
+
+typedef struct
+{
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t MOD;
+      __rw__ uint32_t TC;
+      __wo__ uint32_t FEED;
+      __ro__ uint32_t TV;
+    };
+
+    LPC_WDT_Type BASE;
+  };
   __rw__ uint32_t CLKSEL;
   __rw__ uint32_t WARNINT;
   __rw__ uint32_t WINDOW;
-} LPC_WDT_Type;
+} LPC_WWDT_Type;
 /*----------------------------------------------------------------------------*/
-/* Base addresses */
-#define LPC_APB_BASE                0x40000000UL
-#define LPC_AHB_BASE                0x50000000UL
-
-/* APB peripherals */
-#define LPC_I2C_BASE                (LPC_APB_BASE + 0x00000)
-#define LPC_WDT_BASE                (LPC_APB_BASE + 0x04000)
-#define LPC_USART_BASE              (LPC_APB_BASE + 0x08000)
-#define LPC_TIMER16B0_BASE          (LPC_APB_BASE + 0x0C000)
-#define LPC_TIMER16B1_BASE          (LPC_APB_BASE + 0x10000)
-#define LPC_TIMER32B0_BASE          (LPC_APB_BASE + 0x14000)
-#define LPC_TIMER32B1_BASE          (LPC_APB_BASE + 0x18000)
-#define LPC_ADC_BASE                (LPC_APB_BASE + 0x1C000)
-#define LPC_PMU_BASE                (LPC_APB_BASE + 0x38000)
-#define LPC_FMC_BASE                (LPC_APB_BASE + 0x3C000)
-#define LPC_SSP0_BASE               (LPC_APB_BASE + 0x40000)
-#define LPC_IOCON_BASE              (LPC_APB_BASE + 0x44000)
-#define LPC_SYSCON_BASE             (LPC_APB_BASE + 0x48000)
-#define LPC_GPIO_INT_BASE           (LPC_APB_BASE + 0x4C000)
-#define LPC_SSP1_BASE               (LPC_APB_BASE + 0x58000)
-#define LPC_GPIO_GROUP_INT0_BASE    (LPC_APB_BASE + 0x5C000)
-#define LPC_GPIO_GROUP_INT1_BASE    (LPC_APB_BASE + 0x60000)
-
-/* AHB peripherals */
-#define LPC_GPIO_BASE               (LPC_AHB_BASE + 0x00000)
+typedef struct
+{
+  LPC_I2C_Type I2C;
+  __ne__ uint8_t RESERVED0[0x4000 - sizeof(LPC_I2C_Type)];
+  LPC_WWDT_Type WWDT;
+  __ne__ uint8_t RESERVED1[0x4000 - sizeof(LPC_WWDT_Type)];
+  LPC_UART_Type USART;
+  __ne__ uint8_t RESERVED2[0x4000 - sizeof(LPC_UART_Type)];
+  LPC_TIMER_Type TIMER16B0;
+  __ne__ uint8_t RESERVED3[0x4000 - sizeof(LPC_TIMER_Type)];
+  LPC_TIMER_Type TIMER16B1;
+  __ne__ uint8_t RESERVED4[0x4000 - sizeof(LPC_TIMER_Type)];
+  LPC_TIMER_Type TIMER32B0;
+  __ne__ uint8_t RESERVED5[0x4000 - sizeof(LPC_TIMER_Type)];
+  LPC_TIMER_Type TIMER32B1;
+  __ne__ uint8_t RESERVED6[0x4000 - sizeof(LPC_TIMER_Type)];
+  LPC_ADC_Type ADC;
+  __ne__ uint8_t RESERVED7[0x1C000 - sizeof(LPC_ADC_Type)];
+  LPC_PMU_Type PMU;
+  __ne__ uint8_t RESERVED8[0x4000 - sizeof(LPC_PMU_Type)];
+  LPC_FMC_Type FMC;
+  __ne__ uint8_t RESERVED9[0x4000 - sizeof(LPC_FMC_Type)];
+  LPC_SSP_Type SSP0;
+  __ne__ uint8_t RESERVED10[0x4000 - sizeof(LPC_SSP_Type)];
+  LPC_IOCON_Type IOCON;
+  __ne__ uint8_t RESERVED11[0x4000 - sizeof(LPC_IOCON_Type)];
+  LPC_SYSCON_Type SYSCON;
+  __ne__ uint8_t RESERVED12[0x4000 - sizeof(LPC_SYSCON_Type)];
+  LPC_GPIO_INT_Type GPIO_INT;
+  __ne__ uint8_t RESERVED13[0xC000 - sizeof(LPC_GPIO_INT_Type)];
+  LPC_SSP_Type SSP1;
+  __ne__ uint8_t RESERVED14[0x4000 - sizeof(LPC_SSP_Type)];
+  LPC_GPIO_GROUP_INT_Type GPIO_GROUP_INT0;
+  __ne__ uint8_t RESERVED15[0x4000 - sizeof(LPC_GPIO_GROUP_INT_Type)];
+  LPC_GPIO_GROUP_INT_Type GPIO_GROUP_INT1;
+} APB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
-/* Peripheral declaration */
-#define LPC_I2C             ((LPC_I2C_Type *)LPC_I2C_BASE)
-#define LPC_WDT             ((LPC_WDT_Type *)LPC_WDT_BASE)
-#define LPC_USART           ((LPC_UART_Type *)LPC_USART_BASE)
-#define LPC_TIMER16B0       ((LPC_TIMER_Type *)LPC_TIMER16B0_BASE)
-#define LPC_TIMER16B1       ((LPC_TIMER_Type *)LPC_TIMER16B1_BASE)
-#define LPC_TIMER32B0       ((LPC_TIMER_Type *)LPC_TIMER32B0_BASE)
-#define LPC_TIMER32B1       ((LPC_TIMER_Type *)LPC_TIMER32B1_BASE)
-#define LPC_ADC             ((LPC_ADC_Type *)LPC_ADC_BASE)
-#define LPC_PMU             ((LPC_PMU_Type *)LPC_PMU_BASE)
-#define LPC_FMC             ((LPC_FMC_Type *)LPC_FMC_BASE)
-#define LPC_SSP0            ((LPC_SSP_Type *)LPC_SSP0_BASE)
-#define LPC_SSP1            ((LPC_SSP_Type *)LPC_SSP1_BASE)
-#define LPC_IOCON           ((LPC_IOCON_Type *)LPC_IOCON_BASE)
-#define LPC_SYSCON          ((LPC_SYSCON_Type *)LPC_SYSCON_BASE)
-#define LPC_GPIO            ((LPC_GPIO_Type *)LPC_GPIO_BASE)
-#define LPC_GPIO_INT        ((LPC_GPIO_INT_Type *)LPC_GPIO_INT_BASE)
-#define LPC_GPIO_GROUP_INT0 \
-    ((LPC_GPIO_GROUP_INT_Type *)LPC_GPIO_GROUP_INT0_BASE)
-#define LPC_GPIO_GROUP_INT1 \
-    ((LPC_GPIO_GROUP_INT_Type *)LPC_GPIO_GROUP_INT1_BASE)
+extern APB_DOMAIN_Type APB_DOMAIN;
+extern LPC_GPIO_Type   GPIO_DOMAIN;
+/*----------------------------------------------------------------------------*/
+#define LPC_I2C               (&APB_DOMAIN.I2C)
+#define LPC_WDT               (&APB_DOMAIN.WWDT.BASE)
+#define LPC_WWDT              (&APB_DOMAIN.WWDT)
+#define LPC_USART             (&APB_DOMAIN.USART)
+#define LPC_TIMER16B0         (&APB_DOMAIN.TIMER16B0)
+#define LPC_TIMER16B1         (&APB_DOMAIN.TIMER16B1)
+#define LPC_TIMER32B0         (&APB_DOMAIN.TIMER32B0)
+#define LPC_TIMER32B1         (&APB_DOMAIN.TIMER32B1)
+#define LPC_ADC               (&APB_DOMAIN.ADC)
+#define LPC_PMU               (&APB_DOMAIN.PMU)
+#define LPC_FMC               (&APB_DOMAIN.FMC)
+#define LPC_SSP0              (&APB_DOMAIN.SSP0)
+#define LPC_IOCON             (&APB_DOMAIN.IOCON)
+#define LPC_SYSCON            (&APB_DOMAIN.SYSCON)
+#define LPC_GPIO_INT          (&APB_DOMAIN.GPIO_INT)
+#define LPC_SSP1              (&APB_DOMAIN.SSP1)
+#define LPC_GPIO_GROUP_INT0   (&APB_DOMAIN.GPIO_GROUP_INT0)
+#define LPC_GPIO_GROUP_INT1   (&APB_DOMAIN.GPIO_GROUP_INT1)
+
+#define LPC_GPIO              (&GPIO_DOMAIN)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_ */

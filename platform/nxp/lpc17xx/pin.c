@@ -16,8 +16,7 @@ static void commonPinInit(struct Pin);
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(struct PinData pin)
 {
-  return (LPC_GPIO_Type *)((uintptr_t)LPC_GPIO0
-      + pin.port * ((uintptr_t)LPC_GPIO1 - (uintptr_t)LPC_GPIO0));
+  return &LPC_GPIO[pin.port];
 }
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinSelect(struct PinData pin)

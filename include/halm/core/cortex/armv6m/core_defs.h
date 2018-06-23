@@ -6,17 +6,6 @@
 
 #ifndef HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_
 #define HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_
-/*----------------------------------------------------------------------------*/
-#include <stdint.h>
-/*----------------------------------------------------------------------------*/
-/* No effect or reserved registers */
-#define __ne__ __attribute__((deprecated))
-/* Registers with read and write access types */
-#define __rw__ volatile
-/* Read-only registers */
-#define __ro__ const volatile
-/* Write-only registers */
-#define __wo__ volatile
 /*------------------System Control Block--------------------------------------*/
 typedef struct
 {
@@ -51,20 +40,20 @@ typedef struct
   __rw__ uint32_t IPR[8]; /* Interrupt Priority Registers */
 } NVIC_Type;
 /*----------------------------------------------------------------------------*/
-/* Base addresses of Cortex-M3 Hardware */
-#define SCS_BASE        (0xE000E000UL)
-#define SYSTICK_BASE    (SCS_BASE + 0x0010)
-#define NVIC_BASE       (SCS_BASE + 0x0100)
-#define SCB_BASE        (SCS_BASE + 0x0D00)
+typedef struct
+{
+  __ne__ uint8_t RESERVED0[0xE010];
+  SYSTICK_Type SYSTICK;
+  __ne__ uint8_t RESERVED1[0xF0 - sizeof(SYSTICK_Type)];
+  NVIC_Type NVIC;
+  __ne__ uint8_t RESERVED2[0xC00 - sizeof(NVIC_Type)];
+  SCB_Type SCB;
+} PPB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
-/* Hardware declaration */
-#define SCB             ((SCB_Type *)SCB_BASE)
-#define SYSTICK         ((SYSTICK_Type *)SYSTICK_BASE)
-#define NVIC            ((NVIC_Type *)NVIC_BASE)
+extern PPB_DOMAIN_Type PPB_DOMAIN;
 /*----------------------------------------------------------------------------*/
-#undef __wo__
-#undef __ro__
-#undef __rw__
-#undef __ne__
+#define SYSTICK   (&PPB_DOMAIN.SYSTICK)
+#define NVIC      (&PPB_DOMAIN.NVIC)
+#define SCB       (&PPB_DOMAIN.SCB)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_ */
