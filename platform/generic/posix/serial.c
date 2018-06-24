@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <ev.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <uv.h>
 #include <xcore/bits.h>
 #include <xcore/containers/byte_queue.h>
 #include <halm/platform/generic/serial.h>
@@ -23,12 +23,6 @@ struct StreamRateEntry
   speed_t value;
 };
 
-struct InterfaceWatcher
-{
-  ev_io io;
-  void *instance;
-};
-
 struct Serial
 {
   struct Interface parent;
@@ -40,7 +34,7 @@ struct Serial
   pthread_mutex_t rxQueueLock;
 
   struct termios initialSettings;
-  struct InterfaceWatcher watcher;
+  uv_poll_t listener;
   int descriptor;
 };
 /*----------------------------------------------------------------------------*/
@@ -65,7 +59,7 @@ static bool changePortFlag(struct Serial *, int, bool);
 static bool getPortFlag(struct Serial *, int, bool *);
 static bool getPortParity(struct Serial *, enum SerialParity *);
 static bool getPortRate(struct Serial *, uint32_t *);
-static void interfaceCallback(EV_P_ ev_io *, int);
+static void interfaceCallback(uv_poll_t *, int, int);
 static void setPortParameters(struct Serial *, const struct SerialConfig *);
 static bool setPortRate(struct Serial *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -150,14 +144,15 @@ static bool getPortRate(struct Serial *interface, uint32_t *actualRate)
   return false;
 }
 /*----------------------------------------------------------------------------*/
-static void interfaceCallback(EV_P_ ev_io *w,
-    int revents __attribute__((unused)))
+static void interfaceCallback(uv_poll_t *handle,
+    int status __attribute__((unused)),
+    int events __attribute__((unused)))
 {
-  struct InterfaceWatcher * const watcher = (struct InterfaceWatcher *)w;
-  struct Serial * const interface = watcher->instance;
+  struct Serial * const interface = handle->data;
   uint8_t buffer[BUFFER_SIZE];
   ssize_t length;
 
+  /* TODO Disconnect handling */
   pthread_mutex_lock(&interface->rxQueueLock);
   while ((length = read(interface->descriptor, buffer, sizeof(buffer))) > 0)
     byteQueuePushArray(&interface->rxQueue, buffer, (size_t)length);
@@ -263,10 +258,9 @@ static enum Result streamInit(void *object, const void *configBase)
   fcntl(interface->descriptor, F_SETFL, 0);
   setPortParameters(interface, config);
 
-  interface->watcher.instance = interface;
-  ev_init(&interface->watcher.io, interfaceCallback);
-  ev_io_set(&interface->watcher.io, interface->descriptor, EV_READ);
-  ev_io_start(ev_default_loop(0), &interface->watcher.io);
+  uv_poll_init(uv_default_loop(), &interface->listener, interface->descriptor);
+  interface->listener.data = interface;
+  uv_poll_start(&interface->listener, UV_READABLE, interfaceCallback);
 
   return E_OK;
 
@@ -281,7 +275,7 @@ static void streamDeinit(void *object)
 {
   struct Serial * const interface = object;
 
-  ev_io_stop(ev_default_loop(0), &interface->watcher.io);
+  uv_poll_stop(&interface->listener);
 
   /* Restore terminal settings and close device */
   tcsetattr(STDIN_FILENO, TCSANOW, &interface->initialSettings);
