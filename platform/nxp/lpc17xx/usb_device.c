@@ -9,6 +9,7 @@
 #include <xcore/asm.h>
 #include <xcore/containers/array.h>
 #include <xcore/containers/queue.h>
+#include <halm/delay.h>
 #include <halm/platform/nxp/lpc17xx/usb_base.h>
 #include <halm/platform/nxp/lpc17xx/usb_defs.h>
 #include <halm/platform/nxp/usb_device.h>
@@ -24,10 +25,10 @@ struct DmaDescriptorPool
 {
   /* Pointer to an aligned array of Queue Head descriptors */
   volatile struct DmaDescriptor *heads[32];
-  /* Memory allocated for Transfer descriptors */
-  struct DmaDescriptor memory[CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE];
   /* Transfer descriptor pool */
   struct Array descriptors;
+  /* Memory allocated for Transfer descriptors */
+  struct DmaDescriptor memory[CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE];
 };
 /*----------------------------------------------------------------------------*/
 struct UsbDmaEndpoint
@@ -89,6 +90,9 @@ static void resetDevice(struct UsbDevice *);
 static void usbCommand(struct UsbDevice *, uint8_t);
 static uint8_t usbCommandRead(struct UsbDevice *, uint8_t);
 static void usbCommandWrite(struct UsbDevice *, uint8_t, uint16_t);
+static void usbPrepareEngine(LPC_USB_Type *);
+static void usbRunCommand(LPC_USB_Type *, enum UsbCommandPhase, uint32_t,
+    uint32_t);
 static void waitForInt(struct UsbDevice *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
@@ -346,27 +350,19 @@ static void usbCommand(struct UsbDevice *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  /* Clear command and data interrupt flags */
-  reg->USBDevIntClr = USBDevInt_CCEMPTY | USBDevInt_CDFULL;
-  while (reg->USBDevIntSt & USBDevInt_CDFULL);
-
-  /* Write command code and wait for completion */
-  reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_COMMAND)
-      | USBCmdCode_CMD_CODE(command);
-  waitForInt(device, USBDevInt_CCEMPTY);
+  usbPrepareEngine(reg);
+  usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t usbCommandRead(struct UsbDevice *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  /* Write command code */
-  usbCommand(device, command);
+  usbPrepareEngine(reg);
+  usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 
-  /* Send read request and wait for data */
-  reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_READ)
-      | USBCmdCode_CMD_CODE(command);
-  waitForInt(device, USBDevInt_CDFULL);
+  reg->USBDevIntClr = USBDevInt_CCEMPTY | USBDevInt_CDFULL;
+  usbRunCommand(reg, USB_CMD_PHASE_READ, command, USBDevInt_CDFULL);
 
   return reg->USBCmdData;
 }
@@ -376,13 +372,30 @@ static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  /* Write command code */
-  usbCommand(device, command);
+  usbPrepareEngine(reg);
+  usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 
-  /* Write data and wait for completion */
-  reg->USBCmdCode = USBCmdCode_CMD_PHASE(USB_CMD_PHASE_WRITE)
-      | USBCmdCode_CMD_WDATA(data);
-  waitForInt(device, USBDevInt_CCEMPTY);
+  reg->USBDevIntClr = USBDevInt_CCEMPTY;
+  usbRunCommand(reg, USB_CMD_PHASE_WRITE, data, USBDevInt_CCEMPTY);
+}
+/*----------------------------------------------------------------------------*/
+static void usbPrepareEngine(LPC_USB_Type *reg)
+{
+  /*
+   * Clearing can take up to 24 cycles, and checking the CCEMPTY flag
+   * is not a guaranteed condition for a completion of the operation,
+   * so an additional delay has been added.
+   */
+  reg->USBDevIntClr = USBDevInt_CCEMPTY;
+  while (reg->USBDevIntSt & USBDevInt_CCEMPTY);
+  delayTicks(4);
+}
+/*----------------------------------------------------------------------------*/
+static void usbRunCommand(LPC_USB_Type *reg, enum UsbCommandPhase phase,
+    uint32_t payload, uint32_t mask)
+{
+  reg->USBCmdCode = USBCmdCode_CMD_PHASE(phase) | USBCmdCode_CMD_CODE(payload);
+  while (!(reg->USBDevIntSt & (mask | USBDevInt_DEV_STAT)));
 }
 /*----------------------------------------------------------------------------*/
 static void waitForInt(struct UsbDevice *device, uint32_t mask)
