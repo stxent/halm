@@ -211,14 +211,14 @@ static void resetDevice(struct UsbDevice *device)
     reg->ENDPTCTRL[index] &= ~(ENDPTCTRL_RXE | ENDPTCTRL_TXE);
 
   /* Clear all pending interrupts */
-  reg->ENDPTNAK = 0xFFFFFFFF;
+  reg->ENDPTNAK = 0xFFFFFFFFUL;
   reg->ENDPTNAKEN = 0;
-  reg->USBSTS_D = 0xFFFFFFFF;
+  reg->USBSTS_D = 0xFFFFFFFFUL;
   reg->ENDPTSETUPSTAT = reg->ENDPTSETUPSTAT;
   reg->ENDPTCOMPLETE = reg->ENDPTCOMPLETE;
 
   while (reg->ENDPTPRIME);
-  reg->ENDPTFLUSH = 0xFFFFFFFF;
+  reg->ENDPTFLUSH = 0xFFFFFFFFUL;
   while (reg->ENDPTFLUSH);
 
   /* Set the Interrupt Threshold control interval to 0 */

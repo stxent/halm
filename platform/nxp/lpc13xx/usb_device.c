@@ -177,7 +177,7 @@ static void resetDevice(struct UsbDevice *device)
 
   /* Configure and clear interrupts */
   reg->USBDevIntEn = USBDevInt_DEV_STAT;
-  reg->USBDevIntClr = 0xFFFFFFFF;
+  reg->USBDevIntClr = 0xFFFFFFFFUL;
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)

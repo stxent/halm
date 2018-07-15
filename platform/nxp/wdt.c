@@ -40,7 +40,7 @@ static enum Result wdtInit(void *object, const void *configBase)
   const uint32_t prescaler = config->period * (clock / 1000);
 
   assert(prescaler >= 1 << 8);
-  assert(prescaler <= 0xFFFFFFFF >> (32 - WDT_TIMER_RESOLUTION));
+  assert(prescaler <= 0xFFFFFFFFUL >> (32 - WDT_TIMER_RESOLUTION));
 
   LPC_WDT->TC = prescaler;
   LPC_WDT->MOD = MOD_WDEN | MOD_WDRESET;

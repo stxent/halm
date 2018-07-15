@@ -331,16 +331,16 @@ static void resetDevice(struct UsbDevice *device)
 
   /* Reset device interrupts */
   reg->USBDevIntEn = 0;
-  reg->USBDevIntClr = 0xFFFFFFFF;
+  reg->USBDevIntClr = 0xFFFFFFFFUL;
   reg->USBDevIntPri = 0;
   /* Reset endpoint interrupts */
   reg->USBEpIntEn = 0;
-  reg->USBEpIntClr = 0xFFFFFFFF;
+  reg->USBEpIntClr = 0xFFFFFFFFUL;
   reg->USBEpIntPri = 0;
   /* Clear DMA interrupts */
-  reg->USBEpDMADis = 0xFFFFFFFF;
-  reg->USBDMARClr = 0xFFFFFFFF;
-  reg->USBEoTIntClr = 0xFFFFFFFF;
+  reg->USBEpDMADis = 0xFFFFFFFFUL;
+  reg->USBDMARClr = 0xFFFFFFFFUL;
+  reg->USBEoTIntClr = 0xFFFFFFFFUL;
 
   reg->USBDMAIntEn = USBDMAIntEn_EOT | USBDMAIntEn_NDDR | USBDMAIntEn_ERR;
   reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW;

@@ -12,10 +12,10 @@
 struct UartBlockDescriptor
 {
   STM_USART_Type *reg;
+  /* Peripheral clock branch */
+  enum SysClockBranch clock;
   /* Reset control identifier */
   enum SysBlockReset reset;
-  /* Peripheral clock branch */
-  enum SysClockBranch branch;
   /* Peripheral interrupt request identifier */
   IrqNumber irq;
 };
@@ -40,31 +40,31 @@ const struct EntityClass * const UartBase = &(const struct EntityClass){
 static const struct UartBlockDescriptor uartBlockEntries[] = {
     {
         .reg = STM_USART1,
-        .branch = CLK_USART1,
+        .clock = CLK_USART1,
         .reset = RST_USART1,
         .irq = USART1_IRQ
     },
     {
         .reg = STM_USART2,
-        .branch = CLK_USART2,
+        .clock = CLK_USART2,
         .reset = RST_USART2,
         .irq = USART2_IRQ
     },
     {
         .reg = STM_USART3,
-        .branch = CLK_USART3,
+        .clock = CLK_USART3,
         .reset = RST_USART3,
         .irq = USART3_IRQ
     },
     {
         .reg = STM_UART4,
-        .branch = CLK_UART4,
+        .clock = CLK_UART4,
         .reset = RST_UART4,
         .irq = UART4_IRQ
     },
     {
         .reg = STM_UART5,
-        .branch = CLK_UART5,
+        .clock = CLK_UART5,
         .reset = RST_UART5,
         .irq = UART5_IRQ
     }
@@ -219,9 +219,7 @@ static enum Result uartInit(void *object, const void *configBase)
   const struct UartBlockDescriptor * const entry =
       &uartBlockEntries[interface->channel];
 
-  /* Enable clocks to register interface and peripheral */
-  sysClockEnable(entry->branch);
-  /* Reset registers to default values */
+  sysClockEnable(entry->clock);
   sysResetEnable(entry->reset);
   sysResetDisable(entry->reset);
 
@@ -236,7 +234,7 @@ static void uartDeinit(void *object)
 {
   const struct UartBase * const interface = object;
 
-  sysClockDisable(uartBlockEntries[interface->channel].branch);
+  sysClockDisable(uartBlockEntries[interface->channel].clock);
   resetInstance(interface->channel);
 }
 #endif

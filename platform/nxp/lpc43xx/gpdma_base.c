@@ -279,7 +279,7 @@ static enum Result channelInit(void *object, const void *configBase)
   channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
 
   /* Reset multiplexer mask and value */
-  channel->mux.mask = 0xFFFFFFFF;
+  channel->mux.mask = 0xFFFFFFFFUL;
   channel->mux.value = 0;
 
   if (config->type != GPDMA_TYPE_M2M)
