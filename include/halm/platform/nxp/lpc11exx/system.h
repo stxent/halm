@@ -26,7 +26,7 @@ enum SysBlockPower
   PWR_USBPLL    = 8,  /* Only for LPC11U6x */
   PWR_USBPAD    = 10, /* Only for LPC11U6x */
   PWR_TEMPSENSE = 13  /* Only for LPC11U6x and LPC11E6x */
-};
+} __attribute__((packed));
 
 /* System AHB clock control register */
 enum SysClockBranch
@@ -61,7 +61,7 @@ enum SysClockBranch
   CLK_DMA         = 29, /* Only for LPC11U6x and LPC11E6x */
   CLK_RTC         = 30, /* Only for LPC11U6x and LPC11E6x */
   CLK_SCT0_1      = 31  /* Only for LPC11U6x and LPC11E6x */
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

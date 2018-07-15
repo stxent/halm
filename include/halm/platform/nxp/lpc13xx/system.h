@@ -25,7 +25,7 @@ enum SysBlockPower
   PWR_SYSPLL  = 7,
   PWR_USBPLL  = 8,
   PWR_USBPAD  = 10
-};
+} __attribute__((packed));
 
 /* System AHB clock control register */
 enum SysClockBranch
@@ -48,7 +48,7 @@ enum SysClockBranch
   CLK_WDT         = 15,
   CLK_IOCON       = 16,
   CLK_SSP1        = 18
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

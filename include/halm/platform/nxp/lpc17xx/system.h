@@ -47,7 +47,7 @@ enum SysBlockPower
   PWR_GPDMA = 29,
   PWR_ENET  = 30,
   PWR_USB   = 31
-};
+} __attribute__((packed));
 
 /* Divider values for peripheral clock control registers */
 enum SysClockDiv
@@ -92,7 +92,7 @@ enum SysClockBranch
   CLK_RIT      = 0x20 + 26,
   CLK_SYSCON   = 0x20 + 28,
   CLK_MC       = 0x20 + 30
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

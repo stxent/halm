@@ -62,7 +62,7 @@ enum SysBlockReset
   RST_TIM9    = 0x40 + 19,
   RST_TIM10   = 0x40 + 20,
   RST_TIM11   = 0x40 + 21
-};
+} __attribute__((packed));
 
 enum SysClockBranch
 {
@@ -120,7 +120,7 @@ enum SysClockBranch
   CLK_TIM9      = 0x40 + 19,
   CLK_TIM10     = 0x40 + 20,
   CLK_TIM11     = 0x40 + 21
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
