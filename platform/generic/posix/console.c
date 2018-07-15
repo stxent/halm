@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <ev.h>
 #include <pthread.h>
 #include <termios.h>
 #include <unistd.h>
+#include <uv.h>
 #include <xcore/containers/byte_queue.h>
 #include <halm/platform/generic/console.h>
 /*----------------------------------------------------------------------------*/
@@ -23,12 +23,6 @@ enum Cleanup
   CLEANUP_QUEUE
 };
 
-struct InterfaceWatcher
-{
-  ev_io io;
-  void *instance;
-};
-
 struct Console
 {
   struct Interface base;
@@ -40,11 +34,11 @@ struct Console
   pthread_mutex_t rxQueueLock;
 
   struct termios initialSettings;
-  struct InterfaceWatcher watcher;
+  uv_poll_t listener;
 };
 /*----------------------------------------------------------------------------*/
 static void configurePort(struct Console *);
-static void interfaceCallback(EV_P_ ev_io *, int);
+static void interfaceCallback(uv_poll_t *, int, int);
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *, const void *);
 static void streamDeinit(void *);
@@ -80,11 +74,11 @@ static void configurePort(struct Console *interface)
   tcsetattr(STDIN_FILENO, TCSANOW, &settings);
 }
 /*----------------------------------------------------------------------------*/
-static void interfaceCallback(EV_P_ ev_io *w,
-    int revents __attribute__((unused)))
+static void interfaceCallback(uv_poll_t *handle,
+    int status __attribute__((unused)),
+    int events __attribute__((unused)))
 {
-  struct InterfaceWatcher * const watcher = (struct InterfaceWatcher *)w;
-  struct Console * const interface = watcher->instance;
+  struct Console * const interface = handle->data;
   uint8_t buffer[BUFFER_SIZE];
   ssize_t length;
 
@@ -116,10 +110,9 @@ static enum Result streamInit(void *object,
 
   configurePort(interface);
 
-  interface->watcher.instance = interface;
-  ev_init(&interface->watcher.io, interfaceCallback);
-  ev_io_set(&interface->watcher.io, STDIN_FILENO, EV_READ);
-  ev_io_start(ev_default_loop(0), &interface->watcher.io);
+  uv_poll_init(uv_default_loop(), &interface->listener, STDIN_FILENO);
+  interface->listener.data = interface;
+  uv_poll_start(&interface->listener, UV_READABLE, interfaceCallback);
 
   return E_OK;
 }
@@ -128,7 +121,7 @@ static void streamDeinit(void *object __attribute__((unused)))
 {
   struct Console * const interface = object;
 
-  ev_io_stop(ev_default_loop(0), &interface->watcher.io);
+  uv_poll_stop(&interface->listener);
 
   /* Restore terminal settings */
   tcsetattr(STDIN_FILENO, TCSANOW, &interface->initialSettings);

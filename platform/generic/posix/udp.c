@@ -4,11 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <string.h>
 #include <arpa/inet.h>
-#include <ev.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <uv.h>
 #include <xcore/containers/byte_queue.h>
 #include <halm/platform/generic/udp.h>
 /*----------------------------------------------------------------------------*/
@@ -23,12 +24,6 @@ enum Cleanup
   CLEANUP_QUEUE
 };
 
-struct InterfaceWatcher
-{
-  ev_io io;
-  void *instance;
-};
-
 struct Udp
 {
   struct Interface parent;
@@ -39,13 +34,13 @@ struct Udp
   struct ByteQueue rxQueue;
   pthread_mutex_t rxQueueLock;
 
-  struct InterfaceWatcher watcher;
+  uv_poll_t listener;
   int client;
   int server;
 };
 /*----------------------------------------------------------------------------*/
 static void cleanup(struct Udp *, enum Cleanup);
-static void interfaceCallback(EV_P_ ev_io *, int);
+static void interfaceCallback(uv_poll_t *, int, int);
 static enum Result setupSockets(struct Udp *,
     const struct UdpConfig *);
 /*----------------------------------------------------------------------------*/
@@ -74,7 +69,7 @@ static void cleanup(struct Udp *interface, enum Cleanup step)
   switch (step)
   {
     case CLEANUP_ALL:
-      ev_io_stop(ev_default_loop(0), &interface->watcher.io);
+      uv_poll_stop(&interface->listener);
       /* Falls through */
     case CLEANUP_NETWORK:
       close(interface->server);
@@ -87,6 +82,23 @@ static void cleanup(struct Udp *interface, enum Cleanup step)
       pthread_mutex_destroy(&interface->rxQueueLock);
       break;
   }
+}
+/*----------------------------------------------------------------------------*/
+static void interfaceCallback(uv_poll_t *handle,
+    int status __attribute__((unused)),
+    int events __attribute__((unused)))
+{
+  struct Udp * const interface = handle->data;
+  uint8_t buffer[BUFFER_SIZE];
+  ssize_t length;
+
+  pthread_mutex_lock(&interface->rxQueueLock);
+  while ((length = recv(interface->server, buffer, sizeof(buffer), 0)) > 0)
+    byteQueuePushArray(&interface->rxQueue, buffer, (size_t)length);
+  pthread_mutex_unlock(&interface->rxQueueLock);
+
+  if (interface->callback)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result setupSockets(struct Udp *interface,
@@ -154,23 +166,6 @@ close_client:
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void interfaceCallback(EV_P_ ev_io *w,
-    int revents __attribute__((unused)))
-{
-  struct InterfaceWatcher * const watcher = (struct InterfaceWatcher *)w;
-  struct Udp * const interface = watcher->instance;
-  uint8_t buffer[BUFFER_SIZE];
-  ssize_t length;
-
-  pthread_mutex_lock(&interface->rxQueueLock);
-  while ((length = recv(interface->server, buffer, sizeof(buffer), 0)) > 0)
-    byteQueuePushArray(&interface->rxQueue, buffer, (size_t)length);
-  pthread_mutex_unlock(&interface->rxQueueLock);
-
-  if (interface->callback)
-    interface->callback(interface->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
 {
   const struct UdpConfig * const config = configBase;
@@ -195,10 +190,10 @@ static enum Result streamInit(void *object, const void *configBase)
   }
 
   /* Initialize and start thread */
-  interface->watcher.instance = interface;
-  ev_init(&interface->watcher.io, interfaceCallback);
-  ev_io_set(&interface->watcher.io, interface->server, EV_READ);
-  ev_io_start(ev_default_loop(0), &interface->watcher.io);
+  uv_poll_init_socket(uv_default_loop(), &interface->listener,
+      interface->server);
+  interface->listener.data = interface;
+  uv_poll_start(&interface->listener, UV_READABLE, interfaceCallback);
 
   return E_OK;
 }
