@@ -32,7 +32,7 @@ static void spiDeinit(void *);
 #define spiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass spiTable = {
+const struct EntityClass * const SpiBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = spiInit,
     .deinit = spiDeinit
@@ -153,7 +153,6 @@ const struct PinEntry spiPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const SpiBase = &spiTable;
 static struct SpiBase *instances[3] = {0};
 /*----------------------------------------------------------------------------*/
 static void resetInstance(uint8_t channel)

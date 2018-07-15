@@ -28,7 +28,7 @@ static void tmrDeinit(void *);
 #define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct TimerClass tmrTable = {
+const struct TimerClass * const Rit = &(const struct TimerClass){
     .size = sizeof(struct Rit),
     .init = tmrInit,
     .deinit = tmrDeinit,
@@ -44,7 +44,6 @@ static const struct TimerClass tmrTable = {
     .setValue = tmrSetValue
 };
 /*----------------------------------------------------------------------------*/
-const struct TimerClass * const Rit = &tmrTable;
 static struct Rit *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void resetInstance(void)

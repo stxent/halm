@@ -46,7 +46,7 @@ static void i2cDeinit(void *);
 #define i2cDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass i2cTable = {
+const struct InterfaceClass * const I2cSlave = &(const struct InterfaceClass){
     .size = sizeof(struct I2cSlave),
     .init = i2cInit,
     .deinit = i2cDeinit,
@@ -57,8 +57,6 @@ static const struct InterfaceClass i2cTable = {
     .read = i2cRead,
     .write = i2cWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const I2cSlave = &i2cTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {

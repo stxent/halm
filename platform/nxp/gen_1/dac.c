@@ -22,7 +22,7 @@ static void dacDeinit(void *);
 #define dacDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass dacTable = {
+const struct InterfaceClass * const Dac = &(const struct InterfaceClass){
     .size = sizeof(struct Dac),
     .init = dacInit,
     .deinit = dacDeinit,
@@ -33,8 +33,6 @@ static const struct InterfaceClass dacTable = {
     .read = 0,
     .write = dacWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Dac = &dacTable;
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *object, const void *configBase)
 {

@@ -48,13 +48,14 @@ static void tmrDeinit(void *);
 #define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
+static const struct EntityClass * const TimerHandler =
+    &(const struct EntityClass){
     .size = sizeof(struct TimerHandler),
     .init = timerHandlerInit,
     .deinit = deletedDestructorTrap
 };
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass tmrTable = {
+
+const struct EntityClass * const SctBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = tmrInit,
     .deinit = tmrDeinit
@@ -396,8 +397,6 @@ const struct PinEntry sctOutputPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const TimerHandler = &handlerTable;
-const struct EntityClass * const SctBase = &tmrTable;
 static struct TimerHandler *handlers[1] = {0};
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(uint8_t channel)

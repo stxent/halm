@@ -19,7 +19,7 @@ static bool setInstance(struct SdmmcBase *);
 static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass sdioTable = {
+const struct EntityClass * const SdmmcBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = sdioInit,
     .deinit = sdioDeinit
@@ -159,7 +159,6 @@ const struct PinEntry sdmmcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const SdmmcBase = &sdioTable;
 static struct SdmmcBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SdmmcBase *interface,

@@ -22,7 +22,7 @@ static void clkDeinit(void *);
 #define clkDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct RtClockClass clkTable = {
+const struct RtClockClass * const Rtc = &(const struct RtClockClass){
     .size = sizeof(struct Rtc),
     .init = clkInit,
     .deinit = clkDeinit,
@@ -32,8 +32,6 @@ static const struct RtClockClass clkTable = {
     .setTime = clkSetTime,
     .time = clkTime
 };
-/*----------------------------------------------------------------------------*/
-const struct RtClockClass * const Rtc = &clkTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {

@@ -39,13 +39,15 @@ static void channelDeinit(void *);
 #define channelDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass unitTable = {
+const struct EntityClass * const GpTimerCaptureUnit =
+    &(const struct EntityClass){
     .size = sizeof(struct GpTimerCaptureUnit),
     .init = unitInit,
     .deinit = unitDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct CaptureClass channelTable = {
+const struct CaptureClass * const GpTimerCapture =
+    &(const struct CaptureClass){
     .size = sizeof(struct GpTimerCapture),
     .init = channelInit,
     .deinit = channelDeinit,
@@ -55,9 +57,6 @@ static const struct CaptureClass channelTable = {
     .setCallback = channelSetCallback,
     .getValue = channelGetValue
 };
-/*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpTimerCaptureUnit = &unitTable;
-const struct CaptureClass * const GpTimerCapture = &channelTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {

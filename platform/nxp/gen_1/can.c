@@ -46,7 +46,7 @@ static void canDeinit(void *);
 #define canDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass canTable = {
+const struct InterfaceClass * const Can = &(const struct InterfaceClass){
     .size = sizeof(struct Can),
     .init = canInit,
     .deinit = canDeinit,
@@ -57,8 +57,6 @@ static const struct InterfaceClass canTable = {
     .read = canRead,
     .write = canWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Can = &canTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(const struct Can *interface, uint32_t rate)
 {
@@ -477,7 +475,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   const struct CanStandardMessage *input = buffer;
   const size_t initialLength = length;
 
-  /* Get exclusive access to the message queue */
+  /* Acquire exclusive access to the message queue */
   irqDisable(interface->base.irq);
 
   if (queueEmpty(&interface->txQueue))

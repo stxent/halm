@@ -28,7 +28,7 @@ static void serialDeinit(void *);
 #define serialDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass serialTable = {
+const struct InterfaceClass * const SerialPoll = &(const struct InterfaceClass){
     .size = sizeof(struct SerialPoll),
     .init = serialInit,
     .deinit = serialDeinit,
@@ -39,8 +39,6 @@ static const struct InterfaceClass serialTable = {
     .read = serialRead,
     .write = serialWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const SerialPoll = &serialTable;
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_UART_PM
 static void powerStateHandler(void *object, enum PmState state)

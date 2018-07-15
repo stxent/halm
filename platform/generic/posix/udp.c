@@ -57,7 +57,7 @@ static enum Result streamSetParam(void *, enum IfParameter, const void *);
 static size_t streamRead(void *, void *, size_t);
 static size_t streamWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass streamTable = {
+const struct InterfaceClass * const Udp = &(const struct InterfaceClass){
     .size = sizeof(struct Udp),
     .init = streamInit,
     .deinit = streamDeinit,
@@ -68,8 +68,6 @@ static const struct InterfaceClass streamTable = {
     .read = streamRead,
     .write = streamWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Udp = &streamTable;
 /*----------------------------------------------------------------------------*/
 static void cleanup(struct Udp *interface, enum Cleanup step)
 {

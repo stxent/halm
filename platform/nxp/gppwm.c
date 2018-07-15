@@ -61,13 +61,13 @@ static void doubleEdgeDeinit(void *);
 #define doubleEdgeDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass unitTable = {
+const struct EntityClass * const GpPwmUnit = &(const struct EntityClass){
     .size = sizeof(struct GpPwmUnit),
     .init = unitInit,
     .deinit = unitDeinit
 };
-/*----------------------------------------------------------------------------*/
-static const struct PwmClass singleEdgeTable = {
+
+const struct PwmClass * const GpPwm = &(const struct PwmClass){
     .size = sizeof(struct GpPwm),
     .init = singleEdgeInit,
     .deinit = singleEdgeDeinit,
@@ -79,8 +79,8 @@ static const struct PwmClass singleEdgeTable = {
     .setEdges = singleEdgeSetEdges,
     .setFrequency = singleEdgeSetFrequency
 };
-/*----------------------------------------------------------------------------*/
-static const struct PwmClass doubleEdgeTable = {
+
+const struct PwmClass * const GpPwmDoubleEdge = &(const struct PwmClass){
     .size = sizeof(struct GpPwmDoubleEdge),
     .init = doubleEdgeInit,
     .deinit = doubleEdgeDeinit,
@@ -94,9 +94,6 @@ static const struct PwmClass doubleEdgeTable = {
 };
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry gpPwmPins[];
-const struct EntityClass * const GpPwmUnit = &unitTable;
-const struct PwmClass * const GpPwm = &singleEdgeTable;
-const struct PwmClass * const GpPwmDoubleEdge = &doubleEdgeTable;
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
     uint8_t channel)

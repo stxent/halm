@@ -18,13 +18,11 @@ static void sramDeinit(void *);
 #define sramDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass sramTable = {
+const struct EntityClass * const EmcSram = &(const struct EntityClass){
     .size = sizeof(struct EmcSram),
     .init = sramInit,
     .deinit = sramDeinit
 };
-/*----------------------------------------------------------------------------*/
-const struct EntityClass * const EmcSram = &sramTable;
 /*----------------------------------------------------------------------------*/
 extern const struct PinGroupEntry emcAddressPins[];
 extern const PinNumber emcAddressPinMap[];

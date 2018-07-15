@@ -37,7 +37,7 @@ static void serialDeinit(void *);
 #define serialDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass serialTable = {
+const struct InterfaceClass * const SerialDma = &(const struct InterfaceClass){
     .size = sizeof(struct SerialDma),
     .init = serialInit,
     .deinit = serialDeinit,
@@ -48,8 +48,6 @@ static const struct InterfaceClass serialTable = {
     .read = serialRead,
     .write = serialWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const SerialDma = &serialTable;
 /*----------------------------------------------------------------------------*/
 static bool dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
     uint8_t txChannel)

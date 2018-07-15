@@ -64,7 +64,7 @@ static enum Result cardSetParam(void *, enum IfParameter, const void *);
 static size_t cardRead(void *, void *, size_t);
 static size_t cardWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass cardTable = {
+const struct InterfaceClass * const SdCard = &(const struct InterfaceClass){
     .size = sizeof(struct SdCard),
     .init = cardInit,
     .deinit = cardDeinit,
@@ -75,8 +75,6 @@ static const struct InterfaceClass cardTable = {
     .read = cardRead,
     .write = cardWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const SdCard = &cardTable;
 /*----------------------------------------------------------------------------*/
 static enum Result executeCommand(struct SdCard *device, uint32_t command,
     uint32_t argument, uint32_t *response, bool await)

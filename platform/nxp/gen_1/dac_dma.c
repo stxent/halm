@@ -26,7 +26,7 @@ static void dacDeinit(void *);
 #define dacDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass dacTable = {
+const struct InterfaceClass * const DacDma = &(const struct InterfaceClass){
     .size = sizeof(struct DacDma),
     .init = dacInit,
     .deinit = dacDeinit,
@@ -37,8 +37,6 @@ static const struct InterfaceClass dacTable = {
     .read = 0,
     .write = dacWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const DacDma = &dacTable;
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {

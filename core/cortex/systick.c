@@ -29,7 +29,7 @@ static void tmrDeinit(void *);
 #define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct TimerClass tmrTable = {
+const struct TimerClass * const SysTickTimer = &(const struct TimerClass){
     .size = sizeof(struct SysTickTimer),
     .init = tmrInit,
     .deinit = tmrDeinit,
@@ -46,7 +46,6 @@ static const struct TimerClass tmrTable = {
 };
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const MainClock;
-const struct TimerClass * const SysTickTimer = &tmrTable;
 static struct SysTickTimer *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void resetInstance(void)

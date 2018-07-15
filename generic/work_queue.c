@@ -34,13 +34,13 @@ struct WorkDescriptor
 /*----------------------------------------------------------------------------*/
 static enum Result wqInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass wqTable = {
+static const struct EntityClass * const SimpleWorkQueue =
+    &(const struct EntityClass){
     .size = sizeof(struct SimpleWorkQueue),
     .init = wqInit,
     .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const SimpleWorkQueue = &wqTable;
 static struct SimpleWorkQueue *instance = 0;
 /*----------------------------------------------------------------------------*/
 enum Result workQueueAdd(void (*callback)(void *), void *argument)

@@ -23,7 +23,7 @@ static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct DmaClass channelTable = {
+const struct DmaClass * const DmaSdmmc = &(const struct DmaClass){
     .size = sizeof(struct DmaSdmmc),
     .init = channelInit,
     .deinit = channelDeinit,
@@ -40,8 +40,6 @@ static const struct DmaClass channelTable = {
     .append = channelAppend,
     .clear = 0
 };
-/*----------------------------------------------------------------------------*/
-const struct DmaClass * const DmaSdmmc = &channelTable;
 /*----------------------------------------------------------------------------*/
 static enum Result appendItem(void *object, uintptr_t address, size_t size)
 {

@@ -30,7 +30,7 @@ static void serialDeinit(void *);
 #define serialDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass serialTable = {
+const struct InterfaceClass * const Serial = &(const struct InterfaceClass){
     .size = sizeof(struct Serial),
     .init = serialInit,
     .deinit = serialDeinit,
@@ -41,8 +41,6 @@ static const struct InterfaceClass serialTable = {
     .read = serialRead,
     .write = serialWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Serial = &serialTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {

@@ -19,7 +19,6 @@ struct PmHandlerEntry
 struct PmHandler
 {
   struct Entity parent;
-
   struct List objectList;
 };
 /*----------------------------------------------------------------------------*/
@@ -29,13 +28,12 @@ static enum Result pmHandlerInit(void *, const void *);
 extern enum Result pmCoreChangeState(enum PmState);
 extern enum Result pmPlatformChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
+static const struct EntityClass * const PmHandler = &(const struct EntityClass){
     .size = sizeof(struct PmHandler),
     .init = pmHandlerInit,
     .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const PmHandler = &handlerTable;
 static struct PmHandler *pmHandler = 0;
 /*----------------------------------------------------------------------------*/
 static void notifyHandlerEntries(enum PmState state)

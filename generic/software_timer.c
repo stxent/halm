@@ -37,13 +37,12 @@ static void removeTimer(struct SoftwareTimerFactory *,
 static enum Result factoryInit(void *, const void *);
 static void factoryDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass factoryTable = {
+const struct EntityClass * const SoftwareTimerFactory =
+    &(const struct EntityClass){
     .size = sizeof(struct SoftwareTimerFactory),
     .init = factoryInit,
     .deinit = factoryDeinit
 };
-/*----------------------------------------------------------------------------*/
-const struct EntityClass * const SoftwareTimerFactory = &factoryTable;
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
@@ -57,7 +56,7 @@ static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static const struct TimerClass tmrTable = {
+const struct TimerClass * const SoftwareTimer = &(const struct TimerClass){
     .size = sizeof(struct SoftwareTimer),
     .init = tmrInit,
     .deinit = tmrDeinit,
@@ -72,8 +71,6 @@ static const struct TimerClass tmrTable = {
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
 };
-/*----------------------------------------------------------------------------*/
-static const struct TimerClass * const SoftwareTimer = &tmrTable;
 /*----------------------------------------------------------------------------*/
 static uint32_t distance(uint32_t a, uint32_t b)
 {

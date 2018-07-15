@@ -25,7 +25,7 @@ static void sspDeinit(void *);
 #define sspDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass sspTable = {
+const struct EntityClass * const SspBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = sspInit,
     .deinit = sspDeinit
@@ -97,7 +97,6 @@ const struct PinEntry sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const SspBase = &sspTable;
 static struct SspBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static void resetInstance(uint8_t channel)

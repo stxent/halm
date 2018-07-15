@@ -32,7 +32,7 @@ static void i2sDeinit(void *);
 #define i2sDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass i2sTable = {
+const struct EntityClass * const I2sBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = i2sInit,
     .deinit = i2sDeinit
@@ -212,7 +212,6 @@ const struct PinEntry i2sPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const I2sBase = &i2sTable;
 static struct I2sBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2sBase *interface,

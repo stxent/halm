@@ -47,7 +47,7 @@ static enum Result canSetParam(void *, enum IfParameter, const void *);
 static size_t canRead(void *, void *, size_t);
 static size_t canWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass canTable = {
+const struct InterfaceClass * const Can = &(const struct InterfaceClass){
     .size = sizeof(struct Can),
     .init = canInit,
     .deinit = canDeinit,
@@ -58,8 +58,6 @@ static const struct InterfaceClass canTable = {
     .read = canRead,
     .write = canWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Can = &canTable;
 /*----------------------------------------------------------------------------*/
 static void buildAcceptanceFilters(struct Can *interface)
 {

@@ -37,7 +37,7 @@ static enum Result channelStatus(const void *);
 static void channelAppend(void *, void *, const void *, size_t);
 static void channelClear(void *);
 /*----------------------------------------------------------------------------*/
-static const struct DmaClass channelTable = {
+const struct DmaClass * const GpDmaList = &(const struct DmaClass){
     .size = sizeof(struct GpDmaList),
     .init = channelInit,
     .deinit = channelDeinit,
@@ -54,8 +54,6 @@ static const struct DmaClass channelTable = {
     .append = channelAppend,
     .clear = channelClear
 };
-/*----------------------------------------------------------------------------*/
-const struct DmaClass * const GpDmaList = &channelTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum Result res)
 {

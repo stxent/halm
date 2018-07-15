@@ -37,7 +37,7 @@ static void spiDeinit(void *);
 #define spiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass spiTable = {
+const struct InterfaceClass * const SpiDma = &(const struct InterfaceClass){
     .size = sizeof(struct SpiDma),
     .init = spiInit,
     .deinit = spiDeinit,
@@ -48,8 +48,6 @@ static const struct InterfaceClass spiTable = {
     .read = spiRead,
     .write = spiWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const SpiDma = &spiTable;
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {

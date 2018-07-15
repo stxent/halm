@@ -23,7 +23,7 @@ static void busDeinit(void *);
 static uint32_t busRead(void *);
 static void busWrite(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static const struct GpioBusClass gpioBusTable = {
+const struct GpioBusClass * const SimpleGpioBus = &(const struct GpioBusClass){
     .size = sizeof(struct SimpleGpioBus),
     .init = busInit,
     .deinit = busDeinit,
@@ -31,8 +31,6 @@ static const struct GpioBusClass gpioBusTable = {
     .read = busRead,
     .write = busWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct GpioBusClass * const SimpleGpioBus = &gpioBusTable;
 /*----------------------------------------------------------------------------*/
 static enum Result busInit(void *object, const void *configBase)
 {

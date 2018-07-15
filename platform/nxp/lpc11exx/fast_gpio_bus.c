@@ -11,7 +11,7 @@ static enum Result busInit(void *, const void *);
 static uint32_t busRead(void *);
 static void busWrite(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
-static const struct GpioBusClass gpioBusTable = {
+const struct GpioBusClass * const FastGpioBus = &(const struct GpioBusClass){
     .size = sizeof(struct FastGpioBus),
     .init = busInit,
     .deinit = 0, /* Default destructor */
@@ -19,8 +19,6 @@ static const struct GpioBusClass gpioBusTable = {
     .read = busRead,
     .write = busWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct GpioBusClass * const FastGpioBus = &gpioBusTable;
 /*----------------------------------------------------------------------------*/
 static enum Result busInit(void *object, const void *configBase)
 {

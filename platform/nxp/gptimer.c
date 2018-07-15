@@ -33,7 +33,7 @@ static void tmrDeinit(void *);
 #define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct TimerClass tmrTable = {
+const struct TimerClass * const GpTimer = &(const struct TimerClass){
     .size = sizeof(struct GpTimer),
     .init = tmrInit,
     .deinit = tmrDeinit,
@@ -48,8 +48,6 @@ static const struct TimerClass tmrTable = {
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
 };
-/*----------------------------------------------------------------------------*/
-const struct TimerClass * const GpTimer = &tmrTable;
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getMaxValue(const struct GpTimer *timer)
 {

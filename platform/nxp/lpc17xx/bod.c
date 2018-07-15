@@ -23,7 +23,7 @@ static void bodDeinit(void *);
 #define bodDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterruptClass bodTable = {
+const struct InterruptClass * const Bod = &(const struct InterruptClass){
     .size = sizeof(struct Bod),
     .init = bodInit,
     .deinit = bodDeinit,
@@ -33,7 +33,6 @@ static const struct InterruptClass bodTable = {
     .setCallback = bodSetCallback
 };
 /*----------------------------------------------------------------------------*/
-const struct InterruptClass * const Bod = &bodTable;
 static struct Bod *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void resetInstance(void)

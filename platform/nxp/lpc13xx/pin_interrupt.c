@@ -17,7 +17,6 @@ struct PinInterruptHandlerConfig
 struct PinInterruptHandler
 {
   struct Entity base;
-
   struct PinInterrupt *interrupts[12];
 };
 /*----------------------------------------------------------------------------*/
@@ -46,13 +45,15 @@ static void pinInterruptDeinit(void *);
 #define pinInterruptDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
+static const struct EntityClass * const PinInterruptHandler =
+    &(const struct EntityClass){
     .size = sizeof(struct PinInterruptHandler),
     .init = pinInterruptHandlerInit,
     .deinit = deletedDestructorTrap
 };
-/*----------------------------------------------------------------------------*/
-static const struct InterruptClass pinInterruptTable = {
+
+const struct InterruptClass * const PinInterrupt =
+    &(const struct InterruptClass){
     .size = sizeof(struct PinInterrupt),
     .init = pinInterruptInit,
     .deinit = pinInterruptDeinit,
@@ -62,8 +63,6 @@ static const struct InterruptClass pinInterruptTable = {
     .setCallback = pinInterruptSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const PinInterruptHandler = &handlerTable;
-const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
 static struct PinInterruptHandler *handlers[4] = {0};
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t port)

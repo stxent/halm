@@ -25,7 +25,7 @@ static void adcDeinit(void *);
 #define adcDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass adcTable = {
+const struct InterfaceClass * const AdcBus = &(const struct InterfaceClass){
     .size = sizeof(struct AdcBus),
     .init = adcInit,
     .deinit = adcDeinit,
@@ -36,8 +36,6 @@ static const struct InterfaceClass adcTable = {
     .read = adcRead,
     .write = 0
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const AdcBus = &adcTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {

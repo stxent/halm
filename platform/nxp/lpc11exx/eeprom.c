@@ -19,7 +19,7 @@ static enum Result eepromSetParam(void *, enum IfParameter, const void *);
 static size_t eepromRead(void *, void *, size_t);
 static size_t eepromWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass eepromTable = {
+const struct InterfaceClass * const Eeprom = &(const struct InterfaceClass){
     .size = sizeof(struct Eeprom),
     .init = eepromInit,
     .deinit = 0, /* Default destructor */
@@ -30,8 +30,6 @@ static const struct InterfaceClass eepromTable = {
     .read = eepromRead,
     .write = eepromWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Eeprom = &eepromTable;
 /*----------------------------------------------------------------------------*/
 static inline bool isAddressValid(const struct Eeprom *interface,
     uintptr_t address)

@@ -10,16 +10,15 @@
 #include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct WdtBase *);
-/*----------------------------------------------------------------------------*/
+
 static enum Result wdtInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass wdtTable = {
+const struct EntityClass * const WdtBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = wdtInit,
     .deinit = 0 /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const WdtBase = &wdtTable;
 static struct WdtBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct WdtBase *object)

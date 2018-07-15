@@ -24,13 +24,12 @@ static void dma1StreamHandler(uint8_t);
 static void dma2StreamHandler(uint8_t);
 static enum Result streamInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass streamTable = {
+const struct EntityClass * const DmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = streamInit,
     .deinit = 0 /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const DmaBase = &streamTable;
 static struct DmaBase *instances[STREAM_COUNT] = {0};
 /*----------------------------------------------------------------------------*/
 const struct DmaBase *dmaGetInstance(uint8_t stream)

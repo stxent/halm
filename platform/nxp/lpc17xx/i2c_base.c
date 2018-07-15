@@ -29,7 +29,7 @@ static void i2cDeinit(void *);
 #define i2cDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass i2cTable = {
+const struct EntityClass * const I2cBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = i2cInit,
     .deinit = i2cDeinit
@@ -91,7 +91,6 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const I2cBase = &i2cTable;
 static struct I2cBase *instances[3] = {0};
 /*----------------------------------------------------------------------------*/
 static void resetInstance(uint8_t channel)

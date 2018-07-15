@@ -35,13 +35,13 @@ static enum Result dmaHubInit(void *, const void *);
 static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass hubTable = {
+static const struct EntityClass * const DmaHub = &(const struct EntityClass){
     .size = sizeof(struct DmaHub),
     .init = dmaHubInit,
     .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass channelTable = {
+const struct EntityClass * const GpDmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
     .deinit = channelDeinit
@@ -66,8 +66,6 @@ static const enum GpDmaEvent eventMap[EVENT_COUNT][EVENT_SOURCES] = {
     {GPDMA_DAC,     GPDMA_SCT_OUT3,   GPDMA_SGPIO15,    GPDMA_MAT3_0}
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const DmaHub = &hubTable;
-const struct EntityClass * const GpDmaBase = &channelTable;
 static struct DmaHub *hub = 0;
 /*----------------------------------------------------------------------------*/
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel,

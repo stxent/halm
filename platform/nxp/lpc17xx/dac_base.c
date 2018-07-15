@@ -24,7 +24,7 @@ static void dacDeinit(void *);
 #define dacDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass dacTable = {
+const struct EntityClass * const DacBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = dacInit,
     .deinit = dacDeinit
@@ -40,7 +40,6 @@ const struct PinEntry dacPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const DacBase = &dacTable;
 static struct DacBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(PinNumber key)

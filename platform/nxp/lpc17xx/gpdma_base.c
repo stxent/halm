@@ -20,7 +20,7 @@ static unsigned int eventToPeripheral(enum GpDmaEvent);
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass channelTable = {
+const struct EntityClass * const GpDmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
     .deinit = 0 /* Default destructor */
@@ -53,7 +53,6 @@ static const uint8_t eventTranslationMap[] = {
     [GPDMA_DAC]       = 7
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpDmaBase = &channelTable;
 static struct GpDmaBase *instances[CHANNEL_COUNT] = {0};
 /*----------------------------------------------------------------------------*/
 static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,

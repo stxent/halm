@@ -38,7 +38,7 @@ static void tmrDeinit(void *);
 #define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct TimerClass tmrTable = {
+const struct TimerClass * const SctTimer = &(const struct TimerClass){
     .size = sizeof(struct SctTimer),
     .init = tmrInit,
     .deinit = tmrDeinit,
@@ -54,7 +54,7 @@ static const struct TimerClass tmrTable = {
     .setValue = tmrSetValue
 };
 
-static const struct TimerClass tmrUnifiedTable = {
+const struct TimerClass * const SctUnifiedTimer = &(const struct TimerClass){
     .size = sizeof(struct SctTimer),
     .init = tmrInitUnified,
     .deinit = tmrDeinit,
@@ -69,9 +69,6 @@ static const struct TimerClass tmrUnifiedTable = {
     .getValue = tmrGetValueUnified,
     .setValue = tmrSetValueUnified
 };
-/*----------------------------------------------------------------------------*/
-const struct TimerClass * const SctTimer = &tmrTable;
-const struct TimerClass * const SctUnifiedTimer = &tmrUnifiedTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {

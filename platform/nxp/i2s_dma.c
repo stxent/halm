@@ -30,7 +30,7 @@ static void i2sDeinit(void *);
 #define i2sDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass i2sTable = {
+const struct InterfaceClass * const I2sDma = &(const struct InterfaceClass){
     .size = sizeof(struct I2sDma),
     .init = i2sInit,
     .deinit = i2sDeinit,
@@ -41,8 +41,6 @@ static const struct InterfaceClass i2sTable = {
     .read = i2sRead,
     .write = i2sWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const I2sDma = &i2sTable;
 /*----------------------------------------------------------------------------*/
 static bool dmaSetup(struct I2sDma *interface,
     const struct I2sDmaConfig *config, bool rx, bool tx)

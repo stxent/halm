@@ -77,7 +77,7 @@ static enum Result streamSetParam(void *, enum IfParameter, const void *);
 static size_t streamRead(void *, void *, size_t);
 static size_t streamWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass streamTable = {
+const struct InterfaceClass * const Serial = &(const struct InterfaceClass){
     .size = sizeof(struct Serial),
     .init = streamInit,
     .deinit = streamDeinit,
@@ -88,8 +88,6 @@ static const struct InterfaceClass streamTable = {
     .read = streamRead,
     .write = streamWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Serial = &streamTable;
 /*----------------------------------------------------------------------------*/
 static bool changePortFlag(struct Serial *interface, int flag, bool state)
 {

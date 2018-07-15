@@ -18,7 +18,7 @@ struct Rtc
   struct RtClock base;
 };
 /*----------------------------------------------------------------------------*/
-static const struct RtClockClass clkTable = {
+const struct RtClockClass * const Rtc = &(const struct RtClockClass){
     .size = sizeof(struct Rtc),
     .init = clkInit,
     .deinit = 0, /* Default destructor */
@@ -28,8 +28,6 @@ static const struct RtClockClass clkTable = {
     .setTime = clkSetTime,
     .time = clkTime
 };
-/*----------------------------------------------------------------------------*/
-const struct RtClockClass * const Rtc = &clkTable;
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *object __attribute__((unused)),
     const void *configBase __attribute__((unused)))

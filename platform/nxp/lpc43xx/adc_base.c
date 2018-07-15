@@ -33,7 +33,7 @@ static struct AdcPin configRegularPin(const struct PinEntry *, PinNumber);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass adcTable = {
+const struct EntityClass * const AdcBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = adcInit,
     .deinit = 0 /* Default destructor */
@@ -141,7 +141,6 @@ const struct PinEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const AdcBase = &adcTable;
 static struct AdcBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static struct AdcPin configGroupPin(const struct PinGroupEntry *group,

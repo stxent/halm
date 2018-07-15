@@ -35,7 +35,7 @@ static enum Result streamStatus(const void *);
 static void streamAppend(void *, void *, const void *, size_t);
 static void streamClear(void *);
 /*----------------------------------------------------------------------------*/
-static const struct DmaClass streamTable = {
+const struct DmaClass * const DmaOneShot = &(const struct DmaClass){
     .size = sizeof(struct DmaOneShot),
     .init = streamInit,
     .deinit = streamDeinit,
@@ -52,8 +52,6 @@ static const struct DmaClass streamTable = {
     .append = streamAppend,
     .clear = streamClear
 };
-/*----------------------------------------------------------------------------*/
-const struct DmaClass * const DmaOneShot = &streamTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum Result res)
 {

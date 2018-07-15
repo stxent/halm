@@ -165,7 +165,7 @@ static const struct StateEntry stateTable[] = {
 #endif
 };
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass sdioTable = {
+const struct InterfaceClass * const SdioSpi = &(const struct InterfaceClass){
     .size = sizeof(struct SdioSpi),
     .init = sdioInit,
     .deinit = sdioDeinit,
@@ -176,8 +176,6 @@ static const struct InterfaceClass sdioTable = {
     .read = sdioRead,
     .write = sdioWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const SdioSpi = &sdioTable;
 /*----------------------------------------------------------------------------*/
 static void stateInitEnter(struct SdioSpi *interface)
 {

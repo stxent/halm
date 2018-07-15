@@ -28,7 +28,7 @@ static enum Result sdioSetParam(void *, enum IfParameter, const void *);
 static size_t sdioRead(void *, void *, size_t);
 static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass sdioTable = {
+const struct InterfaceClass * const Sdmmc = &(const struct InterfaceClass){
     .size = sizeof(struct Sdmmc),
     .init = sdioInit,
     .deinit = sdioDeinit,
@@ -39,8 +39,6 @@ static const struct InterfaceClass sdioTable = {
     .read = sdioRead,
     .write = sdioWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Sdmmc = &sdioTable;
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *interface)
 {

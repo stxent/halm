@@ -36,7 +36,8 @@ struct MemoryMappedFile
   int file;
 };
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass mmfTable = {
+const struct InterfaceClass * const MemoryMappedFile =
+    &(const struct InterfaceClass){
     .size = sizeof(struct MemoryMappedFile),
     .init = mmfInit,
     .deinit = mmfDeinit,
@@ -47,8 +48,6 @@ static const struct InterfaceClass mmfTable = {
     .read = mmfRead,
     .write = mmfWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const MemoryMappedFile = &mmfTable;
 /*----------------------------------------------------------------------------*/
 static enum Result mmfInit(void *object, const void *configBase)
 {

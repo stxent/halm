@@ -66,7 +66,7 @@ static void oneWireDeinit(void *);
 #define oneWireDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass oneWireTable = {
+const struct InterfaceClass * const OneWireSsp = &(const struct InterfaceClass){
     .size = sizeof(struct OneWireSsp),
     .init = oneWireInit,
     .deinit = oneWireDeinit,
@@ -77,8 +77,6 @@ static const struct InterfaceClass oneWireTable = {
     .read = oneWireRead,
     .write = oneWireWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const OneWireSsp = &oneWireTable;
 /*----------------------------------------------------------------------------*/
 static void adjustPins(struct OneWireSsp *interface __attribute__((unused)),
     const struct OneWireSspConfig *config)

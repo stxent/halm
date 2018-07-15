@@ -24,7 +24,7 @@ static void canDeinit(void *);
 #define canDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass canTable = {
+const struct EntityClass * const CanBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = canInit,
     .deinit = canDeinit
@@ -71,7 +71,6 @@ static const struct PinEntry canPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const CanBase = &canTable;
 static struct CanBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBase *interface,

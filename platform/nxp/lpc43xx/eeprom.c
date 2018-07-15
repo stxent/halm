@@ -33,7 +33,7 @@ static enum Result eepromSetParam(void *, enum IfParameter, const void *);
 static size_t eepromRead(void *, void *, size_t);
 static size_t eepromWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass eepromTable = {
+const struct InterfaceClass * const Eeprom = &(const struct InterfaceClass){
     .size = sizeof(struct Eeprom),
     .init = eepromInit,
     .deinit = eepromDeinit,
@@ -45,7 +45,6 @@ static const struct InterfaceClass eepromTable = {
     .write = eepromWrite
 };
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Eeprom = &eepromTable;
 static struct Eeprom *instance = 0;
 /*----------------------------------------------------------------------------*/
 static size_t calcChunkLength(uintptr_t address, size_t left)

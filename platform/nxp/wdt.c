@@ -13,7 +13,7 @@ static enum Result wdtInit(void *, const void *);
 static enum Result wdtSetCallback(void *, void (*)(void *), void *);
 static void wdtReload(void *);
 /*----------------------------------------------------------------------------*/
-static const struct WatchdogClass wdtTable = {
+const struct WatchdogClass * const Wdt = &(const struct WatchdogClass){
     .size = sizeof(struct Wdt),
     .init = wdtInit,
     .deinit = 0, /* Default destructor */
@@ -21,8 +21,6 @@ static const struct WatchdogClass wdtTable = {
     .setCallback = wdtSetCallback,
     .reload = wdtReload
 };
-/*----------------------------------------------------------------------------*/
-const struct WatchdogClass * const Wdt = &wdtTable;
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *object, const void *configBase)
 {

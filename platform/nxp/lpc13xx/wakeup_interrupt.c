@@ -35,13 +35,15 @@ static void wakeupInterruptDeinit(void *);
 #define wakeupInterruptDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
+static const struct EntityClass * const StartLogicHandler =
+    &(const struct EntityClass){
     .size = sizeof(struct StartLogicHandler),
     .init = startLogicHandlerInit,
     .deinit = deletedDestructorTrap
 };
-/*----------------------------------------------------------------------------*/
-static const struct InterruptClass wakeupInterruptTable = {
+
+const struct InterruptClass * const WakeupInterrupt =
+    &(const struct InterruptClass){
     .size = sizeof(struct WakeupInterrupt),
     .init = wakeupInterruptInit,
     .deinit = wakeupInterruptDeinit,
@@ -51,8 +53,6 @@ static const struct InterruptClass wakeupInterruptTable = {
     .setCallback = wakeupInterruptSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const StartLogicHandler = &handlerTable;
-const struct InterruptClass * const WakeupInterrupt = &wakeupInterruptTable;
 static struct StartLogicHandler *handler = 0;
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(struct PinData data)

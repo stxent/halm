@@ -18,13 +18,12 @@ static void clkDeinit(void *);
 #define clkDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass clkTable = {
+const struct EntityClass * const RtcBase = &(const struct EntityClass){
     .size = sizeof(struct RtcBase),
     .init = clkInit,
     .deinit = clkDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const RtcBase = &clkTable;
 static struct RtcBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void resetInstance(void)

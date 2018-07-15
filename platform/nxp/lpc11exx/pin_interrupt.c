@@ -31,7 +31,8 @@ static void pinInterruptDeinit(void *);
 #define pinInterruptDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterruptClass pinInterruptTable = {
+const struct InterruptClass * const PinInterrupt =
+    &(const struct InterruptClass){
     .size = sizeof(struct PinInterrupt),
     .init = pinInterruptInit,
     .deinit = pinInterruptDeinit,
@@ -41,7 +42,6 @@ static const struct InterruptClass pinInterruptTable = {
     .setCallback = pinInterruptSetCallback
 };
 /*----------------------------------------------------------------------------*/
-const struct InterruptClass * const PinInterrupt = &pinInterruptTable;
 static struct PinInterrupt *instances[8] = {0};
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(uint8_t channel)

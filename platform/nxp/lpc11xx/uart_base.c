@@ -24,7 +24,7 @@ static void uartDeinit(void *);
 #define uartDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass uartTable = {
+const struct EntityClass * const UartBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = uartInit,
     .deinit = uartDeinit
@@ -59,7 +59,6 @@ const struct PinEntry uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const UartBase = &uartTable;
 static struct UartBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void resetInstance(void)

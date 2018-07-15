@@ -33,7 +33,7 @@ static void spiDeinit(void *);
 #define spiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass spiTable = {
+const struct InterfaceClass * const Spi = &(const struct InterfaceClass){
     .size = sizeof(struct Spi),
     .init = spiInit,
     .deinit = spiDeinit,
@@ -44,8 +44,6 @@ static const struct InterfaceClass spiTable = {
     .read = spiRead,
     .write = spiWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Spi = &spiTable;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {

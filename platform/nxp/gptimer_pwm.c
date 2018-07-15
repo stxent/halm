@@ -41,13 +41,13 @@ static void channelDeinit(void *);
 #define channelDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass unitTable = {
+const struct EntityClass * const GpTimerPwmUnit = &(const struct EntityClass){
     .size = sizeof(struct GpTimerPwmUnit),
     .init = unitInit,
     .deinit = unitDeinit
 };
-/*----------------------------------------------------------------------------*/
-static const struct PwmClass channelTable = {
+
+const struct PwmClass * const GpTimerPwm = &(const struct PwmClass){
     .size = sizeof(struct GpTimerPwm),
     .init = channelInit,
     .deinit = channelDeinit,
@@ -59,9 +59,6 @@ static const struct PwmClass channelTable = {
     .setEdges = channelSetEdges,
     .setFrequency = channelSetFrequency
 };
-/*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpTimerPwmUnit = &unitTable;
-const struct PwmClass * const GpTimerPwm = &channelTable;
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NXP_GPTIMER_PM
 static void powerStateHandler(void *object, enum PmState state)

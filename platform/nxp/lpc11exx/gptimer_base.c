@@ -30,7 +30,7 @@ static void tmrDeinit(void *);
 #define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass tmrTable = {
+const struct EntityClass * const GpTimerBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = tmrInit,
     .deinit = tmrDeinit
@@ -215,7 +215,6 @@ const struct PinEntry gpTimerMatchPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpTimerBase = &tmrTable;
 static struct GpTimerBase *instances[4] = {0};
 /*----------------------------------------------------------------------------*/
 static void resetInstance(uint8_t channel)

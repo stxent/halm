@@ -67,7 +67,8 @@ static enum UsbSpeed devGetSpeed(const void *);
 static enum Result devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
-static const struct UsbDeviceClass deviceTable = {
+const struct UsbDeviceClass * const CompositeDevice =
+    &(const struct UsbDeviceClass){
     .size = sizeof(struct CompositeDevice),
     .init = devInit,
     .deinit = devDeinit,
@@ -86,8 +87,6 @@ static const struct UsbDeviceClass deviceTable = {
     .stringAppend = devStringAppend,
     .stringErase = devStringErase
 };
-/*----------------------------------------------------------------------------*/
-const struct UsbDeviceClass * const CompositeDevice = &deviceTable;
 /*----------------------------------------------------------------------------*/
 static void deviceDescriptor(const void *object __attribute__((unused)),
     struct UsbDescriptor *header, void *payload)

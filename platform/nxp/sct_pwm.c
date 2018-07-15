@@ -54,13 +54,13 @@ static void doubleEdgeDeinit(void *);
 #define doubleEdgeDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass unitTable = {
+const struct EntityClass * const SctPwmUnit = &(const struct EntityClass){
     .size = sizeof(struct SctPwmUnit),
     .init = unitInit,
     .deinit = unitDeinit
 };
 
-static const struct PwmClass singleEdgeTable = {
+const struct PwmClass * const SctPwm = &(const struct PwmClass){
     .size = sizeof(struct SctPwm),
     .init = singleEdgeInit,
     .deinit = singleEdgeDeinit,
@@ -73,7 +73,7 @@ static const struct PwmClass singleEdgeTable = {
     .setFrequency = singleEdgeSetFrequency
 };
 
-static const struct PwmClass singleEdgeUnifiedTable = {
+const struct PwmClass * const SctUnifiedPwm = &(const struct PwmClass){
     .size = sizeof(struct SctPwm),
     .init = singleEdgeInit,
     .deinit = singleEdgeDeinit,
@@ -86,7 +86,7 @@ static const struct PwmClass singleEdgeUnifiedTable = {
     .setFrequency = singleEdgeSetFrequency
 };
 
-static const struct PwmClass doubleEdgeTable = {
+const struct PwmClass * const SctPwmDoubleEdge = &(const struct PwmClass){
     .size = sizeof(struct SctPwm),
     .init = doubleEdgeInit,
     .deinit = doubleEdgeDeinit,
@@ -99,7 +99,8 @@ static const struct PwmClass doubleEdgeTable = {
     .setFrequency = doubleEdgeSetFrequency
 };
 
-static const struct PwmClass doubleEdgeUnifiedTable = {
+const struct PwmClass * const SctUnifiedPwmDoubleEdge =
+    &(const struct PwmClass){
     .size = sizeof(struct SctPwm),
     .init = doubleEdgeInit,
     .deinit = doubleEdgeDeinit,
@@ -113,11 +114,6 @@ static const struct PwmClass doubleEdgeUnifiedTable = {
 };
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry sctOutputPins[];
-const struct EntityClass * const SctPwmUnit = &unitTable;
-const struct PwmClass * const SctPwm = &singleEdgeTable;
-const struct PwmClass * const SctUnifiedPwm = &singleEdgeUnifiedTable;
-const struct PwmClass * const SctPwmDoubleEdge = &doubleEdgeTable;
-const struct PwmClass * const SctUnifiedPwmDoubleEdge = &doubleEdgeUnifiedTable;
 /*----------------------------------------------------------------------------*/
 static uint8_t configOutputPin(uint8_t channel, PinNumber key)
 {

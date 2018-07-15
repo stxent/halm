@@ -25,7 +25,7 @@ static void unitDeinit(void *);
 #define unitDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass unitTable = {
+const struct EntityClass * const GpPwmUnitBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = unitInit,
     .deinit = unitDeinit
@@ -97,7 +97,6 @@ const struct PinEntry gpPwmPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpPwmUnitBase = &unitTable;
 static struct GpPwmUnitBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void resetInstance(void)

@@ -20,7 +20,7 @@ static enum Result flashSetParam(void *, enum IfParameter, const void *);
 static size_t flashRead(void *, void *, size_t);
 static size_t flashWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
-static const struct InterfaceClass flashTable = {
+const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .size = sizeof(struct Flash),
     .init = flashInit,
     .deinit = 0, /* Default destructor */
@@ -31,8 +31,6 @@ static const struct InterfaceClass flashTable = {
     .read = flashRead,
     .write = flashWrite
 };
-/*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Flash = &flashTable;
 /*----------------------------------------------------------------------------*/
 static inline bool isPagePositionValid(const struct Flash *interface,
     size_t position)

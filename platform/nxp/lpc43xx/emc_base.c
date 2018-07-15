@@ -26,13 +26,12 @@ static void emcSwitchEnabled(bool);
 
 static enum Result emcHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass handlerTable = {
+static const struct EntityClass * const EmcHandler =
+    &(const struct EntityClass){
     .size = sizeof(struct EmcHandler),
     .init = emcHandlerInit,
     .deinit = deletedDestructorTrap
 };
-/*----------------------------------------------------------------------------*/
-static const struct EntityClass * const EmcHandler = &handlerTable;
 /*----------------------------------------------------------------------------*/
 const struct PinGroupEntry emcAddressPins[] = {
     {
