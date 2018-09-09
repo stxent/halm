@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <halm/pin.h>
 #include <halm/platform/stm/stm32f1xx/pin_defs.h>
+#include <halm/platform/stm/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(struct PinData);
@@ -127,7 +128,8 @@ void pinSetFunction(struct Pin pin, uint8_t function)
     if (mode != MODE_INPUT)
       configuration |= CNF_FUNCTION_MASK;
 
-    // TODO Add workaround for remap
+    if (function)
+      pinRemapApply(function);
   }
 
   configValue &= ~CR_MASK(pin.data.offset);

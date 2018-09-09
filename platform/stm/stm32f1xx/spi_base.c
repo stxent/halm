@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <halm/platform/stm/stm32f1xx/clocking.h>
+#include <halm/platform/stm/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
 #include <halm/platform/stm/spi_base.h>
 #include <halm/platform/stm/spi_defs.h>
@@ -63,35 +64,35 @@ const struct PinEntry spiPins[] = {
     {
         .key = PIN(PORT_A, 4), /* SPI1_NSS */
         .channel = 0,
-        .value = 0
+        .value = PACK_REMAP(REMAP_SPI1, 0)
     }, {
         .key = PIN(PORT_A, 5), /* SPI1_SCK */
         .channel = 0,
-        .value = 0
+        .value = PACK_REMAP(REMAP_SPI1, 0)
     }, {
         .key = PIN(PORT_A, 6), /* SPI1_MISO */
         .channel = 0,
-        .value = 0
+        .value = PACK_REMAP(REMAP_SPI1, 0)
     }, {
         .key = PIN(PORT_A, 7), /* SPI1_MOSI */
         .channel = 0,
-        .value = 0
+        .value = PACK_REMAP(REMAP_SPI1, 0)
     }, {
         .key = PIN(PORT_A, 15), /* SPI1_NSS */
         .channel = 0,
-        .value = 1
+        .value = PACK_REMAP(REMAP_SPI1, 1)
     }, {
         .key = PIN(PORT_B, 3), /* SPI1_SCK */
         .channel = 0,
-        .value = 1
+        .value = PACK_REMAP(REMAP_SPI1, 1)
     }, {
         .key = PIN(PORT_B, 4), /* SPI1_MISO */
         .channel = 0,
-        .value = 1
+        .value = PACK_REMAP(REMAP_SPI1, 1)
     }, {
         .key = PIN(PORT_B, 5), /* SPI1_MOSI */
         .channel = 0,
-        .value = 1
+        .value = PACK_REMAP(REMAP_SPI1, 1)
     }, {
         .key = PIN(PORT_B, 12), /* SPI2_NSS */
         .channel = 1,
@@ -112,42 +113,42 @@ const struct PinEntry spiPins[] = {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_A, 4), /* SPI3_NSS */
         .channel = 2,
-        .value = 1
+        .value = PACK_REMAP(REMAP_SPI3, 1)
     }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_A, 15), /* SPI3_NSS */
         .channel = 2,
-        .value = 0
+        .value = PACK_REMAP(REMAP_SPI3, 0)
     }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_B, 3), /* SPI3_SCK */
         .channel = 2,
-        .value = 0
+        .value = PACK_REMAP(REMAP_SPI3, 0)
     }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_B, 4), /* SPI3_MISO */
         .channel = 2,
-        .value = 0
+        .value = PACK_REMAP(REMAP_SPI3, 0)
     }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_B, 5), /* SPI3_MOSI */
         .channel = 2,
-        .value = 0
+        .value = PACK_REMAP(REMAP_SPI3, 0)
     }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_C, 10), /* SPI3_SCK */
         .channel = 2,
-        .value = 1
+        .value = PACK_REMAP(REMAP_SPI3, 1)
     }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_C, 11), /* SPI3_MISO */
         .channel = 2,
-        .value = 1
+        .value = PACK_REMAP(REMAP_SPI3, 1)
     }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_C, 12), /* SPI3_MOSI */
         .channel = 2,
-        .value = 1
+        .value = PACK_REMAP(REMAP_SPI3, 1)
     }, {
         .key = 0 /* End of pin function association list */
     }
