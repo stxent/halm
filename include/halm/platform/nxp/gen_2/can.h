@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_NXP_CAN_H_
-#define HALM_PLATFORM_NXP_CAN_H_
+#ifndef HALM_PLATFORM_NXP_GEN_2_CAN_H_
+#define HALM_PLATFORM_NXP_GEN_2_CAN_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 #include <halm/generic/pointer_array.h>
@@ -56,4 +56,4 @@ struct Can
   uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NXP_SERIAL_H_ */
+#endif /* HALM_PLATFORM_NXP_GEN_2_CAN_H_ */

@@ -430,15 +430,15 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
 
   const enum Result res = dmaEnable(interface->dma);
 
-  if (res != E_OK)
-  {
-    interface->status = res;
-    return 0;
-  }
-  else
+  if (res == E_OK)
   {
     execute(interface);
     return length;
+  }
+  else
+  {
+    interface->status = res;
+    return 0;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -452,14 +452,14 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
 
   const enum Result res = dmaEnable(interface->dma);
 
-  if (res != E_OK)
-  {
-    interface->status = res;
-    return 0;
-  }
-  else
+  if (res == E_OK)
   {
     execute(interface);
     return length;
+  }
+  else
+  {
+    interface->status = res;
+    return 0;
   }
 }

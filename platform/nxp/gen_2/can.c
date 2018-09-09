@@ -379,9 +379,9 @@ static enum Result canInit(void *object, const void *configBase)
   assert(config);
 
   const struct CanBaseConfig baseConfig = {
-      .channel = config->channel,
       .rx = config->rx,
-      .tx = config->tx
+      .tx = config->tx,
+      .channel = config->channel
   };
   struct Can * const interface = object;
   enum Result res;

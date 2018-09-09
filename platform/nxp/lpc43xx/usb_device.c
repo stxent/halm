@@ -207,7 +207,7 @@ static void resetDevice(struct UsbDevice *device)
   device->suspended = false;
 
   /* Disable all endpoints */
-  for (unsigned int index = 0; index < device->base.numberOfEndpoints; ++index)
+  for (size_t index = 0; index < device->base.numberOfEndpoints; ++index)
     reg->ENDPTCTRL[index] &= ~(ENDPTCTRL_RXE | ENDPTCTRL_TXE);
 
   /* Clear all pending interrupts */
@@ -225,7 +225,7 @@ static void resetDevice(struct UsbDevice *device)
   reg->USBCMD_D &= ~USBCMD_D_ITC_MASK;
 
   /* Zero out all queue heads */
-  for (unsigned int index = 0; index < device->base.numberOfEndpoints; ++index)
+  for (size_t index = 0; index < device->base.numberOfEndpoints; ++index)
   {
     struct QueueHead * const head = &device->base.queueHeads[index];
 
@@ -250,7 +250,7 @@ static void resetDevice(struct UsbDevice *device)
 /*----------------------------------------------------------------------------*/
 static void resetQueueHeads(struct UsbDevice *device)
 {
-  for (unsigned int index = 0; index < device->base.numberOfEndpoints; ++index)
+  for (size_t index = 0; index < device->base.numberOfEndpoints; ++index)
   {
     struct QueueHead * const head = &device->base.queueHeads[index];
 
@@ -277,10 +277,9 @@ static enum Result devInit(void *object, const void *configBase)
       .pid = config->pid
   };
   struct UsbDevice * const device = object;
-  enum Result res;
 
   /* Call base class constructor */
-  res = UsbBase->init(object, &baseConfig);
+  const enum Result res = UsbBase->init(object, &baseConfig);
   if (res != E_OK)
     return res;
 
@@ -294,7 +293,7 @@ static enum Result devInit(void *object, const void *configBase)
     return E_MEMORY;
   memset(device->endpoints, 0, endpointBufferSize);
 
-  /* Initialize control message handler */
+  /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
   if (!device->control)
     return E_ERROR;

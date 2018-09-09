@@ -420,10 +420,9 @@ static enum Result devInit(void *object, const void *configBase)
       .pid = config->pid
   };
   struct UsbDevice * const device = object;
-  enum Result res;
 
   /* Call base class constructor */
-  res = UsbBase->init(object, &baseConfig);
+  const enum Result res = UsbBase->init(object, &baseConfig);
   if (res != E_OK)
     return res;
 
@@ -431,7 +430,7 @@ static enum Result devInit(void *object, const void *configBase)
   device->enabled = false;
   memset(device->endpoints, 0, sizeof(device->endpoints));
 
-  /* Initialize control message handler */
+  /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
   if (!device->control)
     return E_ERROR;
