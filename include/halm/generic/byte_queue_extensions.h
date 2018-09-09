@@ -16,21 +16,21 @@ static inline void byteQueueDeferredPop(struct ByteQueue *queue,
 {
   assert(queue->size > 0);
 
-  *buffer = queue->data + queue->floor;
+  *buffer = queue->data + queue->head;
 
-  if (queue->floor < queue->ceil)
+  if (queue->head < queue->tail)
     *size = queue->size;
   else
-    *size = queue->capacity - queue->floor;
+    *size = queue->capacity - queue->head;
 }
 
 static inline void byteQueueAbandon(struct ByteQueue *queue, size_t size)
 {
   assert(queue->size >= size);
 
-  queue->floor += size;
-  if (queue->floor >= queue->capacity)
-    queue->floor -= queue->capacity;
+  queue->head += size;
+  if (queue->head >= queue->capacity)
+    queue->head -= queue->capacity;
   queue->size -= size;
 }
 

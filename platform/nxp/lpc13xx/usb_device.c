@@ -5,9 +5,10 @@
  */
 
 #include <assert.h>
+#include <string.h>
 #include <xcore/asm.h>
-#include <xcore/containers/queue.h>
 #include <halm/delay.h>
+#include <halm/generic/pointer_queue.h>
 #include <halm/platform/nxp/lpc13xx/usb_base.h>
 #include <halm/platform/nxp/lpc13xx/usb_defs.h>
 #include <halm/platform/nxp/usb_device.h>
@@ -22,7 +23,7 @@ struct UsbSieEndpoint
   /* Parent device */
   struct UsbDevice *device;
   /* Queued requests */
-  struct Queue requests;
+  PointerQueue requests;
   /* Logical address */
   uint8_t address;
 };
@@ -376,23 +377,23 @@ static void devStringErase(void *object, struct UsbString string)
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbSieEndpoint *ep, uint8_t status)
 {
-  if (queueEmpty(&ep->requests))
+  if (pointerQueueEmpty(&ep->requests))
     return;
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
     const unsigned int index = EP_TO_INDEX(ep->address);
 
-    while (!queueEmpty(&ep->requests))
+    while (!pointerQueueEmpty(&ep->requests))
     {
       const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
       const uint8_t epStatus = usbCommandRead(ep->device, epCode);
 
       if (!(epStatus & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST)))
       {
-        struct UsbRequest *request;
+        struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+        pointerQueuePopFront(&ep->requests);
 
-        queuePop(&ep->requests, &request);
         epWriteData(ep, request->buffer, request->length);
         request->callback(request->callbackArgument, request,
             USB_REQUEST_COMPLETED);
@@ -403,17 +404,15 @@ static void epHandler(struct UsbSieEndpoint *ep, uint8_t status)
   }
   else
   {
-    struct UsbRequest *request;
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
     size_t read;
-
-    queuePeek(&ep->requests, &request);
 
     if (epReadData(ep, request->buffer, request->capacity, &read) == E_OK)
     {
       const enum UsbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
           USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
 
-      queuePop(&ep->requests, 0);
+      pointerQueuePopFront(&ep->requests);
       request->length = read;
       request->callback(request->callbackArgument, request, requestStatus);
     }
@@ -564,16 +563,15 @@ static enum Result epInit(void *object, const void *configBase)
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbSieEndpoint * const ep = object;
 
-  const enum Result res = queueInit(&ep->requests,
-      sizeof(struct UsbRequest *), CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS);
-
-  if (res == E_OK)
+  if (pointerQueueInit(&ep->requests, CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS))
   {
     ep->address = config->address;
     ep->device = config->parent;
-  }
 
-  return res;
+    return E_OK;
+  }
+  else
+    return E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
 static void epDeinit(void *object)
@@ -590,19 +588,19 @@ static void epDeinit(void *object)
   device->endpoints[index] = 0;
   irqRestore(state);
 
-  assert(queueEmpty(&ep->requests));
-  queueDeinit(&ep->requests);
+  assert(pointerQueueEmpty(&ep->requests));
+  pointerQueueDeinit(&ep->requests);
 }
 /*----------------------------------------------------------------------------*/
 static void epClear(void *object)
 {
   struct UsbSieEndpoint * const ep = object;
 
-  while (!queueEmpty(&ep->requests))
+  while (!pointerQueueEmpty(&ep->requests))
   {
-    struct UsbRequest *request;
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+    pointerQueuePopFront(&ep->requests);
 
-    queuePop(&ep->requests, &request);
     request->callback(request->callbackArgument, request,
         USB_REQUEST_CANCELLED);
   }
@@ -651,7 +649,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
     return E_IDLE;
 
   irqDisable(ep->device->base.irq);
-  assert(!queueFull(&ep->requests));
+  assert(!pointerQueueFull(&ep->requests));
 
   const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
   const uint8_t epStatus = usbCommandRead(ep->device, epCode);
@@ -662,14 +660,14 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
     static const uint8_t mask = SELECT_ENDPOINT_ST
         | SELECT_ENDPOINT_B1FULL | SELECT_ENDPOINT_B2FULL;
 
-    invokeHandler = !(epStatus & mask) && !queueSize(&ep->requests);
+    invokeHandler = !(epStatus & mask) && pointerQueueEmpty(&ep->requests);
   }
   else if (epStatus & SELECT_ENDPOINT_FE)
   {
     invokeHandler = true;
   }
 
-  queuePush(&ep->requests, &request);
+  pointerQueuePushBack(&ep->requests, request);
 
   if (invokeHandler)
   {
@@ -704,11 +702,11 @@ static void epSetStalled(void *object, bool stalled)
 
   /* Write pending IN request to the endpoint buffer */
   if (!stalled && (ep->address & USB_EP_DIRECTION_IN)
-      && !queueEmpty(&ep->requests))
+      && !pointerQueueEmpty(&ep->requests))
   {
-    struct UsbRequest *request;
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+    pointerQueuePopFront(&ep->requests);
 
-    queuePop(&ep->requests, &request);
     epWriteData(ep, request->buffer, request->length);
     request->callback(request->callbackArgument, request,
         USB_REQUEST_COMPLETED);

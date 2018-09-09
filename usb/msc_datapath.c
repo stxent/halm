@@ -52,10 +52,10 @@ static bool enqueueUsbRx(struct MscQueryHandler *handler,
 
   usbTrace("msc: OUT %"PRIu32" bytes", length);
 
-  while (!arrayEmpty(&handler->usbPool) && length)
+  while (!pointerArrayEmpty(&handler->usbPool) && length)
   {
-    struct UsbRequest *request;
-    arrayPopBack(&handler->usbPool, &request);
+    struct UsbRequest * const request = pointerArrayBack(&handler->usbPool);
+    pointerArrayPopBack(&handler->usbPool);
 
     const size_t prepared = prepareDataRx(handler, request, position, length,
         silent, last);
@@ -68,7 +68,7 @@ static bool enqueueUsbRx(struct MscQueryHandler *handler,
     else
     {
       /* Hardware error occurred */
-      arrayPushBack(&handler->usbPool, &request);
+      pointerArrayPushBack(&handler->usbPool, request);
       return false;
     }
   }
@@ -105,10 +105,10 @@ static bool enqueueUsbTx(struct MscQueryHandler *handler,
 
   usbTrace("msc: IN %"PRIu32" bytes", length);
 
-  while (!arrayEmpty(&handler->usbPool) && length)
+  while (!pointerArrayEmpty(&handler->usbPool) && length)
   {
-    struct UsbRequest *request;
-    arrayPopBack(&handler->usbPool, &request);
+    struct UsbRequest * const request = pointerArrayBack(&handler->usbPool);
+    pointerArrayPopBack(&handler->usbPool);
 
     const size_t prepared = prepareDataTx(handler, request, position, length,
         silent, last);
@@ -121,7 +121,7 @@ static bool enqueueUsbTx(struct MscQueryHandler *handler,
     else
     {
       /* Hardware error occurred */
-      arrayPushBack(&handler->usbPool, &request);
+      pointerArrayPushBack(&handler->usbPool, request);
       return false;
     }
   }
@@ -151,10 +151,10 @@ static bool enqueueUsbTxRequests(struct MscQueryHandler *handler,
 /*----------------------------------------------------------------------------*/
 static void fillStorageReadQueue(struct MscQueryHandler *handler)
 {
-  while (handler->currentQueryLength && !arrayEmpty(&handler->queryPool))
+  while (handler->currentQueryLength && !pointerArrayEmpty(&handler->queryPool))
   {
-    struct MscQuery *transfer;
-    arrayPopBack(&handler->queryPool, &transfer);
+    struct MscQuery * const transfer = pointerArrayBack(&handler->queryPool);
+    pointerArrayPopBack(&handler->queryPool);
 
     transfer->position = handler->currentQueryPosition;
     transfer->length = MIN(transfer->capacity, handler->currentQueryLength);
@@ -163,16 +163,16 @@ static void fillStorageReadQueue(struct MscQueryHandler *handler)
     handler->currentQueryLength -= transfer->length;
     handler->currentQueryPosition += transfer->length;
 
-    queuePush(&handler->storageQueries, &transfer);
+    pointerQueuePushBack(&handler->storageQueries, transfer);
   }
 }
 /*----------------------------------------------------------------------------*/
 static void fillUsbReadQueue(struct MscQueryHandler *handler)
 {
-  while (handler->currentQueryLength && !arrayEmpty(&handler->queryPool))
+  while (handler->currentQueryLength && !pointerArrayEmpty(&handler->queryPool))
   {
-    struct MscQuery *transfer;
-    arrayPopBack(&handler->queryPool, &transfer);
+    struct MscQuery * const transfer = pointerArrayBack(&handler->queryPool);
+    pointerArrayPopBack(&handler->queryPool);
 
     transfer->position = handler->currentQueryPosition;
     transfer->length = MIN(transfer->capacity, handler->currentQueryLength);
@@ -181,7 +181,7 @@ static void fillUsbReadQueue(struct MscQueryHandler *handler)
     handler->currentQueryLength -= transfer->length;
     handler->currentQueryPosition += transfer->length;
 
-    queuePush(&handler->usbQueries, &transfer);
+    pointerQueuePushBack(&handler->usbQueries, transfer);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -189,10 +189,9 @@ static void handleIncomingFlow(struct MscQueryHandler *handler)
 {
   fillUsbReadQueue(handler);
 
-  if (!queueEmpty(&handler->usbQueries))
+  if (!pointerQueueEmpty(&handler->usbQueries))
   {
-    struct MscQuery *query;
-    queuePeek(&handler->usbQueries, &query);
+    struct MscQuery * const query = pointerQueueFront(&handler->usbQueries);
 
     if (!enqueueUsbRxRequests(handler, query))
     {
@@ -203,10 +202,9 @@ static void handleIncomingFlow(struct MscQueryHandler *handler)
     }
   }
 
-  if (!queueEmpty(&handler->storageQueries))
+  if (!pointerQueueEmpty(&handler->storageQueries))
   {
-    struct MscQuery *query;
-    queuePeek(&handler->storageQueries, &query);
+    struct MscQuery * const query = pointerQueueFront(&handler->storageQueries);
 
     if (query->offset != query->length)
     {
@@ -224,7 +222,7 @@ static void handleIncomingFlow(struct MscQueryHandler *handler)
     }
   }
 
-  if (arrayFull(&handler->queryPool) && !handler->currentQueryLength)
+  if (pointerArrayFull(&handler->queryPool) && !handler->currentQueryLength)
   {
     /* Transfer completed, invoke parent FSM */
     handler->currentStatus = E_OK;
@@ -236,10 +234,9 @@ static void handleOutgoingFlow(struct MscQueryHandler *handler)
 {
   fillStorageReadQueue(handler);
 
-  if (!queueEmpty(&handler->usbQueries))
+  if (!pointerQueueEmpty(&handler->usbQueries))
   {
-    struct MscQuery *query;
-    queuePeek(&handler->usbQueries, &query);
+    struct MscQuery * const query = pointerQueueFront(&handler->usbQueries);
 
     if (!enqueueUsbTxRequests(handler, query))
     {
@@ -250,10 +247,9 @@ static void handleOutgoingFlow(struct MscQueryHandler *handler)
     }
   }
 
-  if (!queueEmpty(&handler->storageQueries))
+  if (!pointerQueueEmpty(&handler->storageQueries))
   {
-    struct MscQuery *query;
-    queuePeek(&handler->storageQueries, &query);
+    struct MscQuery * const query = pointerQueueFront(&handler->storageQueries);
 
     if (query->offset != query->length)
     {
@@ -271,7 +267,7 @@ static void handleOutgoingFlow(struct MscQueryHandler *handler)
     }
   }
 
-  if (arrayFull(&handler->queryPool) && !handler->currentQueryLength)
+  if (pointerArrayFull(&handler->queryPool) && !handler->currentQueryLength)
   {
     /* Transfer completed, invoke parent FSM */
     handler->currentStatus = E_OK;
@@ -300,13 +296,8 @@ static void makePingPongTransfer(struct MscQueryHandler *handler,
       .length = 0
   };
 
-  const struct MscQuery * const transfers[] = {
-      &handler->queries[0],
-      &handler->queries[1]
-  };
-
-  arrayPushBack(&handler->queryPool, &transfers[0]);
-  arrayPushBack(&handler->queryPool, &transfers[1]);
+  pointerArrayPushBack(&handler->queryPool, &handler->queries[0]);
+  pointerArrayPushBack(&handler->queryPool, &handler->queries[1]);
 }
 /*----------------------------------------------------------------------------*/
 static size_t prepareDataRx(struct MscQueryHandler *handler,
@@ -340,9 +331,9 @@ static size_t prepareDataTx(struct MscQueryHandler *handler,
 /*----------------------------------------------------------------------------*/
 static void resetTransferPool(struct MscQueryHandler *handler)
 {
-  arrayClear(&handler->queryPool);
-  queueClear(&handler->storageQueries);
-  queueClear(&handler->usbQueries);
+  pointerArrayClear(&handler->queryPool);
+  pointerQueueClear(&handler->storageQueries);
+  pointerQueueClear(&handler->usbQueries);
 
   handler->currentQueryLength = 0;
   handler->currentQueryPosition = 0;
@@ -383,11 +374,12 @@ static void storageReadCallback(void *argument)
   {
     usbTrace("msc: storage read done");
 
-    struct MscQuery *transfer;
+    struct MscQuery * const transfer =
+        pointerQueueFront(&handler->storageQueries);
+    pointerQueuePopFront(&handler->storageQueries);
 
-    queuePop(&handler->storageQueries, &transfer);
     transfer->offset = 0;
-    queuePush(&handler->usbQueries, &transfer);
+    pointerQueuePushBack(&handler->usbQueries, transfer);
 
     /* Handle USB transfers */
     handleOutgoingFlow(handler);
@@ -431,11 +423,12 @@ static void storageWriteCallback(void *argument)
   {
     usbTrace("msc: storage write done");
 
-    struct MscQuery *transfer;
+    struct MscQuery * const transfer =
+        pointerQueueFront(&handler->storageQueries);
+    pointerQueuePopFront(&handler->storageQueries);
 
     /* Return query to pool */
-    queuePop(&handler->storageQueries, &transfer);
-    arrayPushBack(&handler->queryPool, &transfer);
+    pointerArrayPushBack(&handler->queryPool, transfer);
 
     /* Enqueue storage interface requests and handle USB transfers */
     handleIncomingFlow(handler);
@@ -455,12 +448,12 @@ static void usbControlCallback(void *argument, struct UsbRequest *request,
 
     handler->currentStatus = request->length == request->capacity ?
         E_OK : E_VALUE;
-    arrayPushBack(&handler->usbPool, &request);
+    pointerArrayPushBack(&handler->usbPool, request);
     handler->trampoline(handler->driver);
   }
   else if (status != USB_REQUEST_CANCELLED)
   {
-    arrayPushBack(&handler->usbPool, &request);
+    pointerArrayPushBack(&handler->usbPool, request);
 
     handler->currentStatus = E_ERROR;
     handler->trampoline(handler->driver);
@@ -472,18 +465,17 @@ static void usbRxLastCallback(void *argument, struct UsbRequest *request,
 {
   struct MscQueryHandler * const handler = argument;
 
-  arrayPushBack(&handler->usbPool, &request);
+  pointerArrayPushBack(&handler->usbPool, request);
 
   if (status == USB_REQUEST_COMPLETED)
   {
     usbTrace("msc: OUT done");
 
-    struct MscQuery *transfer;
+    struct MscQuery * const transfer = pointerQueueFront(&handler->usbQueries);
+    pointerQueuePopFront(&handler->usbQueries);
 
-    queuePop(&handler->usbQueries, &transfer);
     transfer->offset = 0;
-    queuePush(&handler->storageQueries, &transfer);
-
+    pointerQueuePushBack(&handler->storageQueries, transfer);
     handleIncomingFlow(handler);
   }
   else if (status != USB_REQUEST_CANCELLED)
@@ -498,13 +490,13 @@ static void usbRxSilentCallback(void *argument, struct UsbRequest *request,
 {
   struct MscQueryHandler * const handler = argument;
 
-  arrayPushBack(&handler->usbPool, &request);
+  pointerArrayPushBack(&handler->usbPool, request);
 
   if (status == USB_REQUEST_COMPLETED)
   {
-    const size_t watermark = arrayCapacity(&handler->usbPool) >> 1;
+    const size_t watermark = pointerArrayCapacity(&handler->usbPool) >> 1;
 
-    if (arraySize(&handler->usbPool) >= watermark)
+    if (pointerArraySize(&handler->usbPool) >= watermark)
       handleIncomingFlow(handler);
   }
   else if (status != USB_REQUEST_CANCELLED)
@@ -519,17 +511,16 @@ static void usbTxLastCallback(void *argument, struct UsbRequest *request,
 {
   struct MscQueryHandler * const handler = argument;
 
-  arrayPushBack(&handler->usbPool, &request);
+  pointerArrayPushBack(&handler->usbPool, request);
 
   if (status == USB_REQUEST_COMPLETED)
   {
     usbTrace("msc: IN done");
 
-    struct MscQuery *transfer;
+    struct MscQuery * const transfer = pointerQueueFront(&handler->usbQueries);
+    pointerQueuePopFront(&handler->usbQueries);
 
-    queuePop(&handler->usbQueries, &transfer);
-    arrayPushBack(&handler->queryPool, &transfer);
-
+    pointerArrayPushBack(&handler->queryPool, transfer);
     handleOutgoingFlow(handler);
   }
   else if (status != USB_REQUEST_CANCELLED)
@@ -544,13 +535,13 @@ static void usbTxSilentCallback(void *argument, struct UsbRequest *request,
 {
   struct MscQueryHandler * const handler = argument;
 
-  arrayPushBack(&handler->usbPool, &request);
+  pointerArrayPushBack(&handler->usbPool, request);
 
   if (status == USB_REQUEST_COMPLETED)
   {
-    const size_t watermark = arrayCapacity(&handler->usbPool) >> 1;
+    const size_t watermark = pointerArrayCapacity(&handler->usbPool) >> 1;
 
-    if (arraySize(&handler->usbPool) >= watermark)
+    if (pointerArraySize(&handler->usbPool) >= watermark)
       handleOutgoingFlow(handler);
   }
   else if (status != USB_REQUEST_CANCELLED)
@@ -563,49 +554,40 @@ static void usbTxSilentCallback(void *argument, struct UsbRequest *request,
 enum Result datapathInit(struct MscQueryHandler *handler,
     struct Msc *driver, void (*trampoline)(struct Msc *))
 {
-  enum Result res;
-
-  res = arrayInit(&handler->usbPool, sizeof(struct UsbRequest *),
-      DATA_QUEUE_SIZE);
-  if (res != E_OK)
-    return res;
-  res = queueInit(&handler->usbQueue, sizeof(struct UsbRequest *),
-      DATA_QUEUE_SIZE);
-  if (res != E_OK)
-    return res;
+  if (!pointerArrayInit(&handler->usbPool, DATA_QUEUE_SIZE))
+    return E_MEMORY;
+  if (!pointerQueueInit(&handler->usbQueue, DATA_QUEUE_SIZE))
+    return E_MEMORY;
 
   for (size_t index = 0; index < DATA_QUEUE_SIZE; ++index)
   {
     struct UsbRequest * const request = &handler->headers[index];
 
     usbRequestInit(request, 0, 0, 0, 0);
-    arrayPushBack(&handler->usbPool, &request);
+    pointerArrayPushBack(&handler->usbPool, request);
   }
 
   handler->driver = driver;
   handler->trampoline = trampoline;
 
-  res = arrayInit(&handler->queryPool, sizeof(struct MscQuery *), 2);
-  if (res != E_OK)
-    return res;
-  res = queueInit(&handler->storageQueries, sizeof(struct MscQuery *), 2);
-  if (res != E_OK)
-    return res;
-  res = queueInit(&handler->usbQueries, sizeof(struct MscQuery *), 2);
-  if (res != E_OK)
-    return res;
+  if (!pointerArrayInit(&handler->queryPool, 2))
+    return E_MEMORY;
+  if (!pointerQueueInit(&handler->storageQueries, 2))
+    return E_MEMORY;
+  if (!pointerQueueInit(&handler->usbQueries, 2))
+    return E_MEMORY;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void datapathDeinit(struct MscQueryHandler *handler)
 {
-  queueDeinit(&handler->usbQueries);
-  queueDeinit(&handler->storageQueries);
-  arrayDeinit(&handler->queryPool);
+  pointerQueueDeinit(&handler->usbQueries);
+  pointerQueueDeinit(&handler->storageQueries);
+  pointerArrayDeinit(&handler->queryPool);
 
-  queueDeinit(&handler->usbQueue);
-  arrayDeinit(&handler->usbPool);
+  pointerQueueDeinit(&handler->usbQueue);
+  pointerArrayDeinit(&handler->usbPool);
 }
 /*----------------------------------------------------------------------------*/
 enum Result datapathStatus(const struct MscQueryHandler *handler)
@@ -648,15 +630,10 @@ bool datapathSendResponseAndStatus(struct MscQueryHandler *handler,
       .offset = 0
   };
 
-  struct MscQuery * const transfers[] = {
-      &handler->queries[0],
-      &handler->queries[1]
-  };
+  pointerQueuePushBack(&handler->usbQueries, &handler->queries[0]);
+  pointerQueuePushBack(&handler->usbQueries, &handler->queries[1]);
 
-  queuePush(&handler->usbQueries, &transfers[0]);
-  queuePush(&handler->usbQueries, &transfers[1]);
-
-  return enqueueUsbTxRequests(handler, transfers[0]);
+  return enqueueUsbTxRequests(handler, &handler->queries[0]);
 }
 /*----------------------------------------------------------------------------*/
 bool datapathSendResponse(struct MscQueryHandler *handler,
@@ -679,15 +656,10 @@ bool datapathSendResponse(struct MscQueryHandler *handler,
       .offset = 0
   };
 
-  struct MscQuery * const transfers[] = {
-      &handler->queries[0],
-      &handler->queries[1]
-  };
+  pointerQueuePushBack(&handler->usbQueries, &handler->queries[0]);
+  pointerArrayPushBack(&handler->queryPool, &handler->queries[1]);
 
-  queuePush(&handler->usbQueries, &transfers[0]);
-  arrayPushBack(&handler->queryPool, &transfers[1]);
-
-  return enqueueUsbTxRequests(handler, transfers[0]);
+  return enqueueUsbTxRequests(handler, &handler->queries[0]);
 }
 /*----------------------------------------------------------------------------*/
 bool datapathSendStatus(struct MscQueryHandler *handler,
@@ -718,15 +690,10 @@ bool datapathSendStatus(struct MscQueryHandler *handler,
       .offset = 0
   };
 
-  struct MscQuery * const transfers[] = {
-      &handler->queries[0],
-      &handler->queries[1]
-  };
+  pointerQueuePushBack(&handler->usbQueries, &handler->queries[0]);
+  pointerArrayPushBack(&handler->queryPool, &handler->queries[1]);
 
-  queuePush(&handler->usbQueries, &transfers[0]);
-  arrayPushBack(&handler->queryPool, &transfers[1]);
-
-  return enqueueUsbTxRequests(handler, transfers[0]);
+  return enqueueUsbTxRequests(handler, &handler->queries[0]);
 }
 /*----------------------------------------------------------------------------*/
 bool datapathReceiveAndWriteData(struct MscQueryHandler *handler,
@@ -737,10 +704,7 @@ bool datapathReceiveAndWriteData(struct MscQueryHandler *handler,
       storagePosition, transferLength);
   fillUsbReadQueue(handler);
 
-  struct MscQuery *query;
-  queuePeek(&handler->usbQueries, &query);
-
-  return enqueueUsbRxRequests(handler, query);
+  return enqueueUsbRxRequests(handler, pointerQueueFront(&handler->usbQueries));
 }
 /*----------------------------------------------------------------------------*/
 bool datapathReadAndSendData(struct MscQueryHandler *handler,
@@ -751,8 +715,7 @@ bool datapathReadAndSendData(struct MscQueryHandler *handler,
       storagePosition, transferLength);
   fillStorageReadQueue(handler);
 
-  struct MscQuery *query;
-  queuePeek(&handler->storageQueries, &query);
+  struct MscQuery * const query = pointerQueueFront(&handler->storageQueries);
 
   /* Mark query as pending */
   query->offset = query->length;

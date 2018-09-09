@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <xcore/containers/list.h>
+#include <xcore/containers/tg_list.h>
 #include <xcore/entity.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
@@ -15,11 +15,13 @@ struct PmHandlerEntry
   void *object;
   void (*callback)(void *, enum PmState);
 };
-/*----------------------------------------------------------------------------*/
+
+DEFINE_LIST(struct PmHandlerEntry, Pm, pm)
+
 struct PmHandler
 {
   struct Entity parent;
-  struct List objectList;
+  PmList objectList;
 };
 /*----------------------------------------------------------------------------*/
 static void notifyHandlerEntries(enum PmState);
@@ -41,14 +43,14 @@ static void notifyHandlerEntries(enum PmState state)
   if (!pmHandler)
     return;
 
-  const struct ListNode *current = listFirst(&pmHandler->objectList);
-  struct PmHandlerEntry entry;
+  PmListNode *current = pmListFront(&pmHandler->objectList);
 
   while (current)
   {
-    listData(&pmHandler->objectList, current, &entry);
-    entry.callback(entry.object, state);
-    current = listNext(current);
+    const struct PmHandlerEntry * const entry = pmListData(current);
+
+    entry->callback(entry->object, state);
+    current = pmListNext(current);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -56,7 +58,9 @@ static enum Result pmHandlerInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct PmHandler * const handler = object;
-  return listInit(&handler->objectList, sizeof(struct PmHandlerEntry));
+
+  pmListInit(&handler->objectList);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void pmChangeState(enum PmState state)
@@ -78,29 +82,23 @@ enum Result pmRegister(void (*callback)(void *, enum PmState), void *object)
   if (!pmHandler)
     return E_ERROR;
 
-  const struct PmHandlerEntry entry = {
-      .object = object,
-      .callback = callback
-  };
-
-  return listPush(&pmHandler->objectList, &entry);
+  return pmListPushFront(&pmHandler->objectList,
+      (struct PmHandlerEntry){object, callback}) ? E_OK : E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
 void pmUnregister(const void *object)
 {
   assert(pmHandler);
 
-  struct ListNode *current = listFirst(&pmHandler->objectList);
-  struct PmHandlerEntry entry;
+  PmListNode *current = pmListFront(&pmHandler->objectList);
 
   while (current)
   {
-    listData(&pmHandler->objectList, current, &entry);
-    if (entry.object == object)
+    if (pmListData(current)->object == object)
       break;
-    current = listNext(current);
+    current = pmListNext(current);
   }
   assert(current);
 
-  listErase(&pmHandler->objectList, current);
+  pmListErase(&pmHandler->objectList, current);
 }

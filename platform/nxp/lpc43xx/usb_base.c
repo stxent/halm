@@ -169,7 +169,6 @@ static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbBaseConfig * const config = configBase;
   struct UsbBase * const device = object;
-  enum Result res;
 
   device->channel = config->channel;
   device->handler = 0;
@@ -178,10 +177,8 @@ static enum Result devInit(void *object, const void *configBase)
   if (!setInstance(device->channel, device))
     return E_BUSY;
 
-  res = arrayInit(&device->descriptorPool, sizeof(struct TransferDescriptor *),
-      ENDPOINT_REQUESTS);
-  if (res != E_OK)
-    return res;
+  if (!pointerArrayInit(&device->descriptorPool, ENDPOINT_REQUESTS))
+    return E_MEMORY;
 
   configPins(device, configBase);
 
@@ -223,8 +220,8 @@ static enum Result devInit(void *object, const void *configBase)
 
   for (size_t index = 0; index < ENDPOINT_REQUESTS; ++index)
   {
-    struct TransferDescriptor * const entry = device->descriptorMemory + index;
-    arrayPushBack(&device->descriptorPool, &entry);
+    pointerArrayPushBack(&device->descriptorPool,
+        device->descriptorMemory + index);
   }
 
   return E_OK;

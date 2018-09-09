@@ -7,9 +7,9 @@
 #ifndef HALM_USB_CDC_ACM_H_
 #define HALM_USB_CDC_ACM_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/array.h>
-#include <xcore/containers/queue.h>
 #include <xcore/interface.h>
+#include <halm/generic/pointer_array.h>
+#include <halm/generic/pointer_queue.h>
 #include <halm/usb/cdc_acm_base.h>
 /*----------------------------------------------------------------------------*/
 enum CdcAcmParameter
@@ -62,9 +62,9 @@ struct CdcAcm
   /* Lower half of the driver */
   struct CdcAcmBase *driver;
   /* Queue for OUT requests */
-  struct Queue rxRequestQueue;
+  PointerQueue rxRequestQueue;
   /* Pool for IN requests */
-  struct Array txRequestPool;
+  PointerArray txRequestPool;
   /* Pointer to the beginning of the request pool */
   void *requests;
   /* Number of available and pending bytes */

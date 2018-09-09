@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include <xcore/containers/queue.h>
+#include <halm/generic/pointer_queue.h>
 #include <halm/platform/stm/stm32f1xx/usb_base.h>
 #include <halm/platform/stm/stm32f1xx/usb_defs.h>
 #include <halm/platform/stm/stm32f1xx/usb_helpers.h>
@@ -34,7 +34,7 @@ struct UsbSieEndpoint
   /* Parent device */
   struct UsbDevice *device;
   /* Queued requests */
-  struct Queue requests;
+  PointerQueue requests;
   /* Logical address */
   uint8_t address;
   /* Pending transfers */
@@ -266,10 +266,9 @@ static enum Result devInit(void *object, const void *configBase)
       .pid = config->pid
   };
   struct UsbDevice * const device = object;
-  enum Result res;
 
   /* Call base class constructor */
-  res = UsbBase->init(object, &baseConfig);
+  const enum Result res = UsbBase->init(object, &baseConfig);
   if (res != E_OK)
     return res;
 
@@ -281,7 +280,7 @@ static enum Result devInit(void *object, const void *configBase)
   device->suspended = false;
   memset(device->endpoints, 0, sizeof(device->endpoints));
 
-  /* Initialize control message handler */
+  /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
   if (!device->control)
     return E_ERROR;
@@ -493,7 +492,7 @@ static void dbEpEnqueue(struct UsbSieEndpoint *ep, struct UsbRequest *request)
 {
   if (ep->address & USB_EP_DIRECTION_IN)
   {
-    if (ep->pending < 2 && ep->pending == queueSize(&ep->requests))
+    if (ep->pending < 2 && ep->pending == pointerQueueSize(&ep->requests))
     {
       if (ep->state == 3)
       {
@@ -510,7 +509,7 @@ static void dbEpEnqueue(struct UsbSieEndpoint *ep, struct UsbRequest *request)
   }
   else
   {
-    if (queueEmpty(&ep->requests))
+    if (pointerQueueEmpty(&ep->requests))
     {
       STM_USB_Type * const reg = ep->device->base.reg;
       const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
@@ -535,7 +534,7 @@ static void dbEpEnqueue(struct UsbSieEndpoint *ep, struct UsbRequest *request)
     }
   }
 
-  queuePush(&ep->requests, &request);
+  pointerQueuePushBack(&ep->requests, request);
 }
 /*----------------------------------------------------------------------------*/
 static void dbEpHandler(struct UsbSieEndpoint *ep,
@@ -562,10 +561,11 @@ static void dbEpHandler(struct UsbSieEndpoint *ep,
     else
     {
       /* The first packet has been sent or the driver is in the work state */
-      assert(!queueEmpty(&ep->requests));
+      assert(!pointerQueueEmpty(&ep->requests));
 
       --ep->pending;
-      queuePop(&ep->requests, &req);
+      req = pointerQueueFront(&ep->requests);
+      pointerQueuePopFront(&ep->requests);
       req->callback(req->callbackArgument, req, USB_REQUEST_COMPLETED);
 
       if (ep->state == 2)
@@ -581,9 +581,9 @@ static void dbEpHandler(struct UsbSieEndpoint *ep,
        * Write up to two packets into the packet memory,
        * state should be already changed.
        */
-      while (ep->pending < 2 && ep->pending < queueSize(&ep->requests))
+      while (ep->pending < 2 && ep->pending < pointerQueueSize(&ep->requests))
       {
-        req = *(struct UsbRequest **)queueAt(&ep->requests, ep->pending);
+        req = *pointerQueueAt(&ep->requests, ep->pending);
         dbEpWritePacket(ep, req->buffer, req->length);
         ++ep->pending;
       }
@@ -591,16 +591,14 @@ static void dbEpHandler(struct UsbSieEndpoint *ep,
   }
   else
   {
-    assert(!queueEmpty(&ep->requests));
+    assert(!pointerQueueEmpty(&ep->requests));
 
-    struct UsbRequest *req;
+    struct UsbRequest * const req = pointerQueueFront(&ep->requests);
     size_t read;
-
-    queuePeek(&ep->requests, &req);
 
     if (dbEpReadData(ep, req->buffer, req->capacity, &read))
     {
-      queuePop(&ep->requests, 0);
+      pointerQueuePopFront(&ep->requests);
       req->length = read;
       req->callback(req->callbackArgument, req, USB_REQUEST_COMPLETED);
     }
@@ -619,7 +617,7 @@ static bool dbEpReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
   const size_t available = COUNT_RX_VALUE(*calcEpCount(reg, entry));
   const bool ok = available <= length;
 
-  if (queueSize(&ep->requests) > 1 || !ok)
+  if (pointerQueueSize(&ep->requests) > 1 || !ok)
   {
     if (!ep->state)
     {
@@ -726,7 +724,7 @@ static void sbEpEnable(struct UsbSieEndpoint *ep, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static void sbEpEnqueue(struct UsbSieEndpoint *ep, struct UsbRequest *request)
 {
-  if (queueEmpty(&ep->requests))
+  if (pointerQueueEmpty(&ep->requests))
   {
     if (!(ep->address & USB_EP_DIRECTION_IN))
     {
@@ -742,12 +740,12 @@ static void sbEpEnqueue(struct UsbSieEndpoint *ep, struct UsbRequest *request)
     }
   }
 
-  queuePush(&ep->requests, &request);
+  pointerQueuePushBack(&ep->requests, request);
 }
 /*----------------------------------------------------------------------------*/
 static void sbEpHandler(struct UsbSieEndpoint *ep, bool setup)
 {
-  if (queueEmpty(&ep->requests))
+  if (pointerQueueEmpty(&ep->requests))
     return;
 
   STM_USB_Type * const reg = ep->device->base.reg;
@@ -770,32 +768,30 @@ static void sbEpHandler(struct UsbSieEndpoint *ep, bool setup)
       }
     }
 
-    struct UsbRequest *req;
+    struct UsbRequest *req = pointerQueueFront(&ep->requests);
+    pointerQueuePopFront(&ep->requests);
 
-    queuePop(&ep->requests, &req);
     req->callback(req->callbackArgument, req, USB_REQUEST_COMPLETED);
     --ep->pending;
 
-    if (!queueEmpty(&ep->requests))
+    if (!pointerQueueEmpty(&ep->requests))
     {
-      queuePeek(&ep->requests, &req);
+      req = pointerQueueFront(&ep->requests);
       sbEpWriteData(ep, req->buffer, req->length);
       ++ep->pending;
     }
   }
   else
   {
-    struct UsbRequest *req;
+    struct UsbRequest * const req = pointerQueueFront(&ep->requests);
     size_t read;
-
-    queuePeek(&ep->requests, &req);
 
     if (sbEpReadData(ep, req->buffer, req->capacity, &read))
     {
       const enum UsbRequestStatus requestStatus = setup ?
           USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
 
-      queuePop(&ep->requests, 0);
+      pointerQueuePopFront(&ep->requests);
       req->length = read;
       req->callback(req->callbackArgument, req, requestStatus);
     }
@@ -817,7 +813,7 @@ static bool sbEpReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
     *read = available;
   }
 
-  if (queueSize(&ep->requests) > 1 || !ok)
+  if (pointerQueueSize(&ep->requests) > 1 || !ok)
     reg->EPR[number] = eprMakeRxStat(reg->EPR[number], EPR_STAT_VALID);
 
   return ok;
@@ -848,17 +844,16 @@ static enum Result epInit(void *object, const void *configBase)
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbSieEndpoint * const ep = object;
 
-  const enum Result res = queueInit(&ep->requests, sizeof(struct UsbRequest *),
-      CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS);
-
-  if (res == E_OK)
+  if (pointerQueueInit(&ep->requests, CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS))
   {
     ep->subclass = 0;
     ep->device = config->parent;
     ep->address = config->address;
-  }
 
-  return res;
+    return E_OK;
+  }
+  else
+    return E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
 static void epDeinit(void *object)
@@ -874,18 +869,19 @@ static void epDeinit(void *object)
   device->endpoints[EP_TO_INDEX(ep->address)] = 0;
   irqRestore(state);
 
-  assert(queueEmpty(&ep->requests));
-  queueDeinit(&ep->requests);
+  assert(pointerQueueEmpty(&ep->requests));
+  pointerQueueDeinit(&ep->requests);
 }
 /*----------------------------------------------------------------------------*/
 static void epClear(void *object)
 {
   struct UsbSieEndpoint * const ep = object;
 
-  while (!queueEmpty(&ep->requests))
+  while (!pointerQueueEmpty(&ep->requests))
   {
-    struct UsbRequest *req;
-    queuePop(&ep->requests, &req);
+    struct UsbRequest * const req = pointerQueueFront(&ep->requests);
+    pointerQueuePopFront(&ep->requests);
+
     req->callback(req->callbackArgument, req, USB_REQUEST_CANCELLED);
   }
 }
@@ -932,7 +928,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
   struct UsbSieEndpoint * const ep = object;
 
   irqDisable(ep->device->base.irq);
-  assert(!queueFull(&ep->requests));
+  assert(!pointerQueueFull(&ep->requests));
   ep->subclass->enqueue(ep, request);
   irqEnable(ep->device->base.irq);
 

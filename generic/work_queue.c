@@ -4,32 +4,32 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdbool.h>
 #include <xcore/asm.h>
-#include <xcore/containers/queue.h>
+#include <xcore/containers/tg_queue.h>
 #include <xcore/entity.h>
 #include <halm/generic/work_queue.h>
 #include <halm/irq.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
+struct Task
+{
+  void (*callback)(void *);
+  void *argument;
+};
+
+DEFINE_QUEUE(struct Task, Task, task)
+
 struct SimpleWorkQueueConfig
 {
   size_t size;
 };
-/*----------------------------------------------------------------------------*/
+
 struct SimpleWorkQueue
 {
   struct Entity base;
 
-  struct Queue queue;
+  TaskQueue queue;
   bool event;
-};
-/*----------------------------------------------------------------------------*/
-struct WorkDescriptor
-{
-  void (*callback)(void *);
-  void *argument;
 };
 /*----------------------------------------------------------------------------*/
 static enum Result wqInit(void *, const void *);
@@ -49,17 +49,12 @@ enum Result workQueueAdd(void (*callback)(void *), void *argument)
 
   if (!callback)
     return E_VALUE;
-  if (queueFull(&instance->queue))
+  if (taskQueueFull(&instance->queue))
     return E_FULL;
-
-  const struct WorkDescriptor descriptor = {
-      .callback = callback,
-      .argument = argument
-  };
 
   /* Critical section */
   const IrqState state = irqSave();
-  queuePush(&instance->queue, &descriptor);
+  taskQueuePushBack(&instance->queue, (struct Task){callback, argument});
   instance->event = true;
   irqRestore(state);
 
@@ -91,16 +86,15 @@ void workQueueStart(void *argument __attribute__((unused)))
     }
     instance->event = false;
 
-    while (!queueEmpty(&instance->queue))
+    while (!taskQueueEmpty(&instance->queue))
     {
-      struct WorkDescriptor descriptor;
-
       /* Critical section */
       const IrqState state = irqSave();
-      queuePop(&instance->queue, &descriptor);
+      const struct Task task = taskQueueFront(&instance->queue);
+      taskQueuePopFront(&instance->queue);
       irqRestore(state);
 
-      descriptor.callback(descriptor.argument);
+      task.callback(task.argument);
     }
   }
 }
@@ -111,11 +105,12 @@ static enum Result wqInit(void *object, const void *configBase)
   assert(config);
 
   struct SimpleWorkQueue * const wq = object;
-  const enum Result res = queueInit(&wq->queue,
-      sizeof(struct WorkDescriptor), config->size);
 
-  if (res == E_OK)
+  if (taskQueueInit(&wq->queue, config->size))
+  {
     wq->event = false;
-
-  return res;
+    return E_OK;
+  }
+  else
+    return E_MEMORY;
 }

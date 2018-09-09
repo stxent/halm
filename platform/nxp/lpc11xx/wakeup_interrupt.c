@@ -5,19 +5,18 @@
  */
 
 #include <assert.h>
-#include <xcore/containers/list.h>
+#include <halm/generic/pointer_list.h>
 #include <halm/platform/nxp/wakeup_interrupt.h>
 /*----------------------------------------------------------------------------*/
 struct StartLogicHandler
 {
   struct Entity base;
-
-  struct List list;
+  PointerList list;
 };
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(struct PinData);
 static enum Result startLogicHandlerAttach(struct PinData,
-    const struct WakeupInterrupt *);
+    struct WakeupInterrupt *);
 static enum Result startLogicHandlerInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
@@ -62,18 +61,16 @@ static inline IrqNumber calcVector(struct PinData data)
 /*----------------------------------------------------------------------------*/
 void WAKEUP_ISR(void)
 {
-  const struct List * const list = &handler->list;
-  const struct ListNode *current = listFirst(list);
+  PointerList * const list = &handler->list;
+  PointerListNode *current = pointerListFront(list);
   const uint32_t state = LPC_SYSCON->STARTSRP0;
-  struct WakeupInterrupt *interrupt;
 
   /* Clear start-up logic states */
   LPC_SYSCON->STARTRSRP0CLR = state;
 
   while (current)
   {
-    listData(list, current, &interrupt);
-
+    struct WakeupInterrupt * const interrupt = *pointerListData(current);
     const unsigned int index = interrupt->pin.port * 12 + interrupt->pin.offset;
 
     if (state & 1UL << (index & 0x1F))
@@ -82,45 +79,44 @@ void WAKEUP_ISR(void)
         interrupt->callback(interrupt->callbackArgument);
     }
 
-    current = listNext(current);
+    current = pointerListNext(current);
   }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result startLogicHandlerAttach(struct PinData pin,
-    const struct WakeupInterrupt *interrupt)
+    struct WakeupInterrupt *interrupt)
 {
   if (!handler)
     handler = init(StartLogicHandler, 0);
 
   assert(handler);
 
-  struct List * const list = &handler->list;
-  const struct ListNode *current = listFirst(list);
-  struct WakeupInterrupt *entry;
+  PointerList * const list = &handler->list;
+  PointerListNode *current = pointerListFront(list);
 
   /* Check for duplicates */
   while (current)
   {
-    listData(list, current, &entry);
+    struct WakeupInterrupt * const entry = *pointerListData(current);
 
     if (entry->pin.port == pin.port && entry->pin.offset == pin.offset)
       return E_BUSY;
 
-    current = listNext(current);
+    current = pointerListNext(current);
   }
 
   /* Add to list */
-  return listPush(list, &interrupt);
+  return pointerListPushFront(list, interrupt) ? E_OK : E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
 static void startLogicHandlerDetach(const struct WakeupInterrupt *interrupt)
 {
-  struct List * const list = &handler->list;
-  struct ListNode * const node = listFind(list, &interrupt);
+  PointerList * const list = &handler->list;
+  PointerListNode * const node = pointerListFind(list, interrupt);
 
   if (node)
-    listErase(list, node);
+    pointerListErase(list, node);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -129,7 +125,8 @@ static enum Result startLogicHandlerInit(void *object,
 {
   struct StartLogicHandler * const startLogicHandler = object;
 
-  return listInit(&startLogicHandler->list, sizeof(struct WakeupInterrupt *));
+  pointerListInit(&startLogicHandler->list);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result wakeupInterruptInit(void *object, const void *configBase)

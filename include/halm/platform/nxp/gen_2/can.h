@@ -7,9 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_CAN_H_
 #define HALM_PLATFORM_NXP_CAN_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/array.h>
-#include <xcore/containers/queue.h>
 #include <xcore/interface.h>
+#include <halm/generic/pointer_array.h>
+#include <halm/generic/pointer_queue.h>
 #include <halm/platform/nxp/gen_2/can_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Can;
@@ -45,9 +45,11 @@ struct Can
   struct Timer *timer;
 
   /* Message pool */
-  struct Array pool;
-  /* Input and output queues */
-  struct Queue rxQueue, txQueue;
+  PointerArray pool;
+  /* Queue for received messages */
+  PointerQueue rxQueue;
+  /* Queue for transmitting messages */
+  PointerQueue txQueue;
   /* Pointer to a memory region used as a message pool */
   void *poolBuffer;
   /* Desired baud rate */

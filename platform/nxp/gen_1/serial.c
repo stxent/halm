@@ -61,7 +61,7 @@ static void interruptHandler(void *object)
 
     /* Received bytes will be dropped when queue becomes full */
     if (!byteQueueFull(&interface->rxQueue))
-      byteQueuePush(&interface->rxQueue, data);
+      byteQueuePushBack(&interface->rxQueue, data);
   }
   if (reg->LSR & LSR_THRE)
   {
@@ -76,7 +76,7 @@ static void interruptHandler(void *object)
       event = event || bytesToWrite == txQueueSize;
 
       while (bytesToWrite--)
-        reg->THR = byteQueuePop(&interface->txQueue);
+        reg->THR = byteQueuePopFront(&interface->txQueue);
     }
   }
 
@@ -132,10 +132,10 @@ static enum Result serialInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->rate = config->rate;
 
-  if ((res = byteQueueInit(&interface->rxQueue, config->rxLength)) != E_OK)
-    return res;
-  if ((res = byteQueueInit(&interface->txQueue, config->txLength)) != E_OK)
-    return res;
+  if (!byteQueueInit(&interface->rxQueue, config->rxLength))
+    return E_MEMORY;
+  if (!byteQueueInit(&interface->txQueue, config->txLength))
+    return E_MEMORY;
 
   LPC_UART_Type * const reg = interface->base.reg;
 

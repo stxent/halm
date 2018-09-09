@@ -7,8 +7,8 @@
 #ifndef HALM_USB_MSC_DATAPATH_H_
 #define HALM_USB_MSC_DATAPATH_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/array.h>
-#include <xcore/containers/queue.h>
+#include <halm/generic/pointer_array.h>
+#include <halm/generic/pointer_queue.h>
 #include <halm/usb/msc_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb.h>
@@ -29,16 +29,16 @@ struct MscQueryHandler
   struct Msc *driver;
   void (*trampoline)(struct Msc *);
 
-  struct Array usbPool;
-  struct Queue usbQueue;
+  PointerArray usbPool;
+  PointerQueue usbQueue;
 
   size_t currentQueryLength;
   uint64_t currentQueryPosition;
   enum Result currentStatus;
 
-  struct Array queryPool;
-  struct Queue storageQueries;
-  struct Queue usbQueries;
+  PointerArray queryPool;
+  PointerQueue storageQueries;
+  PointerQueue usbQueries;
 
   /* Preallocated data */
   struct CSW csw;

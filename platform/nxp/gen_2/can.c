@@ -172,14 +172,15 @@ static void interruptHandler(void *object)
         const uint32_t timestamp = interface->timer ?
             timerGetValue(interface->timer) : 0;
 
-        if (!queueFull(&interface->rxQueue))
+        if (!pointerQueueFull(&interface->rxQueue))
         {
-          struct CanMessage *message;
+          struct CanMessage * const message =
+              pointerArrayBack(&interface->pool);
+          pointerArrayPopBack(&interface->pool);
 
-          arrayPopBack(&interface->pool, &message);
           endOfChain = readMessage(interface, message, id);
           message->timestamp = timestamp;
-          queuePush(&interface->rxQueue, &message);
+          pointerQueuePushBack(&interface->rxQueue, message);
           event = true;
         }
         else
@@ -198,20 +199,21 @@ static void interruptHandler(void *object)
     }
   }
 
-  if (!queueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
+  if (!pointerQueueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
   {
-    const size_t pendingMessages = queueSize(&interface->txQueue);
+    const size_t pendingMessages = pointerQueueSize(&interface->txQueue);
     const size_t lastMessageIndex = pendingMessages >= MAX_MESSAGES / 2 ?
         (MAX_MESSAGES / 2 - 1) : pendingMessages;
 
     for (size_t index = 0; index <= lastMessageIndex; ++index)
     {
-      const struct CanMessage *message;
+      struct CanMessage * const message =
+          pointerQueueFront(&interface->txQueue);
+      pointerQueuePopFront(&interface->txQueue);
 
-      queuePop(&interface->txQueue, &message);
       writeMessage(interface, message, TX_OBJECT + index,
           index == lastMessageIndex);
-      arrayPushBack(&interface->pool, &message);
+      pointerArrayPushBack(&interface->pool, message);
     }
   }
 
@@ -394,17 +396,12 @@ static enum Result canInit(void *object, const void *configBase)
 
   const size_t poolSize = config->rxBuffers + config->txBuffers;
 
-  res = arrayInit(&interface->pool, sizeof(struct CanMessage *), poolSize);
-  if (res != E_OK)
-    return res;
-  res = queueInit(&interface->rxQueue, sizeof(struct CanMessage *),
-      config->rxBuffers);
-  if (res != E_OK)
-    return res;
-  res = queueInit(&interface->txQueue, sizeof(struct CanMessage *),
-      config->txBuffers);
-  if (res != E_OK)
-    return res;
+  if (!pointerArrayInit(&interface->pool, poolSize))
+    return E_MEMORY;
+  if (!pointerQueueInit(&interface->rxQueue, config->rxBuffers))
+    return E_MEMORY;
+  if (!pointerQueueInit(&interface->txQueue, config->txBuffers))
+    return E_MEMORY;
 
   interface->poolBuffer = malloc(sizeof(struct CanStandardMessage) * poolSize);
 
@@ -412,7 +409,7 @@ static enum Result canInit(void *object, const void *configBase)
 
   for (size_t index = 0; index < poolSize; ++index)
   {
-    arrayPushBack(&interface->pool, &message);
+    pointerArrayPushBack(&interface->pool, message);
     ++message;
   }
 
@@ -457,9 +454,9 @@ static void canDeinit(void *object)
   irqDisable(interface->base.irq);
   reg->CNTL = CNTL_INIT;
 
-  queueDeinit(&interface->txQueue);
-  queueDeinit(&interface->rxQueue);
-  arrayDeinit(&interface->pool);
+  pointerQueueDeinit(&interface->txQueue);
+  pointerQueueDeinit(&interface->rxQueue);
+  pointerArrayDeinit(&interface->pool);
 
   CanBase->deinit(interface);
 }
@@ -482,11 +479,11 @@ static enum Result canGetParam(void *object, enum IfParameter parameter,
   switch (parameter)
   {
     case IF_AVAILABLE:
-      *(size_t *)data = queueSize(&interface->rxQueue);
+      *(size_t *)data = pointerQueueSize(&interface->rxQueue);
       return E_OK;
 
     case IF_PENDING:
-      *(size_t *)data = queueSize(&interface->txQueue);
+      *(size_t *)data = pointerQueueSize(&interface->txQueue);
       return E_OK;
 
     case IF_RATE:
@@ -543,24 +540,25 @@ static size_t canRead(void *object, void *buffer, size_t length)
   assert(length % sizeof(struct CanStandardMessage) == 0);
 
   struct Can * const interface = object;
-  struct CanStandardMessage *output = buffer;
-  size_t read = 0;
+  struct CanStandardMessage *current = buffer;
+  const struct CanStandardMessage * const last =
+      (const void *)((uintptr_t)buffer + length);
 
-  while (read < length && !queueEmpty(&interface->rxQueue))
+  while (!pointerQueueEmpty(&interface->rxQueue) && current < last)
   {
-    struct CanMessage *input;
-
     irqDisable(interface->base.irq);
-    queuePop(&interface->rxQueue, &input);
-    memcpy(output, input, sizeof(*output));
-    arrayPushBack(&interface->pool, &input);
-    irqEnable(interface->base.irq);
 
-    read += sizeof(*output);
-    ++output;
+    struct CanMessage * const input = pointerQueueFront(&interface->rxQueue);
+    pointerQueuePopFront(&interface->rxQueue);
+
+    memcpy(current, input, sizeof(*current));
+    pointerArrayPushBack(&interface->pool, input);
+
+    irqEnable(interface->base.irq);
+    ++current;
   }
 
-  return read;
+  return (uintptr_t)current - (uintptr_t)buffer;
 }
 /*----------------------------------------------------------------------------*/
 static size_t canWrite(void *object, const void *buffer, size_t length)
@@ -569,39 +567,38 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
 
   struct Can * const interface = object;
   LPC_CAN_Type * const reg = interface->base.reg;
-  const struct CanStandardMessage *input = buffer;
-  const size_t initialLength = length;
+  const size_t totalMessages = length / sizeof(struct CanStandardMessage);
+  const struct CanStandardMessage *current = buffer;
+  const struct CanStandardMessage * const last = current + totalMessages;
 
   /* Synchronize access to the message queue and the CAN core */
   irqDisable(interface->base.irq);
 
-  if (queueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
+  if (pointerQueueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
   {
-    const size_t totalMessages = length / sizeof(struct CanStandardMessage);
-    const size_t messageCount = MIN(totalMessages, MAX_MESSAGES / 2);
+    const size_t messagesToWrite = MIN(totalMessages, MAX_MESSAGES / 2);
 
-    for (size_t index = 0; index < messageCount; ++index)
+    for (size_t index = 0; index < messagesToWrite; ++index)
     {
-      writeMessage(interface, (const struct CanMessage *)(input + index),
-          TX_OBJECT + index, index == (messageCount - 1));
+      writeMessage(interface, (const struct CanMessage *)(current + index),
+          TX_OBJECT + index, index == (messagesToWrite - 1));
     }
 
-    length -= messageCount * sizeof(struct CanStandardMessage);
-    input += messageCount;
+    current += messagesToWrite;
   }
 
-  while (length && !queueFull(&interface->txQueue))
+  while (current < last && !pointerQueueFull(&interface->txQueue))
   {
-    struct CanMessage *output;
+    struct CanMessage * const output = pointerArrayBack(&interface->pool);
+    pointerArrayPopBack(&interface->pool);
 
-    arrayPopBack(&interface->pool, &output);
-    memcpy(output, input, sizeof(*input));
-    queuePush(&interface->txQueue, &output);
-    length -= sizeof(*input);
-    ++input;
+    memcpy(output, current, sizeof(*current));
+    pointerQueuePushBack(&interface->txQueue, output);
+
+    ++current;
   }
 
   irqEnable(interface->base.irq);
 
-  return initialLength - length;
+  return (uintptr_t)current - (uintptr_t)buffer;
 }

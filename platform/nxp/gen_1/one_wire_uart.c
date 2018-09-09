@@ -147,7 +147,7 @@ static void interruptHandler(void *object)
   {
     /* Fill FIFO with next word or end the transaction */
     if (!byteQueueEmpty(&interface->txQueue))
-      sendWord(interface, byteQueuePop(&interface->txQueue));
+      sendWord(interface, byteQueuePopFront(&interface->txQueue));
   }
 
   if (interface->callback && event)
@@ -173,8 +173,8 @@ static enum Result oneWireInit(void *object, const void *configBase)
 
   adjustPins(interface, config);
 
-  if ((res = byteQueueInit(&interface->txQueue, TX_QUEUE_LENGTH)) != E_OK)
-    return res;
+  if (!byteQueueInit(&interface->txQueue, TX_QUEUE_LENGTH))
+    return E_MEMORY;
 
   if ((res = uartCalcRate(object, RATE_DATA, &interface->dataRate)) != E_OK)
     return res;
@@ -285,7 +285,7 @@ static size_t oneWireRead(void *object, void *buffer, size_t length)
 
   /* Fill queue with dummy words */
   while (!byteQueueFull(&interface->txQueue) && ++read != length)
-    byteQueuePush(&interface->txQueue, 0xFF);
+    byteQueuePushBack(&interface->txQueue, 0xFF);
   interface->left = read;
 
   /* Set current mode */
@@ -323,13 +323,13 @@ static size_t oneWireWrite(void *object, const void *buffer, size_t length)
   /* Select the addressing mode */
   if (interface->address)
   {
-    byteQueuePush(&interface->txQueue, MATCH_ROM);
+    byteQueuePushBack(&interface->txQueue, MATCH_ROM);
     interface->left += byteQueuePushArray(&interface->txQueue,
         &interface->address, sizeof(interface->address));
   }
   else
   {
-    byteQueuePush(&interface->txQueue, SKIP_ROM);
+    byteQueuePushBack(&interface->txQueue, SKIP_ROM);
   }
 
   /* Push data into the transmit queue */

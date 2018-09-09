@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_USB_BASE_H_
 #define HALM_PLATFORM_NXP_LPC43XX_USB_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/array.h>
 #include <xcore/entity.h>
+#include <halm/generic/pointer_array.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
@@ -44,7 +44,7 @@ struct UsbBase
   /* Memory allocated for Transfer descriptors */
   struct TransferDescriptor *descriptorMemory;
   /* Pool for transfer descriptors */
-  struct Array descriptorPool;
+  PointerArray descriptorPool;
 
   /* Unique peripheral identifier */
   uint8_t channel;

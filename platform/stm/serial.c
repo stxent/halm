@@ -50,7 +50,7 @@ static void interruptHandler(void *object)
 
     /* Received bytes will be dropped when queue becomes full */
     if (!byteQueueFull(&interface->rxQueue))
-      byteQueuePush(&interface->rxQueue, data);
+      byteQueuePushBack(&interface->rxQueue, data);
   }
 
   /* Handle reception timeout */
@@ -66,7 +66,7 @@ static void interruptHandler(void *object)
   if ((control & CR1_TXEIE) && (status & SR_TXE))
   {
     if (!byteQueueEmpty(&interface->txQueue))
-      reg->DR = byteQueuePop(&interface->txQueue);
+      reg->DR = byteQueuePopFront(&interface->txQueue);
 
     if (byteQueueEmpty(&interface->txQueue))
       reg->CR1 = control & ~CR1_TXEIE;
@@ -104,10 +104,10 @@ static enum Result serialInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->rate = config->rate;
 
-  if ((res = byteQueueInit(&interface->rxQueue, config->rxLength)) != E_OK)
-    return res;
-  if ((res = byteQueueInit(&interface->txQueue, config->txLength)) != E_OK)
-    return res;
+  if (!byteQueueInit(&interface->rxQueue, config->rxLength))
+    return E_MEMORY;
+  if (!byteQueueInit(&interface->txQueue, config->txLength))
+    return E_MEMORY;
 
   uartSetRate(object, config->rate);
   uartSetParity(object, config->parity);

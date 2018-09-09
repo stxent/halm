@@ -5,7 +5,7 @@
  */
 
 #include <assert.h>
-#include <xcore/containers/list.h>
+#include <halm/generic/pointer_list.h>
 #include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 struct PinInterruptHandlerConfig
@@ -16,7 +16,7 @@ struct PinInterruptHandlerConfig
 struct PinInterruptHandler
 {
   struct Entity base;
-  struct List list;
+  PointerList list;
 };
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t);
@@ -26,7 +26,7 @@ static void enableInterrupt(const struct PinInterrupt *);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptHandlerAttach(struct PinData,
-    const struct PinInterrupt *);
+    struct PinInterrupt *);
 static enum Result pinInterruptHandlerInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
@@ -95,23 +95,22 @@ static void enableInterrupt(const struct PinInterrupt *interrupt)
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  const struct List * const list = &handlers[channel]->list;
-  const struct ListNode *current = listFirst(list);
+  PointerList * const list = &handlers[channel]->list;
+  PointerListNode *current = pointerListFront(list);
   LPC_GPIO_Type * const reg = calcPort(channel);
   const uint32_t state = reg->MIS;
-  struct PinInterrupt *interrupt;
 
   /* Synchronizer logic causes a delay of 2 clocks */
   reg->IC = state;
 
   while (current)
   {
-    listData(list, current, &interrupt);
+    struct PinInterrupt * const interrupt = *pointerListData(current);
 
     if (state & (1UL << interrupt->pin.offset))
       interrupt->callback(interrupt->callbackArgument);
 
-    current = listNext(current);
+    current = pointerListNext(current);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -136,7 +135,7 @@ void PIO3_ISR(void)
 }
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptHandlerAttach(struct PinData pin,
-    const struct PinInterrupt *interrupt)
+    struct PinInterrupt *interrupt)
 {
   if (!handlers[pin.port])
   {
@@ -149,33 +148,32 @@ static enum Result pinInterruptHandlerAttach(struct PinData pin,
 
   assert(handlers[pin.port]);
 
-  struct List * const list = &handlers[pin.port]->list;
-  const struct ListNode *current = listFirst(list);
-  struct PinInterrupt *entry;
+  PointerList * const list = &handlers[pin.port]->list;
+  PointerListNode *current = pointerListFront(list);
 
   /* Check for duplicates */
   while (current)
   {
-    listData(list, current, &entry);
+    struct PinInterrupt * const entry = *pointerListData(current);
 
     if (entry->pin.offset == pin.offset)
       return E_BUSY;
 
-    current = listNext(current);
+    current = pointerListNext(current);
   }
 
   /* Add to list */
-  return listPush(list, &interrupt);
+  return pointerListPushFront(list, interrupt) ? E_OK : E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
 static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
 {
-  struct List * const list = &handlers[interrupt->pin.port]->list;
-  struct ListNode * const node = listFind(list, &interrupt);
+  PointerList * const list = &handlers[interrupt->pin.port]->list;
+  PointerListNode * const node = pointerListFind(list, interrupt);
 
   if (node)
-    listErase(list, node);
+    pointerListErase(list, node);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -184,11 +182,8 @@ static enum Result pinInterruptHandlerInit(void *object,
 {
   struct PinInterruptHandler * const handler = object;
   const struct PinInterruptHandlerConfig * const config = configBase;
-  enum Result res;
 
-  if ((res = listInit(&handler->list, sizeof(struct PinInterrupt *))) != E_OK)
-    return res;
-
+  pointerListInit(&handler->list);
   irqEnable(calcVector(config->channel));
 
   return E_OK;

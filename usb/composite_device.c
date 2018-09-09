@@ -129,14 +129,14 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
   uint8_t *payloadPosition = (uint8_t *)payload
       + sizeof(struct UsbConfigurationDescriptor);
 
-  struct ListNode *currentNode = listFirst(&driver->owner->entries);
-  struct UsbDriver *current;
+  PointerListNode *current = pointerListFront(&driver->owner->entries);
 
-  while (currentNode)
+  while (current)
   {
-    listData(&driver->owner->entries, currentNode, &current);
-    payloadPosition += extendConfigurationDescriptor(current, payloadPosition);
-    currentNode = listNext(currentNode);
+    struct UsbDriver * const entry = *pointerListData(current);
+
+    payloadPosition += extendConfigurationDescriptor(entry, payloadPosition);
+    current = pointerListNext(current);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -256,20 +256,19 @@ static enum Result lookupDescriptor(struct CompositeDeviceProxy *driver,
     uint8_t type, void *response, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
-  struct ListNode *currentNode = listFirst(&driver->owner->entries);
-  struct UsbDriver *current;
+  PointerListNode *current = pointerListFront(&driver->owner->entries);
 
-  while (currentNode)
+  while (current)
   {
-    listData(&driver->owner->entries, currentNode, &current);
+    struct UsbDriver * const entry = *pointerListData(current);
 
-    const enum Result res = usbExtractDescriptorData(current, type,
+    const enum Result res = usbExtractDescriptorData(entry, type,
         response, responseLength, maxResponseLength);
 
     if (res == E_OK)
       return E_OK;
 
-    currentNode = listNext(currentNode);
+    current = pointerListNext(current);
   }
 
   return E_VALUE;
@@ -306,17 +305,17 @@ static enum Result driverConfigure(void *object,
 
   if (res == E_INVALID)
   {
-    struct ListNode *currentNode = listFirst(&driver->owner->entries);
-    struct UsbDriver *current;
+    PointerListNode *current = pointerListFront(&driver->owner->entries);
 
-    while (currentNode)
+    while (current)
     {
-      listData(&driver->owner->entries, currentNode, &current);
-      res = usbDriverConfigure(current, packet, payload, payloadLength,
+      struct UsbDriver * const entry = *pointerListData(current);
+
+      res = usbDriverConfigure(entry, packet, payload, payloadLength,
           response, responseLength, maxResponseLength);
       if (res == E_OK || res != E_INVALID)
         break;
-      currentNode = listNext(currentNode);
+      current = pointerListNext(current);
     }
   }
 
@@ -326,14 +325,14 @@ static enum Result driverConfigure(void *object,
 static void driverEvent(void *object, unsigned int event)
 {
   struct CompositeDeviceProxy * const driver = object;
-  struct ListNode *currentNode = listFirst(&driver->owner->entries);
-  struct UsbDriver *current;
+  PointerListNode *current = pointerListFront(&driver->owner->entries);
 
-  while (currentNode)
+  while (current)
   {
-    listData(&driver->owner->entries, currentNode, &current);
-    usbDriverEvent(current, event);
-    currentNode = listNext(currentNode);
+    struct UsbDriver * const entry = *pointerListData(current);
+
+    usbDriverEvent(entry, event);
+    current = pointerListNext(current);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -350,15 +349,12 @@ static enum Result devInit(void *object, const void *configBase)
   const struct CompositeDeviceProxyConfig driverConfig = {
       .owner = device
   };
-  enum Result res;
 
   device->driver = init(CompositeDeviceProxy, &driverConfig);
   if (!device->driver)
     return E_ERROR;
 
-  res = listInit(&device->entries, sizeof(const struct UsbDriver *));
-  if (res != E_OK)
-    return res;
+  pointerListInit(&device->entries);
 
   device->parent = config->device;
   device->configurationLength = sizeof(struct UsbConfigurationDescriptor);
@@ -371,8 +367,8 @@ static void devDeinit(void *object)
 {
   struct CompositeDevice * const device = object;
 
-  assert(listEmpty(&device->entries));
-  listDeinit(&device->entries);
+  assert(pointerListEmpty(&device->entries));
+  pointerListDeinit(&device->entries);
 
   deinit(device->driver);
 }
@@ -409,15 +405,14 @@ static enum Result devBind(void *object, void *driver)
   assert(device->interfaceCount + interfaces <= UCHAR_MAX);
   assert(device->configurationLength + length <= USHRT_MAX);
 
-  const enum Result res = listPush(&device->entries, &driver);
-
-  if (res == E_OK)
+  if (pointerListPushFront(&device->entries, driver))
   {
     device->interfaceCount += interfaces;
     device->configurationLength += length;
+    return E_OK;
   }
-
-  return res;
+  else
+    return E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
 static void devUnbind(void *object, const void *driver)
@@ -431,11 +426,11 @@ static void devUnbind(void *object, const void *driver)
   assert(device->interfaceCount >= interfaces);
   assert(device->configurationLength >= length);
 
-  struct ListNode * const node = listFind(&device->entries, &driver);
+  PointerListNode * const node = pointerListFind(&device->entries, driver);
 
   if (node)
   {
-    listErase(&device->entries, node);
+    pointerListErase(&device->entries, node);
     device->interfaceCount -= interfaces;
     device->configurationLength -= length;
   }

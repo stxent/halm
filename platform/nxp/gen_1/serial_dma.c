@@ -211,10 +211,10 @@ static enum Result serialInit(void *object, const void *configBase)
   if (!interface->rxBuffer)
     return E_MEMORY;
 
-  if ((res = byteQueueInit(&interface->rxQueue, config->rxLength)) != E_OK)
-    return res;
-  if ((res = byteQueueInit(&interface->txQueue, config->txLength)) != E_OK)
-    return res;
+  if (byteQueueInit(&interface->rxQueue, config->rxLength))
+    return E_MEMORY;
+  if (byteQueueInit(&interface->txQueue, config->txLength))
+    return E_MEMORY;
 
   if (!dmaSetup(interface, config->dma[0], config->dma[1]))
     return E_ERROR;

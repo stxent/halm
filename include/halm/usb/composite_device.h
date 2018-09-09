@@ -7,7 +7,7 @@
 #ifndef HALM_USB_COMPOSITE_DEVICE_H_
 #define HALM_USB_COMPOSITE_DEVICE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/list.h>
+#include <halm/generic/pointer_list.h>
 #include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDeviceClass * const CompositeDevice;
@@ -25,7 +25,7 @@ struct CompositeDevice
   struct UsbDevice *parent;
   struct CompositeDeviceProxy *driver;
 
-  struct List entries;
+  PointerList entries;
 
   /* Length of the unified configuration descriptor */
   uint16_t configurationLength;
