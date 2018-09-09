@@ -208,7 +208,7 @@ static void readMessage(struct Can *interface, struct CanMessage *message)
         reg->RDB
     };
 
-    memcpy(message->data, data, message->length);
+    memcpy(message->data, data, sizeof(data));
   }
 
   if (information & RFS_FF)
@@ -241,9 +241,8 @@ static void sendMessage(struct Can *interface,
 
   if (!(message->flags & CAN_RTR))
   {
-    uint32_t data[2] = {0};
-
-    memcpy(data, message->data, message->length);
+    uint32_t data[2];
+    memcpy(data, message->data, sizeof(data));
 
     reg->TX[index].TDA = data[0];
     reg->TX[index].TDB = data[1];

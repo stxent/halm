@@ -294,7 +294,7 @@ static bool readMessage(struct Can *interface, struct CanMessage *message,
         reg->IF[0].DB2
     };
 
-    memcpy(message->data, data, message->length);
+    memcpy(message->data, data, sizeof(data));
   }
 
   if (arb2 & ARB2_XTD)
@@ -327,14 +327,14 @@ static void writeMessage(struct Can *interface,
 
   if (!(message->flags & CAN_RTR))
   {
-    uint16_t data[4] = {0};
+    uint16_t data[4];
 
     /* Message is not a Remote Transmission Request */
     arb2 |= ARB2_DIR;
 
     /* Fill data registers */
     control |= MCTRL_DLC(message->length);
-    memcpy(data, message->data, message->length);
+    memcpy(data, message->data, sizeof(data));
 
     reg->IF[0].DA1 = data[0];
     reg->IF[0].DA2 = data[1];
