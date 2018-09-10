@@ -46,6 +46,8 @@ struct UsbDevice
   bool suspended;
 };
 /*----------------------------------------------------------------------------*/
+static bool initEndpoints(struct UsbDevice *);
+static void initPeripheral(struct UsbDevice *);
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
 static void resetQueueHeads(struct UsbDevice *);
@@ -130,6 +132,43 @@ static const struct UsbEndpointClass * const UsbDmaEndpoint =
     .isStalled = epIsStalled,
     .setStalled = epSetStalled
 };
+/*----------------------------------------------------------------------------*/
+static bool initEndpoints(struct UsbDevice *device)
+{
+  const size_t endpointBufferSize =
+      device->base.numberOfEndpoints * sizeof(struct UsbEndpoint *);
+
+  device->endpoints = malloc(endpointBufferSize);
+
+  if (device->endpoints)
+  {
+    memset(device->endpoints, 0, endpointBufferSize);
+    return true;
+  }
+  else
+    return false;
+}
+/*----------------------------------------------------------------------------*/
+static void initPeripheral(struct UsbDevice *device)
+{
+  LPC_USB_Type * const reg = device->base.reg;
+
+  /* Reset the controller */
+  reg->USBCMD_D = USBCMD_D_RST;
+  while (reg->USBCMD_D & USBCMD_D_RST);
+
+  /* Program the controller to be the USB device controller */
+  reg->USBMODE_D = USBMODE_D_CM(CM_DEVICE_CONTROLLER)
+      | USBMODE_D_SDIS | USBMODE_D_SLOM;
+
+  /* Recommended by NXP technical support */
+  reg->SBUSCFG = SBUSCFG_AHB_BRST(AHB_BRST_INCR16_UNSPECIFIED);
+
+#ifndef CONFIG_PLATFORM_USB_HS
+  /* Force Full Speed mode */
+  reg->PORTSC1_D |= PORTSC1_D_PFSC;
+#endif
+}
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -285,38 +324,15 @@ static enum Result devInit(void *object, const void *configBase)
 
   device->base.handler = interruptHandler;
 
-  const size_t endpointBufferSize =
-      device->base.numberOfEndpoints * sizeof(struct UsbEndpoint *);
-
-  device->endpoints = malloc(endpointBufferSize);
-  if (!device->endpoints)
-    return E_MEMORY;
-  memset(device->endpoints, 0, endpointBufferSize);
+  initEndpoints(device);
+  resetQueueHeads(device);
 
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
   if (!device->control)
     return E_ERROR;
 
-  LPC_USB_Type * const reg = device->base.reg;
-
-  /* Reset the controller */
-  reg->USBCMD_D = USBCMD_D_RST;
-  while (reg->USBCMD_D & USBCMD_D_RST);
-
-  /* Program the controller to be the USB device controller */
-  reg->USBMODE_D = USBMODE_D_CM(CM_DEVICE_CONTROLLER)
-      | USBMODE_D_SDIS | USBMODE_D_SLOM;
-
-  /* Recommended by NXP technical support */
-  reg->SBUSCFG = SBUSCFG_AHB_BRST(AHB_BRST_INCR16_UNSPECIFIED);
-
-#ifndef CONFIG_PLATFORM_USB_HS
-  /* Force Full Speed mode */
-  reg->PORTSC1_D |= PORTSC1_D_PFSC;
-#endif
-
-  resetQueueHeads(device);
+  initPeripheral(device);
   resetDevice(device);
 
   devSetAddress(device, 0);
