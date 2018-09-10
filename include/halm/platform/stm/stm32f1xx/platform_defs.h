@@ -55,8 +55,18 @@ typedef struct
   __rw__ uint32_t MCR;
   __rw__ uint32_t MSR;
   __rw__ uint32_t TSR;
-  __rw__ uint32_t RF0R;
-  __rw__ uint32_t RF1R;
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t RF0R;
+      __rw__ uint32_t RF1R;
+    };
+
+    __rw__ uint32_t RFR[2];
+  };
+
   __rw__ uint32_t IER;
   __rw__ uint32_t ESR;
   __rw__ uint32_t BTR;

@@ -21,6 +21,11 @@ if(${CONFIG_PLATFORM_STM_DMA})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dma_oneshot.c")
 endif()
 
+if(${CONFIG_PLATFORM_STM_CAN})
+    list(APPEND SOURCE_FILES "can.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/bxcan_base.c")
+endif()
+
 if(${CONFIG_PLATFORM_STM_SPI_BASE})
     list(APPEND SOURCE_FILES "spi_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/spi_base.c")

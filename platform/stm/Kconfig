@@ -10,6 +10,32 @@ endmenu
 
 menu "Peripherals"
 
+config PLATFORM_STM_CAN
+	bool "bxCAN"
+	default y
+	help
+	  This is the driver for the Controller Area Network peripheral.
+
+config PLATFORM_STM_CAN_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_STM_CAN
+
+config PLATFORM_STM_CAN_TSEG1
+	int "TSEG1 quanta"
+	default 9
+	depends on PLATFORM_STM_CAN
+
+config PLATFORM_STM_CAN_TSEG2
+	int "TSEG2 quanta"
+	default 2
+	depends on PLATFORM_STM_CAN
+
+config PLATFORM_STM_CAN_PM
+	bool "Power management"
+	default n
+	depends on PM && PLATFORM_STM_CAN
+
 config PLATFORM_STM_DMA
 	bool "DMA"
 	default y
