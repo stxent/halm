@@ -48,7 +48,6 @@ static void resetDevice(struct UsbDevice *);
 static void usbCommand(struct UsbDevice *, uint8_t);
 static uint8_t usbCommandRead(struct UsbDevice *, uint8_t);
 static void usbCommandWrite(struct UsbDevice *, uint8_t, uint16_t);
-static void usbPrepareEngine(LPC_USB_Type *);
 static void usbRunCommand(LPC_USB_Type *, enum UsbCommandPhase, uint32_t,
     uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -185,7 +184,7 @@ static void usbCommand(struct UsbDevice *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  usbPrepareEngine(reg);
+  reg->USBDevIntClr = USBDevInt_CCEMPTY;
   usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 }
 /*----------------------------------------------------------------------------*/
@@ -193,7 +192,7 @@ static uint8_t usbCommandRead(struct UsbDevice *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  usbPrepareEngine(reg);
+  reg->USBDevIntClr = USBDevInt_CCEMPTY;
   usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 
   reg->USBDevIntClr = USBDevInt_CCEMPTY | USBDevInt_CDFULL;
@@ -207,19 +206,11 @@ static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  usbPrepareEngine(reg);
+  reg->USBDevIntClr = USBDevInt_CCEMPTY;
   usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 
   reg->USBDevIntClr = USBDevInt_CCEMPTY;
   usbRunCommand(reg, USB_CMD_PHASE_WRITE, data, USBDevInt_CCEMPTY);
-}
-/*----------------------------------------------------------------------------*/
-static void usbPrepareEngine(LPC_USB_Type *reg)
-{
-  /* Initialization made similar to LPC175x/LPC176x parts */
-  reg->USBDevIntClr = USBDevInt_CCEMPTY;
-  while (reg->USBDevIntSt & USBDevInt_CCEMPTY);
-  delayTicks(4);
 }
 /*----------------------------------------------------------------------------*/
 static void usbRunCommand(LPC_USB_Type *reg, enum UsbCommandPhase phase,

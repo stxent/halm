@@ -381,8 +381,7 @@ static void usbPrepareEngine(LPC_USB_Type *reg)
    * so an additional delay has been added.
    */
   reg->USBDevIntClr = USBDevInt_CCEMPTY;
-  while (reg->USBDevIntSt & USBDevInt_CCEMPTY);
-  delayTicks(4);
+  delayTicks(24);
 }
 /*----------------------------------------------------------------------------*/
 static void usbRunCommand(LPC_USB_Type *reg, enum UsbCommandPhase phase,
