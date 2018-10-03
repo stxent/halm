@@ -49,24 +49,9 @@ static void interruptHandler(void *object)
 {
   struct Spi * const interface = object;
   LPC_SSP_Type * const reg = interface->base.reg;
+
+  /* Handle reception */
   size_t received = 0;
-
-  if (reg->RIS & RIS_RXRIS)
-  {
-    /* FIFO is at least half full */
-    if (interface->rxBuffer)
-    {
-      for (size_t i = 0; i < FIFO_DEPTH / 2; ++i)
-        *interface->rxBuffer++ = reg->DR;
-    }
-    else
-    {
-      for (size_t i = 0; i < FIFO_DEPTH / 2; ++i)
-        (void)reg->DR;
-    }
-
-    received += FIFO_DEPTH / 2;
-  }
 
   if (interface->rxBuffer)
   {
@@ -87,26 +72,38 @@ static void interruptHandler(void *object)
 
   interface->rxLeft -= received;
 
-  const size_t space = FIFO_DEPTH - (interface->rxLeft - interface->txLeft);
-  size_t pending = MIN(space, interface->txLeft);
-
-  interface->txLeft -= pending;
-
-  if (interface->txBuffer)
+  /* Handle transmission */
+  if (interface->txLeft)
   {
-    while (pending--)
-      reg->DR = *interface->txBuffer++;
-  }
-  else
-  {
-    while (pending--)
-      reg->DR = DUMMY_FRAME;
+    const size_t space = FIFO_DEPTH - (interface->rxLeft - interface->txLeft);
+    size_t pending = MIN(space, interface->txLeft);
+
+    interface->txLeft -= pending;
+
+    if (interface->txBuffer)
+    {
+      while (pending--)
+        reg->DR = *interface->txBuffer++;
+    }
+    else
+    {
+      while (pending--)
+        reg->DR = DUMMY_FRAME;
+    }
   }
 
+  /* Stop the transfer when all frames have been received */
   if (!interface->rxLeft)
   {
-    /* Disable interrupts */
+    /* Disable RTIM and RXIM interrupts */
     reg->IMSC = 0;
+
+    /*
+     * Clear pending interrupt flag in NVIC. The ISR handler will be called
+     * twice if the RTIM interrupt occurred after the RXIM interrupt
+     * but before the RTIM interrupt was disabled.
+     */
+    irqClearPending(interface->base.irq);
 
     /*
      * Reset the pointer to an input buffer only. The pointer for
