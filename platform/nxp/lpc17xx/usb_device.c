@@ -1104,11 +1104,18 @@ static void dmaEpClear(void *object)
 
   while (current)
   {
-    struct UsbRequest * const request = (struct UsbRequest *)current->request;
+    struct UsbRequest * const request =
+        (struct UsbRequest *)current->request;
+    volatile struct DmaDescriptor * const next =
+        (volatile struct DmaDescriptor *)current->next;
+
+    irqDisable(ep->device->base.irq);
+    pointerArrayPushBack(&pool->descriptors, current);
+    irqEnable(ep->device->base.irq);
 
     request->callback(request->callbackArgument, request,
         USB_REQUEST_CANCELLED);
-    current = (volatile struct DmaDescriptor *)current->next;
+    current = next;
   }
 
   pool->heads[index] = 0;
