@@ -49,16 +49,22 @@ enum Result workQueueAdd(void (*callback)(void *), void *argument)
 
   if (!callback)
     return E_VALUE;
-  if (taskQueueFull(&instance->queue))
-    return E_FULL;
 
   /* Critical section */
   const IrqState state = irqSave();
-  taskQueuePushBack(&instance->queue, (struct Task){callback, argument});
-  instance->event = true;
-  irqRestore(state);
+  enum Result res;
 
-  return E_OK;
+  if (!taskQueueFull(&instance->queue))
+  {
+    taskQueuePushBack(&instance->queue, (struct Task){callback, argument});
+    instance->event = true;
+    res = E_OK;
+  }
+  else
+    res = E_FULL;
+
+  irqRestore(state);
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 enum Result workQueueInit(size_t size)
