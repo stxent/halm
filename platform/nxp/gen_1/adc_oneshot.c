@@ -115,8 +115,8 @@ static enum Result adcSetParam(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)
 {
-  /* Ensure proper alignment of the output buffer */
-  assert(!((uintptr_t)buffer & 1));
+  /* Ensure proper alignment of the output buffer length */
+  assert((uintptr_t)buffer % 2 == 0);
 
   if (length < sizeof(uint16_t))
     return 0;

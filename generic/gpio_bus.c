@@ -41,7 +41,7 @@ static enum Result busInit(void *object, const void *configBase)
   /* Find number of pins in the array */
   while (config->pins[number] && ++number < 32);
 
-  assert(number && number <= 32);
+  assert(number > 0 && number <= 32);
 
   bus->number = number;
   bus->pins = malloc(sizeof(struct Pin) * bus->number);

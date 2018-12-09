@@ -629,8 +629,8 @@ static void interruptHandler(void *object)
 
   if (interface->state != STATE_IDLE)
   {
-    if (stateTable[interface->state].enter)
-      stateTable[interface->state].enter(interface);
+    assert(stateTable[interface->state].enter);
+    stateTable[interface->state].enter(interface);
   }
   else
   {
@@ -791,7 +791,6 @@ static void sdioDeinit(void *object __attribute__((unused)))
 
   if (interface->timer)
     timerSetCallback(interface->timer, 0, 0);
-
   ifSetCallback(interface->bus, 0, 0);
 
   free(interface->crcPool);
@@ -933,7 +932,7 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
   struct SdioSpi * const interface = object;
 
   /* Check buffer alignment and size */
-  assert(!(length & (interface->blockSize - 1)));
+  assert((length & (interface->blockSize - 1)) == 0);
 
   if (COMMAND_FLAG_VALUE(interface->command) & SDIO_CHECK_CRC)
     assert(length / interface->blockSize <= interface->crcPoolSize);
@@ -963,7 +962,7 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
 
   /* Check buffer alignment and size */
-  assert(!(length & (interface->blockSize - 1)));
+  assert((length & (interface->blockSize - 1)) == 0);
 
   if (flags & SDIO_CHECK_CRC)
     assert(length / interface->blockSize <= interface->crcPoolSize);
