@@ -29,19 +29,19 @@ static inline void toLittleEndian24(uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
-static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
-    const void *, uint16_t, void *, uint16_t *, uint16_t);
+static enum Result driverControl(void *, const struct UsbSetupPacket *,
+    void *, uint16_t *, uint16_t);
 static const UsbDescriptorFunctor *driverDescribe(const void *);
-static void driverEvent(void *, unsigned int);
+static void driverNotify(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const Dfu = &(const struct UsbDriverClass){
     .size = sizeof(struct Dfu),
     .init = driverInit,
     .deinit = driverDeinit,
 
-    .configure = driverConfigure,
+    .control = driverControl,
     .describe = driverDescribe,
-    .event = driverEvent
+    .notify = driverNotify
 };
 /*----------------------------------------------------------------------------*/
 static const UsbDescriptorFunctor deviceDescriptorTable[] = {
@@ -329,9 +329,9 @@ static void driverDeinit(void *object)
     timerSetCallback(driver->timer, 0, 0);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result driverConfigure(void *object,
-    const struct UsbSetupPacket *packet, const void *payload,
-    uint16_t payloadLength, void *response, uint16_t *responseLength,
+static enum Result driverControl(void *object,
+    const struct UsbSetupPacket *packet, void *buffer,
+    uint16_t *responseLength,
     uint16_t maxResponseLength __attribute__((unused)))
 {
   struct Dfu * const driver = object;
@@ -342,75 +342,106 @@ static enum Result driverConfigure(void *object,
   if (packet->index != driver->interfaceIndex)
     return E_INVALID;
 
+  enum Result res;
+
   switch (packet->request)
   {
     case DFU_REQUEST_DNLOAD:
-      if (packet->length == payloadLength)
-        return processDownloadRequest(driver, payload, packet->length);
-      else
-        return E_VALUE;
+    {
+      res = processDownloadRequest(driver, buffer, packet->length);
+      break;
+    }
 
     case DFU_REQUEST_UPLOAD:
-      return processUploadRequest(driver, packet->length, response,
+    {
+      res = processUploadRequest(driver, packet->length, buffer,
           responseLength);
+      break;
+    }
 
     case DFU_REQUEST_GETSTATUS:
-      processGetStatusRequest(driver, response, responseLength);
-      return E_OK;
+    {
+      processGetStatusRequest(driver, buffer, responseLength);
+      res = E_OK;
+      break;
+    }
 
     case DFU_REQUEST_CLRSTATUS:
     {
-      switch ((enum DfuState)driver->state)
+      if ((enum DfuState)driver->state == STATE_DFU_ERROR)
       {
-        case STATE_DFU_ERROR:
-          driver->status = DFU_STATUS_OK;
-          driver->state = STATE_DFU_IDLE;
-          usbTrace("dfu at %u: status cleared", driver->interfaceIndex);
-          return E_OK;
+        usbTrace("dfu at %u: status cleared", driver->interfaceIndex);
 
-        default:
-          setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-          usbTrace("dfu at %u: clear failed", driver->interfaceIndex);
-          return E_INVALID;
+        driver->status = DFU_STATUS_OK;
+        driver->state = STATE_DFU_IDLE;
+        res = E_OK;
       }
+      else
+      {
+        usbTrace("dfu at %u: clear failed", driver->interfaceIndex);
+
+        setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+        res = E_INVALID;
+      }
+
+      break;
     }
 
     case DFU_REQUEST_ABORT:
     {
-      switch (driver->state)
+      switch ((enum DfuState)driver->state)
       {
         case STATE_DFU_IDLE:
         case STATE_DFU_DNLOAD_SYNC:
         case STATE_DFU_DNLOAD_IDLE:
         case STATE_DFU_MANIFEST_SYNC:
         case STATE_DFU_UPLOAD_IDLE:
-          driver->state = STATE_DFU_IDLE;
           usbTrace("dfu at %u: aborted", driver->interfaceIndex);
-          return E_OK;
+
+          driver->state = STATE_DFU_IDLE;
+          res = E_OK;
+          break;
 
         default:
-          setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
           usbTrace("dfu at %u: abort failed", driver->interfaceIndex);
-          return E_INVALID;
+
+          setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+          res = E_INVALID;
+          break;
       }
+
+      break;
     }
 
     case DFU_REQUEST_DETACH:
-      setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+    {
       usbTrace("dfu at %u: detach request", driver->interfaceIndex);
-      return E_INVALID;
+
+      setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+      res = E_INVALID;
+      break;
+    }
 
     case DFU_REQUEST_GETSTATE:
-      ((uint8_t *)response)[0] = driver->state;
+    {
+      ((uint8_t *)buffer)[0] = driver->state;
       *responseLength = 1;
-      return E_OK;
+      res = E_OK;
+      break;
+    }
 
     default:
-      setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+    {
       usbTrace("dfu at %u: unknown request 0x%02X",
           driver->interfaceIndex, packet->request);
-      return E_INVALID;
+
+      setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+      res = E_INVALID;
+      break;
+    }
   }
+
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static const UsbDescriptorFunctor *driverDescribe(const void *object
@@ -419,7 +450,7 @@ static const UsbDescriptorFunctor *driverDescribe(const void *object
   return deviceDescriptorTable;
 }
 /*----------------------------------------------------------------------------*/
-static void driverEvent(void *object, unsigned int event)
+static void driverNotify(void *object, unsigned int event)
 {
   struct Dfu * const driver = object;
 

@@ -247,14 +247,14 @@ static void interruptHandler(void *object)
     if (deviceStatus & DEVICE_STATUS_RST)
     {
       resetDevice(device);
-      usbControlEvent(device->control, USB_DEVICE_EVENT_RESET);
+      usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
     }
 
     if (deviceStatus & DEVICE_STATUS_SUS_CH)
     {
       const bool suspended = (deviceStatus & DEVICE_STATUS_SUS) != 0;
 
-      usbControlEvent(device->control, suspended ?
+      usbControlNotify(device->control, suspended ?
           USB_DEVICE_EVENT_SUSPEND : USB_DEVICE_EVENT_RESUME);
     }
   }
@@ -312,7 +312,7 @@ static void interruptHandler(void *object)
   {
     /* Reset device in case of AHB bus error */
     resetDevice(device);
-    usbControlEvent(device->control, USB_DEVICE_EVENT_RESET);
+    usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
   }
 }
 /*----------------------------------------------------------------------------*/

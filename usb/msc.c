@@ -84,25 +84,25 @@ static void rxEndpointDescriptor(const void *, struct UsbDescriptor *, void *);
 static void txEndpointDescriptor(const void *, struct UsbDescriptor *, void *);
 /*----------------------------------------------------------------------------*/
 static enum Result handleClassRequest(struct Msc *,
-    const struct UsbSetupPacket *, void *, uint16_t *);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 static void resetBuffers(struct Msc *);
 static void resetEndpoints(struct Msc *);
 /*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
-static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
-    const void *, uint16_t, void *, uint16_t *, uint16_t);
+static enum Result driverControl(void *, const struct UsbSetupPacket *,
+    void *, uint16_t *, uint16_t);
 static const UsbDescriptorFunctor *driverDescribe(const void *);
-static void driverEvent(void *, unsigned int);
+static void driverNotify(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const Msc = &(const struct UsbDriverClass){
     .size = sizeof(struct Msc),
     .init = driverInit,
     .deinit = driverDeinit,
 
-    .configure = driverConfigure,
+    .control = driverControl,
     .describe = driverDescribe,
-    .event = driverEvent
+    .notify = driverNotify
 };
 /*----------------------------------------------------------------------------*/
 static const UsbDescriptorFunctor deviceDescriptorTable[] = {
@@ -776,7 +776,7 @@ static void txEndpointDescriptor(const void *object,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result handleClassRequest(struct Msc *driver,
-    const struct UsbSetupPacket *packet, void *response,
+    const struct UsbSetupPacket *packet, uint8_t *response,
     uint16_t *responseLength)
 {
   if (packet->index != driver->interfaceIndex)
@@ -788,13 +788,12 @@ static enum Result handleClassRequest(struct Msc *driver,
       usbTrace("msc at %u: reset requested", driver->interfaceIndex);
 
       resetBuffers(driver);
-      *responseLength = 0;
       return E_OK;
 
     case MSC_REQUEST_GET_MAX_LUN:
       usbTrace("msc at %u: max LUN requested", driver->interfaceIndex);
 
-      ((uint8_t *)response)[0] = 0; // TODO
+      response[0] = 0; // TODO Implement LUN in MSC
       *responseLength = 1;
       return E_OK;
 
@@ -903,15 +902,12 @@ static void driverDeinit(void *object)
   deinit(driver->rxEp);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result driverConfigure(void *object,
-    const struct UsbSetupPacket *packet,
-    const void *payload __attribute__((unused)),
-    uint16_t payloadLength __attribute__((unused)),
-    void *response, uint16_t *responseLength,
+static enum Result driverControl(void *object,
+    const struct UsbSetupPacket *packet, void *buffer, uint16_t *responseLength,
     uint16_t maxResponseLength __attribute__((unused)))
 {
   if (REQUEST_TYPE_VALUE(packet->requestType) == REQUEST_TYPE_CLASS)
-    return handleClassRequest(object, packet, response, responseLength);
+    return handleClassRequest(object, packet, buffer, responseLength);
   else
     return E_INVALID;
 }
@@ -922,7 +918,7 @@ static const UsbDescriptorFunctor *driverDescribe(const void *object
   return deviceDescriptorTable;
 }
 /*----------------------------------------------------------------------------*/
-static void driverEvent(void *object, unsigned int event)
+static void driverNotify(void *object, unsigned int event)
 {
   struct Msc * const driver = object;
 

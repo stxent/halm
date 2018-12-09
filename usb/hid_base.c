@@ -26,26 +26,25 @@ static void hidDescriptor(const void *, struct UsbDescriptor *, void *);
 static void endpointDescriptor(const void *, struct UsbDescriptor *, void *);
 /*----------------------------------------------------------------------------*/
 static enum Result handleClassRequest(struct HidBase *,
-    const struct UsbSetupPacket *, const void *, uint16_t,
-    void *, uint16_t *, uint16_t);
+    const struct UsbSetupPacket *, uint8_t *, uint16_t *, uint16_t);
 static enum Result handleDeviceRequest(struct HidBase *,
     const struct UsbSetupPacket *, void *, uint16_t *, uint16_t);
 /*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
-static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
-    const void *, uint16_t, void *, uint16_t *, uint16_t);
+static enum Result driverControl(void *, const struct UsbSetupPacket *,
+    void *, uint16_t *, uint16_t);
 static const UsbDescriptorFunctor *driverDescribe(const void *);
-static void driverEvent(void *, unsigned int);
+static void driverNotify(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 const struct UsbDriverClass * const HidBase = &(const struct UsbDriverClass){
     .size = sizeof(struct HidBase),
     .init = driverInit,
     .deinit = driverDeinit,
 
-    .configure = driverConfigure,
+    .control = driverControl,
     .describe = driverDescribe,
-    .event = driverEvent
+    .notify = driverNotify
 };
 /*----------------------------------------------------------------------------*/
 static const UsbDescriptorFunctor deviceDescriptorTable[] = {
@@ -155,64 +154,82 @@ static void endpointDescriptor(const void *object,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result handleClassRequest(struct HidBase *driver,
-    const struct UsbSetupPacket *packet, const void *payload,
-    uint16_t payloadLength, void *response, uint16_t *responseLength,
-    uint16_t maxResponseLength)
+    const struct UsbSetupPacket *packet, uint8_t *response,
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
   if (packet->index != driver->interfaceIndex)
     return E_INVALID;
 
+  enum Result res;
+
   switch (packet->request)
   {
     case HID_REQUEST_GET_REPORT:
+    {
       usbTrace("hid at %u: get report type 0x%02X, id 0x%02X",
           driver->interfaceIndex, (uint8_t)(packet->value >> 8),
           (uint8_t)packet->value);
 
-      return hidGetReport(driver->owner, packet->value >> 8,
+      res = hidGetReport(driver->owner, packet->value >> 8,
           packet->value, response, responseLength,
           maxResponseLength);
+      break;
+    }
 
     case HID_REQUEST_SET_REPORT:
+    {
       usbTrace("hid at %u: set report type 0x%02X, id 0x%02X, length %u",
           driver->interfaceIndex, (uint8_t)(packet->value >> 8),
-          (uint8_t)packet->value, payloadLength);
+          (uint8_t)packet->value, packet->length);
 
-      if (payloadLength)
+      if (packet->length)
       {
-        return hidSetReport(driver->owner, packet->value >> 8, packet->value,
-            payload, payloadLength);
+        res = hidSetReport(driver->owner, packet->value >> 8, packet->value,
+            response, packet->length);
       }
       else
-        return E_VALUE;
+        res = E_VALUE;
+      break;
+    }
 
     case HID_REQUEST_GET_IDLE:
+    {
       usbTrace("hid at %u: get idle time %u",
           driver->interfaceIndex, packet->value);
 
-      ((uint8_t *)response)[0] = driver->idleTime;
+      response[0] = driver->idleTime;
       *responseLength = 1;
-      return E_OK;
+      res = E_OK;
+      break;
+    }
 
     case HID_REQUEST_SET_IDLE:
+    {
       usbTrace("hid at %u: set idle time to %u",
           driver->interfaceIndex, packet->value);
 
       driver->idleTime = packet->value >> 8;
-      return E_OK;
+      res = E_OK;
+      break;
+    }
 
     default:
+    {
       usbTrace("hid at %u: unknown request 0x%02X",
           driver->interfaceIndex, packet->request);
-      return E_INVALID;
+      res = E_INVALID;
+      break;
+    }
   }
+
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result handleDeviceRequest(struct HidBase *driver,
     const struct UsbSetupPacket *packet, void *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
 {
-  enum Result res = E_INVALID;
+  enum Result res;
 
   if (packet->request == REQUEST_GET_DESCRIPTOR
       && DESCRIPTOR_TYPE(packet->value) == DESCRIPTOR_TYPE_HID_REPORT)
@@ -222,14 +239,15 @@ static enum Result handleDeviceRequest(struct HidBase *driver,
 
     if (driver->reportDescriptorSize <= maxResponseLength)
     {
-      memcpy(response, driver->reportDescriptor,
-          driver->reportDescriptorSize);
+      memcpy(response, driver->reportDescriptor, driver->reportDescriptorSize);
       *responseLength = driver->reportDescriptorSize;
       res = E_OK;
     }
     else
       res = E_VALUE;
   }
+  else
+    res = E_INVALID;
 
   return res;
 }
@@ -258,14 +276,12 @@ static enum Result driverInit(void *object, const void *configBase)
 static void driverDeinit(void *object)
 {
   struct HidBase * const driver = object;
-
   usbDevUnbind(driver->device, driver);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result driverConfigure(void *object,
-    const struct UsbSetupPacket *packet, const void *payload,
-    uint16_t payloadLength, void *response, uint16_t *responseLength,
-    uint16_t maxResponseLength)
+static enum Result driverControl(void *object,
+    const struct UsbSetupPacket *packet, void *buffer,
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
   struct HidBase * const driver = object;
   const uint8_t recipient = REQUEST_RECIPIENT_VALUE(packet->requestType);
@@ -277,14 +293,17 @@ static enum Result driverConfigure(void *object,
     case REQUEST_TYPE_STANDARD:
       if (recipient == REQUEST_RECIPIENT_DEVICE)
       {
-        res = handleDeviceRequest(driver, packet, response, responseLength,
+        res = handleDeviceRequest(driver, packet, buffer, responseLength,
             maxResponseLength);
       }
       break;
 
     case REQUEST_TYPE_CLASS:
-      res = handleClassRequest(object, packet, payload, payloadLength,
-          response, responseLength, maxResponseLength);
+      res = handleClassRequest(object, packet, buffer, responseLength,
+          maxResponseLength);
+      break;
+
+    default:
       break;
   }
 
@@ -297,9 +316,8 @@ static const UsbDescriptorFunctor *driverDescribe(const void *object
   return deviceDescriptorTable;
 }
 /*----------------------------------------------------------------------------*/
-static void driverEvent(void *object, unsigned int event)
+static void driverNotify(void *object, unsigned int event)
 {
   struct HidBase * const driver = object;
-
   hidEvent(driver->owner, event);
 }

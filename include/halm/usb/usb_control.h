@@ -28,7 +28,7 @@ BEGIN_DECLS
 
 enum Result usbControlBindDriver(struct UsbControl *, void *);
 void usbControlUnbindDriver(struct UsbControl *);
-void usbControlEvent(struct UsbControl *, unsigned int);
+void usbControlNotify(struct UsbControl *, unsigned int);
 void usbControlSetPower(struct UsbControl *, uint16_t);
 enum Result usbControlStringAppend(struct UsbControl *, struct UsbString);
 void usbControlStringErase(struct UsbControl *, struct UsbString);

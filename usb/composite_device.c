@@ -38,10 +38,10 @@ static enum Result lookupDescriptor(struct CompositeDeviceProxy *,
 /*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
-static enum Result driverConfigure(void *, const struct UsbSetupPacket *,
-    const void *, uint16_t, void *, uint16_t *, uint16_t);
+static enum Result driverControl(void *, const struct UsbSetupPacket *,
+    void *, uint16_t *, uint16_t);
 static const UsbDescriptorFunctor *driverDescribe(const void *);
-static void driverEvent(void *, unsigned int);
+static void driverNotify(void *, unsigned int);
 /*----------------------------------------------------------------------------*/
 static const struct UsbDriverClass * const CompositeDeviceProxy =
     &(const struct UsbDriverClass){
@@ -49,9 +49,9 @@ static const struct UsbDriverClass * const CompositeDeviceProxy =
     .init = driverInit,
     .deinit = driverDeinit,
 
-    .configure = driverConfigure,
+    .control = driverControl,
     .describe = driverDescribe,
-    .event = driverEvent
+    .notify = driverNotify
 };
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
@@ -287,10 +287,9 @@ static void driverDeinit(void *object __attribute__((unused)))
 {
 }
 /*----------------------------------------------------------------------------*/
-static enum Result driverConfigure(void *object,
-    const struct UsbSetupPacket *packet, const void *payload,
-    uint16_t payloadLength, void *response, uint16_t *responseLength,
-    uint16_t maxResponseLength)
+static enum Result driverControl(void *object,
+    const struct UsbSetupPacket *packet, void *buffer,
+    uint16_t *responseLength, uint16_t maxResponseLength)
 {
   struct CompositeDeviceProxy * const driver = object;
   const uint8_t recipient = REQUEST_RECIPIENT_VALUE(packet->requestType);
@@ -299,7 +298,7 @@ static enum Result driverConfigure(void *object,
 
   if (type == REQUEST_TYPE_STANDARD && recipient == REQUEST_RECIPIENT_DEVICE)
   {
-    res = handleDeviceRequest(driver, packet, response, responseLength,
+    res = handleDeviceRequest(driver, packet, buffer, responseLength,
         maxResponseLength);
   }
 
@@ -311,8 +310,8 @@ static enum Result driverConfigure(void *object,
     {
       struct UsbDriver * const entry = *pointerListData(current);
 
-      res = usbDriverConfigure(entry, packet, payload, payloadLength,
-          response, responseLength, maxResponseLength);
+      res = usbDriverControl(entry, packet, buffer, responseLength,
+          maxResponseLength);
       if (res == E_OK || res != E_INVALID)
         break;
       current = pointerListNext(current);
@@ -322,7 +321,7 @@ static enum Result driverConfigure(void *object,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void driverEvent(void *object, unsigned int event)
+static void driverNotify(void *object, unsigned int event)
 {
   struct CompositeDeviceProxy * const driver = object;
   PointerListNode *current = pointerListFront(&driver->owner->entries);
@@ -331,7 +330,7 @@ static void driverEvent(void *object, unsigned int event)
   {
     struct UsbDriver * const entry = *pointerListData(current);
 
-    usbDriverEvent(entry, event);
+    usbDriverNotify(entry, event);
     current = pointerListNext(current);
   }
 }

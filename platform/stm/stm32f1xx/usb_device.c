@@ -187,14 +187,14 @@ static void interruptHandler(void *object)
   {
     reg->ISTR = ISTR_MASK & ~ISTR_RESET;
     resetDevice(device);
-    usbControlEvent(device->control, USB_DEVICE_EVENT_RESET);
+    usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
   }
 
   if (intStatus & ISTR_SUSP)
   {
     reg->ISTR = ISTR_MASK & ~ISTR_SUSP;
     if (!device->suspended)
-      usbControlEvent(device->control, USB_DEVICE_EVENT_SUSPEND);
+      usbControlNotify(device->control, USB_DEVICE_EVENT_SUSPEND);
     device->suspended = true;
   }
 
@@ -202,7 +202,7 @@ static void interruptHandler(void *object)
   {
     reg->ISTR = ISTR_MASK & ~ISTR_WKUP;
     if (device->suspended)
-      usbControlEvent(device->control, USB_DEVICE_EVENT_RESUME);
+      usbControlNotify(device->control, USB_DEVICE_EVENT_RESUME);
     device->suspended = false;
   }
 

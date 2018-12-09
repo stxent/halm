@@ -286,10 +286,10 @@ struct UsbDriverClass
 {
   CLASS_HEADER
 
-  enum Result (*configure)(void *, const struct UsbSetupPacket *,
-      const void *, uint16_t, void *, uint16_t *, uint16_t);
+  enum Result (*control)(void *, const struct UsbSetupPacket *,
+      void *, uint16_t *, uint16_t);
   const UsbDescriptorFunctor *(*describe)(const void *);
-  void (*event)(void *, unsigned int);
+  void (*notify)(void *, unsigned int);
 };
 
 struct UsbDriver
@@ -300,26 +300,29 @@ struct UsbDriver
 BEGIN_DECLS
 
 /**
- * Process an USB Setup Packet with driver-specific handlers.
+ * Process an USB Setup Packet.
  * @param driver Pointer to an UsbDriver object.
- * @param packet USB Setup Packet.
- * @param payload Data stage of the setup packet.
- * @param payloadLength Number of bytes in the payload buffer.
- * @param response Pointer to a response buffer with a size of at least
- * @b maxLength bytes.
- * @param responseLength Number of bytes used in the response buffer.
- * Zero-length responses are allowed.
- * @param maxResponseLength Maximum length of the response buffer in bytes.
- * @return @b E_OK on success, @b E_VALUE when the buffer is too small.
+ * @param packet Pointer to a structure representing USB Setup Packet.
+ * @param buffer For OUT transfers: data part of the setup packet, data length
+ * is stored in the length field of the setup packet. For IN transfers:
+ * buffer for a response, response length must be placed in the
+ * @b responseLength and must not exceed @b maxResponseLength bytes.
+ * @param bufferLength Pointer to a response length for IN transfers,
+ * default value is initialized to 0. Null pointer in case of OUT transfers.
+ * @param maxResponseLength Maximum allowed length of a response in bytes
+ * for IN transfers. Zero in case of OUT transfers.
+ * @return @b E_OK on success or error code in case of error. Frequently used
+ * error codes:
+ *   - @b E_MEMORY when the length of the response buffer is not sufficient.
+ *   - @b E_INVALID when a packet is not supported by the driver in use.
+ *   - @b E_VALUE in case of an incorrect packet data.
  */
-static inline enum Result usbDriverConfigure(void *driver,
-    const struct UsbSetupPacket *packet, const void *payload,
-    uint16_t payloadLength, void *response, uint16_t *responseLength,
+static inline enum Result usbDriverControl(void *driver,
+    const struct UsbSetupPacket *packet, void *buffer, uint16_t *responseLength,
     uint16_t maxResponseLength)
 {
-  return ((const struct UsbDriverClass *)CLASS(driver))->configure(driver,
-      packet, payload, payloadLength, response, responseLength,
-      maxResponseLength);
+  return ((const struct UsbDriverClass *)CLASS(driver))->control(driver,
+      packet, buffer, responseLength, maxResponseLength);
 }
 
 /**
@@ -333,13 +336,13 @@ static inline const UsbDescriptorFunctor *usbDriverDescribe(const void *driver)
 }
 
 /**
- * Handle USB event.
+ * Notify about an USB event.
  * @param driver Pointer to an UsbDriver object.
  * @param event Event identifier.
  */
-static inline void usbDriverEvent(void *driver, unsigned int event)
+static inline void usbDriverNotify(void *driver, unsigned int event)
 {
-  ((const struct UsbDriverClass *)CLASS(driver))->event(driver, event);
+  ((const struct UsbDriverClass *)CLASS(driver))->notify(driver, event);
 }
 
 END_DECLS

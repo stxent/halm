@@ -181,20 +181,20 @@ static void interruptHandler(void *object)
   if (intStatus & USBSTS_D_URI)
   {
     resetDevice(device);
-    usbControlEvent(device->control, USB_DEVICE_EVENT_RESET);
+    usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
   }
 
   /* Port change detect */
   if (intStatus & USBSTS_D_PCI)
   {
-    usbControlEvent(device->control, USB_DEVICE_EVENT_PORT_CHANGE);
+    usbControlNotify(device->control, USB_DEVICE_EVENT_PORT_CHANGE);
   }
 
   const bool suspended = (intStatus & USBSTS_D_SLI) != 0;
 
   if (suspended != device->suspended)
   {
-    usbControlEvent(device->control, suspended ?
+    usbControlNotify(device->control, suspended ?
         USB_DEVICE_EVENT_SUSPEND : USB_DEVICE_EVENT_RESUME);
     device->suspended = suspended;
   }
