@@ -83,6 +83,10 @@ struct WdtOscConfig
 {
   /** Optional: oscillator frequency. */
   enum WdtFrequency frequency;
+  /**
+   * Optional: clock frequency divisor. Divisor range is 2 to 64 in step of 2.
+   */
+  uint16_t divisor;
 };
 
 /* Requires a WdtOscConfig structure */

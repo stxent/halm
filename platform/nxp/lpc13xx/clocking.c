@@ -354,13 +354,18 @@ static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
   const struct WdtOscConfig * const config = configBase;
 
   assert(config->frequency <= WDT_FREQ_4600);
+  assert(config->divisor <= 64 && config->divisor % 2 == 0);
 
-  const unsigned int index = !config->frequency ?
+  const unsigned int divsel = config->divisor ?
+      (config->divisor >> 1) - 1 : 0;
+  const unsigned int freqsel = !config->frequency ?
       WDT_FREQ_600 : config->frequency;
 
+  LPC_SYSCON->WDTOSCCTRL = WDTOSCCTRL_DIVSEL(divsel)
+      | WDTOSCCTRL_FREQSEL(freqsel);
   sysPowerEnable(PWR_WDTOSC);
-  LPC_SYSCON->WDTOSCCTRL = WDTOSCCTRL_DIVSEL(0) | WDTOSCCTRL_FREQSEL(index);
-  wdtFrequency = (wdtFrequencyValues[index - 1] * 1000) >> 1;
+
+  wdtFrequency = (wdtFrequencyValues[freqsel - 1] * 1000) >> 1;
 
   return E_OK;
 }
