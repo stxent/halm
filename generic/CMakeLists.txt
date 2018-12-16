@@ -22,5 +22,5 @@ if(${CONFIG_GENERIC_WORK_QUEUE})
 endif()
 
 if(SOURCE_FILES)
-    add_library(generic OBJECT ${SOURCE_FILES})
+    add_library(halm_generic OBJECT ${SOURCE_FILES})
 endif()

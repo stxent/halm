@@ -29,36 +29,31 @@ if(${USE_LTO})
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto -ffat-lto-objects")
 endif()
 
+set(TARGET_LIST core generic platform pm usb)
+set(DEFINITION_LIST "")
+set(LIBRARY_OBJECTS "")
+
 if(DEFINED PLATFORM)
-    add_definitions(-D${PLATFORM})
-else()
-    if(UNIX)
-        add_definitions(-D_POSIX_C_SOURCE=200809L)
+    set(DEFINITION_LIST ${DEFINITION_LIST} -D${PLATFORM})
+elseif(UNIX)
+    set(DEFINITION_LIST ${DEFINITION_LIST} -D_POSIX_C_SOURCE=200809L)
+endif()
+
+foreach(ENTRY ${TARGET_LIST})
+    add_subdirectory(${ENTRY})
+    if(TARGET halm_${ENTRY})
+        set(LIBRARY_OBJECTS ${LIBRARY_OBJECTS} $<TARGET_OBJECTS:halm_${ENTRY}>)
+        target_compile_definitions(halm_${ENTRY}
+                PRIVATE ${DEFINITION_LIST}
+        )
+        target_include_directories(halm_${ENTRY}
+                PRIVATE "${PATH_XCORE}/include"
+                PRIVATE "${PROJECT_SOURCE_DIR}/include"
+        )
     endif()
-endif()
-
-include_directories("${PATH_XCORE}/include")
-include_directories("${PROJECT_SOURCE_DIR}/include")
-
-add_subdirectory(core)
-add_subdirectory(generic)
-add_subdirectory(platform)
-add_subdirectory(pm)
-add_subdirectory(usb)
-
-set(LIBRARY_OBJECTS $<TARGET_OBJECTS:platform>)
-if(TARGET core)
-    set(LIBRARY_OBJECTS ${LIBRARY_OBJECTS} $<TARGET_OBJECTS:core>)
-endif()
-if(TARGET generic)
-    set(LIBRARY_OBJECTS ${LIBRARY_OBJECTS} $<TARGET_OBJECTS:generic>)
-endif()
-if(TARGET pm)
-    set(LIBRARY_OBJECTS ${LIBRARY_OBJECTS} $<TARGET_OBJECTS:pm>)
-endif()
-if(TARGET usb)
-    set(LIBRARY_OBJECTS ${LIBRARY_OBJECTS} $<TARGET_OBJECTS:usb>)
-endif()
+endforeach()
 
 add_library(${PROJECT_NAME} ${LIBRARY_OBJECTS})
+target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
+
 install(TARGETS ${PROJECT_NAME} ARCHIVE DESTINATION lib)

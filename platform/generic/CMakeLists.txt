@@ -14,4 +14,4 @@ list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/rtc.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/serial.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/udp.c")
 
-add_library(platform OBJECT ${SOURCE_FILES})
+add_library(halm_platform OBJECT ${SOURCE_FILES})

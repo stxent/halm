@@ -22,4 +22,4 @@ if(${CONFIG_CORE_CORTEX_SYSTICK})
     list(APPEND SOURCE_FILES "systick.c")
 endif()
 
-add_library(core OBJECT ${SOURCE_FILES})
+add_library(halm_core OBJECT ${SOURCE_FILES})

@@ -6,5 +6,5 @@ if(${CONFIG_PM})
 endif()
 
 if(SOURCE_FILES)
-    add_library(pm OBJECT ${SOURCE_FILES})
+    add_library(halm_pm OBJECT ${SOURCE_FILES})
 endif()

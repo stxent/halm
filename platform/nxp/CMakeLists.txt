@@ -214,4 +214,4 @@ if(${CONFIG_PLATFORM_USB})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_device.c")
 endif()
 
-add_library(platform OBJECT ${SOURCE_FILES})
+add_library(halm_platform OBJECT ${SOURCE_FILES})

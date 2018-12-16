@@ -35,5 +35,5 @@ if(${CONFIG_USB_DEVICE_MSC})
 endif()
 
 if(SOURCE_FILES)
-    add_library(usb OBJECT ${SOURCE_FILES})
+    add_library(halm_usb OBJECT ${SOURCE_FILES})
 endif()
