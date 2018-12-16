@@ -50,7 +50,7 @@ struct GpTimerBase
   struct Pin input;
   /* Peripheral block identifier */
   uint8_t channel;
-  /* Exponent of the timer resolution */
+  /* Timer resolution in exponential form */
   uint8_t resolution;
 };
 /*----------------------------------------------------------------------------*/

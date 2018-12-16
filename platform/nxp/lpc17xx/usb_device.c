@@ -1110,7 +1110,7 @@ static void dmaEpClear(void *object)
         (volatile struct DmaDescriptor *)current->next;
 
     irqDisable(ep->device->base.irq);
-    pointerArrayPushBack(&pool->descriptors, current);
+    pointerArrayPushBack(&pool->descriptors, (void *)current);
     irqEnable(ep->device->base.irq);
 
     request->callback(request->callbackArgument, request,

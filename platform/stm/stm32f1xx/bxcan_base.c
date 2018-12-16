@@ -14,10 +14,10 @@
 struct BxCanBlockDescriptor
 {
   STM_CAN_Type *reg;
-  /* Reset control identifier */
-  enum SysBlockReset reset;
   /* Peripheral clock branch */
   enum SysClockBranch clock;
+  /* Reset control identifier */
+  enum SysBlockReset reset;
   /* Interrupt request identifiers */
   struct
   {
