@@ -29,8 +29,9 @@ struct Dfu
   struct Timer *timer;
   struct UsbDevice *device;
 
-  size_t (*onDownloadRequest)(size_t, const void *, size_t, uint16_t *);
-  size_t (*onUploadRequest)(size_t, void *, size_t);
+  void *callbackArgument;
+  size_t (*onDownloadRequest)(void *, size_t, const void *, size_t, uint16_t *);
+  size_t (*onUploadRequest)(void *, size_t, void *, size_t);
 
   /* Current offset */
   size_t position;
@@ -51,10 +52,11 @@ struct Dfu
 BEGIN_DECLS
 
 void dfuOnDownloadCompleted(struct Dfu *, bool);
+void dfuSetCallbackArgument(struct Dfu *, void *);
 void dfuSetDownloadRequestCallback(struct Dfu *,
-    size_t (*)(size_t, const void *, size_t, uint16_t *));
+    size_t (*)(void *, size_t, const void *, size_t, uint16_t *));
 void dfuSetUploadRequestCallback(struct Dfu *,
-    size_t (*)(size_t, void *, size_t));
+    size_t (*)(void *, size_t, void *, size_t));
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

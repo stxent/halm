@@ -178,8 +178,8 @@ static enum Result processDownloadRequest(struct Dfu *driver,
     return E_ERROR;
   }
 
-  const size_t written = driver->onDownloadRequest(driver->position,
-      payload, payloadLength, &driver->timeout);
+  const size_t written = driver->onDownloadRequest(driver->callbackArgument,
+      driver->position, payload, payloadLength, &driver->timeout);
 
   /*
    * User-space code must not use timeouts when the timer is not
@@ -262,8 +262,8 @@ static enum Result processUploadRequest(struct Dfu *driver,
     return E_ERROR;
   }
 
-  const size_t read = driver->onUploadRequest(driver->position, response,
-      requestedLength);
+  const size_t read = driver->onUploadRequest(driver->callbackArgument,
+      driver->position, response, requestedLength);
 
   driver->position += read;
   driver->state = read == requestedLength ?
@@ -306,6 +306,7 @@ static enum Result driverInit(void *object, const void *configBase)
 
   driver->device = config->device;
   driver->timer = config->timer;
+  driver->callbackArgument = 0;
   driver->onDownloadRequest = 0;
   driver->onUploadRequest = 0;
   driver->transferSize = config->transferSize;
@@ -477,13 +478,18 @@ void dfuOnDownloadCompleted(struct Dfu *driver, bool status)
 }
 /*----------------------------------------------------------------------------*/
 void dfuSetDownloadRequestCallback(struct Dfu *driver,
-    size_t (*callback)(size_t, const void *, size_t, uint16_t *))
+    size_t (*callback)(void *, size_t, const void *, size_t, uint16_t *))
 {
   driver->onDownloadRequest = callback;
 }
 /*----------------------------------------------------------------------------*/
 void dfuSetUploadRequestCallback(struct Dfu *driver,
-    size_t (*callback)(size_t, void *, size_t))
+    size_t (*callback)(void *, size_t, void *, size_t))
 {
   driver->onUploadRequest = callback;
+}
+/*----------------------------------------------------------------------------*/
+void dfuSetCallbackArgument(struct Dfu *driver, void *argument)
+{
+  driver->callbackArgument = argument;
 }
