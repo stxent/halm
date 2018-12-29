@@ -131,20 +131,18 @@ static void interruptHandler(void *object)
   /* Device status interrupt */
   if (intStatus & USBDevInt_DEV_STAT)
   {
-    const uint8_t deviceStatus = usbCommandRead(device,
+    const uint8_t devStatus = usbCommandRead(device,
         USB_CMD_GET_DEVICE_STATUS);
 
-    if (deviceStatus & DEVICE_STATUS_RST)
+    if (devStatus & DEVICE_STATUS_RST)
     {
       resetDevice(device);
       usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
     }
 
-    if (deviceStatus & DEVICE_STATUS_SUS_CH)
+    if (devStatus & DEVICE_STATUS_SUS_CH)
     {
-      const bool suspended = (deviceStatus & DEVICE_STATUS_SUS) != 0;
-
-      usbControlNotify(device->control, suspended ?
+      usbControlNotify(device->control, (devStatus & DEVICE_STATUS_SUS) ?
           USB_DEVICE_EVENT_SUSPEND : USB_DEVICE_EVENT_RESUME);
     }
   }
@@ -367,29 +365,38 @@ static void devStringErase(void *object, struct UsbString string)
 /*----------------------------------------------------------------------------*/
 static void epHandler(struct UsbSieEndpoint *ep, uint8_t status)
 {
+  /* Double-buffering availability mask */
+  static const uint32_t dbAvailable = 0x000003C0UL;
+
   if (pointerQueueEmpty(&ep->requests))
     return;
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
-    const unsigned int index = EP_TO_INDEX(ep->address);
-
-    while (!pointerQueueEmpty(&ep->requests))
+    if (status & SELECT_ENDPOINT_ST)
     {
-      const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
-      const uint8_t epStatus = usbCommandRead(ep->device, epCode);
+      /* The endpoint is stalled */
+      return;
+    }
 
-      if (!(epStatus & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST)))
-      {
-        struct UsbRequest * const request = pointerQueueFront(&ep->requests);
-        pointerQueuePopFront(&ep->requests);
+    const unsigned int index = EP_TO_INDEX(ep->address);
+    const size_t pending = pointerQueueSize(&ep->requests);
+    size_t count = 0;
 
-        epWriteData(ep, request->buffer, request->length);
-        request->callback(request->callbackArgument, request,
-            USB_REQUEST_COMPLETED);
-      }
-      else
-        break;
+    if (!(status & SELECT_ENDPOINT_B1FULL))
+      ++count;
+    if ((dbAvailable & (1UL << index)) && !(status & SELECT_ENDPOINT_B2FULL))
+      ++count;
+    count = MIN(count, pending);
+
+    while (count--)
+    {
+      struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+      pointerQueuePopFront(&ep->requests);
+
+      epWriteData(ep, request->buffer, request->length);
+      request->callback(request->callbackArgument, request,
+          USB_REQUEST_COMPLETED);
     }
   }
   else

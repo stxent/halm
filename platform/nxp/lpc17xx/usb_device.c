@@ -90,9 +90,9 @@ static void resetDevice(struct UsbDevice *);
 static void usbCommand(struct UsbDevice *, uint8_t);
 static uint8_t usbCommandRead(struct UsbDevice *, uint8_t);
 static void usbCommandWrite(struct UsbDevice *, uint8_t, uint16_t);
-static void usbPrepareEngine(LPC_USB_Type *);
 static void usbRunCommand(LPC_USB_Type *, enum UsbCommandPhase, uint32_t,
     uint32_t);
+static uint8_t usbStatusRead(struct UsbDevice *, unsigned int);
 static void waitForInt(struct UsbDevice *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
@@ -241,20 +241,18 @@ static void interruptHandler(void *object)
   {
     reg->USBDevIntClr = USBDevInt_DEV_STAT;
 
-    const uint8_t deviceStatus = usbCommandRead(device,
+    const uint8_t devStatus = usbCommandRead(device,
         USB_CMD_GET_DEVICE_STATUS);
 
-    if (deviceStatus & DEVICE_STATUS_RST)
+    if (devStatus & DEVICE_STATUS_RST)
     {
       resetDevice(device);
       usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
     }
 
-    if (deviceStatus & DEVICE_STATUS_SUS_CH)
+    if (devStatus & DEVICE_STATUS_SUS_CH)
     {
-      const bool suspended = (deviceStatus & DEVICE_STATUS_SUS) != 0;
-
-      usbControlNotify(device->control, suspended ?
+      usbControlNotify(device->control, (devStatus & DEVICE_STATUS_SUS) ?
           USB_DEVICE_EVENT_SUSPEND : USB_DEVICE_EVENT_RESUME);
     }
   }
@@ -270,12 +268,9 @@ static void interruptHandler(void *object)
     while (epIntStatus)
     {
       const unsigned int index = countLeadingZeros32(epIntStatus);
-      const uint8_t status = usbCommandRead(device,
-          USB_CMD_CLEAR_INTERRUPT | index);
+      const uint8_t status = usbStatusRead(device, index);
 
       epIntStatus -= (1UL << 31) >> index;
-      reg->USBEpIntClr = 1UL << index;
-
       sieEpHandler((struct UsbSieEndpoint *)endpointArray[index], status);
     }
   }
@@ -344,7 +339,7 @@ static void usbCommand(struct UsbDevice *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  usbPrepareEngine(reg);
+  reg->USBDevIntClr = USBDevInt_CCEMPTY;
   usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 }
 /*----------------------------------------------------------------------------*/
@@ -352,7 +347,7 @@ static uint8_t usbCommandRead(struct UsbDevice *device, uint8_t command)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  usbPrepareEngine(reg);
+  reg->USBDevIntClr = USBDevInt_CCEMPTY;
   usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 
   reg->USBDevIntClr = USBDevInt_CCEMPTY | USBDevInt_CDFULL;
@@ -366,22 +361,11 @@ static void usbCommandWrite(struct UsbDevice *device, uint8_t command,
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  usbPrepareEngine(reg);
+  reg->USBDevIntClr = USBDevInt_CCEMPTY;
   usbRunCommand(reg, USB_CMD_PHASE_COMMAND, command, USBDevInt_CCEMPTY);
 
   reg->USBDevIntClr = USBDevInt_CCEMPTY;
   usbRunCommand(reg, USB_CMD_PHASE_WRITE, data, USBDevInt_CCEMPTY);
-}
-/*----------------------------------------------------------------------------*/
-static void usbPrepareEngine(LPC_USB_Type *reg)
-{
-  /*
-   * Clearing can take up to 24 cycles, and checking the CCEMPTY flag
-   * is not a guaranteed condition for a completion of the operation,
-   * so an additional delay has been added.
-   */
-  reg->USBDevIntClr = USBDevInt_CCEMPTY;
-  delayTicks(24);
 }
 /*----------------------------------------------------------------------------*/
 static void usbRunCommand(LPC_USB_Type *reg, enum UsbCommandPhase phase,
@@ -389,6 +373,16 @@ static void usbRunCommand(LPC_USB_Type *reg, enum UsbCommandPhase phase,
 {
   reg->USBCmdCode = USBCmdCode_CMD_PHASE(phase) | USBCmdCode_CMD_CODE(payload);
   while (!(reg->USBDevIntSt & (mask | USBDevInt_DEV_STAT)));
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t usbStatusRead(struct UsbDevice *device, unsigned int index)
+{
+  LPC_USB_Type * const reg = device->base.reg;
+
+  reg->USBEpIntClr = 1UL << index;
+  while (!(reg->USBDevIntSt & USBDevInt_CDFULL));
+
+  return reg->USBCmdData;
 }
 /*----------------------------------------------------------------------------*/
 static void waitForInt(struct UsbDevice *device, uint32_t mask)
@@ -691,29 +685,38 @@ static void epWritePacketMemory(LPC_USB_Type *reg, const uint8_t *buffer,
 /*----------------------------------------------------------------------------*/
 static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
 {
+  /* Double-buffering availability mask */
+  static const uint32_t dbAvailable = 0xF3CF3CF0UL;
+
   if (pointerQueueEmpty(&ep->requests))
     return;
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
-    const unsigned int index = EP_TO_INDEX(ep->address);
-
-    while (!pointerQueueEmpty(&ep->requests))
+    if (status & SELECT_ENDPOINT_ST)
     {
-      const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
-      const uint8_t epStatus = usbCommandRead(ep->device, epCode);
+      /* The endpoint is stalled */
+      return;
+    }
 
-      if (!(epStatus & (SELECT_ENDPOINT_FE | SELECT_ENDPOINT_ST)))
-      {
-        struct UsbRequest * const request = pointerQueueFront(&ep->requests);
-        pointerQueuePopFront(&ep->requests);
+    const unsigned int index = EP_TO_INDEX(ep->address);
+    const size_t pending = pointerQueueSize(&ep->requests);
+    size_t count = 0;
 
-        epWriteData(ep, request->buffer, request->length);
-        request->callback(request->callbackArgument, request,
-            USB_REQUEST_COMPLETED);
-      }
-      else
-        break;
+    if (!(status & SELECT_ENDPOINT_B1FULL))
+      ++count;
+    if ((dbAvailable & (1UL << index)) && !(status & SELECT_ENDPOINT_B2FULL))
+      ++count;
+    count = MIN(count, pending);
+
+    while (count--)
+    {
+      struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+      pointerQueuePopFront(&ep->requests);
+
+      epWriteData(ep, request->buffer, request->length);
+      request->callback(request->callbackArgument, request,
+          USB_REQUEST_COMPLETED);
     }
   }
   else
