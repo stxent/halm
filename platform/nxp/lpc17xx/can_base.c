@@ -132,8 +132,20 @@ static enum Result canInit(void *object, const void *configBase)
   interface->channel = config->channel;
   interface->handler = 0;
 
+  /*
+   * Disable interrupt requests during initialization, because the same vector
+   * is used for both CAN modules. Interrupt requests will be enabled in
+   * upper-level code after completion of initialization.
+   */
+  const bool irqEnabled = irqStatus(CAN_IRQ);
+  irqDisable(CAN_IRQ);
+
   if (!setInstance(interface->channel, interface))
+  {
+    if (irqEnabled)
+      irqEnable(CAN_IRQ);
     return E_BUSY;
+  }
 
   /* Configure input and output pins */
   configPins(interface, config);
@@ -157,9 +169,6 @@ static enum Result canInit(void *object, const void *configBase)
   sysClockControl(CLK_CAN2, DEFAULT_DIV);
   sysClockControl(CLK_ACF, DEFAULT_DIV);
 
-  if (!instances[!interface->channel])
-    irqEnable(CAN_IRQ);
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -167,9 +176,6 @@ static enum Result canInit(void *object, const void *configBase)
 static void canDeinit(void *object)
 {
   const struct CanBase * const interface = object;
-
-  if (!instances[!interface->channel])
-    irqDisable(CAN_IRQ);
 
   switch (interface->channel)
   {
@@ -183,5 +189,9 @@ static void canDeinit(void *object)
   }
 
   resetInstance(interface->channel);
+
+  /* Re-enable IRQ for the second module if it is still active */
+  if (instances[!interface->channel])
+    irqDisable(CAN_IRQ);
 }
 #endif

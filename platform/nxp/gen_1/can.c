@@ -27,6 +27,7 @@ static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
 static void interruptHandler(void *);
 static void readMessage(struct Can *, struct CanMessage *);
+static void resetQueues(struct Can *);
 static void sendMessage(struct Can *, const struct CanMessage *, uint32_t *);
 
 #ifdef CONFIG_PLATFORM_NXP_CAN_PM
@@ -99,6 +100,9 @@ static void changeMode(struct Can *interface, enum Mode mode)
       default:
         break;
     }
+
+    /* Return pending message descriptors to the pool */
+    resetQueues(interface);
 
     /* Enable Reset mode to configure LOM and STM bits */
     reg->MOD |= MOD_RM;
@@ -217,6 +221,27 @@ static void readMessage(struct Can *interface, struct CanMessage *message)
   }
 }
 /*----------------------------------------------------------------------------*/
+static void resetQueues(struct Can *interface)
+{
+  irqDisable(interface->base.irq);
+
+  while (!pointerQueueEmpty(&interface->txQueue))
+  {
+    struct CanMessage * const message = pointerQueueFront(&interface->txQueue);
+    pointerQueuePopFront(&interface->txQueue);
+    pointerArrayPushBack(&interface->pool, message);
+  }
+
+  while (!pointerQueueEmpty(&interface->rxQueue))
+  {
+    struct CanMessage * const message = pointerQueueFront(&interface->rxQueue);
+    pointerQueuePopFront(&interface->rxQueue);
+    pointerArrayPushBack(&interface->pool, message);
+  }
+
+  irqEnable(interface->base.irq);
+}
+/*----------------------------------------------------------------------------*/
 static void sendMessage(struct Can *interface,
     const struct CanMessage *message, uint32_t *status)
 {
@@ -333,10 +358,11 @@ static enum Result canInit(void *object, const void *configBase)
     return res;
 #endif
 
-  irqSetPriority(interface->base.irq, config->priority);
-
   /* Enable interrupts on message reception and bus error */
   reg->IER = IER_RIE | IER_EPIE | IER_BEIE | IER_TIE_MASK;
+
+  irqSetPriority(interface->base.irq, config->priority);
+  irqEnable(interface->base.irq);
 
   return E_OK;
 }
@@ -348,6 +374,7 @@ static void canDeinit(void *object)
   LPC_CAN_Type * const reg = interface->base.reg;
 
   /* Disable all interrupts */
+  irqDisable(interface->base.irq);
   reg->IER = 0;
 
 #ifdef CONFIG_PLATFORM_NXP_CAN_PM
