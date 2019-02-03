@@ -436,6 +436,9 @@ static enum Result devInit(void *object, const void *configBase)
 #ifdef CONFIG_PLATFORM_USB_DMA
   if (!initDescriptorPool(device))
     return E_MEMORY;
+#else
+  /* Suppress warning */
+  (void)UsbDmaEndpoint;
 #endif
 
   irqSetPriority(device->base.irq, config->priority);

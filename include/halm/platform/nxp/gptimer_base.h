@@ -18,7 +18,7 @@ enum
   GPTIMER_CT16B1,
   GPTIMER_CT32B0,
   GPTIMER_CT32B1
-};
+} __attribute__((packed));
 
 enum GpTimerEvent
 {
@@ -28,7 +28,7 @@ enum GpTimerEvent
   GPTIMER_MATCH2,
   GPTIMER_MATCH3,
   GPTIMER_EVENT_END
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerBase;
 
