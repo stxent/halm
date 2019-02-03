@@ -472,10 +472,20 @@ typedef struct
   __rw__ uint32_t PSC;
   __rw__ uint32_t ARR;
   __rw__ uint32_t RCR;
-  __rw__ uint32_t CCR1;
-  __rw__ uint32_t CCR2;
-  __rw__ uint32_t CCR3;
-  __rw__ uint32_t CCR4;
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t CCR1;
+      __rw__ uint32_t CCR2;
+      __rw__ uint32_t CCR3;
+      __rw__ uint32_t CCR4;
+    };
+
+    __rw__ uint32_t CCR[4];
+  };
+
   __rw__ uint32_t BDTR;
   __rw__ uint32_t DCR;
   __rw__ uint32_t DMAR;
@@ -662,12 +672,12 @@ extern STM_FSMC_Type    FSMC_DOMAIN;
 #define STM_TIM8          (&APB2_DOMAIN.TIM8)
 #define STM_USART1        (&APB2_DOMAIN.USART1)
 #define STM_ADC3          (&APB2_DOMAIN.ADC3)
-#define STM_TIM15         (&APB2_DOMAIN.ADC15)
-#define STM_TIM16         (&APB2_DOMAIN.ADC16)
-#define STM_TIM17         (&APB2_DOMAIN.ADC17)
-#define STM_TIM9          (&APB2_DOMAIN.ADC9)
-#define STM_TIM10         (&APB2_DOMAIN.ADC10)
-#define STM_TIM11         (&APB2_DOMAIN.ADC11)
+#define STM_TIM15         (&APB2_DOMAIN.TIM15)
+#define STM_TIM16         (&APB2_DOMAIN.TIM16)
+#define STM_TIM17         (&APB2_DOMAIN.TIM17)
+#define STM_TIM9          (&APB2_DOMAIN.TIM9)
+#define STM_TIM10         (&APB2_DOMAIN.TIM10)
+#define STM_TIM11         (&APB2_DOMAIN.TIM11)
 
 #define STM_SDIO          (&AHB_DOMAIN.SDIO)
 #define STM_DMA1          (&AHB_DOMAIN.DMA1)

@@ -40,6 +40,25 @@ config PLATFORM_STM_DMA
 	bool "DMA"
 	default y
 
+config PLATFORM_STM_GPTIMER_BASE
+	bool "General Purpose Timer"
+	default y
+
+config PLATFORM_STM_GPTIMER_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_STM_GPTIMER_BASE
+
+config PLATFORM_STM_GPTIMER_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_STM_GPTIMER_BASE && PM
+
+config PLATFORM_STM_GPTIMER
+	bool "Common timer"
+	default y
+	depends on PLATFORM_STM_GPTIMER_BASE
+
 config PLATFORM_STM_SPI_BASE
 	bool "SPI"
 	default y
