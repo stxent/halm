@@ -49,12 +49,6 @@ enum WdtFrequency
   WDT_FREQ_4400,
   WDT_FREQ_4600
 };
-
-struct GenericClockClass
-{
-  struct ClockClass base;
-  enum ClockBranch branch;
-};
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -121,7 +115,7 @@ struct ClockOutputConfig
 };
 
 /* Requires a ClockOutputConfig structure */
-extern const struct GenericClockClass * const ClockOutput;
+extern const struct ClockClass * const ClockOutput;
 /*----------------------------------------------------------------------------*/
 struct GenericClockConfig
 {
@@ -132,6 +126,6 @@ struct GenericClockConfig
 };
 
 /* Requires a GenericClockConfig structure */
-extern const struct GenericClockClass * const MainClock;
+extern const struct ClockClass * const MainClock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11EXX_CLOCKING_H_ */

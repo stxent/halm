@@ -59,24 +59,6 @@ enum ClockSource
   CLOCK_IDIVD       = 0x0F,
   CLOCK_IDIVE       = 0x10
 };
-
-struct GenericClockClass
-{
-  struct ClockClass base;
-  enum ClockBranch branch;
-};
-
-struct GenericDividerClass
-{
-  struct ClockClass base;
-  enum ClockSource channel;
-};
-
-struct GenericPllClass
-{
-  struct ClockClass base;
-  enum ClockSource channel;
-};
 /*----------------------------------------------------------------------------*/
 struct GenericDividerConfig
 {
@@ -92,11 +74,11 @@ struct GenericDividerConfig
 };
 
 /* Require a GenericDividerConfig structure */
-extern const struct GenericDividerClass * const DividerA;
-extern const struct GenericDividerClass * const DividerB;
-extern const struct GenericDividerClass * const DividerC;
-extern const struct GenericDividerClass * const DividerD;
-extern const struct GenericDividerClass * const DividerE;
+extern const struct ClockClass * const DividerA;
+extern const struct ClockClass * const DividerB;
+extern const struct ClockClass * const DividerC;
+extern const struct ClockClass * const DividerD;
+extern const struct ClockClass * const DividerE;
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -150,8 +132,8 @@ struct PllConfig
 
 /* Require a PllConfig structure */
 extern const struct ClockClass * const SystemPll;
-extern const struct GenericPllClass * const AudioPll;
-extern const struct GenericPllClass * const UsbPll;
+extern const struct ClockClass * const AudioPll;
+extern const struct ClockClass * const UsbPll;
 /*----------------------------------------------------------------------------*/
 struct GenericClockConfig
 {
@@ -160,26 +142,26 @@ struct GenericClockConfig
 };
 
 /* Require a GenericClockConfig structure */
-extern const struct GenericClockClass * const MainClock; /* Base M4 clock */
-extern const struct GenericClockClass * const Usb0Clock;
-extern const struct GenericClockClass * const Usb1Clock;
-extern const struct GenericClockClass * const PeriphClock; /* APB0 and APB2 */
-extern const struct GenericClockClass * const Apb1Clock;
-extern const struct GenericClockClass * const Apb3Clock;
-extern const struct GenericClockClass * const SpifiClock;
-extern const struct GenericClockClass * const SpiClock;
-extern const struct GenericClockClass * const PhyRxClock;
-extern const struct GenericClockClass * const PhyTxClock;
-extern const struct GenericClockClass * const LcdClock;
-extern const struct GenericClockClass * const AdcHsClock;
-extern const struct GenericClockClass * const SdioClock;
-extern const struct GenericClockClass * const Ssp0Clock;
-extern const struct GenericClockClass * const Ssp1Clock;
-extern const struct GenericClockClass * const Usart0Clock;
-extern const struct GenericClockClass * const Uart1Clock;
-extern const struct GenericClockClass * const Usart2Clock;
-extern const struct GenericClockClass * const Usart3Clock;
-extern const struct GenericClockClass * const AudioClock;
+extern const struct ClockClass * const MainClock; /* Base M4 clock */
+extern const struct ClockClass * const Usb0Clock;
+extern const struct ClockClass * const Usb1Clock;
+extern const struct ClockClass * const PeriphClock; /* APB0 and APB2 */
+extern const struct ClockClass * const Apb1Clock;
+extern const struct ClockClass * const Apb3Clock;
+extern const struct ClockClass * const SpifiClock;
+extern const struct ClockClass * const SpiClock;
+extern const struct ClockClass * const PhyRxClock;
+extern const struct ClockClass * const PhyTxClock;
+extern const struct ClockClass * const LcdClock;
+extern const struct ClockClass * const AdcHsClock;
+extern const struct ClockClass * const SdioClock;
+extern const struct ClockClass * const Ssp0Clock;
+extern const struct ClockClass * const Ssp1Clock;
+extern const struct ClockClass * const Usart0Clock;
+extern const struct ClockClass * const Uart1Clock;
+extern const struct ClockClass * const Usart2Clock;
+extern const struct ClockClass * const Usart3Clock;
+extern const struct ClockClass * const AudioClock;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
@@ -190,8 +172,8 @@ struct ClockOutputConfig
 };
 
 /* Require a ClockOutputConfig structure */
-extern const struct GenericClockClass * const ClockOutput;
-extern const struct GenericClockClass * const CguOut0Clock;
-extern const struct GenericClockClass * const CguOut1Clock;
+extern const struct ClockClass * const ClockOutput;
+extern const struct ClockClass * const CguOut0Clock;
+extern const struct ClockClass * const CguOut1Clock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC43XX_CLOCKING_H_ */

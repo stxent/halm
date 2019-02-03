@@ -20,6 +20,12 @@ struct ClockDescriptor
   volatile uint32_t sourceUpdate;
   volatile uint32_t divider;
 };
+
+struct GenericClockClass
+{
+  struct ClockClass base;
+  enum ClockBranch branch;
+};
 /*----------------------------------------------------------------------------*/
 static struct ClockDescriptor *calcBranchDescriptor(enum ClockBranch);
 static uint32_t calcPllFrequency(uint16_t, uint8_t, enum ClockSource);
@@ -82,8 +88,8 @@ const struct ClockClass * const SystemPll = &(const struct ClockClass){
     .ready = sysPllReady
 };
 /*----------------------------------------------------------------------------*/
-const struct GenericClockClass * const ClockOutput =
-    &(const struct GenericClockClass){
+const struct ClockClass * const ClockOutput =
+    (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
         .disable = branchDisable,
         .enable = clockOutputEnable,
@@ -93,8 +99,8 @@ const struct GenericClockClass * const ClockOutput =
     .branch = CLOCK_BRANCH_OUTPUT
 };
 
-const struct GenericClockClass * const MainClock =
-    &(const struct GenericClockClass){
+const struct ClockClass * const MainClock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
         .disable = branchDisable,
         .enable = branchEnable,
@@ -104,8 +110,8 @@ const struct GenericClockClass * const MainClock =
     .branch = CLOCK_BRANCH_MAIN
 };
 
-const struct GenericClockClass * const WdtClock =
-    &(const struct GenericClockClass){
+const struct ClockClass * const WdtClock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
         .disable = branchDisable,
         .enable = branchEnable,
