@@ -105,13 +105,14 @@ static enum Result tmrInit(void *object, const void *configBase)
   reg->IR = reg->IR; /* Clear pending interrupts */
   reg->CCR = 0;
   reg->CTCR = 0;
-  reg->MCR = 0;
 
   timer->frequency = config->frequency;
   gpTimerSetFrequency(&timer->base, timer->frequency);
 
   /* Configure prescaler and default match value */
   reg->MR[timer->event] = getMaxValue(timer);
+  /* Reset the timer after reaching the match register value */
+  reg->MCR = MCR_RESET(timer->event);
   /* Enable external match to generate signals to other peripherals */
   reg->EMR = EMR_CONTROL(timer->event, CONTROL_TOGGLE);
 
@@ -214,27 +215,9 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
-  const uint32_t resolution = getMaxValue(timer);
-  const uint32_t state = reg->TCR & TCR_CEN;
 
-  /* Stop the timer before reconfiguration */
-  reg->TCR = 0;
-
-  assert((overflow - 1) <= resolution);
-  overflow = (overflow - 1) & resolution;
-
-  /* Setup the match register */
-  reg->MR[timer->event] = overflow;
-
-  if (overflow != resolution)
-  {
-    /* Reset the timer after reaching match register value */
-    reg->MCR |= MCR_RESET(timer->event);
-  }
-  else
-    reg->MCR &= ~MCR_RESET(timer->event);
-
-  reg->TCR = state;
+  assert(overflow <= getMaxValue(timer));
+  reg->MR[timer->event] = overflow - 1;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
@@ -249,12 +232,9 @@ static void tmrSetValue(void *object, uint32_t value)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
-  const uint32_t state = reg->TCR & TCR_CEN;
 
   assert(value <= reg->MR[timer->event]);
 
-  reg->TCR = 0;
   reg->PC = 0;
   reg->TC = value;
-  reg->TCR = state;
 }

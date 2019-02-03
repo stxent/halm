@@ -317,10 +317,7 @@ static void tmrSetValue(void *object, uint32_t value)
   const unsigned int part = timer->base.part == SCT_HIGH;
 
   assert(value <= reg->MATCH_PART[timer->event][part]);
-
-  reg->CTRL_PART[part] |= CTRL_STOP;
   reg->COUNT_PART[part] = value;
-  reg->CTRL_PART[part] &= ~CTRL_STOP;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetValueUnified(void *object, uint32_t value)
@@ -329,8 +326,5 @@ static void tmrSetValueUnified(void *object, uint32_t value)
   LPC_SCT_Type * const reg = timer->base.reg;
 
   assert(value <= reg->MATCH[timer->event]);
-
-  reg->CTRL_PART[SCT_LOW] |= CTRL_STOP;
   reg->COUNT = value;
-  reg->CTRL_PART[SCT_LOW] &= ~CTRL_STOP;
 }

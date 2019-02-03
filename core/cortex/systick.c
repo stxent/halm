@@ -130,7 +130,7 @@ static uint32_t tmrGetFrequency(const void *object __attribute__((unused)))
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object __attribute__((unused)))
 {
-  return SYSTICK->LOAD + 1;
+  return (SYSTICK->LOAD + 1) & TIMER_RESOLUTION;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object __attribute__((unused)),
@@ -141,7 +141,7 @@ static void tmrSetOverflow(void *object __attribute__((unused)),
   assert(overflow <= TIMER_RESOLUTION);
 
   SYSTICK->CTRL = 0;
-  SYSTICK->LOAD = overflow ? overflow - 1 : TIMER_RESOLUTION;
+  SYSTICK->LOAD = (overflow - 1) & TIMER_RESOLUTION;
   SYSTICK->CTRL = state;
 }
 /*----------------------------------------------------------------------------*/
