@@ -427,7 +427,7 @@ static enum Result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
 
   /*
    * User Manual says that it takes 3 clock cycle to fetch the packet length
-   * from the RAM. It seems that this delay should be a little bit higher.
+   * from the RAM. It seems that this delay should be a little bit longer.
    */
   delayTicks(4);
 

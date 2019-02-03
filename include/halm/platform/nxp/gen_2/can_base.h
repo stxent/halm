@@ -1,5 +1,5 @@
 /*
- * platform/nxp/gen_2/can_base.h
+ * halm/platform/nxp/gen_2/can_base.h
  * Copyright (C) 2017 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
