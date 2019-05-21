@@ -14,7 +14,6 @@
 /* Pack match channel and pin function in one value */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void);
 static bool setInstance(struct GpPwmUnitBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
@@ -99,11 +98,6 @@ const struct PinEntry gpPwmPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct GpPwmUnitBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(struct GpPwmUnitBase *object)
 {
   if (!instance)
@@ -150,6 +144,6 @@ static enum Result unitInit(void *object, const void *configBase)
 static void unitDeinit(void *object __attribute__((unused)))
 {
   sysPowerDisable(PWR_PWM1);
-  resetInstance();
+  instance = 0;
 }
 #endif

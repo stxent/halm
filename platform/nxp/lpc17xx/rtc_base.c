@@ -7,7 +7,6 @@
 #include <halm/platform/nxp/gen_1/rtc_base.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void);
 static bool setInstance(struct RtcBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
@@ -25,11 +24,6 @@ const struct EntityClass * const RtcBase = &(const struct EntityClass){
 };
 /*----------------------------------------------------------------------------*/
 static struct RtcBase *instance = 0;
-/*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct RtcBase *object)
 {
@@ -71,6 +65,6 @@ static enum Result clkInit(void *object,
 static void clkDeinit(void *object __attribute__((unused)))
 {
   sysPowerDisable(PWR_RTC);
-  resetInstance();
+  instance = 0;
 }
 #endif

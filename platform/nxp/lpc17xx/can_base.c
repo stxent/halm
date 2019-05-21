@@ -13,7 +13,6 @@
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBase *, const struct CanBaseConfig *);
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct CanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
@@ -90,11 +89,6 @@ static void configPins(const struct CanBase *interface,
   assert(pinEntry);
   pinInput((pin = pinInit(config->tx)));
   pinSetFunction(pin, pinEntry->value);
-}
-/*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct CanBase *object)
@@ -188,7 +182,7 @@ static void canDeinit(void *object)
       break;
   }
 
-  resetInstance(interface->channel);
+  instances[interface->channel] = 0;
 
   /* Re-enable IRQ for the second module if it is still active */
   if (instances[!interface->channel])

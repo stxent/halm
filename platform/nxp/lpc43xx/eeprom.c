@@ -22,7 +22,6 @@ extern unsigned long _eeeprom;
 static size_t calcChunkLength(uintptr_t, size_t);
 static inline bool isAddressValid(const struct Eeprom *, uintptr_t);
 static void programNextChunk(struct Eeprom *);
-static void resetInstance(void);
 static bool setInstance(struct Eeprom *);
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *, const void *);
@@ -68,11 +67,6 @@ static void programNextChunk(struct Eeprom *interface)
 
   memcpy((void *)interface->offset, interface->buffer, nextChunkLength);
   LPC_EEPROM->CMD = CMD_ERASE_PROGRAM;
-}
-/*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Eeprom *object)
@@ -135,7 +129,8 @@ static void eepromDeinit(void *object __attribute__((unused)))
 {
   irqDisable(EEPROM_IRQ);
   sysClockDisable(CLK_M4_EEPROM);
-  resetInstance();
+
+  instance = 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result eepromSetCallback(void *object, void (*callback)(void *),

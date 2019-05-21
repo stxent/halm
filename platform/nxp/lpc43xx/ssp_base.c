@@ -30,7 +30,6 @@ struct SspBlockDescriptor
 };
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SspBase *, const struct SspBaseConfig *);
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *, const void *);
@@ -215,11 +214,6 @@ static void configPins(struct SspBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct SspBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -290,6 +284,7 @@ static void sspDeinit(void *object)
 
   sysClockDisable(entry->registerBranch);
   sysClockDisable(entry->periperalBranch);
-  resetInstance(interface->channel);
+
+  instances[interface->channel] = 0;
 }
 #endif

@@ -22,7 +22,6 @@ struct SpiBlockDescriptor
   IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct SpiBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *, const void *);
@@ -156,11 +155,6 @@ const struct PinEntry spiPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct SpiBase *instances[3] = {0};
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct SpiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -229,6 +223,6 @@ static void spiDeinit(void *object)
   const struct SpiBase * const interface = object;
 
   sysClockDisable(spiBlockEntries[interface->channel].branch);
-  resetInstance(interface->channel);
+  instances[interface->channel] = 0;
 }
 #endif

@@ -30,7 +30,6 @@ struct BxCanBlockDescriptor
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct BxCanBase *,
     const struct BxCanBaseConfig *);
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct BxCanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
@@ -141,11 +140,6 @@ static void configPins(const struct BxCanBase *interface,
   pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct BxCanBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -244,6 +238,6 @@ static void canDeinit(void *object)
   const struct BxCanBase * const interface = object;
 
   sysClockDisable(bxCanBlockEntries[interface->channel].clock);
-  resetInstance(interface->channel);
+  instances[interface->channel] = 0;
 }
 #endif

@@ -9,7 +9,6 @@
 #include <halm/platform/nxp/lpc17xx/system_defs.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void);
 static bool setInstance(struct Bod *);
 /*----------------------------------------------------------------------------*/
 static enum Result bodInit(void *, const void *);
@@ -34,11 +33,6 @@ const struct InterruptClass * const Bod = &(const struct InterruptClass){
 };
 /*----------------------------------------------------------------------------*/
 static struct Bod *instance = 0;
-/*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Bod *object)
 {
@@ -87,7 +81,7 @@ static enum Result bodInit(void *object, const void *configBase)
 static void bodDeinit(void *object __attribute__((unused)))
 {
   irqDisable(BOD_IRQ);
-  resetInstance();
+  instance = 0;
 }
 #endif
 /*----------------------------------------------------------------------------*/

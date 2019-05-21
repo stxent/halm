@@ -9,7 +9,6 @@
 #include <halm/platform/nxp/rit_base.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void);
 static bool setInstance(struct Rit *);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
@@ -45,11 +44,6 @@ const struct TimerClass * const Rit = &(const struct TimerClass){
 };
 /*----------------------------------------------------------------------------*/
 static struct Rit *instance = 0;
-/*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Rit *object)
 {
@@ -98,7 +92,8 @@ static void tmrDeinit(void *object __attribute__((unused)))
   irqDisable(RIT_IRQ);
   LPC_RIT->CTRL = 0;
   ritBaseDeinit();
-  resetInstance();
+
+  instance = 0;
 }
 #endif
 /*----------------------------------------------------------------------------*/

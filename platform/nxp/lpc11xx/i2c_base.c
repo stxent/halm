@@ -10,7 +10,6 @@
 #include <halm/platform/nxp/lpc11xx/system.h>
 #include <halm/platform/nxp/lpc11xx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void);
 static bool setInstance(struct I2cBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
@@ -42,11 +41,6 @@ const struct PinEntry i2cPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 static struct I2cBase *instance = 0;
-/*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct I2cBase *object)
 {
@@ -98,7 +92,9 @@ static void i2cDeinit(void *object __attribute__((unused)))
 {
   /* Put the peripheral into the reset state */
   LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C;
+
   sysClockDisable(CLK_I2C);
-  resetInstance();
+
+  instance = 0;
 }
 #endif

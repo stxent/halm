@@ -13,7 +13,6 @@
 #define DEFAULT_DIV CLK_DIV2
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
-static void resetInstance(void);
 static bool setInstance(struct I2sBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
@@ -125,11 +124,6 @@ static void configPins(struct I2sBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(struct I2sBase *object)
 {
   if (!instance)
@@ -178,6 +172,6 @@ static enum Result i2sInit(void *object, const void *configBase)
 static void i2sDeinit(void *object __attribute__((unused)))
 {
   sysPowerDisable(PWR_I2S);
-  resetInstance();
+  instance = 0;
 }
 #endif

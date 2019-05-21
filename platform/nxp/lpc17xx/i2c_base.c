@@ -18,7 +18,6 @@ struct I2cBlockDescriptor
   enum SysClockBranch clock;
 };
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
@@ -93,11 +92,6 @@ const struct PinEntry i2cPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct I2cBase *instances[3] = {0};
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct I2cBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -163,6 +157,6 @@ static void i2cDeinit(void *object)
   const struct I2cBase * const interface = object;
 
   sysPowerDisable(i2cBlockEntries[interface->channel].power);
-  resetInstance(interface->channel);
+  instances[interface->channel] = 0;
 }
 #endif

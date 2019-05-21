@@ -10,7 +10,6 @@
 #include <halm/core/cortex/systick.h>
 #include <halm/core/cortex/systick_defs.h>
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void);
 static bool setInstance(struct SysTickTimer *);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
@@ -47,11 +46,6 @@ const struct TimerClass * const SysTickTimer = &(const struct TimerClass){
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const MainClock;
 static struct SysTickTimer *instance = 0;
-/*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SysTickTimer *object)
 {
@@ -95,7 +89,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *object __attribute__((unused)))
 {
   SYSTICK->CTRL = 0;
-  resetInstance();
+  instance = 0;
 }
 #endif
 /*----------------------------------------------------------------------------*/

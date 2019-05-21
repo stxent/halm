@@ -11,7 +11,6 @@
 #include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(PinNumber);
-static void resetInstance(void);
 static bool setInstance(struct DacBase *);
 
 #ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
@@ -66,11 +65,6 @@ static void releaseOutputPin(PinNumber key __attribute__((unused)))
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(struct DacBase *object)
 {
   if (!instance)
@@ -115,6 +109,7 @@ static void dacDeinit(void *object)
 
   sysClockDisable(CLK_APB3_DAC);
   releaseOutputPin(interface->pin);
-  resetInstance();
+
+  instance = 0;
 }
 #endif

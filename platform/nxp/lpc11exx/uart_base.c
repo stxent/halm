@@ -13,7 +13,6 @@
 #define DEFAULT_DIV       1
 #define DEFAULT_DIV_VALUE 1
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void);
 static bool setInstance(struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *, const void *);
@@ -70,11 +69,6 @@ const struct PinEntry uartPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct UartBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(struct UartBase *object)
 {
   if (!instance)
@@ -124,8 +118,11 @@ static enum Result uartInit(void *object, const void *configBase)
 #ifndef CONFIG_PLATFORM_NXP_UART_NO_DEINIT
 static void uartDeinit(void *object __attribute__((unused)))
 {
-  LPC_SYSCON->UARTCLKDIV = 0; /* Disable peripheral clock */
+  /* Disable the peripheral clock */
+  LPC_SYSCON->UARTCLKDIV = 0;
+
   sysClockDisable(CLK_USART);
-  resetInstance();
+
+  instance = 0;
 }
 #endif

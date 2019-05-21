@@ -18,7 +18,6 @@ struct I2cBlockDescriptor
   enum SysBlockReset reset;
 };
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct I2cBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
@@ -79,11 +78,6 @@ const struct PinEntry i2cPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 static struct I2cBase *instances[2] = {0};
-/*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct I2cBase *object)
 {
@@ -148,6 +142,7 @@ static void i2cDeinit(void *object)
 
   /* Main peripheral bus clock is left enabled */
   sysClockDisable(i2cBlockEntries[interface->channel].clock);
-  resetInstance(interface->channel);
+
+  instances[interface->channel] = 0;
 }
 #endif

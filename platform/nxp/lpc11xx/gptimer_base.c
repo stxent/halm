@@ -19,7 +19,6 @@ struct TimerBlockDescriptor
   uint8_t resolution;
 };
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct GpTimerBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
@@ -141,11 +140,6 @@ const struct PinEntry gpTimerMatchPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct GpTimerBase *instances[4] = {0};
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -214,6 +208,6 @@ static void tmrDeinit(void *object)
   const struct GpTimerBase * const timer = object;
 
   sysClockDisable(timerBlockEntries[timer->channel].clock);
-  resetInstance(timer->channel);
+  instances[timer->channel] = 0;
 }
 #endif

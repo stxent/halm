@@ -10,7 +10,6 @@
 #include <halm/platform/stm/stm32f1xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
@@ -89,11 +88,6 @@ static void configPins(struct UsbBase *device,
     pinOutput(device->connect, true);
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UsbBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -158,6 +152,6 @@ static void devDeinit(void *object)
   struct UsbBase * const device = object;
 
   sysClockDisable(CLK_USB);
-  resetInstance(device->channel);
+  instances[device->channel] = 0;
 }
 #endif

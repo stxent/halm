@@ -17,7 +17,6 @@
 #define USB1_ENDPOINT_NUMBER  8
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
@@ -137,11 +136,6 @@ static void configPins(struct UsbBase *device,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UsbBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -250,6 +244,6 @@ static void devDeinit(void *object)
     sysClockDisable(CLK_M4_USB1);
   }
 
-  resetInstance(device->channel);
+  instances[device->channel] = 0;
 }
 #endif

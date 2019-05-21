@@ -22,7 +22,6 @@ struct CanBlockDescriptor
 };
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBase *, const struct CanBaseConfig *);
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct CanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
@@ -121,11 +120,6 @@ static void configPins(const struct CanBase *interface,
   pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct CanBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -190,6 +184,6 @@ static void canDeinit(void *object)
       &canBlockEntries[interface->channel];
 
   sysClockDisable(entry->clock);
-  resetInstance(interface->channel);
+  instances[interface->channel] = 0;
 }
 #endif

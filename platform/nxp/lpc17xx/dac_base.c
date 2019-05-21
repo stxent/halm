@@ -13,7 +13,6 @@
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(PinNumber);
-static void resetInstance(void);
 static bool setInstance(struct DacBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
@@ -53,11 +52,6 @@ static void configOutputPin(PinNumber key)
   pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(struct DacBase *object)
 {
   if (!instance)
@@ -94,6 +88,6 @@ static enum Result dacInit(void *object, const void *configBase)
 #ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
 static void dacDeinit(void *object __attribute__((unused)))
 {
-  resetInstance();
+  instance = 0;
 }
 #endif

@@ -21,7 +21,6 @@ struct UartBlockDescriptor
   IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *, const void *);
@@ -155,11 +154,6 @@ const struct PinEntry uartPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct UartBase *instances[5] = {0};
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -236,6 +230,6 @@ static void uartDeinit(void *object)
   const struct UartBase * const interface = object;
 
   sysClockDisable(uartBlockEntries[interface->channel].clock);
-  resetInstance(interface->channel);
+  instances[interface->channel] = 0;
 }
 #endif

@@ -13,10 +13,6 @@ static void disableInterrupt(const struct PinInterrupt *);
 static void enableInterrupt(const struct PinInterrupt *);
 static void processInterrupt(uint8_t);
 static int setInstance(struct PinInterrupt *);
-
-#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void resetInstance(uint8_t);
-#endif
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptInit(void *, const void *);
 static void pinInterruptEnable(void *);
@@ -70,13 +66,6 @@ static void processInterrupt(uint8_t channel)
   if (interrupt->callback)
     interrupt->callback(interrupt->callbackArgument);
 }
-/*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-#endif
 /*----------------------------------------------------------------------------*/
 static int setInstance(struct PinInterrupt *interrupt)
 {
@@ -192,7 +181,7 @@ static void pinInterruptDeinit(void *object)
   LPC_GPIO_INT->CIENR = mask;
   LPC_GPIO_INT->CIENF = mask;
 
-  resetInstance(interrupt->channel);
+  instances[interrupt->channel] = 0;
 }
 #endif
 /*----------------------------------------------------------------------------*/

@@ -12,7 +12,6 @@
 #include <halm/platform/nxp/lpc13xx/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
-static void resetInstance(void);
 static bool setInstance(struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
@@ -76,11 +75,6 @@ static void configPins(struct UsbBase *device,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(struct UsbBase *object)
 {
   if (!instance)
@@ -129,6 +123,6 @@ static void devDeinit(void *object __attribute__((unused)))
 {
   sysClockDisable(CLK_USBREG);
   sysPowerDisable(PWR_USBPAD);
-  resetInstance();
+  instance = 0;
 }
 #endif

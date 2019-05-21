@@ -13,7 +13,6 @@
 #define SDDELAY_DRV(value)    BIT_FIELD((value), 8)
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SdmmcBase *, const struct SdmmcBaseConfig *);
-static void resetInstance(void);
 static bool setInstance(struct SdmmcBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *, const void *);
@@ -198,11 +197,6 @@ static void configPins(struct SdmmcBase *interface,
   interface->wide = wide;
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(void)
-{
-  instance = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(struct SdmmcBase *object)
 {
   if (!instance)
@@ -255,5 +249,5 @@ static void sdioDeinit(void *object __attribute__((unused)))
   sysClockDisable(CLK_SDIO);
   sysClockDisable(CLK_M4_SDIO);
 
-  resetInstance();
+  instance = 0;
 }

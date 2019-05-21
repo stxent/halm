@@ -11,7 +11,6 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *, const void *);
@@ -87,11 +86,6 @@ const struct PinEntry sspPins[] = {
 };
 /*----------------------------------------------------------------------------*/
 static struct SspBase *instances[2] = {0};
-/*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct SspBase *object)
 {
@@ -170,6 +164,7 @@ static void sspDeinit(void *object)
       sysPowerDisable(PWR_SSP1);
       break;
   }
-  resetInstance(interface->channel);
+
+  instances[interface->channel] = 0;
 }
 #endif

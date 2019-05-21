@@ -21,7 +21,6 @@
 #define CHANNEL_TX_MCLK(channel)        ((channel) * CHANNEL_COUNT + 7)
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
-static void resetInstance(uint8_t);
 static bool setInstance(uint8_t, struct I2sBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
@@ -238,11 +237,6 @@ static void configPins(struct I2sBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void resetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct I2sBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -316,6 +310,7 @@ static void i2sDeinit(void *object)
 
   if (!instances[interface->channel ^ 1])
     sysClockDisable(CLK_APB1_I2S);
-  resetInstance(interface->channel);
+
+  instances[interface->channel] = 0;
 }
 #endif
