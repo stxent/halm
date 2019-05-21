@@ -21,8 +21,13 @@ config GENERIC_SOFTWARE_TIMER
 	bool "Software Timer Factory"
 	default y
 
-config GENERIC_WORK_QUEUE
+config GENERIC_WQ
 	bool "Work Queue"
 	default y
+
+config GENERIC_WQ_PM
+	bool "Use power management"
+	default y
+	depends on GENERIC_WQ
 
 endmenu

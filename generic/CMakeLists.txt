@@ -17,7 +17,7 @@ if(${CONFIG_GENERIC_SOFTWARE_TIMER})
     list(APPEND SOURCE_FILES "software_timer.c")
 endif()
 
-if(${CONFIG_GENERIC_WORK_QUEUE})
+if(${CONFIG_GENERIC_WQ})
     list(APPEND SOURCE_FILES "work_queue.c")
 endif()
 

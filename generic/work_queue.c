@@ -27,9 +27,7 @@ struct SimpleWorkQueueConfig
 struct SimpleWorkQueue
 {
   struct Entity base;
-
   TaskQueue queue;
-  bool event;
 };
 /*----------------------------------------------------------------------------*/
 static enum Result wqInit(void *, const void *);
@@ -57,7 +55,6 @@ enum Result workQueueAdd(void (*callback)(void *), void *argument)
   if (!taskQueueFull(&instance->queue))
   {
     taskQueuePushBack(&instance->queue, (struct Task){callback, argument});
-    instance->event = true;
     res = E_OK;
   }
   else
@@ -85,18 +82,28 @@ void workQueueStart(void *argument __attribute__((unused)))
 
   while (1)
   {
-    while (!instance->event)
-    {
+    IrqState state;
+
+#ifdef CONFIG_GENERIC_WQ_PM
+    /*
+     * Disable interrupts to avoid entering sleep mode when interrupt is fired
+     * between size comparison and sleep instruction.
+     */
+    state = irqSave();
+    if (taskQueueEmpty(&instance->queue))
       pmChangeState(PM_SLEEP);
-      barrier();
-    }
-    instance->event = false;
+    irqRestore(state);
+
+    /* Reload queue size */
+    barrier();
+#endif
 
     while (!taskQueueEmpty(&instance->queue))
     {
-      /* Critical section */
-      const IrqState state = irqSave();
       const struct Task task = taskQueueFront(&instance->queue);
+
+      /* Critical section */
+      state = irqSave();
       taskQueuePopFront(&instance->queue);
       irqRestore(state);
 
@@ -111,12 +118,5 @@ static enum Result wqInit(void *object, const void *configBase)
   assert(config);
 
   struct SimpleWorkQueue * const wq = object;
-
-  if (taskQueueInit(&wq->queue, config->size))
-  {
-    wq->event = false;
-    return E_OK;
-  }
-  else
-    return E_MEMORY;
+  return taskQueueInit(&wq->queue, config->size) ? E_OK : E_MEMORY;
 }
