@@ -30,6 +30,7 @@ struct Dfu
   struct UsbDevice *device;
 
   void *callbackArgument;
+  void (*onDetachRequest)(void *, uint16_t);
   size_t (*onDownloadRequest)(void *, size_t, const void *, size_t, uint16_t *);
   size_t (*onUploadRequest)(void *, size_t, void *, size_t);
 
@@ -53,6 +54,7 @@ BEGIN_DECLS
 
 void dfuOnDownloadCompleted(struct Dfu *, bool);
 void dfuSetCallbackArgument(struct Dfu *, void *);
+void dfuSetDetachRequestCallback(struct Dfu *, void (*)(void *, uint16_t));
 void dfuSetDownloadRequestCallback(struct Dfu *,
     size_t (*)(void *, size_t, const void *, size_t, uint16_t *));
 void dfuSetUploadRequestCallback(struct Dfu *,

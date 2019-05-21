@@ -122,6 +122,8 @@ static void functionalDescriptor(const void *object,
     struct DfuFunctionalDescriptor * const descriptor = payload;
 
     descriptor->attributes = DFU_MANIFESTATION_TOLERANT;
+    if (driver->onDetachRequest)
+      descriptor->attributes |= DFU_WILL_DETACH;
     if (driver->onDownloadRequest)
       descriptor->attributes |= DFU_CAN_DNLOAD;
     if (driver->onUploadRequest)
@@ -170,8 +172,7 @@ static enum Result processDownloadRequest(struct Dfu *driver,
   {
     driver->position = 0;
   }
-  else if (driver->state == STATE_DFU_IDLE
-      || driver->state != STATE_DFU_DNLOAD_IDLE)
+  else if (driver->state != STATE_DFU_DNLOAD_IDLE)
   {
     setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
     usbTrace("dfu at %u: incorrect sequence", driver->interfaceIndex);
@@ -307,6 +308,7 @@ static enum Result driverInit(void *object, const void *configBase)
   driver->device = config->device;
   driver->timer = config->timer;
   driver->callbackArgument = 0;
+  driver->onDetachRequest = 0;
   driver->onDownloadRequest = 0;
   driver->onUploadRequest = 0;
   driver->transferSize = config->transferSize;
@@ -418,14 +420,23 @@ static enum Result driverControl(void *object,
     {
       usbTrace("dfu at %u: detach request", driver->interfaceIndex);
 
-      setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-      res = E_INVALID;
+      if (driver->onDetachRequest)
+      {
+        driver->onDetachRequest(driver->callbackArgument, packet->value);
+        driver->state = STATE_APP_IDLE;
+        res = E_OK;
+      }
+      else
+      {
+        setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+        res = E_INVALID;
+      }
       break;
     }
 
     case DFU_REQUEST_GETSTATE:
     {
-      ((uint8_t *)buffer)[0] = driver->state;
+      *(uint8_t *)buffer = driver->state;
       *responseLength = 1;
       res = E_OK;
       break;
@@ -475,6 +486,12 @@ void dfuOnDownloadCompleted(struct Dfu *driver, bool status)
       usbTrace("dfu at %u: unexpected call", driver->interfaceIndex);
       break;
   }
+}
+/*----------------------------------------------------------------------------*/
+void dfuSetDetachRequestCallback(struct Dfu *driver,
+    void (*callback)(void *, uint16_t))
+{
+  driver->onDetachRequest = callback;
 }
 /*----------------------------------------------------------------------------*/
 void dfuSetDownloadRequestCallback(struct Dfu *driver,
