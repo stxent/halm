@@ -109,6 +109,10 @@ static enum Result tmrInit(void *object, const void *configBase)
   timer->frequency = config->frequency;
   gpTimerSetFrequency(&timer->base, timer->frequency);
 
+  /* Set all match registers to zero for DMA event generation */
+  for (size_t i = 0; i < ARRAY_SIZE(reg->MR); ++i)
+    reg->MR[i] = 0;
+
   /* Configure prescaler and default match value */
   reg->MR[timer->event] = getMaxValue(timer);
   /* Reset the timer after reaching the match register value */

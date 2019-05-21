@@ -546,15 +546,14 @@ static size_t canRead(void *object, void *buffer, size_t length)
 
   while (!pointerQueueEmpty(&interface->rxQueue) && current < last)
   {
-    irqDisable(interface->base.irq);
-
     struct CanMessage * const input = pointerQueueFront(&interface->rxQueue);
-    pointerQueuePopFront(&interface->rxQueue);
-
     memcpy(current, input, sizeof(*current));
-    pointerArrayPushBack(&interface->pool, input);
 
+    irqDisable(interface->base.irq);
+    pointerQueuePopFront(&interface->rxQueue);
+    pointerArrayPushBack(&interface->pool, input);
     irqEnable(interface->base.irq);
+
     ++current;
   }
 

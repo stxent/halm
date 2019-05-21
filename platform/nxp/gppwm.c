@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <halm/irq.h>
 #include <halm/platform/nxp/gppwm.h>
 #include <halm/platform/nxp/gppwm_defs.h>
 #include <halm/pm.h>

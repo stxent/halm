@@ -17,5 +17,6 @@
 #define PCR_OUTPUT_ENABLED(channel)     BIT((channel) + 8)
 /*------------------PWM Latch Enable Register---------------------------------*/
 #define LER_ENABLE(channel)             BIT(channel)
+#define LER_MASK                        MASK(7)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_GPPWM_DEFS_H_ */
