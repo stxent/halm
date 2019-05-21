@@ -6,6 +6,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <halm/generic/flash.h>
 #include <halm/platform/nxp/flash.h>
 #include <halm/platform/nxp/iap.h>
 #include <halm/platform/nxp/lpc13xx/flash_defs.h>
