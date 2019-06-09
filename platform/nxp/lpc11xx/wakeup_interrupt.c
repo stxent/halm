@@ -20,7 +20,7 @@ static enum Result startLogicHandlerAttach(struct PinData,
 static enum Result startLogicHandlerInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
-static void startLogicHandlerDetach(const struct WakeupInterrupt *);
+static void startLogicHandlerDetach(struct WakeupInterrupt *);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result wakeupInterruptInit(void *, const void *);
@@ -110,13 +110,10 @@ static enum Result startLogicHandlerAttach(struct PinData pin,
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
-static void startLogicHandlerDetach(const struct WakeupInterrupt *interrupt)
+static void startLogicHandlerDetach(struct WakeupInterrupt *interrupt)
 {
-  PointerList * const list = &handler->list;
-  PointerListNode * const node = pointerListFind(list, interrupt);
-
-  if (node)
-    pointerListErase(list, node);
+  assert(pointerListFind(&handler->list, interrupt));
+  pointerListErase(&handler->list, interrupt);
 }
 #endif
 /*----------------------------------------------------------------------------*/

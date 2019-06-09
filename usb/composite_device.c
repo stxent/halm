@@ -424,15 +424,11 @@ static void devUnbind(void *object, const void *driver)
 
   assert(device->interfaceCount >= interfaces);
   assert(device->configurationLength >= length);
+  assert(pointerListFind(&device->entries, driver));
 
-  PointerListNode * const node = pointerListFind(&device->entries, driver);
-
-  if (node)
-  {
-    pointerListErase(&device->entries, node);
-    device->interfaceCount -= interfaces;
-    device->configurationLength -= length;
-  }
+  pointerListErase(&device->entries, (void *)driver);
+  device->interfaceCount -= interfaces;
+  device->configurationLength -= length;
 }
 /*----------------------------------------------------------------------------*/
 static void devSetPower(void *object, uint16_t current)

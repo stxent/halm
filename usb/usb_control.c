@@ -96,6 +96,7 @@ static void copySetupPacket(struct UsbSetupPacket *,
     const struct UsbRequest *);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
+static bool usbStringComparator(const void *a, void *b);
 /*----------------------------------------------------------------------------*/
 static enum Result controlInit(void *, const void *);
 static void controlDeinit(void *);
@@ -566,6 +567,16 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   }
 }
 /*----------------------------------------------------------------------------*/
+static bool usbStringComparator(const void *a, void *b)
+{
+  const struct UsbString * const aValue = a;
+  const struct UsbString * const bValue = b;
+
+  return aValue->functor == bValue->functor
+      && aValue->argument == bValue->argument
+      && aValue->type == bValue->type;
+}
+/*----------------------------------------------------------------------------*/
 enum Result usbControlBindDriver(struct UsbControl *control, void *driver)
 {
   assert(driver);
@@ -613,10 +624,7 @@ enum Result usbControlStringAppend(struct UsbControl *control,
 /*----------------------------------------------------------------------------*/
 void usbControlStringErase(struct UsbControl *control, struct UsbString string)
 {
-  StringListNode * const node = stringListFind(&control->strings, string);
-
-  if (node)
-    stringListErase(&control->strings, node);
+  stringListEraseIf(&control->strings, &string, usbStringComparator);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result controlInit(void *object, const void *configBase)

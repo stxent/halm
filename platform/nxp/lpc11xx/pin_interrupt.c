@@ -30,7 +30,7 @@ static enum Result pinInterruptHandlerAttach(struct PinData,
 static enum Result pinInterruptHandlerInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void pinInterruptHandlerDetach(const struct PinInterrupt *);
+static void pinInterruptHandlerDetach(struct PinInterrupt *);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result pinInterruptInit(void *, const void *);
@@ -167,13 +167,12 @@ static enum Result pinInterruptHandlerAttach(struct PinData pin,
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
+static void pinInterruptHandlerDetach(struct PinInterrupt *interrupt)
 {
   PointerList * const list = &handlers[interrupt->pin.port]->list;
-  PointerListNode * const node = pointerListFind(list, interrupt);
 
-  if (node)
-    pointerListErase(list, node);
+  assert(pointerListFind(list, interrupt));
+  pointerListErase(list, interrupt);
 }
 #endif
 /*----------------------------------------------------------------------------*/
