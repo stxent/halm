@@ -60,7 +60,7 @@ static void interruptHandler(void *object)
   LPC_TIMER_Type * const reg = timer->base.reg;
 
   /* Clear all pending interrupts */
-  reg->IR = reg->IR;
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
 
   timer->callback(timer->callbackArgument);
 }
@@ -102,7 +102,9 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   reg->TCR = TCR_CRES;
 
-  reg->IR = reg->IR; /* Clear pending interrupts */
+  /* Clear all pending interrupts */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+
   reg->CCR = 0;
   reg->CTCR = 0;
 
@@ -156,10 +158,10 @@ static void tmrEnable(void *object)
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
 
-  /* Clear pending interrupt flags and direct memory access requests */
-  reg->IR = IR_MATCH_INTERRUPT(timer->event);
-  /* Clear match value to avoid undefined output level */
-  reg->EMR &= ~EMR_EXTERNAL_MATCH(timer->event);
+  /* Clear pending interrupt flags and DMA requests */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+  /* Clear external match events to avoid undefined output levels */
+  reg->EMR &= ~EMR_EXTERNAL_MATCH_MASK;
   /* Start the timer */
   reg->TCR = TCR_CEN;
 }
@@ -169,7 +171,10 @@ static void tmrDisable(void *object)
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
 
+  /* Stop the timer */
   reg->TCR = 0;
+  /* Clear pending interrupt flags and DMA requests */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
@@ -183,7 +188,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 
   if (callback)
   {
-    reg->IR = reg->IR;
+    reg->IR = IR_MATCH_MASK;
     reg->MCR |= MCR_INTERRUPT(timer->event);
   }
   else
