@@ -10,7 +10,7 @@
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_string.h>
 /*----------------------------------------------------------------------------*/
-struct UsbString usbStringBuild(usbStringFunctor functor, void *argument,
+struct UsbString usbStringBuild(UsbStringFunctor functor, const void *argument,
     enum UsbStringType type)
 {
   return (struct UsbString){

@@ -13,7 +13,8 @@
 /*----------------------------------------------------------------------------*/
 struct UsbDescriptor;
 
-typedef void (*usbStringFunctor)(void *, enum UsbLangId,
+typedef int UsbStringNumber;
+typedef void (*UsbStringFunctor)(const void *, enum UsbLangId,
     struct UsbDescriptor *, void *);
 
 enum UsbStringType
@@ -27,14 +28,15 @@ enum UsbStringType
 
 struct UsbString
 {
-  usbStringFunctor functor;
-  void *argument;
+  UsbStringFunctor functor;
+  const void *argument;
   uint8_t type;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-struct UsbString usbStringBuild(usbStringFunctor, void *, enum UsbStringType);
+struct UsbString usbStringBuild(UsbStringFunctor, const void *,
+    enum UsbStringType);
 void usbStringHeader(struct UsbDescriptor *, void *, enum UsbLangId);
 void usbStringMultiHeader(struct UsbDescriptor *, void *,
     const enum UsbLangId *, size_t);

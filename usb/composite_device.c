@@ -64,7 +64,7 @@ static enum Result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
 static enum UsbSpeed devGetSpeed(const void *);
-static enum Result devStringAppend(void *, struct UsbString);
+static UsbStringNumber devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const CompositeDevice =
@@ -404,7 +404,7 @@ static enum Result devBind(void *object, void *driver)
   assert(device->interfaceCount + interfaces <= UCHAR_MAX);
   assert(device->configurationLength + length <= USHRT_MAX);
 
-  if (pointerListPushFront(&device->entries, driver))
+  if (pointerListPushBack(&device->entries, driver))
   {
     device->interfaceCount += interfaces;
     device->configurationLength += length;
@@ -441,7 +441,7 @@ static enum UsbSpeed devGetSpeed(const void *object)
   return usbDevGetSpeed(((const struct CompositeDevice *)object)->parent);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result devStringAppend(void *object, struct UsbString string)
+static UsbStringNumber devStringAppend(void *object, struct UsbString string)
 {
   return usbDevStringAppend(((struct CompositeDevice *)object)->parent, string);
 }

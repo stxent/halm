@@ -606,20 +606,19 @@ void usbControlSetPower(struct UsbControl *control, uint16_t current)
   control->current = current;
 }
 /*----------------------------------------------------------------------------*/
-enum Result usbControlStringAppend(struct UsbControl *control,
+UsbStringNumber usbControlStringAppend(struct UsbControl *control,
     struct UsbString string)
 {
-  if (!stringListFind(&control->strings, string))
-  {
-    if (string.type == USB_STRING_HEADER)
-      assert(stringListEmpty(&control->strings));
-    else
-      assert(!stringListEmpty(&control->strings));
+  assert(!stringListFind(&control->strings, string));
 
-    return stringListPushFront(&control->strings, string);
-  }
-  else
-    return E_EXIST;
+  const size_t count = stringListSize(&control->strings);
+
+  /* String header must be added first and it must be unique */
+  assert((count == 0) == (string.type == USB_STRING_HEADER));
+
+  /* Append a new string to the list */
+  return stringListPushBack(&control->strings, string) ?
+      (UsbStringNumber)count : -1;
 }
 /*----------------------------------------------------------------------------*/
 void usbControlStringErase(struct UsbControl *control, struct UsbString string)

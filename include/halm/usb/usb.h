@@ -76,7 +76,7 @@ struct UsbDeviceClass
   void (*setPower)(void *, uint16_t);
   enum UsbSpeed (*getSpeed)(const void *);
 
-  enum Result (*stringAppend)(void *, struct UsbString);
+  UsbStringNumber (*stringAppend)(void *, struct UsbString);
   void (*stringErase)(void *, struct UsbString);
 };
 /*----------------------------------------------------------------------------*/
@@ -97,7 +97,7 @@ static inline void *usbDevCreateEndpoint(void *device, uint8_t address)
 /**
  * Get an index of a free interface.
  * @param device Pointer to an UsbDevice object.
- * @return @b Number of a free interface.
+ * @return Identifier of a free interface.
  */
 static inline uint8_t usbDevGetInterface(const void *device)
 {
@@ -170,9 +170,9 @@ static inline enum UsbSpeed usbDevGetSpeed(const void *device)
  * Append string descriptor.
  * @param device Pointer to an UsbDevice object.
  * @param string String descriptor.
- * @return @b E_OK on success.
+ * @return String identifier on success or negative number in case of failure.
  */
-static inline enum Result usbDevStringAppend(void *device,
+static inline UsbStringNumber usbDevStringAppend(void *device,
     struct UsbString string)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->stringAppend(device,
