@@ -53,6 +53,8 @@ static inline void irqEnable(IrqNumber irq)
 static inline void irqDisable(IrqNumber irq)
 {
   NVIC->ICER = 1UL << (irq & 0x1F);
+  __dsb();
+  __isb();
 }
 
 static inline void irqClearPending(IrqNumber irq)
