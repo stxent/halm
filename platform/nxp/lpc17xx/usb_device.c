@@ -169,8 +169,7 @@ static void dmaEpUpdateChain(struct UsbDmaEndpoint *);
 static struct DmaDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *,
     struct UsbRequest *);
 static void epAppendDescriptor(struct UsbDmaEndpoint *, struct DmaDescriptor *);
-static void epEnqueueRx(struct UsbDmaEndpoint *, struct UsbRequest *);
-static void epEnqueueTx(struct UsbDmaEndpoint *, struct UsbRequest *);
+static void epEnqueueRequest(struct UsbDmaEndpoint *, struct UsbRequest *);
 /*----------------------------------------------------------------------------*/
 static enum Result dmaEpInit(void *, const void *);
 static void dmaEpDeinit(void *);
@@ -1055,13 +1054,8 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
   irqEnable(ep->device->base.irq);
 }
 /*----------------------------------------------------------------------------*/
-static void epEnqueueRx(struct UsbDmaEndpoint *ep, struct UsbRequest *request)
-{
-  struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request);
-  epAppendDescriptor(ep, descriptor);
-}
-/*----------------------------------------------------------------------------*/
-static void epEnqueueTx(struct UsbDmaEndpoint *ep, struct UsbRequest *request)
+static void epEnqueueRequest(struct UsbDmaEndpoint *ep,
+    struct UsbRequest *request)
 {
   struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request);
   epAppendDescriptor(ep, descriptor);
@@ -1167,13 +1161,7 @@ static enum Result dmaEpEnqueue(void *object, struct UsbRequest *request)
 {
   assert(request->callback);
 
-  struct UsbDmaEndpoint * const ep = object;
-
-  if (ep->address & USB_EP_DIRECTION_IN)
-    epEnqueueTx(ep, request);
-  else
-    epEnqueueRx(ep, request);
-
+  epEnqueueRequest(object, request);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
