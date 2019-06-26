@@ -11,9 +11,9 @@
 #include <halm/platform/nxp/iap.h>
 #include <halm/platform/nxp/lpc43xx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
-static bool isPagePositionValid(const struct Flash *, size_t);
-static bool isSectorPositionValid(const struct Flash *, size_t);
-static uint32_t positionToAddress(const struct Flash *, size_t);
+static bool isPagePositionValid(const struct Flash *, uintptr_t);
+static bool isSectorPositionValid(const struct Flash *, uintptr_t);
+static uint32_t positionToAddress(const struct Flash *, uintptr_t);
 static size_t totalFlashSize(size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *, const void *);
@@ -35,7 +35,8 @@ const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .write = flashWrite
 };
 /*----------------------------------------------------------------------------*/
-static bool isPagePositionValid(const struct Flash *interface, size_t position)
+static bool isPagePositionValid(const struct Flash *interface,
+    uintptr_t position)
 {
   if (position >= totalFlashSize(interface->size))
     return false;
@@ -46,13 +47,13 @@ static bool isPagePositionValid(const struct Flash *interface, size_t position)
 }
 /*----------------------------------------------------------------------------*/
 static bool isSectorPositionValid(const struct Flash *interface,
-    size_t position)
+    uintptr_t position)
 {
   if (position >= totalFlashSize(interface->size))
     return false;
 
-  const uint32_t address = positionToAddress(interface, position)
-      & FLASH_BANK_MASK;
+  const uint32_t address =
+      positionToAddress(interface, position) & FLASH_BANK_MASK;
   const uint32_t mask = address < FLASH_SECTORS_BORDER ?
       (FLASH_SECTOR_SIZE_0 - 1) : (FLASH_SECTOR_SIZE_1 - 1);
 
@@ -60,7 +61,7 @@ static bool isSectorPositionValid(const struct Flash *interface,
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t positionToAddress(const struct Flash *interface,
-    size_t position)
+    uintptr_t position)
 {
   if (position < FLASH_SIZE_DECODE_A(interface->size))
     return FLASH_BANK_A + position;
@@ -126,7 +127,7 @@ static enum Result flashGetParam(void *object, enum IfParameter parameter,
   switch ((enum FlashParameter)parameter)
   {
     case IF_FLASH_PAGE_SIZE:
-      *(size_t *)data = FLASH_PAGE_SIZE;
+      *(uint32_t *)data = FLASH_PAGE_SIZE;
       return E_OK;
 
     default:
@@ -136,11 +137,11 @@ static enum Result flashGetParam(void *object, enum IfParameter parameter,
   switch (parameter)
   {
     case IF_POSITION:
-      *(size_t *)data = interface->position;
+      *(uint32_t *)data = interface->position;
       return E_OK;
 
     case IF_SIZE:
-      *(size_t *)data = totalFlashSize(interface->size);
+      *(uint32_t *)data = totalFlashSize(interface->size);
       return E_OK;
 
     default:
@@ -158,11 +159,11 @@ static enum Result flashSetParam(void *object, enum IfParameter parameter,
   {
     case IF_FLASH_ERASE_SECTOR:
     {
-      const size_t position = *(const size_t *)data;
+      const uintptr_t position = *(const uint32_t *)data;
 
       if (!isSectorPositionValid(interface, position))
         return E_ADDRESS;
-      if (flashBlankCheckSector(position) == E_OK)
+      if (flashBlankCheckSector(positionToAddress(interface, position)) == E_OK)
         return E_OK;
 
       flashInitWrite();
@@ -171,7 +172,7 @@ static enum Result flashSetParam(void *object, enum IfParameter parameter,
 
     case IF_FLASH_ERASE_PAGE:
     {
-      const size_t position = *(const size_t *)data;
+      const uintptr_t position = *(const uint32_t *)data;
 
       if (!isPagePositionValid(interface, position))
         return E_ADDRESS;
@@ -188,7 +189,7 @@ static enum Result flashSetParam(void *object, enum IfParameter parameter,
   {
     case IF_POSITION:
     {
-      const size_t position = *(const size_t *)data;
+      const uintptr_t position = *(const uint32_t *)data;
 
       if (position < totalFlashSize(interface->size))
       {
