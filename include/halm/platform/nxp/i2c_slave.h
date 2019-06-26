@@ -15,9 +15,9 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const I2cSlave;
+extern const struct InterfaceClass * const I2CSlave;
 
-struct I2cSlaveConfig
+struct I2CSlaveConfig
 {
   /** Mandatory: register map size. Map size is limited by 64 kB. */
   size_t size;
@@ -31,9 +31,9 @@ struct I2cSlaveConfig
   uint8_t channel;
 };
 
-struct I2cSlave
+struct I2CSlave
 {
-  struct I2cBase base;
+  struct I2CBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

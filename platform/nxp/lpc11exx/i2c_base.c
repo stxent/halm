@@ -10,7 +10,7 @@
 #include <halm/platform/nxp/lpc11exx/system.h>
 #include <halm/platform/nxp/lpc11exx/system_defs.h>
 /*----------------------------------------------------------------------------*/
-static bool setInstance(struct I2cBase *);
+static bool setInstance(struct I2CBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
 
@@ -20,7 +20,7 @@ static void i2cDeinit(void *);
 #define i2cDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const I2cBase = &(const struct EntityClass){
+const struct EntityClass * const I2CBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = i2cInit,
     .deinit = i2cDeinit
@@ -40,9 +40,9 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2cBase *instance = 0;
+static struct I2CBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static bool setInstance(struct I2cBase *object)
+static bool setInstance(struct I2CBase *object)
 {
   if (!instance)
   {
@@ -58,15 +58,15 @@ void I2C_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock(const struct I2cBase *interface __attribute__((unused)))
+uint32_t i2cGetClock(const struct I2CBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *object, const void *configBase)
 {
-  const struct I2cBaseConfig * const config = configBase;
-  struct I2cBase * const interface = object;
+  const struct I2CBaseConfig * const config = configBase;
+  struct I2CBase * const interface = object;
 
   assert(config->channel == 0);
 

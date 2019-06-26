@@ -52,8 +52,8 @@ static void i2cDeinit(void *);
 #define i2cDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const I2c = &(const struct InterfaceClass){
-    .size = sizeof(struct I2c),
+const struct InterfaceClass * const I2C = &(const struct InterfaceClass){
+    .size = sizeof(struct I2C),
     .init = i2cInit,
     .deinit = i2cDeinit,
 
@@ -66,7 +66,7 @@ const struct InterfaceClass * const I2c = &(const struct InterfaceClass){
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct I2c * const interface = object;
+  struct I2C * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
   bool clearInterrupt = true;
   bool event = false;
@@ -175,19 +175,19 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *object, const void *configBase)
 {
-  const struct I2cConfig * const config = configBase;
+  const struct I2CConfig * const config = configBase;
   assert(config);
 
-  const struct I2cBaseConfig baseConfig = {
+  const struct I2CBaseConfig baseConfig = {
       .channel = config->channel,
       .scl = config->scl,
       .sda = config->sda
   };
-  struct I2c * const interface = object;
+  struct I2C * const interface = object;
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = I2cBase->init(object, &baseConfig)) != E_OK)
+  if ((res = I2CBase->init(object, &baseConfig)) != E_OK)
     return res;
 
   interface->base.handler = interruptHandler;
@@ -216,18 +216,18 @@ static enum Result i2cInit(void *object, const void *configBase)
 #ifndef CONFIG_PLATFORM_NXP_I2C_NO_DEINIT
 static void i2cDeinit(void *object)
 {
-  struct I2c * const interface = object;
+  struct I2C * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
   reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
-  I2cBase->deinit(interface);
+  I2CBase->deinit(interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result i2cSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct I2c * const interface = object;
+  struct I2C * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -237,7 +237,7 @@ static enum Result i2cSetCallback(void *object, void (*callback)(void *),
 static enum Result i2cGetParam(void *object, enum IfParameter parameter,
     void *data)
 {
-  struct I2c * const interface = object;
+  struct I2C * const interface = object;
 
   switch (parameter)
   {
@@ -259,10 +259,10 @@ static enum Result i2cGetParam(void *object, enum IfParameter parameter,
 static enum Result i2cSetParam(void *object, enum IfParameter parameter,
     const void *data)
 {
-  struct I2c * const interface = object;
+  struct I2C * const interface = object;
 
   /* Additional I2C parameters */
-  switch ((enum I2cParameter)parameter)
+  switch ((enum I2CParameter)parameter)
   {
     case IF_I2C_SENDSTOP:
       interface->sendStopBit = *(const bool *)data;
@@ -302,7 +302,7 @@ static enum Result i2cSetParam(void *object, enum IfParameter parameter,
 /*----------------------------------------------------------------------------*/
 static size_t i2cRead(void *object, void *buffer, size_t length)
 {
-  struct I2c * const interface = object;
+  struct I2C * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
   if (!length)
@@ -338,7 +338,7 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t i2cWrite(void *object, const void *buffer, size_t length)
 {
-  struct I2c * const interface = object;
+  struct I2C * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
   if (!length)

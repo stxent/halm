@@ -6,8 +6,8 @@
 
 #include <halm/platform/nxp/i2s_base.h>
 /*----------------------------------------------------------------------------*/
-enum Result i2sCalcRate(struct I2sBase *interface, uint32_t clock,
-    struct I2sRateConfig *config)
+enum Result i2sCalcRate(struct I2SBase *interface, uint32_t clock,
+    struct I2SRateConfig *config)
 {
   const uint32_t periphClock = i2sGetClock(interface);
 

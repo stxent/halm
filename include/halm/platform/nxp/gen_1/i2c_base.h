@@ -11,9 +11,9 @@
 #include <halm/irq.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const I2cBase;
+extern const struct EntityClass * const I2CBase;
 
-struct I2cBaseConfig
+struct I2CBaseConfig
 {
   /** Mandatory: serial clock pin. */
   PinNumber scl;
@@ -23,7 +23,7 @@ struct I2cBaseConfig
   uint8_t channel;
 };
 
-struct I2cBase
+struct I2CBase
 {
   struct Interface base;
 
@@ -38,12 +38,12 @@ struct I2cBase
 BEGIN_DECLS
 
 /* Common functions */
-void i2cConfigPins(struct I2cBase *, const struct I2cBaseConfig *);
-uint32_t i2cGetRate(const struct I2cBase *);
-void i2cSetRate(struct I2cBase *, uint32_t);
+void i2cConfigPins(struct I2CBase *, const struct I2CBaseConfig *);
+uint32_t i2cGetRate(const struct I2CBase *);
+void i2cSetRate(struct I2CBase *, uint32_t);
 
 /* Platform-specific functions */
-uint32_t i2cGetClock(const struct I2cBase *);
+uint32_t i2cGetClock(const struct I2CBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

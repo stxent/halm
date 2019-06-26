@@ -10,14 +10,14 @@
 #include <halm/dma.h>
 #include <halm/platform/nxp/i2s_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const I2sDma;
+extern const struct InterfaceClass * const I2SDma;
 
-struct I2sDmaConfig
+struct I2SDmaConfig
 {
   /** Mandatory: sample rate for the receiver and the transmitter. */
   uint32_t rate;
   /** Mandatory: word width. */
-  enum I2sWidth width;
+  enum I2SWidth width;
 
   struct
   {
@@ -57,9 +57,9 @@ struct I2sDmaConfig
   bool slave;
 };
 
-struct I2sDma
+struct I2SDma
 {
-  struct I2sBase base;
+  struct I2SBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

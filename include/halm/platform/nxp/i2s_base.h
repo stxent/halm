@@ -11,22 +11,22 @@
 #include <halm/irq.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum I2sWidth
+enum I2SWidth
 {
   I2S_WIDTH_8,
   I2S_WIDTH_16,
   I2S_WIDTH_32
 };
 
-struct I2sRateConfig
+struct I2SRateConfig
 {
   uint8_t x;
   uint8_t y;
 };
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const I2sBase;
+extern const struct EntityClass * const I2SBase;
 
-struct I2sBaseConfig
+struct I2SBaseConfig
 {
   struct
   {
@@ -56,7 +56,7 @@ struct I2sBaseConfig
   uint8_t channel;
 };
 
-struct I2sBase
+struct I2SBase
 {
   struct Interface base;
 
@@ -71,10 +71,10 @@ struct I2sBase
 BEGIN_DECLS
 
 /* Common functions */
-enum Result i2sCalcRate(struct I2sBase *, uint32_t, struct I2sRateConfig *);
+enum Result i2sCalcRate(struct I2SBase *, uint32_t, struct I2SRateConfig *);
 
 /* Platform-specific functions */
-uint32_t i2sGetClock(const struct I2sBase *);
+uint32_t i2sGetClock(const struct I2SBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

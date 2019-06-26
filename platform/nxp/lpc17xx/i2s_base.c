@@ -12,8 +12,8 @@
 /* PCLK for I2S must not be higher than 74 MHz */
 #define DEFAULT_DIV CLK_DIV2
 /*----------------------------------------------------------------------------*/
-static void configPins(struct I2sBase *, const struct I2sBaseConfig *);
-static bool setInstance(struct I2sBase *);
+static void configPins(struct I2SBase *, const struct I2SBaseConfig *);
+static bool setInstance(struct I2SBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
 
@@ -23,7 +23,7 @@ static void i2sDeinit(void *);
 #define i2sDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const I2sBase = &(const struct EntityClass){
+const struct EntityClass * const I2SBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = i2sInit,
     .deinit = i2sDeinit
@@ -98,10 +98,10 @@ const struct PinEntry i2sPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2sBase *instance = 0;
+static struct I2SBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static void configPins(struct I2sBase *interface,
-    const struct I2sBaseConfig *config)
+static void configPins(struct I2SBase *interface,
+    const struct I2SBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->rx.sck, config->rx.ws, config->rx.sda, config->rx.mclk,
@@ -124,7 +124,7 @@ static void configPins(struct I2sBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool setInstance(struct I2sBase *object)
+static bool setInstance(struct I2SBase *object)
 {
   if (!instance)
   {
@@ -140,15 +140,15 @@ void I2S_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2sGetClock(const struct I2sBase *interface __attribute__((unused)))
+uint32_t i2sGetClock(const struct I2SBase *interface __attribute__((unused)))
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *object, const void *configBase)
 {
-  const struct I2sBaseConfig * const config = configBase;
-  struct I2sBase * const interface = object;
+  const struct I2SBaseConfig * const config = configBase;
+  struct I2SBase * const interface = object;
 
   assert(config->channel == 0);
 

@@ -15,7 +15,7 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-enum I2cParameter
+enum I2CParameter
 {
   /**
    * Send stop after write operation. Option controls the repeated start
@@ -24,9 +24,9 @@ enum I2cParameter
   IF_I2C_SENDSTOP = IF_PARAMETER_END
 };
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const I2c;
+extern const struct InterfaceClass * const I2C;
 
-struct I2cConfig
+struct I2CConfig
 {
   /** Mandatory: data rate. */
   uint32_t rate;
@@ -40,9 +40,9 @@ struct I2cConfig
   uint8_t channel;
 };
 
-struct I2c
+struct I2C
 {
-  struct I2cBase base;
+  struct I2CBase base;
 
   void (*callback)(void *);
   void *callbackArgument;

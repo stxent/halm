@@ -9,7 +9,7 @@
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
-struct I2cBlockDescriptor
+struct I2CBlockDescriptor
 {
   LPC_I2C_Type *reg;
   /* Clock to register interface and to peripheral */
@@ -18,7 +18,7 @@ struct I2cBlockDescriptor
   enum SysBlockReset reset;
 };
 /*----------------------------------------------------------------------------*/
-static bool setInstance(uint8_t, struct I2cBase *);
+static bool setInstance(uint8_t, struct I2CBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
 
@@ -28,13 +28,13 @@ static void i2cDeinit(void *);
 #define i2cDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const I2cBase = &(const struct EntityClass){
+const struct EntityClass * const I2CBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = i2cInit,
     .deinit = i2cDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const struct I2cBlockDescriptor i2cBlockEntries[] = {
+static const struct I2CBlockDescriptor i2cBlockEntries[] = {
     {
         .reg = LPC_I2C0,
         .clock = CLK_APB1_I2C0,
@@ -77,9 +77,9 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2cBase *instances[2] = {0};
+static struct I2CBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static bool setInstance(uint8_t channel, struct I2cBase *object)
+static bool setInstance(uint8_t channel, struct I2CBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
@@ -102,15 +102,15 @@ void I2C1_ISR(void)
   instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock(const struct I2cBase *interface)
+uint32_t i2cGetClock(const struct I2CBase *interface)
 {
   return clockFrequency(interface->channel == 0 ? Apb1Clock : Apb3Clock);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *object, const void *configBase)
 {
-  const struct I2cBaseConfig * const config = configBase;
-  struct I2cBase * const interface = object;
+  const struct I2CBaseConfig * const config = configBase;
+  struct I2CBase * const interface = object;
 
   interface->channel = config->channel;
   interface->handler = 0;
@@ -121,7 +121,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   /* Configure pins */
   i2cConfigPins(interface, configBase);
 
-  const struct I2cBlockDescriptor * const entry =
+  const struct I2CBlockDescriptor * const entry =
       &i2cBlockEntries[interface->channel];
 
   /* Enable clock to register interface and peripheral */
@@ -138,7 +138,7 @@ static enum Result i2cInit(void *object, const void *configBase)
 #ifndef CONFIG_PLATFORM_NXP_I2C_NO_DEINIT
 static void i2cDeinit(void *object)
 {
-  const struct I2cBase * const interface = object;
+  const struct I2CBase * const interface = object;
 
   /* Main peripheral bus clock is left enabled */
   sysClockDisable(i2cBlockEntries[interface->channel].clock);

@@ -10,7 +10,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry i2cPins[];
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetRate(const struct I2cBase *interface)
+uint32_t i2cGetRate(const struct I2CBase *interface)
 {
   LPC_I2C_Type * const reg = interface->reg;
   const uint32_t rate = reg->SCLL + reg->SCLH;
@@ -18,7 +18,7 @@ uint32_t i2cGetRate(const struct I2cBase *interface)
   return rate ? i2cGetClock(interface) / rate : 0;
 }
 /*----------------------------------------------------------------------------*/
-void i2cSetRate(struct I2cBase *interface, uint32_t rate)
+void i2cSetRate(struct I2CBase *interface, uint32_t rate)
 {
   assert(rate != 0);
 
@@ -32,8 +32,8 @@ void i2cSetRate(struct I2cBase *interface, uint32_t rate)
   reg->SCLL = reg->SCLH = divisor;
 }
 /*----------------------------------------------------------------------------*/
-void i2cConfigPins(struct I2cBase *interface,
-    const struct I2cBaseConfig *config)
+void i2cConfigPins(struct I2CBase *interface,
+    const struct I2CBaseConfig *config)
 {
   const struct PinEntry *pinEntry;
   struct Pin pin;
