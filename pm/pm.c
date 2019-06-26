@@ -24,7 +24,7 @@ struct PmHandler
   PmList objectList;
 };
 /*----------------------------------------------------------------------------*/
-static bool handlerEntryComparator(const void *, void *);
+static bool entryComparator(const void *, void *);
 static void notifyHandlerEntries(enum PmState);
 static enum Result pmHandlerInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
@@ -39,7 +39,7 @@ static const struct EntityClass * const PmHandler = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 static struct PmHandler *pmHandler = 0;
 /*----------------------------------------------------------------------------*/
-static bool handlerEntryComparator(const void *element, void *argument)
+static bool entryComparator(const void *element, void *argument)
 {
   const struct PmHandlerEntry * const entry = element;
   return entry->object == argument;
@@ -96,7 +96,7 @@ enum Result pmRegister(void (*callback)(void *, enum PmState), void *object)
 void pmUnregister(const void *object)
 {
   assert(pmHandler);
-  assert(pmListFind(&pmHandler->objectList, object));
+  assert(pmListFindIf(&pmHandler->objectList, (void *)object, entryComparator));
 
-  pmListEraseIf(&pmHandler->objectList, (void *)object, handlerEntryComparator);
+  pmListEraseIf(&pmHandler->objectList, (void *)object, entryComparator);
 }

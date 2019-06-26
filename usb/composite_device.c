@@ -424,7 +424,7 @@ static void devUnbind(void *object, const void *driver)
 
   assert(device->interfaceCount >= interfaces);
   assert(device->configurationLength >= length);
-  assert(pointerListFind(&device->entries, driver));
+  assert(pointerListFind(&device->entries, (void *)driver));
 
   pointerListErase(&device->entries, (void *)driver);
   device->interfaceCount -= interfaces;
