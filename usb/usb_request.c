@@ -14,23 +14,21 @@ static const UsbDescriptorFunctor *findEntry(const void *, uint8_t,
     unsigned int);
 /*----------------------------------------------------------------------------*/
 static const UsbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
-    unsigned int offset)
+    unsigned int index)
 {
-  const UsbDescriptorFunctor *descriptors = usbDriverDescribe(driver);
-  struct UsbDescriptor header;
+  const UsbDescriptorFunctor *descriptor = usbDriverDescribe(driver);
 
-  while (*descriptors)
+  if (descriptor)
   {
-    (*descriptors)(driver, &header, 0);
-
-    if (header.descriptorType == type)
+    while (*descriptor)
     {
-      if (offset)
-        --offset;
-      else
-        return descriptors;
+      struct UsbDescriptor header;
+
+      (*descriptor)(driver, &header, 0);
+      if (header.descriptorType == type && !index--)
+        return descriptor;
+      ++descriptor;
     }
-    ++descriptors;
   }
 
   return 0;

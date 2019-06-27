@@ -271,7 +271,7 @@ static enum Result lookupDescriptor(struct CompositeDeviceProxy *driver,
     current = pointerListNext(current);
   }
 
-  return E_VALUE;
+  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *object, const void *configBase)
