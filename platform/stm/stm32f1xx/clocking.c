@@ -120,7 +120,13 @@ static uint32_t adcPrescalerToValue(uint32_t adcpre)
 /*----------------------------------------------------------------------------*/
 static uint32_t ahbPrescalerToValue(uint32_t hpre)
 {
-  return hpre < 8 ? 1 : (2 << (hpre & 0x07));
+  if (hpre >= 8)
+  {
+    hpre &= 0x07;
+    return hpre < 4 ? (2 << hpre) : (4 << hpre);
+  }
+  else
+    return 1;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t apbPrescalerToValue(uint32_t ppre)

@@ -8,6 +8,18 @@
 #define HALM_PLATFORM_STM_GPTIMER_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
+/*------------------Channel packing-------------------------------------------*/
+#define CHANNEL_COUNT                   8
+#define CHANNEL_CH1(channel)            ((channel) * CHANNEL_COUNT + 0)
+#define CHANNEL_CH1N(channel)           ((channel) * CHANNEL_COUNT + 1)
+#define CHANNEL_CH2(channel)            ((channel) * CHANNEL_COUNT + 2)
+#define CHANNEL_CH2N(channel)           ((channel) * CHANNEL_COUNT + 3)
+#define CHANNEL_CH3(channel)            ((channel) * CHANNEL_COUNT + 4)
+#define CHANNEL_CH3N(channel)           ((channel) * CHANNEL_COUNT + 5)
+#define CHANNEL_CH4(channel)            ((channel) * CHANNEL_COUNT + 6)
+#define CHANNEL_CH4N(channel)           ((channel) * CHANNEL_COUNT + 7)
+#define PACK_CHANNEL(channel, index)    ((channel) * CHANNEL_COUNT + (index))
+#define UNPACK_CHANNEL(value)           ((value) & (CHANNEL_COUNT - 1))
 /*------------------Timer channel identifiers---------------------------------*/
 enum TimerChannel
 {

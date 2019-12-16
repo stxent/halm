@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_STM_GPTIMER_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/irq.h>
+#include <halm/pin.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerBase;
@@ -34,6 +35,12 @@ struct GpTimerBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+/* Common functions */
+int gpTimerAllocateChannel(uint8_t);
+uint8_t gpTimerConfigCapturePin(uint8_t, PinNumber, enum PinPull);
+uint8_t gpTimerConfigComparePin(uint8_t, PinNumber);
+
+/* Platform-specific functions */
 uint32_t gpTimerGetClock(const struct GpTimerBase *);
 
 END_DECLS

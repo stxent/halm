@@ -181,7 +181,7 @@ static void tmrDisable(void *object)
   STM_TIM_Type * const reg = timer->base.reg;
 
   reg->CR1 &= ~CR1_CEN;
-  reg->DIER &= ~DIER_CCDE_MASK;
+  reg->DIER &= ~(DIER_CCIE_MASK | DIER_CCDE_MASK);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
@@ -197,12 +197,12 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   {
     /* Clear pending interrupt flags */
     reg->SR = 0;
-    /* Enable generation of interrupt request */
-    reg->DIER |= DIER_CCIE(0);
+    /* Enable generation of an interrupt request */
+    reg->DIER |= DIER_CCIE(timer->event);
   }
   else
   {
-    /* Disable interrupt request generation only */
+    /* Disable interrupt request generation */
     reg->DIER &= ~DIER_CCIE_MASK;
   }
 }

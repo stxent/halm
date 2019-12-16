@@ -6,7 +6,9 @@
 
 #include <assert.h>
 #include <halm/platform/stm/gptimer_base.h>
+#include <halm/platform/stm/gptimer_defs.h>
 #include <halm/platform/stm/stm32f1xx/clocking.h>
+#include <halm/platform/stm/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
 /*----------------------------------------------------------------------------*/
 struct TimerBlockDescriptor
@@ -112,6 +114,170 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
 /*----------------------------------------------------------------------------*/
 const struct PinEntry gpTimerCaptureComparePins[] = {
     {
+        .key = PIN(PORT_A, 1), /* TIM2_CH2 */
+        .channel = CHANNEL_CH2(1),
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 2), /* TIM2_CH3 */
+        .channel = CHANNEL_CH3(1),
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 3), /* TIM2_CH4 */
+        .channel = CHANNEL_CH4(1),
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 6), /* TIM3_CH1 */
+        .channel = CHANNEL_CH1(2),
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 7), /* TIM3_CH2 */
+        .channel = CHANNEL_CH2(2),
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 7), /* TIM1_CH1N */
+        .channel = CHANNEL_CH1N(0),
+        .value = PACK_REMAP(REMAP_TIM1_PARTIAL, 1)
+    }, {
+        .key = PIN(PORT_A, 8), /* TIM1_CH1 */
+        .channel = CHANNEL_CH1(0),
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 9), /* TIM1_CH2 */
+        .channel = CHANNEL_CH2(0),
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 10), /* TIM1_CH3 */
+        .channel = CHANNEL_CH3(0),
+        .value = 0
+    }, {
+        .key = PIN(PORT_A, 11), /* TIM1_CH4 */
+        .channel = CHANNEL_CH4(0),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 0), /* TIM3_CH3 */
+        .channel = CHANNEL_CH3(2),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 0), /* TIM1_CH2N */
+        .channel = CHANNEL_CH2N(0),
+        .value = PACK_REMAP(REMAP_TIM1_PARTIAL, 1)
+    }, {
+        .key = PIN(PORT_B, 1), /* TIM3_CH4 */
+        .channel = CHANNEL_CH4(2),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 1), /* TIM1_CH3N */
+        .channel = CHANNEL_CH3N(0),
+        .value = PACK_REMAP(REMAP_TIM1_PARTIAL, 1)
+    }, {
+        .key = PIN(PORT_B, 3), /* TIM2_CH2 */
+        .channel = CHANNEL_CH2(1),
+        .value = PACK_REMAP(REMAP_TIM2_LOWER, 1)
+    }, {
+        .key = PIN(PORT_B, 4), /* TIM3_CH1 */
+        .channel = CHANNEL_CH1(2),
+        .value = PACK_REMAP(REMAP_TIM3_PARTIAL, 2)
+    }, {
+        .key = PIN(PORT_B, 5), /* TIM3_CH2 */
+        .channel = CHANNEL_CH2(2),
+        .value = PACK_REMAP(REMAP_TIM3_PARTIAL, 2)
+    }, {
+        .key = PIN(PORT_B, 6), /* TIM4_CH1 */
+        .channel = CHANNEL_CH1(3),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 7), /* TIM4_CH2 */
+        .channel = CHANNEL_CH2(3),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 8), /* TIM4_CH3 */
+        .channel = CHANNEL_CH3(3),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 9), /* TIM4_CH4 */
+        .channel = CHANNEL_CH4(3),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 10), /* TIM2_CH3 */
+        .channel = CHANNEL_CH3(1),
+        .value = PACK_REMAP(REMAP_TIM2_UPPER, 2)
+    }, {
+        .key = PIN(PORT_B, 11), /* TIM2_CH4 */
+        .channel = CHANNEL_CH4(1),
+        .value = PACK_REMAP(REMAP_TIM2_UPPER, 2)
+    }, {
+        .key = PIN(PORT_B, 13), /* TIM1_CH1N */
+        .channel = CHANNEL_CH1N(0),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 14), /* TIM1_CH2N */
+        .channel = CHANNEL_CH2N(0),
+        .value = 0
+    }, {
+        .key = PIN(PORT_B, 15), /* TIM1_CH3N */
+        .channel = CHANNEL_CH3N(0),
+        .value = 0
+    }, {
+        .key = PIN(PORT_C, 6), /* TIM3_CH1 */
+        .channel = CHANNEL_CH1(2),
+        .value = PACK_REMAP(REMAP_TIM3, 3)
+    }, {
+        .key = PIN(PORT_C, 7), /* TIM3_CH2 */
+        .channel = CHANNEL_CH2(2),
+        .value = PACK_REMAP(REMAP_TIM3, 3)
+    }, {
+        .key = PIN(PORT_C, 8), /* TIM3_CH3 */
+        .channel = CHANNEL_CH3(2),
+        .value = PACK_REMAP(REMAP_TIM3, 3)
+    }, {
+        .key = PIN(PORT_C, 9), /* TIM3_CH4 */
+        .channel = CHANNEL_CH4(2),
+        .value = PACK_REMAP(REMAP_TIM3, 3)
+    }, {
+        .key = PIN(PORT_D, 12), /* TIM4_CH1 */
+        .channel = CHANNEL_CH1(3),
+        .value = PACK_REMAP(REMAP_TIM4, 1)
+    }, {
+        .key = PIN(PORT_D, 13), /* TIM4_CH2 */
+        .channel = CHANNEL_CH2(3),
+        .value = PACK_REMAP(REMAP_TIM4, 1)
+    }, {
+        .key = PIN(PORT_D, 14), /* TIM4_CH3 */
+        .channel = CHANNEL_CH3(3),
+        .value = PACK_REMAP(REMAP_TIM4, 1)
+    }, {
+        .key = PIN(PORT_D, 15), /* TIM4_CH4 */
+        .channel = CHANNEL_CH4(3),
+        .value = PACK_REMAP(REMAP_TIM4, 1)
+    }, {
+        .key = PIN(PORT_E, 8), /* TIM1_CH1N */
+        .channel = CHANNEL_CH1N(0),
+        .value = PACK_REMAP(REMAP_TIM1, 3)
+    }, {
+        .key = PIN(PORT_E, 9), /* TIM1_CH1 */
+        .channel = CHANNEL_CH1(0),
+        .value = PACK_REMAP(REMAP_TIM1, 3)
+    }, {
+        .key = PIN(PORT_E, 10), /* TIM1_CH2N */
+        .channel = CHANNEL_CH2N(0),
+        .value = PACK_REMAP(REMAP_TIM1, 3)
+    }, {
+        .key = PIN(PORT_E, 11), /* TIM1_CH2 */
+        .channel = CHANNEL_CH2(0),
+        .value = PACK_REMAP(REMAP_TIM1, 3)
+    }, {
+        .key = PIN(PORT_E, 12), /* TIM1_CH3N */
+        .channel = CHANNEL_CH3N(0),
+        .value = PACK_REMAP(REMAP_TIM1, 3)
+    }, {
+        .key = PIN(PORT_E, 13), /* TIM1_CH3 */
+        .channel = CHANNEL_CH3(0),
+        .value = PACK_REMAP(REMAP_TIM1, 3)
+    }, {
+        .key = PIN(PORT_E, 14), /* TIM1_CH4 */
+        .channel = CHANNEL_CH4(0),
+        .value = PACK_REMAP(REMAP_TIM1, 3)
+    }, {
         .key = 0 /* End of pin function association list */
     }
 };

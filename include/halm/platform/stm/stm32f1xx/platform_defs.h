@@ -115,7 +115,7 @@ typedef struct
 typedef struct
 {
   __rw__ uint32_t CR;
-  __rw__ uint32_t SWTRIGR;
+  __wo__ uint32_t SWTRIGR;
   __rw__ uint32_t DHR12R1;
   __rw__ uint32_t DHR12L1;
   __rw__ uint32_t DHR8R1;
@@ -125,8 +125,8 @@ typedef struct
   __rw__ uint32_t DHR12RD;
   __rw__ uint32_t DHR12LD;
   __rw__ uint32_t DHR8RD;
-  __rw__ uint32_t DOR1;
-  __rw__ uint32_t DOR2;
+  __ro__ uint32_t DOR1;
+  __ro__ uint32_t DOR2;
   __rw__ uint32_t SR; /* For LD, MD and HD parts */
 } STM_DAC_Type;
 /*------------------DMA Controller--------------------------------------------*/
@@ -278,8 +278,8 @@ typedef struct
 {
   __rw__ uint16_t RDP;
   __rw__ uint16_t USER;
-  __rw__ uint16_t Data0;
-  __rw__ uint16_t Data1;
+  __rw__ uint16_t DATA0;
+  __rw__ uint16_t DATA1;
   __rw__ uint16_t WRP0;
   __rw__ uint16_t WRP1;
   __rw__ uint16_t WRP2;
@@ -346,7 +346,7 @@ typedef struct
 
     __rw__ uint32_t CR[2];
   };
-  __rw__ uint32_t IDR;
+  __ro__ uint32_t IDR;
   __rw__ uint32_t ODR;
   __rw__ uint32_t BSRR;
   __rw__ uint32_t BRR;
@@ -378,10 +378,10 @@ typedef struct
 /*------------------Independent Watchdog--------------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t KR;
+  __wo__ uint32_t KR;
   __rw__ uint32_t PR;
   __rw__ uint32_t RLR;
-  __rw__ uint32_t SR;
+  __ro__ uint32_t SR;
 } STM_IWDG_Type;
 /*------------------Power Control---------------------------------------------*/
 typedef struct
@@ -410,14 +410,14 @@ typedef struct
 {
   __rw__ uint32_t CRH;
   __rw__ uint32_t CRL;
-  __rw__ uint32_t PRLH;
-  __rw__ uint32_t PRLL;
-  __rw__ uint32_t DIVH;
-  __rw__ uint32_t DIVL;
+  __wo__ uint32_t PRLH;
+  __wo__ uint32_t PRLL;
+  __ro__ uint32_t DIVH;
+  __ro__ uint32_t DIVL;
   __rw__ uint32_t CNTH;
   __rw__ uint32_t CNTL;
-  __rw__ uint32_t ALRH;
-  __rw__ uint32_t ALRL;
+  __wo__ uint32_t ALRH;
+  __wo__ uint32_t ALRL;
 } STM_RTC_Type;
 /*------------------SD/MMC card interface-------------------------------------*/
 typedef struct
@@ -451,8 +451,8 @@ typedef struct
   __rw__ uint32_t SR;
   __rw__ uint32_t DR;
   __rw__ uint32_t CRCPR;
-  __rw__ uint32_t RXCRCR;
-  __rw__ uint32_t TXCRCR;
+  __ro__ uint32_t RXCRCR;
+  __ro__ uint32_t TXCRCR;
   __rw__ uint32_t I2SCFGR;
   __rw__ uint32_t I2SPR;
 } STM_SPI_Type;
@@ -464,9 +464,19 @@ typedef struct
   __rw__ uint32_t SMCR;
   __rw__ uint32_t DIER;
   __rw__ uint32_t SR;
-  __rw__ uint32_t EGR;
-  __rw__ uint32_t CCMR1;
-  __rw__ uint32_t CCMR2;
+  __wo__ uint32_t EGR;
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t CCMR1;
+      __rw__ uint32_t CCMR2;
+    };
+
+    __rw__ uint32_t CCMR[2];
+  };
+
   __rw__ uint32_t CCER;
   __rw__ uint32_t CNT;
   __rw__ uint32_t PSC;

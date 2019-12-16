@@ -27,6 +27,7 @@ if(${CONFIG_PLATFORM_STM_CAN})
 endif()
 
 if(${CONFIG_PLATFORM_STM_GPTIMER_BASE})
+    list(APPEND SOURCE_FILES "gptimer_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gptimer_base.c")
 endif()
 

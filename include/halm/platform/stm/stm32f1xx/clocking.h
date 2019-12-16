@@ -96,7 +96,12 @@ extern const struct ClockClass * const SystemClock;
 /*----------------------------------------------------------------------------*/
 struct BusClockConfig
 {
-  /** Mandatory: bus clock divisor. */
+  /**
+   * Mandatory: bus clock divisor.
+   * @n Available options for AHB: 2, 4, 8, 16, 64, 128, 256, 512.
+   * @n Available options for both APB: 2, 4, 8, 16.
+   * @n Available options for ADC: 2, 4, 6, 8.
+   */
   uint16_t divisor;
 };
 
