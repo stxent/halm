@@ -29,15 +29,16 @@ if(${USE_LTO})
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto -ffat-lto-objects")
 endif()
 
-set(TARGET_LIST core generic platform pm usb)
-set(DEFINITION_LIST "")
-set(LIBRARY_OBJECTS "")
-
 if(DEFINED PLATFORM)
     set(DEFINITION_LIST ${DEFINITION_LIST} -D${PLATFORM})
 elseif(UNIX)
     set(DEFINITION_LIST ${DEFINITION_LIST} -D_POSIX_C_SOURCE=200809L)
+else()
+    set(DEFINITION_LIST "")
 endif()
+
+set(TARGET_LIST core generic platform pm usb)
+set(LIBRARY_OBJECTS "")
 
 foreach(ENTRY ${TARGET_LIST})
     add_subdirectory(${ENTRY})
