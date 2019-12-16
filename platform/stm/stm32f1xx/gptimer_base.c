@@ -42,80 +42,67 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM1,
         .reset = RST_TIM1,
         .irq = TIM1_CC_IRQ
-    },
-    {
+    }, {
         .reg = STM_TIM2,
         .clock = CLK_TIM2,
         .reset = RST_TIM2,
         .irq = TIM2_IRQ
-    },
-    {
+    }, {
         .reg = STM_TIM3,
         .clock = CLK_TIM3,
         .reset = RST_TIM3,
         .irq = TIM3_IRQ
-    },
-    {
+    }, {
         .reg = STM_TIM4,
         .clock = CLK_TIM4,
         .reset = RST_TIM4,
         .irq = TIM4_IRQ
-    },
-    {
+    }, {
         .reg = STM_TIM5,
         .clock = CLK_TIM5,
         .reset = RST_TIM5,
         .irq = TIM5_IRQ
-    },
-    {
+    }, {
         .reg = STM_TIM6,
         .clock = CLK_TIM6,
         .reset = RST_TIM6,
         .irq = TIM6_IRQ /* Virtual IRQ */
-    },
-    {
+    }, {
         .reg = STM_TIM7,
         .clock = CLK_TIM7,
         .reset = RST_TIM7,
         .irq = TIM7_IRQ
-    },
-    {
+    }, {
         .reg = STM_TIM8,
         .clock = CLK_TIM8,
         .reset = RST_TIM8,
         .irq = TIM8_CC_IRQ
-    },
-    {
+    }, {
         .reg = STM_TIM9,
         .clock = CLK_TIM9,
         .reset = RST_TIM9,
         .irq = -1
-    },
-    {
+    }, {
         .reg = STM_TIM10,
         .clock = CLK_TIM10,
         .reset = RST_TIM10,
         .irq = -1
-    },
-    {
+    }, {
         .reg = STM_TIM11,
         .clock = CLK_TIM11,
         .reset = RST_TIM11,
         .irq = -1
-    },
-    {
+    }, {
         .reg = STM_TIM12,
         .clock = CLK_TIM12,
         .reset = RST_TIM12,
         .irq = TIM12_IRQ /* Virtual IRQ */
-    },
-    {
+    }, {
         .reg = STM_TIM13,
         .clock = CLK_TIM13,
         .reset = RST_TIM13,
         .irq = TIM13_IRQ /* Virtual IRQ */
-    },
-    {
+    }, {
         .reg = STM_TIM14,
         .clock = CLK_TIM14,
         .reset = RST_TIM14,

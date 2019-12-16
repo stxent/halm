@@ -57,8 +57,7 @@ static const struct BxCanBlockDescriptor bxCanBlockEntries[] = {
             .sce = CAN1_SCE_IRQ,
             .tx = CAN1_TX_IRQ,
         }
-    },
-    {
+    }, {
         .reg = STM_CAN2,
         .clock = CLK_CAN2,
         .reset = RST_CAN2,

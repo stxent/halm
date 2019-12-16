@@ -43,26 +43,22 @@ static const struct UartBlockDescriptor uartBlockEntries[] = {
         .clock = CLK_USART1,
         .reset = RST_USART1,
         .irq = USART1_IRQ
-    },
-    {
+    }, {
         .reg = STM_USART2,
         .clock = CLK_USART2,
         .reset = RST_USART2,
         .irq = USART2_IRQ
-    },
-    {
+    }, {
         .reg = STM_USART3,
         .clock = CLK_USART3,
         .reset = RST_USART3,
         .irq = USART3_IRQ
-    },
-    {
+    }, {
         .reg = STM_UART4,
         .clock = CLK_UART4,
         .reset = RST_UART4,
         .irq = UART4_IRQ
-    },
-    {
+    }, {
         .reg = STM_UART5,
         .clock = CLK_UART5,
         .reset = RST_UART5,

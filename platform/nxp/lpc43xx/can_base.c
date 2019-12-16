@@ -44,8 +44,7 @@ static const struct CanBlockDescriptor canBlockEntries[] = {
         .clock = CLK_APB3_CAN0,
         .reset = RST_CAN0,
         .irq = CAN0_IRQ
-    },
-    {
+    }, {
         .reg = LPC_CAN1,
         .clock = CLK_APB1_CAN1,
         .reset = RST_CAN1,

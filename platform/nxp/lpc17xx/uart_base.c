@@ -41,20 +41,17 @@ static const struct UartBlockDescriptor uartBlockEntries[] = {
         .power = PWR_UART0,
         .clock = CLK_UART0,
         .irq = UART0_IRQ
-    },
-    {
+    }, {
         .reg = &LPC_UART1->BASE,
         .power = PWR_UART1,
         .clock = CLK_UART1,
         .irq = UART1_IRQ
-    },
-    {
+    }, {
         .reg = LPC_UART2,
         .power = PWR_UART2,
         .clock = CLK_UART2,
         .irq = UART2_IRQ
-    },
-    {
+    }, {
         .reg = LPC_UART3,
         .power = PWR_UART3,
         .clock = CLK_UART3,

@@ -38,7 +38,7 @@ enum GpDmaEvent
   GPDMA_DAC,
   GPDMA_MEMORY,
   GPDMA_EVENT_END
-};
+} __attribute__((packed));
 
 struct GpDmaMuxConfig
 {

@@ -39,13 +39,11 @@ static const struct I2CBlockDescriptor i2cBlockEntries[] = {
         .reg = LPC_I2C0,
         .power = PWR_I2C0,
         .clock = CLK_I2C0
-    },
-    {
+    }, {
         .reg = LPC_I2C1,
         .power = PWR_I2C1,
         .clock = CLK_I2C1
-    },
-    {
+    }, {
         .reg = LPC_I2C2,
         .power = PWR_I2C2,
         .clock = CLK_I2C2

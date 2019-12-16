@@ -50,7 +50,7 @@ enum GpDmaEvent
   GPDMA_SPIFI,
   GPDMA_MEMORY,
   GPDMA_EVENT_END
-};
+} __attribute__((packed));
 
 struct GpDmaMuxConfig
 {

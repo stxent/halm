@@ -45,22 +45,19 @@ static const struct UartBlockDescriptor uartBlockEntries[] = {
         .periperalBranch = CLK_APB0_USART0,
         .reset = RST_USART0,
         .irq = USART0_IRQ
-    },
-    {
+    }, {
         .reg = LPC_UART1,
         .registerBranch = CLK_M4_UART1,
         .periperalBranch = CLK_APB0_UART1,
         .reset = RST_UART1,
         .irq = UART1_IRQ
-    },
-    {
+    }, {
         .reg = (LPC_UART_Type *)LPC_USART2,
         .registerBranch = CLK_M4_USART2,
         .periperalBranch = CLK_APB2_USART2,
         .reset = RST_USART2,
         .irq = USART2_IRQ
-    },
-    {
+    }, {
         .reg = (LPC_UART_Type *)LPC_USART3,
         .registerBranch = CLK_M4_USART3,
         .periperalBranch = CLK_APB2_USART3,

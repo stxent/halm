@@ -40,18 +40,15 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reg = LPC_TIMER16B0,
         .clock = CLK_CT16B0,
         .resolution = 16
-    },
-    {
+    }, {
         .reg = LPC_TIMER16B1,
         .clock = CLK_CT16B1,
         .resolution = 16
-    },
-    {
+    }, {
         .reg = LPC_TIMER32B0,
         .clock = CLK_CT32B0,
         .resolution = 32
-    },
-    {
+    }, {
         .reg = LPC_TIMER32B1,
         .clock = CLK_CT32B1,
         .resolution = 32

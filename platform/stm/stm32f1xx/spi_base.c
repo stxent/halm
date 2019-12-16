@@ -44,14 +44,12 @@ static const struct SpiBlockDescriptor spiBlockEntries[] = {
         .branch = CLK_SPI1,
         .reset = RST_SPI1,
         .irq = SPI1_IRQ
-    },
-    {
+    }, {
         .reg = STM_SPI2,
         .branch = CLK_SPI2,
         .reset = RST_SPI2,
         .irq = SPI2_IRQ
-    },
-    {
+    }, {
         .reg = STM_SPI3,
         .branch = CLK_SPI3,
         .reset = RST_SPI3,

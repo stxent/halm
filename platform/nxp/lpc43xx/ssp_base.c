@@ -53,8 +53,7 @@ static const struct SspBlockDescriptor sspBlockEntries[] = {
         .periperalBranch = CLK_APB0_SSP0,
         .reset = RST_SSP0,
         .irq = SSP0_IRQ
-    },
-    {
+    }, {
         .reg = LPC_SSP1,
         .registerBranch = CLK_M4_SSP1,
         .periperalBranch = CLK_APB2_SSP1,

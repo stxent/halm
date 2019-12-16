@@ -41,18 +41,15 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reg = LPC_TIMER0,
         .power = PWR_TIM0,
         .clock = CLK_TIMER0
-    },
-    {
+    }, {
         .reg = LPC_TIMER1,
         .power = PWR_TIM1,
         .clock = CLK_TIMER1
-    },
-    {
+    }, {
         .reg = LPC_TIMER2,
         .power = PWR_TIM2,
         .clock = CLK_TIMER2
-    },
-    {
+    }, {
         .reg = LPC_TIMER3,
         .power = PWR_TIM3,
         .clock = CLK_TIMER3
