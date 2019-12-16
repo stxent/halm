@@ -6,15 +6,11 @@
 
 void defaultHandler(void) __attribute__((weak));
 /*----------------------------------------------------------------------------*/
-/* Core Cortex-M3 IRQ handlers */
+/* Core Cortex-M0 IRQ handlers */
 void RESET_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void NMI_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void HARDFAULT_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void MEMMANAGE_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void BUSFAULT_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void USAGEFAULT_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SVCALL_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void DEBUGMON_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void PENDSV_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SYSTICK_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
@@ -52,15 +48,15 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     RESET_ISR,
     NMI_ISR,
     HARDFAULT_ISR,
-    MEMMANAGE_ISR,
-    BUSFAULT_ISR,
-    USAGEFAULT_ISR,
+    0,
+    0,
+    0,
     0,
     0,
     0,
     0,
     SVCALL_ISR,
-    DEBUGMON_ISR,
+    0,
     0,
     PENDSV_ISR,
     SYSTICK_ISR,
