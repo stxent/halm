@@ -11,8 +11,8 @@
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
-static enum Result clkCallback(void *, void (*)(void *), void *);
 static enum Result clkSetAlarm(void *, time64_t);
+static enum Result clkSetCallback(void *, void (*)(void *), void *);
 static enum Result clkSetTime(void *, time64_t);
 static time64_t clkTime(void *);
 
@@ -27,8 +27,8 @@ const struct RtClockClass * const Rtc = &(const struct RtClockClass){
     .init = clkInit,
     .deinit = clkDeinit,
 
-    .callback = clkCallback,
     .setAlarm = clkSetAlarm,
+    .setCallback = clkSetCallback,
     .setTime = clkSetTime,
     .time = clkTime
 };
@@ -106,16 +106,6 @@ static void clkDeinit(void *object __attribute__((unused)))
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result clkCallback(void *object, void (*callback)(void *),
-    void *argument)
-{
-  struct Rtc * const clock = object;
-
-  clock->callbackArgument = argument;
-  clock->callback = callback;
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
 static enum Result clkSetAlarm(void *object, time64_t alarmTime)
 {
   struct Rtc * const clock = object;
@@ -139,6 +129,16 @@ static enum Result clkSetAlarm(void *object, time64_t alarmTime)
   /* Enable interrupt */
   reg->AMR = AMR_DOW | AMR_DOY;
 
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result clkSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct Rtc * const clock = object;
+
+  clock->callbackArgument = argument;
+  clock->callback = callback;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
