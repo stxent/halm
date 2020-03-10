@@ -88,9 +88,9 @@ static enum Result serialInit(void *object, const void *configBase)
   assert(config);
 
   const struct UartBaseConfig baseConfig = {
-      .channel = config->channel,
       .rx = config->rx,
-      .tx = config->tx
+      .tx = config->tx,
+      .channel = config->channel
   };
   struct Serial * const interface = object;
   enum Result res;

@@ -38,6 +38,10 @@ choice
 		bool "NXP LPC13xx"
 		depends on CORE_CORTEX_M3
 
+	config FAMILY_LPC13UXX
+		bool "NXP LPC13Uxx"
+		depends on CORE_CORTEX_M3
+
 	config FAMILY_LPC17XX
 		bool "NXP LPC175x and LPC176x"
 		depends on CORE_CORTEX_M3

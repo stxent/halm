@@ -5,12 +5,12 @@
     "blocks":
     [
       {"offset": "0x00000", "name": "I2C", "type": "LPC_I2C_Type"},
-      {"offset": "0x04000", "name": "WDT", "type": "LPC_WDT_Type"},
+      {"offset": "0x04000", "name": "WWDT", "type": "LPC_WWDT_Type"},
       {"offset": "0x08000", "name": "USART", "type": "LPC_USART_Type"},
-      {"offset": "0x0C000", "name": "TIMER16B0", "type": "LPC_TIMER_Type"},
-      {"offset": "0x10000", "name": "TIMER16B1", "type": "LPC_TIMER_Type"},
-      {"offset": "0x14000", "name": "TIMER32B0", "type": "LPC_TIMER_Type"},
-      {"offset": "0x18000", "name": "TIMER32B1", "type": "LPC_TIMER_Type"},
+      {"offset": "0x0C000", "name": "CT16B0", "type": "LPC_TIMER_Type"},
+      {"offset": "0x10000", "name": "CT16B1", "type": "LPC_TIMER_Type"},
+      {"offset": "0x14000", "name": "CT32B0", "type": "LPC_TIMER_Type"},
+      {"offset": "0x18000", "name": "CT32B1", "type": "LPC_TIMER_Type"},
       {"offset": "0x1C000", "name": "ADC", "type": "LPC_ADC_Type"},
       {"offset": "0x38000", "name": "PMU", "type": "LPC_PMU_Type"},
       {"offset": "0x3C000", "name": "FMC", "type": "LPC_FMC_Type"},
@@ -20,7 +20,16 @@
       {"offset": "0x4C000", "name": "GPIO_INT", "type": "LPC_GPIO_INT_Type"},
       {"offset": "0x58000", "name": "SSP1", "type": "LPC_SSP_Type"},
       {"offset": "0x5C000", "name": "GPIO_GROUP_INT0", "type": "LPC_GPIO_GROUP_INT_Type"},
-      {"offset": "0x60000", "name": "GPIO_GROUP_INT1", "type": "LPC_GPIO_GROUP_INT_Type"}
+      {"offset": "0x60000", "name": "GPIO_GROUP_INT1", "type": "LPC_GPIO_GROUP_INT_Type"},
+      {"offset": "0x64000", "name": "RIT", "type": "LPC_RIT_Type"}
+    ]
+  },
+  {
+    "address": "0x48000000",
+    "name": "AHB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "USB", "type": "LPC_USB_Type"}
     ]
   }
 ]

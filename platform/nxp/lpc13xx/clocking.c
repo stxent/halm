@@ -171,7 +171,7 @@ static const int8_t commonClockSourceMap[4][4] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static const uint16_t wdtFrequencyValues[15] = {
+static const uint16_t wdtFrequencyValues[] = {
     600,
     1050,
     1400,
@@ -455,7 +455,10 @@ static enum Result usbPllEnable(const void *clockBase __attribute__((unused)),
   /* Power-up PLL */
   sysPowerEnable(PWR_USBPLL);
 
-  /* Select clock source, system oscillator is the only choice */
+  /*
+   * The USB PLL clock source must be switched to system oscillator
+   * for correct operation.
+   */
   LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_SYSOSC;
   /* Update clock source for changes to take effect */
   LPC_SYSCON->USBPLLCLKUEN = 0;

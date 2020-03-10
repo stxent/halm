@@ -1,13 +1,13 @@
 /*
  * uart_base.c
- * Copyright (C) 2012 xent
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
 #include <halm/platform/nxp/gen_1/uart_base.h>
-#include <halm/platform/nxp/lpc13xx/clocking.h>
-#include <halm/platform/nxp/lpc13xx/system.h>
+#include <halm/platform/nxp/lpc13uxx/clocking.h>
+#include <halm/platform/nxp/lpc13uxx/system.h>
 /*----------------------------------------------------------------------------*/
 /* UART clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1
@@ -31,13 +31,37 @@ const struct EntityClass * const UartBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 const struct PinEntry uartPins[] = {
     {
-        .key = PIN(1, 6), /* RXD */
+        .key = PIN(0, 18), /* RXD */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(1, 7), /* TXD */
+        .key = PIN(0, 19), /* TXD */
         .channel = 0,
         .value = 1
+    }, {
+        .key = PIN(1, 14), /* RXD */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(1, 13), /* TXD */
+        .channel = 0,
+        .value = 3
+    }, {
+        .key = PIN(1, 17), /* RXD */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = PIN(1, 18), /* TXD */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = PIN(1, 26), /* RXD */
+        .channel = 0,
+        .value = 2
+    }, {
+        .key = PIN(1, 27), /* TXD */
+        .channel = 0,
+        .value = 2
     }, {
         .key = 0 /* End of pin function association list */
     }
@@ -56,7 +80,7 @@ static bool setInstance(struct UartBase *object)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-void UART_ISR(void)
+void USART_ISR(void)
 {
   instance->handler(instance);
 }
@@ -77,15 +101,15 @@ static enum Result uartInit(void *object, const void *configBase)
   if (!setInstance(interface))
     return E_BUSY;
 
-  interface->reg = LPC_UART;
-  interface->irq = UART_IRQ;
+  interface->reg = LPC_USART;
+  interface->irq = USART_IRQ;
   interface->handler = 0;
   interface->channel = config->channel;
 
   /* Configure input and output pins */
   uartConfigPins(interface, config);
 
-  sysClockEnable(CLK_UART);
+  sysClockEnable(CLK_USART);
   LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV;
 
   return E_OK;
@@ -97,7 +121,7 @@ static void uartDeinit(void *object __attribute__((unused)))
   /* Disable the peripheral clock */
   LPC_SYSCON->UARTCLKDIV = 0;
 
-  sysClockDisable(CLK_UART);
+  sysClockDisable(CLK_USART);
 
   instance = 0;
 }

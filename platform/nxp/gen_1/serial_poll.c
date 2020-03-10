@@ -62,9 +62,9 @@ static enum Result serialInit(void *object, const void *configBase)
   assert(config);
 
   const struct UartBaseConfig baseConfig = {
-      .channel = config->channel,
       .rx = config->rx,
-      .tx = config->tx
+      .tx = config->tx,
+      .channel = config->channel
   };
   struct SerialPoll * const interface = object;
   struct UartRateConfig rateConfig;
@@ -82,10 +82,10 @@ static enum Result serialInit(void *object, const void *configBase)
   LPC_UART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
-  reg->LCR = LCR_WORD_8BIT;
+  reg->LCR = LCR_WLS_8BIT;
   /* Enable FIFO and reset RX trigger level */
-  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_ENABLE
-      | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_1);
+  reg->FCR = (reg->FCR & ~FCR_RXTRIGLVL_MASK) | FCR_FIFOEN
+      | FCR_RXTRIGLVL(RX_TRIGGER_LEVEL_1);
   /* Disable all interrupts */
   reg->IER = 0;
   /* Transmitter is enabled by default thus TER register is left untouched */

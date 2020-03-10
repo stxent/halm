@@ -52,7 +52,7 @@ static void interruptHandler(void *object)
   const uint32_t state = reg->IIR;
 
   /* Call user handler when receive timeout occurs */
-  event = (state & IIR_INT_MASK) == IIR_INT_CTI;
+  event = (state & IIR_INTID_MASK) == IIR_INTID_CTI;
 
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
@@ -112,9 +112,9 @@ static enum Result serialInit(void *object, const void *configBase)
   assert(config);
 
   const struct UartBaseConfig baseConfig = {
-      .channel = config->channel,
       .rx = config->rx,
-      .tx = config->tx
+      .tx = config->tx,
+      .channel = config->channel
   };
   struct Serial * const interface = object;
   struct UartRateConfig rateConfig;
@@ -140,12 +140,12 @@ static enum Result serialInit(void *object, const void *configBase)
   LPC_UART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
-  reg->LCR = LCR_WORD_8BIT;
+  reg->LCR = LCR_WLS_8BIT;
   /* Enable FIFO and set RX trigger level */
-  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_ENABLE
-      | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_8);
+  reg->FCR = (reg->FCR & ~FCR_RXTRIGLVL_MASK) | FCR_FIFOEN
+      | FCR_RXTRIGLVL(RX_TRIGGER_LEVEL_8);
   /* Enable RBR and THRE interrupts */
-  reg->IER = IER_RBR | IER_THRE;
+  reg->IER = IER_RBRIE | IER_THREIE;
   /* Transmitter is enabled by default thus TER register is left untouched */
 
   uartSetParity(object, config->parity);

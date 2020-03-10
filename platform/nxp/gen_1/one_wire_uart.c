@@ -73,7 +73,7 @@ static void beginTransmission(struct OneWireUart *interface)
   uartSetRate(&interface->base, interface->resetRate);
   interface->state = STATE_RESET;
   /* Clear RX FIFO and set trigger level to 1 character */
-  reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_1);
+  reg->FCR |= FCR_RXFIFORES | FCR_RXTRIGLVL(RX_TRIGGER_LEVEL_1);
   reg->THR = 0xF0; /* Execute reset */
 }
 /*----------------------------------------------------------------------------*/
@@ -93,7 +93,7 @@ static void interruptHandler(void *object)
   bool event = false;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  if (reg->IIR & IIR_INT_STATUS)
+  if (reg->IIR & IIR_INTSTATUS)
     return;
 
   /* Byte will be removed from FIFO after reading from RBR register */
@@ -191,11 +191,11 @@ static enum Result oneWireInit(void *object, const void *configBase)
   LPC_UART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
-  reg->LCR = LCR_WORD_8BIT;
+  reg->LCR = LCR_WLS_8BIT;
   /* Enable FIFO and set RX trigger level to single byte */
-  reg->FCR = (reg->FCR & ~FCR_RX_TRIGGER_MASK) | FCR_ENABLE;
+  reg->FCR = (reg->FCR & ~FCR_RXTRIGLVL_MASK) | FCR_FIFOEN;
   /* Enable RBR and THRE interrupts */
-  reg->IER = IER_RBR | IER_THRE;
+  reg->IER = IER_RBRIE | IER_THREIE;
   /* Transmitter is enabled by default */
 
   uartSetRate(object, interface->resetRate);
@@ -292,7 +292,7 @@ static size_t oneWireRead(void *object, void *buffer, size_t length)
   interface->state = STATE_RECEIVE;
 
   /* Clear RX FIFO and set trigger level to 8 characters */
-  reg->FCR |= FCR_RX_RESET | FCR_RX_TRIGGER(RX_TRIGGER_LEVEL_8);
+  reg->FCR |= FCR_RXFIFORES | FCR_RXTRIGLVL(RX_TRIGGER_LEVEL_8);
 
   /* Start reception */
   sendWord(interface, 0xFF);

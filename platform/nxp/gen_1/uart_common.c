@@ -68,8 +68,8 @@ enum SerialParity uartGetParity(const struct UartBase *interface)
   const LPC_UART_Type * const reg = interface->reg;
   const uint32_t value = reg->LCR;
 
-  if (value & LCR_PARITY)
-    return (value & LCR_PARITY_EVEN) ? SERIAL_PARITY_EVEN : SERIAL_PARITY_ODD;
+  if (value & LCR_PS)
+    return (value & LCR_PS_EVEN) ? SERIAL_PARITY_EVEN : SERIAL_PARITY_ODD;
   else
     return SERIAL_PARITY_NONE;
 }
@@ -91,12 +91,12 @@ uint32_t uartGetRate(const struct UartBase *interface)
 void uartSetParity(struct UartBase *interface, enum SerialParity parity)
 {
   LPC_UART_Type * const reg = interface->reg;
-  uint32_t value = reg->LCR & ~(LCR_PARITY | LCR_PARITY_MASK);
+  uint32_t value = reg->LCR & ~(LCR_PS | LCR_PS_MASK);
 
   if (parity != SERIAL_PARITY_NONE)
   {
-    value |= LCR_PARITY;
-    value |= parity == SERIAL_PARITY_EVEN ? LCR_PARITY_EVEN : LCR_PARITY_ODD;
+    value |= LCR_PS;
+    value |= parity == SERIAL_PARITY_EVEN ? LCR_PS_EVEN : LCR_PS_ODD;
   }
 
   reg->LCR = value;

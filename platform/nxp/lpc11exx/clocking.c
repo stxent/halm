@@ -129,7 +129,7 @@ static const int8_t commonClockSourceMap[4][4] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static const uint16_t wdtFrequencyValues[15] = {
+static const uint16_t wdtFrequencyValues[] = {
     600,
     1050,
     1400,

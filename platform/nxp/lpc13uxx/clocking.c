@@ -1,23 +1,25 @@
 /*
  * clocking.c
- * Copyright (C) 2013 xent
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
+#include <xcore/asm.h>
 #include <halm/delay.h>
-#include <halm/platform/nxp/lpc11xx/clocking.h>
-#include <halm/platform/nxp/lpc11xx/clocking_defs.h>
-#include <halm/platform/nxp/lpc11xx/system.h>
+#include <halm/platform/nxp/lpc13uxx/clocking.h>
+#include <halm/platform/nxp/lpc13uxx/clocking_defs.h>
+#include <halm/platform/nxp/lpc13uxx/system.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY             12000000
+#define USB_FREQUENCY                 48000000
 #define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)
 /*----------------------------------------------------------------------------*/
 struct ClockDescriptor
 {
-  volatile uint32_t sourceSelect;
-  volatile uint32_t sourceUpdate;
+  volatile uint32_t source;
+  volatile uint32_t reserved;
   volatile uint32_t divider;
 };
 
@@ -52,6 +54,11 @@ static void sysPllDisable(const void *);
 static enum Result sysPllEnable(const void *, const void *);
 static uint32_t sysPllFrequency(const void *);
 static bool sysPllReady(const void *);
+
+static void usbPllDisable(const void *);
+static enum Result usbPllEnable(const void *, const void *);
+static uint32_t usbPllFrequency(const void *);
+static bool usbPllReady(const void *);
 /*----------------------------------------------------------------------------*/
 static enum Result clockOutputEnable(const void *, const void *);
 
@@ -87,6 +94,13 @@ const struct ClockClass * const SystemPll = &(const struct ClockClass){
     .frequency = sysPllFrequency,
     .ready = sysPllReady
 };
+
+const struct ClockClass * const UsbPll = &(const struct ClockClass){
+    .disable = usbPllDisable,
+    .enable = usbPllEnable,
+    .frequency = usbPllFrequency,
+    .ready = usbPllReady
+};
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ClockOutput =
     (const struct ClockClass *)&(const struct GenericClockClass){
@@ -110,7 +124,7 @@ const struct ClockClass * const MainClock =
     .branch = CLOCK_BRANCH_MAIN
 };
 
-const struct ClockClass * const WdtClock =
+const struct ClockClass * const UsbClock =
     (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
         .disable = branchDisable,
@@ -118,7 +132,7 @@ const struct ClockClass * const WdtClock =
         .frequency = branchFrequency,
         .ready = branchReady,
     },
-    .branch = CLOCK_BRANCH_WDT
+    .branch = CLOCK_BRANCH_USB
 };
 /*----------------------------------------------------------------------------*/
 static const struct PinEntry clockOutputPins[] = {
@@ -131,15 +145,15 @@ static const struct PinEntry clockOutputPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static const int8_t commonClockSourceMap[4][4] = {
+static const int8_t commonClockSourceMap[3][4] = {
     [CLOCK_BRANCH_MAIN] = {
         CLOCK_INTERNAL, CLOCK_EXTERNAL, CLOCK_WDT, CLOCK_PLL
     },
     [CLOCK_BRANCH_OUTPUT] = {
         CLOCK_INTERNAL, CLOCK_EXTERNAL, CLOCK_WDT, CLOCK_MAIN
     },
-    [CLOCK_BRANCH_WDT] = {
-        CLOCK_INTERNAL, CLOCK_MAIN, CLOCK_WDT, -1
+    [CLOCK_BRANCH_USB] = {
+        CLOCK_USB_PLL, CLOCK_MAIN, -1, -1
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -177,11 +191,11 @@ static struct ClockDescriptor *calcBranchDescriptor(enum ClockBranch branch)
       break;
 
     case CLOCK_BRANCH_OUTPUT:
-      base = &LPC_SYSCON->CLKOUTCLKSEL;
+      base = &LPC_SYSCON->CLKOUTSEL;
       break;
 
-    case CLOCK_BRANCH_WDT:
-      base = &LPC_SYSCON->WDTCLKSEL;
+    case CLOCK_BRANCH_USB:
+      base = &LPC_SYSCON->USBCLKSEL;
       break;
   }
 
@@ -222,15 +236,10 @@ static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
   assert(divisor % 2 == 0);
 
   const unsigned int msel = multiplier / divisor - 1;
-  unsigned int psel = 0;
-  unsigned int sourceDivisor = divisor >> 1;
+  const unsigned int psel = 31 - countLeadingZeros32(divisor);
 
   assert(msel < 32);
-
-  while (psel < 4 && sourceDivisor != 1U << psel)
-    ++psel;
-  /* Check whether actual divisor value found */
-  assert(psel != 4);
+  assert(psel < 4 && 1 << psel == divisor);
 
   return PLLCTRL_MSEL(msel) | PLLCTRL_PSEL(psel);
 }
@@ -243,10 +252,16 @@ static inline void flashLatencyReset(void)
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
-  static const uint32_t frequencyStep = 20000000;
-  const unsigned int clocks = (frequency + (frequencyStep - 1)) / frequencyStep;
+  unsigned int clocks;
 
-  sysFlashLatencyUpdate(MIN(clocks, 3));
+  if (frequency <= 25000000)
+    clocks = 1;
+  else if (frequency <= 55000000)
+    clocks = 2;
+  else
+    clocks = 3;
+
+  sysFlashLatencyUpdate(clocks);
 }
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *clockBase __attribute__((unused)))
@@ -276,11 +291,7 @@ static enum Result extOscEnable(const void *clockBase
   /* There is no status register so wait for 10 microseconds */
   udelay(10);
 
-  LPC_SYSCON->SYSPLLCLKSEL = PLLCLKSEL_SYSOSC;
-  /* Update PLL clock source */
-  LPC_SYSCON->SYSPLLCLKUEN = 0;
-  LPC_SYSCON->SYSPLLCLKUEN = CLKUEN_ENA;
-
+  LPC_SYSCON->SYSPLLCLKSEL = PLLCLKSEL_SYSOSC; // XXX
   extFrequency = config->frequency;
 
   return E_OK;
@@ -333,13 +344,18 @@ static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
   const struct WdtOscConfig * const config = configBase;
 
   assert(config->frequency <= WDT_FREQ_4600);
+  assert(config->divisor <= 64 && config->divisor % 2 == 0);
 
-  const unsigned int index = !config->frequency ?
+  const unsigned int divsel = config->divisor ?
+      (config->divisor >> 1) - 1 : 0;
+  const unsigned int freqsel = !config->frequency ?
       WDT_FREQ_600 : config->frequency;
 
+  LPC_SYSCON->WDTOSCCTRL = WDTOSCCTRL_DIVSEL(divsel)
+      | WDTOSCCTRL_FREQSEL(freqsel);
   sysPowerEnable(PWR_WDTOSC);
-  LPC_SYSCON->WDTOSCCTRL = WDTOSCCTRL_DIVSEL(0) | WDTOSCCTRL_FREQSEL(index);
-  wdtFrequency = (wdtFrequencyValues[index - 1] * 1000) >> 1;
+
+  wdtFrequency = (wdtFrequencyValues[freqsel - 1] * 1000) >> 1;
 
   return E_OK;
 }
@@ -379,14 +395,10 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
   /* Select clock source */
   LPC_SYSCON->SYSPLLCLKSEL = config->source == CLOCK_EXTERNAL ?
       PLLCLKSEL_SYSOSC : PLLCLKSEL_IRC;
-  /* Update clock source for changes to take effect */
-  LPC_SYSCON->SYSPLLCLKUEN = 0;
-  LPC_SYSCON->SYSPLLCLKUEN = CLKUEN_ENA;
   /* Set feedback divider value and post divider ratio */
   LPC_SYSCON->SYSPLLCTRL = control;
 
   pllFrequency = frequency;
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -398,6 +410,51 @@ static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
 static bool sysPllReady(const void *clockBase __attribute__((unused)))
 {
   return pllFrequency && (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK);
+}
+/*----------------------------------------------------------------------------*/
+static void usbPllDisable(const void *clockBase __attribute__((unused)))
+{
+  sysPowerDisable(PWR_USBPLL);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result usbPllEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase)
+{
+  const struct PllConfig * const config = configBase;
+
+  assert(config->divisor);
+  assert(config->source == CLOCK_EXTERNAL);
+
+  const uint32_t control = calcPllValues(config->multiplier,
+      config->divisor);
+
+  assert(extFrequency * config->multiplier >= 156000000
+      && extFrequency * config->multiplier <= 320000000);
+  assert(extFrequency * config->multiplier / config->divisor == USB_FREQUENCY);
+
+  /* Power-up PLL */
+  sysPowerEnable(PWR_USBPLL);
+
+  /*
+   * The USB PLL clock source must be switched to system oscillator
+   * for correct operation.
+   */
+  LPC_SYSCON->USBPLLCLKSEL = PLLCLKSEL_SYSOSC;
+  /* Set feedback divider value and post divider ratio */
+  LPC_SYSCON->USBPLLCTRL = control;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t usbPllFrequency(const void *clockBase __attribute__((unused)))
+{
+  return LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK ? USB_FREQUENCY : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool usbPllReady(const void *clockBase __attribute__((unused)))
+{
+  /* USB PLL should be locked */
+  return (LPC_SYSCON->USBPLLSTAT & PLLSTAT_LOCK) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clockOutputEnable(const void *clockBase
@@ -452,11 +509,7 @@ static enum Result branchEnable(const void *clockBase, const void *configBase)
   if (clock->branch == CLOCK_BRANCH_MAIN)
     flashLatencyReset();
 
-  descriptor->sourceSelect = (uint32_t)source;
-
-  /* Update clock source */
-  descriptor->sourceUpdate = 0;
-  descriptor->sourceUpdate = CLKUEN_ENA;
+  descriptor->source = (uint32_t)source;
 
   /* Enable clock */
   descriptor->divider = config->divisor ? config->divisor : 1;
@@ -478,7 +531,7 @@ static uint32_t branchFrequency(const void *clockBase)
   const struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
   const int sourceType =
-      commonClockSourceMap[clock->branch][descriptor->sourceSelect];
+      commonClockSourceMap[clock->branch][descriptor->source];
 
   if (!descriptor->divider || sourceType == -1)
     return 0;
@@ -497,6 +550,10 @@ static uint32_t branchFrequency(const void *clockBase)
 
     case CLOCK_PLL:
       baseFrequency = sysPllFrequency(0);
+      break;
+
+    case CLOCK_USB_PLL:
+      baseFrequency = usbPllFrequency(0);
       break;
 
     case CLOCK_WDT:

@@ -1,95 +1,93 @@
 /*
- * halm/platform/nxp/lpc11exx/platform_defs.h
- * Copyright (C) 2014 xent
+ * halm/platform/nxp/lpc13uxx/platform_defs.h
+ * Based on original from NXP
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_
-#define HALM_PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_LPC13UXX_PLATFORM_DEFS_H_
+#define HALM_PLATFORM_NXP_LPC13UXX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#define NVIC_PRIORITY_SIZE 2
-/*------------------System Configuration Registers----------------------------*/
+#define NVIC_PRIORITY_SIZE 3
+/*------------------System Configuration registers----------------------------*/
 typedef struct
 {
   __rw__ uint32_t SYSMEMREMAP; /* System memory remap */
   __rw__ uint32_t PRESETCTRL; /* Peripheral reset control */
   __rw__ uint32_t SYSPLLCTRL; /* System PLL control */
   __rw__ uint32_t SYSPLLSTAT;
-  __ne__ uint32_t RESERVED0[4];
+  __rw__ uint32_t USBPLLCTRL; /* USB PLL control */
+  __rw__ uint32_t USBPLLSTAT;
+  __ne__ uint32_t RESERVED0[2];
 
   /* Offset 0x0020 */
   __rw__ uint32_t SYSOSCCTRL;
   __rw__ uint32_t WDTOSCCTRL;
-  __rw__ uint32_t IRCCTRL;
-  __ne__ uint32_t RESERVED1;
+  __ne__ uint32_t RESERVED1[2];
   __rw__ uint32_t SYSRESSTAT; /* System reset status */
   __ne__ uint32_t RESERVED2[3];
 
   /* Offset 0x0040 */
   __rw__ uint32_t SYSPLLCLKSEL;
-  __rw__ uint32_t SYSPLLCLKUEN;
-  __ne__ uint32_t RESERVED3[10];
+  __rw__ uint32_t RESERVED3;
+  __rw__ uint32_t USBPLLCLKSEL;
+  __ne__ uint32_t RESERVED4[9];
   __rw__ uint32_t MAINCLKSEL;
-  __rw__ uint32_t MAINCLKUEN;
+  __rw__ uint32_t RESERVED5;
   __rw__ uint32_t SYSAHBCLKDIV;
-  __ne__ uint32_t RESERVED4;
+  __ne__ uint32_t RESERVED6;
 
   /* Offset 0x0080 */
   __rw__ uint32_t SYSAHBCLKCTRL;
-  __ne__ uint32_t RESERVED5[4];
+  __ne__ uint32_t RESERVED7[4];
   __rw__ uint32_t SSP0CLKDIV;
   __rw__ uint32_t UARTCLKDIV;
   __rw__ uint32_t SSP1CLKDIV;
-  __ne__ uint32_t RESERVED6[16];
+  __ne__ uint32_t RESERVED8[3];
+  __rw__ uint32_t TRACECLKDIV;
+  __rw__ uint32_t SYSTICKCLKDIV;
+  __ne__ uint32_t RESERVED9[3];
+
+  /* Offset 0x00C0 */
+  __rw__ uint32_t USBCLKSEL;
+  __rw__ uint32_t RESERVED10;
+  __rw__ uint32_t USBCLKDIV;
+  __ne__ uint32_t RESERVED11[5];
 
   /* Offset 0x00E0 */
-  __rw__ uint32_t CLKOUTCLKSEL;
-  __rw__ uint32_t CLKOUTUEN;
+  __rw__ uint32_t CLKOUTSEL;
+  __rw__ uint32_t RESERVED12;
   __rw__ uint32_t CLKOUTDIV;
-  __ne__ uint32_t RESERVED7[5];
+  __ne__ uint32_t RESERVED13[5];
 
   /* Offset 0x0100 */
   __rw__ uint32_t PIOPORCAP0;
   __rw__ uint32_t PIOPORCAP1;
-  __ne__ uint32_t RESERVED10[18];
+  __ne__ uint32_t RESERVED14[18];
 
   /* Offset 0x0150 */
   __rw__ uint32_t BODCTRL;
   __rw__ uint32_t SYSTCKCAL;
-  __ne__ uint32_t RESERVED11[6];
+  __ne__ uint32_t RESERVED15[6];
 
   /* Offset 0x0170 */
   __rw__ uint32_t IRQLATENCY;
   __rw__ uint32_t NMISRC;
-  union
-  {
-    __rw__ uint32_t PINTSEL[8];
-    struct
-    {
-      __rw__ uint32_t PINTSEL0;
-      __rw__ uint32_t PINTSEL1;
-      __rw__ uint32_t PINTSEL2;
-      __rw__ uint32_t PINTSEL3;
-      __rw__ uint32_t PINTSEL4;
-      __rw__ uint32_t PINTSEL5;
-      __rw__ uint32_t PINTSEL6;
-      __rw__ uint32_t PINTSEL7;
-    };
-  };
-  __ne__ uint32_t RESERVED12[26];
+  __rw__ uint32_t PINTSEL[8];
+  __rw__ uint32_t USBCLKCTRL;
+  __ro__ uint32_t USBCLKST;
+  __ne__ uint32_t RESERVED16[25];
 
-  /* Offset 0x0200 */
-  __ne__ uint32_t RESERVED13;
+  /* Offset 0x0204 */
   __rw__ uint32_t STARTERP0;
-  __ne__ uint32_t RESERVED14[3];
+  __ne__ uint32_t RESERVED17[3];
   __rw__ uint32_t STARTERP1;
-  __ne__ uint32_t RESERVED15[6];
-
-  /* Offset 0x0230 */
+  __ne__ uint32_t RESERVED18[6];
   __rw__ uint32_t PDSLEEPCFG;
   __rw__ uint32_t PDAWAKECFG;
   __rw__ uint32_t PDRUNCFG;
-  __ne__ uint32_t RESERVED16[110];
+  __ne__ uint32_t RESERVED19[111];
+
+  /* Offset 0x03F8 */
   __ro__ uint32_t DEVICE_ID;
 } LPC_SYSCON_Type;
 /*------------------Flash Memory Configuration--------------------------------*/
@@ -104,20 +102,17 @@ typedef struct
   __rw__ uint32_t FMSSTOP;
   __ne__ uint32_t RESERVED2;
   __ro__ uint32_t FMSW[4];
-  __ne__ uint32_t RESERVED3[24];
-  __rw__ uint32_t EEMSSTART;
-  __rw__ uint32_t EEMSSTOP;
-  __ro__ uint32_t EEMSSIG;
-  __ne__ uint32_t RESERVED4[974];
+  __ne__ uint32_t RESERVED3[1001];
 
   /* Offset 0x0FE0 */
   __ro__ uint32_t FMSTAT;
-  __ne__ uint32_t RESERVED5;
+  __ne__ uint32_t RESERVED4;
   __wo__ uint32_t FMSTATCLR;
 } LPC_FMC_Type;
 /*------------------Input/Output Configuration--------------------------------*/
 typedef struct
 {
+  /* Offset 0x000 */
   union
   {
     __rw__ uint32_t PIO0[24];
@@ -131,8 +126,6 @@ typedef struct
       __rw__ uint32_t PIO0_5;
       __rw__ uint32_t PIO0_6;
       __rw__ uint32_t PIO0_7;
-
-      /* Offset 0x20 */
       __rw__ uint32_t PIO0_8;
       __rw__ uint32_t PIO0_9;
       __rw__ uint32_t SWCLK_PIO0_10;
@@ -141,8 +134,6 @@ typedef struct
       __rw__ uint32_t TDO_PIO0_13;
       __rw__ uint32_t TRST_PIO0_14;
       __rw__ uint32_t SWDIO_PIO0_15;
-
-      /* Offset 0x40 */
       __rw__ uint32_t PIO0_16;
       __rw__ uint32_t PIO0_17;
       __rw__ uint32_t PIO0_18;
@@ -154,32 +145,28 @@ typedef struct
     };
   };
 
+  /* Offset 0x060 */
   union
   {
     __rw__ uint32_t PIO1[32];
     struct
     {
-      /* Offset 0x60 */
       __rw__ uint32_t PIO1_0;
       __rw__ uint32_t PIO1_1;
       __rw__ uint32_t PIO1_2;
       __rw__ uint32_t PIO1_3;
       __rw__ uint32_t PIO1_4;
       __rw__ uint32_t PIO1_5;
-      __rw__ uint32_t PIO1_6;
+      __ne__ uint32_t RESERVED0;
       __rw__ uint32_t PIO1_7;
-
-      /* Offset 0x80 */
       __rw__ uint32_t PIO1_8;
-      __rw__ uint32_t PIO1_9;
+      __ne__ uint32_t RESERVED1;
       __rw__ uint32_t PIO1_10;
       __rw__ uint32_t PIO1_11;
-      __rw__ uint32_t PIO1_12;
+      __ne__ uint32_t RESERVED2;
       __rw__ uint32_t PIO1_13;
       __rw__ uint32_t PIO1_14;
       __rw__ uint32_t PIO1_15;
-
-      /* Offset 0xA0 */
       __rw__ uint32_t PIO1_16;
       __rw__ uint32_t PIO1_17;
       __rw__ uint32_t PIO1_18;
@@ -188,37 +175,41 @@ typedef struct
       __rw__ uint32_t PIO1_21;
       __rw__ uint32_t PIO1_22;
       __rw__ uint32_t PIO1_23;
-
-      /* Offset 0xC0 */
       __rw__ uint32_t PIO1_24;
       __rw__ uint32_t PIO1_25;
       __rw__ uint32_t PIO1_26;
       __rw__ uint32_t PIO1_27;
       __rw__ uint32_t PIO1_28;
       __rw__ uint32_t PIO1_29;
-      __ne__ uint32_t RESERVED0;
+      __ne__ uint32_t RESERVED3;
       __rw__ uint32_t PIO1_31;
     };
   };
 } LPC_IOCON_Type;
-/*------------------Power Management Unit-------------------------------------*/
+/*------------------Analog-to-Digital Converter-------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t PCON;
+  __rw__ uint32_t CR;
+  __rw__ uint32_t GDR;
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t INTEN;
   union
   {
-    __rw__ uint32_t GPREG[4];
+    __ro__ uint32_t DR[8];
     struct
     {
-      __rw__ uint32_t GPREG0;
-      __rw__ uint32_t GPREG1;
-      __rw__ uint32_t GPREG2;
-      __rw__ uint32_t GPREG3;
+      __ro__ uint32_t DR0;
+      __ro__ uint32_t DR1;
+      __ro__ uint32_t DR2;
+      __ro__ uint32_t DR3;
+      __ro__ uint32_t DR4;
+      __ro__ uint32_t DR5;
+      __ro__ uint32_t DR6;
+      __ro__ uint32_t DR7;
     };
   };
-  __rw__ uint32_t GPREG4;
-} LPC_PMU_Type;
-/*------------------General Purpose Input/Output------------------------------*/
+  __ro__ uint32_t STAT;
+} LPC_ADC_Type;
 typedef struct
 {
   __rw__ uint32_t ISEL;
@@ -370,30 +361,6 @@ typedef struct
     };
   };
 } LPC_GPIO_Type;
-/*------------------Analog-to-Digital Converter-------------------------------*/
-typedef struct
-{
-  __rw__ uint32_t CR;
-  __rw__ uint32_t GDR;
-  __ne__ uint32_t RESERVED0;
-  __rw__ uint32_t INTEN;
-  union
-  {
-    __ro__ uint32_t DR[8];
-    struct
-    {
-      __ro__ uint32_t DR0;
-      __ro__ uint32_t DR1;
-      __ro__ uint32_t DR2;
-      __ro__ uint32_t DR3;
-      __ro__ uint32_t DR4;
-      __ro__ uint32_t DR5;
-      __ro__ uint32_t DR6;
-      __ro__ uint32_t DR7;
-    };
-  };
-  __ro__ uint32_t STAT;
-} LPC_ADC_Type;
 /*------------------Inter-Integrated Circuit----------------------------------*/
 typedef struct
 {
@@ -414,6 +381,35 @@ typedef struct
   __rw__ uint32_t MASK2;
   __rw__ uint32_t MASK3;
 } LPC_I2C_Type;
+/*------------------Power Management Unit-------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t PCON;
+  union
+  {
+    __rw__ uint32_t GPREG[4];
+    struct
+    {
+      __rw__ uint32_t GPREG0;
+      __rw__ uint32_t GPREG1;
+      __rw__ uint32_t GPREG2;
+      __rw__ uint32_t GPREG3;
+    };
+  };
+  __rw__ uint32_t GPREG4;
+} LPC_PMU_Type;
+/*------------------Repetitive Interrupt Timer--------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t COMPVAL;
+  __rw__ uint32_t MASK;
+  __rw__ uint32_t CTRL;
+  __rw__ uint32_t COUNTER;
+  __rw__ uint32_t COMPVAL_H;
+  __rw__ uint32_t MASK_H;
+  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t COUNTER_H;
+} LPC_RIT_Type;
 /*------------------Synchronous Serial Port-----------------------------------*/
 typedef struct
 {
@@ -453,28 +449,18 @@ typedef struct
     __ro__ uint32_t CR[4];
     struct
     {
-      __ro__ uint32_t B0_CR0;
-      __ne__ uint32_t RESERVED0;
-      __ro__ uint32_t B0_CR1;
-      __ne__ uint32_t RESERVED1;
-    };
-    struct
-    {
-      __ro__ uint32_t B1_CR0;
-      __ro__ uint32_t B1_CR1;
-      __ne__ uint32_t RESERVED2[2];
+      __ro__ uint32_t CR0;
+      __ro__ uint32_t CR1;
+      __ro__ uint32_t CR2;
+      __ro__ uint32_t CR3;
     };
   };
   __rw__ uint32_t EMR;
-  __ne__ uint32_t RESERVED3[12];
+  __ne__ uint32_t RESERVED1[12];
   __rw__ uint32_t CTCR;
-  __rw__ uint32_t PWMC;
+  __rw__ uint32_t PWMC; /* Chip-specific register */
 } LPC_TIMER_Type;
-/*------------------Extended Universal Asynchronous Receiver Transmitter------*/
-/*
- * UART controller with modem control, RS485, half duplex mode,
- * smart card interface, synchronous mode and IrDa support.
- */
+/*------------------Universal Asynchronous Receiver Transmitter--------------*/
 typedef struct
 {
   union
@@ -504,13 +490,13 @@ typedef struct
   __rw__ uint32_t OSR;
   __rw__ uint32_t TER;
   __ne__ uint32_t RESERVED0[3];
-  __rw__ uint32_t HDEN; /* Half Duplex Enable register */
+  __rw__ uint32_t HDEN;
   __ne__ uint32_t RESERVED1;
-  __rw__ uint32_t SCICTRL; /* Smart Card Interface Control register */
+  __rw__ uint32_t SCICTRL;
   __rw__ uint32_t RS485CTRL;
   __rw__ uint32_t RS485ADRMATCH;
   __rw__ uint32_t RS485DLY;
-  __rw__ uint32_t SYNCCTRL; /* Synchronous Mode Control register */
+  __rw__ uint32_t SYNCCTRL;
 } LPC_USART_Type;
 
 typedef LPC_USART_Type LPC_UART_Type;
@@ -541,6 +527,24 @@ typedef struct
   __rw__ uint32_t WARNINT;
   __rw__ uint32_t WINDOW;
 } LPC_WWDT_Type;
+/*------------------Universal Serial Bus--------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t DEVCMDSTAT;
+  __rw__ uint32_t INFO;
+  __rw__ uint32_t EPLISTSTART;
+  __rw__ uint32_t DATABUFSTART;
+  __rw__ uint32_t LPM;
+  __rw__ uint32_t EPSKIP;
+  __rw__ uint32_t EPINUSE;
+  __rw__ uint32_t EPBUFCFG;
+  __rw__ uint32_t INTSTAT;
+  __rw__ uint32_t INTEN;
+  __rw__ uint32_t INTSETSTAT;
+  __rw__ uint32_t INTROUTING;
+  __ro__ uint32_t RESERVED0;
+  __ro__ uint32_t EPTOGGLE;
+} LPC_USB_Type;
 /*----------------------------------------------------------------------------*/
 typedef struct
 {
@@ -550,13 +554,13 @@ typedef struct
   __ne__ uint8_t RESERVED1[0x4000 - sizeof(LPC_WWDT_Type)];
   LPC_USART_Type USART;
   __ne__ uint8_t RESERVED2[0x4000 - sizeof(LPC_USART_Type)];
-  LPC_TIMER_Type TIMER16B0;
+  LPC_TIMER_Type CT16B0;
   __ne__ uint8_t RESERVED3[0x4000 - sizeof(LPC_TIMER_Type)];
-  LPC_TIMER_Type TIMER16B1;
+  LPC_TIMER_Type CT16B1;
   __ne__ uint8_t RESERVED4[0x4000 - sizeof(LPC_TIMER_Type)];
-  LPC_TIMER_Type TIMER32B0;
+  LPC_TIMER_Type CT32B0;
   __ne__ uint8_t RESERVED5[0x4000 - sizeof(LPC_TIMER_Type)];
-  LPC_TIMER_Type TIMER32B1;
+  LPC_TIMER_Type CT32B1;
   __ne__ uint8_t RESERVED6[0x4000 - sizeof(LPC_TIMER_Type)];
   LPC_ADC_Type ADC;
   __ne__ uint8_t RESERVED7[0x1C000 - sizeof(LPC_ADC_Type)];
@@ -577,30 +581,41 @@ typedef struct
   LPC_GPIO_GROUP_INT_Type GPIO_GROUP_INT0;
   __ne__ uint8_t RESERVED15[0x4000 - sizeof(LPC_GPIO_GROUP_INT_Type)];
   LPC_GPIO_GROUP_INT_Type GPIO_GROUP_INT1;
+  __ne__ uint8_t RESERVED16[0x4000 - sizeof(LPC_GPIO_GROUP_INT_Type)];
+  LPC_RIT_Type RIT;
 } APB_DOMAIN_Type;
+
+typedef struct
+{
+  LPC_USB_Type USB;
+} AHB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
 extern APB_DOMAIN_Type APB_DOMAIN;
-extern LPC_GPIO_Type   GPIO_DOMAIN;
+extern AHB_DOMAIN_Type AHB_DOMAIN;
+extern LPC_GPIO_Type GPIO_DOMAIN;
 /*----------------------------------------------------------------------------*/
-#define LPC_I2C               (&APB_DOMAIN.I2C)
-#define LPC_WDT               (&APB_DOMAIN.WWDT.BASE)
-#define LPC_WWDT              (&APB_DOMAIN.WWDT)
-#define LPC_USART             (&APB_DOMAIN.USART)
-#define LPC_TIMER16B0         (&APB_DOMAIN.TIMER16B0)
-#define LPC_TIMER16B1         (&APB_DOMAIN.TIMER16B1)
-#define LPC_TIMER32B0         (&APB_DOMAIN.TIMER32B0)
-#define LPC_TIMER32B1         (&APB_DOMAIN.TIMER32B1)
-#define LPC_ADC               (&APB_DOMAIN.ADC)
-#define LPC_PMU               (&APB_DOMAIN.PMU)
-#define LPC_FMC               (&APB_DOMAIN.FMC)
-#define LPC_SSP0              (&APB_DOMAIN.SSP0)
-#define LPC_IOCON             (&APB_DOMAIN.IOCON)
-#define LPC_SYSCON            (&APB_DOMAIN.SYSCON)
-#define LPC_GPIO_INT          (&APB_DOMAIN.GPIO_INT)
-#define LPC_SSP1              (&APB_DOMAIN.SSP1)
-#define LPC_GPIO_GROUP_INT0   (&APB_DOMAIN.GPIO_GROUP_INT0)
-#define LPC_GPIO_GROUP_INT1   (&APB_DOMAIN.GPIO_GROUP_INT1)
+#define LPC_I2C             (&APB_DOMAIN.I2C)
+#define LPC_WDT             (&APB_DOMAIN.WWDT.BASE)
+#define LPC_WWDT            (&APB_DOMAIN.WWDT)
+#define LPC_USART           (&APB_DOMAIN.USART)
+#define LPC_CT16B0          (&APB_DOMAIN.CT16B0)
+#define LPC_CT16B1          (&APB_DOMAIN.CT16B1)
+#define LPC_CT32B0          (&APB_DOMAIN.CT32B0)
+#define LPC_CT32B1          (&APB_DOMAIN.CT32B1)
+#define LPC_ADC             (&APB_DOMAIN.ADC)
+#define LPC_PMU             (&APB_DOMAIN.PMU)
+#define LPC_FMC             (&APB_DOMAIN.FMC)
+#define LPC_SSP0            (&APB_DOMAIN.SSP0)
+#define LPC_IOCON           (&APB_DOMAIN.IOCON)
+#define LPC_SYSCON          (&APB_DOMAIN.SYSCON)
+#define LPC_GPIO_INT        (&APB_DOMAIN.GPIO_INT)
+#define LPC_SSP1            (&APB_DOMAIN.SSP1)
+#define LPC_GPIO_GROUP_INT0 (&APB_DOMAIN.GPIO_GROUP_INT0)
+#define LPC_GPIO_GROUP_INT1 (&APB_DOMAIN.GPIO_GROUP_INT1)
+#define LPC_RIT             (&APB_DOMAIN.RIT)
 
-#define LPC_GPIO              (&GPIO_DOMAIN)
+#define LPC_USB             (&AHB_DOMAIN.USB)
+
+#define LPC_GPIO            (&GPIO_DOMAIN)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NXP_LPC11EXX_PLATFORM_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC13UXX_PLATFORM_DEFS_H_ */
