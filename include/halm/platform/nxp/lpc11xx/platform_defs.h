@@ -303,8 +303,7 @@ typedef struct
   __rw__ uint32_t CTCR;
   __rw__ uint32_t PWMC; /* Chip-specific register */
 } LPC_TIMER_Type;
-/*------------------Extended Universal Asynchronous Receiver Transmitter------*/
-/* UART controller with modem control and RS485 support */
+/*------------------Universal Asynchronous Receiver Transmitter---------------*/
 typedef struct
 {
   union
@@ -445,13 +444,13 @@ typedef struct
   __ne__ uint8_t RESERVED1[0x4000 - sizeof(LPC_WWDT_Type)];
   LPC_UART_Type UART;
   __ne__ uint8_t RESERVED2[0x4000 - sizeof(LPC_UART_Type)];
-  LPC_TIMER_Type TIMER16B0;
+  LPC_TIMER_Type CT16B0;
   __ne__ uint8_t RESERVED3[0x4000 - sizeof(LPC_TIMER_Type)];
-  LPC_TIMER_Type TIMER16B1;
+  LPC_TIMER_Type CT16B1;
   __ne__ uint8_t RESERVED4[0x4000 - sizeof(LPC_TIMER_Type)];
-  LPC_TIMER_Type TIMER32B0;
+  LPC_TIMER_Type CT32B0;
   __ne__ uint8_t RESERVED5[0x4000 - sizeof(LPC_TIMER_Type)];
-  LPC_TIMER_Type TIMER32B1;
+  LPC_TIMER_Type CT32B1;
   __ne__ uint8_t RESERVED6[0x4000 - sizeof(LPC_TIMER_Type)];
   LPC_ADC_Type ADC;
   __ne__ uint8_t RESERVED7[0x1C000 - sizeof(LPC_ADC_Type)];
@@ -478,27 +477,27 @@ typedef struct
 extern APB_DOMAIN_Type APB_DOMAIN;
 extern AHB_DOMAIN_Type AHB_DOMAIN;
 /*----------------------------------------------------------------------------*/
-#define LPC_I2C       (&APB_DOMAIN.I2C)
-#define LPC_WDT       (&APB_DOMAIN.WWDT.BASE)
-#define LPC_WWDT      (&APB_DOMAIN.WWDT)
-#define LPC_UART      (&APB_DOMAIN.UART)
-#define LPC_TIMER16B0 (&APB_DOMAIN.TIMER16B0)
-#define LPC_TIMER16B1 (&APB_DOMAIN.TIMER16B1)
-#define LPC_TIMER32B0 (&APB_DOMAIN.TIMER32B0)
-#define LPC_TIMER32B1 (&APB_DOMAIN.TIMER32B1)
-#define LPC_ADC       (&APB_DOMAIN.ADC)
-#define LPC_PMU       (&APB_DOMAIN.PMU)
-#define LPC_FMC       (&APB_DOMAIN.FMC)
-#define LPC_SSP0      (&APB_DOMAIN.SSP0)
-#define LPC_IOCON     (&APB_DOMAIN.IOCON)
-#define LPC_SYSCON    (&APB_DOMAIN.SYSCON)
-#define LPC_CAN       (&APB_DOMAIN.CAN)
-#define LPC_SSP1      (&APB_DOMAIN.SSP1)
+#define LPC_I2C     (&APB_DOMAIN.I2C)
+#define LPC_WDT     (&APB_DOMAIN.WWDT.BASE)
+#define LPC_WWDT    (&APB_DOMAIN.WWDT)
+#define LPC_UART    (&APB_DOMAIN.UART)
+#define LPC_CT16B0  (&APB_DOMAIN.CT16B0)
+#define LPC_CT16B1  (&APB_DOMAIN.CT16B1)
+#define LPC_CT32B0  (&APB_DOMAIN.CT32B0)
+#define LPC_CT32B1  (&APB_DOMAIN.CT32B1)
+#define LPC_ADC     (&APB_DOMAIN.ADC)
+#define LPC_PMU     (&APB_DOMAIN.PMU)
+#define LPC_FMC     (&APB_DOMAIN.FMC)
+#define LPC_SSP0    (&APB_DOMAIN.SSP0)
+#define LPC_IOCON   (&APB_DOMAIN.IOCON)
+#define LPC_SYSCON  (&APB_DOMAIN.SYSCON)
+#define LPC_CAN     (&APB_DOMAIN.CAN)
+#define LPC_SSP1    (&APB_DOMAIN.SSP1)
 
-#define LPC_GPIO      (AHB_DOMAIN.GPIO)
-#define LPC_GPIO0     (&AHB_DOMAIN.GPIO[0])
-#define LPC_GPIO1     (&AHB_DOMAIN.GPIO[1])
-#define LPC_GPIO2     (&AHB_DOMAIN.GPIO[2])
-#define LPC_GPIO3     (&AHB_DOMAIN.GPIO[3])
+#define LPC_GPIO    (AHB_DOMAIN.GPIO)
+#define LPC_GPIO0   (&AHB_DOMAIN.GPIO[0])
+#define LPC_GPIO1   (&AHB_DOMAIN.GPIO[1])
+#define LPC_GPIO2   (&AHB_DOMAIN.GPIO[2])
+#define LPC_GPIO3   (&AHB_DOMAIN.GPIO[3])
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11XX_PLATFORM_DEFS_H_ */

@@ -27,10 +27,10 @@ void PIN_GINT0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void PIN_GINT1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SSP1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void I2C_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER16B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER16B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER32B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER32B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void CT16B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void CT16B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void CT32B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void CT32B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SSP0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void USART_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void ADC_ISR(void) __attribute__((weak, alias("defaultHandler")));
@@ -78,10 +78,10 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     0,
     SSP1_ISR,
     I2C_ISR,
-    TIMER16B0_ISR,
-    TIMER16B1_ISR,
-    TIMER32B0_ISR,
-    TIMER32B1_ISR,
+    CT16B0_ISR,
+    CT16B1_ISR,
+    CT32B0_ISR,
+    CT32B1_ISR,
     SSP0_ISR,
     USART_ISR,
     0,

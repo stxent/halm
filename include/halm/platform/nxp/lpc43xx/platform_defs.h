@@ -1447,7 +1447,6 @@ typedef struct
   __rw__ uint32_t TER;
 } LPC_UART_Type;
 /*------------------Universal Synchronous Asynchronous Receiver Transmitter---*/
-/* UART block with modem control, RS485 support and IrDA mode */
 typedef struct
 {
   union

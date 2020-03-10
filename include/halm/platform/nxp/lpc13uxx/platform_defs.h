@@ -460,7 +460,7 @@ typedef struct
   __rw__ uint32_t CTCR;
   __rw__ uint32_t PWMC; /* Chip-specific register */
 } LPC_TIMER_Type;
-/*------------------Universal Asynchronous Receiver Transmitter--------------*/
+/*------------------Universal Synchronous Asynchronous Receiver Transmitter---*/
 typedef struct
 {
   union

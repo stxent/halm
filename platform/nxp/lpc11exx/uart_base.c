@@ -31,35 +31,35 @@ const struct EntityClass * const UartBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 const struct PinEntry uartPins[] = {
     {
-        .key = PIN(0, 18), /* UART_RX */
+        .key = PIN(0, 18), /* RXD */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(0, 19), /* UART_TX */
+        .key = PIN(0, 19), /* TXD */
         .channel = 0,
         .value = 1
     }, {
-        .key = PIN(1, 13), /* UART_TX */
+        .key = PIN(1, 13), /* TXD */
         .channel = 0,
         .value = 3
     }, {
-        .key = PIN(1, 14), /* UART_RX */
+        .key = PIN(1, 14), /* RXD */
         .channel = 0,
         .value = 3
     }, {
-        .key = PIN(1, 17), /* UART_RX */
+        .key = PIN(1, 17), /* RXD */
         .channel = 0,
         .value = 2
     }, {
-        .key = PIN(1, 18), /* UART_TX */
+        .key = PIN(1, 18), /* TXD */
         .channel = 0,
         .value = 2
     }, {
-        .key = PIN(1, 26), /* UART_RX */
+        .key = PIN(1, 26), /* RXD */
         .channel = 0,
         .value = 2
     }, {
-        .key = PIN(1, 27), /* UART_TX */
+        .key = PIN(1, 27), /* TXD */
         .channel = 0,
         .value = 2
     }, {

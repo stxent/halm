@@ -37,19 +37,19 @@ const struct EntityClass * const GpTimerBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 static const struct TimerBlockDescriptor timerBlockEntries[] = {
     {
-        .reg = LPC_TIMER16B0,
+        .reg = LPC_CT16B0,
         .clock = CLK_CT16B0,
         .resolution = 16
     }, {
-        .reg = LPC_TIMER16B1,
+        .reg = LPC_CT16B1,
         .clock = CLK_CT16B1,
         .resolution = 16
     }, {
-        .reg = LPC_TIMER32B0,
+        .reg = LPC_CT32B0,
         .clock = CLK_CT32B0,
         .resolution = 32
     }, {
-        .reg = LPC_TIMER32B1,
+        .reg = LPC_CT32B1,
         .clock = CLK_CT32B1,
         .resolution = 32
     }
@@ -150,22 +150,22 @@ static bool setInstance(uint8_t channel, struct GpTimerBase *object)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-void TIMER16B0_ISR(void)
+void CT16B0_ISR(void)
 {
   instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER16B1_ISR(void)
+void CT16B1_ISR(void)
 {
   instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER32B0_ISR(void)
+void CT32B0_ISR(void)
 {
   instances[2]->handler(instances[2]);
 }
 /*----------------------------------------------------------------------------*/
-void TIMER32B1_ISR(void)
+void CT32B1_ISR(void)
 {
   instances[3]->handler(instances[3]);
 }
@@ -192,7 +192,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   sysClockEnable(entry->clock);
 
-  timer->irq = TIMER16B0_IRQ + timer->channel;
+  timer->irq = CT16B0_IRQ + timer->channel;
   timer->reg = entry->reg;
   timer->resolution = entry->resolution;
 

@@ -20,10 +20,10 @@ void SYSTICK_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
 /* Chip-specific IRQ handlers */
 void I2C_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER16B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER16B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER32B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER32B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void CT16B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void CT16B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void CT32B0_ISR(void) __attribute__((weak, alias("defaultHandler")));
+void CT32B1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SSP0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SSP1_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void UART_ISR(void) __attribute__((weak, alias("defaultHandler")));
@@ -111,10 +111,10 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
 
     /* Other LPC13xx interrupts */
     I2C_ISR,
-    TIMER16B0_ISR,
-    TIMER16B1_ISR,
-    TIMER32B0_ISR,
-    TIMER32B1_ISR,
+    CT16B0_ISR,
+    CT16B1_ISR,
+    CT32B0_ISR,
+    CT32B1_ISR,
     SSP0_ISR,
     UART_ISR,
     USB_ISR,
