@@ -11,6 +11,11 @@
 #include <halm/pin.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/gptimer_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
+/*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerBase;
 
 struct GpTimerBaseConfig
