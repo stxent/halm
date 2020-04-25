@@ -388,7 +388,7 @@ static enum Result sdioSetParam(void *object, enum IfParameter parameter,
 
     case IF_SDIO_BLOCK_SIZE:
     {
-      const size_t blockLength = *(const size_t *)data;
+      const uint32_t blockLength = *(const uint32_t *)data;
 
       if (blockLength < 0xFFFF)
       {

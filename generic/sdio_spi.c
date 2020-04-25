@@ -902,9 +902,9 @@ static enum Result sdioSetParam(void *object, enum IfParameter parameter,
       return E_OK;
 
     case IF_SDIO_BLOCK_SIZE:
-      if (*(const size_t *)data <= BLOCK_SIZE_MAX)
+      if (*(const uint32_t *)data <= BLOCK_SIZE_MAX)
       {
-        interface->blockSize = *(const size_t *)data;
+        interface->blockSize = *(const uint32_t *)data;
         return E_OK;
       }
       else

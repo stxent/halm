@@ -53,12 +53,12 @@ struct SdioSpi
   uint8_t *rxBuffer;
   /* Pointer to an output buffer */
   const uint8_t *txBuffer;
+  /* Block size of data transfers */
+  uint32_t blockSize;
   /* Number of bytes left */
   size_t left;
   /* Total transfer size */
   size_t length;
-  /* Block size in data transfers */
-  size_t blockSize;
 
   /* Argument for the most recent command */
   uint32_t argument;
