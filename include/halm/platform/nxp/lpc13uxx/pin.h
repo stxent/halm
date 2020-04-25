@@ -23,6 +23,7 @@ void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum PinPull);
+void pinSetSlewRate(struct Pin, enum PinSlewRate);
 void pinSetType(struct Pin, enum PinType);
 
 END_DECLS
@@ -53,12 +54,6 @@ static inline void pinWrite(struct Pin pin, bool value)
 {
   /* Only 0 and 1 are allowed */
   LPC_GPIO->B[(pin.data.port << 5) + pin.data.offset] = value;
-}
-
-static inline void pinSetSlewRate(struct Pin pin __attribute__((unused)),
-    enum PinSlewRate rate __attribute__((unused)))
-{
-  /* Slew rate control is not supported on these devices */
 }
 
 END_DECLS

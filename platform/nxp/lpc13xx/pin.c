@@ -11,7 +11,8 @@ static inline LPC_GPIO_Type *calcPort(struct PinData);
 static inline volatile uint32_t *calcControlReg(struct PinData);
 static volatile uint32_t *calcMaskedReg(struct PinData);
 static void commonPinInit(struct Pin);
-static bool isCommonPin(struct Pin);
+static inline bool isI2CPin(struct Pin);
+static inline bool isSystemPin(struct Pin);
 /*----------------------------------------------------------------------------*/
 static const uint8_t pinRegMap[4][12] = {
     {0x0C, 0x10, 0x1C, 0x2C, 0x30, 0x34, 0x4C, 0x50, 0x60, 0x64, 0x68, 0x74},
@@ -50,10 +51,30 @@ static void commonPinInit(struct Pin pin)
   pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
-static bool isCommonPin(struct Pin pin)
+static bool isI2CPin(struct Pin pin)
 {
   /* PIO0_4 and PIO0_5 are I2C pins with different function set */
-  return pin.data.port != 0 || (pin.data.offset < 4 || pin.data.offset > 5);
+  return pin.data.port == 0 && pin.data.offset >= 4 && pin.data.offset <= 5;
+}
+/*----------------------------------------------------------------------------*/
+static bool isSystemPin(struct Pin pin)
+{
+  /*
+   * PIO0_0 is Reset pin, PIO0_10 and PIO1_3 are SWD pins,
+   * PIO0_11, PIO1_0 through PIO1_2 have a reserved function.
+   */
+  switch (pin.data.port)
+  {
+    case 0:
+      return (pin.data.offset >= 10 && pin.data.offset <= 11)
+          || pin.data.offset == 0;
+
+    case 1:
+      return pin.data.offset <= 3;
+
+    default:
+      return false;
+  }
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
@@ -96,33 +117,37 @@ void pinSetFunction(struct Pin pin, uint8_t function)
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.data);
-  const uint32_t value = *reg;
+  uint32_t value = *reg;
 
   switch (function)
   {
-    case PIN_DEFAULT:
-    {
-      /* Some pins have default function value other than zero */
-      bool alternate;
-
-      alternate = pin.data.port == 0 && (pin.data.offset == 0
-          || (pin.data.offset >= 10 && pin.data.offset <= 11));
-      alternate = alternate || (pin.data.port == 1 && pin.data.offset <= 3);
-      function = alternate ? 1 : 0;
-      break;
-    }
-
     case PIN_ANALOG:
       *reg = value & ~IOCON_DIGITAL;
       return;
+
+    case PIN_DEFAULT:
+      value &= ~IOCON_FUNC_MASK;
+
+      /* Default function for Reset and JTAG/SWD pins is 1 */
+      if (isSystemPin(pin))
+        value |= IOCON_FUNC(1);
+
+      /* Mode configuration for I2C pins */
+      if (isI2CPin(pin))
+        value = (value & ~IOCON_I2C_MASK) | IOCON_I2C_IO;
+      break;
+
+    default:
+      value = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
+      break;
   }
 
-  *reg = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
+  *reg = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum PinPull pull)
 {
-  if (!pin.reg || !isCommonPin(pin))
+  if (!pin.reg || isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.data);
@@ -149,18 +174,23 @@ void pinSetPull(struct Pin pin, enum PinPull pull)
 void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   /* Slew rate control is available only for I2C pins */
-  if (!pin.reg || isCommonPin(pin))
+  if (!pin.reg || !isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.data);
+  uint32_t value = *reg & ~IOCON_I2C_MASK;
 
-  *reg = (*reg & ~IOCON_I2C_MASK)
-      | (rate == PIN_SLEW_FAST ? IOCON_I2C_PLUS : 0);
+  if (IOCON_FUNC_VALUE(value) == 1)
+    value |= (rate == PIN_SLEW_FAST) ? IOCON_I2C_PLUS : IOCON_I2C_STANDARD;
+  else
+    value |= IOCON_I2C_IO;
+
+  *reg = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum PinType type)
 {
-  if (!pin.reg || !isCommonPin(pin))
+  if (!pin.reg || isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.data);

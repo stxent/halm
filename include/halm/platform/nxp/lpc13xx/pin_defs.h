@@ -11,6 +11,7 @@
 /*------------------IO Configuration registers--------------------------------*/
 #define IOCON_FUNC_MASK                 BIT_FIELD(MASK(3), 0)
 #define IOCON_FUNC(func)                BIT_FIELD((func), 0)
+#define IOCON_FUNC_VALUE(reg)           FIELD_VALUE((reg), IOCON_FUNC_MASK, 0)
 /*----------------------------------------------------------------------------*/
 #define IOCON_I2C_MASK                  BIT_FIELD(MASK(2), 8)
 /* Standard or Fast-mode with input glitch filter */
