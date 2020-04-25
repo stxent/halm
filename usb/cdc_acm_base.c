@@ -390,6 +390,12 @@ uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
   return privateData->state.lineCoding.dteRate;
 }
 /*----------------------------------------------------------------------------*/
+uint8_t cdcAcmBaseGetState(const struct CdcAcmBase *driver)
+{
+  const struct PrivateData * const privateData = driver->privateData;
+  return privateData->state.controlLineState;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct CdcAcmBaseConfig * const config = configBase;

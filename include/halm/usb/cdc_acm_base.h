@@ -59,6 +59,7 @@ struct CdcAcmBase
 BEGIN_DECLS
 
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *);
+uint8_t cdcAcmBaseGetState(const struct CdcAcmBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

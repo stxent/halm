@@ -345,6 +345,20 @@ static enum Result interfaceGetParam(void *object, enum IfParameter parameter,
       break;
   }
 
+  switch ((enum SerialParameter)parameter)
+  {
+    case IF_SERIAL_RTS:
+      *(bool *)data = (cdcAcmBaseGetState(interface->driver) & CDC_RTS) != 0;
+      return E_OK;
+
+    case IF_SERIAL_DTR:
+      *(bool *)data = (cdcAcmBaseGetState(interface->driver) & CDC_DTR) != 0;
+      return E_OK;
+
+    default:
+      break;
+  }
+
   switch ((enum CdcAcmParameter)parameter)
   {
     case IF_CDC_ACM_STATUS:

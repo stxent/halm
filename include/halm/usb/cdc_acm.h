@@ -10,12 +10,13 @@
 #include <xcore/interface.h>
 #include <halm/generic/pointer_array.h>
 #include <halm/generic/pointer_queue.h>
+#include <halm/generic/serial.h>
 #include <halm/usb/cdc_acm_base.h>
 /*----------------------------------------------------------------------------*/
 enum CdcAcmParameter
 {
   /** Retrieve extended information about current interface status. */
-  IF_CDC_ACM_STATUS = IF_PARAMETER_END
+  IF_CDC_ACM_STATUS = IF_SERIAL_PARAMETER_END
 };
 
 enum

@@ -28,7 +28,10 @@ enum SerialParameter
   /** Read the DSR status line. */
   IF_SERIAL_DSR,
   /** Write the DTR status line. */
-  IF_SERIAL_DTR
+  IF_SERIAL_DTR,
+
+  /** End of the list. */
+  IF_SERIAL_PARAMETER_END
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_SERIAL_H_ */
