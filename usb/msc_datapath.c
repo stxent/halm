@@ -351,7 +351,7 @@ static bool storageRead(struct MscQueryHandler *handler,
 
   ifSetCallback(storage, storageReadCallback, handler);
 
-  if (ifSetParam(storage, IF_POSITION, &query->position) != E_OK)
+  if (ifSetParam(storage, IF_POSITION_64, &query->position) != E_OK)
     return false;
 
   return ifRead(storage, (void *)query->data, query->length) == query->length;
@@ -399,7 +399,7 @@ static bool storageWrite(struct MscQueryHandler *handler,
 
   ifSetCallback(storage, storageWriteCallback, handler);
 
-  if (ifSetParam(storage, IF_POSITION, &query->position) != E_OK)
+  if (ifSetParam(storage, IF_POSITION_64, &query->position) != E_OK)
     return false;
 
   return ifWrite(storage, (const void *)query->data, query->length) ==

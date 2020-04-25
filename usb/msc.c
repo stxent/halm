@@ -857,7 +857,7 @@ static enum Result driverInit(void *object, const void *configBase)
   /* Calculate storage geometry */
   uint64_t storageSize;
 
-  if ((res = ifGetParam(driver->storage, IF_SIZE, &storageSize)) != E_OK)
+  if ((res = ifGetParam(driver->storage, IF_SIZE_64, &storageSize)) != E_OK)
     return res;
 
   driver->blockLength = MSC_BLOCK_SIZE;

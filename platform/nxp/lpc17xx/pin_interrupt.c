@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include <xcore/memory.h>
+#include <xcore/accel.h>
 #include <halm/platform/nxp/lpc17xx/pin_defs.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 #include <halm/platform/nxp/pin_interrupt.h>

@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <xcore/asm.h>
+#include <xcore/accel.h>
 #include <halm/delay.h>
 #include <halm/generic/pointer_array.h>
 #include <halm/generic/pointer_queue.h>

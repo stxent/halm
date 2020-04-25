@@ -118,11 +118,11 @@ static enum Result mmfGetParam(void *object, enum IfParameter parameter,
 
   switch (parameter)
   {
-    case IF_POSITION:
+    case IF_POSITION_64:
       *(uint64_t *)data = (uint64_t)dev->position;
       return E_OK;
 
-    case IF_SIZE:
+    case IF_SIZE_64:
       *(uint64_t *)data = (uint64_t)dev->size;
       return E_OK;
 
@@ -138,7 +138,7 @@ static enum Result mmfSetParam(void *object, enum IfParameter parameter,
 
   switch (parameter)
   {
-    case IF_POSITION:
+    case IF_POSITION_64:
     {
       const off_t position = (off_t)(*(const uint64_t *)data);
 

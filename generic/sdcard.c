@@ -662,11 +662,11 @@ static enum Result cardGetParam(void *object, enum IfParameter parameter,
 
   switch (parameter)
   {
-    case IF_POSITION:
+    case IF_POSITION_64:
       *(uint64_t *)data = device->position;
       return E_OK;
 
-    case IF_SIZE:
+    case IF_SIZE_64:
       *(uint64_t *)data = (uint64_t)device->blockCount << BLOCK_POW;
       return E_OK;
 
@@ -701,7 +701,7 @@ static enum Result cardSetParam(void *object, enum IfParameter parameter,
       device->blocking = true;
       return E_OK;
 
-    case IF_POSITION:
+    case IF_POSITION_64:
     {
       const uint64_t position = *(const uint64_t *)data;
 

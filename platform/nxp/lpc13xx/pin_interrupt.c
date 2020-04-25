@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include <xcore/asm.h>
+#include <xcore/accel.h>
 #include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 struct PinInterruptHandlerConfig

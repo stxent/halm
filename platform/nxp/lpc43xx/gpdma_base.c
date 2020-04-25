@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <xcore/accel.h>
 #include <xcore/memory.h>
 #include <halm/irq.h>
 #include <halm/platform/nxp/gpdma_base.h>

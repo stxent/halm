@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <xcore/asm.h>
+#include <xcore/accel.h>
 #include <halm/generic/can.h>
 #include <halm/platform/nxp/gen_1/can.h>
 #include <halm/platform/nxp/gen_1/can_defs.h>
