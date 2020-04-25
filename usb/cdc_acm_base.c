@@ -329,16 +329,16 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
     {
       if (packet->length == sizeof(struct CdcLineCoding))
       {
-        struct CdcLineCoding * const lc = &privateData->state.lineCoding;
+        struct CdcLineCoding * const settings = &privateData->state.lineCoding;
 
-        memcpy(lc, response, sizeof(*lc));
-        lc->dteRate = fromLittleEndian32(lc->dteRate);
+        memcpy(settings, response, sizeof(*settings));
+        settings->dteRate = fromLittleEndian32(settings->dteRate);
 
         event = true;
 
         usbTrace("cdc_acm at %u: rate %u, format %u, parity %u, width %u",
-            driver->controlInterfaceIndex, lc->dteRate,
-            lc->charFormat, lc->parityType, lc->dataBits);
+            driver->controlInterfaceIndex, settings->dteRate,
+            settings->charFormat, settings->parityType, settings->dataBits);
       }
       else
       {
@@ -350,11 +350,11 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
 
     case CDC_GET_LINE_CODING:
     {
-      struct CdcLineCoding * const lc = response;
+      struct CdcLineCoding * const settings = response;
 
-      memcpy(lc, &privateData->state.lineCoding, sizeof(*lc));
-      lc->dteRate = toLittleEndian32(lc->dteRate);
-      *responseLength = sizeof(*lc);
+      memcpy(settings, &privateData->state.lineCoding, sizeof(*settings));
+      settings->dteRate = toLittleEndian32(settings->dteRate);
+      *responseLength = sizeof(*settings);
 
       usbTrace("cdc_acm at %u: line coding requested",
           driver->controlInterfaceIndex);

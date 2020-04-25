@@ -36,7 +36,7 @@ static enum Result busInit(void *object, const void *configBase)
 {
   const struct SimpleGpioBusConfig * const config = configBase;
   struct SimpleGpioBus * const bus = object;
-  unsigned int number = 0;
+  size_t number = 0;
 
   /* Find number of pins in the array */
   while (config->pins[number] && ++number < 32);
@@ -49,7 +49,7 @@ static enum Result busInit(void *object, const void *configBase)
   if (!bus->pins)
     return E_MEMORY;
 
-  for (unsigned int index = 0; index < bus->number; ++index)
+  for (size_t index = 0; index < bus->number; ++index)
   {
     bus->pins[index] = pinInit(config->pins[index]);
 
@@ -89,7 +89,7 @@ static uint32_t busRead(void *object)
   const struct SimpleGpioBus * const bus = object;
   uint32_t result = 0;
 
-  for (unsigned int position = 0; position < bus->number; ++position)
+  for (size_t position = 0; position < bus->number; ++position)
     result |= pinRead(bus->pins[position]) << position;
 
   return result;
@@ -99,6 +99,6 @@ static void busWrite(void *object, uint32_t value)
 {
   const struct SimpleGpioBus * const bus = object;
 
-  for (unsigned int position = 0; position < bus->number; ++position)
+  for (size_t position = 0; position < bus->number; ++position)
     pinWrite(bus->pins[position], (value >> position) & 1);
 }

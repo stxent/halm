@@ -26,7 +26,7 @@ struct AdcBusConfig
   enum AdcEvent event;
   /** Optional: interrupt priority. */
   IrqPriority priority;
-  /** Optional: number of clocks used for each conversion. */
+  /** Optional: number of bits of accuracy of the result. */
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;

@@ -55,7 +55,7 @@ struct SdioSpi
   const uint8_t *txBuffer;
   /* Number of bytes left */
   size_t left;
-  /* Number of bytes to be sent or received */
+  /* Total transfer size */
   size_t length;
   /* Block size in data transfers */
   size_t blockSize;

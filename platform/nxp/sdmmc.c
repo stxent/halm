@@ -337,7 +337,7 @@ static enum Result sdioGetParam(void *object, enum IfParameter parameter,
 
       if (response == SDIO_RESPONSE_LONG)
       {
-        for (unsigned int index = 0; index < 4; ++index)
+        for (size_t index = 0; index < 4; ++index)
           buffer[index] = reg->RESP[index];
 
         return E_OK;

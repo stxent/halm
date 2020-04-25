@@ -95,7 +95,12 @@ static void dmaPeripheralInit(void)
   LPC_GPDMA->CONFIG |= DMA_ENABLE;
 
 #ifndef CONFIG_PLATFORM_NXP_GPDMA_SYNC
-  /* Disable synchronization logic to improve response time */
+  /*
+   * Synchronization logic is enabled by default. It must be used when
+   * the peripheral generating the DMA request runs on a different clock
+   * to the GPDMA. For peripherals running on the same clock as the GPDMA,
+   * disabling the synchronization logic improves the response time.
+   */
   LPC_GPDMA->SYNC = SYNC_MASK;
 #endif
 

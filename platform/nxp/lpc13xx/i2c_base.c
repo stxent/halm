@@ -92,7 +92,6 @@ static void i2cDeinit(void *object __attribute__((unused)))
 {
   /* Put the peripheral into the reset state */
   LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C;
-
   sysClockDisable(CLK_I2C);
 
   instance = 0;

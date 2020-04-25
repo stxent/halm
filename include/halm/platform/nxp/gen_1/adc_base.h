@@ -24,7 +24,7 @@ struct AdcBaseConfig
 {
   /** Optional: desired converter clock. */
   uint32_t frequency;
-  /** Optional: number of clocks used for each conversion. */
+  /** Optional: number of bits of accuracy of the result. */
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;

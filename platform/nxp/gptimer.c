@@ -59,7 +59,7 @@ static void interruptHandler(void *object)
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
 
-  /* Clear all pending interrupts */
+  /* Clear all possible pending interrupts */
   reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
 
   timer->callback(timer->callbackArgument);

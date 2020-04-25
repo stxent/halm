@@ -83,7 +83,7 @@ struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
   const struct Pin pin = pinInit(key);
 
   pinInput(pin);
-  /* Enable analog pin mode bit */
+  /* Enable analog mode */
   pinSetFunction(pin, PIN_ANALOG);
   /* Set analog pin function */
   pinSetFunction(pin, function);
