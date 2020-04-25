@@ -191,11 +191,11 @@ static enum Result oneWireInit(void *object, const void *configBase)
   LPC_UART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
-  reg->LCR = LCR_WLS_8BIT;
+  reg->LCR = LCR_WLS(WLS_8BIT);
   /* Enable FIFO and set RX trigger level to single byte */
   reg->FCR = (reg->FCR & ~FCR_RXTRIGLVL_MASK) | FCR_FIFOEN;
   /* Enable RBR and THRE interrupts */
-  reg->IER = IER_RBRIE | IER_THREIE;
+  reg->IER = IER_RBRINTEN | IER_THREINTEN;
   /* Transmitter is enabled by default */
 
   uartSetRate(object, interface->resetRate);

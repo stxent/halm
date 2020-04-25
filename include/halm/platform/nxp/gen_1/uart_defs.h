@@ -9,22 +9,37 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Line Control Register-------------------------------------*/
+enum
+{
+  WLS_5BIT = 0,
+  WLS_6BIT = 1,
+  WLS_7BIT = 2,
+  WLS_8BIT = 3
+};
+
+enum
+{
+  PS_ODD         = 0,
+  PS_EVEN        = 1,
+  PS_FORCED_HIGH = 2,
+  PS_FORCED_LOW  = 3
+};
+
 #define LCR_WLS_MASK                    BIT_FIELD(MASK(2), 0)
-#define LCR_WLS_5BIT                    BIT_FIELD(0, 0)
-#define LCR_WLS_6BIT                    BIT_FIELD(1, 0)
-#define LCR_WLS_7BIT                    BIT_FIELD(2, 0)
-#define LCR_WLS_8BIT                    BIT_FIELD(3, 0)
+#define LCR_WLS(length)                 BIT_FIELD((length), 0)
+#define LCR_WLS_VALUE(reg)              FIELD_VALUE((reg), LCR_WLS_MASK, 0)
 #define LCR_SBS_2BIT                    BIT(2)
+#define LCR_PE                          BIT(3)
 #define LCR_PS_MASK                     BIT_FIELD(MASK(2), 4)
-#define LCR_PS                          BIT(3)
-#define LCR_PS_ODD                      BIT_FIELD(0, 4)
-#define LCR_PS_EVEN                     BIT_FIELD(1, 4)
+#define LCR_PS(parity)                  BIT_FIELD((parity), 4)
+#define LCR_PS_VALUE(reg)               FIELD_VALUE((reg), LCR_PS_MASK, 4)
 #define LCR_BC                          BIT(6)
 #define LCR_DLAB                        BIT(7)
 /*------------------Interrupt Enable Register---------------------------------*/
-#define IER_RBRIE                       BIT(0)
-#define IER_THREIE                      BIT(1)
-#define IER_RXIE                        BIT(2)
+#define IER_RBRINTEN                    BIT(0)
+#define IER_THREINTEN                   BIT(1)
+#define IER_RLSINTEN                    BIT(2)
+#define IER_MSINTEN                     BIT(3)
 #define IER_ABEOINTEN                   BIT(8)
 #define IER_ABTOINTEN                   BIT(9)
 /*------------------Interrupt Identification Register-------------------------*/
@@ -40,6 +55,8 @@
 #define IIR_INTID_CTI                   BIT_FIELD(6, 1)
 /* Transmitter Holding Register Empty interrupt */
 #define IIR_INTID_THRE                  BIT_FIELD(1, 1)
+/* Modem Status interrupt */
+#define IIR_INTID_MS                    BIT_FIELD(0, 1)
 /* End of auto-baud interrupt */
 #define IIR_ABEOINT                     BIT(8)
 /* Auto-baud timeout interrupt */
@@ -81,6 +98,15 @@ enum
 #define LSR_RXFE                        BIT(7)
 /* Error in transmitted character */
 #define LSR_TXERR                       BIT(8)
+/*------------------Modem Status Register-------------------------------------*/
+#define MSR_DCTS                        BIT(0)
+#define MSR_DDSR                        BIT(1)
+#define MSR_TERI                        BIT(2)
+#define MSR_DDCD                        BIT(3)
+#define MSR_CTS                         BIT(4)
+#define MSR_DSR                         BIT(5)
+#define MSR_RI                          BIT(6)
+#define MSR_DCD                         BIT(7)
 /*------------------Transmit Enable Register----------------------------------*/
 /* Transmit enable */
 #define TER_TXEN                        BIT(7)

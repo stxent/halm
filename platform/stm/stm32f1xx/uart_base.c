@@ -68,6 +68,14 @@ static const struct UartBlockDescriptor uartBlockEntries[] = {
 /*----------------------------------------------------------------------------*/
 const struct PinEntry uartPins[] = {
     {
+        .key = PIN(PORT_A, 2), /* USART2_TX */
+        .channel = 1,
+        .value = PACK_REMAP(REMAP_USART2, 0)
+    }, {
+        .key = PIN(PORT_A, 3), /* USART2_RX */
+        .channel = 1,
+        .value = PACK_REMAP(REMAP_USART2, 0)
+    }, {
         .key = PIN(PORT_A, 9), /* USART1_TX */
         .channel = 0,
         .value = PACK_REMAP(REMAP_USART1, 0)
@@ -84,22 +92,6 @@ const struct PinEntry uartPins[] = {
         .channel = 0,
         .value = PACK_REMAP(REMAP_USART1, 1)
     }, {
-        .key = PIN(PORT_A, 2), /* USART2_TX */
-        .channel = 1,
-        .value = PACK_REMAP(REMAP_USART2, 0)
-    }, {
-        .key = PIN(PORT_A, 3), /* USART2_RX */
-        .channel = 1,
-        .value = PACK_REMAP(REMAP_USART2, 0)
-    }, {
-        .key = PIN(PORT_D, 5), /* USART2_TX */
-        .channel = 1,
-        .value = PACK_REMAP(REMAP_USART2, 1)
-    }, {
-        .key = PIN(PORT_D, 6), /* USART2_RX */
-        .channel = 1,
-        .value = PACK_REMAP(REMAP_USART2, 1)
-    }, {
         .key = PIN(PORT_B, 10), /* USART3_TX */
         .channel = 2,
         .value = PACK_REMAP(REMAP_USART3, 0)
@@ -112,22 +104,14 @@ const struct PinEntry uartPins[] = {
         .channel = 2,
         .value = PACK_REMAP(REMAP_USART3, 1)
     }, {
-        .key = PIN(PORT_C, 11), /* USART3_RX */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_USART3, 1)
-    }, {
-        .key = PIN(PORT_D, 8), /* USART3_TX */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_USART3, 3)
-    }, {
-        .key = PIN(PORT_D, 9), /* USART3_RX */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_USART3, 3)
-    }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_C, 10), /* UART4_TX */
         .channel = 3,
         .value = 0
+    }, {
+        .key = PIN(PORT_C, 11), /* USART3_RX */
+        .channel = 2,
+        .value = PACK_REMAP(REMAP_USART3, 1)
     }, {
         /* Available on STM32F105 and STM32F107 series only */
         .key = PIN(PORT_C, 11), /* UART4_RX */
@@ -143,6 +127,22 @@ const struct PinEntry uartPins[] = {
         .key = PIN(PORT_D, 2), /* UART5_RX */
         .channel = 4,
         .value = 0
+    }, {
+        .key = PIN(PORT_D, 5), /* USART2_TX */
+        .channel = 1,
+        .value = PACK_REMAP(REMAP_USART2, 1)
+    }, {
+        .key = PIN(PORT_D, 6), /* USART2_RX */
+        .channel = 1,
+        .value = PACK_REMAP(REMAP_USART2, 1)
+    }, {
+        .key = PIN(PORT_D, 8), /* USART3_TX */
+        .channel = 2,
+        .value = PACK_REMAP(REMAP_USART3, 3)
+    }, {
+        .key = PIN(PORT_D, 9), /* USART3_RX */
+        .channel = 2,
+        .value = PACK_REMAP(REMAP_USART3, 3)
     }, {
         .key = 0 /* End of pin function association list */
     }

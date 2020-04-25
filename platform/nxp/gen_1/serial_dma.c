@@ -229,7 +229,7 @@ static enum Result serialInit(void *object, const void *configBase)
   LPC_UART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
-  reg->LCR = LCR_WLS_8BIT;
+  reg->LCR = LCR_WLS(WLS_8BIT);
   /* Enable FIFO and DMA, set RX trigger level */
   reg->FCR = (reg->FCR & ~FCR_RXTRIGLVL_MASK) | FCR_FIFOEN | FCR_DMAMODE
       | FCR_RXTRIGLVL(RX_TRIGGER_LEVEL_1);

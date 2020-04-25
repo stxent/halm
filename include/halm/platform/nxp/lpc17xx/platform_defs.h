@@ -340,15 +340,16 @@ typedef struct
       __ro__ uint32_t MSR;
       __rw__ uint32_t SCR;
       __rw__ uint32_t ACR;
-      __rw__ uint32_t ICR;
+      __rw__ uint32_t RESERVED0;
       __rw__ uint32_t FDR;
-      __ne__ uint32_t RESERVED0;
+      __ne__ uint32_t RESERVED1;
       __rw__ uint32_t TER;
     };
 
     LPC_UART_Type BASE;
   };
-  __ne__ uint32_t RESERVED1[6];
+
+  __ne__ uint32_t RESERVED2[6];
   __rw__ uint32_t RS485CTRL;
   __rw__ uint32_t RS485ADRMATCH;
   __rw__ uint32_t RS485DLY;

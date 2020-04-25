@@ -29,6 +29,10 @@ enum SerialParameter
   IF_SERIAL_DSR,
   /** Write the DTR status line. */
   IF_SERIAL_DTR,
+  /** Read frame error counter. */
+  IF_SERIAL_FE,
+  /** Read parity error counter. */
+  IF_SERIAL_PE,
 
   /** End of the list. */
   IF_SERIAL_PARAMETER_END

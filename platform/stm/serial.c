@@ -109,16 +109,19 @@ static enum Result serialInit(void *object, const void *configBase)
   if (!byteQueueInit(&interface->txQueue, config->txLength))
     return E_MEMORY;
 
+  STM_USART_Type * const reg = interface->base.reg;
+
+  /* Disable the peripheral */
+  reg->CR1 = 0;
+
   uartSetRate(object, config->rate);
   uartSetParity(object, config->parity);
-
-  STM_USART_Type * const reg = interface->base.reg;
 
   /*
    * Enable receiver and transmitter, RXNE and IDLE interrupts,
    * enable peripheral.
    */
-  reg->CR1 = CR1_RE | CR1_TE | CR1_RXNEIE | CR1_IDLEIE | CR1_UE;
+  reg->CR1 |= CR1_RE | CR1_TE | CR1_RXNEIE | CR1_IDLEIE | CR1_UE;
 
   irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);
