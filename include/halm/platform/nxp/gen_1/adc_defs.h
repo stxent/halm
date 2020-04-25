@@ -26,6 +26,8 @@
 #define CR_CLKS(value)                  BIT_FIELD((value), 17)
 #define CR_CLKS_VALUE(reg)              FIELD_VALUE((reg), CR_CLKS_MASK, 17)
 #define CR_PDN                          BIT(21)
+#define CR_LPWRMODE                     BIT(22)
+#define CR_MODE10BIT                    BIT(23)
 /*------------------Global Data Register--------------------------------------*/
 #define GDR_RESULT_MASK                 BIT_FIELD(MASK(16), 0)
 #define GDR_RESULT_VALUE(reg)           FIELD_VALUE((reg), GDR_RESULT_MASK, 0)

@@ -115,6 +115,8 @@ static enum Result adcInit(void *object, const void *configBase)
   struct AdcBase * const interface = object;
 
   assert(config->channel == 0);
+  assert(config->frequency <= MAX_FREQUENCY);
+  assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
 
   interface->reg = LPC_ADC;
   interface->irq = ADC_IRQ;
@@ -127,14 +129,10 @@ static enum Result adcInit(void *object, const void *configBase)
     sysClockEnable(CLK_ADC);
   }
 
-  assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
-  assert(config->frequency <= MAX_FREQUENCY);
-
   const uint32_t ticks = config->accuracy ? (10 - config->accuracy) : 0;
-  const uint32_t adcClock = config->frequency ?
-      config->frequency : MAX_FREQUENCY;
-  const uint32_t apbClock = clockFrequency(MainClock);
-  const uint32_t divisor = (apbClock + (adcClock - 1)) / adcClock;
+  const uint32_t fAdc = config->frequency ? config->frequency : MAX_FREQUENCY;
+  const uint32_t fApb = clockFrequency(MainClock);
+  const uint32_t divisor = (fApb + (fAdc - 1)) / fAdc;
 
   interface->control = CR_CLKDIV(divisor - 1) | CR_CLKS(ticks);
   return E_OK;

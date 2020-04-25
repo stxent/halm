@@ -1,16 +1,17 @@
 /*
  * adc_base.c
- * Copyright (C) 2015 xent
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <assert.h>
+#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/adc_base.h>
 #include <halm/platform/nxp/gen_1/adc_defs.h>
-#include <halm/platform/nxp/lpc11exx/clocking.h>
-#include <halm/platform/nxp/lpc11exx/system.h>
+#include <halm/platform/nxp/lpc13uxx/clocking.h>
+#include <halm/platform/nxp/lpc13uxx/system.h>
 /*----------------------------------------------------------------------------*/
-#define MAX_FREQUENCY                 4500000
+#define MAX_FREQUENCY                 15500000
 /* Pack and unpack conversion channel and pin function */
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
@@ -24,41 +25,26 @@ const struct EntityClass * const AdcBase = &(const struct EntityClass){
     .deinit = 0 /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-const struct PinEntry adcPins[] = {
+const struct PinGroupEntry adcPins[] = {
     {
-        .key = PIN(0, 11), /* AD0 */
+        .begin = PIN(0, 11),
+        .end = PIN(0, 15),
         .channel = 0,
         .value = PACK_VALUE(2, 0)
     }, {
-        .key = PIN(0, 12), /* AD1 */
-        .channel = 0,
-        .value = PACK_VALUE(2, 1)
-    }, {
-        .key = PIN(0, 13), /* AD2 */
-        .channel = 0,
-        .value = PACK_VALUE(2, 2)
-    }, {
-        .key = PIN(0, 14), /* AD3 */
-        .channel = 0,
-        .value = PACK_VALUE(2, 3)
-    }, {
-        .key = PIN(0, 15), /* AD4 */
-        .channel = 0,
-        .value = PACK_VALUE(2, 4)
-    }, {
-        .key = PIN(0, 16), /* AD5 */
+        .begin = PIN(0, 16),
+        .end = PIN(0, 16),
         .channel = 0,
         .value = PACK_VALUE(1, 5)
     }, {
-        .key = PIN(0, 22), /* AD6 */
+        .begin = PIN(0, 22),
+        .end = PIN(0, 23),
         .channel = 0,
         .value = PACK_VALUE(1, 6)
     }, {
-        .key = PIN(0, 23), /* AD7 */
-        .channel = 0,
-        .value = PACK_VALUE(1, 7)
-    }, {
-        .key = 0 /* End of pin function association list */
+        /* End of pin function association list */
+        .begin = 0,
+        .end = 0
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -71,23 +57,20 @@ void ADC_ISR(void)
 /*----------------------------------------------------------------------------*/
 struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
 {
-  const struct PinEntry * const entry = pinFind(adcPins, key,
+  const struct PinGroupEntry * const group = pinGroupFind(adcPins, key,
       interface->channel);
-  assert(entry);
+  assert(group);
 
-  const uint8_t function = UNPACK_FUNCTION(entry->value);
-  const uint8_t index = UNPACK_CHANNEL(entry->value);
-
-  /* Fill pin structure and initialize pin as input */
+  const unsigned int offset = PIN_TO_OFFSET(key) - PIN_TO_OFFSET(group->begin);
   const struct Pin pin = pinInit(key);
 
   pinInput(pin);
   /* Enable analog mode */
   pinSetFunction(pin, PIN_ANALOG);
   /* Set analog pin function */
-  pinSetFunction(pin, function);
+  pinSetFunction(pin, UNPACK_FUNCTION(group->value));
 
-  return (struct AdcPin){index};
+  return (struct AdcPin){UNPACK_CHANNEL(group->value) + offset};
 }
 /*----------------------------------------------------------------------------*/
 void adcReleasePin(const struct AdcPin adcPin __attribute__((unused)))
@@ -104,17 +87,8 @@ bool adcSetInstance(uint8_t channel __attribute__((unused)),
 {
   assert(channel == 0);
 
-  const IrqState state = irqSave();
-  bool status = false;
-
-  if (!instance)
-  {
-    instance = object;
-    status = true;
-  }
-
-  irqRestore(state);
-  return status;
+  void *expected = 0;
+  return compareExchangePointer(&instance, &expected, object);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
@@ -123,8 +97,7 @@ static enum Result adcInit(void *object, const void *configBase)
   struct AdcBase * const interface = object;
 
   assert(config->channel == 0);
-  assert(config->frequency <= MAX_FREQUENCY);
-  assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
+  assert(!config->accuracy || config->accuracy == 10 || config->accuracy == 12);
 
   interface->reg = LPC_ADC;
   interface->irq = ADC_IRQ;
@@ -137,11 +110,15 @@ static enum Result adcInit(void *object, const void *configBase)
     sysClockEnable(CLK_ADC);
   }
 
-  const uint32_t ticks = config->accuracy ? (10 - config->accuracy) : 0;
-  const uint32_t fAdc = config->frequency ? config->frequency : MAX_FREQUENCY;
+  const bool mode10bit = (config->accuracy == 10);
+  const uint32_t fMax = mode10bit ? (MAX_FREQUENCY * 2) : MAX_FREQUENCY;
+
+  assert(config->frequency <= fMax);
+
+  const uint32_t fAdc = config->frequency ? config->frequency : fMax;
   const uint32_t fApb = clockFrequency(MainClock);
   const uint32_t divisor = (fApb + (fAdc - 1)) / fAdc;
 
-  interface->control = CR_CLKDIV(divisor - 1) | CR_CLKS(ticks);
+  interface->control = CR_CLKDIV(divisor - 1) | (mode10bit ? CR_MODE10BIT : 0);
   return E_OK;
 }
