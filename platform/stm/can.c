@@ -416,11 +416,13 @@ static enum Result canGetParam(void *object, enum IfParameter parameter,
   switch (parameter)
   {
     case IF_AVAILABLE:
-      *(size_t *)data = pointerQueueSize(&interface->rxQueue);
+      *(size_t *)data = pointerQueueSize(&interface->rxQueue)
+          * sizeof(struct CanStandardMessage);
       return E_OK;
 
     case IF_PENDING:
-      *(size_t *)data = pointerQueueSize(&interface->txQueue);
+      *(size_t *)data = pointerQueueSize(&interface->txQueue)
+          * sizeof(struct CanStandardMessage);
       return E_OK;
 
     case IF_RATE:
