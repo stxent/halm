@@ -25,7 +25,7 @@
     ]
   },
   {
-    "address": "0x48000000",
+    "address": "0x40080000",
     "name": "AHB_DOMAIN",
     "blocks":
     [
