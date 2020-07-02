@@ -117,14 +117,23 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = 0;
-  timer->event = config->event ? config->event - 1 : 0;
 
   /* Initialize peripheral block */
   STM_TIM_Type * const reg = timer->base.reg;
 
   reg->CR1 = CR1_CKD(CKD_CK_INT) | CR1_CMS(CMS_EDGE_ALIGNED_MODE);
   reg->ARR = getMaxValue(timer);
-  reg->DIER = 0;
+
+  if (config->event)
+  {
+    timer->event = config->event - 1;
+    reg->DIER = DIER_CCDE(timer->event);
+  }
+  else
+  {
+    timer->event = 0;
+    reg->DIER = 0;
+  }
 
   timer->frequency = config->frequency;
   setTimerFrequency(timer, timer->frequency);
@@ -167,10 +176,6 @@ static void tmrEnable(void *object)
   /* Clear pending interrupt flags */
   reg->SR = 0;
 
-  /* Enable DMA request */
-  if (timer->event)
-    reg->DIER |= DIER_CCDE(timer->event);
-
   /* Start the timer */
   reg->CR1 |= CR1_CEN;
 }
@@ -181,7 +186,6 @@ static void tmrDisable(void *object)
   STM_TIM_Type * const reg = timer->base.reg;
 
   reg->CR1 &= ~CR1_CEN;
-  reg->DIER &= ~(DIER_CCIE_MASK | DIER_CCDE_MASK);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
