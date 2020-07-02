@@ -6,9 +6,12 @@
 
 #include <stddef.h>
 #include <xcore/bits.h>
-#include <halm/core/cortex/fpu.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 #include <halm/platform/nxp/lpc43xx/system_defs.h>
+
+#ifdef CONFIG_FPU
+#include <halm/core/cortex/fpu.h>
+#endif
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {

@@ -68,7 +68,7 @@ const struct PinEntry sdmmcPins[] = {
     }, {
         .key = PIN(PORT_C, 0), /* SD_CLK */
         .channel = 0,
-        .value = 6
+        .value = 7
     }, {
         .key = PIN(PORT_C, 1), /* SD_VOLT0 */
         .channel = 0,
@@ -80,7 +80,7 @@ const struct PinEntry sdmmcPins[] = {
     }, {
         .key = PIN(PORT_C, 3), /* SD_VOLT1 */
         .channel = 0,
-        .value = 6
+        .value = 7
     }, {
         .key = PIN(PORT_C, 4), /* SD_DAT0 */
         .channel = 0,
@@ -140,11 +140,11 @@ const struct PinEntry sdmmcPins[] = {
     }, {
         .key = PIN(PORT_F, 10), /* SD_WP */
         .channel = 0,
-        .value = 5
+        .value = 6
     }, {
         .key = PIN(PORT_F, 11), /* SD_VOLT2 */
         .channel = 0,
-        .value = 5
+        .value = 6
     }, {
         .key = PIN(PORT_CLK, 0), /* SD_CLK */
         .channel = 0,

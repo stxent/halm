@@ -431,6 +431,11 @@ config PLATFORM_USB_DMA
 	default y
 	depends on PLATFORM_USB && (FAMILY_LPC17XX || FAMILY_LPC43XX)
 
+config PLATFORM_USB_DOUBLE_BUFFERING
+	bool "Double-buffered endpoints"
+	default y
+	depends on PLATFORM_USB && FAMILY_LPC13UXX
+
 config PLATFORM_USB_HS
 	bool "USB HS"
 	default n
@@ -446,7 +451,7 @@ config PLATFORM_USB_DEVICE
 config PLATFORM_USB_DEVICE_EP_REQUESTS
 	int "Endpoint queue size"
 	default 4
-	depends on PLATFORM_USB_DEVICE && (FAMILY_LPC13XX || FAMILY_LPC17XX)
+	depends on PLATFORM_USB_DEVICE && (FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX)
 
 config PLATFORM_USB_DEVICE_POOL_SIZE
 	int "Descriptor pool size"

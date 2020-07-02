@@ -201,7 +201,7 @@ static unsigned int dmaHubAllocate(struct GpDmaBase *channel,
     }
     while (++entry < EVENT_SOURCES);
 
-    if (allowed && (!found || minValue < hub->connections[index]))
+    if (allowed && (!found || hub->connections[index] < minValue))
     {
       found = true;
       entryIndex = index;

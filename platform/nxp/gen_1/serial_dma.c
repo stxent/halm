@@ -211,9 +211,9 @@ static enum Result serialInit(void *object, const void *configBase)
   if (!interface->rxBuffer)
     return E_MEMORY;
 
-  if (byteQueueInit(&interface->rxQueue, config->rxLength))
+  if (!byteQueueInit(&interface->rxQueue, config->rxLength))
     return E_MEMORY;
-  if (byteQueueInit(&interface->txQueue, config->txLength))
+  if (!byteQueueInit(&interface->txQueue, config->txLength))
     return E_MEMORY;
 
   if (!dmaSetup(interface, config->dma[0], config->dma[1]))

@@ -61,24 +61,25 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   assert(config->source < WDT_CLOCK_END);
 
-  if (!setInstance(timer))
-    return E_BUSY;
+  if (setInstance(timer))
+  {
+    timer->handler = 0;
+    timer->irq = WWDT_IRQ;
+    sysClockEnable(CLK_WWDT);
 
-  timer->handler = 0;
-  timer->irq = WWDT_IRQ;
+    const enum WdtClockSource clockSource =
+        config->source != WDT_CLOCK_DEFAULT ? config->source : WDT_CLOCK_IRC;
 
-  sysClockEnable(CLK_WWDT);
-
-  const enum WdtClockSource clockSource = config->source != WDT_CLOCK_DEFAULT ?
-      config->source : WDT_CLOCK_IRC;
-
-  /* Select clock source */
-  LPC_WWDT->CLKSEL = CLKSEL_WDSEL(clockSource - 1) | CLKSEL_LOCK;
+    /* Select clock source */
+    LPC_WWDT->CLKSEL = CLKSEL_WDSEL(clockSource - 1) | CLKSEL_LOCK;
 
 #ifdef CONFIG_PM
-  /* Watchdog interrupt will wake the controller from low-power modes */
-  LPC_SYSCON->STARTERP1 |= STARTERP1_WWDTINT;
+    /* Watchdog interrupt will wake the controller from low-power modes */
+    LPC_SYSCON->STARTERP1 |= STARTERP1_WWDTINT;
 #endif
 
-  return E_OK;
+    return E_OK;
+  }
+  else
+    return E_BUSY;
 }
