@@ -1437,7 +1437,7 @@ typedef struct
   __ro__ uint32_t MSR;
   __rw__ uint32_t SCR;
   __rw__ uint32_t ACR;
-  __ne__ uint32_t RESERVED0;
+  __rw__ uint32_t ICR;
   __rw__ uint32_t FDR;
   __ne__ uint32_t RESERVED1[8];
   __rw__ uint32_t RS485CTRL;
