@@ -24,6 +24,7 @@ config GENERIC_SOFTWARE_TIMER
 config GENERIC_WQ
 	bool "Work Queue"
 	default y
+	depends on CORE_CORTEX_M0 || CORE_CORTEX_M3 || CORE_CORTEX_M4
 
 config GENERIC_WQ_PM
 	bool "Use power management"

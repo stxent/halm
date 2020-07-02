@@ -5,6 +5,7 @@
  */
 
 #include <pthread.h>
+#include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
 #include <uv.h>
@@ -34,11 +35,12 @@ struct Console
   pthread_mutex_t rxQueueLock;
 
   struct termios initialSettings;
-  uv_poll_t listener;
+  uv_poll_t *listener;
 };
 /*----------------------------------------------------------------------------*/
 static void configurePort(struct Console *);
-static void interfaceCallback(uv_poll_t *, int, int);
+static void onCloseCallback(uv_handle_t *);
+static void onInterfaceCallback(uv_poll_t *, int, int);
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *, const void *);
 static void streamDeinit(void *);
@@ -74,7 +76,12 @@ static void configurePort(struct Console *interface)
   tcsetattr(STDIN_FILENO, TCSANOW, &settings);
 }
 /*----------------------------------------------------------------------------*/
-static void interfaceCallback(uv_poll_t *handle,
+static void onCloseCallback(uv_handle_t *handle)
+{
+  free(handle);
+}
+/*----------------------------------------------------------------------------*/
+static void onInterfaceCallback(uv_poll_t *handle,
     int status __attribute__((unused)),
     int events __attribute__((unused)))
 {
@@ -102,26 +109,40 @@ static enum Result streamInit(void *object,
   if (pthread_mutex_init(&interface->rxQueueLock, 0))
     return E_ERROR;
 
-  if ((res = byteQueueInit(&interface->rxQueue, QUEUE_SIZE)) != E_OK)
+  interface->listener = malloc(sizeof(uv_poll_t));
+  if (!interface->listener)
   {
-    pthread_mutex_destroy(&interface->rxQueueLock);
-    return res;
+    res = E_MEMORY;
+    goto free_mutex;
+  }
+
+  if (!byteQueueInit(&interface->rxQueue, QUEUE_SIZE))
+  {
+    res = E_MEMORY;
+    goto free_listener;
   }
 
   configurePort(interface);
 
-  uv_poll_init(uv_default_loop(), &interface->listener, STDIN_FILENO);
-  interface->listener.data = interface;
-  uv_poll_start(&interface->listener, UV_READABLE, interfaceCallback);
+  uv_poll_init(uv_default_loop(), interface->listener, STDIN_FILENO);
+  uv_handle_set_data((uv_handle_t *)interface->listener, interface);
+  uv_poll_start(interface->listener, UV_READABLE, onInterfaceCallback);
 
   return E_OK;
+
+free_listener:
+  free(interface->listener);
+free_mutex:
+  pthread_mutex_destroy(&interface->rxQueueLock);
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static void streamDeinit(void *object __attribute__((unused)))
 {
   struct Console * const interface = object;
 
-  uv_poll_stop(&interface->listener);
+  uv_handle_set_data((uv_handle_t *)interface->listener, 0);
+  uv_close((uv_handle_t *)interface->listener, onCloseCallback);
 
   /* Restore terminal settings */
   tcsetattr(STDIN_FILENO, TCSANOW, &interface->initialSettings);

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <uv.h>
@@ -20,6 +21,7 @@ enum Cleanup
 {
   CLEANUP_ALL,
   CLEANUP_NETWORK,
+  CLEANUP_LISTENER,
   CLEANUP_MUTEX,
   CLEANUP_QUEUE
 };
@@ -34,13 +36,14 @@ struct Udp
   struct ByteQueue rxQueue;
   pthread_mutex_t rxQueueLock;
 
-  uv_poll_t listener;
+  uv_poll_t *listener;
   int client;
   int server;
 };
 /*----------------------------------------------------------------------------*/
 static void cleanup(struct Udp *, enum Cleanup);
-static void interfaceCallback(uv_poll_t *, int, int);
+static void onCloseCallback(uv_handle_t *);
+static void onInterfaceCallback(uv_poll_t *, int, int);
 static enum Result setupSockets(struct Udp *,
     const struct UdpConfig *);
 /*----------------------------------------------------------------------------*/
@@ -69,7 +72,8 @@ static void cleanup(struct Udp *interface, enum Cleanup step)
   switch (step)
   {
     case CLEANUP_ALL:
-      uv_poll_stop(&interface->listener);
+      uv_handle_set_data((uv_handle_t *)interface->listener, 0);
+      uv_close((uv_handle_t *)interface->listener, onCloseCallback);
       /* Falls through */
     case CLEANUP_NETWORK:
       close(interface->server);
@@ -78,17 +82,25 @@ static void cleanup(struct Udp *interface, enum Cleanup step)
     case CLEANUP_QUEUE:
       byteQueueDeinit(&interface->rxQueue);
       /* Falls through */
+    case CLEANUP_LISTENER:
+      free(interface->listener);
+      /* Falls through */
     case CLEANUP_MUTEX:
       pthread_mutex_destroy(&interface->rxQueueLock);
       break;
   }
 }
 /*----------------------------------------------------------------------------*/
-static void interfaceCallback(uv_poll_t *handle,
+static void onCloseCallback(uv_handle_t *handle)
+{
+  free(handle);
+}
+/*----------------------------------------------------------------------------*/
+static void onInterfaceCallback(uv_poll_t *handle,
     int status __attribute__((unused)),
     int events __attribute__((unused)))
 {
-  struct Udp * const interface = handle->data;
+  struct Udp * const interface = uv_handle_get_data((uv_handle_t *)handle);
   uint8_t buffer[BUFFER_SIZE];
   ssize_t length;
 
@@ -177,10 +189,17 @@ static enum Result streamInit(void *object, const void *configBase)
   if (pthread_mutex_init(&interface->rxQueueLock, 0))
     return E_ERROR;
 
-  if ((res = byteQueueInit(&interface->rxQueue, QUEUE_SIZE)) != E_OK)
+  interface->listener = malloc(sizeof(uv_poll_t));
+  if (!interface->listener)
   {
     cleanup(interface, CLEANUP_MUTEX);
-    return res;
+    return E_MEMORY;
+  }
+
+  if (!byteQueueInit(&interface->rxQueue, QUEUE_SIZE))
+  {
+    cleanup(interface, CLEANUP_LISTENER);
+    return E_MEMORY;
   }
 
   if ((res = setupSockets(interface, config)) != E_OK)
@@ -190,10 +209,10 @@ static enum Result streamInit(void *object, const void *configBase)
   }
 
   /* Initialize and start thread */
-  uv_poll_init_socket(uv_default_loop(), &interface->listener,
+  uv_poll_init_socket(uv_default_loop(), interface->listener,
       interface->server);
-  interface->listener.data = interface;
-  uv_poll_start(&interface->listener, UV_READABLE, interfaceCallback);
+  uv_handle_set_data((uv_handle_t *)interface->listener, interface);
+  uv_poll_start(interface->listener, UV_READABLE, onInterfaceCallback);
 
   return E_OK;
 }

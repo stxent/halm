@@ -6,6 +6,7 @@
 
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -34,7 +35,7 @@ struct Serial
   pthread_mutex_t rxQueueLock;
 
   struct termios initialSettings;
-  uv_poll_t listener;
+  uv_poll_t *listener;
   int descriptor;
 };
 /*----------------------------------------------------------------------------*/
@@ -42,16 +43,16 @@ static const struct StreamRateEntry rateList[] = {
     {.key = 1200,    .value = B1200},
     {.key = 2400,    .value = B2400},
     {.key = 4800,    .value = B4800},
-    {.key = 9600,    .value = B9600}, 
-    {.key = 19200,   .value = B19200}, 
-    {.key = 38400,   .value = B38400}, 
-    {.key = 57600,   .value = B57600}, 
-    {.key = 115200,  .value = B115200}, 
-    {.key = 230400,  .value = B230400}, 
-    {.key = 460800,  .value = B460800}, 
-    {.key = 500000,  .value = B500000}, 
-    {.key = 576000,  .value = B576000}, 
-    {.key = 921600,  .value = B921600}, 
+    {.key = 9600,    .value = B9600},
+    {.key = 19200,   .value = B19200},
+    {.key = 38400,   .value = B38400},
+    {.key = 57600,   .value = B57600},
+    {.key = 115200,  .value = B115200},
+    {.key = 230400,  .value = B230400},
+    {.key = 460800,  .value = B460800},
+    {.key = 500000,  .value = B500000},
+    {.key = 576000,  .value = B576000},
+    {.key = 921600,  .value = B921600},
     {.key = 1000000, .value = B1000000}
 };
 /*----------------------------------------------------------------------------*/
@@ -59,7 +60,8 @@ static bool changePortFlag(struct Serial *, int, bool);
 static bool getPortFlag(struct Serial *, int, bool *);
 static bool getPortParity(struct Serial *, enum SerialParity *);
 static bool getPortRate(struct Serial *, uint32_t *);
-static void interfaceCallback(uv_poll_t *, int, int);
+static void onCloseCallback(uv_handle_t *);
+static void onInterfaceCallback(uv_poll_t *, int, int);
 static void setPortParameters(struct Serial *, const struct SerialConfig *);
 static bool setPortRate(struct Serial *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -142,11 +144,16 @@ static bool getPortRate(struct Serial *interface, uint32_t *actualRate)
   return false;
 }
 /*----------------------------------------------------------------------------*/
-static void interfaceCallback(uv_poll_t *handle,
+static void onCloseCallback(uv_handle_t *handle)
+{
+  free(handle);
+}
+/*----------------------------------------------------------------------------*/
+static void onInterfaceCallback(uv_poll_t *handle,
     int status __attribute__((unused)),
     int events __attribute__((unused)))
 {
-  struct Serial * const interface = handle->data;
+  struct Serial * const interface = uv_handle_get_data((uv_handle_t *)handle);
   uint8_t buffer[BUFFER_SIZE];
   ssize_t length;
 
@@ -243,8 +250,18 @@ static enum Result streamInit(void *object, const void *configBase)
   if (pthread_mutex_init(&interface->rxQueueLock, 0))
     return E_ERROR;
 
-  if ((res = byteQueueInit(&interface->rxQueue, QUEUE_SIZE)) != E_OK)
+  interface->listener = malloc(sizeof(uv_poll_t));
+  if (!interface->listener)
+  {
+    res = E_MEMORY;
     goto free_mutex;
+  }
+
+  if (!byteQueueInit(&interface->rxQueue, QUEUE_SIZE))
+  {
+    res = E_MEMORY;
+    goto free_listener;
+  }
 
   interface->descriptor = open(config->device, O_RDWR | O_NOCTTY | O_NDELAY);
   if (interface->descriptor == -1)
@@ -256,14 +273,16 @@ static enum Result streamInit(void *object, const void *configBase)
   fcntl(interface->descriptor, F_SETFL, 0);
   setPortParameters(interface, config);
 
-  uv_poll_init(uv_default_loop(), &interface->listener, interface->descriptor);
-  interface->listener.data = interface;
-  uv_poll_start(&interface->listener, UV_READABLE, interfaceCallback);
+  uv_poll_init(uv_default_loop(), interface->listener, interface->descriptor);
+  uv_handle_set_data((uv_handle_t *)interface->listener, interface);
+  uv_poll_start(interface->listener, UV_READABLE, onInterfaceCallback);
 
   return E_OK;
 
 free_queue:
   byteQueueDeinit(&interface->rxQueue);
+free_listener:
+  free(interface->listener);
 free_mutex:
   pthread_mutex_destroy(&interface->rxQueueLock);
   return res;
@@ -273,10 +292,11 @@ static void streamDeinit(void *object)
 {
   struct Serial * const interface = object;
 
-  uv_poll_stop(&interface->listener);
+  uv_handle_set_data((uv_handle_t *)interface->listener, 0);
+  uv_close((uv_handle_t *)interface->listener, onCloseCallback);
 
   /* Restore terminal settings and close device */
-  tcsetattr(STDIN_FILENO, TCSANOW, &interface->initialSettings);
+  tcsetattr(interface->descriptor, TCSANOW, &interface->initialSettings);
   close(interface->descriptor);
 
   byteQueueDeinit(&interface->rxQueue);

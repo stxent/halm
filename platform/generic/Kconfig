@@ -16,8 +16,20 @@ config PLATFORM_LINUX_SERIAL
 	bool "Serial stream"
 	default y
 
+config PLATFORM_LINUX_SIGNAL_HANDLER
+	bool "Signal Handler"
+	default y
+
+config PLATFORM_LINUX_TIMER
+	bool "Timer"
+	default y
+
 config PLATFORM_LINUX_UDP
 	bool "UDP stream"
+	default y
+
+config PLATFORM_LINUX_WQ
+	bool "Work Queue"
 	default y
 
 endmenu
