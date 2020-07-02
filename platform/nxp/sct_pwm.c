@@ -260,7 +260,6 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
 
   /* Configure event */
   reg->EV[pwm->event].CTRL = EVCTRL_MATCHSEL(pwm->event)
-      | EVCTRL_OUTSEL | EVCTRL_IOSEL(pwm->channel)
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
@@ -406,8 +405,7 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   }
 
   /* Configure event */
-  const uint32_t controlValue = EVCTRL_OUTSEL | EVCTRL_IOSEL(pwm->channel)
-      | EVCTRL_COMBMODE(COMBMODE_MATCH)
+  const uint32_t controlValue = EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
   reg->EV[pwm->leadingEvent].CTRL = EVCTRL_MATCHSEL(pwm->leadingEvent)

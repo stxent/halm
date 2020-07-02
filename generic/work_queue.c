@@ -116,6 +116,7 @@ static enum Result wqInit(void *object, const void *configBase)
 {
   const struct SimpleWorkQueueConfig * const config = configBase;
   assert(config);
+  assert(config->size);
 
   struct SimpleWorkQueue * const wq = object;
   return taskQueueInit(&wq->queue, config->size) ? E_OK : E_MEMORY;

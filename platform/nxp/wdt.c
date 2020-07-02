@@ -55,8 +55,8 @@ static enum Result wdtSetCallback(void *object __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
   /*
-   * The intent of the WDT interrupt is to allow debugging. This interrupt
-   * can not be used as a regular timer interrupt.
+   * The main purpose of the WDT interrupt is to allow debugging.
+   * This interrupt can not be used as a regular timer interrupt.
    */
   return E_INVALID;
 }
