@@ -91,7 +91,6 @@ static void controlInHandler(void *, struct UsbRequest *,
     enum UsbRequestStatus);
 static void controlOutHandler(void *, struct UsbRequest *,
     enum UsbRequestStatus);
-static void enableEndpoints(struct UsbControl *);
 static void copySetupPacket(struct UsbSetupPacket *,
     const struct UsbRequest *);
 static void resetDevice(struct UsbControl *);
@@ -520,18 +519,13 @@ static void copySetupPacket(struct UsbSetupPacket *packet,
   packet->length = fromLittleEndian16(received->length);
 }
 /*----------------------------------------------------------------------------*/
-static void enableEndpoints(struct UsbControl *control)
-{
-  usbEpEnable(control->ep0in, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
-  usbEpEnable(control->ep0out, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
-}
-/*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbControl *control)
 {
   usbEpClear(control->ep0in);
   usbEpClear(control->ep0out);
 
-  enableEndpoints(control);
+  usbEpEnable(control->ep0out, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
+  usbEpEnable(control->ep0in, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
 
   usbEpEnqueue(control->ep0out, control->outRequest);
 }
@@ -660,9 +654,6 @@ static enum Result controlInit(void *object, const void *configBase)
 
   /* Initialize list of device strings */
   stringListInit(&control->strings);
-
-  /* Enable endpoints before adding requests in the queues */
-  enableEndpoints(control);
 
   /* Initialize requests */
   struct ControlUsbRequest *request = control->requests;
