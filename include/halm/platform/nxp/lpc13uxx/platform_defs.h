@@ -548,6 +548,11 @@ typedef struct
 /*----------------------------------------------------------------------------*/
 typedef struct
 {
+  __rw__ uint8_t USB_SRAM[2048];
+} RAM_DOMAIN_Type;
+
+typedef struct
+{
   LPC_I2C_Type I2C;
   __ne__ uint8_t RESERVED0[0x4000 - sizeof(LPC_I2C_Type)];
   LPC_WWDT_Type WWDT;
@@ -590,6 +595,7 @@ typedef struct
   LPC_USB_Type USB;
 } AHB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
+extern RAM_DOMAIN_Type RAM_DOMAIN;
 extern APB_DOMAIN_Type APB_DOMAIN;
 extern AHB_DOMAIN_Type AHB_DOMAIN;
 extern LPC_GPIO_Type GPIO_DOMAIN;
@@ -615,6 +621,7 @@ extern LPC_GPIO_Type GPIO_DOMAIN;
 #define LPC_RIT             (&APB_DOMAIN.RIT)
 
 #define LPC_USB             (&AHB_DOMAIN.USB)
+#define LPC_USB_SRAM        (RAM_DOMAIN.USB_SRAM)
 
 #define LPC_GPIO            (&GPIO_DOMAIN)
 /*----------------------------------------------------------------------------*/

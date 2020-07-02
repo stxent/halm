@@ -79,6 +79,13 @@ struct UsbDeviceClass
   UsbStringNumber (*stringAppend)(void *, struct UsbString);
   void (*stringErase)(void *, struct UsbString);
 };
+
+struct UsbDeviceBase
+{
+  struct Entity base;
+};
+
+struct UsbDevice;
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
@@ -204,10 +211,12 @@ struct UsbEndpointClass
   void (*setStalled)(void *, bool);
 };
 
-struct UsbEndpoint
+struct UsbEndpointBase
 {
   struct Entity base;
 };
+
+struct UsbEndpoint;
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

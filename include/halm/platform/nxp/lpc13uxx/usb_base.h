@@ -13,6 +13,11 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbBase;
 
+struct EpListEntry
+{
+  volatile uint32_t b[2];
+};
+
 struct UsbBaseConfig
 {
   /** Mandatory: USB bidirectional D- line. */
@@ -36,7 +41,7 @@ struct UsbBase
   IrqNumber irq;
 
   /* Pointer to an aligned array of Endpoint Command/Status entries */
-  volatile uint32_t *epList;
+  struct EpListEntry *endpointList;
 
   /* Unique peripheral identifier */
   uint8_t channel;

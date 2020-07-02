@@ -33,7 +33,7 @@ struct DmaDescriptorPool
 /*----------------------------------------------------------------------------*/
 struct UsbDmaEndpoint
 {
-  struct UsbEndpoint base;
+  struct UsbEndpointBase base;
 
   /* Parent device */
   struct UsbDevice *device;
@@ -49,7 +49,7 @@ struct UsbDmaEndpoint
 
 struct UsbSieEndpoint
 {
-  struct UsbEndpoint base;
+  struct UsbEndpointBase base;
 
   /* Parent device */
   struct UsbDevice *device;
@@ -134,8 +134,7 @@ const struct UsbDeviceClass * const UsbDevice =
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
-static enum Result epReadData(struct UsbSieEndpoint *, uint8_t *, size_t,
-    size_t *);
+static bool epReadData(struct UsbSieEndpoint *, uint8_t *, size_t, size_t *);
 static void epReadPacketMemory(LPC_USB_Type *, uint8_t *, size_t);
 static void epWriteData(struct UsbSieEndpoint *, const uint8_t *, size_t);
 static void epWritePacketMemory(LPC_USB_Type *, const uint8_t *, size_t);
@@ -261,7 +260,7 @@ static void interruptHandler(void *object)
   {
     reg->USBDevIntClr = USBDevInt_EP_SLOW;
 
-    struct UsbEndpoint ** const endpointArray = device->endpoints;
+    struct UsbEndpoint ** const epArray = device->endpoints;
     uint32_t epIntStatus = reverseBits32(reg->USBEpIntSt);
 
     while (epIntStatus)
@@ -270,7 +269,7 @@ static void interruptHandler(void *object)
       const uint8_t status = usbStatusRead(device, index);
 
       epIntStatus -= (1UL << 31) >> index;
-      sieEpHandler((struct UsbSieEndpoint *)endpointArray[index], status);
+      sieEpHandler((struct UsbSieEndpoint *)epArray[index], status);
     }
   }
 
@@ -558,7 +557,7 @@ static void devStringErase(void *object, struct UsbString string)
   usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
+static bool epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
     size_t length, size_t *read)
 {
   LPC_USB_Type * const reg = ep->device->base.reg;
@@ -573,12 +572,12 @@ static enum Result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
 
   /* Check packet validity */
   if (!(packetLength & USBRxPLen_DV))
-    return E_INTERFACE;
+    return false;
   /* Extract length */
   packetLength = USBRxPLen_PKT_LNGTH_VALUE(packetLength);
   /* Check for buffer overflow */
   if (packetLength > length)
-    return E_MEMORY;
+    return false;
 
   /* Read data from the internal packet memory */
   *read = packetLength;
@@ -591,7 +590,7 @@ static enum Result epReadData(struct UsbSieEndpoint *ep, uint8_t *buffer,
   usbCommand(ep->device, USB_CMD_SELECT_ENDPOINT | EP_TO_INDEX(ep->address));
   usbCommand(ep->device, USB_CMD_CLEAR_BUFFER);
 
-  return E_OK;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static void epReadPacketMemory(LPC_USB_Type *reg, uint8_t *buffer,
@@ -726,7 +725,7 @@ static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
     struct UsbRequest * const request = pointerQueueFront(&ep->requests);
     size_t read;
 
-    if (epReadData(ep, request->buffer, request->capacity, &read) == E_OK)
+    if (epReadData(ep, request->buffer, request->capacity, &read))
     {
       const enum UsbRequestStatus requestStatus = status & SELECT_ENDPOINT_STP ?
           USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;

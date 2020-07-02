@@ -38,6 +38,10 @@ const struct PinEntry usbPins[] = {
         .channel = 0,
         .value = 0
     }, {
+        .key = PIN(0, 1), /* USB_FTOGGLE */
+        .channel = 0,
+        .value = 3
+    }, {
         .key = PIN(0, 3), /* USB_VBUS */
         .channel = 0,
         .value = 1

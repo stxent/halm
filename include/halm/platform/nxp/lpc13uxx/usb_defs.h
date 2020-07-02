@@ -9,8 +9,12 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*----------------------------------------------------------------------------*/
-#define USB_EP_NUMBER   10
-#define USB_EPLIST_SIZE (sizeof(uint32_t) * USB_EP_NUMBER * 2)
+/* Aligned along 64-byte boundary */
+#define BUFFER_ALIGNMENT  64
+//#define SETUP_BUFFER_SIZE BUFFER_ALIGNMENT
+
+#define USB_EP_NUMBER     10
+#define USB_EP_LIST_SIZE  (sizeof(uint32_t) * USB_EP_NUMBER * 2)
 /*------------------Device Command/Status register----------------------------*/
 #define DEVCMDSTAT_DEV_ADDR_MASK        BIT_FIELD(MASK(7), 0)
 #define DEVCMDSTAT_DEV_ADDR(value)      BIT_FIELD((value), 0)
@@ -55,6 +59,7 @@
 #define LPM_DATA_PENDING                BIT(8)
 /*------------------Endpoint Skip---------------------------------------------*/
 #define EPSKIP_SKIP(index)              BIT(index)
+#define EPSKIP_MASK                     MASK(30)
 /*------------------Endpoint Toggle-------------------------------------------*/
 #define EPTOGGLE_TOGGLE(index)          BIT(index)
 /*------------------Endpoint Buffer in use------------------------------------*/
@@ -62,11 +67,14 @@
 /*------------------Endpoint Buffer Configuration-----------------------------*/
 #define EPBUFCFG_BUF_SB(index)          BIT(index)
 /*------------------Interrupt Status register---------------------------------*/
+#define INTSTAT_EP_INT_MASK             MASK(10)
 #define INTSTAT_EP_INT(index)           BIT(index)
 #define INTSTAT_OUT_INT(ep)             BIT((ep) * 2)
 #define INTSTAT_IN_INT(ep)              BIT((ep) * 2 + 1)
 #define INTSTAT_FRAME_INT               BIT(30)
 #define INTSTAT_DEV_INT                 BIT(31)
+#define INTSTAT_MASK \
+    (INTSTAT_EP_INT_MASK | BIT(30) | BIT(31))
 /*------------------Interrupt Enable register---------------------------------*/
 #define INTEN_EP_INT_EN(index)          BIT(index)
 #define INTEN_FRAME_INT_EN              BIT(30)
@@ -79,10 +87,12 @@
 #define INTROUTING_ROUTE_EP_INT(index)  BIT(index)
 #define INTROUTING_ROUTE_FRAME_INT      BIT(30)
 #define INTROUTING_ROUTE_DEV_INT        BIT(31)
-// /*------------------EP Command/Status List start address----------------------*/
-// #define EPLISTSTART_EP_LIST(value)      BIT_FIELD((value), 8)
-// /*------------------Data buffer start address---------------------------------*/
-// #define DATABUFSTART_DA_BUF(value)      BIT_FIELD((value), 22)
+/*------------------EP Command/Status List start address----------------------*/
+#define EPLISTSTART_EP_LIST_MASK        BIT_FIELD(MASK(24), 8)
+#define EPLISTSTART_EP_LIST(value)      ((value) & EPLISTSTART_EP_LIST_MASK)
+/*------------------Data buffer start address---------------------------------*/
+#define DATABUFSTART_DA_BUF_MASK        BIT_FIELD(MASK(10), 22)
+#define DATABUFSTART_DA_BUF(value)      ((value) & DATABUFSTART_DA_BUF_MASK)
 /*------------------Endpoint Command/Status List------------------------------*/
 #define EPCS_NBytes_MASK                BIT_FIELD(MASK(10), 16)
 #define EPCS_NBytes(value)              BIT_FIELD((value), 16)
@@ -105,6 +115,19 @@
 #define EPCS_D                          BIT(30)
 /* Active */
 #define EPCS_A                          BIT(31)
+/*----------------------------------------------------------------------------*/
+static inline uint16_t epcsAlignSize(uint16_t size)
+{
+  return (size + (BUFFER_ALIGNMENT - 1)) & ~(BUFFER_ALIGNMENT - 1);
+}
+
+static inline uint32_t epcsSetupTransfer(uint32_t value, uint16_t size,
+    uint16_t offset)
+{
+  return (value & ~(EPCS_NBytes_MASK | EPCS_AddressOffset_MASK))
+      | EPCS_NBytes(size)
+      | EPCS_AddressOffset(offset >> 6);
+}
 /*----------------------------------------------------------------------------*/
 #define EP_TO_INDEX(ep)     ((((ep) & 0x0F) << 1) | (((ep) & 0x80) >> 7))
 #define INDEX_TO_EP(index)  ((((index) << 7) & 0x80) | (((index) >> 1) & 0x0F))

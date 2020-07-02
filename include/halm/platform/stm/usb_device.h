@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/irq.h>
 #include <halm/pin.h>
+#include <halm/usb/usb.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDeviceClass * const UsbDevice;
 
@@ -32,8 +33,6 @@ struct UsbDeviceConfig
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct UsbDevice;
-
 struct UsbEndpointConfig
 {
   /** Mandatory: hardware device. */

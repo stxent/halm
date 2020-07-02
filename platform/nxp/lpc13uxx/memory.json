@@ -1,5 +1,13 @@
 [
   {
+    "address": "0x20004000",
+    "name": "RAM_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "USB_SRAM", "type": "__rw__ uint8_t", "array": 2048}
+    ]
+  },
+  {
     "address": "0x40000000",
     "name": "APB_DOMAIN",
     "blocks":

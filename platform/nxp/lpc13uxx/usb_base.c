@@ -106,12 +106,7 @@ static enum Result devInit(void *object, const void *configBase)
   if (!setInstance(device))
     return E_BUSY;
 
-  // device->epList = memalign(256, USB_EPLIST_SIZE); // XXX Add similar to 43xx
-  device->epList = 0x20004000UL; // XXX
-  if (!device->epList)
-    return E_MEMORY;
-  // memset(device->epList, 0, sizeof(uint32_t) * USB_ENDPOINT_NUMBER * 2);
-
+  device->endpointList = LPC_USB_SRAM;
   device->reg = LPC_USB;
   device->irq = USB_IRQ;
   device->handler = 0;
@@ -126,12 +121,9 @@ static enum Result devInit(void *object, const void *configBase)
   /* Perform platform-specific initialization */
   LPC_USB_Type * const reg = device->reg;
 
-  reg->EPLISTSTART = (uint32_t)device->epList;
-	reg->DATABUFSTART = 0x20004000UL & 0xFFC00000UL;  //(uint32_t) usb_data_buffer) & 0xFFC00000;
-
-
-
-  // reg->USBDevFIQSel = 0;
+  reg->EPLISTSTART = EPLISTSTART_EP_LIST((uint32_t)device->endpointList);
+  reg->DATABUFSTART = DATABUFSTART_DA_BUF((uint32_t)device->endpointList
+      + epcsAlignSize(USB_EP_LIST_SIZE));
 
   return E_OK;
 }
@@ -144,7 +136,6 @@ static void devDeinit(void *object)
   sysClockDisable(CLK_USBSRAM);
   sysClockDisable(CLK_USB);
   sysPowerDisable(PWR_USBPAD);
-  free(device->epList);
 
   instance = 0;
 }
