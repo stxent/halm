@@ -1,8 +1,9 @@
 # Copyright (C) 2017 xent
 # Project is distributed under the terms of the GNU General Public License v3.0
 
-function(parse_config _config_file)
+function(parse_config _config_file _config_output)
     file(STRINGS "${_config_file}" _config_data)
+    set(_output "")
 
     foreach(_entry ${_config_data})
         string(FIND "${_entry}" "CONFIG_" _entry_is_config)
@@ -12,14 +13,16 @@ function(parse_config _config_file)
             list(GET _splitted_entry 1 _entry_value)
             if("${_entry_value}" STREQUAL "y")
                 set(${_entry_name} ON PARENT_SCOPE)
-                add_definitions(-D${_entry_name})
+                list(APPEND _output -D${_entry_name})
             elseif("${_entry_value}" STREQUAL "n")
                 set(${_entry_name} OFF PARENT_SCOPE)
             else()
                 set(${_entry_name} "${_entry_value}" PARENT_SCOPE)
                 # Entry values should not contain any special characters, symbols or spaces
-                add_definitions(-D${_entry_name}=${_entry_value})
+                list(APPEND _output -D${_entry_name}=${_entry_value})
             endif()
         endif()
     endforeach()
+
+    set(${_config_output} "${_output}" PARENT_SCOPE)
 endfunction()

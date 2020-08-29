@@ -4,11 +4,11 @@
 set(SOURCE_PATHS "")
 string(REPLACE "cortex-" "" CORE_VERSION "${CMAKE_SYSTEM_PROCESSOR}")
 
-if("${CORE_VERSION}" STREQUAL "m0")
+if(${CORE_VERSION} STREQUAL "m0")
     set(SOURCE_PATHS ${SOURCE_PATHS} "armv6m/*.c")
-elseif("${CORE_VERSION}" STREQUAL "m3")
+elseif(${CORE_VERSION} STREQUAL "m3")
     set(SOURCE_PATHS ${SOURCE_PATHS} "armv7m/*.c")
-elseif("${CORE_VERSION}" STREQUAL "m4" OR "${CORE_VERSION}" STREQUAL "m7")
+  elseif(${CORE_VERSION} MATCHES "m4|m7")
     set(SOURCE_PATHS ${SOURCE_PATHS} "armv7m/*.c" "armv7em/*.c")
 endif()
 
