@@ -521,7 +521,7 @@ static void stateWriteStopEnter(struct SdioSpi *interface)
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
 static void stateCrcEnter(struct SdioSpi *interface)
 {
-  workQueueAdd(interruptHandler, interface);
+  wqAdd(WQ_DEFAULT, interruptHandler, interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/

@@ -1,45 +1,46 @@
 /*
- * work_queue.c
- * Copyright (C) 2016 xent
+ * work_queue_irq.c
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/asm.h>
-#include <halm/generic/work_queue.h>
 #include <halm/generic/work_queue_defs.h>
-#include <halm/irq.h>
-#include <halm/pm.h>
+#include <halm/generic/work_queue_irq.h>
 /*----------------------------------------------------------------------------*/
-struct WorkQueue
+struct WorkQueueIrq
 {
   struct WorkQueueBase base;
   WqTaskQueue queue;
+  IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
 static enum Result workQueueInit(void *, const void *);
 static enum Result workQueueAdd(void *, void (*)(void *), void *);
 static enum Result workQueueStart(void *);
+static void workQueueStop(void *);
 /*----------------------------------------------------------------------------*/
-const struct WorkQueueClass * const WorkQueue =
+const struct WorkQueueClass * const WorkQueueIrq =
     &(const struct WorkQueueClass){
-    .size = sizeof(struct WorkQueue),
+    .size = sizeof(struct WorkQueueIrq),
     .init = workQueueInit,
     .deinit = deletedDestructorTrap,
 
     .add = workQueueAdd,
     .start = workQueueStart,
-    .stop = 0
+    .stop = workQueueStop
 };
-/*----------------------------------------------------------------------------*/
-void *WQ_DEFAULT = 0;
 /*----------------------------------------------------------------------------*/
 static enum Result workQueueInit(void *object, const void *configBase)
 {
-  const struct WorkQueueConfig * const config = configBase;
+  const struct WorkQueueIrqConfig * const config = configBase;
   assert(config);
   assert(config->size);
 
-  struct WorkQueue * const wq = object;
+  struct WorkQueueIrq * const wq = object;
+
+  irqSetPriority(config->irq, config->priority);
+  wq->irq = config->irq;
+
   return wqTaskQueueInit(&wq->queue, config->size) ? E_OK : E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
@@ -48,7 +49,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
 {
   assert(callback != 0);
 
-  struct WorkQueue * const wq = object;
+  struct WorkQueueIrq * const wq = object;
   enum Result res;
 
   /* Critical section */
@@ -57,6 +58,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
   if (!wqTaskQueueFull(&wq->queue))
   {
     wqTaskQueuePushBack(&wq->queue, (struct WqTask){callback, argument});
+    irqSetPending(wq->irq);
     res = E_OK;
   }
   else
@@ -68,38 +70,31 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum Result workQueueStart(void *object)
 {
-  struct WorkQueue * const wq = object;
+  struct WorkQueueIrq * const wq = object;
 
-  while (1)
-  {
-    IrqState state;
-
-#ifdef CONFIG_GENERIC_WQ_PM
-    /*
-     * Disable interrupts to avoid entering sleep mode when interrupt is fired
-     * between size comparison and sleep instruction.
-     */
-    state = irqSave();
-    if (wqTaskQueueEmpty(&wq->queue))
-      pmChangeState(PM_SLEEP);
-    irqRestore(state);
-#endif
-
-    /* Reload queue size */
-    barrier();
-
-    while (!wqTaskQueueEmpty(&wq->queue))
-    {
-      const struct WqTask task = wqTaskQueueFront(&wq->queue);
-
-      /* Critical section */
-      state = irqSave();
-      wqTaskQueuePopFront(&wq->queue);
-      irqRestore(state);
-
-      task.callback(task.argument);
-    }
-  }
-
+  irqEnable(wq->irq);
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void workQueueStop(void *object)
+{
+  struct WorkQueueIrq * const wq = object;
+  irqDisable(wq->irq);
+}
+/*----------------------------------------------------------------------------*/
+void wqIrqUpdate(void *object)
+{
+  struct WorkQueueIrq * const wq = object;
+
+  while (!wqTaskQueueEmpty(&wq->queue))
+  {
+    const struct WqTask task = wqTaskQueueFront(&wq->queue);
+
+    /* Critical section */
+    const IrqState state = irqSave();
+    wqTaskQueuePopFront(&wq->queue);
+    irqRestore(state);
+
+    task.callback(task.argument);
+  }
 }

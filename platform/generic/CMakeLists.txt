@@ -12,6 +12,10 @@ if(${CONFIG_PLATFORM_LINUX_CONSOLE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/console.c")
 endif()
 
+if(${CONFIG_PLATFORM_LINUX_EVENT_QUEUE})
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/event_queue.c")
+endif()
+
 if(${CONFIG_PLATFORM_LINUX_MMF})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/mmf.c")
 endif()
@@ -34,10 +38,6 @@ endif()
 
 if(${CONFIG_PLATFORM_LINUX_UDP})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/udp.c")
-endif()
-
-if(${CONFIG_PLATFORM_LINUX_WQ})
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/work_queue.c")
 endif()
 
 add_library(halm_platform OBJECT ${SOURCE_FILES})

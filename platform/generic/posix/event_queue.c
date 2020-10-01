@@ -1,12 +1,12 @@
 /*
- * work_queue.c
+ * event_queue.c
  * Copyright (C) 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <stdlib.h>
 #include <uv.h>
-#include <halm/generic/work_queue.h>
+#include <halm/platform/generic/event_queue.h>
 /*----------------------------------------------------------------------------*/
 struct Task
 {
@@ -15,9 +15,30 @@ struct Task
   void (*callback)(void *);
   void *argument;
 };
+
+struct WorkQueue
+{
+  struct WorkQueueBase base;
+};
 /*----------------------------------------------------------------------------*/
 static void onAsyncCallback(uv_async_t *);
 static void onCloseCallback(uv_handle_t *);
+
+static enum Result workQueueInit(void *, const void *);
+static enum Result workQueueAdd(void *, void (*)(void *), void *);
+static enum Result workQueueStart(void *);
+static void workQueueStop(void *);
+/*----------------------------------------------------------------------------*/
+const struct WorkQueueClass * const EventQueue =
+    &(const struct WorkQueueClass){
+    .size = sizeof(struct WorkQueue),
+    .init = workQueueInit,
+    .deinit = deletedDestructorTrap,
+
+    .add = workQueueAdd,
+    .start = workQueueStart,
+    .stop = workQueueStop
+};
 /*----------------------------------------------------------------------------*/
 static void onAsyncCallback(uv_async_t *handle)
 {
@@ -32,7 +53,14 @@ static void onCloseCallback(uv_handle_t *handle)
   free(uv_handle_get_data((uv_handle_t *)handle));
 }
 /*----------------------------------------------------------------------------*/
-enum Result workQueueAdd(void (*callback)(void *), void *argument)
+static enum Result workQueueInit(void *object __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
+{
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result workQueueAdd(void *object __attribute__((unused)),
+    void (*callback)(void *), void *argument)
 {
   if (!callback)
     return E_VALUE;
@@ -60,11 +88,11 @@ enum Result workQueueAdd(void (*callback)(void *), void *argument)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-enum Result workQueueInit(size_t size __attribute__((unused)))
+static enum Result workQueueStart(void *object __attribute__((unused)))
 {
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-void workQueueStart(void *argument __attribute__((unused)))
+static void workQueueStop(void *object __attribute__((unused)))
 {
 }
