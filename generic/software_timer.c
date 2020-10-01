@@ -22,6 +22,7 @@ struct SoftwareTimer
   void (*callback)(void *);
   void *callbackArgument;
 
+  uint32_t overflow;
   uint32_t period;
   uint32_t timestamp;
 
@@ -161,11 +162,11 @@ static void removeTimer(struct SoftwareTimerFactory *factory,
 {
   struct SoftwareTimer **current = &factory->head;
 
-  while (*current != timer)
+  while (*current && *current != timer)
     current = &(*current)->next;
-  assert(current);
 
-  *current = timer->next;
+  if (*current)
+    *current = timer->next;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *object, const void *configBase)
@@ -199,6 +200,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->factory = config->parent;
   timer->callback = 0;
+  timer->overflow = 0;
   timer->period = 0;
   timer->timestamp = 0;
   timer->next = 0;
@@ -210,31 +212,42 @@ static void tmrDeinit(void *object)
 {
   struct SoftwareTimer * const timer = object;
 
-  const IrqState irq = irqSave();
+  const IrqState state = irqSave();
   removeTimer(timer->factory, timer);
-  irqRestore(irq);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrEnable(void *object)
 {
   struct SoftwareTimer * const timer = object;
   struct SoftwareTimerFactory * const factory = timer->factory;
+  const IrqState state = irqSave();
 
-  const IrqState irq = irqSave();
+  if (timer->period)
+  {
+    removeTimer(timer->factory, timer);
+    timer->next = 0;
+  }
+
+  timer->period = timer->overflow;
   timer->timestamp = factory->counter + timer->period;
   insertTimer(factory, timer);
-  irqRestore(irq);
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrDisable(void *object)
 {
   struct SoftwareTimer * const timer = object;
 
-  const IrqState irq = irqSave();
-  removeTimer(timer->factory, timer);
-  timer->next = 0;
-  timer->period = 0;
-  irqRestore(irq);
+  if (timer->period)
+  {
+    const IrqState state = irqSave();
+    removeTimer(timer->factory, timer);
+    timer->next = 0;
+    timer->period = 0;
+    irqRestore(state);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
@@ -261,13 +274,16 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 static uint32_t tmrGetOverflow(const void *object)
 {
   const struct SoftwareTimer * const timer = object;
-  return timer->period;
+  return timer->overflow;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SoftwareTimer * const timer = object;
-  timer->period = overflow;
+
+  timer->overflow = overflow;
+  if (timer->period)
+    timer->period = overflow;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
@@ -280,7 +296,7 @@ static void tmrSetValue(void *object, uint32_t value)
 {
   struct SoftwareTimer * const timer = object;
 
-  const IrqState irq = irqSave();
+  const IrqState state = irqSave();
   const uint32_t current = distance(timer->factory->counter, timer->timestamp);
 
   if (current > value)
@@ -288,7 +304,7 @@ static void tmrSetValue(void *object, uint32_t value)
   else
     timer->timestamp -= value - current;
 
-  irqRestore(irq);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 void *softwareTimerCreate(void *object)

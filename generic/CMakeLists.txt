@@ -17,6 +17,14 @@ if(${CONFIG_GENERIC_SOFTWARE_TIMER})
     list(APPEND SOURCE_FILES "software_timer.c")
 endif()
 
+if(${CONFIG_GENERIC_SOFTWARE_TIMER_32})
+    list(APPEND SOURCE_FILES "software_timer_32.c")
+endif()
+
+if(${CONFIG_GENERIC_SOFTWARE_TIMER_64})
+    list(APPEND SOURCE_FILES "software_timer_64.c")
+endif()
+
 if(${CONFIG_GENERIC_WQ})
     list(APPEND SOURCE_FILES "work_queue.c")
 endif()

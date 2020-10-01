@@ -136,4 +136,42 @@ static inline void timerSetValue(void *timer, uint32_t value)
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
+/* Class descriptor */
+struct Timer64Class
+{
+  struct TimerClass base;
+
+  uint64_t (*getValue64)(const void *);
+  void (*setValue64)(void *, uint64_t);
+};
+
+struct Timer64
+{
+  struct Timer base;
+};
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+/**
+ * Get the current value of the timer.
+ * @param timer Pointer to a Timer64 object.
+ * @return Value of the counter measured in timer ticks.
+ */
+static inline uint64_t timerGetValue64(const void *timer)
+{
+  return ((const struct Timer64Class *)CLASS(timer))->getValue64(timer);
+}
+
+/**
+ * Set the current value.
+ * @param timer Pointer to a Timer64 object.
+ * @param value New timer value.
+ */
+static inline void timerSetValue64(void *timer, uint64_t value)
+{
+  ((const struct Timer64Class *)CLASS(timer))->setValue64(timer, value);
+}
+
+END_DECLS
+/*----------------------------------------------------------------------------*/
 #endif /* HALM_TIMER_H_ */

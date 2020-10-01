@@ -21,6 +21,14 @@ config GENERIC_SOFTWARE_TIMER
 	bool "Software Timer Factory"
 	default y
 
+config GENERIC_SOFTWARE_TIMER_32
+	bool "Extending 32-bit timer"
+	default y
+
+config GENERIC_SOFTWARE_TIMER_64
+	bool "Extending 64-bit timer"
+	default y
+
 config GENERIC_WQ
 	bool "Work Queue"
 	default y
