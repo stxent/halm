@@ -23,7 +23,7 @@ struct SerialDmaConfig
   /** Mandatory: baud rate. */
   uint32_t rate;
   /** Mandatory: size of the input buffer, input is double buffered. */
-  size_t rxChunk;
+  size_t rxChunks;
   /** Mandatory: input queue size. */
   size_t rxLength;
   /** Mandatory: output queue size. */
@@ -58,12 +58,8 @@ struct SerialDma
   struct ByteQueue rxQueue;
   struct ByteQueue txQueue;
 
-  /* Temporary buffer for received bytes */
-  uint8_t *rxBuffer;
-  /* Index of the first DMA buffer in the receive queue */
-  size_t rxBufferIndex;
-  /* Current position inside the receiving buffer */
-  size_t rxBufferPosition;
+  /* DMA RX chunk count */
+  size_t rxChunks;
   /* Size of the single DMA RX buffer */
   size_t rxBufferSize;
   /* Size of the DMA TX transfer */
