@@ -8,6 +8,38 @@
 #include <halm/platform/nxp/sct_base.h>
 #include <halm/platform/nxp/sct_defs.h>
 /*----------------------------------------------------------------------------*/
+#define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
+#define UNPACK_FUNCTION(value)  ((value) & 0x0F)
+/*----------------------------------------------------------------------------*/
+extern const struct PinEntry sctInputPins[];
+extern const struct PinEntry sctOutputPins[];
+/*----------------------------------------------------------------------------*/
+uint8_t sctConfigInputPin(uint8_t channel, PinNumber key)
+{
+  const struct PinEntry * const pinEntry = pinFind(sctInputPins, key, channel);
+  assert(pinEntry);
+
+  const struct Pin pin = pinInit(key);
+
+  pinInput(pin);
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
+
+  return UNPACK_CHANNEL(pinEntry->value);
+}
+/*----------------------------------------------------------------------------*/
+uint8_t sctConfigOutputPin(uint8_t channel, PinNumber key)
+{
+  const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, channel);
+  assert(pinEntry);
+
+  const struct Pin pin = pinInit(key);
+
+  pinOutput(pin, false);
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
+
+  return UNPACK_CHANNEL(pinEntry->value);
+}
+/*----------------------------------------------------------------------------*/
 void sctSetFrequency(struct SctBase *timer, uint32_t frequency)
 {
   const unsigned int part = timer->part == SCT_HIGH;

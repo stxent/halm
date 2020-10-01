@@ -401,7 +401,6 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
 {
   struct CdcAcm * const interface = object;
   uint8_t *bufferPosition = buffer;
-  const size_t initialLength = length;
 
   assert(length >= getPacketSize(interface));
 
@@ -442,14 +441,13 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
     }
   }
 
-  return initialLength - length;
+  return bufferPosition - (uint8_t *)buffer;
 }
 /*----------------------------------------------------------------------------*/
 static size_t interfaceWrite(void *object, const void *buffer, size_t length)
 {
   struct CdcAcm * const interface = object;
   const uint8_t *bufferPosition = buffer;
-  const size_t initialLength = length;
   const size_t maxPacketSize = getPacketSize(interface);
 
   if (interface->suspended)
@@ -489,5 +487,5 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     }
   }
 
-  return initialLength - length;
+  return bufferPosition - (const uint8_t *)buffer;
 }

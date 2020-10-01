@@ -8,10 +8,6 @@
 #include <halm/platform/nxp/sct_defs.h>
 #include <halm/platform/nxp/sct_pwm.h>
 /*----------------------------------------------------------------------------*/
-#define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
-#define UNPACK_FUNCTION(value)  ((value) & 0x0F)
-/*----------------------------------------------------------------------------*/
-static uint8_t configOutputPin(uint8_t, PinNumber);
 static void setUnitResolution(struct SctPwmUnit *, uint8_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
@@ -112,21 +108,6 @@ const struct PwmClass * const SctUnifiedPwmDoubleEdge =
     .setEdges = doubleEdgeSetEdgesUnified,
     .setFrequency = doubleEdgeSetFrequency
 };
-/*----------------------------------------------------------------------------*/
-extern const struct PinEntry sctOutputPins[];
-/*----------------------------------------------------------------------------*/
-static uint8_t configOutputPin(uint8_t channel, PinNumber key)
-{
-  const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, channel);
-  assert(pinEntry);
-
-  const struct Pin pin = pinInit(key);
-
-  pinOutput(pin, false);
-  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
-
-  return UNPACK_CHANNEL(pinEntry->value);
-}
 /*----------------------------------------------------------------------------*/
 static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
     uint32_t value)
@@ -248,7 +229,7 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
     return E_BUSY;
 
   /* Initialize output pin */
-  pwm->channel = configOutputPin(unit->base.channel, config->pin);
+  pwm->channel = sctConfigOutputPin(unit->base.channel, config->pin);
   pwm->unit = unit;
 
   LPC_SCT_Type * const reg = unit->base.reg;
@@ -388,7 +369,7 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
     return E_BUSY;
 
   /* Initialize output pin */
-  pwm->channel = configOutputPin(unit->base.channel, config->pin);
+  pwm->channel = sctConfigOutputPin(unit->base.channel, config->pin);
   pwm->unit = unit;
 
   LPC_SCT_Type * const reg = unit->base.reg;
