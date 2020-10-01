@@ -25,7 +25,7 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *, const void *);
-static enum Result spiSetCallback(void *, void (*)(void *), void *);
+static void spiSetCallback(void *, void (*)(void *), void *);
 static enum Result spiGetParam(void *, enum IfParameter, void *);
 static enum Result spiSetParam(void *, enum IfParameter, const void *);
 static size_t spiRead(void *, void *, size_t);
@@ -333,14 +333,13 @@ static void spiDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result spiSetCallback(void *object, void (*callback)(void *),
+static void spiSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SpiDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result spiGetParam(void *object, enum IfParameter parameter,

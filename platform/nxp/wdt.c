@@ -10,7 +10,7 @@
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
-static enum Result wdtSetCallback(void *, void (*)(void *), void *);
+static void wdtSetCallback(void *, void (*)(void *), void *);
 static void wdtReload(void *);
 /*----------------------------------------------------------------------------*/
 const struct WatchdogClass * const Wdt = &(const struct WatchdogClass){
@@ -50,7 +50,7 @@ static enum Result wdtInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result wdtSetCallback(void *object __attribute__((unused)),
+static void wdtSetCallback(void *object __attribute__((unused)),
     void (*callback)(void *) __attribute__((unused)),
     void *argument __attribute__((unused)))
 {
@@ -58,7 +58,6 @@ static enum Result wdtSetCallback(void *object __attribute__((unused)),
    * The main purpose of the WDT interrupt is to allow debugging.
    * This interrupt can not be used as a regular timer interrupt.
    */
-  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static void wdtReload(void *object __attribute__((unused)))

@@ -130,7 +130,7 @@ static void sendCommand(struct SdioSpi *, uint32_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
-static enum Result sdioSetCallback(void *, void (*)(void *), void *);
+static void sdioSetCallback(void *, void (*)(void *), void *);
 static enum Result sdioGetParam(void *, enum IfParameter, void *);
 static enum Result sdioSetParam(void *, enum IfParameter, const void *);
 static size_t sdioRead(void *, void *, size_t);
@@ -741,9 +741,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   res = ifSetParam(interface->bus, IF_ZEROCOPY, 0);
   if (res != E_OK)
     return res;
-  res = ifSetCallback(interface->bus, interruptHandler, interface);
-  if (res != E_OK)
-    return res;
+  ifSetCallback(interface->bus, interruptHandler, interface);
 
   interface->timer = config->timer;
 
@@ -796,14 +794,13 @@ static void sdioDeinit(void *object __attribute__((unused)))
   free(interface->crcPool);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result sdioSetCallback(void *object, void (*callback)(void *),
+static void sdioSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SdioSpi * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result sdioGetParam(void *object, enum IfParameter parameter,

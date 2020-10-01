@@ -11,7 +11,6 @@
 #define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
-static enum Result dacSetCallback(void *, void (*)(void *), void *);
 static enum Result dacGetParam(void *, enum IfParameter, void *);
 static enum Result dacSetParam(void *, enum IfParameter, const void *);
 static size_t dacWrite(void *, const void *, size_t);
@@ -27,7 +26,7 @@ const struct InterfaceClass * const Dac = &(const struct InterfaceClass){
     .init = dacInit,
     .deinit = dacDeinit,
 
-    .setCallback = dacSetCallback,
+    .setCallback = 0,
     .getParam = dacGetParam,
     .setParam = dacSetParam,
     .read = 0,
@@ -64,13 +63,6 @@ static void dacDeinit(void *object)
   DacBase->deinit(object);
 }
 #endif
-/*----------------------------------------------------------------------------*/
-static enum Result dacSetCallback(void *object __attribute__((unused)),
-    void (*callback)(void *) __attribute__((unused)),
-    void *argument __attribute__((unused)))
-{
-  return E_INVALID;
-}
 /*----------------------------------------------------------------------------*/
 static enum Result dacGetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),

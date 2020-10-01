@@ -18,7 +18,7 @@ static void txDmaHandler(void *);
 static enum Result updateRate(struct I2SDma *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
-static enum Result i2sSetCallback(void *, void (*)(void *), void *);
+static void i2sSetCallback(void *, void (*)(void *), void *);
 static enum Result i2sGetParam(void *, enum IfParameter, void *);
 static enum Result i2sSetParam(void *, enum IfParameter, const void *);
 static size_t i2sRead(void *, void *, size_t);
@@ -373,14 +373,13 @@ static void i2sDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result i2sSetCallback(void *object, void (*callback)(void *),
+static void i2sSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct I2SDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2sGetParam(void *object, enum IfParameter parameter,

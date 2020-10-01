@@ -14,7 +14,6 @@
 static inline bool isSectorPositionValid(const struct Flash *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *, const void *);
-static enum Result flashSetCallback(void *, void (*)(void *), void *);
 static enum Result flashGetParam(void *, enum IfParameter, void *);
 static enum Result flashSetParam(void *, enum IfParameter, const void *);
 static size_t flashRead(void *, void *, size_t);
@@ -25,7 +24,7 @@ const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .init = flashInit,
     .deinit = 0, /* Default destructor */
 
-    .setCallback = flashSetCallback,
+    .setCallback = 0,
     .getParam = flashGetParam,
     .setParam = flashSetParam,
     .read = flashRead,
@@ -65,13 +64,6 @@ static enum Result flashInit(void *object,
 
   interface->position = 0;
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static enum Result flashSetCallback(void *object __attribute__((unused)),
-    void (*callback)(void *) __attribute__((unused)),
-    void *argument __attribute__((unused)))
-{
-  return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result flashGetParam(void *object, enum IfParameter parameter,

@@ -44,7 +44,7 @@ static void onInterfaceCallback(uv_poll_t *, int, int);
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *, const void *);
 static void streamDeinit(void *);
-static enum Result streamSetCallback(void *, void (*)(void *), void *);
+static void streamSetCallback(void *, void (*)(void *), void *);
 static enum Result streamGetParam(void *, enum IfParameter, void *);
 static enum Result streamSetParam(void *, enum IfParameter, const void *);
 static size_t streamRead(void *, void *, size_t);
@@ -151,14 +151,13 @@ static void streamDeinit(void *object __attribute__((unused)))
   pthread_mutex_destroy(&interface->rxQueueLock);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamSetCallback(void *object, void (*callback)(void *),
+static void streamSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Console * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamGetParam(void *object, enum IfParameter parameter,

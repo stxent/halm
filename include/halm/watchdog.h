@@ -19,7 +19,7 @@ struct WatchdogClass
 {
   CLASS_HEADER
 
-  enum Result (*setCallback)(void *, void (*)(void *), void *);
+  void (*setCallback)(void *, void (*)(void *), void *);
   void (*reload)(void *);
 };
 
@@ -36,11 +36,11 @@ BEGIN_DECLS
  * @param callback Callback function.
  * @param argument Callback function argument.
  */
-static inline enum Result watchdogSetCallback(void *timer,
-    void (*callback)(void *), void *argument)
+static inline void watchdogSetCallback(void *timer, void (*callback)(void *),
+    void *argument)
 {
-  return ((const struct WatchdogClass *)CLASS(timer))->setCallback(timer,
-      callback, argument);
+  ((const struct WatchdogClass *)CLASS(timer))->setCallback(timer, callback,
+      argument);
 }
 
 /**

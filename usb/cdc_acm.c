@@ -32,7 +32,7 @@ static bool resetEndpoints(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
-static enum Result interfaceSetCallback(void *, void (*)(void *), void *);
+static void interfaceSetCallback(void *, void (*)(void *), void *);
 static enum Result interfaceGetParam(void *, enum IfParameter, void *);
 static enum Result interfaceSetParam(void *, enum IfParameter, const void *);
 static size_t interfaceRead(void *, void *, size_t);
@@ -312,14 +312,13 @@ static void interfaceDeinit(void *object)
   pointerQueueDeinit(&interface->rxRequestQueue);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result interfaceSetCallback(void *object, void (*callback)(void *),
+static void interfaceSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct CdcAcm * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceGetParam(void *object, enum IfParameter parameter,

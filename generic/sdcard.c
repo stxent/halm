@@ -58,7 +58,7 @@ static enum Result transferBuffer(struct SdCard *, uint32_t, uint32_t,
 /*----------------------------------------------------------------------------*/
 static enum Result cardInit(void *, const void *);
 static void cardDeinit(void *);
-static enum Result cardSetCallback(void *, void (*)(void *), void *);
+static void cardSetCallback(void *, void (*)(void *), void *);
 static enum Result cardGetParam(void *, enum IfParameter, void *);
 static enum Result cardSetParam(void *, enum IfParameter, const void *);
 static size_t cardRead(void *, void *, size_t);
@@ -285,9 +285,7 @@ static enum Result initializeCard(struct SdCard *device)
   res = ifSetParam(device->interface, IF_ZEROCOPY, 0);
   if (res != E_OK)
     goto error;
-  res = ifSetCallback(device->interface, interruptHandler, device);
-  if (res != E_OK)
-    goto error;
+  ifSetCallback(device->interface, interruptHandler, device);
 
   res = ifGetParam(device->interface, IF_RATE, &originalRate);
   if (res != E_OK)
@@ -645,14 +643,13 @@ static void cardDeinit(void *object)
   ifSetCallback(device->interface, 0, 0); //FIXME Acquire?
 }
 /*----------------------------------------------------------------------------*/
-static enum Result cardSetCallback(void *object, void (*callback)(void *),
+static void cardSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SdCard * const device = object;
 
   device->callbackArgument = argument;
   device->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result cardGetParam(void *object, enum IfParameter parameter,

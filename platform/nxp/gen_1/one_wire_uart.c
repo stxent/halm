@@ -35,7 +35,7 @@ static void interruptHandler(void *);
 static void sendWord(struct OneWireUart *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum Result oneWireInit(void *, const void *);
-static enum Result oneWireSetCallback(void *, void (*)(void *), void *);
+static void oneWireSetCallback(void *, void (*)(void *), void *);
 static enum Result oneWireGetParam(void *, enum IfParameter, void *);
 static enum Result oneWireSetParam(void *, enum IfParameter, const void *);
 static size_t oneWireRead(void *, void *, size_t);
@@ -217,14 +217,13 @@ static void oneWireDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result oneWireSetCallback(void *object, void (*callback)(void *),
+static void oneWireSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct OneWireUart * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result oneWireGetParam(void *object, enum IfParameter parameter,

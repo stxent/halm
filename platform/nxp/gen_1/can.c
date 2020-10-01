@@ -35,7 +35,7 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
-static enum Result canSetCallback(void *, void (*)(void *), void *);
+static void canSetCallback(void *, void (*)(void *), void *);
 static enum Result canGetParam(void *, enum IfParameter, void *);
 static enum Result canSetParam(void *, enum IfParameter, const void *);
 static size_t canRead(void *, void *, size_t);
@@ -388,14 +388,13 @@ static void canDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result canSetCallback(void *object, void (*callback)(void *),
+static void canSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Can * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result canGetParam(void *object, enum IfParameter parameter,

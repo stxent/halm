@@ -25,7 +25,7 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result serialInit(void *, const void *);
-static enum Result serialSetCallback(void *, void (*)(void *), void *);
+static void serialSetCallback(void *, void (*)(void *), void *);
 static enum Result serialGetParam(void *, enum IfParameter, void *);
 static enum Result serialSetParam(void *, enum IfParameter, const void *);
 static size_t serialRead(void *, void *, size_t);
@@ -277,14 +277,13 @@ static void serialDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result serialSetCallback(void *object, void (*callback)(void *),
+static void serialSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct SerialDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result serialGetParam(void *object, enum IfParameter parameter,

@@ -12,7 +12,6 @@
 static uint16_t makeChannelConversion(struct AdcOneShot *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
-static enum Result adcSetCallback(void *, void (*)(void *), void *);
 static enum Result adcGetParam(void *, enum IfParameter, void *);
 static enum Result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
@@ -28,7 +27,7 @@ const struct InterfaceClass * const AdcOneShot = &(const struct InterfaceClass){
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .setCallback = adcSetCallback,
+    .setCallback = 0,
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
@@ -91,13 +90,6 @@ static void adcDeinit(void *object)
     AdcBase->deinit(interface);
 }
 #endif
-/*----------------------------------------------------------------------------*/
-static enum Result adcSetCallback(void *object __attribute__((unused)),
-    void (*callback)(void *) __attribute__((unused)),
-    void *argument __attribute__((unused)))
-{
-  return E_INVALID;
-}
 /*----------------------------------------------------------------------------*/
 static enum Result adcGetParam(void *object __attribute__((unused)),
     enum IfParameter parameter __attribute__((unused)),

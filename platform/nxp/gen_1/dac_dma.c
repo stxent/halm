@@ -15,7 +15,7 @@ static void dmaHandler(void *object);
 static bool dmaSetup(struct DacDma *, const struct DacDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
-static enum Result dacSetCallback(void *, void (*)(void *), void *);
+static void dacSetCallback(void *, void (*)(void *), void *);
 static enum Result dacGetParam(void *, enum IfParameter, void *);
 static enum Result dacSetParam(void *, enum IfParameter, const void *);
 static size_t dacWrite(void *, const void *, size_t);
@@ -137,14 +137,13 @@ static void dacDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result dacSetCallback(void *object, void (*callback)(void *),
+static void dacSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct DacDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dacGetParam(void *object, enum IfParameter parameter,

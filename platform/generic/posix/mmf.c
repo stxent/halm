@@ -15,7 +15,6 @@
 /*----------------------------------------------------------------------------*/
 static enum Result mmfInit(void *, const void *);
 static void mmfDeinit(void *);
-static enum Result mmfSetCallback(void *, void (*)(void *), void *);
 static enum Result mmfGetParam(void *, enum IfParameter, void *);
 static enum Result mmfSetParam(void *, enum IfParameter, const void *);
 static size_t mmfRead(void *, void *, size_t);
@@ -42,7 +41,7 @@ const struct InterfaceClass * const MemoryMappedFile =
     .init = mmfInit,
     .deinit = mmfDeinit,
 
-    .setCallback = mmfSetCallback,
+    .setCallback = 0,
     .getParam = mmfGetParam,
     .setParam = mmfSetParam,
     .read = mmfRead,
@@ -101,14 +100,6 @@ static void mmfDeinit(void *object)
   munmap(dev->data, dev->info.st_size);
   close(dev->file);
   sem_destroy(&dev->semaphore);
-}
-/*----------------------------------------------------------------------------*/
-static enum Result mmfSetCallback(void *object __attribute__((unused)),
-    void (*callback)(void *) __attribute__((unused)),
-    void *argument __attribute__((unused)))
-{
-  /* Not implemented */
-  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result mmfGetParam(void *object, enum IfParameter parameter,

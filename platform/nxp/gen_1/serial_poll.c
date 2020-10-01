@@ -16,7 +16,6 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result serialInit(void *, const void *);
-static enum Result serialSetCallback(void *, void (*)(void *), void *);
 static enum Result serialGetParam(void *, enum IfParameter, void *);
 static enum Result serialSetParam(void *, enum IfParameter, const void *);
 static size_t serialRead(void *, void *, size_t);
@@ -33,7 +32,7 @@ const struct InterfaceClass * const SerialPoll = &(const struct InterfaceClass){
     .init = serialInit,
     .deinit = serialDeinit,
 
-    .setCallback = serialSetCallback,
+    .setCallback = 0,
     .getParam = serialGetParam,
     .setParam = serialSetParam,
     .read = serialRead,
@@ -111,13 +110,6 @@ static void serialDeinit(void *object)
   UartBase->deinit(object);
 }
 #endif
-/*----------------------------------------------------------------------------*/
-static enum Result serialSetCallback(void *object __attribute__((unused)),
-    void (*callback)(void *) __attribute__((unused)),
-    void *argument __attribute__((unused)))
-{
-  return E_INVALID;
-}
 /*----------------------------------------------------------------------------*/
 static enum Result serialGetParam(void *object, enum IfParameter parameter,
     void *data)

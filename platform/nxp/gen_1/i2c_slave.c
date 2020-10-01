@@ -34,7 +34,7 @@ enum Status
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
-static enum Result i2cSetCallback(void *, void (*)(void *), void *);
+static void i2cSetCallback(void *, void (*)(void *), void *);
 static enum Result i2cGetParam(void *, enum IfParameter, void *);
 static enum Result i2cSetParam(void *, enum IfParameter, const void *);
 static size_t i2cRead(void *, void *, size_t);
@@ -173,14 +173,13 @@ static void i2cDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result i2cSetCallback(void *object, void (*callback)(void *),
+static void i2cSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct I2CSlave * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2cGetParam(void *object, enum IfParameter parameter,

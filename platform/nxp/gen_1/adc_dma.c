@@ -15,7 +15,7 @@ static void dmaHandler(void *);
 static bool dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
-static enum Result adcSetCallback(void *, void (*)(void *), void *);
+static void adcSetCallback(void *, void (*)(void *), void *);
 static enum Result adcGetParam(void *, enum IfParameter, void *);
 static enum Result adcSetParam(void *, enum IfParameter, const void *);
 static size_t adcRead(void *, void *, size_t);
@@ -155,14 +155,13 @@ static void adcDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result adcSetCallback(void *object, void (*callback)(void *),
+static void adcSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct AdcDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcGetParam(void *object, enum IfParameter parameter,

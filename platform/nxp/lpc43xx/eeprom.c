@@ -26,7 +26,7 @@ static bool setInstance(struct Eeprom *);
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *, const void *);
 static void eepromDeinit(void *);
-static enum Result eepromSetCallback(void *, void (*)(void *), void *);
+static void eepromSetCallback(void *, void (*)(void *), void *);
 static enum Result eepromGetParam(void *, enum IfParameter, void *);
 static enum Result eepromSetParam(void *, enum IfParameter, const void *);
 static size_t eepromRead(void *, void *, size_t);
@@ -133,14 +133,13 @@ static void eepromDeinit(void *object __attribute__((unused)))
   instance = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result eepromSetCallback(void *object, void (*callback)(void *),
+static void eepromSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Eeprom * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result eepromGetParam(void *object, enum IfParameter parameter,

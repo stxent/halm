@@ -22,7 +22,7 @@ static enum Result updateRate(struct Sdmmc *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
-static enum Result sdioSetCallback(void *, void (*)(void *), void *);
+static void sdioSetCallback(void *, void (*)(void *), void *);
 static enum Result sdioGetParam(void *, enum IfParameter, void *);
 static enum Result sdioSetParam(void *, enum IfParameter, const void *);
 static size_t sdioRead(void *, void *, size_t);
@@ -305,14 +305,13 @@ static void sdioDeinit(void *object)
   SdmmcBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result sdioSetCallback(void *object, void (*callback)(void *),
+static void sdioSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct Sdmmc * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result sdioGetParam(void *object, enum IfParameter parameter,
