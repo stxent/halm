@@ -966,12 +966,17 @@ static enum Result pll1ClockEnable(const void *clockBase
     LPC_CGU->PLL1_CTRL |= BASE_PD | BASE_AUTOBLOCK;
     LPC_CGU->PLL1_CTRL = controlValue;
 
-    /* User manual recommends to add a delay for 50 microseconds */
-    udelay(50);
+    /* Wait for PLL to lock */
+    unsigned int timeout = 100000;
 
-    /* Check PLL state */
-    if (!((LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK)))
+    while (!(LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK) && --timeout)
+      udelay(10);
+
+    if (!timeout)
       return E_ERROR;
+
+    /* User manual recommends to wait for 50 microseconds */
+    udelay(50);
 
     /* Double the output frequency by enabling direct output */
     LPC_CGU->PLL1_CTRL |= PLL1_CTRL_DIRECT;
