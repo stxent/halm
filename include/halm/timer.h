@@ -6,7 +6,7 @@
 
 /**
  * @file
- * Abstract timer class.
+ * Abstract Timer class.
  */
 
 #ifndef HALM_TIMER_H_
@@ -115,7 +115,7 @@ static inline void timerSetOverflow(void *timer, uint32_t overflow)
 }
 
 /**
- * Get the current value of a timer.
+ * Get the current value of the timer.
  * @param timer Pointer to a Timer object.
  * @return Value of the counter measured in timer ticks.
  */
@@ -125,7 +125,7 @@ static inline uint32_t timerGetValue(const void *timer)
 }
 
 /**
- * Set the timer value.
+ * Set the current value.
  * @param timer Pointer to a Timer object.
  * @param value New timer value.
  */

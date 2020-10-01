@@ -639,7 +639,6 @@ static enum Result cardInit(void *object, const void *configBase)
 static void cardDeinit(void *object)
 {
   struct SdCard * const device = object;
-
   ifSetCallback(device->interface, 0, 0); //FIXME Acquire?
 }
 /*----------------------------------------------------------------------------*/

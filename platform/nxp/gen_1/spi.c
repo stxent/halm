@@ -180,7 +180,7 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Set frame size */
   controlValue |= CR0_DSS(8);
 
-  /* Set mode of the interface */
+  /* Set clock polarity and phase */
   if (config->mode & 0x01)
     controlValue |= CR0_CPHA;
   if (config->mode & 0x02)

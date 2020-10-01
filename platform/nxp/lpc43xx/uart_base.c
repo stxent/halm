@@ -15,7 +15,7 @@ struct UartBlockDescriptor
   /* Reset control identifier */
   enum SysBlockReset reset;
   /* Peripheral clock branch */
-  enum SysClockBranch periperalBranch;
+  enum SysClockBranch peripheralBranch;
   /* Clock to register interface */
   enum SysClockBranch registerBranch;
   /* Peripheral interrupt request identifier */
@@ -42,25 +42,25 @@ static const struct UartBlockDescriptor uartBlockEntries[] = {
     {
         .reg = (LPC_UART_Type *)LPC_USART0,
         .registerBranch = CLK_M4_USART0,
-        .periperalBranch = CLK_APB0_USART0,
+        .peripheralBranch = CLK_APB0_USART0,
         .reset = RST_USART0,
         .irq = USART0_IRQ
     }, {
         .reg = LPC_UART1,
         .registerBranch = CLK_M4_UART1,
-        .periperalBranch = CLK_APB0_UART1,
+        .peripheralBranch = CLK_APB0_UART1,
         .reset = RST_UART1,
         .irq = UART1_IRQ
     }, {
         .reg = (LPC_UART_Type *)LPC_USART2,
         .registerBranch = CLK_M4_USART2,
-        .periperalBranch = CLK_APB2_USART2,
+        .peripheralBranch = CLK_APB2_USART2,
         .reset = RST_USART2,
         .irq = USART2_IRQ
     }, {
         .reg = (LPC_UART_Type *)LPC_USART3,
         .registerBranch = CLK_M4_USART3,
-        .periperalBranch = CLK_APB2_USART3,
+        .peripheralBranch = CLK_APB2_USART3,
         .reset = RST_USART3,
         .irq = USART3_IRQ
     }
@@ -287,7 +287,7 @@ static enum Result uartInit(void *object, const void *configBase)
       &uartBlockEntries[interface->channel];
 
   /* Enable clocks to register interface and peripheral */
-  sysClockEnable(entry->periperalBranch);
+  sysClockEnable(entry->peripheralBranch);
   sysClockEnable(entry->registerBranch);
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
@@ -306,7 +306,7 @@ static void uartDeinit(void *object)
       &uartBlockEntries[interface->channel];
 
   sysClockDisable(entry->registerBranch);
-  sysClockDisable(entry->periperalBranch);
+  sysClockDisable(entry->peripheralBranch);
   instances[interface->channel] = 0;
 }
 #endif

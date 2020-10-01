@@ -51,10 +51,12 @@ struct SerialDma
   uint32_t rate;
 
   /* DMA channel descriptors */
-  struct Dma *rxDma, *txDma;
+  struct Dma *rxDma;
+  struct Dma *txDma;
 
   /* Input and output queues */
-  struct ByteQueue rxQueue, txQueue;
+  struct ByteQueue rxQueue;
+  struct ByteQueue txQueue;
 
   /* Temporary buffer for received bytes */
   uint8_t *rxBuffer;

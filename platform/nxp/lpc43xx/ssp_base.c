@@ -20,7 +20,7 @@ struct SspBlockDescriptor
 {
   LPC_SSP_Type *reg;
   /* Peripheral clock branch */
-  enum SysClockBranch periperalBranch;
+  enum SysClockBranch peripheralBranch;
   /* Clock to register interface */
   enum SysClockBranch registerBranch;
   /* Reset control identifier */
@@ -50,13 +50,13 @@ static const struct SspBlockDescriptor sspBlockEntries[] = {
     {
         .reg = LPC_SSP0,
         .registerBranch = CLK_M4_SSP0,
-        .periperalBranch = CLK_APB0_SSP0,
+        .peripheralBranch = CLK_APB0_SSP0,
         .reset = RST_SSP0,
         .irq = SSP0_IRQ
     }, {
         .reg = LPC_SSP1,
         .registerBranch = CLK_M4_SSP1,
-        .periperalBranch = CLK_APB2_SSP1,
+        .peripheralBranch = CLK_APB2_SSP1,
         .reset = RST_SSP1,
         .irq = SSP1_IRQ
     }
@@ -263,7 +263,7 @@ static enum Result sspInit(void *object, const void *configBase)
       &sspBlockEntries[interface->channel];
 
   /* Enable clocks to register interface and peripheral */
-  sysClockEnable(entry->periperalBranch);
+  sysClockEnable(entry->peripheralBranch);
   sysClockEnable(entry->registerBranch);
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
@@ -282,7 +282,7 @@ static void sspDeinit(void *object)
       &sspBlockEntries[interface->channel];
 
   sysClockDisable(entry->registerBranch);
-  sysClockDisable(entry->periperalBranch);
+  sysClockDisable(entry->peripheralBranch);
 
   instances[interface->channel] = 0;
 }
