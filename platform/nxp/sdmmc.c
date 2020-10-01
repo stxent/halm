@@ -16,7 +16,7 @@
 #define BUSY_WRITE_DELAY    500 /* Milliseconds */
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *);
-static enum Result executeCommand(struct Sdmmc *, uint32_t, uint32_t);
+static void executeCommand(struct Sdmmc *, uint32_t, uint32_t);
 static void interruptHandler(void *);
 static enum Result updateRate(struct Sdmmc *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -66,8 +66,8 @@ static void execute(struct Sdmmc *interface)
 
   /* Initialize interrupts */
   reg->RINTSTS = INT_MASK;
-  irqClearPending(interface->base.irq);
   reg->INTMASK = waitStatus;
+  irqClearPending(interface->base.irq);
   irqEnable(interface->base.irq);
 
   /* Prepare command */
@@ -109,11 +109,10 @@ static void execute(struct Sdmmc *interface)
 
   /* Execute low-level command */
   interface->status = E_BUSY;
-  if (executeCommand(interface, command, interface->argument) != E_OK)
-    interface->status = E_VALUE;
+  executeCommand(interface, command, interface->argument);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result executeCommand(struct Sdmmc *interface, uint32_t command,
+static void executeCommand(struct Sdmmc *interface, uint32_t command,
     uint32_t argument)
 {
   LPC_SDMMC_Type * const reg = interface->base.reg;
@@ -124,8 +123,6 @@ static enum Result executeCommand(struct Sdmmc *interface, uint32_t command,
 
   /* Poll until command is accepted by the CIU */
   while (reg->CMD & CMD_START);
-
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
