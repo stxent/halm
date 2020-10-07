@@ -4,14 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 #include <halm/generic/can.h>
 #include <halm/platform/nxp/gen_2/can.h>
 #include <halm/platform/nxp/gen_2/can_defs.h>
 #include <halm/timer.h>
+#include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY 50000000
 #define MAX_MESSAGES  32

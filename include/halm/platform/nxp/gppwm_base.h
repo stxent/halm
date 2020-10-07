@@ -7,9 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_GPPWM_BASE_H_
 #define HALM_PLATFORM_NXP_GPPWM_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
-#include <xcore/entity.h>
 #include <halm/irq.h>
+#include <xcore/entity.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpPwmUnitBase;
 

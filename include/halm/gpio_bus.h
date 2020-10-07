@@ -13,8 +13,8 @@
 #ifndef HALM_GPIO_BUS_H_
 #define HALM_GPIO_BUS_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/entity.h>
 #include <halm/pin.h>
+#include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct GpioBusClass

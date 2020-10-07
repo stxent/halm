@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gptimer_capture.h>
 #include <halm/platform/nxp/gptimer_defs.h>
 #include <halm/pm.h>
+#include <xcore/memory.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 

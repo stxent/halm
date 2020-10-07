@@ -4,16 +4,16 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <xcore/accel.h>
 #include <halm/generic/can.h>
 #include <halm/platform/nxp/gen_1/can.h>
 #include <halm/platform/nxp/gen_1/can_defs.h>
 #include <halm/pm.h>
 #include <halm/timer.h>
+#include <xcore/accel.h>
+#include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 enum Mode
 {

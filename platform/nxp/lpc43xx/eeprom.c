@@ -4,14 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdbool.h>
-#include <string.h>
-#include <xcore/memory.h>
 #include <halm/platform/nxp/eeprom.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/eeprom_defs.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
+#include <xcore/memory.h>
+#include <assert.h>
+#include <stdbool.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 #define EEPROM_CLOCK  1500000
 #define PAGE_SIZE     128

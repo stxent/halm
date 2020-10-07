@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_USB_DEFS_H_
 #define HALM_PLATFORM_NXP_LPC43XX_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/bits.h>
+#include <stdint.h>
 /*------------------USB Command register--------------------------------------*/
 /* Device mode */
 #define USBCMD_D_RS                     BIT(0)

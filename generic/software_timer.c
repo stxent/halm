@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/generic/software_timer.h>
 #include <halm/irq.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct SoftwareTimerConfig
 {

@@ -11,7 +11,9 @@
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
+
 DEFINE_LIST(void *, Pointer, pointer)
+
 END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_POINTER_LIST_H_ */

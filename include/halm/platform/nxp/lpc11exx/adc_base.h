@@ -7,6 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_LPC11EXX_ADC_BASE_H_
 #define HALM_PLATFORM_NXP_LPC11EXX_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
 enum AdcEvent
 {

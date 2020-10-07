@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_EMC_BASE_H_
 #define HALM_PLATFORM_NXP_EMC_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/entity.h>
 #include <halm/pin.h>
+#include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 struct EmcPinDescription
 {

@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/usb/hid.h>
 #include <halm/usb/hid_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static enum Result deviceInit(void *, const void *);
 static void deviceDeinit(void *);

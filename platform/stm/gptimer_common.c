@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/stm/gptimer_base.h>
 #include <halm/platform/stm/gptimer_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry gpTimerCaptureComparePins[];
 /*----------------------------------------------------------------------------*/

@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_STM_STM32F1XX_PIN_REMAP_H_
 #define HALM_PLATFORM_STM_STM32F1XX_PIN_REMAP_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/helpers.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_REMAP(type, value) (((value) << 5) | (type))
 /*----------------------------------------------------------------------------*/

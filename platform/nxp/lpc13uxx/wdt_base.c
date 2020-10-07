@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/lpc13uxx/clocking.h>
 #include <halm/platform/nxp/lpc13uxx/system.h>
 #include <halm/platform/nxp/lpc13uxx/system_defs.h>
 #include <halm/platform/nxp/wdt_base.h>
 #include <halm/platform/nxp/wdt_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct WdtBase *);
 

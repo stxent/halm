@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/platform/nxp/gen_1/i2c_defs.h>
+#include <halm/platform/nxp/i2c_slave.h>
+#include <xcore/memory.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <xcore/memory.h>
-#include <halm/platform/nxp/gen_1/i2c_defs.h>
-#include <halm/platform/nxp/i2c_slave.h>
 /*----------------------------------------------------------------------------*/
 enum State
 {

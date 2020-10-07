@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdbool.h>
-#include <string.h>
 #include <halm/generic/flash.h>
 #include <halm/platform/nxp/flash.h>
 #include <halm/platform/nxp/iap.h>
 #include <halm/platform/nxp/lpc43xx/flash_defs.h>
+#include <stdbool.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 static bool isPagePositionValid(const struct Flash *, uintptr_t);
 static bool isSectorPositionValid(const struct Flash *, uintptr_t);

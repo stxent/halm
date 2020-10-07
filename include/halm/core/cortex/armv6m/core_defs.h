@@ -6,6 +6,8 @@
 
 #ifndef HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_
 #define HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_
+/*----------------------------------------------------------------------------*/
+#include <stdint.h>
 /*------------------System Control Block--------------------------------------*/
 typedef struct
 {

@@ -4,15 +4,15 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdlib.h>
-#include <xcore/memory.h>
 #include <halm/usb/cdc_acm.h>
 #include <halm/usb/cdc_acm_base.h>
 #include <halm/usb/cdc_acm_defs.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
+#include <xcore/memory.h>
+#include <assert.h>
+#include <stdlib.h>
 /*----------------------------------------------------------------------------*/
 struct PrivateData
 {

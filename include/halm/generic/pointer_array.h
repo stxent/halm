@@ -11,7 +11,9 @@
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
+
 DEFINE_ARRAY(void *, Pointer, pointer)
+
 END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_POINTER_ARRAY_H_ */

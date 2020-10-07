@@ -12,10 +12,10 @@
 #ifndef HALM_PLATFORM_NXP_LPC17XX_SYSTEM_H_
 #define HALM_PLATFORM_NXP_LPC17XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
+#include <halm/platform/platform_defs.h>
 #include <xcore/bits.h>
 #include <xcore/helpers.h>
-#include <halm/platform/platform_defs.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
 enum SysBlockPower

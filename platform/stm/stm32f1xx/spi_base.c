@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/stm/stm32f1xx/clocking.h>
 #include <halm/platform/stm/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
 #include <halm/platform/stm/spi_base.h>
 #include <halm/platform/stm/spi_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct SpiBlockDescriptor
 {

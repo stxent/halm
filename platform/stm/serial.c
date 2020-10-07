@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdbool.h>
 #include <halm/platform/stm/serial.h>
 #include <halm/platform/stm/uart_defs.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/

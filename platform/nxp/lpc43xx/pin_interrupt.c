@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/lpc43xx/pin_defs.h>
 #include <halm/platform/nxp/pin_interrupt.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(uint8_t);
 static void disableInterrupt(const struct PinInterrupt *);

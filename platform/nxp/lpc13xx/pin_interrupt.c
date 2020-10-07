@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/platform/nxp/pin_interrupt.h>
+#include <xcore/accel.h>
 #include <assert.h>
 #include <string.h>
-#include <xcore/accel.h>
-#include <halm/platform/nxp/pin_interrupt.h>
 /*----------------------------------------------------------------------------*/
 struct PinInterruptHandlerConfig
 {

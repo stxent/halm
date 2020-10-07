@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
 #include <halm/platform/stm/stm32f1xx/usb_base.h>
 #include <halm/platform/stm/stm32f1xx/usb_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static bool setInstance(uint8_t, struct UsbBase *);

@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <time.h>
 #include <halm/platform/generic/rtc.h>
+#include <time.h>
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
 static time64_t clkTime(void *);

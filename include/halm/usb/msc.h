@@ -7,8 +7,8 @@
 #ifndef HALM_USB_MSC_H_
 #define HALM_USB_MSC_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/interface.h>
 #include <halm/usb/usb.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct UsbDriverClass * const Msc;
 

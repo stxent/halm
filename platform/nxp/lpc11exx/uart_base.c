@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/gen_1/uart_base.h>
 #include <halm/platform/nxp/lpc11exx/clocking.h>
 #include <halm/platform/nxp/lpc11exx/system.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 /* UART clock divisor is the number from 1 to 255 or 0 to disable */
 #define DEFAULT_DIV       1

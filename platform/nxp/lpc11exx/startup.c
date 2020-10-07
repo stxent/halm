@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/bits.h>
 #include <halm/platform/nxp/lpc11exx/system.h>
 #include <halm/platform/nxp/lpc11exx/system_defs.h>
+#include <xcore/bits.h>
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {

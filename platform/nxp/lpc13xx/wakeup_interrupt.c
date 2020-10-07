@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/generic/pointer_list.h>
 #include <halm/platform/nxp/wakeup_interrupt.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct StartLogicHandler
 {

@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/pin.h>
 #include <halm/platform/stm/stm32f1xx/pin_defs.h>
 #include <halm/platform/stm/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(struct PinData);
 static void commonPinInit(struct PinData);

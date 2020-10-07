@@ -7,9 +7,9 @@
 #ifndef HALM_CORE_CORTEX_ARMV6M_IRQ_H_
 #define HALM_CORE_CORTEX_ARMV6M_IRQ_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <xcore/core/cortex/asm.h>
 #include <halm/core/core_defs.h>
+#include <xcore/core/cortex/asm.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 enum
 {

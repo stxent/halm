@@ -4,9 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <malloc.h>
-#include <xcore/accel.h>
 #include <halm/delay.h>
 #include <halm/generic/pointer_array.h>
 #include <halm/generic/pointer_queue.h>
@@ -16,6 +13,9 @@
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
+#include <xcore/accel.h>
+#include <assert.h>
+#include <malloc.h>
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
 #define CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE

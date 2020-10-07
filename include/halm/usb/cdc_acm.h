@@ -7,11 +7,11 @@
 #ifndef HALM_USB_CDC_ACM_H_
 #define HALM_USB_CDC_ACM_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/interface.h>
 #include <halm/generic/pointer_array.h>
 #include <halm/generic/pointer_queue.h>
 #include <halm/generic/serial.h>
 #include <halm/usb/cdc_acm_base.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 enum CdcAcmParameter
 {

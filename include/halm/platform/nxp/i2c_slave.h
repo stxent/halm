@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_I2C_SLAVE_H_
 #define HALM_PLATFORM_NXP_I2C_SLAVE_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <halm/target.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_I2C/i2c_base.h>

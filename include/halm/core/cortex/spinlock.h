@@ -7,9 +7,9 @@
 #ifndef HALM_CORE_CORTEX_SPINLOCK_H_
 #define HALM_CORE_CORTEX_SPINLOCK_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <xcore/error.h>
 #include <xcore/helpers.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

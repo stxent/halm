@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stddef.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {

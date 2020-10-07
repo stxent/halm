@@ -7,6 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
 #define HALM_PLATFORM_NXP_LPC17XX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 5
 /*------------------System Control--------------------------------------------*/
 typedef struct

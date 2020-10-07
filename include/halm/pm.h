@@ -12,10 +12,10 @@
 #ifndef HALM_PM_H_
 #define HALM_PM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <stdint.h>
 #include <xcore/error.h>
 #include <xcore/helpers.h>
+#include <stdbool.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 enum PmState
 {

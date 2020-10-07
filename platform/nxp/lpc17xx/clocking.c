@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/accel.h>
 #include <halm/platform/nxp/lpc17xx/clocking.h>
 #include <halm/platform/nxp/lpc17xx/clocking_defs.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/accel.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY     4000000
 #define RTC_OSC_FREQUENCY     32768

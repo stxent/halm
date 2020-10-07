@@ -7,9 +7,9 @@
 #ifndef HALM_CORE_X86_DELAY_H_
 #define HALM_CORE_X86_DELAY_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/helpers.h>
 #include <stdint.h>
 #include <time.h>
-#include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

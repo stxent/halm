@@ -7,8 +7,8 @@
 #ifndef HALM_USB_USB_TRACE_H_
 #define HALM_USB_USB_TRACE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/interface.h>
 #include <halm/timer.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

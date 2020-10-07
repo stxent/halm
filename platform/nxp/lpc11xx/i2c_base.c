@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/gen_1/i2c_base.h>
 #include <halm/platform/nxp/lpc11xx/clocking.h>
 #include <halm/platform/nxp/lpc11xx/system.h>
 #include <halm/platform/nxp/lpc11xx/system_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct I2CBase *);
 /*----------------------------------------------------------------------------*/

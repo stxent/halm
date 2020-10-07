@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/platform/generic/timer.h>
+#include <uv.h>
 #include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include <uv.h>
-#include <halm/platform/generic/timer.h>
 /*----------------------------------------------------------------------------*/
 struct PosixTimer
 {

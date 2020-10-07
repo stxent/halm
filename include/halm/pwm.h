@@ -12,9 +12,9 @@
 #ifndef HALM_PWM_H_
 #define HALM_PWM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <xcore/entity.h>
 #include <halm/pin.h>
+#include <xcore/entity.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct PwmClass

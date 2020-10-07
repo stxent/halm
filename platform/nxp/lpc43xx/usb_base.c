@@ -4,13 +4,13 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <malloc.h>
-#include <stdlib.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 #include <halm/platform/nxp/lpc43xx/system_defs.h>
 #include <halm/platform/nxp/lpc43xx/usb_base.h>
 #include <halm/platform/nxp/lpc43xx/usb_defs.h>
+#include <assert.h>
+#include <malloc.h>
+#include <stdlib.h>
 /*----------------------------------------------------------------------------*/
 #define ENDPOINT_REQUESTS     CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
 #define USB0_ENDPOINT_NUMBER  12

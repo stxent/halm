@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/memory.h>
-#include <xcore/unicode.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_string.h>
+#include <xcore/memory.h>
+#include <xcore/unicode.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct UsbString usbStringBuild(UsbStringFunctor functor, const void *argument,
     enum UsbStringType type)

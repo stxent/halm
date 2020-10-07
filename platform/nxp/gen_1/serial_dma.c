@@ -4,13 +4,13 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <string.h>
 #include <halm/generic/byte_queue_extensions.h>
 #include <halm/platform/nxp/gen_1/uart_defs.h>
 #include <halm/platform/nxp/gpdma_list.h>
 #include <halm/platform/nxp/gpdma_oneshot.h>
 #include <halm/platform/nxp/serial_dma.h>
 #include <halm/pm.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 static bool dmaSetup(struct SerialDma *, uint8_t, uint8_t, size_t);
 static enum Result enqueueRxBuffers(struct SerialDma *);

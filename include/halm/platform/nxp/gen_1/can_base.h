@@ -7,9 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_GEN_1_CAN_BASE_H_
 #define HALM_PLATFORM_NXP_GEN_1_CAN_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/entity.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
+#include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const CanBase;
 

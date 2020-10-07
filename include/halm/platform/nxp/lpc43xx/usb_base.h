@@ -7,10 +7,10 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_USB_BASE_H_
 #define HALM_PLATFORM_NXP_LPC43XX_USB_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/entity.h>
 #include <halm/generic/pointer_array.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
+#include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbBase;
 

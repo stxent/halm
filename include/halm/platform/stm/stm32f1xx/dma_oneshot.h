@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_STM_STM32F1XX_DMA_ONESHOT_H_
 #define HALM_PLATFORM_STM_STM32F1XX_DMA_ONESHOT_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <halm/platform/stm/stm32f1xx/dma_base.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const DmaOneShot;
 

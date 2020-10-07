@@ -7,7 +7,6 @@
 #ifndef HALM_GENERIC_SERIAL_H_
 #define HALM_GENERIC_SERIAL_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 enum SerialParity

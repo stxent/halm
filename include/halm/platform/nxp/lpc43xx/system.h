@@ -12,9 +12,9 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 #define HALM_PLATFORM_NXP_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <xcore/helpers.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/helpers.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals register */
 enum SysBlockReset

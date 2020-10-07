@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/irq.h>
 #include <halm/platform/platform_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define PRIORITY_TO_VALUE(priority) \
     ((((1 << NVIC_PRIORITY_SIZE) - 1) - (priority)) << (8 - NVIC_PRIORITY_SIZE))

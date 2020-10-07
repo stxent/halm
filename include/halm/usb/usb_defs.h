@@ -7,8 +7,8 @@
 #ifndef HALM_USB_USB_DEFS_H_
 #define HALM_USB_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/bits.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 enum
 {

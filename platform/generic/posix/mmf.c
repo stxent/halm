@@ -4,14 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/platform/generic/mmf.h>
+#include <xcore/memory.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <xcore/memory.h>
-#include <halm/platform/generic/mmf.h>
+#include <unistd.h>
 /*----------------------------------------------------------------------------*/
 static enum Result mmfInit(void *, const void *);
 static void mmfDeinit(void *);

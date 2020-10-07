@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/memory.h>
 #include <halm/platform/nxp/gen_1/uart_defs.h>
 #include <halm/platform/nxp/one_wire_uart.h>
+#include <xcore/memory.h>
 /*----------------------------------------------------------------------------*/
 #define RATE_RESET      9600
 #define RATE_DATA       115200

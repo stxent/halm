@@ -4,16 +4,16 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <inttypes.h>
-#include <stdlib.h>
-#include <string.h>
-#include <xcore/memory.h>
 #include <halm/irq.h>
 #include <halm/usb/msc.h>
 #include <halm/usb/msc_datapath.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_trace.h>
+#include <xcore/memory.h>
+#include <assert.h>
+#include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 enum State
 {

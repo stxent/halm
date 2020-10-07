@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/asm.h>
 #include <halm/generic/work_queue.h>
 #include <halm/generic/work_queue_defs.h>
 #include <halm/irq.h>
 #include <halm/pm.h>
+#include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
 struct WorkQueue
 {

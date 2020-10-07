@@ -4,14 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdbool.h>
-#include <xcore/accel.h>
 #include <halm/clock.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm/stm32f1xx/clocking.h>
 #include <halm/platform/stm/stm32f1xx/clocking_defs.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
+#include <xcore/accel.h>
+#include <assert.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #define HSI_OSC_FREQUENCY     8000000
 #define TICK_RATE(frequency)  ((frequency) / 1000)

@@ -9,20 +9,20 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
-#define CODE_LPC1769            0x26113F37U
-#define CODE_LPC1768            0x26013F37U
-#define CODE_LPC1767            0x26012837U
-#define CODE_LPC1766            0x26013F33U
-#define CODE_LPC1765            0x26013733U
-#define CODE_LPC1764            0x26011922U
-#define CODE_LPC1763            0x26012033U
-#define CODE_LPC1759            0x25113737U
-#define CODE_LPC1758            0x25013F37U
-#define CODE_LPC1756            0x25011723U
-#define CODE_LPC1754            0x25011722U
-#define CODE_LPC1752            0x25001121U
-#define CODE_LPC1751            0x25001118U
-#define CODE_LPC1751_00         0x25001110U
+#define CODE_LPC1769            0x26113F37UL
+#define CODE_LPC1768            0x26013F37UL
+#define CODE_LPC1767            0x26012837UL
+#define CODE_LPC1766            0x26013F33UL
+#define CODE_LPC1765            0x26013733UL
+#define CODE_LPC1764            0x26011922UL
+#define CODE_LPC1763            0x26012033UL
+#define CODE_LPC1759            0x25113737UL
+#define CODE_LPC1758            0x25013F37UL
+#define CODE_LPC1756            0x25011723UL
+#define CODE_LPC1754            0x25011722UL
+#define CODE_LPC1752            0x25001121UL
+#define CODE_LPC1751            0x25001118UL
+#define CODE_LPC1751_00         0x25001110UL
 /*----------------------------------------------------------------------------*/
 #define FLASH_PAGE_SIZE         256
 #define FLASH_SECTOR_SIZE_0     4096
@@ -30,7 +30,7 @@
 #define FLASH_SECTORS_BORDER    0x10000
 #define FLASH_SECTORS_OFFSET    (FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0)
 /*----------------------------------------------------------------------------*/
-#define IAP_BASE                0x1FFF1FF1U
+#define IAP_BASE                0x1FFF1FF1UL
 /*----------------------------------------------------------------------------*/
 static inline uint8_t addressToBank(uint32_t address __attribute__((unused)))
 {

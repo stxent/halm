@@ -7,11 +7,10 @@
 #ifndef HALM_PLATFORM_NXP_GEN_1_ADC_BASE_H_
 #define HALM_PLATFORM_NXP_GEN_1_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <stdint.h>
-#include <xcore/interface.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
+#include <xcore/interface.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/adc_base.h>

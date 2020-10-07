@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <inttypes.h>
 #include <halm/irq.h>
 #include <halm/usb/msc.h>
 #include <halm/usb/msc_datapath.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_trace.h>
+#include <inttypes.h>
 /*----------------------------------------------------------------------------*/
 static bool enqueueUsbRx(struct MscQueryHandler *, uintptr_t, size_t,
     UsbRequestCallback, UsbRequestCallback, size_t *);

@@ -12,9 +12,9 @@
 #ifndef HALM_TIMER_H_
 #define HALM_TIMER_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/entity.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct TimerClass

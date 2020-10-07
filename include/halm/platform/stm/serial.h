@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_STM_SERIAL_H_
 #define HALM_PLATFORM_STM_SERIAL_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/byte_queue.h>
 #include <halm/platform/stm/uart_base.h>
+#include <xcore/containers/byte_queue.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Serial;
 

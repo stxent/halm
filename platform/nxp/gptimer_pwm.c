@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/gptimer_pwm.h>
 #include <halm/platform/nxp/gptimer_pwm_defs.h>
 #include <halm/pm.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static bool unitAllocateChannel(struct GpTimerPwmUnit *, uint8_t);
 static void unitUpdateResolution(struct GpTimerPwmUnit *, uint8_t);

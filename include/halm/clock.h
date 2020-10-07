@@ -12,10 +12,10 @@
 #ifndef HALM_CLOCK_H_
 #define HALM_CLOCK_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
-#include <stdbool.h>
 #include <xcore/error.h>
 #include <xcore/helpers.h>
+#include <stdbool.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* Simplified descriptor for abstract class */
 struct ClockClass

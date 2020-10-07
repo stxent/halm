@@ -4,17 +4,17 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <xcore/containers/tg_list.h>
-#include <xcore/memory.h>
 #include <halm/generic/pointer_array.h>
 #include <halm/usb/usb.h>
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
+#include <xcore/containers/tg_list.h>
+#include <xcore/memory.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 #define EP0_BUFFER_SIZE   64
 #define DATA_BUFFER_SIZE  (CONFIG_USB_DEVICE_CONTROL_REQUESTS * EP0_BUFFER_SIZE)

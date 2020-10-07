@@ -12,8 +12,8 @@
 #ifndef HALM_PLATFORM_STM_STM32F1XX_SYSTEM_H_
 #define HALM_PLATFORM_STM_STM32F1XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <xcore/helpers.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 enum SysBlockReset
 {

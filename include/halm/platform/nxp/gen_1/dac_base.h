@@ -7,10 +7,10 @@
 #ifndef HALM_PLATFORM_NXP_GEN_1_DAC_BASE_H_
 #define HALM_PLATFORM_NXP_GEN_1_DAC_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/entity.h>
-#include <xcore/interface.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
+#include <xcore/entity.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const DacBase;
 

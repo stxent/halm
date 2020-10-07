@@ -7,10 +7,10 @@
 #ifndef HALM_PLATFORM_NXP_IAP_H_
 #define HALM_PLATFORM_NXP_IAP_H_
 /*----------------------------------------------------------------------------*/
-#include <stddef.h>
-#include <stdint.h>
 #include <xcore/error.h>
 #include <xcore/helpers.h>
+#include <stddef.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

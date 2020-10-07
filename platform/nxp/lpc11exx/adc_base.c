@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/gen_1/adc_base.h>
 #include <halm/platform/nxp/gen_1/adc_defs.h>
 #include <halm/platform/nxp/lpc11exx/clocking.h>
 #include <halm/platform/nxp/lpc11exx/system.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY                 4500000
 /* Pack and unpack conversion channel and pin function */

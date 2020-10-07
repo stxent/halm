@@ -7,8 +7,6 @@
 #ifndef HALM_CORE_CORTEX_CORE_DEFS_H_
 #define HALM_CORE_CORTEX_CORE_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
-/*----------------------------------------------------------------------------*/
 /* No effect or reserved registers */
 #define __ne__ __attribute__((deprecated))
 /* Registers with read and write access types */

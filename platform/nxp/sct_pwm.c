@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/sct_defs.h>
 #include <halm/platform/nxp/sct_pwm.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void setUnitResolution(struct SctPwmUnit *, uint8_t, uint32_t);
 /*----------------------------------------------------------------------------*/

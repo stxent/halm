@@ -4,13 +4,13 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/platform/generic/console.h>
+#include <xcore/containers/byte_queue.h>
+#include <uv.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
-#include <uv.h>
-#include <xcore/containers/byte_queue.h>
-#include <halm/platform/generic/console.h>
 /*----------------------------------------------------------------------------*/
 #define BUFFER_SIZE 64
 #define QUEUE_SIZE  2048

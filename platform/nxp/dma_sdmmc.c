@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <malloc.h>
-#include <stdlib.h>
 #include <halm/platform/nxp/dma_sdmmc.h>
 #include <halm/platform/nxp/sdmmc_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <assert.h>
+#include <malloc.h>
+#include <stdlib.h>
 /*----------------------------------------------------------------------------*/
 static enum Result appendItem(void *object, uintptr_t address, size_t size);
 /*----------------------------------------------------------------------------*/

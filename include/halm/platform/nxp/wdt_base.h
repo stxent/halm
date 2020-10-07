@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_WDT_BASE_H_
 #define HALM_PLATFORM_NXP_WDT_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/entity.h>
 #include <halm/irq.h>
+#include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/wdt_base.h>

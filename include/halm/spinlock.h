@@ -7,8 +7,8 @@
 #ifndef HALM_SPINLOCK_H_
 #define HALM_SPINLOCK_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <halm/target.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 typedef volatile uint8_t Spinlock;
 

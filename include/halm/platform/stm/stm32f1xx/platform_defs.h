@@ -7,6 +7,8 @@
 #ifndef HALM_PLATFORM_STM_STM32F1XX_PLATFORM_DEFS_H_
 #define HALM_PLATFORM_STM_STM32F1XX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 4
 /*------------------Analog to Digital Converter-------------------------------*/
 typedef struct

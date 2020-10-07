@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_GPDMA_CIRCULAR_H_
 #define HALM_PLATFORM_NXP_GPDMA_CIRCULAR_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <halm/platform/nxp/gpdma_base.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const GpDmaCircular;
 

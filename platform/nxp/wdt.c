@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/wdt.h>
 #include <halm/platform/nxp/wdt_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
 static void wdtSetCallback(void *, void (*)(void *), void *);

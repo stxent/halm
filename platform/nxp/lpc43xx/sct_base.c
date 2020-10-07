@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/accel.h>
 #include <halm/platform/nxp/lpc43xx/clocking.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 #include <halm/platform/nxp/sct_base.h>
 #include <halm/platform/nxp/sct_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/accel.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/

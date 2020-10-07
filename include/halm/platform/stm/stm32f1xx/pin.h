@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_STM_STM32F1XX_PIN_H_
 #define HALM_PLATFORM_STM_STM32F1XX_PIN_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/helpers.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 enum
 {

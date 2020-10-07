@@ -4,13 +4,13 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/memory.h>
 #include <halm/irq.h>
 #include <halm/platform/stm/stm32f1xx/dma_base.h>
 #include <halm/platform/stm/stm32f1xx/dma_defs.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/memory.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 /* DMA1 has 7 streams and DMA2 has 5 streams */
 #define DMA1_STREAM_COUNT 7

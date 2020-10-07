@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/asm.h>
 #include <halm/generic/software_timer_32.h>
+#include <xcore/asm.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void onTimerOverflow(void *);
 /*----------------------------------------------------------------------------*/

@@ -4,14 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <string.h>
-#include <xcore/memory.h>
 #include <halm/usb/hid.h>
 #include <halm/usb/hid_base.h>
 #include <halm/usb/hid_defs.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
+#include <xcore/memory.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 struct SingleHidDescriptor
 {

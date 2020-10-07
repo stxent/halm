@@ -7,10 +7,10 @@
 #ifndef HALM_PLATFORM_STM_CAN_H_
 #define HALM_PLATFORM_STM_CAN_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/interface.h>
 #include <halm/generic/pointer_array.h>
 #include <halm/generic/pointer_queue.h>
 #include <halm/platform/stm/bxcan_base.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Can;
 

@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/delay.h>
 #include <halm/platform/nxp/lpc11exx/clocking.h>
 #include <halm/platform/nxp/lpc11exx/clocking_defs.h>
 #include <halm/platform/nxp/lpc11exx/system.h>
 #include <halm/platform/platform_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY             12000000
 #define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)

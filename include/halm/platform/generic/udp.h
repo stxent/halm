@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_GENERIC_UDP_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Udp;
 

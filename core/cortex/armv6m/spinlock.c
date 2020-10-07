@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/core/cortex/asm.h>
 #include <halm/spinlock.h>
+#include <xcore/core/cortex/asm.h>
 /*----------------------------------------------------------------------------*/
 void spinLock(Spinlock *lock)
 {

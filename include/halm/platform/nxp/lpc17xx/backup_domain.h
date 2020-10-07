@@ -7,10 +7,10 @@
 #ifndef HALM_PLATFORM_NXP_LPC17XX_BACKUP_DOMAIN_H_
 #define HALM_PLATFORM_NXP_LPC17XX_BACKUP_DOMAIN_H_
 /*----------------------------------------------------------------------------*/
-#include <stddef.h>
-#include <xcore/helpers.h>
 #include <halm/target.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/helpers.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

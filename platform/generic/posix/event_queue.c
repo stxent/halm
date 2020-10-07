@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdlib.h>
-#include <uv.h>
 #include <halm/platform/generic/event_queue.h>
+#include <uv.h>
+#include <stdlib.h>
 /*----------------------------------------------------------------------------*/
 struct Task
 {

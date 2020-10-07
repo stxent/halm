@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <string.h>
 #include <halm/platform/nxp/adc_oneshot.h>
 #include <halm/platform/nxp/gen_1/adc_defs.h>
+#include <assert.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 static uint16_t makeChannelConversion(struct AdcOneShot *);
 /*----------------------------------------------------------------------------*/

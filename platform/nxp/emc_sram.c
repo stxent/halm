@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/helpers.h>
 #include <halm/platform/nxp/emc_base.h>
 #include <halm/platform/nxp/emc_defs.h>
 #include <halm/platform/nxp/emc_sram.h>
+#include <xcore/helpers.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static enum Result sramInit(void *, const void *);
 

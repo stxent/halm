@@ -7,8 +7,6 @@
 #ifndef HALM_PLATFORM_STM_PLATFORM_DEFS_H_
 #define HALM_PLATFORM_STM_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
-/*----------------------------------------------------------------------------*/
 /* No effect or reserved registers */
 #define __ne__ __attribute__((deprecated))
 /* Registers with read and write access types */

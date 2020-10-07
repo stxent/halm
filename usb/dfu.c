@@ -4,14 +4,14 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <limits.h>
-#include <xcore/memory.h>
 #include <halm/usb/dfu.h>
 #include <halm/usb/dfu_defs.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
+#include <xcore/memory.h>
+#include <assert.h>
+#include <limits.h>
 /*----------------------------------------------------------------------------*/
 static void deviceDescriptor(const void *, struct UsbDescriptor *, void *);
 static void configDescriptor(const void *, struct UsbDescriptor *, void *);

@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/bits.h>
 #include <halm/platform/nxp/fast_gpio_bus.h>
+#include <xcore/bits.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 void fastGpioBusConfigPins(struct FastGpioBus *bus,
     const struct FastGpioBusConfig *config)

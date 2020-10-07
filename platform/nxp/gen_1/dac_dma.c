@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/dac_dma.h>
 #include <halm/platform/nxp/gen_1/dac_defs.h>
 #include <halm/platform/nxp/gpdma_list.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define BUFFER_COUNT 2
 /*----------------------------------------------------------------------------*/

@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/gpdma_list.h>
 #include <halm/platform/nxp/i2s_defs.h>
 #include <halm/platform/nxp/i2s_dma.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define BUFFER_COUNT 2
 /*----------------------------------------------------------------------------*/

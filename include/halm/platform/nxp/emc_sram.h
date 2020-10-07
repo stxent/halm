@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_EMC_SRAM_H_
 #define HALM_PLATFORM_NXP_EMC_SRAM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <xcore/entity.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const EmcSram;
 

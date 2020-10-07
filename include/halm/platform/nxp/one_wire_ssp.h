@@ -7,10 +7,10 @@
 #ifndef HALM_PLATFORM_NXP_ONE_WIRE_SSP_H_
 #define HALM_PLATFORM_NXP_ONE_WIRE_SSP_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/containers/byte_queue.h>
 #include <halm/generic/one_wire.h>
 #include <halm/irq.h>
 #include <halm/platform/nxp/ssp_base.h>
+#include <xcore/containers/byte_queue.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const OneWireSsp;
 

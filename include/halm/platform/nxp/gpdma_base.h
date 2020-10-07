@@ -7,9 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_GPDMA_BASE_H_
 #define HALM_PLATFORM_NXP_GPDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <halm/dma.h>
 #include <halm/target.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/gpdma_base.h>

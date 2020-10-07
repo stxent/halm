@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stddef.h>
-#include <xcore/bits.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 #include <halm/platform/nxp/lpc17xx/system_defs.h>
+#include <xcore/bits.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {

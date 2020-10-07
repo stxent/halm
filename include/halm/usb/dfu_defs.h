@@ -7,9 +7,9 @@
 #ifndef HALM_USB_DFU_DEFS_H_
 #define HALM_USB_DFU_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/bits.h>
 #include <xcore/memory.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define DFU_CONTROL_EP_SIZE 64
 /*----------------------------------------------------------------------------*/

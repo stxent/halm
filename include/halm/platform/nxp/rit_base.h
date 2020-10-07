@@ -7,6 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_RIT_BASE_H_
 #define HALM_PLATFORM_NXP_RIT_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
 void ritBaseInit(void);
 void ritBaseDeinit(void);
 uint32_t ritGetClock(void);

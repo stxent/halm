@@ -7,10 +7,10 @@
 #ifndef HALM_CAPTURE_H_
 #define HALM_CAPTURE_H_
 /*----------------------------------------------------------------------------*/
+#include <halm/pin.h>
+#include <xcore/entity.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <xcore/entity.h>
-#include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct CaptureClass

@@ -5,6 +5,7 @@
  */
 
 #include <halm/platform/nxp/gen_1/rtc_base.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct RtcBase *);
 /*----------------------------------------------------------------------------*/

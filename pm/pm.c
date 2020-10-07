@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdlib.h>
+#include <halm/pm.h>
 #include <xcore/containers/tg_list.h>
 #include <xcore/entity.h>
-#include <halm/pm.h>
+#include <assert.h>
+#include <stdlib.h>
 /*----------------------------------------------------------------------------*/
 struct PmHandlerEntry
 {

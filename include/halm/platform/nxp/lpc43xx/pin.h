@@ -7,9 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_PIN_H_
 #define HALM_PLATFORM_NXP_LPC43XX_PIN_H_
 /*----------------------------------------------------------------------------*/
+#include <halm/platform/platform_defs.h>
 #include <assert.h>
 #include <stdbool.h>
-#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 enum
 {

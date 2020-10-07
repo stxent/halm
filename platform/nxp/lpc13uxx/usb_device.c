@@ -4,9 +4,6 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <string.h>
-#include <xcore/accel.h>
 #include <halm/delay.h>
 #include <halm/generic/pointer_queue.h>
 #include <halm/platform/nxp/lpc13uxx/usb_base.h>
@@ -15,6 +12,9 @@
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
+#include <xcore/accel.h>
+#include <assert.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 struct SbUsbEndpoint
 {

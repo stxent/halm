@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <malloc.h>
 #include <halm/platform/nxp/gpdma_defs.h>
 #include <halm/platform/nxp/gpdma_list.h>
 #include <halm/platform/platform_defs.h>
+#include <assert.h>
+#include <malloc.h>
 /*----------------------------------------------------------------------------*/
 enum State
 {

@@ -7,9 +7,9 @@
 #ifndef HALM_USB_MSC_DEFS_H_
 #define HALM_USB_MSC_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/bits.h>
 #include <xcore/memory.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define MSC_CONTROL_EP_SIZE 64
 #define MSC_DATA_EP_SIZE    64

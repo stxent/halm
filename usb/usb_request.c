@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <string.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
+#include <assert.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 static const UsbDescriptorFunctor *findEntry(const void *, uint8_t,
     unsigned int);

@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdbool.h>
-#include <string.h>
 #include <halm/platform/nxp/eeprom.h>
 #include <halm/platform/nxp/iap.h>
 #include <halm/platform/nxp/lpc11exx/flash_defs.h>
+#include <stdbool.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 static inline bool isAddressValid(const struct Eeprom *, uintptr_t);
 /*----------------------------------------------------------------------------*/

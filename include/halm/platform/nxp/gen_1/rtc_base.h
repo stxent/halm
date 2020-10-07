@@ -7,9 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_GEN_1_RTC_BASE_H_
 #define HALM_PLATFORM_NXP_GEN_1_RTC_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/realtime.h>
 #include <halm/irq.h>
-#include <halm/pin.h>
+#include <xcore/realtime.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const RtcBase;
 

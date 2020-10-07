@@ -7,8 +7,8 @@
 #ifndef HALM_CORE_CORTEX_ARMV7M_NVIC_H_
 #define HALM_CORE_CORTEX_ARMV7M_NVIC_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/helpers.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 #include <halm/platform/nxp/lpc17xx/usb_base.h>
 #include <halm/platform/nxp/lpc17xx/usb_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
 static bool setInstance(struct UsbBase *);

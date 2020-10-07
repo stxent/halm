@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/usb/usb_trace.h>
 #include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <halm/usb/usb_trace.h>
 /*----------------------------------------------------------------------------*/
 #define CONFIG_TRACE_BUFFER_SIZE 80
 /*----------------------------------------------------------------------------*/

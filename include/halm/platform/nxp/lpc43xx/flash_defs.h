@@ -7,33 +7,33 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_FLASH_DEFS_H_
 #define HALM_PLATFORM_NXP_LPC43XX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/bits.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
-#define CODE_LPC4350            0xA0000830U
-#define CODE_LPC4330            0xA0000A30U
-#define CODE_LPC4320            0xA000CB3CU
-#define CODE_LPC4310            0xA00ACB3FU
-#define CODE_LPC4370FET256      0x00000030U
-#define CODE_LPC4370FET100      0x00000230U
+#define CODE_LPC4350            0xA0000830UL
+#define CODE_LPC4330            0xA0000A30UL
+#define CODE_LPC4320            0xA000CB3CUL
+#define CODE_LPC4310            0xA00ACB3FUL
+#define CODE_LPC4370FET256      0x00000030UL
+#define CODE_LPC4370FET100      0x00000230UL
 
-#define CODE_LPC435X            0xA001C830U
-#define CODE_LPC433X            0xA001CA30U
-#define CODE_LPC4325_17         0xA001CB3CU
-#define CODE_LPC4322_13         0xA00BCB3CU
-#define CODE_LPC4315_17         0xA001CB3FU
-#define CODE_LPC4312_13         0xA00BCB3FU
+#define CODE_LPC435X            0xA001C830UL
+#define CODE_LPC433X            0xA001CA30UL
+#define CODE_LPC4325_17         0xA001CB3CUL
+#define CODE_LPC4322_13         0xA00BCB3CUL
+#define CODE_LPC4315_17         0xA001CB3FUL
+#define CODE_LPC4312_13         0xA00BCB3FUL
 
-#define FLASH_AVAILABLE         0x00010000U
-#define FLASH_SIZE_MASK         0x000000FFU
-#define FLASH_SIZE_256_256      0x00000044U
-#define FLASH_SIZE_384_384      0x00000022U
-#define FLASH_SIZE_512_0        0x00000080U
-#define FLASH_SIZE_512_512      0x00000000U
+#define FLASH_AVAILABLE         0x00010000UL
+#define FLASH_SIZE_MASK         0x000000FFUL
+#define FLASH_SIZE_256_256      0x00000044UL
+#define FLASH_SIZE_384_384      0x00000022UL
+#define FLASH_SIZE_512_0        0x00000080UL
+#define FLASH_SIZE_512_512      0x00000000UL
 /*----------------------------------------------------------------------------*/
-#define FLASH_BANK_A            0x1A000000U
-#define FLASH_BANK_B            0x1B000000U
-#define FLASH_BANK_MASK         0x0007FFFFU
+#define FLASH_BANK_A            0x1A000000UL
+#define FLASH_BANK_B            0x1B000000UL
+#define FLASH_BANK_MASK         0x0007FFFFUL
 #define FLASH_BANKS_BORDER      0x80000
 #define FLASH_PAGE_SIZE         512
 #define FLASH_SECTOR_SIZE_0     8192
@@ -41,7 +41,7 @@
 #define FLASH_SECTORS_BORDER    0x10000
 #define FLASH_SECTORS_OFFSET    (FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0)
 /*----------------------------------------------------------------------------*/
-#define IAP_BASE                (*(volatile uint32_t *)0x10400100U)
+#define IAP_BASE                (*(volatile uint32_t *)0x10400100UL)
 /*----------------------------------------------------------------------------*/
 #define FLASH_SIZE_ENCODE(a, b) \
     (BIT_FIELD((a) >> 10, 0) | BIT_FIELD((b) >> 10, 16))

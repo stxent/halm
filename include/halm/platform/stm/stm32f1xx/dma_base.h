@@ -7,10 +7,10 @@
 #ifndef HALM_PLATFORM_STM_STM32F1XX_DMA_BASE_H_
 #define HALM_PLATFORM_STM_STM32F1XX_DMA_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <stdint.h>
 #include <halm/dma.h>
 #include <halm/irq.h>
+#include <stdbool.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /** Symbolic names for the DMA streams */
 enum

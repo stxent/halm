@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
 #include <halm/platform/nxp/gptimer_counter.h>
 #include <halm/platform/nxp/gptimer_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getMaxValue(const struct GpTimerCounter *);
 static void interruptHandler(void *);

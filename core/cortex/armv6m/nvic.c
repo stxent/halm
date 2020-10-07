@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/asm.h>
 #include <halm/core/core_defs.h>
 #include <halm/core/cortex/armv7m/nvic_defs.h>
 #include <halm/core/cortex/nvic.h>
+#include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
 void nvicResetCore(void)
 {

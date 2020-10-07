@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stdbool.h>
 #include <halm/platform/stm/spi.h>
 #include <halm/platform/stm/spi_defs.h>
+#include <assert.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #define DUMMY_FRAME 0xFF
 /*----------------------------------------------------------------------------*/

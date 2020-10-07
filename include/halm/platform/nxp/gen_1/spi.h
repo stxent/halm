@@ -7,9 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_GEN_1_SPI_H_
 #define HALM_PLATFORM_NXP_GEN_1_SPI_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <halm/generic/spi.h>
 #include <halm/platform/nxp/ssp_base.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Spi;
 

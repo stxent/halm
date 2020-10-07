@@ -7,9 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_SSP_BASE_H_
 #define HALM_PLATFORM_NXP_SSP_BASE_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/interface.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SspBase;
 

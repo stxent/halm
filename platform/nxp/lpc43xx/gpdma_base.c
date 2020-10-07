@@ -4,15 +4,15 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <string.h>
-#include <xcore/accel.h>
-#include <xcore/memory.h>
 #include <halm/irq.h>
 #include <halm/platform/nxp/gpdma_base.h>
 #include <halm/platform/nxp/gpdma_defs.h>
 #include <halm/platform/nxp/lpc43xx/system.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/accel.h>
+#include <xcore/memory.h>
+#include <assert.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 #define CHANNEL_COUNT ARRAY_SIZE(LPC_GPDMA->CHANNELS)
 #define EVENT_COUNT   16

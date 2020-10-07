@@ -7,9 +7,9 @@
 #ifndef HALM_PLATFORM_NXP_LPC43XX_EEPROM_H_
 #define HALM_PLATFORM_NXP_LPC43XX_EEPROM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
-#include <xcore/interface.h>
 #include <halm/irq.h>
+#include <xcore/interface.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Eeprom;
 

@@ -7,8 +7,8 @@
 #ifndef HALM_GENERIC_CAN_H_
 #define HALM_GENERIC_CAN_H_
 /*----------------------------------------------------------------------------*/
-#include <stdint.h>
 #include <xcore/interface.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 enum CanFlags
 {

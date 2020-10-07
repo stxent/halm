@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <xcore/memory.h>
 #include <halm/platform/nxp/one_wire_ssp.h>
 #include <halm/platform/nxp/ssp_defs.h>
+#include <xcore/memory.h>
 /*----------------------------------------------------------------------------*/
 #define DATA_MASK         0x3FC0
 

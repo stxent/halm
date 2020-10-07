@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/bits.h>
 #include <halm/irq.h>
 #include <halm/platform/nxp/iap.h>
 #include <halm/target.h>
+#include <xcore/bits.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/flash_defs.h>

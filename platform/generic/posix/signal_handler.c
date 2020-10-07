@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/platform/generic/signal_handler.h>
+#include <uv.h>
 #include <assert.h>
 #include <stdlib.h>
-#include <uv.h>
-#include <halm/platform/generic/signal_handler.h>
 /*----------------------------------------------------------------------------*/
 struct SignalHandler
 {

@@ -7,6 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_LPC13UXX_PLATFORM_DEFS_H_
 #define HALM_PLATFORM_NXP_LPC13UXX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
 #define NVIC_PRIORITY_SIZE 3
 /*------------------System Configuration registers----------------------------*/
 typedef struct

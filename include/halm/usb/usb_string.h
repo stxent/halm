@@ -7,10 +7,10 @@
 #ifndef HALM_USB_USB_STRING_H_
 #define HALM_USB_USB_STRING_H_
 /*----------------------------------------------------------------------------*/
+#include <halm/usb/usb_langid.h>
+#include <xcore/helpers.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <xcore/helpers.h>
-#include <halm/usb/usb_langid.h>
 /*----------------------------------------------------------------------------*/
 struct UsbDescriptor;
 

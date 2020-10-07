@@ -4,12 +4,12 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <xcore/asm.h>
 #include <halm/core/core_defs.h>
 #include <halm/core/cortex/armv7m/nvic_defs.h>
 #include <halm/core/cortex/nvic.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/asm.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define GROUPS_TO_VALUE(groups)   ((7 - NVIC_PRIORITY_SIZE) + (groups))
 #define VALUE_TO_GROUPS(value)    ((value) - (7 - NVIC_PRIORITY_SIZE))

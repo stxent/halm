@@ -7,10 +7,10 @@
 #ifndef HALM_PIN_H_
 #define HALM_PIN_H_
 /*----------------------------------------------------------------------------*/
+#include <halm/target.h>
+#include <xcore/helpers.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <xcore/helpers.h>
-#include <halm/target.h>
 /*----------------------------------------------------------------------------*/
 typedef uint16_t PinNumber;
 /*----------------------------------------------------------------------------*/

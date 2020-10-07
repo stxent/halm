@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <stdbool.h>
 #include <halm/platform/nxp/lpc17xx/clocking_defs.h>
 #include <halm/platform/nxp/lpc17xx/system.h>
 #include <halm/platform/nxp/lpc17xx/system_defs.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /**
  * Set the peripheral clock prescaler.

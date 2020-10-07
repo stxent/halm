@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_NXP_DAC_H_
 #define HALM_PLATFORM_NXP_DAC_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/interface.h>
 #include <halm/target.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_DAC/dac_base.h>

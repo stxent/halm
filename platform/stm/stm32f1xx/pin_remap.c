@@ -4,13 +4,13 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <assert.h>
-#include <stddef.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm/stm32f1xx/pin_defs.h>
 #include <halm/platform/stm/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm/stm32f1xx/pin_remap_defs.h>
 #include <halm/platform/stm/stm32f1xx/system.h>
+#include <assert.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 #define UNPACK_TYPE(pair)  ((pair) & 0x1F)
 #define UNPACK_VALUE(pair) (((pair) >> 5) & 0x07)
