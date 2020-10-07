@@ -106,7 +106,7 @@ static enum Result devInit(void *object, const void *configBase)
   if (!setInstance(device))
     return E_BUSY;
 
-  device->endpointList = LPC_USB_SRAM;
+  device->endpointList = (struct EpListEntry *)LPC_USB_SRAM;
   device->reg = LPC_USB;
   device->irq = USB_IRQ;
   device->handler = 0;
@@ -129,10 +129,8 @@ static enum Result devInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_USB_NO_DEINIT
-static void devDeinit(void *object)
+static void devDeinit(void *object __attribute__((unused)))
 {
-  struct UsbBase * const device = object;
-
   sysClockDisable(CLK_USBSRAM);
   sysClockDisable(CLK_USB);
   sysPowerDisable(PWR_USBPAD);
