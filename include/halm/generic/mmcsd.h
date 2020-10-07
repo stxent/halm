@@ -1,35 +1,19 @@
 /*
- * halm/generic/sdcard.h
- * Copyright (C) 2014 xent
+ * halm/generic/mmcsd.h
+ * Copyright (C) 2014, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_GENERIC_SDCARD_H_
-#define HALM_GENERIC_SDCARD_H_
+#ifndef HALM_GENERIC_MMCSD_H_
+#define HALM_GENERIC_MMCSD_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
-#include <halm/pin.h>
+#include <stdbool.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
-enum SdCardCapacity
-{
-  SDCARD_SDSC,
-  SDCARD_SDHC,
-  SDCARD_SDXC
-};
+extern const struct InterfaceClass * const MMCSD;
 
-enum SdCardType
-{
-  SDCARD_1_0,
-  SDCARD_1_1,
-  SDCARD_2_0,
-  SDCARD_3_0,
-  SDCARD_4_0,
-  SDCARD_4_1
-};
-/*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const SdCard;
-
-struct SdCardConfig
+struct MMCSDConfig
 {
   /** Mandatory: hardware interface. */
   struct Interface *interface;
@@ -37,7 +21,7 @@ struct SdCardConfig
   bool crc;
 };
 
-struct SdCard
+struct MMCSD
 {
   struct Interface base;
 
@@ -49,8 +33,8 @@ struct SdCard
   /* Current position in the internal memory space */
   uint64_t position;
 
-  /* Number of blocks on the card */
-  uint32_t blockCount;
+  /* Number of sectors on the card */
+  uint32_t sectors;
   /* Relative card address */
   uint16_t address;
   /* Memory card capacity, possible values are SC, HC or XC */
@@ -76,4 +60,4 @@ struct SdCard
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_GENERIC_SDCARD_H_ */
+#endif /* HALM_GENERIC_MMCSD_H_ */

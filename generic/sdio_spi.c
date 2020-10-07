@@ -15,16 +15,18 @@
 #include <halm/generic/sdio_spi.h>
 #include <halm/generic/work_queue.h>
 /*----------------------------------------------------------------------------*/
-#define BLOCK_SIZE_DEFAULT  512
-#define BLOCK_SIZE_MAX      2048
+#define CMD_STOP_TRANSMISSION 12
 
-#define BUSY_READ_RETRIES   1000
-#define BUSY_WRITE_RETRIES  5000
+#define BLOCK_SIZE_DEFAULT    512
+#define BLOCK_SIZE_MAX        2048
 
-#define INITIAL_CRC7        0x00
-#define INITIAL_CRC16       0x0000
+#define BUSY_READ_RETRIES     1000
+#define BUSY_WRITE_RETRIES    5000
 
-#define TOKEN_RETRIES       8
+#define INITIAL_CRC7          0x00
+#define INITIAL_CRC16         0x0000
+
+#define TOKEN_RETRIES         8
 /*----------------------------------------------------------------------------*/
 enum State
 {

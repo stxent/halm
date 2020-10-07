@@ -9,35 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum SdioCommand
-{
-  /* Common commands */
-  CMD_GO_IDLE_STATE         = 0,
-  CMD_SEND_IF_COND          = 8,
-  CMD_SEND_CSD              = 9,
-  CMD_SEND_CID              = 10,
-  CMD_STOP_TRANSMISSION     = 12,
-  CMD_SEND_STATUS           = 13,
-  CMD_SET_BLOCKLEN          = 16,
-  CMD_READ_SINGLE_BLOCK     = 17,
-  CMD_READ_MULTIPLE_BLOCK   = 18,
-  CMD_WRITE_BLOCK           = 24,
-  CMD_WRITE_MULTIPLE_BLOCK  = 25,
-  CMD_APP_CMD               = 55,
-  ACMD_SD_SEND_OP_COND      = 41,
-  ACMD_SET_CLR_CARD_DETECT  = 42,
-
-  /* Commands available only in SDIO mode */
-  CMD_ALL_SEND_CID          = 2,
-  CMD_SEND_RELATIVE_ADDR    = 3,
-  CMD_SELECT_CARD           = 7,
-  ACMD_SET_BUS_WIDTH        = 6,
-
-  /* Commands available only in SPI mode */
-  CMD_READ_OCR              = 58,
-  CMD_CRC_ON_OFF            = 59
-};
-
 enum SdioFlags
 {
   /** Send initialization sequence to device. */
@@ -50,9 +21,9 @@ enum SdioFlags
   SDIO_WRITE_MODE     = 0x08,
   /** Stop the transfer when the data transfer is in progress. */
   SDIO_STOP_TRANSFER  = 0x10,
-  /** Wait for previous data transfer completion. */
+  /** Wait for a previous data transfer completion. */
   SDIO_WAIT_DATA      = 0x20,
-  /** Send stop command at the end of data transfer. */
+  /** Send stop command at the end of the data transfer. */
   SDIO_AUTO_STOP      = 0x40
 };
 
@@ -60,7 +31,8 @@ enum SdioMode
 {
   SDIO_SPI,
   SDIO_1BIT,
-  SDIO_4BIT
+  SDIO_4BIT,
+  SDIO_8BIT
 };
 
 enum SdioParameter

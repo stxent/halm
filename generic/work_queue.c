@@ -31,8 +31,6 @@ const struct WorkQueueClass * const WorkQueue =
     .stop = 0
 };
 /*----------------------------------------------------------------------------*/
-void *WQ_DEFAULT = 0;
-/*----------------------------------------------------------------------------*/
 static enum Result workQueueInit(void *object, const void *configBase)
 {
   const struct WorkQueueConfig * const config = configBase;

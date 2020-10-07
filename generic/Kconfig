@@ -4,6 +4,10 @@ config GENERIC_GPIO_BUS
 	bool "GPIO Bus"
 	default y
 
+config GENERIC_MMCSD
+	bool "MMC/SD cards"
+	default y
+
 config GENERIC_SDIO_SPI
 	bool "SDIO over SPI"
 	default y
@@ -12,10 +16,6 @@ config GENERIC_SDIO_SPI_CRC
 	bool "Enable CRC checking"
 	default y
 	depends on GENERIC_SDIO_SPI
-
-config GENERIC_SDCARD
-	bool "SD Card driver"
-	default y
 
 config GENERIC_SOFTWARE_TIMER
 	bool "Software Timer Factory"

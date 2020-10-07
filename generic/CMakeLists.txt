@@ -1,16 +1,18 @@
 # Copyright (C) 2017 xent
 # Project is distributed under the terms of the GNU General Public License v3.0
 
+list(APPEND SOURCE_FILES "work_queue_default.c")
+
 if(${CONFIG_GENERIC_GPIO_BUS})
     list(APPEND SOURCE_FILES "gpio_bus.c")
 endif()
 
-if(${CONFIG_GENERIC_SDIO_SPI})
-    list(APPEND SOURCE_FILES "sdio_spi.c")
+if(${CONFIG_GENERIC_MMCSD})
+    list(APPEND SOURCE_FILES "mmcsd.c")
 endif()
 
-if(${CONFIG_GENERIC_SDCARD})
-    list(APPEND SOURCE_FILES "sdcard.c")
+if(${CONFIG_GENERIC_SDIO_SPI})
+    list(APPEND SOURCE_FILES "sdio_spi.c")
 endif()
 
 if(${CONFIG_GENERIC_SOFTWARE_TIMER})
