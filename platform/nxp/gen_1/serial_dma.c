@@ -254,10 +254,25 @@ static enum Result serialInit(void *object, const void *configBase)
   if ((res = uartCalcRate(object, config->rate, &rateConfig)) != E_OK)
     return res;
 
-  if (!byteQueueInit(&interface->rxQueue, config->rxLength))
-    return E_MEMORY;
-  if (!byteQueueInit(&interface->txQueue, config->txLength))
-    return E_MEMORY;
+  if (config->arena)
+  {
+    uint8_t * const arena = config->arena;
+
+    byteQueueInitArena(&interface->rxQueue, config->rxLength, arena);
+    byteQueueInitArena(&interface->txQueue, config->txLength,
+        arena + config->rxLength);
+
+    interface->preallocated = true;
+  }
+  else
+  {
+    if (!byteQueueInit(&interface->rxQueue, config->rxLength))
+      return E_MEMORY;
+    if (!byteQueueInit(&interface->txQueue, config->txLength))
+      return E_MEMORY;
+
+    interface->preallocated = false;
+  }
 
   if (!dmaSetup(interface, config->dma[0], config->dma[1], config->rxChunks))
     return E_ERROR;
@@ -308,9 +323,17 @@ static void serialDeinit(void *object)
   deinit(interface->txDma);
   deinit(interface->rxDma);
 
-  /* Free temporary buffers and queues */
-  byteQueueDeinit(&interface->txQueue);
-  byteQueueDeinit(&interface->rxQueue);
+  if (interface->preallocated)
+  {
+    byteQueueDeinitArena(&interface->txQueue);
+    byteQueueDeinitArena(&interface->rxQueue);
+  }
+  else
+  {
+    /* Free memory allocated for queues */
+    byteQueueDeinit(&interface->txQueue);
+    byteQueueDeinit(&interface->rxQueue);
+  }
 
   /* Call base class destructor */
   UartBase->deinit(interface);

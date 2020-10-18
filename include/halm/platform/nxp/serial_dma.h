@@ -28,6 +28,8 @@ struct SerialDmaConfig
   size_t rxLength;
   /** Mandatory: output queue size. */
   size_t txLength;
+  /** Optional: memory arena for queues. */
+  void *arena;
   /** Optional: parity bit setting. */
   enum SerialParity parity;
   /** Mandatory: serial input. */
@@ -57,6 +59,7 @@ struct SerialDma
   /* Input and output queues */
   struct ByteQueue rxQueue;
   struct ByteQueue txQueue;
+  bool preallocated;
 
   /* DMA RX chunk count */
   size_t rxChunks;

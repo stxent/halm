@@ -35,12 +35,14 @@ struct CdcAcmConfig
   void *device;
 
   /**
-   * Mandatory: number of reception buffers. All types of buffers have
-   * fixed size of 64 bytes.
+   * Mandatory: number of reception buffers. Buffers have fixed size of
+   * 64 bytes for full-speed devices and 512 bytes for for high-speed.
    */
   size_t rxBuffers;
   /** Mandatory: number of transmission buffers. */
   size_t txBuffers;
+  /** Optional: memory arena for queues. */
+  void *arena;
 
   struct
   {
@@ -68,13 +70,16 @@ struct CdcAcm
   PointerArray txRequestPool;
   /* Pointer to the beginning of the request pool */
   void *requests;
-  /* Number of available and pending bytes */
-  size_t queuedRxBytes, queuedTxBytes;
+  /* Number of available bytes */
+  size_t queuedRxBytes;
+  /* Number of pending bytes */
+  size_t queuedTxBytes;
 
   struct UsbEndpoint *rxDataEp;
   struct UsbEndpoint *txDataEp;
   struct UsbEndpoint *notificationEp;
 
+  bool preallocated;
   bool suspended;
   bool updated;
 };

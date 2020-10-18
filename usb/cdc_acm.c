@@ -254,11 +254,21 @@ static enum Result interfaceInit(void *object, const void *configBase)
     return E_ERROR;
 
   /* Allocate requests */
-  const size_t totalPoolSize = config->rxBuffers + config->txBuffers;
+  if (config->arena)
+  {
+    interface->requests = config->arena;
+    interface->preallocated = true;
+  }
+  else
+  {
+    const size_t count = config->rxBuffers + config->txBuffers;
 
-  interface->requests = malloc(totalPoolSize * sizeof(struct CdcUsbRequest));
-  if (!interface->requests)
-    return E_MEMORY;
+    interface->requests = malloc(count * sizeof(struct CdcUsbRequest));
+    if (!interface->requests)
+      return E_MEMORY;
+
+    interface->preallocated = false;
+  }
 
   /* Add requests to queues */
   struct CdcUsbRequest *request = interface->requests;
@@ -299,8 +309,11 @@ static void interfaceDeinit(void *object)
   assert(pointerQueueFull(&interface->rxRequestQueue));
   assert(pointerArrayFull(&interface->txRequestPool));
 
-  /* Delete requests and free memory */
-  free(interface->requests);
+  if (!interface->preallocated)
+  {
+    /* Free memory allocated for request buffers */
+    free(interface->requests);
+  }
 
   /* Delete endpoints */
   deinit(interface->txDataEp);

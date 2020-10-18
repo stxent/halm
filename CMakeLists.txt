@@ -8,9 +8,7 @@ cmake_policy(SET CMP0069 NEW)
 cmake_policy(SET CMP0079 NEW)
 
 option(USE_LTO "Enable Link Time Optimization." OFF)
-
 set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE STRING "Path to the config file.")
-set(PATH_XCORE "${PROJECT_SOURCE_DIR}/../xcore" CACHE STRING "Path to the XCORE library.")
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(ParseConfig)
