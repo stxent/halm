@@ -21,6 +21,11 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS_DEFAULT} ${FLAGS_CPU}")
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
+find_package(xcore QUIET)
+if(NOT xcore_FOUND)
+    message(STATUS "Package information for xcore not found")
+endif()
+
 if(${USE_LTO})
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -49,16 +54,35 @@ foreach(ENTRY ${DIRECTORY_LIST})
                 PUBLIC ${PUBLIC_DEFS}
                 PRIVATE ${CONFIG_DEFS}
         )
-        target_include_directories(halm_${ENTRY}
-                PUBLIC "${PROJECT_SOURCE_DIR}/include"
+        target_include_directories(halm_${ENTRY} PUBLIC
+                $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                $<INSTALL_INTERFACE:include>
         )
         target_link_libraries(halm_${ENTRY}
                 PUBLIC xcore
         )
+        install(TARGETS halm_${ENTRY} EXPORT halm-targets)
     endif()
 endforeach()
 
 add_library(${PROJECT_NAME} ${LIBRARY_OBJECTS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBRARY_TARGETS})
 
-install(TARGETS ${PROJECT_NAME} ARCHIVE DESTINATION lib)
+# Library installation configuration
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/halm
+        DESTINATION include
+        FILES_MATCHING PATTERN "*.h"
+)
+install(TARGETS ${PROJECT_NAME}
+        EXPORT halm-targets
+        ARCHIVE DESTINATION lib
+        INCLUDES DESTINATION include
+)
+install(EXPORT halm-targets
+        FILE halm-targets.cmake
+        DESTINATION lib/halm
+)
+install(FILES "${PROJECT_SOURCE_DIR}/config.cmake.in"
+        DESTINATION lib/halm
+        RENAME halm-config.cmake
+)
