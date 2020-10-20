@@ -41,3 +41,4 @@ if(${CONFIG_PLATFORM_LINUX_UDP})
 endif()
 
 add_library(halm_platform OBJECT ${SOURCE_FILES})
+target_link_libraries(halm_platform PUBLIC pthread uv)

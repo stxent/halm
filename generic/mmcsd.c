@@ -344,7 +344,7 @@ static enum Result executeCommand(struct MMCSD *device, uint32_t command,
 {
   enum Result res;
 
-  if ((COMMAND_FLAG_VALUE(command) & SDIO_CHECK_CRC) && !device->crc)
+  if ((command & COMMAND_FLAG(SDIO_CHECK_CRC)) && !device->crc)
     command &= ~COMMAND_FLAG(SDIO_CHECK_CRC);
 
   res = ifSetParam(device->interface, IF_SDIO_COMMAND, &command);
