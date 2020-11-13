@@ -140,7 +140,6 @@ static void interruptHandler(void *object)
   const uint32_t devStatus = reg->DEVCMDSTAT;
   const uint32_t intStatus = reg->INTSTAT;
 
-  reg->DEVCMDSTAT = devStatus;
   reg->INTSTAT = intStatus;
 
   /* Device interrupts */
@@ -149,6 +148,8 @@ static void interruptHandler(void *object)
     /* Device reset */
     if (devStatus & DEVCMDSTAT_DRES_C)
     {
+      reg->DEVCMDSTAT |= DEVCMDSTAT_DRES_C;
+
       resetDevice(device);
       usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
     }
@@ -156,6 +157,7 @@ static void interruptHandler(void *object)
     /* Connect Change event on VBus disappearance */
     if (devStatus & DEVCMDSTAT_DCON_C)
     {
+      reg->DEVCMDSTAT |= DEVCMDSTAT_DCON_C;
     }
 
     /*
@@ -166,12 +168,14 @@ static void interruptHandler(void *object)
      */
     if (devStatus & DEVCMDSTAT_DSUS_C)
     {
+      reg->DEVCMDSTAT |= DEVCMDSTAT_DSUS_C;
+
       usbControlNotify(device->control, ((devStatus & DEVCMDSTAT_DSUS) ?
           USB_DEVICE_EVENT_SUSPEND : USB_DEVICE_EVENT_RESUME));
     }
   }
 
-  uint32_t epStatus = reverseBits32(intStatus & INTSTAT_EP_INT_MASK);
+  uint32_t epStatus = intStatus & INTSTAT_EP_INT_MASK;
 
   /* EP interrupts */
   if (epStatus)
@@ -184,10 +188,13 @@ static void interruptHandler(void *object)
     do
     {
       const unsigned int index = countLeadingZeros32(epStatus);
+      const bool controlEpSetup = (index == 0) && setup;
 
       epStatus -= (1UL << 31) >> index;
-      epHandler((struct SbUsbEndpoint *)epArray[index],
-          !index && setup);
+      epHandler((struct SbUsbEndpoint *)epArray[index], controlEpSetup);
+
+      if (controlEpSetup)
+        reg->DEVCMDSTAT |= DEVCMDSTAT_SETUP;
     }
     while (epStatus);
   }
@@ -604,6 +611,10 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct SbUsbEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
+  const unsigned int index = EP_TO_INDEX(ep->address);
+
+  if (index >= 2 && !ep->device->configured)
+    return E_IDLE;
 
   assert(ep->position); /* Device should be initialized */
   assert(request->callback);
@@ -615,7 +626,11 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
-    invokeHandler = pointerQueueEmpty(&ep->requests);
+    if (pointerQueueEmpty(&ep->requests))
+    {
+      if (!(device->base.endpointList[index].b[0] & EPCS_A))
+        invokeHandler = true;
+    }
   }
   else if (pointerQueueEmpty(&ep->requests))
   {
@@ -625,9 +640,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
 
   if (invokeHandler)
   {
-    const unsigned int index = EP_TO_INDEX(ep->address);
     LPC_USB_Type * const reg = device->base.reg;
-
     reg->INTSETSTAT |= INTSETSTAT_EP_SET_INT(index);
   }
 
