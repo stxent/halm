@@ -35,6 +35,7 @@ const struct TimerClass * const SysTickTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
+    .setAutostop = 0,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = 0,

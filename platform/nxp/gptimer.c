@@ -19,6 +19,7 @@ static void powerStateHandler(void *, enum PmState);
 static enum Result tmrInit(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
@@ -40,6 +41,7 @@ const struct TimerClass * const GpTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
@@ -177,11 +179,24 @@ static void tmrDisable(void *object)
   reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
 }
 /*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct GpTimer * const timer = object;
+  LPC_TIMER_Type * const reg = timer->base.reg;
+  const uint32_t mask = MCR_STOP(timer->event);
+
+  if (state)
+    reg->MCR |= mask;
+  else
+    reg->MCR &= ~mask;
+}
+/*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
+  const uint32_t mask = MCR_INTERRUPT(timer->event);
 
   timer->callbackArgument = argument;
   timer->callback = callback;
@@ -189,10 +204,10 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   if (callback)
   {
     reg->IR = IR_MATCH_MASK;
-    reg->MCR |= MCR_INTERRUPT(timer->event);
+    reg->MCR |= mask;
   }
   else
-    reg->MCR &= ~MCR_INTERRUPT(timer->event);
+    reg->MCR &= ~mask;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object)

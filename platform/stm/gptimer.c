@@ -21,6 +21,7 @@ static void powerStateHandler(void *, enum PmState);
 static enum Result tmrInit(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
@@ -42,6 +43,7 @@ const struct TimerClass * const GpTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
@@ -186,6 +188,17 @@ static void tmrDisable(void *object)
   STM_TIM_Type * const reg = timer->base.reg;
 
   reg->CR1 &= ~CR1_CEN;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct GpTimer * const timer = object;
+  STM_TIM_Type * const reg = timer->base.reg;
+
+  if (state)
+    reg->CR1 |= CR1_OPM;
+  else
+    reg->CR1 &= ~CR1_OPM;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),

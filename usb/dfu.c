@@ -140,8 +140,6 @@ static void onTimerOverflow(void *argument)
 {
   struct Dfu * const driver = argument;
 
-  timerDisable(driver->timer);
-
   switch ((enum DfuState)driver->state)
   {
     case STATE_DFU_DNBUSY:
@@ -238,7 +236,6 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
   if (enableTimer)
   {
     timerSetOverflow(driver->timer, driver->timeout);
-    timerSetValue(driver->timer, 0);
     timerEnable(driver->timer);
   }
 }
@@ -306,15 +303,20 @@ static enum Result driverInit(void *object, const void *configBase)
   struct Dfu * const driver = object;
 
   driver->device = config->device;
-  driver->timer = config->timer;
   driver->callbackArgument = 0;
   driver->onDetachRequest = 0;
   driver->onDownloadRequest = 0;
   driver->onUploadRequest = 0;
   driver->transferSize = config->transferSize;
 
-  if (driver->timer)
+  if (config->timer)
+  {
+    driver->timer = config->timer;
+    timerSetAutostop(driver->timer, true);
     timerSetCallback(driver->timer, onTimerOverflow, driver);
+  }
+  else
+    driver->timer = 0;
 
   resetDriver(driver);
 

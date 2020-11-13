@@ -18,15 +18,15 @@ struct SoftwareTimer
   struct Timer base;
 
   struct SoftwareTimerFactory *factory;
+  struct SoftwareTimer *next;
 
   void (*callback)(void *);
   void *callbackArgument;
 
   uint32_t overflow;
-  uint32_t period;
   uint32_t timestamp;
-
-  struct SoftwareTimer *next;
+  bool continuous;
+  bool enabled;
 };
 /*----------------------------------------------------------------------------*/
 static inline uint32_t distance(uint32_t a, uint32_t b);
@@ -49,6 +49,7 @@ static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
@@ -64,6 +65,7 @@ const struct TimerClass * const SoftwareTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
@@ -81,80 +83,88 @@ static inline uint32_t distance(uint32_t a, uint32_t b)
 static void insertTimer(struct SoftwareTimerFactory *factory,
     struct SoftwareTimer *timer)
 {
-  if (!factory->head)
+  if (factory->head)
   {
-    timer->next = factory->head;
-    factory->head = timer;
-    return;
-  }
+    /* Time of the current timer is overflowed */
+    const bool co = factory->counter >= timer->timestamp;
+    /* Time of the current timer is greater or equal to the head timer */
+    const bool hg = timer->timestamp <= factory->head->timestamp;
+    /* Time of the head timer is overflowed */
+    const bool ho = factory->counter >= factory->head->timestamp;
 
-  /* Time of the current element is overflowed */
-  const bool co = factory->counter >= timer->timestamp;
-  /* Time of the current element is greater or equal to the head element */
-  const bool hg = timer->timestamp <= factory->head->timestamp;
-  /* Time of the head element is overflowed */
-  const bool ho = factory->counter >= factory->head->timestamp;
+    if ((!co && (ho ^ hg)) || (co && ho && hg))
+    {
+      timer->next = factory->head;
+      factory->head = timer;
+    }
+    else
+    {
+      struct SoftwareTimer *current = factory->head;
 
-  if ((!co && (ho ^ hg)) || (co && ho && hg))
-  {
-    timer->next = factory->head;
-    factory->head = timer;
+      while (current->next)
+      {
+        /* Time of the current timer is greater or equal to the next timer */
+        const bool cg = timer->timestamp <= current->next->timestamp;
+        /* Time of the next timer is overflowed */
+        const bool no = factory->counter >= current->next->timestamp;
+
+        if ((no && !co) || ((no || !co) && cg))
+          break;
+
+        current = current->next;
+      }
+
+      timer->next = current->next;
+      current->next = timer;
+    }
   }
   else
   {
-    struct SoftwareTimer *current = factory->head;
-
-    while (current->next)
-    {
-      /* Time of the current element is greater or equal to the next element */
-      const bool cg = timer->timestamp <= current->next->timestamp;
-      /* Time of the next element is overflowed */
-      const bool no = factory->counter >= current->next->timestamp;
-
-      if ((no && !co) || ((no || !co) && cg))
-        break;
-
-      current = current->next;
-    }
-
-    timer->next = current->next;
-    current->next = timer;
+    timer->next = 0;
+    factory->head = timer;
   }
+
+  assert(!factory->head || (factory->head != factory->head->next));
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct SoftwareTimerFactory * const factory = object;
-  struct SoftwareTimer *current = factory->head;
+  struct SoftwareTimer *current;
   struct SoftwareTimer *head = 0;
 
   ++factory->counter;
 
+  current = factory->head;
   while (current && factory->counter == current->timestamp)
+  {
+    struct SoftwareTimer * const timer = current;
+    current = current->next;
+
+    if (!timer->continuous)
+      timer->enabled = false;
+    timer->next = head;
+    head = timer;
+  }
+  factory->head = current;
+
+  current = head;
+  while (current)
   {
     struct SoftwareTimer * const timer = current;
     current = current->next;
 
     timer->callback(timer->callbackArgument);
 
-    if (timer->period)
+    if (timer->enabled)
     {
-      /* Append periodic timers to the temporary list */
-      timer->next = head ? head : 0;
-      head = timer;
+      /* Append the periodic timer to the main list */
+      timer->timestamp = factory->counter + timer->overflow;
+      insertTimer(factory, timer);
     }
   }
-  factory->head = current;
 
-  /* Append periodic timers to the main list */
-  while (head)
-  {
-    struct SoftwareTimer * const timer = head;
-    head = head->next;
-
-    timer->timestamp = factory->counter + timer->period;
-    insertTimer(factory, timer);
-  }
+  assert(!factory->head || (factory->head != factory->head->next));
 }
 /*----------------------------------------------------------------------------*/
 static void removeTimer(struct SoftwareTimerFactory *factory,
@@ -167,6 +177,8 @@ static void removeTimer(struct SoftwareTimerFactory *factory,
 
   if (*current)
     *current = timer->next;
+
+  assert(!factory->head || (factory->head != factory->head->next));
 }
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *object, const void *configBase)
@@ -201,20 +213,16 @@ static enum Result tmrInit(void *object, const void *configBase)
   timer->factory = config->parent;
   timer->callback = 0;
   timer->overflow = 0;
-  timer->period = 0;
-  timer->timestamp = 0;
-  timer->next = 0;
+  timer->timestamp = timer->factory->counter;
+  timer->continuous = true;
+  timer->enabled = false;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrDeinit(void *object)
 {
-  struct SoftwareTimer * const timer = object;
-
-  const IrqState state = irqSave();
-  removeTimer(timer->factory, timer);
-  irqRestore(state);
+  tmrDisable(object);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrEnable(void *object)
@@ -223,14 +231,11 @@ static void tmrEnable(void *object)
   struct SoftwareTimerFactory * const factory = timer->factory;
   const IrqState state = irqSave();
 
-  if (timer->period)
-  {
+  if (timer->enabled)
     removeTimer(timer->factory, timer);
-    timer->next = 0;
-  }
 
-  timer->period = timer->overflow;
-  timer->timestamp = factory->counter + timer->period;
+  timer->enabled = true;
+  timer->timestamp = factory->counter + timer->overflow;
   insertTimer(factory, timer);
 
   irqRestore(state);
@@ -240,14 +245,17 @@ static void tmrDisable(void *object)
 {
   struct SoftwareTimer * const timer = object;
 
-  if (timer->period)
+  if (timer->enabled)
   {
-    const IrqState state = irqSave();
+    timer->enabled = false;
     removeTimer(timer->factory, timer);
-    timer->next = 0;
-    timer->period = 0;
-    irqRestore(state);
   }
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct SoftwareTimer * const timer = object;
+  timer->continuous = !state;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
@@ -280,10 +288,7 @@ static uint32_t tmrGetOverflow(const void *object)
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct SoftwareTimer * const timer = object;
-
   timer->overflow = overflow;
-  if (timer->period)
-    timer->period = overflow;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
@@ -312,6 +317,5 @@ void *softwareTimerCreate(void *object)
   const struct SoftwareTimerConfig config = {
       .parent = object
   };
-
   return init(SoftwareTimer, &config);
 }

@@ -20,6 +20,7 @@ static enum Result tmrInit(void *, const void *);
 static enum Result tmrInitUnified(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
@@ -45,6 +46,7 @@ const struct TimerClass * const SctTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
@@ -215,6 +217,18 @@ static void tmrDisable(void *object)
   const unsigned int part = timer->base.part == SCT_HIGH;
 
   reg->CTRL_PART[part] |= CTRL_HALT;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct SctTimer * const timer = object;
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const unsigned int part = timer->base.part == SCT_HIGH;
+
+  if (state)
+    reg->HALT_PART[part] = 1 << timer->event;
+  else
+    reg->HALT_PART[part] = 0;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),

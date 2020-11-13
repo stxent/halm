@@ -14,6 +14,7 @@ static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
@@ -33,6 +34,7 @@ const struct Timer64Class * const SoftwareTimer64 =
 
         .enable = tmrEnable,
         .disable = tmrDisable,
+        .setAutostop = tmrSetAutostop,
         .setCallback = tmrSetCallback,
         .getFrequency = tmrGetFrequency,
         .setFrequency = tmrSetFrequency,
@@ -90,6 +92,15 @@ static void tmrDisable(void *object)
 {
   struct SoftwareTimer64 * const timer = object;
   timerDisable(timer->timer);
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct SoftwareTimer64 * const timer = object;
+
+  // TODO
+  (void)timer;
+  (void)state;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),

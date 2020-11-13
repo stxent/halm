@@ -24,6 +24,7 @@ struct TimerClass
   void (*enable)(void *);
   void (*disable)(void *);
 
+  void (*setAutostop)(void *, bool);
   void (*setCallback)(void *, void (*)(void *), void *);
 
   uint32_t (*getFrequency)(const void *);
@@ -59,6 +60,16 @@ static inline void timerEnable(void *timer)
 static inline void timerDisable(void *timer)
 {
   ((const struct TimerClass *)CLASS(timer))->disable(timer);
+}
+
+/**
+ * Enable or disable the autostop function of a timer.
+ * @param timer Pointer to a Timer object.
+ * @param state Enable or disable the autostop function.
+ */
+static inline void timerSetAutostop(void *timer, bool state)
+{
+  ((const struct TimerClass *)CLASS(timer))->setAutostop(timer, state);
 }
 
 /**

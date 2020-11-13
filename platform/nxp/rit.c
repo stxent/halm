@@ -14,6 +14,7 @@ static bool setInstance(struct Rit *);
 static enum Result tmrInit(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static uint32_t tmrGetOverflow(const void *);
@@ -34,6 +35,7 @@ const struct TimerClass * const Rit = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = 0,
@@ -105,6 +107,14 @@ static void tmrEnable(void *object __attribute__((unused)))
 static void tmrDisable(void *object __attribute__((unused)))
 {
   LPC_RIT->CTRL &= ~CTRL_RITEN;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object __attribute__((unused)), bool state)
+{
+  if (state)
+    LPC_RIT->CTRL &= ~CTRL_RITENCLR;
+  else
+    LPC_RIT->CTRL |= CTRL_RITENCLR;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),

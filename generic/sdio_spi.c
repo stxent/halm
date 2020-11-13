@@ -401,14 +401,13 @@ static enum State stateReadCrcAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateDelayEnter(struct SdioSpi *interface)
 {
-  timerSetValue(interface->timer, 0);
   timerEnable(interface->timer);
   --interface->retries;
 }
 /*----------------------------------------------------------------------------*/
-static enum State stateReadDelayAdvance(struct SdioSpi *interface)
+static enum State stateReadDelayAdvance(struct SdioSpi *interface
+    __attribute__((unused)))
 {
-  timerDisable(interface->timer);
   return STATE_WAIT_READ;
 }
 /*----------------------------------------------------------------------------*/
@@ -474,9 +473,9 @@ static enum State stateWaitWriteAdvance(struct SdioSpi *interface)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum State stateWriteDelayAdvance(struct SdioSpi *interface)
+static enum State stateWriteDelayAdvance(struct SdioSpi *interface
+    __attribute__((unused)))
 {
-  timerDisable(interface->timer);
   return STATE_WRITE_BUSY;
 }
 /*----------------------------------------------------------------------------*/
@@ -745,10 +744,14 @@ static enum Result sdioInit(void *object, const void *configBase)
     return res;
   ifSetCallback(interface->bus, interruptHandler, interface);
 
-  interface->timer = config->timer;
-
-  if (interface->timer)
+  if (config->timer)
+  {
+    interface->timer = config->timer;
+    timerSetAutostop(interface->timer, true);
     timerSetCallback(interface->timer, interruptHandler, interface);
+  }
+  else
+    interface->timer = 0;
 
   /* Data verification part */
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC

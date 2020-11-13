@@ -14,6 +14,7 @@ static void interruptHandler(void *);
 static enum Result tmrInit(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
@@ -33,6 +34,7 @@ const struct TimerClass * const GpTimerCounter = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = 0,
     .setFrequency = 0,
@@ -153,11 +155,24 @@ static void tmrDisable(void *object)
   reg->TCR = 0;
 }
 /*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct GpTimerCounter * const timer = object;
+  LPC_TIMER_Type * const reg = timer->base.reg;
+  const uint32_t mask = MCR_STOP(timer->event);
+
+  if (state)
+    reg->MCR |= mask;
+  else
+    reg->MCR &= ~mask;
+}
+/*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct GpTimerCounter * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
+  const uint32_t mask = MCR_INTERRUPT(timer->event);
 
   timer->callbackArgument = argument;
   timer->callback = callback;
@@ -165,10 +180,10 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   if (callback)
   {
     reg->IR = reg->IR;
-    reg->MCR |= MCR_INTERRUPT(timer->event);
+    reg->MCR |= mask;
   }
   else
-    reg->MCR &= ~MCR_INTERRUPT(timer->event);
+    reg->MCR &= ~mask;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)
@@ -183,6 +198,7 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimerCounter * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
+  const uint32_t mask = MCR_RESET(timer->event);
   const uint32_t resolution = getMaxValue(timer);
   const uint32_t state = reg->TCR & TCR_CEN;
 
@@ -198,10 +214,10 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   if (overflow != resolution)
   {
     /* Reset the timer after reaching match register value */
-    reg->MCR |= MCR_RESET(timer->event);
+    reg->MCR |= mask;
   }
   else
-    reg->MCR &= ~MCR_RESET(timer->event);
+    reg->MCR &= ~mask;
 
   reg->TCR = state;
 }

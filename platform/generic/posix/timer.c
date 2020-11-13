@@ -22,6 +22,7 @@ struct PosixTimer
   uint64_t frequency;
   uint64_t overflow;
   uint64_t timestamp;
+  bool autostop;
 };
 /*----------------------------------------------------------------------------*/
 static void onCloseCallback(uv_handle_t *);
@@ -31,6 +32,7 @@ static enum Result tmrInit(void *, const void *);
 static void tmrDeinit(void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
@@ -46,6 +48,7 @@ const struct TimerClass * const Timer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
@@ -89,6 +92,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   timer->callback = 0;
   timer->overflow = (uint64_t)-1;
   timer->timestamp = uv_now(uv_default_loop());
+  timer->autostop = false;
 
   if (config)
   {
@@ -115,13 +119,20 @@ static void tmrEnable(void *object)
   const uint64_t period = (timer->overflow * 1000) / timer->frequency;
 
   timer->timestamp = uv_now(uv_default_loop());
-  uv_timer_start(timer->handle, onTimerCallback, period, period);
+  uv_timer_start(timer->handle, onTimerCallback, period,
+      timer->autostop ? 0 : period);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrDisable(void *object)
 {
   struct PosixTimer * const timer = object;
   uv_timer_stop(timer->handle);
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct PosixTimer * const timer = object;
+  timer->autostop = state;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
@@ -177,8 +188,8 @@ static uint32_t tmrGetValue(const void *object)
   return (uint32_t)(uv_now(uv_default_loop()) - timer->timestamp);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue(void *object __attribute__((unused)),
-    uint32_t value __attribute__((unused)))
+static void tmrSetValue(void *object, uint32_t value)
 {
-  // TODO
+  struct PosixTimer * const timer = object;
+  timer->timestamp = (uint32_t)uv_now(uv_default_loop()) - value;
 }
