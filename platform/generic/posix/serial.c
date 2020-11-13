@@ -68,8 +68,8 @@ static bool setPortRate(struct Serial *, uint32_t);
 static enum Result streamInit(void *, const void *);
 static void streamDeinit(void *);
 static void streamSetCallback(void *, void (*)(void *), void *);
-static enum Result streamGetParam(void *, enum IfParameter, void *);
-static enum Result streamSetParam(void *, enum IfParameter, const void *);
+static enum Result streamGetParam(void *, int, void *);
+static enum Result streamSetParam(void *, int, const void *);
 static size_t streamRead(void *, void *, size_t);
 static size_t streamWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -312,8 +312,7 @@ static void streamSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result streamGetParam(void *object, int parameter, void *data)
 {
   struct Serial * const interface = object;
 
@@ -338,7 +337,7 @@ static enum Result streamGetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_AVAILABLE:
       pthread_mutex_lock(&interface->rxQueueLock);
@@ -358,8 +357,7 @@ static enum Result streamGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result streamSetParam(void *object, int parameter, const void *data)
 {
   struct Serial * const interface = object;
 
@@ -377,7 +375,7 @@ static enum Result streamSetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
       return setPortRate(interface, *(const uint32_t *)data) ?

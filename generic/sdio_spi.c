@@ -133,8 +133,8 @@ static void sendCommand(struct SdioSpi *, uint32_t, uint32_t);
 static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
 static void sdioSetCallback(void *, void (*)(void *), void *);
-static enum Result sdioGetParam(void *, enum IfParameter, void *);
-static enum Result sdioSetParam(void *, enum IfParameter, const void *);
+static enum Result sdioGetParam(void *, int, void *);
+static enum Result sdioSetParam(void *, int, const void *);
 static size_t sdioRead(void *, void *, size_t);
 static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -810,8 +810,7 @@ static void sdioSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result sdioGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result sdioGetParam(void *object, int parameter, void *data)
 {
   struct SdioSpi * const interface = object;
 
@@ -842,7 +841,7 @@ static enum Result sdioGetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
       return ifGetParam(interface->bus, IF_RATE, data);
@@ -881,8 +880,7 @@ static enum Result sdioGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result sdioSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result sdioSetParam(void *object, int parameter, const void *data)
 {
   struct SdioSpi * const interface = object;
 
@@ -918,7 +916,7 @@ static enum Result sdioSetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
       return ifSetParam(interface->bus, IF_RATE, data);

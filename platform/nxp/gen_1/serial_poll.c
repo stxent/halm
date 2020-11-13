@@ -16,8 +16,8 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result serialInit(void *, const void *);
-static enum Result serialGetParam(void *, enum IfParameter, void *);
-static enum Result serialSetParam(void *, enum IfParameter, const void *);
+static enum Result serialGetParam(void *, int, void *);
+static enum Result serialSetParam(void *, int, const void *);
 static size_t serialRead(void *, void *, size_t);
 static size_t serialWrite(void *, const void *, size_t);
 
@@ -111,8 +111,7 @@ static void serialDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result serialGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result serialGetParam(void *object, int parameter, void *data)
 {
 #ifdef CONFIG_PLATFORM_NXP_UART_RC
   switch ((enum SerialParameter)parameter)
@@ -125,7 +124,7 @@ static enum Result serialGetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
       *(uint32_t *)data = uartGetRate(object);
@@ -143,8 +142,7 @@ static enum Result serialGetParam(void *object, enum IfParameter parameter,
 #endif
 }
 /*----------------------------------------------------------------------------*/
-static enum Result serialSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result serialSetParam(void *object, int parameter, const void *data)
 {
   struct SerialPoll * const interface = object;
 
@@ -159,7 +157,7 @@ static enum Result serialSetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
     {

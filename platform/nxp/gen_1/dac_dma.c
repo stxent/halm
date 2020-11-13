@@ -16,8 +16,8 @@ static bool dmaSetup(struct DacDma *, const struct DacDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
 static void dacSetCallback(void *, void (*)(void *), void *);
-static enum Result dacGetParam(void *, enum IfParameter, void *);
-static enum Result dacSetParam(void *, enum IfParameter, const void *);
+static enum Result dacGetParam(void *, int, void *);
+static enum Result dacSetParam(void *, int, const void *);
 static size_t dacWrite(void *, const void *, size_t);
 
 #ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
@@ -146,12 +146,11 @@ static void dacSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result dacGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result dacGetParam(void *object, int parameter, void *data)
 {
   struct DacDma * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
       return dmaStatus(interface->dma);
@@ -166,7 +165,7 @@ static enum Result dacGetParam(void *object, enum IfParameter parameter,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dacSetParam(void *object __attribute__((unused)),
-    enum IfParameter parameter __attribute__((unused)),
+    int parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

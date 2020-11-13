@@ -33,8 +33,8 @@ static bool resetEndpoints(struct CdcAcm *);
 static enum Result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
 static void interfaceSetCallback(void *, void (*)(void *), void *);
-static enum Result interfaceGetParam(void *, enum IfParameter, void *);
-static enum Result interfaceSetParam(void *, enum IfParameter, const void *);
+static enum Result interfaceGetParam(void *, int, void *);
+static enum Result interfaceSetParam(void *, int, const void *);
 static size_t interfaceRead(void *, void *, size_t);
 static size_t interfaceWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -334,12 +334,11 @@ static void interfaceSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result interfaceGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result interfaceGetParam(void *object, int parameter, void *data)
 {
   struct CdcAcm * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_AVAILABLE:
       *(size_t *)data = interface->suspended ? 0 : interface->queuedRxBytes;
@@ -404,7 +403,7 @@ static enum Result interfaceGetParam(void *object, enum IfParameter parameter,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceSetParam(void *object __attribute__((unused)),
-    enum IfParameter parameter __attribute__((unused)),
+    int parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

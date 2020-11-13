@@ -61,8 +61,8 @@ static enum Result transferBuffer(struct MMCSD *, uint32_t, uint32_t,
 static enum Result cardInit(void *, const void *);
 static void cardDeinit(void *);
 static void cardSetCallback(void *, void (*)(void *), void *);
-static enum Result cardGetParam(void *, enum IfParameter, void *);
-static enum Result cardSetParam(void *, enum IfParameter, const void *);
+static enum Result cardGetParam(void *, int, void *);
+static enum Result cardSetParam(void *, int, const void *);
 static size_t cardRead(void *, void *, size_t);
 static size_t cardWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -860,12 +860,11 @@ static void cardSetCallback(void *object, void (*callback)(void *),
   device->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result cardGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result cardGetParam(void *object, int parameter, void *data)
 {
   struct MMCSD * const device = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_POSITION_64:
       *(uint64_t *)data = device->position;
@@ -895,12 +894,11 @@ static enum Result cardGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result cardSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result cardSetParam(void *object, int parameter, const void *data)
 {
   struct MMCSD * const device = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_BLOCKING:
       device->blocking = true;

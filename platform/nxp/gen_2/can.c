@@ -42,8 +42,8 @@ static void writeMessage(struct Can *, const struct CanMessage *, size_t, bool);
 static enum Result canInit(void *, const void *);
 static void canDeinit(void *);
 static void canSetCallback(void *, void (*)(void *), void *);
-static enum Result canGetParam(void *, enum IfParameter, void *);
-static enum Result canSetParam(void *, enum IfParameter, const void *);
+static enum Result canGetParam(void *, int, void *);
+static enum Result canSetParam(void *, int, const void *);
 static size_t canRead(void *, void *, size_t);
 static size_t canWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -470,12 +470,11 @@ static void canSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result canGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result canGetParam(void *object, int parameter, void *data)
 {
   struct Can * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_AVAILABLE:
       *(size_t *)data = pointerQueueSize(&interface->rxQueue)
@@ -496,8 +495,7 @@ static enum Result canGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result canSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result canSetParam(void *object, int parameter, const void *data)
 {
   struct Can * const interface = object;
 
@@ -519,7 +517,7 @@ static enum Result canSetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
     {

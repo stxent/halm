@@ -36,8 +36,8 @@ static void sendWord(struct OneWireUart *, uint8_t);
 /*----------------------------------------------------------------------------*/
 static enum Result oneWireInit(void *, const void *);
 static void oneWireSetCallback(void *, void (*)(void *), void *);
-static enum Result oneWireGetParam(void *, enum IfParameter, void *);
-static enum Result oneWireSetParam(void *, enum IfParameter, const void *);
+static enum Result oneWireGetParam(void *, int, void *);
+static enum Result oneWireSetParam(void *, int, const void *);
 static size_t oneWireRead(void *, void *, size_t);
 static size_t oneWireWrite(void *, const void *, size_t);
 
@@ -226,12 +226,12 @@ static void oneWireSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result oneWireGetParam(void *object, enum IfParameter parameter,
+static enum Result oneWireGetParam(void *object, int parameter,
     void *data __attribute__((unused)))
 {
   struct OneWireUart * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
       if (interface->blocking || interface->state != STATE_ERROR)
@@ -244,12 +244,12 @@ static enum Result oneWireGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result oneWireSetParam(void *object, enum IfParameter parameter,
+static enum Result oneWireSetParam(void *object, int parameter,
     const void *data)
 {
   struct OneWireUart * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_BLOCKING:
       interface->blocking = true;

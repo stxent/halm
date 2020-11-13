@@ -26,8 +26,8 @@ static void powerStateHandler(void *, enum PmState);
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *, const void *);
 static void spiSetCallback(void *, void (*)(void *), void *);
-static enum Result spiGetParam(void *, enum IfParameter, void *);
-static enum Result spiSetParam(void *, enum IfParameter, const void *);
+static enum Result spiGetParam(void *, int, void *);
+static enum Result spiSetParam(void *, int, const void *);
 static size_t spiRead(void *, void *, size_t);
 static size_t spiWrite(void *, const void *, size_t);
 
@@ -342,8 +342,7 @@ static void spiSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result spiGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result spiGetParam(void *object, int parameter, void *data)
 {
   struct SpiDma * const interface = object;
 
@@ -351,7 +350,7 @@ static enum Result spiGetParam(void *object, enum IfParameter parameter,
   (void)data;
 #endif
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
 #ifdef CONFIG_PLATFORM_NXP_SSP_RC
     case IF_RATE:
@@ -372,8 +371,7 @@ static enum Result spiGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result spiSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result spiSetParam(void *object, int parameter, const void *data)
 {
   struct SpiDma * const interface = object;
 
@@ -395,7 +393,7 @@ static enum Result spiSetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_BLOCKING:
       dmaSetCallback(interface->rxDma, 0, 0);

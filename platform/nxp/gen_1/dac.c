@@ -11,8 +11,8 @@
 #define SAMPLE_SIZE sizeof(uint16_t)
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
-static enum Result dacGetParam(void *, enum IfParameter, void *);
-static enum Result dacSetParam(void *, enum IfParameter, const void *);
+static enum Result dacGetParam(void *, int, void *);
+static enum Result dacSetParam(void *, int, const void *);
 static size_t dacWrite(void *, const void *, size_t);
 
 #ifndef CONFIG_PLATFORM_NXP_DAC_NO_DEINIT
@@ -65,14 +65,13 @@ static void dacDeinit(void *object)
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result dacGetParam(void *object __attribute__((unused)),
-    enum IfParameter parameter __attribute__((unused)),
-    void *data __attribute__((unused)))
+    int parameter __attribute__((unused)), void *data __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dacSetParam(void *object __attribute__((unused)),
-    enum IfParameter parameter __attribute__((unused)),
+    int parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

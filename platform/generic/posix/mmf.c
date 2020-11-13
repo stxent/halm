@@ -15,8 +15,8 @@
 /*----------------------------------------------------------------------------*/
 static enum Result mmfInit(void *, const void *);
 static void mmfDeinit(void *);
-static enum Result mmfGetParam(void *, enum IfParameter, void *);
-static enum Result mmfSetParam(void *, enum IfParameter, const void *);
+static enum Result mmfGetParam(void *, int, void *);
+static enum Result mmfSetParam(void *, int, const void *);
 static size_t mmfRead(void *, void *, size_t);
 static size_t mmfWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -102,12 +102,11 @@ static void mmfDeinit(void *object)
   sem_destroy(&dev->semaphore);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result mmfGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result mmfGetParam(void *object, int parameter, void *data)
 {
   struct MemoryMappedFile * const dev = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_POSITION_64:
       *(uint64_t *)data = (uint64_t)dev->position;
@@ -122,12 +121,11 @@ static enum Result mmfGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result mmfSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result mmfSetParam(void *object, int parameter, const void *data)
 {
   struct MemoryMappedFile * const dev = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_POSITION_64:
     {

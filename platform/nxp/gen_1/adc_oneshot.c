@@ -12,8 +12,8 @@
 static uint16_t makeChannelConversion(struct AdcOneShot *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
-static enum Result adcGetParam(void *, enum IfParameter, void *);
-static enum Result adcSetParam(void *, enum IfParameter, const void *);
+static enum Result adcGetParam(void *, int, void *);
+static enum Result adcSetParam(void *, int, const void *);
 static size_t adcRead(void *, void *, size_t);
 
 #ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
@@ -92,14 +92,13 @@ static void adcDeinit(void *object)
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result adcGetParam(void *object __attribute__((unused)),
-    enum IfParameter parameter __attribute__((unused)),
-    void *data __attribute__((unused)))
+    int parameter __attribute__((unused)), void *data __attribute__((unused)))
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcSetParam(void *object __attribute__((unused)),
-    enum IfParameter parameter __attribute__((unused)),
+    int parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;

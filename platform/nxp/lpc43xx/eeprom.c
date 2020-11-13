@@ -27,8 +27,8 @@ static bool setInstance(struct Eeprom *);
 static enum Result eepromInit(void *, const void *);
 static void eepromDeinit(void *);
 static void eepromSetCallback(void *, void (*)(void *), void *);
-static enum Result eepromGetParam(void *, enum IfParameter, void *);
-static enum Result eepromSetParam(void *, enum IfParameter, const void *);
+static enum Result eepromGetParam(void *, int, void *);
+static enum Result eepromSetParam(void *, int, const void *);
 static size_t eepromRead(void *, void *, size_t);
 static size_t eepromWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -142,12 +142,11 @@ static void eepromSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result eepromGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result eepromGetParam(void *object, int parameter, void *data)
 {
   struct Eeprom * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_POSITION:
       *(uint32_t *)data = interface->position;
@@ -162,12 +161,11 @@ static enum Result eepromGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result eepromSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result eepromSetParam(void *object, int parameter, const void *data)
 {
   struct Eeprom * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_BLOCKING:
       interface->blocking = true;

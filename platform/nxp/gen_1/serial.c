@@ -19,8 +19,8 @@ static void powerStateHandler(void *, enum PmState);
 /*----------------------------------------------------------------------------*/
 static enum Result serialInit(void *, const void *);
 static void serialSetCallback(void *, void (*)(void *), void *);
-static enum Result serialGetParam(void *, enum IfParameter, void *);
-static enum Result serialSetParam(void *, enum IfParameter, const void *);
+static enum Result serialGetParam(void *, int, void *);
+static enum Result serialSetParam(void *, int, const void *);
 static size_t serialRead(void *, void *, size_t);
 static size_t serialWrite(void *, const void *, size_t);
 
@@ -188,8 +188,7 @@ static void serialSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result serialGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result serialGetParam(void *object, int parameter, void *data)
 {
   struct Serial * const interface = object;
 
@@ -205,7 +204,7 @@ static enum Result serialGetParam(void *object, enum IfParameter parameter,
   }
 #endif
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_AVAILABLE:
       *(size_t *)data = byteQueueSize(&interface->rxQueue);
@@ -226,8 +225,7 @@ static enum Result serialGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result serialSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result serialSetParam(void *object, int parameter, const void *data)
 {
   struct Serial * const interface = object;
 
@@ -242,7 +240,7 @@ static enum Result serialSetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
     {

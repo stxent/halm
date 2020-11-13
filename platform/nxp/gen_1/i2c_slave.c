@@ -35,8 +35,8 @@ static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
 static void i2cSetCallback(void *, void (*)(void *), void *);
-static enum Result i2cGetParam(void *, enum IfParameter, void *);
-static enum Result i2cSetParam(void *, enum IfParameter, const void *);
+static enum Result i2cGetParam(void *, int, void *);
+static enum Result i2cSetParam(void *, int, const void *);
 static size_t i2cRead(void *, void *, size_t);
 static size_t i2cWrite(void *, const void *, size_t);
 
@@ -182,13 +182,12 @@ static void i2cSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result i2cGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result i2cGetParam(void *object, int parameter, void *data)
 {
   struct I2CSlave * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_ADDRESS:
        *(uint16_t *)data = ADR_ADDRESS_VALUE(reg->ADR0);
@@ -206,13 +205,12 @@ static enum Result i2cGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result i2cSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result i2cSetParam(void *object, int parameter, const void *data)
 {
   struct I2CSlave * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_ADDRESS:
       if (*(const uint16_t *)data <= 127)

@@ -15,8 +15,8 @@ static inline bool isPagePositionValid(const struct Flash *, size_t);
 static inline bool isSectorPositionValid(const struct Flash *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *, const void *);
-static enum Result flashGetParam(void *, enum IfParameter, void *);
-static enum Result flashSetParam(void *, enum IfParameter, const void *);
+static enum Result flashGetParam(void *, int, void *);
+static enum Result flashSetParam(void *, int, const void *);
 static size_t flashRead(void *, void *, size_t);
 static size_t flashWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -105,8 +105,7 @@ static enum Result flashInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result flashGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result flashGetParam(void *object, int parameter, void *data)
 {
   struct Flash * const interface = object;
 
@@ -121,7 +120,7 @@ static enum Result flashGetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_POSITION:
       *(uint32_t *)data = interface->position;
@@ -136,8 +135,7 @@ static enum Result flashGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result flashSetParam(void *object, enum IfParameter parameter,
-    const void *data)
+static enum Result flashSetParam(void *object, int parameter, const void *data)
 {
   struct Flash * const interface = object;
 
@@ -171,7 +169,7 @@ static enum Result flashSetParam(void *object, enum IfParameter parameter,
       break;
   }
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_POSITION:
     {

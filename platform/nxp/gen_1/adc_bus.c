@@ -15,8 +15,8 @@ static size_t setupChannels(struct AdcBus *, const PinNumber *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static void adcSetCallback(void *, void (*)(void *), void *);
-static enum Result adcGetParam(void *, enum IfParameter, void *);
-static enum Result adcSetParam(void *, enum IfParameter, const void *);
+static enum Result adcGetParam(void *, int, void *);
+static enum Result adcSetParam(void *, int, const void *);
 static size_t adcRead(void *, void *, size_t);
 
 #ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
@@ -157,12 +157,12 @@ static void adcSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcGetParam(void *object, enum IfParameter parameter,
+static enum Result adcGetParam(void *object, int parameter,
     void *data __attribute__((unused)))
 {
   struct AdcBus * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
       return interface->buffer ? E_BUSY : E_OK;
@@ -172,12 +172,12 @@ static enum Result adcGetParam(void *object, enum IfParameter parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcSetParam(void *object, enum IfParameter parameter,
+static enum Result adcSetParam(void *object, int parameter,
     const void *data __attribute__((unused)))
 {
   struct AdcBus * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_BLOCKING:
       interface->blocking = true;

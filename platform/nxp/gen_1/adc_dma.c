@@ -16,8 +16,8 @@ static bool dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static void adcSetCallback(void *, void (*)(void *), void *);
-static enum Result adcGetParam(void *, enum IfParameter, void *);
-static enum Result adcSetParam(void *, enum IfParameter, const void *);
+static enum Result adcGetParam(void *, int, void *);
+static enum Result adcSetParam(void *, int, const void *);
 static size_t adcRead(void *, void *, size_t);
 
 #ifndef CONFIG_PLATFORM_NXP_ADC_NO_DEINIT
@@ -164,12 +164,11 @@ static void adcSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcGetParam(void *object, enum IfParameter parameter,
-    void *data)
+static enum Result adcGetParam(void *object, int parameter, void *data)
 {
   struct AdcDma * const interface = object;
 
-  switch (parameter)
+  switch ((enum IfParameter)parameter)
   {
     case IF_AVAILABLE:
       *(size_t *)data = BUFFER_COUNT - ((dmaPending(interface->dma) + 1) >> 1);
@@ -184,7 +183,7 @@ static enum Result adcGetParam(void *object, enum IfParameter parameter,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcSetParam(void *object __attribute__((unused)),
-    enum IfParameter parameter __attribute__((unused)),
+    int parameter __attribute__((unused)),
     const void *data __attribute__((unused)))
 {
   return E_INVALID;
