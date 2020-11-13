@@ -4,15 +4,17 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/generic/byte_queue_extensions.h>
 #include <halm/platform/nxp/gen_1/uart_defs.h>
 #include <halm/platform/nxp/serial.h>
 #include <halm/pm.h>
 #include <stdbool.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 #define TX_FIFO_SIZE 8
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-/*----------------------------------------------------------------------------*/
+
 #ifdef CONFIG_PLATFORM_NXP_UART_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
@@ -271,38 +273,67 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
 static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct Serial * const interface = object;
+  uint8_t *position = buffer;
 
-  irqDisable(interface->base.irq);
-  const size_t read = byteQueuePopArray(&interface->rxQueue, buffer, length);
-  irqEnable(interface->base.irq);
+  while (length && !byteQueueEmpty(&interface->rxQueue))
+  {
+    const uint8_t *address;
+    size_t count;
 
-  return read;
+    byteQueueDeferredPop(&interface->rxQueue, &address, &count, 0);
+    count = MIN(length, count);
+    memcpy(position, address, count);
+
+    irqDisable(interface->base.irq);
+    byteQueueAbandon(&interface->rxQueue, count);
+    irqEnable(interface->base.irq);
+
+    position += count;
+    length -= count;
+  }
+
+  return position - (uint8_t *)buffer;
 }
 /*----------------------------------------------------------------------------*/
 static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
   struct Serial * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  const uint8_t *bufferPosition = buffer;
-  size_t written = 0;
+  const uint8_t *position = buffer;
 
+  /* Check transmitter state and fill internal queue */
   irqDisable(interface->base.irq);
 
-  /* Check transmitter state */
   if ((reg->LSR & LSR_THRE) && byteQueueEmpty(&interface->txQueue))
   {
     /* Transmitter is idle so fill TX FIFO */
     const size_t bytesToWrite = MIN(length, TX_FIFO_SIZE);
+    size_t written = 0;
 
     for (; written < bytesToWrite; ++written)
-      reg->THR = *bufferPosition++;
+      reg->THR = *position++;
     length -= written;
   }
-  /* Fill TX queue with the rest of data */
-  if (length)
-    written += byteQueuePushArray(&interface->txQueue, bufferPosition, length);
 
   irqEnable(interface->base.irq);
 
-  return written;
+  /* Fill TX queue with the rest of data */
+  while (length && !byteQueueFull(&interface->txQueue))
+  {
+    uint8_t *address;
+    size_t count;
+
+    byteQueueDeferredPush(&interface->txQueue, &address, &count, 0);
+    count = MIN(length, count);
+    memcpy(address, position, count);
+
+    irqDisable(interface->base.irq);
+    byteQueueAdvance(&interface->txQueue, count);
+    irqEnable(interface->base.irq);
+
+    position += count;
+    length -= count;
+  }
+
+  return position - (const uint8_t *)buffer;
 }

@@ -4,9 +4,11 @@
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
+#include <halm/generic/byte_queue_extensions.h>
 #include <halm/platform/stm/serial.h>
 #include <halm/platform/stm/uart_defs.h>
 #include <stdbool.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
@@ -227,30 +229,56 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
 static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct Serial * const interface = object;
+  uint8_t *position = buffer;
 
-  irqDisable(interface->base.irq);
-  const size_t read = byteQueuePopArray(&interface->rxQueue, buffer, length);
-  irqEnable(interface->base.irq);
+  while (length && !byteQueueEmpty(&interface->rxQueue))
+  {
+    const uint8_t *address;
+    size_t count;
 
-  return read;
+    byteQueueDeferredPop(&interface->rxQueue, &address, &count, 0);
+    count = MIN(length, count);
+    memcpy(position, address, count);
+
+    irqDisable(interface->base.irq);
+    byteQueueAbandon(&interface->rxQueue, count);
+    irqEnable(interface->base.irq);
+
+    position += count;
+    length -= count;
+  }
+
+  return position - (uint8_t *)buffer;
 }
 /*----------------------------------------------------------------------------*/
 static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
   struct Serial * const interface = object;
-  STM_USART_Type * const reg = interface->base.reg;
-  size_t written;
+  const uint8_t *position = buffer;
 
-  if (length)
+  while (length && !byteQueueFull(&interface->txQueue))
   {
-    irqDisable(interface->base.irq);
-    written = byteQueuePushArray(&interface->txQueue, buffer, length);
-    if (!(reg->CR1 & CR1_TXEIE))
-      reg->CR1 |= CR1_TXEIE;
-    irqEnable(interface->base.irq);
-  }
-  else
-    written = 0;
+    uint8_t *address;
+    size_t count;
 
-  return written;
+    byteQueueDeferredPush(&interface->txQueue, &address, &count, 0);
+    count = MIN(length, count);
+    memcpy(address, position, count);
+
+    irqDisable(interface->base.irq);
+    byteQueueAdvance(&interface->txQueue, count);
+    irqEnable(interface->base.irq);
+
+    position += count;
+    length -= count;
+  }
+
+  STM_USART_Type * const reg = interface->base.reg;
+
+  irqDisable(interface->base.irq);
+  if (!byteQueueEmpty(&interface->txQueue) && !(reg->CR1 & CR1_TXEIE))
+    reg->CR1 |= CR1_TXEIE;
+  irqEnable(interface->base.irq);
+
+  return position - (const uint8_t *)buffer;
 }
