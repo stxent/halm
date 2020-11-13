@@ -22,8 +22,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS_DEFAULT} ${FLAGS_CPU}")
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
 find_package(xcore QUIET)
-if(NOT xcore_FOUND)
-    message(STATUS "Package information for xcore not found")
+if(xcore_FOUND)
+    message(STATUS "Found xcore package")
 endif()
 
 if(${USE_LTO})

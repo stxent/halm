@@ -729,8 +729,12 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
 static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdioSpiConfig * const config = configBase;
+  assert(config);
+  assert(config->interface);
+  /* Check zero-copy capability */
+  assert(ifSetParam(config->interface, IF_ZEROCOPY, 0) == E_OK);
+
   struct SdioSpi * const interface = object;
-  enum Result res;
 
   interface->cs = pinInit(config->cs);
   if (!pinValid(interface->cs))
@@ -738,10 +742,6 @@ static enum Result sdioInit(void *object, const void *configBase)
   pinOutput(interface->cs, true);
 
   interface->bus = config->interface;
-
-  res = ifSetParam(interface->bus, IF_ZEROCOPY, 0);
-  if (res != E_OK)
-    return res;
   ifSetCallback(interface->bus, interruptHandler, interface);
 
   if (config->timer)
@@ -757,16 +757,18 @@ static enum Result sdioInit(void *object, const void *configBase)
 
   /* Data verification part */
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
-  interface->crcPoolSize = config->blocks;
-
-  if (interface->crcPoolSize)
+  if (config->blocks)
   {
+    interface->crcPoolSize = config->blocks;
     interface->crcPool = malloc(interface->crcPoolSize * sizeof(uint16_t));
     if (!interface->crcPool)
       return E_MEMORY;
   }
   else
+  {
+    interface->crcPoolSize = 0;
     interface->crcPool = 0;
+  }
 #else
   assert(config->blocks == 0);
   interface->crcPool = 0;
