@@ -10,9 +10,9 @@
 #include <halm/pm.h>
 #include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
-struct WorkQueue
+struct WorkQueueDefault
 {
-  struct WorkQueueBase base;
+  struct WorkQueue base;
   WqTaskQueue queue;
 };
 /*----------------------------------------------------------------------------*/
@@ -22,7 +22,7 @@ static enum Result workQueueStart(void *);
 /*----------------------------------------------------------------------------*/
 const struct WorkQueueClass * const WorkQueue =
     &(const struct WorkQueueClass){
-    .size = sizeof(struct WorkQueue),
+    .size = sizeof(struct WorkQueueDefault),
     .init = workQueueInit,
     .deinit = deletedDestructorTrap,
 
@@ -37,7 +37,7 @@ static enum Result workQueueInit(void *object, const void *configBase)
   assert(config);
   assert(config->size);
 
-  struct WorkQueue * const wq = object;
+  struct WorkQueueDefault * const wq = object;
   return wqTaskQueueInit(&wq->queue, config->size) ? E_OK : E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
@@ -46,7 +46,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
 {
   assert(callback != 0);
 
-  struct WorkQueue * const wq = object;
+  struct WorkQueueDefault * const wq = object;
   enum Result res;
 
   /* Critical section */
@@ -66,7 +66,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum Result workQueueStart(void *object)
 {
-  struct WorkQueue * const wq = object;
+  struct WorkQueueDefault * const wq = object;
 
   while (1)
   {

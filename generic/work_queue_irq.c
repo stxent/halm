@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 struct WorkQueueIrq
 {
-  struct WorkQueueBase base;
+  struct WorkQueue base;
   WqTaskQueue queue;
   IrqNumber irq;
 };

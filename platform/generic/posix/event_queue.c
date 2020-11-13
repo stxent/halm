@@ -16,9 +16,9 @@ struct Task
   void *argument;
 };
 
-struct WorkQueue
+struct EventQueue
 {
-  struct WorkQueueBase base;
+  struct WorkQueue base;
 };
 /*----------------------------------------------------------------------------*/
 static void onAsyncCallback(uv_async_t *);
@@ -31,7 +31,7 @@ static void workQueueStop(void *);
 /*----------------------------------------------------------------------------*/
 const struct WorkQueueClass * const EventQueue =
     &(const struct WorkQueueClass){
-    .size = sizeof(struct WorkQueue),
+    .size = sizeof(struct EventQueue),
     .init = workQueueInit,
     .deinit = deletedDestructorTrap,
 

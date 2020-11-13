@@ -522,7 +522,7 @@ static void stateWriteStopEnter(struct SdioSpi *interface)
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
 static void stateCrcEnter(struct SdioSpi *interface)
 {
-  wqAdd(WQ_DEFAULT, interruptHandler, interface);
+  wqAdd(interface->wq, interruptHandler, interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -752,6 +752,8 @@ static enum Result sdioInit(void *object, const void *configBase)
   }
   else
     interface->timer = 0;
+
+  interface->wq = config->wq ? config->wq : WQ_DEFAULT;
 
   /* Data verification part */
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC

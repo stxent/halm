@@ -10,6 +10,7 @@
 #include <xcore/interface.h>
 #include <halm/pin.h>
 #include <halm/timer.h>
+#include <halm/wq.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdioSpi;
 
@@ -22,6 +23,8 @@ struct SdioSpiConfig
    * lower or equal priority than serial interface interrupts.
    */
   struct Timer *timer;
+  /** Optional: work queue for integrity checking tasks. */
+  struct WorkQueue *wq;
   /**
    * Optional: integrity checking control, set to zero to disable integrity
    * checks or to positive value to set maximal number of blocks in
@@ -43,6 +46,8 @@ struct SdioSpi
   struct Interface *bus;
   /* Timer to generate periodic interrupt requests */
   struct Timer *timer;
+  /* Work queue for integrity checking tasks */
+  struct WorkQueue *wq;
 
   /* Pool for results of checksum computation */
   uint16_t *crcPool;

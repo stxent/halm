@@ -28,7 +28,7 @@ struct WorkQueueClass
   void (*stop)(void *);
 };
 
-struct WorkQueueBase
+struct WorkQueue
 {
   struct Entity base;
 };
