@@ -833,12 +833,13 @@ static enum Result sieEpEnqueue(void *object, struct UsbRequest *request)
   if (index >= 2 && !ep->device->configured)
     return E_IDLE;
 
-  irqDisable(ep->device->base.irq);
   assert(!pointerQueueFull(&ep->requests));
 
   const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
-  const uint8_t epStatus = usbCommandRead(ep->device, epCode);
   bool invokeHandler = false;
+
+  const IrqState state = irqSave();
+  const uint8_t epStatus = usbCommandRead(ep->device, epCode);
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
@@ -863,7 +864,7 @@ static enum Result sieEpEnqueue(void *object, struct UsbRequest *request)
     reg->USBEpIntSet = mask;
   }
 
-  irqEnable(ep->device->base.irq);
+  irqRestore(state);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -1006,22 +1007,27 @@ static struct DmaDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *ep,
   }
 
   struct DmaDescriptorPool * const pool = ep->device->pool;
-  struct DmaDescriptor *descriptor;
+  struct DmaDescriptor *descriptor = 0;
+  const IrqState state = irqSave();
 
-  assert(!pointerArrayEmpty(&pool->descriptors));
+  if (!pointerArrayEmpty(&pool->descriptors))
+  {
+    descriptor = pointerArrayBack(&pool->descriptors);
+    pointerArrayPopBack(&pool->descriptors);
+  }
 
-  irqDisable(ep->device->base.irq);
-  descriptor = pointerArrayBack(&pool->descriptors);
-  pointerArrayPopBack(&pool->descriptors);
-  irqEnable(ep->device->base.irq);
+  irqRestore(state);
 
-  descriptor->next = 0;
-  descriptor->control = control;
-  descriptor->buffer = (uint32_t)request->buffer;
-  descriptor->status = 0;
-  descriptor->size = 0;
-  /* Store pointer to the USB Request structure in the reserved field */
-  descriptor->request = (uint32_t)request;
+  if (descriptor)
+  {
+    descriptor->next = 0;
+    descriptor->control = control;
+    descriptor->buffer = (uint32_t)request->buffer;
+    descriptor->status = 0;
+    descriptor->size = 0;
+    /* Store pointer to the USB Request structure in the reserved field */
+    descriptor->request = (uint32_t)request;
+  }
 
   return descriptor;
 }
@@ -1031,8 +1037,7 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
 {
   LPC_USB_Type * const reg = ep->device->base.reg;
   const uint32_t mask = 1UL << EP_TO_INDEX(ep->address);
-
-  irqDisable(ep->device->base.irq);
+  const IrqState state = irqSave();
 
   if (ep->tail)
   {
@@ -1050,13 +1055,15 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
   if (!(reg->USBEpDMASt & mask))
     reg->USBNDDRIntSet = mask;
 
-  irqEnable(ep->device->base.irq);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void epEnqueueRequest(struct UsbDmaEndpoint *ep,
     struct UsbRequest *request)
 {
   struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request);
+  assert(descriptor);
+
   epAppendDescriptor(ep, descriptor);
 }
 /*----------------------------------------------------------------------------*/
@@ -1108,9 +1115,9 @@ static void dmaEpClear(void *object)
     volatile struct DmaDescriptor * const next =
         (volatile struct DmaDescriptor *)current->next;
 
-    irqDisable(ep->device->base.irq);
+    const IrqState state = irqSave();
     pointerArrayPushBack(&pool->descriptors, (void *)current);
-    irqEnable(ep->device->base.irq);
+    irqRestore(state);
 
     request->callback(request->callbackArgument, request,
         USB_REQUEST_CANCELLED);

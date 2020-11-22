@@ -609,6 +609,8 @@ static void epEnable(void *object, uint8_t type __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
+  assert(request->callback);
+
   struct SbUsbEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
   const unsigned int index = EP_TO_INDEX(ep->address);
@@ -617,12 +619,10 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
     return E_IDLE;
 
   assert(ep->position); /* Device should be initialized */
-  assert(request->callback);
-
-  irqDisable(device->base.irq);
   assert(!pointerQueueFull(&ep->requests));
 
   bool invokeHandler = false;
+  const IrqState state = irqSave();
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
@@ -644,7 +644,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
     reg->INTSETSTAT |= INTSETSTAT_EP_SET_INT(index);
   }
 
-  irqEnable(device->base.irq);
+  irqRestore(state);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

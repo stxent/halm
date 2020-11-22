@@ -490,6 +490,8 @@ static void dbEpEnable(struct UsbEndpoint *ep, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static void dbEpEnqueue(struct UsbEndpoint *ep, struct UsbRequest *request)
 {
+  const IrqState state = irqSave();
+
   if (ep->address & USB_EP_DIRECTION_IN)
   {
     if (ep->pending < 2 && ep->pending == pointerQueueSize(&ep->requests))
@@ -535,6 +537,7 @@ static void dbEpEnqueue(struct UsbEndpoint *ep, struct UsbRequest *request)
   }
 
   pointerQueuePushBack(&ep->requests, request);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void dbEpHandler(struct UsbEndpoint *ep,
@@ -725,6 +728,8 @@ static void sbEpEnable(struct UsbEndpoint *ep, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static void sbEpEnqueue(struct UsbEndpoint *ep, struct UsbRequest *request)
 {
+  const IrqState state = irqSave();
+
   if (pointerQueueEmpty(&ep->requests))
   {
     if (!(ep->address & USB_EP_DIRECTION_IN))
@@ -742,6 +747,7 @@ static void sbEpEnqueue(struct UsbEndpoint *ep, struct UsbRequest *request)
   }
 
   pointerQueuePushBack(&ep->requests, request);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void sbEpHandler(struct UsbEndpoint *ep, bool setup)
@@ -924,15 +930,12 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request->callback);
-
   struct UsbEndpoint * const ep = object;
 
-  irqDisable(ep->device->base.irq);
+  assert(request->callback);
   assert(!pointerQueueFull(&ep->requests));
-  ep->subclass->enqueue(ep, request);
-  irqEnable(ep->device->base.irq);
 
+  ep->subclass->enqueue(ep, request);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

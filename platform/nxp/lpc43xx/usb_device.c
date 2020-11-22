@@ -287,6 +287,8 @@ static void resetQueueHeads(struct UsbDevice *device)
 
     head->listHead = TD_NEXT_TERMINATE;
     head->listTail = TD_NEXT_TERMINATE;
+    head->gap[0] = 0;
+    head->gap[1] = 0;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -492,35 +494,39 @@ static struct TransferDescriptor *epAllocDescriptor(struct UsbEndpoint *ep,
     struct UsbRequest *node, uint8_t *buffer, size_t length)
 {
   struct TransferDescriptor *descriptor = 0;
+  const IrqState state = irqSave();
 
-  irqDisable(ep->device->base.irq);
   if (!pointerArrayEmpty(&ep->device->base.descriptorPool))
   {
     descriptor = pointerArrayBack(&ep->device->base.descriptorPool);
     pointerArrayPopBack(&ep->device->base.descriptorPool);
   }
-  irqEnable(ep->device->base.irq);
 
-  if (!descriptor)
-    return 0;
+  irqRestore(state);
 
-  /* The next descriptor pointer is invalid */
-  descriptor->next = TD_NEXT_TERMINATE;
+  if (descriptor)
+  {
+    /* Initialize allocated descriptor */
 
-  /* Setup status and size, enable interrupt on completion */
-  descriptor->token = TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE) | TD_TOKEN_IOC
-      | TD_TOKEN_TOTAL_BYTES(length);
+    /* The next descriptor pointer is invalid */
+    descriptor->next = TD_NEXT_TERMINATE;
 
-  /* Store pointer to the USB Request structure in reserved field */
-  descriptor->listNode = (uint32_t)node;
+    /* Setup status and size, enable interrupt on completion */
+    descriptor->token = TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE)
+        | TD_TOKEN_IOC
+        | TD_TOKEN_TOTAL_BYTES(length);
 
-  const uint32_t basePage = (uint32_t)buffer & 0xFFFFF000;
+    /* Store pointer to the USB Request structure in reserved field */
+    descriptor->listNode = (uint32_t)node;
 
-  descriptor->buffer0 = (uint32_t)buffer;
-  descriptor->buffer1 = basePage + 0x1000;
-  descriptor->buffer2 = basePage + 0x2000;
-  descriptor->buffer3 = basePage + 0x3000;
-  descriptor->buffer4 = basePage + 0x4000;
+    const uint32_t base = (uint32_t)buffer & 0xFFFFF000;
+
+    descriptor->buffer0 = (uint32_t)buffer;
+    descriptor->buffer1 = base + 0x1000;
+    descriptor->buffer2 = base + 0x2000;
+    descriptor->buffer3 = base + 0x3000;
+    descriptor->buffer4 = base + 0x4000;
+  }
 
   return descriptor;
 }
@@ -530,7 +536,11 @@ static void epAppendDescriptor(struct UsbEndpoint *ep,
 {
   LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
+  const uint32_t mask = ENDPT_BIT(ep->address);
   struct QueueHead * const head = &ep->device->base.queueHeads[index];
+  bool reprime = true;
+
+  const IrqState state = irqSave();
 
   if (head->listHead != TD_NEXT_TERMINATE)
   {
@@ -538,26 +548,28 @@ static void epAppendDescriptor(struct UsbEndpoint *ep,
 
     struct TransferDescriptor * const tail =
         (struct TransferDescriptor *)head->listTail;
-    const uint32_t mask = ENDPT_BIT(ep->address);
-    uint32_t status;
 
     tail->next = (uint32_t)descriptor;
     head->listTail = (uint32_t)descriptor;
 
-    status = reg->ENDPTPRIME;
-    if (status & mask)
-      return;
-
-    do
+    if (!(reg->ENDPTPRIME & mask))
     {
-      reg->USBCMD_D |= USBCMD_D_ATDTW;
-      status = reg->ENDPTSTAT;
-    }
-    while (!(reg->USBCMD_D & USBCMD_D_ATDTW));
-    reg->USBCMD_D &= ~USBCMD_D_ATDTW;
+      uint32_t status;
 
-    if (status & mask)
-      return;
+      do
+      {
+        reg->USBCMD_D |= USBCMD_D_ATDTW;
+        status = reg->ENDPTSTAT;
+      }
+      while (!(reg->USBCMD_D & USBCMD_D_ATDTW));
+      reg->USBCMD_D &= ~USBCMD_D_ATDTW;
+
+      reprime = (status & mask) == 0;
+    }
+    else
+    {
+      reprime = false;
+    }
   }
   else
   {
@@ -567,11 +579,17 @@ static void epAppendDescriptor(struct UsbEndpoint *ep,
     head->listTail = (uint32_t)descriptor;
   }
 
-  head->next = (uint32_t)descriptor;
-  /* Clear Active and Halt bits as mentioned in User Manual */
-  head->token &= ~TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE | TOKEN_STATUS_HALTED);
+  if (reprime)
+  {
+    /* Mark the head descriptor as the first descriptor to transfer */
+    head->next = head->listHead;
+    /* Clear Active and Halt bits as mentioned in User Manual */
+    head->token &= ~TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE | TOKEN_STATUS_HALTED);
 
-  epPrime(ep);
+    epPrime(ep);
+  }
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void epEnqueueRx(struct UsbEndpoint *ep, struct UsbRequest *request)
@@ -580,9 +598,7 @@ static void epEnqueueRx(struct UsbEndpoint *ep, struct UsbRequest *request)
       request, request->buffer, request->capacity);
   assert(descriptor);
 
-  irqDisable(ep->device->base.irq);
   epAppendDescriptor(ep, descriptor);
-  irqEnable(ep->device->base.irq);
 }
 /*----------------------------------------------------------------------------*/
 static void epEnqueueTx(struct UsbEndpoint *ep, struct UsbRequest *request)
@@ -591,9 +607,7 @@ static void epEnqueueTx(struct UsbEndpoint *ep, struct UsbRequest *request)
       request, request->buffer, request->length);
   assert(descriptor);
 
-  irqDisable(ep->device->base.irq);
   epAppendDescriptor(ep, descriptor);
-  irqEnable(ep->device->base.irq);
 }
 /*----------------------------------------------------------------------------*/
 static void epExtractDataLength(const struct UsbEndpoint *ep,
@@ -636,7 +650,7 @@ static enum EndpointStatus epGetStatus(const struct UsbEndpoint *ep)
   const struct QueueHead * const head = &ep->device->base.queueHeads[index];
 
   if (head->listHead == TD_NEXT_TERMINATE)
-    return false;
+    return STATUS_IDLE;
 
   const LPC_USB_Type * const reg = ep->device->base.reg;
   const struct TransferDescriptor * const descriptor =
@@ -674,7 +688,7 @@ static void epPrime(struct UsbEndpoint *ep)
   LPC_USB_Type * const reg = ep->device->base.reg;
   const uint32_t mask = ENDPT_BIT(ep->address);
 
-  /* Prime the endpoint for read */
+  /* Prime the endpoint for IN/OUT */
   reg->ENDPTPRIME |= mask;
   /* Wait until the bit is set */
   while (reg->ENDPTPRIME & mask);
@@ -776,11 +790,10 @@ static void epClear(void *object)
   while (head->listHead != TD_NEXT_TERMINATE)
   {
     struct UsbRequest * const request = epGetHeadRequest(head);
+    epPopDescriptor(ep);
 
     request->callback(request->callbackArgument, request,
         USB_REQUEST_CANCELLED);
-
-    epPopDescriptor(ep);
   }
 }
 /*----------------------------------------------------------------------------*/

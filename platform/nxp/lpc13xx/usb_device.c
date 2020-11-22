@@ -644,12 +644,13 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
   if (index >= 2 && !ep->device->configured)
     return E_IDLE;
 
-  irqDisable(ep->device->base.irq);
   assert(!pointerQueueFull(&ep->requests));
 
   const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
-  const uint8_t epStatus = usbCommandRead(ep->device, epCode);
   bool invokeHandler = false;
+
+  const IrqState state = irqSave();
+  const uint8_t epStatus = usbCommandRead(ep->device, epCode);
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
@@ -674,7 +675,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
     reg->USBDevIntSet = mask;
   }
 
-  irqEnable(ep->device->base.irq);
+  irqRestore(state);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
