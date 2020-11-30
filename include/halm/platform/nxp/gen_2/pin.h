@@ -1,44 +1,31 @@
 /*
- * halm/platform/stm/stm32f1xx/pin.h
- * Copyright (C) 2016 xent
+ * halm/platform/nxp/gen_2/pin.h
+ * Copyright (C) 2013, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_STM_STM32F1XX_PIN_H_
-#define HALM_PLATFORM_STM_STM32F1XX_PIN_H_
+#ifndef HALM_PLATFORM_NXP_GEN_2_PIN_H_
+#define HALM_PLATFORM_NXP_GEN_2_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
-#include <xcore/helpers.h>
-/*----------------------------------------------------------------------------*/
-enum
-{
-  PORT_A,
-  PORT_B,
-  PORT_C,
-  PORT_D,
-  PORT_E,
-  PORT_F,
-  PORT_G
-};
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 struct Pin
 {
   void *reg;
-  uint16_t mask;
   uint8_t number;
   uint8_t port;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void *pinAddress(struct Pin);
 struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum PinPull);
-void pinSetType(struct Pin, enum PinType);
 void pinSetSlewRate(struct Pin, enum PinSlewRate);
+void pinSetType(struct Pin, enum PinType);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
@@ -46,44 +33,34 @@ BEGIN_DECLS
 
 static inline bool pinRead(struct Pin pin)
 {
-  return (((STM_GPIO_Type *)pin.reg)->IDR & pin.mask) != 0;
+  return *(const volatile uint32_t *)pin.reg != 0;
 }
 
 static inline void pinReset(struct Pin pin)
 {
-  ((STM_GPIO_Type *)pin.reg)->BRR = pin.mask;
+  *(volatile uint32_t *)pin.reg = 0x000;
 }
 
 static inline void pinSet(struct Pin pin)
 {
-  ((STM_GPIO_Type *)pin.reg)->BSRR = pin.mask;
+  *(volatile uint32_t *)pin.reg = 0xFFF;
 }
 
 static inline void pinToggle(struct Pin pin)
 {
-  STM_GPIO_Type * const reg = pin.reg;
-
-  if (reg->ODR & pin.mask)
-    reg->BRR = pin.mask;
-  else
-    reg->BSRR = pin.mask;
+  *(volatile uint32_t *)pin.reg = ~(*(volatile uint32_t *)pin.reg);
 }
 
 static inline bool pinValid(struct Pin pin)
 {
-  return pin.port != 0xFF;
+  return pin.reg != 0;
 }
 
 static inline void pinWrite(struct Pin pin, bool value)
 {
-  STM_GPIO_Type * const reg = pin.reg;
-
-  if (value)
-    reg->BSRR = pin.mask;
-  else
-    reg->BRR = pin.mask;
+  *(volatile uint32_t *)pin.reg = value ? 0xFFF : 0x000;
 }
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM_STM32F1XX_PIN_H_ */
+#endif /* HALM_PLATFORM_NXP_GEN_2_PIN_H_ */

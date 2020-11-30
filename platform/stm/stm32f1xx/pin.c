@@ -10,24 +10,24 @@
 #include <halm/platform/stm/stm32f1xx/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static inline STM_GPIO_Type *calcPort(struct PinData);
-static void commonPinInit(struct PinData);
-static inline enum SysBlockReset portToBlockReset(struct PinData);
-static inline enum SysClockBranch portToClockBranch(struct PinData);
+static inline STM_GPIO_Type *calcPort(uint8_t);
+static void commonPinInit(uint8_t);
+static inline enum SysBlockReset portToBlockReset(uint8_t);
+static inline enum SysClockBranch portToClockBranch(uint8_t);
 /*----------------------------------------------------------------------------*/
-static inline STM_GPIO_Type *calcPort(struct PinData pin)
+static inline STM_GPIO_Type *calcPort(uint8_t port)
 {
   return (STM_GPIO_Type *)((uint32_t)STM_GPIOA
-      + pin.port * ((uint32_t)STM_GPIOB - (uint32_t)STM_GPIOA));
+      + port * ((uint32_t)STM_GPIOB - (uint32_t)STM_GPIOA));
 }
 /*----------------------------------------------------------------------------*/
-static void commonPinInit(struct PinData pin)
+static void commonPinInit(uint8_t port)
 {
-  const enum SysClockBranch branch = portToClockBranch(pin);
+  const enum SysClockBranch branch = portToClockBranch(port);
 
   if (!sysClockStatus(branch))
   {
-    const enum SysBlockReset reset = portToBlockReset(pin);
+    const enum SysBlockReset reset = portToBlockReset(port);
 
     sysClockEnable(branch);
     sysResetEnable(reset);
@@ -35,59 +35,58 @@ static void commonPinInit(struct PinData pin)
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline enum SysBlockReset portToBlockReset(struct PinData pin)
+static inline enum SysBlockReset portToBlockReset(uint8_t port)
 {
-  return RST_IOPA + pin.port;
+  return RST_IOPA + port;
 }
 /*----------------------------------------------------------------------------*/
-static inline enum SysClockBranch portToClockBranch(struct PinData pin)
+static inline enum SysClockBranch portToClockBranch(uint8_t port)
 {
-  return CLK_IOPA + pin.port;
+  return CLK_IOPA + port;
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
 {
   struct Pin pin;
 
-  pin.data.port = PIN_TO_PORT(id);
-  pin.data.offset = PIN_TO_OFFSET(id);
-  pin.reg = id ? calcPort(pin.data) : 0;
+  pin.port = PIN_TO_PORT(id);
+  pin.number = PIN_TO_OFFSET(id);
+  pin.mask = 1UL << pin.number;
+  pin.reg = id ? calcPort(pin.port) : 0;
 
   return pin;
 }
 /*----------------------------------------------------------------------------*/
 void pinInput(struct Pin pin)
 {
-  assert(pin.reg);
+  assert(pinValid(pin));
+  commonPinInit(pin.port);
 
-  commonPinInit(pin.data);
-
-  const unsigned int index = pin.data.offset >> 3;
+  const unsigned int index = pin.number >> 3;
   STM_GPIO_Type * const reg = pin.reg;
   uint32_t configValue = reg->CR[index];
 
   /* Configure to floating input */
-  configValue &= ~CR_MASK(pin.data.offset);
-  configValue |= CR_MODE(pin.data.offset, MODE_INPUT);
-  configValue |= CR_CNF(pin.data.offset, CNF_INPUT_FLOATING);
+  configValue &= ~CR_MASK(pin.number);
+  configValue |= CR_MODE(pin.number, MODE_INPUT);
+  configValue |= CR_CNF(pin.number, CNF_INPUT_FLOATING);
 
   reg->CR[index] = configValue;
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
 {
-  assert(pin.reg);
+  assert(pinValid(pin));
+  commonPinInit(pin.port);
 
-  commonPinInit(pin.data);
-
-  const unsigned int index = pin.data.offset >> 3;
+  const unsigned int index = pin.number >> 3;
   STM_GPIO_Type * const reg = pin.reg;
   uint32_t configValue = reg->CR[index];
 
   /* Configure to push-pull with maximum slew rate */
-  configValue &= ~CR_MASK(pin.data.offset);
-  configValue |= CR_MODE(pin.data.offset, MODE_OUTPUT_SPEED_50);
-  configValue |= CR_CNF(pin.data.offset, CNF_OUTPUT_GP | CNF_OUTPUT_PP);
+  configValue &= ~CR_MASK(pin.number);
+  configValue |= CR_MODE(pin.number, MODE_OUTPUT_SPEED_50);
+  configValue |= CR_CNF(pin.number, CNF_OUTPUT_GP | CNF_OUTPUT_PP);
 
   pinWrite(pin, value);
   reg->CR[index] = configValue;
@@ -95,12 +94,12 @@ void pinOutput(struct Pin pin, bool value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
-  const unsigned int index = pin.data.offset >> 3;
+  const unsigned int index = pin.number >> 3;
   STM_GPIO_Type * const reg = pin.reg;
   uint32_t configValue = reg->CR[index];
 
-  uint32_t configuration = CR_CNF_VALUE(pin.data.offset, configValue);
-  uint32_t mode = CR_MODE_VALUE(pin.data.offset, configValue);
+  uint32_t configuration = CR_CNF_VALUE(pin.number, configValue);
+  uint32_t mode = CR_MODE_VALUE(pin.number, configValue);
 
   if (function == PIN_DEFAULT)
   {
@@ -132,43 +131,43 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       pinRemapApply(function);
   }
 
-  configValue &= ~CR_MASK(pin.data.offset);
-  configValue |= CR_MODE(pin.data.offset, mode);
-  configValue |= CR_CNF(pin.data.offset, configuration);
+  configValue &= ~CR_MASK(pin.number);
+  configValue |= CR_MODE(pin.number, mode);
+  configValue |= CR_CNF(pin.number, configuration);
 
   reg->CR[index] = configValue;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum PinPull pull)
 {
-  const unsigned int index = pin.data.offset >> 3;
+  const unsigned int index = pin.number >> 3;
   STM_GPIO_Type * const reg = pin.reg;
   uint32_t configValue = reg->CR[index];
 
-  if (CR_MODE_VALUE(pin.data.offset, configValue) != MODE_INPUT)
+  if (CR_MODE_VALUE(pin.number, configValue) != MODE_INPUT)
     return;
 
-  configValue &= ~CR_CNF_VALUE(pin.data.offset, CNF_OUTPUT_MASK);
+  configValue &= ~CR_CNF_VALUE(pin.number, CNF_OUTPUT_MASK);
 
   if (pull != PIN_NOPULL)
   {
-    configValue |= CR_CNF(pin.data.offset, CNF_INPUT_PUPD);
+    configValue |= CR_CNF(pin.number, CNF_INPUT_PUPD);
     pinWrite(pin, pull == PIN_PULLUP ? 1 : 0);
   }
   else
-    configValue |= CR_CNF(pin.data.offset, CNF_INPUT_FLOATING);
+    configValue |= CR_CNF(pin.number, CNF_INPUT_FLOATING);
 
   reg->CR[index] = configValue;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
-  const unsigned int index = pin.data.offset >> 3;
+  const unsigned int index = pin.number >> 3;
   STM_GPIO_Type * const reg = pin.reg;
   uint32_t configValue = reg->CR[index];
   uint32_t rateValue;
 
-  if (CR_MODE_VALUE(pin.data.offset, configValue) == MODE_INPUT)
+  if (CR_MODE_VALUE(pin.number, configValue) == MODE_INPUT)
     return;
 
   switch (rate)
@@ -186,22 +185,22 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
       break;
   }
 
-  configValue &= ~CR_MODE_MASK(pin.data.offset);
-  configValue |= CR_MODE(pin.data.offset, rateValue);
+  configValue &= ~CR_MODE_MASK(pin.number);
+  configValue |= CR_MODE(pin.number, rateValue);
 
   reg->CR[index] = configValue;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum PinType type)
 {
-  const unsigned int index = pin.data.offset >> 3;
+  const unsigned int index = pin.number >> 3;
   STM_GPIO_Type * const reg = pin.reg;
   uint32_t configValue = reg->CR[index];
 
-  if (CR_MODE_VALUE(pin.data.offset, configValue) == MODE_INPUT)
+  if (CR_MODE_VALUE(pin.number, configValue) == MODE_INPUT)
     return;
 
-  configValue &= ~CR_CNF_VALUE(pin.data.offset, CNF_OUTPUT_MASK);
+  configValue &= ~CR_CNF_VALUE(pin.number, CNF_OUTPUT_MASK);
   configValue |= type == PIN_PUSHPULL ? CNF_OUTPUT_PP : CNF_OUTPUT_OD;
 
   reg->CR[index] = configValue;

@@ -11,6 +11,25 @@ config GEN_DAC
 	string
 	default gen_1 if FAMILY_LPC17XX || FAMILY_LPC43XX
 
+config GEN_PIN
+	string
+	default gen_2 if FAMILY_LPC11XX || FAMILY_LPC13XX
+	default gen_3 if FAMILY_LPC11EXX || FAMILY_LPC13UXX
+	default lpc17xx if FAMILY_LPC17XX
+	default lpc43xx if FAMILY_LPC43XX
+
+config GEN_PINBUS
+	string
+	default gen_2 if FAMILY_LPC11XX || FAMILY_LPC13XX
+	default gen_3 if FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX
+	default lpc17xx if FAMILY_LPC17XX
+
+config GEN_PININT
+	string
+	default gen_2 if FAMILY_LPC11XX || FAMILY_LPC13XX
+	default gen_3 if FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX
+	default lpc17xx if FAMILY_LPC17XX
+
 config GEN_I2C
 	string
 	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
@@ -273,6 +292,11 @@ config PLATFORM_NXP_IAP_FLASH
 	depends on PLATFORM_NXP_IAP
 	help
 	  This enables driver for the internal Flash memory.
+
+config PLATFORM_NXP_PININT_BASE
+	bool
+	default y
+	depends on PLATFORM_NXP_PININT && (FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX)
 
 config PLATFORM_NXP_PININT
 	bool "Pin Interrupts"

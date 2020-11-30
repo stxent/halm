@@ -41,8 +41,4 @@
 #define SFS_USB_EPWR                    BIT(4) /* Disable suspend mode */
 #define SFS_USB_VBUS                    BIT(5) /* Enable VBUS Valid signal */
 /*----------------------------------------------------------------------------*/
-#define PINTSEL_CHANNEL_MASK(channel)   BIT_FIELD(MASK(8), (channel) << 3)
-#define PINTSEL_CHANNEL(channel, port, offset) \
-    BIT_FIELD(((port) << 5) | (offset), (channel) << 3)
-/*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC43XX_PIN_DEFS_H_ */

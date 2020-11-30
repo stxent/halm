@@ -7,31 +7,31 @@
 #include <halm/pin.h>
 #include <halm/platform/nxp/lpc17xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(struct PinData);
-static inline volatile uint32_t *calcPinSelect(struct PinData);
-static inline volatile uint32_t *calcPinMode(struct PinData);
-static inline volatile uint32_t *calcPinType(struct PinData);
+static inline LPC_GPIO_Type *calcPort(uint8_t);
+static inline volatile uint32_t *calcPinSelect(uint8_t, uint8_t);
+static inline volatile uint32_t *calcPinMode(uint8_t, uint8_t);
+static inline volatile uint32_t *calcPinType(uint8_t);
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin);
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(struct PinData pin)
+static inline LPC_GPIO_Type *calcPort(uint8_t port)
 {
-  return &LPC_GPIO[pin.port];
+  return &LPC_GPIO[port];
 }
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcPinSelect(struct PinData pin)
+static inline volatile uint32_t *calcPinSelect(uint8_t port, uint8_t number)
 {
-  return LPC_PINCON->PINSEL + (pin.offset >> 4) + (pin.port << 1);
+  return LPC_PINCON->PINSEL + (number >> 4) + (port << 1);
 }
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcPinMode(struct PinData pin)
+static inline volatile uint32_t *calcPinMode(uint8_t port, uint8_t number)
 {
-  return LPC_PINCON->PINMODE + (pin.offset >> 4) + (pin.port << 1);
+  return LPC_PINCON->PINMODE + (number >> 4) + (port << 1);
 }
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcPinType(struct PinData pin)
+static inline volatile uint32_t *calcPinType(uint8_t port)
 {
-  return LPC_PINCON->PINMODE_OD + pin.port;
+  return LPC_PINCON->PINMODE_OD + port;
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
@@ -50,9 +50,10 @@ struct Pin pinInit(PinNumber id)
 {
   struct Pin pin;
 
-  pin.data.port = PIN_TO_PORT(id);
-  pin.data.offset = PIN_TO_OFFSET(id);
-  pin.reg = id ? calcPort(pin.data) : 0;
+  pin.port = PIN_TO_PORT(id);
+  pin.number = PIN_TO_OFFSET(id);
+  pin.mask = 1UL << pin.number;
+  pin.reg = id ? calcPort(pin.port) : 0;
 
   return pin;
 }
@@ -60,13 +61,13 @@ struct Pin pinInit(PinNumber id)
 void pinInput(struct Pin pin)
 {
   commonPinInit(pin);
-  ((LPC_GPIO_Type *)pin.reg)->DIR &= ~(1UL << pin.data.offset);
+  ((LPC_GPIO_Type *)pin.reg)->DIR &= ~pin.mask;
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
 {
   commonPinInit(pin);
-  ((LPC_GPIO_Type *)pin.reg)->DIR |= 1UL << pin.data.offset;
+  ((LPC_GPIO_Type *)pin.reg)->DIR |= pin.mask;
   pinWrite(pin, value);
 }
 /*----------------------------------------------------------------------------*/
@@ -88,31 +89,31 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       return;
   }
 
-  volatile uint32_t * const reg = calcPinSelect(pin.data);
-  uint32_t value = *reg & ~PIN_OFFSET(PIN_MASK, pin.data.offset);
+  volatile uint32_t * const reg = calcPinSelect(pin.port, pin.number);
+  uint32_t value = *reg & ~PIN_OFFSET(PIN_MASK, pin.number);
 
-  value |= PIN_OFFSET(function, pin.data.offset);
+  value |= PIN_OFFSET(function, pin.number);
 
   *reg = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum PinPull pull)
 {
-  volatile uint32_t * const reg = calcPinMode(pin.data);
-  uint32_t value = *reg & ~PIN_OFFSET(PIN_MASK, pin.data.offset);
+  volatile uint32_t * const reg = calcPinMode(pin.port, pin.number);
+  uint32_t value = *reg & ~PIN_OFFSET(PIN_MASK, pin.number);
 
   switch (pull)
   {
     case PIN_NOPULL:
-      value |= PIN_OFFSET(PIN_MODE_INACTIVE, pin.data.offset);
+      value |= PIN_OFFSET(PIN_MODE_INACTIVE, pin.number);
       break;
 
     case PIN_PULLUP:
-      value |= PIN_OFFSET(PIN_MODE_PULLUP, pin.data.offset);
+      value |= PIN_OFFSET(PIN_MODE_PULLUP, pin.number);
       break;
 
     case PIN_PULLDOWN:
-      value |= PIN_OFFSET(PIN_MODE_PULLDOWN, pin.data.offset);
+      value |= PIN_OFFSET(PIN_MODE_PULLDOWN, pin.number);
       break;
   }
 
@@ -122,9 +123,9 @@ void pinSetPull(struct Pin pin, enum PinPull pull)
 void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   /* Slew rate control is available only for I2C pins */
-  if (pin.data.port == 0 && (pin.data.offset >= 27 && pin.data.offset <= 28))
+  if (pin.port == 0 && (pin.number >= 27 && pin.number <= 28))
   {
-    const uint8_t offset = pin.data.offset - 27;
+    const uint8_t offset = pin.number - 27;
     const uint32_t mask = I2CPADCFG_DRIVE(offset);
     uint32_t value = LPC_PINCON->I2CPADCFG & ~I2CPADCFG_FILTERING(offset);
 
@@ -139,17 +140,17 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum PinType type)
 {
-  volatile uint32_t * const reg = calcPinType(pin.data);
+  volatile uint32_t * const reg = calcPinType(pin.port);
   uint32_t value = *reg;
 
   switch (type)
   {
     case PIN_PUSHPULL:
-      value &= ~(1UL << pin.data.offset);
+      value &= ~pin.mask;
       break;
 
     case PIN_OPENDRAIN:
-      value |= 1UL << pin.data.offset;
+      value |= pin.mask;
       break;
   }
 

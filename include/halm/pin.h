@@ -65,12 +65,6 @@ enum PinType
   PIN_OPENDRAIN
 };
 /*----------------------------------------------------------------------------*/
-struct PinData
-{
-  uint8_t offset;
-  uint8_t port;
-};
-
 struct PinEntry
 {
   PinNumber key;
@@ -85,12 +79,11 @@ struct PinGroupEntry
   uint8_t channel;
   uint8_t value;
 };
-
-struct Pin
-{
-  void *reg;
-  struct PinData data;
-};
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/pin.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
@@ -99,19 +92,5 @@ const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *,
     PinNumber, uint8_t);
 
 END_DECLS
-/*----------------------------------------------------------------------------*/
-BEGIN_DECLS
-
-static inline bool pinValid(struct Pin pin)
-{
-  return pin.data.port != 0xFF && pin.data.offset != 0xFF && pin.reg != 0;
-}
-
-END_DECLS
-/*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/pin.h>
-#include HEADER_PATH
-#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PIN_H_ */

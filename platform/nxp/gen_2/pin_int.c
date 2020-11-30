@@ -1,69 +1,68 @@
 /*
- * pin_interrupt.c
- * Copyright (C) 2014 xent
+ * pin_int.c
+ * Copyright (C) 2014, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#include <halm/platform/nxp/pin_interrupt.h>
+#include <halm/platform/nxp/gen_2/pin_int.h>
 #include <xcore/accel.h>
 #include <assert.h>
-#include <string.h>
 /*----------------------------------------------------------------------------*/
-struct PinInterruptHandlerConfig
+struct PinIntHandlerConfig
 {
   uint8_t channel;
 };
 
-struct PinInterruptHandler
+struct PinIntHandler
 {
   struct Entity base;
-  struct PinInterrupt *interrupts[12];
+  struct PinInt *interrupts[12];
 };
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t);
 static inline IrqNumber calcVector(uint8_t);
-static void disableInterrupt(const struct PinInterrupt *);
-static void enableInterrupt(const struct PinInterrupt *);
+static void disableInterrupt(const struct PinInt *);
+static void enableInterrupt(const struct PinInt *);
 static void processInterrupt(uint8_t);
 /*----------------------------------------------------------------------------*/
-static enum Result pinInterruptHandlerAttach(struct PinData,
-    struct PinInterrupt *);
-static enum Result pinInterruptHandlerInit(void *, const void *);
+static enum Result pinIntHandlerAttach(uint8_t, uint8_t,
+    struct PinInt *);
+static enum Result pinIntHandlerInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void pinInterruptHandlerDetach(const struct PinInterrupt *);
+static void pinIntHandlerDetach(const struct PinInt *);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result pinInterruptInit(void *, const void *);
-static void pinInterruptEnable(void *);
-static void pinInterruptDisable(void *);
-static void pinInterruptSetCallback(void *, void (*)(void *), void *);
+static enum Result pinIntInit(void *, const void *);
+static void pinIntEnable(void *);
+static void pinIntDisable(void *);
+static void pinIntSetCallback(void *, void (*)(void *), void *);
 
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void pinInterruptDeinit(void *);
+static void pinIntDeinit(void *);
 #else
-#define pinInterruptDeinit deletedDestructorTrap
+#define pinIntDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const PinInterruptHandler =
+static const struct EntityClass * const PinIntHandler =
     &(const struct EntityClass){
-    .size = sizeof(struct PinInterruptHandler),
-    .init = pinInterruptHandlerInit,
+    .size = sizeof(struct PinIntHandler),
+    .init = pinIntHandlerInit,
     .deinit = deletedDestructorTrap
 };
 
-const struct InterruptClass * const PinInterrupt =
+const struct InterruptClass * const PinInt =
     &(const struct InterruptClass){
-    .size = sizeof(struct PinInterrupt),
-    .init = pinInterruptInit,
-    .deinit = pinInterruptDeinit,
+    .size = sizeof(struct PinInt),
+    .init = pinIntInit,
+    .deinit = pinIntDeinit,
 
-    .enable = pinInterruptEnable,
-    .disable = pinInterruptDisable,
-    .setCallback = pinInterruptSetCallback
+    .enable = pinIntEnable,
+    .disable = pinIntDisable,
+    .setCallback = pinIntSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct PinInterruptHandler *handlers[4] = {0};
+static struct PinIntHandler *handlers[4] = {0};
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t port)
 {
@@ -76,27 +75,23 @@ static inline IrqNumber calcVector(uint8_t port)
   return PIOINT0_IRQ - port;
 }
 /*----------------------------------------------------------------------------*/
-static void disableInterrupt(const struct PinInterrupt *interrupt)
+static void disableInterrupt(const struct PinInt *interrupt)
 {
-  const struct PinData data = interrupt->pin;
-  LPC_GPIO_Type * const reg = calcPort(data.port);
-
-  reg->IE &= ~(1UL << data.offset);
+  LPC_GPIO_Type * const reg = calcPort(interrupt->channel);
+  reg->IE &= ~interrupt->mask;
 }
 /*----------------------------------------------------------------------------*/
-static void enableInterrupt(const struct PinInterrupt *interrupt)
+static void enableInterrupt(const struct PinInt *interrupt)
 {
-  const struct PinData data = interrupt->pin;
-  const uint32_t mask = 1UL << data.offset;
-  LPC_GPIO_Type * const reg = calcPort(data.port);
+  LPC_GPIO_Type * const reg = calcPort(interrupt->channel);
 
-  reg->IC = mask;
-  reg->IE |= mask;
+  reg->IC = interrupt->mask;
+  reg->IE |= interrupt->mask;
 }
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  struct PinInterrupt ** const interruptArray = handlers[channel]->interrupts;
+  struct PinInt ** const interrupts = handlers[channel]->interrupts;
   LPC_GPIO_Type * const reg = calcPort(channel);
   uint32_t state = reg->MIS;
 
@@ -108,7 +103,7 @@ static void processInterrupt(uint8_t channel)
   do
   {
     const unsigned int index = countLeadingZeros32(state);
-    struct PinInterrupt * const interrupt = interruptArray[index];
+    struct PinInt * const interrupt = interrupts[index];
 
     state -= (1UL << 31) >> index;
     interrupt->callback(interrupt->callbackArgument);
@@ -136,25 +131,23 @@ void PIO3_ISR(void)
   processInterrupt(3);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result pinInterruptHandlerAttach(struct PinData pin,
-    struct PinInterrupt *interrupt)
+static enum Result pinIntHandlerAttach(uint8_t port, uint8_t number,
+    struct PinInt *interrupt)
 {
-  if (!handlers[pin.port])
+  if (!handlers[port])
   {
-    const struct PinInterruptHandlerConfig handlerConfig = {
-        .channel = pin.port
+    const struct PinIntHandlerConfig handlerConfig = {
+        .channel = port
     };
-
-    handlers[pin.port] = init(PinInterruptHandler, &handlerConfig);
+    handlers[port] = init(PinIntHandler, &handlerConfig);
   }
 
-  struct PinInterruptHandler * const handler = handlers[pin.port];
-
+  struct PinIntHandler * const handler = handlers[port];
   assert(handler);
 
-  if (!handler->interrupts[pin.offset])
+  if (!handler->interrupts[number])
   {
-    handler->interrupts[pin.offset] = interrupt;
+    handler->interrupts[number] = interrupt;
     return E_OK;
   }
   else
@@ -162,38 +155,39 @@ static enum Result pinInterruptHandlerAttach(struct PinData pin,
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void pinInterruptHandlerDetach(const struct PinInterrupt *interrupt)
+static void pinIntHandlerDetach(const struct PinInt *interrupt)
 {
-  const struct PinData pin = interrupt->pin;
-
-  handlers[pin.port]->interrupts[pin.offset] = 0;
+  const unsigned int index = countLeadingZeros32(interrupt->mask);
+  handlers[interrupt->channel]->interrupts[31 - index] = 0;
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result pinInterruptHandlerInit(void *object, const void *configBase)
+static enum Result pinIntHandlerInit(void *object, const void *configBase)
 {
-  struct PinInterruptHandler * const handler = object;
-  const struct PinInterruptHandlerConfig * const config = configBase;
+  struct PinIntHandler * const handler = object;
+  const struct PinIntHandlerConfig * const config = configBase;
 
-  memset(handler->interrupts, 0, sizeof(handler->interrupts));
+  for (size_t index = 0; index < ARRAY_SIZE(handler->interrupts); ++index)
+    handler->interrupts[index] = 0;
+
   irqEnable(calcVector(config->channel));
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result pinInterruptInit(void *object, const void *configBase)
+static enum Result pinIntInit(void *object, const void *configBase)
 {
-  const struct PinInterruptConfig * const config = configBase;
+  const struct PinIntConfig * const config = configBase;
   assert(config);
 
   const struct Pin input = pinInit(config->pin);
-  struct PinInterrupt * const interrupt = object;
-  enum Result res;
-
   assert(pinValid(input));
 
+  struct PinInt * const interrupt = object;
+  enum Result res;
+
   /* Try to register pin interrupt in the interrupt handler */
-  if ((res = pinInterruptHandlerAttach(input.data, interrupt)) != E_OK)
+  res = pinIntHandlerAttach(input.port, input.number, interrupt);
+  if (res != E_OK)
     return res;
 
   /* Configure the pin */
@@ -201,67 +195,66 @@ static enum Result pinInterruptInit(void *object, const void *configBase)
   pinSetPull(input, config->pull);
 
   interrupt->callback = 0;
-  interrupt->channel = 0; /* Channel field is left unused */
+  interrupt->mask = 1UL << input.number;
+  interrupt->channel = input.port;
   interrupt->enabled = false;
   interrupt->event = config->event;
-  interrupt->pin = input.data;
 
-  LPC_GPIO_Type * const reg = calcPort(interrupt->pin.port);
-  const uint32_t mask = 1UL << interrupt->pin.offset;
+  LPC_GPIO_Type * const reg = calcPort(interrupt->channel);
 
   /* Configure interrupt as edge sensitive */
-  reg->IS &= ~mask;
+  reg->IS &= ~interrupt->mask;
   /* Configure edge sensitivity options */
-  reg->IBE &= ~mask;
+  reg->IBE &= ~interrupt->mask;
 
-  switch (config->event)
+  switch (interrupt->event)
   {
     case PIN_RISING:
-      reg->IEV |= mask;
+      reg->IEV |= interrupt->mask;
       break;
 
     case PIN_FALLING:
-      reg->IEV &= ~mask;
+      reg->IEV &= ~interrupt->mask;
       break;
 
     case PIN_TOGGLE:
-      reg->IBE |= mask;
+      reg->IBE |= interrupt->mask;
       break;
   }
-
   /* Interrupt is disabled by default */
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
-static void pinInterruptDeinit(void *object)
+static void pinIntDeinit(void *object)
 {
   disableInterrupt(object);
-  pinInterruptHandlerDetach(object);
+  pinIntHandlerDetach(object);
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static void pinInterruptEnable(void *object)
+static void pinIntEnable(void *object)
 {
-  struct PinInterrupt * const interrupt = object;
+  struct PinInt * const interrupt = object;
 
   interrupt->enabled = true;
   if (interrupt->callback)
     enableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
-static void pinInterruptDisable(void *object)
+static void pinIntDisable(void *object)
 {
-  struct PinInterrupt * const interrupt = object;
+  struct PinInt * const interrupt = object;
 
   interrupt->enabled = false;
   disableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
-static void pinInterruptSetCallback(void *object, void (*callback)(void *),
+static void pinIntSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct PinInterrupt * const interrupt = object;
+  struct PinInt * const interrupt = object;
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;

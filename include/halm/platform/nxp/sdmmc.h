@@ -8,9 +8,9 @@
 #define HALM_PLATFORM_NXP_SDMMC_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
+#include <halm/interrupt.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
-#include <halm/platform/nxp/pin_interrupt.h>
 #include <halm/platform/nxp/sdmmc_base.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/

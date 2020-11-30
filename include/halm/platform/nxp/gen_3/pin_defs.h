@@ -1,11 +1,11 @@
 /*
- * halm/platform/nxp/lpc13xx/pin_defs.h
- * Copyright (C) 2013 xent
+ * halm/platform/nxp/gen_3/pin_defs.h
+ * Copyright (C) 2014, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_NXP_LPC13XX_PIN_DEFS_H_
-#define HALM_PLATFORM_NXP_LPC13XX_PIN_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_GEN_3_PIN_DEFS_H_
+#define HALM_PLATFORM_NXP_GEN_3_PIN_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------IO Configuration registers--------------------------------*/
@@ -28,7 +28,12 @@
 #define IOCON_MODE_REPEATER             BIT_FIELD(3, 3)
 /*----------------------------------------------------------------------------*/
 #define IOCON_HYS                       BIT(5)
+#define IOCON_INV                       BIT(6)
 #define IOCON_DIGITAL                   BIT(7)
 #define IOCON_OD                        BIT(10)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NXP_LPC13XX_PIN_DEFS_H_ */
+#define PINTSEL_CHANNEL_MASK(channel)   BIT_FIELD(MASK(8), (channel) << 3)
+#define PINTSEL_CHANNEL(channel, port, offset) \
+    BIT_FIELD(((port) << 5) | (offset), (channel) << 3)
+/*----------------------------------------------------------------------------*/
+#endif /* HALM_PLATFORM_NXP_GEN_3_PIN_DEFS_H_ */

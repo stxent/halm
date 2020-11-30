@@ -9,17 +9,16 @@
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
+struct Pin
+{
+  int handle;
+};
+/*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
 static inline struct Pin pinInit(PinNumber id __attribute__((unused)))
 {
-  struct Pin pin;
-
-  pin.reg = 0;
-  pin.data.port = ~0;
-  pin.data.offset = ~0;
-
-  return pin;
+  return (struct Pin){-1};
 }
 
 static inline void pinInput(struct Pin pin __attribute__((unused)))
@@ -46,6 +45,11 @@ static inline void pinSet(struct Pin pin __attribute__((unused)))
 
 static inline void pinToggle(struct Pin pin __attribute__((unused)))
 {
+}
+
+static inline bool pinValid(struct Pin pin __attribute__((unused)))
+{
+  return false;
 }
 
 static inline void pinWrite(struct Pin pin __attribute__((unused)),

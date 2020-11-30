@@ -7,6 +7,7 @@
 #include <halm/generic/sdio.h>
 #include <halm/generic/sdio_defs.h>
 #include <halm/platform/nxp/dma_sdmmc.h>
+#include <halm/platform/nxp/pin_int.h>
 #include <halm/platform/nxp/sdmmc.h>
 #include <halm/platform/nxp/sdmmc_defs.h>
 #include <halm/platform/platform_defs.h>
@@ -224,7 +225,7 @@ static enum Result sdioInit(void *object, const void *configBase)
       .number = 16,
       .parent = object
   };
-  const struct PinInterruptConfig finalizerConfig = {
+  const struct PinIntConfig finalizerConfig = {
       .pin = config->dat0,
       .event = PIN_RISING,
       .pull = PIN_NOPULL,
@@ -243,7 +244,7 @@ static enum Result sdioInit(void *object, const void *configBase)
 
   assert(config->rate);
 
-  interface->finalizer = init(PinInterrupt, &finalizerConfig);
+  interface->finalizer = init(PinInt, &finalizerConfig);
   if (!interface->finalizer)
     return E_ERROR;
   interruptSetCallback(interface->finalizer, interruptHandler, interface);

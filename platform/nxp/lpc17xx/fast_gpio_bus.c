@@ -5,7 +5,6 @@
  */
 
 #include <halm/platform/nxp/fast_gpio_bus.h>
-#include <halm/platform/nxp/lpc17xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum Result busInit(void *, const void *);
 static uint32_t busRead(void *);
@@ -31,7 +30,7 @@ static uint32_t busRead(void *object)
   const struct FastGpioBus * const bus = object;
   const LPC_GPIO_Type * const reg = bus->first.reg;
 
-  return (reg->PIN & bus->mask) >> bus->first.data.offset;
+  return (reg->PIN & bus->mask) >> bus->first.number;
 }
 /*----------------------------------------------------------------------------*/
 static void busWrite(void *object, uint32_t value)
@@ -39,7 +38,7 @@ static void busWrite(void *object, uint32_t value)
   struct FastGpioBus * const bus = object;
   LPC_GPIO_Type * const reg = bus->first.reg;
 
-  const uint32_t set = (value << bus->first.data.offset) & bus->mask;
+  const uint32_t set = (value << bus->first.number) & bus->mask;
   const uint32_t clear = ~set & bus->mask;
 
   reg->SET = set;

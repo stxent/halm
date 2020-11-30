@@ -7,9 +7,6 @@
 #ifndef HALM_PLATFORM_NXP_LPC11XX_PIN_H_
 #define HALM_PLATFORM_NXP_LPC11XX_PIN_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/platform/platform_defs.h>
-#include <stdbool.h>
-/*----------------------------------------------------------------------------*/
 enum
 {
   PORT_0,
@@ -18,45 +15,8 @@ enum
   PORT_3
 };
 /*----------------------------------------------------------------------------*/
-BEGIN_DECLS
-
-struct Pin pinInit(PinNumber);
-void pinInput(struct Pin);
-void pinOutput(struct Pin, bool);
-void pinSetFunction(struct Pin, uint8_t);
-void pinSetPull(struct Pin, enum PinPull);
-void pinSetSlewRate(struct Pin, enum PinSlewRate);
-void pinSetType(struct Pin, enum PinType);
-
-END_DECLS
-/*----------------------------------------------------------------------------*/
-BEGIN_DECLS
-
-static inline bool pinRead(struct Pin pin)
-{
-  return *(const volatile uint32_t *)pin.reg != 0;
-}
-
-static inline void pinReset(struct Pin pin)
-{
-  *(volatile uint32_t *)pin.reg = 0x000;
-}
-
-static inline void pinSet(struct Pin pin)
-{
-  *(volatile uint32_t *)pin.reg = 0xFFF;
-}
-
-static inline void pinToggle(struct Pin pin)
-{
-  *(volatile uint32_t *)pin.reg = ~(*(volatile uint32_t *)pin.reg);
-}
-
-static inline void pinWrite(struct Pin pin, bool value)
-{
-  *(volatile uint32_t *)pin.reg = 0xFFF * value;
-}
-
-END_DECLS
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_PIN/pin.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11XX_PIN_H_ */

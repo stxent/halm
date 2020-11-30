@@ -21,6 +21,12 @@ struct AdcBlockDescriptor
   /* Peripheral interrupt request identifier */
   IrqNumber irq;
 };
+
+struct PinDescriptor
+{
+  uint8_t number;
+  uint8_t port;
+};
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY                 4500000
 /* Pack and unpack conversion channel and pin function */
@@ -146,17 +152,17 @@ static struct AdcBase *instances[2] = {0};
 static struct AdcPin configGroupPin(const struct PinGroupEntry *group,
     PinNumber key)
 {
-  const struct PinData begin = {
-      .offset = PIN_TO_OFFSET(group->begin),
+  const struct PinDescriptor begin = {
+      .number = PIN_TO_OFFSET(group->begin),
       .port = PIN_TO_PORT(group->begin)
   };
-  const struct PinData current = {
-      .offset = PIN_TO_OFFSET(key),
+  const struct PinDescriptor current = {
+      .number = PIN_TO_OFFSET(key),
       .port = PIN_TO_PORT(key)
   };
 
   return (struct AdcPin){
-      .channel = current.offset - begin.offset,
+      .channel = current.number - begin.number,
       .control = -1
   };
 }

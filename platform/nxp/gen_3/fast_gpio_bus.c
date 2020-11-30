@@ -1,11 +1,10 @@
 /*
  * fast_gpio_bus.c
- * Copyright (C) 2016 xent
+ * Copyright (C) 2016, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <halm/platform/nxp/fast_gpio_bus.h>
-#include <halm/platform/nxp/lpc43xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum Result busInit(void *, const void *);
 static uint32_t busRead(void *);
@@ -29,19 +28,15 @@ static enum Result busInit(void *object, const void *configBase)
 static uint32_t busRead(void *object)
 {
   const struct FastGpioBus * const bus = object;
-  const struct PinData data = bus->first.data;
-
-  return (LPC_GPIO->PIN[data.port] & bus->mask) >> data.offset;
+  return (LPC_GPIO->PIN[bus->first.port] & bus->mask) >> bus->first.number;
 }
 /*----------------------------------------------------------------------------*/
 static void busWrite(void *object, uint32_t value)
 {
   struct FastGpioBus * const bus = object;
-  const struct PinData data = bus->first.data;
-
-  const uint32_t set = (value << data.offset) & bus->mask;
+  const uint32_t set = (value << bus->first.number) & bus->mask;
   const uint32_t clear = ~set & bus->mask;
 
-  LPC_GPIO->SET[data.port] = set;
-  LPC_GPIO->CLR[data.port] = clear;
+  LPC_GPIO->SET[bus->first.port] = set;
+  LPC_GPIO->CLR[bus->first.port] = clear;
 }

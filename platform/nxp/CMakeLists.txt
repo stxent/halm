@@ -5,8 +5,8 @@ string(TOLOWER ${PLATFORM} CMAKE_SYSTEM_SOC)
 
 list(APPEND SOURCE_FILES "../pin.c")
 list(APPEND SOURCE_FILES "startup.c")
+list(APPEND SOURCE_FILES "${CONFIG_GEN_PIN}/pin.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/clocking.c")
-list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pin.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/startup.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/system.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/vectors.c")
@@ -43,7 +43,7 @@ endif()
 
 if(${CONFIG_PLATFORM_NXP_FAST_GPIO_BUS})
     list(APPEND SOURCE_FILES "fast_gpio_bus_common.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/fast_gpio_bus.c")
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_PINBUS}/fast_gpio_bus.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_GPDMA})
@@ -93,8 +93,8 @@ if(${CONFIG_PLATFORM_NXP_IAP_FLASH})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/flash.c")
 endif()
 
-if(${CONFIG_PLATFORM_NXP_PININT})
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pin_interrupt.c")
+if(${CONFIG_PLATFORM_NXP_PININT_BASE})
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pin_int_base.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_SDMMC})
@@ -119,7 +119,7 @@ if(${CONFIG_PLATFORM_NXP_UART_BASE})
 endif()
 
 if(${CONFIG_PLATFORM_NXP_WAKEUPINT})
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/wakeup_interrupt.c")
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_PININT}/wakeup_int.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_WDT})
@@ -169,6 +169,10 @@ endif()
 
 if(${CONFIG_PLATFORM_NXP_I2S_DMA})
     list(APPEND SOURCE_FILES "i2s_dma.c")
+endif()
+
+if(${CONFIG_PLATFORM_NXP_PININT})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_PININT}/pin_int.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_RIT})

@@ -1,11 +1,11 @@
 /*
- * halm/platform/nxp/lpc11exx/pin_defs.h
- * Copyright (C) 2014 xent
+ * halm/platform/nxp/gen_2/pin_defs.h
+ * Copyright (C) 2013, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_NXP_LPC11EXX_PIN_DEFS_H_
-#define HALM_PLATFORM_NXP_LPC11EXX_PIN_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_GEN_2_PIN_DEFS_H_
+#define HALM_PLATFORM_NXP_GEN_2_PIN_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------IO Configuration registers--------------------------------*/
@@ -14,8 +14,11 @@
 #define IOCON_FUNC_VALUE(reg)           FIELD_VALUE((reg), IOCON_FUNC_MASK, 0)
 /*----------------------------------------------------------------------------*/
 #define IOCON_I2C_MASK                  BIT_FIELD(MASK(2), 8)
+/* Standard or Fast-mode with input glitch filter */
 #define IOCON_I2C_STANDARD              BIT_FIELD(0, 8)
+/* Open-drain input-output without glitch filter */
 #define IOCON_I2C_IO                    BIT_FIELD(1, 8)
+/* Fast-mode Plus with input glitch filter */
 #define IOCON_I2C_PLUS                  BIT_FIELD(2, 8)
 /*----------------------------------------------------------------------------*/
 #define IOCON_MODE_MASK                 BIT_FIELD(MASK(2), 3)
@@ -25,12 +28,7 @@
 #define IOCON_MODE_REPEATER             BIT_FIELD(3, 3)
 /*----------------------------------------------------------------------------*/
 #define IOCON_HYS                       BIT(5)
-#define IOCON_INV                       BIT(6)
 #define IOCON_DIGITAL                   BIT(7)
 #define IOCON_OD                        BIT(10)
 /*----------------------------------------------------------------------------*/
-#define PINTSEL_CHANNEL_MASK(channel)   BIT_FIELD(MASK(8), (channel) << 3)
-#define PINTSEL_CHANNEL(channel, port, offset) \
-    BIT_FIELD(((port) << 5) | (offset), (channel) << 3)
-/*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NXP_LPC11EXX_PIN_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_GEN_2_PIN_DEFS_H_ */

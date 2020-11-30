@@ -17,9 +17,15 @@ enum PinDriveType
   HIGH_DRIVE_PIN,
   HIGH_SPEED_PIN
 };
+
+struct PinDescriptor
+{
+  uint8_t number;
+  uint8_t port;
+};
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcControlReg(struct PinData);
-static struct PinData calcPinData(volatile uint32_t *);
+static volatile uint32_t *calcControlReg(struct PinDescriptor);
+static struct PinDescriptor calcPinDescriptor(volatile uint32_t *);
 static void commonPinInit(struct Pin);
 static enum PinDriveType detectPinDriveType(volatile uint32_t *);
 /*----------------------------------------------------------------------------*/
@@ -271,18 +277,18 @@ const struct PinGroupEntry gpioPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcControlReg(struct PinData data)
+static volatile uint32_t *calcControlReg(struct PinDescriptor pin)
 {
-  if (data.port < PORT_CLK)
+  if (pin.port < PORT_CLK)
   {
     const uint32_t portMapSize = ((uint32_t)&LPC_SCU->SFSP1
         - (uint32_t)&LPC_SCU->SFSP0) / sizeof(LPC_SCU->SFSP0[0]);
 
-    return LPC_SCU->SFSP0 + portMapSize * data.port + data.offset;
+    return LPC_SCU->SFSP0 + portMapSize * pin.port + pin.number;
   }
-  else if (data.port == PORT_CLK)
+  else if (pin.port == PORT_CLK)
   {
-    return &LPC_SCU->SFSPCLK0 + data.offset;
+    return &LPC_SCU->SFSPCLK0 + pin.number;
   }
   else
   {
@@ -290,14 +296,14 @@ static volatile uint32_t *calcControlReg(struct PinData data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static struct PinData calcPinData(volatile uint32_t *reg)
+static struct PinDescriptor calcPinDescriptor(volatile uint32_t *reg)
 {
-  struct PinData pin;
+  struct PinDescriptor pin;
 
   if (reg >= &LPC_SCU->SFSPCLK0 && reg <= &LPC_SCU->SFSPCLK3)
   {
     pin.port = PORT_CLK;
-    pin.offset = reg - &LPC_SCU->SFSPCLK0;
+    pin.number = reg - &LPC_SCU->SFSPCLK0;
   }
   else
   {
@@ -306,11 +312,11 @@ static struct PinData calcPinData(volatile uint32_t *reg)
     const uint32_t totalOffset = reg - &LPC_SCU->SFSP0[0];
 
     pin.port = totalOffset / portMapSize;
-    pin.offset = totalOffset % portMapSize;
+    pin.number = totalOffset % portMapSize;
   }
 
   pin.port = ~pin.port;
-  pin.offset = ~pin.offset;
+  pin.number = ~pin.number;
   return pin;
 }
 /*----------------------------------------------------------------------------*/
@@ -323,17 +329,17 @@ static void commonPinInit(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static enum PinDriveType detectPinDriveType(volatile uint32_t *reg)
 {
-  const struct PinData pin = calcPinData(reg);
+  const struct PinDescriptor pin = calcPinDescriptor(reg);
   bool highDrive = false;
   bool highSpeed = false;
 
-  highDrive |= pin.port == PORT_1 && pin.offset == 17;
-  highDrive |= pin.port == PORT_2 && pin.offset >= 3 && pin.offset <= 5;
-  highDrive |= pin.port == PORT_8 && pin.offset <= 2;
-  highDrive |= pin.port == PORT_A && pin.offset >= 1 && pin.offset <= 3;
+  highDrive |= pin.port == PORT_1 && pin.number == 17;
+  highDrive |= pin.port == PORT_2 && pin.number >= 3 && pin.number <= 5;
+  highDrive |= pin.port == PORT_8 && pin.number <= 2;
+  highDrive |= pin.port == PORT_A && pin.number >= 1 && pin.number <= 3;
 
-  highSpeed |= pin.port == PORT_3 && pin.offset == 3;
-  highSpeed |= pin.port == PORT_CLK && pin.offset <= 3;
+  highSpeed |= pin.port == PORT_3 && pin.number == 3;
+  highSpeed |= pin.port == PORT_CLK && pin.number <= 3;
 
   if (highDrive)
     return HIGH_DRIVE_PIN;
@@ -345,50 +351,56 @@ static enum PinDriveType detectPinDriveType(volatile uint32_t *reg)
 /*----------------------------------------------------------------------------*/
 void *pinAddress(struct Pin pin)
 {
-  return (void *)&LPC_GPIO->PIN[pin.data.port];
+  return (void *)&LPC_GPIO->PIN[pin.port];
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
 {
   const struct PinGroupEntry *group;
-  struct PinData current = {
-      .offset = PIN_TO_OFFSET(id),
+  struct PinDescriptor current = {
+      .number = PIN_TO_OFFSET(id),
       .port = PIN_TO_PORT(id),
   };
   struct Pin pin;
 
   pin.reg = (void *)calcControlReg(current);
+  pin.index = ~0;
 
   if ((group = pinGroupFind(gpioPins, id, 0)))
   {
-    struct PinData begin = {
-        .offset = PIN_TO_OFFSET(group->begin),
+    struct PinDescriptor begin = {
+        .number = PIN_TO_OFFSET(group->begin),
         .port = PIN_TO_PORT(group->begin)
     };
 
-    pin.data.port = UNPACK_CHANNEL(group->value);
-    pin.data.offset = current.offset - begin.offset
-        + UNPACK_OFFSET(group->value);
+    pin.port = UNPACK_CHANNEL(group->value);
+    pin.number = current.number - begin.number + UNPACK_OFFSET(group->value);
+    pin.index = (pin.port << 5) + pin.number;
   }
   else
   {
     /* Some pins do not have GPIO function */
-    pin.data.port = ~0;
-    pin.data.offset = ~0;
+    pin.port = ~0;
+    pin.number = ~0;
 
     switch (current.port)
     {
       case PORT_ADC:
-        if (current.offset < 8)
-          pin.data = current;
+        if (current.number < 8)
+        {
+          pin.port = current.port;
+          pin.number = current.number;
+        }
         break;
 
       case PORT_I2C:
-        if (current.offset < 2)
+        if (current.number < 2)
         {
-          pin.data = current;
+          pin.port = current.port;
+          pin.number = current.number;
+
           /* Enable input receiver, input filter is enabled by default */
-          LPC_SCU->SFSI2C0 |= SFS_I2C_EZI << (current.offset << 3);
+          LPC_SCU->SFSI2C0 |= SFS_I2C_EZI << (current.number << 3);
         }
         break;
 
@@ -404,10 +416,10 @@ void pinInput(struct Pin pin)
 {
   commonPinInit(pin);
 
-  if (pinGpioValid(pin))
+  if (pinValid(pin))
   {
     /* Configure pin as input */
-    LPC_GPIO->DIR[pin.data.port] &= ~(1UL << pin.data.offset);
+    LPC_GPIO->DIR[pin.port] &= ~(1UL << pin.number);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -415,10 +427,10 @@ void pinOutput(struct Pin pin, bool value)
 {
   commonPinInit(pin);
 
-  if (pinGpioValid(pin))
+  if (pinValid(pin))
   {
     /* Configure pin as output */
-    LPC_GPIO->DIR[pin.data.port] |= 1UL << pin.data.offset;
+    LPC_GPIO->DIR[pin.port] |= 1UL << pin.number;
     /* Set default output value */
     pinWrite(pin, value);
   }
@@ -435,9 +447,9 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   switch (function)
   {
     case PIN_DEFAULT:
-      if (pinGpioValid(pin))
+      if (pinValid(pin))
       {
-        const uint8_t actualFunction = pin.data.port >= 5 ? 4 : 0;
+        const uint8_t actualFunction = pin.port >= 5 ? 4 : 0;
 
         /* Set GPIO function */
         value |= SFS_FUNC(actualFunction);
@@ -488,9 +500,9 @@ void pinSetPull(struct Pin pin, enum PinPull pull)
 /*----------------------------------------------------------------------------*/
 void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
-  if (pin.data.port == PORT_I2C)
+  if (pin.port == PORT_I2C)
   {
-    const uint32_t mask = (SFS_I2C_EFP | SFS_I2C_EHD) << (pin.data.offset << 3);
+    const uint32_t mask = (SFS_I2C_EFP | SFS_I2C_EHD) << (pin.number << 3);
 
     if (rate == PIN_SLEW_FAST)
       LPC_SCU->SFSI2C0 |= mask;

@@ -1,19 +1,19 @@
 /*
- * halm/platform/nxp/pin_interrupt.h
- * Copyright (C) 2014 xent
+ * halm/platform/nxp/gen_2/pin_int.h
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_NXP_PIN_INTERRUPT_H_
-#define HALM_PLATFORM_NXP_PIN_INTERRUPT_H_
+#ifndef HALM_PLATFORM_NXP_GEN_2_PIN_INT_H_
+#define HALM_PLATFORM_NXP_GEN_2_PIN_INT_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/interrupt.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterruptClass * const PinInterrupt;
+extern const struct InterruptClass * const PinInt;
 
-struct PinInterruptConfig
+struct PinIntConfig
 {
   /** Mandatory: pin used as interrupt source. */
   PinNumber pin;
@@ -25,21 +25,21 @@ struct PinInterruptConfig
   enum PinPull pull;
 };
 
-struct PinInterrupt
+struct PinInt
 {
   struct Interrupt base;
 
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Descriptor of the input pin used as interrupt source */
-  struct PinData pin;
-  /* Interrupt channel identifier */
+  /* Channel mask */
+  uint16_t mask;
+  /* Peripheral identifier */
   uint8_t channel;
-  /* Edge sensitivity mode */
+  /* Pin event configuration */
   uint8_t event;
   /* Is interrupt enabled */
   bool enabled;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NXP_PIN_INTERRUPT_H_ */
+#endif /* HALM_PLATFORM_NXP_GEN_2_PIN_INT_H_ */

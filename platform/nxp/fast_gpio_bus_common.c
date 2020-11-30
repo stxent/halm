@@ -27,8 +27,8 @@ void fastGpioBusConfigPins(struct FastGpioBus *bus,
 
     if (index)
     {
-      assert(pin.data.port == bus->first.data.port);
-      assert(pin.data.offset == bus->first.data.offset + index);
+      assert(pin.port == bus->first.port);
+      assert(pin.number == bus->first.number + index);
     }
     else
       bus->first = pin;
@@ -45,5 +45,5 @@ void fastGpioBusConfigPins(struct FastGpioBus *bus,
     pinSetPull(pin, config->pull);
   }
 
-  bus->mask = BIT_FIELD(MASK(number), bus->first.data.offset);
+  bus->mask = BIT_FIELD(MASK(number), bus->first.number);
 }

@@ -1,89 +1,64 @@
 /*
  * pin.c
- * Copyright (C) 2012 xent
+ * Copyright (C) 2014, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <halm/pin.h>
-#include <halm/platform/nxp/lpc13xx/pin_defs.h>
+#include <halm/platform/nxp/gen_3/pin_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(struct PinData);
-static inline volatile uint32_t *calcControlReg(struct PinData);
-static volatile uint32_t *calcMaskedReg(struct PinData);
+static volatile uint32_t *calcControlReg(uint8_t, uint8_t);
 static void commonPinInit(struct Pin);
 static inline bool isI2CPin(struct Pin);
 static inline bool isSystemPin(struct Pin);
 /*----------------------------------------------------------------------------*/
-static const uint8_t pinRegMap[4][12] = {
-    {0x0C, 0x10, 0x1C, 0x2C, 0x30, 0x34, 0x4C, 0x50, 0x60, 0x64, 0x68, 0x74},
-    {0x78, 0x7C, 0x80, 0x90, 0x94, 0xA0, 0xA4, 0xA8, 0x14, 0x38, 0x6C, 0x98},
-    {0x08, 0x28, 0x5C, 0x8C, 0x40, 0x44, 0x00, 0x20, 0x24, 0x54, 0x58, 0x70},
-    {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
-};
-/*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(struct PinData data)
+static volatile uint32_t *calcControlReg(uint8_t port, uint8_t number)
 {
-  return &LPC_GPIO[data.port];
-}
-/*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcControlReg(struct PinData data)
-{
-  return (volatile uint32_t *)((uintptr_t)LPC_IOCON
-      + pinRegMap[data.port][data.offset]);
-}
-/*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcMaskedReg(struct PinData data)
-{
-  if (data.port < PORT_USB)
+  switch (port)
   {
-    LPC_GPIO_Type * const reg = calcPort(data);
-    return (void *)(reg->MASKED_ACCESS + (1UL << data.offset));
+    case 0:
+      return &LPC_IOCON->PIO0[number];
+
+    case 1:
+      return &LPC_IOCON->PIO1[number];
+
+    default:
+      return 0;
   }
-  else
-    return 0;
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
 {
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
-  pinSetSlewRate(pin, PIN_SLEW_NORMAL);
   pinSetType(pin, PIN_PUSHPULL);
+  pinSetSlewRate(pin, PIN_SLEW_NORMAL);
 }
 /*----------------------------------------------------------------------------*/
 static bool isI2CPin(struct Pin pin)
 {
   /* PIO0_4 and PIO0_5 are I2C pins with different function set */
-  return pin.data.port == 0 && pin.data.offset >= 4 && pin.data.offset <= 5;
+  return pin.port == 0 && pin.number >= 4 && pin.number <= 5;
 }
 /*----------------------------------------------------------------------------*/
 static bool isSystemPin(struct Pin pin)
 {
-  /*
-   * PIO0_0 is Reset pin, PIO0_10 and PIO1_3 are SWD pins,
-   * PIO0_11, PIO1_0 through PIO1_2 have a reserved function.
-   */
-  switch (pin.data.port)
-  {
-    case 0:
-      return (pin.data.offset >= 10 && pin.data.offset <= 11)
-          || pin.data.offset == 0;
-
-    case 1:
-      return pin.data.offset <= 3;
-
-    default:
-      return false;
-  }
+  /* PIO0_0 is Reset pin, PIO0_10 through PIO0_15 are JTAG/SWD pins */
+  return pin.port == 0
+      && (pin.number == 0 || (pin.number >= 10 && pin.number <= 15));
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
 {
   struct Pin pin;
 
-  pin.data.port = PIN_TO_PORT(id);
-  pin.data.offset = PIN_TO_OFFSET(id);
-  pin.reg = (void *)calcMaskedReg(pin.data);
+  pin.port = PIN_TO_PORT(id);
+  pin.number = PIN_TO_OFFSET(id);
+  pin.index = (pin.port << 5) + pin.number;
+
+  pin.reg = (void *)calcControlReg(pin.port, pin.number);
+  assert(pin.reg);
 
   return pin;
 }
@@ -93,10 +68,8 @@ void pinInput(struct Pin pin)
   if (!pin.reg)
     return;
 
-  LPC_GPIO_Type * const reg = calcPort(pin.data);
-
   commonPinInit(pin);
-  reg->DIR &= ~(1UL << pin.data.offset);
+  LPC_GPIO->DIR[pin.port] &= ~(1UL << pin.number);
 }
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
@@ -104,10 +77,8 @@ void pinOutput(struct Pin pin, bool value)
   if (!pin.reg)
     return;
 
-  LPC_GPIO_Type * const reg = calcPort(pin.data);
-
   commonPinInit(pin);
-  reg->DIR |= 1UL << pin.data.offset;
+  LPC_GPIO->DIR[pin.port] |= 1UL << pin.number;
   pinWrite(pin, value);
 }
 /*----------------------------------------------------------------------------*/
@@ -116,7 +87,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   if (!pin.reg)
     return;
 
-  volatile uint32_t * const reg = calcControlReg(pin.data);
+  volatile uint32_t * const reg = pin.reg;
   uint32_t value = *reg;
 
   switch (function)
@@ -150,7 +121,7 @@ void pinSetPull(struct Pin pin, enum PinPull pull)
   if (!pin.reg || isI2CPin(pin))
     return;
 
-  volatile uint32_t * const reg = calcControlReg(pin.data);
+  volatile uint32_t * const reg = pin.reg;
   uint32_t value = *reg & ~IOCON_MODE_MASK;
 
   switch (pull)
@@ -177,7 +148,7 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
   if (!pin.reg || !isI2CPin(pin))
     return;
 
-  volatile uint32_t * const reg = calcControlReg(pin.data);
+  volatile uint32_t * const reg = calcControlReg(pin.port, pin.number);
   uint32_t value = *reg & ~IOCON_I2C_MASK;
 
   if (IOCON_FUNC_VALUE(value) == 1)
@@ -193,7 +164,7 @@ void pinSetType(struct Pin pin, enum PinType type)
   if (!pin.reg || isI2CPin(pin))
     return;
 
-  volatile uint32_t * const reg = calcControlReg(pin.data);
+  volatile uint32_t * const reg = pin.reg;
 
   switch (type)
   {

@@ -1,11 +1,11 @@
 /*
- * wakeup_interrupt.c
- * Copyright (C) 2015 xent
+ * wakeup_int.c
+ * Copyright (C) 2015, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <halm/generic/pointer_list.h>
-#include <halm/platform/nxp/wakeup_interrupt.h>
+#include <halm/platform/nxp/gen_2/wakeup_int.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct StartLogicHandler
@@ -14,24 +14,23 @@ struct StartLogicHandler
   PointerList list;
 };
 /*----------------------------------------------------------------------------*/
-static inline IrqNumber calcVector(struct PinData);
-static enum Result startLogicHandlerAttach(struct PinData,
-    struct WakeupInterrupt *);
+static inline IrqNumber calcVector(uint8_t);
+static enum Result startLogicHandlerAttach(uint8_t, struct WakeupInt *);
 static enum Result startLogicHandlerInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
-static void startLogicHandlerDetach(struct WakeupInterrupt *);
+static void startLogicHandlerDetach(struct WakeupInt *);
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result wakeupInterruptInit(void *, const void *);
-static void wakeupInterruptEnable(void *);
-static void wakeupInterruptDisable(void *);
-static void wakeupInterruptSetCallback(void *, void (*)(void *), void *);
+static enum Result wakeupIntInit(void *, const void *);
+static void wakeupIntEnable(void *);
+static void wakeupIntDisable(void *);
+static void wakeupIntSetCallback(void *, void (*)(void *), void *);
 
 #ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
-static void wakeupInterruptDeinit(void *);
+static void wakeupIntDeinit(void *);
 #else
-#define wakeupInterruptDeinit deletedDestructorTrap
+#define wakeupIntDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const StartLogicHandler =
@@ -41,39 +40,42 @@ static const struct EntityClass * const StartLogicHandler =
     .deinit = deletedDestructorTrap
 };
 
-const struct InterruptClass * const WakeupInterrupt =
+const struct InterruptClass * const WakeupInt =
     &(const struct InterruptClass){
-    .size = sizeof(struct WakeupInterrupt),
-    .init = wakeupInterruptInit,
-    .deinit = wakeupInterruptDeinit,
+    .size = sizeof(struct WakeupInt),
+    .init = wakeupIntInit,
+    .deinit = wakeupIntDeinit,
 
-    .enable = wakeupInterruptEnable,
-    .disable = wakeupInterruptDisable,
-    .setCallback = wakeupInterruptSetCallback
+    .enable = wakeupIntEnable,
+    .disable = wakeupIntDisable,
+    .setCallback = wakeupIntSetCallback
 };
 /*----------------------------------------------------------------------------*/
 static struct StartLogicHandler *handler = 0;
 /*----------------------------------------------------------------------------*/
-static inline IrqNumber calcVector(struct PinData data)
+static inline IrqNumber calcVector(uint8_t channel)
 {
-  return WAKEUP_IRQ + data.port * 12 + data.offset;
+  return WAKEUP_IRQ + channel;
 }
 /*----------------------------------------------------------------------------*/
 void WAKEUP_ISR(void)
 {
   PointerList * const list = &handler->list;
   PointerListNode *current = pointerListFront(list);
-  const uint32_t state = LPC_SYSCON->STARTSRP0;
+  uint32_t state[ARRAY_SIZE(LPC_SYSCON->START)];
 
   /* Clear start-up logic states */
-  LPC_SYSCON->STARTRSRP0CLR = state;
+  for (size_t index = 0; index < ARRAY_SIZE(state); ++index)
+  {
+    state[index] = LPC_SYSCON->START[index].SRP;
+    LPC_SYSCON->START[index].RSRPCLR = state[index];
+  }
 
   while (current)
   {
-    struct WakeupInterrupt * const interrupt = *pointerListData(current);
-    const unsigned int index = interrupt->pin.port * 12 + interrupt->pin.offset;
+    struct WakeupInt * const interrupt = *pointerListData(current);
 
-    if (state & 1UL << (index & 0x1F))
+    if (state[interrupt->index] & interrupt->mask)
     {
       if (interrupt->callback)
         interrupt->callback(interrupt->callbackArgument);
@@ -83,8 +85,8 @@ void WAKEUP_ISR(void)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result startLogicHandlerAttach(struct PinData pin,
-    struct WakeupInterrupt *interrupt)
+static enum Result startLogicHandlerAttach(uint8_t channel,
+    struct WakeupInt *interrupt)
 {
   if (!handler)
     handler = init(StartLogicHandler, 0);
@@ -97,9 +99,9 @@ static enum Result startLogicHandlerAttach(struct PinData pin,
   /* Check for duplicates */
   while (current)
   {
-    struct WakeupInterrupt * const entry = *pointerListData(current);
+    struct WakeupInt * const entry = *pointerListData(current);
 
-    if (entry->pin.port == pin.port && entry->pin.offset == pin.offset)
+    if (entry->channel == channel)
       return E_BUSY;
 
     current = pointerListNext(current);
@@ -110,7 +112,7 @@ static enum Result startLogicHandlerAttach(struct PinData pin,
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
-static void startLogicHandlerDetach(struct WakeupInterrupt *interrupt)
+static void startLogicHandlerDetach(struct WakeupInt *interrupt)
 {
   assert(pointerListFind(&handler->list, interrupt));
   pointerListErase(&handler->list, interrupt);
@@ -126,23 +128,21 @@ static enum Result startLogicHandlerInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result wakeupInterruptInit(void *object, const void *configBase)
+static enum Result wakeupIntInit(void *object, const void *configBase)
 {
-  const struct WakeupInterruptConfig * const config = configBase;
+  const struct WakeupIntConfig * const config = configBase;
   assert(config);
 
   const struct Pin input = pinInit(config->pin);
-  struct WakeupInterrupt * const interrupt = object;
+  struct WakeupInt * const interrupt = object;
+  const uint8_t channel = input.port * 12 + input.number;
   enum Result res;
 
   assert(config->event != PIN_TOGGLE);
   assert(pinValid(input));
 
-  const unsigned int index = interrupt->pin.port * 12 + interrupt->pin.offset;
-  assert(index <= 12);
-
   /* Try to register pin interrupt in the interrupt handler */
-  if ((res = startLogicHandlerAttach(input.data, interrupt)) != E_OK)
+  if ((res = startLogicHandlerAttach(channel, interrupt)) != E_OK)
     return res;
 
   /* Configure the pin */
@@ -150,68 +150,67 @@ static enum Result wakeupInterruptInit(void *object, const void *configBase)
   pinSetPull(input, config->pull);
 
   interrupt->callback = 0;
-  interrupt->event = config->event;
-  interrupt->pin = input.data;
-
-  const uint32_t mask = 1UL << index;
+  interrupt->channel = channel;
+  interrupt->index = channel >> 5;
+  interrupt->mask = 1UL << (channel & 0x1F);
 
   /* Configure edge sensitivity options */
   switch (config->event)
   {
     case PIN_RISING:
-      LPC_SYSCON->STARTAPRP0 |= mask;
+      LPC_SYSCON->START[interrupt->index].APRP |= interrupt->mask;
       break;
 
     case PIN_FALLING:
-      LPC_SYSCON->STARTAPRP0 &= ~mask;
+      LPC_SYSCON->START[interrupt->index].APRP &= ~interrupt->mask;
       break;
 
     default:
       break;
   }
+
   /* Clear status flag */
-  LPC_SYSCON->STARTRSRP0CLR = mask;
+  LPC_SYSCON->START[interrupt->index].RSRPCLR = interrupt->mask;
+
   /* Enable interrupt in NVIC, interrupt is masked by default */
-  irqEnable(calcVector(interrupt->pin));
+  const IrqNumber irq = calcVector(interrupt->channel);
+
+  irqSetPriority(irq, config->priority);
+  irqEnable(irq);
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NXP_WAKEUPINT_NO_DEINIT
-static void wakeupInterruptDeinit(void *object)
+static void wakeupIntDeinit(void *object)
 {
-  const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
-  const unsigned int index = data.port * 12 + data.offset;
+  struct WakeupInt * const interrupt = object;
 
-  irqDisable(calcVector(data));
-  LPC_SYSCON->STARTERP0 &= ~(1UL << index);
+  irqDisable(calcVector(interrupt->channel));
+  LPC_SYSCON->START[interrupt->index].ERP &= ~interrupt->mask;
 
   startLogicHandlerDetach(object);
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static void wakeupInterruptEnable(void *object)
+static void wakeupIntEnable(void *object)
 {
-  const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
-  const unsigned int index = data.port * 12 + data.offset;
-  const uint32_t mask = 1UL << index;
+  struct WakeupInt * const interrupt = object;
 
-  LPC_SYSCON->STARTRSRP0CLR = mask;
-  LPC_SYSCON->STARTERP0 |= mask;
+  LPC_SYSCON->START[interrupt->index].RSRPCLR = interrupt->mask;
+  LPC_SYSCON->START[interrupt->index].ERP |= interrupt->mask;
 }
 /*----------------------------------------------------------------------------*/
-static void wakeupInterruptDisable(void *object)
+static void wakeupIntDisable(void *object)
 {
-  const struct PinData data = ((struct WakeupInterrupt *)object)->pin;
-  const unsigned int index = data.port * 12 + data.offset;
-
-  LPC_SYSCON->STARTERP0 &= ~(1UL << index);
+  struct WakeupInt * const interrupt = object;
+  LPC_SYSCON->START[interrupt->index].ERP &= ~interrupt->mask;
 }
 /*----------------------------------------------------------------------------*/
-static void wakeupInterruptSetCallback(void *object, void (*callback)(void *),
+static void wakeupIntSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct WakeupInterrupt * const interrupt = object;
+  struct WakeupInt * const interrupt = object;
 
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;

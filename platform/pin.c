@@ -6,6 +6,12 @@
 
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
+struct PinDescriptor
+{
+  uint8_t number;
+  uint8_t port;
+};
+/*----------------------------------------------------------------------------*/
 /* Returns 0 when no descriptor associated with pin found */
 const struct PinEntry *pinFind(const struct PinEntry *list, PinNumber key,
     uint8_t channel)
@@ -19,25 +25,25 @@ const struct PinEntry *pinFind(const struct PinEntry *list, PinNumber key,
 const struct PinGroupEntry *pinGroupFind(const struct PinGroupEntry *list,
     PinNumber key, uint8_t channel)
 {
-  struct PinData pin;
+  struct PinDescriptor pin;
 
   pin.port = PIN_TO_PORT(key);
-  pin.offset = PIN_TO_OFFSET(key);
+  pin.number = PIN_TO_OFFSET(key);
 
   while (list->begin && list->end)
   {
     if (list->channel == channel)
     {
-      const struct PinData begin = {
-          .offset = PIN_TO_OFFSET(list->begin),
+      const struct PinDescriptor begin = {
+          .number = PIN_TO_OFFSET(list->begin),
           .port = PIN_TO_PORT(list->begin)
       };
-      const struct PinData end = {
-          .offset = PIN_TO_OFFSET(list->end),
+      const struct PinDescriptor end = {
+          .number = PIN_TO_OFFSET(list->end),
           .port = PIN_TO_PORT(list->end)
       };
       const bool found = pin.port >= begin.port && pin.port <= end.port
-          && pin.offset >= begin.offset && pin.offset <= end.offset;
+          && pin.number >= begin.number && pin.number <= end.number;
 
       if (found)
         return list;

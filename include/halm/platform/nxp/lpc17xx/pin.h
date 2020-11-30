@@ -19,6 +19,14 @@ enum
   PORT_4
 };
 /*----------------------------------------------------------------------------*/
+struct Pin
+{
+  void *reg;
+  uint32_t mask;
+  uint8_t number;
+  uint8_t port;
+};
+/*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
 void *pinAddress(struct Pin);
@@ -37,28 +45,30 @@ BEGIN_DECLS
 
 static inline bool pinRead(struct Pin pin)
 {
-  const uint32_t mask = 1UL << pin.data.offset;
-  return (((const LPC_GPIO_Type *)pin.reg)->PIN & mask) != 0;
+  return (((const LPC_GPIO_Type *)pin.reg)->PIN & pin.mask) != 0;
 }
 
 static inline void pinReset(struct Pin pin)
 {
-  ((LPC_GPIO_Type *)pin.reg)->CLR = 1UL << pin.data.offset;
+  ((LPC_GPIO_Type *)pin.reg)->CLR = pin.mask;
 }
 
 static inline void pinSet(struct Pin pin)
 {
-  ((LPC_GPIO_Type *)pin.reg)->SET = 1UL << pin.data.offset;
+  ((LPC_GPIO_Type *)pin.reg)->SET = pin.mask;
+}
+
+static inline bool pinValid(struct Pin pin)
+{
+  return pin.reg != 0;
 }
 
 static inline void pinWrite(struct Pin pin, bool value)
 {
-  const uint32_t mask = 1UL << pin.data.offset;
-
   if (value)
-    ((LPC_GPIO_Type *)pin.reg)->SET = mask;
+    ((LPC_GPIO_Type *)pin.reg)->SET = pin.mask;
   else
-    ((LPC_GPIO_Type *)pin.reg)->CLR = mask;
+    ((LPC_GPIO_Type *)pin.reg)->CLR = pin.mask;
 }
 
 END_DECLS
