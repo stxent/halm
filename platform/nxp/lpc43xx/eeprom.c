@@ -15,12 +15,9 @@
 /*----------------------------------------------------------------------------*/
 #define EEPROM_CLOCK  1500000
 #define PAGE_SIZE     128
-
-extern unsigned long _seeprom;
-extern unsigned long _eeeprom;
 /*----------------------------------------------------------------------------*/
-static size_t calcChunkLength(uintptr_t, size_t);
-static inline bool isAddressValid(const struct Eeprom *, uintptr_t);
+static size_t calcChunkLength(uint32_t, size_t);
+static inline bool isAddressValid(const struct Eeprom *, uint32_t);
 static void programNextChunk(struct Eeprom *);
 static bool setInstance(struct Eeprom *);
 /*----------------------------------------------------------------------------*/
@@ -46,18 +43,18 @@ const struct InterfaceClass * const Eeprom = &(const struct InterfaceClass){
 /*----------------------------------------------------------------------------*/
 static struct Eeprom *instance = 0;
 /*----------------------------------------------------------------------------*/
-static size_t calcChunkLength(uintptr_t address, size_t left)
+static size_t calcChunkLength(uint32_t address, size_t left)
 {
-  const uintptr_t pageAddress = (address + PAGE_SIZE) & ~(PAGE_SIZE - 1);
+  const uint32_t pageAddress = (address + PAGE_SIZE) & ~(PAGE_SIZE - 1);
   const size_t chunkLength = MIN(left, pageAddress - address);
 
   return chunkLength;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool isAddressValid(const struct Eeprom *interface,
-    uintptr_t address)
+    uint32_t address)
 {
-  return !(address & 0x03) && address < interface->size;
+  return !(address & 0x03) && address < interface->base.size;
 }
 /*----------------------------------------------------------------------------*/
 static void programNextChunk(struct Eeprom *interface)
@@ -100,12 +97,15 @@ static enum Result eepromInit(void *object, const void *configBase)
 {
   const struct EepromConfig * const config = configBase;
   struct Eeprom * const interface = object;
+  enum Result res;
+
+  if ((res = EepromBase->init(interface, 0)) != E_OK)
+    return res;
 
   if (!setInstance(interface))
     return E_BUSY;
 
   interface->position = 0;
-  interface->size = (uintptr_t)&_eeeprom - (uintptr_t)&_seeprom;
   interface->blocking = true;
 
   /* Enable clock to register interface and peripheral */
@@ -153,7 +153,7 @@ static enum Result eepromGetParam(void *object, int parameter, void *data)
       return E_OK;
 
     case IF_SIZE:
-      *(uint32_t *)data = interface->size;
+      *(uint32_t *)data = interface->base.size;
       return E_OK;
 
     default:
@@ -173,7 +173,7 @@ static enum Result eepromSetParam(void *object, int parameter, const void *data)
 
     case IF_POSITION:
     {
-      const uintptr_t position = *(const uint32_t *)data;
+      const uint32_t position = *(const uint32_t *)data;
 
       if (isAddressValid(interface, position))
       {
@@ -200,7 +200,7 @@ static size_t eepromRead(void *object, void *buffer, size_t length)
   if (!isAddressValid(interface, interface->position + length))
     return 0;
 
-  const uintptr_t position = (uintptr_t)&_seeprom + interface->position;
+  const uint32_t position = interface->base.address + interface->position;
 
   memcpy(buffer, (const void *)position, length);
   return length;
@@ -218,7 +218,7 @@ static size_t eepromWrite(void *object, const void *buffer, size_t length)
 
   interface->buffer = buffer;
   interface->left = length;
-  interface->offset = (uintptr_t)&_seeprom + interface->position;
+  interface->offset = interface->base.address + interface->position;
 
   programNextChunk(interface);
 

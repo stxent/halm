@@ -11,9 +11,9 @@
 #include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-static bool isPagePositionValid(const struct Flash *, uintptr_t);
-static bool isSectorPositionValid(const struct Flash *, uintptr_t);
-static uint32_t positionToAddress(const struct Flash *, uintptr_t);
+static bool isPagePositionValid(const struct Flash *, uint32_t);
+static bool isSectorPositionValid(const struct Flash *, uint32_t);
+static uint32_t positionToAddress(const struct Flash *, uint32_t);
 static size_t totalFlashSize(size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *, const void *);
@@ -35,9 +35,9 @@ const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
 };
 /*----------------------------------------------------------------------------*/
 static bool isPagePositionValid(const struct Flash *interface,
-    uintptr_t position)
+    uint32_t position)
 {
-  if (position >= totalFlashSize(interface->size))
+  if (position >= totalFlashSize(interface->base.size))
     return false;
   if (position & (FLASH_PAGE_SIZE - 1))
     return false;
@@ -46,9 +46,9 @@ static bool isPagePositionValid(const struct Flash *interface,
 }
 /*----------------------------------------------------------------------------*/
 static bool isSectorPositionValid(const struct Flash *interface,
-    uintptr_t position)
+    uint32_t position)
 {
-  if (position >= totalFlashSize(interface->size))
+  if (position >= totalFlashSize(interface->base.size))
     return false;
 
   const uint32_t address =
@@ -60,12 +60,17 @@ static bool isSectorPositionValid(const struct Flash *interface,
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t positionToAddress(const struct Flash *interface,
-    uintptr_t position)
+    uint32_t position)
 {
-  if (position < FLASH_SIZE_DECODE_A(interface->size))
+  if (position < FLASH_SIZE_DECODE_A(interface->base.size))
+  {
     return FLASH_BANK_A + position;
+  }
   else
-    return FLASH_BANK_B + (position - FLASH_SIZE_DECODE_A(interface->size));
+  {
+    return FLASH_BANK_B
+        + (position - FLASH_SIZE_DECODE_A(interface->base.size));
+  }
 }
 /*----------------------------------------------------------------------------*/
 static size_t totalFlashSize(size_t size)
@@ -77,37 +82,12 @@ static enum Result flashInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct Flash * const interface = object;
-  const uint32_t id = flashReadId();
+  const enum Result res = FlashBase->init(interface, 0);
 
-  if (!(id & FLASH_AVAILABLE))
-    return E_ERROR; /* Flashless part */
+  if (res == E_OK)
+    interface->position = 0;
 
-  const uint32_t memory = flashReadConfigId() & FLASH_SIZE_MASK;
-
-  switch (memory)
-  {
-    case FLASH_SIZE_256_256:
-      interface->size = FLASH_SIZE_ENCODE(256 * 1024, 256 * 1024);
-      break;
-
-    case FLASH_SIZE_384_384:
-      interface->size = FLASH_SIZE_ENCODE(384 * 1024, 384 * 1024);
-      break;
-
-    case FLASH_SIZE_512_0:
-      interface->size = FLASH_SIZE_ENCODE(512 * 1024, 0);
-      break;
-
-    case FLASH_SIZE_512_512:
-      interface->size = FLASH_SIZE_ENCODE(512 * 1024, 512 * 1024);
-      break;
-
-    default:
-      return E_ERROR;
-  }
-
-  interface->position = 0;
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result flashGetParam(void *object, int parameter, void *data)
@@ -132,7 +112,7 @@ static enum Result flashGetParam(void *object, int parameter, void *data)
       return E_OK;
 
     case IF_SIZE:
-      *(uint32_t *)data = totalFlashSize(interface->size);
+      *(uint32_t *)data = totalFlashSize(interface->base.size);
       return E_OK;
 
     default:
@@ -147,9 +127,20 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
   /* Additional Flash options */
   switch ((enum FlashParameter)parameter)
   {
+    case IF_FLASH_ERASE_PAGE:
+    {
+      const uint32_t position = *(const uint32_t *)data;
+
+      if (!isPagePositionValid(interface, position))
+        return E_ADDRESS;
+
+      flashInitWrite();
+      return flashErasePage(positionToAddress(interface, position));
+    }
+
     case IF_FLASH_ERASE_SECTOR:
     {
-      const uintptr_t position = *(const uint32_t *)data;
+      const uint32_t position = *(const uint32_t *)data;
 
       if (!isSectorPositionValid(interface, position))
         return E_ADDRESS;
@@ -160,17 +151,6 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
       return flashEraseSector(positionToAddress(interface, position));
     }
 
-    case IF_FLASH_ERASE_PAGE:
-    {
-      const uintptr_t position = *(const uint32_t *)data;
-
-      if (!isPagePositionValid(interface, position))
-        return E_ADDRESS;
-
-      flashInitWrite();
-      return flashErasePage(positionToAddress(interface, position));
-    }
-
     default:
       break;
   }
@@ -179,9 +159,9 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
   {
     case IF_POSITION:
     {
-      const uintptr_t position = *(const uint32_t *)data;
+      const uint32_t position = *(const uint32_t *)data;
 
-      if (position < totalFlashSize(interface->size))
+      if (position < totalFlashSize(interface->base.size))
       {
         interface->position = position;
         return E_OK;
@@ -199,7 +179,7 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  if (interface->position + length <= totalFlashSize(interface->size))
+  if (interface->position + length <= totalFlashSize(interface->base.size))
   {
     const uint32_t address = positionToAddress(interface, interface->position);
 

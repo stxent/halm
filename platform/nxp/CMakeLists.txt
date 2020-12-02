@@ -33,7 +33,8 @@ if(${CONFIG_PLATFORM_NXP_DAC_BASE})
 endif()
 
 if(${CONFIG_PLATFORM_NXP_EEPROM})
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/eeprom.c")
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_FLASH}/eeprom.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/eeprom_base.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_EMC})
@@ -44,6 +45,11 @@ endif()
 if(${CONFIG_PLATFORM_NXP_FAST_GPIO_BUS})
     list(APPEND SOURCE_FILES "fast_gpio_bus_common.c")
     list(APPEND SOURCE_FILES "${CONFIG_GEN_PINBUS}/fast_gpio_bus.c")
+endif()
+
+if(${CONFIG_PLATFORM_NXP_FLASH})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_FLASH}/flash.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/flash_base.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_GPDMA})
@@ -87,10 +93,6 @@ endif()
 
 if(${CONFIG_PLATFORM_NXP_IAP})
     list(APPEND SOURCE_FILES "iap.c")
-endif()
-
-if(${CONFIG_PLATFORM_NXP_IAP_FLASH})
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/flash.c")
 endif()
 
 if(${CONFIG_PLATFORM_NXP_PININT_BASE})

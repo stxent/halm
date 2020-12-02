@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_NXP_LPC17XX_FLASH_DEFS_H_
 #define HALM_PLATFORM_NXP_LPC17XX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define CODE_LPC1769            0x26113F37UL
@@ -55,6 +56,20 @@ static inline uint32_t addressToSector(uint32_t address)
     return (address - FLASH_SECTORS_BORDER) / FLASH_SECTOR_SIZE_1
         + FLASH_SECTORS_OFFSET;
   }
+}
+/*----------------------------------------------------------------------------*/
+static inline bool isPagePositionValid(uint32_t position
+    __attribute__((unused)))
+{
+  return false;
+}
+/*----------------------------------------------------------------------------*/
+static inline bool isSectorPositionValid(uint32_t position)
+{
+  if (position < FLASH_SECTORS_BORDER)
+    return (position & (FLASH_SECTOR_SIZE_0 - 1)) == 0;
+  else
+    return (position & (FLASH_SECTOR_SIZE_1 - 1)) == 0;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC17XX_FLASH_DEFS_H_ */

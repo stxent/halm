@@ -1,21 +1,21 @@
 /*
- * halm/platform/nxp/lpc13xx/flash_defs.h
- * Copyright (C) 2015 xent
+ * halm/platform/nxp/lpc13uxx/flash_defs.h
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
-#ifndef HALM_PLATFORM_NXP_LPC13XX_FLASH_DEFS_H_
-#define HALM_PLATFORM_NXP_LPC13XX_FLASH_DEFS_H_
+#ifndef HALM_PLATFORM_NXP_LPC13UXX_FLASH_DEFS_H_
+#define HALM_PLATFORM_NXP_LPC13UXX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
-#define CODE_LPC1311      0x2C42502BUL
-#define CODE_LPC1311_01   0x1816902BUL
-#define CODE_LPC1313      0x2C40102BUL
-#define CODE_LPC1313_01   0x1830102BUL
-#define CODE_LPC1342      0x3D01402BUL
-#define CODE_LPC1343      0x3D00002BUL
+#define CODE_LPC1315      0x3A010523UL
+#define CODE_LPC1316      0x1A018524UL
+#define CODE_LPC1317      0x1A020525UL
+#define CODE_LPC1345      0x28010541UL
+#define CODE_LPC1346      0x08018542UL
+#define CODE_LPC1347      0x08020543UL
 /*----------------------------------------------------------------------------*/
 #define FLASH_PAGE_SIZE   256
 #define FLASH_SECTOR_SIZE 4096
@@ -27,9 +27,9 @@ static inline uint8_t addressToBank(uint32_t address __attribute__((unused)))
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t addressToPage(uint32_t address __attribute__((unused)))
+static inline uint32_t addressToPage(uint32_t address)
 {
-  return 0;
+  return address / FLASH_PAGE_SIZE;
 }
 /*----------------------------------------------------------------------------*/
 static inline uint32_t addressToSector(uint32_t address)
@@ -37,10 +37,9 @@ static inline uint32_t addressToSector(uint32_t address)
   return address / FLASH_SECTOR_SIZE;
 }
 /*----------------------------------------------------------------------------*/
-static inline bool isPagePositionValid(uint32_t position
-    __attribute__((unused)))
+static inline bool isPagePositionValid(uint32_t position)
 {
-  return false;
+  return (position & (FLASH_PAGE_SIZE - 1)) == 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool isSectorPositionValid(uint32_t position)
@@ -48,4 +47,4 @@ static inline bool isSectorPositionValid(uint32_t position)
   return (position & (FLASH_SECTOR_SIZE - 1)) == 0;
 }
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NXP_LPC13XX_FLASH_DEFS_H_ */
+#endif /* HALM_PLATFORM_NXP_LPC13UXX_FLASH_DEFS_H_ */

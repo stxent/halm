@@ -11,6 +11,11 @@ config GEN_DAC
 	string
 	default gen_1 if FAMILY_LPC17XX || FAMILY_LPC43XX
 
+config GEN_FLASH
+	string
+	default gen_1 if FAMILY_LPC11EXX || FAMILY_LPC11XX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX
+	default lpc43xx if FAMILY_LPC43XX
+
 config GEN_PIN
 	string
 	default gen_2 if FAMILY_LPC11XX || FAMILY_LPC13XX
@@ -176,6 +181,13 @@ config PLATFORM_NXP_FAST_GPIO_BUS
 	help
 	  Optimized version of GPIO Bus for contiguous sets of pins.
 
+config PLATFORM_NXP_FLASH
+	bool "Flash driver"
+	default y
+	select PLATFORM_NXP_IAP
+	help
+	  This enables driver for the internal Flash memory.
+
 config PLATFORM_NXP_GPDMA
 	bool "GPDMA"
 	default y
@@ -285,13 +297,6 @@ config PLATFORM_NXP_IAP
 	default y
 	help
 	  This enables support for In-Application Programming.
-
-config PLATFORM_NXP_IAP_FLASH
-	bool "Flash driver"
-	default y
-	depends on PLATFORM_NXP_IAP
-	help
-	  This enables driver for the internal Flash memory.
 
 config PLATFORM_NXP_PININT_BASE
 	bool

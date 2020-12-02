@@ -7,6 +7,6 @@
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/eeprom.h>
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_FLASH/eeprom.h>
 #include HEADER_PATH
 #undef HEADER_PATH

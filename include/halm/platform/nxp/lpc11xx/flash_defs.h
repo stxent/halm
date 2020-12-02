@@ -7,6 +7,7 @@
 #ifndef HALM_PLATFORM_NXP_LPC11XX_FLASH_DEFS_H_
 #define HALM_PLATFORM_NXP_LPC11XX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/
+#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define CODE_LPC1110_1      0x0A07102BUL
@@ -94,6 +95,17 @@ static inline uint32_t addressToPage(uint32_t address __attribute__((unused)))
 static inline uint32_t addressToSector(uint32_t address)
 {
   return address / FLASH_SECTOR_SIZE;
+}
+/*----------------------------------------------------------------------------*/
+static inline bool isPagePositionValid(uint32_t position
+    __attribute__((unused)))
+{
+  return false;
+}
+/*----------------------------------------------------------------------------*/
+static inline bool isSectorPositionValid(uint32_t position)
+{
+  return (position & (FLASH_SECTOR_SIZE - 1)) == 0;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_LPC11XX_FLASH_DEFS_H_ */

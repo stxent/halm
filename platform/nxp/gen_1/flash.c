@@ -1,17 +1,14 @@
 /*
  * flash.c
- * Copyright (C) 2016 xent
+ * Copyright (C) 2015, 2020 xent
  * Project is distributed under the terms of the GNU General Public License v3.0
  */
 
 #include <halm/generic/flash.h>
-#include <halm/platform/nxp/flash.h>
+#include <halm/platform/nxp/gen_1/flash.h>
+#include <halm/platform/nxp/gen_1/flash_defs.h>
 #include <halm/platform/nxp/iap.h>
-#include <halm/platform/nxp/lpc11xx/flash_defs.h>
-#include <stdbool.h>
 #include <string.h>
-/*----------------------------------------------------------------------------*/
-static inline bool isSectorPositionValid(const struct Flash *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *, const void *);
 static enum Result flashGetParam(void *, int, void *);
@@ -31,39 +28,16 @@ const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .write = flashWrite
 };
 /*----------------------------------------------------------------------------*/
-static inline bool isSectorPositionValid(const struct Flash *interface,
-    size_t position)
-{
-  return !(position & (FLASH_SECTOR_SIZE - 1)) && position < interface->size;
-}
-/*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct Flash * const interface = object;
-  const uint32_t id = flashReadId();
+  const enum Result res = FlashBase->init(interface, 0);
 
-  if (IS_LPC1110(id))
-    interface->size = 4 * 1024;
-  else if (IS_LPC1111(id))
-    interface->size = 8 * 1024;
-  else if (IS_LPC1112(id) || IS_LPC11CX2(id))
-    interface->size = 16 * 1024;
-  else if (IS_LPC1113(id))
-    interface->size = 24 * 1024;
-  else if (IS_LPC1114(id) || IS_LPC11CX4(id))
-    interface->size = 32 * 1024;
-  else if (id == CODE_LPC1114_323)
-    interface->size = 48 * 1024;
-  else if (id == CODE_LPC1114_333)
-    interface->size = 56 * 1024;
-  else if (IS_LPC1115(id))
-    interface->size = 64 * 1024;
-  else
-    return E_ERROR;
+  if (res == E_OK)
+    interface->position = 0;
 
-  interface->position = 0;
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result flashGetParam(void *object, int parameter, void *data)
@@ -88,7 +62,7 @@ static enum Result flashGetParam(void *object, int parameter, void *data)
       return E_OK;
 
     case IF_SIZE:
-      *(uint32_t *)data = interface->size;
+      *(uint32_t *)data = interface->base.size;
       return E_OK;
 
     default:
@@ -103,11 +77,25 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
   /* Additional Flash parameters */
   switch ((enum FlashParameter)parameter)
   {
+    case IF_FLASH_ERASE_PAGE:
+    {
+      const uint32_t position = *(const uint32_t *)data;
+
+      if (position >= interface->base.size)
+        return E_ADDRESS;
+      if (!isPagePositionValid(position))
+        return E_ADDRESS;
+
+      return flashErasePage(position);
+    }
+
     case IF_FLASH_ERASE_SECTOR:
     {
-      const uintptr_t position = *(const uint32_t *)data;
+      const uint32_t position = *(const uint32_t *)data;
 
-      if (!isSectorPositionValid(interface, position))
+      if (position >= interface->base.size)
+        return E_ADDRESS;
+      if (!isSectorPositionValid(position))
         return E_ADDRESS;
 
       if (flashBlankCheckSector(position) == E_OK)
@@ -124,9 +112,9 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
   {
     case IF_POSITION:
     {
-      const uintptr_t position = *(const uint32_t *)data;
+      const uint32_t position = *(const uint32_t *)data;
 
-      if (position < interface->size)
+      if (position < interface->base.size)
       {
         interface->position = position;
         return E_OK;
@@ -144,9 +132,10 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  if (interface->position + length <= interface->size)
+  if (interface->position + length <= interface->base.size)
   {
     memcpy(buffer, (const void *)interface->position, length);
+    interface->position += (uint32_t)length;
     return length;
   }
   else
@@ -158,7 +147,10 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
   struct Flash * const interface = object;
 
   if (flashWriteBuffer(interface->position, buffer, length) == E_OK)
+  {
+    interface->position += (uint32_t)length;
     return length;
+  }
   else
     return 0;
 }

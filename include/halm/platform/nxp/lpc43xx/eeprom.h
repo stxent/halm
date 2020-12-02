@@ -8,8 +8,8 @@
 #define HALM_PLATFORM_NXP_LPC43XX_EEPROM_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/irq.h>
+#include <halm/platform/nxp/lpc43xx/eeprom_base.h>
 #include <xcore/interface.h>
-#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Eeprom;
 
@@ -21,22 +21,20 @@ struct EepromConfig
 
 struct Eeprom
 {
-  struct Interface base;
+  struct EepromBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
 
   /* Current address */
-  uintptr_t position;
-  /* Size of the memory */
-  size_t size;
+  uint32_t position;
 
   /* Output buffer */
   const uint8_t *buffer;
+  /* Offset from the start of the memory */
+  uint32_t offset;
   /* Bytes left in the buffer */
   size_t left;
-  /* Offset from the start of the memory */
-  uintptr_t offset;
 
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
