@@ -108,7 +108,11 @@ static enum Result iap(enum IapCommand command, unsigned long *results,
 static enum Result prepareSectorToWrite(unsigned long sector,
     unsigned long bank)
 {
-  const unsigned long parameters[] = {sector, sector, bank};
+  const unsigned long parameters[] = {
+      sector,
+      sector,
+      bank
+  };
   return iap(CMD_PREPARE_FOR_WRITE, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
@@ -138,7 +142,18 @@ enum Result eepromWriteBuffer(uint32_t address, const void *buffer,
 
   return iap(CMD_EEPROM_WRITE, 0, 0, parameters, ARRAY_SIZE(parameters));
 }
+/*----------------------------------------------------------------------------*/
+enum Result flashActivateBootBank(unsigned int bank)
+{
+  const unsigned long frequency = clockFrequency(MainClock);
+  const unsigned long parameters[] = {
+      (unsigned long)bank,
+      frequency / 1000
+  };
 
+  return iap(CMD_SET_ACTIVE_BOOT_BANK, 0, 0, parameters,
+      ARRAY_SIZE(parameters));
+}
 /*----------------------------------------------------------------------------*/
 enum Result flashBlankCheckSector(uint32_t address)
 {

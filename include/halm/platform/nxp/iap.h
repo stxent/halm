@@ -16,6 +16,7 @@ BEGIN_DECLS
 
 enum Result eepromReadBuffer(uint32_t, void *, size_t);
 enum Result eepromWriteBuffer(uint32_t, const void *, size_t);
+enum Result flashActivateBootBank(unsigned int);
 enum Result flashBlankCheckSector(uint32_t);
 enum Result flashErasePage(uint32_t);
 enum Result flashEraseSector(uint32_t);

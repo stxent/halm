@@ -11,5 +11,6 @@
 #define CRP_NO_ISP   0x4E697370UL
 #define CRP_LEVEL_1  0x12345678UL
 #define CRP_LEVEL_2  0x87654321UL
+#define CRP_LEVEL_3  0x43218765UL
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NXP_CRP_DEFS_H_ */
