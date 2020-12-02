@@ -164,7 +164,7 @@ static enum Result spiInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = SspBase->init(object, &baseConfig)) != E_OK)
+  if ((res = SspBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   interface->base.handler = interruptHandler;

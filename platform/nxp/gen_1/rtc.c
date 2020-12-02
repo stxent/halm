@@ -64,7 +64,7 @@ static enum Result clkInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = RtcBase->init(object, 0)) != E_OK)
+  if ((res = RtcBase->init(clock, 0)) != E_OK)
     return res;
 
   clock->base.handler = interruptHandler;

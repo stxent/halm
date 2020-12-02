@@ -168,7 +168,7 @@ static enum Result oneWireInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = UartBase->init(object, &baseConfig)) != E_OK)
+  if ((res = UartBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   adjustPins(interface, config);

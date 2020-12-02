@@ -187,7 +187,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = I2CBase->init(object, &baseConfig)) != E_OK)
+  if ((res = I2CBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   interface->base.handler = interruptHandler;

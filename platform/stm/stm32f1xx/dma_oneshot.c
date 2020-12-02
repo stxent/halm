@@ -83,7 +83,7 @@ static enum Result streamInit(void *object, const void *configBase)
   struct DmaOneShot * const stream = object;
 
   /* Call base class constructor */
-  const enum Result res = DmaBase->init(object, &baseConfig);
+  const enum Result res = DmaBase->init(stream, &baseConfig);
 
   if (res == E_OK)
   {

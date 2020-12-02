@@ -78,7 +78,7 @@ static enum Result channelInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = GpDmaBase->init(object, &baseConfig)) != E_OK)
+  if ((res = GpDmaBase->init(channel, &baseConfig)) != E_OK)
     return res;
 
   channel->base.handler = interruptHandler;

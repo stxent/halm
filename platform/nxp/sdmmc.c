@@ -250,7 +250,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   interruptSetCallback(interface->finalizer, interruptHandler, interface);
 
   /* Call base class constructor */
-  if ((res = SdmmcBase->init(object, &baseConfig)) != E_OK)
+  if ((res = SdmmcBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   interface->base.handler = interruptHandler;

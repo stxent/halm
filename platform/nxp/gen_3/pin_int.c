@@ -104,7 +104,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
 #ifndef CONFIG_PLATFORM_NXP_PININT_NO_DEINIT
 static void pinIntDeinit(void *object)
 {
-  const struct PinInt * const interrupt = object;
+  struct PinInt * const interrupt = object;
 
   /* Disable channel interrupt in the NVIC */
   disableInterrupt(interrupt);
@@ -113,7 +113,7 @@ static void pinIntDeinit(void *object)
   LPC_GPIO_INT->CIENR = interrupt->mask;
   LPC_GPIO_INT->CIENF = interrupt->mask;
 
-  PinIntBase->deinit(object);
+  PinIntBase->deinit(interrupt);
 }
 #endif
 /*----------------------------------------------------------------------------*/

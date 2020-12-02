@@ -248,7 +248,7 @@ static enum Result spiInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = SpiBase->init(object, &baseConfig)) != E_OK)
+  if ((res = SpiBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   if (!dmaSetup(interface, config->rxDma, config->txDma))

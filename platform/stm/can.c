@@ -310,7 +310,7 @@ static enum Result canInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = BxCanBase->init(object, &baseConfig)) != E_OK)
+  if ((res = BxCanBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   interface->base.handler = interruptHandler;

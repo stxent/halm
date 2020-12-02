@@ -266,7 +266,7 @@ static enum Result devInit(void *object, const void *configBase)
   struct UsbDevice * const device = object;
 
   /* Call base class constructor */
-  const enum Result res = UsbBase->init(object, &baseConfig);
+  const enum Result res = UsbBase->init(device, &baseConfig);
   if (res != E_OK)
     return res;
 

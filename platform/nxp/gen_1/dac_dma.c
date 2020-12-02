@@ -110,7 +110,7 @@ static enum Result dacInit(void *object, const void *configBase)
   assert(config->rate);
 
   /* Call base class constructor */
-  if ((res = DacBase->init(object, &baseConfig)) != E_OK)
+  if ((res = DacBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   if (!dmaSetup(interface, config))

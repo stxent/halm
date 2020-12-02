@@ -266,7 +266,7 @@ static enum Result spiInit(void *object, const void *configBase)
   assert(config->dma[0] != config->dma[1]);
 
   /* Call base class constructor */
-  if ((res = SspBase->init(object, &baseConfig)) != E_OK)
+  if ((res = SspBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   /* RX channel should have higher DMA priority */

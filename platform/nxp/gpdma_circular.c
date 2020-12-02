@@ -105,7 +105,7 @@ static enum Result channelInit(void *object, const void *configBase)
   assert(config->number > 0);
 
   /* Call base class constructor */
-  if ((res = GpDmaBase->init(object, &baseConfig)) != E_OK)
+  if ((res = GpDmaBase->init(channel, &baseConfig)) != E_OK)
     return res;
 
   channel->list = memalign(4, sizeof(struct GpDmaEntry) * config->number);

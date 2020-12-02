@@ -16,6 +16,10 @@ config GEN_FLASH
 	default gen_1 if FAMILY_LPC11EXX || FAMILY_LPC11XX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX
 	default lpc43xx if FAMILY_LPC43XX
 
+config GEN_I2C
+	string
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
 config GEN_PIN
 	string
 	default gen_2 if FAMILY_LPC11XX || FAMILY_LPC13XX
@@ -34,10 +38,6 @@ config GEN_PININT
 	default gen_2 if FAMILY_LPC11XX || FAMILY_LPC13XX
 	default gen_3 if FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX
 	default lpc17xx if FAMILY_LPC17XX
-
-config GEN_I2C
-	string
-	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config GEN_RTC
 	string
@@ -140,14 +140,14 @@ config PLATFORM_NXP_DAC_BASE
 	default y
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
-config PLATFORM_NXP_DAC
-	bool "Simplified DAC driver"
-	default y
-	depends on PLATFORM_NXP_DAC_BASE
-
 config PLATFORM_NXP_DAC_NO_DEINIT
 	bool "Disable destructors"
 	default n
+	depends on PLATFORM_NXP_DAC_BASE
+
+config PLATFORM_NXP_DAC
+	bool "Simplified DAC driver"
+	default y
 	depends on PLATFORM_NXP_DAC_BASE
 
 config PLATFORM_NXP_DAC_DMA

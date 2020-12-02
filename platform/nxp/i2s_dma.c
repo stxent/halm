@@ -246,7 +246,7 @@ static enum Result i2sInit(void *object, const void *configBase)
   assert(config->width <= I2S_WIDTH_32);
 
   /* Call base class constructor */
-  if ((res = I2SBase->init(object, &baseConfig)) != E_OK)
+  if ((res = I2SBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   interface->base.handler = interruptHandler;

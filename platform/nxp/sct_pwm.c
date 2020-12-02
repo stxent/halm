@@ -155,7 +155,7 @@ static enum Result unitInit(void *object, const void *configBase)
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = SctBase->init(object, &baseConfig)) != E_OK)
+  if ((res = SctBase->init(unit, &baseConfig)) != E_OK)
     return res;
 
   if (!sctAllocateEvent(&unit->base, &unit->event))
