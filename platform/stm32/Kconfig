@@ -1,0 +1,126 @@
+menu "Power settings"
+
+config PM
+	bool "Power management"
+	default y
+	help
+	  This enables support for power management features.
+
+endmenu
+
+menu "Peripherals"
+
+config PLATFORM_STM32_CAN
+	bool "bxCAN"
+	default y
+	help
+	  This is the driver for the Controller Area Network peripheral.
+
+config PLATFORM_STM32_CAN_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_STM32_CAN
+
+config PLATFORM_STM32_CAN_TSEG1
+	int "TSEG1 quanta"
+	default 9
+	depends on PLATFORM_STM32_CAN
+
+config PLATFORM_STM32_CAN_TSEG2
+	int "TSEG2 quanta"
+	default 2
+	depends on PLATFORM_STM32_CAN
+
+config PLATFORM_STM32_CAN_PM
+	bool "Power management"
+	default n
+	depends on PM && PLATFORM_STM32_CAN
+
+config PLATFORM_STM32_DMA
+	bool "DMA"
+	default y
+
+config PLATFORM_STM32_GPTIMER_BASE
+	bool "General Purpose Timer"
+	default y
+
+config PLATFORM_STM32_GPTIMER_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_GPTIMER_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_STM32_GPTIMER_BASE && PM
+
+config PLATFORM_STM32_GPTIMER
+	bool "Common timer"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_SPI_BASE
+	bool "SPI"
+	default y
+	help
+	  This is the driver for the Serial Peripheral Interface.
+
+config PLATFORM_STM32_SPI_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_STM32_SPI_BASE
+
+config PLATFORM_STM32_SPI_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_STM32_SPI_BASE
+
+config PLATFORM_STM32_SPI
+	bool "SPI Master with DMA"
+	default y
+	depends on PLATFORM_STM32_SPI_BASE && PLATFORM_STM_DMA
+
+config PLATFORM_STM32_UART_BASE
+	bool "UART"
+	default y
+
+config PLATFORM_STM32_UART_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_UART_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_SERIAL
+	bool "Interrupt-driven serial port driver"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_USB
+	bool "USB"
+	default y
+
+config PLATFORM_USB_NO_DEINIT
+	bool "Disable destructors"
+	default n
+	depends on PLATFORM_USB
+
+config PLATFORM_USB_DEVICE
+	bool "USB Device"
+	default y
+	depends on PLATFORM_USB
+
+config PLATFORM_USB_DOUBLE_BUFFERING
+	bool "Double-buffered endpoints"
+	default y
+	depends on PLATFORM_USB
+
+config PLATFORM_USB_DEVICE_EP_REQUESTS
+	int "Endpoint queue size"
+	default 4
+	depends on PLATFORM_USB_DEVICE
+
+endmenu

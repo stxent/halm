@@ -20,7 +20,7 @@
 #  define GEN_SPI         gen_1
 #  define GEN_UART        gen_1
 #  define PLATFORM        lpc11xx
-#  define PLATFORM_TYPE   nxp
+#  define PLATFORM_TYPE   lpc
 
 #elif defined(LPC11EXX)
 
@@ -34,7 +34,7 @@
 #  define GEN_SPI         gen_1
 #  define GEN_UART        gen_1
 #  define PLATFORM        lpc11exx
-#  define PLATFORM_TYPE   nxp
+#  define PLATFORM_TYPE   lpc
 
 #elif defined(LPC13XX)
 
@@ -48,7 +48,7 @@
 #  define GEN_UART        gen_1
 #  define GEN_USB         gen_1
 #  define PLATFORM        lpc13xx
-#  define PLATFORM_TYPE   nxp
+#  define PLATFORM_TYPE   lpc
 
 #elif defined(LPC13UXX)
 
@@ -62,7 +62,7 @@
 #  define GEN_UART        gen_1
 #  define GEN_USB         gen_1
 #  define PLATFORM        lpc13uxx
-#  define PLATFORM_TYPE   nxp
+#  define PLATFORM_TYPE   lpc
 
 #elif defined(LPC17XX)
 
@@ -79,7 +79,7 @@
 #  define GEN_UART        gen_1
 #  define GEN_USB         gen_1
 #  define PLATFORM        lpc17xx
-#  define PLATFORM_TYPE   nxp
+#  define PLATFORM_TYPE   lpc
 
 #elif defined(LPC43XX)
 
@@ -95,12 +95,12 @@
 #  define GEN_SPI         gen_1
 #  define GEN_UART        gen_1
 #  define PLATFORM        lpc43xx
-#  define PLATFORM_TYPE   nxp
+#  define PLATFORM_TYPE   lpc
 
 #elif defined(STM32F1XX)
 
 #  define PLATFORM        stm32f1xx
-#  define PLATFORM_TYPE   stm
+#  define PLATFORM_TYPE   stm32
 
 #else
 

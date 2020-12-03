@@ -3,9 +3,9 @@ if FAMILY_GENERIC_POSIX
 endif
 
 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
-	source "platform/nxp/Kconfig"
+	source "platform/lpc/Kconfig"
 endif
 
 if FAMILY_STM32F1XX
-	source "platform/stm/Kconfig"
+	source "platform/stm32/Kconfig"
 endif
