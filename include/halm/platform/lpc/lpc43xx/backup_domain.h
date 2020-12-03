@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/lpc43xx/backup_domain.h
  * Copyright (C) 2017 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_LPC43XX_BACKUP_DOMAIN_H_

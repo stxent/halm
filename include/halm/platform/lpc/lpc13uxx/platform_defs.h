@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/lpc13uxx/platform_defs.h
  * Based on original from NXP
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_LPC13UXX_PLATFORM_DEFS_H_

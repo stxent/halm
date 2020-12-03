@@ -1,7 +1,7 @@
 /*
  * pin_int.c
  * Copyright (C) 2014, 2020 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/lpc/gen_2/pin_int.h>

@@ -1,7 +1,7 @@
 /*
  * halm/core/cortex/armv6m/core_defs.h
  * Based on original from ARM Limited
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_CORE_CORTEX_ARMV6M_CORE_DEFS_H_

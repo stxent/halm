@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/lpc11exx/adc_base.h
  * Copyright (C) 2015 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_LPC11EXX_ADC_BASE_H_

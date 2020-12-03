@@ -1,7 +1,7 @@
 /*
  * halm/usb/usb_string.h
  * Copyright (C) 2016 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_USB_USB_STRING_H_

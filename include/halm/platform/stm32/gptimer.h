@@ -1,7 +1,7 @@
 /*
  * halm/platform/stm32/gptimer.h
  * Copyright (C) 2019 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_STM32_GPTIMER_H_

@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/lpc11xx/flash_defs.h
  * Copyright (C) 2016 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_LPC11XX_FLASH_DEFS_H_

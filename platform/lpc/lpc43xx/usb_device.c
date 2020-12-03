@@ -1,7 +1,7 @@
 /*
  * usb_device.c
  * Copyright (C) 2016 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/lpc/lpc43xx/usb_base.h>

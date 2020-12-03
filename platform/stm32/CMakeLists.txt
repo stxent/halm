@@ -1,5 +1,5 @@
 # Copyright (C) 2017 xent
-# Project is distributed under the terms of the GNU General Public License v3.0
+# Project is distributed under the terms of the MIT License
 
 string(TOLOWER ${PLATFORM} CMAKE_SYSTEM_SOC)
 

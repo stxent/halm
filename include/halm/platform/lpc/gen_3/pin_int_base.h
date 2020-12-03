@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/gen_3/pin_int_base.h
  * Copyright (C) 2020 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_GEN_3_PIN_INT_BASE_H_

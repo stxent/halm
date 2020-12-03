@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/gen_1/eeprom.h
  * Copyright (C) 2016, 2020 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_GEN_1_EEPROM_H_

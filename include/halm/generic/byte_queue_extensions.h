@@ -1,7 +1,7 @@
 /*
  * halm/generic/byte_queue_extensions.h
  * Copyright (C) 2017 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_GENERIC_BYTE_QUEUE_EXTENSIONS_H_

@@ -1,7 +1,7 @@
 /*
  * halm/core/cortex/systick_defs.h
  * Copyright (C) 2018 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_CORE_CORTEX_SYSTICK_DEFS_H_

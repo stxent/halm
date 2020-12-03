@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/dma_sdmmc.h
  * Copyright (C) 2014 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_DMA_SDMMC_H_

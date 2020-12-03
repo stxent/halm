@@ -1,7 +1,7 @@
 /*
  * halm/platform/generic/rtc.h
  * Copyright (C) 2018 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_GENERIC_RTC_H_

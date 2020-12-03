@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/lpc13uxx/adc_base.h
  * Copyright (C) 2020 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_LPC13UXX_ADC_BASE_H_

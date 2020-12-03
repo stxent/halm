@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/i2s_dma.h
  * Copyright (C) 2015 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_I2S_DMA_H_

@@ -1,7 +1,7 @@
 /*
  * halm/core/x86/irq.h
  * Copyright (C) 2018 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_CORE_X86_IRQ_H_

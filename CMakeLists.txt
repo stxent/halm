@@ -1,5 +1,5 @@
 # Copyright (C) 2017 xent
-# Project is distributed under the terms of the GNU General Public License v3.0
+# Project is distributed under the terms of the MIT License
 
 project(halm C)
 cmake_minimum_required(VERSION 3.13)

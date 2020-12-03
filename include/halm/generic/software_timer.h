@@ -1,7 +1,7 @@
 /*
  * halm/generic/software_timer.h
  * Copyright (C) 2016 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_GENERIC_SOFTWARE_TIMER_H_

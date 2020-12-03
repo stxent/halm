@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/flash_base.h
  * Copyright (C) 2020 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_FLASH_BASE_H_

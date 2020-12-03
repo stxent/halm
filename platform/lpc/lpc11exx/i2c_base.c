@@ -1,7 +1,7 @@
 /*
  * i2c_base.c
  * Copyright (C) 2013 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/lpc/gen_1/i2c_base.h>

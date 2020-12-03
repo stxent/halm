@@ -1,7 +1,7 @@
 /*
  * halm/core/x86/delay.h
  * Copyright (C) 2018 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_CORE_X86_DELAY_H_

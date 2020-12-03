@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/usb_device.h
  * Copyright (C) 2015 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_USB_DEVICE_H_

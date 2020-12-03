@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/rit_base.h
  * Copyright (C) 2018 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_RIT_BASE_H_

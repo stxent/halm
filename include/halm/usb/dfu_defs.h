@@ -1,7 +1,7 @@
 /*
  * halm/usb/dfu_defs.h
  * Copyright (C) 2017 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_USB_DFU_DEFS_H_

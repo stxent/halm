@@ -1,5 +1,5 @@
 # Copyright (C) 2020 xent
-# Project is distributed under the terms of the GNU General Public License v3.0
+# Project is distributed under the terms of the MIT License
 
 find_path(LIBUV_INCLUDE_DIR NAMES uv.h)
 find_library(LIBUV_LIBRARY NAMES uv libuv)

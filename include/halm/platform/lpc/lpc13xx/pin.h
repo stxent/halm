@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/lpc13xx/pin.h
  * Copyright (C) 2013 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_LPC13XX_PIN_H_

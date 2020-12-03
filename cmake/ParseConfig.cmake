@@ -1,5 +1,5 @@
 # Copyright (C) 2017 xent
-# Project is distributed under the terms of the GNU General Public License v3.0
+# Project is distributed under the terms of the MIT License
 
 function(parse_config _config_file _config_output)
     file(STRINGS "${_config_file}" _config_data)

@@ -1,7 +1,7 @@
 /*
  * halm/platform/stm32/stm32f1xx/platform_defs.h
  * Based on original from ST
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_STM32_STM32F1XX_PLATFORM_DEFS_H_

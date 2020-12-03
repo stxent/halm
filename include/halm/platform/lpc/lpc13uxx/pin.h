@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/lpc13uxx/pin.h
  * Copyright (C) 2020 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_LPC13UXX_PIN_H_

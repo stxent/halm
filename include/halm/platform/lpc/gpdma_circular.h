@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/gpdma_circular.h
  * Copyright (C) 2016 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_GPDMA_CIRCULAR_H_

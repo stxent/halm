@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/gen_1/adc_defs.h
  * Copyright (C) 2012 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_GEN_1_ADC_DEFS_H_
