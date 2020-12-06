@@ -76,13 +76,17 @@ endmenu
 
 menu "Peripherals"
 
+config PLATFORM_LPC_NO_DEINIT
+	bool "Disable destructors"
+	default n
+
 config PLATFORM_LPC_ADC_BASE
 	bool "ADC"
 	default y
 
 config PLATFORM_LPC_ADC_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_ADC_BASE
 
 config PLATFORM_LPC_ADC_ONESHOT
@@ -93,7 +97,7 @@ config PLATFORM_LPC_ADC_ONESHOT
 config PLATFORM_LPC_ADC_DMA
 	bool "Single channel ADC with DMA"
 	default y
-	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_NXP_GPDMA
+	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
 
 config PLATFORM_LPC_ADC_BUS
 	bool "Interrupt-driven ADC bus"
@@ -106,8 +110,8 @@ config PLATFORM_LPC_BOD
 	depends on FAMILY_LPC17XX
 
 config PLATFORM_LPC_BOD_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_BOD
 
 config PLATFORM_LPC_CAN
@@ -116,8 +120,8 @@ config PLATFORM_LPC_CAN
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_LPC_CAN_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_CAN
 
 config PLATFORM_LPC_CAN_TSEG1
@@ -141,8 +145,8 @@ config PLATFORM_LPC_DAC_BASE
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_LPC_DAC_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_DAC_BASE
 
 config PLATFORM_LPC_DAC
@@ -153,7 +157,7 @@ config PLATFORM_LPC_DAC
 config PLATFORM_LPC_DAC_DMA
 	bool "DAC driver with DMA"
 	default y
-	depends on PLATFORM_LPC_DAC_BASE && PLATFORM_NXP_GPDMA
+	depends on PLATFORM_LPC_DAC_BASE && PLATFORM_LPC_GPDMA
 
 config PLATFORM_LPC_EEPROM
 	bool "EEPROM"
@@ -171,8 +175,8 @@ config PLATFORM_LPC_EMC
 	  This enables driver for the External Memory Controller.
 
 config PLATFORM_LPC_EMC_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_EMC
 
 config PLATFORM_LPC_FAST_GPIO_BUS
@@ -214,8 +218,8 @@ config PLATFORM_LPC_GPTIMER_BASE
 	default y
 
 config PLATFORM_LPC_GPTIMER_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_GPTIMER_BASE
 
 config PLATFORM_LPC_GPTIMER_PM
@@ -249,8 +253,8 @@ config PLATFORM_LPC_GPPWM
 	depends on FAMILY_LPC17XX
 
 config PLATFORM_LPC_GPPWM_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_GPPWM
 
 config PLATFORM_LPC_I2C_BASE
@@ -258,8 +262,8 @@ config PLATFORM_LPC_I2C_BASE
 	default y
 
 config PLATFORM_LPC_I2C_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_I2C_BASE
 
 config PLATFORM_LPC_I2C_PM
@@ -283,8 +287,8 @@ config PLATFORM_LPC_I2S_BASE
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_LPC_I2S_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_I2S_BASE
 
 config PLATFORM_LPC_I2S_DMA
@@ -308,8 +312,8 @@ config PLATFORM_LPC_PININT
 	default y
 
 config PLATFORM_LPC_PININT_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_PININT
 
 config PLATFORM_LPC_RIT
@@ -318,8 +322,8 @@ config PLATFORM_LPC_RIT
 	depends on FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_LPC_RIT_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_RIT
 
 config PLATFORM_LPC_RTC
@@ -328,8 +332,8 @@ config PLATFORM_LPC_RTC
 	depends on FAMILY_LPC17XX || FAMILY_LPC43XX
 
 config PLATFORM_LPC_RTC_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_RTC
 
 config PLATFORM_LPC_SDMMC
@@ -345,8 +349,8 @@ config PLATFORM_LPC_SCT_BASE
 	  This is the driver for the State Configurable Timer peripheral.
 
 config PLATFORM_LPC_SCT_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_SCT_BASE
 
 config PLATFORM_LPC_SCT_PM
@@ -371,8 +375,8 @@ config PLATFORM_LPC_SSP_BASE
 	  This is the driver for the Synchronous Serial Port peripheral.
 
 config PLATFORM_LPC_SSP_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_SSP_BASE
 
 config PLATFORM_LPC_SSP_PM
@@ -393,7 +397,7 @@ config PLATFORM_LPC_SPI
 config PLATFORM_LPC_SPI_DMA
 	bool "SPI Master with DMA"
 	default y
-	depends on PLATFORM_LPC_SSP_BASE && PLATFORM_NXP_GPDMA
+	depends on PLATFORM_LPC_SSP_BASE && PLATFORM_LPC_GPDMA
 
 config PLATFORM_LPC_ONE_WIRE_SSP
 	bool "1-Wire using SSP peripheral"
@@ -410,8 +414,8 @@ config PLATFORM_LPC_UART_BASE
 	default y
 
 config PLATFORM_LPC_UART_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_UART_BASE
 
 config PLATFORM_LPC_UART_PM
@@ -437,7 +441,7 @@ config PLATFORM_LPC_SERIAL_POLL
 config PLATFORM_LPC_SERIAL_DMA
 	bool "Serial port driver with DMA"
 	default y
-	depends on PLATFORM_LPC_UART_BASE && PLATFORM_NXP_GPDMA
+	depends on PLATFORM_LPC_UART_BASE && PLATFORM_LPC_GPDMA
 
 config PLATFORM_LPC_ONE_WIRE_UART
 	bool "1-Wire using UART peripheral"
@@ -451,8 +455,8 @@ config PLATFORM_USB
 	select PLATFORM_USB_DMA if FAMILY_LPC43XX
 
 config PLATFORM_USB_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_USB
 
 config PLATFORM_USB_DMA
@@ -493,8 +497,8 @@ config PLATFORM_LPC_WAKEUPINT
 	depends on PM && (FAMILY_LPC11XX || FAMILY_LPC13XX)
 
 config PLATFORM_LPC_WAKEUPINT_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_WAKEUPINT
 
 config PLATFORM_LPC_WDT

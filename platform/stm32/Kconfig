@@ -10,6 +10,10 @@ endmenu
 
 menu "Peripherals"
 
+config PLATFORM_STM32_NO_DEINIT
+	bool "Disable destructors"
+	default n
+
 config PLATFORM_STM32_CAN
 	bool "bxCAN"
 	default y
@@ -17,8 +21,8 @@ config PLATFORM_STM32_CAN
 	  This is the driver for the Controller Area Network peripheral.
 
 config PLATFORM_STM32_CAN_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_CAN
 
 config PLATFORM_STM32_CAN_TSEG1
@@ -45,8 +49,8 @@ config PLATFORM_STM32_GPTIMER_BASE
 	default y
 
 config PLATFORM_STM32_GPTIMER_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_GPTIMER_BASE
 
 config PLATFORM_STM32_GPTIMER_PM
@@ -66,8 +70,8 @@ config PLATFORM_STM32_SPI_BASE
 	  This is the driver for the Serial Peripheral Interface.
 
 config PLATFORM_STM32_SPI_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_SPI_BASE
 
 config PLATFORM_STM32_SPI_RC
@@ -85,8 +89,8 @@ config PLATFORM_STM32_UART_BASE
 	default y
 
 config PLATFORM_STM32_UART_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_UART_BASE
 
 config PLATFORM_STM32_UART_RC
@@ -104,8 +108,8 @@ config PLATFORM_USB
 	default y
 
 config PLATFORM_USB_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_USB
 
 config PLATFORM_USB_DEVICE

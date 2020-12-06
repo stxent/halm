@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#ifdef CONFIG_FPU
+#ifdef CONFIG_CORE_CORTEX_FPU
 #include <halm/core/cortex/fpu.h>
 #endif
 
@@ -74,7 +74,7 @@ void platformStartup(void)
   for (size_t index = 0; index < ARRAY_SIZE(clocksToDisable); ++index)
     sysClockDisable(clocksToDisable[index]);
 
-#ifdef CONFIG_FPU
+#ifdef CONFIG_CORE_CORTEX_FPU
   fpuEnable();
 #endif
 

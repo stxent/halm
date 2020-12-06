@@ -1,4 +1,8 @@
-config FPU
+config CORE_CORTEX_NO_DEINIT
+	bool "Disable destructors"
+	default n
+
+config CORE_CORTEX_FPU
 	bool "FPU"
 	default y
 	depends on CORE_CORTEX_M4
@@ -13,6 +17,6 @@ config CORE_CORTEX_SYSTICK
 	  This is the driver for the System Timer peripheral.
 
 config CORE_CORTEX_SYSTICK_NO_DEINIT
-	bool "Disable destructors"
-	default n
+	bool
+	default y if CORE_CORTEX_NO_DEINIT
 	depends on CORE_CORTEX_SYSTICK
