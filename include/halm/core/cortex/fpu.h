@@ -12,5 +12,6 @@
 #undef HEADER_PATH
 #define HEADER_PATH <halm/core/CORE_TYPE/CORE/fpu.h>
 #include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_FPU_H_ */

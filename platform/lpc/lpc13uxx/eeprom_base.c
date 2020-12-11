@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/gen_1/eeprom_base.h>
 #include <halm/platform/lpc/iap.h>
-#include <halm/platform/lpc/lpc13uxx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *, const void *);
 /*----------------------------------------------------------------------------*/

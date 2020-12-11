@@ -5,17 +5,11 @@
  */
 
 #include <halm/irq.h>
+#include <halm/platform/lpc/clocking.h>
+#include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/iap.h>
 #include <halm/target.h>
-#include <xcore/bits.h>
 #include <assert.h>
-/*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/flash_defs.h>
-#include HEADER_PATH
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/clocking.h>
-#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 enum IapCommand
 {

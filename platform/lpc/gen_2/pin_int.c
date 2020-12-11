@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/gen_2/pin_int.h>
+#include <halm/platform/lpc/pin_int.h>
 #include <xcore/accel.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/

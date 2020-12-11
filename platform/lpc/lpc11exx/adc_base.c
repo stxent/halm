@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/gen_1/adc_base.h>
+#include <halm/platform/lpc/adc_base.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/gen_1/adc_defs.h>
-#include <halm/platform/lpc/lpc11exx/clocking.h>
-#include <halm/platform/lpc/lpc11exx/system.h>
+#include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY                 4500000

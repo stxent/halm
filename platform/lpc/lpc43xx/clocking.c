@@ -5,10 +5,10 @@
  */
 
 #include <halm/delay.h>
-#include <halm/platform/lpc/lpc43xx/clocking.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/lpc43xx/clocking_defs.h>
-#include <halm/platform/lpc/lpc43xx/system.h>
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
+#include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
 #include <xcore/accel.h>
 #include <assert.h>

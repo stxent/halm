@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc17xx/system.h>
 #include <halm/platform/lpc/lpc17xx/usb_base.h>
 #include <halm/platform/lpc/lpc17xx/usb_defs.h>
+#include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);

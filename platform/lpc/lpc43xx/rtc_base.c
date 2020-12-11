@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/gen_1/rtc_base.h>
+#include <halm/platform/lpc/rtc_base.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct RtcBase *);

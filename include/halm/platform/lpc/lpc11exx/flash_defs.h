@@ -4,6 +4,10 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#ifndef HALM_PLATFORM_LPC_FLASH_DEFS_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_PLATFORM_LPC_LPC11EXX_FLASH_DEFS_H_
 #define HALM_PLATFORM_LPC_LPC11EXX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/

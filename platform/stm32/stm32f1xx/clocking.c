@@ -6,9 +6,9 @@
 
 #include <halm/clock.h>
 #include <halm/platform/platform_defs.h>
-#include <halm/platform/stm32/stm32f1xx/clocking.h>
+#include <halm/platform/stm32/clocking.h>
 #include <halm/platform/stm32/stm32f1xx/clocking_defs.h>
-#include <halm/platform/stm32/stm32f1xx/system.h>
+#include <halm/platform/stm32/system.h>
 #include <xcore/accel.h>
 #include <assert.h>
 #include <stdbool.h>

@@ -5,8 +5,8 @@
  */
 
 #include <halm/platform/lpc/flash_base.h>
+#include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/iap.h>
-#include <halm/platform/lpc/lpc17xx/flash_defs.h>
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *, const void *);
 /*----------------------------------------------------------------------------*/

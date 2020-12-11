@@ -7,12 +7,7 @@
 #ifndef HALM_PLATFORM_LPC_SERIAL_POLL_H_
 #define HALM_PLATFORM_LPC_SERIAL_POLL_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/target.h>
-/*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_UART/uart_base.h>
-#include HEADER_PATH
-#undef HEADER_PATH
+#include <halm/platform/lpc/uart_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SerialPoll;
 

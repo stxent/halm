@@ -9,6 +9,10 @@
  * Clock configuration functions for LPC43xx series.
  */
 
+#ifndef HALM_PLATFORM_LPC_CLOCKING_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_PLATFORM_LPC_LPC43XX_CLOCKING_H_
 #define HALM_PLATFORM_LPC_LPC43XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/

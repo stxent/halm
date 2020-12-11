@@ -5,8 +5,8 @@
  */
 
 #include <halm/generic/flash.h>
-#include <halm/platform/lpc/gen_1/flash.h>
-#include <halm/platform/lpc/gen_1/flash_defs.h>
+#include <halm/platform/lpc/flash.h>
+#include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/iap.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/

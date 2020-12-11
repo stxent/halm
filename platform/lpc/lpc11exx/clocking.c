@@ -5,9 +5,9 @@
  */
 
 #include <halm/delay.h>
-#include <halm/platform/lpc/lpc11exx/clocking.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/lpc11exx/clocking_defs.h>
-#include <halm/platform/lpc/lpc11exx/system.h>
+#include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/

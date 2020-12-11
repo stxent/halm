@@ -9,6 +9,10 @@
  * System configuration functions for LPC43xx chips.
  */
 
+#ifndef HALM_PLATFORM_LPC_SYSTEM_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_PLATFORM_LPC_LPC43XX_SYSTEM_H_
 #define HALM_PLATFORM_LPC_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/

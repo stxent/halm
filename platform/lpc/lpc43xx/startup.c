@@ -8,9 +8,8 @@
 #include <halm/core/cortex/fpu.h>
 #endif
 
-#include <halm/platform/lpc/lpc43xx/system.h>
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
-#include <xcore/bits.h>
+#include <halm/platform/lpc/system.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)

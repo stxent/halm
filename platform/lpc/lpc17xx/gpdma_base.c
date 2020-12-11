@@ -7,7 +7,7 @@
 #include <halm/irq.h>
 #include <halm/platform/lpc/gpdma_base.h>
 #include <halm/platform/lpc/gpdma_defs.h>
-#include <halm/platform/lpc/lpc17xx/system.h>
+#include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
 #include <xcore/accel.h>
 #include <xcore/memory.h>

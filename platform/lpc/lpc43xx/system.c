@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc43xx/system.h>
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
+#include <halm/platform/lpc/system.h>
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcBranchReg(enum SysClockBranch branch)
 {

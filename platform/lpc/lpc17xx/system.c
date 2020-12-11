@@ -5,8 +5,8 @@
  */
 
 #include <halm/platform/lpc/lpc17xx/clocking_defs.h>
-#include <halm/platform/lpc/lpc17xx/system.h>
 #include <halm/platform/lpc/lpc17xx/system_defs.h>
+#include <halm/platform/lpc/system.h>
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /**

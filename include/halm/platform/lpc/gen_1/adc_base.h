@@ -4,6 +4,10 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#ifndef HALM_PLATFORM_LPC_ADC_BASE_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_PLATFORM_LPC_GEN_1_ADC_BASE_H_
 #define HALM_PLATFORM_LPC_GEN_1_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
@@ -11,11 +15,6 @@
 #include <halm/pin.h>
 #include <xcore/interface.h>
 #include <stdbool.h>
-/*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/adc_base.h>
-#include HEADER_PATH
-#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const AdcBase;
 

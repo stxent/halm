@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/gen_1/uart_base.h>
 #include <halm/platform/lpc/gen_1/uart_defs.h>
+#include <halm/platform/lpc/uart_base.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];

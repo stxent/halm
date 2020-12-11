@@ -8,7 +8,7 @@
 #include <halm/platform/stm32/stm32f1xx/pin_defs.h>
 #include <halm/platform/stm32/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm32/stm32f1xx/pin_remap_defs.h>
-#include <halm/platform/stm32/stm32f1xx/system.h>
+#include <halm/platform/stm32/system.h>
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/

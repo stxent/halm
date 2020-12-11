@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc13uxx/system.h>
 #include <halm/platform/lpc/lpc13uxx/usb_base.h>
 #include <halm/platform/lpc/lpc13uxx/usb_defs.h>
+#include <halm/platform/lpc/system.h>
 #include <xcore/memory.h>
 #include <assert.h>
 #include <malloc.h>

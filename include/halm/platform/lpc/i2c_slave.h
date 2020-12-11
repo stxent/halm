@@ -7,13 +7,8 @@
 #ifndef HALM_PLATFORM_LPC_I2C_SLAVE_H_
 #define HALM_PLATFORM_LPC_I2C_SLAVE_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/target.h>
+#include <halm/platform/lpc/i2c_base.h>
 #include <stdbool.h>
-/*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_I2C/i2c_base.h>
-#include HEADER_PATH
-#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2CSlave;
 

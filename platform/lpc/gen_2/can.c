@@ -5,7 +5,7 @@
  */
 
 #include <halm/generic/can.h>
-#include <halm/platform/lpc/gen_2/can.h>
+#include <halm/platform/lpc/can.h>
 #include <halm/platform/lpc/gen_2/can_defs.h>
 #include <halm/timer.h>
 #include <assert.h>

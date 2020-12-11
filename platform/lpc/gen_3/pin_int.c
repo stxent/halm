@@ -5,7 +5,7 @@
  */
 
 #include <halm/platform/lpc/gen_3/pin_defs.h>
-#include <halm/platform/lpc/gen_3/pin_int.h>
+#include <halm/platform/lpc/pin_int.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void disableInterrupt(const struct PinInt *);

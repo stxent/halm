@@ -4,6 +4,10 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#ifndef HALM_PLATFORM_LPC_CAN_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_PLATFORM_LPC_GEN_2_CAN_H_
 #define HALM_PLATFORM_LPC_GEN_2_CAN_H_
 /*----------------------------------------------------------------------------*/

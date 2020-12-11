@@ -5,8 +5,8 @@
  */
 
 #include <halm/platform/lpc/lpc17xx/pin_defs.h>
-#include <halm/platform/lpc/lpc17xx/system.h>
-#include <halm/platform/lpc/lpc17xx/pin_int.h>
+#include <halm/platform/lpc/pin_int.h>
+#include <halm/platform/lpc/system.h>
 #include <xcore/accel.h>
 #include <assert.h>
 #include <string.h>

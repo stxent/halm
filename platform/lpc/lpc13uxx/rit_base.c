@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc13uxx/clocking.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/rit_base.h>
 /*----------------------------------------------------------------------------*/
 uint32_t ritGetClock(void)

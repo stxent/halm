@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc13uxx/clocking.h>
-#include <halm/platform/lpc/lpc13uxx/system.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/lpc13uxx/system_defs.h>
 #include <halm/platform/lpc/ssp_base.h>
+#include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 /* SSP clock divisor is the number from 1 to 255 or 0 to disable */

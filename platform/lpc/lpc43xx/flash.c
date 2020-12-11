@@ -6,8 +6,8 @@
 
 #include <halm/generic/flash.h>
 #include <halm/platform/lpc/flash.h>
+#include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/iap.h>
-#include <halm/platform/lpc/lpc43xx/flash_defs.h>
 #include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/

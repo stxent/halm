@@ -5,9 +5,9 @@
  */
 
 #include <halm/pin.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/gppwm_base.h>
-#include <halm/platform/lpc/lpc17xx/clocking.h>
-#include <halm/platform/lpc/lpc17xx/system.h>
+#include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1

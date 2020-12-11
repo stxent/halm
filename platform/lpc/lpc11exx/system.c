@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc11exx/system.h>
 #include <halm/platform/lpc/lpc11exx/system_defs.h>
+#include <halm/platform/lpc/system.h>
 /*----------------------------------------------------------------------------*/
 unsigned int sysFlashLatency(void)
 {

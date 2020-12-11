@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/gen_1/i2c_base.h>
 #include <halm/platform/lpc/gen_1/i2c_defs.h>
+#include <halm/platform/lpc/i2c_base.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry i2cPins[];

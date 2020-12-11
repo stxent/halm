@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/stm32/stm32f1xx/system.h>
-#include <halm/platform/stm32/stm32f1xx/system_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <halm/platform/stm32/stm32f1xx/system_defs.h>
+#include <halm/platform/stm32/system.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 void pmPlatformChangeState(enum PmState);

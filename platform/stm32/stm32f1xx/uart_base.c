@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/stm32/stm32f1xx/clocking.h>
+#include <halm/platform/stm32/clocking.h>
 #include <halm/platform/stm32/stm32f1xx/pin_remap.h>
-#include <halm/platform/stm32/stm32f1xx/system.h>
+#include <halm/platform/stm32/system.h>
 #include <halm/platform/stm32/uart_base.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/

@@ -4,10 +4,10 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/lpc/clocking.h>
+#include <halm/platform/lpc/system.h>
 #include <halm/platform/lpc/wdt_base.h>
 #include <halm/platform/lpc/wdt_defs.h>
-#include <halm/platform/lpc/lpc43xx/clocking.h>
-#include <halm/platform/lpc/lpc43xx/system.h>
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct WdtBase *);
 

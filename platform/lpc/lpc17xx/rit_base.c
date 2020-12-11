@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc17xx/clocking.h>
-#include <halm/platform/lpc/lpc17xx/system.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/rit_base.h>
+#include <halm/platform/lpc/system.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/

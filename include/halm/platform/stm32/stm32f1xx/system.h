@@ -9,6 +9,10 @@
  * System configuration functions for STM32F1xx chips.
  */
 
+#ifndef HALM_PLATFORM_STM32_SYSTEM_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_PLATFORM_STM32_STM32F1XX_SYSTEM_H_
 #define HALM_PLATFORM_STM32_STM32F1XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/

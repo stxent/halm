@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/i2s_base.h>
-#include <halm/platform/lpc/lpc17xx/clocking.h>
-#include <halm/platform/lpc/lpc17xx/system.h>
+#include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 /* PCLK for I2S must not be higher than 74 MHz */

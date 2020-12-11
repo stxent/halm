@@ -5,10 +5,10 @@
  */
 
 #include <halm/irq.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/emc_base.h>
 #include <halm/platform/lpc/emc_defs.h>
-#include <halm/platform/lpc/lpc43xx/clocking.h>
-#include <halm/platform/lpc/lpc43xx/system.h>
+#include <halm/platform/lpc/system.h>
 #include <xcore/bits.h>
 #include <assert.h>
 #include <stddef.h>

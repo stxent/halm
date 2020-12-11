@@ -5,7 +5,7 @@
  */
 
 #include <halm/generic/pointer_list.h>
-#include <halm/platform/lpc/gen_2/wakeup_int.h>
+#include <halm/platform/lpc/wakeup_int.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct StartLogicHandler

@@ -4,6 +4,10 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#ifndef HALM_IRQ_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_CORE_X86_IRQ_H_
 #define HALM_CORE_X86_IRQ_H_
 /*----------------------------------------------------------------------------*/

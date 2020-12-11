@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc17xx/system.h>
 #include <halm/platform/lpc/lpc17xx/system_defs.h>
+#include <halm/platform/lpc/system.h>
 #include <xcore/bits.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/

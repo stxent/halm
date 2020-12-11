@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc43xx/clocking.h>
-#include <halm/platform/lpc/lpc43xx/system.h>
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/sdmmc_base.h>
+#include <halm/platform/lpc/system.h>
 #include <xcore/bits.h>
 /*----------------------------------------------------------------------------*/
 #define SDDELAY_SAMPLE(value) BIT_FIELD((value), 0)

@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/gen_1/uart_base.h>
-#include <halm/platform/lpc/lpc13xx/clocking.h>
-#include <halm/platform/lpc/lpc13xx/system.h>
+#include <halm/platform/lpc/clocking.h>
+#include <halm/platform/lpc/system.h>
+#include <halm/platform/lpc/uart_base.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 /* UART clock divisor is the number from 1 to 255 or 0 to disable */

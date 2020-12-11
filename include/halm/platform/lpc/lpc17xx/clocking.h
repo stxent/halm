@@ -9,6 +9,10 @@
  * Clock configuration functions for LPC175x and LPC176x series.
  */
 
+#ifndef HALM_PLATFORM_LPC_CLOCKING_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_PLATFORM_LPC_LPC17XX_CLOCKING_H_
 #define HALM_PLATFORM_LPC_LPC17XX_CLOCKING_H_
 /*----------------------------------------------------------------------------*/

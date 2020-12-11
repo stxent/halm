@@ -7,13 +7,8 @@
 #ifndef HALM_PLATFORM_LPC_DAC_H_
 #define HALM_PLATFORM_LPC_DAC_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/target.h>
+#include <halm/platform/lpc/dac_base.h>
 #include <xcore/interface.h>
-/*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_DAC/dac_base.h>
-#include HEADER_PATH
-#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Dac;
 

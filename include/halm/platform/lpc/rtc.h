@@ -7,12 +7,7 @@
 #ifndef HALM_PLATFORM_LPC_RTC_H_
 #define HALM_PLATFORM_LPC_RTC_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/target.h>
-/*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_RTC/rtc_base.h>
-#include HEADER_PATH
-#undef HEADER_PATH
+#include <halm/platform/lpc/rtc_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct RtClockClass * const Rtc;
 

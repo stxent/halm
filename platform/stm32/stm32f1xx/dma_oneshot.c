@@ -4,9 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/stm32/stm32f1xx/dma_defs.h>
-#include <halm/platform/stm32/stm32f1xx/dma_oneshot.h>
 #include <halm/platform/platform_defs.h>
+#include <halm/platform/stm32/dma_oneshot.h>
+#include <halm/platform/stm32/stm32f1xx/dma_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 enum State

@@ -4,7 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/stm32/stm32f1xx/system.h>
+#include <halm/platform/stm32/system.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)

@@ -4,10 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/gen_1/can_base.h>
-#include <halm/platform/lpc/gen_1/can_defs.h>
-#include <halm/platform/lpc/lpc17xx/clocking.h>
-#include <halm/platform/lpc/lpc17xx/system.h>
+#include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
