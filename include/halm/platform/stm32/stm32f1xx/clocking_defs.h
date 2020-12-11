@@ -38,6 +38,15 @@ enum
   CFGR_SW_PLL = 0x02
 };
 
+enum
+{
+  CFGR_MCO_NONE       = 0x00,
+  CFGR_MCO_SYSCLK     = 0x04,
+  CFGR_MCO_HSI        = 0x05,
+  CFGR_MCO_HSE        = 0x06,
+  CFGR_MCO_PLL_DIV_2  = 0x07
+};
+
 #define CFGR_SW_MASK                    BIT_FIELD(MASK(2), 0)
 #define CFGR_SW(value)                  BIT_FIELD((value), 0)
 #define CFGR_SW_VALUE(reg)              FIELD_VALUE((reg), CFGR_SW_MASK, 0)
@@ -69,7 +78,7 @@ enum
 #define CFGR_PLLMUL(value)              BIT_FIELD((value), 18)
 #define CFGR_PLLMUL_VALUE(reg)          FIELD_VALUE((reg), CFGR_PLLMUL_MASK, 18)
 
-#define CFGR_OTGFSPRE                   BIT(22)
+#define CFGR_USBPRE                     BIT(22)
 
 #define CFGR_MCO_MASK                   BIT_FIELD(MASK(4), 24)
 #define CFGR_MCO(value)                 BIT_FIELD((value), 24)

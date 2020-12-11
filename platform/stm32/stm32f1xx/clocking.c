@@ -44,6 +44,9 @@ static bool mainPllReady(const void *);
 static enum Result systemClockEnable(const void *, const void *);
 static uint32_t systemClockFrequency(const void *);
 
+static enum Result usbClockEnable(const void *, const void *);
+static uint32_t usbClockFrequency(const void *);
+
 static enum Result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
 static enum Result adcClockEnable(const void *, const void *);
@@ -85,6 +88,13 @@ const struct ClockClass * const MainClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = mainClockEnable,
     .frequency = mainClockFrequency,
+    .ready = clockReadyStub
+};
+
+const struct ClockClass * const UsbClock = &(const struct ClockClass){
+    .disable = clockDisableStub,
+    .enable = usbClockEnable,
+    .frequency = usbClockFrequency,
     .ready = clockReadyStub
 };
 
@@ -358,6 +368,29 @@ static uint32_t mainClockFrequency(const void *clockBase
 {
   const uint32_t divisor = ahbPrescalerToValue(CFGR_HPRE_VALUE(STM_RCC->CFGR));
   return systemClockFrequency(0) / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result usbClockEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
+{
+  const struct UsbClockConfig * const config = configBase;
+  assert(config->divisor == USB_CLK_DIV_1
+      || config->divisor == USB_CLK_DIV_1_5);
+
+  if (config->divisor == USB_CLK_DIV_1_5)
+    STM_RCC->CFGR &= ~CFGR_USBPRE;
+  else
+    STM_RCC->CFGR |= CFGR_USBPRE;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t usbClockFrequency(const void *clockBase __attribute__((unused)))
+{
+  if (STM_RCC->CFGR & CFGR_USBPRE)
+    return pllFrequency;
+  else
+    return (pllFrequency * 3) / 2;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcClockEnable(const void *clockBase

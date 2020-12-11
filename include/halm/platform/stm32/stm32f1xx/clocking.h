@@ -98,6 +98,23 @@ struct SystemClockConfig
 /* Requires a SystemClockConfig structure */
 extern const struct ClockClass * const SystemClock;
 /*----------------------------------------------------------------------------*/
+enum UsbClockPrescaler
+{
+  /** PLL clock is not divided. */
+  USB_CLK_DIV_1,
+  /** PLL clock is divided by 1.5. */
+  USB_CLK_DIV_1_5
+};
+
+struct UsbClockConfig
+{
+  /** Mandatory: PLL clock prescaler. */
+  enum UsbClockPrescaler divisor;
+};
+
+/* Require a UsbClockConfig structure */
+extern const struct ClockClass * const UsbClock;
+/*----------------------------------------------------------------------------*/
 struct BusClockConfig
 {
   /**
