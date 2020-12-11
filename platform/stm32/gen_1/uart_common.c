@@ -5,7 +5,7 @@
  */
 
 #include <halm/platform/stm32/uart_base.h>
-#include <halm/platform/stm32/uart_defs.h>
+#include <halm/platform/stm32/gen_1/uart_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];
@@ -62,11 +62,11 @@ uint32_t uartGetRate(const struct UartBase *interface)
 void uartSetParity(struct UartBase *interface, enum SerialParity parity)
 {
   STM_USART_Type * const reg = interface->reg;
-  uint32_t value = reg->CR1 & ~(CR1_PS | CR1_PCE | CR1_M);
+  uint32_t value = reg->CR1 & ~(CR1_PS | CR1_PCE | CR1_M0);
 
   if (parity != SERIAL_PARITY_NONE)
   {
-    value |= CR1_PCE | CR1_M;
+    value |= CR1_PCE | CR1_M0;
     if (parity == SERIAL_PARITY_ODD)
       value |= CR1_PS;
   }
@@ -77,5 +77,7 @@ void uartSetParity(struct UartBase *interface, enum SerialParity parity)
 void uartSetRate(struct UartBase *interface, uint32_t rate)
 {
   STM_USART_Type * const reg = interface->reg;
-  reg->BRR = rate ? ((uartGetClock(interface) + rate / 2) / rate) : 0;
+  const uint32_t clock = uartGetClock(interface);
+
+  reg->BRR = rate ? ((clock + rate / 2) / rate) : 0;
 }

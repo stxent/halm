@@ -1,0 +1,117 @@
+menu "Enabled peripherals"
+
+menu "General Purpose Timers"
+
+config PLATFORM_STM32_TIM1
+	bool "TIM1"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM2
+	bool "TIM2"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM3
+	bool "TIM3"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM6
+	bool "TIM6"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+	help
+	  TIM6 is available on STM32F05x, STM32F07x and STM32F09x devices only.
+
+config PLATFORM_STM32_TIM7
+	bool "TIM7"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+	help
+	  TIM7 is available on STM32F07x and STM32F09x devices only.
+
+config PLATFORM_STM32_TIM14
+	bool "TIM14"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM15
+	bool "TIM15"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+	help
+	  TIM15 is not available on STM32F03x devices.
+
+config PLATFORM_STM32_TIM16
+	bool "TIM16"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM17
+	bool "TIM17"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+endmenu
+
+menu "UART"
+
+config PLATFORM_STM32_USART1
+	bool "USART1"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_USART2
+	bool "USART2"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+	help
+	  USART2 is available on STM32F04x, STM32F05x, STM32F07x
+	  and STM32F09x devices only.
+
+config PLATFORM_STM32_USART3
+	bool "USART3"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+	help
+	  USART3 is available on STM32F07x and STM32F09x devices only.
+
+config PLATFORM_STM32_USART4
+	bool "USART4"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+	help
+	  USART4 is available on STM32F07x and STM32F09x devices only.
+
+config PLATFORM_STM32_USART5
+	bool "USART5"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+	help
+	  USART5 is available on STM32F09x devices only.
+
+config PLATFORM_STM32_USART6
+	bool "USART6"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+	help
+	  USART6 is available on STM32F09x devices only.
+
+config PLATFORM_STM32_USART7
+	bool "USART7"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+	help
+	  USART7 is available on STM32F09x devices only.
+
+config PLATFORM_STM32_USART8
+	bool "USART8"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+	help
+	  USART8 is available on STM32F09x devices only.
+
+endmenu
+
+endmenu

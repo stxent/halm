@@ -81,32 +81,7 @@ enum
   CAN2_RX0_IRQ           = 64,
   CAN2_RX1_IRQ           = 65,
   CAN2_SCE_IRQ           = 66,
-  OTG_FS_IRQ             = 67,
-
-  /* Virtual interrupt sources */
-  ADC1_IRQ               = ADC1_2_IRQ,
-  ADC2_IRQ               = ADC1_2_IRQ,
-  USB_HP_IRQ             = USB_HP_CAN1_TX_IRQ,
-  CAN1_TX_IRQ            = USB_HP_CAN1_TX_IRQ,
-  USB_LP_IRQ             = USB_LP_CAN1_RX0_IRQ,
-  CAN1_RX0_IRQ           = USB_LP_CAN1_RX0_IRQ,
-  TIM1_BRK_IRQ           = TIM1_BRK_TIM15_IRQ,
-  TIM15_IRQ              = TIM1_BRK_TIM15_IRQ,
-  TIM1_UP_IRQ            = TIM1_UP_TIM16_IRQ,
-  TIM16_IRQ              = TIM1_UP_TIM16_IRQ,
-  TIM1_TRG_COM_IRQ       = TIM1_TRG_COM_TIM17_IRQ,
-  TIM17_IRQ              = TIM1_TRG_COM_TIM17_IRQ,
-  USB_WAKEUP_IRQ         = USB_WAKEUP_CEC_IRQ,
-  CEC_IRQ                = USB_WAKEUP_CEC_IRQ,
-  TIM8_BRK_IRQ           = TIM8_BRK_TIM12_IRQ,
-  TIM12_IRQ              = TIM8_BRK_TIM12_IRQ,
-  TIM8_UP_IRQ            = TIM8_UP_TIM13_IRQ,
-  TIM13_IRQ              = TIM8_UP_TIM13_IRQ,
-  TIM8_TRG_COM_IRQ       = TIM8_TRG_COM_TIM14_IRQ,
-  TIM14_IRQ              = TIM8_TRG_COM_TIM14_IRQ,
-  DAC_IRQ                = DAC_TIM6_IRQ,
-  TIM6_IRQ               = DAC_TIM6_IRQ,
-  DMA2_CHANNEL4_IRQ      = DMA2_CHANNEL4_5_IRQ
+  OTG_FS_IRQ             = 67
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F1XX_VECTORS_H_ */

@@ -97,8 +97,17 @@
 #  define PLATFORM        lpc43xx
 #  define PLATFORM_TYPE   lpc
 
+#elif defined(STM32F0XX)
+
+#  define GEN_PIN         gen_1
+#  define GEN_UART        gen_2
+#  define PLATFORM        stm32f0xx
+#  define PLATFORM_TYPE   stm32
+
 #elif defined(STM32F1XX)
 
+#  define GEN_PIN         gen_1
+#  define GEN_UART        gen_1
 #  define PLATFORM        stm32f1xx
 #  define PLATFORM_TYPE   stm32
 

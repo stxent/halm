@@ -1,0 +1,66 @@
+[
+  {
+    "address": "0x40000000",
+    "name": "APB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "TIM2", "type": "STM_TIM_Type"},
+      {"offset": "0x00400", "name": "TIM3", "type": "STM_TIM_Type"},
+      {"offset": "0x01000", "name": "TIM6", "type": "STM_TIM_Type"},
+      {"offset": "0x01400", "name": "TIM7", "type": "STM_TIM_Type"},
+      {"offset": "0x02000", "name": "TIM14", "type": "STM_TIM_Type"},
+      {"offset": "0x02800", "name": "RTC", "type": "STM_RTC_Type"},
+      {"offset": "0x02C00", "name": "WWDG", "type": "STM_WWDG_Type"},
+      {"offset": "0x03000", "name": "IWDG", "type": "STM_IWDG_Type"},
+      {"offset": "0x03800", "name": "SPI2", "type": "STM_SPI_Type"},
+      {"offset": "0x04400", "name": "USART2", "type": "STM_USART_Type"},
+      {"offset": "0x04800", "name": "USART3", "type": "STM_USART_Type"},
+      {"offset": "0x04C00", "name": "USART4", "type": "STM_USART_Type"},
+      {"offset": "0x05000", "name": "USART5", "type": "STM_USART_Type"},
+      {"offset": "0x05400", "name": "I2C1", "type": "STM_I2C_Type"},
+      {"offset": "0x05800", "name": "I2C2", "type": "STM_I2C_Type"},
+      {"offset": "0x05C00", "name": "USB", "type": "STM_USB_Type"},
+      {"offset": "0x06000", "name": "CAN_USB_SRAM", "type": "__rw__ uint16_t", "array": 512},
+      {"offset": "0x06400", "name": "CAN", "type": "STM_CAN_Type", "aligned": true},
+      {"offset": "0x06C00", "name": "CRS", "type": "STM_CRS_Type"},
+      {"offset": "0x07000", "name": "PWR", "type": "STM_PWR_Type"},
+      {"offset": "0x07400", "name": "DAC", "type": "STM_DAC_Type"},
+      {"offset": "0x07800", "name": "CEC", "type": "STM_CEC_Type"},
+      {"offset": "0x10000", "name": "SYSCFG", "type": "STM_SYSCFG_Type"},
+      {"offset": "0x1001C", "name": "COMP", "type": "STM_COMP_Type"},
+      {"offset": "0x10400", "name": "EXTI", "type": "STM_EXTI_Type"},
+      {"offset": "0x11400", "name": "USART6", "type": "STM_USART_Type"},
+      {"offset": "0x11800", "name": "USART7", "type": "STM_USART_Type"},
+      {"offset": "0x11C00", "name": "USART8", "type": "STM_USART_Type"},
+      {"offset": "0x12400", "name": "ADC", "type": "STM_ADC_Type"},
+      {"offset": "0x12C00", "name": "TIM1", "type": "STM_TIM_Type"},
+      {"offset": "0x13000", "name": "SPI1", "type": "STM_SPI_Type"},
+      {"offset": "0x13800", "name": "USART1", "type": "STM_USART_Type"},
+      {"offset": "0x14000", "name": "TIM15", "type": "STM_TIM_Type"},
+      {"offset": "0x14400", "name": "TIM16", "type": "STM_TIM_Type"},
+      {"offset": "0x14800", "name": "TIM17", "type": "STM_TIM_Type"},
+      {"offset": "0x15800", "name": "DBGMCU", "type": "STM_DBGMCU_Type"}
+    ]
+  },
+  {
+    "address": "0x40020000",
+    "name": "AHB1_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "DMA1", "type": "STM_DMA_Type"},
+      {"offset": "0x00400", "name": "DMA2", "type": "STM_DMA_Type"},
+      {"offset": "0x01000", "name": "RCC", "type": "STM_RCC_Type"},
+      {"offset": "0x02000", "name": "FLASH", "type": "STM_FLASH_Type"},
+      {"offset": "0x03000", "name": "CRC", "type": "STM_CRC_Type"},
+      {"offset": "0x04000", "name": "TSC", "type": "STM_TSC_Type"}
+    ]
+  },
+  {
+    "address": "0x48000000",
+    "name": "AHB2_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "GPIO", "type": "STM_GPIO_Type", "array": 6}
+    ]
+  }
+]

@@ -1,12 +1,12 @@
 /*
  * serial.c
- * Copyright (C) 2016 xent
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/generic/byte_queue_extensions.h>
+#include <halm/platform/stm32/gen_2/uart_defs.h>
 #include <halm/platform/stm32/serial.h>
-#include <halm/platform/stm32/uart_defs.h>
 #include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
@@ -43,12 +43,12 @@ static void interruptHandler(void *object)
   STM_USART_Type * const reg = interface->base.reg;
   bool event = false;
 
-  const uint32_t status = reg->SR;
+  const uint32_t status = reg->ISR;
 
   /* Handle received data */
-  if (status & SR_RXNE)
+  if (status & ISR_RXNE)
   {
-    const uint8_t data = reg->DR;
+    const uint8_t data = reg->RDR;
 
     /* Received bytes will be dropped when queue becomes full */
     if (!byteQueueFull(&interface->rxQueue))
@@ -56,19 +56,22 @@ static void interruptHandler(void *object)
   }
 
   /* Handle reception timeout */
-  if (status & SR_IDLE)
+  if (status & ISR_IDLE)
   {
-    (void)reg->DR; /* Clear IDLE flag */
+    /* Clear IDLE flag */
+    reg->ICR = ICR_IDLECF;
     event = true;
   }
 
   const uint32_t control = reg->CR1;
 
   /* Send queued data */
-  if ((control & CR1_TXEIE) && (status & SR_TXE))
+  if ((control & CR1_TXEIE) && (status & ISR_TXE))
   {
     if (!byteQueueEmpty(&interface->txQueue))
-      reg->DR = byteQueuePopFront(&interface->txQueue);
+      reg->TDR = byteQueuePopFront(&interface->txQueue);
+    else
+      reg->ICR = ICR_TCCF;
 
     if (byteQueueEmpty(&interface->txQueue))
       reg->CR1 = control & ~CR1_TXEIE;
@@ -119,6 +122,10 @@ static enum Result serialInit(void *object, const void *configBase)
   uartSetRate(object, config->rate);
   uartSetParity(object, config->parity);
 
+  /* Disable overrun error */
+  reg->CR3 = CR3_OVRDIS;
+  /* Clear pending interrupt flags */
+  reg->ICR = ICR_IDLECF | ICR_TCCF;
   /*
    * Enable receiver and transmitter, RXNE and IDLE interrupts,
    * enable peripheral.

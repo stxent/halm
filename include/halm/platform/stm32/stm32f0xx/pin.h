@@ -1,6 +1,6 @@
 /*
- * halm/platform/stm32/stm32f1xx/pin.h
- * Copyright (C) 2016 xent
+ * halm/platform/stm32/stm32f0xx/pin.h
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -8,8 +8,8 @@
 #error This header should not be included directly
 #endif
 
-#ifndef HALM_PLATFORM_STM32_STM32F1XX_PIN_H_
-#define HALM_PLATFORM_STM32_STM32F1XX_PIN_H_
+#ifndef HALM_PLATFORM_STM32_STM32F0XX_PIN_H_
+#define HALM_PLATFORM_STM32_STM32F0XX_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
@@ -20,12 +20,11 @@ enum
   PORT_C,
   PORT_D,
   PORT_E,
-  PORT_F,
-  PORT_G
+  PORT_F
 };
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_PIN/pin.h>
 #include HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_STM32F1XX_PIN_H_ */
+#endif /* HALM_PLATFORM_STM32_STM32F0XX_PIN_H_ */

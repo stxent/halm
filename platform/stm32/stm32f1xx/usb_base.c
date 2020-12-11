@@ -107,16 +107,19 @@ void usbSoftConnectionControl(struct UsbBase *device, bool state)
     pinWrite(device->connect, !state);
 }
 /*----------------------------------------------------------------------------*/
+/* Virtual handler */
 void USB_HP_ISR(void)
 {
 }
 /*----------------------------------------------------------------------------*/
+/* Virtual handler */
 void USB_LP_ISR(void)
 {
   if (instances[0])
     instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
+/* Virtual handler */
 void USB_WAKEUP_ISR(void)
 {
 }
@@ -140,7 +143,7 @@ static enum Result devInit(void *object, const void *configBase)
   sysResetEnable(RST_USB);
   sysResetDisable(RST_USB);
 
-  device->irq = USB_LP_IRQ;
+  device->irq = USB_LP_CAN1_RX0_IRQ;
   device->reg = STM_USB;
 
   return E_OK;

@@ -45,12 +45,12 @@ if(${CONFIG_PLATFORM_STM32_SPI})
 endif()
 
 if(${CONFIG_PLATFORM_STM32_UART_BASE})
-    list(APPEND SOURCE_FILES "uart_common.c")
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/uart_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/uart_base.c")
 endif()
 
 if(${CONFIG_PLATFORM_STM32_SERIAL})
-    list(APPEND SOURCE_FILES "serial.c")
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/serial.c")
 endif()
 
 if(${CONFIG_PLATFORM_USB})

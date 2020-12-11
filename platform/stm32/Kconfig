@@ -1,3 +1,12 @@
+config GEN_PIN
+	string
+	default gen_1 if FAMILY_STM32F0XX || FAMILY_STM32F1XX
+
+config GEN_UART
+	string
+	default gen_1 if FAMILY_STM32F1XX
+	default gen_2 if FAMILY_STM32F0XX
+
 menu "Power settings"
 
 config PM
@@ -82,7 +91,7 @@ config PLATFORM_STM32_SPI_RC
 config PLATFORM_STM32_SPI
 	bool "SPI Master with DMA"
 	default y
-	depends on PLATFORM_STM32_SPI_BASE && PLATFORM_STM_DMA
+	depends on PLATFORM_STM32_SPI_BASE && PLATFORM_STM32_DMA
 
 config PLATFORM_STM32_UART_BASE
 	bool "UART"
@@ -128,3 +137,11 @@ config PLATFORM_USB_DEVICE_EP_REQUESTS
 	depends on PLATFORM_USB_DEVICE
 
 endmenu
+
+if FAMILY_STM32F0XX
+	source "platform/stm32/stm32f0xx/Kconfig"
+endif
+
+if FAMILY_STM32F1XX
+	source "platform/stm32/stm32f1xx/Kconfig"
+endif

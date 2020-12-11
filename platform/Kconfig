@@ -6,6 +6,6 @@ if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAM
 	source "platform/lpc/Kconfig"
 endif
 
-if FAMILY_STM32F1XX
+if FAMILY_STM32F0XX || FAMILY_STM32F1XX
 	source "platform/stm32/Kconfig"
 endif

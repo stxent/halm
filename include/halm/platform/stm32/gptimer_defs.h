@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Channel packing-------------------------------------------*/
-#define CHANNEL_COUNT                   8
+#define CHANNEL_COUNT                   10
 #define CHANNEL_CH1(channel)            ((channel) * CHANNEL_COUNT + 0)
 #define CHANNEL_CH1N(channel)           ((channel) * CHANNEL_COUNT + 1)
 #define CHANNEL_CH2(channel)            ((channel) * CHANNEL_COUNT + 2)
@@ -18,6 +18,8 @@
 #define CHANNEL_CH3N(channel)           ((channel) * CHANNEL_COUNT + 5)
 #define CHANNEL_CH4(channel)            ((channel) * CHANNEL_COUNT + 6)
 #define CHANNEL_CH4N(channel)           ((channel) * CHANNEL_COUNT + 7)
+#define CHANNEL_ETR(channel)            ((channel) * CHANNEL_COUNT + 8)
+#define CHANNEL_BKIN(channel)           ((channel) * CHANNEL_COUNT + 9)
 #define PACK_CHANNEL(channel, index)    ((channel) * CHANNEL_COUNT + (index))
 #define UNPACK_CHANNEL(value)           ((value) & (CHANNEL_COUNT - 1))
 /*------------------Timer channel identifiers---------------------------------*/

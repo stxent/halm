@@ -8,13 +8,23 @@
 #include <halm/platform/stm32/gptimer_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-extern const struct PinEntry gpTimerCaptureComparePins[];
+extern const struct PinEntry gpTimerPins[];
 /*----------------------------------------------------------------------------*/
 int gpTimerAllocateChannel(uint8_t mask)
 {
   int pos = 4; /* Each timer has 4 match blocks */
   while (--pos >= 0 && (mask & (1 << pos)));
   return pos;
+}
+/*----------------------------------------------------------------------------*/
+uint8_t gpTimerConfigCapturePin(uint8_t channel, PinNumber key,
+    enum PinPull pull)
+{
+  // TODO
+  (void)channel;
+  (void)key;
+  (void)pull;
+  return (uint8_t)-1;
 }
 /*----------------------------------------------------------------------------*/
 uint8_t gpTimerConfigComparePin(uint8_t channel, PinNumber key)
@@ -24,8 +34,7 @@ uint8_t gpTimerConfigComparePin(uint8_t channel, PinNumber key)
 
   for (; index < CHANNEL_COUNT; ++index)
   {
-    pinEntry = pinFind(gpTimerCaptureComparePins, key,
-        PACK_CHANNEL(channel, index));
+    pinEntry = pinFind(gpTimerPins, key, PACK_CHANNEL(channel, index));
 
     if (pinEntry)
     {

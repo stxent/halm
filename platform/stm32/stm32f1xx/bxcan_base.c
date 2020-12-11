@@ -52,10 +52,10 @@ static const struct BxCanBlockDescriptor bxCanBlockEntries[] = {
         .clock = CLK_CAN1,
         .reset = RST_CAN1,
         .irq = {
-            .rx0 = CAN1_RX0_IRQ,
+            .rx0 = USB_LP_CAN1_RX0_IRQ,
             .rx1 = CAN1_RX1_IRQ,
             .sce = CAN1_SCE_IRQ,
-            .tx = CAN1_TX_IRQ,
+            .tx = USB_HP_CAN1_TX_IRQ
         }
     }, {
         .reg = STM_CAN2,
@@ -65,7 +65,7 @@ static const struct BxCanBlockDescriptor bxCanBlockEntries[] = {
             .rx0 = CAN2_RX0_IRQ,
             .rx1 = CAN2_RX1_IRQ,
             .sce = CAN2_SCE_IRQ,
-            .tx = CAN2_TX_IRQ,
+            .tx = CAN2_TX_IRQ
         }
     }
 };

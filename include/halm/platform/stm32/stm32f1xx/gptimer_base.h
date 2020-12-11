@@ -27,7 +27,7 @@ enum
   TIM6,
   TIM7,
 
-  /* TIM8 available on high-density and XL-density STM32F103 devices only */
+  /* TIM8 is available on high-density and XL-density STM32F103 devices only */
   TIM8,
 
   /* TIM9 through TIM14 are available on XL-density devices only */
