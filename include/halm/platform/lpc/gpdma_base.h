@@ -16,6 +16,19 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
+/** DMA burst transfer size. */
+enum GpDmaBurst
+{
+  DMA_BURST_1,
+  DMA_BURST_4,
+  DMA_BURST_8,
+  DMA_BURST_16,
+  DMA_BURST_32,
+  DMA_BURST_64,
+  DMA_BURST_128,
+  DMA_BURST_256
+} __attribute__((packed));
+
 /** DMA transfer type. */
 enum GpDmaType
 {
@@ -25,7 +38,15 @@ enum GpDmaType
   GPDMA_TYPE_M2P,
   /** Peripheral to memory. */
   GPDMA_TYPE_P2M
-};
+} __attribute__((packed));
+
+/** DMA transfer width. */
+enum GpDmaWidth
+{
+  DMA_WIDTH_BYTE,
+  DMA_WIDTH_HALFWORD,
+  DMA_WIDTH_WORD
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct GpDmaEntry
 {
@@ -53,9 +74,9 @@ struct GpDmaSettings
   struct
   {
     /** Mandatory: number of transfers that make up a burst transfer request. */
-    enum DmaBurst burst;
+    enum GpDmaBurst burst;
     /** Mandatory: source transfer width. */
-    enum DmaWidth width;
+    enum GpDmaWidth width;
     /** Mandatory: enable increment of the source address. */
     bool increment;
   } source;
@@ -64,9 +85,9 @@ struct GpDmaSettings
   struct
   {
     /** Mandatory: number of transfers that make up a burst transfer request. */
-    enum DmaBurst burst;
+    enum GpDmaBurst burst;
     /** Mandatory: destination transfer width. */
-    enum DmaWidth width;
+    enum GpDmaWidth width;
     /** Mandatory: enable increment of the destination address. */
     bool increment;
   } destination;

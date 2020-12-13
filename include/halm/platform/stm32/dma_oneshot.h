@@ -7,11 +7,37 @@
 #ifndef HALM_PLATFORM_STM32_DMA_ONESHOT_H_
 #define HALM_PLATFORM_STM32_DMA_ONESHOT_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/target.h>
+#include <halm/platform/stm32/dma_base.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/dma_oneshot.h>
-#include HEADER_PATH
-#undef HEADER_PATH
+extern const struct DmaClass * const DmaOneShot;
+
+struct DmaOneShotConfig
+{
+  /** Mandatory: transfer type. */
+  enum DmaType type;
+  /** Mandatory: stream number. */
+  uint8_t stream;
+  /** Optional: stream priority. */
+  uint8_t priority;
+};
+
+struct DmaOneShot
+{
+  struct DmaBase base;
+
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  /* Base address of the memory area */
+  uintptr_t memoryAddress;
+  /* Base address of the peripheral data register */
+  uintptr_t periphAddress;
+  /* Number of transfers */
+  uint16_t transfers;
+
+  /* State of the transfer */
+  uint8_t state;
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_DMA_ONESHOT_H_ */

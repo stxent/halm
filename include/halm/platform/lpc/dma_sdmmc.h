@@ -7,7 +7,7 @@
 #ifndef HALM_PLATFORM_LPC_DMA_SDMMC_H_
 #define HALM_PLATFORM_LPC_DMA_SDMMC_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/dma.h>
+#include <halm/platform/lpc/gpdma_base.h>
 #include <halm/platform/lpc/sdmmc.h>
 /*----------------------------------------------------------------------------*/
 struct DmaSdmmcEntry
@@ -23,10 +23,10 @@ extern const struct DmaClass * const DmaSdmmc;
 struct DmaSdmmcConfig
 {
   const struct Sdmmc *parent;
+  /** Mandatory: number of transfers that make up a burst transfer request. */
+  enum GpDmaBurst burst;
   /** Mandatory: number of blocks in the chain. */
   size_t number;
-  /** Mandatory: number of transfers that make up a burst transfer request. */
-  enum DmaBurst burst;
 };
 
 struct DmaSdmmc

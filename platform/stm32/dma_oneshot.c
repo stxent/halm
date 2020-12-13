@@ -1,12 +1,12 @@
 /*
  * gpdma_oneshot.c
- * Copyright (C) 2012 xent
+ * Copyright (C) 2018 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/platform_defs.h>
+#include <halm/platform/stm32/dma_defs.h>
 #include <halm/platform/stm32/dma_oneshot.h>
-#include <halm/platform/stm32/stm32f1xx/dma_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 enum State
@@ -60,8 +60,6 @@ static void interruptHandler(void *object, enum Result res)
 
   /* Disable the DMA stream */
   reg->CCR = 0;
-  /* Disable the NVIC interrupt */
-  irqDisable(stream->base.irq);
 
   dmaResetInstance(stream->base.number);
   stream->state = res == E_OK ? STATE_DONE : STATE_ERROR;
@@ -164,7 +162,6 @@ static enum Result streamEnable(void *object)
 
     /* Start the transfer */
     stream->state = STATE_BUSY;
-    irqEnable(stream->base.irq);
     reg->CCR = stream->base.config | CCR_EN;
 
     return E_OK;

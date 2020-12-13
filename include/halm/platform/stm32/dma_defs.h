@@ -1,11 +1,11 @@
 /*
- * halm/platform/stm32/stm32f1xx/dma_defs.h
+ * halm/platform/stm32/dma_defs.h
  * Copyright (C) 2018 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_STM32F1XX_DMA_DEFS_H_
-#define HALM_PLATFORM_STM32_STM32F1XX_DMA_DEFS_H_
+#ifndef HALM_PLATFORM_STM32_DMA_DEFS_H_
+#define HALM_PLATFORM_STM32_DMA_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*----------------------------------------------------------------------------*/
@@ -54,4 +54,4 @@
 
 #define CCR_MEM2MEM                     BIT(14)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_STM32F1XX_DMA_DEFS_H_ */
+#endif /* HALM_PLATFORM_STM32_DMA_DEFS_H_ */

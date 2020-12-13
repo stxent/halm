@@ -17,8 +17,8 @@ if(${CONFIG_PM})
 endif()
 
 if(${CONFIG_PLATFORM_STM32_DMA})
+    list(APPEND SOURCE_FILES "dma_oneshot.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dma_base.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dma_oneshot.c")
 endif()
 
 if(${CONFIG_PLATFORM_STM32_CAN})

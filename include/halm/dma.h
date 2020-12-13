@@ -14,31 +14,6 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
-/** DMA burst transfer size. */
-enum DmaBurst
-{
-  DMA_BURST_1,
-  DMA_BURST_2,
-  DMA_BURST_4,
-  DMA_BURST_8,
-  DMA_BURST_16,
-  DMA_BURST_32,
-  DMA_BURST_64,
-  DMA_BURST_128,
-  DMA_BURST_256,
-  DMA_BURST_512,
-  DMA_BURST_1024
-};
-
-/** DMA transfer width. */
-enum DmaWidth
-{
-  DMA_WIDTH_BYTE,
-  DMA_WIDTH_HALFWORD,
-  DMA_WIDTH_WORD,
-  DMA_WIDTH_DOUBLEWORD
-};
-/*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct DmaClass
 {

@@ -73,13 +73,12 @@ static enum Result channelInit(void *object, const void *configBase)
 {
   const struct DmaSdmmcConfig * const config = configBase;
   assert(config);
+  assert(config->number);
+  assert(config->burst <= DMA_BURST_256);
 
   struct DmaSdmmc * const channel = object;
 
-  assert(config->number);
-  assert(config->burst <= DMA_BURST_256 && config->burst != DMA_BURST_2);
-
-  /* Allocation should produce memory chunks aligned along 4-byte boundary */
+  /* Memory chunks should be aligned along 4-byte boundary */
   channel->list = memalign(4, sizeof(struct DmaSdmmcEntry) * config->number);
   if (!channel->list)
     return E_MEMORY;
@@ -89,8 +88,6 @@ static enum Result channelInit(void *object, const void *configBase)
   channel->reg = config->parent->base.reg;
 
   LPC_SDMMC_Type * const reg = channel->reg;
-  const enum DmaBurst burst = config->burst >= DMA_BURST_4 ?
-      config->burst - 1 : config->burst;
 
   /* Control register is originally initialized in parent class */
 
@@ -107,7 +104,8 @@ static enum Result channelInit(void *object, const void *configBase)
   /* Disable all DMA interrupts */
   reg->IDINTEN = 0;
 
-  reg->FIFOTH = FIFOTH_DMA_MTS(burst) | FIFOTH_TX_WMARK(FIFO_SIZE / 2)
+  reg->FIFOTH = FIFOTH_DMA_MTS(config->burst)
+      | FIFOTH_TX_WMARK(FIFO_SIZE / 2)
       | FIFOTH_RX_WMARK(FIFO_SIZE / 2 - 1);
 
   return E_OK;
