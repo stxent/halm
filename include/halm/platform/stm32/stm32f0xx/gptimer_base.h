@@ -30,6 +30,6 @@ enum
 
   TIM16 = 15,
   TIM17 = 16
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F0XX_GPTIMER_BASE_H_ */

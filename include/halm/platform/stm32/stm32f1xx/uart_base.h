@@ -24,6 +24,6 @@ enum
    */
   UART4,
   UART5
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F1XX_UART_BASE_H_ */

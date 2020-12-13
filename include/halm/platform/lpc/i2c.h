@@ -46,8 +46,10 @@ struct I2C
   uint8_t *rxBuffer;
   /* Pointer to an output buffer */
   const uint8_t *txBuffer;
-  /* Bytes left for transmission or reception */
-  uint16_t rxLeft, txLeft;
+  /* Bytes to be received */
+  uint16_t rxLeft;
+  /* Bytes to be transmitted */
+  uint16_t txLeft;
 
   /* Address of the device, only 7-bit addressing is supported */
   uint8_t address;

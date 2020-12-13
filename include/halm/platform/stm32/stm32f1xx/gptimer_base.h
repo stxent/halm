@@ -37,6 +37,6 @@ enum
   TIM12,
   TIM13,
   TIM14
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F1XX_GPTIMER_BASE_H_ */

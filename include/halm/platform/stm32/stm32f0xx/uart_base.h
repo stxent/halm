@@ -28,6 +28,6 @@ enum
   USART6,
   USART7,
   USART8
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F0XX_UART_BASE_H_ */
