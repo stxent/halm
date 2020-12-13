@@ -11,6 +11,11 @@
 #include <halm/pin.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/spi_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
+/*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SpiBase;
 
 struct SpiBaseConfig

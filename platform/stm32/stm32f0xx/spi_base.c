@@ -1,13 +1,12 @@
 /*
  * spi_base.c
- * Copyright (C) 2018 xent
+ * Copyright (C) 2020 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/stm32/clocking.h>
 #include <halm/platform/stm32/spi_base.h>
 #include <halm/platform/stm32/spi_defs.h>
-#include <halm/platform/stm32/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm32/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -58,15 +57,6 @@ static const struct SpiBlockDescriptor spiBlockEntries[] = {
         .reset = RST_SPI2,
         .irq = SPI2_IRQ,
         .channel = SPI2
-    },
-#endif
-#ifdef CONFIG_PLATFORM_STM32_SPI3
-    {
-        .reg = STM_SPI3,
-        .clock = CLK_SPI3,
-        .reset = RST_SPI3,
-        .irq = SPI3_IRQ,
-        .channel = SPI3
     }
 #endif
 };
@@ -76,39 +66,47 @@ const struct PinEntry spiPins[] = {
     {
         .key = PIN(PORT_A, 4), /* SPI1_NSS */
         .channel = 0,
-        .value = PACK_REMAP(REMAP_SPI1, 0)
+        .value = 0
     }, {
         .key = PIN(PORT_A, 5), /* SPI1_SCK */
         .channel = 0,
-        .value = PACK_REMAP(REMAP_SPI1, 0)
+        .value = 0
     }, {
         .key = PIN(PORT_A, 6), /* SPI1_MISO */
         .channel = 0,
-        .value = PACK_REMAP(REMAP_SPI1, 0)
+        .value = 0
     }, {
         .key = PIN(PORT_A, 7), /* SPI1_MOSI */
         .channel = 0,
-        .value = PACK_REMAP(REMAP_SPI1, 0)
+        .value = 0
     }, {
         .key = PIN(PORT_A, 15), /* SPI1_NSS */
         .channel = 0,
-        .value = PACK_REMAP(REMAP_SPI1, 1)
+        .value = 0
     }, {
         .key = PIN(PORT_B, 3), /* SPI1_SCK */
         .channel = 0,
-        .value = PACK_REMAP(REMAP_SPI1, 1)
+        .value = 0
     }, {
         .key = PIN(PORT_B, 4), /* SPI1_MISO */
         .channel = 0,
-        .value = PACK_REMAP(REMAP_SPI1, 1)
+        .value = 0
     }, {
         .key = PIN(PORT_B, 5), /* SPI1_MOSI */
         .channel = 0,
-        .value = PACK_REMAP(REMAP_SPI1, 1)
+        .value = 0
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_SPI2
     {
+        .key = PIN(PORT_B, 9), /* SPI2_NSS */
+        .channel = 1,
+        .value = 5
+    }, {
+        .key = PIN(PORT_B, 10), /* SPI2_SCK */
+        .channel = 1,
+        .value = 5
+    }, {
         .key = PIN(PORT_B, 12), /* SPI2_NSS */
         .channel = 1,
         .value = 0
@@ -124,41 +122,46 @@ const struct PinEntry spiPins[] = {
         .key = PIN(PORT_B, 15), /* SPI2_MOSI */
         .channel = 1,
         .value = 0
-    },
-#endif
-#ifdef CONFIG_PLATFORM_STM32_SPI3
-    {
-        .key = PIN(PORT_A, 4), /* SPI3_NSS */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_SPI3, 1)
     }, {
-        .key = PIN(PORT_A, 15), /* SPI3_NSS */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_SPI3, 0)
+        .key = PIN(PORT_C, 2), /* SPI2_MISO */
+        .channel = 1,
+        .value = 1
     }, {
-        .key = PIN(PORT_B, 3), /* SPI3_SCK */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_SPI3, 0)
+        .key = PIN(PORT_C, 3), /* SPI2_MOSI */
+        .channel = 1,
+        .value = 1
     }, {
-        .key = PIN(PORT_B, 4), /* SPI3_MISO */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_SPI3, 0)
+        .key = PIN(PORT_D, 0), /* SPI2_NSS */
+        .channel = 1,
+        .value = 1
     }, {
-        .key = PIN(PORT_B, 5), /* SPI3_MOSI */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_SPI3, 0)
+        .key = PIN(PORT_D, 1), /* SPI2_SCK */
+        .channel = 1,
+        .value = 1
     }, {
-        .key = PIN(PORT_C, 10), /* SPI3_SCK */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_SPI3, 1)
+        .key = PIN(PORT_D, 3), /* SPI2_MISO */
+        .channel = 1,
+        .value = 1
     }, {
-        .key = PIN(PORT_C, 11), /* SPI3_MISO */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_SPI3, 1)
+        .key = PIN(PORT_D, 4), /* SPI2_MOSI */
+        .channel = 1,
+        .value = 1
     }, {
-        .key = PIN(PORT_C, 12), /* SPI3_MOSI */
-        .channel = 2,
-        .value = PACK_REMAP(REMAP_SPI3, 1)
+        .key = PIN(PORT_E, 12), /* SPI2_NSS */
+        .channel = 1,
+        .value = 1
+    }, {
+        .key = PIN(PORT_E, 13), /* SPI2_SCK */
+        .channel = 1,
+        .value = 1
+    }, {
+        .key = PIN(PORT_E, 14), /* SPI2_MISO */
+        .channel = 1,
+        .value = 1
+    }, {
+        .key = PIN(PORT_E, 15), /* SPI2_MOSI */
+        .channel = 1,
+        .value = 1
     },
 #endif
     {
@@ -166,7 +169,7 @@ const struct PinEntry spiPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SpiBase *instances[3] = {0};
+static struct SpiBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
 static const struct SpiBlockDescriptor *findDescriptor(uint8_t channel)
 {
@@ -206,16 +209,9 @@ void SPI2_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_SPI3
-void SPI3_ISR(void)
+uint32_t spiGetClock(const struct SpiBase *interface __attribute__((unused)))
 {
-  instances[2]->handler(instances[2]);
-}
-#endif
-/*----------------------------------------------------------------------------*/
-uint32_t spiGetClock(const struct SpiBase *interface)
-{
-  return clockFrequency(interface->channel == 0 ? Apb2Clock : Apb1Clock);
+  return clockFrequency(ApbClock);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *object, const void *configBase)

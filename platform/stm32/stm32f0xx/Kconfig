@@ -55,6 +55,23 @@ config PLATFORM_STM32_TIM17
 
 endmenu
 
+menu "SPI"
+
+config PLATFORM_STM32_SPI1
+	bool "SPI1"
+	default y
+	depends on PLATFORM_STM32_SPI_BASE
+
+config PLATFORM_STM32_SPI2
+	bool "SPI2"
+	default y
+	depends on PLATFORM_STM32_SPI_BASE
+	help
+	  SPI2 is available on STM32F04x, STM32F05x, STM32F07x and
+	  STM32F09x devices only.
+
+endmenu
+
 menu "UART"
 
 config PLATFORM_STM32_USART1
