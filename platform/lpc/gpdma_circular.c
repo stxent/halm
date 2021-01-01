@@ -19,6 +19,7 @@ enum State
   STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
+static size_t getCurrentEntry(const struct GpDmaCircular *);
 static void interruptHandler(void *, enum Result);
 static void startTransfer(struct GpDmaCircular *, const struct GpDmaEntry *);
 /*----------------------------------------------------------------------------*/
@@ -55,22 +56,27 @@ const struct DmaClass * const GpDmaCircular = &(const struct DmaClass){
     .clear = channelClear
 };
 /*----------------------------------------------------------------------------*/
+static size_t getCurrentEntry(const struct GpDmaCircular *channel)
+{
+  const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+  const size_t offset = (uintptr_t)reg->LLI - (uintptr_t)channel->list;
+  const size_t next = offset / sizeof(struct GpDmaEntry);
+  const size_t current = (next > 0 ? next : channel->capacity) - 1;
+
+  return current;
+}
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum Result res)
 {
   struct GpDmaCircular * const channel = object;
 
-  switch (res)
+  if (res == E_OK)
   {
-    case E_OK:
-      channel->state = STATE_DONE;
-      break;
-
-    case E_ERROR:
-      channel->state = STATE_ERROR;
-      break;
-
-    default:
-      break;
+    channel->state = STATE_DONE;
+  }
+  else if (res == E_ERROR)
+  {
+    channel->state = STATE_ERROR;
   }
 
   if (channel->callback)
@@ -212,18 +218,13 @@ static size_t channelResidue(const void *object)
   /* Residue is available when the channel was initialized and enabled */
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
   {
+    const size_t index = getCurrentEntry(channel);
+    const size_t total = CONTROL_SIZE_VALUE(channel->list[index].control);
+
     const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+    const size_t completed = CONTROL_SIZE_VALUE(reg->CONTROL);
 
-    const size_t nextEntry = ((uintptr_t)reg->LLI - (uintptr_t)channel->list)
-        / sizeof(struct GpDmaEntry);
-    const size_t currentEntry =
-        (nextEntry > 0 ? nextEntry : channel->capacity) - 1;
-
-    const size_t initialTransfers =
-        CONTROL_SIZE_VALUE(channel->list[currentEntry].control);
-    const size_t completedTransfers = CONTROL_SIZE_VALUE(reg->CONTROL);
-
-    return initialTransfers - completedTransfers;
+    return total - completed;
   }
   else
     return 0;

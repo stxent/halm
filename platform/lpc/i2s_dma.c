@@ -57,8 +57,7 @@ static bool dmaSetup(struct I2SDma *interface,
               .width = DMA_WIDTH_WORD,
               .increment = true
           }
-      },
-      {
+      }, {
           .source = {
               .burst = DMA_BURST_4,
               .width = DMA_WIDTH_WORD,

@@ -223,6 +223,7 @@ static size_t channelResidue(const void *object)
 {
   const struct GpDmaList * const channel = object;
 
+  /* Residue is available when the channel was initialized and enabled */
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
   {
     const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;

@@ -69,8 +69,7 @@ static bool dmaSetup(struct Spi *interface, uint8_t rxStream,
           .type = DMA_TYPE_P2M,
           .stream = rxStream,
           .priority = 0
-      },
-      {
+      }, {
           .type = DMA_TYPE_M2P,
           .stream = txStream,
           .priority = 0
@@ -100,8 +99,7 @@ static void dmaSetupRx(struct Dma *rx, struct Dma *tx)
               .width = DMA_WIDTH_BYTE,
               .increment = true
           }
-      },
-      {
+      }, {
           .source = {
               .width = DMA_WIDTH_BYTE,
               .increment = false
@@ -129,8 +127,7 @@ static void dmaSetupRxTx(struct Dma *rx, struct Dma *tx)
               .width = DMA_WIDTH_BYTE,
               .increment = true
           }
-      },
-      {
+      }, {
           .source = {
               .width = DMA_WIDTH_BYTE,
               .increment = true
@@ -158,8 +155,7 @@ static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }
-      },
-      {
+      }, {
           .source = {
               .width = DMA_WIDTH_BYTE,
               .increment = true

@@ -70,8 +70,7 @@ static bool dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
           .event = GPDMA_SSP0_RX + interface->base.channel,
           .type = GPDMA_TYPE_P2M,
           .channel = rxChannel
-      },
-      {
+      }, {
           .event = GPDMA_SSP0_TX + interface->base.channel,
           .type = GPDMA_TYPE_M2P,
           .channel = txChannel
@@ -103,8 +102,7 @@ static void dmaSetupRx(struct Dma *rx, struct Dma *tx)
               .width = DMA_WIDTH_BYTE,
               .increment = true
           }
-      },
-      {
+      }, {
           .source = {
               .burst = DMA_BURST_4,
               .width = DMA_WIDTH_BYTE,
@@ -136,8 +134,7 @@ static void dmaSetupRxTx(struct Dma *rx, struct Dma *tx)
               .width = DMA_WIDTH_BYTE,
               .increment = true
           }
-      },
-      {
+      }, {
           .source = {
               .burst = DMA_BURST_4,
               .width = DMA_WIDTH_BYTE,
@@ -169,8 +166,7 @@ static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }
-      },
-      {
+      }, {
           .source = {
               .burst = DMA_BURST_4,
               .width = DMA_WIDTH_BYTE,

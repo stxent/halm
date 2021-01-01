@@ -7,7 +7,6 @@
 #ifndef HALM_PLATFORM_STM32_SPI_H_
 #define HALM_PLATFORM_STM32_SPI_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/dma.h>
 #include <halm/generic/spi.h>
 #include <halm/platform/stm32/dma_oneshot.h>
 #include <halm/platform/stm32/spi_base.h>
@@ -46,9 +45,9 @@ struct Spi
   /* Desired baud rate */
   uint32_t rate;
 
-  /* DMA descriptor for RX channel */
+  /* DMA channel for data reception */
   struct Dma *rxDma;
-  /* DMA descriptor for TX channel */
+  /* DMA channel for data transmission */
   struct Dma *txDma;
   /* Pointer to an input buffer for bidirectional transfers */
   uint8_t *sink;

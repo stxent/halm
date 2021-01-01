@@ -127,6 +127,11 @@ config PLATFORM_STM32_SERIAL
 	default y
 	depends on PLATFORM_STM32_UART_BASE
 
+config PLATFORM_STM32_SERIAL_DMA
+	bool "Serial port driver with DMA"
+	default y
+	depends on PLATFORM_STM32_UART_BASE && PLATFORM_STM32_DMA
+
 config PLATFORM_USB
 	bool "USB"
 	default y

@@ -1,14 +1,15 @@
 /*
- * halm/platform/lpc/serial_dma.h
- * Copyright (C) 2012 xent
+ * halm/platform/stm32/serial_dma.h
+ * Copyright (C) 2021 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_LPC_SERIAL_DMA_H_
-#define HALM_PLATFORM_LPC_SERIAL_DMA_H_
+#ifndef HALM_PLATFORM_STM32_SERIAL_DMA_H_
+#define HALM_PLATFORM_STM32_SERIAL_DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/dma.h>
-#include <halm/platform/lpc/uart_base.h>
+#include <halm/platform/stm32/dma_circular.h>
+#include <halm/platform/stm32/dma_oneshot.h>
+#include <halm/platform/stm32/uart_base.h>
 #include <xcore/containers/byte_queue.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SerialDma;
@@ -17,24 +18,26 @@ struct SerialDmaConfig
 {
   /** Mandatory: baud rate. */
   uint32_t rate;
-  /** Mandatory: size of the input buffer, input is double buffered. */
-  size_t rxChunks;
+  /** Mandatory: size of the circular buffer. */
+  size_t rxChunk;
   /** Mandatory: input queue size. */
   size_t rxLength;
   /** Mandatory: output queue size. */
   size_t txLength;
-  /** Optional: memory arena for queues. */
-  void *arena;
   /** Optional: parity bit setting. */
   enum SerialParity parity;
   /** Mandatory: serial input. */
   PinNumber rx;
   /** Mandatory: serial output. */
   PinNumber tx;
+  /** Optional: interrupt priority. */
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Mandatory: direct memory access channels. */
-  uint8_t dma[2];
+  /** Mandatory: number of the RX DMA stream. */
+  uint8_t rxDma;
+  /** Mandatory: number of the RX DMA stream. */
+  uint8_t txDma;
 };
 
 struct SerialDma
@@ -56,15 +59,15 @@ struct SerialDma
   struct ByteQueue rxQueue;
   /* Output queue */
   struct ByteQueue txQueue;
-  /* Queues are allocated in a static memory */
-  bool preallocated;
+  /* Pointer to the temporary reception buffer */
+  uint8_t *rxBuffer;
+  /* Position inside the temporary buffer */
+  size_t rxPosition;
 
-  /* DMA RX chunk count */
-  size_t rxChunks;
-  /* Size of the single DMA RX buffer */
+  /* Size of the circular reception buffer */
   size_t rxBufferSize;
   /* Size of the DMA TX transfer */
   size_t txBufferSize;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LPC_SERIAL_DMA_H_ */
+#endif /* HALM_PLATFORM_STM32_SERIAL_DMA_H_ */

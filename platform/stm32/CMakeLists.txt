@@ -17,6 +17,7 @@ if(${CONFIG_PM})
 endif()
 
 if(${CONFIG_PLATFORM_STM32_DMA})
+    list(APPEND SOURCE_FILES "dma_circular.c")
     list(APPEND SOURCE_FILES "dma_oneshot.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dma_base.c")
 endif()
@@ -51,6 +52,10 @@ endif()
 
 if(${CONFIG_PLATFORM_STM32_SERIAL})
     list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/serial.c")
+endif()
+
+if(${CONFIG_PLATFORM_STM32_SERIAL_DMA})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/serial_dma.c")
 endif()
 
 if(${CONFIG_PLATFORM_USB})
