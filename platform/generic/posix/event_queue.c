@@ -36,6 +36,8 @@ const struct WorkQueueClass * const EventQueue =
     .deinit = deletedDestructorTrap,
 
     .add = workQueueAdd,
+    .profile = 0,
+    .statistics = 0,
     .start = workQueueStart,
     .stop = workQueueStop
 };

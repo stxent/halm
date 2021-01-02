@@ -33,10 +33,23 @@ config GENERIC_WQ
 	bool "Work Queue"
 	default y
 
+config GENERIC_WQ_NONSTOP
+	bool "Disable stop functions"
+	default n
+	depends on GENERIC_WQ
+
 config GENERIC_WQ_PM
-	bool "Use power management"
+	bool "Enable power management"
 	default y
 	depends on GENERIC_WQ
+
+config GENERIC_WQ_PROFILE
+	bool "Enable profiling support"
+	default n
+	depends on GENERIC_WQ
+	help
+	  This enables support for profiling and statistics functions.
+	  Information about task execution times and latency will be available.
 
 config GENERIC_WQ_IRQ
 	bool "Work Queue on IRQ"
