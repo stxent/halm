@@ -11,12 +11,29 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct UsbString usbStringBuild(UsbStringFunctor functor, const void *argument,
-    enum UsbStringType type)
+    enum UsbStringType type, unsigned int number)
+{
+  assert(!(type == USB_STRING_CONFIGURATION || type == USB_STRING_INTERFACE)
+      || number == 0);
+
+  return (struct UsbString){
+      .functor = functor,
+      .argument = argument,
+      .index = 0,
+      .number = (uint8_t)number,
+      .type = (uint8_t)type
+  };
+}
+/*----------------------------------------------------------------------------*/
+struct UsbString usbStringBuildCustom(UsbStringFunctor functor,
+    const void *argument, UsbStringIndex index)
 {
   return (struct UsbString){
-    .functor = functor,
-    .argument = argument,
-    .type = type
+      .functor = functor,
+      .argument = argument,
+      .index = (uint8_t)index,
+      .number = 0,
+      .type = USB_STRING_CUSTOM
   };
 }
 /*----------------------------------------------------------------------------*/
@@ -36,12 +53,12 @@ void usbStringHeader(struct UsbDescriptor *header, void *payload,
 }
 /*----------------------------------------------------------------------------*/
 void usbStringMultiHeader(struct UsbDescriptor *header, void *payload,
-    const enum UsbLangId *languages, size_t languageCount)
+    const enum UsbLangId *languages, size_t count)
 {
-  assert(languageCount >= 1);
+  assert(count >= 1);
 
   header->length = sizeof(struct UsbStringDescriptor)
-      + sizeof(uint16_t) * languageCount;
+      + sizeof(uint16_t) * count;
   header->descriptorType = DESCRIPTOR_TYPE_STRING;
 
   if (payload)
@@ -49,7 +66,7 @@ void usbStringMultiHeader(struct UsbDescriptor *header, void *payload,
     struct UsbStringDescriptor * const descriptor =
         (struct UsbStringDescriptor *)payload;
 
-    for (size_t index = 0; index < languageCount; ++index)
+    for (size_t index = 0; index < count; ++index)
       descriptor->langid[index] = toLittleEndian16(languages[index]);
   }
 }
@@ -65,7 +82,6 @@ void usbStringWrap(struct UsbDescriptor *header, void *payload,
   if (payload)
   {
     struct UsbDescriptor * const descriptor = payload;
-
     uToUtf16((char16_t *)descriptor->data, text, textLength + 1);
   }
 }

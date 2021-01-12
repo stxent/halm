@@ -76,7 +76,7 @@ struct UsbDeviceClass
   void (*setPower)(void *, uint16_t);
   enum UsbSpeed (*getSpeed)(const void *);
 
-  UsbStringNumber (*stringAppend)(void *, struct UsbString);
+  UsbStringIndex (*stringAppend)(void *, struct UsbString);
   void (*stringErase)(void *, struct UsbString);
 };
 
@@ -179,7 +179,7 @@ static inline enum UsbSpeed usbDevGetSpeed(const void *device)
  * @param string String descriptor.
  * @return String identifier on success or negative number in case of failure.
  */
-static inline UsbStringNumber usbDevStringAppend(void *device,
+static inline UsbStringIndex usbDevStringAppend(void *device,
     struct UsbString string)
 {
   return ((const struct UsbDeviceClass *)CLASS(device))->stringAppend(device,

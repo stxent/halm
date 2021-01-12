@@ -64,7 +64,7 @@ static enum Result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
 static enum UsbSpeed devGetSpeed(const void *);
-static UsbStringNumber devStringAppend(void *, struct UsbString);
+static UsbStringIndex devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const CompositeDevice =
@@ -441,7 +441,7 @@ static enum UsbSpeed devGetSpeed(const void *object)
   return usbDevGetSpeed(((const struct CompositeDevice *)object)->parent);
 }
 /*----------------------------------------------------------------------------*/
-static UsbStringNumber devStringAppend(void *object, struct UsbString string)
+static UsbStringIndex devStringAppend(void *object, struct UsbString string)
 {
   return usbDevStringAppend(((struct CompositeDevice *)object)->parent, string);
 }

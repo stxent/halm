@@ -74,7 +74,7 @@ struct UsbControl
 /*----------------------------------------------------------------------------*/
 static enum Result driverControl(struct UsbControl *,
     const struct UsbSetupPacket *, void *, uint16_t *, uint16_t);
-static void fillConfigurationDescriptor(const struct UsbControl *, void *);
+static void fillConfigurationDescriptor(struct UsbControl *, void *);
 static void fillDeviceDescriptor(struct UsbControl *, void *);
 static enum Result handleDescriptorRequest(struct UsbControl *,
     const struct UsbSetupPacket *, void *, uint16_t *, uint16_t);
@@ -93,6 +93,8 @@ static void controlOutHandler(void *, struct UsbRequest *,
     enum UsbRequestStatus);
 static void copySetupPacket(struct UsbSetupPacket *,
     const struct UsbRequest *);
+static const struct UsbString *findStringByIndex(struct UsbControl *,
+    UsbStringIndex);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
 static bool usbStringComparator(const void *a, void *b);
@@ -158,16 +160,20 @@ static enum Result driverControl(struct UsbControl *control,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void fillConfigurationDescriptor(const struct UsbControl *control,
+static void fillConfigurationDescriptor(struct UsbControl *control,
     void *buffer)
 {
   struct UsbConfigurationDescriptor * const descriptor = buffer;
+
+  descriptor->configuration = usbControlStringFind(control,
+      USB_STRING_CONFIGURATION, DEFAULT_DEVICE_CONFIGURATION);
 
   descriptor->attributes = CONFIGURATION_DESCRIPTOR_DEFAULT;
   if (!control->current)
     descriptor->attributes |= CONFIGURATION_DESCRIPTOR_SELF_POWERED;
   if (control->rwu)
     descriptor->attributes |= CONFIGURATION_DESCRIPTOR_REMOTE_WAKEUP;
+
   descriptor->maxPower = ((control->current + 1) >> 1);
 }
 /*----------------------------------------------------------------------------*/
@@ -178,34 +184,12 @@ static void fillDeviceDescriptor(struct UsbControl *control, void *buffer)
   descriptor->idVendor = toLittleEndian16(control->vid);
   descriptor->idProduct = toLittleEndian16(control->pid);
 
-  StringListNode *current = stringListFront(&control->strings);
-  size_t index = 0;
-
-  while (current)
-  {
-    const struct UsbString * const entry = stringListData(current);
-
-    switch ((enum UsbStringType)entry->type)
-    {
-      case USB_STRING_VENDOR:
-        descriptor->manufacturer = index;
-        break;
-
-      case USB_STRING_PRODUCT:
-        descriptor->product = index;
-        break;
-
-      case USB_STRING_SERIAL:
-        descriptor->serialNumber = index;
-        break;
-
-      default:
-        break;
-    }
-
-    current = stringListNext(current);
-    ++index;
-  }
+  descriptor->manufacturer = usbControlStringFind(control,
+      USB_STRING_VENDOR, 0);
+  descriptor->product = usbControlStringFind(control,
+      USB_STRING_PRODUCT, 0);
+  descriptor->serialNumber = usbControlStringFind(control,
+      USB_STRING_SERIAL, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result handleDescriptorRequest(struct UsbControl *control,
@@ -402,31 +386,23 @@ static enum Result handleStringRequest(struct UsbControl *control,
   if (descriptorType != DESCRIPTOR_TYPE_STRING)
     return E_INVALID;
 
-  StringListNode *current = stringListFront(&control->strings);
-  size_t index = 0;
+  const struct UsbString * const entry = findStringByIndex(control,
+      descriptorIndex);
 
-  while (current)
+  if (entry)
   {
-    const struct UsbString * const entry = stringListData(current);
+    struct UsbDescriptor * const header = response;
 
-    if (index == descriptorIndex)
-    {
-      struct UsbDescriptor * const header = response;
+    assert((entry->functor(entry->argument, langid, header, 0),
+        header->length <= maxResponseLength));
+    (void)maxResponseLength;
 
-      assert((entry->functor(entry->argument, langid, header, 0),
-          header->length <= maxResponseLength));
-      (void)maxResponseLength;
-
-      entry->functor(entry->argument, langid, header, response);
-      *responseLength = header->length;
-      return E_OK;
-    }
-
-    current = stringListNext(current);
-    ++index;
+    entry->functor(entry->argument, langid, header, response);
+    *responseLength = header->length;
+    return E_OK;
   }
-
-  return E_INVALID;
+  else
+    return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *argument, struct UsbRequest *request,
@@ -519,6 +495,24 @@ static void copySetupPacket(struct UsbSetupPacket *packet,
   packet->length = fromLittleEndian16(received->length);
 }
 /*----------------------------------------------------------------------------*/
+static const struct UsbString *findStringByIndex(struct UsbControl *control,
+    UsbStringIndex index)
+{
+  StringListNode *current = stringListFront(&control->strings);
+
+  while (current)
+  {
+    const struct UsbString * const entry = stringListData(current);
+
+    if (entry->index == index)
+      return entry;
+
+    current = stringListNext(current);
+  }
+
+  return 0;
+}
+/*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbControl *control)
 {
   usbEpClear(control->ep0in);
@@ -566,8 +560,10 @@ static bool usbStringComparator(const void *a, void *b)
   const struct UsbString * const aValue = a;
   const struct UsbString * const bValue = b;
 
+  /* USB index is ignored */
   return aValue->functor == bValue->functor
       && aValue->argument == bValue->argument
+      && aValue->number == bValue->number
       && aValue->type == bValue->type;
 }
 /*----------------------------------------------------------------------------*/
@@ -595,24 +591,58 @@ void usbControlNotify(struct UsbControl *control, unsigned int event)
     usbDriverNotify(control->driver, event);
 }
 /*----------------------------------------------------------------------------*/
-void usbControlSetPower(struct UsbControl *control, uint16_t current)
+void usbControlSetPower(struct UsbControl *control, unsigned int current)
 {
-  control->current = current;
+  control->current = (uint16_t)current;
 }
 /*----------------------------------------------------------------------------*/
-UsbStringNumber usbControlStringAppend(struct UsbControl *control,
+UsbStringIndex usbControlStringAppend(struct UsbControl *control,
     struct UsbString string)
 {
-  assert(!stringListFind(&control->strings, string));
+  /* String header must be added first */
+  assert(string.type != USB_STRING_HEADER
+      || (string.index == 0 && stringListEmpty(&control->strings)));
 
-  const size_t count = stringListSize(&control->strings);
+  /* String must be unique */
+  assert(!stringListFindIf(&control->strings, &string, usbStringComparator));
 
-  /* String header must be added first and it must be unique */
-  assert((count == 0) == (string.type == USB_STRING_HEADER));
+  if (string.index == 0)
+  {
+    UsbStringIndex index = 0;
 
-  /* Append a new string to the list */
+    /* Find free index */
+    while (findStringByIndex(control, index))
+      ++index;
+
+    string.index = index;
+  }
+  else if (findStringByIndex(control, string.index))
+  {
+    /* Index already exists */
+    return -1;
+  }
+
+  /* Append the string to the list */
   return stringListPushBack(&control->strings, string) ?
-      (UsbStringNumber)count : -1;
+      (UsbStringIndex)string.index : -1;
+}
+/*----------------------------------------------------------------------------*/
+UsbStringIndex usbControlStringFind(struct UsbControl *control,
+    enum UsbStringType type, unsigned int number)
+{
+  StringListNode *current = stringListFront(&control->strings);
+
+  while (current)
+  {
+    const struct UsbString * const entry = stringListData(current);
+
+    if (entry->type == type && entry->number == number)
+      return (UsbStringIndex)entry->index;
+
+    current = stringListNext(current);
+  }
+
+  return 0;
 }
 /*----------------------------------------------------------------------------*/
 void usbControlStringErase(struct UsbControl *control, struct UsbString string)

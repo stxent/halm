@@ -63,7 +63,7 @@ static enum Result devBind(void *, void *);
 static void devUnbind(void *, const void *);
 static void devSetPower(void *, uint16_t);
 static enum UsbSpeed devGetSpeed(const void *);
-static UsbStringNumber devStringAppend(void *, struct UsbString);
+static UsbStringIndex devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 
 #ifndef CONFIG_PLATFORM_USB_NO_DEINIT
@@ -430,7 +430,7 @@ static enum UsbSpeed devGetSpeed(const void *object)
   return high ? USB_HS : USB_FS;
 }
 /*----------------------------------------------------------------------------*/
-static UsbStringNumber devStringAppend(void *object, struct UsbString string)
+static UsbStringIndex devStringAppend(void *object, struct UsbString string)
 {
   struct UsbDevice * const device = object;
   return usbControlStringAppend(device->control, string);
