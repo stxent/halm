@@ -13,6 +13,7 @@ extern const struct WorkQueueClass * const WorkQueue;
 
 struct WorkQueueConfig
 {
+  /** Mandatory: number of pending tasks. */
   size_t size;
 };
 /*----------------------------------------------------------------------------*/

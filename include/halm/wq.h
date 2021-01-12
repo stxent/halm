@@ -123,6 +123,12 @@ static inline void wqStop(void *wq)
   ((const struct WorkQueueClass *)CLASS(wq))->stop(wq);
 }
 
+/**
+ * Work Queue helper function for a timestamp generation.
+ * When profiling is enabled, the function must be defined in user code.
+ * The time format should be chosen depending on the target platform.
+ * @return Current time.
+ */
 WqCounter wqGetTime(void);
 
 END_DECLS

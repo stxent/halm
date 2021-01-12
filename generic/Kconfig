@@ -55,4 +55,17 @@ config GENERIC_WQ_IRQ
 	bool "Work Queue on IRQ"
 	default y
 
+config GENERIC_WQ_IRQ_NONSTOP
+	bool "Disable stop functions"
+	default n
+	depends on GENERIC_WQ_IRQ
+
+config GENERIC_WQ_IRQ_PROFILE
+	bool "Enable profiling support"
+	default n
+	depends on GENERIC_WQ_IRQ
+	help
+	  This enables support for profiling and statistics functions.
+	  Information about task execution times and latency will be available.
+
 endmenu
