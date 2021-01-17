@@ -84,8 +84,11 @@ static enum Result handleEndpointRequest(struct UsbControl *,
     const struct UsbSetupPacket *, uint8_t *, uint16_t *);
 static enum Result handleInterfaceRequest(const struct UsbSetupPacket *,
     uint8_t *, uint16_t *);
+
+#ifdef CONFIG_USB_DEVICE_STRINGS
 static enum Result handleStringRequest(struct UsbControl *, uint16_t, uint16_t,
     void *, uint16_t *, uint16_t);
+#endif
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *, struct UsbRequest *,
     enum UsbRequestStatus);
@@ -93,11 +96,14 @@ static void controlOutHandler(void *, struct UsbRequest *,
     enum UsbRequestStatus);
 static void copySetupPacket(struct UsbSetupPacket *,
     const struct UsbRequest *);
-static const struct UsbString *findStringByIndex(struct UsbControl *,
-    UsbStringIndex);
 static void resetDevice(struct UsbControl *);
 static void sendResponse(struct UsbControl *, const uint8_t *, uint16_t);
+
+#ifdef CONFIG_USB_DEVICE_STRINGS
+static const struct UsbString *findStringByIndex(struct UsbControl *,
+    UsbStringIndex);
 static bool usbStringComparator(const void *a, void *b);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result controlInit(void *, const void *);
 static void controlDeinit(void *);
@@ -199,11 +205,13 @@ static enum Result handleDescriptorRequest(struct UsbControl *control,
   enum Result res = usbExtractDescriptorData(control->driver, packet->value,
       response, responseLength, maxResponseLength);
 
+#ifdef CONFIG_USB_DEVICE_STRINGS
   if (res == E_INVALID)
   {
     res = handleStringRequest(control, packet->value, packet->index,
         response, responseLength, maxResponseLength);
   }
+#endif
 
   return res;
 }
@@ -376,6 +384,7 @@ static enum Result handleInterfaceRequest(const struct UsbSetupPacket *packet,
   return res;
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_USB_DEVICE_STRINGS
 static enum Result handleStringRequest(struct UsbControl *control,
     uint16_t keyword, uint16_t langid, void *response,
     uint16_t *responseLength, uint16_t maxResponseLength)
@@ -404,6 +413,7 @@ static enum Result handleStringRequest(struct UsbControl *control,
   else
     return E_INVALID;
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *argument, struct UsbRequest *request,
     enum UsbRequestStatus status __attribute__((unused)))
@@ -495,6 +505,7 @@ static void copySetupPacket(struct UsbSetupPacket *packet,
   packet->length = fromLittleEndian16(received->length);
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_USB_DEVICE_STRINGS
 static const struct UsbString *findStringByIndex(struct UsbControl *control,
     UsbStringIndex index)
 {
@@ -512,6 +523,7 @@ static const struct UsbString *findStringByIndex(struct UsbControl *control,
 
   return 0;
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbControl *control)
 {
@@ -555,6 +567,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
   }
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_USB_DEVICE_STRINGS
 static bool usbStringComparator(const void *a, void *b)
 {
   const struct UsbString * const aValue = a;
@@ -566,6 +579,7 @@ static bool usbStringComparator(const void *a, void *b)
       && aValue->number == bValue->number
       && aValue->type == bValue->type;
 }
+#endif
 /*----------------------------------------------------------------------------*/
 enum Result usbControlBindDriver(struct UsbControl *control, void *driver)
 {
@@ -599,6 +613,7 @@ void usbControlSetPower(struct UsbControl *control, unsigned int current)
 UsbStringIndex usbControlStringAppend(struct UsbControl *control,
     struct UsbString string)
 {
+#ifdef CONFIG_USB_DEVICE_STRINGS
   /* String header must be added first */
   assert(string.type != USB_STRING_HEADER
       || (string.index == 0 && stringListEmpty(&control->strings)));
@@ -623,13 +638,20 @@ UsbStringIndex usbControlStringAppend(struct UsbControl *control,
   }
 
   /* Append the string to the list */
-  return stringListPushBack(&control->strings, string) ?
-      (UsbStringIndex)string.index : -1;
+  if (stringListPushBack(&control->strings, string))
+    return (UsbStringIndex)string.index;
+#else
+  (void)control;
+  (void)string;
+#endif
+
+  return -1;
 }
 /*----------------------------------------------------------------------------*/
 UsbStringIndex usbControlStringFind(struct UsbControl *control,
     enum UsbStringType type, unsigned int number)
 {
+#ifdef CONFIG_USB_DEVICE_STRINGS
   StringListNode *current = stringListFront(&control->strings);
 
   while (current)
@@ -641,13 +663,23 @@ UsbStringIndex usbControlStringFind(struct UsbControl *control,
 
     current = stringListNext(current);
   }
+#else
+  (void)control;
+  (void)type;
+  (void)number;
+#endif
 
   return 0;
 }
 /*----------------------------------------------------------------------------*/
 void usbControlStringErase(struct UsbControl *control, struct UsbString string)
 {
+#ifdef CONFIG_USB_DEVICE_STRINGS
   stringListEraseIf(&control->strings, &string, usbStringComparator);
+#else
+  (void)control;
+  (void)string;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static enum Result controlInit(void *object, const void *configBase)

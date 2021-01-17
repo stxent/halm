@@ -45,6 +45,10 @@ config USB_DEVICE_CONTROL_REQUESTS
 	int "Control queue size"
 	default 2
 
+config USB_DEVICE_STRINGS
+	bool "Strings support"
+	default y
+
 endmenu
 
 config USB_TRACE
