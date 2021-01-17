@@ -36,34 +36,34 @@ enum PinDirection
 {
   PIN_INPUT,
   PIN_OUTPUT
-};
+} __attribute__((packed));
 
 enum PinEvent
 {
   PIN_RISING,
   PIN_FALLING,
   PIN_TOGGLE
-};
+} __attribute__((packed));
 
 enum PinPull
 {
   PIN_NOPULL,
   PIN_PULLUP,
   PIN_PULLDOWN
-};
+} __attribute__((packed));
 
 enum PinSlewRate
 {
   PIN_SLEW_FAST,
   PIN_SLEW_NORMAL,
   PIN_SLEW_SLOW
-};
+} __attribute__((packed));
 
 enum PinType
 {
   PIN_PUSHPULL,
   PIN_OPENDRAIN
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct PinEntry
 {
