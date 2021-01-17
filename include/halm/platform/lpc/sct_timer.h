@@ -19,10 +19,12 @@ struct SctTimerConfig
    * when option is set to zero.
    */
   uint32_t frequency;
-  /** Optional: timer part. */
-  enum SctPart part;
   /** Optional: timer interrupt priority. */
   IrqPriority priority;
+  /** Optional: clock input. */
+  enum SctInput clock;
+  /** Optional: timer part. */
+  enum SctPart part;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

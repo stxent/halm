@@ -536,9 +536,9 @@ static enum Result tmrInit(void *object, const void *configBase)
   {
     desiredConfig |= CONFIG_CLKMODE(CLKMODE_INPUT);
     if (config->edge == PIN_RISING)
-      desiredConfig |= CONFIG_CKSEL_RISING(config->input);
+      desiredConfig |= CONFIG_CKSEL_RISING(config->input - 1);
     else
-      desiredConfig |= CONFIG_CKSEL_FALLING(config->input);
+      desiredConfig |= CONFIG_CKSEL_FALLING(config->input - 1);
   }
 
   const bool enabled = timerHandlerActive(timer->channel);

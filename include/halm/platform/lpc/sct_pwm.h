@@ -18,6 +18,8 @@ struct SctPwmUnitConfig
   uint32_t frequency;
   /** Mandatory: cycle resolution. */
   uint32_t resolution;
+  /** Optional: clock input. */
+  enum SctInput clock;
   /** Optional: timer part. */
   enum SctPart part;
   /** Mandatory: peripheral identifier. */

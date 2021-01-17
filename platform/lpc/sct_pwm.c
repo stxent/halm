@@ -148,7 +148,7 @@ static enum Result unitInit(void *object, const void *configBase)
   const struct SctBaseConfig baseConfig = {
       .channel = config->channel,
       .edge = PIN_RISING,
-      .input = SCT_INPUT_NONE,
+      .input = config->clock,
       .part = config->part
   };
   struct SctPwmUnit * const unit = object;
@@ -171,8 +171,11 @@ static enum Result unitInit(void *object, const void *configBase)
   /* Set desired unit frequency */
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
-  sctSetFrequency(&unit->base, unit->frequency * unit->resolution);
 
+  if (unit->frequency)
+    sctSetFrequency(&unit->base, unit->resolution * unit->frequency);
+
+  /* Automatic reload feature is not supported on all parts */
   reg->CONFIG &= ~(CONFIG_AUTOLIMIT(part) | CONFIG_NORELOAD(part));
 
   /* Match value should be configured after event initialization */
@@ -351,7 +354,9 @@ static void singleEdgeSetFrequency(void *object, uint32_t frequency)
   struct SctPwmUnit * const unit = pwm->unit;
 
   unit->frequency = frequency;
-  sctSetFrequency(&unit->base, unit->frequency * unit->resolution);
+
+  if (unit->frequency)
+    sctSetFrequency(&unit->base, unit->resolution * unit->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeInit(void *object, const void *configBase)
@@ -555,7 +560,9 @@ static void doubleEdgeSetFrequency(void *object, uint32_t frequency)
   struct SctPwmUnit * const unit = pwm->unit;
 
   unit->frequency = frequency;
-  sctSetFrequency(&unit->base, unit->frequency * unit->resolution);
+
+  if (unit->frequency)
+    sctSetFrequency(&unit->base, unit->resolution * unit->frequency);
 }
 /*----------------------------------------------------------------------------*/
 /**

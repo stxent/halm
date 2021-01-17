@@ -84,7 +84,7 @@ static enum Result genericTimerInit(void *object,
   const struct SctBaseConfig baseConfig = {
       .channel = config->channel,
       .edge = PIN_RISING,
-      .input = SCT_INPUT_NONE,
+      .input = config->clock,
       .part = config->part
   };
   struct SctTimer * const timer = object;
