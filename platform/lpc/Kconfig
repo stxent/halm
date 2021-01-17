@@ -368,6 +368,16 @@ config PLATFORM_LPC_SCT_TIMER
 	default y
 	depends on PLATFORM_LPC_SCT_BASE
 
+config PLATFORM_LPC_SGPIO_BASE
+	bool "Serial GPIO"
+	default y
+	depends on FAMILY_LPC43XX
+
+config PLATFORM_LPC_SGPIO_NO_DEINIT
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
+	depends on PLATFORM_LPC_SGPIO_BASE
+
 config PLATFORM_LPC_SSP_BASE
 	bool "SSP"
 	default y
