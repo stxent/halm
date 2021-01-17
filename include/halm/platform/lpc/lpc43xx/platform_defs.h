@@ -994,8 +994,8 @@ typedef struct
   __ro__ uint32_t GPIO_INREG;
   __rw__ uint32_t GPIO_OUTREG;
   __rw__ uint32_t GPIO_OENREG;
-  __rw__ uint32_t CTRL_ENABLED;
-  __rw__ uint32_t CTRL_DISABLED;
+  __rw__ uint32_t CTRL_ENABLE;
+  __rw__ uint32_t CTRL_DISABLE;
   __ne__ uint32_t RESERVED0[823];
 
   /* Offset 0x0F00: shift clock interrupt registers */
