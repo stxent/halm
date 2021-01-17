@@ -356,17 +356,18 @@ void *pinAddress(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
 {
-  const struct PinGroupEntry *group;
-  struct PinDescriptor current = {
+  const struct PinDescriptor current = {
       .number = PIN_TO_OFFSET(id),
-      .port = PIN_TO_PORT(id),
+      .port = PIN_TO_PORT(id)
   };
-  struct Pin pin;
+  struct Pin pin = {
+      .reg = (void *)calcControlReg(current),
+      .index = ~0
+  };
 
-  pin.reg = (void *)calcControlReg(current);
-  pin.index = ~0;
+  const struct PinGroupEntry * const group = pinGroupFind(gpioPins, id, 0);
 
-  if ((group = pinGroupFind(gpioPins, id, 0)))
+  if (group)
   {
     struct PinDescriptor begin = {
         .number = PIN_TO_OFFSET(group->begin),

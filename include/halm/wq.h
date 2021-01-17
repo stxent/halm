@@ -13,12 +13,21 @@
 #define HALM_WQ_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/entity.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern void *WQ_DEFAULT;
 /*----------------------------------------------------------------------------*/
 typedef uint32_t WqCounter;
+
+#define WQ_COUNTER_MAX_GENERIC(value) _Generic((value), \
+    unsigned long long: ULLONG_MAX, \
+    unsigned long: ULONG_MAX, \
+    unsigned int: UINT_MAX, \
+    unsigned short: USHRT_MAX \
+)
+#define WQ_COUNTER_MAX WQ_COUNTER_MAX_GENERIC((WqCounter)0)
 
 struct WqInfo
 {

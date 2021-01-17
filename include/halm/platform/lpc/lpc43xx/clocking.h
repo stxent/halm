@@ -135,8 +135,8 @@ struct PllConfig
 };
 
 /* Require a PllConfig structure */
-extern const struct ClockClass * const SystemPll;
 extern const struct ClockClass * const AudioPll;
+extern const struct ClockClass * const SystemPll;
 extern const struct ClockClass * const UsbPll;
 /*----------------------------------------------------------------------------*/
 struct GenericClockConfig
@@ -146,26 +146,29 @@ struct GenericClockConfig
 };
 
 /* Require a GenericClockConfig structure */
-extern const struct ClockClass * const MainClock; /* Base M4 clock */
-extern const struct ClockClass * const Usb0Clock;
-extern const struct ClockClass * const Usb1Clock;
-extern const struct ClockClass * const PeriphClock; /* APB0 and APB2 */
+
+/* Base M4 clock */
+extern const struct ClockClass * const AdcHsClock;
 extern const struct ClockClass * const Apb1Clock;
 extern const struct ClockClass * const Apb3Clock;
-extern const struct ClockClass * const SpifiClock;
-extern const struct ClockClass * const SpiClock;
+extern const struct ClockClass * const AudioClock;
+/* APB0, APB2, Cortex-M0 and SGPIO */
+extern const struct ClockClass * const PeriphClock;
+extern const struct ClockClass * const LcdClock;
+extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const PhyRxClock;
 extern const struct ClockClass * const PhyTxClock;
-extern const struct ClockClass * const LcdClock;
-extern const struct ClockClass * const AdcHsClock;
 extern const struct ClockClass * const SdioClock;
+extern const struct ClockClass * const SpiClock;
+extern const struct ClockClass * const SpifiClock;
 extern const struct ClockClass * const Ssp0Clock;
 extern const struct ClockClass * const Ssp1Clock;
-extern const struct ClockClass * const Usart0Clock;
 extern const struct ClockClass * const Uart1Clock;
+extern const struct ClockClass * const Usart0Clock;
 extern const struct ClockClass * const Usart2Clock;
 extern const struct ClockClass * const Usart3Clock;
-extern const struct ClockClass * const AudioClock;
+extern const struct ClockClass * const Usb0Clock;
+extern const struct ClockClass * const Usb1Clock;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
@@ -176,8 +179,8 @@ struct ClockOutputConfig
 };
 
 /* Require a ClockOutputConfig structure */
-extern const struct ClockClass * const ClockOutput;
 extern const struct ClockClass * const CguOut0Clock;
 extern const struct ClockClass * const CguOut1Clock;
+extern const struct ClockClass * const ClockOutput;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_CLOCKING_H_ */

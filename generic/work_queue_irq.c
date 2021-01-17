@@ -165,7 +165,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
       const struct WqTaskDescriptor info = {
           .task = callback,
           .count = 0,
-          .execution = {0, (WqCounter)-1, 0}
+          .execution = {0, WQ_COUNTER_MAX, 0}
       };
 
       wqInfoArrayPushBack(&wq->info, info);
@@ -215,7 +215,7 @@ static void workQueueProfile(void *object, WqProfileCallback callback,
         .count = entry->count,
         .execution = {
             entry->execution.max,
-            entry->count ? entry->execution.min : 0,
+            entry->execution.min != WQ_COUNTER_MAX ? entry->execution.min : 0,
             entry->execution.total
         }
     };
@@ -235,7 +235,7 @@ static enum Result workQueueStart(void *object)
 
   wqInfoArrayClear(&wq->info);
   wq->latency.max = 0;
-  wq->latency.min = (WqCounter)-1;
+  wq->latency.min = WQ_COUNTER_MAX;
   wq->watermark = 0;
   wq->timestamp = wqGetTime();
 
@@ -255,8 +255,8 @@ static void workQueueStatistics(void *object, struct WqInfo *statistics)
   statistics->watermark = wq->watermark;
   statistics->uptime = wqGetTime() - wq->timestamp;
   statistics->latency.max = wq->latency.max;
-  statistics->latency.min =
-      wq->latency.min != (WqCounter)-1 ? wq->latency.min : 0;
+  statistics->latency.min = wq->latency.min != WQ_COUNTER_MAX ?
+      wq->latency.min : 0;
 
   irqRestore(state);
 }

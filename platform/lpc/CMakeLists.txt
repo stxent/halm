@@ -19,6 +19,18 @@ if(${CONFIG_PLATFORM_LPC_ADC_BASE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/adc_base.c")
 endif()
 
+if(${CONFIG_PLATFORM_LPC_ADC_BUS})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_bus.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_ADC_DMA})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_dma.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_ADC_ONESHOT})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_oneshot.c")
+endif()
+
 if(${CONFIG_PLATFORM_LPC_BOD})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/bod.c")
 endif()
@@ -30,6 +42,14 @@ endif()
 
 if(${CONFIG_PLATFORM_LPC_DAC_BASE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dac_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_DAC})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_DAC}/dac.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_DAC_DMA})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_DAC}/dac_dma.c")
 endif()
 
 if(${CONFIG_PLATFORM_LPC_EEPROM})
@@ -69,6 +89,10 @@ if(${CONFIG_PLATFORM_LPC_GPTIMER_BASE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gptimer_base.c")
 endif()
 
+if(${CONFIG_PLATFORM_LPC_GPTIMER})
+    list(APPEND SOURCE_FILES "gptimer.c")
+endif()
+
 if(${CONFIG_PLATFORM_LPC_GPTIMER_CAPTURE})
     list(APPEND SOURCE_FILES "gptimer_capture.c")
 endif()
@@ -86,9 +110,21 @@ if(${CONFIG_PLATFORM_LPC_I2C_BASE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/i2c_base.c")
 endif()
 
+if(${CONFIG_PLATFORM_LPC_I2C})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_I2C}/i2c.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_I2C_SLAVE})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_I2C}/i2c_slave.c")
+endif()
+
 if(${CONFIG_PLATFORM_LPC_I2S_BASE})
     list(APPEND SOURCE_FILES "i2s_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/i2s_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_I2S_DMA})
+    list(APPEND SOURCE_FILES "i2s_dma.c")
 endif()
 
 if(${CONFIG_PLATFORM_LPC_IAP})
@@ -97,6 +133,28 @@ endif()
 
 if(${CONFIG_PLATFORM_LPC_PININT_BASE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pin_int_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_PININT})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_PININT}/pin_int.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_ONE_WIRE_SSP})
+    list(APPEND SOURCE_FILES "one_wire_ssp.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_ONE_WIRE_UART})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/one_wire_uart.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_RIT})
+    list(APPEND SOURCE_FILES "rit.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/rit_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_RTC})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_RTC}/rtc.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/rtc_base.c")
 endif()
 
 if(${CONFIG_PLATFORM_LPC_SDMMC})
@@ -108,83 +166,6 @@ endif()
 if(${CONFIG_PLATFORM_LPC_SCT_BASE})
     list(APPEND SOURCE_FILES "sct_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/sct_base.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_SSP_BASE})
-    list(APPEND SOURCE_FILES "ssp_common.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/ssp_base.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_UART_BASE})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/uart_common.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/uart_base.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_WAKEUPINT})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_PININT}/wakeup_int.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_WDT})
-    list(APPEND SOURCE_FILES "wdt.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/wdt_base.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_ADC_BUS})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_bus.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_ADC_DMA})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_dma.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_ADC_ONESHOT})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_oneshot.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_DAC})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_DAC}/dac.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_DAC_DMA})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_DAC}/dac_dma.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_GPTIMER})
-    list(APPEND SOURCE_FILES "gptimer.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_ONE_WIRE_SSP})
-    list(APPEND SOURCE_FILES "one_wire_ssp.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_ONE_WIRE_UART})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/one_wire_uart.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_I2C})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_I2C}/i2c.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_I2C_SLAVE})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_I2C}/i2c_slave.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_I2S_DMA})
-    list(APPEND SOURCE_FILES "i2s_dma.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_PININT})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_PININT}/pin_int.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_RIT})
-    list(APPEND SOURCE_FILES "rit.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/rit_base.c")
-endif()
-
-if(${CONFIG_PLATFORM_LPC_RTC})
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_RTC}/rtc.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/rtc_base.c")
 endif()
 
 if(${CONFIG_PLATFORM_LPC_SCT_PWM})
@@ -213,6 +194,25 @@ endif()
 
 if(${CONFIG_PLATFORM_LPC_SPI_DMA})
     list(APPEND SOURCE_FILES "${CONFIG_GEN_SPI}/spi_dma.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_SSP_BASE})
+    list(APPEND SOURCE_FILES "ssp_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/ssp_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_UART_BASE})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/uart_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/uart_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_WAKEUPINT})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_PININT}/wakeup_int.c")
+endif()
+
+if(${CONFIG_PLATFORM_LPC_WDT})
+    list(APPEND SOURCE_FILES "wdt.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/wdt_base.c")
 endif()
 
 if(${CONFIG_PLATFORM_USB})
