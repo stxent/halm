@@ -50,7 +50,7 @@ static bool enqueueUsbRx(struct MscQueryHandler *handler,
   struct Msc * const driver = handler->driver;
   uintptr_t position = buffer;
 
-  usbTrace("msc: OUT %"PRIu32" bytes", length);
+  usbTrace("msc: OUT %"PRIu32, length);
 
   while (!pointerArrayEmpty(&handler->usbPool) && length)
   {
@@ -103,7 +103,7 @@ static bool enqueueUsbTx(struct MscQueryHandler *handler,
   struct Msc * const driver = handler->driver;
   uintptr_t position = buffer;
 
-  usbTrace("msc: IN %"PRIu32" bytes", length);
+  usbTrace("msc: IN %"PRIu32, length);
 
   while (!pointerArrayEmpty(&handler->usbPool) && length)
   {

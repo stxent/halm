@@ -41,28 +41,6 @@ enum
 /*----------------------------------------------------------------------------*/
 enum
 {
-  PDT_DIRECT_ACCESS_BLOCK_DEVICE      = 0x00,
-  PDT_SEQUENTIAL_ACCESS_DEVICE        = 0x01,
-  PDT_PRINTER_DEVICE                  = 0x02,
-  PDT_PROCESSOR_DEVICE                = 0x03,
-  PDT_WRITE_ONCE_DEVICE               = 0x04,
-  PDT_CD_DVD_DEVICE                   = 0x05,
-  PDT_OPTICAL_MEMORY_DEVICE           = 0x07,
-  PDT_MEDIA_CHANGER_DEVICE            = 0x08,
-  PDT_STORAGE_ARRAY_CONTROLLER_DEVICE = 0x0C,
-  PDT_ENCLOSURE_SERVICES_DEVICE       = 0x0D,
-  PDT_SIMPLIFIED_DIRECT_ACCESS_DEVICE = 0x0E,
-  PDT_OPTICAL_CARD_RW_DEVICE          = 0x0F,
-  PDT_BRIDGE_CONTROLLER_COMMANDS      = 0x10,
-  PDT_OBJECT_BASED_STORAGE_DEVICE     = 0x11,
-  PDT_AUTOMATION_DRIVE_INTERFACE      = 0x12,
-  PDT_SECURITY_MANAGER_DEVICE         = 0x13,
-  PDT_WELL_KNOWN_LOGICAL_UNIT         = 0x1E,
-  PDT_UNKNOWN_DEVICE                  = 0x1F
-};
-/*----------------------------------------------------------------------------*/
-enum
-{
   SCSI_TEST_UNIT_READY        = 0x00,
   SCSI_REQUEST_SENSE          = 0x03,
   SCSI_FORMAT_UNIT            = 0x04,
@@ -90,9 +68,76 @@ enum
   MSC_REQUEST_GET_MAX_LUN = 0xFE
 };
 /*----------------------------------------------------------------------------*/
-#define CBW_FLAG_DIRECTION_TO_HOST  BIT(7)
-#define CBW_SIGNATURE               TO_LITTLE_ENDIAN_32(0x43425355)
-#define CSW_SIGNATURE               TO_LITTLE_ENDIAN_32(0x53425355)
+enum
+{
+  PDT_DIRECT_ACCESS_BLOCK_DEVICE      = 0x00,
+  PDT_SEQUENTIAL_ACCESS_DEVICE        = 0x01,
+  PDT_PRINTER_DEVICE                  = 0x02,
+  PDT_PROCESSOR_DEVICE                = 0x03,
+  PDT_WRITE_ONCE_DEVICE               = 0x04,
+  PDT_CD_DVD_DEVICE                   = 0x05,
+  PDT_OPTICAL_MEMORY_DEVICE           = 0x07,
+  PDT_MEDIA_CHANGER_DEVICE            = 0x08,
+  PDT_STORAGE_ARRAY_CONTROLLER_DEVICE = 0x0C,
+  PDT_ENCLOSURE_SERVICES_DEVICE       = 0x0D,
+  PDT_SIMPLIFIED_DIRECT_ACCESS_DEVICE = 0x0E,
+  PDT_OPTICAL_CARD_RW_DEVICE          = 0x0F,
+  PDT_BRIDGE_CONTROLLER_COMMANDS      = 0x10,
+  PDT_OBJECT_BASED_STORAGE_DEVICE     = 0x11,
+  PDT_AUTOMATION_DRIVE_INTERFACE      = 0x12,
+  PDT_SECURITY_MANAGER_DEVICE         = 0x13,
+  PDT_WELL_KNOWN_LOGICAL_UNIT         = 0x1E,
+  PDT_UNKNOWN_DEVICE                  = 0x1F
+};
+
+/* Enable Vital Product Data */
+#define INQUIRY_EVPD                    BIT(0)
+/* Removable Medium Bit set to one indicates that the medium is removable */
+#define INQUIRY_FLAGS_0_RMB             BIT(7)
+/* Response Data Format */
+#define INQUIRY_FLAGS_1_RDF(value)      BIT_FIELD((value), 0)
+/* Hierarchical Support */
+#define INQUIRY_FLAGS_1_HISUP           BIT(4)
+/* Normal ACA bit: support of the ACA task attribute */
+#define INQUIRY_FLAGS_1_NORMACA         BIT(5)
+/* PROTECT bit: the logical unit supports type 1, 2 or 3 protection */
+#define INQUIRY_FLAGS_2_PROTECT         BIT(0)
+/* Third-Party Copy: the device supports third-party copy commands */
+#define INQUIRY_FLAGS_2_3PC             BIT(3)
+/* Target Port Group Support: the support for asymmetric logcal unit access */
+#define INQUIRY_FLAGS_2_TPGS(value)     BIT_FIELD((value), 4)
+/*
+ * Access Controls Coordinator: the device contains an access controls
+ * coordinator, that may be addressed through this logical unit.
+ */
+#define INQUIRY_FLAGS_2_ACC             BIT(6)
+/* SCC Supported bit: the device contains an embedded storage controller */
+#define INQUIRY_FLAGS_2_SCCS            BIT(7)
+/*
+ * Multi Port: the device contains two or more ports and conforms
+ * to the multi-port requirements.
+ */
+#define INQUIRY_FLAGS_3_MULTIP          BIT(4)
+/* Enclosure Services: the device contains an embedded enclosure services */
+#define INQUIRY_FLAGS_3_ENCSERV         BIT(6)
+/* Command Queuing */
+#define INQUIRY_FLAGS_4_CMDQUE          BIT(1)
+
+#define READ6_LBA_MASK                  MASK(21)
+#define READ10_RARC                     BIT(2)
+#define READ10_FUA                      BIT(3)
+#define READ10_DPO                      BIT(4)
+#define READ10_RDPROTECT_MASK           BIT_FIELD(MASK(3), 5)
+#define READ12_GROUP_NUMBER_MASK        BIT_FIELD(MASK(5), 0)
+
+#define VERIFY10_BYTCHK_MASK            BIT_FIELD(MASK(2), 1)
+#define VERIFY10_DPO                    BIT(4)
+#define VERIFY10_VRPROTECT_MASK         BIT_FIELD(MASK(3), 5)
+#define VERIFY10_GROUP_NUMBER_MASK      BIT_FIELD(MASK(5), 0)
+/*----------------------------------------------------------------------------*/
+#define CBW_FLAG_DIRECTION_TO_HOST      BIT(7)
+#define CBW_SIGNATURE                   TO_LITTLE_ENDIAN_32(0x43425355)
+#define CSW_SIGNATURE                   TO_LITTLE_ENDIAN_32(0x53425355)
 
 enum
 {

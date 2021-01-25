@@ -22,6 +22,7 @@ enum State
   STATE_REQUEST_SENSE,
   STATE_INQUIRY,
   STATE_MODE_SENSE,
+  STATE_MEDIUM_REMOVAL,
   STATE_READ_FORMAT_CAPACITIES,
   STATE_READ_CAPACITY,
   STATE_READ_SETUP,
@@ -53,16 +54,16 @@ static enum State stateIdleRun(struct Msc *);
 static enum State stateTestUnitReadyEnter(struct Msc *);
 static enum State stateRequestSenseEnter(struct Msc *);
 static enum State stateInquiryEnter(struct Msc *);
+static enum State stateMediumRemovalEnter(struct Msc *);
 static enum State stateModeSenseEnter(struct Msc *);
 static enum State stateReadWriteRun(struct Msc *);
 static enum State stateReadFormatCapacitiesEnter(struct Msc *);
 static enum State stateReadCapacityEnter(struct Msc *);
 static enum State stateReadSetupEnter(struct Msc *);
 static enum State stateReadEnter(struct Msc *);
+static enum State stateVerifyEnter(struct Msc *);
 static enum State stateWriteSetupEnter(struct Msc *);
 static enum State stateWriteEnter(struct Msc *);
-static enum State stateVerifyEnter(struct Msc *);
-static enum State stateVerifyRun(struct Msc *);
 static enum State stateAckEnter(struct Msc *);
 static enum State stateAckRun(struct Msc *);
 static enum State stateAckStallRun(struct Msc *);
@@ -120,13 +121,14 @@ static const struct StateEntry stateTable[] = {
     [STATE_REQUEST_SENSE]           = {stateRequestSenseEnter, 0},
     [STATE_INQUIRY]                 = {stateInquiryEnter, 0},
     [STATE_MODE_SENSE]              = {stateModeSenseEnter, 0},
+    [STATE_MEDIUM_REMOVAL]          = {stateMediumRemovalEnter, 0},
     [STATE_READ_FORMAT_CAPACITIES]  = {stateReadFormatCapacitiesEnter, 0},
     [STATE_READ_CAPACITY]           = {stateReadCapacityEnter, 0},
     [STATE_READ_SETUP]              = {stateReadSetupEnter, 0},
     [STATE_READ]                    = {stateReadEnter, stateReadWriteRun},
     [STATE_WRITE_SETUP]             = {stateWriteSetupEnter, 0},
     [STATE_WRITE]                   = {stateWriteEnter, stateReadWriteRun},
-    [STATE_VERIFY]                  = {stateVerifyEnter, stateVerifyRun},
+    [STATE_VERIFY]                  = {stateVerifyEnter, 0},
     [STATE_ACK]                     = {stateAckEnter, stateAckRun},
     [STATE_ACK_STALL]               = {0, stateAckStallRun},
     [STATE_COMPLETED]               = {0, stateCompletedRun},
@@ -167,7 +169,7 @@ static enum State stateIdleRun(struct Msc *driver)
   if (cbw->signature != CBW_SIGNATURE)
     return STATE_IDLE;
 
-  if (cbw->lun != 0 || !cbw->cbLength || cbw->cbLength > 16) //FIXME LUN
+  if (cbw->lun != 0 || !cbw->cbLength || cbw->cbLength > 16) /* TODO MSC LUN */
     return STATE_ERROR;
 
   driver->context.cbw.length = fromLittleEndian32(cbw->dataTransferLength);
@@ -194,6 +196,9 @@ static enum State stateIdleRun(struct Msc *driver)
 
     case SCSI_MODE_SENSE10:
       return STATE_MODE_SENSE;
+
+    case SCSI_MEDIA_REMOVAL:
+      return STATE_MEDIUM_REMOVAL;
 
     case SCSI_READ_FORMAT_CAPACITIES:
       return STATE_READ_FORMAT_CAPACITIES;
@@ -265,10 +270,10 @@ static enum State stateInquiryEnter(struct Msc *driver)
   buffer->version = 0;
   buffer->additionalLength = 32;
 
-  /* TODO */
-  buffer->flags0 = 0x80; /* Removable Medium */
-  buffer->flags1 = 0x02; /* Response Data Format set to 2 */
-  buffer->flags2 = 0x80; /* SCCS */
+  buffer->flags0 = INQUIRY_FLAGS_0_RMB;
+  /* Response Data Format should be set to a fixed value of 2 */
+  buffer->flags1 = INQUIRY_FLAGS_1_RDF(2);
+  buffer->flags2 = INQUIRY_FLAGS_2_SCCS;
   buffer->flags3 = 0x00;
   buffer->flags4 = 0x00;
 
@@ -283,6 +288,13 @@ static enum State stateInquiryEnter(struct Msc *driver)
 
   return sendResponse(driver, driver->context.cbw.tag,
       driver->context.cbw.length, buffer, sizeof(struct InquiryData));
+}
+/*----------------------------------------------------------------------------*/
+static enum State stateMediumRemovalEnter(struct Msc *driver
+    __attribute__((unused)))
+{
+  usbTrace("msc: medium removal");
+  return STATE_ACK;
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateModeSenseEnter(struct Msc *driver)
@@ -334,8 +346,10 @@ static enum State stateReadWriteRun(struct Msc *driver)
   {
     case E_OK:
       return STATE_ACK;
+
     case E_ERROR:
       return STATE_SUSPEND;
+
     default:
       return STATE_FAILURE;
   }
@@ -352,9 +366,9 @@ static enum State stateReadFormatCapacitiesEnter(struct Msc *driver)
 
   buffer->header.capacityListLength = 8;
 
-  //TODO Constants
+  /* TODO MSC constants */
   buffer->descriptors[0].numberOfBlocks = toBigEndian32(driver->blockCount);
-  buffer->descriptors[0].flags = 0x02; /* Descriptor Type: Formatted Media */
+  buffer->descriptors[0].flags = 0x02; /* Descriptor Type: Formatted Medium */
   toBigEndian24(buffer->descriptors[0].blockLength, driver->blockLength);
 
   usbTrace("msc: read format capacity");
@@ -394,7 +408,7 @@ static enum State stateReadSetupEnter(struct Msc *driver)
           (const struct Read6Command *)driver->context.cbw.cb;
 
       logicalBlockAddress =
-          fromBigEndian24(command->logicalBlockAddress, 0x1FFFFF);
+          fromBigEndian24(command->logicalBlockAddress, READ6_LBA_MASK);
       numberOfBlocks = !command->transferLength ? 256 : command->transferLength;
       break;
     }
@@ -444,6 +458,31 @@ static enum State stateReadEnter(struct Msc *driver)
       driver->context.position, driver->context.left);
 
   return queued ? STATE_READ : STATE_FAILURE;
+}
+/*----------------------------------------------------------------------------*/
+static enum State stateVerifyEnter(struct Msc *driver)
+{
+  const struct Verify10Command * const command =
+      (const struct Verify10Command *)driver->context.cbw.cb;
+
+  if ((command->flags & VERIFY10_BYTCHK_MASK) == 0)
+  {
+    const uint32_t logicalBlockAddress =
+        fromBigEndian32(command->logicalBlockAddress);
+    const uint16_t numberOfBlocks =
+        fromBigEndian16(command->verificationLength);
+
+    usbTrace("msc: verify command, start block %"PRIu32", count %"PRIu16,
+        logicalBlockAddress, numberOfBlocks);
+
+    return (logicalBlockAddress + numberOfBlocks <= driver->blockCount) ?
+        STATE_ACK : STATE_FAILURE;
+  }
+  else
+  {
+    usbTrace("msc: incorrect verify command flags 0x%02X", command->flags);
+    return STATE_ERROR;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateWriteSetupEnter(struct Msc *driver)
@@ -509,16 +548,6 @@ static enum State stateWriteEnter(struct Msc *driver)
       driver->context.position, driver->context.left);
 
   return queued ? STATE_WRITE : STATE_FAILURE;
-}
-/*----------------------------------------------------------------------------*/
-static enum State stateVerifyEnter(struct Msc *driver)
-{
-  return STATE_IDLE;
-}
-/*----------------------------------------------------------------------------*/
-static enum State stateVerifyRun(struct Msc *driver)
-{
-  return STATE_IDLE;
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateAckEnter(struct Msc *driver)
@@ -675,11 +704,6 @@ static enum State sendResponse(struct Msc *driver, uint32_t tag,
   }
 }
 /*----------------------------------------------------------------------------*/
-//static enum result storageVerify(struct Msc *driver, struct UsbRequest *request)
-//{
-//  usbTrace("msc: memory verify");
-//}
-/*----------------------------------------------------------------------------*/
 static void deviceDescriptor(const void *object __attribute__((unused)),
     struct UsbDescriptor *header, void *payload)
 {
@@ -793,7 +817,7 @@ static enum Result handleClassRequest(struct Msc *driver,
     case MSC_REQUEST_GET_MAX_LUN:
       usbTrace("msc at %u: max LUN requested", driver->interfaceIndex);
 
-      response[0] = 0; // TODO Implement LUN in MSC
+      response[0] = 0; /* TODO MSC LUN */
       *responseLength = 1;
       return E_OK;
 
