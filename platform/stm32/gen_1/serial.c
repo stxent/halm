@@ -275,6 +275,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
 
   STM_USART_Type * const reg = interface->base.reg;
 
+  /* Invoke interrupt when the transmitter is idle */
   irqDisable(interface->base.irq);
   if (!byteQueueEmpty(&interface->txQueue) && !(reg->CR1 & CR1_TXEIE))
     reg->CR1 |= CR1_TXEIE;

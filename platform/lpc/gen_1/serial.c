@@ -298,26 +298,8 @@ static size_t serialRead(void *object, void *buffer, size_t length)
 static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
   struct Serial * const interface = object;
-  LPC_UART_Type * const reg = interface->base.reg;
   const uint8_t *position = buffer;
 
-  /* Check transmitter state and fill internal queue */
-  irqDisable(interface->base.irq);
-
-  if ((reg->LSR & LSR_THRE) && byteQueueEmpty(&interface->txQueue))
-  {
-    /* Transmitter is idle so fill TX FIFO */
-    const size_t bytesToWrite = MIN(length, TX_FIFO_SIZE);
-    size_t written = 0;
-
-    for (; written < bytesToWrite; ++written)
-      reg->THR = *position++;
-    length -= written;
-  }
-
-  irqEnable(interface->base.irq);
-
-  /* Fill TX queue with the rest of data */
   while (length && !byteQueueFull(&interface->txQueue))
   {
     uint8_t *address;
@@ -334,6 +316,14 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
     position += count;
     length -= count;
   }
+
+  LPC_UART_Type * const reg = interface->base.reg;
+
+  /* Invoke interrupt when the transmitter is idle */
+  irqDisable(interface->base.irq);
+  if (!byteQueueEmpty(&interface->txQueue) && (reg->LSR & LSR_THRE))
+    irqSetPending(interface->base.irq);
+  irqEnable(interface->base.irq);
 
   return position - (const uint8_t *)buffer;
 }
