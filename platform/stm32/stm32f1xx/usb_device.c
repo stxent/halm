@@ -230,9 +230,7 @@ static void resetDevice(struct UsbDevice *device)
   STM_USB_Type * const reg = device->base.reg;
 
   /* Set inactive configuration */
-  device->configured = false;
   device->suspended = false;
-  device->scheduledAddress = 0;
   device->position = DESCRIPTOR_TABLE_SIZE;
 
   for (size_t i = 0; i < 8; ++i)
@@ -347,11 +345,10 @@ static void devSetAddress(void *object, uint8_t address)
   STM_USB_Type * const reg = device->base.reg;
 
   device->configured = address != 0;
+  device->scheduledAddress = address;
 
   if (address == 0)
     reg->DADDR = DADDR_ADD(address) | DADDR_EF;
-  else
-    device->scheduledAddress = address;
 }
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)

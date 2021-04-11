@@ -159,8 +159,12 @@ static void initPeripheral(struct UsbDevice *device)
   while (reg->USBCMD_D & USBCMD_D_RST);
 
   /* Program the controller to be the USB device controller */
-  reg->USBMODE_D = USBMODE_D_CM(CM_DEVICE_CONTROLLER)
-      | USBMODE_D_SDIS | USBMODE_D_SLOM;
+  reg->USBMODE_D = USBMODE_D_CM(CM_DEVICE_CONTROLLER) | USBMODE_D_SLOM;
+
+  if (device->base.channel == 0)
+  {
+    reg->OTGSC = (reg->OTGSC & ~OTGSC_VD) | OTGSC_OT;
+  }
 
   /* Recommended by NXP technical support */
   reg->SBUSCFG = SBUSCFG_AHB_BRST(AHB_BRST_INCR16_UNSPECIFIED);
@@ -277,6 +281,8 @@ static void resetDevice(struct UsbDevice *device)
   /* Enable interrupts */
   reg->USBINTR_D = USBSTS_D_UI | USBSTS_D_UEI | USBSTS_D_PCI
       | USBSTS_D_URI | USBSTS_D_SLI;
+
+  devSetAddress(device, 0);
 }
 /*----------------------------------------------------------------------------*/
 static void resetQueueHeads(struct UsbDevice *device)
@@ -328,8 +334,6 @@ static enum Result devInit(void *object, const void *configBase)
 
   initPeripheral(device);
   resetDevice(device);
-
-  devSetAddress(device, 0);
 
   /* Configure NVIC interrupts */
   irqSetPriority(device->base.irq, config->priority);

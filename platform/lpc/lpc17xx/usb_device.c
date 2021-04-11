@@ -313,9 +313,6 @@ static void resetDevice(struct UsbDevice *device)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  /* Set inactive configuration */
-  device->configured = false;
-
   /* Reset device interrupts */
   reg->USBDevIntEn = 0;
   reg->USBDevIntClr = 0xFFFFFFFFUL;
@@ -331,6 +328,8 @@ static void resetDevice(struct UsbDevice *device)
 
   reg->USBDMAIntEn = USBDMAIntEn_EOT | USBDMAIntEn_NDDR | USBDMAIntEn_ERR;
   reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW;
+
+  devSetAddress(device, 0);
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)

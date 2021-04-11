@@ -219,8 +219,7 @@ static void resetDevice(struct UsbDevice *device)
   /* Enable device interrupt only */
   reg->INTEN = INTEN_DEV_INT_EN;
 
-  device->configured = false;
-  device->scheduledAddress = 0;
+  devSetAddress(device, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -316,10 +315,9 @@ static void devSetAddress(void *object, uint8_t address)
   struct UsbDevice * const device = object;
 
   device->configured = address != 0;
+  device->scheduledAddress = address;
 
-  if (address)
-    device->scheduledAddress = address;
-  else
+  if (address != 0)
     applyAddress(device, 0);
 }
 /*----------------------------------------------------------------------------*/

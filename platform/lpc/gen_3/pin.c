@@ -56,9 +56,7 @@ struct Pin pinInit(PinNumber id)
   pin.port = PIN_TO_PORT(id);
   pin.number = PIN_TO_OFFSET(id);
   pin.index = (pin.port << 5) + pin.number;
-
   pin.reg = (void *)calcControlReg(pin.port, pin.number);
-  assert(pin.reg);
 
   return pin;
 }

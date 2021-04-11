@@ -169,12 +169,11 @@ static void resetDevice(struct UsbDevice *device)
 {
   LPC_USB_Type * const reg = device->base.reg;
 
-  /* Set inactive configuration */
-  device->configured = false;
-
   /* Configure and clear interrupts */
   reg->USBDevIntEn = USBDevInt_DEV_STAT;
   reg->USBDevIntClr = 0xFFFFFFFFUL;
+
+  devSetAddress(device, 0);
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)
