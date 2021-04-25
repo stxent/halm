@@ -480,7 +480,7 @@ typedef struct
   __ne__ uint8_t RESERVED14[0x400 - sizeof(STM_I2C_Type)];
   STM_USB_Type USB;
   __ne__ uint8_t RESERVED15[0x400 - sizeof(STM_USB_Type)];
-  __rw__ uint16_t CAN_USB_SRAM[512];
+  __rw__ uint32_t CAN_USB_SRAM[256];
   STM_CAN_Type CAN;
   __ne__ uint8_t RESERVED16[0x800 - sizeof(STM_CAN_Type)];
   STM_CRS_Type CRS;

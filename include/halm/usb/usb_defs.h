@@ -259,7 +259,7 @@ struct UsbStringDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
-  uint16_t langid[];
+  uint16_t data[];
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_DEFS_H_ */

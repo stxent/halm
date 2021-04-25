@@ -554,7 +554,7 @@ typedef struct
 /*----------------------------------------------------------------------------*/
 typedef struct
 {
-  __rw__ uint8_t USB_SRAM[2048];
+  __rw__ uint32_t USB_SRAM[512];
 } RAM_DOMAIN_Type;
 
 typedef struct

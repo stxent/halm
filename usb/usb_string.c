@@ -45,10 +45,8 @@ void usbStringHeader(struct UsbDescriptor *header, void *payload,
 
   if (payload)
   {
-    struct UsbStringDescriptor * const descriptor =
-        (struct UsbStringDescriptor *)payload;
-
-    descriptor->langid[0] = toLittleEndian16(langid);
+    struct UsbStringDescriptor * const descriptor = payload;
+    descriptor->data[0] = toLittleEndian16(langid);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -63,11 +61,10 @@ void usbStringMultiHeader(struct UsbDescriptor *header, void *payload,
 
   if (payload)
   {
-    struct UsbStringDescriptor * const descriptor =
-        (struct UsbStringDescriptor *)payload;
+    struct UsbStringDescriptor * const descriptor = payload;
 
     for (size_t index = 0; index < count; ++index)
-      descriptor->langid[index] = toLittleEndian16(languages[index]);
+      descriptor->data[index] = toLittleEndian16(languages[index]);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -81,7 +78,7 @@ void usbStringWrap(struct UsbDescriptor *header, void *payload,
 
   if (payload)
   {
-    struct UsbDescriptor * const descriptor = payload;
+    struct UsbStringDescriptor * const descriptor = payload;
     uToUtf16((char16_t *)descriptor->data, text, textLength + 1);
   }
 }

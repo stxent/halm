@@ -25,7 +25,7 @@
       {"offset": "0x05400", "name": "I2C1", "type": "STM_I2C_Type"},
       {"offset": "0x05800", "name": "I2C2", "type": "STM_I2C_Type"},
       {"offset": "0x05C00", "name": "USB", "type": "STM_USB_Type"},
-      {"offset": "0x06000", "name": "CAN_USB_SRAM", "type": "__rw__ uint16_t", "array": 512},
+      {"offset": "0x06000", "name": "CAN_USB_SRAM", "type": "__rw__ uint32_t", "array": 256},
       {"offset": "0x06400", "name": "CAN1", "type": "STM_CAN_Type", "aligned": true},
       {"offset": "0x06800", "name": "CAN2", "type": "STM_CAN_Type"},
       {"offset": "0x06C00", "name": "BKP", "type": "STM_BKP_Type"},

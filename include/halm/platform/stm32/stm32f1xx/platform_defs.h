@@ -569,7 +569,7 @@ typedef struct
   __ne__ uint8_t RESERVED19[0x400 - sizeof(STM_I2C_Type)];
   STM_USB_Type USB;
   __ne__ uint8_t RESERVED20[0x400 - sizeof(STM_USB_Type)];
-  __rw__ uint16_t CAN_USB_SRAM[512];
+  __rw__ uint32_t CAN_USB_SRAM[256];
   STM_CAN_Type CAN1;
   __ne__ uint8_t RESERVED21[0x400 - sizeof(STM_CAN_Type)];
   STM_CAN_Type CAN2;

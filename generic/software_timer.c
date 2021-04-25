@@ -300,14 +300,10 @@ static uint32_t tmrGetValue(const void *object)
 static void tmrSetValue(void *object, uint32_t value)
 {
   struct SoftwareTimer * const timer = object;
-
   const IrqState state = irqSave();
-  const uint32_t current = distance(timer->factory->counter, timer->timestamp);
 
-  if (current > value)
-    timer->timestamp += current - value;
-  else
-    timer->timestamp -= value - current;
+  const uint32_t current = distance(timer->factory->counter, timer->timestamp);
+  timer->timestamp += current - value;
 
   irqRestore(state);
 }
