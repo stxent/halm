@@ -29,11 +29,11 @@ struct Eeprom
   /* Current address */
   uint32_t position;
 
-  /* Output buffer */
-  const uint8_t *buffer;
+  /* Input buffer */
+  const uint32_t *buffer;
   /* Offset from the start of the memory */
   uint32_t offset;
-  /* Bytes left in the buffer */
+  /* Words left in the buffer */
   size_t left;
 
   /* Selection between blocking mode and zero copy mode */

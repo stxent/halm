@@ -7,10 +7,7 @@
 #include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/eeprom.h>
 #include <halm/platform/lpc/lpc43xx/eeprom_defs.h>
-#include <halm/platform/lpc/system.h>
-#include <xcore/memory.h>
 #include <assert.h>
-#include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 #define EEPROM_CLOCK  1500000
@@ -46,7 +43,8 @@ static struct Eeprom *instance = 0;
 static size_t calcChunkLength(uint32_t address, size_t left)
 {
   const uint32_t pageAddress = (address + PAGE_SIZE) & ~(PAGE_SIZE - 1);
-  const size_t chunkLength = MIN(left, pageAddress - address);
+  const size_t wordsLeft = (pageAddress - address) >> 2;
+  const size_t chunkLength = MIN(left, wordsLeft);
 
   return chunkLength;
 }
@@ -54,15 +52,20 @@ static size_t calcChunkLength(uint32_t address, size_t left)
 static inline bool isAddressValid(const struct Eeprom *interface,
     uint32_t address)
 {
-  return !(address & 0x03) && address < interface->base.size;
+  return !(address & 0x03) && address <= interface->base.size;
 }
 /*----------------------------------------------------------------------------*/
 static void programNextChunk(struct Eeprom *interface)
 {
-  const size_t nextChunkLength = calcChunkLength(interface->offset,
-      instance->left);
+  const size_t length = calcChunkLength(interface->offset, instance->left);
+  uint32_t *address = (uint32_t *)interface->offset;
 
-  memcpy((void *)interface->offset, interface->buffer, nextChunkLength);
+  for (size_t index = 0; index < length; ++index)
+  {
+    /* Write buffer using 4-byte words */
+    address[index] = interface->buffer[index];
+  }
+
   LPC_EEPROM->CMD = CMD_ERASE_PROGRAM;
 }
 /*----------------------------------------------------------------------------*/
@@ -90,7 +93,7 @@ void EEPROM_ISR(void)
 
   instance->buffer += currentChunkLength;
   instance->left -= currentChunkLength;
-  instance->offset += currentChunkLength;
+  instance->offset += currentChunkLength << 2;
 
   if (instance->left)
     programNextChunk(instance);
@@ -100,25 +103,44 @@ static enum Result eepromInit(void *object, const void *configBase)
 {
   const struct EepromConfig * const config = configBase;
   struct Eeprom * const interface = object;
-  enum Result res;
-
-  if ((res = EepromBase->init(interface, 0)) != E_OK)
-    return res;
 
   if (!setInstance(interface))
     return E_BUSY;
 
+  const enum Result res = EepromBase->init(interface, 0);
+
+  if (res != E_OK)
+  {
+    instance = 0;
+    return res;
+  }
+
   interface->position = 0;
   interface->blocking = true;
 
-  /* Enable clock to register interface and peripheral */
-  sysClockEnable(CLK_M4_EEPROM);
-  /* Reset registers to default values */
-  sysResetEnable(RST_EEPROM);
-
+  /* Main clock frequency */
   const uint32_t frequency = clockFrequency(MainClock);
+  /* Main clock period in nanoseconds */
+  const uint32_t period = (1000000000UL - 1 + frequency) / frequency;
 
+  LPC_EEPROM->PWRDWN = 0;
   LPC_EEPROM->CLKDIV = (frequency + (EEPROM_CLOCK - 1)) / EEPROM_CLOCK - 1;
+
+  const uint32_t rphase1 = (RPHASE1_WAIT_TIME - 1 + period) / period;
+  const uint32_t rphase2 = (RPHASE2_WAIT_TIME - 1 + period) / period;
+
+  LPC_EEPROM->RWSTATE = RWSTATE_RPHASE1(rphase1 - 1)
+      | RWSTATE_RPHASE2(rphase2 - 1);
+
+  const uint32_t phase1 = (PHASE1_WAIT_TIME - 1 + period) / period;
+  const uint32_t phase2 = (PHASE2_WAIT_TIME - 1 + period) / period;
+  const uint32_t phase3 = (PHASE3_WAIT_TIME - 1 + period) / period;
+
+  LPC_EEPROM->WSTATE = WSTATE_PHASE1(phase1 - 1) | WSTATE_PHASE2(phase2 - 1)
+      | WSTATE_PHASE3(phase3 - 1);
+
+  LPC_EEPROM->AUTOPROG = AUTOPROG_MODE(AUTOPROG_OFF);
+  LPC_EEPROM->INTSTATCLR = INT_PROG_DONE;
   LPC_EEPROM->INTENSET = INT_PROG_DONE;
 
   if (config)
@@ -131,9 +153,9 @@ static enum Result eepromInit(void *object, const void *configBase)
 static void eepromDeinit(void *object __attribute__((unused)))
 {
   irqDisable(EEPROM_IRQ);
-  sysClockDisable(CLK_M4_EEPROM);
-
   instance = 0;
+
+  EepromBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
 static void eepromSetCallback(void *object, void (*callback)(void *),
@@ -220,7 +242,7 @@ static size_t eepromWrite(void *object, const void *buffer, size_t length)
     return 0;
 
   interface->buffer = buffer;
-  interface->left = length;
+  interface->left = length >> 2;
   interface->offset = interface->base.address + interface->position;
 
   programNextChunk(interface);

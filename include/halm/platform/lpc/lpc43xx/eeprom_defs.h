@@ -53,5 +53,11 @@ enum
 #define PWRDWN_MODE                     BIT(0)
 /*------------------Interrupt registers---------------------------------------*/
 #define INT_PROG_DONE                   BIT(2)
+/*------------------Wait time in ns-------------------------------------------*/
+#define RPHASE1_WAIT_TIME               70
+#define RPHASE2_WAIT_TIME               35
+#define PHASE1_WAIT_TIME                20
+#define PHASE2_WAIT_TIME                40
+#define PHASE3_WAIT_TIME                10
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_EEPROM_DEFS_H_ */

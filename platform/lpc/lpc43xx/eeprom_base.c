@@ -5,13 +5,15 @@
  */
 
 #include <halm/platform/lpc/lpc43xx/eeprom_base.h>
+#include <halm/platform/lpc/system.h>
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *, const void *);
+static void eepromDeinit(void *);
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const EepromBase = &(const struct EntityClass){
     .size = sizeof(struct EepromBase),
     .init = eepromInit,
-    .deinit = 0 /* Default destructor */
+    .deinit = eepromDeinit
 };
 /*----------------------------------------------------------------------------*/
 extern const unsigned long _seeprom;
@@ -24,5 +26,16 @@ static enum Result eepromInit(void *object,
 
   interface->address = (uint32_t)&_seeprom;
   interface->size = (uint32_t)&_eeeprom - (uint32_t)&_seeprom;
+
+  /* Enable clock to register interface and peripheral */
+  sysClockEnable(CLK_M4_EEPROM);
+  /* Reset registers to default values */
+  sysResetEnable(RST_EEPROM);
+
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void eepromDeinit(void *object __attribute__((unused)))
+{
+  sysClockDisable(CLK_M4_EEPROM);
 }
