@@ -142,11 +142,11 @@ static void tmrSetOverflow(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object __attribute__((unused)))
 {
-  return SYSTICK->VAL;
+  return SYSTICK->LOAD - SYSTICK->VAL;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetValue(void *object __attribute__((unused)), uint32_t value)
 {
-  assert(value <= TIMER_RESOLUTION);
-  SYSTICK->VAL = value;
+  assert(value <= SYSTICK->LOAD);
+  SYSTICK->VAL = SYSTICK->LOAD - value;
 }
