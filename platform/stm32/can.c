@@ -246,15 +246,7 @@ static void sendMessage(struct Can *interface,
   assert(message->length <= 8);
 
   STM_CAN_Type * const reg = interface->base.reg;
-  size_t mailbox;
-
-  /* Find an empty mailbox */
-  if (reg->TSR & TSR_TME(0))
-    mailbox = 0;
-  else if (reg->TSR & TSR_TME(1))
-    mailbox = 1;
-  else
-    mailbox = 2;
+  const uint32_t mailbox = TSR_CODE_VALUE(reg->TSR);
 
   if (message->flags & CAN_EXT_ID)
   {

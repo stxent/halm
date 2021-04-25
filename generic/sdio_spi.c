@@ -313,10 +313,13 @@ static void stateReadLongEnter(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static enum State stateReadLongAdvance(struct SdioSpi *interface)
 {
-  const uint32_t * const buffer = (const uint32_t *)interface->buffer;
+  for (size_t index = 0; index < 4; ++index)
+  {
+    uint32_t word;
 
-  for (unsigned int index = 0; index < 4; ++index)
-    interface->response[3 - index] = fromBigEndian32(buffer[index]);
+    memcpy(&word, interface->buffer + index * sizeof(word), sizeof(word));
+    interface->response[3 - index] = fromBigEndian32(word);
+  }
 
   interface->commandStatus = STATUS_OK;
   return STATE_IDLE;
