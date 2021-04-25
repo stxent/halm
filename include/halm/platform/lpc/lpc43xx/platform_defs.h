@@ -283,7 +283,7 @@ typedef struct
   __rw__ uint32_t M0SUBMEMMAP;
   __ne__ uint32_t RESERVED5;
   __rw__ uint32_t M0SUBTXEVENT;
-  __ne__ uint32_t RESERVED6[58];
+  __ne__ uint32_t RESERVED6[59];
 
   /* Offset 0x0400 */
   __rw__ uint32_t M0APPTXEVENT;
@@ -1906,6 +1906,7 @@ typedef struct
   __rw__ uint32_t MAC_RWAKE_FRFLT;
   __rw__ uint32_t MAC_PMT_CTRL_STAT;
   __ne__ uint32_t RESERVED1[2];
+  __ro__ uint32_t MAC_INTR;
   __rw__ uint32_t MAC_INTR_MASK;
   __rw__ uint32_t MAC_ADDR0_HIGH;
   __rw__ uint32_t MAC_ADDR0_LOW;

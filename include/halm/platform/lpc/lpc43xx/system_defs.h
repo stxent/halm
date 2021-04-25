@@ -67,5 +67,23 @@
 #define CREG0_WAKEUP1CTRL(value)        BIT_FIELD((value), 16)
 #define CREG0_WAKEUP1CTRL_VALUE(reg) \
     FIELD_VALUE((reg), CREG0_WAKEUP1CTRL_MASK, 16)
+/*------------------Configuration Register 6----------------------------------*/
+enum
+{
+  CREG6_ETHMODE_MII   = 0,
+  CREG6_ETHMODE_RMII  = 4
+};
+
+#define CREG6_ETHMODE_MASK              BIT_FIELD(MASK(3), 0)
+#define CREG6_ETHMODE(value)            BIT_FIELD((value), 0)
+#define CREG6_ETHMODE_VALUE(reg) \
+    FIELD_VALUE((reg), CREG6_ETHMODE_MASK, 0)
+
+#define CREG6_CTOUTCTRL                 BIT(4)
+#define CREG6_I2S0_TX_SCK_IN_SEL        BIT(12)
+#define CREG6_I2S0_RX_SCK_IN_SEL        BIT(13)
+#define CREG6_I2S1_TX_SCK_IN_SEL        BIT(14)
+#define CREG6_I2S1_RX_SCK_IN_SEL        BIT(15)
+#define CREG6_EMC_CLK_SEL               BIT(16)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_SYSTEM_DEFS_H_ */
