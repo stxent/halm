@@ -49,8 +49,7 @@ static const struct EntityClass * const PinIntHandler =
     .deinit = deletedDestructorTrap
 };
 
-const struct InterruptClass * const PinInt =
-    &(const struct InterruptClass){
+const struct InterruptClass * const PinInt = &(const struct InterruptClass){
     .size = sizeof(struct PinInt),
     .init = pinIntInit,
     .deinit = pinIntDeinit,

@@ -51,8 +51,7 @@ static const struct AdcBlockDescriptor adcBlockEntries[] = {
         .irq = ADC0_IRQ,
         .clock = CLK_APB3_ADC0,
         .reset = RST_ADC0
-    },
-    {
+    }, {
         .reg = LPC_ADC1,
         .irq = ADC1_IRQ,
         .clock = CLK_APB3_ADC1,

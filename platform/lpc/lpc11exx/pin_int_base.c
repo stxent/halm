@@ -19,8 +19,7 @@ static void pinIntDeinit(void *);
 #define pinIntDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const PinIntBase =
-    &(const struct EntityClass){
+const struct EntityClass * const PinIntBase = &(const struct EntityClass){
     .size = sizeof(struct PinIntBase),
     .init = pinIntInit,
     .deinit = pinIntDeinit

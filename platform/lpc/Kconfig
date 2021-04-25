@@ -65,11 +65,11 @@ choice
 	depends on PM
 
 	config PLATFORM_LPC_PM_DEEPSLEEP
-	  bool "Deep Sleep"
+		bool "Deep Sleep"
 
 	config PLATFORM_LPC_PM_PD
-	  bool "Power-down"
-	  depends on FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+		bool "Power-down"
+		depends on FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
 endchoice
 
 endmenu
@@ -340,6 +340,7 @@ config PLATFORM_LPC_SDMMC
 	bool "SD/MMC card interface"
 	default y
 	depends on FAMILY_LPC43XX
+	select PLATFORM_LPC_PININT
 
 config PLATFORM_LPC_SCT_BASE
 	bool "SCT"
