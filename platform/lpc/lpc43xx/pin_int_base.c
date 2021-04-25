@@ -8,6 +8,7 @@
 #include <halm/platform/lpc/gen_3/pin_int_base.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+static IrqNumber findIrqNumber(uint8_t);
 static int setInstance(struct PinIntBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result pinIntInit(void *, const void *);
@@ -18,14 +19,47 @@ static void pinIntDeinit(void *);
 #define pinIntDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const PinIntBase =
-    &(const struct EntityClass){
+const struct EntityClass * const PinIntBase = &(const struct EntityClass){
     .size = sizeof(struct PinIntBase),
     .init = pinIntInit,
     .deinit = pinIntDeinit
 };
 /*----------------------------------------------------------------------------*/
 static struct PinIntBase *instances[8] = {0};
+/*----------------------------------------------------------------------------*/
+static IrqNumber findIrqNumber(uint8_t channel)
+{
+  /* In M0APP and M0SUB cores only one interrupt vector is implemented */
+
+  static const IrqNumber IRQ_TABLE[] = {
+      PIN_INT0_IRQ,
+      PIN_INT1_IRQ,
+      PIN_INT2_IRQ,
+      PIN_INT3_IRQ,
+      PIN_INT4_IRQ,
+      PIN_INT5_IRQ,
+      PIN_INT6_IRQ,
+      PIN_INT7_IRQ
+  };
+
+  return IRQ_TABLE[channel];
+}
+/*----------------------------------------------------------------------------*/
+static int setInstance(struct PinIntBase *interrupt)
+{
+  /* Find free interrupt */
+  for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
+  {
+    if (!instances[index] && findIrqNumber(index) != -1)
+    {
+      instances[index] = interrupt;
+      return (int)index;
+    }
+  }
+
+  /* All handlers are busy */
+  return -1;
+}
 /*----------------------------------------------------------------------------*/
 void PIN_INT0_ISR(void)
 {
@@ -67,22 +101,6 @@ void PIN_INT7_ISR(void)
   instances[7]->handler(instances[7]);
 }
 /*----------------------------------------------------------------------------*/
-static int setInstance(struct PinIntBase *interrupt)
-{
-  /* Find free interrupt */
-  for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
-  {
-    if (!instances[index])
-    {
-      instances[index] = interrupt;
-      return (int)index;
-    }
-  }
-
-  /* All handlers are busy */
-  return -1;
-}
-/*----------------------------------------------------------------------------*/
 static enum Result pinIntInit(void *object, const void *configBase)
 {
   const struct PinIntBaseConfig * const config = configBase;
@@ -94,7 +112,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
 
   interrupt->channel = (uint8_t)channel;
   interrupt->handler = 0;
-  interrupt->irq = PIN_INT0_IRQ + interrupt->channel;
+  interrupt->irq = findIrqNumber(interrupt->channel);
 
   volatile uint32_t * const reg = LPC_SCU->PINTSEL + (interrupt->channel >> 2);
 

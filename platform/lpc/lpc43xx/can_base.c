@@ -138,7 +138,9 @@ void CAN0_ISR(void)
 /*----------------------------------------------------------------------------*/
 void CAN1_ISR(void)
 {
-  instances[1]->handler(instances[1]);
+  /* In M0 cores CAN1 IRQ is combined with USART2 IRQ */
+  if (instances[1]->handler)
+    instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t canGetClock(const struct CanBase *interface)

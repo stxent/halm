@@ -228,12 +228,16 @@ static bool setInstance(uint8_t channel, struct SspBase *object)
 /*----------------------------------------------------------------------------*/
 void SSP0_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  /* In M0 cores SSP0 IRQ is combined with SSP1 IRQ */
+  if (instances[0]->handler)
+    instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void SSP1_ISR(void)
 {
-  instances[1]->handler(instances[1]);
+  /* In M0 cores SSP1 IRQ is combined with SSP0 IRQ */
+  if (instances[1]->handler)
+    instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetClock(const struct SspBase *interface)

@@ -59,10 +59,16 @@ static bool setInstance(struct Rit *object)
 /*----------------------------------------------------------------------------*/
 void RIT_ISR(void)
 {
-  /* Clear pending interrupt flag */
-  LPC_RIT->CTRL = LPC_RIT->CTRL;
+  const uint32_t control = LPC_RIT->CTRL;
 
-  instance->callback(instance->callbackArgument);
+  if (control & CTRL_RITINT)
+  {
+    /* Clear pending interrupt flag */
+    LPC_RIT->CTRL = control;
+
+    if (instance->callback)
+      instance->callback(instance->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
@@ -80,6 +86,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
     if (config)
       irqSetPriority(RIT_IRQ, config->priority);
+    irqEnable(RIT_IRQ);
 
     return E_OK;
   }
@@ -115,11 +122,6 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 
   timer->callback = callback;
   timer->callbackArgument = argument;
-
-  if (timer->callback)
-    irqEnable(RIT_IRQ);
-  else
-    irqDisable(RIT_IRQ);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object __attribute__((unused)))

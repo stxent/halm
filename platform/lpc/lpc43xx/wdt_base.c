@@ -34,7 +34,9 @@ static bool setInstance(struct WdtBase *object)
 /*----------------------------------------------------------------------------*/
 void WWDT_ISR(void)
 {
-  instance->handler(instance);
+  /* In M0APP core WWDT IRQ is combined with RIT IRQ */
+  if (instance->handler)
+    instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t wdtGetClock(const struct WdtBase *timer __attribute__((unused)))

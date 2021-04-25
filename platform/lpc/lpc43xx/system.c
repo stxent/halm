@@ -7,31 +7,31 @@
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
 /*----------------------------------------------------------------------------*/
-static volatile uint32_t *calcBranchReg(enum SysClockBranch branch)
+static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch branch)
 {
-  const uint32_t address = branch < 0x200 ? (uintptr_t)LPC_CCU1 + (branch << 3)
-      : (uintptr_t)LPC_CCU2 + ((branch - 0x200) << 3);
-
-  return (volatile uint32_t *)address;
+  if (branch < 0x200)
+    return &LPC_CCU1->BRANCH[branch];
+  else
+    return &LPC_CCU2->BRANCH[branch - 0x200];
 }
 /*----------------------------------------------------------------------------*/
 void sysClockEnable(enum SysClockBranch branch)
 {
-  *calcBranchReg(branch) |= CFG_RUN | CFG_AUTO | CFG_WAKEUP;
+  calcBranchReg(branch)->CFG |= CFG_RUN | CFG_AUTO | CFG_WAKEUP;
 }
 /*----------------------------------------------------------------------------*/
 bool sysClockStatus(enum SysClockBranch branch)
 {
-  return (*calcBranchReg(branch) & CFG_RUN) != 0;
+  return (calcBranchReg(branch)->STAT & STAT_RUN) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void sysClockDisable(enum SysClockBranch branch)
 {
-  volatile uint32_t * const reg = calcBranchReg(branch);
+  LPC_CCU_BRANCH_Type * const reg = calcBranchReg(branch);
 
   /* Use AHB disable protocol and do not enable clock after wake up */
-  *reg = (*reg & ~CFG_WAKEUP) | CFG_AUTO;
-  *reg &= ~CFG_RUN; /* Disable clock */
+  reg->CFG = (reg->CFG & ~CFG_WAKEUP) | CFG_AUTO;
+  reg->CFG &= ~CFG_RUN; /* Disable clock */
 }
 /*----------------------------------------------------------------------------*/
 void sysFlashEnable(unsigned int bank)
@@ -83,7 +83,10 @@ void sysResetEnable(enum SysBlockReset block)
   LPC_RGU->RESET_CTRL[index] = ~LPC_RGU->RESET_ACTIVE_STATUS[index] | mask;
 
   if (block != RST_M0SUB && block != RST_M0APP)
+  {
+    /* Wait for reset to be cleared */
     while (!(LPC_RGU->RESET_ACTIVE_STATUS[index] & mask));
+  }
 }
 /*----------------------------------------------------------------------------*/
 void sysResetDisable(enum SysBlockReset block)

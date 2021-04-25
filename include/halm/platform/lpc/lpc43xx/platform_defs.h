@@ -94,6 +94,12 @@ typedef struct
   __rw__ uint32_t BASE_CGU_OUT0_CLK;
   __rw__ uint32_t BASE_CGU_OUT1_CLK;
 } LPC_CGU_Type;
+/*------------------Clock Control Unit Branch---------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CFG;
+  __ro__ uint32_t STAT;
+} LPC_CCU_BRANCH_Type;
 /*------------------Clock Control Unit 1--------------------------------------*/
 typedef struct
 {
@@ -101,155 +107,101 @@ typedef struct
   __ro__ uint32_t BASE_STAT;
   __ne__ uint32_t RESERVED0[62];
 
-  /* Offset 0x0100 */
-  __rw__ uint32_t CLK_APB3_BUS_CFG;
-  __ro__ uint32_t CLK_APB3_BUS_STAT;
-  __rw__ uint32_t CLK_APB3_I2C1_CFG;
-  __ro__ uint32_t CLK_APB3_I2C1_STAT;
-  __rw__ uint32_t CLK_APB3_DAC_CFG;
-  __ro__ uint32_t CLK_APB3_DAC_STAT;
-  __rw__ uint32_t CLK_APB3_ADC0_CFG;
-  __ro__ uint32_t CLK_APB3_ADC0_STAT;
-  __rw__ uint32_t CLK_APB3_ADC1_CFG;
-  __ro__ uint32_t CLK_APB3_ADC1_STAT;
-  __rw__ uint32_t CLK_APB3_CAN0_CFG;
-  __ro__ uint32_t CLK_APB3_CAN0_STAT;
-  __ne__ uint32_t RESERVED1[52];
+  union
+  {
+    struct
+    {
+      /* Offset 0x0100 */
+      LPC_CCU_BRANCH_Type CLK_APB3_BUS;
+      LPC_CCU_BRANCH_Type CLK_APB3_I2C1;
+      LPC_CCU_BRANCH_Type CLK_APB3_DAC;
+      LPC_CCU_BRANCH_Type CLK_APB3_ADC0;
+      LPC_CCU_BRANCH_Type CLK_APB3_ADC1;
+      LPC_CCU_BRANCH_Type CLK_APB3_CAN0;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED1[26];
 
-  /* Offset 0x0200 */
-  __rw__ uint32_t CLK_APB1_BUS_CFG;
-  __ro__ uint32_t CLK_APB1_BUS_STAT;
-  __rw__ uint32_t CLK_APB1_MCPWM_CFG;
-  __ro__ uint32_t CLK_APB1_MCPWM_STAT;
-  __rw__ uint32_t CLK_APB1_I2C0_CFG;
-  __ro__ uint32_t CLK_APB1_I2C0_STAT;
-  __rw__ uint32_t CLK_APB1_I2S_CFG;
-  __ro__ uint32_t CLK_APB1_I2S_STAT;
-  __rw__ uint32_t CLK_APB1_CAN1_CFG;
-  __ro__ uint32_t CLK_APB1_CAN1_STAT;
-  __ne__ uint32_t RESERVED2[54];
+      /* Offset 0x0200 */
+      LPC_CCU_BRANCH_Type CLK_APB1_BUS;
+      LPC_CCU_BRANCH_Type CLK_APB1_MCPWM;
+      LPC_CCU_BRANCH_Type CLK_APB1_I2C0;
+      LPC_CCU_BRANCH_Type CLK_APB1_I2S;
+      LPC_CCU_BRANCH_Type CLK_APB1_CAN1;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED2[27];
 
-  /* Offset 0x0300 */
-  __rw__ uint32_t CLK_SPIFI_CFG;
-  __ro__ uint32_t CLK_SPIFI_STAT;
-  __ne__ uint32_t RESERVED3[62];
+      /* Offset 0x0300 */
+      LPC_CCU_BRANCH_Type CLK_SPIFI;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED3[31];
 
-  /* Offset 0x0400 */
-  __rw__ uint32_t CLK_M4_BUS_CFG;
-  __ro__ uint32_t CLK_M4_BUS_STAT;
-  __rw__ uint32_t CLK_M4_SPIFI_CFG;
-  __ro__ uint32_t CLK_M4_SPIFI_STAT;
-  __rw__ uint32_t CLK_M4_GPIO_CFG;
-  __ro__ uint32_t CLK_M4_GPIO_STAT;
-  __rw__ uint32_t CLK_M4_LCD_CFG;
-  __ro__ uint32_t CLK_M4_LCD_STAT;
+      /* Offset 0x0400 */
+      LPC_CCU_BRANCH_Type CLK_M4_BUS;
+      LPC_CCU_BRANCH_Type CLK_M4_SPIFI;
+      LPC_CCU_BRANCH_Type CLK_M4_GPIO;
+      LPC_CCU_BRANCH_Type CLK_M4_LCD;
+      LPC_CCU_BRANCH_Type CLK_M4_ETHERNET;
+      LPC_CCU_BRANCH_Type CLK_M4_USB0;
+      LPC_CCU_BRANCH_Type CLK_M4_EMC;
+      LPC_CCU_BRANCH_Type CLK_M4_SDIO;
+      LPC_CCU_BRANCH_Type CLK_M4_DMA;
+      LPC_CCU_BRANCH_Type CLK_M4_M4CORE;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED4[3];
+      LPC_CCU_BRANCH_Type CLK_M4_SCT;
+      LPC_CCU_BRANCH_Type CLK_M4_USB1;
+      LPC_CCU_BRANCH_Type CLK_M4_EMCDIV;
 
-  /* Offset 0x0420 */
-  __rw__ uint32_t CLK_M4_ETHERNET_CFG;
-  __ro__ uint32_t CLK_M4_ETHERNET_STAT;
-  __rw__ uint32_t CLK_M4_USB0_CFG;
-  __ro__ uint32_t CLK_M4_USB0_STAT;
-  __rw__ uint32_t CLK_M4_EMC_CFG;
-  __ro__ uint32_t CLK_M4_EMC_STAT;
-  __rw__ uint32_t CLK_M4_SDIO_CFG;
-  __ro__ uint32_t CLK_M4_SDIO_STAT;
+      /* Offset 0x0480 */
+      LPC_CCU_BRANCH_Type CLK_M4_FLASHA;
+      LPC_CCU_BRANCH_Type CLK_M4_FLASHB;
+      LPC_CCU_BRANCH_Type CLK_M4_M0APP;
+      LPC_CCU_BRANCH_Type CLK_M4_ADCHS;
+      LPC_CCU_BRANCH_Type CLK_M4_EEPROM;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED5[11];
 
-  /* Offset 0x0440 */
-  __rw__ uint32_t CLK_M4_DMA_CFG;
-  __ro__ uint32_t CLK_M4_DMA_STAT;
-  __rw__ uint32_t CLK_M4_M4CORE_CFG;
-  __ro__ uint32_t CLK_M4_M4CORE_STAT;
-  __ne__ uint32_t RESERVED4[6];
-  __rw__ uint32_t CLK_M4_SCT_CFG;
-  __ro__ uint32_t CLK_M4_SCT_STAT;
-  __rw__ uint32_t CLK_M4_USB1_CFG;
-  __ro__ uint32_t CLK_M4_USB1_STAT;
-  __rw__ uint32_t CLK_M4_EMCDIV_CFG;
-  __ro__ uint32_t CLK_M4_EMCDIV_STAT;
+      /* Offset 0x0500 */
+      LPC_CCU_BRANCH_Type CLK_M4_WWDT;
+      LPC_CCU_BRANCH_Type CLK_M4_USART0;
+      LPC_CCU_BRANCH_Type CLK_M4_UART1;
+      LPC_CCU_BRANCH_Type CLK_M4_SSP0;
+      LPC_CCU_BRANCH_Type CLK_M4_TIMER0;
+      LPC_CCU_BRANCH_Type CLK_M4_TIMER1;
+      LPC_CCU_BRANCH_Type CLK_M4_SCU;
+      LPC_CCU_BRANCH_Type CLK_M4_CREG;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED6[24];
 
-  /* Offset 0x0480 */
-  __rw__ uint32_t CLK_M4_FLASHA_CFG;
-  __ro__ uint32_t CLK_M4_FLASHA_STAT;
-  __rw__ uint32_t CLK_M4_FLASHB_CFG;
-  __ro__ uint32_t CLK_M4_FLASHB_STAT;
-  __rw__ uint32_t CLK_M4_M0APP_CFG;
-  __ro__ uint32_t CLK_M4_M0APP_STAT;
-  __rw__ uint32_t CLK_M4_ADCHS_CFG;
-  __ro__ uint32_t CLK_M4_ADCHS_STAT;
+      /* Offset 0x0600 */
+      LPC_CCU_BRANCH_Type CLK_M4_RIT;
+      LPC_CCU_BRANCH_Type CLK_M4_USART2;
+      LPC_CCU_BRANCH_Type CLK_M4_USART3;
+      LPC_CCU_BRANCH_Type CLK_M4_TIMER2;
+      LPC_CCU_BRANCH_Type CLK_M4_TIMER3;
+      LPC_CCU_BRANCH_Type CLK_M4_SSP1;
+      LPC_CCU_BRANCH_Type CLK_M4_QEI;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED7[25];
 
-  /* Offset 0x04A0 */
-  __rw__ uint32_t CLK_M4_EEPROM_CFG;
-  __ro__ uint32_t CLK_M4_EEPROM_STAT;
-  __ne__ uint32_t RESERVED5[22];
+      /* Offset 0x0700 */
+      LPC_CCU_BRANCH_Type CLK_PERIPH_BUS;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED8[1];
+      LPC_CCU_BRANCH_Type CLK_PERIPH_CORE;
+      LPC_CCU_BRANCH_Type CLK_PERIPH_SGPIO;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED9[28];
 
-  /* Offset 0x0500 */
-  __rw__ uint32_t CLK_M4_WWDT_CFG;
-  __ro__ uint32_t CLK_M4_WWDT_STAT;
-  __rw__ uint32_t CLK_M4_USART0_CFG;
-  __ro__ uint32_t CLK_M4_USART0_STAT;
-  __rw__ uint32_t CLK_M4_UART1_CFG;
-  __ro__ uint32_t CLK_M4_UART1_STAT;
-  __rw__ uint32_t CLK_M4_SSP0_CFG;
-  __ro__ uint32_t CLK_M4_SSP0_STAT;
+      /* Offset 0x0800 */
+      LPC_CCU_BRANCH_Type CLK_USB0;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED10[31];
 
-  /* Offset 0x0520 */
-  __rw__ uint32_t CLK_M4_TIMER0_CFG;
-  __ro__ uint32_t CLK_M4_TIMER0_STAT;
-  __rw__ uint32_t CLK_M4_TIMER1_CFG;
-  __ro__ uint32_t CLK_M4_TIMER1_STAT;
-  __rw__ uint32_t CLK_M4_SCU_CFG;
-  __ro__ uint32_t CLK_M4_SCU_STAT;
-  __rw__ uint32_t CLK_M4_CREG_CFG;
-  __ro__ uint32_t CLK_M4_CREG_STAT;
-  __ne__ uint32_t RESERVED6[48];
+      /* Offset 0x0900 */
+      LPC_CCU_BRANCH_Type CLK_USB1;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED11[31];
 
-  /* Offset 0x0600 */
-  __rw__ uint32_t CLK_M4_RIT_CFG;
-  __ro__ uint32_t CLK_M4_RIT_STAT;
-  __rw__ uint32_t CLK_M4_USART2_CFG;
-  __ro__ uint32_t CLK_M4_USART2_STAT;
-  __rw__ uint32_t CLK_M4_USART3_CFG;
-  __ro__ uint32_t CLK_M4_USART3_STAT;
-  __rw__ uint32_t CLK_M4_TIMER2_CFG;
-  __ro__ uint32_t CLK_M4_TIMER2_STAT;
+      /* Offset 0x0A00 */
+      LPC_CCU_BRANCH_Type CLK_SPI;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED12[31];
 
-  /* Offset 0x0620 */
-  __rw__ uint32_t CLK_M4_TIMER3_CFG;
-  __ro__ uint32_t CLK_M4_TIMER3_STAT;
-  __rw__ uint32_t CLK_M4_SSP1_CFG;
-  __ro__ uint32_t CLK_M4_SSP1_STAT;
-  __rw__ uint32_t CLK_M4_QEI_CFG;
-  __ro__ uint32_t CLK_M4_QEI_STAT;
-  __ne__ uint32_t RESERVED7[50];
+      /* Offset 0x0B00 */
+      LPC_CCU_BRANCH_Type CLK_ADCHS;
+    };
 
-  /* Offset 0x0700 */
-  __rw__ uint32_t CLK_PERIPH_BUS_CFG;
-  __ro__ uint32_t CLK_PERIPH_BUS_STAT;
-  __ne__ uint32_t RESERVED8[2];
-  __rw__ uint32_t CLK_PERIPH_CORE_CFG;
-  __ro__ uint32_t CLK_PERIPH_CORE_STAT;
-  __rw__ uint32_t CLK_PERIPH_SGPIO_CFG;
-  __ro__ uint32_t CLK_PERIPH_SGPIO_STAT;
-  __ne__ uint32_t RESERVED9[56];
-
-  /* Offset 0x0800 */
-  __rw__ uint32_t CLK_USB0_CFG;
-  __ro__ uint32_t CLK_USB0_STAT;
-  __ne__ uint32_t RESERVED10[62];
-
-  /* Offset 0x0900 */
-  __rw__ uint32_t CLK_USB1_CFG;
-  __ro__ uint32_t CLK_USB1_STAT;
-  __ne__ uint32_t RESERVED11[62];
-
-  /* Offset 0x0A00 */
-  __rw__ uint32_t CLK_SPI_CFG;
-  __ro__ uint32_t CLK_SPI_STAT;
-  __ne__ uint32_t RESERVED12[62];
-
-  /* Offset 0x0B00 */
-  __rw__ uint32_t CLK_ADCHS_CFG;
-  __ro__ uint32_t CLK_ADCHS_STAT;
+    LPC_CCU_BRANCH_Type BRANCH[321];
+  };
 } LPC_CCU1_Type;
 /*------------------Clock Control Unit 2--------------------------------------*/
 typedef struct
@@ -258,44 +210,44 @@ typedef struct
   __ro__ uint32_t BASE_STAT;
   __ne__ uint32_t RESERVED0[62];
 
-  /* Offset 0x0100 */
-  __rw__ uint32_t CLK_AUDIO_CFG;
-  __ro__ uint32_t CLK_AUDIO_STAT;
-  __ne__ uint32_t RESERVED1[62];
+  union
+  {
+    struct
+    {
+      /* Offset 0x0100 */
+      LPC_CCU_BRANCH_Type CLK_AUDIO;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED1[31];
 
-  /* Offset 0x0200 */
-  __rw__ uint32_t CLK_APB2_USART3_CFG;
-  __ro__ uint32_t CLK_APB2_USART3_STAT;
-  __ne__ uint32_t RESERVED2[62];
+      /* Offset 0x0200 */
+      LPC_CCU_BRANCH_Type CLK_APB2_USART3;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED2[31];
 
-  /* Offset 0x0300 */
-  __rw__ uint32_t CLK_APB2_USART2_CFG;
-  __ro__ uint32_t CLK_APB2_USART2_STAT;
-  __ne__ uint32_t RESERVED3[62];
+      /* Offset 0x0300 */
+      LPC_CCU_BRANCH_Type CLK_APB2_USART2;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED3[31];
 
-  /* Offset 0x0400 */
-  __rw__ uint32_t CLK_APB0_UART1_CFG;
-  __ro__ uint32_t CLK_APB0_UART1_STAT;
-  __ne__ uint32_t RESERVED4[62];
+      /* Offset 0x0400 */
+      LPC_CCU_BRANCH_Type CLK_APB0_UART1;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED4[31];
 
-  /* Offset 0x0500 */
-  __rw__ uint32_t CLK_APB0_USART0_CFG;
-  __ro__ uint32_t CLK_APB0_USART0_STAT;
-  __ne__ uint32_t RESERVED5[62];
+      /* Offset 0x0500 */
+      LPC_CCU_BRANCH_Type CLK_APB0_USART0;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED5[31];
 
-  /* Offset 0x0600 */
-  __rw__ uint32_t CLK_APB2_SSP1_CFG;
-  __ro__ uint32_t CLK_APB2_SSP1_STAT;
-  __ne__ uint32_t RESERVED6[62];
+      /* Offset 0x0600 */
+      LPC_CCU_BRANCH_Type CLK_APB2_SSP1;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED6[31];
 
-  /* Offset 0x0700 */
-  __rw__ uint32_t CLK_APB0_SSP0_CFG;
-  __ro__ uint32_t CLK_APB0_SSP0_STAT;
-  __ne__ uint32_t RESERVED7[62];
+      /* Offset 0x0700 */
+      LPC_CCU_BRANCH_Type CLK_APB0_SSP0;
+      __ne__ LPC_CCU_BRANCH_Type RESERVED7[31];
 
-  /* Offset 0x0800 */
-  __rw__ uint32_t CLK_SDIO_CFG;
-  __ro__ uint32_t CLK_SDIO_STAT;
+      /* Offset 0x0800 */
+      LPC_CCU_BRANCH_Type CLK_SDIO;
+    };
+
+    LPC_CCU_BRANCH_Type BRANCH[225];
+  };
 } LPC_CCU2_Type;
 /*------------------Configuration register------------------------------------*/
 typedef struct

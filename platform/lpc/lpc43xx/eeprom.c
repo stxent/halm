@@ -79,6 +79,9 @@ static bool setInstance(struct Eeprom *object)
 /*----------------------------------------------------------------------------*/
 void EEPROM_ISR(void)
 {
+  if (!(LPC_EEPROM->INTSTAT & INT_PROG_DONE))
+    return;
+
   /* Clear pending interrupt flag */
   LPC_EEPROM->INTSTATCLR = INT_PROG_DONE;
 

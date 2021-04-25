@@ -1,6 +1,6 @@
 /*
- * startup.c
- * Copyright (C) 2015 xent
+ * startup_m4.c
+ * Copyright (C) 2015, 2021 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -26,7 +26,7 @@ void platformStartup(void)
       CLK_APB1_CAN1,
       CLK_M4_SPIFI,
       CLK_M4_LCD,
-      CLK_M4_ENET,
+      CLK_M4_ETHERNET,
       CLK_M4_USB0,
       CLK_M4_EMC,
       CLK_M4_SDIO,

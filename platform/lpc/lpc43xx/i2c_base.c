@@ -93,12 +93,16 @@ static bool setInstance(uint8_t channel, struct I2CBase *object)
 /*----------------------------------------------------------------------------*/
 void I2C0_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  /* In M0APP core I2C0 IRQ is combined with I2C1 IRQ */
+  if (instances[0]->handler)
+    instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void I2C1_ISR(void)
 {
-  instances[1]->handler(instances[1]);
+  /* In M0APP core I2C1 IRQ is combined with I2C0 IRQ */
+  if (instances[1]->handler)
+    instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetClock(const struct I2CBase *interface)

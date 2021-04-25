@@ -252,12 +252,16 @@ static bool setInstance(uint8_t channel, struct I2SBase *object)
 /*----------------------------------------------------------------------------*/
 void I2S0_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  /* In M0 cores I2S0 IRQ is combined with I2S1 and QEI IRQ */
+  if (instances[0]->handler)
+    instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void I2S1_ISR(void)
 {
-  instances[1]->handler(instances[1]);
+  /* In M0 cores I2S1 IRQ is combined with I2S0 and QEI IRQ */
+  if (instances[1]->handler)
+    instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t i2sGetClock(const struct I2SBase *interface __attribute__((unused)))

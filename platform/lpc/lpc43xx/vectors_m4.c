@@ -1,6 +1,6 @@
 /*
- * vectors.c
- * Copyright (C) 2014 xent
+ * vectors_m4.c
+ * Copyright (C) 2014, 2021 xent
  * Project is distributed under the terms of the MIT License
  */
 

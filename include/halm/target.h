@@ -81,7 +81,7 @@
 #  define PLATFORM        lpc17xx
 #  define PLATFORM_TYPE   lpc
 
-#elif defined(LPC43XX)
+#elif defined(LPC43XX) || defined(LPC43XX_M0APP) || defined(LPC43XX_M0SUB)
 
 #  define GEN_ADC         gen_1
 #  define GEN_CAN         gen_2

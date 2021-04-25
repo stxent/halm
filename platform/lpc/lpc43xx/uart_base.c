@@ -235,7 +235,9 @@ void UART1_ISR(void)
 /*----------------------------------------------------------------------------*/
 void USART2_ISR(void)
 {
-  instances[2]->handler(instances[2]);
+  /* In M0 cores USART2 IRQ is combined with CAN1 IRQ */
+  if (instances[2]->handler)
+    instances[2]->handler(instances[2]);
 }
 /*----------------------------------------------------------------------------*/
 void USART3_ISR(void)
