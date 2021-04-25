@@ -10,11 +10,18 @@
 #include <halm/generic/sdio.h>
 /*----------------------------------------------------------------------------*/
 #define BLOCK_POW                       9
-#define ENUM_RATE                       400000
+#define RATE_ENUMERATION                400000
 /*------------------CMD6------------------------------------------------------*/
 #define MMC_BUS_WIDTH_PATTERN           0x03B70000UL
-#define MMC_BUS_WIDTH_4BIT              0x00000100
-#define MMC_BUS_WIDTH_8BIT              0x00000200
+#define MMC_BUS_WIDTH_1BIT              0x00000000UL
+#define MMC_BUS_WIDTH_4BIT              0x00000100UL
+#define MMC_BUS_WIDTH_8BIT              0x00000200UL
+
+#define MMC_HS_TIMING_PATTERN           0x03B90000UL
+#define MMC_HS_TIMING_COMPATIBLE        0x00000000UL
+#define MMC_HS_TIMING_HS                0x00000100UL
+#define MMC_HS_TIMING_HS200             0x00000200UL
+#define MMC_HS_TIMING_HS400             0x00000300UL
 /*------------------CMD8------------------------------------------------------*/
 #define CONDITION_PATTERN               0x000001AAUL
 /*------------------CMD59-----------------------------------------------------*/
@@ -35,14 +42,6 @@
 /* SD: Host Capacity Support */
 #define OCR_SD_HCS                      BIT(30)
 /*----------------------------------------------------------------------------*/
-enum MMCSDCapacity
-{
-  MMCSD_SC,
-  MMCSD_HC,
-  MMCSD_XC,
-  MMCSD_UC
-};
-
 enum MMCSDCommand
 {
   /* Common commands */
@@ -91,11 +90,33 @@ enum MMCSDResponse
   MMCSD_RESPONSE_R7   = SDIO_RESPONSE_SHORT
 };
 
+enum MMCSDCapacity
+{
+  CAPACITY_SC,
+  CAPACITY_HC,
+  CAPACITY_XC,
+  CAPACITY_UC
+};
+
+enum MMCSDSpeed
+{
+  SPEED_COMPATIBLE,
+  SPEED_HS,
+  SPEED_HS200,
+  SPEED_HS400
+};
+
 enum MMCSDType
 {
-  CARD_SD_1_0,
+  /* SD and MMC enumerations must not be mixed */
+
+  /* SD cards */
+  CARD_SD,
   CARD_SD_2_0,
-  CARD_MMC
+
+  /* MMC cards */
+  CARD_MMC,
+  CARD_MMC_4_0
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_MMCSD_DEFS_H_ */

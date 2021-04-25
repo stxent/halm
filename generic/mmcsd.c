@@ -29,6 +29,7 @@ enum State
 static enum Result initStepEnableCrc(struct MMCSD *);
 static enum Result initStepMmcReadOCR(struct MMCSD *);
 static enum Result initStepMmcSetBusWidth(struct MMCSD *);
+static enum Result initStepMmcSetHighSpeed(struct MMCSD *, enum MMCSDSpeed);
 static enum Result initStepReadCondition(struct MMCSD *);
 static enum Result initStepReadCID(struct MMCSD *);
 static enum Result initStepReadCSD(struct MMCSD *);
@@ -106,12 +107,12 @@ static enum Result initStepMmcReadOCR(struct MMCSD *device)
         if (response & OCR_MMC_SECTOR_MODE)
         {
           /* Card capacity is greater than 2GB */
-          device->capacity = MMCSD_HC;
+          device->capacity = CAPACITY_HC;
         }
         else
         {
           /* Card capacity is less then or equal to 2GB */
-          device->capacity = MMCSD_SC;
+          device->capacity = CAPACITY_SC;
         }
 
         device->type = CARD_MMC;
@@ -130,16 +131,55 @@ static enum Result initStepMmcReadOCR(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static enum Result initStepMmcSetBusWidth(struct MMCSD *device)
 {
-  uint32_t busMode = 0x03B70000UL;
+  uint32_t mode = MMC_BUS_WIDTH_PATTERN;
 
-  if (device->mode == SDIO_8BIT)
-    busMode |= MMC_BUS_WIDTH_8BIT;
-  else if (device->mode == SDIO_4BIT)
-    busMode |= MMC_BUS_WIDTH_4BIT;
+  switch (device->mode)
+  {
+    case SDIO_4BIT:
+      mode |= MMC_BUS_WIDTH_4BIT;
+      break;
+
+    case SDIO_8BIT:
+      mode |= MMC_BUS_WIDTH_8BIT;
+      break;
+
+    default:
+      mode |= MMC_BUS_WIDTH_1BIT;
+      break;
+  }
 
   return executeCommand(device,
       SDIO_COMMAND(CMD6_SWITCH, MMCSD_RESPONSE_R1B, SDIO_CHECK_CRC),
-      busMode, 0, true);
+      mode, 0, true);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result initStepMmcSetHighSpeed(struct MMCSD *device,
+    enum MMCSDSpeed speed)
+{
+  uint32_t mode = MMC_HS_TIMING_PATTERN;
+
+  switch (speed)
+  {
+    case SPEED_HS:
+      mode |= MMC_HS_TIMING_HS;
+      break;
+
+    case SPEED_HS200:
+      mode |= MMC_HS_TIMING_HS200;
+      break;
+
+    case SPEED_HS400:
+      mode |= MMC_HS_TIMING_HS400;
+      break;
+
+    default:
+      mode |= MMC_HS_TIMING_COMPATIBLE;
+      break;
+  }
+
+  return executeCommand(device,
+      SDIO_COMMAND(CMD6_SWITCH, MMCSD_RESPONSE_R1B, SDIO_CHECK_CRC),
+      mode, 0, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepReadCondition(struct MMCSD *device)
@@ -263,7 +303,7 @@ static enum Result initStepSdReadOCR(struct MMCSD *device,
       {
         /* Check card capacity information */
         if (response & OCR_SD_CCS)
-          device->capacity = MMCSD_HC;
+          device->capacity = CAPACITY_HC;
         break;
       }
     }
@@ -335,7 +375,7 @@ static enum Result initStepSpiReadOCR(struct MMCSD *device)
       0, &response, true);
 
   if (res == E_OK && (response & OCR_SD_CCS))
-    device->capacity = MMCSD_HC;
+    device->capacity = CAPACITY_HC;
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -438,7 +478,7 @@ static enum Result identifyCard(struct MMCSD *device)
     if ((res = initStepReadCID(device)) != E_OK)
       return res;
 
-    if (device->type == CARD_MMC)
+    if (device->type >= CARD_MMC)
       res = initStepSetRCA(device, 1);
     else
       res = initStepReadRCA(device);
@@ -459,9 +499,13 @@ static enum Result identifyCard(struct MMCSD *device)
     if ((res = initStepSetBlockLength(device)) != E_OK)
       return res;
 
-    if (device->type == CARD_MMC)
+    if (device->type == CARD_MMC_4_0)
     {
       if ((res = initStepMmcSetBusWidth(device)) != E_OK)
+        return res;
+
+      /* Enable high-speed mode by default */
+      if ((res = initStepMmcSetHighSpeed(device, SPEED_HS)) != E_OK)
         return res;
     }
     else
@@ -472,7 +516,7 @@ static enum Result identifyCard(struct MMCSD *device)
   }
 
   /* Read Extended CSD register of the MMC */
-  if (device->type == CARD_MMC && device->capacity == MMCSD_HC)
+  if (device->type == CARD_MMC_4_0 && device->capacity == CAPACITY_HC)
   {
     if ((res = initStepReadExtCSD(device)) != E_OK)
       return res;
@@ -483,7 +527,7 @@ static enum Result identifyCard(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static enum Result initializeCard(struct MMCSD *device)
 {
-  static const uint32_t enumRate = ENUM_RATE;
+  static const uint32_t enumRate = RATE_ENUMERATION;
   uint32_t workRate;
   enum Result res;
 
@@ -660,7 +704,15 @@ static inline bool isMultiBufferTransfer(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static void parseCardSpecificData(struct MMCSD *device, uint32_t *response)
 {
-  if (device->capacity == MMCSD_SC)
+  if (device->type == CARD_MMC)
+  {
+    const uint8_t specVers = extractBits(response, 122, 125);
+
+    if (specVers >= 4)
+      device->type = CARD_MMC_4_0;
+  }
+
+  if (device->capacity == CAPACITY_SC)
   {
     const uint32_t blockLength = extractBits(response, 80, 83);
     const uint32_t deviceSize = extractBits(response, 62, 73) + 1;
@@ -669,7 +721,7 @@ static void parseCardSpecificData(struct MMCSD *device, uint32_t *response)
     device->sectors = (deviceSize << (sizeMultiplier + 2));
     device->sectors <<= blockLength - 9;
   }
-  else if (device->type != CARD_MMC)
+  else if (device->type <= CARD_SD_2_0)
   {
     const uint32_t deviceSize = extractBits(response, 48, 69) + 1;
 
@@ -835,8 +887,8 @@ static enum Result cardInit(void *object, const void *configBase)
 
   device->sectors = 0;
   device->address = 0;
-  device->capacity = MMCSD_SC;
-  device->type = CARD_SD_1_0;
+  device->capacity = CAPACITY_SC;
+  device->type = CARD_SD;
   device->crc = config->crc;
 
   device->state = STATE_IDLE;
@@ -951,7 +1003,7 @@ static size_t cardRead(void *object, void *buffer, size_t length)
   const enum MMCSDResponse response = device->mode == SDIO_SPI ?
       MMCSD_RESPONSE_NONE : MMCSD_RESPONSE_R1;
   const uint32_t command = SDIO_COMMAND(code, response, flags);
-  const uint32_t argument = (uint32_t)(device->capacity == MMCSD_SC ?
+  const uint32_t argument = (uint32_t)(device->capacity == CAPACITY_SC ?
       device->position : (device->position >> BLOCK_POW));
 
   const enum Result res = transferBuffer(device, command, argument,
@@ -983,7 +1035,7 @@ static size_t cardWrite(void *object, const void *buffer, size_t length)
   const enum MMCSDResponse response = device->mode == SDIO_SPI ?
       MMCSD_RESPONSE_NONE : MMCSD_RESPONSE_R1;
   const uint32_t command = SDIO_COMMAND(code, response, flags);
-  const uint32_t argument = (uint32_t)(device->capacity == MMCSD_SC ?
+  const uint32_t argument = (uint32_t)(device->capacity == CAPACITY_SC ?
       device->position : (device->position >> BLOCK_POW));
 
   const enum Result res = transferBuffer(device, command, argument,

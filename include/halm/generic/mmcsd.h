@@ -43,8 +43,6 @@ struct MMCSD
   uint8_t mode;
   /* Type of the memory card */
   uint8_t type;
-  /* Integrity check flag */
-  bool crc;
 
   /* Command argument */
   uint32_t argument;
@@ -56,8 +54,11 @@ struct MMCSD
   size_t length;
   /* Transfer state */
   uint8_t state;
+
   /* Blocking mode flag */
   bool blocking;
+  /* Integrity check flag */
+  bool crc;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_MMCSD_H_ */
