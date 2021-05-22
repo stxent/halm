@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum SdioFlags
+enum SDIOFlags
 {
   /** Send initialization sequence to device. */
   SDIO_INITIALIZE     = 0x01,
@@ -27,7 +27,7 @@ enum SdioFlags
   SDIO_AUTO_STOP      = 0x40
 };
 
-enum SdioMode
+enum SDIOMode
 {
   SDIO_SPI,
   SDIO_1BIT,
@@ -35,7 +35,7 @@ enum SdioMode
   SDIO_8BIT
 };
 
-enum SdioParameter
+enum SDIOParameter
 {
   IF_SDIO_MODE = IF_PARAMETER_END,
   IF_SDIO_EXECUTE,
@@ -45,7 +45,7 @@ enum SdioParameter
   IF_SDIO_BLOCK_SIZE
 };
 
-enum SdioResponse
+enum SDIOResponse
 {
   SDIO_RESPONSE_NONE,
   SDIO_RESPONSE_SHORT,

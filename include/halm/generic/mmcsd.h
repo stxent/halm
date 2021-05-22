@@ -13,6 +13,16 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const MMCSD;
 
+enum MMCSDParameter
+{
+  /** Size of the erase group in bytes. */
+  IF_MMCSD_ERASE_GROUP_SIZE = IF_PARAMETER_END,
+  /** Erase sector using 32-bit address. */
+  IF_MMCSD_ERASE,
+  /** Erase sector using 64-bit address. */
+  IF_MMCSD_ERASE_64
+};
+
 struct MMCSDConfig
 {
   /** Mandatory: hardware interface. */
@@ -30,35 +40,43 @@ struct MMCSD
 
   /* Hardware interface */
   struct Interface *interface;
-  /* Current position in the internal memory space */
-  uint64_t position;
-
-  /* Number of sectors on the card */
-  uint32_t sectors;
-  /* Relative card address */
-  uint16_t address;
-  /* Memory card capacity, possible values are SC, HC or XC */
-  uint8_t capacity;
   /* Subclass of the hardware interface */
   uint8_t mode;
-  /* Type of the memory card */
-  uint8_t type;
-
-  /* Command argument */
-  uint32_t argument;
-  /* Interface command */
-  uint32_t command;
-  /* Address of the user-space buffer */
-  uintptr_t buffer;
-  /* Length of the current transfer */
-  size_t length;
-  /* Transfer state */
-  uint8_t state;
-
-  /* Blocking mode flag */
+  /* Enable blocking mode */
   bool blocking;
-  /* Integrity check flag */
+  /* Enable integrity checking */
   bool crc;
+
+  struct
+  {
+    /* Number of sectors on the card */
+    uint32_t sectorCount;
+    /* Relative card address */
+    uint16_t cardAddress;
+    /* Number of sectors in the erase group */
+    uint16_t eraseGroupSize;
+    /* Capacity type: standard capacity or high capacity */
+    uint8_t capacityType;
+    /* Memory card type */
+    uint8_t cardType;
+  } info;
+
+  struct
+  {
+    /* Address of the user-space buffer */
+    uintptr_t buffer;
+    /* Length of the current transfer */
+    size_t length;
+
+    /* Current position in the internal memory space */
+    uint64_t position;
+    /* Command argument */
+    uint32_t argument;
+    /* Command code */
+    uint32_t command;
+    /* Transfer state */
+    uint8_t state;
+  } transfer;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_MMCSD_H_ */

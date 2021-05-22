@@ -46,7 +46,7 @@ static void execute(struct Sdmmc *interface)
   LPC_SDMMC_Type * const reg = interface->base.reg;
   const uint32_t code = COMMAND_CODE_VALUE(interface->command);
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
-  const enum SdioResponse response = COMMAND_RESP_VALUE(interface->command);
+  const enum SDIOResponse response = COMMAND_RESP_VALUE(interface->command);
 
   /* Prepare interrupt mask */
   uint32_t waitStatus = INT_EBE | INT_SBE | INT_HLE | INT_RTO | INT_RE;
@@ -318,7 +318,7 @@ static enum Result sdioGetParam(void *object, int parameter, void *data)
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   /* Additional options */
-  switch ((enum SdioParameter)parameter)
+  switch ((enum SDIOParameter)parameter)
   {
     case IF_SDIO_MODE:
     {
@@ -328,7 +328,7 @@ static enum Result sdioGetParam(void *object, int parameter, void *data)
 
     case IF_SDIO_RESPONSE:
     {
-      const enum SdioResponse response = COMMAND_RESP_VALUE(interface->command);
+      const enum SDIOResponse response = COMMAND_RESP_VALUE(interface->command);
       uint32_t * const buffer = data;
 
       if (response == SDIO_RESPONSE_LONG)
@@ -371,7 +371,7 @@ static enum Result sdioSetParam(void *object, int parameter, const void *data)
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   /* Additional options */
-  switch ((enum SdioParameter)parameter)
+  switch ((enum SDIOParameter)parameter)
   {
     case IF_SDIO_EXECUTE:
       execute(interface);

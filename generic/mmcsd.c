@@ -42,6 +42,7 @@ static enum Result initStepSetBlockLength(struct MMCSD *);
 static enum Result initStepSetRCA(struct MMCSD *, uint32_t);
 static enum Result initStepSpiReadOCR(struct MMCSD *);
 /*----------------------------------------------------------------------------*/
+static enum Result eraseSectorGroup(struct MMCSD *, uint32_t);
 static enum Result executeCommand(struct MMCSD *, uint32_t, uint32_t,
     uint32_t *, bool);
 static uint32_t extractBits(const uint32_t *, unsigned int, unsigned int);
@@ -78,7 +79,6 @@ const struct InterfaceClass * const MMCSD = &(const struct InterfaceClass){
     .read = cardRead,
     .write = cardWrite
 };
-
 /*----------------------------------------------------------------------------*/
 static enum Result initStepEnableCrc(struct MMCSD *device)
 {
@@ -107,15 +107,15 @@ static enum Result initStepMmcReadOCR(struct MMCSD *device)
         if (response & OCR_MMC_SECTOR_MODE)
         {
           /* Card capacity is greater than 2GB */
-          device->capacity = CAPACITY_HC;
+          device->info.capacityType = CAPACITY_HC;
         }
         else
         {
           /* Card capacity is less then or equal to 2GB */
-          device->capacity = CAPACITY_SC;
+          device->info.capacityType = CAPACITY_SC;
         }
 
-        device->type = CARD_MMC;
+        device->info.cardType = CARD_MMC;
         break;
       }
     }
@@ -195,7 +195,7 @@ static enum Result initStepReadCondition(struct MMCSD *device)
     if (response != CONDITION_PATTERN)
       return E_DEVICE;
 
-    device->type = CARD_SD_2_0;
+    device->info.cardType = CARD_SD_2_0;
   }
   else if (res != E_INVALID && res != E_TIMEOUT)
   {
@@ -218,7 +218,7 @@ static enum Result initStepReadCSD(struct MMCSD *device)
   uint32_t response[4];
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD9_SEND_CSD, MMCSD_RESPONSE_R2, SDIO_CHECK_CRC),
-      (device->address << 16), response, true);
+      (device->info.cardAddress << 16), response, true);
 
   if (res == E_OK)
     parseCardSpecificData(device, response);
@@ -255,7 +255,13 @@ static enum Result initStepReadExtCSD(struct MMCSD *device)
   /* Process SEC_COUNT parameter [215:212] */
   uint32_t sectors;
   memcpy(&sectors, &csd[212], sizeof(sectors));
-  device->sectors = fromLittleEndian32(sectors);
+  device->info.sectorCount = fromLittleEndian32(sectors);
+
+  /* Process HC_ERASE_GRP_SIZE parameter [224] */
+  if (csd[224] != 0)
+  {
+    device->info.eraseGroupSize = csd[224] * ((512 * 1024) >> BLOCK_POW);
+  }
 
   return E_OK;
 }
@@ -268,7 +274,7 @@ static enum Result initStepReadRCA(struct MMCSD *device)
       0, &response, true);
 
   if (res == E_OK)
-    device->address = response >> 16;
+    device->info.cardAddress = response >> 16;
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -280,7 +286,7 @@ static enum Result initStepSdReadOCR(struct MMCSD *device,
   uint32_t response;
   enum Result res;
 
-  if (device->type == CARD_SD_2_0)
+  if (device->info.cardType == CARD_SD_2_0)
     ocr |= OCR_SD_HCS;
   if (device->mode != SDIO_SPI)
     ocr |= OCR_VOLTAGE_MASK;
@@ -303,7 +309,7 @@ static enum Result initStepSdReadOCR(struct MMCSD *device,
       {
         /* Check card capacity information */
         if (response & OCR_SD_CCS)
-          device->capacity = CAPACITY_HC;
+          device->info.capacityType = CAPACITY_HC;
         break;
       }
     }
@@ -329,7 +335,7 @@ static enum Result initStepSdSetBusWidth(struct MMCSD *device)
 
   res = executeCommand(device,
       SDIO_COMMAND(CMD55_APP_CMD, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      (device->address << 16), 0, true);
+      (device->info.cardAddress << 16), 0, true);
   if (res != E_OK)
     return res;
 
@@ -363,7 +369,7 @@ static enum Result initStepSetRCA(struct MMCSD *device, uint32_t address)
       address << 16, 0, true);
 
   if (res == E_OK)
-    device->address = address;
+    device->info.cardAddress = address;
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -375,7 +381,50 @@ static enum Result initStepSpiReadOCR(struct MMCSD *device)
       0, &response, true);
 
   if (res == E_OK && (response & OCR_SD_CCS))
-    device->capacity = CAPACITY_HC;
+    device->info.capacityType = CAPACITY_HC;
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result eraseSectorGroup(struct MMCSD *device, uint32_t sector)
+{
+  const uint32_t argument = device->info.capacityType == CAPACITY_SC ?
+      (sector << BLOCK_POW) : sector;
+  enum Result res;
+
+  /* Lock the interface */
+  ifSetParam(device->interface, IF_ACQUIRE, 0);
+
+  res = executeCommand(device,
+      SDIO_COMMAND(CMD35_ERASE_GROUP_START, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
+      argument, 0, true);
+  if (res != E_OK)
+    goto error;
+
+  res = executeCommand(device,
+      SDIO_COMMAND(CMD36_ERASE_GROUP_END, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
+      argument, 0, true);
+  if (res != E_OK)
+    goto error;
+
+  res = executeCommand(device,
+      SDIO_COMMAND(CMD38_ERASE, MMCSD_RESPONSE_R1B, SDIO_CHECK_CRC),
+      0, 0, true);
+  if (res != E_OK)
+    goto error;
+
+  // const uint32_t address = device->info.cardAddress << 16;
+  // uint32_t response;
+  //
+  // res = executeCommand(device,
+  //     SDIO_COMMAND(CMD13_SEND_STATUS, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
+  //     address, &response, true);
+  // if (res != E_OK)
+  //   goto error;
+
+error:
+  /* Release the interface */
+  ifSetParam(device->interface, IF_RELEASE, 0);
+
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -466,7 +515,7 @@ static enum Result identifyCard(struct MMCSD *device)
   }
 
   /* Read card capacity information when SPI mode is used */
-  if (device->mode == SDIO_SPI && device->type == CARD_SD_2_0)
+  if (device->mode == SDIO_SPI && device->info.cardType == CARD_SD_2_0)
   {
     if ((res = initStepSpiReadOCR(device)) != E_OK)
       return res;
@@ -478,7 +527,7 @@ static enum Result identifyCard(struct MMCSD *device)
     if ((res = initStepReadCID(device)) != E_OK)
       return res;
 
-    if (device->type >= CARD_MMC)
+    if (device->info.cardType >= CARD_MMC)
       res = initStepSetRCA(device, 1);
     else
       res = initStepReadRCA(device);
@@ -499,7 +548,7 @@ static enum Result identifyCard(struct MMCSD *device)
     if ((res = initStepSetBlockLength(device)) != E_OK)
       return res;
 
-    if (device->type == CARD_MMC_4_0)
+    if (device->info.cardType == CARD_MMC_4_0)
     {
       if ((res = initStepMmcSetBusWidth(device)) != E_OK)
         return res;
@@ -516,7 +565,8 @@ static enum Result identifyCard(struct MMCSD *device)
   }
 
   /* Read Extended CSD register of the MMC */
-  if (device->type == CARD_MMC_4_0 && device->capacity == CAPACITY_HC)
+  if (device->info.cardType == CARD_MMC_4_0
+      && device->info.capacityType == CAPACITY_HC)
   {
     if ((res = initStepReadExtCSD(device)) != E_OK)
       return res;
@@ -561,7 +611,7 @@ static enum Result initializeCard(struct MMCSD *device)
   ifSetParam(device->interface, IF_RATE, &workRate);
 
 error:
-  /* Release the interface */
+  /* Unlock the interface */
   ifSetParam(device->interface, IF_RELEASE, 0);
 
   return res;
@@ -572,35 +622,35 @@ static void interruptHandler(void *object)
   struct MMCSD * const device = object;
   bool event = false;
 
-  switch ((enum State)device->state)
+  switch ((enum State)device->transfer.state)
   {
     case STATE_GET_STATUS:
     {
       switch (isCardReady(device))
       {
         case E_OK:
-          device->state = STATE_TRANSFER;
+          device->transfer.state = STATE_TRANSFER;
 
           if (startTransfer(device) != E_OK)
           {
             event = true;
-            device->state = STATE_ERROR;
+            device->transfer.state = STATE_ERROR;
           }
           break;
 
         case E_IDLE:
-          device->state = STATE_SELECT_CARD;
+          device->transfer.state = STATE_SELECT_CARD;
 
           if (startCardSelection(device) != E_OK)
           {
             event = true;
-            device->state = STATE_ERROR;
+            device->transfer.state = STATE_ERROR;
           }
           break;
 
         default:
           event = true;
-          device->state = STATE_ERROR;
+          device->transfer.state = STATE_ERROR;
           break;
       }
 
@@ -609,12 +659,12 @@ static void interruptHandler(void *object)
 
     case STATE_SELECT_CARD:
     {
-      device->state = STATE_TRANSFER;
+      device->transfer.state = STATE_TRANSFER;
 
       if (startTransfer(device) != E_OK)
       {
         event = true;
-        device->state = STATE_ERROR;
+        device->transfer.state = STATE_ERROR;
       }
       break;
     }
@@ -625,20 +675,20 @@ static void interruptHandler(void *object)
 
       if (res != E_OK)
       {
-        device->state = STATE_HALT;
+        device->transfer.state = STATE_HALT;
       }
       else
       {
         event = true;
-        device->state = STATE_IDLE;
+        device->transfer.state = STATE_IDLE;
       }
 
-      if (device->state == STATE_HALT)
+      if (device->transfer.state == STATE_HALT)
       {
         if (terminateTransfer(device) != E_OK)
         {
           event = true;
-          device->state = STATE_ERROR;
+          device->transfer.state = STATE_ERROR;
         }
       }
       break;
@@ -649,13 +699,13 @@ static void interruptHandler(void *object)
       const enum Result res = ifGetParam(device->interface, IF_STATUS, 0);
 
       event = true;
-      device->state = res == E_OK ? STATE_IDLE : STATE_ERROR;
+      device->transfer.state = res == E_OK ? STATE_IDLE : STATE_ERROR;
       break;
     }
 
     case STATE_HALT:
       event = true;
-      device->state = STATE_ERROR;
+      device->transfer.state = STATE_ERROR;
       break;
 
     default:
@@ -696,7 +746,7 @@ static enum Result isCardReady(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static inline bool isMultiBufferTransfer(struct MMCSD *device)
 {
-  const enum MMCSDCommand code = COMMAND_CODE_VALUE(device->command);
+  const enum MMCSDCommand code = COMMAND_CODE_VALUE(device->transfer.command);
 
   return code == CMD18_READ_MULTIPLE_BLOCK
       || code == CMD25_WRITE_MULTIPLE_BLOCK;
@@ -704,35 +754,44 @@ static inline bool isMultiBufferTransfer(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static void parseCardSpecificData(struct MMCSD *device, uint32_t *response)
 {
-  if (device->type == CARD_MMC)
+  if (device->info.cardType == CARD_MMC)
   {
     const uint8_t specVers = extractBits(response, 122, 125);
 
     if (specVers >= 4)
-      device->type = CARD_MMC_4_0;
+      device->info.cardType = CARD_MMC_4_0;
   }
 
-  if (device->capacity == CAPACITY_SC)
+  /* Card capacity */
+
+  if (device->info.capacityType == CAPACITY_SC)
   {
     const uint32_t blockLength = extractBits(response, 80, 83);
     const uint32_t deviceSize = extractBits(response, 62, 73) + 1;
-    const uint32_t sizeMultiplier = extractBits(response, 47, 49);
+    const uint32_t sizeMult = extractBits(response, 47, 49);
 
-    device->sectors = (deviceSize << (sizeMultiplier + 2));
-    device->sectors <<= blockLength - 9;
+    device->info.sectorCount = (deviceSize << (sizeMult + 2));
+    device->info.sectorCount <<= blockLength - 9;
   }
-  else if (device->type <= CARD_SD_2_0)
+  else if (device->info.cardType <= CARD_SD_2_0)
   {
     const uint32_t deviceSize = extractBits(response, 48, 69) + 1;
 
-    device->sectors = deviceSize << 10;
+    device->info.sectorCount = deviceSize << 10;
   }
+
+  /* Erase group size */
+
+  const uint32_t eraseGroupSize = extractBits(response, 42, 46);
+  const uint32_t eraseGroupMult = extractBits(response, 37, 31);
+
+  device->info.eraseGroupSize = (eraseGroupSize + 1) * (eraseGroupMult + 1);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result setTransferState(struct MMCSD *device)
 {
   /* Relative card address should be initialized */
-  const uint32_t address = device->address << 16;
+  const uint32_t address = device->info.cardAddress << 16;
   const uint32_t flags = SDIO_WAIT_DATA | SDIO_CHECK_CRC;
   uint32_t response;
   enum Result res;
@@ -761,7 +820,7 @@ static enum Result setTransferState(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static enum Result startCardSelection(struct MMCSD *device)
 {
-  const uint32_t address = device->address << 16;
+  const uint32_t address = device->info.cardAddress << 16;
   const uint32_t flags = SDIO_WAIT_DATA | SDIO_CHECK_CRC;
 
   const enum Result res = executeCommand(device,
@@ -771,7 +830,7 @@ static enum Result startCardSelection(struct MMCSD *device)
   if (res != E_BUSY)
   {
     /* Operation must not be completed instantly */
-    return res != E_OK ? res : E_INVALID;
+    return res == E_OK ? E_INVALID : res;
   }
   else
     return E_OK;
@@ -781,35 +840,48 @@ static enum Result startTransfer(struct MMCSD *device)
 {
   enum Result res;
 
-  res = ifSetParam(device->interface, IF_SDIO_COMMAND, &device->command);
-  if (res != E_OK)
-    return res;
-  res = ifSetParam(device->interface, IF_SDIO_ARGUMENT, &device->argument);
+  res = ifSetParam(device->interface, IF_SDIO_COMMAND,
+      &device->transfer.command);
   if (res != E_OK)
     return res;
 
-  const enum MMCSDCommand code = COMMAND_CODE_VALUE(device->command);
-  const size_t length = device->length;
+  res = ifSetParam(device->interface, IF_SDIO_ARGUMENT,
+      &device->transfer.argument);
+  if (res != E_OK)
+    return res;
+
+  const enum MMCSDCommand code = COMMAND_CODE_VALUE(device->transfer.command);
   size_t queued;
 
   if (code == CMD17_READ_SINGLE_BLOCK || code == CMD18_READ_MULTIPLE_BLOCK)
-    queued = ifRead(device->interface, (void *)device->buffer, length);
+  {
+    queued = ifRead(device->interface, (void *)device->transfer.buffer,
+        device->transfer.length);
+  }
   else
-    queued = ifWrite(device->interface, (const void *)device->buffer, length);
+  {
+    queued = ifWrite(device->interface, (const void *)device->transfer.buffer,
+        device->transfer.length);
+  }
 
-  return queued == length ? E_OK : E_INTERFACE;
+  return queued == device->transfer.length ? E_OK : E_INTERFACE;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result startTransferStateSetup(struct MMCSD *device)
 {
-  const uint32_t address = device->address << 16;
+  const uint32_t address = device->info.cardAddress << 16;
   const uint32_t flags = SDIO_WAIT_DATA | SDIO_CHECK_CRC;
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD13_SEND_STATUS, MMCSD_RESPONSE_R1, flags),
       address, 0, false);
 
-  /* Operation must not be completed instantly */
-  return res == E_BUSY ? E_OK : (res == E_OK ? E_INVALID : res);
+  if (res != E_BUSY)
+  {
+    /* Operation must not be completed instantly */
+    return res == E_OK ? E_INVALID : res;
+  }
+  else
+    return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result terminateTransfer(struct MMCSD *device)
@@ -819,8 +891,13 @@ static enum Result terminateTransfer(struct MMCSD *device)
       SDIO_COMMAND(CMD12_STOP_TRANSMISSION, MMCSD_RESPONSE_R1B, flags);
   const enum Result res = executeCommand(device, command, 0, 0, false);
 
-  /* Operation must not be completed instantly */
-  return res == E_BUSY ? E_OK : (res == E_OK ? E_INVALID : res);
+  if (res != E_BUSY)
+  {
+    /* Operation must not be completed instantly */
+    return res == E_OK ? E_INVALID : res;
+  }
+  else
+    return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result transferBuffer(struct MMCSD *device,
@@ -832,25 +909,25 @@ static enum Result transferBuffer(struct MMCSD *device,
   ifSetParam(device->interface, IF_ZEROCOPY, 0);
   ifSetCallback(device->interface, interruptHandler, device);
 
-  device->argument = argument;
-  device->command = command;
-  device->buffer = buffer;
-  device->length = length;
+  device->transfer.argument = argument;
+  device->transfer.command = command;
+  device->transfer.buffer = buffer;
+  device->transfer.length = length;
 
   if (device->mode != SDIO_SPI)
   {
-    device->state = STATE_GET_STATUS;
+    device->transfer.state = STATE_GET_STATUS;
     res = startTransferStateSetup(device);
   }
   else
   {
-    device->state = STATE_TRANSFER;
+    device->transfer.state = STATE_TRANSFER;
     res = startTransfer(device);
   }
 
   if (res != E_OK)
   {
-    device->state = STATE_ERROR;
+    device->transfer.state = STATE_ERROR;
     ifSetParam(device->interface, IF_RELEASE, 0);
 
     if (device->callback)
@@ -861,13 +938,13 @@ static enum Result transferBuffer(struct MMCSD *device,
 
   if (device->blocking)
   {
-    while (device->state != STATE_IDLE && device->state != STATE_ERROR)
+    while (device->transfer.state != STATE_IDLE
+      && device->transfer.state != STATE_ERROR)
+    {
       barrier();
+    }
 
-    if (device->state == STATE_ERROR)
-      res = E_INTERFACE;
-    else
-      res = E_OK;
+    res = device->transfer.state == STATE_ERROR ? E_INTERFACE : E_OK;
   }
   else
     res = E_BUSY;
@@ -883,15 +960,15 @@ static enum Result cardInit(void *object, const void *configBase)
   device->callback = 0;
 
   device->interface = config->interface;
-  device->position = 0;
+  device->transfer.position = 0;
 
-  device->sectors = 0;
-  device->address = 0;
-  device->capacity = CAPACITY_SC;
-  device->type = CARD_SD;
+  device->info.sectorCount = 0;
+  device->info.cardAddress = 0;
+  device->info.capacityType = CAPACITY_SC;
+  device->info.cardType = CARD_SD;
   device->crc = config->crc;
 
-  device->state = STATE_IDLE;
+  device->transfer.state = STATE_IDLE;
   device->blocking = true;
 
   return initializeCard(device);
@@ -900,7 +977,7 @@ static enum Result cardInit(void *object, const void *configBase)
 static void cardDeinit(void *object)
 {
   struct MMCSD * const device = object;
-  ifSetCallback(device->interface, 0, 0); //FIXME Acquire?
+  ifSetCallback(device->interface, 0, 0); // FIXME Acquire?
 }
 /*----------------------------------------------------------------------------*/
 static void cardSetCallback(void *object, void (*callback)(void *),
@@ -916,19 +993,29 @@ static enum Result cardGetParam(void *object, int parameter, void *data)
 {
   struct MMCSD * const device = object;
 
+  switch ((enum MMCSDParameter)parameter)
+  {
+    case IF_MMCSD_ERASE_GROUP_SIZE:
+      *(uint32_t *)data = (uint32_t)device->info.eraseGroupSize << BLOCK_POW;
+      return E_OK;
+
+    default:
+      break;
+  }
+
   switch ((enum IfParameter)parameter)
   {
     case IF_POSITION_64:
-      *(uint64_t *)data = device->position;
+      *(uint64_t *)data = device->transfer.position;
       return E_OK;
 
     case IF_SIZE_64:
-      *(uint64_t *)data = (uint64_t)device->sectors << BLOCK_POW;
+      *(uint64_t *)data = (uint64_t)device->info.sectorCount << BLOCK_POW;
       return E_OK;
 
     case IF_STATUS:
     {
-      switch ((enum State)device->state)
+      switch ((enum State)device->transfer.state)
       {
         case STATE_IDLE:
           return E_OK;
@@ -950,6 +1037,42 @@ static enum Result cardSetParam(void *object, int parameter, const void *data)
 {
   struct MMCSD * const device = object;
 
+  switch ((enum MMCSDParameter)parameter)
+  {
+    case IF_MMCSD_ERASE:
+    {
+      const uint32_t position = *(const uint32_t *)data;
+
+      /* Check address alignment */
+      if (position & ((device->info.eraseGroupSize << BLOCK_POW) - 1))
+        return E_VALUE;
+
+      /* Check address range */
+      if ((position >> BLOCK_POW) >= device->info.sectorCount)
+        return E_VALUE;
+
+      return eraseSectorGroup(device, position >> BLOCK_POW);
+    }
+
+    case IF_MMCSD_ERASE_64:
+    {
+      const uint64_t position = *(const uint64_t *)data;
+
+      /* Check address alignment */
+      if (position & ((device->info.eraseGroupSize << BLOCK_POW) - 1))
+        return E_VALUE;
+
+      /* Check address range */
+      if ((position >> BLOCK_POW) >= (uint64_t)device->info.sectorCount)
+        return E_VALUE;
+
+      return eraseSectorGroup(device, (uint32_t)(position >> BLOCK_POW));
+    }
+
+    default:
+      break;
+  }
+
   switch ((enum IfParameter)parameter)
   {
     case IF_BLOCKING:
@@ -965,10 +1088,10 @@ static enum Result cardSetParam(void *object, int parameter, const void *data)
         return E_VALUE;
 
       /* Check address range */
-      if ((position >> BLOCK_POW) >= (uint64_t)device->sectors)
+      if ((position >> BLOCK_POW) >= (uint64_t)device->info.sectorCount)
         return E_VALUE;
 
-      device->position = position;
+      device->transfer.position = position;
       return E_OK;
     }
 
@@ -1002,9 +1125,9 @@ static size_t cardRead(void *object, void *buffer, size_t length)
       CMD17_READ_SINGLE_BLOCK : CMD18_READ_MULTIPLE_BLOCK;
   const enum MMCSDResponse response = device->mode == SDIO_SPI ?
       MMCSD_RESPONSE_NONE : MMCSD_RESPONSE_R1;
+  const uint32_t argument = device->info.capacityType == CAPACITY_SC ?
+      device->transfer.position : (device->transfer.position >> BLOCK_POW);
   const uint32_t command = SDIO_COMMAND(code, response, flags);
-  const uint32_t argument = (uint32_t)(device->capacity == CAPACITY_SC ?
-      device->position : (device->position >> BLOCK_POW));
 
   const enum Result res = transferBuffer(device, command, argument,
       (uintptr_t)buffer, length);
@@ -1034,9 +1157,9 @@ static size_t cardWrite(void *object, const void *buffer, size_t length)
       CMD24_WRITE_BLOCK : CMD25_WRITE_MULTIPLE_BLOCK;
   const enum MMCSDResponse response = device->mode == SDIO_SPI ?
       MMCSD_RESPONSE_NONE : MMCSD_RESPONSE_R1;
+  const uint32_t argument = device->info.capacityType == CAPACITY_SC ?
+      device->transfer.position : (device->transfer.position >> BLOCK_POW);
   const uint32_t command = SDIO_COMMAND(code, response, flags);
-  const uint32_t argument = (uint32_t)(device->capacity == CAPACITY_SC ?
-      device->position : (device->position >> BLOCK_POW));
 
   const enum Result res = transferBuffer(device, command, argument,
       (uintptr_t)buffer, length);

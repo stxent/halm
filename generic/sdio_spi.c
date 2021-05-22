@@ -62,7 +62,7 @@ enum Status
   STATUS_ERROR_TIMEOUT
 };
 /*----------------------------------------------------------------------------*/
-enum SdioResponseFlags
+enum SDIOResponseFlags
 {
   FLAG_IDLE_STATE       = 0x01,
   FLAG_ERASE_RESET      = 0x02,
@@ -75,7 +75,7 @@ enum SdioResponseFlags
   FLAG_NO_RESPONSE      = 0x80
 };
 /*----------------------------------------------------------------------------*/
-enum SdioToken
+enum SDIOToken
 {
   TOKEN_DATA_ACCEPTED     = 0x05,
   TOKEN_DATA_CRC_ERROR    = 0x0B,
@@ -125,7 +125,7 @@ static enum State stateVerifyCrcAdvance(struct SdioSpi *);
 static void autoStopTransmission(struct SdioSpi *);
 static void execute(struct SdioSpi *);
 static void interruptHandler(void *);
-static enum Result parseDataToken(struct SdioSpi *, uint8_t, enum SdioToken);
+static enum Result parseDataToken(struct SdioSpi *, uint8_t, enum SDIOToken);
 static enum Result parseResponseToken(struct SdioSpi *, uint8_t);
 static enum Status resultToStatus(enum Result);
 static void sendCommand(struct SdioSpi *, uint32_t, uint32_t);
@@ -658,7 +658,7 @@ static void interruptHandler(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum Result parseDataToken(struct SdioSpi *interface, uint8_t token,
-    enum SdioToken expected)
+    enum SDIOToken expected)
 {
   enum Result res;
 
@@ -820,7 +820,7 @@ static enum Result sdioGetParam(void *object, int parameter, void *data)
   struct SdioSpi * const interface = object;
 
   /* Additional options */
-  switch ((enum SdioParameter)parameter)
+  switch ((enum SDIOParameter)parameter)
   {
     case IF_SDIO_MODE:
     {
@@ -830,7 +830,7 @@ static enum Result sdioGetParam(void *object, int parameter, void *data)
 
     case IF_SDIO_RESPONSE:
     {
-      const enum SdioResponse response = COMMAND_RESP_VALUE(interface->command);
+      const enum SDIOResponse response = COMMAND_RESP_VALUE(interface->command);
       const uint8_t length = response == SDIO_RESPONSE_LONG ? 16 : 4;
 
       if (response != SDIO_RESPONSE_NONE)
@@ -890,7 +890,7 @@ static enum Result sdioSetParam(void *object, int parameter, const void *data)
   struct SdioSpi * const interface = object;
 
   /* Additional options */
-  switch ((enum SdioParameter)parameter)
+  switch ((enum SDIOParameter)parameter)
   {
     case IF_SDIO_EXECUTE:
       interface->left = 0;
