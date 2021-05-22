@@ -67,8 +67,8 @@ void pinInput(struct Pin pin)
 void pinOutput(struct Pin pin, bool value)
 {
   commonPinInit(pin);
-  ((LPC_GPIO_Type *)pin.reg)->DIR |= pin.mask;
   pinWrite(pin, value);
+  ((LPC_GPIO_Type *)pin.reg)->DIR |= pin.mask;
 }
 /*----------------------------------------------------------------------------*/
 void pinToggle(struct Pin pin)

@@ -430,10 +430,10 @@ void pinOutput(struct Pin pin, bool value)
 
   if (pinValid(pin))
   {
+    /* Set an initial output value */
+    pinWrite(pin, value);
     /* Configure pin as output */
     LPC_GPIO->DIR[pin.port] |= 1UL << pin.number;
-    /* Set default output value */
-    pinWrite(pin, value);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -443,30 +443,27 @@ void pinSetFunction(struct Pin pin, uint8_t function)
     return;
 
   volatile uint32_t * const reg = pin.reg;
-  uint32_t value = *reg & ~SFS_FUNC_MASK;
+  uint32_t value = *reg & ~(SFS_FUNC_MASK | SFS_EZI);
 
   switch (function)
   {
     case PIN_DEFAULT:
-      if (pinValid(pin))
-      {
-        const uint8_t actualFunction = pin.port >= 5 ? 4 : 0;
-
-        /* Set GPIO function */
-        value |= SFS_FUNC(actualFunction);
-      }
-
-      /* Enable input buffer */
       value |= SFS_EZI;
-      break;
+      /* Falls through */
 
     case PIN_ANALOG:
-      /* Disable input buffer */
-      value &= ~SFS_EZI;
+      /* Input buffer is left disabled */
+      if (pinValid(pin))
+      {
+        const uint8_t gpioFunction = pin.port >= 5 ? 4 : 0;
+
+        /* Set the GPIO function */
+        value |= SFS_FUNC(gpioFunction);
+      }
       break;
 
     default:
-      value |= SFS_FUNC(function);
+      value |= SFS_EZI | SFS_FUNC(function);
       break;
   }
 

@@ -76,8 +76,8 @@ void pinOutput(struct Pin pin, bool value)
     return;
 
   commonPinInit(pin);
-  LPC_GPIO->DIR[pin.port] |= 1UL << pin.number;
   pinWrite(pin, value);
+  LPC_GPIO->DIR[pin.port] |= 1UL << pin.number;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
@@ -95,9 +95,9 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       return;
 
     case PIN_DEFAULT:
-      value &= ~IOCON_FUNC_MASK;
+      value = (value & ~IOCON_FUNC_MASK) | IOCON_DIGITAL;
 
-      /* Default function for Reset and JTAG/SWD pins is 1 */
+      /* GPIO function for Reset and JTAG/SWD pins is 1 */
       if (isSystemPin(pin))
         value |= IOCON_FUNC(1);
 
@@ -107,7 +107,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       break;
 
     default:
-      value = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
+      value = (value & ~IOCON_FUNC_MASK) | IOCON_DIGITAL | IOCON_FUNC(function);
       break;
   }
 

@@ -75,19 +75,20 @@ void pinOutput(struct Pin pin, bool value)
   assert(pin.reg);
   commonPinInit(pin.port);
 
-  STM_GPIO_Type * const reg = pin.reg;
-  uint32_t moder = reg->MODER;
-
-  /* Configure to push-pull output */
-  moder &= ~MODER_MODE_MASK(pin.number);
-  moder |= MODER_MODE(pin.number, MODER_OUTPUT);
-  reg->MODER = moder;
-
   pinSetType(pin, PIN_PUSHPULL);
   pinSetPull(pin, PIN_NOPULL);
   pinSetSlewRate(pin, PIN_SLEW_FAST);
 
+  /* Set an initial output value */
   pinWrite(pin, value);
+
+  STM_GPIO_Type * const reg = pin.reg;
+  uint32_t moder = reg->MODER;
+
+  /* Enable push-pull output */
+  moder &= ~MODER_MODE_MASK(pin.number);
+  moder |= MODER_MODE(pin.number, MODER_OUTPUT);
+  reg->MODER = moder;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)

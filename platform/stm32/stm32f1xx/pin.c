@@ -83,7 +83,7 @@ void pinOutput(struct Pin pin, bool value)
   STM_GPIO_Type * const reg = pin.reg;
   uint32_t configValue = reg->CR[index];
 
-  /* Configure to push-pull with maximum slew rate */
+  /* Enable push-pull output with maximum slew rate */
   configValue &= ~CR_MASK(pin.number);
   configValue |= CR_MODE(pin.number, MODE_OUTPUT_SPEED_50);
   configValue |= CR_CNF(pin.number, CNF_OUTPUT_GP | CNF_OUTPUT_PP);
