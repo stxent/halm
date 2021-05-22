@@ -18,9 +18,9 @@ struct UsbRequest
   uint16_t length;
 
   UsbRequestCallback callback;
-  void *callbackArgument;
+  void *argument;
 
-  uint8_t *buffer;
+  void *buffer;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

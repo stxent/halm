@@ -397,7 +397,7 @@ static void epHandler(struct SbUsbEndpoint *ep, bool setup)
       const bool ok = epWriteDataAndPrime(ep, request);
 
       pointerQueuePopFront(&ep->requests);
-      request->callback(request->callbackArgument, request,
+      request->callback(request->argument, request,
           ok ? USB_REQUEST_COMPLETED : USB_REQUEST_ERROR);
     }
   }
@@ -420,7 +420,7 @@ static void epHandler(struct SbUsbEndpoint *ep, bool setup)
     if (status != USB_REQUEST_ERROR)
     {
       pointerQueuePopFront(&ep->requests);
-      request->callback(request->callbackArgument, request, status);
+      request->callback(request->argument, request, status);
     }
 
     if (!pointerQueueEmpty(&ep->requests))
@@ -547,8 +547,7 @@ static void epClear(void *object)
     struct UsbRequest * const request = pointerQueueFront(&ep->requests);
     pointerQueuePopFront(&ep->requests);
 
-    request->callback(request->callbackArgument, request,
-        USB_REQUEST_CANCELLED);
+    request->callback(request->argument, request, USB_REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -687,7 +686,7 @@ static void epSetStalled(void *object, bool stalled)
       const bool ok = epWriteDataAndPrime(ep, request);
 
       pointerQueuePopFront(&ep->requests);
-      request->callback(request->callbackArgument, request,
+      request->callback(request->argument, request,
           ok ? USB_REQUEST_COMPLETED : USB_REQUEST_ERROR);
     }
   }

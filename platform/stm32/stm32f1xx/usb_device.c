@@ -566,7 +566,7 @@ static void dbEpHandler(struct UsbEndpoint *ep,
       --ep->pending;
       req = pointerQueueFront(&ep->requests);
       pointerQueuePopFront(&ep->requests);
-      req->callback(req->callbackArgument, req, USB_REQUEST_COMPLETED);
+      req->callback(req->argument, req, USB_REQUEST_COMPLETED);
 
       if (ep->state == 2)
       {
@@ -600,7 +600,7 @@ static void dbEpHandler(struct UsbEndpoint *ep,
     {
       pointerQueuePopFront(&ep->requests);
       req->length = read;
-      req->callback(req->callbackArgument, req, USB_REQUEST_COMPLETED);
+      req->callback(req->argument, req, USB_REQUEST_COMPLETED);
     }
   }
 }
@@ -774,7 +774,7 @@ static void sbEpHandler(struct UsbEndpoint *ep, bool setup)
     struct UsbRequest *req = pointerQueueFront(&ep->requests);
     pointerQueuePopFront(&ep->requests);
 
-    req->callback(req->callbackArgument, req, USB_REQUEST_COMPLETED);
+    req->callback(req->argument, req, USB_REQUEST_COMPLETED);
     --ep->pending;
 
     if (!pointerQueueEmpty(&ep->requests))
@@ -796,7 +796,7 @@ static void sbEpHandler(struct UsbEndpoint *ep, bool setup)
 
       pointerQueuePopFront(&ep->requests);
       req->length = read;
-      req->callback(req->callbackArgument, req, requestStatus);
+      req->callback(req->argument, req, requestStatus);
     }
   }
 }
@@ -885,7 +885,7 @@ static void epClear(void *object)
     struct UsbRequest * const req = pointerQueueFront(&ep->requests);
     pointerQueuePopFront(&ep->requests);
 
-    req->callback(req->callbackArgument, req, USB_REQUEST_CANCELLED);
+    req->callback(req->argument, req, USB_REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/

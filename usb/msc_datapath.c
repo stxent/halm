@@ -306,9 +306,9 @@ static size_t prepareDataRx(struct MscQueryHandler *handler,
 {
   const size_t length = MIN(left, handler->driver->packetSize);
 
-  request->buffer = (uint8_t *)buffer;
+  request->buffer = (void *)buffer;
   request->capacity = length;
-  request->callbackArgument = handler;
+  request->argument = handler;
   request->callback = (last && length == left) ? last : silent;
 
   return length;
@@ -320,10 +320,10 @@ static size_t prepareDataTx(struct MscQueryHandler *handler,
 {
   const size_t length = MIN(left, handler->driver->packetSize);
 
-  request->buffer = (uint8_t *)buffer;
+  request->buffer = (void *)buffer;
   request->capacity = length;
   request->length = length;
-  request->callbackArgument = handler;
+  request->argument = handler;
   request->callback = (last && length == left) ? last : silent;
 
   return length;

@@ -715,8 +715,7 @@ static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
       pointerQueuePopFront(&ep->requests);
 
       epWriteData(ep, request->buffer, request->length);
-      request->callback(request->callbackArgument, request,
-          USB_REQUEST_COMPLETED);
+      request->callback(request->argument, request, USB_REQUEST_COMPLETED);
     }
   }
   else
@@ -731,7 +730,7 @@ static void sieEpHandler(struct UsbSieEndpoint *ep, uint8_t status)
 
       pointerQueuePopFront(&ep->requests);
       request->length = read;
-      request->callback(request->callbackArgument, request, requestStatus);
+      request->callback(request->argument, request, requestStatus);
     }
   }
 }
@@ -779,8 +778,7 @@ static void sieEpClear(void *object)
     struct UsbRequest * const request = pointerQueueFront(&ep->requests);
     pointerQueuePopFront(&ep->requests);
 
-    request->callback(request->callbackArgument, request,
-        USB_REQUEST_CANCELLED);
+    request->callback(request->argument, request, USB_REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -893,8 +891,7 @@ static void sieEpSetStalled(void *object, bool stalled)
     pointerQueuePopFront(&ep->requests);
 
     epWriteData(ep, request->buffer, request->length);
-    request->callback(request->callbackArgument, request,
-        USB_REQUEST_COMPLETED);
+    request->callback(request->argument, request, USB_REQUEST_COMPLETED);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -953,7 +950,7 @@ static void dmaEpHandler(struct UsbDmaEndpoint *ep)
       ep->head = (struct DmaDescriptor *)dd->next;
     }
 
-    request->callback(request->callbackArgument, request, requestStatus);
+    request->callback(request->argument, request, requestStatus);
 
     if (preserve)
     {
@@ -1118,8 +1115,7 @@ static void dmaEpClear(void *object)
     pointerArrayPushBack(&pool->descriptors, (void *)current);
     irqRestore(state);
 
-    request->callback(request->callbackArgument, request,
-        USB_REQUEST_CANCELLED);
+    request->callback(request->argument, request, USB_REQUEST_CANCELLED);
     current = next;
   }
 

@@ -490,7 +490,7 @@ static void epCommonHandler(struct UsbEndpoint *ep)
         epReprime(ep);
     }
 
-    request->callback(request->callbackArgument, request, requestStatus);
+    request->callback(request->argument, request, requestStatus);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -796,8 +796,7 @@ static void epClear(void *object)
     struct UsbRequest * const request = epGetHeadRequest(head);
     epPopDescriptor(ep);
 
-    request->callback(request->callbackArgument, request,
-        USB_REQUEST_CANCELLED);
+    request->callback(request->argument, request, USB_REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/

@@ -35,12 +35,12 @@ static const UsbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
 }
 /*----------------------------------------------------------------------------*/
 void usbRequestInit(struct UsbRequest *request, void *buffer, uint16_t capacity,
-    UsbRequestCallback callback, void *callbackArgument)
+    UsbRequestCallback callback, void *argument)
 {
   request->capacity = capacity;
   request->length = 0;
   request->callback = callback;
-  request->callbackArgument = callbackArgument;
+  request->argument = argument;
   request->buffer = buffer;
 }
 /*----------------------------------------------------------------------------*/
