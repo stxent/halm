@@ -24,7 +24,7 @@ enum AdcEvent
   ADC_TRIG1,
   ADC_MCOA2,
   ADC_EVENT_END
-};
+} __attribute__((packed));
 
 struct AdcPin
 {

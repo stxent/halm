@@ -37,6 +37,7 @@
 #define GDR_DONE                        BIT(31)
 /*------------------Interrupt Enable register---------------------------------*/
 #define INTEN_AD(channel)               BIT(channel)
+#define INTEN_AD_MASK                   BIT_FIELD(MASK(8), 0)
 #define INTEN_ADG                       BIT(8)
 /*------------------Data Registers--------------------------------------------*/
 #define DR_RESULT_MASK                  BIT_FIELD(MASK(16), 0)

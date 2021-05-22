@@ -22,10 +22,6 @@ struct GpDmaListConfig
   enum GpDmaType type;
   /** Mandatory: channel number. */
   uint8_t channel;
-  /**
-   * Optional: set @b true to call a user function only in the end of the list.
-   */
-  bool silent;
 };
 
 struct GpDmaList
@@ -46,11 +42,8 @@ struct GpDmaList
 
   /* Control register value */
   uint32_t control;
-
   /* State of the transfer */
   uint8_t state;
-  /* Call user function only in the end of the list */
-  bool silent;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_GPDMA_LIST_H_ */

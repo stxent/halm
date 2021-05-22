@@ -89,20 +89,27 @@ config PLATFORM_LPC_ADC_NO_DEINIT
 	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_ADC_BASE
 
+config PLATFORM_LPC_ADC_SHARED
+	bool "Shared ADC"
+	default y
+	depends on PLATFORM_LPC_ADC_BASE
+	help
+	  This allows usage of multiple ADC channel objects on the same peripheral.
+
 config PLATFORM_LPC_ADC_ONESHOT
 	bool "Single channel ADC with polling"
 	default y
 	depends on PLATFORM_LPC_ADC_BASE
 
-config PLATFORM_LPC_ADC_DMA
-	bool "Single channel ADC with DMA"
-	default y
-	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
-
 config PLATFORM_LPC_ADC_BUS
-	bool "Interrupt-driven ADC bus"
+	bool "ADC bus with interrupts"
 	default y
 	depends on PLATFORM_LPC_ADC_BASE
+
+config PLATFORM_LPC_ADC_DMA
+	bool "ADC bus with DMA"
+	default y
+	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
 
 config PLATFORM_LPC_BOD
 	bool "Brownout detection"

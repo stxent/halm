@@ -26,6 +26,8 @@ struct AdcBaseConfig
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: disable automatic peripheral locking. */
+  bool shared;
 };
 
 struct AdcBase
@@ -47,8 +49,7 @@ BEGIN_DECLS
 
 struct AdcPin adcConfigPin(const struct AdcBase *, PinNumber);
 void adcReleasePin(struct AdcPin);
-void adcResetInstance(uint8_t);
-bool adcSetInstance(uint8_t, struct AdcBase *);
+bool adcSetInstance(uint8_t, struct AdcBase *, struct AdcBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

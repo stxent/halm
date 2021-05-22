@@ -62,32 +62,38 @@ static void interruptHandler(void *object, enum Result res)
 
   --channel->queued;
 
-  if (res == E_BUSY)
+  switch (res)
   {
-    event = !channel->silent;
-  }
-  else if (res == E_OK)
-  {
-    if (channel->queued)
-    {
-      /* Underrun occurred */
-      size_t index = channel->index;
+    case E_OK:
+      if (channel->queued)
+      {
+        /* Underrun occurred */
+        size_t index = channel->index;
 
-      /* Calculate index of the first stalled chunk */
-      if (index >= channel->queued)
-        index -= channel->queued;
+        /* Calculate index of the first stalled chunk */
+        if (index >= channel->queued)
+          index -= channel->queued;
+        else
+          index += channel->capacity - channel->queued;
+
+        /* Restart stalled transfer */
+        startTransfer(channel, &channel->list[index]);
+        event = true;
+      }
       else
-        index += channel->capacity - channel->queued;
+      {
+        channel->state = STATE_DONE;
+      }
+      break;
 
-      /* Restart stalled transfer */
-      startTransfer(channel, &channel->list[index]);
+    case E_BUSY:
       event = true;
-    }
-    else
-      channel->state = STATE_DONE;
+      break;
+
+    default:
+      channel->state = STATE_ERROR;
+      break;
   }
-  else
-    channel->state = STATE_ERROR;
 
   if (channel->state != STATE_BUSY)
   {
@@ -142,7 +148,6 @@ static enum Result channelInit(void *object, const void *configBase)
   channel->queued = 0;
   channel->control = 0;
   channel->state = STATE_IDLE;
-  channel->silent = config->silent;
 
   return E_OK;
 }

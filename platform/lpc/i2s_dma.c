@@ -77,8 +77,7 @@ static bool dmaSetup(struct I2SDma *interface,
         .number = BUFFER_COUNT << 1,
         .event = GPDMA_I2S0_REQ1 + (config->channel << 1),
         .type = GPDMA_TYPE_P2M,
-        .channel = config->rx.dma,
-        .silent = false
+        .channel = config->rx.dma
     };
 
     interface->rxDma = init(GpDmaList, &dmaConfig);
@@ -97,8 +96,7 @@ static bool dmaSetup(struct I2SDma *interface,
         .number = BUFFER_COUNT << 1,
         .event = GPDMA_I2S0_REQ2 + (config->channel << 1),
         .type = GPDMA_TYPE_M2P,
-        .channel = config->tx.dma,
-        .silent = false
+        .channel = config->tx.dma
     };
 
     interface->txDma = init(GpDmaList, &dmaConfig);

@@ -22,9 +22,9 @@ struct GpDmaCircularConfig
   enum GpDmaType type;
   /** Mandatory: channel number. */
   uint8_t channel;
-  /**
-   * Optional: set @b true to call a user function only in the end of the list.
-   */
+  /** Optional: stop after each pass. */
+  bool oneshot;
+  /** Optional: call a user function only in the end of the list. */
   bool silent;
 };
 
@@ -47,7 +47,9 @@ struct GpDmaCircular
 
   /* State of the transfer */
   uint8_t state;
-  /* Call user function only in the end of the list */
+  /* Stop after each pass. */
+  bool oneshot;
+  /* Call a user function only in the end of the list */
   bool silent;
 };
 /*----------------------------------------------------------------------------*/

@@ -38,11 +38,17 @@ static struct AdcPin configGroupPin(const struct PinGroupEntry *, PinNumber);
 static struct AdcPin configRegularPin(const struct PinEntry *, PinNumber);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
+
+#ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
+static void adcDeinit(void *);
+#else
+#define adcDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const AdcBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = adcInit,
-    .deinit = 0 /* Default destructor */
+    .deinit = adcDeinit
 };
 /*----------------------------------------------------------------------------*/
 static const struct AdcBlockDescriptor adcBlockEntries[] = {
@@ -228,17 +234,11 @@ void adcReleasePin(const struct AdcPin adcPin)
     LPC_SCU->ENAIO[adcPin.control] &= ~(1UL << adcPin.channel);
 }
 /*----------------------------------------------------------------------------*/
-void adcResetInstance(uint8_t channel)
-{
-  instances[channel] = 0;
-}
-/*----------------------------------------------------------------------------*/
-bool adcSetInstance(uint8_t channel, struct AdcBase *object)
+bool adcSetInstance(uint8_t channel, struct AdcBase *expected,
+    struct AdcBase *interface)
 {
   assert(channel < ARRAY_SIZE(instances));
-
-  void *expected = 0;
-  return compareExchangePointer(&instances[channel], &expected, object);
+  return compareExchangePointer(&instances[channel], &expected, interface);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
@@ -249,6 +249,9 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(config->channel < ARRAY_SIZE(instances));
   assert(config->frequency <= MAX_FREQUENCY);
   assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
+
+  if (!config->shared && !adcSetInstance(config->channel, 0, interface))
+    return E_BUSY;
 
   const struct AdcBlockDescriptor * const entry =
       &adcBlockEntries[config->channel];
@@ -274,3 +277,11 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->control = CR_PDN | CR_CLKDIV(divisor - 1) | CR_CLKS(ticks);
   return E_OK;
 }
+/*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
+static void adcDeinit(void *object)
+{
+  struct AdcBase * const interface = object;
+  adcSetInstance(interface->channel, interface, 0);
+}
+#endif

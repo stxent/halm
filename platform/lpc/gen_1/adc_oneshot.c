@@ -61,7 +61,8 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,
       .accuracy = 0,
-      .channel = config->channel
+      .channel = config->channel,
+      .shared = config->shared
   };
   struct AdcOneShot * const interface = object;
 
@@ -86,8 +87,7 @@ static void adcDeinit(void *object)
   struct AdcOneShot * const interface = object;
 
   adcReleasePin(interface->pin);
-  if (AdcBase->deinit)
-    AdcBase->deinit(interface);
+  AdcBase->deinit(interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -97,29 +97,41 @@ static enum Result adcGetParam(void *object __attribute__((unused)),
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcSetParam(void *object __attribute__((unused)),
-    int parameter __attribute__((unused)),
+static enum Result adcSetParam(void *object, int parameter,
     const void *data __attribute__((unused)))
 {
+#ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
+  struct AdcOneShot * const interface = object;
+
+  switch ((enum IfParameter)parameter)
+  {
+    case IF_ACQUIRE:
+      return adcSetInstance(interface->base.channel, 0, object) ?
+          E_OK : E_BUSY;
+
+    case IF_RELEASE:
+      adcSetInstance(interface->base.channel, object, 0);
+      return E_OK;
+
+    default:
+      break;
+  }
+#else
+  (void)object;
+  (void)parameter;
+#endif
+
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)
 {
-  /* Ensure proper alignment of the output buffer length */
-  assert((uintptr_t)buffer % 2 == 0);
-
-  if (length < sizeof(uint16_t))
-    return 0;
+  /* Ensure that the buffer has enough space */
+  assert(length >= sizeof(uint16_t));
 
   struct AdcOneShot * const interface = object;
+  const uint16_t value = makeChannelConversion(interface);
 
-  if (adcSetInstance(interface->base.channel, &interface->base))
-  {
-    *(uint16_t *)buffer = makeChannelConversion(interface);
-    adcResetInstance(interface->base.channel);
-    return sizeof(uint16_t);
-  }
-  else
-    return 0;
+  memcpy(buffer, &value, sizeof(value));
+  return sizeof(uint16_t);
 }

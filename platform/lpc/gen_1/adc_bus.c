@@ -1,6 +1,6 @@
 /*
  * adc_bus.c
- * Copyright (C) 2016 xent
+ * Copyright (C) 2016, 2021 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -11,7 +11,7 @@
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static size_t setupChannels(struct AdcBus *, const PinNumber *);
+static size_t setupPins(struct AdcBus *, const PinNumber *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static void adcSetCallback(void *, void (*)(void *), void *);
@@ -42,30 +42,20 @@ static void interruptHandler(void *object)
   struct AdcBus * const interface = object;
   LPC_ADC_Type * const reg = interface->base.reg;
 
-  /* Further conversions should be stopped immediately after entering the ISR */
-  if (!--interface->cycles)
-  {
-    /* Stop further conversions */
-    reg->CR = 0;
-    /* Disable interrupts */
-    reg->INTEN = 0;
-    irqDisable(interface->base.irq);
-  }
+  /* Stop further conversions */
+  reg->CR = 0;
+  /* Disable interrupts */
+  reg->INTEN = 0;
 
   /* Read values and clear interrupt flags */
   for (size_t i = 0; i < interface->count; ++i)
     interface->buffer[i] = DR_RESULT_VALUE(reg->DR[interface->pins[i].channel]);
 
-  if (!interface->cycles)
-  {
-    adcResetInstance(interface->base.channel);
-
-    if (interface->callback)
-      interface->callback(interface->callbackArgument);
-  }
+  if (interface->callback)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static size_t setupChannels(struct AdcBus *interface, const PinNumber *pins)
+static size_t setupPins(struct AdcBus *interface, const PinNumber *pins)
 {
   unsigned int event = 0;
   unsigned int mask = 0;
@@ -106,7 +96,8 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,
       .accuracy = config->accuracy,
-      .channel = config->channel
+      .channel = config->channel,
+      .shared = config->shared
   };
   struct AdcBus * const interface = object;
 
@@ -118,7 +109,6 @@ static enum Result adcInit(void *object, const void *configBase)
     interface->base.handler = interruptHandler;
     interface->callback = 0;
     interface->buffer = 0;
-    interface->cycles = 0;
     interface->priority = config->priority;
     interface->blocking = true;
 
@@ -128,7 +118,13 @@ static enum Result adcInit(void *object, const void *configBase)
       interface->base.control |= CR_START(config->event);
 
     /* Initialize input pins */
-    interface->count = setupChannels(interface, config->pins);
+    interface->count = setupPins(interface, config->pins);
+
+    if (!config->shared)
+    {
+      irqSetPriority(interface->base.irq, interface->priority);
+      irqEnable(interface->base.irq);
+    }
   }
 
   return res;
@@ -141,10 +137,8 @@ static void adcDeinit(void *object)
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
-  free(interface->pins);
 
-  if (AdcBase->deinit)
-    AdcBase->deinit(interface);
+  AdcBase->deinit(interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -187,6 +181,23 @@ static enum Result adcSetParam(void *object, int parameter,
       interface->blocking = false;
       return E_OK;
 
+#ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
+    case IF_ACQUIRE:
+      if (adcSetInstance(interface->base.channel, 0, object))
+      {
+        irqSetPriority(interface->base.irq, interface->priority);
+        irqEnable(interface->base.irq);
+        return E_BUSY;
+      }
+      else
+        return E_BUSY;
+
+    case IF_RELEASE:
+      if (adcSetInstance(interface->base.channel, object, 0))
+        irqDisable(interface->base.irq);
+      return E_OK;
+#endif
+
     default:
       return E_INVALID;
   }
@@ -196,32 +207,22 @@ static size_t adcRead(void *object, void *buffer, size_t length)
 {
   struct AdcBus * const interface = object;
   LPC_ADC_Type * const reg = interface->base.reg;
-  const size_t cycles = length / (interface->count * sizeof(uint16_t));
 
-  if (!cycles)
-    return 0;
-  if (!adcSetInstance(interface->base.channel, &interface->base))
-    return 0;
+  assert(length >= interface->count * sizeof(uint16_t));
 
   interface->buffer = buffer;
-  interface->cycles = cycles;
 
-  /* Clear pending interrupts */
+  /* Clear pending interrupt */
   (void)reg->DR[interface->event];
-
-  /* Enable interrupts for the channel with the highest number */
+  /* Enable interrupt for the channel with the highest number */
   reg->INTEN = INTEN_AD(interface->event);
-  irqSetPriority(interface->base.irq, interface->priority);
-  irqEnable(interface->base.irq);
-
   /* Reconfigure peripheral and start the conversion */
   reg->CR = interface->base.control;
 
   if (interface->blocking)
   {
-    while (interface->cycles)
-      barrier();
+    while (reg->INTEN & INTEN_AD_MASK);
   }
 
-  return cycles * interface->count * sizeof(uint16_t);
+  return interface->count * sizeof(uint16_t);
 }

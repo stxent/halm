@@ -25,6 +25,8 @@ struct AdcBusConfig
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: disable automatic peripheral locking. */
+  bool shared;
 };
 
 struct AdcBus
@@ -36,8 +38,6 @@ struct AdcBus
 
   /* Pointer to an output buffer */
   uint16_t *buffer;
-  /* Number of cycles left */
-  size_t cycles;
 
   /* Pin descriptors */
   struct AdcPin pins[8];
@@ -47,7 +47,7 @@ struct AdcBus
   uint8_t count;
   /* Event channel */
   uint8_t event;
-  /* Selection between blocking mode and zero copy mode */
+  /* Enable the blocking mode instead of the non-blocking zero-copy mode */
   bool blocking;
 };
 /*----------------------------------------------------------------------------*/

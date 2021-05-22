@@ -80,8 +80,7 @@ static bool dmaSetup(struct DacDma *interface,
       .number = BUFFER_COUNT << 1,
       .event = GPDMA_DAC,
       .type = GPDMA_TYPE_M2P,
-      .channel = config->dma,
-      .silent = false
+      .channel = config->dma
   };
 
   interface->dma = init(GpDmaList, &dmaConfig);

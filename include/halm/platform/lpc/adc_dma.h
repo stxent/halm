@@ -8,23 +8,26 @@
 #define HALM_PLATFORM_LPC_ADC_DMA_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/adc_base.h>
+#include <halm/platform/lpc/gpdma_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const AdcDma;
 
 struct AdcDmaConfig
 {
+  /** Mandatory: pointer to an array of pins terminated by a zero element. */
+  const PinNumber *pins;
   /** Optional: desired converter clock. */
   uint32_t frequency;
   /** Optional: trigger to start the conversion. */
   enum AdcEvent event;
-  /** Mandatory: analog input. */
-  PinNumber pin;
   /** Optional: number of bits of accuracy of the result. */
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: DMA channel. */
   uint8_t dma;
+  /** Optional: disable automatic peripheral locking. */
+  bool shared;
 };
 
 struct AdcDma
@@ -34,10 +37,23 @@ struct AdcDma
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* DMA channel handle */
+  /* DMA handle */
   struct Dma *dma;
-  /* Pin descriptor */
-  struct AdcPin pin;
+
+  /* Output buffer */
+  uint16_t *output;
+  /* Result buffer */
+  uint16_t buffer[8];
+
+  /* Pin descriptors */
+  struct AdcPin pins[8];
+  /* Event mask */
+  uint32_t mask;
+  /* Pin count */
+  uint8_t count;
+
+  /* Enable the blocking mode instead of the non-blocking zero-copy mode */
+  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_ADC_DMA_H_ */

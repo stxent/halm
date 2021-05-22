@@ -19,6 +19,8 @@ struct AdcOneShotConfig
   PinNumber pin;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: disable automatic peripheral locking. */
+  bool shared;
 };
 
 struct AdcOneShot

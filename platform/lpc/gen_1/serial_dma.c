@@ -80,8 +80,7 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
       .number = chunks,
       .event = GPDMA_UART0_RX + interface->base.channel,
       .type = GPDMA_TYPE_P2M,
-      .channel = rxChannel,
-      .silent = false
+      .channel = rxChannel
   };
   const struct GpDmaOneShotConfig txDmaConfig = {
       .event = GPDMA_UART0_TX + interface->base.channel,

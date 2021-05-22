@@ -70,13 +70,10 @@ static void interruptHandler(void *object, enum Result res)
 {
   struct GpDmaCircular * const channel = object;
 
-  if (res == E_OK)
+  if (res != E_BUSY)
   {
-    channel->state = STATE_DONE;
-  }
-  else if (res == E_ERROR)
-  {
-    channel->state = STATE_ERROR;
+    channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
+    gpDmaResetInstance(channel->base.number);
   }
 
   if (channel->callback)
@@ -125,6 +122,7 @@ static enum Result channelInit(void *object, const void *configBase)
   channel->queued = 0;
   channel->control = 0;
   channel->state = STATE_IDLE;
+  channel->oneshot = config->oneshot;
   channel->silent = config->silent;
 
   return E_OK;
@@ -173,7 +171,7 @@ static enum Result channelEnable(void *object)
   const uint8_t number = channel->base.number;
   const uint32_t request = 1 << number;
 
-  assert(channel->state == STATE_READY);
+  assert(channel->state == STATE_READY || channel->state == STATE_DONE);
   if (!gpDmaSetInstance(number, object))
     return E_BUSY;
   gpDmaSetMux(object);
@@ -271,14 +269,20 @@ static void channelAppend(void *object, void *destination, const void *source,
   entry->source = (uintptr_t)source;
   entry->destination = (uintptr_t)destination;
   entry->control = channel->control | CONTROL_SIZE(size);
-  entry->next = (uintptr_t)channel->list;
 
   if (channel->callback)
     entry->control |= CONTROL_INT;
+
+  if (!channel->oneshot)
+    entry->next = (uintptr_t)channel->list;
+  else
+    entry->next = 0;
+
   if (previous)
   {
     if (channel->silent)
       previous->control &= ~CONTROL_INT;
+
     /* Link previous element with the new one */
     previous->next = (uintptr_t)entry;
   }

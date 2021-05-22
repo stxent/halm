@@ -25,7 +25,7 @@ enum AdcEvent
   ADC_TIMER1_MAT0,
   ADC_TIMER1_MAT1,
   ADC_EVENT_END
-};
+} __attribute__((packed));
 
 struct AdcPin
 {
