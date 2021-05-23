@@ -412,15 +412,6 @@ static enum Result eraseSectorGroup(struct MMCSD *device, uint32_t sector)
   if (res != E_OK)
     goto error;
 
-  // const uint32_t address = device->info.cardAddress << 16;
-  // uint32_t response;
-  //
-  // res = executeCommand(device,
-  //     SDIO_COMMAND(CMD13_SEND_STATUS, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-  //     address, &response, true);
-  // if (res != E_OK)
-  //   goto error;
-
 error:
   /* Release the interface */
   ifSetParam(device->interface, IF_RELEASE, 0);

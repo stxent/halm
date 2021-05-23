@@ -26,9 +26,9 @@ static uint32_t calcBusTimings(const struct Can *, uint32_t);
 static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
 static void interruptHandler(void *);
-static void readMessage(struct Can *, struct CanMessage *);
+static void readMessage(struct Can *, struct CANMessage *);
 static void resetQueues(struct Can *);
-static void sendMessage(struct Can *, const struct CanMessage *, uint32_t *);
+static void sendMessage(struct Can *, const struct CANMessage *, uint32_t *);
 
 #ifdef CONFIG_PLATFORM_LPC_CAN_PM
 static void powerStateHandler(void *, enum PmState);
@@ -136,7 +136,7 @@ static void interruptHandler(void *object)
 
       if (!pointerQueueFull(&interface->rxQueue))
       {
-        struct CanMessage * const message = pointerArrayBack(&interface->pool);
+        struct CANMessage * const message = pointerArrayBack(&interface->pool);
         pointerArrayPopBack(&interface->pool);
 
         readMessage(interface, message);
@@ -165,7 +165,7 @@ static void interruptHandler(void *object)
     {
       while (!pointerQueueEmpty(&interface->txQueue) && status)
       {
-        struct CanMessage * const message =
+        struct CANMessage * const message =
             pointerQueueFront(&interface->txQueue);
         pointerQueuePopFront(&interface->txQueue);
 
@@ -192,7 +192,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void readMessage(struct Can *interface, struct CanMessage *message)
+static void readMessage(struct Can *interface, struct CANMessage *message)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
   const uint32_t information = reg->RFS;
@@ -227,14 +227,14 @@ static void resetQueues(struct Can *interface)
 
   while (!pointerQueueEmpty(&interface->txQueue))
   {
-    struct CanMessage * const message = pointerQueueFront(&interface->txQueue);
+    struct CANMessage * const message = pointerQueueFront(&interface->txQueue);
     pointerQueuePopFront(&interface->txQueue);
     pointerArrayPushBack(&interface->pool, message);
   }
 
   while (!pointerQueueEmpty(&interface->rxQueue))
   {
-    struct CanMessage * const message = pointerQueueFront(&interface->rxQueue);
+    struct CANMessage * const message = pointerQueueFront(&interface->rxQueue);
     pointerQueuePopFront(&interface->rxQueue);
     pointerArrayPushBack(&interface->pool, message);
   }
@@ -243,7 +243,7 @@ static void resetQueues(struct Can *interface)
 }
 /*----------------------------------------------------------------------------*/
 static void sendMessage(struct Can *interface,
-    const struct CanMessage *message, uint32_t *status)
+    const struct CANMessage *message, uint32_t *status)
 {
   assert(message->length <= 8);
 
@@ -329,9 +329,9 @@ static enum Result canInit(void *object, const void *configBase)
   if (!pointerQueueInit(&interface->txQueue, config->txBuffers))
     return E_MEMORY;
 
-  interface->poolBuffer = malloc(sizeof(struct CanStandardMessage) * poolSize);
+  interface->poolBuffer = malloc(sizeof(struct CANStandardMessage) * poolSize);
 
-  struct CanStandardMessage *message = interface->poolBuffer;
+  struct CANStandardMessage *message = interface->poolBuffer;
 
   for (size_t index = 0; index < poolSize; ++index)
   {
@@ -405,12 +405,12 @@ static enum Result canGetParam(void *object, int parameter, void *data)
   {
     case IF_AVAILABLE:
       *(size_t *)data = pointerQueueSize(&interface->rxQueue)
-          * sizeof(struct CanStandardMessage);
+          * sizeof(struct CANStandardMessage);
       return E_OK;
 
     case IF_PENDING:
       *(size_t *)data = pointerQueueSize(&interface->txQueue)
-          * sizeof(struct CanStandardMessage);
+          * sizeof(struct CANStandardMessage);
       return E_OK;
 
     case IF_RATE:
@@ -426,7 +426,7 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
 {
   struct Can * const interface = object;
 
-  switch ((enum CanParameter)parameter)
+  switch ((enum CANParameter)parameter)
   {
     case IF_CAN_ACTIVE:
       changeMode(interface, MODE_ACTIVE);
@@ -463,16 +463,16 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t canRead(void *object, void *buffer, size_t length)
 {
-  assert(length % sizeof(struct CanStandardMessage) == 0);
+  assert(length % sizeof(struct CANStandardMessage) == 0);
 
   struct Can * const interface = object;
-  struct CanStandardMessage *current = buffer;
-  const struct CanStandardMessage * const last =
+  struct CANStandardMessage *current = buffer;
+  const struct CANStandardMessage * const last =
       (const void *)((uintptr_t)buffer + length);
 
   while (!pointerQueueEmpty(&interface->rxQueue) && current < last)
   {
-    struct CanMessage * const input = pointerQueueFront(&interface->rxQueue);
+    struct CANMessage * const input = pointerQueueFront(&interface->rxQueue);
     memcpy(current, input, sizeof(*current));
 
     irqDisable(interface->base.irq);
@@ -488,11 +488,11 @@ static size_t canRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t canWrite(void *object, const void *buffer, size_t length)
 {
-  assert(length % sizeof(struct CanStandardMessage) == 0);
+  assert(length % sizeof(struct CANStandardMessage) == 0);
 
   struct Can * const interface = object;
-  const struct CanStandardMessage *current = buffer;
-  const struct CanStandardMessage * const last =
+  const struct CANStandardMessage *current = buffer;
+  const struct CANStandardMessage * const last =
       (const void *)((uintptr_t)buffer + length);
 
   /* Acquire exclusive access to the message queue */
@@ -508,7 +508,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
       while (current < last && status != 0)
       {
         /* One of transmit buffers is empty, write new message into it */
-        sendMessage(interface, (const struct CanMessage *)current, &status);
+        sendMessage(interface, (const struct CANMessage *)current, &status);
         ++current;
 
         /* Stop after sequence restart */
@@ -520,7 +520,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
 
   while (current < last && !pointerQueueFull(&interface->txQueue))
   {
-    struct CanMessage * const output = pointerArrayBack(&interface->pool);
+    struct CANMessage * const output = pointerArrayBack(&interface->pool);
     pointerArrayPopBack(&interface->pool);
 
     memcpy(output, current, sizeof(*current));

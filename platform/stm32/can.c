@@ -26,8 +26,8 @@ static uint32_t calcBusTimings(const struct Can *, uint32_t);
 static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
 static void interruptHandler(void *);
-static void readMessage(struct Can *, struct CanMessage *, unsigned int);
-static void sendMessage(struct Can *, const struct CanMessage *);
+static void readMessage(struct Can *, struct CANMessage *, unsigned int);
+static void sendMessage(struct Can *, const struct CANMessage *);
 static void setupAcceptanceFilter(struct Can *, unsigned int, unsigned int,
     bool, uint32_t, uint32_t);
 
@@ -168,7 +168,7 @@ static void interruptHandler(void *object)
 
     if (!pointerQueueFull(&interface->rxQueue))
     {
-      struct CanMessage * const message = pointerArrayBack(&interface->pool);
+      struct CANMessage * const message = pointerArrayBack(&interface->pool);
       pointerArrayPopBack(&interface->pool);
 
       readMessage(interface, message, 0);
@@ -183,7 +183,7 @@ static void interruptHandler(void *object)
   /* Write pending messages */
   while ((reg->TSR & TSR_TME_MASK) && !pointerQueueEmpty(&interface->txQueue))
   {
-    struct CanMessage * const message = pointerQueueFront(&interface->txQueue);
+    struct CANMessage * const message = pointerQueueFront(&interface->txQueue);
     pointerQueuePopFront(&interface->txQueue);
 
     sendMessage(interface, message);
@@ -202,7 +202,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void readMessage(struct Can *interface, struct CanMessage *message,
+static void readMessage(struct Can *interface, struct CANMessage *message,
     unsigned int fifo)
 {
   STM_CAN_Type * const reg = interface->base.reg;
@@ -241,7 +241,7 @@ static void readMessage(struct Can *interface, struct CanMessage *message,
 }
 /*----------------------------------------------------------------------------*/
 static void sendMessage(struct Can *interface,
-    const struct CanMessage *message)
+    const struct CANMessage *message)
 {
   assert(message->length <= 8);
 
@@ -318,9 +318,9 @@ static enum Result canInit(void *object, const void *configBase)
   if (!pointerQueueInit(&interface->txQueue, config->txBuffers))
     return E_MEMORY;
 
-  interface->poolBuffer = malloc(sizeof(struct CanStandardMessage) * poolSize);
+  interface->poolBuffer = malloc(sizeof(struct CANStandardMessage) * poolSize);
 
-  struct CanStandardMessage *message = interface->poolBuffer;
+  struct CANStandardMessage *message = interface->poolBuffer;
 
   for (size_t index = 0; index < poolSize; ++index)
   {
@@ -407,12 +407,12 @@ static enum Result canGetParam(void *object, int parameter, void *data)
   {
     case IF_AVAILABLE:
       *(size_t *)data = pointerQueueSize(&interface->rxQueue)
-          * sizeof(struct CanStandardMessage);
+          * sizeof(struct CANStandardMessage);
       return E_OK;
 
     case IF_PENDING:
       *(size_t *)data = pointerQueueSize(&interface->txQueue)
-          * sizeof(struct CanStandardMessage);
+          * sizeof(struct CANStandardMessage);
       return E_OK;
 
     case IF_RATE:
@@ -428,7 +428,7 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
 {
   struct Can * const interface = object;
 
-  switch ((enum CanParameter)parameter)
+  switch ((enum CANParameter)parameter)
   {
     case IF_CAN_ACTIVE:
       changeMode(interface, MODE_ACTIVE);
@@ -465,16 +465,16 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t canRead(void *object, void *buffer, size_t length)
 {
-  assert(length % sizeof(struct CanStandardMessage) == 0);
+  assert(length % sizeof(struct CANStandardMessage) == 0);
 
   struct Can * const interface = object;
-  struct CanStandardMessage *current = buffer;
-  const struct CanStandardMessage * const last =
+  struct CANStandardMessage *current = buffer;
+  const struct CANStandardMessage * const last =
       (const void *)((uintptr_t)buffer + length);
 
   while (!pointerQueueEmpty(&interface->rxQueue) && current < last)
   {
-    struct CanMessage * const input = pointerQueueFront(&interface->rxQueue);
+    struct CANMessage * const input = pointerQueueFront(&interface->rxQueue);
     memcpy(current, input, sizeof(*current));
 
     irqDisable(interface->base.irq.rx0);
@@ -490,12 +490,12 @@ static size_t canRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t canWrite(void *object, const void *buffer, size_t length)
 {
-  assert(length % sizeof(struct CanStandardMessage) == 0);
+  assert(length % sizeof(struct CANStandardMessage) == 0);
 
   struct Can * const interface = object;
   STM_CAN_Type * const reg = interface->base.reg;
-  const struct CanStandardMessage *current = buffer;
-  const struct CanStandardMessage * const last =
+  const struct CANStandardMessage *current = buffer;
+  const struct CANStandardMessage * const last =
       (const void *)((uintptr_t)buffer + length);
 
   irqDisable(interface->base.irq.tx);
@@ -508,14 +508,14 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
     while (current < last && (reg->TSR & TSR_TME_MASK) != 0)
     {
       /* One of transmit buffers is empty, write new message into it */
-      sendMessage(interface, (const struct CanMessage *)current);
+      sendMessage(interface, (const struct CANMessage *)current);
       ++current;
     }
   }
 
   while (current < last && !pointerQueueFull(&interface->txQueue))
   {
-    struct CanMessage * const output = pointerArrayBack(&interface->pool);
+    struct CANMessage * const output = pointerArrayBack(&interface->pool);
     pointerArrayPopBack(&interface->pool);
 
     memcpy(output, current, sizeof(*current));

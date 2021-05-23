@@ -36,8 +36,8 @@ static bool dropMessage(struct Can *, size_t);
 static void interruptHandler(void *);
 static void invalidateMessage(struct Can *, size_t);
 static void listenForMessage(struct Can *, size_t, bool);
-static bool readMessage(struct Can *, struct CanMessage *, size_t);
-static void writeMessage(struct Can *, const struct CanMessage *, size_t, bool);
+static bool readMessage(struct Can *, struct CANMessage *, size_t);
+static void writeMessage(struct Can *, const struct CANMessage *, size_t, bool);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
 static void canDeinit(void *);
@@ -174,7 +174,7 @@ static void interruptHandler(void *object)
 
         if (!pointerQueueFull(&interface->rxQueue))
         {
-          struct CanMessage * const message =
+          struct CANMessage * const message =
               pointerArrayBack(&interface->pool);
           pointerArrayPopBack(&interface->pool);
 
@@ -207,7 +207,7 @@ static void interruptHandler(void *object)
 
     for (size_t index = 0; index <= lastMessageIndex; ++index)
     {
-      struct CanMessage * const message =
+      struct CANMessage * const message =
           pointerQueueFront(&interface->txQueue);
       pointerQueuePopFront(&interface->txQueue);
 
@@ -262,7 +262,7 @@ static void listenForMessage(struct Can *interface, size_t index, bool last)
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 }
 /*----------------------------------------------------------------------------*/
-static bool readMessage(struct Can *interface, struct CanMessage *message,
+static bool readMessage(struct Can *interface, struct CANMessage *message,
     size_t index)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
@@ -312,7 +312,7 @@ static bool readMessage(struct Can *interface, struct CanMessage *message,
 }
 /*----------------------------------------------------------------------------*/
 static void writeMessage(struct Can *interface,
-    const struct CanMessage *message, size_t index, bool last)
+    const struct CANMessage *message, size_t index, bool last)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
 
@@ -403,9 +403,9 @@ static enum Result canInit(void *object, const void *configBase)
   if (!pointerQueueInit(&interface->txQueue, config->txBuffers))
     return E_MEMORY;
 
-  interface->poolBuffer = malloc(sizeof(struct CanStandardMessage) * poolSize);
+  interface->poolBuffer = malloc(sizeof(struct CANStandardMessage) * poolSize);
 
-  struct CanStandardMessage *message = interface->poolBuffer;
+  struct CANStandardMessage *message = interface->poolBuffer;
 
   for (size_t index = 0; index < poolSize; ++index)
   {
@@ -478,12 +478,12 @@ static enum Result canGetParam(void *object, int parameter, void *data)
   {
     case IF_AVAILABLE:
       *(size_t *)data = pointerQueueSize(&interface->rxQueue)
-          * sizeof(struct CanStandardMessage);
+          * sizeof(struct CANStandardMessage);
       return E_OK;
 
     case IF_PENDING:
       *(size_t *)data = pointerQueueSize(&interface->txQueue)
-          * sizeof(struct CanStandardMessage);
+          * sizeof(struct CANStandardMessage);
       return E_OK;
 
     case IF_RATE:
@@ -499,7 +499,7 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
 {
   struct Can * const interface = object;
 
-  switch ((enum CanParameter)parameter)
+  switch ((enum CANParameter)parameter)
   {
     case IF_CAN_ACTIVE:
       changeMode(interface, MODE_ACTIVE);
@@ -536,16 +536,16 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t canRead(void *object, void *buffer, size_t length)
 {
-  assert(length % sizeof(struct CanStandardMessage) == 0);
+  assert(length % sizeof(struct CANStandardMessage) == 0);
 
   struct Can * const interface = object;
-  struct CanStandardMessage *current = buffer;
-  const struct CanStandardMessage * const last =
+  struct CANStandardMessage *current = buffer;
+  const struct CANStandardMessage * const last =
       (const void *)((uintptr_t)buffer + length);
 
   while (!pointerQueueEmpty(&interface->rxQueue) && current < last)
   {
-    struct CanMessage * const input = pointerQueueFront(&interface->rxQueue);
+    struct CANMessage * const input = pointerQueueFront(&interface->rxQueue);
     memcpy(current, input, sizeof(*current));
 
     irqDisable(interface->base.irq);
@@ -561,13 +561,13 @@ static size_t canRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t canWrite(void *object, const void *buffer, size_t length)
 {
-  assert(length % sizeof(struct CanStandardMessage) == 0);
+  assert(length % sizeof(struct CANStandardMessage) == 0);
 
   struct Can * const interface = object;
   LPC_CAN_Type * const reg = interface->base.reg;
-  const size_t totalMessages = length / sizeof(struct CanStandardMessage);
-  const struct CanStandardMessage *current = buffer;
-  const struct CanStandardMessage * const last = current + totalMessages;
+  const size_t totalMessages = length / sizeof(struct CANStandardMessage);
+  const struct CANStandardMessage *current = buffer;
+  const struct CANStandardMessage * const last = current + totalMessages;
 
   /* Synchronize access to the message queue and the CAN core */
   irqDisable(interface->base.irq);
@@ -578,7 +578,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
 
     for (size_t index = 0; index < messagesToWrite; ++index)
     {
-      writeMessage(interface, (const struct CanMessage *)(current + index),
+      writeMessage(interface, (const struct CANMessage *)(current + index),
           TX_OBJECT + index, index == (messagesToWrite - 1));
     }
 
@@ -587,7 +587,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
 
   while (current < last && !pointerQueueFull(&interface->txQueue))
   {
-    struct CanMessage * const output = pointerArrayBack(&interface->pool);
+    struct CANMessage * const output = pointerArrayBack(&interface->pool);
     pointerArrayPopBack(&interface->pool);
 
     memcpy(output, current, sizeof(*current));
