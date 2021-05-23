@@ -35,6 +35,10 @@ if(${CONFIG_PLATFORM_LPC_ADC_DMA})
     list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_dma.c")
 endif()
 
+if(${CONFIG_PLATFORM_LPC_ADC_DMA_STREAM})
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_dma_stream.c")
+endif()
+
 if(${CONFIG_PLATFORM_LPC_ADC_ONESHOT})
     list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_oneshot.c")
 endif()

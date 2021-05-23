@@ -45,16 +45,15 @@ static void dmaHandler(void *object)
   struct AdcDma * const interface = object;
   LPC_ADC_Type * const reg = interface->base.reg;
 
-  /* Stop automatic conversion */
+  /* Stop automatic conversion and disable further requests */
   reg->CR = 0;
-  /* Disable further DMA requests */
   reg->INTEN = 0;
 
-  // TODO Check DMA errors
-//  dmaDisable(interface->dma); // XXX
-
-  for (size_t index = 0; index < interface->count; ++index)
-    interface->output[index] = interface->buffer[index];
+  if (dmaStatus(interface->dma) == E_OK)
+  {
+    for (size_t index = 0; index < interface->count; ++index)
+      interface->output[index] = interface->buffer[index];
+  }
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
@@ -83,7 +82,7 @@ static bool setupDmaChannel(struct AdcDma *interface,
           .increment = false
       },
       .destination = {
-          .burst = DMA_BURST_4,
+          .burst = DMA_BURST_1,
           .width = DMA_WIDTH_HALFWORD,
           .increment = false
       }

@@ -111,6 +111,11 @@ config PLATFORM_LPC_ADC_DMA
 	default y
 	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
 
+config PLATFORM_LPC_ADC_DMA_STREAM
+	bool "Buffered ADC bus with DMA"
+	default y
+	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
+
 config PLATFORM_LPC_BOD
 	bool "Brownout detection"
 	default y
