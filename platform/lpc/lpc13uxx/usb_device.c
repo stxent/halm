@@ -606,6 +606,7 @@ static void epEnable(void *object, uint8_t type __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
+  assert(request);
   assert(request->callback);
 
   struct SbUsbEndpoint * const ep = object;

@@ -7,7 +7,6 @@
 #ifndef HALM_PLATFORM_LPC_ADC_DMA_STREAM_H_
 #define HALM_PLATFORM_LPC_ADC_DMA_STREAM_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/generic/pointer_queue.h>
 #include <halm/platform/lpc/adc_base.h>
 #include <halm/platform/lpc/gpdma_base.h>
 #include <xcore/stream.h>

@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/generic/pointer_queue.h>
 #include <halm/platform/lpc/adc_dma_stream.h>
 #include <halm/platform/lpc/gen_1/adc_defs.h>
 #include <halm/platform/lpc/gpdma_circular.h>
@@ -75,11 +76,6 @@ const struct StreamClass * const AdcDmaStreamHandler =
     .enqueue = adcHandlerEnqueue
 };
 /*----------------------------------------------------------------------------*/
-static void xxxHandler(void *object)
-{
-  (void)object;
-}
-
 static void dmaHandler(void *object)
 {
   struct AdcDmaStream * const interface = object;
@@ -167,7 +163,6 @@ static bool setupInnerChannel(struct AdcDmaStream *interface,
   if (interface->inner)
   {
     dmaConfigure(interface->inner, &dmaSettings);
-    dmaSetCallback(interface->inner, xxxHandler, interface);
     return true;
   }
   else
@@ -243,6 +238,8 @@ static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaStreamConfig * const config = configBase;
   assert(config);
+  assert(config->converter.event < ADC_EVENT_END);
+  assert(config->converter.event != ADC_SOFTWARE);
 
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,
@@ -250,38 +247,43 @@ static enum Result adcInit(void *object, const void *configBase)
       .channel = config->channel,
       .shared = config->shared
   };
-  struct AdcDmaStream * const interface = object;
+  const struct AdcDmaStreamHandlerConfig streamConfig = {
+      .parent = object,
+      .size = config->size
+  };
 
-  assert(config->converter.event < ADC_EVENT_END);
-  assert(config->converter.event != ADC_SOFTWARE);
+  struct AdcDmaStream * const interface = object;
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
   if (res != E_OK)
     return res;
 
+  interface->stream = init(AdcDmaStreamHandler, &streamConfig);
+  if (!interface->stream)
+    return E_ERROR;
+
   /* Initialize input pins */
   interface->count = setupPins(interface, config->pins);
 
   if (!setupOuterChannel(interface, config))
+  {
+    deinit(interface->stream);
     return E_ERROR;
+  }
 
   if (!setupInnerChannel(interface, config))
+  {
+    deinit(interface->outer);
+    deinit(interface->stream);
     return E_ERROR;
+  }
   resetInnerBuffers(interface);
 
   if (config->converter.event == ADC_BURST)
     interface->base.control |= CR_BURST;
   else
     interface->base.control |= CR_START(config->converter.event);
-
-  const struct AdcDmaStreamHandlerConfig streamConfig = {
-      .parent = interface,
-      .size = config->size
-  };
-  interface->stream = init(AdcDmaStreamHandler, &streamConfig);
-  if (!interface->stream)
-    return E_ERROR;
 
   return E_OK;
 }
@@ -356,58 +358,63 @@ static enum Result adcHandlerEnqueue(void *object,
 {
   struct AdcDmaStreamHandler * const stream = object;
   struct AdcDmaStream * const interface = stream->parent;
-  LPC_ADC_Type * const reg = interface->base.reg;
 
+  assert(request && request->callback);
+  /* Ensure the buffer has enough space and is aligned to the sample size */
+  assert(request->capacity > 0);
+  assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);
   /* Ensure proper alignment of the output buffer */
   assert((uintptr_t)request->buffer % 2 == 0);
 
-  /* Ensure the buffer has enough space and is aligned to a size of a result */
-  assert(request->capacity > 0);
-  assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);
-
   /* Prepare linked list of DMA descriptors */
   const size_t samples = request->capacity / sizeof(uint16_t);
-  const size_t parts[] = {samples / 2, samples - samples / 2};
-  uint16_t * const sink = request->buffer;
+  const size_t parts[] = {samples >> 1, (samples - samples) >> 1};
 
-  const IrqState state = irqSave();
   enum Result res = E_OK;
-  bool queued = true;
+  const IrqState state = irqSave();
 
-  /* When a previous transfer is ongoing it will be continued */
-  dmaAppend(interface->outer, sink, &interface->buffer, parts[0]);
-  dmaAppend(interface->outer, sink + parts[0], &interface->buffer, parts[1]);
-
-  if (dmaStatus(interface->outer) != E_BUSY)
+  if (!pointerQueueFull(&stream->requests))
   {
-    if (dmaEnable(interface->outer) == E_OK)
-    {
-      /* Clear pending requests */
-      for (size_t index = 0; index < interface->count; ++index)
-        (void)reg->DR[interface->pins[index].channel];
+    LPC_ADC_Type * const reg = interface->base.reg;
+    uint16_t * const sink = request->buffer;
 
-      if (dmaEnable(interface->inner) == E_OK)
+    /* When a previous transfer is ongoing it will be continued */
+    dmaAppend(interface->outer, sink, &interface->buffer, parts[0]);
+    dmaAppend(interface->outer, sink + parts[0], &interface->buffer, parts[1]);
+
+    if (dmaStatus(interface->outer) != E_BUSY)
+    {
+      if (dmaEnable(interface->outer) == E_OK)
       {
-        /* Enable DMA requests */
-        reg->INTEN = interface->mask;
-        /* Reconfigure peripheral and start the conversion */
-        reg->CR = interface->base.control;
+        /* Clear pending requests */
+        for (size_t index = 0; index < interface->count; ++index)
+          (void)reg->DR[interface->pins[index].channel];
+
+        if (dmaEnable(interface->inner) == E_OK)
+        {
+          /* Enable DMA requests */
+          reg->INTEN = interface->mask;
+          /* Reconfigure peripheral and start the conversion */
+          reg->CR = interface->base.control;
+        }
+        else
+        {
+          dmaDisable(interface->outer);
+          dmaClear(interface->outer);
+          res = E_INTERFACE;
+        }
       }
       else
       {
-        dmaDisable(interface->outer);
         dmaClear(interface->outer);
         res = E_INTERFACE;
       }
     }
-    else
-    {
-      dmaClear(interface->outer);
-      res = E_INTERFACE;
-    }
   }
+  else
+    res = E_FULL;
 
-  if (queued)
+  if (res == E_OK)
     pointerQueuePushBack(&stream->requests, request);
 
   irqRestore(state);
@@ -422,8 +429,8 @@ static void adcDeinit(void *object)
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
 
-  if (interface->outer)
-    deinit(interface->outer);
+  deinit(interface->stream);
+  deinit(interface->outer);
   deinit(interface->inner);
 
   AdcBase->deinit(interface);

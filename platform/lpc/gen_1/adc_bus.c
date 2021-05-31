@@ -75,8 +75,7 @@ static size_t setupPins(struct AdcBus *interface, const PinNumber *pins)
     const unsigned int channel = interface->pins[index].channel;
     assert(!(mask >> channel));
 
-    if (channel > event)
-      event = channel;
+    event = channel;
     mask |= 1 << channel;
 
     ++index;

@@ -818,6 +818,7 @@ static void sieEpEnable(void *object, uint8_t type __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static enum Result sieEpEnqueue(void *object, struct UsbRequest *request)
 {
+  assert(request);
   assert(request->callback);
 
   struct UsbSieEndpoint * const ep = object;
@@ -1160,6 +1161,7 @@ static void dmaEpEnable(void *object, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum Result dmaEpEnqueue(void *object, struct UsbRequest *request)
 {
+  assert(request);
   assert(request->callback);
 
   epEnqueueRequest(object, request);

@@ -181,7 +181,6 @@ static void interruptHandler(void *object)
           endOfChain = readMessage(interface, message, id);
           message->timestamp = timestamp;
           pointerQueuePushBack(&interface->rxQueue, message);
-          event = true;
         }
         else
         {
@@ -191,6 +190,8 @@ static void interruptHandler(void *object)
 
         ++id;
       }
+
+      event = true;
     }
     else
     {

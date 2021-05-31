@@ -157,7 +157,7 @@ static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
   static const struct GpDmaSettings dmaSettings[] = {
       {
           .source = {
-              .burst = DMA_BURST_1,
+              .burst = DMA_BURST_4,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           },

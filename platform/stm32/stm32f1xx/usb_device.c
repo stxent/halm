@@ -929,6 +929,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct UsbEndpoint * const ep = object;
 
+  assert(request);
   assert(request->callback);
   assert(!pointerQueueFull(&ep->requests));
 

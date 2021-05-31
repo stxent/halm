@@ -481,22 +481,22 @@ static enum Result identifyCard(struct MMCSD *device)
   if ((res = initStepSendReset(device)) != E_OK)
     return res;
 
-  /* Start initialization and detect card type */
-  if ((res = initStepReadCondition(device)) != E_OK)
-    return res;
-
-  res = initStepSdReadOCR(device, device->mode == SDIO_SPI ?
-      MMCSD_RESPONSE_NONE : MMCSD_RESPONSE_R1);
-  if (res == E_TIMEOUT)
+  /* Try to initialize as MMC. */
+  if ((res = initStepMmcReadOCR(device)) != E_OK)
   {
-    /*
-     * Initialization using CMD55 and ACMD42 failed.
-     * Try to initialize as MMC card.
-     */
-    res = initStepMmcReadOCR(device);
+    /* Send Reset command */
+    if ((res = initStepSendReset(device)) != E_OK)
+      return res;
+
+    /* Card is not MMC, try to initialize as SD */
+    if ((res = initStepReadCondition(device)) != E_OK)
+      return res;
+
+    res = initStepSdReadOCR(device, device->mode == SDIO_SPI ?
+        MMCSD_RESPONSE_NONE : MMCSD_RESPONSE_R1);
+    if (res != E_OK)
+      return res;
   }
-  if (res != E_OK)
-    return res;
 
   /* Enable optional integrity checking */
   if (device->mode == SDIO_SPI && device->crc)
@@ -522,7 +522,6 @@ static enum Result identifyCard(struct MMCSD *device)
       res = initStepSetRCA(device, 1);
     else
       res = initStepReadRCA(device);
-
     if (res != E_OK)
       return res;
   }
