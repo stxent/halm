@@ -1,33 +1,59 @@
 /*
  * i2s_dma.c
- * Copyright (C) 2015 xent
+ * Copyright (C) 2015, 2021 xent
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/generic/pointer_queue.h>
 #include <halm/platform/lpc/gpdma_list.h>
 #include <halm/platform/lpc/i2s_defs.h>
 #include <halm/platform/lpc/i2s_dma.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define BUFFER_COUNT 2
+struct I2SDmaHandlerConfig
+{
+  /** Mandatory: pointer to a parent object. */
+  struct I2SDma *parent;
+  /** Mandatory: queue size. */
+  size_t size;
+};
+
+struct I2SDmaHandler
+{
+  struct Stream base;
+
+  /* Parent interface */
+  struct I2SDma *parent;
+  /* Queued requests */
+  PointerQueue requests;
+  /* Transfer direction */
+  bool input;
+};
 /*----------------------------------------------------------------------------*/
-static bool dmaSetup(struct I2SDma *, const struct I2SDmaConfig *, bool, bool);
+static void cleanupInterface(struct I2SDma *);
+static bool dmaSetup(struct I2SDma *, const struct I2SDmaConfig *);
+static void modeSetup(struct I2SDma *, const struct I2SDmaConfig *);
+static bool streamSetup(struct I2SDma *, const struct I2SDmaConfig *);
 static void interruptHandler(void *);
 static void rxDmaHandler(void *);
 static void txDmaHandler(void *);
-static enum Result updateRate(struct I2SDma *, uint32_t);
+static bool updateRate(struct I2SDma *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
-static void i2sSetCallback(void *, void (*)(void *), void *);
 static enum Result i2sGetParam(void *, int, void *);
 static enum Result i2sSetParam(void *, int, const void *);
-static size_t i2sRead(void *, void *, size_t);
-static size_t i2sWrite(void *, const void *, size_t);
+
+static enum Result i2sHandlerInit(void *, const void *);
+static void i2sHandlerClear(void *);
+static enum Result i2sRxHandlerEnqueue(void *, struct StreamRequest *);
+static enum Result i2sTxHandlerEnqueue(void *, struct StreamRequest *);
 
 #ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
 static void i2sDeinit(void *);
+static void i2sHandlerDeinit(void *);
 #else
 #define i2sDeinit deletedDestructorTrap
+#define i2sHandlerDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const I2SDma = &(const struct InterfaceClass){
@@ -35,15 +61,47 @@ const struct InterfaceClass * const I2SDma = &(const struct InterfaceClass){
     .init = i2sInit,
     .deinit = i2sDeinit,
 
-    .setCallback = i2sSetCallback,
+    .setCallback = 0,
     .getParam = i2sGetParam,
     .setParam = i2sSetParam,
-    .read = i2sRead,
-    .write = i2sWrite
+    .read = 0,
+    .write = 0
+};
+
+const struct StreamClass * const I2SDmaRxHandler =
+    &(const struct StreamClass){
+    .size = sizeof(struct I2SDmaHandler),
+    .init = i2sHandlerInit,
+    .deinit = i2sHandlerDeinit,
+
+    .clear = i2sHandlerClear,
+    .enqueue = i2sRxHandlerEnqueue
+};
+
+const struct StreamClass * const I2SDmaTxHandler =
+    &(const struct StreamClass){
+    .size = sizeof(struct I2SDmaHandler),
+    .init = i2sHandlerInit,
+    .deinit = i2sHandlerDeinit,
+
+    .clear = i2sHandlerClear,
+    .enqueue = i2sTxHandlerEnqueue
 };
 /*----------------------------------------------------------------------------*/
+static void cleanupInterface(struct I2SDma *interface)
+{
+  if (interface->txStream)
+    deinit(interface->txStream);
+  if (interface->rxStream)
+    deinit(interface->rxStream);
+  if (interface->txDma)
+    deinit(interface->txDma);
+  if (interface->rxDma)
+    deinit(interface->rxDma);
+}
+/*----------------------------------------------------------------------------*/
 static bool dmaSetup(struct I2SDma *interface,
-    const struct I2SDmaConfig *config, bool rx, bool tx)
+    const struct I2SDmaConfig *config)
 {
   static const struct GpDmaSettings dmaSettings[] = {
       {
@@ -71,10 +129,10 @@ static bool dmaSetup(struct I2SDma *interface,
       }
   };
 
-  if (rx)
+  if (config->rx.sda != 0)
   {
     const struct GpDmaListConfig dmaConfig = {
-        .number = BUFFER_COUNT << 1,
+        .number = config->size << 1,
         .event = GPDMA_I2S0_REQ1 + (config->channel << 1),
         .type = GPDMA_TYPE_P2M,
         .channel = config->rx.dma
@@ -87,13 +145,11 @@ static bool dmaSetup(struct I2SDma *interface,
     dmaConfigure(interface->rxDma, &dmaSettings[0]);
     dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
   }
-  else
-    interface->rxDma = 0;
 
-  if (tx)
+  if (config->tx.sda != 0)
   {
     const struct GpDmaListConfig dmaConfig = {
-        .number = BUFFER_COUNT << 1,
+        .number = config->size << 1,
         .event = GPDMA_I2S0_REQ2 + (config->channel << 1),
         .type = GPDMA_TYPE_M2P,
         .channel = config->tx.dma
@@ -106,8 +162,114 @@ static bool dmaSetup(struct I2SDma *interface,
     dmaConfigure(interface->txDma, &dmaSettings[1]);
     dmaSetCallback(interface->txDma, txDmaHandler, interface);
   }
+
+  return true;
+}
+/*----------------------------------------------------------------------------*/
+static void modeSetup(struct I2SDma *interface,
+    const struct I2SDmaConfig *config)
+{
+  static const unsigned int wordWidthMap[] = {
+      WORDWIDTH_8BIT,
+      WORDWIDTH_16BIT,
+      WORDWIDTH_32BIT
+  };
+  const unsigned int halfPeriod = (1 << (config->width + 3)) - 1;
+  const unsigned int wordWidth = wordWidthMap[config->width];
+
+  uint32_t dai = DAI_WORDWIDTH(wordWidth) | DAI_WS_HALFPERIOD(halfPeriod);
+  uint32_t dao = DAO_WORDWIDTH(wordWidth) | DAO_WS_HALFPERIOD(halfPeriod);
+
+  LPC_I2S_Type * const reg = interface->base.reg;
+
+  reg->IRQ = 0;
+  reg->RXMODE = 0;
+  reg->TXMODE = 0;
+  reg->RXRATE = 0;
+  reg->TXRATE = 0;
+  reg->RXBITRATE = 0;
+  reg->TXBITRATE = 0;
+
+  if (config->rx.sda != 0)
+  {
+    assert((config->rx.ws != 0 && config->rx.sck != 0)
+        || (config->rx.ws == 0 && config->rx.sck == 0));
+
+    dai |= DAI_STOP;
+    reg->DMA1 = DMA_RX_DEPTH(4);
+
+    if (interface->mono)
+      dai |= DAI_MONO;
+
+    if (config->slave)
+      dai |= DAI_WS_SEL;
+    if (config->rx.mclk)
+      reg->RXMODE |= RXMODE_RXMCENA;
+    if (!config->rx.ws && !config->rx.sck)
+      reg->RXMODE |= RXMODE_RX4PIN;
+  }
   else
-    interface->txDma = 0;
+  {
+    /* Set default values */
+    dai |= DAI_WS_SEL;
+    reg->DMA1 = 0;
+  }
+
+  if (config->tx.sda != 0)
+  {
+    assert((config->tx.ws != 0 && config->tx.sck != 0)
+        || (config->tx.ws == 0 && config->tx.sck == 0));
+
+    dao |= DAO_STOP;
+    reg->DMA2 = DMA_TX_DEPTH(3);
+
+    if (interface->mono)
+      dao |= DAO_MONO;
+
+    if (config->slave)
+      dao |= DAO_WS_SEL;
+    if (config->tx.mclk)
+      reg->TXMODE |= TXMODE_TXMCENA;
+    if (!config->tx.ws && !config->tx.sck)
+      reg->TXMODE |= TXMODE_TX4PIN;
+
+    reg->IRQ |= IRQ_TX_DEPTH(0);
+  }
+  else
+  {
+    /* Set default values */
+    dao |= DAO_WS_SEL | DAO_MUTE;
+    reg->DMA2 = 0;
+  }
+
+  reg->DAO = dao | DAO_RESET;
+  reg->DAO &= ~DAO_RESET;
+
+  reg->DAI = dai | DAI_RESET;
+  reg->DAI &= ~DAI_RESET;
+}
+/*----------------------------------------------------------------------------*/
+static bool streamSetup(struct I2SDma *interface,
+    const struct I2SDmaConfig *config)
+{
+  const struct I2SDmaHandlerConfig streamConfig = {
+      .parent = interface,
+      .size = config->size
+  };
+
+  if (config->rx.sda != 0)
+  {
+    interface->rxStream = init(I2SDmaRxHandler, &streamConfig);
+    if (!interface->rxStream)
+      return false;
+  }
+
+  if (config->tx.sda != 0)
+  {
+    interface->txStream = init(I2SDmaTxHandler, &streamConfig);
+    if (!interface->txStream)
+      return false;
+  }
 
   return true;
 }
@@ -127,52 +289,80 @@ static void interruptHandler(void *object)
 static void rxDmaHandler(void *object)
 {
   struct I2SDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->base.reg;
+  const enum Result transferStatus = dmaStatus(interface->rxDma);
+  enum StreamRequestStatus requestStatus = STREAM_REQUEST_COMPLETED;
   bool event = false;
 
-  if (reg->DMA1 & DMA_RX_ENABLE)
+  if (transferStatus != E_BUSY)
   {
-    if (dmaStatus(interface->rxDma) != E_BUSY)
-    {
-      reg->DAI |= DAI_STOP;
-      reg->DMA1 &= ~DMA_RX_ENABLE;
-    }
-    else if ((dmaPending(interface->rxDma) & 1) == 0)
-    {
-      event = true;
-    }
+    LPC_I2S_Type * const reg = interface->base.reg;
+
+    reg->DAI |= DAI_STOP;
+    reg->DMA1 &= ~DMA_RX_ENABLE;
+
+    if (transferStatus == E_ERROR)
+      requestStatus = STREAM_REQUEST_FAILED;
+
+    event = true;
+  }
+  else if ((dmaPending(interface->rxDma) & 1) == 0)
+  {
+    /*
+     * Each block consists of two buffers. Call user function
+     * at the end of the odd block or at the end of the list.
+     */
+    event = true;
   }
 
-  if (event && interface->callback)
-    interface->callback(interface->callbackArgument);
+  if (event)
+  {
+    struct StreamRequest * const request =
+        pointerQueueFront(&interface->rxStream->requests);
+    pointerQueuePopFront(&interface->rxStream->requests);
+
+    if (requestStatus == STREAM_REQUEST_COMPLETED)
+      request->length = request->capacity;
+    request->callback(request->argument, request, requestStatus);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void txDmaHandler(void *object)
 {
   struct I2SDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->base.reg;
+  const enum Result transferStatus = dmaStatus(interface->txDma);
+  enum StreamRequestStatus requestStatus = STREAM_REQUEST_COMPLETED;
   bool event = false;
 
-  if (reg->DMA2 & DMA_TX_ENABLE)
+  if (transferStatus != E_BUSY)
   {
-    if (dmaStatus(interface->txDma) != E_BUSY)
-    {
-      /* Workaround to transmit last sample correctly */
-      reg->TXFIFO = 0;
+    LPC_I2S_Type * const reg = interface->base.reg;
 
-      reg->DMA2 &= ~DMA_TX_ENABLE;
-    }
-    else if ((dmaPending(interface->txDma) & 1) == 0)
-    {
-      event = true;
-    }
+    /* Workaround to transmit last sample correctly */
+    reg->TXFIFO = 0;
+
+    reg->DMA2 &= ~DMA_TX_ENABLE;
+
+    if (transferStatus == E_ERROR)
+      requestStatus = STREAM_REQUEST_FAILED;
+
+    event = true;
+  }
+  else if ((dmaPending(interface->txDma) & 1) == 0)
+  {
+    event = true;
   }
 
-  if (event && interface->callback)
-    interface->callback(interface->callbackArgument);
+  if (event)
+  {
+    struct StreamRequest * const request =
+        pointerQueueFront(&interface->txStream->requests);
+    pointerQueuePopFront(&interface->txStream->requests);
+
+    request->callback(request->argument, request, requestStatus);
+  }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result updateRate(struct I2SDma *interface, uint32_t sampleRate)
+static bool updateRate(struct I2SDma *interface, uint32_t sampleRate)
 {
   LPC_I2S_Type * const reg = interface->base.reg;
   struct I2SRateConfig rateConfig;
@@ -190,11 +380,8 @@ static enum Result updateRate(struct I2SDma *interface, uint32_t sampleRate)
 
     divisor = masterClock / bitrate;
 
-    const enum Result res = i2sCalcRate(&interface->base, masterClock,
-        &rateConfig);
-
-    if (res != E_OK)
-      return res;
+    if (!i2sCalcRate(&interface->base, masterClock, &rateConfig))
+      return false;
   }
 
   const uint32_t rate = RATE_X_DIVIDER(rateConfig.x)
@@ -212,13 +399,16 @@ static enum Result updateRate(struct I2SDma *interface, uint32_t sampleRate)
   }
 
   interface->sampleRate = sampleRate;
-  return E_OK;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *object, const void *configBase)
 {
   const struct I2SDmaConfig * const config = configBase;
   assert(config);
+  assert(config->rate);
+  assert(config->rx.sda || config->tx.sda);
+  assert(config->width <= I2S_WIDTH_32);
 
   const struct I2SBaseConfig baseConfig = {
       .rx = {
@@ -236,147 +426,47 @@ static enum Result i2sInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct I2SDma * const interface = object;
-  enum Result res;
-
-  assert(config->rate);
-  assert(config->rx.sda || config->tx.sda);
-  assert(config->width <= I2S_WIDTH_32);
 
   /* Call base class constructor */
-  if ((res = I2SBase->init(interface, &baseConfig)) != E_OK)
+  const enum Result res = I2SBase->init(interface, &baseConfig);
+  if (res != E_OK)
     return res;
 
   interface->base.handler = interruptHandler;
-  interface->callback = 0;
   interface->sampleRate = 0;
   interface->sampleSize = config->width + (config->mono ? 0 : 1);
   interface->mono = config->mono;
   interface->slave = config->slave;
 
-  if (!dmaSetup(interface, config, config->rx.sda != 0, config->tx.sda != 0))
+  interface->rxDma = 0;
+  interface->txDma = 0;
+  interface->rxStream = 0;
+  interface->txStream = 0;
+
+  if (!streamSetup(interface, config))
+  {
+    cleanupInterface(interface);
     return E_ERROR;
-
-  static const unsigned int wordWidthMap[] = {
-      WORDWIDTH_8BIT,
-      WORDWIDTH_16BIT,
-      WORDWIDTH_32BIT
-  };
-  const unsigned int halfPeriod = (1 << (config->width + 3)) - 1;
-  const unsigned int wordWidth = wordWidthMap[config->width];
-
-  uint32_t dai = DAI_WORDWIDTH(wordWidth) | DAI_WS_HALFPERIOD(halfPeriod);
-  uint32_t dao = DAO_WORDWIDTH(wordWidth) | DAO_WS_HALFPERIOD(halfPeriod);
-
-  LPC_I2S_Type * const reg = interface->base.reg;
-
-  reg->IRQ = 0;
-  reg->RXMODE = reg->TXMODE = 0;
-  reg->RXRATE = reg->TXRATE = 0;
-  reg->RXBITRATE = reg->TXBITRATE = 0;
-
-  if (interface->rxDma)
-  {
-    dai |= DAI_STOP;
-    reg->DMA1 = DMA_RX_DEPTH(4);
-
-    if (config->slave)
-      dai |= DAI_WS_SEL;
-    if (interface->mono)
-      dai |= DAI_MONO;
-
-    if (config->rx.mclk)
-      reg->RXMODE |= RXMODE_RXMCENA;
-
-    if (!config->rx.ws && !config->rx.sck)
-    {
-      reg->RXMODE |= RXMODE_RX4PIN;
-    }
-    else
-    {
-      assert(config->rx.ws != 0 && config->rx.sck != 0);
-    }
-  }
-  else
-  {
-    /* Set default values */
-    dai |= DAI_WS_SEL;
-    reg->DMA1 = 0;
   }
 
-  if (interface->txDma)
+  if (!dmaSetup(interface, config))
   {
-    dao |= DAO_STOP;
-    reg->DMA2 = DMA_TX_DEPTH(3);
-
-    if (config->slave)
-      dao |= DAO_WS_SEL;
-    if (interface->mono)
-      dao |= DAO_MONO;
-
-    if (config->tx.mclk)
-      reg->TXMODE |= TXMODE_TXMCENA;
-
-    if (!config->tx.ws && !config->tx.sck)
-    {
-      reg->TXMODE |= TXMODE_TX4PIN;
-    }
-    else
-    {
-      assert(config->tx.ws != 0 && config->tx.sck != 0);
-    }
-
-    reg->IRQ |= IRQ_TX_DEPTH(0);
-  }
-  else
-  {
-    /* Set default values */
-    dao |= DAO_WS_SEL | DAO_MUTE;
-    reg->DMA2 = 0;
+    cleanupInterface(interface);
+    return E_ERROR;
   }
 
-  reg->DAO = dao | DAO_RESET;
-  reg->DAI = dai | DAI_RESET;
+  modeSetup(interface, config);
 
-  /* All fields should be already initialized */
-  if ((res = updateRate(interface, config->rate)) != E_OK)
-    return res;
-
-  reg->DAO = dao;
-  reg->DAI = dai;
+  if (!updateRate(interface, config->rate))
+  {
+    cleanupInterface(interface);
+    return E_VALUE;
+  }
 
   irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);
 
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
-static void i2sDeinit(void *object)
-{
-  struct I2SDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->base.reg;
-
-  irqDisable(interface->base.irq);
-
-  reg->IRQ = 0;
-  reg->DMA1 = reg->DMA2 = 0;
-  reg->RXRATE = reg->TXRATE = 0;
-
-  if (interface->txDma)
-    deinit(interface->txDma);
-  if (interface->rxDma)
-    deinit(interface->rxDma);
-  I2SBase->deinit(interface);
-}
-#endif
-/*----------------------------------------------------------------------------*/
-static void i2sSetCallback(void *object, void (*callback)(void *),
-    void *argument)
-{
-  struct I2SDma * const interface = object;
-
-  interface->callbackArgument = argument;
-  interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2sGetParam(void *object, int parameter, void *data)
@@ -385,18 +475,20 @@ static enum Result i2sGetParam(void *object, int parameter, void *data)
 
   switch ((enum IfParameter)parameter)
   {
+    // TODO
     case IF_AVAILABLE:
-      if (!interface->rxDma)
+      if (!interface->rxStream)
         return E_INVALID;
 
-      *(size_t *)data = BUFFER_COUNT - ((dmaPending(interface->rxDma) + 1) >> 1);
+      *(size_t *)data = pointerQueueSize(&interface->rxStream->requests);
       return E_OK;
 
+    // TODO
     case IF_PENDING:
-      if (!interface->txDma)
+      if (!interface->txStream)
         return E_INVALID;
 
-      *(size_t *)data = (dmaPending(interface->txDma) + 1) >> 1;
+      *(size_t *)data = pointerQueueSize(&interface->txStream->requests);
       return E_OK;
 
     case IF_RATE:
@@ -427,87 +519,186 @@ static enum Result i2sSetParam(void *object, int parameter, const void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
-      return updateRate(interface, *(const uint32_t *)data);
+      return updateRate(interface, *(const uint32_t *)data) ? E_OK : E_ERROR;
 
     default:
       return E_INVALID;
   }
 }
 /*----------------------------------------------------------------------------*/
-static size_t i2sRead(void *object, void *buffer, size_t length)
+static enum Result i2sHandlerInit(void *object, const void *configBase)
 {
-  struct I2SDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->base.reg;
-  const size_t samples = length >> interface->sampleSize;
+  const struct I2SDmaHandlerConfig * const config = configBase;
+  struct I2SDmaHandler * const stream = object;
 
-  /* At least 2 samples */
-  assert(samples >= 2);
+  if (!pointerQueueInit(&stream->requests, config->size))
+    return E_MEMORY;
 
-  const size_t elements = (samples << interface->sampleSize) >> 2;
-  const size_t parts[] = {elements / 2, elements - elements / 2};
-  uint32_t *destination = buffer;
-
-  /*
-   * When the transfer is already active it will be continued.
-   * 32-bit DMA transfers are used.
-   */
-  dmaAppend(interface->rxDma, destination, (const uint32_t *)&reg->RXFIFO,
-      parts[0]);
-  destination += parts[0];
-  dmaAppend(interface->rxDma, destination, (const uint32_t *)&reg->RXFIFO,
-      parts[1]);
-
-  if (dmaStatus(interface->rxDma) != E_BUSY)
-  {
-    /* Clear internal FIFO */
-    reg->DAI |= DAI_RESET;
-
-    if (dmaEnable(interface->rxDma) != E_OK)
-    {
-      dmaClear(interface->txDma);
-      return 0;
-    }
-
-    reg->DMA1 |= DMA_RX_ENABLE;
-    reg->DAI &= ~(DAI_STOP | DAI_RESET);
-  }
-
-  return samples << interface->sampleSize;
+  stream->parent = config->parent;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static size_t i2sWrite(void *object, const void *buffer, size_t length)
+static void i2sHandlerClear(void *object)
 {
-  struct I2SDma * const interface = object;
-  LPC_I2S_Type * const reg = interface->base.reg;
-  const size_t samples = length >> interface->sampleSize;
+  struct I2SDmaHandler * const stream = object;
 
-  /* At least 2 samples */
-  assert(samples >= 2);
+  while (!pointerQueueEmpty(&stream->requests))
+  {
+    struct StreamRequest * const request = pointerQueueFront(&stream->requests);
+    pointerQueuePopFront(&stream->requests);
+
+    request->callback(request->argument, request, STREAM_REQUEST_CANCELLED);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum Result i2sRxHandlerEnqueue(void *object,
+    struct StreamRequest *request)
+{
+  struct I2SDmaHandler * const stream = object;
+  struct I2SDma * const interface = stream->parent;
+  const size_t samples = request->capacity >> interface->sampleSize;
+
+  assert(request && request->callback);
+  /* Ensure the buffer has enough space and is aligned with the sample size */
+  assert(request->capacity >> interface->sampleSize >= 2);
+  assert(request->capacity % (1 << interface->sampleSize) == 0);
+  /* Input buffer should be aligned with a size of the memory word */
+  assert((uintptr_t)request->buffer % 4 == 0);
 
   const size_t elements = (samples << interface->sampleSize) >> 2;
   const size_t parts[] = {elements / 2, elements - elements / 2};
-  const uint32_t *source = buffer;
 
-  /*
-   * When the transfer is already active it will be continued.
-   * 32-bit DMA transfers are used.
-   */
-  dmaAppend(interface->txDma, (void *)&reg->TXFIFO, source, parts[0]);
-  source += parts[0];
-  dmaAppend(interface->txDma, (void *)&reg->TXFIFO, source, parts[1]);
+  enum Result res = E_OK;
+  const IrqState state = irqSave();
 
-  if (dmaStatus(interface->txDma) != E_BUSY)
+  if (!pointerQueueFull(&stream->requests))
   {
-    if (dmaEnable(interface->txDma) != E_OK)
+    LPC_I2S_Type * const reg = interface->base.reg;
+    const uint32_t * const src = (const uint32_t *)&reg->RXFIFO;
+    uint32_t * const dst = request->buffer;
+
+    /*
+     * When the transfer is already active it will be continued.
+     * 32-bit DMA transfers are used.
+     */
+    dmaAppend(interface->rxDma, dst, src, parts[0]);
+    dmaAppend(interface->rxDma, dst + parts[0], src, parts[1]);
+
+    if (dmaStatus(interface->rxDma) != E_BUSY)
     {
-      dmaClear(interface->txDma);
-      return 0;
+      /* Clear internal FIFO */
+      reg->DAI |= DAI_RESET;
+
+      if (dmaEnable(interface->rxDma) == E_OK)
+      {
+        reg->DMA1 |= DMA_RX_ENABLE;
+        reg->DAI &= ~(DAI_STOP | DAI_RESET);
+      }
+      else
+      {
+        dmaClear(interface->txDma);
+        res = E_INTERFACE;
+      }
     }
-
-    reg->DMA2 |= DMA_TX_ENABLE;
-    reg->DAO &= ~DAO_STOP;
-    reg->IRQ |= IRQ_TX_ENABLE;
   }
+  else
+    res = E_FULL;
 
-  return samples << interface->sampleSize;
+  if (res == E_OK)
+    pointerQueuePushBack(&stream->requests, request);
+
+  irqRestore(state);
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result i2sTxHandlerEnqueue(void *object,
+    struct StreamRequest *request)
+{
+  struct I2SDmaHandler * const stream = object;
+  struct I2SDma * const interface = stream->parent;
+
+  assert(request && request->callback);
+  /* Ensure the buffer has enough space and is aligned with the sample size */
+  assert(request->capacity >> interface->sampleSize >= 2);
+  assert(request->capacity % (1 << interface->sampleSize) == 0);
+  /* Output buffer should be aligned with a size of the memory word */
+  assert((uintptr_t)request->buffer % 4 == 0);
+
+  const size_t words = request->length >> 2;
+  const size_t parts[] = {words >> 1, words - (words >> 1)};
+
+  enum Result res = E_OK;
+  const IrqState state = irqSave();
+
+  if (!pointerQueueFull(&stream->requests))
+  {
+    LPC_I2S_Type * const reg = interface->base.reg;
+    uint32_t * const dst = (uint32_t *)&reg->TXFIFO;
+    const uint32_t * const src = request->buffer;
+
+    /*
+     * When the transfer is already active it will be continued.
+     * 32-bit DMA transfers are used.
+     */
+    dmaAppend(interface->txDma, dst, src, parts[0]);
+    dmaAppend(interface->txDma, dst, src + parts[0], parts[1]);
+
+    if (dmaStatus(interface->txDma) != E_BUSY)
+    {
+      if (dmaEnable(interface->txDma) == E_OK)
+      {
+        reg->DMA2 |= DMA_TX_ENABLE;
+        reg->DAO &= ~DAO_STOP;
+        reg->IRQ |= IRQ_TX_ENABLE;
+      }
+      else
+      {
+        dmaClear(interface->txDma);
+        res = E_INTERFACE;
+      }
+    }
+  }
+  else
+    res = E_FULL;
+
+  if (res == E_OK)
+    pointerQueuePushBack(&stream->requests, request);
+
+  irqRestore(state);
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
+static void i2sDeinit(void *object)
+{
+  struct I2SDma * const interface = object;
+  LPC_I2S_Type * const reg = interface->base.reg;
+
+  irqDisable(interface->base.irq);
+
+  reg->IRQ = 0;
+  reg->DMA1 = reg->DMA2 = 0;
+  reg->RXRATE = reg->TXRATE = 0;
+
+  cleanupInterface(interface);
+  I2SBase->deinit(interface);
+}
+#endif
+/*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
+static void i2sHandlerDeinit(void *object)
+{
+  struct I2SDmaHandler * const stream = object;
+  pointerQueueDeinit(&stream->requests);
+}
+#endif
+/*----------------------------------------------------------------------------*/
+struct Stream *i2sDmaGetInput(struct I2SDma *interface)
+{
+  return (struct Stream *)interface->rxStream;
+}
+/*----------------------------------------------------------------------------*/
+struct Stream *i2sDmaGetOutput(struct I2SDma *interface)
+{
+  return (struct Stream *)interface->txStream;
 }

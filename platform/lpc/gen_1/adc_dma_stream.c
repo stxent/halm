@@ -103,7 +103,7 @@ static void dmaHandler(void *object)
   {
     /*
      * Each block consists of two buffers. Call user function
-     * at the end of the block or at the end of the transfer.
+     * at the end of the odd block or at the end of the list.
      */
     event = true;
   }
@@ -360,15 +360,15 @@ static enum Result adcHandlerEnqueue(void *object,
   struct AdcDmaStream * const interface = stream->parent;
 
   assert(request && request->callback);
-  /* Ensure the buffer has enough space and is aligned to the sample size */
-  assert(request->capacity > 0);
+  /* Ensure the buffer has enough space and is aligned with the sample size */
+  assert(request->capacity / (interface->count * sizeof(uint16_t)) >= 2);
   assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);
-  /* Ensure proper alignment of the output buffer */
+  /* Output buffer should be aligned with the sample size */
   assert((uintptr_t)request->buffer % 2 == 0);
 
   /* Prepare linked list of DMA descriptors */
   const size_t samples = request->capacity / sizeof(uint16_t);
-  const size_t parts[] = {samples >> 1, (samples - samples) >> 1};
+  const size_t parts[] = {samples >> 1, samples - (samples >> 1)};
 
   enum Result res = E_OK;
   const IrqState state = irqSave();
@@ -376,11 +376,11 @@ static enum Result adcHandlerEnqueue(void *object,
   if (!pointerQueueFull(&stream->requests))
   {
     LPC_ADC_Type * const reg = interface->base.reg;
-    uint16_t * const sink = request->buffer;
+    uint16_t * const dst = request->buffer;
 
     /* When a previous transfer is ongoing it will be continued */
-    dmaAppend(interface->outer, sink, &interface->buffer, parts[0]);
-    dmaAppend(interface->outer, sink + parts[0], &interface->buffer, parts[1]);
+    dmaAppend(interface->outer, dst, &interface->buffer, parts[0]);
+    dmaAppend(interface->outer, dst + parts[0], &interface->buffer, parts[1]);
 
     if (dmaStatus(interface->outer) != E_BUSY)
     {

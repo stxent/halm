@@ -71,7 +71,7 @@ struct I2SBase
 BEGIN_DECLS
 
 /* Common functions */
-enum Result i2sCalcRate(struct I2SBase *, uint32_t, struct I2SRateConfig *);
+bool i2sCalcRate(struct I2SBase *, uint32_t, struct I2SRateConfig *);
 
 /* Platform-specific functions */
 uint32_t i2sGetClock(const struct I2SBase *);

@@ -1,6 +1,6 @@
 /*
  * halm/platform/lpc/i2s_dma.h
- * Copyright (C) 2015 xent
+ * Copyright (C) 2015, 2021 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -9,13 +9,18 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
 #include <halm/platform/lpc/i2s_base.h>
+#include <xcore/stream.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2SDma;
+
+struct I2SDmaHandler;
 
 struct I2SDmaConfig
 {
   /** Mandatory: sample rate for the receiver and the transmitter. */
   uint32_t rate;
+  /** Mandatory: request queue size. */
+  size_t size;
   /** Mandatory: word width. */
   enum I2SWidth width;
 
@@ -61,11 +66,15 @@ struct I2SDma
 {
   struct I2SBase base;
 
-  void (*callback)(void *);
-  void *callbackArgument;
+  /* Input stream */
+  struct I2SDmaHandler *rxStream;
+  /* Output stream */
+  struct I2SDmaHandler *txStream;
+  /* DMA channel descriptors for receiving data */
+  struct Dma *rxDma;
+  /* DMA channel descriptors for transmitting data */
+  struct Dma *txDma;
 
-  /* Direct memory access channel descriptors */
-  struct Dma *rxDma, *txDma;
   /* Sample rate */
   uint32_t sampleRate;
   /* Size of the sample in power of two format */
@@ -75,5 +84,12 @@ struct I2SDma
   /* Enable slave mode */
   bool slave;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+struct Stream *i2sDmaGetInput(struct I2SDma *);
+struct Stream *i2sDmaGetOutput(struct I2SDma *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_I2S_DMA_H_ */

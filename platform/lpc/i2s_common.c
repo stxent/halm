@@ -6,13 +6,13 @@
 
 #include <halm/platform/lpc/i2s_base.h>
 /*----------------------------------------------------------------------------*/
-enum Result i2sCalcRate(struct I2SBase *interface, uint32_t clock,
+bool i2sCalcRate(struct I2SBase *interface, uint32_t clock,
     struct I2SRateConfig *config)
 {
   const uint32_t periphClock = i2sGetClock(interface);
 
   if (periphClock < (1 << 20))
-    return E_DEVICE;
+    return false;
 
   /* Algorithm based on NXP software examples */
   const uint32_t divisor = ((uint64_t)clock << 16) / periphClock;
@@ -42,10 +42,10 @@ enum Result i2sCalcRate(struct I2SBase *interface, uint32_t clock,
   const uint16_t xDiv = ((uint64_t)yDiv * clock * 2) / periphClock;
 
   if (!xDiv || xDiv >= 256)
-    return E_VALUE;
+    return false;
 
   config->x = xDiv;
   config->y = yDiv;
 
-  return E_OK;
+  return true;
 }
