@@ -89,9 +89,11 @@ static void processInterrupt(uint8_t channel)
   assert(handlers[channel]);
 
   struct PinInt ** const interruptArray = handlers[channel]->interrupts;
-  const uint32_t initialState = LPC_GPIO_INT->PORT[channel].STATR
-      | LPC_GPIO_INT->PORT[channel].STATF;
-  uint32_t state = reverseBits32(initialState);
+  uint32_t state =
+      LPC_GPIO_INT->PORT[channel].STATR | LPC_GPIO_INT->PORT[channel].STATF;
+
+  LPC_GPIO_INT->PORT[channel].CLR = state;
+  state = reverseBits32(state);
 
   do
   {
@@ -102,8 +104,6 @@ static void processInterrupt(uint8_t channel)
     interrupt->callback(interrupt->callbackArgument);
   }
   while (state);
-
-  LPC_GPIO_INT->PORT[channel].CLR = initialState;
 }
 /*----------------------------------------------------------------------------*/
 void EINT3_ISR(void)

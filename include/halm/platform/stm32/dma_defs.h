@@ -16,20 +16,20 @@
 #define ISR_HTIF_GENERIC                BIT(2)
 #define ISR_TEIF_GENERIC                BIT(3)
 
-#define ISR_GIF(ch)                     BIT_FIELD(ISR_GIF_GENERIC, (ch) * 4)
-#define ISR_TCIF(ch)                    BIT_FIELD(ISR_TCIF_GENERIC, (ch) * 4)
-#define ISR_HTIF(ch)                    BIT_FIELD(ISR_HTIF_GENERIC, (ch) * 4)
-#define ISR_TEIF(ch)                    BIT_FIELD(ISR_TEIF_GENERIC, (ch) * 4)
+#define ISR_GIF(ch)                     BIT_FIELD(ISR_GIF_GENERIC, (ch) << 2)
+#define ISR_TCIF(ch)                    BIT_FIELD(ISR_TCIF_GENERIC, (ch) << 2)
+#define ISR_HTIF(ch)                    BIT_FIELD(ISR_HTIF_GENERIC, (ch) << 2)
+#define ISR_TEIF(ch)                    BIT_FIELD(ISR_TEIF_GENERIC, (ch) << 2)
 
-#define ISR_CHANNEL_MASK(ch)            BIT_FIELD(MASK(4), (ch) * 4)
+#define ISR_CHANNEL_MASK(ch)            BIT_FIELD(MASK(4), (ch) << 2)
 
 /* Irrelevant bits should be already masked */
-#define ISR_CHANNEL_VALUE(reg, ch)      ((reg) >> ((ch) * 4))
+#define ISR_CHANNEL_VALUE(reg, ch)      ((reg) >> ((ch) << 2))
 /*------------------Interrupt Flag Clear Register-----------------------------*/
-#define IFCR_GIF(ch)                    BIT_FIELD(0x01, (ch) * 4)
-#define IFCR_TCIF(ch)                   BIT_FIELD(0x02, (ch) * 4)
-#define IFCR_HTIF(ch)                   BIT_FIELD(0x04, (ch) * 4)
-#define IFCR_TEIF(ch)                   BIT_FIELD(0x08, (ch) * 4)
+#define IFCR_GIF(ch)                    BIT_FIELD(0x01, (ch) << 2)
+#define IFCR_TCIF(ch)                   BIT_FIELD(0x02, (ch) << 2)
+#define IFCR_HTIF(ch)                   BIT_FIELD(0x04, (ch) << 2)
+#define IFCR_TEIF(ch)                   BIT_FIELD(0x08, (ch) << 2)
 /*------------------Channel Configuration Register----------------------------*/
 #define CCR_EN                          BIT(0)
 #define CCR_TCIE                        BIT(1)

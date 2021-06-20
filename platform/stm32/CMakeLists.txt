@@ -27,6 +27,11 @@ if(${CONFIG_PLATFORM_STM32_CAN})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/bxcan_base.c")
 endif()
 
+if(${CONFIG_PLATFORM_STM32_EXTI})
+    list(APPEND SOURCE_FILES "exti.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/exti_base.c")
+endif()
+
 if(${CONFIG_PLATFORM_STM32_GPTIMER_BASE})
     list(APPEND SOURCE_FILES "gptimer_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gptimer_base.c")

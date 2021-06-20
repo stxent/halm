@@ -68,6 +68,17 @@ config PLATFORM_STM32_DMA_PRIORITY
 	default 0
 	depends on PLATFORM_STM32_DMA
 
+config PLATFORM_STM32_EXTI
+	bool "EXTI"
+	default y
+	help
+	  This is the driver for the Extended Interrupts and Events Controller.
+
+config PLATFORM_STM32_EXTI_NO_DEINIT
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
+	depends on PLATFORM_STM32_EXTI
+
 config PLATFORM_STM32_GPTIMER_BASE
 	bool "General Purpose Timer"
 	default y
