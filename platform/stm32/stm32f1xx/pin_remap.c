@@ -41,6 +41,7 @@ static const struct RemapEntry remapTable[] = {
     [REMAP_ETH]             = {MAPR_ETH_MASK,             MAPR_ETH_OFFSET},
     [REMAP_CAN2]            = {MAPR_CAN2_MASK,            MAPR_CAN2_OFFSET},
     [REMAP_SPI3]            = {MAPR_SPI3_MASK,            MAPR_SPI3_OFFSET},
+    [REMAP_SWJ]             = {MAPR_SWJ_MASK,             MAPR_SWJ_OFFSET},
 
     /* AFIO_MAPR2 */
     [REMAP_TIM9]            = {MAPR2_TIM9_MASK,           MAPR2_TIM9_OFFSET},
@@ -58,13 +59,16 @@ void pinRemapApply(uint8_t function)
   const uint32_t mask = remapTable[index].mask << remapTable[index].offset;
   const uint32_t value = UNPACK_VALUE(function) << remapTable[index].offset;
 
-  if (!sysClockStatus(CLK_AFIO))
-    sysClockEnable(CLK_AFIO);
-
   volatile uint32_t * const reg = index < REMAP_TIM9 ?
       &STM_AFIO->MAPR : &STM_AFIO->MAPR2;
-  const uint32_t cachedValue = *reg;
+  const uint32_t cache = *reg;
+  bool update = false;
 
-  if ((cachedValue & mask) != (value & mask))
-    *reg = (cachedValue & ~mask) | value;
+  if (index == REMAP_SWJ)
+    update = (cache & mask) < value;
+  else
+    update = (cache & mask) != value;
+
+  if (update)
+    *reg = (cache & ~mask) | value;
 }

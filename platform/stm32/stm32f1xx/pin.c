@@ -11,9 +11,35 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(uint8_t);
-static void commonPinInit(uint8_t);
+static void commonPinInit(struct Pin pin);
 static inline enum SysBlockReset portToBlockReset(uint8_t);
 static inline enum SysClockBranch portToClockBranch(uint8_t);
+/*----------------------------------------------------------------------------*/
+static const struct PinEntry swjPins[] = {
+    {
+        .key = PIN(PORT_A, 13), /* JTMS/SWDIO */
+        .channel = 0,
+        .value = PACK_REMAP(REMAP_SWJ, 4)
+    }, {
+        .key = PIN(PORT_A, 14), /* JTCK/SWCLK */
+        .channel = 0,
+        .value = PACK_REMAP(REMAP_SWJ, 4)
+    }, {
+        .key = PIN(PORT_A, 15), /* JTDI */
+        .channel = 0,
+        .value = PACK_REMAP(REMAP_SWJ, 2)
+    }, {
+        .key = PIN(PORT_B, 3), /* JTDO/SWO */
+        .channel = 0,
+        .value = PACK_REMAP(REMAP_SWJ, 2)
+    }, {
+        .key = PIN(PORT_B, 4), /* NJTRST */
+        .channel = 0,
+        .value = PACK_REMAP(REMAP_SWJ, 1)
+    }, {
+        .key = 0
+    }
+};
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(uint8_t port)
 {
@@ -21,18 +47,20 @@ static inline STM_GPIO_Type *calcPort(uint8_t port)
       + port * ((uint32_t)STM_GPIOB - (uint32_t)STM_GPIOA));
 }
 /*----------------------------------------------------------------------------*/
-static void commonPinInit(uint8_t port)
+static void commonPinInit(struct Pin pin)
 {
-  const enum SysClockBranch branch = portToClockBranch(port);
+  const enum SysClockBranch branch = portToClockBranch(pin.port);
 
   if (!sysClockStatus(branch))
   {
-    const enum SysBlockReset reset = portToBlockReset(port);
+    const enum SysBlockReset reset = portToBlockReset(pin.port);
 
     sysClockEnable(branch);
     sysResetEnable(reset);
     sysResetDisable(reset);
   }
+
+  pinSetFunction(pin, PIN_DEFAULT);
 }
 /*----------------------------------------------------------------------------*/
 static inline enum SysBlockReset portToBlockReset(uint8_t port)
@@ -60,7 +88,7 @@ struct Pin pinInit(PinNumber id)
 void pinInput(struct Pin pin)
 {
   assert(pinValid(pin));
-  commonPinInit(pin.port);
+  commonPinInit(pin);
 
   const unsigned int index = pin.number >> 3;
   STM_GPIO_Type * const reg = pin.reg;
@@ -77,7 +105,7 @@ void pinInput(struct Pin pin)
 void pinOutput(struct Pin pin, bool value)
 {
   assert(pinValid(pin));
-  commonPinInit(pin.port);
+  commonPinInit(pin);
 
   const unsigned int index = pin.number >> 3;
   STM_GPIO_Type * const reg = pin.reg;
@@ -115,6 +143,12 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       if ((configuration & CNF_FUNCTION_MASK) == CNF_OUTPUT_AF)
         configuration = CNF_OUTPUT_GP;
     }
+
+    const struct PinEntry * const swjPinEntry =
+        pinFind(swjPins, PIN(pin.port, pin.number), 0);
+
+    if (swjPinEntry)
+      pinSetFunction(pin, swjPinEntry->value);
   }
   else if (function == PIN_ANALOG)
   {

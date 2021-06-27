@@ -36,6 +36,7 @@ enum RemapGroup
   REMAP_ETH,
   REMAP_CAN2,
   REMAP_SPI3,
+  REMAP_SWJ,
 
   /* AFIO_MAPR2 */
   REMAP_TIM9,

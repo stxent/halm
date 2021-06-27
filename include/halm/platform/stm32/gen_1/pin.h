@@ -54,7 +54,7 @@ static inline void pinSet(struct Pin pin)
 
 static inline void pinToggle(struct Pin pin)
 {
-  STM_GPIO_Type * const reg = pin.reg;
+  STM_GPIO_Type * const reg = (STM_GPIO_Type *)pin.reg;
 
   if (reg->ODR & pin.mask)
     reg->BRR = pin.mask;
@@ -69,7 +69,7 @@ static inline bool pinValid(struct Pin pin)
 
 static inline void pinWrite(struct Pin pin, bool value)
 {
-  STM_GPIO_Type * const reg = pin.reg;
+  STM_GPIO_Type * const reg = (STM_GPIO_Type *)pin.reg;
 
   if (value)
     reg->BSRR = pin.mask;
