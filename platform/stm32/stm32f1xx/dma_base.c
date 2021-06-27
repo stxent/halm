@@ -153,7 +153,7 @@ static enum Result streamInit(void *object, const void *configBase)
   struct DmaBase * const stream = object;
 
   assert(config->stream < ARRAY_SIZE(instances));
-  assert(config->priority < 4);
+  assert(config->priority <= DMA_PRIORITY_VERY_HIGH);
 
   const unsigned int controller = config->stream >= DMA1_STREAM_COUNT;
   const unsigned int number = controller ?

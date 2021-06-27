@@ -207,7 +207,10 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   struct AdcBus * const interface = object;
   LPC_ADC_Type * const reg = interface->base.reg;
 
-  assert(length >= interface->count * sizeof(uint16_t));
+  /* Ensure that the buffer has enough space */
+  assert(length >= sizeof(uint16_t));
+  /* Suppress warning */
+  (void)length;
 
   interface->buffer = buffer;
 

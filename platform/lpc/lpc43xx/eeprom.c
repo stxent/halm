@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/irq.h>
 #include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/eeprom.h>
 #include <halm/platform/lpc/lpc43xx/eeprom_defs.h>
@@ -58,7 +59,8 @@ static inline bool isAddressValid(const struct Eeprom *interface,
 static void programNextChunk(struct Eeprom *interface)
 {
   const size_t length = calcChunkLength(interface->offset, instance->left);
-  uint32_t *address = (uint32_t *)interface->offset;
+  uint32_t * const address = (uint32_t *)interface->offset;
+  const IrqState state = irqSave();
 
   for (size_t index = 0; index < length; ++index)
   {
@@ -67,6 +69,7 @@ static void programNextChunk(struct Eeprom *interface)
   }
 
   LPC_EEPROM->CMD = CMD_ERASE_PROGRAM;
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Eeprom *object)

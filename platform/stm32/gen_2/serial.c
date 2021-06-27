@@ -5,8 +5,8 @@
  */
 
 #include <halm/generic/byte_queue_extensions.h>
-#include <halm/platform/stm32/gen_2/uart_defs.h>
 #include <halm/platform/stm32/serial.h>
+#include <halm/platform/stm32/uart_defs.h>
 #include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/

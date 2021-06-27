@@ -256,6 +256,8 @@ static size_t adcRead(void *object, void *buffer, size_t length)
   assert((uintptr_t)buffer % 2 == 0);
   /* Ensure the buffer has enough space and is aligned to a size of a result */
   assert(length && (length % (interface->count * sizeof(uint16_t)) == 0));
+  /* Suppress warning */
+  (void)length;
 
   interface->output = buffer;
 

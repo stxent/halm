@@ -5,8 +5,8 @@
  */
 
 #include <halm/generic/byte_queue_extensions.h>
-#include <halm/platform/stm32/gen_1/uart_defs.h>
 #include <halm/platform/stm32/serial_dma.h>
+#include <halm/platform/stm32/uart_defs.h>
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/

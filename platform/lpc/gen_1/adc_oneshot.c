@@ -128,6 +128,8 @@ static size_t adcRead(void *object, void *buffer, size_t length)
 {
   /* Ensure that the buffer has enough space */
   assert(length >= sizeof(uint16_t));
+  /* Suppress warning */
+  (void)length;
 
   struct AdcOneShot * const interface = object;
   const uint16_t value = makeChannelConversion(interface);

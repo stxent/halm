@@ -5,7 +5,7 @@
  */
 
 #include <halm/platform/stm32/uart_base.h>
-#include <halm/platform/stm32/gen_1/uart_defs.h>
+#include <halm/platform/stm32/uart_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];
