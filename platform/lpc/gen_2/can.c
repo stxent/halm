@@ -5,20 +5,20 @@
  */
 
 #include <halm/generic/can.h>
+#include <halm/generic/pointer_array.h>
+#include <halm/generic/pointer_queue.h>
 #include <halm/platform/lpc/can.h>
+#include <halm/platform/lpc/gen_2/can_base.h>
 #include <halm/platform/lpc/gen_2/can_defs.h>
-#include <halm/timer.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY 50000000
 #define MAX_MESSAGES  32
 
+#define RX_COUNT      (MAX_MESSAGES / 2)
 #define RX_OBJECT     1
 #define RX_REG_INDEX  ((RX_OBJECT - 1) / 16)
-#define TX_OBJECT     (1 + (MAX_MESSAGES / 2))
+#define TX_OBJECT     (1 + RX_COUNT)
 #define TX_REG_INDEX  ((TX_OBJECT - 1) / 16)
 /*----------------------------------------------------------------------------*/
 enum Mode
@@ -28,16 +28,65 @@ enum Mode
   MODE_LOOPBACK
 };
 /*----------------------------------------------------------------------------*/
+typedef struct
+{
+  uint32_t id;
+  uint32_t mask;
+} CanFilterEntry;
+
+enum
+{
+  CAN_FILTER_ENTRY_EXT = 1UL << 29
+};
+
+DEFINE_ARRAY(CanFilterEntry, Filter, filter)
+/*----------------------------------------------------------------------------*/
+struct Can
+{
+  struct CanBase base;
+
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  /* Timer for the time stamp generation */
+  struct Timer *timer;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+  /* Filter entries */
+  FilterArray filters;
+#endif
+
+  /* Message pool */
+  PointerArray pool;
+  /* Queue for received messages */
+  PointerQueue rxQueue;
+  /* Queue for transmitting messages */
+  PointerQueue txQueue;
+  /* Pointer to a memory region used as a message pool */
+  void *arena;
+  /* Desired baud rate */
+  uint32_t rate;
+};
+/*----------------------------------------------------------------------------*/
 static void buildAcceptanceFilters(struct Can *);
 static uint32_t calcBusTimings(const struct Can *, uint32_t);
 static void changeMode(struct Can *, enum Mode);
 static void changeRate(struct Can *, uint32_t);
-static bool dropMessage(struct Can *, size_t);
+static void dropMessage(struct Can *, size_t);
 static void interruptHandler(void *);
-static void invalidateMessage(struct Can *, size_t);
-static void listenForMessage(struct Can *, size_t, bool);
-static bool readMessage(struct Can *, struct CANMessage *, size_t);
+static void invalidateMessageObject(struct Can *, size_t);
+static void listenForMessage(struct Can *, size_t, uint32_t, uint32_t);
+static void readMessage(struct Can *, struct CANMessage *, size_t);
 static void writeMessage(struct Can *, const struct CANMessage *, size_t, bool);
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+static bool filterAdd(struct Can *, const struct CANFilter *, bool);
+static bool filterRemove(struct Can *, const struct CANFilter *, bool);
+#endif
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_PM
+static void powerStateHandler(void *, enum PmState);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
 static void canDeinit(void *);
@@ -61,9 +110,37 @@ const struct InterfaceClass * const Can = &(const struct InterfaceClass){
 /*----------------------------------------------------------------------------*/
 static void buildAcceptanceFilters(struct Can *interface)
 {
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+  if (!filterArrayEmpty(&interface->filters))
+  {
+    const size_t width = RX_COUNT / filterArraySize(&interface->filters);
+    size_t offset = RX_OBJECT;
+
+    for (size_t rule = 0; rule < filterArraySize(&interface->filters); ++rule)
+    {
+      const CanFilterEntry entry = *filterArrayAt(&interface->filters, rule);
+
+      for (size_t index = 0; index < width; ++index)
+      {
+        invalidateMessageObject(interface, index + offset);
+        listenForMessage(interface, index + offset, entry.id, entry.mask);
+      }
+
+      offset += width;
+    }
+
+    for (; offset < TX_OBJECT; ++offset)
+      invalidateMessageObject(interface, offset);
+
+    return;
+  }
+#endif
+
   for (size_t index = RX_OBJECT; index < TX_OBJECT; ++index)
   {
-    listenForMessage(interface, index, index == TX_OBJECT - 1);
+    /* Accept all messages, disable FIFO mode */
+    invalidateMessageObject(interface, index);
+    listenForMessage(interface, index, 0, 0);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -127,17 +204,14 @@ static void changeRate(struct Can *interface, uint32_t rate)
   reg->CNTL = state;
 }
 /*----------------------------------------------------------------------------*/
-static bool dropMessage(struct Can *interface, size_t index)
+static void dropMessage(struct Can *interface, size_t index)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
 
   /* Clear pending interrupt and new data flag  */
-  reg->IF[0].CMDMSK = CMDMSK_NEWDAT | CMDMSK_CLRINTPND | CMDMSK_CTRL;
+  reg->IF[0].CMDMSK = CMDMSK_NEWDAT | CMDMSK_CLRINTPND;
   reg->IF[0].CMDREQ = index;
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
-
-  /* Return true when this Message Object is the end of the FIFO */
-  return (reg->IF[0].MCTRL & MCTRL_EOB) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -165,9 +239,7 @@ static void interruptHandler(void *object)
     else if (id < TX_OBJECT)
     {
       /* Receive messages */
-      bool endOfChain = false;
-
-      while (!endOfChain && reg->ND[RX_REG_INDEX] & (1UL << (id - 1)))
+      while (reg->ND[RX_REG_INDEX] & (1UL << (id - 1)))
       {
         const uint32_t timestamp = interface->timer ?
             timerGetValue(interface->timer) : 0;
@@ -178,14 +250,14 @@ static void interruptHandler(void *object)
               pointerArrayBack(&interface->pool);
           pointerArrayPopBack(&interface->pool);
 
-          endOfChain = readMessage(interface, message, id);
+          readMessage(interface, message, id);
           message->timestamp = timestamp;
           pointerQueuePushBack(&interface->rxQueue, message);
         }
         else
         {
           /* Received message will be lost when queue is full */
-          endOfChain = dropMessage(interface, id);
+          dropMessage(interface, id);
         }
 
         ++id;
@@ -196,24 +268,23 @@ static void interruptHandler(void *object)
     else
     {
       /* Clear pending transmit interrupt */
-      invalidateMessage(interface, id);
+      invalidateMessageObject(interface, id);
     }
   }
 
   if (!pointerQueueEmpty(&interface->txQueue) && !reg->TXREQ[TX_REG_INDEX])
   {
     const size_t pendingMessages = pointerQueueSize(&interface->txQueue);
-    const size_t lastMessageIndex = pendingMessages >= MAX_MESSAGES / 2 ?
-        (MAX_MESSAGES / 2 - 1) : pendingMessages;
+    const size_t lastMessageIndex = MIN(pendingMessages, MAX_MESSAGES / 2);
 
-    for (size_t index = 0; index <= lastMessageIndex; ++index)
+    for (size_t index = 0; index < lastMessageIndex; ++index)
     {
       struct CANMessage * const message =
           pointerQueueFront(&interface->txQueue);
       pointerQueuePopFront(&interface->txQueue);
 
       writeMessage(interface, message, TX_OBJECT + index,
-          index == lastMessageIndex);
+          index == lastMessageIndex - 1);
       pointerArrayPushBack(&interface->pool, message);
     }
   }
@@ -222,7 +293,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void invalidateMessage(struct Can *interface, size_t index)
+static void invalidateMessageObject(struct Can *interface, size_t index)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
 
@@ -240,30 +311,53 @@ static void invalidateMessage(struct Can *interface, size_t index)
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 }
 /*----------------------------------------------------------------------------*/
-static void listenForMessage(struct Can *interface, size_t index, bool last)
+static void listenForMessage(struct Can *interface, size_t index, uint32_t id,
+    uint32_t mask)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
-  uint32_t control = MCTRL_UMASK | MCTRL_RXIE | MCTRL_DLC(8);
 
-  if (last)
-    control |= MCTRL_EOB;
+  reg->IF[0].MCTRL = MCTRL_EOB | MCTRL_UMASK | MCTRL_RXIE | MCTRL_DLC(8);
 
-  reg->IF[0].MCTRL = control;
+  uint16_t msk1 = 0;
+  uint16_t msk2 = 0;
 
-  reg->IF[0].MSK1 = 0;
-  reg->IF[0].MSK2 = 0;
+  if (mask != 0)
+  {
+    msk2 = MSK2_MXTD;
 
-  reg->IF[0].ARB1 = 0;
-  reg->IF[0].ARB2 = ARB2_MSGVAL;
+    if (id & CAN_FILTER_ENTRY_EXT)
+    {
+      msk1 = MSK1_EXT_ID_FROM_MASK(mask);
+      msk2 |= MSK2_EXT_ID_FROM_MASK(mask);
+    }
+    else
+      msk2 |= MSK2_STD_ID_FROM_MASK(mask);
+  }
 
+  reg->IF[0].MSK1 = msk1;
+  reg->IF[0].MSK2 = msk2;
+
+  uint16_t arb1 = 0;
+  uint16_t arb2 = ARB2_MSGVAL;
+
+  if (id & CAN_FILTER_ENTRY_EXT)
+  {
+    arb1 = ARB1_EXT_ID_FROM_ID(id);
+    arb2 |= ARB2_EXT_ID_FROM_ID(id) | ARB2_XTD;
+  }
+  else
+    arb2 |= ARB2_STD_ID_FROM_ID(id);
+
+  reg->IF[0].ARB1 = arb1;
+  reg->IF[0].ARB2 = arb2;
+
+  /* Active the Message Object */
   reg->IF[0].CMDMSK = CMDMSK_WR | CMDMSK_CTRL | CMDMSK_ARB | CMDMSK_MASK;
   reg->IF[0].CMDREQ = index;
-
-  /* Wait until read/write action is finished */
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 }
 /*----------------------------------------------------------------------------*/
-static bool readMessage(struct Can *interface, struct CANMessage *message,
+static void readMessage(struct Can *interface, struct CANMessage *message,
     size_t index)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
@@ -305,11 +399,9 @@ static bool readMessage(struct Can *interface, struct CANMessage *message,
   }
   else
   {
+    // XXX
     message->id = ARB2_STD_ID_VALUE(arb2);
   }
-
-  /* Return true when this Message Object is the end of the FIFO */
-  return (control & MCTRL_EOB) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void writeMessage(struct Can *interface,
@@ -318,7 +410,7 @@ static void writeMessage(struct Can *interface,
   LPC_CAN_Type * const reg = interface->base.reg;
 
   /* Prepare values for the message interface registers */
-  uint32_t arb1 = 0;
+  uint32_t arb1;
   uint32_t arb2 = ARB2_MSGVAL;
   uint32_t control = MCTRL_EOB | MCTRL_TXRQST | MCTRL_NEWDAT;
   uint32_t mask = CMDMSK_WR | CMDMSK_CTRL | CMDMSK_ARB;
@@ -359,6 +451,7 @@ static void writeMessage(struct Can *interface,
     /* Standard frame */
     assert(message->id < (1UL << 11));
 
+    arb1 = 0;
     arb2 |= ARB2_STD_ID_FROM_ID(message->id);
   }
 
@@ -374,10 +467,82 @@ static void writeMessage(struct Can *interface,
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+static bool filterAdd(struct Can *interface, const struct CANFilter *filter,
+    bool ext)
+{
+  if (filterArrayFull(&interface->filters))
+    return false;
+
+  CanFilterEntry entry;
+
+  if (ext)
+  {
+    entry.id = (filter->id & MASK(29)) | CAN_FILTER_ENTRY_EXT;
+    entry.mask = filter->mask & MASK(29);
+  }
+  else
+  {
+    entry.id = filter->id & MASK(11);
+    entry.mask = filter->mask & MASK(11);
+  }
+
+  filterArrayPushBack(&interface->filters, entry);
+  return true;
+}
+#endif
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+static bool filterRemove(struct Can *interface, const struct CANFilter *filter,
+    bool ext)
+{
+  CanFilterEntry target;
+  bool matched = false;
+
+  if (ext)
+  {
+    target.id = (filter->id & MASK(29)) | CAN_FILTER_ENTRY_EXT;
+    target.mask = filter->mask & MASK(29);
+  }
+  else
+  {
+    target.id = filter->id & MASK(11);
+    target.mask = filter->mask & MASK(11);
+  }
+
+  for (size_t index = 0; index < filterArraySize(&interface->filters);)
+  {
+    const CanFilterEntry entry = *filterArrayAt(&interface->filters, index);
+
+    if (entry.id == target.id && entry.mask == target.mask)
+    {
+      filterArrayErase(&interface->filters, index);
+      matched = true;
+    }
+    else
+      ++index;
+  }
+
+  return matched;
+}
+#endif
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_LPC_CAN_PM
+static void powerStateHandler(void *object, enum PmState state)
+{
+  if (state == PM_ACTIVE)
+  {
+    struct Can * const interface = object;
+    changeRate(interface, interface->rate);
+  }
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum Result canInit(void *object, const void *configBase)
 {
   const struct CanConfig * const config = configBase;
   assert(config);
+  assert(config->filters <= RX_COUNT);
 
   const struct CanBaseConfig baseConfig = {
       .rx = config->rx,
@@ -390,6 +555,11 @@ static enum Result canInit(void *object, const void *configBase)
   /* Call base class constructor */
   if ((res = CanBase->init(interface, &baseConfig)) != E_OK)
     return res;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+  if (!filterArrayInit(&interface->filters, config->filters))
+    return E_MEMORY;
+#endif
 
   interface->base.handler = interruptHandler;
   interface->callback = 0;
@@ -404,9 +574,9 @@ static enum Result canInit(void *object, const void *configBase)
   if (!pointerQueueInit(&interface->txQueue, config->txBuffers))
     return E_MEMORY;
 
-  interface->poolBuffer = malloc(sizeof(struct CANStandardMessage) * poolSize);
+  interface->arena = malloc(sizeof(struct CANStandardMessage) * poolSize);
 
-  struct CANStandardMessage *message = interface->poolBuffer;
+  struct CANStandardMessage *message = interface->arena;
 
   for (size_t index = 0; index < poolSize; ++index)
   {
@@ -433,10 +603,15 @@ static enum Result canInit(void *object, const void *configBase)
 
   /* All Message Objects should be reset manually */
   for (size_t index = 1; index <= MAX_MESSAGES; ++index)
-    invalidateMessage(interface, index);
+    invalidateMessageObject(interface, index);
 
   /* Prepare RX Message Objects */
   buildAcceptanceFilters(interface);
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
+    return res;
+#endif
 
   /* Enable interrupts and exit initialization mode */
   reg->CNTL = (reg->CNTL & ~CNTL_INIT) | (CNTL_IE | CNTL_EIE);
@@ -454,6 +629,14 @@ static void canDeinit(void *object)
 
   irqDisable(interface->base.irq);
   reg->CNTL = CNTL_INIT;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_PM
+  pmUnregister(interface);
+#endif
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+  filterArrayDeinit(&interface->filters);
+#endif
 
   pointerQueueDeinit(&interface->txQueue);
   pointerQueueDeinit(&interface->rxQueue);
@@ -513,6 +696,44 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
     case IF_CAN_LOOPBACK:
       changeMode(interface, MODE_LOOPBACK);
       return E_OK;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+    case IF_CAN_FILTER_ADD_STD:
+      if (filterAdd(interface, data, false))
+      {
+        buildAcceptanceFilters(interface);
+        return E_OK;
+      }
+      else
+        return E_FULL;
+
+    case IF_CAN_FILTER_REMOVE_STD:
+      if (filterRemove(interface, data, false))
+      {
+        buildAcceptanceFilters(interface);
+        return E_OK;
+      }
+      else
+        return E_VALUE;
+
+    case IF_CAN_FILTER_ADD_EXT:
+      if (filterAdd(interface, data, true))
+      {
+        buildAcceptanceFilters(interface);
+        return E_OK;
+      }
+      else
+        return E_FULL;
+
+    case IF_CAN_FILTER_REMOVE_EXT:
+      if (filterRemove(interface, data, true))
+      {
+        buildAcceptanceFilters(interface);
+        return E_OK;
+      }
+      else
+        return E_VALUE;
+#endif
 
     default:
       break;

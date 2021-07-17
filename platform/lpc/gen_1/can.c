@@ -5,21 +5,45 @@
  */
 
 #include <halm/generic/can.h>
+#include <halm/generic/pointer_array.h>
+#include <halm/generic/pointer_queue.h>
 #include <halm/platform/lpc/can.h>
+#include <halm/platform/lpc/gen_1/can_base.h>
 #include <halm/platform/lpc/gen_1/can_defs.h>
 #include <halm/pm.h>
-#include <halm/timer.h>
 #include <xcore/accel.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 /*----------------------------------------------------------------------------*/
 enum Mode
 {
   MODE_LISTENER,
   MODE_ACTIVE,
   MODE_LOOPBACK
+};
+/*----------------------------------------------------------------------------*/
+struct Can
+{
+  struct CanBase base;
+
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  /* Timer for the time stamp generation */
+  struct Timer *timer;
+
+  /* Message pool */
+  PointerArray pool;
+  /* Queue for received messages */
+  PointerQueue rxQueue;
+  /* Queue for transmitting messages */
+  PointerQueue txQueue;
+  /* Pointer to a memory region used as a message pool */
+  void *poolBuffer;
+  /* Desired baud rate */
+  uint32_t rate;
+  /* Current interface mode */
+  uint8_t mode;
+  /* Message sequence number */
+  uint8_t sequence;
 };
 /*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(const struct Can *, uint32_t);

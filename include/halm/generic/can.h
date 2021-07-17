@@ -32,10 +32,18 @@ enum CANParameter
   IF_CAN_LISTENER,
   /** Enable loopback mode. */
   IF_CAN_LOOPBACK,
-  /** Add message filter. */
-  IF_CAN_FILTER_ADD,
-  /** Remove message filter. */
-  IF_CAN_FILTER_REMOVE
+  /** Add acceptance filter for standard frames. */
+  IF_CAN_FILTER_ADD_STD,
+  /** Remove acceptance filter for standard frames. */
+  IF_CAN_FILTER_REMOVE_STD,
+  /** Add acceptance filter for extended frames. */
+  IF_CAN_FILTER_ADD_EXT,
+  /** Remove acceptance filter for extended frames. */
+  IF_CAN_FILTER_REMOVE_EXT,
+  /** Add acceptance filter for flexible data-rate frames. */
+  IF_CAN_FILTER_ADD_FD,
+  /** Remove acceptance filter for flexible data-rate frames. */
+  IF_CAN_FILTER_REMOVE_FD
 };
 /*----------------------------------------------------------------------------*/
 struct CANMessage

@@ -104,13 +104,21 @@ enum
 #define CMDMSK_MASK                     BIT(6)
 #define CMDMSK_WR                       BIT(7)
 /*------------------Command Mask registers------------------------------------*/
-#define MSK1_ID(value)                  BIT_FIELD((value), 0)
-#define MSK1_ID_MASK                    BIT_FIELD(MASK(16), 0)
-#define MSK1_ID_VALUE(reg)              FIELD_VALUE((reg), MSK1_ID_MASK, 0)
+#define MSK1_EXT_ID(value)              BIT_FIELD((value), 0)
+#define MSK1_EXT_ID_MASK                BIT_FIELD(MASK(16), 0)
+#define MSK1_EXT_ID_VALUE(reg)          FIELD_VALUE((reg), MSK1_EXT_ID_MASK, 0)
 
-#define MSK2_ID(value)                  BIT_FIELD((value), 0)
-#define MSK2_ID_MASK                    BIT_FIELD(MASK(13), 0)
-#define MSK2_ID_VALUE(reg)              FIELD_VALUE((reg), MSK2_ID_MASK, 0)
+#define MSK2_EXT_ID(value)              BIT_FIELD((value), 0)
+#define MSK2_EXT_ID_MASK                BIT_FIELD(MASK(13), 0)
+#define MSK2_EXT_ID_VALUE(reg)          FIELD_VALUE((reg), MSK2_EXT_ID_MASK, 0)
+
+#define MSK2_STD_ID(value)              BIT_FIELD((value), 2)
+#define MSK2_STD_ID_MASK                BIT_FIELD(MASK(11), 2)
+#define MSK2_STD_ID_VALUE(reg)          FIELD_VALUE((reg), MSK2_STD_ID_MASK, 2)
+
+#define MSK1_EXT_ID_FROM_MASK(value)    (MSK1_EXT_ID(value) & MSK1_EXT_ID_MASK)
+#define MSK2_EXT_ID_FROM_MASK(value)    MSK2_EXT_ID((value) >> 16)
+#define MSK2_STD_ID_FROM_MASK(value)    MSK2_STD_ID(value)
 
 #define MSK2_MDIR                       BIT(14)
 #define MSK2_MXTD                       BIT(15)
