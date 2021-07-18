@@ -13,14 +13,14 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2SDma;
 
-struct I2SDmaHandler;
+struct I2SDmaStream;
 
 struct I2SDmaConfig
 {
-  /** Mandatory: sample rate for the receiver and the transmitter. */
-  uint32_t rate;
   /** Mandatory: request queue size. */
   size_t size;
+  /** Mandatory: sample rate for the receiver and the transmitter. */
+  uint32_t rate;
   /** Mandatory: word width. */
   enum I2SWidth width;
 
@@ -67,9 +67,9 @@ struct I2SDma
   struct I2SBase base;
 
   /* Input stream */
-  struct I2SDmaHandler *rxStream;
+  struct I2SDmaStream *rxStream;
   /* Output stream */
-  struct I2SDmaHandler *txStream;
+  struct I2SDmaStream *txStream;
   /* DMA channel descriptors for receiving data */
   struct Dma *rxDma;
   /* DMA channel descriptors for transmitting data */

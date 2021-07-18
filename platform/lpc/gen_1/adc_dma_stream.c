@@ -333,11 +333,13 @@ static enum Result adcHandlerInit(void *object, const void *configBase)
   const struct AdcDmaStreamHandlerConfig * const config = configBase;
   struct AdcDmaStreamHandler * const stream = object;
 
-  if (!pointerQueueInit(&stream->requests, config->size))
+  if (pointerQueueInit(&stream->requests, config->size))
+  {
+    stream->parent = config->parent;
+    return E_OK;
+  }
+  else
     return E_MEMORY;
-
-  stream->parent = config->parent;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void adcHandlerClear(void *object)
@@ -364,7 +366,7 @@ static enum Result adcHandlerEnqueue(void *object,
   assert(request->capacity / (interface->count * sizeof(uint16_t)) >= 2);
   assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);
   /* Output buffer should be aligned with the sample size */
-  assert((uintptr_t)request->buffer % 2 == 0);
+  assert((uintptr_t)request->buffer % sizeof(uint16_t) == 0);
 
   /* Prepare linked list of DMA descriptors */
   const size_t samples = request->capacity / sizeof(uint16_t);

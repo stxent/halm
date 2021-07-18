@@ -9,13 +9,16 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
 #include <halm/platform/lpc/dac_base.h>
-#include <halm/target.h>
-#include <xcore/interface.h>
+#include <xcore/stream.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const DacDma;
 
+struct DacDmaStream;
+
 struct DacDmaConfig
 {
+  /** Mandatory: request queue size. */
+  size_t size;
   /** Mandatory: conversion rate. */
   uint32_t rate;
   /** Optional: initial output value. */
@@ -30,10 +33,16 @@ struct DacDma
 {
   struct DacBase base;
 
-  void (*callback)(void *);
-  void *callbackArgument;
-
+  /* Output stream */
+  struct DacDmaStream *stream;
+  /* DMA channel descriptors for transmitting data */
   struct Dma *dma;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+struct Stream *dacDmaGetOutput(struct DacDma *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_DAC_DMA_H_ */

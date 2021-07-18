@@ -10,7 +10,7 @@
 #include <halm/platform/lpc/i2s_dma.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-struct I2SDmaHandlerConfig
+struct I2SDmaStreamConfig
 {
   /** Mandatory: pointer to a parent object. */
   struct I2SDma *parent;
@@ -18,7 +18,7 @@ struct I2SDmaHandlerConfig
   size_t size;
 };
 
-struct I2SDmaHandler
+struct I2SDmaStream
 {
   struct Stream base;
 
@@ -26,8 +26,6 @@ struct I2SDmaHandler
   struct I2SDma *parent;
   /* Queued requests */
   PointerQueue requests;
-  /* Transfer direction */
-  bool input;
 };
 /*----------------------------------------------------------------------------*/
 static void cleanupInterface(struct I2SDma *);
@@ -43,17 +41,17 @@ static enum Result i2sInit(void *, const void *);
 static enum Result i2sGetParam(void *, int, void *);
 static enum Result i2sSetParam(void *, int, const void *);
 
-static enum Result i2sHandlerInit(void *, const void *);
-static void i2sHandlerClear(void *);
-static enum Result i2sRxHandlerEnqueue(void *, struct StreamRequest *);
-static enum Result i2sTxHandlerEnqueue(void *, struct StreamRequest *);
+static enum Result i2sStreamInit(void *, const void *);
+static void i2sStreamClear(void *);
+static enum Result i2sRxStreamEnqueue(void *, struct StreamRequest *);
+static enum Result i2sTxStreamEnqueue(void *, struct StreamRequest *);
 
 #ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
 static void i2sDeinit(void *);
-static void i2sHandlerDeinit(void *);
+static void i2sStreamDeinit(void *);
 #else
 #define i2sDeinit deletedDestructorTrap
-#define i2sHandlerDeinit deletedDestructorTrap
+#define i2sStreamDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const I2SDma = &(const struct InterfaceClass){
@@ -68,24 +66,22 @@ const struct InterfaceClass * const I2SDma = &(const struct InterfaceClass){
     .write = 0
 };
 
-const struct StreamClass * const I2SDmaRxHandler =
-    &(const struct StreamClass){
-    .size = sizeof(struct I2SDmaHandler),
-    .init = i2sHandlerInit,
-    .deinit = i2sHandlerDeinit,
+const struct StreamClass * const I2SDmaRxStream = &(const struct StreamClass){
+    .size = sizeof(struct I2SDmaStream),
+    .init = i2sStreamInit,
+    .deinit = i2sStreamDeinit,
 
-    .clear = i2sHandlerClear,
-    .enqueue = i2sRxHandlerEnqueue
+    .clear = i2sStreamClear,
+    .enqueue = i2sRxStreamEnqueue
 };
 
-const struct StreamClass * const I2SDmaTxHandler =
-    &(const struct StreamClass){
-    .size = sizeof(struct I2SDmaHandler),
-    .init = i2sHandlerInit,
-    .deinit = i2sHandlerDeinit,
+const struct StreamClass * const I2SDmaTxStream = &(const struct StreamClass){
+    .size = sizeof(struct I2SDmaStream),
+    .init = i2sStreamInit,
+    .deinit = i2sStreamDeinit,
 
-    .clear = i2sHandlerClear,
-    .enqueue = i2sTxHandlerEnqueue
+    .clear = i2sStreamClear,
+    .enqueue = i2sTxStreamEnqueue
 };
 /*----------------------------------------------------------------------------*/
 static void cleanupInterface(struct I2SDma *interface)
@@ -252,21 +248,21 @@ static void modeSetup(struct I2SDma *interface,
 static bool streamSetup(struct I2SDma *interface,
     const struct I2SDmaConfig *config)
 {
-  const struct I2SDmaHandlerConfig streamConfig = {
+  const struct I2SDmaStreamConfig streamConfig = {
       .parent = interface,
       .size = config->size
   };
 
   if (config->rx.sda != 0)
   {
-    interface->rxStream = init(I2SDmaRxHandler, &streamConfig);
+    interface->rxStream = init(I2SDmaRxStream, &streamConfig);
     if (!interface->rxStream)
       return false;
   }
 
   if (config->tx.sda != 0)
   {
-    interface->txStream = init(I2SDmaTxHandler, &streamConfig);
+    interface->txStream = init(I2SDmaTxStream, &streamConfig);
     if (!interface->txStream)
       return false;
   }
@@ -526,21 +522,23 @@ static enum Result i2sSetParam(void *object, int parameter, const void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result i2sHandlerInit(void *object, const void *configBase)
+static enum Result i2sStreamInit(void *object, const void *configBase)
 {
-  const struct I2SDmaHandlerConfig * const config = configBase;
-  struct I2SDmaHandler * const stream = object;
+  const struct I2SDmaStreamConfig * const config = configBase;
+  struct I2SDmaStream * const stream = object;
 
-  if (!pointerQueueInit(&stream->requests, config->size))
+  if (pointerQueueInit(&stream->requests, config->size))
+  {
+    stream->parent = config->parent;
+    return E_OK;
+  }
+  else
     return E_MEMORY;
-
-  stream->parent = config->parent;
-  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void i2sHandlerClear(void *object)
+static void i2sStreamClear(void *object)
 {
-  struct I2SDmaHandler * const stream = object;
+  struct I2SDmaStream * const stream = object;
 
   while (!pointerQueueEmpty(&stream->requests))
   {
@@ -551,10 +549,10 @@ static void i2sHandlerClear(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result i2sRxHandlerEnqueue(void *object,
+static enum Result i2sRxStreamEnqueue(void *object,
     struct StreamRequest *request)
 {
-  struct I2SDmaHandler * const stream = object;
+  struct I2SDmaStream * const stream = object;
   struct I2SDma * const interface = stream->parent;
   const size_t samples = request->capacity >> interface->sampleSize;
 
@@ -611,10 +609,10 @@ static enum Result i2sRxHandlerEnqueue(void *object,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result i2sTxHandlerEnqueue(void *object,
+static enum Result i2sTxStreamEnqueue(void *object,
     struct StreamRequest *request)
 {
-  struct I2SDmaHandler * const stream = object;
+  struct I2SDmaStream * const stream = object;
   struct I2SDma * const interface = stream->parent;
 
   assert(request && request->callback);
@@ -686,9 +684,9 @@ static void i2sDeinit(void *object)
 #endif
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
-static void i2sHandlerDeinit(void *object)
+static void i2sStreamDeinit(void *object)
 {
-  struct I2SDmaHandler * const stream = object;
+  struct I2SDmaStream * const stream = object;
   pointerQueueDeinit(&stream->requests);
 }
 #endif

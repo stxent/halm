@@ -4,26 +4,49 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/generic/pointer_queue.h>
 #include <halm/platform/lpc/dac_dma.h>
 #include <halm/platform/lpc/gen_1/dac_defs.h>
 #include <halm/platform/lpc/gpdma_list.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define BUFFER_COUNT 2
+struct DacDmaStreamConfig
+{
+  /** Mandatory: pointer to a parent object. */
+  struct DacDma *parent;
+  /** Mandatory: queue size. */
+  size_t size;
+};
+
+struct DacDmaStream
+{
+  struct Stream base;
+
+  /* Parent interface */
+  struct DacDma *parent;
+  /* Queued requests */
+  PointerQueue requests;
+};
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object);
 static bool dmaSetup(struct DacDma *, const struct DacDmaConfig *);
+static uint32_t getConversionRate(const struct DacDma *);
+static void setConversionRate(struct DacDma *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *, const void *);
-static void dacSetCallback(void *, void (*)(void *), void *);
 static enum Result dacGetParam(void *, int, void *);
 static enum Result dacSetParam(void *, int, const void *);
-static size_t dacWrite(void *, const void *, size_t);
+
+static enum Result dacStreamInit(void *, const void *);
+static void dacStreamClear(void *);
+static enum Result dacStreamEnqueue(void *, struct StreamRequest *);
 
 #ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
 static void dacDeinit(void *);
+static void dacStreamDeinit(void *);
 #else
 #define dacDeinit deletedDestructorTrap
+#define dacStreamDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const DacDma = &(const struct InterfaceClass){
@@ -31,24 +54,38 @@ const struct InterfaceClass * const DacDma = &(const struct InterfaceClass){
     .init = dacInit,
     .deinit = dacDeinit,
 
-    .setCallback = dacSetCallback,
+    .setCallback = 0,
     .getParam = dacGetParam,
     .setParam = dacSetParam,
     .read = 0,
-    .write = dacWrite
+    .write = 0
+};
+
+const struct StreamClass * const DacDmaStream = &(const struct StreamClass){
+    .size = sizeof(struct DacDmaStream),
+    .init = dacStreamInit,
+    .deinit = dacStreamDeinit,
+
+    .clear = dacStreamClear,
+    .enqueue = dacStreamEnqueue
 };
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {
   struct DacDma * const interface = object;
+  const enum Result transferStatus = dmaStatus(interface->dma);
+  enum StreamRequestStatus requestStatus = STREAM_REQUEST_COMPLETED;
   bool event = false;
 
-  if (dmaStatus(interface->dma) != E_BUSY)
+  if (transferStatus != E_BUSY)
   {
     LPC_DAC_Type * const reg = interface->base.reg;
 
     /* Scatter-gather transfer finished, disable further requests */
     reg->CTRL &= ~(CTRL_INT_DMA_REQ | CTRL_CNT_ENA);
+
+    if (transferStatus == E_ERROR)
+      requestStatus = STREAM_REQUEST_FAILED;
 
     event = true;
   }
@@ -57,8 +94,14 @@ static void dmaHandler(void *object)
     event = true;
   }
 
-  if (event && interface->callback)
-    interface->callback(interface->callbackArgument);
+  if (event)
+  {
+    struct StreamRequest * const request =
+        pointerQueueFront(&interface->stream->requests);
+    pointerQueuePopFront(&interface->stream->requests);
+
+    request->callback(request->argument, request, requestStatus);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static bool dmaSetup(struct DacDma *interface,
@@ -77,7 +120,7 @@ static bool dmaSetup(struct DacDma *interface,
       }
   };
   const struct GpDmaListConfig dmaConfig = {
-      .number = BUFFER_COUNT << 1,
+      .number = config->size << 1,
       .event = GPDMA_DAC,
       .type = GPDMA_TYPE_M2P,
       .channel = config->dma
@@ -95,54 +138,57 @@ static bool dmaSetup(struct DacDma *interface,
     return false;
 }
 /*----------------------------------------------------------------------------*/
+static uint32_t getConversionRate(const struct DacDma *interface)
+{
+  const LPC_DAC_Type * const reg = interface->base.reg;
+  const uint32_t clock = dacGetClock(&interface->base);
+
+  return clock / (reg->CNTVAL + 1);
+}
+/*----------------------------------------------------------------------------*/
+static void setConversionRate(struct DacDma *interface, uint32_t rate)
+{
+  LPC_DAC_Type * const reg = interface->base.reg;
+  const uint32_t clock = dacGetClock(&interface->base);
+
+  reg->CNTVAL = (clock + (rate - 1)) / rate - 1;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *object, const void *configBase)
 {
   const struct DacDmaConfig * const config = configBase;
   assert(config);
+  assert(config->rate);
 
   const struct DacBaseConfig baseConfig = {
       .pin = config->pin
   };
-  struct DacDma * const interface = object;
-  enum Result res;
+  const struct DacDmaStreamConfig streamConfig = {
+      .parent = object,
+      .size = config->size
+  };
 
-  assert(config->rate);
+  struct DacDma * const interface = object;
 
   /* Call base class constructor */
-  if ((res = DacBase->init(interface, &baseConfig)) != E_OK)
+  const enum Result res = DacBase->init(interface, &baseConfig);
+  if (res != E_OK)
     return res;
+
+  interface->stream = init(DacDmaStream, &streamConfig);
+  if (!interface->stream)
+    return E_ERROR;
 
   if (!dmaSetup(interface, config))
     return E_ERROR;
-
-  interface->callback = 0;
 
   LPC_DAC_Type * const reg = interface->base.reg;
 
   reg->CR = (config->value & CR_OUTPUT_MASK) | CR_BIAS;
   reg->CTRL = CTRL_DBLBUF_ENA | CTRL_DMA_ENA;
-  reg->CNTVAL = (dacGetClock(object) + (config->rate - 1)) / config->rate - 1;
+  setConversionRate(interface, config->rate);
 
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
-static void dacDeinit(void *object)
-{
-  struct DacDma * const interface = object;
-
-  deinit(interface->dma);
-  DacBase->deinit(interface);
-}
-#endif
-/*----------------------------------------------------------------------------*/
-static void dacSetCallback(void *object, void (*callback)(void *),
-    void *argument)
-{
-  struct DacDma * const interface = object;
-
-  interface->callbackArgument = argument;
-  interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dacGetParam(void *object, int parameter, void *data)
@@ -155,7 +201,11 @@ static enum Result dacGetParam(void *object, int parameter, void *data)
       return dmaStatus(interface->dma);
 
     case IF_PENDING:
-      *(size_t *)data = (dmaPending(interface->dma) + 1) >> 1;
+      *(size_t *)data = pointerQueueSize(&interface->stream->requests);
+      return E_OK;
+
+    case IF_RATE:
+      *(uint32_t *)data = getConversionRate(interface);
       return E_OK;
 
     default:
@@ -163,41 +213,121 @@ static enum Result dacGetParam(void *object, int parameter, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result dacSetParam(void *object __attribute__((unused)),
-    int parameter __attribute__((unused)),
-    const void *data __attribute__((unused)))
-{
-  return E_INVALID;
-}
-/*----------------------------------------------------------------------------*/
-static size_t dacWrite(void *object, const void *buffer, size_t length)
+static enum Result dacSetParam(void *object, int parameter, const void *data)
 {
   struct DacDma * const interface = object;
-  const size_t samples = length / sizeof(uint16_t);
 
-  /* At least 2 samples */
-  assert(samples >= 2);
-
-  const size_t parts[] = {samples / 2, samples - samples / 2};
-  LPC_DAC_Type * const reg = interface->base.reg;
-  const uint16_t *source = buffer;
-
-  /* When the transfer is already active it will be continued */
-  dmaAppend(interface->dma, (void *)&reg->CR, source, parts[0]);
-  source += parts[0];
-  dmaAppend(interface->dma, (void *)&reg->CR, source, parts[1]);
-
-  if (dmaStatus(interface->dma) != E_BUSY)
+  switch ((enum IfParameter)parameter)
   {
-    if (dmaEnable(interface->dma) != E_OK)
-    {
-      dmaClear(interface->dma);
-      return 0;
-    }
+    case IF_RATE:
+      setConversionRate(interface, *(const uint32_t *)data);
+      return E_OK;
 
-    /* Enable counter to generate memory access requests */
-    reg->CTRL |= CTRL_CNT_ENA;
+    default:
+      return E_INVALID;
   }
+}
+/*----------------------------------------------------------------------------*/
+static enum Result dacStreamInit(void *object, const void *configBase)
+{
+  const struct DacDmaStreamConfig * const config = configBase;
+  struct DacDmaStream * const stream = object;
 
-  return samples * sizeof(uint16_t);
+  if (pointerQueueInit(&stream->requests, config->size))
+  {
+    stream->parent = config->parent;
+    return E_OK;
+  }
+  else
+    return E_MEMORY;
+}
+/*----------------------------------------------------------------------------*/
+static void dacStreamClear(void *object)
+{
+  struct DacDmaStream * const stream = object;
+
+  while (!pointerQueueEmpty(&stream->requests))
+  {
+    struct StreamRequest * const request = pointerQueueFront(&stream->requests);
+    pointerQueuePopFront(&stream->requests);
+
+    request->callback(request->argument, request, STREAM_REQUEST_CANCELLED);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static enum Result dacStreamEnqueue(void *object,
+    struct StreamRequest *request)
+{
+  struct DacDmaStream * const stream = object;
+  struct DacDma * const interface = stream->parent;
+
+  assert(request && request->callback);
+  /* Ensure the buffer has enough space and is aligned with the sample size */
+  assert(request->capacity / sizeof(uint16_t) >= 2);
+  assert(request->capacity % sizeof(uint16_t) == 0);
+  /* Output buffer should be aligned with the sample size */
+  assert((uintptr_t)request->buffer % sizeof(uint16_t) == 0);
+
+  /* Prepare linked list of DMA descriptors */
+  const size_t samples = request->capacity / sizeof(uint16_t);
+  const size_t parts[] = {samples >> 1, samples - (samples >> 1)};
+
+  enum Result res = E_OK;
+  const IrqState state = irqSave();
+
+  if (!pointerQueueFull(&stream->requests))
+  {
+    LPC_DAC_Type * const reg = interface->base.reg;
+    const uint16_t * const src = request->buffer;
+
+    /* When a previous transfer is ongoing it will be continued */
+    dmaAppend(interface->dma, (void *)&reg->CR, src, parts[0]);
+    dmaAppend(interface->dma, (void *)&reg->CR, src + parts[0], parts[1]);
+
+    if (dmaStatus(interface->dma) != E_BUSY)
+    {
+      if (dmaEnable(interface->dma) == E_OK)
+      {
+        /* Enable counter to generate memory access requests */
+        reg->CTRL |= CTRL_CNT_ENA;
+      }
+      else
+      {
+        dmaClear(interface->dma);
+        res = E_INTERFACE;
+      }
+    }
+  }
+  else
+    res = E_FULL;
+
+  if (res == E_OK)
+    pointerQueuePushBack(&stream->requests, request);
+
+  irqRestore(state);
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
+static void dacDeinit(void *object)
+{
+  struct DacDma * const interface = object;
+
+  deinit(interface->stream);
+  deinit(interface->dma);
+  DacBase->deinit(interface);
+}
+#endif
+/*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
+static void dacStreamDeinit(void *object)
+{
+  struct DacDmaStream * const stream = object;
+  pointerQueueDeinit(&stream->requests);
+}
+#endif
+/*----------------------------------------------------------------------------*/
+struct Stream *dacDmaGetOutput(struct DacDma *interface)
+{
+  return (struct Stream *)interface->stream;
 }
