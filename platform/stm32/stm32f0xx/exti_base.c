@@ -7,6 +7,7 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/exti_base.h>
 #include <halm/platform/stm32/exti_defs.h>
+#include <halm/platform/stm32/system.h>
 #include <xcore/accel.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -193,6 +194,13 @@ static enum Result extiInit(void *object, const void *configBase)
 
   interrupt->channel = config->channel;
   interrupt->handler = 0;
+
+  if (!sysClockStatus(CLK_SYSCFG))
+  {
+    sysClockEnable(CLK_SYSCFG);
+    sysResetEnable(RST_SYSCFG);
+    sysResetDisable(RST_SYSCFG);
+  }
 
   /* Configure event multiplexor */
   if (interrupt->channel <= EXTI_PIN15)

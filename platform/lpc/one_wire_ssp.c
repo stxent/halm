@@ -432,7 +432,7 @@ static enum Result oneWireGetParam(void *object, int parameter,
 
   switch ((enum IfParameter)parameter)
   {
-    case IF_ADDRESS:
+    case IF_ADDRESS_64:
       *(uint64_t *)data = fromLittleEndian64(interface->address);
       return E_OK;
 
@@ -481,7 +481,7 @@ static enum Result oneWireSetParam(void *object, int parameter,
       interface->blocking = true;
       return E_OK;
 
-    case IF_ADDRESS:
+    case IF_ADDRESS_64:
       interface->address = toLittleEndian64(*(const uint64_t *)data);
       return E_OK;
 

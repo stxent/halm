@@ -190,7 +190,7 @@ static enum Result i2cGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_ADDRESS:
-       *(uint16_t *)data = ADR_ADDRESS_VALUE(reg->ADR0);
+       *(uint32_t *)data = ADR_ADDRESS_VALUE(reg->ADR0);
       return E_OK;
 
     case IF_POSITION:
@@ -213,9 +213,9 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_ADDRESS:
-      if (*(const uint16_t *)data <= 127)
+      if (*(const uint32_t *)data <= 127)
       {
-        reg->ADR0 = ADR_ADDRESS(*(const uint16_t *)data);
+        reg->ADR0 = ADR_ADDRESS(*(const uint32_t *)data);
         return E_OK;
       }
       else

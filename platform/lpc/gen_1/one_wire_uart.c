@@ -255,7 +255,7 @@ static enum Result oneWireSetParam(void *object, int parameter,
       interface->blocking = true;
       return E_OK;
 
-    case IF_ADDRESS:
+    case IF_ADDRESS_64:
       interface->address = toLittleEndian64(*(const uint64_t *)data);
       return E_OK;
 

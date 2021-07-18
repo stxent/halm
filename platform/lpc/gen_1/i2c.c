@@ -272,9 +272,9 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_ADDRESS:
-      if (*(const uint16_t *)data <= 127)
+      if (*(const uint32_t *)data <= 127)
       {
-        interface->address = *(const uint16_t *)data;
+        interface->address = *(const uint32_t *)data;
         return E_OK;
       }
       else
