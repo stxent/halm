@@ -10,11 +10,13 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
+static void setTime(struct Rtc *, time64_t);
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
 static enum Result clkSetAlarm(void *, time64_t);
 static void clkSetCallback(void *, void (*)(void *), void *);
 static enum Result clkSetTime(void *, time64_t);
+static void clkStop(void *);
 static time64_t clkTime(void *);
 
 #ifndef CONFIG_PLATFORM_LPC_RTC_NO_DEINIT
@@ -31,6 +33,7 @@ const struct RtClockClass * const Rtc = &(const struct RtClockClass){
     .setAlarm = clkSetAlarm,
     .setCallback = clkSetCallback,
     .setTime = clkSetTime,
+    .stop = clkStop,
     .time = clkTime
 };
 /*----------------------------------------------------------------------------*/
@@ -42,17 +45,48 @@ static void interruptHandler(void *object)
 
   if (reg->ILR & ILR_RTCALF)
   {
-    /* Disable future interrupts */
+    /* Disable further interrupts */
     reg->AMR = AMR_MASK;
 
     event = true;
   }
 
   /* Clear pending interrupts */
-  reg->ILR = reg->ILR;
+  reg->ILR = ILR_RTCCIF | ILR_RTCALF;
 
   if (event && clock->callback)
     clock->callback(clock->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static void setTime(struct Rtc *clock, time64_t timestamp)
+{
+  LPC_RTC_Type * const reg = clock->base.reg;
+
+  if ((reg->CCR & CCR_CLKEN) != 0)
+  {
+    const uint32_t mask = CCR_CTCRST | CCR_CCALEN;
+
+    /* Stop and reset counters */
+    reg->CCR = mask;
+    while ((reg->CCR & mask) != mask);
+  }
+
+  struct RtDateTime dateTime;
+  rtMakeTime(&dateTime, timestamp);
+
+  reg->SEC = dateTime.second; /* Seconds in the range of 0 to 59 */
+  reg->MIN = dateTime.minute; /* Minutes in the range of 0 to 59 */
+  reg->HOUR = dateTime.hour; /* Hours in the range of 0 to 23 */
+  reg->DOM = dateTime.day; /* Days in the range of 1 to 31 */
+  reg->MONTH = dateTime.month; /* Month value in the range of 1 to 12 */
+  reg->YEAR = dateTime.year; /* Year value in the range of 0 to 4095 */
+
+  /* Unused fields */
+  reg->DOW = 0; /* Day of week in the range of 0 to 6 */
+  reg->DOY = 0; /* Day of year in the range of 0 to 366 */
+
+  /* Enable clock */
+  reg->CCR = CCR_CLKEN | CCR_CCALEN;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *object, const void *configBase)
@@ -72,20 +106,26 @@ static enum Result clkInit(void *object, const void *configBase)
 
   LPC_RTC_Type * const reg = clock->base.reg;
 
+  /* Disable interrupts */
+  reg->CIIR = 0;
+  reg->ILR = ILR_RTCCIF | ILR_RTCALF;
+
   if (config->timestamp)
   {
-    /* Reinitialize clock */
-    if ((res = clkSetTime(clock, config->timestamp)) != E_OK)
-      return res;
+    reg->AMR = AMR_MASK;
+    reg->CALIBRATION = 0;
+
+    /* Reinitialize current time */
+    setTime(clock, config->timestamp);
   }
+  else if (!(reg->CCR & CCR_CLKEN))
+  {
+    reg->AMR = AMR_MASK;
+    reg->CALIBRATION = 0;
 
-  /* Disable interrupts */
-  reg->CALIBRATION = 0;
-  reg->ILR = ILR_RTCCIF | ILR_RTCALF;
-  reg->AMR = AMR_MASK;
-
-  reg->CIIR = 0;
-  while ((reg->CIIR & CIIR_MASK) != 0);
+    /* Set default time */
+    setTime(clock, 0);
+  }
 
   irqSetPriority(clock->base.irq, config->priority);
   irqEnable(clock->base.irq);
@@ -99,8 +139,10 @@ static void clkDeinit(void *object __attribute__((unused)))
   struct Rtc * const clock = object;
   LPC_RTC_Type * const reg = clock->base.reg;
 
-  /* Stop time counters */
-  reg->CCR &= ~CCR_CLKEN;
+  /* Disable interrupts */
+  reg->CIIR = 0;
+  /* Reset counters */
+  reg->CCR = CCR_CTCRST | CCR_CCALEN;
 
   irqDisable(clock->base.irq);
   RtcBase->deinit(clock);
@@ -142,61 +184,53 @@ static void clkSetCallback(void *object, void (*callback)(void *),
   clock->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result clkSetTime(void *object, time64_t currentTime)
+static enum Result clkSetTime(void *object, time64_t timestamp)
 {
-  struct Rtc * const clock = object;
-  LPC_RTC_Type * const reg = clock->base.reg;
-  struct RtDateTime dateTime;
-
-  rtMakeTime(&dateTime, currentTime);
-
-  /* Stop and reset counters */
-  reg->CCR = CCR_CTCRST | CCR_CCALEN;
-  while ((reg->CCR & (CCR_CTCRST | CCR_CCALEN)) != (CCR_CTCRST | CCR_CCALEN));
-
-  reg->SEC = dateTime.second; /* Seconds in the range of 0 to 59 */
-  reg->MIN = dateTime.minute; /* Minutes in the range of 0 to 59 */
-  reg->HOUR = dateTime.hour; /* Hours in the range of 0 to 23 */
-  reg->DOM = dateTime.day; /* Days in the range of 1 to 31 */
-  reg->MONTH = dateTime.month; /* Month value in the range of 1 to 12 */
-  reg->YEAR = dateTime.year; /* Year value in the range of 0 to 4095 */
-
-  /* Unused fields */
-  reg->DOW = 0; /* Day of week in the range of 0 to 6 */
-  reg->DOY = 0; /* Day of year in the range of 0 to 366 */
-
-  /* Enable clock */
-  reg->CCR = CCR_CLKEN | CCR_CCALEN;
-  while ((reg->CCR & (CCR_CLKEN | CCR_CCALEN)) != (CCR_CLKEN | CCR_CCALEN));
-
+  setTime(object, timestamp);
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static void clkStop(void *object)
+{
+  const struct Rtc * const clock = object;
+  LPC_RTC_Type * const reg = clock->base.reg;
+
+  if ((reg->CCR & CCR_CLKEN) != 0)
+  {
+    /* Stop and reset counters */
+    reg->CCR = CCR_CTCRST | CCR_CCALEN;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static time64_t clkTime(void *object)
 {
   const struct Rtc * const clock = object;
   const LPC_RTC_Type * const reg = clock->base.reg;
-  uint32_t ctime0, ctime1;
 
-  do
+  if ((reg->CCR & CCR_CLKEN) != 0)
   {
-    ctime0 = reg->CTIME0;
-    ctime1 = reg->CTIME1;
+    uint32_t ctime0, ctime1;
+
+    do
+    {
+      ctime0 = reg->CTIME0;
+      ctime1 = reg->CTIME1;
+    }
+    while (ctime0 != reg->CTIME0);
+
+    const struct RtDateTime dateTime = {
+        .second = CTIME0_SECONDS_VALUE(ctime0),
+        .minute = CTIME0_MINUTES_VALUE(ctime0),
+        .hour = CTIME0_HOURS_VALUE(ctime0),
+        .day = CTIME1_DOM_VALUE(ctime1),
+        .month = CTIME1_MONTH_VALUE(ctime1),
+        .year = CTIME1_YEAR_VALUE(ctime1)
+    };
+    time64_t timestamp = 0;
+
+    if (rtMakeEpochTime(&timestamp, &dateTime) == E_OK)
+      return timestamp;
   }
-  while (ctime0 != reg->CTIME0);
 
-  const struct RtDateTime dateTime = {
-      .second = CTIME0_SECONDS_VALUE(ctime0),
-      .minute = CTIME0_MINUTES_VALUE(ctime0),
-      .hour = CTIME0_HOURS_VALUE(ctime0),
-      .day = CTIME1_DOM_VALUE(ctime1),
-      .month = CTIME1_MONTH_VALUE(ctime1),
-      .year = CTIME1_YEAR_VALUE(ctime1)
-  };
-  time64_t timestamp;
-
-  if (rtMakeEpochTime(&timestamp, &dateTime) == E_OK)
-    return timestamp;
-  else
-    return 0;
+  return 0;
 }
