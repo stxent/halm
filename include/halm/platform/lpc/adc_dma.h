@@ -37,23 +37,18 @@ struct AdcDma
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* Pin descriptors */
+  struct AdcPin pins[8];
+  /* Output buffer */
+  uint16_t buffer[8];
+
   /* DMA handle */
   struct Dma *dma;
 
-  /* Output buffer */
-  uint16_t *output;
-  /* Result buffer */
-  uint16_t buffer[8];
-
-  /* Pin descriptors */
-  struct AdcPin pins[8];
   /* Event mask */
   uint32_t mask;
   /* Pin count */
   uint8_t count;
-
-  /* Enable the blocking mode instead of the non-blocking zero-copy mode */
-  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_ADC_DMA_H_ */

@@ -274,7 +274,9 @@ static enum Result adcInit(void *object, const void *configBase)
   const uint32_t fApb = clockFrequency(Apb3Clock);
   const uint32_t divisor = (fApb + (fAdc - 1)) / fAdc;
 
+  assert(divisor <= 256);
   interface->control = CR_PDN | CR_CLKDIV(divisor - 1) | CR_CLKS(ticks);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

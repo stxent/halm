@@ -1,17 +1,17 @@
 /*
- * halm/platform/lpc/adc_bus.h
+ * halm/platform/lpc/adc.h
  * Copyright (C) 2016 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_LPC_ADC_BUS_H_
-#define HALM_PLATFORM_LPC_ADC_BUS_H_
+#ifndef HALM_PLATFORM_LPC_ADC_H_
+#define HALM_PLATFORM_LPC_ADC_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/adc_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const AdcBus;
+extern const struct InterfaceClass * const Adc;
 
-struct AdcBusConfig
+struct AdcConfig
 {
   /** Mandatory: pointer to an array of pins terminated by a zero element. */
   const PinNumber *pins;
@@ -29,26 +29,26 @@ struct AdcBusConfig
   bool shared;
 };
 
-struct AdcBus
+struct Adc
 {
   struct AdcBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Pointer to an output buffer */
-  uint16_t *buffer;
-
+  /* Data registers used */
+  const uint32_t *dr[8];
   /* Pin descriptors */
   struct AdcPin pins[8];
+  /* Output buffer */
+  uint16_t buffer[8];
+
   /* Interrupt priority */
   IrqPriority priority;
   /* Pin count */
   uint8_t count;
   /* Event channel */
   uint8_t event;
-  /* Enable the blocking mode instead of the non-blocking zero-copy mode */
-  bool blocking;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LPC_ADC_BUS_H_ */
+#endif /* HALM_PLATFORM_LPC_ADC_H_ */

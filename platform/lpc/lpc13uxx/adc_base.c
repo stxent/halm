@@ -121,7 +121,9 @@ static enum Result adcInit(void *object, const void *configBase)
   const uint32_t fApb = clockFrequency(MainClock);
   const uint32_t divisor = (fApb + (fAdc - 1)) / fAdc;
 
+  assert(divisor <= 256);
   interface->control = CR_CLKDIV(divisor - 1) | (mode10bit ? CR_MODE10BIT : 0);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

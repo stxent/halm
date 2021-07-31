@@ -428,13 +428,12 @@ static void adcDeinit(void *object)
 {
   struct AdcDmaStream * const interface = object;
 
-  for (size_t index = 0; index < interface->count; ++index)
-    adcReleasePin(interface->pins[index]);
-
   deinit(interface->stream);
   deinit(interface->outer);
   deinit(interface->inner);
 
+  for (size_t index = 0; index < interface->count; ++index)
+    adcReleasePin(interface->pins[index]);
   AdcBase->deinit(interface);
 }
 #endif

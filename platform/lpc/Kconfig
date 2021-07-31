@@ -101,18 +101,18 @@ config PLATFORM_LPC_ADC_ONESHOT
 	default y
 	depends on PLATFORM_LPC_ADC_BASE
 
-config PLATFORM_LPC_ADC_BUS
-	bool "ADC bus with interrupts"
+config PLATFORM_LPC_ADC
+	bool "Multichannel ADC with interrupts"
 	default y
 	depends on PLATFORM_LPC_ADC_BASE
 
 config PLATFORM_LPC_ADC_DMA
-	bool "ADC bus with DMA"
+	bool "Multichannel ADC with DMA"
 	default y
 	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
 
 config PLATFORM_LPC_ADC_DMA_STREAM
-	bool "Buffered ADC bus with DMA"
+	bool "Multichannel buffered ADC with DMA"
 	default y
 	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
 
