@@ -59,11 +59,13 @@ struct SerialDma
   /* Queues are allocated in a static memory */
   bool preallocated;
 
-  /* DMA RX chunk count */
+  /* Count of reception buffers */
   size_t rxChunks;
-  /* Size of the single DMA RX buffer */
+  /* Position inside the current reception buffer */
+  size_t rxPosition;
+  /* Size of the single reception buffer */
   size_t rxBufferSize;
-  /* Size of the DMA TX transfer */
+  /* Size of the current outgoing transfer */
   size_t txBufferSize;
 };
 /*----------------------------------------------------------------------------*/

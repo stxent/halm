@@ -216,16 +216,18 @@ static size_t channelResidue(const void *object)
   /* Residue is available when the channel was initialized and enabled */
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
   {
-    const size_t index = getCurrentEntry(channel);
-    const size_t total = CONTROL_SIZE_VALUE(channel->list[index].control);
-
     const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
-    const size_t completed = CONTROL_SIZE_VALUE(reg->CONTROL);
+    const size_t index = getCurrentEntry(channel);
+    const uint32_t transfers = CONTROL_SIZE_VALUE(reg->CONTROL);
 
-    return total - completed;
+    if (reg->LLI == channel->list[index].next)
+    {
+      /* Linked list item is not changed, transfer count is correct */
+      return (size_t)transfers;
+    }
   }
-  else
-    return 0;
+
+  return 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelStatus(const void *object)

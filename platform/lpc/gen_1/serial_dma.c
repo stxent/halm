@@ -15,6 +15,7 @@
 static bool dmaSetup(struct SerialDma *, uint8_t, uint8_t, size_t);
 static enum Result enqueueRxBuffers(struct SerialDma *);
 static enum Result enqueueTxBuffers(struct SerialDma *);
+static void readResidue(struct SerialDma *);
 static void rxDmaHandler(void *);
 static bool rxQueueReady(struct SerialDma *);
 static void txDmaHandler(void *);
@@ -150,13 +151,30 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
   return res;
 }
 /*----------------------------------------------------------------------------*/
+static void readResidue(struct SerialDma *interface)
+{
+  const size_t offset = interface->rxBufferSize - dmaResidue(interface->rxDma);
+  const size_t pending = offset - interface->rxPosition;
+
+  if (pending)
+  {
+    byteQueueAdvance(&interface->rxQueue, pending);
+    interface->rxPosition += pending;
+  }
+}
+/*----------------------------------------------------------------------------*/
 static void rxDmaHandler(void *object)
 {
   struct SerialDma * const interface = object;
   const bool event = dmaStatus(interface->rxDma) != E_ERROR;
 
   if (event)
-    byteQueueAdvance(&interface->rxQueue, interface->rxBufferSize);
+  {
+    const size_t pending = interface->rxBufferSize - interface->rxPosition;
+
+    byteQueueAdvance(&interface->rxQueue, pending);
+    interface->rxPosition = 0;
+  }
 
   if (rxQueueReady(interface))
     enqueueRxBuffers(interface);
@@ -267,6 +285,7 @@ static enum Result serialInit(void *object, const void *configBase)
   interface->rate = config->rate;
 
   interface->rxChunks = config->rxChunks;
+  interface->rxPosition = 0;
   interface->rxBufferSize = config->rxLength / config->rxChunks;
   interface->txBufferSize = 0;
 
@@ -420,7 +439,10 @@ static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
   uint8_t *position = buffer;
-  IrqState state;
+
+  IrqState state = irqSave();
+  readResidue(interface);
+  irqRestore(state);
 
   while (length && !byteQueueEmpty(&interface->rxQueue))
   {

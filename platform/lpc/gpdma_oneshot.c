@@ -167,11 +167,7 @@ static size_t channelResidue(const void *object)
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
   {
     const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
-
-    const size_t initialTransfers = CONTROL_SIZE_VALUE(channel->control);
-    const size_t completedTransfers = CONTROL_SIZE_VALUE(reg->CONTROL);
-
-    return initialTransfers - completedTransfers;
+    return CONTROL_SIZE_VALUE(reg->CONTROL);
   }
   else
     return 0;
