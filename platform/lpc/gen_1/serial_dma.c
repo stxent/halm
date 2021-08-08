@@ -111,7 +111,7 @@ static enum Result enqueueRxBuffers(struct SerialDma *interface)
   size_t count;
 
   byteQueueDeferredPush(&interface->rxQueue, &address, &count,
-      pending * interface->rxBufferSize);
+      pending * interface->rxBufferSize - interface->rxPosition);
 
   if (count >= interface->rxBufferSize)
   {

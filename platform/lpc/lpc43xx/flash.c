@@ -184,6 +184,7 @@ static size_t flashRead(void *object, void *buffer, size_t length)
     const uint32_t address = positionToAddress(interface, interface->position);
 
     memcpy(buffer, (const void *)address, length);
+    interface->position += (uint32_t)length;
     return length;
   }
   else
@@ -198,7 +199,10 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
   flashInitWrite();
 
   if (flashWriteBuffer(address, buffer, length) == E_OK)
+  {
+    interface->position += (uint32_t)length;
     return length;
+  }
   else
     return 0;
 }
