@@ -32,6 +32,7 @@ typedef uint32_t WqCounter;
 struct WqInfo
 {
   size_t watermark;
+  WqCounter loops;
   WqCounter uptime;
 
   struct

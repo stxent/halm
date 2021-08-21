@@ -33,6 +33,15 @@ config GENERIC_WQ
 	bool "Work Queue"
 	default y
 
+config GENERIC_WQ_LOAD
+	bool "Gather performance data"
+	default n
+	depends on GENERIC_WQ
+	help
+	  This enables calculation of the idle cycles of the work queue.
+	  The number of idle cycles depends on the processor load.
+	  Power management cannot be used in this mode.
+
 config GENERIC_WQ_NONSTOP
 	bool "Disable stop functions"
 	default n

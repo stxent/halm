@@ -35,7 +35,7 @@ struct WqTask
 #endif
 };
 
-DEFINE_ARRAY(struct WqTaskDescriptor, WqInfo, wqInfo)
+DEFINE_ARRAY(struct WqTaskDescriptor, WqTaskInfo, wqTaskInfo)
 DEFINE_QUEUE(struct WqTask, WqTask, wqTask)
 
 struct WorkQueueDefault
@@ -51,9 +51,14 @@ struct WorkQueueDefault
   } latency;
 
   WqCounter timestamp;
-  WqInfoArray info;
+  WqTaskInfoArray info;
 
   size_t watermark;
+#endif
+
+#ifdef CONFIG_GENERIC_WQ_LOAD
+  WqCounter loops;
+  WqCounter previous;
 #endif
 
 #ifndef CONFIG_GENERIC_WQ_NONSTOP
@@ -70,12 +75,16 @@ static enum Result workQueueInit(void *, const void *);
 static enum Result workQueueAdd(void *, void (*)(void *), void *);
 static enum Result workQueueStart(void *);
 
-#ifdef CONFIG_GENERIC_WQ_PROFILE
-  static void workQueueProfile(void *, WqProfileCallback, void *);
+#if defined(CONFIG_GENERIC_WQ_PROFILE) || defined(CONFIG_GENERIC_WQ_LOAD)
   static void workQueueStatistics(void *, struct WqInfo *);
 #else
-  #define workQueueProfile 0
   #define workQueueStatistics 0
+#endif
+
+#ifdef CONFIG_GENERIC_WQ_PROFILE
+  static void workQueueProfile(void *, WqProfileCallback, void *);
+#else
+  #define workQueueProfile 0
 #endif
 
 #ifndef CONFIG_GENERIC_WQ_NONSTOP
@@ -105,9 +114,10 @@ const struct WorkQueueClass * const WorkQueue =
 static struct WqTaskDescriptor *findTaskInfo(struct WorkQueueDefault *wq,
     void (*task)(void *))
 {
-  for (size_t index = 0; index < wqInfoArraySize(&wq->info); ++index)
+  for (size_t index = 0; index < wqTaskInfoArraySize(&wq->info); ++index)
   {
-    struct WqTaskDescriptor * const current = wqInfoArrayAt(&wq->info, index);
+    struct WqTaskDescriptor * const current =
+        wqTaskInfoArrayAt(&wq->info, index);
 
     if (current->task == task)
       return current;
@@ -126,7 +136,7 @@ static enum Result workQueueInit(void *object, const void *configBase)
   struct WorkQueueDefault * const wq = object;
 
 #ifdef CONFIG_GENERIC_WQ_PROFILE
-  if (!wqInfoArrayInit(&wq->info, config->size))
+  if (!wqTaskInfoArrayInit(&wq->info, config->size))
     return E_MEMORY;
 #endif
 
@@ -145,7 +155,7 @@ static void workQueueDeinit(void *object)
   wqTaskQueueDeinit(&wq->tasks);
 
 #ifdef CONFIG_GENERIC_WQ_PROFILE
-  wqInfoArrayDeinit(&wq->info);
+  wqTaskInfoArrayDeinit(&wq->info);
 #endif /* CONFIG_GENERIC_WQ_PROFILE */
 }
 #endif /* CONFIG_GENERIC_WQ_NONSTOP */
@@ -173,8 +183,8 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
           .execution = {0, WQ_COUNTER_MAX, 0}
       };
 
-      wqInfoArrayPushBack(&wq->info, info);
-      entry = wqInfoArrayAt(&wq->info, wqInfoArraySize(&wq->info) - 1);
+      wqTaskInfoArrayPushBack(&wq->info, info);
+      entry = wqTaskInfoArrayAt(&wq->info, wqTaskInfoArraySize(&wq->info) - 1);
     }
 
     if (wq->watermark < watermark)
@@ -209,9 +219,9 @@ static void workQueueProfile(void *object, WqProfileCallback callback,
 {
   struct WorkQueueDefault * const wq = object;
 
-  for (size_t index = 0; index < wqInfoArraySize(&wq->info); ++index)
+  for (size_t index = 0; index < wqTaskInfoArraySize(&wq->info); ++index)
   {
-    struct WqTaskDescriptor * const entry = wqInfoArrayAt(&wq->info, index);
+    struct WqTaskDescriptor * const entry = wqTaskInfoArrayAt(&wq->info, index);
     const IrqState state = irqSave();
 
     const struct WqTaskInfo info = {
@@ -242,7 +252,7 @@ static enum Result workQueueStart(void *object)
 #ifdef CONFIG_GENERIC_WQ_PROFILE
   state = irqSave();
 
-  wqInfoArrayClear(&wq->info);
+  wqTaskInfoArrayClear(&wq->info);
   wq->latency.max = 0;
   wq->latency.min = WQ_COUNTER_MAX;
   wq->watermark = 0;
@@ -262,6 +272,10 @@ static enum Result workQueueStart(void *object)
     if (wqTaskQueueEmpty(&wq->tasks))
       pmChangeState(PM_SLEEP);
     irqRestore(state);
+#endif
+
+#ifdef CONFIG_GENERIC_WQ_LOAD
+    ++wq->loops;
 #endif
 
     /* Reload queue size */
@@ -313,10 +327,12 @@ static enum Result workQueueStart(void *object)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_GENERIC_WQ_PROFILE
+#if defined(CONFIG_GENERIC_WQ_PROFILE) || defined(CONFIG_GENERIC_WQ_LOAD)
 static void workQueueStatistics(void *object, struct WqInfo *statistics)
 {
   struct WorkQueueDefault * const wq = object;
+
+#ifdef CONFIG_GENERIC_WQ_PROFILE
   const IrqState state = irqSave();
 
   statistics->watermark = wq->watermark;
@@ -326,6 +342,14 @@ static void workQueueStatistics(void *object, struct WqInfo *statistics)
       wq->latency.min : 0;
 
   irqRestore(state);
+#endif
+
+#ifdef CONFIG_GENERIC_WQ_LOAD
+  const WqCounter loops = wq->loops;
+
+  statistics->loops = loops - wq->previous;
+  wq->previous = loops;
+#endif
 }
 #endif
 /*----------------------------------------------------------------------------*/
