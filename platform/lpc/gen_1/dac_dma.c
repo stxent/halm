@@ -89,7 +89,7 @@ static void dmaHandler(void *object)
 
     event = true;
   }
-  else if ((dmaPending(interface->dma) & 1) == 0)
+  else if ((dmaQueued(interface->dma) & 1) == 0)
   {
     event = true;
   }

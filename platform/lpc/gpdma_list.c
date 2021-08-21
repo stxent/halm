@@ -25,34 +25,34 @@ static void startTransfer(struct GpDmaList *, const struct GpDmaEntry *);
 static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
-static void channelSetCallback(void *, void (*)(void *), void *);
 static void channelConfigure(void *, const void *);
+static void channelSetCallback(void *, void (*)(void *), void *);
 
 static enum Result channelEnable(void *);
 static void channelDisable(void *);
-static size_t channelPending(const void *);
-static size_t channelResidue(const void *);
+static enum Result channelResidue(const void *, size_t *);
 static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
 static void channelClear(void *);
+static size_t channelQueued(const void *);
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDmaList = &(const struct DmaClass){
     .size = sizeof(struct GpDmaList),
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .setCallback = channelSetCallback,
     .configure = channelConfigure,
+    .setCallback = channelSetCallback,
 
     .enable = channelEnable,
     .disable = channelDisable,
-    .pending = channelPending,
     .residue = channelResidue,
     .status = channelStatus,
 
     .append = channelAppend,
-    .clear = channelClear
+    .clear = channelClear,
+    .queued = channelQueued
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum Result res)
@@ -162,15 +162,6 @@ static void channelDeinit(void *object)
     GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
-static void channelSetCallback(void *object, void (*callback)(void *),
-    void *argument)
-{
-  struct GpDmaList * const channel = object;
-
-  channel->callback = callback;
-  channel->callbackArgument = argument;
-}
-/*----------------------------------------------------------------------------*/
 static void channelConfigure(void *object, const void *settingsBase)
 {
   const struct GpDmaSettings * const settings = settingsBase;
@@ -178,6 +169,15 @@ static void channelConfigure(void *object, const void *settingsBase)
 
   channel->control = gpDmaBaseCalcControl(object, settings);
   channel->control |= CONTROL_INT;
+}
+/*----------------------------------------------------------------------------*/
+static void channelSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct GpDmaList * const channel = object;
+
+  channel->callback = callback;
+  channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelEnable(void *object)
@@ -214,17 +214,7 @@ static void channelDisable(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static size_t channelPending(const void *object)
-{
-  const struct GpDmaList * const channel = object;
-
-  if (channel->state != STATE_IDLE && channel->state != STATE_READY)
-    return channel->queued;
-  else
-    return 0;
-}
-/*----------------------------------------------------------------------------*/
-static size_t channelResidue(const void *object)
+static enum Result channelResidue(const void *object, size_t *count)
 {
   const struct GpDmaList * const channel = object;
 
@@ -242,11 +232,12 @@ static size_t channelResidue(const void *object)
     if (reg->LLI == channel->list[index].next)
     {
       /* Linked list item is not changed, transfer count is correct */
-      return (size_t)transfers;
+      *count = (size_t)transfers;
+      return E_OK;
     }
   }
 
-  return 0;
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelStatus(const void *object)
@@ -320,4 +311,14 @@ static void channelClear(void *object)
   channel->index = 0;
   channel->queued = 0;
   channel->state = STATE_IDLE;
+}
+/*----------------------------------------------------------------------------*/
+static size_t channelQueued(const void *object)
+{
+  const struct GpDmaList * const channel = object;
+
+  if (channel->state != STATE_IDLE && channel->state != STATE_READY)
+    return channel->queued;
+  else
+    return 0;
 }

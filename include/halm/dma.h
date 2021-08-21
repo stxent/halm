@@ -19,19 +19,21 @@ struct DmaClass
 {
   CLASS_HEADER
 
-  void (*setCallback)(void *, void (*)(void *), void *);
   void (*configure)(void *, const void *);
+  void (*setCallback)(void *, void (*)(void *), void *);
 
   /* Transfer management */
+
   enum Result (*enable)(void *);
   void (*disable)(void *);
-  size_t (*pending)(const void *);
-  size_t (*residue)(const void *);
+  enum Result (*residue)(const void *, size_t *);
   enum Result (*status)(const void *);
 
   /* List management */
+
   void (*append)(void *, void *, const void *, size_t);
   void (*clear)(void *);
+  size_t (*queued)(const void *);
 };
 
 struct Dma
@@ -40,6 +42,16 @@ struct Dma
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
+
+/**
+ * Change channel settings when the channel is already initialized.
+ * @param channel Pointer to a Dma object.
+ * @param config Pointer to a runtime configuration data.
+ */
+static inline void dmaConfigure(void *channel, const void *config)
+{
+  ((const struct DmaClass *)CLASS(channel))->configure(channel, config);
+}
 
 /**
  * Set the callback function for the transmission completion event.
@@ -52,16 +64,6 @@ static inline void dmaSetCallback(void *channel, void (*callback)(void *),
 {
   ((const struct DmaClass *)CLASS(channel))->setCallback(channel, callback,
       argument);
-}
-
-/**
- * Change channel settings when the channel is already initialized.
- * @param channel Pointer to a Dma object.
- * @param config Pointer to a runtime configuration data.
- */
-static inline void dmaConfigure(void *channel, const void *config)
-{
-  ((const struct DmaClass *)CLASS(channel))->configure(channel, config);
 }
 
 /**
@@ -84,23 +86,16 @@ static inline void dmaDisable(void *channel)
 }
 
 /**
- * Get a number of pending items.
- * @param channel Pointer to a Dma object.
- * @return The number of pending items is returned.
- */
-static inline size_t dmaPending(const void *channel)
-{
-  return ((const struct DmaClass *)CLASS(channel))->pending(channel);
-}
-
-/**
  * Get a number of pending transfers.
  * @param channel Pointer to a Dma object.
- * @return The number of pending transfers is returned.
+ * @param count Pointer to an output variable where a number of
+ * pending transfers will be written.
+ * @return @b E_OK when a number of pending transfers is available and
+ * other error types when the channel or the buffer aren't in correct state.
  */
-static inline size_t dmaResidue(const void *channel)
+static inline enum Result dmaResidue(const void *channel, size_t *count)
 {
-  return ((const struct DmaClass *)CLASS(channel))->residue(channel);
+  return ((const struct DmaClass *)CLASS(channel))->residue(channel, count);
 }
 
 /**
@@ -135,6 +130,16 @@ static inline void dmaAppend(void *channel, void *destination,
 static inline void dmaClear(void *channel)
 {
   ((const struct DmaClass *)CLASS(channel))->clear(channel);
+}
+
+/**
+ * Get a number of queued buffers.
+ * @param channel Pointer to a Dma object.
+ * @return The number of queued buffers is returned.
+ */
+static inline size_t dmaQueued(const void *channel)
+{
+  return ((const struct DmaClass *)CLASS(channel))->queued(channel);
 }
 
 END_DECLS

@@ -23,34 +23,34 @@ static void interruptHandler(void *, enum Result);
 static enum Result streamInit(void *, const void *);
 static void streamDeinit(void *);
 
-static void streamSetCallback(void *, void (*)(void *), void *);
 static void streamConfigure(void *, const void *);
+static void streamSetCallback(void *, void (*)(void *), void *);
 
 static enum Result streamEnable(void *);
 static void streamDisable(void *);
-static size_t streamPending(const void *);
-static size_t streamResidue(const void *);
+static enum Result streamResidue(const void *, size_t *);
 static enum Result streamStatus(const void *);
 
 static void streamAppend(void *, void *, const void *, size_t);
 static void streamClear(void *);
+static size_t streamQueued(const void *);
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const DmaCircular = &(const struct DmaClass){
     .size = sizeof(struct DmaCircular),
     .init = streamInit,
     .deinit = streamDeinit,
 
-    .setCallback = streamSetCallback,
     .configure = streamConfigure,
+    .setCallback = streamSetCallback,
 
     .enable = streamEnable,
     .disable = streamDisable,
-    .pending = streamPending,
     .residue = streamResidue,
     .status = streamStatus,
 
     .append = streamAppend,
-    .clear = streamClear
+    .clear = streamClear,
+    .queued = streamQueued
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum Result res)
@@ -102,15 +102,6 @@ static void streamDeinit(void *object)
   DmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static void streamSetCallback(void *object, void (*callback)(void *),
-    void *argument)
-{
-  struct DmaCircular * const stream = object;
-
-  stream->callback = callback;
-  stream->callbackArgument = argument;
-}
-/*----------------------------------------------------------------------------*/
 static void streamConfigure(void *object, const void *settingsBase)
 {
   const struct DmaSettings * const settings = settingsBase;
@@ -150,6 +141,15 @@ static void streamConfigure(void *object, const void *settingsBase)
   stream->base.config = config;
 }
 /*----------------------------------------------------------------------------*/
+static void streamSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct DmaCircular * const stream = object;
+
+  stream->callback = callback;
+  stream->callbackArgument = argument;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result streamEnable(void *object)
 {
   struct DmaCircular * const stream = object;
@@ -187,30 +187,19 @@ static void streamDisable(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static size_t streamPending(const void *object)
+static enum Result streamResidue(const void *object, size_t *count)
 {
   const struct DmaCircular * const stream = object;
 
   if (stream->state != STATE_IDLE && stream->state != STATE_READY)
   {
     const STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
-    return reg->CNDTR <= (stream->transfers >> 1);
-  }
-  else
-    return 0;
-}
-/*----------------------------------------------------------------------------*/
-static size_t streamResidue(const void *object)
-{
-  const struct DmaCircular * const stream = object;
 
-  if (stream->state != STATE_IDLE && stream->state != STATE_READY)
-  {
-    const STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
-    return reg->CNDTR;
+    *count = reg->CNDTR;
+    return E_OK;
   }
   else
-    return 0;
+    return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamStatus(const void *object)
@@ -262,4 +251,17 @@ static void streamAppend(void *object, void *destination, const void *source,
 static void streamClear(void *object)
 {
   ((struct DmaCircular *)object)->state = STATE_IDLE;
+}
+/*----------------------------------------------------------------------------*/
+static size_t streamQueued(const void *object)
+{
+  const struct DmaCircular * const stream = object;
+
+  if (stream->state != STATE_IDLE && stream->state != STATE_READY)
+  {
+    const STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
+    return reg->CNDTR <= (stream->transfers >> 1);
+  }
+  else
+    return 0;
 }

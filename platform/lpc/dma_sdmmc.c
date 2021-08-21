@@ -17,28 +17,28 @@ static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
 static enum Result channelEnable(void *);
-static size_t channelPending(const void *);
-static size_t channelResidue(const void *);
+static enum Result channelResidue(const void *, size_t *);
 static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
+static size_t channelQueued(const void *);
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const DmaSdmmc = &(const struct DmaClass){
     .size = sizeof(struct DmaSdmmc),
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .setCallback = 0,
     .configure = 0,
+    .setCallback = 0,
 
     .enable = channelEnable,
     .disable = 0,
-    .pending = channelPending,
     .residue = channelResidue,
     .status = channelStatus,
 
     .append = channelAppend,
-    .clear = 0
+    .clear = 0,
+    .queued = channelQueued
 };
 /*----------------------------------------------------------------------------*/
 static enum Result appendItem(void *object, uintptr_t address, size_t size)
@@ -135,24 +135,20 @@ static enum Result channelEnable(void *object)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static size_t channelPending(const void *object)
-{
-  const struct DmaSdmmc * const channel = object;
-
-  return channel->length;
-}
-/*----------------------------------------------------------------------------*/
-static size_t channelResidue(const void *object)
+static enum Result channelResidue(const void *object, size_t *count)
 {
   const struct DmaSdmmc * const channel = object;
   const LPC_SDMMC_Type * const reg = channel->reg;
   const struct DmaSdmmcEntry * const current =
       (const struct DmaSdmmcEntry *)reg->DSCADDR;
 
-  if (!current)
-    return 0;
-
-  return channel->length - (current - channel->list);
+  if (current)
+  {
+    *count = channel->length - (current - channel->list);
+    return E_OK;
+  }
+  else
+    return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelStatus(const void *object)
@@ -200,4 +196,10 @@ static void channelAppend(void *object, void *destination, const void *source,
     appendItem(channel, address + offset, chunkLength);
     offset += chunkLength;
   }
+}
+/*----------------------------------------------------------------------------*/
+static size_t channelQueued(const void *object)
+{
+  const struct DmaSdmmc * const channel = object;
+  return channel->length;
 }

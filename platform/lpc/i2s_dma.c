@@ -301,7 +301,7 @@ static void rxDmaHandler(void *object)
 
     event = true;
   }
-  else if ((dmaPending(interface->rxDma) & 1) == 0)
+  else if ((dmaQueued(interface->rxDma) & 1) == 0)
   {
     /*
      * Each block consists of two buffers. Call user function
@@ -343,7 +343,7 @@ static void txDmaHandler(void *object)
 
     event = true;
   }
-  else if ((dmaPending(interface->txDma) & 1) == 0)
+  else if ((dmaQueued(interface->txDma) & 1) == 0)
   {
     event = true;
   }

@@ -127,7 +127,7 @@ static void rxDmaHandler(void *object)
 
   assert(dmaStatus(interface->rxDma) == E_BUSY);
 
-  const size_t index = dmaPending(interface->rxDma);
+  const size_t index = dmaQueued(interface->rxDma);
   const size_t end = interface->rxBufferSize >> index;
   const size_t count = end - interface->rxPosition;
 
@@ -150,18 +150,22 @@ static void serialInterruptHandler(void *object)
   (void)reg->SR;
   (void)reg->DR;
 
-  const size_t position =
-      interface->rxBufferSize - dmaResidue(interface->rxDma);
-  const size_t count = position - interface->rxPosition;
+  size_t residue;
 
-  if (count)
+  if (dmaResidue(interface->rxDma, &residue) == E_OK)
   {
-    byteQueuePushArray(&interface->rxQueue,
-        interface->rxBuffer + interface->rxPosition, count);
-    interface->rxPosition += count;
+    const size_t pending =
+        interface->rxBufferSize - interface->rxPosition - residue;
 
-    if (interface->callback)
-      interface->callback(interface->callbackArgument);
+    if (pending)
+    {
+      byteQueuePushArray(&interface->rxQueue,
+          interface->rxBuffer + interface->rxPosition, pending);
+      interface->rxPosition += pending;
+
+      if (interface->callback)
+        interface->callback(interface->callbackArgument);
+    }
   }
 }
 /*----------------------------------------------------------------------------*/

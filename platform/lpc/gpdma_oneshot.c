@@ -23,34 +23,34 @@ static void interruptHandler(void *, enum Result);
 static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
-static void channelSetCallback(void *, void (*)(void *), void *);
 static void channelConfigure(void *, const void *);
+static void channelSetCallback(void *, void (*)(void *), void *);
 
 static enum Result channelEnable(void *);
 static void channelDisable(void *);
-static size_t channelPending(const void *);
-static size_t channelResidue(const void *);
+static enum Result channelResidue(const void *, size_t *);
 static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
 static void channelClear(void *);
+static size_t channelQueued(const void *);
 /*----------------------------------------------------------------------------*/
 const struct DmaClass * const GpDmaOneShot = &(const struct DmaClass){
     .size = sizeof(struct GpDmaOneShot),
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .setCallback = channelSetCallback,
     .configure = channelConfigure,
+    .setCallback = channelSetCallback,
 
     .enable = channelEnable,
     .disable = channelDisable,
-    .pending = channelPending,
     .residue = channelResidue,
     .status = channelStatus,
 
     .append = channelAppend,
-    .clear = channelClear
+    .clear = channelClear,
+    .queued = channelQueued
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum Result res)
@@ -96,15 +96,6 @@ static void channelDeinit(void *object)
     GpDmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
-static void channelSetCallback(void *object, void (*callback)(void *),
-    void *argument)
-{
-  struct GpDmaOneShot * const channel = object;
-
-  channel->callback = callback;
-  channel->callbackArgument = argument;
-}
-/*----------------------------------------------------------------------------*/
 static void channelConfigure(void *object, const void *settingsBase)
 {
   const struct GpDmaSettings * const settings = settingsBase;
@@ -112,6 +103,15 @@ static void channelConfigure(void *object, const void *settingsBase)
 
   channel->control = gpDmaBaseCalcControl(object, settings);
   channel->control |= CONTROL_INT;
+}
+/*----------------------------------------------------------------------------*/
+static void channelSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct GpDmaOneShot * const channel = object;
+
+  channel->callback = callback;
+  channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelEnable(void *object)
@@ -154,23 +154,19 @@ static void channelDisable(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static size_t channelPending(const void *object)
-{
-  const struct GpDmaOneShot * const channel = object;
-  return channel->state != STATE_IDLE && channel->state != STATE_READY ? 1 : 0;
-}
-/*----------------------------------------------------------------------------*/
-static size_t channelResidue(const void *object)
+static enum Result channelResidue(const void *object, size_t *count)
 {
   const struct GpDmaOneShot * const channel = object;
 
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
   {
     const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
-    return CONTROL_SIZE_VALUE(reg->CONTROL);
+
+    *count = CONTROL_SIZE_VALUE(reg->CONTROL);
+    return E_OK;
   }
-  else
-    return 0;
+
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelStatus(const void *object)
@@ -211,4 +207,10 @@ static void channelAppend(void *object, void *destination, const void *source,
 static void channelClear(void *object)
 {
   ((struct GpDmaOneShot *)object)->state = STATE_IDLE;
+}
+/*----------------------------------------------------------------------------*/
+static size_t channelQueued(const void *object)
+{
+  const struct GpDmaOneShot * const channel = object;
+  return channel->state != STATE_IDLE && channel->state != STATE_READY ? 1 : 0;
 }

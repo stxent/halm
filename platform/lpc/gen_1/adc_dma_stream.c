@@ -99,7 +99,7 @@ static void dmaHandler(void *object)
 
     event = true;
   }
-  else if ((dmaPending(interface->outer) & 1) == 0)
+  else if ((dmaQueued(interface->outer) & 1) == 0)
   {
     /*
      * Each block consists of two buffers. Call user function

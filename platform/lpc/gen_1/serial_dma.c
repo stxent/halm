@@ -106,7 +106,7 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
 /*----------------------------------------------------------------------------*/
 static enum Result enqueueRxBuffers(struct SerialDma *interface)
 {
-  const size_t pending = dmaPending(interface->rxDma);
+  const size_t pending = dmaQueued(interface->rxDma);
   uint8_t *address;
   size_t count;
 
@@ -153,13 +153,18 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
 /*----------------------------------------------------------------------------*/
 static void readResidue(struct SerialDma *interface)
 {
-  const size_t offset = interface->rxBufferSize - dmaResidue(interface->rxDma);
-  const size_t pending = offset - interface->rxPosition;
+  size_t residue;
 
-  if (pending)
+  if (dmaResidue(interface->rxDma, &residue) == E_OK)
   {
-    byteQueueAdvance(&interface->rxQueue, pending);
-    interface->rxPosition += pending;
+    const size_t pending =
+        interface->rxBufferSize - interface->rxPosition - residue;
+
+    if (pending)
+    {
+      byteQueueAdvance(&interface->rxQueue, pending);
+      interface->rxPosition += pending;
+    }
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -185,7 +190,10 @@ static void rxDmaHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static bool rxQueueReady(struct SerialDma *interface)
 {
-  const size_t pending = dmaPending(interface->rxDma);
+  // if (interface->rxPosition != 0)
+  //   return false;
+
+  const size_t pending = dmaQueued(interface->rxDma);
 
   if (pending != 1)
   {
@@ -440,6 +448,7 @@ static size_t serialRead(void *object, void *buffer, size_t length)
   struct SerialDma * const interface = object;
   uint8_t *position = buffer;
 
+  // IrqState state;
   IrqState state = irqSave();
   readResidue(interface);
   irqRestore(state);
