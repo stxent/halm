@@ -35,11 +35,14 @@ struct CdcAcmConfig
   void *device;
 
   /**
-   * Mandatory: number of reception buffers. Buffers have fixed size of
-   * 64 bytes for full-speed devices and 512 bytes for for high-speed.
+   * Optional: size of the single receive or transmit buffer in bytes.
+   * By default buffers have fixed size of 64 bytes for full-speed devices and
+   * 512 bytes for high-speed devices.
    */
+  size_t size;
+  /** Mandatory: number of receive buffers. */
   size_t rxBuffers;
-  /** Mandatory: number of transmission buffers. */
+  /** Mandatory: number of transmit buffers. */
   size_t txBuffers;
   /** Optional: memory arena for queues. */
   void *arena;
@@ -79,8 +82,9 @@ struct CdcAcm
   struct UsbEndpoint *txDataEp;
   struct UsbEndpoint *notificationEp;
 
-  bool preallocated;
+  /* Device suspended due to error or external request */
   bool suspended;
+  /* Link configuration message received */
   bool updated;
 };
 /*----------------------------------------------------------------------------*/

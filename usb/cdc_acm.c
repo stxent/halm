@@ -17,17 +17,13 @@
 struct CdcUsbRequest
 {
   struct UsbRequest base;
-
-#ifdef CONFIG_USB_DEVICE_HS
-  uint8_t payload[CDC_DATA_EP_SIZE_HS];
-#else
-  uint8_t payload[CDC_DATA_EP_SIZE];
-#endif
+  uint8_t payload[];
 };
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(void *, struct UsbRequest *, enum UsbRequestStatus);
 static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
 static inline size_t getPacketSize(const struct CdcAcm *);
+static inline size_t getRequestSize(void);
 static bool resetEndpoints(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *, const void *);
@@ -131,6 +127,15 @@ static inline size_t getPacketSize(const struct CdcAcm *interface)
       CDC_DATA_EP_SIZE_HS : CDC_DATA_EP_SIZE;
 }
 /*----------------------------------------------------------------------------*/
+static inline size_t getRequestSize(void)
+{
+#ifdef CONFIG_USB_DEVICE_HS
+  return CDC_DATA_EP_SIZE_HS;
+#else
+  return CDC_DATA_EP_SIZE;
+#endif
+}
+/*----------------------------------------------------------------------------*/
 static bool resetEndpoints(struct CdcAcm *interface)
 {
   bool completed = true;
@@ -217,6 +222,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   const struct CdcAcmConfig * const config = configBase;
   assert(config);
   assert(config->device);
+  assert(config->size % sizeof(void *) == 0);
 
   struct CdcAcm * const interface = object;
   const struct CdcAcmBaseConfig driverConfig = {
@@ -253,40 +259,51 @@ static enum Result interfaceInit(void *object, const void *configBase)
   if (!interface->txDataEp)
     return E_ERROR;
 
+  const size_t count = config->rxBuffers + config->txBuffers;
+  const size_t size = config->size ? config->size : getRequestSize();
+  uint8_t *arena;
+
   /* Allocate requests */
   if (config->arena)
   {
-    interface->requests = config->arena;
-    interface->preallocated = true;
-  }
-  else
-  {
-    const size_t count = config->rxBuffers + config->txBuffers;
-
     interface->requests = malloc(count * sizeof(struct CdcUsbRequest));
     if (!interface->requests)
       return E_MEMORY;
 
-    interface->preallocated = false;
+    arena = config->arena;
+  }
+  else
+  {
+    interface->requests = malloc(count * (sizeof(struct CdcUsbRequest) + size));
+    if (!interface->requests)
+      return E_MEMORY;
+
+    arena = (uint8_t *)interface->requests
+        + count * sizeof(struct CdcUsbRequest);
   }
 
   /* Add requests to queues */
   struct CdcUsbRequest *request = interface->requests;
+  uint8_t *payload = arena;
 
   for (size_t index = 0; index < config->rxBuffers; ++index)
   {
-    usbRequestInit((struct UsbRequest *)request, request->payload,
-        sizeof(request->payload), cdcDataReceived, interface);
+    usbRequestInit((struct UsbRequest *)request, payload, size,
+        cdcDataReceived, interface);
     pointerQueuePushBack(&interface->rxRequestQueue, request);
+
     ++request;
+    payload += size;
   }
 
   for (size_t index = 0; index < config->txBuffers; ++index)
   {
-    usbRequestInit((struct UsbRequest *)request, request->payload,
-        sizeof(request->payload), cdcDataSent, interface);
+    usbRequestInit((struct UsbRequest *)request, payload, size,
+        cdcDataSent, interface);
     pointerArrayPushBack(&interface->txRequestPool, request);
+
     ++request;
+    payload += size;
   }
 
   /* Core part should be initialized when all other parts are already created */
@@ -309,11 +326,8 @@ static void interfaceDeinit(void *object)
   assert(pointerQueueFull(&interface->rxRequestQueue));
   assert(pointerArrayFull(&interface->txRequestPool));
 
-  if (!interface->preallocated)
-  {
-    /* Free memory allocated for request buffers */
-    free(interface->requests);
-  }
+  /* Free memory allocated for request buffers */
+  free(interface->requests);
 
   /* Delete endpoints */
   deinit(interface->txDataEp);
