@@ -34,6 +34,8 @@ struct CdcAcmConfig
   /** Mandatory: USB device. */
   void *device;
 
+  /** Optional: memory region for receive and transmit buffers. */
+  void *arena;
   /**
    * Optional: size of the single receive or transmit buffer in bytes.
    * By default buffers have fixed size of 64 bytes for full-speed devices and
@@ -44,8 +46,6 @@ struct CdcAcmConfig
   size_t rxBuffers;
   /** Mandatory: number of transmit buffers. */
   size_t txBuffers;
-  /** Optional: memory arena for queues. */
-  void *arena;
 
   struct
   {

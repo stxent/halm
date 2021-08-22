@@ -179,8 +179,8 @@ static void channelAppend(void *object, void *destination, const void *source,
       (uintptr_t)destination : (uintptr_t)source;
 
   /* Address and size must be aligned along 4-byte boundary */
-  assert(address % 4 == 0);
-  assert(size % 4 == 0);
+  assert(address % sizeof(uint32_t) == 0);
+  assert(size % sizeof(uint32_t) == 0);
 
   /* Reset DMA */
   reg->CTRL |= CTRL_DMA_RESET | CTRL_FIFO_RESET;

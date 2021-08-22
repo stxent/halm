@@ -239,7 +239,7 @@ static size_t eepromWrite(void *object, const void *buffer, size_t length)
   struct Eeprom * const interface = object;
 
   /* Buffer size must be aligned along 4-byte boundary */
-  assert(length % 4 == 0);
+  assert(length % sizeof(uint32_t) == 0);
 
   if (!isAddressValid(interface, interface->position + length))
     return 0;

@@ -14,12 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-struct CdcUsbRequest
-{
-  struct UsbRequest base;
-  uint8_t payload[];
-};
-/*----------------------------------------------------------------------------*/
 static void cdcDataReceived(void *, struct UsbRequest *, enum UsbRequestStatus);
 static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
 static inline size_t getPacketSize(const struct CdcAcm *);
@@ -266,7 +260,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   /* Allocate requests */
   if (config->arena)
   {
-    interface->requests = malloc(count * sizeof(struct CdcUsbRequest));
+    interface->requests = malloc(count * sizeof(struct UsbRequest));
     if (!interface->requests)
       return E_MEMORY;
 
@@ -274,22 +268,20 @@ static enum Result interfaceInit(void *object, const void *configBase)
   }
   else
   {
-    interface->requests = malloc(count * (sizeof(struct CdcUsbRequest) + size));
+    interface->requests = malloc(count * (sizeof(struct UsbRequest) + size));
     if (!interface->requests)
       return E_MEMORY;
 
-    arena = (uint8_t *)interface->requests
-        + count * sizeof(struct CdcUsbRequest);
+    arena = (uint8_t *)interface->requests + count * sizeof(struct UsbRequest);
   }
 
   /* Add requests to queues */
-  struct CdcUsbRequest *request = interface->requests;
+  struct UsbRequest *request = interface->requests;
   uint8_t *payload = arena;
 
   for (size_t index = 0; index < config->rxBuffers; ++index)
   {
-    usbRequestInit((struct UsbRequest *)request, payload, size,
-        cdcDataReceived, interface);
+    usbRequestInit(request, payload, size, cdcDataReceived, interface);
     pointerQueuePushBack(&interface->rxRequestQueue, request);
 
     ++request;
@@ -298,8 +290,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
 
   for (size_t index = 0; index < config->txBuffers; ++index)
   {
-    usbRequestInit((struct UsbRequest *)request, payload, size,
-        cdcDataSent, interface);
+    usbRequestInit(request, payload, size, cdcDataSent, interface);
     pointerArrayPushBack(&interface->txRequestPool, request);
 
     ++request;
