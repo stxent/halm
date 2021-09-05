@@ -399,10 +399,10 @@ uint8_t cdcAcmBaseGetState(const struct CdcAcmBase *driver)
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct CdcAcmBaseConfig * const config = configBase;
-  struct CdcAcmBase * const driver = object;
+  assert(config->owner);
+  assert(config->device);
 
-  if (!config->owner || !config->device)
-    return E_VALUE;
+  struct CdcAcmBase * const driver = object;
 
   driver->owner = config->owner;
   driver->endpoints.interrupt = config->endpoints.interrupt;

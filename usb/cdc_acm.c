@@ -16,8 +16,8 @@
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(void *, struct UsbRequest *, enum UsbRequestStatus);
 static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
+static inline size_t getMaxPacketSize(void);
 static inline size_t getPacketSize(const struct CdcAcm *);
-static inline size_t getRequestSize(void);
 static bool resetEndpoints(struct CdcAcm *);
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *, const void *);
@@ -115,19 +115,19 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   }
 }
 /*----------------------------------------------------------------------------*/
-static inline size_t getPacketSize(const struct CdcAcm *interface)
-{
-  return interface->driver->speed == USB_HS ?
-      CDC_DATA_EP_SIZE_HS : CDC_DATA_EP_SIZE;
-}
-/*----------------------------------------------------------------------------*/
-static inline size_t getRequestSize(void)
+static inline size_t getMaxPacketSize(void)
 {
 #ifdef CONFIG_USB_DEVICE_HS
   return CDC_DATA_EP_SIZE_HS;
 #else
   return CDC_DATA_EP_SIZE;
 #endif
+}
+/*----------------------------------------------------------------------------*/
+static inline size_t getPacketSize(const struct CdcAcm *interface)
+{
+  return interface->driver->speed == USB_HS ?
+      CDC_DATA_EP_SIZE_HS : CDC_DATA_EP_SIZE;
 }
 /*----------------------------------------------------------------------------*/
 static bool resetEndpoints(struct CdcAcm *interface)
@@ -216,7 +216,6 @@ static enum Result interfaceInit(void *object, const void *configBase)
   const struct CdcAcmConfig * const config = configBase;
   assert(config);
   assert(config->device);
-  assert(config->size % sizeof(void *) == 0);
 
   struct CdcAcm * const interface = object;
   const struct CdcAcmBaseConfig driverConfig = {
@@ -254,7 +253,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
     return E_ERROR;
 
   const size_t count = config->rxBuffers + config->txBuffers;
-  const size_t size = config->size ? config->size : getRequestSize();
+  const size_t size = getMaxPacketSize();
   uint8_t *arena;
 
   /* Allocate requests */

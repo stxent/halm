@@ -861,7 +861,6 @@ static enum Result driverInit(void *object, const void *configBase)
   assert(config->size && !(config->size & (MSC_BLOCK_SIZE - 1)));
 
   struct Msc * const driver = object;
-  enum Result res;
 
   driver->device = config->device;
   driver->storage = config->storage;
@@ -869,19 +868,25 @@ static enum Result driverInit(void *object, const void *configBase)
   driver->endpoints.rx = config->endpoints.rx;
   driver->endpoints.tx = config->endpoints.tx;
 
-  if (!config->buffer)
+  if (!config->arena)
   {
     driver->buffer = malloc(driver->bufferSize);
     if (!driver->buffer)
       return E_MEMORY;
+    driver->preallocated = false;
   }
   else
-    driver->buffer = config->buffer;
+  {
+    driver->buffer = config->arena;
+    driver->preallocated = true;
+  }
 
   /* Calculate storage geometry */
   uint64_t storageSize;
+  enum Result res;
 
-  if ((res = ifGetParam(driver->storage, IF_SIZE_64, &storageSize)) != E_OK)
+  res = ifGetParam(driver->storage, IF_SIZE_64, &storageSize);
+  if (res != E_OK)
     return res;
 
   driver->blockLength = MSC_BLOCK_SIZE;
@@ -899,9 +904,11 @@ static enum Result driverInit(void *object, const void *configBase)
   if (!driver->txEp)
     return E_ERROR;
 
-  if (!(driver->datapath = malloc(sizeof(struct MscQueryHandler))))
+  driver->datapath = malloc(sizeof(struct MscQueryHandler));
+  if (!driver->datapath)
     return E_MEMORY;
-  if ((res = datapathInit(driver->datapath, driver, dispatch)) != E_OK)
+  res = datapathInit(driver->datapath, driver, dispatch);
+  if (res != E_OK)
     return res;
 
   driver->interfaceIndex = usbDevGetInterface(driver->device);
@@ -924,6 +931,9 @@ static void driverDeinit(void *object)
   /* Delete endpoints */
   deinit(driver->txEp);
   deinit(driver->rxEp);
+
+  if (!driver->preallocated)
+    free(driver->buffer);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result driverControl(void *object,

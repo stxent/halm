@@ -23,11 +23,11 @@ struct MscConfig
   struct Interface *storage;
 
   /**
-   * Optional: pointer to a buffer for a temporary data. When the pointer is
+   * Optional: memory region for the temporary buffer. When the pointer is
    * left uninitialized, a memory for the buffer will be allocated in the heap.
-   * Buffer should be aligned.
+   * Pointer address should be aligned.
    */
-  void *buffer;
+  void *arena;
   /** Mandatory: buffer size. */
   size_t size;
 
@@ -52,7 +52,7 @@ struct Msc
 
   /*
    * Buffer for temporary data. It stores commands, responses,
-   * data received from the host or data to be sent to the host.
+   * data received from the host and data to be sent to the host.
    */
   void *buffer;
   /* Size of the buffer */
@@ -76,6 +76,8 @@ struct Msc
 
   /* Interface index in configurations with multiple interface */
   uint8_t interfaceIndex;
+  /* Buffer should be released during deinitialization */
+  bool preallocated;
 
   struct
   {
