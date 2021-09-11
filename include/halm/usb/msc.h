@@ -19,9 +19,6 @@ struct MscConfig
   /** Mandatory: USB device. */
   void *device;
 
-  /** Mandatory: storage interface. */
-  struct Interface *storage;
-
   /**
    * Optional: memory region for the temporary buffer. When the pointer is
    * left uninitialized, a memory for the buffer will be allocated in the heap.
@@ -44,11 +41,8 @@ struct Msc
 {
   struct UsbDriver base;
 
-  struct UsbDevice *device;
-  struct Interface *storage;
-
-  struct UsbEndpoint *rxEp;
-  struct UsbEndpoint *txEp;
+  void (*callback)(void *);
+  void *callbackArgument;
 
   /*
    * Buffer for temporary data. It stores commands, responses,
@@ -58,22 +52,42 @@ struct Msc
   /* Size of the buffer */
   size_t bufferSize;
 
-  uint32_t blockCount;
-  uint32_t blockLength;
+  struct
+  {
+    /* Memory interface */
+    struct Interface *interface;
+    /* Number of blocks */
+    uint32_t blocks;
+    /* Additional Sense Code */
+    uint16_t asc;
+    /* Sense Key */
+    uint8_t sense;
+    /* Status flags */
+    uint8_t flags;
+  } lun[1];
 
-  /*
-   * Size of the USB packet. Packet size is initialized during interface
-   * configuration and depends on the speed of the interface.
-   */
-  uint16_t packetSize;
+  /* USB device handle */
+  struct UsbDevice *device;
 
-  /* Addresses of endpoints */
+  /* OUT endpoint handle */
+  struct UsbEndpoint *rxEp;
+  /* IN endpoint handle */
+  struct UsbEndpoint *txEp;
+
+  /* Addresses of bulk endpoints */
   struct
   {
     uint8_t rx;
     uint8_t tx;
   } endpoints;
 
+  /* Size of the block in a Block Device */
+  uint16_t blockSize;
+  /*
+   * Size of the USB packet. Packet size is initialized during interface
+   * configuration and depends on the speed of the interface.
+   */
+  uint16_t packetSize;
   /* Interface index in configurations with multiple interface */
   uint8_t interfaceIndex;
   /* Buffer should be released during deinitialization */
@@ -102,5 +116,14 @@ struct Msc
 
   struct MscQueryHandler *datapath;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+enum Result mscAttachUnit(struct Msc *, uint8_t, void *);
+void mscDetachUnit(struct Msc *, uint8_t);
+bool mscIsUnitLocked(const struct Msc *, uint8_t);
+void mscSetCallback(struct Msc *, void (*)(void *), void *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_MSC_H_ */

@@ -15,6 +15,12 @@
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+enum Flags
+{
+  FLAG_LOCKED   = 0x01,
+  FLAG_READONLY = 0x02
+};
+
 enum State
 {
   STATE_IDLE,
@@ -168,8 +174,7 @@ static enum State stateIdleRun(struct Msc *driver)
 
   if (cbw->signature != CBW_SIGNATURE)
     return STATE_IDLE;
-
-  if (cbw->lun != 0 || !cbw->cbLength || cbw->cbLength > 16) /* TODO MSC LUN */
+  if (!cbw->cbLength || cbw->cbLength > 16)
     return STATE_ERROR;
 
   driver->context.cbw.length = fromLittleEndian32(cbw->dataTransferLength);
@@ -179,6 +184,9 @@ static enum State stateIdleRun(struct Msc *driver)
   memcpy(driver->context.cbw.cb, cbw->cb, sizeof(driver->context.cbw.cb));
 
   driver->context.left = cbw->dataTransferLength;
+
+  if (driver->context.cbw.lun >= ARRAY_SIZE(driver->lun))
+    return STATE_FAILURE;
 
   switch (driver->context.cbw.cb[0])
   {
@@ -197,7 +205,7 @@ static enum State stateIdleRun(struct Msc *driver)
     case SCSI_MODE_SENSE10:
       return STATE_MODE_SENSE;
 
-    case SCSI_MEDIA_REMOVAL:
+    case SCSI_MEDIUM_REMOVAL:
       return STATE_MEDIUM_REMOVAL;
 
     case SCSI_READ_FORMAT_CAPACITIES:
@@ -220,6 +228,9 @@ static enum State stateIdleRun(struct Msc *driver)
       return STATE_VERIFY;
 
     default:
+      driver->lun[driver->context.cbw.lun].sense = SCSI_SK_ILLEGAL_REQUEST;
+      driver->lun[driver->context.cbw.lun].asc = SCSI_ASC_IR_INVALIDCOMMAND;
+
       usbTrace("msc: unsupported command 0x%02X", driver->context.cbw.cb[0]);
       return STATE_FAILURE;
   }
@@ -230,7 +241,15 @@ static enum State stateTestUnitReadyEnter(struct Msc *driver)
   if (!driver->context.cbw.length)
   {
     usbTrace("msc: test unit ready");
-    return STATE_ACK;
+
+    if (!driver->lun[driver->context.cbw.lun].interface)
+    {
+      driver->lun[driver->context.cbw.lun].sense = SCSI_SK_NOT_READY;
+      driver->lun[driver->context.cbw.lun].asc = SCSI_ASC_NR_MEDIUMNOTPRESENT;
+      return STATE_FAILURE;
+    }
+    else
+      return STATE_ACK;
   }
   else
     return STATE_ERROR;
@@ -242,15 +261,32 @@ static enum State stateRequestSenseEnter(struct Msc *driver)
     return STATE_ERROR;
 
   struct RequestSenseData * const buffer = driver->buffer;
+  const size_t index = driver->context.cbw.lun;
 
   memset(buffer, 0, sizeof(struct RequestSenseData));
   buffer->responseCode = 0x70;
-  buffer->flags = 0x02;
-  buffer->additionalSenseLength = 0x0A;
-  buffer->additionalSenseCode = 0x30;
-  buffer->additionalSenseCodeQualifier = 0x01;
+  buffer->additionalSenseLength = sizeof(struct RequestSenseData) - 7;
 
-  usbTrace("msc: request sense");
+  if (index >= ARRAY_SIZE(driver->lun))
+  {
+    buffer->flags = SCSI_SK_ILLEGAL_REQUEST;
+    buffer->additionalSenseCode = (uint8_t)(SCSI_ASC_IR_INVALIDLUN >> 8);
+    buffer->additionalSenseCodeQualifier = (uint8_t)SCSI_ASC_IR_INVALIDLUN;
+  }
+  else
+  {
+    buffer->flags = driver->lun[index].sense;
+    buffer->additionalSenseCode = (uint8_t)(driver->lun[index].asc >> 8);
+    buffer->additionalSenseCodeQualifier = (uint8_t)driver->lun[index].asc;
+
+    /* Clear error */
+    driver->lun[index].sense = SCSI_SK_NO_SENSE;
+    driver->lun[index].asc = SCSI_ASC_NOSENSE;
+  }
+
+  usbTrace("msc: request sense 0x%06X", buffer->flags << 16
+      | buffer->additionalSenseCode << 8
+      | buffer->additionalSenseCodeQualifier);
 
   return sendResponse(driver, driver->context.cbw.tag,
       driver->context.cbw.length, buffer, sizeof(struct RequestSenseData));
@@ -290,11 +326,38 @@ static enum State stateInquiryEnter(struct Msc *driver)
       driver->context.cbw.length, buffer, sizeof(struct InquiryData));
 }
 /*----------------------------------------------------------------------------*/
-static enum State stateMediumRemovalEnter(struct Msc *driver
-    __attribute__((unused)))
+static enum State stateMediumRemovalEnter(struct Msc *driver)
 {
-  usbTrace("msc: medium removal");
-  return STATE_ACK;
+  const struct PreventAllowMediumRemovalCommand * const command =
+      (const struct PreventAllowMediumRemovalCommand *)driver->context.cbw.cb;
+  const size_t index = driver->context.cbw.lun;
+
+  if (driver->lun[index].interface)
+  {
+    uint8_t flags = driver->lun[index].flags;
+
+    if (MEDIUM_REMOVAL_FLAGS_PREVENT_VALUE(command->flags) == PAMR_LOCK)
+      flags |= FLAG_LOCKED;
+    else
+      flags &= ~FLAG_LOCKED;
+
+    if (flags != driver->lun[index].flags)
+    {
+      driver->lun[index].flags = flags;
+
+      if (driver->callback)
+        driver->callback(driver->callbackArgument);
+    }
+
+    usbTrace("msc: medium removal state %u", (flags & FLAG_LOCKED) != 0);
+    return STATE_ACK;
+  }
+  else
+  {
+    driver->lun[index].sense = SCSI_SK_NOT_READY;
+    driver->lun[index].asc = SCSI_ASC_NR_MEDIUMNOTPRESENT;
+    return STATE_FAILURE;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateModeSenseEnter(struct Msc *driver)
@@ -351,7 +414,21 @@ static enum State stateReadWriteRun(struct Msc *driver)
       return STATE_SUSPEND;
 
     default:
+    {
+      const size_t index = driver->context.cbw.lun;
+
+      if (driver->context.state == STATE_WRITE)
+      {
+        driver->lun[index].sense = SCSI_SK_MEDIUM_ERROR;
+        driver->lun[index].asc = SCSI_ASC_ME_WRITEFAULT;
+      }
+      else
+      {
+        driver->lun[index].sense = SCSI_SK_MEDIUM_ERROR;
+        driver->lun[index].asc = SCSI_ASC_ME_READERROR;
+      }
       return STATE_FAILURE;
+    }
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -360,22 +437,34 @@ static enum State stateReadFormatCapacitiesEnter(struct Msc *driver)
   if (!isInputDataValid(driver->context.cbw.length, driver->context.cbw.flags))
     return STATE_ERROR;
 
-  struct ReadFormatCapacitiesData * const buffer = driver->buffer;
+  const size_t index = driver->context.cbw.lun;
 
-  memset(buffer, 0, sizeof(struct ReadFormatCapacitiesData));
+  if (driver->lun[index].interface)
+  {
+    /* TODO MSC constants */
+    struct ReadFormatCapacitiesData * const buffer = driver->buffer;
 
-  buffer->header.capacityListLength = 8;
+    memset(buffer->header.reserved, 0, sizeof(buffer->header.reserved));
+    buffer->header.capacityListLength = 8;
 
-  /* TODO MSC constants */
-  buffer->descriptors[0].numberOfBlocks = toBigEndian32(driver->blockCount);
-  buffer->descriptors[0].flags = 0x02; /* Descriptor Type: Formatted Medium */
-  toBigEndian24(buffer->descriptors[0].blockLength, driver->blockLength);
+    buffer->descriptors[0].numberOfBlocks =
+        toBigEndian32(driver->lun[index].blocks);
+    buffer->descriptors[0].flags = 0x02; /* Descriptor Type: Formatted Medium */
+    toBigEndian24(buffer->descriptors[0].blockLength, driver->blockSize);
 
-  usbTrace("msc: read format capacity");
+    usbTrace("msc: read format capacity, %"PRIu32" blocks",
+        driver->lun[index].blocks);
 
-  return sendResponse(driver,  driver->context.cbw.tag,
-      driver->context.cbw.length, buffer,
-      sizeof(struct ReadFormatCapacitiesData));
+    return sendResponse(driver,  driver->context.cbw.tag,
+        driver->context.cbw.length, buffer,
+        sizeof(struct ReadFormatCapacitiesData));
+  }
+  else
+  {
+    driver->lun[index].sense = SCSI_SK_NOT_READY;
+    driver->lun[index].asc = SCSI_ASC_NR_MEDIUMNOTPRESENT;
+    return STATE_FAILURE;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateReadCapacityEnter(struct Msc *driver)
@@ -383,20 +472,42 @@ static enum State stateReadCapacityEnter(struct Msc *driver)
   if (!isInputDataValid(driver->context.cbw.length, driver->context.cbw.flags))
     return STATE_ERROR;
 
-  struct ReadCapacityData * const buffer = driver->buffer;
+  const size_t index = driver->context.cbw.lun;
 
-  buffer->lastLogicalBlockAddress = toBigEndian32(driver->blockCount - 1);
-  buffer->blockLength = toBigEndian32(driver->blockLength);
+  if (driver->lun[index].interface)
+  {
+    struct ReadCapacityData * const buffer = driver->buffer;
 
-  usbTrace("msc: read capacity, %"PRIu32" blocks, block length %"PRIu32,
-      driver->blockCount, driver->blockLength);
+    buffer->lastLogicalBlockAddress =
+        toBigEndian32(driver->lun[index].blocks - 1);
+    buffer->blockLength = toBigEndian32(driver->blockSize);
 
-  return sendResponse(driver, driver->context.cbw.tag,
-      driver->context.cbw.length, buffer, sizeof(struct ReadCapacityData));
+    usbTrace("msc: read capacity, %"PRIu32" blocks",
+        driver->lun[index].blocks);
+
+    return sendResponse(driver, driver->context.cbw.tag,
+        driver->context.cbw.length, buffer,
+        sizeof(struct ReadCapacityData));
+  }
+  else
+  {
+    driver->lun[index].sense = SCSI_SK_NOT_READY;
+    driver->lun[index].asc = SCSI_ASC_NR_MEDIUMNOTPRESENT;
+    return STATE_FAILURE;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateReadSetupEnter(struct Msc *driver)
 {
+  const size_t index = driver->context.cbw.lun;
+
+  if (!driver->lun[index].interface)
+  {
+    driver->lun[index].sense = SCSI_SK_NOT_READY;
+    driver->lun[index].asc = SCSI_ASC_NR_MEDIUMNOTPRESENT;
+    return STATE_FAILURE;
+  }
+
   uint32_t logicalBlockAddress = 0;
   uint32_t numberOfBlocks = 0;
 
@@ -434,19 +545,27 @@ static enum State stateReadSetupEnter(struct Msc *driver)
     }
   }
 
-  const uint32_t transferLength = numberOfBlocks * driver->blockLength;
+  const uint32_t transferLength = numberOfBlocks * driver->blockSize;
 
   if (driver->context.cbw.length != transferLength || !transferLength)
+  {
+    driver->lun[index].sense = SCSI_SK_ILLEGAL_REQUEST;
+    driver->lun[index].asc = SCSI_ASC_IR_INVALIDFIELDINCBA;
     return STATE_FAILURE;
-  if (logicalBlockAddress + numberOfBlocks > driver->blockCount)
+  }
+  if (logicalBlockAddress + numberOfBlocks > driver->lun[index].blocks)
+  {
+    driver->lun[index].sense = SCSI_SK_ILLEGAL_REQUEST;
+    driver->lun[index].asc = SCSI_ASC_IR_LBAOUTOFRANGE;
     return STATE_FAILURE;
+  }
 
   driver->context.position =
-      (uint64_t)logicalBlockAddress * driver->blockLength;
+      (uint64_t)logicalBlockAddress * driver->blockSize;
 
   usbTrace("msc: read command, start block %"PRIu32", count %"PRIu32,
-      (uint32_t)(driver->context.position / driver->blockLength),
-      transferLength / driver->blockLength);
+      (uint32_t)(driver->context.position / driver->blockSize),
+      transferLength / driver->blockSize);
 
   return STATE_READ;
 }
@@ -457,11 +576,27 @@ static enum State stateReadEnter(struct Msc *driver)
       driver->buffer, driver->bufferSize,
       driver->context.position, driver->context.left);
 
-  return queued ? STATE_READ : STATE_FAILURE;
+  if (!queued)
+  {
+    driver->lun[driver->context.cbw.lun].sense = SCSI_SK_MEDIUM_ERROR;
+    driver->lun[driver->context.cbw.lun].asc = SCSI_ASC_ME_READERROR;
+    return STATE_FAILURE;
+  }
+  else
+    return STATE_READ;
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateVerifyEnter(struct Msc *driver)
 {
+  const size_t index = driver->context.cbw.lun;
+
+  if (!driver->lun[index].interface)
+  {
+    driver->lun[index].sense = SCSI_SK_NOT_READY;
+    driver->lun[index].asc = SCSI_ASC_NR_MEDIUMNOTPRESENT;
+    return STATE_FAILURE;
+  }
+
   const struct Verify10Command * const command =
       (const struct Verify10Command *)driver->context.cbw.cb;
 
@@ -475,8 +610,14 @@ static enum State stateVerifyEnter(struct Msc *driver)
     usbTrace("msc: verify command, start block %"PRIu32", count %"PRIu16,
         logicalBlockAddress, numberOfBlocks);
 
-    return (logicalBlockAddress + numberOfBlocks <= driver->blockCount) ?
-        STATE_ACK : STATE_FAILURE;
+    if (logicalBlockAddress + numberOfBlocks > driver->lun[index].blocks)
+    {
+      driver->lun[index].sense = SCSI_SK_ILLEGAL_REQUEST;
+      driver->lun[index].asc = SCSI_ASC_IR_INVALIDCOMMAND;
+      return STATE_FAILURE;
+    }
+    else
+      return STATE_ACK;
   }
   else
   {
@@ -487,6 +628,15 @@ static enum State stateVerifyEnter(struct Msc *driver)
 /*----------------------------------------------------------------------------*/
 static enum State stateWriteSetupEnter(struct Msc *driver)
 {
+  const size_t index = driver->context.cbw.lun;
+
+  if (!driver->lun[index].interface)
+  {
+    driver->lun[index].sense = SCSI_SK_NOT_READY;
+    driver->lun[index].asc = SCSI_ASC_NR_MEDIUMNOTPRESENT;
+    return STATE_FAILURE;
+  }
+
   uint32_t logicalBlockAddress = 0;
   uint32_t numberOfBlocks = 0;
 
@@ -524,19 +674,27 @@ static enum State stateWriteSetupEnter(struct Msc *driver)
     }
   }
 
-  const uint32_t transferLength = numberOfBlocks * driver->blockLength;
+  const uint32_t transferLength = numberOfBlocks * driver->blockSize;
 
   if (driver->context.cbw.length != transferLength || !transferLength)
+  {
+    driver->lun[index].sense = SCSI_SK_ILLEGAL_REQUEST;
+    driver->lun[index].asc = SCSI_ASC_IR_INVALIDFIELDINCBA;
     return STATE_FAILURE;
-  if (logicalBlockAddress + numberOfBlocks > driver->blockCount)
+  }
+  if (logicalBlockAddress + numberOfBlocks > driver->lun[index].blocks)
+  {
+    driver->lun[index].sense = SCSI_SK_ILLEGAL_REQUEST;
+    driver->lun[index].asc = SCSI_ASC_IR_INVALIDCOMMAND;
     return STATE_FAILURE;
+  }
 
   driver->context.position =
-      (uint64_t)logicalBlockAddress * driver->blockLength;
+      (uint64_t)logicalBlockAddress * driver->blockSize;
 
   usbTrace("msc: write command, start block %"PRIu32", count %"PRIu32,
-      (uint32_t)(driver->context.position / driver->blockLength),
-      transferLength / driver->blockLength);
+      (uint32_t)(driver->context.position / driver->blockSize),
+      transferLength / driver->blockSize);
 
   return STATE_WRITE;
 }
@@ -547,7 +705,14 @@ static enum State stateWriteEnter(struct Msc *driver)
       driver->buffer, driver->bufferSize,
       driver->context.position, driver->context.left);
 
-  return queued ? STATE_WRITE : STATE_FAILURE;
+  if (!queued)
+  {
+    driver->lun[driver->context.cbw.lun].sense = SCSI_SK_MEDIUM_ERROR;
+    driver->lun[driver->context.cbw.lun].asc = SCSI_ASC_ME_WRITEFAULT;
+    return STATE_FAILURE;
+  }
+  else
+    return STATE_WRITE;
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateAckEnter(struct Msc *driver)
@@ -817,7 +982,7 @@ static enum Result handleClassRequest(struct Msc *driver,
     case MSC_REQUEST_GET_MAX_LUN:
       usbTrace("msc at %u: max LUN requested", driver->interfaceIndex);
 
-      response[0] = 0; /* TODO MSC LUN */
+      response[0] = ARRAY_SIZE(driver->lun) - 1;
       *responseLength = 1;
       return E_OK;
 
@@ -857,14 +1022,15 @@ static enum Result driverInit(void *object, const void *configBase)
   const struct MscConfig * const config = configBase;
   assert(config);
   assert(config->device);
-  assert(config->storage);
   assert(config->size && !(config->size & (MSC_BLOCK_SIZE - 1)));
 
   struct Msc * const driver = object;
 
+  driver->callback = 0;
   driver->device = config->device;
-  driver->storage = config->storage;
   driver->bufferSize = config->size;
+  driver->blockSize = MSC_BLOCK_SIZE;
+  driver->packetSize = MSC_DATA_EP_SIZE;
   driver->endpoints.rx = config->endpoints.rx;
   driver->endpoints.tx = config->endpoints.tx;
 
@@ -881,17 +1047,8 @@ static enum Result driverInit(void *object, const void *configBase)
     driver->preallocated = true;
   }
 
-  /* Calculate storage geometry */
-  uint64_t storageSize;
-  enum Result res;
-
-  res = ifGetParam(driver->storage, IF_SIZE_64, &storageSize);
-  if (res != E_OK)
-    return res;
-
-  driver->blockLength = MSC_BLOCK_SIZE;
-  driver->blockCount = storageSize / driver->blockLength;
-  driver->packetSize = MSC_DATA_EP_SIZE;
+  for (size_t index = 0; index < ARRAY_SIZE(driver->lun); ++index)
+    mscDetachUnit(driver, index);
 
   /* Initialize context, suspend state machine */
   memset(&driver->context.cbw, 0, sizeof(driver->context.cbw));
@@ -907,7 +1064,8 @@ static enum Result driverInit(void *object, const void *configBase)
   driver->datapath = malloc(sizeof(struct MscQueryHandler));
   if (!driver->datapath)
     return E_MEMORY;
-  res = datapathInit(driver->datapath, driver, dispatch);
+
+  const enum Result res = datapathInit(driver->datapath, driver, dispatch);
   if (res != E_OK)
     return res;
 
@@ -977,4 +1135,48 @@ static void driverNotify(void *object, unsigned int event)
 
     usbTrace("msc: reset completed");
   }
+}
+/*----------------------------------------------------------------------------*/
+enum Result mscAttachUnit(struct Msc *driver, uint8_t index, void *interface)
+{
+  assert(index < ARRAY_SIZE(driver->lun));
+  assert(interface);
+
+  uint64_t capacity;
+  const enum Result res = ifGetParam(interface, IF_SIZE_64, &capacity);
+
+  if (res == E_OK)
+  {
+    driver->lun[index].interface = interface;
+    driver->lun[index].blocks = capacity / driver->blockSize;
+    driver->lun[index].sense = SCSI_SK_NO_SENSE;
+    driver->lun[index].asc = SCSI_ASC_NOSENSE;
+    driver->lun[index].flags = 0;
+  }
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+void mscDetachUnit(struct Msc *driver, uint8_t index)
+{
+  assert(index < ARRAY_SIZE(driver->lun));
+
+  driver->lun[index].interface = 0;
+  driver->lun[index].blocks = 0;
+  driver->lun[index].sense = SCSI_SK_NO_SENSE;
+  driver->lun[index].asc = SCSI_ASC_NOSENSE;
+  driver->lun[index].flags = 0;
+}
+/*----------------------------------------------------------------------------*/
+bool mscIsUnitLocked(const struct Msc *driver, uint8_t index)
+{
+  assert(index < ARRAY_SIZE(driver->lun));
+  return (driver->lun[index].flags & FLAG_LOCKED) != 0;
+}
+/*----------------------------------------------------------------------------*/
+void mscSetCallback(struct Msc *driver, void (*callback)(void *),
+    void *argument)
+{
+  driver->callbackArgument = argument;
+  driver->callback = callback;
 }

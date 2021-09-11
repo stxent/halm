@@ -149,7 +149,7 @@ static void endpointDescriptor(const void *object,
     descriptor->endpointAddress = driver->endpointAddress;
     descriptor->attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT);
     descriptor->maxPacketSize = toLittleEndian16(driver->reportDescriptorSize);
-    descriptor->interval = 0x20; //TODO
+    descriptor->interval = 0x20; /* TODO */
   }
 }
 /*----------------------------------------------------------------------------*/

@@ -343,18 +343,20 @@ static void resetTransferPool(struct MscQueryHandler *handler)
 static bool storageRead(struct MscQueryHandler *handler,
     struct MscQuery *query)
 {
-  struct Interface * const storage = handler->driver->storage;
+  const size_t index = handler->driver->context.cbw.lun;
+  struct Interface * const interface = handler->driver->lun[index].interface;
 
   usbTrace("msc: read storage block %"PRIu32", count %"PRIu32,
-      (uint32_t)(query->position / handler->driver->blockLength),
-      (uint32_t)(query->length / handler->driver->blockLength));
+      (uint32_t)(query->position / handler->driver->blockSize),
+      (uint32_t)(query->length / handler->driver->blockSize));
 
-  ifSetCallback(storage, storageReadCallback, handler);
+  ifSetCallback(interface, storageReadCallback, handler);
 
-  if (ifSetParam(storage, IF_POSITION_64, &query->position) != E_OK)
+  if (ifSetParam(interface, IF_POSITION_64, &query->position) != E_OK)
     return false;
 
-  return ifRead(storage, (void *)query->data, query->length) == query->length;
+  return ifRead(interface, (void *)query->data, query->length) ==
+      query->length;
 }
 /*----------------------------------------------------------------------------*/
 static void storageReadCallback(void *argument)
@@ -362,7 +364,10 @@ static void storageReadCallback(void *argument)
   struct MscQueryHandler * const handler = argument;
   const IrqState state = irqSave();
 
-  if (ifGetParam(handler->driver->storage, IF_STATUS, 0) != E_OK)
+  const size_t index = handler->driver->context.cbw.lun;
+  struct Interface * const interface = handler->driver->lun[index].interface;
+
+  if (ifGetParam(interface, IF_STATUS, 0) != E_OK)
   {
     usbTrace("msc: storage read failed");
 
@@ -391,18 +396,19 @@ static void storageReadCallback(void *argument)
 static bool storageWrite(struct MscQueryHandler *handler,
     struct MscQuery *query)
 {
-  struct Interface * const storage = handler->driver->storage;
+  const size_t index = handler->driver->context.cbw.lun;
+  struct Interface * const interface = handler->driver->lun[index].interface;
 
   usbTrace("msc: write storage block %"PRIu32", count %"PRIu32,
-      (uint32_t)(query->position / handler->driver->blockLength),
-      (uint32_t)(query->length / handler->driver->blockLength));
+      (uint32_t)(query->position / handler->driver->blockSize),
+      (uint32_t)(query->length / handler->driver->blockSize));
 
-  ifSetCallback(storage, storageWriteCallback, handler);
+  ifSetCallback(interface, storageWriteCallback, handler);
 
-  if (ifSetParam(storage, IF_POSITION_64, &query->position) != E_OK)
+  if (ifSetParam(interface, IF_POSITION_64, &query->position) != E_OK)
     return false;
 
-  return ifWrite(storage, (const void *)query->data, query->length) ==
+  return ifWrite(interface, (const void *)query->data, query->length) ==
       query->length;
 }
 /*----------------------------------------------------------------------------*/
@@ -411,7 +417,10 @@ static void storageWriteCallback(void *argument)
   struct MscQueryHandler * const handler = argument;
   const IrqState state = irqSave();
 
-  if (ifGetParam(handler->driver->storage, IF_STATUS, 0) != E_OK)
+  const size_t index = handler->driver->context.cbw.lun;
+  struct Interface * const interface = handler->driver->lun[index].interface;
+
+  if (ifGetParam(interface, IF_STATUS, 0) != E_OK)
   {
     usbTrace("msc: storage write failed");
 
