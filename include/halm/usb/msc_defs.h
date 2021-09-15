@@ -31,7 +31,7 @@ enum
   SCSI_START_STOP_UNIT        = 0x1B,
   SCSI_MEDIUM_REMOVAL         = 0x1E,
   SCSI_READ_FORMAT_CAPACITIES = 0x23,
-  SCSI_READ_CAPACITY          = 0x25,
+  SCSI_READ_CAPACITY10        = 0x25,
   SCSI_READ10                 = 0x28,
   SCSI_WRITE10                = 0x2A,
   SCSI_VERIFY10               = 0x2F,
@@ -76,6 +76,9 @@ enum
 #define SCSI_ASC_IR_LBAOUTOFRANGE       0x2100
 #define SCSI_ASC_IR_INVALIDFIELDINCBA   0x2400
 #define SCSI_ASC_IR_INVALIDLUN          0x2500
+
+/* Sense Key 0x06 */
+#define SCSI_ASC_UA_READYTRANSITION     0x2800
 
 /* Sense Key 0x07 */
 #define SCSI_ASC_WP_COMMANDNOTALLOWED   0x2700
@@ -175,10 +178,10 @@ enum
 /* Command Queuing */
 #define INQUIRY_FLAGS_4_CMDQUE          BIT(1)
 
-#define MEDIUM_REMOVAL_FLAGS_PREVENT_MASK \
+#define MEDIUMREMOVAL_FLAGS_PREVENT_MASK \
     BIT_FIELD(MASK(2), 0)
-#define MEDIUM_REMOVAL_FLAGS_PREVENT_VALUE(value) \
-    FIELD_VALUE((value), MEDIUM_REMOVAL_FLAGS_PREVENT_MASK, 0)
+#define MEDIUMREMOVAL_FLAGS_PREVENT_VALUE(value) \
+    FIELD_VALUE((value), MEDIUMREMOVAL_FLAGS_PREVENT_MASK, 0)
 
 #define READ6_LBA_MASK                  MASK(21)
 #define READ10_RARC                     BIT(2)
@@ -186,6 +189,9 @@ enum
 #define READ10_DPO                      BIT(4)
 #define READ10_RDPROTECT_MASK           BIT_FIELD(MASK(3), 5)
 #define READ12_GROUP_NUMBER_MASK        BIT_FIELD(MASK(5), 0)
+
+#define READCAPACITY10_FLAGS_0_RELADR   BIT(0)
+#define READCAPACITY10_FLAGS_1_PMI      BIT(0)
 
 #define SENSE_FLAGS_ILI                 BIT(5)
 #define SENSE_FLAGS_EOM                 BIT(6)
@@ -254,7 +260,7 @@ struct ModeParameterHeader10
   uint16_t modeDataLength;
   uint8_t mediumType;
   uint8_t deviceSpecificParameter;
-  uint8_t flags; /* LONGLBA */
+  uint8_t flags;
   uint8_t reserved;
   uint16_t blockDescriptorLength;
 } __attribute__((packed));
@@ -283,9 +289,9 @@ struct ModeSense10Command
 struct PreventAllowMediumRemovalCommand
 {
   uint8_t operationCode;
-  uint8_t lun;
+  uint8_t flags0;
   uint8_t reserved0[2];
-  uint8_t flags;
+  uint8_t flags1;
   uint8_t reserved1[4];
   uint8_t control;
 } __attribute__((packed));
@@ -318,10 +324,20 @@ struct Read12Command
   uint8_t control;
 } __attribute__((packed));
 
+struct ReadCapacity10Command
+{
+  uint8_t operationCode;
+  uint8_t flags0;
+  uint32_t lba;
+  uint8_t reserved[2];
+  uint8_t flags1;
+  uint8_t control;
+} __attribute__((packed));
+
 struct RequestSenseData
 {
   uint8_t responseCode;
-  uint8_t reserved0;
+  uint8_t reserved;
   uint8_t flags;
   uint32_t information;
   uint8_t additionalSenseLength;
