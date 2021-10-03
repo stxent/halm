@@ -344,11 +344,32 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
 
   switch ((enum IfParameter)parameter)
   {
-    case IF_AVAILABLE:
+    case IF_RX_AVAILABLE:
+      if (!interface->suspended)
+      {
+        const size_t buffers = pointerQueueCapacity(&interface->rxRequestQueue)
+            - pointerQueueSize(&interface->rxRequestQueue);
+        *(size_t *)data = buffers * getPacketSize(interface);
+      }
+      else
+        *(size_t *)data = 0;
+      return E_OK;
+
+    case IF_RX_PENDING:
       *(size_t *)data = interface->suspended ? 0 : interface->queuedRxBytes;
       return E_OK;
 
-    case IF_PENDING:
+    case IF_TX_AVAILABLE:
+      if (!interface->suspended)
+      {
+        const size_t buffers = pointerArraySize(&interface->txRequestPool);
+        *(size_t *)data = buffers * getPacketSize(interface);
+      }
+      else
+        *(size_t *)data = 0;
+      return E_OK;
+
+    case IF_TX_PENDING:
       *(size_t *)data = interface->suspended ? 0 : interface->queuedTxBytes;
       return E_OK;
 

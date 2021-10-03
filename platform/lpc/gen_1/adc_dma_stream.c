@@ -294,7 +294,12 @@ static enum Result adcGetParam(void *object, int parameter, void *data)
 
   switch ((enum IfParameter)parameter)
   {
-    case IF_PENDING:
+    case IF_RX_AVAILABLE:
+      *(size_t *)data = pointerQueueCapacity(&interface->stream->requests)
+          - pointerQueueSize(&interface->stream->requests);
+      return E_OK;
+
+    case IF_RX_PENDING:
       *(size_t *)data = pointerQueueSize(&interface->stream->requests);
       return E_OK;
 

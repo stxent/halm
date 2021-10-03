@@ -295,11 +295,21 @@ static enum Result serialGetParam(void *object, int parameter, void *data)
 
   switch ((enum IfParameter)parameter)
   {
-    case IF_AVAILABLE:
+    case IF_RX_AVAILABLE:
       *(size_t *)data = byteQueueSize(&interface->rxQueue);
       return E_OK;
 
-    case IF_PENDING:
+    case IF_RX_PENDING:
+      *(size_t *)data = byteQueueCapacity(&interface->rxQueue)
+          - byteQueueSize(&interface->rxQueue);
+      return E_OK;
+
+    case IF_TX_AVAILABLE:
+      *(size_t *)data = byteQueueCapacity(&interface->txQueue)
+          - byteQueueSize(&interface->txQueue);
+      return E_OK;
+
+    case IF_TX_PENDING:
       *(size_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
 

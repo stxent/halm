@@ -200,7 +200,12 @@ static enum Result dacGetParam(void *object, int parameter, void *data)
     case IF_STATUS:
       return dmaStatus(interface->dma);
 
-    case IF_PENDING:
+    case IF_TX_AVAILABLE:
+      *(size_t *)data = pointerQueueCapacity(&interface->stream->requests)
+          - pointerQueueSize(&interface->stream->requests);
+      return E_OK;
+
+    case IF_TX_PENDING:
       *(size_t *)data = pointerQueueSize(&interface->stream->requests);
       return E_OK;
 

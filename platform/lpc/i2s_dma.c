@@ -471,16 +471,30 @@ static enum Result i2sGetParam(void *object, int parameter, void *data)
 
   switch ((enum IfParameter)parameter)
   {
-    // TODO
-    case IF_AVAILABLE:
+    case IF_RX_AVAILABLE:
       if (!interface->rxStream)
         return E_INVALID;
 
       *(size_t *)data = pointerQueueSize(&interface->rxStream->requests);
       return E_OK;
 
-    // TODO
-    case IF_PENDING:
+    case IF_RX_PENDING:
+      if (!interface->rxStream)
+        return E_INVALID;
+
+      *(size_t *)data = pointerQueueCapacity(&interface->rxStream->requests)
+          - pointerQueueSize(&interface->rxStream->requests);
+      return E_OK;
+
+    case IF_TX_AVAILABLE:
+      if (!interface->txStream)
+        return E_INVALID;
+
+      *(size_t *)data = pointerQueueCapacity(&interface->txStream->requests)
+          - pointerQueueSize(&interface->txStream->requests);
+      return E_OK;
+
+    case IF_TX_PENDING:
       if (!interface->txStream)
         return E_INVALID;
 

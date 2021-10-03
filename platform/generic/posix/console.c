@@ -166,13 +166,24 @@ static enum Result streamGetParam(void *object, int parameter, void *data)
 
   switch ((enum IfParameter)parameter)
   {
-    case IF_AVAILABLE:
+    case IF_RX_AVAILABLE:
       pthread_mutex_lock(&interface->rxQueueLock);
       *(size_t *)data = byteQueueSize(&interface->rxQueue);
       pthread_mutex_unlock(&interface->rxQueueLock);
       return E_OK;
 
-    case IF_PENDING:
+    case IF_RX_PENDING:
+      pthread_mutex_lock(&interface->rxQueueLock);
+      *(size_t *)data = byteQueueCapacity(&interface->rxQueue)
+          - byteQueueSize(&interface->rxQueue);
+      pthread_mutex_unlock(&interface->rxQueueLock);
+      return E_OK;
+
+    case IF_TX_AVAILABLE:
+      *(size_t *)data = 0;
+      return E_OK;
+
+    case IF_TX_PENDING:
       *(size_t *)data = 0;
       return E_OK;
 
