@@ -12,6 +12,7 @@
 extern const struct UsbDriverClass * const CdcAcmBase;
 
 struct CdcAcm;
+struct CdcAcmBase;
 
 struct CdcAcmBaseConfig
 {
@@ -30,36 +31,12 @@ struct CdcAcmBaseConfig
     uint8_t tx;
   } endpoints;
 };
-
-struct CdcAcmBase
-{
-  struct UsbDriver base;
-
-  /* Upper-half driver */
-  struct CdcAcm *owner;
-  /* USB peripheral */
-  struct UsbDevice *device;
-
-  /* Addresses of endpoints */
-  struct
-  {
-    uint8_t interrupt;
-    uint8_t rx;
-    uint8_t tx;
-  } endpoints;
-
-  /* Interface index in configurations with multiple interfaces */
-  uint8_t controlInterfaceIndex;
-  /* Speed of the USB interface */
-  uint8_t speed;
-
-  void *privateData;
-};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *);
 uint8_t cdcAcmBaseGetState(const struct CdcAcmBase *);
+uint8_t cdcAcmBaseGetUsbSpeed(const struct CdcAcmBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

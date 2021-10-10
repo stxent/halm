@@ -51,11 +51,6 @@ struct Can
   /* Timer for the time stamp generation */
   struct Timer *timer;
 
-#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
-  /* Filter entries */
-  FilterArray filters;
-#endif
-
   /* Message pool */
   PointerArray pool;
   /* Queue for received messages */
@@ -66,6 +61,18 @@ struct Can
   void *arena;
   /* Desired baud rate */
   uint32_t rate;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+  /* Filter entries */
+  FilterArray filters;
+#endif
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+  /* Maximum available frames in the receive queue */
+  size_t rxWatermark;
+  /* Maximum pending frames in the transmit queue */
+  size_t txWatermark;
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static void buildAcceptanceFilters(struct Can *);
@@ -77,6 +84,8 @@ static void interruptHandler(void *);
 static void invalidateMessageObject(struct Can *, size_t);
 static void listenForMessage(struct Can *, size_t, uint32_t, uint32_t);
 static void readMessage(struct Can *, struct CANMessage *, size_t);
+static void updateRxWatermark(struct Can *, size_t);
+static void updateTxWatermark(struct Can *, size_t);
 static void writeMessage(struct Can *, const struct CANMessage *, size_t, bool);
 
 #ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
@@ -263,6 +272,7 @@ static void interruptHandler(void *object)
         ++id;
       }
 
+      updateRxWatermark(interface, pointerQueueSize(&interface->rxQueue));
       event = true;
     }
     else
@@ -276,6 +286,8 @@ static void interruptHandler(void *object)
   {
     const size_t pendingMessages = pointerQueueSize(&interface->txQueue);
     const size_t lastMessageIndex = MIN(pendingMessages, MAX_MESSAGES / 2);
+
+    updateTxWatermark(interface, pendingMessages);
 
     for (size_t index = 0; index < lastMessageIndex; ++index)
     {
@@ -398,10 +410,29 @@ static void readMessage(struct Can *interface, struct CANMessage *message,
     message->flags |= CAN_EXT_ID;
   }
   else
-  {
-    // XXX
     message->id = ARB2_STD_ID_VALUE(arb2);
-  }
+}
+/*----------------------------------------------------------------------------*/
+static void updateRxWatermark(struct Can *interface, size_t level)
+{
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+  if (level > interface->rxWatermark)
+    interface->rxWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
+}
+/*----------------------------------------------------------------------------*/
+static void updateTxWatermark(struct Can *interface, size_t level)
+{
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+  if (level > interface->txWatermark)
+    interface->txWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static void writeMessage(struct Can *interface,
@@ -556,15 +587,6 @@ static enum Result canInit(void *object, const void *configBase)
   if ((res = CanBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
-  if (!filterArrayInit(&interface->filters, config->filters))
-    return E_MEMORY;
-#endif
-
-  interface->base.handler = interruptHandler;
-  interface->callback = 0;
-  interface->timer = config->timer;
-
   const size_t poolSize = config->rxBuffers + config->txBuffers;
 
   if (!pointerArrayInit(&interface->pool, poolSize))
@@ -575,6 +597,22 @@ static enum Result canInit(void *object, const void *configBase)
     return E_MEMORY;
 
   interface->arena = malloc(sizeof(struct CANStandardMessage) * poolSize);
+  if (!interface->arena)
+    return E_MEMORY;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
+  if (!filterArrayInit(&interface->filters, config->filters))
+    return E_MEMORY;
+#endif
+
+  interface->base.handler = interruptHandler;
+  interface->callback = 0;
+  interface->timer = config->timer;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+  interface->rxWatermark = 0;
+  interface->txWatermark = 0;
+#endif
 
   struct CANStandardMessage *message = interface->arena;
 
@@ -638,6 +676,7 @@ static void canDeinit(void *object)
   filterArrayDeinit(&interface->filters);
 #endif
 
+  free(interface->arena);
   pointerQueueDeinit(&interface->txQueue);
   pointerQueueDeinit(&interface->rxQueue);
   pointerArrayDeinit(&interface->pool);

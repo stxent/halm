@@ -7,11 +7,33 @@
 #ifndef HALM_PLATFORM_LPC_CAN_H_
 #define HALM_PLATFORM_LPC_CAN_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/target.h>
+#include <halm/irq.h>
+#include <halm/pin.h>
+#include <halm/timer.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_CAN/can.h>
-#include HEADER_PATH
-#undef HEADER_PATH
+extern const struct InterfaceClass * const Can;
+
+struct CanConfig
+{
+  /** Optional: timer for a message time stamp generation. */
+  struct Timer *timer;
+  /** Mandatory: baud rate. */
+  uint32_t rate;
+  /** Optional: number of filtering rules. */
+  size_t filters;
+  /** Mandatory: input queue size. */
+  size_t rxBuffers;
+  /** Mandatory: output queue size. */
+  size_t txBuffers;
+  /** Mandatory: receiver input. */
+  PinNumber rx;
+  /** Mandatory: transmitter output. */
+  PinNumber tx;
+  /** Optional: interrupt priority. */
+  IrqPriority priority;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_CAN_H_ */

@@ -37,13 +37,20 @@ struct Can
   /* Queue for transmitting messages */
   PointerQueue txQueue;
   /* Pointer to a memory region used as a message pool */
-  void *poolBuffer;
+  void *arena;
   /* Desired baud rate */
   uint32_t rate;
   /* Current interface mode */
   uint8_t mode;
   /* Message sequence number */
   uint8_t sequence;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+  /* Maximum available frames in the receive queue */
+  size_t rxWatermark;
+  /* Maximum pending frames in the transmit queue */
+  size_t txWatermark;
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(const struct Can *, uint32_t);
@@ -53,6 +60,8 @@ static void interruptHandler(void *);
 static void readMessage(struct Can *, struct CANMessage *);
 static void resetQueues(struct Can *);
 static void sendMessage(struct Can *, const struct CANMessage *, uint32_t *);
+static void updateRxWatermark(struct Can *, size_t);
+static void updateTxWatermark(struct Can *, size_t);
 
 #ifdef CONFIG_PLATFORM_LPC_CAN_PM
 static void powerStateHandler(void *, enum PmState);
@@ -172,6 +181,8 @@ static void interruptHandler(void *object)
       /* Release receive buffer */
       reg->CMR = CMR_RRB | CMR_CDO;
     }
+
+    updateRxWatermark(interface, pointerQueueSize(&interface->rxQueue));
   }
 
   const uint32_t sr = reg->SR;
@@ -187,6 +198,8 @@ static void interruptHandler(void *object)
      */
     if (interface->sequence || status == SR_TBS_MASK)
     {
+      updateTxWatermark(interface, pointerQueueSize(&interface->txQueue));
+
       while (!pointerQueueEmpty(&interface->txQueue) && status)
       {
         struct CANMessage * const message =
@@ -310,6 +323,28 @@ static void sendMessage(struct Can *interface,
   ++interface->sequence;
 }
 /*----------------------------------------------------------------------------*/
+static void updateRxWatermark(struct Can *interface, size_t level)
+{
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+  if (level > interface->rxWatermark)
+    interface->rxWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
+}
+/*----------------------------------------------------------------------------*/
+static void updateTxWatermark(struct Can *interface, size_t level)
+{
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+  if (level > interface->txWatermark)
+    interface->txWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
+}
+/*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_LPC_CAN_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
@@ -338,12 +373,6 @@ static enum Result canInit(void *object, const void *configBase)
   if ((res = CanBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  interface->base.handler = interruptHandler;
-  interface->callback = 0;
-  interface->timer = config->timer;
-  interface->mode = MODE_LISTENER;
-  interface->sequence = 0;
-
   const size_t poolSize = config->rxBuffers + config->txBuffers;
 
   if (!pointerArrayInit(&interface->pool, poolSize))
@@ -353,9 +382,22 @@ static enum Result canInit(void *object, const void *configBase)
   if (!pointerQueueInit(&interface->txQueue, config->txBuffers))
     return E_MEMORY;
 
-  interface->poolBuffer = malloc(sizeof(struct CANStandardMessage) * poolSize);
+  interface->arena = malloc(sizeof(struct CANStandardMessage) * poolSize);
+  if (!interface->arena)
+    return E_MEMORY;
 
-  struct CANStandardMessage *message = interface->poolBuffer;
+  interface->base.handler = interruptHandler;
+  interface->callback = 0;
+  interface->timer = config->timer;
+  interface->mode = MODE_LISTENER;
+  interface->sequence = 0;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+  interface->rxWatermark = 0;
+  interface->txWatermark = 0;
+#endif
+
+  struct CANStandardMessage *message = interface->arena;
 
   for (size_t index = 0; index < poolSize; ++index)
   {
@@ -405,9 +447,11 @@ static void canDeinit(void *object)
   pmUnregister(interface);
 #endif
 
+  free(interface->arena);
   pointerQueueDeinit(&interface->txQueue);
   pointerQueueDeinit(&interface->rxQueue);
   pointerArrayDeinit(&interface->pool);
+
   CanBase->deinit(interface);
 }
 #endif

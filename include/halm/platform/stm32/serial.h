@@ -7,8 +7,11 @@
 #ifndef HALM_PLATFORM_STM32_SERIAL_H_
 #define HALM_PLATFORM_STM32_SERIAL_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/platform/stm32/uart_base.h>
-#include <xcore/containers/byte_queue.h>
+#include <halm/generic/serial.h>
+#include <halm/irq.h>
+#include <halm/pin.h>
+#include <xcore/interface.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Serial;
 
@@ -30,21 +33,6 @@ struct SerialConfig
   IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-};
-
-struct Serial
-{
-  struct UartBase base;
-
-  void (*callback)(void *);
-  void *callbackArgument;
-
-  /* Input queue */
-  struct ByteQueue rxQueue;
-  /* Output queue */
-  struct ByteQueue txQueue;
-  /* Desired baud rate */
-  uint32_t rate;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_SERIAL_H_ */

@@ -9,8 +9,50 @@
 #include <halm/platform/lpc/gpdma_list.h>
 #include <halm/platform/lpc/gpdma_oneshot.h>
 #include <halm/platform/lpc/serial_dma.h>
+#include <halm/platform/lpc/uart_base.h>
 #include <halm/pm.h>
 #include <string.h>
+/*----------------------------------------------------------------------------*/
+struct SerialDma
+{
+  struct UartBase base;
+
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  /* DMA channel for data reception */
+  struct Dma *rxDma;
+  /* DMA channel for data transmission */
+  struct Dma *txDma;
+
+  /* Input queue */
+  struct ByteQueue rxQueue;
+  /* Output queue */
+  struct ByteQueue txQueue;
+  /* Queues are allocated in a static memory */
+  bool preallocated;
+
+  /* Count of reception buffers */
+  size_t rxChunks;
+  /* Position inside the current receive buffer */
+  size_t rxPosition;
+  /* Size of the single reception buffer */
+  size_t rxBufferSize;
+  /* Size of the current outgoing transfer */
+  size_t txBufferSize;
+
+#ifdef CONFIG_PLATFORM_LPC_UART_PM
+  /* Desired baud rate */
+  uint32_t rate;
+#endif
+
+#ifdef CONFIG_PLATFORM_LPC_UART_WATERMARK
+  /* Maximum available frames in the receive queue */
+  size_t rxWatermark;
+  /* Maximum pending frames in the transmit queue */
+  size_t txWatermark;
+#endif
+};
 /*----------------------------------------------------------------------------*/
 static bool dmaSetup(struct SerialDma *, uint8_t, uint8_t, size_t);
 static enum Result enqueueRxBuffers(struct SerialDma *);
@@ -19,6 +61,8 @@ static void readResidue(struct SerialDma *);
 static void rxDmaHandler(void *);
 static bool rxQueueReady(struct SerialDma *);
 static void txDmaHandler(void *);
+static void updateRxWatermark(struct SerialDma *, size_t);
+static void updateTxWatermark(struct SerialDma *, size_t);
 
 #ifdef CONFIG_PLATFORM_LPC_UART_PM
 static void powerStateHandler(void *, enum PmState);
@@ -140,6 +184,8 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
   const uint8_t *address;
   enum Result res;
 
+  updateTxWatermark(interface, byteQueueSize(&interface->txQueue));
+
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
   dmaAppend(interface->txDma, (void *)&reg->THR, address,
@@ -164,6 +210,8 @@ static void readResidue(struct SerialDma *interface)
     {
       byteQueueAdvance(&interface->rxQueue, pending);
       interface->rxPosition += pending;
+
+      updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
     }
   }
 }
@@ -179,6 +227,8 @@ static void rxDmaHandler(void *object)
 
     byteQueueAdvance(&interface->rxQueue, pending);
     interface->rxPosition = 0;
+
+    updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
   }
 
   if (rxQueueReady(interface))
@@ -221,6 +271,28 @@ static void txDmaHandler(void *object)
 
   if (event && interface->callback)
     interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static void updateRxWatermark(struct SerialDma *interface, size_t level)
+{
+#ifdef CONFIG_PLATFORM_LPC_UART_WATERMARK
+  if (level > interface->rxWatermark)
+    interface->rxWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
+}
+/*----------------------------------------------------------------------------*/
+static void updateTxWatermark(struct SerialDma *interface, size_t level)
+{
+#ifdef CONFIG_PLATFORM_LPC_UART_WATERMARK
+  if (level > interface->txWatermark)
+    interface->txWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_LPC_UART_PM
@@ -287,12 +359,15 @@ static enum Result serialInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->callback = 0;
-  interface->rate = config->rate;
-
   interface->rxChunks = config->rxChunks;
   interface->rxPosition = 0;
   interface->rxBufferSize = config->rxLength / config->rxChunks;
   interface->txBufferSize = 0;
+
+#ifdef CONFIG_PLATFORM_LPC_UART_WATERMARK
+  interface->rxWatermark = 0;
+  interface->txWatermark = 0;
+#endif
 
   LPC_UART_Type * const reg = interface->base.reg;
 
@@ -309,6 +384,8 @@ static enum Result serialInit(void *object, const void *configBase)
   uartSetRate(object, rateConfig);
 
 #ifdef CONFIG_PLATFORM_LPC_UART_PM
+  interface->rate = config->rate;
+
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
     return res;
 #endif
@@ -368,7 +445,7 @@ static enum Result serialGetParam(void *object, int parameter,
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_PARITY:
-      *(uint8_t *)data = (uint8_t)uartGetParity(object);
+      *(uint8_t *)data = (uint8_t)uartGetParity(&interface->base);
       return E_OK;
 
     default:
@@ -396,9 +473,19 @@ static enum Result serialGetParam(void *object, int parameter,
       *(size_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
 
+#ifdef CONFIG_PLATFORM_LPC_UART_WATERMARK
+    case IF_RX_WATERMARK:
+      *(size_t *)data = interface->rxWatermark;
+      return E_OK;
+
+    case IF_TX_WATERMARK:
+      *(size_t *)data = interface->txWatermark;
+      return E_OK;
+#endif
+
 #ifdef CONFIG_PLATFORM_LPC_UART_RC
     case IF_RATE:
-      *(uint32_t *)data = uartGetRate(object);
+      *(uint32_t *)data = uartGetRate(&interface->base);
       return E_OK;
 #endif
 
@@ -415,8 +502,12 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_PARITY:
-      uartSetParity(object, (enum SerialParity)(*(const uint8_t *)data));
+    {
+      const enum SerialParity parity = *(const uint8_t *)data;
+
+      uartSetParity(&interface->base, parity);
       return E_OK;
+    }
 
     default:
       break;
@@ -427,13 +518,16 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
     case IF_RATE:
     {
       struct UartRateConfig rateConfig;
-      const enum Result res = uartCalcRate(object, *(const uint32_t *)data,
-          &rateConfig);
+      const uint32_t rate = *(const uint32_t *)data;
+      const enum Result res = uartCalcRate(&interface->base, rate, &rateConfig);
 
       if (res == E_OK)
       {
-        interface->rate = *(const uint32_t *)data;
-        uartSetRate(object, rateConfig);
+#ifdef CONFIG_PLATFORM_LPC_UART_PM
+        interface->rate = rate;
+#endif /* CONFIG_PLATFORM_LPC_UART_PM */
+
+        uartSetRate(&interface->base, rateConfig);
       }
       return res;
     }
@@ -441,13 +535,13 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
     default:
       return E_INVALID;
   }
-#else
+#else /* CONFIG_PLATFORM_LPC_UART_RC */
   (void)interface;
   (void)parameter;
   (void)data;
 
   return E_INVALID;
-#endif
+#endif /* CONFIG_PLATFORM_LPC_UART_RC */
 }
 /*----------------------------------------------------------------------------*/
 static size_t serialRead(void *object, void *buffer, size_t length)
@@ -455,7 +549,6 @@ static size_t serialRead(void *object, void *buffer, size_t length)
   struct SerialDma * const interface = object;
   uint8_t *position = buffer;
 
-  // IrqState state;
   IrqState state = irqSave();
   readResidue(interface);
   irqRestore(state);

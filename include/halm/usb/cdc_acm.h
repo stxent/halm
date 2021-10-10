@@ -7,11 +7,9 @@
 #ifndef HALM_USB_CDC_ACM_H_
 #define HALM_USB_CDC_ACM_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/generic/pointer_array.h>
-#include <halm/generic/pointer_queue.h>
 #include <halm/generic/serial.h>
-#include <halm/usb/cdc_acm_base.h>
 #include <xcore/interface.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 enum CdcAcmParameter
 {
@@ -28,6 +26,8 @@ enum
 };
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const CdcAcm;
+
+struct CdcAcm;
 
 struct CdcAcmConfig
 {
@@ -55,36 +55,6 @@ struct CdcAcmConfig
     /** Mandatory: identifier of the output data endpoint. */
     uint8_t tx;
   } endpoints;
-};
-
-struct CdcAcm
-{
-  struct Interface base;
-
-  void (*callback)(void *);
-  void *callbackArgument;
-
-  /* Lower half of the driver */
-  struct CdcAcmBase *driver;
-  /* Queue for OUT requests */
-  PointerQueue rxRequestQueue;
-  /* Pool for IN requests */
-  PointerArray txRequestPool;
-  /* Pointer to the beginning of the request pool */
-  void *requests;
-  /* Number of available bytes */
-  size_t queuedRxBytes;
-  /* Number of pending bytes */
-  size_t queuedTxBytes;
-
-  struct UsbEndpoint *rxDataEp;
-  struct UsbEndpoint *txDataEp;
-  struct UsbEndpoint *notificationEp;
-
-  /* Device suspended due to error or external request */
-  bool suspended;
-  /* Link configuration message received */
-  bool updated;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

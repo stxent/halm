@@ -13,15 +13,36 @@
 #include <xcore/memory.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
-struct PrivateData
+struct CdcAcmBase
 {
+  struct UsbDriver base;
+
+  /* Upper-half driver */
+  struct CdcAcm *owner;
+  /* USB peripheral */
+  struct UsbDevice *device;
+
   /* Line settings */
   struct
   {
     struct CdcLineCoding lineCoding;
     uint8_t controlLineState;
   } state;
+
+  /* Addresses of endpoints */
+  struct
+  {
+    uint8_t interrupt;
+    uint8_t rx;
+    uint8_t tx;
+  } endpoints;
+
+  /* Interface index in configurations with multiple interfaces */
+  uint8_t controlInterfaceIndex;
+  /* Speed of the USB interface */
+  uint8_t speed;
 };
 /*----------------------------------------------------------------------------*/
 static void interfaceAssociationDescriptor(const void *, struct UsbDescriptor *,
@@ -319,7 +340,6 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
   if (packet->index != driver->controlInterfaceIndex)
     return E_INVALID;
 
-  struct PrivateData * const privateData = driver->privateData;
   enum Result res = E_OK;
   bool event = false;
 
@@ -329,7 +349,7 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
     {
       if (packet->length == sizeof(struct CdcLineCoding))
       {
-        struct CdcLineCoding * const settings = &privateData->state.lineCoding;
+        struct CdcLineCoding * const settings = &driver->state.lineCoding;
 
         memcpy(settings, response, sizeof(*settings));
         settings->dteRate = fromLittleEndian32(settings->dteRate);
@@ -352,7 +372,7 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
     {
       struct CdcLineCoding * const settings = response;
 
-      memcpy(settings, &privateData->state.lineCoding, sizeof(*settings));
+      memcpy(settings, &driver->state.lineCoding, sizeof(*settings));
       settings->dteRate = toLittleEndian32(settings->dteRate);
       *responseLength = sizeof(*settings);
 
@@ -363,7 +383,7 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
 
     case CDC_SET_CONTROL_LINE_STATE:
     {
-      privateData->state.controlLineState = packet->value & 0x03;
+      driver->state.controlLineState = packet->value & 0x03;
       event = true;
 
       usbTrace("cdc_acm at %u: set control lines to %02X",
@@ -386,14 +406,17 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
 /*----------------------------------------------------------------------------*/
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
 {
-  const struct PrivateData * const privateData = driver->privateData;
-  return privateData->state.lineCoding.dteRate;
+  return driver->state.lineCoding.dteRate;
 }
 /*----------------------------------------------------------------------------*/
 uint8_t cdcAcmBaseGetState(const struct CdcAcmBase *driver)
 {
-  const struct PrivateData * const privateData = driver->privateData;
-  return privateData->state.controlLineState;
+  return driver->state.controlLineState;
+}
+/*----------------------------------------------------------------------------*/
+uint8_t cdcAcmBaseGetUsbSpeed(const struct CdcAcmBase *driver)
+{
+  return driver->speed;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *object, const void *configBase)
@@ -411,13 +434,8 @@ static enum Result driverInit(void *object, const void *configBase)
   driver->device = config->device;
   driver->speed = USB_FS;
 
-  struct PrivateData * const privateData = malloc(sizeof(struct PrivateData));
-  if (!privateData)
-    return E_MEMORY;
-
-  privateData->state.lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
-  privateData->state.controlLineState = 0;
-  driver->privateData = privateData;
+  driver->state.lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
+  driver->state.controlLineState = 0;
 
   driver->controlInterfaceIndex = usbDevGetInterface(driver->device);
   return usbDevBind(driver->device, driver);
@@ -426,9 +444,7 @@ static enum Result driverInit(void *object, const void *configBase)
 static void driverDeinit(void *object)
 {
   struct CdcAcmBase * const driver = object;
-
   usbDevUnbind(driver->device, driver);
-  free(driver->privateData);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result driverControl(void *object,

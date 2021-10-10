@@ -34,6 +34,16 @@ config PLATFORM_STM32_CAN_NO_DEINIT
 	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_CAN
 
+config PLATFORM_STM32_CAN_PM
+	bool "Power management"
+	default n
+	depends on PM && PLATFORM_STM32_CAN
+
+config PLATFORM_STM32_CAN_WATERMARK
+	bool "Watermark calculation"
+	default n
+	depends on PLATFORM_STM32_CAN
+
 config PLATFORM_STM32_CAN_TSEG1
 	int "TSEG1 quanta"
 	default 9
@@ -43,11 +53,6 @@ config PLATFORM_STM32_CAN_TSEG2
 	int "TSEG2 quanta"
 	default 2
 	depends on PLATFORM_STM32_CAN
-
-config PLATFORM_STM32_CAN_PM
-	bool "Power management"
-	default n
-	depends on PM && PLATFORM_STM32_CAN
 
 config PLATFORM_STM32_DMA
 	bool "DMA"
@@ -128,9 +133,19 @@ config PLATFORM_STM32_UART_NO_DEINIT
 	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_UART_BASE
 
+config PLATFORM_STM32_UART_PM
+	bool "Power management"
+	default n
+	depends on PM && PLATFORM_STM32_UART_BASE
+
 config PLATFORM_STM32_UART_RC
 	bool "Runtime configuration"
 	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_UART_WATERMARK
+	bool "Watermark calculation"
+	default n
 	depends on PLATFORM_STM32_UART_BASE
 
 config PLATFORM_STM32_SERIAL
@@ -141,11 +156,12 @@ config PLATFORM_STM32_SERIAL
 config PLATFORM_STM32_SERIAL_DMA
 	bool "Serial port driver with DMA"
 	default y
-	depends on PLATFORM_STM32_UART_BASE && PLATFORM_STM32_DMA
+	depends on PLATFORM_STM32_UART_BASE && PLATFORM_STM32_DMA && FAMILY_STM32F1XX
 
 config PLATFORM_USB
 	bool "USB"
 	default y
+	depends on FAMILY_STM32F1XX
 
 config PLATFORM_USB_NO_DEINIT
 	bool

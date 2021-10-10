@@ -4,8 +4,11 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/generic/pointer_array.h>
+#include <halm/generic/pointer_queue.h>
 #include <halm/irq.h>
 #include <halm/usb/cdc_acm.h>
+#include <halm/usb/cdc_acm_base.h>
 #include <halm/usb/cdc_acm_defs.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
@@ -13,6 +16,37 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+/*----------------------------------------------------------------------------*/
+struct CdcAcm
+{
+  struct Interface base;
+
+  /* Lower half of the driver */
+  struct CdcAcmBase *driver;
+
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  /* Queue for OUT requests */
+  PointerQueue rxRequestQueue;
+  /* Pool for IN requests */
+  PointerArray txRequestPool;
+  /* Pointer to the beginning of the request pool */
+  void *requests;
+  /* Number of available bytes */
+  size_t queuedRxBytes;
+  /* Number of pending bytes */
+  size_t queuedTxBytes;
+
+  struct UsbEndpoint *rxDataEp;
+  struct UsbEndpoint *txDataEp;
+  struct UsbEndpoint *notificationEp;
+
+  /* Device suspended due to error or external request */
+  bool suspended;
+  /* Link configuration message received */
+  bool updated;
+};
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(void *, struct UsbRequest *, enum UsbRequestStatus);
 static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
@@ -126,7 +160,7 @@ static inline size_t getMaxPacketSize(void)
 /*----------------------------------------------------------------------------*/
 static inline size_t getPacketSize(const struct CdcAcm *interface)
 {
-  return interface->driver->speed == USB_HS ?
+  return cdcAcmBaseGetUsbSpeed(interface->driver) == USB_HS ?
       CDC_DATA_EP_SIZE_HS : CDC_DATA_EP_SIZE;
 }
 /*----------------------------------------------------------------------------*/
@@ -296,7 +330,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
     payload += size;
   }
 
-  /* Core part should be initialized when all other parts are already created */
+  /* Lower half of the driver should be initialized after all other parts */
   interface->driver = init(CdcAcmBase, &driverConfig);
   return interface->driver ? E_OK : E_ERROR;
 }
@@ -496,6 +530,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     struct UsbRequest *request;
     IrqState state;
 
+    /* Critical section */
     state = irqSave();
     request = pointerArrayBack(&interface->txRequestPool);
     pointerArrayPopBack(&interface->txRequestPool);

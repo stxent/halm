@@ -36,9 +36,16 @@ struct Can
   /* Queue for transmitting messages */
   PointerQueue txQueue;
   /* Pointer to a memory region used as a message pool */
-  void *poolBuffer;
+  void *arena;
   /* Desired baud rate */
   uint32_t rate;
+
+#ifdef CONFIG_PLATFORM_STM32_CAN_WATERMARK
+  /* Maximum available frames in the receive queue */
+  size_t rxWatermark;
+  /* Maximum pending frames in the transmit queue */
+  size_t txWatermark;
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(const struct Can *, uint32_t);
@@ -49,6 +56,8 @@ static void readMessage(struct Can *, struct CANMessage *, unsigned int);
 static void sendMessage(struct Can *, const struct CANMessage *);
 static void setupAcceptanceFilter(struct Can *, unsigned int, unsigned int,
     bool, uint32_t, uint32_t);
+static void updateRxWatermark(struct Can *, size_t);
+static void updateTxWatermark(struct Can *, size_t);
 
 #ifdef CONFIG_PLATFORM_STM32_CAN_PM
 static void powerStateHandler(void *, enum PmState);
@@ -78,37 +87,6 @@ const struct InterfaceClass * const Can = &(const struct InterfaceClass){
     .read = canRead,
     .write = canWrite
 };
-/*----------------------------------------------------------------------------*/
-static void setupAcceptanceFilter(struct Can *interface, unsigned int number,
-    unsigned int fifo, bool enabled, uint32_t filterValue, uint32_t filterMask)
-{
-  STM_CAN_Type * const reg = interface->base.reg;
-  const uint32_t mask = BIT(number);
-
-  /* Enter filter initialization mode */
-  reg->FMR |= FMR_FINIT;
-  /* Deactivate the filter */
-  reg->FA1R &= ~mask;
-
-  if (enabled)
-  {
-    reg->FS1R |= mask;
-    reg->FM1R &= ~mask;
-    reg->FILTERS[number].FR1 = filterValue;
-    reg->FILTERS[number].FR2 = filterMask;
-
-    if (fifo)
-      reg->FFA1R |= mask;
-    else
-      reg->FFA1R &= ~mask;
-
-    /* Activate the filter */
-    reg->FA1R |= mask;
-  }
-
-  /* Leave filter initialization mode */
-  reg->FMR &= ~FMR_FINIT;
-}
 /*----------------------------------------------------------------------------*/
 static uint32_t calcBusTimings(const struct Can *interface, uint32_t rate)
 {
@@ -199,8 +177,11 @@ static void interruptHandler(void *object)
     reg->RFR[0] |= RF_RFOM;
   }
 
+  updateRxWatermark(interface, pointerQueueSize(&interface->rxQueue));
+  updateTxWatermark(interface, pointerQueueSize(&interface->txQueue));
+
   /* Write pending messages */
-  while ((reg->TSR & TSR_TME_MASK) && !pointerQueueEmpty(&interface->txQueue))
+  while (!pointerQueueEmpty(&interface->txQueue) && (reg->TSR & TSR_TME_MASK))
   {
     struct CANMessage * const message = pointerQueueFront(&interface->txQueue);
     pointerQueuePopFront(&interface->txQueue);
@@ -295,6 +276,59 @@ static void sendMessage(struct Can *interface,
   reg->TX[mailbox].TIR |= TI_TXRQ;
 }
 /*----------------------------------------------------------------------------*/
+static void setupAcceptanceFilter(struct Can *interface, unsigned int number,
+    unsigned int fifo, bool enabled, uint32_t filterValue, uint32_t filterMask)
+{
+  STM_CAN_Type * const reg = interface->base.reg;
+  const uint32_t mask = BIT(number);
+
+  /* Enter filter initialization mode */
+  reg->FMR |= FMR_FINIT;
+  /* Deactivate the filter */
+  reg->FA1R &= ~mask;
+
+  if (enabled)
+  {
+    reg->FS1R |= mask;
+    reg->FM1R &= ~mask;
+    reg->FILTERS[number].FR1 = filterValue;
+    reg->FILTERS[number].FR2 = filterMask;
+
+    if (fifo)
+      reg->FFA1R |= mask;
+    else
+      reg->FFA1R &= ~mask;
+
+    /* Activate the filter */
+    reg->FA1R |= mask;
+  }
+
+  /* Leave filter initialization mode */
+  reg->FMR &= ~FMR_FINIT;
+}
+/*----------------------------------------------------------------------------*/
+static void updateRxWatermark(struct Can *interface, size_t level)
+{
+#ifdef CONFIG_PLATFORM_STM32_CAN_WATERMARK
+  if (level > interface->rxWatermark)
+    interface->rxWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
+}
+/*----------------------------------------------------------------------------*/
+static void updateTxWatermark(struct Can *interface, size_t level)
+{
+#ifdef CONFIG_PLATFORM_STM32_CAN_WATERMARK
+  if (level > interface->txWatermark)
+    interface->txWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
+}
+/*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_CAN_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
@@ -324,10 +358,6 @@ static enum Result canInit(void *object, const void *configBase)
   if ((res = BxCanBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  interface->base.handler = interruptHandler;
-  interface->callback = 0;
-  interface->timer = config->timer;
-
   const size_t poolSize = config->rxBuffers + config->txBuffers;
 
   if (!pointerArrayInit(&interface->pool, poolSize))
@@ -337,9 +367,20 @@ static enum Result canInit(void *object, const void *configBase)
   if (!pointerQueueInit(&interface->txQueue, config->txBuffers))
     return E_MEMORY;
 
-  interface->poolBuffer = malloc(sizeof(struct CANStandardMessage) * poolSize);
+  interface->arena = malloc(sizeof(struct CANStandardMessage) * poolSize);
+  if (!interface->arena)
+    return E_MEMORY;
 
-  struct CANStandardMessage *message = interface->poolBuffer;
+  interface->base.handler = interruptHandler;
+  interface->callback = 0;
+  interface->timer = config->timer;
+
+#ifdef CONFIG_PLATFORM_STM32_CAN_WATERMARK
+  interface->rxWatermark = 0;
+  interface->txWatermark = 0;
+#endif
+
+  struct CANStandardMessage *message = interface->arena;
 
   for (size_t index = 0; index < poolSize; ++index)
   {
@@ -394,17 +435,19 @@ static void canDeinit(void *object)
   STM_CAN_Type * const reg = interface->base.reg;
 
   /* Disable all interrupts */
-  irqEnable(interface->base.irq.rx0);
-  irqEnable(interface->base.irq.tx);
+  irqDisable(interface->base.irq.rx0);
+  irqDisable(interface->base.irq.tx);
   reg->IER = 0;
 
 #ifdef CONFIG_PLATFORM_STM32_CAN_PM
   pmUnregister(interface);
 #endif
 
+  free(interface->arena);
   pointerQueueDeinit(&interface->txQueue);
   pointerQueueDeinit(&interface->rxQueue);
   pointerArrayDeinit(&interface->pool);
+
   BxCanBase->deinit(interface);
 }
 #endif

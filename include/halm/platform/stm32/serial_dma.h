@@ -7,10 +7,11 @@
 #ifndef HALM_PLATFORM_STM32_SERIAL_DMA_H_
 #define HALM_PLATFORM_STM32_SERIAL_DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/platform/stm32/dma_circular.h>
-#include <halm/platform/stm32/dma_oneshot.h>
-#include <halm/platform/stm32/uart_base.h>
-#include <xcore/containers/byte_queue.h>
+#include <halm/generic/serial.h>
+#include <halm/irq.h>
+#include <halm/pin.h>
+#include <xcore/interface.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SerialDma;
 
@@ -38,36 +39,6 @@ struct SerialDmaConfig
   uint8_t rxDma;
   /** Mandatory: number of the RX DMA stream. */
   uint8_t txDma;
-};
-
-struct SerialDma
-{
-  struct UartBase base;
-
-  void (*callback)(void *);
-  void *callbackArgument;
-
-  /* Desired baud rate */
-  uint32_t rate;
-
-  /* DMA channel for data reception */
-  struct Dma *rxDma;
-  /* DMA channel for data transmission */
-  struct Dma *txDma;
-
-  /* Input queue */
-  struct ByteQueue rxQueue;
-  /* Output queue */
-  struct ByteQueue txQueue;
-  /* Pointer to the temporary reception buffer */
-  uint8_t *rxBuffer;
-  /* Position inside the temporary buffer */
-  size_t rxPosition;
-
-  /* Size of the circular reception buffer */
-  size_t rxBufferSize;
-  /* Size of the DMA TX transfer */
-  size_t txBufferSize;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_SERIAL_DMA_H_ */

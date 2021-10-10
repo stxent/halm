@@ -136,15 +136,20 @@ config PLATFORM_LPC_CAN_NO_DEINIT
 	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_CAN
 
+config PLATFORM_LPC_CAN_FILTERS
+	bool "Filtering"
+	default y
+	depends on PLATFORM_LPC_CAN && FAMILY_LPC43XX
+
 config PLATFORM_LPC_CAN_PM
 	bool "Power management"
 	default n
 	depends on PM && PLATFORM_LPC_CAN
 
-config PLATFORM_LPC_CAN_FILTERS
-	bool "Filtering"
-	default y
-	depends on PLATFORM_LPC_CAN && FAMILY_LPC43XX
+config PLATFORM_LPC_CAN_WATERMARK
+	bool "Watermark calculation"
+	default n
+	depends on PLATFORM_LPC_CAN
 
 config PLATFORM_LPC_CAN_TSEG1
 	int "TSEG1 quanta"
@@ -454,6 +459,11 @@ config PLATFORM_LPC_UART_PM
 config PLATFORM_LPC_UART_RC
 	bool "Runtime configuration"
 	default y
+	depends on PLATFORM_LPC_UART_BASE
+
+config PLATFORM_LPC_UART_WATERMARK
+	bool "Watermark calculation"
+	default n
 	depends on PLATFORM_LPC_UART_BASE
 
 config PLATFORM_LPC_SERIAL
