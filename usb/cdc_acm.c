@@ -486,17 +486,17 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
     if (length < request->length)
       break;
 
-    const size_t chunkLength = request->length;
+    const size_t bytesToRead = request->length;
     IrqState state;
 
     state = irqSave();
     pointerQueuePopFront(&interface->rxRequestQueue);
-    interface->queuedRxBytes -= chunkLength;
+    interface->queuedRxBytes -= bytesToRead;
     irqRestore(state);
 
-    memcpy(bufferPosition, request->buffer, chunkLength);
-    bufferPosition += chunkLength;
-    length -= chunkLength;
+    memcpy(bufferPosition, request->buffer, bytesToRead);
+    bufferPosition += bytesToRead;
+    length -= bytesToRead;
 
     if (usbEpEnqueue(interface->rxDataEp, request) != E_OK)
     {
@@ -540,12 +540,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     request->length = bytesToWrite;
     memcpy(request->buffer, bufferPosition, bytesToWrite);
 
-    if (usbEpEnqueue(interface->txDataEp, request) == E_OK)
-    {
-      bufferPosition += bytesToWrite;
-      length -= bytesToWrite;
-    }
-    else
+    if (usbEpEnqueue(interface->txDataEp, request) != E_OK)
     {
       /* Hardware error occurred, suspend the interface and wait for reset */
       interface->suspended = true;
@@ -557,6 +552,9 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
       usbTrace("cdc_acm: suspended in write function");
       break;
     }
+
+    bufferPosition += bytesToWrite;
+    length -= bytesToWrite;
   }
 
   return bufferPosition - (const uint8_t *)buffer;

@@ -351,15 +351,19 @@ static void serialDeinit(void *object)
   dmaDisable(interface->txDma);
   dmaDisable(interface->rxDma);
 
+  reg->CR1 = 0;
+
+#ifdef CONFIG_PLATFORM_STM32_UART_PM
+  pmUnregister(interface);
+#endif
+
   /* Free DMA channels */
   deinit(interface->txDma);
   deinit(interface->rxDma);
 
-  reg->CR1 = 0;
-
+  free(interface->rxBuffer);
   byteQueueDeinit(&interface->txQueue);
   byteQueueDeinit(&interface->rxQueue);
-  free(interface->rxBuffer);
 
   /* Call base class destructor */
   UartBase->deinit(interface);

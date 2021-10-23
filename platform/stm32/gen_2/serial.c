@@ -225,6 +225,10 @@ static void serialDeinit(void *object)
   irqDisable(interface->base.irq);
   reg->CR1 = 0;
 
+#ifdef CONFIG_PLATFORM_STM32_UART_PM
+  pmUnregister(interface);
+#endif
+
   byteQueueDeinit(&interface->txQueue);
   byteQueueDeinit(&interface->rxQueue);
   UartBase->deinit(interface);
