@@ -201,6 +201,13 @@ config PLATFORM_LPC_EMC_NO_DEINIT
 	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_EMC
 
+config PLATFORM_LPC_ETHERNET
+	bool "Ethernet"
+	default y
+	depends on FAMILY_LPC43XX
+	help
+	  This enables driver for the Ethernet MAC.
+
 config PLATFORM_LPC_FAST_GPIO_BUS
 	bool "Fast GPIO Bus"
 	default y

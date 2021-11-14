@@ -74,6 +74,12 @@ if(${CONFIG_PLATFORM_LPC_EMC})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/emc_base.c")
 endif()
 
+if(${CONFIG_PLATFORM_LPC_ETHERNET})
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/ethernet.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/ethernet_base.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/ethernet_mdio.c")
+endif()
+
 if(${CONFIG_PLATFORM_LPC_FAST_GPIO_BUS})
     list(APPEND SOURCE_FILES "fast_gpio_bus_common.c")
     list(APPEND SOURCE_FILES "${CONFIG_GEN_PINBUS}/fast_gpio_bus.c")
