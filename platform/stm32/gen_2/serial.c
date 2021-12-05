@@ -330,7 +330,7 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
       interface->rate = rate;
 #endif /* CONFIG_PLATFORM_STM32_UART_PM */
 
-      uartSetRate(&interface->base, *(const uint32_t *)data);
+      uartSetRate(&interface->base, rate);
       return E_OK;
     }
 
@@ -395,6 +395,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
 
   STM_USART_Type * const reg = interface->base.reg;
 
+  /* Invoke interrupt when the transmitter is idle */
   irqDisable(interface->base.irq);
   if (!byteQueueEmpty(&interface->txQueue) && !(reg->CR1 & CR1_TXEIE))
     reg->CR1 |= CR1_TXEIE;

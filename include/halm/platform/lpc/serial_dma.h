@@ -17,16 +17,16 @@ extern const struct InterfaceClass * const SerialDma;
 
 struct SerialDmaConfig
 {
-  /** Mandatory: baud rate. */
-  uint32_t rate;
+  /** Optional: memory arena for queues. */
+  void *arena;
   /** Mandatory: size of the input buffer, input is double buffered. */
   size_t rxChunks;
   /** Mandatory: input queue size. */
   size_t rxLength;
   /** Mandatory: output queue size. */
   size_t txLength;
-  /** Optional: memory arena for queues. */
-  void *arena;
+  /** Mandatory: baud rate. */
+  uint32_t rate;
   /** Optional: parity bit setting. */
   enum SerialParity parity;
   /** Mandatory: serial input. */

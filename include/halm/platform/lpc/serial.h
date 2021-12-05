@@ -17,12 +17,12 @@ extern const struct InterfaceClass * const Serial;
 
 struct SerialConfig
 {
-  /** Mandatory: baud rate. */
-  uint32_t rate;
   /** Mandatory: input queue size. */
   size_t rxLength;
   /** Mandatory: output queue size. */
   size_t txLength;
+  /** Mandatory: baud rate. */
+  uint32_t rate;
   /** Optional: parity bit setting. */
   enum SerialParity parity;
   /** Optional: serial input. */

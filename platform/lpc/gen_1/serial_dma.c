@@ -248,7 +248,7 @@ static bool rxQueueReady(struct SerialDma *interface)
         - byteQueueSize(&interface->rxQueue)
         - pending * interface->rxBufferSize;
 
-    if (available > interface->rxBufferSize)
+    if (available >= interface->rxBufferSize)
       return true;
   }
 
