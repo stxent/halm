@@ -3,6 +3,10 @@
 
 list(APPEND SOURCE_FILES "work_queue_default.c")
 
+if(${CONFIG_GENERIC_BUFFERING_PROXY})
+    list(APPEND SOURCE_FILES "buffering_proxy.c")
+endif()
+
 if(${CONFIG_GENERIC_GPIO_BUS})
     list(APPEND SOURCE_FILES "gpio_bus.c")
 endif()

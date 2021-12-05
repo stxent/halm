@@ -1,5 +1,12 @@
 menu "Generic drivers"
 
+config GENERIC_BUFFERING_PROXY
+	bool "Buffering proxy"
+	default y
+	help
+	  This enables building of a synchronous buffered interface, that wraps
+	  an asynchronous interface with input and output streams.
+
 config GENERIC_GPIO_BUS
 	bool "GPIO Bus"
 	default y
