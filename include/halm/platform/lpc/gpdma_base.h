@@ -16,6 +16,8 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
+#define GPDMA_MAX_TRANSFER_SIZE ((1 << 12) - 1)
+/*----------------------------------------------------------------------------*/
 /** DMA burst transfer size. */
 enum GpDmaBurst
 {

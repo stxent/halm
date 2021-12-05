@@ -439,6 +439,12 @@ config PLATFORM_LPC_SPI_DMA
 	default y
 	depends on PLATFORM_LPC_SSP_BASE && PLATFORM_LPC_GPDMA
 
+config PLATFORM_LPC_SPI_DMA_CHAIN
+	int "DMA chain size"
+	default 1
+	range 1 65536
+	depends on PLATFORM_LPC_SPI_DMA
+
 config PLATFORM_LPC_ONE_WIRE_SSP
 	bool "1-Wire using SSP peripheral"
 	default y

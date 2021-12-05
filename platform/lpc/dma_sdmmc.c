@@ -186,9 +186,10 @@ static void channelAppend(void *object, void *destination, const void *source,
   reg->CTRL |= CTRL_DMA_RESET | CTRL_FIFO_RESET;
   while (reg->CTRL & (CTRL_DMA_RESET | CTRL_FIFO_RESET));
 
+  channel->length = 0;
+
   size_t offset = 0;
 
-  channel->length = 0;
   while (offset < size)
   {
     const size_t chunkLength = MIN(size - offset, DESC_SIZE_MAX);

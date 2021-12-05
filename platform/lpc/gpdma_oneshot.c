@@ -122,8 +122,12 @@ static enum Result channelEnable(void *object)
   const uint32_t request = 1 << number;
 
   assert(channel->state == STATE_READY);
+
   if (!gpDmaSetInstance(number, object))
+  {
+    channel->state = STATE_ERROR;
     return E_BUSY;
+  }
   gpDmaSetMux(object);
 
   reg->SRCADDR = channel->source;
@@ -146,6 +150,12 @@ static void channelDisable(void *object)
 {
   struct GpDmaOneShot * const channel = object;
   LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+
+  /*
+   * Incorrect sequence of calls: channel should not be disabled when
+   * it is not initialized and started.
+   */
+  assert(channel->state != STATE_IDLE && channel->state != STATE_READY);
 
   if (channel->state == STATE_BUSY)
   {
@@ -194,7 +204,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   struct GpDmaOneShot * const channel = object;
 
   assert(destination != 0 && source != 0);
-  assert(size > 0 && size <= GPDMA_MAX_TRANSFER);
+  assert(size > 0 && size <= GPDMA_MAX_TRANSFER_SIZE);
   assert(channel->state != STATE_BUSY && channel->state != STATE_READY);
 
   channel->destination = (uintptr_t)destination;

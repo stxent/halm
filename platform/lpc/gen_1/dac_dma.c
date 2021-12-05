@@ -297,10 +297,7 @@ static enum Result dacStreamEnqueue(void *object,
         reg->CTRL |= CTRL_CNT_ENA;
       }
       else
-      {
-        dmaClear(interface->dma);
         res = E_INTERFACE;
-      }
     }
   }
   else

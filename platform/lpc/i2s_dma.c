@@ -607,10 +607,7 @@ static enum Result i2sRxStreamEnqueue(void *object,
         reg->DAI &= ~(DAI_STOP | DAI_RESET);
       }
       else
-      {
-        dmaClear(interface->txDma);
         res = E_INTERFACE;
-      }
     }
   }
   else
@@ -664,10 +661,7 @@ static enum Result i2sTxStreamEnqueue(void *object,
         reg->IRQ |= IRQ_TX_ENABLE;
       }
       else
-      {
-        dmaClear(interface->txDma);
         res = E_INTERFACE;
-      }
     }
   }
   else

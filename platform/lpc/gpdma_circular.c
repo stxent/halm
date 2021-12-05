@@ -172,8 +172,12 @@ static enum Result channelEnable(void *object)
   const uint32_t request = 1 << number;
 
   assert(channel->state == STATE_READY || channel->state == STATE_DONE);
+
   if (!gpDmaSetInstance(number, object))
+  {
+    channel->state = STATE_ERROR;
     return E_BUSY;
+  }
   gpDmaSetMux(object);
 
   /* Clear interrupt requests for the current channel */
@@ -191,6 +195,12 @@ static void channelDisable(void *object)
 {
   struct GpDmaCircular * const channel = object;
   LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+
+  /*
+   * Incorrect sequence of calls: channel should not be disabled when
+   * it is not initialized and started.
+   */
+  assert(channel->state != STATE_IDLE && channel->state != STATE_READY);
 
   if (channel->state == STATE_BUSY)
   {
@@ -246,11 +256,11 @@ static void channelAppend(void *object, void *destination, const void *source,
   struct GpDmaCircular * const channel = object;
 
   assert(destination != 0 && source != 0);
-  assert(size > 0 && size <= GPDMA_MAX_TRANSFER);
+  assert(size > 0 && size <= GPDMA_MAX_TRANSFER_SIZE);
   assert(channel->queued < channel->capacity);
   assert(channel->state != STATE_BUSY);
 
-  if (channel->state == STATE_ERROR)
+  if (channel->state == STATE_DONE || channel->state == STATE_ERROR)
     channel->queued = 0;
 
   struct GpDmaEntry * const entry = channel->list + channel->queued;
@@ -263,7 +273,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   entry->destination = (uintptr_t)destination;
   entry->control = channel->control | CONTROL_SIZE(size);
 
-  if (channel->callback)
+  if (channel->callback || channel->oneshot)
     entry->control |= CONTROL_INT;
 
   if (!channel->oneshot)

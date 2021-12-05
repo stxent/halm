@@ -124,8 +124,6 @@ static void resetInnerBuffers(struct AdcDmaStream *interface)
 {
   LPC_ADC_Type * const reg = interface->base.reg;
 
-  dmaClear(interface->inner);
-
   for (size_t index = 0; index < interface->count; ++index)
   {
     dmaAppend(interface->inner, &interface->buffer,
@@ -407,15 +405,11 @@ static enum Result adcHandlerEnqueue(void *object,
         else
         {
           dmaDisable(interface->outer);
-          dmaClear(interface->outer);
           res = E_INTERFACE;
         }
       }
       else
-      {
-        dmaClear(interface->outer);
         res = E_INTERFACE;
-      }
     }
   }
   else

@@ -68,6 +68,7 @@ static inline void dmaSetCallback(void *channel, void (*callback)(void *),
 
 /**
  * Enable the channel.
+ * Channel goes into the error state when the operation fails.
  * @param channel Pointer to a Dma object.
  * @return @b E_OK on success.
  */

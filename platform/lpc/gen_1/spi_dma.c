@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/lpc/gpdma_circular.h>
 #include <halm/platform/lpc/gpdma_oneshot.h>
 #include <halm/platform/lpc/spi_dma.h>
 #include <halm/platform/lpc/ssp_defs.h>
@@ -65,6 +66,26 @@ static void dmaHandler(void *object)
 static bool dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
     uint8_t txChannel)
 {
+#if CONFIG_PLATFORM_LPC_SPI_DMA_CHAIN > 1
+  const struct GpDmaCircularConfig dmaConfigs[] = {
+      {
+          .number = CONFIG_PLATFORM_LPC_SPI_DMA_CHAIN,
+          .event = GPDMA_SSP0_RX + interface->base.channel,
+          .type = GPDMA_TYPE_P2M,
+          .channel = rxChannel,
+          .oneshot = true,
+          .silent = true
+      }, {
+          .number = CONFIG_PLATFORM_LPC_SPI_DMA_CHAIN,
+          .event = GPDMA_SSP0_TX + interface->base.channel,
+          .type = GPDMA_TYPE_M2P,
+          .channel = txChannel,
+          .oneshot = true,
+          .silent = true
+      }
+  };
+  const void * const dmaClassDescriptor = GpDmaCircular;
+#else
   const struct GpDmaOneShotConfig dmaConfigs[] = {
       {
           .event = GPDMA_SSP0_RX + interface->base.channel,
@@ -76,12 +97,14 @@ static bool dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
           .channel = txChannel
       }
   };
+  const void * const dmaClassDescriptor = GpDmaOneShot;
+#endif
 
-  interface->rxDma = init(GpDmaOneShot, &dmaConfigs[0]);
+  interface->rxDma = init(dmaClassDescriptor, &dmaConfigs[0]);
   if (!interface->rxDma)
     return false;
 
-  interface->txDma = init(GpDmaOneShot, &dmaConfigs[1]);
+  interface->txDma = init(dmaClassDescriptor, &dmaConfigs[1]);
   if (!interface->txDma)
     return false;
 
@@ -207,8 +230,8 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static size_t transferData(struct SpiDma *interface, const void *txSource,
-    void *rxSink, size_t length)
+static size_t transferData(struct SpiDma *interface, const void *source,
+    void *sink, size_t length)
 {
   LPC_SSP_Type * const reg = interface->base.reg;
 
@@ -218,17 +241,39 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
 
   interface->invoked = false;
   interface->sink = 0;
-  dmaAppend(interface->rxDma, rxSink, (const void *)&reg->DR, length);
-  dmaAppend(interface->txDma, (void *)&reg->DR, txSource, length);
+
+#if CONFIG_PLATFORM_LPC_SPI_DMA_CHAIN > 1
+  size_t pending = length;
+  uintptr_t rxAddress = (uintptr_t)sink;
+  uintptr_t txAddress = (uintptr_t)source;
+
+  do
+  {
+    const size_t chunk = MIN(pending, GPDMA_MAX_TRANSFER_SIZE);
+
+    dmaAppend(interface->rxDma, (void *)rxAddress, (const void *)&reg->DR,
+        chunk);
+    dmaAppend(interface->txDma, (void *)&reg->DR, (const void *)txAddress,
+        chunk);
+
+    rxAddress += chunk;
+    txAddress += chunk;
+    pending -= chunk;
+  }
+  while (pending);
+#else
+  dmaAppend(interface->rxDma, sink, (const void *)&reg->DR, length);
+  dmaAppend(interface->txDma, (void *)&reg->DR, source, length);
+#endif
 
   if (dmaEnable(interface->rxDma) != E_OK)
   {
-    goto error;
+    return 0;
   }
   if (dmaEnable(interface->txDma) != E_OK)
   {
     dmaDisable(interface->rxDma);
-    goto error;
+    return 0;
   }
 
   enum Result res = E_OK;
@@ -237,11 +282,6 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
     while ((res = getStatus(interface)) == E_BUSY);
 
   return res == E_OK ? length : 0;
-
-error:
-  dmaClear(interface->txDma);
-  dmaClear(interface->rxDma);
-  return 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *object, const void *configBase)

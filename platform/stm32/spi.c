@@ -196,12 +196,12 @@ static size_t transferData(struct Spi *interface, const void *txSource,
 
   if (dmaEnable(interface->rxDma) != E_OK)
   {
-    goto error;
+    return 0;
   }
   if (dmaEnable(interface->txDma) != E_OK)
   {
     dmaDisable(interface->rxDma);
-    goto error;
+    return 0;
   }
 
   enum Result res = E_OK;
@@ -210,11 +210,6 @@ static size_t transferData(struct Spi *interface, const void *txSource,
     while ((res = getStatus(interface)) == E_BUSY);
 
   return res == E_OK ? length : 0;
-
-error:
-  dmaClear(interface->txDma);
-  dmaClear(interface->rxDma);
-  return 0;
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_SPI_PM

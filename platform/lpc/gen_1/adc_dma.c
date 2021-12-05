@@ -54,8 +54,6 @@ static void resetDmaBuffers(struct AdcDma *interface)
 {
   LPC_ADC_Type * const reg = interface->base.reg;
 
-  dmaClear(interface->dma);
-
   for (size_t index = 0; index < interface->count; ++index)
   {
     dmaAppend(interface->dma, &interface->buffer[index],
