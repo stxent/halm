@@ -9,6 +9,7 @@ extern unsigned long _edata;
 extern unsigned long _sidata;
 extern unsigned long _sbss;
 extern unsigned long _ebss;
+extern unsigned long _stack;
 /*----------------------------------------------------------------------------*/
 extern int main(void);
 extern void platformStartup(void);
@@ -18,7 +19,13 @@ void RESET_ISR(void)
   register unsigned long *dst __asm__ ("r0");
   register unsigned long *src __asm__ ("r1");
 
-  /* Copy the data segment initializers from flash to RAM */
+#ifdef CONFIG_CORE_CORTEX_MEMORY_DEBUG
+  /* Fill the RAM with a predefined pattern */
+  for (dst = &_sdata; dst < &_stack;)
+    *dst++ = CONFIG_CORE_CORTEX_MEMORY_PATTERN;
+#endif
+
+  /* Copy the data segment initializers from flash to the RAM */
   for (dst = &_sdata, src = &_sidata; dst < &_edata;)
     *dst++ = *src++;
 

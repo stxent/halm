@@ -9,6 +9,18 @@ config CORE_CORTEX_FPU
 	help
 	  This enables Floating Point Unit.
 
+config CORE_CORTEX_MEMORY_DEBUG
+	bool "Memory debug"
+	default n
+	help
+	  This fills the RAM with a predefined pattern.
+
+config CORE_CORTEX_MEMORY_PATTERN
+	hex "Memory pattern"
+	default 0xDEADBEEF
+	range 0x00000000 0xFFFFFFFF
+	depends on CORE_CORTEX_MEMORY_DEBUG
+
 config CORE_CORTEX_SYSTICK
 	bool "SysTick"
 	default y
