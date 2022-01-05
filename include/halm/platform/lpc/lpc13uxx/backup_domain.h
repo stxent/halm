@@ -1,6 +1,6 @@
 /*
- * halm/platform/lpc/lpc17xx/backup_domain.h
- * Copyright (C) 2017 xent
+ * halm/platform/lpc/lpc13uxx/backup_domain.h
+ * Copyright (C) 2021 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -8,8 +8,8 @@
 #error This header should not be included directly
 #endif
 
-#ifndef HALM_PLATFORM_LPC_LPC17XX_BACKUP_DOMAIN_H_
-#define HALM_PLATFORM_LPC_LPC17XX_BACKUP_DOMAIN_H_
+#ifndef HALM_PLATFORM_LPC_LPC13UXX_BACKUP_DOMAIN_H_
+#define HALM_PLATFORM_LPC_LPC13UXX_BACKUP_DOMAIN_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
 #include <xcore/helpers.h>
@@ -19,14 +19,14 @@ BEGIN_DECLS
 
 static inline void *backupDomainAddress(void)
 {
-  return (void *)LPC_RTC->GPREG;
+  return (void *)LPC_PMU->GPREG;
 }
 
 static inline size_t backupDomainSize(void)
 {
-  return sizeof(LPC_RTC->GPREG);
+  return sizeof(LPC_PMU->GPREG);
 }
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LPC_LPC17XX_BACKUP_DOMAIN_H_ */
+#endif /* HALM_PLATFORM_LPC_LPC13UXX_BACKUP_DOMAIN_H_ */

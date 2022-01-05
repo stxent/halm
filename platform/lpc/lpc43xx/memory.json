@@ -24,7 +24,7 @@
     "blocks":
     [
       {"offset": "0x00000", "name": "ATIMER", "type": "LPC_ATIMER_Type"},
-      {"offset": "0x01000", "name": "BACKUP", "type": "LPC_BACKUP_Type"},
+      {"offset": "0x01000", "name": "REGFILE", "type": "LPC_REGFILE_Type"},
       {"offset": "0x02000", "name": "PMC", "type": "LPC_PMC_Type"},
       {"offset": "0x03000", "name": "CREG", "type": "LPC_CREG_Type"},
       {"offset": "0x04000", "name": "EVENTROUTER", "type": "LPC_EVENTROUTER_Type"},

@@ -19,12 +19,12 @@ BEGIN_DECLS
 
 static inline void *backupDomainAddress(void)
 {
-  return (void *)LPC_BACKUP->DATA;
+  return (void *)LPC_REGFILE->REGFILE;
 }
 
 static inline size_t backupDomainSize(void)
 {
-  return sizeof(LPC_BACKUP->DATA);
+  return sizeof(LPC_REGFILE->REGFILE);
 }
 
 END_DECLS

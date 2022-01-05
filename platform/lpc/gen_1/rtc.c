@@ -86,7 +86,7 @@ static void setTime(struct Rtc *clock, time64_t timestamp)
   reg->DOY = 0; /* Day of year in the range of 0 to 366 */
 
   /* Enable clock */
-  reg->CCR = CCR_CLKEN | CCR_CCALEN;
+  reg->CCR = CCR_CLKEN;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *object, const void *configBase)
@@ -233,4 +233,23 @@ static time64_t clkTime(void *object)
   }
 
   return 0;
+}
+/*----------------------------------------------------------------------------*/
+void rtcSetCalibration(struct Rtc *clock, int32_t offset)
+{
+  LPC_RTC_Type * const reg = clock->base.reg;
+  uint32_t calibration;
+
+  if (offset < 0)
+  {
+    offset = -offset;
+    calibration = CALIBRATION_DIR;
+  }
+  else
+    calibration = 0;
+
+  offset = MIN(offset, (int32_t)CALIBRATION_VAL_MASK);
+  calibration |= CALIBRATION_VAL(offset);
+
+  reg->CALIBRATION = calibration;
 }

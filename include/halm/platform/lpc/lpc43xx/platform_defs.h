@@ -2125,11 +2125,11 @@ typedef struct
   __rw__ uint32_t MCMD;
   __rw__ uint32_t STAT;
 } LPC_SPIFI_Type;
-/*------------------Battery-powered Backup registers--------------------------*/
+/*------------------Battery-powered general purpose registers-----------------*/
 typedef struct
 {
-  __rw__ uint8_t DATA[256];
-} LPC_BACKUP_Type;
+  __rw__ uint32_t REGFILE[64];
+} LPC_REGFILE_Type;
 /*------------------One-Time Programmable memory------------------------------*/
 typedef struct
 {
@@ -2176,8 +2176,8 @@ typedef struct
 {
   LPC_ATIMER_Type ATIMER;
   __ne__ uint8_t RESERVED0[0x1000 - sizeof(LPC_ATIMER_Type)];
-  LPC_BACKUP_Type BACKUP;
-  __ne__ uint8_t RESERVED1[0x1000 - sizeof(LPC_BACKUP_Type)];
+  LPC_REGFILE_Type REGFILE;
+  __ne__ uint8_t RESERVED1[0x1000 - sizeof(LPC_REGFILE_Type)];
   LPC_PMC_Type PMC;
   __ne__ uint8_t RESERVED2[0x1000 - sizeof(LPC_PMC_Type)];
   LPC_CREG_Type CREG;
@@ -2291,7 +2291,7 @@ extern LPC_SGPIO_Type   SGPIO_DOMAIN;
 #define LPC_ETHERNET        (&AHB_DOMAIN.ETHERNET)
 
 #define LPC_ATIMER          (&RTC_DOMAIN.ATIMER)
-#define LPC_BACKUP          (&RTC_DOMAIN.BACKUP)
+#define LPC_REGFILE         (&RTC_DOMAIN.REGFILE)
 #define LPC_PMC             (&RTC_DOMAIN.PMC)
 #define LPC_CREG            (&RTC_DOMAIN.CREG)
 #define LPC_EVENTROUTER     (&RTC_DOMAIN.EVENTROUTER)

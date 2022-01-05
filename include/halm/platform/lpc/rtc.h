@@ -27,4 +27,10 @@ struct Rtc
   void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+void rtcSetCalibration(struct Rtc *, int32_t);
+
+END_DECLS
+/*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_RTC_H_ */
