@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/lpc43xx/ethernet.h>
 #include <halm/platform/lpc/lpc43xx/ethernet_defs.h>
 #include <halm/platform/lpc/lpc43xx/ethernet_mdio.h>
@@ -11,9 +12,9 @@
 #include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+static uint32_t frequencyToClockRange(uint32_t);
+/*----------------------------------------------------------------------------*/
 static enum Result mdioInit(void *, const void *);
-static void mdioDeinit(void *);
-static void mdioSetCallback(void *, void (*)(void *), void *);
 static enum Result mdioGetParam(void *, int, void *);
 static enum Result mdioSetParam(void *, int, const void *);
 static size_t mdioRead(void *, void *, size_t);
@@ -22,14 +23,48 @@ static size_t mdioWrite(void *, const void *, size_t);
 const struct InterfaceClass * const MDIO = &(const struct InterfaceClass){
     .size = sizeof(struct MDIO),
     .init = mdioInit,
-    .deinit = mdioDeinit,
+    .deinit = 0, /* Default destructor */
 
-    .setCallback = mdioSetCallback,
+    .setCallback = 0,
     .getParam = mdioGetParam,
     .setParam = mdioSetParam,
     .read = mdioRead,
     .write = mdioWrite
 };
+/*----------------------------------------------------------------------------*/
+static uint32_t frequencyToClockRange(uint32_t frequency)
+{
+  if (frequency <= 35000000)
+  {
+    /* 20 - 35 MHz */
+    return CR_CLOCK_DIV_16;
+  }
+  else if (frequency <= 60000000)
+  {
+    /* 35 - 60 MHz */
+    return CR_CLOCK_DIV_26;
+  }
+  else if (frequency <= 100000000)
+  {
+    /* 60 - 100 MHz */
+    return CR_CLOCK_DIV_42;
+  }
+  else if (frequency <= 150000000)
+  {
+    /* 100 - 150 MHz */
+    return CR_CLOCK_DIV_62;
+  }
+  else if (frequency <= 250000000)
+  {
+    /* 150 - 250 MHz */
+    return CR_CLOCK_DIV_102;
+  }
+  else
+  {
+    /* 250 - 300 MHz */
+    return CR_CLOCK_DIV_124;
+  }
+}
 /*----------------------------------------------------------------------------*/
 static enum Result mdioInit(void *object, const void *configBase)
 {
@@ -42,20 +77,12 @@ static enum Result mdioInit(void *object, const void *configBase)
   interface->address = 0;
   interface->position = 0;
 
+  const uint32_t frequency = clockFrequency(MainClock);
+  LPC_ETHERNET_Type * const reg = interface->parent->base.reg;
+
+  reg->MAC_MII_ADDR = MAC_MII_ADDR_CR(frequencyToClockRange(frequency));
+
   return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static void mdioDeinit(void *object __attribute__((unused)))
-{
-}
-/*----------------------------------------------------------------------------*/
-// TODO Update template
-static void mdioSetCallback(void *object, void (*callback)(void *),
-    void *argument)
-{
-  (void)object;
-  (void)callback;
-  (void)argument;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result mdioGetParam(void *object, int parameter, void *data)
@@ -98,65 +125,55 @@ static enum Result mdioSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t mdioRead(void *object, void *buffer, size_t length)
 {
-  (void)length;
+  static const uint32_t ADDR_MASK = MAC_MII_ADDR_GR_MASK | MAC_MII_ADDR_PA_MASK
+      | MAC_MII_ADDR_W;
 
-  static const uint32_t MII_RD_TOUT = 0x00050000;
+  if (length < sizeof(uint16_t))
+    return 0;
 
   struct MDIO * const interface = object;
   LPC_ETHERNET_Type * const reg = interface->parent->base.reg;
-  unsigned int tout;
-  uint16_t val;
 
-  while (reg->MAC_MII_ADDR & MAC_MII_ADDR_GB); // Check GMII busy bit
-  reg->MAC_MII_ADDR = MAC_MII_ADDR_PA(interface->address)
+  reg->MAC_MII_ADDR = (reg->MAC_MII_ADDR & ~ADDR_MASK)
+      | MAC_MII_ADDR_PA(interface->address)
       | MAC_MII_ADDR_GR(interface->position);
-  reg->MAC_MII_ADDR |= MAC_MII_ADDR_GB; // Start PHY Read Cycle
+
+  /* Start the read cycle */
+  reg->MAC_MII_ADDR |= MAC_MII_ADDR_GB;
 
   /* Wait until operation completed */
-  for (tout = 0; tout < MII_RD_TOUT; tout++) {
-    if ((reg->MAC_MII_ADDR & MAC_MII_ADDR_GB) == 0) {
-       break;
-    }
-  }
+  while (reg->MAC_MII_ADDR & MAC_MII_ADDR_GB);
 
-  if (tout == MII_RD_TOUT)
-    return 0;
+  const uint16_t value = reg->MAC_MII_DATA;
+  memcpy(buffer, &value, sizeof(value));
 
-  val = reg->MAC_MII_DATA;
-  memcpy(buffer, &val, sizeof(val));
-
-  return sizeof(val);
+  return sizeof(uint16_t);
 }
 /*----------------------------------------------------------------------------*/
 static size_t mdioWrite(void *object, const void *buffer, size_t length)
 {
-  (void)length;
+  static const uint32_t ADDR_MASK = MAC_MII_ADDR_GR_MASK | MAC_MII_ADDR_PA_MASK;
 
-  static const uint32_t MII_WR_TOUT = 0x00050000;
+  if (length < sizeof(uint16_t))
+    return 0;
 
   struct MDIO * const interface = object;
   LPC_ETHERNET_Type * const reg = interface->parent->base.reg;
-  unsigned int tout;
-  uint16_t val;
 
-  memcpy(&val, buffer, sizeof(val));
-
-  while (reg->MAC_MII_ADDR & MAC_MII_ADDR_GB); // Check GMII busy bit
-  reg->MAC_MII_ADDR = MAC_MII_ADDR_PA(interface->address)
+  reg->MAC_MII_ADDR = (reg->MAC_MII_ADDR & ~ADDR_MASK)
+      | MAC_MII_ADDR_PA(interface->address)
       | MAC_MII_ADDR_GR(interface->position)
       | MAC_MII_ADDR_W;
-  reg->MAC_MII_DATA = val;
-  reg->MAC_MII_ADDR |= MAC_MII_ADDR_GB; // Start PHY Write Cycle
+
+  uint16_t value;
+
+  /* Prepare data and start the write cycle */
+  memcpy(&value, buffer, sizeof(value));
+  reg->MAC_MII_DATA = value;
+  reg->MAC_MII_ADDR |= MAC_MII_ADDR_GB;
 
   /* Wait until operation completed */
-  for (tout = 0; tout < MII_WR_TOUT; tout++) {
-    if ((reg->MAC_MII_ADDR & MAC_MII_ADDR_GB) == 0) {
-       break;
-    }
-  }
+  while (reg->MAC_MII_ADDR & MAC_MII_ADDR_GB);
 
-  if (tout == MII_WR_TOUT)
-    return 0;
-
-  return sizeof(val);
+  return sizeof(uint16_t);
 }

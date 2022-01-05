@@ -196,6 +196,13 @@ void ETHERNET_ISR(void)
 void ethConfigPins(struct EthernetBase *interface,
     const struct EthernetBaseConfig *config)
 {
+  enum InterfaceType
+  {
+    INTERFACE_UNDEFINED,
+    INTERFACE_RMII,
+    INTERFACE_MII
+  };
+
   static const uint32_t MIIM_MINIMAL_MASK =
       1UL << CHANNEL_MDC
       | 1UL << CHANNEL_MDIO;
@@ -260,11 +267,17 @@ void ethConfigPins(struct EthernetBase *interface,
     }
   }
 
-  assert((used & MII_MINIMAL_MASK) == MII_MINIMAL_MASK
-      || (used & RMII_MINIMAL_MASK) == RMII_MINIMAL_MASK);
+  enum InterfaceType type = INTERFACE_UNDEFINED;
+
+  if ((used & MII_MINIMAL_MASK) == MII_MINIMAL_MASK)
+    type = INTERFACE_MII;
+  else if ((used & RMII_MINIMAL_MASK) == RMII_MINIMAL_MASK)
+    type = INTERFACE_RMII;
+
+  assert(type != INTERFACE_UNDEFINED);
 
   interface->miim = ((used & MIIM_MINIMAL_MASK) == MIIM_MINIMAL_MASK);
-  interface->rmii = ((used & RMII_MINIMAL_MASK) == RMII_MINIMAL_MASK);
+  interface->rmii = type == INTERFACE_RMII;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result ethInit(void *object, const void *configBase)
