@@ -7,30 +7,11 @@
 #ifndef HALM_PLATFORM_LPC_RTC_H_
 #define HALM_PLATFORM_LPC_RTC_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/platform/lpc/rtc_base.h>
+#include <halm/target.h>
 /*----------------------------------------------------------------------------*/
-extern const struct RtClockClass * const Rtc;
-
-struct RtcConfig
-{
-  /** Optional: initial time. */
-  time64_t timestamp;
-  /** Optional: interrupt priority. */
-  IrqPriority priority;
-};
-
-struct Rtc
-{
-  struct RtcBase base;
-
-  void (*callback)(void *);
-  void *callbackArgument;
-};
-/*----------------------------------------------------------------------------*/
-BEGIN_DECLS
-
-void rtcSetCalibration(struct Rtc *, int32_t);
-
-END_DECLS
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_RTC/rtc.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_RTC_H_ */

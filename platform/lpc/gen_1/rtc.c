@@ -235,9 +235,34 @@ static time64_t clkTime(void *object)
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-void rtcSetCalibration(struct Rtc *clock, int32_t offset)
+int32_t rtcCalcCalibration(time64_t globaltime, time64_t localtime, 
+    time64_t prevSync, int32_t prevCalib)
 {
-  LPC_RTC_Type * const reg = clock->base.reg;
+  if (prevSync != 0)
+  {
+    time64_t uncorrected = localtime;
+
+    if (prevCalib != 0)
+      uncorrected -= (localtime - prevSync) / prevCalib;
+
+    const int32_t limit = (int32_t)CALIBRATION_VAL_MASK;
+    const int32_t delta = (int32_t)(globaltime - uncorrected);
+    int32_t calib = delta != 0 ? (globaltime - prevSync) / delta : 0;
+
+    if (calib > limit)
+      calib = limit;
+    else if (calib < -limit)
+      calib = -limit;
+
+    return calib;
+  }
+  else
+    return 0;
+}
+/*----------------------------------------------------------------------------*/
+void rtcSetCalibration(void *clock, int32_t offset)
+{
+  LPC_RTC_Type * const reg = ((struct Rtc *)clock)->base.reg;
   uint32_t calibration;
 
   if (offset < 0)
