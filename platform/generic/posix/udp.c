@@ -83,7 +83,8 @@ static void cleanup(struct Udp *interface, enum Cleanup step)
       byteQueueDeinit(&interface->rxQueue);
       /* Falls through */
     case CLEANUP_LISTENER:
-      free(interface->listener);
+      if (step != CLEANUP_ALL)
+        free(interface->listener);
       /* Falls through */
     case CLEANUP_MUTEX:
       pthread_mutex_destroy(&interface->rxQueueLock);

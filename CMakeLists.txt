@@ -35,8 +35,6 @@ endif()
 
 if(DEFINED PLATFORM)
     set(PUBLIC_DEFS -D${PLATFORM})
-elseif(UNIX)
-    set(PUBLIC_DEFS -D_POSIX_C_SOURCE=200809L)
 else()
     set(PUBLIC_DEFS "")
 endif()
