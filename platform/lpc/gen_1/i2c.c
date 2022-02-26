@@ -34,7 +34,8 @@ enum Status
   STATUS_SLAVE_READ_ACK         = 0x40,
   STATUS_SLAVE_READ_NACK        = 0x48,
   STATUS_DATA_RECEIVED_ACK      = 0x50,
-  STATUS_DATA_RECEIVED_NACK     = 0x58
+  STATUS_DATA_RECEIVED_NACK     = 0x58,
+  STATUS_NO_INFORMATION         = 0xF8
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
@@ -68,10 +69,11 @@ static void interruptHandler(void *object)
 {
   struct I2C * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
+  const uint8_t stat = reg->STAT;
   bool clearInterrupt = true;
   bool event = false;
 
-  switch (reg->STAT)
+  switch (stat)
   {
     /* Start or Repeated Start conditions have been transmitted */
     case STATUS_START_TRANSMITTED:
@@ -157,6 +159,10 @@ static void interruptHandler(void *object)
       reg->CONSET = CONSET_STO;
       interface->state = STATE_ERROR;
       event = true;
+      break;
+
+    case STATUS_NO_INFORMATION:
+      clearInterrupt = false;
       break;
 
     default:
