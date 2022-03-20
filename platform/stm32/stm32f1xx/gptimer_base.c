@@ -560,15 +560,15 @@ void TIM14_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t gpTimerGetClock(const struct GpTimerBase *timer)
 {
-  const uint32_t ahbFrequency = clockFrequency(MainClock);
-  uint32_t apbFrequency = 0;
+  const uint32_t ahbClock = clockFrequency(MainClock);
+  uint32_t apbClock = 0;
 
   if (timer->channel == 0 || (timer->channel >= 7 && timer->channel <= 10))
-    apbFrequency = clockFrequency(Apb2Clock);
+    apbClock = clockFrequency(Apb2Clock);
   else
-    apbFrequency = clockFrequency(Apb1Clock);
+    apbClock = clockFrequency(Apb1Clock);
 
-  return apbFrequency == ahbFrequency ? ahbFrequency : apbFrequency * 2;
+  return apbClock == ahbClock ? ahbClock : apbClock * 2;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)

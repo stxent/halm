@@ -325,6 +325,36 @@ config PLATFORM_LPC_I2S_DMA
 	default y
 	depends on PLATFORM_LPC_I2S_BASE
 
+choice
+	prompt "Master clock selection"
+	default PLATFORM_LPC_I2S_128FS
+	depends on PLATFORM_LPC_I2S_BASE
+
+	config PLATFORM_LPC_I2S_128FS
+		bool "128FS"
+
+	config PLATFORM_LPC_I2S_192FS
+		bool "192FS"
+
+	config PLATFORM_LPC_I2S_256FS
+		bool "256FS"
+
+	config PLATFORM_LPC_I2S_384FS
+		bool "384FS"
+
+	config PLATFORM_LPC_I2S_512FS
+		bool "512FS"
+endchoice
+
+config PLATFORM_LPC_I2S_FS
+	int
+	default 512 if PLATFORM_LPC_I2S_512FS
+	default 384 if PLATFORM_LPC_I2S_384FS
+	default 256 if PLATFORM_LPC_I2S_256FS
+	default 192 if PLATFORM_LPC_I2S_192FS
+	default 128
+	depends on PLATFORM_LPC_I2S_BASE
+
 config PLATFORM_LPC_IAP
 	bool "IAP"
 	default y

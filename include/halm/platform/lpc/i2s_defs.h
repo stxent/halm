@@ -74,7 +74,7 @@ enum
 #define IRQ_TX_DEPTH(value)             BIT_FIELD((value), 16)
 #define IRQ_TX_DEPTH_VALUE(reg) \
     FIELD_VALUE((reg), IRQ_TX_DEPTH_MASK, 16)
-/*------------------Clock rate registers--------------------------------------*/
+/*------------------Clock Rate registers--------------------------------------*/
 #define RATE_Y_DIVIDER_MASK             BIT_FIELD(MASK(8), 0)
 #define RATE_Y_DIVIDER(value)           BIT_FIELD((value), 0)
 #define RATE_Y_DIVIDER_VALUE(reg) \
@@ -83,6 +83,11 @@ enum
 #define RATE_X_DIVIDER(value)           BIT_FIELD((value), 8)
 #define RATE_X_DIVIDER_VALUE(reg) \
     FIELD_VALUE((reg), RATE_X_DIVIDER_MASK, 8)
+/*------------------Clock Bit Rate registers----------------------------------*/
+#define BITRATE_DIVIDER(value)          BIT_FIELD((value), 0)
+#define BITRATE_DIVIDER_MASK            BIT_FIELD(MASK(6), 0)
+#define BITRATE_DIVIDER_VALUE(reg) \
+    FIELD_VALUE((reg), BITRATE_DIVIDER_MASK, 0)
 /*------------------Transmit Mode control register----------------------------*/
 enum
 {

@@ -9,7 +9,7 @@
 #include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-/* PCLK for I2S must not be higher than 74 MHz */
+/* Errata: PCLK for I2S must not be higher than 74 MHz */
 #define DEFAULT_DIV CLK_DIV2
 /*----------------------------------------------------------------------------*/
 static void configPins(struct I2SBase *, const struct I2SBaseConfig *);

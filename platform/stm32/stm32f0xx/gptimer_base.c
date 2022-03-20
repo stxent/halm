@@ -546,10 +546,10 @@ void TIM17_ISR(void)
 uint32_t gpTimerGetClock(const struct GpTimerBase *timer
     __attribute__((unused)))
 {
-  const uint32_t ahbFrequency = clockFrequency(MainClock);
-  const uint32_t apbFrequency = clockFrequency(ApbClock);
+  const uint32_t ahbClock = clockFrequency(MainClock);
+  const uint32_t apbClock = clockFrequency(ApbClock);
 
-  return apbFrequency == ahbFrequency ? ahbFrequency : apbFrequency * 2;
+  return apbClock == ahbClock ? ahbClock : apbClock * 2;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)

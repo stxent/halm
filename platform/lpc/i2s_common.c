@@ -9,43 +9,45 @@
 bool i2sCalcRate(struct I2SBase *interface, uint32_t clock,
     struct I2SRateConfig *config)
 {
-  const uint32_t periphClock = i2sGetClock(interface);
+  const uint32_t apbClock = i2sGetClock(interface);
+  const uint32_t ratio = ((uint64_t)clock << 16) / apbClock;
+  uint32_t minError = UINT32_MAX;
+  uint32_t yDiv = 0;
 
-  if (periphClock < (1 << 20))
-    return false;
-
-  /* Algorithm based on NXP software examples */
-  const uint32_t divisor = ((uint64_t)clock << 16) / periphClock;
-  uint16_t minError = 0xFFFF;
-  uint16_t yDiv = 0;
-
-  for (uint16_t y = 255; y > 0; --y)
+  for (uint8_t y = 255; y > 0; --y)
   {
-    const uint32_t x = y * divisor;
+    const uint32_t x = y * ratio;
+    const uint32_t xDiv = x >> 16;
 
-    if (x >= (1 << 24))
+    if (!xDiv || xDiv >= 128)
       continue;
 
-    const uint16_t delta = x & 0xFFFF;
-    const uint16_t error = delta > 0x8000 ? 0x10000 - delta : delta;
+    const uint32_t delta = (x & UINT16_MAX) << 16;
+
+    if (delta == 0)
+    {
+      yDiv = y;
+      break;
+    }
+
+    const uint32_t error = delta / xDiv;
 
     if (error < minError)
     {
       minError = error;
       yDiv = y;
-
-      if (!minError)
-        break;
     }
   }
 
-  const uint16_t xDiv = ((uint64_t)yDiv * clock * 2) / periphClock;
+  if (yDiv != 0)
+  {
+    const uint16_t xDiv = yDiv * ratio >> 15;
 
-  if (!xDiv || xDiv >= 256)
+    config->x = (uint8_t)xDiv;
+    config->y = (uint8_t)yDiv;
+
+    return true;
+  }
+  else
     return false;
-
-  config->x = xDiv;
-  config->y = yDiv;
-
-  return true;
 }

@@ -366,32 +366,36 @@ static bool updateRate(struct I2SDma *interface, uint32_t sampleRate)
 
   if (interface->slave)
   {
-    rateConfig.x = rateConfig.y = 1;
+    rateConfig.x = 1;
+    rateConfig.y = 1;
     divisor = 1;
   }
   else
   {
-    uint32_t bitrate = sampleRate * (1 << (interface->sampleSize + 3));
-    uint32_t masterClock = sampleRate << 7;
-
-    divisor = masterClock / bitrate;
+    const uint32_t masterClock = sampleRate * CONFIG_PLATFORM_LPC_I2S_FS;
 
     if (!i2sCalcRate(&interface->base, masterClock, &rateConfig))
       return false;
+
+    divisor = CONFIG_PLATFORM_LPC_I2S_FS >> (interface->sampleSize + 3);
   }
 
-  const uint32_t rate = RATE_X_DIVIDER(rateConfig.x)
+  if (divisor == 0 || divisor >= BITRATE_DIVIDER_MASK)
+    return false;
+
+  const uint32_t clockRate = RATE_X_DIVIDER(rateConfig.x)
       | RATE_Y_DIVIDER(rateConfig.y);
+  const uint32_t clockBitRate = divisor - 1;
 
   if (interface->rxDma)
   {
-    reg->RXBITRATE = divisor - 1;
-    reg->RXRATE = rate;
+    reg->RXBITRATE = clockBitRate;
+    reg->RXRATE = clockRate;
   }
   if (interface->txDma)
   {
-    reg->TXBITRATE = divisor - 1;
-    reg->TXRATE = rate;
+    reg->TXBITRATE = clockBitRate;
+    reg->TXRATE = clockRate;
   }
 
   interface->sampleRate = sampleRate;
