@@ -137,10 +137,12 @@
 #define BTR_TS1(value)                  BIT_FIELD((value), 16)
 #define BTR_TS1_MASK                    BIT_FIELD(MASK(4), 16)
 #define BTR_TS1_VALUE(reg)              FIELD_VALUE((reg), BTR_TS1_MASK, 16)
+#define BTR_TS1_MAX                     15
 
 #define BTR_TS2(value)                  BIT_FIELD((value), 20)
 #define BTR_TS2_MASK                    BIT_FIELD(MASK(3), 20)
 #define BTR_TS2_VALUE(reg)              FIELD_VALUE((reg), BTR_TS2_MASK, 20)
+#define BTR_TS2_MAX                     7
 
 #define BTR_SJW(value)                  BIT_FIELD((value), 24)
 #define BTR_SJW_MASK                    BIT_FIELD(MASK(2), 24)

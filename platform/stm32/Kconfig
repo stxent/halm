@@ -34,24 +34,34 @@ config PLATFORM_STM32_CAN_NO_DEINIT
 	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_CAN
 
+config PLATFORM_STM32_CAN_EXACT_RATE
+	bool "Exact rate"
+	default y
+	depends on PM && PLATFORM_STM32_CAN
+
 config PLATFORM_STM32_CAN_PM
 	bool "Power management"
 	default n
 	depends on PM && PLATFORM_STM32_CAN
 
+config PLATFORM_STM32_CAN_SJW
+	int "SJW duration"
+	default 1
+	range 1 4
+	depends on PLATFORM_STM32_CAN
+
+config PLATFORM_STM32_CAN_SP
+	int "Sampling point"
+	default 75
+	range 1 99
+	depends on PLATFORM_STM32_CAN
+	help
+	  The sample point is the location, given as a percent value,
+	  inside each bit period where the bus level is read.
+
 config PLATFORM_STM32_CAN_WATERMARK
 	bool "Watermark calculation"
 	default n
-	depends on PLATFORM_STM32_CAN
-
-config PLATFORM_STM32_CAN_TSEG1
-	int "TSEG1 quanta"
-	default 9
-	depends on PLATFORM_STM32_CAN
-
-config PLATFORM_STM32_CAN_TSEG2
-	int "TSEG2 quanta"
-	default 2
 	depends on PLATFORM_STM32_CAN
 
 config PLATFORM_STM32_DMA

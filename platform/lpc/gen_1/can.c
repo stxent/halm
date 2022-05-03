@@ -13,6 +13,12 @@
 #include <halm/pm.h>
 #include <xcore/accel.h>
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_LPC_CAN_EXACT_RATE
+#define MAX_CLOCK_ERROR 0
+#else
+#define MAX_CLOCK_ERROR UINT32_MAX
+#endif
+/*----------------------------------------------------------------------------*/
 enum Mode
 {
   MODE_LISTENER,
@@ -53,13 +59,15 @@ struct Can
 #endif
 };
 /*----------------------------------------------------------------------------*/
-static uint32_t calcBusTimings(const struct Can *, uint32_t);
-static void changeMode(struct Can *, enum Mode);
-static void changeRate(struct Can *, uint32_t);
+static bool calcSegments(uint8_t, uint8_t *, uint8_t *);
+static bool calcTimings(const struct Can *, uint32_t, uint32_t *);
+static uint32_t getBusRate(const struct Can *);
 static void interruptHandler(void *);
 static void readMessage(struct Can *, struct CANMessage *);
 static void resetQueues(struct Can *);
 static void sendMessage(struct Can *, const struct CANMessage *, uint32_t *);
+static void setBusMode(struct Can *, enum Mode);
+static bool setBusRate(struct Can *, uint32_t);
 static void updateRxWatermark(struct Can *, size_t);
 static void updateTxWatermark(struct Can *, size_t);
 
@@ -92,65 +100,99 @@ const struct InterfaceClass * const Can = &(const struct InterfaceClass){
     .write = canWrite
 };
 /*----------------------------------------------------------------------------*/
-static uint32_t calcBusTimings(const struct Can *interface, uint32_t rate)
+static bool calcSegments(uint8_t width, uint8_t *tseg1, uint8_t *tseg2)
 {
-  assert(rate != 0);
+  /* Width of the bit segment 1, the synchronization time segment excluded */
+  const uint8_t seg1 = width * CONFIG_PLATFORM_LPC_CAN_SP / 100 - 1;
 
-  const unsigned int bitsPerFrame =
-      1 + CONFIG_PLATFORM_LPC_CAN_TSEG1 + CONFIG_PLATFORM_LPC_CAN_TSEG2;
-  const uint32_t clock = canGetClock(&interface->base);
-  const uint32_t prescaler = clock / rate / bitsPerFrame;
-  const uint32_t regValue = BTR_BRP(prescaler - 1) | BTR_SJW(0)
-      | BTR_TSEG1(CONFIG_PLATFORM_LPC_CAN_TSEG1 - 1)
-      | BTR_TSEG2(CONFIG_PLATFORM_LPC_CAN_TSEG2 - 1);
+  if (seg1 > BTR_TSEG1_MAX + 1)
+    return false;
 
-  return regValue;
+  const uint8_t seg2 = width - seg1 - 1;
+
+  if (seg2 > BTR_TSEG2_MAX + 1)
+    return false;
+  if (seg2 <= CONFIG_PLATFORM_LPC_CAN_SJW)
+    return false;
+  if (seg2 > seg1 + 1)
+    return false;
+
+  *tseg1 = seg1;
+  *tseg2 = seg2;
+
+  return true;
 }
 /*----------------------------------------------------------------------------*/
-static void changeMode(struct Can *interface, enum Mode mode)
+static bool calcTimings(const struct Can *interface, uint32_t rate,
+    uint32_t *result)
 {
-  if (interface->mode != mode)
+  static const uint8_t MAX_WIDTH = BTR_TSEG1_MAX + BTR_TSEG2_MAX + 3;
+  static const uint8_t MIN_WIDTH = 3;
+
+  if (!rate)
+    return false;
+
+  const uint32_t apbClock = canGetClock(&interface->base);
+  uint32_t currentError = MAX_CLOCK_ERROR;
+  uint32_t currentPrescaler;
+  uint8_t currentDelta = UINT8_MAX;
+  uint8_t currentSeg1;
+  uint8_t currentSeg2;
+
+  for (uint8_t width = MAX_WIDTH; width >= MIN_WIDTH; --width)
   {
-    interface->mode = mode;
+    const uint32_t clock = rate * width;
+    const uint32_t error = apbClock % clock;
 
-    LPC_CAN_Type * const reg = interface->base.reg;
-    uint32_t value = reg->MOD & ~(MOD_LOM | MOD_STM);
+    if (clock > apbClock)
+      continue;
+    if (error > currentError)
+      continue;
 
-    switch (interface->mode)
+    uint8_t seg1;
+    uint8_t seg2;
+
+    if (calcSegments(width, &seg1, &seg2))
     {
-      case MODE_LISTENER:
-        /*
-         * Notice: CAN peripheral in the Listen Only mode cannot receive
-         * unacknowledged messages due to a hardware issue in the CPU.
-         */
-        value |= MOD_LOM;
-        break;
+      const uint8_t sp = ((uint16_t)seg1 + 1) * 100 / width;
+      const uint8_t delta = abs(CONFIG_PLATFORM_LPC_CAN_SP - (int)sp);
 
-      case MODE_LOOPBACK:
-        value |= MOD_STM;
-        break;
+      if (error < currentError || delta < currentDelta)
+      {
+        currentError = error;
+        currentPrescaler = apbClock / clock;
+        currentDelta = delta;
+        currentSeg1 = seg1;
+        currentSeg2 = seg2;
 
-      default:
-        break;
+        if (error == 0 && delta == 0)
+          break;
+      }
     }
-
-    /* Return pending message descriptors to the pool */
-    resetQueues(interface);
-
-    /* Enable Reset mode to configure LOM and STM bits */
-    reg->MOD |= MOD_RM;
-    /* Change test settings */
-    reg->MOD = value;
   }
+
+  if (currentDelta != UINT8_MAX)
+  {
+    *result = BTR_BRP(currentPrescaler - 1)
+        | BTR_SJW(CONFIG_PLATFORM_LPC_CAN_SJW - 1)
+        | BTR_TSEG1(currentSeg1 - 1)
+        | BTR_TSEG2(currentSeg2 - 1);
+
+    return true;
+  }
+
+  return false;
 }
 /*----------------------------------------------------------------------------*/
-static void changeRate(struct Can *interface, uint32_t rate)
+static uint32_t getBusRate(const struct Can *interface)
 {
-  LPC_CAN_Type * const reg = interface->base.reg;
+  const LPC_CAN_Type * const reg = interface->base.reg;
+  const uint32_t apbClock = canGetClock(&interface->base);
+  const uint32_t btr = reg->BTR;
+  const uint32_t prescaler = BTR_BRP_VALUE(btr);
+  const uint32_t width = 3 + BTR_TSEG1_VALUE(btr) + BTR_TSEG2_VALUE(btr);
 
-  reg->MOD |= MOD_RM; /* Enable Reset mode */
-  reg->BTR = calcBusTimings(interface, rate);
-  reg->MOD &= ~MOD_RM;
+  return apbClock / prescaler / width;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -213,6 +255,9 @@ static void interruptHandler(void *object)
         if (!interface->sequence)
           break;
       }
+
+      if (pointerQueueEmpty(&interface->txQueue))
+        event = true;
     }
   }
 
@@ -323,6 +368,58 @@ static void sendMessage(struct Can *interface,
   ++interface->sequence;
 }
 /*----------------------------------------------------------------------------*/
+static void setBusMode(struct Can *interface, enum Mode mode)
+{
+  if (interface->mode != mode)
+  {
+    interface->mode = mode;
+
+    LPC_CAN_Type * const reg = interface->base.reg;
+    uint32_t value = reg->MOD & ~(MOD_LOM | MOD_STM);
+
+    switch (interface->mode)
+    {
+      case MODE_LISTENER:
+        /*
+         * Notice: CAN peripheral in the Listen Only mode cannot receive
+         * unacknowledged messages due to a hardware issue in the CPU.
+         */
+        value |= MOD_LOM;
+        break;
+
+      case MODE_LOOPBACK:
+        value |= MOD_STM;
+        break;
+
+      default:
+        break;
+    }
+
+    /* Return pending message descriptors to the pool */
+    resetQueues(interface);
+
+    /* Enable Reset mode to configure LOM and STM bits */
+    reg->MOD |= MOD_RM;
+    /* Change test settings */
+    reg->MOD = value;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static bool setBusRate(struct Can *interface, uint32_t rate)
+{
+  LPC_CAN_Type * const reg = interface->base.reg;
+  uint32_t btr;
+
+  if (!calcTimings(interface, rate, &btr))
+    return false;
+
+  reg->MOD |= MOD_RM; /* Enable Reset mode */
+  reg->BTR = btr;
+  reg->MOD &= ~MOD_RM;
+
+  return true;
+}
+/*----------------------------------------------------------------------------*/
 static void updateRxWatermark(struct Can *interface, size_t level)
 {
 #ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
@@ -351,7 +448,7 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct Can * const interface = object;
-    changeRate(interface, interface->rate);
+    setBusRate(interface, interface->rate);
   }
 }
 #endif
@@ -390,6 +487,7 @@ static enum Result canInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->timer = config->timer;
   interface->mode = MODE_LISTENER;
+  interface->rate = config->rate;
   interface->sequence = 0;
 
 #ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
@@ -406,13 +504,15 @@ static enum Result canInit(void *object, const void *configBase)
   }
 
   LPC_CAN_Type * const reg = interface->base.reg;
+  uint32_t btr;
+
+  if (!calcTimings(interface, config->rate, &btr))
+    return E_VALUE;
 
   reg->MOD = MOD_RM; /* Reset CAN */
   reg->IER = 0; /* Disable Receive Interrupt */
   reg->GSR = 0; /* Reset error counter */
-
-  interface->rate = config->rate;
-  reg->BTR = calcBusTimings(interface, interface->rate);
+  reg->BTR = btr; /* Configure time segments, the bus is sampled once */
 
   /* Activate Listen Only mode and enable local priority for transmit buffers */
   reg->MOD = MOD_LOM | MOD_TPM;
@@ -493,8 +593,18 @@ static enum Result canGetParam(void *object, int parameter, void *data)
           * sizeof(struct CANStandardMessage);
       return E_OK;
 
+#ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
+    case IF_RX_WATERMARK:
+      *(size_t *)data = interface->rxWatermark;
+      return E_OK;
+
+    case IF_TX_WATERMARK:
+      *(size_t *)data = interface->txWatermark;
+      return E_OK;
+#endif
+
     case IF_RATE:
-      *(uint32_t *)data = interface->rate;
+      *(uint32_t *)data = getBusRate(interface);
       return E_OK;
 
     default:
@@ -509,15 +619,15 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
   switch ((enum CANParameter)parameter)
   {
     case IF_CAN_ACTIVE:
-      changeMode(interface, MODE_ACTIVE);
+      setBusMode(interface, MODE_ACTIVE);
       return E_OK;
 
     case IF_CAN_LISTENER:
-      changeMode(interface, MODE_LISTENER);
+      setBusMode(interface, MODE_LISTENER);
       return E_OK;
 
     case IF_CAN_LOOPBACK:
-      changeMode(interface, MODE_LOOPBACK);
+      setBusMode(interface, MODE_LOOPBACK);
       return E_OK;
 
     default:
@@ -530,10 +640,13 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
     {
       const uint32_t rate = *(const uint32_t *)data;
 
-      changeRate(interface, rate);
-      interface->rate = rate;
-
-      return E_OK;
+      if (setBusRate(interface, rate))
+      {
+        interface->rate = rate;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
     }
 
     default:

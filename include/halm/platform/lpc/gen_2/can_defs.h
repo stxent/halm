@@ -65,10 +65,13 @@ enum
 #define BT_TSEG1(value)                 BIT_FIELD((value), 8)
 #define BT_TSEG1_MASK                   BIT_FIELD(MASK(4), 8)
 #define BT_TSEG1_VALUE(reg)             FIELD_VALUE((reg), BT_TSEG1_MASK, 8)
+#define BT_TSEG1_MAX                    15
+#define BT_TSEG1_MIN                    1
 
 #define BT_TSEG2(value)                 BIT_FIELD((value), 12)
 #define BT_TSEG2_MASK                   BIT_FIELD(MASK(3), 12)
 #define BT_TSEG2_VALUE(reg)             FIELD_VALUE((reg), BT_TSEG2_MASK, 12)
+#define BT_TSEG2_MAX                    7
 /*------------------Interrupt register----------------------------------------*/
 enum
 {

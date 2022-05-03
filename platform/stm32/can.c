@@ -12,6 +12,12 @@
 #include <halm/platform/stm32/can.h>
 #include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_STM32_CAN_EXACT_RATE
+#define MAX_CLOCK_ERROR 0
+#else
+#define MAX_CLOCK_ERROR UINT32_MAX
+#endif
+/*----------------------------------------------------------------------------*/
 enum Mode
 {
   MODE_LISTENER,
@@ -48,12 +54,14 @@ struct Can
 #endif
 };
 /*----------------------------------------------------------------------------*/
-static uint32_t calcBusTimings(const struct Can *, uint32_t);
-static void changeMode(struct Can *, enum Mode);
-static void changeRate(struct Can *, uint32_t);
+static bool calcSegments(uint8_t, uint8_t *, uint8_t *);
+static bool calcTimings(const struct Can *, uint32_t, uint32_t *);
+static uint32_t getBusRate(const struct Can *);
 static void interruptHandler(void *);
 static void readMessage(struct Can *, struct CANMessage *, unsigned int);
 static void sendMessage(struct Can *, const struct CANMessage *);
+static void setBusMode(struct Can *, enum Mode);
+static bool setBusRate(struct Can *, uint32_t);
 static void setupAcceptanceFilter(struct Can *, unsigned int, unsigned int,
     bool, uint32_t, uint32_t);
 static void updateRxWatermark(struct Can *, size_t);
@@ -88,66 +96,99 @@ const struct InterfaceClass * const Can = &(const struct InterfaceClass){
     .write = canWrite
 };
 /*----------------------------------------------------------------------------*/
-static uint32_t calcBusTimings(const struct Can *interface, uint32_t rate)
+static bool calcSegments(uint8_t width, uint8_t *tseg1, uint8_t *tseg2)
 {
-  assert(rate != 0);
+  /* Width of the bit segment 1, the synchronization time segment excluded */
+  const uint8_t seg1 = width * CONFIG_PLATFORM_STM32_CAN_SP / 100 - 1;
 
-  const unsigned int bitsPerFrame =
-      1 + CONFIG_PLATFORM_STM32_CAN_TSEG1 + CONFIG_PLATFORM_STM32_CAN_TSEG2;
-  const uint32_t clock = canGetClock(&interface->base);
-  const uint32_t prescaler = clock / rate / bitsPerFrame;
-  const uint32_t regValue = BTR_BRP(prescaler - 1) | BTR_SJW(0)
-      | BTR_TS1(CONFIG_PLATFORM_STM32_CAN_TSEG1 - 1)
-      | BTR_TS2(CONFIG_PLATFORM_STM32_CAN_TSEG2 - 1);
+  if (seg1 > BTR_TS1_MAX + 1)
+    return false;
 
-  return regValue;
+  const uint8_t seg2 = width - seg1 - 1;
+
+  if (seg2 > BTR_TS2_MAX + 1)
+    return false;
+  if (seg2 <= CONFIG_PLATFORM_STM32_CAN_SJW)
+    return false;
+  if (seg2 > seg1 + 1)
+    return false;
+
+  *tseg1 = seg1;
+  *tseg2 = seg2;
+
+  return true;
 }
 /*----------------------------------------------------------------------------*/
-static void changeMode(struct Can *interface, enum Mode mode)
+static bool calcTimings(const struct Can *interface, uint32_t rate,
+    uint32_t *result)
 {
-  STM_CAN_Type * const reg = interface->base.reg;
-  uint32_t value = reg->BTR;
+  static const uint8_t MAX_WIDTH = BTR_TS1_MAX + BTR_TS2_MAX + 3;
+  static const uint8_t MIN_WIDTH = 3;
 
-  switch (mode)
+  if (!rate)
+    return false;
+
+  const uint32_t apbClock = canGetClock(&interface->base);
+  uint32_t currentError = MAX_CLOCK_ERROR;
+  uint32_t currentPrescaler;
+  uint8_t currentDelta = UINT8_MAX;
+  uint8_t currentSeg1;
+  uint8_t currentSeg2;
+
+  for (uint8_t width = MAX_WIDTH; width >= MIN_WIDTH; --width)
   {
-    case MODE_LISTENER:
-      value = (value & ~BTR_LBKM) | BTR_SILM;
-      break;
+    const uint32_t clock = rate * width;
+    const uint32_t error = apbClock % clock;
 
-    case MODE_LOOPBACK:
-      value |= BTR_LBKM | BTR_SILM;
-      break;
+    if (clock > apbClock)
+      continue;
+    if (error > currentError)
+      continue;
 
-    default:
-      value &= ~(BTR_LBKM | BTR_SILM);
-      break;
+    uint8_t seg1;
+    uint8_t seg2;
+
+    if (calcSegments(width, &seg1, &seg2))
+    {
+      const uint8_t sp = ((uint16_t)seg1 + 1) * 100 / width;
+      const uint8_t delta = abs(CONFIG_PLATFORM_STM32_CAN_SP - (int)sp);
+
+      if (error < currentError || delta < currentDelta)
+      {
+        currentError = error;
+        currentPrescaler = apbClock / clock;
+        currentDelta = delta;
+        currentSeg1 = seg1;
+        currentSeg2 = seg2;
+
+        if (error == 0 && delta == 0)
+          break;
+      }
+    }
   }
 
-  if (value != reg->BTR)
+  if (currentDelta != UINT8_MAX)
   {
-    /* Enter initialization mode */
-    reg->MCR |= MCR_INRQ;
-    while (!(reg->MSR & MSR_INAK));
+    *result = BTR_BRP(currentPrescaler - 1)
+        | BTR_SJW(CONFIG_PLATFORM_STM32_CAN_SJW - 1)
+        | BTR_TS1(currentSeg1 - 1)
+        | BTR_TS2(currentSeg2 - 1);
 
-    reg->BTR = value;
-
-    /* Leave initialization mode */
-    reg->MCR &= ~MCR_INRQ;
+    return true;
   }
+
+  return false;
 }
 /*----------------------------------------------------------------------------*/
-static void changeRate(struct Can *interface, uint32_t rate)
+static uint32_t getBusRate(const struct Can *interface)
 {
-  STM_CAN_Type * const reg = interface->base.reg;
+  const STM_CAN_Type * const reg = interface->base.reg;
+  const uint32_t apbClock = canGetClock(&interface->base);
+  const uint32_t btr = reg->BTR;
+  const uint32_t prescaler = BTR_BRP_VALUE(btr);
+  const uint32_t width = 3 + BTR_TS1_VALUE(btr) + BTR_TS2_VALUE(btr);
 
-  /* Enter initialization mode */
-  reg->MCR |= MCR_INRQ;
-  while (!(reg->MSR & MSR_INAK));
-
-  reg->BTR = calcBusTimings(interface, rate);
-
-  /* Request exit from initialization mode */
-  reg->MCR &= ~MCR_INRQ;
+  return apbClock / prescaler / width;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -192,10 +233,16 @@ static void interruptHandler(void *object)
     queued = true;
   }
 
-  if (!queued && (reg->TSR & TSR_TME_MASK) == TSR_TME_MASK
-      && pointerQueueEmpty(&interface->txQueue))
+  if (pointerQueueEmpty(&interface->txQueue))
   {
-    reg->IER &= ~IER_TMEIE;
+    if (queued)
+    {
+      event = true;
+    }
+    else if ((reg->TSR & TSR_TME_MASK) == TSR_TME_MASK)
+    {
+      reg->IER &= ~IER_TMEIE;
+    }
   }
 
   if (interface->callback && event)
@@ -276,6 +323,59 @@ static void sendMessage(struct Can *interface,
   reg->TX[mailbox].TIR |= TI_TXRQ;
 }
 /*----------------------------------------------------------------------------*/
+static void setBusMode(struct Can *interface, enum Mode mode)
+{
+  STM_CAN_Type * const reg = interface->base.reg;
+  uint32_t value = reg->BTR;
+
+  switch (mode)
+  {
+    case MODE_LISTENER:
+      value = (value & ~BTR_LBKM) | BTR_SILM;
+      break;
+
+    case MODE_LOOPBACK:
+      value |= BTR_LBKM | BTR_SILM;
+      break;
+
+    default:
+      value &= ~(BTR_LBKM | BTR_SILM);
+      break;
+  }
+
+  if (value != reg->BTR)
+  {
+    /* Enter initialization mode */
+    reg->MCR |= MCR_INRQ;
+    while (!(reg->MSR & MSR_INAK));
+
+    reg->BTR = value;
+
+    /* Leave initialization mode */
+    reg->MCR &= ~MCR_INRQ;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static bool setBusRate(struct Can *interface, uint32_t rate)
+{
+  STM_CAN_Type * const reg = interface->base.reg;
+  uint32_t btr;
+
+  if (!calcTimings(interface, rate, &btr))
+    return false;
+
+  /* Enter initialization mode */
+  reg->MCR |= MCR_INRQ;
+  while (!(reg->MSR & MSR_INAK));
+
+  reg->BTR = btr;
+
+  /* Request exit from initialization mode */
+  reg->MCR &= ~MCR_INRQ;
+
+  return true;
+}
+/*----------------------------------------------------------------------------*/
 static void setupAcceptanceFilter(struct Can *interface, unsigned int number,
     unsigned int fifo, bool enabled, uint32_t filterValue, uint32_t filterMask)
 {
@@ -335,8 +435,7 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct Can * const interface = object;
-
-    changeRate(interface, interface->rate);
+    setBusRate(interface, interface->rate);
   }
 }
 #endif
@@ -389,6 +488,10 @@ static enum Result canInit(void *object, const void *configBase)
   }
 
   STM_CAN_Type * const reg = interface->base.reg;
+  uint32_t btr;
+
+  if (!calcTimings(interface, config->rate, &btr))
+    return E_VALUE;
 
   /* Exit from sleep mode */
   reg->MCR &= ~MCR_SLEEP;
@@ -399,8 +502,8 @@ static enum Result canInit(void *object, const void *configBase)
   reg->MCR = (reg->MCR & ~(MCR_TTCM | MCR_NART))
       | (MCR_ABOM | MCR_AWUM | MCR_RFLM | MCR_TXFP);
 
-  /* Calculate bus timings and enable listener mode */
-  reg->BTR = calcBusTimings(interface, config->rate) | BTR_SILM;
+  /* Configure bus timings and enable listener mode */
+  reg->BTR = btr | BTR_SILM;
 
   /* Leave initialization mode */
   reg->MCR &= ~MCR_INRQ;
@@ -489,8 +592,18 @@ static enum Result canGetParam(void *object, int parameter, void *data)
           * sizeof(struct CANStandardMessage);
       return E_OK;
 
+#ifdef CONFIG_PLATFORM_STM32_CAN_WATERMARK
+    case IF_RX_WATERMARK:
+      *(size_t *)data = interface->rxWatermark;
+      return E_OK;
+
+    case IF_TX_WATERMARK:
+      *(size_t *)data = interface->txWatermark;
+      return E_OK;
+#endif
+
     case IF_RATE:
-      *(uint32_t *)data = interface->rate;
+      *(uint32_t *)data = getBusRate(interface);
       return E_OK;
 
     default:
@@ -505,15 +618,15 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
   switch ((enum CANParameter)parameter)
   {
     case IF_CAN_ACTIVE:
-      changeMode(interface, MODE_ACTIVE);
+      setBusMode(interface, MODE_ACTIVE);
       return E_OK;
 
     case IF_CAN_LISTENER:
-      changeMode(interface, MODE_LISTENER);
+      setBusMode(interface, MODE_LISTENER);
       return E_OK;
 
     case IF_CAN_LOOPBACK:
-      changeMode(interface, MODE_LOOPBACK);
+      setBusMode(interface, MODE_LOOPBACK);
       return E_OK;
 
     default:
@@ -526,10 +639,13 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
     {
       const uint32_t rate = *(const uint32_t *)data;
 
-      changeRate(interface, rate);
-      interface->rate = rate;
-
-      return E_OK;
+      if (setBusRate(interface, rate))
+      {
+        interface->rate = rate;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
     }
 
     default:

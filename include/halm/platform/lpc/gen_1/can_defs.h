@@ -96,10 +96,12 @@
 #define BTR_TSEG1(value)                BIT_FIELD((value), 16)
 #define BTR_TSEG1_MASK                  BIT_FIELD(MASK(4), 16)
 #define BTR_TSEG1_VALUE(reg)            FIELD_VALUE((reg), BTR_TSEG1_MASK, 16)
+#define BTR_TSEG1_MAX                   15
 
 #define BTR_TSEG2(value)                BIT_FIELD((value), 20)
 #define BTR_TSEG2_MASK                  BIT_FIELD(MASK(3), 20)
 #define BTR_TSEG2_VALUE(reg)            FIELD_VALUE((reg), BTR_TSEG2_MASK, 20)
+#define BTR_TSEG2_MAX                   7
 
 #define BTR_SAM                         BIT(23)
 /*------------------Error Warning Limit register------------------------------*/
