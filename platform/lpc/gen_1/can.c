@@ -189,8 +189,8 @@ static uint32_t getBusRate(const struct Can *interface)
   const LPC_CAN_Type * const reg = interface->base.reg;
   const uint32_t apbClock = canGetClock(&interface->base);
   const uint32_t btr = reg->BTR;
-  const uint32_t prescaler = BTR_BRP_VALUE(btr);
-  const uint32_t width = 3 + BTR_TSEG1_VALUE(btr) + BTR_TSEG2_VALUE(btr);
+  const uint32_t prescaler = BTR_BRP_VALUE(btr) + 1;
+  const uint32_t width = BTR_TSEG1_VALUE(btr) + BTR_TSEG2_VALUE(btr) + 3;
 
   return apbClock / prescaler / width;
 }
