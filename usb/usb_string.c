@@ -10,6 +10,16 @@
 #include <xcore/unicode.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
+struct UsbStringDescriptor
+{
+  uint8_t length;
+  uint8_t descriptorType;
+  uint16_t data[];
+};
+
+static_assert(offsetof(struct UsbStringDescriptor, data) ==
+    offsetof(struct UsbDescriptor, data), "Incorrect type declaration");
+/*----------------------------------------------------------------------------*/
 struct UsbString usbStringBuild(UsbStringFunctor functor, const void *argument,
     enum UsbStringType type, unsigned int number)
 {
