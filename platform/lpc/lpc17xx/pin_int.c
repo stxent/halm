@@ -66,22 +66,25 @@ static void disableInterrupt(const struct PinInt *interrupt)
   const unsigned int channel = interrupt->channel;
   const uint32_t mask = ~interrupt->mask;
 
-  LPC_GPIO_INT->PORT[channel].ENF &= ~mask;
-  LPC_GPIO_INT->PORT[channel].ENR &= ~mask;
+  /* Disable edge sensitivity options */
+  LPC_GPIO_INT->PORT[channel].ENF &= mask;
+  LPC_GPIO_INT->PORT[channel].ENR &= mask;
 }
 /*----------------------------------------------------------------------------*/
 static void enableInterrupt(const struct PinInt *interrupt)
 {
   const unsigned int channel = interrupt->channel;
   const enum PinEvent event = interrupt->event;
+  const uint32_t mask = interrupt->mask;
 
   /* Clear pending interrupt flag */
-  LPC_GPIO_INT->PORT[channel].CLR = interrupt->mask;
+  LPC_GPIO_INT->PORT[channel].CLR = mask;
+
   /* Configure edge sensitivity options */
   if (event != PIN_RISING)
-    LPC_GPIO_INT->PORT[channel].ENF |= interrupt->mask;
+    LPC_GPIO_INT->PORT[channel].ENF |= mask;
   if (event != PIN_FALLING)
-    LPC_GPIO_INT->PORT[channel].ENR |= interrupt->mask;
+    LPC_GPIO_INT->PORT[channel].ENR |= mask;
 }
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
