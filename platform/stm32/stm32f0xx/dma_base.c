@@ -9,7 +9,7 @@
 #include <halm/platform/stm32/dma_base.h>
 #include <halm/platform/stm32/dma_defs.h>
 #include <halm/platform/stm32/system.h>
-#include <xcore/memory.h>
+#include <xcore/atomic.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 /*

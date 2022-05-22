@@ -10,6 +10,7 @@ cmake_policy(SET CMP0079 NEW)
 option(USE_LTO "Enable Link Time Optimization." OFF)
 set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE STRING "Path to the config file.")
 
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${HALM_CONFIG_FILE}")
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(ParseConfig)
 parse_config("${HALM_CONFIG_FILE}" CONFIG_DEFS)

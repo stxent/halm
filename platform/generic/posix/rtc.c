@@ -23,6 +23,7 @@ const struct RtClockClass * const Rtc = &(const struct RtClockClass){
     .setAlarm = 0,
     .setCallback = 0,
     .setTime = 0,
+    .stop = 0,
     .time = clkTime
 };
 /*----------------------------------------------------------------------------*/

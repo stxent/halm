@@ -12,7 +12,7 @@
 #define HALM_CORE_CORTEX_ARMV6M_IRQ_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/core/core_defs.h>
-#include <xcore/core/cortex/asm.h>
+#include <xcore/asm.h>
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 enum

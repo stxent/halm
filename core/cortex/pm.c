@@ -7,7 +7,7 @@
 #include <halm/core/core_defs.h>
 #include <halm/core/cortex/pm_defs.h>
 #include <halm/pm.h>
-#include <xcore/core/cortex/asm.h>
+#include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
 void pmCoreChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/

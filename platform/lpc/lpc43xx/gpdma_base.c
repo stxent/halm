@@ -10,7 +10,7 @@
 #include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
 #include <xcore/accel.h>
-#include <xcore/memory.h>
+#include <xcore/atomic.h>
 #include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/

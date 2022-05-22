@@ -1,6 +1,7 @@
 /*
  * buffering_proxy.c
- * Copyright (C) 2021 Alexander
+ * Copyright (C) 2021 xent
+ * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/generic/buffering_proxy.h>
@@ -85,6 +86,7 @@ static void onTxStreamEvent(void *argument, struct StreamRequest *request,
 static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct BufferingProxyConfig * const config = configBase;
+  assert(config);
   assert(config->pipe);
 
   struct BufferingProxy * const interface = object;

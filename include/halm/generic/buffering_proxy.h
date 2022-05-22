@@ -1,6 +1,7 @@
 /*
  * halm/generic/buffering_proxy.h
- * Copyright (C) 2021 Alexander
+ * Copyright (C) 2021 xent
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_GENERIC_BUFFERING_PROXY_H_

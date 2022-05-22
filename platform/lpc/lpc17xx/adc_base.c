@@ -8,7 +8,7 @@
 #include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/gen_1/adc_defs.h>
 #include <halm/platform/lpc/system.h>
-#include <xcore/memory.h>
+#include <xcore/atomic.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV                   CLK_DIV1

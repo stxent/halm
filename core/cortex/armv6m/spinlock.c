@@ -5,7 +5,7 @@
  */
 
 #include <halm/spinlock.h>
-#include <xcore/core/cortex/asm.h>
+#include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
 void spinLock(Spinlock *lock)
 {
