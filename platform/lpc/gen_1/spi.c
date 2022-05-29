@@ -269,7 +269,7 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
   (void)data;
 #endif
 
-  switch ((enum SpiParameter)parameter)
+  switch ((enum SPIParameter)parameter)
   {
     case IF_SPI_BIDIRECTIONAL:
       interface->unidir = false;

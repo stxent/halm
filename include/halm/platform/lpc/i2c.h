@@ -10,15 +10,6 @@
 #include <halm/platform/lpc/i2c_base.h>
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
-enum I2CParameter
-{
-  /**
-   * Send stop after write operation. Option controls the repeated start
-   * condition generation. This option is enabled by default.
-   */
-  IF_I2C_SENDSTOP = IF_PARAMETER_END
-};
-/*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2C;
 
 struct I2CConfig
@@ -57,8 +48,8 @@ struct I2C
   uint8_t state;
   /* Selection between blocking mode and zero copy mode */
   bool blocking;
-  /* Generate stop condition after writing */
-  bool sendStopBit;
+  /* Generate repeated start condition after a next transfer */
+  bool sendRepeatedStart;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_I2C_H_ */

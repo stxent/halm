@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/generic/i2c.h>
 #include <halm/platform/lpc/gen_1/i2c_defs.h>
 #include <halm/platform/lpc/i2c.h>
 #include <xcore/memory.h>
@@ -115,10 +116,13 @@ static void interruptHandler(void *object)
       }
       else
       {
-        if (interface->sendStopBit)
-          reg->CONSET = CONSET_STO;
-        else
+        if (interface->sendRepeatedStart)
+        {
+          interface->sendRepeatedStart = false;
           clearInterrupt = false;
+        }
+        else
+          reg->CONSET = CONSET_STO;
 
         interface->state = STATE_IDLE;
         event = true;
@@ -201,7 +205,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->address = 0;
   interface->callback = 0;
   interface->blocking = true;
-  interface->sendStopBit = true;
+  interface->sendRepeatedStart = false;
   interface->state = STATE_IDLE;
 
   /* Rate should be initialized after block selection */
@@ -267,8 +271,8 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
   /* Additional I2C parameters */
   switch ((enum I2CParameter)parameter)
   {
-    case IF_I2C_SENDSTOP:
-      interface->sendStopBit = *(const bool *)data;
+    case IF_I2C_REPEATED_START:
+      interface->sendRepeatedStart = true;
       return E_OK;
 
     default:

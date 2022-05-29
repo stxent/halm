@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-enum SpiParameter
+enum SPIParameter
 {
   /**
    * Change interface mode, consisting of phase and clock settings,
