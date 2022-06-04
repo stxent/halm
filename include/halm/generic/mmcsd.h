@@ -15,11 +15,11 @@ extern const struct InterfaceClass * const MMCSD;
 
 enum MMCSDParameter
 {
-  /** Size of the erase group in bytes. */
+  /** Size of the erase group in bytes. Parameter type is \a uint32_t. */
   IF_MMCSD_ERASE_GROUP_SIZE = IF_PARAMETER_END,
-  /** Erase sector using 32-bit address. */
+  /** Erase sector using 32-bit address. Parameter type is \a uint32_t. */
   IF_MMCSD_ERASE,
-  /** Erase sector using 64-bit address. */
+  /** Erase sector using 64-bit address. Parameter type is \a uint64_t. */
   IF_MMCSD_ERASE_64
 };
 

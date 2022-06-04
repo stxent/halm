@@ -13,6 +13,7 @@ enum I2CParameter
 {
   /**
    * Enable generation of the repeated start condition after a next transfer.
+   * Data pointer should be set to zero.
    */
   IF_I2C_REPEATED_START = IF_PARAMETER_END,
 };

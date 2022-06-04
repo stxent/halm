@@ -257,7 +257,7 @@ static void searchInterruptHandler(void *object)
 
   if (reg->SR & SR_TFE)
   {
-    switch (interface->state)
+    switch ((enum State)interface->state)
     {
       case STATE_SEARCH_START:
         sendWord(interface, 0xF0);

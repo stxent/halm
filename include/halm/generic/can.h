@@ -26,23 +26,45 @@ enum CANFlags
 
 enum CANParameter
 {
-  /** Enable active mode. */
+  /** Enable active mode. Data pointer should be set to zero. */
   IF_CAN_ACTIVE = IF_PARAMETER_END,
-  /** Enable listener mode. This mode is set by default. */
+  /**
+   * Enable listener mode. This mode is set by default.
+   * Data pointer should be set to zero.
+   */
   IF_CAN_LISTENER,
-  /** Enable loopback mode. */
+  /** Enable loopback mode. Data pointer should be set to zero. */
   IF_CAN_LOOPBACK,
-  /** Add acceptance filter for standard frames. */
+
+  /**
+   * Add acceptance filter for standard frames.
+   * Parameter type is \a struct \a CANFilter.
+   */
   IF_CAN_FILTER_ADD_STD,
-  /** Remove acceptance filter for standard frames. */
+  /**
+   * Remove acceptance filter for standard frames.
+   * Parameter type is \a struct \a CANFilter.
+   */
   IF_CAN_FILTER_REMOVE_STD,
-  /** Add acceptance filter for extended frames. */
+  /**
+   * Add acceptance filter for extended frames.
+   * Parameter type is \a struct \a CANFilter.
+   */
   IF_CAN_FILTER_ADD_EXT,
-  /** Remove acceptance filter for extended frames. */
+  /**
+   * Remove acceptance filter for extended frames.
+   * Parameter type is \a struct \a CANFilter.
+   */
   IF_CAN_FILTER_REMOVE_EXT,
-  /** Add acceptance filter for flexible data-rate frames. */
+  /**
+   * Add acceptance filter for flexible data-rate frames.
+   * Parameter type is \a struct \a CANFilter.
+   */
   IF_CAN_FILTER_ADD_FD,
-  /** Remove acceptance filter for flexible data-rate frames. */
+  /**
+   * Remove acceptance filter for flexible data-rate frames.
+   * Parameter type is \a struct \a CANFilter.
+   */
   IF_CAN_FILTER_REMOVE_FD
 };
 /*----------------------------------------------------------------------------*/

@@ -56,9 +56,9 @@ static const struct StreamRateEntry rateList[] = {
     {.key = 1000000, .value = B1000000}
 };
 /*----------------------------------------------------------------------------*/
-static bool changePortFlag(struct Serial *, int, bool);
-static bool getPortFlag(struct Serial *, int, bool *);
-static bool getPortParity(struct Serial *, enum SerialParity *);
+static bool changePortFlag(struct Serial *, int, uint8_t);
+static bool getPortFlag(struct Serial *, int, uint8_t *);
+static bool getPortParity(struct Serial *, uint8_t *);
 static bool getPortRate(struct Serial *, uint32_t *);
 static void onCloseCallback(uv_handle_t *);
 static void onInterfaceCallback(uv_poll_t *, int, int);
@@ -85,13 +85,13 @@ const struct InterfaceClass * const Serial = &(const struct InterfaceClass){
     .write = streamWrite
 };
 /*----------------------------------------------------------------------------*/
-static bool changePortFlag(struct Serial *interface, int flag, bool state)
+static bool changePortFlag(struct Serial *interface, int flag, uint8_t state)
 {
-  const int cmd = state ? TIOCMBIS : TIOCMBIC;
+  const int cmd = state != 0 ? TIOCMBIS : TIOCMBIC;
   return ioctl(interface->descriptor, cmd, &flag) != -1;
 }
 /*----------------------------------------------------------------------------*/
-static bool getPortFlag(struct Serial *interface, int flag, bool *state)
+static bool getPortFlag(struct Serial *interface, int flag, uint8_t *state)
 {
   int value;
 
@@ -104,7 +104,7 @@ static bool getPortFlag(struct Serial *interface, int flag, bool *state)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-static bool getPortParity(struct Serial *interface, enum SerialParity *parity)
+static bool getPortParity(struct Serial *interface, uint8_t *parity)
 {
   struct termios settings;
 
@@ -375,11 +375,11 @@ static enum Result streamSetParam(void *object, int parameter, const void *data)
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_RTS:
-      return changePortFlag(interface, TIOCM_RTS, *(const bool *)data) ?
+      return changePortFlag(interface, TIOCM_RTS, *(const uint8_t *)data) ?
           E_OK : E_INTERFACE;
 
     case IF_SERIAL_DTR:
-      return changePortFlag(interface, TIOCM_DTR, *(const bool *)data) ?
+      return changePortFlag(interface, TIOCM_DTR, *(const uint8_t *)data) ?
           E_OK : E_INTERFACE;
 
     default:

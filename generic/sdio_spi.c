@@ -7,6 +7,7 @@
 #include <halm/generic/sdio.h>
 #include <halm/generic/sdio_defs.h>
 #include <halm/generic/sdio_spi.h>
+#include <halm/generic/spi.h>
 #include <halm/generic/work_queue.h>
 #include <xcore/crc/crc7.h>
 #include <xcore/crc/crc16_ccitt.h>
@@ -599,7 +600,10 @@ static void autoStopTransmission(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *interface)
 {
+  /* Lock the interface */
   ifSetParam(interface->bus, IF_ACQUIRE, 0);
+
+  ifSetParam(interface->bus, IF_SPI_UNIDIRECTIONAL, 0);
   ifSetParam(interface->bus, IF_ZEROCOPY, 0);
   ifSetCallback(interface->bus, interruptHandler, interface);
 

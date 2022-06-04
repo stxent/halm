@@ -18,19 +18,24 @@ enum SerialParity
 
 enum SerialParameter
 {
-  /** Enable parity checking or read current parity settings. */
+  /**
+   * Enable parity checking or read current parity settings.
+   * Parameter type is \a uint8_t.
+   */
   IF_SERIAL_PARITY = IF_PARAMETER_END,
-  /** Read the CTS status line. */
+
+  /** Read the CTS status line. Parameter type is \a uint8_t. */
   IF_SERIAL_CTS,
-  /** Write the RTS status line. */
+  /** Write the RTS status line. Parameter type is \a uint8_t. */
   IF_SERIAL_RTS,
-  /** Read the DSR status line. */
+  /** Read the DSR status line. Parameter type is \a uint8_t. */
   IF_SERIAL_DSR,
-  /** Write the DTR status line. */
+  /** Write the DTR status line. Parameter type is \a uint8_t. */
   IF_SERIAL_DTR,
-  /** Read frame error counter. */
+
+  /** Read frame error counter. Parameter type is \a uint32_t. */
   IF_SERIAL_FE,
-  /** Read parity error counter. */
+  /** Read parity error counter. Parameter type is \a uint32_t. */
   IF_SERIAL_PE,
 
   /** End of the list. */

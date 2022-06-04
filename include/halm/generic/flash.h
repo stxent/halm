@@ -11,11 +11,11 @@
 /*----------------------------------------------------------------------------*/
 enum FlashParameter
 {
-  /** Get page size. */
+  /** Get page size. Parameter type is \a uint32_t. */
   IF_FLASH_PAGE_SIZE = IF_PARAMETER_END,
-  /** Erase sector. */
+  /** Erase sector at a relative address. Parameter type is \a uint32_t. */
   IF_FLASH_ERASE_SECTOR,
-  /** Erase page in sector. */
+  /** Erase page at a relative address. Parameter type is \a uint32_t. */
   IF_FLASH_ERASE_PAGE
 };
 /*----------------------------------------------------------------------------*/
