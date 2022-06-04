@@ -80,18 +80,23 @@ static void cdcDataReceived(void *argument, struct UsbRequest *request,
   struct CdcAcm * const interface = argument;
   bool event = false;
 
-  pointerQueuePushBack(&interface->rxRequestQueue, request);
-
   if (status == USB_REQUEST_COMPLETED)
   {
     interface->queuedRxBytes += request->length;
     event = true;
   }
-  else if (status != USB_REQUEST_CANCELLED)
+  else
   {
-    interface->suspended = true;
-    usbTrace("cdc_acm: suspended in read callback");
+    request->length = 0;
+
+    if (status != USB_REQUEST_CANCELLED)
+    {
+      interface->suspended = true;
+      usbTrace("cdc_acm: suspended in read callback");
+    }
   }
+
+  pointerQueuePushBack(&interface->rxRequestQueue, request);
 
   if (event && interface->callback)
     interface->callback(interface->callbackArgument);
@@ -495,6 +500,8 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
     irqRestore(state);
 
     memcpy(bufferPosition, request->buffer, bytesToRead);
+    request->length = 0;
+
     bufferPosition += bytesToRead;
     length -= bytesToRead;
 

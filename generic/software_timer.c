@@ -270,13 +270,20 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 static uint32_t tmrGetFrequency(const void *object)
 {
   const struct SoftwareTimer * const timer = object;
-  return timerGetFrequency(timer->factory->timer);
+  const uint32_t clock = timerGetFrequency(timer->factory->timer);
+  const uint32_t overflow = timerGetOverflow(timer->factory->timer);
+
+  assert(overflow != 0 && overflow <= clock);
+  return clock / overflow;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   const struct SoftwareTimer * const timer = object;
-  timerSetFrequency(timer->factory->timer, frequency);
+  const uint32_t clock = timerGetFrequency(timer->factory->timer);
+
+  assert(frequency != 0 && frequency <= clock);
+  timerSetOverflow(timer->factory->timer, clock / frequency);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)
