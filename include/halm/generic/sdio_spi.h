@@ -17,14 +17,14 @@ extern const struct InterfaceClass * const SdioSpi;
 struct SdioSpiConfig
 {
   /** Mandatory: underlying serial interface. */
-  struct Interface *interface;
+  void *interface;
   /**
    * Optional: timer to reduce interrupt count. Timer interrupts should have
    * lower or equal priority than serial interface interrupts.
    */
-  struct Timer *timer;
+  void *timer;
   /** Optional: work queue for integrity checking tasks. */
-  struct WorkQueue *wq;
+  void *wq;
   /**
    * Optional: integrity checking control, set to zero to disable integrity
    * checks or to positive value to set maximal number of blocks in

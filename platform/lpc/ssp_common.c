@@ -46,25 +46,29 @@ uint32_t sspGetRate(const struct SspBase *interface)
 void sspSetRate(struct SspBase *interface, uint32_t rate)
 {
   LPC_SSP_Type * const reg = interface->reg;
-  uint32_t clockPrescaleReg;
-  uint32_t controlReg0 = reg->CR0 & ~CR0_SCR_MASK;
+  uint32_t cpsr;
+  uint32_t cr0 = reg->CR0 & ~CR0_SCR_MASK;
 
   if (rate)
   {
     const uint32_t clock = sspGetClock(interface);
-    uint32_t divisor = ((clock + (rate - 1)) >> 1) / rate - 1;
+    const uint32_t divisor = (clock + (rate - 1)) / rate;
+    uint32_t prescaler0 = divisor >> 8;
 
-    if (divisor >= 127 * 256)
-      divisor = 127 * 256 - 1;
+    if (prescaler0 > 254)
+      prescaler0 = 254;
+    if (prescaler0 < 2)
+      prescaler0 = 2;
+    prescaler0 = (prescaler0 + 1) & 0xFE;
 
-    const uint32_t prescaler = 1 + (divisor >> 8);
+    const uint32_t prescaler1 = (divisor + (prescaler0 - 1)) / prescaler0;
 
-    clockPrescaleReg = prescaler << 1;
-    controlReg0 |= CR0_SCR(divisor / prescaler);
+    cpsr = prescaler0;
+    cr0 |= CR0_SCR(prescaler1 - 1);
   }
   else
-    clockPrescaleReg = 0;
+    cpsr = 0;
 
-  reg->CPSR = clockPrescaleReg;
-  reg->CR0 = controlReg0;
+  reg->CPSR = cpsr;
+  reg->CR0 = cr0;
 }

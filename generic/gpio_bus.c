@@ -80,7 +80,6 @@ static enum Result busInit(void *object, const void *configBase)
 static void busDeinit(void *object)
 {
   struct SimpleGpioBus * const bus = object;
-
   free(bus->pins);
 }
 /*----------------------------------------------------------------------------*/

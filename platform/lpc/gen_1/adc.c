@@ -53,9 +53,9 @@ static void interruptHandler(void *object)
 static size_t setupPins(struct Adc *interface, const PinNumber *pins)
 {
   LPC_ADC_Type * const reg = interface->base.reg;
-  unsigned int event = 0;
-  unsigned int mask = 0;
   size_t index = 0;
+  uint32_t enabled = 0;
+  unsigned int event = 0;
 
   while (pins[index])
   {
@@ -73,15 +73,15 @@ static size_t setupPins(struct Adc *interface, const PinNumber *pins)
      * and an array of measured values.
      */
     const unsigned int channel = interface->pins[index].channel;
-    assert(!(mask >> channel));
+    assert(!(enabled >> channel));
 
     event = channel;
-    mask |= 1 << channel;
-
+    enabled |= 1 << channel;
     ++index;
   }
 
-  interface->base.control |= CR_SEL(mask);
+  assert(enabled != 0);
+  interface->base.control |= CR_SEL(enabled);
   interface->event = event;
 
   return index;
@@ -119,6 +119,7 @@ static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
   assert(config);
+  assert(config->pins);
   assert(config->event < ADC_EVENT_END);
   assert(config->event != ADC_SOFTWARE);
 

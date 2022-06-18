@@ -320,23 +320,16 @@ static enum Result spiInit(void *object, const void *configBase)
   interface->unidir = true;
 
   LPC_SSP_Type * const reg = interface->base.reg;
-  uint32_t controlValue = 0;
 
   /* Set frame size */
-  controlValue |= CR0_DSS(8);
-
-  /* Set mode of the interface */
-  if (config->mode & 0x01)
-    controlValue |= CR0_CPHA;
-  if (config->mode & 0x02)
-    controlValue |= CR0_CPOL;
-
-  reg->CR0 = controlValue;
+  reg->CR0 = CR0_DSS(8);
   /* Disable all interrupts */
   reg->IMSC = 0;
 
+  /* Set SPI mode */
+  sspSetMode(&interface->base, config->mode);
   /* Set the desired data rate */
-  sspSetRate(object, interface->rate);
+  sspSetRate(&interface->base, interface->rate);
 
 #ifdef CONFIG_PLATFORM_LPC_SSP_PM
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
@@ -386,6 +379,18 @@ static enum Result spiGetParam(void *object, int parameter, void *data)
   (void)data;
 #endif
 
+  switch ((enum SPIParameter)parameter)
+  {
+#ifdef CONFIG_PLATFORM_LPC_SSP_RC
+    case IF_SPI_MODE:
+      *(uint8_t *)data = sspGetMode(&interface->base);
+      return E_OK;
+#endif
+
+    default:
+      break;
+  }
+
   switch ((enum IfParameter)parameter)
   {
 #ifdef CONFIG_PLATFORM_LPC_SSP_RC
@@ -417,6 +422,10 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
 
   switch ((enum SPIParameter)parameter)
   {
+    case IF_SPI_MODE:
+      sspSetMode(&interface->base, *(const uint8_t *)data);
+      return E_OK;
+
     case IF_SPI_BIDIRECTIONAL:
       interface->unidir = false;
       return E_OK;
@@ -440,7 +449,7 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
 #ifdef CONFIG_PLATFORM_LPC_SSP_RC
     case IF_RATE:
       interface->rate = *(const uint32_t *)data;
-      sspSetRate(object, interface->rate);
+      sspSetRate(&interface->base, interface->rate);
       return E_OK;
 #endif
 

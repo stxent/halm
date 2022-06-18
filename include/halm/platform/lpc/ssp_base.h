@@ -52,7 +52,9 @@ BEGIN_DECLS
 
 /* Common functions */
 void sspConfigPins(struct SspBase *, const struct SspBaseConfig *);
+uint8_t sspGetMode(const struct SspBase *);
 uint32_t sspGetRate(const struct SspBase *);
+void sspSetMode(struct SspBase *, uint8_t);
 void sspSetRate(struct SspBase *, uint32_t);
 
 /* Platform-specific functions */

@@ -26,7 +26,7 @@ enum MMCSDParameter
 struct MMCSDConfig
 {
   /** Mandatory: hardware interface. */
-  struct Interface *interface;
+  void *interface;
   /** Optional: enable integrity checking for all transfers. */
   bool crc;
 };

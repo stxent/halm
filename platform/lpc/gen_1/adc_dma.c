@@ -100,8 +100,7 @@ static bool setupDmaChannel(struct AdcDma *interface,
 static size_t setupPins(struct AdcDma *interface, const PinNumber *pins)
 {
   size_t index = 0;
-
-  interface->mask = 0;
+  uint32_t enabled = 0;
 
   while (pins[index])
   {
@@ -115,15 +114,15 @@ static size_t setupPins(struct AdcDma *interface, const PinNumber *pins)
      * and an array of measured values.
      */
     const unsigned int channel = interface->pins[index].channel;
-    uint32_t mask = INTEN_AD(channel);
+    assert(!(enabled >> channel));
 
-    assert(!(interface->mask & ~(mask - 1)));
-
-    interface->base.control |= CR_SEL(1 << channel);
-    interface->mask |= mask;
-
+    enabled |= 1 << channel;
     ++index;
   }
+
+  assert(enabled != 0);
+  interface->base.control |= CR_SEL(enabled);
+  interface->mask = enabled;
 
   return index;
 }
@@ -165,6 +164,7 @@ static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
   assert(config);
+  assert(config->pins);
   assert(config->event < ADC_EVENT_END);
   assert(config->event != ADC_SOFTWARE);
 

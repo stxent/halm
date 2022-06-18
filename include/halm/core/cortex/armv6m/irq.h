@@ -18,14 +18,11 @@
 enum
 {
   /* Core-specific interrupt sources */
-  NMI_IRQ         = -14,
-  MEMMANAGE_IRQ   = -12,
-  BUSFAULT_IRQ    = -11,
-  USAGEFAULT_IRQ  = -10,
-  SVCALL_IRQ      = -5,
-  DEBUGMON_IRQ    = -4,
-  PENDSV_IRQ      = -2,
-  SYSTICK_IRQ     = -1
+  NMI_IRQ       = -14,
+  HARDFAULT_IRQ = -12,
+  SVCALL_IRQ    = -5,
+  PENDSV_IRQ    = -2,
+  SYSTICK_IRQ   = -1
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
