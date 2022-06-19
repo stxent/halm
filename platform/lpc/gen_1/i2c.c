@@ -23,6 +23,7 @@ enum State
 /* Master transmitter and receiver modes */
 enum Status
 {
+  STATUS_BUS_ERROR              = 0x00,
   /* Start condition transmitted */
   STATUS_START_TRANSMITTED      = 0x08,
   /* Repeated start condition transmitted */
@@ -153,6 +154,8 @@ static void interruptHandler(void *object)
       event = true;
       break;
 
+    /* External interference disturbed the internal signals */
+    case STATUS_BUS_ERROR:
     /* Arbitration has been lost during transmission or reception */
     case STATUS_ARBITRATION_LOST:
     /* Data byte has been transmitted, NACK received */
@@ -160,6 +163,8 @@ static void interruptHandler(void *object)
     /* Address and direction bit have not been acknowledged */
     case STATUS_SLAVE_WRITE_NACK:
     case STATUS_SLAVE_READ_NACK:
+      interface->sendRepeatedStart = false;
+
       reg->CONSET = CONSET_STO;
       interface->state = STATE_ERROR;
       event = true;
@@ -215,7 +220,7 @@ static enum Result i2cInit(void *object, const void *configBase)
 
   /* Clear all flags */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
-  /* Enable I2C interface */
+  /* Enable the interface */
   reg->CONSET = CONSET_I2EN;
 
   irqSetPriority(interface->base.irq, config->priority);
@@ -229,7 +234,9 @@ static void i2cDeinit(void *object)
   struct I2C * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
-  reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
+  /* Disable the interface */
+  reg->CONCLR = CONCLR_I2ENC;
+
   I2CBase->deinit(interface);
 }
 #endif
@@ -372,6 +379,7 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
    */
   interface->state = STATE_ADDRESS;
   reg->CONSET = CONSET_STA;
+
   irqEnable(interface->base.irq);
 
   if (interface->blocking)

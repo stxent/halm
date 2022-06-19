@@ -34,13 +34,40 @@ void sspConfigPins(struct SspBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
+uint8_t sspGetMode(const struct SspBase *interface)
+{
+  const LPC_SSP_Type * const reg = interface->reg;
+  const uint32_t cr0 = reg->CR0;
+  uint8_t mode = 0;
+
+  if (cr0 & CR0_CPHA)
+    mode |= 0x01;
+  if (cr0 & CR0_CPOL)
+    mode |= 0x02;
+
+  return mode;
+}
+/*----------------------------------------------------------------------------*/
 uint32_t sspGetRate(const struct SspBase *interface)
 {
-  LPC_SSP_Type * const reg = interface->reg;
-  const uint32_t value = reg->CPSR;
+  const LPC_SSP_Type * const reg = interface->reg;
+  const uint32_t cpsr = reg->CPSR;
 
-  return value ?
-      (sspGetClock(interface) / value / (CR0_SCR_VALUE(reg->CR0) + 1)) : 0;
+  return cpsr ?
+      (sspGetClock(interface) / cpsr / (CR0_SCR_VALUE(reg->CR0) + 1)) : 0;
+}
+/*----------------------------------------------------------------------------*/
+void sspSetMode(struct SspBase *interface, uint8_t mode)
+{
+  LPC_SSP_Type * const reg = interface->reg;
+  uint32_t cr0 = reg->CR0 & ~(CR0_CPHA | CR0_CPOL);
+
+  if (mode & 0x01)
+    cr0 |= CR0_CPHA;
+  if (mode & 0x02)
+    cr0 |= CR0_CPOL;
+
+  reg->CR0 = cr0;
 }
 /*----------------------------------------------------------------------------*/
 void sspSetRate(struct SspBase *interface, uint32_t rate)
