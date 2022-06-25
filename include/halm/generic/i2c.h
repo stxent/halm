@@ -16,6 +16,11 @@ enum I2CParameter
    * Data pointer should be set to zero.
    */
   IF_I2C_REPEATED_START = IF_PARAMETER_END,
+  /**
+   * Generate bus recovery sequence. Bus recovery is a blocking operation.
+   * Data pointer should be set to zero.
+   */
+  IF_I2C_BUS_RECOVERY
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_I2C_H_ */

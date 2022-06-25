@@ -35,6 +35,10 @@ struct I2CBase
   void (*handler)(void *);
   IrqNumber irq;
 
+  /* Serial clock pin identifier */
+  PinNumber scl;
+  /* Serial data pin identifier */
+  PinNumber sda;
   /* Unique peripheral identifier */
   uint8_t channel;
 };
@@ -42,8 +46,9 @@ struct I2CBase
 BEGIN_DECLS
 
 /* Common functions */
-void i2cConfigPins(struct I2CBase *, const struct I2CBaseConfig *);
+void i2cConfigPins(struct I2CBase *);
 uint32_t i2cGetRate(const struct I2CBase *);
+void i2cRecoverBus(struct I2CBase *);
 void i2cSetRate(struct I2CBase *, uint32_t);
 
 /* Platform-specific functions */

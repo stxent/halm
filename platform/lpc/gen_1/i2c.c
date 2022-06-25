@@ -282,6 +282,18 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
       interface->sendRepeatedStart = true;
       return E_OK;
 
+    case IF_I2C_BUS_RECOVERY:
+    {
+      LPC_I2C_Type * const reg = interface->base.reg;
+
+      reg->CONSET = CONSET_STO;
+      i2cRecoverBus(&interface->base);
+      i2cConfigPins(&interface->base);
+      interface->sendRepeatedStart = false;
+
+      return E_OK;
+    }
+
     default:
       break;
   }

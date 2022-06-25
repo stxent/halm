@@ -135,7 +135,9 @@ static enum Result i2cInit(void *object, const void *configBase)
     return E_BUSY;
 
   /* Configure pins */
-  i2cConfigPins(interface, configBase);
+  interface->scl = config->scl;
+  interface->sda = config->sda;
+  i2cConfigPins(interface);
 
   const struct I2CBlockDescriptor * const entry =
       &i2cBlockEntries[interface->channel];
