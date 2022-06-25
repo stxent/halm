@@ -21,7 +21,7 @@ struct MscConfig
 
   /**
    * Optional: memory region for the temporary buffer. When the pointer is
-   * left uninitialized, a memory for the buffer will be allocated in the heap.
+   * left uninitialized, a memory for the buffer will be allocated on the heap.
    * Pointer address should be aligned.
    */
   void *arena;

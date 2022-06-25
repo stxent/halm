@@ -41,7 +41,7 @@ struct CdcAcmConfig
 
   /**
    * Optional: memory region for receive and transmit buffers.
-   * When the pointer is left uninitialized, buffers will be allocated in
+   * When the pointer is left uninitialized, buffers will be allocated on
    * the heap. Pointer address should be aligned. Buffers have fixed size of
    * 64 bytes for full-speed devices and 512 bytes for high-speed devices.
    */

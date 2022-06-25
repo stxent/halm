@@ -302,7 +302,7 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
       return E_OK;
 
     case IF_RATE:
-      i2cSetRate(object, *(const uint32_t *)data);
+      i2cSetRate(&interface->base, *(const uint32_t *)data);
       return E_OK;
 
     case IF_ZEROCOPY:

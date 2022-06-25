@@ -16,7 +16,7 @@ extern const struct InterfaceClass * const SdioSpi;
 
 struct SdioSpiConfig
 {
-  /** Mandatory: underlying serial interface. */
+  /** Mandatory: serial interface. */
   void *interface;
   /**
    * Optional: timer to reduce interrupt count. Timer interrupts should have

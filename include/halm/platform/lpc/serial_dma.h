@@ -17,7 +17,11 @@ extern const struct InterfaceClass * const SerialDma;
 
 struct SerialDmaConfig
 {
-  /** Optional: memory arena for queues. */
+  /**
+   * Optional: memory buffer for transmit and receive queues. Queues will be
+   * allocated on the heap when the pointer is set to zero.
+   * Pointer address should be aligned.
+   */
   void *arena;
   /** Mandatory: size of the input buffer, input is double buffered. */
   size_t rxChunks;

@@ -16,7 +16,7 @@ extern const struct InterfaceClass * const BufferingProxy;
 
 struct BufferingProxyConfig
 {
-  /** Mandatory: underlying interface. */
+  /** Mandatory: wrapped interface. */
   void *pipe;
 
   struct
