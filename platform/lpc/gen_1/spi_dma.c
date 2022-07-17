@@ -132,7 +132,7 @@ static void dmaSetupRx(struct Dma *rx, struct Dma *tx)
               .increment = false
           },
           .destination = {
-              .burst = DMA_BURST_4,
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }
@@ -164,7 +164,7 @@ static void dmaSetupRxTx(struct Dma *rx, struct Dma *tx)
               .increment = true
           },
           .destination = {
-              .burst = DMA_BURST_4,
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }
@@ -180,7 +180,7 @@ static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
   static const struct GpDmaSettings dmaSettings[] = {
       {
           .source = {
-              .burst = DMA_BURST_4,
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           },
@@ -196,7 +196,7 @@ static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
               .increment = true
           },
           .destination = {
-              .burst = DMA_BURST_4,
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }

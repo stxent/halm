@@ -188,15 +188,16 @@ static void stateInitEnter(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateSendCommandEnter(struct SdioSpi *interface)
 {
+  interface->retries = TOKEN_RETRIES;
+
   pinReset(interface->cs);
   sendCommand(interface, interface->command, interface->argument);
-  interface->retries = TOKEN_RETRIES;
 }
 /*----------------------------------------------------------------------------*/
 static void stateWaitRespEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->bus, interface->buffer, 1);
   --interface->retries;
+  ifRead(interface->bus, interface->buffer, 1);
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitRespAdvance(struct SdioSpi *interface)
@@ -280,8 +281,8 @@ static enum State stateReadShortAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateRequestToken(struct SdioSpi *interface)
 {
-  ifRead(interface->bus, interface->buffer, 1);
   --interface->retries;
+  ifRead(interface->bus, interface->buffer, 1);
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitLongAdvance(struct SdioSpi *interface)
@@ -350,9 +351,10 @@ static enum State stateWaitReadAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateReadDataEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->bus, interface->rxBuffer
-      + (interface->length - interface->left), interface->blockSize);
+  const size_t offset = interface->length - interface->left;
+
   interface->left -= interface->blockSize;
+  ifRead(interface->bus, interface->rxBuffer + offset, interface->blockSize);
 }
 /*----------------------------------------------------------------------------*/
 static void stateReadCrcEnter(struct SdioSpi *interface)
@@ -406,7 +408,6 @@ static enum State stateReadCrcAdvance(struct SdioSpi *interface)
 static void stateDelayEnter(struct SdioSpi *interface)
 {
   timerEnable(interface->timer);
-  --interface->retries;
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateReadDelayAdvance(struct SdioSpi *interface
@@ -426,9 +427,10 @@ static void stateWriteTokenEnter(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateWriteDataEnter(struct SdioSpi *interface)
 {
-  ifWrite(interface->bus, interface->txBuffer
-      + (interface->length - interface->left), interface->blockSize);
+  const size_t offset = interface->length - interface->left;
+
   interface->left -= interface->blockSize;
+  ifWrite(interface->bus, interface->txBuffer + offset, interface->blockSize);
 }
 /*----------------------------------------------------------------------------*/
 static void stateWriteCrcEnter(struct SdioSpi *interface)
@@ -505,8 +507,9 @@ static enum State stateWriteBusyAdvance(struct SdioSpi *interface)
 
     if ((flags & SDIO_AUTO_STOP) && interface->txBuffer)
     {
-      interface->retries = BUSY_WRITE_RETRIES;
       interface->txBuffer = 0;
+
+      interface->retries = BUSY_WRITE_RETRIES;
       return STATE_WRITE_STOP;
     }
     else
@@ -667,7 +670,7 @@ static enum Result parseDataToken(struct SdioSpi *interface, uint8_t token,
   enum Result res;
 
   if (token == 0xFF)
-    res = !interface->retries ? E_TIMEOUT : E_BUSY;
+    res = interface->retries ? E_BUSY : E_TIMEOUT;
   else if (token != expected)
     res = E_DEVICE;
   else
@@ -681,7 +684,7 @@ static enum Result parseResponseToken(struct SdioSpi *interface, uint8_t token)
   enum Result res;
 
   if (token == 0xFF)
-    res = !interface->retries ? E_TIMEOUT : E_BUSY;
+    res = interface->retries ? E_BUSY : E_TIMEOUT;
   else if (token & FLAG_NO_RESPONSE)
     res = E_DEVICE;
   else if (token & FLAG_ILLEGAL_COMMAND)

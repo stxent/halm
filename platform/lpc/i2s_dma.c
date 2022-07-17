@@ -275,11 +275,8 @@ static void interruptHandler(void *object)
   struct I2SDma * const interface = object;
   LPC_I2S_Type * const reg = interface->base.reg;
 
-  if ((reg->STATE & STATE_IRQ) && !(reg->DMA2 & DMA_TX_ENABLE))
-  {
-    reg->DAO |= DAO_STOP;
-    reg->IRQ &= ~IRQ_TX_ENABLE;
-  }
+  reg->DAO |= DAO_STOP;
+  reg->IRQ &= ~IRQ_TX_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
 static void rxDmaHandler(void *object)
@@ -333,10 +330,11 @@ static void txDmaHandler(void *object)
   {
     LPC_I2S_Type * const reg = interface->base.reg;
 
-    /* Workaround to transmit last sample correctly */
-    reg->TXFIFO = 0;
-
     reg->DMA2 &= ~DMA_TX_ENABLE;
+
+    /* Workaround to transmit last sample correctly */
+    reg->IRQ |= IRQ_TX_ENABLE;
+    reg->TXFIFO = 0;
 
     if (transferStatus == E_ERROR)
       requestStatus = STREAM_REQUEST_FAILED;
@@ -662,7 +660,6 @@ static enum Result i2sTxStreamEnqueue(void *object,
       {
         reg->DMA2 |= DMA_TX_ENABLE;
         reg->DAO &= ~DAO_STOP;
-        reg->IRQ |= IRQ_TX_ENABLE;
       }
       else
         res = E_INTERFACE;

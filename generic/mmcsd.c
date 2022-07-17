@@ -929,7 +929,7 @@ static enum Result transferBuffer(struct MMCSD *device,
   if (device->blocking)
   {
     while (device->transfer.state != STATE_IDLE
-      && device->transfer.state != STATE_ERROR)
+        && device->transfer.state != STATE_ERROR)
     {
       barrier();
     }
