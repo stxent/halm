@@ -27,7 +27,6 @@ static inline void __delay(uint32_t count)
       ".syntax divided"
       : [count] "=r" (count)
       : "0" (count)
-      : "r3"
   );
 }
 

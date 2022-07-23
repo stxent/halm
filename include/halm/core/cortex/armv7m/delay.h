@@ -25,7 +25,6 @@ static inline void __delay(uint32_t count)
       "    BCS 1b"
       : [count] "=r" (count)
       : "0" (count)
-      : "r3"
   );
 }
 
