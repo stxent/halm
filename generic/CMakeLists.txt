@@ -3,39 +3,39 @@
 
 list(APPEND SOURCE_FILES "work_queue_default.c")
 
-if(${CONFIG_GENERIC_BUFFERING_PROXY})
+if(CONFIG_GENERIC_BUFFERING_PROXY)
     list(APPEND SOURCE_FILES "buffering_proxy.c")
 endif()
 
-if(${CONFIG_GENERIC_GPIO_BUS})
+if(CONFIG_GENERIC_GPIO_BUS)
     list(APPEND SOURCE_FILES "gpio_bus.c")
 endif()
 
-if(${CONFIG_GENERIC_MMCSD})
+if(CONFIG_GENERIC_MMCSD)
     list(APPEND SOURCE_FILES "mmcsd.c")
 endif()
 
-if(${CONFIG_GENERIC_SDIO_SPI})
+if(CONFIG_GENERIC_SDIO_SPI)
     list(APPEND SOURCE_FILES "sdio_spi.c")
 endif()
 
-if(${CONFIG_GENERIC_SOFTWARE_TIMER})
+if(CONFIG_GENERIC_SOFTWARE_TIMER)
     list(APPEND SOURCE_FILES "software_timer.c")
 endif()
 
-if(${CONFIG_GENERIC_SOFTWARE_TIMER_32})
+if(CONFIG_GENERIC_SOFTWARE_TIMER_32)
     list(APPEND SOURCE_FILES "software_timer_32.c")
 endif()
 
-if(${CONFIG_GENERIC_SOFTWARE_TIMER_64})
+if(CONFIG_GENERIC_SOFTWARE_TIMER_64)
     list(APPEND SOURCE_FILES "software_timer_64.c")
 endif()
 
-if(${CONFIG_GENERIC_WQ})
+if(CONFIG_GENERIC_WQ)
     list(APPEND SOURCE_FILES "work_queue.c")
 endif()
 
-if(${CONFIG_GENERIC_WQ_IRQ})
+if(CONFIG_GENERIC_WQ_IRQ)
     list(APPEND SOURCE_FILES "work_queue_irq.c")
 endif()
 

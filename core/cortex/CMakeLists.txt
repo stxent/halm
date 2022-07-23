@@ -14,11 +14,11 @@ endif()
 
 file(GLOB SOURCE_FILES ${SOURCE_PATHS})
 
-if(${CONFIG_PM})
+if(CONFIG_PM)
     list(APPEND SOURCE_FILES "pm.c")
 endif()
 
-if(${CONFIG_CORE_CORTEX_SYSTICK})
+if(CONFIG_CORE_CORTEX_SYSTICK)
     list(APPEND SOURCE_FILES "systick.c")
 endif()
 
