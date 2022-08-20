@@ -275,7 +275,9 @@ static void interruptHandler(void *object)
   struct I2SDma * const interface = object;
   LPC_I2S_Type * const reg = interface->base.reg;
 
-  reg->DAO |= DAO_STOP;
+  if (!(reg->DMA2 & DMA_TX_ENABLE))
+    reg->DAO |= DAO_STOP;
+
   reg->IRQ &= ~IRQ_TX_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
@@ -334,7 +336,6 @@ static void txDmaHandler(void *object)
 
     /* Workaround to transmit last sample correctly */
     reg->IRQ |= IRQ_TX_ENABLE;
-    reg->TXFIFO = 0;
 
     if (transferStatus == E_ERROR)
       requestStatus = STREAM_REQUEST_FAILED;

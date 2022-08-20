@@ -106,16 +106,22 @@ static void configPins(const struct CanBase *interface,
   struct Pin pin;
 
   /* Configure RX pin */
-  pinEntry = pinFind(canPins, config->rx, interface->channel);
-  assert(pinEntry);
-  pinInput((pin = pinInit(config->rx)));
-  pinSetFunction(pin, pinEntry->value);
+  if (config->rx)
+  {
+    pinEntry = pinFind(canPins, config->rx, interface->channel);
+    assert(pinEntry);
+    pinInput((pin = pinInit(config->rx)));
+    pinSetFunction(pin, pinEntry->value);
+  }
 
   /* Configure TX pin */
-  pinEntry = pinFind(canPins, config->tx, interface->channel);
-  assert(pinEntry);
-  pinInput((pin = pinInit(config->tx)));
-  pinSetFunction(pin, pinEntry->value);
+  if (config->tx)
+  {
+    pinEntry = pinFind(canPins, config->tx, interface->channel);
+    assert(pinEntry);
+    pinInput((pin = pinInit(config->tx)));
+    pinSetFunction(pin, pinEntry->value);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct CanBase *object)

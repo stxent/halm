@@ -66,19 +66,21 @@ static void configPins(const struct BxCanBase *interface,
   const struct PinEntry *pinEntry;
   struct Pin pin;
 
-  pinEntry = pinFind(bxCanPins, config->rx, interface->channel);
-  assert(pinEntry);
+  if (config->rx)
+  {
+    pinEntry = pinFind(bxCanPins, config->rx, interface->channel);
+    assert(pinEntry);
+    pinInput((pin = pinInit(config->rx)));
+    pinSetFunction(pin, pinEntry->value);
+  }
 
-  pin = pinInit(config->rx);
-  pinInput(pin);
-  pinSetFunction(pin, pinEntry->value);
-
-  pinEntry = pinFind(bxCanPins, config->tx, interface->channel);
-  assert(pinEntry);
-
-  pin = pinInit(config->tx);
-  pinOutput(pin, true);
-  pinSetFunction(pin, pinEntry->value);
+  if (config->tx)
+  {
+    pinEntry = pinFind(bxCanPins, config->tx, interface->channel);
+    assert(pinEntry);
+    pinOutput((pin = pinInit(config->tx)), true);
+    pinSetFunction(pin, pinEntry->value);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct BxCanBase *object)

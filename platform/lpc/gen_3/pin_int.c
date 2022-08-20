@@ -89,11 +89,18 @@ static enum Result pinIntInit(void *object, const void *configBase)
 
   /* Configure interrupt as edge sensitive */
   LPC_GPIO_INT->ISEL &= ~interrupt->mask;
-  /* Configure edge sensitivity options */
+
+  /* Configure rising edge sensitivity */
   if (config->event == PIN_RISING || config->event == PIN_TOGGLE)
     LPC_GPIO_INT->SIENR = interrupt->mask;
+  else
+    LPC_GPIO_INT->CIENR = interrupt->mask;
+
+  /* Configure falling edge sensitivity */
   if (config->event == PIN_FALLING || config->event == PIN_TOGGLE)
     LPC_GPIO_INT->SIENF = interrupt->mask;
+  else
+    LPC_GPIO_INT->CIENF = interrupt->mask;
 
   /* Configure interrupt priority, interrupt is disabled by default */
   irqSetPriority(interrupt->base.irq, config->priority);
