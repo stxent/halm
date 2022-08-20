@@ -30,17 +30,23 @@
 #define SD_BUS_WIDTH_4BIT               0x00000002UL
 /*------------------OCR register----------------------------------------------*/
 /* Voltage range from 2.7V to 3.6V */
-#define OCR_VOLTAGE_MASK                0x00FF8000UL
+#define OCR_VOLTAGE_MASK_2V7_3V6        0x00FF8000UL
+/* Voltage range from 1.7V to 1.95V */
+#define OCR_VOLTAGE_MASK_1V7_1V95       0x00000080UL
+/* Host Capacity Support */
+#define OCR_HCS                         BIT(30)
 /* Card power up status bit (active low) */
 #define OCR_BUSY                        BIT(31)
 
+/* MMC: Addressing mode mask */
+#define OCR_MMC_ACCESS_MODE_MASK        BIT_FIELD(MASK(2), 29)
+/* MMC: Byte addressing mode */
+#define OCR_MMC_BYTE_MODE               BIT_FIELD(0, 29)
 /* MMC: Sector addressing mode */
-#define OCR_MMC_SECTOR_MODE             BIT(30)
+#define OCR_MMC_SECTOR_MODE             BIT_FIELD(2, 29)
 
 /* SD: Card Capacity Status */
 #define OCR_SD_CCS                      BIT(30)
-/* SD: Host Capacity Support */
-#define OCR_SD_HCS                      BIT(30)
 /*----------------------------------------------------------------------------*/
 enum MMCSDCommand
 {

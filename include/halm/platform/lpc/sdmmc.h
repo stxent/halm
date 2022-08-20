@@ -47,6 +47,8 @@ struct Sdmmc
   struct Dma *dma;
   /* External interrupt on data line 0 */
   struct Interrupt *finalizer;
+  /* Data line 0 pin */
+  struct Pin data0;
   /* Argument for the most recent command */
   uint32_t argument;
   /* Interface command */

@@ -18,7 +18,8 @@
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *);
 static void executeCommand(struct Sdmmc *, uint32_t, uint32_t);
-static void interruptHandler(void *);
+static void pinInterruptHandler(void *);
+static void sdioInterruptHandler(void *);
 static enum Result updateRate(struct Sdmmc *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *, const void *);
@@ -68,8 +69,6 @@ static void execute(struct Sdmmc *interface)
   /* Initialize interrupts */
   reg->RINTSTS = INT_MASK;
   reg->INTMASK = waitStatus;
-  irqClearPending(interface->base.irq);
-  irqEnable(interface->base.irq);
 
   /* Prepare command */
   uint32_t command = code;
@@ -108,8 +107,13 @@ static void execute(struct Sdmmc *interface)
     while (reg->CTRL & CTRL_FIFO_RESET);
   }
 
-  /* Execute low-level command */
   interface->status = E_BUSY;
+
+  /* Enable interrupts */
+  irqClearPending(interface->base.irq);
+  irqEnable(interface->base.irq);
+
+  /* Execute low-level command */
   executeCommand(interface, command, interface->argument);
 }
 /*----------------------------------------------------------------------------*/
@@ -126,54 +130,92 @@ static void executeCommand(struct Sdmmc *interface, uint32_t command,
   while (reg->CMD & CMD_START);
 }
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
+static void pinInterruptHandler(void *object)
 {
-  static const uint32_t hostErrors = INT_FRUN | INT_HLE;
-  static const uint32_t integrityErrors = INT_RE | INT_RCRC | INT_DCRC
-      | INT_SBE | INT_EBE;
-  static const uint32_t timeoutErrors = INT_RTO | INT_DRTO | INT_HTO;
-
   struct Sdmmc * const interface = object;
-  LPC_SDMMC_Type * const reg = interface->base.reg;
-  const uint32_t status = reg->MINTSTS;
 
+  /* Disable further DATA0 interrupts */
   interruptDisable(interface->finalizer);
 
-  irqDisable(interface->base.irq);
-  reg->INTMASK = 0;
-  reg->RINTSTS = INT_MASK;
+  interface->status = E_OK;
 
-  if (status & hostErrors)
+  if (interface->callback)
+    interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static void sdioInterruptHandler(void *object)
+{
+  struct Sdmmc * const interface = object;
+  LPC_SDMMC_Type * const reg = interface->base.reg;
+  const uint32_t intStatus = reg->MINTSTS;
+
+  /* Disable further DATA0 interrupts */
+  interruptDisable(interface->finalizer);
+  /* Clear pending SDMMC interrupts */
+  reg->RINTSTS = intStatus;
+
+  if (intStatus & (INT_FRUN | INT_HLE))
   {
+    /* Host error */
     interface->status = E_ERROR;
   }
-  else if (status & integrityErrors)
+  else if (intStatus & (INT_RE | INT_RCRC | INT_DCRC | INT_SBE | INT_EBE))
   {
+    /* Integrity error */
     interface->status = E_INTERFACE;
   }
-  else if (status & timeoutErrors)
+  else if (intStatus & (INT_RTO | INT_DRTO | INT_HTO))
   {
+    /* Timeout error */
     interface->status = E_TIMEOUT;
-  }
-  else if (!(reg->STATUS & STATUS_DATA_BUSY))
-  {
-    interface->status = E_OK;
   }
   else
   {
-    interruptEnable(interface->finalizer);
+    const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+    bool completed;
 
-    if (!(reg->STATUS & STATUS_DATA_BUSY))
+    if (flags & SDIO_DATA_MODE)
     {
-      interface->status = E_OK;
-      interruptDisable(interface->finalizer);
+      completed = (intStatus & INT_DTO) != 0;
     }
     else
-      interface->status = E_BUSY;
+    {
+      completed = (intStatus & INT_CDONE) != 0;
+    }
+
+    if (completed)
+    {
+      if (!pinRead(interface->data0))
+      {
+        interruptEnable(interface->finalizer);
+        __dsb();
+
+        if (pinRead(interface->data0))
+        {
+          interruptDisable(interface->finalizer);
+          interface->status = E_OK;
+        }
+        else
+        {
+          /* Disable SDMMC interrupts, wait for high level on DATA0 */
+          irqDisable(interface->base.irq);
+        }
+      }
+      else
+      {
+        interface->status = E_OK;
+      }
+    }
   }
 
-  if (interface->status != E_BUSY && interface->callback)
-    interface->callback(interface->callbackArgument);
+  if (interface->status != E_BUSY)
+  {
+    /* Disable SDMMC interrupts */
+    irqDisable(interface->base.irq);
+
+    if (interface->callback)
+      interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result updateRate(struct Sdmmc *interface, uint32_t rate)
@@ -244,16 +286,19 @@ static enum Result sdioInit(void *object, const void *configBase)
 
   assert(config->rate);
 
+  interface->data0 = pinInit(config->dat0);
+  assert(pinValid(interface->data0));
+
   interface->finalizer = init(PinInt, &finalizerConfig);
   if (!interface->finalizer)
     return E_ERROR;
-  interruptSetCallback(interface->finalizer, interruptHandler, interface);
+  interruptSetCallback(interface->finalizer, pinInterruptHandler, interface);
 
   /* Call base class constructor */
   if ((res = SdmmcBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  interface->base.handler = interruptHandler;
+  interface->base.handler = sdioInterruptHandler;
   interface->argument = 0;
   interface->callback = 0;
   interface->command = 0;
@@ -293,11 +338,10 @@ static void sdioDeinit(void *object)
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
-  deinit(interface->dma);
-
   /* Disable interrupts */
   reg->CTRL &= ~CTRL_INT_ENABLE;
 
+  deinit(interface->dma);
   deinit(interface->finalizer);
 
   SdmmcBase->deinit(interface);

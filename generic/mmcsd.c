@@ -89,37 +89,57 @@ static enum Result initStepEnableCrc(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static enum Result initStepMmcReadOCR(struct MMCSD *device)
 {
+  uint32_t ocr = 0;
   enum Result res;
 
   for (unsigned int counter = 100; counter; --counter)
   {
-    uint32_t response;
-
-    res = executeCommand(device,
-        SDIO_COMMAND(CMD1_SEND_OP_COND, MMCSD_RESPONSE_R3, 0),
-        OCR_VOLTAGE_MASK, &response, true);
-
-    if (res == E_OK)
+    if (!ocr)
     {
-      /* Status bit is active low */
-      if (response & OCR_BUSY)
+      res = executeCommand(device,
+          SDIO_COMMAND(CMD1_SEND_OP_COND, MMCSD_RESPONSE_R3, 0),
+          0, &ocr, true);
+
+      if (res == E_OK)
       {
-        if (response & OCR_MMC_SECTOR_MODE)
+        ocr = OCR_HCS | (ocr & OCR_VOLTAGE_MASK_2V7_3V6);
+      }
+    }
+
+    if (ocr)
+    {
+      uint32_t response;
+
+      res = executeCommand(device,
+          SDIO_COMMAND(CMD1_SEND_OP_COND, MMCSD_RESPONSE_R3, 0),
+	      ocr, &response, true);
+
+      if (res == E_OK)
+      {
+        /* Busy bit is active low */
+        if (response & OCR_BUSY)
         {
-          /* Card capacity is greater than 2GB */
-          device->info.capacityType = CAPACITY_HC;
+          if (response & OCR_MMC_SECTOR_MODE)
+          {
+            /* Card capacity is greater than 2GB */
+            device->info.capacityType = CAPACITY_HC;
+          }
+          else
+          {
+            /* Card capacity is less then or equal to 2GB */
+            device->info.capacityType = CAPACITY_SC;
+          }
+
+          device->info.cardType = CARD_MMC;
         }
         else
         {
-          /* Card capacity is less then or equal to 2GB */
-          device->info.capacityType = CAPACITY_SC;
+          res = E_BUSY;
         }
-
-        device->info.cardType = CARD_MMC;
-        break;
       }
     }
-    else
+
+    if (res != E_BUSY)
       break;
 
     /* TODO Remove delay */
@@ -287,9 +307,9 @@ static enum Result initStepSdReadOCR(struct MMCSD *device,
   enum Result res;
 
   if (device->info.cardType == CARD_SD_2_0)
-    ocr |= OCR_SD_HCS;
+    ocr |= OCR_HCS;
   if (device->mode != SDIO_SPI)
-    ocr |= OCR_VOLTAGE_MASK;
+    ocr |= OCR_VOLTAGE_MASK_2V7_3V6;
 
   for (; counter; --counter)
   {
@@ -481,7 +501,7 @@ static enum Result identifyCard(struct MMCSD *device)
   if ((res = initStepSendReset(device)) != E_OK)
     return res;
 
-  /* Try to initialize as MMC. */
+  /* Try to initialize as MMC */
   if ((res = initStepMmcReadOCR(device)) != E_OK)
   {
     /* Send Reset command */
