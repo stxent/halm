@@ -603,7 +603,7 @@ static void autoStopTransmission(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void execute(struct SdioSpi *interface)
 {
-  /* Lock the interface */
+  /* Lock the bus */
   ifSetParam(interface->bus, IF_ACQUIRE, 0);
 
   ifSetParam(interface->bus, IF_SPI_UNIDIRECTIONAL, 0);
@@ -657,6 +657,9 @@ static void interruptHandler(void *object)
 
     /* Finalize the transfer */
     pinSet(interface->cs);
+
+    /* Release the bus */
+    ifSetCallback(interface->bus, 0, 0);
     ifSetParam(interface->bus, IF_RELEASE, 0);
 
     if (interface->callback)
