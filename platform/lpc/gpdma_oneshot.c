@@ -7,6 +7,7 @@
 #include <halm/platform/lpc/gpdma_defs.h>
 #include <halm/platform/lpc/gpdma_oneshot.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/asm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 enum State
@@ -119,7 +120,7 @@ static enum Result channelEnable(void *object)
   struct GpDmaOneShot * const channel = object;
   LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
   const uint8_t number = channel->base.number;
-  const uint32_t request = 1 << number;
+  const uint32_t mask = 1 << number;
 
   assert(channel->state == STATE_READY);
 
@@ -128,7 +129,9 @@ static enum Result channelEnable(void *object)
     channel->state = STATE_ERROR;
     return E_BUSY;
   }
+
   gpDmaSetMux(object);
+  channel->state = STATE_BUSY;
 
   reg->SRCADDR = channel->source;
   reg->DESTADDR = channel->destination;
@@ -136,11 +139,11 @@ static enum Result channelEnable(void *object)
   reg->LLI = 0;
 
   /* Clear interrupt requests for current channel */
-  LPC_GPDMA->INTTCCLEAR = request;
-  LPC_GPDMA->INTERRCLEAR = request;
+  LPC_GPDMA->INTTCCLEAR = mask;
+  LPC_GPDMA->INTERRCLEAR = mask;
 
   /* Start the transfer */
-  channel->state = STATE_BUSY;
+  __dsb();
   reg->CONFIG = channel->base.config | CONFIG_ENABLE;
 
   return E_OK;

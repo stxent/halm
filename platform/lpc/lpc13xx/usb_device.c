@@ -418,17 +418,17 @@ static bool epReadData(struct UsbEndpoint *ep, uint8_t *buffer,
 {
   LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  size_t packetLength;
 
-  /* Set read enable bit for specific endpoint */
+  /* Enable data read mode for the endpoint */
   reg->USBCtrl = USBCtrl_RD_EN | USBCtrl_LOG_ENDPOINT(number);
 
   /*
    * User Manual says that it takes 3 clock cycle to fetch the packet length
-   * from the RAM. It seems that this delay should be a little bit longer.
+   * from the RAM after programming the control register.
    */
-  delayTicks(4);
-
-  size_t packetLength = reg->USBRxPLen;
+  __dsb();
+  packetLength = reg->USBRxPLen;
 
   /* Check packet validity */
   if (!(packetLength & USBRxPLen_DV))
@@ -443,7 +443,7 @@ static bool epReadData(struct UsbEndpoint *ep, uint8_t *buffer,
   *read = packetLength;
   epReadPacketMemory(reg, buffer, packetLength);
 
-  /* Clear read enable bit */
+  /* Clear endpoint number and read enable bit */
   reg->USBCtrl = 0;
 
   /* Select endpoint and clear buffer */
@@ -492,23 +492,17 @@ static void epWriteData(struct UsbEndpoint *ep, const uint8_t *buffer,
   LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
-  /* Set write enable for specific endpoint */
+  /* Enable data write mode for the endpoint */
   reg->USBCtrl = USBCtrl_WR_EN | USBCtrl_LOG_ENDPOINT(number);
   /* Set packet length */
   reg->USBTxPLen = length;
 
-  if (length == 0)
-  {
-    /* To send an empty packet a single write operation has to be performed */
-    reg->USBTxData = 0;
-  }
-  else
-  {
-    /* Write data into the internal packet memory */
-    epWritePacketMemory(reg, buffer, length);
-  }
+  /* Write data into the internal packet memory */
+  epWritePacketMemory(reg, buffer, length);
 
-  /* Clear write enable bit */
+  /* Wait until the write enable bit becomes cleared */
+  while (reg->USBCtrl & USBCtrl_WR_EN);
+  /* Clear the endpoint number */
   reg->USBCtrl = 0;
 
   /* Select endpoint and validate buffer */
@@ -522,33 +516,39 @@ static void epWritePacketMemory(LPC_USB_Type *reg, const uint8_t *buffer,
   const uint32_t *start = (const uint32_t *)buffer;
   const uint32_t * const end = start + (length >> 2);
 
-  buffer = (const uint8_t *)end;
-  length &= 3;
-
-  while (start < end)
-  {
-    reg->USBTxData = *start++;
-    __dsb();
-  }
-
   if (length)
   {
-    uint32_t lastWord = 0;
+    buffer = (const uint8_t *)end;
+    length &= 3;
 
-    switch (length)
+    while (start < end)
     {
-      case 3:
-        lastWord = buffer[2] << 16;
-        /* Falls through */
-      case 2:
-        lastWord |= buffer[1] << 8;
-        /* Falls through */
-      case 1:
-        lastWord |= buffer[0];
-        break;
+      reg->USBTxData = *start++;
     }
 
-    reg->USBTxData = lastWord;
+    if (length)
+    {
+      uint32_t lastWord = 0;
+
+      switch (length)
+      {
+        case 3:
+          lastWord = buffer[2] << 16;
+          /* Falls through */
+        case 2:
+          lastWord |= buffer[1] << 8;
+          /* Falls through */
+        case 1:
+          lastWord |= buffer[0];
+          break;
+      }
+
+      reg->USBTxData = lastWord;
+    }
+  }
+  else
+  {
+    reg->USBTxData = 0;
   }
 }
 /*----------------------------------------------------------------------------*/

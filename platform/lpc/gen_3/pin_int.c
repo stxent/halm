@@ -41,10 +41,12 @@ static void disableInterrupt(const struct PinInt *interrupt)
 /*----------------------------------------------------------------------------*/
 static void enableInterrupt(const struct PinInt *interrupt)
 {
-  /* Clear pending interrupts and interrupt flags */
+  /* Clear pending interrupt flags in the peripheral */
   LPC_GPIO_INT->IST = interrupt->mask;
-  irqClearPending(interrupt->base.irq);
+  __dsb();
 
+  /* Clear pending interrupts and enable further interrupts in the NVIC */
+  irqClearPending(interrupt->base.irq);
   irqEnable(interrupt->base.irq);
 }
 /*----------------------------------------------------------------------------*/

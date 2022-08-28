@@ -7,6 +7,7 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/dma_circular.h>
 #include <halm/platform/stm32/dma_defs.h>
+#include <xcore/asm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 enum State
@@ -161,12 +162,13 @@ static enum Result streamEnable(void *object)
   {
     STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
 
+    stream->state = STATE_BUSY;
     reg->CMAR = stream->memoryAddress;
     reg->CPAR = stream->periphAddress;
     reg->CNDTR = stream->transfers;
 
     /* Start the transfer */
-    stream->state = STATE_BUSY;
+    __dsb();
     reg->CCR = stream->base.config | CCR_EN;
 
     return E_OK;

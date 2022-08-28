@@ -97,6 +97,7 @@ static void interruptHandler(void *object)
   {
     /* Disable RTIM and RXIM interrupts */
     reg->IMSC = 0;
+    __dsb();
 
     /*
      * Clear pending interrupt flag in NVIC. The ISR handler will be called

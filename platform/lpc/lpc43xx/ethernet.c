@@ -303,8 +303,8 @@ static enum Result ethInit(void *object, const void *configBase)
   /* Enable Receiver and Transmitter interrupts */
   reg->DMA_INT_EN = DMA_INT_EN_TIE | DMA_INT_EN_RIE | DMA_INT_EN_NIE;
 
-  irqClearPending(interface->base.irq);
   irqSetPriority(interface->base.irq, config->priority);
+  irqClearPending(interface->base.irq);
   irqEnable(interface->base.irq);
 
   return E_OK;

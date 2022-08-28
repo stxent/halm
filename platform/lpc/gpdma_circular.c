@@ -7,6 +7,7 @@
 #include <halm/platform/lpc/gpdma_circular.h>
 #include <halm/platform/lpc/gpdma_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/asm.h>
 #include <assert.h>
 #include <malloc.h>
 /*----------------------------------------------------------------------------*/
@@ -89,6 +90,8 @@ static void startTransfer(struct GpDmaCircular *channel,
   reg->DESTADDR = entry->destination;
   reg->CONTROL = entry->control;
   reg->LLI = entry->next;
+
+  __dsb();
   reg->CONFIG = channel->base.config | CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
@@ -169,7 +172,7 @@ static enum Result channelEnable(void *object)
 {
   struct GpDmaCircular * const channel = object;
   const uint8_t number = channel->base.number;
-  const uint32_t request = 1 << number;
+  const uint32_t mask = 1 << number;
 
   assert(channel->state == STATE_READY || channel->state == STATE_DONE);
 
@@ -178,14 +181,15 @@ static enum Result channelEnable(void *object)
     channel->state = STATE_ERROR;
     return E_BUSY;
   }
+
   gpDmaSetMux(object);
+  channel->state = STATE_BUSY;
 
   /* Clear interrupt requests for the current channel */
-  LPC_GPDMA->INTTCCLEAR = request;
-  LPC_GPDMA->INTERRCLEAR = request;
+  LPC_GPDMA->INTTCCLEAR = mask;
+  LPC_GPDMA->INTERRCLEAR = mask;
 
   /* Start the transfer */
-  channel->state = STATE_BUSY;
   startTransfer(channel, &channel->list[0]);
 
   return E_OK;

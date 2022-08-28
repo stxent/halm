@@ -227,12 +227,6 @@ static enum Result streamInit(void *object, const void *configBase)
   stream->handler = 0;
   stream->number = config->stream;
 
-  if (!irqStatus(stream->irq))
-  {
-    irqSetPriority(stream->irq, CONFIG_PLATFORM_STM32_DMA_PRIORITY);
-    irqEnable(stream->irq);
-  }
-
   switch (config->type)
   {
     case DMA_TYPE_M2M:
@@ -245,6 +239,12 @@ static enum Result streamInit(void *object, const void *configBase)
 
     default:
       break;
+  }
+
+  if (!irqStatus(stream->irq))
+  {
+    irqSetPriority(stream->irq, CONFIG_PLATFORM_STM32_DMA_PRIORITY);
+    irqEnable(stream->irq);
   }
 
   return E_OK;

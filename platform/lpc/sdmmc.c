@@ -188,7 +188,6 @@ static void sdioInterruptHandler(void *object)
       if (!pinRead(interface->data0))
       {
         interruptEnable(interface->finalizer);
-        __dsb();
 
         if (pinRead(interface->data0))
         {

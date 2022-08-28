@@ -692,6 +692,8 @@ static void epPrime(struct UsbEndpoint *ep)
   LPC_USB_Type * const reg = ep->device->base.reg;
   const uint32_t mask = ENDPT_BIT(ep->address);
 
+  /* Wait until all memory stores have been completed */
+  __dsb();
   /* Prime the endpoint for IN/OUT */
   reg->ENDPTPRIME |= mask;
   /* Wait until the bit is set */
