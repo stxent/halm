@@ -80,7 +80,7 @@ void sspSetRate(struct SspBase *interface, uint32_t rate)
   {
     const uint32_t clock = sspGetClock(interface);
     const uint32_t divisor = (clock + (rate - 1)) / rate;
-    uint32_t prescaler0 = divisor >> 8;
+    uint32_t prescaler0 = (divisor + 255) >> 8;
 
     if (prescaler0 > 254)
       prescaler0 = 254;
