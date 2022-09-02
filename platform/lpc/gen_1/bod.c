@@ -1,11 +1,11 @@
 /*
  * bod.c
- * Copyright (C) 2018 xent
+ * Copyright (C) 2022 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/lpc/bod.h>
-#include <halm/platform/lpc/lpc17xx/system_defs.h>
+#include <halm/platform/lpc/gen_1/bod_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -54,21 +54,25 @@ static enum Result bodInit(void *object, const void *configBase)
 {
   const struct BodConfig * const config = configBase;
   assert(config);
+  assert(config->eventLevel >= BOD_EVENT_MIN
+      && config->eventLevel <= BOD_EVENT_MAX);
+  assert(config->resetLevel >= BOD_RESET_DISABLED
+      && config->resetLevel <= BOD_RESET_MAX);
 
   struct Bod * const bod = object;
 
   if (setInstance(bod))
   {
-    uint32_t pcon = LPC_SC->PCON | PCON_BODRPM | PCON_BORD;
+    uint32_t bodctrl = 0;
 
     bod->callback = 0;
     bod->enabled = false;
 
-    LPC_SC->PCON = pcon;
-    LPC_SC->PCON = pcon & ~PCON_BOGD;
     if (config->resetLevel != BOD_RESET_DISABLED)
-      LPC_SC->PCON = pcon & ~(PCON_BOGD | PCON_BODRPM | PCON_BORD);
+      bodctrl |= BODCTRL_BODRSTLEV(config->resetLevel - 1) | BODCTRL_BODRSTENA;
+    bodctrl |= BODCTRL_BODINTVAL(config->eventLevel - 1);
 
+    LPC_SYSCON->BODCTRL = bodctrl;
     irqSetPriority(BOD_IRQ, config->priority);
 
     return E_OK;

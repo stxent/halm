@@ -20,12 +20,12 @@ extern const struct InterruptClass * const Bod;
 struct BodConfig
 {
   /**
-   * Optional: if the voltage falls below event level, an interrupt signal
+   * Mandatory: if the voltage falls below event level, an interrupt signal
    * will be asserted.
    */
   enum BodEventLevel eventLevel;
   /**
-   * Optional: if the voltage falls below reset level, a reset signal
+   * Mandatory: if the voltage falls below reset level, a reset signal
    * will be asserted to deactivate the MCU.
    */
   enum BodResetLevel resetLevel;

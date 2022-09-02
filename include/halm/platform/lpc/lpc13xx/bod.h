@@ -1,0 +1,46 @@
+/*
+ * halm/platform/lpc/lpc13xx/bod.h
+ * Copyright (C) 2022 xent
+ * Project is distributed under the terms of the MIT License
+ */
+
+#ifndef HALM_PLATFORM_LPC_BOD_H_
+#error This header should not be included directly
+#endif
+
+#ifndef HALM_PLATFORM_LPC_LPC13XX_BOD_H_
+#define HALM_PLATFORM_LPC_LPC13XX_BOD_H_
+/*----------------------------------------------------------------------------*/
+enum BodEventLevel
+{
+  /* 1.65V for LPC1300L series */
+  BOD_EVENT_1V69  = 1,
+  /* 2.22V for LPC1300L series */
+  BOD_EVENT_2V29  = 2,
+  /* 2.52V for LPC1300L series */
+  BOD_EVENT_2V59  = 3,
+  /* 2.80V for LPC1300L series */
+  BOD_EVENT_2V87  = 4,
+
+  BOD_EVENT_MIN   = BOD_EVENT_1V69,
+  BOD_EVENT_MAX   = BOD_EVENT_2V87
+};
+
+enum BodResetLevel
+{
+  BOD_RESET_DISABLED  = 0,
+
+  /* 1.46V for LPC1300L series */
+  BOD_RESET_1V49      = 1,
+  /* Unavailable on LPC1300 series */
+  BOD_RESET_2V06      = 2,
+  /* Unavailable on LPC1300 series */
+  BOD_RESET_2V35      = 3,
+  /* Unavailable on LPC1300 series */
+  BOD_RESET_2V63      = 4,
+
+  BOD_RESET_MIN       = BOD_RESET_1V49,
+  BOD_RESET_MAX       = BOD_RESET_2V63
+};
+/*----------------------------------------------------------------------------*/
+#endif /* HALM_PLATFORM_LPC_LPC13XX_BOD_H_ */

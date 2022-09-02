@@ -10,70 +10,74 @@
 #include <assert.h>
 #include <stdlib.h>
 /*----------------------------------------------------------------------------*/
-struct PmHandlerEntry
+struct PowerManagerObserver
 {
   void *object;
   void (*callback)(void *, enum PmState);
 };
 
-DEFINE_LIST(struct PmHandlerEntry, Pm, pm)
+DEFINE_LIST(struct PowerManagerObserver, Pmo, pmo)
 
-struct PmHandler
+struct PowerManager
 {
   struct Entity parent;
-  PmList objectList;
+
+  /* List of power event observers */
+  PmoList observers;
 };
 /*----------------------------------------------------------------------------*/
 static bool entryComparator(const void *, void *);
-static void notifyHandlerEntries(enum PmState);
-static enum Result pmHandlerInit(void *, const void *);
+static void notifyObservers(enum PmState);
+
+static enum Result pmInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 extern enum Result pmCoreChangeState(enum PmState);
 extern enum Result pmPlatformChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const PmHandler = &(const struct EntityClass){
-    .size = sizeof(struct PmHandler),
-    .init = pmHandlerInit,
+static const struct EntityClass * const PowerManager =
+    &(const struct EntityClass){
+    .size = sizeof(struct PowerManager),
+    .init = pmInit,
     .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
-static struct PmHandler *pmHandler = 0;
+static struct PowerManager *pmInstance = 0;
 /*----------------------------------------------------------------------------*/
 static bool entryComparator(const void *element, void *argument)
 {
-  const struct PmHandlerEntry * const entry = element;
+  const struct PowerManagerObserver * const entry = element;
   return entry->object == argument;
 }
 /*----------------------------------------------------------------------------*/
-static void notifyHandlerEntries(enum PmState state)
+static void notifyObservers(enum PmState state)
 {
-  if (!pmHandler)
+  if (!pmInstance)
     return;
 
-  PmListNode *current = pmListFront(&pmHandler->objectList);
+  PmoListNode *current = pmoListFront(&pmInstance->observers);
 
   while (current)
   {
-    const struct PmHandlerEntry * const entry = pmListData(current);
+    const struct PowerManagerObserver * const entry = pmoListData(current);
 
     entry->callback(entry->object, state);
-    current = pmListNext(current);
+    current = pmoListNext(current);
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result pmHandlerInit(void *object,
+static enum Result pmInit(void *object,
     const void *configBase __attribute__((unused)))
 {
-  struct PmHandler * const handler = object;
+  struct PowerManager * const handler = object;
 
-  pmListInit(&handler->objectList);
+  pmoListInit(&handler->observers);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void pmChangeState(enum PmState state)
 {
   if (state != PM_SLEEP)
-    notifyHandlerEntries(state);
+    notifyObservers(state);
 
   /* Prepare specific platform features before entering other states */
   pmPlatformChangeState(state);
@@ -84,19 +88,20 @@ void pmChangeState(enum PmState state)
 /*----------------------------------------------------------------------------*/
 enum Result pmRegister(void (*callback)(void *, enum PmState), void *object)
 {
-  if (!pmHandler)
-    pmHandler = init(PmHandler, 0);
-  if (!pmHandler)
+  if (!pmInstance)
+    pmInstance = init(PowerManager, 0);
+  if (!pmInstance)
     return E_ERROR;
 
-  return pmListPushFront(&pmHandler->objectList,
-      (struct PmHandlerEntry){object, callback}) ? E_OK : E_MEMORY;
+  return pmoListPushFront(&pmInstance->observers,
+      (struct PowerManagerObserver){object, callback}) ? E_OK : E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
 void pmUnregister(const void *object)
 {
-  assert(pmHandler);
-  assert(pmListFindIf(&pmHandler->objectList, (void *)object, entryComparator));
+  assert(pmInstance);
+  assert(pmoListFindIf(&pmInstance->observers,
+      (void *)object, entryComparator));
 
-  pmListEraseIf(&pmHandler->objectList, (void *)object, entryComparator);
+  pmoListEraseIf(&pmInstance->observers, (void *)object, entryComparator);
 }

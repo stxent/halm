@@ -16,14 +16,14 @@
 /* ADC trigger sources */
 enum AdcEvent
 {
-  ADC_BURST,
-  ADC_SOFTWARE,
-  ADC_PIN_0_2,
-  ADC_PIN_1_5,
-  ADC_CT32B0_MAT0,
-  ADC_CT32B0_MAT1,
-  ADC_CT16B0_MAT0,
-  ADC_CT16B0_MAT1,
+  ADC_BURST       = 0,
+  ADC_SOFTWARE    = 1,
+  ADC_PIN_0_2     = 2,
+  ADC_PIN_1_5     = 3,
+  ADC_CT32B0_MAT0 = 4,
+  ADC_CT32B0_MAT1 = 5,
+  ADC_CT16B0_MAT0 = 6,
+  ADC_CT16B0_MAT1 = 7,
   ADC_EVENT_END
 } __attribute__((packed));
 

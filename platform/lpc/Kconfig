@@ -2,6 +2,12 @@ config GEN_ADC
 	string
 	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
 
+config GEN_BOD
+	string
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
+	default lpc17xx if FAMILY_LPC17XX
+  default lpc43xx if FAMILY_LPC43XX
+
 config GEN_CAN
 	string
 	default gen_1 if FAMILY_LPC17XX
@@ -119,7 +125,7 @@ config PLATFORM_LPC_ADC_DMA_STREAM
 config PLATFORM_LPC_BOD
 	bool "Brownout detection"
 	default y
-	depends on FAMILY_LPC17XX
+	select PLATFORM_LPC_EVENT_ROUTER if FAMILY_LPC43XX
 
 config PLATFORM_LPC_BOD_NO_DEINIT
 	bool
@@ -217,6 +223,18 @@ config PLATFORM_LPC_ETHERNET
 	depends on FAMILY_LPC43XX
 	help
 	  This enables driver for the Ethernet MAC.
+
+config PLATFORM_LPC_EVENT_ROUTER
+	bool "Event Router"
+	default y
+	depends on FAMILY_LPC43XX
+	help
+	  This enables driver for the Event Router.
+
+config PLATFORM_LPC_EVENT_ROUTER_PRIORITY
+	int "Event Router interrupts priority"
+	default 0
+	depends on PLATFORM_LPC_EVENT_ROUTER
 
 config PLATFORM_LPC_FAST_GPIO_BUS
 	bool "Fast GPIO Bus"

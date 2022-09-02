@@ -16,14 +16,14 @@
 /* ADC trigger sources */
 enum AdcEvent
 {
-  ADC_BURST,
-  ADC_SOFTWARE,
-  ADC_PIN_2_10,
-  ADC_PIN_1_27,
-  ADC_TIMER0_MAT1,
-  ADC_TIMER0_MAT3,
-  ADC_TIMER1_MAT0,
-  ADC_TIMER1_MAT1,
+  ADC_BURST       = 0,
+  ADC_SOFTWARE    = 1,
+  ADC_PIN_2_10    = 2,
+  ADC_PIN_1_27    = 3,
+  ADC_TIMER0_MAT1 = 4,
+  ADC_TIMER0_MAT3 = 5,
+  ADC_TIMER1_MAT0 = 6,
+  ADC_TIMER1_MAT1 = 7,
   ADC_EVENT_END
 } __attribute__((packed));
 

@@ -1,22 +1,23 @@
 /*
  * bod.c
- * Copyright (C) 2018 xent
+ * Copyright (C) 2022 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/lpc/bod.h>
-#include <halm/platform/lpc/lpc17xx/system_defs.h>
+#include <halm/platform/lpc/lpc43xx/event_router.h>
+#include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static bool setInstance(struct Bod *);
+static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result bodInit(void *, const void *);
 static void bodEnable(void *);
 static void bodDisable(void *);
 static void bodSetCallback(void *, void (*)(void *), void *);
 
-#ifndef CONFIG_PLATFORM_LPC_BOD_NO_DEINIT
+#ifndef CONFIG_PLATFORM_NXP_BOD_NO_DEINIT
 static void bodDeinit(void *);
 #else
 #define bodDeinit deletedDestructorTrap
@@ -32,78 +33,52 @@ const struct InterruptClass * const Bod = &(const struct InterruptClass){
     .setCallback = bodSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct Bod *instance = 0;
-/*----------------------------------------------------------------------------*/
-static bool setInstance(struct Bod *object)
+static void interruptHandler(void *object)
 {
-  if (!instance)
-  {
-    instance = object;
-    return true;
-  }
-  else
-    return false;
-}
-/*----------------------------------------------------------------------------*/
-void BOD_ISR(void)
-{
-  instance->callback(instance->callbackArgument);
+  struct Bod * const bod = object;
+
+  if (bod->enabled && bod->callback)
+    bod->callback(bod->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result bodInit(void *object, const void *configBase)
 {
   const struct BodConfig * const config = configBase;
   assert(config);
+  assert(config->eventLevel <= BOD_EVENT_3V05);
+  assert(config->resetLevel <= BOD_RESET_2V2);
 
   struct Bod * const bod = object;
+  uint32_t creg = LPC_CREG->CREG0 & ~(CREG0_BODLVL1_MASK | CREG0_BODLVL2_MASK);
 
-  if (setInstance(bod))
-  {
-    uint32_t pcon = LPC_SC->PCON | PCON_BODRPM | PCON_BORD;
+  bod->callback = 0;
+  bod->enabled = false;
 
-    bod->callback = 0;
-    bod->enabled = false;
+  creg |= CREG0_BODLVL1(config->eventLevel);
+  creg |= CREG0_BODLVL2(config->resetLevel);
 
-    LPC_SC->PCON = pcon;
-    LPC_SC->PCON = pcon & ~PCON_BOGD;
-    if (config->resetLevel != BOD_RESET_DISABLED)
-      LPC_SC->PCON = pcon & ~(PCON_BOGD | PCON_BODRPM | PCON_BORD);
+  LPC_CREG->CREG0 = creg;
 
-    irqSetPriority(BOD_IRQ, config->priority);
-
-    return E_OK;
-  }
-  else
-    return E_BUSY;
+  return erRegister(interruptHandler, bod, ER_BOD);
 }
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_LPC_BOD_NO_DEINIT
-static void bodDeinit(void *object __attribute__((unused)))
+#ifndef CONFIG_PLATFORM_NXP_BOD_NO_DEINIT
+static void bodDeinit(void *object)
 {
-  irqDisable(BOD_IRQ);
-  instance = 0;
+  erUnregister(object);
 }
 #endif
 /*----------------------------------------------------------------------------*/
 static void bodEnable(void *object)
 {
   struct Bod * const bod = object;
-
   bod->enabled = true;
-
-  if (bod->callback)
-  {
-    irqClearPending(BOD_IRQ);
-    irqEnable(BOD_IRQ);
-  }
 }
 /*----------------------------------------------------------------------------*/
 static void bodDisable(void *object)
 {
   struct Bod * const bod = object;
-
   bod->enabled = false;
-  irqDisable(BOD_IRQ);
 }
 /*----------------------------------------------------------------------------*/
 static void bodSetCallback(void *object, void (*callback)(void *),
@@ -113,12 +88,4 @@ static void bodSetCallback(void *object, void (*callback)(void *),
 
   bod->callbackArgument = argument;
   bod->callback = callback;
-
-  if (bod->enabled && callback)
-  {
-    irqClearPending(BOD_IRQ);
-    irqEnable(BOD_IRQ);
-  }
-  else
-    irqDisable(BOD_IRQ);
 }

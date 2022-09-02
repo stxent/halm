@@ -16,13 +16,13 @@
 /* ADC trigger sources */
 enum AdcEvent
 {
-  ADC_BURST,
-  ADC_SOFTWARE,
-  ADC_CTOUT_15,
-  ADC_CTOUT_8,
-  ADC_TRIG0,
-  ADC_TRIG1,
-  ADC_MCOA2,
+  ADC_BURST     = 0,
+  ADC_SOFTWARE  = 1,
+  ADC_CTOUT_15  = 2,
+  ADC_CTOUT_8   = 3,
+  ADC_TRIG0     = 4,
+  ADC_TRIG1     = 5,
+  ADC_MCOA2     = 6,
   ADC_EVENT_END
 } __attribute__((packed));
 

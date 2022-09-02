@@ -43,26 +43,32 @@
 #define CREG0_RESET32KHZ                BIT(2)
 #define CREG0_PD32KHZ                   BIT(3)
 #define CREG0_USB0PHY                   BIT(5)
+
 #define CREG0_ALARMCTRL_MASK            BIT_FIELD(MASK(2), 6)
 #define CREG0_ALARMCTRL(value)          BIT_FIELD((value), 6)
 #define CREG0_ALARMCTRL_VALUE(reg) \
     FIELD_VALUE((reg), CREG0_ALARMCTRL_MASK, 6)
+
 #define CREG0_BODLVL1_MASK              BIT_FIELD(MASK(2), 8)
 #define CREG0_BODLVL1(value)            BIT_FIELD((value), 8)
 #define CREG0_BODLVL1_VALUE(reg) \
     FIELD_VALUE((reg), CREG0_BODLVL1_MASK, 8)
+
 #define CREG0_BODLVL2_MASK              BIT_FIELD(MASK(2), 10)
 #define CREG0_BODLVL2(value)            BIT_FIELD((value), 10)
 #define CREG0_BODLVL2_VALUE(reg) \
     FIELD_VALUE((reg), CREG0_BODLVL2_MASK, 10)
+
 #define CREG0_SAMPLECTRL_MASK           BIT_FIELD(MASK(2), 12)
 #define CREG0_SAMPLECTRL(value)         BIT_FIELD((value), 12)
 #define CREG0_SAMPLECTRL_VALUE(reg) \
     FIELD_VALUE((reg), CREG0_SAMPLECTRL_MASK, 12)
+
 #define CREG0_WAKEUP0CTRL_MASK          BIT_FIELD(MASK(2), 14)
 #define CREG0_WAKEUP0CTRL(value)        BIT_FIELD((value), 14)
 #define CREG0_WAKEUP0CTRL_VALUE(reg) \
     FIELD_VALUE((reg), CREG0_WAKEUP0CTRL_MASK, 14)
+
 #define CREG0_WAKEUP1CTRL_MASK          BIT_FIELD(MASK(2), 16)
 #define CREG0_WAKEUP1CTRL(value)        BIT_FIELD((value), 16)
 #define CREG0_WAKEUP1CTRL_VALUE(reg) \

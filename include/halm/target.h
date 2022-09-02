@@ -12,6 +12,7 @@
 #if defined(LPC11XX)
 
 #  define GEN_ADC         gen_1
+#  define GEN_BOD         gen_1
 #  define GEN_FLASH       gen_1
 #  define GEN_I2C         gen_1
 #  define GEN_PIN         gen_2
@@ -25,6 +26,7 @@
 #elif defined(LPC11EXX)
 
 #  define GEN_ADC         gen_1
+#  define GEN_BOD         gen_1
 #  define GEN_CAN         gen_2
 #  define GEN_FLASH       gen_1
 #  define GEN_I2C         gen_1
@@ -39,6 +41,7 @@
 #elif defined(LPC13XX)
 
 #  define GEN_ADC         gen_1
+#  define GEN_BOD         gen_1
 #  define GEN_FLASH       gen_1
 #  define GEN_I2C         gen_1
 #  define GEN_PIN         gen_2
@@ -53,6 +56,7 @@
 #elif defined(LPC13UXX)
 
 #  define GEN_ADC         gen_1
+#  define GEN_BOD         gen_1
 #  define GEN_I2C         gen_1
 #  define GEN_FLASH       gen_1
 #  define GEN_PIN         gen_3
@@ -67,6 +71,7 @@
 #elif defined(LPC17XX)
 
 #  define GEN_ADC         gen_1
+#  define GEN_BOD         lpc17xx
 #  define GEN_CAN         gen_1
 #  define GEN_DAC         gen_1
 #  define GEN_FLASH       gen_1
@@ -84,6 +89,7 @@
 #elif defined(LPC43XX) || defined(LPC43XX_M0APP) || defined(LPC43XX_M0SUB)
 
 #  define GEN_ADC         gen_1
+#  define GEN_BOD         lpc43xx
 #  define GEN_CAN         gen_2
 #  define GEN_DAC         gen_1
 #  define GEN_FLASH       lpc43xx
