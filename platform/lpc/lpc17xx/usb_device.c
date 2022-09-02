@@ -168,7 +168,8 @@ static void dmaEpUpdateChain(struct UsbDmaEndpoint *);
 static struct DmaDescriptor *epAllocDescriptor(struct UsbDmaEndpoint *,
     struct UsbRequest *);
 static void epAppendDescriptor(struct UsbDmaEndpoint *, struct DmaDescriptor *);
-static void epEnqueueRequest(struct UsbDmaEndpoint *, struct UsbRequest *);
+static enum Result epEnqueueRequest(struct UsbDmaEndpoint *,
+    struct UsbRequest *);
 /*----------------------------------------------------------------------------*/
 static enum Result dmaEpInit(void *, const void *);
 static void dmaEpDeinit(void *);
@@ -839,39 +840,43 @@ static enum Result sieEpEnqueue(void *object, struct UsbRequest *request)
   if (index >= 2 && !ep->device->configured)
     return E_IDLE;
 
-  assert(!pointerQueueFull(&ep->requests));
-
-  const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
-  bool invokeHandler = false;
-
   const IrqState state = irqSave();
-  const uint8_t epStatus = usbCommandRead(ep->device, epCode);
+  enum Result res = E_FULL;
 
-  if (ep->address & USB_EP_DIRECTION_IN)
+  if (!pointerQueueFull(&ep->requests))
   {
-    static const uint8_t mask = SELECT_ENDPOINT_ST
-        | SELECT_ENDPOINT_B1FULL | SELECT_ENDPOINT_B2FULL;
+    const uint8_t epCode = USB_CMD_SELECT_ENDPOINT | index;
+    const uint8_t epStatus = usbCommandRead(ep->device, epCode);
+    bool invokeHandler = false;
 
-    invokeHandler = !(epStatus & mask) && pointerQueueEmpty(&ep->requests);
-  }
-  else if (epStatus & SELECT_ENDPOINT_FE)
-  {
-    invokeHandler = true;
-  }
+    if (ep->address & USB_EP_DIRECTION_IN)
+    {
+      static const uint8_t mask = SELECT_ENDPOINT_ST
+          | SELECT_ENDPOINT_B1FULL | SELECT_ENDPOINT_B2FULL;
 
-  pointerQueuePushBack(&ep->requests, request);
+      invokeHandler = !(epStatus & mask) && pointerQueueEmpty(&ep->requests);
+    }
+    else if (epStatus & SELECT_ENDPOINT_FE)
+    {
+      invokeHandler = true;
+    }
 
-  if (invokeHandler)
-  {
-    LPC_USB_Type * const reg = ep->device->base.reg;
-    const uint32_t mask = 1UL << index;
+    pointerQueuePushBack(&ep->requests, request);
 
-    /* Schedule interrupt */
-    reg->USBEpIntSet = mask;
+    if (invokeHandler)
+    {
+      LPC_USB_Type * const reg = ep->device->base.reg;
+      const uint32_t mask = 1UL << index;
+
+      /* Schedule interrupt */
+      reg->USBEpIntSet = mask;
+    }
+
+    res = E_OK;
   }
 
   irqRestore(state);
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static bool sieEpIsStalled(void *object)
@@ -1065,13 +1070,18 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static void epEnqueueRequest(struct UsbDmaEndpoint *ep,
+static enum Result epEnqueueRequest(struct UsbDmaEndpoint *ep,
     struct UsbRequest *request)
 {
   struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request);
-  assert(descriptor);
 
-  epAppendDescriptor(ep, descriptor);
+  if (descriptor)
+  {
+    epAppendDescriptor(ep, descriptor);
+    return E_OK;
+  }
+  else
+    return E_EMPTY;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dmaEpInit(void *object, const void *configBase)
@@ -1174,8 +1184,7 @@ static enum Result dmaEpEnqueue(void *object, struct UsbRequest *request)
   assert(request);
   assert(request->callback);
 
-  epEnqueueRequest(object, request);
-  return E_OK;
+  return epEnqueueRequest(object, request);
 }
 /*----------------------------------------------------------------------------*/
 static bool dmaEpIsStalled(void *object)

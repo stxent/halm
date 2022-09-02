@@ -617,33 +617,39 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
     return E_IDLE;
 
   assert(ep->position); /* Device should be initialized */
-  assert(!pointerQueueFull(&ep->requests));
 
-  bool invokeHandler = false;
   const IrqState state = irqSave();
+  enum Result res = E_FULL;
 
-  if (ep->address & USB_EP_DIRECTION_IN)
+  if (!pointerQueueFull(&ep->requests))
   {
-    if (pointerQueueEmpty(&ep->requests))
+    bool invokeHandler = false;
+
+    if (ep->address & USB_EP_DIRECTION_IN)
     {
-      if (!(device->base.endpointList[index].b[0] & EPCS_A))
-        invokeHandler = true;
+      if (pointerQueueEmpty(&ep->requests))
+      {
+        if (!(device->base.endpointList[index].b[0] & EPCS_A))
+          invokeHandler = true;
+      }
     }
-  }
-  else if (pointerQueueEmpty(&ep->requests))
-  {
-    epPrimeOut(ep);
-  }
-  pointerQueuePushBack(&ep->requests, request);
+    else if (pointerQueueEmpty(&ep->requests))
+    {
+      epPrimeOut(ep);
+    }
+    pointerQueuePushBack(&ep->requests, request);
 
-  if (invokeHandler)
-  {
-    LPC_USB_Type * const reg = device->base.reg;
-    reg->INTSETSTAT |= INTSETSTAT_EP_SET_INT(index);
+    if (invokeHandler)
+    {
+      LPC_USB_Type * const reg = device->base.reg;
+      reg->INTSETSTAT |= INTSETSTAT_EP_SET_INT(index);
+    }
+
+    res = E_OK;
   }
 
   irqRestore(state);
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static bool epIsStalled(void *object)

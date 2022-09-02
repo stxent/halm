@@ -98,8 +98,8 @@ static struct TransferDescriptor *epAllocDescriptor(struct UsbEndpoint *,
     struct UsbRequest *, uint8_t *, size_t);
 static void epAppendDescriptor(struct UsbEndpoint *,
     struct TransferDescriptor *);
-static void epEnqueueRx(struct UsbEndpoint *, struct UsbRequest *);
-static void epEnqueueTx(struct UsbEndpoint *, struct UsbRequest *);
+static enum Result epEnqueueRx(struct UsbEndpoint *, struct UsbRequest *);
+static enum Result epEnqueueTx(struct UsbEndpoint *, struct UsbRequest *);
 static void epExtractDataLength(const struct UsbEndpoint *,
     struct UsbRequest *);
 static void epFlush(struct UsbEndpoint *);
@@ -596,22 +596,34 @@ static void epAppendDescriptor(struct UsbEndpoint *ep,
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-static void epEnqueueRx(struct UsbEndpoint *ep, struct UsbRequest *request)
+static enum Result epEnqueueRx(struct UsbEndpoint *ep,
+    struct UsbRequest *request)
 {
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
       request, request->buffer, request->capacity);
-  assert(descriptor);
 
-  epAppendDescriptor(ep, descriptor);
+  if (descriptor)
+  {
+    epAppendDescriptor(ep, descriptor);
+    return E_OK;
+  }
+  else
+    return E_EMPTY;
 }
 /*----------------------------------------------------------------------------*/
-static void epEnqueueTx(struct UsbEndpoint *ep, struct UsbRequest *request)
+static enum Result epEnqueueTx(struct UsbEndpoint *ep,
+    struct UsbRequest *request)
 {
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
       request, request->buffer, request->length);
-  assert(descriptor);
 
-  epAppendDescriptor(ep, descriptor);
+  if (descriptor)
+  {
+    epAppendDescriptor(ep, descriptor);
+    return E_OK;
+  }
+  else
+    return E_EMPTY;
 }
 /*----------------------------------------------------------------------------*/
 static void epExtractDataLength(const struct UsbEndpoint *ep,
@@ -866,11 +878,9 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
   struct UsbEndpoint * const ep = object;
 
   if (ep->address & USB_EP_DIRECTION_IN)
-    epEnqueueTx(ep, request);
+    return epEnqueueTx(ep, request);
   else
-    epEnqueueRx(ep, request);
-
-  return E_OK;
+    return epEnqueueRx(ep, request);
 }
 /*----------------------------------------------------------------------------*/
 static bool epIsStalled(void *object)

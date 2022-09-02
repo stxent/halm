@@ -21,7 +21,7 @@ struct UsbEndpoint;
 struct SieEndpointClass
 {
   void (*enable)(struct UsbEndpoint *, uint8_t, uint16_t);
-  void (*enqueue)(struct UsbEndpoint *, struct UsbRequest *);
+  enum Result (*enqueue)(struct UsbEndpoint *, struct UsbRequest *);
   void (*isr)(struct UsbEndpoint *, bool);
 };
 
@@ -124,7 +124,7 @@ static void epWritePacketMemory(volatile void *, const void *, size_t);
 static uint32_t sizeToNumBlocks(size_t);
 
 static void dbEpEnable(struct UsbEndpoint *, uint8_t, uint16_t);
-static void dbEpEnqueue(struct UsbEndpoint *, struct UsbRequest *);
+static enum Result dbEpEnqueue(struct UsbEndpoint *, struct UsbRequest *);
 static void dbEpHandler(struct UsbEndpoint *, bool);
 static bool dbEpReadData(struct UsbEndpoint *, uint8_t *, size_t, size_t *);
 static void dbEpSetBufferSize(struct UsbEndpoint *, size_t);
@@ -132,7 +132,7 @@ static void dbEpWriteFirstPacket(struct UsbEndpoint *, const uint8_t *, size_t);
 static void dbEpWritePacket(struct UsbEndpoint *, const uint8_t *, size_t);
 
 static void sbEpEnable(struct UsbEndpoint *, uint8_t, uint16_t);
-static void sbEpEnqueue(struct UsbEndpoint *, struct UsbRequest *);
+static enum Result sbEpEnqueue(struct UsbEndpoint *, struct UsbRequest *);
 static void sbEpHandler(struct UsbEndpoint *, bool);
 static bool sbEpReadData(struct UsbEndpoint *, uint8_t *, size_t, size_t *);
 static void sbEpSetBufferSize(struct UsbEndpoint *, size_t);
@@ -485,9 +485,16 @@ static void dbEpEnable(struct UsbEndpoint *ep, uint8_t type, uint16_t size)
   }
 }
 /*----------------------------------------------------------------------------*/
-static void dbEpEnqueue(struct UsbEndpoint *ep, struct UsbRequest *request)
+static enum Result dbEpEnqueue(struct UsbEndpoint *ep,
+    struct UsbRequest *request)
 {
   const IrqState state = irqSave();
+
+  if (pointerQueueFull(&ep->requests))
+  {
+    irqRestore(state);
+    return E_FULL;
+  }
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
@@ -534,7 +541,9 @@ static void dbEpEnqueue(struct UsbEndpoint *ep, struct UsbRequest *request)
   }
 
   pointerQueuePushBack(&ep->requests, request);
+
   irqRestore(state);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void dbEpHandler(struct UsbEndpoint *ep,
@@ -723,9 +732,16 @@ static void sbEpEnable(struct UsbEndpoint *ep, uint8_t type, uint16_t size)
   device->position += size;
 }
 /*----------------------------------------------------------------------------*/
-static void sbEpEnqueue(struct UsbEndpoint *ep, struct UsbRequest *request)
+static enum Result sbEpEnqueue(struct UsbEndpoint *ep,
+    struct UsbRequest *request)
 {
   const IrqState state = irqSave();
+
+  if (pointerQueueFull(&ep->requests))
+  {
+    irqRestore(state);
+    return E_FULL;
+  }
 
   if (pointerQueueEmpty(&ep->requests))
   {
@@ -744,7 +760,9 @@ static void sbEpEnqueue(struct UsbEndpoint *ep, struct UsbRequest *request)
   }
 
   pointerQueuePushBack(&ep->requests, request);
+
   irqRestore(state);
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void sbEpHandler(struct UsbEndpoint *ep, bool setup)
@@ -931,10 +949,8 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
 
   assert(request);
   assert(request->callback);
-  assert(!pointerQueueFull(&ep->requests));
 
-  ep->subclass->enqueue(ep, request);
-  return E_OK;
+  return ep->subclass->enqueue(ep, request);
 }
 /*----------------------------------------------------------------------------*/
 static bool epIsStalled(void *object)
