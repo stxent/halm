@@ -102,7 +102,7 @@ struct GpDmaBase
   void *reg;
   void (*handler)(void *, enum Result);
 
-  /* Precalculated value of Channel Configuration register */
+  /* Precalculated value of the channel configuration register */
   uint32_t config;
   /* Precalculated values of the system connections multiplexer */
   struct GpDmaMuxConfig mux;
@@ -118,6 +118,8 @@ void gpDmaSetMux(struct GpDmaBase *);
 
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *,
     const struct GpDmaSettings *);
+uint32_t gpDmaBaseCalcMasterAffinity(const struct GpDmaBase *,
+    enum GpDmaMaster, enum GpDmaMaster);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

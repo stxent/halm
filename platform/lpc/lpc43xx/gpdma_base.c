@@ -107,6 +107,35 @@ uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel,
   return control;
 }
 /*----------------------------------------------------------------------------*/
+uint32_t gpDmaBaseCalcMasterAffinity(const struct GpDmaBase *channel,
+    enum GpDmaMaster dstMaster, enum GpDmaMaster srcMaster)
+{
+  const uint32_t type = CONFIG_TYPE_VALUE(channel->config);
+  uint32_t control = 0;
+
+  if (srcMaster == GPDMA_MASTER_DEFAULT)
+  {
+    if (type == GPDMA_TYPE_P2M)
+      control |= CONTROL_SRC_MASTER(1);
+  }
+  else if (srcMaster == GPDMA_MASTER_1)
+  {
+    control |= CONTROL_SRC_MASTER(1);
+  }
+
+  if (dstMaster == GPDMA_MASTER_DEFAULT)
+  {
+    if (type == GPDMA_TYPE_M2P)
+      control |= CONTROL_DST_MASTER(1);
+  }
+  else if (dstMaster == GPDMA_MASTER_1)
+  {
+    control |= CONTROL_DST_MASTER(1);
+  }
+
+  return control;
+}
+/*----------------------------------------------------------------------------*/
 void gpDmaResetInstance(uint8_t channel)
 {
   hub->instances[channel] = 0;

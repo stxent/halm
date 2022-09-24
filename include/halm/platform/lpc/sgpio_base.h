@@ -64,8 +64,58 @@ struct SgpioBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+static inline int8_t sgpioSliceToClockSource(enum SgpioSlice slice)
+{
+  if (slice == SGPIO_SLICE_D)
+    return 0;
+
+  if (slice == SGPIO_SLICE_H)
+    return 1;
+
+  if (slice == SGPIO_SLICE_O || slice == SGPIO_SLICE_P)
+    return slice - 12;
+
+  return -1;
+}
+
+static inline int8_t sgpioSliceToQualifierSource(enum SgpioSlice source,
+    enum SgpioSlice destination)
+{
+  if (destination == SGPIO_SLICE_A && source == SGPIO_SLICE_D)
+    return 0;
+  if (destination == SGPIO_SLICE_H && source == SGPIO_SLICE_O)
+    return 1;
+  if (destination == SGPIO_SLICE_I && source == SGPIO_SLICE_D)
+    return 2;
+  if (destination == SGPIO_SLICE_P && source == SGPIO_SLICE_O)
+    return 3;
+
+  switch (source)
+  {
+    case SGPIO_SLICE_A:
+      return 0;
+
+    case SGPIO_SLICE_H:
+      return 1;
+
+    case SGPIO_SLICE_I:
+      return 2;
+
+    case SGPIO_SLICE_P:
+      return 3;
+
+    default:
+      return -1;
+  }
+}
+
+END_DECLS
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
 uint8_t sgpioConfigPin(PinNumber, enum PinPull);
 uint32_t sgpioGetClock(const struct SgpioBase *);
+enum SgpioSlice sgpioPinToSlice(enum SgpioPin, uint8_t);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

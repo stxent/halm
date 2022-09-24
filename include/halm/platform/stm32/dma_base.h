@@ -85,7 +85,7 @@ struct DmaBase
   void *reg;
   void (*handler)(void *, enum Result);
 
-  /* Precalculated value of Channel Configuration Register */
+  /* Precalculated value of the channel configuration register */
   uint32_t config;
   /* IRQ number */
   IrqNumber irq;

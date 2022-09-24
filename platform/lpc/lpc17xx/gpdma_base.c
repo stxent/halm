@@ -138,6 +138,14 @@ uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
   return control;
 }
 /*----------------------------------------------------------------------------*/
+uint32_t gpDmaBaseCalcMasterAffinity(
+    const struct GpDmaBase *channel __attribute__((unused)),
+    enum GpDmaMaster dstMaster __attribute__((unused)),
+    enum GpDmaMaster srcMaster __attribute__((unused)))
+{
+  return 0;
+}
+/*----------------------------------------------------------------------------*/
 void gpDmaResetInstance(uint8_t channel)
 {
   instances[channel] = 0;

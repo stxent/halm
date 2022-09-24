@@ -267,6 +267,111 @@ uint32_t sgpioGetClock(const struct SgpioBase *unit __attribute__((unused)))
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
+enum SgpioSlice sgpioPinToSlice(enum SgpioPin pin, uint8_t mux)
+{
+  if (mux == 0x0)
+  {
+    /* 1-bit */
+    static const enum SgpioSlice MUX_TABLE[] = {
+        SGPIO_SLICE_A, SGPIO_SLICE_I, SGPIO_SLICE_E, SGPIO_SLICE_J,
+        SGPIO_SLICE_C, SGPIO_SLICE_K, SGPIO_SLICE_F, SGPIO_SLICE_L,
+        SGPIO_SLICE_B, SGPIO_SLICE_M, SGPIO_SLICE_G, SGPIO_SLICE_N,
+        SGPIO_SLICE_D, SGPIO_SLICE_O, SGPIO_SLICE_H, SGPIO_SLICE_P
+    };
+
+    return MUX_TABLE[pin];
+  }
+  else if (mux == 0x1)
+  {
+    /* Clock */
+    static const enum SgpioSlice MUX_TABLE[] = {
+        SGPIO_SLICE_B, SGPIO_SLICE_D, SGPIO_SLICE_E, SGPIO_SLICE_H,
+        SGPIO_SLICE_C, SGPIO_SLICE_F, SGPIO_SLICE_O, SGPIO_SLICE_P,
+        SGPIO_SLICE_A, SGPIO_SLICE_M, SGPIO_SLICE_G, SGPIO_SLICE_N,
+        SGPIO_SLICE_I, SGPIO_SLICE_J, SGPIO_SLICE_K, SGPIO_SLICE_L
+    };
+
+    return MUX_TABLE[pin];
+  }
+  else if (mux == 0xB)
+  {
+    /* 8-bit 8c */
+    return pin < SGPIO_8 ? SGPIO_SLICE_L : SGPIO_SLICE_N;
+  }
+  else if (mux == 0xA)
+  {
+    /* 8-bit 8b */
+    return pin < SGPIO_8 ? SGPIO_SLICE_J : SGPIO_SLICE_M;
+  }
+  else if (mux == 0x9)
+  {
+    /* 8-bit 8a */
+    return pin < SGPIO_8 ? SGPIO_SLICE_A : SGPIO_SLICE_B;
+  }
+  else if (mux == 0x7)
+  {
+    /* 4-bit 4c */
+    static const enum SgpioSlice MUX_TABLE[] = {
+        SGPIO_SLICE_J, SGPIO_SLICE_L, SGPIO_SLICE_N, SGPIO_SLICE_P
+    };
+
+    return MUX_TABLE[pin >> 2];
+  }
+  else if (mux == 0x6)
+  {
+    /* 4-bit 4b */
+    static const enum SgpioSlice MUX_TABLE[] = {
+        SGPIO_SLICE_I, SGPIO_SLICE_K, SGPIO_SLICE_M, SGPIO_SLICE_O
+    };
+
+    return MUX_TABLE[pin >> 2];
+  }
+  else if (mux == 0x5)
+  {
+    /* 4-bit 4a */
+    static const enum SgpioSlice MUX_TABLE[] = {
+        SGPIO_SLICE_A, SGPIO_SLICE_C, SGPIO_SLICE_B, SGPIO_SLICE_D
+    };
+
+    return MUX_TABLE[pin >> 2];
+  }
+  else if (mux == 0x3)
+  {
+    /* 2-bit 2c */
+    static const enum SgpioSlice MUX_TABLE[] = {
+        SGPIO_SLICE_J, SGPIO_SLICE_I, SGPIO_SLICE_L, SGPIO_SLICE_K,
+        SGPIO_SLICE_N, SGPIO_SLICE_M, SGPIO_SLICE_P, SGPIO_SLICE_O
+    };
+
+    return MUX_TABLE[pin >> 1];
+  }
+  else if (mux == 0x2)
+  {
+    /* 2-bit 2b */
+    static const enum SgpioSlice MUX_TABLE[] = {
+        SGPIO_SLICE_I, SGPIO_SLICE_J, SGPIO_SLICE_K, SGPIO_SLICE_L,
+        SGPIO_SLICE_M, SGPIO_SLICE_N, SGPIO_SLICE_O, SGPIO_SLICE_P
+    };
+
+    return MUX_TABLE[pin >> 1];
+  }
+  else if (mux == 0x1)
+  {
+    /* 2-bit 2a */
+    static const enum SgpioSlice MUX_TABLE[] = {
+        SGPIO_SLICE_A, SGPIO_SLICE_E, SGPIO_SLICE_C, SGPIO_SLICE_F,
+        SGPIO_SLICE_B, SGPIO_SLICE_G, SGPIO_SLICE_D, SGPIO_SLICE_H
+    };
+
+    return MUX_TABLE[pin >> 1];
+  }
+  else
+  {
+    /* GPIO */
+    return (enum SgpioSlice)pin;
+  }
+}
+/*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *object,
     const void *configBase __attribute__((unused)))
 {

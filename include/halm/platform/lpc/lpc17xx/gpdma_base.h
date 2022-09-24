@@ -44,6 +44,12 @@ enum GpDmaEvent
   GPDMA_EVENT_END
 } __attribute__((packed));
 
+/** Direct Memory Access controller masters. */
+enum GpDmaMaster
+{
+  GPDMA_MASTER_DEFAULT
+} __attribute__((packed));
+
 struct GpDmaMuxConfig
 {
   uint8_t mask;

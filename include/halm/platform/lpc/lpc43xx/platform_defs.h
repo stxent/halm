@@ -955,7 +955,7 @@ typedef struct
   __wo__ uint32_t SET_EN_0;
   __ro__ uint32_t ENABLE_0;
   __ro__ uint32_t STATUS_0;
-  __wo__ uint32_t CTR_STATUS_0;
+  __wo__ uint32_t CLR_STATUS_0;
   __wo__ uint32_t SET_STATUS_0;
   __ne__ uint32_t RESERVED1[2];
 
@@ -964,7 +964,7 @@ typedef struct
   __wo__ uint32_t SET_EN_1;
   __ro__ uint32_t ENABLE_1;
   __ro__ uint32_t STATUS_1;
-  __wo__ uint32_t CTR_STATUS_1;
+  __wo__ uint32_t CLR_STATUS_1;
   __wo__ uint32_t SET_STATUS_1;
   __ne__ uint32_t RESERVED2[2];
 
@@ -973,7 +973,7 @@ typedef struct
   __wo__ uint32_t SET_EN_2;
   __ro__ uint32_t ENABLE_2;
   __ro__ uint32_t STATUS_2;
-  __wo__ uint32_t CTR_STATUS_2;
+  __wo__ uint32_t CLR_STATUS_2;
   __wo__ uint32_t SET_STATUS_2;
   __ne__ uint32_t RESERVED3[2];
 
@@ -982,7 +982,7 @@ typedef struct
   __wo__ uint32_t SET_EN_3;
   __ro__ uint32_t ENABLE_3;
   __ro__ uint32_t STATUS_3;
-  __wo__ uint32_t CTR_STATUS_3;
+  __wo__ uint32_t CLR_STATUS_3;
   __wo__ uint32_t SET_STATUS_3;
 } LPC_SGPIO_Type;
 /*------------------Reset Generation Unit-------------------------------------*/

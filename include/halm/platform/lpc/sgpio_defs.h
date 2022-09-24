@@ -44,6 +44,23 @@ enum
 #define OUT_MUX_CFG_P_OE_CFG_VALUE(reg) \
     FIELD_VALUE((reg), OUT_MUX_CFG_P_OE_CFG_MASK, 4)
 /*------------------SGPIO multiplexer configuration registers-----------------*/
+enum
+{
+  CONCAT_SELF_LOOP  = 0x0,
+  CONCAT_2_SLICES   = 0x1,
+  CONCAT_4_SLICES   = 0x2,
+  CONCAT_8_SLICES   = 0x3
+};
+
+enum
+{
+  QUALIFIER_ENABLE  = 0x0,
+  QUALIFIER_DISABLE = 0x1,
+  QUALIFIER_SLICE   = 0x2,
+  QUALIFIER_PIN     = 0x3
+};
+
+#define SGPIO_MUX_CFG_INT_CLK_ENABLE    0
 #define SGPIO_MUX_CFG_EXT_CLK_ENABLE    BIT(0)
 #define SGPIO_MUX_CFG_CONCAT_ENABLE     BIT(11)
 
@@ -89,11 +106,43 @@ enum
 #define SGPIO_MUX_CFG_CONCAT_ORDER_VALUE(reg) \
     FIELD_VALUE((reg), SGPIO_MUX_CFG_CONCAT_ORDER_MASK, 12)
 /*------------------Slice multiplexer configuration registers-----------------*/
+enum
+{
+  CLK_CAP_RISING      = 0,
+  CLK_CAP_FALLING     = 1
+};
+
+enum
+{
+  CLK_GEN_INTERNAL    = 0,
+  CLK_GEN_EXTERNAL    = 1
+};
+
+enum
+{
+  PARALLEL_MODE_1_BIT = 0,
+  PARALLEL_MODE_2_BIT = 1,
+  PARALLEL_MODE_4_BIT = 2,
+  PARALLEL_MODE_8_BIT = 3
+};
+
 #define SLICE_MUX_CFG_MATCH_MODE        BIT(0)
-#define SLICE_MUX_CFG_CLK_CAPTURE_MODE  BIT(1)
-#define SLICE_MUX_CFG_CLKGEN_MODE       BIT(2)
 #define SLICE_MUX_CFG_INV_OUT_CLK       BIT(3)
 #define SLICE_MUX_CFG_INV_QUALIFIER     BIT(8)
+
+#define SLICE_MUX_CFG_CLK_CAPTURE_MODE_MASK \
+    BIT_FIELD(MASK(1), 1)
+#define SLICE_MUX_CFG_CLK_CAPTURE_MODE(value) \
+    BIT_FIELD((value), 1)
+#define SLICE_MUX_CFG_CLK_CAPTURE_MODE_VALUE(reg) \
+    FIELD_VALUE((reg), SLICE_MUX_CFG_CLK_CAPTURE_MODE_MASK, 1)
+
+#define SLICE_MUX_CFG_CLKGEN_MODE_MASK \
+    BIT_FIELD(MASK(1), 2)
+#define SLICE_MUX_CFG_CLKGEN_MODE(value) \
+    BIT_FIELD((value), 2)
+#define SLICE_MUX_CFG_CLKGEN_MODE_VALUE(reg) \
+    FIELD_VALUE((reg), SLICE_MUX_CFG_CLKGEN_MODE_MASK, 2)
 
 #define SLICE_MUX_CFG_DATA_CAPTURE_MODE_MASK \
     BIT_FIELD(MASK(2), 4)
