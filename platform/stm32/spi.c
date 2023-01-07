@@ -67,12 +67,12 @@ static bool dmaSetup(struct Spi *interface, uint8_t rxStream,
   const struct DmaOneShotConfig dmaConfigs[] = {
       {
           .type = DMA_TYPE_P2M,
-          .stream = rxStream,
-          .priority = 0
+          .priority = 0,
+          .stream = rxStream
       }, {
           .type = DMA_TYPE_M2P,
-          .stream = txStream,
-          .priority = 0
+          .priority = 0,
+          .stream = txStream
       }
   };
 

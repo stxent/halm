@@ -7,17 +7,12 @@
 #include <halm/pin.h>
 #include <halm/platform/lpc/lpc17xx/pin_defs.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(uint8_t);
 static inline volatile uint32_t *calcPinSelect(uint8_t, uint8_t);
 static inline volatile uint32_t *calcPinMode(uint8_t, uint8_t);
 static inline volatile uint32_t *calcPinType(uint8_t);
+static inline LPC_GPIO_Type *calcPort(uint8_t);
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin);
-/*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(uint8_t port)
-{
-  return &LPC_GPIO[port];
-}
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinSelect(uint8_t port, uint8_t number)
 {
@@ -32,6 +27,11 @@ static inline volatile uint32_t *calcPinMode(uint8_t port, uint8_t number)
 static inline volatile uint32_t *calcPinType(uint8_t port)
 {
   return LPC_PINCON->PINMODE_OD + port;
+}
+/*----------------------------------------------------------------------------*/
+static inline LPC_GPIO_Type *calcPort(uint8_t port)
+{
+  return &LPC_GPIO[port];
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)

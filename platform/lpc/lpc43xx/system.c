@@ -7,6 +7,8 @@
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
 /*----------------------------------------------------------------------------*/
+static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch);
+/*----------------------------------------------------------------------------*/
 static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch branch)
 {
   if (branch < 0x200)
@@ -20,11 +22,6 @@ void sysClockEnable(enum SysClockBranch branch)
   calcBranchReg(branch)->CFG |= CFG_RUN | CFG_AUTO | CFG_WAKEUP;
 }
 /*----------------------------------------------------------------------------*/
-bool sysClockStatus(enum SysClockBranch branch)
-{
-  return (calcBranchReg(branch)->STAT & STAT_RUN) != 0;
-}
-/*----------------------------------------------------------------------------*/
 void sysClockDisable(enum SysClockBranch branch)
 {
   LPC_CCU_BRANCH_Type * const reg = calcBranchReg(branch);
@@ -32,6 +29,11 @@ void sysClockDisable(enum SysClockBranch branch)
   /* Use AHB disable protocol and do not enable clock after wake up */
   reg->CFG = (reg->CFG & ~CFG_WAKEUP) | CFG_AUTO;
   reg->CFG &= ~CFG_RUN; /* Disable clock */
+}
+/*----------------------------------------------------------------------------*/
+bool sysClockStatus(enum SysClockBranch branch)
+{
+  return (calcBranchReg(branch)->STAT & STAT_RUN) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void sysFlashEnable(unsigned int bank)

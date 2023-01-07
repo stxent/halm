@@ -16,10 +16,10 @@ struct DmaOneShotConfig
 {
   /** Mandatory: transfer type. */
   enum DmaType type;
-  /** Mandatory: stream number. */
-  uint8_t stream;
   /** Optional: stream priority. */
   uint8_t priority;
+  /** Mandatory: stream number. */
+  uint8_t stream;
 };
 
 struct DmaOneShot

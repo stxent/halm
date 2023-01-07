@@ -53,16 +53,6 @@ enum SysBlockPower
   PWR_USB   = 31
 } __attribute__((packed));
 
-/* Divider values for peripheral clock control registers */
-enum SysClockDiv
-{
-  CLK_DIV1 = 0,
-  CLK_DIV2 = 1,
-  CLK_DIV4 = 2,
-  CLK_DIV6 = 3, /* For CAN1, CAN2 and CAN Filtering */
-  CLK_DIV8 = 3
-};
-
 /* Peripheral clock selection registers */
 enum SysClockBranch
 {
@@ -97,6 +87,16 @@ enum SysClockBranch
   CLK_SYSCON   = 0x20 + 28,
   CLK_MC       = 0x20 + 30
 } __attribute__((packed));
+
+/* Divider values for peripheral clock control registers */
+enum SysClockDiv
+{
+  CLK_DIV1 = 0,
+  CLK_DIV2 = 1,
+  CLK_DIV4 = 2,
+  CLK_DIV6 = 3, /* For CAN1, CAN2 and CAN Filtering */
+  CLK_DIV8 = 3
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
@@ -113,14 +113,14 @@ static inline unsigned int sysClockDivToValue(enum SysClockDiv divisor)
   return 1 << divisor;
 }
 
-static inline void sysPowerEnable(enum SysBlockPower block)
-{
-  LPC_SC->PCONP |= 1UL << block;
-}
-
 static inline void sysPowerDisable(enum SysBlockPower block)
 {
   LPC_SC->PCONP &= ~(1UL << block);
+}
+
+static inline void sysPowerEnable(enum SysBlockPower block)
+{
+  LPC_SC->PCONP |= 1UL << block;
 }
 
 static inline bool sysPowerStatus(enum SysBlockPower block)

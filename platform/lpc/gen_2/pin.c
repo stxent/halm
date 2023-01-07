@@ -8,9 +8,9 @@
 #include <halm/platform/lpc/gen_2/pin_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(uint8_t);
 static inline volatile uint32_t *calcControlReg(uint8_t, uint8_t);
 static inline volatile uint32_t *calcMaskedReg(uint8_t, uint8_t);
+static inline LPC_GPIO_Type *calcPort(uint8_t);
 static void commonPinInit(struct Pin);
 static inline bool isI2CPin(struct Pin);
 static inline bool isSystemPin(struct Pin);
@@ -21,12 +21,6 @@ static const uint8_t pinRegMap[4][12] = {
     {0x08, 0x28, 0x5C, 0x8C, 0x40, 0x44, 0x00, 0x20, 0x24, 0x54, 0x58, 0x70},
     {0x84, 0x88, 0x9C, 0xAC, 0x3C, 0x48}
 };
-/*----------------------------------------------------------------------------*/
-static inline LPC_GPIO_Type *calcPort(uint8_t port)
-{
-  assert(port < ARRAY_SIZE(LPC_GPIO));
-  return &LPC_GPIO[port];
-}
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcControlReg(uint8_t port, uint8_t number)
 {
@@ -39,6 +33,12 @@ static inline volatile uint32_t *calcMaskedReg(uint8_t port, uint8_t number)
     return calcPort(port)->MASKED_ACCESS + (1UL << number);
   else
     return 0;
+}
+/*----------------------------------------------------------------------------*/
+static inline LPC_GPIO_Type *calcPort(uint8_t port)
+{
+  assert(port < ARRAY_SIZE(LPC_GPIO));
+  return &LPC_GPIO[port];
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)

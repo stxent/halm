@@ -12,12 +12,12 @@
 struct UartBlockDescriptor
 {
   LPC_UART_Type *reg;
-  /* Reset control identifier */
-  enum SysBlockReset reset;
   /* Peripheral clock branch */
   enum SysClockBranch peripheralBranch;
   /* Clock to register interface */
   enum SysClockBranch registerBranch;
+  /* Reset control identifier */
+  enum SysBlockReset reset;
   /* Peripheral interrupt request identifier */
   IrqNumber irq;
 };

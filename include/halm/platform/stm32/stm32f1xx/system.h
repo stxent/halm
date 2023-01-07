@@ -130,13 +130,13 @@ enum SysClockBranch
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void sysClockEnable(enum SysClockBranch);
 void sysClockDisable(enum SysClockBranch);
+void sysClockEnable(enum SysClockBranch);
 bool sysClockStatus(enum SysClockBranch);
 unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
-void sysResetEnable(enum SysBlockReset);
 void sysResetDisable(enum SysBlockReset);
+void sysResetEnable(enum SysBlockReset);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

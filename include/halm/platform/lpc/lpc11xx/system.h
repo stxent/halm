@@ -61,24 +61,24 @@ END_DECLS
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void sysClockEnable(enum SysClockBranch branch)
-{
-  LPC_SYSCON->SYSAHBCLKCTRL |= 1UL << branch;
-}
-
 static inline void sysClockDisable(enum SysClockBranch branch)
 {
   LPC_SYSCON->SYSAHBCLKCTRL &= ~(1UL << branch);
 }
 
-static inline void sysPowerEnable(enum SysBlockPower branch)
+static inline void sysClockEnable(enum SysClockBranch branch)
 {
-  LPC_SYSCON->PDRUNCFG &= ~(1UL << branch);
+  LPC_SYSCON->SYSAHBCLKCTRL |= 1UL << branch;
 }
 
 static inline void sysPowerDisable(enum SysBlockPower block)
 {
   LPC_SYSCON->PDRUNCFG |= 1UL << block;
+}
+
+static inline void sysPowerEnable(enum SysBlockPower branch)
+{
+  LPC_SYSCON->PDRUNCFG &= ~(1UL << branch);
 }
 
 static inline bool sysPowerStatus(enum SysBlockPower block)

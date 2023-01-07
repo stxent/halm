@@ -8,7 +8,7 @@ if(${CORE_VERSION} STREQUAL "m0")
     set(SOURCE_PATHS ${SOURCE_PATHS} "armv6m/*.c")
 elseif(${CORE_VERSION} STREQUAL "m3")
     set(SOURCE_PATHS ${SOURCE_PATHS} "armv7m/*.c")
-  elseif(${CORE_VERSION} MATCHES "m4|m7")
+elseif(${CORE_VERSION} MATCHES "m4|m7")
     set(SOURCE_PATHS ${SOURCE_PATHS} "armv7m/*.c" "armv7em/*.c")
 endif()
 

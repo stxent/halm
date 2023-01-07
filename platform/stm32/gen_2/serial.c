@@ -109,7 +109,10 @@ static void interruptHandler(void *object)
       reg->ICR = ICR_TCCF;
 
     if (byteQueueEmpty(&interface->txQueue))
+    {
       reg->CR1 = control & ~CR1_TXEIE;
+      event = true;
+    }
   }
 
   /* User handler will be called when receive queue is half-full */

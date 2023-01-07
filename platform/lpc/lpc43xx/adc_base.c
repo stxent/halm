@@ -54,14 +54,14 @@ const struct EntityClass * const AdcBase = &(const struct EntityClass){
 static const struct AdcBlockDescriptor adcBlockEntries[] = {
     {
         .reg = LPC_ADC0,
-        .irq = ADC0_IRQ,
         .clock = CLK_APB3_ADC0,
-        .reset = RST_ADC0
+        .reset = RST_ADC0,
+        .irq = ADC0_IRQ
     }, {
         .reg = LPC_ADC1,
-        .irq = ADC1_IRQ,
         .clock = CLK_APB3_ADC1,
-        .reset = RST_ADC1
+        .reset = RST_ADC1,
+        .irq = ADC1_IRQ
     }
 };
 /*----------------------------------------------------------------------------*/

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # make_layout.py
@@ -69,8 +69,11 @@ def build_memory_struct(branch):
             reserved += 1
         elif i > 0 and not block['aligned']:
             size = block['offset'] - position
-            output += '  __ne__ uint8_t RESERVED{:d}[0x{:X} - sizeof({})];\n'.format(
-                reserved, size, blocks[i - 1]['type'])
+            sizeof = 'sizeof({:s})'.format(blocks[i - 1]['type'])
+            if blocks[i - 1]['count'] > 1:
+                sizeof += ' * {:d}'.format(blocks[i - 1]['count'])
+            output += '  __ne__ uint8_t RESERVED{:d}[0x{:X} - {:s}];\n'.format(
+                reserved, size, sizeof)
             reserved += 1
 
         if block['count'] == 1:

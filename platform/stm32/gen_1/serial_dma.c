@@ -117,13 +117,13 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxStream,
   };
   const struct DmaCircularConfig rxDmaConfig = {
       .type = DMA_TYPE_P2M,
-      .stream = rxStream,
-      .priority = 0
+      .priority = 0,
+      .stream = rxStream
   };
   const struct DmaOneShotConfig txDmaConfig = {
       .type = DMA_TYPE_M2P,
-      .stream = txStream,
-      .priority = 0
+      .priority = 0,
+      .stream = txStream
   };
 
   interface->rxDma = init(DmaCircular, &rxDmaConfig);

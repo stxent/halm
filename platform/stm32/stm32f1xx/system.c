@@ -15,27 +15,6 @@ enum
   INDEX_APB2
 };
 /*----------------------------------------------------------------------------*/
-void sysClockEnable(enum SysClockBranch branch)
-{
-  const unsigned int index = branch >> 5;
-  const uint32_t value = 1UL << (branch & 0x1F);
-
-  switch (index)
-  {
-    case INDEX_AHB:
-      STM_RCC->AHBENR |= value;
-      break;
-
-    case INDEX_APB1:
-      STM_RCC->APB1ENR |= value;
-      break;
-
-    case INDEX_APB2:
-      STM_RCC->APB2ENR |= value;
-      break;
-  }
-}
-/*----------------------------------------------------------------------------*/
 void sysClockDisable(enum SysClockBranch branch)
 {
   const unsigned int index = branch >> 5;
@@ -53,6 +32,27 @@ void sysClockDisable(enum SysClockBranch branch)
 
     case INDEX_APB2:
       STM_RCC->APB2ENR &= mask;
+      break;
+  }
+}
+/*----------------------------------------------------------------------------*/
+void sysClockEnable(enum SysClockBranch branch)
+{
+  const unsigned int index = branch >> 5;
+  const uint32_t value = 1UL << (branch & 0x1F);
+
+  switch (index)
+  {
+    case INDEX_AHB:
+      STM_RCC->AHBENR |= value;
+      break;
+
+    case INDEX_APB1:
+      STM_RCC->APB1ENR |= value;
+      break;
+
+    case INDEX_APB2:
+      STM_RCC->APB2ENR |= value;
       break;
   }
 }
