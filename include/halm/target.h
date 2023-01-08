@@ -103,6 +103,11 @@
 #  define PLATFORM        lpc43xx
 #  define PLATFORM_TYPE   lpc
 
+#elif defined(M03X)
+
+#  define PLATFORM        m03x
+#  define PLATFORM_TYPE   numicro
+
 #elif defined(STM32F0XX)
 
 #  define GEN_PIN         gen_1

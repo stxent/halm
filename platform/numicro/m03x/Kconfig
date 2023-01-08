@@ -1,0 +1,47 @@
+menu "Enabled peripherals"
+
+menu "UART"
+
+config PLATFORM_NUMICRO_UART0
+	bool "UART0"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE
+
+config PLATFORM_NUMICRO_UART1
+	bool "UART1"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE
+
+config PLATFORM_NUMICRO_UART2
+	bool "UART2"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE
+
+config PLATFORM_NUMICRO_UART3
+	bool "UART3"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE
+
+config PLATFORM_NUMICRO_UART4
+	bool "UART4"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE
+
+config PLATFORM_NUMICRO_UART5
+	bool "UART5"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE
+
+config PLATFORM_NUMICRO_UART6
+	bool "UART6"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE
+
+config PLATFORM_NUMICRO_UART7
+	bool "UART7"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE
+
+endmenu
+
+endmenu

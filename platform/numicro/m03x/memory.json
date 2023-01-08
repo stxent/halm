@@ -1,0 +1,62 @@
+[
+  {
+    "address": "0x40000000",
+    "name": "AHB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "SYS", "type": "NM_SYS_Type"},
+      {"offset": "0x00200", "name": "CLK", "type": "NM_CLK_Type"},
+      {"offset": "0x00400", "name": "NMI", "type": "NM_NMI_Type"},
+      {"offset": "0x04000", "name": "GPIO", "type": "NM_GPIO_Type", "array": 8},
+      {"offset": "0x04440", "name": "GPIO_DBCTL", "type": "NM_GPIO_DBCTL_Type"},
+      {"offset": "0x04800", "name": "GPIO_PDIO", "type": "NM_GPIO_PDIO_Type"},
+      {"offset": "0x08000", "name": "PDMA", "type": "NM_PDMA_Type"},
+      {"offset": "0x0C000", "name": "FMC", "type": "NM_FMC_Type"},
+      {"offset": "0x10000", "name": "EBI", "type": "NM_EBI_Type"},
+      {"offset": "0x14000", "name": "HDIV", "type": "NM_HDIV_Type"},
+      {"offset": "0x31000", "name": "CRC", "type": "NM_CRC_Type"},
+      {"offset": "0xC0000", "name": "USBD", "type": "NM_USBD_Type"}
+    ]
+  },
+  {
+    "address": "0x40000000",
+    "name": "APB1_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x40000", "name": "WDT", "type": "NM_WDT_Type"},
+      {"offset": "0x40100", "name": "WWDT", "type": "NM_WWDT_Type"},
+      {"offset": "0x41000", "name": "RTC", "type": "NM_RTC_Type"},
+      {"offset": "0x43000", "name": "ADC", "type": "NM_ADC_Type"},
+      {"offset": "0x45000", "name": "ACMP01", "type": "NM_ACMP_Type"},
+      {"offset": "0x50000", "name": "TIMER0", "type": "NM_TIMER_Type"},
+      {"offset": "0x50020", "name": "TIMER1", "type": "NM_TIMER_Type"},
+      {"offset": "0x58000", "name": "PWM0", "type": "NM_PWM_Type"},
+      {"offset": "0x5A000", "name": "BPWM0", "type": "NM_BPWM_Type"},
+      {"offset": "0x60000", "name": "QSPI0", "type": "NM_QSPI_Type"},
+      {"offset": "0x61000", "name": "SPI0", "type": "NM_SPI_Type"},
+      {"offset": "0x70000", "name": "UART0", "type": "NM_UART_Type"},
+      {"offset": "0x80000", "name": "I2C0", "type": "NM_I2C_Type"},
+      {"offset": "0xD0000", "name": "USCI0", "type": "NM_USCI_Type"}
+    ]
+  },
+  {
+    "address": "0x40000000",
+    "name": "APB2_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x51000", "name": "TIMER2", "type": "NM_TIMER_Type"},
+      {"offset": "0x51020", "name": "TIMER3", "type": "NM_TIMER_Type"},
+      {"offset": "0x59000", "name": "PWM1", "type": "NM_PWM_Type"},
+      {"offset": "0x5B000", "name": "BPWM1", "type": "NM_BPWM_Type"},
+      {"offset": "0x71000", "name": "UART1", "type": "NM_UART_Type"},
+      {"offset": "0x72000", "name": "UART2", "type": "NM_UART_Type"},
+      {"offset": "0x73000", "name": "UART3", "type": "NM_UART_Type"},
+      {"offset": "0x74000", "name": "UART4", "type": "NM_UART_Type"},
+      {"offset": "0x75000", "name": "UART5", "type": "NM_UART_Type"},
+      {"offset": "0x76000", "name": "UART6", "type": "NM_UART_Type"},
+      {"offset": "0x77000", "name": "UART7", "type": "NM_UART_Type"},
+      {"offset": "0x81000", "name": "I2C1", "type": "NM_I2C_Type"},
+      {"offset": "0xD1000", "name": "USCI1", "type": "NM_USCI_Type"}
+    ]
+  }
+]

@@ -61,6 +61,10 @@ choice
 		select FAMILY_LPC43XX
 		depends on CORE_CORTEX_M0
 
+	config FAMILY_M03X
+		bool "Nuvoton M03x"
+		depends on CORE_CORTEX_M0
+
 	config FAMILY_STM32F0XX
 		bool "ST STM32F0xx"
 		depends on CORE_CORTEX_M0
