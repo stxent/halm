@@ -1,11 +1,11 @@
 /*
- * halm/platform/numicro/m03x/spi_defs.h
+ * halm/platform/numicro/spi_defs.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_NUMICRO_M03X_SPI_DEFS_H_
-#define HALM_PLATFORM_NUMICRO_M03X_SPI_DEFS_H_
+#ifndef HALM_PLATFORM_NUMICRO_SPI_DEFS_H_
+#define HALM_PLATFORM_NUMICRO_SPI_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Control register------------------------------------------*/
@@ -157,4 +157,4 @@
 #define I2SSTS_TXCNT_VALUE(reg) \
     FIELD_VALUE((reg), I2SSTS_TXCNT_MASK, 24)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NUMICRO_M03X_SPI_DEFS_H_ */
+#endif /* HALM_PLATFORM_NUMICRO_SPI_DEFS_H_ */

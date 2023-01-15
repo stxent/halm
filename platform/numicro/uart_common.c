@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/numicro/m03x/uart_defs.h>
 #include <halm/platform/numicro/uart_base.h>
+#include <halm/platform/numicro/uart_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];

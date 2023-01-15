@@ -223,7 +223,7 @@ typedef struct
   __ne__ uint32_t RESERVED0[28];
 
   /* Offset 0x100 */
-  __ro__ uint32_t CURSCAT[9]; /* Current descriptor addresses of PDMA channels */ // TODO
+  __ro__ uint32_t CURSCAT[9]; /* Current descriptor addresses of channels */
   __ne__ uint32_t RESERVED1[183];
 
   /* Offset 0x400 */
@@ -576,8 +576,13 @@ typedef struct
   __ro__ uint32_t LPMATTR; /* LPM Attribution register */
   __ro__ uint32_t FN; /* Frame number register */
   __rw__ uint32_t SE0; /* Device Drive SE0 Control register */
-  __ne__ uint32_t RESERVED2[283];
+  __ne__ uint32_t RESERVED2[27];
 
+  /* Offset 0x100 */
+  __rw__ uint8_t SRAM[512];
+  __ne__ uint32_t RESERVED3[128];
+
+  /* Offset 0x500 */
   NM_USBD_EP_Type EP[8]; /* USB Device Endpoints */
 } NM_USBD_Type;
 /*------------------Watchdog Timer--------------------------------------------*/
@@ -626,7 +631,7 @@ typedef struct
   NM_NMI_Type NMI;
   __ne__ uint8_t RESERVED2[0x3C00 - sizeof(NM_NMI_Type)];
   NM_GPIO_Type GPIO[8];
-  __ne__ uint8_t RESERVED3[0x440 - sizeof(NM_GPIO_Type) * 8]; // TODO
+  __ne__ uint8_t RESERVED3[0x440 - sizeof(NM_GPIO_Type) * 8];
   NM_GPIO_DBCTL_Type GPIO_DBCTL;
   __ne__ uint8_t RESERVED4[0x3C0 - sizeof(NM_GPIO_DBCTL_Type)];
   NM_GPIO_PDIO_Type GPIO_PDIO;

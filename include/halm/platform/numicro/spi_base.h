@@ -52,7 +52,9 @@ BEGIN_DECLS
 
 /* Common functions */
 void spiConfigPins(struct SpiBase *, const struct SpiBaseConfig *);
+uint8_t spiGetMode(const struct SpiBase *);
 uint32_t spiGetRate(const struct SpiBase *);
+void spiSetMode(struct SpiBase *, uint8_t);
 void spiSetRate(struct SpiBase *, uint32_t);
 
 /* Platform-specific functions */

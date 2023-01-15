@@ -71,26 +71,36 @@ void pinOutput(struct Pin pin, bool value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
+  NM_GPIO_Type * const reg = calcPort(pin.port);
+  volatile uint32_t * const mfp = calcPinFunc(pin.port, pin.number);
+
   /* Function should not be used outside platform drivers */
   switch (function)
   {
     case PIN_DEFAULT:
-      function = 0; /* Function 0 is the default for all GPIO pins */
+      /* Function 0 is the default for all GPIO pins */
+      function = 0;
+      /* Enable digital input path */
+      reg->DINOFF &= ~BIT(pin.number + DINOFF_OFFSET);
       break;
 
     case PIN_ANALOG:
-      // TODO Disable digital input path
-      function = 1; /* Function 1 is the default for all analog pins */
-      return;
+      /* Function 1 is the default for all analog pins */
+      function = 1;
+      /* Disable digital input path */
+      reg->DINOFF |= BIT(pin.number + DINOFF_OFFSET);
+      break;
+
+    default:
+      break;
   }
 
-  volatile uint32_t * const reg = calcPinFunc(pin.port, pin.number);
   const uint32_t offset = pin.number & 0x7;
-  uint32_t value = *reg;
+  uint32_t value = *mfp;
 
   value &= ~MFP_FUNCTION_MASK(offset);
   value |= MFP_FUNCTION(function, offset);
-  *reg = value;
+  *mfp = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin __attribute__((unused)),

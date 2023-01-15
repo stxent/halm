@@ -30,7 +30,6 @@ enum
   UART13_IRQ        = 13,
   SPI0_IRQ          = 14,
   QSPI0_IRQ         = 15,
-  ISP_IRQ           = 16,
   UART57_IRQ        = 17,
   I2C0_IRQ          = 18,
   I2C1_IRQ          = 19,

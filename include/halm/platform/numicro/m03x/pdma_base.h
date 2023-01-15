@@ -11,6 +11,20 @@
 #ifndef HALM_PLATFORM_NUMICRO_M03X_PDMA_BASE_H_
 #define HALM_PLATFORM_NUMICRO_M03X_PDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
+/** Symbolic names for the DMA channels */
+enum
+{
+  DMA0_CHANNEL0 = 0,
+  DMA0_CHANNEL1 = 1,
+  DMA0_CHANNEL2 = 2,
+  DMA0_CHANNEL3 = 3,
+  DMA0_CHANNEL4 = 4,
+  DMA0_CHANNEL5 = 5,
+  DMA0_CHANNEL6 = 6,
+  DMA0_CHANNEL7 = 7,
+  DMA0_CHANNEL8 = 8
+};
+
 /** PDMA Request Source Selection. */
 enum PdmaEvent
 {
@@ -63,5 +77,43 @@ struct PdmaMuxConfig
   uint32_t mask;
   uint32_t value;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+static inline enum PdmaEvent pdmaGetEventAdc(uint8_t channel
+    __attribute__((unused)))
+{
+  return PDMA_ADC_RX;
+}
+
+static inline enum PdmaEvent pdmaGetEventSpiRx(uint8_t channel
+    __attribute__((unused)))
+{
+  return PDMA_SPI0_RX;
+}
+
+static inline enum PdmaEvent pdmaGetEventSpiTx(uint8_t channel
+    __attribute__((unused)))
+{
+  return PDMA_SPI0_TX;
+}
+
+static inline enum PdmaEvent pdmaGetEventUartRx(uint8_t channel)
+{
+  if (channel < 3)
+    return PDMA_UART0_RX + channel * 2;
+  else
+    return PDMA_UART3_RX + (channel - 3) * 2;
+}
+
+static inline enum PdmaEvent pdmaGetEventUartTx(uint8_t channel)
+{
+  if (channel < 3)
+    return PDMA_UART0_TX + channel * 2;
+  else
+    return PDMA_UART3_TX + (channel - 3) * 2;
+}
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_M03X_PDMA_BASE_H_ */

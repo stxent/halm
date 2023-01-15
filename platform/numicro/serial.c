@@ -5,9 +5,9 @@
  */
 
 #include <halm/generic/byte_queue_extensions.h>
-#include <halm/platform/numicro/m03x/uart_defs.h>
 #include <halm/platform/numicro/serial.h>
 #include <halm/platform/numicro/uart_base.h>
+#include <halm/platform/numicro/uart_defs.h>
 #include <halm/pm.h>
 #include <stdbool.h>
 #include <string.h>

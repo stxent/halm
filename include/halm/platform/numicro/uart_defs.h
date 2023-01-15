@@ -1,11 +1,11 @@
 /*
- * halm/platform/numicro/m03x/uart_defs.h
+ * halm/platform/numicro/uart_defs.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_NUMICRO_M03X_UART_DEFS_H_
-#define HALM_PLATFORM_NUMICRO_M03X_UART_DEFS_H_
+#ifndef HALM_PLATFORM_NUMICRO_UART_DEFS_H_
+#define HALM_PLATFORM_NUMICRO_UART_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Interrupt Enable register---------------------------------*/
@@ -245,4 +245,4 @@ enum
 #define WKSTS_RS485WKF                  BIT(3)
 #define WKSTS_TOUTWKF                   BIT(4)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NUMICRO_M03X_UART_DEFS_H_ */
+#endif /* HALM_PLATFORM_NUMICRO_UART_DEFS_H_ */

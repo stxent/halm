@@ -23,7 +23,9 @@ enum
 #define DINOFF_OFFSET                   16
 /*------------------Interrupt Enable Control register-------------------------*/
 #define INTEN_FLIEN(pin)                BIT((pin) + 0)
+#define INTEN_FLIEN_GROUP(value)        BIT_FIELD((value), 0)
 #define INTEN_RHIEN(pin)                BIT((pin) + 16)
+#define INTEN_RHIEN_GROUP(value)        BIT_FIELD((value), 16)
 /*------------------Interrupt De-bounce Control register----------------------*/
 enum
 {

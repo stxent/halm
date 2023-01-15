@@ -31,7 +31,6 @@ void UART02_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void UART13_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void SPI0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void QSPI0_ISR (void) __attribute__((weak, alias("defaultHandler")));
-void ISP_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void UART57_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void I2C0_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void I2C1_ISR(void) __attribute__((weak, alias("defaultHandler")));
@@ -86,7 +85,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     UART13_ISR,
     SPI0_ISR,
     QSPI0_ISR,
-    ISP_ISR,
+    0,
     UART57_ISR,
     I2C0_ISR,
     I2C1_ISR,
@@ -94,6 +93,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     BPWM1_ISR,
     USCI01_ISR,
     USBD_ISR,
+    0,
     ACMP01_ISR,
     PDMA_ISR,
     UART46_ISR,

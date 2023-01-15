@@ -14,14 +14,79 @@ config PLATFORM_NUMICRO_NO_DEINIT
 	bool "Disable destructors"
 	default n
 
+config PLATFORM_NUMICRO_ADC_BASE
+	bool "ADC"
+	default y
+
+config PLATFORM_NUMICRO_ADC_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_ADC_BASE
+
+config PLATFORM_NUMICRO_ADC_SHARED
+	bool "Shared ADC"
+	default y
+	depends on PLATFORM_NUMICRO_ADC_BASE
+	help
+	  This allows usage of multiple ADC channel objects on the same peripheral.
+
+config PLATFORM_NUMICRO_ADC_ONESHOT
+	bool "Single channel ADC with polling"
+	default y
+	depends on PLATFORM_NUMICRO_ADC_BASE
+
+config PLATFORM_NUMICRO_ADC
+	bool "Multichannel ADC with interrupts"
+	default y
+	depends on PLATFORM_NUMICRO_ADC_BASE
+
+config PLATFORM_NUMICRO_ADC_DMA
+	bool "Multichannel ADC with DMA"
+	default y
+	depends on PLATFORM_NUMICRO_ADC_BASE && PLATFORM_NUMICRO_PDMA
+
+config PLATFORM_NUMICRO_GPTIMER_BASE
+	bool "General Purpose Timer"
+	default y
+
+config PLATFORM_NUMICRO_GPTIMER_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_GPTIMER_BASE
+
+config PLATFORM_NUMICRO_GPTIMER_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_NUMICRO_GPTIMER_BASE && PM
+
+config PLATFORM_NUMICRO_GPTIMER
+	bool "Common timer"
+	default y
+	depends on PLATFORM_NUMICRO_GPTIMER_BASE
+
 config PLATFORM_NUMICRO_PDMA
 	bool "PDMA"
 	default y
+
+config PLATFORM_NUMICRO_PDMA_COUNT
+	int "PDMA channel count"
+	default 2
+	range 2 9
+	depends on PLATFORM_NUMICRO_PDMA
 
 config PLATFORM_NUMICRO_PDMA_PRIORITY
 	int "PDMA interrupt priority"
 	default 0
 	depends on PLATFORM_NUMICRO_PDMA
+
+config PLATFORM_NUMICRO_PININT
+	bool "Pin Interrupts"
+	default y
+
+config PLATFORM_NUMICRO_PININT_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_PININT
 
 config PLATFORM_NUMICRO_UART_BASE
 	bool "UART"

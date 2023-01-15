@@ -932,7 +932,6 @@ uint32_t uartGetClock(const struct UartBase *interface)
 {
   const void *clock = 0;
 
-  // TODO
   switch (interface->channel)
   {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART0

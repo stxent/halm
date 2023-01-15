@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/numicro/m03x/spi_defs.h>
 #include <halm/platform/numicro/spi_base.h>
+#include <halm/platform/numicro/spi_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry spiPins[];
@@ -17,7 +17,6 @@ void spiConfigPins(struct SpiBase *interface,
       config->miso, config->mosi, config->sck, config->cs
   };
 
-  /* Direction configuration is not needed for alternate function pins */
   for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
@@ -34,10 +33,40 @@ void spiConfigPins(struct SpiBase *interface,
   }
 }
 /*----------------------------------------------------------------------------*/
+uint8_t spiGetMode(const struct SpiBase *interface)
+{
+  const NM_SPI_Type * const reg = interface->reg;
+  const uint32_t ctl = reg->CTL;
+  uint8_t mode = 0;
+
+  if (ctl & CTL_RXNEG)
+    mode |= 0x01;
+  if (ctl & CTL_CLKPOL)
+    mode |= 0x02;
+
+  return mode;
+}
+/*----------------------------------------------------------------------------*/
 uint32_t spiGetRate(const struct SpiBase *interface)
 {
   NM_SPI_Type * const reg = interface->reg;
   return spiGetClock(interface) / (reg->CLKDIV + 1);
+}
+/*----------------------------------------------------------------------------*/
+void spiSetMode(struct SpiBase *interface, uint8_t mode)
+{
+  NM_SPI_Type * const reg = interface->reg;
+  uint32_t ctl = reg->CTL & ~(CTL_RXNEG | CTL_TXNEG | CTL_CLKPOL);
+
+  if (mode & 0x01)
+    ctl |= CTL_RXNEG; /* CPHA = 1 */
+  else
+    ctl |= CTL_TXNEG; /* CPHA = 0 */
+
+  if (mode & 0x02)
+    ctl |= CTL_CLKPOL;
+
+  reg->CTL = ctl;
 }
 /*----------------------------------------------------------------------------*/
 void spiSetRate(struct SpiBase *interface, uint32_t rate)

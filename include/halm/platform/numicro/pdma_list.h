@@ -1,38 +1,42 @@
 /*
- * halm/platform/numicro/pdma_oneshot.h
+ * halm/platform/numicro/pdma_list.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_NUMICRO_PDMA_ONESHOT_H_
-#define HALM_PLATFORM_NUMICRO_PDMA_ONESHOT_H_
+#ifndef HALM_PLATFORM_NUMICRO_PDMA_LIST_H_
+#define HALM_PLATFORM_NUMICRO_PDMA_LIST_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/numicro/pdma_base.h>
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
-extern const struct DmaClass * const PdmaOneShot;
+extern const struct DmaClass * const PdmaList;
 
-struct PdmaOneShotConfig
+struct PdmaListConfig
 {
+  /** Mandatory: number of blocks in the chain. */
+  size_t number;
   /** Mandatory: request connection. */
   enum PdmaEvent event;
   /** Mandatory: channel number. */
   uint8_t channel;
 };
 
-struct PdmaOneShot
+struct PdmaList
 {
   struct PdmaBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* The destination address of the data to be transferred */
-  uintptr_t destination;
-  /* The source address of the data */
-  uintptr_t source;
-  /* Number of transfers */
-  uint16_t transfers;
+  /* Linked list items */
+  struct PdmaEntry *list;
+  /* Maximum size of the list */
+  size_t capacity;
+  /* Index of the last item */
+  size_t index;
+  /* Current size of the list */
+  size_t queued;
 
   /* State of the transfer */
   uint8_t state;
@@ -40,4 +44,4 @@ struct PdmaOneShot
   bool fixed;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NUMICRO_PDMA_ONESHOT_H_ */
+#endif /* HALM_PLATFORM_NUMICRO_PDMA_LIST_H_ */

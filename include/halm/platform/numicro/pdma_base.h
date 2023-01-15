@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_NUMICRO_PDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
+#include <halm/target.h>
 #include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
@@ -29,6 +30,12 @@ enum PdmaBurst
   DMA_BURST_32,
   DMA_BURST_64,
   DMA_BURST_128
+} __attribute__((packed));
+
+enum PdmaPriority
+{
+  DMA_PRIORITY_FIXED,
+  DMA_PRIORITY_RR
 } __attribute__((packed));
 
 /** DMA transfer width. */
@@ -55,16 +62,14 @@ struct PdmaBaseConfig
   enum PdmaEvent event;
   /** Mandatory: channel number. */
   uint8_t channel;
-  /** Mandatory: controller number. */
-  uint8_t controller;
-  // /** Optional: channel priority. */
-  // uint8_t priority; // TODO
 };
 
 struct PdmaSettings
 {
   /** Mandatory: number of transfers that make up a burst transfer request. */
   enum PdmaBurst burst;
+  /** Mandatory: channel priority. */
+  enum PdmaPriority priority;
   /** Mandatory: transfer width. */
   enum PdmaWidth width;
 
@@ -93,7 +98,7 @@ struct PdmaBase
   /* Precalculated value of Channel Control register */
   uint32_t control;
   /* Channel number */
-  uint8_t index;
+  uint8_t number;
 
   /* Event multiplexer settings */
   struct PdmaMuxConfig mux;
@@ -104,6 +109,7 @@ BEGIN_DECLS
 const struct PdmaBase *pdmaGetInstance(uint8_t);
 void pdmaResetInstance(uint8_t);
 bool pdmaSetInstance(uint8_t, struct PdmaBase *);
+void pdmaSetMux(struct PdmaBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

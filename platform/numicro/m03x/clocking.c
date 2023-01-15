@@ -83,8 +83,7 @@ static uint32_t sysPllFrequency(const void *);
 static bool sysPllReady(const void *);
 
 static enum Result apbBranchEnable(const void *, const void *);
-static uint32_t apb0BranchFrequency(const void *);
-static uint32_t apb1BranchFrequency(const void *);
+static uint32_t apbBranchFrequency(const void *);
 
 static enum Result extendedBranchEnable(const void *, const void *);
 static uint32_t extendedBranchFrequency(const void *);
@@ -146,7 +145,7 @@ const struct ClockClass * const Apb0Clock =
     .base = {
         .disable = 0,
         .enable = apbBranchEnable,
-        .frequency = apb0BranchFrequency,
+        .frequency = apbBranchFrequency,
         .ready = genericBranchReady,
     },
     .divider = DIVIDER_APB0
@@ -157,7 +156,7 @@ const struct ClockClass * const Apb1Clock =
     .base = {
         .disable = 0,
         .enable = apbBranchEnable,
-        .frequency = apb1BranchFrequency,
+        .frequency = apbBranchFrequency,
         .ready = genericBranchReady,
     },
     .divider = DIVIDER_APB1
@@ -762,22 +761,24 @@ static uint32_t getSourceFrequency(enum ClockBranch branch,
 
     case CLOCK_MAIN:
     {
-      const uint32_t clock = getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK);
+      const uint32_t frequency = getClockFrequency(BRANCH_HCLK,
+          BRANCH_GROUP_HCLK);
+      uint32_t divider = getClockDivider(DIVIDER_HCLK) + 1;
 
       if (branch == BRANCH_STCLK)
-        return clock / 2;
+        divider *= 2;
 
-      return clock;
+      return frequency / divider;
     }
 
     case CLOCK_APB:
       for (size_t index = 0; index < ARRAY_SIZE(APB0_BRANCHES); ++index)
       {
         if (branch == APB0_BRANCHES[index])
-          return apb0BranchFrequency(0);
+          return apbBranchFrequency(Apb0Clock);
       }
 
-      return apb1BranchFrequency(0);
+      return apbBranchFrequency(Apb1Clock);
 
     default:
       return 0;
@@ -1121,18 +1122,14 @@ static enum Result apbBranchEnable(const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t apb0BranchFrequency(const void *clockBase
-    __attribute__((unused)))
+static uint32_t apbBranchFrequency(const void *clockBase)
 {
-  const uint32_t divider = 1 << getClockDivider(DIVIDER_APB0);
-  return getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK) / divider;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t apb1BranchFrequency(const void *clockBase
-    __attribute__((unused)))
-{
-  const uint32_t divider = 1 << getClockDivider(DIVIDER_APB1);
-  return getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK) / divider;
+  const struct ExtendedClockClass * const clock = clockBase;
+  const uint32_t frequency = getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK);
+  const uint32_t ahbDivider = getClockDivider(DIVIDER_HCLK) + 1;
+  const uint32_t apbDivider = ahbDivider << getClockDivider(clock->divider);
+
+  return frequency / apbDivider;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result extendedBranchEnable(const void *clockBase,
