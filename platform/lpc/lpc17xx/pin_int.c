@@ -162,6 +162,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
 {
   const struct PinIntConfig * const config = configBase;
   assert(config);
+  assert(config->event != PIN_LOW && config->event != PIN_HIGH);
 
   const struct Pin input = pinInit(config->pin);
   struct PinInt * const interrupt = object;

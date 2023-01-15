@@ -64,6 +64,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerCounterConfig * const config = configBase;
   assert(config);
+  assert(config->edge != PIN_HIGH && config->edge != PIN_LOW);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
@@ -86,7 +87,7 @@ static enum Result tmrInit(void *object, const void *configBase)
       captureControlValue |= MODE_FALLING;
       break;
 
-    case PIN_TOGGLE:
+    default:
       captureControlValue |= MODE_TOGGLE;
       break;
   }

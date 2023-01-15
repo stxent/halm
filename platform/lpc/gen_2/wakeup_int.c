@@ -132,14 +132,14 @@ static enum Result wakeupIntInit(void *object, const void *configBase)
 {
   const struct WakeupIntConfig * const config = configBase;
   assert(config);
+  assert(config->event == PIN_RISING || config->event == PIN_FALLING);
 
   const struct Pin input = pinInit(config->pin);
+  assert(pinValid(input));
+
   struct WakeupInt * const interrupt = object;
   const uint8_t channel = input.port * 12 + input.number;
   enum Result res;
-
-  assert(config->event != PIN_TOGGLE);
-  assert(pinValid(input));
 
   /* Try to register pin interrupt in the interrupt handler */
   if ((res = startLogicHandlerAttach(channel, interrupt)) != E_OK)

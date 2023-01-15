@@ -172,6 +172,7 @@ static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerCaptureConfig * const config = configBase;
   assert(config);
+  assert(config->event != PIN_LOW && config->event != PIN_HIGH);
 
   struct GpTimerCapture * const capture = object;
   struct GpTimerCaptureUnit * const unit = config->parent;

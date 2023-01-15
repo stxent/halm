@@ -42,6 +42,7 @@ static enum Result extiInit(void *object, const void *configBase)
 {
   const struct ExtiConfig * const config = configBase;
   assert(config);
+  assert(config->event != PIN_LOW && config->event != PIN_HIGH);
 
   enum ExtiEvent channel = EXTI_EVENT_END;
 

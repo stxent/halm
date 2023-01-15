@@ -518,11 +518,11 @@ void sctReleaseEvent(struct SctBase *timer, uint8_t event)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctBaseConfig * const config = configBase;
+  assert(config->edge == PIN_RISING || config->edge == PIN_FALLING);
+  assert(config->input < SCT_INPUT_END);
+
   struct SctBase * const timer = object;
   uint32_t desiredConfig = 0;
-
-  assert(config->edge < PIN_TOGGLE);
-  assert(config->input < SCT_INPUT_END);
 
   timer->channel = config->channel;
   timer->part = config->part;

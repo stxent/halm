@@ -42,6 +42,8 @@ enum PinEvent
 {
   PIN_RISING,
   PIN_FALLING,
+  PIN_HIGH,
+  PIN_LOW,
   PIN_TOGGLE
 } __attribute__((packed));
 
