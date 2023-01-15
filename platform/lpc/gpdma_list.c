@@ -197,7 +197,7 @@ static enum Result channelEnable(void *object)
     return E_BUSY;
   }
 
-  gpDmaSetMux(object);
+  gpDmaSetMux(&channel->base);
   channel->state = STATE_BUSY;
 
   /* Clear interrupt requests for the current channel */
@@ -241,12 +241,12 @@ static enum Result channelResidue(const void *object, size_t *count)
     if (index >= channel->capacity)
       index -= channel->capacity;
 
-    const uint32_t transfers = CONTROL_SIZE_VALUE(reg->CONTROL);
+    const size_t transfers = CONTROL_SIZE_VALUE(reg->CONTROL);
 
     if (reg->LLI == channel->list[index].next)
     {
       /* Linked list item is not changed, transfer count is correct */
-      *count = (size_t)transfers;
+      *count = transfers;
       return E_OK;
     }
   }

@@ -315,9 +315,7 @@ static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
   assert(config);
-
-  if (config->rxLength % config->rxChunks != 0)
-    return E_VALUE;
+  assert(config->rxLength % config->rxChunks == 0);
 
   const struct UartBaseConfig baseConfig = {
       .rx = config->rx,

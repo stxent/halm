@@ -184,6 +184,16 @@ static enum Result getStatus(const struct Spi *interface)
   return res;
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_STM32_SPI_PM
+static void powerStateHandler(void *object, enum PmState state)
+{
+  struct Spi * const interface = object;
+
+  if (state == PM_ACTIVE)
+    spiSetRate(object, interface->rate);
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static size_t transferData(struct Spi *interface, const void *txSource,
     void *rxSink, size_t length)
 {
@@ -211,16 +221,6 @@ static size_t transferData(struct Spi *interface, const void *txSource,
 
   return res == E_OK ? length : 0;
 }
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_SPI_PM
-static void powerStateHandler(void *object, enum PmState state)
-{
-  struct Spi * const interface = object;
-
-  if (state == PM_ACTIVE)
-    spiSetRate(object, interface->rate);
-}
-#endif
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *object, const void *configBase)
 {

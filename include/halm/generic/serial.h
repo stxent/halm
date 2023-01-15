@@ -14,7 +14,7 @@ enum SerialParity
   SERIAL_PARITY_NONE,
   SERIAL_PARITY_ODD,
   SERIAL_PARITY_EVEN
-};
+} __attribute__((packed));
 
 enum SerialParameter
 {

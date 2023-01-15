@@ -62,7 +62,7 @@ static size_t getCurrentEntry(const struct GpDmaCircular *channel)
   const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
   const size_t offset = (uintptr_t)reg->LLI - (uintptr_t)channel->list;
   const size_t next = offset / sizeof(struct GpDmaEntry);
-  const size_t current = (next > 0 ? next : channel->capacity) - 1;
+  const size_t current = (next > 0 ? next : channel->queued) - 1;
 
   return current;
 }
@@ -161,7 +161,7 @@ static void channelSetCallback(void *object, void (*callback)(void *),
 
   for (size_t index = 0; index < channel->queued; ++index)
   {
-    if (channel->callback && (!channel->silent || index < channel->queued - 1))
+    if (channel->callback && (!channel->silent || index == channel->queued - 1))
       channel->list[index].control |= CONTROL_INT;
     else
       channel->list[index].control &= ~CONTROL_INT;
@@ -182,7 +182,7 @@ static enum Result channelEnable(void *object)
     return E_BUSY;
   }
 
-  gpDmaSetMux(object);
+  gpDmaSetMux(&channel->base);
   channel->state = STATE_BUSY;
 
   /* Clear interrupt requests for the current channel */
@@ -222,12 +222,12 @@ static enum Result channelResidue(const void *object, size_t *count)
   {
     const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
     const size_t index = getCurrentEntry(channel);
-    const uint32_t transfers = CONTROL_SIZE_VALUE(reg->CONTROL);
+    const size_t transfers = CONTROL_SIZE_VALUE(reg->CONTROL);
 
     if (reg->LLI == channel->list[index].next)
     {
       /* Linked list item is not changed, transfer count is correct */
-      *count = (size_t)transfers;
+      *count = transfers;
       return E_OK;
     }
   }

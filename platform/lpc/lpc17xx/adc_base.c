@@ -93,6 +93,12 @@ struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
   return (struct AdcPin){UNPACK_CHANNEL(entry->value)};
 }
 /*----------------------------------------------------------------------------*/
+struct AdcBase *adcGetInstance(uint8_t channel __attribute__((unused)))
+{
+  assert(channel == 0);
+  return instance;
+}
+/*----------------------------------------------------------------------------*/
 void adcReleasePin(const struct AdcPin adcPin __attribute__((unused)))
 {
 }

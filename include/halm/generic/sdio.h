@@ -33,7 +33,7 @@ enum SDIOMode
   SDIO_1BIT,
   SDIO_4BIT,
   SDIO_8BIT
-};
+} __attribute__((packed));
 
 enum SDIOParameter
 {
@@ -59,6 +59,6 @@ enum SDIOResponse
   SDIO_RESPONSE_NONE,
   SDIO_RESPONSE_SHORT,
   SDIO_RESPONSE_LONG
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_SDIO_H_ */

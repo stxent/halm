@@ -130,7 +130,7 @@ static enum Result channelEnable(void *object)
     return E_BUSY;
   }
 
-  gpDmaSetMux(object);
+  gpDmaSetMux(&channel->base);
   channel->state = STATE_BUSY;
 
   reg->SRCADDR = channel->source;

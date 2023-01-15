@@ -25,14 +25,14 @@ struct SerialDmaConfig
   size_t txLength;
   /** Mandatory: baud rate. */
   uint32_t rate;
-  /** Optional: parity bit setting. */
-  enum SerialParity parity;
   /** Mandatory: serial input. */
   PinNumber rx;
   /** Mandatory: serial output. */
   PinNumber tx;
   /** Optional: interrupt priority. */
   IrqPriority priority;
+  /** Optional: parity bit setting. */
+  enum SerialParity parity;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: number of the RX DMA stream. */

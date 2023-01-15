@@ -7,8 +7,8 @@
 #ifndef HALM_PLATFORM_LPC_ADC_DMA_H_
 #define HALM_PLATFORM_LPC_ADC_DMA_H_
 /*----------------------------------------------------------------------------*/
+#include <halm/dma.h>
 #include <halm/platform/lpc/adc_base.h>
-#include <halm/platform/lpc/gpdma_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const AdcDma;
 
@@ -37,13 +37,13 @@ struct AdcDma
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* DMA handle */
+  struct Dma *dma;
+
   /* Pin descriptors */
   struct AdcPin pins[8];
   /* Output buffer */
   uint16_t buffer[8];
-
-  /* DMA handle */
-  struct Dma *dma;
 
   /* Event mask */
   uint32_t mask;

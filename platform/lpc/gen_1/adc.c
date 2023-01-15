@@ -43,8 +43,8 @@ static void interruptHandler(void *object)
   struct Adc * const interface = object;
 
   /* Read values and clear interrupt flags */
-  for (size_t i = 0; i < interface->count; ++i)
-    interface->buffer[i] = (uint16_t)(*interface->dr[i]);
+  for (size_t index = 0; index < interface->count; ++index)
+    interface->buffer[index] = (uint16_t)(*interface->dr[index]);
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
@@ -186,7 +186,12 @@ static enum Result adcGetParam(void *object, int parameter,
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-      return interface->buffer ? E_BUSY : E_OK;
+    {
+      const struct AdcBase * const instance =
+          adcGetInstance(interface->base.channel);
+
+      return (struct AdcBase *)interface == instance ? E_BUSY : E_OK;
+    }
 
     default:
       return E_INVALID;
@@ -224,15 +229,12 @@ static enum Result adcSetParam(void *object, int parameter,
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)
 {
-  /* Ensure that the buffer has enough space */
-  assert((length % sizeof(uint16_t)) == 0);
-  /* Suppress warning */
-  (void)length;
-
   struct Adc * const interface = object;
-  const size_t capacity = interface->count * sizeof(uint16_t);
-  const size_t chunk = MIN(length, capacity);
+  const size_t chunk = MIN(length, interface->count * sizeof(uint16_t));
 
+  irqDisable(interface->base.irq);
   memcpy(buffer, interface->buffer, chunk);
+  irqEnable(interface->base.irq);
+
   return chunk;
 }

@@ -228,6 +228,12 @@ struct AdcPin adcConfigPin(const struct AdcBase *unit, PinNumber key)
   }
 }
 /*----------------------------------------------------------------------------*/
+struct AdcBase *adcGetInstance(uint8_t channel)
+{
+  assert(channel < ARRAY_SIZE(instances));
+  return instances[channel];
+}
+/*----------------------------------------------------------------------------*/
 void adcReleasePin(const struct AdcPin adcPin)
 {
   if (adcPin.control != -1)

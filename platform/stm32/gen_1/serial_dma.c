@@ -175,16 +175,17 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
 static void rxDmaHandler(void *object)
 {
   struct SerialDma * const interface = object;
+  const size_t index = dmaQueued(interface->rxDma);
 
+  assert(index >= 1 && index <= 2);
   assert(dmaStatus(interface->rxDma) == E_BUSY);
 
-  const size_t index = dmaQueued(interface->rxDma);
-  const size_t end = interface->rxBufferSize >> index;
+  const size_t end = interface->rxBufferSize >> (2 - index);
   const size_t count = end - interface->rxPosition;
 
   byteQueuePushArray(&interface->rxQueue,
       interface->rxBuffer + interface->rxPosition, count);
-  interface->rxPosition = index ? (interface->rxBufferSize >> 1) : 0;
+  interface->rxPosition = index == 1 ? (interface->rxBufferSize >> 1) : 0;
 
   updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
 

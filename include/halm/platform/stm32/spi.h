@@ -31,7 +31,7 @@ struct SpiConfig
   uint8_t mode;
   /** Mandatory: number of the RX DMA stream. */
   uint8_t rxDma;
-  /** Mandatory: number of the RX DMA stream. */
+  /** Mandatory: number of the TX DMA stream. */
   uint8_t txDma;
 };
 

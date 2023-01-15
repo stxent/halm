@@ -261,5 +261,5 @@ static void streamClear(void *object)
 static size_t streamQueued(const void *object)
 {
   const struct DmaOneShot * const stream = object;
-  return (stream->state != STATE_IDLE && stream->state != STATE_READY) ? 1 : 0;
+  return stream->state != STATE_IDLE && stream->state != STATE_READY ? 1 : 0;
 }

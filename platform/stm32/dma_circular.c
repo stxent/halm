@@ -271,7 +271,9 @@ static size_t streamQueued(const void *object)
   if (stream->state != STATE_IDLE && stream->state != STATE_READY)
   {
     const STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
-    return reg->CNDTR <= (stream->transfers >> 1);
+    const bool lower = reg->CNDTR <= (stream->transfers >> 1);
+
+    return lower ? 2 : 1;
   }
   else
     return 0;

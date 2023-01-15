@@ -228,9 +228,9 @@ static uint32_t tmrGetFrequency(const void *object)
 {
   const struct GpTimer * const timer = object;
   const STM_TIM_Type * const reg = timer->base.reg;
-  const uint32_t baseClock = gpTimerGetClock(&timer->base);
+  const uint32_t apbClock = gpTimerGetClock(&timer->base);
 
-  return baseClock / (reg->PSC + 1);
+  return apbClock / (reg->PSC + 1);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)

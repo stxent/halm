@@ -273,14 +273,8 @@ static enum Result adcSetParam(void *object, int parameter,
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)
 {
-  /* Ensure that the buffer has enough space */
-  assert((length % sizeof(uint16_t)) == 0);
-  /* Suppress warning */
-  (void)length;
-
   struct AdcDma * const interface = object;
-  const size_t capacity = interface->count * sizeof(uint16_t);
-  const size_t chunk = MIN(length, capacity);
+  const size_t chunk = MIN(length, interface->count * sizeof(uint16_t));
 
   memcpy(buffer, interface->buffer, chunk);
   return chunk;
