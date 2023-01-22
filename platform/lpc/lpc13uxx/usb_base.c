@@ -31,11 +31,11 @@ const struct EntityClass * const UsbBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 const struct PinEntry usbPins[] = {
     {
-        .key = PIN(PORT_USB, PIN_USB_DP), /* Mock USB_D+ pin descriptor */
+        .key = PIN(PORT_USB, PIN_USB_DM), /* Mock USB_D- pin descriptor */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_USB, PIN_USB_DM), /* Mock USB_D- pin descriptor */
+        .key = PIN(PORT_USB, PIN_USB_DP), /* Mock USB_D+ pin descriptor */
         .channel = 0,
         .value = 0
     }, {
@@ -110,9 +110,9 @@ static enum Result devInit(void *object, const void *configBase)
   device->reg = LPC_USB;
   device->irq = USB_IRQ;
   device->handler = 0;
-  device->channel = config->channel;
+  device->channel = 0;
 
-  configPins(device, configBase);
+  configPins(device, config);
 
   sysPowerEnable(PWR_USBPAD);
   sysClockEnable(CLK_USB);

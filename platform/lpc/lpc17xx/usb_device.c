@@ -102,8 +102,8 @@ static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
 static enum Result devBind(void *, void *);
 static void devUnbind(void *, const void *);
-static void devSetPower(void *, uint16_t);
 static enum UsbSpeed devGetSpeed(const void *);
+static void devSetPower(void *, uint16_t);
 static UsbStringIndex devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 
@@ -127,8 +127,8 @@ const struct UsbDeviceClass * const UsbDevice =
     .bind = devBind,
     .unbind = devUnbind,
 
-    .setPower = devSetPower,
     .getSpeed = devGetSpeed,
+    .setPower = devSetPower,
 
     .stringAppend = devStringAppend,
     .stringErase = devStringErase
@@ -534,15 +534,15 @@ static void devUnbind(void *object, const void *driver __attribute__((unused)))
   usbControlUnbindDriver(device->control);
 }
 /*----------------------------------------------------------------------------*/
+static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
+{
+  return USB_FS;
+}
+/*----------------------------------------------------------------------------*/
 static void devSetPower(void *object, uint16_t current)
 {
   struct UsbDevice * const device = object;
   usbControlSetPower(device->control, current);
-}
-/*----------------------------------------------------------------------------*/
-static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
-{
-  return USB_FS;
 }
 /*----------------------------------------------------------------------------*/
 static UsbStringIndex devStringAppend(void *object, struct UsbString string)

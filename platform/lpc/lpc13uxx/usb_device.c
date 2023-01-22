@@ -63,8 +63,8 @@ static void devSetAddress(void *, uint8_t);
 static void devSetConnected(void *, bool);
 static enum Result devBind(void *, void *);
 static void devUnbind(void *, const void *);
-static void devSetPower(void *, uint16_t);
 static enum UsbSpeed devGetSpeed(const void *);
+static void devSetPower(void *, uint16_t);
 static UsbStringIndex devStringAppend(void *, struct UsbString);
 static void devStringErase(void *, struct UsbString);
 
@@ -88,8 +88,8 @@ const struct UsbDeviceClass * const UsbDevice =
     .bind = devBind,
     .unbind = devUnbind,
 
-    .setPower = devSetPower,
     .getSpeed = devGetSpeed,
+    .setPower = devSetPower,
 
     .stringAppend = devStringAppend,
     .stringErase = devStringErase
@@ -346,15 +346,15 @@ static void devUnbind(void *object, const void *driver __attribute__((unused)))
   usbControlUnbindDriver(device->control);
 }
 /*----------------------------------------------------------------------------*/
+static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
+{
+  return USB_FS;
+}
+/*----------------------------------------------------------------------------*/
 static void devSetPower(void *object, uint16_t current)
 {
   struct UsbDevice * const device = object;
   usbControlSetPower(device->control, current);
-}
-/*----------------------------------------------------------------------------*/
-static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
-{
-  return USB_FS;
 }
 /*----------------------------------------------------------------------------*/
 static UsbStringIndex devStringAppend(void *object, struct UsbString string)
@@ -376,7 +376,7 @@ static void epHandler(struct SbUsbEndpoint *ep, bool setup)
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
-    if (!USB_EP_LOGICAL_ADDRESS(ep->address))
+    if (ep->address == USB_EP_DIRECTION_IN)
     {
       struct UsbDevice * const device = ep->device;
 
@@ -586,22 +586,6 @@ static void epEnable(void *object, uint8_t type __attribute__((unused)),
 
   entry->b[0] = value;
   entry->b[1] = value;
-
-//  switch (type)
-//  {
-//    case ENDPOINT_TYPE_ISOCHRONOUS:
-//    case ENDPOINT_TYPE_BULK:
-//#ifdef CONFIG_PLATFORM_USB_DOUBLE_BUFFERING
-//      ep->subclass = DbUsbEndpoint;
-//      break;
-//#endif
-//
-//    default:
-//      ep->subclass = SbUsbEndpoint;
-//      break;
-//  }
-//
-//  ep->subclass->enable(ep, type, size);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
@@ -669,21 +653,10 @@ static void epSetStalled(void *object, bool stalled)
   if (stalled)
   {
     entry->b[0] |= EPCS_S;
-//    entry->b[1] |= EPCS_S; // TODO
   }
   else
   {
     entry->b[0] &= ~EPCS_S;
-
-//    const LPC_USB_Type * const reg = device->base.reg; // TODO
-//
-//    entry->b[0] &= ~EPCS_S;
-//    entry->b[1] &= ~EPCS_S;
-//
-//    if (reg->EPINUSE & (1UL << index))
-//      entry->b[1] |= (entry->b[1] & ~EPCS_RF_TV) | EPCS_TR;
-//    else
-//      entry->b[0] |= (entry->b[0] & ~EPCS_RF_TV) | EPCS_TR;
 
     /* Write pending IN request to the endpoint buffer */
     if ((ep->address & USB_EP_DIRECTION_IN)

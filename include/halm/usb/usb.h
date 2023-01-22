@@ -73,8 +73,8 @@ struct UsbDeviceClass
   enum Result (*bind)(void *, void *);
   void (*unbind)(void *, const void *);
 
-  void (*setPower)(void *, uint16_t);
   enum UsbSpeed (*getSpeed)(const void *);
+  void (*setPower)(void *, uint16_t);
 
   UsbStringIndex (*stringAppend)(void *, struct UsbString);
   void (*stringErase)(void *, struct UsbString);
@@ -153,6 +153,16 @@ static inline void usbDevUnbind(void *device, const void *driver)
 }
 
 /**
+ * Return the speed of the physical interface.
+ * @param device Pointer to an UsbDevice object.
+ * @return USB interface speed.
+ */
+static inline enum UsbSpeed usbDevGetSpeed(const void *device)
+{
+  return ((const struct UsbDeviceClass *)CLASS(device))->getSpeed(device);
+}
+
+/**
  * Set the maximum device current.
  * @param device Pointer to an UsbDevice object.
  * @param current Current drawn by the device in mA. When this parameter is set
@@ -161,16 +171,6 @@ static inline void usbDevUnbind(void *device, const void *driver)
 static inline void usbDevSetPower(void *device, uint16_t current)
 {
   ((const struct UsbDeviceClass *)CLASS(device))->setPower(device, current);
-}
-
-/**
- * Return the speed of the physical interface.
- * @param device Pointer to an UsbDevice object.
- * @return USB interface speed.
- */
-static inline enum UsbSpeed usbDevGetSpeed(const void *device)
-{
-  return ((const struct UsbDeviceClass *)CLASS(device))->getSpeed(device);
 }
 
 /**
