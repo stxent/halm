@@ -268,6 +268,7 @@ static void tmrSetValue(void *object, uint32_t value)
 
   /* Data register is read-only, writing 0 is implemented using reset */
   assert(value == 0);
+  (void)value;
 
   reg->CTL |= CTL_RSTCNT;
 

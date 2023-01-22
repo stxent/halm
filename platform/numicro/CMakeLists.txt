@@ -87,5 +87,10 @@ if(${CONFIG_PLATFORM_NUMICRO_UART_BASE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/uart_base.c")
 endif()
 
+if(CONFIG_PLATFORM_USB)
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_device.c")
+endif()
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_SYSTEM_SOC}/CMakeLists.txt" OPTIONAL)
 add_library(halm_platform OBJECT ${SOURCE_FILES})
