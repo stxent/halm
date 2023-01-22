@@ -7,19 +7,26 @@
 #include <halm/platform/lpc/gptimer_capture.h>
 #include <halm/platform/lpc/gptimer_defs.h>
 #include <halm/pm.h>
-#include <xcore/memory.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
+static inline uint32_t getMaxValue(const struct GpTimerCaptureUnit *);
 static void interruptHandler(void *);
 
 #ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
-static void unitResetInstance(struct GpTimerCaptureUnit *, uint8_t);
 static bool unitSetInstance(struct GpTimerCaptureUnit *, uint8_t,
     struct GpTimerCapture *);
+
 static enum Result unitInit(void *, const void *);
+static void unitEnable(void *);
+static void unitDisable(void *);
+static void unitSetCallback(void *, void (*)(void *), void *);
+static uint32_t unitGetFrequency(const void *);
+static void unitSetFrequency(void *, uint32_t);
+static uint32_t unitGetValue(const void *);
+static void unitSetValue(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_GPTIMER_NO_DEINIT
 static void unitDeinit(void *);
@@ -39,11 +46,22 @@ static void channelDeinit(void *);
 #define channelDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpTimerCaptureUnit =
-    &(const struct EntityClass){
+const struct TimerClass * const GpTimerCaptureUnit =
+    &(const struct TimerClass){
     .size = sizeof(struct GpTimerCaptureUnit),
     .init = unitInit,
-    .deinit = unitDeinit
+    .deinit = unitDeinit,
+
+    .enable = unitEnable,
+    .disable = unitDisable,
+    .setAutostop = 0,
+    .setCallback = unitSetCallback,
+    .getFrequency = unitGetFrequency,
+    .setFrequency = unitSetFrequency,
+    .getOverflow = 0,
+    .setOverflow = 0,
+    .getValue = unitGetValue,
+    .setValue = unitSetValue
 };
 /*----------------------------------------------------------------------------*/
 const struct CaptureClass * const GpTimerCapture =
@@ -58,18 +76,30 @@ const struct CaptureClass * const GpTimerCapture =
     .getValue = channelGetValue
 };
 /*----------------------------------------------------------------------------*/
+static inline uint32_t getMaxValue(const struct GpTimerCaptureUnit *timer)
+{
+  return MASK(timer->base.resolution);
+}
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct GpTimerCaptureUnit * const unit = object;
   LPC_TIMER_Type * const reg = unit->base.reg;
-  uint32_t state = reg->IR;
+  const uint32_t state = reg->IR;
 
   reg->IR = state; /* Clear pending interrupts */
-  state = IR_CAPTURE_VALUE(state); /* Extract capture channel flags */
 
-  for (size_t index = 0; state; state >>= 1, ++index)
+  if (state & IR_MATCH_INTERRUPT(0))
   {
-    if (state & 1)
+    unit->callback(unit->callbackArgument);
+  }
+
+  /* Extract capture channel flags */
+  uint32_t capture = IR_CAPTURE_VALUE(state);
+
+  for (size_t index = 0; capture; capture >>= 1, ++index)
+  {
+    if (capture & 1)
     {
       struct GpTimerCapture * const instance = unit->instances[index];
       instance->callback(instance->callbackArgument);
@@ -87,11 +117,6 @@ static void powerStateHandler(void *object, enum PmState state)
   }
 }
 #endif
-/*----------------------------------------------------------------------------*/
-static void unitResetInstance(struct GpTimerCaptureUnit *unit, uint8_t channel)
-{
-  unit->instances[channel] = 0;
-}
 /*----------------------------------------------------------------------------*/
 static bool unitSetInstance(struct GpTimerCaptureUnit *unit,
     uint8_t channel, struct GpTimerCapture *capture)
@@ -121,18 +146,22 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 
   unit->base.handler = interruptHandler;
+  unit->callback = 0;
   for (size_t index = 0; index < ARRAY_SIZE(unit->instances); ++index)
     unit->instances[index] = 0;
 
   LPC_TIMER_Type * const reg = unit->base.reg;
 
   reg->TCR = TCR_CRES;
-
-  reg->IR = reg->IR; /* Clear pending interrupts */
   reg->CCR = 0;
   reg->CTCR = 0;
   reg->EMR = 0;
   reg->MCR = 0;
+
+  /* Clear all pending interrupts */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+  /* Configure default match value for update event */
+  reg->MR[0] = getMaxValue(unit);
 
   unit->frequency = config->frequency;
   gpTimerSetFrequency(&unit->base, unit->frequency);
@@ -167,6 +196,80 @@ static void unitDeinit(void *object)
   GpTimerBase->deinit(unit);
 }
 #endif
+/*----------------------------------------------------------------------------*/
+static void unitEnable(void *object)
+{
+  struct GpTimerCaptureUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  /* Clear pending interrupt flags and DMA requests */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+  /* Start the timer */
+  reg->TCR = TCR_CEN;
+}
+/*----------------------------------------------------------------------------*/
+static void unitDisable(void *object)
+{
+  struct GpTimerCaptureUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  /* Stop the timer */
+  reg->TCR = 0;
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct GpTimerCaptureUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  unit->callbackArgument = argument;
+  unit->callback = callback;
+
+  if (callback)
+  {
+    reg->IR = IR_MATCH_MASK;
+    reg->MCR |= MCR_INTERRUPT(0);
+  }
+  else
+    reg->MCR &= ~MCR_INTERRUPT(0);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetFrequency(const void *object)
+{
+  const struct GpTimerCaptureUnit * const unit = object;
+  const LPC_TIMER_Type * const reg = unit->base.reg;
+  const uint32_t baseClock = gpTimerGetClock(&unit->base);
+
+  return baseClock / (reg->PR + 1);
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetFrequency(void *object, uint32_t frequency)
+{
+  struct GpTimerCaptureUnit * const unit = object;
+
+  unit->frequency = frequency;
+  gpTimerSetFrequency(&unit->base, unit->frequency);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetValue(const void *object)
+{
+  const struct GpTimerCaptureUnit * const unit = object;
+  const LPC_TIMER_Type * const reg = unit->base.reg;
+
+  return reg->TC;
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetValue(void *object, uint32_t value)
+{
+  struct GpTimerCaptureUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  assert(value <= getMaxValue(unit));
+
+  reg->PC = 0;
+  reg->TC = value;
+}
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
@@ -211,7 +314,7 @@ static void channelDeinit(void *object)
   struct GpTimerCapture * const capture = object;
 
   channelDisable(object);
-  unitResetInstance(capture->unit, capture->channel);
+  capture->unit->instances[capture->channel] = 0;
 }
 #endif
 /*----------------------------------------------------------------------------*/

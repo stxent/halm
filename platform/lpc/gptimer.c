@@ -103,12 +103,11 @@ static enum Result tmrInit(void *object, const void *configBase)
   LPC_TIMER_Type * const reg = timer->base.reg;
 
   reg->TCR = TCR_CRES;
+  reg->CCR = 0;
+  reg->CTCR = 0;
 
   /* Clear all pending interrupts */
   reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
-
-  reg->CCR = 0;
-  reg->CTCR = 0;
 
   timer->frequency = config->frequency;
   gpTimerSetFrequency(&timer->base, timer->frequency);
@@ -129,7 +128,7 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 #endif
 
-  /* Clear timer reset flag, but do not enable */
+  /* Clear timer reset flag, but do not enable the timer */
   reg->TCR = 0;
 
   irqSetPriority(timer->base.irq, config->priority);

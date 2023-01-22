@@ -10,7 +10,7 @@
 #include <halm/capture.h>
 #include <halm/platform/lpc/gptimer_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const GpTimerCaptureUnit;
+extern const struct TimerClass * const GpTimerCaptureUnit;
 
 struct GpTimerCapture;
 
@@ -27,6 +27,9 @@ struct GpTimerCaptureUnitConfig
 struct GpTimerCaptureUnit
 {
   struct GpTimerBase base;
+
+  void (*callback)(void *);
+  void *callbackArgument;
 
   /* Registered capture handlers */
   struct GpTimerCapture *instances[4];
