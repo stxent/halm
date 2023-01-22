@@ -93,7 +93,20 @@
 #define STATUS_TXCNT_MASK               BIT_FIELD(MASK(3), 24)
 #define STATUS_TXCNT_VALUE(reg) \
     FIELD_VALUE((reg), STATUS_TXCNT_MASK, 24)
+/*------------------Status 2 register-----------------------------------------*/
+#define STATUS2_SLVBENUM(value)         BIT_FIELD((value), 24)
+#define STATUS2_SLVBENUM_MASK           BIT_FIELD(MASK(6), 24)
+#define STATUS2_SLVBENUM_VALUE(reg) \
+    FIELD_VALUE((reg), STATUS2_SLVBENUM_MASK, 24)
 /*------------------I2S Control register--------------------------------------*/
+enum
+{
+  FORMAT_I2S            = 0,
+  FORMAT_MSB_JUSTIFIED  = 1,
+  FORMAT_PCM_MODE_A     = 2,
+  FORMAT_PCM_MODE_B     = 3
+};
+
 #define I2SCTL_I2SEN                    BIT(0)
 #define I2SCTL_TXEN                     BIT(1)
 #define I2SCTL_RXEN                     BIT(2)

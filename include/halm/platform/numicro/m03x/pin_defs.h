@@ -26,6 +26,13 @@ enum
 #define INTEN_FLIEN_GROUP(value)        BIT_FIELD((value), 0)
 #define INTEN_RHIEN(pin)                BIT((pin) + 16)
 #define INTEN_RHIEN_GROUP(value)        BIT_FIELD((value), 16)
+/*------------------Pull-up and Pull-down Selection register------------------*/
+enum
+{
+  PUSEL_NONE  = 0,
+  PUSEL_UP    = 1,
+  PUSEL_DOWN  = 2
+};
 /*------------------Interrupt De-bounce Control register----------------------*/
 enum
 {

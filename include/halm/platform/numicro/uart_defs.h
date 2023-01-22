@@ -225,6 +225,51 @@ enum
     FIELD_VALUE((reg), FUNCSEL_FUNCSEL_MASK, 0)
 
 #define FUNCSEL_TXRXDIS                 BIT(3)
+/*------------------LIN Control register--------------------------------------*/
+enum
+{
+  HSEL_BREAK                = 0,
+  HSEL_BREAK_SYNC           = 1,
+  HSEL_BREAK_SYNC_FRAME_ID  = 2
+};
+
+#define LINCTL_SLVEN                    BIT(0)
+#define LINCTL_SLVHDEN                  BIT(1)
+#define LINCTL_SLVAREN                  BIT(2)
+#define LINCTL_SLVDUEN                  BIT(3)
+#define LINCTL_MUTE                     BIT(4)
+#define LINCTL_SENDH                    BIT(8)
+#define LINCTL_IDPEN                    BIT(9)
+#define LINCTL_BRKDETEN                 BIT(10)
+#define LINCTL_LINRXOFF                 BIT(11)
+#define LINCTL_BITERREN                 BIT(12)
+
+#define LINCTL_BRKFL(value)             BIT_FIELD((value), 16)
+#define LINCTL_BRKFL_MASK               BIT_FIELD(MASK(4), 16)
+#define LINCTL_BRKFL_VALUE(reg) \
+    FIELD_VALUE((reg), LINCTL_BRKFL_MASK, 16)
+
+#define LINCTL_BSL(value)               BIT_FIELD((value), 20)
+#define LINCTL_BSL_MASK                 BIT_FIELD(MASK(2), 20)
+#define LINCTL_BSL_VALUE(reg) \
+    FIELD_VALUE((reg), LINCTL_BSL_MASK, 20)
+
+#define LINCTL_HSEL(value)              BIT_FIELD((value), 22)
+#define LINCTL_HSEL_MASK                BIT_FIELD(MASK(2), 22)
+#define LINCTL_HSEL_VALUE(reg) \
+    FIELD_VALUE((reg), LINCTL_HSEL_MASK, 22)
+
+#define LINCTL_PID(value)               BIT_FIELD((value), 24)
+#define LINCTL_PID_MASK                 BIT_FIELD(MASK(8), 24)
+#define LINCTL_PID_VALUE(reg) \
+    FIELD_VALUE((reg), LINCTL_PID_MASK, 24)
+/*------------------LIN Status register---------------------------------------*/
+#define LINSTS_SLVHDETF                 BIT(0)
+#define LINSTS_SLVHEF                   BIT(1)
+#define LINSTS_SLVIDPEF                 BIT(2)
+#define LINSTS_SLVSYNCF                 BIT(3)
+#define LINSTS_BRKDETF                  BIT(8)
+#define LINSTS_BITEF                    BIT(9)
 /*------------------Baud Rate Compensation register---------------------------*/
 #define BRCOMP_BRCOMP(value)            BIT_FIELD((value), 0)
 #define BRCOMP_BRCOMP_MASK              BIT_FIELD(MASK(9), 0)
