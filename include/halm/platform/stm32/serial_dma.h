@@ -7,11 +7,7 @@
 #ifndef HALM_PLATFORM_STM32_SERIAL_DMA_H_
 #define HALM_PLATFORM_STM32_SERIAL_DMA_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/generic/serial.h>
-#include <halm/irq.h>
-#include <halm/pin.h>
-#include <xcore/interface.h>
-#include <stdint.h>
+#include <halm/platform/stm32/uart_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SerialDma;
 

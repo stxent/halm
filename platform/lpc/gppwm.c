@@ -14,8 +14,8 @@
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
 static uint8_t configMatchPin(uint8_t channel, PinNumber key);
+static void setTimerFrequency(struct GpPwmUnit *, uint32_t);
 static bool unitAllocateChannel(struct GpPwmUnit *, uint8_t);
-static void unitSetFrequency(struct GpPwmUnit *, uint32_t);
 
 #ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
 static void powerStateHandler(void *, enum PmState);
@@ -25,6 +25,12 @@ static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
+static void unitEnable(void *);
+static void unitDisable(void *);
+static uint32_t unitGetFrequency(const void *);
+static void unitSetFrequency(void *, uint32_t);
+static uint32_t unitGetOverflow(const void *);
+static void unitSetOverflow(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
 static void unitDeinit(void *);
@@ -35,10 +41,8 @@ static void unitDeinit(void *);
 static enum Result singleEdgeInit(void *, const void *);
 static void singleEdgeEnable(void *);
 static void singleEdgeDisable(void *);
-static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
-static void singleEdgeSetFrequency(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
 static void singleEdgeDeinit(void *);
@@ -49,10 +53,8 @@ static void singleEdgeDeinit(void *);
 static enum Result doubleEdgeInit(void *, const void *);
 static void doubleEdgeEnable(void *);
 static void doubleEdgeDisable(void *);
-static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
-static void doubleEdgeSetFrequency(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
 static void doubleEdgeDeinit(void *);
@@ -60,10 +62,21 @@ static void doubleEdgeDeinit(void *);
 #define doubleEdgeDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpPwmUnit = &(const struct EntityClass){
+const struct TimerClass * const GpPwmUnit = &(const struct TimerClass){
     .size = sizeof(struct GpPwmUnit),
     .init = unitInit,
-    .deinit = unitDeinit
+    .deinit = unitDeinit,
+
+    .enable = unitEnable,
+    .disable = unitDisable,
+    .setAutostop = 0,
+    .setCallback = 0,
+    .getFrequency = unitGetFrequency,
+    .setFrequency = unitSetFrequency,
+    .getOverflow = unitGetOverflow,
+    .setOverflow = unitSetOverflow,
+    .getValue = 0,
+    .setValue = 0
 };
 
 const struct PwmClass * const GpPwm = &(const struct PwmClass){
@@ -73,10 +86,8 @@ const struct PwmClass * const GpPwm = &(const struct PwmClass){
 
     .enable = singleEdgeEnable,
     .disable = singleEdgeDisable,
-    .getResolution = singleEdgeGetResolution,
     .setDuration = singleEdgeSetDuration,
-    .setEdges = singleEdgeSetEdges,
-    .setFrequency = singleEdgeSetFrequency
+    .setEdges = singleEdgeSetEdges
 };
 
 const struct PwmClass * const GpPwmDoubleEdge = &(const struct PwmClass){
@@ -86,10 +97,8 @@ const struct PwmClass * const GpPwmDoubleEdge = &(const struct PwmClass){
 
     .enable = doubleEdgeEnable,
     .disable = doubleEdgeDisable,
-    .getResolution = doubleEdgeGetResolution,
     .setDuration = doubleEdgeSetDuration,
-    .setEdges = doubleEdgeSetEdges,
-    .setFrequency = doubleEdgeSetFrequency
+    .setEdges = doubleEdgeSetEdges
 };
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry gpPwmPins[];
@@ -124,10 +133,27 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct GpPwmUnit * const unit = object;
-    unitSetFrequency(unit, unit->frequency * unit->resolution);
+    setTimerFrequency(unit, unit->frequency);
   }
 }
 #endif
+/*----------------------------------------------------------------------------*/
+static void setTimerFrequency(struct GpPwmUnit *unit, uint32_t frequency)
+{
+  LPC_PWM_Type * const reg = unit->base.reg;
+
+  if (frequency)
+  {
+    const uint32_t apbClock = gpPwmGetClock(&unit->base);
+    const uint32_t divisor = apbClock / frequency - 1;
+
+    assert(frequency <= apbClock);
+
+    reg->PR = divisor;
+  }
+  else
+    reg->PR = 0;
+}
 /*----------------------------------------------------------------------------*/
 static bool unitAllocateChannel(struct GpPwmUnit *unit, uint8_t channel)
 {
@@ -149,23 +175,6 @@ static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static void unitSetFrequency(struct GpPwmUnit *unit, uint32_t frequency)
-{
-  LPC_PWM_Type * const reg = unit->base.reg;
-
-  if (frequency)
-  {
-    const uint32_t apbClock = gpPwmGetClock(&unit->base);
-    const uint32_t divisor = apbClock / frequency - 1;
-
-    assert(frequency <= apbClock);
-
-    reg->PR = divisor;
-  }
-  else
-    reg->PR = 0;
-}
-/*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpPwmUnitConfig * const config = configBase;
@@ -182,19 +191,22 @@ static enum Result unitInit(void *object, const void *configBase)
   if ((res = GpPwmUnitBase->init(unit, &baseConfig)) != E_OK)
     return res;
 
+  unit->frequency = config->frequency;
+  unit->resolution = config->resolution;
+
   LPC_PWM_Type * const reg = unit->base.reg;
 
   reg->TCR = TCR_CRES;
 
-  reg->IR = reg->IR; /* Clear pending interrupts */
+  /* Clear pending interrupts */
+  reg->IR = reg->IR;
+
   reg->CTCR = 0;
   reg->CCR = 0;
   reg->PCR = 0;
 
   /* Configure timings */
-  unit->frequency = config->frequency;
-  unit->resolution = config->resolution;
-  unitSetFrequency(unit, unit->frequency * unit->resolution);
+  setTimerFrequency(unit, unit->frequency);
 
   unit->matches = 0;
   reg->MR0 = unit->resolution;
@@ -205,9 +217,7 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 #endif
 
-  /* Switch to the PWM mode and enable the timer */
-  reg->TCR = TCR_CEN | TCR_PWM_ENABLE;
-
+  /* Timer is left in a disabled state */
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -226,6 +236,55 @@ static void unitDeinit(void *object)
   GpPwmUnitBase->deinit(unit);
 }
 #endif
+/*----------------------------------------------------------------------------*/
+static void unitEnable(void *object)
+{
+  struct GpPwmUnit * const unit = object;
+  LPC_PWM_Type * const reg = unit->base.reg;
+
+  /* Clear pending interrupt flags */
+  reg->IR = reg->IR;
+  /* Switch to the PWM mode and enable the timer */
+  reg->TCR = TCR_CEN | TCR_PWM_ENABLE;
+}
+/*----------------------------------------------------------------------------*/
+static void unitDisable(void *object)
+{
+  struct GpPwmUnit * const unit = object;
+  LPC_PWM_Type * const reg = unit->base.reg;
+
+  /* Stop the timer */
+  reg->TCR = 0;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetFrequency(const void *object)
+{
+  const struct GpPwmUnit * const unit = object;
+  return unit->frequency;
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetFrequency(void *object, uint32_t frequency)
+{
+  struct GpPwmUnit * const unit = object;
+
+  unit->frequency = frequency;
+  setTimerFrequency(unit, unit->frequency);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetOverflow(const void *object)
+{
+  const struct GpPwmUnit * const unit = object;
+  return unit->resolution;
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetOverflow(void *object, uint32_t overflow)
+{
+  struct GpPwmUnit * const unit = object;
+  LPC_PWM_Type * const reg = unit->base.reg;
+
+  unit->resolution = overflow;
+  reg->MR0 = unit->resolution;
+}
 /*----------------------------------------------------------------------------*/
 static enum Result singleEdgeInit(void *object, const void *configBase)
 {
@@ -285,11 +344,6 @@ static void singleEdgeDisable(void *object)
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t singleEdgeGetResolution(const void *object)
-{
-  return ((const struct GpPwm *)object)->unit->resolution;
-}
-/*----------------------------------------------------------------------------*/
 static void singleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct GpPwm * const pwm = object;
@@ -308,15 +362,6 @@ static void singleEdgeSetEdges(void *object,
 {
   assert(leading == 0); /* Leading edge time must be zero */
   singleEdgeSetDuration(object, trailing);
-}
-/*----------------------------------------------------------------------------*/
-static void singleEdgeSetFrequency(void *object, uint32_t frequency)
-{
-  struct GpPwm * const pwm = object;
-  struct GpPwmUnit * const unit = pwm->unit;
-
-  unit->frequency = frequency;
-  unitSetFrequency(unit, unit->frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeInit(void *object, const void *configBase)
@@ -382,11 +427,6 @@ static void doubleEdgeDisable(void *object)
   reg->PCR &= ~PCR_OUTPUT_ENABLED(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t doubleEdgeGetResolution(const void *object)
-{
-  return ((const struct GpPwmDoubleEdge *)object)->unit->resolution;
-}
-/*----------------------------------------------------------------------------*/
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct GpPwmDoubleEdge * const pwm = object;
@@ -422,15 +462,6 @@ static void doubleEdgeSetEdges(void *object, uint32_t leading,
   *pwm->leading = leading;
   *pwm->trailing = trailing;
   reg->LER |= pwm->latch;
-}
-/*----------------------------------------------------------------------------*/
-static void doubleEdgeSetFrequency(void *object, uint32_t frequency)
-{
-  struct GpPwmDoubleEdge * const pwm = object;
-  struct GpPwmUnit * const unit = pwm->unit;
-
-  unit->frequency = frequency;
-  unitSetFrequency(unit, unit->frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
 /**

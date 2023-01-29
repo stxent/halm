@@ -30,6 +30,7 @@
 #define IOCON_HYS                       BIT(5)
 #define IOCON_INV                       BIT(6)
 #define IOCON_DIGITAL                   BIT(7)
+#define IOCON_FILTR                     BIT(8)
 #define IOCON_OD                        BIT(10)
 /*----------------------------------------------------------------------------*/
 #define PINTSEL_CHANNEL_MASK(channel)   BIT_FIELD(MASK(8), (channel) << 3)

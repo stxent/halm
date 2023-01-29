@@ -24,10 +24,8 @@ struct PwmClass
   void (*enable)(void *);
   void (*disable)(void *);
 
-  uint32_t (*getResolution)(const void *);
   void (*setDuration)(void *, uint32_t);
   void (*setEdges)(void *, uint32_t, uint32_t);
-  void (*setFrequency)(void *, uint32_t);
 };
 
 struct Pwm
@@ -56,16 +54,6 @@ static inline void pwmDisable(void *channel)
 }
 
 /**
- * Get channel resolution.
- * @param channel Pointer to a Pwm object.
- * @return Channel resolution in timer ticks.
- */
-static inline uint32_t pwmGetResolution(const void *channel)
-{
-  return ((const struct PwmClass *)CLASS(channel))->getResolution(channel);
-}
-
-/**
  * Set duration of the pulse.
  * @param channel Pointer to a Pwm object.
  * @param duration Duration in timer ticks.
@@ -86,16 +74,6 @@ static inline void pwmSetEdges(void *channel, uint32_t leading,
 {
   ((const struct PwmClass *)CLASS(channel))->setEdges(channel, leading,
       trailing);
-}
-
-/**
- * Change switching frequency of the channel.
- * @param channel Pointer to a Pwm object.
- * @param frequency New switching frequency in Hz or zero to use default value.
- */
-static inline void pwmSetFrequency(void *channel, uint32_t frequency)
-{
-  ((const struct PwmClass *)CLASS(channel))->setFrequency(channel, frequency);
 }
 
 END_DECLS

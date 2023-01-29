@@ -9,12 +9,13 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/gppwm_base.h>
 #include <halm/pwm.h>
+#include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const GpPwmUnit;
+extern const struct TimerClass * const GpPwmUnit;
 
 struct GpPwmUnitConfig
 {
-  /** Mandatory: switching frequency. */
+  /** Mandatory: timer frequency. */
   uint32_t frequency;
   /** Mandatory: cycle resolution. */
   uint32_t resolution;

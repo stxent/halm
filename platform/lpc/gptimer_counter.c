@@ -55,7 +55,7 @@ static void interruptHandler(void *object)
   LPC_TIMER_Type * const reg = timer->base.reg;
 
   /* Clear all pending interrupts */
-  reg->IR = reg->IR;
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
 
   timer->callback(timer->callbackArgument);
 }
@@ -98,24 +98,31 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = 0;
-  timer->event = GPTIMER_MATCH0 - 1;
+  timer->event = (config->event ? config->event : GPTIMER_MATCH0) - 1;
 
   /* Initialize peripheral block */
   LPC_TIMER_Type * const reg = timer->base.reg;
 
   reg->TCR = TCR_CRES;
-
-  reg->IR = reg->IR; /* Clear pending interrupts */
   reg->CCR = 0;
   reg->CTCR = captureControlValue;
-  reg->EMR = 0;
-  reg->MCR = 0;
   reg->PC = 0;
+
+  /* Clear all pending interrupts */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+
+  /* Set all match registers to zero for DMA event generation */
+  for (size_t i = 0; i < ARRAY_SIZE(reg->MR); ++i)
+    reg->MR[i] = 0;
 
   /* Configure prescaler and default match value */
   reg->MR[timer->event] = getMaxValue(timer);
+  /* Reset the timer after reaching the match register value */
+  reg->MCR = MCR_RESET(timer->event);
+  /* Enable external match to generate signals to other peripherals */
+  reg->EMR = EMR_CONTROL(timer->event, CONTROL_TOGGLE);
 
-  /* Timer is disabled by default */
+  /* Clear timer reset flag, but do not enable the timer */
   reg->TCR = 0;
 
   irqSetPriority(timer->base.irq, config->priority);
@@ -142,8 +149,10 @@ static void tmrEnable(void *object)
   struct GpTimerCounter * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
 
-  /* Clear pending interrupts */
-  reg->IR = IR_MATCH_INTERRUPT(timer->event);
+  /* Clear pending interrupt flags and DMA requests */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+  /* Clear external match events to avoid undefined output levels */
+  reg->EMR &= ~EMR_EXTERNAL_MATCH_MASK;
   /* Start the timer */
   reg->TCR = TCR_CEN;
 }
@@ -153,7 +162,10 @@ static void tmrDisable(void *object)
   struct GpTimerCounter * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
 
+  /* Stop the timer */
   reg->TCR = 0;
+  /* Clear pending interrupt flags and DMA requests */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetAutostop(void *object, bool state)
@@ -180,7 +192,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 
   if (callback)
   {
-    reg->IR = reg->IR;
+    reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
     reg->MCR |= mask;
   }
   else
@@ -199,28 +211,10 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimerCounter * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
-  const uint32_t mask = MCR_RESET(timer->event);
-  const uint32_t resolution = getMaxValue(timer);
-  const uint32_t state = reg->TCR & TCR_CEN;
+  const uint32_t value = overflow ? overflow - 1 : getMaxValue(timer);
 
-  /* Stop the timer before reconfiguration */
-  reg->TCR = 0;
-
-  assert((overflow - 1) <= resolution);
-  overflow = (overflow - 1) & resolution;
-
-  /* Setup the match register */
-  reg->MR[timer->event] = overflow;
-
-  if (overflow != resolution)
-  {
-    /* Reset the timer after reaching match register value */
-    reg->MCR |= mask;
-  }
-  else
-    reg->MCR &= ~mask;
-
-  reg->TCR = state;
+  assert(value <= getMaxValue(timer));
+  reg->MR[timer->event] = value;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
@@ -235,14 +229,9 @@ static void tmrSetValue(void *object, uint32_t value)
 {
   struct GpTimerCounter * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
-  const uint32_t state = reg->TCR & TCR_CEN;
 
   assert(value <= reg->MR[timer->event]);
 
-  reg->TCR = 0;
-
   reg->PC = 0;
   reg->TC = value;
-
-  reg->TCR = state;
 }

@@ -91,11 +91,12 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   switch (function)
   {
     case PIN_ANALOG:
-      *reg = value & ~IOCON_DIGITAL;
-      return;
+      /* Switch to the analog mode */
+      value = value & ~IOCON_DIGITAL;
+      break;
 
     case PIN_DEFAULT:
-      value = (value & ~IOCON_FUNC_MASK) | IOCON_DIGITAL;
+      value = (value & ~IOCON_FUNC_MASK) | IOCON_DIGITAL | IOCON_FILTR;
 
       /* GPIO function for Reset and JTAG/SWD pins is 1 */
       if (isSystemPin(pin))
@@ -107,7 +108,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
       break;
 
     default:
-      value = (value & ~IOCON_FUNC_MASK) | IOCON_DIGITAL | IOCON_FUNC(function);
+      value = (value & ~IOCON_FUNC_MASK) | IOCON_FUNC(function);
       break;
   }
 

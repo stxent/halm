@@ -11,6 +11,12 @@
 static void setUnitResolution(struct SctPwmUnit *, uint8_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
+static void unitEnable(void *);
+static void unitDisable(void *);
+static uint32_t unitGetFrequency(const void *);
+static void unitSetFrequency(void *, uint32_t);
+static uint32_t unitGetOverflow(const void *);
+static void unitSetOverflow(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
 static void unitDeinit(void *);
@@ -21,12 +27,10 @@ static void unitDeinit(void *);
 static enum Result singleEdgeInit(void *, const void *);
 static void singleEdgeEnable(void *);
 static void singleEdgeDisable(void *);
-static uint32_t singleEdgeGetResolution(const void *);
 static void singleEdgeSetDuration(void *, uint32_t);
 static void singleEdgeSetDurationUnified(void *, uint32_t);
 static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
 static void singleEdgeSetEdgesUnified(void *, uint32_t, uint32_t);
-static void singleEdgeSetFrequency(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
 static void singleEdgeDeinit(void *);
@@ -37,12 +41,10 @@ static void singleEdgeDeinit(void *);
 static enum Result doubleEdgeInit(void *, const void *);
 static void doubleEdgeEnable(void *);
 static void doubleEdgeDisable(void *);
-static uint32_t doubleEdgeGetResolution(const void *);
 static void doubleEdgeSetDuration(void *, uint32_t);
 static void doubleEdgeSetDurationUnified(void *, uint32_t);
 static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
 static void doubleEdgeSetEdgesUnified(void *, uint32_t, uint32_t);
-static void doubleEdgeSetFrequency(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
 static void doubleEdgeDeinit(void *);
@@ -50,10 +52,21 @@ static void doubleEdgeDeinit(void *);
 #define doubleEdgeDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const SctPwmUnit = &(const struct EntityClass){
+const struct TimerClass * const SctPwmUnit = &(const struct TimerClass){
     .size = sizeof(struct SctPwmUnit),
     .init = unitInit,
-    .deinit = unitDeinit
+    .deinit = unitDeinit,
+
+    .enable = unitEnable,
+    .disable = unitDisable,
+    .setAutostop = 0,
+    .setCallback = 0,
+    .getFrequency = unitGetFrequency,
+    .setFrequency = unitSetFrequency,
+    .getOverflow = unitGetOverflow,
+    .setOverflow = unitSetOverflow,
+    .getValue = 0,
+    .setValue = 0
 };
 
 const struct PwmClass * const SctPwm = &(const struct PwmClass){
@@ -63,10 +76,8 @@ const struct PwmClass * const SctPwm = &(const struct PwmClass){
 
     .enable = singleEdgeEnable,
     .disable = singleEdgeDisable,
-    .getResolution = singleEdgeGetResolution,
     .setDuration = singleEdgeSetDuration,
-    .setEdges = singleEdgeSetEdges,
-    .setFrequency = singleEdgeSetFrequency
+    .setEdges = singleEdgeSetEdges
 };
 
 const struct PwmClass * const SctUnifiedPwm = &(const struct PwmClass){
@@ -76,10 +87,8 @@ const struct PwmClass * const SctUnifiedPwm = &(const struct PwmClass){
 
     .enable = singleEdgeEnable,
     .disable = singleEdgeDisable,
-    .getResolution = singleEdgeGetResolution,
     .setDuration = singleEdgeSetDurationUnified,
-    .setEdges = singleEdgeSetEdgesUnified,
-    .setFrequency = singleEdgeSetFrequency
+    .setEdges = singleEdgeSetEdgesUnified
 };
 
 const struct PwmClass * const SctPwmDoubleEdge = &(const struct PwmClass){
@@ -89,10 +98,8 @@ const struct PwmClass * const SctPwmDoubleEdge = &(const struct PwmClass){
 
     .enable = doubleEdgeEnable,
     .disable = doubleEdgeDisable,
-    .getResolution = doubleEdgeGetResolution,
     .setDuration = doubleEdgeSetDuration,
-    .setEdges = doubleEdgeSetEdges,
-    .setFrequency = doubleEdgeSetFrequency
+    .setEdges = doubleEdgeSetEdges
 };
 
 const struct PwmClass * const SctUnifiedPwmDoubleEdge =
@@ -103,17 +110,16 @@ const struct PwmClass * const SctUnifiedPwmDoubleEdge =
 
     .enable = doubleEdgeEnable,
     .disable = doubleEdgeDisable,
-    .getResolution = doubleEdgeGetResolution,
     .setDuration = doubleEdgeSetDurationUnified,
-    .setEdges = doubleEdgeSetEdgesUnified,
-    .setFrequency = doubleEdgeSetFrequency
+    .setEdges = doubleEdgeSetEdgesUnified
 };
 /*----------------------------------------------------------------------------*/
 static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
-    uint32_t value)
+    uint32_t resolution)
 {
   const unsigned int part = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
+  const uint32_t value = resolution - 1;
 
   reg->CONFIG |= CONFIG_NORELOAD(part);
 
@@ -161,6 +167,9 @@ static enum Result unitInit(void *object, const void *configBase)
   if (!sctAllocateEvent(&unit->base, &unit->event))
     return E_BUSY;
 
+  unit->frequency = config->frequency;
+  unit->resolution = config->resolution;
+
   LPC_SCT_Type * const reg = unit->base.reg;
   const unsigned int part = unit->base.part == SCT_HIGH;
   const uint16_t eventMask = 1 << unit->event;
@@ -168,18 +177,14 @@ static enum Result unitInit(void *object, const void *configBase)
   unit->base.mask = eventMask;
   reg->CTRL_PART[part] = CTRL_HALT;
 
-  /* Set desired unit frequency */
-  unit->frequency = config->frequency;
-  unit->resolution = config->resolution;
-
-  if (unit->frequency)
-    sctSetFrequency(&unit->base, unit->resolution * unit->frequency);
+  /* Set base timer frequency */
+  sctSetFrequency(&unit->base, unit->frequency);
 
   /* Automatic reload feature is not supported on all parts */
   reg->CONFIG &= ~(CONFIG_AUTOLIMIT(part) | CONFIG_NORELOAD(part));
 
   /* Match value should be configured after event initialization */
-  setUnitResolution(unit, unit->event, unit->resolution - 1);
+  setUnitResolution(unit, unit->event, unit->resolution);
 
   /* Configure event */
   reg->EV[unit->event].CTRL = EVCTRL_MATCHSEL(unit->event)
@@ -194,9 +199,7 @@ static enum Result unitInit(void *object, const void *configBase)
   /* Enable timer clearing on allocated event */
   reg->LIMIT_PART[part] = eventMask;
 
-  /* Enable counter */
-  reg->CTRL_PART[part] &= ~CTRL_HALT;
-
+  /* Timer is left in a disabled state */
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -219,6 +222,53 @@ static void unitDeinit(void *object)
   SctBase->deinit(unit);
 }
 #endif
+/*----------------------------------------------------------------------------*/
+static void unitEnable(void *object)
+{
+  struct SctPwmUnit * const unit = object;
+  LPC_SCT_Type * const reg = unit->base.reg;
+  const unsigned int part = unit->base.part == SCT_HIGH;
+
+  reg->EVFLAG = unit->base.mask;
+  reg->CTRL_PART[part] &= ~CTRL_HALT;
+}
+/*----------------------------------------------------------------------------*/
+static void unitDisable(void *object)
+{
+  struct SctPwmUnit * const unit = object;
+  LPC_SCT_Type * const reg = unit->base.reg;
+  const unsigned int part = unit->base.part == SCT_HIGH;
+
+  reg->CTRL_PART[part] |= CTRL_HALT;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetFrequency(const void *object)
+{
+  const struct SctPwmUnit * const unit = object;
+  return unit->frequency;
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetFrequency(void *object, uint32_t frequency)
+{
+  struct SctPwmUnit * const unit = object;
+
+  unit->frequency = frequency;
+  sctSetFrequency(&unit->base, unit->frequency);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetOverflow(const void *object)
+{
+  const struct SctPwmUnit * const unit = object;
+  return unit->resolution;
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetOverflow(void *object, uint32_t overflow)
+{
+  struct SctPwmUnit * const unit = object;
+
+  unit->resolution = overflow;
+  setUnitResolution(unit, unit->event, unit->resolution);
+}
 /*----------------------------------------------------------------------------*/
 static enum Result singleEdgeInit(void *object, const void *configBase)
 {
@@ -303,11 +353,6 @@ static void singleEdgeDisable(void *object)
   reg->OUT[pwm->channel].SET = 0;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t singleEdgeGetResolution(const void *object)
-{
-  return ((const struct SctPwm *)object)->unit->resolution;
-}
-/*----------------------------------------------------------------------------*/
 static void singleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct SctPwm * const pwm = object;
@@ -346,17 +391,6 @@ static void singleEdgeSetEdgesUnified(void *object,
 {
   assert(leading == 0); /* Leading edge time must be zero */
   singleEdgeSetDurationUnified(object, trailing);
-}
-/*----------------------------------------------------------------------------*/
-static void singleEdgeSetFrequency(void *object, uint32_t frequency)
-{
-  struct SctPwm * const pwm = object;
-  struct SctPwmUnit * const unit = pwm->unit;
-
-  unit->frequency = frequency;
-
-  if (unit->frequency)
-    sctSetFrequency(&unit->base, unit->resolution * unit->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeInit(void *object, const void *configBase)
@@ -460,11 +494,6 @@ static void doubleEdgeDisable(void *object)
   reg->OUT[pwm->channel].SET = 0;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t doubleEdgeGetResolution(const void *object)
-{
-  return ((const struct SctPwmDoubleEdge *)object)->unit->resolution;
-}
-/*----------------------------------------------------------------------------*/
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
 {
   struct SctPwmDoubleEdge * const pwm = object;
@@ -552,17 +581,6 @@ static void doubleEdgeSetEdgesUnified(void *object, uint32_t leading,
   *(volatile uint32_t *)pwm->leading = leading - 1;
   *(volatile uint32_t *)pwm->trailing = trailing - 1;
   reg->CONFIG &= ~mask;
-}
-/*----------------------------------------------------------------------------*/
-static void doubleEdgeSetFrequency(void *object, uint32_t frequency)
-{
-  struct SctPwmDoubleEdge * const pwm = object;
-  struct SctPwmUnit * const unit = pwm->unit;
-
-  unit->frequency = frequency;
-
-  if (unit->frequency)
-    sctSetFrequency(&unit->base, unit->resolution * unit->frequency);
 }
 /*----------------------------------------------------------------------------*/
 /**

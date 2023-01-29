@@ -9,6 +9,8 @@
 #include <halm/pm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
+#define MATCH_CHANNEL_OVERFLOW 0
+/*----------------------------------------------------------------------------*/
 static inline uint32_t getMaxValue(const struct GpTimerCaptureUnit *);
 static void interruptHandler(void *);
 
@@ -25,6 +27,8 @@ static void unitDisable(void *);
 static void unitSetCallback(void *, void (*)(void *), void *);
 static uint32_t unitGetFrequency(const void *);
 static void unitSetFrequency(void *, uint32_t);
+static uint32_t unitGetOverflow(const void *);
+static void unitSetOverflow(void *, uint32_t);
 static uint32_t unitGetValue(const void *);
 static void unitSetValue(void *, uint32_t);
 
@@ -58,8 +62,8 @@ const struct TimerClass * const GpTimerCaptureUnit =
     .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
-    .getOverflow = 0,
-    .setOverflow = 0,
+    .getOverflow = unitGetOverflow,
+    .setOverflow = unitSetOverflow,
     .getValue = unitGetValue,
     .setValue = unitSetValue
 };
@@ -87,14 +91,15 @@ static void interruptHandler(void *object)
   LPC_TIMER_Type * const reg = unit->base.reg;
   const uint32_t state = reg->IR;
 
-  reg->IR = state; /* Clear pending interrupts */
+  /* Clear all pending interrupts */
+  reg->IR = state;
 
-  if (state & IR_MATCH_INTERRUPT(0))
+  if (state & IR_MATCH_INTERRUPT(MATCH_CHANNEL_OVERFLOW))
   {
     unit->callback(unit->callbackArgument);
   }
 
-  /* Extract capture channel flags */
+  /* Extract capture channel interrupts */
   uint32_t capture = IR_CAPTURE_VALUE(state);
 
   for (size_t index = 0; capture; capture >>= 1, ++index)
@@ -156,12 +161,13 @@ static enum Result unitInit(void *object, const void *configBase)
   reg->CCR = 0;
   reg->CTCR = 0;
   reg->EMR = 0;
-  reg->MCR = 0;
 
   /* Clear all pending interrupts */
   reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+  /* Reset the timer after reaching the match register value */
+  reg->MCR = MCR_RESET(MATCH_CHANNEL_OVERFLOW);
   /* Configure default match value for update event */
-  reg->MR[0] = getMaxValue(unit);
+  reg->MR[MATCH_CHANNEL_OVERFLOW] = getMaxValue(unit);
 
   unit->frequency = config->frequency;
   gpTimerSetFrequency(&unit->base, unit->frequency);
@@ -229,10 +235,10 @@ static void unitSetCallback(void *object, void (*callback)(void *),
   if (callback)
   {
     reg->IR = IR_MATCH_MASK;
-    reg->MCR |= MCR_INTERRUPT(0);
+    reg->MCR |= MCR_INTERRUPT(MATCH_CHANNEL_OVERFLOW);
   }
   else
-    reg->MCR &= ~MCR_INTERRUPT(0);
+    reg->MCR &= ~MCR_INTERRUPT(MATCH_CHANNEL_OVERFLOW);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t unitGetFrequency(const void *object)
@@ -250,6 +256,24 @@ static void unitSetFrequency(void *object, uint32_t frequency)
 
   unit->frequency = frequency;
   gpTimerSetFrequency(&unit->base, unit->frequency);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetOverflow(const void *object)
+{
+  const struct GpTimerCaptureUnit * const unit = object;
+  const LPC_TIMER_Type * const reg = unit->base.reg;
+
+  return (reg->MR[MATCH_CHANNEL_OVERFLOW] + 1) & getMaxValue(unit);
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetOverflow(void *object, uint32_t overflow)
+{
+  struct GpTimerCaptureUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+  const uint32_t value = overflow ? overflow - 1 : getMaxValue(unit);
+
+  assert(value <= getMaxValue(unit));
+  reg->MR[MATCH_CHANNEL_OVERFLOW] = value;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t unitGetValue(const void *object)

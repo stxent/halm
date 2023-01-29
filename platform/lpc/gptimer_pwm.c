@@ -9,6 +9,7 @@
 #include <halm/pm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
+static inline uint32_t getMaxValue(const struct GpTimerPwmUnit *);
 static bool unitAllocateChannel(struct GpTimerPwmUnit *, uint8_t);
 static void unitUpdateResolution(struct GpTimerPwmUnit *, uint8_t);
 
@@ -20,6 +21,12 @@ static void unitReleaseChannel(struct GpTimerPwmUnit *, uint8_t);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
+static void unitEnable(void *);
+static void unitDisable(void *);
+static uint32_t unitGetFrequency(const void *);
+static void unitSetFrequency(void *, uint32_t);
+static uint32_t unitGetOverflow(const void *);
+static void unitSetOverflow(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_GPTIMER_NO_DEINIT
 static void unitDeinit(void *);
@@ -30,10 +37,8 @@ static void unitDeinit(void *);
 static enum Result channelInit(void *, const void *);
 static void channelEnable(void *);
 static void channelDisable(void *);
-static uint32_t channelGetResolution(const void *);
 static void channelSetDuration(void *, uint32_t);
 static void channelSetEdges(void *, uint32_t, uint32_t);
-static void channelSetFrequency(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_LPC_GPTIMER_NO_DEINIT
 static void channelDeinit(void *);
@@ -41,10 +46,21 @@ static void channelDeinit(void *);
 #define channelDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const GpTimerPwmUnit = &(const struct EntityClass){
+const struct TimerClass * const GpTimerPwmUnit = &(const struct TimerClass){
     .size = sizeof(struct GpTimerPwmUnit),
     .init = unitInit,
-    .deinit = unitDeinit
+    .deinit = unitDeinit,
+
+    .enable = unitEnable,
+    .disable = unitDisable,
+    .setAutostop = 0,
+    .setCallback = 0,
+    .getFrequency = unitGetFrequency,
+    .setFrequency = unitSetFrequency,
+    .getOverflow = unitGetOverflow,
+    .setOverflow = unitSetOverflow,
+    .getValue = 0,
+    .setValue = 0
 };
 
 const struct PwmClass * const GpTimerPwm = &(const struct PwmClass){
@@ -54,11 +70,14 @@ const struct PwmClass * const GpTimerPwm = &(const struct PwmClass){
 
     .enable = channelEnable,
     .disable = channelDisable,
-    .getResolution = channelGetResolution,
     .setDuration = channelSetDuration,
-    .setEdges = channelSetEdges,
-    .setFrequency = channelSetFrequency
+    .setEdges = channelSetEdges
 };
+/*----------------------------------------------------------------------------*/
+static inline uint32_t getMaxValue(const struct GpTimerPwmUnit *unit)
+{
+  return MASK(unit->base.resolution);
+}
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
 static void powerStateHandler(void *object, enum PmState state)
@@ -116,7 +135,6 @@ static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmUnitConfig * const config = configBase;
   assert(config);
-  assert(config->resolution >= 2);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
@@ -127,12 +145,15 @@ static enum Result unitInit(void *object, const void *configBase)
   /* Call base class constructor */
   if ((res = GpTimerBase->init(unit, &baseConfig)) != E_OK)
     return res;
-  assert(config->resolution < MASK(unit->base.resolution));
+  /* Actual overflow value should be lower than a timer limit */
+  assert(config->resolution > 0 && config->resolution <= getMaxValue(unit));
+
+  unit->frequency = config->frequency;
+  unit->resolution = config->resolution;
 
   LPC_TIMER_Type * const reg = unit->base.reg;
 
   reg->TCR = TCR_CRES;
-
   reg->IR = reg->IR; /* Clear pending interrupts */
   reg->CTCR = 0;
   reg->CCR = 0;
@@ -140,9 +161,7 @@ static enum Result unitInit(void *object, const void *configBase)
   reg->PWMC = 0; /* Register is available only on specific parts */
 
   /* Configure timings */
-  unit->frequency = config->frequency;
-  unit->resolution = config->resolution;
-  gpTimerSetFrequency(&unit->base, unit->frequency * unit->resolution);
+  gpTimerSetFrequency(&unit->base, unit->frequency);
 
   unit->matches = 0;
   unit->limiter = gpTimerAllocateChannel(unit->matches);
@@ -154,9 +173,7 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 #endif
 
-  /* Enable timer */
-  reg->TCR = TCR_CEN;
-
+  /* Timer is left in a disabled state */
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -175,6 +192,56 @@ static void unitDeinit(void *object)
   GpTimerBase->deinit(unit);
 }
 #endif
+/*----------------------------------------------------------------------------*/
+static void unitEnable(void *object)
+{
+  struct GpTimerPwmUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  /* Clear pending interrupt flags */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+  /* Start the timer */
+  reg->TCR = TCR_CEN;
+}
+/*----------------------------------------------------------------------------*/
+static void unitDisable(void *object)
+{
+  struct GpTimerPwmUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  /* Stop the timer */
+  reg->TCR = 0;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetFrequency(const void *object)
+{
+  const struct GpTimerPwmUnit * const unit = object;
+  return unit->frequency;
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetFrequency(void *object, uint32_t frequency)
+{
+  struct GpTimerPwmUnit * const unit = object;
+
+  unit->frequency = frequency;
+  gpTimerSetFrequency(&unit->base, unit->frequency);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t unitGetOverflow(const void *object)
+{
+  const struct GpTimerPwmUnit * const unit = object;
+  return unit->resolution;
+}
+/*----------------------------------------------------------------------------*/
+static void unitSetOverflow(void *object, uint32_t overflow)
+{
+  struct GpTimerPwmUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  assert(overflow > 0 && overflow <= getMaxValue(unit));
+  unit->resolution = overflow;
+  reg->MR[unit->limiter] = unit->resolution - 1;
+}
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
@@ -229,11 +296,6 @@ static void channelDisable(void *object)
   reg->EMR &= ~EMR_EXTERNAL_MATCH(pwm->channel);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t channelGetResolution(const void *object)
-{
-  return ((const struct GpTimerPwm *)object)->unit->resolution;
-}
-/*----------------------------------------------------------------------------*/
 static void channelSetDuration(void *object, uint32_t duration)
 {
   struct GpTimerPwm * const pwm = object;
@@ -265,15 +327,6 @@ static void channelSetEdges(void *object,
 {
   assert(leading == 0); /* Leading edge time must be zero */
   channelSetDuration(object, trailing);
-}
-/*----------------------------------------------------------------------------*/
-static void channelSetFrequency(void *object, uint32_t frequency)
-{
-  struct GpTimerPwm * const pwm = object;
-  struct GpTimerPwmUnit * const unit = pwm->unit;
-
-  unit->frequency = frequency;
-  gpTimerSetFrequency(&unit->base, unit->frequency * unit->resolution);
 }
 /*----------------------------------------------------------------------------*/
 /**

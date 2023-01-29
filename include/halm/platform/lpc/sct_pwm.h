@@ -10,11 +10,11 @@
 #include <halm/platform/lpc/sct_base.h>
 #include <halm/pwm.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const SctPwmUnit;
+extern const struct TimerClass * const SctPwmUnit;
 
 struct SctPwmUnitConfig
 {
-  /** Mandatory: switching frequency. */
+  /** Mandatory: timer frequency. */
   uint32_t frequency;
   /** Mandatory: cycle resolution. */
   uint32_t resolution;
@@ -30,7 +30,7 @@ struct SctPwmUnit
 {
   struct SctBase base;
 
-  /* Timer frequency */
+  /* Desired timer frequency */
   uint32_t frequency;
   /* Cycle width measured in timer ticks */
   uint32_t resolution;

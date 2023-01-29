@@ -18,6 +18,8 @@ struct GpTimerCounterConfig
   enum PinEvent edge;
   /** Mandatory: pin used as an input. */
   PinNumber pin;
+  /** Optional: match event used as a reset source for the timer. */
+  enum GpTimerEvent event;
   /** Optional: timer interrupt priority. */
   IrqPriority priority;
   /** Mandatory: peripheral identifier. */

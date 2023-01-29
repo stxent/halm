@@ -61,7 +61,7 @@ static void interruptHandler(void *object)
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
 
-  /* Clear all possible pending interrupts */
+  /* Clear all pending interrupts */
   reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
 
   timer->callback(timer->callbackArgument);
@@ -202,7 +202,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 
   if (callback)
   {
-    reg->IR = IR_MATCH_MASK;
+    reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
     reg->MCR |= mask;
   }
   else
@@ -238,9 +238,10 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
+  const uint32_t value = overflow ? overflow - 1 : getMaxValue(timer);
 
-  assert(overflow <= getMaxValue(timer));
-  reg->MR[timer->event] = overflow - 1;
+  assert(value <= getMaxValue(timer));
+  reg->MR[timer->event] = value;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)

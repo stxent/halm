@@ -86,7 +86,7 @@ static inline void timerSetCallback(void *timer, void (*callback)(void *),
 }
 
 /**
- * Get the current frequency of the timer.
+ * Get the frequency of the timer.
  * @param timer Pointer to a Timer object.
  * @return Frequency of the timer in Hz.
  */
