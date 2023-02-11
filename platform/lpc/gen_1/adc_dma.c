@@ -11,9 +11,8 @@
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
+static bool dmaSetup(struct AdcDma *, const struct AdcDmaConfig *, size_t);
 static void resetDmaBuffers(struct AdcDma *);
-static bool setupDmaChannel(struct AdcDma *, const struct AdcDmaConfig *,
-    size_t);
 static size_t setupPins(struct AdcDma *, const PinNumber *);
 static bool startConversion(struct AdcDma *);
 static void stopConversion(struct AdcDma *);
@@ -50,18 +49,7 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void resetDmaBuffers(struct AdcDma *interface)
-{
-  LPC_ADC_Type * const reg = interface->base.reg;
-
-  for (size_t index = 0; index < interface->count; ++index)
-  {
-    dmaAppend(interface->dma, &interface->buffer[index],
-        (const void *)&reg->DR[interface->pins[index].channel], 1);
-  }
-}
-/*----------------------------------------------------------------------------*/
-static bool setupDmaChannel(struct AdcDma *interface,
+static bool dmaSetup(struct AdcDma *interface,
     const struct AdcDmaConfig *config, size_t number)
 {
   static const struct GpDmaSettings dmaSettings = {
@@ -95,6 +83,17 @@ static bool setupDmaChannel(struct AdcDma *interface,
   }
   else
     return false;
+}
+/*----------------------------------------------------------------------------*/
+static void resetDmaBuffers(struct AdcDma *interface)
+{
+  LPC_ADC_Type * const reg = interface->base.reg;
+
+  for (size_t index = 0; index < interface->count; ++index)
+  {
+    dmaAppend(interface->dma, &interface->buffer[index],
+        (const void *)&reg->DR[interface->pins[index].channel], 1);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static size_t setupPins(struct AdcDma *interface, const PinNumber *pins)
@@ -193,7 +192,7 @@ static enum Result adcInit(void *object, const void *configBase)
     /* Initialize input pins */
     interface->count = setupPins(interface, config->pins);
 
-    if (setupDmaChannel(interface, config, interface->count))
+    if (dmaSetup(interface, config, interface->count))
     {
       if (!config->shared)
         res = startConversion(interface) ? E_OK : E_ERROR;

@@ -9,6 +9,7 @@
 #include <halm/platform/numicro/pdma_defs.h>
 #include <halm/platform/numicro/system.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/accel.h>
 #include <xcore/atomic.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -22,7 +23,7 @@ const struct EntityClass * const PdmaBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 extern unsigned long _sbss;
 /*----------------------------------------------------------------------------*/
-static struct PdmaBase *instances[CONFIG_PLATFORM_NUMICRO_PDMA_COUNT] = {0};
+static struct PdmaBase *instances[16] = {0};
 /*----------------------------------------------------------------------------*/
 const struct PdmaBase *pdmaGetInstance(uint8_t channel)
 {
@@ -53,46 +54,48 @@ void pdmaSetMux(struct PdmaBase *descriptor)
 /*----------------------------------------------------------------------------*/
 void PDMA_ISR(void)
 {
-  const uint32_t abtsts = NM_PDMA->ABTSTS;
-  const uint32_t reqtof = INTSTS_REQTOF_VALUE(NM_PDMA->INTSTS);
   const uint32_t tdsts = NM_PDMA->TDSTS;
-  const uint32_t status = abtsts | reqtof | tdsts;
+  uint32_t abtsts = NM_PDMA->ABTSTS;
+  uint32_t reqtof = INTSTS_REQTOF_VALUE(NM_PDMA->INTSTS);
+  uint32_t status = reverseBits32(abtsts | reqtof | tdsts);
 
   NM_PDMA->ABTSTS = abtsts;
   NM_PDMA->TDSTS = tdsts;
 
-  for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
+  abtsts = reverseBits32(abtsts);
+  reqtof = reverseBits32(reqtof);
+
+  do
   {
-    const uint32_t mask = 1 << index;
+    const unsigned int index = countLeadingZeros32(status);
+    struct PdmaBase * const descriptor = instances[index];
+    NM_PDMA_CHANNEL_Type * const entry = &NM_PDMA->CHANNELS[index];
+    const uint32_t mask = (1UL << 31) >> index;
+    enum Result res = E_OK;
 
-    if (status & mask)
+    if (abtsts & mask)
     {
-      struct PdmaBase * const descriptor = instances[index];
-      NM_PDMA_CHANNEL_Type * const entry = &NM_PDMA->CHANNELS[index];
-      enum Result res = E_OK;
-
-      if (abtsts & mask)
-      {
-        res = E_ERROR;
-      }
-      else if (reqtof & mask)
-      {
-        /* Disable time-out function, then clear interrupt flag */
-        NM_PDMA->TOUTEN &= ~mask;
-        NM_PDMA->INTSTS = INTSTS_REQTOF(index);
-
-        res = E_TIMEOUT;
-      }
-      else if (DSCT_CTL_OPMODE_VALUE(entry->CTL) != OPMODE_IDLE)
-      {
-        res = E_BUSY;
-      }
-      else
-        res = E_OK;
-
-      descriptor->handler(descriptor, res);
+      res = E_ERROR;
     }
+    else if (reqtof & mask)
+    {
+      /* Disable time-out function, then clear interrupt flag */
+      NM_PDMA->TOUTEN &= ~mask;
+      NM_PDMA->INTSTS = INTSTS_REQTOF(index);
+
+      res = E_TIMEOUT;
+    }
+    else if (DSCT_CTL_OPMODE_VALUE(entry->CTL) != OPMODE_IDLE)
+    {
+      res = E_BUSY;
+    }
+    else
+      res = E_OK;
+
+    descriptor->handler(descriptor, res);
+    status -= mask;
   }
+  while (status);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
@@ -126,7 +129,7 @@ static enum Result channelInit(void *object, const void *configBase)
     sysResetBlock(RST_PDMA);
 
     /* Clear descriptors */
-    for (size_t index = 0; index < CONFIG_PLATFORM_NUMICRO_PDMA_COUNT; ++index)
+    for (size_t index = 0; index < 16; ++index)
     {
       NM_PDMA->CHANNELS[index].CTL = 0;
       NM_PDMA->CHANNELS[index].SA = 0;

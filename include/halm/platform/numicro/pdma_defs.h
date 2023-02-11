@@ -68,12 +68,10 @@ enum
     FIELD_VALUE((reg), DSCT_NEXT_EXENEXT_MASK, 16)
 /*------------------Channel Control register----------------------------------*/
 #define CHCTL_CH(channel)               BIT(channel)
-#define CHCTL_CH_MASK \
-    BIT_FIELD(MASK(CONFIG_PLATFORM_NUMICRO_PDMA_COUNT), 0)
+#define CHCTL_CH_MASK                   BIT_FIELD(MASK(16), 0)
 /*------------------Transfer Pause Control register---------------------------*/
 #define PAUSE_CH(channel)               BIT(channel)
-#define PAUSE_CH_MASK \
-    BIT_FIELD(MASK(CONFIG_PLATFORM_NUMICRO_PDMA_COUNT), 0)
+#define PAUSE_CH_MASK                   BIT_FIELD(MASK(16), 0)
 /*------------------Software Request register---------------------------------*/
 #define SWREQ_CH(channel)               BIT(channel)
 /*------------------Channel Request Status register---------------------------*/
@@ -84,8 +82,7 @@ enum
 #define PRICLR_CH(channel)              BIT(channel)
 /*------------------Interrupt Enable register---------------------------------*/
 #define INTEN_CH(channel)               BIT(channel)
-#define INTEN_CH_MASK \
-    BIT_FIELD(MASK(CONFIG_PLATFORM_NUMICRO_PDMA_COUNT), 0)
+#define INTEN_CH_MASK                   BIT_FIELD(MASK(16), 0)
 /*------------------Interrupt Status register---------------------------------*/
 #define INTSTS_ABTIF                    BIT(0)
 #define INTSTS_TDIF                     BIT(1)
@@ -157,8 +154,7 @@ enum
     FIELD_VALUE((reg), TOC_CH_MASK(channel), (channel) * 16)
 /*------------------Channel Reset register------------------------------------*/
 #define CHRST_CH(channel)               BIT(channel)
-#define CHRST_CH_MASK \
-    BIT_FIELD(MASK(CONFIG_PLATFORM_NUMICRO_PDMA_COUNT), 0)
+#define CHRST_CH_MASK                   BIT_FIELD(MASK(16), 0)
 /*------------------Request Source Select registers---------------------------*/
 #define REQSEL_CH(channel, value)       BIT_FIELD((value), (channel) * 8)
 #define REQSEL_CH_MASK(channel)         BIT_FIELD(MASK(6), (channel) * 8)

@@ -1,11 +1,11 @@
 /*
- * halm/platform/numicro/m03x/pin_defs.h
+ * halm/platform/numicro/m48x/pin_defs.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_NUMICRO_M03X_PIN_DEFS_H_
-#define HALM_PLATFORM_NUMICRO_M03X_PIN_DEFS_H_
+#ifndef HALM_PLATFORM_NUMICRO_M48X_PIN_DEFS_H_
+#define HALM_PLATFORM_NUMICRO_M48X_PIN_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------I/O Mode Control------------------------------------------*/
@@ -26,6 +26,19 @@ enum
 #define INTEN_FLIEN_GROUP(value)        BIT_FIELD((value), 0)
 #define INTEN_RHIEN(pin)                BIT((pin) + 16)
 #define INTEN_RHIEN_GROUP(value)        BIT_FIELD((value), 16)
+/*------------------High Slew Rate Control register---------------------------*/
+enum
+{
+  /* Maximum 40 MHz at 2.7V */
+  HSREN_NORMAL  = 0,
+  /* Maximum 80 MHz at 2.7V */
+  HSREN_HIGH    = 1,
+  /* Maximum 100 MHz at 2.7V */
+  HSREN_FAST    = 2
+};
+
+#define SLEWCTL_HSREN_MASK(pin)         BIT_FIELD(MASK(2), (pin) * 2)
+#define SLEWCTL_HSREN(pin, value)       BIT_FIELD((value), (pin) * 2)
 /*------------------Pull-up and Pull-down Selection register------------------*/
 enum
 {
@@ -33,6 +46,9 @@ enum
   PUSEL_UP    = 1,
   PUSEL_DOWN  = 2
 };
+
+#define PUSEL_PUSEL_MASK(pin)           BIT_FIELD(MASK(2), (pin) * 2)
+#define PUSEL_PUSEL(pin, value)         BIT_FIELD((value), (pin) * 2)
 /*------------------Interrupt De-bounce Control register----------------------*/
 enum
 {
@@ -62,4 +78,4 @@ enum
 #define DBCTL_DBCLKSRC                  BIT(4)
 #define DBCTL_ICLKON                    BIT(5)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NUMICRO_M03X_PIN_DEFS_H_ */
+#endif /* HALM_PLATFORM_NUMICRO_M48X_PIN_DEFS_H_ */

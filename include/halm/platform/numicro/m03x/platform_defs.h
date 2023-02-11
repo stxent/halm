@@ -18,8 +18,8 @@
 typedef struct
 {
   __rw__ uint32_t CTL[2]; /* Control registers */
-  __rw__ uint32_t STATUS; /* Status Register */
-  __rw__ uint32_t VREF;   /* Reference Voltage Control */
+  __rw__ uint32_t STATUS; /* Status register */
+  __rw__ uint32_t VREF; /* Reference Voltage Control */
   __rw__ uint32_t CALCTL; /* Calibration Control */
   __ro__ uint32_t CALSR;  /* Calibration Status */
 } NM_ACMP_Type;
@@ -30,12 +30,12 @@ typedef struct
   __ne__ uint32_t RESERVED0[2];
 
   /* Offset 0x080 */
-  __rw__ uint32_t ADCR; /* Control Register */
-  __rw__ uint32_t ADCHER; /* Channel Enable Register */
-  __rw__ uint32_t ADCMPR[2]; /* Compare Registers */
-  __rw__ uint32_t ADSR0; /* Status Register 0 */
-  __ro__ uint32_t ADSR1; /* Status Register 1 */
-  __ro__ uint32_t ADSR2; /* Status Register 2 */
+  __rw__ uint32_t ADCR; /* Control register */
+  __rw__ uint32_t ADCHER; /* Channel Enable register */
+  __rw__ uint32_t ADCMPR[2]; /* Compare registers */
+  __rw__ uint32_t ADSR0; /* Status register 0 */
+  __ro__ uint32_t ADSR1; /* Status register 1 */
+  __ro__ uint32_t ADSR2; /* Status register 2 */
   __ne__ uint32_t RESERVED1;
   __rw__ uint32_t ESMPCTL; /* Extend Sample Time Control register */
   __rw__ uint32_t CFDCTL; /* Channel Floating Detect Control register */
@@ -44,9 +44,9 @@ typedef struct
   /* Offset 0x100 */
   __ro__ uint32_t ADPDMA; /* PDMA Current Transfer Data register */
   __ne__ uint32_t RESERVED3[31];
-  __rw__ uint32_t ADCALR; /* Calibration Mode Register */
-  __rw__ uint32_t ADCALSTSR; /* Calibration Status Register */
-  __rw__ uint32_t ADCALDBR; /* Calibration Debug Mode Register */
+  __rw__ uint32_t ADCALR; /* Calibration Mode register */
+  __rw__ uint32_t ADCALSTSR; /* Calibration Status register */
+  __rw__ uint32_t ADCALDBR; /* Calibration Debug Mode register */
 } NM_ADC_Type;
 /*------------------Clock Controller------------------------------------------*/
 typedef struct
@@ -73,7 +73,7 @@ typedef struct
   {
     struct
     {
-      __rw__ uint32_t CLKDIV0; /* Clock Divider Number Register 0 */
+      __rw__ uint32_t CLKDIV0; /* Clock Divider Number register 0 */
       __ne__ uint32_t RESERVED0[3];
       __rw__ uint32_t CLKDIV4; /* Clock Divider Number register 4 */
       __rw__ uint32_t PCLKDIV; /* APB Clock Divider register */
@@ -91,8 +91,8 @@ typedef struct
   __ne__ uint32_t RESERVED4[3];
   __rw__ uint32_t CLKDCTL; /* Clock Fail Detector Control register */
   __rw__ uint32_t CLKDSTS; /* Clock Fail Detector Status register */
-  __rw__ uint32_t CDUPB; /* Clock Frequency Range Detector upper boundary register */ // TODO
-  __rw__ uint32_t CDLOWB; /* Clock Frequency Range Detector lower boundary register */ // TODO
+  __rw__ uint32_t CDUPB; /* Clock Frequency Range Detector upper boundary */
+  __rw__ uint32_t CDLOWB; /* Clock Frequency Range Detector lower boundary */
   __rw__ uint32_t LDOCTL; /* LDO Control register */
   __ne__ uint32_t RESERVED5[12];
   __rw__ uint32_t HXTFSEL; /* HXT Filter Select control register */
@@ -156,21 +156,21 @@ typedef struct
 
 typedef struct
 {
-  __rw__ uint32_t MODE; /* I/O Mode control */
-  __rw__ uint32_t DINOFF; /* Digital Input Path Disable control */
+  __rw__ uint32_t MODE; /* I/O Mode Control */
+  __rw__ uint32_t DINOFF; /* Digital Input Path Disable Control */
   __rw__ uint32_t DOUT; /* Data Output Value */
   __rw__ uint32_t DATMSK; /* Data Output Write Mask */
-  __ro__ uint32_t PIN; /* Pin values */
-  __rw__ uint32_t DBEN; /* Debounce Enable control */
-  __rw__ uint32_t INTTYPE; /* Interrupt Trigger Type control */
-  __rw__ uint32_t INTEN; /* Interrupt Enable control */
-  __rw__ uint32_t INTSRC; /* Interrupt Source flags */
+  __ro__ uint32_t PIN; /* Pin Value */
+  __rw__ uint32_t DBEN; /* Debounce Enable Control register */
+  __rw__ uint32_t INTTYPE; /* Interrupt Trigger Type Control */
+  __rw__ uint32_t INTEN; /* Interrupt Enable Control register */
+  __rw__ uint32_t INTSRC; /* Interrupt Source Flag */
   __ne__ uint32_t RESERVED0[7];
 } NM_GPIO_Type;
 /*------------------Hardware Divider------------------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t DIVIDEND; /* Dividend source Register */
+  __rw__ uint32_t DIVIDEND; /* Dividend source register */
   __rw__ uint32_t DIVISOR; /* Divisor source resister */
   __rw__ uint32_t QUOTIENT; /* Quotient result resister */
   __rw__ uint32_t REM; /* Remainder result register */
@@ -206,6 +206,12 @@ typedef struct
   __rw__ uint32_t BUSTOUT; /* Bus Management Timer register */
   __rw__ uint32_t CLKTOUT; /* Bus Management Clock Low Timer register */
 } NM_I2C_Type;
+/*------------------Non-Maskable Interrupt------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t NMIEN; /* Source Interrupt Enable register */
+  __ro__ uint32_t NMISTS; /* Source Interrupt Status register */
+} NM_NMI_Type;
 /*------------------Peripheral Direct Memory Access Controller----------------*/
 typedef struct
 {
@@ -223,6 +229,7 @@ typedef struct
   __ne__ uint32_t RESERVED0[28];
 
   /* Offset 0x100 */
+  // TODO Incorrect
   __ro__ uint32_t CURSCAT[9]; /* Current descriptor addresses of channels */
   __ne__ uint32_t RESERVED1[183];
 
@@ -424,12 +431,6 @@ typedef struct
   __rw__ uint32_t I2SCLK; /* I2S Clock Divider Control register */
   __rw__ uint32_t I2SSTS; /* I2S Status register */
 } NM_SPI_Type;
-/*------------------Non-Maskable Interrupt------------------------------------*/
-typedef struct
-{
-  __rw__ uint32_t NMIEN; /* Source Interrupt Enable register */
-  __ro__ uint32_t NMISTS; /* Source Interrupt Status register */
-} NM_NMI_Type;
 /*------------------System Manager--------------------------------------------*/
 typedef struct
 {
@@ -447,8 +448,8 @@ typedef struct
   /* Offset 0x030 */
   struct
   {
-    __rw__ uint32_t MFPL; /* GPIO Low Byte Multiple Function control register */
-    __rw__ uint32_t MFPH; /* GPIO High Byte Multiple Function control register */
+    __rw__ uint32_t MFPL; /* GPIO Low Byte Function control register */
+    __rw__ uint32_t MFPH; /* GPIO High Byte Function control register */
   } GP[8];
 
   __ne__ uint32_t RESERVED3[2];
@@ -472,29 +473,6 @@ typedef struct
   __wo__ uint32_t REGLCTL; /* Register Lock Control register */
   __ne__ uint32_t RESERVED8[58];
   __rw__ uint32_t PORDISAN; /* Analog POR Disable control register */
-
-  /* Offset 0x100 */
-// XXX Verify
-//   __wo__ uint32_t REGLCTL; /* Register Lock Control register */
-//   __ne__ uint32_t RESERVED8[5];
-//   __rw__ uint32_t HIRCADJ; /* HIRC Trim Value register */
-//   __ne__ uint32_t RESERVED9;
-//   __ro__ uint32_t LDOTRIM; /* LDO Trim code register */
-//   __ro__ uint32_t LVR16TRIM; /* LVR16 Trim code register */
-//   __ne__ uint32_t RESERVED10[4];
-//   __ro__ uint32_t LIRCT; /* Low Speed Internal Oscillator Trim code register */
-//   __ne__ uint32_t RESERVED11[5];
-//   __ro__ uint32_t LVR17TRIM; /* LVR17 Trim code register */
-//   __ro__ uint32_t LVR20TRIM; /* LVR20 Trim code register */
-//   __ro__ uint32_t LVR25TRIM; /* LVR25 Trim code register */
-//   __ro__ uint32_t ULDOVITRIM; /* ULDO V Trim and I TRIM code register */
-//   __rw__ uint32_t LVRITRIMSEL; /* LVR I Trim and Version Select register */
-//   __ne__ uint32_t RESERVED12[9];
-//   __rw__ uint32_t HIRCTCTL; /* HIRC Test Mode Control register */
-//   __rw__ uint32_t ADCCHIP; /* ADC CHIP control register */
-//   __rw__ uint32_t HXTTCTL; /* R/W HXT Test Mode Control register */
-//   __ne__ uint32_t RESERVED13[22];
-//   __rw__ uint32_t PORDISAN; /* Analog POR Disable control register
 } NM_SYS_Type;
 /*------------------Real Timer Clock------------------------------------------*/
 typedef struct

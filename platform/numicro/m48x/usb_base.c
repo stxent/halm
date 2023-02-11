@@ -27,17 +27,41 @@ const struct EntityClass * const UsbBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 const struct PinEntry usbPins[] = {
     {
-        .key = PIN(PORT_USB, PIN_USB_DM), /* Mock USB_D- pin descriptor */
+        .key = PIN(PORT_A, 12), /* USB_VBUS */
         .channel = 0,
-        .value = 0
+        .value = 14
     }, {
-        .key = PIN(PORT_USB, PIN_USB_DP), /* Mock USB_D+ pin descriptor */
+        .key = PIN(PORT_A, 13), /* USB_D- */
         .channel = 0,
-        .value = 0
+        .value = 14
     }, {
-        .key = PIN(PORT_USB, PIN_USB_VBUS), /* Mock USB_VBUS pin descriptor */
+        .key = PIN(PORT_A, 14), /* USB_D+ */
         .channel = 0,
-        .value = 0
+        .value = 14
+    }, {
+        .key = PIN(PORT_A, 15), /* USB_OTG_ID */
+        .channel = 0,
+        .value = 14
+    }, {
+        .key = PIN(PORT_B, 6), /* USB_VBUS_EN */
+        .channel = 0,
+        .value = 14
+    }, {
+        .key = PIN(PORT_B, 7), /* USB_VBUS_ST */
+        .channel = 0,
+        .value = 14
+    }, {
+        .key = PIN(PORT_B, 15), /* USB_VBUS_EN */
+        .channel = 0,
+        .value = 14
+    }, {
+        .key = PIN(PORT_C, 14), /* USB_VBUS_ST */
+        .channel = 0,
+        .value = 14
+    }, {
+        .key = PIN(PORT_D, 4), /* USB_VBUS_ST */
+        .channel = 0,
+        .value = 14
     }, {
         .key = 0 /* End of pin function association list */
     }
@@ -48,28 +72,24 @@ static struct UsbBase *instance = 0;
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
 {
-  // TODO
-  (void)device;
-  (void)config;
+  const PinNumber pinArray[] = {
+      config->dm, config->dp, config->vbus
+  };
 
-  // const PinNumber pinArray[] = {
-  //     config->dm, config->dp, config->connect, config->vbus
-  // };
+  for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
+  {
+    if (pinArray[index])
+    {
+      const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
+          device->channel);
+      assert(pinEntry);
 
-  // for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
-  // {
-  //   if (pinArray[index])
-  //   {
-  //     const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
-  //         device->channel);
-  //     assert(pinEntry);
+      const struct Pin pin = pinInit(pinArray[index]);
 
-  //     const struct Pin pin = pinInit(pinArray[index]);
-
-  //     pinInput(pin);
-  //     pinSetFunction(pin, pinEntry->value);
-  //   }
-  // }
+      pinInput(pin);
+      pinSetFunction(pin, pinEntry->value);
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct UsbBase *object)

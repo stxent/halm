@@ -32,10 +32,6 @@ if(${CONFIG_PLATFORM_NUMICRO_ADC_DMA})
     list(APPEND SOURCE_FILES "adc_dma.c")
 endif()
 
-if(${CONFIG_PLATFORM_NUMICRO_ADC_ONESHOT})
-    # list(APPEND SOURCE_FILES "adc_oneshot.c")
-endif()
-
 if(${CONFIG_PLATFORM_NUMICRO_GPTIMER_BASE})
     list(APPEND SOURCE_FILES "gptimer_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gptimer_base.c")
@@ -65,7 +61,6 @@ if(${CONFIG_PLATFORM_NUMICRO_SERIAL})
 endif()
 
 if(${CONFIG_PLATFORM_NUMICRO_SERIAL_DMA})
-    # list(APPEND SOURCE_FILES "serial_dma_v1.c")
     list(APPEND SOURCE_FILES "serial_dma.c")
 endif()
 
@@ -82,14 +77,23 @@ if(${CONFIG_PLATFORM_NUMICRO_SPI_DMA})
     list(APPEND SOURCE_FILES "spi_dma.c")
 endif()
 
+if(${CONFIG_PLATFORM_NUMICRO_QSPI})
+    list(APPEND SOURCE_FILES "qspi.c")
+endif()
+
+if(${CONFIG_PLATFORM_NUMICRO_QSPI_BASE})
+    list(APPEND SOURCE_FILES "qspi_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/qspi_base.c")
+endif()
+
 if(${CONFIG_PLATFORM_NUMICRO_UART_BASE})
     list(APPEND SOURCE_FILES "uart_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/uart_base.c")
 endif()
 
 if(CONFIG_PLATFORM_USB)
+    list(APPEND SOURCE_FILES "usb_device.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_device.c")
 endif()
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_SYSTEM_SOC}/CMakeLists.txt" OPTIONAL)

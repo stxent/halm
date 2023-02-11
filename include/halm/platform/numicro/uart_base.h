@@ -12,10 +12,11 @@
 #include <halm/pin.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-#undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/uart_base.h>
-#include HEADER_PATH
-#undef HEADER_PATH
+enum
+{
+  UART_DEPTH_1  = 1,
+  UART_DEPTH_16 = 16
+};
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UartBase;
 

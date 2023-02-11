@@ -99,7 +99,7 @@ const struct PinEntry spiPins[] = {
         .channel = 0,
         .value = 4
     }, {
-        .key = PIN(PORT_F, 7), /* SPI0_MOSI */
+        .key = PIN(PORT_F, 6), /* SPI0_MOSI */
         .channel = 0,
         .value = 5
     }, {

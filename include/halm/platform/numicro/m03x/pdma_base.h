@@ -98,6 +98,18 @@ static inline enum PdmaEvent pdmaGetEventSpiTx(uint8_t channel
   return PDMA_SPI0_TX;
 }
 
+static inline enum PdmaEvent pdmaGetEventQspiRx(uint8_t channel
+    __attribute__((unused)))
+{
+  return PDMA_QSPI0_RX;
+}
+
+static inline enum PdmaEvent pdmaGetEventQspiTx(uint8_t channel
+    __attribute__((unused)))
+{
+  return PDMA_QSPI0_TX;
+}
+
 static inline enum PdmaEvent pdmaGetEventUartRx(uint8_t channel)
 {
   if (channel < 3)

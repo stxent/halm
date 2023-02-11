@@ -6,14 +6,15 @@
 
 #include <halm/delay.h>
 #include <halm/platform/numicro/clocking.h>
-#include <halm/platform/numicro/m03x/clocking_defs.h>
+#include <halm/platform/numicro/m48x/clocking_defs.h>
 #include <halm/platform/numicro/system.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
-#define HIRC_FREQUENCY                48000000
-#define LIRC_FREQUENCY                38400
+#define HIRC_FREQUENCY                12000000
+#define HIRC_48_FREQUENCY             48000000
+#define LIRC_FREQUENCY                10000
 #define RTC_FREQUENCY                 32768
 #define USB_FREQUENCY                 48000000
 #define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)
@@ -22,6 +23,13 @@ struct ApbClockClass
 {
   struct ClockClass base;
   enum ClockDivider divider;
+};
+
+struct DividedClockClass
+{
+  struct ClockClass base;
+  enum ClockDivider divider;
+  enum ClockDivider source;
 };
 
 struct ExtendedClockClass
@@ -66,6 +74,11 @@ static void intOscDisable(const void *);
 static enum Result intOscEnable(const void *, const void *);
 static uint32_t intOscFrequency(const void *);
 static bool intOscReady(const void *);
+
+static void intHighSpeedOscDisable(const void *);
+static enum Result intHighSpeedOscEnable(const void *, const void *);
+static uint32_t intHighSpeedOscFrequency(const void *);
+static bool intHighSpeedOscReady(const void *);
 
 static void intLowSpeedOscDisable(const void *);
 static enum Result intLowSpeedOscEnable(const void *, const void *);
@@ -126,6 +139,14 @@ const struct ClockClass * const InternalLowSpeedOsc =
     .ready = intLowSpeedOscReady
 };
 
+const struct ClockClass * const InternalHighSpeedOsc =
+    &(const struct ClockClass){
+    .disable = intHighSpeedOscDisable,
+    .enable = intHighSpeedOscEnable,
+    .frequency = intHighSpeedOscFrequency,
+    .ready = intHighSpeedOscReady
+};
+
 const struct ClockClass * const RtcOsc = &(const struct ClockClass){
     .disable = rtcOscDisable,
     .enable = rtcOscEnable,
@@ -162,6 +183,8 @@ const struct ClockClass * const Apb1Clock =
     .divider = DIVIDER_APB1
 };
 
+/* Generic Clocks */
+
 const struct ClockClass * const Bpwm0Clock =
     (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
@@ -186,7 +209,7 @@ const struct ClockClass * const Bpwm1Clock =
     .group = BRANCH_GROUP_PWM
 };
 
-const struct ClockClass * const Pwm0Clock =
+const struct ClockClass * const Epwm0Clock =
     (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
         .disable = 0,
@@ -194,11 +217,11 @@ const struct ClockClass * const Pwm0Clock =
         .frequency = genericBranchFrequency,
         .ready = genericBranchReady,
     },
-    .branch = BRANCH_PWM0,
+    .branch = BRANCH_EPWM0,
     .group = BRANCH_GROUP_PWM
 };
 
-const struct ClockClass * const Pwm1Clock =
+const struct ClockClass * const Epwm1Clock =
     (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
         .disable = 0,
@@ -206,7 +229,7 @@ const struct ClockClass * const Pwm1Clock =
         .frequency = genericBranchFrequency,
         .ready = genericBranchReady,
     },
-    .branch = BRANCH_PWM1,
+    .branch = BRANCH_EPWM1,
     .group = BRANCH_GROUP_PWM
 };
 
@@ -219,7 +242,31 @@ const struct ClockClass * const Qspi0Clock =
         .ready = genericBranchReady,
     },
     .branch = BRANCH_QSPI0,
-    .group = BRANCH_GROUP_ADC_SPI
+    .group = BRANCH_GROUP_SPI
+};
+
+const struct ClockClass * const Qspi1Clock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
+    .base = {
+        .disable = 0,
+        .enable = genericBranchEnable,
+        .frequency = genericBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_QSPI1,
+    .group = BRANCH_GROUP_SPI
+};
+
+const struct ClockClass * const RtcClock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
+    .base = {
+        .disable = 0,
+        .enable = genericBranchEnable,
+        .frequency = genericBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_RTC,
+    .group = BRANCH_GROUP_RTC
 };
 
 const struct ClockClass * const Spi0Clock =
@@ -231,7 +278,43 @@ const struct ClockClass * const Spi0Clock =
         .ready = genericBranchReady,
     },
     .branch = BRANCH_SPI0,
-    .group = BRANCH_GROUP_ADC_SPI
+    .group = BRANCH_GROUP_SPI
+};
+
+const struct ClockClass * const Spi1Clock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
+    .base = {
+        .disable = 0,
+        .enable = genericBranchEnable,
+        .frequency = genericBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SPI1,
+    .group = BRANCH_GROUP_SPI
+};
+
+const struct ClockClass * const Spi2Clock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
+    .base = {
+        .disable = 0,
+        .enable = genericBranchEnable,
+        .frequency = genericBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SPI2,
+    .group = BRANCH_GROUP_SPI
+};
+
+const struct ClockClass * const Spi3Clock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
+    .base = {
+        .disable = 0,
+        .enable = genericBranchEnable,
+        .frequency = genericBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SPI3,
+    .group = BRANCH_GROUP_SPI
 };
 
 const struct ClockClass * const SysTickClock =
@@ -318,18 +401,7 @@ const struct ClockClass * const WwdtClock =
     .group = BRANCH_GROUP_WWDT
 };
 
-const struct ClockClass * const AdcClock =
-    (const struct ClockClass *)&(const struct ExtendedClockClass){
-    .base = {
-        .disable = 0,
-        .enable = extendedBranchEnable,
-        .frequency = extendedBranchFrequency,
-        .ready = genericBranchReady,
-    },
-    .branch = BRANCH_ADC,
-    .divider = DIVIDER_ADC,
-    .group = BRANCH_GROUP_ADC_SPI
-};
+/* Extended Clocks */
 
 const struct ClockClass * const MainClock =
     (const struct ClockClass *)&(const struct ExtendedClockClass){
@@ -342,6 +414,97 @@ const struct ClockClass * const MainClock =
     .branch = BRANCH_HCLK,
     .group = BRANCH_GROUP_HCLK,
     .divider = DIVIDER_HCLK
+};
+
+const struct ClockClass * const CcapClock =
+    (const struct ClockClass *)&(const struct ExtendedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_CCAP,
+    .group = BRANCH_GROUP_SD,
+    .divider = DIVIDER_CCAP
+};
+
+const struct ClockClass * const I2S0Clock =
+    (const struct ClockClass *)&(const struct ExtendedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_I2S0,
+    .group = BRANCH_GROUP_SPI,
+    .divider = DIVIDER_I2S0
+};
+
+const struct ClockClass * const SC0Clock =
+    (const struct ClockClass *)&(const struct ExtendedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SC0,
+    .group = BRANCH_GROUP_SPI,
+    .divider = DIVIDER_SC0
+};
+
+const struct ClockClass * const SC1Clock =
+    (const struct ClockClass *)&(const struct ExtendedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SC1,
+    .group = BRANCH_GROUP_SPI,
+    .divider = DIVIDER_SC1
+};
+
+const struct ClockClass * const SC2Clock =
+    (const struct ClockClass *)&(const struct ExtendedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SC2,
+    .group = BRANCH_GROUP_SPI,
+    .divider = DIVIDER_SC2
+};
+
+const struct ClockClass * const SdHost0Clock =
+    (const struct ClockClass *)&(const struct ExtendedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SDH0,
+    .group = BRANCH_GROUP_SD,
+    .divider = DIVIDER_SDH0
+};
+
+const struct ClockClass * const SdHost1Clock =
+    (const struct ClockClass *)&(const struct ExtendedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SDH1,
+    .group = BRANCH_GROUP_SD,
+    .divider = DIVIDER_SDH1
 };
 
 const struct ClockClass * const Uart0Clock =
@@ -460,6 +623,56 @@ const struct ClockClass * const UsbClock =
     .group = BRANCH_GROUP_USB,
     .divider = DIVIDER_USB
 };
+
+/* Divided Clocks */
+
+const struct ClockClass * const EAadc0Clock =
+    (const struct ClockClass *)&(const struct DividedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .divider = DIVIDER_EADC0,
+    .source = DIVIDER_APB1
+};
+
+const struct ClockClass * const EAadc1Clock =
+    (const struct ClockClass *)&(const struct DividedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .divider = DIVIDER_EADC1,
+    .source = DIVIDER_APB1
+};
+
+const struct ClockClass * const EmacClock =
+    (const struct ClockClass *)&(const struct DividedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .divider = DIVIDER_EMAC,
+    .source = DIVIDER_HCLK
+};
+
+const struct ClockClass * const VsenseClock =
+    (const struct ClockClass *)&(const struct DividedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = extendedBranchEnable,
+        .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .divider = DIVIDER_EMAC,
+    .source = DIVIDER_CCAP
+};
 /*----------------------------------------------------------------------------*/
 static const PinNumber X32_IN_PIN = PIN(PORT_F, 5);
 static const PinNumber X32_OUT_PIN = PIN(PORT_F, 4);
@@ -468,10 +681,6 @@ static const PinNumber XT1_OUT_PIN = PIN(PORT_F, 2);
 
 static const struct PinEntry clockOutputPins[] = {
     {
-        .key = PIN(PORT_A, 3),
-        .channel = 0,
-        .value = 14
-    }, {
         .key = PIN(PORT_B, 14),
         .channel = 0,
         .value = 14
@@ -483,14 +692,6 @@ static const struct PinEntry clockOutputPins[] = {
         .key = PIN(PORT_D, 12),
         .channel = 0,
         .value = 13
-    }, {
-        .key = PIN(PORT_F, 14),
-        .channel = 0,
-        .value = 13
-    }, {
-        .key = PIN(PORT_F, 15),
-        .channel = 0,
-        .value = 14
     }, {
         .key = PIN(PORT_G, 15),
         .channel = 0,
@@ -514,10 +715,21 @@ static const struct PinGroupEntry crystalPinGroups[] = {
 };
 
 static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
-    [BRANCH_GROUP_ADC_SPI] = {
-        CLOCK_EXTERNAL,
+    [BRANCH_GROUP_PWM] = {
         CLOCK_PLL,
         CLOCK_APB,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED
+    },
+
+    [BRANCH_GROUP_SD] = {
+        CLOCK_EXTERNAL,
+        CLOCK_PLL,
+        CLOCK_MAIN,
         CLOCK_INTERNAL,
         CLOCK_UNDEFINED,
         CLOCK_UNDEFINED,
@@ -525,11 +737,11 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
         CLOCK_UNDEFINED
     },
 
-    [BRANCH_GROUP_PWM] = {
+    [BRANCH_GROUP_SPI] = {
+        CLOCK_EXTERNAL,
         CLOCK_PLL,
         CLOCK_APB,
-        CLOCK_UNDEFINED,
-        CLOCK_UNDEFINED,
+        CLOCK_INTERNAL,
         CLOCK_UNDEFINED,
         CLOCK_UNDEFINED,
         CLOCK_UNDEFINED,
@@ -552,8 +764,8 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
         CLOCK_PLL,
         CLOCK_RTC,
         CLOCK_INTERNAL,
-        CLOCK_APB,
-        CLOCK_INTERNAL_LS,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
         CLOCK_UNDEFINED,
         CLOCK_UNDEFINED
     },
@@ -563,9 +775,9 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
         CLOCK_RTC,
         CLOCK_MAIN,
         CLOCK_INTERNAL,
-        CLOCK_INTERNAL_LS,
-        CLOCK_INTERNAL,
-        CLOCK_PLL,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
         CLOCK_UNDEFINED
     },
 
@@ -580,6 +792,17 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
         CLOCK_INTERNAL
     },
 
+    [BRANCH_GROUP_RTC] = {
+        CLOCK_RTC,
+        CLOCK_INTERNAL_LS,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED,
+        CLOCK_UNDEFINED
+    },
+
     [BRANCH_GROUP_STCLK] = {
         CLOCK_EXTERNAL,
         CLOCK_RTC,
@@ -592,7 +815,7 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
     },
 
     [BRANCH_GROUP_USB] = {
-        CLOCK_INTERNAL,
+        CLOCK_INTERNAL_HS,
         CLOCK_PLL,
         CLOCK_UNDEFINED,
         CLOCK_UNDEFINED,
@@ -605,7 +828,7 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
     [BRANCH_GROUP_WDT] = {
         CLOCK_UNDEFINED,
         CLOCK_RTC,
-        CLOCK_MAIN,
+        CLOCK_MAIN, // TODO HCLK_DIV2048
         CLOCK_INTERNAL_LS,
         CLOCK_UNDEFINED,
         CLOCK_UNDEFINED,
@@ -616,7 +839,7 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
     [BRANCH_GROUP_WWDT] = {
         CLOCK_UNDEFINED,
         CLOCK_UNDEFINED,
-        CLOCK_MAIN,
+        CLOCK_MAIN, // TODO HCLK_DIV2048
         CLOCK_INTERNAL_LS,
         CLOCK_UNDEFINED,
         CLOCK_UNDEFINED,
@@ -631,18 +854,14 @@ uint32_t ticksPerSecond = TICK_RATE(HIRC_FREQUENCY, 3);
 /*----------------------------------------------------------------------------*/
 static uint32_t calcExtCrystalGain(uint32_t frequency)
 {
-  if (frequency <= 4000000)
-    return HXTGAIN_4MHZ;
-  else if (frequency <= 8000000)
-    return HXTGAIN_4MHZ_8MHZ;
+  if (frequency <= 8000000)
+    return HXTGAIN_8MHZ;
   else if (frequency <= 12000000)
     return HXTGAIN_8MHZ_12MHZ;
   else if (frequency <= 16000000)
     return HXTGAIN_12MHZ_16MHZ;
-  else if (frequency <= 24000000)
-    return HXTGAIN_16MHZ_24MHZ;
   else
-    return HXTGAIN_24MHZ_32MHZ;
+    return HXTGAIN_16MHZ_24MHZ;
 }
 /*----------------------------------------------------------------------------*/
 static bool checkClockDivider(enum ClockDivider divider, uint16_t value)
@@ -684,6 +903,7 @@ static void configExtOscPins(bool bypass)
 /*----------------------------------------------------------------------------*/
 static void configRtcOscPins(bool bypass)
 {
+  // TODO Is bypass available for LXE?
   configCrystalPin(X32_IN_PIN);
   if (!bypass)
     configCrystalPin(X32_OUT_PIN);
@@ -720,8 +940,13 @@ static uint32_t getSourceFrequency(enum ClockBranch branch,
     enum ClockSource source)
 {
   static const enum ClockBranch APB0_BRANCHES[] = {
+      BRANCH_I2S0,
+      BRANCH_EPWM0,
       BRANCH_BPWM0,
-      BRANCH_PWM0,
+      BRANCH_SPI1,
+      BRANCH_SPI3,
+      BRANCH_SC0,
+      BRANCH_SC2,
       BRANCH_TMR0,
       BRANCH_TMR1,
       BRANCH_QSPI0,
@@ -737,6 +962,9 @@ static uint32_t getSourceFrequency(enum ClockBranch branch,
       if (branch == BRANCH_STCLK)
         return HIRC_FREQUENCY / 2;
       return HIRC_FREQUENCY;
+
+    case CLOCK_INTERNAL_HS:
+      return HIRC_48_FREQUENCY;
 
     case CLOCK_INTERNAL_LS:
       return LIRC_FREQUENCY;
@@ -886,7 +1114,7 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
   const uint32_t gain = calcExtCrystalGain(config->frequency);
   uint32_t pwrctl = NM_CLK->PWRCTL & ~PWRCTL_HXTGAIN_MASK;
 
-  assert(config->frequency >= 4000000 && config->frequency <= 32000000);
+  assert(config->frequency >= 4000000 && config->frequency <= 24000000);
 
   // TODO Detect bypass mode
   configExtOscPins(false);
@@ -895,10 +1123,6 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
   pwrctl |= PWRCTL_HXTGAIN(gain) | PWRCTL_HXTEN;
 
   sysUnlockReg();
-  if (config->frequency > 12000000)
-    NM_CLK->HXTFSEL &= ~HXTFSEL_HXTFSEL;
-  else
-    NM_CLK->HXTFSEL |= HXTFSEL_HXTFSEL;
   NM_CLK->PWRCTL = pwrctl;
   sysLockReg();
 
@@ -942,6 +1166,35 @@ static bool intOscReady(const void *clockBase __attribute__((unused)))
   return (NM_CLK->STATUS & STATUS_HIRCSTB) != 0;
 }
 /*----------------------------------------------------------------------------*/
+static void intHighSpeedOscDisable(const void *clockBase
+    __attribute__((unused)))
+{
+  sysUnlockReg();
+  NM_CLK->PWRCTL &= ~PWRCTL_HIRC48MEN;
+  sysLockReg();
+}
+/*----------------------------------------------------------------------------*/
+static enum Result intHighSpeedOscEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase __attribute__((unused)))
+{
+  sysUnlockReg();
+  NM_CLK->PWRCTL |= PWRCTL_HIRC48MEN;
+  sysLockReg();
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t intHighSpeedOscFrequency(const void *clockBase
+    __attribute__((unused)))
+{
+  return (NM_CLK->STATUS & STATUS_HIRC48MSTB) != 0 ? HIRC_48_FREQUENCY : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool intHighSpeedOscReady(const void *clockBase __attribute__((unused)))
+{
+  return (NM_CLK->STATUS & STATUS_HIRC48MSTB) != 0;
+}
+/*----------------------------------------------------------------------------*/
 static void intLowSpeedOscDisable(const void *clockBase __attribute__((unused)))
 {
   sysUnlockReg();
@@ -978,30 +1231,13 @@ static void rtcOscDisable(const void *clockBase __attribute__((unused)))
 }
 /*----------------------------------------------------------------------------*/
 static enum Result rtcOscEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase)
+    const void *configBase __attribute__((unused)))
 {
-  const struct RtcOscConfig * const config = configBase;
-  uint32_t pwrctl = NM_CLK->PWRCTL & ~PWRCTL_LXTGAIN_MASK;
-
-  configRtcOscPins(config->bypass);
-
-  if (!config->bypass)
-  {
-    const uint32_t gain = config->gain == RTC_GAIN_HIGH ?
-        LXTGAIN_HIGH : LXTGAIN_LOW;
-
-    pwrctl &= ~PWRCTL_LXTSELXT;
-    pwrctl |= PWRCTL_LXTGAIN(gain);
-  }
-  else
-  {
-    pwrctl |= PWRCTL_LXTSELXT;
-  }
-
-  pwrctl |= PWRCTL_LXTEN;
+  // TODO Is bypass available for LXT?
+  configRtcOscPins(false);
 
   sysUnlockReg();
-  NM_CLK->PWRCTL = pwrctl;
+  NM_CLK->PWRCTL |= PWRCTL_LXTEN;
   sysLockReg();
 
   return E_OK;
@@ -1038,7 +1274,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
   uint32_t sourceFrequency;
 
   if (config->source == CLOCK_INTERNAL)
-    sourceFrequency = HIRC_FREQUENCY / 4;
+    sourceFrequency = HIRC_FREQUENCY;
   else
     sourceFrequency = extFrequency;
   if (!sourceFrequency)
@@ -1063,7 +1299,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
 
   while (sourceFrequency / indiv >= 8000000)
     ++indiv;
-  if (indiv > 33 || sourceFrequency / indiv <= 800000)
+  if (indiv > 33 || sourceFrequency / indiv <= 4000000)
     return E_VALUE;
 
   fbdiv = fcoFrequency / (sourceFrequency / indiv);
@@ -1141,20 +1377,9 @@ static enum Result extendedBranchEnable(const void *clockBase,
   if (!checkClockSource(config->source, clock->group))
     return E_VALUE;
 
-  if (clock->branch == BRANCH_HCLK)
-    sysFlashLatencyReset();
-
   setMaxClockDivider(clock->divider);
   selectClockSource(clock->branch, config->source, clock->group);
   setClockDivider(clock->divider, divisor);
-
-  if (clock->branch == BRANCH_HCLK)
-  {
-    uint32_t frequency = getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK);
-
-    frequency = frequency / (divisor + 1);
-    sysFlashLatencyUpdate(frequency);
-  }
 
   return E_OK;
 }

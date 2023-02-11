@@ -6,8 +6,8 @@
 
 #include <halm/delay.h>
 #include <halm/generic/pointer_queue.h>
-#include <halm/platform/numicro/m03x/usb_base.h>
-#include <halm/platform/numicro/m03x/usb_defs.h>
+#include <halm/platform/numicro/usb_base.h>
+#include <halm/platform/numicro/usb_defs.h>
 #include <halm/platform/numicro/usb_device.h>
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
@@ -17,7 +17,6 @@
 /*----------------------------------------------------------------------------*/
 #define CONTROL_IN      1
 #define CONTROL_OUT     0
-#define ENDPOINT_COUNT  8
 #define ENDPOINT_FIRST  2
 /*----------------------------------------------------------------------------*/
 struct UsbEndpoint
@@ -39,7 +38,7 @@ struct UsbDevice
   struct UsbBase base;
 
   /* Array of registered endpoints */
-  struct UsbEndpoint *endpoints[ENDPOINT_COUNT];
+  struct UsbEndpoint *endpoints[CONFIG_PLATFORM_USB_DEVICE_EP_COUNT];
   /* Control message handler */
   struct UsbControl *control;
 
@@ -53,7 +52,6 @@ struct UsbDevice
   bool enabled;
 };
 /*----------------------------------------------------------------------------*/
-static unsigned int countTrailingZeros8(uint32_t);
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
 /*----------------------------------------------------------------------------*/
@@ -128,27 +126,6 @@ static const struct UsbEndpointClass * const UsbEndpoint =
     .setStalled = epSetStalled
 };
 /*----------------------------------------------------------------------------*/
-static inline unsigned int countTrailingZeros8(uint32_t value)
-{
-  /* It is assumed that the input value is not zero */
-  unsigned int result = 1;
-
-  if ((value & 0x0F) == 0)
-  {
-    result += 4;
-    value >>= 4;
-  }
-
-  if ((value & 0x03) == 0)
-  {
-    result += 2;
-    value >>= 2;
-  }
-
-  result -= value & 0x01;
-  return result;
-}
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct UsbDevice * const device = object;
@@ -206,15 +183,8 @@ static void interruptHandler(void *object)
       epHandleSetupPacket(device->endpoints[CONTROL_OUT]);
     }
 
-    uint32_t epIntStatus = INTSTS_EPEVT_VALUE(intStatus);
-
-    while (epIntStatus)
-    {
-      const unsigned int index = countTrailingZeros8(epIntStatus);
-
-      epHandlePacket(device->endpoints[index]);
-      epIntStatus -= 1 << index;
-    }
+    usbEpFlagsIterate(epHandlePacket, device->endpoints,
+        INTSTS_EPEVT_VALUE(intStatus));
   }
 
   if (intStatus & INTSTS_SOFIF)
@@ -233,7 +203,7 @@ static void resetDevice(struct UsbDevice *device)
 {
   NM_USBD_Type * const reg = device->base.reg;
 
-  for (size_t index = 0; index < ENDPOINT_COUNT; ++index)
+  for (size_t index = 0; index < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT; ++index)
     reg->EP[index].CFG = 0;
 
   /* Allocate buffer for setup packet inside the USB SRAM */
@@ -291,7 +261,7 @@ static enum Result devInit(void *object, const void *configBase)
   reg->FADDR = 0;
   reg->SE0 = SE0_SE0;
 
-  for (size_t index = 0; index < ENDPOINT_COUNT; ++index)
+  for (size_t index = 0; index < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT; ++index)
     reg->EP[index].CFG = 0;
 
   irqSetPriority(device->base.irq, config->priority);
@@ -328,7 +298,9 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   else
   {
     /* Allocate free endpoint */
-    for (channel = ENDPOINT_FIRST; channel < ENDPOINT_COUNT; ++channel)
+    channel = ENDPOINT_FIRST;
+
+    while (channel < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT)
     {
       struct UsbEndpoint * const current = device->endpoints[channel];
 
@@ -340,10 +312,12 @@ static void *devCreateEndpoint(void *object, uint8_t address)
         ep = current;
         break;
       }
+
+      ++channel;
     }
   }
 
-  if (!ep && channel != ENDPOINT_COUNT)
+  if (!ep && channel != CONFIG_PLATFORM_USB_DEVICE_EP_COUNT)
   {
     /* Driver should be disabled during initialization */
     assert(!device->enabled);
@@ -572,8 +546,14 @@ static enum Result epInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbEndpoint * const ep = object;
+  size_t size;
 
-  if (pointerQueueInit(&ep->requests, CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS))
+  if (USB_EP_LOGICAL_ADDRESS(ep->address) == 0)
+    size = CONFIG_USB_DEVICE_CONTROL_REQUESTS;
+  else
+    size = CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS;
+
+  if (pointerQueueInit(&ep->requests, size))
   {
     ep->address = config->address;
     ep->device = config->parent;

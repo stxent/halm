@@ -1,5 +1,5 @@
 /*
- * sdmmc_base.c
+ * sdmmc.c
  * Copyright (C) 2014 xent
  * Project is distributed under the terms of the MIT License
  */

@@ -264,7 +264,7 @@ static uint32_t calcPllValues(uint16_t multiplier, uint8_t divisor)
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
 {
-  /* Select safe setting */
+  /* Set safe latency settings */
   sysFlashLatencyUpdate(3);
 }
 /*----------------------------------------------------------------------------*/

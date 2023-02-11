@@ -1,11 +1,11 @@
 /*
- * halm/platform/numicro/m03x/clocking_defs.h
+ * halm/platform/numicro/m48x/clocking_defs.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_NUMICRO_M03X_CLOCKING_DEFS_H_
-#define HALM_PLATFORM_NUMICRO_M03X_CLOCKING_DEFS_H_
+#ifndef HALM_PLATFORM_NUMICRO_M48X_CLOCKING_DEFS_H_
+#define HALM_PLATFORM_NUMICRO_M48X_CLOCKING_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Clock Divider Number registers----------------------------*/
@@ -23,28 +23,39 @@ enum ClockBranch
   BRANCH_HCLK     = BRANCH_FIELD(0, 0, 3),
   BRANCH_STCLK    = BRANCH_FIELD(0, 3, 3),
   BRANCH_USBD     = BRANCH_FIELD(0, 8, 1),
+  BRANCH_CCAP     = BRANCH_FIELD(0, 16, 2),
+  BRANCH_SDH0     = BRANCH_FIELD(0, 20, 2),
+  BRANCH_SDH1     = BRANCH_FIELD(0, 22, 2),
   BRANCH_WDT      = BRANCH_FIELD(1, 0, 2),
-  BRANCH_WWDT     = BRANCH_FIELD(1, 2, 2),
-  BRANCH_CLKO     = BRANCH_FIELD(1, 4, 3),
   BRANCH_TMR0     = BRANCH_FIELD(1, 8, 3),
   BRANCH_TMR1     = BRANCH_FIELD(1, 12, 3),
   BRANCH_TMR2     = BRANCH_FIELD(1, 16, 3),
   BRANCH_TMR3     = BRANCH_FIELD(1, 20, 3),
-  BRANCH_UART0    = BRANCH_FIELD(1, 24, 3),
-  BRANCH_UART1    = BRANCH_FIELD(1, 28, 3),
-  BRANCH_PWM0     = BRANCH_FIELD(2, 0, 1),
-  BRANCH_PWM1     = BRANCH_FIELD(2, 1, 1),
+  BRANCH_UART0    = BRANCH_FIELD(1, 24, 2),
+  BRANCH_UART1    = BRANCH_FIELD(1, 26, 2),
+  BRANCH_CLKO     = BRANCH_FIELD(1, 28, 2),
+  BRANCH_WWDT     = BRANCH_FIELD(1, 30, 2),
+  BRANCH_EPWM0    = BRANCH_FIELD(2, 0, 1),
+  BRANCH_EPWM1    = BRANCH_FIELD(2, 1, 1),
   BRANCH_QSPI0    = BRANCH_FIELD(2, 2, 2),
   BRANCH_SPI0     = BRANCH_FIELD(2, 4, 2),
+  BRANCH_SPI1     = BRANCH_FIELD(2, 6, 2),
   BRANCH_BPWM0    = BRANCH_FIELD(2, 8, 1),
   BRANCH_BPWM1    = BRANCH_FIELD(2, 9, 1),
-  BRANCH_ADC      = BRANCH_FIELD(2, 20, 2),
-  BRANCH_UART6    = BRANCH_FIELD(3, 8, 3),
-  BRANCH_UART7    = BRANCH_FIELD(3, 12, 3),
-  BRANCH_UART4    = BRANCH_FIELD(3, 16, 3),
-  BRANCH_UART5    = BRANCH_FIELD(3, 20, 3),
-  BRANCH_UART2    = BRANCH_FIELD(3, 24, 3),
-  BRANCH_UART3    = BRANCH_FIELD(3, 28, 3)
+  BRANCH_SPI2     = BRANCH_FIELD(2, 10, 2),
+  BRANCH_SPI3     = BRANCH_FIELD(2, 12, 2),
+  BRANCH_SC0      = BRANCH_FIELD(3, 0, 2),
+  BRANCH_SC1      = BRANCH_FIELD(3, 2, 2),
+  BRANCH_SC2      = BRANCH_FIELD(3, 4, 2),
+  BRANCH_RTC      = BRANCH_FIELD(3, 8, 1),
+  BRANCH_QSPI1    = BRANCH_FIELD(3, 12, 2),
+  BRANCH_I2S0     = BRANCH_FIELD(3, 16, 2),
+  BRANCH_UART6    = BRANCH_FIELD(3, 20, 2),
+  BRANCH_UART7    = BRANCH_FIELD(3, 22, 2),
+  BRANCH_UART2    = BRANCH_FIELD(3, 24, 2),
+  BRANCH_UART3    = BRANCH_FIELD(3, 26, 2),
+  BRANCH_UART4    = BRANCH_FIELD(3, 28, 2),
+  BRANCH_UART5    = BRANCH_FIELD(3, 30, 2)
 } __attribute__((packed));
 
 #define DIVIDER_FIELD(index, offset, size) \
@@ -55,13 +66,15 @@ enum ClockBranch
 
 enum ClockBranchGroup
 {
-  BRANCH_GROUP_ADC_SPI,
   BRANCH_GROUP_PWM,
+  BRANCH_GROUP_SD,
+  BRANCH_GROUP_SPI,
   BRANCH_GROUP_TMR,
   BRANCH_GROUP_UART,
 
   BRANCH_GROUP_CLKO,
   BRANCH_GROUP_HCLK,
+  BRANCH_GROUP_RTC,
   BRANCH_GROUP_STCLK,
   BRANCH_GROUP_USB,
   BRANCH_GROUP_WDT,
@@ -72,37 +85,48 @@ enum ClockBranchGroup
 
 enum ClockDivider
 {
-  DIVIDER_HCLK  = DIVIDER_FIELD(0, 0, 4),
-  DIVIDER_USB   = DIVIDER_FIELD(0, 4, 4),
-  DIVIDER_UART0 = DIVIDER_FIELD(0, 8, 4),
-  DIVIDER_UART1 = DIVIDER_FIELD(0, 12, 4),
-  DIVIDER_ADC   = DIVIDER_FIELD(0, 16, 8),
+  DIVIDER_HCLK    = DIVIDER_FIELD(0, 0, 4),
+  DIVIDER_USB     = DIVIDER_FIELD(0, 4, 4),
+  DIVIDER_UART0   = DIVIDER_FIELD(0, 8, 4),
+  DIVIDER_UART1   = DIVIDER_FIELD(0, 12, 4),
+  DIVIDER_EADC0   = DIVIDER_FIELD(0, 16, 8),
+  DIVIDER_SDH0    = DIVIDER_FIELD(0, 24, 8),
 
-  DIVIDER_UART2 = DIVIDER_FIELD(4, 0, 4),
-  DIVIDER_UART3 = DIVIDER_FIELD(4, 4, 4),
-  DIVIDER_UART4 = DIVIDER_FIELD(4, 8, 4),
-  DIVIDER_UART5 = DIVIDER_FIELD(4, 12, 4),
-  DIVIDER_UART6 = DIVIDER_FIELD(4, 16, 4),
-  DIVIDER_UART7 = DIVIDER_FIELD(4, 20, 4),
+  DIVIDER_SC0     = DIVIDER_FIELD(1, 0, 8),
+  DIVIDER_SC1     = DIVIDER_FIELD(1, 8, 8),
+  DIVIDER_SC2     = DIVIDER_FIELD(1, 16, 8),
 
-  DIVIDER_APB0  = DIVIDER_FIELD(5, 0, 3),
-  DIVIDER_APB1  = DIVIDER_FIELD(5, 4, 3)
+  DIVIDER_I2S0    = DIVIDER_FIELD(2, 0, 4),
+  DIVIDER_EADC1   = DIVIDER_FIELD(2, 24, 8),
+
+  DIVIDER_CCAP    = DIVIDER_FIELD(3, 0, 8),
+  DIVIDER_VSENSE  = DIVIDER_FIELD(3, 8, 8),
+  DIVIDER_EMAC    = DIVIDER_FIELD(3, 16, 8),
+  DIVIDER_SDH1    = DIVIDER_FIELD(3, 24, 8),
+
+  DIVIDER_UART2   = DIVIDER_FIELD(4, 0, 4),
+  DIVIDER_UART3   = DIVIDER_FIELD(4, 4, 4),
+  DIVIDER_UART4   = DIVIDER_FIELD(4, 8, 4),
+  DIVIDER_UART5   = DIVIDER_FIELD(4, 12, 4),
+  DIVIDER_UART6   = DIVIDER_FIELD(4, 16, 4),
+  DIVIDER_UART7   = DIVIDER_FIELD(4, 20, 4),
+
+  DIVIDER_APB0    = DIVIDER_FIELD(5, 0, 3),
+  DIVIDER_APB1    = DIVIDER_FIELD(5, 4, 3)
 } __attribute__((packed));
 /*------------------System Power-down Control register------------------------*/
 enum
 {
-  HXTGAIN_4MHZ        = 0,
-  HXTGAIN_4MHZ_8MHZ   = 1,
-  HXTGAIN_8MHZ_12MHZ  = 2,
-  HXTGAIN_12MHZ_16MHZ = 3,
-  HXTGAIN_16MHZ_24MHZ = 4,
-  HXTGAIN_24MHZ_32MHZ = 7
+  HXTGAIN_8MHZ        = 0,
+  HXTGAIN_8MHZ_12MHZ  = 1,
+  HXTGAIN_12MHZ_16MHZ = 2,
+  HXTGAIN_16MHZ_24MHZ = 3
 };
 
 enum
 {
-  LXTGAIN_LOW   = 0,
-  LXTGAIN_HIGH  = 2
+  HIRCSTBS_24CLKS = 0,
+  HIRCSTBS_64CLKS = 1
 };
 
 #define PWRCTL_HXTEN                    BIT(0)
@@ -114,12 +138,20 @@ enum
 #define PWRCTL_PDWKIF                   BIT(6)
 #define PWRCTL_PDEN                     BIT(7)
 
-#define PWRCTL_HXTGAIN(value)           BIT_FIELD((value), 20)
-#define PWRCTL_HXTGAIN_MASK             BIT_FIELD(MASK(3), 20)
+#define PWRCTL_HXTGAIN(value)           BIT_FIELD((value), 10)
+#define PWRCTL_HXTGAIN_MASK             BIT_FIELD(MASK(2), 10)
 #define PWRCTL_HXTGAIN_VALUE(reg) \
-    FIELD_VALUE((reg), PWRCTL_HXTGAIN_MASK, 20)
+    FIELD_VALUE((reg), PWRCTL_HXTGAIN_MASK, 10)
 
-#define PWRCTL_LXTSELXT                 BIT(24)
+#define PWRCTL_HXTSELTYP                BIT(12)
+#define PWRCTL_HXTTBEN                  BIT(13)
+
+#define PWRCTL_HIRCSTBS(value)          BIT_FIELD((value), 16)
+#define PWRCTL_HIRCSTBS_MASK            BIT_FIELD(MASK(2), 16)
+#define PWRCTL_HIRCSTBS_VALUE(reg) \
+    FIELD_VALUE((reg), PWRCTL_HIRCSTBS_MASK, 16)
+
+#define PWRCTL_HIRC48MEN                BIT(18)
 
 #define PWRCTL_LXTGAIN(value)           BIT_FIELD((value), 25)
 #define PWRCTL_LXTGAIN_MASK             BIT_FIELD(MASK(2), 25)
@@ -157,6 +189,7 @@ enum
 #define STATUS_PLLSTB                   BIT(2)
 #define STATUS_LIRCSTB                  BIT(3)
 #define STATUS_HIRCSTB                  BIT(4)
+#define STATUS_HIRC48MSTB               BIT(6)
 #define STATUS_CLKSFAIL                 BIT(7)
 /*------------------Clock Output Control register-----------------------------*/
 #define CLKOCTL_FREQSEL(value)          BIT_FIELD((value), 0)
@@ -178,7 +211,7 @@ enum
 #define CLKDSTS_HXTFIF                  BIT(0)
 #define CLKDSTS_LXTFIF                  BIT(1)
 #define CLKDSTS_HXTFQIF                 BIT(8)
-/*------------------HXT Filter Select Control register------------------------*/
-#define HXTFSEL_HXTFSEL                 BIT(0)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NUMICRO_M03X_CLOCKING_DEFS_H_ */
+// TODO PMUCTL PMUSTS LDOCTL SWKDBCTL PxSWKCTL IOPDCTL
+/*----------------------------------------------------------------------------*/
+#endif /* HALM_PLATFORM_NUMICRO_M48X_CLOCKING_DEFS_H_ */

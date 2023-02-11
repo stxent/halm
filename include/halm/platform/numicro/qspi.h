@@ -1,27 +1,39 @@
 /*
- * halm/platform/numicro/spi_dma.h
+ * halm/platform/numicro/qspi.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_NUMICRO_SPI_DMA_H_
-#define HALM_PLATFORM_NUMICRO_SPI_DMA_H_
+#ifndef HALM_PLATFORM_NUMICRO_QSPI_H_
+#define HALM_PLATFORM_NUMICRO_QSPI_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/generic/spi.h>
+#include <halm/generic/qspi.h>
 #include <halm/platform/numicro/pdma_base.h>
-#include <halm/platform/numicro/spi_base.h>
+#include <halm/platform/numicro/qspi_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const SpiDma;
+extern const struct InterfaceClass * const Qspi;
 
-struct SpiDmaConfig
+struct QspiConfig
 {
   /** Mandatory: serial data rate. */
   uint32_t rate;
-  /** Optional: serial data input. */
-  PinNumber miso;
-  /** Optional: serial data output. */
-  PinNumber mosi;
-  /** Mandatory: serial clock output. */
+  /** Optional: slave select pin. */
+  PinNumber cs;
+  /**
+   * Optional: data output in single-wire mode, input/output pin 0
+   * in dual or quad mode.
+   */
+  PinNumber io0;
+  /**
+   * Optional: data input in single-wire mode, input/output pin 1
+   * in dual or quad mode.
+   */
+  PinNumber io1;
+  /** Optional: input/output pin 2 in quad mode. */
+  PinNumber io2;
+  /** Optional: input/output pin 3 in quad mode. */
+  PinNumber io3;
+  /** Optional: serial clock output. */
   PinNumber sck;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
@@ -31,9 +43,9 @@ struct SpiDmaConfig
   uint8_t dma[2];
 };
 
-struct SpiDma
+struct Qspi
 {
-  struct SpiBase base;
+  struct QspiBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
@@ -45,8 +57,6 @@ struct SpiDma
   struct Dma *rxDma;
   /* DMA descriptor for TX channel */
   struct Dma *txDma;
-  /* Pointer to an input buffer for bidirectional transfers */
-  uint8_t *sink;
 
   /*
    * Dummy frame to be sent over transmit line in the receive mode or
@@ -58,8 +68,6 @@ struct SpiDma
   bool blocking;
   /* Synchronize DMA TX and RX handlers */
   bool invoked;
-  /* Selection between unidirectional and bidirectional modes */
-  bool unidir;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NUMICRO_SPI_DMA_H_ */
+#endif /* HALM_PLATFORM_NUMICRO_QSPI_H_ */

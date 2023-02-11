@@ -1,11 +1,11 @@
 /*
- * halm/platform/numicro/m03x/usb_defs.h
+ * halm/platform/numicro/usb_defs.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_NUMICRO_M03X_USB_DEFS_H_
-#define HALM_PLATFORM_NUMICRO_M03X_USB_DEFS_H_
+#ifndef HALM_PLATFORM_NUMICRO_USB_DEFS_H_
+#define HALM_PLATFORM_NUMICRO_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Interrupt Enable register---------------------------------*/
@@ -23,8 +23,10 @@
 #define INTSTS_NEVWKIF                  BIT(3)
 #define INTSTS_SOFIF                    BIT(4)
 
-#define INTSTS_EPEVT_MASK               BIT_FIELD(MASK(8), 16)
-#define INTSTS_EPEVT(value)             BIT_FIELD((value), 16)
+#define INTSTS_EPEVT_MASK \
+    BIT_FIELD(MASK(CONFIG_PLATFORM_USB_DEVICE_EP_COUNT), 16)
+#define INTSTS_EPEVT(value) \
+    BIT_FIELD((value), 16)
 #define INTSTS_EPEVT_VALUE(reg) \
     FIELD_VALUE((reg), INTSTS_EPEVT_MASK, 16)
 
@@ -98,4 +100,4 @@ enum
 /*----------------------------------------------------------------------------*/
 #define EP_TO_NUMBER(ep)                ((ep) & 0x0F)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NUMICRO_M03X_USB_DEFS_H_ */
+#endif /* HALM_PLATFORM_NUMICRO_USB_DEFS_H_ */

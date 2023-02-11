@@ -128,7 +128,7 @@ uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
 {
-  /* Select safe setting */
+  /* Set safe latency settings */
   sysFlashLatencyUpdate(6);
 }
 /*----------------------------------------------------------------------------*/

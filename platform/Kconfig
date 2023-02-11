@@ -6,7 +6,7 @@ if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAM
 	source "platform/lpc/Kconfig"
 endif
 
-if FAMILY_M03X
+if FAMILY_M03X || FAMILY_M48X
 	source "platform/numicro/Kconfig"
 endif
 

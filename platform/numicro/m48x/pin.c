@@ -5,8 +5,8 @@
  */
 
 #include <halm/pin.h>
-#include <halm/platform/numicro/m03x/pin_defs.h>
-#include <halm/platform/numicro/m03x/system_defs.h>
+#include <halm/platform/numicro/m48x/pin_defs.h>
+#include <halm/platform/numicro/m48x/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinFunc(uint8_t, uint8_t);
 static inline NM_GPIO_Type *calcPort(uint8_t);
@@ -36,11 +36,7 @@ struct Pin pinInit(PinNumber id)
       .port = PIN_TO_PORT(id)
   };
 
-  if (id && pin.port < PORT_USB)
-    pin.reg = (void *)&NM_GPIO_PDIO->GPIO[pin.port].PDIO[pin.number];
-  else
-    pin.reg = 0;
-
+  pin.reg = (void *)&NM_GPIO_PDIO->GPIO[pin.port].PDIO[pin.number];
   return pin;
 }
 /*----------------------------------------------------------------------------*/
@@ -103,14 +99,50 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   *mfp = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetPull(struct Pin pin __attribute__((unused)),
-    enum PinPull pull __attribute__((unused)))
+void pinSetPull(struct Pin pin, enum PinPull pull)
 {
+  NM_GPIO_Type * const reg = calcPort(pin.port);
+  uint32_t value = reg->PUSEL & ~PUSEL_PUSEL_MASK(pin.number);
+
+  switch (pull)
+  {
+    case PIN_NOPULL:
+      value |= PUSEL_PUSEL(PUSEL_NONE, pin.number);
+      break;
+
+    case PIN_PULLUP:
+      value |= PUSEL_PUSEL(PUSEL_UP, pin.number);
+      break;
+
+    case PIN_PULLDOWN:
+      value |= PUSEL_PUSEL(PUSEL_DOWN, pin.number);
+      break;
+  }
+
+  reg->PUSEL = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetSlewRate(struct Pin pin __attribute__((unused)),
-    enum PinSlewRate rate __attribute__((unused)))
+void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
+  NM_GPIO_Type * const reg = calcPort(pin.port);
+  uint32_t value = reg->SLEWCTL & ~SLEWCTL_HSREN_MASK(pin.number);
+
+  switch (rate)
+  {
+    case PIN_SLEW_FAST:
+      value |= SLEWCTL_HSREN(HSREN_FAST, pin.number);
+      break;
+
+    case PIN_SLEW_NORMAL:
+      value |= SLEWCTL_HSREN(HSREN_HIGH, pin.number);
+      break;
+
+    case PIN_SLEW_SLOW:
+      value |= SLEWCTL_HSREN(HSREN_NORMAL, pin.number);
+      break;
+  }
+
+  reg->SLEWCTL = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum PinType type)

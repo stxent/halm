@@ -511,7 +511,7 @@ static inline LPC_CGU_PLL0_Type *calcPllReg(enum ClockSource source)
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void)
 {
-  /* Select safe setting */
+  /* Set safe latency settings */
   sysFlashLatencyUpdate(10);
 }
 /*----------------------------------------------------------------------------*/

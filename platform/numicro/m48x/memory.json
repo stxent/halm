@@ -1,0 +1,98 @@
+[
+  {
+    "address": "0x40000000",
+    "name": "AHB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "SYS", "type": "NM_SYS_Type"},
+      {"offset": "0x00200", "name": "CLK", "type": "NM_CLK_Type"},
+      {"offset": "0x00300", "name": "NMI", "type": "NM_NMI_Type"},
+      {"offset": "0x04000", "name": "GPIO", "type": "NM_GPIO_Type", "array": 8},
+      {"offset": "0x04440", "name": "GPIO_DBCTL", "type": "NM_GPIO_DBCTL_Type"},
+      {"offset": "0x04800", "name": "GPIO_PDIO", "type": "NM_GPIO_PDIO_Type"},
+      {"offset": "0x07000", "name": "SPIM", "type": "NM_SPIM_Type"},
+      {"offset": "0x08000", "name": "PDMA", "type": "NM_PDMA_Type"},
+      {"offset": "0x09000", "name": "USBH", "type": "NM_USBH_Type"},
+      {"offset": "0x0B000", "name": "EMAC", "type": "NM_EMAC_Type"},
+      {"offset": "0x0C000", "name": "FMC", "type": "NM_FMC_Type"},
+      {"offset": "0x0D000", "name": "SDH0", "type": "NM_SDH_Type"},
+      {"offset": "0x0E000", "name": "SDH1", "type": "NM_SDH_Type"},
+      {"offset": "0x10000", "name": "EBI", "type": "NM_EBI_Type"},
+      {"offset": "0x19000", "name": "HSUSBD", "type": "NM_HSUSBD_Type"},
+      {"offset": "0x1A000", "name": "HSUSBH", "type": "NM_HSUSBH_Type"},
+      {"offset": "0x30000", "name": "CCAP", "type": "NM_CCAP_Type"},
+      {"offset": "0x31000", "name": "CRC", "type": "NM_CRC_Type"}
+    ]
+  },
+  {
+    "address": "0x40000000",
+    "name": "APB1_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x41000", "name": "RTC", "type": "NM_RTC_Type"},
+      {"offset": "0x43000", "name": "EADC0", "type": "NM_EADC_Type"},
+      {"offset": "0x45000", "name": "ACMP01", "type": "NM_ACMP_Type"},
+      {"offset": "0x4D000", "name": "OTG", "type": "NM_OTG_Type"},
+      {"offset": "0x4F000", "name": "HSOTG", "type": "NM_HSOTG_Type"},
+      {"offset": "0x51000", "name": "TIMER2", "type": "NM_TIMER_Type"},
+      {"offset": "0x51100", "name": "TIMER3", "type": "NM_TIMER_Type"},
+      {"offset": "0x59000", "name": "EPWM1", "type": "NM_EPWM_Type"},
+      {"offset": "0x5B000", "name": "BPWM1", "type": "NM_BPWM_Type"},
+      {"offset": "0x61000", "name": "SPI0", "type": "NM_SPI_Type"},
+      {"offset": "0x63000", "name": "SPI2", "type": "NM_SPI_Type"},
+      {"offset": "0x69000", "name": "QSPI1", "type": "NM_QSPI_Type"},
+      {"offset": "0x71000", "name": "UART1", "type": "NM_UART_Type"},
+      {"offset": "0x73000", "name": "UART3", "type": "NM_UART_Type"},
+      {"offset": "0x75000", "name": "UART5", "type": "NM_UART_Type"},
+      {"offset": "0x77000", "name": "UART7", "type": "NM_UART_Type"},
+      {"offset": "0x81000", "name": "I2C1", "type": "NM_I2C_Type"},
+      {"offset": "0x90000", "name": "SC0", "type": "NM_SC_Type"},
+      {"offset": "0x91000", "name": "SC1", "type": "NM_SC_Type"},
+      {"offset": "0x92000", "name": "SC2", "type": "NM_SC_Type"},
+      {"offset": "0xA1000", "name": "CAN1", "type": "NM_CAN_Type"},
+      {"offset": "0xB1000", "name": "QEI1", "type": "NM_QEI_Type"},
+      {"offset": "0xB5000", "name": "ECAP1", "type": "NM_ECAP_Type"},
+      {"offset": "0xB9000", "name": "TRNG", "type": "NM_TRNG_Type"},
+      {"offset": "0xC0000", "name": "USBD", "type": "NM_USBD_Type"},
+      {"offset": "0xD1000", "name": "USCI1", "type": "NM_USCI_Type"}
+    ]
+  },
+  {
+    "address": "0x40000000",
+    "name": "APB2_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x40000", "name": "WDT", "type": "NM_WDT_Type"},
+      {"offset": "0x40100", "name": "WWDT", "type": "NM_WWDT_Type"},
+      {"offset": "0x46000", "name": "OPA0", "type": "NM_OPA_Type"},
+      {"offset": "0x48000", "name": "I2S0", "type": "NM_I2S_Type"},
+      {"offset": "0x4B000", "name": "EADC1", "type": "NM_EADC_Type"},
+      {"offset": "0x50000", "name": "TIMER0", "type": "NM_TIMER_Type"},
+      {"offset": "0x50100", "name": "TIMER1", "type": "NM_TIMER_Type"},
+      {"offset": "0x58000", "name": "EPWM0", "type": "NM_EPWM_Type"},
+      {"offset": "0x5A000", "name": "BPWM0", "type": "NM_BPWM_Type"},
+      {"offset": "0x60000", "name": "QSPI0", "type": "NM_QSPI_Type"},
+      {"offset": "0x62000", "name": "SPI1", "type": "NM_SPI_Type"},
+      {"offset": "0x64000", "name": "SPI3", "type": "NM_SPI_Type"},
+      {"offset": "0x70000", "name": "UART0", "type": "NM_UART_Type"},
+      {"offset": "0x72000", "name": "UART2", "type": "NM_UART_Type"},
+      {"offset": "0x74000", "name": "UART4", "type": "NM_UART_Type"},
+      {"offset": "0x76000", "name": "UART6", "type": "NM_UART_Type"},
+      {"offset": "0x80000", "name": "I2C0", "type": "NM_I2C_Type"},
+      {"offset": "0x82000", "name": "I2C2", "type": "NM_I2C_Type"},
+      {"offset": "0xA0000", "name": "CAN0", "type": "NM_CAN_Type"},
+      {"offset": "0xA2000", "name": "CAN2", "type": "NM_CAN_Type"},
+      {"offset": "0xB0000", "name": "QEI0", "type": "NM_QEI_Type"},
+      {"offset": "0xB4000", "name": "ECAP0", "type": "NM_ECAP_Type"},
+      {"offset": "0xD0000", "name": "USCI0", "type": "NM_USCI_Type"}
+    ]
+  },
+  {
+    "address": "0x50000000",
+    "name": "CRPT_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x80000", "name": "CRPT", "type": "NM_CRPT_Type"}
+    ]
+  }
+]

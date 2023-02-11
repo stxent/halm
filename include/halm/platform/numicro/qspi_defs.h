@@ -1,11 +1,11 @@
 /*
- * halm/platform/numicro/spi_defs.h
+ * halm/platform/numicro/qspi_defs.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_NUMICRO_SPI_DEFS_H_
-#define HALM_PLATFORM_NUMICRO_SPI_DEFS_H_
+#ifndef HALM_PLATFORM_NUMICRO_QSPI_DEFS_H_
+#define HALM_PLATFORM_NUMICRO_QSPI_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Control register------------------------------------------*/
@@ -25,16 +25,23 @@
 #define CTL_LSB                         BIT(13)
 #define CTL_HALFDPX                     BIT(14)
 #define CTL_RXONLY                      BIT(15)
+#define CTL_TWOBIT                      BIT(16)
 #define CTL_UNITIEN                     BIT(17)
 #define CTL_SLAVE                       BIT(18)
 #define CTL_REORDER                     BIT(19)
 #define CTL_DATDIR                      BIT(20)
+#define CTL_DUALIOEN                    BIT(21)
+#define CTL_QUADIOEN                    BIT(22)
+#define CTL_TXDTR_EN                    BIT(23)
 /*------------------Clock Divider register------------------------------------*/
 #define CLKDIV_DIVIDER_MASK             BIT_FIELD(MASK(9), 0)
 /*------------------Slave Select Control register-----------------------------*/
 #define SSCTL_SS                        BIT(0)
 #define SSCTL_SSACTPOL                  BIT(2)
 #define SSCTL_AUTOSS                    BIT(3)
+#define SSCTL_SLV3WIRE                  BIT(4)
+#define SSCTL_SLVTOIEN                    BIT(5)
+#define SSCTL_SLVTORST                    BIT(6)
 #define SSCTL_SLVBEIEN                  BIT(8)
 #define SSCTL_SLVURIEN                  BIT(9)
 #define SSCTL_SSACTIEN                  BIT(12)
@@ -93,81 +100,5 @@
 #define STATUS_TXCNT_MASK               BIT_FIELD(MASK(4), 28)
 #define STATUS_TXCNT_VALUE(reg) \
     FIELD_VALUE((reg), STATUS_TXCNT_MASK, 28)
-/*------------------Status 2 register-----------------------------------------*/
-#define STATUS2_SLVBENUM(value)         BIT_FIELD((value), 24)
-#define STATUS2_SLVBENUM_MASK           BIT_FIELD(MASK(6), 24)
-#define STATUS2_SLVBENUM_VALUE(reg) \
-    FIELD_VALUE((reg), STATUS2_SLVBENUM_MASK, 24)
-/*------------------I2S Control register--------------------------------------*/
-enum
-{
-  FORMAT_I2S            = 0,
-  FORMAT_MSB_JUSTIFIED  = 1,
-  FORMAT_PCM_MODE_A     = 2,
-  FORMAT_PCM_MODE_B     = 3
-};
-
-#define I2SCTL_I2SEN                    BIT(0)
-#define I2SCTL_TXEN                     BIT(1)
-#define I2SCTL_RXEN                     BIT(2)
-#define I2SCTL_MUTE                     BIT(3)
-
-#define I2SCTL_WDWIDTH(value)           BIT_FIELD((value), 4)
-#define I2SCTL_WDWIDTH_MASK             BIT_FIELD(MASK(2), 4)
-#define I2SCTL_WDWIDTH_VALUE(reg) \
-    FIELD_VALUE((reg), I2SCTL_WDWIDTH_MASK, 4)
-
-#define I2SCTL_MONO                     BIT(6)
-#define I2SCTL_ORDER                    BIT(7)
-#define I2SCTL_SLAVE                    BIT(8)
-#define I2SCTL_MCLKEN                   BIT(15)
-#define I2SCTL_RZCEN                    BIT(16)
-#define I2SCTL_LZCEN                    BIT(17)
-#define I2SCTL_RXLCH                    BIT(23)
-#define I2SCTL_RZCIEN                   BIT(24)
-#define I2SCTL_LZCIEN                   BIT(25)
-
-#define I2SCTL_FORMAT(value)            BIT_FIELD((value), 28)
-#define I2SCTL_FORMAT_MASK              BIT_FIELD(MASK(2), 28)
-#define I2SCTL_FORMAT_VALUE(reg) \
-    FIELD_VALUE((reg), I2SCTL_FORMAT_MASK, 28)
-
-#define I2SCTL_SLVERRIEN                BIT(31)
-/*------------------I2S Clock Divider Control register------------------------*/
-#define I2SCLK_MCLKDIV(value)           BIT_FIELD((value), 0)
-#define I2SCLK_MCLKDIV_MASK             BIT_FIELD(MASK(7), 0)
-#define I2SCLK_MCLKDIV_VALUE(reg) \
-    FIELD_VALUE((reg), I2SCLK_MCLKDIV_MASK, 0)
-
-#define I2SCLK_BCLKDIV(value)           BIT_FIELD((value), 8)
-#define I2SCLK_BCLKDIV_MASK             BIT_FIELD(MASK(10), 8)
-#define I2SCLK_BCLKDIV_VALUE(reg) \
-    FIELD_VALUE((reg), I2SCLK_BCLKDIV_MASK, 8)
-/*------------------I2S Status register---------------------------------------*/
-#define I2SSTS_RIGHT                    BIT(4)
-#define I2SSTS_RXEMPTY                  BIT(8)
-#define I2SSTS_RXFULL                   BIT(9)
-#define I2SSTS_RXTHIF                   BIT(10)
-#define I2SSTS_RXOVIF                   BIT(11)
-#define I2SSTS_RXTOIF                   BIT(12)
-#define I2SSTS_I2SENSTS                 BIT(15)
-#define I2SSTS_TXEMPTY                  BIT(16)
-#define I2SSTS_TXFULL                   BIT(17)
-#define I2SSTS_TXTHIF                   BIT(18)
-#define I2SSTS_TXUFIF                   BIT(19)
-#define I2SSTS_RZCIF                    BIT(20)
-#define I2SSTS_LZCIF                    BIT(21)
-#define I2SSTS_SLVERRIF                 BIT(22)
-#define I2SSTS_TXRXRST                  BIT(21)
-
-#define I2SSTS_RXCNT(value)             BIT_FIELD((value), 24)
-#define I2SSTS_RXCNT_MASK               BIT_FIELD(MASK(3), 24)
-#define I2SSTS_RXCNT_VALUE(reg) \
-    FIELD_VALUE((reg), I2SSTS_RXCNT_MASK, 24)
-
-#define I2SSTS_TXCNT(value)             BIT_FIELD((value), 24)
-#define I2SSTS_TXCNT_MASK               BIT_FIELD(MASK(3), 24)
-#define I2SSTS_TXCNT_VALUE(reg) \
-    FIELD_VALUE((reg), I2SSTS_TXCNT_MASK, 24)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_NUMICRO_SPI_DEFS_H_ */
+#endif /* HALM_PLATFORM_NUMICRO_QSPI_DEFS_H_ */

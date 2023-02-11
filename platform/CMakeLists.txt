@@ -8,7 +8,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
 
     if (${PLATFORM} MATCHES "^LPC")
         add_subdirectory(lpc)
-    elseif(${PLATFORM} MATCHES "^M03")
+    elseif(${PLATFORM} MATCHES "^M03|^M48")
         add_subdirectory(numicro)
     elseif(${PLATFORM} MATCHES "^STM32")
         add_subdirectory(stm32)

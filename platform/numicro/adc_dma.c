@@ -13,8 +13,8 @@
 /*----------------------------------------------------------------------------*/
 static size_t calcPinCount(const PinNumber *);
 static void dmaHandler(void *);
+static bool dmaSetup(struct AdcDma *, const struct AdcDmaConfig *);
 static void resetDmaBuffer(struct AdcDma *);
-static bool setupDmaChannel(struct AdcDma *, const struct AdcDmaConfig *);
 static bool startConversion(struct AdcDma *);
 static void stopConversion(struct AdcDma *);
 /*----------------------------------------------------------------------------*/
@@ -60,15 +60,7 @@ static void dmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void resetDmaBuffer(struct AdcDma *interface)
-{
-  NM_ADC_Type * const reg = interface->base.reg;
-
-  dmaAppend(interface->dma, interface->buffer, (const void *)&reg->ADPDMA,
-      interface->count);
-}
-/*----------------------------------------------------------------------------*/
-static bool setupDmaChannel(struct AdcDma *interface,
+static bool dmaSetup(struct AdcDma *interface,
     const struct AdcDmaConfig *config)
 {
   static const struct PdmaSettings dmaSettings = {
@@ -100,6 +92,14 @@ static bool setupDmaChannel(struct AdcDma *interface,
   }
   else
     return false;
+}
+/*----------------------------------------------------------------------------*/
+static void resetDmaBuffer(struct AdcDma *interface)
+{
+  NM_ADC_Type * const reg = interface->base.reg;
+
+  dmaAppend(interface->dma, interface->buffer, (const void *)&reg->ADPDMA,
+      interface->count);
 }
 /*----------------------------------------------------------------------------*/
 static bool startConversion(struct AdcDma *interface)
@@ -173,7 +173,7 @@ static enum Result adcInit(void *object, const void *configBase)
       | ADCR_TRGCOND(adcMakePinCondition(config->sensitivity));
   interface->callback = 0;
 
-  if (setupDmaChannel(interface, config))
+  if (dmaSetup(interface, config))
   {
     if (!config->shared)
       res = startConversion(interface) ? E_OK : E_ERROR;
