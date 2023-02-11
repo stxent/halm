@@ -748,8 +748,14 @@ static enum Result sieEpInit(void *object, const void *configBase)
 {
   const struct UsbEndpointConfig * const config = configBase;
   struct UsbSieEndpoint * const ep = object;
+  size_t size;
 
-  if (pointerQueueInit(&ep->requests, CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS))
+  if (USB_EP_LOGICAL_ADDRESS(ep->address) == 0)
+    size = CONFIG_USB_DEVICE_CONTROL_REQUESTS;
+  else
+    size = CONFIG_PLATFORM_USB_DEVICE_EP_REQUESTS;
+
+  if (pointerQueueInit(&ep->requests, size))
   {
     ep->address = config->address;
     ep->device = config->parent;

@@ -283,7 +283,9 @@ static uint32_t tmrGetOverflow(const void *object)
 static uint32_t tmrGetOverflowUnified(const void *object)
 {
   const struct SctTimer * const timer = object;
-  return ((const LPC_SCT_Type *)timer->base.reg)->MATCH[timer->event] + 1;
+  const LPC_SCT_Type * const reg = timer->base.reg;
+
+  return reg->MATCH[timer->event] + 1;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)

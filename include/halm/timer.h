@@ -109,6 +109,7 @@ static inline void timerSetFrequency(void *timer, uint32_t frequency)
  * Get the timer overflow rate.
  * @param timer Pointer to a Timer object.
  * @return Number of timer ticks after which overflow event occurs.
+ * When function returns zero it means that a match register value is 2^32.
  */
 static inline uint32_t timerGetOverflow(const void *timer)
 {
@@ -119,6 +120,7 @@ static inline uint32_t timerGetOverflow(const void *timer)
  * Set the timer overflow rate.
  * @param timer Pointer to a Timer object.
  * @param overflow Number of timer ticks after which overflow event occurs.
+ * Zero overflow value means that a match register value will be 2^32.
  */
 static inline void timerSetOverflow(void *timer, uint32_t overflow)
 {

@@ -263,7 +263,7 @@ static uint32_t unitGetOverflow(const void *object)
   const struct GpTimerCaptureUnit * const unit = object;
   const LPC_TIMER_Type * const reg = unit->base.reg;
 
-  return (reg->MR[MATCH_CHANNEL_OVERFLOW] + 1) & getMaxValue(unit);
+  return reg->MR[MATCH_CHANNEL_OVERFLOW] + 1;
 }
 /*----------------------------------------------------------------------------*/
 static void unitSetOverflow(void *object, uint32_t overflow)

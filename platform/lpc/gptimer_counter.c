@@ -204,7 +204,7 @@ static uint32_t tmrGetOverflow(const void *object)
   const struct GpTimerCounter * const timer = object;
   const LPC_TIMER_Type * const reg = timer->base.reg;
 
-  return (reg->MR[timer->event] + 1) & getMaxValue(timer);
+  return reg->MR[timer->event] + 1;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
