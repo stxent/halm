@@ -222,6 +222,11 @@ if(CONFIG_PLATFORM_LPC_SPI_DMA)
     list(APPEND SOURCE_FILES "${CONFIG_GEN_SPI}/spi_dma.c")
 endif()
 
+if(CONFIG_PLATFORM_LPC_SPIFI)
+    list(APPEND SOURCE_FILES "spifi.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/spifi_base.c")
+endif()
+
 if(CONFIG_PLATFORM_LPC_SSP_BASE)
     list(APPEND SOURCE_FILES "ssp_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/ssp_base.c")

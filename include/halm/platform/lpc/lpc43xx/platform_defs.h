@@ -2341,13 +2341,15 @@ extern LPC_SGPIO_Type   SGPIO_DOMAIN;
 #define LPC_SGPIO           (&SGPIO_DOMAIN)
 /*----------------------------------------------------------------------------*/
 /* External memory regions */
-#define LPC_EMC_CS0_BASE   0x1C000000UL
-#define LPC_EMC_CS1_BASE   0x1D000000UL
-#define LPC_EMC_CS2_BASE   0x1E000000UL
-#define LPC_EMC_CS3_BASE   0x1F000000UL
-#define LPC_EMC_DYCS0_BASE 0x28000000UL
-#define LPC_EMC_DYCS1_BASE 0x30000000UL
-#define LPC_EMC_DYCS2_BASE 0x60000000UL
-#define LPC_EMC_DYCS3_BASE 0x70000000UL
+#define LPC_EMC_CS0_BASE      0x1C000000UL
+#define LPC_EMC_CS1_BASE      0x1D000000UL
+#define LPC_EMC_CS2_BASE      0x1E000000UL
+#define LPC_EMC_CS3_BASE      0x1F000000UL
+#define LPC_EMC_DYCS0_BASE    0x28000000UL
+#define LPC_EMC_DYCS1_BASE    0x30000000UL
+#define LPC_EMC_DYCS2_BASE    0x60000000UL
+#define LPC_EMC_DYCS3_BASE    0x70000000UL
+#define LPC_SPIFI_BASE        0x80000000UL
+#define LPC_SPIFI_DEBUG_BASE  0x14000000UL
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_PLATFORM_DEFS_H_ */

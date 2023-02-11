@@ -155,11 +155,11 @@ static enum Result spiInit(void *object, const void *configBase)
   assert(config);
 
   const struct SspBaseConfig baseConfig = {
-      .channel = config->channel,
+      .cs = 0,
       .miso = config->miso,
       .mosi = config->mosi,
       .sck = config->sck,
-      .cs = 0
+      .channel = config->channel
   };
   struct Spi * const interface = object;
   enum Result res;

@@ -33,8 +33,8 @@ struct SpiBaseConfig
    */
   PinNumber mosi;
   /**
-   * Optional: serial clock output for masters and input for slaves.
-   * May be left unused in specific emulation modes.
+   * Optional: serial clock output for masters and clock input for slaves.
+   * May be left unused in special cases.
    */
   PinNumber sck;
   /** Mandatory: peripheral identifier. */

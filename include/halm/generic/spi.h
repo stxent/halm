@@ -31,7 +31,10 @@ enum SPIParameter
    * Enable the unidirectional interface mode. This mode is used by default.
    * Data pointer should be set to zero.
    */
-  IF_SPI_UNIDIRECTIONAL
+  IF_SPI_UNIDIRECTIONAL,
+
+  /** End of the list. */
+  IF_SPI_PARAMETER_END
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_SPI_H_ */
