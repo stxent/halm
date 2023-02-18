@@ -41,14 +41,13 @@ static inline unsigned int usbEpCountTrailingZeros8(uint32_t value)
 static inline void usbEpFlagsIterate(void (*callback)(struct UsbEndpoint *),
     struct UsbEndpoint **endpoints, uint32_t status)
 {
-  do
+  while (status)
   {
     const unsigned int index = usbEpCountTrailingZeros8(status);
 
     callback(endpoints[index]);
     status -= 1 << index;
   }
-  while (status);
 }
 
 END_DECLS

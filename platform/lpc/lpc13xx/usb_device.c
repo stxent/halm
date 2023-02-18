@@ -170,8 +170,8 @@ static void resetDevice(struct UsbDevice *device)
   LPC_USB_Type * const reg = device->base.reg;
 
   /* Configure and clear interrupts */
-  reg->USBDevIntEn = USBDevInt_DEV_STAT;
   reg->USBDevIntClr = 0xFFFFFFFFUL;
+  reg->USBDevIntEn = USBDevInt_DEV_STAT;
 
   devSetAddress(device, 0);
 }
@@ -249,11 +249,16 @@ static enum Result devInit(void *object, const void *configBase)
   if (!device->control)
     return E_ERROR;
 
-  /* Configure interrupts and reset system variables */
-  resetDevice(device);
+  /* Reset device address */
+  devSetAddress(device, 0);
   /* By default, only ACKs generate interrupts */
   usbCommandWrite(device, USB_CMD_SET_MODE, 0);
 
+  LPC_USB_Type * const reg = device->base.reg;
+
+  /* Configure interrupts in USB core */
+  reg->USBDevIntEn = 0;
+  /* Configure interrupts in NVIC */
   irqSetPriority(device->base.irq, config->priority);
   irqEnable(device->base.irq);
 
@@ -320,10 +325,22 @@ static void devSetAddress(void *object, uint8_t address)
 static void devSetConnected(void *object, bool state)
 {
   struct UsbDevice * const device = object;
+  LPC_USB_Type * const reg = device->base.reg;
 
   device->enabled = state;
-  usbCommandWrite(device, USB_CMD_SET_DEVICE_STATUS,
-      state ? DEVICE_STATUS_CON : 0);
+
+  if (device->enabled)
+  {
+    reg->USBDevIntClr = USBDevInt_DEV_STAT;
+    reg->USBDevIntEn = USBDevInt_DEV_STAT;
+
+    usbCommandWrite(device, USB_CMD_SET_DEVICE_STATUS, DEVICE_STATUS_CON);
+  }
+  else
+  {
+    reg->USBDevIntEn = 0;
+    usbCommandWrite(device, USB_CMD_SET_DEVICE_STATUS, 0);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devBind(void *object, void *driver)

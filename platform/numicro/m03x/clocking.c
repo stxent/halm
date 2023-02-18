@@ -500,16 +500,25 @@ static const struct PinEntry clockOutputPins[] = {
     }
 };
 
-static const struct PinGroupEntry crystalPinGroups[] = {
+static const struct PinEntry crystalPins[] = {
     {
-        .begin = PIN(PORT_F, 2),
-        .end = PIN(PORT_F, 5),
+        .key = PIN(PORT_F, 2),
         .channel = 0,
         .value = 10
     }, {
-        /* End of pin function association list */
-        .begin = 0,
-        .end = 0
+        .key = PIN(PORT_F, 3),
+        .channel = 0,
+        .value = 10
+    }, {
+        .key = PIN(PORT_F, 4),
+        .channel = 0,
+        .value = 10
+    }, {
+        .key = PIN(PORT_F, 5),
+        .channel = 0,
+        .value = 10
+    }, {
+        .key = 0 /* End of pin function association list */
     }
 };
 
@@ -664,15 +673,14 @@ static bool checkClockSource(enum ClockSource source,
 /*----------------------------------------------------------------------------*/
 static void configCrystalPin(PinNumber key)
 {
-  const struct PinGroupEntry * const group = pinGroupFind(crystalPinGroups,
-      key, 0);
-  assert(group);
+  const struct PinEntry * const pinEntry = pinFind(crystalPins, key, 0);
+  assert(pinEntry);
 
   const struct Pin pin = pinInit(key);
   assert(pinValid(pin));
 
   pinInput(pin);
-  pinSetFunction(pin, group->value);
+  pinSetFunction(pin, pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
 static void configExtOscPins(bool bypass)
@@ -1063,7 +1071,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
 
   while (sourceFrequency / indiv >= 8000000)
     ++indiv;
-  if (indiv > 33 || sourceFrequency / indiv <= 800000)
+  if (indiv > 33 || sourceFrequency / indiv < 800000)
     return E_VALUE;
 
   fbdiv = fcoFrequency / (sourceFrequency / indiv);

@@ -23,7 +23,16 @@ enum
   PORT_E,
   PORT_F,
   PORT_G,
-  PORT_H
+  PORT_H,
+  PORT_HSUSB
+};
+
+enum
+{
+  PIN_HSUSB_DM,
+  PIN_HSUSB_DP,
+  PIN_HSUSB_ID,
+  PIN_HSUSB_VBUS
 };
 /*----------------------------------------------------------------------------*/
 struct Pin

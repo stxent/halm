@@ -70,8 +70,8 @@ enum
   DBCLKSEL_32768 = 15
 };
 
-#define DBCTL_DBCLKSEL(value)           BIT_FIELD((value), 0)
 #define DBCTL_DBCLKSEL_MASK             BIT_FIELD(MASK(4), 0)
+#define DBCTL_DBCLKSEL(value)           BIT_FIELD((value), 0)
 #define DBCTL_DBCLKSEL_VALUE(reg) \
     FIELD_VALUE((reg), DBCTL_DBCLKSEL_MASK, 0)
 

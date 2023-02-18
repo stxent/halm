@@ -94,6 +94,7 @@ const struct UsbDeviceClass * const UsbDevice =
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
+static inline void epCopyData(uint32_t *, const uint32_t *, size_t);
 static inline void epEnqueueRequest(struct UsbEndpoint *,
     const struct UsbRequest *);
 static inline NM_USBD_EP_Type *epGetChannel(struct UsbEndpoint *);
@@ -130,6 +131,7 @@ static void interruptHandler(void *object)
 {
   struct UsbDevice * const device = object;
   NM_USBD_Type * const reg = device->base.reg;
+  const uint32_t devStatus = reg->ATTR;
   const uint32_t intStatus = reg->INTSTS;
 
   reg->INTSTS = intStatus;
@@ -139,8 +141,7 @@ static void interruptHandler(void *object)
   {
     if (reg->VBUSDET & VBUSDET_VBUSDET)
     {
-      resetDevice(device);
-      usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
+      reg->ATTR |= ATTR_USBEN;
     }
     else
     {
@@ -151,24 +152,20 @@ static void interruptHandler(void *object)
   /* Device status interrupt */
   if (intStatus & INTSTS_BUSIF)
   {
-    const uint32_t devStatus = reg->ATTR;
-
     if (devStatus & ATTR_USBRST)
     {
       resetDevice(device);
       usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
     }
 
-    if (devStatus & ATTR_SUSPEND)
-    {
-      reg->ATTR &= ~ATTR_PHYEN;
-      usbControlNotify(device->control, USB_DEVICE_EVENT_SUSPEND);
-    }
-
     if (devStatus & ATTR_RESUME)
     {
-      reg->ATTR |= ATTR_PHYEN;
       usbControlNotify(device->control, USB_DEVICE_EVENT_RESUME);
+    }
+
+    if (devStatus & ATTR_SUSPEND)
+    {
+      usbControlNotify(device->control, USB_DEVICE_EVENT_SUSPEND);
     }
   }
 
@@ -209,8 +206,6 @@ static void resetDevice(struct UsbDevice *device)
   /* Allocate buffer for setup packet inside the USB SRAM */
   device->position = STBUFSEG_SIZE;
   reg->STBUFSEG = 0;
-
-  reg->ATTR |= ATTR_PHYEN | ATTR_USBEN;
 
   device->scheduledAddress = 0;
   devSetAddress(device, 0);
@@ -257,7 +252,7 @@ static enum Result devInit(void *object, const void *configBase)
   reg->INTEN = 0;
   reg->INTSTS = INTSTS_BUSIF | INTSTS_USBIF | INTSTS_VBDETIF | INTSTS_NEVWKIF;
 
-  reg->ATTR = ATTR_PWRDN | ATTR_BYTEM;
+  reg->ATTR = ATTR_PWRDN;
   reg->FADDR = 0;
   reg->SE0 = SE0_SE0;
 
@@ -368,7 +363,7 @@ static void devSetConnected(void *object, bool state)
     reg->INTEN = INTEN_BUSIEN | INTEN_USBIEN | INTEN_VBDETIEN
         | INTEN_NEVWKIEN | INTEN_WKEN;
 
-    reg->ATTR |= ATTR_DPPUEN;
+    reg->ATTR |= ATTR_PHYEN | ATTR_DPPUEN;
     reg->SE0 = 0;
   }
   else
@@ -376,7 +371,7 @@ static void devSetConnected(void *object, bool state)
     /* Disable interrupts */
     reg->INTEN = 0;
 
-    reg->ATTR &= ~ATTR_DPPUEN;
+    reg->ATTR &= ~(ATTR_PHYEN | ATTR_USBEN | ATTR_DPPUEN);
     reg->SE0 = SE0_SE0;
   }
 }
@@ -414,6 +409,37 @@ static void devStringErase(void *object, struct UsbString string)
 {
   struct UsbDevice * const device = object;
   usbControlStringErase(device->control, string);
+}
+/*----------------------------------------------------------------------------*/
+static inline void epCopyData(uint32_t *destination, const uint32_t *source,
+    size_t length)
+{
+  const uint32_t * const end = destination + (length >> 2);
+
+  while (destination != end)
+    *destination++ = *source++;
+  length &= 3;
+
+  if (length)
+  {
+    const uint8_t * const buffer = (const uint8_t *)source;
+    uint32_t word = 0;
+
+    switch (length)
+    {
+      case 3:
+        word = buffer[2] << 16;
+        /* Falls through */
+      case 2:
+        word |= buffer[1] << 8;
+        /* Falls through */
+      case 1:
+        word |= buffer[0];
+        break;
+    }
+
+    *destination = word;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static inline void epEnqueueRequest(struct UsbEndpoint *ep,
@@ -496,8 +522,8 @@ static void epHandleSetupPacket(struct UsbEndpoint *ep)
 
     pointerQueuePopFront(&ep->requests);
 
+    epCopyData(req->buffer, (const void *)(reg->SRAM + offset), STBUFSEG_SIZE);
     req->length = STBUFSEG_SIZE;
-    memcpy(req->buffer, (const void *)&reg->SRAM[offset], req->length);
     req->callback(req->argument, req, USB_REQUEST_SETUP);
   }
 }
@@ -513,8 +539,8 @@ static bool epReadData(struct UsbEndpoint *ep, uint8_t *buffer,
   if (available > length)
     return false;
 
+  epCopyData((uint32_t *)buffer, (const void *)(reg->SRAM + offset), available);
   *read = available;
-  memcpy(buffer, (const void *)&reg->SRAM[offset], available);
 
   return true;
 }
@@ -538,7 +564,7 @@ static void epWriteData(struct UsbEndpoint *ep, const uint8_t *buffer,
   NM_USBD_EP_Type * const channel = &reg->EP[ep->index];
   const uint32_t offset = channel->BUFSEG & BUFSEG_ADDRESS_MASK;
 
-  memcpy((void *)&reg->SRAM[offset], buffer, length);
+  epCopyData((void *)(reg->SRAM + offset), (const uint32_t *)buffer, length);
   channel->MXPLD = length;
 }
 /*----------------------------------------------------------------------------*/

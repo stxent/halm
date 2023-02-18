@@ -23,14 +23,13 @@ static inline void usbEpFlagsIterate(void (*callback)(struct UsbEndpoint *),
 {
   status = reverseBits32(status);
 
-  do
+  while (status)
   {
     const unsigned int index = countLeadingZeros32(status);
 
     callback(endpoints[index]);
     status -= (1UL << 31) >> index;
   }
-  while (status);
 }
 
 END_DECLS

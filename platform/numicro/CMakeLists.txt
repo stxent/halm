@@ -91,7 +91,7 @@ if(${CONFIG_PLATFORM_NUMICRO_UART_BASE})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/uart_base.c")
 endif()
 
-if(CONFIG_PLATFORM_USB)
+if(${CONFIG_PLATFORM_USB})
     list(APPEND SOURCE_FILES "usb_device.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
 endif()

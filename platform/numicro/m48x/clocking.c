@@ -1285,7 +1285,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     return E_VALUE;
 
   uint32_t fbdiv;
-  uint32_t indiv = 2;
+  uint32_t indiv = 1;
   uint32_t outdiv;
 
   if (config->divisor == 1)
@@ -1299,14 +1299,14 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
 
   while (sourceFrequency / indiv >= 8000000)
     ++indiv;
-  if (indiv > 33 || sourceFrequency / indiv <= 4000000)
+  if (indiv > 33 || sourceFrequency / indiv < 4000000)
     return E_VALUE;
 
-  fbdiv = fcoFrequency / (sourceFrequency / indiv);
+  fbdiv = fcoFrequency / (2 * sourceFrequency / indiv);
   if (fbdiv < 2 || fbdiv > 513)
     return E_VALUE;
 
-  uint32_t pllctl = PLLCTL_FBDIV(fbdiv - 2) | PLLCTL_INDIV(indiv - 2)
+  uint32_t pllctl = PLLCTL_FBDIV(fbdiv - 2) | PLLCTL_INDIV(indiv - 1)
       | PLLCTL_OUTDIV(outdiv);
 
   if (config->source == CLOCK_INTERNAL)

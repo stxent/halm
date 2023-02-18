@@ -611,6 +611,7 @@ typedef struct
   __rw__ uint32_t SLEWCTL; /* High Slew Rate Control register */
   __ne__ uint32_t RESERVED0;
   __rw__ uint32_t PUSEL; /* Pull-up and Pull-down Enable register */
+  __ne__ uint32_t RESERVED1[3];
 } NM_GPIO_Type;
 /*------------------USB 2.0 High-Speed Device Controller----------------------*/
 typedef struct
@@ -657,10 +658,20 @@ typedef struct
   __rw__ uint32_t CEPTXCNT; /* Control-Endpoint In-transfer Data Count */
   __ro__ uint32_t CEPRXCNT; /* Control-Endpoint Out-transfer Data Count */
   __ro__ uint32_t CEPDATCNT; /* Control-Endpoint data count */
-  __ro__ uint32_t SETUP1_0; /* Setup 1 & Setup 0 bytes */
-  __ro__ uint32_t SETUP3_2; /* Setup 3 & Setup 2 bytes */
-  __ro__ uint32_t SETUP5_4; /* Setup 5 & Setup 4 bytes */
-  __ro__ uint32_t SETUP7_6; /* Setup 7 & Setup 6 bytes */
+
+  union
+  {
+    struct
+    {
+      __ro__ uint32_t SETUP1_0; /* Setup 1 & Setup 0 bytes */
+      __ro__ uint32_t SETUP3_2; /* Setup 3 & Setup 2 bytes */
+      __ro__ uint32_t SETUP5_4; /* Setup 5 & Setup 4 bytes */
+      __ro__ uint32_t SETUP7_6; /* Setup 7 & Setup 6 bytes */
+    };
+
+    __ro__ uint32_t SETUP[4];
+  };
+
   __rw__ uint32_t CEPBUFST; /* Control Endpoint RAM Start Address register */
   __rw__ uint32_t CEPBUFEND; /* Control Endpoint RAM End Address register */
 

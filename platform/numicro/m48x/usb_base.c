@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/numicro/m48x/system_defs.h>
 #include <halm/platform/numicro/system.h>
 #include <halm/platform/numicro/usb_base.h>
 #include <assert.h>
@@ -80,8 +81,8 @@ static void configPins(struct UsbBase *device,
   {
     if (pinArray[index])
     {
-      const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
-          device->channel);
+      const struct PinEntry * const pinEntry = pinFind(usbPins,
+          pinArray[index], device->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);
@@ -129,6 +130,11 @@ static enum Result devInit(void *object, const void *configBase)
   sysClockEnable(CLK_USBD);
   /* Reset registers to default values */
   sysResetBlock(RST_USBD);
+
+  sysUnlockReg();
+  NM_SYS->USBPHY = (NM_SYS->USBPHY & ~USBPHY_USBROLE_MASK)
+      | (USBPHY_USBROLE(USBROLE_DEVICE) | USBPHY_USBEN);
+  sysLockReg();
 
   return E_OK;
 }
