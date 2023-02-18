@@ -9,11 +9,13 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Control register------------------------------------------*/
+#define CTRL_TIMEOUT_MAX                MASK(16)
 #define CTRL_TIMEOUT_MASK               BIT_FIELD(MASK(16), 0)
 #define CTRL_TIMEOUT(value)             BIT_FIELD((value), 0)
 #define CTRL_TIMEOUT_VALUE(reg) \
     FIELD_VALUE((reg), CTRL_TIMEOUT_MASK, 0)
 
+#define CTRL_CSHIGH_MAX                 MASK(4)
 #define CTRL_CSHIGH_MASK                BIT_FIELD(MASK(4), 16)
 #define CTRL_CSHIGH(value)              BIT_FIELD((value), 16)
 #define CTRL_CSHIGH_VALUE(reg) \

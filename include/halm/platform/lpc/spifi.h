@@ -15,6 +15,19 @@ extern const struct InterfaceClass * const Spifi;
 
 struct SpifiConfig
 {
+  /**
+   * Optional: minimum chip select high time before a next command,
+   * measured in serial clock periods. In case of zero value a maximum possible
+   * delay will be used. When set, it should be in the range of 1 to 16.
+   */
+  uint32_t delay;
+  /**
+   * Optional: maximum chip select low time after a last memory access in
+   * memory-mapped mode, measured in serial clock periods. In case of zero
+   * value a maximum possible timeout will be used. When set, it should be
+   * in the range of 1 to 65536.
+   */
+  uint32_t timeout;
   /** Mandatory: chip select pin. */
   PinNumber cs;
   /**
@@ -97,10 +110,10 @@ struct Spifi
     uint16_t length;
     /* Command response */
     uint8_t response;
+    /* Enable serial mode for data */
+    bool serial;
   } data;
 
-  /* Default input/output mode: serial, dual or quad */
-  uint8_t mode;
   /* Operation status */
   uint8_t status;
   /* Enables blocking mode instead of zero-copy mode */

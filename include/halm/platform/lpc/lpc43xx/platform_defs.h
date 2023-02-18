@@ -2121,7 +2121,24 @@ typedef struct
   __rw__ uint32_t ADDR;
   __rw__ uint32_t IDATA;
   __rw__ uint32_t CLIMIT;
-  __rw__ uint32_t DATA;
+
+  union
+  {
+    __rw__ uint32_t DATA;
+
+    struct
+    {
+      __rw__ uint8_t DATA_B;
+      __ne__ uint8_t RESERVED0[3];
+    };
+
+    struct
+    {
+      __rw__ uint16_t DATA_H;
+      __ne__ uint16_t RESERVED1;
+    };
+  };
+
   __rw__ uint32_t MCMD;
   __rw__ uint32_t STAT;
 } LPC_SPIFI_Type;

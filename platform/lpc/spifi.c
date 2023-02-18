@@ -11,13 +11,6 @@
 /*----------------------------------------------------------------------------*/
 enum
 {
-  MODE_SERIAL,
-  MODE_DUAL,
-  MODE_QUAD
-};
-
-enum
-{
   STATUS_OK,
   STATUS_RX_BUSY,
   STATUS_TX_BUSY,
@@ -29,7 +22,7 @@ static void enableIndirectMode(struct Spifi *);
 static void enableMemoryMappingMode(struct Spifi *);
 static void executeCommand(struct Spifi *, bool);
 static uint32_t makeCommand(const struct Spifi *);
-static void resetContext(struct Spifi *, uint8_t);
+static void resetContext(struct Spifi *);
 static void resetMode(struct Spifi *);
 static void dmaInterruptHandler(void *);
 static void spifiInterruptHandler(void *);
@@ -71,23 +64,23 @@ static bool dmaSetup(struct Spifi *interface, uint8_t channel)
       {
           .source = {
               .burst = DMA_BURST_1,
-              .width = DMA_WIDTH_BYTE,
+              .width = DMA_WIDTH_WORD,
               .increment = false
           },
           .destination = {
-              .burst = DMA_BURST_4,
-              .width = DMA_WIDTH_BYTE,
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_WORD,
               .increment = true
           }
       }, {
           .source = {
-              .burst = DMA_BURST_4,
-              .width = DMA_WIDTH_BYTE,
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_WORD,
               .increment = true
           },
           .destination = {
               .burst = DMA_BURST_1,
-              .width = DMA_WIDTH_BYTE,
+              .width = DMA_WIDTH_WORD,
               .increment = false
           }
       }
@@ -127,8 +120,10 @@ static void enableMemoryMappingMode(struct Spifi *interface)
   LPC_SPIFI_Type * const reg = interface->base.reg;
   uint32_t command = makeCommand(interface);
 
-  /* Clear data length field and poll bit */
-  command &= ~(CMD_DATALEN_MASK | CMD_POLL);
+  /* Ensure that poll mode was disabled */
+  assert(!(command & CMD_POLL));
+  /* Clear data length field */
+  command &= ~CMD_DATALEN_MASK;
 
   /* Disable DMA mode */
   reg->CTRL &= ~CTRL_DMAEN;
@@ -148,90 +143,107 @@ static void executeCommand(struct Spifi *interface, bool out)
   if (out)
   {
     /* Poll mode must not be used with data write commands */
-    assert(!interface->poll);
+    assert(!(command & CMD_POLL));
 
     command |= CMD_DOUT;
   }
 
+  if (interface->address.length)
+    reg->ADDR = interface->address.value;
   if (interface->post.length)
     reg->IDATA = interface->post.value;
-  reg->ADDR = interface->address.value;
   reg->CMD = command;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t makeCommand(const struct Spifi *interface)
 {
+  enum FieldPacking
+  {
+    PACK_PARALLEL,
+    PACK_SERIAL,
+    PACK_DISABLED
+  };
+
+  static const uint8_t FRAMEFORM_NO_OPCODE[] = {
+      FRAMEFORM_OPCODE,
+      FRAMEFORM_OPCODE_ADDRESS_8,
+      FRAMEFORM_OPCODE_ADDRESS_16,
+      FRAMEFORM_OPCODE_ADDRESS_24,
+      FRAMEFORM_OPCODE_ADDRESS_32
+  };
+
   const uint8_t delay = interface->delay.length + interface->post.length;
+  enum FieldPacking packCommand = PACK_DISABLED;
+  enum FieldPacking packAddress = PACK_DISABLED;
+  enum FieldPacking packPost = PACK_DISABLED;
+  enum FieldPacking packData = PACK_DISABLED;
   uint8_t fieldform;
   uint8_t frameform;
 
-  assert(interface->post.serial == interface->delay.serial);
-  assert(delay <= CMD_INTLEN_MAX);
-
-  if (interface->command.length)
+  if (delay != 0)
   {
-    if (interface->address.length == 0)
-      frameform = FRAMEFORM_OPCODE;
-    else if (interface->address.length == 4)
-      frameform = FRAMEFORM_OPCODE_ADDRESS_32;
-    else if (interface->address.length == 3)
-      frameform = FRAMEFORM_OPCODE_ADDRESS_24;
-    else if (interface->address.length == 3)
-      frameform = FRAMEFORM_OPCODE_ADDRESS_16;
-    else
-      frameform = FRAMEFORM_OPCODE_ADDRESS_8;
+    assert(delay <= CMD_INTLEN_MAX);
 
-    if (interface->command.serial)
+    if (interface->post.length != 0 && interface->delay.length != 0)
     {
-      if (interface->address.serial && interface->delay.serial)
-      {
-        if (interface->mode == MODE_SERIAL)
-          fieldform = FIELDFORM_SERIAL_ALL;
-        else
-          fieldform = FIELDFORM_PARALLEL_DATA;
-      }
-      else
-      {
-        assert(!interface->address.serial);
-        assert(!interface->delay.serial);
-        assert(interface->mode == MODE_DUAL || interface->mode == MODE_QUAD);
-
-        fieldform = FIELDFORM_SERIAL_OPCODE;
-      }
+      assert(interface->post.serial == interface->delay.serial);
+      packPost = interface->post.serial ? PACK_SERIAL : PACK_PARALLEL;
     }
     else
     {
-      assert(!interface->address.serial);
-      assert(!interface->delay.serial);
-      assert(interface->mode == MODE_DUAL || interface->mode == MODE_QUAD);
+      const bool serial = interface->post.length != 0 ?
+          interface->post.serial : interface->delay.serial;
 
-      fieldform = FIELDFORM_PARALLEL_ALL;
+      packPost = serial ? PACK_SERIAL : PACK_PARALLEL;
     }
+  }
+
+  if (interface->command.length != 0)
+  {
+    frameform = FRAMEFORM_NO_OPCODE[interface->address.length];
+    packCommand = interface->command.serial ? PACK_SERIAL : PACK_PARALLEL;
   }
   else
   {
     assert(interface->address.length >= 3);
 
-    if (interface->address.length == 4)
-      frameform = FRAMEFORM_ADDRESS_32;
-    else
-      frameform = FRAMEFORM_ADDRESS_24;
+    frameform = interface->address.length == 4 ?
+        FRAMEFORM_ADDRESS_32 : FRAMEFORM_ADDRESS_24;
+  }
 
-    if (interface->address.serial && interface->delay.serial)
-    {
-      if (interface->mode == MODE_SERIAL)
-        fieldform = FIELDFORM_SERIAL_ALL;
-      else
-        fieldform = FIELDFORM_PARALLEL_DATA;
-    }
-    else
-    {
-      assert(!interface->address.serial);
-      assert(!interface->delay.serial);
-      assert(interface->mode == MODE_DUAL || interface->mode == MODE_QUAD);
+  if (interface->address.length != 0)
+    packAddress = interface->address.serial ? PACK_SERIAL : PACK_PARALLEL;
+  packData = interface->data.serial ? PACK_SERIAL : PACK_PARALLEL;
 
+  assert(
+      (
+          /* FIELDFORM_PARALLEL_ALL or FIELDFORM_SERIAL_OPCODE */
+          packAddress != PACK_SERIAL
+          && packPost != PACK_SERIAL
+          && packData != PACK_SERIAL
+      ) || (
+          /* FIELDFORM_PARALLEL_DATA or FIELDFORM_SERIAL_ALL */
+          packCommand != PACK_PARALLEL
+          && packAddress != PACK_PARALLEL
+          && packPost != PACK_PARALLEL
+      )
+  );
+
+  if (packAddress != PACK_SERIAL && packPost != PACK_SERIAL
+      && packData != PACK_SERIAL)
+  {
+    if (packCommand != PACK_SERIAL)
       fieldform = FIELDFORM_PARALLEL_ALL;
-    }
+    else
+      fieldform = FIELDFORM_SERIAL_OPCODE;
+  }
+  else if (packCommand != PACK_PARALLEL && packAddress != PACK_PARALLEL
+      && packPost != PACK_PARALLEL)
+  {
+    if (packData != PACK_SERIAL)
+      fieldform = FIELDFORM_PARALLEL_DATA;
+    else
+      fieldform = FIELDFORM_SERIAL_ALL;
   }
 
   uint32_t command = CMD_DATALEN(interface->data.length)
@@ -247,27 +259,26 @@ static uint32_t makeCommand(const struct Spifi *interface)
   return command;
 }
 /*----------------------------------------------------------------------------*/
-static void resetContext(struct Spifi *interface, uint8_t mode)
+static void resetContext(struct Spifi *interface)
 {
-  interface->mode = mode;
-
-  interface->address.length = 0;
-  interface->address.serial = false;
-  interface->address.value = 0;
-
   interface->command.length = 0;
-  interface->command.serial = false;
+  interface->command.serial = true;
   interface->command.value = 0;
 
-  interface->delay.length = 0;
-  interface->delay.serial = false;
+  interface->address.length = 0;
+  interface->address.serial = true;
+  interface->address.value = 0;
 
   interface->post.length = 0;
-  interface->post.serial = false;
+  interface->post.serial = true;
   interface->post.value = 0;
+
+  interface->delay.length = 0;
+  interface->delay.serial = true;
 
   interface->data.length = 0;
   interface->data.response = 0;
+  interface->data.serial = true;
 }
 /*----------------------------------------------------------------------------*/
 static void resetMode(struct Spifi *interface)
@@ -331,6 +342,9 @@ static void spifiInterruptHandler(void *object)
   struct Spifi * const interface = object;
   LPC_SPIFI_Type * const reg = interface->base.reg;
 
+  /* Clear pending interrupt flag */
+  reg->STAT = STAT_INTRQ;
+
   if (interface->sync)
   {
     if (interface->status != STATUS_ERROR)
@@ -338,7 +352,7 @@ static void spifiInterruptHandler(void *object)
 
     if (interface->poll)
     {
-      interface->data.response = reg->DATA;
+      interface->data.response = (uint32_t)reg->DATA_B;
       interface->poll = false;
     }
 
@@ -355,6 +369,8 @@ static enum Result spifiInit(void *object, const void *configBase)
 {
   const struct SpifiConfig * const config = configBase;
   assert(config);
+  assert(config->delay <= CTRL_CSHIGH_MAX + 1);
+  assert(config->timeout <= CTRL_TIMEOUT_MAX + 1);
   assert(config->mode == 0 || config->mode == 3);
 
   const struct SpifiBaseConfig baseConfig = {
@@ -381,12 +397,22 @@ static enum Result spifiInit(void *object, const void *configBase)
   interface->blocking = true;
   interface->memmap = true;
   interface->poll = false;
-  resetContext(interface, MODE_SERIAL);
+  resetContext(interface);
 
   LPC_SPIFI_Type * const reg = interface->base.reg;
-  uint32_t control = CTRL_TIMEOUT(0xFFFF) | CTRL_CSHIGH(0xF);
+  uint32_t control = 0;
 
-  // TODO RFCLK, FBCLK
+  if (config->delay)
+    control |= CTRL_CSHIGH(config->delay - 1);
+  else
+    control |= CTRL_CSHIGH(CTRL_CSHIGH_MAX);
+
+  if (config->timeout)
+    control |= CTRL_TIMEOUT(config->timeout - 1);
+  else
+    control |= CTRL_TIMEOUT(CTRL_TIMEOUT_MAX);
+
+  // TODO Configure RFCLK, FBCLK
   if (config->mode == 3)
     control |= CTRL_MODE3;
   else
@@ -492,18 +518,14 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
       return E_OK;
     }
 
-    case IF_SPIM_SERIAL:
-      interface->mode = MODE_SERIAL;
-      return E_OK;
-
     case IF_SPIM_DUAL:
-      interface->mode = MODE_DUAL;
+      reg->CTRL |= CTRL_DUAL;
       return E_OK;
 
     case IF_SPIM_QUAD:
       if (interface->base.wide)
       {
-        interface->mode = MODE_QUAD;
+        reg->CTRL &= ~CTRL_DUAL;
         return E_OK;
       }
       else
@@ -528,7 +550,7 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
       interface->command.length = 0;
       return E_OK;
 
-    case IF_SPIM_COMMAND_DEFAULT:
+    case IF_SPIM_COMMAND_PARALLEL:
       interface->command.serial = false;
       return E_OK;
 
@@ -553,7 +575,7 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
       interface->delay.length = 0;
       return E_OK;
 
-    case IF_SPIM_DELAY_DEFAULT:
+    case IF_SPIM_DELAY_PARALLEL:
       interface->delay.serial = false;
       return E_OK;
 
@@ -575,7 +597,7 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
       interface->address.length = 0;
       return E_OK;
 
-    case IF_SPIM_ADDRESS_DEFAULT:
+    case IF_SPIM_ADDRESS_PARALLEL:
       interface->address.serial = false;
       return E_OK;
 
@@ -592,7 +614,7 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
       interface->post.length = 0;
       return E_OK;
 
-    case IF_SPIM_POST_ADDRESS_DEFAULT:
+    case IF_SPIM_POST_ADDRESS_PARALLEL:
       interface->post.serial = false;
       return E_OK;
 
@@ -617,7 +639,7 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
       interface->data.length = 0;
       return E_OK;
 
-    case IF_SPIM_POLL_BIT:
+    case IF_SPIM_DATA_POLL_BIT:
     {
       const uint8_t value = *(const uint8_t *)data;
 
@@ -630,6 +652,14 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
       else
         return E_VALUE;
     }
+
+    case IF_SPIM_DATA_PARALLEL:
+      interface->data.serial = false;
+      return E_OK;
+
+    case IF_SPIM_DATA_SERIAL:
+      interface->data.serial = true;
+      return E_OK;
 
     default:
       break;
@@ -659,7 +689,10 @@ static size_t spifiRead(void *object, void *buffer, size_t length)
   LPC_SPIFI_Type * const reg = interface->base.reg;
 
   if (!interface->blocking)
+  {
+    assert(length % 4 == 0);
     interface->sync = length == 0;
+  }
 
   executeCommand(interface, false);
 
@@ -674,11 +707,11 @@ static size_t spifiRead(void *object, void *buffer, size_t length)
       size_t left = length;
 
       while (left--)
-        *position++ = reg->DATA;
+        *position++ = reg->DATA_B;
     }
     else
     {
-      dmaAppend(interface->rxDma, buffer, (const void *)reg->DATA, length);
+      dmaAppend(interface->rxDma, buffer, (const void *)&reg->DATA, length / 4);
 
       interface->status = STATUS_RX_BUSY;
       if (dmaEnable(interface->rxDma) != E_OK)
@@ -703,7 +736,10 @@ static size_t spifiWrite(void *object, const void *buffer, size_t length)
   LPC_SPIFI_Type * const reg = interface->base.reg;
 
   if (!interface->blocking)
+  {
+    assert(length % 4 == 0);
     interface->sync = length == 0;
+  }
 
   executeCommand(interface, true);
 
@@ -715,11 +751,11 @@ static size_t spifiWrite(void *object, const void *buffer, size_t length)
       size_t left = length;
 
       while (left--)
-        reg->DATA = *position++;
+        reg->DATA_B = *position++;
     }
     else
     {
-      dmaAppend(interface->txDma, (void *)reg->DATA, buffer, length);
+      dmaAppend(interface->txDma, (void *)&reg->DATA, buffer, length / 4);
 
       interface->status = STATUS_TX_BUSY;
       if (dmaEnable(interface->txDma) != E_OK)

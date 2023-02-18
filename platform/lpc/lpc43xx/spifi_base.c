@@ -21,33 +21,24 @@ const struct EntityClass * const SpifiBase = &(const struct EntityClass){
     .deinit = spifiDeinit
 };
 /*----------------------------------------------------------------------------*/
-const struct PinEntry spifiPins[] = {
+static const struct PinGroupEntry spifiPinGroups[] = {
     {
-        .key = PIN(PORT_3, 3), /* SPIFI_SCK */
+        /*
+         * P3_3 - SPIFI_SCK
+         * P3_4 - SPIFI_SIO3
+         * P3_5 - SPIFI_SIO2
+         * P3_6 - SPIFI_MISO or SPIFI_SIO1
+         * P3_7 - SPIFI_MOSI or SPIFI_SIO0
+         * P3_8 - SPIFI_CS
+         */
+        .begin = PIN(PORT_3, 3),
+        .end = PIN(PORT_3, 8),
         .channel = 0,
         .value = 3
     }, {
-        .key = PIN(PORT_3, 4), /* SPIFI_SIO3 */
-        .channel = 0,
-        .value = 3
-    }, {
-        .key = PIN(PORT_3, 5), /* SPIFI_SIO2 */
-        .channel = 0,
-        .value = 3
-    }, {
-        .key = PIN(PORT_3, 6), /* SPIFI_MISO or SPIFI_SIO1 */
-        .channel = 0,
-        .value = 3
-    }, {
-        .key = PIN(PORT_3, 7), /* SPIFI_MOSI or SPIFI_SIO0 */
-        .channel = 0,
-        .value = 3
-    }, {
-        .key = PIN(PORT_3, 8), /* SPIFI_CS */
-        .channel = 0,
-        .value = 3
-    }, {
-        .key = 0 /* End of pin function association list */
+        /* End of pin function association list */
+        .begin = 0,
+        .end = 0
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -77,14 +68,14 @@ static void configPins(struct SpifiBase *interface,
     if (!pinArray[index])
       continue;
 
-    const struct PinEntry * const pinEntry = pinFind(spifiPins,
+    const struct PinGroupEntry * const group = pinGroupFind(spifiPinGroups,
         pinArray[index], 0);
-    assert(pinEntry);
+    assert(group);
 
     const struct Pin pin = pinInit(pinArray[index]);
 
     pinInput(pin);
-    pinSetFunction(pin, pinEntry->value);
+    pinSetFunction(pin, group->value);
   }
 
   interface->wide = wide;

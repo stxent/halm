@@ -21,8 +21,6 @@ enum SPIMParameter
    * Possible values are 0 to 3. Parameter type is \a uint8_t.
    */
   IF_SPIM_MODE = IF_QSPI_MODE,
-  /** Enable standard 3-wire mode. */
-  IF_SPIM_SERIAL = IF_QSPI_SERIAL,
   /** Enable dual I/O mode. */
   IF_SPIM_DUAL = IF_QSPI_DUAL,
   /** Enable quad I/O mode. */
@@ -42,8 +40,8 @@ enum SPIMParameter
   IF_SPIM_COMMAND,
   /** Disable operation code phase. */
   IF_SPIM_COMMAND_NONE,
-  /** Use default mode for operation code phase. */
-  IF_SPIM_COMMAND_DEFAULT,
+  /** Enable parallel mode for operation code phase. */
+  IF_SPIM_COMMAND_PARALLEL,
   /** Enable serial mode for operation code phase. */
   IF_SPIM_COMMAND_SERIAL,
 
@@ -51,8 +49,8 @@ enum SPIMParameter
   IF_SPIM_DELAY_LENGTH,
   /** Disable dummy-cycles phase. */
   IF_SPIM_DELAY_NONE,
-  /** Use default mode for dummy-cycles phase. */
-  IF_SPIM_DELAY_DEFAULT,
+  /** Enable parallel mode for dummy-cycles phase. */
+  IF_SPIM_DELAY_PARALLEL,
   /** Enable serial mode for dummy-cycles phase. */
   IF_SPIM_DELAY_SERIAL,
 
@@ -62,8 +60,8 @@ enum SPIMParameter
   IF_SPIM_ADDRESS_32,
   /** Disable address field phase. */
   IF_SPIM_ADDRESS_NONE,
-  /** Use default mode for address phase. */
-  IF_SPIM_ADDRESS_DEFAULT,
+  /** Enable parallel mode for address phase. */
+  IF_SPIM_ADDRESS_PARALLEL,
   /** Enable serial mode for address phase. */
   IF_SPIM_ADDRESS_SERIAL,
 
@@ -71,23 +69,27 @@ enum SPIMParameter
   IF_SPIM_POST_ADDRESS_8,
   /** Disable post-address field phase. */
   IF_SPIM_POST_ADDRESS_NONE,
-  /** Use default mode for post-address phase. */
-  IF_SPIM_POST_ADDRESS_DEFAULT,
-  /** Enable serial mode for post-address control bytes. */
+  /** Enable parallel mode for post-address phase. */
+  IF_SPIM_POST_ADDRESS_PARALLEL,
+  /** Enable serial mode for post-address phase. */
   IF_SPIM_POST_ADDRESS_SERIAL,
 
   /** Number of bytes read or written in data phase. */
   IF_SPIM_DATA_LENGTH,
   /** Disable data phase. */
   IF_SPIM_DATA_NONE,
-  /** Command response. Parameter type is \a uint32_t. */
-  IF_SPIM_RESPONSE,
   /**
    * Set an index of a polling bit and enable the poll mode for a next command.
    * Hardware polls the memory until this bit becomes cleared.
    * Parameter type is \a uint8_t.
    */
-  IF_SPIM_POLL_BIT,
+  IF_SPIM_DATA_POLL_BIT,
+  /** Enable parallel mode for data phase. */
+  IF_SPIM_DATA_PARALLEL,
+  /** Enable serial mode for data phase. */
+  IF_SPIM_DATA_SERIAL,
+  /** Command response. Parameter type is \a uint32_t. */
+  IF_SPIM_RESPONSE,
 
   /** End of the list. */
   IF_SPIM_PARAMETER_END
