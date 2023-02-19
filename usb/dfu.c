@@ -235,7 +235,11 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
 
   if (enableTimer)
   {
-    timerSetOverflow(driver->timer, driver->timeout);
+    const uint32_t frequency = timerGetFrequency(driver->timer);
+    const uint64_t timeout = (driver->timeout * (1ULL << 32) / 1000);
+    const uint32_t overflow = (frequency * timeout + ((1ULL << 32) - 1)) >> 32;
+
+    timerSetOverflow(driver->timer, overflow);
     timerEnable(driver->timer);
   }
 }
