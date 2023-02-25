@@ -83,7 +83,7 @@ static enum Result initStepEnableCrc(struct MMCSD *device)
 {
   return executeCommand(device,
       SDIO_COMMAND(CMD59_CRC_ON_OFF, MMCSD_RESPONSE_R1, 0),
-      CRC_ENABLED, 0, true);
+      CMD59_CRC_ENABLED, 0, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepMmcReadOCR(struct MMCSD *device)
@@ -206,12 +206,12 @@ static enum Result initStepReadCondition(struct MMCSD *device)
   uint32_t response;
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD8_SEND_IF_COND, MMCSD_RESPONSE_R7, 0),
-      CONDITION_PATTERN, &response, true);
+      CMD8_CONDITION_PATTERN, &response, true);
 
   if (res == E_OK || res == E_IDLE)
   {
     /* Response should be equal to the command argument */
-    if (response != CONDITION_PATTERN)
+    if (response != CMD8_CONDITION_PATTERN)
       return E_DEVICE;
 
     device->info.cardType = CARD_SD_2_0;
@@ -358,7 +358,8 @@ static enum Result initStepSdSetBusWidth(struct MMCSD *device)
   if (res != E_OK)
     return res;
 
-  const uint8_t busMode = device->mode == SDIO_4BIT ? SD_BUS_WIDTH_4BIT : 0;
+  const uint8_t busMode = device->mode == SDIO_4BIT ?
+      ACMD6_BUS_WIDTH_4BIT : ACMD6_BUS_WIDTH_1BIT;
 
   return executeCommand(device,
       SDIO_COMMAND(ACMD6_SET_BUS_WIDTH, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
@@ -499,6 +500,7 @@ static enum Result identifyCard(struct MMCSD *device)
   /* Send Reset command */
   if ((res = initStepSendReset(device)) != E_OK)
     return res;
+  udelay(CMD0_IDLE_DELAY);
 
   /* Try to initialize as MMC */
   if ((res = initStepMmcReadOCR(device)) != E_OK)
@@ -506,6 +508,7 @@ static enum Result identifyCard(struct MMCSD *device)
     /* Send Reset command */
     if ((res = initStepSendReset(device)) != E_OK)
       return res;
+    udelay(CMD0_IDLE_DELAY);
 
     /* Card is not MMC, try to initialize as SD */
     if ((res = initStepReadCondition(device)) != E_OK)

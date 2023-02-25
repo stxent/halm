@@ -11,6 +11,8 @@
 /*----------------------------------------------------------------------------*/
 #define BLOCK_POW                       9
 #define RATE_ENUMERATION                400000
+/*------------------CMD0------------------------------------------------------*/
+#define CMD0_IDLE_DELAY                 1000
 /*------------------CMD6------------------------------------------------------*/
 #define MMC_BUS_WIDTH_PATTERN           0x03B70000UL
 #define MMC_BUS_WIDTH_1BIT              0x00000000UL
@@ -23,11 +25,12 @@
 #define MMC_HS_TIMING_HS200             0x00000200UL
 #define MMC_HS_TIMING_HS400             0x00000300UL
 /*------------------CMD8------------------------------------------------------*/
-#define CONDITION_PATTERN               0x000001AAUL
+#define CMD8_CONDITION_PATTERN          0x000001AAUL
 /*------------------CMD59-----------------------------------------------------*/
-#define CRC_ENABLED                     0x00000001UL
+#define CMD59_CRC_ENABLED               0x00000001UL
 /*------------------ACMD6-----------------------------------------------------*/
-#define SD_BUS_WIDTH_4BIT               0x00000002UL
+#define ACMD6_BUS_WIDTH_1BIT            0x00000000UL
+#define ACMD6_BUS_WIDTH_4BIT            0x00000002UL
 /*------------------OCR register----------------------------------------------*/
 /* Voltage range from 2.7V to 3.6V */
 #define OCR_VOLTAGE_MASK_2V7_3V6        0x00FF8000UL
