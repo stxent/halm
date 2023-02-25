@@ -58,5 +58,13 @@
       {"offset": "0x81000", "name": "I2C1", "type": "NM_I2C_Type"},
       {"offset": "0xD1000", "name": "USCI1", "type": "NM_USCI_Type"}
     ]
+  },
+  {
+    "address": "0x00300000",
+    "name": "CONFIG_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "CONFIG", "type": "NM_CONFIG_Type"}
+    ]
   }
 ]

@@ -7,6 +7,7 @@
 #include <halm/delay.h>
 #include <halm/platform/numicro/clocking.h>
 #include <halm/platform/numicro/m48x/clocking_defs.h>
+#include <halm/platform/numicro/m48x/config_defs.h>
 #include <halm/platform/numicro/system.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
@@ -854,11 +855,11 @@ uint32_t ticksPerSecond = TICK_RATE(HIRC_FREQUENCY, 3);
 /*----------------------------------------------------------------------------*/
 static uint32_t calcExtCrystalGain(uint32_t frequency)
 {
-  if (frequency <= 8000000)
+  if (frequency < 8000000)
     return HXTGAIN_8MHZ;
-  else if (frequency <= 12000000)
+  else if (frequency < 12000000)
     return HXTGAIN_8MHZ_12MHZ;
-  else if (frequency <= 16000000)
+  else if (frequency < 16000000)
     return HXTGAIN_12MHZ_16MHZ;
   else
     return HXTGAIN_16MHZ_24MHZ;
@@ -1111,16 +1112,16 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  const uint32_t gain = calcExtCrystalGain(config->frequency);
-  uint32_t pwrctl = NM_CLK->PWRCTL & ~PWRCTL_HXTGAIN_MASK;
-
   assert(config->frequency >= 4000000 && config->frequency <= 24000000);
 
-  // TODO Detect bypass mode
-  configExtOscPins(false);
+  const uint32_t gain = calcExtCrystalGain(config->frequency);
+  const bool bypass = (NM_CONFIG->CONFIG[0] & CONFIG0_CFGXT1) == 0;
+  uint32_t pwrctl = NM_CLK->PWRCTL & ~PWRCTL_HXTGAIN_MASK;
+
+  configExtOscPins(bypass);
 
   extFrequency = config->frequency;
-  pwrctl |= PWRCTL_HXTGAIN(gain) | PWRCTL_HXTEN;
+  pwrctl |= PWRCTL_HXTEN | PWRCTL_HXTSELTYP | PWRCTL_HXTGAIN(gain);
 
   sysUnlockReg();
   NM_CLK->PWRCTL = pwrctl;
@@ -1377,9 +1378,24 @@ static enum Result extendedBranchEnable(const void *clockBase,
   if (!checkClockSource(config->source, clock->group))
     return E_VALUE;
 
+  if (clock->branch == BRANCH_HCLK)
+  {
+    sysPowerLevelReset();
+    sysFlashLatencyReset();
+  }
+
   setMaxClockDivider(clock->divider);
   selectClockSource(clock->branch, config->source, clock->group);
   setClockDivider(clock->divider, divisor);
+
+  if (clock->branch == BRANCH_HCLK)
+  {
+    uint32_t frequency = getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK);
+
+    frequency = frequency / (divisor + 1);
+    sysFlashLatencyUpdate(frequency);
+    sysPowerLevelUpdate(frequency);
+  }
 
   return E_OK;
 }

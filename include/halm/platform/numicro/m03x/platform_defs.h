@@ -99,6 +99,11 @@ typedef struct
   __ne__ uint32_t RESERVED9[14];
   __rw__ uint32_t TESTCLK; /* Test Clock control register */
 } NM_CLK_Type;
+/*------------------User Configuration Block----------------------------------*/
+typedef struct
+{
+  __ro__ uint32_t CONFIG[3];
+} NM_CONFIG_Type;
 /*------------------CRC Controller--------------------------------------------*/
 typedef struct
 {
@@ -689,6 +694,11 @@ typedef struct
   NM_USCI_Type USCI1;
 } APB2_DOMAIN_Type;
 
+typedef struct
+{
+  NM_CONFIG_Type CONFIG;
+} CONFIG_DOMAIN_Type;
+
 typedef union
 {
   AHB_DOMAIN_Type AHB_DOMAIN;
@@ -697,6 +707,7 @@ typedef union
 } AHB_APB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
 extern AHB_APB_DOMAIN_Type AHB_APB_DOMAIN;
+extern CONFIG_DOMAIN_Type CONFIG_DOMAIN;
 /*----------------------------------------------------------------------------*/
 #define NM_SYS        (&AHB_APB_DOMAIN.AHB_DOMAIN.SYS)
 #define NM_CLK        (&AHB_APB_DOMAIN.AHB_DOMAIN.CLK)
@@ -746,5 +757,7 @@ extern AHB_APB_DOMAIN_Type AHB_APB_DOMAIN;
 #define NM_UART7      (&AHB_APB_DOMAIN.APB2_DOMAIN.UART7)
 #define NM_I2C1       (&AHB_APB_DOMAIN.APB2_DOMAIN.I2C1)
 #define NM_USCI1      (&AHB_APB_DOMAIN.APB2_DOMAIN.USCI1)
+
+#define NM_CONFIG     (&CONFIG_DOMAIN.CONFIG)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_M03X_PLATFORM_DEFS_H_ */

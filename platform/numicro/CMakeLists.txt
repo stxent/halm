@@ -96,5 +96,10 @@ if(${CONFIG_PLATFORM_USB})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
 endif()
 
+if(${CONFIG_PLATFORM_USB_HS})
+    list(APPEND SOURCE_FILES "hsusb_device.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/hsusb_base.c")
+endif()
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_SYSTEM_SOC}/CMakeLists.txt" OPTIONAL)
 add_library(halm_platform OBJECT ${SOURCE_FILES})

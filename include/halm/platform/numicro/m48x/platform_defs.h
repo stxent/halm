@@ -210,6 +210,11 @@ typedef struct
   __rw__ uint32_t PDSWKCTL; /* GPD low-power control register */
   __rw__ uint32_t IOPDCTL; /* GPIO low-power control register */
 } NM_CLK_Type;
+/*------------------User Configuration Block----------------------------------*/
+typedef struct
+{
+  __ro__ uint32_t CONFIG[4];
+} NM_CONFIG_Type;
 /*------------------Cyclic Redundancy Check Controller------------------------*/
 typedef struct
 {
@@ -330,7 +335,7 @@ typedef struct
   __rw__ uint32_t ECC_DADDR;      /* ECC DMA Destination Address register */
   __rw__ uint32_t ECC_STARTREG;   /* ECC Starting Address of Updated registers */
   __rw__ uint32_t ECC_WORDCNT;    /* ECC DMA Word Count */
-} NM_CRPT_Type;
+} NM_CRYPTO_Type;
 /*------------------Digital to Analog Converter-------------------------------*/
 typedef struct
 {
@@ -625,7 +630,17 @@ typedef struct
 
 typedef struct
 {
-  __rw__ uint32_t EPDAT; /* Data register */
+  union
+  {
+    __rw__ uint32_t EPDAT; /* Data register */
+
+    struct
+    {
+      __rw__ uint8_t EPDAT_B;
+      __ne__ uint8_t RESERVED0[3];
+    };
+  };
+
   __rw__ uint32_t EPINTSTS; /* Interrupt Status register */
   __rw__ uint32_t EPINTEN; /* Interrupt Enable register */
   __ro__ uint32_t EPDATCNT; /* Data Available Count register */
@@ -757,6 +772,10 @@ typedef struct
 {
   __rw__ uint32_t NMIEN; /* Source Interrupt Enable register */
   __ro__ uint32_t NMISTS; /* Source Interrupt Status register */
+  __ne__ uint32_t RESERVED0[62];
+
+  /* Offset 0x100 */
+  __rw__ uint32_t AHBMCTL; /* AHB Bus Matrix Priority Control register */
 } NM_NMI_Type;
 /*------------------Operational Amplifier-------------------------------------*/
 typedef struct
@@ -1024,14 +1043,10 @@ typedef struct
   __rw__ uint32_t REGLCTL; /* Register Lock Control register */
   __ne__ uint32_t RESERVED7[58];
   __rw__ uint32_t PORDISAN; /* Analog POR Disable Control register */
-
-  // TODO Fix layout
-  // __ne__ uint32_t RESERVED8;
-  // __ro__ uint32_t CSERVER; /* Chip Series Version register */
-  // __rw__ uint32_t PLCTL; /* Power Level Control register */
-  // __ro__ uint32_t PLSTS; /* Power Level Status register */
-  // __ne__ uint32_t RESERVED9[128];
-  // __rw__ uint32_t AHBMCTL; /* AHB Bus Matrix Priority Control register */
+  __ne__ uint32_t RESERVED8;
+  __ro__ uint32_t CSERVER; /* Chip Series Version register */
+  __rw__ uint32_t PLCTL; /* Power Level Control register */
+  __ro__ uint32_t PLSTS; /* Power Level Status register */
 } NM_SYS_Type;
 /*------------------Timer Controller------------------------------------------*/
 typedef struct
@@ -1216,7 +1231,6 @@ typedef struct
 typedef struct
 {
   NM_SYS_Type SYS;
-  __ne__ uint8_t RESERVED0[0x200 - sizeof(NM_SYS_Type)];
   NM_CLK_Type CLK;
   __ne__ uint8_t RESERVED1[0x100 - sizeof(NM_CLK_Type)];
   NM_NMI_Type NMI;
@@ -1360,9 +1374,14 @@ typedef struct
 
 typedef struct
 {
+  NM_CONFIG_Type CONFIG;
+} CONFIG_DOMAIN_Type;
+
+typedef struct
+{
   __ne__ uint8_t RESERVED0[0x80000];
-  NM_CRPT_Type CRPT;
-} CRPT_DOMAIN_Type;
+  NM_CRYPTO_Type CRYPTO;
+} CRYPTO_DOMAIN_Type;
 
 typedef union
 {
@@ -1372,7 +1391,8 @@ typedef union
 } AHB_APB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
 extern AHB_APB_DOMAIN_Type AHB_APB_DOMAIN;
-extern CRPT_DOMAIN_Type CRPT_DOMAIN;
+extern CONFIG_DOMAIN_Type CONFIG_DOMAIN;
+extern CRYPTO_DOMAIN_Type CRYPTO_DOMAIN;
 /*----------------------------------------------------------------------------*/
 #define NM_SYS        (&AHB_APB_DOMAIN.AHB_DOMAIN.SYS)
 #define NM_CLK        (&AHB_APB_DOMAIN.AHB_DOMAIN.CLK)
@@ -1450,5 +1470,8 @@ extern CRPT_DOMAIN_Type CRPT_DOMAIN;
 #define NM_QEI0       (&AHB_APB_DOMAIN.APB2_DOMAIN.QEI0)
 #define NM_ECAP0      (&AHB_APB_DOMAIN.APB2_DOMAIN.ECAP0)
 #define NM_USCI0      (&AHB_APB_DOMAIN.APB2_DOMAIN.USCI0)
+
+#define NM_CONFIG     (&CONFIG_DOMAIN.CONFIG)
+#define NM_CRYPTO     (&CRYPTO_DOMAIN.CRYPTO)
 /*----------------------------------------------------------------------------*/
 #endif // HALM_PLATFORM_NUMICRO_M48X_PLATFORM_DEFS_H_

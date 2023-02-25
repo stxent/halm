@@ -4,10 +4,12 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/numicro/m48x/system_defs.h>
 #include <halm/platform/numicro/system.h>
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcClockReg(enum SysClockBranch);
 static volatile uint32_t *calcResetReg(enum SysBlockReset);
+static unsigned int calcFlashLatency(uint32_t);
 static inline bool isClockProtected(enum SysClockBranch);
 static inline bool isResetProtected(enum SysBlockReset);
 /*----------------------------------------------------------------------------*/
@@ -29,6 +31,27 @@ static volatile uint32_t *calcResetReg(enum SysBlockReset block)
     return &NM_SYS->IPRST1;
   else
     return &NM_SYS->IPRST2;
+}
+/*----------------------------------------------------------------------------*/
+static unsigned int calcFlashLatency(uint32_t frequency)
+{
+  /* CYCLE value of 1 is not used */
+  if (frequency < 27000000)
+    return 0;
+  else if (frequency <= 54000000)
+    return 2;
+  else if (frequency <= 81000000)
+    return 3;
+  else if (frequency <= 108000000)
+    return 4;
+  else if (frequency <= 135000000)
+    return 5;
+  else if (frequency <= 162000000)
+    return 6;
+  else if (frequency <= 192000000)
+    return 7;
+  else
+    return 8;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool isClockProtected(enum SysClockBranch branch)
@@ -72,6 +95,51 @@ void sysClockEnable(enum SysClockBranch branch)
 bool sysClockStatus(enum SysClockBranch branch)
 {
   return (*calcClockReg(branch) & (1UL << (branch & 0x1F))) != 0;
+}
+/*----------------------------------------------------------------------------*/
+void sysFlashLatencyReset(void)
+{
+  sysUnlockReg();
+  NM_FMC->CYCCTL = (NM_FMC->CYCCTL & ~CYCCTL_CYCLE_MASK)
+      | CYCCTL_CYCLE(CYCCTL_CYCLE_MAX);
+  sysLockReg();
+}
+/*----------------------------------------------------------------------------*/
+void sysFlashLatencyUpdate(uint32_t frequency)
+{
+  const unsigned int latency = calcFlashLatency(frequency);
+
+  sysUnlockReg();
+  NM_FMC->CYCCTL = (NM_FMC->CYCCTL & ~CYCCTL_CYCLE_MASK)
+      | CYCCTL_CYCLE(latency);
+  sysLockReg();
+}
+/*----------------------------------------------------------------------------*/
+void sysPowerLevelReset(void)
+{
+  sysUnlockReg();
+  NM_SYS->PLCTL = (NM_SYS->PLCTL & ~PLCTL_PLSEL_MASK) | PLCTL_PLSEL(PLSEL_PL0);
+  sysLockReg();
+
+  /* Wait until core voltage change is completed */
+  while (NM_SYS->PLSTS & PLSTS_PLCBUSY);
+}
+/*----------------------------------------------------------------------------*/
+void sysPowerLevelUpdate(uint32_t frequency)
+{
+  uint32_t value = NM_SYS->PLCTL & ~PLCTL_PLSEL_MASK;
+
+  if (frequency <= 160000000)
+    value |= PLCTL_PLSEL(PLSEL_PL1);
+  else
+    value |= PLCTL_PLSEL(PLSEL_PL0);
+
+  sysUnlockReg();
+  NM_SYS->PLCTL = value;
+  sysLockReg();
+
+  /* Wait until core voltage change is completed */
+  while (NM_SYS->PLSTS & PLSTS_PLCBUSY);
 }
 /*----------------------------------------------------------------------------*/
 void sysResetBlock(enum SysBlockReset block)

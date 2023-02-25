@@ -5,7 +5,7 @@
     "blocks":
     [
       {"offset": "0x00000", "name": "SYS", "type": "NM_SYS_Type"},
-      {"offset": "0x00200", "name": "CLK", "type": "NM_CLK_Type"},
+      {"offset": "0x00200", "name": "CLK", "type": "NM_CLK_Type", "aligned": true},
       {"offset": "0x00300", "name": "NMI", "type": "NM_NMI_Type"},
       {"offset": "0x04000", "name": "GPIO", "type": "NM_GPIO_Type", "array": 8},
       {"offset": "0x04440", "name": "GPIO_DBCTL", "type": "NM_GPIO_DBCTL_Type"},
@@ -88,11 +88,19 @@
     ]
   },
   {
-    "address": "0x50000000",
-    "name": "CRPT_DOMAIN",
+    "address": "0x00300000",
+    "name": "CONFIG_DOMAIN",
     "blocks":
     [
-      {"offset": "0x80000", "name": "CRPT", "type": "NM_CRPT_Type"}
+      {"offset": "0x00000", "name": "CONFIG", "type": "NM_CONFIG_Type"}
+    ]
+  },
+  {
+    "address": "0x50000000",
+    "name": "CRYPTO_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x80000", "name": "CRYPTO", "type": "NM_CRYPTO_Type"}
     ]
   }
 ]

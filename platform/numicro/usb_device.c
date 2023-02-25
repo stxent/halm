@@ -94,15 +94,16 @@ const struct UsbDeviceClass * const UsbDevice =
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
-static inline void epCopyData(uint32_t *, const uint32_t *, size_t);
 static inline void epEnqueueRequest(struct UsbEndpoint *,
     const struct UsbRequest *);
 static inline NM_USBD_EP_Type *epGetChannel(struct UsbEndpoint *);
 static void epHandlePacket(struct UsbEndpoint *);
 static void epHandleSetupPacket(struct UsbEndpoint *);
 static bool epReadData(struct UsbEndpoint *, uint8_t *, size_t, size_t *);
+static void epReadPacketMemory(uint32_t *, const uint32_t *, size_t);
 static inline void epSetDataType(struct UsbEndpoint *, uint8_t);
 static void epWriteData(struct UsbEndpoint *, const uint8_t *, size_t);
+static void epWritePacketMemory(uint32_t *, const uint32_t *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result epInit(void *, const void *);
 static void epDeinit(void *);
@@ -207,7 +208,6 @@ static void resetDevice(struct UsbDevice *device)
   device->position = STBUFSEG_SIZE;
   reg->STBUFSEG = 0;
 
-  device->scheduledAddress = 0;
   devSetAddress(device, 0);
 }
 /*----------------------------------------------------------------------------*/
@@ -411,37 +411,6 @@ static void devStringErase(void *object, struct UsbString string)
   usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
-static inline void epCopyData(uint32_t *destination, const uint32_t *source,
-    size_t length)
-{
-  const uint32_t * const end = destination + (length >> 2);
-
-  while (destination != end)
-    *destination++ = *source++;
-  length &= 3;
-
-  if (length)
-  {
-    const uint8_t * const buffer = (const uint8_t *)source;
-    uint32_t word = 0;
-
-    switch (length)
-    {
-      case 3:
-        word = buffer[2] << 16;
-        /* Falls through */
-      case 2:
-        word |= buffer[1] << 8;
-        /* Falls through */
-      case 1:
-        word |= buffer[0];
-        break;
-    }
-
-    *destination = word;
-  }
-}
-/*----------------------------------------------------------------------------*/
 static inline void epEnqueueRequest(struct UsbEndpoint *ep,
     const struct UsbRequest *request)
 {
@@ -522,7 +491,8 @@ static void epHandleSetupPacket(struct UsbEndpoint *ep)
 
     pointerQueuePopFront(&ep->requests);
 
-    epCopyData(req->buffer, (const void *)(reg->SRAM + offset), STBUFSEG_SIZE);
+    epReadPacketMemory(req->buffer, (const void *)(reg->SRAM + offset),
+        STBUFSEG_SIZE);
     req->length = STBUFSEG_SIZE;
     req->callback(req->argument, req, USB_REQUEST_SETUP);
   }
@@ -539,10 +509,40 @@ static bool epReadData(struct UsbEndpoint *ep, uint8_t *buffer,
   if (available > length)
     return false;
 
-  epCopyData((uint32_t *)buffer, (const void *)(reg->SRAM + offset), available);
+  epReadPacketMemory((uint32_t *)buffer, (const void *)(reg->SRAM + offset),
+      available);
   *read = available;
 
   return true;
+}
+/*----------------------------------------------------------------------------*/
+static void epReadPacketMemory(uint32_t *destination, const uint32_t *source,
+    size_t length)
+{
+  const uint32_t * const end = destination + (length >> 2);
+
+  while (destination != end)
+    *destination++ = *source++;
+  length &= 3;
+
+  if (length)
+  {
+    uint8_t * const buffer = (uint8_t *)destination;
+    const uint32_t word = *source;
+
+    switch (length)
+    {
+      case 3:
+        buffer[2] = word >> 16;
+        /* Falls through */
+      case 2:
+        buffer[1] = word >> 8;
+        /* Falls through */
+      case 1:
+        buffer[0] = word;
+        break;
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static inline void epSetDataType(struct UsbEndpoint *ep, uint8_t type)
@@ -564,8 +564,40 @@ static void epWriteData(struct UsbEndpoint *ep, const uint8_t *buffer,
   NM_USBD_EP_Type * const channel = &reg->EP[ep->index];
   const uint32_t offset = channel->BUFSEG & BUFSEG_ADDRESS_MASK;
 
-  epCopyData((void *)(reg->SRAM + offset), (const uint32_t *)buffer, length);
+  epWritePacketMemory((void *)(reg->SRAM + offset), (const uint32_t *)buffer,
+      length);
   channel->MXPLD = length;
+}
+/*----------------------------------------------------------------------------*/
+static void epWritePacketMemory(uint32_t *destination, const uint32_t *source,
+    size_t length)
+{
+  const uint32_t * const end = source + (length >> 2);
+
+  while (source != end)
+    *destination++ = *source++;
+  length &= 3;
+
+  if (length)
+  {
+    const uint8_t * const buffer = (const uint8_t *)source;
+    uint32_t word = 0;
+
+    switch (length)
+    {
+      case 3:
+        word = buffer[2] << 16;
+        /* Falls through */
+      case 2:
+        word |= buffer[1] << 8;
+        /* Falls through */
+      case 1:
+        word |= buffer[0];
+        break;
+    }
+
+    *destination = word;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result epInit(void *object, const void *configBase)

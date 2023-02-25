@@ -7,6 +7,7 @@
 #include <halm/delay.h>
 #include <halm/platform/numicro/clocking.h>
 #include <halm/platform/numicro/m03x/clocking_defs.h>
+#include <halm/platform/numicro/m03x/config_defs.h>
 #include <halm/platform/numicro/system.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
@@ -640,15 +641,15 @@ uint32_t ticksPerSecond = TICK_RATE(HIRC_FREQUENCY, 3);
 /*----------------------------------------------------------------------------*/
 static uint32_t calcExtCrystalGain(uint32_t frequency)
 {
-  if (frequency <= 4000000)
+  if (frequency < 4000000)
     return HXTGAIN_4MHZ;
-  else if (frequency <= 8000000)
+  else if (frequency < 8000000)
     return HXTGAIN_4MHZ_8MHZ;
-  else if (frequency <= 12000000)
+  else if (frequency < 12000000)
     return HXTGAIN_8MHZ_12MHZ;
-  else if (frequency <= 16000000)
+  else if (frequency < 16000000)
     return HXTGAIN_12MHZ_16MHZ;
-  else if (frequency <= 24000000)
+  else if (frequency < 24000000)
     return HXTGAIN_16MHZ_24MHZ;
   else
     return HXTGAIN_24MHZ_32MHZ;
@@ -891,13 +892,13 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  const uint32_t gain = calcExtCrystalGain(config->frequency);
-  uint32_t pwrctl = NM_CLK->PWRCTL & ~PWRCTL_HXTGAIN_MASK;
-
   assert(config->frequency >= 4000000 && config->frequency <= 32000000);
 
-  // TODO Detect bypass mode
-  configExtOscPins(false);
+  const uint32_t gain = calcExtCrystalGain(config->frequency);
+  const bool bypass = (NM_CONFIG->CONFIG[0] & CONFIG0_CFGXT1) == 0;
+  uint32_t pwrctl = NM_CLK->PWRCTL & ~PWRCTL_HXTGAIN_MASK;
+
+  configExtOscPins(bypass);
 
   extFrequency = config->frequency;
   pwrctl |= PWRCTL_HXTGAIN(gain) | PWRCTL_HXTEN;

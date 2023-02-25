@@ -164,6 +164,10 @@ BEGIN_DECLS
 void sysClockDisable(enum SysClockBranch);
 void sysClockEnable(enum SysClockBranch);
 bool sysClockStatus(enum SysClockBranch);
+void sysFlashLatencyReset(void);
+void sysFlashLatencyUpdate(uint32_t);
+void sysPowerLevelReset(void);
+void sysPowerLevelUpdate(uint32_t);
 void sysResetBlock(enum SysBlockReset);
 
 void sysLockReg(void);

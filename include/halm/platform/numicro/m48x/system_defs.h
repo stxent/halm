@@ -11,6 +11,48 @@
 /*------------------Multiple Function Control registers-----------------------*/
 #define MFP_FUNCTION_MASK(pin)          BIT_FIELD(MASK(4), (pin) * 4)
 #define MFP_FUNCTION(value, pin)        BIT_FIELD((value), (pin) * 4)
+/*------------------Flash Access Cycle Control register-----------------------*/
+#define CYCCTL_CYCLE_MAX                8
+#define CYCCTL_CYCLE_MASK               BIT_FIELD(MASK(4), 0)
+#define CYCCTL_CYCLE(value)             BIT_FIELD((value), 0)
+#define CYCCTL_CYCLE_VALUE(reg)         FIELD_VALUE((reg), CYCCTL_CYCLE_MASK, 0)
+/*------------------Power Level Control register------------------------------*/
+enum
+{
+  /* Turbo mode */
+  PLSEL_PL0 = 0,
+  /* Normal mode */
+  PLSEL_PL1 = 1
+};
+
+#define PLCTL_PLSEL_MASK                BIT_FIELD(MASK(2), 0)
+#define PLCTL_PLSEL(value)              BIT_FIELD((value), 0)
+#define PLCTL_PLSEL_VALUE(reg)          FIELD_VALUE((reg), PLCTL_PLSEL_MASK, 0)
+
+#define PLCTL_LVSSTEP_MASK              BIT_FIELD(MASK(6), 16)
+#define PLCTL_LVSSTEP(value)            BIT_FIELD((value), 16)
+#define PLCTL_LVSSTEP_VALUE(reg) \
+    FIELD_VALUE((reg), PLCTL_LVSSTEP_MASK, 16)
+
+#define PLCTL_LVSPRD_MASK               BIT_FIELD(MASK(8), 24)
+#define PLCTL_LVSPRD(value)             BIT_FIELD((value), 24)
+#define PLCTL_LVSPRD_VALUE(reg) \
+    FIELD_VALUE((reg), PLCTL_LVSPRD_MASK, 24)
+/*------------------Power Level Status register-------------------------------*/
+enum
+{
+  /* Turbo mode */
+  PLSTATUS_PL0 = 0,
+  /* Normal mode */
+  PLSTATUS_PL1 = 1
+};
+
+#define PLSTS_PLCBUSY                   BIT(0)
+
+#define PLCTL_PLSTATUS_MASK             BIT_FIELD(MASK(2), 8)
+#define PLCTL_PLSTATUS(value)           BIT_FIELD((value), 8)
+#define PLCTL_PLSTATUS_VALUE(reg) \
+    FIELD_VALUE((reg), PLCTL_PLSTATUS_MASK, 8)
 /*------------------USB PHY control register----------------------------------*/
 enum
 {
