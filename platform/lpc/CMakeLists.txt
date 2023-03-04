@@ -246,6 +246,10 @@ if(CONFIG_PLATFORM_LPC_WDT)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/wdt_base.c")
 endif()
 
+if(CONFIG_PLATFORM_LPC_WWDT)
+    list(APPEND SOURCE_FILES "wwdt.c")
+endif()
+
 if(CONFIG_PLATFORM_USB)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_device.c")

@@ -27,10 +27,10 @@ struct GpTimerConfig
   {
     /** Optional: timer interrupt enables ADC. */
     bool adc;
-    /** Optional: timer interrupt enables BPWM. */
-    bool bpwm;
+    /** Optional: timer interrupt enables DAC. */
+    bool dac;
     /** Optional: timer interrupt enables PDMA. */
-    bool pdma;
+    bool dma;
     /** Optional: timer interrupt enables PWM. */
     bool pwm;
     /** Optional: timer interrupt enables wake-up from Idle and Power-down. */

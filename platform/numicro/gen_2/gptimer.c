@@ -1,0 +1,274 @@
+/*
+ * gptimer.c
+ * Copyright (C) 2023 xent
+ * Project is distributed under the terms of the MIT License
+ */
+
+#include <halm/platform/numicro/gptimer.h>
+#include <halm/platform/numicro/gptimer_defs.h>
+#include <halm/platform/platform_defs.h>
+#include <halm/pm.h>
+#include <assert.h>
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *);
+static void setTimerFrequency(struct GpTimer *, uint32_t);
+
+#ifdef CONFIG_PLATFORM_NUMICRO_GPTIMER_PM
+static void powerStateHandler(void *, enum PmState);
+#endif
+/*----------------------------------------------------------------------------*/
+static enum Result tmrInit(void *, const void *);
+static void tmrEnable(void *);
+static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
+static void tmrSetCallback(void *, void (*)(void *), void *);
+static uint32_t tmrGetFrequency(const void *);
+static void tmrSetFrequency(void *, uint32_t);
+static uint32_t tmrGetOverflow(const void *);
+static void tmrSetOverflow(void *, uint32_t);
+static uint32_t tmrGetValue(const void *);
+static void tmrSetValue(void *, uint32_t);
+
+#ifndef CONFIG_PLATFORM_NUMICRO_GPTIMER_NO_DEINIT
+static void tmrDeinit(void *);
+#else
+#define tmrDeinit deletedDestructorTrap
+#endif
+/*----------------------------------------------------------------------------*/
+const struct TimerClass * const GpTimer = &(const struct TimerClass){
+    .size = sizeof(struct GpTimer),
+    .init = tmrInit,
+    .deinit = tmrDeinit,
+
+    .enable = tmrEnable,
+    .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
+    .setCallback = tmrSetCallback,
+    .getFrequency = tmrGetFrequency,
+    .setFrequency = tmrSetFrequency,
+    .getOverflow = tmrGetOverflow,
+    .setOverflow = tmrSetOverflow,
+    .getValue = tmrGetValue,
+    .setValue = tmrSetValue
+};
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct GpTimer * const timer = object;
+  NM_TIMER_Type * const reg = timer->base.reg;
+
+  /* Clear all pending interrupts */
+  reg->INTSTS = INTSTS_TIF | INTSTS_TWKF;
+
+  timer->callback(timer->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_NUMICRO_GPTIMER_PM
+static void powerStateHandler(void *object, enum PmState state)
+{
+  if (state == PM_ACTIVE)
+  {
+    struct GpTimer * const timer = object;
+    setTimerFrequency(timer, timer->frequency);
+  }
+}
+#endif
+/*----------------------------------------------------------------------------*/
+static void setTimerFrequency(struct GpTimer *timer, uint32_t frequency)
+{
+  NM_TIMER_Type * const reg = timer->base.reg;
+  uint32_t divisor;
+
+  if (frequency)
+  {
+    const uint32_t apbClock = gpTimerGetClock(&timer->base);
+    assert(frequency <= apbClock);
+
+    divisor = apbClock / frequency - 1;
+    assert(divisor <= MASK(CTL_PSC_WIDTH));
+  }
+  else
+    divisor = 0;
+
+  reg->CTL = (reg->CTL & ~CTL_PSC_MASK) | CTL_PSC(divisor);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result tmrInit(void *object, const void *configBase)
+{
+  const struct GpTimerConfig * const config = configBase;
+  assert(config);
+
+  const struct GpTimerBaseConfig baseConfig = {
+      .channel = config->channel
+  };
+  struct GpTimer * const timer = object;
+  enum Result res;
+
+  /* Call base class constructor */
+  if ((res = GpTimerBase->init(timer, &baseConfig)) != E_OK)
+    return res;
+
+  timer->base.handler = interruptHandler;
+  timer->callback = 0;
+
+  /* Initialize peripheral block */
+  NM_TIMER_Type * const reg = timer->base.reg;
+  uint32_t trgctl = 0;
+
+  if (config->trigger.adc)
+    trgctl |= TRGCTL_TRGEADC;
+  if (config->trigger.dac)
+    trgctl |= TRGCTL_TRGDAC;
+  if (config->trigger.dma)
+    trgctl |= TRGCTL_TRGPDMA;
+  if (config->trigger.pwm)
+    trgctl |= TRGCTL_TRGPWM;
+
+  reg->CTL = 0;
+  while (reg->CTL & CTL_ACTSTS);
+
+  reg->CTL = CTL_OPMODE(OPMODE_PERIODIC)
+      | (config->trigger.wakeup ? CTL_WKEN : 0);
+  reg->TRGCTL = trgctl;
+  reg->CMP = CMP_CMPDAT_MASK;
+  reg->EXTCTL = 0;
+  reg->INTSTS = INTSTS_TIF | INTSTS_TWKF;
+  reg->EINTSTS = EINTSTS_CAPIF;
+
+  timer->frequency = config->frequency;
+  setTimerFrequency(timer, timer->frequency);
+
+#ifdef CONFIG_PLATFORM_NUMICRO_GPTIMER_PM
+  if ((res = pmRegister(powerStateHandler, timer)) != E_OK)
+    return res;
+#endif
+
+  irqSetPriority(timer->base.irq, config->priority);
+  irqEnable(timer->base.irq);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NUMICRO_GPTIMER_NO_DEINIT
+static void tmrDeinit(void *object)
+{
+  struct GpTimer * const timer = object;
+  NM_TIMER_Type * const reg = timer->base.reg;
+
+  irqDisable(timer->base.irq);
+  reg->CTL &= ~CTL_CNTEN;
+
+#ifdef CONFIG_PLATFORM_NUMICRO_GPTIMER_PM
+  pmUnregister(timer);
+#endif
+
+  GpTimerBase->deinit(timer);
+}
+#endif
+/*----------------------------------------------------------------------------*/
+static void tmrEnable(void *object)
+{
+  struct GpTimer * const timer = object;
+  NM_TIMER_Type * const reg = timer->base.reg;
+
+  /* Clear pending interrupt flags */
+  reg->INTSTS = INTSTS_TIF | INTSTS_TWKF;
+  /* Start the timer, operation needs 2 * TMR_CLK period to complete */
+  reg->CTL |= CTL_CNTEN;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrDisable(void *object)
+{
+  struct GpTimer * const timer = object;
+  NM_TIMER_Type * const reg = timer->base.reg;
+
+  /* Stop the timer, operation needs 2 * TMR_CLK period to complete */
+  reg->CTL &= ~CTL_CNTEN;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct GpTimer * const timer = object;
+  NM_TIMER_Type * const reg = timer->base.reg;
+  uint32_t ctl = reg->CTL & ~CTL_OPMODE_MASK;
+
+  if (state)
+    ctl |= CTL_OPMODE(OPMODE_ONE_SHOT);
+  else
+    ctl |= CTL_OPMODE(OPMODE_PERIODIC);
+
+  reg->CTL = ctl;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct GpTimer * const timer = object;
+  NM_TIMER_Type * const reg = timer->base.reg;
+
+  timer->callbackArgument = argument;
+  timer->callback = callback;
+
+  /* Clear pending interrupt flags */
+  reg->INTSTS = INTSTS_TIF | INTSTS_TWKF;
+
+  if (callback)
+    reg->CTL |= CTL_INTEN;
+  else
+    reg->CTL &= ~CTL_INTEN;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t tmrGetFrequency(const void *object)
+{
+  const struct GpTimer * const timer = object;
+  const NM_TIMER_Type * const reg = timer->base.reg;
+  const uint32_t apbClock = gpTimerGetClock(&timer->base);
+
+  return apbClock / (CTL_PSC_VALUE(reg->CTL) + 1);
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetFrequency(void *object, uint32_t frequency)
+{
+  struct GpTimer * const timer = object;
+
+  timer->frequency = frequency;
+  setTimerFrequency(timer, timer->frequency);
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t tmrGetOverflow(const void *object)
+{
+  const struct GpTimer * const timer = object;
+  const NM_TIMER_Type * const reg = timer->base.reg;
+
+  return reg->CMP;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetOverflow(void *object, uint32_t overflow)
+{
+  struct GpTimer * const timer = object;
+  NM_TIMER_Type * const reg = timer->base.reg;
+
+  assert(overflow > 1 && overflow <= CMP_CMPDAT_MASK);
+  reg->CMP = overflow;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t tmrGetValue(const void *object)
+{
+  const struct GpTimer * const timer = object;
+  const NM_TIMER_Type * const reg = timer->base.reg;
+
+  return reg->CNT;
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetValue(void *object, uint32_t value)
+{
+  struct GpTimer * const timer = object;
+  NM_TIMER_Type * const reg = timer->base.reg;
+
+  /* Data register is read-only, writing 0 is implemented using reset */
+  assert(value == 0);
+  (void)value;
+
+  reg->CNT = 0;
+  while (reg->CNT & CNT_RSTACT);
+}

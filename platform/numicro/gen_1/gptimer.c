@@ -117,12 +117,10 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   if (config->trigger.adc)
     ctl |= CTL_TRGADC;
-  if (config->trigger.bpwm)
-    ctl |= CTL_TRGBPWM;
-  if (config->trigger.pdma)
+  if (config->trigger.dma)
     ctl |= CTL_TRGPDMA;
   if (config->trigger.pwm)
-    ctl |= CTL_TRGPWM;
+    ctl |= CTL_TRGPWM | CTL_TRGBPWM;
   if (config->trigger.wakeup)
     ctl |= CTL_WKEN;
 

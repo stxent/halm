@@ -17,7 +17,7 @@ static uint8_t configMatchPin(uint8_t channel, PinNumber key);
 static void setTimerFrequency(struct GpPwmUnit *, uint32_t);
 static bool unitAllocateChannel(struct GpPwmUnit *, uint8_t);
 
-#ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
+#ifdef CONFIG_PLATFORM_LPC_GPPWM_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
@@ -127,7 +127,7 @@ static uint8_t configMatchPin(uint8_t channel, PinNumber key)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
+#ifdef CONFIG_PLATFORM_LPC_GPPWM_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
   if (state == PM_ACTIVE)
@@ -212,7 +212,7 @@ static enum Result unitInit(void *object, const void *configBase)
   reg->MR0 = unit->resolution;
   reg->MCR = MCR_RESET(0);
 
-#ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
+#ifdef CONFIG_PLATFORM_LPC_GPPWM_PM
   if ((res = pmRegister(powerStateHandler, unit)) != E_OK)
     return res;
 #endif
@@ -229,7 +229,7 @@ static void unitDeinit(void *object)
 
   reg->TCR = 0;
 
-#ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
+#ifdef CONFIG_PLATFORM_LPC_GPPWM_PM
   pmUnregister(unit);
 #endif
 

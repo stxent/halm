@@ -20,6 +20,6 @@ enum WdtClockSource
   WDT_CLOCK_PCLK,
   WDT_CLOCK_RTC,
   WDT_CLOCK_END
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC17XX_WDT_BASE_H_ */

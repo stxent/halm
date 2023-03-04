@@ -38,7 +38,7 @@ if(${CONFIG_PLATFORM_NUMICRO_GPTIMER_BASE})
 endif()
 
 if(${CONFIG_PLATFORM_NUMICRO_GPTIMER})
-    list(APPEND SOURCE_FILES "gptimer.c")
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_TIMER}/gptimer.c")
 endif()
 
 if(${CONFIG_PLATFORM_NUMICRO_PDMA})
@@ -99,6 +99,11 @@ endif()
 if(${CONFIG_PLATFORM_USB_HS})
     list(APPEND SOURCE_FILES "hsusb_device.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/hsusb_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_NUMICRO_WDT})
+    list(APPEND SOURCE_FILES "wdt.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/wdt_base.c")
 endif()
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_SYSTEM_SOC}/CMakeLists.txt" OPTIONAL)

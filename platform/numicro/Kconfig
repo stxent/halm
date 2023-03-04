@@ -1,3 +1,8 @@
+config GEN_TIMER
+	string
+	default gen_1 if FAMILY_M03X
+	default gen_2 if FAMILY_M48X
+
 menu "Power settings"
 
 config PM
@@ -215,6 +220,10 @@ config PLATFORM_USB_DEVICE_EP_COUNT
 	default 8 if FAMILY_M03X
 	default 12 if FAMILY_M48X
 	depends on PLATFORM_USB_DEVICE
+
+config PLATFORM_NUMICRO_WDT
+	bool "Watchdog"
+	default y
 
 endmenu
 

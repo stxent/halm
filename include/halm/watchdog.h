@@ -19,6 +19,7 @@ struct WatchdogClass
 {
   CLASS_HEADER
 
+  bool (*fired)(const void *);
   void (*setCallback)(void *, void (*)(void *), void *);
   void (*reload)(void *);
 };
@@ -29,6 +30,17 @@ struct Watchdog
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
+
+/**
+ * Get a reset status.
+ * @param timer Pointer to a Watchdog object.
+ * @return Status of the timer, @b true in case of controller reset
+ * and @b false otherwise.
+ */
+static inline bool watchdogFired(const void *timer)
+{
+  return ((const struct WatchdogClass *)CLASS(timer))->fired(timer);
+}
 
 /**
  * Set the interrupt callback.

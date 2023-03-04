@@ -105,11 +105,13 @@
 
 #elif defined(M03X)
 
+#  define GEN_TIMER       gen_1
 #  define PLATFORM        m03x
 #  define PLATFORM_TYPE   numicro
 
 #elif defined(M48X)
 
+#  define GEN_TIMER       gen_2
 #  define PLATFORM        m48x
 #  define PLATFORM_TYPE   numicro
 

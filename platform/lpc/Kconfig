@@ -309,6 +309,11 @@ config PLATFORM_LPC_GPPWM
 	default y
 	depends on FAMILY_LPC17XX
 
+config PLATFORM_LPC_GPPWM_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_LPC_GPPWM && PM
+
 config PLATFORM_LPC_GPPWM_NO_DEINIT
 	bool
 	default y if PLATFORM_LPC_NO_DEINIT
@@ -618,5 +623,10 @@ config PLATFORM_LPC_WAKEUPINT_NO_DEINIT
 config PLATFORM_LPC_WDT
 	bool "Watchdog"
 	default y
+
+config PLATFORM_LPC_WWDT
+	bool "Windowed Watchdog"
+	default y
+	depends on PLATFORM_LPC_WDT && !FAMILY_LPC17XX
 
 endmenu
