@@ -52,9 +52,9 @@ if(${CONFIG_PLATFORM_NUMICRO_PININT})
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pin_int.c")
 endif()
 
-# if(${CONFIG_PM})
-#     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pm.c")
-# endif()
+if(${CONFIG_PM})
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pm.c")
+endif()
 
 if(${CONFIG_PLATFORM_NUMICRO_SERIAL})
     list(APPEND SOURCE_FILES "serial.c")

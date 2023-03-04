@@ -11,6 +11,45 @@ config PM
 	help
 	  This enables support for power management features.
 
+choice
+	prompt "Power-down mode in suspend state"
+	default PLATFORM_NUMICRO_PM_PD
+	depends on PM && FAMILY_M48X
+
+	config PLATFORM_NUMICRO_PM_PD
+		bool "Power-down"
+
+	config PLATFORM_NUMICRO_PM_FWPD
+		bool "Fast wake-up power-down"
+
+	config PLATFORM_NUMICRO_PM_LLPD
+		bool "Low leakage power-down"
+
+	config PLATFORM_NUMICRO_PM_STANDBY
+		bool "Standby power-down"
+endchoice
+
+choice
+	prompt "SRAM retention region in shutdown state"
+	default PLATFORM_NUMICRO_PM_SRAM_NONE
+	depends on PLATFORM_NUMICRO_PM_STANDBY
+
+	config PLATFORM_NUMICRO_PM_SRAM_NONE
+		bool "Disabled"
+
+	config PLATFORM_NUMICRO_PM_SRAM_16K
+		bool "16K"
+
+	config PLATFORM_NUMICRO_PM_SRAM_32K
+		bool "32K"
+
+	config PLATFORM_NUMICRO_PM_SRAM_64K
+		bool "64K"
+
+	config PLATFORM_NUMICRO_PM_SRAM_128K
+		bool "128K"
+endchoice
+
 endmenu
 
 menu "Peripherals"

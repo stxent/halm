@@ -532,9 +532,38 @@ void SPI3_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-uint32_t spiGetClock(const struct SpiBase *interface __attribute__((unused)))
+uint32_t spiGetClock(const struct SpiBase *interface)
 {
-  return clockFrequency(Spi0Clock);
+  const void *clock = 0;
+
+  switch (interface->channel)
+  {
+#ifdef CONFIG_PLATFORM_NUMICRO_SPI0
+    case 0:
+      clock = Spi0Clock;
+      break;
+#endif
+
+#ifdef CONFIG_PLATFORM_NUMICRO_SPI1
+    case 1:
+      clock = Spi1Clock;
+      break;
+#endif
+
+#ifdef CONFIG_PLATFORM_NUMICRO_SPI2
+    case 2:
+      clock = Spi2Clock;
+      break;
+#endif
+
+#ifdef CONFIG_PLATFORM_NUMICRO_SPI3
+    case 3:
+      clock = Spi3Clock;
+      break;
+#endif
+  }
+
+  return clockFrequency(clock);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *object, const void *configBase)
