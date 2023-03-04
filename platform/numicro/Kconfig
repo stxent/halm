@@ -61,6 +61,7 @@ config PLATFORM_NUMICRO_NO_DEINIT
 config PLATFORM_NUMICRO_ADC_BASE
 	bool "ADC"
 	default y
+	depends on FAMILY_M03X
 
 config PLATFORM_NUMICRO_ADC_NO_DEINIT
 	bool

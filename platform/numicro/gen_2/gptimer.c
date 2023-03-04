@@ -155,8 +155,8 @@ static void tmrDeinit(void *object)
   struct GpTimer * const timer = object;
   NM_TIMER_Type * const reg = timer->base.reg;
 
+  reg->CTL = 0;
   irqDisable(timer->base.irq);
-  reg->CTL &= ~CTL_CNTEN;
 
 #ifdef CONFIG_PLATFORM_NUMICRO_GPTIMER_PM
   pmUnregister(timer);
@@ -209,11 +209,11 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  /* Clear pending interrupt flags */
-  reg->INTSTS = INTSTS_TIF | INTSTS_TWKF;
-
   if (callback)
+  {
+    reg->INTSTS = INTSTS_TIF | INTSTS_TWKF;
     reg->CTL |= CTL_INTEN;
+  }
   else
     reg->CTL &= ~CTL_INTEN;
 }

@@ -115,7 +115,7 @@ static bool startConversion(struct AdcDma *interface)
   /* Enable selected channels */
   reg->ADCHER = interface->enabled;
   /* Configure sample time extension */
-  reg->ESMPCTL = interface->base.delay;
+  reg->ESMPCTL = interface->delay;
   /* Reconfigure peripheral and start the conversion */
   reg->ADCR = interface->base.control;
 
@@ -135,13 +135,11 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcDmaConfig * const config = configBase;
   assert(config);
   assert(config->pins);
-  assert(config->event < ADC_EVENT_END);
-  assert(config->event != ADC_SOFTWARE);
+  assert(config->event != ADC_SOFTWARE && config->event < ADC_EVENT_END);
 
   const struct AdcBaseConfig baseConfig = {
       .accuracy = config->accuracy,
       .channel = config->channel,
-      .delay = config->delay,
       .shared = config->shared
   };
   struct AdcDma * const interface = object;
@@ -172,6 +170,7 @@ static enum Result adcInit(void *object, const void *configBase)
       | ADCR_ADMD(ADMD_SINGLE_SCAN) | ADCR_TRGS(config->event)
       | ADCR_TRGCOND(adcMakePinCondition(config->sensitivity));
   interface->callback = 0;
+  interface->delay = config->delay;
 
   if (dmaSetup(interface, config))
   {

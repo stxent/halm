@@ -24,7 +24,7 @@ struct AdcDmaConfig
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-    /** Optional: sampling time extension in ADC clocks. */
+  /** Optional: sampling time extension in ADC clocks. */
   uint8_t delay;
   /** Mandatory: DMA channel. */
   uint8_t dma;
@@ -51,6 +51,8 @@ struct AdcDma
   uint32_t enabled;
   /* Pin count */
   uint8_t count;
+  /* Sampling time extension value */
+  uint8_t delay;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_ADC_DMA_H_ */

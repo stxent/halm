@@ -10,6 +10,20 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry adcPins[];
 /*----------------------------------------------------------------------------*/
+struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
+{
+  const struct PinEntry * const entry = pinFind(adcPins, key,
+      interface->channel);
+  assert(entry);
+
+  const struct Pin pin = pinInit(key);
+
+  pinInput(pin);
+  pinSetFunction(pin, PIN_ANALOG);
+
+  return (struct AdcPin){entry->value};
+}
+/*----------------------------------------------------------------------------*/
 uint32_t adcMakePinCondition(enum PinEvent event)
 {
   assert(event != PIN_TOGGLE);
@@ -33,6 +47,10 @@ uint32_t adcMakePinCondition(enum PinEvent event)
   }
 
   return 0;
+}
+/*----------------------------------------------------------------------------*/
+void adcReleasePin(struct AdcPin adcPin __attribute__((unused)))
+{
 }
 /*----------------------------------------------------------------------------*/
 uint32_t adcSetupPins(struct AdcBase *interface, const PinNumber *pins,

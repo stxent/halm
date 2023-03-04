@@ -41,6 +41,11 @@ struct ExternalOscConfig
    * an external clock source.
    */
   uint32_t frequency;
+  /**
+   * Mandatory: enable bypass. Bypassing should be enabled when using
+   * an external clock source instead of the crystal oscillator.
+   */
+  bool bypass;
 };
 
 /* Requires an ExternalOscConfig structure */

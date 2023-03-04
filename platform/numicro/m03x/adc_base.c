@@ -124,28 +124,10 @@ void ADC_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
-{
-  const struct PinEntry * const entry = pinFind(adcPins, key,
-      interface->channel);
-  assert(entry);
-
-  const struct Pin pin = pinInit(key);
-
-  pinInput(pin);
-  pinSetFunction(pin, PIN_ANALOG);
-
-  return (struct AdcPin){entry->value};
-}
-/*----------------------------------------------------------------------------*/
 struct AdcBase *adcGetInstance(uint8_t channel __attribute__((unused)))
 {
   assert(channel == 0);
   return instance;
-}
-/*----------------------------------------------------------------------------*/
-void adcReleasePin(const struct AdcPin adcPin __attribute__((unused)))
-{
 }
 /*----------------------------------------------------------------------------*/
 bool adcSetInstance(uint8_t channel __attribute__((unused)),
@@ -171,6 +153,7 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->irq = ADC_IRQ;
   interface->handler = 0;
   interface->channel = config->channel;
+  interface->control = ADCR_ADEN;
 
   if (!sysClockStatus(CLK_ADC))
   {
@@ -184,9 +167,6 @@ static enum Result adcInit(void *object, const void *configBase)
     NM_ADC->ADCR = ADCR_RESET;
     sysLockReg();
   }
-
-  interface->control = ADCR_ADEN;
-  interface->delay = config->delay;
 
   return E_OK;
 }

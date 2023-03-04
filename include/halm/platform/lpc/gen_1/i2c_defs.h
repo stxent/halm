@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Control Set register--------------------------------------*/
-#define CONSET_AA                       BIT(2) /* Assert acknowledge flag */
+#define CONSET_AA                       BIT(2) /* Assert Acknowledge flag */
 #define CONSET_SI                       BIT(3) /* I2C interrupt flag */
 #define CONSET_STO                      BIT(4) /* STOP flag */
 #define CONSET_STA                      BIT(5) /* START flag */

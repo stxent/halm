@@ -214,7 +214,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->state = STATE_IDLE;
 
   /* Rate should be initialized after block selection */
-  i2cSetRate(object, config->rate);
+  i2cSetRate(&interface->base, config->rate);
 
   LPC_I2C_Type * const reg = interface->base.reg;
 

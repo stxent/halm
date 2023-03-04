@@ -15,12 +15,12 @@ struct AdcConfig
 {
   /** Mandatory: pointer to an array of pins terminated by a zero element. */
   const PinNumber *pins;
-  /** Mandatory: trigger to start the conversion. */
-  enum AdcEvent event;
-    /** Optional: external pin sensitivity. */
-  enum PinEvent sensitivity;
   /** Optional: interrupt priority. */
   IrqPriority priority;
+  /** Mandatory: trigger to start the conversion. */
+  enum AdcEvent event;
+  /** Optional: external pin sensitivity. */
+  enum PinEvent sensitivity;
   /** Optional: number of bits of accuracy of the result. */
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
@@ -49,6 +49,8 @@ struct Adc
   IrqPriority priority;
   /* Pin count */
   uint8_t count;
+  /* Sampling time extension value */
+  uint8_t delay;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_ADC_H_ */

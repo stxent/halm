@@ -21,12 +21,10 @@ extern const struct EntityClass * const AdcBase;
 
 struct AdcBaseConfig
 {
-  /** Optional: number of bits of accuracy of the result. */
+  /** Optional: resolution of the conversion results. */
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Optional: sampling time extension in ADC clocks. */
-  uint8_t delay;
   /** Optional: disable automatic peripheral locking. */
   bool shared;
 };
@@ -44,22 +42,20 @@ struct AdcBase
   IrqNumber irq;
   /* Unique peripheral identifier */
   uint8_t channel;
-  /* Sampling time extension value */
-  uint8_t delay;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
 /* Common functions */
+struct AdcPin adcConfigPin(const struct AdcBase *, PinNumber);
 uint32_t adcMakePinCondition(enum PinEvent);
+void adcReleasePin(struct AdcPin);
 uint32_t adcSetupPins(struct AdcBase *, const PinNumber *, struct AdcPin *,
     size_t);
 struct Pin adcSetupTriggerPin(uint8_t, PinNumber);
 
 /* Platform-specific functions */
-struct AdcPin adcConfigPin(const struct AdcBase *, PinNumber);
 struct AdcBase *adcGetInstance(uint8_t);
-void adcReleasePin(struct AdcPin);
 bool adcSetInstance(uint8_t, struct AdcBase *, struct AdcBase *);
 
 END_DECLS

@@ -53,14 +53,17 @@ static void interruptHandler(void *object)
 {
   struct Adc * const interface = object;
   NM_ADC_Type * const reg = interface->base.reg;
-  const struct AdcPin *pins = interface->pins;
+  const struct AdcPin *pin = interface->pins;
   uint16_t *buffer = interface->buffer;
 
   /* Clear pending interrupt flag */
   reg->ADSR0 = ADSR0_ADF;
 
   for (size_t index = 0; index < interface->count; ++index)
-    *buffer++ = (uint16_t)reg->ADDR[pins[index].channel];
+  {
+    *buffer++ = (uint16_t)reg->ADDR[pin->channel];
+    ++pin;
+  }
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
@@ -79,7 +82,7 @@ static void startConversion(struct Adc *interface)
   /* Enable selected channels */
   reg->ADCHER = interface->enabled;
   /* Configure sample time extension */
-  reg->ESMPCTL = interface->base.delay;
+  reg->ESMPCTL = interface->delay;
   /* Reconfigure peripheral and start the conversion */
   reg->ADCR = interface->base.control;
 }
@@ -97,13 +100,11 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcConfig * const config = configBase;
   assert(config);
   assert(config->pins);
-  assert(config->event < ADC_EVENT_END);
-  assert(config->event != ADC_SOFTWARE);
+  assert(config->event != ADC_SOFTWARE && config->event < ADC_EVENT_END);
 
   const struct AdcBaseConfig baseConfig = {
       .accuracy = config->accuracy,
       .channel = config->channel,
-      .delay = config->delay,
       .shared = config->shared
   };
   struct Adc * const interface = object;
@@ -136,6 +137,7 @@ static enum Result adcInit(void *object, const void *configBase)
       | ADCR_TRGCOND(adcMakePinCondition(config->sensitivity));
 
   interface->callback = 0;
+  interface->delay = config->delay;
   interface->priority = config->priority;
 
   if (!config->shared)

@@ -37,10 +37,10 @@ void i2cConfigPins(struct I2CBase *interface)
 /*----------------------------------------------------------------------------*/
 uint32_t i2cGetRate(const struct I2CBase *interface)
 {
-  LPC_I2C_Type * const reg = interface->reg;
-  const uint32_t rate = reg->SCLL + reg->SCLH;
+  const LPC_I2C_Type * const reg = interface->reg;
+  const uint32_t prescaler = reg->SCLL + reg->SCLH;
 
-  return rate ? i2cGetClock(interface) / rate : 0;
+  return prescaler ? i2cGetClock(interface) / prescaler : 0;
 }
 /*----------------------------------------------------------------------------*/
 void i2cRecoverBus(struct I2CBase *interface)
@@ -55,7 +55,7 @@ void i2cRecoverBus(struct I2CBase *interface)
   pinOutput(sda, true);
   pinSetType(sda, PIN_OPENDRAIN);
 
-  for (size_t number = 0; number < RECOVERY_CYCLES; ++number)
+  for (unsigned int number = 0; number < RECOVERY_CYCLES; ++number)
   {
     udelay(RECOVERY_TIME);
     pinReset(scl);

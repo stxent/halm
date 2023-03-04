@@ -186,19 +186,6 @@ static void interruptHandler(void *object)
 
   reg->BUSINTSTS = intStatus;
 
-  /* VBUS detection interrupt */
-  if (intStatus & BUSINTSTS_VBUSDETIF)
-  {
-    if (reg->PHYCTL & PHYCTL_VBUSDET)
-    {
-      // TODO
-    }
-    else
-    {
-      // TODO
-    }
-  }
-
   /* Device status interrupts */
   if (intStatus & BUSINTSTS_RSTIF)
   {
@@ -221,24 +208,30 @@ static void interruptHandler(void *object)
   /* Control Endpoint interrupt */
   if (epStatus & GINTSTS_CEPIF)
   {
-    const uint32_t controlStatus = reg->CEPINTSTS;
-    reg->CEPINTSTS = controlStatus;
+    const uint32_t controlIntEnable = reg->CEPINTEN;
+    const uint32_t controlIntStatus = reg->CEPINTSTS;
 
-    if (controlStatus & CEPINTSTS_SETUPPKIF)
+    reg->CEPINTSTS = controlIntStatus;
+
+    if ((controlIntEnable & CEPINTEN_SETUPPKIEN)
+        && (controlIntStatus & CEPINTSTS_SETUPPKIF))
     {
       epHandleSetupPacket(&device->controlEpOut);
     }
-    if (controlStatus & CEPINTSTS_RXPKIF)
+
+    if ((controlIntEnable & CEPINTEN_RXPKIEN)
+        && (controlIntStatus & CEPINTSTS_RXPKIF))
     {
       epHandleControlPacket(&device->controlEpOut);
     }
-    if (controlStatus & CEPINTSTS_TXPKIF)
+
+    if (controlIntStatus & CEPINTSTS_TXPKIF)
     {
       epHandleControlPacket(&device->controlEpIn);
     }
 
-    if ((reg->CEPINTEN & CEPINTEN_STSDONEIEN)
-        && (controlStatus & CEPINTSTS_STSDONEIF))
+    if ((controlIntEnable & CEPINTEN_STSDONEIEN)
+        && (controlIntStatus & CEPINTSTS_STSDONEIF))
     {
       reg->CEPINTEN &= ~CEPINTEN_STSDONEIEN;
 
@@ -254,11 +247,6 @@ static void interruptHandler(void *object)
 
       epHandleControlPacket(&device->controlEpIn);
     }
-  }
-
-  if (intStatus & BUSINTSTS_DMADONEIF)
-  {
-    // TODO DMA Done handling
   }
 
   if (epStatus & GINTSTS_EPIF_MASK)
@@ -464,13 +452,15 @@ static uint8_t devGetInterface(const void *object __attribute__((unused)))
 static void devSetAddress(void *object, uint8_t address)
 {
   struct UsbDevice * const device = object;
-  NM_HSUSBD_Type * const reg = device->base.reg;
 
   device->configured = address != 0;
   device->scheduledAddress = address;
 
-  if (address == 0) // TODO
+  if (address == 0)
+  {
+    NM_HSUSBD_Type * const reg = device->base.reg;
     reg->FADDR = address;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void devSetConnected(void *object, bool state)
@@ -483,8 +473,8 @@ static void devSetConnected(void *object, bool state)
   if (state)
   {
     reg->BUSINTSTS = BUSINTSTS_MASK;
-    reg->BUSINTEN = BUSINTEN_RSTIEN | BUSINTEN_RESUMEIEN | BUSINTEN_SUSPENDIEN
-        | BUSINTEN_HISPDIEN | BUSINTEN_DMADONEIEN | BUSINTEN_VBUSDETIEN;
+    reg->BUSINTEN = BUSINTEN_RSTIEN | BUSINTEN_HISPDIEN
+        | BUSINTEN_RESUMEIEN | BUSINTEN_SUSPENDIEN;
 
     reg->GINTEN = GINTEN_USBIEN | GINTEN_CEPIEN | GINTEN_EPIEN_MASK;
     reg->PHYCTL |= PHYCTL_DPPUEN | PHYCTL_PHYEN;
@@ -544,17 +534,19 @@ static inline NM_HSUSBD_EP_Type *epGetChannel(struct UsbEndpoint *ep)
 static void epHandlePacket(struct UsbEndpoint *ep)
 {
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
+  const bool error = (channel->EPINTSTS & EPINTSTS_ERRIF) != 0;
 
   channel->EPINTSTS = EPINTSTS_MASK;
 
   if (!pointerQueueEmpty(&ep->requests))
   {
+    struct UsbRequest *req = pointerQueueFront(&ep->requests);
+
     if (ep->address & USB_EP_DIRECTION_IN)
     {
-      struct UsbRequest *req = pointerQueueFront(&ep->requests);
       pointerQueuePopFront(&ep->requests);
-
-      req->callback(req->argument, req, USB_REQUEST_COMPLETED);
+      req->callback(req->argument, req, error ?
+          USB_REQUEST_ERROR : USB_REQUEST_COMPLETED);
 
       if (!pointerQueueEmpty(&ep->requests))
       {
@@ -564,20 +556,20 @@ static void epHandlePacket(struct UsbEndpoint *ep)
     }
     else
     {
-      struct UsbRequest *req = pointerQueueFront(&ep->requests);
+      enum UsbRequestStatus status = USB_REQUEST_ERROR;
       size_t read;
 
-      if (epReadData(ep, req->buffer, req->capacity, &read))
+      if (!error && epReadData(ep, req->buffer, req->capacity, &read))
       {
-        pointerQueuePopFront(&ep->requests);
         req->length = read;
-        req->callback(req->argument, req, USB_REQUEST_COMPLETED);
+        status = USB_REQUEST_COMPLETED;
       }
 
+      pointerQueuePopFront(&ep->requests);
+      req->callback(req->argument, req, status);
+
       if (pointerQueueEmpty(&ep->requests))
-      {
         channel->EPINTEN &= ~(EPINTEN_RXPKIEN | EPINTEN_SHORTRXIEN);
-      }
     }
   }
 }
@@ -616,10 +608,8 @@ static void epHandleControlPacket(struct ControlUsbEndpoint *ep)
     }
 
     /* Trigger reception of a next packet */
-    if (!pointerQueueEmpty(&ep->requests))
-    {
-      // epEnqueueRequest(ep, req); // TODO XXX
-    }
+    if (pointerQueueEmpty(&ep->requests))
+      reg->CEPINTEN &= ~(CEPINTEN_SETUPPKIEN | CEPINTEN_RXPKIEN);
   }
 
   reg->CEPCTL &= ~CEPCTL_NAKCLR;
@@ -650,8 +640,7 @@ static void epHandleSetupPacket(struct ControlUsbEndpoint *ep)
 static bool epReadData(struct UsbEndpoint *ep, uint8_t *buffer,
     size_t length, size_t *read)
 {
-  NM_HSUSBD_Type * const reg = ep->device->base.reg;
-  NM_HSUSBD_EP_Type * const channel = &reg->EP[ep->index];
+  NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
   const uint32_t available = EPDATCNT_DATCNT_VALUE(channel->EPDATCNT);
 
   if (available <= length)
@@ -708,8 +697,7 @@ static void epReadPacketData(void *memory, volatile const void *peripheral,
 static void epWriteData(struct UsbEndpoint *ep, const uint8_t *buffer,
     size_t length)
 {
-  NM_HSUSBD_Type * const reg = ep->device->base.reg;
-  NM_HSUSBD_EP_Type * const channel = &reg->EP[ep->index];
+  NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
 
   epWritePacketData(&channel->EPDAT, (const uint32_t *)buffer, length);
 
@@ -841,7 +829,7 @@ static void controlEpEnable(void *object, uint8_t type __attribute__((unused)),
   reg->CEPCTL = CEPCTL_FLUSH;
 
   reg->CEPINTSTS = EPINTSTS_MASK;
-  reg->CEPINTEN = CEPINTEN_SETUPPKIEN | CEPINTEN_TXPKIEN | CEPINTEN_RXPKIEN;
+  reg->CEPINTEN = CEPINTEN_TXPKIEN;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result controlEpEnqueue(void *object, struct UsbRequest *request)
@@ -864,8 +852,11 @@ static enum Result controlEpEnqueue(void *object, struct UsbRequest *request)
     else
     {
       /* Trigger reception when the queue is empty */
-      // if (pointerQueueEmpty(&ep->requests))
-      //   epEnqueueRequest(ep, request); // TODO
+      if (pointerQueueEmpty(&ep->requests))
+      {
+        NM_HSUSBD_Type * const reg = ep->device->base.reg;
+        reg->CEPINTEN |= CEPINTEN_SETUPPKIEN | CEPINTEN_RXPKIEN;
+      }
     }
 
     pointerQueuePushBack(&ep->requests, request);
@@ -1008,9 +999,7 @@ static void dataEpEnable(void *object, uint8_t type, uint16_t size)
   else
   {
     channel->EPINTSTS = EPINTSTS_MASK;
-    // TODO ERRIEN
-    channel->EPINTEN = 0;
-//    channel->EPINTEN = EPINTEN_ERRIEN;
+    channel->EPINTEN = EPINTEN_ERRIEN;
   }
 
   channel->EPRSPCTL = EPRSPCTL_FLUSH | EPRSPCTL_TOGGLE
@@ -1039,9 +1028,8 @@ static enum Result dataEpEnqueue(void *object, struct UsbRequest *request)
     else
     {
       /* Trigger reception when the queue is empty */
-      // TODO ERRIEN
       if (pointerQueueEmpty(&ep->requests))
-        channel->EPINTEN = EPINTEN_RXPKIEN | /*EPINTEN_ERRIEN | */EPINTEN_SHORTRXIEN;
+        channel->EPINTEN = EPINTEN_RXPKIEN | EPINTEN_SHORTRXIEN;
     }
 
     pointerQueuePushBack(&ep->requests, request);
@@ -1064,18 +1052,32 @@ static void dataEpSetStalled(void *object, bool stalled)
 {
   struct UsbEndpoint * const ep = object;
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
+  // const bool in = (ep->address & USB_EP_DIRECTION_IN) != 0;
 
   if (stalled)
     channel->EPRSPCTL |= EPRSPCTL_HALT;
   else
     channel->EPRSPCTL &= ~EPRSPCTL_HALT;
 
-  // /* Write pending IN request to the endpoint buffer */
-  // TODO
-  // if (!stalled && (ep->address & USB_EP_DIRECTION_IN)
-  //     && !pointerQueueEmpty(&ep->requests))
+  // TODO Is flushing needed during unstall?
+  // if (!stalled)
   // {
-  //   struct UsbRequest * const request = pointerQueueFront(&ep->requests);
-  //   epWriteData(ep, request->buffer, request->length);
+  //   if (in)
+  //   {
+  //     /* Flush TX FIFO */
+  //     channel->EPRSPCTL |= EPRSPCTL_FLUSH;
+  //     while (channel->EPRSPCTL & EPRSPCTL_FLUSH);
+  //   }
+
+  //   channel->EPRSPCTL &= ~EPRSPCTL_HALT;
+
+  //   /* Write pending IN request to the endpoint buffer */
+  //   if (in && !pointerQueueEmpty(&ep->requests))
+  //   {
+  //     struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+  //     epWriteData(ep, request->buffer, request->length);
+  //   }
   // }
+  // else
+  //   channel->EPRSPCTL |= EPRSPCTL_HALT;
 }

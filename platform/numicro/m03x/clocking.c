@@ -898,10 +898,9 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
   assert(config->frequency >= 4000000 && config->frequency <= 32000000);
 
   const uint32_t gain = calcExtCrystalGain(config->frequency);
-  const bool bypass = (NM_CONFIG->CONFIG[0] & CONFIG0_CFGXT1) == 0;
   uint32_t pwrctl = NM_CLK->PWRCTL & ~PWRCTL_HXTGAIN_MASK;
 
-  configExtOscPins(bypass);
+  configExtOscPins(config->bypass);
 
   extFrequency = config->frequency;
   pwrctl |= PWRCTL_HXTGAIN(gain) | PWRCTL_HXTEN;
