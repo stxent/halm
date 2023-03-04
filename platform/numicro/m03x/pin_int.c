@@ -197,12 +197,13 @@ static enum Result pinIntHandlerInit(void *object, const void *configBase)
   const struct PinIntHandlerConfig * const config = configBase;
   struct PinIntHandler * const handler = object;
 
+  pointerListInit(&handler->list);
+
   if (calcPortGroup(config->port))
     irqEnable(GPIO_PCPDPEPF_IRQ);
   else
     irqEnable(GPIO_PAPBPGPH_IRQ);
 
-  pointerListInit(&handler->list);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

@@ -171,9 +171,10 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  uint32_t buffer = LPC_SC->SCS | SCS_OSCEN;
-
+  assert(config);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
+
+  uint32_t buffer = LPC_SC->SCS | SCS_OSCEN;
 
   /*
    * Oscillator can operate in two modes: slave mode and oscillation mode.
@@ -220,6 +221,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
+  assert(config);
 
   if (!config->multiplier || !config->divisor)
     return E_VALUE;
@@ -324,6 +326,7 @@ static enum Result usbPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
+  assert(config);
 
   if (!config->multiplier || !config->divisor)
     return E_VALUE;
@@ -381,6 +384,7 @@ static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
+  assert(config);
   assert(config->divisor >= 1 && config->divisor <= 16);
   assert(config->source != CLOCK_PLL);
 
@@ -473,6 +477,7 @@ static enum Result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
+  assert(config);
 
   flashLatencyReset();
 
@@ -560,6 +565,7 @@ static enum Result usbClockEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
+  assert(config);
   assert(config->source == CLOCK_PLL || config->source == CLOCK_USB_PLL);
 
   switch (config->source)

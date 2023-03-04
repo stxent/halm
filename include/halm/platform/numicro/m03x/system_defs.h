@@ -17,5 +17,9 @@
 #define FTCTL_FOM_VALUE(reg)            FIELD_VALUE((reg), FTCTL_FOM_MASK, 4)
 
 #define FTCTL_CACHEINV                  BIT(9)
+/*------------------Register Lock Control register----------------------------*/
+#define REGLCTL_MAGIC_NUMBER_0          0x59
+#define REGLCTL_MAGIC_NUMBER_1          0x16
+#define REGLCTL_MAGIC_NUMBER_2          0x88
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_M03X_SYSTEM_DEFS_H_ */

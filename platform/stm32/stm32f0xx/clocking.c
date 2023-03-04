@@ -183,6 +183,8 @@ static enum Result extOscEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
+  assert(config->frequency >= 4000000 && config->frequency <= 32000000);
+
   uint32_t control = (STM_RCC->CR & ~(CR_HSERDY | CR_HSEBYP)) | CR_HSEON;
 
   if (config->bypass)
@@ -258,7 +260,7 @@ static enum Result systemPllEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct SystemPllConfig * const config = configBase;
-
+  assert(config);
   assert(config->source == CLOCK_INTERNAL
       || config->source == CLOCK_INTERNAL_48
       || config->source == CLOCK_EXTERNAL);
@@ -322,12 +324,13 @@ static enum Result systemClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct SystemClockConfig * const config = configBase;
-  uint32_t cfgr = STM_RCC->CFGR & ~CFGR_SW_MASK;
-
+  assert(config);
   assert(config->source == CLOCK_INTERNAL
       || config->source == CLOCK_INTERNAL_48
       || config->source == CLOCK_EXTERNAL
       || config->source == CLOCK_PLL);
+
+  uint32_t cfgr = STM_RCC->CFGR & ~CFGR_SW_MASK;
 
   switch (config->source)
   {
@@ -385,8 +388,8 @@ static uint32_t systemClockFrequency(const void *clockBase
 static enum Result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
-//  static const uint8_t PRESCALER_MAP[] =
   const struct BusClockConfig * const config = configBase;
+  assert(config);
   assert(config->divisor);
 
   // XXX
@@ -429,13 +432,15 @@ static enum Result apbClockEnable(const void *clockBase
    __attribute__((unused)), const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
+  assert(config);
   assert(config->divisor);
 
   const unsigned int prescaler = 31 - countLeadingZeros32(config->divisor);
   assert(prescaler < 5 && 1 << prescaler == config->divisor);
-  const unsigned int value = prescaler >= 1 ? 0x04 | (prescaler - 1) : 0;
 
+  const unsigned int value = prescaler >= 1 ? 0x04 | (prescaler - 1) : 0;
   STM_RCC->CFGR = (STM_RCC->CFGR & ~CFGR_PPRE_MASK) | CFGR_PPRE(value);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

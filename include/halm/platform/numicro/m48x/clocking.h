@@ -165,11 +165,11 @@ extern const struct ClockClass * const Uart5Clock;
 extern const struct ClockClass * const Uart6Clock;
 extern const struct ClockClass * const Uart7Clock;
 extern const struct ClockClass * const UsbClock;
+extern const struct ClockClass * const VsenseClock;
 
 /* Requires a DividedClockConfig structure */
 extern const struct ClockClass * const Eadc0Clock;
 extern const struct ClockClass * const Eadc1Clock;
 extern const struct ClockClass * const EmacClock;
-extern const struct ClockClass * const VsenseClock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_M48X_CLOCKING_H_ */

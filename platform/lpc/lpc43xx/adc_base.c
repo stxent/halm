@@ -234,7 +234,7 @@ struct AdcBase *adcGetInstance(uint8_t channel)
   return instances[channel];
 }
 /*----------------------------------------------------------------------------*/
-void adcReleasePin(const struct AdcPin adcPin)
+void adcReleasePin(struct AdcPin adcPin)
 {
   if (adcPin.control != -1)
     LPC_SCU->ENAIO[adcPin.control] &= ~(1UL << adcPin.channel);

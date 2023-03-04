@@ -274,9 +274,10 @@ static enum Result extOscEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  uint32_t buffer = 0;
-
+  assert(config);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
+
+  uint32_t buffer = 0;
 
   if (config->bypass)
     buffer |= SYSOSCCTRL_BYPASS;
@@ -342,7 +343,7 @@ static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct WdtOscConfig * const config = configBase;
-
+  assert(config);
   assert(config->frequency <= WDT_FREQ_4600);
   assert(config->divisor <= 64 && config->divisor % 2 == 0);
 
@@ -380,7 +381,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-
+  assert(config);
   assert(config->divisor);
   assert(config->source == CLOCK_EXTERNAL || config->source == CLOCK_INTERNAL);
 
@@ -421,16 +422,13 @@ static enum Result usbPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-
-  assert(config->divisor);
-  assert(config->source == CLOCK_EXTERNAL);
-
-  const uint32_t control = calcPllValues(config->multiplier,
-      config->divisor);
-
+  assert(config);
+  assert(config->divisor && config->source == CLOCK_EXTERNAL);
   assert(extFrequency * config->multiplier >= 156000000
       && extFrequency * config->multiplier <= 320000000);
   assert(extFrequency * config->multiplier / config->divisor == USB_FREQUENCY);
+
+  const uint32_t control = calcPllValues(config->multiplier, config->divisor);
 
   /* Power-up PLL */
   sysPowerEnable(PWR_USBPLL);
@@ -461,6 +459,8 @@ static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
+  assert(config);
+
   const struct GenericClockConfig baseConfig = {
       .source = config->source,
       .divisor = config->divisor
@@ -490,8 +490,10 @@ static void branchDisable(const void *clockBase)
 /*----------------------------------------------------------------------------*/
 static enum Result branchEnable(const void *clockBase, const void *configBase)
 {
-  const struct GenericClockClass * const clock = clockBase;
   const struct GenericClockConfig * const config = configBase;
+  assert(config);
+
+  const struct GenericClockClass * const clock = clockBase;
   struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
   int source = -1;

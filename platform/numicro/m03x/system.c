@@ -229,9 +229,9 @@ void sysUnlockReg(void)
 {
   do
   {
-    NM_SYS->REGLCTL = 0x59;
-    NM_SYS->REGLCTL = 0x16;
-    NM_SYS->REGLCTL = 0x88;
+    NM_SYS->REGLCTL = REGLCTL_MAGIC_NUMBER_0;
+    NM_SYS->REGLCTL = REGLCTL_MAGIC_NUMBER_1;
+    NM_SYS->REGLCTL = REGLCTL_MAGIC_NUMBER_2;
   }
   while (NM_SYS->REGLCTL == 0);
 }

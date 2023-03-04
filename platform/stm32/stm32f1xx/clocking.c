@@ -191,6 +191,9 @@ static enum Result extOscEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
+  assert(config);
+  assert(config->frequency >= 4000000 && config->frequency <= 16000000);
+
   uint32_t control = (STM_RCC->CR & ~(CR_HSERDY | CR_HSEBYP)) | CR_HSEON;
 
   if (config->bypass)
@@ -243,11 +246,12 @@ static void mainPllDisable(const void *clockBase __attribute__((unused)))
 static enum Result mainPllEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
-  const struct MainPllConfig * const config = configBase;
-  uint32_t frequency;
-
   // TODO Detect chip
+  const struct MainPllConfig * const config = configBase;
+  assert(config);
   assert(config->multiplier >= 2 && config->multiplier <= 16);
+
+  uint32_t frequency;
 
   if (config->source == CLOCK_INTERNAL)
   {
@@ -297,11 +301,12 @@ static enum Result systemClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct SystemClockConfig * const config = configBase;
-  uint32_t clockConfig = STM_RCC->CFGR & ~CFGR_SW_MASK;
-
+  assert(config);
   assert(config->source == CLOCK_INTERNAL
       || config->source == CLOCK_EXTERNAL
       || config->source == CLOCK_PLL);
+
+  uint32_t clockConfig = STM_RCC->CFGR & ~CFGR_SW_MASK;
 
   switch (config->source)
   {
@@ -352,6 +357,7 @@ static enum Result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
+  assert(config);
   assert(config->divisor);
 
   const unsigned int prescaler = 31 - countLeadingZeros32(config->divisor);
@@ -374,6 +380,7 @@ static enum Result usbClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct UsbClockConfig * const config = configBase;
+  assert(config);
   assert(config->divisor == USB_CLK_DIV_1
       || config->divisor == USB_CLK_DIV_1_5);
 
@@ -397,6 +404,8 @@ static enum Result adcClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
+  assert(config);
+
   const unsigned int prescaler = config->divisor / 2 - 1;
   assert(prescaler < 4 && adcPrescalerToValue(prescaler) == config->divisor);
 
@@ -416,13 +425,15 @@ static enum Result apb1ClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
+  assert(config);
   assert(config->divisor);
 
   const unsigned int prescaler = 31 - countLeadingZeros32(config->divisor);
   assert(prescaler < 5 && 1 << prescaler == config->divisor);
-  const unsigned int value = prescaler >= 1 ? 0x04 | (prescaler - 1) : 0;
 
+  const unsigned int value = prescaler >= 1 ? 0x04 | (prescaler - 1) : 0;
   STM_RCC->CFGR = (STM_RCC->CFGR & ~CFGR_PPRE1_MASK) | CFGR_PPRE1(value);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -437,13 +448,15 @@ static enum Result apb2ClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
+  assert(config);
   assert(config->divisor);
 
   const unsigned int prescaler = 31 - countLeadingZeros32(config->divisor);
   assert(prescaler < 5 && 1 << prescaler == config->divisor);
-  const unsigned int value = prescaler >= 1 ? 0x04 | (prescaler - 1) : 0;
 
+  const unsigned int value = prescaler >= 1 ? 0x04 | (prescaler - 1) : 0;
   STM_RCC->CFGR = (STM_RCC->CFGR & ~CFGR_PPRE2_MASK) | CFGR_PPRE2(value);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

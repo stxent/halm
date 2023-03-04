@@ -699,11 +699,13 @@ static void genericDividerDisable(const void *clockBase)
 static enum Result genericDividerEnable(const void *clockBase,
     const void *configBase)
 {
-  const struct GenericDividerClass * const clock = clockBase;
   const struct GenericDividerConfig * const config = configBase;
+  assert(config);
+  assert(config->divisor);
+
+  const struct GenericDividerClass * const clock = clockBase;
   volatile uint32_t * const reg = calcDividerReg(clock->channel);
 
-  assert(config->divisor);
   assert(clock->channel != CLOCK_IDIVA || config->divisor <= 4);
   assert(clock->channel != CLOCK_IDIVE || config->divisor <= 256);
   assert(clock->channel == CLOCK_IDIVA || clock->channel == CLOCK_IDIVE
@@ -741,9 +743,10 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  uint32_t buffer = XTAL_ENABLE;
-
+  assert(config);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
+
+  uint32_t buffer = XTAL_ENABLE;
 
   if (config->bypass)
     buffer |= XTAL_BYPASS;
@@ -838,8 +841,8 @@ static void pll0ClockDisable(const void *clockBase)
 static enum Result pll0ClockEnable(const void *clockBase,
     const void *configBase)
 {
-  const struct GenericPllClass * const clock = clockBase;
   const struct PllConfig * const config = configBase;
+  assert(config);
   assert(config->source != CLOCK_AUDIO_PLL && config->source != CLOCK_USB_PLL);
 
   if (!config->divisor || config->divisor > 64)
@@ -849,6 +852,7 @@ static enum Result pll0ClockEnable(const void *clockBase,
   if (!config->multiplier || config->multiplier > 32768)
     return E_VALUE;
 
+  const struct GenericPllClass * const clock = clockBase;
   const bool multiplierIsEven = (config->multiplier & 1) == 0;
   const unsigned int psel = config->divisor > 1 ? config->divisor >> 1 : 0;
   const unsigned int nsel = multiplierIsEven ? 1 : 2;
@@ -925,6 +929,7 @@ static enum Result pll1ClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct PllConfig * const config = configBase;
+  assert(config);
   assert(config->source != CLOCK_PLL);
 
   if (!config->divisor)
@@ -1008,8 +1013,10 @@ static bool pll1ClockReady(const void *clockBase __attribute__((unused)))
 static enum Result clockOutputEnable(const void *clockBase,
     const void *configBase)
 {
-  const struct GenericClockClass * const clock = clockBase;
   const struct ClockOutputConfig * const config = configBase;
+  assert(config);
+
+  const struct GenericClockClass * const clock = clockBase;
   const struct GenericClockConfig baseConfig = {
       .source = config->source
   };
@@ -1035,8 +1042,10 @@ static void genericClockDisable(const void *clockBase)
 static enum Result genericClockEnable(const void *clockBase,
     const void *configBase)
 {
-  const struct GenericClockClass * const clock = clockBase;
   const struct GenericClockConfig * const config = configBase;
+  assert(config);
+
+  const struct GenericClockClass * const clock = clockBase;
   volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
   if (clock->branch == CLOCK_BASE_M4)

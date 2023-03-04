@@ -53,6 +53,10 @@ enum
 #define PLCTL_PLSTATUS(value)           BIT_FIELD((value), 8)
 #define PLCTL_PLSTATUS_VALUE(reg) \
     FIELD_VALUE((reg), PLCTL_PLSTATUS_MASK, 8)
+/*------------------Register Lock Control register----------------------------*/
+#define REGLCTL_MAGIC_NUMBER_0          0x59
+#define REGLCTL_MAGIC_NUMBER_1          0x16
+#define REGLCTL_MAGIC_NUMBER_2          0x88
 /*------------------USB PHY control register----------------------------------*/
 enum
 {

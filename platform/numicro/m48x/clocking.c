@@ -30,7 +30,7 @@ struct DividedClockClass
 {
   struct ClockClass base;
   enum ClockDivider divider;
-  enum ClockDivider source;
+  enum ClockDivider prescaler;
 };
 
 struct ExtendedClockClass
@@ -98,6 +98,9 @@ static bool sysPllReady(const void *);
 
 static enum Result apbBranchEnable(const void *, const void *);
 static uint32_t apbBranchFrequency(const void *);
+
+static enum Result dividedBranchEnable(const void *, const void *);
+static uint32_t dividedBranchFrequency(const void *);
 
 static enum Result extendedBranchEnable(const void *, const void *);
 static uint32_t extendedBranchFrequency(const void *);
@@ -625,54 +628,55 @@ const struct ClockClass * const UsbClock =
     .divider = DIVIDER_USB
 };
 
-/* Divided Clocks */
-
-const struct ClockClass * const EAadc0Clock =
-    (const struct ClockClass *)&(const struct DividedClockClass){
+const struct ClockClass * const VsenseClock =
+    (const struct ClockClass *)&(const struct ExtendedClockClass){
     .base = {
         .disable = 0,
         .enable = extendedBranchEnable,
         .frequency = extendedBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_CCAP,
+    .group = BRANCH_GROUP_SD,
+    .divider = DIVIDER_VSENSE
+};
+
+/* Divided Clocks */
+
+const struct ClockClass * const Eadc0Clock =
+    (const struct ClockClass *)&(const struct DividedClockClass){
+    .base = {
+        .disable = 0,
+        .enable = dividedBranchEnable,
+        .frequency = dividedBranchFrequency,
         .ready = genericBranchReady,
     },
     .divider = DIVIDER_EADC0,
-    .source = DIVIDER_APB1
+    .prescaler = DIVIDER_APB1
 };
 
-const struct ClockClass * const EAadc1Clock =
+const struct ClockClass * const Eadc1Clock =
     (const struct ClockClass *)&(const struct DividedClockClass){
     .base = {
         .disable = 0,
-        .enable = extendedBranchEnable,
-        .frequency = extendedBranchFrequency,
+        .enable = dividedBranchEnable,
+        .frequency = dividedBranchFrequency,
         .ready = genericBranchReady,
     },
     .divider = DIVIDER_EADC1,
-    .source = DIVIDER_APB1
+    .prescaler = DIVIDER_APB1
 };
 
 const struct ClockClass * const EmacClock =
     (const struct ClockClass *)&(const struct DividedClockClass){
     .base = {
         .disable = 0,
-        .enable = extendedBranchEnable,
-        .frequency = extendedBranchFrequency,
+        .enable = dividedBranchEnable,
+        .frequency = dividedBranchFrequency,
         .ready = genericBranchReady,
     },
     .divider = DIVIDER_EMAC,
-    .source = DIVIDER_HCLK
-};
-
-const struct ClockClass * const VsenseClock =
-    (const struct ClockClass *)&(const struct DividedClockClass){
-    .base = {
-        .disable = 0,
-        .enable = extendedBranchEnable,
-        .frequency = extendedBranchFrequency,
-        .ready = genericBranchReady,
-    },
-    .divider = DIVIDER_EMAC,
-    .source = DIVIDER_CCAP
+    .prescaler = DIVIDER_HCLK
 };
 /*----------------------------------------------------------------------------*/
 static const PinNumber X32_IN_PIN = PIN(PORT_F, 5);
@@ -1016,7 +1020,7 @@ static void selectClockSource(enum ClockBranch branch, enum ClockSource source,
   {
     if ((enum ClockSource)sourceMap[group][number] == source)
     {
-      value = (uint32_t)number; // TODO Rename
+      value = (uint32_t)number;
       break;
     }
   }
@@ -1068,6 +1072,8 @@ static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
+  assert(config);
+
   uint32_t divisor = 1;
 
   while ((1 << divisor) < config->divisor)
@@ -1112,6 +1118,7 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
+  assert(config);
   assert(config->frequency >= 4000000 && config->frequency <= 24000000);
 
   const uint32_t gain = calcExtCrystalGain(config->frequency);
@@ -1265,11 +1272,9 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-
-  if (!config->multiplier || !config->divisor)
-    return E_VALUE;
-  if (config->source != CLOCK_INTERNAL && config->source != CLOCK_EXTERNAL)
-    return E_VALUE;
+  assert(config);
+  assert(config->divisor && config->multiplier);
+  assert(config->source == CLOCK_INTERNAL || config->source == CLOCK_EXTERNAL);
 
   uint32_t fcoFrequency;
   uint32_t sourceFrequency;
@@ -1339,6 +1344,8 @@ static enum Result apbBranchEnable(const void *clockBase,
     const void *configBase)
 {
   const struct ApbClockConfig * const config = configBase;
+  assert(config);
+
   const struct ApbClockClass * const clock = clockBase;
   uint32_t divisor = 0;
 
@@ -1356,22 +1363,58 @@ static uint32_t apbBranchFrequency(const void *clockBase)
 {
   const struct ExtendedClockClass * const clock = clockBase;
   const uint32_t frequency = getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK);
-  const uint32_t ahbDivider = getClockDivider(DIVIDER_HCLK) + 1;
-  const uint32_t apbDivider = ahbDivider << getClockDivider(clock->divider);
+  const uint32_t ahbDivisor = getClockDivider(DIVIDER_HCLK) + 1;
+  const uint32_t apbDivisor = ahbDivisor << getClockDivider(clock->divider);
 
-  return frequency / apbDivider;
+  return frequency / apbDivisor;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result dividedBranchEnable(const void *clockBase,
+    const void *configBase)
+{
+  const struct DividedClockConfig * const config = configBase;
+  assert(config);
+  assert(config->divisor);
+
+  const struct DividedClockClass * const clock = clockBase;
+  const uint16_t divisor = config->divisor - 1;
+
+  if (checkClockDivider(clock->divider, divisor))
+  {
+    setClockDivider(clock->divider, divisor);
+    return E_OK;
+  }
+  else
+    return E_VALUE;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t dividedBranchFrequency(const void *clockBase)
+{
+  const struct DividedClockClass * const clock = clockBase;
+  const uint32_t frequency = getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK);
+  uint32_t divisor = getClockDivider(clock->divider) + 1;
+
+  /* Source clock is the AHB clock */
+  divisor *= getClockDivider(DIVIDER_HCLK) + 1;
+
+  if (clock->prescaler != DIVIDER_HCLK)
+  {
+    /* Source clock is one of the APB clocks */
+    divisor <<= getClockDivider(clock->prescaler);
+  }
+
+  return frequency / divisor;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result extendedBranchEnable(const void *clockBase,
     const void *configBase)
 {
   const struct ExtendedClockConfig * const config = configBase;
-  const struct ExtendedClockClass * const clock = clockBase;
-  uint16_t divisor = config->divisor;
+  assert(config);
+  assert(config->divisor);
 
-  if (!divisor)
-    return E_VALUE;
-  --divisor;
+  const struct ExtendedClockClass * const clock = clockBase;
+  const uint16_t divisor = config->divisor - 1;
 
   if (!checkClockDivider(clock->divider, divisor))
     return E_VALUE;
@@ -1412,6 +1455,8 @@ static enum Result genericBranchEnable(const void *clockBase,
     const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
+  assert(config);
+
   const struct GenericClockClass * const clock = clockBase;
 
   if (checkClockSource(config->source, clock->group))

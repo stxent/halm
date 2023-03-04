@@ -241,9 +241,10 @@ static enum Result extOscEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  uint32_t buffer = 0;
-
+  assert(config);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
+
+  uint32_t buffer = 0;
 
   if (config->bypass)
     buffer |= SYSOSCCTRL_BYPASS;
@@ -313,7 +314,7 @@ static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct WdtOscConfig * const config = configBase;
-
+  assert(config);
   assert(config->frequency <= WDT_FREQ_4600);
 
   const unsigned int index = !config->frequency ?
@@ -346,7 +347,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-
+  assert(config);
   assert(config->divisor);
   assert(config->source == CLOCK_EXTERNAL || config->source == CLOCK_INTERNAL);
 
@@ -386,6 +387,8 @@ static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
+  assert(config);
+
   const struct GenericClockConfig baseConfig = {
       .source = config->source,
       .divisor = config->divisor
@@ -415,8 +418,10 @@ static void branchDisable(const void *clockBase)
 /*----------------------------------------------------------------------------*/
 static enum Result branchEnable(const void *clockBase, const void *configBase)
 {
-  const struct GenericClockClass * const clock = clockBase;
   const struct GenericClockConfig * const config = configBase;
+  assert(config);
+
+  const struct GenericClockClass * const clock = clockBase;
   struct ClockDescriptor * const descriptor =
       calcBranchDescriptor(clock->branch);
   int source = -1;

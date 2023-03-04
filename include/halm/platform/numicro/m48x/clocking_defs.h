@@ -211,7 +211,115 @@ enum
 #define CLKDSTS_HXTFIF                  BIT(0)
 #define CLKDSTS_LXTFIF                  BIT(1)
 #define CLKDSTS_HXTFQIF                 BIT(8)
+/*------------------Power Manager Control register----------------------------*/
+enum
+{
+  /* Power-down mode */
+  PDMSEL_PD             = 0,
+  /* Low leakage power-down mode */
+  PDMSEL_LOW_LEAKAGE_PD = 1,
+  /* Fast wake-up power-down mode */
+  PDMSEL_FAST_WAKEUP_PD = 2,
+  /* Standby power-down mode with SRAM retention */
+  PDMSEL_STANDBY_PD_0   = 4,
+  /* Standby power-down mode */
+  PDMSEL_STANDBY_PD_1   = 5,
+  /* Deep power-down mode */
+  PDMSEL_DEEP_PD        = 6
+};
+
+enum
+{
+  SRETSEL_NONE  = 0,
+  SRETSEL_16K   = 1,
+  SRETSEL_32K   = 2,
+  SRETSEL_64K   = 3,
+  SRETSEL_128K  = 4
+};
+
+enum
+{
+  WKTMRIS_128     = 0,
+  WKTMRIS_256     = 1,
+  WKTMRIS_512     = 2,
+  WKTMRIS_1024    = 3,
+  WKTMRIS_4096    = 4,
+  WKTMRIS_8192    = 5,
+  WKTMRIS_16384   = 6,
+  WKTMRIS_65536   = 7,
+  WKTMRIS_131072  = 8,
+  WKTMRIS_262144  = 9,
+  WKTMRIS_524288  = 10,
+  WKTMRIS_1048576 = 11
+};
+
+#define PMUCTL_PDMSEL(value)            BIT_FIELD((value), 0)
+#define PMUCTL_PDMSEL_MASK              BIT_FIELD(MASK(3), 0)
+#define PMUCTL_PDMSEL_VALUE(reg) \
+    FIELD_VALUE((reg), PMUCTL_PDMSEL_MASK, 0)
+
+#define PMUCTL_DPDHOLDEN                BIT(3)
+
+#define PMUCTL_SRETSEL(value)           BIT_FIELD((value), 4)
+#define PMUCTL_SRETSEL_MASK             BIT_FIELD(MASK(3), 4)
+#define PMUCTL_SRETSEL_VALUE(reg) \
+    FIELD_VALUE((reg), PMUCTL_SRETSEL_MASK, 4)
+
+#define PMUCTL_WKTMREN                  BIT(8)
+
+#define PMUCTL_WKTMRIS(value)           BIT_FIELD((value), 9)
+#define PMUCTL_WKTMRIS_MASK             BIT_FIELD(MASK(4), 9)
+#define PMUCTL_WKTMRIS_VALUE(reg) \
+    FIELD_VALUE((reg), PMUCTL_WKTMRIS_MASK, 9)
+
+#define PMUCTL_WKPINEN0(value)          BIT_FIELD((value), 16)
+#define PMUCTL_WKPINEN0_MASK            BIT_FIELD(MASK(2), 16)
+#define PMUCTL_WKPINEN0_VALUE(reg) \
+    FIELD_VALUE((reg), PMUCTL_WKPINEN0_MASK, 16)
+
+#define PMUCTL_ACMPSPWK                 BIT(18)
+#define PMUCTL_RTCWKEN                  BIT(23)
+
+#define PMUCTL_WKPINEN1(value)          BIT_FIELD((value), 24)
+#define PMUCTL_WKPINEN1_MASK            BIT_FIELD(MASK(2), 24)
+#define PMUCTL_WKPINEN1_VALUE(reg) \
+    FIELD_VALUE((reg), PMUCTL_WKPINEN1_MASK, 24)
+
+#define PMUCTL_WKPINEN2(value)          BIT_FIELD((value), 26)
+#define PMUCTL_WKPINEN2_MASK            BIT_FIELD(MASK(2), 26)
+#define PMUCTL_WKPINEN2_VALUE(reg) \
+    FIELD_VALUE((reg), PMUCTL_WKPINEN2_MASK, 26)
+
+#define PMUCTL_WKPINEN3(value)          BIT_FIELD((value), 28)
+#define PMUCTL_WKPINEN3_MASK            BIT_FIELD(MASK(2), 28)
+#define PMUCTL_WKPINEN3_VALUE(reg) \
+    FIELD_VALUE((reg), PMUCTL_WKPINEN3_MASK, 28)
+
+#define PMUCTL_WKPINEN4(value)          BIT_FIELD((value), 30)
+#define PMUCTL_WKPINEN4_MASK            BIT_FIELD(MASK(2), 30)
+#define PMUCTL_WKPINEN4_VALUE(reg) \
+    FIELD_VALUE((reg), PMUCTL_WKPINEN4_MASK, 30)
+/*------------------Power Manager Status register-----------------------------*/
+#define PMUSTS_PINWK0                   BIT(0)
+#define PMUSTS_TMRWK                    BIT(1)
+#define PMUSTS_RTCWK                    BIT(2)
+#define PMUSTS_PINWK1                   BIT(3)
+#define PMUSTS_PINWK2                   BIT(4)
+#define PMUSTS_PINWK3                   BIT(5)
+#define PMUSTS_PINWK4                   BIT(6)
+#define PMUSTS_GPAWK                    BIT(8)
+#define PMUSTS_GPBWK                    BIT(9)
+#define PMUSTS_GPCWK                    BIT(10)
+#define PMUSTS_GPDWK                    BIT(11)
+#define PMUSTS_LVRWK                    BIT(12)
+#define PMUSTS_BODWK                    BIT(13)
+#define PMUSTS_ACMPWK                   BIT(14)
+#define PMUSTS_CLRWK                    BIT(31)
+/*------------------LDO Control register--------------------------------------*/
+#define LDOCTL_DPDWKSEL                 BIT(0)
+/*------------------GPIO Standby Power-down Control register------------------*/
+#define IOPDCTL_IOHR                    BIT(0)
 /*----------------------------------------------------------------------------*/
-// TODO PMUCTL PMUSTS LDOCTL SWKDBCTL PxSWKCTL IOPDCTL
+// TODO SWKDBCTL PxSWKCTL
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_M48X_CLOCKING_DEFS_H_ */
