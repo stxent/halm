@@ -1,5 +1,52 @@
 menu "Enabled peripherals"
 
+menu "BPWM"
+
+config PLATFORM_NUMICRO_BPWM0
+	bool "BPWM0"
+	default y
+	depends on PLATFORM_NUMICRO_BPWM_BASE
+
+config PLATFORM_NUMICRO_BPWM1
+	bool "BPWM1"
+	default y
+	depends on PLATFORM_NUMICRO_BPWM_BASE
+
+endmenu
+
+menu "EADC"
+
+config PLATFORM_NUMICRO_EADC0
+	bool "EADC0"
+	default y
+	depends on PLATFORM_NUMICRO_EADC_BASE
+
+config PLATFORM_NUMICRO_EADC1
+	bool "EADC1"
+	default y
+	depends on PLATFORM_NUMICRO_EADC_BASE
+
+endmenu
+
+menu "I2C"
+
+config PLATFORM_NUMICRO_I2C0
+	bool "I2C0"
+	default y
+	depends on PLATFORM_NUMICRO_I2C_BASE
+
+config PLATFORM_NUMICRO_I2C1
+	bool "I2C1"
+	default y
+	depends on PLATFORM_NUMICRO_I2C_BASE
+
+config PLATFORM_NUMICRO_I2C2
+	bool "I2C2"
+	default y
+	depends on PLATFORM_NUMICRO_I2C_BASE
+
+endmenu
+
 menu "SPI"
 
 config PLATFORM_NUMICRO_SPI0

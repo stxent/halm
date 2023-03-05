@@ -32,6 +32,28 @@ if(${CONFIG_PLATFORM_NUMICRO_ADC_DMA})
     list(APPEND SOURCE_FILES "adc_dma.c")
 endif()
 
+if(${CONFIG_PLATFORM_NUMICRO_BPWM_BASE})
+    list(APPEND SOURCE_FILES "bpwm_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/bpwm_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_NUMICRO_BPWM})
+    list(APPEND SOURCE_FILES "bpwm.c")
+endif()
+
+if(${CONFIG_PLATFORM_NUMICRO_EADC_BASE})
+    list(APPEND SOURCE_FILES "eadc_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/eadc_base.c")
+endif()
+
+if(${CONFIG_PLATFORM_NUMICRO_EADC})
+    list(APPEND SOURCE_FILES "eadc.c")
+endif()
+
+if(${CONFIG_PLATFORM_NUMICRO_EADC_DMA})
+    list(APPEND SOURCE_FILES "eadc_dma.c")
+endif()
+
 if(${CONFIG_PLATFORM_NUMICRO_GPTIMER_BASE})
     list(APPEND SOURCE_FILES "gptimer_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gptimer_base.c")
@@ -39,6 +61,15 @@ endif()
 
 if(${CONFIG_PLATFORM_NUMICRO_GPTIMER})
     list(APPEND SOURCE_FILES "${CONFIG_GEN_TIMER}/gptimer.c")
+endif()
+
+if(CONFIG_PLATFORM_NUMICRO_I2C_BASE)
+    list(APPEND SOURCE_FILES "i2c_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/i2c_base.c")
+endif()
+
+if(CONFIG_PLATFORM_NUMICRO_I2C)
+    list(APPEND SOURCE_FILES "i2c.c")
 endif()
 
 if(${CONFIG_PLATFORM_NUMICRO_PDMA})

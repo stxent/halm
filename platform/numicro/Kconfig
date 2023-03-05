@@ -85,6 +85,52 @@ config PLATFORM_NUMICRO_ADC_DMA
 	default y
 	depends on PLATFORM_NUMICRO_ADC_BASE && PLATFORM_NUMICRO_PDMA
 
+config PLATFORM_NUMICRO_BPWM_BASE
+	bool "BPWM"
+	default y
+
+config PLATFORM_NUMICRO_BPWM_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_BPWM_BASE
+
+config PLATFORM_NUMICRO_BPWM_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_NUMICRO_BPWM_BASE && PM
+
+config PLATFORM_NUMICRO_BPWM
+	bool "Simple single edge PWM"
+	default y
+	depends on PLATFORM_NUMICRO_BPWM_BASE
+
+config PLATFORM_NUMICRO_EADC_BASE
+	bool "EADC"
+	default y
+	depends on FAMILY_M48X
+
+config PLATFORM_NUMICRO_EADC_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_EADC_BASE
+
+config PLATFORM_NUMICRO_EADC_SHARED
+	bool "Shared EADC"
+	default y
+	depends on PLATFORM_NUMICRO_EADC_BASE
+	help
+	  This allows usage of multiple EADC channel objects on the same peripheral.
+
+config PLATFORM_NUMICRO_EADC
+	bool "Multichannel EADC with interrupts"
+	default y
+	depends on PLATFORM_NUMICRO_EADC_BASE
+
+config PLATFORM_NUMICRO_EADC_DMA
+	bool "Multichannel EADC with DMA"
+	default y
+	depends on PLATFORM_NUMICRO_EADC_BASE && PLATFORM_NUMICRO_PDMA
+
 config PLATFORM_NUMICRO_GPTIMER_BASE
 	bool "General Purpose Timer"
 	default y
@@ -103,6 +149,25 @@ config PLATFORM_NUMICRO_GPTIMER
 	bool "Common timer"
 	default y
 	depends on PLATFORM_NUMICRO_GPTIMER_BASE
+
+config PLATFORM_NUMICRO_I2C_BASE
+	bool "I2C"
+	default y
+
+config PLATFORM_NUMICRO_I2C_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_I2C_BASE
+
+config PLATFORM_NUMICRO_I2C_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_NUMICRO_I2C_BASE && PM
+
+config PLATFORM_NUMICRO_I2C
+	bool "I2C Master"
+	default y
+	depends on PLATFORM_NUMICRO_I2C_BASE
 
 config PLATFORM_NUMICRO_PDMA
 	bool "PDMA"
