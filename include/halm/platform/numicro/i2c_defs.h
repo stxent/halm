@@ -8,6 +8,25 @@
 #define HALM_PLATFORM_NUMICRO_I2C_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
+/*----------------------------------------------------------------------------*/
+enum
+{
+  STATUS_BUS_ERROR              = 0x00,
+  /* Start condition transmitted */
+  STATUS_START_TRANSMITTED      = 0x08,
+  /* Repeated start condition transmitted */
+  STATUS_RESTART_TRANSMITTED    = 0x10,
+  STATUS_SLAVE_WRITE_ACK        = 0x18,
+  STATUS_SLAVE_WRITE_NACK       = 0x20,
+  STATUS_DATA_TRANSMITTED_ACK   = 0x28,
+  STATUS_DATA_TRANSMITTED_NACK  = 0x30,
+  STATUS_ARBITRATION_LOST       = 0x38,
+  STATUS_SLAVE_READ_ACK         = 0x40,
+  STATUS_SLAVE_READ_NACK        = 0x48,
+  STATUS_DATA_RECEIVED_ACK      = 0x50,
+  STATUS_DATA_RECEIVED_NACK     = 0x58,
+  STATUS_NO_INFORMATION         = 0xF8
+};
 /*------------------Control Register 0----------------------------------------*/
 #define CTL0_AA                         BIT(2) /* Assert Acknowledge flag */
 #define CTL0_SI                         BIT(3) /* I2C interrupt flag */
@@ -17,6 +36,7 @@
 #define CTL0_INTEN                      BIT(7) /* I2C interrupt enable */
 /*------------------Data register---------------------------------------------*/
 #define DATA_READ                       BIT(0)
+#define DATA_RW_MASK                    BIT(0)
 #define DATA_WRITE                      0
 /*------------------Clock Divider register------------------------------------*/
 #define CLKDIV_MAX                      MASK(10)

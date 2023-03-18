@@ -18,19 +18,6 @@ enum State
   STATE_DATA
 };
 /*----------------------------------------------------------------------------*/
-/* Slave receiver and transmitter modes except general call modes */
-enum Status
-{
-  STATUS_ADDRESS_WRITE_RECEIVED = 0x60,
-  STATUS_DATA_RECEIVED_ACK      = 0x80,
-  STATUS_DATA_RECEIVED_NACK     = 0x88,
-  STATUS_STOP_RECEIVED          = 0xA0,
-  STATUS_ADDRESS_READ_RECEIVED  = 0xA8,
-  STATUS_DATA_TRANSMITTED_ACK   = 0xB8,
-  STATUS_DATA_TRANSMITTED_NACK  = 0xC0,
-  STATUS_LAST_TRANSMITTED_ACK   = 0xC8
-};
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
@@ -70,7 +57,7 @@ static void interruptHandler(void *object)
       interface->state = STATE_ADDRESS;
       break;
 
-    case STATUS_DATA_RECEIVED_ACK:
+    case STATUS_SLAVE_DATA_RECEIVED_ACK:
       if (interface->state == STATE_ADDRESS)
       {
         interface->external = reg->DAT;
@@ -88,7 +75,7 @@ static void interruptHandler(void *object)
     case STATUS_ADDRESS_READ_RECEIVED:
       interface->state = STATE_DATA;
       /* Falls through */
-    case STATUS_DATA_TRANSMITTED_ACK:
+    case STATUS_SLAVE_DATA_TRANSMITTED_ACK:
       reg->DAT = interface->cache[interface->external];
 
       /* Wrap current external position after reaching the end of cache */
@@ -96,9 +83,9 @@ static void interruptHandler(void *object)
         interface->external = 0;
       break;
 
-    case STATUS_DATA_RECEIVED_NACK:
+    case STATUS_SLAVE_DATA_RECEIVED_NACK:
     case STATUS_STOP_RECEIVED:
-    case STATUS_DATA_TRANSMITTED_NACK:
+    case STATUS_SLAVE_DATA_TRANSMITTED_NACK:
     case STATUS_LAST_TRANSMITTED_ACK:
       interface->state = STATE_IDLE;
       event = true;

@@ -247,7 +247,7 @@ void SGPIO_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint8_t sgpioConfigPin(PinNumber key, enum PinPull pull)
+enum SgpioPin sgpioConfigPin(PinNumber key, enum PinPull pull)
 {
   const struct PinGroupEntry * const group = pinGroupFind(sgpioPins, key, 0);
   assert(group);
@@ -259,7 +259,7 @@ uint8_t sgpioConfigPin(PinNumber key, enum PinPull pull)
   pinSetFunction(pin, UNPACK_FUNCTION(group->value));
   pinSetPull(pin, pull);
 
-  return offset + UNPACK_NUMBER(group->value);
+  return (enum SgpioPin)(offset + UNPACK_NUMBER(group->value));
 }
 /*----------------------------------------------------------------------------*/
 uint32_t sgpioGetClock(const struct SgpioBase *unit __attribute__((unused)))

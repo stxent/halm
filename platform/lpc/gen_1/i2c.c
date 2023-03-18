@@ -7,7 +7,7 @@
 #include <halm/generic/i2c.h>
 #include <halm/platform/lpc/gen_1/i2c_defs.h>
 #include <halm/platform/lpc/i2c.h>
-#include <xcore/memory.h>
+#include <halm/pm.h>
 #include <assert.h>
 #include <limits.h>
 /*----------------------------------------------------------------------------*/
@@ -20,27 +20,11 @@ enum State
   STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
-/* Master transmitter and receiver modes */
-enum Status
-{
-  STATUS_BUS_ERROR              = 0x00,
-  /* Start condition transmitted */
-  STATUS_START_TRANSMITTED      = 0x08,
-  /* Repeated start condition transmitted */
-  STATUS_RESTART_TRANSMITTED    = 0x10,
-  STATUS_SLAVE_WRITE_ACK        = 0x18,
-  STATUS_SLAVE_WRITE_NACK       = 0x20,
-  STATUS_DATA_TRANSMITTED_ACK   = 0x28,
-  STATUS_DATA_TRANSMITTED_NACK  = 0x30,
-  STATUS_ARBITRATION_LOST       = 0x38,
-  STATUS_SLAVE_READ_ACK         = 0x40,
-  STATUS_SLAVE_READ_NACK        = 0x48,
-  STATUS_DATA_RECEIVED_ACK      = 0x50,
-  STATUS_DATA_RECEIVED_NACK     = 0x58,
-  STATUS_NO_INFORMATION         = 0xF8
-};
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
+
+#ifdef CONFIG_PLATFORM_LPC_I2C_PM
+static void powerStateHandler(void *, enum PmState);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
 static void i2cSetCallback(void *, void (*)(void *), void *);
@@ -105,7 +89,7 @@ static void interruptHandler(void *object)
       break;
 
     /* Data byte has been transmitted, ACK received */
-    case STATUS_DATA_TRANSMITTED_ACK:
+    case STATUS_MASTER_DATA_TRANSMITTED_ACK:
       if (interface->state != STATE_TRANSMIT)
         break;
 
@@ -131,7 +115,7 @@ static void interruptHandler(void *object)
       break;
 
     /* Data has been received and ACK has been returned */
-    case STATUS_DATA_RECEIVED_ACK:
+    case STATUS_MASTER_DATA_RECEIVED_ACK:
       --interface->rxLeft;
       *interface->rxBuffer++ = reg->DAT;
 
@@ -142,7 +126,7 @@ static void interruptHandler(void *object)
       break;
 
     /* Last byte of data has been received and NACK has been returned */
-    case STATUS_DATA_RECEIVED_NACK:
+    case STATUS_MASTER_DATA_RECEIVED_NACK:
       if (interface->state != STATE_RECEIVE)
         break;
 
@@ -159,7 +143,7 @@ static void interruptHandler(void *object)
     /* Arbitration has been lost during transmission or reception */
     case STATUS_ARBITRATION_LOST:
     /* Data byte has been transmitted, NACK received */
-    case STATUS_DATA_TRANSMITTED_NACK:
+    case STATUS_MASTER_DATA_TRANSMITTED_NACK:
     /* Address and direction bit have not been acknowledged */
     case STATUS_SLAVE_WRITE_NACK:
     case STATUS_SLAVE_READ_NACK:
@@ -188,6 +172,16 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_LPC_I2C_PM
+static void powerStateHandler(void *object, enum PmState state)
+{
+  struct I2C * const interface = object;
+
+  if (state == PM_ACTIVE)
+    i2cSetRate(object, interface->rate);
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2CConfig * const config = configBase;
@@ -210,6 +204,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->address = 0;
   interface->callback = 0;
   interface->blocking = true;
+  interface->rate = config->rate;
   interface->sendRepeatedStart = false;
   interface->state = STATE_IDLE;
 
@@ -220,11 +215,16 @@ static enum Result i2cInit(void *object, const void *configBase)
 
   /* Clear all flags */
   reg->CONCLR = CONCLR_AAC | CONCLR_SIC | CONCLR_STAC | CONCLR_I2ENC;
+
+#ifdef CONFIG_PLATFORM_LPC_I2C_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
+    return res;
+#endif
+
   /* Enable the interface */
   reg->CONSET = CONSET_I2EN;
 
   irqSetPriority(interface->base.irq, config->priority);
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -236,6 +236,10 @@ static void i2cDeinit(void *object)
 
   /* Disable the interface */
   reg->CONCLR = CONCLR_I2ENC;
+
+#ifdef CONFIG_PLATFORM_LPC_I2C_PM
+  pmUnregister(interface);
+#endif
 
   I2CBase->deinit(interface);
 }
@@ -314,7 +318,8 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
       return E_OK;
 
     case IF_RATE:
-      i2cSetRate(&interface->base, *(const uint32_t *)data);
+      interface->rate = *(const uint32_t *)data;
+      i2cSetRate(&interface->base, interface->rate);
       return E_OK;
 
     case IF_ZEROCOPY:
@@ -345,7 +350,7 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   reg->CONSET = CONSET_STA;
 
   /* Continue previous transmission when Repeated Start is enabled */
-  if (reg->STAT == STATUS_DATA_TRANSMITTED_ACK)
+  if (reg->STAT == STATUS_MASTER_DATA_TRANSMITTED_ACK)
     reg->CONCLR = CONCLR_SIC;
 
   irqEnable(interface->base.irq);
@@ -378,7 +383,7 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   interface->txBuffer = buffer;
 
   /* Stop previous transmission when Repeated Start is enabled */
-  if (reg->STAT == STATUS_DATA_TRANSMITTED_ACK)
+  if (reg->STAT == STATUS_MASTER_DATA_TRANSMITTED_ACK)
   {
     reg->CONSET = CONSET_STO;
     reg->CONCLR = CONCLR_SIC;

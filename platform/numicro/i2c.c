@@ -7,7 +7,7 @@
 #include <halm/generic/i2c.h>
 #include <halm/platform/numicro/i2c.h>
 #include <halm/platform/numicro/i2c_defs.h>
-#include <xcore/memory.h>
+#include <halm/pm.h>
 #include <assert.h>
 #include <limits.h>
 /*----------------------------------------------------------------------------*/
@@ -20,27 +20,11 @@ enum State
   STATE_ERROR
 };
 /*----------------------------------------------------------------------------*/
-/* Master transmitter and receiver modes */
-enum Status
-{
-  STATUS_BUS_ERROR              = 0x00,
-  /* Start condition transmitted */
-  STATUS_START_TRANSMITTED      = 0x08,
-  /* Repeated start condition transmitted */
-  STATUS_RESTART_TRANSMITTED    = 0x10,
-  STATUS_SLAVE_WRITE_ACK        = 0x18,
-  STATUS_SLAVE_WRITE_NACK       = 0x20,
-  STATUS_DATA_TRANSMITTED_ACK   = 0x28,
-  STATUS_DATA_TRANSMITTED_NACK  = 0x30,
-  STATUS_ARBITRATION_LOST       = 0x38,
-  STATUS_SLAVE_READ_ACK         = 0x40,
-  STATUS_SLAVE_READ_NACK        = 0x48,
-  STATUS_DATA_RECEIVED_ACK      = 0x50,
-  STATUS_DATA_RECEIVED_NACK     = 0x58,
-  STATUS_NO_INFORMATION         = 0xF8
-};
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
+
+#ifdef CONFIG_PLATFORM_NUMICRO_I2C_PM
+static void powerStateHandler(void *, enum PmState);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
 static void i2cSetCallback(void *, void (*)(void *), void *);
@@ -71,11 +55,11 @@ static void interruptHandler(void *object)
 {
   struct I2C * const interface = object;
   NM_I2C_Type * const reg = interface->base.reg;
-  const uint8_t stat = reg->STATUS0;
+  const uint8_t status = reg->STATUS0;
   bool clearInterrupt = true;
   bool event = false;
 
-  switch (stat)
+  switch (status)
   {
     /* Start or Repeated Start conditions have been transmitted */
     case STATUS_START_TRANSMITTED:
@@ -188,6 +172,16 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_NUMICRO_I2C_PM
+static void powerStateHandler(void *object, enum PmState state)
+{
+  struct I2C * const interface = object;
+
+  if (state == PM_ACTIVE)
+    i2cSetRate(object, interface->rate);
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2CConfig * const config = configBase;
@@ -211,6 +205,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->blocking = true;
   interface->extended = config->extended;
+  interface->rate = config->rate;
   interface->sendRepeatedStart = false;
   interface->state = STATE_IDLE;
 
@@ -225,6 +220,11 @@ static enum Result i2cInit(void *object, const void *configBase)
   reg->CTL1 = interface->extended ? CTL1_ADDR10EN : 0;
   reg->TOCTL = 0;
   reg->WKCTL = 0;
+
+#ifdef CONFIG_PLATFORM_NUMICRO_I2C_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
+    return res;
+#endif
 
   /* Enable the interface */
   reg->CTL0 = CTL0_I2CEN | CTL0_INTEN;
@@ -241,6 +241,10 @@ static void i2cDeinit(void *object)
 
   /* Disable the interface */
   reg->CTL0 = 0;
+
+#ifdef CONFIG_PLATFORM_NUMICRO_I2C_PM
+  pmUnregister(interface);
+#endif
 
   I2CBase->deinit(interface);
 }
@@ -323,7 +327,8 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
       return E_OK;
 
     case IF_RATE:
-      i2cSetRate(&interface->base, *(const uint32_t *)data);
+      interface->rate = *(const uint32_t *)data;
+      i2cSetRate(&interface->base, interface->rate);
       return E_OK;
 
     case IF_ZEROCOPY:
@@ -349,13 +354,12 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   interface->txLeft = 0;
   interface->rxBuffer = buffer;
   interface->txBuffer = 0;
-
   interface->state = STATE_ADDRESS;
-  reg->CTL0 |= CTL0_STA;
 
   /* Continue previous transmission when Repeated Start is enabled */
   if (reg->STATUS0 == STATUS_DATA_TRANSMITTED_ACK)
     reg->CTL0 |= CTL0_SI;
+  reg->CTL0 |= CTL0_STA;
 
   irqEnable(interface->base.irq);
 
@@ -385,17 +389,16 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   interface->txLeft = length;
   interface->rxBuffer = 0;
   interface->txBuffer = buffer;
+  interface->state = STATE_ADDRESS;
 
   /* Stop previous transmission when Repeated Start is enabled */
   if (reg->STATUS0 == STATUS_DATA_TRANSMITTED_ACK)
     reg->CTL0 |= CTL0_SI | CTL0_STO;
-
   /*
    * Start condition generation can be delayed when the bus is not free.
    * After Stop condition being transmitted Start will be generated
    * automatically.
    */
-  interface->state = STATE_ADDRESS;
   reg->CTL0 |= CTL0_STA;
 
   irqEnable(interface->base.irq);

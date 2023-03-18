@@ -244,6 +244,7 @@ static void channelDisable(void *object)
 {
   struct PdmaCircular * const channel = object;
   NM_PDMA_Type * const reg = channel->base.reg;
+  const uint8_t number = channel->base.number;
 
   /*
    * Incorrect sequence of calls: channel should not be disabled when
@@ -253,8 +254,9 @@ static void channelDisable(void *object)
 
   if (channel->state == STATE_BUSY)
   {
-    // TODO Clear CHRST at enable?
-    reg->CHRST |= 1 << channel->base.number;
+    reg->CHRST |= 1 << number;
+    pdmaResetInstance(number);
+
     channel->state = STATE_DONE;
   }
 }

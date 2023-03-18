@@ -53,9 +53,9 @@ struct Spi
   /* Number of bytes to be transmitted */
   size_t txLeft;
 
-  /* Selection between blocking mode and zero copy mode */
+  /* Enable blocking mode */
   bool blocking;
-  /* Selection between unidirectional and bidirectional modes */
+  /* Enable unidirectional mode */
   bool unidir;
 };
 /*----------------------------------------------------------------------------*/

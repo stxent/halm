@@ -63,11 +63,11 @@ struct SpiDma
    */
   uint8_t dummy;
 
-  /* Selection between blocking mode and zero copy mode */
+  /* Enable blocking mode */
   bool blocking;
   /* Synchronize DMA TX and RX handlers */
   bool invoked;
-  /* Selection between unidirectional and bidirectional modes */
+  /* Enable unidirectional mode */
   bool unidir;
 };
 /*----------------------------------------------------------------------------*/

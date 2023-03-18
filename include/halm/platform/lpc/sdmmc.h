@@ -9,8 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
 #include <halm/interrupt.h>
-#include <halm/irq.h>
-#include <halm/pin.h>
 #include <halm/platform/lpc/sdmmc_base.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/

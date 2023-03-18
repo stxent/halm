@@ -33,6 +33,9 @@ struct I2C
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* Desired baud rate */
+  uint32_t rate;
+
   /* Pointer to an input buffer */
   uint8_t *rxBuffer;
   /* Pointer to an output buffer */

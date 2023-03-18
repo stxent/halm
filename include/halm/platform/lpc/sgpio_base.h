@@ -113,7 +113,7 @@ END_DECLS
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-uint8_t sgpioConfigPin(PinNumber, enum PinPull);
+enum SgpioPin sgpioConfigPin(PinNumber, enum PinPull);
 uint32_t sgpioGetClock(const struct SgpioBase *);
 enum SgpioSlice sgpioPinToSlice(enum SgpioPin, uint8_t);
 

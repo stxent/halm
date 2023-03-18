@@ -8,6 +8,38 @@
 #define HALM_PLATFORM_LPC_GEN_1_I2C_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
+/*----------------------------------------------------------------------------*/
+enum
+{
+  /* Master transmitter and receiver modes */
+
+  STATUS_BUS_ERROR                    = 0x00,
+  /* Start condition transmitted */
+  STATUS_START_TRANSMITTED            = 0x08,
+  /* Repeated start condition transmitted */
+  STATUS_RESTART_TRANSMITTED          = 0x10,
+  STATUS_SLAVE_WRITE_ACK              = 0x18,
+  STATUS_SLAVE_WRITE_NACK             = 0x20,
+  STATUS_MASTER_DATA_TRANSMITTED_ACK  = 0x28,
+  STATUS_MASTER_DATA_TRANSMITTED_NACK = 0x30,
+  STATUS_ARBITRATION_LOST             = 0x38,
+  STATUS_SLAVE_READ_ACK               = 0x40,
+  STATUS_SLAVE_READ_NACK              = 0x48,
+  STATUS_MASTER_DATA_RECEIVED_ACK     = 0x50,
+  STATUS_MASTER_DATA_RECEIVED_NACK    = 0x58,
+  STATUS_NO_INFORMATION               = 0xF8,
+
+  /* Slave receiver and transmitter modes except general call modes */
+
+  STATUS_ADDRESS_WRITE_RECEIVED       = 0x60,
+  STATUS_SLAVE_DATA_RECEIVED_ACK      = 0x80,
+  STATUS_SLAVE_DATA_RECEIVED_NACK     = 0x88,
+  STATUS_STOP_RECEIVED                = 0xA0,
+  STATUS_ADDRESS_READ_RECEIVED        = 0xA8,
+  STATUS_SLAVE_DATA_TRANSMITTED_ACK   = 0xB8,
+  STATUS_SLAVE_DATA_TRANSMITTED_NACK  = 0xC0,
+  STATUS_LAST_TRANSMITTED_ACK         = 0xC8
+};
 /*------------------Control Set register--------------------------------------*/
 #define CONSET_AA                       BIT(2) /* Assert Acknowledge flag */
 #define CONSET_SI                       BIT(3) /* I2C interrupt flag */
