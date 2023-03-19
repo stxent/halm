@@ -180,15 +180,11 @@ static void streamDisable(void *object)
   struct DmaOneShot * const stream = object;
   STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
 
-  /*
-   * Incorrect sequence of calls: stream should not be disabled when
-   * it is not initialized and started.
-   */
-  assert(stream->state != STATE_IDLE && stream->state != STATE_READY);
-
   if (stream->state == STATE_BUSY)
   {
     reg->CCR &= ~CCR_EN;
+    dmaResetInstance(stream->base.number);
+
     stream->state = STATE_DONE;
   }
 }

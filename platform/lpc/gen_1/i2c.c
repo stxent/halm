@@ -261,7 +261,7 @@ static enum Result i2cGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-      if (interface->blocking || interface->state != STATE_ERROR)
+      if (interface->state != STATE_ERROR)
         return interface->state != STATE_IDLE ? E_BUSY : E_OK;
       else
         return E_ERROR;

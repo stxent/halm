@@ -55,9 +55,18 @@ static void interruptHandler(void *object)
 {
   struct I2C * const interface = object;
   NM_I2C_Type * const reg = interface->base.reg;
-  const uint8_t status = reg->STATUS0;
-  bool clearInterrupt = true;
+  uint8_t status = reg->STATUS0;
+  bool clear = true;
   bool event = false;
+
+  if (reg->TOCTL & TOCTL_TOIF)
+  {
+    reg->TOCTL |= TOCTL_TOIF;
+
+    interface->state = STATE_ERROR;
+    event = true;
+    status = STATUS_BUS_RELEASED;
+  }
 
   switch (status)
   {
@@ -104,7 +113,7 @@ static void interruptHandler(void *object)
         if (interface->sendRepeatedStart)
         {
           interface->sendRepeatedStart = false;
-          clearInterrupt = false;
+          clear = false;
         }
         else
           reg->CTL0 |= CTL0_STO;
@@ -138,35 +147,34 @@ static void interruptHandler(void *object)
       event = true;
       break;
 
-    /* External interference disturbed the internal signals */
     case STATUS_BUS_ERROR:
-    /* Arbitration has been lost during transmission or reception */
     case STATUS_ARBITRATION_LOST:
-    /* Data byte has been transmitted, NACK received */
     case STATUS_DATA_TRANSMITTED_NACK:
-    /* Address and direction bit have not been acknowledged */
     case STATUS_SLAVE_WRITE_NACK:
     case STATUS_SLAVE_READ_NACK:
-      interface->sendRepeatedStart = false;
-
       reg->CTL0 |= CTL0_STO;
+
+      interface->sendRepeatedStart = false;
       interface->state = STATE_ERROR;
       event = true;
       break;
 
-    case STATUS_NO_INFORMATION:
-      clearInterrupt = false;
+    case STATUS_BUS_RELEASED:
+      clear = false;
       break;
 
     default:
       break;
   }
 
-  if (clearInterrupt)
+  if (clear)
     reg->CTL0 |= CTL0_SI;
 
   if (interface->state == STATE_IDLE || interface->state == STATE_ERROR)
+  {
     irqDisable(interface->base.irq);
+    reg->TOCTL = 0;
+  }
 
   if (interface->callback && event)
     interface->callback(interface->callbackArgument);
@@ -266,7 +274,7 @@ static enum Result i2cGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-      if (interface->blocking || interface->state != STATE_ERROR)
+      if (interface->state != STATE_ERROR)
         return interface->state != STATE_IDLE ? E_BUSY : E_OK;
       else
         return E_ERROR;
@@ -358,9 +366,11 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
 
   /* Continue previous transmission when Repeated Start is enabled */
   if (reg->STATUS0 == STATUS_DATA_TRANSMITTED_ACK)
-    reg->CTL0 |= CTL0_SI;
-  reg->CTL0 |= CTL0_STA;
+    reg->CTL0 |= CTL0_SI | CTL0_STA;
+  else
+    reg->CTL0 |= CTL0_STA;
 
+  reg->TOCTL = TOCTL_TOIF | TOCTL_TOCEN;
   irqEnable(interface->base.irq);
 
   if (interface->blocking)
@@ -391,9 +401,6 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   interface->txBuffer = buffer;
   interface->state = STATE_ADDRESS;
 
-  /* Stop previous transmission when Repeated Start is enabled */
-  if (reg->STATUS0 == STATUS_DATA_TRANSMITTED_ACK)
-    reg->CTL0 |= CTL0_SI | CTL0_STO;
   /*
    * Start condition generation can be delayed when the bus is not free.
    * After Stop condition being transmitted Start will be generated
@@ -401,6 +408,7 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
    */
   reg->CTL0 |= CTL0_STA;
 
+  reg->TOCTL = TOCTL_TOIF | TOCTL_TOCEN;
   irqEnable(interface->base.irq);
 
   if (interface->blocking)

@@ -200,15 +200,11 @@ static void channelDisable(void *object)
   struct GpDmaCircular * const channel = object;
   LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
 
-  /*
-   * Incorrect sequence of calls: channel should not be disabled when
-   * it is not initialized and started.
-   */
-  assert(channel->state != STATE_IDLE && channel->state != STATE_READY);
-
   if (channel->state == STATE_BUSY)
   {
     reg->CONFIG &= ~CONFIG_ENABLE;
+    gpDmaResetInstance(channel->base.number);
+
     channel->state = STATE_DONE;
   }
 }

@@ -183,12 +183,6 @@ static void channelDisable(void *object)
   NM_PDMA_Type * const reg = channel->base.reg;
   const uint8_t number = channel->base.number;
 
-  /*
-   * Incorrect sequence of calls: channel should not be disabled when
-   * it is not initialized and started.
-   */
-  assert(channel->state != STATE_IDLE && channel->state != STATE_READY);
-
   if (channel->state == STATE_BUSY)
   {
     reg->CHRST |= 1 << number;

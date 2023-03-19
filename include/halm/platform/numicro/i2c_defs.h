@@ -25,7 +25,7 @@ enum
   STATUS_SLAVE_READ_NACK        = 0x48,
   STATUS_DATA_RECEIVED_ACK      = 0x50,
   STATUS_DATA_RECEIVED_NACK     = 0x58,
-  STATUS_NO_INFORMATION         = 0xF8
+  STATUS_BUS_RELEASED           = 0xF8
 };
 /*------------------Control Register 0----------------------------------------*/
 #define CTL0_AA                         BIT(2) /* Assert Acknowledge flag */
