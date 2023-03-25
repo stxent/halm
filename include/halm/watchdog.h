@@ -13,6 +13,7 @@
 #define HALM_WATCHDOG_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/entity.h>
+#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Class descriptor */
 struct WatchdogClass

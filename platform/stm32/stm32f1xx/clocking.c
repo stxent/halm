@@ -14,6 +14,7 @@
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #define HSI_OSC_FREQUENCY     8000000
+#define LSI_OSC_FREQUENCY     40000
 #define TICK_RATE(frequency)  ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 static uint32_t adcPrescalerToValue(uint32_t);
@@ -30,6 +31,11 @@ static void extOscDisable(const void *);
 static enum Result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
 static bool extOscReady(const void *);
+
+static void intLowSpeedOscDisable(const void *);
+static enum Result intLowSpeedOscEnable(const void *, const void *);
+static uint32_t intLowSpeedOscFrequency(const void *);
+static bool intLowSpeedOscReady(const void *);
 
 static void intOscDisable(const void *);
 static enum Result intOscEnable(const void *, const void *);
@@ -61,6 +67,14 @@ const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .enable = extOscEnable,
     .frequency = extOscFrequency,
     .ready = extOscReady
+};
+
+const struct ClockClass * const InternalLowSpeedOsc =
+    &(const struct ClockClass){
+    .disable = intLowSpeedOscDisable,
+    .enable = intLowSpeedOscEnable,
+    .frequency = intLowSpeedOscFrequency,
+    .ready = intLowSpeedOscReady
 };
 
 const struct ClockClass * const InternalOsc = &(const struct ClockClass){
@@ -214,6 +228,29 @@ static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 static bool extOscReady(const void *clockBase __attribute__((unused)))
 {
   return (STM_RCC->CR & CR_HSERDY) != 0;
+}
+/*----------------------------------------------------------------------------*/
+static void intLowSpeedOscDisable(const void *clockBase __attribute__((unused)))
+{
+  STM_RCC->CSR &= ~CSR_LSION;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result intLowSpeedOscEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase __attribute__((unused)))
+{
+  STM_RCC->CSR |= CSR_LSION;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t intLowSpeedOscFrequency(const void *clockBase
+    __attribute__((unused)))
+{
+  return (STM_RCC->CSR & CSR_LSIRDY) != 0 ? LSI_OSC_FREQUENCY : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool intLowSpeedOscReady(const void *clockBase __attribute__((unused)))
+{
+  return (STM_RCC->CSR & CSR_LSIRDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void intOscDisable(const void *clockBase __attribute__((unused)))

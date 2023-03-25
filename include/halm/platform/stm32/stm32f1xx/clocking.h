@@ -48,6 +48,7 @@ struct ExternalOscConfig
 extern const struct ClockClass * const ExternalOsc;
 /*----------------------------------------------------------------------------*/
 /* May be initialized with the null pointer */
+extern const struct ClockClass * const InternalLowSpeedOsc;
 extern const struct ClockClass * const InternalOsc;
 /*----------------------------------------------------------------------------*/
 struct MainPllConfig

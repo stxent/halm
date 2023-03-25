@@ -71,11 +71,6 @@ static enum Result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
 static bool extOscReady(const void *);
 
-static void intOscDisable(const void *);
-static enum Result intOscEnable(const void *, const void *);
-static uint32_t intOscFrequency(const void *);
-static bool intOscReady(const void *);
-
 static void intHighSpeedOscDisable(const void *);
 static enum Result intHighSpeedOscEnable(const void *, const void *);
 static uint32_t intHighSpeedOscFrequency(const void *);
@@ -85,6 +80,11 @@ static void intLowSpeedOscDisable(const void *);
 static enum Result intLowSpeedOscEnable(const void *, const void *);
 static uint32_t intLowSpeedOscFrequency(const void *);
 static bool intLowSpeedOscReady(const void *);
+
+static void intOscDisable(const void *);
+static enum Result intOscEnable(const void *, const void *);
+static uint32_t intOscFrequency(const void *);
+static bool intOscReady(const void *);
 
 static void rtcOscDisable(const void *);
 static enum Result rtcOscEnable(const void *, const void *);
@@ -128,11 +128,12 @@ const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .ready = extOscReady
 };
 
-const struct ClockClass * const InternalOsc = &(const struct ClockClass){
-    .disable = intOscDisable,
-    .enable = intOscEnable,
-    .frequency = intOscFrequency,
-    .ready = intOscReady
+const struct ClockClass * const InternalHighSpeedOsc =
+    &(const struct ClockClass){
+    .disable = intHighSpeedOscDisable,
+    .enable = intHighSpeedOscEnable,
+    .frequency = intHighSpeedOscFrequency,
+    .ready = intHighSpeedOscReady
 };
 
 const struct ClockClass * const InternalLowSpeedOsc =
@@ -143,12 +144,11 @@ const struct ClockClass * const InternalLowSpeedOsc =
     .ready = intLowSpeedOscReady
 };
 
-const struct ClockClass * const InternalHighSpeedOsc =
-    &(const struct ClockClass){
-    .disable = intHighSpeedOscDisable,
-    .enable = intHighSpeedOscEnable,
-    .frequency = intHighSpeedOscFrequency,
-    .ready = intHighSpeedOscReady
+const struct ClockClass * const InternalOsc = &(const struct ClockClass){
+    .disable = intOscDisable,
+    .enable = intOscEnable,
+    .frequency = intOscFrequency,
+    .ready = intOscReady
 };
 
 const struct ClockClass * const RtcOsc = &(const struct ClockClass){
@@ -1147,33 +1147,6 @@ static bool extOscReady(const void *clockBase __attribute__((unused)))
   return extFrequency && (NM_CLK->STATUS & STATUS_HXTSTB);
 }
 /*----------------------------------------------------------------------------*/
-static void intOscDisable(const void *clockBase __attribute__((unused)))
-{
-  sysUnlockReg();
-  NM_CLK->PWRCTL &= ~PWRCTL_HIRCEN;
-  sysLockReg();
-}
-/*----------------------------------------------------------------------------*/
-static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase __attribute__((unused)))
-{
-  sysUnlockReg();
-  NM_CLK->PWRCTL |= PWRCTL_HIRCEN;
-  sysLockReg();
-
-  return E_OK;
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
-{
-  return (NM_CLK->STATUS & STATUS_HIRCSTB) != 0 ? HIRC_FREQUENCY : 0;
-}
-/*----------------------------------------------------------------------------*/
-static bool intOscReady(const void *clockBase __attribute__((unused)))
-{
-  return (NM_CLK->STATUS & STATUS_HIRCSTB) != 0;
-}
-/*----------------------------------------------------------------------------*/
 static void intHighSpeedOscDisable(const void *clockBase
     __attribute__((unused)))
 {
@@ -1229,6 +1202,33 @@ static uint32_t intLowSpeedOscFrequency(const void *clockBase
 static bool intLowSpeedOscReady(const void *clockBase __attribute__((unused)))
 {
   return (NM_CLK->STATUS & STATUS_LIRCSTB) != 0;
+}
+/*----------------------------------------------------------------------------*/
+static void intOscDisable(const void *clockBase __attribute__((unused)))
+{
+  sysUnlockReg();
+  NM_CLK->PWRCTL &= ~PWRCTL_HIRCEN;
+  sysLockReg();
+}
+/*----------------------------------------------------------------------------*/
+static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
+{
+  sysUnlockReg();
+  NM_CLK->PWRCTL |= PWRCTL_HIRCEN;
+  sysLockReg();
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
+{
+  return (NM_CLK->STATUS & STATUS_HIRCSTB) != 0 ? HIRC_FREQUENCY : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool intOscReady(const void *clockBase __attribute__((unused)))
+{
+  return (NM_CLK->STATUS & STATUS_HIRCSTB) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void rtcOscDisable(const void *clockBase __attribute__((unused)))

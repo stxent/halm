@@ -113,6 +113,10 @@ config PLATFORM_STM32_GPTIMER
 	default y
 	depends on PLATFORM_STM32_GPTIMER_BASE
 
+config PLATFORM_STM32_IWDG
+	bool "IWDG"
+	default y
+
 config PLATFORM_STM32_SPI_BASE
 	bool "SPI"
 	default y
