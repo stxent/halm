@@ -155,7 +155,7 @@ static void tmrSetValue(void *object, uint32_t value)
   while (timer->ticks != value);
 }
 /*----------------------------------------------------------------------------*/
-uint64_t tmrGetValue64(const void *object)
+static uint64_t tmrGetValue64(const void *object)
 {
   const struct SoftwareTimer64 * const timer = object;
 
@@ -173,7 +173,7 @@ uint64_t tmrGetValue64(const void *object)
   return accumulated + (uint64_t)current;
 }
 /*----------------------------------------------------------------------------*/
-void tmrSetValue64(void *object, uint64_t value)
+static void tmrSetValue64(void *object, uint64_t value)
 {
   struct SoftwareTimer64 * const timer = object;
 

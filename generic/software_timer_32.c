@@ -23,7 +23,7 @@ static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
-const struct TimerClass * const Timer32 = &(const struct TimerClass){
+const struct TimerClass * const SoftwareTimer32 = &(const struct TimerClass){
     .size = sizeof(struct SoftwareTimer32),
     .init = tmrInit,
     .deinit = tmrDeinit,
