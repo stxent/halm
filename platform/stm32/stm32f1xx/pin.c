@@ -181,7 +181,7 @@ void pinSetPull(struct Pin pin, enum PinPull pull)
   if (CR_MODE_VALUE(pin.number, configValue) != MODE_INPUT)
     return;
 
-  configValue &= ~CR_CNF_VALUE(pin.number, CNF_OUTPUT_MASK);
+  configValue &= ~CR_CNF_MASK(pin.number);
 
   if (pull != PIN_NOPULL)
   {
