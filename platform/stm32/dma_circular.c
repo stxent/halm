@@ -269,7 +269,7 @@ static size_t streamQueued(const void *object)
     const STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
     const bool lower = reg->CNDTR <= (stream->transfers >> 1);
 
-    return lower ? 2 : 1;
+    return lower ? 1 : 2;
   }
   else
     return 0;

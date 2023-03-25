@@ -326,7 +326,7 @@ static enum Result serialInit(void *object, const void *configBase)
   /* Enable DMA mode for transmission and reception */
   reg->CR3 = CR3_DMAR | CR3_DMAT;
 
-  /* Enable receiver and transmitter, IDLE interrupt, enable peripheral. */
+  /* Enable receiver and transmitter, IDLE interrupt, enable peripheral */
   reg->CR1 |= CR1_RE | CR1_TE | CR1_IDLEIE | CR1_UE;
 
 #ifdef CONFIG_PLATFORM_STM32_UART_PM
