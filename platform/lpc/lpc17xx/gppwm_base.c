@@ -125,6 +125,7 @@ static enum Result unitInit(void *object, const void *configBase)
   struct GpPwmUnitBase * const unit = object;
 
   assert(config->channel == 0);
+  (void)config;
 
   if (setInstance(unit))
   {

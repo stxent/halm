@@ -237,8 +237,7 @@ static uint32_t makeCommand(const struct Spifi *interface)
     else
       fieldform = FIELDFORM_SERIAL_OPCODE;
   }
-  else if (packCommand != PACK_PARALLEL && packAddress != PACK_PARALLEL
-      && packPost != PACK_PARALLEL)
+  else
   {
     if (packData != PACK_SERIAL)
       fieldform = FIELDFORM_PARALLEL_DATA;
