@@ -44,7 +44,7 @@ struct UartBase
 BEGIN_DECLS
 
 /* Common functions */
-void uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
+void uartConfigPins(const struct UartBaseConfig *);
 enum SerialParity uartGetParity(const struct UartBase *);
 uint32_t uartGetRate(const struct UartBase *);
 void uartSetParity(struct UartBase *, enum SerialParity);

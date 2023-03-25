@@ -10,8 +10,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry qspiPins[];
 /*----------------------------------------------------------------------------*/
-void qspiConfigPins(struct QspiBase *interface,
-    const struct QspiBaseConfig *config)
+void qspiConfigPins(const struct QspiBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->cs,
@@ -27,7 +26,7 @@ void qspiConfigPins(struct QspiBase *interface,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(qspiPins,
-          pinArray[index], interface->channel);
+          pinArray[index], config->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);

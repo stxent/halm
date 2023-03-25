@@ -12,7 +12,7 @@
 /* Errata: PCLK for I2S must not be higher than 74 MHz */
 #define DEFAULT_DIV CLK_DIV2
 /*----------------------------------------------------------------------------*/
-static void configPins(struct I2SBase *, const struct I2SBaseConfig *);
+static void configPins(const struct I2SBaseConfig *);
 static bool setInstance(struct I2SBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
@@ -100,8 +100,7 @@ const struct PinEntry i2sPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct I2SBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static void configPins(struct I2SBase *interface,
-    const struct I2SBaseConfig *config)
+static void configPins(const struct I2SBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->rx.sck, config->rx.ws, config->rx.sda, config->rx.mclk,
@@ -113,7 +112,7 @@ static void configPins(struct I2SBase *interface,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(i2sPins, pinArray[index],
-          interface->channel);
+          config->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);
@@ -151,19 +150,19 @@ static enum Result i2sInit(void *object, const void *configBase)
   struct I2SBase * const interface = object;
 
   assert(config->channel == 0);
-
   if (!setInstance(interface))
     return E_BUSY;
 
-  interface->irq = I2S_IRQ;
-  interface->reg = LPC_I2S;
-  interface->handler = 0;
-  interface->channel = config->channel;
-
-  configPins(interface, configBase);
+  /* Configure input and output pins */
+  configPins(config);
 
   sysPowerEnable(PWR_I2S);
   sysClockControl(CLK_I2S, DEFAULT_DIV);
+
+  interface->handler = 0;
+  interface->channel = config->channel;
+  interface->irq = I2S_IRQ;
+  interface->reg = LPC_I2S;
 
   return E_OK;
 }

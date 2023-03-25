@@ -20,6 +20,7 @@ struct SpiBlockDescriptor
   IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
+static uint8_t channelToIndex(uint8_t);
 static bool setInstance(uint8_t, struct SpiBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *, const void *);
@@ -491,6 +492,34 @@ const struct PinEntry spiPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct SpiBase *instances[4] = {0};
 /*----------------------------------------------------------------------------*/
+static uint8_t channelToIndex(uint8_t channel)
+{
+  uint8_t index = 0;
+
+#ifdef CONFIG_PLATFORM_NUMICRO_SPI0
+  if (channel == 0)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_SPI1
+  if (channel == 1)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_SPI2
+  if (channel == 2)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_SPI3
+  if (channel == 3)
+    return index;
+  ++index;
+#endif
+
+  return UINT8_MAX;
+}
+/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct SpiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -569,25 +598,25 @@ uint32_t spiGetClock(const struct SpiBase *interface)
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiBaseConfig * const config = configBase;
+  const size_t index = channelToIndex(config->channel);
   struct SpiBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  assert(index != UINT8_MAX);
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
-  spiConfigPins(interface, config);
+  spiConfigPins(config);
 
-  const struct SpiBlockDescriptor * const entry =
-      &spiBlockEntries[interface->channel];
+  const struct SpiBlockDescriptor * const entry = &spiBlockEntries[index];
 
   /* Enable clock to peripheral */
   sysClockEnable(entry->branch);
   /* Reset registers to default values */
   sysResetBlock(entry->reset);
 
+  interface->channel = config->channel;
+  interface->handler = 0;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -599,7 +628,7 @@ static void spiDeinit(void *object)
 {
   const struct SpiBase * const interface = object;
   const struct SpiBlockDescriptor * const entry =
-      &spiBlockEntries[interface->channel];
+      &spiBlockEntries[channelToIndex(interface->channel)];
 
   sysClockDisable(entry->branch);
   instances[interface->channel] = 0;

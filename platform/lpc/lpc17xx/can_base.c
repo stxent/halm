@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_DIV CLK_DIV1
 /*----------------------------------------------------------------------------*/
-static void configPins(const struct CanBase *, const struct CanBaseConfig *);
+static void configPins(const struct CanBaseConfig *);
 static bool setInstance(uint8_t, struct CanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
@@ -71,8 +71,7 @@ static const struct PinEntry canPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct CanBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void configPins(const struct CanBase *interface,
-    const struct CanBaseConfig *config)
+static void configPins(const struct CanBaseConfig *config)
 {
   const struct PinEntry *pinEntry;
   struct Pin pin;
@@ -80,7 +79,7 @@ static void configPins(const struct CanBase *interface,
   /* Configure RX pin */
   if (config->rx)
   {
-    pinEntry = pinFind(canPins, config->rx, interface->channel);
+    pinEntry = pinFind(canPins, config->rx, config->channel);
     assert(pinEntry);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
@@ -89,7 +88,7 @@ static void configPins(const struct CanBase *interface,
   /* Configure TX pin */
   if (config->tx)
   {
-    pinEntry = pinFind(canPins, config->tx, interface->channel);
+    pinEntry = pinFind(canPins, config->tx, config->channel);
     assert(pinEntry);
     pinInput((pin = pinInit(config->tx)));
     pinSetFunction(pin, pinEntry->value);
@@ -128,9 +127,6 @@ static enum Result canInit(void *object, const void *configBase)
   const struct CanBaseConfig * const config = configBase;
   struct CanBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
   /*
    * Disable interrupt requests during initialization, because the same vector
    * is used for both CAN modules. Interrupt requests will be enabled in
@@ -139,7 +135,7 @@ static enum Result canInit(void *object, const void *configBase)
   const bool irqEnabled = irqStatus(CAN_IRQ);
   irqDisable(CAN_IRQ);
 
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
   {
     if (irqEnabled)
       irqEnable(CAN_IRQ);
@@ -147,26 +143,29 @@ static enum Result canInit(void *object, const void *configBase)
   }
 
   /* Configure input and output pins */
-  configPins(interface, config);
+  configPins(config);
 
-  switch (interface->channel)
+  switch (config->channel)
   {
     case 0:
       sysPowerEnable(PWR_CAN1);
-      interface->reg = LPC_CAN1;
       interface->irq = CAN_IRQ;
+      interface->reg = LPC_CAN1;
       break;
 
     case 1:
       sysPowerEnable(PWR_CAN2);
-      interface->reg = LPC_CAN2;
       interface->irq = CAN_IRQ;
+      interface->reg = LPC_CAN2;
       break;
   }
 
   sysClockControl(CLK_CAN1, DEFAULT_DIV);
   sysClockControl(CLK_CAN2, DEFAULT_DIV);
   sysClockControl(CLK_ACF, DEFAULT_DIV);
+
+  interface->channel = config->channel;
+  interface->handler = 0;
 
   return E_OK;
 }

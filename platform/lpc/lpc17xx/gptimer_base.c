@@ -205,20 +205,19 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct GpTimerBaseConfig * const config = configBase;
   struct GpTimerBase * const timer = object;
 
-  timer->channel = config->channel;
-  timer->handler = 0;
-
   /* Try to set peripheral descriptor */
-  if (!setInstance(timer->channel, timer))
+  if (!setInstance(config->channel, timer))
     return E_BUSY;
 
   const struct TimerBlockDescriptor * const entry =
-      &timerBlockEntries[timer->channel];
+      &timerBlockEntries[config->channel];
 
   sysPowerEnable(entry->power);
   sysClockControl(entry->clock, DEFAULT_DIV);
 
-  timer->irq = TIMER0_IRQ + timer->channel;
+  timer->channel = config->channel;
+  timer->handler = 0;
+  timer->irq = TIMER0_IRQ + config->channel;
   timer->resolution = 32;
   timer->reg = entry->reg;
 

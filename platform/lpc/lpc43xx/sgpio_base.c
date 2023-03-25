@@ -380,14 +380,14 @@ static enum Result unitInit(void *object,
   if (!setInstance(unit))
     return E_BUSY;
 
-  unit->handler = 0;
-  unit->irq = SGPIO_IRQ;
-  unit->reg = LPC_SGPIO;
-
   /* Enable clock to peripheral */
   sysClockEnable(CLK_PERIPH_SGPIO);
   /* Reset registers to default values */
   sysResetEnable(RST_SGPIO);
+
+  unit->handler = 0;
+  unit->irq = SGPIO_IRQ;
+  unit->reg = LPC_SGPIO;
 
   return E_OK;
 }

@@ -10,7 +10,7 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
-static bool setInstance(uint8_t, struct UsbBase *);
+static bool setInstance(struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
 
@@ -50,7 +50,7 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UsbBase *instances[1] = {0};
+static struct UsbBase *instance = 0;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
@@ -73,7 +73,7 @@ static void configPins(struct UsbBase *device,
     if (index != VBUS_INDEX || pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(usbPins,
-          pinArray[index], device->channel);
+          pinArray[index], config->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);
@@ -88,13 +88,11 @@ static void configPins(struct UsbBase *device,
     pinOutput(device->connect, true);
 }
 /*----------------------------------------------------------------------------*/
-static bool setInstance(uint8_t channel, struct UsbBase *object)
+static bool setInstance(struct UsbBase *object)
 {
-  assert(channel < ARRAY_SIZE(instances));
-
-  if (!instances[channel])
+  if (!instance)
   {
-    instances[channel] = object;
+    instance = object;
     return true;
   }
   else
@@ -115,8 +113,8 @@ void USB_HP_ISR(void)
 /* Virtual handler */
 void USB_LP_ISR(void)
 {
-  if (instances[0])
-    instances[0]->handler(instances[0]);
+  if (instance)
+    instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 /* Virtual handler */
@@ -129,13 +127,11 @@ static enum Result devInit(void *object, const void *configBase)
   const struct UsbBaseConfig * const config = configBase;
   struct UsbBase * const device = object;
 
-  device->channel = config->channel;
-  device->handler = 0;
-
-  if (!setInstance(device->channel, device))
+  assert(config->channel == 0);
+  if (!setInstance(device))
     return E_BUSY;
 
-  configPins(device, configBase);
+  configPins(device, config);
 
   /* Enable clocks to the register interface and peripheral */
   sysClockEnable(CLK_USB);
@@ -143,6 +139,8 @@ static enum Result devInit(void *object, const void *configBase)
   sysResetEnable(RST_USB);
   sysResetDisable(RST_USB);
 
+  device->channel = 0;
+  device->handler = 0;
   device->irq = USB_LP_CAN1_RX0_IRQ;
   device->reg = STM_USB;
 
@@ -150,11 +148,9 @@ static enum Result devInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_USB_NO_DEINIT
-static void devDeinit(void *object)
+static void devDeinit(void *object __attribute__((unused)))
 {
-  struct UsbBase * const device = object;
-
   sysClockDisable(CLK_USB);
-  instances[device->channel] = 0;
+  instance = 0;
 }
 #endif

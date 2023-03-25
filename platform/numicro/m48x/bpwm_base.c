@@ -301,29 +301,45 @@ static enum Result unitInit(void *object, const void *configBase)
 {
   const struct BpwmUnitBaseConfig * const config = configBase;
   struct BpwmUnitBase * const unit = object;
+  enum SysClockBranch branch;
+  enum SysBlockReset reset;
 
-  unit->channel = config->channel;
-  unit->handler = 0;
+  switch (config->channel)
+  {
+#ifdef CONFIG_PLATFORM_NUMICRO_BPWM0
+    case 0:
+      branch = CLK_BPWM0;
+      reset = RST_BPWM0;
+
+      unit->irq = BPWM0_IRQ;
+      unit->reg = NM_BPWM0;
+      break;
+#endif
+
+#ifdef CONFIG_PLATFORM_NUMICRO_BPWM1
+    case 1:
+      branch = CLK_BPWM1;
+      reset = RST_BPWM1;
+
+      unit->irq = BPWM1_IRQ;
+      unit->reg = NM_BPWM1;
+      break;
+#endif
+
+    default:
+      return E_VALUE;
+  }
 
   if (!setInstance(unit->channel, unit))
     return E_BUSY;
 
-  if (unit->channel == 0)
-  {
-    sysClockEnable(CLK_BPWM0);
-    sysResetBlock(RST_BPWM0);
+  /* Enable clock to peripheral */
+  sysClockEnable(branch);
+  /* Reset registers to default values */
+  sysResetBlock(reset);
 
-    unit->irq = BPWM0_IRQ;
-    unit->reg = NM_BPWM0;
-  }
-  else
-  {
-    sysClockEnable(CLK_BPWM1);
-    sysResetBlock(RST_BPWM1);
-
-    unit->irq = BPWM1_IRQ;
-    unit->reg = NM_BPWM1;
-  }
+  unit->channel = config->channel;
+  unit->handler = 0;
 
   return E_OK;
 }

@@ -11,8 +11,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry spiPins[];
 /*----------------------------------------------------------------------------*/
-void spiConfigPins(struct SpiBase *interface,
-    const struct SpiBaseConfig *config)
+void spiConfigPins(const struct SpiBaseConfig *config)
 {
   enum
   {
@@ -34,7 +33,7 @@ void spiConfigPins(struct SpiBase *interface,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(spiPins,
-          pinArray[index], interface->channel);
+          pinArray[index], config->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);

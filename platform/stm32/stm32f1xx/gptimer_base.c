@@ -584,15 +584,15 @@ static enum Result tmrInit(void *object, const void *configBase)
   if (!setInstance(config->channel, timer))
     return E_BUSY;
 
+  sysClockEnable(entry->clock);
+  sysResetEnable(entry->reset);
+  sysResetDisable(entry->reset);
+
   timer->channel = config->channel;
   timer->handler = 0;
   timer->irq = entry->irq;
   timer->reg = entry->reg;
   timer->resolution = 16;
-
-  sysClockEnable(entry->clock);
-  sysResetEnable(entry->reset);
-  sysResetDisable(entry->reset);
 
   return E_OK;
 }

@@ -20,6 +20,7 @@ struct UartBlockDescriptor
   IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
+static uint8_t channelToIndex(uint8_t);
 static bool setInstance(uint8_t, struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *, const void *);
@@ -839,6 +840,54 @@ const struct PinEntry uartPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct UartBase *instances[8] = {0};
 /*----------------------------------------------------------------------------*/
+static uint8_t channelToIndex(uint8_t channel)
+{
+  uint8_t index = 0;
+
+#ifdef CONFIG_PLATFORM_NUMICRO_UART0
+  if (channel == 0)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_UART1
+  if (channel == 1)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_UART2
+  if (channel == 2)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_UART3
+  if (channel == 3)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_UART4
+  if (channel == 4)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_UART5
+  if (channel == 5)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_UART6
+  if (channel == 6)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_UART7
+  if (channel == 7)
+    return index;
+  ++index;
+#endif
+
+  return UINT8_MAX;
+}
+/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -969,26 +1018,26 @@ uint32_t uartGetClock(const struct UartBase *interface)
 static enum Result uartInit(void *object, const void *configBase)
 {
   const struct UartBaseConfig * const config = configBase;
+  const size_t index = channelToIndex(config->channel);
   struct UartBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  assert(index != UINT8_MAX);
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
-  uartConfigPins(interface, config);
+  uartConfigPins(config);
 
-  const struct UartBlockDescriptor * const entry =
-      &uartBlockEntries[interface->channel];
+  const struct UartBlockDescriptor * const entry = &uartBlockEntries[index];
 
   /* Enable clock to peripheral */
   sysClockEnable(entry->branch);
   /* Reset registers to default values */
   sysResetBlock(entry->reset);
 
+  interface->channel = config->channel;
   interface->depth = UART_DEPTH_16;
+  interface->handler = 0;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -1003,7 +1052,7 @@ static void uartDeinit(void *object)
 {
   const struct UartBase * const interface = object;
   const struct UartBlockDescriptor * const entry =
-      &uartBlockEntries[interface->channel];
+      &uartBlockEntries[channelToIndex(interface->channel)];
 
   irqDisable(interface->irq);
   sysClockDisable(entry->branch);

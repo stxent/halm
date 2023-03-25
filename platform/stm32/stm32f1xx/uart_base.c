@@ -321,17 +321,17 @@ static enum Result uartInit(void *object, const void *configBase)
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-  interface->irq = entry->irq;
-  interface->reg = entry->reg;
-
   /* Configure input and output pins */
-  uartConfigPins(interface, config);
+  uartConfigPins(config);
 
   sysClockEnable(entry->clock);
   sysResetEnable(entry->reset);
   sysResetDisable(entry->reset);
+
+  interface->channel = config->channel;
+  interface->handler = 0;
+  interface->irq = entry->irq;
+  interface->reg = entry->reg;
 
   return E_OK;
 }

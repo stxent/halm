@@ -262,11 +262,6 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcBlockDescriptor * const entry =
       &adcBlockEntries[config->channel];
 
-  interface->irq = entry->irq;
-  interface->reg = entry->reg;
-  interface->handler = 0;
-  interface->channel = config->channel;
-
   if (!sysClockStatus(entry->clock))
   {
     /* Enable clock to register interface and peripheral */
@@ -274,6 +269,11 @@ static enum Result adcInit(void *object, const void *configBase)
     /* Reset registers to default values */
     sysResetEnable(entry->reset);
   }
+
+  interface->channel = config->channel;
+  interface->handler = 0;
+  interface->irq = entry->irq;
+  interface->reg = entry->reg;
 
   const uint32_t ticks = config->accuracy ? (10 - config->accuracy) : 0;
   const uint32_t fAdc = config->frequency ? config->frequency : MAX_FREQUENCY;

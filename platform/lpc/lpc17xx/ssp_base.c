@@ -120,31 +120,31 @@ static enum Result sspInit(void *object, const void *configBase)
   const struct SspBaseConfig * const config = configBase;
   struct SspBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
-  sspConfigPins(interface, config);
+  sspConfigPins(config);
 
-  switch (interface->channel)
+  switch (config->channel)
   {
     case 0:
       sysPowerEnable(PWR_SSP0);
       sysClockControl(CLK_SSP0, DEFAULT_DIV);
-      interface->reg = LPC_SSP0;
       interface->irq = SSP0_IRQ;
+      interface->reg = LPC_SSP0;
       break;
 
     case 1:
       sysPowerEnable(PWR_SSP1);
       sysClockControl(CLK_SSP1, DEFAULT_DIV);
-      interface->reg = LPC_SSP1;
       interface->irq = SSP1_IRQ;
+      interface->reg = LPC_SSP1;
       break;
   }
+
+  interface->channel = config->channel;
+  interface->handler = 0;
 
   return E_OK;
 }

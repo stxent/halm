@@ -307,21 +307,20 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct GpTimerBaseConfig * const config = configBase;
   struct GpTimerBase * const timer = object;
 
-  timer->channel = config->channel;
-  timer->handler = 0;
-
-  if (!setInstance(timer->channel, timer))
+  if (!setInstance(config->channel, timer))
     return E_BUSY;
 
   const struct TimerBlockDescriptor * const entry =
-      &timerBlockEntries[timer->channel];
+      &timerBlockEntries[config->channel];
 
   /* Enable clock to register interface and peripheral */
   sysClockEnable(entry->clock);
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
 
-  timer->irq = TIMER0_IRQ + timer->channel;
+  timer->channel = config->channel;
+  timer->handler = 0;
+  timer->irq = TIMER0_IRQ + config->channel;
   timer->resolution = 32;
   timer->reg = entry->reg;
 

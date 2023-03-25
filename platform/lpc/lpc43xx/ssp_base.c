@@ -29,7 +29,7 @@ struct SspBlockDescriptor
   IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
-static void configPins(struct SspBase *, const struct SspBaseConfig *);
+static void configPins(const struct SspBaseConfig *);
 static bool setInstance(uint8_t, struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *, const void *);
@@ -190,8 +190,7 @@ const struct PinEntry sspPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct SspBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void configPins(struct SspBase *interface,
-    const struct SspBaseConfig *config)
+static void configPins(const struct SspBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->miso, config->mosi, config->sck, config->cs
@@ -202,7 +201,7 @@ static void configPins(struct SspBase *interface,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(sspPins, pinArray[index],
-          CHANNEL_INDEX(interface->channel, index));
+          CHANNEL_INDEX(config->channel, index));
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);
@@ -250,10 +249,7 @@ static enum Result sspInit(void *object, const void *configBase)
   const struct SspBaseConfig * const config = configBase;
   struct SspBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /*
@@ -261,10 +257,10 @@ static enum Result sspInit(void *object, const void *configBase)
    * to the differences in the pin tables. One pin may have more than two
    * alternate functions of the same peripheral channel.
    */
-  configPins(interface, config);
+  configPins(config);
 
   const struct SspBlockDescriptor * const entry =
-      &sspBlockEntries[interface->channel];
+      &sspBlockEntries[config->channel];
 
   /* Enable clocks to register interface and peripheral */
   sysClockEnable(entry->peripheralBranch);
@@ -272,6 +268,8 @@ static enum Result sspInit(void *object, const void *configBase)
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
 
+  interface->channel = config->channel;
+  interface->handler = 0;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 

@@ -20,7 +20,7 @@
 #define CHANNEL_TX_SDA(channel)         ((channel) * CHANNEL_COUNT + 6)
 #define CHANNEL_TX_MCLK(channel)        ((channel) * CHANNEL_COUNT + 7)
 /*----------------------------------------------------------------------------*/
-static void configPins(struct I2SBase *, const struct I2SBaseConfig *);
+static void configPins(const struct I2SBaseConfig *);
 static bool setInstance(uint8_t, struct I2SBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2sInit(void *, const void *);
@@ -213,8 +213,7 @@ const struct PinEntry i2sPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct I2SBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void configPins(struct I2SBase *interface,
-    const struct I2SBaseConfig *config)
+static void configPins(const struct I2SBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->rx.sck, config->rx.ws, config->rx.sda, config->rx.mclk,
@@ -226,7 +225,7 @@ static void configPins(struct I2SBase *interface,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(i2sPins, pinArray[index],
-          CHANNEL_INDEX(interface->channel, index));
+          CHANNEL_INDEX(config->channel, index));
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);
@@ -274,16 +273,14 @@ static enum Result i2sInit(void *object, const void *configBase)
   const struct I2SBaseConfig * const config = configBase;
   struct I2SBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
-  configPins(interface, configBase);
+  /* Configure input and output pins */
+  configPins(config);
 
   /* Check whether other channel is disabled too */
-  if (!instances[interface->channel ^ 1])
+  if (!instances[config->channel ^ 1])
   {
     /* Enable clock to register interface and to peripheral */
     sysClockEnable(CLK_APB1_I2S);
@@ -291,7 +288,7 @@ static enum Result i2sInit(void *object, const void *configBase)
     sysResetEnable(RST_I2S);
   }
 
-  switch (interface->channel)
+  switch (config->channel)
   {
     case 0:
       interface->irq = I2S0_IRQ;
@@ -303,6 +300,9 @@ static enum Result i2sInit(void *object, const void *configBase)
       interface->reg = LPC_I2S1;
       break;
   }
+
+  interface->channel = config->channel;
+  interface->handler = 0;
 
   return E_OK;
 }

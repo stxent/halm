@@ -115,27 +115,26 @@ static enum Result i2cInit(void *object, const void *configBase)
   const struct I2CBaseConfig * const config = configBase;
   struct I2CBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
-  /* Configure pins */
-  interface->scl = config->scl;
-  interface->sda = config->sda;
-  i2cConfigPins(interface);
-
   const struct I2CBlockDescriptor * const entry =
-      &i2cBlockEntries[interface->channel];
+      &i2cBlockEntries[config->channel];
 
   /* Enable clock to register interface and peripheral */
   sysClockEnable(entry->clock);
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
 
-  interface->irq = I2C0_IRQ + interface->channel;
+  interface->channel = config->channel;
+  interface->handler = 0;
+  interface->irq = I2C0_IRQ + config->channel;
   interface->reg = entry->reg;
+
+  /* Configure pins */
+  interface->scl = config->scl;
+  interface->sda = config->sda;
+  i2cConfigPins(interface);
 
   return E_OK;
 }

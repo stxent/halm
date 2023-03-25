@@ -20,7 +20,7 @@ struct CanBlockDescriptor
   IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
-static void configPins(const struct CanBase *, const struct CanBaseConfig *);
+static void configPins(const struct CanBaseConfig *);
 static bool setInstance(uint8_t, struct CanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
@@ -99,8 +99,7 @@ static const struct PinEntry canPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct CanBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void configPins(const struct CanBase *interface,
-    const struct CanBaseConfig *config)
+static void configPins(const struct CanBaseConfig *config)
 {
   const struct PinEntry *pinEntry;
   struct Pin pin;
@@ -108,7 +107,7 @@ static void configPins(const struct CanBase *interface,
   /* Configure RX pin */
   if (config->rx)
   {
-    pinEntry = pinFind(canPins, config->rx, interface->channel);
+    pinEntry = pinFind(canPins, config->rx, config->channel);
     assert(pinEntry);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
@@ -117,7 +116,7 @@ static void configPins(const struct CanBase *interface,
   /* Configure TX pin */
   if (config->tx)
   {
-    pinEntry = pinFind(canPins, config->tx, interface->channel);
+    pinEntry = pinFind(canPins, config->tx, config->channel);
     assert(pinEntry);
     pinInput((pin = pinInit(config->tx)));
     pinSetFunction(pin, pinEntry->value);
@@ -159,23 +158,22 @@ static enum Result canInit(void *object, const void *configBase)
   const struct CanBaseConfig * const config = configBase;
   struct CanBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
-  configPins(interface, config);
+  configPins(config);
 
   const struct CanBlockDescriptor * const entry =
-      &canBlockEntries[interface->channel];
+      &canBlockEntries[config->channel];
 
   /* Enable clock */
   sysClockEnable(entry->clock);
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
 
+  interface->channel = config->channel;
+  interface->handler = 0;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 

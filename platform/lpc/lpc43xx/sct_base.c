@@ -524,11 +524,8 @@ static enum Result tmrInit(void *object, const void *configBase)
   struct SctBase * const timer = object;
   uint32_t desiredConfig = 0;
 
-  timer->channel = config->channel;
-  timer->part = config->part;
-
   /* Check whether the timer is divided into two separate parts */
-  if (timer->part == SCT_UNIFIED)
+  if (config->part == SCT_UNIFIED)
     desiredConfig |= CONFIG_UNIFY;
 
   /* Configure timer clock source */
@@ -541,7 +538,7 @@ static enum Result tmrInit(void *object, const void *configBase)
       desiredConfig |= CONFIG_CKSEL_FALLING(config->input - 1);
   }
 
-  const bool enabled = timerHandlerActive(timer->channel);
+  const bool enabled = timerHandlerActive(config->channel);
   LPC_SCT_Type * const reg = LPC_SCT;
 
   if (enabled)
@@ -554,14 +551,16 @@ static enum Result tmrInit(void *object, const void *configBase)
       return E_BUSY;
   }
 
-  const enum Result res = timerHandlerAttach(timer->channel,
-      timer->part, timer);
+  const enum Result res = timerHandlerAttach(config->channel,
+      config->part, timer);
 
   if (res == E_OK)
   {
+    timer->channel = config->channel;
     timer->handler = 0;
     timer->irq = SCT_IRQ;
     timer->mask = 0;
+    timer->part = config->part;
     timer->reg = reg;
 
     if (!enabled)

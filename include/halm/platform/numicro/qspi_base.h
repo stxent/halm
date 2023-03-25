@@ -52,7 +52,7 @@ struct QspiBase
 BEGIN_DECLS
 
 /* Common functions */
-void qspiConfigPins(struct QspiBase *, const struct QspiBaseConfig *);
+void qspiConfigPins(const struct QspiBaseConfig *);
 uint8_t qspiGetMode(const struct QspiBase *);
 uint32_t qspiGetRate(const struct QspiBase *);
 void qspiSetMode(struct QspiBase *, uint8_t);

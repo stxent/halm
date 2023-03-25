@@ -276,17 +276,14 @@ static enum Result uartInit(void *object, const void *configBase)
   const struct UartBaseConfig * const config = configBase;
   struct UartBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
-  uartConfigPins(interface, config);
+  uartConfigPins(config);
 
   const struct UartBlockDescriptor * const entry =
-      &uartBlockEntries[interface->channel];
+      &uartBlockEntries[config->channel];
 
   /* Enable clocks to register interface and peripheral */
   sysClockEnable(entry->peripheralBranch);
@@ -294,6 +291,8 @@ static enum Result uartInit(void *object, const void *configBase)
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
 
+  interface->channel = config->channel;
+  interface->handler = 0;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 

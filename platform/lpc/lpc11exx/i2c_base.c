@@ -69,22 +69,21 @@ static enum Result i2cInit(void *object, const void *configBase)
   struct I2CBase * const interface = object;
 
   assert(config->channel == 0);
-
   if (!setInstance(interface))
     return E_BUSY;
 
-  interface->reg = LPC_I2C;
-  interface->irq = I2C_IRQ;
+  sysClockEnable(CLK_I2C);
+  LPC_SYSCON->PRESETCTRL |= PRESETCTRL_I2C;
+
+  interface->channel = 0;
   interface->handler = 0;
-  interface->channel = config->channel;
+  interface->irq = I2C_IRQ;
+  interface->reg = LPC_I2C;
 
   /* Configure pins */
   interface->scl = config->scl;
   interface->sda = config->sda;
   i2cConfigPins(interface);
-
-  sysClockEnable(CLK_I2C);
-  LPC_SYSCON->PRESETCTRL |= PRESETCTRL_I2C;
 
   return E_OK;
 }

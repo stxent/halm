@@ -153,21 +153,19 @@ static enum Result spiInit(void *object, const void *configBase)
 
   if (config->channel != 0)
     return E_VALUE;
-
-  interface->channel = config->channel;
-  interface->handler = 0;
-
   if (!setInstance(interface))
     return E_BUSY;
 
   /* Configure input and output pins */
-  spiConfigPins(interface, config);
+  spiConfigPins(config);
 
   /* Enable clock to peripheral */
   sysClockEnable(CLK_SPI0);
   /* Reset registers to default values */
   sysResetBlock(RST_SPI0);
 
+  interface->channel = config->channel;
+  interface->handler = 0;
   interface->irq = SPI0_IRQ;
   interface->reg = NM_SPI0;
 

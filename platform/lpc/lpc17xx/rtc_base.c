@@ -48,12 +48,12 @@ static enum Result clkInit(void *object,
 
   if (setInstance(clock))
   {
-    clock->reg = LPC_RTC;
-    clock->irq = RTC_IRQ;
-    clock->handler = 0;
-
     if (!sysPowerStatus(PWR_RTC))
       sysPowerEnable(PWR_RTC);
+
+    clock->handler = 0;
+    clock->irq = RTC_IRQ;
+    clock->reg = LPC_RTC;
 
     return E_OK;
   }

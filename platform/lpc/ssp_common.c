@@ -10,8 +10,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry sspPins[];
 /*----------------------------------------------------------------------------*/
-void sspConfigPins(struct SspBase *interface,
-    const struct SspBaseConfig *config)
+void sspConfigPins(const struct SspBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->miso, config->mosi, config->sck, config->cs
@@ -23,7 +22,7 @@ void sspConfigPins(struct SspBase *interface,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(sspPins,
-          pinArray[index], interface->channel);
+          pinArray[index], config->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);

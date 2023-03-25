@@ -51,7 +51,7 @@ BEGIN_DECLS
 /* Common functions */
 enum Result uartCalcRate(const struct UartBase *, uint32_t,
     struct UartRateConfig *);
-void uartConfigPins(struct UartBase *, const struct UartBaseConfig *);
+void uartConfigPins(const struct UartBaseConfig *);
 enum SerialParity uartGetParity(const struct UartBase *);
 uint32_t uartGetRate(const struct UartBase *);
 void uartSetParity(struct UartBase *, enum SerialParity);

@@ -132,28 +132,25 @@ static enum Result sspInit(void *object, const void *configBase)
   const struct SspBaseConfig * const config = configBase;
   struct SspBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
-  sspConfigPins(interface, config);
+  sspConfigPins(config);
 
   /*
    * SSP1 configuration differs for latest silicon revisions and is not
    * completely reentrant. Device should be reset to configure the peripheral
    * with other pins.
    */
-  switch (interface->channel)
+  switch (config->channel)
   {
     case 0:
       sysClockEnable(CLK_SSP0);
       LPC_SYSCON->SSP0CLKDIV = DEFAULT_DIV;
       LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP0;
-      interface->reg = LPC_SSP0;
       interface->irq = SSP0_IRQ;
+      interface->reg = LPC_SSP0;
 
       /* Set SCK0 pin location register */
       switch (config->sck)
@@ -176,8 +173,8 @@ static enum Result sspInit(void *object, const void *configBase)
       sysClockEnable(CLK_SSP1);
       LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV;
       LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP1;
-      interface->reg = LPC_SSP1;
       interface->irq = SSP1_IRQ;
+      interface->reg = LPC_SSP1;
 
       /* Configure pin locations for LPC1100XL */
       if (config->sck == PIN(3, 2))
@@ -194,6 +191,9 @@ static enum Result sspInit(void *object, const void *configBase)
 
       break;
   }
+
+  interface->channel = config->channel;
+  interface->handler = 0;
 
   return E_OK;
 }

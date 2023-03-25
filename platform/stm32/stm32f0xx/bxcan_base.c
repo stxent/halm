@@ -10,9 +10,8 @@
 #include <halm/platform/stm32/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static void configPins(const struct BxCanBase *,
-    const struct BxCanBaseConfig *);
-static bool setInstance(uint8_t, struct BxCanBase *);
+static void configPins(const struct BxCanBaseConfig *);
+static bool setInstance(struct BxCanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
 
@@ -58,17 +57,16 @@ static const struct PinEntry bxCanPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct BxCanBase *instances[2] = {0};
+static struct BxCanBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static void configPins(const struct BxCanBase *interface,
-    const struct BxCanBaseConfig *config)
+static void configPins(const struct BxCanBaseConfig *config)
 {
   const struct PinEntry *pinEntry;
   struct Pin pin;
 
   if (config->rx)
   {
-    pinEntry = pinFind(bxCanPins, config->rx, interface->channel);
+    pinEntry = pinFind(bxCanPins, config->rx, config->channel);
     assert(pinEntry);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
@@ -76,20 +74,18 @@ static void configPins(const struct BxCanBase *interface,
 
   if (config->tx)
   {
-    pinEntry = pinFind(bxCanPins, config->tx, interface->channel);
+    pinEntry = pinFind(bxCanPins, config->tx, config->channel);
     assert(pinEntry);
     pinOutput((pin = pinInit(config->tx)), true);
     pinSetFunction(pin, pinEntry->value);
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool setInstance(uint8_t channel, struct BxCanBase *object)
+static bool setInstance(struct BxCanBase *object)
 {
-  assert(channel < ARRAY_SIZE(instances));
-
-  if (!instances[channel])
+  if (!instance)
   {
-    instances[channel] = object;
+    instance = object;
     return true;
   }
   else
@@ -99,8 +95,8 @@ static bool setInstance(uint8_t channel, struct BxCanBase *object)
 void CAN_ISR(void)
 {
   /* Joint interrupt */
-  if (instances[0])
-    instances[0]->handler(instances[0]);
+  if (instance)
+    instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t canGetClock(const struct BxCanBase *interface __attribute__((unused)))
@@ -113,19 +109,19 @@ static enum Result canInit(void *object, const void *configBase)
   const struct BxCanBaseConfig * const config = configBase;
   struct BxCanBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  assert(config->channel == 0);
+  if (!setInstance(interface))
     return E_BUSY;
 
   /* Enable alternate functions on RX and TX pins */
-  configPins(interface, config);
+  configPins(config);
 
   sysClockEnable(CLK_CAN);
   sysResetEnable(RST_CAN);
   sysResetDisable(RST_CAN);
 
+  interface->channel = 0;
+  interface->handler = 0;
   interface->irq.rx0 = CEC_CAN_IRQ;
   interface->irq.rx1 = CEC_CAN_IRQ;
   interface->irq.sce = CEC_CAN_IRQ;
@@ -136,11 +132,9 @@ static enum Result canInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_STM32_BXCAN_NO_DEINIT
-static void canDeinit(void *object)
+static void canDeinit(void *object __attribute__((unused)))
 {
-  const struct BxCanBase * const interface = object;
-
   sysClockDisable(CLK_CAN);
-  instances[interface->channel] = 0;
+  instance = 0;
 }
 #endif

@@ -227,19 +227,19 @@ static enum Result spiInit(void *object, const void *configBase)
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-  interface->irq = entry->irq;
-  interface->reg = entry->reg;
-
   /* Configure input and output pins */
-  spiConfigPins(interface, config);
+  spiConfigPins(config);
 
   /* Enable clocks to register interface and peripheral */
   sysClockEnable(entry->clock);
   /* Reset registers to default values */
   sysResetEnable(entry->reset);
   sysResetDisable(entry->reset);
+
+  interface->channel = config->channel;
+  interface->handler = 0;
+  interface->irq = entry->irq;
+  interface->reg = entry->reg;
 
   return E_OK;
 }

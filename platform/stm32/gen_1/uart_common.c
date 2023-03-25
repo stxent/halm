@@ -10,14 +10,13 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];
 /*----------------------------------------------------------------------------*/
-void uartConfigPins(struct UartBase *interface,
-    const struct UartBaseConfig *config)
+void uartConfigPins(const struct UartBaseConfig *config)
 {
   if (config->rx)
   {
     /* Configure UART RX pin */
     const struct PinEntry * const pinEntry = pinFind(uartPins,
-        config->rx, interface->channel);
+        config->rx, config->channel);
     assert(pinEntry);
 
     const struct Pin pin = pinInit(config->rx);
@@ -30,7 +29,7 @@ void uartConfigPins(struct UartBase *interface,
   {
     /* Configure UART TX pin */
     const struct PinEntry * const pinEntry = pinFind(uartPins,
-        config->tx, interface->channel);
+        config->tx, config->channel);
     assert(pinEntry);
 
     const struct Pin pin = pinInit(config->tx);

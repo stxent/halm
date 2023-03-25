@@ -28,8 +28,7 @@ struct BxCanBlockDescriptor
   } irq;
 };
 /*----------------------------------------------------------------------------*/
-static void configPins(const struct BxCanBase *,
-    const struct BxCanBaseConfig *);
+static void configPins(const struct BxCanBaseConfig *);
 static bool setInstance(uint8_t, struct BxCanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
@@ -118,15 +117,14 @@ static const struct PinEntry bxCanPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct BxCanBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void configPins(const struct BxCanBase *interface,
-    const struct BxCanBaseConfig *config)
+static void configPins(const struct BxCanBaseConfig *config)
 {
   const struct PinEntry *pinEntry;
   struct Pin pin;
 
   if (config->rx)
   {
-    pinEntry = pinFind(bxCanPins, config->rx, interface->channel);
+    pinEntry = pinFind(bxCanPins, config->rx, config->channel);
     assert(pinEntry);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
@@ -134,7 +132,7 @@ static void configPins(const struct BxCanBase *interface,
 
   if (config->tx)
   {
-    pinEntry = pinFind(bxCanPins, config->tx, interface->channel);
+    pinEntry = pinFind(bxCanPins, config->tx, config->channel);
     assert(pinEntry);
     pinOutput((pin = pinInit(config->tx)), true);
     pinSetFunction(pin, pinEntry->value);
@@ -208,22 +206,21 @@ static enum Result canInit(void *object, const void *configBase)
   const struct BxCanBaseConfig * const config = configBase;
   struct BxCanBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /* Enable alternate functions on RX and TX pins */
-  configPins(interface, config);
+  configPins(config);
 
   const struct BxCanBlockDescriptor * const entry =
-      &bxCanBlockEntries[interface->channel];
+      &bxCanBlockEntries[config->channel];
 
   sysClockEnable(entry->clock);
   sysResetEnable(entry->reset);
   sysResetDisable(entry->reset);
 
+  interface->channel = config->channel;
+  interface->handler = 0;
   interface->irq.rx0 = entry->irq.rx0;
   interface->irq.rx1 = entry->irq.rx1;
   interface->irq.sce = entry->irq.sce;

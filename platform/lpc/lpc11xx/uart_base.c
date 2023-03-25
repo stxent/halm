@@ -88,17 +88,11 @@ static enum Result uartInit(void *object, const void *configBase)
   struct UartBase * const interface = object;
 
   assert(config->channel == 0);
-
   if (!setInstance(interface))
     return E_BUSY;
 
-  interface->reg = LPC_UART;
-  interface->irq = UART_IRQ;
-  interface->handler = 0;
-  interface->channel = config->channel;
-
   /* Configure input and output pins */
-  uartConfigPins(interface, config);
+  uartConfigPins(config);
 
   sysClockEnable(CLK_UART);
   LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV;
@@ -126,6 +120,11 @@ static enum Result uartInit(void *object, const void *configBase)
       /* Do nothing to ensure compatibility with older revisions  */
       break;
   }
+
+  interface->channel = 0;
+  interface->handler = 0;
+  interface->irq = UART_IRQ;
+  interface->reg = LPC_UART;
 
   return E_OK;
 }

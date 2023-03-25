@@ -48,9 +48,10 @@ static enum Result wdtInit(void *object, const void *configBase
 
   if (setInstance(timer))
   {
+    sysClockEnable(CLK_WDT);
+
     timer->handler = 0;
     timer->irq = WDT_IRQ;
-    sysClockEnable(CLK_WDT);
     return E_OK;
   }
   else

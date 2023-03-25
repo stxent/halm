@@ -225,32 +225,48 @@ static enum Result qspiInit(void *object, const void *configBase)
 {
   const struct QspiBaseConfig * const config = configBase;
   struct QspiBase * const interface = object;
+  enum SysClockBranch branch;
+  enum SysBlockReset reset;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
+  switch (config->channel)
+  {
+#ifdef CONFIG_PLATFORM_NUMICRO_QSPI0
+    case 0:
+      branch = CLK_QSPI0;
+      reset = RST_QSPI0;
 
-  if (!setInstance(interface->channel, interface))
+      interface->irq = QSPI0_IRQ;
+      interface->reg = NM_QSPI0;
+      break;
+#endif
+
+#ifdef CONFIG_PLATFORM_NUMICRO_QSPI1
+    case 1:
+      branch = CLK_QSPI1;
+      reset = RST_QSPI1;
+
+      interface->irq = QSPI1_IRQ;
+      interface->reg = NM_QSPI1;
+      break;
+#endif
+
+    default:
+      return E_VALUE;
+  }
+
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
   /* Configure input and output pins */
-  qspiConfigPins(interface, config);
+  qspiConfigPins(config);
 
-  if (interface->channel == 0)
-  {
-    sysClockEnable(CLK_QSPI0);
-    sysResetBlock(RST_QSPI0);
+  /* Enable clock to peripheral */
+  sysClockEnable(branch);
+  /* Reset registers to default values */
+  sysResetBlock(reset);
 
-    interface->irq = QSPI0_IRQ;
-    interface->reg = NM_QSPI0;
-  }
-  else
-  {
-    sysClockEnable(CLK_QSPI1);
-    sysResetBlock(RST_QSPI1);
-
-    interface->irq = QSPI1_IRQ;
-    interface->reg = NM_QSPI1;
-  }
+  interface->channel = config->channel;
+  interface->handler = 0;
 
   return E_OK;
 }

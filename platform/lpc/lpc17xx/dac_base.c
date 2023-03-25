@@ -76,11 +76,11 @@ static enum Result dacInit(void *object, const void *configBase)
   if (!setInstance(interface))
     return E_BUSY;
 
+  configOutputPin(config->pin);
+  sysClockControl(CLK_DAC, DEFAULT_DIV);
+
   interface->pin = config->pin;
   interface->reg = LPC_DAC;
-
-  configOutputPin(interface->pin);
-  sysClockControl(CLK_DAC, DEFAULT_DIV);
 
   return E_OK;
 }

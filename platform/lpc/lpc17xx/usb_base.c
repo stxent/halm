@@ -9,7 +9,7 @@
 #include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
+static void configPins(const struct UsbBaseConfig *);
 static bool setInstance(struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
@@ -62,8 +62,7 @@ const struct PinEntry usbPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct UsbBase *instance = 0;
 /*----------------------------------------------------------------------------*/
-static void configPins(struct UsbBase *device,
-    const struct UsbBaseConfig *config)
+static void configPins(const struct UsbBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->dm, config->dp, config->connect, config->vbus
@@ -74,7 +73,7 @@ static void configPins(struct UsbBase *device,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
-          device->channel);
+          config->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);
@@ -107,17 +106,16 @@ static enum Result devInit(void *object, const void *configBase)
   struct UsbBase * const device = object;
 
   assert(config->channel == 0);
-
   if (!setInstance(device))
     return E_BUSY;
 
-  device->reg = LPC_USB;
-  device->irq = USB_IRQ;
-  device->handler = 0;
-  device->channel = 0;
-
-  configPins(device, config);
+  configPins(config);
   sysPowerEnable(PWR_USB);
+
+  device->channel = 0;
+  device->handler = 0;
+  device->irq = USB_IRQ;
+  device->reg = LPC_USB;
 
   /* Perform platform-specific initialization */
   LPC_USB_Type * const reg = device->reg;

@@ -10,8 +10,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry uartPins[];
 /*----------------------------------------------------------------------------*/
-void uartConfigPins(struct UartBase *interface,
-    const struct UartBaseConfig *config)
+void uartConfigPins(const struct UartBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->rx, config->tx
@@ -22,7 +21,7 @@ void uartConfigPins(struct UartBase *interface,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(uartPins,
-          pinArray[index], CHANNEL_INDEX(interface->channel, index));
+          pinArray[index], CHANNEL_INDEX(config->channel, index));
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);

@@ -181,18 +181,17 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct GpTimerBaseConfig * const config = configBase;
   struct GpTimerBase * const timer = object;
 
-  timer->channel = config->channel;
-  timer->handler = 0;
-
-  if (!setInstance(timer->channel, timer))
+  if (!setInstance(config->channel, timer))
     return E_BUSY;
 
   const struct TimerBlockDescriptor * const entry =
-      &timerBlockEntries[timer->channel];
+      &timerBlockEntries[config->channel];
 
   sysClockEnable(entry->clock);
 
-  timer->irq = CT16B0_IRQ + timer->channel;
+  timer->channel = config->channel;
+  timer->handler = 0;
+  timer->irq = CT16B0_IRQ + config->channel;
   timer->reg = entry->reg;
   timer->resolution = entry->resolution;
 

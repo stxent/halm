@@ -20,6 +20,7 @@ struct I2CBlockDescriptor
   IrqNumber irq;
 };
 /*----------------------------------------------------------------------------*/
+static uint8_t channelToIndex(uint8_t);
 static bool setInstance(uint8_t, struct I2CBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *, const void *);
@@ -389,6 +390,29 @@ const struct PinEntry i2cPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct I2CBase *instances[3] = {0};
 /*----------------------------------------------------------------------------*/
+static uint8_t channelToIndex(uint8_t channel)
+{
+  uint8_t index = 0;
+
+#ifdef CONFIG_PLATFORM_NUMICRO_I2C0
+  if (channel == 0)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_I2C1
+  if (channel == 1)
+    return index;
+  ++index;
+#endif
+#ifdef CONFIG_PLATFORM_NUMICRO_I2C2
+  if (channel == 2)
+    return index;
+  ++index;
+#endif
+
+  return UINT8_MAX;
+}
+/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct I2CBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -431,29 +455,29 @@ uint32_t i2cGetClock(const struct I2CBase *interface)
 static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2CBaseConfig * const config = configBase;
+  const size_t index = channelToIndex(config->channel);
   struct I2CBase * const interface = object;
 
-  interface->channel = config->channel;
-  interface->handler = 0;
-
-  if (!setInstance(interface->channel, interface))
+  assert(index != UINT8_MAX);
+  if (!setInstance(config->channel, interface))
     return E_BUSY;
 
-  /* Configure pins */
-  interface->scl = config->scl;
-  interface->sda = config->sda;
-  i2cConfigPins(interface);
-
-  const struct I2CBlockDescriptor * const entry =
-      &i2cBlockEntries[interface->channel];
+  const struct I2CBlockDescriptor * const entry = &i2cBlockEntries[index];
 
   /* Enable clock to peripheral */
   sysClockEnable(entry->branch);
   /* Reset registers to default values */
   sysResetBlock(entry->reset);
 
+  interface->channel = config->channel;
+  interface->handler = 0;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
+
+  /* Configure pins */
+  interface->scl = config->scl;
+  interface->sda = config->sda;
+  i2cConfigPins(interface);
 
   return E_OK;
 }
@@ -463,7 +487,7 @@ static void i2cDeinit(void *object)
 {
   const struct I2CBase * const interface = object;
   const struct I2CBlockDescriptor * const entry =
-      &i2cBlockEntries[interface->channel];
+      &i2cBlockEntries[channelToIndex(interface->channel)];
 
   sysClockDisable(entry->branch);
   instances[interface->channel] = 0;

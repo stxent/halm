@@ -285,10 +285,12 @@ static enum Result ethInit(void *object, const void *configBase)
   const struct EthernetBaseConfig * const config = configBase;
   struct EthernetBase * const interface = object;
 
-  interface->handler = 0;
-
   if (!setInstance(interface))
     return E_BUSY;
+
+  interface->handler = 0;
+  interface->irq = ETHERNET_IRQ;
+  interface->reg = LPC_ETHERNET;
 
   /* Configure input and output pins */
   ethConfigPins(interface, config);
@@ -297,9 +299,6 @@ static enum Result ethInit(void *object, const void *configBase)
   sysClockEnable(CLK_M4_ETHERNET);
   /* Reset registers to default values */
   sysResetEnable(RST_ETHERNET);
-
-  interface->irq = ETHERNET_IRQ;
-  interface->reg = LPC_ETHERNET;
 
   uint32_t creg6 = LPC_CREG->CREG6 & ~CREG6_ETHMODE_MASK;
 

@@ -16,7 +16,7 @@
 #define USB0_ENDPOINT_NUMBER  12
 #define USB1_ENDPOINT_NUMBER  8
 /*----------------------------------------------------------------------------*/
-static void configPins(struct UsbBase *, const struct UsbBaseConfig *);
+static void configPins(const struct UsbBaseConfig *);
 static bool setInstance(uint8_t, struct UsbBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
@@ -113,8 +113,7 @@ const struct PinEntry usbPins[] = {
 /*----------------------------------------------------------------------------*/
 static struct UsbBase *instances[2] = {0};
 /*----------------------------------------------------------------------------*/
-static void configPins(struct UsbBase *device,
-    const struct UsbBaseConfig *config)
+static void configPins(const struct UsbBaseConfig *config)
 {
   const PinNumber pinArray[] = {
       config->dm, config->dp, config->connect, config->vbus
@@ -125,7 +124,7 @@ static void configPins(struct UsbBase *device,
     if (pinArray[index])
     {
       const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
-          device->channel);
+          config->channel);
       assert(pinEntry);
 
       const struct Pin pin = pinInit(pinArray[index]);
@@ -164,19 +163,12 @@ static enum Result devInit(void *object, const void *configBase)
   const struct UsbBaseConfig * const config = configBase;
   struct UsbBase * const device = object;
 
-  device->channel = config->channel;
-  device->handler = 0;
-  device->queueHeads = 0;
-
-  if (!setInstance(device->channel, device))
+  if (!setInstance(config->channel, device))
     return E_BUSY;
 
-  if (!pointerArrayInit(&device->descriptorPool, ENDPOINT_REQUESTS))
-    return E_MEMORY;
+  configPins(config);
 
-  configPins(device, configBase);
-
-  if (!device->channel)
+  if (!config->channel)
   {
     sysClockEnable(CLK_M4_USB0);
     sysClockEnable(CLK_USB0);
@@ -201,6 +193,13 @@ static enum Result devInit(void *object, const void *configBase)
 
     LPC_SCU->SFSUSB = SFSUSB_ESEA | SFSUSB_EPWR | SFSUSB_VBUS;
   }
+
+  device->channel = config->channel;
+  device->handler = 0;
+  device->queueHeads = 0;
+
+  if (!pointerArrayInit(&device->descriptorPool, ENDPOINT_REQUESTS))
+    return E_MEMORY;
 
   device->queueHeads = memalign(2048, sizeof(struct QueueHead)
       * device->numberOfEndpoints);

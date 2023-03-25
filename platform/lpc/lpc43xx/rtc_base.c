@@ -50,9 +50,9 @@ static enum Result clkInit(void *object,
   {
     /* CLK_M4_BUS is already enabled */
 
-    clock->reg = LPC_RTC;
-    clock->irq = RTC_IRQ;
     clock->handler = 0;
+    clock->irq = RTC_IRQ;
+    clock->reg = LPC_RTC;
 
     return E_OK;
   }

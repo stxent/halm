@@ -202,13 +202,15 @@ static enum Result tmrInit(void *object, const void *configBase)
   if (!setInstance(config->channel, timer))
     return E_BUSY;
 
+  /* Enable clock to peripheral */
+  sysClockEnable(CLK_TMR0 + config->channel);
+  /* Reset registers to default values */
+  sysResetBlock(RST_TMR0 + config->channel);
+
   timer->channel = config->channel;
   timer->handler = 0;
   timer->irq = TMR0_IRQ + config->channel;
   timer->reg = TIMER_BLOCKS[config->channel];
-
-  sysClockEnable(CLK_TMR0 + config->channel);
-  sysResetBlock(RST_TMR0 + config->channel);
 
   return E_OK;
 }

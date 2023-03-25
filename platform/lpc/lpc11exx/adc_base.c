@@ -136,16 +136,16 @@ static enum Result adcInit(void *object, const void *configBase)
   if (!config->shared && !adcSetInstance(config->channel, 0, interface))
     return E_BUSY;
 
-  interface->reg = LPC_ADC;
-  interface->irq = ADC_IRQ;
-  interface->handler = 0;
-  interface->channel = config->channel;
-
   if (!sysPowerStatus(PWR_ADC))
   {
     sysPowerEnable(PWR_ADC);
     sysClockEnable(CLK_ADC);
   }
+
+  interface->channel = 0;
+  interface->handler = 0;
+  interface->irq = ADC_IRQ;
+  interface->reg = LPC_ADC;
 
   const uint32_t ticks = config->accuracy ? (10 - config->accuracy) : 0;
   const uint32_t fAdc = config->frequency ? config->frequency : MAX_FREQUENCY;

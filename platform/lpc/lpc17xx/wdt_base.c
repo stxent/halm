@@ -68,10 +68,10 @@ static enum Result wdtInit(void *object, const void *configBase)
   if (!setInstance(timer))
     return E_BUSY;
 
+  sysClockControl(CLK_WDT, DEFAULT_DIV);
+
   timer->handler = 0;
   timer->irq = WDT_IRQ;
-
-  sysClockControl(CLK_WDT, DEFAULT_DIV);
 
   const enum WdtClockSource clockSource = config->source != WDT_CLOCK_DEFAULT ?
       config->source : WDT_CLOCK_IRC;

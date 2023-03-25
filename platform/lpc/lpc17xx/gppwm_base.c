@@ -124,12 +124,14 @@ static enum Result unitInit(void *object, const void *configBase)
   const struct GpPwmUnitBaseConfig * const config = configBase;
   struct GpPwmUnitBase * const unit = object;
 
+  assert(config->channel == 0);
+
   if (setInstance(unit))
   {
-    unit->reg = LPC_PWM1;
-    unit->irq = PWM1_IRQ;
     unit->handler = 0;
-    unit->channel = config->channel;
+    unit->channel = 0;
+    unit->irq = PWM1_IRQ;
+    unit->reg = LPC_PWM1;
 
     sysPowerEnable(PWR_PWM1);
     sysClockControl(CLK_PWM1, DEFAULT_DIV);

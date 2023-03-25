@@ -24,13 +24,13 @@ static enum Result eepromInit(void *object,
 {
   struct EepromBase * const interface = object;
 
-  interface->address = (uint32_t)&_seeprom;
-  interface->size = (uint32_t)&_eeeprom - (uint32_t)&_seeprom;
-
   /* Enable clock to register interface and peripheral */
   sysClockEnable(CLK_M4_EEPROM);
   /* Reset registers to default values */
   sysResetEnable(RST_EEPROM);
+
+  interface->address = (uint32_t)&_seeprom;
+  interface->size = (uint32_t)&_eeeprom - (uint32_t)&_seeprom;
 
   return E_OK;
 }

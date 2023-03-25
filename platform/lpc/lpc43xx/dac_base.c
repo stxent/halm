@@ -89,15 +89,15 @@ static enum Result dacInit(void *object, const void *configBase)
   if (!setInstance(interface))
     return E_BUSY;
 
-  interface->pin = config->pin;
-  interface->reg = LPC_DAC;
-
   /* Enable analog function on the output pin */
-  configOutputPin(interface->pin);
+  configOutputPin(config->pin);
   /* Enable clock to register interface and peripheral */
   sysClockEnable(CLK_APB3_DAC);
   /* Reset registers to default values */
   sysResetEnable(RST_DAC);
+
+  interface->pin = config->pin;
+  interface->reg = LPC_DAC;
 
   return E_OK;
 }
