@@ -16,9 +16,10 @@ include(ParseConfig)
 parse_config("${HALM_CONFIG_FILE}" CONFIG_DEFS)
 
 # Default compiler flags
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS OFF)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS_CPU}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_INIT} ${FLAGS_CPU}")
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
 find_package(xcore QUIET)
@@ -33,11 +34,15 @@ if(USE_LTO)
     endif()
 endif()
 
+# Prepare compiler definitions for object libraries
+
 if(DEFINED PLATFORM)
     set(PUBLIC_DEFS -D${PLATFORM})
 else()
     set(PUBLIC_DEFS "")
 endif()
+
+# Collect files for object libraries
 
 set(DIRECTORY_LIST core generic platform pm usb)
 set(LIBRARY_OBJECTS "")
@@ -66,7 +71,8 @@ endforeach()
 add_library(${PROJECT_NAME} ${LIBRARY_OBJECTS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBRARY_TARGETS})
 
-# Library installation configuration
+# Configure library installation
+
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/halm
         DESTINATION include
         FILES_MATCHING PATTERN "*.h"
