@@ -25,8 +25,6 @@ struct SerialDmaConfig
   PinNumber rx;
   /** Mandatory: serial output. */
   PinNumber tx;
-  /** Optional: interrupt priority. */
-  IrqPriority priority;
   /** Optional: parity bit setting. */
   enum SerialParity parity;
   /** Mandatory: peripheral identifier. */

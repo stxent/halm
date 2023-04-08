@@ -1,11 +1,11 @@
 /*
- * halm/platform/stm32/stm32f0xx/pin_defs.h
+ * halm/platform/stm32/gen_2/pin_defs.h
  * Copyright (C) 2020 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_STM32F0XX_PIN_DEFS_H_
-#define HALM_PLATFORM_STM32_STM32F0XX_PIN_DEFS_H_
+#ifndef HALM_PLATFORM_STM32_GEN_2_PIN_DEFS_H_
+#define HALM_PLATFORM_STM32_GEN_2_PIN_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Mode register---------------------------------------------*/
@@ -21,25 +21,26 @@ enum
 #define MODER_MODE_MASK(pin)            BIT_FIELD(MASK(2), (pin) * 2)
 #define MODER_MODE_VALUE(pin, reg) \
     FIELD_VALUE((reg), MODER_MODE_MASK(pin), (pin) * 2)
-/*------------------Output type register--------------------------------------*/
+/*------------------Output Type register--------------------------------------*/
 enum
 {
   OTYPER_PP = 0,
   OTYPER_OD = 1
 };
-/*------------------Output speed register-------------------------------------*/
+/*------------------Output Speed register-------------------------------------*/
 enum
 {
-  OSPEEDR_LOW     = 0,
-  OSPEEDR_MEDIUM  = 1,
-  OSPEEDR_HIGH    = 3
+  OSPEEDR_LOW       = 0,
+  OSPEEDR_MEDIUM    = 1,
+  OSPEEDR_HIGH      = 2,
+  OSPEEDR_VERYHIGH  = 3
 };
 
 #define OSPEEDR_SPEED(pin, value)       BIT_FIELD((value), (pin) * 2)
 #define OSPEEDR_SPEED_MASK(pin)         BIT_FIELD(MASK(2), (pin) * 2)
 #define OSPEEDR_SPEED_VALUE(pin, reg) \
     FIELD_VALUE((reg), OSPEEDR_SPEED_MASK(pin), (pin) * 2)
-/*------------------Pull-up and pull-down register----------------------------*/
+/*------------------Pull-up and Pull-down register----------------------------*/
 enum
 {
   PUPDR_NOPULL    = 0,
@@ -51,10 +52,12 @@ enum
 #define PUPDR_PULL_MASK(pin)            BIT_FIELD(MASK(2), (pin) * 2)
 #define PUPDR_PULL_VALUE(pin, reg) \
     FIELD_VALUE((reg), PUPDR_PULL_MASK(pin), (pin) * 2)
-/*------------------Alternate function register-------------------------------*/
+/*------------------Alternate Function register-------------------------------*/
 #define AFR_AFSEL(pin, value)           BIT_FIELD((value), ((pin) & 0x07) * 4)
 #define AFR_AFSEL_MASK(pin)             BIT_FIELD(MASK(4), ((pin) & 0x07) * 4)
 #define AFR_AFSEL_VALUE(pin, reg) \
     FIELD_VALUE((reg), AFR_AFSEL_MASK(pin), ((pin) & 0x07) * 4)
+/*------------------Configuration Lock register-------------------------------*/
+#define LCKR_LCKK                       BIT(16)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_STM32F0XX_PIN_DEFS_H_ */
+#endif /* HALM_PLATFORM_STM32_GEN_2_PIN_DEFS_H_ */

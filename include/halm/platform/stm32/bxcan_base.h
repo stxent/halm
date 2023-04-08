@@ -11,6 +11,11 @@
 #include <halm/pin.h>
 #include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/bxcan_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
+/*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const BxCanBase;
 
 struct BxCanBaseConfig

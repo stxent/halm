@@ -65,12 +65,12 @@ static void commonPinInit(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static inline enum SysBlockReset portToBlockReset(uint8_t port)
 {
-  return RST_IOPA + port;
+  return RST_GPIOA + port;
 }
 /*----------------------------------------------------------------------------*/
 static inline enum SysClockBranch portToClockBranch(uint8_t port)
 {
-  return CLK_IOPA + port;
+  return CLK_GPIOA + port;
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)

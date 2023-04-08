@@ -14,10 +14,6 @@
 struct BxCanBlockDescriptor
 {
   STM_CAN_Type *reg;
-  /* Peripheral clock branch */
-  enum SysClockBranch clock;
-  /* Reset control identifier */
-  enum SysBlockReset reset;
   /* Interrupt request identifiers */
   struct
   {
@@ -26,9 +22,16 @@ struct BxCanBlockDescriptor
     IrqNumber sce;
     IrqNumber tx;
   } irq;
+  /* Peripheral clock branch */
+  enum SysClockBranch clock;
+  /* Reset control identifier */
+  enum SysBlockReset reset;
+  /* Peripheral channel */
+  uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct BxCanBaseConfig *);
+static const struct BxCanBlockDescriptor *findDescriptor(uint8_t);
 static bool setInstance(uint8_t, struct BxCanBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result canInit(void *, const void *);
@@ -46,30 +49,38 @@ const struct EntityClass * const BxCanBase = &(const struct EntityClass){
 };
 /*----------------------------------------------------------------------------*/
 static const struct BxCanBlockDescriptor bxCanBlockEntries[] = {
+#ifdef CONFIG_PLATFORM_STM32_CAN1
     {
         .reg = STM_CAN1,
-        .clock = CLK_CAN1,
-        .reset = RST_CAN1,
         .irq = {
             .rx0 = USB_LP_CAN1_RX0_IRQ,
             .rx1 = CAN1_RX1_IRQ,
             .sce = CAN1_SCE_IRQ,
             .tx = USB_HP_CAN1_TX_IRQ
-        }
-    }, {
+        },
+        .clock = CLK_CAN1,
+        .reset = RST_CAN1,
+        .channel = CAN1
+    },
+#endif
+#ifdef CONFIG_PLATFORM_STM32_CAN2
+    {
         .reg = STM_CAN2,
-        .clock = CLK_CAN2,
-        .reset = RST_CAN2,
         .irq = {
             .rx0 = CAN2_RX0_IRQ,
             .rx1 = CAN2_RX1_IRQ,
             .sce = CAN2_SCE_IRQ,
             .tx = CAN2_TX_IRQ
-        }
+        },
+        .clock = CLK_CAN2,
+        .reset = RST_CAN2,
+        .channel = CAN2
     }
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static const struct PinEntry bxCanPins[] = {
+#ifdef CONFIG_PLATFORM_STM32_CAN1
     {
         .key = PIN(PORT_A, 11), /* CAN1_RX */
         .channel = 0,
@@ -79,14 +90,6 @@ static const struct PinEntry bxCanPins[] = {
         .channel = 0,
         .value = PACK_REMAP(REMAP_CAN1, 0)
     }, {
-        .key = PIN(PORT_B, 5), /* CAN2_RX */
-        .channel = 1,
-        .value = PACK_REMAP(REMAP_CAN2, 1)
-    }, {
-        .key = PIN(PORT_B, 6), /* CAN2_TX */
-        .channel = 1,
-        .value = PACK_REMAP(REMAP_CAN2, 1)
-    }, {
         .key = PIN(PORT_B, 8), /* CAN1_RX */
         .channel = 0,
         .value = PACK_REMAP(REMAP_CAN1, 2)
@@ -95,14 +98,6 @@ static const struct PinEntry bxCanPins[] = {
         .channel = 0,
         .value = PACK_REMAP(REMAP_CAN1, 2)
     }, {
-        .key = PIN(PORT_B, 12), /* CAN2_RX */
-        .channel = 1,
-        .value = PACK_REMAP(REMAP_CAN2, 0)
-    }, {
-        .key = PIN(PORT_B, 13), /* CAN2_TX */
-        .channel = 1,
-        .value = PACK_REMAP(REMAP_CAN2, 0)
-    }, {
         .key = PIN(PORT_D, 0), /* CAN1_RX */
         .channel = 0,
         .value = PACK_REMAP(REMAP_CAN1, 3)
@@ -110,7 +105,28 @@ static const struct PinEntry bxCanPins[] = {
         .key = PIN(PORT_D, 1), /* CAN1_TX */
         .channel = 0,
         .value = PACK_REMAP(REMAP_CAN1, 3)
+    },
+#endif
+#ifdef CONFIG_PLATFORM_STM32_CAN2
+    {
+        .key = PIN(PORT_B, 5), /* CAN2_RX */
+        .channel = 1,
+        .value = PACK_REMAP(REMAP_CAN2, 1)
     }, {
+        .key = PIN(PORT_B, 6), /* CAN2_TX */
+        .channel = 1,
+        .value = PACK_REMAP(REMAP_CAN2, 1)
+    }, {
+        .key = PIN(PORT_B, 12), /* CAN2_RX */
+        .channel = 1,
+        .value = PACK_REMAP(REMAP_CAN2, 0)
+    }, {
+        .key = PIN(PORT_B, 13), /* CAN2_TX */
+        .channel = 1,
+        .value = PACK_REMAP(REMAP_CAN2, 0)
+    },
+#endif
+    {
         .key = 0 /* End of pin function association list */
     }
 };
@@ -139,6 +155,17 @@ static void configPins(const struct BxCanBaseConfig *config)
   }
 }
 /*----------------------------------------------------------------------------*/
+static const struct BxCanBlockDescriptor *findDescriptor(uint8_t channel)
+{
+  for (size_t index = 0; index < ARRAY_SIZE(bxCanBlockEntries); ++index)
+  {
+    if (bxCanBlockEntries[index].channel == channel)
+      return &bxCanBlockEntries[index];
+  }
+
+  return 0;
+}
+/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct BxCanBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
@@ -152,49 +179,53 @@ static bool setInstance(uint8_t channel, struct BxCanBase *object)
     return false;
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_STM32_CAN1
 void CAN1_TX_ISR(void)
 {
   /* Joint interrupt */
   if (instances[0])
     instances[0]->handler(instances[0]);
 }
-/*----------------------------------------------------------------------------*/
+
 void CAN1_RX0_ISR(void)
 {
   /* Joint interrupt */
   if (instances[0])
     instances[0]->handler(instances[0]);
 }
-/*----------------------------------------------------------------------------*/
+
 void CAN1_RX1_ISR(void)
 {
   instances[0]->handler(instances[0]);
 }
-/*----------------------------------------------------------------------------*/
+
 void CAN1_SCE_ISR(void)
 {
   instances[0]->handler(instances[0]);
 }
+#endif
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_STM32_CAN2
 void CAN2_TX_ISR(void)
 {
   instances[1]->handler(instances[1]);
 }
-/*----------------------------------------------------------------------------*/
+
 void CAN2_RX0_ISR(void)
 {
   instances[1]->handler(instances[1]);
 }
-/*----------------------------------------------------------------------------*/
+
 void CAN2_RX1_ISR(void)
 {
   instances[1]->handler(instances[1]);
 }
-/*----------------------------------------------------------------------------*/
+
 void CAN2_SCE_ISR(void)
 {
   instances[1]->handler(instances[1]);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 uint32_t canGetClock(const struct BxCanBase *interface __attribute__((unused)))
 {
@@ -206,16 +237,20 @@ static enum Result canInit(void *object, const void *configBase)
   const struct BxCanBaseConfig * const config = configBase;
   struct BxCanBase * const interface = object;
 
+  const struct BxCanBlockDescriptor * const entry =
+      findDescriptor(config->channel);
+
+  if (!entry)
+    return E_VALUE;
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 
-  /* Enable alternate functions on RX and TX pins */
+  /* Configure input and output pins */
   configPins(config);
 
-  const struct BxCanBlockDescriptor * const entry =
-      &bxCanBlockEntries[config->channel];
-
+  /* Enable clocks to register interface and peripheral */
   sysClockEnable(entry->clock);
+  /* Reset registers to default values */
   sysResetEnable(entry->reset);
   sysResetDisable(entry->reset);
 
@@ -234,8 +269,10 @@ static enum Result canInit(void *object, const void *configBase)
 static void canDeinit(void *object)
 {
   const struct BxCanBase * const interface = object;
+  const struct BxCanBlockDescriptor * const entry =
+      findDescriptor(interface->channel);
 
-  sysClockDisable(bxCanBlockEntries[interface->channel].clock);
+  sysClockDisable(entry->clock);
   instances[interface->channel] = 0;
 }
 #endif

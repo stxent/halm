@@ -7,7 +7,7 @@
 #include <halm/irq.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/dma_base.h>
-#include <halm/platform/stm32/dma_defs.h>
+#include <halm/platform/stm32/gen_1/dma_defs.h>
 #include <halm/platform/stm32/system.h>
 #include <xcore/atomic.h>
 #include <assert.h>

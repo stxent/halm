@@ -1,5 +1,21 @@
 menu "Enabled peripherals"
 
+menu "bxCAN"
+
+config PLATFORM_STM32_CAN1
+	bool "CAN1"
+	default y
+	depends on PLATFORM_STM32_CAN
+
+config PLATFORM_STM32_CAN2
+	bool "CAN2"
+	default y
+	depends on PLATFORM_STM32_CAN
+	help
+	  CAN2 is available on connectivity line devices only.
+
+endmenu
+
 menu "General Purpose Timers"
 
 config PLATFORM_STM32_TIM1

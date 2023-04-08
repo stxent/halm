@@ -12,7 +12,7 @@
 #define HALM_PLATFORM_STM32_PIN_H_
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/pin.h>
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_PIN/pin.h>
 #include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_PIN_H_ */

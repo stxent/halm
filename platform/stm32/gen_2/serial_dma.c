@@ -1,6 +1,6 @@
 /*
  * serial_dma.c
- * Copyright (C) 2021 xent
+ * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -149,7 +149,7 @@ static enum Result enqueueRxBuffer(struct SerialDma *interface)
 {
   const STM_USART_Type * const reg = interface->base.reg;
 
-  dmaAppend(interface->rxDma, interface->rxBuffer, (const void *)&reg->DR,
+  dmaAppend(interface->rxDma, interface->rxBuffer, (const void *)&reg->RDR,
       interface->rxBufferSize);
   interface->rxPosition = 0;
 
@@ -167,7 +167,7 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
 
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
-  dmaAppend(interface->txDma, (void *)&reg->DR, address,
+  dmaAppend(interface->txDma, (void *)&reg->TDR, address,
       interface->txBufferSize);
 
   if ((res = dmaEnable(interface->txDma)) != E_OK)
@@ -205,8 +205,7 @@ static void serialInterruptHandler(void *object)
   assert(dmaStatus(interface->rxDma) == E_BUSY);
 
   /* Clear IDLE flag */
-  (void)reg->SR;
-  (void)reg->DR;
+  reg->ICR = ICR_IDLECF;
 
   size_t residue;
 

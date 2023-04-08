@@ -5,7 +5,7 @@
  */
 
 #include <halm/pin.h>
-#include <halm/platform/stm32/stm32f0xx/pin_defs.h>
+#include <halm/platform/stm32/gen_2/pin_defs.h>
 #include <halm/platform/stm32/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -36,12 +36,12 @@ static void commonPinInit(uint8_t port)
 /*----------------------------------------------------------------------------*/
 static inline enum SysBlockReset portToBlockReset(uint8_t port)
 {
-  return RST_IOPA + port;
+  return RST_GPIOA + port;
 }
 /*----------------------------------------------------------------------------*/
 static inline enum SysClockBranch portToClockBranch(uint8_t port)
 {
-  return CLK_IOPA + port;
+  return CLK_GPIOA + port;
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
@@ -161,11 +161,12 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
       break;
 
     case PIN_SLEW_NORMAL:
+      /* TODO Select between medium and high speed, high unavailable on F0 */
       value = OSPEEDR_MEDIUM;
       break;
 
     default:
-      value = OSPEEDR_HIGH;
+      value = OSPEEDR_VERYHIGH;
       break;
   }
 

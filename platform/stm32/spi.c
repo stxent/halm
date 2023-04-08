@@ -92,19 +92,23 @@ static void dmaSetupRx(struct Dma *rx, struct Dma *tx)
   static const struct DmaSettings dmaSettings[] = {
       {
           .source = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           },
           .destination = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = true
           }
       }, {
           .source = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           },
           .destination = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }
@@ -120,19 +124,23 @@ static void dmaSetupRxTx(struct Dma *rx, struct Dma *tx)
   static const struct DmaSettings dmaSettings[] = {
       {
           .source = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           },
           .destination = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = true
           }
       }, {
           .source = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = true
           },
           .destination = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }
@@ -148,19 +156,23 @@ static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
   static const struct DmaSettings dmaSettings[] = {
       {
           .source = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           },
           .destination = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }
       }, {
           .source = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = true
           },
           .destination = {
+              .burst = DMA_BURST_1,
               .width = DMA_WIDTH_BYTE,
               .increment = false
           }

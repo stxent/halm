@@ -1,5 +1,5 @@
 /*
- * halm/platform/stm32/gen_1/pin.h
+ * halm/platform/stm32/gen_2/pin.h
  * Copyright (C) 2016, 2020 xent
  * Project is distributed under the terms of the MIT License
  */
@@ -8,11 +8,15 @@
 #error This header should not be included directly
 #endif
 
-#ifndef HALM_PLATFORM_STM32_GEN_1_PIN_H_
-#define HALM_PLATFORM_STM32_GEN_1_PIN_H_
+#ifndef HALM_PLATFORM_STM32_GEN_2_PIN_H_
+#define HALM_PLATFORM_STM32_GEN_2_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
 #include <xcore/helpers.h>
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/pin.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 struct Pin
 {
@@ -44,7 +48,7 @@ static inline bool pinRead(struct Pin pin)
 
 static inline void pinReset(struct Pin pin)
 {
-  ((STM_GPIO_Type *)pin.reg)->BRR = pin.mask;
+  ((STM_GPIO_Type *)pin.reg)->BSRR = pin.mask << 16;
 }
 
 static inline void pinSet(struct Pin pin)
@@ -57,7 +61,7 @@ static inline void pinToggle(struct Pin pin)
   STM_GPIO_Type * const reg = (STM_GPIO_Type *)pin.reg;
 
   if (reg->ODR & pin.mask)
-    reg->BRR = pin.mask;
+    reg->BSRR = pin.mask << 16;
   else
     reg->BSRR = pin.mask;
 }
@@ -74,9 +78,9 @@ static inline void pinWrite(struct Pin pin, bool value)
   if (value)
     reg->BSRR = pin.mask;
   else
-    reg->BRR = pin.mask;
+    reg->BSRR = pin.mask << 16;
 }
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_GEN_1_PIN_H_ */
+#endif /* HALM_PLATFORM_STM32_GEN_2_PIN_H_ */

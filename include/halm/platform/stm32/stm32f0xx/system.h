@@ -21,12 +21,12 @@
 /*----------------------------------------------------------------------------*/
 enum SysBlockReset
 {
-  RST_IOPA    = 17,
-  RST_IOPB    = 18,
-  RST_IOPC    = 19,
-  RST_IOPD    = 20,
-  RST_IOPE    = 21,
-  RST_IOPF    = 22,
+  RST_GPIOA   = 17,
+  RST_GPIOB   = 18,
+  RST_GPIOC   = 19,
+  RST_GPIOD   = 20,
+  RST_GPIOE   = 21,
+  RST_GPIOF   = 22,
   RST_TSC     = 24,
 
   RST_TIM2    = 0x20 + 0,
@@ -70,12 +70,12 @@ enum SysClockBranch
   CLK_SRAM      = 2,
   CLK_FLITF     = 4,
   CLK_CRC       = 6,
-  CLK_IOPA      = 17,
-  CLK_IOPB      = 18,
-  CLK_IOPC      = 19,
-  CLK_IOPD      = 20,
-  CLK_IOPE      = 21,
-  CLK_IOPF      = 22,
+  CLK_GPIOA     = 17,
+  CLK_GPIOB     = 18,
+  CLK_GPIOC     = 19,
+  CLK_GPIOD     = 20,
+  CLK_GPIOE     = 21,
+  CLK_GPIOF     = 22,
   CLK_TSC       = 24,
 
   CLK_TIM2      = 0x20 + 0,

@@ -17,7 +17,16 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-/** DMA transfer priority. */
+/** Burst size. */
+enum DmaBurst
+{
+  DMA_BURST_1,
+  DMA_BURST_4,
+  DMA_BURST_8,
+  DMA_BURST_16
+} __attribute__((packed));
+
+/** Transfer priority. */
 enum DmaPriority
 {
   DMA_PRIORITY_LOW,
@@ -26,7 +35,7 @@ enum DmaPriority
   DMA_PRIORITY_VERY_HIGH
 } __attribute__((packed));
 
-/** DMA transfer type. */
+/** Transfer type. */
 enum DmaType
 {
   /** Peripheral to memory. */
@@ -37,7 +46,7 @@ enum DmaType
   DMA_TYPE_M2M
 } __attribute__((packed));
 
-/** DMA transfer width. */
+/** Transfer width. */
 enum DmaWidth
 {
   DMA_WIDTH_BYTE,
@@ -62,6 +71,8 @@ struct DmaSettings
   /** Mandatory: source configuration. */
   struct
   {
+    /** Mandatory: burst size for source transfers. */
+    enum DmaBurst burst;
     /** Mandatory: source transfer width. */
     enum DmaWidth width;
     /** Mandatory: enable increment of the source address. */
@@ -71,6 +82,8 @@ struct DmaSettings
   /** Mandatory: destination configuration. */
   struct
   {
+    /** Mandatory: burst size for destination transfers. */
+    enum DmaBurst burst;
     /** Mandatory: destination transfer width. */
     enum DmaWidth width;
     /** Mandatory: enable increment of the destination address. */

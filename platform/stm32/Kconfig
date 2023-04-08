@@ -1,6 +1,11 @@
-config GEN_PIN
+config GEN_DMA
 	string
 	default gen_1 if FAMILY_STM32F0XX || FAMILY_STM32F1XX
+
+config GEN_PIN
+	string
+	default gen_2 if FAMILY_STM32F0XX
+	default stm32f1xx if FAMILY_STM32F1XX
 
 config GEN_UART
 	string
@@ -175,7 +180,7 @@ config PLATFORM_STM32_SERIAL
 config PLATFORM_STM32_SERIAL_DMA
 	bool "Serial port driver with DMA"
 	default y
-	depends on PLATFORM_STM32_UART_BASE && PLATFORM_STM32_DMA && FAMILY_STM32F1XX
+	depends on PLATFORM_STM32_UART_BASE && PLATFORM_STM32_DMA
 
 config PLATFORM_USB
 	bool "USB"
