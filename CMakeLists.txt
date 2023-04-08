@@ -17,9 +17,10 @@ parse_config("${HALM_CONFIG_FILE}" CONFIG_DEFS)
 
 # Default compiler flags
 
-set(CMAKE_C_STANDARD 11)
+set(FLAGS_DEFAULT "-fdata-sections -ffunction-sections")
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_EXTENSIONS OFF)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_INIT} ${FLAGS_CPU}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_INIT} ${FLAGS_DEFAULT} ${FLAGS_CPU}")
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
 find_package(xcore QUIET)
