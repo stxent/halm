@@ -111,6 +111,18 @@
 /* Sleep interrupt enable */
 #define IER_SLKIE                       BIT(17)
 /*------------------Error Status Register-------------------------------------*/
+enum
+{
+  LEC_NO_ERROR    = 0x00,
+  LEC_STUFF_ERROR = 0x01,
+  LEC_FORM_ERROR  = 0x02,
+  LEC_ACK_ERROR   = 0x03,
+  LEC_BIT_1_ERROR = 0x04,
+  LEC_BIT_0_ERROR = 0x05,
+  LEC_CRC_ERROR   = 0x06,
+  LEC_UNUSED      = 0x07
+};
+
 /* Error warning flag */
 #define ESR_TMEIE                       BIT(0)
 /* Error passive flag */
@@ -133,6 +145,7 @@
 #define BTR_BRP(value)                  BIT_FIELD((value), 0)
 #define BTR_BRP_MASK                    BIT_FIELD(MASK(10), 0)
 #define BTR_BRP_VALUE(reg)              FIELD_VALUE((reg), BTR_BRP_MASK, 0)
+#define BTR_BRP_MAX                     1024
 
 #define BTR_TS1(value)                  BIT_FIELD((value), 16)
 #define BTR_TS1_MASK                    BIT_FIELD(MASK(4), 16)

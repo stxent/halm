@@ -65,7 +65,16 @@ enum CANParameter
    * Remove acceptance filter for flexible data-rate frames.
    * Parameter type is \a struct \a CANFilter.
    */
-  IF_CAN_FILTER_REMOVE_FD
+  IF_CAN_FILTER_REMOVE_FD,
+
+  /** Total number of bus errors. Parameter type is \a uint32_t. */
+  IF_CAN_ERRORS,
+  /** Number of received frame overruns. Parameter type is \a uint32_t. */
+  IF_CAN_OVERRUNS,
+  /** Number of received frames. Parameter type is \a uint32_t. */
+  IF_CAN_RX_COUNT,
+  /** Number of transmitted frames. Parameter type is \a uint32_t. */
+  IF_CAN_TX_COUNT
 };
 /*----------------------------------------------------------------------------*/
 struct CANMessage

@@ -142,6 +142,11 @@ config PLATFORM_LPC_CAN_NO_DEINIT
 	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_CAN
 
+config PLATFORM_LPC_CAN_COUNTERS
+	bool "Frame counters"
+	default y
+	depends on PM && PLATFORM_LPC_CAN
+
 config PLATFORM_LPC_CAN_EXACT_RATE
 	bool "Exact rate"
 	default y

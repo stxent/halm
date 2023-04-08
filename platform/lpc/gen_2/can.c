@@ -79,11 +79,22 @@ struct Can
   /* Maximum pending frames in the transmit queue */
   size_t txWatermark;
 #endif
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  /* Bus errors */
+  uint32_t errorCount;
+  /* Received frame overruns */
+  uint32_t overrunCount;
+  /* Received frames */
+  uint32_t rxCount;
+  /* Transmitted frames */
+  uint32_t txCount;
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static void buildAcceptanceFilters(struct Can *);
 static bool calcSegments(uint8_t, uint8_t *, uint8_t *);
-static bool calcTimings(const struct Can *, uint32_t, uint32_t *);
+static bool calcTimings(const struct Can *, uint32_t, uint32_t *, uint32_t *);
 static void dropMessage(struct Can *, size_t);
 static uint32_t getBusRate(const struct Can *);
 static void interruptHandler(void *);
@@ -185,7 +196,7 @@ static bool calcSegments(uint8_t width, uint8_t *tseg1, uint8_t *tseg2)
 }
 /*----------------------------------------------------------------------------*/
 static bool calcTimings(const struct Can *interface, uint32_t rate,
-    uint32_t *result)
+    uint32_t *result, uint32_t *extension)
 {
   static const uint8_t MAX_WIDTH = BT_TSEG1_MAX + BT_TSEG2_MAX + 3;
   static const uint8_t MIN_WIDTH = BT_TSEG1_MIN + 3;
@@ -207,9 +218,11 @@ static bool calcTimings(const struct Can *interface, uint32_t rate,
     const uint32_t clock = rate * width;
     const uint32_t error = apbClock % clock;
 
+    if (error > currentError)
+      continue;
     if (clock > apbClock)
       continue;
-    if (error > currentError)
+    if (apbClock / clock > BRP_BRPE_MAX + 1)
       continue;
 
     uint8_t seg1;
@@ -236,10 +249,11 @@ static bool calcTimings(const struct Can *interface, uint32_t rate,
 
   if (currentDelta != UINT8_MAX)
   {
-    *result = BT_BRP(currentPrescaler - 1)
+    *result = (BT_BRP(currentPrescaler - 1) & BT_BRP_MASK)
         | BT_SJW(CONFIG_PLATFORM_LPC_CAN_SJW - 1)
         | BT_TSEG1(currentSeg1 - 1)
         | BT_TSEG2(currentSeg2 - 1);
+    *extension = (currentPrescaler - 1) >> BT_BRP_WIDTH;
 
     return true;
   }
@@ -255,6 +269,10 @@ static void dropMessage(struct Can *interface, size_t index)
   reg->IF[0].CMDMSK = CMDMSK_NEWDAT | CMDMSK_CLRINTPND;
   reg->IF[0].CMDREQ = index;
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  ++interface->overrunCount;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t getBusRate(const struct Can *interface)
@@ -284,6 +302,15 @@ static void interruptHandler(void *object)
 
     if (id == INT_STATUS)
     {
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+      const uint8_t error = STAT_LEC_VALUE(status);
+
+      if (error != LEC_NO_ERROR && error != LEC_UNUSED)
+      {
+        ++interface->errorCount;
+      }
+#endif
+
       if (status & STAT_BOFF)
       {
         /* Exit bus-off state */
@@ -423,14 +450,19 @@ static void readMessage(struct Can *interface, struct CANMessage *message,
   LPC_CAN_Type * const reg = interface->base.reg;
 
   /* Read from Message Object to system memory and clear interrupt flag */
-  reg->IF[0].CMDMSK = CMDMSK_DATA_A | CMDMSK_DATA_B
-      | CMDMSK_NEWDAT | CMDMSK_CLRINTPND | CMDMSK_CTRL | CMDMSK_ARB;
+  reg->IF[0].CMDMSK = CMDMSK_DATA_A | CMDMSK_DATA_B | CMDMSK_CTRL | CMDMSK_ARB;
   reg->IF[0].CMDREQ = index;
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 
   const uint32_t arb1 = reg->IF[0].ARB1;
   const uint32_t arb2 = reg->IF[0].ARB2;
   const uint32_t control = reg->IF[0].MCTRL;
+
+  /* Clear flags */
+  reg->IF[0].MCTRL = MCTRL_EOB | MCTRL_UMASK | MCTRL_RXIE | MCTRL_DLC(8);
+  reg->IF[0].CMDMSK = CMDMSK_WR | CMDMSK_CTRL;
+  reg->IF[0].CMDREQ = index;
+  while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
 
   /* Fill message structure */
   message->flags = 0;
@@ -459,6 +491,12 @@ static void readMessage(struct Can *interface, struct CANMessage *message,
   }
   else
     message->id = ARB2_STD_ID_VALUE(arb2);
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  if (control & MCTRL_MSGLST)
+    ++interface->overrunCount;
+  ++interface->rxCount;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static void setBusMode(struct Can *interface, enum Mode mode)
@@ -497,13 +535,14 @@ static bool setBusRate(struct Can *interface, uint32_t rate)
 {
   LPC_CAN_Type * const reg = interface->base.reg;
   const uint32_t state = reg->CNTL;
+  uint32_t brpe;
   uint32_t bt;
 
-  if (!calcTimings(interface, rate, &bt))
+  if (!calcTimings(interface, rate, &bt, &brpe))
     return false;
 
   reg->CNTL = state | (CNTL_INIT | CNTL_CCE);
-  reg->BRPE = 0;
+  reg->BRPE = brpe;
   reg->BT = bt;
   reg->CNTL = state;
 
@@ -593,6 +632,10 @@ static void writeMessage(struct Can *interface,
 
   /* Wait until read/write action is finished */
   while (reg->IF[0].CMDREQ & CMDREQ_BUSY);
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  ++interface->txCount;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
@@ -707,6 +750,13 @@ static enum Result canInit(void *object, const void *configBase)
   interface->rate = config->rate;
   interface->timer = config->timer;
 
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  interface->errorCount = 0;
+  interface->overrunCount = 0;
+  interface->rxCount = 0;
+  interface->txCount = 0;
+#endif
+
 #ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
   interface->rxWatermark = 0;
   interface->txWatermark = 0;
@@ -794,6 +844,30 @@ static void canSetCallback(void *object, void (*callback)(void *),
 static enum Result canGetParam(void *object, int parameter, void *data)
 {
   struct Can * const interface = object;
+
+  switch ((enum CANParameter)parameter)
+  {
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+    case IF_CAN_ERRORS:
+      *(uint32_t *)data = interface->errorCount;
+      break;
+
+    case IF_CAN_OVERRUNS:
+      *(uint32_t *)data = interface->overrunCount;
+      break;
+
+    case IF_CAN_RX_COUNT:
+      *(uint32_t *)data = interface->rxCount;
+      break;
+
+    case IF_CAN_TX_COUNT:
+      *(uint32_t *)data = interface->txCount;
+      break;
+#endif
+
+    default:
+      break;
+  }
 
   switch ((enum IfParameter)parameter)
   {

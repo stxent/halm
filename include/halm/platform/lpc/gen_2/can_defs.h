@@ -54,9 +54,12 @@ enum
 
 #define EC_RP                           BIT(15)
 /*------------------Bit Timing register---------------------------------------*/
+#define BRP_BRPE_MAX                    1024
+
 #define BT_BRP(value)                   BIT_FIELD((value), 0)
 #define BT_BRP_MASK                     BIT_FIELD(MASK(6), 0)
 #define BT_BRP_VALUE(reg)               FIELD_VALUE((reg), BT_BRP_MASK, 0)
+#define BT_BRP_WIDTH                    6
 
 #define BT_SJW(value)                   BIT_FIELD((value), 6)
 #define BT_SJW_MASK                     BIT_FIELD(MASK(2), 6)

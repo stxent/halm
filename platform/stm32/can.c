@@ -52,6 +52,17 @@ struct Can
   /* Maximum pending frames in the transmit queue */
   size_t txWatermark;
 #endif
+
+#ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
+  /* Bus errors */
+  uint32_t errorCount;
+  /* Received frame overruns */
+  uint32_t overrunCount;
+  /* Received frames */
+  uint32_t rxCount;
+  /* Transmitted frames */
+  uint32_t txCount;
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static bool calcSegments(uint8_t, uint8_t *, uint8_t *);
@@ -140,9 +151,11 @@ static bool calcTimings(const struct Can *interface, uint32_t rate,
     const uint32_t clock = rate * width;
     const uint32_t error = apbClock % clock;
 
+    if (error > currentError)
+      continue;
     if (clock > apbClock)
       continue;
-    if (error > currentError)
+    if (apbClock / clock > BTR_BRP_MAX + 1)
       continue;
 
     uint8_t seg1;
@@ -198,6 +211,16 @@ static void interruptHandler(void *object)
   bool event = false;
   bool queued = false;
 
+  /* Handle received message overruns */
+  if (reg->RFR[0] & RF_FOVR)
+  {
+    reg->RFR[0] = RF_FOVR;
+
+#ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
+    ++interface->overrunCount;
+#endif
+  }
+
   /* Read received messages, use FIFO0 only */
   while (RF_FMP_VALUE(reg->RFR[0]) > 0)
   {
@@ -214,8 +237,14 @@ static void interruptHandler(void *object)
       pointerQueuePushBack(&interface->rxQueue, message);
       event = true;
     }
+    else
+    {
+#ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
+      ++interface->overrunCount;
+#endif
+    }
 
-    reg->RFR[0] |= RF_RFOM;
+    reg->RFR[0] = RF_RFOM;
   }
 
   updateRxWatermark(interface, pointerQueueSize(&interface->rxQueue));
@@ -243,6 +272,21 @@ static void interruptHandler(void *object)
     {
       reg->IER &= ~IER_TMEIE;
     }
+  }
+
+  /* Handle bus errors */
+  if (reg->MSR & MSR_ERRI)
+  {
+#ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
+    const uint8_t error = ESR_LEC_VALUE(reg->ESR);
+
+    if (error != LEC_NO_ERROR && error != LEC_UNUSED)
+    {
+      ++interface->errorCount;
+    }
+#endif
+
+    reg->MSR &= ~MSR_ERRI;
   }
 
   if (interface->callback && event)
@@ -285,6 +329,10 @@ static void readMessage(struct Can *interface, struct CANMessage *message,
      */
     memcpy(message->data, data, sizeof(data));
   }
+
+#ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
+  ++interface->rxCount;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static void sendMessage(struct Can *interface,
@@ -321,6 +369,10 @@ static void sendMessage(struct Can *interface,
 
   /* Start transmission */
   reg->TX[mailbox].TIR |= TI_TXRQ;
+
+#ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
+  ++interface->txCount;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static void setBusMode(struct Can *interface, enum Mode mode)
@@ -474,6 +526,13 @@ static enum Result canInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->timer = config->timer;
 
+#ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
+  interface->errorCount = 0;
+  interface->overrunCount = 0;
+  interface->rxCount = 0;
+  interface->txCount = 0;
+#endif
+
 #ifdef CONFIG_PLATFORM_STM32_CAN_WATERMARK
   interface->rxWatermark = 0;
   interface->txWatermark = 0;
@@ -517,7 +576,7 @@ static enum Result canInit(void *object, const void *configBase)
 #endif
 
   /* Enable FIFO0 message pending interrupt */
-  reg->IER = IER_FMPIE0;
+  reg->IER = IER_FMPIE0 | IER_FOVIE0 | IER_ERRIE;
 
   if (interface->base.irq.tx != interface->base.irq.rx0)
   {
@@ -567,6 +626,30 @@ static void canSetCallback(void *object, void (*callback)(void *),
 static enum Result canGetParam(void *object, int parameter, void *data)
 {
   struct Can * const interface = object;
+
+  switch ((enum CANParameter)parameter)
+  {
+#ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
+    case IF_CAN_ERRORS:
+      *(uint32_t *)data = interface->errorCount;
+      break;
+
+    case IF_CAN_OVERRUNS:
+      *(uint32_t *)data = interface->overrunCount;
+      break;
+
+    case IF_CAN_RX_COUNT:
+      *(uint32_t *)data = interface->rxCount;
+      break;
+
+    case IF_CAN_TX_COUNT:
+      *(uint32_t *)data = interface->txCount;
+      break;
+#endif
+
+    default:
+      break;
+  }
 
   switch ((enum IfParameter)parameter)
   {

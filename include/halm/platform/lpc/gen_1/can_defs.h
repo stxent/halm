@@ -88,6 +88,7 @@
 #define BTR_BRP(value)                  BIT_FIELD((value), 0)
 #define BTR_BRP_MASK                    BIT_FIELD(MASK(10), 0)
 #define BTR_BRP_VALUE(reg)              FIELD_VALUE((reg), BTR_BRP_MASK, 0)
+#define BTR_BRP_MAX                     1024
 
 #define BTR_SJW(value)                  BIT_FIELD((value), 14)
 #define BTR_SJW_MASK                    BIT_FIELD(MASK(2), 14)

@@ -34,6 +34,11 @@ config PLATFORM_STM32_CAN_NO_DEINIT
 	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_CAN
 
+config PLATFORM_STM32_CAN_COUNTERS
+	bool "Frame counters"
+	default y
+	depends on PM && PLATFORM_STM32_CAN
+
 config PLATFORM_STM32_CAN_EXACT_RATE
 	bool "Exact rate"
 	default y

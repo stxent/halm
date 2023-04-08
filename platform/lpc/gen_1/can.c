@@ -57,6 +57,17 @@ struct Can
   /* Maximum pending frames in the transmit queue */
   size_t txWatermark;
 #endif
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  /* Bus errors */
+  uint32_t errorCount;
+  /* Received frame overruns */
+  uint32_t overrunCount;
+  /* Received frames */
+  uint32_t rxCount;
+  /* Transmitted frames */
+  uint32_t txCount;
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static bool calcSegments(uint8_t, uint8_t *, uint8_t *);
@@ -144,9 +155,11 @@ static bool calcTimings(const struct Can *interface, uint32_t rate,
     const uint32_t clock = rate * width;
     const uint32_t error = apbClock % clock;
 
+    if (error > currentError)
+      continue;
     if (clock > apbClock)
       continue;
-    if (error > currentError)
+    if (apbClock / clock > BTR_BRP_MAX + 1)
       continue;
 
     uint8_t seg1;
@@ -219,6 +232,12 @@ static void interruptHandler(void *object)
         pointerQueuePushBack(&interface->rxQueue, message);
         event = true;
       }
+      else
+      {
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+        ++interface->overrunCount;
+#endif
+      }
 
       /* Release receive buffer */
       reg->CMR = CMR_RRB | CMR_CDO;
@@ -226,6 +245,13 @@ static void interruptHandler(void *object)
 
     updateRxWatermark(interface, pointerQueueSize(&interface->rxQueue));
   }
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  if (icr & ICR_DOI)
+  {
+    ++interface->overrunCount;
+  }
+#endif
 
   const uint32_t sr = reg->SR;
 
@@ -261,13 +287,20 @@ static void interruptHandler(void *object)
     }
   }
 
-  if ((icr & ICR_BEI) && (sr & SR_BS))
+  if (icr & ICR_BEI)
   {
-    /*
-     * The controller is forced into a bus-off state, RM bit should be cleared
-     * to continue normal operation.
-     */
-    reg->MOD &= ~MOD_RM;
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+    ++interface->errorCount;
+#endif
+
+    if (sr & SR_BS)
+    {
+      /*
+       * The controller is forced into a bus-off state, RM bit should be cleared
+       * to continue normal operation.
+       */
+      reg->MOD &= ~MOD_RM;
+    }
   }
 
   if (interface->callback && event)
@@ -301,6 +334,10 @@ static void readMessage(struct Can *interface, struct CANMessage *message)
   {
     message->flags |= CAN_EXT_ID;
   }
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  ++interface->rxCount;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static void resetQueues(struct Can *interface)
@@ -366,6 +403,10 @@ static void sendMessage(struct Can *interface,
 
   *status &= ~BIT(position);
   ++interface->sequence;
+
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  ++interface->txCount;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static void setBusMode(struct Can *interface, enum Mode mode)
@@ -490,6 +531,13 @@ static enum Result canInit(void *object, const void *configBase)
   interface->rate = config->rate;
   interface->sequence = 0;
 
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+  interface->errorCount = 0;
+  interface->overrunCount = 0;
+  interface->rxCount = 0;
+  interface->txCount = 0;
+#endif
+
 #ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
   interface->rxWatermark = 0;
   interface->txWatermark = 0;
@@ -525,7 +573,7 @@ static enum Result canInit(void *object, const void *configBase)
 #endif
 
   /* Enable interrupts on message reception and bus error */
-  reg->IER = IER_RIE | IER_EPIE | IER_BEIE | IER_TIE_MASK;
+  reg->IER = IER_RIE | IER_DOIE | IER_EPIE | IER_BEIE | IER_TIE_MASK;
 
   irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);
@@ -568,6 +616,30 @@ static void canSetCallback(void *object, void (*callback)(void *),
 static enum Result canGetParam(void *object, int parameter, void *data)
 {
   struct Can * const interface = object;
+
+  switch ((enum CANParameter)parameter)
+  {
+#ifdef CONFIG_PLATFORM_LPC_CAN_COUNTERS
+    case IF_CAN_ERRORS:
+      *(uint32_t *)data = interface->errorCount;
+      break;
+
+    case IF_CAN_OVERRUNS:
+      *(uint32_t *)data = interface->overrunCount;
+      break;
+
+    case IF_CAN_RX_COUNT:
+      *(uint32_t *)data = interface->rxCount;
+      break;
+
+    case IF_CAN_TX_COUNT:
+      *(uint32_t *)data = interface->txCount;
+      break;
+#endif
+
+    default:
+      break;
+  }
 
   switch ((enum IfParameter)parameter)
   {
