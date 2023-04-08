@@ -12,8 +12,6 @@
 #define HALM_PLATFORM_LPC_LPC13UXX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-/*----------------------------------------------------------------------------*/
-#define NVIC_PRIORITY_SIZE 3
 /*------------------System Configuration registers----------------------------*/
 typedef struct
 {

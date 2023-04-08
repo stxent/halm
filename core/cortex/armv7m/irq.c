@@ -5,19 +5,13 @@
  */
 
 #include <halm/irq.h>
-#include <halm/platform/platform_defs.h>
 #include <assert.h>
-/*----------------------------------------------------------------------------*/
-#define PRIORITY_TO_VALUE(priority) \
-    ((((1 << NVIC_PRIORITY_SIZE) - 1) - (priority)) << (8 - NVIC_PRIORITY_SIZE))
-#define VALUE_TO_PRIORITY(value) \
-    (((1 << NVIC_PRIORITY_SIZE) - 1) - ((value) >> (8 - NVIC_PRIORITY_SIZE)))
 /*----------------------------------------------------------------------------*/
 void irqSetPriority(IrqNumber irq, IrqPriority priority)
 {
-  assert(priority < (1 << NVIC_PRIORITY_SIZE));
+  assert(priority < (1 << NVIC_IRQ_BITS));
 
-  const uint32_t value = PRIORITY_TO_VALUE(priority) & 0xFF;
+  const uint32_t value = IRQ_PRIORITY_TO_REG(priority) & 0xFF;
 
   if (irq < 0)
     SCB->SHP[(irq & 0x0F) - 4] = value;
@@ -28,7 +22,7 @@ void irqSetPriority(IrqNumber irq, IrqPriority priority)
 IrqPriority irqGetPriority(IrqNumber irq)
 {
   if (irq < 0)
-    return VALUE_TO_PRIORITY(SCB->SHP[(irq & 0x0F) - 4]);
+    return IRQ_REG_TO_PRIORITY(SCB->SHP[(irq & 0x0F) - 4]);
   else
-    return VALUE_TO_PRIORITY(NVIC->IPR[irq]);
+    return IRQ_REG_TO_PRIORITY(NVIC->IPR[irq]);
 }

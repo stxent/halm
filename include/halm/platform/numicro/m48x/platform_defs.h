@@ -12,8 +12,6 @@
 #define HALM_PLATFORM_NUMICRO_M48X_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-/*----------------------------------------------------------------------------*/
-#define NVIC_PRIORITY_SIZE 4
 /*------------------Analog Comparator registers-------------------------------*/
 typedef struct
 {

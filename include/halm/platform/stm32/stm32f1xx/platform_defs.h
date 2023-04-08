@@ -12,8 +12,6 @@
 #define HALM_PLATFORM_STM32_STM32F1XX_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
-/*----------------------------------------------------------------------------*/
-#define NVIC_PRIORITY_SIZE 4
 /*------------------Analog to Digital Converter-------------------------------*/
 typedef struct
 {
@@ -507,7 +505,7 @@ typedef struct
   __rw__ uint32_t DMAR;
 } STM_TIM_Type;
 /*------------------Universal Synchronous Asynchronous Receiver Transmitter---*/
- typedef struct
+typedef struct
 {
   __rw__ uint32_t SR;
   __rw__ uint32_t DR;

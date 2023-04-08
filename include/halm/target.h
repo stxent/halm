@@ -20,6 +20,7 @@
 #  define GEN_PININT      gen_2
 #  define GEN_SPI         gen_1
 #  define GEN_UART        gen_1
+#  define NVIC_IRQ_BITS   2
 #  define PLATFORM        lpc11xx
 #  define PLATFORM_TYPE   lpc
 
@@ -35,6 +36,7 @@
 #  define GEN_PININT      gen_3
 #  define GEN_SPI         gen_1
 #  define GEN_UART        gen_1
+#  define NVIC_IRQ_BITS   2
 #  define PLATFORM        lpc11exx
 #  define PLATFORM_TYPE   lpc
 
@@ -50,6 +52,7 @@
 #  define GEN_SPI         gen_1
 #  define GEN_UART        gen_1
 #  define GEN_USB         gen_1
+#  define NVIC_IRQ_BITS   3
 #  define PLATFORM        lpc13xx
 #  define PLATFORM_TYPE   lpc
 
@@ -65,6 +68,7 @@
 #  define GEN_SPI         gen_1
 #  define GEN_UART        gen_1
 #  define GEN_USB         gen_1
+#  define NVIC_IRQ_BITS   3
 #  define PLATFORM        lpc13uxx
 #  define PLATFORM_TYPE   lpc
 
@@ -83,6 +87,7 @@
 #  define GEN_SPI         gen_1
 #  define GEN_UART        gen_1
 #  define GEN_USB         gen_1
+#  define NVIC_IRQ_BITS   5
 #  define PLATFORM        lpc17xx
 #  define PLATFORM_TYPE   lpc
 
@@ -103,29 +108,41 @@
 #  define PLATFORM        lpc43xx
 #  define PLATFORM_TYPE   lpc
 
+#  ifdef LPC43XX
+#    define NVIC_IRQ_BITS 3
+#  else
+#    define NVIC_IRQ_BITS 2
+#  endif
+
 #elif defined(M03X)
 
 #  define GEN_TIMER       gen_1
+#  define NVIC_IRQ_BITS   2
 #  define PLATFORM        m03x
 #  define PLATFORM_TYPE   numicro
 
 #elif defined(M48X)
 
 #  define GEN_TIMER       gen_2
+#  define NVIC_IRQ_BITS   4
 #  define PLATFORM        m48x
 #  define PLATFORM_TYPE   numicro
 
 #elif defined(STM32F0XX)
 
-#  define GEN_PIN         gen_1
-#  define GEN_UART        gen_2
+#  define GEN_DMA         gen_1
+#  define GEN_PIN         gen_2
+#  define GEN_UART        gen_1
+#  define NVIC_IRQ_BITS   2
 #  define PLATFORM        stm32f0xx
 #  define PLATFORM_TYPE   stm32
 
 #elif defined(STM32F1XX)
 
-#  define GEN_PIN         gen_1
+#  define GEN_DMA         gen_1
+#  define GEN_PIN         stm32f1xx
 #  define GEN_UART        gen_1
+#  define NVIC_IRQ_BITS   4
 #  define PLATFORM        stm32f1xx
 #  define PLATFORM_TYPE   stm32
 

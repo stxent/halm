@@ -13,6 +13,11 @@
 /*----------------------------------------------------------------------------*/
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
+#define IRQ_PRIORITY_TO_REG(priority) \
+    ((((1 << NVIC_IRQ_BITS) - 1) - (priority)) << (8 - NVIC_IRQ_BITS))
+#define IRQ_REG_TO_PRIORITY(reg) \
+    (((1 << NVIC_IRQ_BITS) - 1) - ((reg) >> (8 - NVIC_IRQ_BITS)))
+
 typedef int16_t IrqNumber;
 typedef uint8_t IrqPriority;
 typedef uint32_t IrqState;

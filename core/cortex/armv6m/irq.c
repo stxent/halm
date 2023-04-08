@@ -5,25 +5,19 @@
  */
 
 #include <halm/irq.h>
-#include <halm/platform/platform_defs.h>
 #include <xcore/bits.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define IRQ_SHIFT(value)    (((uint32_t)(value) & 0x03) << 3)
 #define CORE_OFFSET(value)  ((((uint32_t)(value) & 0x0F) - 8) >> 2)
-
-#define PRIORITY_TO_VALUE(priority) \
-    ((((1 << NVIC_PRIORITY_SIZE) - 1) - (priority)) << (8 - NVIC_PRIORITY_SIZE))
-#define VALUE_TO_PRIORITY(value) \
-    (((1 << NVIC_PRIORITY_SIZE) - 1) - ((value) >> (8 - NVIC_PRIORITY_SIZE)))
 /*----------------------------------------------------------------------------*/
 void irqSetPriority(IrqNumber irq, IrqPriority priority)
 {
-  assert(priority < (1 << NVIC_PRIORITY_SIZE));
+  assert(priority < (1 << NVIC_IRQ_BITS));
 
   const uint32_t shift = IRQ_SHIFT(irq);
   const uint32_t mask = ~BIT_FIELD(MASK(8), shift);
-  const uint32_t value = PRIORITY_TO_VALUE(priority) << shift;
+  const uint32_t value = IRQ_PRIORITY_TO_REG(priority) << shift;
 
   if (irq < 0)
   {
@@ -44,7 +38,7 @@ IrqPriority irqGetPriority(IrqNumber irq)
   const uint32_t shift = IRQ_SHIFT(irq);
 
   if (irq < 0)
-    return SCB->SHP[CORE_OFFSET(irq)] >> shift;
+    return IRQ_REG_TO_PRIORITY(SCB->SHP[CORE_OFFSET(irq)] >> shift);
   else
-    return NVIC->IPR[irq >> 2] >> shift;
+    return IRQ_REG_TO_PRIORITY(NVIC->IPR[irq >> 2] >> shift);
 }

@@ -23,3 +23,9 @@ if(CONFIG_CORE_CORTEX_SYSTICK)
 endif()
 
 add_library(halm_core OBJECT ${SOURCE_FILES})
+
+if(DEFINED IRQ_THRESHOLD)
+    target_compile_definitions(halm_core
+            PUBLIC -DCONFIG_IRQ_THRESHOLD=${IRQ_THRESHOLD}
+    )
+endif()

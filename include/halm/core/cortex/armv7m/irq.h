@@ -39,13 +39,25 @@ BEGIN_DECLS
 
 static inline void irqRestore(IrqState state)
 {
+#ifdef CONFIG_IRQ_THRESHOLD
+  __interruptsResetBasePriority(state);
+#else
   __interruptsSetState(state);
+#endif
 }
 
 static inline IrqState irqSave(void)
 {
-  const IrqState state = __interruptsGetState();
+  IrqState state;
+
+#ifdef CONFIG_IRQ_THRESHOLD
+  state = __interruptsGetBasePriority();
+  __interruptsSetBasePriority(IRQ_PRIORITY_TO_REG(CONFIG_IRQ_THRESHOLD));
+#else
+  state = __interruptsGetState();
   __interruptsDisable();
+#endif
+
   return state;
 }
 
