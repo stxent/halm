@@ -146,7 +146,6 @@ static enum Result channelEnable(void *object)
   const uint8_t number = channel->base.number;
 
   NM_PDMA_Type * const reg = channel->base.reg;
-  NM_PDMA_CHANNEL_Type * const entry = &reg->CHANNELS[number];
   const uint32_t mask = 1 << number;
 
   assert(channel->state == STATE_READY);
@@ -165,14 +164,10 @@ static enum Result channelEnable(void *object)
   else
     reg->PRICLR = mask;
 
-  entry->CTL = channel->base.control | DSCT_CTL_TXCNT(channel->transfers - 1);
-  entry->SA = channel->source;
-  entry->DA = channel->destination;
-  entry->NEXT = 0;
-
   /* Start the transfer */
-  __dsb();
-  reg->CHCTL |= mask;
+  pdmaStartTransfer(&channel->base,
+      channel->base.control | DSCT_CTL_TXCNT(channel->transfers - 1),
+      channel->source, channel->destination, 0);
 
   return E_OK;
 }

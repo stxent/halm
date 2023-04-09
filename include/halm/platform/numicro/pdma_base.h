@@ -110,6 +110,8 @@ const struct PdmaBase *pdmaGetInstance(uint8_t);
 void pdmaResetInstance(uint8_t);
 bool pdmaSetInstance(uint8_t, struct PdmaBase *);
 void pdmaSetMux(struct PdmaBase *);
+void pdmaStartTransfer(struct PdmaBase *, uint32_t, uintptr_t, uintptr_t,
+    uintptr_t);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

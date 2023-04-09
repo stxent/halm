@@ -135,6 +135,11 @@ extern const struct ClockClass * const Epwm1Clock;
 extern const struct ClockClass * const Qspi0Clock;
 extern const struct ClockClass * const Qspi1Clock;
 extern const struct ClockClass * const RtcClock;
+
+/* SDH dividers are used by SDH driver */
+extern const struct ClockClass * const Sdh0Clock;
+extern const struct ClockClass * const Sdh1Clock;
+
 extern const struct ClockClass * const Spi0Clock;
 extern const struct ClockClass * const Spi1Clock;
 extern const struct ClockClass * const Spi2Clock;
@@ -154,8 +159,6 @@ extern const struct ClockClass * const I2S0Clock;
 extern const struct ClockClass * const Sc0Clock;
 extern const struct ClockClass * const Sc1Clock;
 extern const struct ClockClass * const Sc2Clock;
-extern const struct ClockClass * const SdHost0Clock;
-extern const struct ClockClass * const SdHost1Clock;
 extern const struct ClockClass * const Uart0Clock;
 extern const struct ClockClass * const Uart1Clock;
 extern const struct ClockClass * const Uart2Clock;

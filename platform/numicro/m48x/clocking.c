@@ -273,6 +273,30 @@ const struct ClockClass * const RtcClock =
     .group = BRANCH_GROUP_RTC
 };
 
+const struct ClockClass * const Sdh0Clock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
+    .base = {
+        .disable = 0,
+        .enable = genericBranchEnable,
+        .frequency = genericBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SDH0,
+    .group = BRANCH_GROUP_SD
+};
+
+const struct ClockClass * const Sdh1Clock =
+    (const struct ClockClass *)&(const struct GenericClockClass){
+    .base = {
+        .disable = 0,
+        .enable = genericBranchEnable,
+        .frequency = genericBranchFrequency,
+        .ready = genericBranchReady,
+    },
+    .branch = BRANCH_SDH1,
+    .group = BRANCH_GROUP_SD
+};
+
 const struct ClockClass * const Spi0Clock =
     (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
@@ -483,32 +507,6 @@ const struct ClockClass * const SC2Clock =
     .branch = BRANCH_SC2,
     .group = BRANCH_GROUP_SPI,
     .divider = DIVIDER_SC2
-};
-
-const struct ClockClass * const SdHost0Clock =
-    (const struct ClockClass *)&(const struct ExtendedClockClass){
-    .base = {
-        .disable = 0,
-        .enable = extendedBranchEnable,
-        .frequency = extendedBranchFrequency,
-        .ready = genericBranchReady,
-    },
-    .branch = BRANCH_SDH0,
-    .group = BRANCH_GROUP_SD,
-    .divider = DIVIDER_SDH0
-};
-
-const struct ClockClass * const SdHost1Clock =
-    (const struct ClockClass *)&(const struct ExtendedClockClass){
-    .base = {
-        .disable = 0,
-        .enable = extendedBranchEnable,
-        .frequency = extendedBranchFrequency,
-        .ready = genericBranchReady,
-    },
-    .branch = BRANCH_SDH1,
-    .group = BRANCH_GROUP_SD,
-    .divider = DIVIDER_SDH1
 };
 
 const struct ClockClass * const Uart0Clock =

@@ -51,6 +51,25 @@ void pdmaSetMux(struct PdmaBase *descriptor)
   *reg = (*reg & descriptor->mux.mask) | descriptor->mux.value;
 }
 /*----------------------------------------------------------------------------*/
+void pdmaStartTransfer(struct PdmaBase *channel, uint32_t control,
+    uintptr_t source, uintptr_t destination, uintptr_t next)
+{
+  NM_PDMA_Type * const reg = channel->reg;
+  NM_PDMA_CHANNEL_Type * const entry = &reg->CHANNELS[channel->number];
+  IrqState state;
+
+  entry->CTL = control;
+  entry->SA = source;
+  entry->DA = destination;
+  entry->NEXT = DSCT_NEXT_ADDRESS_TO_NEXT(next);
+  __dsb();
+
+  /* Start the transfer */
+  state = irqSave();
+  reg->CHCTL |= 1 << channel->number;
+  irqRestore(state);
+}
+/*----------------------------------------------------------------------------*/
 void PDMA_ISR(void)
 {
   const uint32_t abtsts = NM_PDMA->ABTSTS;

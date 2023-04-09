@@ -23,7 +23,6 @@ enum State
 static inline NM_PDMA_CHANNEL_Type *getChannelReg(const struct PdmaCircular *);
 static size_t getCurrentEntry(const struct PdmaCircular *);
 static void interruptHandler(void *, enum Result);
-static void startTransfer(struct PdmaCircular *, const struct PdmaEntry *);
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
@@ -102,22 +101,6 @@ static void interruptHandler(void *object, enum Result res)
 
   if (channel->callback)
     channel->callback(channel->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
-static void startTransfer(struct PdmaCircular *channel,
-    const struct PdmaEntry *current)
-{
-  NM_PDMA_Type * const reg = channel->base.reg;
-  NM_PDMA_CHANNEL_Type * const entry = getChannelReg(channel);
-
-  entry->CTL = DSCT_CTL_OPMODE(OPMODE_LIST);
-  entry->SA = 0;
-  entry->DA = 0;
-  entry->NEXT = DSCT_NEXT_ADDRESS_TO_NEXT((uintptr_t)current);
-
-  /* Start the transfer */
-  __dsb();
-  reg->CHCTL |= 1 << channel->base.number;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
@@ -235,7 +218,8 @@ static enum Result channelEnable(void *object)
     reg->PRICLR = mask;
 
   /* Start the transfer */
-  startTransfer(channel, &channel->list[0]);
+  pdmaStartTransfer(&channel->base, DSCT_CTL_OPMODE(OPMODE_LIST),
+      0, 0, (uintptr_t)&channel->list[0]);
 
   return E_OK;
 }

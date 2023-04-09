@@ -109,19 +109,56 @@ typedef struct
   __ne__ uint32_t RESERVED0;
 
   NM_CAN_IF_Type IF[2];
-
   __ne__ uint32_t RESERVED1[8];
-  __ro__ uint32_t TXREQ1; /* Transmission Request register 1 */
-  __ro__ uint32_t TXREQ2; /* Transmission Request register 2 */
+
+  /* Offset 0x0100 */
+  union
+  {
+    __ro__ uint32_t TXREQ[2];
+    struct
+    {
+      __ro__ uint32_t TXREQ1;
+      __ro__ uint32_t TXREQ2;
+    };
+  };
   __ne__ uint32_t RESERVED2[6];
-  __ro__ uint32_t NDAT1; /* New Data register 1 */
-  __ro__ uint32_t NDAT2; /* New Data register 2 */
+
+  /* Offset 0x0120 */
+  union
+  {
+    __ro__ uint32_t NDAT[2];
+    struct
+    {
+      __ro__ uint32_t NDAT1;
+      __ro__ uint32_t NDAT2;
+    };
+  };
   __ne__ uint32_t RESERVED3[6];
-  __ro__ uint32_t IPND1; /* Interrupt Pending register 1 */
-  __ro__ uint32_t IPND2; /* Interrupt Pending register 2 */
+
+  /* Offset 0x0140 */
+  union
+  {
+    __ro__ uint32_t IPND[2];
+    struct
+    {
+      __ro__ uint32_t IPND1;
+      __ro__ uint32_t IPND2;
+    };
+  };
   __ne__ uint32_t RESERVED4[6];
-  __ro__ uint32_t MVLD1; /* Message Valid register 1 */
-  __ro__ uint32_t MVLD2; /* Message Valid register 2 */
+
+  /* Offset 0x0160 */
+  union
+  {
+    __ro__ uint32_t MVLD[2];
+    struct
+    {
+      __ro__ uint32_t MVLD1;
+      __ro__ uint32_t MVLD2;
+    };
+  };
+
+  /* Offset 0x0168 */
   __rw__ uint32_t WU_EN; /* Wake-up Enable Control register */
   __rw__ uint32_t WU_STATUS; /* Wake-up Status register */
 } NM_CAN_Type;
@@ -947,7 +984,7 @@ typedef struct
   __ne__ uint32_t RESERVED2[250];
   __rw__ uint32_t GCTL; /* Global Control and Status register */
   __rw__ uint32_t GINTEN; /* Global Interrupt Control register */
-  __ro__ uint32_t GINTSTS; /* Global Interrupt Status register */
+  __rw__ uint32_t GINTSTS; /* Global Interrupt Status register */
   __ne__ uint32_t RESERVED3[5];
   __rw__ uint32_t CTL; /* SD Control and Status register */
   __rw__ uint32_t CMDARG; /* SD Command Argument register */
