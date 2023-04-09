@@ -25,7 +25,10 @@ enum
   SVCALL_IRQ      = -5,
   DEBUGMON_IRQ    = -4,
   PENDSV_IRQ      = -2,
-  SYSTICK_IRQ     = -1
+  SYSTICK_IRQ     = -1,
+
+  /* Undefined interrupt source */
+  IRQ_RESERVED    = -127
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

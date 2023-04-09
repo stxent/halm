@@ -76,6 +76,10 @@ choice
 	config PLATFORM_LPC_PM_PD
 		bool "Power-down"
 		depends on FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+
+	config PLATFORM_LPC_PM_PD_M0SUB
+		bool "Power-down with M0SUB SRAM retention"
+		depends on FAMILY_LPC43XX
 endchoice
 
 endmenu
@@ -121,6 +125,16 @@ config PLATFORM_LPC_ADC_DMA_STREAM
 	bool "Multichannel buffered ADC with DMA"
 	default y
 	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
+
+config PLATFORM_LPC_ATIMER
+	bool "Alarm Timer"
+	default y
+	depends on FAMILY_LPC43XX
+
+config PLATFORM_LPC_ATIMER_NO_DEINIT
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
+	depends on PLATFORM_LPC_ATIMER
 
 config PLATFORM_LPC_BOD
 	bool "Brownout detection"

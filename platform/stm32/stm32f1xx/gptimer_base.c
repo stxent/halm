@@ -118,7 +118,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reg = STM_TIM9,
         .clock = CLK_TIM9,
         .reset = RST_TIM9,
-        .irq = -1,
+        .irq = IRQ_RESERVED,
         .channel = TIM9
     },
 #endif
@@ -127,7 +127,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reg = STM_TIM10,
         .clock = CLK_TIM10,
         .reset = RST_TIM10,
-        .irq = -1,
+        .irq = IRQ_RESERVED,
         .channel = TIM10
     },
 #endif
@@ -136,7 +136,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reg = STM_TIM11,
         .clock = CLK_TIM11,
         .reset = RST_TIM11,
-        .irq = -1,
+        .irq = IRQ_RESERVED,
         .channel = TIM11
     },
 #endif

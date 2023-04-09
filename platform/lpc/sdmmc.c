@@ -226,7 +226,7 @@ static enum Result updateRate(struct Sdmmc *interface, uint32_t rate)
     return E_VALUE;
 
   const uint32_t current = CLKDIV_VALUE(0, reg->CLKDIV);
-  const uint32_t divider = ((clock + (rate >> 1)) / rate) >> 1;
+  const uint32_t divider = ((clock + (rate - 1)) / rate) >> 1;
 
   if (divider == current && (reg->CLKENA & CLKENA_CCLK_ENABLE))
     return E_OK; /* Closest rate is already set */

@@ -22,7 +22,10 @@ enum
   HARDFAULT_IRQ = -12,
   SVCALL_IRQ    = -5,
   PENDSV_IRQ    = -2,
-  SYSTICK_IRQ   = -1
+  SYSTICK_IRQ   = -1,
+
+  /* Undefined interrupt source */
+  IRQ_RESERVED  = -127
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

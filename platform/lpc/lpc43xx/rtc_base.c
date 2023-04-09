@@ -4,9 +4,11 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/lpc/lpc43xx/event_router.h>
 #include <halm/platform/lpc/rtc_base.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *);
 static bool setInstance(struct RtcBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *, const void *);
@@ -25,6 +27,11 @@ const struct EntityClass * const RtcBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 static struct RtcBase *instance = 0;
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  ((struct RtcBase *)object)->handler(object);
+}
+/*----------------------------------------------------------------------------*/
 static bool setInstance(struct RtcBase *object)
 {
   if (!instance)
@@ -34,11 +41,6 @@ static bool setInstance(struct RtcBase *object)
   }
   else
     return false;
-}
-/*----------------------------------------------------------------------------*/
-void RTC_ISR(void)
-{
-  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result clkInit(void *object,
@@ -51,10 +53,10 @@ static enum Result clkInit(void *object,
     /* CLK_M4_BUS is already enabled */
 
     clock->handler = 0;
-    clock->irq = RTC_IRQ;
+    clock->irq = IRQ_RESERVED;
     clock->reg = LPC_RTC;
 
-    return E_OK;
+    return erRegister(interruptHandler, clock, ER_RTC);
   }
   else
     return E_BUSY;
@@ -63,6 +65,7 @@ static enum Result clkInit(void *object,
 #ifndef CONFIG_PLATFORM_LPC_RTC_NO_DEINIT
 static void clkDeinit(void *object __attribute__((unused)))
 {
+  erUnregister(object);
   instance = 0;
 }
 #endif

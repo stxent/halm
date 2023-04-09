@@ -29,8 +29,9 @@ void pmPlatformChangeState(enum PmState state)
       LPC_CCU2->PM = PM_PD;
 
 #if defined(CONFIG_PLATFORM_LPC_PM_PD)
-      /* TODO Power-down mode with M0 SRAM maintained */
       LPC_PMC->PD0_SLEEP0_MODE = MODE_POWERDOWN;
+#elif defined(CONFIG_PLATFORM_LPC_PM_PD_M0SUB)
+      LPC_PMC->PD0_SLEEP0_MODE = MODE_POWERDOWN_M0SUB;
 #else
       LPC_PMC->PD0_SLEEP0_MODE = MODE_DEEP_SLEEP;
 #endif

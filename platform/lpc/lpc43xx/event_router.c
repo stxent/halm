@@ -49,16 +49,13 @@ static bool entryComparator(const void *element, void *argument)
 /*----------------------------------------------------------------------------*/
 static void notifyObservers(uint32_t status)
 {
-  if (!erInstance)
-    return;
-
   EroListNode *current = eroListFront(&erInstance->observers);
 
   while (current)
   {
     const struct EventRouterObserver * const entry = eroListData(current);
 
-    if (entry->events & status)
+    if ((status & entry->events) && entry->callback)
       entry->callback(entry->object);
     current = eroListNext(current);
   }
@@ -79,7 +76,11 @@ static enum Result erInit(void *object,
 
   eroListInit(&handler->observers);
 
+  LPC_EVENTROUTER->CLR_EN = 0xFFFFFFFFUL;
+  LPC_EVENTROUTER->CLR_STAT = 0xFFFFFFFFUL;
+
   irqSetPriority(EVENTROUTER_IRQ, CONFIG_PLATFORM_LPC_EVENT_ROUTER_PRIORITY);
+  irqClearPending(EVENTROUTER_IRQ);
   irqEnable(EVENTROUTER_IRQ);
 
   return E_OK;
@@ -95,14 +96,18 @@ enum Result erRegister(void (*callback)(void *), void *object, uint32_t events)
   if (!erInstance)
     return E_ERROR;
 
-  LPC_EVENTROUTER->CLR_STAT = events & ~LPC_EVENTROUTER->ENABLE;
-  LPC_EVENTROUTER->SET_EN = events;
+  if (eroListPushFront(&erInstance->observers,
+      (struct EventRouterObserver){object, callback, events}))
+  {
+    LPC_EVENTROUTER->HILO |= events;
+    LPC_EVENTROUTER->EDGE |= events;
 
-  LPC_EVENTROUTER->HILO |= events;
-  LPC_EVENTROUTER->EDGE |= events;
-
-  return eroListPushFront(&erInstance->observers,
-      (struct EventRouterObserver){object, callback, events}) ? E_OK : E_MEMORY;
+    LPC_EVENTROUTER->CLR_STAT = events & ~LPC_EVENTROUTER->ENABLE;
+    LPC_EVENTROUTER->SET_EN = events;
+    return E_OK;
+  }
+  else
+    return E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
 void erUnregister(const void *object)

@@ -41,7 +41,7 @@ static void enableInterrupt(enum ExtiEvent event, IrqPriority priority)
 {
   const IrqNumber irq = eventToIrq(event);
 
-  if (irq != -1)
+  if (irq != IRQ_RESERVED)
   {
     if (irqGetPriority(irq) < priority)
       irqSetPriority(irq, priority);
@@ -90,7 +90,7 @@ static IrqNumber eventToIrq(enum ExtiEvent event)
       return USART3_8_IRQ;
 
     default:
-      return -1;
+      return IRQ_RESERVED;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -112,7 +112,7 @@ static void disableInterrupt(enum ExtiEvent event)
   {
     const IrqNumber irq = eventToIrq(event);
 
-    if (irq != -1)
+    if (irq != IRQ_RESERVED)
       irqDisable(irq);
   }
 }

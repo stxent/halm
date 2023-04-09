@@ -127,8 +127,11 @@ static enum Result clkInit(void *object, const void *configBase)
     setTime(clock, 0);
   }
 
-  irqSetPriority(clock->base.irq, config->priority);
-  irqEnable(clock->base.irq);
+  if (clock->base.irq != IRQ_RESERVED)
+  {
+    irqSetPriority(clock->base.irq, config->priority);
+    irqEnable(clock->base.irq);
+  }
 
   return E_OK;
 }
@@ -144,7 +147,9 @@ static void clkDeinit(void *object __attribute__((unused)))
   /* Reset counters */
   reg->CCR = CCR_CTCRST | CCR_CCALEN;
 
-  irqDisable(clock->base.irq);
+  if (clock->base.irq != IRQ_RESERVED)
+    irqDisable(clock->base.irq);
+
   RtcBase->deinit(clock);
 }
 #endif
@@ -235,7 +240,7 @@ static time64_t clkTime(void *object)
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-int32_t rtcCalcCalibration(time64_t globaltime, time64_t localtime, 
+int32_t rtcCalcCalibration(time64_t globaltime, time64_t localtime,
     time64_t prevSync, int32_t prevCalib)
 {
   if (prevSync != 0)

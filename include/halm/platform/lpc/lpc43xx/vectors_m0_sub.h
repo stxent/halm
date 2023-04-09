@@ -62,24 +62,24 @@ enum
 
   /* Stubs */
 
-  EEPROM_IRQ        = -1,
-  ETHERNET_IRQ      = -1,
-  SDIO_IRQ          = -1,
-  LCD_IRQ           = -1,
-  TIMER0_IRQ        = -1,
-  TIMER3_IRQ        = -1,
-  SGPIO_IRQ         = -1,
-  PIN_INT0_IRQ      = -1,
-  PIN_INT1_IRQ      = -1,
-  PIN_INT2_IRQ      = -1,
-  PIN_INT3_IRQ      = -1,
-  PIN_INT4_IRQ      = -1,
-  PIN_INT6_IRQ      = -1,
-  PIN_INT7_IRQ      = -1,
-  PIN_GINT0_IRQ     = -1,
-  ATIMER_IRQ        = -1,
-  RTC_IRQ           = -1,
-  WWDT_IRQ          = -1
+  EEPROM_IRQ        = IRQ_RESERVED,
+  ETHERNET_IRQ      = IRQ_RESERVED,
+  SDIO_IRQ          = IRQ_RESERVED,
+  LCD_IRQ           = IRQ_RESERVED,
+  TIMER0_IRQ        = IRQ_RESERVED,
+  TIMER3_IRQ        = IRQ_RESERVED,
+  SGPIO_IRQ         = IRQ_RESERVED,
+  PIN_INT0_IRQ      = IRQ_RESERVED,
+  PIN_INT1_IRQ      = IRQ_RESERVED,
+  PIN_INT2_IRQ      = IRQ_RESERVED,
+  PIN_INT3_IRQ      = IRQ_RESERVED,
+  PIN_INT4_IRQ      = IRQ_RESERVED,
+  PIN_INT6_IRQ      = IRQ_RESERVED,
+  PIN_INT7_IRQ      = IRQ_RESERVED,
+  PIN_GINT0_IRQ     = IRQ_RESERVED,
+  ATIMER_IRQ        = IRQ_RESERVED,
+  RTC_IRQ           = IRQ_RESERVED,
+  WWDT_IRQ          = IRQ_RESERVED
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_VECTORS_M0_SUB_H_ */

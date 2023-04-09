@@ -33,10 +33,10 @@
 #define ENA_EVENT0                      BIT(0)
 #define ENA_EVENT1                      BIT(1)
 /*------------------Power-down modes register---------------------------------*/
-#define MODE_DEEP_SLEEP                 0x003000AA
-#define MODE_POWERDOWN                  0x0030FCBA
-#define MODE_POWERDOWN_M0SUB            0x00303CBA
-#define MODE_DEEP_POWERDOWN             0x0030FF7F
+#define MODE_DEEP_SLEEP                 0x003F00AAUL
+#define MODE_POWERDOWN                  0x003FFCBAUL
+#define MODE_POWERDOWN_M0SUB            0x003F3CBAUL
+#define MODE_DEEP_POWERDOWN             0x003FFF7FUL
 /*------------------Configuration Register 0----------------------------------*/
 #define CREG0_EN1KHZ                    BIT(0)
 #define CREG0_EN32KHZ                   BIT(1)

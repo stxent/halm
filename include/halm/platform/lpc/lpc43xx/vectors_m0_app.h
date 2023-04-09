@@ -70,16 +70,16 @@ enum
 
   /* Stubs */
 
-  TIMER1_IRQ        = -1,
-  TIMER2_IRQ        = -1,
-  PIN_INT0_IRQ      = -1,
-  PIN_INT1_IRQ      = -1,
-  PIN_INT2_IRQ      = -1,
-  PIN_INT3_IRQ      = -1,
-  PIN_INT5_IRQ      = -1,
-  PIN_INT6_IRQ      = -1,
-  PIN_INT7_IRQ      = -1,
-  PIN_GINT0_IRQ     = -1
+  TIMER1_IRQ        = IRQ_RESERVED,
+  TIMER2_IRQ        = IRQ_RESERVED,
+  PIN_INT0_IRQ      = IRQ_RESERVED,
+  PIN_INT1_IRQ      = IRQ_RESERVED,
+  PIN_INT2_IRQ      = IRQ_RESERVED,
+  PIN_INT3_IRQ      = IRQ_RESERVED,
+  PIN_INT5_IRQ      = IRQ_RESERVED,
+  PIN_INT6_IRQ      = IRQ_RESERVED,
+  PIN_INT7_IRQ      = IRQ_RESERVED,
+  PIN_GINT0_IRQ     = IRQ_RESERVED
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_VECTORS_M0_APP_H_ */
