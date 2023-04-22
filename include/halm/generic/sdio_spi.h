@@ -83,7 +83,7 @@ struct SdioSpi
   uint8_t commandStatus;
   /*
    * Status of the high-level command, some commands may be split up into
-   * several low-level commands.
+   * multiple low-level commands.
    */
   uint8_t transferStatus;
 

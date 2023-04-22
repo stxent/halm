@@ -252,7 +252,8 @@ typedef struct
 {
   __ne__ uint32_t RESERVED0;
   __rw__ uint32_t CREG0;
-  __ne__ uint32_t RESERVED1[62];
+  __rw__ uint32_t CREG1;
+  __ne__ uint32_t RESERVED1[61];
 
   /* Offset 0x0100 */
   __rw__ uint32_t M4MEMMAP;

@@ -143,7 +143,7 @@ static void clkDeinit(void *object __attribute__((unused)))
   LPC_RTC_Type * const reg = clock->base.reg;
 
   /* Disable interrupts */
-  reg->CIIR = 0;
+  reg->AMR = AMR_MASK;
   /* Reset counters */
   reg->CCR = CCR_CTCRST | CCR_CCALEN;
 
@@ -162,6 +162,9 @@ static enum Result clkSetAlarm(void *object, time64_t alarmTime)
 
   rtMakeTime(&dateTime, alarmTime);
 
+  /* Wait until write to the alarm mask register is pending */
+  while (reg->AMR != AMR_MASK);
+
   /* Initialize alarm registers */
   reg->ALSEC = dateTime.second;
   reg->ALMIN = dateTime.minute;
@@ -174,7 +177,7 @@ static enum Result clkSetAlarm(void *object, time64_t alarmTime)
   reg->ALDOW = 0;
   reg->ALDOY = 0;
 
-  /* Enable interrupt */
+  /* Enable alarm interrupt */
   reg->AMR = AMR_DOW | AMR_DOY;
 
   return E_OK;

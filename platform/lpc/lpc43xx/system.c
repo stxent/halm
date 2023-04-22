@@ -77,6 +77,11 @@ void sysFlashLatencyUpdate(unsigned int value)
   LPC_CREG->FLASHCFGB = (LPC_CREG->FLASHCFGB & ~FLASHCFG_FLASHTIM_MASK) | data;
 }
 /*----------------------------------------------------------------------------*/
+void sysFlashLatencyReset(void)
+{
+  sysFlashLatencyUpdate(10);
+}
+/*----------------------------------------------------------------------------*/
 void sysResetEnable(enum SysBlockReset block)
 {
   const uint32_t mask = 1UL << (block & 0x1F);

@@ -38,7 +38,6 @@ struct GenericPllClass
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcBranchReg(enum ClockBranch);
 static inline volatile uint32_t *calcDividerReg(enum ClockSource);
-static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 static uint32_t getSourceFrequency(enum ClockSource);
 static unsigned int pll0ComputeMdec(unsigned int);
@@ -507,12 +506,6 @@ static inline volatile uint32_t *calcDividerReg(enum ClockSource source)
 static inline LPC_CGU_PLL0_Type *calcPllReg(enum ClockSource source)
 {
   return source == CLOCK_AUDIO_PLL ? &LPC_CGU->PLL0AUDIO : &LPC_CGU->PLL0USB;
-}
-/*----------------------------------------------------------------------------*/
-static inline void flashLatencyReset(void)
-{
-  /* Set safe latency settings */
-  sysFlashLatencyUpdate(10);
 }
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
@@ -1049,7 +1042,7 @@ static enum Result genericClockEnable(const void *clockBase,
   volatile uint32_t * const reg = calcBranchReg(clock->branch);
 
   if (clock->branch == CLOCK_BASE_M4)
-    flashLatencyReset();
+    sysFlashLatencyReset();
 
   *reg |= BASE_AUTOBLOCK;
   *reg = (*reg & ~BASE_CLK_SEL_MASK) | BASE_CLK_SEL(config->source);

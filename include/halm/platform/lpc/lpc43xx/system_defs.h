@@ -33,9 +33,9 @@
 #define ENA_EVENT0                      BIT(0)
 #define ENA_EVENT1                      BIT(1)
 /*------------------Power-down modes register---------------------------------*/
-#define MODE_DEEP_SLEEP                 0x003F00AAUL
-#define MODE_POWERDOWN                  0x003FFCBAUL
-#define MODE_POWERDOWN_M0SUB            0x003F3CBAUL
+#define MODE_DEEP_SLEEP                 0x003000AAUL
+#define MODE_POWERDOWN                  0x0030FCBAUL
+#define MODE_POWERDOWN_M0SUB            0x00303CBAUL
 #define MODE_DEEP_POWERDOWN             0x003FFF7FUL
 /*------------------Configuration Register 0----------------------------------*/
 #define CREG0_EN1KHZ                    BIT(0)
@@ -73,6 +73,11 @@
 #define CREG0_WAKEUP1CTRL(value)        BIT_FIELD((value), 16)
 #define CREG0_WAKEUP1CTRL_VALUE(reg) \
     FIELD_VALUE((reg), CREG0_WAKEUP1CTRL_MASK, 16)
+/*------------------Configuration Register 1----------------------------------*/
+#define CREG1_USB0_PHY_PWREN_LP         BIT(9)
+#define CREG1_USB1_PHY_PWREN_LP         BIT(10)
+#define CREG1_RESERVED_16               BIT(16)
+#define CREG1_RESERVED_17               BIT(17)
 /*------------------Configuration Register 6----------------------------------*/
 enum
 {

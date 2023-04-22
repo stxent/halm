@@ -24,6 +24,10 @@ void pmPlatformChangeState(enum PmState state)
       break;
 
     case PM_SUSPEND:
+      /* Workaround for LPC43xx Errata */
+      LPC_CREG->CREG1 =
+          (LPC_CREG->CREG1 & ~CREG1_RESERVED_16) | CREG1_RESERVED_17;
+
       /* Disable clocks */
       LPC_CCU1->PM = PM_PD;
       LPC_CCU2->PM = PM_PD;

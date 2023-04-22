@@ -148,6 +148,7 @@ bool sysClockStatus(enum SysClockBranch);
 void sysFlashDisable(unsigned int);
 void sysFlashEnable(unsigned int);
 unsigned int sysFlashLatency(void);
+void sysFlashLatencyReset(void);
 void sysFlashLatencyUpdate(unsigned int);
 void sysResetDisable(enum SysBlockReset);
 void sysResetEnable(enum SysBlockReset);
