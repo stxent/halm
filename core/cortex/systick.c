@@ -10,7 +10,7 @@
 #include <xcore/bits.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static bool setInstance(struct SysTickTimer *);
+static bool setInstance(struct SysTick *);
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
 static void tmrEnable(void *);
@@ -28,8 +28,8 @@ static void tmrDeinit(void *);
 #define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct TimerClass * const SysTickTimer = &(const struct TimerClass){
-    .size = sizeof(struct SysTickTimer),
+const struct TimerClass * const SysTick = &(const struct TimerClass){
+    .size = sizeof(struct SysTick),
     .init = tmrInit,
     .deinit = tmrDeinit,
 
@@ -46,9 +46,9 @@ const struct TimerClass * const SysTickTimer = &(const struct TimerClass){
 };
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const MainClock;
-static struct SysTickTimer *instance = 0;
+static struct SysTick *instance = 0;
 /*----------------------------------------------------------------------------*/
-static bool setInstance(struct SysTickTimer *object)
+static bool setInstance(struct SysTick *object)
 {
   if (!instance)
   {
@@ -68,8 +68,8 @@ void SYSTICK_ISR(void)
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
-  const struct SysTickTimerConfig * const config = configBase;
-  struct SysTickTimer * const timer = object;
+  const struct SysTickConfig * const config = configBase;
+  struct SysTick * const timer = object;
 
   if (setInstance(timer))
   {
@@ -107,7 +107,7 @@ static void tmrDisable(void *object __attribute__((unused)))
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct SysTickTimer * const timer = object;
+  struct SysTick * const timer = object;
 
   timer->callback = callback;
   timer->callbackArgument = argument;
