@@ -272,16 +272,16 @@ static enum Result adcInit(void *object, const void *configBase)
   enum SysClockBranch clock;
   enum SysBlockReset reset;
   NM_EADC_Type *reg = 0;
+  uint32_t frequency = 0;
 
   switch (config->channel)
   {
 #ifdef CONFIG_PLATFORM_NUMICRO_EADC0
     case 0:
-      assert(clockFrequency(Eadc0Clock) <= MAX_FREQUENCY);
-
       clock = CLK_EADC0;
       reset = RST_EADC0;
       reg = NM_EADC0;
+      frequency = clockFrequency(Eadc0Clock);
       interface->irq.p0 = EADC0_P0_IRQ;
       interface->irq.p1 = EADC0_P1_IRQ;
       interface->irq.p2 = EADC0_P2_IRQ;
@@ -291,11 +291,10 @@ static enum Result adcInit(void *object, const void *configBase)
 
 #ifdef CONFIG_PLATFORM_NUMICRO_EADC1
     case 1:
-      assert(clockFrequency(Eadc1Clock) <= MAX_FREQUENCY);
-
       clock = CLK_EADC1;
       reset = RST_EADC1;
       reg = NM_EADC1;
+      frequency = clockFrequency(Eadc1Clock);
       interface->irq.p0 = EADC1_P0_IRQ;
       interface->irq.p1 = EADC1_P1_IRQ;
       interface->irq.p2 = EADC1_P2_IRQ;
@@ -303,6 +302,7 @@ static enum Result adcInit(void *object, const void *configBase)
       break;
 #endif
   }
+  assert(frequency > 0 && frequency <= MAX_FREQUENCY);
   assert(reg);
 
   uint32_t control = CTL_ADCEN;
@@ -337,6 +337,12 @@ static enum Result adcInit(void *object, const void *configBase)
     sysUnlockReg();
     reg->CTL = CTL_ADCRST;
     sysLockReg();
+
+    /* Enable deep power-down mode, set LDO start-up time to 20 us */
+    reg->PWRM = PWRM_PWUCALEN | PWRM_PWDMOD(PWDMOD_DEEP_POWER_DOWN)
+        | PWRM_LDOSUT(frequency / 50000);
+    /* Calibrate on each power up */
+    reg->CALCTL = CALCTL_CALSEL;
   }
 
   interface->channel = config->channel;

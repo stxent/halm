@@ -119,10 +119,10 @@ static enum Result adcInit(void *object, const void *configBase)
       .shared = config->shared
   };
   struct Eadc * const interface = object;
-  enum Result res;
 
   /* Call base class constructor */
-  if ((res = EadcBase->init(interface, &baseConfig)) != E_OK)
+  const enum Result res = EadcBase->init(interface, &baseConfig);
+  if (res != E_OK)
     return res;
 
   /* Initialize input pins */
@@ -167,10 +167,7 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->priority = config->priority;
   interface->sampling = sampling;
 
-  if (!config->shared)
-    startConversion(interface);
-
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NUMICRO_EADC_NO_DEINIT
@@ -202,17 +199,16 @@ static void adcSetCallback(void *object, void (*callback)(void *),
 static enum Result adcGetParam(void *object, int parameter,
     void *data __attribute__((unused)))
 {
-  struct Eadc * const interface = object;
+  const struct Eadc * const interface = object;
+  const NM_EADC_Type * const reg = interface->base.reg;
 
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-    {
-      const struct EadcBase * const instance =
-          adcGetInstance(interface->base.channel);
-
-      return (struct EadcBase *)interface == instance ? E_BUSY : E_OK;
-    }
+      if (adcGetInstance(interface->base.channel) == &interface->base)
+        return (reg->CTL & CTL_ADCEN) ? E_BUSY : E_OK;
+      else
+        return E_OK;
 
     default:
       return E_INVALID;

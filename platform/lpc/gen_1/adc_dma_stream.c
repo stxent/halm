@@ -288,7 +288,7 @@ static enum Result adcInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static enum Result adcGetParam(void *object, int parameter, void *data)
 {
-  struct AdcDmaStream * const interface = object;
+  const struct AdcDmaStream * const interface = object;
 
   switch ((enum IfParameter)parameter)
   {

@@ -133,27 +133,23 @@ static enum Result adcInit(void *object, const void *configBase)
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
+  if (res != E_OK)
+    return res;
 
-  if (res == E_OK)
-  {
-    interface->base.handler = interruptHandler;
-    interface->callback = 0;
-    interface->priority = config->priority;
-    memset(interface->buffer, 0, sizeof(interface->buffer));
+  interface->base.handler = interruptHandler;
+  interface->callback = 0;
+  interface->priority = config->priority;
+  memset(interface->buffer, 0, sizeof(interface->buffer));
 
-    if (config->event == ADC_BURST)
-      interface->base.control |= CR_BURST;
-    else
-      interface->base.control |= CR_START(config->event);
+  if (config->event == ADC_BURST)
+    interface->base.control |= CR_BURST;
+  else
+    interface->base.control |= CR_START(config->event);
 
-    /* Initialize input pins */
-    interface->count = setupPins(interface, config->pins);
+  /* Initialize input pins */
+  interface->count = setupPins(interface, config->pins);
 
-    if (!config->shared)
-      startConversion(interface);
-  }
-
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
@@ -181,17 +177,16 @@ static void adcSetCallback(void *object, void (*callback)(void *),
 static enum Result adcGetParam(void *object, int parameter,
     void *data __attribute__((unused)))
 {
-  struct Adc * const interface = object;
+  const struct Adc * const interface = object;
+  const LPC_ADC_Type * const reg = interface->base.reg;
 
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-    {
-      const struct AdcBase * const instance =
-          adcGetInstance(interface->base.channel);
-
-      return (struct AdcBase *)interface == instance ? E_BUSY : E_OK;
-    }
+      if (adcGetInstance(interface->base.channel) == &interface->base)
+        return (reg->CR & (CR_START_MASK | CR_BURST)) ? E_BUSY : E_OK;
+      else
+        return E_OK;
 
     default:
       return E_INVALID;

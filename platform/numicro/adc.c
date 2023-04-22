@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/generic/adc.h>
 #include <halm/platform/numicro/adc.h>
 #include <halm/platform/numicro/adc_defs.h>
 #include <assert.h>
@@ -12,7 +13,9 @@
 /*----------------------------------------------------------------------------*/
 static size_t calcPinCount(const PinNumber *);
 static void interruptHandler(void *);
+static void startCalibration(struct Adc *);
 static void startConversion(struct Adc *);
+static void stopCalibration(struct Adc *);
 static void stopConversion(struct Adc *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
@@ -53,38 +56,74 @@ static void interruptHandler(void *object)
 {
   struct Adc * const interface = object;
   NM_ADC_Type * const reg = interface->base.reg;
-  const struct AdcPin *pin = interface->pins;
-  uint16_t *buffer = interface->buffer;
 
-  /* Clear pending interrupt flag */
-  reg->ADSR0 = ADSR0_ADF;
-
-  for (size_t index = 0; index < interface->count; ++index)
+  if (reg->ADSR0 & ADSR0_ADF)
   {
-    *buffer++ = (uint16_t)reg->ADDR[pin->channel];
-    ++pin;
+    const struct AdcPin *pin = interface->pins;
+    uint16_t *buffer = interface->buffer;
+
+    /* Clear pending data interrupt flag */
+    reg->ADSR0 = ADSR0_ADF;
+
+    for (size_t index = 0; index < interface->count; ++index)
+    {
+      *buffer++ = (uint16_t)reg->ADDR[pin->channel];
+      ++pin;
+    }
+  }
+  else
+  {
+    /* Clear pending calibration interrupt flag */
+    reg->ADCALSTSR = ADCALSTSR_CALIF;
+
+    stopCalibration(interface);
   }
 
   if (interface->callback)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void startConversion(struct Adc *interface)
+static void startCalibration(struct Adc *interface)
 {
   NM_ADC_Type * const reg = interface->base.reg;
+
+  /* Clear pending calibration interrupt flag */
+  reg->ADCALSTSR = ADCALSTSR_CALIF;
 
   irqSetPriority(interface->base.irq, interface->priority);
   irqClearPending(interface->base.irq);
   irqEnable(interface->base.irq);
 
-  /* Clear pending interrupt flag */
+  reg->ADCALR = ADCALR_CALEN | ADCALR_CALIE;
+  reg->ADCR = interface->base.control | ADCR_ADST;
+}
+/*----------------------------------------------------------------------------*/
+static void startConversion(struct Adc *interface)
+{
+  NM_ADC_Type * const reg = interface->base.reg;
+
+  /* Clear pending data interrupt flag */
   reg->ADSR0 = ADSR0_ADF;
+
+  irqSetPriority(interface->base.irq, interface->priority);
+  irqClearPending(interface->base.irq);
+  irqEnable(interface->base.irq);
+
   /* Enable selected channels */
   reg->ADCHER = interface->enabled;
   /* Configure sample time extension */
   reg->ESMPCTL = interface->delay;
   /* Reconfigure peripheral and start the conversion */
   reg->ADCR = interface->base.control;
+}
+/*----------------------------------------------------------------------------*/
+static void stopCalibration(struct Adc *interface)
+{
+  NM_ADC_Type * const reg = interface->base.reg;
+
+  reg->ADCR = 0;
+  reg->ADCALR = 0;
+  irqDisable(interface->base.irq);
 }
 /*----------------------------------------------------------------------------*/
 static void stopConversion(struct Adc *interface)
@@ -108,10 +147,10 @@ static enum Result adcInit(void *object, const void *configBase)
       .shared = config->shared
   };
   struct Adc * const interface = object;
-  enum Result res;
 
   /* Call base class constructor */
-  if ((res = AdcBase->init(interface, &baseConfig)) != E_OK)
+  const enum Result res = AdcBase->init(interface, &baseConfig);
+  if (res != E_OK)
     return res;
 
   /* Initialize input pins */
@@ -140,10 +179,7 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->delay = config->delay;
   interface->priority = config->priority;
 
-  if (!config->shared)
-    startConversion(interface);
-
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NUMICRO_ADC_NO_DEINIT
@@ -175,17 +211,16 @@ static void adcSetCallback(void *object, void (*callback)(void *),
 static enum Result adcGetParam(void *object, int parameter,
     void *data __attribute__((unused)))
 {
-  struct Adc * const interface = object;
+  const struct Adc * const interface = object;
+  const NM_ADC_Type * const reg = interface->base.reg;
 
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-    {
-      const struct AdcBase * const instance =
-          adcGetInstance(interface->base.channel);
-
-      return (struct AdcBase *)interface == instance ? E_BUSY : E_OK;
-    }
+      if (adcGetInstance(interface->base.channel) == &interface->base)
+        return (reg->ADCR & ADCR_ADEN) ? E_BUSY : E_OK;
+      else
+        return E_OK;
 
     default:
       return E_INVALID;
@@ -196,6 +231,16 @@ static enum Result adcSetParam(void *object, int parameter,
     const void *data __attribute__((unused)))
 {
   struct Adc * const interface = object;
+
+  switch ((enum ADCParameter)parameter)
+  {
+    case IF_ADC_CALIBRATE:
+      startCalibration(interface);
+      return E_BUSY;
+
+    default:
+      break;
+  }
 
   switch ((enum IfParameter)parameter)
   {

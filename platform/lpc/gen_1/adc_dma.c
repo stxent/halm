@@ -174,34 +174,27 @@ static enum Result adcInit(void *object, const void *configBase)
       .shared = config->shared
   };
   struct AdcDma * const interface = object;
-  enum Result res;
 
   /* Call base class constructor */
-  res = AdcBase->init(interface, &baseConfig);
+  const enum Result res = AdcBase->init(interface, &baseConfig);
+  if (res != E_OK)
+    return res;
 
-  if (res == E_OK)
-  {
-    interface->callback = 0;
-    memset(interface->buffer, 0, sizeof(interface->buffer));
+  interface->callback = 0;
+  memset(interface->buffer, 0, sizeof(interface->buffer));
 
-    if (config->event == ADC_BURST)
-      interface->base.control |= CR_BURST;
-    else
-      interface->base.control |= CR_START(config->event);
+  if (config->event == ADC_BURST)
+    interface->base.control |= CR_BURST;
+  else
+    interface->base.control |= CR_START(config->event);
 
-    /* Initialize input pins */
-    interface->count = setupPins(interface, config->pins);
+  /* Initialize input pins */
+  interface->count = setupPins(interface, config->pins);
 
-    if (dmaSetup(interface, config, interface->count))
-    {
-      if (!config->shared)
-        res = startConversion(interface) ? E_OK : E_ERROR;
-    }
-    else
-      res = E_ERROR;
-  }
+  if (!dmaSetup(interface, config, interface->count))
+    return E_ERROR;
 
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
@@ -230,7 +223,7 @@ static void adcSetCallback(void *object, void (*callback)(void *),
 static enum Result adcGetParam(void *object, int parameter,
     void *data __attribute__((unused)))
 {
-  struct AdcDma * const interface = object;
+  const struct AdcDma * const interface = object;
 
   switch ((enum IfParameter)parameter)
   {

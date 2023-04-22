@@ -157,10 +157,10 @@ static enum Result adcInit(void *object, const void *configBase)
       .shared = config->shared
   };
   struct EadcDma * const interface = object;
-  enum Result res;
 
   /* Call base class constructor */
-  if ((res = EadcBase->init(interface, &baseConfig)) != E_OK)
+  const enum Result res = EadcBase->init(interface, &baseConfig);
+  if (res != E_OK)
     return res;
 
   /* Initialize input pins */
@@ -203,15 +203,10 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->callback = 0;
   interface->sampling = sampling;
 
-  if (dmaSetup(interface, config))
-  {
-    if (!config->shared)
-      res = startConversion(interface) ? E_OK : E_ERROR;
-  }
-  else
-    res = E_ERROR;
+  if (!dmaSetup(interface, config))
+    return E_ERROR;
 
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NUMICRO_ADC_NO_DEINIT
@@ -244,7 +239,7 @@ static void adcSetCallback(void *object, void (*callback)(void *),
 static enum Result adcGetParam(void *object, int parameter,
     void *data __attribute__((unused)))
 {
-  struct EadcDma * const interface = object;
+  const struct EadcDma * const interface = object;
 
   switch ((enum IfParameter)parameter)
   {

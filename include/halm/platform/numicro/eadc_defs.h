@@ -181,6 +181,7 @@ enum
 #define PWRM_LDOSUT(value)              BIT_FIELD((value), 8)
 #define PWRM_LDOSUT_MASK                BIT_FIELD(MASK(12), 8)
 #define PWRM_LDOSUT_VALUE(reg)          FIELD_VALUE((reg), PWRM_LDOSUT_MASK, 8)
+#define PWRM_LDOSUT_MAX                 MASK(12)
 /*------------------Calibration Control register------------------------------*/
 #define CALCTL_CALSTART                 BIT(1)
 #define CALCTL_CALDONE                  BIT(2)

@@ -16,6 +16,8 @@ struct AdcDmaConfig
 {
   /** Mandatory: pointer to an array of pins terminated by a zero element. */
   const PinNumber *pins;
+  /** Optional: calibration interrupt priority. */
+  IrqPriority priority;
   /** Optional: trigger to start the conversion. */
   enum AdcEvent event;
   /** Optional: external pin sensitivity. */
@@ -42,13 +44,15 @@ struct AdcDma
   /* DMA handle */
   struct Dma *dma;
 
+  /* Enabled channels mask */
+  uint32_t enabled;
   /* Output buffer */
   uint16_t *buffer;
   /* Pin descriptors */
   struct AdcPin *pins;
 
-  /* Enabled channels mask */
-  uint32_t enabled;
+  /* Interrupt priority */
+  IrqPriority priority;
   /* Pin count */
   uint8_t count;
   /* Sampling time extension value */

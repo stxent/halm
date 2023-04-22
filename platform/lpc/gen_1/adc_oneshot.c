@@ -68,17 +68,16 @@ static enum Result adcInit(void *object, const void *configBase)
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
+  if (res != E_OK)
+    return res;
 
-  if (res == E_OK)
-  {
-    /* Enable analog function on the input pin */
-    interface->pin = adcConfigPin(&interface->base, config->pin);
-    /* Calculate Control register value */
-    interface->base.control |= CR_START(ADC_SOFTWARE)
-        | CR_SEL_CHANNEL(interface->pin.channel);
-  }
+  /* Enable analog function on the input pin */
+  interface->pin = adcConfigPin(&interface->base, config->pin);
+  /* Calculate Control register value */
+  interface->base.control |= CR_START(ADC_SOFTWARE)
+      | CR_SEL_CHANNEL(interface->pin.channel);
 
-  return res;
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
