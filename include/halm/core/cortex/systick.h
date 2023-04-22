@@ -10,19 +10,19 @@
 #include <halm/irq.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct TimerClass * const SysTickTimer;
+extern const struct TimerClass * const SysTick;
 
 /*
  * All configuration fields are optional, it is allowed to pass
  * a null pointer as the constructor argument.
  */
-struct SysTickTimerConfig
+struct SysTickConfig
 {
   /** Optional: interrupt priority. */
   IrqPriority priority;
 };
 
-struct SysTickTimer
+struct SysTick
 {
   struct Timer parent;
 
