@@ -1,11 +1,11 @@
 # Copyright (C) 2017 xent
 # Project is distributed under the terms of the MIT License
 
-project(halm C)
 cmake_minimum_required(VERSION 3.13)
 cmake_policy(SET CMP0054 NEW)
 cmake_policy(SET CMP0069 NEW)
 cmake_policy(SET CMP0079 NEW)
+project(halm C)
 
 option(USE_LTO "Enable Link Time Optimization." OFF)
 set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE STRING "Path to the config file.")
