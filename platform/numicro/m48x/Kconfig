@@ -14,6 +14,25 @@ config PLATFORM_NUMICRO_BPWM1
 
 endmenu
 
+menu "CAN"
+
+config PLATFORM_NUMICRO_CAN0
+	bool "CAN0"
+	default y
+	depends on PLATFORM_NUMICRO_CAN
+
+config PLATFORM_NUMICRO_CAN1
+	bool "CAN1"
+	default y
+	depends on PLATFORM_NUMICRO_CAN
+
+config PLATFORM_NUMICRO_CAN2
+	bool "CAN2"
+	default y
+	depends on PLATFORM_NUMICRO_CAN
+
+endmenu
+
 menu "EADC"
 
 config PLATFORM_NUMICRO_EADC0

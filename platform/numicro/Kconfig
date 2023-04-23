@@ -104,6 +104,56 @@ config PLATFORM_NUMICRO_BPWM
 	default y
 	depends on PLATFORM_NUMICRO_BPWM_BASE
 
+config PLATFORM_NUMICRO_CAN
+	bool "CAN"
+	default y
+	depends on FAMILY_M48X
+
+config PLATFORM_NUMICRO_CAN_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_CAN
+
+config PLATFORM_NUMICRO_CAN_COUNTERS
+	bool "Frame counters"
+	default y
+	depends on PM && PLATFORM_NUMICRO_CAN
+
+config PLATFORM_NUMICRO_CAN_EXACT_RATE
+	bool "Exact rate"
+	default y
+	depends on PM && PLATFORM_NUMICRO_CAN
+
+config PLATFORM_NUMICRO_CAN_FILTERS
+	bool "Filtering"
+	default y
+	depends on PLATFORM_NUMICRO_CAN
+
+config PLATFORM_NUMICRO_CAN_PM
+	bool "Power management"
+	default n
+	depends on PM && PLATFORM_NUMICRO_CAN
+
+config PLATFORM_NUMICRO_CAN_SJW
+	int "SJW duration"
+	default 1
+	range 1 4
+	depends on PLATFORM_NUMICRO_CAN
+
+config PLATFORM_NUMICRO_CAN_SP
+	int "Sampling point"
+	default 75
+	range 1 99
+	depends on PLATFORM_NUMICRO_CAN
+	help
+	  The sample point is the location, given as a percent value,
+	  inside each bit period where the bus level is read.
+
+config PLATFORM_NUMICRO_CAN_WATERMARK
+	bool "Watermark calculation"
+	default n
+	depends on PLATFORM_NUMICRO_CAN
+
 config PLATFORM_NUMICRO_EADC_BASE
 	bool "EADC"
 	default y

@@ -1130,7 +1130,7 @@ static enum Result apbBranchEnable(const void *clockBase,
 /*----------------------------------------------------------------------------*/
 static uint32_t apbBranchFrequency(const void *clockBase)
 {
-  const struct ExtendedClockClass * const clock = clockBase;
+  const struct ApbClockClass * const clock = clockBase;
   const uint32_t frequency = getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK);
   const uint32_t ahbDivisor = getClockDivider(DIVIDER_HCLK) + 1;
   const uint32_t apbDivisor = ahbDivisor << getClockDivider(clock->divider);

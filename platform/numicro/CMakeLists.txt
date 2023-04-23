@@ -41,6 +41,11 @@ if(CONFIG_PLATFORM_NUMICRO_BPWM)
     list(APPEND SOURCE_FILES "bpwm.c")
 endif()
 
+if(CONFIG_PLATFORM_NUMICRO_CAN)
+    list(APPEND SOURCE_FILES "can.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/can_base.c")
+endif()
+
 if(CONFIG_PLATFORM_NUMICRO_EADC_BASE)
     list(APPEND SOURCE_FILES "eadc_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/eadc_base.c")
