@@ -151,8 +151,7 @@ static enum Result spiInit(void *object, const void *configBase)
   const struct SpiBaseConfig * const config = configBase;
   struct SpiBase * const interface = object;
 
-  if (config->channel != 0)
-    return E_VALUE;
+  assert(config->channel == 0);
   if (!setInstance(interface))
     return E_BUSY;
 

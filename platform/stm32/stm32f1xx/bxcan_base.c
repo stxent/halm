@@ -240,8 +240,7 @@ static enum Result canInit(void *object, const void *configBase)
   const struct BxCanBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  if (!entry)
-    return E_VALUE;
+  assert(entry != NULL);
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 

@@ -348,6 +348,8 @@ static enum Result unitInit(void *object, const void *configBase)
 static void unitDeinit(void *object)
 {
   const struct BpwmUnitBase * const unit = object;
+
   sysClockDisable(unit->channel ? CLK_BPWM1 : CLK_BPWM0);
+  instances[unit->channel] = NULL;
 }
 #endif

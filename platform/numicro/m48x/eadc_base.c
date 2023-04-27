@@ -303,7 +303,6 @@ static enum Result adcInit(void *object, const void *configBase)
 #endif
   }
   assert(frequency > 0 && frequency <= MAX_FREQUENCY);
-  assert(reg);
 
   uint32_t control = CTL_ADCEN;
 

@@ -312,8 +312,7 @@ static enum Result canInit(void *object, const void *configBase)
   const size_t index = channelToIndex(config->channel);
   struct CanBase * const interface = object;
 
-  if (index == UINT8_MAX)
-    return E_VALUE;
+  assert(index != UINT8_MAX);
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 

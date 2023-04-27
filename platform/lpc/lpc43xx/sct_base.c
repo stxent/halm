@@ -13,31 +13,19 @@
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/
-struct TimerHandlerConfig
-{
-  uint8_t channel;
-};
-/*----------------------------------------------------------------------------*/
 struct TimerHandler
 {
-  struct Entity parent;
-
-  /* Pointer to peripheral registers */
-  LPC_SCT_Type *reg;
   /* Timer descriptors */
-  struct SctBase *instances[2];
+  struct SctBase *parts[2];
   /* Free events */
   uint16_t events;
 };
 /*----------------------------------------------------------------------------*/
-static bool timerHandlerActive(uint8_t);
-static enum Result timerHandlerAttach(uint8_t, enum SctPart, struct SctBase *);
-static void timerHandlerInstantiate(uint8_t channel);
-static void timerHandlerProcess(struct TimerHandler *);
-static enum Result timerHandlerInit(void *, const void *);
+static bool timerHandlerActive(void);
+static enum Result timerHandlerAttach(enum SctPart, struct SctBase *);
 
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
-static void timerHandlerDetach(uint8_t, enum SctPart);
+static void timerHandlerDetach(enum SctPart);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
@@ -48,13 +36,6 @@ static void tmrDeinit(void *);
 #define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-static const struct EntityClass * const TimerHandler =
-    &(const struct EntityClass){
-    .size = sizeof(struct TimerHandler),
-    .init = timerHandlerInit,
-    .deinit = deletedDestructorTrap
-};
-
 const struct EntityClass * const SctBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = tmrInit,
@@ -397,26 +378,25 @@ const struct PinEntry sctOutputPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct TimerHandler *handlers[1] = {0};
+static struct TimerHandler instance = {
+    .parts = {NULL, NULL},
+    .events = 0xFFFF
+};
 /*----------------------------------------------------------------------------*/
-static bool timerHandlerActive(uint8_t channel)
+static bool timerHandlerActive(void)
 {
-  timerHandlerInstantiate(channel);
-  return handlers[channel]->instances[0] || handlers[channel]->instances[1];
+  return instance.parts[0] != NULL || instance.parts[1] != NULL;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
+static enum Result timerHandlerAttach(enum SctPart timerPart,
     struct SctBase *timer)
 {
-  timerHandlerInstantiate(channel);
-
-  struct TimerHandler * const handler = handlers[channel];
   enum Result res = E_OK;
 
   if (timerPart == SCT_UNIFIED)
   {
-    if (!handler->instances[0] && !handler->instances[1])
-      handler->instances[0] = timer;
+    if (instance.parts[0] == NULL && instance.parts[1] == NULL)
+      instance.parts[0] = timer;
     else
       res = E_BUSY;
   }
@@ -424,8 +404,9 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
   {
     const unsigned int part = timerPart == SCT_HIGH;
 
-    if (!handler->instances[part])
-      handler->instances[part] = timer;
+    // TODO Handle case when unified part already exists
+    if (instance.parts[part] == NULL)
+      instance.parts[part] = timer;
     else
       res = E_BUSY;
   }
@@ -434,71 +415,34 @@ static enum Result timerHandlerAttach(uint8_t channel, enum SctPart timerPart,
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
-static void timerHandlerDetach(uint8_t channel, enum SctPart timerPart)
+static void timerHandlerDetach(enum SctPart timerPart)
 {
   const unsigned int part = timerPart == SCT_HIGH;
-  handlers[channel]->instances[part] = 0;
+  instance.parts[part] = NULL;
 }
 #endif
-/*----------------------------------------------------------------------------*/
-static void timerHandlerInstantiate(uint8_t channel)
-{
-  if (!handlers[channel])
-  {
-    const struct TimerHandlerConfig config = {
-        .channel = channel
-    };
-
-    handlers[channel] = init(TimerHandler, &config);
-  }
-  assert(handlers[channel]);
-}
-/*----------------------------------------------------------------------------*/
-static void timerHandlerProcess(struct TimerHandler *handler)
-{
-  const uint16_t state = handler->reg->EVFLAG;
-
-  for (size_t index = 0; index < ARRAY_SIZE(handler->instances); ++index)
-  {
-    struct SctBase * const descriptor = handler->instances[index];
-
-    if (descriptor && descriptor->mask & state)
-      descriptor->handler(descriptor);
-  }
-
-  /* Clear interrupt flags */
-  handler->reg->EVFLAG = state;
-}
-/*----------------------------------------------------------------------------*/
-static enum Result timerHandlerInit(void *object, const void *configBase)
-{
-  const struct TimerHandlerConfig * const config = configBase;
-  struct TimerHandler * const handler = object;
-
-  assert(config->channel == 0);
-
-#ifdef NDEBUG
-  (void)config; /* Suppress warning */
-#endif
-
-  handler->reg = LPC_SCT;
-  handler->instances[0] = handler->instances[1] = 0;
-  handler->events = 0xFFFF;
-
-  return E_OK;
-}
 /*----------------------------------------------------------------------------*/
 void SCT_ISR(void)
 {
-  timerHandlerProcess(handlers[0]);
+  const uint16_t state = LPC_SCT->EVFLAG;
+
+  if (instance.parts[0] != NULL && (instance.parts[0]->mask & state))
+    instance.parts[0]->handler(instance.parts[0]);
+
+  if (instance.parts[1] != NULL && (instance.parts[1]->mask & state))
+    instance.parts[1]->handler(instance.parts[1]);
+
+  /* Clear interrupt flags */
+  LPC_SCT->EVFLAG = state;
 }
 /*----------------------------------------------------------------------------*/
-bool sctAllocateEvent(struct SctBase *timer, uint8_t *event)
+bool sctAllocateEvent(struct SctBase *timer __attribute__((unused)),
+    uint8_t *event)
 {
-  if (handlers[timer->channel]->events)
+  if (instance.events)
   {
-    *event = 31 - countLeadingZeros32(handlers[timer->channel]->events);
-    handlers[timer->channel]->events &= ~(1 << *event);
+    *event = 31 - countLeadingZeros32(instance.events);
+    instance.events &= ~(1 << *event);
     return true;
   }
   else
@@ -510,9 +454,10 @@ uint32_t sctGetClock(const struct SctBase *timer __attribute__((unused)))
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-void sctReleaseEvent(struct SctBase *timer, uint8_t event)
+void sctReleaseEvent(struct SctBase *timer __attribute__((unused)),
+    uint8_t event)
 {
-  handlers[timer->channel]->events |= 1 << event;
+  instance.events |= 1 << event;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
@@ -538,7 +483,7 @@ static enum Result tmrInit(void *object, const void *configBase)
       desiredConfig |= CONFIG_CKSEL_FALLING(config->input - 1);
   }
 
-  const bool enabled = timerHandlerActive(config->channel);
+  const bool enabled = timerHandlerActive();
   LPC_SCT_Type * const reg = LPC_SCT;
 
   if (enabled)
@@ -551,13 +496,12 @@ static enum Result tmrInit(void *object, const void *configBase)
       return E_BUSY;
   }
 
-  const enum Result res = timerHandlerAttach(config->channel,
-      config->part, timer);
+  const enum Result res = timerHandlerAttach(config->part, timer);
 
   if (res == E_OK)
   {
     timer->channel = config->channel;
-    timer->handler = 0;
+    timer->handler = NULL;
     timer->irq = SCT_IRQ;
     timer->mask = 0;
     timer->part = config->part;
@@ -584,8 +528,9 @@ static void tmrDeinit(void *object)
 {
   struct SctBase * const timer = object;
 
-  timerHandlerDetach(timer->channel, timer->part);
-  if (!timerHandlerActive(timer->channel))
+  timerHandlerDetach(timer->part);
+
+  if (!timerHandlerActive())
   {
     /* Disable common interrupt */
     irqDisable(timer->irq);

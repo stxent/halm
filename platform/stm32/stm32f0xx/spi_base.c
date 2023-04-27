@@ -222,8 +222,7 @@ static enum Result spiInit(void *object, const void *configBase)
   const struct SpiBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  if (!entry)
-    return E_VALUE;
+  assert(entry != NULL);
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 

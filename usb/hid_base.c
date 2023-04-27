@@ -11,6 +11,7 @@
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
 #include <xcore/memory.h>
+#include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 struct SingleHidDescriptor
@@ -255,10 +256,10 @@ static enum Result handleDeviceRequest(struct HidBase *driver,
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct HidBaseConfig * const config = configBase;
-  struct HidBase * const driver = object;
+  assert(config->owner != NULL);
+  assert(config->device != NULL);
 
-  if (!config->owner || !config->device)
-    return E_VALUE;
+  struct HidBase * const driver = object;
 
   driver->owner = config->owner;
   driver->device = config->device;

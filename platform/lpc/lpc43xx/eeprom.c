@@ -112,10 +112,7 @@ static enum Result eepromInit(void *object, const void *configBase)
 
   const enum Result res = EepromBase->init(interface, NULL);
   if (res != E_OK)
-  {
-    instance = 0;
     return res;
-  }
 
   interface->position = 0;
   interface->blocking = true;

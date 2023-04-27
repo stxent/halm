@@ -686,10 +686,9 @@ void usbControlStringErase(struct UsbControl *control, struct UsbString string)
 static enum Result controlInit(void *object, const void *configBase)
 {
   const struct UsbControlConfig * const config = configBase;
-  struct UsbControl * const control = object;
+  assert(config->parent != NULL);
 
-  if (!config->parent)
-    return E_VALUE;
+  struct UsbControl * const control = object;
 
   control->owner = config->parent;
 

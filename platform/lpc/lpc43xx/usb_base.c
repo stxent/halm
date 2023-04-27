@@ -196,7 +196,6 @@ static enum Result devInit(void *object, const void *configBase)
 
   device->channel = config->channel;
   device->handler = NULL;
-  device->queueHeads = 0;
 
   if (!pointerArrayInit(&device->descriptorPool, ENDPOINT_REQUESTS))
     return E_MEMORY;

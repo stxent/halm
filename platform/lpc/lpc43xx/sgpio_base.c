@@ -396,5 +396,6 @@ static enum Result unitInit(void *object,
 static void unitDeinit(void *object __attribute__((unused)))
 {
   sysClockDisable(CLK_PERIPH_SGPIO);
+  instance = NULL;
 }
 #endif

@@ -8,6 +8,7 @@
 #include <halm/platform/stm32/gptimer_base.h>
 #include <halm/platform/stm32/gptimer_defs.h>
 #include <halm/platform/stm32/system.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct TimerBlockDescriptor
 {
@@ -560,8 +561,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct TimerBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  if (!entry)
-    return E_VALUE;
+  assert(entry != NULL);
   if (!setInstance(config->channel, timer))
     return E_BUSY;
 
