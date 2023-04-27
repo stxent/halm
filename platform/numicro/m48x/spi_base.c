@@ -524,7 +524,7 @@ static bool setInstance(uint8_t channel, struct SpiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -563,7 +563,7 @@ void SPI3_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t spiGetClock(const struct SpiBase *interface)
 {
-  const void *clock = 0;
+  const void *clock = NULL;
 
   switch (interface->channel)
   {
@@ -616,7 +616,7 @@ static enum Result spiInit(void *object, const void *configBase)
   sysResetBlock(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -631,6 +631,6 @@ static void spiDeinit(void *object)
       &spiBlockEntries[channelToIndex(interface->channel)];
 
   sysClockDisable(entry->branch);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

@@ -72,7 +72,7 @@ const struct PinEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instance = 0;
+static struct AdcBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
 {
@@ -81,16 +81,16 @@ void ADC_ISR(void)
 /*----------------------------------------------------------------------------*/
 struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
 {
-  const struct PinEntry * const entry = pinFind(adcPins, key,
+  const struct PinEntry * const pinEntry = pinFind(adcPins, key,
       interface->channel);
-  assert(entry);
+  assert(pinEntry != NULL);
 
   /* Initialize pin as input and enable analog pin function */
   const struct Pin pin = pinInit(key);
   pinInput(pin);
-  pinSetFunction(pin, UNPACK_FUNCTION(entry->value));
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
-  return (struct AdcPin){UNPACK_CHANNEL(entry->value)};
+  return (struct AdcPin){UNPACK_CHANNEL(pinEntry->value)};
 }
 /*----------------------------------------------------------------------------*/
 struct AdcBase *adcGetInstance(uint8_t channel __attribute__((unused)))
@@ -119,7 +119,7 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(config->frequency <= MAX_FREQUENCY);
   assert(!config->accuracy);
 
-  if (!config->shared && !adcSetInstance(config->channel, 0, interface))
+  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;
 
   if (!sysPowerStatus(PWR_ADC))
@@ -129,7 +129,7 @@ static enum Result adcInit(void *object, const void *configBase)
   }
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = ADC_IRQ;
   interface->reg = LPC_ADC;
 
@@ -147,6 +147,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, 0);
+  adcSetInstance(interface->channel, interface, NULL);
 }
 #endif

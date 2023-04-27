@@ -252,7 +252,7 @@ static void configPins(const struct CanBaseConfig *config)
   if (config->rx)
   {
     pinEntry = pinFind(canPins, config->rx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -261,7 +261,7 @@ static void configPins(const struct CanBaseConfig *config)
   if (config->tx)
   {
     pinEntry = pinFind(canPins, config->tx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
     pinInput((pin = pinInit(config->tx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -271,7 +271,7 @@ static bool setInstance(uint8_t channel, struct CanBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -328,7 +328,7 @@ static enum Result canInit(void *object, const void *configBase)
   sysResetBlock(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -343,6 +343,6 @@ static void canDeinit(void *object)
       &canBlockEntries[channelToIndex(interface->channel)];
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

@@ -693,7 +693,7 @@ static enum Result genericDividerEnable(const void *clockBase,
     const void *configBase)
 {
   const struct GenericDividerConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->divisor);
 
   const struct GenericDividerClass * const clock = clockBase;
@@ -736,7 +736,7 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
 
   uint32_t buffer = XTAL_ENABLE;
@@ -835,7 +835,7 @@ static enum Result pll0ClockEnable(const void *clockBase,
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->source != CLOCK_AUDIO_PLL && config->source != CLOCK_USB_PLL);
 
   if (!config->divisor || config->divisor > 64)
@@ -922,7 +922,7 @@ static enum Result pll1ClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->source != CLOCK_PLL);
 
   if (!config->divisor)
@@ -1007,7 +1007,7 @@ static enum Result clockOutputEnable(const void *clockBase,
     const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GenericClockClass * const clock = clockBase;
   const struct GenericClockConfig baseConfig = {
@@ -1016,7 +1016,7 @@ static enum Result clockOutputEnable(const void *clockBase,
 
   const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
       config->pin, clock->branch);
-  assert(pinEntry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(config->pin);
 
@@ -1036,7 +1036,7 @@ static enum Result genericClockEnable(const void *clockBase,
     const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GenericClockClass * const clock = clockBase;
   volatile uint32_t * const reg = calcBranchReg(clock->branch);

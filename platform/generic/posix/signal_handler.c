@@ -51,18 +51,19 @@ static void onSignalReceived(uv_signal_t *handle,
   struct SignalHandler * const handler =
       uv_handle_get_data((uv_handle_t *)handle);
 
-  if (handler->callback)
+  if (handler->callback != NULL)
     handler->callback(handler->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result shInit(void *object, const void *configBase)
 {
   const struct SignalHandlerConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct SignalHandler * const handler = object;
 
-  if (!(handler->handle = malloc(sizeof(uv_signal_t))))
+  handler->handle = malloc(sizeof(uv_signal_t));
+  if (handler->handle == NULL)
     return E_MEMORY;
 
   if (uv_signal_init(uv_default_loop(), handler->handle) < 0)
@@ -71,7 +72,7 @@ static enum Result shInit(void *object, const void *configBase)
     return E_ERROR;
   }
 
-  handler->callback = 0;
+  handler->callback = NULL;
   handler->signum = config->signum;
   uv_handle_set_data((uv_handle_t *)handler->handle, handler);
 
@@ -82,7 +83,7 @@ static void shDeinit(void *object)
 {
   struct SignalHandler * const handler = object;
 
-  uv_handle_set_data((uv_handle_t *)handler->handle, 0);
+  uv_handle_set_data((uv_handle_t *)handler->handle, NULL);
   uv_close((uv_handle_t *)handler->handle, onCloseCallback);
 }
 /*----------------------------------------------------------------------------*/

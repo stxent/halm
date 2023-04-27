@@ -70,7 +70,7 @@ static size_t cardWrite(void *, const void *, size_t);
 const struct InterfaceClass * const MMCSD = &(const struct InterfaceClass){
     .size = sizeof(struct MMCSD),
     .init = cardInit,
-    .deinit = 0, /* Default destructor */
+    .deinit = NULL, /* Default destructor */
 
     .setCallback = cardSetCallback,
     .getParam = cardGetParam,
@@ -265,8 +265,12 @@ static enum Result initStepReadExtCSD(struct MMCSD *device)
 
   if (queued == sizeof(csd))
   {
-    while ((status = ifGetParam(device->interface, IF_STATUS, 0)) == E_BUSY)
+    do
+    {
+      status = ifGetParam(device->interface, IF_STATUS, NULL);
       barrier();
+    }
+    while (status == E_BUSY);
   }
   else
     return E_INTERFACE;
@@ -412,7 +416,7 @@ static enum Result eraseSectorGroup(struct MMCSD *device, uint32_t sector)
   enum Result res;
 
   /* Lock the bus */
-  ifSetParam(device->interface, IF_ACQUIRE, 0);
+  ifSetParam(device->interface, IF_ACQUIRE, NULL);
 
   res = executeCommand(device,
       SDIO_COMMAND(CMD35_ERASE_GROUP_START, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
@@ -434,7 +438,7 @@ static enum Result eraseSectorGroup(struct MMCSD *device, uint32_t sector)
 
 error:
   /* Release the bus */
-  ifSetParam(device->interface, IF_RELEASE, 0);
+  ifSetParam(device->interface, IF_RELEASE, NULL);
 
   return res;
 }
@@ -454,21 +458,25 @@ static enum Result executeCommand(struct MMCSD *device, uint32_t command,
   if (res != E_OK)
     return res;
 
-  enum Result status = ifSetParam(device->interface, IF_SDIO_EXECUTE, 0);
+  enum Result status = ifSetParam(device->interface, IF_SDIO_EXECUTE, NULL);
 
   if (status == E_BUSY)
   {
     if (!await)
       return E_BUSY;
 
-    while ((status = ifGetParam(device->interface, IF_STATUS, 0)) == E_BUSY)
+    do
+    {
+      status = ifGetParam(device->interface, IF_STATUS, NULL);
       barrier();
+    }
+    while (status == E_BUSY);
   }
 
   if (status != E_OK && status != E_IDLE)
     return status;
 
-  if (response)
+  if (response != NULL)
   {
     res = ifGetParam(device->interface, IF_SDIO_RESPONSE, response);
     if (res != E_OK)
@@ -599,10 +607,10 @@ static enum Result initializeCard(struct MMCSD *device)
     return res;
 
   /* Lock the bus */
-  ifSetParam(device->interface, IF_ACQUIRE, 0);
+  ifSetParam(device->interface, IF_ACQUIRE, NULL);
 
   /* Check interface capabilities and select zero-copy mode */
-  res = ifSetParam(device->interface, IF_ZEROCOPY, 0);
+  res = ifSetParam(device->interface, IF_ZEROCOPY, NULL);
   if (res != E_OK)
     goto error;
   ifSetCallback(device->interface, interruptHandler, device);
@@ -624,8 +632,8 @@ static enum Result initializeCard(struct MMCSD *device)
 
 error:
   /* Release the bus */
-  ifSetCallback(device->interface, 0, 0);
-  ifSetParam(device->interface, IF_RELEASE, 0);
+  ifSetCallback(device->interface, NULL, NULL);
+  ifSetParam(device->interface, IF_RELEASE, NULL);
 
   return res;
 }
@@ -684,7 +692,7 @@ static void interruptHandler(void *object)
 
     case STATE_TRANSFER:
     {
-      const enum Result res = ifGetParam(device->interface, IF_STATUS, 0);
+      const enum Result res = ifGetParam(device->interface, IF_STATUS, NULL);
 
       if (res != E_OK)
       {
@@ -709,7 +717,7 @@ static void interruptHandler(void *object)
 
     case STATE_STOP:
     {
-      const enum Result res = ifGetParam(device->interface, IF_STATUS, 0);
+      const enum Result res = ifGetParam(device->interface, IF_STATUS, NULL);
 
       event = true;
       device->transfer.state = res == E_OK ? STATE_IDLE : STATE_ERROR;
@@ -728,10 +736,10 @@ static void interruptHandler(void *object)
   if (event)
   {
     /* Release the bus */
-    ifSetCallback(device->interface, 0, 0);
-    ifSetParam(device->interface, IF_RELEASE, 0);
+    ifSetCallback(device->interface, NULL, NULL);
+    ifSetParam(device->interface, IF_RELEASE, NULL);
 
-    if (device->callback)
+    if (device->callback != NULL)
       device->callback(device->callbackArgument);
   }
 }
@@ -920,8 +928,8 @@ static enum Result transferBuffer(struct MMCSD *device,
 {
   enum Result res;
 
-  ifSetParam(device->interface, IF_ACQUIRE, 0);
-  ifSetParam(device->interface, IF_ZEROCOPY, 0);
+  ifSetParam(device->interface, IF_ACQUIRE, NULL);
+  ifSetParam(device->interface, IF_ZEROCOPY, NULL);
   ifSetCallback(device->interface, interruptHandler, device);
 
   device->transfer.argument = argument;
@@ -945,10 +953,10 @@ static enum Result transferBuffer(struct MMCSD *device,
     device->transfer.state = STATE_ERROR;
 
     /* Release the bus */
-    ifSetCallback(device->interface, 0, 0);
-    ifSetParam(device->interface, IF_RELEASE, 0);
+    ifSetCallback(device->interface, NULL, NULL);
+    ifSetParam(device->interface, IF_RELEASE, NULL);
 
-    if (device->callback)
+    if (device->callback != NULL)
       device->callback(device->callbackArgument);
 
     return res;
@@ -975,7 +983,7 @@ static enum Result cardInit(void *object, const void *configBase)
   const struct MMCSDConfig * const config = configBase;
   struct MMCSD * const device = object;
 
-  device->callback = 0;
+  device->callback = NULL;
 
   device->interface = config->interface;
   device->transfer.position = 0;

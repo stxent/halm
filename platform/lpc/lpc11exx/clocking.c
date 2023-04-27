@@ -10,6 +10,7 @@
 #include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 #define INT_OSC_FREQUENCY             12000000
 #define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)
@@ -154,7 +155,7 @@ uint32_t ticksPerSecond = TICK_RATE(INT_OSC_FREQUENCY, 3);
 /*----------------------------------------------------------------------------*/
 static struct ClockDescriptor *calcBranchDescriptor(enum ClockBranch branch)
 {
-  volatile uint32_t *base = 0;
+  volatile uint32_t *base = NULL;
 
   switch (branch)
   {
@@ -241,7 +242,7 @@ static enum Result extOscEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
 
   uint32_t buffer = 0;
@@ -314,7 +315,7 @@ static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct WdtOscConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->frequency <= WDT_FREQ_4600);
 
   const unsigned int index = !config->frequency ?
@@ -347,7 +348,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->divisor);
   assert(config->source == CLOCK_EXTERNAL || config->source == CLOCK_INTERNAL);
 
@@ -387,7 +388,7 @@ static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GenericClockConfig baseConfig = {
       .source = config->source,
@@ -396,7 +397,7 @@ static enum Result clockOutputEnable(const void *clockBase
 
   const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
       config->pin, 0);
-  assert(pinEntry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(config->pin);
 
@@ -419,7 +420,7 @@ static void branchDisable(const void *clockBase)
 static enum Result branchEnable(const void *clockBase, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GenericClockClass * const clock = clockBase;
   struct ClockDescriptor * const descriptor =

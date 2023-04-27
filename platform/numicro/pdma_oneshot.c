@@ -65,14 +65,14 @@ static void interruptHandler(void *object, enum Result res)
 
   channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
-  if (channel->callback)
+  if (channel->callback != NULL)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct PdmaOneShotConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct PdmaBaseConfig baseConfig = {
       .event = config->event,
@@ -87,7 +87,7 @@ static enum Result channelInit(void *object, const void *configBase)
   {
     channel->base.control |= DSCT_CTL_OPMODE(OPMODE_BASIC);
     channel->base.handler = interruptHandler;
-    channel->callback = 0;
+    channel->callback = NULL;
     channel->state = STATE_IDLE;
     channel->fixed = true;
   }
@@ -228,7 +228,7 @@ static void channelAppend(void *object, void *destination, const void *source,
 {
   struct PdmaOneShot * const channel = object;
 
-  assert(destination != 0 && source != 0);
+  assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= PDMA_MAX_TRANSFER_SIZE);
   assert(channel->state != STATE_BUSY && channel->state != STATE_READY);
 

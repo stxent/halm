@@ -53,14 +53,14 @@ const struct TimerClass * const GpTimerPwmUnit = &(const struct TimerClass){
 
     .enable = unitEnable,
     .disable = unitDisable,
-    .setAutostop = 0,
-    .setCallback = 0,
+    .setAutostop = NULL,
+    .setCallback = NULL,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
     .setOverflow = unitSetOverflow,
-    .getValue = 0,
-    .setValue = 0
+    .getValue = NULL,
+    .setValue = NULL
 };
 
 const struct PwmClass * const GpTimerPwm = &(const struct PwmClass){
@@ -134,7 +134,7 @@ static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmUnitConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
@@ -246,7 +246,7 @@ static void unitSetOverflow(void *object, uint32_t overflow)
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct GpTimerPwm * const pwm = object;
   struct GpTimerPwmUnit * const unit = config->parent;

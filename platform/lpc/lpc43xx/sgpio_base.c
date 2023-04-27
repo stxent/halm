@@ -229,11 +229,11 @@ const struct PinGroupEntry sgpioPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SgpioBase *instance = 0;
+static struct SgpioBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SgpioBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -250,7 +250,7 @@ void SGPIO_ISR(void)
 enum SgpioPin sgpioConfigPin(PinNumber key, enum PinPull pull)
 {
   const struct PinGroupEntry * const group = pinGroupFind(sgpioPins, key, 0);
-  assert(group);
+  assert(group != NULL);
 
   const uint8_t offset = PIN_TO_OFFSET(key) - PIN_TO_OFFSET(group->begin);
   const struct Pin pin = pinInit(key);
@@ -385,7 +385,7 @@ static enum Result unitInit(void *object,
   /* Reset registers to default values */
   sysResetEnable(RST_SGPIO);
 
-  unit->handler = 0;
+  unit->handler = NULL;
   unit->irq = SGPIO_IRQ;
   unit->reg = LPC_SGPIO;
 

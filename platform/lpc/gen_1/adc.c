@@ -35,7 +35,7 @@ const struct InterfaceClass * const Adc = &(const struct InterfaceClass){
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = 0
+    .write = NULL
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -46,7 +46,7 @@ static void interruptHandler(void *object)
   for (size_t index = 0; index < interface->count; ++index)
     interface->buffer[index] = (uint16_t)(*interface->dr[index]);
 
-  if (interface->callback)
+  if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -118,8 +118,8 @@ static void stopConversion(struct Adc *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
-  assert(config);
-  assert(config->pins);
+  assert(config != NULL);
+  assert(config->pins != NULL);
   assert(config->event < ADC_EVENT_END);
   assert(config->event != ADC_SOFTWARE);
 
@@ -137,7 +137,7 @@ static enum Result adcInit(void *object, const void *configBase)
     return res;
 
   interface->base.handler = interruptHandler;
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->priority = config->priority;
   memset(interface->buffer, 0, sizeof(interface->buffer));
 
@@ -210,10 +210,11 @@ static enum Result adcSetParam(void *object, int parameter,
 
 #ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, 0, object) ? E_OK : E_BUSY;
+      return adcSetInstance(interface->base.channel, NULL, object) ?
+          E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, 0);
+      adcSetInstance(interface->base.channel, object, NULL);
       return E_OK;
 #endif
 

@@ -12,7 +12,7 @@ extern const struct PinEntry gpTimerPins[];
 void gpTimerConfigPin(uint8_t channel, PinNumber key, enum PinPull pull)
 {
   const struct PinEntry * const pinEntry = pinFind(gpTimerPins, key, channel);
-  assert(pinEntry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 

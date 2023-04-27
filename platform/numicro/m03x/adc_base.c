@@ -117,7 +117,7 @@ const struct PinEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instance = 0;
+static struct AdcBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
 {
@@ -146,12 +146,12 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(!config->accuracy || config->accuracy == 12);
   assert(clockFrequency(AdcClock) <= MAX_FREQUENCY);
 
-  if (!config->shared && !adcSetInstance(config->channel, 0, interface))
+  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;
 
   interface->reg = NM_ADC;
   interface->irq = ADC_IRQ;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->channel = config->channel;
   interface->control = ADCR_ADEN;
 
@@ -175,6 +175,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, 0);
+  adcSetInstance(interface->channel, interface, NULL);
 }
 #endif

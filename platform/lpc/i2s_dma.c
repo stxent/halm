@@ -59,11 +59,11 @@ const struct InterfaceClass * const I2SDma = &(const struct InterfaceClass){
     .init = i2sInit,
     .deinit = i2sDeinit,
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = i2sGetParam,
     .setParam = i2sSetParam,
-    .read = 0,
-    .write = 0
+    .read = NULL,
+    .write = NULL
 };
 
 const struct StreamClass * const I2SDmaRxStream = &(const struct StreamClass){
@@ -86,13 +86,13 @@ const struct StreamClass * const I2SDmaTxStream = &(const struct StreamClass){
 /*----------------------------------------------------------------------------*/
 static void cleanupInterface(struct I2SDma *interface)
 {
-  if (interface->txStream)
+  if (interface->txStream != NULL)
     deinit(interface->txStream);
-  if (interface->rxStream)
+  if (interface->rxStream != NULL)
     deinit(interface->rxStream);
-  if (interface->txDma)
+  if (interface->txDma != NULL)
     deinit(interface->txDma);
-  if (interface->rxDma)
+  if (interface->rxDma != NULL)
     deinit(interface->rxDma);
 }
 /*----------------------------------------------------------------------------*/
@@ -135,7 +135,7 @@ static bool dmaSetup(struct I2SDma *interface,
     };
 
     interface->rxDma = init(GpDmaList, &dmaConfig);
-    if (!interface->rxDma)
+    if (interface->rxDma == NULL)
       return false;
 
     dmaConfigure(interface->rxDma, &dmaSettings[0]);
@@ -152,7 +152,7 @@ static bool dmaSetup(struct I2SDma *interface,
     };
 
     interface->txDma = init(GpDmaList, &dmaConfig);
-    if (!interface->txDma)
+    if (interface->txDma == NULL)
       return false;
 
     dmaConfigure(interface->txDma, &dmaSettings[1]);
@@ -256,14 +256,14 @@ static bool streamSetup(struct I2SDma *interface,
   if (config->rx.sda != 0)
   {
     interface->rxStream = init(I2SDmaRxStream, &streamConfig);
-    if (!interface->rxStream)
+    if (interface->rxStream == NULL)
       return false;
   }
 
   if (config->tx.sda != 0)
   {
     interface->txStream = init(I2SDmaTxStream, &streamConfig);
-    if (!interface->txStream)
+    if (interface->txStream == NULL)
       return false;
   }
 
@@ -386,12 +386,12 @@ static bool updateRate(struct I2SDma *interface, uint32_t sampleRate)
       | RATE_Y_DIVIDER(rateConfig.y);
   const uint32_t clockBitRate = divisor - 1;
 
-  if (interface->rxDma)
+  if (interface->rxDma != NULL)
   {
     reg->RXBITRATE = clockBitRate;
     reg->RXRATE = clockRate;
   }
-  if (interface->txDma)
+  if (interface->txDma != NULL)
   {
     reg->TXBITRATE = clockBitRate;
     reg->TXRATE = clockRate;
@@ -404,7 +404,7 @@ static bool updateRate(struct I2SDma *interface, uint32_t sampleRate)
 static enum Result i2sInit(void *object, const void *configBase)
 {
   const struct I2SDmaConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->rate);
   assert(config->rx.sda || config->tx.sda);
   assert(config->width <= I2S_WIDTH_32);
@@ -437,10 +437,10 @@ static enum Result i2sInit(void *object, const void *configBase)
   interface->mono = config->mono;
   interface->slave = config->slave;
 
-  interface->rxDma = 0;
-  interface->txDma = 0;
-  interface->rxStream = 0;
-  interface->txStream = 0;
+  interface->rxDma = NULL;
+  interface->txDma = NULL;
+  interface->rxStream = NULL;
+  interface->txStream = NULL;
 
   if (!streamSetup(interface, config))
   {
@@ -475,14 +475,14 @@ static enum Result i2sGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_RX_AVAILABLE:
-      if (!interface->rxStream)
+      if (interface->rxStream == NULL)
         return E_INVALID;
 
       *(size_t *)data = pointerQueueSize(&interface->rxStream->requests);
       return E_OK;
 
     case IF_RX_PENDING:
-      if (!interface->rxStream)
+      if (interface->rxStream == NULL)
         return E_INVALID;
 
       *(size_t *)data = pointerQueueCapacity(&interface->rxStream->requests)
@@ -490,7 +490,7 @@ static enum Result i2sGetParam(void *object, int parameter, void *data)
       return E_OK;
 
     case IF_TX_AVAILABLE:
-      if (!interface->txStream)
+      if (interface->txStream == NULL)
         return E_INVALID;
 
       *(size_t *)data = pointerQueueCapacity(&interface->txStream->requests)
@@ -498,7 +498,7 @@ static enum Result i2sGetParam(void *object, int parameter, void *data)
       return E_OK;
 
     case IF_TX_PENDING:
-      if (!interface->txStream)
+      if (interface->txStream == NULL)
         return E_INVALID;
 
       *(size_t *)data = pointerQueueSize(&interface->txStream->requests);
@@ -512,10 +512,16 @@ static enum Result i2sGetParam(void *object, int parameter, void *data)
     {
       enum Result res;
 
-      if (interface->rxDma && (res = dmaStatus(interface->rxDma)) != E_OK)
+      if (interface->rxDma != NULL
+          && (res = dmaStatus(interface->rxDma)) != E_OK)
+      {
         return res;
-      if (interface->txDma && (res = dmaStatus(interface->txDma)) != E_OK)
+      }
+      if (interface->txDma != NULL
+          && (res = dmaStatus(interface->txDma)) != E_OK)
+      {
         return res;
+      }
 
       return E_OK;
     }
@@ -573,7 +579,7 @@ static enum Result i2sRxStreamEnqueue(void *object,
   struct I2SDma * const interface = stream->parent;
   const size_t samples = request->capacity >> interface->sampleSize;
 
-  assert(request && request->callback);
+  assert(request != NULL && request->callback != NULL);
   /* Ensure the buffer has enough space and is aligned with the sample size */
   assert(request->capacity >> interface->sampleSize >= 2);
   assert(request->capacity % (1 << interface->sampleSize) == 0);
@@ -629,7 +635,7 @@ static enum Result i2sTxStreamEnqueue(void *object,
   struct I2SDmaStream * const stream = object;
   struct I2SDma * const interface = stream->parent;
 
-  assert(request && request->callback);
+  assert(request != NULL && request->callback != NULL);
   /* Ensure the buffer has enough space and is aligned with the sample size */
   assert(request->capacity >> interface->sampleSize >= 2);
   assert(request->capacity % (1 << interface->sampleSize) == 0);

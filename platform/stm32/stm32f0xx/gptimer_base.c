@@ -456,12 +456,12 @@ static const struct TimerBlockDescriptor *findDescriptor(uint8_t channel)
       return &timerBlockEntries[index];
   }
 
-  return 0;
+  return NULL;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -473,7 +473,7 @@ static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 #ifdef CONFIG_PLATFORM_STM32_TIM1
 // void TIM1_BRK_UP_TRG_COM_ISR(void)
 // {
-//  if (instances[0])
+//  if (instances[0] != NULL)
 //    instances[0]->handler(instances[0]);
 // }
 #endif
@@ -503,7 +503,7 @@ void TIM3_ISR(void)
 /* Virtual handler */
 void TIM6_ISR(void)
 {
-  if (instances[5])
+  if (instances[5] != NULL)
     instances[5]->handler(instances[5]);
 }
 #endif
@@ -570,7 +570,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   sysResetDisable(entry->reset);
 
   timer->channel = config->channel;
-  timer->handler = 0;
+  timer->handler = NULL;
   timer->irq = entry->irq;
   timer->reg = entry->reg;
   timer->resolution = timer->channel == TIM2 ? 32 : 16;
@@ -586,6 +586,6 @@ static void tmrDeinit(void *object)
       findDescriptor(timer->channel);
 
   sysClockDisable(entry->clock);
-  instances[timer->channel] = 0;
+  instances[timer->channel] = NULL;
 }
 #endif

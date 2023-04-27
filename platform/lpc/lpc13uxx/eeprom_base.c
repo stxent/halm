@@ -13,7 +13,7 @@ static enum Result eepromInit(void *, const void *);
 const struct EntityClass * const EepromBase = &(const struct EntityClass){
     .size = sizeof(struct EepromBase),
     .init = eepromInit,
-    .deinit = 0 /* Default destructor */
+    .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *object,

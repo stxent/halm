@@ -22,7 +22,7 @@ void spiConfigPins(const struct SpiBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(spiPins,
           pinArray[index], config->channel);
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 

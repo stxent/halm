@@ -99,14 +99,14 @@ static void interruptHandler(void *object, enum Result res)
     channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
   }
 
-  if (channel->callback)
+  if (channel->callback != NULL)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct PdmaCircularConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->number > 0);
 
   const struct PdmaBaseConfig baseConfig = {
@@ -121,12 +121,12 @@ static enum Result channelInit(void *object, const void *configBase)
     return res;
 
   channel->list = memalign(4, sizeof(struct PdmaEntry) * config->number);
-  if (!channel->list)
+  if (channel->list == NULL)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = 0;
+  channel->callback = NULL;
   channel->capacity = config->number;
   channel->queued = 0;
   channel->state = STATE_IDLE;
@@ -287,7 +287,7 @@ static void channelAppend(void *object, void *destination, const void *source,
 {
   struct PdmaCircular * const channel = object;
 
-  assert(destination != 0 && source != 0);
+  assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= PDMA_MAX_TRANSFER_SIZE);
   assert(channel->queued < channel->capacity);
   assert(channel->state != STATE_BUSY);
@@ -296,7 +296,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     channel->queued = 0;
 
   struct PdmaEntry * const current = channel->list + channel->queued;
-  struct PdmaEntry *previous = 0;
+  struct PdmaEntry *previous = NULL;
 
   if (channel->queued)
     previous = channel->list + (channel->queued - 1);
@@ -319,7 +319,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     current->next = DSCT_NEXT_ADDRESS_TO_NEXT((uintptr_t)channel->list);
   }
 
-  if (previous)
+  if (previous != NULL)
   {
     if (channel->silent)
       previous->control |= DSCT_CTL_TBINTDIS;

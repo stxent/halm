@@ -171,7 +171,7 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
 
   uint32_t buffer = LPC_SC->SCS | SCS_OSCEN;
@@ -221,7 +221,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   if (!config->multiplier || !config->divisor)
     return E_VALUE;
@@ -326,7 +326,7 @@ static enum Result usbPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   if (!config->multiplier || !config->divisor)
     return E_VALUE;
@@ -384,13 +384,13 @@ static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->divisor >= 1 && config->divisor <= 16);
   assert(config->source != CLOCK_PLL);
 
   const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
       config->pin, 0);
-  assert(pinEntry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(config->pin);
 
@@ -477,7 +477,7 @@ static enum Result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   flashLatencyReset();
 
@@ -565,7 +565,7 @@ static enum Result usbClockEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->source == CLOCK_PLL || config->source == CLOCK_USB_PLL);
 
   switch (config->source)

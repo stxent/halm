@@ -7,6 +7,7 @@
 #include <halm/pin.h>
 #include <halm/platform/lpc/gen_3/pin_defs.h>
 #include <assert.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcControlReg(uint8_t, uint8_t);
 static void commonPinInit(struct Pin);
@@ -63,7 +64,7 @@ struct Pin pinInit(PinNumber id)
 /*----------------------------------------------------------------------------*/
 void pinInput(struct Pin pin)
 {
-  if (!pin.reg)
+  if (pin.reg == NULL)
     return;
 
   commonPinInit(pin);
@@ -72,7 +73,7 @@ void pinInput(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
 {
-  if (!pin.reg)
+  if (pin.reg == NULL)
     return;
 
   commonPinInit(pin);
@@ -82,7 +83,7 @@ void pinOutput(struct Pin pin, bool value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
-  if (!pin.reg)
+  if (pin.reg == NULL)
     return;
 
   volatile uint32_t * const reg = pin.reg;
@@ -117,7 +118,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum PinPull pull)
 {
-  if (!pin.reg || isI2CPin(pin))
+  if (pin.reg == NULL || isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = pin.reg;
@@ -144,7 +145,7 @@ void pinSetPull(struct Pin pin, enum PinPull pull)
 void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   /* Slew rate control is available only for I2C pins */
-  if (!pin.reg || !isI2CPin(pin))
+  if (pin.reg == NULL || !isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.port, pin.number);
@@ -160,7 +161,7 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum PinType type)
 {
-  if (!pin.reg || isI2CPin(pin))
+  if (pin.reg == NULL || isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = pin.reg;

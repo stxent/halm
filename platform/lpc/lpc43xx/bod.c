@@ -44,14 +44,14 @@ static void interruptHandler(void *object)
 static enum Result bodInit(void *object, const void *configBase)
 {
   const struct BodConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->eventLevel <= BOD_EVENT_3V05);
   assert(config->resetLevel <= BOD_RESET_2V2);
 
   struct Bod * const bod = object;
   uint32_t creg = LPC_CREG->CREG0 & ~(CREG0_BODLVL1_MASK | CREG0_BODLVL2_MASK);
 
-  bod->callback = 0;
+  bod->callback = NULL;
   bod->enabled = false;
 
   creg |= CREG0_BODLVL1(config->eventLevel);

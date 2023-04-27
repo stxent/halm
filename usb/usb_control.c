@@ -398,11 +398,11 @@ static enum Result handleStringRequest(struct UsbControl *control,
   const struct UsbString * const entry = findStringByIndex(control,
       descriptorIndex);
 
-  if (entry)
+  if (entry != NULL)
   {
     struct UsbDescriptor * const header = response;
 
-    assert((entry->functor(entry->argument, langid, header, 0),
+    assert((entry->functor(entry->argument, langid, header, NULL),
         header->length <= maxResponseLength));
     (void)maxResponseLength;
 
@@ -429,7 +429,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
   struct UsbSetupPacket * const packet = &control->context.packet;
   bool ready = false;
 
-  assert(control->driver);
+  assert(control->driver != NULL);
 
   if (status == USB_REQUEST_CANCELLED)
     return;
@@ -471,7 +471,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
         control,
         packet,
         control->context.payload,
-        (out ? 0 : &length),
+        (out ? NULL : &length),
         (out ? 0 : sizeof(control->context.payload))
     );
 
@@ -511,7 +511,7 @@ static const struct UsbString *findStringByIndex(struct UsbControl *control,
 {
   StringListNode *current = stringListFront(&control->strings);
 
-  while (current)
+  while (current != NULL)
   {
     const struct UsbString * const entry = stringListData(current);
 
@@ -521,7 +521,7 @@ static const struct UsbString *findStringByIndex(struct UsbControl *control,
     current = stringListNext(current);
   }
 
-  return 0;
+  return NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -583,8 +583,8 @@ static bool usbStringComparator(const void *a, void *b)
 /*----------------------------------------------------------------------------*/
 enum Result usbControlBindDriver(struct UsbControl *control, void *driver)
 {
-  assert(driver);
-  assert(!control->driver);
+  assert(driver != NULL);
+  assert(control->driver == NULL);
 
   control->driver = driver;
   return E_OK;
@@ -592,12 +592,12 @@ enum Result usbControlBindDriver(struct UsbControl *control, void *driver)
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control)
 {
-  control->driver = 0;
+  control->driver = NULL;
 }
 /*----------------------------------------------------------------------------*/
 void usbControlNotify(struct UsbControl *control, unsigned int event)
 {
-  assert(control->driver);
+  assert(control->driver != NULL);
 
   if (event == USB_DEVICE_EVENT_RESET)
     resetDevice(control);
@@ -619,19 +619,20 @@ UsbStringIndex usbControlStringAppend(struct UsbControl *control,
       || (string.index == 0 && stringListEmpty(&control->strings)));
 
   /* String must be unique */
-  assert(!stringListFindIf(&control->strings, &string, usbStringComparator));
+  assert(stringListFindIf(&control->strings, &string,
+      usbStringComparator) != NULL);
 
   if (string.index == 0)
   {
     UsbStringIndex index = 0;
 
     /* Find free index */
-    while (findStringByIndex(control, index))
+    while (findStringByIndex(control, index) != NULL)
       ++index;
 
     string.index = index;
   }
-  else if (findStringByIndex(control, string.index))
+  else if (findStringByIndex(control, string.index) != NULL)
   {
     /* Index already exists */
     return -1;
@@ -654,7 +655,7 @@ UsbStringIndex usbControlStringFind(struct UsbControl *control,
 #ifdef CONFIG_USB_DEVICE_STRINGS
   StringListNode *current = stringListFront(&control->strings);
 
-  while (current)
+  while (current != NULL)
   {
     const struct UsbString * const entry = stringListData(current);
 
@@ -695,13 +696,13 @@ static enum Result controlInit(void *object, const void *configBase)
   /* Create control endpoints */
   control->ep0in = usbDevCreateEndpoint(control->owner,
       USB_EP_DIRECTION_IN | USB_EP_ADDRESS(0));
-  if (!control->ep0in)
+  if (control->ep0in == NULL)
     return E_MEMORY;
   control->ep0out = usbDevCreateEndpoint(control->owner, USB_EP_ADDRESS(0));
-  if (!control->ep0out)
+  if (control->ep0out == NULL)
     return E_MEMORY;
 
-  control->driver = 0;
+  control->driver = NULL;
   control->current = 0;
   control->vid = config->vid;
   control->pid = config->pid;

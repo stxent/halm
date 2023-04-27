@@ -211,18 +211,18 @@ struct AdcPin adcConfigPin(const struct AdcBase *unit, PinNumber key)
   const struct PinGroupEntry * const group = pinGroupFind(adcPinGroups,
       key, unit->channel);
 
-  if (group)
+  if (group != NULL)
   {
     return configGroupPin(group, key);
   }
   else
   {
     /* Inputs are connected to both peripherals on parts without ADCHS */
-    const struct PinEntry *entry = 0;
+    const struct PinEntry *entry = NULL;
 
     for (unsigned int part = 0; !entry && part < 2; ++part)
       entry = pinFind(adcPins, key, part);
-    assert(entry);
+    assert(entry != NULL);
 
     return configRegularPin(entry, key);
   }
@@ -256,7 +256,7 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(config->frequency <= MAX_FREQUENCY);
   assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
 
-  if (!config->shared && !adcSetInstance(config->channel, 0, interface))
+  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;
 
   const struct AdcBlockDescriptor * const entry =
@@ -271,7 +271,7 @@ static enum Result adcInit(void *object, const void *configBase)
   }
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -290,6 +290,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, 0);
+  adcSetInstance(interface->channel, interface, NULL);
 }
 #endif

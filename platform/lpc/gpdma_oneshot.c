@@ -61,14 +61,14 @@ static void interruptHandler(void *object, enum Result res)
   gpDmaResetInstance(channel->base.number);
   channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
-  if (channel->callback)
+  if (channel->callback != NULL)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaOneShotConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GpDmaBaseConfig baseConfig = {
       .event = config->event,
@@ -84,7 +84,7 @@ static enum Result channelInit(void *object, const void *configBase)
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = 0;
+  channel->callback = NULL;
   channel->control = 0;
   channel->state = STATE_IDLE;
 
@@ -93,7 +93,7 @@ static enum Result channelInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  if (GpDmaBase->deinit)
+  if (GpDmaBase->deinit != NULL)
     GpDmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
@@ -202,7 +202,7 @@ static void channelAppend(void *object, void *destination, const void *source,
 {
   struct GpDmaOneShot * const channel = object;
 
-  assert(destination != 0 && source != 0);
+  assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= GPDMA_MAX_TRANSFER_SIZE);
   assert(channel->state != STATE_BUSY && channel->state != STATE_READY);
 

@@ -182,7 +182,7 @@ static void standardInterruptHandler(void *object)
   {
     reg->IMSC = 0;
 
-    if (interface->callback)
+    if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -315,7 +315,7 @@ static void searchInterruptHandler(void *object)
   {
     reg->IMSC = 0;
 
-    if (interface->callback)
+    if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -353,7 +353,7 @@ static void startSearch(struct OneWireSsp *interface)
 static enum Result oneWireInit(void *object, const void *configBase)
 {
   const struct OneWireSspConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct SspBaseConfig baseConfig = {
       .channel = config->channel,
@@ -376,7 +376,7 @@ static enum Result oneWireInit(void *object, const void *configBase)
 
   interface->address = 0;
   interface->blocking = true;
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->state = STATE_IDLE;
 
 #ifdef CONFIG_PLATFORM_LPC_ONE_WIRE_SSP_SEARCH

@@ -247,7 +247,7 @@ static void resetDevice(struct UsbDevice *device)
 static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
@@ -274,11 +274,13 @@ static enum Result devInit(void *object, const void *configBase)
   device->configured = false;
   device->enabled = false;
   device->suspended = false;
-  memset(device->endpoints, 0, sizeof(device->endpoints));
+
+  for (size_t index = 0; index < ARRAY_SIZE(device->endpoints); ++index)
+    device->endpoints[index] = NULL;
 
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
-  if (!device->control)
+  if (device->control == NULL)
     return E_ERROR;
 
   STM_USB_Type * const reg = device->base.reg;
@@ -313,10 +315,10 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   assert(index < ARRAY_SIZE(device->endpoints));
 
-  struct UsbEndpoint *ep = 0;
+  struct UsbEndpoint *ep = NULL;
   const IrqState state = irqSave();
 
-  if (!device->endpoints[index])
+  if (device->endpoints[index] == NULL)
   {
     /* Initialization of endpoint is only available before the driver starts */
     assert(!device->enabled);
@@ -873,7 +875,7 @@ static enum Result epInit(void *object, const void *configBase)
 
   if (pointerQueueInit(&ep->requests, size))
   {
-    ep->subclass = 0;
+    ep->subclass = NULL;
     ep->device = config->parent;
     ep->address = config->address;
 
@@ -893,7 +895,7 @@ static void epDeinit(void *object)
   epClear(ep);
 
   const IrqState state = irqSave();
-  device->endpoints[EP_TO_INDEX(ep->address)] = 0;
+  device->endpoints[EP_TO_INDEX(ep->address)] = NULL;
   irqRestore(state);
 
   assert(pointerQueueEmpty(&ep->requests));
@@ -953,8 +955,8 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
   struct UsbEndpoint * const ep = object;
 
-  assert(request);
-  assert(request->callback);
+  assert(request != NULL);
+  assert(request->callback != NULL);
 
   return ep->subclass->enqueue(ep, request);
 }

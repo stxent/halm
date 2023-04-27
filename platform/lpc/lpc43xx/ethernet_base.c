@@ -175,11 +175,11 @@ const struct PinEntry ethernetPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct EthernetBase *instance = 0;
+static struct EthernetBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct EthernetBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -256,7 +256,7 @@ void ethConfigPins(struct EthernetBase *interface,
     {
       const struct PinEntry * const pinEntry = pinFind(ethernetPins,
           pinArray[index], (uint8_t)index);
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -288,7 +288,7 @@ static enum Result ethInit(void *object, const void *configBase)
   if (!setInstance(interface))
     return E_BUSY;
 
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = ETHERNET_IRQ;
   interface->reg = LPC_ETHERNET;
 
@@ -315,5 +315,5 @@ static enum Result ethInit(void *object, const void *configBase)
 static void ethDeinit(void *object __attribute__((unused)))
 {
   sysClockDisable(CLK_M4_ETHERNET);
-  instance = 0;
+  instance = NULL;
 }

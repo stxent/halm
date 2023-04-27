@@ -102,7 +102,7 @@ static enum Result genericTimerInit(void *object,
 
   timer->base.handler = interruptHandler;
   timer->base.mask = 1 << timer->event;
-  timer->callback = 0;
+  timer->callback = NULL;
 
   /* Disable the timer before any configuration is done */
   reg->CTRL_PART[part] = CTRL_HALT;
@@ -157,7 +157,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctTimerConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->part != SCT_UNIFIED);
 
   return genericTimerInit(object, config);
@@ -166,7 +166,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 static enum Result tmrInitUnified(void *object, const void *configBase)
 {
   const struct SctTimerConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->part == SCT_UNIFIED);
 
   return genericTimerInit(object, config);
@@ -241,7 +241,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  if (callback)
+  if (timer->callback != NULL)
   {
     /* Clear pending requests */
     reg->EVFLAG = eventMask;

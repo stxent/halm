@@ -20,7 +20,7 @@ static void wdtReload(void *);
 const struct WatchdogClass * const Wdt = &(const struct WatchdogClass){
     .size = sizeof(struct Wdt),
     .init = wdtInit,
-    .deinit = 0, /* Default destructor */
+    .deinit = NULL, /* Default destructor */
 
     .fired = wdtFired,
     .setCallback = wdtSetCallback,
@@ -34,24 +34,24 @@ static void interruptHandler(void *object)
   /* Clear interrupt flags */
   NM_WDT->CTL = NM_WDT->CTL;
 
-  if (timer->callback)
+  if (timer->callback != NULL)
     timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *object, const void *configBase)
 {
   const struct WdtConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct Wdt * const timer = object;
 
   /* Call base class constructor */
-  const enum Result res = WdtBase->init(timer, 0);
+  const enum Result res = WdtBase->init(timer, NULL);
   if (res != E_OK)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = 0;
+  timer->callback = NULL;
   timer->fired = (NM_WDT->CTL & CTL_RSTF) != 0;
 
   const uint32_t clock = wdtGetClock(object);
@@ -100,7 +100,7 @@ static void wdtSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  if (timer->callback)
+  if (timer->callback != NULL)
     ctl |= CTL_INTEN;
 
   sysUnlockReg();

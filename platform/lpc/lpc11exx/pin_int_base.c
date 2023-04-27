@@ -72,7 +72,7 @@ static int setInstance(struct PinIntBase *interrupt)
   /* Find free interrupt */
   for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
   {
-    if (!instances[index])
+    if (instances[index] == NULL)
     {
       instances[index] = interrupt;
       return (int)index;
@@ -93,7 +93,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
     return E_BUSY;
 
   interrupt->channel = (uint8_t)channel;
-  interrupt->handler = 0;
+  interrupt->handler = NULL;
   interrupt->irq = PIN_INT0_IRQ + interrupt->channel;
 
   const unsigned int index = config->port * 24 + config->number;
@@ -117,6 +117,6 @@ static enum Result pinIntInit(void *object, const void *configBase)
 static void pinIntDeinit(void *object)
 {
   const struct PinIntBase * const interrupt = object;
-  instances[interrupt->channel] = 0;
+  instances[interrupt->channel] = NULL;
 }
 #endif

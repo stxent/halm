@@ -72,7 +72,7 @@ static void cleanup(struct Udp *interface, enum Cleanup step)
   switch (step)
   {
     case CLEANUP_ALL:
-      uv_handle_set_data((uv_handle_t *)interface->listener, 0);
+      uv_handle_set_data((uv_handle_t *)interface->listener, NULL);
       uv_close((uv_handle_t *)interface->listener, onCloseCallback);
       /* Falls through */
     case CLEANUP_NETWORK:
@@ -110,7 +110,7 @@ static void onInterfaceCallback(uv_poll_t *handle,
     byteQueuePushArray(&interface->rxQueue, buffer, (size_t)length);
   pthread_mutex_unlock(&interface->rxQueueLock);
 
-  if (interface->callback)
+  if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -185,13 +185,13 @@ static enum Result streamInit(void *object, const void *configBase)
   struct Udp * const interface = object;
   enum Result res;
 
-  interface->callback = 0;
+  interface->callback = NULL;
 
   if (pthread_mutex_init(&interface->rxQueueLock, 0))
     return E_ERROR;
 
   interface->listener = malloc(sizeof(uv_poll_t));
-  if (!interface->listener)
+  if (interface->listener == NULL)
   {
     cleanup(interface, CLEANUP_MUTEX);
     return E_MEMORY;

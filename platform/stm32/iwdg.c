@@ -16,22 +16,22 @@ static void wdtReload(void *);
 const struct WatchdogClass * const Iwdg = &(const struct WatchdogClass){
     .size = sizeof(struct Iwdg),
     .init = wdtInit,
-    .deinit = 0, /* Default destructor */
+    .deinit = NULL, /* Default destructor */
 
     .fired = wdtFired,
-    .setCallback = 0,
+    .setCallback = NULL,
     .reload = wdtReload
 };
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *object, const void *configBase)
 {
   const struct IwdgConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct Iwdg * const timer = object;
 
   /* Call base class constructor */
-  const enum Result res = IwdgBase->init(timer, 0);
+  const enum Result res = IwdgBase->init(timer, NULL);
   if (res != E_OK)
     return res;
 

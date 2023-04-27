@@ -225,7 +225,7 @@ static void resetDevice(struct UsbDevice *device)
 static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
@@ -249,11 +249,13 @@ static enum Result devInit(void *object, const void *configBase)
   device->base.handler = interruptHandler;
   device->enabled = false;
   device->position = 0; /* Will be initialized during device reset */
-  memset(device->endpoints, 0, sizeof(device->endpoints));
+
+  for (size_t index = 0; index < ARRAY_SIZE(device->endpoints); ++index)
+    device->endpoints[index] = NULL;
 
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
-  if (!device->control)
+  if (device->control == NULL)
     return E_ERROR;
 
   /* Configure interrupts and reset system variables */
@@ -284,10 +286,10 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   assert(index < ARRAY_SIZE(device->endpoints));
 
-  struct UsbEndpoint *ep = 0;
+  struct UsbEndpoint *ep = NULL;
   const IrqState state = irqSave();
 
-  if (!device->endpoints[index])
+  if (device->endpoints[index] == NULL)
   {
     /* Initialization of endpoint is only available before the driver starts */
     assert(!device->enabled);
@@ -537,7 +539,7 @@ static void epDeinit(void *object)
   epClear(ep);
 
   const IrqState state = irqSave();
-  device->endpoints[index] = 0;
+  device->endpoints[index] = NULL;
   irqRestore(state);
 
   assert(pointerQueueEmpty(&ep->requests));
@@ -596,8 +598,8 @@ static void epEnable(void *object, uint8_t type __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request);
-  assert(request->callback);
+  assert(request != NULL);
+  assert(request->callback != NULL);
 
   struct SbUsbEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;

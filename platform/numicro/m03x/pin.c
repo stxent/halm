@@ -39,7 +39,7 @@ struct Pin pinInit(PinNumber id)
   if (id && pin.port < PORT_USB)
     pin.reg = (void *)&NM_GPIO_PDIO->GPIO[pin.port].PDIO[pin.number];
   else
-    pin.reg = 0;
+    pin.reg = NULL;
 
   return pin;
 }

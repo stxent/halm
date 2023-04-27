@@ -12,16 +12,16 @@ extern const struct PinEntry eadcPins[];
 /*----------------------------------------------------------------------------*/
 struct AdcPin adcConfigPin(const struct EadcBase *interface, PinNumber key)
 {
-  const struct PinEntry * const entry = pinFind(eadcPins, key,
+  const struct PinEntry * const pinEntry = pinFind(eadcPins, key,
       interface->channel);
-  assert(entry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
   pinInput(pin);
   pinSetFunction(pin, PIN_ANALOG);
 
-  return (struct AdcPin){entry->value};
+  return (struct AdcPin){pinEntry->value};
 }
 /*----------------------------------------------------------------------------*/
 void adcReleasePin(struct AdcPin adcPin __attribute__((unused)))
@@ -57,13 +57,13 @@ uint32_t adcSetupPins(struct EadcBase *interface, const PinNumber *pins,
 /*----------------------------------------------------------------------------*/
 struct Pin adcSetupTriggerPin(uint8_t channel, PinNumber key)
 {
-  const struct PinEntry * const entry = pinFind(eadcPins, key, channel);
-  assert(entry);
+  const struct PinEntry * const pinEntry = pinFind(eadcPins, key, channel);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
   pinInput(pin);
-  pinSetFunction(pin, entry->value);
+  pinSetFunction(pin, pinEntry->value);
 
   return pin;
 }

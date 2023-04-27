@@ -22,7 +22,7 @@ void uartConfigPins(const struct UartBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(uartPins,
           pinArray[index], CHANNEL_INDEX(config->channel, index));
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 

@@ -13,7 +13,7 @@ static void busWrite(void *, uint32_t);
 const struct GpioBusClass * const FastGpioBus = &(const struct GpioBusClass){
     .size = sizeof(struct FastGpioBus),
     .init = busInit,
-    .deinit = 0, /* Default destructor */
+    .deinit = NULL, /* Default destructor */
 
     .read = busRead,
     .write = busWrite

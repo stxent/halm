@@ -118,14 +118,14 @@ static void interruptHandler(void *object, enum Result res)
     event = true;
   }
 
-  if (event && channel->callback)
+  if (event && channel->callback != NULL)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct PdmaListConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->number > 0);
 
   const struct PdmaBaseConfig baseConfig = {
@@ -140,12 +140,12 @@ static enum Result channelInit(void *object, const void *configBase)
     return res;
 
   channel->list = memalign(4, sizeof(struct PdmaEntry) * config->number);
-  if (!channel->list)
+  if (channel->list == NULL)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = 0;
+  channel->callback = NULL;
   channel->capacity = config->number;
   channel->index = 0;
   channel->queued = 0;
@@ -298,7 +298,7 @@ static void channelAppend(void *object, void *destination, const void *source,
 {
   struct PdmaList * const channel = object;
 
-  assert(destination != 0 && source != 0);
+  assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= PDMA_MAX_TRANSFER_SIZE);
   assert(channel->queued < channel->capacity);
 
@@ -309,7 +309,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   }
 
   struct PdmaEntry * const current = channel->list + channel->index;
-  struct PdmaEntry *previous = 0;
+  struct PdmaEntry *previous = NULL;
 
   if (channel->queued)
   {
@@ -327,7 +327,7 @@ static void channelAppend(void *object, void *destination, const void *source,
       | DSCT_CTL_OPMODE(OPMODE_BASIC) | DSCT_CTL_TXCNT(size - 1);
   current->next = 0;
 
-  if (previous)
+  if (previous != NULL)
   {
     /* Change mode of the previous element from basic to scatter-gather */
     previous->control &= ~DSCT_CTL_OPMODE_MASK;

@@ -96,7 +96,7 @@ static IrqNumber eventToIrq(enum ExtiEvent event)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct ExtiBase *object)
 {
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -130,7 +130,7 @@ static bool isEventGroupUsed(enum ExtiEvent event)
   else if (event >= EXTI_PIN4 && event <= EXTI_PIN15)
     return isGroupUsed(EXTI_PIN4, EXTI_PIN15);
   else
-    return instances[event] != 0;
+    return instances[event] != NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -193,7 +193,7 @@ static enum Result extiInit(void *object, const void *configBase)
     return E_BUSY;
 
   interrupt->channel = config->channel;
-  interrupt->handler = 0;
+  interrupt->handler = NULL;
 
   if (!sysClockStatus(CLK_SYSCFG))
   {
@@ -227,7 +227,7 @@ static void extiDeinit(void *object)
 {
   const struct ExtiBase * const interrupt = object;
 
-  instances[interrupt->channel] = 0;
+  instances[interrupt->channel] = NULL;
   disableInterrupt(interrupt->channel);
 }
 #endif

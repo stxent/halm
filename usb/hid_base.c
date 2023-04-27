@@ -53,7 +53,7 @@ static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     interfaceDescriptor,
     hidDescriptor,
     endpointDescriptor,
-    0
+    NULL
 };
 /*----------------------------------------------------------------------------*/
 static void deviceDescriptor(const void *object __attribute__((unused)),
@@ -62,7 +62,7 @@ static void deviceDescriptor(const void *object __attribute__((unused)),
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbDeviceDescriptor * const descriptor = payload;
 
@@ -80,7 +80,7 @@ static void configDescriptor(const void *object __attribute__((unused)),
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbConfigurationDescriptor * const descriptor = payload;
 
@@ -102,7 +102,7 @@ static void interfaceDescriptor(const void *object,
   header->length = sizeof(struct UsbInterfaceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbInterfaceDescriptor * const descriptor = payload;
 
@@ -122,7 +122,7 @@ static void hidDescriptor(const void *object,
   header->length = sizeof(struct SingleHidDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_HID;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct SingleHidDescriptor * const descriptor = payload;
 
@@ -142,7 +142,7 @@ static void endpointDescriptor(const void *object,
   header->length = sizeof(struct UsbEndpointDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbEndpointDescriptor * const descriptor = payload;
 

@@ -54,11 +54,11 @@ const struct InterfaceClass * const DacDma = &(const struct InterfaceClass){
     .init = dacInit,
     .deinit = dacDeinit,
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = dacGetParam,
     .setParam = dacSetParam,
-    .read = 0,
-    .write = 0
+    .read = NULL,
+    .write = NULL
 };
 
 const struct StreamClass * const DacDmaStream = &(const struct StreamClass){
@@ -128,7 +128,7 @@ static bool dmaSetup(struct DacDma *interface,
 
   interface->dma = init(GpDmaList, &dmaConfig);
 
-  if (interface->dma)
+  if (interface->dma != NULL)
   {
     dmaConfigure(interface->dma, &dmaSettings);
     dmaSetCallback(interface->dma, dmaHandler, interface);
@@ -157,7 +157,7 @@ static void setConversionRate(struct DacDma *interface, uint32_t rate)
 static enum Result dacInit(void *object, const void *configBase)
 {
   const struct DacDmaConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->rate);
 
   const struct DacBaseConfig baseConfig = {
@@ -176,7 +176,7 @@ static enum Result dacInit(void *object, const void *configBase)
     return res;
 
   interface->stream = init(DacDmaStream, &streamConfig);
-  if (!interface->stream)
+  if (interface->stream == NULL)
     return E_ERROR;
 
   if (!dmaSetup(interface, config))
@@ -266,7 +266,7 @@ static enum Result dacStreamEnqueue(void *object,
   struct DacDmaStream * const stream = object;
   struct DacDma * const interface = stream->parent;
 
-  assert(request && request->callback);
+  assert(request != NULL && request->callback != NULL);
   /* Ensure the buffer has enough space and is aligned with the sample size */
   assert(request->capacity / sizeof(uint16_t) >= 2);
   assert(request->capacity % sizeof(uint16_t) == 0);

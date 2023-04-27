@@ -11,7 +11,7 @@
 void fastGpioBusConfigPins(struct FastGpioBus *bus,
     const struct FastGpioBusConfig *config)
 {
-  assert(config);
+  assert(config != NULL);
 
   size_t number = 0;
 

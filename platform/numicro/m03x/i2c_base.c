@@ -270,7 +270,7 @@ static bool setInstance(uint8_t channel, struct I2CBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -316,7 +316,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   sysResetBlock(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -336,6 +336,6 @@ static void i2cDeinit(void *object)
       &i2cBlockEntries[channelToIndex(interface->channel)];
 
   sysClockDisable(entry->branch);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

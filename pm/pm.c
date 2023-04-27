@@ -41,7 +41,7 @@ static const struct EntityClass * const PowerManager =
     .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
-static struct PowerManager *pmInstance = 0;
+static struct PowerManager *pmInstance = NULL;
 /*----------------------------------------------------------------------------*/
 static bool entryComparator(const void *element, void *argument)
 {
@@ -51,12 +51,12 @@ static bool entryComparator(const void *element, void *argument)
 /*----------------------------------------------------------------------------*/
 static void notifyObservers(enum PmState state)
 {
-  if (!pmInstance)
+  if (pmInstance == NULL)
     return;
 
   PmoListNode *current = pmoListFront(&pmInstance->observers);
 
-  while (current)
+  while (current != NULL)
   {
     const struct PowerManagerObserver * const entry = pmoListData(current);
 
@@ -88,9 +88,9 @@ void pmChangeState(enum PmState state)
 /*----------------------------------------------------------------------------*/
 enum Result pmRegister(void (*callback)(void *, enum PmState), void *object)
 {
-  if (!pmInstance)
-    pmInstance = init(PowerManager, 0);
-  if (!pmInstance)
+  if (pmInstance == NULL)
+    pmInstance = init(PowerManager, NULL);
+  if (pmInstance == NULL)
     return E_ERROR;
 
   return pmoListPushFront(&pmInstance->observers,
@@ -99,9 +99,9 @@ enum Result pmRegister(void (*callback)(void *, enum PmState), void *object)
 /*----------------------------------------------------------------------------*/
 void pmUnregister(const void *object)
 {
-  assert(pmInstance);
+  assert(pmInstance != NULL);
   assert(pmoListFindIf(&pmInstance->observers,
-      (void *)object, entryComparator));
+      (void *)object, entryComparator) != NULL);
 
   pmoListEraseIf(&pmInstance->observers, (void *)object, entryComparator);
 }

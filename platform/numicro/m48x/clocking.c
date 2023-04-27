@@ -888,7 +888,7 @@ static void configCrystalPin(PinNumber key)
 {
   const struct PinGroupEntry * const group = pinGroupFind(crystalPinGroups,
       key, 0);
-  assert(group);
+  assert(group != NULL);
 
   const struct Pin pin = pinInit(key);
   assert(pinValid(pin));
@@ -1070,7 +1070,7 @@ static enum Result clockOutputEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   uint32_t divisor = 1;
 
@@ -1084,7 +1084,7 @@ static enum Result clockOutputEnable(const void *clockBase
 
   const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
       config->pin, 0);
-  assert(pinEntry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(config->pin);
 
@@ -1116,7 +1116,7 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->frequency >= 4000000 && config->frequency <= 24000000);
 
   const uint32_t gain = calcExtCrystalGain(config->frequency);
@@ -1270,7 +1270,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->divisor && config->multiplier);
   assert(config->source == CLOCK_INTERNAL || config->source == CLOCK_EXTERNAL);
 
@@ -1342,7 +1342,7 @@ static enum Result apbBranchEnable(const void *clockBase,
     const void *configBase)
 {
   const struct ApbClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct ApbClockClass * const clock = clockBase;
   uint32_t divisor = 0;
@@ -1371,7 +1371,7 @@ static enum Result dividedBranchEnable(const void *clockBase,
     const void *configBase)
 {
   const struct DividedClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->divisor);
 
   const struct DividedClockClass * const clock = clockBase;
@@ -1408,7 +1408,7 @@ static enum Result extendedBranchEnable(const void *clockBase,
     const void *configBase)
 {
   const struct ExtendedClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->divisor);
 
   const struct ExtendedClockClass * const clock = clockBase;
@@ -1453,7 +1453,7 @@ static enum Result genericBranchEnable(const void *clockBase,
     const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GenericClockClass * const clock = clockBase;
 

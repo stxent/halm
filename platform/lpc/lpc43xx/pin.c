@@ -6,6 +6,7 @@
 
 #include <halm/pin.h>
 #include <halm/platform/lpc/lpc43xx/pin_defs.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(channel, offset) (((offset) << 3) | (channel))
 #define UNPACK_CHANNEL(value)       ((value) & 0x07)
@@ -367,7 +368,7 @@ struct Pin pinInit(PinNumber id)
 
   const struct PinGroupEntry * const group = pinGroupFind(gpioPins, id, 0);
 
-  if (group)
+  if (group != NULL)
   {
     struct PinDescriptor begin = {
         .number = PIN_TO_OFFSET(group->begin),
@@ -439,7 +440,7 @@ void pinOutput(struct Pin pin, bool value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
-  if (!pin.reg)
+  if (pin.reg == NULL)
     return;
 
   volatile uint32_t * const reg = pin.reg;
@@ -472,7 +473,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum PinPull pull)
 {
-  if (!pin.reg)
+  if (pin.reg == NULL)
     return;
 
   volatile uint32_t * const reg = pin.reg;
@@ -510,7 +511,7 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
     return;
   }
 
-  if (!pin.reg)
+  if (pin.reg == NULL)
     return;
 
   volatile uint32_t * const reg = pin.reg;

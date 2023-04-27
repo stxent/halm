@@ -65,14 +65,14 @@ static void interruptHandler(void *object, enum Result res)
   dmaResetInstance(stream->base.number);
   stream->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
-  if (stream->callback)
+  if (stream->callback != NULL)
     stream->callback(stream->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
 {
   const struct DmaOneShotConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct DmaBaseConfig baseConfig = {
       .type = config->type,
@@ -88,7 +88,7 @@ static enum Result streamInit(void *object, const void *configBase)
   {
     stream->base.config |= CCR_TCIE | CCR_TEIE;
     stream->base.handler = interruptHandler;
-    stream->callback = 0;
+    stream->callback = NULL;
     stream->state = STATE_IDLE;
   }
 
@@ -230,7 +230,7 @@ static void streamAppend(void *object, void *destination, const void *source,
 {
   struct DmaOneShot * const stream = object;
 
-  assert(destination != 0 && source != 0);
+  assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= DMA_MAX_TRANSFER);
   assert(stream->state != STATE_BUSY && stream->state != STATE_READY);
 

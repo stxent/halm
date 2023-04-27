@@ -89,7 +89,7 @@ static void enableInterrupt(const struct PinInt *interrupt)
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  assert(handlers[channel]);
+  assert(handlers[channel] != NULL);
 
   struct PinInt ** const interruptArray = handlers[channel]->interrupts;
   uint32_t state =
@@ -121,14 +121,13 @@ void EINT3_ISR(void)
 static enum Result pinIntHandlerAttach(uint8_t channel,
     uint8_t number, struct PinInt *interrupt)
 {
-  if (!handlers[channel])
-    handlers[channel] = init(PinIntHandler, 0);
+  if (handlers[channel] == NULL)
+    handlers[channel] = init(PinIntHandler, NULL);
 
   struct PinIntHandler * const handler = handlers[channel];
+  assert(handler != NULL);
 
-  assert(handler);
-
-  if (!handler->interrupts[number])
+  if (handler->interrupts[number] == NULL)
   {
     handler->interrupts[number] = interrupt;
     return E_OK;
@@ -141,7 +140,7 @@ static enum Result pinIntHandlerAttach(uint8_t channel,
 static void pinIntHandlerDetach(const struct PinInt *interrupt)
 {
   const unsigned int index = countLeadingZeros32(interrupt->mask);
-  handlers[interrupt->channel]->interrupts[31 - index] = 0;
+  handlers[interrupt->channel]->interrupts[31 - index] = NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -150,7 +149,8 @@ static enum Result pinIntHandlerInit(void *object,
 {
   struct PinIntHandler * const handler = object;
 
-  memset(handler->interrupts, 0, sizeof(handler->interrupts));
+  for (size_t index = 0; index < ARRAY_SIZE(handler->interrupts); ++index)
+    handler->interrupts[index] = NULL;
 
   sysClockControl(CLK_GPIOINT, DEFAULT_DIV);
   irqEnable(EINT3_IRQ);
@@ -161,7 +161,7 @@ static enum Result pinIntHandlerInit(void *object,
 static enum Result pinIntInit(void *object, const void *configBase)
 {
   const struct PinIntConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->event != PIN_LOW && config->event != PIN_HIGH);
 
   const struct Pin input = pinInit(config->pin);
@@ -185,7 +185,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
   pinInput(input);
   pinSetPull(input, config->pull);
 
-  interrupt->callback = 0;
+  interrupt->callback = NULL;
   interrupt->enabled = false;
   interrupt->event = config->event;
   interrupt->mask = 1UL << input.number;
@@ -209,7 +209,7 @@ static void pinIntEnable(void *object)
 
   interrupt->enabled = true;
 
-  if (interrupt->callback)
+  if (interrupt->callback != NULL)
     enableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
@@ -229,7 +229,7 @@ static void pinIntSetCallback(void *object, void (*callback)(void *),
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
 
-  if (interrupt->enabled && callback)
+  if (interrupt->enabled && interrupt->callback != NULL)
     enableInterrupt(interrupt);
   else
     disableInterrupt(interrupt);

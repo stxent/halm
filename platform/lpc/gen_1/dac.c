@@ -26,17 +26,17 @@ const struct InterfaceClass * const Dac = &(const struct InterfaceClass){
     .init = dacInit,
     .deinit = dacDeinit,
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = dacGetParam,
     .setParam = dacSetParam,
-    .read = 0,
+    .read = NULL,
     .write = dacWrite
 };
 /*----------------------------------------------------------------------------*/
 static enum Result dacInit(void *object, const void *configBase)
 {
   const struct DacConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct DacBaseConfig baseConfig = {
       .pin = config->pin

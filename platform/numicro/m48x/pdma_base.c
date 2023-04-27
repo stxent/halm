@@ -18,7 +18,7 @@ static enum Result channelInit(void *, const void *);
 const struct EntityClass * const PdmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
-    .deinit = 0 /* Default destructor */
+    .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 extern unsigned long _sbss;
@@ -34,15 +34,15 @@ const struct PdmaBase *pdmaGetInstance(uint8_t channel)
 void pdmaResetInstance(uint8_t channel)
 {
   assert(channel < ARRAY_SIZE(instances));
-  instances[channel] = 0;
+  instances[channel] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 bool pdmaSetInstance(uint8_t channel, struct PdmaBase *object)
 {
-  assert(object);
+  assert(object != NULL);
   assert(channel < ARRAY_SIZE(instances));
 
-  void *expected = 0;
+  void *expected = NULL;
   return compareExchangePointer(&instances[channel], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
@@ -133,7 +133,7 @@ static enum Result channelInit(void *object, const void *configBase)
   const uint32_t offset = config->channel & 0x3;
 
   channel->reg = NM_PDMA;
-  channel->handler = 0;
+  channel->handler = NULL;
   channel->control = 0;
   channel->number = config->channel;
   channel->mux.mask = ~REQSEL_CH_MASK(offset);

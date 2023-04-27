@@ -131,13 +131,13 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxStream,
   };
 
   interface->rxDma = init(DmaCircular, &rxDmaConfig);
-  if (!interface->rxDma)
+  if (interface->rxDma == NULL)
     return false;
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
   interface->txDma = init(DmaOneShot, &txDmaConfig);
-  if (!interface->txDma)
+  if (interface->txDma == NULL)
     return false;
   dmaConfigure(interface->txDma, &dmaSettings[1]);
   dmaSetCallback(interface->txDma, txDmaHandler, interface);
@@ -193,7 +193,7 @@ static void rxDmaHandler(void *object)
 
   updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
 
-  if (interface->callback)
+  if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -223,7 +223,7 @@ static void serialInterruptHandler(void *object)
 
       updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
 
-      if (interface->callback)
+      if (interface->callback != NULL)
         interface->callback(interface->callbackArgument);
     }
   }
@@ -243,7 +243,7 @@ static void txDmaHandler(void *object)
   else
     event = true;
 
-  if (event && interface->callback)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -282,7 +282,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct UartBaseConfig baseConfig = {
       .rx = config->rx,
@@ -303,11 +303,11 @@ static enum Result serialInit(void *object, const void *configBase)
 
   /* Allocate ring buffer for reception */
   interface->rxBuffer = malloc(config->rxChunk);
-  if (!interface->rxBuffer)
+  if (interface->rxBuffer == NULL)
     return E_MEMORY;
 
   interface->base.handler = serialInterruptHandler;
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->rxBufferSize = config->rxChunk;
   interface->txBufferSize = 0;
 

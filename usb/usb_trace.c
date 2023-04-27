@@ -13,8 +13,8 @@
 /*----------------------------------------------------------------------------*/
 #define CONFIG_TRACE_BUFFER_SIZE 80
 /*----------------------------------------------------------------------------*/
-static struct Interface *traceInterface = 0;
-static struct Timer *traceTimer = 0;
+static struct Interface *traceInterface = NULL;
+static struct Timer *traceTimer = NULL;
 static char traceBuffer[CONFIG_TRACE_BUFFER_SIZE];
 /*----------------------------------------------------------------------------*/
 enum Result usbTraceInit(struct Interface *interface, struct Timer *timer)
@@ -26,19 +26,19 @@ enum Result usbTraceInit(struct Interface *interface, struct Timer *timer)
 /*----------------------------------------------------------------------------*/
 void usbTraceDeinit(void)
 {
-  traceInterface = 0;
-  traceTimer = 0;
+  traceInterface = NULL;
+  traceTimer = NULL;
 }
 /*----------------------------------------------------------------------------*/
 void usbTrace(const char *format, ...)
 {
-  if (!traceInterface)
+  if (traceInterface == NULL)
     return;
 
   va_list arguments;
   int length;
 
-  if (traceTimer)
+  if (traceTimer != NULL)
   {
     const uint32_t timerValue = timerGetValue(traceTimer);
 

@@ -68,7 +68,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct SoftwareTimer64Config * const config = configBase;
   struct SoftwareTimer64 * const timer = object;
 
-  timer->callback = 0;
+  timer->callback = NULL;
   timer->ticks = 0;
   timer->timer = config->timer;
 
@@ -79,7 +79,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *object)
 {
   struct SoftwareTimer64 * const timer = object;
-  timerSetCallback(timer->timer, 0, 0);
+  timerSetCallback(timer->timer, NULL, NULL);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrEnable(void *object)

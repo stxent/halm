@@ -68,7 +68,7 @@ static void dmaHandler(void *object)
   {
     reg->PDMACTL = 0;
 
-    if (interface->callback)
+    if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
   else
@@ -89,11 +89,11 @@ static bool dmaSetup(struct Qspi *interface, uint8_t rxChannel,
   };
 
   interface->rxDma = init(PdmaOneShot, &dmaConfigs[0]);
-  if (!interface->rxDma)
+  if (interface->rxDma == NULL)
     return false;
 
   interface->txDma = init(PdmaOneShot, &dmaConfigs[1]);
-  if (!interface->txDma)
+  if (interface->txDma == NULL)
     return false;
 
   dmaSetCallback(interface->rxDma, dmaHandler, interface);
@@ -248,7 +248,7 @@ static size_t transferData(struct Qspi *interface, const void *txSource,
 static enum Result qspiInit(void *object, const void *configBase)
 {
   const struct QspiConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct QspiBaseConfig baseConfig = {
       .cs = 0,
@@ -269,7 +269,7 @@ static enum Result qspiInit(void *object, const void *configBase)
   if (!dmaSetup(interface, config->dma[0], config->dma[1]))
     return E_ERROR;
 
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->rate = config->rate;
   interface->blocking = true;
 

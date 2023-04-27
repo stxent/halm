@@ -69,7 +69,7 @@ const struct PinEntry hsUsbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UsbBase *instance = 0;
+static struct UsbBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *config)
 {
@@ -83,7 +83,7 @@ static void configPins(const struct UsbBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(hsUsbPins,
           pinArray[index], config->channel);
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -95,7 +95,7 @@ static void configPins(const struct UsbBaseConfig *config)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct UsbBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -120,7 +120,7 @@ static enum Result devInit(void *object, const void *configBase)
 
   device->reg = NM_HSUSBD;
   device->irq = HSUSBD_IRQ;
-  device->handler = 0;
+  device->handler = NULL;
   device->channel = 0;
 
   configPins(config);
@@ -149,6 +149,6 @@ static enum Result devInit(void *object, const void *configBase)
 static void devDeinit(void *object __attribute__((unused)))
 {
   sysClockDisable(CLK_HSUSBD);
-  instance = 0;
+  instance = NULL;
 }
 #endif

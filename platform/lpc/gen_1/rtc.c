@@ -92,17 +92,17 @@ static void setTime(struct Rtc *clock, time64_t timestamp)
 static enum Result clkInit(void *object, const void *configBase)
 {
   const struct RtcConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct Rtc * const clock = object;
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = RtcBase->init(clock, 0)) != E_OK)
+  if ((res = RtcBase->init(clock, NULL)) != E_OK)
     return res;
 
   clock->base.handler = interruptHandler;
-  clock->callback = 0;
+  clock->callback = NULL;
 
   LPC_RTC_Type * const reg = clock->base.reg;
 

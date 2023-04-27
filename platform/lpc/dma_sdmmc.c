@@ -28,16 +28,16 @@ const struct DmaClass * const DmaSdmmc = &(const struct DmaClass){
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .configure = 0,
-    .setCallback = 0,
+    .configure = NULL,
+    .setCallback = NULL,
 
     .enable = channelEnable,
-    .disable = 0,
+    .disable = NULL,
     .residue = channelResidue,
     .status = channelStatus,
 
     .append = channelAppend,
-    .clear = 0,
+    .clear = NULL,
     .queued = channelQueued
 };
 /*----------------------------------------------------------------------------*/
@@ -72,7 +72,7 @@ static enum Result appendItem(void *object, uintptr_t address, size_t size)
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct DmaSdmmcConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->number);
   assert(config->burst <= DMA_BURST_256);
 
@@ -80,7 +80,7 @@ static enum Result channelInit(void *object, const void *configBase)
 
   /* Memory chunks should be aligned along 4-byte boundary */
   channel->list = memalign(4, sizeof(struct DmaSdmmcEntry) * config->number);
-  if (!channel->list)
+  if (channel->list == NULL)
     return E_MEMORY;
 
   channel->capacity = config->number;
@@ -142,7 +142,7 @@ static enum Result channelResidue(const void *object, size_t *count)
   const struct DmaSdmmcEntry * const current =
       (const struct DmaSdmmcEntry *)reg->DSCADDR;
 
-  if (current)
+  if (current != NULL)
   {
     *count = channel->length - (current - channel->list);
     return E_OK;
@@ -171,11 +171,12 @@ static void channelAppend(void *object, void *destination, const void *source,
   struct DmaSdmmc * const channel = object;
   LPC_SDMMC_Type * const reg = channel->reg;
 
+  assert(destination != NULL || source != NULL);
+  assert(destination == NULL || source == NULL);
   assert(size);
   assert(size <= channel->capacity * DESC_SIZE_MAX);
-  assert(!destination ^ !source);
 
-  const uintptr_t address = destination != 0 ?
+  const uintptr_t address = destination != NULL ?
       (uintptr_t)destination : (uintptr_t)source;
 
   /* Address and size must be aligned along 4-byte boundary */

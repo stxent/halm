@@ -53,7 +53,7 @@ void usbStringHeader(struct UsbDescriptor *header, void *payload,
   header->length = sizeof(struct UsbStringDescriptor) + sizeof(uint16_t);
   header->descriptorType = DESCRIPTOR_TYPE_STRING;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbStringDescriptor * const descriptor = payload;
     descriptor->data[0] = toLittleEndian16(langid);
@@ -69,7 +69,7 @@ void usbStringMultiHeader(struct UsbDescriptor *header, void *payload,
       + sizeof(uint16_t) * count;
   header->descriptorType = DESCRIPTOR_TYPE_STRING;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbStringDescriptor * const descriptor = payload;
 
@@ -86,7 +86,7 @@ void usbStringWrap(struct UsbDescriptor *header, void *payload,
   header->length = sizeof(struct UsbDescriptor) + textLength * 2;
   header->descriptorType = DESCRIPTOR_TYPE_STRING;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbStringDescriptor * const descriptor = payload;
     uToUtf16((char16_t *)descriptor->data, text, textLength + 1);

@@ -59,11 +59,11 @@ const struct InterfaceClass * const AdcDmaStream =
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = adcGetParam,
     .setParam = adcSetParam,
-    .read = 0,
-    .write = 0
+    .read = NULL,
+    .write = NULL
 };
 
 const struct StreamClass * const AdcDmaStreamHandler =
@@ -158,7 +158,7 @@ static bool setupInnerChannel(struct AdcDmaStream *interface,
 
   interface->inner = init(GpDmaCircular, &dmaConfig);
 
-  if (interface->inner)
+  if (interface->inner != NULL)
   {
     dmaConfigure(interface->inner, &dmaSettings);
     return true;
@@ -191,7 +191,7 @@ static bool setupOuterChannel(struct AdcDmaStream *interface,
 
   interface->outer = init(GpDmaList, &dmaConfig);
 
-  if (interface->outer)
+  if (interface->outer != NULL)
   {
     dmaConfigure(interface->outer, &dmaSettings);
     dmaSetCallback(interface->outer, dmaHandler, interface);
@@ -234,8 +234,8 @@ static size_t setupPins(struct AdcDmaStream *interface, const PinNumber *pins)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaStreamConfig * const config = configBase;
-  assert(config);
-  assert(config->pins);
+  assert(config != NULL);
+  assert(config->pins != NULL);
   assert(config->converter.event < ADC_EVENT_END);
   assert(config->converter.event != ADC_SOFTWARE);
 
@@ -258,7 +258,7 @@ static enum Result adcInit(void *object, const void *configBase)
     return res;
 
   interface->stream = init(AdcDmaStreamHandler, &streamConfig);
-  if (!interface->stream)
+  if (interface->stream == NULL)
     return E_ERROR;
 
   /* Initialize input pins */
@@ -318,11 +318,11 @@ static enum Result adcSetParam(void *object, int parameter,
   {
 #ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, 0, object) ?
+      return adcSetInstance(interface->base.channel, NULL, object) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, 0);
+      adcSetInstance(interface->base.channel, object, NULL);
       return E_OK;
 #endif
 
@@ -364,7 +364,7 @@ static enum Result adcHandlerEnqueue(void *object,
   struct AdcDmaStreamHandler * const stream = object;
   struct AdcDmaStream * const interface = stream->parent;
 
-  assert(request && request->callback);
+  assert(request != NULL && request->callback != NULL);
   /* Ensure the buffer has enough space and is aligned with the sample size */
   assert(request->capacity / (interface->count * sizeof(uint16_t)) >= 2);
   assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);

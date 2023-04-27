@@ -98,14 +98,14 @@ static void interruptHandler(void *object)
   reg->CONSET = CONSET_AA;
   reg->CONCLR = CONCLR_SIC;
 
-  if (interface->callback && event)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2CSlaveConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct I2CBaseConfig baseConfig = {
       .channel = config->channel,
@@ -120,13 +120,13 @@ static enum Result i2cInit(void *object, const void *configBase)
     return res;
 
   interface->cache = malloc(config->size);
-  if (!interface->cache)
+  if (interface->cache == NULL)
     return E_MEMORY;
   memset(interface->cache, 0, config->size);
 
   interface->base.handler = interruptHandler;
 
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->external = 0;
   interface->internal = 0;
   interface->size = config->size;

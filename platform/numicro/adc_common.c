@@ -12,16 +12,16 @@ extern const struct PinEntry adcPins[];
 /*----------------------------------------------------------------------------*/
 struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
 {
-  const struct PinEntry * const entry = pinFind(adcPins, key,
+  const struct PinEntry * const pinEntry = pinFind(adcPins, key,
       interface->channel);
-  assert(entry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
   pinInput(pin);
   pinSetFunction(pin, PIN_ANALOG);
 
-  return (struct AdcPin){entry->value};
+  return (struct AdcPin){pinEntry->value};
 }
 /*----------------------------------------------------------------------------*/
 uint32_t adcMakePinCondition(enum PinEvent event)
@@ -82,13 +82,13 @@ uint32_t adcSetupPins(struct AdcBase *interface, const PinNumber *pins,
 /*----------------------------------------------------------------------------*/
 struct Pin adcSetupTriggerPin(uint8_t channel, PinNumber key)
 {
-  const struct PinEntry * const entry = pinFind(adcPins, key, channel);
-  assert(entry);
+  const struct PinEntry * const pinEntry = pinFind(adcPins, key, channel);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
   pinInput(pin);
-  pinSetFunction(pin, entry->value);
+  pinSetFunction(pin, pinEntry->value);
 
   return pin;
 }

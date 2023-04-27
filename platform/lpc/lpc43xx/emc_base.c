@@ -250,7 +250,7 @@ const PinNumber emcDataPinMap[] = {
     PIN(PORT_E, 9),  PIN(PORT_E, 10), PIN(PORT_E, 11), PIN(PORT_E, 12)
 };
 /*----------------------------------------------------------------------------*/
-static struct EmcHandler *emcHandler = 0;
+static struct EmcHandler *emcHandler = NULL;
 /*----------------------------------------------------------------------------*/
 uint32_t emcGetClock(void)
 {
@@ -276,7 +276,7 @@ void *emcGetDynamicMemoryAddress(uint8_t channel)
       return (void *)LPC_EMC_DYCS3_BASE;
 
     default:
-      return 0;
+      return NULL;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -299,7 +299,7 @@ void *emcGetStaticMemoryAddress(uint8_t channel)
       return (void *)LPC_EMC_CS3_BASE;
 
     default:
-      return 0;
+      return NULL;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -317,7 +317,7 @@ bool emcSetDynamicMemoryDescriptor(uint8_t channel,
     if (completed)
     {
       emcHandler->dm[channel] = memory;
-      emcSwitchEnabled(memory != 0);
+      emcSwitchEnabled(memory != NULL);
     }
   }
 
@@ -338,7 +338,7 @@ bool emcSetStaticMemoryDescriptor(uint8_t channel,
     if (completed)
     {
       emcHandler->sm[channel] = memory;
-      emcSwitchEnabled(memory != 0);
+      emcSwitchEnabled(memory != NULL);
     }
   }
 
@@ -347,10 +347,10 @@ bool emcSetStaticMemoryDescriptor(uint8_t channel,
 /*----------------------------------------------------------------------------*/
 static bool emcHandlerInstantiate(void)
 {
-  if (!emcHandler)
-    emcHandler = init(EmcHandler, 0);
+  if (emcHandler == NULL)
+    emcHandler = init(EmcHandler, NULL);
 
-  return emcHandler != 0;
+  return emcHandler != NULL;
 }
 /*----------------------------------------------------------------------------*/
 static void emcSwitchEnabled(bool state)
@@ -406,9 +406,9 @@ static enum Result emcHandlerInit(void *object,
   struct EmcHandler * const handler = object;
 
   for (size_t channel = 0; channel < ARRAY_SIZE(handler->dm); ++channel)
-    handler->dm[channel] = 0;
+    handler->dm[channel] = NULL;
   for (size_t channel = 0; channel < ARRAY_SIZE(handler->sm); ++channel)
-    handler->sm[channel] = 0;
+    handler->sm[channel] = NULL;
 
   return E_OK;
 }

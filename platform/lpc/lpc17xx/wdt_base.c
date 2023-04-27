@@ -19,14 +19,14 @@ static enum Result wdtInit(void *, const void *);
 const struct EntityClass * const WdtBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = wdtInit,
-    .deinit = 0 /* Default destructor */
+    .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static struct WdtBase *instance = 0;
+static struct WdtBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct WdtBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -70,7 +70,7 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   sysClockControl(CLK_WDT, DEFAULT_DIV);
 
-  timer->handler = 0;
+  timer->handler = NULL;
   timer->irq = WDT_IRQ;
 
   const enum WdtClockSource clockSource = config->source != WDT_CLOCK_DEFAULT ?

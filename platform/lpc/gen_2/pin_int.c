@@ -134,7 +134,7 @@ void PIO3_ISR(void)
 static enum Result pinIntHandlerAttach(uint8_t port, uint8_t number,
     struct PinInt *interrupt)
 {
-  if (!handlers[port])
+  if (handlers[port] == NULL)
   {
     const struct PinIntHandlerConfig handlerConfig = {
         .channel = port
@@ -143,9 +143,9 @@ static enum Result pinIntHandlerAttach(uint8_t port, uint8_t number,
   }
 
   struct PinIntHandler * const handler = handlers[port];
-  assert(handler);
+  assert(handler != NULL);
 
-  if (!handler->interrupts[number])
+  if (handler->interrupts[number] == NULL)
   {
     handler->interrupts[number] = interrupt;
     return E_OK;
@@ -158,7 +158,7 @@ static enum Result pinIntHandlerAttach(uint8_t port, uint8_t number,
 static void pinIntHandlerDetach(const struct PinInt *interrupt)
 {
   const unsigned int index = countLeadingZeros32(interrupt->mask);
-  handlers[interrupt->channel]->interrupts[31 - index] = 0;
+  handlers[interrupt->channel]->interrupts[31 - index] = NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -168,7 +168,7 @@ static enum Result pinIntHandlerInit(void *object, const void *configBase)
   const struct PinIntHandlerConfig * const config = configBase;
 
   for (size_t index = 0; index < ARRAY_SIZE(handler->interrupts); ++index)
-    handler->interrupts[index] = 0;
+    handler->interrupts[index] = NULL;
 
   irqEnable(calcVector(config->channel));
   return E_OK;
@@ -177,7 +177,7 @@ static enum Result pinIntHandlerInit(void *object, const void *configBase)
 static enum Result pinIntInit(void *object, const void *configBase)
 {
   const struct PinIntConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct Pin input = pinInit(config->pin);
   assert(pinValid(input));
@@ -194,7 +194,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
   pinInput(input);
   pinSetPull(input, config->pull);
 
-  interrupt->callback = 0;
+  interrupt->callback = NULL;
   interrupt->mask = 1UL << input.number;
   interrupt->channel = input.port;
   interrupt->enabled = false;
@@ -247,7 +247,7 @@ static void pinIntEnable(void *object)
   struct PinInt * const interrupt = object;
 
   interrupt->enabled = true;
-  if (interrupt->callback)
+  if (interrupt->callback != NULL)
     enableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
@@ -267,7 +267,7 @@ static void pinIntSetCallback(void *object, void (*callback)(void *),
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
 
-  if (interrupt->enabled && callback)
+  if (interrupt->enabled && interrupt->callback != NULL)
     enableInterrupt(interrupt);
   else
     disableInterrupt(interrupt);

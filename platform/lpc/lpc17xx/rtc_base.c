@@ -23,11 +23,11 @@ const struct EntityClass * const RtcBase = &(const struct EntityClass){
     .deinit = clkDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct RtcBase *instance = 0;
+static struct RtcBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct RtcBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -51,7 +51,7 @@ static enum Result clkInit(void *object,
     if (!sysPowerStatus(PWR_RTC))
       sysPowerEnable(PWR_RTC);
 
-    clock->handler = 0;
+    clock->handler = NULL;
     clock->irq = RTC_IRQ;
     clock->reg = LPC_RTC;
 
@@ -65,6 +65,6 @@ static enum Result clkInit(void *object,
 static void clkDeinit(void *object __attribute__((unused)))
 {
   sysPowerDisable(PWR_RTC);
-  instance = 0;
+  instance = NULL;
 }
 #endif

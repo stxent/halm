@@ -36,7 +36,7 @@ uint8_t gpTimerConfigComparePin(uint8_t channel, PinNumber key)
   {
     pinEntry = pinFind(gpTimerPins, key, PACK_CHANNEL(channel, index));
 
-    if (pinEntry)
+    if (pinEntry != NULL)
     {
       const struct Pin pin = pinInit(key);
 
@@ -46,6 +46,6 @@ uint8_t gpTimerConfigComparePin(uint8_t channel, PinNumber key)
     }
   }
 
-  assert(pinEntry);
+  assert(pinEntry != NULL);
   return UNPACK_CHANNEL(index) >> 1;
 }

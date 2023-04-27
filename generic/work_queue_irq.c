@@ -68,8 +68,8 @@ static enum Result workQueueStart(void *);
   static void workQueueProfile(void *, WqProfileCallback, void *);
   static void workQueueStatistics(void *, struct WqInfo *);
 #else
-  #define workQueueProfile 0
-  #define workQueueStatistics 0
+  #define workQueueProfile NULL
+  #define workQueueStatistics NULL
 #endif
 
 #ifndef CONFIG_GENERIC_WQ_IRQ_NONSTOP
@@ -77,7 +77,7 @@ static enum Result workQueueStart(void *);
   static void workQueueStop(void *);
 #else
   #define workQueueDeinit deletedDestructorTrap
-  #define workQueueStop 0
+  #define workQueueStop NULL
 #endif
 /*----------------------------------------------------------------------------*/
 const struct WorkQueueClass * const WorkQueueIrq =
@@ -105,14 +105,14 @@ static struct WqTaskDescriptor *findTaskInfo(struct WorkQueueIrq *wq,
       return current;
   }
 
-  return 0;
+  return NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result workQueueInit(void *object, const void *configBase)
 {
   const struct WorkQueueIrqConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->size);
 
   struct WorkQueueIrq * const wq = object;
@@ -148,7 +148,7 @@ static void workQueueDeinit(void *object)
 static enum Result workQueueAdd(void *object, void (*callback)(void *),
     void *argument)
 {
-  assert(callback != 0);
+  assert(callback != NULL);
 
   struct WorkQueueIrq * const wq = object;
   const IrqState state = irqSave();
@@ -160,7 +160,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
     const size_t watermark = wqTaskQueueSize(&wq->tasks) + 1;
     struct WqTaskDescriptor *entry = findTaskInfo(wq, callback);
 
-    if (!entry)
+    if (entry == NULL)
     {
       const struct WqTaskDescriptor info = {
           .task = callback,

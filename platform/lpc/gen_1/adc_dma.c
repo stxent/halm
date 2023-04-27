@@ -38,14 +38,14 @@ const struct InterfaceClass * const AdcDma = &(const struct InterfaceClass){
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = 0
+    .write = NULL
 };
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {
   struct AdcDma * const interface = object;
 
-  if (interface->callback)
+  if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -75,7 +75,7 @@ static bool dmaSetup(struct AdcDma *interface,
 
   interface->dma = init(GpDmaCircular, &dmaConfig);
 
-  if (interface->dma)
+  if (interface->dma != NULL)
   {
     dmaConfigure(interface->dma, &dmaSettings);
     dmaSetCallback(interface->dma, dmaHandler, interface);
@@ -162,8 +162,8 @@ static void stopConversion(struct AdcDma *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
-  assert(config);
-  assert(config->pins);
+  assert(config != NULL);
+  assert(config->pins != NULL);
   assert(config->event < ADC_EVENT_END);
   assert(config->event != ADC_SOFTWARE);
 
@@ -180,7 +180,7 @@ static enum Result adcInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  interface->callback = 0;
+  interface->callback = NULL;
   memset(interface->buffer, 0, sizeof(interface->buffer));
 
   if (config->event == ADC_BURST)
@@ -251,10 +251,11 @@ static enum Result adcSetParam(void *object, int parameter,
 
 #ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, 0, object) ? E_OK : E_BUSY;
+      return adcSetInstance(interface->base.channel, NULL, object) ?
+          E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, 0);
+      adcSetInstance(interface->base.channel, object, NULL);
       return E_OK;
 #endif
 

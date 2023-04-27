@@ -39,12 +39,12 @@ const struct PinEntry dacPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct DacBase *instance = 0;
+static struct DacBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
-  assert(pinEntry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
@@ -54,7 +54,7 @@ static void configOutputPin(PinNumber key)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct DacBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -88,6 +88,6 @@ static enum Result dacInit(void *object, const void *configBase)
 #ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
 static void dacDeinit(void *object __attribute__((unused)))
 {
-  instance = 0;
+  instance = NULL;
 }
 #endif

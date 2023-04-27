@@ -38,17 +38,17 @@ const struct TimerClass * const Atimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = 0,
+    .setAutostop = NULL,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = 0,
+    .setFrequency = NULL,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
 };
 /*----------------------------------------------------------------------------*/
-static struct Atimer *instance = 0;
+static struct Atimer *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -57,13 +57,13 @@ static void interruptHandler(void *object)
   /* Clear pending interrupt flag */
   LPC_ATIMER->CLR_STAT = CLR_STAT_CSTAT;
 
-  if (timer->callback)
+  if (timer->callback != NULL)
     timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Atimer *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -80,7 +80,7 @@ static enum Result tmrInit(void *object,
   if (!setInstance(timer))
     return E_BUSY;
 
-  timer->callback = 0;
+  timer->callback = NULL;
 
   LPC_ATIMER->CLR_EN = CLR_EN_CLR_EN;
   LPC_ATIMER->CLR_STAT = CLR_STAT_CSTAT;
@@ -100,7 +100,7 @@ static void tmrDeinit(void *object)
   LPC_ATIMER->CLR_EN = CLR_EN_CLR_EN;
 
   erUnregister(timer);
-  instance = 0;
+  instance = NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/

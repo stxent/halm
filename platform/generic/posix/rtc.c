@@ -18,12 +18,12 @@ struct Rtc
 const struct RtClockClass * const Rtc = &(const struct RtClockClass){
     .size = sizeof(struct Rtc),
     .init = clkInit,
-    .deinit = 0, /* Default destructor */
+    .deinit = NULL, /* Default destructor */
 
-    .setAlarm = 0,
-    .setCallback = 0,
-    .setTime = 0,
-    .stop = 0,
+    .setAlarm = NULL,
+    .setCallback = NULL,
+    .setTime = NULL,
+    .stop = NULL,
     .time = clkTime
 };
 /*----------------------------------------------------------------------------*/
@@ -35,5 +35,5 @@ static enum Result clkInit(void *object __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static time64_t clkTime(void *object __attribute__((unused)))
 {
-  return (time64_t)time(0);
+  return (time64_t)time(NULL);
 }

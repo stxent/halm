@@ -98,7 +98,7 @@ static void cdcDataReceived(void *argument, struct UsbRequest *request,
 
   pointerQueuePushBack(&interface->rxRequestQueue, request);
 
-  if (event && interface->callback)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -149,7 +149,7 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   else if (pointerArrayFull(&interface->txRequestPool))
   {
     /* Notify when all data has been sent */
-    if (interface->callback)
+    if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -214,7 +214,7 @@ void cdcAcmOnParametersChanged(struct CdcAcm *interface)
 {
   interface->updated = true;
 
-  if (interface->callback)
+  if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -246,15 +246,15 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
       break;
   }
 
-  if (interface->callback)
+  if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
-  assert(config);
-  assert(config->device);
+  assert(config != NULL);
+  assert(config->device != NULL);
 
   struct CdcAcm * const interface = object;
   const struct CdcAcmBaseConfig driverConfig = {
@@ -272,7 +272,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   if (!pointerArrayInit(&interface->txRequestPool, config->txBuffers))
     return E_MEMORY;
 
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->queuedRxBytes = 0;
   interface->queuedTxBytes = 0;
   interface->suspended = true;
@@ -280,15 +280,15 @@ static enum Result interfaceInit(void *object, const void *configBase)
 
   interface->notificationEp = usbDevCreateEndpoint(config->device,
       config->endpoints.interrupt);
-  if (!interface->notificationEp)
+  if (interface->notificationEp == NULL)
     return E_ERROR;
   interface->rxDataEp = usbDevCreateEndpoint(config->device,
       config->endpoints.rx);
-  if (!interface->rxDataEp)
+  if (interface->rxDataEp == NULL)
     return E_ERROR;
   interface->txDataEp = usbDevCreateEndpoint(config->device,
       config->endpoints.tx);
-  if (!interface->txDataEp)
+  if (interface->txDataEp == NULL)
     return E_ERROR;
 
   const size_t count = config->rxBuffers + config->txBuffers;
@@ -296,10 +296,10 @@ static enum Result interfaceInit(void *object, const void *configBase)
   uint8_t *arena;
 
   /* Allocate requests */
-  if (config->arena)
+  if (config->arena != NULL)
   {
     interface->requests = malloc(count * sizeof(struct UsbRequest));
-    if (!interface->requests)
+    if (interface->requests == NULL)
       return E_MEMORY;
 
     arena = config->arena;
@@ -307,7 +307,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   else
   {
     interface->requests = malloc(count * (sizeof(struct UsbRequest) + size));
-    if (!interface->requests)
+    if (interface->requests == NULL)
       return E_MEMORY;
 
     arena = (uint8_t *)interface->requests + count * sizeof(struct UsbRequest);

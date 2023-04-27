@@ -165,7 +165,7 @@ static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -216,7 +216,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   sysClockControl(entry->clock, DEFAULT_DIV);
 
   timer->channel = config->channel;
-  timer->handler = 0;
+  timer->handler = NULL;
   timer->irq = TIMER0_IRQ + config->channel;
   timer->resolution = 32;
   timer->reg = entry->reg;
@@ -230,6 +230,6 @@ static void tmrDeinit(void *object)
   const struct GpTimerBase * const timer = object;
 
   sysPowerDisable(timerBlockEntries[timer->channel].power);
-  instances[timer->channel] = 0;
+  instances[timer->channel] = NULL;
 }
 #endif

@@ -18,7 +18,7 @@ static const UsbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
 {
   const UsbDescriptorFunctor *descriptor = usbDriverDescribe(driver);
 
-  if (descriptor)
+  if (descriptor != NULL)
   {
     while (*descriptor)
     {
@@ -31,7 +31,7 @@ static const UsbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
     }
   }
 
-  return 0;
+  return NULL;
 }
 /*----------------------------------------------------------------------------*/
 void usbRequestInit(struct UsbRequest *request, void *buffer, uint16_t capacity,
@@ -52,7 +52,7 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   const UsbDescriptorFunctor *entry = findEntry(driver,
       descriptorType, descriptorIndex);
 
-  if (!entry)
+  if (entry == NULL)
   {
     usbTrace("control: descriptor %u:%u not found",
         descriptorType, descriptorIndex);

@@ -157,7 +157,7 @@ static void interruptHandler(void *object)
 static enum Result oneWireInit(void *object, const void *configBase)
 {
   const struct OneWireUartConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct UartBaseConfig baseConfig = {
       .channel = config->channel,
@@ -185,7 +185,7 @@ static enum Result oneWireInit(void *object, const void *configBase)
 
   interface->address = 0;
   interface->blocking = true;
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->state = STATE_IDLE;
 
   LPC_UART_Type * const reg = interface->base.reg;

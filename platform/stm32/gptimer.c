@@ -103,7 +103,7 @@ static void setTimerFrequency(struct GpTimer *timer, uint32_t frequency)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
@@ -118,7 +118,7 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = 0;
+  timer->callback = NULL;
 
   /* Initialize peripheral block */
   STM_TIM_Type * const reg = timer->base.reg;
@@ -210,7 +210,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  if (callback)
+  if (timer->callback != NULL)
   {
     /* Clear pending interrupt flags */
     reg->SR = 0;

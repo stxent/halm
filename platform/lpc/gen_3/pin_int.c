@@ -56,14 +56,14 @@ static void interruptHandler(void *object)
 
   LPC_GPIO_INT->IST = interrupt->mask;
 
-  if (interrupt->callback)
+  if (interrupt->callback != NULL)
     interrupt->callback(interrupt->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result pinIntInit(void *object, const void *configBase)
 {
   const struct PinIntConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct Pin input = pinInit(config->pin);
   assert(pinValid(input));
@@ -84,7 +84,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
   pinSetPull(input, config->pull);
 
   interrupt->base.handler = interruptHandler;
-  interrupt->callback = 0;
+  interrupt->callback = NULL;
 
   interrupt->mask = 1 << interrupt->base.channel;
   interrupt->enabled = false;
@@ -149,7 +149,7 @@ static void pinIntEnable(void *object)
 
   interrupt->enabled = true;
 
-  if (interrupt->callback)
+  if (interrupt->callback != NULL)
     enableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
@@ -169,7 +169,7 @@ static void pinIntSetCallback(void *object, void (*callback)(void *),
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
 
-  if (interrupt->enabled && callback)
+  if (interrupt->enabled && interrupt->callback != NULL)
     enableInterrupt(interrupt);
   else
     disableInterrupt(interrupt);

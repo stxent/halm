@@ -77,7 +77,7 @@ static void interruptHandler(void *object, enum Result res)
     gpDmaResetInstance(channel->base.number);
   }
 
-  if (channel->callback)
+  if (channel->callback != NULL)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -98,7 +98,7 @@ static void startTransfer(struct GpDmaCircular *channel,
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaCircularConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GpDmaBaseConfig baseConfig = {
       .event = config->event,
@@ -115,12 +115,12 @@ static enum Result channelInit(void *object, const void *configBase)
     return res;
 
   channel->list = memalign(4, sizeof(struct GpDmaEntry) * config->number);
-  if (!channel->list)
+  if (channel->list == NULL)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = 0;
+  channel->callback = NULL;
   channel->capacity = config->number;
   channel->queued = 0;
   channel->control = 0;
@@ -137,7 +137,7 @@ static void channelDeinit(void *object)
 
   free(channel->list);
 
-  if (GpDmaBase->deinit)
+  if (GpDmaBase->deinit != NULL)
     GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
@@ -255,7 +255,7 @@ static void channelAppend(void *object, void *destination, const void *source,
 {
   struct GpDmaCircular * const channel = object;
 
-  assert(destination != 0 && source != 0);
+  assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= GPDMA_MAX_TRANSFER_SIZE);
   assert(channel->queued < channel->capacity);
   assert(channel->state != STATE_BUSY);
@@ -264,7 +264,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     channel->queued = 0;
 
   struct GpDmaEntry * const entry = channel->list + channel->queued;
-  struct GpDmaEntry *previous = 0;
+  struct GpDmaEntry *previous = NULL;
 
   if (channel->queued)
     previous = channel->list + (channel->queued - 1);
@@ -273,7 +273,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   entry->destination = (uintptr_t)destination;
   entry->control = channel->control | CONTROL_SIZE(size);
 
-  if (channel->callback || channel->oneshot)
+  if (channel->callback != NULL || channel->oneshot)
     entry->control |= CONTROL_INT;
 
   if (!channel->oneshot)
@@ -281,7 +281,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   else
     entry->next = 0;
 
-  if (previous)
+  if (previous != NULL)
   {
     if (channel->silent)
       previous->control &= ~CONTROL_INT;

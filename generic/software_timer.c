@@ -83,7 +83,7 @@ static inline uint32_t distance(uint32_t a, uint32_t b)
 static void insertTimer(struct SoftwareTimerFactory *factory,
     struct SoftwareTimer *timer)
 {
-  if (factory->head)
+  if (factory->head != NULL)
   {
     /* Time of the current timer is overflowed */
     const bool co = factory->counter >= timer->timestamp;
@@ -101,7 +101,7 @@ static void insertTimer(struct SoftwareTimerFactory *factory,
     {
       struct SoftwareTimer *current = factory->head;
 
-      while (current->next)
+      while (current->next != NULL)
       {
         /* Time of the current timer is greater or equal to the next timer */
         const bool cg = timer->timestamp <= current->next->timestamp;
@@ -120,23 +120,23 @@ static void insertTimer(struct SoftwareTimerFactory *factory,
   }
   else
   {
-    timer->next = 0;
+    timer->next = NULL;
     factory->head = timer;
   }
 
-  assert(!factory->head || (factory->head != factory->head->next));
+  assert(factory->head == NULL || (factory->head != factory->head->next));
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct SoftwareTimerFactory * const factory = object;
   struct SoftwareTimer *current;
-  struct SoftwareTimer *head = 0;
+  struct SoftwareTimer *head = NULL;
 
   ++factory->counter;
 
   current = factory->head;
-  while (current && factory->counter == current->timestamp)
+  while (current != NULL && factory->counter == current->timestamp)
   {
     struct SoftwareTimer * const timer = current;
     current = current->next;
@@ -149,7 +149,7 @@ static void interruptHandler(void *object)
   factory->head = current;
 
   current = head;
-  while (current)
+  while (current != NULL)
   {
     struct SoftwareTimer * const timer = current;
     current = current->next;
@@ -164,7 +164,7 @@ static void interruptHandler(void *object)
     }
   }
 
-  assert(!factory->head || (factory->head != factory->head->next));
+  assert(factory->head == NULL || (factory->head != factory->head->next));
 }
 /*----------------------------------------------------------------------------*/
 static void removeTimer(struct SoftwareTimerFactory *factory,
@@ -172,24 +172,25 @@ static void removeTimer(struct SoftwareTimerFactory *factory,
 {
   struct SoftwareTimer **current = &factory->head;
 
-  while (*current && *current != timer)
+  while (*current != NULL && *current != timer)
     current = &(*current)->next;
 
-  if (*current)
+  if (*current != NULL)
     *current = timer->next;
 
-  assert(!factory->head || (factory->head != factory->head->next));
+  assert(factory->head == NULL || (factory->head != factory->head->next));
 }
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *object, const void *configBase)
 {
   const struct SoftwareTimerFactoryConfig * const config = configBase;
+  assert(config != NULL);
+  assert(config->timer != NULL);
+
   struct SoftwareTimerFactory * const factory = object;
 
-  assert(config->timer);
-
   factory->timer = config->timer;
-  factory->head = 0;
+  factory->head = NULL;
   factory->counter = 0;
 
   timerSetCallback(factory->timer, interruptHandler, factory);
@@ -201,8 +202,8 @@ static void factoryDeinit(void *object)
 {
   struct SoftwareTimerFactory * const factory = object;
 
-  assert(!factory->head);
-  timerSetCallback(factory->timer, 0, 0);
+  assert(factory->head == NULL);
+  timerSetCallback(factory->timer, NULL, NULL);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
@@ -211,7 +212,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   struct SoftwareTimer * const timer = object;
 
   timer->factory = config->parent;
-  timer->callback = 0;
+  timer->callback = NULL;
   timer->overflow = 0;
   timer->timestamp = timer->factory->counter;
   timer->continuous = true;

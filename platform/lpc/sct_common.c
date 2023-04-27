@@ -17,7 +17,7 @@ extern const struct PinEntry sctOutputPins[];
 uint8_t sctConfigInputPin(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(sctInputPins, key, channel);
-  assert(pinEntry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
@@ -30,7 +30,7 @@ uint8_t sctConfigInputPin(uint8_t channel, PinNumber key)
 uint8_t sctConfigOutputPin(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, channel);
-  assert(pinEntry);
+  assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 

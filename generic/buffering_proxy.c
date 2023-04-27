@@ -65,7 +65,7 @@ static void onRxStreamEvent(void *argument, struct StreamRequest *request,
   {
     pointerQueuePushBack(&interface->rxQueue, request);
 
-    if (interface->callback)
+    if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
   else
@@ -79,24 +79,24 @@ static void onTxStreamEvent(void *argument, struct StreamRequest *request,
 
   pointerArrayPushBack(&interface->txPool, request);
 
-  if (status == STREAM_REQUEST_COMPLETED && interface->callback)
+  if (status == STREAM_REQUEST_COMPLETED && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct BufferingProxyConfig * const config = configBase;
-  assert(config);
-  assert(config->pipe);
+  assert(config != NULL);
+  assert(config->pipe != NULL);
 
   struct BufferingProxy * const interface = object;
 
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->pipe = config->pipe;
   interface->rx = config->rx.stream;
   interface->tx = config->tx.stream;
 
-  if (interface->rx)
+  if (interface->rx != NULL)
   {
     interface->rxBufferCount = config->rx.count;
     interface->rxBufferSize = config->rx.size;
@@ -112,7 +112,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   if (!pointerArrayInit(&interface->rxPool, interface->rxBufferCount))
     return E_MEMORY;
 
-  if (interface->tx)
+  if (interface->tx != NULL)
   {
     interface->txBufferCount = config->tx.count;
     interface->txBufferSize = config->tx.size;
@@ -132,7 +132,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
       rxSize * interface->rxBufferCount + txSize * interface->txBufferCount;
   uint8_t *arena = malloc(poolSize);
 
-  if (!arena)
+  if (arena == NULL)
     return E_MEMORY;
   interface->arena = arena;
 
@@ -194,14 +194,14 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_RX_AVAILABLE:
-      if (!interface->rx)
+      if (interface->rx == NULL)
         return E_INVALID;
 
       *(size_t *)data = pointerQueueSize(&interface->rxQueue);
       return E_OK;
 
     case IF_RX_PENDING:
-      if (!interface->rx)
+      if (interface->rx == NULL)
         return E_INVALID;
 
       *(size_t *)data = interface->rxBufferCount
@@ -209,14 +209,14 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
       return E_OK;
 
     case IF_TX_AVAILABLE:
-      if (!interface->tx)
+      if (interface->tx == NULL)
         return E_INVALID;
 
       *(size_t *)data = pointerArraySize(&interface->txPool);
       return E_OK;
 
     case IF_TX_PENDING:
-      if (!interface->tx)
+      if (interface->tx == NULL)
         return E_INVALID;
 
       *(size_t *)data = interface->txBufferCount

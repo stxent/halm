@@ -102,7 +102,7 @@ static void interruptHandler(void *object, enum Result res)
     event = true;
   }
 
-  if (event && channel->callback)
+  if (event && channel->callback != NULL)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -123,7 +123,7 @@ static void startTransfer(struct GpDmaList *channel,
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaListConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct GpDmaBaseConfig baseConfig = {
       .event = config->event,
@@ -140,12 +140,12 @@ static enum Result channelInit(void *object, const void *configBase)
     return res;
 
   channel->list = memalign(4, sizeof(struct GpDmaEntry) * config->number);
-  if (!channel->list)
+  if (channel->list == NULL)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = 0;
+  channel->callback = NULL;
   channel->capacity = config->number;
   channel->index = 0;
   channel->queued = 0;
@@ -161,7 +161,7 @@ static void channelDeinit(void *object)
 
   free(channel->list);
 
-  if (GpDmaBase->deinit)
+  if (GpDmaBase->deinit != NULL)
     GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
@@ -274,7 +274,7 @@ static void channelAppend(void *object, void *destination, const void *source,
 {
   struct GpDmaList * const channel = object;
 
-  assert(destination != 0 && source != 0);
+  assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= GPDMA_MAX_TRANSFER_SIZE);
   assert(channel->queued < channel->capacity);
 
@@ -285,7 +285,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   }
 
   struct GpDmaEntry * const entry = channel->list + channel->index;
-  struct GpDmaEntry *previous = 0;
+  struct GpDmaEntry *previous = NULL;
 
   if (channel->queued)
   {
@@ -302,7 +302,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   entry->control = channel->control | CONTROL_SIZE(size);
   entry->next = 0;
 
-  if (previous)
+  if (previous != NULL)
   {
     /* Link previous element with the new one */
     previous->next = (uintptr_t)entry;

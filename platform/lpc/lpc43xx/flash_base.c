@@ -13,7 +13,7 @@ static enum Result flashInit(void *, const void *);
 const struct EntityClass * const FlashBase = &(const struct EntityClass){
     .size = sizeof(struct FlashBase),
     .init = flashInit,
-    .deinit = 0 /* Default destructor */
+    .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *object,

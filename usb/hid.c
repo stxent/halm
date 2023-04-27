@@ -16,17 +16,17 @@ const struct HidClass * const Hid = &(const struct HidClass){
     .init = deviceInit,
     .deinit = deviceDeinit,
 
-    .event = 0,
-    .getReport = 0,
-    .setReport = 0
+    .event = NULL,
+    .getReport = NULL,
+    .setReport = NULL
 };
 /*----------------------------------------------------------------------------*/
 static enum Result deviceInit(void *object, const void *configBase)
 {
   const struct HidConfig * const config = configBase;
-  assert(config);
-  assert(config->device);
-  assert(config->descriptor);
+  assert(config != NULL);
+  assert(config->device != NULL);
+  assert(config->descriptor != NULL);
   assert(config->descriptorSize);
   assert(config->reportSize);
 

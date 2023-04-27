@@ -25,7 +25,7 @@ const struct EntityClass * const RtcBase = &(const struct EntityClass){
     .deinit = clkDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct RtcBase *instance = 0;
+static struct RtcBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -34,7 +34,7 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct RtcBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -52,7 +52,7 @@ static enum Result clkInit(void *object,
   {
     /* CLK_M4_BUS is already enabled */
 
-    clock->handler = 0;
+    clock->handler = NULL;
     clock->irq = IRQ_RESERVED;
     clock->reg = LPC_RTC;
 
@@ -66,6 +66,6 @@ static enum Result clkInit(void *object,
 static void clkDeinit(void *object __attribute__((unused)))
 {
   erUnregister(object);
-  instance = 0;
+  instance = NULL;
 }
 #endif

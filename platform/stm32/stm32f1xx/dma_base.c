@@ -27,7 +27,7 @@ static enum Result streamInit(void *, const void *);
 const struct EntityClass * const DmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = streamInit,
-    .deinit = 0 /* Default destructor */
+    .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static struct DmaBase *instances[STREAM_COUNT] = {0};
@@ -41,15 +41,15 @@ const struct DmaBase *dmaGetInstance(uint8_t stream)
 void dmaResetInstance(uint8_t stream)
 {
   assert(stream < ARRAY_SIZE(instances));
-  instances[stream] = 0;
+  instances[stream] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 bool dmaSetInstance(uint8_t stream, struct DmaBase *object)
 {
-  assert(object);
+  assert(object != NULL);
   assert(stream < ARRAY_SIZE(instances));
 
-  void *expected = 0;
+  void *expected = NULL;
   return compareExchangePointer(&instances[stream], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
@@ -179,7 +179,7 @@ static enum Result streamInit(void *object, const void *configBase)
   }
 
   stream->config = CCR_PL(config->priority);
-  stream->handler = 0;
+  stream->handler = NULL;
   stream->number = config->stream;
 
   if (!irqStatus(stream->irq))

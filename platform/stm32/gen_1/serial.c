@@ -158,7 +158,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct UartBaseConfig baseConfig = {
       .rx = config->rx,
@@ -178,7 +178,7 @@ static enum Result serialInit(void *object, const void *configBase)
     return E_MEMORY;
 
   interface->base.handler = interruptHandler;
-  interface->callback = 0;
+  interface->callback = NULL;
 
 #ifdef CONFIG_PLATFORM_STM32_UART_WATERMARK
   interface->rxWatermark = 0;

@@ -53,7 +53,7 @@ static void interruptHandler(void *object)
   /* Handle reception */
   size_t received = 0;
 
-  if (interface->rxBuffer)
+  if (interface->rxBuffer != NULL)
   {
     while (reg->SR & SR_RNE)
     {
@@ -80,7 +80,7 @@ static void interruptHandler(void *object)
 
     interface->txLeft -= pending;
 
-    if (interface->txBuffer)
+    if (interface->txBuffer != NULL)
     {
       while (pending--)
         reg->DR = *interface->txBuffer++;
@@ -110,9 +110,9 @@ static void interruptHandler(void *object)
      * Reset the pointer to an input buffer only. The pointer for
      * an output buffer will be reinitialized in read and write functions.
      */
-    interface->rxBuffer = 0;
+    interface->rxBuffer = NULL;
 
-    if (interface->callback)
+    if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -152,7 +152,7 @@ static size_t transferData(struct Spi *interface, size_t length)
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct SspBaseConfig baseConfig = {
       .cs = 0,
@@ -169,9 +169,9 @@ static enum Result spiInit(void *object, const void *configBase)
     return res;
 
   interface->base.handler = interruptHandler;
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->rate = config->rate;
-  interface->rxBuffer = 0;
+  interface->rxBuffer = NULL;
   interface->blocking = true;
   interface->unidir = true;
 
@@ -325,7 +325,7 @@ static size_t spiRead(void *object, void *buffer, size_t length)
   interface->rxBuffer = buffer;
   if (interface->unidir)
   {
-    interface->txBuffer = 0;
+    interface->txBuffer = NULL;
     return transferData(interface, length);
   }
   else

@@ -226,7 +226,7 @@ static void configPins(const struct I2SBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(i2sPins, pinArray[index],
           CHANNEL_INDEX(config->channel, index));
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -240,7 +240,7 @@ static bool setInstance(uint8_t channel, struct I2SBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -252,14 +252,14 @@ static bool setInstance(uint8_t channel, struct I2SBase *object)
 void I2S0_ISR(void)
 {
   /* In M0 cores I2S0 IRQ is combined with I2S1 and QEI IRQ */
-  if (instances[0]->handler)
+  if (instances[0]->handler != NULL)
     instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void I2S1_ISR(void)
 {
   /* In M0 cores I2S1 IRQ is combined with I2S0 and QEI IRQ */
-  if (instances[1]->handler)
+  if (instances[1]->handler != NULL)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
@@ -280,7 +280,7 @@ static enum Result i2sInit(void *object, const void *configBase)
   configPins(config);
 
   /* Check whether other channel is disabled too */
-  if (!instances[config->channel ^ 1])
+  if (instances[config->channel ^ 1] == NULL)
   {
     /* Enable clock to register interface and to peripheral */
     sysClockEnable(CLK_APB1_I2S);
@@ -302,7 +302,7 @@ static enum Result i2sInit(void *object, const void *configBase)
   }
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
 
   return E_OK;
 }
@@ -312,9 +312,9 @@ static void i2sDeinit(void *object)
 {
   const struct I2SBase * const interface = object;
 
-  if (!instances[interface->channel ^ 1])
+  if (instances[interface->channel ^ 1] == NULL)
     sysClockDisable(CLK_APB1_I2S);
 
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

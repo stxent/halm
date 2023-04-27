@@ -34,12 +34,12 @@ extern const PinNumber emcDataPinMap[];
 static enum Result sramInit(void *object, const void *configBase)
 {
   const struct EmcSramConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct EmcSram * const memory = object;
 
   /* Try to register module */
-  if (!emcSetStaticMemoryDescriptor(config->channel, 0, object))
+  if (!emcSetStaticMemoryDescriptor(config->channel, NULL, object))
     return E_BUSY;
 
   const size_t byteLanes = config->dataWidth >> 3;
@@ -59,7 +59,7 @@ static enum Result sramInit(void *object, const void *configBase)
   for (size_t index = 0; index < config->addressWidth; ++index)
   {
     group = pinGroupFind(emcAddressPins, emcAddressPinMap[index], 0);
-    assert(group);
+    assert(group != NULL);
     pinInput((pin = pinInit(emcAddressPinMap[index])));
     pinSetFunction(pin, group->value);
   }
@@ -68,14 +68,14 @@ static enum Result sramInit(void *object, const void *configBase)
   for (size_t index = 0; index < config->dataWidth; ++index)
   {
     group = pinGroupFind(emcDataPins, emcDataPinMap[index], 0);
-    assert(group);
+    assert(group != NULL);
     pinInput((pin = pinInit(emcDataPinMap[index])));
     pinSetFunction(pin, group->value);
   }
 
   /* Output Enable pin */
   group = pinGroupFind(emcControlPins, emcControlPinMap.oe, 0);
-  assert(group);
+  assert(group != NULL);
   pinInput((pin = pinInit(emcControlPinMap.oe)));
   pinSetFunction(pin, group->value);
 
@@ -92,14 +92,14 @@ static enum Result sramInit(void *object, const void *configBase)
   if (config->partitioned)
   {
     group = pinGroupFind(emcControlPins, emcControlPinMap.we, 0);
-    assert(group);
+    assert(group != NULL);
     pinInput((pin = pinInit(emcControlPinMap.we)));
     pinSetFunction(pin, group->value);
   }
 
   /* Chip Select pin */
   group = pinGroupFind(emcControlPins, emcControlPinMap.cs[memory->channel], 0);
-  assert(group);
+  assert(group != NULL);
   pinInput((pin = pinInit(emcControlPinMap.cs[config->channel])));
   pinSetFunction(pin, group->value);
 
@@ -160,7 +160,6 @@ static enum Result sramInit(void *object, const void *configBase)
 static void sramDeinit(void *object)
 {
   struct EmcSram * const memory = object;
-
-  emcSetStaticMemoryDescriptor(memory->channel, object, 0);
+  emcSetStaticMemoryDescriptor(memory->channel, object, NULL);
 }
 #endif

@@ -51,7 +51,7 @@ const struct InterruptClass * const WakeupInt =
     .setCallback = wakeupIntSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct StartLogicHandler *handler = 0;
+static struct StartLogicHandler *handler = NULL;
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(uint8_t channel)
 {
@@ -71,13 +71,13 @@ void WAKEUP_ISR(void)
     LPC_SYSCON->START[index].RSRPCLR = state[index];
   }
 
-  while (current)
+  while (current != NULL)
   {
     struct WakeupInt * const interrupt = *pointerListData(current);
 
     if (state[interrupt->index] & interrupt->mask)
     {
-      if (interrupt->callback)
+      if (interrupt->callback != NULL)
         interrupt->callback(interrupt->callbackArgument);
     }
 
@@ -88,16 +88,15 @@ void WAKEUP_ISR(void)
 static enum Result startLogicHandlerAttach(uint8_t channel,
     struct WakeupInt *interrupt)
 {
-  if (!handler)
-    handler = init(StartLogicHandler, 0);
-
-  assert(handler);
+  if (handler == NULL)
+    handler = init(StartLogicHandler, NULL);
+  assert(handler != NULL);
 
   PointerList * const list = &handler->list;
   PointerListNode *current = pointerListFront(list);
 
   /* Check for duplicates */
-  while (current)
+  while (current != NULL)
   {
     struct WakeupInt * const entry = *pointerListData(current);
 
@@ -114,7 +113,7 @@ static enum Result startLogicHandlerAttach(uint8_t channel,
 #ifndef CONFIG_PLATFORM_LPC_WAKEUPINT_NO_DEINIT
 static void startLogicHandlerDetach(struct WakeupInt *interrupt)
 {
-  assert(pointerListFind(&handler->list, interrupt));
+  assert(pointerListFind(&handler->list, interrupt) != NULL);
   pointerListErase(&handler->list, interrupt);
 }
 #endif
@@ -131,7 +130,7 @@ static enum Result startLogicHandlerInit(void *object,
 static enum Result wakeupIntInit(void *object, const void *configBase)
 {
   const struct WakeupIntConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->event == PIN_RISING || config->event == PIN_FALLING);
 
   const struct Pin input = pinInit(config->pin);
@@ -149,7 +148,7 @@ static enum Result wakeupIntInit(void *object, const void *configBase)
   pinInput(input);
   pinSetPull(input, config->pull);
 
-  interrupt->callback = 0;
+  interrupt->callback = NULL;
   interrupt->channel = channel;
   interrupt->index = channel >> 5;
   interrupt->mask = 1UL << (channel & 0x1F);

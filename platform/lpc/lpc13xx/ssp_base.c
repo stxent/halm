@@ -83,7 +83,7 @@ static bool setInstance(uint8_t channel, struct SspBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -155,7 +155,7 @@ static enum Result sspInit(void *object, const void *configBase)
   }
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
 
   return E_OK;
 }
@@ -181,6 +181,6 @@ static void sspDeinit(void *object)
       break;
   }
 
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

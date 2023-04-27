@@ -27,11 +27,11 @@ const struct InterfaceClass * const AdcOneShot = &(const struct InterfaceClass){
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = 0
+    .write = NULL
 };
 /*----------------------------------------------------------------------------*/
 static uint16_t makeChannelConversion(struct AdcOneShot *interface)
@@ -56,7 +56,7 @@ static uint16_t makeChannelConversion(struct AdcOneShot *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcOneShotConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,
@@ -105,11 +105,11 @@ static enum Result adcSetParam(void *object, int parameter,
   switch ((enum IfParameter)parameter)
   {
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, 0, object) ?
+      return adcSetInstance(interface->base.channel, NULL, object) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, 0);
+      adcSetInstance(interface->base.channel, object, NULL);
       return E_OK;
 
     default:

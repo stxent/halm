@@ -80,7 +80,7 @@ static void configPins(const struct CanBaseConfig *config)
   if (config->rx)
   {
     pinEntry = pinFind(canPins, config->rx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -89,7 +89,7 @@ static void configPins(const struct CanBaseConfig *config)
   if (config->tx)
   {
     pinEntry = pinFind(canPins, config->tx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
     pinInput((pin = pinInit(config->tx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -99,7 +99,7 @@ static bool setInstance(uint8_t channel, struct CanBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -110,10 +110,10 @@ static bool setInstance(uint8_t channel, struct CanBase *object)
 /*----------------------------------------------------------------------------*/
 void CAN_ISR(void)
 {
-  if (instances[0])
+  if (instances[0] != NULL)
     instances[0]->handler(instances[0]);
 
-  if (instances[1])
+  if (instances[1] != NULL)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
@@ -165,7 +165,7 @@ static enum Result canInit(void *object, const void *configBase)
   sysClockControl(CLK_ACF, DEFAULT_DIV);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
 
   return E_OK;
 }
@@ -186,10 +186,10 @@ static void canDeinit(void *object)
       break;
   }
 
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 
-  /* Re-enable IRQ for the second module if it is still active */
-  if (instances[!interface->channel])
-    irqDisable(CAN_IRQ);
+  /* Re-enable IRQ when the second module is still used */
+  if (instances[interface->channel ^ 1] != NULL)
+    irqEnable(CAN_IRQ);
 }
 #endif

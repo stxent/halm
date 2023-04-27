@@ -214,7 +214,7 @@ static bool setInstance(uint8_t channel, struct UartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -236,7 +236,7 @@ void UART1_ISR(void)
 void USART2_ISR(void)
 {
   /* In M0 cores USART2 IRQ is combined with CAN1 IRQ */
-  if (instances[2]->handler)
+  if (instances[2]->handler != NULL)
     instances[2]->handler(instances[2]);
 }
 /*----------------------------------------------------------------------------*/
@@ -247,7 +247,7 @@ void USART3_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)
 {
-  const void *clock = 0;
+  const void *clock = NULL;
 
   switch (interface->channel)
   {
@@ -292,7 +292,7 @@ static enum Result uartInit(void *object, const void *configBase)
   sysResetEnable(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -308,6 +308,6 @@ static void uartDeinit(void *object)
 
   sysClockDisable(entry->registerBranch);
   sysClockDisable(entry->peripheralBranch);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

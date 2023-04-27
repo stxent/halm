@@ -57,7 +57,7 @@ static const struct PinEntry bxCanPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct BxCanBase *instance = 0;
+static struct BxCanBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct BxCanBaseConfig *config)
 {
@@ -67,7 +67,7 @@ static void configPins(const struct BxCanBaseConfig *config)
   if (config->rx)
   {
     pinEntry = pinFind(bxCanPins, config->rx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -75,7 +75,7 @@ static void configPins(const struct BxCanBaseConfig *config)
   if (config->tx)
   {
     pinEntry = pinFind(bxCanPins, config->tx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
     pinOutput((pin = pinInit(config->tx)), true);
     pinSetFunction(pin, pinEntry->value);
   }
@@ -83,7 +83,7 @@ static void configPins(const struct BxCanBaseConfig *config)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct BxCanBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -95,7 +95,7 @@ static bool setInstance(struct BxCanBase *object)
 void CAN_ISR(void)
 {
   /* Joint interrupt */
-  if (instance)
+  if (instance != NULL)
     instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
@@ -121,7 +121,7 @@ static enum Result canInit(void *object, const void *configBase)
   sysResetDisable(RST_CAN);
 
   interface->channel = 0;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq.rx0 = CEC_CAN_IRQ;
   interface->irq.rx1 = CEC_CAN_IRQ;
   interface->irq.sce = CEC_CAN_IRQ;
@@ -135,6 +135,6 @@ static enum Result canInit(void *object, const void *configBase)
 static void canDeinit(void *object __attribute__((unused)))
 {
   sysClockDisable(CLK_CAN);
-  instance = 0;
+  instance = NULL;
 }
 #endif

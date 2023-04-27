@@ -32,7 +32,7 @@ const struct InterfaceClass * const SerialPoll = &(const struct InterfaceClass){
     .init = serialInit,
     .deinit = serialDeinit,
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = serialGetParam,
     .setParam = serialSetParam,
     .read = serialRead,
@@ -58,7 +58,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialPollConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct UartBaseConfig baseConfig = {
       .rx = config->rx,

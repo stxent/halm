@@ -19,7 +19,7 @@ void uartConfigPins(const struct UartBaseConfig *config)
     /* Configure UART RX pin */
     const struct PinEntry * const pinEntry = pinFind(uartPins,
         config->rx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
 
     const struct Pin pin = pinInit(config->rx);
 
@@ -32,7 +32,7 @@ void uartConfigPins(const struct UartBaseConfig *config)
     /* Configure UART TX pin */
     const struct PinEntry * const pinEntry = pinFind(uartPins,
         config->tx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
 
     const struct Pin pin = pinInit(config->tx);
 

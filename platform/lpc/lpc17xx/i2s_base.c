@@ -98,7 +98,7 @@ const struct PinEntry i2sPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2SBase *instance = 0;
+static struct I2SBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct I2SBaseConfig *config)
 {
@@ -113,7 +113,7 @@ static void configPins(const struct I2SBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(i2sPins, pinArray[index],
           config->channel);
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -125,7 +125,7 @@ static void configPins(const struct I2SBaseConfig *config)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct I2SBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -159,7 +159,7 @@ static enum Result i2sInit(void *object, const void *configBase)
   sysPowerEnable(PWR_I2S);
   sysClockControl(CLK_I2S, DEFAULT_DIV);
 
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->channel = config->channel;
   interface->irq = I2S_IRQ;
   interface->reg = LPC_I2S;
@@ -171,6 +171,6 @@ static enum Result i2sInit(void *object, const void *configBase)
 static void i2sDeinit(void *object __attribute__((unused)))
 {
   sysPowerDisable(PWR_I2S);
-  instance = 0;
+  instance = NULL;
 }
 #endif

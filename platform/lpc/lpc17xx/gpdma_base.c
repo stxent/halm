@@ -24,7 +24,7 @@ static enum Result channelInit(void *, const void *);
 const struct EntityClass * const GpDmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
-    .deinit = 0 /* Default destructor */
+    .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static const uint8_t eventTranslationMap[] = {
@@ -148,14 +148,14 @@ uint32_t gpDmaBaseCalcMasterAffinity(
 /*----------------------------------------------------------------------------*/
 void gpDmaResetInstance(uint8_t channel)
 {
-  instances[channel] = 0;
+  instances[channel] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 bool gpDmaSetInstance(uint8_t channel, struct GpDmaBase *object)
 {
   assert(channel < CHANNEL_COUNT);
 
-  void *expected = 0;
+  void *expected = NULL;
   return compareExchangePointer(&instances[channel], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
@@ -210,7 +210,7 @@ static enum Result channelInit(void *object, const void *configBase)
   assert(config->channel < CHANNEL_COUNT);
 
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
-  channel->handler = 0;
+  channel->handler = NULL;
   channel->number = config->channel;
   channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
 

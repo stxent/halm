@@ -19,9 +19,9 @@ static size_t flashWrite(void *, const void *, size_t);
 const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .size = sizeof(struct Flash),
     .init = flashInit,
-    .deinit = 0, /* Default destructor */
+    .deinit = NULL, /* Default destructor */
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = flashGetParam,
     .setParam = flashSetParam,
     .read = flashRead,
@@ -32,7 +32,7 @@ static enum Result flashInit(void *object,
     const void *configBase __attribute__((unused)))
 {
   struct Flash * const interface = object;
-  const enum Result res = FlashBase->init(interface, 0);
+  const enum Result res = FlashBase->init(interface, NULL);
 
   if (res == E_OK)
     interface->position = 0;

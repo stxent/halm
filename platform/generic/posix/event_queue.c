@@ -36,8 +36,8 @@ const struct WorkQueueClass * const EventQueue =
     .deinit = deletedDestructorTrap,
 
     .add = workQueueAdd,
-    .profile = 0,
-    .statistics = 0,
+    .profile = NULL,
+    .statistics = NULL,
     .start = workQueueStart,
     .stop = workQueueStop
 };
@@ -64,11 +64,11 @@ static enum Result workQueueInit(void *object __attribute__((unused)),
 static enum Result workQueueAdd(void *object __attribute__((unused)),
     void (*callback)(void *), void *argument)
 {
-  if (!callback)
+  if (callback == NULL)
     return E_VALUE;
 
   struct Task * const task = malloc(sizeof(struct Task));
-  if (!task)
+  if (task == NULL)
     return E_MEMORY;
 
   if (uv_async_init(uv_default_loop(), &task->handle, onAsyncCallback) < 0)

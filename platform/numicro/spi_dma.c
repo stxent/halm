@@ -58,7 +58,7 @@ static void dmaHandler(void *object)
   {
     reg->PDMACTL = 0;
 
-    if (interface->callback)
+    if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
   else
@@ -79,11 +79,11 @@ static bool dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
   };
 
   interface->rxDma = init(PdmaOneShot, &dmaConfigs[0]);
-  if (!interface->rxDma)
+  if (interface->rxDma == NULL)
     return false;
 
   interface->txDma = init(PdmaOneShot, &dmaConfigs[1]);
-  if (!interface->txDma)
+  if (interface->txDma == NULL)
     return false;
 
   dmaSetCallback(interface->rxDma, dmaHandler, interface);
@@ -210,7 +210,7 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
   NM_SPI_Type * const reg = interface->base.reg;
 
   interface->invoked = false;
-  interface->sink = 0;
+  interface->sink = NULL;
 
   reg->PDMACTL = PDMACTL_RXPDMAEN | PDMACTL_TXPDMAEN;
   dmaAppend(interface->rxDma, rxSink, (const void *)&reg->RX, length);
@@ -237,7 +237,7 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct SpiBaseConfig baseConfig = {
       .cs = 0,
@@ -256,9 +256,9 @@ static enum Result spiInit(void *object, const void *configBase)
   if (!dmaSetup(interface, config->dma[0], config->dma[1]))
     return E_ERROR;
 
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->rate = config->rate;
-  interface->sink = 0;
+  interface->sink = NULL;
   interface->blocking = true;
   interface->unidir = true;
 
@@ -438,7 +438,7 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
 
   struct SpiDma * const interface = object;
 
-  if (!interface->sink)
+  if (interface->sink == NULL)
   {
     dmaSetupTx(interface->rxDma, interface->txDma);
     return transferData(interface, buffer, &interface->dummy, length);

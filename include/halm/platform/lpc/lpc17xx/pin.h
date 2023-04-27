@@ -13,6 +13,7 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
 #include <stdbool.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -64,7 +65,7 @@ static inline void pinSet(struct Pin pin)
 
 static inline bool pinValid(struct Pin pin)
 {
-  return pin.reg != 0;
+  return pin.reg != NULL;
 }
 
 static inline void pinWrite(struct Pin pin, bool value)

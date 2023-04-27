@@ -102,7 +102,7 @@ static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     dataInterfaceDescriptor,
     bulkReceiveEndpointDescriptor,
     bulkTransmitEndpointDescriptor,
-    0
+    NULL
 };
 /*----------------------------------------------------------------------------*/
 static void interfaceAssociationDescriptor(const void *object,
@@ -113,7 +113,7 @@ static void interfaceAssociationDescriptor(const void *object,
   header->length = sizeof(struct UsbInterfaceAssociationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbInterfaceAssociationDescriptor * const descriptor = payload;
 
@@ -130,7 +130,7 @@ static void deviceDescriptor(const void *object __attribute__((unused)),
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbDeviceDescriptor * const descriptor = payload;
 
@@ -148,7 +148,7 @@ static void configDescriptor(const void *object __attribute__((unused)),
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbConfigurationDescriptor * const descriptor = payload;
 
@@ -173,7 +173,7 @@ static void controlInterfaceDescriptor(const void *object,
   header->length = sizeof(struct UsbInterfaceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbInterfaceDescriptor * const descriptor = payload;
 
@@ -190,7 +190,7 @@ static void cdcHeaderDescriptor(const void *object __attribute__((unused)),
   header->length = sizeof(struct CdcHeaderDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct CdcHeaderDescriptor * const descriptor = payload;
 
@@ -205,7 +205,7 @@ static void cdcCallManagementDescriptor(const void *object
   header->length = sizeof(struct CdcCallManagementDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct CdcCallManagementDescriptor * const descriptor = payload;
 
@@ -219,7 +219,7 @@ static void cdcAcmDescriptor(const void *object __attribute__((unused)),
   header->length = sizeof(struct CdcAcmDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct CdcAcmDescriptor * const descriptor = payload;
 
@@ -236,7 +236,7 @@ static void unionDescriptor(const void *object, struct UsbDescriptor *header,
   header->length = sizeof(struct CdcUnionDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct CdcUnionDescriptor * const descriptor = payload;
 
@@ -254,7 +254,7 @@ static void notificationEndpointDescriptor(const void *object,
   header->length = sizeof(struct UsbEndpointDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbEndpointDescriptor * const descriptor = payload;
 
@@ -273,7 +273,7 @@ static void dataInterfaceDescriptor(const void *object,
   header->length = sizeof(struct UsbInterfaceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbInterfaceDescriptor * const descriptor = payload;
 
@@ -291,7 +291,7 @@ static void dataEndpointDescriptor(const void *object,
   header->length = sizeof(struct UsbEndpointDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
 
-  if (payload)
+  if (payload != NULL)
   {
     struct UsbEndpointDescriptor * const descriptor = payload;
 
@@ -310,7 +310,7 @@ static void bulkTransmitEndpointDescriptor(const void *object,
 {
   dataEndpointDescriptor(object, header, payload);
 
-  if (payload)
+  if (payload != NULL)
   {
     const struct CdcAcmBase * const driver = object;
     struct UsbEndpointDescriptor * const descriptor = payload;
@@ -324,7 +324,7 @@ static void bulkReceiveEndpointDescriptor(const void *object,
 {
   dataEndpointDescriptor(object, header, payload);
 
-  if (payload)
+  if (payload != NULL)
   {
     const struct CdcAcmBase * const driver = object;
     struct UsbEndpointDescriptor * const descriptor = payload;
@@ -422,8 +422,8 @@ uint8_t cdcAcmBaseGetUsbSpeed(const struct CdcAcmBase *driver)
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct CdcAcmBaseConfig * const config = configBase;
-  assert(config->owner);
-  assert(config->device);
+  assert(config->owner != NULL);
+  assert(config->device != NULL);
 
   struct CdcAcmBase * const driver = object;
 

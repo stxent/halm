@@ -46,7 +46,7 @@ static enum Result busInit(void *object, const void *configBase)
   bus->number = number;
   bus->pins = malloc(sizeof(struct Pin) * bus->number);
 
-  if (!bus->pins)
+  if (bus->pins == NULL)
     return E_MEMORY;
 
   for (size_t index = 0; index < bus->number; ++index)

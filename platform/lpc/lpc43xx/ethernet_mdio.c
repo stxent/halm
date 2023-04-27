@@ -23,9 +23,9 @@ static size_t mdioWrite(void *, const void *, size_t);
 const struct InterfaceClass * const MDIO = &(const struct InterfaceClass){
     .size = sizeof(struct MDIO),
     .init = mdioInit,
-    .deinit = 0, /* Default destructor */
+    .deinit = NULL, /* Default destructor */
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = mdioGetParam,
     .setParam = mdioSetParam,
     .read = mdioRead,
@@ -69,7 +69,7 @@ static uint32_t frequencyToClockRange(uint32_t frequency)
 static enum Result mdioInit(void *object, const void *configBase)
 {
   const struct MDIOConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct MDIO * const interface = object;
 

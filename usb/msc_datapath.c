@@ -367,7 +367,7 @@ static void storageReadCallback(void *argument)
   const size_t index = handler->driver->context.cbw.lun;
   struct Interface * const interface = handler->driver->lun[index].interface;
 
-  if (ifGetParam(interface, IF_STATUS, 0) != E_OK)
+  if (ifGetParam(interface, IF_STATUS, NULL) != E_OK)
   {
     usbTrace("msc: storage read failed");
 
@@ -420,7 +420,7 @@ static void storageWriteCallback(void *argument)
   const size_t index = handler->driver->context.cbw.lun;
   struct Interface * const interface = handler->driver->lun[index].interface;
 
-  if (ifGetParam(interface, IF_STATUS, 0) != E_OK)
+  if (ifGetParam(interface, IF_STATUS, NULL) != E_OK)
   {
     usbTrace("msc: storage write failed");
 
@@ -572,7 +572,7 @@ enum Result datapathInit(struct MscQueryHandler *handler,
   {
     struct UsbRequest * const request = &handler->headers[index];
 
-    usbRequestInit(request, 0, 0, 0, 0);
+    usbRequestInit(request, NULL, 0, NULL, NULL);
     pointerArrayPushBack(&handler->usbPool, request);
   }
 
@@ -608,7 +608,7 @@ bool datapathReceiveControl(struct MscQueryHandler *handler, void *buffer,
     size_t length)
 {
   return enqueueUsbRx(handler, (uintptr_t)buffer, length,
-      usbControlCallback, 0, 0);
+      usbControlCallback, NULL, NULL);
 }
 /*----------------------------------------------------------------------------*/
 bool datapathSendResponseAndStatus(struct MscQueryHandler *handler,

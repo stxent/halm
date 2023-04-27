@@ -202,7 +202,7 @@ static void configPins(const struct SspBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(sspPins, pinArray[index],
           CHANNEL_INDEX(config->channel, index));
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -216,7 +216,7 @@ static bool setInstance(uint8_t channel, struct SspBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -228,14 +228,14 @@ static bool setInstance(uint8_t channel, struct SspBase *object)
 void SSP0_ISR(void)
 {
   /* In M0 cores SSP0 IRQ is combined with SSP1 IRQ */
-  if (instances[0]->handler)
+  if (instances[0]->handler != NULL)
     instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void SSP1_ISR(void)
 {
   /* In M0 cores SSP1 IRQ is combined with SSP0 IRQ */
-  if (instances[1]->handler)
+  if (instances[1]->handler != NULL)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
@@ -269,7 +269,7 @@ static enum Result sspInit(void *object, const void *configBase)
   sysResetEnable(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -286,6 +286,6 @@ static void sspDeinit(void *object)
   sysClockDisable(entry->registerBranch);
   sysClockDisable(entry->peripheralBranch);
 
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

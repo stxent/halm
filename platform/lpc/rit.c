@@ -34,21 +34,21 @@ const struct TimerClass * const Rit = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = 0,
+    .setAutostop = NULL,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = 0,
+    .setFrequency = NULL,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
 };
 /*----------------------------------------------------------------------------*/
-static struct Rit *instance = 0;
+static struct Rit *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Rit *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -66,7 +66,7 @@ void RIT_ISR(void)
     /* Clear pending interrupt flag */
     LPC_RIT->CTRL = control;
 
-    if (instance->callback)
+    if (instance->callback != NULL)
       instance->callback(instance->callbackArgument);
   }
 }
@@ -84,7 +84,7 @@ static enum Result tmrInit(void *object, const void *configBase)
     LPC_RIT->CTRL = CTRL_RITENCLR | CTRL_RITENBR;
     LPC_RIT->COMPVAL = TIMER_RESOLUTION;
 
-    if (config)
+    if (config != NULL)
       irqSetPriority(RIT_IRQ, config->priority);
     irqEnable(RIT_IRQ);
 
@@ -101,7 +101,7 @@ static void tmrDeinit(void *object __attribute__((unused)))
   LPC_RIT->CTRL = 0;
   ritBaseDeinit();
 
-  instance = 0;
+  instance = NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/

@@ -50,7 +50,7 @@ static int setInstance(struct PinIntBase *interrupt)
   /* Find free interrupt */
   for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
   {
-    if (!instances[index] && findIrqNumber(index) != -1)
+    if (instances[index] == NULL && findIrqNumber(index) != -1)
     {
       instances[index] = interrupt;
       return (int)index;
@@ -111,7 +111,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
     return E_BUSY;
 
   interrupt->channel = (uint8_t)channel;
-  interrupt->handler = 0;
+  interrupt->handler = NULL;
   interrupt->irq = findIrqNumber(interrupt->channel);
 
   volatile uint32_t * const reg = LPC_SCU->PINTSEL + (interrupt->channel >> 2);
@@ -126,6 +126,6 @@ static enum Result pinIntInit(void *object, const void *configBase)
 static void pinIntDeinit(void *object)
 {
   const struct PinIntBase * const interrupt = object;
-  instances[interrupt->channel] = 0;
+  instances[interrupt->channel] = NULL;
 }
 #endif

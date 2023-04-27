@@ -54,7 +54,7 @@ const struct PinGroupEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instance = 0;
+static struct AdcBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
 {
@@ -65,7 +65,7 @@ struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
 {
   const struct PinGroupEntry * const group = pinGroupFind(adcPins, key,
       interface->channel);
-  assert(group);
+  assert(group != NULL);
 
   const unsigned int offset = PIN_TO_OFFSET(key) - PIN_TO_OFFSET(group->begin);
   const struct Pin pin = pinInit(key);
@@ -104,7 +104,7 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(config->channel == 0);
   assert(!config->accuracy || config->accuracy == 10 || config->accuracy == 12);
 
-  if (!config->shared && !adcSetInstance(config->channel, 0, interface))
+  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;
 
   if (!sysPowerStatus(PWR_ADC))
@@ -114,7 +114,7 @@ static enum Result adcInit(void *object, const void *configBase)
   }
 
   interface->channel = 0;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = ADC_IRQ;
   interface->reg = LPC_ADC;
 
@@ -137,6 +137,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, 0);
+  adcSetInstance(interface->channel, interface, NULL);
 }
 #endif

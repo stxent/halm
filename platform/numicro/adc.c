@@ -39,7 +39,7 @@ const struct InterfaceClass * const Adc = &(const struct InterfaceClass){
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = 0
+    .write = NULL
 };
 /*----------------------------------------------------------------------------*/
 static size_t calcPinCount(const PinNumber *pins)
@@ -79,7 +79,7 @@ static void interruptHandler(void *object)
     stopCalibration(interface);
   }
 
-  if (interface->callback)
+  if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -137,8 +137,8 @@ static void stopConversion(struct Adc *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
-  assert(config);
-  assert(config->pins);
+  assert(config != NULL);
+  assert(config->pins != NULL);
   assert(config->event != ADC_SOFTWARE && config->event < ADC_EVENT_END);
 
   const struct AdcBaseConfig baseConfig = {
@@ -159,13 +159,13 @@ static enum Result adcInit(void *object, const void *configBase)
 
   /* Allocate buffer for conversion results */
   interface->buffer = malloc(sizeof(uint16_t) * interface->count);
-  if (!interface->buffer)
+  if (interface->buffer == NULL)
     return E_MEMORY;
   memset(interface->buffer, 0, sizeof(uint16_t) * interface->count);
 
   /* Allocate buffer for pin descriptors */
   interface->pins = malloc(sizeof(struct AdcPin) * interface->count);
-  if (!interface->pins)
+  if (interface->pins == NULL)
     return E_MEMORY;
   interface->enabled = adcSetupPins(&interface->base, config->pins,
       interface->pins, interface->count);
@@ -175,7 +175,7 @@ static enum Result adcInit(void *object, const void *configBase)
       | ADCR_ADMD(ADMD_SINGLE_SCAN) | ADCR_TRGS(config->event)
       | ADCR_TRGCOND(adcMakePinCondition(config->sensitivity));
 
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->delay = config->delay;
   interface->priority = config->priority;
 
@@ -254,10 +254,11 @@ static enum Result adcSetParam(void *object, int parameter,
 
 #ifdef CONFIG_PLATFORM_NUMICRO_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, 0, object) ? E_OK : E_BUSY;
+      return adcSetInstance(interface->base.channel, NULL, object) ?
+          E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, 0);
+      adcSetInstance(interface->base.channel, object, NULL);
       return E_OK;
 #endif
 

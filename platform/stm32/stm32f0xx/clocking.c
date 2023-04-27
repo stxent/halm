@@ -12,6 +12,7 @@
 #include <xcore/accel.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 #define HSI_OSC_FREQUENCY     8000000
 #define HSI_OSC_48_FREQUENCY  48000000
@@ -297,7 +298,7 @@ static enum Result systemPllEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct SystemPllConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->source == CLOCK_INTERNAL
       || config->source == CLOCK_INTERNAL_48
       || config->source == CLOCK_EXTERNAL);
@@ -361,7 +362,7 @@ static enum Result systemClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct SystemClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->source == CLOCK_INTERNAL
       || config->source == CLOCK_INTERNAL_48
       || config->source == CLOCK_EXTERNAL
@@ -426,7 +427,7 @@ static enum Result mainClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->divisor);
 
   // XXX
@@ -469,7 +470,7 @@ static enum Result apbClockEnable(const void *clockBase
    __attribute__((unused)), const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->divisor);
 
   const unsigned int prescaler = 31 - countLeadingZeros32(config->divisor);

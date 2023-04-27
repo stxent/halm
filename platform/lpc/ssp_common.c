@@ -23,7 +23,7 @@ void sspConfigPins(const struct SspBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(sspPins,
           pinArray[index], config->channel);
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 

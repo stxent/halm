@@ -1,7 +1,7 @@
 # Copyright (C) 2017 xent
 # Project is distributed under the terms of the MIT License
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.21)
 cmake_policy(SET CMP0054 NEW)
 cmake_policy(SET CMP0069 NEW)
 cmake_policy(SET CMP0079 NEW)
@@ -18,7 +18,7 @@ parse_config("${HALM_CONFIG_FILE}" CONFIG_DEFS)
 # Default compiler flags
 
 set(FLAGS_DEFAULT "-fdata-sections -ffunction-sections")
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_INIT} ${FLAGS_DEFAULT} ${FLAGS_CPU}")
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")

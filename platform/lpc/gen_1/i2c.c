@@ -168,7 +168,7 @@ static void interruptHandler(void *object)
   if (interface->state == STATE_IDLE || interface->state == STATE_ERROR)
     irqDisable(interface->base.irq);
 
-  if (interface->callback && event)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -185,7 +185,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2CConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct I2CBaseConfig baseConfig = {
       .channel = config->channel,
@@ -202,7 +202,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->base.handler = interruptHandler;
 
   interface->address = 0;
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->blocking = true;
   interface->rate = config->rate;
   interface->sendRepeatedStart = false;
@@ -344,7 +344,7 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   interface->rxLeft = length;
   interface->txLeft = 0;
   interface->rxBuffer = buffer;
-  interface->txBuffer = 0;
+  interface->txBuffer = NULL;
 
   interface->state = STATE_ADDRESS;
   reg->CONSET = CONSET_STA;
@@ -379,7 +379,7 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
 
   interface->rxLeft = 0;
   interface->txLeft = length;
-  interface->rxBuffer = 0;
+  interface->rxBuffer = NULL;
   interface->txBuffer = buffer;
 
   /* Stop previous transmission when Repeated Start is enabled */

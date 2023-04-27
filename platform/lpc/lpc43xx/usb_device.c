@@ -141,9 +141,10 @@ static bool initEndpoints(struct UsbDevice *device)
 
   device->endpoints = malloc(endpointBufferSize);
 
-  if (device->endpoints)
+  if (device->endpoints != NULL)
   {
-    memset(device->endpoints, 0, endpointBufferSize);
+    for (size_t index = 0; index < device->base.numberOfEndpoints; ++index)
+      device->endpoints[index] = NULL;
     return true;
   }
   else
@@ -301,7 +302,7 @@ static void resetQueueHeads(struct UsbDevice *device)
 static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
@@ -329,7 +330,7 @@ static enum Result devInit(void *object, const void *configBase)
 
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
-  if (!device->control)
+  if (device->control == NULL)
     return E_ERROR;
 
   initPeripheral(device);
@@ -362,10 +363,10 @@ static void *devCreateEndpoint(void *object, uint8_t address)
 
   assert(index < device->base.numberOfEndpoints);
 
-  struct UsbEndpoint *ep = 0;
+  struct UsbEndpoint *ep = NULL;
   const IrqState state = irqSave();
 
-  if (!device->endpoints[index])
+  if (device->endpoints[index] == NULL)
   {
     const struct UsbEndpointConfig config = {
         .parent = device,
@@ -497,7 +498,7 @@ static void epCommonHandler(struct UsbEndpoint *ep)
 static struct TransferDescriptor *epAllocDescriptor(struct UsbEndpoint *ep,
     struct UsbRequest *node, uint8_t *buffer, size_t length)
 {
-  struct TransferDescriptor *descriptor = 0;
+  struct TransferDescriptor *descriptor = NULL;
   const IrqState state = irqSave();
 
   if (!pointerArrayEmpty(&ep->device->base.descriptorPool))
@@ -508,7 +509,7 @@ static struct TransferDescriptor *epAllocDescriptor(struct UsbEndpoint *ep,
 
   irqRestore(state);
 
-  if (descriptor)
+  if (descriptor != NULL)
   {
     /* Initialize allocated descriptor */
 
@@ -602,7 +603,7 @@ static enum Result epEnqueueRx(struct UsbEndpoint *ep,
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
       request, request->buffer, request->capacity);
 
-  if (descriptor)
+  if (descriptor != NULL)
   {
     epAppendDescriptor(ep, descriptor);
     return E_OK;
@@ -617,7 +618,7 @@ static enum Result epEnqueueTx(struct UsbEndpoint *ep,
   struct TransferDescriptor * const descriptor = epAllocDescriptor(ep,
       request, request->buffer, request->length);
 
-  if (descriptor)
+  if (descriptor != NULL)
   {
     epAppendDescriptor(ep, descriptor);
     return E_OK;
@@ -792,7 +793,7 @@ static void epDeinit(void *object)
 
   /* Protect endpoint array from simultaneous access */
   const IrqState state = irqSave();
-  device->endpoints[index] = 0;
+  device->endpoints[index] = NULL;
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
@@ -872,8 +873,8 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request);
-  assert(request->callback);
+  assert(request != NULL);
+  assert(request->callback != NULL);
 
   struct UsbEndpoint * const ep = object;
 

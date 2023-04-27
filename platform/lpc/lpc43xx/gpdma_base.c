@@ -67,7 +67,7 @@ static const enum GpDmaEvent eventMap[EVENT_COUNT][EVENT_SOURCES] = {
     {GPDMA_DAC,     GPDMA_SCT_OUT3,   GPDMA_SGPIO15,    GPDMA_MAT3_0}
 };
 /*----------------------------------------------------------------------------*/
-static struct DmaHub *hub = 0;
+static struct DmaHub *hub = NULL;
 /*----------------------------------------------------------------------------*/
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel,
     const struct GpDmaSettings *settings)
@@ -138,14 +138,14 @@ uint32_t gpDmaBaseCalcMasterAffinity(const struct GpDmaBase *channel,
 /*----------------------------------------------------------------------------*/
 void gpDmaResetInstance(uint8_t channel)
 {
-  hub->instances[channel] = 0;
+  hub->instances[channel] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 bool gpDmaSetInstance(uint8_t channel, struct GpDmaBase *object)
 {
   assert(channel < CHANNEL_COUNT);
 
-  void *expected = 0;
+  void *expected = NULL;
   return compareExchangePointer(&hub->instances[channel], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
@@ -254,9 +254,9 @@ static void dmaHubFree(struct GpDmaBase *channel)
 /*----------------------------------------------------------------------------*/
 static void dmaHubInstantiate(void)
 {
-  if (!hub)
-    hub = init(DmaHub, 0);
-  assert(hub);
+  if (hub == NULL)
+    hub = init(DmaHub, NULL);
+  assert(hub != NULL);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dmaHubInit(void *object,
@@ -265,7 +265,7 @@ static enum Result dmaHubInit(void *object,
   struct DmaHub * const handler = object;
 
   for (size_t index = 0; index < CHANNEL_COUNT; ++index)
-    handler->instances[index] = 0;
+    handler->instances[index] = NULL;
   memset(handler->connections, 0, sizeof(handler->connections));
 
   sysClockEnable(CLK_M4_GPDMA);
@@ -292,7 +292,7 @@ static enum Result channelInit(void *object, const void *configBase)
   assert(config->channel < CHANNEL_COUNT);
 
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
-  channel->handler = 0;
+  channel->handler = NULL;
   channel->number = config->channel;
   channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
 

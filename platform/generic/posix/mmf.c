@@ -41,7 +41,7 @@ const struct InterfaceClass * const MemoryMappedFile =
     .init = mmfInit,
     .deinit = mmfDeinit,
 
-    .setCallback = 0,
+    .setCallback = NULL,
     .getParam = mmfGetParam,
     .setParam = mmfSetParam,
     .read = mmfRead,
@@ -54,7 +54,7 @@ static enum Result mmfInit(void *object, const void *configBase)
   struct MemoryMappedFile * const dev = object;
   enum Result res;
 
-  if (!path)
+  if (path == NULL)
     return E_ERROR;
 
   dev->position = 0;
@@ -65,7 +65,7 @@ static enum Result mmfInit(void *object, const void *configBase)
     return E_ERROR;
 
   dev->file = open(path, O_RDWR);
-  if (!dev->file)
+  if (dev->file < 0)
   {
     res = E_ENTRY;
     goto free_semaphore;
@@ -76,7 +76,8 @@ static enum Result mmfInit(void *object, const void *configBase)
     goto free_file;
   }
 
-  dev->data = mmap(0, dev->info.st_size, PROT_WRITE, MAP_SHARED, dev->file, 0);
+  dev->data = mmap(NULL, dev->info.st_size, PROT_WRITE, MAP_SHARED,
+      dev->file, 0);
   if (dev->data == MAP_FAILED)
   {
     res = E_INTERFACE;

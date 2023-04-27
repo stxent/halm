@@ -139,7 +139,7 @@ static void pinInterruptHandler(void *object)
 
   interface->status = E_OK;
 
-  if (interface->callback)
+  if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -212,7 +212,7 @@ static void sdioInterruptHandler(void *object)
     /* Disable SDMMC interrupts */
     irqDisable(interface->base.irq);
 
-    if (interface->callback)
+    if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -259,7 +259,7 @@ static enum Result updateRate(struct Sdmmc *interface, uint32_t rate)
 static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdmmcConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct DmaSdmmcConfig dmaConfig = {
       .burst = DMA_BURST_4,
@@ -289,7 +289,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   assert(pinValid(interface->data0));
 
   interface->finalizer = init(PinInt, &finalizerConfig);
-  if (!interface->finalizer)
+  if (interface->finalizer == NULL)
     return E_ERROR;
   interruptSetCallback(interface->finalizer, pinInterruptHandler, interface);
 
@@ -299,7 +299,7 @@ static enum Result sdioInit(void *object, const void *configBase)
 
   interface->base.handler = sdioInterruptHandler;
   interface->argument = 0;
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->command = 0;
   interface->status = E_OK;
 
@@ -326,7 +326,7 @@ static enum Result sdioInit(void *object, const void *configBase)
 
   /* Internal DMA controller should be initialized after interface setup */
   interface->dma = init(DmaSdmmc, &dmaConfig);
-  if (!interface->dma)
+  if (interface->dma == NULL)
     return E_ERROR;
 
   return E_OK;
@@ -464,7 +464,7 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   reg->BYTCNT = length;
-  dmaAppend(interface->dma, buffer, 0, length);
+  dmaAppend(interface->dma, buffer, NULL, length);
 
   const enum Result res = dmaEnable(interface->dma);
 
@@ -486,7 +486,7 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   reg->BYTCNT = length;
-  dmaAppend(interface->dma, 0, buffer, length);
+  dmaAppend(interface->dma, NULL, buffer, length);
 
   const enum Result res = dmaEnable(interface->dma);
 

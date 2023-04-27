@@ -8,6 +8,7 @@
 #include <halm/platform/stm32/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm32/system.h>
 #include <halm/platform/stm32/uart_base.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 struct UartBlockDescriptor
 {
@@ -254,12 +255,12 @@ static const struct UartBlockDescriptor *findDescriptor(uint8_t channel)
       return &uartBlockEntries[index];
   }
 
-  return 0;
+  return NULL;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UartBase *object)
 {
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -329,7 +330,7 @@ static enum Result uartInit(void *object, const void *configBase)
   sysResetDisable(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -344,6 +345,6 @@ static void uartDeinit(void *object)
       findDescriptor(interface->channel);
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

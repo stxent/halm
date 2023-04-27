@@ -42,7 +42,7 @@ static const struct PinGroupEntry spifiPinGroups[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SpifiBase *instance = 0;
+static struct SpifiBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SpifiBase *interface,
     const struct SpifiBaseConfig *config)
@@ -70,7 +70,7 @@ static void configPins(struct SpifiBase *interface,
 
     const struct PinGroupEntry * const group = pinGroupFind(spifiPinGroups,
         pinArray[index], 0);
-    assert(group);
+    assert(group != NULL);
 
     const struct Pin pin = pinInit(pinArray[index]);
 
@@ -83,7 +83,7 @@ static void configPins(struct SpifiBase *interface,
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SpifiBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -126,7 +126,7 @@ static enum Result spifiInit(void *object, const void *configBase)
   sysClockEnable(CLK_SPIFI);
   sysResetEnable(RST_SPIFI);
 
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = SPIFI_IRQ;
   interface->reg = LPC_SPIFI;
   interface->debug = config->debug;
@@ -139,5 +139,5 @@ static void spifiDeinit(void *object __attribute__((unused)))
   sysClockDisable(CLK_SPIFI);
   sysClockDisable(CLK_M4_SPIFI);
 
-  instance = 0;
+  instance = NULL;
 }

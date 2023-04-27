@@ -266,12 +266,12 @@ static enum Result adcInit(void *object, const void *configBase)
   assert((config->accuracy / 2 >= 3 && config->accuracy / 2 <= 6)
       || !config->accuracy);
 
-  if (!config->shared && !adcSetInstance(config->channel, 0, interface))
+  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;
 
   enum SysClockBranch clock;
   enum SysBlockReset reset;
-  NM_EADC_Type *reg = 0;
+  NM_EADC_Type *reg = NULL;
   uint32_t frequency = 0;
 
   switch (config->channel)
@@ -347,7 +347,7 @@ static enum Result adcInit(void *object, const void *configBase)
 
   interface->channel = config->channel;
   interface->control = control;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->reg = reg;
 
   return E_OK;
@@ -357,6 +357,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct EadcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, 0);
+  adcSetInstance(interface->channel, interface, NULL);
 }
 #endif

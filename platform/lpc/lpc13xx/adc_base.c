@@ -69,7 +69,7 @@ const struct PinEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instance = 0;
+static struct AdcBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
 {
@@ -78,12 +78,12 @@ void ADC_ISR(void)
 /*----------------------------------------------------------------------------*/
 struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
 {
-  const struct PinEntry * const entry = pinFind(adcPins, key,
+  const struct PinEntry * const pinEntry = pinFind(adcPins, key,
       interface->channel);
-  assert(entry);
+  assert(pinEntry != NULL);
 
-  const uint8_t function = UNPACK_FUNCTION(entry->value);
-  const uint8_t index = UNPACK_CHANNEL(entry->value);
+  const uint8_t function = UNPACK_FUNCTION(pinEntry->value);
+  const uint8_t index = UNPACK_CHANNEL(pinEntry->value);
 
   /* Fill pin structure and initialize pin as input */
   const struct Pin pin = pinInit(key);
@@ -123,7 +123,7 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(config->frequency <= MAX_FREQUENCY);
   assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
 
-  if (!config->shared && !adcSetInstance(config->channel, 0, interface))
+  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;
 
   if (!sysPowerStatus(PWR_ADC))
@@ -133,7 +133,7 @@ static enum Result adcInit(void *object, const void *configBase)
   }
 
   interface->channel = 0;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = ADC_IRQ;
   interface->reg = LPC_ADC;
 
@@ -152,6 +152,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, 0);
+  adcSetInstance(interface->channel, interface, NULL);
 }
 #endif

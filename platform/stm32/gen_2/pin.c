@@ -8,6 +8,7 @@
 #include <halm/platform/stm32/gen_2/pin_defs.h>
 #include <halm/platform/stm32/system.h>
 #include <assert.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(uint8_t);
 static void commonPinInit(uint8_t);
@@ -58,7 +59,7 @@ struct Pin pinInit(PinNumber id)
 /*----------------------------------------------------------------------------*/
 void pinInput(struct Pin pin)
 {
-  assert(pin.reg);
+  assert(pin.reg != NULL);
   commonPinInit(pin.port);
 
   STM_GPIO_Type * const reg = pin.reg;
@@ -72,7 +73,7 @@ void pinInput(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
 {
-  assert(pin.reg);
+  assert(pin.reg != NULL);
   commonPinInit(pin.port);
 
   pinSetType(pin, PIN_PUSHPULL);

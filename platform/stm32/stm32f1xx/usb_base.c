@@ -50,7 +50,7 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UsbBase *instance = 0;
+static struct UsbBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
@@ -74,7 +74,7 @@ static void configPins(struct UsbBase *device,
     {
       const struct PinEntry * const pinEntry = pinFind(usbPins,
           pinArray[index], config->channel);
-      assert(pinEntry);
+      assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -90,7 +90,7 @@ static void configPins(struct UsbBase *device,
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct UsbBase *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -113,7 +113,7 @@ void USB_HP_ISR(void)
 /* Virtual handler */
 void USB_LP_ISR(void)
 {
-  if (instance)
+  if (instance != NULL)
     instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
@@ -140,7 +140,7 @@ static enum Result devInit(void *object, const void *configBase)
   sysResetDisable(RST_USB);
 
   device->channel = 0;
-  device->handler = 0;
+  device->handler = NULL;
   device->irq = USB_LP_CAN1_RX0_IRQ;
   device->reg = STM_USB;
 
@@ -151,6 +151,6 @@ static enum Result devInit(void *object, const void *configBase)
 static void devDeinit(void *object __attribute__((unused)))
 {
   sysClockDisable(CLK_USB);
-  instance = 0;
+  instance = NULL;
 }
 #endif

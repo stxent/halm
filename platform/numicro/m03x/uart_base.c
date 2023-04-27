@@ -916,7 +916,7 @@ static bool setInstance(uint8_t channel, struct UartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -928,12 +928,12 @@ static bool setInstance(uint8_t channel, struct UartBase *object)
 void UART02_ISR(void)
 {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART0
-  if (instances[0])
+  if (instances[0] != NULL)
     instances[0]->handler(instances[0]);
 #endif
 
 #ifdef CONFIG_PLATFORM_NUMICRO_UART2
-  if (instances[2])
+  if (instances[2] != NULL)
     instances[2]->handler(instances[2]);
 #endif
 }
@@ -941,12 +941,12 @@ void UART02_ISR(void)
 void UART13_ISR(void)
 {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART1
-  if (instances[1])
+  if (instances[1] != NULL)
     instances[1]->handler(instances[1]);
 #endif
 
 #ifdef CONFIG_PLATFORM_NUMICRO_UART3
-  if (instances[3])
+  if (instances[3] != NULL)
     instances[3]->handler(instances[3]);
 #endif
 }
@@ -954,12 +954,12 @@ void UART13_ISR(void)
 void UART46_ISR(void)
 {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART4
-  if (instances[4])
+  if (instances[4] != NULL)
     instances[4]->handler(instances[4]);
 #endif
 
 #ifdef CONFIG_PLATFORM_NUMICRO_UART6
-  if (instances[6])
+  if (instances[6] != NULL)
     instances[6]->handler(instances[6]);
 #endif
 }
@@ -967,19 +967,19 @@ void UART46_ISR(void)
 void UART57_ISR(void)
 {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART5
-  if (instances[5])
+  if (instances[5] != NULL)
     instances[5]->handler(instances[5]);
 #endif
 
 #ifdef CONFIG_PLATFORM_NUMICRO_UART7
-  if (instances[7])
+  if (instances[7] != NULL)
     instances[7]->handler(instances[7]);
 #endif
 }
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)
 {
-  const void *clock = 0;
+  const void *clock = NULL;
 
   switch (interface->channel)
   {
@@ -1057,7 +1057,7 @@ static enum Result uartInit(void *object, const void *configBase)
 
   interface->channel = config->channel;
   interface->depth = entry->depth;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -1079,6 +1079,6 @@ static void uartDeinit(void *object)
 
   disableInterrupts(interface->irq);
   sysClockDisable(entry->branch);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

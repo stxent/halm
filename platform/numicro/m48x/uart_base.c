@@ -892,7 +892,7 @@ static bool setInstance(uint8_t channel, struct UartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -959,7 +959,7 @@ void UART7_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)
 {
-  const void *clock = 0;
+  const void *clock = NULL;
 
   switch (interface->channel)
   {
@@ -1037,7 +1037,7 @@ static enum Result uartInit(void *object, const void *configBase)
 
   interface->channel = config->channel;
   interface->depth = UART_DEPTH_16;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -1056,6 +1056,6 @@ static void uartDeinit(void *object)
 
   irqDisable(interface->irq);
   sysClockDisable(entry->branch);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

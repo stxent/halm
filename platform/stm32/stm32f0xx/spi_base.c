@@ -179,14 +179,14 @@ static const struct SpiBlockDescriptor *findDescriptor(uint8_t channel)
       return &spiBlockEntries[index];
   }
 
-  return 0;
+  return NULL;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct SpiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -237,7 +237,7 @@ static enum Result spiInit(void *object, const void *configBase)
   sysResetDisable(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -252,6 +252,6 @@ static void spiDeinit(void *object)
       findDescriptor(interface->channel);
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

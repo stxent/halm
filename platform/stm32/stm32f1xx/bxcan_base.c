@@ -141,7 +141,7 @@ static void configPins(const struct BxCanBaseConfig *config)
   if (config->rx)
   {
     pinEntry = pinFind(bxCanPins, config->rx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -149,7 +149,7 @@ static void configPins(const struct BxCanBaseConfig *config)
   if (config->tx)
   {
     pinEntry = pinFind(bxCanPins, config->tx, config->channel);
-    assert(pinEntry);
+    assert(pinEntry != NULL);
     pinOutput((pin = pinInit(config->tx)), true);
     pinSetFunction(pin, pinEntry->value);
   }
@@ -163,14 +163,14 @@ static const struct BxCanBlockDescriptor *findDescriptor(uint8_t channel)
       return &bxCanBlockEntries[index];
   }
 
-  return 0;
+  return NULL;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct BxCanBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -183,14 +183,14 @@ static bool setInstance(uint8_t channel, struct BxCanBase *object)
 void CAN1_TX_ISR(void)
 {
   /* Joint interrupt */
-  if (instances[0])
+  if (instances[0] != NULL)
     instances[0]->handler(instances[0]);
 }
 
 void CAN1_RX0_ISR(void)
 {
   /* Joint interrupt */
-  if (instances[0])
+  if (instances[0] != NULL)
     instances[0]->handler(instances[0]);
 }
 
@@ -255,7 +255,7 @@ static enum Result canInit(void *object, const void *configBase)
   sysResetDisable(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq.rx0 = entry->irq.rx0;
   interface->irq.rx1 = entry->irq.rx1;
   interface->irq.sce = entry->irq.sce;
@@ -273,6 +273,6 @@ static void canDeinit(void *object)
       findDescriptor(interface->channel);
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

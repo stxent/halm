@@ -59,14 +59,14 @@ const struct TimerClass * const SctPwmUnit = &(const struct TimerClass){
 
     .enable = unitEnable,
     .disable = unitDisable,
-    .setAutostop = 0,
-    .setCallback = 0,
+    .setAutostop = NULL,
+    .setCallback = NULL,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
     .setOverflow = unitSetOverflow,
-    .getValue = 0,
-    .setValue = 0
+    .getValue = NULL,
+    .setValue = NULL
 };
 
 const struct PwmClass * const SctPwm = &(const struct PwmClass){
@@ -148,7 +148,7 @@ static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct SctPwmUnitConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->resolution >= 2);
 
   const struct SctBaseConfig baseConfig = {
@@ -273,7 +273,7 @@ static void unitSetOverflow(void *object, uint32_t overflow)
 static enum Result singleEdgeInit(void *object, const void *configBase)
 {
   const struct SctPwmConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;
@@ -396,7 +396,7 @@ static void singleEdgeSetEdgesUnified(void *object,
 static enum Result doubleEdgeInit(void *object, const void *configBase)
 {
   const struct SctPwmDoubleEdgeConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;

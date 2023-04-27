@@ -289,7 +289,7 @@ static void interruptHandler(void *object)
     reg->MSR &= ~MSR_ERRI;
   }
 
-  if (interface->callback && event)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -495,7 +495,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result canInit(void *object, const void *configBase)
 {
   const struct CanConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
 
   const struct BxCanBaseConfig baseConfig = {
       .rx = config->rx,
@@ -519,11 +519,11 @@ static enum Result canInit(void *object, const void *configBase)
     return E_MEMORY;
 
   interface->arena = malloc(sizeof(struct CANStandardMessage) * poolSize);
-  if (!interface->arena)
+  if (interface->arena == NULL)
     return E_MEMORY;
 
   interface->base.handler = interruptHandler;
-  interface->callback = 0;
+  interface->callback = NULL;
   interface->timer = config->timer;
 
 #ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS

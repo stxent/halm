@@ -252,7 +252,7 @@ static bool setInstance(uint8_t channel, struct BpwmUnitBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -277,7 +277,7 @@ void BPWM1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t bpwmGetClock(const struct BpwmUnitBase *unit)
 {
-  const void *clock = 0;
+  const void *clock = NULL;
 
   switch (unit->channel)
   {
@@ -339,7 +339,7 @@ static enum Result unitInit(void *object, const void *configBase)
   sysResetBlock(reset);
 
   unit->channel = config->channel;
-  unit->handler = 0;
+  unit->handler = NULL;
 
   return E_OK;
 }

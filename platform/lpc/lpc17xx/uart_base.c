@@ -135,7 +135,7 @@ static bool setInstance(uint8_t channel, struct UartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -187,7 +187,7 @@ static enum Result uartInit(void *object, const void *configBase)
   sysClockControl(entry->clock, DEFAULT_DIV);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -200,6 +200,6 @@ static void uartDeinit(void *object)
   const struct UartBase * const interface = object;
 
   sysPowerDisable(uartBlockEntries[interface->channel].power);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif

@@ -35,10 +35,10 @@ const struct TimerClass * const SysTick = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = 0,
+    .setAutostop = NULL,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = 0,
+    .setFrequency = NULL,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -46,11 +46,11 @@ const struct TimerClass * const SysTick = &(const struct TimerClass){
 };
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const MainClock;
-static struct SysTick *instance = 0;
+static struct SysTick *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SysTick *object)
 {
-  if (!instance)
+  if (instance == NULL)
   {
     instance = object;
     return true;
@@ -77,7 +77,7 @@ static enum Result tmrInit(void *object, const void *configBase)
     SYSTICK->CTRL = CTRL_CLKSOURCE;
     SYSTICK->LOAD = TIMER_RESOLUTION;
 
-    if (config)
+    if (config != NULL)
       irqSetPriority(SYSTICK_IRQ, config->priority);
 
     return E_OK;
@@ -90,7 +90,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *object __attribute__((unused)))
 {
   SYSTICK->CTRL = 0;
-  instance = 0;
+  instance = NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -112,7 +112,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callback = callback;
   timer->callbackArgument = argument;
 
-  if (timer->callback)
+  if (timer->callback != NULL)
     SYSTICK->CTRL |= CTRL_TICKINT;
   else
     SYSTICK->CTRL &= ~CTRL_TICKINT;

@@ -32,7 +32,7 @@ static inline volatile uint32_t *calcMaskedReg(uint8_t port, uint8_t number)
   if (port < ARRAY_SIZE(LPC_GPIO))
     return calcPort(port)->MASKED_ACCESS + (1UL << number);
   else
-    return 0;
+    return NULL;
 }
 /*----------------------------------------------------------------------------*/
 static inline LPC_GPIO_Type *calcPort(uint8_t port)

@@ -193,7 +193,7 @@ static bool setInstance(uint8_t channel, struct QspiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (!instances[channel])
+  if (instances[channel] == NULL)
   {
     instances[channel] = object;
     return true;
@@ -266,7 +266,7 @@ static enum Result qspiInit(void *object, const void *configBase)
   sysResetBlock(reset);
 
   interface->channel = config->channel;
-  interface->handler = 0;
+  interface->handler = NULL;
 
   return E_OK;
 }
@@ -277,6 +277,6 @@ static void qspiDeinit(void *object)
   const struct QspiBase * const interface = object;
 
   sysClockDisable(interface->channel ? CLK_QSPI1 : CLK_QSPI0);
-  instances[interface->channel] = 0;
+  instances[interface->channel] = NULL;
 }
 #endif
