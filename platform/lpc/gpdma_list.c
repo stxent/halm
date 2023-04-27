@@ -124,6 +124,7 @@ static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaListConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->number > 0);
 
   const struct GpDmaBaseConfig baseConfig = {
       .event = config->event,
@@ -132,8 +133,6 @@ static enum Result channelInit(void *object, const void *configBase)
   };
   struct GpDmaList * const channel = object;
   enum Result res;
-
-  assert(config->number > 0);
 
   /* Call base class constructor */
   if ((res = GpDmaBase->init(channel, &baseConfig)) != E_OK)
@@ -329,6 +328,6 @@ static size_t channelQueued(const void *object)
 
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
     return channel->queued;
-  else
-    return 0;
+
+  return 0;
 }

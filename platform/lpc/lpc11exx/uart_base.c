@@ -119,7 +119,6 @@ static void uartDeinit(void *object __attribute__((unused)))
 {
   /* Disable the peripheral clock */
   LPC_SYSCON->UARTCLKDIV = 0;
-
   sysClockDisable(CLK_USART);
 
   instance = NULL;

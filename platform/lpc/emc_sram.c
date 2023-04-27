@@ -35,19 +35,18 @@ static enum Result sramInit(void *object, const void *configBase)
 {
   const struct EmcSramConfig * const config = configBase;
   assert(config != NULL);
+  assert(!(config->dataWidth & 0x7));
+  assert(config->timings.rc >= config->timings.oe);
+  assert(config->timings.wc >= config->timings.we);
+
+  const size_t byteLanes = config->dataWidth >> 3;
+  assert(byteLanes == 1 || byteLanes == 2 || byteLanes == 4);
 
   struct EmcSram * const memory = object;
 
   /* Try to register module */
   if (!emcSetStaticMemoryDescriptor(config->channel, NULL, object))
     return E_BUSY;
-
-  const size_t byteLanes = config->dataWidth >> 3;
-
-  assert(!(config->dataWidth & 0x7));
-  assert(byteLanes == 1 || byteLanes == 2 || byteLanes == 4);
-  assert(config->timings.rc >= config->timings.oe);
-  assert(config->timings.wc >= config->timings.we);
 
   memory->channel = config->channel;
   memory->address = emcGetStaticMemoryAddress(memory->channel);

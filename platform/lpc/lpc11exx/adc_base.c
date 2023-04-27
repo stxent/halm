@@ -127,11 +127,11 @@ bool adcSetInstance(uint8_t channel __attribute__((unused)),
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcBaseConfig * const config = configBase;
-  struct AdcBase * const interface = object;
-
   assert(config->channel == 0);
   assert(config->frequency <= MAX_FREQUENCY);
   assert(!config->accuracy || (config->accuracy > 2 && config->accuracy < 11));
+
+  struct AdcBase * const interface = object;
 
   if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;

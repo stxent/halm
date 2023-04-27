@@ -82,14 +82,13 @@ static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->event < GPTIMER_EVENT_END);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
   };
   struct GpTimer * const timer = object;
   enum Result res;
-
-  assert(config->event < GPTIMER_EVENT_END);
 
   /* Call base class constructor */
   if ((res = GpTimerBase->init(timer, &baseConfig)) != E_OK)

@@ -261,10 +261,10 @@ bool adcSetInstance(uint8_t channel, struct EadcBase *expected,
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct EadcBaseConfig * const config = configBase;
-  struct EadcBase * const interface = object;
-
   assert((config->accuracy / 2 >= 3 && config->accuracy / 2 <= 6)
       || !config->accuracy);
+
+  struct EadcBase * const interface = object;
 
   if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;

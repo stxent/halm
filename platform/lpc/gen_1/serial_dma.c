@@ -521,9 +521,9 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
 
       if (res == E_OK)
       {
-#ifdef CONFIG_PLATFORM_LPC_UART_PM
+#  ifdef CONFIG_PLATFORM_LPC_UART_PM
         interface->rate = rate;
-#endif /* CONFIG_PLATFORM_LPC_UART_PM */
+#  endif /* CONFIG_PLATFORM_LPC_UART_PM */
 
         uartSetRate(&interface->base, rateConfig);
       }

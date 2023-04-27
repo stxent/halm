@@ -60,7 +60,6 @@ static size_t setupPins(struct Adc *interface, const PinNumber *pins)
   while (pins[index])
   {
     assert(index < ARRAY_SIZE(interface->pins));
-
     const struct AdcPin pin = adcConfigPin(&interface->base, pins[index]);
 
     interface->pins[index] = pin;

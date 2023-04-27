@@ -134,7 +134,7 @@ static size_t transferData(struct Spi *interface, size_t length)
 
   if (interface->blocking)
   {
-    while (interface->rxLeft || reg->STATUS & STATUS_BUSY)
+    while (interface->rxLeft || (reg->STATUS & STATUS_BUSY))
       barrier();
   }
 

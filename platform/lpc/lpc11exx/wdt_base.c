@@ -57,9 +57,9 @@ uint32_t wdtGetClock(const struct WdtBase *timer __attribute__((unused)))
 static enum Result wdtInit(void *object, const void *configBase)
 {
   const struct WdtBaseConfig * const config = configBase;
-  struct WdtBase * const timer = object;
-
   assert(config->source < WDT_CLOCK_END);
+
+  struct WdtBase * const timer = object;
 
   if (setInstance(timer))
   {

@@ -322,9 +322,9 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
     {
       const uint32_t rate = *(const uint32_t *)data;
 
-#ifdef CONFIG_PLATFORM_STM32_UART_PM
+#  ifdef CONFIG_PLATFORM_STM32_UART_PM
       interface->rate = rate;
-#endif /* CONFIG_PLATFORM_STM32_UART_PM */
+#  endif /* CONFIG_PLATFORM_STM32_UART_PM */
 
       uartSetRate(&interface->base, rate);
       return E_OK;

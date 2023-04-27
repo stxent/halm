@@ -125,6 +125,7 @@ static void devDeinit(void *object __attribute__((unused)))
 {
   sysClockDisable(CLK_USBREG);
   sysPowerDisable(PWR_USBPAD);
+
   instance = NULL;
 }
 #endif

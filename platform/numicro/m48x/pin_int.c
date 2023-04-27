@@ -197,7 +197,7 @@ static void pinIntHandlerDetach(struct PinInt *interrupt)
   PointerList * const list = &handlers[interrupt->port]->list;
 
   assert(pointerListFind(list, interrupt) != NULL);
-  pointerListErase(&handlers[interrupt->port]->list, interrupt);
+  pointerListErase(list, interrupt);
 }
 #endif
 /*----------------------------------------------------------------------------*/

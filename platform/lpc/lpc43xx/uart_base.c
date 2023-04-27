@@ -308,6 +308,7 @@ static void uartDeinit(void *object)
 
   sysClockDisable(entry->registerBranch);
   sysClockDisable(entry->peripheralBranch);
+
   instances[interface->channel] = NULL;
 }
 #endif

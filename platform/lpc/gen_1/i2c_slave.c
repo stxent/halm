@@ -152,7 +152,8 @@ static void i2cDeinit(void *object)
   struct I2CSlave * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
 
-  reg->CONCLR = CONCLR_I2ENC; /* Disable I2C interface */
+  /* Disable the interface */
+  reg->CONCLR = CONCLR_I2ENC;
 
   irqDisable(interface->base.irq);
   free(interface->cache);
@@ -240,7 +241,6 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
     interface->internal = 0;
 
   memcpy(buffer, position, left);
-
   return left;
 }
 /*----------------------------------------------------------------------------*/
@@ -262,6 +262,5 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
     interface->internal = 0;
 
   memcpy(position, buffer, left);
-
   return left;
 }

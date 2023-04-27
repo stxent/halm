@@ -161,7 +161,6 @@ static enum Result pinIntHandlerAttach(uint8_t group, PinNumber key,
     const struct PinIntHandlerConfig config = {group};
     handlers[group] = init(PinIntHandler, &config);
   }
-
   assert(handlers[group] != NULL);
 
   PointerList * const list = &handlers[group]->list;

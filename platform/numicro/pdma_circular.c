@@ -96,7 +96,7 @@ static void interruptHandler(void *object, enum Result res)
     reg->CHCTL &= ~(1 << number);
     pdmaResetInstance(number);
 
-    channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
+    channel->state = (res == E_OK) ? STATE_DONE : STATE_ERROR;
   }
 
   if (channel->callback != NULL)

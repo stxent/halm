@@ -287,9 +287,9 @@ static enum Result dmaHubInit(void *object,
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaBaseConfig * const config = configBase;
-  struct GpDmaBase * const channel = object;
-
   assert(config->channel < CHANNEL_COUNT);
+
+  struct GpDmaBase * const channel = object;
 
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
   channel->handler = NULL;

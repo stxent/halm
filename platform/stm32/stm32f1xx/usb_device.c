@@ -953,11 +953,10 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
-  struct UsbEndpoint * const ep = object;
-
   assert(request != NULL);
   assert(request->callback != NULL);
 
+  struct UsbEndpoint * const ep = object;
   return ep->subclass->enqueue(ep, request);
 }
 /*----------------------------------------------------------------------------*/
