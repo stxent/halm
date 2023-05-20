@@ -13,6 +13,7 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
 #include <xcore/helpers.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/pin.h>
@@ -54,6 +55,11 @@ static inline void pinReset(struct Pin pin)
 static inline void pinSet(struct Pin pin)
 {
   ((STM_GPIO_Type *)pin.reg)->BSRR = pin.mask;
+}
+
+static inline struct Pin pinStub(void)
+{
+  return (struct Pin){NULL, 0, 0xFF, 0xFF};
 }
 
 static inline void pinToggle(struct Pin pin)

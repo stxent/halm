@@ -14,6 +14,7 @@
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -86,6 +87,11 @@ static inline void pinReset(struct Pin pin)
 static inline void pinSet(struct Pin pin)
 {
   LPC_GPIO->B[pin.index] = 1;
+}
+
+static inline struct Pin pinStub(void)
+{
+  return (struct Pin){NULL, 0xFFFF, 0xFF, 0xFF};
 }
 
 static inline void pinToggle(struct Pin pin)

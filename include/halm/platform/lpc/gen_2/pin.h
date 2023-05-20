@@ -51,6 +51,11 @@ static inline void pinSet(struct Pin pin)
   *(volatile uint32_t *)pin.reg = 0xFFF;
 }
 
+static inline struct Pin pinStub(void)
+{
+  return (struct Pin){NULL, 0, 0};
+}
+
 static inline void pinToggle(struct Pin pin)
 {
   *(volatile uint32_t *)pin.reg = ~(*(volatile uint32_t *)pin.reg);

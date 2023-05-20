@@ -6,7 +6,6 @@
 
 #include <halm/pin.h>
 #include <halm/platform/lpc/lpc43xx/pin_defs.h>
-#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(channel, offset) (((offset) << 3) | (channel))
 #define UNPACK_CHANNEL(value)       ((value) & 0x07)
@@ -362,8 +361,7 @@ struct Pin pinInit(PinNumber id)
       .port = PIN_TO_PORT(id)
   };
   struct Pin pin = {
-      .reg = (void *)calcControlReg(current),
-      .index = ~0
+      .reg = (void *)calcControlReg(current)
   };
 
   const struct PinGroupEntry * const group = pinGroupFind(gpioPins, id, 0);
@@ -384,6 +382,7 @@ struct Pin pinInit(PinNumber id)
     /* Some pins do not have GPIO function */
     pin.port = ~0;
     pin.number = ~0;
+    pin.index = ~0;
 
     switch (current.port)
     {

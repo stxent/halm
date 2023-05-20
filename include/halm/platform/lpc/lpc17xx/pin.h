@@ -63,6 +63,11 @@ static inline void pinSet(struct Pin pin)
   ((LPC_GPIO_Type *)pin.reg)->SET = pin.mask;
 }
 
+static inline struct Pin pinStub(void)
+{
+  return (struct Pin){NULL, 0, 0, 0};
+}
+
 static inline bool pinValid(struct Pin pin)
 {
   return pin.reg != NULL;

@@ -9,7 +9,6 @@
 #include <halm/platform/stm32/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm32/system.h>
 #include <assert.h>
-#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(uint8_t);
 static void commonPinInit(struct Pin pin);
@@ -80,7 +79,7 @@ struct Pin pinInit(PinNumber id)
 
   pin.port = PIN_TO_PORT(id);
   pin.number = PIN_TO_OFFSET(id);
-  pin.mask = 1UL << pin.number;
+  pin.mask = id ? (1 << pin.number) : 0;
   pin.reg = id ? calcPort(pin.port) : 0;
 
   return pin;

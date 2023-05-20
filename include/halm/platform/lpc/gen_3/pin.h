@@ -52,6 +52,11 @@ static inline void pinSet(struct Pin pin)
   LPC_GPIO->B[pin.index] = 1;
 }
 
+static inline struct Pin pinStub(void)
+{
+  return (struct Pin){NULL, 0, 0, 0};
+}
+
 static inline void pinToggle(struct Pin pin)
 {
   LPC_GPIO->NOT[pin.port] = 1UL << pin.number;

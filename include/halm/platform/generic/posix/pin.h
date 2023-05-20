@@ -43,6 +43,11 @@ static inline void pinSet(struct Pin pin __attribute__((unused)))
 {
 }
 
+static inline struct Pin pinStub(void)
+{
+  return (struct Pin){-1};
+}
+
 static inline void pinToggle(struct Pin pin __attribute__((unused)))
 {
 }
