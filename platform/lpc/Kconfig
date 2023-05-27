@@ -4,9 +4,9 @@ config GEN_ADC
 
 config GEN_BOD
 	string
-	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
 	default lpc17xx if FAMILY_LPC17XX
-  default lpc43xx if FAMILY_LPC43XX
+	default lpc43xx if FAMILY_LPC43XX
 
 config GEN_CAN
 	string
