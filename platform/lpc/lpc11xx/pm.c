@@ -42,10 +42,12 @@ void pmPlatformChangeState(enum PmState state)
     /* Prepare magic number */
     uint32_t config = 0x000018FF;
 
-    if (sysPowerStatus(PWR_BOD))
-      config &= ~(1UL << PWR_BOD);
-    if (sysPowerStatus(PWR_WDTOSC))
-      config &= ~(1UL << PWR_WDTOSC);
+#ifndef CONFIG_PLATFORM_LPC_PM_DISABLE_BOD
+    config &= ~(1UL << PWR_BOD);
+#endif
+#ifndef CONFIG_PLATFORM_LPC_PM_DISABLE_WDT
+    config &= ~(1UL << PWR_WDTOSC);
+#endif
 
     LPC_SYSCON->PDSLEEPCFG = config;
   }

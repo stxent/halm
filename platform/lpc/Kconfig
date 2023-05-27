@@ -4,7 +4,7 @@ config GEN_ADC
 
 config GEN_BOD
 	string
-	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
+	default gen_1 if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX
 	default lpc17xx if FAMILY_LPC17XX
   default lpc43xx if FAMILY_LPC43XX
 
@@ -64,6 +64,20 @@ config PM
 	default y
 	help
 	  This enables support for power management features.
+
+config PLATFORM_LPC_PM_DISABLE_BOD
+	bool "Disable brownout detection"
+	default n
+	depends on FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
+	help
+	  This allows to disable brownout detection in suspend state.
+
+config PLATFORM_LPC_PM_DISABLE_WDT
+	bool "Disable watchdog"
+	default n
+	depends on FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
+	help
+	  This allows to disable watchdog timer in suspend state.
 
 choice
 	prompt "Power-down mode in suspend state"
@@ -527,11 +541,6 @@ config PLATFORM_LPC_SPI_DMA_CHAIN
 	range 1 65536
 	depends on PLATFORM_LPC_SPI_DMA
 
-config PLATFORM_LPC_SPIFI
-	bool "SPIFI"
-	default y
-	depends on FAMILY_LPC43XX
-
 config PLATFORM_LPC_ONE_WIRE_SSP
 	bool "1-Wire using SSP peripheral"
 	default y
@@ -541,6 +550,11 @@ config PLATFORM_LPC_ONE_WIRE_SSP_SEARCH
 	bool "Device search feature"
 	default y
 	depends on PLATFORM_LPC_ONE_WIRE_SSP
+
+config PLATFORM_LPC_SPIFI
+	bool "SPIFI"
+	default y
+	depends on FAMILY_LPC43XX
 
 config PLATFORM_LPC_UART_BASE
 	bool "UART"

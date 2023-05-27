@@ -9,10 +9,6 @@
 #include <halm/platform/lpc/uart_base.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-/* UART clock divisor is the number from 1 to 255 or 0 to disable */
-#define DEFAULT_DIV       1
-#define DEFAULT_DIV_VALUE 1
-/*----------------------------------------------------------------------------*/
 static bool setInstance(struct UartBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *, const void *);
@@ -87,8 +83,8 @@ void USART_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
 {
-  return (clockFrequency(MainClock) * LPC_SYSCON->SYSAHBCLKDIV)
-      / DEFAULT_DIV_VALUE;
+  const uint32_t frequency = clockFrequency(MainClock);
+  return frequency * LPC_SYSCON->SYSAHBCLKDIV / LPC_SYSCON->UARTCLKDIV;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *object, const void *configBase)
@@ -104,7 +100,7 @@ static enum Result uartInit(void *object, const void *configBase)
   uartConfigPins(config);
 
   sysClockEnable(CLK_USART);
-  LPC_SYSCON->UARTCLKDIV = DEFAULT_DIV;
+  LPC_SYSCON->UARTCLKDIV = LPC_SYSCON->SYSAHBCLKDIV;
 
   interface->channel = 0;
   interface->handler = NULL;

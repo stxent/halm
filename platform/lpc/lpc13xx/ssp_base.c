@@ -10,10 +10,6 @@
 #include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-/* SSP clock divisor is the number from 1 to 255 or 0 to disable */
-#define DEFAULT_DIV       1
-#define DEFAULT_DIV_VALUE 1
-/*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t, struct SspBase *);
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *, const void *);
@@ -102,10 +98,13 @@ void SSP1_ISR(void)
   instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetClock(const struct SspBase *interface __attribute__((unused)))
+uint32_t sspGetClock(const struct SspBase *interface)
 {
-  return (clockFrequency(MainClock) * LPC_SYSCON->SYSAHBCLKDIV)
-      / DEFAULT_DIV_VALUE;
+  const uint32_t frequency = clockFrequency(MainClock);
+  const uint32_t divider = interface->channel == 0 ?
+      LPC_SYSCON->SSP0CLKDIV : LPC_SYSCON->SSP1CLKDIV;
+
+  return frequency * LPC_SYSCON->SYSAHBCLKDIV / divider;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *object, const void *configBase)
@@ -123,7 +122,7 @@ static enum Result sspInit(void *object, const void *configBase)
   {
     case 0:
       sysClockEnable(CLK_SSP0);
-      LPC_SYSCON->SSP0CLKDIV = DEFAULT_DIV;
+      LPC_SYSCON->SSP0CLKDIV = LPC_SYSCON->SYSAHBCLKDIV;
       LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP0;
       interface->irq = SSP0_IRQ;
       interface->reg = LPC_SSP0;
@@ -147,7 +146,7 @@ static enum Result sspInit(void *object, const void *configBase)
 
     case 1:
       sysClockEnable(CLK_SSP1);
-      LPC_SYSCON->SSP1CLKDIV = DEFAULT_DIV;
+      LPC_SYSCON->SSP1CLKDIV = LPC_SYSCON->SYSAHBCLKDIV;
       LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP1;
       interface->irq = SSP1_IRQ;
       interface->reg = LPC_SSP1;

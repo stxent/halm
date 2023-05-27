@@ -59,18 +59,24 @@ static enum Result bodInit(void *object, const void *configBase)
 
   if (setInstance(bod))
   {
-    uint32_t pcon = LPC_SC->PCON | PCON_BODRPM | PCON_BORD;
-
     bod->callback = NULL;
     bod->enabled = false;
 
+    uint32_t pcon = LPC_SC->PCON & ~(PCON_BODRPM | PCON_BOGD | PCON_BORD);
+
+    if (config->resetLevel == BOD_RESET_DISABLED)
+      pcon |= PCON_BORD;
+
+#ifdef CONFIG_PLATFORM_LPC_PM_DISABLE_BOD
+    pcon |= PCON_BODRPM;
+#endif
+
+    /* Disable reset before Global Disable bit modification */
+    LPC_SC->PCON |= PCON_BORD;
+    /* Apply new settings */
     LPC_SC->PCON = pcon;
-    LPC_SC->PCON = pcon & ~PCON_BOGD;
-    if (config->resetLevel != BOD_RESET_DISABLED)
-      LPC_SC->PCON = pcon & ~(PCON_BOGD | PCON_BODRPM | PCON_BORD);
 
     irqSetPriority(BOD_IRQ, config->priority);
-
     return E_OK;
   }
   else
@@ -80,7 +86,13 @@ static enum Result bodInit(void *object, const void *configBase)
 #ifndef CONFIG_PLATFORM_LPC_BOD_NO_DEINIT
 static void bodDeinit(void *object __attribute__((unused)))
 {
+  /* Disable interrupts */
   irqDisable(BOD_IRQ);
+
+  /* Fully disable BOD circuitry */
+  LPC_SC->PCON |= PCON_BORD;
+  LPC_SC->PCON |= PCON_BODRPM | PCON_BOGD;
+
   instance = NULL;
 }
 #endif

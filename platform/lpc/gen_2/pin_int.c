@@ -100,7 +100,7 @@ static void processInterrupt(uint8_t channel)
 
   state = reverseBits32(state);
 
-  do
+  while (state)
   {
     const unsigned int index = countLeadingZeros32(state);
     struct PinInt * const interrupt = interrupts[index];
@@ -108,7 +108,6 @@ static void processInterrupt(uint8_t channel)
     state -= (1UL << 31) >> index;
     interrupt->callback(interrupt->callbackArgument);
   }
-  while (state);
 }
 /*----------------------------------------------------------------------------*/
 void PIO0_ISR(void)

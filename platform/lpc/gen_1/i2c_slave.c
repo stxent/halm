@@ -87,8 +87,8 @@ static void interruptHandler(void *object)
     case STATUS_STOP_RECEIVED:
     case STATUS_SLAVE_DATA_TRANSMITTED_NACK:
     case STATUS_LAST_TRANSMITTED_ACK:
+      event = interface->state == STATE_DATA;
       interface->state = STATE_IDLE;
-      event = true;
       break;
 
     default:
@@ -226,41 +226,45 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
 static size_t i2cRead(void *object, void *buffer, size_t length)
 {
   struct I2CSlave * const interface = object;
-  const uint8_t * const position = interface->cache + interface->internal;
-  uint16_t left = interface->size - interface->internal;
+  uint8_t *out = buffer;
 
-  if (!length)
-    return 0;
-
-  if (length < left)
+  while (length)
   {
-    left = length;
-    interface->internal += length;
-  }
-  else
-    interface->internal = 0;
+    size_t left = interface->size - interface->internal;
+    size_t chunk = MIN(length, left);
 
-  memcpy(buffer, position, left);
-  return left;
+    memcpy(out, interface->cache + interface->internal, chunk);
+
+    interface->internal += chunk;
+    length -= chunk;
+    out += chunk;
+
+    if (interface->internal == interface->size)
+      interface->internal = 0;
+  }
+
+  return (size_t)(out - (const uint8_t *)buffer);
 }
 /*----------------------------------------------------------------------------*/
 static size_t i2cWrite(void *object, const void *buffer, size_t length)
 {
   struct I2CSlave * const interface = object;
-  uint8_t * const position = interface->cache + interface->internal;
-  uint16_t left = interface->size - interface->internal;
+  const uint8_t *in = buffer;
 
-  if (!length)
-    return 0;
-
-  if (length < left)
+  while (length)
   {
-    left = length;
-    interface->internal += length;
-  }
-  else
-    interface->internal = 0;
+    size_t left = interface->size - interface->internal;
+    size_t chunk = MIN(length, left);
 
-  memcpy(position, buffer, left);
-  return left;
+    memcpy(interface->cache + interface->internal, in, chunk);
+
+    interface->internal += chunk;
+    length -= chunk;
+    in += chunk;
+
+    if (interface->internal == interface->size)
+      interface->internal = 0;
+  }
+
+  return (size_t)(in - (const uint8_t *)buffer);
 }

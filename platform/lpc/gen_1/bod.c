@@ -85,6 +85,8 @@ static enum Result bodInit(void *object, const void *configBase)
 static void bodDeinit(void *object __attribute__((unused)))
 {
   irqDisable(BOD_IRQ);
+  LPC_SYSCON->BODCTRL &= ~BODCTRL_BODRSTENA;
+
   instance = NULL;
 }
 #endif
