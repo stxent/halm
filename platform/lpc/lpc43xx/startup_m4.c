@@ -24,17 +24,13 @@ void platformStartup(void)
       CLK_APB1_I2C0,
       CLK_APB1_I2S,
       CLK_APB1_CAN1,
-      CLK_M4_SPIFI,
       CLK_M4_LCD,
       CLK_M4_ETHERNET,
       CLK_M4_USB0,
-      CLK_M4_EMC,
       CLK_M4_SDIO,
       CLK_M4_GPDMA,
       CLK_M4_SCT,
       CLK_M4_USB1,
-      CLK_M4_EMCDIV,
-      CLK_M4_M0APP,
       CLK_M4_ADCHS,
       CLK_M4_EEPROM,
       CLK_M4_WWDT,
@@ -56,7 +52,6 @@ void platformStartup(void)
       CLK_APB0_USART0,
       CLK_APB2_SSP1,
       CLK_APB0_SSP0,
-      CLK_SPIFI,
       CLK_SPI,
       CLK_ADCHS,
       CLK_AUDIO,
@@ -67,7 +62,14 @@ void platformStartup(void)
   /*
    * CLK_M4_BUS, CLK_M4_GPIO, CLK_M4_M4CORE, CLK_M4_FLASHA, CLK_M4_FLASHB,
    * CLK_M4_SCU, CLK_M4_CREG are enabled by default.
-   * CLK_USB0, CLK_USB1, CLK_PERIPH_BUS, CLK_PERIPH_CORE are left untouched.
+   *
+   * CLK_M4_M0APP, CLK_USB0, CLK_USB1, CLK_PERIPH_BUS, CLK_PERIPH_CORE
+   * are left untouched.
+   *
+   * Clock branches which can be used to boot from memory-mapped regions,
+   * are also left untouched:
+   *   - CLK_M4_EMC and CLK_M4_EMCDIV are used by EMC boot.
+   *   - CLK_M4_SPIFI and CLK_SPIFI are used by SPIFI boot sequence.
    */
 
   for (size_t index = 0; index < ARRAY_SIZE(clocksToDisable); ++index)
@@ -76,8 +78,4 @@ void platformStartup(void)
 #ifdef CONFIG_CORE_CORTEX_FPU
   fpuEnable();
 #endif
-
-  /* Reset SCU and GPIO blocks */
-  sysResetEnable(RST_SCU);
-  sysResetEnable(RST_GPIO);
 }
