@@ -115,11 +115,11 @@ void EADC1_P2_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void EADC1_P3_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void CAN2_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
-extern void _stack(void); /* Initial stack pointer */
+extern unsigned long _stack; /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
 __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     /* The top of the stack */
-    &_stack,
+    (void (*)(void))(unsigned long)&_stack,
     /* Core interrupts */
     RESET_ISR,
     NMI_ISR,

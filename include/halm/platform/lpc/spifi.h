@@ -52,6 +52,11 @@ struct SpifiConfig
   uint8_t mode;
   /** Mandatory: direct memory access channels. */
   uint8_t dma;
+  /**
+   * Optional: use large 128 MB memory-mapped region instead of 64 MB region
+   * with debug capabilites.
+   */
+  bool large;
 };
 
 struct Spifi
@@ -118,6 +123,8 @@ struct Spifi
   uint8_t status;
   /* Enables blocking mode instead of zero-copy mode */
   bool blocking;
+  /* Use large memory-mapped region instead of smaller debug-enabled region */
+  bool large;
   /* Memory-mapping mode flag */
   bool memmap;
   /* Polling mode flag */
@@ -130,7 +137,7 @@ BEGIN_DECLS
 
 static inline void *spifiAddress(const struct Spifi *interface)
 {
-  return spifiGetMemoryAddress(&interface->base);
+  return spifiGetMemoryAddress(&interface->base, interface->large);
 }
 
 END_DECLS

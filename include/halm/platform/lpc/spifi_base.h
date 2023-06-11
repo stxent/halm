@@ -36,8 +36,6 @@ struct SpifiBaseConfig
   PinNumber sck;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Optional: use debug memory area for memory-mapped mode. */
-  bool debug;
 };
 
 struct SpifiBase
@@ -48,8 +46,6 @@ struct SpifiBase
   void (*handler)(void *);
   IrqNumber irq;
 
-  /* Use debug memory area */
-  bool debug;
   /* Select quad or dual mode */
   bool wide;
 };
@@ -58,7 +54,7 @@ BEGIN_DECLS
 
 /* Platform-specific functions */
 uint32_t spifiGetClock(const struct SpifiBase *);
-void *spifiGetMemoryAddress(const struct SpifiBase *);
+void *spifiGetMemoryAddress(const struct SpifiBase *, bool);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

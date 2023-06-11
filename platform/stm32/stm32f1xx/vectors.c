@@ -114,11 +114,11 @@ void DAC_ISR(void) __attribute__((weak, alias("emptyHandler")));
 void TIM6_ISR(void) __attribute__((weak, alias("emptyHandler")));
 void DMA2_CHANNEL4_ISR(void) __attribute__((weak, alias("emptyHandler")));
 /*----------------------------------------------------------------------------*/
-extern void _stack(void); /* Initial stack pointer */
+extern unsigned long _stack; /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
 __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     /* The top of the stack */
-    &_stack,
+    (void (*)(void))(unsigned long)&_stack,
     /* Core interrupts */
     RESET_ISR,
     NMI_ISR,

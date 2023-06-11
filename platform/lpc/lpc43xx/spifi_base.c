@@ -104,12 +104,13 @@ uint32_t spifiGetClock(const struct SpifiBase *interface
   return clockFrequency(SpifiClock);
 }
 /*----------------------------------------------------------------------------*/
-void *spifiGetMemoryAddress(const struct SpifiBase *interface)
+void *spifiGetMemoryAddress(const struct SpifiBase *interface
+    __attribute__((unused)), bool large)
 {
-  if (interface->debug)
-    return (void *)LPC_SPIFI_DEBUG_BASE;
-  else
+  if (large)
     return (void *)LPC_SPIFI_BASE;
+  else
+    return (void *)LPC_SPIFI_DEBUG_BASE;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result spifiInit(void *object, const void *configBase)
@@ -129,7 +130,6 @@ static enum Result spifiInit(void *object, const void *configBase)
   interface->handler = NULL;
   interface->irq = SPIFI_IRQ;
   interface->reg = LPC_SPIFI;
-  interface->debug = config->debug;
 
   return E_OK;
 }

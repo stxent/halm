@@ -59,11 +59,11 @@ void QEI_ISR(void) __attribute__((weak, alias("emptyHandler")));
 void SPIFI_ISR(void) __attribute__((weak, alias("emptyHandler")));
 void ADCHS_ISR(void) __attribute__((weak, alias("emptyHandler")));
 /*----------------------------------------------------------------------------*/
-extern void _stack(void); /* Initial stack pointer */
+extern unsigned long _stack; /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
 __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     /* The top of the stack */
-    &_stack,
+    (void (*)(void))(unsigned long)&_stack,
     /* Core interrupts */
     RESET_ISR,
     NMI_ISR,

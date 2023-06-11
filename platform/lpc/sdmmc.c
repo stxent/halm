@@ -260,6 +260,7 @@ static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdmmcConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->rate);
 
   const struct DmaSdmmcConfig dmaConfig = {
       .burst = DMA_BURST_4,
@@ -282,8 +283,6 @@ static enum Result sdioInit(void *object, const void *configBase)
   };
   struct Sdmmc * const interface = object;
   enum Result res;
-
-  assert(config->rate);
 
   interface->data0 = pinInit(config->dat0);
   assert(pinValid(interface->data0));

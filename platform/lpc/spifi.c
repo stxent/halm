@@ -394,6 +394,7 @@ static enum Result spifiInit(void *object, const void *configBase)
   interface->callback = NULL;
   interface->status = STATUS_OK;
   interface->blocking = true;
+  interface->large = config->large;
   interface->memmap = true;
   interface->poll = false;
   resetContext(interface);
