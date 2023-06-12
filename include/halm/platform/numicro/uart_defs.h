@@ -173,6 +173,7 @@ enum
 #define BAUD_BRD(value)                 BIT_FIELD((value), 0)
 #define BAUD_BRD_MASK                   BIT_FIELD(MASK(16), 0)
 #define BAUD_BRD_VALUE(reg)             FIELD_VALUE((reg), BAUD_BRD_MASK, 0)
+#define BAUD_BRD_MAX                    65535
 
 #define BAUD_EDIVM1(value)              BIT_FIELD((value), 24)
 #define BAUD_EDIVM1_MASK                BIT_FIELD(MASK(4), 24)

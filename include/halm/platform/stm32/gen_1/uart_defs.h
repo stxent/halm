@@ -33,6 +33,11 @@
 #define SR_LBD                          BIT(8)
 /* CTS flag */
 #define SR_CTS                          BIT(9)
+/*------------------Baud Rate Register----------------------------------------*/
+#define BRR_DIV(value)                  BIT_FIELD((value), 0)
+#define BRR_DIV_MASK                    BIT_FIELD(MASK(16), 0)
+#define BRR_DIV_VALUE(reg)              FIELD_VALUE((reg), BRR_DIV_MASK, 0)
+#define BRR_DIV_MAX                     65535
 /*------------------Control Register 1----------------------------------------*/
 /* Send break */
 #define CR1_SBK                         BIT(0)

@@ -93,7 +93,7 @@ enum
 #define INTSTS_REQTOF(channel)          BIT((channel) + 8)
 #define INTSTS_REQTOF_MASK              BIT_FIELD(MASK(2), 8)
 #define INTSTS_REQTOF_VALUE(reg) \
-    FIELD_VALUE((reg), INTSTS_REQTOF_MASK, 0)
+    FIELD_VALUE((reg), INTSTS_REQTOF_MASK, 8)
 /*------------------Channel Read/Write Target Abort Flag register-------------*/
 #define ABTSTS_CH(channel)              BIT(channel)
 /*------------------Channel Transfer Done Flag register-----------------------*/
@@ -144,9 +144,9 @@ enum
 #define TOC_CH_0_MASK                   BIT_FIELD(MASK(16), 0)
 #define TOC_CH_0_VALUE(reg)             FIELD_VALUE((reg), TOC_CH_0_MASK, 0)
 
-#define TOC_CH_1(value)                 BIT_FIELD((value), 0)
-#define TOC_CH_1_MASK                   BIT_FIELD(MASK(16), 0)
-#define TOC_CH_1_VALUE(reg)             FIELD_VALUE((reg), TOC_CH_1_MASK, 0)
+#define TOC_CH_1(value)                 BIT_FIELD((value), 16)
+#define TOC_CH_1_MASK                   BIT_FIELD(MASK(16), 16)
+#define TOC_CH_1_VALUE(reg)             FIELD_VALUE((reg), TOC_CH_1_MASK, 16)
 
 #define TOC_CH(channel, value)          BIT_FIELD((value), (channel) * 16)
 #define TOC_CH_MASK(channel)            BIT_FIELD(MASK(16), (channel) * 16)

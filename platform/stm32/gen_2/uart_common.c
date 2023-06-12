@@ -68,11 +68,16 @@ void uartSetParity(struct UartBase *interface, enum SerialParity parity)
 /*----------------------------------------------------------------------------*/
 void uartSetRate(struct UartBase *interface, uint32_t rate)
 {
+  assert(rate > 0);
+
   STM_USART_Type * const reg = interface->reg;
   const uint32_t clock = uartGetClock(interface);
+  const uint32_t divisor = (clock + (rate >> 1)) / rate;
   const uint32_t enabled = reg->CR1 & CR1_UE;
 
+  assert(divisor <= BRR_DIV_MAX);
+
   reg->CR1 &= ~CR1_UE;
-  reg->BRR = rate ? ((clock + rate / 2) / rate) : 0;
+  reg->BRR = BRR_DIV(divisor);
   reg->CR1 |= enabled;
 }

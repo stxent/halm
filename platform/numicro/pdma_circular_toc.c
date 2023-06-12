@@ -1,10 +1,10 @@
 /*
- * pdma_circular.c
+ * pdma_circular_toc.c
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/numicro/pdma_circular.h>
+#include <halm/platform/numicro/pdma_circular_toc.h>
 #include <halm/platform/numicro/pdma_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <xcore/memory.h>
@@ -17,11 +17,12 @@ enum State
   STATE_READY,
   STATE_DONE,
   STATE_BUSY,
-  STATE_ERROR
+  STATE_ERROR,
+  STATE_TIMEOUT
 };
 /*----------------------------------------------------------------------------*/
-static inline NM_PDMA_CHANNEL_Type *getChannelReg(const struct PdmaCircular *);
-static size_t getCurrentEntry(const struct PdmaCircular *);
+static inline NM_PDMA_CHANNEL_Type *getChannelReg(const struct PdmaCircularTOC *);
+static size_t getCurrentEntry(const struct PdmaCircularTOC *);
 static void interruptHandler(void *, enum Result);
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
@@ -39,8 +40,8 @@ static void channelAppend(void *, void *, const void *, size_t);
 static void channelClear(void *);
 static size_t channelQueued(const void *);
 /*----------------------------------------------------------------------------*/
-const struct DmaClass * const PdmaCircular = &(const struct DmaClass){
-    .size = sizeof(struct PdmaCircular),
+const struct DmaClass * const PdmaCircularTOC = &(const struct DmaClass){
+    .size = sizeof(struct PdmaCircularTOC),
     .init = channelInit,
     .deinit = channelDeinit,
 
@@ -58,13 +59,13 @@ const struct DmaClass * const PdmaCircular = &(const struct DmaClass){
 };
 /*----------------------------------------------------------------------------*/
 static inline NM_PDMA_CHANNEL_Type *getChannelReg(
-    const struct PdmaCircular *channel)
+    const struct PdmaCircularTOC *channel)
 {
   NM_PDMA_Type * const reg = channel->base.reg;
   return &reg->CHANNELS[channel->base.number];
 }
 /*----------------------------------------------------------------------------*/
-static size_t getCurrentEntry(const struct PdmaCircular *channel)
+static size_t getCurrentEntry(const struct PdmaCircularTOC *channel)
 {
   const NM_PDMA_CHANNEL_Type * const entry = getChannelReg(channel);
   const uint32_t opmode = DSCT_CTL_OPMODE_VALUE(entry->CTL);
@@ -87,16 +88,41 @@ static size_t getCurrentEntry(const struct PdmaCircular *channel)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum Result res)
 {
-  struct PdmaCircular * const channel = object;
+  struct PdmaCircularTOC * const channel = object;
   NM_PDMA_Type * const reg = channel->base.reg;
   const uint8_t number = channel->base.number;
 
-  if (res != E_BUSY)
+  if (res == E_TIMEOUT)
+  {
+    const uint32_t mask = 1 << number;
+
+    /* Stop channel and wait for pending transfers to be completed */
+    reg->PAUSE |= mask;
+    while (reg->TACTSTS & mask);
+
+    /* Re-enable Timeout Counter, it is disabled in base ISR handler */
+    reg->TOUTEN |= TOUTEN_CH(number);
+    /* Start the channel again */
+    reg->CHCTL |= mask;
+
+    channel->state = STATE_TIMEOUT;
+  }
+  else if (res == E_BUSY)
+  {
+    channel->state = STATE_BUSY;
+  }
+  else
   {
     reg->CHCTL &= ~CHCTL_CH(number);
+    reg->TOUTEN &= ~TOUTEN_CH(number);
+    reg->TOUTIEN &= ~TOUTIEN_CH(number);
+
     pdmaResetInstance(number);
 
-    channel->state = (res == E_OK) ? STATE_DONE : STATE_ERROR;
+    if (res == E_OK)
+      channel->state = STATE_DONE;
+    else
+      channel->state = STATE_ERROR;
   }
 
   if (channel->callback != NULL)
@@ -105,15 +131,17 @@ static void interruptHandler(void *object, enum Result res)
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
-  const struct PdmaCircularConfig * const config = configBase;
+  const struct PdmaCircularTOCConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->channel < 2);
   assert(config->number > 0);
+  assert(config->timeout >= (1UL << 8) && config->timeout < (1UL << 31));
 
   const struct PdmaBaseConfig baseConfig = {
       .event = config->event,
       .channel = config->channel
   };
-  struct PdmaCircular * const channel = object;
+  struct PdmaCircularTOC * const channel = object;
   enum Result res;
 
   /* Call base class constructor */
@@ -124,10 +152,21 @@ static enum Result channelInit(void *object, const void *configBase)
   if (channel->list == NULL)
     return E_MEMORY;
 
+  uint32_t timeout = config->timeout >> 8;
+  uint8_t prescaler = 8;
+
+  while (prescaler < 15 && timeout > 65535)
+  {
+    timeout >>= 1;
+    ++prescaler;
+  }
+
   channel->base.handler = interruptHandler;
   channel->callback = NULL;
   channel->capacity = config->number;
   channel->queued = 0;
+  channel->timeout = timeout;
+  channel->prescaler = prescaler;
   channel->state = STATE_IDLE;
   channel->fixed = true;
   channel->oneshot = config->oneshot;
@@ -138,7 +177,7 @@ static enum Result channelInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  struct PdmaCircular * const channel = object;
+  struct PdmaCircularTOC * const channel = object;
 
   free(channel->list);
   PdmaBase->deinit(channel);
@@ -147,7 +186,7 @@ static void channelDeinit(void *object)
 static void channelConfigure(void *object, const void *settingsBase)
 {
   const struct PdmaSettings * const settings = settingsBase;
-  struct PdmaCircular * const channel = object;
+  struct PdmaCircularTOC * const channel = object;
 
   assert(settings->burst <= DMA_BURST_128);
   assert(settings->width <= DMA_WIDTH_WORD);
@@ -178,7 +217,7 @@ static void channelConfigure(void *object, const void *settingsBase)
 static void channelSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct PdmaCircular * const channel = object;
+  struct PdmaCircularTOC * const channel = object;
 
   assert(channel->state != STATE_BUSY);
 
@@ -196,17 +235,25 @@ static void channelSetCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum Result channelEnable(void *object)
 {
-  struct PdmaCircular * const channel = object;
+  struct PdmaCircularTOC * const channel = object;
   NM_PDMA_Type * const reg = channel->base.reg;
-  const uint32_t mask = 1 << channel->base.number;
+  const uint8_t number = channel->base.number;
+  const uint32_t mask = 1 << number;
 
   assert(channel->state == STATE_READY || channel->state == STATE_DONE);
 
-  if (!pdmaSetInstance(channel->base.number, object))
+  if (!pdmaSetInstance(number, object))
   {
     channel->state = STATE_ERROR;
     return E_BUSY;
   }
+
+  reg->TOUTPSC = (reg->TOUTPSC & ~TOUTPSC_CH_MASK(number))
+      | TOUTPSC_CH(number, channel->prescaler - 8);
+  reg->TOC0_1 = (reg->TOC0_1 & ~TOC_CH_MASK(number))
+      | TOC_CH(number, channel->prescaler);
+  reg->TOUTIEN |= TOUTIEN_CH(number);
+  reg->TOUTEN |= TOUTEN_CH(number);
 
   pdmaSetMux(&channel->base);
   channel->state = STATE_BUSY;
@@ -225,13 +272,16 @@ static enum Result channelEnable(void *object)
 /*----------------------------------------------------------------------------*/
 static void channelDisable(void *object)
 {
-  struct PdmaCircular * const channel = object;
+  struct PdmaCircularTOC * const channel = object;
   NM_PDMA_Type * const reg = channel->base.reg;
   const uint8_t number = channel->base.number;
 
   if (channel->state == STATE_BUSY)
   {
     reg->CHRST |= CHRST_CH(number);
+    reg->TOUTEN &= ~TOUTEN_CH(number);
+    reg->TOUTIEN &= ~TOUTIEN_CH(number);
+
     pdmaResetInstance(number);
 
     channel->state = STATE_DONE;
@@ -240,7 +290,7 @@ static void channelDisable(void *object)
 /*----------------------------------------------------------------------------*/
 static enum Result channelResidue(const void *object, size_t *count)
 {
-  const struct PdmaCircular * const channel = object;
+  const struct PdmaCircularTOC * const channel = object;
 
   /* Residue is available when the channel was initialized and enabled */
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
@@ -264,7 +314,7 @@ static enum Result channelResidue(const void *object, size_t *count)
 /*----------------------------------------------------------------------------*/
 static enum Result channelStatus(const void *object)
 {
-  const struct PdmaCircular * const channel = object;
+  const struct PdmaCircularTOC * const channel = object;
 
   switch ((enum State)channel->state)
   {
@@ -276,6 +326,9 @@ static enum Result channelStatus(const void *object)
     case STATE_BUSY:
       return E_BUSY;
 
+    case STATE_TIMEOUT:
+      return E_TIMEOUT;
+
     default:
       return E_ERROR;
   }
@@ -284,7 +337,7 @@ static enum Result channelStatus(const void *object)
 static void channelAppend(void *object, void *destination, const void *source,
     size_t size)
 {
-  struct PdmaCircular * const channel = object;
+  struct PdmaCircularTOC * const channel = object;
 
   assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= PDMA_MAX_TRANSFER_SIZE);
@@ -340,12 +393,12 @@ static void channelAppend(void *object, void *destination, const void *source,
 /*----------------------------------------------------------------------------*/
 static void channelClear(void *object)
 {
-  ((struct PdmaCircular *)object)->state = STATE_IDLE;
+  ((struct PdmaCircularTOC *)object)->state = STATE_IDLE;
 }
 /*----------------------------------------------------------------------------*/
 static size_t channelQueued(const void *object)
 {
-  const struct PdmaCircular * const channel = object;
+  const struct PdmaCircularTOC * const channel = object;
 
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
     return channel->queued - getCurrentEntry(channel);

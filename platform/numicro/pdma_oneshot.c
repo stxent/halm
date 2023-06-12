@@ -60,7 +60,7 @@ static void interruptHandler(void *object, enum Result res)
   NM_PDMA_Type * const reg = channel->base.reg;
   const uint8_t number = channel->base.number;
 
-  reg->CHCTL &= ~(1 << number);
+  reg->CHCTL &= ~CHCTL_CH(number);
   pdmaResetInstance(number);
 
   channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
@@ -180,7 +180,7 @@ static void channelDisable(void *object)
 
   if (channel->state == STATE_BUSY)
   {
-    reg->CHRST |= 1 << number;
+    reg->CHRST |= CHRST_CH(number);
     pdmaResetInstance(number);
 
     channel->state = STATE_DONE;

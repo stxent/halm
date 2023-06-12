@@ -20,6 +20,11 @@
 #define CHANNEL_CK(channel)             ((channel) * CHANNEL_COUNT + 2)
 #define CHANNEL_RTS(channel)            ((channel) * CHANNEL_COUNT + 3)
 #define CHANNEL_CTS(channel)            ((channel) * CHANNEL_COUNT + 4)
+/*------------------Baud Rate Register----------------------------------------*/
+#define BRR_DIV(value)                  BIT_FIELD((value), 0)
+#define BRR_DIV_MASK                    BIT_FIELD(MASK(16), 0)
+#define BRR_DIV_VALUE(reg)              FIELD_VALUE((reg), BRR_DIV_MASK, 0)
+#define BRR_DIV_MAX                     65535
 /*------------------Control Register 1----------------------------------------*/
 /* USART enable */
 #define CR1_UE                          BIT(0)

@@ -87,7 +87,7 @@ static void interruptHandler(void *object, enum Result res)
           index += channel->capacity - channel->queued;
 
         /* Restart stalled transfer */
-        reg->CHCTL &= ~(1 << number);
+        reg->CHCTL &= ~CHCTL_CH(number);
 
         pdmaStartTransfer(&channel->base, DSCT_CTL_OPMODE(OPMODE_LIST),
             0, 0, (uintptr_t)&channel->list[index]);
@@ -111,7 +111,7 @@ static void interruptHandler(void *object, enum Result res)
 
   if (channel->state != STATE_BUSY)
   {
-    reg->CHCTL &= ~(1 << number);
+    reg->CHCTL &= ~CHCTL_CH(number);
     pdmaResetInstance(number);
 
     channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
@@ -144,7 +144,6 @@ static enum Result channelInit(void *object, const void *configBase)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
-
   channel->callback = NULL;
   channel->capacity = config->number;
   channel->index = 0;
@@ -240,7 +239,7 @@ static void channelDisable(void *object)
 
   if (channel->state == STATE_BUSY)
   {
-    reg->CHRST |= 1 << number;
+    reg->CHRST |= CHRST_CH(number);
     pdmaResetInstance(number);
 
     channel->state = STATE_DONE;

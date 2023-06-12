@@ -277,6 +277,11 @@ config PLATFORM_NUMICRO_SERIAL_DMA
 	default y
 	depends on PLATFORM_NUMICRO_UART_BASE && PLATFORM_NUMICRO_PDMA
 
+config PLATFORM_NUMICRO_SERIAL_DMA_TOC
+	bool "Serial port driver with timeouts and DMA"
+	default y
+	depends on PLATFORM_NUMICRO_UART_BASE && PLATFORM_NUMICRO_PDMA
+
 config PLATFORM_NUMICRO_SPI_BASE
 	bool "SPI"
 	default y

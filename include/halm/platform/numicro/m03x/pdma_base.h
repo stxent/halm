@@ -136,6 +136,11 @@ static inline enum PdmaEvent pdmaGetEventUartTx(uint8_t channel)
     return PDMA_UART3_TX + (channel - 3) * 2;
 }
 
+static inline bool pdmaIsTOCAvailable(uint8_t channel)
+{
+  return channel < 2;
+}
+
 END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_M03X_PDMA_BASE_H_ */

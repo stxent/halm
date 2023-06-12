@@ -79,6 +79,7 @@ endif()
 
 if(CONFIG_PLATFORM_NUMICRO_PDMA)
     list(APPEND SOURCE_FILES "pdma_circular.c")
+    list(APPEND SOURCE_FILES "pdma_circular_toc.c")
     list(APPEND SOURCE_FILES "pdma_list.c")
     list(APPEND SOURCE_FILES "pdma_oneshot.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pdma_base.c")
@@ -98,6 +99,10 @@ endif()
 
 if(CONFIG_PLATFORM_NUMICRO_SERIAL_DMA)
     list(APPEND SOURCE_FILES "serial_dma.c")
+endif()
+
+if(CONFIG_PLATFORM_NUMICRO_SERIAL_DMA_TOC)
+    list(APPEND SOURCE_FILES "serial_dma_toc.c")
 endif()
 
 if(CONFIG_PLATFORM_NUMICRO_SPI)
