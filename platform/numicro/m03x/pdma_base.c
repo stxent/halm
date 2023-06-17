@@ -56,16 +56,15 @@ void pdmaStartTransfer(struct PdmaBase *channel, uint32_t control,
 {
   NM_PDMA_Type * const reg = channel->reg;
   NM_PDMA_CHANNEL_Type * const entry = &reg->CHANNELS[channel->number];
-  IrqState state;
 
   entry->CTL = control;
   entry->SA = source;
   entry->DA = destination;
-  entry->NEXT = DSCT_NEXT_ADDRESS_TO_NEXT(next);
+  entry->NEXT = DSCT_NEXT_NEXT(next);
   __dsb();
 
   /* Start the transfer */
-  state = irqSave();
+  const IrqState state = irqSave();
   reg->CHCTL |= 1 << channel->number;
   irqRestore(state);
 }

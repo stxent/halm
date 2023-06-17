@@ -68,7 +68,7 @@ void pdmaStartTransfer(struct PdmaBase *channel, uint32_t control,
   entry->CTL = control;
   entry->SA = source;
   entry->DA = destination;
-  entry->NEXT = DSCT_NEXT_ADDRESS_TO_NEXT(next);
+  entry->NEXT = DSCT_NEXT_NEXT(next);
   __dsb();
 
   /* Start the transfer */

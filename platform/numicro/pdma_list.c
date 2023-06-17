@@ -239,7 +239,7 @@ static void channelDisable(void *object)
 
   if (channel->state == STATE_BUSY)
   {
-    reg->CHRST |= CHRST_CH(number);
+    reg->CHRST = CHRST_CH(number);
     pdmaResetInstance(number);
 
     channel->state = STATE_DONE;
@@ -260,13 +260,22 @@ static enum Result channelResidue(const void *object, size_t *count)
       index -= channel->capacity;
 
     const struct PdmaEntry * const current = channel->list + index;
-    const size_t transfers = DSCT_CTL_TXCNT_VALUE(entry->CTL) + 1;
+    const uint32_t next = current->next;
 
-    if (DSCT_NEXT_EXENEXT_TO_ADDRESS(entry->NEXT) == current->next)
+    /*
+     * Double check of the next descriptor address is required
+     * before and after transfer count reading.
+     */
+    if (DSCT_NEXT_EXENEXT_VALUE(entry->NEXT) == next)
     {
-      /* Linked list item is not changed, transfer count is correct */
-      *count = transfers;
-      return E_OK;
+      const size_t transfers = DSCT_CTL_TXCNT_VALUE(entry->CTL) + 1;
+
+      if (DSCT_NEXT_EXENEXT_VALUE(entry->NEXT) == next)
+      {
+        /* Linked list item is not changed, transfer count is correct */
+        *count = transfers;
+        return E_OK;
+      }
     }
   }
 
@@ -333,7 +342,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     previous->control |= DSCT_CTL_OPMODE(OPMODE_LIST);
 
     /* Link previous element with the new one */
-    previous->next = DSCT_NEXT_ADDRESS_TO_NEXT((uintptr_t)current);
+    previous->next = DSCT_NEXT_NEXT((uintptr_t)current);
   }
 
   ++channel->queued;

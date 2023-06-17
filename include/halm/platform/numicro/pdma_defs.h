@@ -57,15 +57,10 @@ enum
 #define DSCT_CTL_TXCNT_VALUE(reg) \
     FIELD_VALUE((reg), DSCT_CTL_TXCNT_MASK, 16)
 /*------------------Next SC Descriptor Table Offset Address-------------------*/
-#define DSCT_NEXT_ADDRESS(value)        ((value) & MASK(16))
+#define DSCT_NEXT_NEXT(value)           ((value) & MASK(16))
+#define DSCT_NEXT_NEXT_VALUE(value)     ((value) & MASK(16))
 
-#define DSCT_NEXT_NEXT_MASK             BIT_FIELD(MASK(16), 0)
-#define DSCT_NEXT_ADDRESS_TO_NEXT(value) \
-    ((value) & DSCT_NEXT_NEXT_MASK)
-
-#define DSCT_NEXT_EXENEXT_MASK          BIT_FIELD(MASK(16), 16)
-#define DSCT_NEXT_EXENEXT_TO_ADDRESS(reg) \
-    FIELD_VALUE((reg), DSCT_NEXT_EXENEXT_MASK, 16)
+#define DSCT_NEXT_EXENEXT_VALUE(reg)    (((reg) >> 16) & MASK(16))
 /*------------------Channel Control register----------------------------------*/
 #define CHCTL_CH(channel)               BIT(channel)
 #define CHCTL_CH_MASK                   BIT_FIELD(MASK(16), 0)

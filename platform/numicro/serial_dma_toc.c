@@ -185,8 +185,6 @@ static enum Result enqueueTxBuffers(struct SerialDmaTOC *interface)
   const uint8_t *address;
   enum Result res;
 
-  updateTxWatermark(interface, byteQueueSize(&interface->txQueue));
-
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
   dmaAppend(interface->txDma, (void *)&reg->DAT, address,
@@ -234,10 +232,10 @@ static void rxDmaHandler(void *object)
     assert(index >= 1 && index <= 2);
 
     const size_t end = interface->rxBufferSize >> (2 - index);
-    const size_t count = end - interface->rxPosition;
+    const size_t pending = end - interface->rxPosition;
 
     byteQueuePushArray(&interface->rxQueue,
-        interface->rxBuffer + interface->rxPosition, count);
+        interface->rxBuffer + interface->rxPosition, pending);
     interface->rxPosition = index == 1 ? (interface->rxBufferSize >> 1) : 0;
   }
 
@@ -559,6 +557,7 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
   }
 
   state = irqSave();
+  updateTxWatermark(interface, byteQueueSize(&interface->txQueue));
   if (!byteQueueEmpty(&interface->txQueue) && interface->txBufferSize == 0)
     enqueueTxBuffers(interface);
   irqRestore(state);

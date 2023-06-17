@@ -180,7 +180,7 @@ static void channelDisable(void *object)
 
   if (channel->state == STATE_BUSY)
   {
-    reg->CHRST |= CHRST_CH(number);
+    reg->CHRST = CHRST_CH(number);
     pdmaResetInstance(number);
 
     channel->state = STATE_DONE;

@@ -68,11 +68,11 @@ static size_t getCurrentEntry(const struct PdmaCircular *channel)
 {
   const NM_PDMA_CHANNEL_Type * const entry = getChannelReg(channel);
   const uint32_t opmode = DSCT_CTL_OPMODE_VALUE(entry->CTL);
-  const uint32_t next = DSCT_NEXT_EXENEXT_TO_ADDRESS(entry->NEXT);
+  const uint32_t next = DSCT_NEXT_EXENEXT_VALUE(entry->NEXT);
 
   if (next)
   {
-    const uint32_t head = DSCT_NEXT_ADDRESS_TO_NEXT((uintptr_t)channel->list);
+    const uint32_t head = DSCT_NEXT_NEXT((uintptr_t)channel->list);
     size_t index = (next - head) / sizeof(struct PdmaEntry);
 
     if (opmode == OPMODE_ACTIVE)
@@ -231,7 +231,7 @@ static void channelDisable(void *object)
 
   if (channel->state == STATE_BUSY)
   {
-    reg->CHRST |= CHRST_CH(number);
+    reg->CHRST = CHRST_CH(number);
     pdmaResetInstance(number);
 
     channel->state = STATE_DONE;
@@ -249,13 +249,22 @@ static enum Result channelResidue(const void *object, size_t *count)
     const size_t index = getCurrentEntry(channel);
 
     const struct PdmaEntry * const current = channel->list + index;
-    const size_t transfers = DSCT_CTL_TXCNT_VALUE(entry->CTL) + 1;
+    const uint32_t next = current->next;
 
-    if (DSCT_NEXT_EXENEXT_TO_ADDRESS(entry->NEXT) == current->next)
+    /*
+     * Double check of the next descriptor address is required
+     * before and after transfer count reading.
+     */
+    if (DSCT_NEXT_EXENEXT_VALUE(entry->NEXT) == next)
     {
-      /* Linked list item is not changed, transfer count is correct */
-      *count = transfers;
-      return E_OK;
+      const size_t transfers = DSCT_CTL_TXCNT_VALUE(entry->CTL) + 1;
+
+      if (DSCT_NEXT_EXENEXT_VALUE(entry->NEXT) == next)
+      {
+        /* Linked list item is not changed, transfer count is correct */
+        *count = transfers;
+        return E_OK;
+      }
     }
   }
 
@@ -315,7 +324,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   else
   {
     current->control |= DSCT_CTL_OPMODE(OPMODE_LIST);
-    current->next = DSCT_NEXT_ADDRESS_TO_NEXT((uintptr_t)channel->list);
+    current->next = DSCT_NEXT_NEXT((uintptr_t)channel->list);
   }
 
   if (previous != NULL)
@@ -331,7 +340,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     }
 
     /* Link previous element with the new one */
-    previous->next = DSCT_NEXT_ADDRESS_TO_NEXT((uintptr_t)current);
+    previous->next = DSCT_NEXT_NEXT((uintptr_t)current);
   }
 
   ++channel->queued;
