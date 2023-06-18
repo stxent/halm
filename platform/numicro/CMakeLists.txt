@@ -93,6 +93,11 @@ if(CONFIG_PM)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pm.c")
 endif()
 
+if(CONFIG_PLATFORM_NUMICRO_SDH)
+    list(APPEND SOURCE_FILES "sdh.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/sdh_base.c")
+endif()
+
 if(CONFIG_PLATFORM_NUMICRO_SERIAL)
     list(APPEND SOURCE_FILES "serial.c")
 endif()

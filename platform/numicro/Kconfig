@@ -282,6 +282,23 @@ config PLATFORM_NUMICRO_SERIAL_DMA_TOC
 	default y
 	depends on PLATFORM_NUMICRO_UART_BASE && PLATFORM_NUMICRO_PDMA
 
+config PLATFORM_NUMICRO_SDH
+	bool "SDH"
+	default y
+  depends on FAMILY_M48X
+	help
+	  This is the driver for the Secure Digital Host Controller.
+
+config PLATFORM_NUMICRO_SDH_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_SDH
+
+config PLATFORM_NUMICRO_SDH_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_NUMICRO_SDH && PM
+
 config PLATFORM_NUMICRO_SPI_BASE
 	bool "SPI"
 	default y

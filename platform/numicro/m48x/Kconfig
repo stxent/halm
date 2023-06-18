@@ -66,6 +66,20 @@ config PLATFORM_NUMICRO_I2C2
 
 endmenu
 
+menu "SDH"
+
+config PLATFORM_NUMICRO_SDH0
+	bool "SDH0"
+	default y
+	depends on PLATFORM_NUMICRO_SDH
+
+config PLATFORM_NUMICRO_SDH1
+	bool "SDH1"
+	default y
+	depends on PLATFORM_NUMICRO_SDH
+
+endmenu
+
 menu "SPI"
 
 config PLATFORM_NUMICRO_SPI0
