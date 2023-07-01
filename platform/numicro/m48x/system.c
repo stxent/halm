@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/numicro/flash_defs.h>
 #include <halm/platform/numicro/m48x/system_defs.h>
 #include <halm/platform/numicro/system.h>
 /*----------------------------------------------------------------------------*/
@@ -113,6 +114,41 @@ void sysFlashLatencyUpdate(uint32_t frequency)
   NM_FMC->CYCCTL = (NM_FMC->CYCCTL & ~CYCCTL_CYCLE_MASK)
       | CYCCTL_CYCLE(latency);
   sysLockReg();
+}
+/*----------------------------------------------------------------------------*/
+size_t sysGetSizeAPROM(void)
+{
+  const uint32_t pdid = NM_SYS->PDID;
+  const uint32_t group = (pdid & 0xFF00000) >> 20;
+  const uint32_t part = pdid & 0xFF;
+
+  if (group == 0x13)
+  {
+    switch (part)
+    {
+      case 0x02:
+      case 0x12:
+      case 0xE2:
+        return 128 * 1024;
+
+      case 0x00:
+      case 0x10:
+      case 0x14:
+      case 0x40:
+      case 0x44:
+      case 0xE0:
+        return 256 * 1024;
+
+      default:
+        return 0;
+    }
+  }
+  else if (group == 0x0D)
+  {
+    return 512 * 1024;
+  }
+  else
+    return 0;
 }
 /*----------------------------------------------------------------------------*/
 void sysPowerLevelReset(void)

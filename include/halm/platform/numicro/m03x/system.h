@@ -19,6 +19,7 @@
 #include <halm/platform/platform_defs.h>
 #include <xcore/helpers.h>
 #include <stdbool.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals */
 enum SysBlockReset
@@ -104,6 +105,7 @@ BEGIN_DECLS
 void sysClockDisable(enum SysClockBranch);
 void sysClockEnable(enum SysClockBranch);
 bool sysClockStatus(enum SysClockBranch);
+size_t sysGetSizeAPROM(void);
 void sysFlashLatencyReset(void);
 void sysFlashLatencyUpdate(uint32_t);
 void sysResetBlock(enum SysBlockReset);

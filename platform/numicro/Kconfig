@@ -181,6 +181,12 @@ config PLATFORM_NUMICRO_EADC_DMA
 	default y
 	depends on PLATFORM_NUMICRO_EADC_BASE && PLATFORM_NUMICRO_PDMA
 
+config PLATFORM_NUMICRO_FLASH
+	bool "Flash driver"
+	default y
+	help
+	  This enables driver for the internal Flash memory.
+
 config PLATFORM_NUMICRO_GPTIMER_BASE
 	bool "General Purpose Timer"
 	default y

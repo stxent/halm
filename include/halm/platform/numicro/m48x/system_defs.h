@@ -11,11 +11,6 @@
 /*------------------Multiple Function Control registers-----------------------*/
 #define MFP_FUNCTION_MASK(pin)          BIT_FIELD(MASK(4), (pin) * 4)
 #define MFP_FUNCTION(value, pin)        BIT_FIELD((value), (pin) * 4)
-/*------------------Flash Access Cycle Control register-----------------------*/
-#define CYCCTL_CYCLE_MAX                8
-#define CYCCTL_CYCLE_MASK               BIT_FIELD(MASK(4), 0)
-#define CYCCTL_CYCLE(value)             BIT_FIELD((value), 0)
-#define CYCCTL_CYCLE_VALUE(reg)         FIELD_VALUE((reg), CYCCTL_CYCLE_MASK, 0)
 /*------------------Power Level Control register------------------------------*/
 enum
 {

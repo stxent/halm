@@ -4,13 +4,13 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/numicro/flash_defs.h>
 #include <halm/platform/numicro/m03x/system_defs.h>
 #include <halm/platform/numicro/system.h>
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcClockReg(enum SysClockBranch);
 static volatile uint32_t *calcResetReg(enum SysBlockReset);
 static unsigned int calcFlashLatency(uint32_t);
-static uint32_t getFlashSize(void);
 static inline bool isClockProtected(enum SysClockBranch);
 static inline bool isResetProtected(enum SysBlockReset);
 /*----------------------------------------------------------------------------*/
@@ -36,7 +36,7 @@ static volatile uint32_t *calcResetReg(enum SysBlockReset block)
 /*----------------------------------------------------------------------------*/
 static unsigned int calcFlashLatency(uint32_t frequency)
 {
-  const uint32_t size = getFlashSize();
+  const size_t size = sysGetSizeAPROM();
 
   if (!size)
   {
@@ -60,89 +60,6 @@ static unsigned int calcFlashLatency(uint32_t frequency)
     else
       return 0;
   }
-}
-/*----------------------------------------------------------------------------*/
-static uint32_t getFlashSize(void)
-{
-  const uint32_t pdid = NM_SYS->PDID;
-  const uint32_t group = (pdid & 0xF00) >> 8;
-  const uint32_t part = pdid & 0xFF;
-
-  if (group == 0x1)
-  {
-    if (part == 0x10 || part == 0x40)
-      return 512 * 1024;
-    else
-      return 0;
-  }
-  if (group == 0x6)
-  {
-    switch (part)
-    {
-      case 0xE1:
-      case 0xE2:
-      case 0xF1:
-      case 0xF2:
-        return 32 * 1024;
-
-      case 0xE0:
-      case 0xF0:
-        return 64 * 1024;
-
-      case 0x00:
-      case 0x01:
-      case 0x10:
-      case 0x11:
-      case 0x40:
-      case 0x41:
-        return 256 * 1024;
-
-      default:
-        return 0;
-    }
-  }
-  else if (group == 0xB)
-  {
-    if (part == 0xA0 || part == 0xB0 || part == 0xE0)
-      return 16 * 1024;
-    else
-      return 0;
-  }
-  else if (group == 0xC)
-  {
-    if (part == 0xA0 || part == 0xB0 || part == 0xE0)
-      return 32 * 1024;
-    else
-      return 0;
-  }
-  else if (group == 0xD)
-  {
-    switch (group)
-    {
-      case 0x01:
-      case 0x11:
-        return 32 * 1024;
-
-      case 0x00:
-      case 0x10:
-      case 0x90:
-      case 0xB0:
-      case 0xE0:
-        return 64 * 1024;
-
-      default:
-        return 0;
-    }
-  }
-  else if (group == 0xE)
-  {
-    if (part == 0xE0 || part == 0xE1 || part == 0xE9 || part == 0xEE)
-      return 128 * 1024;
-    else
-      return 0;
-  }
-  else
-    return 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool isClockProtected(enum SysClockBranch branch)
@@ -186,6 +103,50 @@ void sysClockEnable(enum SysClockBranch branch)
 bool sysClockStatus(enum SysClockBranch branch)
 {
   return (*calcClockReg(branch) & (1UL << (branch & 0x1F))) != 0;
+}
+/*----------------------------------------------------------------------------*/
+size_t sysGetSizeAPROM(void)
+{
+  const uint32_t pdid = NM_SYS->PDID;
+  const uint32_t group = pdid & 0xFFF;
+
+  if ((group & 0xF00) == 0x100)
+  {
+    return 512 * 1024;
+  }
+  else if ((group & 0xF00) == 0x600)
+  {
+    const uint8_t high = (group & 0x0F0) >> 4;
+
+    if (high == 0xE || high == 0xF)
+    {
+      return (group & 0x00F) ? 32 * 1024 : 64 * 1024;
+    }
+    else if (high == 0x0 || high == 0x1 || high == 0x4)
+    {
+      return 256 * 1024;
+    }
+    else
+      return 0;
+  }
+  else if ((group & 0xF00) == 0xB00)
+  {
+    return 16 * 1024;
+  }
+  else if ((group & 0xF00) == 0xC00)
+  {
+    return 32 * 1024;
+  }
+  else if ((group & 0xF00) == 0xD00)
+  {
+    return (group & 0x00F) ? 32 * 1024 : 64 * 1024;
+  }
+  else if ((group & 0xF00) == 0xE00)
+  {
+    return 128 * 1024;
+  }
+  else
+    return 0;
 }
 /*----------------------------------------------------------------------------*/
 void sysFlashLatencyReset(void)

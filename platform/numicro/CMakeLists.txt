@@ -59,6 +59,10 @@ if(CONFIG_PLATFORM_NUMICRO_EADC_DMA)
     list(APPEND SOURCE_FILES "eadc_dma.c")
 endif()
 
+if(CONFIG_PLATFORM_NUMICRO_FLASH)
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/flash.c")
+endif()
+
 if(CONFIG_PLATFORM_NUMICRO_GPTIMER_BASE)
     list(APPEND SOURCE_FILES "gptimer_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gptimer_base.c")
