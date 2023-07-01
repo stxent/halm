@@ -37,7 +37,9 @@
 #define FLASH_SECTOR_SIZE_0   4096
 #define FLASH_SECTOR_SIZE_1   32768
 #define FLASH_SECTORS_BORDER  0x18000
-#define FLASH_SECTORS_OFFSET  (FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0)
+#define FLASH_SECTORS_OFFSET \
+    (FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0 \
+        - FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_1)
 /*----------------------------------------------------------------------------*/
 #define IAP_BASE              0x1FFF1FF1UL
 /*----------------------------------------------------------------------------*/
@@ -51,19 +53,15 @@ static inline uint32_t addressToPage(uint32_t address)
   return address / FLASH_PAGE_SIZE;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t addressToSector(uint32_t address)
+static inline uint32_t addressToSector(uint32_t address, bool uniform)
 {
-  if (address < FLASH_SECTORS_BORDER)
-  {
-    /* Sectors from 0 to 23 have size of 4 kB */
-    return address / FLASH_SECTOR_SIZE_0;
-  }
-  else
+  if (!uniform && address >= FLASH_SECTORS_BORDER)
   {
     /* Sectors from 24 to 28 have size of 32 kB */
-    return (address - FLASH_SECTORS_BORDER) / FLASH_SECTOR_SIZE_1
-        + FLASH_SECTORS_OFFSET;
+    return address / FLASH_SECTOR_SIZE_1 + FLASH_SECTORS_OFFSET;
   }
+
+  return address / FLASH_SECTOR_SIZE_0;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool isPagePositionValid(uint32_t position)
@@ -71,12 +69,12 @@ static inline bool isPagePositionValid(uint32_t position)
   return (position & (FLASH_PAGE_SIZE - 1)) == 0;
 }
 /*----------------------------------------------------------------------------*/
-static inline bool isSectorPositionValid(uint32_t position)
+static inline bool isSectorPositionValid(uint32_t position, bool uniform)
 {
-  if (position < FLASH_SECTORS_BORDER)
-    return (position & (FLASH_SECTOR_SIZE_0 - 1)) == 0;
-  else
+  if (!uniform && position >= FLASH_SECTORS_BORDER)
     return (position & (FLASH_SECTOR_SIZE_1 - 1)) == 0;
+
+  return (position & (FLASH_SECTOR_SIZE_0 - 1)) == 0;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC11EXX_FLASH_DEFS_H_ */

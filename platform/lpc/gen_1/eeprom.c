@@ -86,7 +86,10 @@ static size_t eepromRead(void *object, void *buffer, size_t length)
   struct Eeprom * const interface = object;
 
   if (eepromReadBuffer(interface->position, buffer, length) == E_OK)
+  {
+    interface->position += length;
     return length;
+  }
   else
     return 0;
 }
@@ -96,7 +99,10 @@ static size_t eepromWrite(void *object, const void *buffer, size_t length)
   struct Eeprom * const interface = object;
 
   if (eepromWriteBuffer(interface->position, buffer, length) == E_OK)
+  {
+    interface->position += length;
     return length;
+  }
   else
     return 0;
 }

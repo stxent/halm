@@ -13,7 +13,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/flash_base.h>
 #include <xcore/interface.h>
-#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Flash;
 

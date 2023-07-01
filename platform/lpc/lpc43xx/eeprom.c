@@ -94,12 +94,14 @@ void EEPROM_ISR(void)
   const size_t currentChunkLength = calcChunkLength(instance->offset,
       instance->left);
 
-  instance->buffer += currentChunkLength;
   instance->left -= currentChunkLength;
+  instance->buffer += currentChunkLength;
   instance->offset += currentChunkLength << 2;
 
   if (instance->left)
     programNextChunk(instance);
+  else
+    instance->position = instance->offset - instance->base.address;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *object, const void *configBase)
@@ -224,9 +226,11 @@ static size_t eepromRead(void *object, void *buffer, size_t length)
   if (!isAddressValid(interface, interface->position + length))
     return 0;
 
-  const uint32_t position = interface->base.address + interface->position;
+  const uint32_t position = interface->position + interface->base.address;
 
   memcpy(buffer, (const void *)position, length);
+  interface->position += length;
+
   return length;
 }
 /*----------------------------------------------------------------------------*/
@@ -240,9 +244,9 @@ static size_t eepromWrite(void *object, const void *buffer, size_t length)
   if (!isAddressValid(interface, interface->position + length))
     return 0;
 
-  interface->buffer = buffer;
   interface->left = length >> 2;
-  interface->offset = interface->base.address + interface->position;
+  interface->buffer = buffer;
+  interface->offset = interface->position + interface->base.address;
 
   programNextChunk(interface);
 

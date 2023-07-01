@@ -16,9 +16,9 @@ const struct EntityClass * const FlashBase = &(const struct EntityClass){
     .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static enum Result flashInit(void *object,
-    const void *configBase __attribute__((unused)))
+static enum Result flashInit(void *object, const void *configBase)
 {
+  const struct FlashBaseConfig * const config = configBase;
   struct FlashBase * const interface = object;
   const uint32_t id = flashReadId();
 
@@ -30,24 +30,31 @@ static enum Result flashInit(void *object,
   switch (memory)
   {
     case FLASH_SIZE_256_256:
-      interface->size = FLASH_SIZE_ENCODE(256 * 1024, 256 * 1024);
+      interface->size = 256 * 1024;
       break;
 
     case FLASH_SIZE_384_384:
-      interface->size = FLASH_SIZE_ENCODE(384 * 1024, 384 * 1024);
+      interface->size = 384 * 1024;
       break;
 
     case FLASH_SIZE_512_0:
-      interface->size = FLASH_SIZE_ENCODE(512 * 1024, 0);
+      if (config->bank)
+        return E_VALUE;
+
+      interface->size = 512 * 1024;
       break;
 
     case FLASH_SIZE_512_512:
-      interface->size = FLASH_SIZE_ENCODE(512 * 1024, 512 * 1024);
+      interface->size = 512 * 1024;
       break;
 
     default:
       return E_ERROR;
   }
+
+  /* Bank 0 is Flash A, bank 1 is Flash B */
+  interface->bank = config->bank;
+  interface->uniform = false;
 
   return E_OK;
 }

@@ -1,6 +1,7 @@
 # Copyright (C) 2017 xent
 # Project is distributed under the terms of the MIT License
 
+list(APPEND SOURCE_FILES "flash.c")
 list(APPEND SOURCE_FILES "work_queue_default.c")
 
 if(CONFIG_GENERIC_BUFFERING_PROXY)

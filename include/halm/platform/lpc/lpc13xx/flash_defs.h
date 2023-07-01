@@ -36,7 +36,8 @@ static inline uint32_t addressToPage(uint32_t address __attribute__((unused)))
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t addressToSector(uint32_t address)
+static inline uint32_t addressToSector(uint32_t address,
+    bool uniform __attribute__((unused)))
 {
   return address / FLASH_SECTOR_SIZE;
 }
@@ -47,7 +48,8 @@ static inline bool isPagePositionValid(uint32_t position
   return false;
 }
 /*----------------------------------------------------------------------------*/
-static inline bool isSectorPositionValid(uint32_t position)
+static inline bool isSectorPositionValid(uint32_t position,
+    bool uniform __attribute__((unused)))
 {
   return (position & (FLASH_SECTOR_SIZE - 1)) == 0;
 }

@@ -1140,14 +1140,14 @@ static enum Result cardSetParam(void *object, int parameter, const void *data)
 
     case IF_POSITION:
     {
-      const uint64_t position = (uint64_t)(*(const uint32_t *)data);
+      const uint32_t position = *(const uint32_t *)data;
 
       /* Check address alignment */
       if (position & MASK(BLOCK_POW))
         return E_VALUE;
 
       /* Check address range */
-      if ((position >> BLOCK_POW) >= (uint64_t)device->info.sectorCount)
+      if ((position >> BLOCK_POW) >= device->info.sectorCount)
         return E_VALUE;
 
       device->transfer.position = position;

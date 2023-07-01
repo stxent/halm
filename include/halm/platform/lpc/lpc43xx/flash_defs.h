@@ -35,28 +35,23 @@
 #define FLASH_SIZE_512_0        0x00000080UL
 #define FLASH_SIZE_512_512      0x00000000UL
 /*----------------------------------------------------------------------------*/
-#define FLASH_BANK_A            0x1A000000UL
-#define FLASH_BANK_B            0x1B000000UL
-#define FLASH_BANK_MASK         0x0007FFFFUL
-#define FLASH_BANKS_BORDER      0x80000
+#define FLASH_BANK_A_ADDRESS    0x1A000000UL
+#define FLASH_BANK_B_ADDRESS    0x1B000000UL
+#define FLASH_BANK_BORDER       0x80000
+#define FLASH_BANK_MASK         (FLASH_BANK_BORDER - 1)
 #define FLASH_PAGE_SIZE         512
 #define FLASH_SECTOR_SIZE_0     8192
 #define FLASH_SECTOR_SIZE_1     65536
 #define FLASH_SECTORS_BORDER    0x10000
-#define FLASH_SECTORS_OFFSET    (FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0)
+#define FLASH_SECTORS_OFFSET \
+    (FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0 \
+        - FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_1)
 /*----------------------------------------------------------------------------*/
 #define IAP_BASE                (*(volatile uint32_t *)0x10400100UL)
 /*----------------------------------------------------------------------------*/
-#define FLASH_SIZE_ENCODE(a, b) \
-    (BIT_FIELD((a) >> 10, 0) | BIT_FIELD((b) >> 10, 16))
-#define FLASH_SIZE_DECODE_A(value) \
-    (FIELD_VALUE(value, BIT_FIELD(MASK(16), 0), 0) << 10)
-#define FLASH_SIZE_DECODE_B(value) \
-    (FIELD_VALUE(value, BIT_FIELD(MASK(16), 16), 16) << 10)
-/*----------------------------------------------------------------------------*/
 static inline uint8_t addressToBank(uint32_t address)
 {
-  return address < FLASH_BANK_B ? 0 : 1;
+  return address < FLASH_BANK_B_ADDRESS ? 0 : 1;
 }
 /*----------------------------------------------------------------------------*/
 static inline uint32_t addressToPage(uint32_t address)
@@ -64,21 +59,19 @@ static inline uint32_t addressToPage(uint32_t address)
   return address;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t addressToSector(uint32_t address)
+static inline uint32_t addressToSector(uint32_t address,
+    bool uniform __attribute__((unused)))
 {
-  const uint32_t localAddress = address & FLASH_BANK_MASK;
+  const uint32_t local = address & FLASH_BANK_MASK;
 
-  if (localAddress < FLASH_SECTORS_BORDER)
-  {
-    /* Sectors from 0 to 7 have size of 8 kB */
-    return localAddress / FLASH_SECTOR_SIZE_0;
-  }
-  else
+  if (local >= FLASH_SECTORS_BORDER)
   {
     /* Sectors from 8 to 14 have size of 64 kB */
-    return (localAddress - FLASH_SECTORS_BORDER) / FLASH_SECTOR_SIZE_1
-        + FLASH_SECTORS_OFFSET;
+    return local / FLASH_SECTOR_SIZE_1 + FLASH_SECTORS_OFFSET;
   }
+
+  /* Sectors from 0 to 7 have size of 8 kB */
+  return local / FLASH_SECTOR_SIZE_0;
 }
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_FLASH_DEFS_H_ */

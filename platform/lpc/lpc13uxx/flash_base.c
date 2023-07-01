@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/generic/flash.h>
 #include <halm/platform/lpc/flash_base.h>
 #include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/iap.h>
@@ -43,5 +44,23 @@ static enum Result flashInit(void *object,
       return E_ERROR;
   }
 
+  interface->bank = 0;
+  interface->uniform = true;
+
   return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+size_t flashBaseGetGeometry(const struct FlashBase *interface,
+    struct FlashGeometry *geometry, size_t capacity)
+{
+  if (capacity)
+  {
+    geometry[0].count = interface->size / FLASH_SECTOR_SIZE;
+    geometry[0].size = FLASH_SECTOR_SIZE;
+    geometry[0].time = 100;
+
+    return 1;
+  }
+
+  return 0;
 }

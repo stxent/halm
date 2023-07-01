@@ -152,9 +152,9 @@ enum Result flashActivateBootBank(unsigned int bank)
       parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
-enum Result flashBlankCheckSector(uint32_t address)
+enum Result flashBlankCheckSector(uint32_t address, bool uniform)
 {
-  const unsigned long sector = addressToSector(address);
+  const unsigned long sector = addressToSector(address, uniform);
   const unsigned long parameters[] = {
       sector,
       sector,
@@ -165,9 +165,9 @@ enum Result flashBlankCheckSector(uint32_t address)
       parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
-enum Result flashErasePage(uint32_t address)
+enum Result flashErasePage(uint32_t address, bool uniform)
 {
-  const unsigned long sector = addressToSector(address);
+  const unsigned long sector = addressToSector(address, uniform);
   const unsigned long bank = addressToBank(address);
   enum Result res;
 
@@ -189,9 +189,9 @@ enum Result flashErasePage(uint32_t address)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-enum Result flashEraseSector(uint32_t address)
+enum Result flashEraseSector(uint32_t address, bool uniform)
 {
-  const unsigned long sector = addressToSector(address);
+  const unsigned long sector = addressToSector(address, uniform);
   const unsigned long bank = addressToBank(address);
   enum Result res;
 
@@ -236,10 +236,10 @@ uint32_t flashReadConfigId(void)
   return id[1];
 }
 /*----------------------------------------------------------------------------*/
-enum Result flashWriteBuffer(uint32_t address, const void *buffer,
-    size_t length)
+enum Result flashWriteBuffer(uint32_t address, bool uniform,
+    const void *buffer, size_t length)
 {
-  const unsigned long sector = addressToSector(address);
+  const unsigned long sector = addressToSector(address, uniform);
   const unsigned long bank = addressToBank(address);
   enum Result res;
 

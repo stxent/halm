@@ -8,13 +8,14 @@
 #include <halm/platform/lpc/flash.h>
 #include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/iap.h>
+#include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+static enum FlashBank getBankByAddress(uintptr_t);
 static bool isPagePositionValid(const struct Flash *, uint32_t);
 static bool isSectorPositionValid(const struct Flash *, uint32_t);
 static uint32_t positionToAddress(const struct Flash *, uint32_t);
-static size_t totalFlashSize(size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *, const void *);
 static enum Result flashGetParam(void *, int, void *);
@@ -34,10 +35,26 @@ const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .write = flashWrite
 };
 /*----------------------------------------------------------------------------*/
+static enum FlashBank getBankByAddress(uintptr_t address)
+{
+  if (address >= FLASH_BANK_A_ADDRESS
+      && address < FLASH_BANK_A_ADDRESS + FLASH_BANK_BORDER)
+  {
+    return FLASH_BANK_A;
+  }
+  else if (address >= FLASH_BANK_B_ADDRESS
+      && address < FLASH_BANK_B_ADDRESS + FLASH_BANK_BORDER)
+  {
+    return FLASH_BANK_B;
+  }
+  else
+    return FLASH_BANK_END;
+}
+/*----------------------------------------------------------------------------*/
 static bool isPagePositionValid(const struct Flash *interface,
     uint32_t position)
 {
-  if (position >= totalFlashSize(interface->base.size))
+  if (position >= interface->base.size)
     return false;
   if (position & (FLASH_PAGE_SIZE - 1))
     return false;
@@ -48,41 +65,47 @@ static bool isPagePositionValid(const struct Flash *interface,
 static bool isSectorPositionValid(const struct Flash *interface,
     uint32_t position)
 {
-  if (position >= totalFlashSize(interface->base.size))
+  if (position >= interface->base.size)
     return false;
 
-  const uint32_t address =
-      positionToAddress(interface, position) & FLASH_BANK_MASK;
-  const uint32_t mask = address < FLASH_SECTORS_BORDER ?
+  const uint32_t mask = position < FLASH_SECTORS_BORDER ?
       (FLASH_SECTOR_SIZE_0 - 1) : (FLASH_SECTOR_SIZE_1 - 1);
 
-  return !(address & mask);
+  return (position & mask) == 0;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t positionToAddress(const struct Flash *interface,
     uint32_t position)
 {
-  if (position < FLASH_SIZE_DECODE_A(interface->base.size))
+  return position + (interface->base.bank == FLASH_BANK_A ?
+      FLASH_BANK_A_ADDRESS : FLASH_BANK_B_ADDRESS);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result flashInit(void *object, const void *configBase)
+{
+  const struct FlashConfig * const config = configBase;
+  assert(config == NULL || config->bank < FLASH_BANK_END);
+
+  struct Flash * const interface = object;
+  enum FlashBank bank;
+
+  if (config == NULL || config->bank > FLASH_BANK_B)
   {
-    return FLASH_BANK_A + position;
+    /* Detect current bank */
+    bank = getBankByAddress((uintptr_t)Flash);
+    if (bank == FLASH_BANK_END)
+      return E_ERROR;
+
+    if (config != NULL && config->bank == FLASH_BANK_SPARE)
+      bank = (bank == FLASH_BANK_A) ? FLASH_BANK_B : FLASH_BANK_A;
   }
   else
-  {
-    return FLASH_BANK_B
-        + (position - FLASH_SIZE_DECODE_A(interface->base.size));
-  }
-}
-/*----------------------------------------------------------------------------*/
-static size_t totalFlashSize(size_t size)
-{
-  return FLASH_SIZE_DECODE_A(size) + FLASH_SIZE_DECODE_B(size);
-}
-/*----------------------------------------------------------------------------*/
-static enum Result flashInit(void *object,
-    const void *configBase __attribute__((unused)))
-{
-  struct Flash * const interface = object;
-  const enum Result res = FlashBase->init(interface, NULL);
+    bank = config->bank;
+
+  const struct FlashBaseConfig baseConfig = {
+      .bank = (uint8_t)bank
+  };
+  const enum Result res = FlashBase->init(interface, &baseConfig);
 
   if (res == E_OK)
     interface->position = 0;
@@ -92,11 +115,16 @@ static enum Result flashInit(void *object,
 /*----------------------------------------------------------------------------*/
 static enum Result flashGetParam(void *object, int parameter, void *data)
 {
-  struct Flash * const interface = object;
+  const struct Flash * const interface = object;
 
   /* Additional Flash parameters */
   switch ((enum FlashParameter)parameter)
   {
+    case IF_FLASH_SECTOR_SIZE:
+      /* Sector size is ambiguous, use geometry to calculate actual size */
+      *(uint32_t *)data = 0;
+      return E_OK;
+
     case IF_FLASH_PAGE_SIZE:
       *(uint32_t *)data = FLASH_PAGE_SIZE;
       return E_OK;
@@ -112,7 +140,7 @@ static enum Result flashGetParam(void *object, int parameter, void *data)
       return E_OK;
 
     case IF_SIZE:
-      *(uint32_t *)data = totalFlashSize(interface->base.size);
+      *(uint32_t *)data = interface->base.size;
       return E_OK;
 
     default:
@@ -127,28 +155,37 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
   /* Additional Flash options */
   switch ((enum FlashParameter)parameter)
   {
-    case IF_FLASH_ERASE_PAGE:
-    {
-      const uint32_t position = *(const uint32_t *)data;
-
-      if (!isPagePositionValid(interface, position))
-        return E_ADDRESS;
-
-      flashInitWrite();
-      return flashErasePage(positionToAddress(interface, position));
-    }
-
     case IF_FLASH_ERASE_SECTOR:
     {
       const uint32_t position = *(const uint32_t *)data;
 
-      if (!isSectorPositionValid(interface, position))
-        return E_ADDRESS;
-      if (flashBlankCheckSector(positionToAddress(interface, position)) == E_OK)
-        return E_OK;
+      if (isSectorPositionValid(interface, position))
+      {
+        const uint32_t address = positionToAddress(interface, position);
 
-      flashInitWrite();
-      return flashEraseSector(positionToAddress(interface, position));
+        if (flashBlankCheckSector(address, interface->base.uniform) == E_OK)
+          return E_OK;
+
+        flashInitWrite();
+        return flashEraseSector(address, interface->base.uniform);
+      }
+      else
+        return E_ADDRESS;
+    }
+
+    case IF_FLASH_ERASE_PAGE:
+    {
+      const uint32_t position = *(const uint32_t *)data;
+
+      if (isPagePositionValid(interface, position))
+      {
+        const uint32_t address = positionToAddress(interface, position);
+
+        flashInitWrite();
+        return flashErasePage(address, interface->base.uniform);
+      }
+      else
+        return E_ADDRESS;
     }
 
     default:
@@ -161,7 +198,7 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
     {
       const uint32_t position = *(const uint32_t *)data;
 
-      if (position < totalFlashSize(interface->base.size))
+      if (position < interface->base.size)
       {
         interface->position = position;
         return E_OK;
@@ -179,7 +216,7 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  if (interface->position + length <= totalFlashSize(interface->base.size))
+  if (interface->position + length <= interface->base.size)
   {
     const uint32_t address = positionToAddress(interface, interface->position);
 
@@ -187,22 +224,66 @@ static size_t flashRead(void *object, void *buffer, size_t length)
     interface->position += (uint32_t)length;
     return length;
   }
-  else
-    return 0;
+
+  return 0;
 }
 /*----------------------------------------------------------------------------*/
 static size_t flashWrite(void *object, const void *buffer, size_t length)
 {
-  struct Flash * const interface = object;
-  const uint32_t address = positionToAddress(interface, interface->position);
-
-  flashInitWrite();
-
-  if (flashWriteBuffer(address, buffer, length) == E_OK)
-  {
-    interface->position += (uint32_t)length;
-    return length;
-  }
-  else
+  /* Buffer length should be aligned along page boundary */
+  if (length & (FLASH_PAGE_SIZE - 1))
     return 0;
+
+  struct Flash * const interface = object;
+
+  /* Address should be aligned along page boundary */
+  if (interface->position & (FLASH_PAGE_SIZE - 1))
+    return 0;
+  /* Address should be inside the boundary */
+  if (interface->position + length > interface->base.size)
+    return 0;
+
+  size_t left = length;
+  uint32_t address = positionToAddress(interface, interface->position);
+  const uint8_t *input = buffer;
+
+  while (left)
+  {
+    const size_t chunk = MIN(left, FLASH_PAGE_SIZE);
+
+    flashInitWrite();
+
+    if (flashWriteBuffer(address, interface->base.uniform,
+        input, chunk) != E_OK)
+    {
+      break;
+    }
+
+    left -= chunk;
+    input += chunk;
+    address += (uint32_t)chunk;
+  }
+
+  interface->position += (uint32_t)(length - left);
+  return length - left;
+}
+/*----------------------------------------------------------------------------*/
+size_t flashGetGeometry(const void *object, struct FlashGeometry *geometry,
+    size_t capacity)
+{
+  if (capacity < 2)
+    return 0;
+
+  const struct Flash * const interface = object;
+
+  geometry[0].count = FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0;
+  geometry[0].size = FLASH_SECTOR_SIZE_0;
+  geometry[0].time = 100;
+
+  geometry[1].count =
+      (interface->base.size - FLASH_SECTORS_BORDER) / FLASH_SECTOR_SIZE_1;
+  geometry[1].size = FLASH_SECTOR_SIZE_0;
+  geometry[1].time = 100;
+
+  return 2;
 }

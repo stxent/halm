@@ -9,9 +9,25 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/flash_base.h>
 #include <xcore/interface.h>
-#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Flash;
+
+enum FlashBank
+{
+  FLASH_BANK_A,
+  FLASH_BANK_B,
+  FLASH_BANK_CURRENT,
+  FLASH_BANK_SPARE,
+
+  /* End of the list */
+  FLASH_BANK_END
+} __attribute__((packed));
+
+struct FlashConfig
+{
+  /** Optional: flash bank. */
+  enum FlashBank bank;
+};
 
 struct Flash
 {
