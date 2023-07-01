@@ -9,8 +9,27 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/sct_base.h>
 /*----------------------------------------------------------------------------*/
+/* Requires SctCounterConfig configuration structure */
+extern const struct TimerClass * const SctCounter;
+extern const struct TimerClass * const SctUnifiedCounter;
+
+/* Requires SctTimerConfig configuration structure */
 extern const struct TimerClass * const SctTimer;
 extern const struct TimerClass * const SctUnifiedTimer;
+
+struct SctCounterConfig
+{
+  /** Mandatory: pin used as an input. */
+  PinNumber pin;
+  /** Optional: timer interrupt priority. */
+  IrqPriority priority;
+  /** Optional: edge sensitivity of the selected clock input. */
+  enum PinEvent edge;
+  /** Mandatory: timer part. */
+  enum SctPart part;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+};
 
 struct SctTimerConfig
 {
@@ -21,9 +40,7 @@ struct SctTimerConfig
   uint32_t frequency;
   /** Optional: timer interrupt priority. */
   IrqPriority priority;
-  /** Optional: clock input. */
-  enum SctInput clock;
-  /** Optional: timer part. */
+  /** Mandatory: timer part. */
   enum SctPart part;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;

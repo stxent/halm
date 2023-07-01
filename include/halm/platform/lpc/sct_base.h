@@ -42,7 +42,7 @@ struct SctBaseConfig
   enum PinEvent edge;
   /** Optional: clock input. */
   enum SctInput input;
-  /** Optional: timer part. */
+  /** Mandatory: timer part. */
   enum SctPart part;
 };
 
@@ -65,7 +65,7 @@ struct SctBase
 BEGIN_DECLS
 
 /* Common functions */
-uint8_t sctConfigInputPin(uint8_t, PinNumber);
+uint8_t sctConfigInputPin(uint8_t, PinNumber, enum PinPull);
 uint8_t sctConfigOutputPin(uint8_t, PinNumber);
 void sctSetFrequency(struct SctBase *, uint32_t);
 

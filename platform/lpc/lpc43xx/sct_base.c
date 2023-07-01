@@ -467,20 +467,21 @@ static enum Result tmrInit(void *object, const void *configBase)
   assert(config->input < SCT_INPUT_END);
 
   struct SctBase * const timer = object;
-  uint32_t desiredConfig = 0;
+  uint32_t value = 0;
 
   /* Check whether the timer is divided into two separate parts */
   if (config->part == SCT_UNIFIED)
-    desiredConfig |= CONFIG_UNIFY;
+    value |= CONFIG_UNIFY;
 
   /* Configure timer clock source */
   if (config->input != SCT_INPUT_NONE)
   {
-    desiredConfig |= CONFIG_CLKMODE(CLKMODE_INPUT);
+    value |= CONFIG_CLKMODE(CLKMODE_INPUT_HP);
+
     if (config->edge == PIN_RISING)
-      desiredConfig |= CONFIG_CKSEL_RISING(config->input - 1);
+      value |= CONFIG_CKSEL_RISING(config->input - 1);
     else
-      desiredConfig |= CONFIG_CKSEL_FALLING(config->input - 1);
+      value |= CONFIG_CKSEL_FALLING(config->input - 1);
   }
 
   const bool enabled = timerHandlerActive();
@@ -492,7 +493,7 @@ static enum Result tmrInit(void *object, const void *configBase)
      * Compare current timer configuration with proposed one
      * if the timer is already enabled.
      */
-    if (desiredConfig != (reg->CONFIG & CONFIG_SHARED_MASK))
+    if (value != (reg->CONFIG & CONFIG_SHARED_MASK))
       return E_BUSY;
   }
 
@@ -517,7 +518,7 @@ static enum Result tmrInit(void *object, const void *configBase)
       irqEnable(timer->irq);
     }
 
-    reg->CONFIG = (reg->CONFIG & ~CONFIG_SHARED_MASK) | desiredConfig;
+    reg->CONFIG = (reg->CONFIG & ~CONFIG_SHARED_MASK) | value;
   }
 
   return res;

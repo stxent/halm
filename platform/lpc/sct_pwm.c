@@ -119,16 +119,16 @@ static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
 {
   const unsigned int part = unit->base.part == SCT_HIGH;
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint32_t value = resolution - 1;
+  const uint32_t match = resolution - 1;
 
   reg->CONFIG |= CONFIG_NORELOAD(part);
 
   if (unit->base.part != SCT_UNIFIED)
   {
-    assert(value <= 0xFFFF);
+    assert(match <= 0xFFFF);
 
-    reg->MATCH_PART[channel][part] = value;
-    reg->MATCHREL_PART[channel][part] = value;
+    reg->MATCH_PART[channel][part] = match;
+    reg->MATCHREL_PART[channel][part] = match;
   }
   else
   {
@@ -136,10 +136,10 @@ static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
      * Max 32-bit value is reserved for the case when a PWM output
      * should stay high during all cycle.
      */
-    assert(value < 0xFFFFFFFFUL);
+    assert(match < 0xFFFFFFFFUL);
 
-    reg->MATCH[channel] = value;
-    reg->MATCHREL[channel] = value;
+    reg->MATCH[channel] = match;
+    reg->MATCHREL[channel] = match;
   }
 
   reg->CONFIG &= ~CONFIG_NORELOAD(part);

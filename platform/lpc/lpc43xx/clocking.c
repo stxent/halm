@@ -408,7 +408,7 @@ const struct ClockClass * const AudioClock =
     .branch = CLOCK_BASE_AUDIO
 };
 
-const struct ClockClass * const OutClock =
+const struct ClockClass * const ClockOutput =
     (const struct ClockClass *)&(const struct GenericClockClass){
     .base = {
         .disable = genericClockDisable,

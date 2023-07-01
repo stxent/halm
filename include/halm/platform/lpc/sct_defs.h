@@ -12,8 +12,10 @@
 enum
 {
   CLKMODE_BUS       = 0,
-  CLKMODE_PRESCALED = 1,
-  CLKMODE_INPUT     = 2
+  /* High-performance sampled-clock mode, SCT clock is from the bus clock */
+  CLKMODE_INPUT_HP  = 1,
+  /* Low-performance sampled-clock mode, SCT clock is from the clock input */
+  CLKMODE_INPUT_LP  = 2
 };
 
 #define CONFIG_UNIFY                    BIT(0)

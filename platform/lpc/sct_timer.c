@@ -10,14 +10,17 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static enum Result genericTimerInit(void *, const struct SctTimerConfig *);
+static enum Result genericTimerInit(void *, uint8_t, enum SctPart,
+    enum SctInput, enum PinEvent, IrqPriority, uint32_t);
 
 #ifdef CONFIG_PLATFORM_LPC_SCT_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *, const void *);
+static enum Result tmrInitCounter(void *, const void *);
 static enum Result tmrInitUnified(void *, const void *);
+static enum Result tmrInitUnifiedCounter(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
 static void tmrSetAutostop(void *, bool);
@@ -71,6 +74,41 @@ const struct TimerClass * const SctUnifiedTimer = &(const struct TimerClass){
     .getValue = tmrGetValueUnified,
     .setValue = tmrSetValueUnified
 };
+
+const struct TimerClass * const SctCounter =
+    &(const struct TimerClass){
+    .size = sizeof(struct SctTimer),
+    .init = tmrInitCounter,
+    .deinit = tmrDeinit,
+
+    .enable = tmrEnable,
+    .disable = tmrDisable,
+    .setAutostop = tmrSetAutostop,
+    .setCallback = tmrSetCallback,
+    .getFrequency = tmrGetFrequency,
+    .setFrequency = tmrSetFrequency,
+    .getOverflow = tmrGetOverflow,
+    .setOverflow = tmrSetOverflow,
+    .getValue = tmrGetValue,
+    .setValue = tmrSetValue
+};
+
+const struct TimerClass * const SctUnifiedCounter =
+    &(const struct TimerClass){
+    .size = sizeof(struct SctTimer),
+    .init = tmrInitUnifiedCounter,
+    .deinit = tmrDeinit,
+
+    .enable = tmrEnable,
+    .disable = tmrDisable,
+    .setCallback = tmrSetCallback,
+    .getFrequency = tmrGetFrequency,
+    .setFrequency = tmrSetFrequency,
+    .getOverflow = tmrGetOverflowUnified,
+    .setOverflow = tmrSetOverflowUnified,
+    .getValue = tmrGetValueUnified,
+    .setValue = tmrSetValueUnified
+};
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -78,14 +116,15 @@ static void interruptHandler(void *object)
   timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result genericTimerInit(void *object,
-    const struct SctTimerConfig *config)
+static enum Result genericTimerInit(void *object, uint8_t channel,
+    enum SctPart segment, enum SctInput input, enum PinEvent edge,
+    IrqPriority priority, uint32_t frequency)
 {
   const struct SctBaseConfig baseConfig = {
-      .channel = config->channel,
-      .edge = PIN_RISING,
-      .input = config->clock,
-      .part = config->part
+      .channel = channel,
+      .edge = edge,
+      .input = input,
+      .part = segment
   };
   struct SctTimer * const timer = object;
   enum Result res;
@@ -108,7 +147,7 @@ static enum Result genericTimerInit(void *object,
   reg->CTRL_PART[part] = CTRL_HALT;
 
   /* Set desired timer frequency */
-  timer->frequency = config->frequency;
+  timer->frequency = frequency;
   sctSetFrequency(&timer->base, timer->frequency);
 
   /* Disable match value reload and set current match register value */
@@ -140,6 +179,9 @@ static enum Result genericTimerInit(void *object,
     return res;
 #endif
 
+  /* Priority is same for both timer parts*/
+  irqSetPriority(timer->base.irq, priority);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -160,7 +202,22 @@ static enum Result tmrInit(void *object, const void *configBase)
   assert(config != NULL);
   assert(config->part != SCT_UNIFIED);
 
-  return genericTimerInit(object, config);
+  return genericTimerInit(object, config->channel, config->part,
+      SCT_INPUT_NONE, PIN_RISING, config->priority, config->frequency);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result tmrInitCounter(void *object, const void *configBase)
+{
+  const struct SctCounterConfig * const config = configBase;
+  assert(config != NULL);
+  assert(config->part != SCT_UNIFIED);
+
+  /* Configure clock input */
+  const uint8_t input = sctConfigInputPin(config->channel, config->pin,
+      PIN_NOPULL);
+
+  return genericTimerInit(object, config->channel, config->part,
+      (enum SctInput)(input + 1), config->edge, config->priority, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInitUnified(void *object, const void *configBase)
@@ -169,7 +226,22 @@ static enum Result tmrInitUnified(void *object, const void *configBase)
   assert(config != NULL);
   assert(config->part == SCT_UNIFIED);
 
-  return genericTimerInit(object, config);
+  return genericTimerInit(object, config->channel, SCT_UNIFIED,
+      SCT_INPUT_NONE, PIN_RISING, config->priority, config->frequency);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result tmrInitUnifiedCounter(void *object, const void *configBase)
+{
+  const struct SctCounterConfig * const config = configBase;
+  assert(config != NULL);
+  assert(config->part == SCT_UNIFIED);
+
+  /* Configure clock input */
+  const uint8_t input = sctConfigInputPin(config->channel, config->pin,
+      PIN_NOPULL);
+
+  return genericTimerInit(object, config->channel, SCT_UNIFIED,
+      (enum SctInput)(input + 1), config->edge, config->priority, 0);
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
@@ -333,7 +405,10 @@ static void tmrSetValue(void *object, uint32_t value)
   const unsigned int part = timer->base.part == SCT_HIGH;
 
   assert(value <= reg->MATCH_PART[timer->event][part]);
+
+  reg->CTRL_PART[part] |= CTRL_STOP;
   reg->COUNT_PART[part] = value;
+  reg->CTRL_PART[part] &= ~CTRL_STOP;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetValueUnified(void *object, uint32_t value)
@@ -342,5 +417,8 @@ static void tmrSetValueUnified(void *object, uint32_t value)
   LPC_SCT_Type * const reg = timer->base.reg;
 
   assert(value <= reg->MATCH[timer->event]);
+
+  reg->CTRL_PART[SCT_LOW] |= CTRL_STOP;
   reg->COUNT = value;
+  reg->CTRL_PART[SCT_LOW] &= ~CTRL_STOP;
 }

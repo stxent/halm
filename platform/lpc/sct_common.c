@@ -14,7 +14,7 @@
 extern const struct PinEntry sctInputPins[];
 extern const struct PinEntry sctOutputPins[];
 /*----------------------------------------------------------------------------*/
-uint8_t sctConfigInputPin(uint8_t channel, PinNumber key)
+uint8_t sctConfigInputPin(uint8_t channel, PinNumber key, enum PinPull pull)
 {
   const struct PinEntry * const pinEntry = pinFind(sctInputPins, key, channel);
   assert(pinEntry != NULL);
@@ -23,6 +23,7 @@ uint8_t sctConfigInputPin(uint8_t channel, PinNumber key)
 
   pinInput(pin);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
+  pinSetPull(pin, pull);
 
   return UNPACK_CHANNEL(pinEntry->value);
 }
@@ -46,18 +47,17 @@ void sctSetFrequency(struct SctBase *timer, uint32_t frequency)
   LPC_SCT_Type * const reg = timer->reg;
 
   /* Counter reset is recommended by the user manual */
-  const uint32_t value = (reg->CTRL_PART[part] & ~CTRL_PRE_MASK) | CTRL_CLRCTR;
+  const uint16_t ctrl = (reg->CTRL_PART[part] & ~CTRL_PRE_MASK) | CTRL_CLRCTR;
 
   if (frequency)
   {
-    /* TODO Check whether the clock is from internal source */
     const uint32_t apbClock = sctGetClock(timer);
     const uint16_t prescaler = apbClock / frequency - 1;
 
     assert(prescaler < 256);
 
-    reg->CTRL_PART[part] = value | CTRL_PRE(prescaler);
+    reg->CTRL_PART[part] = ctrl | CTRL_PRE(prescaler);
   }
   else
-    reg->CTRL_PART[part] = 0;
+    reg->CTRL_PART[part] = ctrl;
 }
