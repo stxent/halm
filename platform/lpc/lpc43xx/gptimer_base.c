@@ -6,6 +6,7 @@
 
 #include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/gptimer_base.h>
+#include <halm/platform/lpc/lpc43xx/gima_defs.h>
 #include <halm/platform/lpc/system.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -294,6 +295,22 @@ void TIMER2_ISR(void)
 void TIMER3_ISR(void)
 {
   instances[3]->handler(instances[3]);
+}
+/*----------------------------------------------------------------------------*/
+void gpTimerEnableCapture(uint8_t channel, uint8_t number)
+{
+  static const uint8_t CAPTURE_MUX[4][4] = {
+      {0x2, 0x2, 0x2, 0x1}, /* T0 */
+      {0x2, 0x2, 0x2, 0x1}, /* T1 */
+      {0x2, 0x3, 0x3, 0x1}, /* T2 */
+      {0x2, 0x3, 0x3, 0x2}  /* T3 */
+  };
+
+  assert(channel < 4 && number < 4);
+
+  /* Configure GIMA */
+  const uint32_t value = GIMA_SYNCH | GIMA_SELECT(CAPTURE_MUX[channel][number]);
+  LPC_GIMA->CAP[channel].IN[number] = value;
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpTimerGetClock(const struct GpTimerBase *timer

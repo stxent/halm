@@ -1,11 +1,11 @@
 /*
- * halm/platform/lpc/gima_defs.h
+ * halm/platform/lpc/lpc43xx/gima_defs.h
  * Copyright (C) 2021 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_LPC_GIMA_DEFS_H_
-#define HALM_PLATFORM_LPC_GIMA_DEFS_H_
+#ifndef HALM_PLATFORM_LPC_LPC43XX_GIMA_DEFS_H_
+#define HALM_PLATFORM_LPC_LPC43XX_GIMA_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Input multiplexer registers-------------------------------*/
@@ -23,4 +23,4 @@
 #define GIMA_SELECT(value)              BIT_FIELD((value), 4)
 #define GIMA_SELECT_VALUE(reg)          FIELD_VALUE((reg), GIMA_SELECT_MASK, 4)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LPC_GIMA_DEFS_H_ */
+#endif /* HALM_PLATFORM_LPC_LPC43XX_GIMA_DEFS_H_ */

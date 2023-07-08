@@ -11,15 +11,11 @@
 #include <halm/pin.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-/** Symbolic names for two different types of timers. */
-enum
-{
-  GPTIMER_CT16B0,
-  GPTIMER_CT16B1,
-  GPTIMER_CT32B0,
-  GPTIMER_CT32B1
-} __attribute__((packed));
-
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/gptimer_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
+/*----------------------------------------------------------------------------*/
 enum GpTimerEvent
 {
   GPTIMER_MATCH_AUTO,
