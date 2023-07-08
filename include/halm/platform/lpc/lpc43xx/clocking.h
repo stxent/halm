@@ -183,4 +183,21 @@ extern const struct ClockClass * const CguOut0Clock;
 extern const struct ClockClass * const CguOut1Clock;
 extern const struct ClockClass * const ClockOutput;
 /*----------------------------------------------------------------------------*/
+struct ClockSettings
+{
+  uint32_t extOscFrequency;
+  uint32_t audioPllFrequency;
+  uint32_t sysPllFrequency;
+  uint32_t usbPllFrequency;
+  uint32_t mainClockFrequency;
+  uint32_t checksum;
+} __attribute__((packed));
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+bool loadClockSettings(const struct ClockSettings *);
+void storeClockSettings(struct ClockSettings *);
+
+END_DECLS
+/*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_CLOCKING_H_ */

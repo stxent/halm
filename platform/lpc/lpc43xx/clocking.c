@@ -1070,3 +1070,40 @@ static bool genericClockReady(const void *clockBase)
   const struct GenericClockClass * const clock = clockBase;
   return !(*calcBranchReg(clock->branch) & BASE_PD);
 }
+/*----------------------------------------------------------------------------*/
+bool loadClockSettings(const struct ClockSettings *settings)
+{
+  const uint32_t checksum = settings->extOscFrequency
+      + settings->audioPllFrequency
+      + settings->sysPllFrequency
+      + settings->usbPllFrequency
+      + settings->mainClockFrequency
+      + settings->checksum;
+
+  if (!checksum && settings->mainClockFrequency)
+  {
+    extFrequency = settings->extOscFrequency;
+    pll0AudioFrequency = settings->audioPllFrequency;
+    pll1Frequency = settings->sysPllFrequency;
+    pll0UsbFrequency = settings->usbPllFrequency;
+    ticksPerSecond = TICK_RATE(settings->mainClockFrequency);
+    return true;
+  }
+  else
+    return false;
+}
+/*----------------------------------------------------------------------------*/
+void storeClockSettings(struct ClockSettings *settings)
+{
+  settings->extOscFrequency = extFrequency;
+  settings->audioPllFrequency = pll0AudioFrequency;
+  settings->sysPllFrequency = pll1Frequency;
+  settings->usbPllFrequency = pll0UsbFrequency;
+  settings->mainClockFrequency = clockFrequency(MainClock);
+
+  settings->checksum = -(settings->extOscFrequency
+      + settings->audioPllFrequency
+      + settings->sysPllFrequency
+      + settings->usbPllFrequency
+      + settings->mainClockFrequency);
+}

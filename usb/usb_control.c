@@ -429,10 +429,10 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
   struct UsbSetupPacket * const packet = &control->context.packet;
   bool ready = false;
 
-  assert(control->driver != NULL);
-
   if (status == USB_REQUEST_CANCELLED)
     return;
+
+  assert(control->driver != NULL);
 
   if (status == USB_REQUEST_SETUP)
   {

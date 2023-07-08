@@ -400,7 +400,7 @@ static enum Result spifiInit(void *object, const void *configBase)
   resetContext(interface);
 
   LPC_SPIFI_Type * const reg = interface->base.reg;
-  uint32_t control = 0;
+  uint32_t control = CTRL_FBCLK;
 
   if (config->delay)
     control |= CTRL_CSHIGH(config->delay - 1);
@@ -415,8 +415,6 @@ static enum Result spifiInit(void *object, const void *configBase)
   // TODO Configure RFCLK, FBCLK
   if (config->mode == 3)
     control |= CTRL_MODE3;
-  else
-    control |= CTRL_FBCLK;
 
   if (!interface->base.wide)
     control |= CTRL_DUAL;
