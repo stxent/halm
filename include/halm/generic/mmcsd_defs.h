@@ -12,7 +12,7 @@
 #define BLOCK_POW                       9
 #define RATE_ENUMERATION                400000
 /*------------------CMD0------------------------------------------------------*/
-#define CMD0_IDLE_DELAY                 1000
+#define CMD0_IDLE_DELAY                 100000
 /*------------------CMD6------------------------------------------------------*/
 #define MMC_BUS_WIDTH_PATTERN           0x03B70000UL
 #define MMC_BUS_WIDTH_1BIT              0x00000000UL
@@ -31,6 +31,8 @@
 /*------------------ACMD6-----------------------------------------------------*/
 #define ACMD6_BUS_WIDTH_1BIT            0x00000000UL
 #define ACMD6_BUS_WIDTH_4BIT            0x00000002UL
+/*------------------ACMD41----------------------------------------------------*/
+#define ACMD41_RETRY_DELAY              10000
 /*------------------OCR register----------------------------------------------*/
 /* Voltage range from 2.7V to 3.6V */
 #define OCR_VOLTAGE_MASK_2V7_3V6        0x00FF8000UL

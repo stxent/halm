@@ -344,8 +344,7 @@ static enum Result initStepSdReadOCR(struct MMCSD *device,
         break;
     }
 
-    /* TODO Remove delay */
-    mdelay(10);
+    udelay(ACMD41_RETRY_DELAY);
   }
 
   if (!counter)
@@ -526,7 +525,6 @@ static enum Result identifyCard(struct MMCSD *device)
     /* Send Reset command */
     if ((res = initStepSendReset(device)) != E_OK)
       return res;
-    udelay(CMD0_IDLE_DELAY);
 
     /* Card is not MMC, try to initialize as SD */
     if ((res = initStepReadCondition(device)) != E_OK)
