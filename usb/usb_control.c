@@ -620,7 +620,7 @@ UsbStringIndex usbControlStringAppend(struct UsbControl *control,
 
   /* String must be unique */
   assert(stringListFindIf(&control->strings, &string,
-      usbStringComparator) != NULL);
+      usbStringComparator) == NULL);
 
   if (string.index == 0)
   {

@@ -282,7 +282,7 @@ size_t flashGetGeometry(const void *object, struct FlashGeometry *geometry,
 
   geometry[1].count =
       (interface->base.size - FLASH_SECTORS_BORDER) / FLASH_SECTOR_SIZE_1;
-  geometry[1].size = FLASH_SECTOR_SIZE_0;
+  geometry[1].size = FLASH_SECTOR_SIZE_1;
   geometry[1].time = 100;
 
   return 2;
