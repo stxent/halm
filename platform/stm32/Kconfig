@@ -12,6 +12,10 @@ config GEN_UART
 	default gen_1 if FAMILY_STM32F1XX
 	default gen_2 if FAMILY_STM32F0XX
 
+config PLATFORM_STM32_PIN_REMAP
+	bool
+	default y if FAMILY_STM32F1XX
+
 menu "Power settings"
 
 config PM
