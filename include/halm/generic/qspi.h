@@ -24,6 +24,8 @@ enum QSPIParameter
   IF_QSPI_DUAL,
   /** Enable quad I/O mode. */
   IF_QSPI_QUAD,
+  /** Enable octal I/O mode for two parallel QSPI buses. */
+  IF_QSPI_OCTAL,
   /** Enable standard single data rate mode. */
   IF_QSPI_SDR,
   /** Enable double data rate mode. */

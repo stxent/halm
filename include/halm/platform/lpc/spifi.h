@@ -46,6 +46,8 @@ struct SpifiConfig
   PinNumber io3;
   /** Mandatory: serial clock output. */
   PinNumber sck;
+  /** Optional: interrupt priority. */
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: mode number. */
@@ -101,10 +103,10 @@ struct Spifi
 
   struct
   {
-    /* Post-address value */
-    uint32_t value;
     /* Length of the post-address field */
     uint8_t length;
+    /* Post-address value */
+    uint8_t value;
     /* Enable serial mode for the post-address field */
     bool serial;
   } post;
@@ -135,8 +137,9 @@ struct Spifi
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void *spifiAddress(const struct Spifi *interface)
+static inline void *spifiGetAddress(const void *object)
 {
+  const struct Spifi * const interface = object;
   return spifiGetMemoryAddress(&interface->base, interface->large);
 }
 

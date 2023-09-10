@@ -420,6 +420,9 @@ static enum Result spifiInit(void *object, const void *configBase)
     control |= CTRL_DUAL;
 
   reg->CTRL = control;
+
+  /* Enable SPIFI interrupts in NVIC */
+  irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);
 
   return E_OK;
@@ -432,7 +435,7 @@ static void spifiDeinit(void *object)
   /* Disable memory-mapped mode or stop current command */
   resetMode(interface);
 
-  /* Disable SPIFI IRQ */
+  /* Disable SPIFI interrupts */
   irqDisable(interface->base.irq);
 
   deinit(interface->txDma);

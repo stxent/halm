@@ -43,6 +43,7 @@ const struct FlashGeometry *flashFindRegion(const struct FlashGeometry *,
     size_t, uint32_t);
 
 /* Platform-specific functions */
+void *flashGetAddress(const void *);
 size_t flashGetGeometry(const void *, struct FlashGeometry *, size_t);
 
 END_DECLS

@@ -182,6 +182,11 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
   return length - left;
 }
 /*----------------------------------------------------------------------------*/
+void *flashGetAddress(const void *object __attribute__((unused)))
+{
+  return NULL;
+}
+/*----------------------------------------------------------------------------*/
 size_t flashGetGeometry(const void *object, struct FlashGeometry *geometry,
     size_t capacity)
 {

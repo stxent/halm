@@ -25,6 +25,8 @@ enum SPIMParameter
   IF_SPIM_DUAL = IF_QSPI_DUAL,
   /** Enable quad I/O mode. */
   IF_SPIM_QUAD = IF_QSPI_QUAD,
+  /** Enable octal I/O mode for two parallel QSPI devices. */
+  IF_SPIM_OCTAL = IF_QSPI_OCTAL,
 
   /** Enable standard single data rate mode. */
   IF_SPIM_SDR = IF_QSPI_SDR,

@@ -630,11 +630,11 @@ typedef struct
   STM_ETHERNET_Type ETHERNET;
 } AHB_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
+extern AHB_DOMAIN_Type  AHB_DOMAIN;
 extern APB1_DOMAIN_Type APB1_DOMAIN;
 extern APB2_DOMAIN_Type APB2_DOMAIN;
-extern AHB_DOMAIN_Type  AHB_DOMAIN;
-extern STM_OB_Type      OB_DOMAIN;
 extern STM_FSMC_Type    FSMC_DOMAIN;
+extern STM_OB_Type      OB_DOMAIN;
 /*----------------------------------------------------------------------------*/
 //#define STM_ETHERNET_MAC_BASE   (STM_ETHERNET_BASE)
 //#define STM_ETHERNET_MMC_BASE   (STM_ETHERNET_BASE + 0x0100)

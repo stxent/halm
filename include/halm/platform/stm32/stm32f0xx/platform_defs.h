@@ -536,9 +536,9 @@ typedef struct
   STM_GPIO_Type GPIO[6];
 } AHB2_DOMAIN_Type;
 /*----------------------------------------------------------------------------*/
-extern APB_DOMAIN_Type  APB_DOMAIN;
 extern AHB1_DOMAIN_Type AHB1_DOMAIN;
 extern AHB2_DOMAIN_Type AHB2_DOMAIN;
+extern APB_DOMAIN_Type  APB_DOMAIN;
 /*----------------------------------------------------------------------------*/
 #define STM_TIM2          (&APB_DOMAIN.TIM2)
 #define STM_TIM3          (&APB_DOMAIN.TIM3)

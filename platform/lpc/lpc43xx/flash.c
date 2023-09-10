@@ -268,6 +268,14 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
   return length - left;
 }
 /*----------------------------------------------------------------------------*/
+void *flashGetAddress(const void *object)
+{
+  const struct Flash * const interface = object;
+
+  return interface->base.bank == FLASH_BANK_A ?
+      (void *)FLASH_BANK_A_ADDRESS : (void *)FLASH_BANK_B_ADDRESS;
+}
+/*----------------------------------------------------------------------------*/
 size_t flashGetGeometry(const void *object, struct FlashGeometry *geometry,
     size_t capacity)
 {
