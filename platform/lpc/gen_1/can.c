@@ -565,7 +565,8 @@ static enum Result canInit(void *object, const void *configBase)
   /* Activate Listen Only mode and enable local priority for transmit buffers */
   reg->MOD = MOD_LOM | MOD_TPM;
 
-  LPC_CANAF->AFMR = AFMR_AccBP; //FIXME
+  /* Configure the Acceptance Filter */
+  LPC_CANAF->AFMR = AFMR_AccBP;
 
 #ifdef CONFIG_PLATFORM_LPC_CAN_PM
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
@@ -644,25 +645,21 @@ static enum Result canGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_RX_AVAILABLE:
-      *(size_t *)data = pointerQueueSize(&interface->rxQueue)
-          * sizeof(struct CANStandardMessage);
+      *(size_t *)data = pointerQueueSize(&interface->rxQueue);
       return E_OK;
 
     case IF_RX_PENDING:
-      *(size_t *)data = (pointerQueueCapacity(&interface->rxQueue)
-          - pointerQueueSize(&interface->rxQueue))
-          * sizeof(struct CANStandardMessage);
+      *(size_t *)data = pointerQueueCapacity(&interface->rxQueue)
+          - pointerQueueSize(&interface->rxQueue);
       return E_OK;
 
     case IF_TX_AVAILABLE:
-      *(size_t *)data = (pointerQueueCapacity(&interface->txQueue)
-          - pointerQueueSize(&interface->txQueue))
-          * sizeof(struct CANStandardMessage);
+      *(size_t *)data = pointerQueueCapacity(&interface->txQueue)
+          - pointerQueueSize(&interface->txQueue);
       return E_OK;
 
     case IF_TX_PENDING:
-      *(size_t *)data = pointerQueueSize(&interface->txQueue)
-          * sizeof(struct CANStandardMessage);
+      *(size_t *)data = pointerQueueSize(&interface->txQueue);
       return E_OK;
 
 #ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK

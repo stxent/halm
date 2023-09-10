@@ -872,25 +872,21 @@ static enum Result canGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_RX_AVAILABLE:
-      *(size_t *)data = pointerQueueSize(&interface->rxQueue)
-          * sizeof(struct CANStandardMessage);
+      *(size_t *)data = pointerQueueSize(&interface->rxQueue);
       return E_OK;
 
     case IF_RX_PENDING:
-      *(size_t *)data = (pointerQueueCapacity(&interface->rxQueue)
-          - pointerQueueSize(&interface->rxQueue))
-          * sizeof(struct CANStandardMessage);
+      *(size_t *)data = pointerQueueCapacity(&interface->rxQueue)
+          - pointerQueueSize(&interface->rxQueue);
       return E_OK;
 
     case IF_TX_AVAILABLE:
-      *(size_t *)data = (pointerQueueCapacity(&interface->txQueue)
-          - pointerQueueSize(&interface->txQueue))
-          * sizeof(struct CANStandardMessage);
+      *(size_t *)data = pointerQueueCapacity(&interface->txQueue)
+          - pointerQueueSize(&interface->txQueue);
       return E_OK;
 
     case IF_TX_PENDING:
-      *(size_t *)data = pointerQueueSize(&interface->txQueue)
-          * sizeof(struct CANStandardMessage);
+      *(size_t *)data = pointerQueueSize(&interface->txQueue);
       return E_OK;
 
 #ifdef CONFIG_PLATFORM_LPC_CAN_WATERMARK
