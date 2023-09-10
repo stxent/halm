@@ -694,15 +694,30 @@ static enum Result genericDividerEnable(const void *clockBase,
 {
   const struct GenericDividerConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->divisor);
+
+  if (!config->divisor)
+    return E_VALUE;
 
   const struct GenericDividerClass * const clock = clockBase;
   volatile uint32_t * const reg = calcDividerReg(clock->channel);
 
-  assert(clock->channel != CLOCK_IDIVA || config->divisor <= 4);
-  assert(clock->channel != CLOCK_IDIVE || config->divisor <= 256);
-  assert(clock->channel == CLOCK_IDIVA || clock->channel == CLOCK_IDIVE
-      || config->divisor <= 16);
+  switch (clock->channel)
+  {
+    case CLOCK_IDIVA:
+      if (config->divisor > 4)
+        return E_VALUE;
+      break;
+
+    case CLOCK_IDIVE:
+      if (config->divisor > 16)
+        return E_VALUE;
+      break;
+
+    default:
+      if (config->divisor > 256)
+        return E_VALUE;
+      break;
+  }
 
   *reg |= IDIV_AUTOBLOCK;
   *reg = (*reg & ~(IDIV_DIVIDER_MASK | IDIV_CLK_SEL_MASK))
@@ -766,7 +781,7 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 {
-  return extFrequency;
+  return !(LPC_CGU->XTAL_OSC_CTRL & XTAL_ENABLE) ? extFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool extOscReady(const void *clockBase __attribute__((unused)))
@@ -901,6 +916,9 @@ static uint32_t pll0ClockFrequency(const void *clockBase)
 {
   const struct GenericPllClass * const clock = clockBase;
 
+  if (!(calcPllReg(clock->channel)->STAT & PLL0_STAT_LOCK))
+    return 0;
+
   return clock->channel == CLOCK_AUDIO_PLL ?
       pll0AudioFrequency : pll0UsbFrequency;
 }
@@ -995,7 +1013,7 @@ static enum Result pll1ClockEnable(const void *clockBase
 static uint32_t pll1ClockFrequency(const void *clockBase
     __attribute__((unused)))
 {
-  return pll1Frequency;
+  return (LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK) ? pll1Frequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool pll1ClockReady(const void *clockBase __attribute__((unused)))

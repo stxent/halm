@@ -1509,4 +1509,4 @@ extern CRYPTO_DOMAIN_Type CRYPTO_DOMAIN;
 #define NM_CONFIG     (&CONFIG_DOMAIN.CONFIG)
 #define NM_CRYPTO     (&CRYPTO_DOMAIN.CRYPTO)
 /*----------------------------------------------------------------------------*/
-#endif // HALM_PLATFORM_NUMICRO_M48X_PLATFORM_DEFS_H_
+#endif /* HALM_PLATFORM_NUMICRO_M48X_PLATFORM_DEFS_H_ */

@@ -192,12 +192,12 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 {
-  return extFrequency;
+  return (LPC_SC->SCS & SCS_OSCSTAT) ? extFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool extOscReady(const void *clockBase __attribute__((unused)))
 {
-  return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT);
+  return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
@@ -307,7 +307,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
 {
-  return pllFrequency;
+  return (LPC_SC->PLL0STAT & PLL0STAT_LOCK) ? pllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool sysPllReady(const void *clockBase __attribute__((unused)))
@@ -367,7 +367,7 @@ static enum Result usbPllEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t usbPllFrequency(const void *clockBase __attribute__((unused)))
 {
-  return LPC_SC->PLL1STAT & PLL1STAT_LOCK ? USB_FREQUENCY : 0;
+  return (LPC_SC->PLL1STAT & PLL1STAT_LOCK) ? USB_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool usbPllReady(const void *clockBase __attribute__((unused)))
@@ -442,11 +442,11 @@ static uint32_t clockOutputFrequency(const void *clockBase
   switch (CLKOUTCFG_SEL_VALUE(LPC_SC->CLKOUTCFG))
   {
     case CLKOUTCFG_CPU:
-      frequency = mainClockFrequency(0);
+      frequency = mainClockFrequency(NULL);
       break;
 
     case CLKOUTCFG_MAIN:
-      frequency = extOscFrequency(0);
+      frequency = extOscFrequency(NULL);
       break;
 
     case CLKOUTCFG_IRC:
@@ -454,7 +454,7 @@ static uint32_t clockOutputFrequency(const void *clockBase
       break;
 
     case CLKOUTCFG_USB:
-      frequency = usbClockFrequency(0);
+      frequency = usbClockFrequency(NULL);
       break;
 
     case CLKOUTCFG_RTC:
@@ -527,7 +527,7 @@ static enum Result mainClockEnable(const void *clockBase
     while ((LPC_SC->PLL0STAT & mask) != mask);
   }
 
-  const uint32_t frequency = mainClockFrequency(0);
+  const uint32_t frequency = mainClockFrequency(NULL);
 
   flashLatencyUpdate(frequency);
   ticksPerSecond = TICK_RATE(frequency);

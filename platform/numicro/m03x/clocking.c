@@ -918,7 +918,7 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 {
-  return extFrequency;
+  return (NM_CLK->STATUS & STATUS_HXTSTB) ? extFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool extOscReady(const void *clockBase __attribute__((unused)))
@@ -1101,7 +1101,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
 {
-  return pllFrequency;
+  return (NM_CLK->STATUS & STATUS_PLLSTB) ? pllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool sysPllReady(const void *clockBase __attribute__((unused)))

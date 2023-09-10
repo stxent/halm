@@ -27,7 +27,7 @@ enum ClockSource
   CLOCK_RTC,
   CLOCK_USB_PLL,
   CLOCK_MAIN
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -53,16 +53,6 @@ extern const struct ClockClass * const RtcOsc;
 struct PllConfig
 {
   /**
-   * Mandatory: clock source.
-   * @n Available options for System PLL (PLL0):
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   *   - @b CLOCK_RTC.
-   * @n Available options for USB PLL (PLL1):
-   *   - @b CLOCK_EXTERNAL.
-   */
-  enum ClockSource source;
-  /**
    * Mandatory: PLL output divisor.
    * @n System PLL accepts values in the range of 1 to 32.
    * @n USB PLL accepts a limited set of values: 2, 4, 8, 16.
@@ -78,6 +68,16 @@ struct PllConfig
    * Input frequency range is 10 MHz to 25 MHz.
    */
   uint16_t multiplier;
+  /**
+   * Mandatory: clock source.
+   * @n Available options for System PLL (PLL0):
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   *   - @b CLOCK_RTC.
+   * @n Available options for USB PLL (PLL1):
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum ClockSource source;
 };
 
 /* Require a PllConfig structure */
@@ -86,12 +86,12 @@ extern const struct ClockClass * const UsbPll;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
-  /** Mandatory: clock source. */
-  enum ClockSource source;
   /** Optional: input clock divisor in the range of 1 to 16. */
   uint16_t divisor;
   /** Mandatory: output pin. */
   PinNumber pin;
+  /** Mandatory: clock source. */
+  enum ClockSource source;
 };
 
 /* Requires a ClockOutputConfig structure */

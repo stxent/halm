@@ -194,5 +194,17 @@ enum
 #define CFGR3_USART3SW(value)           BIT_FIELD((value), 18)
 #define CFGR3_USART3SW_VALUE(reg) \
     FIELD_VALUE((reg), CFGR3_USART3SW_MASK, 18)
+/*------------------ADC Configuration Register 2------------------------------*/
+enum
+{
+  CKMODE_ADCCLK     = 0,
+  CKMODE_PCLK_DIV2  = 1,
+  CKMODE_PCLK_DIV4  = 2
+};
+
+#define ADC_CFGR2_CKMODE_MASK           BIT_FIELD(MASK(2), 30)
+#define ADC_CFGR2_CKMODE(value)         BIT_FIELD((value), 30)
+#define ADC_CFGR2_CKMODE_VALUE(reg) \
+    FIELD_VALUE((reg), ADC_CFGR2_CKMODE_MASK, 30)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F0XX_CLOCKING_DEFS_H_ */

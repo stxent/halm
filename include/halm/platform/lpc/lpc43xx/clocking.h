@@ -44,7 +44,7 @@ enum ClockBranch
   CLOCK_BASE_AUDIO    = 24,
   CLOCK_BASE_CGU_OUT0 = 25,
   CLOCK_BASE_CGU_OUT1 = 26
-};
+} __attribute__((packed));
 
 enum ClockSource
 {
@@ -62,12 +62,10 @@ enum ClockSource
   CLOCK_IDIVC       = 0x0E,
   CLOCK_IDIVD       = 0x0F,
   CLOCK_IDIVE       = 0x10
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct GenericDividerConfig
 {
-  /** Mandatory: clock source. */
-  enum ClockSource source;
   /**
    * Mandatory: integer divider value.
    * @n The divider value for the Divider A should be in the range of 1 to 4.
@@ -75,6 +73,8 @@ struct GenericDividerConfig
    * @n The divider value for the Divider E should be in the range of 1 to 256.
    */
   uint16_t divisor;
+  /** Mandatory: clock source. */
+  enum ClockSource source;
 };
 
 /* Require a GenericDividerConfig structure */
@@ -108,14 +108,12 @@ extern const struct ClockClass * const RtcOsc;
 struct PllConfig
 {
   /**
-   * Mandatory: clock source.
-   * @n The input frequency range for Audio PLL (PLL0AUDIO)
-   * and USB PLL (PLL0USB) is 14 kHz to 150 MHz. The input from
-   * an external crystal is limited to 25 MHz.
-   * @n The range for System PLL (PLL1) is 1 to 50 MHz. The input from
-   * an external crystal is limited to 25 MHz.
-   **/
-  enum ClockSource source;
+   * Mandatory: PLL output divisor.
+   * @n Audio PLL and USB PLL divisor must be set to 1 or be in the range
+   * of 2 to 64 in steps of 2.
+   * @n System PLL accepts a limited set of values: 1, 2, 4, 8 and 16.
+   */
+  uint16_t divisor;
   /**
    * Mandatory: input clock multiplier.
    * @n Audio PLL and USB PLL operate in the range of 275 MHz to 550 MHz,
@@ -126,12 +124,14 @@ struct PllConfig
    */
   uint16_t multiplier;
   /**
-   * Mandatory: PLL output divisor.
-   * @n Audio PLL and USB PLL divisor must be set to 1 or be in the range
-   * of 2 to 64 in steps of 2.
-   * @n System PLL accepts a limited set of values: 1, 2, 4, 8 and 16.
-   */
-  uint16_t divisor;
+   * Mandatory: clock source.
+   * @n The input frequency range for Audio PLL (PLL0AUDIO)
+   * and USB PLL (PLL0USB) is 14 kHz to 150 MHz. The input from
+   * an external crystal is limited to 25 MHz.
+   * @n The range for System PLL (PLL1) is 1 to 50 MHz. The input from
+   * an external crystal is limited to 25 MHz.
+   **/
+  enum ClockSource source;
 };
 
 /* Require a PllConfig structure */
@@ -153,9 +153,9 @@ extern const struct ClockClass * const Apb1Clock;
 extern const struct ClockClass * const Apb3Clock;
 extern const struct ClockClass * const AudioClock;
 /* APB0, APB2, Cortex-M0 and SGPIO */
-extern const struct ClockClass * const PeriphClock;
 extern const struct ClockClass * const LcdClock;
 extern const struct ClockClass * const MainClock;
+extern const struct ClockClass * const PeriphClock;
 extern const struct ClockClass * const PhyRxClock;
 extern const struct ClockClass * const PhyTxClock;
 extern const struct ClockClass * const SdioClock;
@@ -172,10 +172,10 @@ extern const struct ClockClass * const Usb1Clock;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
-  /** Mandatory: clock source. */
-  enum ClockSource source;
   /** Mandatory: output pin. */
   PinNumber pin;
+  /** Mandatory: clock source. */
+  enum ClockSource source;
 };
 
 /* Require a ClockOutputConfig structure */

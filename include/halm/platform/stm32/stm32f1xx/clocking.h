@@ -27,7 +27,7 @@ enum ClockSource
   CLOCK_PLL2,
   CLOCK_PLL3,
   CLOCK_SYSTEM
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -54,17 +54,6 @@ extern const struct ClockClass * const InternalOsc;
 struct MainPllConfig
 {
   /**
-   * Mandatory: clock source.
-   * @n Available options for connectivity-line devices:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   *   - @b CLOCK_PLL2.
-   * @n Available options for low-, medium-, high- and XL-density devices:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   */
-  enum ClockSource source;
-  /**
    * Mandatory: PLL input divisor.
    * @n Available options for connectivity-line devices:
    *   - @b CLOCK_INTERNAL: division by 2.
@@ -79,6 +68,17 @@ struct MainPllConfig
    * devices is 4 to 9, the range for other devices is 2 to 16.
    */
   uint16_t multiplier;
+  /**
+   * Mandatory: clock source.
+   * @n Available options for connectivity-line devices:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   *   - @b CLOCK_PLL2.
+   * @n Available options for low-, medium-, high- and XL-density devices:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum ClockSource source;
 };
 
 /* Requires a MainPllConfig structure */
@@ -105,7 +105,7 @@ enum UsbClockPrescaler
   USB_CLK_DIV_1,
   /** PLL clock is divided by 1.5. */
   USB_CLK_DIV_1_5
-};
+} __attribute__((packed));
 
 struct UsbClockConfig
 {
@@ -113,7 +113,7 @@ struct UsbClockConfig
   enum UsbClockPrescaler divisor;
 };
 
-/* Require a UsbClockConfig structure */
+/* Requires a UsbClockConfig structure */
 extern const struct ClockClass * const UsbClock;
 /*----------------------------------------------------------------------------*/
 struct BusClockConfig
@@ -128,9 +128,9 @@ struct BusClockConfig
 };
 
 /* Require a BusClockConfig structure */
-extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const AdcClock;
 extern const struct ClockClass * const Apb1Clock;
 extern const struct ClockClass * const Apb2Clock;
+extern const struct ClockClass * const MainClock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F1XX_CLOCKING_H_ */

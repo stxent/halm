@@ -81,13 +81,6 @@ extern const struct ClockClass * const InternalLowSpeedOsc;
 struct PllConfig
 {
   /**
-   * Mandatory: clock source.
-   * @n Available options for System PLL:
-   *   - @b CLOCK_INTERNAL divided by 4.
-   *   - @b CLOCK_EXTERNAL.
-   */
-  enum ClockSource source;
-  /**
    * Mandatory: PLL output divisor. The output divisor may be set
    * to divide by 1, 2, 4.
    */
@@ -99,6 +92,13 @@ struct PllConfig
    * frequency range is 3.2 to 150 MHz.
    */
   uint16_t multiplier;
+  /**
+   * Mandatory: clock source.
+   * @n Available options for System PLL:
+   *   - @b CLOCK_INTERNAL divided by 4.
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum ClockSource source;
 };
 
 /* Requires a PllConfig structure */
@@ -106,8 +106,6 @@ extern const struct ClockClass * const SystemPll;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
-  /** Mandatory: clock source. */
-  enum ClockSource source;
   /**
    * Mandatory: input clock divisor. Possible values are
    * powers of two from 2 to 65536.
@@ -115,6 +113,8 @@ struct ClockOutputConfig
   uint16_t divisor;
   /** Mandatory: output pin. */
   PinNumber pin;
+  /** Mandatory: clock source. */
+  enum ClockSource source;
 };
 
 /* Requires a ClockOutputConfig structure */
@@ -137,10 +137,10 @@ struct GenericClockConfig
 
 struct ExtendedClockConfig
 {
-  /** Mandatory: clock source. */
-  enum ClockSource source;
   /** Mandatory: input clock divisor in the range of 1 to 255. */
   uint16_t divisor;
+  /** Mandatory: clock source. */
+  enum ClockSource source;
 };
 
 /* Requires an ApbClockConfig structure */

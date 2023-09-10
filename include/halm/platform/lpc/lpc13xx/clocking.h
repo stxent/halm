@@ -25,7 +25,7 @@ enum ClockBranch
   CLOCK_BRANCH_OUTPUT,
   CLOCK_BRANCH_USB,
   CLOCK_BRANCH_WDT
-};
+} __attribute__((packed));
 
 enum ClockSource
 {
@@ -35,7 +35,7 @@ enum ClockSource
   CLOCK_USB_PLL,
   CLOCK_WDT,
   CLOCK_MAIN
-};
+} __attribute__((packed));
 
 enum WdtFrequency
 {
@@ -55,7 +55,7 @@ enum WdtFrequency
   WDT_FREQ_4200,
   WDT_FREQ_4400,
   WDT_FREQ_4600
-};
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -79,12 +79,12 @@ extern const struct ClockClass * const InternalOsc;
 /*----------------------------------------------------------------------------*/
 struct WdtOscConfig
 {
-  /** Optional: oscillator frequency. */
-  enum WdtFrequency frequency;
   /**
    * Optional: clock frequency divisor. Divisor range is 2 to 64 in step of 2.
    */
   uint16_t divisor;
+  /** Optional: oscillator frequency. */
+  enum WdtFrequency frequency;
 };
 
 /* Requires a WdtOscConfig structure */
@@ -92,15 +92,6 @@ extern const struct ClockClass * const WdtOsc;
 /*----------------------------------------------------------------------------*/
 struct PllConfig
 {
-  /**
-   * Mandatory: clock source.
-   * @n Available options for System PLL:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   * @n Available options for USB PLL:
-   *   - @b CLOCK_EXTERNAL.
-   */
-  enum ClockSource source;
   /**
    * Mandatory: PLL output divisor. The output divisor may be set
    * to divide by 2, 4, 8, 16.
@@ -112,6 +103,15 @@ struct PllConfig
    * frequency range is 10 to 25 MHz.
    */
   uint16_t multiplier;
+  /**
+   * Mandatory: clock source.
+   * @n Available options for System PLL:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   * @n Available options for USB PLL:
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum ClockSource source;
 };
 
 /* Require a PllConfig structure */
@@ -120,12 +120,12 @@ extern const struct ClockClass * const UsbPll;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
-  /** Mandatory: clock source. */
-  enum ClockSource source;
   /** Optional: input clock divisor in the range of 1 to 255. */
   uint16_t divisor;
   /** Mandatory: output pin. */
   PinNumber pin;
+  /** Mandatory: clock source. */
+  enum ClockSource source;
 };
 
 /* Requires a ClockOutputConfig structure */
@@ -133,10 +133,10 @@ extern const struct ClockClass * const ClockOutput;
 /*----------------------------------------------------------------------------*/
 struct GenericClockConfig
 {
-  /** Mandatory: clock source. */
-  enum ClockSource source;
   /** Optional: input clock divisor in the range of 1 to 255. */
   uint16_t divisor;
+  /** Mandatory: clock source. */
+  enum ClockSource source;
 };
 
 /* Require a GenericClockConfig structure */

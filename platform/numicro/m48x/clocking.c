@@ -886,12 +886,11 @@ static bool checkClockSource(enum ClockSource source,
 /*----------------------------------------------------------------------------*/
 static void configCrystalPin(PinNumber key)
 {
-  const struct PinGroupEntry * const group = pinGroupFind(crystalPinGroups,
-      key, 0);
+  const struct PinGroupEntry * const group =
+      pinGroupFind(crystalPinGroups, key, 0);
   assert(group != NULL);
 
   const struct Pin pin = pinInit(key);
-  assert(pinValid(pin));
 
   pinInput(pin);
   pinSetFunction(pin, group->value);
@@ -1082,8 +1081,8 @@ static enum Result clockOutputEnable(const void *clockBase
   if (!checkClockSource(config->source, BRANCH_GROUP_CLKO))
     return E_VALUE;
 
-  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
-      config->pin, 0);
+  const struct PinEntry * const pinEntry =
+      pinFind(clockOutputPins, config->pin, 0);
   assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(config->pin);
@@ -1137,7 +1136,7 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 {
-  return extFrequency;
+  return (NM_CLK->STATUS & STATUS_HXTSTB) ? extFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool extOscReady(const void *clockBase __attribute__((unused)))
@@ -1271,8 +1270,10 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
 {
   const struct PllConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->divisor && config->multiplier);
   assert(config->source == CLOCK_INTERNAL || config->source == CLOCK_EXTERNAL);
+
+  if (!config->divisor || !config->multiplier)
+    return E_VALUE;
 
   uint32_t fcoFrequency;
   uint32_t sourceFrequency;
@@ -1330,7 +1331,7 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
 /*----------------------------------------------------------------------------*/
 static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
 {
-  return pllFrequency;
+  return (NM_CLK->STATUS & STATUS_PLLSTB) ? pllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool sysPllReady(const void *clockBase __attribute__((unused)))
@@ -1372,7 +1373,9 @@ static enum Result dividedBranchEnable(const void *clockBase,
 {
   const struct DividedClockConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->divisor);
+
+  if (!config->divisor)
+    return E_VALUE;
 
   const struct DividedClockClass * const clock = clockBase;
   const uint16_t divisor = config->divisor - 1;
@@ -1409,7 +1412,9 @@ static enum Result extendedBranchEnable(const void *clockBase,
 {
   const struct ExtendedClockConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->divisor);
+
+  if (!config->divisor)
+    return E_VALUE;
 
   const struct ExtendedClockClass * const clock = clockBase;
   const uint16_t divisor = config->divisor - 1;

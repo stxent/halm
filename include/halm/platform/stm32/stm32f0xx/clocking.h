@@ -21,13 +21,40 @@
 /*----------------------------------------------------------------------------*/
 enum ClockSource
 {
-  CLOCK_INTERNAL,
-  CLOCK_INTERNAL_14,
-  CLOCK_INTERNAL_48,
-  CLOCK_EXTERNAL,
+  CLOCK_INTERNAL,    /* HSI */
+  CLOCK_INTERNAL_14, /* HSI14 */
+  CLOCK_INTERNAL_48, /* HSI48 */
+  CLOCK_INTERNAL_LS, /* LSI */
+  CLOCK_EXTERNAL,    /* HSE */
   CLOCK_PLL,
+  CLOCK_RTC,         /* LSE */
   CLOCK_SYSTEM
+} __attribute__((packed));
+/*----------------------------------------------------------------------------*/
+enum AdcClockSource
+{
+  /** Separate asynchronous ADC clock. */
+  ADC_CLOCK_INTERNAL_14,
+  /** Synchronous APB clock divided by 2. */
+  ADC_CLOCK_APB_DIV_2,
+  /** Synchronous APB clock divided by 4. */
+  ADC_CLOCK_APB_DIV_4
+} __attribute__((packed));
+
+struct AdcClockConfig
+{
+  /**
+   * Mandatory: clock source.
+   * @n Available options:
+   *   - @b ADC_CLOCK_INTERNAL_14.
+   *   - @b ADC_CLOCK_APB_DIV_2.
+   *   - @b ADC_CLOCK_APB_DIV_4.
+   */
+  enum AdcClockSource source;
 };
+
+/* Requires an AdcClockConfig structure */
+extern const struct ClockClass * const AdcClock;
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -49,10 +76,15 @@ extern const struct ClockClass * const ExternalOsc;
 /* May be initialized with the null pointer */
 extern const struct ClockClass * const InternalLowSpeedOsc;
 extern const struct ClockClass * const InternalOsc;
+extern const struct ClockClass * const InternalOsc14;
 extern const struct ClockClass * const InternalOsc48;
 /*----------------------------------------------------------------------------*/
 struct SystemPllConfig
 {
+  /** Mandatory: PLL input divisor. Divisor range is 1 to 16. */
+  uint16_t divisor;
+  /** Mandatory: PLL multiplier. The multiplier range is 2 to 16. */
+  uint16_t multiplier;
   /**
    * Mandatory: clock source.
    * @n Available options:
@@ -61,10 +93,6 @@ struct SystemPllConfig
    *   - @b CLOCK_EXTERNAL.
    */
   enum ClockSource source;
-  /** Mandatory: PLL input divisor. Divisor range is 1 to 16. */
-  uint16_t divisor;
-  /** Mandatory: PLL multiplier. The multiplier range is 2 to 16. */
-  uint16_t multiplier;
 };
 
 /* Requires a SystemPllConfig structure */
@@ -97,8 +125,7 @@ struct BusClockConfig
 };
 
 /* Require a BusClockConfig structure */
-extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const ApbClock;
-//extern const struct ClockClass * const AdcClock;
+extern const struct ClockClass * const MainClock;
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F0XX_CLOCKING_H_ */

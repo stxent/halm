@@ -266,7 +266,6 @@ static enum Result extOscEnable(const void *clockBase
   LPC_SYSCON->SYSPLLCLKUEN = CLKUEN_ENA;
 
   extFrequency = config->frequency;
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -323,8 +322,8 @@ static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
 
   sysPowerEnable(PWR_WDTOSC);
   LPC_SYSCON->WDTOSCCTRL = WDTOSCCTRL_DIVSEL(0) | WDTOSCCTRL_FREQSEL(index);
-  wdtFrequency = (wdtFrequencyValues[index - 1] * 1000) >> 1;
 
+  wdtFrequency = (wdtFrequencyValues[index - 1] * 1000) >> 1;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -341,7 +340,6 @@ static bool wdtOscReady(const void *clockBase __attribute__((unused)))
 static void sysPllDisable(const void *clockBase __attribute__((unused)))
 {
   sysPowerDisable(PWR_SYSPLL);
-  pllFrequency = 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
@@ -370,13 +368,12 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
   LPC_SYSCON->SYSPLLCTRL = control;
 
   pllFrequency = frequency;
-
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
 {
-  return pllFrequency;
+  return (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK) ? pllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool sysPllReady(const void *clockBase __attribute__((unused)))
@@ -476,19 +473,19 @@ static uint32_t branchFrequency(const void *clockBase)
   switch (sourceType)
   {
     case CLOCK_INTERNAL:
-      baseFrequency = intOscFrequency(0);
+      baseFrequency = intOscFrequency(NULL);
       break;
 
     case CLOCK_EXTERNAL:
-      baseFrequency = extOscFrequency(0);
+      baseFrequency = extOscFrequency(NULL);
       break;
 
     case CLOCK_PLL:
-      baseFrequency = sysPllFrequency(0);
+      baseFrequency = sysPllFrequency(NULL);
       break;
 
     case CLOCK_WDT:
-      baseFrequency = wdtOscFrequency(0);
+      baseFrequency = wdtOscFrequency(NULL);
       break;
 
     case CLOCK_MAIN:
