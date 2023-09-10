@@ -114,10 +114,11 @@ static void interruptHandler(void *object)
 #ifdef CONFIG_PLATFORM_NUMICRO_SPI_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct Spi * const interface = object;
-
   if (state == PM_ACTIVE)
-    spiSetRate(object, interface->rate);
+  {
+    struct Spi * const interface = object;
+    spiSetRate(&interface->base, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/

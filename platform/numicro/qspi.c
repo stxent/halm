@@ -209,10 +209,11 @@ static void setInterfaceMode(struct Qspi *interface, uint8_t width)
 #ifdef CONFIG_PLATFORM_NUMICRO_QSPI_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct Qspi * const interface = object;
-
   if (state == PM_ACTIVE)
-    qspiSetRate(object, interface->rate);
+  {
+    struct Qspi * const interface = object;
+    qspiSetRate(&interface->base, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/

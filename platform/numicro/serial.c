@@ -163,10 +163,11 @@ static void updateTxWatermark(struct Serial *interface, size_t level)
 #ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct Serial * const interface = object;
-
   if (state == PM_ACTIVE)
+  {
+    struct Serial * const interface = object;
     uartSetRate(&interface->base, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/

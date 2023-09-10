@@ -197,10 +197,11 @@ static enum Result getStatus(const struct SpiDma *interface)
 #ifdef CONFIG_PLATFORM_NUMICRO_SPI_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct SpiDma * const interface = object;
-
   if (state == PM_ACTIVE)
-    spiSetRate(object, interface->rate);
+  {
+    struct SpiDma * const interface = object;
+    spiSetRate(&interface->base, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/

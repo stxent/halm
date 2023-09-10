@@ -270,10 +270,11 @@ static void updateTxWatermark(struct SerialDma *interface, size_t level)
 #ifdef CONFIG_PLATFORM_STM32_UART_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct SerialDma * const interface = object;
-
   if (state == PM_ACTIVE)
+  {
+    struct SerialDma * const interface = object;
     uartSetRate(&interface->base, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/

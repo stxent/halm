@@ -183,10 +183,11 @@ static void interruptHandler(void *object)
 #ifdef CONFIG_PLATFORM_NUMICRO_I2C_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct I2C * const interface = object;
-
   if (state == PM_ACTIVE)
-    i2cSetRate(object, interface->rate);
+  {
+    struct I2C * const interface = object;
+    i2cSetRate(&interface->base, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/

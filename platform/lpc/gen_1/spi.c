@@ -120,10 +120,11 @@ static void interruptHandler(void *object)
 #ifdef CONFIG_PLATFORM_LPC_SSP_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct Spi * const interface = object;
-
   if (state == PM_ACTIVE)
-    sspSetRate(object, interface->rate);
+  {
+    struct Spi * const interface = object;
+    sspSetRate(&interface->base, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/

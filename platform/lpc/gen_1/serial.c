@@ -148,15 +148,14 @@ static void updateTxWatermark(struct Serial *interface, size_t level)
 #ifdef CONFIG_PLATFORM_LPC_UART_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct Serial * const interface = object;
-
   if (state == PM_ACTIVE)
   {
+    struct Serial * const interface = object;
     struct UartRateConfig rateConfig;
 
     /* Recalculate and set baud rate */
-    if (uartCalcRate(object, interface->rate, &rateConfig) == E_OK)
-      uartSetRate(object, rateConfig);
+    if (uartCalcRate(&interface->base, interface->rate, &rateConfig) == E_OK)
+      uartSetRate(&interface->base, rateConfig);
   }
 }
 #endif

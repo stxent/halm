@@ -223,10 +223,11 @@ static enum Result getStatus(const struct SpiDma *interface)
 #ifdef CONFIG_PLATFORM_LPC_SSP_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct SpiDma * const interface = object;
-
   if (state == PM_ACTIVE)
-    sspSetRate(object, interface->rate);
+  {
+    struct SpiDma * const interface = object;
+    sspSetRate(&interface->base, interface->rate);
+  }
 }
 #endif
 /*----------------------------------------------------------------------------*/

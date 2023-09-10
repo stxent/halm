@@ -42,15 +42,14 @@ const struct InterfaceClass * const SerialPoll = &(const struct InterfaceClass){
 #ifdef CONFIG_PLATFORM_LPC_UART_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
-  struct SerialPoll * const interface = object;
-
   if (state == PM_ACTIVE)
   {
+    struct SerialPoll * const interface = object;
     struct UartRateConfig rateConfig;
 
     /* Recalculate and set baud rate */
-    if (uartCalcRate(object, interface->rate, &rateConfig) == E_OK)
-      uartSetRate(object, rateConfig);
+    if (uartCalcRate(&interface->base, interface->rate, &rateConfig) == E_OK)
+      uartSetRate(&interface->base, rateConfig);
   }
 }
 #endif

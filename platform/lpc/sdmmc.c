@@ -11,6 +11,7 @@
 #include <halm/platform/lpc/sdmmc.h>
 #include <halm/platform/lpc/sdmmc_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <halm/pm.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_BLOCK_SIZE  512
 #define BUSY_READ_DELAY     100 /* Milliseconds */
@@ -21,6 +22,10 @@ static void executeCommand(struct Sdmmc *, uint32_t, uint32_t);
 static void pinInterruptHandler(void *);
 static void sdioInterruptHandler(void *);
 static enum Result updateRate(struct Sdmmc *, uint32_t);
+
+#ifdef CONFIG_PLATFORM_LPC_SDMMC_PM
+static void powerStateHandler(void *, enum PmState);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -256,6 +261,17 @@ static enum Result updateRate(struct Sdmmc *interface, uint32_t rate)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_LPC_SDMMC_PM
+static void powerStateHandler(void *object, enum PmState state)
+{
+  if (state == PM_ACTIVE)
+  {
+    struct Sdmmc * const interface = object;
+    updateRate(interface, interface->rate);
+  }
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdmmcConfig * const config = configBase;
@@ -269,9 +285,9 @@ static enum Result sdioInit(void *object, const void *configBase)
   };
   const struct PinIntConfig finalizerConfig = {
       .pin = config->dat0,
+      .priority = config->priority,
       .event = PIN_RISING,
-      .pull = PIN_NOPULL,
-      .priority = config->priority
+      .pull = PIN_NOPULL
   };
   const struct SdmmcBaseConfig baseConfig = {
       .clk = config->clk,
@@ -323,6 +339,11 @@ static enum Result sdioInit(void *object, const void *configBase)
   /* Set default clock rate */
   updateRate(interface, config->rate);
 
+#ifdef CONFIG_PLATFORM_LPC_SDMMC_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
+    return res;
+#endif
+
   /* Internal DMA controller should be initialized after interface setup */
   interface->dma = init(DmaSdmmc, &dmaConfig);
   if (interface->dma == NULL)
@@ -339,9 +360,12 @@ static void sdioDeinit(void *object)
   /* Disable interrupts */
   reg->CTRL &= ~CTRL_INT_ENABLE;
 
+#ifdef CONFIG_PLATFORM_LPC_SDMMC_PM
+  pmUnregister(interface);
+#endif
+
   deinit(interface->dma);
   deinit(interface->finalizer);
-
   SdmmcBase->deinit(interface);
 }
 /*----------------------------------------------------------------------------*/
