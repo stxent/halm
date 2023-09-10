@@ -12,29 +12,35 @@ void spinLock(Spinlock *lock)
   /* Wait until lock becomes free */
   while (1)
   {
-    __interruptsDisable();
+    const uint32_t state = __mrs_primask();
+    __cpsid();
+
     if (*lock == SPIN_UNLOCKED)
     {
       *lock = SPIN_LOCKED;
       __dmb();
-      __interruptsEnable();
+      __msr_primask(state);
       return;
     }
-    __interruptsEnable();
+
+    __msr_primask(state);
   }
 }
 /*----------------------------------------------------------------------------*/
 bool spinTryLock(Spinlock *lock)
 {
-  __interruptsDisable();
+  const uint32_t state = __mrs_primask();
+  __cpsid();
+
   if (*lock == SPIN_UNLOCKED)
   {
     *lock = SPIN_LOCKED;
     __dmb();
-    __interruptsEnable();
+    __msr_primask(state);
     return true;
   }
-  __interruptsEnable();
+
+  __msr_primask(state);
   return false; /* Already locked */
 }
 /*----------------------------------------------------------------------------*/

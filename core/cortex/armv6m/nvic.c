@@ -18,7 +18,7 @@ void nvicResetCore(void)
 
   /* The reset sequence recommended by ARM application notes */
   __dsb();
-  __interruptsDisable();
+  __cpsid();
 
   /* Execute reset */
   SCB->AIRCR = value;

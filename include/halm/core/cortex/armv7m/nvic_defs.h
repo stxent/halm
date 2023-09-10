@@ -13,11 +13,13 @@
 #define AIRCR_VECTCLRACTIVE       BIT(1)
 #define AIRCR_SYSRESETREQ         BIT(2)
 
-#define AIRCR_VECTKEY_MASK        BIT_FIELD(MASK(16), 16)
-#define AIRCR_VECTKEY(value)      BIT_FIELD((value), 16)
-
 #define AIRCR_PRIGROUP_MASK       BIT_FIELD(MASK(3), 8)
 #define AIRCR_PRIGROUP(value)     BIT_FIELD((value), 8)
 #define AIRCR_PRIGROUP_VALUE(reg) FIELD_VALUE((reg), AIRCR_PRIGROUP_MASK, 8)
+
+#define AIRCR_ENDIANNESS          BIT(15)
+
+#define AIRCR_VECTKEY_MASK        BIT_FIELD(MASK(16), 16)
+#define AIRCR_VECTKEY(value)      BIT_FIELD((value), 16)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_ARMV7M_NVIC_DEFS_H_ */

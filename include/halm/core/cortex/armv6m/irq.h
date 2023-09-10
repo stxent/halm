@@ -39,13 +39,13 @@ BEGIN_DECLS
 
 static inline void irqRestore(IrqState state)
 {
-  __interruptsSetState(state);
+  __msr_primask(state);
 }
 
 static inline IrqState irqSave(void)
 {
-  const IrqState state = __interruptsGetState();
-  __interruptsDisable();
+  const IrqState state = __mrs_primask();
+  __cpsid();
   return state;
 }
 
