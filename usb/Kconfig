@@ -23,6 +23,11 @@ config USB_DEVICE_CDC
 	default y
 	depends on USB_DEVICE
 
+config USB_DEVICE_CDC_WATERMARK
+	bool "Watermark calculation"
+	default n
+	depends on USB_DEVICE_CDC
+
 config USB_DEVICE_DFU
 	bool "DFU driver"
 	default y

@@ -24,13 +24,25 @@ enum SerialParameter
    */
   IF_SERIAL_PARITY = IF_PARAMETER_END,
 
-  /** Read the CTS status line. Parameter type is \a uint8_t. */
+  /**
+   * Read the CTS status line. Parameter type is \a uint8_t. Possible values:
+   * 0 means carrier is deactivated, 1 means carrier is activated.
+   */
   IF_SERIAL_CTS,
-  /** Write the RTS status line. Parameter type is \a uint8_t. */
+  /**
+   * Write the RTS status line. Parameter type is \a uint8_t.
+   * Possible values: 0 to deactivate carrier and 1 to activate carrier.
+   */
   IF_SERIAL_RTS,
-  /** Read the DSR status line. Parameter type is \a uint8_t. */
+  /**
+   * Read the DSR status line. Parameter type is \a uint8_t. Possible values:
+   * 0 means DTE not present, 1 means DTE is present.
+   */
   IF_SERIAL_DSR,
-  /** Write the DTR status line. Parameter type is \a uint8_t. */
+  /**
+   * Write the DTR status line. Parameter type is \a uint8_t.
+   * Possible values: 0 for DTE not present and 1 for DTE present.
+   */
   IF_SERIAL_DTR,
 
   /** Read frame error counter. Parameter type is \a uint32_t. */

@@ -38,14 +38,21 @@ struct CdcAcm
   /* Number of pending bytes */
   size_t queuedTxBytes;
 
+  struct UsbEndpoint *notificationEp;
   struct UsbEndpoint *rxDataEp;
   struct UsbEndpoint *txDataEp;
-  struct UsbEndpoint *notificationEp;
 
   /* Device suspended due to error or external request */
   bool suspended;
   /* Link configuration message received */
   bool updated;
+
+#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+  /* Maximum available bytes in the receive queue */
+  size_t rxWatermark;
+  /* Maximum pending bytes in the transmit queue */
+  size_t txWatermark;
+#endif
 };
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(void *, struct UsbRequest *, enum UsbRequestStatus);
@@ -53,6 +60,8 @@ static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
 static inline size_t getMaxPacketSize(void);
 static inline size_t getPacketSize(const struct CdcAcm *);
 static bool resetEndpoints(struct CdcAcm *);
+static void updateRxWatermark(struct CdcAcm *, size_t);
+static void updateTxWatermark(struct CdcAcm *, size_t);
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
@@ -83,6 +92,8 @@ static void cdcDataReceived(void *argument, struct UsbRequest *request,
   if (status == USB_REQUEST_COMPLETED)
   {
     interface->queuedRxBytes += request->length;
+    updateRxWatermark(interface, interface->queuedRxBytes);
+
     event = true;
   }
   else
@@ -186,8 +197,8 @@ static bool resetEndpoints(struct CdcAcm *interface)
 
   usbEpEnable(interface->notificationEp, ENDPOINT_TYPE_INTERRUPT,
       CDC_NOTIFICATION_EP_SIZE);
-  usbEpEnable(interface->txDataEp, ENDPOINT_TYPE_BULK, maxPacketSize);
   usbEpEnable(interface->rxDataEp, ENDPOINT_TYPE_BULK, maxPacketSize);
+  usbEpEnable(interface->txDataEp, ENDPOINT_TYPE_BULK, maxPacketSize);
 
   /* Fill OUT endpoint queue */
   while (!pointerQueueEmpty(&interface->rxRequestQueue))
@@ -208,6 +219,28 @@ static bool resetEndpoints(struct CdcAcm *interface)
     interface->suspended = false;
 
   return completed;
+}
+/*----------------------------------------------------------------------------*/
+static void updateRxWatermark(struct CdcAcm *interface, size_t level)
+{
+#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+  if (level > interface->rxWatermark)
+    interface->rxWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
+}
+/*----------------------------------------------------------------------------*/
+static void updateTxWatermark(struct CdcAcm *interface, size_t level)
+{
+#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+  if (level > interface->txWatermark)
+    interface->txWatermark = level;
+#else
+  (void)interface;
+  (void)level;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 void cdcAcmOnParametersChanged(struct CdcAcm *interface)
@@ -278,6 +311,11 @@ static enum Result interfaceInit(void *object, const void *configBase)
   interface->suspended = true;
   interface->updated = false;
 
+#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+  interface->rxWatermark = 0;
+  interface->txWatermark = 0;
+#endif
+
   interface->notificationEp = usbDevCreateEndpoint(config->device,
       config->endpoints.interrupt);
   if (interface->notificationEp == NULL)
@@ -313,7 +351,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
     arena = (uint8_t *)interface->requests + count * sizeof(struct UsbRequest);
   }
 
-  /* Add requests to queues */
+  /* Add requests to containers */
   struct UsbRequest *request = interface->requests;
   uint8_t *payload = arena;
 
@@ -348,12 +386,13 @@ static void interfaceDeinit(void *object)
   deinit(interface->driver);
 
   /* Return requests from endpoint queues to local pools */
-  usbEpClear(interface->notificationEp);
   usbEpClear(interface->txDataEp);
   usbEpClear(interface->rxDataEp);
+  usbEpClear(interface->notificationEp);
 
-  assert(pointerQueueFull(&interface->rxRequestQueue));
+  /* All requests must be in the associated containers after EP clearing */
   assert(pointerArrayFull(&interface->txRequestPool));
+  assert(pointerQueueFull(&interface->rxRequestQueue));
 
   /* Free memory allocated for request buffers */
   free(interface->requests);
@@ -411,6 +450,16 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
     case IF_TX_PENDING:
       *(size_t *)data = interface->suspended ? 0 : interface->queuedTxBytes;
       return E_OK;
+
+#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+    case IF_RX_WATERMARK:
+      *(size_t *)data = interface->rxWatermark;
+      return E_OK;
+
+    case IF_TX_WATERMARK:
+      *(size_t *)data = interface->txWatermark;
+      return E_OK;
+#endif
 
     case IF_RATE:
       *(uint32_t *)data = cdcAcmBaseGetRate(interface->driver);
@@ -542,6 +591,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
     request = pointerArrayBack(&interface->txRequestPool);
     pointerArrayPopBack(&interface->txRequestPool);
     interface->queuedTxBytes += bytesToWrite;
+    updateTxWatermark(interface, interface->queuedTxBytes);
     irqRestore(state);
 
     request->length = bytesToWrite;
