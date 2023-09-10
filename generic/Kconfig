@@ -24,16 +24,16 @@ config GENERIC_SDIO_SPI_CRC
 	default y
 	depends on GENERIC_SDIO_SPI
 
-config GENERIC_SOFTWARE_TIMER
-	bool "Software Timer Factory"
-	default y
-
 config GENERIC_SOFTWARE_TIMER_32
 	bool "Extending 32-bit timer"
 	default y
 
 config GENERIC_SOFTWARE_TIMER_64
 	bool "Extending 64-bit timer"
+	default y
+
+config GENERIC_TIMER_FACTORY
+	bool "Software Timer Factory"
 	default y
 
 config GENERIC_WQ

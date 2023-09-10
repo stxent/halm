@@ -20,16 +20,16 @@ if(CONFIG_GENERIC_SDIO_SPI)
     list(APPEND SOURCE_FILES "sdio_spi.c")
 endif()
 
-if(CONFIG_GENERIC_SOFTWARE_TIMER)
-    list(APPEND SOURCE_FILES "software_timer.c")
-endif()
-
 if(CONFIG_GENERIC_SOFTWARE_TIMER_32)
     list(APPEND SOURCE_FILES "software_timer_32.c")
 endif()
 
 if(CONFIG_GENERIC_SOFTWARE_TIMER_64)
     list(APPEND SOURCE_FILES "software_timer_64.c")
+endif()
+
+if(CONFIG_GENERIC_TIMER_FACTORY)
+    list(APPEND SOURCE_FILES "timer_factory.c")
 endif()
 
 if(CONFIG_GENERIC_WQ)

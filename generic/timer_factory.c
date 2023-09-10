@@ -1,24 +1,24 @@
 /*
- * software_timer.c
- * Copyright (C) 2016 xent
+ * timer_factory.c
+ * Copyright (C) 2016, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/generic/software_timer.h>
+#include <halm/generic/timer_factory.h>
 #include <halm/irq.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-struct SoftwareTimerConfig
+struct TimerFactoryEntryConfig
 {
-  struct SoftwareTimerFactory *parent;
+  struct TimerFactory *parent;
 };
 /*----------------------------------------------------------------------------*/
-struct SoftwareTimer
+struct TimerFactoryEntry
 {
   struct Timer base;
 
-  struct SoftwareTimerFactory *factory;
-  struct SoftwareTimer *next;
+  struct TimerFactory *factory;
+  struct TimerFactoryEntry *next;
 
   void (*callback)(void *);
   void *callbackArgument;
@@ -30,17 +30,17 @@ struct SoftwareTimer
 };
 /*----------------------------------------------------------------------------*/
 static inline uint32_t distance(uint32_t a, uint32_t b);
-static void insertTimer(struct SoftwareTimerFactory *, struct SoftwareTimer *);
+static void insertTimer(struct TimerFactory *, struct TimerFactoryEntry *);
 static void interruptHandler(void *);
-static void removeTimer(struct SoftwareTimerFactory *,
-    const struct SoftwareTimer *);
+static void removeTimer(struct TimerFactory *,
+    const struct TimerFactoryEntry *);
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *, const void *);
 static void factoryDeinit(void *);
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const SoftwareTimerFactory =
+const struct EntityClass * const TimerFactory =
     &(const struct EntityClass){
-    .size = sizeof(struct SoftwareTimerFactory),
+    .size = sizeof(struct TimerFactory),
     .init = factoryInit,
     .deinit = factoryDeinit
 };
@@ -58,8 +58,8 @@ static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
 static void tmrSetValue(void *, uint32_t);
 /*----------------------------------------------------------------------------*/
-const struct TimerClass * const SoftwareTimer = &(const struct TimerClass){
-    .size = sizeof(struct SoftwareTimer),
+const struct TimerClass * const TimerFactoryEntry = &(const struct TimerClass){
+    .size = sizeof(struct TimerFactoryEntry),
     .init = tmrInit,
     .deinit = tmrDeinit,
 
@@ -80,8 +80,8 @@ static inline uint32_t distance(uint32_t a, uint32_t b)
   return b - a;
 }
 /*----------------------------------------------------------------------------*/
-static void insertTimer(struct SoftwareTimerFactory *factory,
-    struct SoftwareTimer *timer)
+static void insertTimer(struct TimerFactory *factory,
+    struct TimerFactoryEntry *timer)
 {
   if (factory->head != NULL)
   {
@@ -99,7 +99,7 @@ static void insertTimer(struct SoftwareTimerFactory *factory,
     }
     else
     {
-      struct SoftwareTimer *current = factory->head;
+      struct TimerFactoryEntry *current = factory->head;
 
       while (current->next != NULL)
       {
@@ -129,16 +129,16 @@ static void insertTimer(struct SoftwareTimerFactory *factory,
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  struct SoftwareTimerFactory * const factory = object;
-  struct SoftwareTimer *current;
-  struct SoftwareTimer *head = NULL;
+  struct TimerFactory * const factory = object;
+  struct TimerFactoryEntry *current;
+  struct TimerFactoryEntry *head = NULL;
 
   ++factory->counter;
 
   current = factory->head;
   while (current != NULL && factory->counter == current->timestamp)
   {
-    struct SoftwareTimer * const timer = current;
+    struct TimerFactoryEntry * const timer = current;
     current = current->next;
 
     if (!timer->continuous)
@@ -151,7 +151,7 @@ static void interruptHandler(void *object)
   current = head;
   while (current != NULL)
   {
-    struct SoftwareTimer * const timer = current;
+    struct TimerFactoryEntry * const timer = current;
     current = current->next;
 
     timer->callback(timer->callbackArgument);
@@ -167,10 +167,10 @@ static void interruptHandler(void *object)
   assert(factory->head == NULL || (factory->head != factory->head->next));
 }
 /*----------------------------------------------------------------------------*/
-static void removeTimer(struct SoftwareTimerFactory *factory,
-    const struct SoftwareTimer *timer)
+static void removeTimer(struct TimerFactory *factory,
+    const struct TimerFactoryEntry *timer)
 {
-  struct SoftwareTimer **current = &factory->head;
+  struct TimerFactoryEntry **current = &factory->head;
 
   while (*current != NULL && *current != timer)
     current = &(*current)->next;
@@ -183,11 +183,11 @@ static void removeTimer(struct SoftwareTimerFactory *factory,
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *object, const void *configBase)
 {
-  const struct SoftwareTimerFactoryConfig * const config = configBase;
+  const struct TimerFactoryConfig * const config = configBase;
   assert(config != NULL);
   assert(config->timer != NULL);
 
-  struct SoftwareTimerFactory * const factory = object;
+  struct TimerFactory * const factory = object;
 
   factory->timer = config->timer;
   factory->head = NULL;
@@ -200,7 +200,7 @@ static enum Result factoryInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void factoryDeinit(void *object)
 {
-  struct SoftwareTimerFactory * const factory = object;
+  struct TimerFactory * const factory = object;
 
   assert(factory->head == NULL);
   timerSetCallback(factory->timer, NULL, NULL);
@@ -208,8 +208,8 @@ static void factoryDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
-  const struct SoftwareTimerConfig * const config = configBase;
-  struct SoftwareTimer * const timer = object;
+  const struct TimerFactoryEntryConfig * const config = configBase;
+  struct TimerFactoryEntry * const timer = object;
 
   timer->factory = config->parent;
   timer->callback = NULL;
@@ -228,8 +228,8 @@ static void tmrDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static void tmrEnable(void *object)
 {
-  struct SoftwareTimer * const timer = object;
-  struct SoftwareTimerFactory * const factory = timer->factory;
+  struct TimerFactoryEntry * const timer = object;
+  struct TimerFactory * const factory = timer->factory;
   const IrqState state = irqSave();
 
   if (timer->enabled)
@@ -244,7 +244,7 @@ static void tmrEnable(void *object)
 /*----------------------------------------------------------------------------*/
 static void tmrDisable(void *object)
 {
-  struct SoftwareTimer * const timer = object;
+  struct TimerFactoryEntry * const timer = object;
 
   if (timer->enabled)
   {
@@ -255,14 +255,14 @@ static void tmrDisable(void *object)
 /*----------------------------------------------------------------------------*/
 static void tmrSetAutostop(void *object, bool state)
 {
-  struct SoftwareTimer * const timer = object;
+  struct TimerFactoryEntry * const timer = object;
   timer->continuous = !state;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct SoftwareTimer * const timer = object;
+  struct TimerFactoryEntry * const timer = object;
 
   timer->callbackArgument = argument;
   timer->callback = callback;
@@ -270,7 +270,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object)
 {
-  const struct SoftwareTimer * const timer = object;
+  const struct TimerFactoryEntry * const timer = object;
   const uint32_t clock = timerGetFrequency(timer->factory->timer);
   const uint32_t overflow = timerGetOverflow(timer->factory->timer);
 
@@ -280,7 +280,7 @@ static uint32_t tmrGetFrequency(const void *object)
 /*----------------------------------------------------------------------------*/
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
-  const struct SoftwareTimer * const timer = object;
+  const struct TimerFactoryEntry * const timer = object;
   const uint32_t clock = timerGetFrequency(timer->factory->timer);
 
   assert(frequency != 0 && frequency <= clock);
@@ -289,25 +289,25 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)
 {
-  const struct SoftwareTimer * const timer = object;
+  const struct TimerFactoryEntry * const timer = object;
   return timer->overflow;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
-  struct SoftwareTimer * const timer = object;
+  struct TimerFactoryEntry * const timer = object;
   timer->overflow = overflow;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
 {
-  const struct SoftwareTimer * const timer = object;
+  const struct TimerFactoryEntry * const timer = object;
   return distance(timer->factory->counter, timer->timestamp);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetValue(void *object, uint32_t value)
 {
-  struct SoftwareTimer * const timer = object;
+  struct TimerFactoryEntry * const timer = object;
   const IrqState state = irqSave();
 
   const uint32_t current = distance(timer->factory->counter, timer->timestamp);
@@ -316,10 +316,10 @@ static void tmrSetValue(void *object, uint32_t value)
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
-void *softwareTimerCreate(void *object)
+void *timerFactoryCreate(void *object)
 {
-  const struct SoftwareTimerConfig config = {
+  const struct TimerFactoryEntryConfig config = {
       .parent = object
   };
-  return init(SoftwareTimer, &config);
+  return init(TimerFactoryEntry, &config);
 }

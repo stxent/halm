@@ -1,29 +1,32 @@
 /*
- * halm/generic/software_timer.h
- * Copyright (C) 2016 xent
+ * halm/generic/timer_factory.h
+ * Copyright (C) 2016, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_GENERIC_SOFTWARE_TIMER_H_
-#define HALM_GENERIC_SOFTWARE_TIMER_H_
+#ifndef HALM_GENERIC_TIMER_FACTORY_H_
+#define HALM_GENERIC_TIMER_FACTORY_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const SoftwareTimerFactory;
+extern const struct EntityClass * const TimerFactory;
 
-struct SoftwareTimer;
+struct TimerFactoryEntry;
 
-struct SoftwareTimerFactoryConfig
+struct TimerFactoryConfig
 {
-  /** Mandatory: timer for delay measurement. */
+  /**
+   * Mandatory: timer for interrupt generation on a regular basis. The timer
+   * period determines a minimum interval between software timer ticks.
+   */
   struct Timer *timer;
 };
 
-struct SoftwareTimerFactory
+struct TimerFactory
 {
   struct Entity base;
 
-  struct SoftwareTimer *head;
+  struct TimerFactoryEntry *head;
   struct Timer *timer;
 
   uint32_t counter;
@@ -31,8 +34,8 @@ struct SoftwareTimerFactory
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void *softwareTimerCreate(void *);
+void *timerFactoryCreate(void *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_GENERIC_SOFTWARE_TIMER_H_ */
+#endif /* HALM_GENERIC_TIMER_FACTORY_H_ */
