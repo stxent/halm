@@ -7,12 +7,13 @@
 #ifndef HALM_PLATFORM_LPC_SDMMC_H_
 #define HALM_PLATFORM_LPC_SDMMC_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/dma.h>
-#include <halm/interrupt.h>
 #include <halm/platform/lpc/sdmmc_base.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Sdmmc;
+
+struct Dma;
+struct Interrupt;
 
 struct SdmmcConfig
 {

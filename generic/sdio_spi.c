@@ -9,6 +9,7 @@
 #include <halm/generic/sdio_spi.h>
 #include <halm/generic/spi.h>
 #include <halm/generic/work_queue.h>
+#include <halm/timer.h>
 #include <xcore/crc/crc7.h>
 #include <xcore/crc/crc16_ccitt.h>
 #include <xcore/memory.h>

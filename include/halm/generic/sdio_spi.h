@@ -9,10 +9,11 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
 #include <halm/pin.h>
-#include <halm/timer.h>
-#include <halm/wq.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdioSpi;
+
+struct Timer;
+struct WorkQueue;
 
 struct SdioSpiConfig
 {

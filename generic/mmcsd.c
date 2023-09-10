@@ -10,8 +10,8 @@
 #include <halm/generic/sdio.h>
 #include <halm/generic/sdio_defs.h>
 #include <xcore/asm.h>
-#include <xcore/memory.h>
 #include <xcore/bits.h>
+#include <xcore/memory.h>
 #include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
@@ -85,7 +85,7 @@ static enum Result initStepEnableCrc(struct MMCSD *device)
 {
   return executeCommand(device,
       SDIO_COMMAND(CMD59_CRC_ON_OFF, MMCSD_RESPONSE_R1, 0),
-      CMD59_CRC_ENABLED, 0, true);
+      CMD59_CRC_ENABLED, NULL, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepMmcReadOCR(struct MMCSD *device)
@@ -113,7 +113,7 @@ static enum Result initStepMmcReadOCR(struct MMCSD *device)
 
       res = executeCommand(device,
           SDIO_COMMAND(CMD1_SEND_OP_COND, MMCSD_RESPONSE_R3, 0),
-	      ocr, &response, true);
+	        ocr, &response, true);
 
       if (res == E_OK)
       {
@@ -171,7 +171,7 @@ static enum Result initStepMmcSetBusWidth(struct MMCSD *device)
 
   return executeCommand(device,
       SDIO_COMMAND(CMD6_SWITCH, MMCSD_RESPONSE_R1B, SDIO_CHECK_CRC),
-      mode, 0, true);
+      mode, NULL, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepMmcSetHighSpeed(struct MMCSD *device,
@@ -200,7 +200,7 @@ static enum Result initStepMmcSetHighSpeed(struct MMCSD *device,
 
   return executeCommand(device,
       SDIO_COMMAND(CMD6_SWITCH, MMCSD_RESPONSE_R1B, SDIO_CHECK_CRC),
-      mode, 0, true);
+      mode, NULL, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepReadCondition(struct MMCSD *device)
@@ -231,7 +231,7 @@ static enum Result initStepReadCID(struct MMCSD *device)
 {
   return executeCommand(device,
       SDIO_COMMAND(CMD2_ALL_SEND_CID, MMCSD_RESPONSE_R2, SDIO_CHECK_CRC),
-      0, 0, true);
+      0, NULL, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepReadCSD(struct MMCSD *device)
@@ -320,13 +320,13 @@ static enum Result initStepSdReadOCR(struct MMCSD *device,
   {
     res = executeCommand(device,
         SDIO_COMMAND(CMD55_APP_CMD, responseType, 0),
-        0, 0, true);
+        0, NULL, true);
     if (res != E_OK && res != E_IDLE)
       break;
 
     res = executeCommand(device,
         SDIO_COMMAND(ACMD41_SD_SEND_OP_COND, responseType, 0),
-        ocr, responseType == MMCSD_RESPONSE_R1 ? &response : 0, true);
+        ocr, responseType == MMCSD_RESPONSE_R1 ? &response : NULL, true);
 
     if (responseType == MMCSD_RESPONSE_R1)
     {
@@ -359,7 +359,7 @@ static enum Result initStepSdSetBusWidth(struct MMCSD *device)
 
   res = executeCommand(device,
       SDIO_COMMAND(CMD55_APP_CMD, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      (device->info.cardAddress << 16), 0, true);
+      (device->info.cardAddress << 16), NULL, true);
   if (res != E_OK)
     return res;
 
@@ -368,14 +368,14 @@ static enum Result initStepSdSetBusWidth(struct MMCSD *device)
 
   return executeCommand(device,
       SDIO_COMMAND(ACMD6_SET_BUS_WIDTH, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      busMode, 0, true);
+      busMode, NULL, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepSendReset(struct MMCSD *device)
 {
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD0_GO_IDLE_STATE, MMCSD_RESPONSE_NONE, SDIO_INITIALIZE),
-      0, 0, true);
+      0, NULL, true);
 
   return (res != E_OK && res != E_IDLE) ? res : E_OK;
 }
@@ -384,14 +384,14 @@ static enum Result initStepSetBlockLength(struct MMCSD *device)
 {
   return executeCommand(device,
       SDIO_COMMAND(CMD16_SET_BLOCKLEN, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      1UL << BLOCK_POW, 0, true);
+      1UL << BLOCK_POW, NULL, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepSetRCA(struct MMCSD *device, uint32_t address)
 {
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD3_SEND_RELATIVE_ADDR, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      address << 16, 0, true);
+      address << 16, NULL, true);
 
   if (res == E_OK)
     device->info.cardAddress = address;
@@ -421,19 +421,19 @@ static enum Result eraseSectorGroup(struct MMCSD *device, uint32_t sector)
 
   res = executeCommand(device,
       SDIO_COMMAND(CMD35_ERASE_GROUP_START, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      argument, 0, true);
+      argument, NULL, true);
   if (res != E_OK)
     goto error;
 
   res = executeCommand(device,
       SDIO_COMMAND(CMD36_ERASE_GROUP_END, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      argument, 0, true);
+      argument, NULL, true);
   if (res != E_OK)
     goto error;
 
   res = executeCommand(device,
       SDIO_COMMAND(CMD38_ERASE, MMCSD_RESPONSE_R1B, SDIO_CHECK_CRC),
-      0, 0, true);
+      0, NULL, true);
   if (res != E_OK)
     goto error;
 
@@ -847,7 +847,7 @@ static enum Result setTransferState(struct MMCSD *device)
   {
     return executeCommand(device,
         SDIO_COMMAND(CMD7_SELECT_CARD, MMCSD_RESPONSE_R1B, flags),
-        address, 0, true);
+        address, NULL, true);
   }
   else if (state != CARD_TRANSFER)
   {
@@ -864,7 +864,7 @@ static enum Result startCardSelection(struct MMCSD *device)
 
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD7_SELECT_CARD, MMCSD_RESPONSE_R1B, flags),
-      address, 0, false);
+      address, NULL, false);
 
   if (res == E_OK)
   {
@@ -913,7 +913,7 @@ static enum Result startTransferStateSetup(struct MMCSD *device)
   const uint32_t flags = SDIO_WAIT_DATA | SDIO_CHECK_CRC;
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD13_SEND_STATUS, MMCSD_RESPONSE_R1, flags),
-      address, 0, false);
+      address, NULL, false);
 
   if (res == E_OK)
   {
@@ -930,7 +930,7 @@ static enum Result terminateTransfer(struct MMCSD *device)
   const uint32_t flags = SDIO_STOP_TRANSFER | SDIO_CHECK_CRC;
   const uint32_t command =
       SDIO_COMMAND(CMD12_STOP_TRANSMISSION, MMCSD_RESPONSE_R1B, flags);
-  const enum Result res = executeCommand(device, command, 0, 0, false);
+  const enum Result res = executeCommand(device, command, 0, NULL, false);
 
   if (res != E_BUSY)
   {
