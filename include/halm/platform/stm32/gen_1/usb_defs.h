@@ -1,11 +1,11 @@
 /*
- * halm/platform/stm32/stm32f1xx/usb_defs.h
+ * halm/platform/stm32/gen_1/usb_defs.h
  * Copyright (C) 2018 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_STM32F1XX_USB_DEFS_H_
-#define HALM_PLATFORM_STM32_STM32F1XX_USB_DEFS_H_
+#ifndef HALM_PLATFORM_STM32_GEN_1_USB_DEFS_H_
+#define HALM_PLATFORM_STM32_GEN_1_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------USB Control Register--------------------------------------*/
@@ -14,6 +14,8 @@
 #define CNTR_LP_MODE                    BIT(2)
 #define CNTR_FSUSP                      BIT(3)
 #define CNTR_RESUME                     BIT(4)
+#define CNTR_L1RESUME                   BIT(5)
+#define CNTR_L1REQM                     BIT(7)
 #define CNTR_ESOFM                      BIT(8)
 #define CNTR_SOFM                       BIT(9)
 #define CNTR_RESETM                     BIT(10)
@@ -28,6 +30,7 @@
 #define ISTR_EP_ID_VALUE(reg)           FIELD_VALUE((reg), ISTR_EP_ID_MASK, 0)
 
 #define ISTR_DIR                        BIT(4)
+#define ISTR_L1REQ                      BIT(7)
 #define ISTR_ESOF                       BIT(8)
 #define ISTR_SOF                        BIT(9)
 #define ISTR_RESET                      BIT(10)
@@ -114,8 +117,26 @@ enum
     FIELD_VALUE((reg), COUNT_RX_NUM_BLOCK_MASK, 10)
 
 #define COUNT_RX_BLSIZE                 BIT(15)
+/*------------------LPM Control and Status Register---------------------------*/
+#define LPMCSR_LPMEN                    BIT(0)
+#define LPMCSR_LPMACK                   BIT(1)
+#define LPMCSR_REMWAKE                  BIT(3)
+
+#define LPMCSR_BESL_MASK                BIT_FIELD(MASK(4), 4)
+#define LPMCSR_BESL(value)              BIT_FIELD((value), 4)
+#define LPMCSR_BESL_VALUE(reg)          FIELD_VALUE((reg), LPMCSR_BESL_MASK, 4)
+/*------------------Battery charging detector---------------------------------*/
+#define BCDR_BCDEN                      BIT(0)
+#define BCDR_DCDEN                      BIT(1)
+#define BCDR_PDEN                       BIT(2)
+#define BCDR_SDEN                       BIT(3)
+#define BCDR_DCDET                      BIT(4)
+#define BCDR_PDET                       BIT(5)
+#define BCDR_SDET                       BIT(6)
+#define BCDR_PS2DET                     BIT(7)
+#define BCDR_DPPU                       BIT(15)
 /*----------------------------------------------------------------------------*/
 #define DESCRIPTOR_TABLE_SIZE 0x40
 #define EP_TO_INDEX(ep)       ((((ep) & 0x0F) << 1) | (((ep) & 0x80) >> 7))
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_STM32F1XX_USB_DEFS_H_ */
+#endif /* HALM_PLATFORM_STM32_GEN_1_USB_DEFS_H_ */

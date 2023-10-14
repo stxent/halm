@@ -1,14 +1,14 @@
 /*
- * halm/platform/stm32/stm32f1xx/usb_helpers.h
+ * halm/platform/stm32/gen_1/usb_helpers.h
  * Copyright (C) 2018 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_STM32F1XX_USB_HELPERS_H_
-#define HALM_PLATFORM_STM32_STM32F1XX_USB_HELPERS_H_
+#ifndef HALM_PLATFORM_STM32_GEN_1_USB_HELPERS_H_
+#define HALM_PLATFORM_STM32_GEN_1_USB_HELPERS_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
-#include <halm/platform/stm32/stm32f1xx/usb_defs.h>
+#include <halm/platform/stm32/gen_1/usb_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcEpAddr(const STM_USB_Type *reg,
     unsigned int entry)
@@ -62,4 +62,4 @@ static inline uint32_t eprMakeDtog(uint32_t epr, uint32_t set, uint32_t reset,
       | EPR_CTR_MASK;
 }
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_STM32F1XX_USB_HELPERS_H_ */
+#endif /* HALM_PLATFORM_STM32_GEN_1_USB_HELPERS_H_ */

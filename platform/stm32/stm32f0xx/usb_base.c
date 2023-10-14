@@ -1,6 +1,6 @@
 /*
  * usb_base.c
- * Copyright (C) 2018 xent
+ * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -28,23 +28,17 @@ const struct EntityClass * const UsbBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 const struct PinEntry usbPins[] = {
     {
-        /* Available on STM32F105 and STM32F107 series only */
-        .key = PIN(PORT_A, 9), /* OTG_FS_VBUS */
+        .key = PIN(PORT_A, 11), /* USB_DM */
         .channel = 0,
-        .value = 0
+        .value = PIN_ANALOG
     }, {
-        /* Available on STM32F105 and STM32F107 series only */
-        .key = PIN(PORT_A, 10), /* OTG_FS_ID */
+        .key = PIN(PORT_A, 12), /* USB_DP */
         .channel = 0,
-        .value = 0
+        .value = PIN_ANALOG
     }, {
-        .key = PIN(PORT_A, 11), /* USBDM or OTG_FS_DM */
+        .key = PIN(PORT_A, 13), /* USB_NOE */
         .channel = 0,
-        .value = 0
-    }, {
-        .key = PIN(PORT_A, 12), /* USBDP or OTG_FS_DP */
-        .channel = 0,
-        .value = 0
+        .value = 2
     }, {
         .key = 0 /* End of pin function association list */
     }
@@ -55,34 +49,26 @@ static struct UsbBase *instance = NULL;
 static void configPins(struct UsbBase *device,
     const struct UsbBaseConfig *config)
 {
-  enum
-  {
-    DM_INDEX,
-    DP_INDEX,
-    VBUS_INDEX
-  };
+  const struct PinEntry *pinEntry;
+  struct Pin pin;
 
-  const PinNumber pinArray[] = {
-      [DM_INDEX] = config->dm,
-      [DP_INDEX] = config->dp,
-      [VBUS_INDEX] = config->vbus
-  };
+  /* DM */
+  pinEntry = pinFind(usbPins, config->dm, config->channel);
+  assert(pinEntry != NULL);
 
-  for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
-  {
-    if (index != VBUS_INDEX || pinArray[index])
-    {
-      const struct PinEntry * const pinEntry = pinFind(usbPins,
-          pinArray[index], config->channel);
-      assert(pinEntry != NULL);
+  pin = pinInit(config->dm);
+  pinInput(pin);
+  pinSetFunction(pin, pinEntry->value);
 
-      const struct Pin pin = pinInit(pinArray[index]);
+  /* DP */
+  pinEntry = pinFind(usbPins, config->dp, config->channel);
+  assert(pinEntry != NULL);
 
-      pinInput(pin);
-      pinSetFunction(pin, pinEntry->value);
-    }
-  }
+  pin = pinInit(config->dp);
+  pinInput(pin);
+  pinSetFunction(pin, pinEntry->value);
 
+  /* Soft Connect */
   device->connect = pinInit(config->connect);
   if (pinValid(device->connect))
     pinOutput(device->connect, true);
@@ -101,25 +87,17 @@ static bool setInstance(struct UsbBase *object)
 /*----------------------------------------------------------------------------*/
 void usbSoftConnectionControl(struct UsbBase *device, bool state)
 {
-  if (pinValid(device->connect))
-    pinWrite(device->connect, !state);
+  STM_USB_Type * const reg = device->reg;
+
+  if (state)
+    reg->BCDR |= BCDR_DPPU;
+  else
+    reg->BCDR &= ~BCDR_DPPU;
 }
 /*----------------------------------------------------------------------------*/
-/* Virtual handler */
-void USB_HP_ISR(void)
+void USB_ISR(void)
 {
-}
-/*----------------------------------------------------------------------------*/
-/* Virtual handler */
-void USB_LP_ISR(void)
-{
-  if (instance != NULL)
-    instance->handler(instance);
-}
-/*----------------------------------------------------------------------------*/
-/* Virtual handler */
-void USB_WAKEUP_ISR(void)
-{
+  instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -141,7 +119,7 @@ static enum Result devInit(void *object, const void *configBase)
 
   device->channel = 0;
   device->handler = NULL;
-  device->irq = USB_LP_CAN1_RX0_IRQ;
+  device->irq = USB_IRQ;
   device->reg = STM_USB;
 
   return E_OK;

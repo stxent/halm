@@ -5,9 +5,9 @@
  */
 
 #include <halm/generic/pointer_queue.h>
-#include <halm/platform/stm32/stm32f1xx/usb_base.h>
-#include <halm/platform/stm32/stm32f1xx/usb_defs.h>
-#include <halm/platform/stm32/stm32f1xx/usb_helpers.h>
+#include <halm/platform/stm32/gen_1/usb_defs.h>
+#include <halm/platform/stm32/gen_1/usb_helpers.h>
+#include <halm/platform/stm32/usb_base.h>
 #include <halm/platform/stm32/usb_device.h>
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>

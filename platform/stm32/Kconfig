@@ -8,6 +8,10 @@ config GEN_UART
 	default gen_1 if FAMILY_STM32F1XX
 	default gen_2 if FAMILY_STM32F0XX
 
+config GEN_USB
+	string
+	default gen_1 if FAMILY_STM32F0XX || FAMILY_STM32F1XX
+
 config PLATFORM_STM32_PIN_REMAP
 	bool
 	default y if FAMILY_STM32F1XX
@@ -190,7 +194,7 @@ config PLATFORM_STM32_SERIAL_DMA_PRIORITY
 config PLATFORM_USB
 	bool "USB"
 	default y
-	depends on FAMILY_STM32F1XX
+	depends on FAMILY_STM32F0XX || FAMILY_STM32F1XX
 
 config PLATFORM_USB_NO_DEINIT
 	bool
@@ -205,7 +209,7 @@ config PLATFORM_USB_DEVICE
 config PLATFORM_USB_DOUBLE_BUFFERING
 	bool "Double-buffered endpoints"
 	default y
-	depends on PLATFORM_USB
+	depends on PLATFORM_USB && (FAMILY_STM32F0XX || FAMILY_STM32F1XX)
 
 config PLATFORM_USB_DEVICE_EP_REQUESTS
 	int "Endpoint queue size"

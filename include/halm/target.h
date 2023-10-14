@@ -132,6 +132,7 @@
 
 #  define GEN_PIN         gen_2
 #  define GEN_UART        gen_2
+#  define GEN_USB         gen_1
 #  define NVIC_IRQ_BITS   2
 #  define PLATFORM        stm32f0xx
 #  define PLATFORM_TYPE   stm32
@@ -140,6 +141,7 @@
 
 #  define GEN_PIN         stm32f1xx
 #  define GEN_UART        gen_1
+#  define GEN_USB         gen_1
 #  define NVIC_IRQ_BITS   4
 #  define PLATFORM        stm32f1xx
 #  define PLATFORM_TYPE   stm32

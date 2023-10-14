@@ -78,8 +78,8 @@ if(CONFIG_PLATFORM_STM32_SERIAL_DMA)
 endif()
 
 if(CONFIG_PLATFORM_USB)
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_USB}/usb_device.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
-    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_device.c")
 endif()
 
 add_library(halm_platform OBJECT ${SOURCE_FILES})

@@ -1,11 +1,11 @@
 /*
- * halm/platform/stm32/stm32f1xx/usb_base.h
+ * halm/platform/stm32/gen_1/usb_base.h
  * Copyright (C) 2018 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_STM32F1XX_USB_BASE_H_
-#define HALM_PLATFORM_STM32_STM32F1XX_USB_BASE_H_
+#ifndef HALM_PLATFORM_STM32_GEN_1_USB_BASE_H_
+#define HALM_PLATFORM_STM32_GEN_1_USB_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/irq.h>
 #include <halm/pin.h>
@@ -21,7 +21,7 @@ struct UsbBaseConfig
   PinNumber dp;
   /**
    * Optional: output pin used for soft connect feature.
-   * Should be left unused on STM32F105 and STM32F107 series.
+   * Should be left unused on STM32F0xx, STM32F105 and STM32F107 series.
    */
   PinNumber connect;
   /**
@@ -53,4 +53,4 @@ void usbSoftConnectionControl(struct UsbBase *, bool);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_STM32F1XX_USB_BASE_H_ */
+#endif /* HALM_PLATFORM_STM32_GEN_1_USB_BASE_H_ */

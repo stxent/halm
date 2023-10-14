@@ -1,17 +1,17 @@
 /*
- * halm/platform/stm32/usb_device.h
+ * halm/platform/stm32/usb_base.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_USB_DEVICE_H_
-#define HALM_PLATFORM_STM32_USB_DEVICE_H_
+#ifndef HALM_PLATFORM_STM32_USB_BASE_H_
+#define HALM_PLATFORM_STM32_USB_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/target.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_USB/usb_device.h>
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_USB/usb_base.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_USB_DEVICE_H_ */
+#endif /* HALM_PLATFORM_STM32_USB_BASE_H_ */
