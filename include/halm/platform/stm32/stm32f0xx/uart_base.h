@@ -11,6 +11,8 @@
 #ifndef HALM_PLATFORM_STM32_STM32F0XX_UART_BASE_H_
 #define HALM_PLATFORM_STM32_STM32F0XX_UART_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <halm/platform/stm32/bdma_base.h>
+/*----------------------------------------------------------------------------*/
 /** Symbolic names for USART. */
 enum
 {

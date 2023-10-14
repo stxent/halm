@@ -263,15 +263,11 @@ static enum Result spiInit(void *object, const void *configBase)
 
   STM_SPI_Type * const reg = interface->base.reg;
 
-  /* Set mode of the interface */
-  uint32_t controlValue = CR1_MSTR;
+  /* Set master mode */
+  reg->CR1 = CR1_MSTR;
 
-  if (config->mode & 0x01)
-    controlValue |= CR1_CPHA;
-  if (config->mode & 0x02)
-    controlValue |= CR1_CPOL;
-  reg->CR1 = controlValue;
-
+  /* Set SPI mode */
+  spiSetMode(&interface->base, config->mode);
   /* Set desired baud rate */
   spiSetRate(object, interface->rate);
 
@@ -324,6 +320,18 @@ static enum Result spiGetParam(void *object, int parameter, void *data)
   (void)data;
 #endif
 
+  switch ((enum SPIParameter)parameter)
+  {
+#ifdef CONFIG_PLATFORM_LPC_SSP_RC
+    case IF_SPI_MODE:
+      *(uint8_t *)data = spiGetMode(&interface->base);
+      return E_OK;
+#endif
+
+    default:
+      break;
+  }
+
   switch ((enum IfParameter)parameter)
   {
 #ifdef CONFIG_PLATFORM_STM32_SPI_RC
@@ -350,6 +358,12 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
 
   switch ((enum SPIParameter)parameter)
   {
+#ifdef CONFIG_PLATFORM_STM32_SPI_RC
+    case IF_SPI_MODE:
+      spiSetMode(&interface->base, *(const uint8_t *)data);
+      return E_OK;
+#endif
+
     case IF_SPI_BIDIRECTIONAL:
       interface->unidir = false;
       return E_OK;

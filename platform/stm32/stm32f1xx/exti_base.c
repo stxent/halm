@@ -48,6 +48,19 @@ static void enableInterrupt(enum ExtiEvent event, IrqPriority priority)
 /*----------------------------------------------------------------------------*/
 static IrqNumber eventToIrq(enum ExtiEvent event)
 {
+  if (event <= EXTI_PIN4)
+  {
+    return EXTI0_IRQ + (event - EXTI_PIN0);
+  }
+  else if (event <= EXTI_PIN9)
+  {
+    return EXTI9_5_IRQ;
+  }
+  else if (event <= EXTI_PIN15)
+  {
+    return EXTI15_10_IRQ;
+  }
+
   switch (event)
   {
     case EXTI_PVD:
@@ -63,20 +76,7 @@ static IrqNumber eventToIrq(enum ExtiEvent event)
       return ETH_WKUP_IRQ;
 
     default:
-      break;
-  }
-
-  if (event <= EXTI_PIN4)
-  {
-    return EXTI0_IRQ + (event - EXTI_PIN0);
-  }
-  else if (event >= EXTI_PIN5 && event <= EXTI_PIN9)
-  {
-    return EXTI9_5_IRQ;
-  }
-  else /* From EXTI_PIN10 to EXTI_PIN15 */
-  {
-    return EXTI15_10_IRQ;
+      return IRQ_RESERVED;
   }
 }
 /*----------------------------------------------------------------------------*/

@@ -56,11 +56,11 @@ static IrqNumber eventToIrq(enum ExtiEvent event)
   {
     return EXTI0_1_IRQ;
   }
-  else if (event >= EXTI_PIN2 && event <= EXTI_PIN3)
+  else if (event <= EXTI_PIN3)
   {
     return EXTI2_3_IRQ;
   }
-  else if (event >= EXTI_PIN4 && event <= EXTI_PIN15)
+  else if (event <= EXTI_PIN15)
   {
     return EXTI4_15_IRQ;
   }

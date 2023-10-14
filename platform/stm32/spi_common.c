@@ -49,10 +49,36 @@ void spiConfigPins(const struct SpiBaseConfig *config)
   }
 }
 /*----------------------------------------------------------------------------*/
+uint8_t spiGetMode(const struct SpiBase *interface)
+{
+  const STM_SPI_Type * const reg = interface->reg;
+  const uint32_t cr1 = reg->CR1;
+  uint8_t mode = 0;
+
+  if (cr1 & CR1_CPHA)
+    mode |= 0x01;
+  if (cr1 & CR1_CPOL)
+    mode |= 0x02;
+
+  return mode;
+}
+/*----------------------------------------------------------------------------*/
 uint32_t spiGetRate(const struct SpiBase *interface)
 {
   STM_SPI_Type * const reg = interface->reg;
   return spiGetClock(interface) / (1UL << (CR1_BR_VALUE(reg->CR1) + 1));
+}
+/*----------------------------------------------------------------------------*/
+void spiSetMode(struct SpiBase *interface, uint8_t mode)
+{
+  STM_SPI_Type * const reg = interface->reg;
+  uint32_t cr1 = reg->CR1 & ~(CR1_CPHA | CR1_CPOL);
+
+  if (mode & 0x01)
+    cr1 |= CR1_CPHA;
+  if (mode & 0x02)
+    cr1 |= CR1_CPOL;
+  reg->CR1 = cr1;
 }
 /*----------------------------------------------------------------------------*/
 void spiSetRate(struct SpiBase *interface, uint32_t rate)

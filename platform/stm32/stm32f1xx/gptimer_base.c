@@ -47,7 +47,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reg = STM_TIM1,
         .clock = CLK_TIM1,
         .reset = RST_TIM1,
-        .irq = TIM1_CC_IRQ,
+        .irq = TIM1_UP_TIM16_IRQ,
         .channel = TIM1
     },
 #endif
@@ -110,7 +110,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reg = STM_TIM8,
         .clock = CLK_TIM8,
         .reset = RST_TIM8,
-        .irq = TIM8_CC_IRQ,
+        .irq = TIM8_UP_TIM13_IRQ,
         .channel = TIM8
     },
 #endif
@@ -422,36 +422,11 @@ static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_TIM1
 /* Virtual handler */
-// void TIM1_BRK_ISR(void)
-// {
-//   if (instances[0])
-//     instances[0]->handler(instances[0]);
-// }
-#endif
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_TIM1
-void TIM1_CC_ISR(void)
+void TIM1_UP_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  if (instances[0] != NULL)
+    instances[0]->handler(instances[0]);
 }
-#endif
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_TIM1
-/* Virtual handler */
-// void TIM1_UP_ISR(void)
-// {
-//   if (instances[0] != NULL)
-//     instances[0]->handler(instances[0]);
-// }
-#endif
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_TIM1
-/* Virtual handler */
-// void TIM1_TRG_COM_ISR(void)
-// {
-//   if (instances[0] != NULL)
-//     instances[0]->handler(instances[0]);
-// }
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_TIM2
@@ -500,36 +475,11 @@ void TIM7_ISR(void)
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_TIM8
 /* Virtual handler */
-// void TIM8_BRK_ISR(void)
-// {
-//   if (instances[7] != NULL)
-//     instances[7]->handler(instances[7]);
-// }
-#endif
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_TIM8
-void TIM8_CC_ISR(void)
+void TIM8_UP_ISR(void)
 {
-  instances[7]->handler(instances[7]);
+  if (instances[7] != NULL)
+    instances[7]->handler(instances[7]);
 }
-#endif
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_TIM8
-/* Virtual handler */
-// void TIM8_TRG_COM_ISR(void)
-// {
-//   if (instances[7] != NULL)
-//     instances[7]->handler(instances[7]);
-// }
-#endif
-/*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_TIM8
-/* Virtual handler */
-// void TIM8_UP_ISR(void)
-// {
-//   if (instances[7] != NULL)
-//     instances[7]->handler(instances[7]);
-// }
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_TIM12
@@ -564,8 +514,11 @@ uint32_t gpTimerGetClock(const struct GpTimerBase *timer)
   const uint32_t ahbClock = clockFrequency(MainClock);
   uint32_t apbClock = 0;
 
-  if (timer->channel == 0 || (timer->channel >= 7 && timer->channel <= 10))
+  if (timer->channel == TIM1
+      || (timer->channel >= TIM8 && timer->channel <= TIM11))
+  {
     apbClock = clockFrequency(Apb2Clock);
+  }
   else
     apbClock = clockFrequency(Apb1Clock);
 

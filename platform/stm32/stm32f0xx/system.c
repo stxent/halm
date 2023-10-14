@@ -95,8 +95,17 @@ unsigned int sysFlashLatency(void)
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {
-  STM_FLASH->ACR = (STM_FLASH->ACR & ~FLASH_ACR_LATENCY_MASK)
-      | FLASH_ACR_LATENCY(value - 1);
+  uint32_t acr = STM_FLASH->ACR & ~(FLASH_ACR_LATENCY_MASK | FLASH_ACR_PRFTBE);
+
+  acr |= FLASH_ACR_LATENCY(value - 1);
+
+  if (value > 1)
+  {
+    /* Enable a prefetch buffer when the number of wait states is not zero */
+    acr |= FLASH_ACR_PRFTBE;
+  }
+
+  STM_FLASH->ACR = acr;
 }
 /*----------------------------------------------------------------------------*/
 void sysResetEnable(enum SysBlockReset block)

@@ -46,7 +46,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reg = STM_TIM1,
         .clock = CLK_TIM1,
         .reset = RST_TIM1,
-        .irq = TIM1_CC_IRQ,
+        .irq = TIM1_BRK_UP_TRG_COM_IRQ,
         .channel = TIM1
     },
 #endif
@@ -472,11 +472,10 @@ static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_TIM1
-// void TIM1_BRK_UP_TRG_COM_ISR(void)
-// {
-//  if (instances[0] != NULL)
-//    instances[0]->handler(instances[0]);
-// }
+void TIM1_BRK_UP_TRG_COM_ISR(void)
+{
+  instances[0]->handler(instances[0]);
+}
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_TIM1
