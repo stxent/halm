@@ -24,6 +24,8 @@ struct SctPwmUnitConfig
   enum SctPart part;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: enable center-aligned mode. */
+  bool centered;
 };
 
 struct SctPwmUnit
@@ -36,6 +38,8 @@ struct SctPwmUnit
   uint32_t resolution;
   /* Match channel used for counter reset */
   uint8_t event;
+  /** Enable center-aligned mode. */
+  bool centered;
 };
 /*----------------------------------------------------------------------------*/
 extern const struct PwmClass * const SctPwm;
@@ -47,6 +51,8 @@ struct SctPwmConfig
   struct SctPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
+  /** Optional: enable output inversion */
+  bool inversion;
 };
 
 struct SctPwm
@@ -61,6 +67,8 @@ struct SctPwm
   uint8_t channel;
   /* Event number */
   uint8_t event;
+  /* Enable output inversion */
+  bool inversion;
 };
 /*----------------------------------------------------------------------------*/
 extern const struct PwmClass * const SctPwmDoubleEdge;
@@ -72,6 +80,8 @@ struct SctPwmDoubleEdgeConfig
   struct SctPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
+  /** Optional: enable output inversion */
+  bool inversion;
 };
 
 struct SctPwmDoubleEdge
@@ -90,12 +100,14 @@ struct SctPwmDoubleEdge
   uint8_t leadingEvent;
   /* Event number for trailing edge */
   uint8_t trailingEvent;
+  /* Enable output inversion */
+  bool inversion;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void *sctPwmCreate(void *, PinNumber);
-void *sctPwmCreateDoubleEdge(void *, PinNumber);
+void *sctPwmCreate(void *, PinNumber, bool);
+void *sctPwmCreateDoubleEdge(void *, PinNumber, bool);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

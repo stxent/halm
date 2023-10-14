@@ -169,6 +169,7 @@ static enum Result unitInit(void *object, const void *configBase)
 
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
+  unit->centered = config->centered;
 
   LPC_SCT_Type * const reg = unit->base.reg;
   const unsigned int part = unit->base.part == SCT_HIGH;
@@ -176,6 +177,9 @@ static enum Result unitInit(void *object, const void *configBase)
 
   unit->base.mask = eventMask;
   reg->CTRL_PART[part] = CTRL_HALT;
+
+  if (unit->centered)
+    reg->CTRL_PART[part] |= CTRL_BIDIR;
 
   /* Set base timer frequency */
   sctSetFrequency(&unit->base, unit->frequency);
@@ -284,6 +288,7 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   /* Initialize output pin */
   pwm->channel = sctConfigOutputPin(unit->base.channel, config->pin);
   pwm->unit = unit;
+  pwm->inversion = config->inversion;
 
   LPC_SCT_Type * const reg = unit->base.reg;
 
@@ -300,9 +305,23 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   if (unit->base.part == SCT_HIGH)
     reg->EV[pwm->event].CTRL |= EVCTRL_HEVENT;
 
-  /* Clear the output when both events occur in the same clock cycle */
+  /* Configure bidirectional output control */
+  uint32_t outputdirctrl =
+      reg->OUTPUTDIRCTRL & ~OUTPUTDIRCTRL_SETCLR_MASK(pwm->channel);
+
+  if (unit->centered)
+  {
+    if (unit->base.part == SCT_HIGH)
+      outputdirctrl |= OUTPUTDIRCTRL_SETCLR(pwm->channel, SETCLR_H_REVERSE);
+    else
+      outputdirctrl |= OUTPUTDIRCTRL_SETCLR(pwm->channel, SETCLR_L_REVERSE);
+  }
+  reg->OUTPUTDIRCTRL = outputdirctrl;
+
+  /* Set or clear the output when both events occur in the same clock cycle */
   reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
-      | RES_OUTPUT(pwm->channel, OUTPUT_CLEAR);
+      | RES_OUTPUT(pwm->channel, pwm->inversion ? OUTPUT_SET : OUTPUT_CLEAR);
+
   /* Disable modulation by default */
   reg->OUT[pwm->channel].CLR = 1 << unit->event;
   reg->OUT[pwm->channel].SET = 0;
@@ -338,8 +357,16 @@ static void singleEdgeEnable(void *object)
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  reg->OUT[pwm->channel].CLR = 1 << pwm->event;
-  reg->OUT[pwm->channel].SET = 1 << unit->event;
+  if (pwm->inversion)
+  {
+    reg->OUT[pwm->channel].SET = 1 << pwm->event;
+    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  }
+  else
+  {
+    reg->OUT[pwm->channel].CLR = 1 << pwm->event;
+    reg->OUT[pwm->channel].SET = 1 << unit->event;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void singleEdgeDisable(void *object)
@@ -349,8 +376,8 @@ static void singleEdgeDisable(void *object)
   LPC_SCT_Type * const reg = unit->base.reg;
 
   /* Clear synchronously */
-  reg->OUT[pwm->channel].CLR = 1 << unit->event;
   reg->OUT[pwm->channel].SET = 0;
+  reg->OUT[pwm->channel].CLR = 1 << unit->event;
 }
 /*----------------------------------------------------------------------------*/
 static void singleEdgeSetDuration(void *object, uint32_t duration)
@@ -410,6 +437,7 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   /* Initialize output pin */
   pwm->channel = sctConfigOutputPin(unit->base.channel, config->pin);
   pwm->unit = unit;
+  pwm->inversion = config->inversion;
 
   LPC_SCT_Type * const reg = unit->base.reg;
 
@@ -439,9 +467,30 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
     reg->EV[pwm->trailingEvent].CTRL |= EVCTRL_HEVENT;
   }
 
-  /* Clear the output when both events occur in the same clock cycle */
+  /* Configure bidirectional output control */
+  uint32_t outputdirctrl = reg->OUTPUTDIRCTRL
+      & ~(OUTPUTDIRCTRL_SETCLR_MASK(pwm->leadingEvent)
+          | OUTPUTDIRCTRL_SETCLR_MASK(pwm->trailingEvent));
+
+  if (unit->centered)
+  {
+    if (unit->base.part == SCT_HIGH)
+    {
+      outputdirctrl |= OUTPUTDIRCTRL_SETCLR(pwm->leadingEvent, SETCLR_H_REVERSE)
+          | OUTPUTDIRCTRL_SETCLR(pwm->trailingEvent, SETCLR_H_REVERSE);
+    }
+    else
+    {
+      outputdirctrl |= OUTPUTDIRCTRL_SETCLR(pwm->leadingEvent, SETCLR_L_REVERSE)
+          | OUTPUTDIRCTRL_SETCLR(pwm->trailingEvent, SETCLR_L_REVERSE);
+    }
+  }
+  reg->OUTPUTDIRCTRL = outputdirctrl;
+
+  /* Set or clear the output when both events occur in the same clock cycle */
   reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
-      | RES_OUTPUT(pwm->channel, OUTPUT_CLEAR);
+      | RES_OUTPUT(pwm->channel, pwm->inversion ? OUTPUT_SET : OUTPUT_CLEAR);
+
   /* Disable modulation by default */
   reg->OUT[pwm->channel].CLR = 1 << unit->event;
   reg->OUT[pwm->channel].SET = 0;
@@ -479,8 +528,16 @@ static void doubleEdgeEnable(void *object)
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
-  reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
+  if (pwm->inversion)
+  {
+    reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
+    reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
+  }
+  else
+  {
+    reg->OUT[pwm->channel].CLR = 1 << pwm->leadingEvent;
+    reg->OUT[pwm->channel].SET = 1 << pwm->trailingEvent;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeDisable(void *object)
@@ -490,8 +547,8 @@ static void doubleEdgeDisable(void *object)
   LPC_SCT_Type * const reg = unit->base.reg;
 
   /* Clear synchronously */
-  reg->OUT[pwm->channel].CLR = 1 << unit->event;
   reg->OUT[pwm->channel].SET = 0;
+  reg->OUT[pwm->channel].CLR = 1 << unit->event;
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
@@ -587,14 +644,16 @@ static void doubleEdgeSetEdgesUnified(void *object, uint32_t leading,
  * Create single edge PWM channel.
  * @param unit Pointer to an SctPwmUnit object.
  * @param pin Pin used as a signal output.
+ * @param inversion Enable output inversion.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *sctPwmCreate(void *object, PinNumber pin)
+void *sctPwmCreate(void *object, PinNumber pin, bool inversion)
 {
   struct SctPwmUnit * const unit = object;
   const struct SctPwmConfig channelConfig = {
       .parent = unit,
-      .pin = pin
+      .pin = pin,
+      .inversion = inversion
   };
 
   return init(unit->base.part == SCT_UNIFIED ?
@@ -605,14 +664,16 @@ void *sctPwmCreate(void *object, PinNumber pin)
  * Create double edge PWM channel.
  * @param unit Pointer to a SctPwmUnit object.
  * @param pin Pin used as a signal output.
+ * @param inversion Enable output inversion.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *sctPwmCreateDoubleEdge(void *object, PinNumber pin)
+void *sctPwmCreateDoubleEdge(void *object, PinNumber pin, bool inversion)
 {
   struct SctPwmUnit * const unit = object;
   const struct SctPwmDoubleEdgeConfig channelConfig = {
       .parent = unit,
-      .pin = pin
+      .pin = pin,
+      .inversion = inversion
   };
 
   return init(unit->base.part == SCT_UNIFIED ?

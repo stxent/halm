@@ -50,8 +50,10 @@ enum
 enum
 {
   SETCLR_INDEPENDENT  = 0,
-  SETCLR_L            = 1, /* L counter */
-  SETCLR_H            = 2  /* H counter */
+  /* Reverse set and clear for Unified or Low part counting down */
+  SETCLR_L_REVERSE    = 1,
+  /* Reverse set and clear for High part counting down */
+  SETCLR_H_REVERSE    = 2
 };
 
 #define OUTPUTDIRCTRL_SETCLR_MASK(channel) \
