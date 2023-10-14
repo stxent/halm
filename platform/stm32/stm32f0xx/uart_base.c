@@ -1,9 +1,11 @@
 /*
  * uart_base.c
- * Copyright (C) 2020 xent
+ * Copyright (C) 2020, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/stm32/bdma_circular.h>
+#include <halm/platform/stm32/bdma_oneshot.h>
 #include <halm/platform/stm32/clocking.h>
 #include <halm/platform/stm32/system.h>
 #include <halm/platform/stm32/uart_base.h>
@@ -118,25 +120,25 @@ static const struct UartBlockDescriptor uartBlockEntries[] = {
 const struct PinEntry uartPins[] = {
 #ifdef CONFIG_PLATFORM_STM32_USART1
     {
-      .key = PIN(PORT_A, 8), /* USART1_CK */
-      .channel = CHANNEL_CK(0),
-      .value = 1
+        .key = PIN(PORT_A, 8), /* USART1_CK */
+        .channel = CHANNEL_CK(0),
+        .value = 1
     }, {
-      .key = PIN(PORT_A, 9), /* USART1_TX */
-      .channel = CHANNEL_TX(0),
-      .value = 1
+        .key = PIN(PORT_A, 9), /* USART1_TX */
+        .channel = CHANNEL_TX(0),
+        .value = 1
     }, {
-      .key = PIN(PORT_A, 10), /* USART1_RX */
-      .channel = CHANNEL_RX(0),
-      .value = 1
+        .key = PIN(PORT_A, 10), /* USART1_RX */
+        .channel = CHANNEL_RX(0),
+        .value = 1
     }, {
-      .key = PIN(PORT_A, 11), /* USART1_CTS */
-      .channel = CHANNEL_CTS(0),
-      .value = 1
+        .key = PIN(PORT_A, 11), /* USART1_CTS */
+        .channel = CHANNEL_CTS(0),
+        .value = 1
     }, {
-      .key = PIN(PORT_A, 12), /* USART1_RTS */
-      .channel = CHANNEL_RTS(0),
-      .value = 1
+        .key = PIN(PORT_A, 12), /* USART1_RTS */
+        .channel = CHANNEL_RTS(0),
+        .value = 1
     }, {
         .key = PIN(PORT_B, 6), /* USART1_TX */
         .channel = CHANNEL_TX(0),
@@ -534,6 +536,32 @@ void USART3_8_ISR(void)
 uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
 {
   return clockFrequency(ApbClock);
+}
+/*----------------------------------------------------------------------------*/
+void *uartMakeCircularDma(uint8_t channel __attribute__((unused)),
+    uint8_t stream, enum DmaPriority priority, enum DmaType type)
+{
+  const struct BdmaCircularConfig config = {
+      .event = DMA_GENERIC,
+      .priority = priority,
+      .type = type,
+      .stream = stream
+  };
+
+  return init(BdmaCircular, &config);
+}
+/*----------------------------------------------------------------------------*/
+void *uartMakeOneShotDma(uint8_t channel __attribute__((unused)),
+    uint8_t stream, enum DmaPriority priority, enum DmaType type)
+{
+  const struct BdmaOneShotConfig config = {
+      .event = DMA_GENERIC,
+      .priority = priority,
+      .type = type,
+      .stream = stream
+  };
+
+  return init(BdmaOneShot, &config);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *object, const void *configBase)

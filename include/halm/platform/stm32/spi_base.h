@@ -1,6 +1,6 @@
 /*
  * halm/platform/stm32/spi_base.h
- * Copyright (C) 2018 xent
+ * Copyright (C) 2018, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -64,6 +64,7 @@ void spiSetRate(struct SpiBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t spiGetClock(const struct SpiBase *);
+void *spiMakeOneShotDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

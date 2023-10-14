@@ -35,7 +35,7 @@
 /* Disable RTC domain write protection */
 #define PWR_CR_DBP                      BIT(8)
 /*------------------Power Control/Status Register-----------------------------*/
-/* Wake-up flag */
+/* Wakeup flag */
 #define PWR_CSR_WUF                     BIT(0)
 /* Standby flag */
 #define PWR_CSR_SBF                     BIT(1)

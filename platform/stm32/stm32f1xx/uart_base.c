@@ -1,9 +1,11 @@
 /*
  * uart_base.c
- * Copyright (C) 2016 xent
+ * Copyright (C) 2016, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/stm32/bdma_circular.h>
+#include <halm/platform/stm32/bdma_oneshot.h>
 #include <halm/platform/stm32/clocking.h>
 #include <halm/platform/stm32/stm32f1xx/pin_remap.h>
 #include <halm/platform/stm32/system.h>
@@ -307,6 +309,32 @@ void UART5_ISR(void)
 uint32_t uartGetClock(const struct UartBase *interface)
 {
   return clockFrequency(interface->channel == 0 ? Apb2Clock : Apb1Clock);
+}
+/*----------------------------------------------------------------------------*/
+void *uartMakeCircularDma(uint8_t channel __attribute__((unused)),
+    uint8_t stream, enum DmaPriority priority, enum DmaType type)
+{
+  const struct BdmaCircularConfig config = {
+      .event = DMA_GENERIC,
+      .priority = priority,
+      .type = type,
+      .stream = stream
+  };
+
+  return init(BdmaCircular, &config);
+}
+/*----------------------------------------------------------------------------*/
+void *uartMakeOneShotDma(uint8_t channel __attribute__((unused)),
+    uint8_t stream, enum DmaPriority priority, enum DmaType type)
+{
+  const struct BdmaOneShotConfig config = {
+      .event = DMA_GENERIC,
+      .priority = priority,
+      .type = type,
+      .stream = stream
+  };
+
+  return init(BdmaOneShot, &config);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *object, const void *configBase)

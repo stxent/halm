@@ -1,13 +1,13 @@
 /*
- * dma_base.c
+ * bdma_base.c
  * Copyright (C) 2020 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/irq.h>
 #include <halm/platform/platform_defs.h>
-#include <halm/platform/stm32/dma_base.h>
-#include <halm/platform/stm32/gen_1/dma_defs.h>
+#include <halm/platform/stm32/bdma_base.h>
+#include <halm/platform/stm32/bdma_defs.h>
 #include <halm/platform/stm32/system.h>
 #include <xcore/atomic.h>
 #include <assert.h>
@@ -18,13 +18,13 @@
  * DMA2 has 5 streams on STM32F09x devices.
  */
 
-#ifdef CONFIG_PLATFORM_STM32_DMA1
+#ifdef CONFIG_PLATFORM_STM32_BDMA1
 #define DMA1_STREAM_COUNT 7
 #else
 #define DMA1_STREAM_COUNT 0
 #endif
 
-#ifdef CONFIG_PLATFORM_STM32_DMA2
+#ifdef CONFIG_PLATFORM_STM32_BDMA2
 #define DMA2_STREAM_COUNT 5
 #else
 #define DMA2_STREAM_COUNT 0
@@ -35,37 +35,37 @@
 #define STREAM_ENCODE(controller, stream) \
     ((controller) * DMA1_STREAM_COUNT + (stream))
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_DMA1
+#ifdef CONFIG_PLATFORM_STM32_BDMA1
 static void dma1StreamHandler(uint8_t);
 #endif
 
-#ifdef CONFIG_PLATFORM_STM32_DMA2
+#ifdef CONFIG_PLATFORM_STM32_BDMA2
 static void dma2StreamHandler(uint8_t);
 #endif
 
 static enum Result streamInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const DmaBase = &(const struct EntityClass){
+const struct EntityClass * const BdmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = streamInit,
     .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static struct DmaBase *instances[STREAM_COUNT] = {0};
+static struct BdmaBase *instances[STREAM_COUNT] = {0};
 /*----------------------------------------------------------------------------*/
-const struct DmaBase *dmaGetInstance(uint8_t stream)
+const struct BdmaBase *bdmaGetInstance(uint8_t stream)
 {
   assert(stream < ARRAY_SIZE(instances));
   return instances[stream];
 }
 /*----------------------------------------------------------------------------*/
-void dmaResetInstance(uint8_t stream)
+void bdmaResetInstance(uint8_t stream)
 {
   assert(stream < ARRAY_SIZE(instances));
   instances[stream] = NULL;
 }
 /*----------------------------------------------------------------------------*/
-bool dmaSetInstance(uint8_t stream, struct DmaBase *object)
+bool bdmaSetInstance(uint8_t stream, struct BdmaBase *object)
 {
   assert(object != NULL);
   assert(stream < ARRAY_SIZE(instances));
@@ -74,17 +74,17 @@ bool dmaSetInstance(uint8_t stream, struct DmaBase *object)
   return compareExchangePointer(&instances[stream], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_DMA1
+#ifdef CONFIG_PLATFORM_STM32_BDMA1
 void DMA1_CHANNEL1_ISR(void)
 {
   dma1StreamHandler(0);
 }
 #endif
 /*----------------------------------------------------------------------------*/
-#if defined(CONFIG_PLATFORM_STM32_DMA1) || defined(CONFIG_PLATFORM_STM32_DMA2)
+#if defined(CONFIG_PLATFORM_STM32_BDMA1) || defined(CONFIG_PLATFORM_STM32_BDMA2)
 void DMA1_CHANNEL2_3_DMA2_CHANNEL1_2_ISR(void)
 {
-#ifdef CONFIG_PLATFORM_STM32_DMA1
+#ifdef CONFIG_PLATFORM_STM32_BDMA1
   const uint32_t isr1 = STM_DMA1->ISR;
 
   if (isr1 & ISR_GIF(1))
@@ -93,7 +93,7 @@ void DMA1_CHANNEL2_3_DMA2_CHANNEL1_2_ISR(void)
     dma1StreamHandler(2);
 #endif
 
-#ifdef CONFIG_PLATFORM_STM32_DMA2
+#ifdef CONFIG_PLATFORM_STM32_BDMA2
   const uint32_t isr2 = STM_DMA2->ISR;
 
   if (isr2 & ISR_GIF(0))
@@ -104,10 +104,10 @@ void DMA1_CHANNEL2_3_DMA2_CHANNEL1_2_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-#if defined(CONFIG_PLATFORM_STM32_DMA1) || defined(CONFIG_PLATFORM_STM32_DMA2)
+#if defined(CONFIG_PLATFORM_STM32_BDMA1) || defined(CONFIG_PLATFORM_STM32_BDMA2)
 void DMA1_CHANNEL4_7_DMA2_CHANNEL3_5_ISR(void)
 {
-#ifdef CONFIG_PLATFORM_STM32_DMA1
+#ifdef CONFIG_PLATFORM_STM32_BDMA1
   const uint32_t isr1 = STM_DMA1->ISR;
 
   if (isr1 & ISR_GIF(3))
@@ -120,7 +120,7 @@ void DMA1_CHANNEL4_7_DMA2_CHANNEL3_5_ISR(void)
     dma1StreamHandler(6);
 #endif
 
-#ifdef CONFIG_PLATFORM_STM32_DMA2
+#ifdef CONFIG_PLATFORM_STM32_BDMA2
   const uint32_t isr2 = STM_DMA2->ISR;
 
   if (isr2 & ISR_GIF(2))
@@ -133,10 +133,10 @@ void DMA1_CHANNEL4_7_DMA2_CHANNEL3_5_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_DMA1
+#ifdef CONFIG_PLATFORM_STM32_BDMA1
 static void dma1StreamHandler(uint8_t number)
 {
-  struct DmaBase * const stream = instances[STREAM_ENCODE(0, number)];
+  struct BdmaBase * const stream = instances[STREAM_ENCODE(0, number)];
   const uint32_t rawStatus = STM_DMA1->ISR & ISR_CHANNEL_MASK(number);
   const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, number);
   enum Result res = E_OK;
@@ -151,10 +151,10 @@ static void dma1StreamHandler(uint8_t number)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_STM32_DMA2
+#ifdef CONFIG_PLATFORM_STM32_BDMA2
 static void dma2StreamHandler(uint8_t number)
 {
-  struct DmaBase * const stream = instances[STREAM_ENCODE(1, number)];
+  struct BdmaBase * const stream = instances[STREAM_ENCODE(1, number)];
   const uint32_t rawStatus = STM_DMA2->ISR & ISR_CHANNEL_MASK(number);
   const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, number);
   enum Result res = E_OK;
@@ -171,8 +171,8 @@ static void dma2StreamHandler(uint8_t number)
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
 {
-  const struct DmaBaseConfig * const config = configBase;
-  struct DmaBase * const stream = object;
+  const struct BdmaBaseConfig * const config = configBase;
+  struct BdmaBase * const stream = object;
 
   assert(config->stream < ARRAY_SIZE(instances));
   assert(config->priority <= DMA_PRIORITY_VERY_HIGH);
@@ -183,7 +183,7 @@ static enum Result streamInit(void *object, const void *configBase)
 
   switch (controller)
   {
-#ifdef CONFIG_PLATFORM_STM32_DMA1
+#ifdef CONFIG_PLATFORM_STM32_BDMA1
     case 0:
     {
       assert(number < DMA1_STREAM_COUNT);
@@ -202,7 +202,7 @@ static enum Result streamInit(void *object, const void *configBase)
     }
 #endif
 
-#ifdef CONFIG_PLATFORM_STM32_DMA2
+#ifdef CONFIG_PLATFORM_STM32_BDMA2
     case 1:
     {
       assert(number < DMA2_STREAM_COUNT);
@@ -243,7 +243,7 @@ static enum Result streamInit(void *object, const void *configBase)
 
   if (!irqStatus(stream->irq))
   {
-    irqSetPriority(stream->irq, CONFIG_PLATFORM_STM32_DMA_PRIORITY);
+    irqSetPriority(stream->irq, CONFIG_PLATFORM_STM32_BDMA_PRIORITY);
     irqEnable(stream->irq);
   }
 

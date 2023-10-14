@@ -1,6 +1,6 @@
 /*
  * spi.c
- * Copyright (C) 2018 xent
+ * Copyright (C) 2018, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -61,26 +61,23 @@ static void dmaHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool dmaSetup(struct Spi *interface, uint8_t rxStream,
-    uint8_t txStream)
+static bool dmaSetup(struct Spi *interface, uint8_t rxStream, uint8_t txStream)
 {
-  const struct DmaOneShotConfig dmaConfigs[] = {
-      {
-          .type = DMA_TYPE_P2M,
-          .priority = 0,
-          .stream = rxStream
-      }, {
-          .type = DMA_TYPE_M2P,
-          .priority = 0,
-          .stream = txStream
-      }
-  };
-
-  interface->rxDma = init(DmaOneShot, &dmaConfigs[0]);
+  interface->rxDma = spiMakeOneShotDma(
+      interface->base.channel,
+      rxStream,
+      DMA_PRIORITY_LOW,
+      DMA_TYPE_P2M
+  );
   if (interface->rxDma == NULL)
     return false;
 
-  interface->txDma = init(DmaOneShot, &dmaConfigs[1]);
+  interface->txDma = spiMakeOneShotDma(
+      interface->base.channel,
+      txStream,
+      DMA_PRIORITY_LOW,
+      DMA_TYPE_M2P
+  );
   if (interface->txDma == NULL)
     return false;
 
@@ -97,7 +94,7 @@ static void dmaSetupRx(struct Dma *rx, struct Dma *tx)
               .increment = false
           },
           .destination = {
-              .burst = DMA_BURST_1,
+              .burst = DMA_BURST_4,
               .width = DMA_WIDTH_BYTE,
               .increment = true
           }
@@ -129,13 +126,13 @@ static void dmaSetupRxTx(struct Dma *rx, struct Dma *tx)
               .increment = false
           },
           .destination = {
-              .burst = DMA_BURST_1,
+              .burst = DMA_BURST_4,
               .width = DMA_WIDTH_BYTE,
               .increment = true
           }
       }, {
           .source = {
-              .burst = DMA_BURST_1,
+              .burst = DMA_BURST_4,
               .width = DMA_WIDTH_BYTE,
               .increment = true
           },
@@ -167,7 +164,7 @@ static void dmaSetupTx(struct Dma *rx, struct Dma *tx)
           }
       }, {
           .source = {
-              .burst = DMA_BURST_1,
+              .burst = DMA_BURST_4,
               .width = DMA_WIDTH_BYTE,
               .increment = true
           },

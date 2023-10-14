@@ -1,11 +1,11 @@
 /*
- * halm/platform/stm32/gen_1/dma_defs.h
- * Copyright (C) 2018 xent
+ * halm/platform/stm32/bdma_defs.h
+ * Copyright (C) 2018, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_GEN_1_DMA_DEFS_H_
-#define HALM_PLATFORM_STM32_GEN_1_DMA_DEFS_H_
+#ifndef HALM_PLATFORM_STM32_BDMA_DEFS_H_
+#define HALM_PLATFORM_STM32_BDMA_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*----------------------------------------------------------------------------*/
@@ -26,10 +26,10 @@
 /* Irrelevant bits should be already masked */
 #define ISR_CHANNEL_VALUE(reg, ch)      ((reg) >> ((ch) << 2))
 /*------------------Interrupt Flag Clear Register-----------------------------*/
-#define IFCR_GIF(ch)                    BIT_FIELD(0x01, (ch) << 2)
-#define IFCR_TCIF(ch)                   BIT_FIELD(0x02, (ch) << 2)
-#define IFCR_HTIF(ch)                   BIT_FIELD(0x04, (ch) << 2)
-#define IFCR_TEIF(ch)                   BIT_FIELD(0x08, (ch) << 2)
+#define IFCR_GIF(ch)                    BIT_FIELD(BIT(0), (ch) << 2)
+#define IFCR_TCIF(ch)                   BIT_FIELD(BIT(1), (ch) << 2)
+#define IFCR_HTIF(ch)                   BIT_FIELD(BIT(2), (ch) << 2)
+#define IFCR_TEIF(ch)                   BIT_FIELD(BIT(3), (ch) << 2)
 /*------------------Channel Configuration Register----------------------------*/
 #define CCR_EN                          BIT(0)
 #define CCR_TCIE                        BIT(1)
@@ -54,4 +54,4 @@
 
 #define CCR_MEM2MEM                     BIT(14)
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_GEN_1_DMA_DEFS_H_ */
+#endif /* HALM_PLATFORM_STM32_BDMA_DEFS_H_ */

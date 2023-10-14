@@ -1,9 +1,10 @@
 /*
  * spi_base.c
- * Copyright (C) 2020 xent
+ * Copyright (C) 2020, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/stm32/bdma_oneshot.h>
 #include <halm/platform/stm32/clocking.h>
 #include <halm/platform/stm32/spi_base.h>
 #include <halm/platform/stm32/spi_defs.h>
@@ -212,6 +213,19 @@ void SPI2_ISR(void)
 uint32_t spiGetClock(const struct SpiBase *interface __attribute__((unused)))
 {
   return clockFrequency(ApbClock);
+}
+/*----------------------------------------------------------------------------*/
+void *spiMakeOneShotDma(uint8_t channel __attribute__((unused)), uint8_t stream,
+    enum DmaPriority priority, enum DmaType type)
+{
+  const struct BdmaOneShotConfig config = {
+      .event = DMA_GENERIC,
+      .priority = priority,
+      .type = type,
+      .stream = stream
+  };
+
+  return init(BdmaOneShot, &config);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *object, const void *configBase)

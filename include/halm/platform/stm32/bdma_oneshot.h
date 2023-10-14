@@ -1,17 +1,17 @@
 /*
- * halm/platform/stm32/dma_oneshot.h
- * Copyright (C) 2023 xent
+ * halm/platform/stm32/gen_1/bdma_oneshot.h
+ * Copyright (C) 2018, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_DMA_ONESHOT_H_
-#define HALM_PLATFORM_STM32_DMA_ONESHOT_H_
+#ifndef HALM_PLATFORM_STM32_BDMA_ONESHOT_H_
+#define HALM_PLATFORM_STM32_BDMA_ONESHOT_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/platform/stm32/dma_base.h>
+#include <halm/platform/stm32/bdma_base.h>
 /*----------------------------------------------------------------------------*/
-extern const struct DmaClass * const DmaOneShot;
+extern const struct DmaClass * const BdmaOneShot;
 
-struct DmaOneShotConfig
+struct BdmaOneShotConfig
 {
   /** Mandatory: request connection to the peripheral or memory. */
   enum DmaEvent event;
@@ -23,9 +23,9 @@ struct DmaOneShotConfig
   uint8_t stream;
 };
 
-struct DmaOneShot
+struct BdmaOneShot
 {
-  struct DmaBase base;
+  struct BdmaBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
@@ -37,10 +37,8 @@ struct DmaOneShot
   /* Number of transfers */
   uint16_t transfers;
 
-  /* FIFO configuration */
-  uint8_t fifo;
   /* State of the transfer */
   uint8_t state;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_DMA_ONESHOT_H_ */
+#endif /* HALM_PLATFORM_STM32_BDMA_ONESHOT_H_ */

@@ -1,15 +1,15 @@
 /*
- * halm/platform/stm32/stm32f0xx/dma_base.h
- * Copyright (C) 2020 xent
+ * halm/platform/stm32/stm32f1xx/bdma_base.h
+ * Copyright (C) 2020, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_DMA_BASE_H_
+#ifndef HALM_PLATFORM_STM32_BDMA_BASE_H_
 #error This header should not be included directly
 #endif
 
-#ifndef HALM_PLATFORM_STM32_STM32F0XX_DMA_BASE_H_
-#define HALM_PLATFORM_STM32_STM32F0XX_DMA_BASE_H_
+#ifndef HALM_PLATFORM_STM32_STM32F1XX_BDMA_BASE_H_
+#define HALM_PLATFORM_STM32_STM32F1XX_BDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
 /** Symbolic names for the DMA streams */
 enum
@@ -28,5 +28,11 @@ enum
   DMA2_STREAM4,
   DMA2_STREAM5
 };
+
+enum DmaEvent
+{
+  DMA_GENERIC,
+  DMA_EVENT_END
+} __attribute__((packed));
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_STM32F0XX_DMA_BASE_H_ */
+#endif /* HALM_PLATFORM_STM32_STM32F1XX_BDMA_BASE_H_ */

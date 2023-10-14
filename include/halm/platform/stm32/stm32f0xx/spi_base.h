@@ -11,7 +11,9 @@
 #ifndef HALM_PLATFORM_STM32_STM32F0XX_SPI_BASE_H_
 #define HALM_PLATFORM_STM32_STM32F0XX_SPI_BASE_H_
 /*----------------------------------------------------------------------------*/
-/** Symbolic names for SPI. */
+#include <halm/platform/stm32/bdma_base.h>
+/*----------------------------------------------------------------------------*/
+/** Symbolic names for Serial Peripheral Interfaces. */
 enum
 {
   SPI1,

@@ -4,15 +4,21 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/dma.h>
 #include <halm/generic/byte_queue_extensions.h>
-#include <halm/platform/stm32/dma_circular.h>
-#include <halm/platform/stm32/dma_oneshot.h>
 #include <halm/platform/stm32/serial_dma.h>
-#include <halm/platform/stm32/uart_base.h>
 #include <halm/platform/stm32/uart_defs.h>
 #include <halm/pm.h>
 #include <stdlib.h>
 #include <string.h>
+/*----------------------------------------------------------------------------*/
+#if defined(CONFIG_PLATFORM_STM32_SERIAL_DMA_PRIORITY)
+#  define UART_PRIORITY CONFIG_PLATFORM_STM32_SERIAL_DMA_PRIORITY
+#elif defined(CONFIG_PLATFORM_STM32_BDMA_PRIORITY)
+#  define UART_PRIORITY CONFIG_PLATFORM_STM32_BDMA_PRIORITY
+#else
+#  define UART_PRIORITY CONFIG_PLATFORM_STM32_DMA_PRIORITY
+#endif
 /*----------------------------------------------------------------------------*/
 struct SerialDma
 {
@@ -94,52 +100,56 @@ const struct InterfaceClass * const SerialDma = &(const struct InterfaceClass){
 static bool dmaSetup(struct SerialDma *interface, uint8_t rxStream,
     uint8_t txStream)
 {
-  static const struct DmaSettings dmaSettings[] = {
-      {
-          .source = {
-              .burst = DMA_BURST_1,
-              .width = DMA_WIDTH_BYTE,
-              .increment = false
-          },
-          .destination = {
-              .burst = DMA_BURST_1,
-              .width = DMA_WIDTH_BYTE,
-              .increment = true
-          }
-      }, {
-          .source = {
-              .burst = DMA_BURST_1,
-              .width = DMA_WIDTH_BYTE,
-              .increment = true
-          },
-          .destination = {
-              .burst = DMA_BURST_1,
-              .width = DMA_WIDTH_BYTE,
-              .increment = false
-          }
+  static const struct DmaSettings rxDmaSettings = {
+      .source = {
+          .burst = DMA_BURST_1,
+          .width = DMA_WIDTH_BYTE,
+          .increment = false
+      },
+      .destination = {
+          /*
+           * Burst mode for the RX DMA channel should not be used, because
+           * the DMA FIFO will not be flushed by the time the IDLE interrupt
+           * occurs.
+           */
+          .burst = DMA_BURST_1,
+          .width = DMA_WIDTH_BYTE,
+          .increment = true
       }
   };
-  const struct DmaCircularConfig rxDmaConfig = {
-      .type = DMA_TYPE_P2M,
-      .priority = 0,
-      .stream = rxStream
-  };
-  const struct DmaOneShotConfig txDmaConfig = {
-      .type = DMA_TYPE_M2P,
-      .priority = 0,
-      .stream = txStream
+  static const struct DmaSettings txDmaSettings = {
+      .source = {
+          .burst = DMA_BURST_4,
+          .width = DMA_WIDTH_BYTE,
+          .increment = true
+      },
+      .destination = {
+          .burst = DMA_BURST_1,
+          .width = DMA_WIDTH_BYTE,
+          .increment = false
+      }
   };
 
-  interface->rxDma = init(DmaCircular, &rxDmaConfig);
+  interface->rxDma = uartMakeCircularDma(
+      interface->base.channel,
+      rxStream,
+      DMA_PRIORITY_LOW,
+      DMA_TYPE_P2M
+  );
   if (interface->rxDma == NULL)
     return false;
-  dmaConfigure(interface->rxDma, &dmaSettings[0]);
+  dmaConfigure(interface->rxDma, &rxDmaSettings);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
-  interface->txDma = init(DmaOneShot, &txDmaConfig);
+  interface->txDma = uartMakeOneShotDma(
+      interface->base.channel,
+      txStream,
+      DMA_PRIORITY_LOW,
+      DMA_TYPE_M2P
+  );
   if (interface->txDma == NULL)
     return false;
-  dmaConfigure(interface->txDma, &dmaSettings[1]);
+  dmaConfigure(interface->txDma, &txDmaSettings);
   dmaSetCallback(interface->txDma, txDmaHandler, interface);
 
   return true;
@@ -338,7 +348,7 @@ static enum Result serialInit(void *object, const void *configBase)
     return res;
 #endif
 
-  irqSetPriority(interface->base.irq, CONFIG_PLATFORM_STM32_DMA_PRIORITY);
+  irqSetPriority(interface->base.irq, UART_PRIORITY);
   irqEnable(interface->base.irq);
 
   return enqueueRxBuffer(interface);

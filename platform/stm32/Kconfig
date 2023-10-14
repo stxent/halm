@@ -1,7 +1,3 @@
-config GEN_DMA
-	string
-	default gen_1 if FAMILY_STM32F0XX || FAMILY_STM32F1XX
-
 config GEN_PIN
 	string
 	default gen_2 if FAMILY_STM32F0XX
@@ -31,6 +27,16 @@ menu "Peripherals"
 config PLATFORM_STM32_NO_DEINIT
 	bool "Disable destructors"
 	default n
+
+config PLATFORM_STM32_BDMA
+	bool "Basic DMA"
+	default y
+	depends on FAMILY_STM32F0XX || FAMILY_STM32F1XX
+
+config PLATFORM_STM32_BDMA_PRIORITY
+	int "Basic DMA interrupts priority"
+	default 0
+	depends on PLATFORM_STM32_BDMA
 
 config PLATFORM_STM32_CAN
 	bool "bxCAN"
@@ -80,17 +86,7 @@ config PLATFORM_STM32_CAN_WATERMARK
 
 config PLATFORM_STM32_DMA
 	bool "DMA"
-	default y
-
-config PLATFORM_STM32_DMA1
-	bool "DMA1"
-	default y
-	depends on FAMILY_STM32F0XX && PLATFORM_STM32_DMA
-
-config PLATFORM_STM32_DMA2
-	bool "DMA2"
 	default n
-	depends on FAMILY_STM32F0XX && PLATFORM_STM32_DMA
 
 config PLATFORM_STM32_DMA_PRIORITY
 	int "DMA interrupts priority"
@@ -150,7 +146,7 @@ config PLATFORM_STM32_SPI_RC
 config PLATFORM_STM32_SPI
 	bool "SPI Master with DMA"
 	default y
-	depends on PLATFORM_STM32_SPI_BASE && PLATFORM_STM32_DMA
+	depends on PLATFORM_STM32_SPI_BASE && (PLATFORM_STM32_BDMA || PLATFORM_STM32_DMA)
 
 config PLATFORM_STM32_UART_BASE
 	bool "UART"
@@ -184,7 +180,12 @@ config PLATFORM_STM32_SERIAL
 config PLATFORM_STM32_SERIAL_DMA
 	bool "Serial port driver with DMA"
 	default y
-	depends on PLATFORM_STM32_UART_BASE && PLATFORM_STM32_DMA
+	depends on PLATFORM_STM32_UART_BASE && (PLATFORM_STM32_BDMA || PLATFORM_STM32_DMA)
+
+config PLATFORM_STM32_SERIAL_DMA_PRIORITY
+	int "UART IDLE interrupt priority"
+	default 0
+	depends on PLATFORM_STM32_SERIAL_DMA && PLATFORM_STM32_BDMA && PLATFORM_STM32_DMA
 
 config PLATFORM_USB
 	bool "USB"

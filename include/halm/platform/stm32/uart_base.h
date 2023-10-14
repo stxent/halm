@@ -1,6 +1,6 @@
 /*
  * halm/platform/stm32/uart_base.h
- * Copyright (C) 2016 xent
+ * Copyright (C) 2016, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -10,6 +10,7 @@
 #include <halm/generic/serial.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
+#include <halm/platform/stm32/dma.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
@@ -52,6 +53,8 @@ void uartSetRate(struct UartBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t uartGetClock(const struct UartBase *);
+void *uartMakeCircularDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType);
+void *uartMakeOneShotDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

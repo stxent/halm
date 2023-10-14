@@ -1,5 +1,19 @@
 menu "Enabled peripherals"
 
+menu "Basic DMA Controllers"
+
+config PLATFORM_STM32_BDMA1
+	bool "BDMA1"
+	default y
+	depends on PLATFORM_STM32_BDMA
+
+config PLATFORM_STM32_BDMA2
+	bool "BDMA2"
+	default n
+	depends on PLATFORM_STM32_BDMA
+
+endmenu
+
 menu "General Purpose Timers"
 
 config PLATFORM_STM32_TIM1

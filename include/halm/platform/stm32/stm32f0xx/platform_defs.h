@@ -183,6 +183,8 @@ typedef struct
   __rw__ uint32_t FNR;
   __rw__ uint32_t DADDR;
   __rw__ uint32_t BTABLE;
+  __rw__ uint32_t LPMCSR;
+  __rw__ uint32_t BCDR;
 } STM_USB_Type;
 /*------------------MCU Debug Component---------------------------------------*/
 typedef struct
@@ -314,18 +316,7 @@ typedef struct
   __ne__ uint32_t RESERVED2[2];
 
   /* Offset 0x50 */
-  union
-  {
-    struct
-    {
-      __rw__ uint32_t BKP0R;
-      __rw__ uint32_t BKP1R;
-      __rw__ uint32_t BKP2R;
-      __rw__ uint32_t BKP3R;
-      __rw__ uint32_t BKP4R;
-    };
-    __rw__ uint32_t BKPR[5];
-  };
+  __rw__ uint32_t BKPR[5];
 } STM_RTC_Type;
 /*------------------Comparator------------------------------------------------*/
 typedef struct

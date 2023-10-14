@@ -1,6 +1,6 @@
 /*
  * halm/platform/stm32/dma_circular.h
- * Copyright (C) 2021 xent
+ * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -8,16 +8,17 @@
 #define HALM_PLATFORM_STM32_DMA_CIRCULAR_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/stm32/dma_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const DmaCircular;
 
 struct DmaCircularConfig
 {
+  /** Mandatory: request connection to the peripheral or memory. */
+  enum DmaEvent event;
+  /** Optional: stream priority. */
+  enum DmaPriority priority;
   /** Mandatory: transfer type. */
   enum DmaType type;
-  /** Optional: stream priority. */
-  uint8_t priority;
   /** Mandatory: stream number. */
   uint8_t stream;
 };
@@ -36,6 +37,8 @@ struct DmaCircular
   /* Number of transfers */
   uint16_t transfers;
 
+  /* FIFO configuration */
+  uint8_t fifo;
   /* State of the transfer */
   uint8_t state;
 };

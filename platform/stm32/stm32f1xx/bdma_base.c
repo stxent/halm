@@ -1,13 +1,13 @@
 /*
- * dma_base.c
+ * bdma_base.c
  * Copyright (C) 2018 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/irq.h>
 #include <halm/platform/platform_defs.h>
-#include <halm/platform/stm32/dma_base.h>
-#include <halm/platform/stm32/gen_1/dma_defs.h>
+#include <halm/platform/stm32/bdma_base.h>
+#include <halm/platform/stm32/bdma_defs.h>
 #include <halm/platform/stm32/system.h>
 #include <xcore/atomic.h>
 #include <assert.h>
@@ -24,27 +24,27 @@ static void dma1StreamHandler(uint8_t);
 static void dma2StreamHandler(uint8_t);
 static enum Result streamInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
-const struct EntityClass * const DmaBase = &(const struct EntityClass){
+const struct EntityClass * const BdmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = streamInit,
     .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static struct DmaBase *instances[STREAM_COUNT] = {0};
+static struct BdmaBase *instances[STREAM_COUNT] = {0};
 /*----------------------------------------------------------------------------*/
-const struct DmaBase *dmaGetInstance(uint8_t stream)
+const struct BdmaBase *bdmaGetInstance(uint8_t stream)
 {
   assert(stream < ARRAY_SIZE(instances));
   return instances[stream];
 }
 /*----------------------------------------------------------------------------*/
-void dmaResetInstance(uint8_t stream)
+void bdmaResetInstance(uint8_t stream)
 {
   assert(stream < ARRAY_SIZE(instances));
   instances[stream] = NULL;
 }
 /*----------------------------------------------------------------------------*/
-bool dmaSetInstance(uint8_t stream, struct DmaBase *object)
+bool bdmaSetInstance(uint8_t stream, struct BdmaBase *object)
 {
   assert(object != NULL);
   assert(stream < ARRAY_SIZE(instances));
@@ -117,7 +117,7 @@ void DMA2_CHANNEL5_ISR(void)
 /*----------------------------------------------------------------------------*/
 static void dma1StreamHandler(uint8_t number)
 {
-  struct DmaBase * const stream = instances[STREAM_ENCODE(0, number)];
+  struct BdmaBase * const stream = instances[STREAM_ENCODE(0, number)];
   const uint32_t rawStatus = STM_DMA1->ISR & ISR_CHANNEL_MASK(number);
   const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, number);
   enum Result res = E_OK;
@@ -133,7 +133,7 @@ static void dma1StreamHandler(uint8_t number)
 /*----------------------------------------------------------------------------*/
 static void dma2StreamHandler(uint8_t number)
 {
-  struct DmaBase * const stream = instances[STREAM_ENCODE(1, number)];
+  struct BdmaBase * const stream = instances[STREAM_ENCODE(1, number)];
   const uint32_t rawStatus = STM_DMA2->ISR & ISR_CHANNEL_MASK(number);
   const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, number);
   enum Result res = E_OK;
@@ -149,8 +149,8 @@ static void dma2StreamHandler(uint8_t number)
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
 {
-  const struct DmaBaseConfig * const config = configBase;
-  struct DmaBase * const stream = object;
+  const struct BdmaBaseConfig * const config = configBase;
+  struct BdmaBase * const stream = object;
 
   assert(config->stream < ARRAY_SIZE(instances));
   assert(config->priority <= DMA_PRIORITY_VERY_HIGH);
@@ -184,7 +184,7 @@ static enum Result streamInit(void *object, const void *configBase)
 
   if (!irqStatus(stream->irq))
   {
-    irqSetPriority(stream->irq, CONFIG_PLATFORM_STM32_DMA_PRIORITY);
+    irqSetPriority(stream->irq, CONFIG_PLATFORM_STM32_BDMA_PRIORITY);
     irqEnable(stream->irq);
   }
 

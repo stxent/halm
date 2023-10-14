@@ -1,12 +1,12 @@
 /*
  * dma_circular.c
- * Copyright (C) 2021 xent
+ * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/dma_circular.h>
-#include <halm/platform/stm32/gen_1/dma_defs.h>
+#include <halm/platform/stm32/dma_defs.h>
 #include <xcore/asm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -60,9 +60,9 @@ static void interruptHandler(void *object, enum Result res)
 
   if (res == E_ERROR)
   {
-    STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
+    STM_DMA_STREAM_Type * const reg = stream->base.reg;
 
-    reg->CCR = 0;
+    reg->CR = 0;
     dmaResetInstance(stream->base.number);
 
     stream->state = STATE_ERROR;
@@ -78,9 +78,10 @@ static enum Result streamInit(void *object, const void *configBase)
   assert(config != NULL);
 
   const struct DmaBaseConfig baseConfig = {
+      .event = config->event,
+      .priority = config->priority,
       .type = config->type,
-      .stream = config->stream,
-      .priority = config->priority
+      .stream = config->stream
   };
   struct DmaCircular * const stream = object;
 
@@ -89,9 +90,10 @@ static enum Result streamInit(void *object, const void *configBase)
 
   if (res == E_OK)
   {
-    stream->base.config |= CCR_TCIE | CCR_HTIE | CCR_TEIE;
+    stream->base.config |= SCR_TCIE | SCR_HTIE | SCR_TEIE;
     stream->base.handler = interruptHandler;
     stream->callback = NULL;
+    stream->fifo = 0;
     stream->state = STATE_IDLE;
   }
 
@@ -108,39 +110,82 @@ static void streamConfigure(void *object, const void *settingsBase)
   const struct DmaSettings * const settings = settingsBase;
   struct DmaCircular * const stream = object;
 
-  assert(settings->source.burst == DMA_BURST_1);
+  assert(settings->source.burst <= DMA_BURST_16);
   assert(settings->source.width <= DMA_WIDTH_WORD);
-  assert(settings->destination.burst == DMA_BURST_1);
+  assert(settings->destination.burst <= DMA_BURST_16);
   assert(settings->destination.width <= DMA_WIDTH_WORD);
 
-  uint32_t config = stream->base.config
-      & ~(CCR_PINC | CCR_MINC | CCR_PSIZE_MASK | CCR_MSIZE_MASK);
+  /* Burst size must not exceed FIFO size */
+  assert(burstToSize(settings->source.width,
+      settings->source.burst) <= 16);
+  assert(burstToSize(settings->destination.width,
+      settings->destination.burst) <= 16);
 
-  if (config & CCR_DIR)
+  /* Burst transfer is not allowed in the fixed address mode */
+  assert(settings->source.increment
+      || settings->source.burst == DMA_BURST_1);
+  assert(settings->destination.increment
+      || settings->destination.burst == DMA_BURST_1);
+
+  uint32_t config = stream->base.config & ~(
+      SCR_PINC | SCR_PSIZE_MASK | SCR_PBURST_MASK
+      | SCR_MINC | SCR_MSIZE_MASK | SCR_MBURST_MASK
+  );
+
+  if (SCR_DIR_VALUE(config) == DMA_TYPE_M2P)
   {
     /* Direction is from memory to peripheral */
-    config |= CCR_MSIZE(settings->source.width)
-        | CCR_PSIZE(settings->destination.width);
+    config |=
+        SCR_PSIZE(settings->destination.width)
+        | SCR_MSIZE(settings->source.width)
+        | SCR_PBURST(settings->destination.burst)
+        | SCR_MBURST(settings->source.burst);
 
     if (settings->source.increment)
-      config |= CCR_MINC;
+      config |= SCR_MINC;
     if (settings->destination.increment)
-      config |= CCR_PINC;
+      config |= SCR_PINC;
   }
   else
   {
     /* Direction is from peripheral to memory */
-    config |= CCR_PSIZE(settings->source.width)
-        | CCR_MSIZE(settings->destination.width);
+    config |=
+        SCR_PSIZE(settings->source.width)
+        | SCR_MSIZE(settings->destination.width)
+        | SCR_PBURST(settings->source.burst)
+        | SCR_MBURST(settings->destination.burst);
 
     if (settings->source.increment)
-      config |= CCR_PINC;
+      config |= SCR_PINC;
     if (settings->destination.increment)
-      config |= CCR_MINC;
+      config |= SCR_MINC;
   }
 
-  config |= CCR_CIRC;
+  if (settings->source.width != settings->destination.width
+      || settings->source.burst != DMA_BURST_1
+      || settings->destination.burst != DMA_BURST_1)
+  {
+    /* Disable direct mode */
+    stream->fifo = SFCR_DMDIS;
 
+    if (SCR_DIR_VALUE(config) == DMA_TYPE_M2P)
+    {
+      stream->fifo |= burstToThreshold(settings->source.width,
+          settings->source.burst);
+    }
+    else
+    {
+      stream->fifo |= burstToThreshold(settings->destination.width,
+          settings->destination.burst);
+    }
+  }
+  else
+  {
+    /* Enable direct mode */
+    stream->fifo = 0;
+  }
+
+  config |= SCR_CIRC;
   stream->base.config = config;
 }
 /*----------------------------------------------------------------------------*/
@@ -162,16 +207,17 @@ static enum Result streamEnable(void *object)
 
   if (dmaSetInstance(number, object))
   {
-    STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
+    STM_DMA_STREAM_Type * const reg = stream->base.reg;
 
     stream->state = STATE_BUSY;
-    reg->CMAR = stream->memoryAddress;
-    reg->CPAR = stream->periphAddress;
-    reg->CNDTR = stream->transfers;
+    reg->FCR = (uint32_t)stream->fifo;
+    reg->NDTR = stream->transfers;
+    reg->M0AR = stream->memoryAddress;
+    reg->PAR = stream->periphAddress;
 
     /* Start the transfer */
     __dsb();
-    reg->CCR = stream->base.config | CCR_EN;
+    reg->CR = stream->base.config | SCR_EN;
 
     return E_OK;
   }
@@ -185,11 +231,11 @@ static enum Result streamEnable(void *object)
 static void streamDisable(void *object)
 {
   struct DmaCircular * const stream = object;
-  STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
+  STM_DMA_STREAM_Type * const reg = stream->base.reg;
 
   if (stream->state == STATE_BUSY)
   {
-    reg->CCR &= ~CCR_EN;
+    reg->CR &= ~SCR_EN;
     dmaResetInstance(stream->base.number);
 
     stream->state = STATE_DONE;
@@ -202,9 +248,9 @@ static enum Result streamResidue(const void *object, size_t *count)
 
   if (stream->state != STATE_IDLE && stream->state != STATE_READY)
   {
-    const STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
+    const STM_DMA_STREAM_Type * const reg = stream->base.reg;
 
-    *count = reg->CNDTR;
+    *count = reg->NDTR;
     return E_OK;
   }
   else
@@ -240,7 +286,7 @@ static void streamAppend(void *object, void *destination, const void *source,
   assert(size % 2 == 0);
   assert(stream->state != STATE_BUSY && stream->state != STATE_READY);
 
-  if (stream->base.config & CCR_DIR)
+  if (SCR_DIR_VALUE(stream->base.config) == DMA_TYPE_M2P)
   {
     /* Direction is from memory to peripheral */
     stream->memoryAddress = (uintptr_t)source;
@@ -268,8 +314,8 @@ static size_t streamQueued(const void *object)
 
   if (stream->state != STATE_IDLE && stream->state != STATE_READY)
   {
-    const STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
-    const bool lower = reg->CNDTR <= (stream->transfers >> 1);
+    const STM_DMA_STREAM_Type * const reg = stream->base.reg;
+    const bool lower = reg->NDTR <= (stream->transfers >> 1);
 
     return lower ? 1 : 2;
   }

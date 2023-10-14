@@ -130,7 +130,6 @@
 
 #elif defined(STM32F0XX)
 
-#  define GEN_DMA         gen_1
 #  define GEN_PIN         gen_2
 #  define GEN_UART        gen_2
 #  define NVIC_IRQ_BITS   2
@@ -139,7 +138,6 @@
 
 #elif defined(STM32F1XX)
 
-#  define GEN_DMA         gen_1
 #  define GEN_PIN         stm32f1xx
 #  define GEN_UART        gen_1
 #  define NVIC_IRQ_BITS   4

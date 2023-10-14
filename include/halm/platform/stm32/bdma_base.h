@@ -1,24 +1,24 @@
 /*
- * halm/platform/stm32/dma_base.h
+ * halm/platform/stm32/bdma_base.h
  * Copyright (C) 2018, 2020, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_DMA_BASE_H_
-#define HALM_PLATFORM_STM32_DMA_BASE_H_
+#ifndef HALM_PLATFORM_STM32_BDMA_BASE_H_
+#define HALM_PLATFORM_STM32_BDMA_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
 #include <halm/irq.h>
 #include <halm/platform/stm32/dma.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
-#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/dma_base.h>
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/bdma_base.h>
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const DmaBase;
+extern const struct EntityClass * const BdmaBase;
 
-struct DmaBaseConfig
+struct BdmaBaseConfig
 {
   /** Mandatory: request connection to the peripheral or memory. */
   enum DmaEvent event;
@@ -30,7 +30,7 @@ struct DmaBaseConfig
   uint8_t stream;
 };
 
-struct DmaBase
+struct BdmaBase
 {
   struct Entity base;
 
@@ -47,10 +47,10 @@ struct DmaBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-const struct DmaBase *dmaGetInstance(uint8_t);
-void dmaResetInstance(uint8_t);
-bool dmaSetInstance(uint8_t, struct DmaBase *);
+const struct BdmaBase *bdmaGetInstance(uint8_t);
+void bdmaResetInstance(uint8_t);
+bool bdmaSetInstance(uint8_t, struct BdmaBase *);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_DMA_BASE_H_ */
+#endif /* HALM_PLATFORM_STM32_BDMA_BASE_H_ */

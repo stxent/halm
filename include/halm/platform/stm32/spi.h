@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_STM32_SPI_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/generic/spi.h>
-#include <halm/platform/stm32/dma_oneshot.h>
 #include <halm/platform/stm32/spi_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Spi;
