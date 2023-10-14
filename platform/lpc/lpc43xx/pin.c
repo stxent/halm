@@ -500,12 +500,13 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   if (pin.port == PORT_I2C)
   {
-    const uint32_t mask = (SFS_I2C_EFP | SFS_I2C_EHD) << (pin.number << 3);
+    const uint32_t mask = SFS_I2C_EFP | SFS_I2C_EHD;
+    const uint32_t offset = (pin.number == PIN_I2C0_SCL) ? 0 : 8;
 
     if (rate == PIN_SLEW_FAST)
-      LPC_SCU->SFSI2C0 |= mask;
+      LPC_SCU->SFSI2C0 |= mask << offset;
     else
-      LPC_SCU->SFSI2C0 &= ~mask;
+      LPC_SCU->SFSI2C0 &= ~(mask << offset);
 
     return;
   }
@@ -514,34 +515,44 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
     return;
 
   volatile uint32_t * const reg = pin.reg;
-  const enum PinDriveType type = detectPinDriveType(reg);
-  uint32_t value = *reg & ~(SFS_STRENGTH_MASK | SFS_ZIF);
+  uint32_t value = *reg;
 
-  if (type == HIGH_SPEED_PIN)
+  if (detectPinDriveType(reg) == HIGH_DRIVE_PIN)
   {
+    value &= ~(SFS_STRENGTH_MASK | SFS_ZIF);
+
     switch (rate)
     {
       case PIN_SLEW_SLOW:
+        /* Select lowest drive strength with input filter enabled */
         value |= SFS_STRENGTH_NORMAL;
         break;
 
       case PIN_SLEW_NORMAL:
-        /* TODO Select between medium and high drive strength */
-        value |= SFS_STRENGTH_HIGH;
+        /* Select high drive strength and disable input filter */
+        value |= SFS_STRENGTH_HIGH | SFS_ZIF;
         break;
 
       case PIN_SLEW_FAST:
-        /* Select drive strength and disable input glitch filter */
+        /* Select highest drive strength and disable input filter */
         value |= SFS_STRENGTH_ULTRAHIGH | SFS_ZIF;
         break;
     }
   }
   else
   {
+    /* Normal-drive pins and high-speed pins */
+
     if (rate == PIN_SLEW_FAST)
+    {
+      /* High slew rate with input filter disabled */
       value |= SFS_EHS | SFS_ZIF;
+    }
     else
-      value &= ~SFS_EHS;
+    {
+      /* Low slew rate with input filter enabled */
+      value &= ~(SFS_EHS | SFS_ZIF);
+    }
   }
 
   *reg = value;
