@@ -15,6 +15,8 @@
 #include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+#define DEFAULT_BLOCK_SIZE 512
+
 enum State
 {
   STATE_IDLE,
@@ -35,7 +37,7 @@ static enum Result initStepReadCID(struct MMCSD *);
 static enum Result initStepReadCSD(struct MMCSD *);
 static enum Result initStepReadExtCSD(struct MMCSD *);
 static enum Result initStepReadRCA(struct MMCSD *);
-static enum Result initStepSdReadOCR(struct MMCSD *, enum MMCSDResponse);
+static enum Result initStepSdReadOCR(struct MMCSD *);
 static enum Result initStepSdSetBusWidth(struct MMCSD *);
 static enum Result initStepSendReset(struct MMCSD *);
 static enum Result initStepSetBlockLength(struct MMCSD *);
@@ -143,8 +145,7 @@ static enum Result initStepMmcReadOCR(struct MMCSD *device)
     if (res != E_BUSY)
       break;
 
-    /* TODO Remove delay */
-    mdelay(10);
+    udelay(CMD1_RETRY_DELAY);
   }
 
   return res;
@@ -252,7 +253,7 @@ static enum Result initStepReadExtCSD(struct MMCSD *device)
   static const uint32_t command = SDIO_COMMAND(CMD8_SEND_EXT_CSD,
       MMCSD_RESPONSE_R1, SDIO_DATA_MODE | SDIO_CHECK_CRC);
 
-  uint8_t csd[512];
+  uint8_t csd[DEFAULT_BLOCK_SIZE];
   enum Result res;
 
   res = ifSetParam(device->interface, IF_SDIO_COMMAND, &command);
@@ -303,12 +304,14 @@ static enum Result initStepReadRCA(struct MMCSD *device)
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result initStepSdReadOCR(struct MMCSD *device,
-    enum MMCSDResponse responseType)
+static enum Result initStepSdReadOCR(struct MMCSD *device)
 {
+  const enum MMCSDResponse responseType = device->mode == SDIO_SPI ?
+      MMCSD_RESPONSE_NONE : MMCSD_RESPONSE_R1;
+  uint32_t responseValue;
+
   unsigned int counter = 100;
   uint32_t ocr = 0;
-  uint32_t response;
   enum Result res;
 
   if (device->info.cardType == CARD_SD_2_0)
@@ -326,14 +329,14 @@ static enum Result initStepSdReadOCR(struct MMCSD *device,
 
     res = executeCommand(device,
         SDIO_COMMAND(ACMD41_SD_SEND_OP_COND, responseType, 0),
-        ocr, responseType == MMCSD_RESPONSE_R1 ? &response : NULL, true);
+        ocr, responseType == MMCSD_RESPONSE_R1 ? &responseValue : NULL, true);
 
     if (responseType == MMCSD_RESPONSE_R1)
     {
-      if (res == E_OK && (response & OCR_BUSY))
+      if (res == E_OK && (responseValue & OCR_BUSY))
       {
         /* Check card capacity information */
-        if (response & OCR_SD_CCS)
+        if (responseValue & OCR_SD_CCS)
           device->info.capacityType = CAPACITY_HC;
         break;
       }
@@ -530,8 +533,7 @@ static enum Result identifyCard(struct MMCSD *device)
     if ((res = initStepReadCondition(device)) != E_OK)
       return res;
 
-    res = initStepSdReadOCR(device, device->mode == SDIO_SPI ?
-        MMCSD_RESPONSE_NONE : MMCSD_RESPONSE_R1);
+    res = initStepSdReadOCR(device);
     if (res != E_OK)
       return res;
   }
@@ -605,7 +607,9 @@ static enum Result identifyCard(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static enum Result initializeCard(struct MMCSD *device)
 {
-  static const uint32_t enumRate = RATE_ENUMERATION;
+  static const uint32_t blockSize = DEFAULT_BLOCK_SIZE;
+  static const uint32_t identRate = RATE_ENUMERATION;
+
   uint32_t workRate;
   enum Result res;
 
@@ -627,8 +631,13 @@ static enum Result initializeCard(struct MMCSD *device)
   if (res != E_OK)
     goto error;
 
+  /* Set data block size */
+  res = ifSetParam(device->interface, IF_SDIO_BLOCK_SIZE, &blockSize);
+  if (res != E_OK)
+    goto error;
+
   /* Set low data rate for enumeration purposes */
-  res = ifSetParam(device->interface, IF_RATE, &enumRate);
+  res = ifSetParam(device->interface, IF_RATE, &identRate);
   if (res != E_OK)
     goto error;
 
