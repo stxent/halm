@@ -532,11 +532,11 @@ static void epWriteData(struct UsbEndpoint *ep, const uint8_t *buffer,
 static void epWritePacketMemory(LPC_USB_Type *reg, const uint8_t *buffer,
     size_t length)
 {
-  const uint32_t *start = (const uint32_t *)buffer;
-  const uint32_t * const end = start + (length >> 2);
-
   if (length)
   {
+    const uint32_t *start = (const uint32_t *)buffer;
+    const uint32_t * const end = start + (length >> 2);
+
     buffer = (const uint8_t *)end;
     length &= 3;
 

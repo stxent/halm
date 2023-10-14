@@ -136,10 +136,8 @@ static const struct UsbEndpointClass * const UsbEndpoint =
 /*----------------------------------------------------------------------------*/
 static bool initEndpoints(struct UsbDevice *device)
 {
-  const size_t endpointBufferSize =
-      device->base.numberOfEndpoints * sizeof(struct UsbEndpoint *);
-
-  device->endpoints = malloc(endpointBufferSize);
+  device->endpoints =
+      malloc(device->base.numberOfEndpoints * sizeof(struct UsbEndpoint *));
 
   if (device->endpoints != NULL)
   {

@@ -119,29 +119,29 @@ static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     interfaceDescriptor,
     rxEndpointDescriptor,
     txEndpointDescriptor,
-    0
+    NULL
 };
 /*----------------------------------------------------------------------------*/
 static const struct StateEntry stateTable[] = {
     [STATE_IDLE]                    = {stateIdleEnter, stateIdleRun},
-    [STATE_TEST_UNIT_READY]         = {stateTestUnitReadyEnter, 0},
-    [STATE_REQUEST_SENSE]           = {stateRequestSenseEnter, 0},
-    [STATE_INQUIRY]                 = {stateInquiryEnter, 0},
-    [STATE_MODE_SENSE]              = {stateModeSenseEnter, 0},
-    [STATE_MEDIUM_REMOVAL]          = {stateMediumRemovalEnter, 0},
-    [STATE_READ_FORMAT_CAPACITIES]  = {stateReadFormatCapacitiesEnter, 0},
-    [STATE_READ_CAPACITY]           = {stateReadCapacityEnter, 0},
-    [STATE_READ_SETUP]              = {stateReadSetupEnter, 0},
+    [STATE_TEST_UNIT_READY]         = {stateTestUnitReadyEnter, NULL},
+    [STATE_REQUEST_SENSE]           = {stateRequestSenseEnter, NULL},
+    [STATE_INQUIRY]                 = {stateInquiryEnter, NULL},
+    [STATE_MODE_SENSE]              = {stateModeSenseEnter, NULL},
+    [STATE_MEDIUM_REMOVAL]          = {stateMediumRemovalEnter, NULL},
+    [STATE_READ_FORMAT_CAPACITIES]  = {stateReadFormatCapacitiesEnter, NULL},
+    [STATE_READ_CAPACITY]           = {stateReadCapacityEnter, NULL},
+    [STATE_READ_SETUP]              = {stateReadSetupEnter, NULL},
     [STATE_READ]                    = {stateReadEnter, stateReadWriteRun},
-    [STATE_WRITE_SETUP]             = {stateWriteSetupEnter, 0},
+    [STATE_WRITE_SETUP]             = {stateWriteSetupEnter, NULL},
     [STATE_WRITE]                   = {stateWriteEnter, stateReadWriteRun},
-    [STATE_VERIFY]                  = {stateVerifyEnter, 0},
+    [STATE_VERIFY]                  = {stateVerifyEnter, NULL},
     [STATE_ACK]                     = {stateAckEnter, stateAckRun},
-    [STATE_ACK_STALL]               = {0, stateAckStallRun},
-    [STATE_COMPLETED]               = {0, stateCompletedRun},
+    [STATE_ACK_STALL]               = {NULL, stateAckStallRun},
+    [STATE_COMPLETED]               = {NULL, stateCompletedRun},
     [STATE_FAILURE]                 = {stateFailureEnter, stateFailureRun},
     [STATE_ERROR]                   = {stateErrorEnter, stateErrorRun},
-    [STATE_SUSPEND]                 = {stateSuspendEnter, 0}
+    [STATE_SUSPEND]                 = {stateSuspendEnter, NULL}
 };
 /*----------------------------------------------------------------------------*/
 static inline uint32_t fromBigEndian24(const uint8_t *input, uint32_t mask)
@@ -1179,7 +1179,7 @@ void mscDetachUnit(struct Msc *driver, uint8_t index)
 
   const IrqState state = irqSave();
 
-  driver->lun[index].interface = 0;
+  driver->lun[index].interface = NULL;
   driver->lun[index].blocks = 0;
   driver->lun[index].sense = SCSI_SK_NO_SENSE;
   driver->lun[index].asc = SCSI_ASC_NOSENSE;

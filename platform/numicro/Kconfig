@@ -291,7 +291,7 @@ config PLATFORM_NUMICRO_SERIAL_DMA_TOC
 config PLATFORM_NUMICRO_SDH
 	bool "SDH"
 	default y
-  depends on FAMILY_M48X
+	depends on FAMILY_M48X
 	help
 	  This is the driver for the Secure Digital Host Controller.
 

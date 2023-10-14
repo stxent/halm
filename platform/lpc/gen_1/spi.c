@@ -278,9 +278,11 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
 
   switch ((enum SPIParameter)parameter)
   {
+#ifdef CONFIG_PLATFORM_LPC_SSP_RC
     case IF_SPI_MODE:
       sspSetMode(&interface->base, *(const uint8_t *)data);
       return E_OK;
+#endif
 
     case IF_SPI_BIDIRECTIONAL:
       interface->unidir = false;

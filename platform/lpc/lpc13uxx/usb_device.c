@@ -26,7 +26,7 @@ struct SbUsbEndpoint
   PointerQueue requests;
   /* Address inside the packet buffer memory */
   uint16_t position;
-  /* Max request size */
+  /* Maximum size of a packet */
   uint16_t size;
   /* Logical address */
   uint8_t address;
@@ -43,13 +43,12 @@ struct UsbDevice
 
   /* The last allocated address inside the packet buffer memory */
   uint16_t position;
+  /* The address to be set after the status stage of the control transaction */
+  uint8_t scheduledAddress;
   /* Device is configured */
   bool configured;
   /* Device is enabled */
   bool enabled;
-
-
-  uint8_t scheduledAddress;
 };
 /*----------------------------------------------------------------------------*/
 static void applyAddress(struct UsbDevice *, uint8_t);
