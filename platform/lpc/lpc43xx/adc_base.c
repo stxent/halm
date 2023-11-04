@@ -37,6 +37,9 @@ struct PinDescriptor
 static struct AdcPin configGroupPin(const struct PinGroupEntry *, PinNumber);
 static struct AdcPin configRegularPin(const struct PinEntry *, PinNumber);
 /*----------------------------------------------------------------------------*/
+void adcBaseHandler0(void) __attribute__((weak));
+void adcBaseHandler1(void) __attribute__((weak));
+
 static enum Result adcInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
@@ -157,17 +160,11 @@ static struct AdcBase *instances[2] = {NULL};
 static struct AdcPin configGroupPin(const struct PinGroupEntry *group,
     PinNumber key)
 {
-  const struct PinDescriptor begin = {
-      .number = PIN_TO_OFFSET(group->begin),
-      .port = PIN_TO_PORT(group->begin)
-  };
-  const struct PinDescriptor current = {
-      .number = PIN_TO_OFFSET(key),
-      .port = PIN_TO_PORT(key)
-  };
+  const uint8_t currentPinNumber = PIN_TO_OFFSET(key);
+  const uint8_t firstPinNumber = PIN_TO_OFFSET(group->begin);
 
   return (struct AdcPin){
-      .channel = current.number - begin.number,
+      .channel = currentPinNumber - firstPinNumber,
       .control = -1
   };
 }
@@ -198,10 +195,20 @@ static struct AdcPin configRegularPin(const struct PinEntry *entry,
 /*----------------------------------------------------------------------------*/
 void ADC0_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  adcBaseHandler0();
 }
 /*----------------------------------------------------------------------------*/
 void ADC1_ISR(void)
+{
+  adcBaseHandler1();
+}
+/*----------------------------------------------------------------------------*/
+void adcBaseHandler0(void)
+{
+  instances[0]->handler(instances[0]);
+}
+/*----------------------------------------------------------------------------*/
+void adcBaseHandler1(void)
 {
   instances[1]->handler(instances[1]);
 }

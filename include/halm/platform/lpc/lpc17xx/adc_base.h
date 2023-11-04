@@ -11,6 +11,7 @@
 #ifndef HALM_PLATFORM_LPC_LPC17XX_ADC_BASE_H_
 #define HALM_PLATFORM_LPC_LPC17XX_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/helpers.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
@@ -32,6 +33,12 @@ struct AdcPin
   /* Peripheral channel */
   uint8_t channel;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+extern void adcBaseHandler0(void);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_ADC/adc_base.h>

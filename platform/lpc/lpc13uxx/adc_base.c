@@ -17,6 +17,8 @@
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
+void adcBaseHandler0(void) __attribute__((weak));
+
 static enum Result adcInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
@@ -57,6 +59,11 @@ const struct PinGroupEntry adcPins[] = {
 static struct AdcBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
+{
+  adcBaseHandler0();
+}
+/*----------------------------------------------------------------------------*/
+void adcBaseHandler0(void)
 {
   instance->handler(instance);
 }

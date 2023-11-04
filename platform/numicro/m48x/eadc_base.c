@@ -13,6 +13,9 @@
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY 72000000
 /*----------------------------------------------------------------------------*/
+void adcBaseHandler0(void) __attribute__((weak));
+void adcBaseHandler1(void) __attribute__((weak));
+
 static enum Result adcInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NUMICRO_EADC_NO_DEINIT
@@ -204,46 +207,56 @@ static struct EadcBase *instances[2] = {NULL};
 #ifdef CONFIG_PLATFORM_NUMICRO_EADC0
 void EADC0_P0_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  adcBaseHandler0();
 }
 
 void EADC0_P1_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  adcBaseHandler0();
 }
 
 void EADC0_P2_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  adcBaseHandler0();
 }
 
 void EADC0_P3_ISR(void)
 {
-  instances[0]->handler(instances[0]);
+  adcBaseHandler0();
 }
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NUMICRO_EADC1
 void EADC1_P0_ISR(void)
 {
-  instances[1]->handler(instances[1]);
+  adcBaseHandler1();
 }
 
 void EADC1_P1_ISR(void)
 {
-  instances[1]->handler(instances[1]);
+  adcBaseHandler1();
 }
 
 void EADC1_P2_ISR(void)
 {
-  instances[1]->handler(instances[1]);
+  adcBaseHandler1();
 }
 
 void EADC1_P3_ISR(void)
 {
-  instances[1]->handler(instances[1]);
+  adcBaseHandler1();
 }
 #endif
+/*----------------------------------------------------------------------------*/
+void adcBaseHandler0(void)
+{
+  instances[0]->handler(instances[0]);
+}
+/*----------------------------------------------------------------------------*/
+void adcBaseHandler1(void)
+{
+  instances[1]->handler(instances[1]);
+}
 /*----------------------------------------------------------------------------*/
 struct EadcBase *adcGetInstance(uint8_t channel)
 {
@@ -261,7 +274,7 @@ bool adcSetInstance(uint8_t channel, struct EadcBase *expected,
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct EadcBaseConfig * const config = configBase;
-  assert((config->accuracy / 2 >= 3 && config->accuracy / 2 <= 6)
+  assert((config->accuracy - 6 <= 6 && config->accuracy % 2 == 0)
       || !config->accuracy);
 
   struct EadcBase * const interface = object;

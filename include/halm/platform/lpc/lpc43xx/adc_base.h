@@ -11,6 +11,7 @@
 #ifndef HALM_PLATFORM_LPC_LPC43XX_ADC_BASE_H_
 #define HALM_PLATFORM_LPC_LPC43XX_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/helpers.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
@@ -33,6 +34,13 @@ struct AdcPin
   /* Index of the control register */
   int8_t control;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+extern void adcBaseHandler0(void);
+extern void adcBaseHandler1(void);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_ADC/adc_base.h>

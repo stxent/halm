@@ -13,6 +13,8 @@
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY 34000000
 /*----------------------------------------------------------------------------*/
+void adcBaseHandler0(void) __attribute__((weak));
+
 static enum Result adcInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_NUMICRO_ADC_NO_DEINIT
@@ -120,6 +122,11 @@ const struct PinEntry adcPins[] = {
 static struct AdcBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
+{
+  adcBaseHandler0();
+}
+/*----------------------------------------------------------------------------*/
+void adcBaseHandler0(void)
 {
   instance->handler(instance);
 }

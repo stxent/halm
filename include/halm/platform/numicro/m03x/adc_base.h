@@ -11,6 +11,7 @@
 #ifndef HALM_PLATFORM_NUMICRO_M03X_ADC_BASE_H_
 #define HALM_PLATFORM_NUMICRO_M03X_ADC_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <xcore/helpers.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
@@ -29,5 +30,11 @@ struct AdcPin
   /* Peripheral channel */
   uint8_t channel;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+extern void adcBaseHandler0(void);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_M03X_ADC_BASE_H_ */

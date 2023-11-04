@@ -38,7 +38,7 @@ void DMA1_CHANNEL4_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void DMA1_CHANNEL5_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void DMA1_CHANNEL6_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void DMA1_CHANNEL7_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void ADC1_2_ISR(void);
+void ADC1_2_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void USB_HP_CAN1_TX_ISR(void);
 void USB_LP_CAN1_RX0_ISR(void);
 void CAN1_RX1_ISR(void) __attribute__((weak, alias("defaultHandler")));
@@ -90,8 +90,6 @@ void CAN2_SCE_ISR(void) __attribute__((weak, alias("defaultHandler")));
 void OTG_FS_ISR(void) __attribute__((weak, alias("defaultHandler")));
 /*----------------------------------------------------------------------------*/
 /* Virtual IRQ handlers */
-void ADC1_ISR(void) __attribute__((weak, alias("emptyHandler")));
-void ADC2_ISR(void) __attribute__((weak, alias("emptyHandler")));
 void USB_HP_ISR(void) __attribute__((weak, alias("emptyHandler")));
 void CAN1_TX_ISR(void) __attribute__((weak, alias("emptyHandler")));
 void USB_LP_ISR(void) __attribute__((weak, alias("emptyHandler")));
@@ -214,12 +212,6 @@ void defaultHandler(void)
 /*----------------------------------------------------------------------------*/
 static void emptyHandler(void)
 {
-}
-/*----------------------------------------------------------------------------*/
-void ADC1_2_ISR(void)
-{
-  ADC1_ISR();
-  ADC2_ISR();
 }
 /*----------------------------------------------------------------------------*/
 void USB_HP_CAN1_TX_ISR(void)
