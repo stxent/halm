@@ -4,13 +4,13 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/generic/byte_queue_extensions.h>
 #include <halm/platform/numicro/pdma_list.h>
 #include <halm/platform/numicro/pdma_oneshot.h>
 #include <halm/platform/numicro/serial_dma.h>
 #include <halm/platform/numicro/uart_base.h>
 #include <halm/platform/numicro/uart_defs.h>
 #include <halm/pm.h>
+#include <xcore/containers/byte_queue.h>
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/

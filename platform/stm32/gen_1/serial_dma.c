@@ -5,10 +5,10 @@
  */
 
 #include <halm/dma.h>
-#include <halm/generic/byte_queue_extensions.h>
 #include <halm/platform/stm32/serial_dma.h>
 #include <halm/platform/stm32/uart_defs.h>
 #include <halm/pm.h>
+#include <xcore/containers/byte_queue.h>
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/

@@ -4,11 +4,11 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/generic/byte_queue_extensions.h>
 #include <halm/platform/lpc/gen_1/uart_defs.h>
 #include <halm/platform/lpc/serial.h>
 #include <halm/platform/lpc/uart_base.h>
 #include <halm/pm.h>
+#include <xcore/containers/byte_queue.h>
 #include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
