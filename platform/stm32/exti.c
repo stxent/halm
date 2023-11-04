@@ -42,7 +42,7 @@ static enum Result extiInit(void *object, const void *configBase)
 {
   const struct ExtiConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->event != PIN_LOW && config->event != PIN_HIGH);
+  assert(config->event != INPUT_LOW && config->event != INPUT_HIGH);
 
   enum ExtiEvent channel = EXTI_EVENT_END;
 
@@ -81,9 +81,9 @@ static enum Result extiInit(void *object, const void *configBase)
   interrupt->enabled = false;
 
   /* Configure edge sensitivity options */
-  if (config->event == PIN_RISING || config->event == PIN_TOGGLE)
+  if (config->event == INPUT_RISING || config->event == INPUT_TOGGLE)
     STM_EXTI->RTSR |= interrupt->mask;
-  if (config->event == PIN_FALLING || config->event == PIN_TOGGLE)
+  if (config->event == INPUT_FALLING || config->event == INPUT_TOGGLE)
     STM_EXTI->FTSR |= interrupt->mask;
 
   return E_OK;

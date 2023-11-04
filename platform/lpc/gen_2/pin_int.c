@@ -202,26 +202,26 @@ static enum Result pinIntInit(void *object, const void *configBase)
   LPC_GPIO_Type * const reg = calcPort(interrupt->channel);
 
   /* Configure interrupt as level sensitive */
-  if (interrupt->event == PIN_HIGH || interrupt->event == PIN_LOW)
+  if (interrupt->event == INPUT_HIGH || interrupt->event == INPUT_LOW)
     reg->IS |= interrupt->mask;
   else
     reg->IS &= ~interrupt->mask;
 
   /* Enable both edges */
-  if (interrupt->event == PIN_TOGGLE)
+  if (interrupt->event == INPUT_TOGGLE)
     reg->IBE |= interrupt->mask;
   else
     reg->IBE &= ~interrupt->mask;
 
   switch (interrupt->event)
   {
-    case PIN_RISING:
-    case PIN_HIGH:
+    case INPUT_RISING:
+    case INPUT_HIGH:
       reg->IEV |= interrupt->mask;
       break;
 
-    case PIN_FALLING:
-    case PIN_LOW:
+    case INPUT_FALLING:
+    case INPUT_LOW:
       reg->IEV &= ~interrupt->mask;
       break;
 

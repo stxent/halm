@@ -24,7 +24,7 @@ struct SctCounterConfig
   /** Optional: timer interrupt priority. */
   IrqPriority priority;
   /** Optional: edge sensitivity of the selected clock input. */
-  enum PinEvent edge;
+  enum InputEvent edge;
   /** Mandatory: timer part. */
   enum SctPart part;
   /** Mandatory: peripheral identifier. */

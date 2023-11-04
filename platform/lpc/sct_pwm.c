@@ -153,7 +153,7 @@ static enum Result unitInit(void *object, const void *configBase)
 
   const struct SctBaseConfig baseConfig = {
       .channel = config->channel,
-      .edge = PIN_RISING,
+      .edge = INPUT_RISING,
       .input = config->clock,
       .part = config->part
   };

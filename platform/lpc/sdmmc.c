@@ -286,7 +286,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   const struct PinIntConfig finalizerConfig = {
       .pin = config->dat0,
       .priority = config->priority,
-      .event = PIN_RISING,
+      .event = INPUT_RISING,
       .pull = PIN_NOPULL
   };
   const struct SdmmcBaseConfig baseConfig = {

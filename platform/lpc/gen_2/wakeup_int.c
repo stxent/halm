@@ -131,7 +131,7 @@ static enum Result wakeupIntInit(void *object, const void *configBase)
 {
   const struct WakeupIntConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->event == PIN_RISING || config->event == PIN_FALLING);
+  assert(config->event == INPUT_RISING || config->event == INPUT_FALLING);
 
   const struct Pin input = pinInit(config->pin);
   assert(pinValid(input));
@@ -156,11 +156,11 @@ static enum Result wakeupIntInit(void *object, const void *configBase)
   /* Configure edge sensitivity options */
   switch (config->event)
   {
-    case PIN_RISING:
+    case INPUT_RISING:
       LPC_SYSCON->START[interrupt->index].APRP |= interrupt->mask;
       break;
 
-    case PIN_FALLING:
+    case INPUT_FALLING:
       LPC_SYSCON->START[interrupt->index].APRP &= ~interrupt->mask;
       break;
 

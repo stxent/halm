@@ -74,16 +74,16 @@ static void disableInterrupt(const struct PinInt *interrupt)
 static void enableInterrupt(const struct PinInt *interrupt)
 {
   const unsigned int channel = interrupt->channel;
-  const enum PinEvent event = interrupt->event;
+  const enum InputEvent event = interrupt->event;
   const uint32_t mask = interrupt->mask;
 
   /* Clear pending interrupt flag */
   LPC_GPIO_INT->PORT[channel].CLR = mask;
 
   /* Configure edge sensitivity options */
-  if (event != PIN_RISING)
+  if (event != INPUT_RISING)
     LPC_GPIO_INT->PORT[channel].ENF |= mask;
-  if (event != PIN_FALLING)
+  if (event != INPUT_FALLING)
     LPC_GPIO_INT->PORT[channel].ENR |= mask;
 }
 /*----------------------------------------------------------------------------*/
@@ -162,7 +162,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
 {
   const struct PinIntConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->event != PIN_LOW && config->event != PIN_HIGH);
+  assert(config->event != INPUT_LOW && config->event != INPUT_HIGH);
 
   const struct Pin input = pinInit(config->pin);
   struct PinInt * const interrupt = object;

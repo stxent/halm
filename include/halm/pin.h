@@ -32,19 +32,19 @@ enum
   PIN_ANALOG  = 0x7E
 };
 
+enum InputEvent
+{
+  INPUT_RISING,
+  INPUT_FALLING,
+  INPUT_HIGH,
+  INPUT_LOW,
+  INPUT_TOGGLE
+} __attribute__((packed));
+
 enum PinDirection
 {
   PIN_INPUT,
   PIN_OUTPUT
-} __attribute__((packed));
-
-enum PinEvent
-{
-  PIN_RISING,
-  PIN_FALLING,
-  PIN_HIGH,
-  PIN_LOW,
-  PIN_TOGGLE
 } __attribute__((packed));
 
 enum PinPull

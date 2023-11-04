@@ -111,7 +111,7 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(config != NULL);
   assert(config->pins != NULL);
   assert(config->event != ADC_SOFTWARE && config->event < ADC_EVENT_END);
-  assert(config->sensitivity != PIN_LOW && config->sensitivity != PIN_HIGH);
+  assert(config->sensitivity != INPUT_HIGH && config->sensitivity != INPUT_LOW);
 
   const struct EadcBaseConfig baseConfig = {
       .accuracy = config->accuracy,
@@ -156,9 +156,9 @@ static enum Result adcInit(void *object, const void *configBase)
   uint32_t sampling = SCTL0_3_TRGDLYDIV(divider) | SCTL0_3_TRGDLYCNT(offset)
       | SCTL0_3_TRGSEL(config->event) | SCTL0_3_EXTSMPT(config->delay);
 
-  if (config->sensitivity != PIN_RISING)
+  if (config->sensitivity != INPUT_RISING)
     sampling |= SCTL0_3_EXTFEN;
-  if (config->sensitivity != PIN_RISING)
+  if (config->sensitivity != INPUT_FALLING)
     sampling |= SCTL0_3_EXTREN;
 
   interface->base.handler = interruptHandler;

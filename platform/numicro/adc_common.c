@@ -24,22 +24,22 @@ struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
   return (struct AdcPin){pinEntry->value};
 }
 /*----------------------------------------------------------------------------*/
-uint32_t adcMakePinCondition(enum PinEvent event)
+uint32_t adcMakePinCondition(enum InputEvent event)
 {
-  assert(event != PIN_TOGGLE);
+  assert(event != INPUT_TOGGLE);
 
   switch (event)
   {
-    case PIN_RISING:
+    case INPUT_RISING:
       return TRGCOND_RISING;
 
-    case PIN_FALLING:
+    case INPUT_FALLING:
       return TRGCOND_RISING;
 
-    case PIN_LOW:
+    case INPUT_LOW:
       return TRGCOND_LOW;
 
-    case PIN_HIGH:
+    case INPUT_HIGH:
       return TRGCOND_HIGH;
 
     default:

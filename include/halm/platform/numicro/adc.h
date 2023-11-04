@@ -20,7 +20,7 @@ struct AdcConfig
   /** Mandatory: trigger to start the conversion. */
   enum AdcEvent event;
   /** Optional: external pin sensitivity. */
-  enum PinEvent sensitivity;
+  enum InputEvent sensitivity;
   /** Optional: number of bits of accuracy of the result. */
   uint8_t accuracy;
   /** Mandatory: peripheral identifier. */

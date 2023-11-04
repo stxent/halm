@@ -463,7 +463,7 @@ void sctReleaseEvent(struct SctBase *timer __attribute__((unused)),
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctBaseConfig * const config = configBase;
-  assert(config->edge == PIN_RISING || config->edge == PIN_FALLING);
+  assert(config->edge == INPUT_RISING || config->edge == INPUT_FALLING);
   assert(config->input < SCT_INPUT_END);
 
   struct SctBase * const timer = object;
@@ -478,7 +478,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   {
     value |= CONFIG_CLKMODE(CLKMODE_INPUT_HP);
 
-    if (config->edge == PIN_RISING)
+    if (config->edge == INPUT_RISING)
       value |= CONFIG_CKSEL_RISING(config->input - 1);
     else
       value |= CONFIG_CKSEL_FALLING(config->input - 1);

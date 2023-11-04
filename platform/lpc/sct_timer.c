@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum Result genericTimerInit(void *, uint8_t, enum SctPart,
-    enum SctInput, enum PinEvent, IrqPriority, uint32_t);
+    enum SctInput, enum InputEvent, IrqPriority, uint32_t);
 
 #ifdef CONFIG_PLATFORM_LPC_SCT_PM
 static void powerStateHandler(void *, enum PmState);
@@ -117,7 +117,7 @@ static void interruptHandler(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum Result genericTimerInit(void *object, uint8_t channel,
-    enum SctPart segment, enum SctInput input, enum PinEvent edge,
+    enum SctPart segment, enum SctInput input, enum InputEvent edge,
     IrqPriority priority, uint32_t frequency)
 {
   const struct SctBaseConfig baseConfig = {
@@ -203,7 +203,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   assert(config->part != SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, config->part,
-      SCT_INPUT_NONE, PIN_RISING, config->priority, config->frequency);
+      SCT_INPUT_NONE, INPUT_RISING, config->priority, config->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInitCounter(void *object, const void *configBase)
@@ -227,7 +227,7 @@ static enum Result tmrInitUnified(void *object, const void *configBase)
   assert(config->part == SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, SCT_UNIFIED,
-      SCT_INPUT_NONE, PIN_RISING, config->priority, config->frequency);
+      SCT_INPUT_NONE, INPUT_RISING, config->priority, config->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInitUnifiedCounter(void *object, const void *configBase)

@@ -300,7 +300,7 @@ static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerCaptureConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->event != PIN_LOW && config->event != PIN_HIGH);
+  assert(config->event != INPUT_LOW && config->event != INPUT_HIGH);
 
   struct GpTimerCapture * const capture = object;
   struct GpTimerCaptureUnit * const unit = config->parent;
@@ -321,9 +321,9 @@ static enum Result channelInit(void *object, const void *configBase)
 
     capture->value = &reg->CR[capture->channel];
 
-    if (capture->event != PIN_RISING)
+    if (capture->event != INPUT_RISING)
       captureControlValue |= CCR_FALLING_EDGE(capture->channel);
-    if (capture->event != PIN_FALLING)
+    if (capture->event != INPUT_FALLING)
       captureControlValue |= CCR_RISING_EDGE(capture->channel);
     reg->CCR = captureControlValue;
 
@@ -387,13 +387,13 @@ static uint32_t channelGetValue(const void *object)
  * Create capture channel.
  * @param unit Pointer to a GpTimerCaptureUnit object.
  * @param pin Pin used as a signal input.
- * @param event Event type, possible values are @b PIN_RISING, @b PIN_FALLING
- * and @b PIN_TOGGLE.
+ * @param event Event type, possible values are @b INPUT_RISING,
+ * @b INPUT_FALLING and @b INPUT_TOGGLE.
  * @param pull Pull-up and pull-down control, possible values are @b PIN_NOPULL,
  * @b PIN_PULLUP and @b PIN_PULLDOWN.
  * @return Pointer to a new Capture object on success or zero on error.
  */
-void *gpTimerCaptureCreate(void *unit, PinNumber pin, enum PinEvent event,
+void *gpTimerCaptureCreate(void *unit, PinNumber pin, enum InputEvent event,
     enum PinPull pull)
 {
   const struct GpTimerCaptureConfig channelConfig = {

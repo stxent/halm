@@ -48,7 +48,7 @@ BEGIN_DECLS
 
 /* Common functions */
 struct AdcPin adcConfigPin(const struct AdcBase *, PinNumber);
-uint32_t adcMakePinCondition(enum PinEvent);
+uint32_t adcMakePinCondition(enum InputEvent);
 void adcReleasePin(struct AdcPin);
 uint32_t adcSetupPins(struct AdcBase *, const PinNumber *, struct AdcPin *,
     size_t);

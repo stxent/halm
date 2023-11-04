@@ -86,7 +86,7 @@ static void disableInterrupt(const struct PinInt *interrupt)
 static void enableInterrupt(const struct PinInt *interrupt)
 {
   NM_GPIO_Type * const reg = calcPort(interrupt->port);
-  const enum PinEvent event = interrupt->event;
+  const enum InputEvent event = interrupt->event;
   const uint32_t mask = interrupt->mask;
   uint32_t inten = reg->INTEN;
 
@@ -95,9 +95,9 @@ static void enableInterrupt(const struct PinInt *interrupt)
 
   /* Configure sensitivity options */
   inten &= ~(INTEN_FLIEN_GROUP(mask) | INTEN_RHIEN_GROUP(mask));
-  if (event == PIN_LOW || event == PIN_FALLING || event == PIN_TOGGLE)
+  if (event == INPUT_LOW || event == INPUT_FALLING || event == INPUT_TOGGLE)
     inten |= INTEN_FLIEN_GROUP(mask);
-  if (event == PIN_HIGH || event == PIN_RISING || event == PIN_TOGGLE)
+  if (event == INPUT_HIGH || event == INPUT_RISING || event == INPUT_TOGGLE)
     inten |= INTEN_RHIEN_GROUP(mask);
 
   reg->INTEN = inten;
@@ -211,7 +211,6 @@ static enum Result pinIntInit(void *object, const void *configBase)
   const struct PinIntConfig * const config = configBase;
   assert(config != NULL);
   assert(config->pull == PIN_NOPULL);
-  assert(config->event != PIN_LOW && config->event != PIN_HIGH);
 
   const struct Pin input = pinInit(config->pin);
   assert(pinValid(input));
@@ -236,7 +235,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
   interrupt->port = input.port;
   interrupt->enabled = false;
 
-  if (config->event == PIN_HIGH || config->event == PIN_LOW)
+  if (config->event == INPUT_HIGH || config->event == INPUT_LOW)
     reg->INTTYPE |= interrupt->mask;
   else
     reg->INTTYPE &= ~interrupt->mask;

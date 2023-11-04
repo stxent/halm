@@ -43,8 +43,8 @@ struct GpTimerCaptureConfig
 {
   /** Mandatory: peripheral unit. */
   struct GpTimerCaptureUnit *parent;
-  /** Mandatory: capture mode. */
-  enum PinEvent event;
+  /** Mandatory: capture trigger. */
+  enum InputEvent event;
   /** Optional: enables pull-up or pull-down resistors for input pin. */
   enum PinPull pull;
   /** Mandatory: pin used as an input. */
@@ -62,15 +62,15 @@ struct GpTimerCapture
   struct GpTimerCaptureUnit *unit;
   /* Pointer to a capture register */
   const volatile uint32_t *value;
-  /* Capture event */
-  enum PinEvent event;
+  /* Capture trigger */
+  enum InputEvent event;
   /* Channel identifier */
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void *gpTimerCaptureCreate(void *, PinNumber, enum PinEvent, enum PinPull);
+void *gpTimerCaptureCreate(void *, PinNumber, enum InputEvent, enum PinPull);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

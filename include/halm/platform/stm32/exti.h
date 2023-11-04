@@ -22,7 +22,7 @@ struct ExtiConfig
   /** Optional: event number. */
   enum ExtiEvent channel;
   /** Optional: external interrupt sensitivity. */
-  enum PinEvent event;
+  enum InputEvent event;
   /** Optional: enables pull-up or pull-down resistors for input pin. */
   enum PinPull pull;
 };
