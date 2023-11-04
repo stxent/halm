@@ -205,7 +205,7 @@ const struct PinEntry sdhPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SdhBase *instances[2] = {0};
+static struct SdhBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SdhBase *interface,
     const struct SdhBaseConfig *config)

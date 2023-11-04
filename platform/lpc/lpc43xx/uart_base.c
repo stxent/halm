@@ -208,7 +208,7 @@ const struct PinEntry uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UartBase *instances[4] = {0};
+static struct UartBase *instances[4] = {NULL};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UartBase *object)
 {

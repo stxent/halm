@@ -187,7 +187,7 @@ const struct PinEntry qspiPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct QspiBase *instances[2] = {0};
+static struct QspiBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct QspiBase *object)
 {

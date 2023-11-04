@@ -479,7 +479,7 @@ const struct PinEntry uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UartBase *instances[8] = {0};
+static struct UartBase *instances[8] = {NULL};
 /*----------------------------------------------------------------------------*/
 static const struct UartBlockDescriptor *findDescriptor(uint8_t channel)
 {

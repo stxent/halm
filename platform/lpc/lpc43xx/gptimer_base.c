@@ -262,7 +262,7 @@ const struct PinEntry gpTimerMatchPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *instances[4] = {0};
+static struct GpTimerBase *instances[4] = {NULL};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {

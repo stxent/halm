@@ -25,7 +25,7 @@ const struct EntityClass * const PinIntBase = &(const struct EntityClass){
     .deinit = pinIntDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct PinIntBase *instances[8] = {0};
+static struct PinIntBase *instances[8] = {NULL};
 /*----------------------------------------------------------------------------*/
 static IrqNumber findIrqNumber(uint8_t channel)
 {

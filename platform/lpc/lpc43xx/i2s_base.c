@@ -211,7 +211,7 @@ const struct PinEntry i2sPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2SBase *instances[2] = {0};
+static struct I2SBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct I2SBaseConfig *config)
 {

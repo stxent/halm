@@ -51,7 +51,7 @@ const struct EntityClass * const BdmaBase = &(const struct EntityClass){
     .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static struct BdmaBase *instances[STREAM_COUNT] = {0};
+static struct BdmaBase *instances[STREAM_COUNT] = {NULL};
 /*----------------------------------------------------------------------------*/
 const struct BdmaBase *bdmaGetInstance(uint8_t stream)
 {

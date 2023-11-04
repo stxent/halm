@@ -131,7 +131,7 @@ static const struct PinEntry bxCanPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct BxCanBase *instances[2] = {0};
+static struct BxCanBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct BxCanBaseConfig *config)
 {

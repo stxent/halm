@@ -111,7 +111,7 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UsbBase *instances[2] = {0};
+static struct UsbBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *config)
 {

@@ -88,7 +88,7 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2CBase *instances[3] = {0};
+static struct I2CBase *instances[3] = {NULL};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct I2CBase *object)
 {

@@ -54,7 +54,7 @@ static const uint8_t eventTranslationMap[] = {
     [GPDMA_DAC]       = 7
 };
 /*----------------------------------------------------------------------------*/
-static struct GpDmaBase *instances[CHANNEL_COUNT] = {0};
+static struct GpDmaBase *instances[CHANNEL_COUNT] = {NULL};
 /*----------------------------------------------------------------------------*/
 static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,
     enum GpDmaEvent event)

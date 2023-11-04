@@ -170,7 +170,7 @@ const struct PinEntry spiPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SpiBase *instances[2] = {0};
+static struct SpiBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static const struct SpiBlockDescriptor *findDescriptor(uint8_t channel)
 {

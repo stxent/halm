@@ -447,7 +447,7 @@ const struct PinEntry gpTimerPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *instances[17] = {0};
+static struct GpTimerBase *instances[17] = {NULL};
 /*----------------------------------------------------------------------------*/
 static const struct TimerBlockDescriptor *findDescriptor(uint8_t channel)
 {

@@ -246,7 +246,7 @@ const struct PinEntry bpwmPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct BpwmUnitBase *instances[2] = {0};
+static struct BpwmUnitBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct BpwmUnitBase *object)
 {

@@ -63,7 +63,7 @@ const struct InterruptClass * const PinInt = &(const struct InterruptClass){
     .setCallback = pinIntSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct PinIntHandler *handlers[2] = {0};
+static struct PinIntHandler *handlers[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static inline NM_GPIO_Type *calcPort(uint8_t port)
 {

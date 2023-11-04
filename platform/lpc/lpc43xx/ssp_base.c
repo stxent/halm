@@ -188,7 +188,7 @@ const struct PinEntry sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SspBase *instances[2] = {0};
+static struct SspBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct SspBaseConfig *config)
 {

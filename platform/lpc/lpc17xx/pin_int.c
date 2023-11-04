@@ -59,7 +59,7 @@ const struct InterruptClass * const PinInt = &(const struct InterruptClass){
     .setCallback = pinIntSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct PinIntHandler *handlers[2] = {0};
+static struct PinIntHandler *handlers[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static void disableInterrupt(const struct PinInt *interrupt)
 {

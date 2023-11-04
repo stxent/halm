@@ -246,7 +246,7 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2CBase *instances[2] = {0};
+static struct I2CBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static uint8_t channelToIndex(uint8_t channel)
 {

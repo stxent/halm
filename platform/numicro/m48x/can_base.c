@@ -218,7 +218,7 @@ const struct PinEntry canPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct CanBase *instances[3] = {0};
+static struct CanBase *instances[3] = {NULL};
 /*----------------------------------------------------------------------------*/
 static uint8_t channelToIndex(uint8_t channel)
 {

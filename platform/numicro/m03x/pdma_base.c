@@ -22,7 +22,7 @@ const struct EntityClass * const PdmaBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 extern unsigned long _sbss;
 /*----------------------------------------------------------------------------*/
-static struct PdmaBase *instances[CONFIG_PLATFORM_NUMICRO_PDMA_COUNT] = {0};
+static struct PdmaBase *instances[CONFIG_PLATFORM_NUMICRO_PDMA_COUNT] = {NULL};
 /*----------------------------------------------------------------------------*/
 const struct PdmaBase *pdmaGetInstance(uint8_t channel)
 {

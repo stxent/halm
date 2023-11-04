@@ -152,7 +152,7 @@ const struct PinEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instances[2] = {0};
+static struct AdcBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static struct AdcPin configGroupPin(const struct PinGroupEntry *group,
     PinNumber key)

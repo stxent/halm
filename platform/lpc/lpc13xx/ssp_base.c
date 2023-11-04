@@ -73,7 +73,7 @@ const struct PinEntry sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SspBase *instances[2] = {0};
+static struct SspBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct SspBase *object)
 {

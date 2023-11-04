@@ -97,7 +97,7 @@ static const struct PinEntry canPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct CanBase *instances[2] = {0};
+static struct CanBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBaseConfig *config)
 {

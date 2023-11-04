@@ -199,7 +199,7 @@ const struct PinEntry eadcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct EadcBase *instances[2] = {0};
+static struct EadcBase *instances[2] = {NULL};
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NUMICRO_EADC0
 void EADC0_P0_ISR(void)

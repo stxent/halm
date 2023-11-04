@@ -35,7 +35,7 @@ const struct EntityClass * const ExtiBase = &(const struct EntityClass){
     .deinit = extiDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct ExtiBase *instances[32] = {0};
+static struct ExtiBase *instances[32] = {NULL};
 /*----------------------------------------------------------------------------*/
 static void enableInterrupt(enum ExtiEvent event, IrqPriority priority)
 {
