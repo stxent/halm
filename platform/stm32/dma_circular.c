@@ -90,7 +90,10 @@ static enum Result streamInit(void *object, const void *configBase)
 
   if (res == E_OK)
   {
-    stream->base.config |= SCR_TCIE | SCR_HTIE | SCR_TEIE;
+    stream->base.config |= SCR_TCIE | SCR_TEIE;
+    if (!config->silent)
+      stream->base.config |= SCR_HTIE;
+
     stream->base.handler = interruptHandler;
     stream->callback = NULL;
     stream->fifo = 0;
@@ -201,11 +204,10 @@ static void streamSetCallback(void *object, void (*callback)(void *),
 static enum Result streamEnable(void *object)
 {
   struct DmaCircular * const stream = object;
-  const uint8_t number = stream->base.number;
 
   assert(stream->state == STATE_READY);
 
-  if (dmaSetInstance(number, object))
+  if (dmaSetInstance(stream->base.number, object))
   {
     STM_DMA_STREAM_Type * const reg = stream->base.reg;
 
@@ -235,7 +237,7 @@ static void streamDisable(void *object)
 
   if (stream->state == STATE_BUSY)
   {
-    reg->CR &= ~SCR_EN;
+    reg->CR &= ~(SCR_EN | SCR_IE_MASK);
     dmaResetInstance(stream->base.number);
 
     stream->state = STATE_DONE;
@@ -283,7 +285,7 @@ static void streamAppend(void *object, void *destination, const void *source,
 
   assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= DMA_MAX_TRANSFER);
-  assert(size % 2 == 0);
+  assert(!(stream->base.config & SCR_HTIE) || (size % 2 == 0));
   assert(stream->state != STATE_BUSY && stream->state != STATE_READY);
 
   if (SCR_DIR_VALUE(stream->base.config) == DMA_TYPE_M2P)

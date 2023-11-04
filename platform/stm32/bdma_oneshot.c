@@ -151,11 +151,10 @@ static void streamSetCallback(void *object, void (*callback)(void *),
 static enum Result streamEnable(void *object)
 {
   struct BdmaOneShot * const stream = object;
-  const uint8_t number = stream->base.number;
 
   assert(stream->state == STATE_READY);
 
-  if (bdmaSetInstance(number, object))
+  if (bdmaSetInstance(stream->base.number, object))
   {
     STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
 
@@ -184,7 +183,7 @@ static void streamDisable(void *object)
 
   if (stream->state == STATE_BUSY)
   {
-    reg->CCR &= ~CCR_EN;
+    reg->CCR &= ~(CCR_EN | CCR_IE_MASK);
     bdmaResetInstance(stream->base.number);
 
     stream->state = STATE_DONE;

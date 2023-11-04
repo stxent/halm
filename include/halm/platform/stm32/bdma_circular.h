@@ -21,6 +21,8 @@ struct BdmaCircularConfig
   enum DmaType type;
   /** Mandatory: stream number. */
   uint8_t stream;
+  /** Optional: call a user function only in the end of the list. */
+  bool silent;
 };
 
 struct BdmaCircular

@@ -81,6 +81,9 @@
 #define SCR_CHSEL(value)                BIT_FIELD((value), 25)
 #define SCR_CHSEL_MASK                  BIT_FIELD(MASK(2), 25)
 #define SCR_CHSEL_VALUE(reg)            FIELD_VALUE((reg), SCR_CHSEL_MASK, 25)
+
+#define SCR_IE_MASK \
+    (SCR_DMEIE | SCR_TEIE | SCR_HTIE | SCR_TCIE)
 /*------------------Stream FIFO Control Register------------------------------*/
 enum
 {

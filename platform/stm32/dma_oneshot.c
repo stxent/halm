@@ -198,11 +198,10 @@ static void streamSetCallback(void *object, void (*callback)(void *),
 static enum Result streamEnable(void *object)
 {
   struct DmaOneShot * const stream = object;
-  const uint8_t number = stream->base.number;
 
   assert(stream->state == STATE_READY);
 
-  if (dmaSetInstance(number, object))
+  if (dmaSetInstance(stream->base.number, object))
   {
     STM_DMA_STREAM_Type * const reg = stream->base.reg;
 
@@ -232,7 +231,7 @@ static void streamDisable(void *object)
 
   if (stream->state == STATE_BUSY)
   {
-    reg->CR &= ~SCR_EN;
+    reg->CR &= ~(SCR_EN | SCR_IE_MASK);
     dmaResetInstance(stream->base.number);
 
     stream->state = STATE_DONE;

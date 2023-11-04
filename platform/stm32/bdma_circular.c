@@ -90,7 +90,10 @@ static enum Result streamInit(void *object, const void *configBase)
 
   if (res == E_OK)
   {
-    stream->base.config |= CCR_TCIE | CCR_HTIE | CCR_TEIE;
+    stream->base.config |= CCR_TCIE | CCR_TEIE;
+    if (!config->silent)
+      stream->base.config |= CCR_HTIE;
+
     stream->base.handler = interruptHandler;
     stream->callback = NULL;
     stream->state = STATE_IDLE;
@@ -155,11 +158,10 @@ static void streamSetCallback(void *object, void (*callback)(void *),
 static enum Result streamEnable(void *object)
 {
   struct BdmaCircular * const stream = object;
-  const uint8_t number = stream->base.number;
 
   assert(stream->state == STATE_READY);
 
-  if (bdmaSetInstance(number, object))
+  if (bdmaSetInstance(stream->base.number, object))
   {
     STM_DMA_CHANNEL_Type * const reg = stream->base.reg;
 
@@ -188,7 +190,7 @@ static void streamDisable(void *object)
 
   if (stream->state == STATE_BUSY)
   {
-    reg->CCR &= ~CCR_EN;
+    reg->CCR &= ~(CCR_EN | CCR_IE_MASK);
     bdmaResetInstance(stream->base.number);
 
     stream->state = STATE_DONE;
@@ -236,7 +238,7 @@ static void streamAppend(void *object, void *destination, const void *source,
 
   assert(destination != NULL && source != NULL);
   assert(size > 0 && size <= DMA_MAX_TRANSFER);
-  assert(size % 2 == 0);
+  assert(!(stream->base.config & CCR_HTIE) || (size % 2 == 0));
   assert(stream->state != STATE_BUSY && stream->state != STATE_READY);
 
   if (stream->base.config & CCR_DIR)

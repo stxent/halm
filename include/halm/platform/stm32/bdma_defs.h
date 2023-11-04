@@ -53,5 +53,7 @@
 #define CCR_PL_VALUE(reg)               FIELD_VALUE((reg), CCR_PL_MASK, 12)
 
 #define CCR_MEM2MEM                     BIT(14)
+
+#define CCR_IE_MASK                     (CCR_TCIE | CCR_HTIE | CCR_TEIE)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_BDMA_DEFS_H_ */

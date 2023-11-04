@@ -545,7 +545,8 @@ void *uartMakeCircularDma(uint8_t channel __attribute__((unused)),
       .event = DMA_GENERIC,
       .priority = priority,
       .type = type,
-      .stream = stream
+      .stream = stream,
+      .silent = false
   };
 
   return init(BdmaCircular, &config);

@@ -36,11 +36,11 @@
     ((controller) * DMA1_STREAM_COUNT + (stream))
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_BDMA1
-static void dma1StreamHandler(uint8_t);
+static void dma1StreamHandler(unsigned int);
 #endif
 
 #ifdef CONFIG_PLATFORM_STM32_BDMA2
-static void dma2StreamHandler(uint8_t);
+static void dma2StreamHandler(unsigned int);
 #endif
 
 static enum Result streamInit(void *, const void *);
@@ -53,25 +53,45 @@ const struct EntityClass * const BdmaBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 static struct BdmaBase *instances[STREAM_COUNT] = {NULL};
 /*----------------------------------------------------------------------------*/
-const struct BdmaBase *bdmaGetInstance(uint8_t stream)
+const struct BdmaBase *bdmaGetInstance(uint8_t number)
 {
-  assert(stream < ARRAY_SIZE(instances));
-  return instances[stream];
-}
-/*----------------------------------------------------------------------------*/
-void bdmaResetInstance(uint8_t stream)
-{
-  assert(stream < ARRAY_SIZE(instances));
-  instances[stream] = NULL;
-}
-/*----------------------------------------------------------------------------*/
-bool bdmaSetInstance(uint8_t stream, struct BdmaBase *object)
-{
-  assert(object != NULL);
-  assert(stream < ARRAY_SIZE(instances));
+  const unsigned int controller = number >= DMA2_STREAM1;
+  const unsigned int index = controller ? number - DMA2_STREAM1 : number;
 
+  assert(STREAM_ENCODE(controller, index) < ARRAY_SIZE(instances));
+  return instances[STREAM_ENCODE(controller, index)];
+}
+/*----------------------------------------------------------------------------*/
+void bdmaResetInstance(uint8_t number)
+{
+  const unsigned int controller = number >= DMA2_STREAM1;
+  const unsigned int index = controller ? number - DMA2_STREAM1 : number;
+
+  assert(STREAM_ENCODE(controller, index) < ARRAY_SIZE(instances));
+  instances[STREAM_ENCODE(controller, index)] = NULL;
+}
+/*----------------------------------------------------------------------------*/
+bool bdmaSetInstance(uint8_t number, struct BdmaBase *stream)
+{
+  const unsigned int controller = number >= DMA2_STREAM1;
+  const unsigned int index = controller ? number - DMA2_STREAM1 : number;
   void *expected = NULL;
-  return compareExchangePointer(&instances[stream], &expected, object);
+
+  assert(stream != NULL);
+  assert(STREAM_ENCODE(controller, index) < ARRAY_SIZE(instances));
+
+  if (compareExchangePointer(&instances[STREAM_ENCODE(controller, index)],
+      &expected, stream))
+  {
+    STM_DMA_Type * const dma = controller ? STM_DMA2 : STM_DMA1;
+
+    /* Clear pending interrupt flags */
+    dma->IFCR = ISR_CHANNEL_MASK(index);
+
+    return true;
+  }
+
+  return false;
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_BDMA1
@@ -134,11 +154,11 @@ void DMA1_CHANNEL4_7_DMA2_CHANNEL3_5_ISR(void)
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_BDMA1
-static void dma1StreamHandler(uint8_t number)
+static void dma1StreamHandler(unsigned int index)
 {
-  struct BdmaBase * const stream = instances[STREAM_ENCODE(0, number)];
-  const uint32_t rawStatus = STM_DMA1->ISR & ISR_CHANNEL_MASK(number);
-  const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, number);
+  struct BdmaBase * const stream = instances[STREAM_ENCODE(0, index)];
+  const uint32_t rawStatus = STM_DMA1->ISR & ISR_CHANNEL_MASK(index);
+  const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, index);
   enum Result res = E_OK;
 
   /* Clear interrupt flags */
@@ -152,11 +172,11 @@ static void dma1StreamHandler(uint8_t number)
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_BDMA2
-static void dma2StreamHandler(uint8_t number)
+static void dma2StreamHandler(unsigned int index)
 {
-  struct BdmaBase * const stream = instances[STREAM_ENCODE(1, number)];
-  const uint32_t rawStatus = STM_DMA2->ISR & ISR_CHANNEL_MASK(number);
-  const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, number);
+  struct BdmaBase * const stream = instances[STREAM_ENCODE(1, index)];
+  const uint32_t rawStatus = STM_DMA2->ISR & ISR_CHANNEL_MASK(index);
+  const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, index);
   enum Result res = E_OK;
 
   /* Clear interrupt flags */
@@ -177,21 +197,21 @@ static enum Result streamInit(void *object, const void *configBase)
   assert(config->stream < ARRAY_SIZE(instances));
   assert(config->priority <= DMA_PRIORITY_VERY_HIGH);
 
-  const unsigned int controller = config->stream >= DMA1_STREAM_COUNT;
-  const unsigned int number = controller ?
-      config->stream - DMA1_STREAM_COUNT : config->stream;
+  const unsigned int controller = config->stream >= DMA2_STREAM1;
+  const unsigned int index = controller ?
+      config->stream - DMA2_STREAM1 : config->stream;
 
   switch (controller)
   {
 #ifdef CONFIG_PLATFORM_STM32_BDMA1
     case 0:
     {
-      assert(number < DMA1_STREAM_COUNT);
-      stream->reg = STM_DMA1->CHANNELS + number;
+      assert(index < DMA1_STREAM_COUNT);
+      stream->reg = STM_DMA1->CHANNELS + index;
 
-      if (number >= 3)
+      if (index >= 3)
         stream->irq = DMA1_CHANNEL4_7_DMA2_CHANNEL3_5_IRQ;
-      else if (number >= 1)
+      else if (index >= 1)
         stream->irq = DMA1_CHANNEL2_3_DMA2_CHANNEL1_2_IRQ;
       else
         stream->irq = DMA1_CHANNEL1_IRQ;
@@ -205,10 +225,10 @@ static enum Result streamInit(void *object, const void *configBase)
 #ifdef CONFIG_PLATFORM_STM32_BDMA2
     case 1:
     {
-      assert(number < DMA2_STREAM_COUNT);
-      stream->reg = STM_DMA2->CHANNELS + number;
+      assert(index < DMA2_STREAM_COUNT);
+      stream->reg = STM_DMA2->CHANNELS + index;
 
-      if (number >= 2)
+      if (index >= 2)
         stream->irq = DMA1_CHANNEL4_7_DMA2_CHANNEL3_5_IRQ;
       else
         stream->irq = DMA1_CHANNEL2_3_DMA2_CHANNEL1_2_IRQ;
