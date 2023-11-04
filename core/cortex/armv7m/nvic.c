@@ -5,7 +5,7 @@
  */
 
 #include <halm/core/core_defs.h>
-#include <halm/core/cortex/armv7m/nvic_defs.h>
+#include <halm/core/cortex/armv7m/scb_defs.h>
 #include <halm/core/cortex/nvic.h>
 #include <xcore/asm.h>
 #include <assert.h>
