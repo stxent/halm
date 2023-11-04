@@ -18,22 +18,61 @@ typedef struct
   __rw__ uint32_t SR;
   __rw__ uint32_t CR1;
   __rw__ uint32_t CR2;
-  __rw__ uint32_t SMPR1;
-  __rw__ uint32_t SMPR2;
-  __rw__ uint32_t JOFR1;
-  __rw__ uint32_t JOFR2;
-  __rw__ uint32_t JOFR3;
-  __rw__ uint32_t JOFR4;
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t SMPR1;
+      __rw__ uint32_t SMPR2;
+    };
+
+    __rw__ uint32_t SMPR[2];
+  };
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t JOFR1;
+      __rw__ uint32_t JOFR2;
+      __rw__ uint32_t JOFR3;
+      __rw__ uint32_t JOFR4;
+    };
+
+    __rw__ uint32_t JOFR[4];
+  };
+
   __rw__ uint32_t HTR;
   __rw__ uint32_t LTR;
-  __rw__ uint32_t SQR1;
-  __rw__ uint32_t SQR2;
-  __rw__ uint32_t SQR3;
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t SQR1;
+      __rw__ uint32_t SQR2;
+      __rw__ uint32_t SQR3;
+    };
+
+    __rw__ uint32_t SQR[3];
+  };
+
   __rw__ uint32_t JSQR;
-  __rw__ uint32_t JDR1;
-  __rw__ uint32_t JDR2;
-  __rw__ uint32_t JDR3;
-  __rw__ uint32_t JDR4;
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t JDR1;
+      __rw__ uint32_t JDR2;
+      __rw__ uint32_t JDR3;
+      __rw__ uint32_t JDR4;
+    };
+
+    __rw__ uint32_t JDR[4];
+  };
+
   __rw__ uint32_t DR;
 } STM_ADC_Type;
 /*------------------Backup registers------------------------------------------*/

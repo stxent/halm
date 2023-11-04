@@ -1,3 +1,8 @@
+config GEN_ADC
+	string
+	default gen_1 if FAMILY_STM32F1XX || FAMILY_STM32F4XX
+	default gen_2 if FAMILY_STM32F0XX
+
 config GEN_PIN
 	string
 	default gen_2 if FAMILY_STM32F0XX
@@ -31,6 +36,42 @@ menu "Peripherals"
 config PLATFORM_STM32_NO_DEINIT
 	bool "Disable destructors"
 	default n
+
+config PLATFORM_STM32_ADC_BASE
+	bool "ADC"
+	default y
+
+config PLATFORM_STM32_ADC_BASIC
+	bool
+	default y if FAMILY_STM32F1XX
+	depends on PLATFORM_STM32_ADC_BASE
+
+config PLATFORM_STM32_ADC_NO_DEINIT
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
+	depends on PLATFORM_STM32_ADC_BASE
+
+config PLATFORM_STM32_ADC_PRIORITY
+	int "ADC interrupts priority"
+	default 0
+	depends on PLATFORM_STM32_ADC_BASE
+
+config PLATFORM_STM32_ADC_SHARED
+	bool "Shared ADC"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE
+	help
+	  This allows usage of multiple ADC channel objects on the same peripheral.
+
+config PLATFORM_STM32_ADC
+	bool "Multichannel ADC with interrupts"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE && (FAMILY_STM32F1XX || FAMILY_STM32F4XX)
+
+config PLATFORM_STM32_ADC_DMA
+	bool "Multichannel ADC with DMA"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE && (PLATFORM_STM32_BDMA || PLATFORM_STM32_DMA)
 
 config PLATFORM_STM32_BDMA
 	bool "Basic DMA"

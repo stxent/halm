@@ -457,6 +457,13 @@ static enum Result adcClockEnable(const void *clockBase
       || config->source == ADC_CLOCK_APB_DIV_2
       || config->source == ADC_CLOCK_APB_DIV_4);
 
+  if (!sysClockStatus(CLK_ADC))
+  {
+    sysClockEnable(CLK_ADC);
+    sysResetEnable(RST_ADC);
+    sysResetDisable(RST_ADC);
+  }
+
   uint32_t cfgr2 = STM_ADC->CFGR2 & ~ADC_CFGR2_CKMODE_MASK;
 
   switch (config->source)

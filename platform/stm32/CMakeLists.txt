@@ -19,6 +19,19 @@ if(CONFIG_PLATFORM_STM32_PIN_REMAP)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pin_remap.c")
 endif()
 
+if(CONFIG_PLATFORM_STM32_ADC_BASE)
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/adc_base.c")
+endif()
+
+if(CONFIG_PLATFORM_STM32_ADC)
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc.c")
+endif()
+
+if(CONFIG_PLATFORM_STM32_ADC_DMA)
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_dma.c")
+endif()
+
 if(CONFIG_PLATFORM_STM32_BDMA)
     list(APPEND SOURCE_FILES "bdma_circular.c")
     list(APPEND SOURCE_FILES "bdma_oneshot.c")
